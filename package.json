@@ -1,0 +1,23 @@
+{
+  "name": "controlsfreak.dev",
+  "version": "1.0.0",
+  "description": "Open calculators and reference tools for building-controls engineers — BACnet, Modbus, HVAC, and building automation work. No login, no ads, just tools that are actually useful on a job site.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/EWH2000/controlsfreak.dev.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/EWH2000/controlsfreak.dev/issues"
+  },
+  "homepage": "https://github.com/EWH2000/controlsfreak.dev#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.59.1"
+  }
+}
