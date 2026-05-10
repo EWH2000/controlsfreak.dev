@@ -45,6 +45,19 @@ Single page, three sections (`#tools`, `#roadmap`, About):
 - **Modbus Register Viewer** (`.tool-card`, "Modbus") — 16-bit
   clickable toggle grid, two-way bound to decimal / hex inputs, with
   dec / hex / binary readouts
+- **PID Tuning Helper** (`.tool-card`, "Loops") — three stacked parts:
+  a step-response simulator (process-type `<select>`, a parameter-style
+  `<select>` that relabels the controls — gain·reset·rate / Ti·Td in
+  minutes or seconds / proportional band — preset-tuning chips, three
+  `<input type=range>` sliders with Ti / Td / PB equivalents shown
+  beneath each, a `<canvas>` plot of PV vs. setpoint, and overshoot /
+  settling-time / steady-state-error readouts), a symptom →
+  what-to-change `<table>`, and a plain-English P/I/D explainer. The
+  controller runs on canonical params (gain, repeats/min, minutes); the
+  parameter-style selector only changes labels/units. The simulated
+  process is a toy first-order-plus-dead-time model — it exists for
+  intuition, not for tuning a real loop. All of it (chart included) is
+  plain JS.
 - **Roadmap** (`#roadmap`) — `.tool-preview` cards for tools not built
   yet (see below)
 - **About** — short personal blurb
@@ -73,9 +86,15 @@ should be built from these, not freshly styled:
   `.tool-card-title` / `.tool-tag` / `.tool-body`; `.tabs` / `.tab-btn`
   / `.tab-pane`; `.form-row` (+ `.three`) / `.field` / `label`;
   `.result-panel` / `.result-label` / `.result-value` (+ `.error` /
-  `.muted`); `.result-formula`; `.range-bar-wrap` / `.range-bar` /
-  `.range-bar-fill`; `.copy-btn` (+ `.copied`); `.section-header` /
-  `.section-label` / `.section-line`.
+  `.muted` / `.warn`); `.result-formula`; `.range-bar-wrap` /
+  `.range-bar` / `.range-bar-fill`; `.copy-btn` (+ `.copied` /
+  `.active`); `.section-header` / `.section-label` / `.section-line`;
+  `.subhead` (a section divider inside a `.tool-body`); `.bit-readouts`
+  / `.readout` / `.readout-label` / `.readout-value` (also reused for
+  the PID metrics row); `.ref-table` (reference tables); `.pid-terms` /
+  `.pid-term`; `.btn-row`, `.slider-field` / `.slider-head` /
+  `.slider-val`, `input[type=range]`, `.sim-canvas-wrap` / `.sim-legend`
+  (the PID simulator).
 
 ### JS patterns
 
@@ -99,8 +118,8 @@ should be built from these, not freshly styled:
    the validate-and-mute pattern.
 3. If it graduates a roadmap item, delete the matching `.tool-preview`
    card from the `#roadmap` grid.
-4. Bump the version string in the footer (`v0.1 · 2025`) when shipping
-   something notable.
+4. Bump the version string in the footer (currently `v0.2 · 2026`) when
+   shipping something notable.
 
 ## Workflow
 
@@ -146,7 +165,6 @@ section of `index.html`:
 - Temperature Conversion (°F / °C / K / °R with HVAC setpoint reference)
 - VAV Balancing (K-factor, design CFM, velocity pressure)
 - BACnet Object Reference (object type codes, property IDs, data types)
-- PID Tuning Reference (what P, I, D actually do, in plain English)
 - Modbus Function Codes (FC01–FC23 with frame breakdowns)
 - Duct Pressure Calculator (static / velocity / total pressure)
 
