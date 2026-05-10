@@ -42,9 +42,9 @@ Single page, three sections (`#tools`, `#roadmap`, About):
 
 - **Signal Scaling Calculator** (`.tool-card`, "Analog I/O") — three
   tabs:
-  - *Signal → EU* — mA/V signal to engineering units, with % of span,
-    a range bar, and the worked formula
-  - *EU → Signal* — the inverse
+  - *Signal → Eng. Units* — mA/V signal to engineering units, with % of
+    span, a range bar, and the worked formula
+  - *Eng. Units → Signal* — the inverse
   - *2-Point → Slope / Offset* — two known IO pairs to `y = mx + b`,
     with copy buttons (aimed at pasting into Niagara's ProxyExt)
 - **Modbus Register Viewer** (`.tool-card`, "Modbus") — 16-bit
@@ -82,11 +82,22 @@ Single page, three sections (`#tools`, `#roadmap`, About):
 The page defines a small vocabulary in the inline `<style>`. A new tool
 should be built from these, not freshly styled:
 
-- **CSS custom properties** in `:root`: `--bg`, `--surface` /
-  `--surface-2`, `--border`, `--accent` (`#55ae2a`), `--accent-dim` /
-  `--accent-glow`, `--text` / `--text-bright` / `--text-dim`, `--green`,
-  `--red`, `--mono` (IBM Plex Mono), `--sans` (Overpass). Dark
-  terminal-green aesthetic with a faint dot-grid background.
+- **CSS custom properties** in `:root` (the theme lives here — change
+  colors by editing these, not by hardcoding): `--bg` (light gray-green
+  app chrome) / `--surface` (white panes) / `--surface-2` (panel headers,
+  table heads, insets); `--border` (hairlines); `--accent` (`#43881c`,
+  the green — chosen to stay readable on white for text and UI) /
+  `--accent-dim` / `--accent-glow`; `--text` / `--text-bright` /
+  `--text-dim`; `--blue` (`#1577b8`, data readouts / highlight); `--red`
+  (fault/alarm); `--mono` (IBM Plex Mono) / `--sans` (Overpass). The page
+  sets `color-scheme: light` and is light-only — no dark variant, no
+  `prefers-color-scheme` switch. Aesthetic: flat, light "workstation"
+  look — white panels on light gray-green chrome, hairline borders, a
+  green accent — with quiet nods to building-automation UIs (slightly
+  shaded panel headers, property-sheet-style zebra tables, flat
+  underlined tabs). No drop shadows, no background texture. The canvas
+  chart reads its colors from these vars via `getComputedStyle` at draw
+  time, so it follows any palette change automatically.
 - **Component classes:** `.tool-card` / `.tool-card-header` /
   `.tool-card-title` / `.tool-tag` / `.tool-body`; `.tabs` / `.tab-btn`
   / `.tab-pane`; `.form-row` (+ `.three`) / `.field` / `label`;
@@ -111,8 +122,10 @@ should be built from these, not freshly styled:
 - Tabs via `switchTab(name, btn)`.
 - Lookup tables for fixed domain data (e.g. the `SIG` object: signal
   type → `{ min, max, unit }`).
-- Domain shorthand used in the UI: **EU** = engineering units;
-  **AI / AO** = analog input / output.
+- Domain shorthand in the UI: **AI / AO** = analog input / output.
+  Don't use "EU" — it's ambiguous (electrical vs engineering unit); the
+  Signal Scaling tool says "Eng. Units" / "Eng. Value" / "Engineering
+  Value" instead.
 
 ### Adding a new tool
 
