@@ -1,0 +1,13 @@
+# KDE Dolphin folder settings
+.directory
+
+# Common OS junk
+.DS_Store
+Thumbs.db
+
+# Editor backup/swap files
+*~
+*.swp
+*.swo
+.vscode/
+.idea/
