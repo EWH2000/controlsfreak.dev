@@ -11,3 +11,7 @@ Thumbs.db
 *.swo
 .vscode/
 .idea/
+
+# Node / npm
+node_modules/
+npm-debug.log*
