@@ -1,0 +1,1050 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>controlsfreak.dev — BMS Field Reference</title>
+    <meta name="description" content="Open calculators and reference tools for building controls engineers. AI/AO scaling, Modbus register viewer, VAV balancing, and more. No login, no ads.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&family=Overpass:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg:           #070e08;
+            --surface:      #0c1610;
+            --surface-2:    #101d13;
+            --border:       #234028;
+            --accent:       #55ae2a;
+            --accent-dim:   rgba(85,174,42,0.12);
+            --accent-glow:  rgba(85,174,42,0.25);
+            --text:         #b8ccba;
+            --text-bright:  #ddeee0;
+            --text-dim:     #9aaea0;
+            --green:        #00c8d4;
+            --red:          #ff5252;
+            --mono:         'IBM Plex Mono', monospace;
+            --sans:         'Overpass', sans-serif;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--sans);
+            font-size: 16px;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image: radial-gradient(circle, var(--border) 1px, transparent 1px);
+            background-size: 28px 28px;
+            opacity: 0.45;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ── NAV ── */
+        nav {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(7,11,18,0.88);
+            backdrop-filter: blur(14px);
+            border-bottom: 1px solid var(--border);
+            padding: 0 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 56px;
+        }
+
+        .nav-logo {
+            font-family: var(--mono);
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: var(--accent);
+            letter-spacing: 0.02em;
+            text-decoration: none;
+        }
+        .nav-logo span { color: var(--text-dim); font-weight: 400; }
+
+        .nav-links { display: flex; gap: 2rem; list-style: none; }
+        .nav-links a {
+            font-family: var(--mono);
+            font-size: 0.72rem;
+            color: var(--text-dim);
+            text-decoration: none;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            transition: color 0.2s;
+        }
+        .nav-links a:hover { color: var(--accent); }
+
+        /* ── HERO ── */
+        .hero {
+            position: relative;
+            z-index: 1;
+            padding: 5rem 2rem 4rem;
+            max-width: 880px;
+            margin: 0 auto;
+            animation: fadeUp 0.5s ease both;
+        }
+
+        .hero-eyebrow {
+            font-family: var(--mono);
+            font-size: 0.7rem;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 0.16em;
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+        .hero-eyebrow::before {
+            content: '';
+            display: block;
+            width: 22px;
+            height: 1px;
+            background: var(--accent);
+        }
+
+        .hero h1 {
+            font-family: var(--mono);
+            font-size: clamp(1.8rem, 4.5vw, 3rem);
+            font-weight: 600;
+            color: var(--text-bright);
+            line-height: 1.18;
+            margin-bottom: 1.1rem;
+            letter-spacing: -0.02em;
+        }
+        .hero h1 em { font-style: normal; color: var(--accent); }
+
+        .hero p {
+            font-size: 1.05rem;
+            font-weight: 300;
+            color: var(--text);
+            max-width: 540px;
+            margin-bottom: 2rem;
+            line-height: 1.8;
+        }
+
+        .hero-badges { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+        .badge {
+            font-family: var(--mono);
+            font-size: 0.68rem;
+            padding: 0.28rem 0.7rem;
+            border: 1px solid var(--border);
+            border-radius: 2px;
+            color: var(--text-dim);
+            background: var(--surface);
+            letter-spacing: 0.05em;
+        }
+
+        /* ── MAIN ── */
+        main {
+            position: relative;
+            z-index: 1;
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 0 2rem 6rem;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .section-label {
+            font-family: var(--mono);
+            font-size: 0.68rem;
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+            color: var(--accent);
+            white-space: nowrap;
+        }
+        .section-line { flex: 1; height: 1px; background: var(--border); }
+
+        /* ── TOOL CARD ── */
+        .tool-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 1.5rem;
+        }
+        .tool-card:nth-child(1) { animation: fadeUp 0.5s 0.08s ease both; }
+        .tool-card:nth-child(2) { animation: fadeUp 0.5s 0.16s ease both; }
+
+        .tool-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.9rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            background: var(--surface-2);
+        }
+        .tool-card-title {
+            font-family: var(--mono);
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-bright);
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
+        }
+        .tool-tag {
+            font-family: var(--mono);
+            font-size: 0.62rem;
+            padding: 0.15rem 0.5rem;
+            background: var(--accent-dim);
+            color: var(--accent);
+            border: 1px solid rgba(85,174,42,0.22);
+            border-radius: 2px;
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+        }
+        .tool-body { padding: 1.5rem; }
+
+        /* ── TABS ── */
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 1.5rem;
+        }
+        .tab-btn {
+            font-family: var(--mono);
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.09em;
+            padding: 0.55rem 1.1rem;
+            border: none;
+            background: none;
+            color: var(--text-dim);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -1px;
+            transition: all 0.18s;
+        }
+        .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+        .tab-btn:hover:not(.active) { color: var(--text); }
+        .tab-pane { display: none; }
+        .tab-pane.active { display: block; }
+
+        /* ── FORM ── */
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        .form-row.three { grid-template-columns: 1fr 1fr 1fr; }
+
+        .field { display: flex; flex-direction: column; gap: 0.4rem; }
+
+        label {
+            font-family: var(--mono);
+            font-size: 0.66rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+        }
+
+        input[type="number"],
+        input[type="text"],
+        select {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            padding: 0.55rem 0.75rem;
+            font-family: var(--mono);
+            font-size: 0.9rem;
+            color: var(--text-bright);
+            width: 100%;
+            transition: border-color 0.18s, box-shadow 0.18s;
+            -webkit-appearance: none;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-dim);
+        }
+        select option { background: var(--surface); }
+
+        /* ── RESULT PANEL ── */
+        .result-panel {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            padding: 1.25rem 1.5rem;
+            margin-top: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+        }
+        .result-label {
+            font-family: var(--mono);
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.2rem;
+        }
+        .result-value {
+            font-family: var(--mono);
+            font-size: 2rem;
+            font-weight: 600;
+            color: var(--green);
+            letter-spacing: -0.02em;
+            transition: color 0.18s;
+        }
+        .result-value.error { color: var(--red); }
+        .result-value.muted { color: var(--text-dim); }
+
+        .result-formula {
+            font-family: var(--mono);
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            margin-top: 0.75rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid var(--border);
+            font-style: italic;
+            word-break: break-all;
+        }
+
+        /* ── RANGE BAR ── */
+        .range-bar-wrap { margin-top: 1rem; }
+        .range-bar-labels {
+            display: flex;
+            justify-content: space-between;
+            font-family: var(--mono);
+            font-size: 0.63rem;
+            color: var(--text-dim);
+            margin-bottom: 0.35rem;
+        }
+        .range-bar {
+            height: 5px;
+            background: var(--border);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .range-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), var(--green));
+            border-radius: 3px;
+            transition: width 0.2s ease;
+            width: 0%;
+        }
+
+        /* ── BIT VIEWER ── */
+        .bit-hint {
+            font-family: var(--mono);
+            font-size: 0.68rem;
+            color: var(--text-dim);
+            margin-bottom: 0.85rem;
+        }
+
+        .bit-grid {
+            display: grid;
+            grid-template-columns: repeat(16, 1fr);
+            gap: 4px;
+            margin-bottom: 1rem;
+        }
+
+        .bit {
+            aspect-ratio: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 2px;
+            cursor: pointer;
+            transition: all 0.12s;
+            user-select: none;
+        }
+        .bit:hover { border-color: var(--text-dim); }
+        .bit.on { background: var(--accent-dim); border-color: var(--accent); }
+
+        .bit-val {
+            font-family: var(--mono);
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-dim);
+            line-height: 1;
+        }
+        .bit.on .bit-val { color: var(--accent); }
+        .bit-idx {
+            font-family: var(--mono);
+            font-size: 0.48rem;
+            color: var(--text-dim);
+            opacity: 0.45;
+            margin-top: 2px;
+        }
+
+        .bit-readouts {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.75rem;
+        }
+        .readout {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            padding: 0.65rem 0.85rem;
+        }
+        .readout-label {
+            font-family: var(--mono);
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+        .readout-value {
+            font-family: var(--mono);
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-bright);
+            word-break: break-all;
+        }
+        #readBin { font-size: 0.68rem; letter-spacing: 0.05em; }
+
+        /* ── ROADMAP GRID ── */
+        .tool-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+            gap: 1rem;
+        }
+        .tool-preview {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 1.25rem;
+            opacity: 0.55;
+            position: relative;
+            overflow: hidden;
+        }
+        .tool-preview::after {
+            content: 'COMING SOON';
+            position: absolute;
+            top: 0.55rem;
+            right: 0.75rem;
+            font-family: var(--mono);
+            font-size: 0.52rem;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+        }
+        .tool-preview-icon { font-size: 1.5rem; margin-bottom: 0.6rem; }
+        .tool-preview-name {
+            font-family: var(--mono);
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--text-bright);
+            margin-bottom: 0.35rem;
+        }
+        .tool-preview-desc {
+            font-size: 0.78rem;
+            color: var(--text-dim);
+            line-height: 1.55;
+        }
+
+        /* ── FOOTER ── */
+        footer {
+            position: relative;
+            z-index: 1;
+            border-top: 1px solid var(--border);
+            padding: 1.5rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            max-width: 880px;
+            margin: 0 auto;
+        }
+        .footer-text {
+            font-family: var(--mono);
+            font-size: 0.68rem;
+            color: var(--text-dim);
+        }
+
+        /* ── ANIMATIONS ── */
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(14px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ── RESPONSIVE ── */
+        @media (max-width: 620px) {
+            .form-row        { grid-template-columns: 1fr; }
+            .form-row.three  { grid-template-columns: 1fr 1fr; }
+            .bit-grid        { grid-template-columns: repeat(8, 1fr); }
+            .bit-readouts    { grid-template-columns: 1fr 1fr; }
+            nav              { padding: 0 1rem; }
+            .hero, main      { padding-left: 1rem; padding-right: 1rem; }
+            footer           { padding: 1.25rem 1rem; flex-direction: column; gap: 0.4rem; }
+        }
+        /* ── COPY BUTTON ── */
+        .copy-btn {
+            font-family: var(--mono);
+            font-size: 0.62rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            padding: 0.2rem 0.55rem;
+            background: none;
+            border: 1px solid var(--border);
+            border-radius: 2px;
+            color: var(--text-dim);
+            cursor: pointer;
+            transition: all 0.15s;
+            white-space: nowrap;
+        }
+        .copy-btn:hover { border-color: var(--accent); color: var(--accent); }
+        .copy-btn.copied { border-color: var(--green); color: var(--green); }
+    </style>
+</head>
+<body>
+
+<nav>
+    <a href="#" class="nav-logo">controlsfreak<span>.dev</span></a>
+    <ul class="nav-links">
+        <li><a href="#tools">Tools</a></li>
+        <li><a href="#roadmap">Roadmap</a></li>
+    </ul>
+</nav>
+
+<section class="hero">
+    <div class="hero-eyebrow">BMS Field Reference</div>
+    <h1>Tools for those in controls,<br><em>not marketing sites.</em></h1>
+    <p>Open calculators and reference utilities for BACnet, Modbus, HVAC, and building automation work. From the installer leveling up to the tech in the field to the engineer keeping this on a second monitor — no login, no ads, just tools that are actually useful on a job site.</p>
+    <div class="hero-badges">
+        <span class="badge">AI / AO Scaling</span>
+        <span class="badge">Modbus Register Viewer</span>
+        <span class="badge">VAV Balancing</span>
+        <span class="badge">Unit Conversions</span>
+        <span class="badge">BACnet Reference</span>
+        <span class="badge">More coming</span>
+    </div>
+</section>
+
+<main id="tools">
+
+    <div class="section-header">
+        <span class="section-label">Live Tools</span>
+        <div class="section-line"></div>
+    </div>
+
+    <!-- ── TOOL 1: Signal Scaling ── -->
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <div class="tool-card-title">
+                Signal Scaling Calculator
+                <span class="tool-tag">Analog I/O</span>
+            </div>
+        </div>
+        <div class="tool-body">
+            <div class="tabs">
+                <button class="tab-btn active" onclick="switchTab('scaling', this)">Signal → EU</button>
+                <button class="tab-btn" onclick="switchTab('reverse', this)">EU → Signal</button>
+                <button class="tab-btn" onclick="switchTab('slopeoffset', this)">2-Point → Slope / Offset</button>
+            </div>
+
+            <!-- Signal → EU -->
+            <div id="tab-scaling" class="tab-pane active">
+                <div class="form-row">
+                    <div class="field">
+                        <label>Signal Type</label>
+                        <select id="sigType" onchange="calcScaling()">
+                            <option value="4-20">4–20 mA</option>
+                            <option value="0-20">0–20 mA</option>
+                            <option value="0-10">0–10 V</option>
+                            <option value="2-10">2–10 V</option>
+                            <option value="0-5">0–5 V</option>
+                            <option value="1-5">1–5 V</option>
+                            <option value="custom">Custom range…</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label id="sigInputLabel">Signal Value (mA)</label>
+                        <input type="number" id="sigVal" step="0.01" placeholder="12.00" oninput="calcScaling()">
+                    </div>
+                </div>
+
+                <div class="form-row three" id="customRow" style="display:none">
+                    <div class="field">
+                        <label>Range Min</label>
+                        <input type="number" id="customMin" step="any" placeholder="4" oninput="calcScaling()">
+                    </div>
+                    <div class="field">
+                        <label>Range Max</label>
+                        <input type="number" id="customMax" step="any" placeholder="20" oninput="calcScaling()">
+                    </div>
+                    <div class="field">
+                        <label>Unit</label>
+                        <input type="text" id="customUnit" placeholder="mA" oninput="calcScaling()">
+                    </div>
+                </div>
+
+                <div class="form-row three">
+                    <div class="field">
+                        <label>EU Minimum</label>
+                        <input type="number" id="euMin" step="any" placeholder="0" oninput="calcScaling()">
+                    </div>
+                    <div class="field">
+                        <label>EU Maximum</label>
+                        <input type="number" id="euMax" step="any" placeholder="100" oninput="calcScaling()">
+                    </div>
+                    <div class="field">
+                        <label>EU Label (optional)</label>
+                        <input type="text" id="euLabelInput" placeholder="°F, %, CFM…" oninput="calcScaling()">
+                    </div>
+                </div>
+
+                <div class="result-panel">
+                    <div>
+                        <div class="result-label">Engineering Value</div>
+                        <div class="result-value muted" id="scalingOut">—</div>
+                    </div>
+                    <div style="text-align:right">
+                        <div class="result-label">% of Span</div>
+                        <div class="result-value muted" id="scalingPct" style="font-size:1.3rem">—</div>
+                    </div>
+                </div>
+
+                <div class="range-bar-wrap">
+                    <div class="range-bar-labels">
+                        <span id="barLabelMin">EU Min</span>
+                        <span id="barLabelMax">EU Max</span>
+                    </div>
+                    <div class="range-bar">
+                        <div class="range-bar-fill" id="rangeBarFill"></div>
+                    </div>
+                </div>
+
+                <div class="result-formula" id="scalingFormula"></div>
+            </div>
+
+            <!-- EU → Signal -->
+            <div id="tab-reverse" class="tab-pane">
+                <div class="form-row">
+                    <div class="field">
+                        <label>Signal Type</label>
+                        <select id="revSigType" onchange="calcReverse()">
+                            <option value="4-20">4–20 mA</option>
+                            <option value="0-20">0–20 mA</option>
+                            <option value="0-10">0–10 V</option>
+                            <option value="2-10">2–10 V</option>
+                            <option value="0-5">0–5 V</option>
+                            <option value="1-5">1–5 V</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label>Engineering Value</label>
+                        <input type="number" id="revEuVal" step="any" placeholder="72.5" oninput="calcReverse()">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="field">
+                        <label>EU Minimum</label>
+                        <input type="number" id="revEuMin" step="any" placeholder="0" oninput="calcReverse()">
+                    </div>
+                    <div class="field">
+                        <label>EU Maximum</label>
+                        <input type="number" id="revEuMax" step="any" placeholder="100" oninput="calcReverse()">
+                    </div>
+                </div>
+
+                <div class="result-panel">
+                    <div>
+                        <div class="result-label">Signal Output</div>
+                        <div class="result-value muted" id="reverseOut">—</div>
+                    </div>
+                </div>
+                <div class="result-formula" id="reverseFormula"></div>
+            </div>
+
+            <!-- 2-Point → Slope / Offset -->
+            <div id="tab-slopeoffset" class="tab-pane">
+                <p style="font-family:var(--mono);font-size:0.7rem;color:var(--text-dim);margin-bottom:1.25rem;line-height:1.7;">
+                    Enter two known input/output pairs — hardware electrical limits work well here.<br>
+                    Outputs the slope (m) and offset (b) for y&nbsp;=&nbsp;mx&nbsp;+&nbsp;b, ready to paste into Niagara's ProxyExt.
+                </p>
+
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1rem;">
+                    <div>
+                        <div style="font-family:var(--mono);font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--accent);margin-bottom:0.65rem;">Point 1</div>
+                        <div class="field" style="margin-bottom:0.75rem;">
+                            <label>Raw Input (x₁)</label>
+                            <input type="number" id="so_x1" step="any" placeholder="4" oninput="calcSlopeOffset()">
+                        </div>
+                        <div class="field">
+                            <label>EU Output (y₁)</label>
+                            <input type="number" id="so_y1" step="any" placeholder="0" oninput="calcSlopeOffset()">
+                        </div>
+                    </div>
+                    <div>
+                        <div style="font-family:var(--mono);font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--accent);margin-bottom:0.65rem;">Point 2</div>
+                        <div class="field" style="margin-bottom:0.75rem;">
+                            <label>Raw Input (x₂)</label>
+                            <input type="number" id="so_x2" step="any" placeholder="20" oninput="calcSlopeOffset()">
+                        </div>
+                        <div class="field">
+                            <label>EU Output (y₂)</label>
+                            <input type="number" id="so_y2" step="any" placeholder="100" oninput="calcSlopeOffset()">
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1rem;">
+                    <div class="result-panel" style="flex-direction:column;align-items:flex-start;gap:0.5rem;">
+                        <div class="result-label">Slope (m) — Scale Factor</div>
+                        <div style="display:flex;align-items:baseline;gap:0.75rem;width:100%;">
+                            <div class="result-value muted" id="so_slope" style="font-size:1.6rem;">—</div>
+                            <button class="copy-btn" onclick="copyVal('so_slope')" title="Copy slope">copy</button>
+                        </div>
+                    </div>
+                    <div class="result-panel" style="flex-direction:column;align-items:flex-start;gap:0.5rem;">
+                        <div class="result-label">Offset (b) — Intercept</div>
+                        <div style="display:flex;align-items:baseline;gap:0.75rem;width:100%;">
+                            <div class="result-value muted" id="so_offset" style="font-size:1.6rem;">—</div>
+                            <button class="copy-btn" onclick="copyVal('so_offset')" title="Copy offset">copy</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="result-formula" id="so_formula"></div>
+            </div>
+
+    <!-- ── TOOL 2: Modbus Register Viewer ── -->
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <div class="tool-card-title">
+                Modbus Register Viewer
+                <span class="tool-tag">Modbus</span>
+            </div>
+        </div>
+        <div class="tool-body">
+            <div class="form-row">
+                <div class="field">
+                    <label>Decimal Value (0 – 65535)</label>
+                    <input type="number" id="modDec" min="0" max="65535" step="1" placeholder="43981" oninput="fromDec()">
+                </div>
+                <div class="field">
+                    <label>Hex Value (0x0000 – 0xFFFF)</label>
+                    <input type="text" id="modHex" placeholder="0xABCD" oninput="fromHex()">
+                </div>
+            </div>
+
+            <p class="bit-hint">Bit 15 = MSB (left) · Bit 0 = LSB (right) · Click any bit to toggle</p>
+
+            <div class="bit-grid" id="bitGrid"></div>
+
+            <div class="bit-readouts">
+                <div class="readout">
+                    <div class="readout-label">Decimal</div>
+                    <div class="readout-value" id="readDec">—</div>
+                </div>
+                <div class="readout">
+                    <div class="readout-label">Hex</div>
+                    <div class="readout-value" id="readHex">—</div>
+                </div>
+                <div class="readout">
+                    <div class="readout-label">Binary</div>
+                    <div class="readout-value" id="readBin">—</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── ROADMAP ── -->
+    <div id="roadmap" style="margin-top:3rem">
+        <div class="section-header">
+            <span class="section-label">Roadmap</span>
+            <div class="section-line"></div>
+        </div>
+
+        <div class="tool-grid">
+            <div class="tool-preview">
+                <div class="tool-preview-icon">🌡️</div>
+                <div class="tool-preview-name">Temperature Conversion</div>
+                <div class="tool-preview-desc">°F / °C / K / °R with common HVAC setpoint reference</div>
+            </div>
+            <div class="tool-preview">
+                <div class="tool-preview-icon">💨</div>
+                <div class="tool-preview-name">VAV Balancing</div>
+                <div class="tool-preview-desc">K-factor, design CFM, and velocity pressure calculations</div>
+            </div>
+            <div class="tool-preview">
+                <div class="tool-preview-icon">🔄</div>
+                <div class="tool-preview-name">BACnet Object Reference</div>
+                <div class="tool-preview-desc">Object type codes, property IDs, and data type quick lookup</div>
+            </div>
+            <div class="tool-preview">
+                <div class="tool-preview-icon">⚡</div>
+                <div class="tool-preview-name">PID Tuning Reference</div>
+                <div class="tool-preview-desc">What P, I, and D actually do — in plain English with examples</div>
+            </div>
+            <div class="tool-preview">
+                <div class="tool-preview-icon">🔢</div>
+                <div class="tool-preview-name">Modbus Function Codes</div>
+                <div class="tool-preview-desc">FC01–FC23 reference with request / response frame breakdown</div>
+            </div>
+            <div class="tool-preview">
+                <div class="tool-preview-icon">📐</div>
+                <div class="tool-preview-name">Duct Pressure Calculator</div>
+                <div class="tool-preview-desc">Static, velocity, and total pressure — with unit conversions</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── ABOUT ── -->
+    <div style="margin-top:3rem">
+        <div class="section-header">
+            <span class="section-label">About</span>
+            <div class="section-line"></div>
+        </div>
+        <div class="tool-card">
+            <div class="tool-body" style="max-width:640px;">
+                <p style="font-size:1rem;line-height:1.85;color:var(--text);">
+                    Hello — I'm a controls programmer based in the Northeast U.S. This is a side project I'm working on while exploring vibe coding. There's a genuine gap in easy reference websites for this trade, and I always find myself with a million tabs open just to write one program. This site aims to address that by being a one-stop shop for the common tools you need to get things done.
+                </p>
+                <p style="font-family:var(--mono);font-size:0.72rem;color:var(--text-dim);margin-top:1.25rem;">
+                    Bug reports and tool requests — contact coming soon.
+                </p>
+            </div>
+        </div>
+    </div>
+
+</main>
+
+<footer>
+    <span class="footer-text">controlsfreak.dev — open tools for controls engineers</span>
+    <span class="footer-text">v0.1 · 2025</span>
+</footer>
+
+<script>
+    // ─────────────────────────────────────────────
+    // Signal type lookup table
+    // ─────────────────────────────────────────────
+    const SIG = {
+        '4-20': { min: 4,  max: 20, unit: 'mA' },
+        '0-20': { min: 0,  max: 20, unit: 'mA' },
+        '0-10': { min: 0,  max: 10, unit: 'V'  },
+        '2-10': { min: 2,  max: 10, unit: 'V'  },
+        '0-5':  { min: 0,  max: 5,  unit: 'V'  },
+        '1-5':  { min: 1,  max: 5,  unit: 'V'  },
+    };
+
+    // ─────────────────────────────────────────────
+    // Tab switching
+    // ─────────────────────────────────────────────
+    function switchTab(name, btn) {
+        document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('tab-' + name).classList.add('active');
+        btn.classList.add('active');
+    }
+
+    // ─────────────────────────────────────────────
+    // Signal → EU
+    // ─────────────────────────────────────────────
+    function calcScaling() {
+        const key      = document.getElementById('sigType').value;
+        const isCustom = key === 'custom';
+        document.getElementById('customRow').style.display = isCustom ? 'grid' : 'none';
+
+        let sMin, sMax, sUnit;
+        if (isCustom) {
+            sMin  = parseFloat(document.getElementById('customMin').value);
+            sMax  = parseFloat(document.getElementById('customMax').value);
+            sUnit = document.getElementById('customUnit').value || '';
+        } else {
+            ({ min: sMin, max: sMax, unit: sUnit } = SIG[key]);
+        }
+
+        document.getElementById('sigInputLabel').textContent = `Signal Value (${sUnit})`;
+
+        const sig    = parseFloat(document.getElementById('sigVal').value);
+        const euMin  = parseFloat(document.getElementById('euMin').value);
+        const euMax  = parseFloat(document.getElementById('euMax').value);
+        const euUnit = document.getElementById('euLabelInput').value || '';
+
+        const outEl  = document.getElementById('scalingOut');
+        const pctEl  = document.getElementById('scalingPct');
+        const fillEl = document.getElementById('rangeBarFill');
+
+        document.getElementById('barLabelMin').textContent = isNaN(euMin) ? 'EU Min' : `${euMin}${euUnit ? ' ' + euUnit : ''}`;
+        document.getElementById('barLabelMax').textContent = isNaN(euMax) ? 'EU Max' : `${euMax}${euUnit ? ' ' + euUnit : ''}`;
+
+        if (isNaN(sig) || isNaN(euMin) || isNaN(euMax) || isNaN(sMin) || isNaN(sMax) || sMax === sMin) {
+            outEl.className = 'result-value muted';
+            outEl.textContent = '—';
+            pctEl.className = 'result-value muted';
+            pctEl.textContent = '—';
+            fillEl.style.width = '0%';
+            document.getElementById('scalingFormula').textContent = '';
+            return;
+        }
+
+        const span    = sMax - sMin;
+        const ratio   = (sig - sMin) / span;
+        const eu      = euMin + ratio * (euMax - euMin);
+        const pctNum  = ratio * 100;
+        const outOfRange = sig < sMin || sig > sMax;
+
+        fillEl.style.width = Math.min(100, Math.max(0, pctNum)) + '%';
+
+        outEl.className = 'result-value' + (outOfRange ? ' error' : '');
+        outEl.textContent = eu.toFixed(2) + (euUnit ? '\u00A0' + euUnit : '');
+
+        pctEl.className = 'result-value' + (outOfRange ? ' error' : '');
+        pctEl.textContent = pctNum.toFixed(1) + '%' + (outOfRange ? '\u00A0⚠' : '');
+
+        document.getElementById('scalingFormula').textContent =
+            `EU = ${euMin} + ((${sig} − ${sMin}) ÷ (${sMax} − ${sMin})) × (${euMax} − ${euMin}) = ${eu.toFixed(4)}${euUnit ? ' ' + euUnit : ''}`;
+    }
+
+    // ─────────────────────────────────────────────
+    // EU → Signal
+    // ─────────────────────────────────────────────
+    function calcReverse() {
+        const key   = document.getElementById('revSigType').value;
+        const { min: sMin, max: sMax, unit: sUnit } = SIG[key];
+        const eu    = parseFloat(document.getElementById('revEuVal').value);
+        const euMin = parseFloat(document.getElementById('revEuMin').value);
+        const euMax = parseFloat(document.getElementById('revEuMax').value);
+        const outEl = document.getElementById('reverseOut');
+
+        if (isNaN(eu) || isNaN(euMin) || isNaN(euMax) || euMax === euMin) {
+            outEl.className = 'result-value muted';
+            outEl.textContent = '—';
+            document.getElementById('reverseFormula').textContent = '';
+            return;
+        }
+
+        const ratio = (eu - euMin) / (euMax - euMin);
+        const sig   = sMin + ratio * (sMax - sMin);
+        const outOfRange = eu < euMin || eu > euMax;
+
+        outEl.className = 'result-value' + (outOfRange ? ' error' : '');
+        outEl.textContent = sig.toFixed(3) + '\u00A0' + sUnit;
+
+        document.getElementById('reverseFormula').textContent =
+            `Signal = ${sMin} + ((${eu} − ${euMin}) ÷ (${euMax} − ${euMin})) × (${sMax} − ${sMin}) = ${sig.toFixed(4)} ${sUnit}`;
+    }
+
+    // ─────────────────────────────────────────────
+    // Modbus Bit Viewer
+    // ─────────────────────────────────────────────
+    let bits = new Array(16).fill(0);
+
+    function renderBits() {
+        const grid = document.getElementById('bitGrid');
+        grid.innerHTML = '';
+        for (let i = 15; i >= 0; i--) {
+            const cell = document.createElement('div');
+            cell.className = 'bit' + (bits[i] ? ' on' : '');
+            cell.innerHTML = `<span class="bit-val">${bits[i]}</span><span class="bit-idx">${i}</span>`;
+            cell.addEventListener('click', () => { bits[i] ^= 1; syncFromBits(); });
+            grid.appendChild(cell);
+        }
+    }
+
+    function syncFromBits() {
+        const val = bits.reduce((acc, b, i) => acc + (b << i), 0);
+        document.getElementById('modDec').value = val;
+        document.getElementById('modHex').value = '0x' + val.toString(16).toUpperCase().padStart(4, '0');
+        updateReadouts(val);
+        renderBits();
+    }
+
+    function updateReadouts(val) {
+        document.getElementById('readDec').textContent = val;
+        document.getElementById('readHex').textContent = '0x' + val.toString(16).toUpperCase().padStart(4, '0');
+        const bin = val.toString(2).padStart(16, '0');
+        document.getElementById('readBin').textContent =
+            bin.slice(0,4) + ' ' + bin.slice(4,8) + ' ' + bin.slice(8,12) + ' ' + bin.slice(12,16);
+    }
+
+    function fromDec() {
+        const val = parseInt(document.getElementById('modDec').value);
+        if (isNaN(val) || val < 0 || val > 65535) return;
+        for (let i = 0; i < 16; i++) bits[i] = (val >> i) & 1;
+        document.getElementById('modHex').value = '0x' + val.toString(16).toUpperCase().padStart(4, '0');
+        updateReadouts(val);
+        renderBits();
+    }
+
+    function fromHex() {
+        let raw = document.getElementById('modHex').value.trim().replace(/^0x/i, '');
+        const val = parseInt(raw, 16);
+        if (isNaN(val) || val < 0 || val > 65535) return;
+        for (let i = 0; i < 16; i++) bits[i] = (val >> i) & 1;
+        document.getElementById('modDec').value = val;
+        updateReadouts(val);
+        renderBits();
+    }
+
+    // ─────────────────────────────────────────────
+    // 2-Point → Slope / Offset
+    // ─────────────────────────────────────────────
+    function calcSlopeOffset() {
+        const x1 = parseFloat(document.getElementById('so_x1').value);
+        const y1 = parseFloat(document.getElementById('so_y1').value);
+        const x2 = parseFloat(document.getElementById('so_x2').value);
+        const y2 = parseFloat(document.getElementById('so_y2').value);
+
+        const slopeEl   = document.getElementById('so_slope');
+        const offsetEl  = document.getElementById('so_offset');
+        const formulaEl = document.getElementById('so_formula');
+
+        if (isNaN(x1) || isNaN(y1) || isNaN(x2) || isNaN(y2) || x1 === x2) {
+            slopeEl.className  = 'result-value muted';
+            offsetEl.className = 'result-value muted';
+            slopeEl.textContent  = '—';
+            offsetEl.textContent = '—';
+            formulaEl.textContent = x1 === x2 ? 'x₁ and x₂ cannot be equal — division by zero.' : '';
+            return;
+        }
+
+        const m = (y2 - y1) / (x2 - x1);
+        const b = y1 - m * x1;
+
+        slopeEl.className  = 'result-value';
+        offsetEl.className = 'result-value';
+        slopeEl.textContent  = parseFloat(m.toFixed(6)).toString();
+        offsetEl.textContent = parseFloat(b.toFixed(6)).toString();
+
+        formulaEl.textContent =
+            `m = (${y2} − ${y1}) ÷ (${x2} − ${x1}) = ${m.toFixed(6)}` +
+            `    ·    b = ${y1} − (${m.toFixed(6)} × ${x1}) = ${b.toFixed(6)}` +
+            `    →    y = ${parseFloat(m.toFixed(6))}x + (${parseFloat(b.toFixed(6))})`;
+    }
+
+    // ─────────────────────────────────────────────
+    // Copy value to clipboard
+    // ─────────────────────────────────────────────
+    function copyVal(id) {
+        const text = document.getElementById(id).textContent;
+        if (text === '—') return;
+        navigator.clipboard.writeText(text).then(() => {
+            const btn = event.currentTarget;
+            btn.textContent = 'copied!';
+            btn.classList.add('copied');
+            setTimeout(() => { btn.textContent = 'copy'; btn.classList.remove('copied'); }, 1800);
+        });
+    }
+
+    // ── Init ──────────────────────────────────────
+    renderBits();
+</script>
+
+</body>
+</html>
