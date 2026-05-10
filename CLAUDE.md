@@ -27,9 +27,14 @@ controlsfreak.dev/
 ├── CLAUDE.md           # this file
 ├── README.md           # human-facing project description
 ├── wrangler.jsonc      # Cloudflare deploy config — touch carefully
+├── package.json        # dev tooling only (Playwright) — the SITE has no build step
+├── package-lock.json
 ├── .gitignore
-└── html/               # site root, served as-is
-    └── index.html      # the entire site
+├── html/               # site root, served as-is
+│   └── index.html      # the entire site
+├── tests/              # Playwright specs (smoke.spec.js, ...)
+├── node_modules/       # gitignored
+└── test-results/       # Playwright output — gitignored
 
 ## What's on the site today
 
@@ -134,6 +139,26 @@ Typical loop:
 3. User reviews the diff (`git diff`)
 4. User commits and pushes
 5. Cloudflare auto-deploys within ~60 seconds
+
+## Local preview & tests (Playwright)
+
+Playwright is set up (`@playwright/test`, a dev dependency only — the
+site itself still has no build step). Use it to actually look at the
+page after a UI change instead of guessing; this has been verified
+working.
+
+- **Serve the site:** `python3 -m http.server 8000 --directory html`
+  — the specs expect it on port 8000. There is no `webServer` block in
+  the Playwright config, so start the server yourself before running
+  tests or screenshots.
+- **Run the specs:** `npx playwright test --reporter=list`
+- **Eyeball a change:** script a page with the `playwright` package and
+  `page.screenshot({ path, fullPage: true })`, then read the PNG —
+  worth doing for canvas rendering, layout, and catching console errors.
+
+Specs live in `tests/` (`smoke.spec.js` checks the page loads). Chromium
+is the installed browser. Don't restructure the Playwright scaffolding
+(config, `package.json` scripts) without being asked — the user owns it.
 
 ## About the user
 
