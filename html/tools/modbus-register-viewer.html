@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modbus Register Viewer — controlsfreak.dev</title>
+    <meta name="description" content="Inspect a 16-bit Modbus register: clickable bit grid, two-way bound decimal / hex inputs, and dec / hex / binary readouts. No login, no ads.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&family=Overpass:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+
+<nav class="site-nav">
+    <a class="site-nav-brand" href="/">controlsfreak<span>.dev</span></a>
+    <div class="site-nav-links">
+        <a href="/">Home</a>
+        <a href="/tools/" class="active">Tools</a>
+        <a href="/education/pid-basics.html">Education</a>
+        <a href="/contact.html">Contact</a>
+    </div>
+</nav>
+
+<main>
+
+    <div class="section-header">
+        <span class="section-label">Modbus</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <div class="tool-card-title">
+                Modbus Register Viewer
+                <span class="tool-tag">Modbus</span>
+            </div>
+        </div>
+        <div class="tool-body">
+            <div class="form-row">
+                <div class="field">
+                    <label>Decimal Value (0 – 65535)</label>
+                    <input type="number" id="modDec" min="0" max="65535" step="1" placeholder="43981" oninput="fromDec()">
+                </div>
+                <div class="field">
+                    <label>Hex Value (0x0000 – 0xFFFF)</label>
+                    <input type="text" id="modHex" placeholder="0xABCD" oninput="fromHex()">
+                </div>
+            </div>
+
+            <p class="bit-hint">Bit 15 = MSB (left) · Bit 0 = LSB (right) · Click any bit to toggle</p>
+
+            <div class="bit-grid" id="bitGrid"></div>
+
+            <div class="bit-readouts">
+                <div class="readout">
+                    <div class="readout-label">Decimal</div>
+                    <div class="readout-value" id="readDec">—</div>
+                </div>
+                <div class="readout">
+                    <div class="readout-label">Hex</div>
+                    <div class="readout-value" id="readHex">—</div>
+                </div>
+                <div class="readout">
+                    <div class="readout-label">Binary</div>
+                    <div class="readout-value" id="readBin">—</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <p style="margin-top:1.5rem;font-family:var(--mono);font-size:0.72rem;">
+        <a href="/tools/" style="color:var(--accent);text-decoration:none;">← All tools</a>
+    </p>
+
+</main>
+
+<footer>
+    <span class="footer-text">controlsfreak.dev — open tools for controls engineers</span>
+    <span class="footer-text">v0.3 · 2026</span>
+</footer>
+
+<script>
+    // ─────────────────────────────────────────────
+    // Modbus Bit Viewer
+    // ─────────────────────────────────────────────
+    let bits = new Array(16).fill(0);
+
+    function renderBits() {
+        const grid = document.getElementById('bitGrid');
+        grid.innerHTML = '';
+        for (let i = 15; i >= 0; i--) {
+            const cell = document.createElement('div');
+            cell.className = 'bit' + (bits[i] ? ' on' : '');
+            cell.innerHTML = `<span class="bit-val">${bits[i]}</span><span class="bit-idx">${i}</span>`;
+            cell.addEventListener('click', () => { bits[i] ^= 1; syncFromBits(); });
+            grid.appendChild(cell);
+        }
+    }
+
+    function syncFromBits() {
+        const val = bits.reduce((acc, b, i) => acc + (b << i), 0);
+        document.getElementById('modDec').value = val;
+        document.getElementById('modHex').value = '0x' + val.toString(16).toUpperCase().padStart(4, '0');
+        updateReadouts(val);
+        renderBits();
+    }
+
+    function updateReadouts(val) {
+        document.getElementById('readDec').textContent = val;
+        document.getElementById('readHex').textContent = '0x' + val.toString(16).toUpperCase().padStart(4, '0');
+        const bin = val.toString(2).padStart(16, '0');
+        document.getElementById('readBin').textContent =
+            bin.slice(0,4) + ' ' + bin.slice(4,8) + ' ' + bin.slice(8,12) + ' ' + bin.slice(12,16);
+    }
+
+    function fromDec() {
+        const val = parseInt(document.getElementById('modDec').value);
+        if (isNaN(val) || val < 0 || val > 65535) return;
+        for (let i = 0; i < 16; i++) bits[i] = (val >> i) & 1;
+        document.getElementById('modHex').value = '0x' + val.toString(16).toUpperCase().padStart(4, '0');
+        updateReadouts(val);
+        renderBits();
+    }
+
+    function fromHex() {
+        let raw = document.getElementById('modHex').value.trim().replace(/^0x/i, '');
+        const val = parseInt(raw, 16);
+        if (isNaN(val) || val < 0 || val > 65535) return;
+        for (let i = 0; i < 16; i++) bits[i] = (val >> i) & 1;
+        document.getElementById('modDec').value = val;
+        updateReadouts(val);
+        renderBits();
+    }
+
+    // ── Init ──
+    renderBits();
+</script>
+
+</body>
+</html>

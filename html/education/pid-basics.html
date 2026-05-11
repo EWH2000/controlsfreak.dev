@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PID Basics — controlsfreak.dev</title>
+    <meta name="description" content="A plain-English walk through proportional, integral, and derivative control for HVAC loops — what each term does and why. Part of the controlsfreak.dev Education section.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&family=Overpass:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+
+<nav class="site-nav">
+    <a class="site-nav-brand" href="/">controlsfreak<span>.dev</span></a>
+    <div class="site-nav-links">
+        <a href="/">Home</a>
+        <a href="/tools/">Tools</a>
+        <a href="/education/pid-basics.html" class="active">Education</a>
+        <a href="/contact.html">Contact</a>
+    </div>
+</nav>
+
+<main>
+
+    <div class="section-header">
+        <span class="section-label">Education · PID Basics</span>
+        <div class="section-line"></div>
+    </div>
+
+    <!-- ──────────────────────────────────────────────────────────────────
+         STUB — Phase 3 fills this in. Planned content (see the brief and
+         site-ideas-and-friction.md → "PID tuner — Education/Tools split plan"):
+
+           1. The plain-English P / I / D explainer, moved over from
+              tools/pid-tuner.html and given room to breathe — worked HVAC
+              examples, the "fast / medium / slow loop" time-constant numbers
+              folded in, maybe a small diagram or two.
+           2. Three clearly-marked "Coming soon" placeholder cards for the
+              cumulative mini-sims, in order:
+                Sim 1 — P only        → demonstrates steady-state offset
+                Sim 2 — P + I         → I kills the offset, but can oscillate
+                Sim 3 — P + I + D     → D damps the oscillation
+              (The sims will reuse /scripts/pid-engine.js with a stripped-down
+              UI — pre-set process, narrow controls, one knob at a time.)
+           3. A "Try it for yourself →" button at the bottom linking to
+              /tools/pid-tuner.
+
+         For now this is just enough so the Education nav link doesn't 404.
+         ────────────────────────────────────────────────────────────────── -->
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <div class="tool-card-title">
+                PID Basics
+                <span class="tool-tag">Education</span>
+            </div>
+        </div>
+        <div class="tool-body">
+            <p style="font-size:1rem;line-height:1.85;color:var(--text);max-width:600px;">
+                A from-scratch walk through proportional, integral, and derivative control — what each term actually does on an HVAC loop, with worked examples and three small simulators you can play with one knob at a time.
+            </p>
+            <p style="font-family:var(--mono);font-size:0.72rem;color:var(--text-dim);margin-top:1.25rem;">
+                This page is being written. In the meantime, the
+                <a href="/tools/pid-tuner.html" style="color:var(--accent);">PID Tuning Helper</a>
+                has the full simulator plus a short P / I / D explainer at the bottom.
+            </p>
+        </div>
+    </div>
+
+    <p style="margin-top:1.5rem;font-family:var(--mono);font-size:0.72rem;">
+        <a href="/tools/" style="color:var(--accent);text-decoration:none;">← All tools</a>
+    </p>
+
+</main>
+
+<footer>
+    <span class="footer-text">controlsfreak.dev — open tools for controls engineers</span>
+    <span class="footer-text">v0.3 · 2026</span>
+</footer>
+
+</body>
+</html>

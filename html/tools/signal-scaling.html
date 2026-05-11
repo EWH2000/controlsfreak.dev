@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Signal Scaling Calculator — controlsfreak.dev</title>
+    <meta name="description" content="Scale analog I/O signals (4–20 mA, 0–10 V, custom) to engineering units and back, plus 2-point → slope/offset for Niagara ProxyExt. No login, no ads.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&family=Overpass:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+
+<nav class="site-nav">
+    <a class="site-nav-brand" href="/">controlsfreak<span>.dev</span></a>
+    <div class="site-nav-links">
+        <a href="/">Home</a>
+        <a href="/tools/" class="active">Tools</a>
+        <a href="/education/pid-basics.html">Education</a>
+        <a href="/contact.html">Contact</a>
+    </div>
+</nav>
+
+<main>
+
+    <div class="section-header">
+        <span class="section-label">Analog I/O</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <div class="tool-card-title">
+                Signal Scaling Calculator
+                <span class="tool-tag">Analog I/O</span>
+            </div>
+        </div>
+        <div class="tool-body">
+            <div class="tabs">
+                <button class="tab-btn active" onclick="switchTab('scaling', this)">Signal → Eng. Units</button>
+                <button class="tab-btn" onclick="switchTab('reverse', this)">Eng. Units → Signal</button>
+                <button class="tab-btn" onclick="switchTab('slopeoffset', this)">2-Point → Slope / Offset</button>
+            </div>
+
+            <!-- Signal → Eng. Units -->
+            <div id="tab-scaling" class="tab-pane active">
+                <div class="form-row">
+                    <div class="field">
+                        <label>Signal Type</label>
+                        <select id="sigType" onchange="calcScaling()">
+                            <option value="4-20">4–20 mA</option>
+                            <option value="0-20">0–20 mA</option>
+                            <option value="0-10">0–10 V</option>
+                            <option value="2-10">2–10 V</option>
+                            <option value="0-5">0–5 V</option>
+                            <option value="1-5">1–5 V</option>
+                            <option value="custom">Custom range…</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label id="sigInputLabel">Signal Value (mA)</label>
+                        <input type="number" id="sigVal" step="0.01" placeholder="12.00" oninput="calcScaling()">
+                    </div>
+                </div>
+
+                <div class="form-row three" id="customRow" style="display:none">
+                    <div class="field">
+                        <label>Range Min</label>
+                        <input type="number" id="customMin" step="any" placeholder="4" oninput="calcScaling()">
+                    </div>
+                    <div class="field">
+                        <label>Range Max</label>
+                        <input type="number" id="customMax" step="any" placeholder="20" oninput="calcScaling()">
+                    </div>
+                    <div class="field">
+                        <label>Unit</label>
+                        <input type="text" id="customUnit" placeholder="mA" oninput="calcScaling()">
+                    </div>
+                </div>
+
+                <div class="form-row three">
+                    <div class="field">
+                        <label>Eng. Units Min</label>
+                        <input type="number" id="euMin" step="any" placeholder="0" oninput="calcScaling()">
+                    </div>
+                    <div class="field">
+                        <label>Eng. Units Max</label>
+                        <input type="number" id="euMax" step="any" placeholder="100" oninput="calcScaling()">
+                    </div>
+                    <div class="field">
+                        <label>Units Label (optional)</label>
+                        <input type="text" id="euLabelInput" placeholder="°F, %, CFM…" oninput="calcScaling()">
+                    </div>
+                </div>
+
+                <div class="result-panel">
+                    <div>
+                        <div class="result-label">Engineering Value</div>
+                        <div class="result-value muted" id="scalingOut">—</div>
+                    </div>
+                    <div style="text-align:right">
+                        <div class="result-label">% of Span</div>
+                        <div class="result-value muted" id="scalingPct" style="font-size:1.3rem">—</div>
+                    </div>
+                </div>
+
+                <div class="range-bar-wrap">
+                    <div class="range-bar-labels">
+                        <span id="barLabelMin">Min</span>
+                        <span id="barLabelMax">Max</span>
+                    </div>
+                    <div class="range-bar">
+                        <div class="range-bar-fill" id="rangeBarFill"></div>
+                    </div>
+                </div>
+
+                <div class="result-formula" id="scalingFormula"></div>
+            </div>
+
+            <!-- Eng. Units → Signal -->
+            <div id="tab-reverse" class="tab-pane">
+                <div class="form-row">
+                    <div class="field">
+                        <label>Signal Type</label>
+                        <select id="revSigType" onchange="calcReverse()">
+                            <option value="4-20">4–20 mA</option>
+                            <option value="0-20">0–20 mA</option>
+                            <option value="0-10">0–10 V</option>
+                            <option value="2-10">2–10 V</option>
+                            <option value="0-5">0–5 V</option>
+                            <option value="1-5">1–5 V</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label>Engineering Value</label>
+                        <input type="number" id="revEuVal" step="any" placeholder="72.5" oninput="calcReverse()">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="field">
+                        <label>Eng. Units Min</label>
+                        <input type="number" id="revEuMin" step="any" placeholder="0" oninput="calcReverse()">
+                    </div>
+                    <div class="field">
+                        <label>Eng. Units Max</label>
+                        <input type="number" id="revEuMax" step="any" placeholder="100" oninput="calcReverse()">
+                    </div>
+                </div>
+
+                <div class="result-panel">
+                    <div>
+                        <div class="result-label">Signal Output</div>
+                        <div class="result-value muted" id="reverseOut">—</div>
+                    </div>
+                </div>
+                <div class="result-formula" id="reverseFormula"></div>
+            </div>
+
+            <!-- 2-Point → Slope / Offset -->
+            <div id="tab-slopeoffset" class="tab-pane">
+                <p style="font-family:var(--mono);font-size:0.7rem;color:var(--text-dim);margin-bottom:1.25rem;line-height:1.7;">
+                    Enter two known IO pairs — hardware electrical limits work well here.<br>
+                    Outputs the slope (m) and offset (b) for y&nbsp;=&nbsp;mx&nbsp;+&nbsp;b, ready to paste into Niagara's ProxyExt.
+                </p>
+
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1rem;">
+                    <div>
+                        <div style="font-family:var(--mono);font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--accent);margin-bottom:0.65rem;">Point 1</div>
+                        <div class="field" style="margin-bottom:0.75rem;">
+                            <label>Raw Input (x₁)</label>
+                            <input type="number" id="so_x1" step="any" placeholder="4" oninput="calcSlopeOffset()">
+                        </div>
+                        <div class="field">
+                            <label>Eng. Value (y₁)</label>
+                            <input type="number" id="so_y1" step="any" placeholder="0" oninput="calcSlopeOffset()">
+                        </div>
+                    </div>
+                    <div>
+                        <div style="font-family:var(--mono);font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--accent);margin-bottom:0.65rem;">Point 2</div>
+                        <div class="field" style="margin-bottom:0.75rem;">
+                            <label>Raw Input (x₂)</label>
+                            <input type="number" id="so_x2" step="any" placeholder="20" oninput="calcSlopeOffset()">
+                        </div>
+                        <div class="field">
+                            <label>Eng. Value (y₂)</label>
+                            <input type="number" id="so_y2" step="any" placeholder="100" oninput="calcSlopeOffset()">
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1rem;">
+                    <div class="result-panel" style="flex-direction:column;align-items:flex-start;gap:0.5rem;">
+                        <div class="result-label">Slope (m) — Scale Factor</div>
+                        <div style="display:flex;align-items:baseline;gap:0.75rem;width:100%;">
+                            <div class="result-value muted" id="so_slope" style="font-size:1.6rem;">—</div>
+                            <button class="copy-btn" onclick="copyVal('so_slope')" title="Copy slope">copy</button>
+                        </div>
+                    </div>
+                    <div class="result-panel" style="flex-direction:column;align-items:flex-start;gap:0.5rem;">
+                        <div class="result-label">Offset (b) — Intercept</div>
+                        <div style="display:flex;align-items:baseline;gap:0.75rem;width:100%;">
+                            <div class="result-value muted" id="so_offset" style="font-size:1.6rem;">—</div>
+                            <button class="copy-btn" onclick="copyVal('so_offset')" title="Copy offset">copy</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="result-formula" id="so_formula"></div>
+            </div>
+        </div>
+    </div>
+
+    <p style="margin-top:1.5rem;font-family:var(--mono);font-size:0.72rem;">
+        <a href="/tools/" style="color:var(--accent);text-decoration:none;">← All tools</a>
+    </p>
+
+</main>
+
+<footer>
+    <span class="footer-text">controlsfreak.dev — open tools for controls engineers</span>
+    <span class="footer-text">v0.3 · 2026</span>
+</footer>
+
+<script>
+    // ─────────────────────────────────────────────
+    // Signal type lookup table
+    // ─────────────────────────────────────────────
+    const SIG = {
+        '4-20': { min: 4,  max: 20, unit: 'mA' },
+        '0-20': { min: 0,  max: 20, unit: 'mA' },
+        '0-10': { min: 0,  max: 10, unit: 'V'  },
+        '2-10': { min: 2,  max: 10, unit: 'V'  },
+        '0-5':  { min: 0,  max: 5,  unit: 'V'  },
+        '1-5':  { min: 1,  max: 5,  unit: 'V'  },
+    };
+
+    // Tabs are scoped to the tool-card the clicked button lives in.
+    function switchTab(name, btn) {
+        const card = btn.closest('.tool-card');
+        card.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+        card.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('tab-' + name).classList.add('active');
+        btn.classList.add('active');
+    }
+
+    // ─────────────────────────────────────────────
+    // Signal → Eng. Units
+    // ─────────────────────────────────────────────
+    function calcScaling() {
+        const key      = document.getElementById('sigType').value;
+        const isCustom = key === 'custom';
+        document.getElementById('customRow').style.display = isCustom ? 'grid' : 'none';
+
+        let sMin, sMax, sUnit;
+        if (isCustom) {
+            sMin  = parseFloat(document.getElementById('customMin').value);
+            sMax  = parseFloat(document.getElementById('customMax').value);
+            sUnit = document.getElementById('customUnit').value || '';
+        } else {
+            ({ min: sMin, max: sMax, unit: sUnit } = SIG[key]);
+        }
+
+        document.getElementById('sigInputLabel').textContent = `Signal Value (${sUnit})`;
+
+        const sig    = parseFloat(document.getElementById('sigVal').value);
+        const euMin  = parseFloat(document.getElementById('euMin').value);
+        const euMax  = parseFloat(document.getElementById('euMax').value);
+        const euUnit = document.getElementById('euLabelInput').value || '';
+
+        const outEl  = document.getElementById('scalingOut');
+        const pctEl  = document.getElementById('scalingPct');
+        const fillEl = document.getElementById('rangeBarFill');
+
+        document.getElementById('barLabelMin').textContent = isNaN(euMin) ? 'Min' : `${euMin}${euUnit ? ' ' + euUnit : ''}`;
+        document.getElementById('barLabelMax').textContent = isNaN(euMax) ? 'Max' : `${euMax}${euUnit ? ' ' + euUnit : ''}`;
+
+        if (isNaN(sig) || isNaN(euMin) || isNaN(euMax) || isNaN(sMin) || isNaN(sMax) || sMax === sMin) {
+            outEl.className = 'result-value muted';
+            outEl.textContent = '—';
+            pctEl.className = 'result-value muted';
+            pctEl.textContent = '—';
+            fillEl.style.width = '0%';
+            document.getElementById('scalingFormula').textContent = '';
+            return;
+        }
+
+        const span    = sMax - sMin;
+        const ratio   = (sig - sMin) / span;
+        const eu      = euMin + ratio * (euMax - euMin);
+        const pctNum  = ratio * 100;
+        const outOfRange = sig < sMin || sig > sMax;
+
+        fillEl.style.width = Math.min(100, Math.max(0, pctNum)) + '%';
+
+        outEl.className = 'result-value' + (outOfRange ? ' error' : '');
+        outEl.textContent = eu.toFixed(2) + (euUnit ? '\u00A0' + euUnit : '');
+
+        pctEl.className = 'result-value' + (outOfRange ? ' error' : '');
+        pctEl.textContent = pctNum.toFixed(1) + '%' + (outOfRange ? '\u00A0⚠' : '');
+
+        document.getElementById('scalingFormula').textContent =
+            `Eng. value = ${euMin} + ((${sig} − ${sMin}) ÷ (${sMax} − ${sMin})) × (${euMax} − ${euMin}) = ${eu.toFixed(4)}${euUnit ? ' ' + euUnit : ''}`;
+    }
+
+    // ─────────────────────────────────────────────
+    // Eng. Units → Signal
+    // ─────────────────────────────────────────────
+    function calcReverse() {
+        const key   = document.getElementById('revSigType').value;
+        const { min: sMin, max: sMax, unit: sUnit } = SIG[key];
+        const eu    = parseFloat(document.getElementById('revEuVal').value);
+        const euMin = parseFloat(document.getElementById('revEuMin').value);
+        const euMax = parseFloat(document.getElementById('revEuMax').value);
+        const outEl = document.getElementById('reverseOut');
+
+        if (isNaN(eu) || isNaN(euMin) || isNaN(euMax) || euMax === euMin) {
+            outEl.className = 'result-value muted';
+            outEl.textContent = '—';
+            document.getElementById('reverseFormula').textContent = '';
+            return;
+        }
+
+        const ratio = (eu - euMin) / (euMax - euMin);
+        const sig   = sMin + ratio * (sMax - sMin);
+        const outOfRange = eu < euMin || eu > euMax;
+
+        outEl.className = 'result-value' + (outOfRange ? ' error' : '');
+        outEl.textContent = sig.toFixed(3) + '\u00A0' + sUnit;
+
+        document.getElementById('reverseFormula').textContent =
+            `Signal = ${sMin} + ((${eu} − ${euMin}) ÷ (${euMax} − ${euMin})) × (${sMax} − ${sMin}) = ${sig.toFixed(4)} ${sUnit}`;
+    }
+
+    // ─────────────────────────────────────────────
+    // 2-Point → Slope / Offset
+    // ─────────────────────────────────────────────
+    function calcSlopeOffset() {
+        const x1 = parseFloat(document.getElementById('so_x1').value);
+        const y1 = parseFloat(document.getElementById('so_y1').value);
+        const x2 = parseFloat(document.getElementById('so_x2').value);
+        const y2 = parseFloat(document.getElementById('so_y2').value);
+
+        const slopeEl   = document.getElementById('so_slope');
+        const offsetEl  = document.getElementById('so_offset');
+        const formulaEl = document.getElementById('so_formula');
+
+        if (isNaN(x1) || isNaN(y1) || isNaN(x2) || isNaN(y2) || x1 === x2) {
+            slopeEl.className  = 'result-value muted';
+            offsetEl.className = 'result-value muted';
+            slopeEl.textContent  = '—';
+            offsetEl.textContent = '—';
+            formulaEl.textContent = x1 === x2 ? 'x₁ and x₂ cannot be equal — division by zero.' : '';
+            return;
+        }
+
+        const m = (y2 - y1) / (x2 - x1);
+        const b = y1 - m * x1;
+
+        slopeEl.className  = 'result-value';
+        offsetEl.className = 'result-value';
+        slopeEl.textContent  = parseFloat(m.toFixed(6)).toString();
+        offsetEl.textContent = parseFloat(b.toFixed(6)).toString();
+
+        formulaEl.textContent =
+            `m = (${y2} − ${y1}) ÷ (${x2} − ${x1}) = ${m.toFixed(6)}` +
+            `    ·    b = ${y1} − (${m.toFixed(6)} × ${x1}) = ${b.toFixed(6)}` +
+            `    →    y = ${parseFloat(m.toFixed(6))}x + (${parseFloat(b.toFixed(6))})`;
+    }
+
+    // ─────────────────────────────────────────────
+    // Copy value to clipboard
+    // ─────────────────────────────────────────────
+    function copyVal(id) {
+        const text = document.getElementById(id).textContent;
+        if (text === '—') return;
+        navigator.clipboard.writeText(text).then(() => {
+            const btn = event.currentTarget;
+            btn.textContent = 'copied!';
+            btn.classList.add('copied');
+            setTimeout(() => { btn.textContent = 'copy'; btn.classList.remove('copied'); }, 1800);
+        });
+    }
+</script>
+
+</body>
+</html>

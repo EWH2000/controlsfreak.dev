@@ -20,3 +20,6 @@ npm-debug.log*
 test-results/
 playwright-report/
 .playwright/
+
+# Personal .MD Notes
+site-ideas-and-friction.md

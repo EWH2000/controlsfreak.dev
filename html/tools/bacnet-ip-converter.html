@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BACnet/IP Hex Converter — controlsfreak.dev</title>
+    <meta name="description" content="Convert BACnet/IP hex address strings (as EBO shows them) to dotted-decimal IP + UDP port and back. Default port BAC0 / 47808 noted. No login, no ads.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&family=Overpass:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+
+<nav class="site-nav">
+    <a class="site-nav-brand" href="/">controlsfreak<span>.dev</span></a>
+    <div class="site-nav-links">
+        <a href="/">Home</a>
+        <a href="/tools/" class="active">Tools</a>
+        <a href="/education/pid-basics.html">Education</a>
+        <a href="/contact.html">Contact</a>
+    </div>
+</nav>
+
+<main>
+
+    <div class="section-header">
+        <span class="section-label">BACnet</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <div class="tool-card-title">
+                BACnet/IP Hex Converter
+                <span class="tool-tag">BACnet</span>
+            </div>
+        </div>
+        <div class="tool-body">
+            <div class="tabs">
+                <button class="tab-btn active" onclick="switchTab('hex2ip', this)">Hex → IP</button>
+                <button class="tab-btn" onclick="switchTab('ip2hex', this)">IP → Hex</button>
+            </div>
+
+            <!-- Hex → IP -->
+            <div id="tab-hex2ip" class="tab-pane active">
+                <p style="font-family:var(--mono);font-size:0.7rem;color:var(--text-dim);margin-bottom:1.25rem;line-height:1.7;">
+                    Paste the hex address string EBO (and others) show for a BACnet/IP device.<br>
+                    8 hex digits → IP only; 12 → IP + UDP port. Spaces, dots, dashes and a leading <code>0x</code> are all fine.
+                </p>
+                <div class="form-row">
+                    <div class="field">
+                        <label>BACnet/IP Hex String</label>
+                        <input type="text" id="b2i_hex" placeholder="C0A80164BAC0" oninput="bacnetHexToIp()">
+                    </div>
+                </div>
+
+                <div class="result-panel" style="flex-wrap:wrap;row-gap:0.85rem;">
+                    <div>
+                        <div class="result-label">IP Address</div>
+                        <div style="display:flex;align-items:baseline;gap:0.75rem;">
+                            <div class="result-value muted" id="b2i_ip" style="font-size:1.5rem;">—</div>
+                            <button class="copy-btn" onclick="copyVal('b2i_ip')" title="Copy IP address">copy</button>
+                        </div>
+                    </div>
+                    <div style="text-align:right">
+                        <div class="result-label">UDP Port</div>
+                        <div class="result-value muted" id="b2i_port" style="font-size:1.3rem">—</div>
+                    </div>
+                </div>
+                <div class="result-formula" id="b2i_formula"></div>
+            </div>
+
+            <!-- IP → Hex -->
+            <div id="tab-ip2hex" class="tab-pane">
+                <p style="font-family:var(--mono);font-size:0.7rem;color:var(--text-dim);margin-bottom:1.25rem;line-height:1.7;">
+                    Dotted-decimal IPv4 → the hex string. Leave the port blank for an address-only (8-digit) string;<br>
+                    fill it in — 47808 is the BACnet/IP default — for the address + port (12-digit) form.
+                </p>
+                <div class="form-row">
+                    <div class="field">
+                        <label>IP Address</label>
+                        <input type="text" id="i2h_ip" placeholder="192.168.1.100" oninput="bacnetIpToHex()">
+                    </div>
+                    <div class="field">
+                        <label>UDP Port (optional)</label>
+                        <input type="number" id="i2h_port" min="0" max="65535" step="1" placeholder="47808" oninput="bacnetIpToHex()">
+                    </div>
+                </div>
+
+                <div class="result-panel" style="flex-wrap:wrap;row-gap:0.85rem;">
+                    <div>
+                        <div class="result-label">BACnet/IP Hex String</div>
+                        <div style="display:flex;align-items:baseline;gap:0.75rem;">
+                            <div class="result-value muted" id="i2h_hex" style="font-size:1.5rem;">—</div>
+                            <button class="copy-btn" onclick="copyVal('i2h_hex')" title="Copy hex string">copy</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="result-formula" id="i2h_formula"></div>
+            </div>
+        </div>
+    </div>
+
+    <p style="margin-top:1.5rem;font-family:var(--mono);font-size:0.72rem;">
+        <a href="/tools/" style="color:var(--accent);text-decoration:none;">← All tools</a>
+    </p>
+
+</main>
+
+<footer>
+    <span class="footer-text">controlsfreak.dev — open tools for controls engineers</span>
+    <span class="footer-text">v0.3 · 2026</span>
+</footer>
+
+<script>
+    // Tabs are scoped to the tool-card the clicked button lives in.
+    function switchTab(name, btn) {
+        const card = btn.closest('.tool-card');
+        card.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+        card.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('tab-' + name).classList.add('active');
+        btn.classList.add('active');
+    }
+
+    function copyVal(id) {
+        const text = document.getElementById(id).textContent;
+        if (text === '—') return;
+        navigator.clipboard.writeText(text).then(() => {
+            const btn = event.currentTarget;
+            btn.textContent = 'copied!';
+            btn.classList.add('copied');
+            setTimeout(() => { btn.textContent = 'copy'; btn.classList.remove('copied'); }, 1800);
+        });
+    }
+
+    // ─────────────────────────────────────────────
+    // BACnet/IP Hex Converter
+    // ─────────────────────────────────────────────
+    // BACnet/IP packs the device address as 4 bytes IPv4, optionally
+    // followed by 2 bytes of UDP port. The default port is 47808 = 0xBAC0.
+    const BACNET_DEFAULT_PORT = 47808;   // 0xBAC0
+
+    // group a hex string into space-separated byte pairs for the worked line
+    function groupHexBytes(hex) {
+        return hex.match(/../g).join(' ');
+    }
+
+    function bacnetHexToIp() {
+        const ipEl   = document.getElementById('b2i_ip');
+        const portEl = document.getElementById('b2i_port');
+        const fEl    = document.getElementById('b2i_formula');
+
+        const mute = () => {
+            ipEl.className = 'result-value muted';   ipEl.textContent   = '—';
+            portEl.className = 'result-value muted'; portEl.textContent = '—';
+            fEl.textContent = '';
+        };
+
+        // Tolerant cleanup: drop a leading 0x, strip separators, uppercase.
+        const hex = document.getElementById('b2i_hex').value
+            .trim().replace(/^0x/i, '').replace(/[\s.:_-]/g, '').toUpperCase();
+
+        if (!/^[0-9A-F]+$/.test(hex) || (hex.length !== 8 && hex.length !== 12)) { mute(); return; }
+
+        const bytes = hex.match(/../g).map(h => parseInt(h, 16));
+        const ip = bytes.slice(0, 4).join('.');
+        ipEl.className = 'result-value'; ipEl.textContent = ip;
+
+        if (hex.length === 8) {
+            portEl.className = 'result-value muted'; portEl.textContent = '—';
+            fEl.textContent = `${groupHexBytes(hex)} → ${ip} · address only (no port in this string)`;
+            return;
+        }
+
+        const port = bytes[4] * 256 + bytes[5];
+        const portHex = hex.slice(8);
+        const isDefault = port === BACNET_DEFAULT_PORT;
+        portEl.className = 'result-value'; portEl.textContent = port;
+        fEl.textContent =
+            `${groupHexBytes(hex.slice(0, 8))} → ${ip}  ·  ${groupHexBytes(portHex)} → port ${port}` +
+            (isDefault ? ' (default BACnet/IP port)' : '');
+    }
+
+    function bacnetIpToHex() {
+        const hexEl = document.getElementById('i2h_hex');
+        const fEl   = document.getElementById('i2h_formula');
+
+        const mute = () => {
+            hexEl.className = 'result-value muted'; hexEl.textContent = '—';
+            fEl.textContent = '';
+        };
+
+        const ipRaw   = document.getElementById('i2h_ip').value.trim();
+        const portRaw = document.getElementById('i2h_port').value.trim();
+
+        const m = ipRaw.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+        if (!m) { mute(); return; }
+        const octets = m.slice(1, 5).map(Number);
+        if (octets.some(o => o > 255)) { mute(); return; }
+
+        const ipHex = octets.map(o => o.toString(16).padStart(2, '0')).join('').toUpperCase();
+
+        if (portRaw === '') {
+            hexEl.className = 'result-value'; hexEl.textContent = ipHex;
+            fEl.textContent = `${octets.join('.')} → ${ipHex} · address only (no port)`;
+            return;
+        }
+
+        const port = Number(portRaw);
+        if (!Number.isInteger(port) || port < 0 || port > 65535) { mute(); return; }
+        const portHex = port.toString(16).padStart(4, '0').toUpperCase();
+        const isDefault = port === BACNET_DEFAULT_PORT;
+
+        hexEl.className = 'result-value'; hexEl.textContent = ipHex + portHex;
+        fEl.textContent =
+            `${octets.join('.')} : ${port} → ${ipHex} ${portHex}` +
+            `  ·  port ${port} = 0x${portHex}` + (isDefault ? ' (default BACnet/IP port)' : '');
+    }
+</script>
+
+</body>
+</html>
