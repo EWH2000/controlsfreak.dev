@@ -3,42 +3,67 @@
 A field-reference tool site for building-controls engineers — open
 calculators and lookup utilities for BACnet, Modbus, HVAC, and building
 automation work. "No login, no ads, just tools that are actually useful
-on a job site." Static site, hand-written HTML, no framework or build
-step (yet). There's a personal "About" card on the page, but the project
-is the tools, not a personal homepage.
+on a job site." Hand-written HTML pages plus a small Cloudflare Worker
+(only for the `/contact` form) — no framework, no build step. There's a
+personal "About" card on the home page, but the project is the tools,
+not a personal homepage.
 
 ## Stack
 
-- **Source:** one page, `html/index.html` — HTML, an inline `<style>`,
-  and an inline `<script>`. No external CSS or JS files.
-- **Fonts:** Google Fonts (IBM Plex Mono + Overpass) loaded from
-  `fonts.googleapis.com` with a `preconnect`. This is the one
-  third-party request on the page; self-hosting the fonts is a
-  reasonable future cleanup.
-- **Hosting:** Cloudflare Workers (static-assets-only Worker)
-- **Deploy:** Auto-deploys on push to `main` via GitHub integration
-- **Config:** `wrangler.jsonc` at repo root — `name` (the Worker name),
-  `assets.directory` (`./html`), and `compatibility_date` are all
-  load-bearing for deploys; touch carefully.
+- **Pages:** `html/index.html` (the tools) and `html/contact.html` (the
+  contact form). Each is a single file — HTML, one inline `<style>`, one
+  inline `<script>`; no external CSS/JS. The two pages carry the *same*
+  inline `<style>` (copy/paste — a small, accepted duplication for a
+  two-page hand-written site); `contact.html` appends a few page-specific
+  rules at the end (`.hp-field`, `.contact-intro`, `#contact-result-value`).
+  If you edit the shared part, keep both copies in sync.
+- **Worker:** `src/worker.js` — an ES-module Worker. Handles
+  `POST /api/contact` (validate input, silently drop honeypot hits,
+  verify the Turnstile token, send the message via Resend with
+  `reply_to` = the submitter) and falls through to
+  `env.ASSETS.fetch(request)` for everything else, so the rest of the
+  site behaves like a plain static deploy. Needs two secrets in the
+  environment — `TURNSTILE_SECRET` and `RESEND_API_KEY` (set with
+  `wrangler secret put ...`). The Turnstile *site* key is a placeholder
+  in `contact.html` (`REPLACE_WITH_SITE_KEY`); the user pastes the real
+  one. The `from`/`to` address is `contact@controlsfreak.dev` (must be a
+  verified Resend sender).
+- **Fonts:** Google Fonts (IBM Plex Mono + Overpass) from
+  `fonts.googleapis.com` with a `preconnect`. (`contact.html` also loads
+  Cloudflare's Turnstile script.) Self-hosting the fonts is a reasonable
+  future cleanup.
+- **Hosting:** Cloudflare Workers — the Worker above, with `html/` bound
+  as static assets.
+- **Deploy:** Auto-deploys on push to `main` via GitHub integration.
+- **Config:** `wrangler.jsonc` at repo root — `name` (Worker name),
+  `main` (`src/worker.js`), `assets.directory` (`./html`),
+  `assets.binding` (`ASSETS`, so the Worker can serve static files), and
+  `assets.html_handling` (`auto-trailing-slash` — gives clean URLs like
+  `/contact` → `contact.html`), plus `compatibility_date`, are all
+  load-bearing; touch carefully.
 
 ## Repo structure
 
 controlsfreak.dev/
 ├── CLAUDE.md           # this file
 ├── README.md           # human-facing project description
-├── wrangler.jsonc      # Cloudflare deploy config — touch carefully
-├── package.json        # dev tooling only (Playwright) — the SITE has no build step
+├── wrangler.jsonc      # Cloudflare config (Worker + static assets) — touch carefully
+├── package.json        # dev tooling only (Playwright) — the site itself has no build step
 ├── package-lock.json
 ├── .gitignore
-├── html/               # site root, served as-is
-│   └── index.html      # the entire site
-├── tests/              # Playwright specs (smoke.spec.js, ...)
+├── src/
+│   └── worker.js       # Cloudflare Worker — POST /api/contact, else fall through to assets
+├── html/               # static assets, served as-is (bound as env.ASSETS)
+│   ├── index.html      # the tools page
+│   └── contact.html    # the contact form
+├── tests/              # Playwright specs (smoke.spec.js, contact.spec.js)
 ├── node_modules/       # gitignored
 └── test-results/       # Playwright output — gitignored
 
 ## What's on the site today
 
-Single page, three sections (`#tools`, `#roadmap`, About):
+Two pages with a shared top nav (`.site-nav`). The home page
+(`index.html`) has three sections (`#tools`, `#roadmap`, About):
 
 - **Signal Scaling Calculator** (`.tool-card`, "Analog I/O") — three
   tabs:
@@ -66,6 +91,15 @@ Single page, three sections (`#tools`, `#roadmap`, About):
 - **Roadmap** (`#roadmap`) — `.tool-preview` cards for tools not built
   yet (see below)
 - **About** — short personal blurb
+
+The **Contact** page (`contact.html`) is a `.tool-card` with a
+name / email / message form — plus an off-screen CSS honeypot
+(`.hp-field`, named `website`) and a Cloudflare Turnstile widget — that
+POSTs form-encoded data to the Worker's `/api/contact`. The Worker
+validates, silently drops honeypot hits (returns `{ok:true}` without
+sending), verifies the Turnstile token, then emails via Resend with
+`reply_to` set to the submitter. Submit feedback is shown in a
+`.result-panel` (the JS in `contact.html` is just `submitContact()`).
 
 ## Conventions
 
@@ -110,7 +144,13 @@ should be built from these, not freshly styled:
   the PID metrics row); `.ref-table` (reference tables); `.pid-terms` /
   `.pid-term`; `.btn-row`, `.slider-field` / `.slider-head` /
   `.slider-val`, `input[type=range]`, `.sim-canvas-wrap` / `.sim-legend`
-  (the PID simulator).
+  (the PID simulator). Shared across pages: `.site-nav` /
+  `.site-nav-brand` / `.site-nav-links` (the top nav — hardcode `.active`
+  on the current page's right-side link, no JS). Contact page only:
+  `.hp-field` (off-screen honeypot wrapper), `.contact-intro`;
+  `textarea` and `input[type=email]` are styled by the same rule as the
+  other form inputs (so a `textarea` gets the standard input look,
+  `--bg` background and all — not `--surface`).
 
 ### JS patterns
 
@@ -206,7 +246,11 @@ section of `index.html`:
 - Modbus Function Codes (FC01–FC23 with frame breakdowns)
 - Duct Pressure Calculator (static / velocity / total pressure)
 
-Longer-term: a contact / bug-report path (currently "coming soon" in
-the About card), and possibly a static site generator (Hugo or 11ty are
-the leading candidates) once the site outgrows a single hand-written
-page. Keep markup patterns consistent so that migration stays clean.
+The contact / bug-report path is now live at `/contact`, and the About
+card on the home page links to it.
+
+Longer-term: possibly a static site generator (Hugo or 11ty are the
+leading candidates) once the site outgrows hand-written pages — the
+duplicated inline `<style>` across `index.html` and `contact.html` is
+the first thing that would motivate it. Keep markup patterns consistent
+so that migration stays clean.

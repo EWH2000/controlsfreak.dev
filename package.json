@@ -18,6 +18,7 @@
   },
   "homepage": "https://github.com/EWH2000/controlsfreak.dev#readme",
   "devDependencies": {
-    "@playwright/test": "^1.59.1"
+    "@playwright/test": "^1.59.1",
+    "wrangler": "^4.90.0"
   }
 }

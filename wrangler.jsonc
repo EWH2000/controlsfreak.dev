@@ -1,7 +1,14 @@
 {
   "name": "controlsfreak",
+  // Worker entry point — handles POST /api/contact, everything else falls
+  // through to the static assets below via env.ASSETS.
+  "main": "src/worker.js",
   "compatibility_date": "2025-05-10",
   "assets": {
-    "directory": "./html"
+    "directory": "./html",
+    // Lets the Worker reference env.ASSETS to serve static files.
+    "binding": "ASSETS",
+    // Clean URLs: /contact serves html/contact.html.
+    "html_handling": "auto-trailing-slash"
   }
 }

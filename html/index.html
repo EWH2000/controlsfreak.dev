@@ -38,42 +38,42 @@
             min-height: 100vh;
         }
 
-        /* ── NAV ── */
-        nav {
+        /* ── SITE NAV (shared across pages — see contact.html) ── */
+        .site-nav {
             position: sticky;
             top: 0;
             z-index: 100;
-            background: rgba(245,248,244,0.85);
-            backdrop-filter: blur(14px);
+            background: var(--surface);
             border-bottom: 1px solid var(--border);
-            padding: 0 2rem;
+            padding: 0.7rem 2rem;
             display: flex;
+            flex-wrap: wrap;
             align-items: center;
             justify-content: space-between;
-            height: 56px;
+            gap: 0.4rem 1.5rem;
         }
-
-        .nav-logo {
+        .site-nav-brand {
             font-family: var(--mono);
-            font-size: 0.88rem;
+            font-size: 0.9rem;
             font-weight: 600;
-            color: var(--accent);
-            letter-spacing: 0.02em;
+            color: var(--text);
+            letter-spacing: 0.01em;
             text-decoration: none;
         }
-        .nav-logo span { color: var(--text-dim); font-weight: 400; }
-
-        .nav-links { display: flex; gap: 2rem; list-style: none; }
-        .nav-links a {
-            font-family: var(--mono);
-            font-size: 0.72rem;
+        .site-nav-brand span { color: var(--accent); }
+        .site-nav-brand:hover { color: var(--text-bright); }
+        .site-nav-links { display: flex; flex-wrap: wrap; gap: 1.5rem; }
+        .site-nav-links a {
+            font-family: var(--sans);
+            font-size: 0.85rem;
             color: var(--text-dim);
             text-decoration: none;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            transition: color 0.2s;
+            padding-bottom: 0.15rem;
+            border-bottom: 2px solid transparent;
+            transition: color 0.18s, border-color 0.18s;
         }
-        .nav-links a:hover { color: var(--accent); }
+        .site-nav-links a:hover { color: var(--text); border-bottom-color: var(--accent); }
+        .site-nav-links a.active { color: var(--text-bright); border-bottom-color: var(--accent); }
 
         /* ── HERO ── */
         .hero {
@@ -248,6 +248,8 @@
 
         input[type="number"],
         input[type="text"],
+        input[type="email"],
+        textarea,
         select {
             background: var(--bg);
             border: 1px solid var(--border);
@@ -260,7 +262,8 @@
             transition: border-color 0.18s, box-shadow 0.18s;
             -webkit-appearance: none;
         }
-        input:focus, select:focus {
+        textarea { resize: vertical; line-height: 1.6; min-height: 6rem; }
+        input:focus, textarea:focus, select:focus {
             outline: none;
             border-color: var(--accent);
             box-shadow: 0 0 0 3px var(--accent-dim);
@@ -482,7 +485,7 @@
             .ref-table th, .ref-table td { padding: 0.5rem 0.5rem; }
             .sim-canvas-wrap canvas { height: 200px; }
             .sim-legend      { gap: 1rem; }
-            nav              { padding: 0 1rem; }
+            .site-nav        { padding: 0.7rem 1rem; }
             .hero, main      { padding-left: 1rem; padding-right: 1rem; }
             footer           { padding: 1.25rem 1rem; flex-direction: column; gap: 0.4rem; }
         }
@@ -653,12 +656,13 @@
 </head>
 <body>
 
-<nav>
-    <a href="#" class="nav-logo">controlsfreak<span>.dev</span></a>
-    <ul class="nav-links">
-        <li><a href="#tools">Tools</a></li>
-        <li><a href="#roadmap">Roadmap</a></li>
-    </ul>
+<nav class="site-nav">
+    <a class="site-nav-brand" href="/">controlsfreak<span>.dev</span></a>
+    <div class="site-nav-links">
+        <a href="/#tools" class="active">Tools</a>
+        <a href="/#roadmap">Roadmap</a>
+        <a href="/contact">Contact</a>
+    </div>
 </nav>
 
 <section class="hero">
@@ -1118,7 +1122,7 @@
                     Hello — I'm a controls programmer based in the Northeast U.S. This is a side project I'm working on while exploring vibe coding. There's a genuine gap in easy reference websites for this trade, and I always find myself with a million tabs open just to write one program. This site aims to address that by being a one-stop shop for the common tools you need to get things done.
                 </p>
                 <p style="font-family:var(--mono);font-size:0.72rem;color:var(--text-dim);margin-top:1.25rem;">
-                    Bug reports and tool requests — contact coming soon.
+                    Bug reports, tool requests, or feedback — <a href="/contact" style="color:var(--accent);">get in touch</a>.
                 </p>
             </div>
         </div>
