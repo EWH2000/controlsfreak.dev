@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PID Basics — controlsfreak.dev</title>
-    <meta name="description" content="A plain-English walk through proportional, integral, and derivative control for HVAC loops — what each term does and why. Part of the controlsfreak.dev Education section.">
+    <meta name="description" content="A plain-English walk through proportional, integral, and derivative control for HVAC loops — what each term does, what loop speed feels like in real units, and three small sims to build intuition one knob at a time.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&family=Overpass:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/styles.css">
@@ -28,55 +28,146 @@
         <div class="section-line"></div>
     </div>
 
-    <!-- ──────────────────────────────────────────────────────────────────
-         STUB — Phase 3 fills this in. Planned content (see the brief and
-         site-ideas-and-friction.md → "PID tuner — Education/Tools split plan"):
+    <p style="font-size:1.02rem;line-height:1.85;color:var(--text);max-width:640px;margin-bottom:2.25rem;">
+        PID is three knobs that, together, push a process variable toward a setpoint. This is a plain-English walk through what each one does on a typical HVAC loop, what "fast" and "slow" actually feel like in seconds and minutes, and three small sims you can play with one knob at a time. By the end, the full <a href="/tools/pid-tuner.html" style="color:var(--accent);">PID Tuning Helper</a> should make a lot more sense.
+    </p>
 
-           1. The plain-English P / I / D explainer, moved over from
-              tools/pid-tuner.html and given room to breathe — worked HVAC
-              examples, the "fast / medium / slow loop" time-constant numbers
-              folded in, maybe a small diagram or two.
-           2. Three clearly-marked "Coming soon" placeholder cards for the
-              cumulative mini-sims, in order:
-                Sim 1 — P only        → demonstrates steady-state offset
-                Sim 2 — P + I         → I kills the offset, but can oscillate
-                Sim 3 — P + I + D     → D damps the oscillation
-              (The sims will reuse /scripts/pid-engine.js with a stripped-down
-              UI — pre-set process, narrow controls, one knob at a time.)
-           3. A "Try it for yourself →" button at the bottom linking to
-              /tools/pid-tuner.
-
-         For now this is just enough so the Education nav link doesn't 404.
-         ────────────────────────────────────────────────────────────────── -->
+    <!-- ── What P, I, and D Actually Do ── -->
+    <div class="section-header">
+        <span class="section-label">What P, I, and D Actually Do</span>
+        <div class="section-line"></div>
+    </div>
 
     <div class="tool-card">
-        <div class="tool-card-header">
-            <div class="tool-card-title">
-                PID Basics
-                <span class="tool-tag">Education</span>
+        <div class="tool-body">
+            <div class="pid-terms">
+                <div class="pid-term">
+                    <h4>P — Proportional <span>· how hard it pushes</span></h4>
+                    <p>Output is proportional to the current error: twice as far off, twice as much push. More gain means a stronger, faster response — but push too hard and the loop overshoots and hunts. In the field this is often dialed in as <em>proportional band</em>: PB&nbsp;=&nbsp;100&nbsp;÷&nbsp;gain, so a 20% PB swings the output across 20% of the input range.</p>
+                    <p style="margin-top:0.6rem;"><em>Worked example.</em> A chilled-water valve, SP = 55&nbsp;°F, PV = 60&nbsp;°F, span = 20&nbsp;°F. Error is 5&nbsp;°F → 25% of span. With a gain of 4, the proportional output is 4&nbsp;×&nbsp;25% = 100% — valve commanded fully open. As the supply cools and PV drops, the output backs off proportionally. The catch: P on its own always leaves a small permanent offset (droop) — it needs <em>some</em> error to produce <em>any</em> output, so the loop settles a hair short of setpoint.</p>
+                </div>
+                <div class="pid-term">
+                    <h4>I — Integral / Reset <span>· how persistent it is</span></h4>
+                    <p>Keeps nudging the output in the same direction for as long as <em>any</em> error remains, so it erases the offset that P leaves behind. Usually set in repeats per minute (or its inverse, integral time in minutes per repeat). Too fast and you get slow rolling oscillation and overshoot; too slow and it takes forever to close the last bit of the gap. On most slow HVAC loops, integral is the term doing the real work.</p>
+                    <p style="margin-top:0.6rem;"><em>Worked example.</em> A space-temp loop sits 1&nbsp;°F under setpoint with P alone — the classic droop. Add 0.2&nbsp;repeats/min (Ti = 5 min) and the integral term accumulates that 1&nbsp;°F of error over the next few minutes, slowly cranking the output up until PV reaches SP and error = 0. Now bump it to 2&nbsp;repeats/min: the integral wakes up too fast, the loop overshoots, and you get a slow oscillation around setpoint instead of a clean approach. That's the trade-off.</p>
+                </div>
+                <div class="pid-term">
+                    <h4>D — Derivative / Rate <span>· how fast it's changing</span></h4>
+                    <p>Reacts to how quickly the PV is moving and applies the brakes early, trimming overshoot on processes with a lot of lag. Set in minutes. Almost always small or zero in HVAC: it amplifies sensor noise, so on a twitchy input it does more harm than good. If you do use it, derivative-on-<em>measurement</em> (not on error) avoids a sudden kick when someone changes the setpoint.</p>
+                    <p style="margin-top:0.6rem;"><em>When it earns its keep.</em> A big hot-water reheat coil with several minutes of lag: P + I will keep pushing while heat is still on its way through the coil, and you overshoot. A small Td — on the order of <sup>1</sup>⁄<sub>4</sub> to <sup>1</sup>⁄<sub>8</sub> of Ti as a starting point — lets the loop "see" PV racing toward SP and start backing off early. On a fast, clean loop (duct pressure, VFD speed), don't bother — most HVAC loops are PI, not full PID.</p>
+                </div>
             </div>
         </div>
+    </div>
+
+    <!-- ── How Fast Is the Loop? ── -->
+    <div class="section-header" style="margin-top:2.5rem;">
+        <span class="section-label">How Fast Is the Loop?</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
         <div class="tool-body">
-            <p style="font-size:1rem;line-height:1.85;color:var(--text);max-width:600px;">
-                A from-scratch walk through proportional, integral, and derivative control — what each term actually does on an HVAC loop, with worked examples and three small simulators you can play with one knob at a time.
+            <p style="margin-bottom:1.25rem;font-size:0.95rem;line-height:1.8;color:var(--text);">
+                "Fast loop / slow loop" is loose shorthand for the dominant time constant — roughly how long the process takes to get most of the way to a new value after the output changes. Loops with longer time constants and more dead time need gentler tuning and benefit more from integral; fast loops can take more aggressive gain. Some rough buckets:
             </p>
-            <p style="font-family:var(--mono);font-size:0.72rem;color:var(--text-dim);margin-top:1.25rem;">
-                This page is being written. In the meantime, the
-                <a href="/tools/pid-tuner.html" style="color:var(--accent);">PID Tuning Helper</a>
-                has the full simulator plus a short P / I / D explainer at the bottom.
+
+            <table class="ref-table">
+                <thead>
+                    <tr><th>Speed</th><th>Time constant (τ)</th><th>Dead time</th><th>Typical HVAC examples</th></tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Fast</td>
+                        <td>~5–15 s</td>
+                        <td>~1–3 s</td>
+                        <td>Duct static pressure, mixing-box damper position, fan VFD speed</td>
+                    </tr>
+                    <tr>
+                        <td>Medium</td>
+                        <td>~30 s – 2 min</td>
+                        <td>~5–15 s</td>
+                        <td>Discharge air temperature, chilled-water valve, hot-water valve</td>
+                    </tr>
+                    <tr>
+                        <td>Slow</td>
+                        <td>~2 – 10 min</td>
+                        <td>~30 s – 2 min</td>
+                        <td>Space / zone temperature, return-air humidity, large tank or basin temperature</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <p style="margin-top:1.25rem;font-family:var(--mono);font-size:0.72rem;color:var(--text-dim);line-height:1.75;">
+                The ratio that matters most for controllability is dead&nbsp;time&nbsp;÷&nbsp;τ. Below ~0.2 the loop is well-behaved; up around 0.5 you need to be careful (slower gain, longer reset); past 1.0 you're usually fighting transport delay, and a Smith predictor or feedforward starts to look attractive. The three buckets above all sit comfortably under 0.2, which is most HVAC.
             </p>
         </div>
     </div>
 
-    <p style="margin-top:1.5rem;font-family:var(--mono);font-size:0.72rem;">
-        <a href="/tools/" style="color:var(--accent);text-decoration:none;">← All tools</a>
+    <!-- ── See Each Term in Action — three placeholder mini-sims ── -->
+    <div class="section-header" style="margin-top:2.5rem;">
+        <span class="section-label">See Each Term in Action</span>
+        <div class="section-line"></div>
+    </div>
+
+    <p style="font-size:0.95rem;line-height:1.8;color:var(--text);max-width:640px;margin-bottom:1.5rem;">
+        Three small simulators, in order — each adds one term and lets you see what it does on its own. (These are being built next; for now the full <a href="/tools/pid-tuner.html" style="color:var(--accent);">PID Tuning Helper</a> exposes all three knobs at once.)
     </p>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <div class="tool-card-title">
+                Sim 1: P only
+                <span class="tool-tag pending">Coming soon</span>
+            </div>
+        </div>
+        <div class="tool-body" style="opacity:0.75;">
+            <p style="font-size:0.95rem;line-height:1.8;">
+                Watch how proportional control alone always settles a little short of setpoint — the steady-state offset (droop) that integral exists to fix. Raise the gain and the offset shrinks but the loop starts to ring; drop it and the loop is calm but the gap grows.
+            </p>
+        </div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <div class="tool-card-title">
+                Sim 2: P + I
+                <span class="tool-tag pending">Coming soon</span>
+            </div>
+        </div>
+        <div class="tool-body" style="opacity:0.75;">
+            <p style="font-size:0.95rem;line-height:1.8;">
+                Add integral to the same loop and the droop disappears — PV climbs all the way to setpoint. Push the reset too fast and you'll see what every tech has seen on a real loop: slow rolling oscillation around the line you were trying to hit.
+            </p>
+        </div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <div class="tool-card-title">
+                Sim 3: P + I + D
+                <span class="tool-tag pending">Coming soon</span>
+            </div>
+        </div>
+        <div class="tool-body" style="opacity:0.75;">
+            <p style="font-size:0.95rem;line-height:1.8;">
+                Start from the over-aggressive P + I that was oscillating, then dial in a small amount of derivative. The brakes go on as PV races toward setpoint; the oscillation damps out; the loop settles cleanly. Push D further and the noise on the input starts twitching the output — a reminder why most HVAC loops stay at PI.
+            </p>
+        </div>
+    </div>
+
+    <!-- ── CTA + back link ── -->
+    <p style="margin-top:2.5rem;">
+        <a class="cta-button" href="/tools/pid-tuner.html">Try it for yourself →</a>
+    </p>
+
+    <a class="back-link" href="/">← Home</a>
 
 </main>
 
 <footer>
     <span class="footer-text">controlsfreak.dev — open tools for controls engineers</span>
-    <span class="footer-text">v0.3 · 2026</span>
+    <span class="footer-text">v0.4 · 2026</span>
 </footer>
 
 </body>

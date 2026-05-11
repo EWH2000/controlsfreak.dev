@@ -41,7 +41,13 @@ body {
     font-size: 16px;
     line-height: 1.6;
     min-height: 100vh;
+    /* sticky footer: stack nav / (hero?) / main / footer in a flex column
+       and let main grow, so the footer hugs the viewport bottom on short pages
+       instead of leaving a big gap underneath. */
+    display: flex;
+    flex-direction: column;
 }
+main { flex: 1; }
 
 /* ── SITE NAV (every page carries the same nav markup) ── */
 .site-nav {
@@ -50,16 +56,16 @@ body {
     z-index: 100;
     background: var(--surface);
     border-bottom: 1px solid var(--border);
-    padding: 0.7rem 2rem;
+    padding: 0.9rem 2rem;
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
-    gap: 0.4rem 1.5rem;
+    gap: 0.4rem 1.75rem;
 }
 .site-nav-brand {
     font-family: var(--mono);
-    font-size: 0.9rem;
+    font-size: 1rem;
     font-weight: 600;
     color: var(--text);
     letter-spacing: 0.01em;
@@ -67,10 +73,10 @@ body {
 }
 .site-nav-brand span { color: var(--accent); }
 .site-nav-brand:hover { color: var(--text-bright); }
-.site-nav-links { display: flex; flex-wrap: wrap; gap: 1.5rem; }
+.site-nav-links { display: flex; flex-wrap: wrap; gap: 1.75rem; }
 .site-nav-links a {
     font-family: var(--sans);
-    font-size: 0.85rem;
+    font-size: 0.95rem;
     color: var(--text-dim);
     text-decoration: none;
     padding-bottom: 0.15rem;
@@ -87,6 +93,7 @@ body {
     padding: 5rem 2rem 4rem;
     max-width: 880px;
     margin: 0 auto;
+    width: 100%;   /* don't shrink-to-fit inside body's flex column */
     animation: fadeUp 0.5s ease both;
 }
 
@@ -142,13 +149,19 @@ body {
 }
 
 /* ── MAIN ── */
+/* The home page puts a .hero between the nav and main, so main doesn't need
+   its own top padding there — .hero already provides air. Sub-pages have no
+   hero, so main supplies the breathing room itself. The adjacent-sibling
+   selector below zeroes out the top padding when a hero comes first. */
 main {
     position: relative;
     z-index: 1;
     max-width: 880px;
     margin: 0 auto;
-    padding: 0 2rem 6rem;
+    padding: 2.5rem 2rem 4rem;
+    width: 100%;
 }
+.hero + main { padding-top: 0; }
 
 .section-header {
     display: flex;
@@ -158,9 +171,10 @@ main {
 }
 .section-label {
     font-family: var(--mono);
-    font-size: 0.68rem;
+    font-size: 0.82rem;
+    font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.14em;
+    letter-spacing: 0.12em;
     color: var(--accent);
     white-space: nowrap;
 }
@@ -466,6 +480,7 @@ footer {
     justify-content: space-between;
     max-width: 880px;
     margin: 0 auto;
+    width: 100%;   /* don't shrink-to-fit inside body's flex column */
 }
 .footer-text {
     font-family: var(--mono);
@@ -709,4 +724,48 @@ input[type="range"]::-moz-range-thumb {
     font-size: 0.85rem;
     color: var(--text-dim);
     line-height: 1.6;
+}
+
+/* ──────────────────────────────────────────────────────────────────────
+ * BACK LINK — the small "← All tools" / "← Back to …" anchor that lives
+ * under a tool's .tool-card. Kept as its own class so the size and color
+ * are consistent across pages (and easy to bump from one place).
+ * ────────────────────────────────────────────────────────────────────── */
+.back-link {
+    display: inline-block;
+    margin-top: 1.75rem;
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    color: var(--accent);
+    text-decoration: none;
+    transition: color 0.18s;
+}
+.back-link:hover { color: var(--text-bright); }
+
+/* ──────────────────────────────────────────────────────────────────────
+ * CTA BUTTON — a prominent in-page link styled like a primary button.
+ * Used for "Try it for yourself →" and other end-of-page calls to action.
+ * ────────────────────────────────────────────────────────────────────── */
+.cta-button {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    padding: 0.7rem 1.4rem;
+    background: var(--surface);
+    border: 1px solid var(--accent);
+    border-radius: 3px;
+    color: var(--accent);
+    text-decoration: none;
+    transition: background 0.18s, color 0.18s;
+}
+.cta-button:hover { background: var(--accent); color: var(--surface); }
+
+/* "Coming soon" variant of .tool-tag — for placeholder cards on Education
+   that aren't dimmed `.tool-preview`s but still need to read as not-yet-built. */
+.tool-tag.pending {
+    color: var(--text-dim);
+    background: transparent;
+    border-color: var(--border);
 }

@@ -146,39 +146,25 @@
                 </tbody>
             </table>
 
-            <div class="subhead">What P, I, and D Actually Do</div>
-
-            <div class="pid-terms">
-                <div class="pid-term">
-                    <h4>P — Proportional <span>· how hard it pushes</span></h4>
-                    <p>Output is proportional to the current error: twice as far off, twice as much push. More gain means a stronger, faster response — but push too hard and the loop overshoots and hunts. In the field this is often dialed in as <em>proportional band</em>: PB&nbsp;=&nbsp;100&nbsp;÷&nbsp;gain, so a 20% PB swings the output across 20% of the input range. P on its own always leaves a small permanent offset (droop) — it needs an error present to produce an output.</p>
-                </div>
-                <div class="pid-term">
-                    <h4>I — Integral / Reset <span>· how persistent it is</span></h4>
-                    <p>Keeps nudging the output in the same direction for as long as <em>any</em> error remains, so it erases the offset that P leaves behind. Usually set in repeats per minute (or its inverse, integral time in minutes per repeat). Too fast and you get slow rolling oscillation and overshoot; too slow and it takes forever to close the last bit of the gap. On most slow HVAC loops, integral is the term doing the real work.</p>
-                </div>
-                <div class="pid-term">
-                    <h4>D — Derivative / Rate <span>· how fast it's changing</span></h4>
-                    <p>Reacts to how quickly the PV is moving and applies the brakes early, trimming overshoot on processes with a lot of lag. Set in minutes. Almost always small or zero in HVAC: it amplifies sensor noise, so on a twitchy input it does more harm than good. If you do use it, derivative-on-<em>measurement</em> (not on error) avoids a sudden kick when someone changes the setpoint.</p>
-                </div>
-            </div>
+            <p class="pid-note" style="margin-top:1.5rem;">
+                New to PID? <a href="/education/pid-basics.html" style="color:var(--accent);">Start with the basics →</a>
+                — the plain-English walk through proportional, integral, and derivative, with worked HVAC examples and three small step-by-step sims.
+            </p>
 
             <p class="pid-note">
-                Rule of thumb: most HVAC loops are PI, not full PID. Start with reset off, raise the gain until the loop just begins to cycle, back it off, then add only as much reset as you need. Vendors differ on the knobs — Niagara LoopPoint exposes bare proportional / integral / derivative constants (closest to the gain · reset · rate view), while EBO and Distech use a proportional band with integral and derivative times in seconds; flip the <em>Parameter Style</em> selector above to read the loop in whichever terms you use. Same idea, different clothes — the numbers here show the relationships between the knobs, not drop-in values for any one platform.
+                Rule of thumb on this tool: most HVAC loops are PI, not full PID. Start with reset off, raise the gain until the loop just begins to cycle, back it off, then add only as much reset as you need. Vendors differ on the knobs — Niagara LoopPoint exposes bare proportional / integral / derivative constants (closest to the gain · reset · rate view), while EBO and Distech use a proportional band with integral and derivative times in seconds; flip the <em>Parameter Style</em> selector above to read the loop in whichever terms you use. Same idea, different clothes — the numbers here show the relationships between the knobs, not drop-in values for any one platform.
             </p>
 
         </div>
     </div>
 
-    <p style="margin-top:1.5rem;font-family:var(--mono);font-size:0.72rem;">
-        <a href="/tools/" style="color:var(--accent);text-decoration:none;">← All tools</a>
-    </p>
+    <a class="back-link" href="/tools/">← All tools</a>
 
 </main>
 
 <footer>
     <span class="footer-text">controlsfreak.dev — open tools for controls engineers</span>
-    <span class="footer-text">v0.3 · 2026</span>
+    <span class="footer-text">v0.4 · 2026</span>
 </footer>
 
 <!-- Shared simulation core — the FOPDT process model + discrete-time stepping.

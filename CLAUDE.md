@@ -25,8 +25,10 @@ page, but the project is the tools, not a personal homepage.
     `html/tools/pid-tuner.html`, `html/tools/bacnet-ip-converter.html` —
     one page per tool, each a `.tool-card` with its own inline `<script>`
     for page-specific logic.
-  - `html/education/pid-basics.html` — the Education section's first page
-    (currently a stub; see "What's on the site today").
+  - `html/education/pid-basics.html` — the Education section's first page:
+    the plain-English P/I/D explainer + a fast/medium/slow loop-speed
+    reference + three "Coming soon" mini-sim placeholders (see
+    "What's on the site today").
   - `html/contact.html` — the contact form.
   - `html/styles.css` — **the shared design system** (all the `:root`
     custom properties and component classes). Every page links it with
@@ -104,7 +106,7 @@ controlsfreak.dev/
 │   │   ├── pid-tuner.html          # also loads /scripts/pid-engine.js
 │   │   └── bacnet-ip-converter.html
 │   └── education/
-│       └── pid-basics.html         # Education section — currently a stub
+│       └── pid-basics.html         # Education section — P/I/D explainer + loop-speed reference + Coming-Soon mini-sim placeholders
 ├── tests/              # Playwright specs (smoke.spec.js, contact.spec.js)
 ├── node_modules/       # gitignored
 └── test-results/       # Playwright output — gitignored
@@ -140,16 +142,17 @@ each live tool, then a "Coming Soon" `.tool-grid` of dimmed
   sliders with Ti / Td / PB equivalents shown beneath each, a `<canvas>`
   plot of PV vs. setpoint, and overshoot / settling-time /
   steady-state-error readouts), a tightened symptom → tuning-move
-  `.ref-table` (short arrow codes — ↑/↓, P/I/D — not prose), and a
-  plain-English P/I/D explainer. The simulation core lives in
+  `.ref-table` (short arrow codes — ↑/↓, P/I/D — not prose), a short
+  "New to PID? Start with the basics →" cross-link to the Education page
+  (where the long-form explainer now lives), and a vendor-style "rule of
+  thumb" note describing how the Parameter Style selector maps to
+  Niagara / EBO / Distech conventions. The simulation core lives in
   `/scripts/pid-engine.js` (`PID_PROC`, `simulatePid()`); this page owns
   the sliders, preset chips, label/unit relabeling, and the canvas
   drawing — everything UI. The controller runs on canonical params (gain,
   repeats/min, minutes); the parameter-style selector only changes
   labels/units. The simulated process is a toy first-order-plus-dead-time
-  model — it exists for intuition, not for tuning a real loop. (The
-  longer P/I/D explainer and three cumulative mini-sims are slated to move
-  to `education/pid-basics.html`; see `site-ideas-and-friction.md`.)
+  model — it exists for intuition, not for tuning a real loop.
 - **BACnet/IP Hex Converter** (`tools/bacnet-ip-converter.html`, "BACnet")
   — two tabs: *Hex → IP* (paste the hex address string EBO shows for a
   BACnet/IP device — tolerant of spaces/dots/dashes/`0x` — get
@@ -157,12 +160,17 @@ each live tool, then a "Coming Soon" `.tool-grid` of dimmed
   default `BAC0`/47808 flagged) and *IP → Hex* (the inverse; blank port →
   8-digit string, port given → 12-digit). Copy buttons on the outputs.
 
-**Education** (`education/pid-basics.html`) — currently a stub: the page
-shell plus a `.tool-card` placeholder and a comment block describing what
-will fill it (the P/I/D explainer moved over from the PID tuner, plus
-three "Coming soon" mini-sim placeholder cards). Enough that the
-Education nav link doesn't 404. The Education section has just this one
-page for now; there's no `education/index.html` landing yet.
+**Education — PID Basics** (`education/pid-basics.html`) — three stacked
+sections under section headers: *What P, I, and D Actually Do* (the
+long-form explainer, three `.pid-term` cards each with a worked HVAC
+example), *How Fast Is the Loop?* (a `.ref-table` mapping Fast / Medium /
+Slow to typical time constants, dead times, and HVAC examples), and *See
+Each Term in Action* (three `.tool-card`s with `.tool-tag.pending`
+"Coming soon" tags and one-sentence descriptions of the cumulative
+mini-sims that will go there — P only → P+I → P+I+D). A `.cta-button`
+links to the PID Tuning Helper at the bottom. The Education section has
+just this one page for now; there's no `education/index.html` landing
+yet.
 
 **Contact** (`contact.html`) — a `.tool-card` with a name / email /
 message form, an off-screen CSS honeypot (`.hp-field`, named `website`),
@@ -197,6 +205,15 @@ design system at all — same custom properties, same component classes,
 same patterns; what changed is **where they live**: one shared file
 instead of an inline `<style>` duplicated across pages.)*
 
+- **Page layout** is a flex column on `body` (`display:flex;
+  flex-direction:column; min-height:100vh`) with `main { flex: 1 }`, so
+  the footer hugs the viewport bottom on short pages instead of leaving
+  a dead gap. Children that need to be horizontally centered at a
+  `max-width` (`main`, `.hero`, `footer`) carry `width: 100%` alongside
+  `margin: 0 auto` — without that, `margin: 0 auto` on a flex child
+  would shrink-to-fit instead of centering, and `justify-content:
+  space-between` on `footer` would collapse to a single clump.
+
 - **CSS custom properties** in `:root` (the theme lives here — change
   colors by editing these, not by hardcoding): `--bg` (light gray-green
   app chrome) / `--surface` (white panes) / `--surface-2` (panel headers,
@@ -214,29 +231,33 @@ instead of an inline `<style>` duplicated across pages.)*
   chart reads its colors from these vars via `getComputedStyle` at draw
   time, so it follows any palette change automatically.
 - **Component classes:** `.tool-card` / `.tool-card-header` /
-  `.tool-card-title` / `.tool-tag` / `.tool-body`; `.tabs` / `.tab-btn`
-  / `.tab-pane`; `.form-row` (+ `.three`) / `.field` / `label`;
-  `.result-panel` / `.result-label` / `.result-value` (+ `.error` /
-  `.muted` / `.warn`); `.result-formula`; `.range-bar-wrap` /
-  `.range-bar` / `.range-bar-fill`; `.copy-btn` (+ `.copied` /
-  `.active`); `.section-header` / `.section-label` / `.section-line`;
-  `.subhead` (a section divider inside a `.tool-body`); `.bit-readouts`
-  / `.readout` / `.readout-label` / `.readout-value` (also reused for
-  the PID metrics row); `.ref-table` (reference tables); `.pid-terms` /
-  `.pid-term`; `.btn-row`, `.slider-field` / `.slider-head` /
-  `.slider-val`, `input[type=range]`, `.sim-canvas-wrap` / `.sim-legend`
-  (the PID simulator); `.tool-grid` / `.tool-preview` (the dimmed
-  "Coming Soon" cards on the Tools landing); `.card-grid` (+ `.two`) /
-  `.nav-card` / `.nav-card-tag` / `.nav-card-name` / `.nav-card-desc`
-  (the clickable landing tiles on the home page and Tools landing);
-  `.hero` / `.hero-eyebrow` / `.hero-badges` / `.badge` (the home
-  hero). Shared across pages: `.site-nav` / `.site-nav-brand` /
-  `.site-nav-links` (the top nav). Contact page only: `.hp-field`
-  (off-screen honeypot wrapper), `.contact-intro` (these stay in
-  `contact.html`'s inline `<style>`, not `styles.css`); `textarea` and
-  `input[type=email]` are styled by the same rule as the other form
-  inputs (so a `textarea` gets the standard input look, `--bg`
-  background and all — not `--surface`).
+  `.tool-card-title` / `.tool-tag` (+ `.pending` — the muted gray
+  variant used on the Education page's "Coming soon" placeholder cards) /
+  `.tool-body`; `.tabs` / `.tab-btn` / `.tab-pane`; `.form-row`
+  (+ `.three`) / `.field` / `label`; `.result-panel` / `.result-label` /
+  `.result-value` (+ `.error` / `.muted` / `.warn`); `.result-formula`;
+  `.range-bar-wrap` / `.range-bar` / `.range-bar-fill`; `.copy-btn`
+  (+ `.copied` / `.active`); `.section-header` / `.section-label` /
+  `.section-line`; `.subhead` (a section divider inside a `.tool-body`);
+  `.bit-readouts` / `.readout` / `.readout-label` / `.readout-value`
+  (also reused for the PID metrics row); `.ref-table` (reference
+  tables); `.pid-terms` / `.pid-term`; `.btn-row`, `.slider-field` /
+  `.slider-head` / `.slider-val`, `input[type=range]`, `.sim-canvas-wrap`
+  / `.sim-legend` (the PID simulator); `.tool-grid` / `.tool-preview`
+  (the dimmed "Coming Soon" cards on the Tools landing); `.card-grid`
+  (+ `.two`) / `.nav-card` / `.nav-card-tag` / `.nav-card-name` /
+  `.nav-card-desc` (the clickable landing tiles on the home page and
+  Tools landing); `.back-link` (the "← All tools" anchor under a tool's
+  `.tool-card`); `.cta-button` (a prominent in-page anchor styled like a
+  primary button — used for "Try it for yourself →" and other
+  end-of-page calls to action); `.hero` / `.hero-eyebrow` /
+  `.hero-badges` / `.badge` (the home hero). Shared across pages:
+  `.site-nav` / `.site-nav-brand` / `.site-nav-links` (the top nav).
+  Contact page only: `.hp-field` (off-screen honeypot wrapper),
+  `.contact-intro` (these stay in `contact.html`'s inline `<style>`, not
+  `styles.css`); `textarea` and `input[type=email]` are styled by the
+  same rule as the other form inputs (so a `textarea` gets the standard
+  input look, `--bg` background and all — not `--surface`).
 
 ### JS patterns
 
@@ -264,17 +285,18 @@ instead of an inline `<style>` duplicated across pages.)*
    the `.site-nav` with `Tools` marked `.active`, a `<main>` with a
    `.section-header` + the `.tool-card` (header / `.tool-body` /
    `.form-row` / `.result-panel` markup, matching the existing tools) +
-   an "← All tools" link, the shared `<footer>`, then an inline
-   `<script>` for the page-specific logic (and, if the tool needs the PID
-   simulator, `<script src="/scripts/pid-engine.js"></script>` *before*
-   that).
+   an `<a class="back-link" href="/tools/">← All tools</a>`, the shared
+   `<footer>`, then an inline `<script>` for the page-specific logic
+   (and, if the tool needs the PID simulator,
+   `<script src="/scripts/pid-engine.js"></script>` *before* that).
+   Anchor `href`s get explicit `.html` extensions (see the Stack note).
 2. Follow the validate-and-mute pattern in the JS.
 3. Add a `.nav-card` for the new page to the `.card-grid` on
    `tools/index.html`.
 4. If it graduates a Coming-Soon item, delete the matching
    `.tool-preview` card from the "Coming Soon" `.tool-grid` on
    `tools/index.html`.
-5. Bump the version string in the footer (currently `v0.3 · 2026`,
+5. Bump the version string in the footer (currently `v0.4 · 2026`,
    carried by every page) when shipping something notable.
 
 ## Workflow
@@ -359,11 +381,13 @@ section of `tools/index.html`:
 - Modbus Function Codes (FC01–FC23 with frame breakdowns)
 - Duct Pressure Calculator (static / velocity / total pressure)
 
-Other near-term work, tracked in `site-ideas-and-friction.md`: fleshing
-out `education/pid-basics.html` (the P/I/D explainer moved over from the
-PID tuner, plus three cumulative mini-sims that reuse `pid-engine.js`),
-and tools like the thermistor calculator and the interactive
-psychrometric simulator.
+Other near-term work, tracked in `site-ideas-and-friction.md`: building
+the three cumulative mini-sims on `education/pid-basics.html` (P only →
+P+I → P+I+D — placeholder cards are in place; they'll reuse
+`/scripts/pid-engine.js` with a stripped-down UI), and tools like the
+thermistor calculator and the interactive psychrometric simulator. (The
+PID explainer and the fast/medium/slow loop-speed reference have already
+moved onto the Education page.)
 
 The contact / bug-report path is live at `/contact`, and the About card
 on the home page links to it.
