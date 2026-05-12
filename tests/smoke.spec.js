@@ -57,3 +57,35 @@ test('psychrometric chart computes a state on load', async ({ page }) => {
     await page.fill('#psySecond', '80');   // wet-bulb above dry-bulb
     await expect(page.locator('#roWb')).toHaveText('—');
 });
+
+test('education page runs the PID mini-sims and they respond to input', async ({ page }) => {
+    const errors = [];
+    page.on('pageerror', (e) => errors.push('pageerror: ' + e.message));
+    page.on('console', (m) => { if (m.type() === 'error') errors.push('console: ' + m.text()); });
+
+    await page.goto('http://localhost:8000/education/pid-basics.html');
+
+    // all three mini-sim canvases are present and visible
+    for (const id of ['#m1Canvas', '#m2Canvas', '#m3Canvas']) {
+        await expect(page.locator(id)).toBeVisible();
+    }
+    // the shared engine ran on load — the key-metric callouts are filled in
+    await expect(page.locator('#m1Offset')).not.toHaveText('—');
+    await expect(page.locator('#m2Over')).not.toHaveText('—');
+    await expect(page.locator('#m3Settle')).not.toHaveText('—');
+
+    // moving Sim 1's gain slider re-runs the sim — the offset readout changes
+    const offsetBefore = await page.locator('#m1Offset').textContent();
+    await page.locator('#m1Slider').evaluate((el) => {
+        el.value = el.max;
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await expect(page.locator('#m1Offset')).not.toHaveText(offsetBefore);
+
+    // a process-speed chip switches the model and takes the .active state
+    const slowChip = page.locator('#sim2 .btn-row .copy-btn').filter({ hasText: 'Slow' });
+    await slowChip.click();
+    await expect(slowChip).toHaveClass(/active/);
+
+    expect(errors, 'education page should log no page / console errors').toEqual([]);
+});

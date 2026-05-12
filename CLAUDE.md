@@ -26,9 +26,11 @@ page, but the project is the tools, not a personal homepage.
     `html/tools/psychrometric-chart.html` — one page per tool, each a
     `.tool-card` with its own inline `<script>` for page-specific logic.
   - `html/education/pid-basics.html` — the Education section's first page:
-    the plain-English P/I/D explainer + a fast/medium/slow loop-speed
-    reference + three "Coming soon" mini-sim placeholders (see
-    "What's on the site today").
+    the plain-English P/I/D explainer + three working one-knob mini-sims
+    (P only → P+I → P+I+D), each an inline simulator built on
+    `/scripts/pid-engine.js` (see "What's on the site today"). It loads
+    `pid-engine.js` like the PID tuner does — a `<script src>` before its
+    own inline `<script>`.
   - `html/contact.html` — the contact form.
   - `html/styles.css` — **the shared design system** (all the `:root`
     custom properties and component classes). Every page links it with
@@ -38,12 +40,19 @@ page, but the project is the tools, not a personal homepage.
     `#contact-result-value`.
   - `html/scripts/pid-engine.js` — **the shared PID simulation core** (the
     first-order-plus-dead-time process model + discrete-time stepping +
-    derived metrics; exposes `PID_PROC` and `simulatePid()`). It's a
-    *classic* script, not an ES module, so its globals are visible to the
-    inline `on*` handlers and the page's own `<script>`; load it with
-    `<script src="/scripts/pid-engine.js"></script>` *before* the page's
-    inline script. `tools/pid-tuner.html` uses it today; the planned
-    Education mini-sims will reuse it with a stripped-down UI.
+    derived metrics; exposes `PID_PROC` and `simulatePid()`). The
+    controller has conditional-integration anti-windup — it stops winding
+    the integrator at a rail it's only pushing further into *and* while
+    derivative action is braking hard toward setpoint (otherwise adding D
+    would just wind the integral up to "cover" the brake, *adding*
+    overshoot instead of damping it; with the default Td = 0 that second
+    clause never fires). It's a *classic* script, not an ES module, so its
+    globals are visible to the inline `on*` handlers and the page's own
+    `<script>`; load it with `<script src="/scripts/pid-engine.js"></script>`
+    *before* the page's inline script. **Two pages use it:**
+    `tools/pid-tuner.html` (the full power-user UI) and
+    `education/pid-basics.html` (three stripped-down one-knob mini-sims) —
+    same engine, different UI surfaces.
 
   Anchor `href`s use **explicit `.html` extensions** (e.g.
   `/tools/signal-scaling.html`, `/education/pid-basics.html`,
@@ -103,11 +112,11 @@ controlsfreak.dev/
 │   │   ├── index.html              # Tools landing — live tools grid + "Coming Soon"
 │   │   ├── signal-scaling.html
 │   │   ├── modbus-register-viewer.html
-│   │   ├── pid-tuner.html          # also loads /scripts/pid-engine.js
+│   │   ├── pid-tuner.html          # also loads /scripts/pid-engine.js; loop-speed reference table lives here
 │   │   ├── bacnet-ip-converter.html
-│   │   └── psychrometric-chart.html   # interactive psych chart — custom canvas layout, psychrometrics inline
+│   │   └── psychrometric-chart.html   # interactive psych chart — three-column layout, psychrometrics inline
 │   └── education/
-│       └── pid-basics.html         # Education section — P/I/D explainer + loop-speed reference + Coming-Soon mini-sim placeholders
+│       └── pid-basics.html         # Education section — P/I/D explainer + three working PID mini-sims (also loads /scripts/pid-engine.js)
 ├── tests/              # Playwright specs (smoke.spec.js, contact.spec.js)
 ├── node_modules/       # gitignored
 └── test-results/       # Playwright output — gitignored
@@ -154,22 +163,27 @@ each live tool, then a "Coming Soon" `.tool-grid` of dimmed
   proportional band — preset-tuning chips, three `<input type=range>`
   sliders with Ti / Td / PB equivalents shown beneath each, a `<canvas>`
   plot of PV vs. setpoint, and overshoot / settling-time /
-  steady-state-error readouts), a tightened symptom → tuning-move
-  `.ref-table-dense` (short arrow codes — ↑/↓, P/I/D — not prose), a short
-  "New to PID? Start with the basics →" cross-link to the Education page
-  (where the long-form explainer now lives), and a vendor-style "rule of
-  thumb" note describing how the Parameter Style selector maps to
-  Niagara / EBO / Distech conventions. **This tool deliberately keeps its
-  custom stacked layout** rather than the three-column property-sheet
-  pattern — the simulator block doesn't fit Input / Output / Reference
-  without forcing it; only the cheat sheet adopts the `.ref-table-dense`
-  styling (partial adoption). The simulation core lives in
-  `/scripts/pid-engine.js` (`PID_PROC`, `simulatePid()`); this page owns
-  the sliders, preset chips, label/unit relabeling, and the canvas
-  drawing — everything UI. The controller runs on canonical params (gain,
-  repeats/min, minutes); the parameter-style selector only changes
-  labels/units. The simulated process is a toy first-order-plus-dead-time
-  model — it exists for intuition, not for tuning a real loop.
+  steady-state-error readouts), then a **Reference** region near the
+  bottom: a *Loop Speed Reference* `.ps-section-label` + the fast/medium/slow
+  `.ref-table` (time constants, dead times, HVAC examples + the dead-time÷τ
+  note — this table moved here from the Education page, since it's
+  operational reference, not conceptual material) and a tightened
+  *Symptom → Tuning Move* `.subhead` + `.ref-table-dense` (short arrow
+  codes — ↑/↓, P/I/D — not prose). Plus a short "New to PID? Start with the
+  basics →" cross-link to the Education page (where the long-form explainer
+  and the three mini-sims live) and a vendor-style "rule of thumb" note
+  describing how the Parameter Style selector maps to Niagara / EBO /
+  Distech conventions. **This tool deliberately keeps its custom stacked
+  layout** rather than the three-column property-sheet pattern — the
+  simulator block doesn't fit Input / Output / Reference without forcing
+  it; only the cheat sheet adopts the `.ref-table-dense` styling (partial
+  adoption). The simulation core lives in `/scripts/pid-engine.js`
+  (`PID_PROC`, `simulatePid()`); this page owns the sliders, preset chips,
+  label/unit relabeling, and the canvas drawing — everything UI. The
+  controller runs on canonical params (gain, repeats/min, minutes); the
+  parameter-style selector only changes labels/units. The simulated process
+  is a toy first-order-plus-dead-time model — it exists for intuition, not
+  for tuning a real loop.
 - **BACnet/IP Hex Converter** (`tools/bacnet-ip-converter.html`, "BACnet")
   — two tabs, on the three-column property-sheet layout: *Hex → IP* (paste
   the hex address string EBO shows for a BACnet/IP device — tolerant of
@@ -187,32 +201,54 @@ each live tool, then a "Coming Soon" `.tool-grid` of dimmed
   crosshairs. Set the point by dragging on the chart, or by typing a
   dry-bulb plus one of {RH, wet-bulb, dew point, humidity ratio, enthalpy}
   (the "define by" selector relabels the second input). Altitude-adjustable
-  (alters the barometric pressure → reshapes the chart). Reads out dry-bulb,
-  wet-bulb, dew point, RH, humidity ratio (gr/lb), enthalpy, specific
-  volume, vapor pressure, and barometric pressure in a 3×3 `.bit-readouts`
-  grid. **Keeps its own custom stacked layout** (like the PID tuner) — a
-  big canvas doesn't fit the three-column property-sheet pattern. The
-  psychrometrics (ASHRAE IP-unit formulations: saturation pressure,
-  humidity-ratio conversions, a bisection for wet-bulb and dew point,
-  enthalpy, specific volume, altitude→pressure) plus the chart drawing and
-  the drag handling all live inline in the page's `<script>` — it's a
-  self-contained, reusable chunk; extract it to `html/scripts/` if a second
-  tool ever needs it. A toy chart for intuition / quick checks, not a
-  calibrated psychrometric calculator. (Step 2 from
-  `site-ideas-and-friction.md` — drawing process lines / mixing between
-  two points — is a future build.)
+  (alters the barometric pressure → reshapes the chart). **Uses the
+  three-column property-sheet layout** (joining the BACnet converter,
+  Signal Scaling, and Modbus Register Viewer as adopters — the PID tuner
+  still keeps its own custom layout): a left **Inputs** column (`.ps-row`s
+  for altitude / dry-bulb / "define by" / its value), a wide **Chart**
+  centre column (the canvas + the curve-legend caption), and a right
+  **State Point** column — all nine readouts (dry-bulb, wet-bulb, dew
+  point, RH, humidity ratio gr/lb, enthalpy, specific volume, vapor
+  pressure, barometric pressure) as a `.ps-row` stack with `.ps-value.live`
+  values, so the whole state stays visible while you drag. Because the
+  canvas wants more room than the standard 880px allows, the page carries a
+  small inline `<style>` widening `main`/`footer` to 1280px and giving
+  `.tool-body-3col` a custom 25%/1fr/25% split (collapsing to one stack at
+  ≤900px); the `.ps-*` classes themselves are the shared design system. A
+  full-width caveat paragraph below the columns holds the longer ASHRAE /
+  "per pound of dry air" note. The psychrometrics (ASHRAE IP-unit
+  formulations: saturation pressure, humidity-ratio conversions, a
+  bisection for wet-bulb and dew point, enthalpy, specific volume,
+  altitude→pressure) plus the chart drawing and the drag handling all live
+  inline in the page's `<script>` — it's a self-contained, reusable chunk;
+  extract it to `html/scripts/` if a second tool ever needs it. For
+  building feel / quick state-point checks, not a calibrated load-study
+  tool. (Step 2 from `site-ideas-and-friction.md` — drawing process lines /
+  mixing between two points — is a future build.)
 
-**Education — PID Basics** (`education/pid-basics.html`) — three stacked
+**Education — PID Basics** (`education/pid-basics.html`) — two stacked
 sections under section headers: *What P, I, and D Actually Do* (the
 long-form explainer, three `.pid-term` cards each with a worked HVAC
-example), *How Fast Is the Loop?* (a `.ref-table` mapping Fast / Medium /
-Slow to typical time constants, dead times, and HVAC examples), and *See
-Each Term in Action* (three `.tool-card`s with `.tool-tag.pending`
-"Coming soon" tags and one-sentence descriptions of the cumulative
-mini-sims that will go there — P only → P+I → P+I+D). A `.cta-button`
-links to the PID Tuning Helper at the bottom. The Education section has
-just this one page for now; there's no `education/index.html` landing
-yet.
+example) and *See Each Term in Action* — **three working mini-sims**, one
+per `.tool-card` (tags "Sim 1 / Sim 2 / Sim 3", not category tags),
+cumulative: **Sim 1 (P only)** exposes a gain slider, shows the
+steady-state offset that never closes; **Sim 2 (P + I)** fixes P at Sim 1's
+default and exposes a reset (rep/min) slider, shows the offset closing but
+overshoot appearing if you push it; **Sim 3 (P + I + D)** fixes the
+aggressive P + I from Sim 2 and exposes a rate (Td, min) slider, shows
+derivative crushing the overshoot (then over-damping if you overdo it).
+Each is its own stripped-down surface over `/scripts/pid-engine.js` — a
+caption, three Fast / Medium / Slow process-speed chips (default Medium),
+one `<input type=range>` slider, a half-height `<canvas>` PV-vs-setpoint
+plot (≈160px vs the tuner's 260px), and one or two `.ps-row` + `.ps-value.live`
+metric callouts; everything auto-reruns on change, no Run button. The
+inline `<script>` (loaded after `pid-engine.js`) is the same shape as the
+tuner's — slider/chip/canvas glue, much smaller. A `.cta-button` ("Try it
+for yourself →") links to the PID Tuning Helper at the bottom. The
+fast/medium/slow loop-speed reference table that used to be a third section
+here moved to the PID tuner (operational reference belongs with the tool).
+The Education section has just this one page for now; there's no
+`education/index.html` landing yet.
 
 **Contact** (`contact.html`) — a `.tool-card` with a name / email /
 message form, an off-screen CSS honeypot (`.hp-field`, named `website`),
@@ -277,8 +313,9 @@ instead of an inline `<style>` duplicated across pages.)*
   chart reads its colors from these vars via `getComputedStyle` at draw
   time, so it follows any palette change automatically.
 - **Component classes:** `.tool-card` / `.tool-card-header` /
-  `.tool-card-title` / `.tool-tag` (+ `.pending` — the muted gray
-  variant used on the Education page's "Coming soon" placeholder cards) /
+  `.tool-card-title` / `.tool-tag` (+ `.pending` — a muted gray variant
+  for "Coming soon" placeholder cards; currently unused since the
+  Education mini-sims became real, kept for future placeholders) /
   `.tool-body`; `.tabs` / `.tab-btn` / `.tab-pane`; `.form-row`
   (+ `.three`) / `.field` / `label`; `.result-panel` / `.result-label` /
   `.result-value` (+ `.error` / `.muted` / `.warn`); `.result-formula`;
@@ -322,10 +359,16 @@ instead of an inline `<style>` duplicated across pages.)*
   value), or `.error` (out-of-range, red) — or an `input.ps-input` /
   `select.ps-input` / `textarea.ps-input` (the dense form-control variant).
   **Adopters: the BACnet/IP converter, Signal Scaling, Modbus Register
-  Viewer.** The PID tuner and the Psychrometric Chart deliberately keep
-  their own custom stacked layouts (a simulator block / a big canvas don't
-  fit Input/Output/Reference) — for the PID tuner, only its cheat
-  sheet adopts `.ref-table-dense`. A tool with no genuinely useful
+  Viewer, and the Psychrometric Chart** — the psych chart with a custom
+  25%/1fr/25% column split and a page-widened `main` (a draggable chart
+  needs the room; see its tool entry above), and with Inputs / Chart /
+  State Point sections rather than Input / Output / Reference, but it's the
+  same `.tool-body-3col` + `.ps-*` + `.ref-note` vocabulary. The PID tuner
+  deliberately keeps its own custom stacked layout — a simulator block
+  (sliders, parameter-style selector, preset chips, metrics) doesn't fit
+  Input/Output/Reference — and uses `.ps-section-label` standalone for its
+  bottom "Reference" region (the loop-speed table + the `.ref-table-dense`
+  cheat sheet). A tool with no genuinely useful
   reference content drops the third column and runs two (e.g. Signal
   Scaling's slope/offset tab — Output spans the right two-thirds via
   `grid-column: span 2`). This pattern serves the "Visual design — two
@@ -378,7 +421,7 @@ instead of an inline `<style>` duplicated across pages.)*
 4. If it graduates a Coming-Soon item, delete the matching
    `.tool-preview` card from the "Coming Soon" `.tool-grid` on
    `tools/index.html`.
-5. Bump the version string in the footer (currently `v0.4 · 2026`,
+5. Bump the version string in the footer (currently `v0.7 · 2026`,
    carried by every page) when shipping something notable.
 
 ## Workflow
@@ -463,13 +506,14 @@ section of `tools/index.html`:
 - Modbus Function Codes (FC01–FC23 with frame breakdowns)
 - Duct Pressure Calculator (static / velocity / total pressure)
 
-Other near-term work, tracked in `site-ideas-and-friction.md`: building
-the three cumulative mini-sims on `education/pid-basics.html` (P only →
-P+I → P+I+D — placeholder cards are in place; they'll reuse
-`/scripts/pid-engine.js` with a stripped-down UI), and tools like the
-thermistor calculator and the interactive psychrometric simulator. (The
-PID explainer and the fast/medium/slow loop-speed reference have already
-moved onto the Education page.)
+Other near-term work, tracked in `site-ideas-and-friction.md`: the
+thermistor calculator, process lines / mixing on the psychrometric chart
+(its "step 2"), and more Education pages. ✅ *Done:* the three cumulative
+PID mini-sims on `education/pid-basics.html` (P only → P+I → P+I+D, each a
+stripped-down UI over `/scripts/pid-engine.js`); the PID long-form
+explainer moved onto that page earlier, and the fast/medium/slow loop-speed
+reference table now lives on the PID tuner (operational reference belongs
+with the tool).
 
 The contact / bug-report path is live at `/contact`, and the About card
 on the home page links to it.

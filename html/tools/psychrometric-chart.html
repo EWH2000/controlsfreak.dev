@@ -8,6 +8,20 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&family=Overpass:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/styles.css">
+    <style>
+        /* Page-specific: a draggable psych chart needs more room than the
+           standard 880px, so this page widens the workspace and uses a custom
+           3-column split — narrow inputs / wide chart / narrow live readouts.
+           The shared design system (.tool-body-3col, .ps-row, …) is otherwise
+           used as-is; these few rules just tune the proportions for this tool.
+           Collapses to a single stack on narrow screens. */
+        main, footer { max-width: 1280px; }
+        .tool-body-3col { grid-template-columns: minmax(200px, 25%) 1fr minmax(200px, 25%); }
+        .tool-body-3col > section:last-child .ps-row { grid-template-columns: 1fr auto; }
+        @media (max-width: 900px) {
+            .tool-body-3col { grid-template-columns: 1fr; }
+        }
+    </style>
 </head>
 <body>
 
@@ -35,32 +49,33 @@
                 <span class="tool-tag">HVAC</span>
             </div>
         </div>
-        <!-- Like the PID tuner, this tool keeps a custom stacked layout: the chart is a big
-             canvas that doesn't fit the three-column Input/Output/Reference pattern. -->
-        <div class="tool-body">
 
-            <p style="font-family:var(--mono);font-size:0.7rem;color:var(--text-dim);margin-bottom:1.5rem;line-height:1.7;">
-                Drag the dot anywhere below the saturation curve, or type a dry-bulb plus any one other property —
-                the rest of the state reads out below. A toy chart for building feel and quick checks, not a substitute
-                for a calibrated psychrometric calculator on a load study.
-            </p>
+        <p style="font-family:var(--mono);font-size:0.7rem;color:var(--text-dim);padding:1.1rem 1.5rem 0;line-height:1.7;">
+            Drag the dot anywhere below the saturation curve, or type a dry-bulb plus any one other property — the rest
+            of the state reads out alongside. For building feel and quick state-point checks — not a substitute for a
+            calibrated load-study tool.
+        </p>
 
-            <div class="subhead">State Point</div>
+        <!-- Adopts the three-column property-sheet layout (like the BACnet converter, Signal
+             Scaling, and the Modbus viewer), with a custom column split — inputs left, the chart
+             canvas in the wide centre column, the live state on the right so every value stays
+             visible while you drag. The column proportions + page width live in the inline
+             <style> in <head>; the .ps-* classes themselves are the shared design system. -->
+        <div class="tool-body-3col">
 
-            <div class="form-row">
-                <div class="field">
-                    <label>Altitude (ft above sea level)</label>
-                    <input type="number" id="psyAlt" step="100" placeholder="0" value="0" oninput="psyRecompute()">
+            <section>
+                <div class="ps-section-label">Inputs</div>
+                <div class="ps-row">
+                    <span class="ps-label">Altitude (ft)</span>
+                    <input class="ps-input" type="number" id="psyAlt" step="100" placeholder="0" value="0" oninput="psyRecompute()">
                 </div>
-                <div class="field">
-                    <label>Dry-bulb (°F)</label>
-                    <input type="number" id="psyDb" step="0.5" placeholder="75" value="75" oninput="psyRecompute()">
+                <div class="ps-row">
+                    <span class="ps-label">Dry-bulb (°F)</span>
+                    <input class="ps-input" type="number" id="psyDb" step="0.5" placeholder="75" value="75" oninput="psyRecompute()">
                 </div>
-            </div>
-            <div class="form-row" style="margin-bottom:1.25rem;">
-                <div class="field">
-                    <label>Define by</label>
-                    <select id="psyMode" onchange="psyModeChanged()">
+                <div class="ps-row">
+                    <span class="ps-label">Define by</span>
+                    <select class="ps-input" id="psyMode" onchange="psyModeChanged()">
                         <option value="rh" selected>Relative humidity</option>
                         <option value="wb">Wet-bulb temperature</option>
                         <option value="dp">Dew point temperature</option>
@@ -68,46 +83,49 @@
                         <option value="h">Enthalpy</option>
                     </select>
                 </div>
-                <div class="field">
-                    <label id="psySecondLbl">Relative humidity (%)</label>
-                    <input type="number" id="psySecond" step="1" placeholder="50" value="50" oninput="psyRecompute()">
+                <div class="ps-row">
+                    <span class="ps-label" id="psySecondLbl">Relative humidity (%)</span>
+                    <input class="ps-input" type="number" id="psySecond" step="1" placeholder="50" value="50" oninput="psyRecompute()">
                 </div>
-            </div>
+                <p class="ref-note">Set the point here, or click / drag it on the chart. Sea-level pressure unless you enter an altitude.</p>
+                <p class="bit-hint" id="psyMsg" style="margin-top:0.6rem;margin-bottom:0;line-height:1.55;"></p>
+            </section>
 
-            <p class="bit-hint">Click or drag on the chart to move the state point · sea-level pressure unless you set an altitude</p>
+            <section>
+                <div class="ps-section-label">Chart</div>
+                <div class="sim-canvas-wrap">
+                    <canvas id="psyCanvas" style="aspect-ratio:8/5;height:auto;touch-action:none;"></canvas>
+                </div>
+                <p class="bit-hint" style="margin-bottom:0;line-height:1.65;">
+                    Heavy curve = saturation (100% RH, the left/top boundary). Light curves rising to the right = constant
+                    relative humidity; light dashed lines sloping down to the right = constant wet-bulb (≈ constant enthalpy).
+                    States outside the drawn region still read out — they just aren't drawn.
+                </p>
+            </section>
 
-            <div class="sim-canvas-wrap">
-                <canvas id="psyCanvas" style="aspect-ratio:8/5;height:auto;touch-action:none;"></canvas>
-            </div>
+            <section>
+                <div class="ps-section-label">State Point</div>
+                <div class="ps-row"><span class="ps-label">Dry-bulb (°F)</span><span class="ps-value live" id="roDb">—</span></div>
+                <div class="ps-row"><span class="ps-label">Wet-bulb (°F)</span><span class="ps-value live" id="roWb">—</span></div>
+                <div class="ps-row"><span class="ps-label">Dew point (°F)</span><span class="ps-value live" id="roDp">—</span></div>
+                <div class="ps-row"><span class="ps-label">Rel. humidity (%)</span><span class="ps-value live" id="roRh">—</span></div>
+                <div class="ps-row"><span class="ps-label">Humidity ratio (gr/lb)</span><span class="ps-value live" id="roW">—</span></div>
+                <div class="ps-row"><span class="ps-label">Enthalpy (Btu/lb)</span><span class="ps-value live" id="roH">—</span></div>
+                <div class="ps-row"><span class="ps-label">Specific volume (ft³/lb)</span><span class="ps-value live" id="roV">—</span></div>
+                <div class="ps-row"><span class="ps-label">Vapor pressure (psia)</span><span class="ps-value live" id="roPw">—</span></div>
+                <div class="ps-row"><span class="ps-label">Barometric press. (psia)</span><span class="ps-value live" id="roP">—</span></div>
+            </section>
 
-            <p class="bit-hint" style="margin-top:0.85rem;margin-bottom:0;line-height:1.7;">
-                Heavy curve = saturation (100% RH, the left/top boundary). Light curves rising to the right = constant
-                relative humidity; light dashed lines sloping down to the right = constant wet-bulb (≈ constant enthalpy).
-            </p>
-            <p class="bit-hint" id="psyMsg" style="margin-top:0.5rem;margin-bottom:0;line-height:1.6;"></p>
+        </div>
 
-            <div class="subhead">Properties at the State Point</div>
-
-            <div class="bit-readouts">
-                <div class="readout"><div class="readout-label">Dry-bulb (°F)</div><div class="readout-value" id="roDb">—</div></div>
-                <div class="readout"><div class="readout-label">Wet-bulb (°F)</div><div class="readout-value" id="roWb">—</div></div>
-                <div class="readout"><div class="readout-label">Dew point (°F)</div><div class="readout-value" id="roDp">—</div></div>
-                <div class="readout"><div class="readout-label">Rel. humidity (%)</div><div class="readout-value" id="roRh">—</div></div>
-                <div class="readout"><div class="readout-label">Humidity ratio (gr/lb)</div><div class="readout-value" id="roW">—</div></div>
-                <div class="readout"><div class="readout-label">Enthalpy (Btu/lb)</div><div class="readout-value" id="roH">—</div></div>
-                <div class="readout"><div class="readout-label">Specific volume (ft³/lb)</div><div class="readout-value" id="roV">—</div></div>
-                <div class="readout"><div class="readout-label">Vapor pressure (psia)</div><div class="readout-value" id="roPw">—</div></div>
-                <div class="readout"><div class="readout-label">Barometric press. (psia)</div><div class="readout-value" id="roP">—</div></div>
-            </div>
-
-            <p class="pid-note">
+        <div style="padding:1.25rem 1.5rem;border-top:1px solid var(--border);">
+            <p class="pid-note" style="margin-top:0;">
                 Properties are per pound of dry air, from the ASHRAE formulations in US customary units; relative humidity
                 is taken as the partial-pressure ratio (the usual approximation). Humidity ratio shown in grains per pound
                 (7000 gr = 1 lb). Wet-bulb here is the thermodynamic wet-bulb, which a sling psychrometer reads to within a
-                fraction of a degree. The drawn chart covers the lower-left region most HVAC air states live in — a state
-                outside that range still reads out below, it just isn't drawn.
+                fraction of a degree. The drawn chart covers the lower-left region most HVAC air states live in; a state
+                outside that range still reads out, it just isn't drawn.
             </p>
-
         </div>
     </div>
 
@@ -117,7 +135,7 @@
 
 <footer>
     <span class="footer-text">controlsfreak.dev — open tools for controls engineers</span>
-    <span class="footer-text">v0.6 · 2026</span>
+    <span class="footer-text">v0.7 · 2026</span>
 </footer>
 
 <script>
@@ -274,23 +292,29 @@
     function applyState(state, P) {
         psyP = P;
         psyState = state;
-        const set = (id, v) => { document.getElementById(id).textContent = v; };
+        // a .ps-value cell reads blue/bold when it holds a real value, muted "—" otherwise
+        const ro = (id, v, live) => {
+            const el = document.getElementById(id);
+            el.textContent = v;
+            el.className = live ? 'ps-value live' : 'ps-value muted';
+        };
         const msgEl = document.getElementById('psyMsg');
 
         if (!state.ok) {
-            ['roDb','roWb','roDp','roRh','roW','roH','roV','roPw','roP'].forEach(id => set(id, '—'));
+            ['roDb','roWb','roDp','roRh','roW','roH','roV','roPw','roP'].forEach(id => ro(id, '—', false));
             msgEl.textContent = state.error;
             msgEl.style.color = 'var(--red)';
         } else {
-            set('roDb', state.tdb.toFixed(1));
-            set('roWb', state.twb.toFixed(1));
-            set('roDp', (isFinite(state.tdp) && state.tdp > -60) ? state.tdp.toFixed(1) : '—');
-            set('roRh', state.rh.toFixed(1));
-            set('roW',  (state.W * GR_PER_LB).toFixed(1));
-            set('roH',  state.h.toFixed(2));
-            set('roV',  state.v.toFixed(3));
-            set('roPw', state.pw.toFixed(4));
-            set('roP',  P.toFixed(3));
+            ro('roDb', state.tdb.toFixed(1), true);
+            ro('roWb', state.twb.toFixed(1), true);
+            const dpOk = isFinite(state.tdp) && state.tdp > -60;
+            ro('roDp', dpOk ? state.tdp.toFixed(1) : '—', dpOk);
+            ro('roRh', state.rh.toFixed(1), true);
+            ro('roW',  (state.W * GR_PER_LB).toFixed(1), true);
+            ro('roH',  state.h.toFixed(2), true);
+            ro('roV',  state.v.toFixed(3), true);
+            ro('roPw', state.pw.toFixed(4), true);
+            ro('roP',  P.toFixed(3), true);
             const z = parseFloat(document.getElementById('psyAlt').value) || 0;
             msgEl.textContent = z === 0
                 ? `Sea level — ${P.toFixed(3)} psia.`

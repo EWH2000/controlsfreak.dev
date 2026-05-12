@@ -63,8 +63,16 @@ function simulatePid(proc, Kc, rep, rate) {
         const uRaw  = pTerm + iTerm + dTerm;
         const u     = Math.max(0, Math.min(100, uRaw));
 
-        // conditional integration (anti-windup): don't wind further into a rail
-        if (!((u >= 100 && e > 0) || (u <= 0 && e < 0))) iAcc += e * dt;
+        // Conditional integration (anti-windup): pause the integrator (a) at a
+        // rail it's only pushing further into, and (b) while derivative action
+        // is braking hard toward setpoint — otherwise the slower approach would
+        // just wind the integral up to "cover" the brake, and adding D would
+        // *add* overshoot once it releases instead of damping it. With Td = 0
+        // (the default), dTerm is 0, so (b) never fires and this is the plain
+        // rail-only anti-windup.
+        const intoRail = (u >= 100 && e > 0) || (u <= 0 && e < 0);
+        const braking  = dTerm * e < 0 && Math.abs(dTerm) > 2;
+        if (!intoRail && !braking) iAcc += e * dt;
 
         deadQ.push(u);
         const uEff = deadQ.shift();

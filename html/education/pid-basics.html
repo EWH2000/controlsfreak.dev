@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PID Basics — controlsfreak.dev</title>
-    <meta name="description" content="A plain-English walk through proportional, integral, and derivative control for HVAC loops — what each term does, what loop speed feels like in real units, and three small sims to build intuition one knob at a time.">
+    <meta name="description" content="A plain-English walk through proportional, integral, and derivative control for HVAC loops — what each term does, with three small interactive sims that build intuition one knob at a time (P only → P+I → P+I+D).">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&family=Overpass:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/styles.css">
@@ -29,7 +29,7 @@
     </div>
 
     <p style="font-size:1.02rem;line-height:1.85;color:var(--text);max-width:640px;margin-bottom:2.25rem;">
-        PID is three knobs that, together, push a process variable toward a setpoint. This is a plain-English walk through what each one does on a typical HVAC loop, what "fast" and "slow" actually feel like in seconds and minutes, and three small sims you can play with one knob at a time. By the end, the full <a href="/tools/pid-tuner.html" style="color:var(--accent);">PID Tuning Helper</a> should make a lot more sense.
+        PID is three knobs that, together, push a process variable toward a setpoint. This is a plain-English walk through what each one does on a typical HVAC loop, plus three small sims you can play with one knob at a time. By the end, the full <a href="/tools/pid-tuner.html" style="color:var(--accent);">PID Tuning Helper</a> should make a lot more sense.
     </p>
 
     <!-- ── What P, I, and D Actually Do ── -->
@@ -60,99 +60,164 @@
         </div>
     </div>
 
-    <!-- ── How Fast Is the Loop? ── -->
-    <div class="section-header" style="margin-top:2.5rem;">
-        <span class="section-label">How Fast Is the Loop?</span>
-        <div class="section-line"></div>
-    </div>
+    <!-- (The fast / medium / slow loop-speed reference table now lives on the
+         PID Tuning Helper, next to the simulator — it's operational reference,
+         not conceptual material.) -->
 
-    <div class="tool-card">
-        <div class="tool-body">
-            <p style="margin-bottom:1.25rem;font-size:0.95rem;line-height:1.8;color:var(--text);">
-                "Fast loop / slow loop" is loose shorthand for the dominant time constant — roughly how long the process takes to get most of the way to a new value after the output changes. Loops with longer time constants and more dead time need gentler tuning and benefit more from integral; fast loops can take more aggressive gain. Some rough buckets:
-            </p>
-
-            <table class="ref-table">
-                <thead>
-                    <tr><th>Speed</th><th>Time constant (τ)</th><th>Dead time</th><th>Typical HVAC examples</th></tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>Fast</td>
-                        <td>~5–15 s</td>
-                        <td>~1–3 s</td>
-                        <td>Duct static pressure, mixing-box damper position, fan VFD speed</td>
-                    </tr>
-                    <tr>
-                        <td>Medium</td>
-                        <td>~30 s – 2 min</td>
-                        <td>~5–15 s</td>
-                        <td>Discharge air temperature, chilled-water valve, hot-water valve</td>
-                    </tr>
-                    <tr>
-                        <td>Slow</td>
-                        <td>~2 – 10 min</td>
-                        <td>~30 s – 2 min</td>
-                        <td>Space / zone temperature, return-air humidity, large tank or basin temperature</td>
-                    </tr>
-                </tbody>
-            </table>
-
-            <p style="margin-top:1.25rem;font-family:var(--mono);font-size:0.72rem;color:var(--text-dim);line-height:1.75;">
-                The ratio that matters most for controllability is dead&nbsp;time&nbsp;÷&nbsp;τ. Below ~0.2 the loop is well-behaved; up around 0.5 you need to be careful (slower gain, longer reset); past 1.0 you're usually fighting transport delay, and a Smith predictor or feedforward starts to look attractive. The three buckets above all sit comfortably under 0.2, which is most HVAC.
-            </p>
-        </div>
-    </div>
-
-    <!-- ── See Each Term in Action — three placeholder mini-sims ── -->
+    <!-- ── See Each Term in Action — three working mini-sims ── -->
     <div class="section-header" style="margin-top:2.5rem;">
         <span class="section-label">See Each Term in Action</span>
         <div class="section-line"></div>
     </div>
 
     <p style="font-size:0.95rem;line-height:1.8;color:var(--text);max-width:640px;margin-bottom:1.5rem;">
-        Three small simulators, in order — each adds one term and lets you see what it does on its own. (These are being built next; for now the full <a href="/tools/pid-tuner.html" style="color:var(--accent);">PID Tuning Helper</a> exposes all three knobs at once.)
+        Three small simulators, in order — each adds one term to the one before. One knob is live; the Fast / Medium / Slow chips set how quickly the loop reacts. Move anything and the plot redraws right away. (Want all three knobs at once? Jump to the full <a href="/tools/pid-tuner.html" style="color:var(--accent);">PID Tuning Helper</a>.)
     </p>
 
-    <div class="tool-card">
+    <!-- ── Sim 1 — P only: the steady-state offset ── -->
+    <div class="tool-card" id="sim1">
         <div class="tool-card-header">
             <div class="tool-card-title">
-                Sim 1: P only
-                <span class="tool-tag pending">Coming soon</span>
+                P only
+                <span class="tool-tag">Sim 1</span>
             </div>
         </div>
-        <div class="tool-body" style="opacity:0.75;">
-            <p style="font-size:0.95rem;line-height:1.8;">
-                Watch how proportional control alone always settles a little short of setpoint — the steady-state offset (droop) that integral exists to fix. Raise the gain and the offset shrinks but the loop starts to ring; drop it and the loop is calm but the gap grows.
+        <div class="tool-body">
+            <p style="font-size:0.92rem;line-height:1.75;color:var(--text);margin-bottom:1.1rem;">
+                Proportional control alone always settles a little short of setpoint — the steady-state offset (droop)
+                that integral exists to fix. Raise the gain and the offset shrinks but the loop starts to ring; back it
+                off and the loop is calm but the gap grows. It never reaches zero — that's the point.
             </p>
+
+            <div class="btn-row" style="margin-bottom:1.1rem;">
+                <button class="copy-btn" onclick="miniSetProc(1,'fast',this)">Fast loop</button>
+                <button class="copy-btn active" onclick="miniSetProc(1,'med',this)">Medium loop</button>
+                <button class="copy-btn" onclick="miniSetProc(1,'slow',this)">Slow loop</button>
+            </div>
+
+            <div class="slider-field" style="margin-bottom:1.1rem;">
+                <div class="slider-head">
+                    <label>Gain (Kc)</label>
+                    <span class="slider-val" id="m1Val">2.0</span>
+                </div>
+                <input type="range" id="m1Slider" min="0" max="20" step="0.1" value="2" oninput="runMini(1)">
+                <span class="slider-sub" id="m1Sub"></span>
+            </div>
+
+            <div class="sim-canvas-wrap">
+                <canvas id="m1Canvas" style="height:160px;"></canvas>
+            </div>
+            <div class="sim-legend" style="margin-bottom:1rem;">
+                <span><span class="swatch pv"></span>Process Variable</span>
+                <span><span class="swatch sp"></span>Setpoint</span>
+            </div>
+
+            <div class="ps-row">
+                <span class="ps-label">Steady-state offset</span>
+                <span class="ps-value live" id="m1Offset">—</span>
+            </div>
+            <p class="ref-note" style="margin-top:0.5rem;padding-top:0;border-top:none;">P alone can't close this — that gap is exactly what integral is for.</p>
         </div>
     </div>
 
-    <div class="tool-card">
+    <!-- ── Sim 2 — P + I: offset closes, but it can oscillate ── -->
+    <div class="tool-card" id="sim2">
         <div class="tool-card-header">
             <div class="tool-card-title">
-                Sim 2: P + I
-                <span class="tool-tag pending">Coming soon</span>
+                P + I
+                <span class="tool-tag">Sim 2</span>
             </div>
         </div>
-        <div class="tool-body" style="opacity:0.75;">
-            <p style="font-size:0.95rem;line-height:1.8;">
-                Add integral to the same loop and the droop disappears — PV climbs all the way to setpoint. Push the reset too fast and you'll see what every tech has seen on a real loop: slow rolling oscillation around the line you were trying to hit.
+        <div class="tool-body">
+            <p style="font-size:0.92rem;line-height:1.75;color:var(--text);margin-bottom:1.1rem;">
+                Add integral to the same loop and the droop disappears — PV climbs all the way to setpoint. But push the
+                reset too fast and you'll see what every tech has seen on a real loop: a slow rolling oscillation around
+                the line you were trying to hit. Watch both readouts as you move the slider.
             </p>
+
+            <div class="btn-row" style="margin-bottom:1.1rem;">
+                <button class="copy-btn" onclick="miniSetProc(2,'fast',this)">Fast loop</button>
+                <button class="copy-btn active" onclick="miniSetProc(2,'med',this)">Medium loop</button>
+                <button class="copy-btn" onclick="miniSetProc(2,'slow',this)">Slow loop</button>
+            </div>
+
+            <div class="slider-field" style="margin-bottom:1.1rem;">
+                <div class="slider-head">
+                    <label>Reset (rep/min) · gain 2.0 fixed</label>
+                    <span class="slider-val" id="m2Val">1.00</span>
+                </div>
+                <input type="range" id="m2Slider" min="0" max="6" step="0.05" value="1" oninput="runMini(2)">
+                <span class="slider-sub" id="m2Sub"></span>
+            </div>
+
+            <div class="sim-canvas-wrap">
+                <canvas id="m2Canvas" style="height:160px;"></canvas>
+            </div>
+            <div class="sim-legend" style="margin-bottom:1rem;">
+                <span><span class="swatch pv"></span>Process Variable</span>
+                <span><span class="swatch sp"></span>Setpoint</span>
+            </div>
+
+            <div class="ps-row">
+                <span class="ps-label">Steady-state offset</span>
+                <span class="ps-value live" id="m2Offset">—</span>
+            </div>
+            <div class="ps-row">
+                <span class="ps-label">Overshoot</span>
+                <span class="ps-value live" id="m2Over">—</span>
+            </div>
+            <p class="ref-note" style="margin-top:0.5rem;padding-top:0;border-top:none;">Offset goes to zero — but the overshoot is the new problem to watch.</p>
         </div>
     </div>
 
-    <div class="tool-card">
+    <!-- ── Sim 3 — P + I + D: derivative damps the oscillation ── -->
+    <div class="tool-card" id="sim3">
         <div class="tool-card-header">
             <div class="tool-card-title">
-                Sim 3: P + I + D
-                <span class="tool-tag pending">Coming soon</span>
+                P + I + D
+                <span class="tool-tag">Sim 3</span>
             </div>
         </div>
-        <div class="tool-body" style="opacity:0.75;">
-            <p style="font-size:0.95rem;line-height:1.8;">
-                Start from the over-aggressive P + I that was oscillating, then dial in a small amount of derivative. The brakes go on as PV races toward setpoint; the oscillation damps out; the loop settles cleanly. Push D further and the noise on the input starts twitching the output — a reminder why most HVAC loops stay at PI.
+        <div class="tool-body">
+            <p style="font-size:0.92rem;line-height:1.75;color:var(--text);margin-bottom:1.1rem;">
+                This loop starts with an over-aggressive P + I — it's overshooting and ringing. Dial in a little
+                derivative: the brakes go on as PV races toward setpoint, and the overshoot collapses. There's a sweet
+                spot, though — keep cranking D and the loop just turns sluggish (and on a real, noisy sensor it would
+                start jittering). That's why most HVAC loops stay at PI.
             </p>
+
+            <div class="btn-row" style="margin-bottom:1.1rem;">
+                <button class="copy-btn" onclick="miniSetProc(3,'fast',this)">Fast loop</button>
+                <button class="copy-btn active" onclick="miniSetProc(3,'med',this)">Medium loop</button>
+                <button class="copy-btn" onclick="miniSetProc(3,'slow',this)">Slow loop</button>
+            </div>
+
+            <div class="slider-field" style="margin-bottom:1.1rem;">
+                <div class="slider-head">
+                    <label>Rate (Td, min) · gain 2.0 / reset 4.0 fixed</label>
+                    <span class="slider-val" id="m3Val">0.00</span>
+                </div>
+                <input type="range" id="m3Slider" min="0" max="0.5" step="0.01" value="0" oninput="runMini(3)">
+                <span class="slider-sub" id="m3Sub"></span>
+            </div>
+
+            <div class="sim-canvas-wrap">
+                <canvas id="m3Canvas" style="height:160px;"></canvas>
+            </div>
+            <div class="sim-legend" style="margin-bottom:1rem;">
+                <span><span class="swatch pv"></span>Process Variable</span>
+                <span><span class="swatch sp"></span>Setpoint</span>
+            </div>
+
+            <div class="ps-row">
+                <span class="ps-label">Overshoot</span>
+                <span class="ps-value live" id="m3Over">—</span>
+            </div>
+            <div class="ps-row">
+                <span class="ps-label">Settling time (±2%)</span>
+                <span class="ps-value live" id="m3Settle">—</span>
+            </div>
+            <p class="ref-note" style="margin-top:0.5rem;padding-top:0;border-top:none;">A little D crushes the overshoot at almost no cost; overdo it and the settling time creeps up — the loop's just sluggish now.</p>
         </div>
     </div>
 
@@ -167,8 +232,165 @@
 
 <footer>
     <span class="footer-text">controlsfreak.dev — open tools for controls engineers</span>
-    <span class="footer-text">v0.6 · 2026</span>
+    <span class="footer-text">v0.7 · 2026</span>
 </footer>
+
+<!-- Shared simulation core — the FOPDT process model + discrete-time stepping
+     (PID_PROC, simulatePid), the same engine the PID Tuning Helper runs on.
+     Classic script (not a module), loaded before the inline glue below so the
+     on* handlers can see its globals. -->
+<script src="/scripts/pid-engine.js"></script>
+<script>
+    // ─────────────────────────────────────────────────────────────────────
+    // Education PID mini-sims — three stripped-down surfaces over the shared
+    // engine. Each exposes ONE knob (P, then I, then D) and keeps the others
+    // fixed, re-running the simulation on every change. The simulation logic
+    // lives in /scripts/pid-engine.js; this is just slider / chip / canvas
+    // glue — the same shape as the full tuner's inline script, only smaller.
+    // ─────────────────────────────────────────────────────────────────────
+
+    // Per-sim state. `proc` is the PID_PROC key the speed chips select; the
+    // gain / rep / rate trio is the controller — exactly one per sim is "live"
+    // (driven by that sim's slider), the rest are fixed for the lesson.
+    const MINI = {
+        1: { proc: 'med', gain: 2.0, rep: 0,   rate: 0 },   // P only    — slider drives gain
+        2: { proc: 'med', gain: 2.0, rep: 1.0, rate: 0 },   // P + I     — slider drives rep (P fixed = Sim 1's default)
+        3: { proc: 'med', gain: 2.0, rep: 4.0, rate: 0 },   // P + I + D — slider drives rate (the aggressive P+I from Sim 2)
+    };
+    const MINI_KNOB = { 1: 'gain', 2: 'rep', 3: 'rate' };          // which knob each slider drives
+    const MINI_UNIT = { fast: 'in. w.c.', med: '°F', slow: '°F' }; // units for the steady-state-offset readout
+    const miniLast  = {};                                          // last sim result per sim — for redraw on resize
+
+    // ── Pick the process model (Fast / Medium / Slow chip) for sim n ──
+    function miniSetProc(n, key, btn) {
+        MINI[n].proc = key;
+        btn.closest('.btn-row').querySelectorAll('.copy-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        runMini(n);
+    }
+
+    // ── Run one mini-sim: read its slider → run the engine → draw + show metrics ──
+    function runMini(n) {
+        const cfg = MINI[n];
+        cfg[MINI_KNOB[n]] = parseFloat(document.getElementById('m' + n + 'Slider').value);
+        updateMiniSlider(n, cfg);
+        const sim = simulatePid(PID_PROC[cfg.proc], cfg.gain, cfg.rep, cfg.rate);
+        miniLast[n] = sim;
+        drawMiniChart(document.getElementById('m' + n + 'Canvas'), sim, n === 1);
+        showMiniMetrics(n, sim, cfg.proc);
+    }
+
+    // ── Slider value + sub-line (the label text itself is static in the markup) ──
+    const fmtTi = rep => { const ti = 1 / rep; return ti >= 10 ? ti.toFixed(0) + ' min' : ti >= 1 ? ti.toFixed(1) + ' min' : Math.round(ti * 60) + ' s'; };
+
+    function updateMiniSlider(n, cfg) {
+        const set = (id, t) => { document.getElementById(id).textContent = t; };
+        if (n === 1) {
+            set('m1Val', cfg.gain.toFixed(1));
+            set('m1Sub', cfg.gain > 0 ? `prop. band ≈ ${Math.round(100 / cfg.gain)} %  ·  no integral, no rate` : 'gain is zero — the output never moves');
+        } else if (n === 2) {
+            set('m2Val', cfg.rep.toFixed(2));
+            set('m2Sub', cfg.rep > 0 ? `reset time ≈ ${fmtTi(cfg.rep)}  ·  no rate` : 'integral off — this is just Sim 1 again');
+        } else {
+            set('m3Val', cfg.rate.toFixed(2));
+            set('m3Sub', cfg.rate > 0 ? `derivative time ≈ ${Math.round(cfg.rate * 60)} s` : 'derivative off — the aggressive P + I, left to oscillate');
+        }
+    }
+
+    // ── Key-metric callouts under each chart ──
+    function fmtDur(sec) {
+        if (sec < 100) return Math.round(sec) + ' s';
+        const m = Math.floor(sec / 60), s = Math.round(sec - m * 60);
+        return s ? `${m}:${String(s).padStart(2, '0')} min` : `${m} min`;
+    }
+
+    function showMiniMetrics(n, sim, procKey) {
+        const set = (id, t) => { const el = document.getElementById(id); if (el) el.textContent = t; };
+        const unit = MINI_UNIT[procKey];
+        const fmtPct = v => v < 0.05 ? 'none' : v.toFixed(1) + ' %';
+        const offset = -sim.ssErr;   // where PV settled relative to SP — negative = short of setpoint
+        const fmtOffset = `${offset > 0 ? '+' : ''}${offset.toFixed(sim.dec)} ${unit}`;
+        if (n === 1) {
+            set('m1Offset', fmtOffset);
+        } else if (n === 2) {
+            set('m2Offset', Math.abs(sim.ssErr) < 0.02 * sim.step ? `≈ 0 ${unit}` : fmtOffset);
+            set('m2Over', fmtPct(sim.overshoot));
+        } else {
+            set('m3Over', fmtPct(sim.overshoot));
+            set('m3Settle', sim.settled === null ? '> ' + fmtDur(sim.win) : fmtDur(sim.settled));
+        }
+    }
+
+    // ── Compact PV-vs-setpoint plot — a stripped-down cousin of the tuner's
+    //    chart: about half the height, no axis numbers, just the trace, the
+    //    setpoint line, and (Sim 1 only) a faint band marking the offset.
+    //    Colours come from the CSS custom properties, same trick as the tuner. ──
+    function drawMiniChart(canvas, sim, shadeOffset) {
+        if (!canvas) return;
+        const cssW = canvas.clientWidth, cssH = canvas.clientHeight;
+        if (!cssW || !cssH) return;
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width  = Math.round(cssW * dpr);
+        canvas.height = Math.round(cssH * dpr);
+        const ctx = canvas.getContext('2d');
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.clearRect(0, 0, cssW, cssH);
+
+        const css = getComputedStyle(document.documentElement);
+        const cv = (name, d) => css.getPropertyValue(name).trim() || d;
+        const cSurface = cv('--surface', '#ffffff'), cBorder = cv('--border', '#ccd7c8'),
+              cDim = cv('--text-dim', '#666e66'), cAccent = cv('--accent', '#43881c'),
+              cFill = cv('--accent-dim', 'rgba(67,136,28,0.1)');
+        ctx.fillStyle = cSurface; ctx.fillRect(0, 0, cssW, cssH);
+
+        const { t, pv, sp, bias, win } = sim;
+        const pad = 8;
+        const w = cssW - 2 * pad, h = cssH - 2 * pad;
+        if (w <= 0 || h <= 0) return;
+
+        // tighter headroom than the full tuner's plot, so overshoot / offset read clearly
+        let yMax = sp + (sp - bias) * 0.4, yMin = bias - (sp - bias) * 0.12;
+        for (const v of pv) { if (v > yMax) yMax = v; if (v < yMin) yMin = v; }
+        const yp = (yMax - yMin) * 0.06 || 1; yMax += yp; yMin -= yp;
+        if (yMax === yMin) yMax += 1;
+        const X = tt => pad + (tt / win) * w;
+        const Y = vv => pad + h - ((vv - yMin) / (yMax - yMin)) * h;
+
+        ctx.lineWidth = 1; ctx.strokeStyle = cBorder;
+        ctx.strokeRect(pad, pad, w, h);
+
+        if (shadeOffset) {                                   // Sim 1: a faint band = the gap P can't close
+            const yPv = Y(pv[pv.length - 1]), ySp = Y(sp);
+            ctx.fillStyle = 'rgba(196,56,47,0.10)';
+            ctx.fillRect(pad, Math.min(yPv, ySp), w, Math.max(1, Math.abs(yPv - ySp)));
+        }
+
+        ctx.strokeStyle = cDim; ctx.setLineDash([5, 3]);     // setpoint
+        ctx.beginPath(); ctx.moveTo(pad, Y(sp)); ctx.lineTo(pad + w, Y(sp)); ctx.stroke();
+        ctx.setLineDash([]);
+
+        ctx.beginPath();                                     // PV trace + soft fill
+        for (let i = 0; i < t.length; i++) {
+            const xx = X(t[i]), yy = Y(pv[i]);
+            i === 0 ? ctx.moveTo(xx, yy) : ctx.lineTo(xx, yy);
+        }
+        ctx.strokeStyle = cAccent; ctx.lineWidth = 2; ctx.stroke();
+        ctx.lineTo(X(t[t.length - 1]), pad + h);
+        ctx.lineTo(X(0), pad + h);
+        ctx.closePath();
+        ctx.fillStyle = cFill; ctx.fill();
+
+        ctx.font = "9px 'IBM Plex Mono', monospace";          // "SP" tag on the setpoint line
+        ctx.fillStyle = cDim; ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
+        ctx.fillText('SP', pad + w - 3, Y(sp) - 2);
+    }
+
+    // ── Init: run all three on load; redraw (not re-simulate) on resize. ──
+    [1, 2, 3].forEach(n => runMini(n));
+    window.addEventListener('resize', () => [1, 2, 3].forEach(n => {
+        if (miniLast[n]) drawMiniChart(document.getElementById('m' + n + 'Canvas'), miniLast[n], n === 1);
+    }));
+</script>
 
 </body>
 </html>
