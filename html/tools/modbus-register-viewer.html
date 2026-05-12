@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Modbus Register Viewer — controlsfreak.dev</title>
-    <meta name="description" content="Inspect a 16-bit Modbus register: clickable bit grid, two-way bound decimal / hex inputs, and dec / hex / binary readouts. No login, no ads.">
+    <meta name="description" content="Inspect a 16-bit Modbus register: clickable bit grid, two-way bound decimal / hex inputs, dec / hex / binary readouts, and a function-code reference. No login, no ads.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&family=Overpass:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/styles.css">
@@ -35,36 +35,62 @@
                 <span class="tool-tag">Modbus</span>
             </div>
         </div>
-        <div class="tool-body">
-            <div class="form-row">
-                <div class="field">
-                    <label>Decimal Value (0 – 65535)</label>
-                    <input type="number" id="modDec" min="0" max="65535" step="1" placeholder="43981" oninput="fromDec()">
-                </div>
-                <div class="field">
-                    <label>Hex Value (0x0000 – 0xFFFF)</label>
-                    <input type="text" id="modHex" placeholder="0xABCD" oninput="fromHex()">
-                </div>
-            </div>
 
-            <p class="bit-hint">Bit 15 = MSB (left) · Bit 0 = LSB (right) · Click any bit to toggle</p>
+        <div class="tool-body-3col">
 
-            <div class="bit-grid" id="bitGrid"></div>
+            <section>
+                <div class="ps-section-label">Input</div>
+                <div class="ps-row">
+                    <span class="ps-label">Decimal (0–65535)</span>
+                    <input class="ps-input" type="number" id="modDec" min="0" max="65535" step="1" placeholder="43981" oninput="fromDec()">
+                </div>
+                <div class="ps-row">
+                    <span class="ps-label">Hex (0x0000–0xFFFF)</span>
+                    <input class="ps-input" type="text" id="modHex" placeholder="0xABCD" oninput="fromHex()">
+                </div>
+                <p class="bit-hint" style="margin-top:0.85rem;">Bit 15 = MSB (top-left) · Bit 0 = LSB (bottom-right) · click to toggle</p>
+                <!-- 8 columns × 2 rows: the 16-bit grid won't stay legible at 16 cells in a third-width column -->
+                <div class="bit-grid" id="bitGrid" style="grid-template-columns:repeat(8, 1fr);"></div>
+            </section>
 
-            <div class="bit-readouts">
-                <div class="readout">
-                    <div class="readout-label">Decimal</div>
-                    <div class="readout-value" id="readDec">—</div>
+            <section>
+                <div class="ps-section-label">Output</div>
+                <div class="ps-row">
+                    <span class="ps-label">Decimal</span>
+                    <span class="ps-value muted" id="readDec">—</span>
                 </div>
-                <div class="readout">
-                    <div class="readout-label">Hex</div>
-                    <div class="readout-value" id="readHex">—</div>
+                <div class="ps-row">
+                    <span class="ps-label">Hex</span>
+                    <span class="ps-value muted" id="readHex">—</span>
                 </div>
-                <div class="readout">
-                    <div class="readout-label">Binary</div>
-                    <div class="readout-value" id="readBin">—</div>
+                <div class="ps-row">
+                    <span class="ps-label">Binary</span>
+                    <span class="ps-value muted" id="readBin">—</span>
                 </div>
-            </div>
+            </section>
+
+            <section>
+                <div class="ps-section-label">Modbus Function Codes</div>
+                <table class="ref-table-dense">
+                    <thead>
+                        <tr><th>FC</th><th>Hex</th><th class="use">Function</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>01</td><td>0x01</td><td class="use">Read Coils</td></tr>
+                        <tr><td>02</td><td>0x02</td><td class="use">Read Discrete Inputs</td></tr>
+                        <tr><td>03</td><td>0x03</td><td class="use">Read Holding Registers</td></tr>
+                        <tr><td>04</td><td>0x04</td><td class="use">Read Input Registers</td></tr>
+                        <tr><td>05</td><td>0x05</td><td class="use">Write Single Coil</td></tr>
+                        <tr><td>06</td><td>0x06</td><td class="use">Write Single Register</td></tr>
+                        <tr><td>15</td><td>0x0F</td><td class="use">Write Multiple Coils</td></tr>
+                        <tr><td>16</td><td>0x10</td><td class="use">Write Multiple Registers</td></tr>
+                    </tbody>
+                </table>
+                <p class="ref-note">
+                    Coils and discrete inputs are 1-bit; holding and input registers are 16-bit — this tool views one of those. Discrete inputs and input registers are read-only; coils and holding registers are read/write.
+                </p>
+            </section>
+
         </div>
     </div>
 
@@ -74,7 +100,7 @@
 
 <footer>
     <span class="footer-text">controlsfreak.dev — open tools for controls engineers</span>
-    <span class="footer-text">v0.4 · 2026</span>
+    <span class="footer-text">v0.5 · 2026</span>
 </footer>
 
 <script>
@@ -104,11 +130,14 @@
     }
 
     function updateReadouts(val) {
-        document.getElementById('readDec').textContent = val;
-        document.getElementById('readHex').textContent = '0x' + val.toString(16).toUpperCase().padStart(4, '0');
+        const decEl = document.getElementById('readDec');
+        const hexEl = document.getElementById('readHex');
+        const binEl = document.getElementById('readBin');
+        decEl.className = 'ps-value live'; decEl.textContent = val;
+        hexEl.className = 'ps-value live'; hexEl.textContent = '0x' + val.toString(16).toUpperCase().padStart(4, '0');
         const bin = val.toString(2).padStart(16, '0');
-        document.getElementById('readBin').textContent =
-            bin.slice(0,4) + ' ' + bin.slice(4,8) + ' ' + bin.slice(8,12) + ' ' + bin.slice(12,16);
+        binEl.className = 'ps-value live';
+        binEl.textContent = bin.slice(0,4) + ' ' + bin.slice(4,8) + ' ' + bin.slice(8,12) + ' ' + bin.slice(12,16);
     }
 
     function fromDec() {

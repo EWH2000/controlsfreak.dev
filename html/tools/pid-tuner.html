@@ -35,6 +35,11 @@
                 <span class="tool-tag">Loops</span>
             </div>
         </div>
+        <!-- This tool keeps its custom stacked layout on purpose: the simulator (canvas +
+             sliders + parameter-style selector + preset chips + metrics) doesn't fit the
+             three-column Input / Output / Reference pattern without forcing it. Only the
+             symptom → tuning-move cheat sheet lower down adopts the new look (.ref-table-dense),
+             since that part IS reference content. -->
         <div class="tool-body">
 
             <p style="font-family:var(--mono);font-size:0.7rem;color:var(--text-dim);margin-bottom:1.5rem;line-height:1.7;">
@@ -130,19 +135,19 @@
                 Quick reference for when you already know your way around a loop. ↑ = more, ↓ = less; P = gain, I = reset, D = rate.
             </p>
 
-            <table class="ref-table">
+            <table class="ref-table-dense">
                 <thead>
-                    <tr><th>Symptom</th><th>Tuning move</th></tr>
+                    <tr><th class="use">Symptom</th><th>Tuning move</th></tr>
                 </thead>
                 <tbody>
-                    <tr><td>Slow to respond</td><td>↑ P</td></tr>
-                    <tr><td>Crawls toward setpoint</td><td>↑ P · ↑ I</td></tr>
-                    <tr><td>Steady-state offset</td><td>↑ I</td></tr>
-                    <tr><td>Overshoots, then recovers</td><td>↓ P slightly · ↑ D on laggy loops</td></tr>
-                    <tr><td>Oscillates / hunts</td><td>↓ P · ↓ I</td></tr>
-                    <tr><td>Jumpy / noisy output</td><td>↓ D · filter input</td></tr>
-                    <tr><td>Pinned at 0 % / 100 %</td><td>check sizing &amp; sequencing</td></tr>
-                    <tr><td>PV runs away when the loop acts</td><td>flip acting (direct ↔ reverse)</td></tr>
+                    <tr><td class="use">Slow to respond</td><td>↑ P</td></tr>
+                    <tr><td class="use">Crawls toward setpoint</td><td>↑ P · ↑ I</td></tr>
+                    <tr><td class="use">Steady-state offset</td><td>↑ I</td></tr>
+                    <tr><td class="use">Overshoots, then recovers</td><td>↓ P slightly · ↑ D on laggy loops</td></tr>
+                    <tr><td class="use">Oscillates / hunts</td><td>↓ P · ↓ I</td></tr>
+                    <tr><td class="use">Jumpy / noisy output</td><td>↓ D · filter input</td></tr>
+                    <tr><td class="use">Pinned at 0 % / 100 %</td><td>check sizing &amp; sequencing</td></tr>
+                    <tr><td class="use">PV runs away when the loop acts</td><td>flip acting (direct ↔ reverse)</td></tr>
                 </tbody>
             </table>
 
@@ -164,7 +169,7 @@
 
 <footer>
     <span class="footer-text">controlsfreak.dev — open tools for controls engineers</span>
-    <span class="footer-text">v0.4 · 2026</span>
+    <span class="footer-text">v0.5 · 2026</span>
 </footer>
 
 <!-- Shared simulation core — the FOPDT process model + discrete-time stepping.

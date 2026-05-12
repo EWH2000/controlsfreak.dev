@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Signal Scaling Calculator — controlsfreak.dev</title>
-    <meta name="description" content="Scale analog I/O signals (4–20 mA, 0–10 V, custom) to engineering units and back, plus 2-point → slope/offset for Niagara ProxyExt. No login, no ads.">
+    <meta name="description" content="Scale analog I/O signals (4–20 mA, 0–10 V, custom) to engineering units and back, plus 2-point → slope/offset for Niagara ProxyExt, with a common-signal-types reference. No login, no ads.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&family=Overpass:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/styles.css">
@@ -35,19 +35,22 @@
                 <span class="tool-tag">Analog I/O</span>
             </div>
         </div>
-        <div class="tool-body">
-            <div class="tabs">
-                <button class="tab-btn active" onclick="switchTab('scaling', this)">Signal → Eng. Units</button>
-                <button class="tab-btn" onclick="switchTab('reverse', this)">Eng. Units → Signal</button>
-                <button class="tab-btn" onclick="switchTab('slopeoffset', this)">2-Point → Slope / Offset</button>
-            </div>
 
-            <!-- Signal → Eng. Units -->
-            <div id="tab-scaling" class="tab-pane active">
-                <div class="form-row">
-                    <div class="field">
-                        <label>Signal Type</label>
-                        <select id="sigType" onchange="calcScaling()">
+        <div class="tabs tabs-flush">
+            <button class="tab-btn active" onclick="switchTab('scaling', this)">Signal → Eng. Units</button>
+            <button class="tab-btn" onclick="switchTab('reverse', this)">Eng. Units → Signal</button>
+            <button class="tab-btn" onclick="switchTab('slopeoffset', this)">2-Point → Slope / Offset</button>
+        </div>
+
+        <!-- ── Signal → Eng. Units ── -->
+        <div id="tab-scaling" class="tab-pane active">
+            <div class="tool-body-3col">
+
+                <section>
+                    <div class="ps-section-label">Input</div>
+                    <div class="ps-row">
+                        <span class="ps-label">Signal type</span>
+                        <select class="ps-input" id="sigType" onchange="calcScaling()">
                             <option value="4-20">4–20 mA</option>
                             <option value="0-20">0–20 mA</option>
                             <option value="0-10">0–10 V</option>
@@ -57,72 +60,95 @@
                             <option value="custom">Custom range…</option>
                         </select>
                     </div>
-                    <div class="field">
-                        <label id="sigInputLabel">Signal Value (mA)</label>
-                        <input type="number" id="sigVal" step="0.01" placeholder="12.00" oninput="calcScaling()">
+                    <div class="ps-row">
+                        <span class="ps-label" id="sigInputLabel">Signal Value (mA)</span>
+                        <input class="ps-input" type="number" id="sigVal" step="0.01" placeholder="12.00" oninput="calcScaling()">
                     </div>
-                </div>
+                    <div id="customRow" style="display:none">
+                        <div class="ps-row">
+                            <span class="ps-label">Range min</span>
+                            <input class="ps-input" type="number" id="customMin" step="any" placeholder="4" oninput="calcScaling()">
+                        </div>
+                        <div class="ps-row">
+                            <span class="ps-label">Range max</span>
+                            <input class="ps-input" type="number" id="customMax" step="any" placeholder="20" oninput="calcScaling()">
+                        </div>
+                        <div class="ps-row">
+                            <span class="ps-label">Range unit</span>
+                            <input class="ps-input" type="text" id="customUnit" placeholder="mA" oninput="calcScaling()">
+                        </div>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">Eng. units min</span>
+                        <input class="ps-input" type="number" id="euMin" step="any" placeholder="0" oninput="calcScaling()">
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">Eng. units max</span>
+                        <input class="ps-input" type="number" id="euMax" step="any" placeholder="100" oninput="calcScaling()">
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">Units label</span>
+                        <input class="ps-input" type="text" id="euLabelInput" placeholder="°F, %, CFM…" oninput="calcScaling()">
+                    </div>
+                </section>
 
-                <div class="form-row three" id="customRow" style="display:none">
-                    <div class="field">
-                        <label>Range Min</label>
-                        <input type="number" id="customMin" step="any" placeholder="4" oninput="calcScaling()">
+                <section>
+                    <div class="ps-section-label">Output</div>
+                    <div class="ps-row">
+                        <span class="ps-label">Eng. value</span>
+                        <span class="ps-value muted" id="scalingOut">—</span>
                     </div>
-                    <div class="field">
-                        <label>Range Max</label>
-                        <input type="number" id="customMax" step="any" placeholder="20" oninput="calcScaling()">
+                    <div class="ps-row">
+                        <span class="ps-label">% of span</span>
+                        <span class="ps-value muted" id="scalingPct">—</span>
                     </div>
-                    <div class="field">
-                        <label>Unit</label>
-                        <input type="text" id="customUnit" placeholder="mA" oninput="calcScaling()">
+                    <div class="range-bar-wrap">
+                        <div class="range-bar-labels">
+                            <span id="barLabelMin">Min</span>
+                            <span id="barLabelMax">Max</span>
+                        </div>
+                        <div class="range-bar">
+                            <div class="range-bar-fill" id="rangeBarFill"></div>
+                        </div>
                     </div>
-                </div>
+                    <div class="btn-row" style="margin-top:1rem;">
+                        <button class="copy-btn" onclick="copyReadouts(this, '', 'scalingOut')">Copy value</button>
+                    </div>
+                    <div class="result-formula" id="scalingFormula" style="word-break:normal;overflow-wrap:break-word;"></div>
+                </section>
 
-                <div class="form-row three">
-                    <div class="field">
-                        <label>Eng. Units Min</label>
-                        <input type="number" id="euMin" step="any" placeholder="0" oninput="calcScaling()">
-                    </div>
-                    <div class="field">
-                        <label>Eng. Units Max</label>
-                        <input type="number" id="euMax" step="any" placeholder="100" oninput="calcScaling()">
-                    </div>
-                    <div class="field">
-                        <label>Units Label (optional)</label>
-                        <input type="text" id="euLabelInput" placeholder="°F, %, CFM…" oninput="calcScaling()">
-                    </div>
-                </div>
+                <section>
+                    <div class="ps-section-label">Common Signal Types</div>
+                    <table class="ref-table-dense">
+                        <thead>
+                            <tr><th>Signal</th><th>Live zero</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>4–20 mA</td><td>yes</td></tr>
+                            <tr><td>0–20 mA</td><td>no</td></tr>
+                            <tr><td>0–10 V</td><td>no</td></tr>
+                            <tr><td>2–10 V</td><td>yes</td></tr>
+                            <tr><td>0–5 V</td><td>no</td></tr>
+                            <tr><td>1–5 V</td><td>yes</td></tr>
+                        </tbody>
+                    </table>
+                    <p class="ref-note">
+                        "Live zero": a broken wire reads below-range and faults, not as a valid 0%.
+                    </p>
+                </section>
 
-                <div class="result-panel">
-                    <div>
-                        <div class="result-label">Engineering Value</div>
-                        <div class="result-value muted" id="scalingOut">—</div>
-                    </div>
-                    <div style="text-align:right">
-                        <div class="result-label">% of Span</div>
-                        <div class="result-value muted" id="scalingPct" style="font-size:1.3rem">—</div>
-                    </div>
-                </div>
-
-                <div class="range-bar-wrap">
-                    <div class="range-bar-labels">
-                        <span id="barLabelMin">Min</span>
-                        <span id="barLabelMax">Max</span>
-                    </div>
-                    <div class="range-bar">
-                        <div class="range-bar-fill" id="rangeBarFill"></div>
-                    </div>
-                </div>
-
-                <div class="result-formula" id="scalingFormula"></div>
             </div>
+        </div>
 
-            <!-- Eng. Units → Signal -->
-            <div id="tab-reverse" class="tab-pane">
-                <div class="form-row">
-                    <div class="field">
-                        <label>Signal Type</label>
-                        <select id="revSigType" onchange="calcReverse()">
+        <!-- ── Eng. Units → Signal ── -->
+        <div id="tab-reverse" class="tab-pane">
+            <div class="tool-body-3col">
+
+                <section>
+                    <div class="ps-section-label">Input</div>
+                    <div class="ps-row">
+                        <span class="ps-label">Signal type</span>
+                        <select class="ps-input" id="revSigType" onchange="calcReverse()">
                             <option value="4-20">4–20 mA</option>
                             <option value="0-20">0–20 mA</option>
                             <option value="0-10">0–10 V</option>
@@ -131,82 +157,105 @@
                             <option value="1-5">1–5 V</option>
                         </select>
                     </div>
-                    <div class="field">
-                        <label>Engineering Value</label>
-                        <input type="number" id="revEuVal" step="any" placeholder="72.5" oninput="calcReverse()">
+                    <div class="ps-row">
+                        <span class="ps-label">Eng. value</span>
+                        <input class="ps-input" type="number" id="revEuVal" step="any" placeholder="72.5" oninput="calcReverse()">
                     </div>
-                </div>
-                <div class="form-row">
-                    <div class="field">
-                        <label>Eng. Units Min</label>
-                        <input type="number" id="revEuMin" step="any" placeholder="0" oninput="calcReverse()">
+                    <div class="ps-row">
+                        <span class="ps-label">Eng. units min</span>
+                        <input class="ps-input" type="number" id="revEuMin" step="any" placeholder="0" oninput="calcReverse()">
                     </div>
-                    <div class="field">
-                        <label>Eng. Units Max</label>
-                        <input type="number" id="revEuMax" step="any" placeholder="100" oninput="calcReverse()">
+                    <div class="ps-row">
+                        <span class="ps-label">Eng. units max</span>
+                        <input class="ps-input" type="number" id="revEuMax" step="any" placeholder="100" oninput="calcReverse()">
                     </div>
-                </div>
+                </section>
 
-                <div class="result-panel">
-                    <div>
-                        <div class="result-label">Signal Output</div>
-                        <div class="result-value muted" id="reverseOut">—</div>
+                <section>
+                    <div class="ps-section-label">Output</div>
+                    <div class="ps-row">
+                        <span class="ps-label">Signal output</span>
+                        <span class="ps-value muted" id="reverseOut">—</span>
                     </div>
-                </div>
-                <div class="result-formula" id="reverseFormula"></div>
+                    <div class="ps-row">
+                        <span class="ps-label">% of span</span>
+                        <span class="ps-value muted" id="reversePct">—</span>
+                    </div>
+                    <div class="btn-row" style="margin-top:1rem;">
+                        <button class="copy-btn" onclick="copyReadouts(this, '', 'reverseOut')">Copy signal</button>
+                    </div>
+                    <div class="result-formula" id="reverseFormula" style="word-break:normal;overflow-wrap:break-word;"></div>
+                </section>
+
+                <section>
+                    <div class="ps-section-label">Common Signal Types</div>
+                    <table class="ref-table-dense">
+                        <thead>
+                            <tr><th>Signal</th><th>Live zero</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>4–20 mA</td><td>yes</td></tr>
+                            <tr><td>0–20 mA</td><td>no</td></tr>
+                            <tr><td>0–10 V</td><td>no</td></tr>
+                            <tr><td>2–10 V</td><td>yes</td></tr>
+                            <tr><td>0–5 V</td><td>no</td></tr>
+                            <tr><td>1–5 V</td><td>yes</td></tr>
+                        </tbody>
+                    </table>
+                    <p class="ref-note">
+                        "Live zero": a broken wire reads below-range and faults, not as a valid 0%.
+                    </p>
+                </section>
+
             </div>
+        </div>
 
-            <!-- 2-Point → Slope / Offset -->
-            <div id="tab-slopeoffset" class="tab-pane">
-                <p style="font-family:var(--mono);font-size:0.7rem;color:var(--text-dim);margin-bottom:1.25rem;line-height:1.7;">
-                    Enter two known IO pairs — hardware electrical limits work well here.<br>
-                    Outputs the slope (m) and offset (b) for y&nbsp;=&nbsp;mx&nbsp;+&nbsp;b, ready to paste into Niagara's ProxyExt.
-                </p>
+        <!-- ── 2-Point → Slope / Offset ── -->
+        <!-- Two-column: the worked formula has nowhere useful to grow into, so there's no
+             Reference section here. Uses the .tool-body-3col grid with the Output section
+             spanning the right two-thirds; on mobile the @media stack rule still applies. -->
+        <div id="tab-slopeoffset" class="tab-pane">
+            <div class="tool-body-3col">
 
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1rem;">
-                    <div>
-                        <div style="font-family:var(--mono);font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--accent);margin-bottom:0.65rem;">Point 1</div>
-                        <div class="field" style="margin-bottom:0.75rem;">
-                            <label>Raw Input (x₁)</label>
-                            <input type="number" id="so_x1" step="any" placeholder="4" oninput="calcSlopeOffset()">
-                        </div>
-                        <div class="field">
-                            <label>Eng. Value (y₁)</label>
-                            <input type="number" id="so_y1" step="any" placeholder="0" oninput="calcSlopeOffset()">
-                        </div>
+                <section>
+                    <div class="ps-section-label">Input — two IO pairs</div>
+                    <div class="ps-row">
+                        <span class="ps-label">x₁ (raw)</span>
+                        <input class="ps-input" type="number" id="so_x1" step="any" placeholder="4" oninput="calcSlopeOffset()">
                     </div>
-                    <div>
-                        <div style="font-family:var(--mono);font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--accent);margin-bottom:0.65rem;">Point 2</div>
-                        <div class="field" style="margin-bottom:0.75rem;">
-                            <label>Raw Input (x₂)</label>
-                            <input type="number" id="so_x2" step="any" placeholder="20" oninput="calcSlopeOffset()">
-                        </div>
-                        <div class="field">
-                            <label>Eng. Value (y₂)</label>
-                            <input type="number" id="so_y2" step="any" placeholder="100" oninput="calcSlopeOffset()">
-                        </div>
+                    <div class="ps-row">
+                        <span class="ps-label">y₁ (eng.)</span>
+                        <input class="ps-input" type="number" id="so_y1" step="any" placeholder="0" oninput="calcSlopeOffset()">
                     </div>
-                </div>
+                    <div class="ps-row">
+                        <span class="ps-label">x₂ (raw)</span>
+                        <input class="ps-input" type="number" id="so_x2" step="any" placeholder="20" oninput="calcSlopeOffset()">
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">y₂ (eng.)</span>
+                        <input class="ps-input" type="number" id="so_y2" step="any" placeholder="100" oninput="calcSlopeOffset()">
+                    </div>
+                </section>
 
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1rem;">
-                    <div class="result-panel" style="flex-direction:column;align-items:flex-start;gap:0.5rem;">
-                        <div class="result-label">Slope (m) — Scale Factor</div>
-                        <div style="display:flex;align-items:baseline;gap:0.75rem;width:100%;">
-                            <div class="result-value muted" id="so_slope" style="font-size:1.6rem;">—</div>
-                            <button class="copy-btn" onclick="copyVal('so_slope')" title="Copy slope">copy</button>
-                        </div>
+                <!-- Output spans the right two-thirds; background:none — it's the output, not a recessed reference panel -->
+                <section style="grid-column:span 2;background:none;">
+                    <div class="ps-section-label">Output — y = mx + b</div>
+                    <div class="ps-row">
+                        <span class="ps-label">Slope (m) — scale factor</span>
+                        <span class="ps-value muted" id="so_slope">—</span>
                     </div>
-                    <div class="result-panel" style="flex-direction:column;align-items:flex-start;gap:0.5rem;">
-                        <div class="result-label">Offset (b) — Intercept</div>
-                        <div style="display:flex;align-items:baseline;gap:0.75rem;width:100%;">
-                            <div class="result-value muted" id="so_offset" style="font-size:1.6rem;">—</div>
-                            <button class="copy-btn" onclick="copyVal('so_offset')" title="Copy offset">copy</button>
-                        </div>
+                    <div class="ps-row">
+                        <span class="ps-label">Offset (b) — intercept</span>
+                        <span class="ps-value muted" id="so_offset">—</span>
                     </div>
-                </div>
+                    <div class="btn-row" style="margin-top:1rem;">
+                        <button class="copy-btn" onclick="copyReadouts(this, '', 'so_slope')">Copy m</button>
+                        <button class="copy-btn" onclick="copyReadouts(this, '', 'so_offset')">Copy b</button>
+                    </div>
+                </section>
 
-                <div class="result-formula" id="so_formula"></div>
             </div>
+            <div class="result-formula" id="so_formula" style="margin:0;padding:0.7rem 1.25rem;"></div>
         </div>
     </div>
 
@@ -216,7 +265,7 @@
 
 <footer>
     <span class="footer-text">controlsfreak.dev — open tools for controls engineers</span>
-    <span class="footer-text">v0.4 · 2026</span>
+    <span class="footer-text">v0.5 · 2026</span>
 </footer>
 
 <script>
@@ -239,6 +288,22 @@
         card.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         document.getElementById('tab-' + name).classList.add('active');
         btn.classList.add('active');
+    }
+
+    // Copy one or more readout values to the clipboard, joined by `sep`
+    // ('' = a single value). Empty "—" placeholders are dropped. No-op if
+    // there's nothing real to copy, or while the button is showing its
+    // "copied!" flash.
+    function copyReadouts(btn, sep, ...ids) {
+        if (btn.classList.contains('copied')) return;
+        const parts = ids.map(id => document.getElementById(id).textContent).filter(v => v && v !== '—');
+        if (!parts.length) return;
+        navigator.clipboard.writeText(parts.join(sep)).then(() => {
+            const orig = btn.textContent;
+            btn.textContent = 'copied!';
+            btn.classList.add('copied');
+            setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 1800);
+        });
     }
 
     // ─────────────────────────────────────────────
@@ -273,9 +338,9 @@
         document.getElementById('barLabelMax').textContent = isNaN(euMax) ? 'Max' : `${euMax}${euUnit ? ' ' + euUnit : ''}`;
 
         if (isNaN(sig) || isNaN(euMin) || isNaN(euMax) || isNaN(sMin) || isNaN(sMax) || sMax === sMin) {
-            outEl.className = 'result-value muted';
+            outEl.className = 'ps-value muted';
             outEl.textContent = '—';
-            pctEl.className = 'result-value muted';
+            pctEl.className = 'ps-value muted';
             pctEl.textContent = '—';
             fillEl.style.width = '0%';
             document.getElementById('scalingFormula').textContent = '';
@@ -290,11 +355,11 @@
 
         fillEl.style.width = Math.min(100, Math.max(0, pctNum)) + '%';
 
-        outEl.className = 'result-value' + (outOfRange ? ' error' : '');
-        outEl.textContent = eu.toFixed(2) + (euUnit ? '\u00A0' + euUnit : '');
+        outEl.className = 'ps-value live' + (outOfRange ? ' error' : '');
+        outEl.textContent = eu.toFixed(2) + (euUnit ? ' ' + euUnit : '');
 
-        pctEl.className = 'result-value' + (outOfRange ? ' error' : '');
-        pctEl.textContent = pctNum.toFixed(1) + '%' + (outOfRange ? '\u00A0⚠' : '');
+        pctEl.className = 'ps-value live' + (outOfRange ? ' error' : '');
+        pctEl.textContent = pctNum.toFixed(1) + '%' + (outOfRange ? ' ⚠' : '');
 
         document.getElementById('scalingFormula').textContent =
             `Eng. value = ${euMin} + ((${sig} − ${sMin}) ÷ (${sMax} − ${sMin})) × (${euMax} − ${euMin}) = ${eu.toFixed(4)}${euUnit ? ' ' + euUnit : ''}`;
@@ -310,10 +375,13 @@
         const euMin = parseFloat(document.getElementById('revEuMin').value);
         const euMax = parseFloat(document.getElementById('revEuMax').value);
         const outEl = document.getElementById('reverseOut');
+        const pctEl = document.getElementById('reversePct');
 
         if (isNaN(eu) || isNaN(euMin) || isNaN(euMax) || euMax === euMin) {
-            outEl.className = 'result-value muted';
+            outEl.className = 'ps-value muted';
             outEl.textContent = '—';
+            pctEl.className = 'ps-value muted';
+            pctEl.textContent = '—';
             document.getElementById('reverseFormula').textContent = '';
             return;
         }
@@ -322,8 +390,11 @@
         const sig   = sMin + ratio * (sMax - sMin);
         const outOfRange = eu < euMin || eu > euMax;
 
-        outEl.className = 'result-value' + (outOfRange ? ' error' : '');
-        outEl.textContent = sig.toFixed(3) + '\u00A0' + sUnit;
+        outEl.className = 'ps-value live' + (outOfRange ? ' error' : '');
+        outEl.textContent = sig.toFixed(3) + ' ' + sUnit;
+
+        pctEl.className = 'ps-value live' + (outOfRange ? ' error' : '');
+        pctEl.textContent = (ratio * 100).toFixed(1) + '%' + (outOfRange ? ' ⚠' : '');
 
         document.getElementById('reverseFormula').textContent =
             `Signal = ${sMin} + ((${eu} − ${euMin}) ÷ (${euMax} − ${euMin})) × (${sMax} − ${sMin}) = ${sig.toFixed(4)} ${sUnit}`;
@@ -343,8 +414,8 @@
         const formulaEl = document.getElementById('so_formula');
 
         if (isNaN(x1) || isNaN(y1) || isNaN(x2) || isNaN(y2) || x1 === x2) {
-            slopeEl.className  = 'result-value muted';
-            offsetEl.className = 'result-value muted';
+            slopeEl.className  = 'ps-value muted';
+            offsetEl.className = 'ps-value muted';
             slopeEl.textContent  = '—';
             offsetEl.textContent = '—';
             formulaEl.textContent = x1 === x2 ? 'x₁ and x₂ cannot be equal — division by zero.' : '';
@@ -354,8 +425,8 @@
         const m = (y2 - y1) / (x2 - x1);
         const b = y1 - m * x1;
 
-        slopeEl.className  = 'result-value';
-        offsetEl.className = 'result-value';
+        slopeEl.className  = 'ps-value live';
+        offsetEl.className = 'ps-value live';
         slopeEl.textContent  = parseFloat(m.toFixed(6)).toString();
         offsetEl.textContent = parseFloat(b.toFixed(6)).toString();
 
@@ -363,20 +434,6 @@
             `m = (${y2} − ${y1}) ÷ (${x2} − ${x1}) = ${m.toFixed(6)}` +
             `    ·    b = ${y1} − (${m.toFixed(6)} × ${x1}) = ${b.toFixed(6)}` +
             `    →    y = ${parseFloat(m.toFixed(6))}x + (${parseFloat(b.toFixed(6))})`;
-    }
-
-    // ─────────────────────────────────────────────
-    // Copy value to clipboard
-    // ─────────────────────────────────────────────
-    function copyVal(id) {
-        const text = document.getElementById(id).textContent;
-        if (text === '—') return;
-        navigator.clipboard.writeText(text).then(() => {
-            const btn = event.currentTarget;
-            btn.textContent = 'copied!';
-            btn.classList.add('copied');
-            setTimeout(() => { btn.textContent = 'copy'; btn.classList.remove('copied'); }, 1800);
-        });
     }
 </script>
 

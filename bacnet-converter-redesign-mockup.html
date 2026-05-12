@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>BACnet/IP Converter — Desktop Redesign Mockup</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Overpass:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  /* approximations of the site's tokens — adjust to real values from styles.css */
+  --bg: #e8ede5;
+  --surface: #ffffff;
+  --surface-2: #f3f5f0;
+  --surface-3: #eef1eb;
+  --border: #d4dbd1;
+  --border-faint: #eaeee6;
+  --accent: #43881c;
+  --accent-dim: #356a16;
+  --text: #1c2018;
+  --text-bright: #0d1108;
+  --text-dim: #6b7068;
+  --blue: #1577b8;
+  --mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --sans: 'Overpass', system-ui, sans-serif;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.5;
+  color-scheme: light;
+  min-height: 100vh;
+}
+
+/* nav (kept similar to current site, just for context) */
+.site-nav {
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+  padding: 0.9rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.site-nav-brand {
+  font-family: var(--mono);
+  font-weight: 600;
+  color: var(--text-bright);
+  font-size: 1rem;
+}
+.site-nav-links {
+  display: flex;
+  gap: 1.75rem;
+  font-size: 0.95rem;
+}
+.site-nav-links a {
+  text-decoration: none;
+  color: var(--text);
+}
+.site-nav-links a.active {
+  color: var(--accent);
+  font-weight: 600;
+  border-bottom: 2px solid var(--accent);
+  padding-bottom: 2px;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2.5rem 1.5rem 3rem;
+}
+
+.back-link {
+  display: inline-block;
+  margin-bottom: 1.25rem;
+  font-size: 0.85rem;
+  color: var(--accent);
+  text-decoration: none;
+}
+
+/* tool card (shared with current site) */
+.tool-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+}
+.tool-card-header {
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+  padding: 0.75rem 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.tool-card-title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text-bright);
+  font-family: var(--sans);
+}
+.tool-tag {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: var(--text-dim);
+  background: var(--surface-3);
+  border: 1px solid var(--border);
+  padding: 3px 10px;
+  border-radius: 2px;
+  letter-spacing: 0.04em;
+}
+
+/* tabs (kept) */
+.tabs {
+  display: flex;
+  gap: 0;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 1.25rem;
+}
+.tab-btn {
+  background: none;
+  border: none;
+  padding: 0.7rem 1rem;
+  font-family: var(--sans);
+  font-size: 0.9rem;
+  color: var(--text-dim);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+.tab-btn.active {
+  color: var(--text-bright);
+  font-weight: 600;
+  border-bottom-color: var(--accent);
+}
+
+/* NEW: three-column tool body */
+.tool-body-3col {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0;
+}
+.tool-body-3col > section {
+  padding: 1.25rem 1.25rem 1.5rem;
+  border-right: 1px solid var(--border);
+}
+.tool-body-3col > section:last-child {
+  border-right: none;
+  background: var(--surface-3);
+}
+
+.section-label {
+  font-family: var(--sans);
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-dim);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 0.85rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+/* NEW: property-sheet row — label left, value right */
+.ps-row {
+  display: grid;
+  grid-template-columns: minmax(90px, 38%) 1fr;
+  gap: 12px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--border-faint);
+  align-items: center;
+  min-height: 38px;
+}
+.ps-row:last-of-type {
+  border-bottom: none;
+}
+.ps-label {
+  font-family: var(--sans);
+  font-size: 0.82rem;
+  color: var(--text-dim);
+}
+.ps-value {
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  color: var(--text);
+}
+.ps-value.readout {
+  color: var(--blue);
+  font-weight: 600;
+  font-size: 0.92rem;
+}
+.ps-value.muted {
+  color: var(--text-dim);
+  font-family: var(--sans);
+  font-style: italic;
+  font-size: 0.78rem;
+}
+.ps-input {
+  width: 100%;
+  padding: 5px 8px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  color: var(--text);
+  border-radius: 2px;
+}
+.ps-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.btn-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 0.85rem;
+}
+.copy-btn {
+  font-family: var(--sans);
+  font-size: 0.78rem;
+  color: var(--accent);
+  background: var(--surface);
+  border: 1px solid var(--accent);
+  padding: 5px 12px;
+  border-radius: 2px;
+  cursor: pointer;
+}
+.copy-btn:hover {
+  background: var(--accent);
+  color: var(--surface);
+}
+
+/* NEW: dense reference table */
+.ref-table-dense {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.78rem;
+}
+.ref-table-dense th {
+  text-align: left;
+  font-family: var(--sans);
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-dim);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-2);
+}
+.ref-table-dense td {
+  padding: 5px 8px;
+  border-bottom: 1px solid var(--border-faint);
+  font-family: var(--mono);
+  color: var(--text);
+}
+.ref-table-dense td.use {
+  font-family: var(--sans);
+  font-size: 0.78rem;
+  color: var(--text-dim);
+}
+.ref-table-dense tr:nth-child(even) td {
+  background: rgba(0,0,0,0.015);
+}
+
+.ref-note {
+  font-family: var(--sans);
+  font-size: 0.74rem;
+  color: var(--text-dim);
+  line-height: 1.5;
+  margin-top: 0.85rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--border-faint);
+}
+
+/* legend strip at the bottom — design notes for the mockup itself */
+.mockup-notes {
+  margin-top: 2rem;
+  padding: 1.25rem 1.5rem;
+  background: var(--surface);
+  border: 1px dashed var(--border);
+  border-radius: 2px;
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  line-height: 1.6;
+}
+.mockup-notes h3 {
+  margin: 0 0 0.5rem;
+  font-size: 0.95rem;
+  color: var(--text);
+  font-weight: 600;
+}
+.mockup-notes ul {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+.mockup-notes li {
+  margin-bottom: 0.35rem;
+}
+.mockup-notes code {
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  background: var(--surface-2);
+  padding: 1px 5px;
+  border-radius: 2px;
+}
+</style>
+</head>
+<body>
+
+<nav class="site-nav">
+  <span class="site-nav-brand">controlsfreak.dev</span>
+  <div class="site-nav-links">
+    <a href="#">Home</a>
+    <a href="#" class="active">Tools</a>
+    <a href="#">Education</a>
+    <a href="#">Contact</a>
+  </div>
+</nav>
+
+<main class="container">
+
+  <a class="back-link" href="#">← All tools</a>
+
+  <div class="tool-card">
+    <header class="tool-card-header">
+      <h2 class="tool-card-title">BACnet/IP Hex Converter</h2>
+      <span class="tool-tag">BACnet</span>
+    </header>
+
+    <div class="tabs">
+      <button class="tab-btn active">Hex → IP</button>
+      <button class="tab-btn">IP → Hex</button>
+    </div>
+
+    <div class="tool-body-3col">
+
+      <section class="input-col">
+        <div class="section-label">Input</div>
+        <div class="ps-row">
+          <span class="ps-label">Hex string</span>
+          <input class="ps-input" type="text" value="C0A80164BAC0">
+        </div>
+        <div class="ps-row">
+          <span class="ps-label">Length</span>
+          <span class="ps-value">12 characters</span>
+        </div>
+        <div class="ps-row">
+          <span class="ps-label">Format</span>
+          <span class="ps-value muted">IP + port</span>
+        </div>
+      </section>
+
+      <section class="output-col">
+        <div class="section-label">Output</div>
+        <div class="ps-row">
+          <span class="ps-label">IP address</span>
+          <span class="ps-value readout">192.168.1.100</span>
+        </div>
+        <div class="ps-row">
+          <span class="ps-label">UDP port</span>
+          <span class="ps-value readout">47808</span>
+        </div>
+        <div class="ps-row">
+          <span class="ps-label">Port notes</span>
+          <span class="ps-value muted">default BACnet/IP</span>
+        </div>
+        <div class="btn-row">
+          <button class="copy-btn">Copy IP</button>
+          <button class="copy-btn">Copy IP : port</button>
+        </div>
+      </section>
+
+      <section class="ref-col">
+        <div class="section-label">BACnet/IP Port Reference</div>
+        <table class="ref-table-dense">
+          <thead>
+            <tr><th>Port</th><th>Hex</th><th class="use">Typical use</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>47808</td><td>BAC0</td><td class="use">Default BACnet/IP</td></tr>
+            <tr><td>47809</td><td>BAC1</td><td class="use">Network #2</td></tr>
+            <tr><td>47810</td><td>BAC2</td><td class="use">Network #3</td></tr>
+            <tr><td>47811</td><td>BAC3</td><td class="use">Network #4</td></tr>
+            <tr><td>47812</td><td>BAC4</td><td class="use">Network #5</td></tr>
+          </tbody>
+        </table>
+        <p class="ref-note">
+          Multiple logical BACnet/IP networks on the same host use sequential UDP ports starting at 47808. BBMDs (Broadcast Management Devices) typically share 47808 but live on different subnets — confirm against the site's actual BACnet design.
+        </p>
+      </section>
+
+    </div>
+  </div>
+
+  <div class="mockup-notes">
+    <h3>What's new in this layout — quick reference</h3>
+    <ul>
+      <li><strong>Three columns side-by-side</strong> instead of a stacked single column. Input on the left, output in the middle, reference panel on the right — all visible at once, no scrolling to cross-check.</li>
+      <li><strong>Property-sheet form rows</strong> (label left, value/input right, hairline divider). Replaces the current "label-above-input" pattern. This is the most "Niagara grammar" element of the redesign.</li>
+      <li><strong>Reference panel <em>alongside</em>, not below.</strong> Sits on a slightly recessed background (<code>--surface-3</code>) so it reads as context rather than content. Holds a dense table that wouldn't have fit usefully on mobile anyway.</li>
+      <li><strong>Tighter typography overall.</strong> Smaller font sizes for values and labels, less vertical padding inside rows, denser table. The current site reads spacious; this reads like a workstation tool.</li>
+      <li><strong>Section labels in small caps.</strong> The "INPUT / OUTPUT / REFERENCE" markers are a BMS-grammar pattern (similar to property-sheet group headers) and let the columns introduce themselves without needing prose.</li>
+      <li><strong>Same fonts, same colors, same accent.</strong> Visual language unchanged — only the layout and density shift. The point is to feel native to the site, not like a different site.</li>
+    </ul>
+  </div>
+
+</main>
+
+</body>
+</html>

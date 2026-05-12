@@ -18,7 +18,9 @@
     --bg:           #eef1ec;   /* app chrome — light warm gray-green */
     --surface:      #ffffff;   /* content panes */
     --surface-2:    #f2f6f1;   /* panel headers, table heads, insets */
-    --border:       #ccd7c8;   /* hairlines */
+    --surface-3:    #e8ece4;   /* recessed background for reference / context panels — a notch below --bg */
+    --border:       #ccd7c8;   /* hairlines — panel & section edges */
+    --border-faint: #e3e8df;   /* lighter hairline for inner row dividers (property-sheet rows, dense tables) */
     --accent:       #43881c;   /* the green — readable on white for text & UI */
     --accent-dim:   rgba(67,136,28,0.10);
     --accent-glow:  rgba(67,136,28,0.22);
@@ -428,7 +430,6 @@ select option { background: var(--surface); }
     color: var(--text-bright);
     word-break: break-all;
 }
-#readBin { font-size: 0.68rem; letter-spacing: 0.05em; }
 
 /* ── ROADMAP GRID ── */
 .tool-grid {
@@ -768,4 +769,178 @@ input[type="range"]::-moz-range-thumb {
     color: var(--text-dim);
     background: transparent;
     border-color: var(--border);
+}
+
+/* ──────────────────────────────────────────────────────────────────────
+ * THREE-COLUMN PROPERTY-SHEET LAYOUT
+ *
+ * A denser "workstation-tool" layout for tools where input / output /
+ * reference make sense as three distinct surfaces side by side, rather
+ * than stacked. Borrows Niagara's property-sheet grammar: label-LEFT /
+ * value-RIGHT rows with hairline dividers, small-caps section headers, a
+ * recessed reference panel ALONGSIDE the active tool, dense tables. See
+ * site-ideas-and-friction.md → "Visual design — two products, one
+ * codebase" for the higher-level design philosophy this pattern serves.
+ *
+ * Adopters: tools/bacnet-ip-converter.html, tools/signal-scaling.html,
+ * tools/modbus-register-viewer.html. The PID tuner (tools/pid-tuner.html)
+ * deliberately keeps its custom stacked layout — its simulator (canvas +
+ * sliders + parameter-style selector + preset chips + metrics) doesn't fit
+ * the Input / Output / Reference shape without forcing it; only its
+ * symptom → tuning-move cheat sheet adopts the .ref-table-dense styling.
+ * ────────────────────────────────────────────────────────────────────── */
+
+/* the grid: three equal columns, butting against the card edges (no gap).
+   Each section carries its own padding; the last one is the recessed
+   reference panel. Lives directly inside a .tab-pane (or .tool-card), not
+   inside a padded .tool-body. */
+.tool-body-3col {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+}
+.tool-body-3col > section {
+    padding: 1.25rem 1.25rem 1.5rem;
+    border-right: 1px solid var(--border);
+}
+.tool-body-3col > section:last-child {
+    border-right: none;
+    background: var(--surface-3);
+}
+
+/* tabs sitting directly above a .tool-body-3col: inset the buttons to line
+   up with the column padding, drop the bottom margin so the grid butts
+   right up under the tab strip. (The .tab-btn underline indicator is
+   unchanged — see the .tabs / .tab-btn rules above.) */
+.tabs.tabs-flush { padding: 0 1.25rem; margin-bottom: 0; }
+
+/* small-caps column header inside a 3-col body (INPUT / OUTPUT / …).
+   (The redesign mockup called this `.section-label`; renamed to
+   .ps-section-label to avoid colliding with the existing page-level
+   .section-label used in .section-header.) */
+.ps-section-label {
+    font-family: var(--sans);
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--text-dim);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 0.85rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border);
+}
+
+/* property-sheet row: label on the left, value or input on the right,
+   faint hairline between rows. The Niagara-grammar replacement for the
+   stacked layout's label-above-input .form-row / .field. */
+.ps-row {
+    display: grid;
+    grid-template-columns: minmax(90px, 38%) 1fr;
+    gap: 12px;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--border-faint);
+    align-items: center;
+    min-height: 38px;
+}
+.ps-row:last-of-type { border-bottom: none; }
+.ps-label {
+    font-family: var(--sans);
+    font-size: 0.82rem;
+    color: var(--text-dim);
+}
+.ps-value {
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    color: var(--text);
+}
+/* a live / actionable output value. (The mockup called this modifier
+   `.readout`; renamed to `.live` because there is already a global
+   `.readout` box class — see the bit-viewer / PID-metrics section above —
+   that an element with both classes would inherit.) */
+.ps-value.live {
+    color: var(--blue);
+    font-weight: 600;
+    font-size: 0.92rem;
+    overflow-wrap: anywhere;
+}
+.ps-value.error { color: var(--red); }  /* out-of-range output (placed after .live so it wins the colour) */
+.ps-value.muted {                       /* a note, an absent value, a placeholder */
+    color: var(--text-dim);
+    font-family: var(--sans);
+    font-style: italic;
+    font-size: 0.78rem;
+}
+/* the input variant for a .ps-row's value cell — works on <input>, <select>
+   and <textarea>. The element-qualified selectors (not bare `.ps-input`)
+   outrank the global `input[type=…]` / `select` block above so the denser
+   sizing wins. */
+input.ps-input, select.ps-input, textarea.ps-input {
+    width: 100%;
+    padding: 5px 8px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    color: var(--text-bright);
+    border-radius: 2px;
+    -webkit-appearance: none;
+}
+input.ps-input:focus, select.ps-input:focus, textarea.ps-input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: none;                   /* the dense layout uses a border change, not the glow */
+}
+
+/* dense reference table — tighter rows than .ref-table, sans-caps headers,
+   for lookup data that lives in a side panel rather than the main flow. */
+.ref-table-dense {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.78rem;
+}
+.ref-table-dense th {
+    text-align: left;
+    font-family: var(--sans);
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--text-dim);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-2);
+}
+.ref-table-dense td {
+    padding: 5px 8px;
+    border-bottom: 1px solid var(--border-faint);
+    font-family: var(--mono);
+    color: var(--text);
+}
+.ref-table-dense td.use {               /* a prose "typical use" cell, not data */
+    font-family: var(--sans);
+    font-size: 0.78rem;
+    color: var(--text-dim);
+}
+.ref-table-dense tbody tr:nth-child(even) td { background: rgba(0,0,0,0.015); }
+.ref-table-dense tbody tr:last-child td { border-bottom: none; }
+
+/* a short explanatory note under a reference table. */
+.ref-note {
+    font-family: var(--sans);
+    font-size: 0.74rem;
+    color: var(--text-dim);
+    line-height: 1.55;
+    margin-top: 0.85rem;
+    padding-top: 0.85rem;
+    border-top: 1px solid var(--border-faint);
+}
+
+/* mobile / responsive — collapse the three columns to a single stack
+   (Input → Output → Reference). The "two products, one codebase" plan
+   eventually wants a purpose-built mobile experience for this tool; this
+   is just the conservative first pass.
+   // mobile-first treatment of this tool is a future task — see site-ideas-and-friction.md */
+@media (max-width: 900px) {
+    .tool-body-3col { grid-template-columns: 1fr; }
+    .tool-body-3col > section { border-right: none; border-bottom: 1px solid var(--border); }
+    .tool-body-3col > section:last-child { border-bottom: none; }
 }

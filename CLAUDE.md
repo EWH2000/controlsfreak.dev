@@ -126,15 +126,27 @@ each live tool, then a "Coming Soon" `.tool-grid` of dimmed
 `.tool-preview` cards (the roadmap items). Each live tool is its own page:
 
 - **Signal Scaling Calculator** (`tools/signal-scaling.html`, "Analog I/O")
-  — three tabs:
-  - *Signal → Eng. Units* — mA/V signal to engineering units, with % of
-    span, a range bar, and the worked formula
-  - *Eng. Units → Signal* — the inverse
-  - *2-Point → Slope / Offset* — two known IO pairs to `y = mx + b`,
-    with copy buttons (aimed at pasting into Niagara's ProxyExt)
+  — three tabs, on the three-column property-sheet layout:
+  - *Signal → Eng. Units* — mA/V signal to engineering units; Input column
+    (signal type, value, eng. range), Output column (eng. value, % of span,
+    range bar, "Copy value" button, worked formula — kept *inside* the
+    column rather than as a full-width footer so the column isn't dwarfed
+    by the reference one), Reference column (a common-signal-types lookup
+    with a "live zero" column + a one-line note)
+  - *Eng. Units → Signal* — the inverse; same shape — Output also shows
+    "% of span" and a "Copy signal" button, same reference table
+  - *2-Point → Slope / Offset* — two known IO pairs to `y = mx + b`, with
+    copy buttons (aimed at pasting into Niagara's ProxyExt). Two-column
+    (Input | Output spanning the right two-thirds, via `grid-column: span 2`
+    on the Output section) — the worked formula has nowhere useful to grow,
+    so there's no reference column on this tab; the formula is a full-width
+    footer here.
 - **Modbus Register Viewer** (`tools/modbus-register-viewer.html`, "Modbus")
-  — 16-bit clickable toggle grid, two-way bound to decimal / hex inputs,
-  with dec / hex / binary readouts
+  — on the three-column property-sheet layout: Input column (decimal / hex
+  inputs + the 16-bit clickable toggle grid, laid out 8×2 so it stays
+  legible in a third-width column), Output column (dec / hex / binary
+  readouts as `.ps-row`s), Reference column (a Modbus function-code
+  lookup, FC01–16, with the read-only vs read/write note)
 - **PID Tuning Helper** (`tools/pid-tuner.html`, "Loops") — a step-response
   simulator (process-type `<select>`, a parameter-style `<select>` that
   relabels the controls — gain·reset·rate / Ti·Td in minutes or seconds /
@@ -142,11 +154,15 @@ each live tool, then a "Coming Soon" `.tool-grid` of dimmed
   sliders with Ti / Td / PB equivalents shown beneath each, a `<canvas>`
   plot of PV vs. setpoint, and overshoot / settling-time /
   steady-state-error readouts), a tightened symptom → tuning-move
-  `.ref-table` (short arrow codes — ↑/↓, P/I/D — not prose), a short
+  `.ref-table-dense` (short arrow codes — ↑/↓, P/I/D — not prose), a short
   "New to PID? Start with the basics →" cross-link to the Education page
   (where the long-form explainer now lives), and a vendor-style "rule of
   thumb" note describing how the Parameter Style selector maps to
-  Niagara / EBO / Distech conventions. The simulation core lives in
+  Niagara / EBO / Distech conventions. **This tool deliberately keeps its
+  custom stacked layout** rather than the three-column property-sheet
+  pattern — the simulator block doesn't fit Input / Output / Reference
+  without forcing it; only the cheat sheet adopts the `.ref-table-dense`
+  styling (partial adoption). The simulation core lives in
   `/scripts/pid-engine.js` (`PID_PROC`, `simulatePid()`); this page owns
   the sliders, preset chips, label/unit relabeling, and the canvas
   drawing — everything UI. The controller runs on canonical params (gain,
@@ -154,11 +170,16 @@ each live tool, then a "Coming Soon" `.tool-grid` of dimmed
   labels/units. The simulated process is a toy first-order-plus-dead-time
   model — it exists for intuition, not for tuning a real loop.
 - **BACnet/IP Hex Converter** (`tools/bacnet-ip-converter.html`, "BACnet")
-  — two tabs: *Hex → IP* (paste the hex address string EBO shows for a
-  BACnet/IP device — tolerant of spaces/dots/dashes/`0x` — get
-  dotted-decimal IP and, for a 12-digit string, the UDP port, with the
-  default `BAC0`/47808 flagged) and *IP → Hex* (the inverse; blank port →
-  8-digit string, port given → 12-digit). Copy buttons on the outputs.
+  — two tabs, on the three-column property-sheet layout: *Hex → IP* (paste
+  the hex address string EBO shows for a BACnet/IP device — tolerant of
+  spaces/dots/dashes/`0x` — get dotted-decimal IP and, for a 12-digit
+  string, the UDP port, with the default `BAC0`/47808 flagged) and
+  *IP → Hex* (the inverse; blank port → 8-digit string, port given →
+  12-digit). Copy buttons on the outputs. The right (Reference) column
+  holds a placeholder UDP-port lookup — the BBMD / port-reference content
+  is flagged `// user to verify` pending refinement. This was the first
+  tool migrated to the property-sheet pattern; the conversion logic is
+  unchanged from the pre-redesign tool, only the markup it drives moved.
 
 **Education — PID Basics** (`education/pid-basics.html`) — three stacked
 sections under section headers: *What P, I, and D Actually Do* (the
@@ -217,7 +238,11 @@ instead of an inline `<style>` duplicated across pages.)*
 - **CSS custom properties** in `:root` (the theme lives here — change
   colors by editing these, not by hardcoding): `--bg` (light gray-green
   app chrome) / `--surface` (white panes) / `--surface-2` (panel headers,
-  table heads, insets); `--border` (hairlines); `--accent` (`#43881c`,
+  table heads, insets) / `--surface-3` (recessed background for reference /
+  context panels — a notch below `--bg`; e.g. the BACnet converter's
+  reference column); `--border` (hairlines — panel & section edges) /
+  `--border-faint` (lighter hairline for inner row dividers — property-sheet
+  rows, dense tables); `--accent` (`#43881c`,
   the green — chosen to stay readable on white for text and UI) /
   `--accent-dim` / `--accent-glow`; `--text` / `--text-bright` /
   `--text-dim`; `--blue` (`#1577b8`, data readouts / highlight); `--red`
@@ -250,7 +275,12 @@ instead of an inline `<style>` duplicated across pages.)*
   Tools landing); `.back-link` (the "← All tools" anchor under a tool's
   `.tool-card`); `.cta-button` (a prominent in-page anchor styled like a
   primary button — used for "Try it for yourself →" and other
-  end-of-page calls to action); `.hero` / `.hero-eyebrow` /
+  end-of-page calls to action); `.tool-body-3col` / `.ps-section-label` / `.ps-row` / `.ps-label` /
+  `.ps-value` (+ `.live` — a blue live readout value; + `.muted` — a note
+  or an absent value; + `.error` — out-of-range, red) / `input.ps-input`
+  (also `select.ps-input` / `textarea.ps-input`) / `.ref-table-dense` /
+  `.ref-note` / `.tabs.tabs-flush` (the three-column property-sheet layout — see the
+  bullet below); `.hero` / `.hero-eyebrow` /
   `.hero-badges` / `.badge` (the home hero). Shared across pages:
   `.site-nav` / `.site-nav-brand` / `.site-nav-links` (the top nav).
   Contact page only: `.hp-field` (off-screen honeypot wrapper),
@@ -258,6 +288,36 @@ instead of an inline `<style>` duplicated across pages.)*
   `styles.css`); `textarea` and `input[type=email]` are styled by the
   same rule as the other form inputs (so a `textarea` gets the standard
   input look, `--bg` background and all — not `--surface`).
+
+- **Three-column property-sheet layout** (`.tool-body-3col` + the `.ps-*`
+  classes + `.ref-table-dense`): a denser "workstation tool" layout —
+  Input / Output / Reference as three surfaces side by side, Niagara-style
+  label-left / value-right rows with hairline dividers, a recessed
+  reference panel (`--surface-3`) *alongside* the active tool, dense
+  lookup tables. The `.tool-body-3col` grid sits directly inside a
+  `.tab-pane` (or `.tool-card`), not inside a padded `.tool-body`; tabs
+  above it take `.tabs.tabs-flush`. A row's value cell can hold a `.ps-value`
+  (mono) — plus `.live` (blue, a live readout), `.muted` (a note / absent
+  value), or `.error` (out-of-range, red) — or an `input.ps-input` /
+  `select.ps-input` / `textarea.ps-input` (the dense form-control variant).
+  **Adopters: the BACnet/IP converter, Signal Scaling, Modbus Register
+  Viewer.** The PID tuner deliberately keeps its custom stacked layout (the
+  simulator block doesn't fit Input/Output/Reference) — only its cheat
+  sheet adopts `.ref-table-dense`. A tool with no genuinely useful
+  reference content drops the third column and runs two (e.g. Signal
+  Scaling's slope/offset tab — Output spans the right two-thirds via
+  `grid-column: span 2`). This pattern serves the "Visual design — two
+  products, one codebase" framework — see `site-ideas-and-friction.md` for
+  the philosophy. Naming gotchas: the redesign mockup called
+  `.ps-section-label` just `.section-label` (renamed — `.section-label` is
+  already the page-level divider label in `.section-header`), and called
+  the live-value modifier `.readout` (renamed to `.live` — `.readout` is
+  already the bit-viewer / PID-metrics box class, which a `.ps-value.readout`
+  element would otherwise inherit). The form-control variant is qualified
+  by element (`input.ps-input` etc., not bare `.ps-input`) so it outranks
+  the global `input[type=…]` / `select` block. Responsive: at ≤900px the
+  columns collapse to a single stack (Input → Output → Reference);
+  purpose-built mobile experiences for these tools are a future task.
 
 ### JS patterns
 
