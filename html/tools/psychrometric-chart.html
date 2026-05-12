@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Psychrometric Chart — controlsfreak.dev</title>
+    <meta name="description" content="Interactive psychrometric chart — drag a state point (or type any two values) and read off dry-bulb, wet-bulb, dew point, RH, humidity ratio, enthalpy, and specific volume. Altitude-adjustable. US units. No login, no ads.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&family=Overpass:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+
+<nav class="site-nav">
+    <a class="site-nav-brand" href="/">controlsfreak<span>.dev</span></a>
+    <div class="site-nav-links">
+        <a href="/">Home</a>
+        <a href="/tools/" class="active">Tools</a>
+        <a href="/education/pid-basics.html">Education</a>
+        <a href="/contact.html">Contact</a>
+    </div>
+</nav>
+
+<main>
+
+    <div class="section-header">
+        <span class="section-label">HVAC · Air Side</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <div class="tool-card-title">
+                Psychrometric Chart
+                <span class="tool-tag">HVAC</span>
+            </div>
+        </div>
+        <!-- Like the PID tuner, this tool keeps a custom stacked layout: the chart is a big
+             canvas that doesn't fit the three-column Input/Output/Reference pattern. -->
+        <div class="tool-body">
+
+            <p style="font-family:var(--mono);font-size:0.7rem;color:var(--text-dim);margin-bottom:1.5rem;line-height:1.7;">
+                Drag the dot anywhere below the saturation curve, or type a dry-bulb plus any one other property —
+                the rest of the state reads out below. A toy chart for building feel and quick checks, not a substitute
+                for a calibrated psychrometric calculator on a load study.
+            </p>
+
+            <div class="subhead">State Point</div>
+
+            <div class="form-row">
+                <div class="field">
+                    <label>Altitude (ft above sea level)</label>
+                    <input type="number" id="psyAlt" step="100" placeholder="0" value="0" oninput="psyRecompute()">
+                </div>
+                <div class="field">
+                    <label>Dry-bulb (°F)</label>
+                    <input type="number" id="psyDb" step="0.5" placeholder="75" value="75" oninput="psyRecompute()">
+                </div>
+            </div>
+            <div class="form-row" style="margin-bottom:1.25rem;">
+                <div class="field">
+                    <label>Define by</label>
+                    <select id="psyMode" onchange="psyModeChanged()">
+                        <option value="rh" selected>Relative humidity</option>
+                        <option value="wb">Wet-bulb temperature</option>
+                        <option value="dp">Dew point temperature</option>
+                        <option value="w">Humidity ratio</option>
+                        <option value="h">Enthalpy</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label id="psySecondLbl">Relative humidity (%)</label>
+                    <input type="number" id="psySecond" step="1" placeholder="50" value="50" oninput="psyRecompute()">
+                </div>
+            </div>
+
+            <p class="bit-hint">Click or drag on the chart to move the state point · sea-level pressure unless you set an altitude</p>
+
+            <div class="sim-canvas-wrap">
+                <canvas id="psyCanvas" style="aspect-ratio:8/5;height:auto;touch-action:none;"></canvas>
+            </div>
+
+            <p class="bit-hint" style="margin-top:0.85rem;margin-bottom:0;line-height:1.7;">
+                Heavy curve = saturation (100% RH, the left/top boundary). Light curves rising to the right = constant
+                relative humidity; light dashed lines sloping down to the right = constant wet-bulb (≈ constant enthalpy).
+            </p>
+            <p class="bit-hint" id="psyMsg" style="margin-top:0.5rem;margin-bottom:0;line-height:1.6;"></p>
+
+            <div class="subhead">Properties at the State Point</div>
+
+            <div class="bit-readouts">
+                <div class="readout"><div class="readout-label">Dry-bulb (°F)</div><div class="readout-value" id="roDb">—</div></div>
+                <div class="readout"><div class="readout-label">Wet-bulb (°F)</div><div class="readout-value" id="roWb">—</div></div>
+                <div class="readout"><div class="readout-label">Dew point (°F)</div><div class="readout-value" id="roDp">—</div></div>
+                <div class="readout"><div class="readout-label">Rel. humidity (%)</div><div class="readout-value" id="roRh">—</div></div>
+                <div class="readout"><div class="readout-label">Humidity ratio (gr/lb)</div><div class="readout-value" id="roW">—</div></div>
+                <div class="readout"><div class="readout-label">Enthalpy (Btu/lb)</div><div class="readout-value" id="roH">—</div></div>
+                <div class="readout"><div class="readout-label">Specific volume (ft³/lb)</div><div class="readout-value" id="roV">—</div></div>
+                <div class="readout"><div class="readout-label">Vapor pressure (psia)</div><div class="readout-value" id="roPw">—</div></div>
+                <div class="readout"><div class="readout-label">Barometric press. (psia)</div><div class="readout-value" id="roP">—</div></div>
+            </div>
+
+            <p class="pid-note">
+                Properties are per pound of dry air, from the ASHRAE formulations in US customary units; relative humidity
+                is taken as the partial-pressure ratio (the usual approximation). Humidity ratio shown in grains per pound
+                (7000 gr = 1 lb). Wet-bulb here is the thermodynamic wet-bulb, which a sling psychrometer reads to within a
+                fraction of a degree. The drawn chart covers the lower-left region most HVAC air states live in — a state
+                outside that range still reads out below, it just isn't drawn.
+            </p>
+
+        </div>
+    </div>
+
+    <a class="back-link" href="/tools/">← All tools</a>
+
+</main>
+
+<footer>
+    <span class="footer-text">controlsfreak.dev — open tools for controls engineers</span>
+    <span class="footer-text">v0.6 · 2026</span>
+</footer>
+
+<script>
+    // ──────────────────────────────────────────────────────────────────
+    // Psychrometrics — US customary units throughout:
+    //   temperatures °F · pressures psia · humidity ratio lb water / lb dry air
+    //   enthalpy Btu / lb dry air · specific volume ft³ / lb dry air
+    // Formulas: ASHRAE 2017 Fundamentals, Chapter 1 (IP equations).
+    // ──────────────────────────────────────────────────────────────────
+    const R_DA       = 0.370486;    // R_dry-air / 144, ft³·psi / (lb·°R)
+    const MW_RATIO   = 0.621945;    // M_water / M_dry-air
+    const GR_PER_LB  = 7000;
+    const P_STD      = 14.696;      // standard sea-level pressure, psia
+
+    // Saturation vapor pressure (psia) over water (t ≥ 32 °F) or ice (t < 32 °F). t in °F.
+    function satPress(tF) {
+        const T = tF + 459.67;      // absolute temperature, °R
+        let lnP;
+        if (tF >= 32) {
+            lnP = -1.0440397e4 / T - 1.1294650e1 - 2.7022355e-2 * T
+                  + 1.2890360e-5 * T * T - 2.4780681e-9 * T * T * T + 6.5459673 * Math.log(T);
+        } else {
+            lnP = -1.0214165e4 / T - 4.8932428 - 5.3765794e-3 * T + 1.9202377e-7 * T * T
+                  + 3.5575832e-10 * T * T * T - 9.0344688e-14 * T * T * T * T + 4.1635019 * Math.log(T);
+        }
+        return Math.exp(lnP);
+    }
+
+    const humRatioFromVapPress = (pw, P) => MW_RATIO * pw / (P - pw);
+    const vapPressFromHumRatio = (W, P) => P * W / (MW_RATIO + W);
+    const satHumRatio          = (tF, P) => humRatioFromVapPress(satPress(tF), P);
+    const humRatioFromRH       = (rhPct, tdb, P) => humRatioFromVapPress(rhPct / 100 * satPress(tdb), P);
+    const rhFromHumRatio       = (W, tdb, P) => vapPressFromHumRatio(W, P) / satPress(tdb) * 100;
+    const enthalpy             = (tdb, W) => 0.240 * tdb + W * (1061 + 0.444 * tdb);
+    const specificVolume       = (tdb, W, P) => R_DA * (tdb + 459.67) * (1 + 1.607858 * W) / P;
+    const pressFromAltitude    = zFt => P_STD * Math.pow(1 - 6.8754e-6 * zFt, 5.2559);
+
+    // Humidity ratio from the (thermodynamic) wet-bulb temperature. twb, tdb in °F.
+    function humRatioFromWetBulb(twb, tdb, P) {
+        const Wsw = satHumRatio(twb, P);
+        return (twb >= 32)
+            ? ((1093 - 0.556 * twb) * Wsw - 0.240 * (tdb - twb)) / (1093 + 0.444 * tdb - twb)
+            : ((1220 - 0.04  * twb) * Wsw - 0.240 * (tdb - twb)) / (1220 + 0.444 * tdb - 0.48 * twb);
+    }
+
+    // Dew point: the temperature where satPress(tdp) = pw.  (Bisection — robust & exact.)
+    function dewPointFromVapPress(pw) {
+        if (pw <= 0) return -Infinity;
+        let lo = -148, hi = 250;
+        for (let i = 0; i < 80; i++) {
+            const mid = (lo + hi) / 2;
+            if (satPress(mid) > pw) hi = mid; else lo = mid;
+        }
+        return (lo + hi) / 2;
+    }
+
+    // Wet-bulb from dry-bulb + humidity ratio.  Bisection on [dew point, dry-bulb]:
+    // humRatioFromWetBulb(·, tdb) is monotonic, equals W at twb = the answer, and
+    // equals the saturation ratio at twb = tdb.
+    function wetBulbFromHumRatio(W, tdb, P) {
+        let lo = dewPointFromVapPress(vapPressFromHumRatio(Math.max(W, 0), P));
+        let hi = tdb;
+        if (!isFinite(lo) || lo > hi) lo = Math.min(-148, hi - 200);   // bone-dry air
+        for (let i = 0; i < 70; i++) {
+            const mid = (lo + hi) / 2;
+            if (humRatioFromWetBulb(mid, tdb, P) > W) hi = mid; else lo = mid;
+        }
+        return (lo + hi) / 2;
+    }
+
+    // Build the complete moist-air state from (mode, dry-bulb, the second value, pressure).
+    // `mode` is one of 'rh' | 'wb' | 'dp' | 'w' | 'h'. The second value's unit depends on mode
+    // (RH in %, temps in °F, humidity ratio in gr/lb, enthalpy in Btu/lb).
+    // Returns { ok:true, tdb, W, P, pw, rh, twb, tdp, h, v } or { ok:false, error }.
+    function solveState(mode, tdb, second, P) {
+        if (![tdb, second, P].every(isFinite) || P <= 0) return { ok: false, error: 'Enter numeric values.' };
+        let W;
+        if (mode === 'rh') {
+            if (second < 0)   return { ok: false, error: 'Relative humidity can’t be negative.' };
+            if (second > 100) return { ok: false, error: 'Relative humidity can’t exceed 100%.' };
+            W = humRatioFromRH(second, tdb, P);
+        } else if (mode === 'wb') {
+            if (second > tdb + 1e-6) return { ok: false, error: 'Wet-bulb can’t exceed dry-bulb.' };
+            W = humRatioFromWetBulb(second, tdb, P);
+        } else if (mode === 'dp') {
+            if (second > tdb + 1e-6) return { ok: false, error: 'Dew point can’t exceed dry-bulb.' };
+            W = humRatioFromVapPress(satPress(second), P);
+        } else if (mode === 'w') {
+            W = second / GR_PER_LB;
+            if (W < -1e-9) return { ok: false, error: 'Humidity ratio can’t be negative.' };
+        } else if (mode === 'h') {
+            W = (second - 0.240 * tdb) / (1061 + 0.444 * tdb);
+            if (W < -1e-9) return { ok: false, error: 'That enthalpy is below dry air at this dry-bulb — impossible.' };
+        } else {
+            return { ok: false, error: 'Pick a property to define the point by.' };
+        }
+        W = Math.max(0, W);
+        const Wsat = satHumRatio(tdb, P);
+        if (W > Wsat + 1e-6) return { ok: false, error: 'That point is past saturation (RH over 100%) — impossible.' };
+        W = Math.min(W, Wsat);
+        return buildState(tdb, W, P);
+    }
+
+    // Build a state object directly from a known (dry-bulb, humidity ratio) — used by chart drags.
+    function buildState(tdb, W, P) {
+        W = Math.max(0, Math.min(W, satHumRatio(tdb, P)));
+        const pw = vapPressFromHumRatio(W, P);
+        return {
+            ok: true, tdb, W, P, pw,
+            rh:  W <= 0 ? 0 : rhFromHumRatio(W, tdb, P),
+            twb: wetBulbFromHumRatio(W, tdb, P),
+            tdp: W <= 0 ? -Infinity : dewPointFromVapPress(pw),
+            h:   enthalpy(tdb, W),
+            v:   specificVolume(tdb, W, P),
+        };
+    }
+
+    // What the "second value" input means / shows for each mode.
+    const SECOND_PROP = {
+        rh: { label: 'Relative humidity (%)',     def: 50, step: 1,   fmt: s => s.rh.toFixed(1),            get: s => s.rh },
+        wb: { label: 'Wet-bulb (°F)',             def: 60, step: 0.5, fmt: s => s.twb.toFixed(1),           get: s => s.twb },
+        dp: { label: 'Dew point (°F)',            def: 50, step: 0.5, fmt: s => isFinite(s.tdp) ? s.tdp.toFixed(1) : '', get: s => s.tdp },
+        w:  { label: 'Humidity ratio (gr/lb)',    def: 65, step: 1,   fmt: s => (s.W * GR_PER_LB).toFixed(1), get: s => s.W * GR_PER_LB },
+        h:  { label: 'Enthalpy (Btu/lb dry air)', def: 28, step: 0.5, fmt: s => s.h.toFixed(2),             get: s => s.h },
+    };
+
+    // ── Chart bounds (the drawn region; states outside it still read out) ──
+    const TDB_MIN = 30, TDB_MAX = 120;     // dry-bulb axis, °F
+    const W_MAX   = 0.025;                  // humidity-ratio axis ceiling, lb/lb (= 175 gr/lb)
+
+    let psyP = P_STD;        // current barometric pressure
+    let psyState = null;     // last state object (or { ok:false, ... })
+
+    // ── Main recompute (driven by the input fields) ──
+    function psyRecompute() {
+        const mode   = document.getElementById('psyMode').value;
+        const P      = pressFromAltitude(parseFloat(document.getElementById('psyAlt').value) || 0);
+        const tdb    = parseFloat(document.getElementById('psyDb').value);
+        const second = parseFloat(document.getElementById('psySecond').value);
+        applyState(solveState(mode, tdb, second, P), P);
+    }
+
+    // ── "Define by" changed: keep the same point, just relabel & repopulate the second input ──
+    function psyModeChanged() {
+        const meta = SECOND_PROP[document.getElementById('psyMode').value];
+        document.getElementById('psySecondLbl').textContent = meta.label;
+        const inp = document.getElementById('psySecond');
+        inp.step = meta.step;
+        inp.value = (psyState && psyState.ok) ? meta.fmt(psyState) : meta.def;
+        psyRecompute();
+    }
+
+    // ── Push a state to the readouts, the status line, and the chart ──
+    function applyState(state, P) {
+        psyP = P;
+        psyState = state;
+        const set = (id, v) => { document.getElementById(id).textContent = v; };
+        const msgEl = document.getElementById('psyMsg');
+
+        if (!state.ok) {
+            ['roDb','roWb','roDp','roRh','roW','roH','roV','roPw','roP'].forEach(id => set(id, '—'));
+            msgEl.textContent = state.error;
+            msgEl.style.color = 'var(--red)';
+        } else {
+            set('roDb', state.tdb.toFixed(1));
+            set('roWb', state.twb.toFixed(1));
+            set('roDp', (isFinite(state.tdp) && state.tdp > -60) ? state.tdp.toFixed(1) : '—');
+            set('roRh', state.rh.toFixed(1));
+            set('roW',  (state.W * GR_PER_LB).toFixed(1));
+            set('roH',  state.h.toFixed(2));
+            set('roV',  state.v.toFixed(3));
+            set('roPw', state.pw.toFixed(4));
+            set('roP',  P.toFixed(3));
+            const z = parseFloat(document.getElementById('psyAlt').value) || 0;
+            msgEl.textContent = z === 0
+                ? `Sea level — ${P.toFixed(3)} psia.`
+                : `Altitude ${z.toLocaleString()} ft → ${P.toFixed(3)} psia.`;
+            msgEl.style.color = '';
+        }
+        drawPsychChart();
+    }
+
+    // ── Set the point straight from a chart click/drag at (dry-bulb, humidity ratio) ──
+    function psySetFromChart(tdb, W) {
+        const P = pressFromAltitude(parseFloat(document.getElementById('psyAlt').value) || 0);
+        tdb = Math.max(TDB_MIN, Math.min(TDB_MAX, tdb));
+        const state = buildState(tdb, W, P);
+        // mirror the new point back into the input fields (in whatever "define by" mode is active)
+        document.getElementById('psyDb').value = tdb.toFixed(1);
+        const meta = SECOND_PROP[document.getElementById('psyMode').value];
+        const v = meta.fmt(state);
+        document.getElementById('psySecond').value = v === '' ? meta.def : v;
+        applyState(state, P);
+    }
+
+    // ──────────────────────────────────────────────────────────────────
+    // Chart drawing.  Colours come from the CSS custom properties so the
+    // chart tracks any palette change (same trick as the PID plot).
+    // ──────────────────────────────────────────────────────────────────
+    let psyGeom = null;   // { padL, padT, w, h, X, Y } from the last draw — used to invert clicks
+
+    function drawPsychChart() {
+        const canvas = document.getElementById('psyCanvas');
+        if (!canvas) return;
+        const cssW = canvas.clientWidth, cssH = canvas.clientHeight;
+        if (!cssW || !cssH) return;
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width  = Math.round(cssW * dpr);
+        canvas.height = Math.round(cssH * dpr);
+        const ctx = canvas.getContext('2d');
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.clearRect(0, 0, cssW, cssH);
+
+        const css = getComputedStyle(document.documentElement);
+        const v = (n, d) => css.getPropertyValue(n).trim() || d;
+        const cSurface = v('--surface', '#ffffff'), cBorder = v('--border', '#ccd7c8'),
+              cBorderF = v('--border-faint', '#e3e8df'), cDim = v('--text-dim', '#666e66'),
+              cAccent = v('--accent', '#43881c'), cBlue = v('--blue', '#1577b8');
+
+        ctx.fillStyle = cSurface;
+        ctx.fillRect(0, 0, cssW, cssH);
+
+        const padL = 14, padR = 50, padB = 30, padT = 16;
+        const w = cssW - padL - padR, h = cssH - padT - padB;
+        if (w <= 20 || h <= 20) return;
+        const P = psyP;
+        const X = t  => padL + (t - TDB_MIN) / (TDB_MAX - TDB_MIN) * w;
+        const Y = ww => padT + h - ww / W_MAX * h;
+        psyGeom = { padL, padT, w, h, X, Y };
+
+        ctx.font = "10px 'IBM Plex Mono', monospace";
+        ctx.lineWidth = 1;
+
+        // grid
+        ctx.strokeStyle = cBorderF;
+        ctx.fillStyle = cDim;
+        for (let t = TDB_MIN; t <= TDB_MAX; t += 10) {
+            const x = X(t);
+            ctx.beginPath(); ctx.moveTo(x, padT); ctx.lineTo(x, padT + h); ctx.stroke();
+            ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+            ctx.fillText(String(t), x, padT + h + 5);
+        }
+        for (let g = 0; g <= 175; g += 25) {
+            const y = Y(g / GR_PER_LB);
+            ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(padL + w, y); ctx.stroke();
+            ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+            ctx.fillText(String(g), padL + w + 5, y);
+        }
+        // border box
+        ctx.strokeStyle = cBorder;
+        ctx.strokeRect(padL, padT, w, h);
+        // axis titles
+        ctx.fillStyle = cDim;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+        ctx.fillText('Dry-bulb temperature · °F', padL + w / 2, cssH - 1);
+        ctx.save();
+        ctx.translate(cssW - 2, padT + h / 2);
+        ctx.rotate(-Math.PI / 2);                       // reads bottom-to-top, conventional for the right axis
+        ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+        ctx.fillText('Humidity ratio · gr/lb', 0, 0);
+        ctx.restore();
+
+        // draw a polyline of [t, W] points, breaking wherever it leaves the chart box
+        const curve = pts => {
+            ctx.beginPath();
+            let on = false;
+            for (const [t, ww] of pts) {
+                if (t < TDB_MIN || t > TDB_MAX || ww < 0 || ww > W_MAX) {
+                    if (on) { ctx.stroke(); ctx.beginPath(); on = false; }
+                    continue;
+                }
+                const x = X(t), y = Y(ww);
+                if (!on) { ctx.moveTo(x, y); on = true; } else ctx.lineTo(x, y);
+            }
+            if (on) ctx.stroke();
+        };
+
+        // constant wet-bulb / enthalpy lines (light dashed, sloping down to the right)
+        ctx.strokeStyle = cBorder;
+        ctx.setLineDash([3, 3]);
+        for (const twb of [30, 40, 50, 60, 70, 80, 90]) {
+            const pts = [];
+            for (let t = twb; t <= TDB_MAX + 1; t += 1) pts.push([t, humRatioFromWetBulb(twb, t, P)]);
+            curve(pts);
+        }
+        ctx.setLineDash([]);
+        ctx.fillStyle = cDim; ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
+        for (const twb of [40, 50, 60, 70, 80]) {
+            const ww = satHumRatio(twb, P);
+            if (ww > W_MAX || twb < TDB_MIN) continue;
+            ctx.fillText(twb + '°', X(twb) - 3, Y(ww) - 2);
+        }
+
+        // constant relative-humidity curves (light hairlines, rising to the right).
+        // Label each one where it crosses ~0.4·W_MAX — that's mid-chart and well clear of the
+        // right-axis tick numbers, and it spreads the labels nicely along the temperature axis.
+        ctx.strokeStyle = cBorder;
+        const rhLblW = 0.4 * W_MAX;
+        for (const rh of [20, 40, 60, 80]) {
+            const pts = [];
+            for (let t = TDB_MIN; t <= TDB_MAX; t += 1) pts.push([t, humRatioFromRH(rh, t, P)]);
+            curve(pts);
+            let lblT = null;
+            for (let t = TDB_MIN; t <= TDB_MAX; t += 1) { if (humRatioFromRH(rh, t, P) >= rhLblW) { lblT = t; break; } }
+            if (lblT != null) {
+                ctx.fillStyle = cDim; ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+                ctx.fillText(rh + '%', X(lblT) + 3, Y(humRatioFromRH(rh, lblT, P)) - 2);
+            }
+        }
+
+        // saturation curve (heavy, accent)
+        ctx.strokeStyle = cAccent; ctx.lineWidth = 2;
+        const sat = [];
+        for (let t = TDB_MIN; t <= TDB_MAX; t += 0.5) sat.push([t, satHumRatio(t, P)]);
+        curve(sat);
+        ctx.lineWidth = 1;
+        // "100% RH" label near where the saturation curve passes ~0.85·W_MAX
+        let satLblT = null;
+        for (let t = TDB_MIN; t <= TDB_MAX; t += 0.5) { if (satHumRatio(t, P) >= 0.85 * W_MAX) { satLblT = t; break; } }
+        if (satLblT != null) {
+            ctx.fillStyle = cAccent; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+            ctx.fillText('100% RH', X(satLblT) + 4, Y(satHumRatio(satLblT, P)) + 2);
+        }
+
+        // the state point
+        if (psyState && psyState.ok) {
+            const t = psyState.tdb, ww = psyState.W;
+            if (t >= TDB_MIN && t <= TDB_MAX && ww >= 0 && ww <= W_MAX) {
+                const px = X(t), py = Y(ww);
+                ctx.strokeStyle = cBlue; ctx.setLineDash([4, 3]); ctx.lineWidth = 1;
+                ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px, padT + h); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(padL + w, py); ctx.stroke();
+                ctx.setLineDash([]);
+                ctx.beginPath(); ctx.arc(px, py, 6, 0, 2 * Math.PI);
+                ctx.fillStyle = cAccent; ctx.fill();
+                ctx.lineWidth = 2; ctx.strokeStyle = cSurface; ctx.stroke();
+                ctx.lineWidth = 1; ctx.strokeStyle = cAccent; ctx.stroke();
+            }
+        }
+    }
+
+    // ── Click / drag on the chart ──
+    function psyPointToState(ev) {
+        if (!psyGeom) return;
+        const { padL, padT, w, h, X, Y } = psyGeom;
+        const tdb = TDB_MIN + (ev.offsetX - padL) / w * (TDB_MAX - TDB_MIN);
+        let W = (padT + h - ev.offsetY) / h * W_MAX;
+        const P = pressFromAltitude(parseFloat(document.getElementById('psyAlt').value) || 0);
+        W = Math.max(0, Math.min(W, satHumRatio(Math.max(TDB_MIN, Math.min(TDB_MAX, tdb)), P)));
+        psySetFromChart(tdb, W);
+    }
+    (function () {
+        const c = document.getElementById('psyCanvas');
+        let dragging = false;
+        c.addEventListener('pointerdown', e => { dragging = true; c.setPointerCapture(e.pointerId); psyPointToState(e); });
+        c.addEventListener('pointermove', e => { if (dragging) { e.preventDefault(); psyPointToState(e); } });
+        const stop = () => { dragging = false; };
+        c.addEventListener('pointerup', stop);
+        c.addEventListener('pointercancel', stop);
+    })();
+
+    // ── Init ──
+    psyRecompute();
+    window.addEventListener('resize', drawPsychChart);
+</script>
+
+</body>
+</html>

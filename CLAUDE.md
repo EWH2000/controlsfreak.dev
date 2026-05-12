@@ -22,9 +22,9 @@ page, but the project is the tools, not a personal homepage.
   - `html/tools/index.html` — the Tools landing: a `.nav-card` grid of
     the live tools plus a "Coming Soon" grid of `.tool-preview` cards.
   - `html/tools/signal-scaling.html`, `html/tools/modbus-register-viewer.html`,
-    `html/tools/pid-tuner.html`, `html/tools/bacnet-ip-converter.html` —
-    one page per tool, each a `.tool-card` with its own inline `<script>`
-    for page-specific logic.
+    `html/tools/pid-tuner.html`, `html/tools/bacnet-ip-converter.html`,
+    `html/tools/psychrometric-chart.html` — one page per tool, each a
+    `.tool-card` with its own inline `<script>` for page-specific logic.
   - `html/education/pid-basics.html` — the Education section's first page:
     the plain-English P/I/D explainer + a fast/medium/slow loop-speed
     reference + three "Coming soon" mini-sim placeholders (see
@@ -104,7 +104,8 @@ controlsfreak.dev/
 │   │   ├── signal-scaling.html
 │   │   ├── modbus-register-viewer.html
 │   │   ├── pid-tuner.html          # also loads /scripts/pid-engine.js
-│   │   └── bacnet-ip-converter.html
+│   │   ├── bacnet-ip-converter.html
+│   │   └── psychrometric-chart.html   # interactive psych chart — custom canvas layout, psychrometrics inline
 │   └── education/
 │       └── pid-basics.html         # Education section — P/I/D explainer + loop-speed reference + Coming-Soon mini-sim placeholders
 ├── tests/              # Playwright specs (smoke.spec.js, contact.spec.js)
@@ -180,6 +181,26 @@ each live tool, then a "Coming Soon" `.tool-grid` of dimmed
   is flagged `// user to verify` pending refinement. This was the first
   tool migrated to the property-sheet pattern; the conversion logic is
   unchanged from the pre-redesign tool, only the markup it drives moved.
+- **Psychrometric Chart** (`tools/psychrometric-chart.html`, "HVAC") — an
+  interactive psych chart on a `<canvas>`: saturation curve, constant-RH
+  curves, constant-wet-bulb/enthalpy lines, a draggable state point with
+  crosshairs. Set the point by dragging on the chart, or by typing a
+  dry-bulb plus one of {RH, wet-bulb, dew point, humidity ratio, enthalpy}
+  (the "define by" selector relabels the second input). Altitude-adjustable
+  (alters the barometric pressure → reshapes the chart). Reads out dry-bulb,
+  wet-bulb, dew point, RH, humidity ratio (gr/lb), enthalpy, specific
+  volume, vapor pressure, and barometric pressure in a 3×3 `.bit-readouts`
+  grid. **Keeps its own custom stacked layout** (like the PID tuner) — a
+  big canvas doesn't fit the three-column property-sheet pattern. The
+  psychrometrics (ASHRAE IP-unit formulations: saturation pressure,
+  humidity-ratio conversions, a bisection for wet-bulb and dew point,
+  enthalpy, specific volume, altitude→pressure) plus the chart drawing and
+  the drag handling all live inline in the page's `<script>` — it's a
+  self-contained, reusable chunk; extract it to `html/scripts/` if a second
+  tool ever needs it. A toy chart for intuition / quick checks, not a
+  calibrated psychrometric calculator. (Step 2 from
+  `site-ideas-and-friction.md` — drawing process lines / mixing between
+  two points — is a future build.)
 
 **Education — PID Basics** (`education/pid-basics.html`) — three stacked
 sections under section headers: *What P, I, and D Actually Do* (the
@@ -301,8 +322,9 @@ instead of an inline `<style>` duplicated across pages.)*
   value), or `.error` (out-of-range, red) — or an `input.ps-input` /
   `select.ps-input` / `textarea.ps-input` (the dense form-control variant).
   **Adopters: the BACnet/IP converter, Signal Scaling, Modbus Register
-  Viewer.** The PID tuner deliberately keeps its custom stacked layout (the
-  simulator block doesn't fit Input/Output/Reference) — only its cheat
+  Viewer.** The PID tuner and the Psychrometric Chart deliberately keep
+  their own custom stacked layouts (a simulator block / a big canvas don't
+  fit Input/Output/Reference) — for the PID tuner, only its cheat
   sheet adopts `.ref-table-dense`. A tool with no genuinely useful
   reference content drops the third column and runs two (e.g. Signal
   Scaling's slope/offset tab — Output spans the right two-thirds via

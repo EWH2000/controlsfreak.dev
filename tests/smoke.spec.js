@@ -12,6 +12,7 @@ const PAGES = [
     { name: 'modbus register viewer', url: 'http://localhost:8000/tools/modbus-register-viewer.html' },
     { name: 'pid tuner',              url: 'http://localhost:8000/tools/pid-tuner.html' },
     { name: 'bacnet/ip converter',    url: 'http://localhost:8000/tools/bacnet-ip-converter.html' },
+    { name: 'psychrometric chart',    url: 'http://localhost:8000/tools/psychrometric-chart.html' },
     { name: 'education — pid basics',  url: 'http://localhost:8000/education/pid-basics.html' },
     { name: 'contact',                url: 'http://localhost:8000/contact.html' },
 ];
@@ -43,4 +44,16 @@ test('bacnet/ip converter converts a hex string', async ({ page }) => {
     await page.fill('#b2i_hex', 'C0A80164BAC0');
     await expect(page.locator('#b2i_ip')).toHaveText('192.168.1.100');
     await expect(page.locator('#b2i_port')).toHaveText('47808');
+});
+
+test('psychrometric chart computes a state on load', async ({ page }) => {
+    await page.goto('http://localhost:8000/tools/psychrometric-chart.html');
+    // default 75°F / 50% RH → wet-bulb ≈ 62.6, humidity ratio ≈ 64.6 gr/lb
+    await expect(page.locator('#roWb')).toHaveText('62.6');
+    await expect(page.locator('#roW')).toHaveText('64.6');
+    // an impossible state mutes the readouts
+    await page.selectOption('#psyMode', 'wb');
+    await page.fill('#psyDb', '70');
+    await page.fill('#psySecond', '80');   // wet-bulb above dry-bulb
+    await expect(page.locator('#roWb')).toHaveText('—');
 });
