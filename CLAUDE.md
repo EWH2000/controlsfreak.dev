@@ -236,12 +236,18 @@ steady-state offset that never closes; **Sim 2 (P + I)** fixes P at Sim 1's
 default and exposes a reset (rep/min) slider, shows the offset closing but
 overshoot appearing if you push it; **Sim 3 (P + I + D)** fixes the
 aggressive P + I from Sim 2 and exposes a rate (Td, min) slider, shows
-derivative crushing the overshoot (then over-damping if you overdo it).
-Each is its own stripped-down surface over `/scripts/pid-engine.js` — a
-caption, three Fast / Medium / Slow process-speed chips (default Medium),
-one `<input type=range>` slider, a half-height `<canvas>` PV-vs-setpoint
-plot (≈160px vs the tuner's 260px), and one or two `.ps-row` + `.ps-value.live`
-metric callouts; everything auto-reruns on change, no Run button. The
+derivative crushing the overshoot (then over-damping if you overdo it) —
+and its rate slider's `max` re-ranges per loop speed (≈0.15 / 0.5 / 2 min
+for fast / medium / slow), keeping the thumb's *position* on a chip switch,
+because useful derivative time scales with the process time constant (a
+30 s rate that's plenty on a 45 s loop is a rounding error on a 4 min one;
+Sims 1 & 2 need no such re-ranging — gain and reset have the same useful
+range across speeds). Each is its own stripped-down surface over
+`/scripts/pid-engine.js` — a caption, three Fast / Medium / Slow
+process-speed chips (default Medium), one `<input type=range>` slider, a
+half-height `<canvas>` PV-vs-setpoint plot (≈160px vs the tuner's 260px),
+and one or two `.ps-row` + `.ps-value.live` metric callouts; everything
+auto-reruns on change, no Run button. The
 inline `<script>` (loaded after `pid-engine.js`) is the same shape as the
 tuner's — slider/chip/canvas glue, much smaller. A `.cta-button` ("Try it
 for yourself →") links to the PID Tuning Helper at the bottom. The

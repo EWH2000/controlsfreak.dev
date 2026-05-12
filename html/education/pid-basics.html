@@ -217,7 +217,7 @@
                 <span class="ps-label">Settling time (±2%)</span>
                 <span class="ps-value live" id="m3Settle">—</span>
             </div>
-            <p class="ref-note" style="margin-top:0.5rem;padding-top:0;border-top:none;">A little D crushes the overshoot at almost no cost; overdo it and the settling time creeps up — the loop's just sluggish now.</p>
+            <p class="ref-note" style="margin-top:0.5rem;padding-top:0;border-top:none;">A little D crushes the overshoot at almost no cost; overdo it and the loop just turns sluggish. The rate slider's range scales with the loop — derivative worth using on a 45-second process is a rounding error on a 4-minute one, which is part of why slow HVAC loops mostly run PI.</p>
         </div>
     </div>
 
@@ -259,6 +259,11 @@
     };
     const MINI_KNOB = { 1: 'gain', 2: 'rep', 3: 'rate' };          // which knob each slider drives
     const MINI_UNIT = { fast: 'in. w.c.', med: '°F', slow: '°F' }; // units for the steady-state-offset readout
+    // Sim 3's rate slider re-ranges per loop: useful derivative time scales with
+    // the process time constant, so a 30 s rate that's plenty on a 45 s loop is
+    // a rounding error on a 4 min one. (Gain / reset — Sims 1 & 2 — need no such
+    // re-ranging; their useful ranges are the same across process speeds.)
+    const MINI3_DMAX = { fast: 0.15, med: 0.5, slow: 2.0 };        // rate-slider max, minutes
     const miniLast  = {};                                          // last sim result per sim — for redraw on resize
 
     // ── Pick the process model (Fast / Medium / Slow chip) for sim n ──
@@ -266,6 +271,12 @@
         MINI[n].proc = key;
         btn.closest('.btn-row').querySelectorAll('.copy-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
+        if (n === 3) {                                  // re-range the rate slider, keeping its position (fraction of range)
+            const s = document.getElementById('m3Slider');
+            const frac = parseFloat(s.max) > 0 ? parseFloat(s.value) / parseFloat(s.max) : 0;
+            s.max = MINI3_DMAX[key];
+            s.value = (frac * MINI3_DMAX[key]).toFixed(2);
+        }
         runMini(n);
     }
 
