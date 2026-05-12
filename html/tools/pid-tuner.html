@@ -52,7 +52,7 @@
             <div class="form-row">
                 <div class="field">
                     <label>Process Type</label>
-                    <select id="pidProc" onchange="runPidSim()">
+                    <select id="pidProc" onchange="pidProcChanged()">
                         <option value="fast">Fast loop — e.g. duct static pressure</option>
                         <option value="med" selected>Medium loop — e.g. discharge air temp</option>
                         <option value="slow">Slow loop — e.g. space temperature</option>
@@ -101,7 +101,7 @@
                         <label id="pidKdLbl">Rate (Td, min)</label>
                         <span class="slider-val" id="pidKdVal">0.00</span>
                     </div>
-                    <input type="range" id="pidKd" min="0" max="2" step="0.01" value="0" oninput="runPidSim()">
+                    <input type="range" id="pidKd" min="0" max="0.5" step="0.01" value="0" oninput="runPidSim()">
                     <span class="slider-sub" id="pidKdSub"></span>
                 </div>
             </div>
@@ -201,7 +201,7 @@
             </p>
 
             <p class="pid-note">
-                One modeling note: the simulated loop's integrator pauses while derivative action is braking hard toward setpoint, so adding rate damps overshoot more cleanly here than on a controller that lacks that anti-windup refinement.
+                One modeling note: the simulated loop's integrator pauses while derivative action is braking hard toward setpoint, so adding rate damps overshoot more cleanly here than on a controller that lacks that anti-windup refinement. The rate slider also re-ranges with the Process Type — useful derivative time scales with the loop's time constant, so it stretches from a few seconds on a fast loop to a couple of minutes on a slow one.
             </p>
 
         </div>
@@ -233,6 +233,12 @@
         aggr:     { kc: 6.0,  ki: 2.00, kd: 0 },
         hot:      { kc: 14.0, ki: 4.00, kd: 0 },
     };
+    // Rate-slider max per process: useful derivative time scales with the loop's
+    // time constant, so a static range can't serve fast and slow loops both —
+    // a 30 s rate is plenty on a 45 s loop and a rounding error on a 4 min one.
+    // (Gain and reset need no such re-ranging; their useful ranges hold across
+    // process speeds.) Mirrors the Education page's mini-sim.
+    const PID_DMAX = { fast: 0.15, med: 0.5, slow: 2.0 };   // minutes
     let pidLast = null;   // last sim result, kept so a window resize can redraw
 
     function pidPreset(name, btn) {
@@ -242,6 +248,17 @@
         document.getElementById('pidKd').value = p.kd;
         document.querySelectorAll('.tool-card .btn-row .copy-btn').forEach(b => b.classList.remove('active'));
         if (btn) btn.classList.add('active');
+        runPidSim();
+    }
+
+    // Process Type changed: re-range the rate slider for the new loop speed,
+    // keeping the thumb's position (its fraction of the range), then re-run.
+    function pidProcChanged() {
+        const key = document.getElementById('pidProc').value;
+        const s = document.getElementById('pidKd');
+        const frac = parseFloat(s.max) > 0 ? parseFloat(s.value) / parseFloat(s.max) : 0;
+        s.max = PID_DMAX[key];
+        s.value = (frac * PID_DMAX[key]).toFixed(2);
         runPidSim();
     }
 

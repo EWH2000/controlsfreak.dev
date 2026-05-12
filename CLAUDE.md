@@ -161,15 +161,19 @@ each live tool, then a "Coming Soon" `.tool-grid` of dimmed
   simulator (process-type `<select>`, a parameter-style `<select>` that
   relabels the controls — gain·reset·rate / Ti·Td in minutes or seconds /
   proportional band — preset-tuning chips, three `<input type=range>`
-  sliders with Ti / Td / PB equivalents shown beneath each, a `<canvas>`
-  plot of PV vs. setpoint, and overshoot / settling-time /
-  steady-state-error readouts), then a **Reference** region near the
-  bottom: a *Loop Speed Reference* `.ps-section-label` + the fast/medium/slow
-  `.ref-table` (time constants, dead times, HVAC examples + the dead-time÷τ
-  note — this table moved here from the Education page, since it's
-  operational reference, not conceptual material) and a tightened
-  *Symptom → Tuning Move* `.subhead` + `.ref-table-dense` (short arrow
-  codes — ↑/↓, P/I/D — not prose). Plus a short "New to PID? Start with the
+  sliders with Ti / Td / PB equivalents shown beneath each — the rate
+  slider's `max` re-ranges with the Process Type (≈0.15 / 0.5 / 2 min for
+  fast / medium / slow, thumb position preserved on a switch), since useful
+  derivative time scales with the loop's time constant — a `<canvas>` plot
+  of PV vs. setpoint, and overshoot / settling-time / steady-state-error
+  readouts), then a **Reference** region near the bottom: a *Loop Speed
+  Reference* `.ps-section-label` + the fast/medium/slow `.ref-table` (time
+  constants, dead times, HVAC examples + the dead-time÷τ note — this table
+  moved here from the Education page, since it's operational reference, not
+  conceptual material) and a tightened *Symptom → Tuning Move*
+  `.ps-section-label` + `.ref-table-dense` (short arrow codes — ↑/↓, P/I/D —
+  not prose; both reference headers use `.ps-section-label` while the
+  *Step-Response Simulator* header up top stays `.subhead`). Plus a short "New to PID? Start with the
   basics →" cross-link to the Education page (where the long-form explainer
   and the three mini-sims live) and a vendor-style "rule of thumb" note
   describing how the Parameter Style selector maps to Niagara / EBO /
