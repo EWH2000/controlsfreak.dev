@@ -184,17 +184,18 @@
                 <title id="d2-title">2-pipe reverse return</title>
                 <desc id="d2-desc">A boiler with a pump feeds a supply main running left to right past three loads in parallel. Each load returns into a return main that also runs left to right, past all the loads, and only then doubles back the full length of the building to the boiler. The first load supplied is the last to return, so every load's total pipe path is roughly equal — naturally self-balancing — at the cost of the extra doubled-back run of pipe.</desc>
 
-                <!-- piping: supply (solid, --blue) — out the boiler top, along the supply main -->
-                <path id="d2-supply-main" d="M75 160 V85 H600" fill="none" stroke="var(--blue, #1577b8)" stroke-width="3"/>
-                <line id="d2-load1-supply" x1="240" y1="85" x2="240" y2="160" stroke="var(--blue, #1577b8)" stroke-width="3"/>
-                <line id="d2-load2-supply" x1="420" y1="85" x2="420" y2="160" stroke="var(--blue, #1577b8)" stroke-width="3"/>
-                <line id="d2-load3-supply" x1="600" y1="85" x2="600" y2="160" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                <!-- piping: supply (solid, --blue) — out the boiler top, along the supply main.
+                     data-flow="supply" hooks flow-engine.js; path/line drawing order matches flow direction. -->
+                <path id="d2-supply-main" data-flow="supply" d="M75 160 V85 H600" fill="none" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                <line id="d2-load1-supply" data-flow="supply" x1="240" y1="85" x2="240" y2="160" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                <line id="d2-load2-supply" data-flow="supply" x1="420" y1="85" x2="420" y2="160" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                <line id="d2-load3-supply" data-flow="supply" x1="600" y1="85" x2="600" y2="160" stroke="var(--blue, #1577b8)" stroke-width="3"/>
                 <!-- piping: return (dashed, --blue-cool) — the collector runs WITH the supply past every load, then doubles back to the boiler -->
-                <line id="d2-load1-return" x1="240" y1="215" x2="240" y2="295" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
-                <line id="d2-load2-return" x1="420" y1="215" x2="420" y2="295" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
-                <line id="d2-load3-return" x1="600" y1="215" x2="600" y2="295" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
-                <path id="d2-return-collector" d="M240 295 H665" fill="none" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
-                <path id="d2-return-main" d="M665 295 V325 H75 V235" fill="none" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="d2-load1-return" data-flow="return" x1="240" y1="215" x2="240" y2="295" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="d2-load2-return" data-flow="return" x1="420" y1="215" x2="420" y2="295" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="d2-load3-return" data-flow="return" x1="600" y1="215" x2="600" y2="295" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
+                <path id="d2-return-collector" data-flow="return" d="M240 295 H665" fill="none" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
+                <path id="d2-return-main" data-flow="return" d="M665 295 V325 H75 V235" fill="none" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
 
                 <!-- flow arrows -->
                 <g id="d2-flow-arrows">

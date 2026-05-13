@@ -263,6 +263,14 @@ engine drops the dashes and direction-of-motion carries the redundant cue.
   init, no alternate render path; the static SVG is already the
   correct reduced-motion state.
 - The page must still teach with the animation off and on any device.
+- The dashed-stroke-vs-moving-particle perceptual issue and the 
+screen-only toggle that fixed it. Future animations on any 
+dashed-encoded element will hit this; recording the resolution saves 
+the rediscovery.
+- The path/line/circle/etc. selector convention — return-flow markup
+uses mixed element types, so attribute selectors should be 
+[data-flow="return"] not path[data-flow="return"]. Small but exactly the 
+kind of catch that costs an afternoon next time.
 
 ---
 
