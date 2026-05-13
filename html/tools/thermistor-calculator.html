@@ -10,15 +10,17 @@
     <link rel="stylesheet" href="/styles.css">
     <style>
         /* Page-specific: the R/T table for a sensor type is long (≈ 60 rows),
-           so it lives in a fixed-height scroll box with a sticky header — that
-           keeps the Reference column from towering over the other two. The row
-           matching the current temperature gets a faint highlight so you can
-           scan the curve around the answer. Whichever input field isn't the
-           active one (it shows the derived value) reads visibly "off". The
-           grid is slightly left-biased so the sensor-type dropdown has room. */
+           so it lives in a short fixed-height scroll box with a sticky header —
+           you scroll it anyway, and a tall box would just leave dead space
+           beside the Input/Output columns. The row matching the current
+           temperature gets a faint highlight (and re-centres in the box when it
+           drifts out) so you can scan the curve around the answer. Whichever
+           input field isn't the active one (it shows the derived value) reads
+           visibly "off". The grid is slightly left-biased so the sensor-type
+           dropdown has room. */
         .tool-body-3col { grid-template-columns: 1.2fr 1fr 1fr; }
         #thRtScroll {
-            max-height: 460px;
+            max-height: 250px;
             overflow-y: auto;
             border: 1px solid var(--border-faint);
             border-radius: 2px;
