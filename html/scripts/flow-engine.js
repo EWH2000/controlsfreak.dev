@@ -16,9 +16,13 @@
 // itself is page-agnostic and a no-op where no `data-flow` exists.
 //
 // Mechanic: each annotated element gets its own pool of <circle>
-// particles, injected as siblings inside the parent SVG. Particles
-// step forward each frame by VELOCITY · dt and wrap to position 0 at
-// the path's end (per-segment pools, no path-stitching). Position
+// particles, injected into a single per-SVG `<g class="flow-particles">`
+// layer that the engine appends as the SVG's *last* child — so
+// particles always paint above the pipework, including the dashed
+// return strokes that would otherwise visually compete with them.
+// Particles step forward each frame by VELOCITY · dt and wrap to
+// position 0 at the path's end (per-segment pools, no path-stitching).
+// Position
 // along the path comes from getPointAtLength() — no SMIL, no CSS
 // offset-path. Velocity and spacing are *global constants*: a longer
 // pipe takes longer to traverse and carries more particles. That's
@@ -89,14 +93,13 @@
             const count = Math.max(1, Math.round(length / SPACING));
             const step = length / count;     // even-stride spacing along this path
             const particles = [];
+            const layer = ensureParticleLayer(svg);
 
             for (let i = 0; i < count; i++) {
                 const circle = document.createElementNS(SVG_NS, 'circle');
                 circle.setAttribute('r', RADIUS);
                 circle.setAttribute('fill', fill);
-                // The particle layer sits on top of the static pipework
-                // and arrows by virtue of being appended last.
-                svg.appendChild(circle);
+                layer.appendChild(circle);
                 particles.push({ circle: circle, offset: i * step });
             }
 
@@ -133,6 +136,21 @@
             requestAnimationFrame(frame);
         }
         requestAnimationFrame(frame);
+    }
+
+    // One particle layer per SVG, appended as the last child so painter's-
+    // order puts every particle above every pipe stroke (including the
+    // dashed return paths). Re-appending an existing layer is a no-op
+    // for paint order but keeps the layer last if anything else gets
+    // added to the SVG later.
+    function ensureParticleLayer(svg) {
+        let layer = svg.querySelector(':scope > g.flow-particles');
+        if (!layer) {
+            layer = document.createElementNS(SVG_NS, 'g');
+            layer.setAttribute('class', 'flow-particles');
+        }
+        svg.appendChild(layer);
+        return layer;
     }
 
     function placeAll(pool) {
