@@ -23,8 +23,10 @@ page, but the project is the tools, not a personal homepage.
     the live tools plus a "Coming Soon" grid of `.tool-preview` cards.
   - `html/tools/signal-scaling.html`, `html/tools/modbus-register-viewer.html`,
     `html/tools/pid-tuner.html`, `html/tools/bacnet-ip-converter.html`,
-    `html/tools/psychrometric-chart.html` — one page per tool, each a
-    `.tool-card` with its own inline `<script>` for page-specific logic.
+    `html/tools/psychrometric-chart.html`, `html/tools/thermistor-calculator.html`
+    — one page per tool, each a `.tool-card` with its own inline `<script>` for
+    page-specific logic. (The thermistor tool also loads
+    `/scripts/thermistor-data.js` first — see below.)
   - `html/education/pid-basics.html` — the Education section's first page:
     the plain-English P/I/D explainer + three working one-knob mini-sims
     (P only → P+I → P+I+D), each an inline simulator built on
@@ -35,9 +37,13 @@ page, but the project is the tools, not a personal homepage.
   - `html/styles.css` — **the shared design system** (all the `:root`
     custom properties and component classes). Every page links it with
     `<link rel="stylesheet" href="/styles.css">`. Page-specific CSS stays
-    inline on the page that needs it — currently only `contact.html`,
-    which keeps a tiny inline `<style>` for `.hp-field` / `.contact-intro` /
-    `#contact-result-value`.
+    inline on the page that needs it — `contact.html` (`.hp-field` /
+    `.contact-intro` / `#contact-result-value`), `psychrometric-chart.html`
+    (widened `main`/`footer` + a custom `.tool-body-3col` column split),
+    and `thermistor-calculator.html` (a left-biased `.tool-body-3col` split,
+    the scrollable R/T-table box + its sticky `thead`, the "current row"
+    highlight, and the disabled-`.ps-input` look) — none of which belong in
+    `styles.css` because no other page uses them.
   - `html/scripts/pid-engine.js` — **the shared PID simulation core** (the
     first-order-plus-dead-time process model + discrete-time stepping +
     derived metrics; exposes `PID_PROC` and `simulatePid()`). The
@@ -53,6 +59,22 @@ page, but the project is the tools, not a personal homepage.
     `tools/pid-tuner.html` (the full power-user UI) and
     `education/pid-basics.html` (three stripped-down one-knob mini-sims) —
     same engine, different UI surfaces.
+  - `html/scripts/thermistor-data.js` — **the sensor R/T curve data** for the
+    thermistor calculator. Same loading pattern as `pid-engine.js` (a *classic*
+    script, loaded `<script src>` before the page's inline `<script>`): it
+    exposes one global, `THERMISTOR_TYPES`, an object keyed by sensor-type id —
+    each entry has a short `name`, a `family` (`thermistor` / `rtd`, drives the
+    card tag), a `group` (the `<optgroup>` label), a `ref` (defining point), a
+    `notes` string, a `curve` block (the nominal curve parameters), and a
+    `table` (`[[tempF, tempC, ohms], …]` generated from `curve` at load — to
+    swap in a transcribed datasheet table, replace `table` directly and drop
+    `curve`). **The tables are GENERATED from nominal curve parameters, not
+    transcribed from datasheets, and are explicitly flagged PENDING FIELD
+    VERIFICATION** — the file header and per-type `// TODO: verify` comments say
+    what each one needs checked against (the shunted curves — JCI "8.7K",
+    Schneider "Type 5" — and the 1K Balco are lowest-confidence; the Pt100/Pt1000
+    IEC 60751 curves are high-confidence). A field-verification pass (the owner
+    plus a second tech) is planned before this tool is treated as authoritative.
 
   Anchor `href`s use **explicit `.html` extensions** (e.g.
   `/tools/signal-scaling.html`, `/education/pid-basics.html`,
@@ -107,14 +129,16 @@ controlsfreak.dev/
 │   ├── contact.html    # the contact form (keeps a tiny inline <style> for page-only rules)
 │   ├── styles.css      # the shared design system (every page links it)
 │   ├── scripts/
-│   │   └── pid-engine.js   # shared PID simulation core (classic script: PID_PROC, simulatePid)
+│   │   ├── pid-engine.js        # shared PID simulation core (classic script: PID_PROC, simulatePid)
+│   │   └── thermistor-data.js   # sensor R/T curves (classic script: THERMISTOR_TYPES) — tables PENDING field verification
 │   ├── tools/
 │   │   ├── index.html              # Tools landing — live tools grid + "Coming Soon"
 │   │   ├── signal-scaling.html
 │   │   ├── modbus-register-viewer.html
 │   │   ├── pid-tuner.html          # also loads /scripts/pid-engine.js; loop-speed reference table lives here
 │   │   ├── bacnet-ip-converter.html
-│   │   └── psychrometric-chart.html   # interactive psych chart — three-column layout, psychrometrics inline
+│   │   ├── psychrometric-chart.html   # interactive psych chart — three-column layout, psychrometrics inline
+│   │   └── thermistor-calculator.html # thermistor / RTD lookup — three-column layout, loads /scripts/thermistor-data.js
 │   └── education/
 │       └── pid-basics.html         # Education section — P/I/D explainer + three working PID mini-sims (also loads /scripts/pid-engine.js)
 ├── tests/              # Playwright specs (smoke.spec.js, contact.spec.js)
@@ -229,6 +253,28 @@ each live tool, then a "Coming Soon" `.tool-grid` of dimmed
   building feel / quick state-point checks, not a calibrated load-study
   tool. (Step 2 from `site-ideas-and-friction.md` — drawing process lines /
   mixing between two points — is a future build.)
+- **Thermistor / RTD Lookup** (`tools/thermistor-calculator.html`, "Sensors")
+  — temperature ↔ resistance for the common HVAC sensors, on the three-column
+  property-sheet layout. Left **Input** column: a `<select>` of types in two
+  `<optgroup>`s (NTC: 10K Type II, 10K Type III, JCI 10K+8.7K shunt, Schneider/TAC
+  "Type 5" 10K-3+11K shunt, 20K, 3K · RTDs: 1K Balco — flagged "RTD, not a
+  thermistor" so a "Balco" search lands here — Pt100, Pt1000), a Temperature ↔
+  Resistance "look up by" toggle, a °F/°C unit toggle, and the temp + resistance
+  fields (the one you aren't looking up by goes `disabled` and shows the derived
+  value). Middle **Output** column: the type's defining point, the result as a
+  `.ps-value.live` readout, whether it's a table value or interpolated, a range
+  check, and a Copy-value button. Right **Reference** column: the full R/T table
+  for the selected type in a scrollable `.ref-table-dense` box (°F · °C · Ω) with
+  the row nearest the current temperature highlighted, plus the type's notes
+  beneath. A `.result-formula` footer shows the bracketing rows for an
+  interpolated answer. **Lookup mode only** — the "identify an unknown sensor
+  from two-plus data points" mode is a separate future build (see
+  `site-ideas-and-friction.md`). The curve data lives in
+  `/scripts/thermistor-data.js` (`THERMISTOR_TYPES`); the page interpolates
+  linearly *between table rows* (the table is the source of truth, by design —
+  no Steinhart-Hart coefficient evaluation). **The R/T tables are generated from
+  nominal curve parameters and are flagged PENDING FIELD VERIFICATION** — see
+  the data file.
 
 **Education — PID Basics** (`education/pid-basics.html`) — two stacked
 sections under section headers: *What P, I, and D Actually Do* (the
@@ -431,7 +477,7 @@ instead of an inline `<style>` duplicated across pages.)*
 4. If it graduates a Coming-Soon item, delete the matching
    `.tool-preview` card from the "Coming Soon" `.tool-grid` on
    `tools/index.html`.
-5. Bump the version string in the footer (currently `v0.7 · 2026`,
+5. Bump the version string in the footer (currently `v0.8 · 2026`,
    carried by every page) when shipping something notable.
 
 ## Workflow
@@ -517,10 +563,15 @@ section of `tools/index.html`:
 - Duct Pressure Calculator (static / velocity / total pressure)
 
 Other near-term work, tracked in `site-ideas-and-friction.md`: the
-thermistor calculator, process lines / mixing on the psychrometric chart
-(its "step 2"), and more Education pages. ✅ *Done:* the three cumulative
-PID mini-sims on `education/pid-basics.html` (P only → P+I → P+I+D, each a
-stripped-down UI over `/scripts/pid-engine.js`); the PID long-form
+thermistor calculator's **identify mode** (curve-fitting a standard type
+from two-plus measured points, with an accuracy disclaimer), process lines /
+mixing on the psychrometric chart (its "step 2"), and more Education pages.
+✅ *Done:* the thermistor / RTD **lookup mode** (`tools/thermistor-calculator.html`
++ `/scripts/thermistor-data.js` — but its R/T tables are generated from
+nominal curves and **flagged PENDING FIELD VERIFICATION**; a verification
+pass with a second tech is planned before it's authoritative); the three
+cumulative PID mini-sims on `education/pid-basics.html` (P only → P+I → P+I+D,
+each a stripped-down UI over `/scripts/pid-engine.js`); the PID long-form
 explainer moved onto that page earlier, and the fast/medium/slow loop-speed
 reference table now lives on the PID tuner (operational reference belongs
 with the tool).

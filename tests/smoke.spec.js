@@ -13,6 +13,7 @@ const PAGES = [
     { name: 'pid tuner',              url: 'http://localhost:8000/tools/pid-tuner.html' },
     { name: 'bacnet/ip converter',    url: 'http://localhost:8000/tools/bacnet-ip-converter.html' },
     { name: 'psychrometric chart',    url: 'http://localhost:8000/tools/psychrometric-chart.html' },
+    { name: 'thermistor calculator',  url: 'http://localhost:8000/tools/thermistor-calculator.html' },
     { name: 'education — pid basics',  url: 'http://localhost:8000/education/pid-basics.html' },
     { name: 'contact',                url: 'http://localhost:8000/contact.html' },
 ];
@@ -56,6 +57,33 @@ test('psychrometric chart computes a state on load', async ({ page }) => {
     await page.fill('#psyDb', '70');
     await page.fill('#psySecond', '80');   // wet-bulb above dry-bulb
     await expect(page.locator('#roWb')).toHaveText('—');
+});
+
+test('thermistor calculator looks up a known reference value', async ({ page }) => {
+    await page.goto('http://localhost:8000/tools/thermistor-calculator.html');
+
+    // the inputs + the reference table render on load
+    await expect(page.locator('#thType')).toBeVisible();
+    await expect(page.locator('#thTemp')).toBeVisible();
+    expect(await page.locator('#thRtBody tr').count(), 'R/T table should be populated').toBeGreaterThan(40);
+
+    // 10K Type III at 77 °F is the type's defining property — should land on ~10,000 Ω
+    await page.selectOption('#thType', '10k-3');
+    await page.fill('#thTemp', '77');
+    const r = parseFloat((await page.locator('#thResult').textContent()).replace(/[^0-9.]/g, ''));
+    expect(r, '10K-3 @ 77 °F should be ≈ 10,000 Ω').toBeGreaterThan(9700);
+    expect(r).toBeLessThan(10300);
+    await expect(page.locator('#thStatus')).toHaveText('in range');
+
+    // a temperature outside the table range mutes the result
+    await page.fill('#thTemp', '400');
+    await expect(page.locator('#thResult')).toHaveText('—');
+
+    // switching units rescales the temperature field in place (no recompute error)
+    await page.fill('#thTemp', '50');
+    await page.click('#thUnitC');
+    await expect(page.locator('#thTempLbl')).toHaveText('Temperature (°C)');
+    expect(parseFloat(await page.locator('#thTemp').inputValue())).toBeCloseTo(10, 0);   // 50 °F ≈ 10 °C
 });
 
 test('education page runs the PID mini-sims and they respond to input', async ({ page }) => {
