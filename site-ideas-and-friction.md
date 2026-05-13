@@ -170,7 +170,9 @@ keyed off `data-flow="supply"|"return"` attributes on each path; the
 static flow arrows stay on as the motion-off direction cue. The Twin-T
 section adds a small `<script>` for the injection-pump slider — not a
 rewrite. Anything new under `education/` keeps that habit: clean named
-groups, semantic ids, equipment as separately-targetable elements.
+groups, semantic ids, equipment as separately-targetable elements.the 
+dashed return is the static-state encoding; in the animated state the 
+engine drops the dashes and direction-of-motion carries the redundant cue.
 
 **Animation policy.**
 - No JS framework or animation lib (Mermaid, D3, GSAP, Lottie) —

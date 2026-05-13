@@ -44,6 +44,21 @@
         .hd-legend .sw { display: inline-block; width: 26px; height: 0; vertical-align: middle; margin-right: 0.4rem; }
         .hd-legend .sw.supply { border-top: 3px solid var(--blue); }
         .hd-legend .sw.return { border-top: 3px dashed var(--blue-cool); }
+
+        /* While particle animation is active on an SVG, drop the dashed
+           return-stroke pattern — direction-of-motion alone distinguishes
+           supply from return, and the stationary dash pattern visually
+           competes with the moving particles. The flow-active class is
+           added by flow-engine.js only after its reduced-motion bail-out,
+           so reduced-motion keeps the dashes. @media screen scopes the
+           override so a printout still gets the dashed encoding even if
+           the page was animating on screen. Selector intentionally targets
+           any element type (paths and lines both carry data-flow). */
+        @media screen {
+            svg.flow-active [data-flow="return"] {
+                stroke-dasharray: none;
+            }
+        }
     </style>
 </head>
 <body>

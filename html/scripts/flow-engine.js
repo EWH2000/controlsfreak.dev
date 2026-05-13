@@ -35,6 +35,14 @@
 // solid/dashed pipe convention and the existing flow-arrow polygons —
 // carries the meaning on its own.
 //
+// flow-active class: when an SVG gets at least one particle pool, the
+// engine adds `flow-active` to that <svg> element. Pages use this hook
+// to switch styling that's tied to "animation is running" — e.g. to
+// drop the dashed-return stroke pattern while motion is the directional
+// cue, while leaving the dashes in place for reduced-motion, print, or
+// any other no-animation state. Scoped to the SVG (not <body>) so a
+// page with both animated and static diagrams gets both right.
+//
 // Path direction: by default the path's drawing order is the flow
 // direction. If a path is drawn against the flow, the page can add
 // `data-flow-reverse="true"` and the engine walks it from end to
@@ -142,8 +150,11 @@
     // order puts every particle above every pipe stroke (including the
     // dashed return paths). Re-appending an existing layer is a no-op
     // for paint order but keeps the layer last if anything else gets
-    // added to the SVG later.
+    // added to the SVG later. Also flags the host SVG with `flow-active`
+    // so page-level CSS can react to "animation is running" — see the
+    // header comment.
     function ensureParticleLayer(svg) {
+        svg.classList.add('flow-active');
         let layer = svg.querySelector(':scope > g.flow-particles');
         if (!layer) {
             layer = document.createElementNS(SVG_NS, 'g');

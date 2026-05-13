@@ -79,6 +79,14 @@ but the project is the tools, not a personal homepage.
   rather than `--bg`.
 - **Turnstile never goes idle** — for Playwright on `contact.html` use
   `waitUntil: 'domcontentloaded'`, not `'networkidle'`.
+- **Selectors targeting SVG geometry are attribute-only, not
+  element-qualified.** Pipe runs in the hydronic diagrams use mixed
+  element types — return-flow on `hydronic-loops.html` mixes `<line>`
+  and `<path>`, for instance — so `path[id^="d1-return"]` silently
+  drops half the geometry. Use `[id^="d1-return"]` (no element
+  qualifier) for `querySelectorAll` and CSS selectors alike. Convention
+  applies to `flow-engine.js` and any future engine that enumerates SVG
+  elements by id pattern.
 
 ## Repo structure
 
