@@ -122,6 +122,18 @@ hardcoding localStorage just for this one tool.
 
 ### System animations for Education *(in progress — hydronic loops first)*
 
+**Engine conventions.** When functionality benefits from a shared
+script (the PID simulator, the flow animation engine, future
+thermo/mixing models for Twin-T or similar), it lives under
+`html/scripts/` as a classic script (no `type="module"`) named
+`<purpose>-engine.js`, exposing plain globals — `PID_PROC` /
+`simulatePid` for the PID engine, `FlowEngine.init()` for the flow
+engine — that inline page scripts (loaded after the engine) consume.
+Engines don't share code with each other; the shared *convention*
+(location, naming, classic-script + globals) is the integration. If a
+third engine appears that genuinely shapes like one of the existing
+two, revisit then — don't pre-abstract a "core."
+
 The Education explainer pages land harder if the schematics move — flow
 pulsing around a loop, the injection pump speeding up and the supply
 temperature creeping up. The framing that anchors this work: a tech on
@@ -130,9 +142,11 @@ page. That sets the bar — static SVG carries the full meaning, motion
 is additive only, page renders usefully on a phone with two bars.
 
 **Per-diagram scope on `education/hydronic-loops.html`:**
-- *2-Pipe Direct Return* — illustrative ambient motion. Same flow
-  indicators on every load branch, near branch visibly faster than far
-  branch, so "self-unbalancing" is something you can see.
+- *2-Pipe Direct Return* — illustrative ambient motion. Same particle
+  behavior on every branch (constant velocity, equal spacing); because
+  path length to near vs. far loads is unequal, the near load's round
+  trip visibly completes sooner than the far load's. That asymmetry is
+  the contrast Reverse Return cancels.
 - *Reverse Return* — illustrative ambient motion. Return-main flow
   direction matches supply (the contrast with Direct is the point),
   load-branch speeds roughly equal.
@@ -143,31 +157,43 @@ is additive only, page renders usefully on a phone with two bars.
   in Tools, it lives wherever it teaches. See "Where interactive
   widgets live" below.
 
-**Progressive-enhancement baseline.** The static inline SVGs are
+**Progressive-enhancement baseline.**
+The static inline SVGs are
 deliberately the baseline this layers onto: every equipment element is
 a named `<g>` (`#d3-boiler`, `#d3-injection-pump`, `#d3-load-A`, …),
 every pipe run is a named `<path>` / `<line>` (`#d3-inject-pipe`,
 `#d3-system-return`, …), labels are real `<text>`, and flow arrows are
-grouped (`#d3-flow-arrows`). The animated version is *additive* — CSS
-keyframes (`stroke-dashoffset` on pipes for "moving water",
-opacity/transform on arrows) keyed off those ids, plus a small
-`<script>` for the Twin-T widget's slider — not a rewrite. Anything
-new under `education/` keeps that habit: clean named groups, semantic
-ids, equipment as separately-targetable elements.
+grouped (`#d3-flow-arrows`). The animated version is *additive* — a
+small JS particle engine (`/scripts/flow-engine.js`) walks discrete
+`<circle>` particles along the named paths via `getPointAtLength()`,
+keyed off `data-flow="supply"|"return"` attributes on each path; the
+static flow arrows stay on as the motion-off direction cue. The Twin-T
+section adds a small `<script>` for the injection-pump slider — not a
+rewrite. Anything new under `education/` keeps that habit: clean named
+groups, semantic ids, equipment as separately-targetable elements.
 
 **Animation policy.**
 - No JS framework or animation lib (Mermaid, D3, GSAP, Lottie) —
   hand-written, same "no build step" property as everything else.
-- CSS keyframes on SVG elements where possible; vanilla JS only when
-  interactivity requires it (the Twin-T widget).
-- Ambient continuous motion (slow flow indication, on the order of one
-  cycle per few seconds, peripheral) is in-bounds — matches what a live
-  BAS graphic does. The test is "would this distract a tech reading on
-  bad cell." If yes, don't.
-- Demanding-attention motion is out: full-screen takeovers, video-style
-  flourishes, bouncy easing. That's the spirit of "no autoplay."
-- Honor `prefers-reduced-motion: reduce` — the static SVG is already
-  the correct reduced-motion state.
+- Flow indication is a vanilla JS particle engine
+  (`html/scripts/flow-engine.js`), driven by `requestAnimationFrame`,
+  walking `<circle>` particles along `data-flow`-annotated paths via
+  `getPointAtLength()`. CSS for static styling only.
+- Constant particle velocity globally — longer paths take longer to
+  traverse. Intentional and pedagogical: the contrast between Direct
+  Return (unequal cycle times to near vs. far loads) and Reverse
+  Return (equal cycle times) depends on it.
+- Per-segment particle pools, no path-stitching at branches. Each
+  path cycles its own pool independently; flow continuity at tees
+  reads correctly as long as the rates match.
+- Ambient continuous motion (peripheral, slow) is in-bounds — matches
+  what a live BAS graphic does. The test is "would this distract a
+  tech reading on bad cell." If yes, don't.
+- Demanding-attention motion is out: full-screen takeovers, video-
+  style flourishes, bouncy easing. That's the spirit of "no autoplay."
+- Honor `prefers-reduced-motion: reduce` — engine short-circuits at
+  init, no alternate render path; the static SVG is already the
+  correct reduced-motion state.
 - The page must still teach with the animation off and on any device.
 
 ---

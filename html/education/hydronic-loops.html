@@ -92,16 +92,17 @@
                 <title id="d1-title">2-pipe direct return</title>
                 <desc id="d1-desc">A boiler with a pump feeds a supply main running left to right past three loads in parallel. Each load returns into a separate return main that runs right to left, straight back to the boiler. The nearest load has a short loop; the farthest load's water travels the full length of the building and back, so flow naturally favours the near loads unless balanced.</desc>
 
-                <!-- piping: supply (solid, --blue) — out the boiler top, along the supply main -->
-                <path id="d1-supply-main" d="M75 160 V85 H600" fill="none" stroke="var(--blue, #1577b8)" stroke-width="3"/>
-                <line id="d1-load1-supply" x1="240" y1="85" x2="240" y2="160" stroke="var(--blue, #1577b8)" stroke-width="3"/>
-                <line id="d1-load2-supply" x1="420" y1="85" x2="420" y2="160" stroke="var(--blue, #1577b8)" stroke-width="3"/>
-                <line id="d1-load3-supply" x1="600" y1="85" x2="600" y2="160" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                <!-- piping: supply (solid, --blue) — out the boiler top, along the supply main.
+                     data-flow="supply" hooks flow-engine.js; path/line drawing order matches flow direction. -->
+                <path id="d1-supply-main" data-flow="supply" d="M75 160 V85 H600" fill="none" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                <line id="d1-load1-supply" data-flow="supply" x1="240" y1="85" x2="240" y2="160" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                <line id="d1-load2-supply" data-flow="supply" x1="420" y1="85" x2="420" y2="160" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                <line id="d1-load3-supply" data-flow="supply" x1="600" y1="85" x2="600" y2="160" stroke="var(--blue, #1577b8)" stroke-width="3"/>
                 <!-- piping: return (dashed, --blue-cool) — out the load bottoms, along the return main, back into the boiler bottom -->
-                <line id="d1-load1-return" x1="240" y1="215" x2="240" y2="300" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
-                <line id="d1-load2-return" x1="420" y1="215" x2="420" y2="300" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
-                <line id="d1-load3-return" x1="600" y1="215" x2="600" y2="300" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
-                <path id="d1-return-main" d="M600 300 H75 V235" fill="none" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="d1-load1-return" data-flow="return" x1="240" y1="215" x2="240" y2="300" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="d1-load2-return" data-flow="return" x1="420" y1="215" x2="420" y2="300" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="d1-load3-return" data-flow="return" x1="600" y1="215" x2="600" y2="300" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
+                <path id="d1-return-main" data-flow="return" d="M600 300 H75 V235" fill="none" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
 
                 <!-- flow arrows -->
                 <g id="d1-flow-arrows">
@@ -369,6 +370,13 @@
     <span class="footer-text">controlsfreak.dev — open tools for controls engineers</span>
     <span class="footer-text">v0.9 · 2026</span>
 </footer>
+
+<!-- Particle-flow animation over the diagram pipework. Classic script (not a
+     module), loaded before the inline init below. Engine respects
+     prefers-reduced-motion and is a no-op on pages without [data-flow] paths;
+     d2 / d3 aren't annotated yet, so only diagram 1 animates. -->
+<script src="/scripts/flow-engine.js"></script>
+<script>FlowEngine.init();</script>
 
 </body>
 </html>
