@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+    <title>controlsfreak.dev</title>
+
+    <!-- background disc in the accent green -->
+    <circle cx="32" cy="32" r="32" fill="#43881c"/>
+
+    <!-- gear in the bg cream, scaled 0.6 from the OG image's 8-tooth polygon
+         (tip radius 35.7 -> 21.4, ~67% of disc diameter); centre hub is
+         punched out with a green circle so it reads as a hole. -->
+    <g transform="translate(32 32) scale(0.6)" fill="#eef1ec">
+        <polygon points="-7,-26.1 -9.6,-35.7 9.6,-35.7 7,-26.1 13.5,-23.4 18.5,-32 32,-18.5 23.4,-13.5 26.1,-7 35.7,-9.6 35.7,9.6 26.1,7 23.4,13.5 32,18.5 18.5,32 13.5,23.4 7,26.1 9.6,35.7 -9.6,35.7 -7,26.1 -13.5,23.4 -18.5,32 -32,18.5 -23.4,13.5 -26.1,7 -35.7,9.6 -35.7,-9.6 -26.1,-7 -23.4,-13.5 -32,-18.5 -18.5,-32 -13.5,-23.4"/>
+        <circle cx="0" cy="0" r="11" fill="#43881c"/>
+    </g>
+</svg>

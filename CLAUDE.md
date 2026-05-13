@@ -144,7 +144,10 @@ controlsfreak.dev/
 │   ├── sitemap.xml     # canonical page list for search engines — keep in sync when adding/removing pages
 │   ├── assets/         # binary site assets (images, icons)
 │   │   ├── og-image.svg         # source for the Open Graph link-preview image (1200×630, hand-written SVG)
-│   │   └── og-image.png         # rendered OG image — every page's og:image points here; re-render from the SVG if edited
+│   │   ├── og-image.png         # rendered OG image — every page's og:image points here; re-render from the SVG if edited
+│   │   ├── favicon.svg          # source for the site favicon (64×64, hand-written SVG) — same gear motif as og-image, color-inverted
+│   │   ├── favicon-32.png       # 32×32 rendered favicon (PNG fallback for browsers that don't support SVG favicons)
+│   │   └── favicon-180.png      # 180×180 Apple touch icon (used when iOS users save the site to their home screen)
 │   ├── scripts/
 │   │   ├── pid-engine.js        # shared PID simulation core (classic script: PID_PROC, simulatePid)
 │   │   └── thermistor-data.js   # sensor R/T curves (classic script: THERMISTOR_TYPES) — tables PENDING field verification
@@ -521,7 +524,13 @@ instead of an inline `<style>` duplicated across pages.)*
    that one image; per-page custom OG images are a future enhancement —
    and `og:site_name=controlsfreak.dev`). `og:title` mirrors `<title>`
    and `og:description` mirrors `<meta name="description">` verbatim;
-   don't reword. Then the Google Fonts `<link>`s, then
+   don't reword. Then, immediately after the OG block, the three favicon
+   link tags (`<link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">`,
+   `<link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png">`,
+   `<link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon-180.png">`) —
+   these are byte-identical on every page (the favicon is site-wide, not
+   per-page; per-page favicons exist technically but make no sense for a
+   unified site). Then the Google Fonts `<link>`s, then
    `<link rel="stylesheet" href="/styles.css">`,
    the `.site-nav` with `Tools` marked `.active`, a `<main>` with a
    `.section-header` + the `.tool-card` (header / `.tool-body` /
