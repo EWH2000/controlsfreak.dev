@@ -217,6 +217,11 @@ is additive only, page renders usefully on a phone with two bars.
   Same precedent as the PID mini-sims — interactive doesn't only live
   in Tools, it lives wherever it teaches. See "Where interactive
   widgets live" below.
+- **viewBox empty space ≠ CSS whitespace.** If a diagram's pipework
+  doesn't fill the rendered SVG width, check the content's bounding
+  box against the viewBox before reaching for CSS. Content should
+  fill its viewBox so `.hd-svg { width: 100% }` does what it looks
+  like it should.
 
 **Progressive-enhancement baseline.**
 The static inline SVGs are
