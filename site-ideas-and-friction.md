@@ -120,33 +120,76 @@ thinking about whether that pattern should generalize (e.g. PID tuner
 saves last sliders, Modbus viewer remembers last register) before
 hardcoding localStorage just for this one tool.
 
-### System animations for Education
-The Education explainer pages would land harder if the schematics moved —
-flow pulsing around a loop, the injection pump speeding up and the supply
-temperature creeping up, water "filling" a coil. Future work, not now.
+### System animations for Education *(in progress — hydronic loops first)*
 
-**Progressive-enhancement baseline.** The static inline SVGs on
-`education/hydronic-loops.html` are deliberately the baseline this layers
-onto: every equipment element is a named `<g>` (`#d3-boiler`,
-`#d3-injection-pump`, `#d3-load-A`, …), every pipe run is a named `<path>`
-/ `<line>` (`#d3-inject-pipe`, `#d3-system-return`, …), labels are real
-`<text>`, and flow arrows are grouped (`#d3-flow-arrows`). So the animated
-version is *additive* — a small inline `<script>` (or CSS keyframes:
-`stroke-dashoffset` on the pipes for "moving water", opacity/transform on
-the arrows) keyed off those ids — not a rewrite. Anything new under
-`education/` should keep that habit: clean named groups, semantic ids,
-equipment as separately-targetable elements.
+The Education explainer pages land harder if the schematics move — flow
+pulsing around a loop, the injection pump speeding up and the supply
+temperature creeping up. The framing that anchors this work: a tech on
+a roof on limited cell service should still get full value from the
+page. That sets the bar — static SVG carries the full meaning, motion
+is additive only, page renders usefully on a phone with two bars.
 
-**Constraints.** No JS framework / animation lib (Mermaid, D3, GSAP, …) —
-hand-written, same "no build step" property as everything else. Honor
-`prefers-reduced-motion` (the static SVG is the reduced-motion state, which
-is already correct). Keep it cheap — these are teaching aids, not a demo
-reel; a slow loop of `requestAnimationFrame` or a couple of CSS keyframes
-is plenty, and the page must still teach with the animation off.
+**Per-diagram scope on `education/hydronic-loops.html`:**
+- *2-Pipe Direct Return* — illustrative ambient motion. Same flow
+  indicators on every load branch, near branch visibly faster than far
+  branch, so "self-unbalancing" is something you can see.
+- *Reverse Return* — illustrative ambient motion. Return-main flow
+  direction matches supply (the contrast with Direct is the point),
+  load-branch speeds roughly equal.
+- *Twin-T Primary-Secondary* — graduates to a small **interactive
+  widget**: slider on injection-pump speed, system supply temperature
+  shifts color in response, worked-example flow numbers update live.
+  Same precedent as the PID mini-sims — interactive doesn't only live
+  in Tools, it lives wherever it teaches. See "Where interactive
+  widgets live" below.
+
+**Progressive-enhancement baseline.** The static inline SVGs are
+deliberately the baseline this layers onto: every equipment element is
+a named `<g>` (`#d3-boiler`, `#d3-injection-pump`, `#d3-load-A`, …),
+every pipe run is a named `<path>` / `<line>` (`#d3-inject-pipe`,
+`#d3-system-return`, …), labels are real `<text>`, and flow arrows are
+grouped (`#d3-flow-arrows`). The animated version is *additive* — CSS
+keyframes (`stroke-dashoffset` on pipes for "moving water",
+opacity/transform on arrows) keyed off those ids, plus a small
+`<script>` for the Twin-T widget's slider — not a rewrite. Anything
+new under `education/` keeps that habit: clean named groups, semantic
+ids, equipment as separately-targetable elements.
+
+**Animation policy.**
+- No JS framework or animation lib (Mermaid, D3, GSAP, Lottie) —
+  hand-written, same "no build step" property as everything else.
+- CSS keyframes on SVG elements where possible; vanilla JS only when
+  interactivity requires it (the Twin-T widget).
+- Ambient continuous motion (slow flow indication, on the order of one
+  cycle per few seconds, peripheral) is in-bounds — matches what a live
+  BAS graphic does. The test is "would this distract a tech reading on
+  bad cell." If yes, don't.
+- Demanding-attention motion is out: full-screen takeovers, video-style
+  flourishes, bouncy easing. That's the spirit of "no autoplay."
+- Honor `prefers-reduced-motion: reduce` — the static SVG is already
+  the correct reduced-motion state.
+- The page must still teach with the animation off and on any device.
 
 ---
 
 ## Site structure / organization
+### Where interactive widgets live
+
+Tools = calculators, converters, lookups. Pull-it-up-and-use-it
+utilities. Standalone, get a Tools-landing card, show up in "Coming
+Soon" while pending.
+
+Education = prose + diagrams + sometimes interactive widgets that exist
+to teach a specific concept. The PID mini-sims (P only → P+I → P+I+D)
+and the Twin-T injection-pump widget on Hydronic Loops are on Education
+pages on purpose — the widget *is part of the explanation*, not a
+standalone tool, and it gets read in sequence with the prose around it.
+
+The rule: standalone "open it and use it" cases go to Tools. Teaching
+widgets stay in Education and don't get a Tools-landing card. If a
+piece of interactive content is useful both ways, the simulator goes
+to Tools and a stripped-down teaching version goes to Education (the
+PID tuner is the worked example of this split).
 
 ### Split into "Tools" and "Education" sections
 When breaking the single page into multiple pages, organize the site
