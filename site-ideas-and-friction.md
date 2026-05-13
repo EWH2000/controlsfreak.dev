@@ -9,6 +9,67 @@ tools.
 
 ## Feature ideas
 
+### Refrigerant cycle — Education section, possibly with calculator
+
+The refrigerant side is where everyone in HVAC has a fuzzy grasp and
+few have a clear one — especially controls people, who tend to treat
+it as someone else's problem until they're staring at a low-suction
+alarm and don't know whether to trust the sensor. The vapor-compression
+cycle isn't actually that hard; it's just that nobody walks you through
+it end-to-end with the controls-relevant pieces emphasized. I messed
+with the TXV on my window unit thinking it was a RaT sensor — the
+suction-line bulb plus capillary tube does look the part if you've
+never seen one explained — and I know controls guys decades in who'd
+make the same mistake. That's the credibility hook for this content:
+name the things people actually trip on, including the look-alikes.
+
+**Rough Education scope** (multiple pages, not one mega-page):
+
+- **Refrigerant cycle basics** — the four components (compressor,
+  condenser, metering device, evaporator), high side vs. low side,
+  what each does and why. The pressure-temperature relationship for
+  saturated refrigerant is the load-bearing concept; it's what makes
+  every other measurement meaningful.
+- **Superheat and subcooling** — the two measurements that prove a
+  cycle is running right. What they are (vapor warmer than its
+  saturation temp, liquid cooler than its saturation temp), what
+  abnormal readings mean (low superheat → liquid floodback risk,
+  high superheat → starved evaporator, low subcooling → undercharge
+  or restriction, etc.), and how the BMS-visible sensors fit:
+  suction temp + suction pressure → superheat; liquid temp + liquid
+  pressure → subcooling.
+- **TXVs vs. EEVs — the metering devices.** TXV mechanical loop: bulb
+  senses suction temp, diaphragm balances bulb pressure vs. evaporator
+  pressure vs. spring, modulates flow to hold superheat. EEV: same
+  job, stepper-driven, commanded by the unit controller or BMS — which
+  is the surface controls people actually interact with. The
+  TXV-as-RaT-sensor anecdote lives here.
+- Optional later: **refrigerants and their pressures** — common ones
+  (R-410A on its way out, R-32 and R-454B as the A2L successors,
+  R-134a still common in centrifugal chillers), glide on blends, why
+  R-22 retrofits get weird.
+
+**Tool potential — P-T / superheat calculator.** The most-asked-for
+refrigerant calculation in the field: given refrigerant + pressure,
+get saturation temperature; given pressure + measured line temp, get
+superheat or subcooling. Fits the calculator-tool pattern (3-col,
+single purpose). Refrigerant select + high/low side + temperature
+input + result. Detail to get right: glide on non-azeotropic blends.
+R-410A is near-azeotropic so single-temp is fine; R-407C has ~10°F
+glide and needs bubble vs. dew handled correctly, or the calculator
+will quietly be a few degrees wrong on the systems where being right
+matters most. Worth shipping later than ship-with-bugs — this is a
+tool whose job is to be more correct than a pocket P-T card, not less.
+
+**Open questions for the design chat when this gets closer:**
+- Where in Education does refrigerant content sit relative to
+  hydronics — same level, or grouped under a broader "systems"
+  category once there are several explainer sections?
+- The P-T calculator and a future refrigerant-cycle animation might
+  share saturation-curve / state-point math. Or not — wait until the
+  second piece exists before deciding, same logic as the engines
+  question.
+
 ### PID tuner — explicit loop speed numbers
 The current "fast loop / slow loop" framing is vague for users who
 don't already have intuition for what those mean in real units. Add
