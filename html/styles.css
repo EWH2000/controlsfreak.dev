@@ -27,7 +27,8 @@
     --text:         #38423a;   /* body copy */
     --text-bright:  #1d251f;   /* headings */
     --text-dim:     #666e66;   /* labels, secondary text */
-    --blue:         #1577b8;   /* data readouts / highlight — workstation blue */
+    --blue:         #1577b8;   /* data readouts / highlight — workstation blue; also "supply water" in the hydronic diagrams */
+    --blue-cool:    #5e8aa0;   /* a muted, cooler companion to --blue — "return water" in the hydronic diagrams (paired with a dashed line so it reads without colour too) */
     --red:          #c4382f;   /* fault / alarm */
     --mono:         'IBM Plex Mono', monospace;
     --sans:         'Overpass', sans-serif;

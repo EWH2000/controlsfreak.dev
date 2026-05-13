@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hydronic Loops — controlsfreak.dev</title>
+    <meta name="description" content="A plain-English explainer for hydronic distribution — 2-pipe direct return, 2-pipe reverse return, and the primary-secondary 'twin-T' boiler injection that lets a constant-flow boiler serve a variable-demand building. Hand-drawn schematics, no jargon. No login, no ads.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&family=Overpass:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/styles.css">
+    <style>
+        /* Page-specific — the inline schematics. Colours come from the shared
+           CSS vars (with literal fallbacks on the SVG elements themselves, so a
+           failed stylesheet still leaves a legible black-on-white diagram).
+           Supply piping is solid + --blue; return piping is dashed + --blue-cool
+           — distinguishable without colour. */
+        .hd-svg {
+            display: block;
+            width: 100%;
+            max-width: 820px;
+            height: auto;
+            margin: 1.5rem auto;
+        }
+        .hd-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem 1.5rem;
+            font-family: var(--mono);
+            font-size: 0.66rem;
+            color: var(--text-dim);
+            margin: -0.5rem auto 0;
+            max-width: 820px;
+            padding-left: 0.25rem;
+        }
+        .hd-legend .sw { display: inline-block; width: 26px; height: 0; vertical-align: middle; margin-right: 0.4rem; }
+        .hd-legend .sw.supply { border-top: 3px solid var(--blue); }
+        .hd-legend .sw.return { border-top: 3px dashed var(--blue-cool); }
+    </style>
+</head>
+<body>
+
+<nav class="site-nav">
+    <a class="site-nav-brand" href="/">controlsfreak<span>.dev</span></a>
+    <div class="site-nav-links">
+        <a href="/">Home</a>
+        <a href="/tools/">Tools</a>
+        <a href="/education/" class="active">Education</a>
+        <a href="/contact.html">Contact</a>
+    </div>
+</nav>
+
+<main>
+
+    <div class="section-header">
+        <span class="section-label">Education · Hydronic Loops</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <div class="tool-card-title">Hydronic Loops — How Water Gets Around a Building <span class="tool-tag">Hydronics</span></div>
+        </div>
+        <div class="tool-body">
+
+            <p style="font-size:1.0rem;line-height:1.85;color:var(--text);max-width:640px;margin-bottom:1.75rem;">
+                "Hydronic" just means the heat — or the cold — moves around the building in water: pumped in loops, dropped off at coils and radiators along the way. The equipment is the easy part. A boiler or chiller makes the water hot or cold, pumps push it, coils take what they need. The part that trips people up is the <em>piping topology</em> — how the loops are arranged, and why. Get the topology and a wall of pumps and tees stops looking like spaghetti and starts looking like three or four moves repeated. Here are the three you'll meet most.
+            </p>
+
+            <!-- ───────────────── 1 · 2-Pipe Direct Return ───────────────── -->
+            <div class="subhead">2-Pipe Direct Return</div>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);">
+                The simplest layout. The source — a boiler (or a chiller; the picture is the same for chilled water) — feeds a <em>supply main</em> that runs past every load. Each load taps off the supply, does its job, and dumps into a <em>return main</em> that heads straight back to the source. "Direct return" is exactly that: each load's return is "go back the way you came."
+            </p>
+
+            <!-- Diagram 1: 2-pipe direct return. Conventions set here propagate to the other two:
+                 equipment = labelled box; pump = circle with a flow-direction triangle; supply pipe =
+                 solid + --blue; return pipe = dashed + --blue-cool; flow arrows = small triangles in
+                 the pipe's colour. Named <g> groups + semantic ids so a future animated version (see
+                 site-ideas-and-friction.md) can drive elements individually. -->
+            <svg class="hd-svg" viewBox="0 0 800 360" role="img" aria-labelledby="d1-title d1-desc"
+                 font-family="var(--mono, 'IBM Plex Mono', monospace)">
+                <title id="d1-title">2-pipe direct return</title>
+                <desc id="d1-desc">A boiler with a pump feeds a supply main running left to right past three loads in parallel. Each load returns into a separate return main that runs right to left, straight back to the boiler. The nearest load has a short loop; the farthest load's water travels the full length of the building and back, so flow naturally favours the near loads unless balanced.</desc>
+
+                <!-- piping: supply (solid, --blue) — out the boiler top, along the supply main -->
+                <path id="d1-supply-main" d="M75 160 V85 H600" fill="none" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                <line id="d1-load1-supply" x1="240" y1="85" x2="240" y2="160" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                <line id="d1-load2-supply" x1="420" y1="85" x2="420" y2="160" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                <line id="d1-load3-supply" x1="600" y1="85" x2="600" y2="160" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                <!-- piping: return (dashed, --blue-cool) — out the load bottoms, along the return main, back into the boiler bottom -->
+                <line id="d1-load1-return" x1="240" y1="215" x2="240" y2="300" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="d1-load2-return" x1="420" y1="215" x2="420" y2="300" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="d1-load3-return" x1="600" y1="215" x2="600" y2="300" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
+                <path id="d1-return-main" d="M600 300 H75 V235" fill="none" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
+
+                <!-- flow arrows -->
+                <g id="d1-flow-arrows">
+                    <polygon points="70,135 75,124 80,135" fill="var(--blue, #1577b8)"/>
+                    <polygon points="155,80 164,85 155,90" fill="var(--blue, #1577b8)"/>
+                    <polygon points="490,80 499,85 490,90" fill="var(--blue, #1577b8)"/>
+                    <polygon points="235,120 240,131 245,120" fill="var(--blue, #1577b8)"/>
+                    <polygon points="415,120 420,131 425,120" fill="var(--blue, #1577b8)"/>
+                    <polygon points="595,120 600,131 605,120" fill="var(--blue, #1577b8)"/>
+                    <polygon points="240,255 235,244 245,244" fill="var(--blue-cool, #5e8aa0)"/>
+                    <polygon points="420,255 415,244 425,244" fill="var(--blue-cool, #5e8aa0)"/>
+                    <polygon points="600,255 595,244 605,244" fill="var(--blue-cool, #5e8aa0)"/>
+                    <polygon points="510,295 501,300 510,305" fill="var(--blue-cool, #5e8aa0)"/>
+                    <polygon points="340,295 331,300 340,305" fill="var(--blue-cool, #5e8aa0)"/>
+                    <polygon points="160,295 151,300 160,305" fill="var(--blue-cool, #5e8aa0)"/>
+                    <polygon points="70,260 75,249 80,260" fill="var(--blue-cool, #5e8aa0)"/>
+                </g>
+
+                <!-- equipment -->
+                <g id="d1-boiler">
+                    <rect x="35" y="160" width="80" height="75" rx="2" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                    <text x="75" y="201" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text-bright, #1d251f)">BOILER</text>
+                </g>
+                <g id="d1-pump">
+                    <circle cx="140" cy="85" r="13" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                    <polygon points="135,79 147,85 135,91" fill="var(--text-dim, #666e66)"/>
+                    <text x="140" y="63" text-anchor="middle" font-size="11" fill="var(--text, #38423a)">PUMP</text>
+                </g>
+                <g id="d1-load-1">
+                    <rect x="205" y="160" width="70" height="55" rx="2" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                    <text x="240" y="184" text-anchor="middle" font-size="12" font-weight="600" fill="var(--text-bright, #1d251f)">LOAD 1</text>
+                    <text x="240" y="200" text-anchor="middle" font-size="9" fill="var(--text-dim, #666e66)">(nearest)</text>
+                </g>
+                <g id="d1-load-2">
+                    <rect x="385" y="160" width="70" height="55" rx="2" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                    <text x="420" y="191" text-anchor="middle" font-size="12" font-weight="600" fill="var(--text-bright, #1d251f)">LOAD 2</text>
+                </g>
+                <g id="d1-load-3">
+                    <rect x="565" y="160" width="70" height="55" rx="2" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                    <text x="600" y="184" text-anchor="middle" font-size="12" font-weight="600" fill="var(--text-bright, #1d251f)">LOAD 3</text>
+                    <text x="600" y="200" text-anchor="middle" font-size="9" fill="var(--text-dim, #666e66)">(farthest)</text>
+                </g>
+
+                <!-- labels -->
+                <text x="350" y="76" text-anchor="middle" font-size="11" fill="var(--text, #38423a)">supply main →</text>
+                <text x="340" y="322" text-anchor="middle" font-size="11" fill="var(--text, #38423a)">← return main (straight back to the source)</text>
+            </svg>
+            <div class="hd-legend">
+                <span><span class="sw supply"></span>supply water</span>
+                <span><span class="sw return"></span>return water</span>
+            </div>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:1.25rem;">
+                The catch: the nearest load has a short total trip — a little out, a little back. The farthest load's water has to cross the whole building and the whole length back. Water, like current, takes the path of least resistance, so the near load <em>gets too much flow</em> and the far load <em>gets too little</em> — left alone, this layout self-unbalances. Every load needs a balancing valve, and somebody has to set them. Cheap to pipe, fussy to commission.
+            </p>
+
+            <!-- ───────────────── 2 · 2-Pipe Reverse Return ───────────────── -->
+            <div class="subhead">2-Pipe Reverse Return</div>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);">
+                Same supply main, same loads. The trick is in the return: instead of running back toward the source, the return main keeps going <em>the same direction as the supply</em> — past every load — and only then loops the long way home. So the first load supplied is the last to return, and the last supplied is the first to return. Add up the pipe each load's water travels and it comes out about the same for everyone.
+            </p>
+
+            <svg class="hd-svg" viewBox="0 0 800 360" role="img" aria-labelledby="d2-title d2-desc"
+                 font-family="var(--mono, 'IBM Plex Mono', monospace)">
+                <title id="d2-title">2-pipe reverse return</title>
+                <desc id="d2-desc">A boiler with a pump feeds a supply main running left to right past three loads in parallel. Each load returns into a return main that also runs left to right, past all the loads, and only then doubles back the full length of the building to the boiler. The first load supplied is the last to return, so every load's total pipe path is roughly equal — naturally self-balancing — at the cost of the extra doubled-back run of pipe.</desc>
+
+                <!-- piping: supply (solid, --blue) — out the boiler top, along the supply main -->
+                <path id="d2-supply-main" d="M75 160 V85 H600" fill="none" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                <line id="d2-load1-supply" x1="240" y1="85" x2="240" y2="160" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                <line id="d2-load2-supply" x1="420" y1="85" x2="420" y2="160" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                <line id="d2-load3-supply" x1="600" y1="85" x2="600" y2="160" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                <!-- piping: return (dashed, --blue-cool) — the collector runs WITH the supply past every load, then doubles back to the boiler -->
+                <line id="d2-load1-return" x1="240" y1="215" x2="240" y2="295" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="d2-load2-return" x1="420" y1="215" x2="420" y2="295" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="d2-load3-return" x1="600" y1="215" x2="600" y2="295" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
+                <path id="d2-return-collector" d="M240 295 H665" fill="none" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
+                <path id="d2-return-main" d="M665 295 V325 H75 V235" fill="none" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
+
+                <!-- flow arrows -->
+                <g id="d2-flow-arrows">
+                    <polygon points="70,135 75,124 80,135" fill="var(--blue, #1577b8)"/>
+                    <polygon points="155,80 164,85 155,90" fill="var(--blue, #1577b8)"/>
+                    <polygon points="490,80 499,85 490,90" fill="var(--blue, #1577b8)"/>
+                    <polygon points="235,120 240,131 245,120" fill="var(--blue, #1577b8)"/>
+                    <polygon points="415,120 420,131 425,120" fill="var(--blue, #1577b8)"/>
+                    <polygon points="595,120 600,131 605,120" fill="var(--blue, #1577b8)"/>
+                    <polygon points="240,255 235,244 245,244" fill="var(--blue-cool, #5e8aa0)"/>
+                    <polygon points="420,255 415,244 425,244" fill="var(--blue-cool, #5e8aa0)"/>
+                    <polygon points="600,255 595,244 605,244" fill="var(--blue-cool, #5e8aa0)"/>
+                    <polygon points="320,290 329,295 320,300" fill="var(--blue-cool, #5e8aa0)"/>
+                    <polygon points="540,290 549,295 540,300" fill="var(--blue-cool, #5e8aa0)"/>
+                    <polygon points="520,320 511,325 520,330" fill="var(--blue-cool, #5e8aa0)"/>
+                    <polygon points="270,320 261,325 270,330" fill="var(--blue-cool, #5e8aa0)"/>
+                    <polygon points="70,260 75,249 80,260" fill="var(--blue-cool, #5e8aa0)"/>
+                </g>
+
+                <!-- equipment -->
+                <g id="d2-boiler">
+                    <rect x="35" y="160" width="80" height="75" rx="2" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                    <text x="75" y="201" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text-bright, #1d251f)">BOILER</text>
+                </g>
+                <g id="d2-pump">
+                    <circle cx="140" cy="85" r="13" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                    <polygon points="135,79 147,85 135,91" fill="var(--text-dim, #666e66)"/>
+                    <text x="140" y="63" text-anchor="middle" font-size="11" fill="var(--text, #38423a)">PUMP</text>
+                </g>
+                <g id="d2-load-1">
+                    <rect x="205" y="160" width="70" height="55" rx="2" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                    <text x="240" y="184" text-anchor="middle" font-size="12" font-weight="600" fill="var(--text-bright, #1d251f)">LOAD 1</text>
+                    <text x="240" y="200" text-anchor="middle" font-size="9" fill="var(--text-dim, #666e66)">(nearest)</text>
+                </g>
+                <g id="d2-load-2">
+                    <rect x="385" y="160" width="70" height="55" rx="2" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                    <text x="420" y="191" text-anchor="middle" font-size="12" font-weight="600" fill="var(--text-bright, #1d251f)">LOAD 2</text>
+                </g>
+                <g id="d2-load-3">
+                    <rect x="565" y="160" width="70" height="55" rx="2" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                    <text x="600" y="184" text-anchor="middle" font-size="12" font-weight="600" fill="var(--text-bright, #1d251f)">LOAD 3</text>
+                    <text x="600" y="200" text-anchor="middle" font-size="9" fill="var(--text-dim, #666e66)">(farthest)</text>
+                </g>
+
+                <!-- labels -->
+                <text x="350" y="76" text-anchor="middle" font-size="11" fill="var(--text, #38423a)">supply main →</text>
+                <text x="450" y="287" text-anchor="middle" font-size="11" fill="var(--text, #38423a)">return runs WITH the supply →</text>
+                <text x="370" y="318" text-anchor="middle" font-size="9" font-style="italic" fill="var(--text-dim, #666e66)">… then the long way back — the extra pipe is the price of self-balancing</text>
+            </svg>
+            <div class="hd-legend">
+                <span><span class="sw supply"></span>supply water</span>
+                <span><span class="sw return"></span>return water</span>
+            </div>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:1.25rem;">
+                Roughly equal path length means roughly equal resistance, which means the loads naturally split flow close to evenly — "self-balancing." (You'll still want balancing valves, but they're trimming, not doing the heavy lifting.) The price: that loop-back is a whole extra run of pipe — you're essentially doubling the return — so it costs more to install. Trade commissioning effort for pipe and labor; pick your poison.
+            </p>
+
+            <!-- ─────── 3 · Primary-Secondary — the "Twin-T" Boiler Injection ─────── -->
+            <div class="subhead">Primary-Secondary — the "Twin-T" Boiler Injection</div>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);">
+                Here's the one that takes people forever. The natural assumption — and it's wrong — is that the whole building's water flows <em>through the boiler</em>: the boiler is just the spot in the loop where the water gets heated, like a kettle on the way around. It isn't. If it were, a 100-GPM boiler couldn't serve a 200-GPM building, and a boiler that hates low flow and thermal shock would get both every time the building turned down. So that's not how it's piped.
+            </p>
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:0.9rem;">
+                The boiler sits on its own <em>short</em> loop — the <em>primary</em> — with its own dedicated <em>boiler pump</em> keeping flow through the boiler constant, always, no matter what the building is doing. That constant flow is what protects the boiler. A separate <em>injection pump</em> taps hot water off the primary and pushes it into the <em>system</em> loop — the building loop — which has its own <em>system pump</em> moving water through the loads. At any moment, only the slice of flow the injection pump is pulling ever touches the boiler; the rest of the building's water is just circulating through the loads, mixing with whatever hot water the injection pump adds. The two tees where the loops meet sit right next to each other — the "closely-spaced tees," the "common pipe," the "twin-T" — so close that there's essentially no pressure drop between them. That's the whole mechanism: with no pressure difference across that little stub, the three pumps — boiler, injection, system — each do their own thing instead of fighting each other's discharge pressure.
+            </p>
+
+            <!-- Diagram 3: primary-secondary with injection. Built to defeat "the whole loop goes
+                 through the boiler": the boiler is on its own small, distinct circuit on the LEFT;
+                 the building is on its own larger, distinct circuit on the RIGHT; the only connection
+                 is the closely-spaced tees with the injection pump on the bridge. Dense flow arrows
+                 around each loop (constant flow); a smaller, separate pair of arrows on the bridge
+                 (the partial diversion). Named <g> groups + semantic ids for a future animated version. -->
+            <svg class="hd-svg" viewBox="0 0 800 360" role="img" aria-labelledby="d3-title d3-desc"
+                 font-family="var(--mono, 'IBM Plex Mono', monospace)">
+                <title id="d3-title">Primary-secondary "twin-T" boiler injection</title>
+                <desc id="d3-desc">Two separate loops. On the left, a small primary loop: a boiler and a dedicated boiler pump with water always circulating around it. On the right, a larger system loop: a system pump moving water through two building loads. The only connection between them is a short bridge with a pair of closely-spaced tees and an injection pump on it; the injection pump pulls a portion of hot water from the primary loop into the system loop, where it mixes with cooler return water. Most of the building's water never passes through the boiler — only the slice the injection pump diverts. The injection pump's speed is the control point for supply temperature.</desc>
+
+                <!-- ── PRIMARY loop piping — solid + --blue all the way around (it's a short loop; it stays hot) ── -->
+                <path id="d3-primary-loop" d="M90 130 V60 H280 V270 H90 V200" fill="none" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                <!-- ── BRIDGE: upper = hot injection (solid --blue), lower = return to primary (dashed --blue-cool) ── -->
+                <line id="d3-inject-pipe" x1="280" y1="150" x2="440" y2="150" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                <line id="d3-bridge-return" x1="440" y1="190" x2="280" y2="190" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
+                <!-- ── SYSTEM loop piping: supply main + risers solid --blue, return main + risers dashed --blue-cool ── -->
+                <path id="d3-system-supply" d="M440 250 V90 H760" fill="none" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                <line id="d3-loadA-supply" x1="540" y1="90" x2="540" y2="150" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                <line id="d3-loadB-supply" x1="680" y1="90" x2="680" y2="150" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                <line id="d3-loadA-return" x1="540" y1="205" x2="540" y2="250" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="d3-loadB-return" x1="680" y1="205" x2="680" y2="250" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
+                <path id="d3-system-return" d="M760 90 V250 H440" fill="none" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
+
+                <!-- flow arrows -->
+                <g id="d3-flow-arrows">
+                    <!-- primary loop — dense, constant flow -->
+                    <polygon points="85,100 90,89 95,100" fill="var(--blue, #1577b8)"/>
+                    <polygon points="150,55 159,60 150,65" fill="var(--blue, #1577b8)"/>
+                    <polygon points="240,55 249,60 240,65" fill="var(--blue, #1577b8)"/>
+                    <polygon points="275,110 280,121 285,110" fill="var(--blue, #1577b8)"/>
+                    <polygon points="275,230 280,241 285,230" fill="var(--blue, #1577b8)"/>
+                    <polygon points="240,265 231,270 240,275" fill="var(--blue, #1577b8)"/>
+                    <polygon points="150,265 141,270 150,275" fill="var(--blue, #1577b8)"/>
+                    <polygon points="85,240 90,229 95,240" fill="var(--blue, #1577b8)"/>
+                    <!-- bridge — a smaller pair, the partial diversion -->
+                    <polygon points="416,146 423,150 416,154" fill="var(--blue, #1577b8)"/>
+                    <polygon points="312,186 305,190 312,194" fill="var(--blue-cool, #5e8aa0)"/>
+                    <!-- system loop — dense, constant flow -->
+                    <polygon points="435,160 440,149 445,160" fill="var(--blue, #1577b8)"/>
+                    <polygon points="500,85 509,90 500,95" fill="var(--blue, #1577b8)"/>
+                    <polygon points="630,85 639,90 630,95" fill="var(--blue, #1577b8)"/>
+                    <polygon points="755,150 760,161 765,150" fill="var(--blue-cool, #5e8aa0)"/>
+                    <polygon points="755,210 760,221 765,210" fill="var(--blue-cool, #5e8aa0)"/>
+                    <polygon points="535,120 540,131 545,120" fill="var(--blue, #1577b8)"/>
+                    <polygon points="675,120 680,131 685,120" fill="var(--blue, #1577b8)"/>
+                    <polygon points="540,230 535,219 545,219" fill="var(--blue-cool, #5e8aa0)"/>
+                    <polygon points="680,230 675,219 685,219" fill="var(--blue-cool, #5e8aa0)"/>
+                    <polygon points="610,245 619,250 610,255" fill="var(--blue-cool, #5e8aa0)"/>
+                    <polygon points="490,245 481,250 490,255" fill="var(--blue-cool, #5e8aa0)"/>
+                </g>
+
+                <!-- equipment -->
+                <g id="d3-boiler">
+                    <rect x="40" y="130" width="80" height="70" rx="2" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                    <text x="80" y="169" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text-bright, #1d251f)">BOILER</text>
+                </g>
+                <g id="d3-boiler-pump">
+                    <circle cx="185" cy="270" r="13" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                    <polygon points="191,264 179,270 191,276" fill="var(--text-dim, #666e66)"/>
+                    <text x="185" y="297" text-anchor="middle" font-size="11" fill="var(--text, #38423a)">BOILER PUMP</text>
+                    <text x="185" y="310" text-anchor="middle" font-size="9" font-style="italic" fill="var(--text-dim, #666e66)">constant flow</text>
+                </g>
+                <g id="d3-injection-pump">
+                    <circle cx="360" cy="150" r="13" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                    <polygon points="354,144 366,150 354,156" fill="var(--text-dim, #666e66)"/>
+                    <text x="360" y="111" text-anchor="middle" font-size="11" fill="var(--text, #38423a)">INJECTION PUMP</text>
+                    <text x="360" y="124" text-anchor="middle" font-size="9" font-style="italic" fill="var(--text-dim, #666e66)">the control point</text>
+                </g>
+                <g id="d3-system-pump">
+                    <circle cx="440" cy="222" r="13" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                    <polygon points="434,228 440,216 446,228" fill="var(--text-dim, #666e66)"/>
+                    <text x="378" y="226" text-anchor="middle" font-size="11" fill="var(--text, #38423a)">SYSTEM PUMP</text>
+                </g>
+                <g id="d3-load-A">
+                    <rect x="505" y="150" width="70" height="55" rx="2" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                    <text x="540" y="181" text-anchor="middle" font-size="12" font-weight="600" fill="var(--text-bright, #1d251f)">LOAD</text>
+                </g>
+                <g id="d3-load-B">
+                    <rect x="645" y="150" width="70" height="55" rx="2" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                    <text x="680" y="181" text-anchor="middle" font-size="12" font-weight="600" fill="var(--text-bright, #1d251f)">LOAD</text>
+                </g>
+
+                <!-- labels -->
+                <text x="200" y="100" text-anchor="middle" font-size="11" font-weight="600" fill="var(--text, #38423a)">PRIMARY LOOP</text>
+                <text x="200" y="113" text-anchor="middle" font-size="9" font-style="italic" fill="var(--text-dim, #666e66)">the boiler's own loop</text>
+                <text x="600" y="78" text-anchor="middle" font-size="11" font-weight="600" fill="var(--text, #38423a)">SYSTEM LOOP</text>
+                <text x="360" y="174" text-anchor="middle" font-size="9" font-style="italic" fill="var(--text-dim, #666e66)">closely-spaced tees · ≈ no Δp</text>
+            </svg>
+            <div class="hd-legend">
+                <span><span class="sw supply"></span>hot supply water</span>
+                <span><span class="sw return"></span>cooler return / mixed water</span>
+            </div>
+
+            <div class="pid-term" style="margin-top:1.5rem;">
+                <h4>Worked example <span>· follow the water</span></h4>
+                <p style="font-size:0.86rem;line-height:1.7;">A boiler sized for 100&nbsp;GPM through itself — held there by the boiler pump. The building's system pump moves 200&nbsp;GPM through the loads. Right now the injection pump is moving 40&nbsp;GPM from the primary into the system. So:</p>
+                <ul style="font-size:0.86rem;line-height:1.7;margin:0.6rem 0 0.7rem 1.25rem;">
+                    <li>100&nbsp;GPM circulates through the boiler — always, no matter what the building wants.</li>
+                    <li>40&nbsp;GPM of that gets pulled into the system by the injection pump, where it mixes with cooler return water before it reaches a single load.</li>
+                    <li>The other 60&nbsp;GPM stays in the primary and goes straight back to the boiler to be reheated.</li>
+                    <li>200&nbsp;GPM moves through the loads — and most of it never touches the boiler. The loads see the <em>mixed</em> temperature, downstream of the injection point.</li>
+                </ul>
+                <p style="font-size:0.86rem;line-height:1.7;">Colder outside, building wants more heat? The injection pump speeds up — pulls more hot water from the primary into the system — and the supply temperature to the loads climbs. The boiler's flow rate never changes. The injection pump is the control point.</p>
+            </div>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:1.25rem;">
+                Why it matters on the floor: those closely-spaced tees look like a mistake the first time you see them — like somebody piped a short-circuit straight across the boiler. They aren't. That little stub of common pipe is the <em>entire reason</em> a building whose demand swings all day can be served by a boiler that insists on a steady diet. Recognize the twin-T and the rest of the plant snaps into focus; miss it and you'll spend an afternoon convinced the pipefitter botched it.
+            </p>
+        </div>
+    </div>
+
+    <a class="back-link" href="/education/">← Back to Education</a>
+
+</main>
+
+<footer>
+    <span class="footer-text">controlsfreak.dev — open tools for controls engineers</span>
+    <span class="footer-text">v0.9 · 2026</span>
+</footer>
+
+</body>
+</html>

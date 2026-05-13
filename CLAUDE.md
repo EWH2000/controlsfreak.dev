@@ -27,12 +27,20 @@ page, but the project is the tools, not a personal homepage.
     — one page per tool, each a `.tool-card` with its own inline `<script>` for
     page-specific logic. (The thermistor tool also loads
     `/scripts/thermistor-data.js` first — see below.)
-  - `html/education/pid-basics.html` — the Education section's first page:
-    the plain-English P/I/D explainer + three working one-knob mini-sims
-    (P only → P+I → P+I+D), each an inline simulator built on
-    `/scripts/pid-engine.js` (see "What's on the site today"). It loads
-    `pid-engine.js` like the PID tuner does — a `<script src>` before its
-    own inline `<script>`.
+  - `html/education/index.html` — the Education landing, mirroring the Tools
+    landing: a `.nav-card` grid linking to each Education page. No "Coming
+    Soon" grid yet.
+  - `html/education/pid-basics.html` — an Education page: the plain-English
+    P/I/D explainer + three working one-knob mini-sims (P only → P+I → P+I+D),
+    each an inline simulator built on `/scripts/pid-engine.js` (see "What's on
+    the site today"). It loads `pid-engine.js` like the PID tuner does — a
+    `<script src>` before its own inline `<script>`.
+  - `html/education/hydronic-loops.html` — an Education page: a plain-English
+    explainer for hydronic distribution (2-pipe direct return → reverse return
+    → primary-secondary "twin-T" boiler injection), built around three inline
+    hand-written `<svg>` schematics. No JS; the SVGs use named `<g>` groups /
+    semantic IDs and real `<text>` labels so a future animated version (per
+    `site-ideas-and-friction.md`) can layer onto them without a rewrite.
   - `html/contact.html` — the contact form.
   - `html/styles.css` — **the shared design system** (all the `:root`
     custom properties and component classes). Every page links it with
@@ -40,10 +48,12 @@ page, but the project is the tools, not a personal homepage.
     inline on the page that needs it — `contact.html` (`.hp-field` /
     `.contact-intro` / `#contact-result-value`), `psychrometric-chart.html`
     (widened `main`/`footer` + a custom `.tool-body-3col` column split),
-    and `thermistor-calculator.html` (a left-biased `.tool-body-3col` split,
+    `thermistor-calculator.html` (a left-biased `.tool-body-3col` split,
     the scrollable R/T-table box + its sticky `thead`, the "current row"
-    highlight, and the disabled-`.ps-input` look) — none of which belong in
-    `styles.css` because no other page uses them.
+    highlight, and the disabled-`.ps-input` look), and `hydronic-loops.html`
+    (`.hd-svg` sizing for the inline schematics + a `.hd-legend` supply/return
+    swatch row) — none of which belong in `styles.css` because no other page
+    uses them.
   - `html/scripts/pid-engine.js` — **the shared PID simulation core** (the
     first-order-plus-dead-time process model + discrete-time stepping +
     derived metrics; exposes `PID_PROC` and `simulatePid()`). The
@@ -140,7 +150,9 @@ controlsfreak.dev/
 │   │   ├── psychrometric-chart.html   # interactive psych chart — three-column layout, psychrometrics inline
 │   │   └── thermistor-calculator.html # thermistor / RTD lookup — three-column layout, loads /scripts/thermistor-data.js
 │   └── education/
-│       └── pid-basics.html         # Education section — P/I/D explainer + three working PID mini-sims (also loads /scripts/pid-engine.js)
+│       ├── index.html              # Education landing — .nav-card grid (mirrors the Tools landing)
+│       ├── pid-basics.html         # Education page — P/I/D explainer + three working PID mini-sims (also loads /scripts/pid-engine.js)
+│       └── hydronic-loops.html     # Education page — hydronic distribution explainer + three hand-written inline SVG schematics
 ├── tests/              # Playwright specs (smoke.spec.js, contact.spec.js)
 ├── node_modules/       # gitignored
 └── test-results/       # Playwright output — gitignored
@@ -150,10 +162,13 @@ controlsfreak.dev/
 
 A multi-page site with a shared top nav (`.site-nav`): **Home / Tools /
 Education / Contact** (hardcode `.active` on the current page's link, no
-JS). Pages link the shared `styles.css`.
+JS). The `Tools` and `Education` links both point at their hub landing
+(`/tools/`, `/education/`); the home page's two `.nav-card` tiles do the
+same. Pages link the shared `styles.css`.
 
 **Home** (`index.html`) — a short hero intro, two `.nav-card` tiles
-(Tools, Education), and the personal **About** card.
+(Tools → `/tools/`, Education → `/education/`), and the personal **About**
+card.
 
 **Tools landing** (`tools/index.html`) — a `.nav-card` grid linking to
 each live tool, then a "Coming Soon" `.tool-grid` of dimmed
@@ -276,7 +291,11 @@ each live tool, then a "Coming Soon" `.tool-grid` of dimmed
   nominal curve parameters and are flagged PENDING FIELD VERIFICATION** — see
   the data file.
 
-**Education — PID Basics** (`education/pid-basics.html`) — two stacked
+**Education landing** (`education/index.html`) — a `.nav-card` grid linking
+to each Education page, mirroring the Tools landing (no "Coming Soon" grid
+yet). Two pages live under it today: PID Basics and Hydronic Loops.
+
+**PID Basics** (`education/pid-basics.html`) — two stacked
 sections under section headers: *What P, I, and D Actually Do* (the
 long-form explainer, three `.pid-term` cards each with a worked HVAC
 example) and *See Each Term in Action* — **three working mini-sims**, one
@@ -300,11 +319,31 @@ and one or two `.ps-row` + `.ps-value.live` metric callouts; everything
 auto-reruns on change, no Run button. The
 inline `<script>` (loaded after `pid-engine.js`) is the same shape as the
 tuner's — slider/chip/canvas glue, much smaller. A `.cta-button` ("Try it
-for yourself →") links to the PID Tuning Helper at the bottom. The
-fast/medium/slow loop-speed reference table that used to be a third section
-here moved to the PID tuner (operational reference belongs with the tool).
-The Education section has just this one page for now; there's no
-`education/index.html` landing yet.
+for yourself →") links to the PID Tuning Helper at the bottom; a
+`.back-link` returns to the Education hub. The fast/medium/slow loop-speed
+reference table that used to be a third section here moved to the PID tuner
+(operational reference belongs with the tool).
+
+**Hydronic Loops** (`education/hydronic-loops.html`) — a plain-English
+explainer for hydronic distribution, paralleling PID Basics in voice and
+structure: an intro, then three diagram-plus-text sections — *2-Pipe Direct
+Return*, *2-Pipe Reverse Return*, and *Primary-Secondary "Twin-T" Boiler
+Injection* — each with a **hand-written inline `<svg>` schematic** (named
+`<g>` groups + semantic IDs, real `<text>` labels, directional flow-arrow
+`<polygon>`s, a `<title>` + `<desc>` for screen readers; supply piping
+solid in `var(--blue)`, return piping dashed in `var(--blue-cool)` so it's
+distinguishable without color too). Lesson-page layout (`.tool-card` /
+`.tool-body`, like PID Basics) — NOT the three-column property-sheet
+pattern. The twin-T section is deliberately built to defeat the "all the
+building's water flows through the boiler" misconception: the boiler sits
+on its own short *primary* loop with its own pump (constant flow), the
+building sits on its own larger *system* loop with its own pump, and the
+two are joined only at the closely-spaced tees with an *injection pump* as
+the control point — a worked example (100 GPM boiler / 200 GPM system /
+40 GPM injection) walks the flow split. A `.back-link` returns to the
+Education hub. (Animating these SVGs is a deferred future item per
+`site-ideas-and-friction.md` — which is why the markup uses clean named
+groups now.)
 
 **Contact** (`contact.html`) — a `.tool-card` with a name / email /
 message form, an off-screen CSS honeypot (`.hp-field`, named `website`),
@@ -358,8 +397,11 @@ instead of an inline `<style>` duplicated across pages.)*
   rows, dense tables); `--accent` (`#43881c`,
   the green — chosen to stay readable on white for text and UI) /
   `--accent-dim` / `--accent-glow`; `--text` / `--text-bright` /
-  `--text-dim`; `--blue` (`#1577b8`, data readouts / highlight); `--red`
-  (fault/alarm); `--mono` (IBM Plex Mono) / `--sans` (Overpass). The site
+  `--text-dim`; `--blue` (`#1577b8`, data readouts / highlight — and "supply
+  water" in the hydronic diagrams) / `--blue-cool` (`#5e8aa0`, a muted, cooler
+  companion — "return water" in the hydronic diagrams, paired with a dashed
+  line so it reads without colour); `--red` (fault/alarm); `--mono`
+  (IBM Plex Mono) / `--sans` (Overpass). The site
   sets `color-scheme: light` and is light-only — no dark variant, no
   `prefers-color-scheme` switch. Aesthetic: flat, light "workstation"
   look — white panels on light gray-green chrome, hairline borders, a
@@ -477,7 +519,7 @@ instead of an inline `<style>` duplicated across pages.)*
 4. If it graduates a Coming-Soon item, delete the matching
    `.tool-preview` card from the "Coming Soon" `.tool-grid` on
    `tools/index.html`.
-5. Bump the version string in the footer (currently `v0.8 · 2026`,
+5. Bump the version string in the footer (currently `v0.9 · 2026`,
    carried by every page) when shipping something notable.
 
 ## Workflow

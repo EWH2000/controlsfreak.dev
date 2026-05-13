@@ -14,7 +14,9 @@ const PAGES = [
     { name: 'bacnet/ip converter',    url: 'http://localhost:8000/tools/bacnet-ip-converter.html' },
     { name: 'psychrometric chart',    url: 'http://localhost:8000/tools/psychrometric-chart.html' },
     { name: 'thermistor calculator',  url: 'http://localhost:8000/tools/thermistor-calculator.html' },
+    { name: 'education hub',          url: 'http://localhost:8000/education/' },
     { name: 'education — pid basics',  url: 'http://localhost:8000/education/pid-basics.html' },
+    { name: 'education — hydronic loops', url: 'http://localhost:8000/education/hydronic-loops.html' },
     { name: 'contact',                url: 'http://localhost:8000/contact.html' },
 ];
 
@@ -116,4 +118,25 @@ test('education page runs the PID mini-sims and they respond to input', async ({
     await expect(slowChip).toHaveClass(/active/);
 
     expect(errors, 'education page should log no page / console errors').toEqual([]);
+});
+
+test('education hub links to its pages', async ({ page }) => {
+    await page.goto('http://localhost:8000/education/');
+    const hrefs = await page.locator('.nav-card').evaluateAll((els) => els.map((e) => e.getAttribute('href')));
+    expect(hrefs).toContain('/education/pid-basics.html');
+    expect(hrefs).toContain('/education/hydronic-loops.html');
+});
+
+test('hydronic loops page renders its three SVG schematics', async ({ page }) => {
+    await page.goto('http://localhost:8000/education/hydronic-loops.html');
+    const svgs = page.locator('main svg.hd-svg');
+    await expect(svgs).toHaveCount(3);
+    // each diagram carries a <title> (the accessibility name) and real <text> labels
+    for (let i = 0; i < 3; i++) {
+        await expect(svgs.nth(i).locator('title')).toHaveCount(1);
+        expect(await svgs.nth(i).locator('text').count(), 'diagram should have <text> labels').toBeGreaterThan(3);
+    }
+    // the named equipment groups are present (the hooks a future animated version would drive)
+    await expect(page.locator('#d1-boiler')).toHaveCount(1);
+    await expect(page.locator('#d3-injection-pump')).toHaveCount(1);
 });
