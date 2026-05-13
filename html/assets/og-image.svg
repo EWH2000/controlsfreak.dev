@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+    <title>controlsfreak.dev — tools and references for HVAC controls</title>
+
+    <!-- background: site bg colour -->
+    <rect width="1200" height="630" fill="#eef1ec"/>
+
+    <!-- hairline frame: border colour, 24px inset -->
+    <rect x="24" y="24" width="1152" height="582" fill="none" stroke="#ccd7c8" stroke-width="1.5"/>
+
+    <!-- gear, centred vertically aligned with wordmark cap-line.
+         8 teeth, tip radius 37, root radius 27, drawn as a 32-point polygon
+         (4 points per tooth: root-side, tip-side, tip-side, root-side).
+         Centre punched out with a bg-coloured circle to read as a hole. -->
+    <g transform="translate(94, 281.5)">
+        <polygon fill="#43881c" points="-7,-26.1 -9.6,-35.7 9.6,-35.7 7,-26.1 13.5,-23.4 18.5,-32 32,-18.5 23.4,-13.5 26.1,-7 35.7,-9.6 35.7,9.6 26.1,7 23.4,13.5 32,18.5 18.5,32 13.5,23.4 7,26.1 9.6,35.7 -9.6,35.7 -7,26.1 -13.5,23.4 -18.5,32 -32,18.5 -23.4,13.5 -26.1,7 -35.7,9.6 -35.7,-9.6 -26.1,-7 -23.4,-13.5 -32,-18.5 -18.5,-32 -13.5,-23.4"/>
+        <circle cx="0" cy="0" r="11" fill="#eef1ec"/>
+    </g>
+
+    <!-- wordmark: "controlsfreak" in body text colour, ".dev" in accent green, matching the site nav -->
+    <text x="166" y="315" font-family="'IBM Plex Mono', 'Menlo', 'Consolas', 'Courier New', monospace" font-size="96" font-weight="600" fill="#38423a" letter-spacing="1">controlsfreak<tspan fill="#43881c">.dev</tspan></text>
+
+    <!-- tagline: dim text, sans -->
+    <text x="600" y="400" text-anchor="middle" font-family="'Overpass', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="34" font-weight="400" fill="#666e66">tools and references for HVAC controls</text>
+</svg>

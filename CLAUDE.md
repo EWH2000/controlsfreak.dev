@@ -85,7 +85,9 @@ page, but the project is the tools, not a personal homepage.
     Schneider "Type 5" — and the 1K Balco are lowest-confidence; the Pt100/Pt1000
     IEC 60751 curves are high-confidence). A field-verification pass (the owner
     plus a second tech) is planned before this tool is treated as authoritative.
-
+  - SVG files in html/assets/ must avoid -- sequences inside <!-- comments -->.
+    ImageMagick's librsvg parser rejects them as invalid XML even though most browsers tolerate them;
+    when referencing CSS custom property names in comments, write them as bg or the bg color rather than --bg.
   Anchor `href`s use **explicit `.html` extensions** (e.g.
   `/tools/signal-scaling.html`, `/education/pid-basics.html`,
   `/contact.html`) — directory URLs (`/`, `/tools/`) stay clean. This
@@ -138,6 +140,11 @@ controlsfreak.dev/
 │   ├── index.html      # home — intro + Tools/Education tiles + About
 │   ├── contact.html    # the contact form (keeps a tiny inline <style> for page-only rules)
 │   ├── styles.css      # the shared design system (every page links it)
+│   ├── robots.txt      # crawler permissions (allow all) + sitemap pointer
+│   ├── sitemap.xml     # canonical page list for search engines — keep in sync when adding/removing pages
+│   ├── assets/         # binary site assets (images, icons)
+│   │   ├── og-image.svg         # source for the Open Graph link-preview image (1200×630, hand-written SVG)
+│   │   └── og-image.png         # rendered OG image — every page's og:image points here; re-render from the SVG if edited
 │   ├── scripts/
 │   │   ├── pid-engine.js        # shared PID simulation core (classic script: PID_PROC, simulatePid)
 │   │   └── thermistor-data.js   # sensor R/T curves (classic script: THERMISTOR_TYPES) — tables PENDING field verification
@@ -503,8 +510,19 @@ instead of an inline `<style>` duplicated across pages.)*
 ### Adding a new tool
 
 1. Create `html/tools/<tool-name>.html` from the standard page shell:
-   the `<head>` (charset/viewport, a `<title>`, a `<meta description>`,
-   the Google Fonts `<link>`s, then `<link rel="stylesheet" href="/styles.css">`),
+   the `<head>` (charset/viewport, a unique `<title>`, a unique
+   `<meta name="description">` — 140–160 chars, written for humans,
+   describing what the page actually is; never reuse another page's
+   description, since duplicate metadata is worse than none),
+   immediately followed by the six Open Graph tags (`og:title`,
+   `og:description`, `og:type=website`, `og:url` set to the page's
+   canonical URL, `og:image` pointing at
+   `https://controlsfreak.dev/assets/og-image.png` — every page shares
+   that one image; per-page custom OG images are a future enhancement —
+   and `og:site_name=controlsfreak.dev`). `og:title` mirrors `<title>`
+   and `og:description` mirrors `<meta name="description">` verbatim;
+   don't reword. Then the Google Fonts `<link>`s, then
+   `<link rel="stylesheet" href="/styles.css">`,
    the `.site-nav` with `Tools` marked `.active`, a `<main>` with a
    `.section-header` + the `.tool-card` (header / `.tool-body` /
    `.form-row` / `.result-panel` markup, matching the existing tools) +
@@ -519,7 +537,11 @@ instead of an inline `<style>` duplicated across pages.)*
 4. If it graduates a Coming-Soon item, delete the matching
    `.tool-preview` card from the "Coming Soon" `.tool-grid` on
    `tools/index.html`.
-5. Bump the version string in the footer (currently `v0.9 · 2026`,
+5. Add the new page's URL to `html/sitemap.xml` (a `<url>` entry with
+   `<loc>` and today's date in `<lastmod>`) so search engines pick it
+   up on the next crawl. The sitemap is hand-maintained — there's no
+   generator.
+6. Bump the version string in the footer (currently `v0.9 · 2026`,
    carried by every page) when shipping something notable.
 
 ## Workflow
