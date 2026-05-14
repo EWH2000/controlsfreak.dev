@@ -475,6 +475,75 @@ two-way-valve loads, the three common piping families, when
 each is appropriate, what BMS sequences typically pair with
 each.
 
+### Load piping — Education page *(shipped 2026-05-14)*
+*One question: what does the connection between a load and a
+hydronic loop look like, and what does that connection point
+have to decide?*
+
+In scope: two-way valve at the load (variable system flow);
+three-way valve at the load (constant system flow, mixing and
+diverting); the tie-back to the twin-T's forward-reference
+callout — which valve type the secondary loop is built around
+determines whether secondary flow varies or stays constant.
+
+Out of scope (forward links, not content):
+- VFD pumping — [future: vfds.html]
+- Hydronic balancing, circuit setters, PICVs — [future:
+  balancing.html]
+- Heat-pump loops, geothermal loops, condenser water/cooling
+  towers — these are different *systems*, each its own future
+  page
+- Coil-specific behavior (chilled vs. hot water control
+  direction) — brief mention only; full treatment is in coil-
+  specific or sequence content
+
+Pays off the twin-T (`hydronic-loops.html#d3`) discovery callout.
+The closing section ties back explicitly. The twin-T subhead now
+carries `id="d3"` as the cross-link anchor; the
+"Find out what it is" callout on hydronic-loops is now a real
+link to `load-piping.html` rather than a "coming soon"
+placeholder.
+
+**Balancing decision (recorded for the scope rule).** The
+friction-file entry had originally floated balancing as a
+possible in-page section if it stayed tight. During drafting it
+was pulled out and replaced with a one-sentence forward link to
+`[future: balancing.html]` instead. Reason: the page's one
+question is about *valve choice at the connection point*;
+balancing is a different function (making each load see its
+design flow) on the same system, and a 3-paragraph treatment
+would be a tease that opens more questions than it answers —
+with no balancing page to absorb them yet. The "Education page
+scope — one question per page" rule says different function =
+its own page, and that was the trigger. The forward link
+preserves the option without committing to the treatment.
+
+**Forward-link debts this page incurred** (so the next pages
+know what they're inheriting):
+- `[future: vfds.html]` — referenced in the two-way section as
+  the natural pairing for variable-flow systems. The VFDs page,
+  when it ships, should tie back to load piping with the
+  inverse framing ("here's the pump side of the variable-flow
+  picture we set up there").
+- `[future: balancing.html]` — referenced once in the three-way
+  section, as a closing aside on why "constant flow" only means
+  each load sees its design flow if the loop is balanced. The
+  balancing page should tie back to load piping for the
+  two-way/three-way context, since the balancing strategy
+  differs between the two.
+
+**Diagram-markup notes for future animation.** Page ships
+without animation but with full animation-ready markup: named
+`<g>` groups, semantic id prefixes (`lp-2w-`, `lp-3wm-`,
+`lp-3wd-`), real `<text>` labels, grouped flow-arrow polygons,
+and `data-flow="supply"|"return"` attributes on every pipe
+segment. Adding `flow-engine.js` later should be a
+script-include + `FlowEngine.init()` call, no markup retrofit.
+Style classes (`.lp-svg`, `.lp-legend`) are inlined in the page
+mirroring `hydronic-loops.html`'s `.hd-svg`/`.hd-legend`; if a
+third Education page with diagrams appears, that's the trigger
+to fold both into a shared `.edu-svg` rule in `styles.css`.
+
 ---
 
 ## Site structure / organization
@@ -517,6 +586,75 @@ Both work because they invite curiosity rather than demanding
 attention. Use where the diagram or widget has a natural
 question-shaped thing the page hasn't answered yet; don't
 manufacture artificial gaps to fit the pattern.
+
+### Education page scope — one question per page
+
+Every new Education page declares its one question in the friction
+file before drafting begins. The question goes at the top of the
+page's entry, and it's the standard the page is held to: every
+section either answers it or it doesn't belong. Vague scopes
+("load piping," "refrigerant," "VFDs") drift into mega-pages
+because nothing inside the scope says no to adjacent material.
+A declared question does.
+
+**Mechanics:**
+
+1. **Declare the question first.** One sentence, in the friction-
+   file entry, before any prose drafting. "What does the connection
+   between a load and a hydronic loop look like, and what does that
+   connection point have to decide?" is a question. "Load piping"
+   is a topic. Topics drift; questions don't.
+
+2. **In scope = what answers the question directly.** Usually two
+   or three real sub-topics, each getting one section. If the in-
+   scope list is longer than four items, the question is probably
+   too broad and the page is two pages.
+
+3. **Out of scope = explicit list of adjacent topics, with
+   forward-link targets.** Each item gets `[future: <page name>]`
+   or `[future: section in <page>]`. The marker is the discipline
+   — it acknowledges the connection, drops a breadcrumb, and
+   creates a record of what future page earns the topic. The
+   prose draws the link with a sentence; the page doesn't *become*
+   the link.
+
+4. **Distinguish different systems from different functions when
+   the question is ambiguous.** A different system (heat pumps,
+   geothermal, cooling towers vs. hydronic distribution) is its
+   own page. A different function (balancing, sequences, VFD
+   pumping) is its own page. The current page is one system + one
+   function, scoped tight.
+
+5. **One adjacent topic may stay as a section if a budget is
+   set before drafting.** Sometimes a small adjacent piece is too
+   short to deserve a page but too connected to ignore. Set a hard
+   length budget on it before the day session ("three paragraphs
+   and one diagram, max"). If it grows past the budget during
+   drafting, it gets pulled into its own page and a forward link
+   replaces it. The budget is the trigger, not the judgment call
+   at the end.
+
+6. **Earn payoffs from forward references on prior pages.** If a
+   previous page made a forward-pointing callout (discovery-prompt
+   pattern, "find out on the load-piping page"), the new page ties
+   back to it explicitly in a closing section. Don't ship the page
+   without paying that debt — the discovery pattern only stays
+   credible if it delivers.
+
+**Why this isn't pre-architecting.** The rule isn't about
+predicting every future page. It's about giving each page a single
+question it has to answer well, and a written boundary for what
+isn't its job. The forward links cost nothing — they're a record
+of what's been promised, used as input when the friction file is
+reviewed for what to build next. Topics surface organically as
+they come up in drafting and get parked with markers; they're not
+invented to fill a category tree.
+
+**Applies retroactively as pages get extended.** PID Basics,
+Hydronic Loops, and any other existing pages don't need re-
+scoping today, but if they get substantially extended in a future
+session, that's the moment to declare their question retroactively
+and check that the additions answer it.
 
 ### Split into "Tools" and "Education" sections
 When breaking the single page into multiple pages, organize the site

@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Load Piping — controlsfreak.dev</title>
+    <meta name="description" content="Two-way vs three-way valves at hydronic loads — variable vs constant system flow, when each one fits, and how the choice shapes the rest of the loop.">
+    <meta property="og:title" content="Load Piping — controlsfreak.dev">
+    <meta property="og:description" content="Two-way vs three-way valves at hydronic loads — variable vs constant system flow, when each one fits, and how the choice shapes the rest of the loop.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://controlsfreak.dev/education/load-piping.html">
+    <meta property="og:image" content="https://controlsfreak.dev/assets/og-image.png">
+    <meta property="og:site_name" content="controlsfreak.dev">
+    <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon-180.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&family=Overpass:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/styles.css">
+    <style>
+        /* Page-specific — the inline schematics. Same conventions as
+           hydronic-loops.html's .hd-svg / .hd-legend (supply solid +
+           --blue, return dashed + --blue-cool; literal colour fallbacks
+           on each element so a stylesheet failure still leaves a legible
+           diagram). When a third Education page with diagrams appears
+           these rules should fold into styles.css as an .edu-svg pattern;
+           inlined for now to keep the design-system surface narrow. */
+        .lp-svg {
+            display: block;
+            width: 100%;
+            height: auto;
+            margin: 1.5rem 0;
+        }
+        .lp-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem 1.5rem;
+            font-family: var(--mono);
+            font-size: 0.66rem;
+            color: var(--text-dim);
+            margin: -0.5rem 0 0;
+            padding-left: 0.25rem;
+        }
+        .lp-legend .sw { display: inline-block; width: 26px; height: 0; vertical-align: middle; margin-right: 0.4rem; }
+        .lp-legend .sw.supply { border-top: 3px solid var(--blue); }
+        .lp-legend .sw.return { border-top: 3px dashed var(--blue-cool); }
+    </style>
+</head>
+<body>
+
+<nav class="site-nav">
+    <a class="site-nav-brand" href="/">controlsfreak<span>.dev</span></a>
+    <div class="site-nav-links">
+        <a href="/">Home</a>
+        <a href="/tools/">Tools</a>
+        <a href="/education/" class="active">Education</a>
+        <a href="/contact.html">Contact</a>
+    </div>
+</nav>
+
+<main>
+
+    <div class="section-header">
+        <span class="section-label">Education · Load Piping</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <div class="tool-card-title">Load Piping — How Loads Connect to the Loop <span class="tool-tag">Hydronics</span></div>
+        </div>
+        <div class="tool-body">
+
+            <p style="font-size:1.0rem;line-height:1.85;color:var(--text);max-width:640px;margin-bottom:1.75rem;">
+                Once you understand <a href="/education/hydronic-loops.html" style="color:var(--accent);">how the loops are arranged</a>, there's one detail left to settle: how does each load actually <em>tap into</em> the loop? A coil, a fan-coil unit, a radiant manifold — whatever the load is, it's a flow consumer on the other side of one short connection. That connection point has one decision to make, and that decision shapes everything around it. There are two answers.
+            </p>
+
+            <!-- ───────────────── 1 · Two-Way Valve — Variable System Flow ───────────────── -->
+            <div class="subhead">Two-Way Valve — Variable System Flow</div>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);">
+                A <em>two-way</em> valve is exactly what it sounds like: two ports, in and out, sitting in the supply line to the load. The controller modulates it open or closed to vary how much flow reaches the coil. Demand high, valve opens, more water through the coil, more heat (or cooling) transferred. Demand low, valve closes, less water — and here's the part worth pausing on: when the valve throttles down, that flow doesn't go <em>anywhere else</em>. It just stops. The whole branch pulls less, and the system loop's total flow drops with it.
+            </p>
+
+            <!-- Diagram 1: two-way valve at the load. Single coil tap; supply main top, return main bottom;
+                 the modulating valve sits in the supply leg. Conventions established here propagate to the
+                 two 3-way diagrams below: supply solid + --blue, return dashed + --blue-cool, named <g>
+                 groups + semantic ids, data-flow attributes pre-annotated so a future animation pass
+                 picks this up without a markup retrofit. Selector convention from CLAUDE.md: id-pattern
+                 selectors are attribute-only (no element qualifier) since pipes are a mix of <line>
+                 and <path>. -->
+            <svg class="lp-svg" viewBox="0 0 660 320" role="img" aria-labelledby="lp-2w-title lp-2w-desc"
+                 font-family="var(--mono, 'IBM Plex Mono', monospace)">
+                <title id="lp-2w-title">Two-way valve at the load</title>
+                <desc id="lp-2w-desc">A short section of supply main runs along the top of the diagram; a return main runs along the bottom. A single coil sits in the middle, tapped off the supply main by a vertical riser. A two-way modulating valve sits in the supply riser above the coil; the coil's return drops straight down into the return main. When the valve modulates closed, flow through the coil — and therefore through this branch of the system loop — drops; nothing diverts around it.</desc>
+
+                <!-- piping: supply (solid, --blue) -->
+                <path id="lp-2w-supply-main" data-flow="supply" d="M40 70 H620" fill="none" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                <line id="lp-2w-coil-supply-top" data-flow="supply" x1="330" y1="70" x2="330" y2="125" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                <line id="lp-2w-coil-supply-bot" data-flow="supply" x1="330" y1="155" x2="330" y2="170" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                <!-- piping: return (dashed, --blue-cool) -->
+                <line id="lp-2w-coil-out" data-flow="return" x1="330" y1="235" x2="330" y2="270" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
+                <path id="lp-2w-return-main" data-flow="return" d="M620 270 H40" fill="none" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
+
+                <!-- flow arrows -->
+                <g id="lp-2w-flow-arrows">
+                    <polygon points="200,65 209,70 200,75" fill="var(--blue, #1577b8)"/>
+                    <polygon points="500,65 509,70 500,75" fill="var(--blue, #1577b8)"/>
+                    <polygon points="325,105 330,116 335,105" fill="var(--blue, #1577b8)"/>
+                    <polygon points="325,255 330,244 335,244" fill="var(--blue-cool, #5e8aa0)"/>
+                    <polygon points="200,275 191,270 200,265" fill="var(--blue-cool, #5e8aa0)"/>
+                    <polygon points="500,275 491,270 500,265" fill="var(--blue-cool, #5e8aa0)"/>
+                </g>
+
+                <!-- equipment -->
+                <g id="lp-2w-valve">
+                    <!-- bowtie symbol: two triangles meeting apex-to-apex along the pipe axis -->
+                    <polygon points="315,125 345,125 330,140" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                    <polygon points="315,155 345,155 330,140" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                    <text x="365" y="138" font-size="11" font-weight="600" fill="var(--text-bright, #1d251f)">2-WAY VALVE</text>
+                    <text x="365" y="152" font-size="9" font-style="italic" fill="var(--text-dim, #666e66)">(modulating)</text>
+                </g>
+                <g id="lp-2w-coil">
+                    <rect x="285" y="170" width="90" height="65" rx="2" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                    <text x="330" y="207" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text-bright, #1d251f)">COIL</text>
+                </g>
+
+                <!-- labels -->
+                <text x="80" y="60" font-size="11" fill="var(--text, #38423a)">supply main →</text>
+                <text x="80" y="290" font-size="11" fill="var(--text, #38423a)">← return main</text>
+                <text x="560" y="60" font-size="9" font-style="italic" fill="var(--text-dim, #666e66)">total system flow Q</text>
+                <text x="560" y="290" font-size="9" font-style="italic" fill="var(--text-dim, #666e66)">varies with valve</text>
+            </svg>
+            <div class="lp-legend">
+                <span><span class="sw supply"></span>supply water</span>
+                <span><span class="sw return"></span>return water</span>
+            </div>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:1.25rem;">
+                That's the whole point — and it's why this is the modern default. If every load on the system is two-way, every coil throttling back drops the system's total flow demand. The pump doesn't need to keep pushing the same volume around all day; it can slow down with the building. Pair this layout with a <a href="/education/vfds.html" style="color:var(--accent);">variable-speed pump</a> and you've got a system that uses real money less power at part load, which is most of the day, most of the year. The trade-off: the system pressure-control problem gets more interesting (more on that in the VFDs lesson), and you have to be willing to commit to variable-flow plumbing throughout — boilers, chillers, and the rest of the plant have to be okay with that.
+            </p>
+
+            <!-- ───────────────── 2 · Three-Way Valve — Constant System Flow ───────────────── -->
+            <div class="subhead">Three-Way Valve — Constant System Flow</div>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);">
+                A <em>three-way</em> valve has, as expected, three ports. What it adds to the picture is a <em>bypass</em>: a short loop of pipe that lets water get from the supply side to the return side <em>without going through the coil</em>. When the load needs less, the valve doesn't choke flow off — it sends it around the coil instead. The water still moves; it just doesn't pick up (or drop off) heat on the way through. From the system loop's point of view, the branch's total flow stays the same. The pump sees the same demand all day.
+            </p>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:1.25rem;">
+                There are two common arrangements, and they look different but do the same job. A <em>mixing</em> valve sits at the coil's outlet and combines coil return with the bypass before sending the result back. A <em>diverting</em> valve sits at the coil's inlet and splits incoming supply between the coil and the bypass. Either way, system-side flow stays constant; coil-side flow varies between zero and full.
+            </p>
+
+            <!-- Diagram 2: three-way MIXING valve. Valve at coil outlet, bypass tapped off supply riser
+                 takes hot water around the coil and joins coil-out at the mixing valve. -->
+            <svg class="lp-svg" viewBox="0 0 660 360" role="img" aria-labelledby="lp-3wm-title lp-3wm-desc"
+                 font-family="var(--mono, 'IBM Plex Mono', monospace)">
+                <title id="lp-3wm-title">Three-way mixing valve at the load</title>
+                <desc id="lp-3wm-desc">A supply main runs along the top; a return main along the bottom. A coil sits tapped off the supply main on the left side. A bypass branch runs from the supply main down to a three-way mixing valve at the bottom; the coil's outlet also feeds into that valve. The mixing valve combines coil return water with bypass supply water in variable proportions and sends the result to the return main. As the valve modulates, the coil sees more or less flow, but the total flow leaving through the return is constant.</desc>
+
+                <!-- piping: supply (solid, --blue) -->
+                <path id="lp-3wm-supply-main" data-flow="supply" d="M40 70 H620" fill="none" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                <line id="lp-3wm-coil-supply" data-flow="supply" x1="250" y1="70" x2="250" y2="140" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                <line id="lp-3wm-bypass-down" data-flow="supply" x1="410" y1="70" x2="410" y2="290" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                <line id="lp-3wm-bypass-cross" data-flow="supply" x1="410" y1="290" x2="345" y2="290" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+
+                <!-- piping: return (dashed, --blue-cool) -->
+                <line id="lp-3wm-coil-out-v" data-flow="return" x1="250" y1="220" x2="250" y2="290" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="lp-3wm-coil-out-h" data-flow="return" x1="250" y1="290" x2="315" y2="290" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="lp-3wm-valve-out" data-flow="return" x1="330" y1="305" x2="330" y2="320" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
+                <path id="lp-3wm-return-main" data-flow="return" d="M620 320 H40" fill="none" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
+
+                <!-- flow arrows -->
+                <g id="lp-3wm-flow-arrows">
+                    <polygon points="150,65 159,70 150,75" fill="var(--blue, #1577b8)"/>
+                    <polygon points="500,65 509,70 500,75" fill="var(--blue, #1577b8)"/>
+                    <polygon points="245,110 250,121 255,110" fill="var(--blue, #1577b8)"/>
+                    <polygon points="405,180 410,191 415,180" fill="var(--blue, #1577b8)"/>
+                    <polygon points="380,285 371,290 380,295" fill="var(--blue, #1577b8)"/>
+                    <polygon points="245,255 250,244 255,244" fill="var(--blue-cool, #5e8aa0)"/>
+                    <polygon points="285,295 294,290 285,285" fill="var(--blue-cool, #5e8aa0)"/>
+                    <polygon points="325,315 330,304 335,304" fill="var(--blue-cool, #5e8aa0)"/>
+                    <polygon points="500,325 491,320 500,315" fill="var(--blue-cool, #5e8aa0)"/>
+                    <polygon points="150,325 141,320 150,315" fill="var(--blue-cool, #5e8aa0)"/>
+                </g>
+
+                <!-- equipment -->
+                <g id="lp-3wm-coil">
+                    <rect x="205" y="140" width="90" height="80" rx="2" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                    <text x="250" y="186" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text-bright, #1d251f)">COIL</text>
+                </g>
+                <g id="lp-3wm-valve">
+                    <!-- three triangles meeting at the central junction: ports from left (coil-out),
+                         right (bypass), and below (combined output to return). Apex of each triangle
+                         points toward the centre. -->
+                    <polygon points="315,280 315,300 330,290" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                    <polygon points="345,280 345,300 330,290" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                    <polygon points="320,305 340,305 330,290" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                    <text x="330" y="271" text-anchor="middle" font-size="11" font-weight="600" fill="var(--text-bright, #1d251f)">3-WAY MIXING</text>
+                    <text x="330" y="335" text-anchor="middle" font-size="9" font-style="italic" fill="var(--text-dim, #666e66)">(at coil outlet)</text>
+                </g>
+
+                <!-- labels -->
+                <text x="80" y="60" font-size="11" fill="var(--text, #38423a)">supply main →</text>
+                <text x="80" y="340" font-size="11" fill="var(--text, #38423a)">← return main</text>
+                <text x="425" y="160" font-size="11" fill="var(--text, #38423a)">BYPASS</text>
+                <text x="560" y="60" font-size="9" font-style="italic" fill="var(--text-dim, #666e66)">total flow Q</text>
+                <text x="560" y="340" font-size="9" font-style="italic" fill="var(--text-dim, #666e66)">stays constant</text>
+            </svg>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:0.5rem;">
+                The diverting version flips the geometry: same loop, different placement of the valve. Supply enters the valve first, gets split between the coil branch and the bypass, and the two paths reunite at a passive tee on the return side. Functionally identical from the system's point of view; the difference shows up in valve <em>authority</em> (how much of the system pressure drop the valve actually controls) and in how the valve body wears under flow. Both are common; which one you'll see on a given job depends on the engineer's preference, the manufacturer's catalog, and what was on the shelf the week the system was built.
+            </p>
+
+            <svg class="lp-svg" viewBox="0 0 660 360" role="img" aria-labelledby="lp-3wd-title lp-3wd-desc"
+                 font-family="var(--mono, 'IBM Plex Mono', monospace)">
+                <title id="lp-3wd-title">Three-way diverting valve at the load</title>
+                <desc id="lp-3wd-desc">Same supply-and-return mains as before, but now a three-way diverting valve sits at the top of the supply riser, just below the supply main. The valve splits incoming supply between two outlets: one feeds the coil below it; the other feeds a bypass branch that runs over to a parallel down-pipe. The coil's outlet and the bypass meet at a passive tee on the return side, and the combined flow continues to the return main. As the valve modulates, the coil sees more or less flow, but the total flow leaving through the return is constant.</desc>
+
+                <!-- piping: supply (solid, --blue) -->
+                <path id="lp-3wd-supply-main" data-flow="supply" d="M40 70 H620" fill="none" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                <line id="lp-3wd-valve-in" data-flow="supply" x1="250" y1="70" x2="250" y2="115" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                <line id="lp-3wd-coil-supply" data-flow="supply" x1="250" y1="145" x2="250" y2="170" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                <line id="lp-3wd-bypass-cross" data-flow="supply" x1="265" y1="130" x2="410" y2="130" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                <line id="lp-3wd-bypass-down" data-flow="supply" x1="410" y1="130" x2="410" y2="310" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+
+                <!-- piping: return (dashed, --blue-cool) -->
+                <line id="lp-3wd-coil-out-v" data-flow="return" x1="250" y1="250" x2="250" y2="310" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="lp-3wd-tee-cross" data-flow="return" x1="250" y1="310" x2="410" y2="310" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="lp-3wd-tee-out" data-flow="return" x1="330" y1="310" x2="330" y2="325" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
+                <path id="lp-3wd-return-main" data-flow="return" d="M620 325 H40" fill="none" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
+
+                <!-- flow arrows -->
+                <g id="lp-3wd-flow-arrows">
+                    <polygon points="150,65 159,70 150,75" fill="var(--blue, #1577b8)"/>
+                    <polygon points="500,65 509,70 500,75" fill="var(--blue, #1577b8)"/>
+                    <polygon points="245,100 250,89 255,89" fill="var(--blue, #1577b8)"/>
+                    <polygon points="245,160 250,171 255,160" fill="var(--blue, #1577b8)"/>
+                    <polygon points="340,125 349,130 340,135" fill="var(--blue, #1577b8)"/>
+                    <polygon points="405,220 410,231 415,220" fill="var(--blue, #1577b8)"/>
+                    <polygon points="245,295 250,284 255,284" fill="var(--blue-cool, #5e8aa0)"/>
+                    <polygon points="305,305 314,310 305,315" fill="var(--blue-cool, #5e8aa0)"/>
+                    <polygon points="375,315 366,310 375,305" fill="var(--blue-cool, #5e8aa0)"/>
+                    <polygon points="325,320 330,309 335,309" fill="var(--blue-cool, #5e8aa0)"/>
+                    <polygon points="500,330 491,325 500,320" fill="var(--blue-cool, #5e8aa0)"/>
+                    <polygon points="150,330 141,325 150,320" fill="var(--blue-cool, #5e8aa0)"/>
+                </g>
+
+                <!-- equipment -->
+                <g id="lp-3wd-valve">
+                    <!-- three triangles meeting at the centre: ports from above (supply-in),
+                         below (coil), and right (bypass). -->
+                    <polygon points="240,120 260,120 250,130" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                    <polygon points="240,140 260,140 250,130" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                    <polygon points="265,120 265,140 250,130" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                    <text x="190" y="135" text-anchor="end" font-size="11" font-weight="600" fill="var(--text-bright, #1d251f)">3-WAY DIVERTING</text>
+                    <text x="190" y="149" text-anchor="end" font-size="9" font-style="italic" fill="var(--text-dim, #666e66)">(at coil inlet)</text>
+                </g>
+                <g id="lp-3wd-coil">
+                    <rect x="205" y="170" width="90" height="80" rx="2" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                    <text x="250" y="216" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text-bright, #1d251f)">COIL</text>
+                </g>
+
+                <!-- labels -->
+                <text x="80" y="60" font-size="11" fill="var(--text, #38423a)">supply main →</text>
+                <text x="80" y="345" font-size="11" fill="var(--text, #38423a)">← return main</text>
+                <text x="425" y="200" font-size="11" fill="var(--text, #38423a)">BYPASS</text>
+                <text x="560" y="60" font-size="9" font-style="italic" fill="var(--text-dim, #666e66)">total flow Q</text>
+                <text x="560" y="345" font-size="9" font-style="italic" fill="var(--text-dim, #666e66)">stays constant</text>
+            </svg>
+            <div class="lp-legend">
+                <span><span class="sw supply"></span>supply water</span>
+                <span><span class="sw return"></span>return water / mixed</span>
+            </div>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:1.25rem;">
+                Why pick three-way over two-way? Mostly history and pairing. Three-way valves pair naturally with constant-speed pumps and with boilers or chillers that want a steady diet of flow, so older buildings — and any new system whose plant insists on it — lean three-way. The downside is the one you can already see: the bypass is moving water around the building for no thermal reason at all. At part load, the system pump is still doing full work to push water past coils that don't want it. That's energy you'd rather not spend, which is exactly the argument that pushed the industry toward two-way + variable-speed.
+            </p>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:1.25rem;">
+                One related note worth flagging: even on a constant-flow setup, each load only sees its <em>design</em> flow if the loop is <em>balanced</em> — circuit setters, automatic balancing valves, or pressure-independent control valves (PICVs) at each branch. That's a substantial topic on its own; see the <a href="/education/balancing.html" style="color:var(--accent);">balancing lesson</a> for the full treatment.
+            </p>
+
+            <!-- ───────────────── 3 · Tying it back to the twin-T ───────────────── -->
+            <div class="subhead">Tying it back to the twin-T</div>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);">
+                If you've been through the <a href="/education/hydronic-loops.html#d3" style="color:var(--accent);">primary-secondary twin-T</a>, this is where the loose end gets tied off. That diagram showed two loads on the system loop as plain boxes — supply in, return out, no detail about how they connect. The detail is what we just covered, and the choice has a consequence that propagates all the way back to the loop.
+            </p>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:1.25rem;">
+                If the twin-T's loads are <em>two-way</em>, the system loop is variable-flow: as loads modulate down, the system pump should slow down with them, and the injection pump may even need to adjust to keep the supply temperature stable as system demand swings. If the twin-T's loads are <em>three-way</em>, the system loop is constant-flow: a fixed-speed system pump runs all day, and the injection pump is the only thing modulating in response to load. The boiler doesn't care either way — it's still on its own primary loop, the closely-spaced tees still decouple it — but the <em>system</em> loop has a personality, and the load piping is what gives it one.
+            </p>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:1.25rem;">
+                That's the difference the twin-T diagram didn't mention. Pick the wrong load type for the rest of your system and you end up with a constant-speed system pump fighting a building full of throttling two-way valves, or a variable-speed pump trying to ramp down on a building full of three-ways that won't let it. The connection point at each load doesn't look like much on a riser diagram, but it determines what the rest of the loop is allowed to do.
+            </p>
+
+        </div>
+    </div>
+
+    <a class="back-link" href="/education/">← Back to Education</a>
+
+</main>
+
+<footer>
+    <span class="footer-text">controlsfreak.dev — open tools for controls engineers</span>
+    <span class="footer-text">v0.9 · 2026</span>
+</footer>
+
+</body>
+</html>

@@ -19,8 +19,8 @@ but the project is the tools, not a personal homepage.
   with `<link rel="stylesheet" href="/styles.css">`. Page-specific CSS
   stays inline on the page that needs it (currently: `contact.html`,
   `psychrometric-chart.html`, `thermistor-calculator.html`,
-  `hydronic-loops.html`). Shared rules live in the file; page-only rules
-  stay inline.
+  `hydronic-loops.html`, `load-piping.html`). Shared rules live in the
+  file; page-only rules stay inline.
 - **Shared scripts** in `html/scripts/` are **classic scripts** (not ES
   modules — modules would break the inline `on*` handlers). Load with
   `<script src="/scripts/xxx.js"></script>` *before* the page's inline
@@ -77,6 +77,9 @@ but the project is the tools, not a personal homepage.
   shared JS goes in `html/scripts/` as a classic script.
 - Prefer semantic HTML over div soup. Keep it fast and accessible: no
   heavy media, no auto-play, no tracking or analytics.
+- **Education page scope rule** (one question per page, forward-links
+  for adjacent topics) lives in `site-ideas-and-friction.md` under
+  "Education page scope — one question per page."
 
 ### Gotchas
 
@@ -132,7 +135,8 @@ controlsfreak.dev/
 │   └── education/
 │       ├── index.html                # Education landing
 │       ├── pid-basics.html           # P/I/D explainer + three mini-sims (loads /scripts/pid-engine.js)
-│       └── hydronic-loops.html       # 2-pipe direct → reverse → twin-T, inline SVG schematics
+│       ├── hydronic-loops.html       # 2-pipe direct → reverse → twin-T, inline SVG schematics
+│       └── load-piping.html          # 2-way vs 3-way load valves, three SVG diagrams; pays off the twin-T #d3 forward callout
 └── tests/              # Playwright (smoke.spec.js, contact.spec.js)
 ```
 
@@ -239,9 +243,30 @@ cards (the roadmap). Live tools:
   live supply-temp mixing math, three discrete states (normal /
   warning at <20 Hz / failure at 0 Hz with a hidden anecdote
   reveal). A discovery-style callout under the twin-T diagram
-  forward-links to a planned load-piping Education page (the
-  bypasses on each load are deliberately left unexplained — that's
-  the hook).
+  forward-links to `load-piping.html` for the load-side answer; the
+  twin-T subhead carries `id="d3"` so the load-piping closing section
+  can link straight to it.
+- **Load Piping** (`load-piping.html`) — paired explainer to Hydronic
+  Loops, scoped to one question: *what does the connection between a
+  load and a hydronic loop look like, and what does that connection
+  point have to decide?* Two main sections — *Two-Way Valve (variable
+  system flow)* and *Three-Way Valve (constant system flow)* — with
+  three inline `<svg>` diagrams (one for two-way, then mixing and
+  diverting three-way side by side). Closing section ties back to the
+  twin-T `#d3` anchor and spells out the consequence: two-way loads
+  ⇒ variable secondary, three-way loads ⇒ constant secondary. Same
+  diagram conventions as Hydronic Loops (named groups, semantic IDs
+  `lp-2w-…` / `lp-3wm-…` / `lp-3wd-…`, supply solid / return dashed,
+  `data-flow` attributes pre-annotated so a future animation pass
+  needs no markup retrofit). Lesson-page layout; no widgets, no
+  engine. **Balancing was deliberately scoped out** — forward-linked
+  to a future balancing page rather than treated as a section here;
+  see friction-file entry "Education page scope — one question per
+  page" for the rule. **Forward-link convention:** when prose
+  references a page that doesn't exist yet (e.g. VFDs, balancing), use
+  a normal `<a>` with `color: var(--accent)` and `href` to the future
+  path (`/education/vfds.html`); the friction file tracks the marker
+  as `[future: <page>]`.
 
 **Contact** (`contact.html`) — `.tool-card` with name/email/message,
 an off-screen CSS honeypot (`.hp-field`, named `website`), and a
