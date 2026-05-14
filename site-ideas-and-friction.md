@@ -9,6 +9,8 @@ tools.
 
 ## Feature ideas
 
+
+
 ### VFDs — Education page + mock interface tool
 
 VFDs are everywhere in HVAC and every controls tech writes to them
@@ -251,7 +253,7 @@ thinking about whether that pattern should generalize (e.g. PID tuner
 saves last sliders, Modbus viewer remembers last register) before
 hardcoding localStorage just for this one tool.
 
-### System animations for Education *(in progress — hydronic loops first)*
+### Improvments and more pages for Education *(in progress — hydronic loops first)*
 
 **Engine conventions.** When functionality benefits from a shared
 script (the PID simulator, the flow animation engine, future
@@ -383,6 +385,25 @@ alongside it:
   (the slider) maps GPM → density before mutating the attribute.
   Keeping that translation outside `flow-engine.js` preserves the
   rule that the engine knows only paths, particles, and time.
+
+  **Load-piping strategies** *(planned Education page — hook live)*
+
+The d3 twin-T diagram shows bypasses on each load without
+explaining them. Bypass strategy (three-way valves, two-way +
+bypass, decoupler approach, terminal-unit piping families) is its
+own substantial topic that competes with the injection-pump
+lesson if folded into the twin-T section. Splitting it into its
+own page lets each lesson stay focused.
+
+A discovery-style callout under d3 ("Do you see a difference
+with this system I didn't mention?") is already live and points
+forward; the "Find out what it is" anchor wires to this page
+when it ships.
+
+Seed content: why constant-flow loops want bypasses on
+two-way-valve loads, the three common piping families, when
+each is appropriate, what BMS sequences typically pair with
+each.
 
 ---
 
