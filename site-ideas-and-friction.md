@@ -566,6 +566,38 @@ flows converge at a tee, draw each contributing leg as its
 own `data-flow` element. Single lines are fine only where flow
 is unidirectional along the whole segment.
 
+**Diagram annotation layout — don't split sentences across
+corners, don't dangle parentheticals far from their referent.**
+Two specific failure modes caught on a label-review pass after
+the diagrams shipped:
+
+- A small dim-italic annotation pair like "total flow Q" at
+  top-right + "varies with valve" at bottom-right reads as
+  one sentence but forces the eye to jump between opposite
+  corners of the diagram to assemble it. Fix: consolidate to a
+  single short line in one place (top-right, paired
+  horizontally with the existing "supply main →" label on
+  the left, both in the same horizontal band — no eye-jump).
+- A parenthetical sub-label like "(at coil outlet)" placed
+  *below* the valve body, while its referent "3-WAY MIXING"
+  sits *above*, reads as a dangling fragment. Fix: either
+  drop the parenthetical entirely if the geometry already
+  conveys what it says (valve at coil outlet vs. coil inlet
+  is visible from where the valve is drawn), or stack it
+  immediately next to its referent.
+- When a sub-label is genuinely useful (e.g. "diverting"
+  disambiguating Load B's 3-way valve type on the tie-back),
+  parens around it are redundant: italic + dim colour already
+  reads as a subtitle. Drop the parens.
+
+The combined effect on `load-piping.html`'s annotations was
+the loss of "(modulating)", "(at coil outlet)", "(at coil
+inlet)", and four orphan halves of split-corner pairs — about
+seven labels removed, all redundant or confusing. Diagrams
+read cleaner. Rule for future Education diagrams: write the
+labels last, then prune them; every annotation should earn
+its real estate by saying something the geometry can't.
+
 **Tie-back diagrams mirror their referent's layout.** The page
 closes with a fourth diagram (`lp-tt-…` prefix) that pays off
 the twin-T discovery callout. It deliberately reuses d3's

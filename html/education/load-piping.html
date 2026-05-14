@@ -133,19 +133,18 @@
                     <!-- bowtie symbol: two triangles meeting apex-to-apex along the pipe axis -->
                     <polygon points="315,125 345,125 330,140" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
                     <polygon points="315,155 345,155 330,140" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
-                    <text x="365" y="138" font-size="11" font-weight="600" fill="var(--text-bright, #1d251f)">2-WAY VALVE</text>
-                    <text x="365" y="152" font-size="9" font-style="italic" fill="var(--text-dim, #666e66)">(modulating)</text>
+                    <text x="365" y="143" font-size="11" font-weight="600" fill="var(--text-bright, #1d251f)">2-WAY VALVE</text>
                 </g>
                 <g id="lp-2w-coil">
                     <rect x="285" y="170" width="90" height="65" rx="2" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
                     <text x="330" y="207" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text-bright, #1d251f)">COIL</text>
                 </g>
 
-                <!-- labels -->
+                <!-- labels. Single-line annotation at top-right rather than a top/bottom split:
+                     reader doesn't have to eye-jump between corners to assemble the sentence. -->
                 <text x="80" y="60" font-size="11" fill="var(--text, #38423a)">supply main →</text>
                 <text x="80" y="290" font-size="11" fill="var(--text, #38423a)">← return main</text>
-                <text x="560" y="60" font-size="9" font-style="italic" fill="var(--text-dim, #666e66)">total system flow Q</text>
-                <text x="560" y="290" font-size="9" font-style="italic" fill="var(--text-dim, #666e66)">varies with valve</text>
+                <text x="615" y="58" text-anchor="end" font-size="9" font-style="italic" fill="var(--text-dim, #666e66)">system Q varies with valve</text>
             </svg>
             <div class="lp-legend">
                 <span><span class="sw supply"></span>supply water</span>
@@ -212,16 +211,16 @@
                     <polygon points="315,280 315,300 330,290" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
                     <polygon points="345,280 345,300 330,290" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
                     <polygon points="320,305 340,305 330,290" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
-                    <text x="330" y="271" text-anchor="middle" font-size="11" font-weight="600" fill="var(--text-bright, #1d251f)">3-WAY MIXING</text>
-                    <text x="330" y="335" text-anchor="middle" font-size="9" font-style="italic" fill="var(--text-dim, #666e66)">(at coil outlet)</text>
+                    <text x="330" y="272" text-anchor="middle" font-size="11" font-weight="600" fill="var(--text-bright, #1d251f)">3-WAY MIXING</text>
                 </g>
 
-                <!-- labels -->
+                <!-- labels. Single-line annotation at top-right, no top/bottom split. The valve's
+                     position relative to the coil (here: outlet) reads from the geometry, so the
+                     "(at coil outlet)" parenthetical that used to dangle below the valve is dropped. -->
                 <text x="80" y="60" font-size="11" fill="var(--text, #38423a)">supply main →</text>
                 <text x="80" y="340" font-size="11" fill="var(--text, #38423a)">← return main</text>
                 <text x="425" y="160" font-size="11" fill="var(--text, #38423a)">BYPASS</text>
-                <text x="560" y="60" font-size="9" font-style="italic" fill="var(--text-dim, #666e66)">total flow Q</text>
-                <text x="560" y="340" font-size="9" font-style="italic" fill="var(--text-dim, #666e66)">stays constant</text>
+                <text x="615" y="58" text-anchor="end" font-size="9" font-style="italic" fill="var(--text-dim, #666e66)">system Q stays constant</text>
             </svg>
 
             <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:0.5rem;">
@@ -277,19 +276,19 @@
                     <polygon points="240,140 260,140 250,130" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
                     <polygon points="265,120 265,140 250,130" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
                     <text x="190" y="135" text-anchor="end" font-size="11" font-weight="600" fill="var(--text-bright, #1d251f)">3-WAY DIVERTING</text>
-                    <text x="190" y="149" text-anchor="end" font-size="9" font-style="italic" fill="var(--text-dim, #666e66)">(at coil inlet)</text>
                 </g>
                 <g id="lp-3wd-coil">
                     <rect x="205" y="170" width="90" height="80" rx="2" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
                     <text x="250" y="216" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text-bright, #1d251f)">COIL</text>
                 </g>
 
-                <!-- labels -->
+                <!-- labels. Single-line annotation at top-right, no top/bottom split. The valve's
+                     position relative to the coil (here: inlet) reads from the geometry, so the
+                     "(at coil inlet)" parenthetical the label used to carry is dropped. -->
                 <text x="80" y="60" font-size="11" fill="var(--text, #38423a)">supply main →</text>
                 <text x="80" y="345" font-size="11" fill="var(--text, #38423a)">← return main</text>
                 <text x="425" y="200" font-size="11" fill="var(--text, #38423a)">BYPASS</text>
-                <text x="560" y="60" font-size="9" font-style="italic" fill="var(--text-dim, #666e66)">total flow Q</text>
-                <text x="560" y="345" font-size="9" font-style="italic" fill="var(--text-dim, #666e66)">stays constant</text>
+                <text x="615" y="58" text-anchor="end" font-size="9" font-style="italic" fill="var(--text-dim, #666e66)">system Q stays constant</text>
             </svg>
             <div class="lp-legend">
                 <span><span class="sw supply"></span>supply water</span>
@@ -419,13 +418,15 @@
                     <text x="540" y="181" text-anchor="middle" font-size="12" font-weight="600" fill="var(--text-bright, #1d251f)">LOAD A</text>
                 </g>
 
-                <!-- Load B — 3-way valve + bypass + coil -->
+                <!-- Load B — 3-way valve + bypass + coil. Subtitle "diverting" uses italic + dim
+                     styling to read as a subtitle to "3-WAY"; parens are redundant once the styling
+                     already signals it. -->
                 <g id="lp-tt-loadB-valve">
                     <polygon points="670,110 690,110 680,125" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
                     <polygon points="670,135 690,135 680,125" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
                     <polygon points="695,117 695,133 680,125" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
                     <text x="615" y="123" text-anchor="end" font-size="9" font-weight="600" fill="var(--text-bright, #1d251f)">3-WAY</text>
-                    <text x="615" y="135" text-anchor="end" font-size="9" font-style="italic" fill="var(--text-dim, #666e66)">(diverting)</text>
+                    <text x="615" y="135" text-anchor="end" font-size="9" font-style="italic" fill="var(--text-dim, #666e66)">diverting</text>
                 </g>
                 <g id="lp-tt-loadB-coil">
                     <rect x="645" y="150" width="70" height="55" rx="2" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
