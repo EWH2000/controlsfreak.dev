@@ -22,13 +22,12 @@
 // return strokes that would otherwise visually compete with them.
 // Particles step forward each frame by VELOCITY · dt and wrap to
 // position 0 at the path's end (per-segment pools, no path-stitching).
-// Position
-// along the path comes from getPointAtLength() — no SMIL, no CSS
-// offset-path. Velocity and spacing are *global constants*: a longer
-// pipe takes longer to traverse and carries more particles. That's
-// deliberate — it's how a viewer reads the unequal load-distance
-// characteristic of direct return (and, on the reverse-return diagram
-// to come, how the equal path lengths land visually).
+// Position along the path comes from getPointAtLength() — no SMIL,
+// no CSS offset-path. Velocity and spacing are *global constants*:
+// a longer pipe takes longer to traverse and carries more particles.
+// That's deliberate — it's how a viewer reads the unequal load-distance
+// characteristic of direct return (and the equal path lengths on
+// reverse return).
 //
 // Reduced motion: if the user has prefers-reduced-motion: reduce,
 // init() bails before injecting anything. The static SVG — with its
@@ -59,6 +58,24 @@
 // never speed. See "Engine attribute conventions" in
 // site-ideas-and-friction.md.
 //
+// Public API:
+//   FlowEngine.init()              — scan the document, build pools,
+//                                    start the frame loop. Idempotent
+//                                    for already-built pools (a second
+//                                    call rebuilds them in place).
+//   FlowEngine.refreshPath(el)     — rebuild the particle pool for one
+//                                    annotated element after the page
+//                                    mutated its `data-flow-density`
+//                                    (or any other engine attribute).
+//                                    Explicit call rather than a
+//                                    MutationObserver because the
+//                                    page already knows when it just
+//                                    changed something — keeps the
+//                                    engine boring and the data flow
+//                                    easy to reason about. No-op under
+//                                    reduced-motion, since init() never
+//                                    built any pools to refresh.
+//
 // What's NOT here: anything page-specific. No per-diagram tuning, no
 // hooks for play/pause UI, no speed coupling to a slider. Add those
 // on the page that needs them; keep the engine boring.
@@ -68,8 +85,7 @@
     'use strict';
 
     // Global tuning — one velocity, one spacing, applied uniformly to
-    // every annotated path. Tuned by eye on the d1 diagram (viewBox
-    // 800×360, rendered roughly 820px wide).
+    // every annotated path. Tuned by eye on the d1 diagram.
     const VELOCITY = 55;        // px/sec along the path
     const SPACING  = 34;        // px between adjacent particles
     const RADIUS   = 3;         // circle r — small but readable
@@ -81,6 +97,13 @@
     const RETURN_FILL = 'var(--blue-cool, #5e8aa0)';
     const SVG_NS = 'http://www.w3.org/2000/svg';
 
+    // Module-level state so refreshPath() can find an existing pool
+    // without walking the array. `pools` is the iteration order for
+    // the frame loop; `poolsByEl` is the O(1) lookup.
+    const pools = [];
+    const poolsByEl = new Map();
+    let frameStarted = false;
+
     function init() {
         // Reduced-motion fallback is the static SVG, untouched. Bail
         // before injecting anything.
@@ -91,56 +114,10 @@
         const annotated = document.querySelectorAll('[data-flow]');
         if (!annotated.length) return;
 
-        const pools = [];
+        annotated.forEach(buildPoolForEl);
 
-        annotated.forEach(function (el) {
-            // <path>, <line>, <polyline> etc. all expose getPointAtLength —
-            // any SVGGeometryElement works. Anything else is silently
-            // skipped so the engine is safe to load on any page.
-            if (typeof el.getTotalLength !== 'function' || typeof el.getPointAtLength !== 'function') return;
-
-            const svg = el.ownerSVGElement;
-            if (!svg) return;
-
-            const length = el.getTotalLength();
-            if (!isFinite(length) || length < 1) return;
-
-            const flow = el.getAttribute('data-flow');
-            const reverse = el.getAttribute('data-flow-reverse') === 'true';
-            const fill = flow === 'return' ? RETURN_FILL : SUPPLY_FILL;
-
-            // Per-path density: clamp to (0, 1.0] at the engine. The page
-            // doesn't have to police bounds; non-finite or out-of-range
-            // values silently fall back to the baseline.
-            let density = parseFloat(el.getAttribute('data-flow-density'));
-            if (!isFinite(density) || density <= 0 || density > 1) density = 1;
-            const localSpacing = SPACING / density;
-
-            // floor(length / localSpacing): at density 1.0 a path just
-            // shorter than SPACING legitimately carries zero particles —
-            // the flow is there in encoding but the rendered stream is
-            // sparse enough that you don't always see a circle on it.
-            const count = Math.floor(length / localSpacing);
-            const step = count > 0 ? length / count : 0;
-            const particles = [];
-            const layer = ensureParticleLayer(svg);
-
-            for (let i = 0; i < count; i++) {
-                const circle = document.createElementNS(SVG_NS, 'circle');
-                circle.setAttribute('r', RADIUS);
-                circle.setAttribute('fill', fill);
-                layer.appendChild(circle);
-                particles.push({ circle: circle, offset: i * step });
-            }
-
-            pools.push({ el: el, length: length, reverse: reverse, particles: particles });
-
-            // Place each particle at its initial position so the first
-            // paint isn't a flash at the origin.
-            placeAll(pools[pools.length - 1]);
-        });
-
-        if (!pools.length) return;
+        if (!pools.length || frameStarted) return;
+        frameStarted = true;
 
         let lastT = null;
         function frame(t) {
@@ -166,6 +143,83 @@
             requestAnimationFrame(frame);
         }
         requestAnimationFrame(frame);
+    }
+
+    // refreshPath rebuilds one path's particle pool from the current
+    // attribute values — call after mutating `data-flow-density` (or
+    // any other engine attribute) from page code. No-op if the engine
+    // never initialized (reduced-motion path) or the element isn't
+    // currently annotated.
+    function refreshPath(el) {
+        if (!frameStarted) return;
+        if (!el || !el.hasAttribute || !el.hasAttribute('data-flow')) return;
+        buildPoolForEl(el);
+    }
+
+    // Build (or rebuild in place) the particle pool for one annotated
+    // element. Reads all current attribute values; tears down any
+    // existing circles for that element before recreating them.
+    function buildPoolForEl(el) {
+        // <path>, <line>, <polyline> etc. all expose getPointAtLength —
+        // any SVGGeometryElement works. Anything else is silently
+        // skipped so the engine is safe to load on any page.
+        if (typeof el.getTotalLength !== 'function' || typeof el.getPointAtLength !== 'function') return;
+
+        const svg = el.ownerSVGElement;
+        if (!svg) return;
+
+        const length = el.getTotalLength();
+        if (!isFinite(length) || length < 1) return;
+
+        const flow = el.getAttribute('data-flow');
+        const reverse = el.getAttribute('data-flow-reverse') === 'true';
+        const fill = flow === 'return' ? RETURN_FILL : SUPPLY_FILL;
+
+        // Per-path density: clamp to (0, 1.0] at the engine. The page
+        // doesn't have to police bounds; non-finite or out-of-range
+        // values silently fall back to the baseline.
+        let density = parseFloat(el.getAttribute('data-flow-density'));
+        if (!isFinite(density) || density <= 0 || density > 1) density = 1;
+        const localSpacing = SPACING / density;
+
+        // floor(length / localSpacing): at density 1.0 a path just
+        // shorter than SPACING legitimately carries zero particles —
+        // the flow is there in encoding but the rendered stream is
+        // sparse enough that you don't always see a circle on it.
+        const count = Math.floor(length / localSpacing);
+        const step = count > 0 ? length / count : 0;
+
+        const layer = ensureParticleLayer(svg);
+
+        // Tear down any existing circles for this element before
+        // rebuilding — refresh case (slider mutated density) and
+        // double-init case both land here.
+        let pool = poolsByEl.get(el);
+        if (pool) {
+            for (let i = 0; i < pool.particles.length; i++) {
+                pool.particles[i].circle.remove();
+            }
+        } else {
+            pool = { el: el, length: length, reverse: reverse, particles: [] };
+            poolsByEl.set(el, pool);
+            pools.push(pool);
+        }
+        pool.length = length;
+        pool.reverse = reverse;
+        pool.particles = [];
+
+        for (let i = 0; i < count; i++) {
+            const circle = document.createElementNS(SVG_NS, 'circle');
+            circle.setAttribute('r', RADIUS);
+            circle.setAttribute('fill', fill);
+            layer.appendChild(circle);
+            pool.particles.push({ circle: circle, offset: i * step });
+        }
+
+        // Place each particle at its initial position so the first
+        // paint isn't a flash at the origin (and so a refresh-induced
+        // pool swap doesn't show a frame of bunched-up zeros).
+        placeAll(pool);
     }
 
     // One particle layer per SVG, appended as the last child so painter's-
@@ -199,5 +253,5 @@
         part.circle.setAttribute('cy', pt.y);
     }
 
-    window.FlowEngine = { init: init };
+    window.FlowEngine = { init: init, refreshPath: refreshPath };
 })();

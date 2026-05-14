@@ -57,6 +57,104 @@
                 stroke-dasharray: none;
             }
         }
+
+        /* d3 injection-pump widget — slider + readouts + supply-temp swatch
+           + alert area. Recessed surface to read as "instrument panel" against
+           the white tool-body, vocabulary borrowed from the 3-col tools'
+           reference panel (--surface-3 + hairline border). */
+        .d3-widget {
+            margin-top: 1.25rem;
+            padding: 1rem 1.25rem;
+            background: var(--surface-3);
+            border: 1px solid var(--border);
+            border-radius: 3px;
+        }
+        .d3-w-readouts {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.25rem 2rem;
+            margin-bottom: 0.6rem;
+        }
+        .d3-w-readout-label {
+            font-family: var(--mono);
+            font-size: 0.6rem;
+            color: var(--text-dim);
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin-bottom: 0.15rem;
+        }
+        .d3-w-readout-value {
+            font-family: var(--mono);
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: var(--blue);
+            line-height: 1.1;
+        }
+        .d3-w-readout-value .d3-w-warn-glyph {
+            color: var(--text-dim);
+            font-size: 0.78em;
+            margin-left: 0.25rem;
+        }
+        .d3-w-slider {
+            width: 100%;
+            margin: 0.35rem 0 0.95rem;
+        }
+        .d3-w-temp {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            font-size: 0.86rem;
+            color: var(--text);
+            margin-bottom: 0.5rem;
+        }
+        .d3-w-temp-swatch {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border-radius: 3px;
+            border: 1px solid var(--border);
+            background: var(--blue-cool);
+            transition: background 80ms linear;
+        }
+        .d3-w-temp-value {
+            font-family: var(--mono);
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--blue);
+        }
+        /* Reserve vertical space so warning/failure swaps don't reflow the
+           page below. Sized for the failure anecdote at desktop column width;
+           on the 375px mobile column the failure text may slightly exceed
+           this and reflow once — that's acceptable for the edge case. */
+        .d3-w-alert {
+            min-height: 4.5rem;
+            margin-top: 0.25rem;
+        }
+        .d3-w-warning {
+            font-size: 0.82rem;
+            line-height: 1.55;
+            color: var(--text-dim);
+            font-style: italic;
+            padding: 0.45rem 0.7rem;
+            border-left: 2px solid var(--border);
+        }
+        /* Failure callout: same .pid-term family (border + radius + bg) but
+           with a heavier left rule in --blue. Chosen over --red (jarring)
+           and over a heavier --accent (already used by .pid-term's normal
+           left rule, so it wouldn't differentiate). --blue matches the
+           swatch dropping to --blue-cool at the same moment, and reads as
+           informational rather than alarming — fitting the "reward, not
+           punishment" tone of the anecdote. */
+        .d3-w-failure {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-left: 4px solid var(--blue);
+            border-radius: 3px;
+            padding: 0.7rem 1rem;
+            font-size: 0.86rem;
+            line-height: 1.7;
+            color: var(--text);
+        }
     </style>
 </head>
 <body>
@@ -382,6 +480,35 @@
                     Do you see a difference with this system I didn't mention? <span style="font-style:italic;color:var(--text-dim);">Find out what it is</span> — lesson coming soon.
                 </p>
             </div>
+
+            <!-- Injection-pump widget: drives system supply temp via a simple mixing
+                 model (180 °F primary into 140 °F return) and live-mutates
+                 data-flow-density on the two bridge paths so the engine particle
+                 traffic on the bridge tracks the slider. See the inline <script> at
+                 page bottom for the math and state machine. -->
+            <div class="d3-widget" id="d3Widget">
+                <div class="d3-w-readouts">
+                    <div>
+                        <div class="d3-w-readout-label">Injection flow</div>
+                        <div class="d3-w-readout-value" id="d3wGpm">40.0 <span style="font-size:0.62em;color:var(--text-dim);font-weight:500;">GPM</span></div>
+                    </div>
+                    <div>
+                        <div class="d3-w-readout-label">Pump speed</div>
+                        <div class="d3-w-readout-value" id="d3wHz">45 <span style="font-size:0.62em;color:var(--text-dim);font-weight:500;">Hz</span></div>
+                    </div>
+                    <div>
+                        <div class="d3-w-readout-label">% of design speed</div>
+                        <div class="d3-w-readout-value" id="d3wPct">75<span style="font-size:0.62em;color:var(--text-dim);font-weight:500;"> %</span></div>
+                    </div>
+                </div>
+                <input class="d3-w-slider" id="d3wSlider" type="range" min="0" max="60" step="1" value="45" aria-label="Injection pump speed (Hz)"/>
+                <div class="d3-w-temp">
+                    <span>System supply temp:</span>
+                    <span class="d3-w-temp-swatch" id="d3wSwatch"></span>
+                    <span class="d3-w-temp-value" id="d3wTemp">156.0 °F</span>
+                </div>
+                <div class="d3-w-alert" id="d3wAlert"></div>
+            </div>
         </div>
     </div>
 
@@ -396,10 +523,102 @@
 
 <!-- Particle-flow animation over the diagram pipework. Classic script (not a
      module), loaded before the inline init below. Engine respects
-     prefers-reduced-motion and is a no-op on pages without [data-flow] paths;
-     d2 / d3 aren't annotated yet, so only diagram 1 animates. -->
+     prefers-reduced-motion and is a no-op on pages without [data-flow] paths.
+     All three diagrams are annotated; the d3 widget below mutates
+     data-flow-density on the bridge paths live and calls FlowEngine.refreshPath
+     to push the change into the engine. -->
 <script src="/scripts/flow-engine.js"></script>
-<script>FlowEngine.init();</script>
+<script>
+    FlowEngine.init();
+
+    // ── d3 injection-pump widget ──────────────────────────────────────
+    // Mixing model: a simple mass-balance. System supply temp =
+    // (Qinj·Tprimary + (Qsys-Qinj)·Treturn) / Qsys. Fixed end-temps
+    // (180 °F primary, 140 °F return) and a fixed system flow (100 GPM)
+    // — this is a teaching widget, not a plant simulator. The slider
+    // drives Qinj via the first affinity law (linear Hz → GPM), and the
+    // same Qinj sets the engine density on the two bridge paths so the
+    // particle traffic on the bridge visually tracks the slider.
+    (function () {
+        const T_PRIMARY = 180;          // °F, fixed
+        const T_RETURN  = 140;          // °F, fixed
+        const Q_SYSTEM  = 100;          // GPM, fixed
+        const DESIGN_HZ = 45;
+        const DESIGN_Q  = 40;           // GPM at DESIGN_HZ (matches the worked example)
+
+        const slider   = document.getElementById('d3wSlider');
+        const gpmEl    = document.getElementById('d3wGpm');
+        const hzEl     = document.getElementById('d3wHz');
+        const pctEl    = document.getElementById('d3wPct');
+        const tempEl   = document.getElementById('d3wTemp');
+        const swatchEl = document.getElementById('d3wSwatch');
+        const alertEl  = document.getElementById('d3wAlert');
+        const injectPipe   = document.getElementById('d3-inject-pipe');
+        const bridgeReturn = document.getElementById('d3-bridge-return');
+
+        // Linear RGB interpolation between --blue-cool at 140 °F and a
+        // warm rust at 180 °F. Spec'd as RGB-linear; the midrange goes
+        // through a warm-gray, which is fine for this small swatch.
+        function tempColor(t) {
+            const k = Math.max(0, Math.min(1, (t - T_RETURN) / (T_PRIMARY - T_RETURN)));
+            const r = Math.round( 94 + (217 -  94) * k);
+            const g = Math.round(138 + ( 90 - 138) * k);
+            const b = Math.round(160 + ( 44 - 160) * k);
+            return 'rgb(' + r + ',' + g + ',' + b + ')';
+        }
+
+        function update(hz) {
+            const gpm = (hz / DESIGN_HZ) * DESIGN_Q;
+            const pct = Math.round((hz / 60) * 100);
+            const tSupply = hz === 0
+                ? T_RETURN
+                : (gpm * T_PRIMARY + (Q_SYSTEM - gpm) * T_RETURN) / Q_SYSTEM;
+
+            // Readouts. Keep the small unit spans intact by writing innerHTML
+            // — the structure is fixed so there's no injection risk.
+            gpmEl.innerHTML = gpm.toFixed(1) + ' <span style="font-size:0.62em;color:var(--text-dim);font-weight:500;">GPM</span>';
+            pctEl.innerHTML = pct + '<span style="font-size:0.62em;color:var(--text-dim);font-weight:500;"> %</span>';
+            let hzInner = hz + ' <span style="font-size:0.62em;color:var(--text-dim);font-weight:500;">Hz</span>';
+            if (hz > 0 && hz < 20) {
+                hzInner += '<span class="d3-w-warn-glyph" aria-hidden="true">⚠</span>';
+            }
+            hzEl.innerHTML = hzInner;
+
+            tempEl.textContent = tSupply.toFixed(1) + ' °F';
+            swatchEl.style.background = (hz === 0)
+                ? 'var(--blue-cool, #5e8aa0)'
+                : tempColor(tSupply);
+
+            // Engine density: clamp at 0.01 floor (the engine treats ≤0 as
+            // "fall back to baseline 1.0", which would be wrong here — at
+            // 0 Hz we want "almost no flow," not "full flow"). Cap at 1.0
+            // for symmetry with the engine clamp.
+            const density = Math.max(0.01, Math.min(1.0, gpm / Q_SYSTEM));
+            const densStr = density.toFixed(3);
+            injectPipe.setAttribute('data-flow-density', densStr);
+            bridgeReturn.setAttribute('data-flow-density', densStr);
+            if (window.FlowEngine && window.FlowEngine.refreshPath) {
+                FlowEngine.refreshPath(injectPipe);
+                FlowEngine.refreshPath(bridgeReturn);
+            }
+
+            // Alert state. Vertical space reserved by .d3-w-alert min-height
+            // so swaps don't reflow the page below.
+            if (hz === 0) {
+                alertEl.innerHTML = '<div class="d3-w-failure">Forgot to enable the injection pump? I\'ve done it. Lucky the boiler I was working with had its own low-flow protection. Older ones don\'t — and it doesn\'t take an engineer to know what happens when there\'s too much heat and nowhere for it to go.</div>';
+            } else if (hz < 20) {
+                alertEl.innerHTML = '<div class="d3-w-warning">Below min speed — most BMS configurations disable the pump entirely below ~20 Hz.</div>';
+            } else {
+                alertEl.innerHTML = '';
+            }
+        }
+
+        slider.addEventListener('input', function () { update(parseInt(slider.value, 10)); });
+        // Initial paint with the default slider value, so readouts match
+        // the slider position even before the user touches it.
+        update(parseInt(slider.value, 10));
+    })();
+</script>
 
 </body>
 </html>
