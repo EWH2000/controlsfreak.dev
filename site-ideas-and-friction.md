@@ -312,6 +312,28 @@ groups, semantic ids, equipment as separately-targetable elements.the
 dashed return is the static-state encoding; in the animated state the 
 engine drops the dashes and direction-of-motion carries the redundant cue.
 
+**Prose-above-diagrams convention** *(Education pages)*
+
+All prose for a section sits above its diagram; the diagram is the
+visual capstone after the explanation rather than the centerpiece
+that prose flows around. Includes intro, mechanism explanation,
+worked examples, and synthesis paragraphs. The legend stays
+immediately below the diagram. Interactive widgets (where present)
+sit below the diagram with any associated callouts.
+
+Driven by the d3 case where the diagram + widget pair has to fit
+in a single viewport for the interactive feedback loop to work.
+Below-diagram prose pushed the widget too far down to see the
+particle response while dragging the slider. Lighter fixes (sticky
+positioning, viewBox trim, side-by-side layout) didn't fully solve
+it; the convention change does, and it stays predictable for AHU
+and future Education pages.
+
+Tradeoff knowingly accepted: d1 and d2 lose their below-diagram
+synthesis paragraphs (now above), which slightly changes the
+rhythm of those sections. The diagram becomes punctuation rather
+than centerpiece. Reads naturally; not a loss.
+
 **Animation policy.**
 - No JS framework or animation lib (Mermaid, D3, GSAP, Lottie) —
   hand-written, same "no build step" property as everything else.
