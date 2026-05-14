@@ -334,6 +334,14 @@ synthesis paragraphs (now above), which slightly changes the
 rhythm of those sections. The diagram becomes punctuation rather
 than centerpiece. Reads naturally; not a loss.
 
+Consequence worth knowing for future Education pages: prose-above
+produces tall sections. d3 lands at ~1700px total because the
+worked-example aside and the synthesis prose both sit above the
+diagram. Worth a pull-through at the bottom of every section —
+d3 has the widget, future sections should either keep prose tight
+or earn the length with a payoff at the bottom worth scrolling
+for.
+
 **Animation policy.**
 - No JS framework or animation lib (Mermaid, D3, GSAP, Lottie) —
   hand-written, same "no build step" property as everything else.
@@ -365,6 +373,23 @@ the rediscovery.
 uses mixed element types, so attribute selectors should be 
 [data-flow="return"] not path[data-flow="return"]. Small but exactly the 
 kind of catch that costs an afternoon next time.
+- **Animating a diagram audits its static markup.** Latent
+  inconsistencies that survive prose review — a flow arrow
+  pointing the wrong way, a path drawn against direction, a label
+  placed near the wrong element — surface immediately once
+  particles contradict them. Hit on d3 (a return-flow arrow apex
+  pointing right while the engine demonstrably moved particles
+  left). Expect more on future diagrams; the audit is a feature
+  of the work, not noise.
+- **Edge case: state-dependent callout reserved height.**
+  Widgets whose callout text changes between states should
+  reserve space for the worst-case content. d3's failure-state
+  anecdote exceeds the 4.5rem reserved alert min-height on
+  narrow viewports (~7 lines on a 375px column), pushing
+  subsequent content down. Documented limitation rather than a
+  bug — the back-link below shifts but nothing overlaps. Future
+  state-dependent widgets should either reserve for the longest
+  state or accept the same reflow.
 
 **Engine attribute conventions.** Three opt-in attributes on
 annotated paths. New surface bubbles up to this list first so the
@@ -408,6 +433,29 @@ alongside it:
   Keeping that translation outside `flow-engine.js` preserves the
   rule that the engine knows only paths, particles, and time.
 
+**Engine public API.** Two methods on `window.FlowEngine`, named
+to keep extension predictable without the surface growing ad-hoc:
+- `init()` — scan the document, build particle pools for every
+  annotated element, start the rAF loop. Idempotent for
+  already-built pools (a second call rebuilds them in place).
+  Pages call it from an inline `<script>` at the bottom of
+  `<body>`, after the engine's `<script src=...>` tag.
+- `refreshPath(el)` — rebuild one element's pool from its current
+  attribute values. Pages call this after mutating
+  `data-flow-density` (or any future engine attribute) so the
+  engine picks up the change live. No-op under reduced motion,
+  since `init()` never built any pools to refresh.
+
+The refresh path is explicit rather than a MutationObserver inside
+the engine. The page already knows when it just changed an
+attribute, so an explicit call keeps the data flow easy to reason
+about; a watcher would have the engine constantly checking DOM
+for changes the page itself made, and would silently re-fire if
+any other code touched the attribute. Explicit beats observed
+when the page already knows what it did. New methods (if a future
+engine extension needs one) bubble to this list before
+implementation, same as new attributes.
+
   **Load-piping strategies** *(planned Education page — hook live)*
 
 The d3 twin-T diagram shows bypasses on each load without
@@ -447,6 +495,28 @@ widgets stay in Education and don't get a Tools-landing card. If a
 piece of interactive content is useful both ways, the simulator goes
 to Tools and a stripped-down teaching version goes to Education (the
 PID tuner is the worked example of this split).
+
+### Discovery prompt + reward — Education page idiom
+
+Two patterns appearing together on d3 (twin-T), establishing the
+recognizable shape going forward:
+- **Forward-pointing callout** — flag a deliberate gap in the
+  explanation, name the discrepancy, point to where it gets
+  resolved later. The d3 callout under the diagram ("Do you see
+  a difference with this system I didn't mention?") forward-
+  links to the planned load-piping page. Reader notices oddity
+  → callout validates the noticing → future page rewards them.
+- **Inward-pointing Easter egg** — reward exploring a widget's
+  extreme state with content that wouldn't appear otherwise. The
+  d3 widget's failure-state anecdote (the forgot-to-enable-the-
+  injection-pump story) reveals only at 0 Hz. Reader drags out
+  of curiosity → hits the failure state → discovers the war
+  story → lesson sticks harder than prose would have made it.
+
+Both work because they invite curiosity rather than demanding
+attention. Use where the diagram or widget has a natural
+question-shaped thing the page hasn't answered yet; don't
+manufacture artificial gaps to fit the pattern.
 
 ### Split into "Tools" and "Education" sections
 When breaking the single page into multiple pages, organize the site
@@ -656,6 +726,30 @@ Lean toward the first two as a combined cheap fix; the toggle is
 nice-to-have if the friction keeps coming up. Either way, the
 underlying design principle to preserve: **slider right = stronger
 effect on the loop, regardless of parameter style.**
+
+### `.pid-term` class is becoming load-bearing for general aside duty
+
+The class started as the styled box for PID terminology cards on
+the Tuning Helper and PID Basics. It's now also doing duty for:
+- Worked-example asides on hydronic-loops (the 100/200/40 GPM
+  walkthrough)
+- The discovery-prompt callout under d3
+- The failure-state Easter-egg callout from the injection-pump
+  widget
+
+All four uses are visually identical, so functionally the class
+is just "styled aside" — but the name still says "PID term." The
+next person reading the markup will wonder why an HVAC
+worked-example uses a PID-named class. Two possible directions:
+
+- Rename to something neutral (`.aside-box`, `.callout`, etc.)
+  and grep-replace existing uses. Cheap mechanically; the name
+  survives future content additions.
+- Leave the class, accept that "pid-term" is now an etymology not
+  a description. Cheapest today, cost compounds slowly.
+
+**Open** — not blocking anything; flag for a future restructure
+pass when the cleanup pace is rights for a rename.
 
 ---
 

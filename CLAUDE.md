@@ -29,6 +29,14 @@ but the project is the tools, not a personal homepage.
     integration anti-windup; exposes `PID_PROC` and `simulatePid()`).
     Used by `tools/pid-tuner.html` (full UI) and
     `education/pid-basics.html` (three mini-sims).
+  - `flow-engine.js` — particle-flow animation engine for SVG
+    schematics (exposes `FlowEngine.init()` and
+    `FlowEngine.refreshPath(el)`). Walks `<circle>` particles along
+    paths annotated with `data-flow="supply"|"return"` via
+    `getPointAtLength()`. Used by `education/hydronic-loops.html`
+    (three diagrams + the twin-T injection-pump widget). Conventions
+    and attribute surface documented in `site-ideas-and-friction.md`
+    under "Engine attribute conventions."
   - `thermistor-data.js` — sensor R/T curves (exposes
     `THERMISTOR_TYPES`). **The R/T tables are generated from nominal
     curve parameters, not transcribed from datasheets, and are flagged
@@ -111,6 +119,7 @@ controlsfreak.dev/
 │   │   └── favicon-180.png           # Apple touch icon
 │   ├── scripts/
 │   │   ├── pid-engine.js             # PID_PROC, simulatePid (classic script)
+│   │   ├── flow-engine.js            # FlowEngine.init(), refreshPath() — particle animation
 │   │   └── thermistor-data.js        # THERMISTOR_TYPES — tables PENDING field verification
 │   ├── tools/
 │   │   ├── index.html                # Tools landing — live grid + "Coming Soon"
@@ -215,13 +224,24 @@ cards (the roadmap). Live tools:
   semantic IDs, real `<text>` labels, flow-arrow `<polygon>`s,
   `<title>` + `<desc>`; supply solid in `var(--blue)`, return dashed in
   `var(--blue-cool)` so it reads without color). Lesson-page layout
-  (`.tool-card` / `.tool-body`), NOT the 3-col pattern. The twin-T
-  section is built to defeat the "all the building's water flows
-  through the boiler" misconception — boiler primary loop with its own
-  pump, system loop with its own pump, joined only at closely-spaced
-  tees with an injection pump; a worked example (100/200/40 GPM) walks
-  the split. (Animating these SVGs is deferred — friction file — which
-  is why the markup uses clean named groups now.)
+  (`.tool-card` / `.tool-body`), NOT the 3-col pattern. **Prose sits
+  above each diagram; the diagram is the visual capstone** — Education
+  page convention, see friction file. The twin-T section is built to
+  defeat the "all the building's water flows through the boiler"
+  misconception — boiler primary loop with its own pump, system loop
+  with its own pump, joined only at closely-spaced tees with an
+  injection pump; a worked example (100/200/40 GPM) walks the split.
+  **Animated:** loads `/scripts/flow-engine.js`; pipes annotated with
+  `data-flow="supply"|"return"` carry particle flow at constant
+  velocity (so longer paths show as longer cycles — the direct-vs-
+  reverse-return pedagogy). Twin-T section adds an interactive
+  injection-pump widget: slider in Hz / GPM / % of design speed,
+  live supply-temp mixing math, three discrete states (normal /
+  warning at <20 Hz / failure at 0 Hz with a hidden anecdote
+  reveal). A discovery-style callout under the twin-T diagram
+  forward-links to a planned load-piping Education page (the
+  bypasses on each load are deliberately left unexplained — that's
+  the hook).
 
 **Contact** (`contact.html`) — `.tool-card` with name/email/message,
 an off-screen CSS honeypot (`.hp-field`, named `website`), and a
