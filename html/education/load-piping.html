@@ -289,7 +289,154 @@
             </p>
 
             <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:1.25rem;">
-                If the twin-T's loads are <em>two-way</em>, the system loop is variable-flow: as loads modulate down, the system pump should slow down with them, and the injection pump may even need to adjust to keep the supply temperature stable as system demand swings. If the twin-T's loads are <em>three-way</em>, the system loop is constant-flow: a fixed-speed system pump runs all day, and the injection pump is the only thing modulating in response to load. The boiler doesn't care either way — it's still on its own primary loop, the closely-spaced tees still decouple it — but the <em>system</em> loop has a personality, and the load piping is what gives it one.
+                Here's the same twin-T, with each load box opened up. <em>Load A</em> is wired two-way; <em>Load B</em> is wired three-way diverting. (Real systems pick one type for every load on the loop — both are drawn together here so the comparison is in one frame.)
+            </p>
+
+            <!-- Tie-back diagram: deliberately mirrors hydronic-loops d3's positioning so the visual
+                 mapping is unmistakable — boiler primary on the left, bridge in the middle, system
+                 loop on the right with two loads. The new content is what's INSIDE each load box:
+                 Load A gets the 2-way config from section 1, Load B gets the 3-way diverting config
+                 from section 2 (chosen over mixing for visual parity with the last 3-way diagram the
+                 reader saw). Annotations under each load spell out the system-flow consequence if all
+                 loads on the loop were of that type. Animation-ready markup conventions match the
+                 rest of the page (lp-tt- prefix). -->
+            <svg class="lp-svg" viewBox="0 0 800 380" role="img" aria-labelledby="lp-tt-title lp-tt-desc"
+                 font-family="var(--mono, 'IBM Plex Mono', monospace)">
+                <title id="lp-tt-title">Twin-T system loop with each load type drawn explicitly</title>
+                <desc id="lp-tt-desc">The same twin-T configuration from the Hydronic Loops lesson, redrawn with the two system-side loads opened up. The boiler primary loop sits on the left with its own pump; the bridge runs across the middle with an injection pump; the system loop runs around the right with a system pump and two loads. Load A is built around a two-way modulating valve in the supply leg; Load B is built around a three-way diverting valve at the supply inlet with a bypass branch around the coil. If all loads on the system were wired like Load A, the system's total flow would vary with demand. If all loads were wired like Load B, the system's total flow would stay constant.</desc>
+
+                <!-- ── PRIMARY loop piping (solid + --blue) ── -->
+                <path id="lp-tt-primary-loop" data-flow="supply" d="M90 130 V60 H280 V270 H90 V200" fill="none" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+
+                <!-- ── BRIDGE: upper = hot injection (solid --blue), lower = return to primary (dashed --blue-cool) ── -->
+                <line id="lp-tt-inject-pipe" data-flow="supply" x1="280" y1="150" x2="440" y2="150" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                <line id="lp-tt-bridge-return" data-flow="return" x1="440" y1="190" x2="280" y2="190" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
+
+                <!-- ── SYSTEM loop piping ── -->
+                <path id="lp-tt-system-supply" data-flow="supply" d="M440 250 V90 H760" fill="none" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                <path id="lp-tt-system-return" data-flow="return" d="M760 90 V250 H440" fill="none" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
+
+                <!-- ── LOAD A (2-way) piping: supply riser split by valve, single return riser ── -->
+                <line id="lp-tt-loadA-supply-top" data-flow="supply" x1="540" y1="90" x2="540" y2="110" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                <line id="lp-tt-loadA-supply-bot" data-flow="supply" x1="540" y1="140" x2="540" y2="150" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                <line id="lp-tt-loadA-return" data-flow="return" x1="540" y1="205" x2="540" y2="250" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
+
+                <!-- ── LOAD B (3-way diverting) piping: supply tap → 3-way → coil; bypass right → down →
+                     joins coil-return at a tee at (680, 225). Bypass segments are SUPPLY colour (hot
+                     water hasn't lost heat); below the tee the combined line is RETURN colour. ── -->
+                <line id="lp-tt-loadB-supply-top" data-flow="supply" x1="680" y1="90" x2="680" y2="110" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                <line id="lp-tt-loadB-coil-supply" data-flow="supply" x1="680" y1="135" x2="680" y2="150" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                <line id="lp-tt-loadB-bypass-h" data-flow="supply" x1="695" y1="122" x2="720" y2="122" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                <line id="lp-tt-loadB-bypass-v" data-flow="supply" x1="720" y1="122" x2="720" y2="225" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                <line id="lp-tt-loadB-bypass-cross" data-flow="supply" x1="720" y1="225" x2="680" y2="225" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                <line id="lp-tt-loadB-coil-return" data-flow="return" x1="680" y1="205" x2="680" y2="250" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
+
+                <!-- flow arrows -->
+                <g id="lp-tt-flow-arrows">
+                    <!-- primary loop -->
+                    <polygon points="85,100 90,89 95,100" fill="var(--blue, #1577b8)"/>
+                    <polygon points="200,55 209,60 200,65" fill="var(--blue, #1577b8)"/>
+                    <polygon points="275,200 280,211 285,200" fill="var(--blue, #1577b8)"/>
+                    <polygon points="200,265 191,270 200,275" fill="var(--blue, #1577b8)"/>
+                    <polygon points="85,240 90,229 95,240" fill="var(--blue, #1577b8)"/>
+                    <!-- bridge -->
+                    <polygon points="416,146 423,150 416,154" fill="var(--blue, #1577b8)"/>
+                    <polygon points="312,186 305,190 312,194" fill="var(--blue-cool, #5e8aa0)"/>
+                    <!-- system loop main path -->
+                    <polygon points="435,160 440,149 445,160" fill="var(--blue, #1577b8)"/>
+                    <polygon points="480,85 489,90 480,95" fill="var(--blue, #1577b8)"/>
+                    <polygon points="620,85 629,90 620,95" fill="var(--blue, #1577b8)"/>
+                    <polygon points="755,150 760,161 765,150" fill="var(--blue-cool, #5e8aa0)"/>
+                    <polygon points="620,255 611,250 620,245" fill="var(--blue-cool, #5e8aa0)"/>
+                    <polygon points="480,255 471,250 480,245" fill="var(--blue-cool, #5e8aa0)"/>
+                    <!-- load A risers -->
+                    <polygon points="535,98 540,109 545,98" fill="var(--blue, #1577b8)"/>
+                    <polygon points="535,238 540,227 545,227" fill="var(--blue-cool, #5e8aa0)"/>
+                    <!-- load B: supply tap, coil supply (post-valve), bypass right, bypass down,
+                         bypass cross (back to tee), coil return -->
+                    <polygon points="675,98 680,109 685,98" fill="var(--blue, #1577b8)"/>
+                    <polygon points="675,143 680,154 685,143" fill="var(--blue, #1577b8)"/>
+                    <polygon points="708,118 715,122 708,126" fill="var(--blue, #1577b8)"/>
+                    <polygon points="716,175 720,184 724,175" fill="var(--blue, #1577b8)"/>
+                    <polygon points="700,221 693,225 700,229" fill="var(--blue, #1577b8)"/>
+                    <polygon points="675,238 680,227 685,227" fill="var(--blue-cool, #5e8aa0)"/>
+                </g>
+
+                <!-- equipment -->
+                <g id="lp-tt-boiler">
+                    <rect x="40" y="130" width="80" height="70" rx="2" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                    <text x="80" y="169" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text-bright, #1d251f)">BOILER</text>
+                </g>
+                <g id="lp-tt-boiler-pump">
+                    <circle cx="185" cy="270" r="13" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                    <polygon points="191,264 179,270 191,276" fill="var(--text-dim, #666e66)"/>
+                    <text x="185" y="297" text-anchor="middle" font-size="10" fill="var(--text, #38423a)">BOILER PUMP</text>
+                </g>
+                <g id="lp-tt-injection-pump">
+                    <circle cx="360" cy="150" r="13" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                    <polygon points="354,144 366,150 354,156" fill="var(--text-dim, #666e66)"/>
+                    <text x="360" y="125" text-anchor="middle" font-size="10" fill="var(--text, #38423a)">INJECTION PUMP</text>
+                </g>
+                <g id="lp-tt-system-pump">
+                    <circle cx="440" cy="222" r="13" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                    <polygon points="434,228 440,216 446,228" fill="var(--text-dim, #666e66)"/>
+                    <text x="378" y="226" text-anchor="middle" font-size="10" fill="var(--text, #38423a)">SYSTEM PUMP</text>
+                </g>
+
+                <!-- Load A — 2-way valve + coil. Valve label sits to the LEFT of the valve
+                     (in the empty band between the system pump and the coil), so it doesn't
+                     collide with Load B's "3-WAY (diverting)" label in the gap between loads. -->
+                <g id="lp-tt-loadA-valve">
+                    <polygon points="530,110 550,110 540,125" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                    <polygon points="530,140 550,140 540,125" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                    <text x="525" y="129" text-anchor="end" font-size="9" font-weight="600" fill="var(--text-bright, #1d251f)">2-WAY</text>
+                </g>
+                <g id="lp-tt-loadA-coil">
+                    <rect x="505" y="150" width="70" height="55" rx="2" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                    <text x="540" y="181" text-anchor="middle" font-size="12" font-weight="600" fill="var(--text-bright, #1d251f)">LOAD A</text>
+                </g>
+
+                <!-- Load B — 3-way valve + bypass + coil -->
+                <g id="lp-tt-loadB-valve">
+                    <polygon points="670,110 690,110 680,125" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                    <polygon points="670,135 690,135 680,125" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                    <polygon points="695,117 695,133 680,125" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                    <text x="615" y="123" text-anchor="end" font-size="9" font-weight="600" fill="var(--text-bright, #1d251f)">3-WAY</text>
+                    <text x="615" y="135" text-anchor="end" font-size="9" font-style="italic" fill="var(--text-dim, #666e66)">(diverting)</text>
+                </g>
+                <g id="lp-tt-loadB-coil">
+                    <rect x="645" y="150" width="70" height="55" rx="2" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                    <text x="680" y="181" text-anchor="middle" font-size="12" font-weight="600" fill="var(--text-bright, #1d251f)">LOAD B</text>
+                </g>
+
+                <!-- top context label -->
+                <text x="400" y="25" text-anchor="middle" font-size="11" font-style="italic" fill="var(--text-dim, #666e66)">Same twin-T as Hydronic Loops · loads opened up to show valve type</text>
+
+                <!-- Consequence callouts under each load. Line 1 deliberately short ("If all 2-way:")
+                     because at the loads' x-positions (540 and 680, 140 units apart) anything wider
+                     than ~70 viewBox units crashes into the neighbour. -->
+                <g id="lp-tt-loadA-callout">
+                    <text x="540" y="295" text-anchor="middle" font-size="11" font-weight="600" fill="var(--text-bright, #1d251f)">If all 2-way:</text>
+                    <text x="540" y="312" text-anchor="middle" font-size="11" fill="var(--blue, #1577b8)">system Q varies</text>
+                    <text x="540" y="330" text-anchor="middle" font-size="9" font-style="italic" fill="var(--text-dim, #666e66)">→ ramp the system pump</text>
+                </g>
+                <g id="lp-tt-loadB-callout">
+                    <text x="680" y="295" text-anchor="middle" font-size="11" font-weight="600" fill="var(--text-bright, #1d251f)">If all 3-way:</text>
+                    <text x="680" y="312" text-anchor="middle" font-size="11" fill="var(--blue, #1577b8)">system Q constant</text>
+                    <text x="680" y="330" text-anchor="middle" font-size="9" font-style="italic" fill="var(--text-dim, #666e66)">→ fixed-speed pump fits</text>
+                </g>
+            </svg>
+            <div class="lp-legend">
+                <span><span class="sw supply"></span>supply water</span>
+                <span><span class="sw return"></span>return water</span>
+            </div>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:1.25rem;">
+                If the twin-T's loads are <em>two-way</em> (Load A above), the system loop is variable-flow. As loads modulate down, the system pump should slow down with them, and the injection pump may even need to adjust to keep the supply temperature stable as system demand swings.
+            </p>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:1.25rem;">
+                If the twin-T's loads are <em>three-way</em> (Load B above), the system loop is constant-flow. A fixed-speed system pump runs all day, and the injection pump becomes the only thing modulating in response to load. Either way, the boiler doesn't care — it's still on its own primary loop, the closely-spaced tees still decouple it — but the <em>system</em> loop has a personality, and the load piping is what gives it one.
             </p>
 
             <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:1.25rem;">

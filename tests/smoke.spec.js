@@ -145,18 +145,21 @@ test('hydronic loops page renders its three SVG schematics', async ({ page }) =>
     await expect(page.locator('#d3')).toHaveCount(1);
 });
 
-test('load piping page renders its three SVG schematics and ties back to the twin-T', async ({ page }) => {
+test('load piping page renders its four SVG schematics and ties back to the twin-T', async ({ page }) => {
     await page.goto('http://localhost:8000/education/load-piping.html');
     const svgs = page.locator('main svg.lp-svg');
-    await expect(svgs).toHaveCount(3);
-    for (let i = 0; i < 3; i++) {
+    await expect(svgs).toHaveCount(4);
+    for (let i = 0; i < 4; i++) {
         await expect(svgs.nth(i).locator('title')).toHaveCount(1);
         expect(await svgs.nth(i).locator('text').count(), 'diagram should have <text> labels').toBeGreaterThan(3);
     }
-    // named equipment groups are present (animation-ready markup hooks)
+    // named equipment groups are present (animation-ready markup hooks) — one per
+    // section, plus the tie-back diagram's twin-T-with-both-load-types comparison
     await expect(page.locator('#lp-2w-valve')).toHaveCount(1);
     await expect(page.locator('#lp-3wm-valve')).toHaveCount(1);
     await expect(page.locator('#lp-3wd-valve')).toHaveCount(1);
+    await expect(page.locator('#lp-tt-loadA-valve')).toHaveCount(1);
+    await expect(page.locator('#lp-tt-loadB-valve')).toHaveCount(1);
     // the closing tie-back actually links back to the twin-T #d3 anchor
     const hrefs = await page.locator('main a').evaluateAll((els) => els.map((e) => e.getAttribute('href')));
     expect(hrefs).toContain('/education/hydronic-loops.html#d3');

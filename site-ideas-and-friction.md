@@ -535,14 +535,33 @@ know what they're inheriting):
 **Diagram-markup notes for future animation.** Page ships
 without animation but with full animation-ready markup: named
 `<g>` groups, semantic id prefixes (`lp-2w-`, `lp-3wm-`,
-`lp-3wd-`), real `<text>` labels, grouped flow-arrow polygons,
-and `data-flow="supply"|"return"` attributes on every pipe
-segment. Adding `flow-engine.js` later should be a
-script-include + `FlowEngine.init()` call, no markup retrofit.
-Style classes (`.lp-svg`, `.lp-legend`) are inlined in the page
-mirroring `hydronic-loops.html`'s `.hd-svg`/`.hd-legend`; if a
-third Education page with diagrams appears, that's the trigger
-to fold both into a shared `.edu-svg` rule in `styles.css`.
+`lp-3wd-`, `lp-tt-` for the tie-back diagram), real `<text>`
+labels, grouped flow-arrow polygons, and
+`data-flow="supply"|"return"` attributes on every pipe segment.
+Adding `flow-engine.js` later should be a script-include +
+`FlowEngine.init()` call, no markup retrofit. Style classes
+(`.lp-svg`, `.lp-legend`) are inlined in the page mirroring
+`hydronic-loops.html`'s `.hd-svg`/`.hd-legend`; if a third
+Education page with diagrams appears, that's the trigger to
+fold both into a shared `.edu-svg` rule in `styles.css`.
+
+**Tie-back diagrams mirror their referent's layout.** The page
+closes with a fourth diagram (`lp-tt-…` prefix) that pays off
+the twin-T discovery callout. It deliberately reuses d3's
+equipment positions (boiler at the same x/y, bridge in the
+same place, system loop on the right, loads at x=540 and x=680
+to match d3 exactly) so the visual mapping is unmistakable —
+the reader recognises the topology instantly and the new
+content is just "what's INSIDE each load box." Cheap discipline
+with a real payoff: don't redraw a referent diagram from
+scratch when the tie-back is the whole point of the new
+diagram. The rule generalises: any future Education tie-back
+diagram should copy the referent's coordinate system as a
+starting point and only diverge where the new content forces
+it. Added in response to "the closing section is prose-only,
+it doesn't *show* the connection" feedback — the prose-only
+version of the tie-back was reading as commentary rather than
+resolution.
 
 ---
 
