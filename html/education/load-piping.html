@@ -44,6 +44,22 @@
         .lp-legend .sw { display: inline-block; width: 26px; height: 0; vertical-align: middle; margin-right: 0.4rem; }
         .lp-legend .sw.supply { border-top: 3px solid var(--blue); }
         .lp-legend .sw.return { border-top: 3px dashed var(--blue-cool); }
+
+        /* While particle animation is active on an SVG, drop the dashed
+           return-stroke pattern — direction-of-motion alone distinguishes
+           supply from return, and the stationary dash pattern visually
+           competes with the moving particles. Same convention as
+           hydronic-loops.html. flow-active is added by flow-engine.js
+           only after its reduced-motion bail-out, so reduced-motion keeps
+           the dashes. @media screen scopes the override so a printout
+           still gets the dashed encoding even if the page was animating
+           on screen. Selector intentionally targets any element type
+           (paths and lines both carry data-flow). */
+        @media screen {
+            svg.flow-active [data-flow="return"] {
+                stroke-dasharray: none;
+            }
+        }
     </style>
 </head>
 <body>
@@ -224,9 +240,16 @@
                 <line id="lp-3wd-bypass-cross" data-flow="supply" x1="265" y1="130" x2="410" y2="130" stroke="var(--blue, #1577b8)" stroke-width="3"/>
                 <line id="lp-3wd-bypass-down" data-flow="supply" x1="410" y1="130" x2="410" y2="310" stroke="var(--blue, #1577b8)" stroke-width="3"/>
 
-                <!-- piping: return (dashed, --blue-cool) -->
+                <!-- piping: return (dashed, --blue-cool). The horizontal at y=310 is split into two
+                     segments because TWO flows converge at the tee at (330, 310): coil-out arrives
+                     from the LEFT (dashed return, walking L→R) and bypass arrives from the RIGHT
+                     (solid supply, walking R→L). The engine can only walk a single path in one
+                     direction, so a single line here would animate both halves the wrong way for
+                     one of them; the colour split is also pedagogically right (bypass water is still
+                     hot supply until it mixes at the tee). -->
                 <line id="lp-3wd-coil-out-v" data-flow="return" x1="250" y1="250" x2="250" y2="310" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
-                <line id="lp-3wd-tee-cross" data-flow="return" x1="250" y1="310" x2="410" y2="310" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="lp-3wd-coil-to-tee" data-flow="return" x1="250" y1="310" x2="330" y2="310" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="lp-3wd-bypass-to-tee" data-flow="supply" x1="410" y1="310" x2="330" y2="310" stroke="var(--blue, #1577b8)" stroke-width="3"/>
                 <line id="lp-3wd-tee-out" data-flow="return" x1="330" y1="310" x2="330" y2="325" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
                 <path id="lp-3wd-return-main" data-flow="return" d="M620 325 H40" fill="none" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
 
@@ -240,7 +263,7 @@
                     <polygon points="405,220 410,231 415,220" fill="var(--blue, #1577b8)"/>
                     <polygon points="245,295 250,284 255,284" fill="var(--blue-cool, #5e8aa0)"/>
                     <polygon points="305,305 314,310 305,315" fill="var(--blue-cool, #5e8aa0)"/>
-                    <polygon points="375,315 366,310 375,305" fill="var(--blue-cool, #5e8aa0)"/>
+                    <polygon points="375,315 366,310 375,305" fill="var(--blue, #1577b8)"/>
                     <polygon points="325,320 330,309 335,309" fill="var(--blue-cool, #5e8aa0)"/>
                     <polygon points="500,330 491,325 500,320" fill="var(--blue-cool, #5e8aa0)"/>
                     <polygon points="150,330 141,325 150,320" fill="var(--blue-cool, #5e8aa0)"/>
@@ -454,6 +477,18 @@
     <span class="footer-text">controlsfreak.dev — open tools for controls engineers</span>
     <span class="footer-text">v0.9 · 2026</span>
 </footer>
+
+<!-- Particle-flow animation over the diagrams. Classic script (not a
+     module), loaded before the inline init below. Engine respects
+     prefers-reduced-motion and is a no-op on pages without [data-flow]
+     paths. All four diagrams on this page are annotated. No
+     interactive widgets to drive density mutations here — the engine
+     just runs at uniform density per the d1/d2 convention on
+     hydronic-loops. -->
+<script src="/scripts/flow-engine.js"></script>
+<script>
+    FlowEngine.init();
+</script>
 
 </body>
 </html>

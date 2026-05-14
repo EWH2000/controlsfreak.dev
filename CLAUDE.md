@@ -252,21 +252,31 @@ cards (the roadmap). Live tools:
   point have to decide?* Two main sections — *Two-Way Valve (variable
   system flow)* and *Three-Way Valve (constant system flow)* — with
   three inline `<svg>` diagrams (one for two-way, then mixing and
-  diverting three-way side by side). Closing section ties back to the
-  twin-T `#d3` anchor and spells out the consequence: two-way loads
-  ⇒ variable secondary, three-way loads ⇒ constant secondary. Same
-  diagram conventions as Hydronic Loops (named groups, semantic IDs
-  `lp-2w-…` / `lp-3wm-…` / `lp-3wd-…`, supply solid / return dashed,
-  `data-flow` attributes pre-annotated so a future animation pass
-  needs no markup retrofit). Lesson-page layout; no widgets, no
-  engine. **Balancing was deliberately scoped out** — forward-linked
+  diverting three-way) plus a fourth tie-back diagram in the closing
+  section that mirrors d3's layout with each load box opened up
+  (Load A 2-way, Load B 3-way diverting). Closing section ties back
+  to the twin-T `#d3` anchor and spells out the consequence: two-way
+  loads ⇒ variable secondary, three-way loads ⇒ constant secondary.
+  Same diagram conventions as Hydronic Loops (named groups, semantic
+  IDs `lp-2w-…` / `lp-3wm-…` / `lp-3wd-…` / `lp-tt-…`, supply solid /
+  return dashed). **Animated:** loads `/scripts/flow-engine.js`; pipes
+  annotated with `data-flow="supply"|"return"` carry particle flow at
+  the engine's global velocity, uniform density (d1/d2 convention —
+  no interactive density mutation here). Lesson-page layout; no
+  widgets. **Balancing was deliberately scoped out** — forward-linked
   to a future balancing page rather than treated as a section here;
   see friction-file entry "Education page scope — one question per
   page" for the rule. **Forward-link convention:** when prose
   references a page that doesn't exist yet (e.g. VFDs, balancing), use
   a normal `<a>` with `color: var(--accent)` and `href` to the future
   path (`/education/vfds.html`); the friction file tracks the marker
-  as `[future: <page>]`.
+  as `[future: <page>]`. **Diverting-valve tee gotcha** (recorded in
+  the friction file too): the horizontal where coil-out and bypass
+  converge has to be drawn as TWO segments (`lp-3wd-coil-to-tee` left
+  half, dashed/return, walks L→R; `lp-3wd-bypass-to-tee` right half,
+  solid/supply, walks R→L). One unified line can't animate both
+  converging directions, and the right half is also miscolored as
+  return when it's still hot supply water until it mixes at the tee.
 
 **Contact** (`contact.html`) — `.tool-card` with name/email/message,
 an off-screen CSS honeypot (`.hp-field`, named `website`), and a

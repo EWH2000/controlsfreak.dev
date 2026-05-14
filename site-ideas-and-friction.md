@@ -532,18 +532,39 @@ know what they're inheriting):
   two-way/three-way context, since the balancing strategy
   differs between the two.
 
-**Diagram-markup notes for future animation.** Page ships
-without animation but with full animation-ready markup: named
-`<g>` groups, semantic id prefixes (`lp-2w-`, `lp-3wm-`,
-`lp-3wd-`, `lp-tt-` for the tie-back diagram), real `<text>`
-labels, grouped flow-arrow polygons, and
-`data-flow="supply"|"return"` attributes on every pipe segment.
-Adding `flow-engine.js` later should be a script-include +
-`FlowEngine.init()` call, no markup retrofit. Style classes
-(`.lp-svg`, `.lp-legend`) are inlined in the page mirroring
-`hydronic-loops.html`'s `.hd-svg`/`.hd-legend`; if a third
-Education page with diagrams appears, that's the trigger to
-fold both into a shared `.edu-svg` rule in `styles.css`.
+**Diagram-markup conventions (now animated).** Named `<g>`
+groups, semantic id prefixes (`lp-2w-`, `lp-3wm-`, `lp-3wd-`,
+`lp-tt-` for the tie-back diagram), real `<text>` labels,
+grouped flow-arrow polygons, and `data-flow="supply"|"return"`
+attributes on every pipe segment. The animation-ready markup
+the page shipped with paid off in a follow-up pass: adding
+`flow-engine.js` + the `@media screen` dashed-return override
++ a `FlowEngine.init()` call was the whole integration. No
+markup retrofit needed except the one tee-split gotcha below.
+Style classes (`.lp-svg`, `.lp-legend`) are inlined in the page
+mirroring `hydronic-loops.html`'s `.hd-svg`/`.hd-legend`; if a
+third Education page with diagrams appears, that's the trigger
+to fold both into a shared `.edu-svg` rule in `styles.css`.
+
+**Diverting-valve tee gotcha — converging flows need two
+segments.** The horizontal at the bottom of the diverting-valve
+diagram (and analogous geometry in any future converging-flow
+diagram) carries two flows meeting at a tee: coil-out arrives
+from the LEFT, bypass arrives from the RIGHT, combined output
+leaves DOWNWARD. Drawn naively as a single `<line>` from
+(coil-out point) to (bypass-down corner), the engine walks
+particles in one direction along the whole line, which
+animates one of the two converging flows backwards. Fix is to
+split the horizontal at the tee into two segments — one per
+incoming flow — each drawn in its own flow direction, and
+coloured by its origin (return-dashed for coil-out side,
+supply-solid for bypass side). The mixing-valve geometry on
+this same page is already split correctly (`coil-out-h` and
+`bypass-cross` are separate lines), which is why this only
+surfaced on `lp-3wd-`. Rule for future diagrams: anywhere two
+flows converge at a tee, draw each contributing leg as its
+own `data-flow` element. Single lines are fine only where flow
+is unidirectional along the whole segment.
 
 **Tie-back diagrams mirror their referent's layout.** The page
 closes with a fourth diagram (`lp-tt-…` prefix) that pays off
