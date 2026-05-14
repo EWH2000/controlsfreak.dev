@@ -277,6 +277,19 @@ cards (the roadmap). Live tools:
   solid/supply, walks R→L). One unified line can't animate both
   converging directions, and the right half is also miscolored as
   return when it's still hot supply water until it mixes at the tee.
+  **DPBV (differential pressure bypass valve)** is marked on the
+  tie-back's system loop at the far end (right-edge vertical at x=760),
+  opposite the system pump where pump head climbs highest when demand
+  drops. Sits as a discrete bowtie symbol (`lp-tt-dpbv`) on the
+  existing return-side path — no topology change, just an identifying
+  symbol — with prose between the two-way and three-way paragraphs
+  explaining its role as pump protection on the variable-flow side
+  (three-way systems don't need one; per-load bypasses already
+  guarantee constant pump flow). Symbol is identical to the 2-way
+  control-valve bowtie; disambiguation is by the `DPBV` label + prose.
+  A possible future enhancement is a small two-state diagram showing
+  the DPBV closed at high demand vs. open at low demand — deferred
+  per user preference for the simpler "add + prose" pass first.
 
 **Contact** (`contact.html`) — `.tool-card` with name/email/message,
 an off-screen CSS honeypot (`.hp-field`, named `website`), and a

@@ -456,25 +456,6 @@ when the page already knows what it did. New methods (if a future
 engine extension needs one) bubble to this list before
 implementation, same as new attributes.
 
-  **Load-piping strategies** *(planned Education page — hook live)*
-
-The d3 twin-T diagram shows bypasses on each load without
-explaining them. Bypass strategy (three-way valves, two-way +
-bypass, decoupler approach, terminal-unit piping families) is its
-own substantial topic that competes with the injection-pump
-lesson if folded into the twin-T section. Splitting it into its
-own page lets each lesson stay focused.
-
-A discovery-style callout under d3 ("Do you see a difference
-with this system I didn't mention?") is already live and points
-forward; the "Find out what it is" anchor wires to this page
-when it ships.
-
-Seed content: why constant-flow loops want bypasses on
-two-way-valve loads, the three common piping families, when
-each is appropriate, what BMS sequences typically pair with
-each.
-
 ### Load piping — Education page *(shipped 2026-05-14)*
 *One question: what does the connection between a load and a
 hydronic loop look like, and what does that connection point
@@ -589,14 +570,33 @@ the diagrams shipped:
   disambiguating Load B's 3-way valve type on the tie-back),
   parens around it are redundant: italic + dim colour already
   reads as a subtitle. Drop the parens.
+- A valve label that floats in empty space far from its valve
+  reads as orphaned, even when there's nothing it would collide
+  with closer in. `lp-3wd`'s `3-WAY DIVERTING` originally sat at
+  `x=190 anchor-end` while the valve started at `x=240` — a 50px
+  gap with nothing in it — because the available horizontal
+  real estate to the left of the valve was empty and the label
+  drifted into it. An audit pass caught it and pulled it to
+  `x=235 anchor-end` (~5px from valve). Rule: spacing should be
+  governed by the valve, not by the size of the empty band the
+  label happens to be drawn into.
 
 The combined effect on `load-piping.html`'s annotations was
 the loss of "(modulating)", "(at coil outlet)", "(at coil
 inlet)", and four orphan halves of split-corner pairs — about
-seven labels removed, all redundant or confusing. Diagrams
-read cleaner. Rule for future Education diagrams: write the
-labels last, then prune them; every annotation should earn
-its real estate by saying something the geometry can't.
+seven labels removed, all redundant or confusing — plus the
+3-WAY DIVERTING reseat. Diagrams read cleaner. Rule for future
+Education diagrams: write the labels last, then prune them;
+every annotation should earn its real estate by saying something
+the geometry can't, and sit snug to its referent.
+
+**Label-audit maintenance pattern.** Screenshot every diagram on
+a page in one pass, scan for orphaned labels / split-corner
+sentences / dangling parentheticals / valve labels that drifted
+into empty space, fix in a single edit cycle. Cheaper than
+catching label drift one-by-one across unrelated PRs, and the
+visual comparison side-by-side makes outliers obvious. Worth
+re-doing periodically when the diagrams on a page have shifted.
 
 **Tie-back diagrams mirror their referent's layout.** The page
 closes with a fourth diagram (`lp-tt-…` prefix) that pays off
@@ -615,6 +615,130 @@ it. Added in response to "the closing section is prose-only,
 it doesn't *show* the connection" feedback — the prose-only
 version of the tie-back was reading as commentary rather than
 resolution.
+
+**DPBV addition — system-level component the page was missing.**
+Follow-up pass after the page first shipped: the tie-back
+diagram showed the valve-at-load detail for both Load A and
+Load B but didn't include the *differential pressure bypass
+valve* at the far end of the system loop. User flagged the
+omission ("there's still one component missing, the balancing
+valve at the far end of the loop"); consultation confirmed DPBV
+was the intent (not a CBV — the "far end of the loop" phrasing
+was the giveaway, since DPBVs live opposite the pump where
+head climbs highest) and the user preferred "just add it to
+the tie-back + prose" over a separate two-state diagram. Added
+as a bowtie symbol (`lp-tt-dpbv`) on the right-edge vertical
+at (760, 115), label `DPBV` snug to its left, plus a prose
+paragraph between the two-way and three-way paragraphs in the
+closing section. The right-edge vertical is already part of
+the `system-return` animated path, so no topology or animation
+changes were needed — the valve is just a discrete symbol on
+the existing pipe. The SVG `<desc>` was updated for
+accessibility. Symbol is identical to the 2-way control-valve
+bowtie; disambiguation is by label + prose.
+
+*Future expansion possibilities for the page.* User noted "we
+may add a full diagram, and maybe more about DP later on" —
+recorded here so options stay on the table. Grouped by topic:
+
+DPBV-related:
+- A small two-state inline diagram showing the DPBV closed at
+  high demand (all flow through loads) vs. open at low demand
+  (minimum bypass keeps pump alive). DPBV behavior is a
+  feedback-loop concept that doesn't read from one static
+  drawing; the two-state view would let the prose shorten from
+  ~95 words to ~40.
+- A distinct DPBV symbol (e.g. bowtie with a spring or Δp-sense
+  indicator) so it's not visually identical to the 2-way
+  control valve at Load A. Optional even with the current label
+  disambiguation, but cleaner if the page expands its DP
+  content.
+- More on differential pressure as a general controls topic
+  (pump curves, system curves, where the operating point lives,
+  why ΔP-based pump control is increasingly common). That's
+  likely its own Education page rather than load-piping
+  expansion — VFDs page or a dedicated pump-control page.
+
+Loop-level coverage (carried forward from the pre-ship
+"Load-piping strategies" planning entry, since the shipped page
+deliberately scoped narrower — just valve choice at the load —
+than the original planning):
+- **Decoupler approach** as an alternative to the
+  closely-spaced-tees / DPBV story. Some installations use a
+  hydraulic separator (decoupler tank or large-diameter common
+  pipe) instead of tees + DPBV; functionally similar but the
+  visual schematic is different and the failure modes differ.
+- **Terminal-unit piping families** — fan-coil units, radiant
+  manifolds, AHU coils, baseboard, induction units, chilled
+  beams. Each load type carries its own piping conventions that
+  the current "generic coil box" abstraction flattens. Could
+  become its own page if it gets long, or a short addendum
+  here.
+- **The broader bypass-strategy landscape** — pairing valve
+  type (2-way vs 3-way) with system type (constant-flow vs
+  variable-flow) with pumping strategy (constant-speed vs VFD)
+  in a single decision table or matrix. The current page
+  threads this implicitly through prose; a synthesis aid could
+  help job-site readers map their plant onto the lesson.
+
+### Balancing — Education page *(stub; planned)*
+*One question (proposed): how do you make sure every load in a
+hydronic system actually receives the design flow it was sized
+for — and how do you know when it isn't?*
+
+Forward-referenced from `load-piping.html` (the three-way
+section's "even on a constant-flow setup, each load only sees
+its design flow if the loop is *balanced*" callout); the
+referent link points to `/education/balancing.html` and resolves
+to a 404 until this page ships. Scoped as a peer to the load-
+piping page, following the "one question per page" rule.
+
+In scope (provisional):
+- Manual / calibrated balancing valves (CBVs / circuit setters)
+  — single-position trim, set once at commissioning. The
+  workhorse on older constant-flow systems.
+- Automatic balancing valves (ABVs) — flow-limiting cartridges
+  that hold design flow regardless of system pressure swings.
+- Pressure-independent control valves (PICVs) — combine
+  modulating control + automatic balancing in one body. The
+  modern default on new variable-flow systems.
+- The commissioning process — what "balancing" actually means
+  as a job-site activity: flow measurement, valve setting,
+  proportional balancing across a riser, signing off.
+- Diagnostic side — common symptoms of an unbalanced loop, how
+  to tell from the BMS, how to tell on a manometer.
+
+Out of scope (forward links, not content):
+- System-level DPBV — covered on `load-piping.html` as part of
+  the variable-flow pump-protection story; balancing page can
+  cross-link rather than re-cover.
+- Reverse return as a passive balancing approach — covered on
+  `hydronic-loops.html`'s d2 diagram; cross-link.
+- VFD pumping / pump-curve overlap with system-curve — [future:
+  vfds.html] or a dedicated pump-control page.
+- Coil sizing / mass-flow design (i.e. how the "design flow"
+  number gets set in the first place) — different page topic;
+  upstream of balancing.
+
+Forward-link inheritances from `load-piping.html`:
+- Load piping's "constant flow" claim for 3-way systems is
+  *conditional on balancing actually working*. The balancing
+  page should tie back to that claim and explain how it can
+  fail (a 3-way system whose individual loads are unbalanced
+  still has constant system flow, but the loads themselves are
+  starved or over-supplied).
+- Load piping's two-way / three-way distinction shapes which
+  balancing strategy fits. The balancing page should treat
+  these as two different parent contexts: balancing on a
+  variable-flow system (PICVs natural, ABVs viable, CBVs awkward
+  because the operating point moves) vs. constant-flow (CBVs
+  workable, ABVs/PICVs also fine, more historical inertia).
+
+Stub status — declared the question and rough scope so the
+"Education page scope — one question per page" rule has
+something to point to when this page enters the queue. Not
+committing to scope or design until someone is ready to write
+it.
 
 ---
 
