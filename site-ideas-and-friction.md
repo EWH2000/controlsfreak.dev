@@ -9,6 +9,79 @@ tools.
 
 ## Feature ideas
 
+### VFDs — Education page + mock interface tool
+
+VFDs are everywhere in HVAC and every controls tech writes to them
+(speed reference, run command, reset, network-vs-keypad source) without
+necessarily understanding the parameter tree underneath. The interface
+is what controls people actually interact with — not the IGBT switching,
+not the V/Hz curve. So the site's angle should match that: explain the
+piece controls people touch, not the piece electricians and mechanics
+own.
+
+**Education page scope** (`education/vfds.html`):
+- What a VFD does at the block-diagram level (AC → DC → variable-freq
+  AC), light on electrical detail — enough to make the rest make sense.
+- Why drives are everywhere on HVAC pumps and fans (the cube-law
+  energy-savings story on centrifugal loads).
+- The two concepts people conflate: **run command** (start/stop signal)
+  vs. **speed reference** (how fast). Each has its own source parameter
+  (keypad / terminals / network), and a lot of "why won't this drive
+  run from BACnet" calls are because one is set right and the other
+  isn't.
+- Common parameter groups every drive has variations of: motor data,
+  ramps (accel/decel), references and sources, run/stop sources, I/O
+  config, faults.
+- Network integration — Modbus RTU, BACnet MS/TP, BACnet/IP. This is
+  where controls people meet the drive in production. Cross-link to
+  the BACnet/IP and Modbus tools.
+- Fault codes at the conceptual level — overcurrent, overvoltage,
+  undervoltage, ground fault, motor overload — not a fault-code lookup
+  (manufacturer-specific, not the site's job).
+- Brief mention of bypass arrangements (manual bypass, soft starter
+  bypass) since they come up in pump/fan applications.
+
+**Mock VFD interface tool** (`tools/vfd-mock.html` or similar):
+
+A clickable keypad + small display that lets someone practice the
+*structure* of navigating a drive's parameter tree, without having a
+drive in front of them. Extremely simplified — the design goal is "feel
+of using a drive keypad," not "accurate simulation of a specific
+manufacturer's product."
+
+Scope discipline (this matters — VFD tools can balloon fast):
+- ~10–15 parameters total, organized into 3–4 groups.
+- Generic interface, not modeled on any specific manufacturer's
+  keypad. The site's value here is the cross-manufacturer pattern;
+  anyone wanting to learn a specific drive's actual keypad should
+  use that manufacturer's simulator (most have free ones).
+- "Motor response" is minimal: commanded Hz vs. actual Hz with a
+  simple linear ramp using the accel/decel parameter values. No V/Hz
+  curve, no slip compensation, no current limit, no real motor model.
+  Just enough to make accel/decel parameters feel like they do
+  something.
+- Keypad has: up, down, enter, escape, run, stop, local/remote. Run
+  and stop respect the configured run-source parameter (won't run
+  from keypad if source is set to terminals — *that* is the
+  pedagogical point).
+- No fault simulation in v1. Maybe later as a "fault explorer" mode
+  if the tool gets used.
+
+**Resist scope creep.** This tool is not a drive engineering trainer.
+It's a parameter-tree navigation trainer. The moment it grows current
+limits, slip compensation, V/Hz curves, or vector-control parameters,
+it has stopped being useful for its actual audience and become a
+worse version of every manufacturer's free simulator. Goal is
+"feels like a drive keypad," not "replaces a drive keypad."
+
+**Future synergy.** The PID tuner already simulates a control loop;
+this tool simulates a VFD. Eventually a combined demo where the PID
+loop's output drives the VFD's frequency reference (pressure control
+sequence in action: PID controls duct static, output → VFD → fan
+speed) would tie a lot together. Not v1, possibly not v2 — but the
+two engines staying standalone keeps that door open.
+
+
 ### Refrigerant cycle — Education section, possibly with calculator
 
 The refrigerant side is where everyone in HVAC has a fuzzy grasp and
@@ -62,9 +135,6 @@ matters most. Worth shipping later than ship-with-bugs — this is a
 tool whose job is to be more correct than a pocket P-T card, not less.
 
 **Open questions for the design chat when this gets closer:**
-- Where in Education does refrigerant content sit relative to
-  hydronics — same level, or grouped under a broader "systems"
-  category once there are several explainer sections?
 - The P-T calculator and a future refrigerant-cycle animation might
   share saturation-curve / state-point math. Or not — wait until the
   second piece exists before deciding, same logic as the engines
@@ -271,6 +341,48 @@ the rediscovery.
 uses mixed element types, so attribute selectors should be 
 [data-flow="return"] not path[data-flow="return"]. Small but exactly the 
 kind of catch that costs an afternoon next time.
+
+**Engine attribute conventions.** Three opt-in attributes on
+annotated paths. New surface bubbles up to this list first so the
+engine's API doesn't grow ad-hoc — `flow-engine.js` is a small
+file and the cost of an unrecorded attribute is that the next
+page invents its own variant.
+- `data-flow="supply"|"return"` — required marker that attaches
+  an element to the engine. Picks particle color (`SUPPLY_FILL` /
+  `RETURN_FILL`) and is the selector future CSS hooks key off
+  (see the screen-only dashed-return override above).
+- `data-flow-reverse="true"` — optional, default false. Walks the
+  path end-to-start instead of start-to-end. Use when a path is
+  drawn against flow direction and rewriting the `d` /
+  `x1,y1→x2,y2` would scramble adjacent geometry semantics. d1
+  and d2 needed none; we'll see whether d3's bridge needs it.
+- `data-flow-density="<float>"` — optional, default 1.0, range
+  (0, 1.0]. Per-path multiplier on the engine's baseline particle
+  spacing — `density 0.4` ⇒ particles spaced `SPACING / 0.4`
+  viewBox units apart (sparser). For diagrams where uniform
+  density misreads: Twin-T's bridge at baseline injection should
+  visibly carry less particle traffic than the primary or system
+  loops, since the whole point of the diagram is that most of
+  the building's water never passes through the boiler. Immediate
+  downstream consumer is the Twin-T injection-pump slider, which
+  mutates the attribute live as the user drags.
+
+Three rules ride with `data-flow-density` and are worth recording
+alongside it:
+- **Velocity stays global.** Density changes spacing only, never
+  speed. This is what protects the direct-vs-reverse-return
+  pedagogy (constant velocity, cycle time varies with path
+  length) from getting muddied by a third axis on d3.
+- **Engine caps at 1.0 on the upper end.** Densities above 1.0
+  would imply pipes carrying *more* than the "main flow"
+  baseline, which has no physical reading on any current diagram
+  and would invite misuse later. Cleaner to clamp at the engine
+  than to police it from the page.
+- **Density is a visual encoding of relative flow, not absolute
+  GPM.** The engine has no concept of hydraulics; page-level code
+  (the slider) maps GPM → density before mutating the attribute.
+  Keeping that translation outside `flow-engine.js` preserves the
+  rule that the engine knows only paths, particles, and time.
 
 ---
 

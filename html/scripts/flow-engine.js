@@ -48,6 +48,17 @@
 // `data-flow-reverse="true"` and the engine walks it from end to
 // start instead of rewriting the path.
 //
+// Per-path density: `data-flow-density="<float>"` is an optional
+// multiplier on baseline particle spacing. Default 1.0 (= baseline
+// SPACING). Lower values space particles farther apart on that path
+// — sparser flow, the visual encoding of "this pipe carries less
+// than the main flow." Clamped at the engine to (0, 1.0]: above 1.0
+// has no physical reading on any current diagram and would invite
+// misuse; non-positive would mean infinite spacing. Velocity stays
+// global per the recorded rule — density changes spacing only,
+// never speed. See "Engine attribute conventions" in
+// site-ideas-and-friction.md.
+//
 // What's NOT here: anything page-specific. No per-diagram tuning, no
 // hooks for play/pause UI, no speed coupling to a slider. Add those
 // on the page that needs them; keep the engine boring.
@@ -98,8 +109,19 @@
             const reverse = el.getAttribute('data-flow-reverse') === 'true';
             const fill = flow === 'return' ? RETURN_FILL : SUPPLY_FILL;
 
-            const count = Math.max(1, Math.round(length / SPACING));
-            const step = length / count;     // even-stride spacing along this path
+            // Per-path density: clamp to (0, 1.0] at the engine. The page
+            // doesn't have to police bounds; non-finite or out-of-range
+            // values silently fall back to the baseline.
+            let density = parseFloat(el.getAttribute('data-flow-density'));
+            if (!isFinite(density) || density <= 0 || density > 1) density = 1;
+            const localSpacing = SPACING / density;
+
+            // floor(length / localSpacing): at density 1.0 a path just
+            // shorter than SPACING legitimately carries zero particles —
+            // the flow is there in encoding but the rendered stream is
+            // sparse enough that you don't always see a circle on it.
+            const count = Math.floor(length / localSpacing);
+            const step = count > 0 ? length / count : 0;
             const particles = [];
             const layer = ensureParticleLayer(svg);
 

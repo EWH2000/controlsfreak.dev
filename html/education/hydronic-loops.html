@@ -274,18 +274,22 @@
                 <title id="d3-title">Primary-secondary "twin-T" boiler injection</title>
                 <desc id="d3-desc">Two separate loops. On the left, a small primary loop: a boiler and a dedicated boiler pump with water always circulating around it. On the right, a larger system loop: a system pump moving water through two building loads. The only connection between them is a short bridge with a pair of closely-spaced tees and an injection pump on it; the injection pump pulls a portion of hot water from the primary loop into the system loop, where it mixes with cooler return water. Most of the building's water never passes through the boiler — only the slice the injection pump diverts. The injection pump's speed is the control point for supply temperature.</desc>
 
-                <!-- ── PRIMARY loop piping — solid + --blue all the way around (it's a short loop; it stays hot) ── -->
-                <path id="d3-primary-loop" d="M90 130 V60 H280 V270 H90 V200" fill="none" stroke="var(--blue, #1577b8)" stroke-width="3"/>
-                <!-- ── BRIDGE: upper = hot injection (solid --blue), lower = return to primary (dashed --blue-cool) ── -->
-                <line id="d3-inject-pipe" x1="280" y1="150" x2="440" y2="150" stroke="var(--blue, #1577b8)" stroke-width="3"/>
-                <line id="d3-bridge-return" x1="440" y1="190" x2="280" y2="190" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
+                <!-- ── PRIMARY loop piping — solid + --blue all the way around (it's a short loop; it stays hot).
+                     data-flow="supply" carries the whole loop; constant flow at baseline density. -->
+                <path id="d3-primary-loop" data-flow="supply" d="M90 130 V60 H280 V270 H90 V200" fill="none" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                <!-- ── BRIDGE: upper = hot injection (solid --blue), lower = return to primary (dashed --blue-cool).
+                     data-flow-density="0.4" encodes the worked-example ratio (~40 GPM diverted into a ~100 GPM
+                     system) so the bridge reads as visibly sparser than either loop — that's the pedagogical
+                     point of twin-T, and the injection-pump slider will mutate this attribute live. -->
+                <line id="d3-inject-pipe" data-flow="supply" data-flow-density="0.4" x1="280" y1="150" x2="440" y2="150" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                <line id="d3-bridge-return" data-flow="return" data-flow-density="0.4" x1="440" y1="190" x2="280" y2="190" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
                 <!-- ── SYSTEM loop piping: supply main + risers solid --blue, return main + risers dashed --blue-cool ── -->
-                <path id="d3-system-supply" d="M440 250 V90 H760" fill="none" stroke="var(--blue, #1577b8)" stroke-width="3"/>
-                <line id="d3-loadA-supply" x1="540" y1="90" x2="540" y2="150" stroke="var(--blue, #1577b8)" stroke-width="3"/>
-                <line id="d3-loadB-supply" x1="680" y1="90" x2="680" y2="150" stroke="var(--blue, #1577b8)" stroke-width="3"/>
-                <line id="d3-loadA-return" x1="540" y1="205" x2="540" y2="250" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
-                <line id="d3-loadB-return" x1="680" y1="205" x2="680" y2="250" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
-                <path id="d3-system-return" d="M760 90 V250 H440" fill="none" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
+                <path id="d3-system-supply" data-flow="supply" d="M440 250 V90 H760" fill="none" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                <line id="d3-loadA-supply" data-flow="supply" x1="540" y1="90" x2="540" y2="150" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                <line id="d3-loadB-supply" data-flow="supply" x1="680" y1="90" x2="680" y2="150" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                <line id="d3-loadA-return" data-flow="return" x1="540" y1="205" x2="540" y2="250" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="d3-loadB-return" data-flow="return" x1="680" y1="205" x2="680" y2="250" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
+                <path id="d3-system-return" data-flow="return" d="M760 90 V250 H440" fill="none" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
 
                 <!-- flow arrows -->
                 <g id="d3-flow-arrows">
@@ -311,7 +315,7 @@
                     <polygon points="675,120 680,131 685,120" fill="var(--blue, #1577b8)"/>
                     <polygon points="540,230 535,219 545,219" fill="var(--blue-cool, #5e8aa0)"/>
                     <polygon points="680,230 675,219 685,219" fill="var(--blue-cool, #5e8aa0)"/>
-                    <polygon points="610,245 619,250 610,255" fill="var(--blue-cool, #5e8aa0)"/>
+                    <polygon points="619,245 610,250 619,255" fill="var(--blue-cool, #5e8aa0)"/>
                     <polygon points="490,245 481,250 490,255" fill="var(--blue-cool, #5e8aa0)"/>
                 </g>
 
