@@ -83,6 +83,23 @@
             padding: 0.4rem 0.7rem;
             font-size: 0.82rem;
             min-width: 11rem;
+            max-width: 100%;
+        }
+        /* Narrow viewports: the 9.5rem label column + 11rem-min select
+           overflows the card on phones. Stack label above select and
+           let it fill the row. */
+        @media (max-width: 600px) {
+            .vfd-w-sources {
+                grid-template-columns: 1fr;
+                gap: 0.25rem 0;
+                margin-bottom: 1rem;
+            }
+            .vfd-w-sources label { margin-top: 0.4rem; }
+            .vfd-w-sources label:first-child { margin-top: 0; }
+            .vfd-widget select {
+                min-width: 0;
+                width: 100%;
+            }
         }
 
         .vfd-w-section {
