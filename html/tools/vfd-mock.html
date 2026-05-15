@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mock VFD Interface — controlsfreak.dev</title>
+    <meta name="description" content="Mock drive keypad — navigate a generic parameter tree and watch how the run-source and speed-source parameters gate every command, on screen.">
+    <meta property="og:title" content="Mock VFD Interface — controlsfreak.dev">
+    <meta property="og:description" content="Mock drive keypad — navigate a generic parameter tree and watch how the run-source and speed-source parameters gate every command, on screen.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://controlsfreak.dev/tools/vfd-mock.html">
+    <meta property="og:image" content="https://controlsfreak.dev/assets/og-image.png">
+    <meta property="og:site_name" content="controlsfreak.dev">
+    <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon-180.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&family=Overpass:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/styles.css">
+    <style>
+        /* Page-specific — the keypad simulator. Two-column on desktop
+           (keypad+display on left, motor response + external inputs on
+           right); stacks to one column at narrow widths. The display is
+           a "hybrid LCD" — light recessed panel with a fixed 20-char × 4-
+           line mono grid, which constrains content the way a real drive's
+           LCD does. Keypad buttons are flat site-style chrome (the
+           "feels like a drive keypad" goal lives in the layout and the
+           grid; we don't need to also mimic dark plastic). */
+
+        .vfdm-grid {
+            display: grid;
+            grid-template-columns: minmax(320px, 1fr) minmax(280px, 1fr);
+            gap: 1.75rem 2.25rem;
+            margin-bottom: 1.75rem;
+        }
+        @media (max-width: 820px) {
+            .vfdm-grid { grid-template-columns: 1fr; }
+        }
+
+        .vfdm-panel-label {
+            font-family: var(--mono);
+            font-size: 0.62rem;
+            color: var(--text-dim);
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+        }
+
+        /* LCD — fixed 20-char × 4-line mono panel.
+           Using `ch` units locks the inner width to exactly 20 mono-
+           character widths so a row that the page laid out as 20 chars
+           wide really does fit 20 chars wide on every viewport. */
+        .vfdm-lcd {
+            background: var(--surface-3);
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            padding: 0.85rem 1rem;
+            font-family: var(--mono);
+            font-size: 0.95rem;
+            color: var(--text-bright);
+            line-height: 1.55;
+            margin-bottom: 1.1rem;
+            display: inline-block;
+            min-width: 0;
+        }
+        .vfdm-lcd-inner {
+            width: 20ch;
+            white-space: pre;
+            font-variant-numeric: tabular-nums;
+        }
+        .vfdm-lcd-line { display: block; min-height: 1.55em; }
+        .vfdm-lcd .blue { color: var(--blue); }
+        .vfdm-lcd .dim  { color: var(--text-dim); }
+
+        /* Keypad — 4-key wide grid, mono labels, flat chrome */
+        .vfdm-keypad {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(3.4rem, 4.6rem));
+            gap: 0.55rem;
+            margin-bottom: 0.85rem;
+        }
+        .vfdm-key {
+            font-family: var(--mono);
+            font-size: 0.78rem;
+            padding: 0.55rem 0.4rem;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--text);
+            cursor: pointer;
+            border-radius: 3px;
+            text-align: center;
+            transition: border-color 0.12s, color 0.12s, background 0.12s;
+            user-select: none;
+        }
+        .vfdm-key:hover { border-color: var(--accent); color: var(--text-bright); }
+        .vfdm-key:active { background: var(--surface-2); }
+        .vfdm-key.run    { color: var(--blue); }
+        .vfdm-key.run:hover { border-color: var(--blue); color: var(--blue); }
+        .vfdm-key.stop   { color: var(--text); }
+        .vfdm-key.stop:hover { border-color: var(--text-bright); color: var(--text-bright); }
+        .vfdm-key .glyph { display: block; font-size: 0.95rem; line-height: 1; margin-bottom: 0.15rem; }
+        .vfdm-key .sub   { display: block; font-size: 0.6rem; color: var(--text-dim); letter-spacing: 0.05em; }
+
+        .vfdm-localrem {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-family: var(--mono);
+            font-size: 0.72rem;
+            color: var(--text-dim);
+        }
+        .vfdm-localrem .dot {
+            display: inline-block;
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: var(--text-dim);
+            transition: background 80ms linear;
+        }
+        .vfdm-localrem.local .dot { background: var(--blue); }
+        .vfdm-localrem.local { color: var(--blue); }
+
+        /* Right column — readouts, gauge, external inputs */
+        .vfdm-readouts { margin-bottom: 0.55rem; }
+        .vfdm-readout {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            padding: 0.42rem 0;
+            border-bottom: 1px solid var(--border-faint, rgba(0,0,0,0.07));
+            font-family: var(--mono);
+            font-size: 0.82rem;
+        }
+        .vfdm-readout > span:first-child { color: var(--text-dim); }
+        .vfdm-readout .v {
+            color: var(--blue);
+            font-weight: 600;
+            font-size: 0.95rem;
+            font-variant-numeric: tabular-nums;
+        }
+        .vfdm-readout .v.stopped { color: var(--text-dim); }
+
+        .vfdm-gauge {
+            height: 12px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 2px;
+            margin: 0.55rem 0 1rem;
+            overflow: hidden;
+        }
+        .vfdm-gauge-fill {
+            height: 100%;
+            background: var(--blue);
+            width: 0%;
+            transition: width 80ms linear;
+        }
+
+        .vfdm-ext { margin-top: 1.1rem; }
+        .vfdm-ext-row {
+            display: grid;
+            grid-template-columns: 10rem 1fr;
+            gap: 0.4rem 0.85rem;
+            align-items: center;
+            margin-bottom: 0.65rem;
+            font-family: var(--mono);
+            font-size: 0.78rem;
+            transition: opacity 0.18s;
+        }
+        .vfdm-ext-row.inactive { opacity: 0.35; }
+        .vfdm-ext-lbl { color: var(--text-dim); }
+        .vfdm-ext-val { color: var(--blue); font-weight: 600; font-variant-numeric: tabular-nums; }
+        .vfdm-ext-row input[type=range] { width: 100%; margin: 0; }
+
+        .vfdm-di-toggle {
+            display: inline-flex;
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .vfdm-di-toggle button {
+            background: var(--surface);
+            border: 0;
+            color: var(--text-dim);
+            font-family: var(--mono);
+            font-size: 0.74rem;
+            padding: 0.3rem 0.72rem;
+            cursor: pointer;
+        }
+        .vfdm-di-toggle button + button { border-left: 1px solid var(--border); }
+        .vfdm-di-toggle button.on { background: var(--blue); color: var(--surface); }
+
+        .vfdm-net-btns { display: inline-flex; gap: 0.4rem; }
+        .vfdm-net-btn {
+            font-family: var(--mono);
+            font-size: 0.74rem;
+            padding: 0.32rem 0.65rem;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--text);
+            cursor: pointer;
+            border-radius: 3px;
+        }
+        .vfdm-net-btn:hover { border-color: var(--accent); color: var(--text-bright); }
+
+        /* "Try this" presets — same idiom as the d3 widget on hydronic-
+           loops and the run/speed widget on the VFDs education page. */
+        .vfdm-try {
+            font-family: var(--mono);
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            margin-bottom: 1.25rem;
+            line-height: 1.7;
+        }
+        .vfdm-try .lbl { letter-spacing: 0.05em; text-transform: uppercase; margin-right: 0.6rem; }
+        .vfdm-try a {
+            color: var(--accent);
+            text-decoration: none;
+            margin-right: 0.85rem;
+            cursor: pointer;
+            border-bottom: 1px dashed var(--accent-dim);
+        }
+        .vfdm-try a:hover { color: var(--text-bright); border-bottom-color: var(--accent); }
+
+        /* Parameter reference table — small column to the right shows
+           the live value so the user can see what the keypad navigation
+           is producing without having to scroll back and forth. */
+        .vfdm-params td.val { color: var(--blue); font-weight: 600; font-variant-numeric: tabular-nums; }
+        .vfdm-params td.grp { color: var(--text-dim); font-size: 0.74rem; }
+    </style>
+</head>
+<body>
+
+<nav class="site-nav">
+    <a class="site-nav-brand" href="/">controlsfreak<span>.dev</span></a>
+    <div class="site-nav-links">
+        <a href="/">Home</a>
+        <a href="/tools/" class="active">Tools</a>
+        <a href="/education/">Education</a>
+        <a href="/contact.html">Contact</a>
+    </div>
+</nav>
+
+<main>
+
+    <div class="section-header">
+        <span class="section-label">Drives</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <div class="tool-card-title">Mock VFD Interface <span class="tool-tag">Drives</span></div>
+        </div>
+        <!-- Custom two-column layout (not .tool-body-3col) — keypad + display
+             on the left, motor response + external inputs on the right. The
+             3-col Input/Output/Reference pattern doesn't fit a simulator;
+             same precedent as the PID tuner page keeping its stacked layout.
+             A small parameter reference table at the bottom is the one piece
+             of reference content the page does have, so it gets the ref-table
+             treatment below the simulator grid. -->
+        <div class="tool-body">
+
+            <p style="font-family:var(--mono);font-size:0.7rem;color:var(--text-dim);margin-bottom:0.85rem;line-height:1.7;">
+                A generic drive keypad — not modelled on any specific manufacturer's product.
+                The goal is to practice navigating a parameter tree, and to feel how the
+                source parameters gate every command, before you're standing in front of a
+                live drive. New to drives? <a href="/education/vfds.html" style="color:var(--accent);">Start with VFD Basics →</a>
+            </p>
+
+            <div class="vfdm-try">
+                <span class="lbl">Try this:</span>
+                <a id="vfdmTryDefault">factory defaults</a>
+                <a id="vfdmTryKeypad">keypad commissioning</a>
+                <a id="vfdmTryBas">BAS auto (all network)</a>
+                <a id="vfdmTryClassic">the classic mistake</a>
+            </div>
+
+            <div class="vfdm-grid">
+
+                <!-- ── LEFT COLUMN: drive front panel ── -->
+                <div>
+                    <div class="vfdm-panel-label">Drive Front Panel</div>
+
+                    <!-- LCD: 20-char × 4-line fixed mono grid. Content set by
+                         the render() loop. .blue class on a wrapping span tints
+                         live values; .dim tints hint/footer text. -->
+                    <div class="vfdm-lcd">
+                        <div class="vfdm-lcd-inner" id="vfdmLcd"
+                             role="status" aria-live="polite" aria-label="Drive display">
+                            <span class="vfdm-lcd-line"></span>
+                            <span class="vfdm-lcd-line"></span>
+                            <span class="vfdm-lcd-line"></span>
+                            <span class="vfdm-lcd-line"></span>
+                        </div>
+                    </div>
+
+                    <!-- Keypad: 4 nav buttons (up/down/enter/escape), then a
+                         second row with RUN/STOP/LOCAL-REMOTE. Sub-labels under
+                         glyphs follow real-drive keypad legends. -->
+                    <div class="vfdm-keypad" role="group" aria-label="Drive keypad">
+                        <button class="vfdm-key" id="vfdmKeyUp"    type="button" aria-label="Up">
+                            <span class="glyph">▲</span><span class="sub">UP</span>
+                        </button>
+                        <button class="vfdm-key" id="vfdmKeyDown"  type="button" aria-label="Down">
+                            <span class="glyph">▼</span><span class="sub">DOWN</span>
+                        </button>
+                        <button class="vfdm-key" id="vfdmKeyEnter" type="button" aria-label="Enter">
+                            <span class="glyph">↵</span><span class="sub">ENT</span>
+                        </button>
+                        <button class="vfdm-key" id="vfdmKeyEsc"   type="button" aria-label="Escape">
+                            <span class="glyph">×</span><span class="sub">ESC</span>
+                        </button>
+                        <button class="vfdm-key run" id="vfdmKeyRun"  type="button" aria-label="Run">
+                            <span class="glyph">▶</span><span class="sub">RUN</span>
+                        </button>
+                        <button class="vfdm-key stop" id="vfdmKeyStop" type="button" aria-label="Stop">
+                            <span class="glyph">■</span><span class="sub">STOP</span>
+                        </button>
+                        <button class="vfdm-key" id="vfdmKeyLocal" type="button" aria-label="Local/Remote" style="grid-column: span 2;">
+                            <span class="glyph">⇄</span><span class="sub">L / R</span>
+                        </button>
+                    </div>
+
+                    <div class="vfdm-localrem" id="vfdmLocalRemInd">
+                        <span class="dot"></span>
+                        <span id="vfdmLocalRemTxt">REMOTE — drive follows configured sources</span>
+                    </div>
+                </div>
+
+                <!-- ── RIGHT COLUMN: motor response + external inputs ── -->
+                <div>
+                    <div class="vfdm-panel-label">Motor Response</div>
+                    <div class="vfdm-readouts">
+                        <div class="vfdm-readout">
+                            <span>Commanded</span>
+                            <span class="v"><span id="vfdmCmdHz">0.0</span> Hz</span>
+                        </div>
+                        <div class="vfdm-readout">
+                            <span>Actual</span>
+                            <span class="v" id="vfdmActWrap"><span id="vfdmActHz">0.0</span> Hz</span>
+                        </div>
+                        <div class="vfdm-gauge" aria-hidden="true">
+                            <div class="vfdm-gauge-fill" id="vfdmGaugeFill"></div>
+                        </div>
+                        <div class="vfdm-readout">
+                            <span>State</span>
+                            <span class="v" id="vfdmStateText">STOPPED</span>
+                        </div>
+                    </div>
+
+                    <div class="vfdm-ext">
+                        <div class="vfdm-panel-label">External Inputs</div>
+
+                        <!-- Terminal DI run input. Active when run source = TERMINALS;
+                             gray out otherwise (still operable — the wire is wired,
+                             the drive just isn't listening). -->
+                        <div class="vfdm-ext-row" id="vfdmDiRow">
+                            <span class="vfdm-ext-lbl">Terminal DI (run)</span>
+                            <div>
+                                <span class="vfdm-di-toggle" role="group" aria-label="DI run input state">
+                                    <button id="vfdmDiOpen"   type="button" class="on">Open</button>
+                                    <button id="vfdmDiClosed" type="button">Closed</button>
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Network run command. Active when run source = NETWORK. -->
+                        <div class="vfdm-ext-row" id="vfdmNetRow">
+                            <span class="vfdm-ext-lbl">Network RUN cmd</span>
+                            <div class="vfdm-net-btns">
+                                <button class="vfdm-net-btn" id="vfdmNetRun"  type="button">Send RUN</button>
+                                <button class="vfdm-net-btn" id="vfdmNetStop" type="button">Send STOP</button>
+                            </div>
+                        </div>
+
+                        <!-- External speed reference. Active when speed source =
+                             TERMINALS or NETWORK (the simulator treats those as the
+                             same "something outside the drive is writing this Hz
+                             value" — real drives have separate AI and network
+                             registers, but the pedagogy doesn't need that
+                             distinction). -->
+                        <div class="vfdm-ext-row" id="vfdmExtSpdRow">
+                            <span class="vfdm-ext-lbl">External speed ref</span>
+                            <div style="display:flex;align-items:center;gap:0.55rem;">
+                                <input type="range" id="vfdmExtSpd" min="0" max="60" step="1" value="30" aria-label="External speed reference"/>
+                                <span class="vfdm-ext-val"><span id="vfdmExtSpdVal">30</span> Hz</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Parameter reference at the bottom — same value the keypad
+                 can edit, here for at-a-glance reading without having to
+                 navigate. Reference content alongside an active tool,
+                 just stacked rather than side-by-side because the simulator
+                 above already uses the horizontal real estate. -->
+            <div class="subhead">Parameter Reference</div>
+            <p style="font-family:var(--mono);font-size:0.7rem;color:var(--text-dim);margin-bottom:0.85rem;line-height:1.7;">
+                Thirteen parameters in four groups — sized to match the friction-file scope rule, not a real drive's full tree. Editing a value from the keypad updates this table live.
+            </p>
+            <table class="ref-table vfdm-params">
+                <thead>
+                    <tr><th style="width:7rem;">Group · ID</th><th>Name</th><th style="width:8rem;text-align:right;">Value</th></tr>
+                </thead>
+                <tbody id="vfdmParamsTbody"></tbody>
+            </table>
+
+        </div>
+    </div>
+
+    <a class="back-link" href="/tools/">← All tools</a>
+
+</main>
+
+<footer>
+    <span class="footer-text">controlsfreak.dev — open tools for controls engineers</span>
+    <span class="footer-text">v1.0 · 2026</span>
+</footer>
+
+<script>
+    // ── Mock VFD interface ──────────────────────────────────────────────
+    // Generic drive: 13 parameters in 4 groups, keypad-driven navigation,
+    // linear-ramp motor model using the accel/decel parameter values.
+    // The pedagogical anchor is that run command and speed reference
+    // each have their own source parameter (S01 / S02). Keypad RUN only
+    // works if S01 = KEYPAD (or if the drive is in LOCAL mode, which is
+    // the universal override). Keypad STOP clears keypad and network
+    // run latches but does not affect the terminal DI input — a teaching
+    // point in itself: you can't open a hardwired contact from the
+    // keypad.
+    (function () {
+
+        // ── Parameter tree ─────────────────────────────────────────────
+        // `lcd` is the ALL-CAPS short name used on the 20-char display;
+        // `name` is the long form used in the reference table. Numerics
+        // carry { value, unit, step, min, max }; enums carry
+        // { value: index, options: [labels] }. `value` mutates in place
+        // when the user commits an edit.
+        const GROUPS = ['MOTOR DATA', 'RAMPS', 'SOURCES', 'I/O'];
+        const PARAMS = [
+            // Motor data
+            { id: 'M01', group: 0, lcd: 'RATED FLA',  name: 'Rated full-load amps',  value: 12.5,  unit: 'A',   step: 0.1,  min: 0.1, max: 200 },
+            { id: 'M02', group: 0, lcd: 'RATED VOLT', name: 'Rated voltage',          value: 480,   unit: 'V',   step: 10,   min: 100, max: 600 },
+            { id: 'M03', group: 0, lcd: 'RATED FREQ', name: 'Rated frequency',        value: 60,    unit: 'Hz',  step: 1,    min: 50,  max: 60  },
+            { id: 'M04', group: 0, lcd: 'RATED RPM',  name: 'Rated speed',            value: 1750,  unit: 'RPM', step: 50,   min: 600, max: 3600 },
+            // Ramps
+            { id: 'R01', group: 1, lcd: 'ACCEL TIME', name: 'Accel time',             value: 10.0,  unit: 's',   step: 0.5,  min: 0.5, max: 300 },
+            { id: 'R02', group: 1, lcd: 'DECEL TIME', name: 'Decel time',             value: 10.0,  unit: 's',   step: 0.5,  min: 0.5, max: 300 },
+            // Sources
+            { id: 'S01', group: 2, lcd: 'RUN SRC',    name: 'Run command source',    value: 1,     options: ['KEYPAD', 'TERMINALS', 'NETWORK'] },
+            { id: 'S02', group: 2, lcd: 'SPEED SRC',  name: 'Speed reference source', value: 2,     options: ['KEYPAD', 'TERMINALS', 'NETWORK'] },
+            { id: 'S03', group: 2, lcd: 'MIN FREQ',   name: 'Minimum frequency',     value: 0,     unit: 'Hz',  step: 1,    min: 0,   max: 60  },
+            { id: 'S04', group: 2, lcd: 'MAX FREQ',   name: 'Maximum frequency',     value: 60,    unit: 'Hz',  step: 1,    min: 20,  max: 60  },
+            // I/O
+            { id: 'I01', group: 3, lcd: 'KP SPEED',   name: 'Keypad speed setpoint', value: 30.0,  unit: 'Hz',  step: 0.5,  min: 0,   max: 60  },
+            { id: 'I02', group: 3, lcd: 'PRESET SP1', name: 'Preset speed 1',        value: 25.0,  unit: 'Hz',  step: 0.5,  min: 0,   max: 60  },
+            { id: 'I03', group: 3, lcd: 'DI1 FUNC',   name: 'DI1 function',          value: 0,     options: ['RUN', 'JOG', 'RESET'] },
+        ];
+
+        function byId(id) { return PARAMS.find(p => p.id === id); }
+        function paramsInGroup(g) { return PARAMS.filter(p => p.group === g); }
+
+        // ── State ──────────────────────────────────────────────────────
+        const state = {
+            // Navigation: 'home' shows running status; 'menu' is the
+            // group picker; 'group' is the parameter picker within a
+            // group; 'edit' is editing the selected parameter's value.
+            mode: 'home',
+            groupIdx: 0,
+            paramIdx: 0,
+            editValue: null,        // pending value during edit
+
+            localMode: false,       // L/R; LOCAL overrides all source parameters
+
+            keypadRun: false,
+            networkRun: false,
+            diClosed: false,
+            externalSpeedHz: 30,    // single value backing both terminal AI and network speed
+
+            actualHz: 0,
+            lastTick: Date.now(),
+
+            // Footer flash on line 4 of the LCD. `flashUntil` is a
+            // wall-clock timestamp; while > now() the LCD shows
+            // `flashText` on line 4 instead of the default L/R footer.
+            flashText: '',
+            flashUntil: 0,
+        };
+
+        // ── DOM ────────────────────────────────────────────────────────
+        const lcdLines = document.querySelectorAll('#vfdmLcd .vfdm-lcd-line');
+        const cmdHzEl  = document.getElementById('vfdmCmdHz');
+        const actHzEl  = document.getElementById('vfdmActHz');
+        const actWrap  = document.getElementById('vfdmActWrap');
+        const stateTxt = document.getElementById('vfdmStateText');
+        const gaugeFill= document.getElementById('vfdmGaugeFill');
+        const localInd = document.getElementById('vfdmLocalRemInd');
+        const localTxt = document.getElementById('vfdmLocalRemTxt');
+        const diOpen   = document.getElementById('vfdmDiOpen');
+        const diClosed = document.getElementById('vfdmDiClosed');
+        const extSpd   = document.getElementById('vfdmExtSpd');
+        const extSpdVal= document.getElementById('vfdmExtSpdVal');
+        const diRow    = document.getElementById('vfdmDiRow');
+        const netRow   = document.getElementById('vfdmNetRow');
+        const extSpdRow= document.getElementById('vfdmExtSpdRow');
+        const paramsBody = document.getElementById('vfdmParamsTbody');
+
+        // ── Pure helpers ───────────────────────────────────────────────
+        function pad20(left, right) {
+            right = right || '';
+            const gap = 20 - left.length - right.length;
+            return left + ' '.repeat(Math.max(1, gap)) + right;
+        }
+        function fmtNum(p, val) {
+            // Numerics: trailing decimals match step granularity.
+            if (Number.isInteger(p.step) && Number.isInteger(val)) return String(val);
+            return Number(val).toFixed(1);
+        }
+        function fmtVal(p, val) {
+            if (p.options) return p.options[val];
+            return fmtNum(p, val) + ' ' + p.unit;
+        }
+        function flash(text, ms) {
+            state.flashText = text;
+            state.flashUntil = Date.now() + (ms || 2500);
+        }
+
+        // Determine whether the drive is currently in the "run state" —
+        // i.e. the configured run source is asserting a run command. In
+        // LOCAL mode, only the keypad's run latch matters.
+        function isRunning() {
+            if (state.localMode) return state.keypadRun;
+            const src = byId('S01').value;
+            if (src === 0) return state.keypadRun;
+            if (src === 1) return state.diClosed;
+            if (src === 2) return state.networkRun;
+            return false;
+        }
+        // Active speed reference (Hz), clamped to [S03, S04].
+        function activeSpeedRef() {
+            let raw;
+            if (state.localMode) raw = byId('I01').value;
+            else {
+                const src = byId('S02').value;
+                if (src === 0) raw = byId('I01').value;
+                else raw = state.externalSpeedHz;
+            }
+            const min = byId('S03').value;
+            const max = byId('S04').value;
+            return Math.max(min, Math.min(max, raw));
+        }
+
+        // ── Motor model: linear ramp using R01/R02 ─────────────────────
+        function tickMotor() {
+            const now = Date.now();
+            const dt  = Math.min(0.5, (now - state.lastTick) / 1000);
+            state.lastTick = now;
+
+            const target = isRunning() ? activeSpeedRef() : 0;
+            // The friction-file scope is "linear ramp using accel/decel
+            // values"; we scale by the rated freq so accel-time means
+            // "seconds from 0 to rated" no matter what the cap is.
+            const rated = byId('M03').value;
+            const accelRate = rated / byId('R01').value;     // Hz/s
+            const decelRate = rated / byId('R02').value;     // Hz/s
+
+            if (state.actualHz < target) {
+                state.actualHz = Math.min(target, state.actualHz + accelRate * dt);
+            } else if (state.actualHz > target) {
+                state.actualHz = Math.max(target, state.actualHz - decelRate * dt);
+            }
+        }
+
+        // ── LCD content per mode ───────────────────────────────────────
+        // Flash messages only appear on the HOME screen's line 4 — the
+        // place the user expects "what just happened" feedback. The
+        // menu/group/edit headers always show the plain L/R label since
+        // flash text in those headers reads as confusing pseudo-status.
+        // (RUN/STOP/L-R presses all return-to-home anyway, so the flash
+        // landing on HOME's line 4 is the common path.)
+        function lrLabel() { return state.localMode ? 'LOCAL' : 'REMOTE'; }
+        function renderLcd() {
+            const lines = ['', '', '', ''];
+            if (state.mode === 'home') {
+                const running = isRunning();
+                const status  = running ? 'RUNNING' : 'STOPPED';
+                lines[0] = pad20(status, lrLabel());
+                lines[1] = pad20('ACTUAL', state.actualHz.toFixed(1) + ' Hz');
+                lines[2] = pad20('REF',    activeSpeedRef().toFixed(1) + ' Hz');
+                lines[3] = state.flashUntil > Date.now() ? state.flashText : '';
+            } else if (state.mode === 'menu') {
+                lines[0] = pad20('MENU', lrLabel());
+                const win = scrollWindow(GROUPS.length, state.groupIdx, 3);
+                for (let i = 0; i < win.count; i++) {
+                    const idx = win.start + i;
+                    const marker = idx === state.groupIdx ? '>' : ' ';
+                    lines[1 + i] = marker + ' ' + (idx + 1) + ' ' + GROUPS[idx];
+                }
+            } else if (state.mode === 'group') {
+                const ps = paramsInGroup(state.groupIdx);
+                lines[0] = pad20(GROUPS[state.groupIdx], lrLabel());
+                const win = scrollWindow(ps.length, state.paramIdx, 3);
+                for (let i = 0; i < win.count; i++) {
+                    const idx = win.start + i;
+                    const p = ps[idx];
+                    const marker = idx === state.paramIdx ? '>' : ' ';
+                    lines[1 + i] = marker + ' ' + p.id + ' ' + p.lcd;
+                }
+            } else if (state.mode === 'edit') {
+                const p = paramsInGroup(state.groupIdx)[state.paramIdx];
+                lines[0] = 'EDIT ' + p.id + ' ' + p.lcd;
+                lines[1] = '';
+                if (p.options) {
+                    lines[2] = '> ' + p.options[state.editValue];
+                } else {
+                    const val = fmtNum(p, state.editValue) + ' ' + p.unit;
+                    // right-align inside 20 chars
+                    lines[2] = pad20('', val);
+                }
+                lines[3] = 'ENT save  ESC cancel';
+            }
+            for (let i = 0; i < 4; i++) {
+                lcdLines[i].textContent = lines[i];
+            }
+        }
+
+        // Scrolling window for menu/group lists: keep the cursor on screen.
+        function scrollWindow(total, cursor, size) {
+            if (total <= size) return { start: 0, count: total };
+            let start = cursor - size + 1;
+            if (start < 0) start = 0;
+            if (start + size > total) start = total - size;
+            if (start > cursor) start = cursor;
+            return { start, count: size };
+        }
+
+        // ── Right-column / page chrome ─────────────────────────────────
+        function renderRightPanel() {
+            const running = isRunning();
+            const cmd = running ? activeSpeedRef() : 0;
+            cmdHzEl.textContent = cmd.toFixed(1);
+            actHzEl.textContent = state.actualHz.toFixed(1);
+            actWrap.classList.toggle('stopped', !running && state.actualHz < 0.05);
+
+            // Gauge: scale to max freq so 100% = S04
+            const max = byId('S04').value;
+            const pct = max > 0 ? Math.max(0, Math.min(100, (state.actualHz / max) * 100)) : 0;
+            gaugeFill.style.width = pct + '%';
+
+            // State text reflects what the motor is doing right now.
+            let stateLabel;
+            if (running && Math.abs(state.actualHz - cmd) < 0.1) stateLabel = 'AT SPEED';
+            else if (running && state.actualHz < cmd)            stateLabel = 'RAMPING UP';
+            else if (running && state.actualHz > cmd)            stateLabel = 'RAMPING DOWN';
+            else if (!running && state.actualHz > 0.1)           stateLabel = 'COASTING DOWN';
+            else                                                  stateLabel = 'STOPPED';
+            stateTxt.textContent = stateLabel;
+
+            // Local/Remote indicator
+            localInd.classList.toggle('local', state.localMode);
+            localTxt.textContent = state.localMode
+                ? 'LOCAL — keypad overrides source parameters'
+                : 'REMOTE — drive follows configured sources';
+
+            // External-input row activity: gray out the rows that the
+            // current source parameters aren't listening to. They remain
+            // operable (the external world is still asserting them);
+            // they're just not what the drive is acting on.
+            const runSrc = byId('S01').value;
+            const spdSrc = byId('S02').value;
+            diRow.classList.toggle('inactive',    state.localMode || runSrc !== 1);
+            netRow.classList.toggle('inactive',   state.localMode || runSrc !== 2);
+            extSpdRow.classList.toggle('inactive', state.localMode || (spdSrc !== 1 && spdSrc !== 2));
+
+            extSpdVal.textContent = state.externalSpeedHz;
+        }
+
+        // ── Parameter reference table ──────────────────────────────────
+        function renderParamTable() {
+            const rows = PARAMS.map(p => {
+                const v = p.options ? p.options[p.value] : fmtNum(p, p.value) + ' ' + p.unit;
+                return '<tr>'
+                    + '<td class="grp">' + GROUPS[p.group] + ' · ' + p.id + '</td>'
+                    + '<td>' + p.name + '</td>'
+                    + '<td class="val" style="text-align:right;">' + v + '</td>'
+                    + '</tr>';
+            }).join('');
+            paramsBody.innerHTML = rows;
+        }
+
+        function render() {
+            renderLcd();
+            renderRightPanel();
+            renderParamTable();
+        }
+
+        // ── Keypad actions ─────────────────────────────────────────────
+        function step(delta) {
+            // Used by up/down to adjust the cursor or the pending edit
+            // value, depending on mode.
+            if (state.mode === 'home') {
+                // From HOME, up/down jumps straight into the menu — common
+                // shortcut on real drives.
+                state.mode = 'menu';
+                return;
+            }
+            if (state.mode === 'menu') {
+                state.groupIdx = (state.groupIdx + GROUPS.length + delta) % GROUPS.length;
+                return;
+            }
+            if (state.mode === 'group') {
+                const ps = paramsInGroup(state.groupIdx);
+                state.paramIdx = (state.paramIdx + ps.length + delta) % ps.length;
+                return;
+            }
+            if (state.mode === 'edit') {
+                const p = paramsInGroup(state.groupIdx)[state.paramIdx];
+                if (p.options) {
+                    state.editValue = (state.editValue + p.options.length + delta) % p.options.length;
+                } else {
+                    const next = +(state.editValue + delta * p.step).toFixed(2);
+                    state.editValue = Math.max(p.min, Math.min(p.max, next));
+                }
+            }
+        }
+        function onEnter() {
+            if (state.mode === 'home') { state.mode = 'menu'; state.groupIdx = 0; }
+            else if (state.mode === 'menu') { state.mode = 'group'; state.paramIdx = 0; }
+            else if (state.mode === 'group') {
+                state.mode = 'edit';
+                const p = paramsInGroup(state.groupIdx)[state.paramIdx];
+                state.editValue = p.value;
+            }
+            else if (state.mode === 'edit') {
+                const p = paramsInGroup(state.groupIdx)[state.paramIdx];
+                p.value = state.editValue;
+                state.mode = 'group';
+                state.editValue = null;
+            }
+        }
+        function onEsc() {
+            if (state.mode === 'home') return;
+            if (state.mode === 'menu') state.mode = 'home';
+            else if (state.mode === 'group') state.mode = 'menu';
+            else if (state.mode === 'edit') { state.mode = 'group'; state.editValue = null; }
+        }
+        // RUN / STOP / L/R always return to HOME mode so the user can
+        // see the flash message on line 4 and the resulting drive state
+        // on lines 1–3. Real drives do this too — pressing an operate
+        // key takes you out of the parameter editor and shows you what
+        // the motor is doing.
+        function backToHome() {
+            state.mode = 'home';
+            state.editValue = null;
+        }
+        function onRun() {
+            backToHome();
+            // LOCAL: keypad always runs the drive.
+            if (state.localMode) { state.keypadRun = true; flash('RUN (LOCAL)'); return; }
+            const src = byId('S01').value;
+            if (src === 0) { state.keypadRun = true; flash('RUN OK'); }
+            else if (src === 1) flash('IGN: SRC=TERMS');
+            else if (src === 2) flash('IGN: SRC=NET');
+        }
+        function onStop() {
+            backToHome();
+            // STOP from the keypad clears software run latches but does
+            // not affect the terminal DI. If the drive is running because
+            // the DI is closed, the user has to physically open the
+            // contact — keypad STOP can't reach a hardwire.
+            const wasRunning = isRunning();
+            state.keypadRun = false;
+            state.networkRun = false;
+            if (!isRunning() && wasRunning) flash('STOP');
+            else if (isRunning() && byId('S01').value === 1 && state.diClosed) flash('STOP IGN: DI HW');
+            else flash('STOP');
+        }
+        function onLocalRemote() {
+            backToHome();
+            state.localMode = !state.localMode;
+            // Drop any latched run when crossing the boundary — a real
+            // drive's L/R toggle resets command state, and this prevents
+            // the user from getting confused about "why is it running?"
+            // after the override changes.
+            state.keypadRun = false;
+            state.networkRun = false;
+            flash(state.localMode ? '> LOCAL' : '> REMOTE');
+        }
+
+        // ── Wiring ─────────────────────────────────────────────────────
+        document.getElementById('vfdmKeyUp')   .addEventListener('click', () => { step(-1); render(); });
+        document.getElementById('vfdmKeyDown') .addEventListener('click', () => { step(+1); render(); });
+        document.getElementById('vfdmKeyEnter').addEventListener('click', () => { onEnter(); render(); });
+        document.getElementById('vfdmKeyEsc')  .addEventListener('click', () => { onEsc();   render(); });
+        document.getElementById('vfdmKeyRun')  .addEventListener('click', () => { onRun();   render(); });
+        document.getElementById('vfdmKeyStop') .addEventListener('click', () => { onStop();  render(); });
+        document.getElementById('vfdmKeyLocal').addEventListener('click', () => { onLocalRemote(); render(); });
+
+        diOpen.addEventListener('click', () => {
+            state.diClosed = false;
+            diOpen.classList.add('on');
+            diClosed.classList.remove('on');
+            render();
+        });
+        diClosed.addEventListener('click', () => {
+            state.diClosed = true;
+            diOpen.classList.remove('on');
+            diClosed.classList.add('on');
+            render();
+        });
+
+        document.getElementById('vfdmNetRun') .addEventListener('click', () => {
+            state.networkRun = true;
+            flash('NET RUN sent');
+            render();
+        });
+        document.getElementById('vfdmNetStop').addEventListener('click', () => {
+            state.networkRun = false;
+            flash('NET STOP sent');
+            render();
+        });
+
+        extSpd.addEventListener('input', () => {
+            state.externalSpeedHz = parseInt(extSpd.value, 10);
+            render();
+        });
+
+        // ── Presets ────────────────────────────────────────────────────
+        function applyPreset(opts) {
+            byId('S01').value = opts.runSrc;       // 0/1/2 for KEYPAD/TERMINALS/NETWORK
+            byId('S02').value = opts.spdSrc;
+            state.localMode  = !!opts.local;
+            state.keypadRun  = false;
+            state.networkRun = false;
+            state.diClosed   = !!opts.diClosed;
+            diOpen.classList.toggle('on', !state.diClosed);
+            diClosed.classList.toggle('on', state.diClosed);
+            state.mode = 'home';
+            state.editValue = null;
+            flash('> PRESET');
+            render();
+        }
+        document.getElementById('vfdmTryDefault').addEventListener('click', e => {
+            e.preventDefault();
+            applyPreset({ runSrc: 1, spdSrc: 2, local: false, diClosed: false });
+        });
+        document.getElementById('vfdmTryKeypad').addEventListener('click', e => {
+            e.preventDefault();
+            applyPreset({ runSrc: 0, spdSrc: 0, local: true,  diClosed: false });
+        });
+        document.getElementById('vfdmTryBas').addEventListener('click', e => {
+            e.preventDefault();
+            applyPreset({ runSrc: 2, spdSrc: 2, local: false, diClosed: false });
+        });
+        document.getElementById('vfdmTryClassic').addEventListener('click', e => {
+            e.preventDefault();
+            applyPreset({ runSrc: 1, spdSrc: 2, local: false, diClosed: false });
+        });
+
+        // ── Tick loop ──────────────────────────────────────────────────
+        // Drive motor model + flash-message expiry. 50 ms keeps the
+        // gauge motion smooth without burning a frame on every paint.
+        setInterval(() => {
+            tickMotor();
+            render();
+        }, 50);
+
+        render();
+    })();
+</script>
+
+</body>
+</html>

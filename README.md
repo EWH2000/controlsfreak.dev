@@ -37,6 +37,12 @@ Calculators, converters, and lookups — open one, get an answer.
   Pt100, Pt1000) with the full R/T table alongside the single
   answer. Tables flagged **pending field verification** — see the
   data file header.
+- **Mock VFD Interface** — generic drive keypad to practice
+  navigating a parameter tree without a live drive in front of you.
+  13 parameters in 4 groups, fixed 20×4 mono LCD, linear-ramp motor
+  model, LOCAL/REMOTE override. The run-source / speed-source
+  pedagogy from the VFDs explainer in hand: a keypad RUN with the
+  run-source set to TERMINALS sits there and does nothing.
 
 Roadmap (Coming Soon cards on the Tools landing):
 Temperature Conversion, VAV Balancing, BACnet Object Reference,
@@ -60,6 +66,12 @@ techs new to the industry and anyone wanting a refresh.
   pressure bypass valve (DPBV) on variable-flow systems, and what
   the load-side valve choice cascades to at the loop level. Pays
   off a forward callout from Hydronic Loops.
+- **VFDs** — variable-frequency drives from the controls-tech
+  angle: block-diagram intro, the cube-law energy story, and the
+  *run command vs. speed reference* parameters that gate every
+  command from the BMS. Includes an interactive widget that reveals
+  a war story when you set up the configuration mistake that
+  catches everyone. Pairs with the Mock VFD interface tool.
 
 ## How it's built
 

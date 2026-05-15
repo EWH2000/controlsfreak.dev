@@ -19,8 +19,9 @@ but the project is the tools, not a personal homepage.
   with `<link rel="stylesheet" href="/styles.css">`. Page-specific CSS
   stays inline on the page that needs it (currently: `contact.html`,
   `psychrometric-chart.html`, `thermistor-calculator.html`,
-  `hydronic-loops.html`, `load-piping.html`). Shared rules live in the
-  file; page-only rules stay inline.
+  `hydronic-loops.html`, `load-piping.html`, `vfds.html`,
+  `vfd-mock.html`). Shared rules live in the file; page-only rules
+  stay inline.
 - **Shared scripts** in `html/scripts/` are **classic scripts** (not ES
   modules — modules would break the inline `on*` handlers). Load with
   `<script src="/scripts/xxx.js"></script>` *before* the page's inline
@@ -131,12 +132,14 @@ controlsfreak.dev/
 │   │   ├── pid-tuner.html            # loads /scripts/pid-engine.js; owns loop-speed reference table
 │   │   ├── bacnet-ip-converter.html
 │   │   ├── psychrometric-chart.html  # 3-col layout, widened to 1280px inline
-│   │   └── thermistor-calculator.html # 3-col layout, loads /scripts/thermistor-data.js
+│   │   ├── thermistor-calculator.html # 3-col layout, loads /scripts/thermistor-data.js
+│   │   └── vfd-mock.html             # 2-col simulator: keypad + 20×4 LCD + linear-ramp motor model; pairs with education/vfds.html
 │   └── education/
 │       ├── index.html                # Education landing
 │       ├── pid-basics.html           # P/I/D explainer + three mini-sims (loads /scripts/pid-engine.js)
 │       ├── hydronic-loops.html       # 2-pipe direct → reverse → twin-T, inline SVG schematics
-│       └── load-piping.html          # 2-way vs 3-way load valves, three SVG diagrams; pays off the twin-T #d3 forward callout
+│       ├── load-piping.html          # 2-way vs 3-way load valves, three SVG diagrams; pays off the twin-T #d3 forward callout
+│       └── vfds.html                 # block diagram + cube law + run/speed widget + parameter groups + bypass; pairs with tools/vfd-mock.html
 └── tests/              # Playwright (smoke.spec.js, contact.spec.js)
 ```
 
@@ -204,6 +207,20 @@ cards (the roadmap). Live tools:
   rows** (the table is the source of truth — no Steinhart-Hart). Lookup
   mode only; identify-mode is a future build (friction file). **Tables
   pending field verification — see the data file.**
+- **Mock VFD Interface** (`vfd-mock.html`, "Drives") — 2-col layout
+  (keypad + LCD on the left, motor response + external inputs on the
+  right; stacks on mobile). 13 parameters in 4 groups; 7-key keypad
+  (▲/▼/ENT/ESC/RUN/STOP/L-R); fixed 20×4 mono LCD on a light recessed
+  panel (drive-style brevity via the grid constraint, on-brand palette).
+  Linear-ramp motor model uses R01/R02; LOCAL is the universal override
+  (drops both run latches when toggled); keypad STOP can't reach a
+  hardwired DI (teaching point); RUN/STOP/L-R always return to HOME so
+  flash messages land on line 4 where the user expects feedback.
+  Parameter reference table at the bottom is live (the keypad edits it
+  in place). Custom layout (not `.tool-body-3col`), same precedent as
+  the PID tuner. Inline JS state machine; CSS prefix `vfdm-`. Paired
+  with `education/vfds.html`'s run/speed widget — same source-parameter
+  pedagogy, here with a parameter tree to navigate.
 
 **Education landing** (`education/index.html`) — `.nav-card` grid
 (mirrors Tools, no "Coming Soon" yet).
@@ -290,6 +307,31 @@ cards (the roadmap). Live tools:
   A possible future enhancement is a small two-state diagram showing
   the DPBV closed at high demand vs. open at low demand — deferred
   per user preference for the simpler "add + prose" pass first.
+- **VFDs** (`vfds.html`) — variable-frequency drives explainer paired
+  with `tools/vfd-mock.html`. One question: *what is a VFD, and what
+  does a controls tech need to know about it?* Seven sections, gentle
+  ramp into practitioner depth: *What a VFD is* (static block diagram,
+  labeled boxes only); *Why drives are everywhere* (cube-law prose +
+  `.pid-term`-style numbers callout); *Run command vs. speed reference*
+  (the centerpiece — a 3×3 source/command-surface widget with a
+  spinning-fan visual indicator next to the status panel, rotation
+  rate proportional to the active speed reference, and a hidden
+  anecdote reveal on the "classic mistake" configuration —
+  run=TERMINALS + speed=NETWORK + Send BACnet RUN); *Parameter groups*
+  (six `.pid-term` cards: motor data, ramps, references/sources,
+  run/stop sources, I/O, faults); *Network integration* (small
+  `.ref-table` for Modbus RTU / BACnet MS/TP / BACnet/IP, inline
+  cross-links to the BACnet/IP converter and Modbus register viewer);
+  *Fault codes* (small `.ref-table` of six categories); *Bypass
+  arrangements* (short prose + small static SVG of the 3-position
+  selector topology). Opens with a hook to load-piping (variable-flow
+  pump side); closes paying it off and forward-linking to
+  `/tools/vfd-mock.html` and `[future: pump-control.html]`. Diagrams
+  use an inline `.vfd-svg` class — the `.edu-svg` consolidation
+  trigger from the load-piping friction entry was deferred because
+  the block diagram is structurally different from pipe-flow diagrams
+  (no `data-flow`, no dashed-return override); trigger now belongs to
+  the next pipe-flow Education page.
 
 **Contact** (`contact.html`) — `.tool-card` with name/email/message,
 an off-screen CSS honeypot (`.hp-field`, named `website`), and a

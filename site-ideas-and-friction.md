@@ -11,77 +11,272 @@ tools.
 
 
 
-### VFDs — Education page + mock interface tool
+### VFDs — Education page *(shipped 2026-05-14)*
+*One question: what is a VFD, and what does a controls tech need to
+know about it?*
 
-VFDs are everywhere in HVAC and every controls tech writes to them
-(speed reference, run command, reset, network-vs-keypad source) without
-necessarily understanding the parameter tree underneath. The interface
-is what controls people actually interact with — not the IGBT switching,
-not the V/Hz curve. So the site's angle should match that: explain the
-piece controls people touch, not the piece electricians and mechanics
-own.
+The original planning entry framed this as a multi-week project
+covering both the explainer and a mock-keypad tool. During scoping
+the decision was to keep the page broad (the question is "what is a
+VFD" not just "the run/speed gotcha") and accept a long page — same
+PID-Basics-style structure of gentle ramp into practitioner depth.
+The single-question rule still applied; the in-scope list runs longer
+than four items because the foundational sections (block diagram,
+cube law) and the practitioner sections (parameter groups, network,
+fault codes, bypass) each pay off the same question.
 
-**Education page scope** (`education/vfds.html`):
-- What a VFD does at the block-diagram level (AC → DC → variable-freq
-  AC), light on electrical detail — enough to make the rest make sense.
-- Why drives are everywhere on HVAC pumps and fans (the cube-law
-  energy-savings story on centrifugal loads).
-- The two concepts people conflate: **run command** (start/stop signal)
-  vs. **speed reference** (how fast). Each has its own source parameter
-  (keypad / terminals / network), and a lot of "why won't this drive
-  run from BACnet" calls are because one is set right and the other
-  isn't.
-- Common parameter groups every drive has variations of: motor data,
-  ramps (accel/decel), references and sources, run/stop sources, I/O
-  config, faults.
-- Network integration — Modbus RTU, BACnet MS/TP, BACnet/IP. This is
-  where controls people meet the drive in production. Cross-link to
-  the BACnet/IP and Modbus tools.
-- Fault codes at the conceptual level — overcurrent, overvoltage,
-  undervoltage, ground fault, motor overload — not a fault-code lookup
-  (manufacturer-specific, not the site's job).
-- Brief mention of bypass arrangements (manual bypass, soft starter
-  bypass) since they come up in pump/fan applications.
+In scope (sections delivered):
+- *What a VFD Is* — static block diagram (AC IN → Rectifier → DC Bus
+  → Inverter → AC OUT variable), labeled boxes only, no waveforms
+  (trusts prose to carry "what variable frequency means")
+- *Why Drives Are Everywhere — the Cube Law* — prose + a
+  `.pid-term`-style numbers callout showing 80/70/50/30% speed →
+  power scaling
+- *Run Command vs. Speed Reference — the centerpiece* — explainer
+  prose + the page's interactive widget (see below)
+- *The Parameter Groups Every Drive Has* — six `.pid-term` cards
+  (motor data, ramps, references/sources, run/stop sources, I/O,
+  faults) — one card per group, ALL-CAPS sub-titles, worked
+  per-group commentary
+- *Network Integration* — small `.ref-table` comparing Modbus RTU /
+  BACnet MS/TP / BACnet/IP plus an inline list of the four points a
+  BMS reads or writes (run cmd, speed ref, run status, actual Hz);
+  inline cross-links to the BACnet/IP converter and Modbus register
+  viewer
+- *Fault Codes — the Conceptual Categories* — small `.ref-table`
+  with six categories (overcurrent, overvoltage, undervoltage,
+  ground fault, motor overload, drive overtemp), each with "what's
+  happening" and "usual cause"
+- *Bypass Arrangements* — short prose + a static SVG of the
+  three-position selector topology (LINE IN → selector → either
+  through-DRIVE or direct → MOTOR)
+- *Tying It Back to Load Piping* — closing payoff section paying
+  off the forward-link from `load-piping.html#two-way`; introduces
+  the natural follow-up on pump-control as `[future:
+  pump-control.html]`
 
-**Mock VFD interface tool** (`tools/vfd-mock.html` or similar):
+Out of scope (forward links, not content):
+- The keypad-and-parameter-tree story — own tool, see Mock VFD
+  interface entry below
+- Pump-control / DP-setpoint reset / pump curves — [future:
+  pump-control.html]
+- Specific manufacturer parameter numbers / keypad menu trees — the
+  site's angle is the cross-manufacturer pattern; the friction file
+  resists this as scope creep
+- V/Hz curves, vector control, slip compensation — electrical /
+  motor-engineering side, not the controls surface
 
-A clickable keypad + small display that lets someone practice the
-*structure* of navigating a drive's parameter tree, without having a
-drive in front of them. Extremely simplified — the design goal is "feel
-of using a drive keypad," not "accurate simulation of a specific
-manufacturer's product."
+**Tie-back to load piping landed correctly.** The original forward-
+link from `load-piping.html:155` was a `<a href="/education/
+vfds.html">variable-speed pump</a>` reference; the new page's
+closing section pays it off explicitly with the inverse framing
+("on load piping we set up the variable-flow picture from the load
+side ... this page is the pump side of that picture"). User chose
+"both opening hook + closing payoff" during scoping; the opening
+hero paragraph anchors the page in load-piping's setup and the
+closing section ties off the loop.
 
-Scope discipline (this matters — VFD tools can balloon fast):
-- ~10–15 parameters total, organized into 3–4 groups.
-- Generic interface, not modeled on any specific manufacturer's
-  keypad. The site's value here is the cross-manufacturer pattern;
-  anyone wanting to learn a specific drive's actual keypad should
-  use that manufacturer's simulator (most have free ones).
-- "Motor response" is minimal: commanded Hz vs. actual Hz with a
-  simple linear ramp using the accel/decel parameter values. No V/Hz
-  curve, no slip compensation, no current limit, no real motor model.
-  Just enough to make accel/decel parameters feel like they do
-  something.
-- Keypad has: up, down, enter, escape, run, stop, local/remote. Run
-  and stop respect the configured run-source parameter (won't run
-  from keypad if source is set to terminals — *that* is the
-  pedagogical point).
-- No fault simulation in v1. Maybe later as a "fault explorer" mode
-  if the tool gets used.
+**Run/speed source widget — interactive centerpiece.** A three-by-
+three matrix (three source values × three command surfaces). The
+user picks Run Source and Speed Source from dropdowns, then attempts
+a run from each of the three command surfaces (keypad RUN/STOP
+buttons, terminal DI Open/Closed toggle, network Send BACnet
+RUN/STOP). The status panel narrates which command was accepted and
+which was ignored. Same idiom as the PID-Basics mini-sims and the
+hydronic-loops twin-T injection-pump widget — interactive doesn't
+only live in Tools.
 
-**Resist scope creep.** This tool is not a drive engineering trainer.
-It's a parameter-tree navigation trainer. The moment it grows current
-limits, slip compensation, V/Hz curves, or vector-control parameters,
-it has stopped being useful for its actual audience and become a
-worse version of every manufacturer's free simulator. Goal is
-"feels like a drive keypad," not "replaces a drive keypad."
+**Fan animation — visual handle for "the drive is energising
+something."** Five-blade SVG fan in the widget status panel,
+clockwise rotation. Rate is proportional to the active speed
+reference (60 Hz ⇒ ~1 rev/sec); slider moves while running and the
+blades visibly speed up or slow down. Blades brighten from
+`--blue-cool` to `--blue` when the drive is running, matching the
+"active = blue, dim = blue-cool" palette used elsewhere. Honours
+`prefers-reduced-motion` (engine short-circuits; colour change
+still communicates state). Driven by `setInterval(40 ms)` writing
+the rotate transform attribute on the parent `<g>` — CSS-driven
+animation would have been simpler but changing animation-duration
+mid-animation makes the angle jump on every slider tick. Visual
+speed scale picked for *readability*, not realism — a real fan at
+60 Hz is invisibly fast; this animation tops out at 1 rev/sec
+because the goal is "you can see it spinning," not "this is
+accurate." Chosen as cube-law equipment to tie the visual to the
+energy-savings story higher up the page.
 
-**Future synergy.** The PID tuner already simulates a control loop;
-this tool simulates a VFD. Eventually a combined demo where the PID
-loop's output drives the VFD's frequency reference (pressure control
-sequence in action: PID controls duct static, output → VFD → fan
-speed) would tie a lot together. Not v1, possibly not v2 — but the
-two engines staying standalone keeps that door open.
+**Hidden anecdote — the "classic mistake" reveal.** Same Easter-egg
+pattern as the d3 widget's failure-state reveal on hydronic-loops.
+Trigger: configure run-source = TERMINALS and speed-source =
+NETWORK, then press "Send BACnet RUN" with the DI still open. The
+state stays STOPPED (correct behavior) and a `.vfd-w-anecdote`
+callout appears below with a war-story paragraph about losing an
+afternoon to exactly this configuration. Once revealed in a session
+it stays pinned — yanking it back on the next slider tweak would
+be petty.
+
+**Inputs and styling vocabulary.** Three source-select rows + a
+single speed-reference slider (labeled per the active speed source;
+single value, source-name follows the dropdown). Three command-
+surface rows below for keypad / terminals / network. Same `--surface
+-3` recessed background as the d3 widget. Status panel + reserved
+anecdote space at the bottom. CSS class prefix `vfd-w-` inline on
+the page.
+
+**Diagram CSS decision — defer the `.edu-svg` consolidation.** The
+load-piping friction entry flagged the third Education page with
+diagrams as the trigger to fold `.hd-svg` + `.lp-svg` into a shared
+`.edu-svg` rule. The VFDs page does have diagrams but they are
+*structurally different* — no pipes, no `data-flow`, no dashed-
+return override, no particle engine. A minimal `.vfd-svg` class
+inlined on the page does the job; folding it in with the pipe-
+diagram rules would import irrelevant baggage. The consolidation
+trigger now belongs to the *next pipe-flow Education page*, not
+just the next page with diagrams. Recorded so the rule reads
+correctly when someone next reaches for it.
+
+**Forward-link debts this page incurred:**
+- `[future: pump-control.html]` — referenced in the closing tie-
+  back as the natural follow-up for "how the BMS decides what speed
+  reference to send." The pump-control page, when it ships, should
+  tie back to VFDs for the parameter-surface context.
+- `/tools/vfd-mock.html` — explicit CTA at the end of the page,
+  paid off by the Mock VFD interface entry below.
+
+### Mock VFD interface — tool *(shipped 2026-05-15)*
+*One question: what does it feel like to navigate a drive's
+parameter tree from the keypad, and what gets ignored when the
+source parameters don't agree?*
+
+The friction-file scope discipline ("~10–15 parameters in 3–4
+groups, generic interface, minimal motor response, no faults in
+v1") held. Final shape: 13 parameters in 4 groups, generic
+keypad UI, linear-ramp motor model.
+
+**Layout — two-column on desktop, stacks on mobile.** Keypad +
+display on the left, motor response readouts + external inputs
+panel on the right. Parameter reference table sits below the
+simulator grid. Custom layout, not the `.tool-body-3col` Input/
+Output/Reference pattern — same precedent as the PID tuner page,
+which also keeps its own stacked layout for its simulator body.
+The 3-col pattern doesn't fit a keypad-driven tool any better
+than it fit a step-response simulator.
+
+**Display — hybrid LCD: light recessed panel with fixed 20×4
+character grid.** Site-on-brand palette (`--surface-3` recessed
+background, `--text-bright` mono text, hairline `--border`), but
+constrained to exactly 20 mono-character columns × 4 lines via a
+`width: 20ch` inner div and `white-space: pre`. The fixed grid
+forces drive-style brevity — "RATED VOLT" not "Rated voltage,"
+"SRC=TERMS" not "ignored because the run source parameter is set
+to TERMINALS." Same affordance a real drive's hardware LCD gives
+you. Dark-LCD aesthetic was offered but the on-brand recessed
+panel won the readability tradeoff while still feeling drive-y
+through the grid constraint.
+
+**Keypad — 7 buttons:** ▲ UP, ▼ DOWN, ↵ ENT, × ESC, ▶ RUN
+(styled in `--blue`), ■ STOP, ⇄ L/R (spans two columns to
+balance the 4-wide grid). Flat site-style chrome on the buttons
+themselves — the drive-keypad feel lives in the LCD grid and the
+layout, not in mimicking dark plastic. Real drives' STOP keys are
+red; the site's `--red` is reserved for fault/alarm state, so
+STOP stays on the neutral text colour. Mouse-clickable only;
+keyboard shortcuts would be nice but aren't in v1.
+
+**Parameter tree — 13 params × 4 groups:**
+- *Motor Data*: M01 Rated FLA, M02 Rated voltage, M03 Rated
+  frequency, M04 Rated speed (RPM)
+- *Ramps*: R01 Accel time, R02 Decel time
+- *Sources*: S01 Run command source (KEYPAD/TERMINALS/NETWORK),
+  S02 Speed reference source, S03 Minimum frequency, S04 Maximum
+  frequency
+- *I/O*: I01 Keypad speed setpoint, I02 Preset speed 1 (decorative
+  — exists for tree-navigation realism, not wired into the
+  simulation), I03 DI1 function
+
+Each parameter has a short `lcd` ALL-CAPS name (≤11 chars to fit
+the "EDIT PNN XYZ" header) and a long `name` for the reference
+table. Numerics carry `{ value, unit, step, min, max }`; enums
+carry `{ value: index, options: [labels] }`.
+
+**Motor model — linear ramp using R01/R02.** No V/Hz curve, no
+slip, no current limit. `state.actualHz` moves toward `target` at
+`rated_freq / accel_time` Hz/s when accelerating and `rated_freq /
+decel_time` Hz/s when decelerating. Tick every 50 ms. The friction
+file scope said "just enough to make accel/decel feel like they do
+something"; this matches that exactly. Resisted the temptation to
+add overcurrent, regen-brake, or torque limits.
+
+**LOCAL/REMOTE — universal override semantic.** LOCAL mode forces
+the drive to ignore both source parameters (S01 and S02) and run
+from the keypad: RUN starts it, STOP stops it, speed reference
+comes from I01. REMOTE is the default and is what the rest of the
+parameter tree actually configures. Pressing L/R drops both run
+latches (keypad and network) so the user doesn't get confused
+about "why is it still running?" after the override changes.
+
+**RUN/STOP/L-R always return to HOME.** A small UX fix discovered
+during smoke-testing: if the user pressed RUN while navigating a
+parameter menu, the IGNORED-flash overwrote the L/R indicator in
+the menu header. Cleaner fix: pressing an operate key (RUN, STOP,
+L/R) returns the navigation to HOME mode, so the flash lands on
+line 4 of the home screen where the user expects "what just
+happened" feedback. Real drives behave this way too.
+
+**Keypad STOP can't reach a hardwired DI.** Pressing keypad STOP
+clears the keypad-run and network-run latches but does not change
+the terminal DI state. If the drive is running because S01 =
+TERMINALS and the DI is closed, keypad STOP shows the flash
+"STOP IGN: DI HW" — you can't open a hardwired contact from the
+keypad. A small but real teaching point preserved in the model.
+
+**Preset chips — same idiom as the d3 widget and the VFDs
+Education-page widget.** Four `Try this:` links above the
+simulator pre-set the source parameters and LOCAL state to a
+named configuration: factory defaults (run=TERMINALS,
+speed=NETWORK, REMOTE), keypad commissioning (all KEYPAD, LOCAL),
+BAS auto (all NETWORK, REMOTE), the classic mistake (run=TERMS,
+speed=NETWORK, REMOTE).
+
+**External inputs panel — contextual visibility.** All three
+external surfaces are always present (terminal DI toggle, network
+RUN/STOP buttons, external speed slider), but the rows fade to
+35% opacity when the configured source parameters aren't
+listening to them. They remain operable — the external world is
+still asserting them — they're just not what the drive is acting
+on. Matches what a real installation looks like (you can keep
+toggling the DI even when the drive isn't using it; nothing
+unplugs).
+
+**Cube-law and pump-control content stays in the Education page,
+not here.** This tool is a parameter-tree navigation trainer.
+Adding cube-law demos or DP-setpoint reset sequences would push
+it back toward a drive-engineering trainer, which the friction
+file explicitly rejects.
+
+**Resist scope creep — validated.** v1 deliberately omitted:
+- Fault simulation (friction-file scope said v1 = no faults).
+- V/Hz curves, slip comp, current limits.
+- Multiple DIs, AIs, AO/DO assignment editing (one DI, one
+  external speed input).
+- Drive auto-tune.
+- Multi-protocol network simulation (one "network" button, not
+  separate BACnet vs. Modbus surfaces).
+- Keyboard shortcuts for the keypad (clickable buttons only).
+- Persistence (state resets on reload).
+
+Any of these can be revisited if the tool gets used and one
+specifically comes up as friction. Until then the friction-file
+"feels like a drive keypad, not replaces one" rule holds.
+
+**Future synergy** (preserved from the original planning entry).
+The PID tuner already simulates a control loop; this tool
+simulates a VFD. Eventually a combined demo where the PID loop's
+output drives the VFD's frequency reference (pressure control
+sequence: PID controls duct static, output → VFD frequency ref →
+fan speed) would tie a lot together. Not v1, not v2; the two
+engines staying standalone keeps that door open. If it happens,
+the integration point is `setExternalSpeedHz()` on the VFD mock
+and a new "external write" sink on the PID tuner.
 
 
 ### Refrigerant cycle — Education section, possibly with calculator

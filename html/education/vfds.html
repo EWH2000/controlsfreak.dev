@@ -185,6 +185,38 @@
         .vfd-w-msgs > div { padding-left: 0.85em; text-indent: -0.85em; }
         .vfd-w-msgs > div::before { content: "→ "; color: var(--text-dim); }
 
+        /* Fan animation — cube-law equipment as the visual indicator
+           that the drive is actually energising a motor. Five-blade
+           SVG fan rotating clockwise; rotation rate proportional to
+           the active speed reference (60 Hz ⇒ 1 rev/sec, scales
+           linearly down to a halt at 0 Hz). Blades brighten from
+           --blue-cool to --blue when the drive is running, matching
+           the existing "active = blue, dim = blue-cool" palette
+           elsewhere on the page. Honours prefers-reduced-motion. */
+        .vfd-w-status-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+        .vfd-w-fan {
+            flex-shrink: 0;
+            margin-top: 0.1rem;
+        }
+        .vfd-w-fan ellipse {
+            fill: var(--blue-cool);
+            transition: fill 0.25s;
+        }
+        .vfd-w-fan.spinning ellipse {
+            fill: var(--blue);
+        }
+        .vfd-w-status-text { flex: 1; min-width: 0; }
+        @media (prefers-reduced-motion: reduce) {
+            /* The JS engine short-circuits when reduced-motion is set,
+               so the blades stay at angle 0. The colour change still
+               communicates running vs stopped without movement. */
+            .vfd-w-fan-blades { transform: none !important; }
+        }
+
         /* Anecdote callout — same family as the d3 failure-state callout
            on hydronic-loops, so the "extreme-state reward" pattern reads
            consistently across the site. --blue left rule matches the
@@ -433,8 +465,34 @@
                 </div>
 
                 <div class="vfd-w-status">
-                    <div class="vfd-w-state" id="vfdState">STOPPED</div>
-                    <div class="vfd-w-msgs" id="vfdMsgs"></div>
+                    <div class="vfd-w-status-row">
+                        <!-- Fan: cube-law equipment as the visual handle for
+                             "the drive is energising a motor." Five blades on
+                             a rotating <g>, rotation driven by a small JS
+                             interval (see the IIFE below). Blades have their
+                             own rotate(N 50 50) transforms to splay them
+                             around the hub; the parent <g> picks up the
+                             time-varying rotate(angle 50 50) on top. Pure
+                             SVG transform attribute (not CSS) so the
+                             rotation origin behaves consistently across
+                             browsers. -->
+                        <svg class="vfd-w-fan" id="vfdWFan" viewBox="0 0 100 100" width="56" height="56" aria-hidden="true" role="img">
+                            <title>Motor fan</title>
+                            <circle cx="50" cy="50" r="46" fill="none" stroke="var(--border)" stroke-width="2"/>
+                            <g class="vfd-w-fan-blades" id="vfdWFanBlades">
+                                <ellipse cx="50" cy="22" rx="7" ry="22"/>
+                                <ellipse cx="50" cy="22" rx="7" ry="22" transform="rotate(72 50 50)"/>
+                                <ellipse cx="50" cy="22" rx="7" ry="22" transform="rotate(144 50 50)"/>
+                                <ellipse cx="50" cy="22" rx="7" ry="22" transform="rotate(216 50 50)"/>
+                                <ellipse cx="50" cy="22" rx="7" ry="22" transform="rotate(288 50 50)"/>
+                            </g>
+                            <circle cx="50" cy="50" r="5" fill="var(--text-dim)"/>
+                        </svg>
+                        <div class="vfd-w-status-text">
+                            <div class="vfd-w-state" id="vfdState">STOPPED</div>
+                            <div class="vfd-w-msgs" id="vfdMsgs"></div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="vfd-w-anecdote-wrap" id="vfdAnecdoteWrap"></div>
@@ -708,6 +766,8 @@
         const stateEl    = document.getElementById('vfdState');
         const msgsEl     = document.getElementById('vfdMsgs');
         const anecdoteEl = document.getElementById('vfdAnecdoteWrap');
+        const fanEl      = document.getElementById('vfdWFan');
+        const fanBlades  = document.getElementById('vfdWFanBlades');
         const tryKeypad  = document.getElementById('vfdTryKeypad');
         const tryNetwork = document.getElementById('vfdTryNetwork');
         const tryClassic = document.getElementById('vfdTryClassic');
@@ -782,6 +842,9 @@
             } else {
                 stateEl.textContent = 'STOPPED';
             }
+            // Fan colour tracks running state; rotation (driven by the
+            // interval below) only advances when running && speed > 0.
+            fanEl.classList.toggle('spinning', running && state.speedHz > 0);
 
             // Messages explaining the current state
             const msgs = [];
@@ -857,6 +920,35 @@
         tryKeypad.addEventListener('click',  function (e) { e.preventDefault(); applyPreset('keypad', 'keypad'); });
         tryNetwork.addEventListener('click', function (e) { e.preventDefault(); applyPreset('network', 'network'); });
         tryClassic.addEventListener('click', function (e) { e.preventDefault(); applyPreset('terminals', 'network'); });
+
+        // ── Fan rotation tick ──────────────────────────────────────────
+        // Independent from render() because the angle has to advance
+        // continuously, not just when state changes. 40 ms ≈ 25 fps,
+        // smooth enough for a slow-rotating fan without the rAF cost
+        // of full-frame rendering. Visual mapping: 60 Hz ⇒ 1 rev/sec
+        // (360 deg/sec) ⇒ 6 deg/sec per Hz. Slider all the way down
+        // (0 Hz) stops the blades regardless of run state. Honours
+        // prefers-reduced-motion by short-circuiting before the
+        // transform write.
+        const reducedMotion = window.matchMedia
+            && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (!reducedMotion) {
+            let fanAngle = 0;
+            let lastFanTick = Date.now();
+            setInterval(function () {
+                const now = Date.now();
+                const dt = (now - lastFanTick) / 1000;
+                lastFanTick = now;
+                if (isRunning() && state.speedHz > 0) {
+                    fanAngle = (fanAngle + 6 * state.speedHz * dt) % 360;
+                    fanBlades.setAttribute('transform', 'rotate(' + fanAngle.toFixed(1) + ' 50 50)');
+                }
+                // else: leave the blades at the last angle (they
+                // appear to coast to a halt visually because the
+                // motion stops abruptly but the user has already
+                // seen the run-state change).
+            }, 40);
+        }
 
         render();
     })();

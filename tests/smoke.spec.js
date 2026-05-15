@@ -14,6 +14,7 @@ const PAGES = [
     { name: 'bacnet/ip converter',    url: 'http://localhost:8000/tools/bacnet-ip-converter.html' },
     { name: 'psychrometric chart',    url: 'http://localhost:8000/tools/psychrometric-chart.html' },
     { name: 'thermistor calculator',  url: 'http://localhost:8000/tools/thermistor-calculator.html' },
+    { name: 'vfd mock',               url: 'http://localhost:8000/tools/vfd-mock.html' },
     { name: 'education hub',          url: 'http://localhost:8000/education/' },
     { name: 'education — pid basics',  url: 'http://localhost:8000/education/pid-basics.html' },
     { name: 'education — hydronic loops', url: 'http://localhost:8000/education/hydronic-loops.html' },
@@ -165,6 +166,25 @@ test('load piping page renders its four SVG schematics and ties back to the twin
     // the closing tie-back actually links back to the twin-T #d3 anchor
     const hrefs = await page.locator('main a').evaluateAll((els) => els.map((e) => e.getAttribute('href')));
     expect(hrefs).toContain('/education/hydronic-loops.html#d3');
+});
+
+test('vfd mock — run-source gating works from the keypad', async ({ page }) => {
+    await page.goto('http://localhost:8000/tools/vfd-mock.html');
+
+    // Default config is run-source=TERMINALS. Pressing keypad RUN should
+    // NOT start the drive; the LCD's line 4 should flash the ignore msg.
+    await page.click('#vfdmKeyRun');
+    await expect(page.locator('#vfdmStateText')).toHaveText(/STOPPED/);
+    const lcdLines = await page.locator('#vfdmLcd .vfdm-lcd-line').allTextContents();
+    expect(lcdLines[3]).toMatch(/IGN: SRC=TERMS/);
+
+    // L/R into LOCAL — keypad now overrides source params and RUN actually starts the drive.
+    await page.click('#vfdmKeyLocal');
+    await page.click('#vfdmKeyRun');
+    await page.waitForTimeout(300);  // let it ramp a bit
+    await expect(page.locator('#vfdmStateText')).toHaveText(/RAMPING UP|AT SPEED/);
+    const actHz = parseFloat(await page.locator('#vfdmActHz').textContent());
+    expect(actHz, 'drive should be ramping up in LOCAL mode').toBeGreaterThan(0);
 });
 
 test('vfds page renders its diagrams and the run/speed widget is wired up', async ({ page }) => {
