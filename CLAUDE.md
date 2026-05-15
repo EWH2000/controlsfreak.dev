@@ -283,11 +283,12 @@ cards (the roadmap). Live tools:
   widgets. **Balancing was deliberately scoped out** — forward-linked
   to a future balancing page rather than treated as a section here;
   see friction-file entry "Education page scope — one question per
-  page" for the rule. **Forward-link convention:** when prose
-  references a page that doesn't exist yet (e.g. VFDs, balancing), use
-  a normal `<a>` with `color: var(--accent)` and `href` to the future
-  path (`/education/vfds.html`); the friction file tracks the marker
-  as `[future: <page>]`. **Diverting-valve tee gotcha** (recorded in
+  page" for the rule. **Forward-link convention:** anchor only if
+  the target page exists today (e.g. `vfds.html` is linked from
+  `load-piping.html` because it shipped); if the target is still a
+  future page, write it as plain prose so a visitor doesn't click
+  into a 404. Either way, the friction file tracks the topic as
+  `[future: <page>]` so the breadcrumb survives. **Diverting-valve tee gotcha** (recorded in
   the friction file too): the horizontal where coil-out and bypass
   converge has to be drawn as TWO segments (`lp-3wd-coil-to-tee` left
   half, dashed/return, walks L→R; `lp-3wd-bypass-to-tee` right half,

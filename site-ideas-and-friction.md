@@ -448,7 +448,7 @@ thinking about whether that pattern should generalize (e.g. PID tuner
 saves last sliders, Modbus viewer remembers last register) before
 hardcoding localStorage just for this one tool.
 
-### Improvments and more pages for Education *(in progress — hydronic loops first)*
+### Improvements and more pages for Education *(in progress — hydronic loops first)*
 
 **Engine conventions.** When functionality benefits from a shared
 script (the PID simulator, the flow animation engine, future
@@ -503,8 +503,8 @@ keyed off `data-flow="supply"|"return"` attributes on each path; the
 static flow arrows stay on as the motion-off direction cue. The Twin-T
 section adds a small `<script>` for the injection-pump slider — not a
 rewrite. Anything new under `education/` keeps that habit: clean named
-groups, semantic ids, equipment as separately-targetable elements.the 
-dashed return is the static-state encoding; in the animated state the 
+groups, semantic ids, equipment as separately-targetable elements. The
+dashed return is the static-state encoding; in the animated state the
 engine drops the dashes and direction-of-motion carries the redundant cue.
 
 **Prose-above-diagrams convention** *(Education pages)*
@@ -883,10 +883,11 @@ for — and how do you know when it isn't?*
 
 Forward-referenced from `load-piping.html` (the three-way
 section's "even on a constant-flow setup, each load only sees
-its design flow if the loop is *balanced*" callout); the
-referent link points to `/education/balancing.html` and resolves
-to a 404 until this page ships. Scoped as a peer to the load-
-piping page, following the "one question per page" rule.
+its design flow if the loop is *balanced*" callout). The
+reference is plain prose — no live anchor — until the page
+ships, per the updated forward-link convention (anchor only if
+the target exists, plain text otherwise). Scoped as a peer to
+the load-piping page, following the "one question per page" rule.
 
 In scope (provisional):
 - Manual / calibrated balancing valves (CBVs / circuit setters)
@@ -1278,8 +1279,5 @@ worked-example uses a PID-named class. Two possible directions:
   a description. Cheapest today, cost compounds slowly.
 
 **Open** — not blocking anything; flag for a future restructure
-pass when the cleanup pace is rights for a rename.
+pass when the cleanup pace is right for a rename.
 
----
-
-*Last updated: started during brainstorming session, pre-coding.*

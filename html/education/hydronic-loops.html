@@ -183,7 +183,7 @@
         <div class="tool-body">
 
             <p style="font-size:1.0rem;line-height:1.85;color:var(--text);max-width:640px;margin-bottom:1.75rem;">
-                "Hydronic" systems uses water to transfer thermal energy throughout a building, we will be focousing on the heating side, as I understand boilers more than chillers, but many ideas transfer between the two. The equipment is the easy part. A boiler or chiller adds or removed heat from the water, pumps push it, coils take what they need. The part that trips people up is the <em>piping topology</em> — how the loops are arranged, and why. Get the topology and a wall of pumps and tees stops looking like spaghetti and starts looking like three or four moves repeated. Here are the three you'll meet most.
+                "Hydronic" systems use water to transfer thermal energy throughout a building. We'll focus on the heating side — I understand boilers more than chillers — but most of the ideas transfer to chilled water just the same. The equipment is the easy part: a boiler or chiller adds or removes heat from the water, pumps push it, coils take what they need. The part that trips people up is the <em>piping topology</em> — how the loops are arranged, and why. Get the topology and a wall of pumps and tees stops looking like spaghetti and starts looking like three or four moves repeated. Here are the three you'll meet most.
             </p>
 
             <!-- ───────────────── 1 · 2-Pipe Direct Return ───────────────── -->
@@ -395,8 +395,8 @@
                      data-flow-density="0.4" encodes the worked-example ratio (~40 GPM diverted into a ~100 GPM
                      system) so the bridge reads as visibly sparser than either loop — that's the pedagogical
                      point of twin-T, and the injection-pump slider will mutate this attribute live. -->
-                <line id="d3-inject-pipe" data-flow="supply" data-flow-density="0.4" x1="280" y1="150" x2="440" y2="150" stroke="var(--blue, #1577b8)" stroke-width="3"/>
-                <line id="d3-bridge-return" data-flow="return" data-flow-density="0.4" x1="440" y1="190" x2="280" y2="190" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="d3-inject-pipe" data-flow="supply" data-flow-density="0.2" x1="280" y1="150" x2="440" y2="150" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                <line id="d3-bridge-return" data-flow="return" data-flow-density="0.2" x1="440" y1="190" x2="280" y2="190" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
                 <!-- ── SYSTEM loop piping: supply main + risers solid --blue, return main + risers dashed --blue-cool ── -->
                 <path id="d3-system-supply" data-flow="supply" d="M440 250 V90 H760" fill="none" stroke="var(--blue, #1577b8)" stroke-width="3"/>
                 <line id="d3-loadA-supply" data-flow="supply" x1="540" y1="90" x2="540" y2="150" stroke="var(--blue, #1577b8)" stroke-width="3"/>
@@ -505,7 +505,7 @@
                 <div class="d3-w-temp">
                     <span>System supply temp:</span>
                     <span class="d3-w-temp-swatch" id="d3wSwatch"></span>
-                    <span class="d3-w-temp-value" id="d3wTemp">156.0 °F</span>
+                    <span class="d3-w-temp-value" id="d3wTemp">148.0 °F</span>
                 </div>
                 <div class="d3-w-alert" id="d3wAlert"></div>
             </div>
@@ -542,7 +542,7 @@
     (function () {
         const T_PRIMARY = 180;          // °F, fixed
         const T_RETURN  = 140;          // °F, fixed
-        const Q_SYSTEM  = 100;          // GPM, fixed
+        const Q_SYSTEM  = 200;          // GPM, fixed — matches the worked example above
         const DESIGN_HZ = 45;
         const DESIGN_Q  = 40;           // GPM at DESIGN_HZ (matches the worked example)
 
