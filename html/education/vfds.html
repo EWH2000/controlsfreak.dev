@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VFDs — controlsfreak.dev</title>
+    <meta name="description" content="Variable frequency drives in HVAC — what a VFD does, why drives are everywhere, and the run-command vs. speed-reference parameters every controls tech meets.">
+    <meta property="og:title" content="VFDs — controlsfreak.dev">
+    <meta property="og:description" content="Variable frequency drives in HVAC — what a VFD does, why drives are everywhere, and the run-command vs. speed-reference parameters every controls tech meets.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://controlsfreak.dev/education/vfds.html">
+    <meta property="og:image" content="https://controlsfreak.dev/assets/og-image.png">
+    <meta property="og:site_name" content="controlsfreak.dev">
+    <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon-180.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&family=Overpass:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/styles.css">
+    <style>
+        /* Page-specific — the block diagram + bypass schematic, and the
+           run/speed widget. Diagrams are structurally different from the
+           hydronic-loops / load-piping pipe diagrams (no supply/return,
+           no data-flow), so a fresh .vfd-svg class is defined here rather
+           than reusing .hd-svg / .lp-svg. When a future Education page
+           with pipe-flow diagrams ships, fold the three pipe-diagram
+           classes into a shared .edu-svg in styles.css; the block
+           diagram here would stay separate. */
+        .vfd-svg {
+            display: block;
+            width: 100%;
+            height: auto;
+            max-width: 720px;
+            margin: 1.5rem auto;
+        }
+
+        /* Run/speed source widget — recessed surface like the d3 widget on
+           hydronic-loops, vocabulary borrowed from the 3-col tools'
+           reference panel. The two source selects sit on top; the speed
+           reference slider in the middle; three command-attempt rows
+           below (one per source); status panel at the bottom narrates
+           which command was accepted and why. */
+        .vfd-widget {
+            margin-top: 1.25rem;
+            padding: 1.1rem 1.25rem;
+            background: var(--surface-3);
+            border: 1px solid var(--border);
+            border-radius: 3px;
+        }
+        .vfd-w-try {
+            font-family: var(--mono);
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            margin-bottom: 0.85rem;
+            line-height: 1.7;
+        }
+        .vfd-w-try .lbl { letter-spacing: 0.05em; text-transform: uppercase; margin-right: 0.6rem; }
+        .vfd-w-try a {
+            color: var(--accent);
+            text-decoration: none;
+            margin-right: 0.85rem;
+            cursor: pointer;
+            border-bottom: 1px dashed var(--accent-dim);
+        }
+        .vfd-w-try a:hover { color: var(--text-bright); border-bottom-color: var(--accent); }
+
+        .vfd-w-sources {
+            display: grid;
+            grid-template-columns: 9.5rem 1fr;
+            gap: 0.55rem 1rem;
+            align-items: center;
+            margin-bottom: 0.85rem;
+        }
+        .vfd-w-sources label {
+            font-family: var(--mono);
+            font-size: 0.68rem;
+            color: var(--text-dim);
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+        .vfd-widget select {
+            width: auto;
+            padding: 0.4rem 0.7rem;
+            font-size: 0.82rem;
+            min-width: 11rem;
+        }
+
+        .vfd-w-section {
+            margin-top: 1rem;
+            padding-top: 0.85rem;
+            border-top: 1px solid var(--border-faint, rgba(0,0,0,0.07));
+        }
+        .vfd-w-section-label {
+            font-family: var(--mono);
+            font-size: 0.62rem;
+            color: var(--text-dim);
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+        }
+
+        .vfd-w-slider-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            font-family: var(--mono);
+            font-size: 0.72rem;
+            color: var(--text-dim);
+            margin-bottom: 0.1rem;
+        }
+        .vfd-w-slider-head .v {
+            color: var(--blue);
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+        .vfd-w-slider { width: 100%; margin: 0.15rem 0 0.4rem; }
+
+        .vfd-w-cmd-row {
+            display: grid;
+            grid-template-columns: 6rem 1fr;
+            align-items: center;
+            gap: 0.4rem 0.85rem;
+            margin-bottom: 0.5rem;
+        }
+        .vfd-w-cmd-row .src {
+            font-family: var(--mono);
+            font-size: 0.68rem;
+            color: var(--text-dim);
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+        .vfd-w-cmd-row .ctrls { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; }
+        .vfd-w-btn {
+            font-family: var(--mono);
+            font-size: 0.74rem;
+            padding: 0.32rem 0.7rem;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--text);
+            cursor: pointer;
+            border-radius: 3px;
+            transition: border-color 0.15s, color 0.15s;
+        }
+        .vfd-w-btn:hover { border-color: var(--accent); color: var(--text-bright); }
+        .vfd-w-btn.armed { border-color: var(--blue); color: var(--blue); }
+        .vfd-w-di {
+            display: inline-flex;
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            overflow: hidden;
+            font-family: var(--mono);
+            font-size: 0.74rem;
+        }
+        .vfd-w-di button {
+            background: var(--surface);
+            border: 0;
+            color: var(--text-dim);
+            padding: 0.3rem 0.75rem;
+            cursor: pointer;
+        }
+        .vfd-w-di button + button { border-left: 1px solid var(--border); }
+        .vfd-w-di button.on { background: var(--blue); color: var(--surface); }
+
+        .vfd-w-status {
+            margin-top: 1rem;
+            padding: 0.85rem 1rem;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 3px;
+        }
+        .vfd-w-state {
+            font-family: var(--mono);
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-bright);
+            margin-bottom: 0.45rem;
+        }
+        .vfd-w-state.running { color: var(--blue); }
+        .vfd-w-state .hz { font-size: 0.78em; color: var(--text-dim); font-weight: 500; margin-left: 0.25rem; }
+        .vfd-w-msgs {
+            font-size: 0.8rem;
+            line-height: 1.7;
+            color: var(--text-dim);
+        }
+        .vfd-w-msgs > div { padding-left: 0.85em; text-indent: -0.85em; }
+        .vfd-w-msgs > div::before { content: "→ "; color: var(--text-dim); }
+
+        /* Anecdote callout — same family as the d3 failure-state callout
+           on hydronic-loops, so the "extreme-state reward" pattern reads
+           consistently across the site. --blue left rule matches the
+           informational tone (the user has found something interesting,
+           not broken anything). Vertical space reserved by min-height
+           on the parent so toggling doesn't reflow the page below. */
+        .vfd-w-anecdote-wrap { min-height: 1.5rem; margin-top: 0.6rem; }
+        .vfd-w-anecdote {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-left: 4px solid var(--blue);
+            border-radius: 3px;
+            padding: 0.75rem 1rem;
+            font-size: 0.86rem;
+            line-height: 1.7;
+            color: var(--text);
+        }
+
+        /* Cube-law numbers callout — re-uses .pid-term styling (per the
+           friction-file note that .pid-term is now functionally a
+           "styled aside" class) but inlines a small numbers grid. */
+        .vfd-cube-numbers {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
+            gap: 0.5rem 1.25rem;
+            margin-top: 0.6rem;
+            font-family: var(--mono);
+            font-size: 0.82rem;
+        }
+        .vfd-cube-numbers div .pct { color: var(--text-dim); font-size: 0.7rem; letter-spacing: 0.05em; text-transform: uppercase; display: block; margin-bottom: 0.1rem; }
+        .vfd-cube-numbers div .val { color: var(--blue); font-weight: 600; font-size: 0.95rem; }
+    </style>
+</head>
+<body>
+
+<nav class="site-nav">
+    <a class="site-nav-brand" href="/">controlsfreak<span>.dev</span></a>
+    <div class="site-nav-links">
+        <a href="/">Home</a>
+        <a href="/tools/">Tools</a>
+        <a href="/education/" class="active">Education</a>
+        <a href="/contact.html">Contact</a>
+    </div>
+</nav>
+
+<main>
+
+    <div class="section-header">
+        <span class="section-label">Education · VFDs</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <div class="tool-card-title">VFDs — Variable Frequency Drives <span class="tool-tag">Drives</span></div>
+        </div>
+        <div class="tool-body">
+
+            <p style="font-size:1.0rem;line-height:1.85;color:var(--text);max-width:680px;margin-bottom:1.75rem;">
+                On the <a href="/education/load-piping.html" style="color:var(--accent);">load piping</a> lesson we said variable-flow systems need a pump that can vary too — and forward-pointed to "the VFDs lesson" for what that pump actually is. This is that page. A <em>variable frequency drive</em> is the box between the line voltage and a motor that lets the motor run at any speed you ask for. It's also the box every controls tech ends up writing to from the BMS, and the box where half the "why won't this thing run" service calls trace back to a single misconfigured parameter. We'll cover both ends — what a VFD is, and what the controls-tech-facing surface of it looks like once it's on a network.
+            </p>
+
+            <!-- ───────────────── 1 · What a VFD Is ───────────────── -->
+            <div class="subhead">What a VFD Is</div>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);">
+                A drive takes fixed-frequency AC line power (60 Hz in the U.S., 50 Hz most everywhere else) and converts it to AC at whatever frequency the controller asks for. Lower frequency, slower motor; higher frequency, faster motor. Three stages, in order:
+            </p>
+
+            <!-- Block diagram. Pure labeled-boxes form (no waveforms) — trusts the prose to carry
+                 'what variable frequency means.' Coordinates are deliberately arithmetic: four
+                 130-wide blocks separated by 40-wide arrow gaps, output label spilling out the
+                 right end. -->
+            <svg class="vfd-svg" viewBox="0 0 720 220" role="img" aria-labelledby="vfd-bd-title vfd-bd-desc"
+                 font-family="var(--mono, 'IBM Plex Mono', monospace)">
+                <title id="vfd-bd-title">VFD block diagram</title>
+                <desc id="vfd-bd-desc">Four labeled boxes in a row connected by arrows, reading left to right: AC IN at fixed 60 Hz, a Rectifier stage that converts AC to DC, a DC Bus that smooths and stores the DC, and an Inverter that switches the DC back into AC at a frequency the controller chooses. An arrow leaves the right side of the Inverter and ends at the label "AC OUT (variable)."</desc>
+
+                <!-- AC IN -->
+                <g id="vfd-bd-acin">
+                    <rect x="20" y="60" width="120" height="70" rx="2" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                    <text x="80" y="92" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text-bright, #1d251f)">AC IN</text>
+                    <text x="80" y="111" text-anchor="middle" font-size="10" fill="var(--text, #38423a)">60 Hz · fixed</text>
+                </g>
+
+                <!-- arrow -->
+                <line x1="140" y1="95" x2="170" y2="95" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                <polygon points="170,90 178,95 170,100" fill="var(--text-dim, #666e66)"/>
+
+                <!-- RECTIFIER -->
+                <g id="vfd-bd-rect">
+                    <rect x="180" y="60" width="140" height="70" rx="2" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                    <text x="250" y="92" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text-bright, #1d251f)">RECTIFIER</text>
+                    <text x="250" y="111" text-anchor="middle" font-size="10" fill="var(--text, #38423a)">AC → DC</text>
+                </g>
+
+                <line x1="320" y1="95" x2="350" y2="95" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                <polygon points="350,90 358,95 350,100" fill="var(--text-dim, #666e66)"/>
+
+                <!-- DC BUS -->
+                <g id="vfd-bd-dcbus">
+                    <rect x="360" y="60" width="110" height="70" rx="2" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                    <text x="415" y="92" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text-bright, #1d251f)">DC BUS</text>
+                    <text x="415" y="111" text-anchor="middle" font-size="10" fill="var(--text, #38423a)">smoothed</text>
+                </g>
+
+                <line x1="470" y1="95" x2="500" y2="95" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                <polygon points="500,90 508,95 500,100" fill="var(--text-dim, #666e66)"/>
+
+                <!-- INVERTER -->
+                <g id="vfd-bd-inv">
+                    <rect x="510" y="60" width="140" height="70" rx="2" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                    <text x="580" y="92" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text-bright, #1d251f)">INVERTER</text>
+                    <text x="580" y="111" text-anchor="middle" font-size="10" fill="var(--text, #38423a)">DC → AC (variable)</text>
+                </g>
+
+                <line x1="650" y1="95" x2="685" y2="95" stroke="var(--blue, #1577b8)" stroke-width="2"/>
+                <polygon points="685,90 693,95 685,100" fill="var(--blue, #1577b8)"/>
+                <text x="610" y="155" text-anchor="middle" font-size="11" font-style="italic" fill="var(--text-dim, #666e66)">→ AC OUT (variable freq)</text>
+
+                <!-- bottom annotation -->
+                <text x="360" y="190" text-anchor="middle" font-size="10" font-style="italic" fill="var(--text-dim, #666e66)">power flows left to right · the inverter's switching frequency is the part you control</text>
+            </svg>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:0.5rem;">
+                Inside the drive that's a wall of insulated-gate bipolar transistors (IGBTs) switching the DC bus on and off thousands of times a second to synthesise a sine-shaped output. From a controls perspective none of that matters. What matters is the surface above it — the parameters that decide what frequency the inverter outputs, when it's allowed to run, and where it gets its commands from. That's where every "configure the drive" task lives, and it's the rest of this page.
+            </p>
+
+            <!-- ───────────────── 2 · Why Drives Are Everywhere ───────────────── -->
+            <div class="subhead">Why Drives Are Everywhere — The Cube Law</div>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);">
+                Walk through any modern mechanical room and you'll see drives on the pumps, on the fans, sometimes on the compressors. Forty years ago the same equipment ran at one speed and dumped whatever it didn't need through bypass dampers, three-way valves, or vanes. The reason that changed isn't comfort or controllability (those are nice side effects). It's <em>energy</em>, and the math is short.
+            </p>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:1.25rem;">
+                For centrifugal equipment — fans, pumps, most compressors — the power required scales roughly as the <em>cube</em> of the speed. Drop the speed to 80%, the power isn't 80% of design; it's 0.8³ ≈ <strong>51%</strong>. Drop it to 50% and the power's down to 0.5³ ≈ <strong>13%</strong>. You don't need that many minutes a day at part load before the drive pays for itself on the electric bill.
+            </p>
+
+            <div class="pid-term" style="margin-top:1rem;">
+                <h4>Cube law — power vs. speed on centrifugal loads</h4>
+                <div class="vfd-cube-numbers">
+                    <div><span class="pct">100% speed</span><span class="val">100% power</span></div>
+                    <div><span class="pct">80% speed</span><span class="val">~51% power</span></div>
+                    <div><span class="pct">70% speed</span><span class="val">~34% power</span></div>
+                    <div><span class="pct">50% speed</span><span class="val">~13% power</span></div>
+                    <div><span class="pct">30% speed</span><span class="val">~3% power</span></div>
+                </div>
+                <p style="margin-top:0.7rem;color:var(--text-dim);">Real drives lose a few points to inverter and motor inefficiency, especially at very low speed, so don't expect the numbers above on the meter — but the shape of the curve is what's selling the drive.</p>
+            </div>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:1.25rem;">
+                That's why a building with variable-flow pumping (every load <a href="/education/load-piping.html" style="color:var(--accent);">piped two-way</a>) almost always pairs with a VFD on the system pump — at part load you want the pump to slow down with the building, not push the same volume around all day. Same story on the air side: VAV systems with a VFD on the supply fan ramp down with the boxes, and the fan's the biggest energy hog on the unit. Cube law is the why; the rest of this page is the how.
+            </p>
+
+            <!-- ───────────────── 3 · Run Command vs. Speed Reference — THE WIDGET ───────────────── -->
+            <div class="subhead">Run Command vs. Speed Reference — The Two Things You're Doing</div>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);">
+                Here's the thing that catches more techs than anything else about drives. To make a VFD run a motor, you're actually giving it <em>two</em> commands, not one — and each command has its own source parameter, configured independently in the drive. The two are:
+            </p>
+
+            <ul style="font-size:0.95rem;line-height:1.85;color:var(--text);margin:0.5rem 0 1rem 1.5rem;">
+                <li><strong>Run command</strong> — should the drive be running right now? On/off, start/stop. Sourced from one of: the drive's <em>keypad</em>, a hardwired <em>digital input</em> on the terminal strip, or a write over the <em>network</em> (BACnet, Modbus, etc.).</li>
+                <li><strong>Speed reference</strong> — if you <em>are</em> running, how fast? An analog value (Hz, RPM, %), sourced independently from one of the same three places: keypad, an <em>analog input</em> on the terminal strip (usually 4–20 mA), or a network write.</li>
+            </ul>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);">
+                The mistake — and it's a common one — is treating these as one thing. You set up the speed reference to come from BACnet, the BMS is happily writing 30 Hz to the speed-reference AV, and the drive doesn't run. Why? Because the <em>run-source</em> parameter is still set to "terminals" from the factory, and there's no digital-input run signal wired up. Two parameters; you only changed one.
+            </p>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:1.25rem;">
+                Try it. The widget below is a tiny mock drive that respects whatever you set the run and speed sources to. Pick a configuration, then try to start it from each of the three command surfaces. The status panel tells you what it accepted and what it ignored.
+            </p>
+
+            <!-- Run/speed source widget — see inline <script> at the bottom of the page for the
+                 state machine. Single speed slider regardless of source (the value the active
+                 source is currently commanding); three command-attempt surfaces below; status
+                 panel narrates state. The "classic mistake" configuration (run=terminals,
+                 speed=network) reveals an inline anecdote when the user attempts a network RUN
+                 against an open DI — matches the d3 widget's failure-state reward pattern on
+                 hydronic-loops. -->
+            <div class="vfd-widget" id="vfdWidget">
+                <div class="vfd-w-try">
+                    <span class="lbl">Try this:</span>
+                    <a id="vfdTryKeypad">all keypad (commissioning)</a>
+                    <a id="vfdTryNetwork">all network (BMS auto)</a>
+                    <a id="vfdTryClassic">the classic mistake</a>
+                </div>
+
+                <div class="vfd-w-sources">
+                    <label for="vfdRunSrc">Run source</label>
+                    <select id="vfdRunSrc" aria-label="Run command source">
+                        <option value="keypad">Keypad (front-panel buttons)</option>
+                        <option value="terminals" selected>Terminals (digital input)</option>
+                        <option value="network">Network (BACnet / Modbus)</option>
+                    </select>
+
+                    <label for="vfdSpdSrc">Speed source</label>
+                    <select id="vfdSpdSrc" aria-label="Speed reference source">
+                        <option value="keypad">Keypad (front-panel buttons)</option>
+                        <option value="terminals">Terminals (4–20 mA AI)</option>
+                        <option value="network" selected>Network (BACnet / Modbus)</option>
+                    </select>
+                </div>
+
+                <div class="vfd-w-section">
+                    <div class="vfd-w-section-label">Speed reference (from <span id="vfdSpdSrcName">network</span>)</div>
+                    <div class="vfd-w-slider-head">
+                        <span>0 Hz</span>
+                        <span class="v"><span id="vfdSpdVal">25</span> <span style="font-size:0.65em;color:var(--text-dim);font-weight:500;">Hz</span></span>
+                        <span>60 Hz</span>
+                    </div>
+                    <input class="vfd-w-slider" id="vfdSpdSlider" type="range" min="0" max="60" step="1" value="25" aria-label="Speed reference"/>
+                </div>
+
+                <div class="vfd-w-section">
+                    <div class="vfd-w-section-label">Try a run command</div>
+
+                    <div class="vfd-w-cmd-row">
+                        <span class="src">Keypad</span>
+                        <span class="ctrls">
+                            <button class="vfd-w-btn" id="vfdKpRun" type="button">▶ RUN</button>
+                            <button class="vfd-w-btn" id="vfdKpStop" type="button">■ STOP</button>
+                        </span>
+                    </div>
+
+                    <div class="vfd-w-cmd-row">
+                        <span class="src">Terminals</span>
+                        <span class="ctrls">
+                            <span style="font-family:var(--mono);font-size:0.7rem;color:var(--text-dim);">DI run:</span>
+                            <span class="vfd-w-di" role="group" aria-label="Digital input state">
+                                <button id="vfdDiOpen" type="button" class="on">Open</button>
+                                <button id="vfdDiClosed" type="button">Closed</button>
+                            </span>
+                        </span>
+                    </div>
+
+                    <div class="vfd-w-cmd-row">
+                        <span class="src">Network</span>
+                        <span class="ctrls">
+                            <button class="vfd-w-btn" id="vfdNetRun" type="button">Send BACnet RUN</button>
+                            <button class="vfd-w-btn" id="vfdNetStop" type="button">Send BACnet STOP</button>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="vfd-w-status">
+                    <div class="vfd-w-state" id="vfdState">STOPPED</div>
+                    <div class="vfd-w-msgs" id="vfdMsgs"></div>
+                </div>
+
+                <div class="vfd-w-anecdote-wrap" id="vfdAnecdoteWrap"></div>
+            </div>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:1.25rem;">
+                The takeaway every drive-shaped thing on a job site shares: <em>setting the speed reference is necessary, not sufficient.</em> If the run command isn't coming from the same place you expect it to, the drive will sit there ignoring you no matter how clean your BACnet write is. When troubleshooting a drive that "won't run from the BMS," the first two parameters to check are <em>both</em> source parameters — not one.
+            </p>
+
+            <!-- ───────────────── 4 · Parameter Groups ───────────────── -->
+            <div class="subhead">The Parameter Groups Every Drive Has</div>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);">
+                Every manufacturer organises parameters differently — ABB calls them parameter numbers, Yaskawa calls them Pn-codes, Danfoss uses three-level menus — but the <em>categories</em> the parameters fall into are basically the same across the industry. If you can name the categories, you can find what you need to change on any drive without reading the whole manual cover to cover. Six groups; everything you'll touch lives in one of them.
+            </p>
+
+            <div class="pid-terms" style="margin-top:1.25rem;">
+                <div class="pid-term">
+                    <h4>Motor data <span>· nameplate</span></h4>
+                    <p>Whatever's printed on the motor's nameplate, copied into the drive: <em>full-load amps (FLA), rated voltage, rated frequency, rated speed (RPM)</em>, sometimes motor type and power factor. The drive uses this to size its current limit and run an auto-tune that builds its internal model of the motor. Get this wrong and the drive either trips on overcurrent at modest loads or quietly cooks the motor. First thing entered when commissioning a new drive; rarely touched again.</p>
+                </div>
+                <div class="pid-term">
+                    <h4>Ramps <span>· accel / decel</span></h4>
+                    <p>How long the drive takes to ramp from 0 Hz to rated frequency on a start (<em>accel time</em>) and back down on a stop (<em>decel time</em>). Seconds. Sometimes a ramp <em>shape</em> parameter too (linear vs. S-curve) to ease mechanical shock. Too fast and you trip on overcurrent during accel or on overvoltage during decel (the motor regenerates back into the DC bus); too slow and the building feels sluggish or the sequence times out. Tune at startup; touch them again only if something complains.</p>
+                </div>
+                <div class="pid-term">
+                    <h4>References &amp; sources <span>· what speed, from where</span></h4>
+                    <p>The <em>speed-reference source</em> parameter (keypad / terminals / network / one of several presets), plus the bounds the reference is allowed to take: <em>minimum frequency, maximum frequency</em>, preset speeds, and the scaling that maps a 4–20 mA AI to a Hz range. Half the time a drive isn't ramping where you expect, this group is where the answer lives.</p>
+                </div>
+                <div class="pid-term">
+                    <h4>Run/stop sources <span>· start command</span></h4>
+                    <p>The <em>run-command source</em> parameter, independent from the speed source above. Choices are the same set (keypad / terminals / network), but the parameter is separate. Sometimes a 2-wire vs. 3-wire distinction (maintained DI for run vs. momentary start/stop), jog enables, and a forward/reverse selection. Touch this in commissioning to flip a drive over from "keypad bench-tested" to "running from the BMS."</p>
+                </div>
+                <div class="pid-term">
+                    <h4>I/O configuration <span>· what each terminal does</span></h4>
+                    <p>The drive's physical inputs and outputs are <em>software-assignable</em>. A digital input can be a run command, a fault reset, a jog enable, or a preset-speed select; an analog input can be the speed reference or a feedback channel; a digital output can signal "drive running," "fault active," or "at speed." This group is the map from physical terminal to logical function. Read it before wiring anything; verify it after.</p>
+                </div>
+                <div class="pid-term">
+                    <h4>Faults &amp; protection <span>· what to do when it trips</span></h4>
+                    <p>The <em>fault history</em> (the last N trips, with timestamps and the operating state at trip), plus the protective behaviour: <em>auto-reset enable</em>, auto-reset count and timeout, fault-output relay assignment, undervoltage ride-through, current-limit setting. Auto-reset is the parameter the maintenance crew turns on after they get tired of resetting drives, and that the controls tech turns off after they get tired of finding the same root cause re-tripping unnoticed.</p>
+                </div>
+            </div>
+
+            <!-- ───────────────── 5 · Network Integration ───────────────── -->
+            <div class="subhead">Network Integration — Where Controls People Meet the Drive</div>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);">
+                The keypad on the front of the drive is for commissioning and panel-front diagnostics; in production the drive lives on a network and talks to the BMS over one of three protocols. Same three you'll meet anywhere else in the building, with the usual physical-layer tradeoffs.
+            </p>
+
+            <table class="ref-table" style="margin-top:1.25rem;">
+                <thead>
+                    <tr><th>Protocol</th><th>Physical</th><th>Speed</th><th>Typical use</th></tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Modbus RTU</td>
+                        <td>RS-485, twisted pair, daisy-chained</td>
+                        <td>9600 – 115200 baud</td>
+                        <td>Older drives, retrofits, plant equipment with no BACnet option. Simple, well-supported.</td>
+                    </tr>
+                    <tr>
+                        <td>BACnet MS/TP</td>
+                        <td>RS-485, twisted pair, daisy-chained</td>
+                        <td>9600 – 76800 baud</td>
+                        <td>Drives on a dedicated MS/TP trunk under a BMS field controller. Same wire as Modbus RTU; different protocol.</td>
+                    </tr>
+                    <tr>
+                        <td>BACnet/IP</td>
+                        <td>Ethernet, twisted pair or fibre</td>
+                        <td>10 / 100 / 1000 Mbps</td>
+                        <td>Drives with a built-in or add-on Ethernet card; routed alongside the rest of the BMS. Modern default on new gear.</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:1.25rem;">
+                What the BMS actually reads and writes is consistent across protocols, even when the addressing isn't. The four points worth knowing about on every drive:
+            </p>
+
+            <ul style="font-size:0.95rem;line-height:1.85;color:var(--text);margin:0.5rem 0 1rem 1.5rem;">
+                <li><em>Run command</em> — a binary value the BMS writes. Setpoint, not feedback. (And only effective if the drive's run-source parameter is set to "network" — see the widget above.)</li>
+                <li><em>Speed reference</em> — an analog value the BMS writes, usually in Hz or as a percentage of rated frequency. Same caveat: only effective if the speed-source parameter points at the network.</li>
+                <li><em>Run status</em> — a binary the BMS reads back. <em>This is what tells you the drive actually started</em>; never trust the BMS's own "I just sent the run command" view of the world.</li>
+                <li><em>Actual frequency / current / fault code</em> — the analog and binary feedbacks. At minimum, the BMS should be logging actual Hz, motor current (an early indicator of mechanical trouble), and the active fault code if any.</li>
+            </ul>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);">
+                When you're pulling that hex address off an EBO BACnet/IP discovery and trying to make sense of it, the <a href="/tools/bacnet-ip-converter.html" style="color:var(--accent);">BACnet/IP converter</a> turns it into the dotted-decimal IP. If you're reaching for a Modbus register and need to see the bits, the <a href="/tools/modbus-register-viewer.html" style="color:var(--accent);">Modbus register viewer</a> lays a 16-bit word out for you.
+            </p>
+
+            <!-- ───────────────── 6 · Fault Codes ───────────────── -->
+            <div class="subhead">Fault Codes — The Conceptual Categories</div>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);">
+                Every manufacturer's fault-code list looks different and is far too long to memorise. What you <em>can</em> hold in your head is the five or six categories the codes fall into — because the root cause of a category is the same across manufacturers even when the code number isn't. A drive's fault history almost always tells you "an overcurrent happened"; what changes between brands is just which integer they call it.
+            </p>
+
+            <table class="ref-table" style="margin-top:1.25rem;">
+                <thead>
+                    <tr><th>Category</th><th>What's happening</th><th>Usual cause</th></tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Overcurrent</td>
+                        <td>Drive output current exceeded the limit, fast</td>
+                        <td>Short circuit, ground fault, locked rotor, accel ramp too steep, motor data wrong</td>
+                    </tr>
+                    <tr>
+                        <td>Overvoltage (DC bus)</td>
+                        <td>DC-bus voltage climbed above the trip threshold</td>
+                        <td>Decel ramp too steep (motor regenerating into the bus), incoming line voltage too high, brake resistor missing on a regenerative load</td>
+                    </tr>
+                    <tr>
+                        <td>Undervoltage (DC bus)</td>
+                        <td>DC-bus voltage sagged below the trip threshold</td>
+                        <td>Incoming line voltage low or dropped out, brownout, loose power connection, building voltage sag on a big motor start</td>
+                    </tr>
+                    <tr>
+                        <td>Ground fault</td>
+                        <td>Drive detected current leaking to ground</td>
+                        <td>Damaged motor cable, motor insulation breakdown, water in the conduit, wrong cable type on a long run</td>
+                    </tr>
+                    <tr>
+                        <td>Motor overload</td>
+                        <td>Drive's internal thermal model says the motor would overheat at this current, sustained</td>
+                        <td>Mechanical bind, clogged filter pushing a fan past its curve, undersized motor for the actual load</td>
+                    </tr>
+                    <tr>
+                        <td>Drive overtemp</td>
+                        <td>Heatsink or interior temperature exceeded threshold</td>
+                        <td>Cooling fan failed, filter blocked, enclosure airflow obstructed, ambient too hot</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:1.25rem;">
+                A drive that auto-resets through a fault every five minutes <em>is telling you something is still wrong</em>. Reading the fault category — not just clearing the alarm — is the difference between fixing the problem and burning the motor.
+            </p>
+
+            <!-- ───────────────── 7 · Bypass Arrangements ───────────────── -->
+            <div class="subhead">Bypass Arrangements</div>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);">
+                On critical loads — life-safety fans, primary chilled-water pumps, anything where a drive failure shouldn't drop the equipment — the panel often includes a <em>bypass</em>. The selector switch routes line power either through the drive or directly to the motor across the contacts of a second contactor. Three positions: <em>OFF</em>, <em>DRIVE</em> (normal — variable speed), <em>BYPASS</em> (across-the-line — full speed, no drive). When the drive faults, you flip to BYPASS and the equipment keeps running at 60 Hz while someone gets a replacement on order.
+            </p>
+
+            <!-- Bypass topology — two parallel paths from line to motor: top path through the drive,
+                 bottom path direct. Selector switch picks which path is energised. Same labeled-box
+                 conventions as the block diagram above. -->
+            <svg class="vfd-svg" viewBox="0 0 660 280" role="img" aria-labelledby="vfd-bp-title vfd-bp-desc"
+                 font-family="var(--mono, 'IBM Plex Mono', monospace)">
+                <title id="vfd-bp-title">Manual bypass arrangement</title>
+                <desc id="vfd-bp-desc">Line power on the left feeds into a selector switch with three positions: OFF, DRIVE, and BYPASS. In the DRIVE position the path goes through a drive box at the top and on to the motor; in the BYPASS position the path goes directly to the motor along the bottom, skipping the drive. The motor on the right is the same in either case; what changes is whether it sees a variable-frequency output from the drive or fixed 60 Hz line power.</desc>
+
+                <!-- LINE IN -->
+                <g id="vfd-bp-line">
+                    <rect x="20" y="115" width="100" height="55" rx="2" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                    <text x="70" y="142" text-anchor="middle" font-size="12" font-weight="600" fill="var(--text-bright, #1d251f)">LINE IN</text>
+                    <text x="70" y="158" text-anchor="middle" font-size="10" fill="var(--text, #38423a)">60 Hz</text>
+                </g>
+
+                <!-- common to selector -->
+                <line x1="120" y1="142" x2="180" y2="142" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+
+                <!-- SELECTOR SWITCH (drawn as a triangle pointing at the active path) -->
+                <g id="vfd-bp-selector">
+                    <circle cx="200" cy="142" r="20" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                    <!-- active "DRIVE" position: arm angled up toward drive path -->
+                    <line x1="200" y1="142" x2="216" y2="128" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                    <circle cx="216" cy="128" r="3" fill="var(--blue, #1577b8)"/>
+                    <text x="200" y="105" text-anchor="middle" font-size="10" font-weight="600" fill="var(--text-bright, #1d251f)">SELECTOR</text>
+                    <text x="200" y="195" text-anchor="middle" font-size="9" font-style="italic" fill="var(--text-dim, #666e66)">shown in DRIVE</text>
+                </g>
+
+                <!-- DRIVE path (top) -->
+                <line x1="220" y1="128" x2="270" y2="128" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                <line x1="270" y1="128" x2="270" y2="80" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                <line x1="270" y1="80" x2="350" y2="80" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                <g id="vfd-bp-drive">
+                    <rect x="350" y="50" width="120" height="60" rx="2" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                    <text x="410" y="78" text-anchor="middle" font-size="12" font-weight="600" fill="var(--text-bright, #1d251f)">DRIVE</text>
+                    <text x="410" y="94" text-anchor="middle" font-size="10" fill="var(--text, #38423a)">variable freq</text>
+                </g>
+                <line x1="470" y1="80" x2="520" y2="80" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                <line x1="520" y1="80" x2="520" y2="142" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+
+                <!-- BYPASS path (bottom) -->
+                <line x1="220" y1="156" x2="270" y2="156" stroke="var(--text-dim, #666e66)" stroke-width="2" stroke-dasharray="6 4"/>
+                <line x1="270" y1="156" x2="270" y2="220" stroke="var(--text-dim, #666e66)" stroke-width="2" stroke-dasharray="6 4"/>
+                <line x1="270" y1="220" x2="520" y2="220" stroke="var(--text-dim, #666e66)" stroke-width="2" stroke-dasharray="6 4"/>
+                <line x1="520" y1="220" x2="520" y2="172" stroke="var(--text-dim, #666e66)" stroke-width="2" stroke-dasharray="6 4"/>
+                <text x="395" y="215" text-anchor="middle" font-size="11" font-style="italic" fill="var(--text-dim, #666e66)">bypass · across-the-line (60 Hz)</text>
+
+                <!-- common to motor -->
+                <line x1="520" y1="142" x2="560" y2="142" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                <polygon points="560,137 568,142 560,147" fill="var(--text-dim, #666e66)"/>
+
+                <!-- MOTOR -->
+                <g id="vfd-bp-motor">
+                    <circle cx="605" cy="142" r="30" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                    <text x="605" y="138" text-anchor="middle" font-size="11" font-weight="600" fill="var(--text-bright, #1d251f)">M</text>
+                    <text x="605" y="155" text-anchor="middle" font-size="9" fill="var(--text, #38423a)">motor</text>
+                </g>
+
+                <!-- top context note -->
+                <text x="330" y="25" text-anchor="middle" font-size="11" font-style="italic" fill="var(--text-dim, #666e66)">Two paths in parallel; the selector picks which is energised</text>
+            </svg>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:0.5rem;">
+                Bypass is an electrical and operations topic more than a controls one — the BMS usually only sees a binary "in bypass" status feedback so the sequence can decide whether to keep modulating speed reference at a drive that isn't there. Worth knowing exists; not worth more than that on a controls-focused page.
+            </p>
+
+            <!-- ───────────────── Closing · Tie back to load piping ───────────────── -->
+            <div class="subhead">Tying It Back to Load Piping</div>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);">
+                On the <a href="/education/load-piping.html" style="color:var(--accent);">load-piping</a> lesson we set up the variable-flow picture from the load side: every coil is throttled by a two-way valve; the system pump should slow down as the loads close in. The VFD is the answer to the pump side of that picture. The system pump's BMS-facing surface is a run command and a speed reference — exactly the two parameters we just walked through — and the BMS modulates the speed reference to hold whatever variable the sequence cares about (usually a differential pressure across the loop, sometimes a return-temperature setpoint, occasionally a valve-position reset on the most-open valve).
+            </p>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:1.25rem;">
+                That last part — <em>how</em> the BMS decides what speed reference to send — is its own topic and deserves a dedicated page on pump curves, DP setpoint reset, and the sequence patterns built around them. <a href="/education/pump-control.html" style="color:var(--accent);">Pump control</a> will land here when it ships. Forward-link, breadcrumb dropped.
+            </p>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:1.25rem;">
+                And if you want to actually feel how the parameter tree on a real drive lays out — pressing up/down/enter/escape, finding the run-source parameter buried three menus deep, watching commanded Hz vs. actual Hz when you hit RUN — the <a href="/tools/vfd-mock.html" style="color:var(--accent);">mock VFD interface</a> is the next step. Same source-parameter pedagogy as the widget above, but with a keypad and a parameter tree to navigate.
+            </p>
+
+        </div>
+    </div>
+
+    <a class="back-link" href="/education/">← Back to Education</a>
+
+</main>
+
+<footer>
+    <span class="footer-text">controlsfreak.dev — open tools for controls engineers</span>
+    <span class="footer-text">v1.0 · 2026</span>
+</footer>
+
+<script>
+    // ── Run/speed source widget ──────────────────────────────────────
+    // Tiny state machine. Three independent run-command surfaces (keypad
+    // RUN/STOP, terminals DI Open/Closed, network RUN/STOP) each maintain
+    // their own latch; the active surface is whichever the runSource
+    // parameter points at. Same for speed source — but with only one
+    // slider that represents the active source's setpoint (one value of
+    // state, the source-name label changes per the dropdown). Anecdote
+    // reveal is gated on the user setting up the "classic mistake"
+    // configuration (run=terminals, speed=network) and attempting a
+    // network RUN with the DI open — i.e. the configuration that costs
+    // techs an afternoon in the field. Reserved space for the anecdote
+    // is allocated by .vfd-w-anecdote-wrap min-height so toggles don't
+    // reflow the page below.
+    (function () {
+        const SOURCES = ['keypad', 'terminals', 'network'];
+        const SOURCE_LABELS = { keypad: 'keypad', terminals: 'terminals (DI)', network: 'network' };
+
+        // — DOM
+        const runSrcEl   = document.getElementById('vfdRunSrc');
+        const spdSrcEl   = document.getElementById('vfdSpdSrc');
+        const spdSrcName = document.getElementById('vfdSpdSrcName');
+        const spdSlider  = document.getElementById('vfdSpdSlider');
+        const spdVal     = document.getElementById('vfdSpdVal');
+        const kpRun      = document.getElementById('vfdKpRun');
+        const kpStop     = document.getElementById('vfdKpStop');
+        const diOpen     = document.getElementById('vfdDiOpen');
+        const diClosed   = document.getElementById('vfdDiClosed');
+        const netRun     = document.getElementById('vfdNetRun');
+        const netStop    = document.getElementById('vfdNetStop');
+        const stateEl    = document.getElementById('vfdState');
+        const msgsEl     = document.getElementById('vfdMsgs');
+        const anecdoteEl = document.getElementById('vfdAnecdoteWrap');
+        const tryKeypad  = document.getElementById('vfdTryKeypad');
+        const tryNetwork = document.getElementById('vfdTryNetwork');
+        const tryClassic = document.getElementById('vfdTryClassic');
+
+        // — State
+        const state = {
+            runSource: 'terminals',
+            speedSource: 'network',
+            speedHz: 25,
+            kpLatch: false,        // keypad run latch (RUN pressed → true, STOP → false)
+            diClosed: false,       // terminals DI input state
+            netLatch: false,       // network run latch
+            lastAttempt: null,     // { source, verb } — most recent command attempt
+            anecdoteShown: false   // once revealed, keep it pinned this session
+        };
+
+        function isRunning() {
+            switch (state.runSource) {
+                case 'keypad':    return state.kpLatch;
+                case 'terminals': return state.diClosed;
+                case 'network':   return state.netLatch;
+            }
+            return false;
+        }
+
+        function attemptRun(source) {
+            state.lastAttempt = { source: source, verb: 'run' };
+            if (source === 'keypad')    state.kpLatch  = true;
+            if (source === 'network')   state.netLatch = true;
+            // DI Closed is a state, not a command — handled in attemptDi
+            render();
+        }
+        function attemptStop(source) {
+            state.lastAttempt = { source: source, verb: 'stop' };
+            if (source === 'keypad')  state.kpLatch  = false;
+            if (source === 'network') state.netLatch = false;
+            render();
+        }
+        function setDi(closed) {
+            state.diClosed = closed;
+            diOpen.classList.toggle('on', !closed);
+            diClosed.classList.toggle('on', closed);
+            state.lastAttempt = { source: 'terminals', verb: closed ? 'run' : 'stop' };
+            render();
+        }
+
+        function applyPreset(runSrc, spdSrc) {
+            state.runSource = runSrc;
+            state.speedSource = spdSrc;
+            runSrcEl.value = runSrc;
+            spdSrcEl.value = spdSrc;
+            // Reset latches so the preset starts from a clean stopped state
+            state.kpLatch = false;
+            state.netLatch = false;
+            state.diClosed = false;
+            state.lastAttempt = null;
+            state.anecdoteShown = false;
+            diOpen.classList.add('on');
+            diClosed.classList.remove('on');
+            render();
+        }
+
+        function render() {
+            // Speed slider label tracks the speed source
+            spdSrcName.textContent = SOURCE_LABELS[state.speedSource];
+            spdVal.textContent = state.speedHz;
+
+            const running = isRunning();
+            stateEl.classList.toggle('running', running);
+            if (running) {
+                stateEl.innerHTML = 'RUNNING <span class="hz">at ' + state.speedHz + ' Hz</span>';
+            } else {
+                stateEl.textContent = 'STOPPED';
+            }
+
+            // Messages explaining the current state
+            const msgs = [];
+            if (running) {
+                msgs.push('Run command from ' + SOURCE_LABELS[state.runSource] + '.');
+                msgs.push('Speed reference from ' + SOURCE_LABELS[state.speedSource] + '.');
+            } else {
+                // If the user just attempted a run from a source that isn't the
+                // configured run source, narrate the ignore
+                const a = state.lastAttempt;
+                if (a && a.verb === 'run' && a.source !== state.runSource) {
+                    msgs.push(
+                        'Drive ignored RUN from ' + SOURCE_LABELS[a.source] +
+                        ' — run source is set to ' + state.runSource.toUpperCase() + '.'
+                    );
+                }
+                // Always remind what would actually start the drive
+                if (state.runSource === 'keypad') {
+                    msgs.push('To start it: press keypad RUN.');
+                } else if (state.runSource === 'terminals') {
+                    msgs.push('To start it: close the DI run input.');
+                } else if (state.runSource === 'network') {
+                    msgs.push('To start it: send a network RUN command.');
+                }
+            }
+            msgsEl.innerHTML = msgs.map(function (m) { return '<div>' + m + '</div>'; }).join('');
+
+            // Anecdote reveal — gated on the "classic mistake" config + an
+            // attempted network RUN + DI open. Once shown, stay shown this
+            // session (the reader has earned it; pulling it back on the
+            // next slider tweak would be petty).
+            const a = state.lastAttempt;
+            const classicMistake =
+                state.runSource === 'terminals' &&
+                state.speedSource === 'network' &&
+                a && a.source === 'network' && a.verb === 'run' &&
+                !state.diClosed;
+            if (classicMistake) state.anecdoteShown = true;
+            if (state.anecdoteShown) {
+                anecdoteEl.innerHTML =
+                    '<div class="vfd-w-anecdote">' +
+                    'I lost half an afternoon to exactly this once. New chiller plant, drives on BACnet, ' +
+                    'I could see the speed reference writing through to 30 Hz on the device readout — and the drive ' +
+                    'sat there stopped. Spent an hour re-checking the sequence, the AV mapping, the network priority ' +
+                    'array. Finally pulled the manual and found the run-source parameter still set to terminals from ' +
+                    'the factory. The DI for run command was sitting open on terminal 7. Two parameters, not one.' +
+                    '</div>';
+            } else {
+                anecdoteEl.innerHTML = '';
+            }
+        }
+
+        // — Wiring
+        runSrcEl.addEventListener('change', function () {
+            state.runSource = runSrcEl.value;
+            state.lastAttempt = null;
+            render();
+        });
+        spdSrcEl.addEventListener('change', function () {
+            state.speedSource = spdSrcEl.value;
+            render();
+        });
+        spdSlider.addEventListener('input', function () {
+            state.speedHz = parseInt(spdSlider.value, 10);
+            render();
+        });
+        kpRun.addEventListener('click',  function () { attemptRun('keypad'); });
+        kpStop.addEventListener('click', function () { attemptStop('keypad'); });
+        diOpen.addEventListener('click',   function () { setDi(false); });
+        diClosed.addEventListener('click', function () { setDi(true); });
+        netRun.addEventListener('click',  function () { attemptRun('network'); });
+        netStop.addEventListener('click', function () { attemptStop('network'); });
+        tryKeypad.addEventListener('click',  function (e) { e.preventDefault(); applyPreset('keypad', 'keypad'); });
+        tryNetwork.addEventListener('click', function (e) { e.preventDefault(); applyPreset('network', 'network'); });
+        tryClassic.addEventListener('click', function (e) { e.preventDefault(); applyPreset('terminals', 'network'); });
+
+        render();
+    })();
+</script>
+
+</body>
+</html>

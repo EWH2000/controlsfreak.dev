@@ -18,6 +18,7 @@ const PAGES = [
     { name: 'education — pid basics',  url: 'http://localhost:8000/education/pid-basics.html' },
     { name: 'education — hydronic loops', url: 'http://localhost:8000/education/hydronic-loops.html' },
     { name: 'education — load piping', url: 'http://localhost:8000/education/load-piping.html' },
+    { name: 'education — vfds',       url: 'http://localhost:8000/education/vfds.html' },
     { name: 'contact',                url: 'http://localhost:8000/contact.html' },
 ];
 
@@ -127,6 +128,7 @@ test('education hub links to its pages', async ({ page }) => {
     expect(hrefs).toContain('/education/pid-basics.html');
     expect(hrefs).toContain('/education/hydronic-loops.html');
     expect(hrefs).toContain('/education/load-piping.html');
+    expect(hrefs).toContain('/education/vfds.html');
 });
 
 test('hydronic loops page renders its three SVG schematics', async ({ page }) => {
@@ -163,4 +165,31 @@ test('load piping page renders its four SVG schematics and ties back to the twin
     // the closing tie-back actually links back to the twin-T #d3 anchor
     const hrefs = await page.locator('main a').evaluateAll((els) => els.map((e) => e.getAttribute('href')));
     expect(hrefs).toContain('/education/hydronic-loops.html#d3');
+});
+
+test('vfds page renders its diagrams and the run/speed widget is wired up', async ({ page }) => {
+    await page.goto('http://localhost:8000/education/vfds.html');
+
+    // block diagram + bypass diagram are present
+    const svgs = page.locator('main svg.vfd-svg');
+    await expect(svgs).toHaveCount(2);
+    // named equipment groups present (the block-diagram stages and the bypass topology)
+    await expect(page.locator('#vfd-bd-rect')).toHaveCount(1);
+    await expect(page.locator('#vfd-bd-inv')).toHaveCount(1);
+    await expect(page.locator('#vfd-bp-drive')).toHaveCount(1);
+    await expect(page.locator('#vfd-bp-motor')).toHaveCount(1);
+
+    // widget initial state: terminals/network, DI open → STOPPED
+    await expect(page.locator('#vfdState')).toHaveText(/STOPPED/);
+
+    // pressing the network RUN with run-source=terminals shows the classic-mistake anecdote
+    await page.click('#vfdTryClassic');
+    await page.click('#vfdNetRun');
+    await expect(page.locator('#vfdState')).toHaveText(/STOPPED/);
+    await expect(page.locator('.vfd-w-anecdote')).toBeVisible();
+
+    // the all-network preset + a network RUN actually starts the drive
+    await page.click('#vfdTryNetwork');
+    await page.click('#vfdNetRun');
+    await expect(page.locator('#vfdState')).toHaveText(/RUNNING/);
 });
