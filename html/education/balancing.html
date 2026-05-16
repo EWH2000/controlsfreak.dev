@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hydronic Balancing — controlsfreak.dev</title>
+    <meta name="description" content="Getting design flow to every load in a hydronic system — calibrated balancing valves, automatic balancing valves, PICVs, and how to tell when the loop has fallen out of balance.">
+    <meta property="og:title" content="Hydronic Balancing — controlsfreak.dev">
+    <meta property="og:description" content="Getting design flow to every load in a hydronic system — calibrated balancing valves, automatic balancing valves, PICVs, and how to tell when the loop has fallen out of balance.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://controlsfreak.dev/education/balancing.html">
+    <meta property="og:image" content="https://controlsfreak.dev/assets/og-image.png">
+    <meta property="og:site_name" content="controlsfreak.dev">
+    <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon-180.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&family=Overpass:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/styles.css">
+    <script>(function(){try{var u=localStorage.getItem('cf_units');document.documentElement.dataset.units=u==='metric'?'metric':'us';}catch(e){}})();</script>
+    <style>
+        /* Page-specific — small inline valve symbols and widget chrome.
+           Pipe-flow riser diagram uses the shared .edu-svg rule from
+           styles.css; the per-valve symbol diagrams below are static
+           reference schematics (no data-flow, no animation) and get their
+           own light styling here. Widget vocabulary mirrors pump-control's
+           .pc-w-* — recessed --surface-3 panel, mono section labels, blue
+           readouts, --blue accent on bars, --red / --heat state colours. */
+
+        /* Per-valve symbol diagram — small inline schematic that sits
+           above each valve-section prose. Self-contained, no .edu-svg. */
+        .bal-valve-fig {
+            display: block;
+            margin: 0.5rem 0 1.1rem;
+            background: var(--surface-3);
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            padding: 0.65rem 0.85rem;
+        }
+        .bal-valve-fig svg {
+            display: block;
+            width: 100%;
+            height: auto;
+            max-width: 360px;
+            margin: 0 auto;
+        }
+        .bal-valve-fig .cap {
+            display: block;
+            font-family: var(--mono);
+            font-size: 0.66rem;
+            color: var(--text-dim);
+            text-align: center;
+            margin-top: 0.35rem;
+            line-height: 1.5;
+        }
+
+        /* Widget chrome — same recessed panel idiom as pump-control. */
+        .bal-widget {
+            margin-top: 1.25rem;
+            padding: 1.1rem 1.25rem;
+            background: var(--surface-3);
+            border: 1px solid var(--border);
+            border-radius: 3px;
+        }
+        .bal-w-section-label {
+            font-family: var(--mono);
+            font-size: 0.62rem;
+            color: var(--text-dim);
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin-bottom: 0.4rem;
+        }
+        .bal-w-slider-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            font-family: var(--mono);
+            font-size: 0.72rem;
+            color: var(--text-dim);
+            margin-bottom: 0.1rem;
+        }
+        .bal-w-slider-head .v {
+            color: var(--blue);
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+        .bal-w-slider { width: 100%; margin: 0.15rem 0 0.4rem; }
+        .bal-w-slider-foot {
+            display: flex;
+            justify-content: space-between;
+            font-family: var(--mono);
+            font-size: 0.6rem;
+            color: var(--text-dim);
+            letter-spacing: 0.05em;
+            margin-bottom: 1rem;
+        }
+        .bal-w-design-tick {
+            font-family: var(--mono);
+            font-size: 0.62rem;
+            color: var(--text-dim);
+            text-align: center;
+            margin-bottom: 0.85rem;
+        }
+        .bal-w-design-tick em {
+            color: var(--accent);
+            font-style: normal;
+            font-weight: 600;
+        }
+
+        /* Three-branch comparison block. Each branch is a row that lights
+           up per state via data-state on the container. Bar background is
+           the design-flow scale (full bar = 1.5× design); fill width is
+           current flow / max scale. */
+        .bal-w-branches {
+            display: grid;
+            gap: 0.6rem;
+        }
+        .bal-w-branch {
+            display: grid;
+            grid-template-columns: 4.5rem minmax(0, 1fr) 6rem;
+            gap: 0.85rem;
+            align-items: center;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            padding: 0.7rem 0.9rem;
+        }
+        .bal-w-bch-tag {
+            font-family: var(--mono);
+            font-size: 0.78rem;
+            font-weight: 600;
+            letter-spacing: 0.06em;
+            color: var(--text-bright);
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            padding: 0.3rem 0;
+            text-align: center;
+        }
+        .bal-w-bch-mid {
+            display: grid;
+            gap: 0.25rem;
+        }
+        .bal-w-bch-flow {
+            font-family: var(--mono);
+            font-size: 0.92rem;
+            font-weight: 600;
+            color: var(--blue);
+            line-height: 1;
+        }
+        .bal-w-bch-flow .pct {
+            color: var(--text-dim);
+            font-weight: 500;
+            font-size: 0.78em;
+            margin-left: 0.45rem;
+        }
+        .bal-w-bch-bar {
+            height: 6px;
+            background: var(--border-faint);
+            border-radius: 3px;
+            overflow: hidden;
+            position: relative;
+        }
+        .bal-w-bch-bar > span {
+            display: block;
+            height: 100%;
+            background: var(--blue);
+            transition: width 0.18s, background 0.25s;
+        }
+        /* Vertical tick on the bar at the design-flow position (66.7%
+           of the 0-150% scale). Pure-CSS line via ::after. */
+        .bal-w-bch-bar::after {
+            content: '';
+            position: absolute;
+            left: 66.6%;
+            top: -2px;
+            bottom: -2px;
+            width: 1px;
+            background: var(--text-dim);
+            opacity: 0.55;
+        }
+        .bal-w-bch-state {
+            font-family: var(--mono);
+            font-size: 0.72rem;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-align: center;
+            padding: 0.32rem 0;
+            border-radius: 3px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+        }
+        /* Per-state colour swap. Bar fill, state pill, branch border. */
+        .bal-w-branch[data-state="holding"] { border-color: var(--accent-dim); }
+        .bal-w-branch[data-state="holding"] .bal-w-bch-bar > span { background: var(--accent); }
+        .bal-w-branch[data-state="holding"] .bal-w-bch-state { color: var(--accent); border-color: var(--accent-dim); }
+        .bal-w-branch[data-state="starved"] { border-color: var(--red); }
+        .bal-w-branch[data-state="starved"] .bal-w-bch-bar > span { background: var(--red); }
+        .bal-w-branch[data-state="starved"] .bal-w-bch-state { color: var(--red); border-color: var(--red); }
+        .bal-w-branch[data-state="over"] { border-color: var(--heat); }
+        .bal-w-branch[data-state="over"] .bal-w-bch-bar > span { background: var(--heat); }
+        .bal-w-branch[data-state="over"] .bal-w-bch-state { color: var(--heat); border-color: var(--heat); }
+
+        @media (max-width: 560px) {
+            .bal-w-branch {
+                grid-template-columns: 4rem minmax(0, 1fr);
+                grid-template-areas:
+                    "tag mid"
+                    "state state";
+                gap: 0.55rem;
+            }
+            .bal-w-bch-tag { grid-area: tag; }
+            .bal-w-bch-mid { grid-area: mid; }
+            .bal-w-bch-state { grid-area: state; }
+        }
+
+        /* Anecdote callout — same family as the d3 / pump-control / vfds
+           extreme-state reveals. min-height reserves vertical space so the
+           reveal doesn't reflow the page below. */
+        .bal-w-anecdote-wrap { min-height: 1rem; margin-top: 0.9rem; }
+        .bal-w-anecdote {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-left: 4px solid var(--red);
+            border-radius: 3px;
+            padding: 0.75rem 1rem;
+            font-size: 0.86rem;
+            line-height: 1.7;
+            color: var(--text);
+        }
+        .bal-w-anecdote strong {
+            color: var(--text-bright);
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+
+<nav class="site-nav">
+    <a class="site-nav-brand" href="/">controlsfreak<span>.dev</span></a>
+    <div class="site-nav-links">
+        <a href="/">Home</a>
+        <a href="/tools/">Tools</a>
+        <a href="/education/" class="active">Education</a>
+        <a href="/contact.html">Contact</a>
+        <span class="units-toggle">
+            <span class="units-label">Units:</span>
+            <span class="units-toggle-pill">
+                <button class="units-btn" data-units="us" aria-pressed="true">US</button>
+                <button class="units-btn" data-units="metric" aria-pressed="false">Metric</button>
+            </span>
+        </span>
+    </div>
+</nav>
+
+<main>
+
+    <div class="section-header">
+        <span class="section-label">Education · Balancing</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <div class="tool-card-title">Hydronic Balancing — Getting Design Flow to Every Load <span class="tool-tag">Hydronics</span></div>
+        </div>
+        <div class="tool-body">
+
+            <p style="font-size:1.0rem;line-height:1.85;color:var(--text);max-width:660px;margin-bottom:1.75rem;">
+                The <a href="/education/hydronic-loops.html#d1" style="color:var(--accent);">2-pipe direct-return</a> lesson ended with a half-sentence — <em>every load needs a balancing valve, and somebody has to set them</em> — and then moved on. That's the half-sentence this page is about. Two questions live underneath it: how do you make sure every load in a hydronic system actually receives the design flow it was sized for, and how do you know when it isn't? The first is an equipment-and-procedure question; the second is the diagnostic story that follows from getting the first wrong.
+            </p>
+
+            <!-- ───────────────── 1 · The riser — where balance valves live ───────────────── -->
+            <div class="subhead">A real riser, with balance valves at every branch</div>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);">
+                Picture a four-story building with a single hot-water riser. Pump in the basement, supply going up the left side, return coming down the right side, one coil per floor tapped between them. Every branch has a balance valve sitting next to the coil. That's the typical job-site geometry, and it's why balancing matters: the load nearest the pump is the easiest place for water to go, the load farthest from the pump is the hardest, and left alone the building will quietly favour the near loads at the far loads' expense.
+            </p>
+
+            <!-- Riser diagram. .edu-svg + flow-engine animated. Four floors, all CBVs (the page's
+                 main pipe-flow diagram exists to show WHERE balance valves sit in real building
+                 geometry, not to compare types — that's the widget's job). Bowtie balance-valve
+                 symbol at each branch, matching the lp-2w / lp-tt 2-port valve symbol used
+                 elsewhere on the site. Bowtie + small "CBV" annotation underneath each. -->
+            <svg class="edu-svg" viewBox="0 0 800 500" role="img" aria-labelledby="bal-riser-title bal-riser-desc"
+                 font-family="var(--mono, 'IBM Plex Mono', monospace)">
+                <title id="bal-riser-title">Four-story hydronic riser with calibrated balancing valves at every branch</title>
+                <desc id="bal-riser-desc">A simplified four-story building riser. The pump sits in the basement at the bottom center. A supply main rises up the left side of the building; a return main descends down the right side; both terminate at the pump. Four horizontal branches tap off between the two risers — one per floor, labelled Floor 1 at the bottom (closest to the pump) through Floor 4 at the top (farthest). Each branch carries a coil and a calibrated balance valve sized and trimmed at commissioning. Floor 1 is hydraulically the nearest load and will naturally take more flow than design unless its balance valve is throttled; Floor 4 is the farthest and most vulnerable to losing flow when system pressure drops.</desc>
+
+                <!-- piping: supply (solid, --blue) -->
+                <path id="bal-riser-supply" data-flow="supply" d="M200 460 V60" fill="none" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                <line id="bal-riser-pump-to-supply" data-flow="supply" x1="385" y1="460" x2="200" y2="460" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+
+                <!-- Branch supply legs (left of valve), one per floor -->
+                <line id="bal-riser-f4-sup-a" data-flow="supply" x1="200" y1="100" x2="248" y2="100" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                <line id="bal-riser-f4-sup-b" data-flow="supply" x1="272" y1="100" x2="340" y2="100" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                <line id="bal-riser-f3-sup-a" data-flow="supply" x1="200" y1="190" x2="248" y2="190" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                <line id="bal-riser-f3-sup-b" data-flow="supply" x1="272" y1="190" x2="340" y2="190" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                <line id="bal-riser-f2-sup-a" data-flow="supply" x1="200" y1="280" x2="248" y2="280" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                <line id="bal-riser-f2-sup-b" data-flow="supply" x1="272" y1="280" x2="340" y2="280" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                <line id="bal-riser-f1-sup-a" data-flow="supply" x1="200" y1="370" x2="248" y2="370" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                <line id="bal-riser-f1-sup-b" data-flow="supply" x1="272" y1="370" x2="340" y2="370" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+
+                <!-- piping: return (dashed, --blue-cool) -->
+                <path id="bal-riser-return" data-flow="return" d="M600 60 V460" fill="none" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="bal-riser-pump-to-return" data-flow="return" x1="600" y1="460" x2="415" y2="460" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
+
+                <!-- Branch return legs, one per floor -->
+                <line id="bal-riser-f4-ret" data-flow="return" x1="460" y1="100" x2="600" y2="100" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="bal-riser-f3-ret" data-flow="return" x1="460" y1="190" x2="600" y2="190" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="bal-riser-f2-ret" data-flow="return" x1="460" y1="280" x2="600" y2="280" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="bal-riser-f1-ret" data-flow="return" x1="460" y1="370" x2="600" y2="370" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
+
+                <!-- flow arrows: riser direction cues + per-branch -->
+                <g id="bal-riser-arrows">
+                    <!-- supply riser up -->
+                    <polygon points="195,260 200,249 205,260" fill="var(--blue, #1577b8)"/>
+                    <polygon points="195,420 200,409 205,420" fill="var(--blue, #1577b8)"/>
+                    <!-- return riser down -->
+                    <polygon points="595,260 600,271 605,260" fill="var(--blue-cool, #5e8aa0)"/>
+                    <polygon points="595,420 600,431 605,420" fill="var(--blue-cool, #5e8aa0)"/>
+                    <!-- pump return leg -->
+                    <polygon points="500,455 491,460 500,465" fill="var(--blue-cool, #5e8aa0)"/>
+                    <polygon points="300,455 309,460 300,465" fill="var(--blue, #1577b8)"/>
+                    <!-- per-floor supply arrows (right) and return arrows (right) -->
+                    <polygon points="225,95 234,100 225,105" fill="var(--blue, #1577b8)"/>
+                    <polygon points="540,95 549,100 540,105" fill="var(--blue-cool, #5e8aa0)"/>
+                    <polygon points="225,185 234,190 225,195" fill="var(--blue, #1577b8)"/>
+                    <polygon points="540,185 549,190 540,195" fill="var(--blue-cool, #5e8aa0)"/>
+                    <polygon points="225,275 234,280 225,285" fill="var(--blue, #1577b8)"/>
+                    <polygon points="540,275 549,280 540,285" fill="var(--blue-cool, #5e8aa0)"/>
+                    <polygon points="225,365 234,370 225,375" fill="var(--blue, #1577b8)"/>
+                    <polygon points="540,365 549,370 540,375" fill="var(--blue-cool, #5e8aa0)"/>
+                </g>
+
+                <!-- Equipment: pump (bottom centre), four coils, four balance valves (bowtie) -->
+                <g id="bal-riser-pump">
+                    <circle cx="400" cy="460" r="15" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                    <polygon points="394,452 408,460 394,468" fill="var(--text-dim, #666e66)"/>
+                    <text x="400" y="492" text-anchor="middle" font-size="10" fill="var(--text, #38423a)">PUMP</text>
+                </g>
+
+                <!-- Per-floor valve (bowtie) + coil -->
+                <g id="bal-riser-f4-valve">
+                    <polygon points="248,93 268,93 260,100" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                    <polygon points="248,107 268,107 260,100" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                </g>
+                <g id="bal-riser-f4-coil">
+                    <rect x="340" y="82" width="120" height="36" rx="2" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                    <text x="400" y="105" text-anchor="middle" font-size="12" font-weight="600" fill="var(--text-bright, #1d251f)">COIL</text>
+                </g>
+                <g id="bal-riser-f3-valve">
+                    <polygon points="248,183 268,183 260,190" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                    <polygon points="248,197 268,197 260,190" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                </g>
+                <g id="bal-riser-f3-coil">
+                    <rect x="340" y="172" width="120" height="36" rx="2" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                    <text x="400" y="195" text-anchor="middle" font-size="12" font-weight="600" fill="var(--text-bright, #1d251f)">COIL</text>
+                </g>
+                <g id="bal-riser-f2-valve">
+                    <polygon points="248,273 268,273 260,280" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                    <polygon points="248,287 268,287 260,280" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                </g>
+                <g id="bal-riser-f2-coil">
+                    <rect x="340" y="262" width="120" height="36" rx="2" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                    <text x="400" y="285" text-anchor="middle" font-size="12" font-weight="600" fill="var(--text-bright, #1d251f)">COIL</text>
+                </g>
+                <g id="bal-riser-f1-valve">
+                    <polygon points="248,363 268,363 260,370" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                    <polygon points="248,377 268,377 260,370" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                </g>
+                <g id="bal-riser-f1-coil">
+                    <rect x="340" y="352" width="120" height="36" rx="2" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                    <text x="400" y="375" text-anchor="middle" font-size="12" font-weight="600" fill="var(--text-bright, #1d251f)">COIL</text>
+                </g>
+
+                <!-- Floor labels (far left) and per-floor "near/far" annotations (far right).
+                     Near-vs-far is hydraulic distance from the pump, not building floor — the
+                     pump is in the basement, so Floor 1 (bottom) is nearest and Floor 4 (top)
+                     is farthest. -->
+                <text x="180" y="105" text-anchor="end" font-size="11" fill="var(--text, #38423a)">FLOOR 4</text>
+                <text x="180" y="195" text-anchor="end" font-size="11" fill="var(--text, #38423a)">FLOOR 3</text>
+                <text x="180" y="285" text-anchor="end" font-size="11" fill="var(--text, #38423a)">FLOOR 2</text>
+                <text x="180" y="375" text-anchor="end" font-size="11" fill="var(--text, #38423a)">FLOOR 1</text>
+
+                <!-- Per-valve "CBV" annotation underneath each valve symbol so the role of the
+                     bowtie reads clearly. The valves on the riser are all the same type — the
+                     widget below compares types; this diagram is purely about WHERE they sit. -->
+                <text x="260" y="125" text-anchor="middle" font-size="9" font-style="italic" fill="var(--text-dim, #666e66)">CBV</text>
+                <text x="260" y="215" text-anchor="middle" font-size="9" font-style="italic" fill="var(--text-dim, #666e66)">CBV</text>
+                <text x="260" y="305" text-anchor="middle" font-size="9" font-style="italic" fill="var(--text-dim, #666e66)">CBV</text>
+                <text x="260" y="395" text-anchor="middle" font-size="9" font-style="italic" fill="var(--text-dim, #666e66)">CBV</text>
+
+                <!-- Hydraulic distance callouts on the right -->
+                <text x="620" y="105" font-size="9" font-style="italic" fill="var(--text-dim, #666e66)">farthest from pump</text>
+                <text x="620" y="375" font-size="9" font-style="italic" fill="var(--text-dim, #666e66)">nearest the pump</text>
+
+                <!-- Supply/return main labels -->
+                <text x="155" y="55" text-anchor="end" font-size="11" fill="var(--text, #38423a)">supply ↑</text>
+                <text x="645" y="55" font-size="11" fill="var(--text, #38423a)">↓ return</text>
+            </svg>
+            <div class="edu-legend">
+                <span><span class="sw supply"></span>supply water</span>
+                <span><span class="sw return"></span>return water</span>
+            </div>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:1.25rem;">
+                The valves drawn here are <em>calibrated balancing valves</em> — the oldest, simplest, and still most common of the three types worth knowing. The other two — <em>automatic</em> balancing valves and <em>pressure-independent control valves</em> — change the picture by doing some of the work the technician used to do by hand. The next three sections walk through what each one is, how it behaves, and where in the building it fits. Then a small widget lets you see all three side-by-side under changing system pressure, which is where the differences stop being academic.
+            </p>
+
+            <!-- ───────────────── 2 · CBVs ───────────────── -->
+            <div class="subhead">Calibrated Balancing Valves (CBVs)</div>
+
+            <!-- Per-valve symbol diagram: bowtie + handle wheel + locking position indicator. -->
+            <div class="bal-valve-fig">
+                <svg viewBox="0 0 360 130" role="img" aria-labelledby="bal-cbv-fig-title bal-cbv-fig-desc"
+                     font-family="var(--mono, 'IBM Plex Mono', monospace)">
+                    <title id="bal-cbv-fig-title">Calibrated balancing valve symbol</title>
+                    <desc id="bal-cbv-fig-desc">A short section of supply pipe with a bowtie-shaped balancing valve in the middle. A handle wheel sits on top of the valve body with a small position-locking indicator, and two pressure-temperature test ports (P/T ports) hang off the upstream and downstream sides for measuring differential pressure during commissioning.</desc>
+
+                    <line x1="20" y1="90" x2="340" y2="90" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                    <!-- bowtie -->
+                    <polygon points="160,75 200,75 180,90" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                    <polygon points="160,105 200,105 180,90" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                    <!-- stem + handle wheel + lock indicator -->
+                    <line x1="180" y1="75" x2="180" y2="48" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                    <circle cx="180" cy="38" r="12" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                    <circle cx="180" cy="38" r="3" fill="var(--text-dim, #666e66)"/>
+                    <text x="200" y="42" font-size="9" font-style="italic" fill="var(--text-dim, #666e66)">position-locked</text>
+                    <!-- PT ports -->
+                    <line x1="130" y1="90" x2="130" y2="74" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                    <circle cx="130" cy="71" r="3" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                    <line x1="230" y1="90" x2="230" y2="74" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                    <circle cx="230" cy="71" r="3" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                    <text x="105" y="125" font-size="9" fill="var(--text-dim, #666e66)">P/T port</text>
+                    <text x="255" y="125" font-size="9" fill="var(--text-dim, #666e66)">P/T port</text>
+                </svg>
+                <span class="cap">Calibrated balancing valve — manual handle, position-locked at commissioning, P/T ports for measuring flow on a manometer.</span>
+            </div>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);">
+                A CBV is, at the level of physics, a fancy orifice. The handle on top rotates a stem that moves a plug into and out of the flow path, restricting how much water can pass for a given pressure drop. Two pressure-temperature ports — small Schrader-like fittings, one upstream and one downstream — let a tech jam a manometer probe in and read the Δp across the trim. The valve manufacturer publishes a flow-vs-Δp-vs-handle-position chart for the body; that chart is how a calibrated reading becomes a flow number. The handle's locking ring or memory-stop holds the position once it's set.
+            </p>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:1.1rem;">
+                The trim is the entire personality of the valve. Once set, the CBV passes flow proportional to the square root of the available Δp through it — twice the Δp gets you roughly 41 % more flow, half the Δp gets you about 71 % of the original flow. There's no compensation, no spring, no actuator. If the system pressure climbs or drops for any reason — another zone closing, the pump curve shifting, a slug of air in the loop — the CBV's flow goes with it. The valve doesn't know what it's supposed to be doing; it just lets through whatever its orifice equation allows.
+            </p>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:1.1rem;">
+                Setting them is the famous part. Because the loads interact — throttling the near load shifts pressure to the far loads, which then read differently — you can't just walk the riser once and dial each valve to its design flow. The procedure is <em>proportional balancing</em>: pick a reference branch (usually the one with the most authority over the system, often the index circuit at the far end), measure its flow as a fraction of design, then walk the rest of the loop adjusting each valve to the same fraction. Then go back and repeat, because the first pass moved the reference. Two or three iterations is typical; a complicated system takes more. It's a real job — half a day for a small system, a week for a big one — and it's exactly the work the other two valve types are trying to replace.
+            </p>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:1.1rem;">
+                Where CBVs fit: constant-flow systems pair with them best. <a href="/education/load-piping.html" style="color:var(--accent);">Three-way loads</a> hold the system loop at constant Δp by design, so the CBV trim that gets set during commissioning stays accurate as long as the loads keep modulating their bypass flows the way the engineer expected. CBVs on variable-flow (two-way) systems are technically valid but awkward — the operating point moves all day as loads modulate, the CBV that was perfect at the design condition is wrong at every off-design condition, and the loop drifts in and out of balance with whatever the pump and the worst-positioned valves are doing. CBVs were the only option for decades, so plenty of variable-flow systems do run on them; they just leave money on the table compared to the automatic alternatives.
+            </p>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:1.1rem;">
+                What goes wrong: the trim drifts. Maintenance staff disturb the handle reaching for the nearby strainer; a vibration loosens the locking ring; somebody re-balances <em>one branch</em> and never goes back to redo the others. The P/T ports clog with rust or scale, and the next tech who tries to measure flow can't get a reading. Worst of all, the system itself changes — boiler swap, new load tied in, pump impeller trimmed — and the original calibration is silently invalid even though nothing about the valves themselves moved. The whole loop is back to "self-unbalanced" without anyone touching it, and the symptoms show up in occupied spaces months later.
+            </p>
+
+            <!-- ───────────────── 3 · ABVs ───────────────── -->
+            <div class="subhead">Automatic Balancing Valves (ABVs)</div>
+
+            <!-- Per-valve symbol diagram: bowtie + internal cartridge / spring. -->
+            <div class="bal-valve-fig">
+                <svg viewBox="0 0 360 130" role="img" aria-labelledby="bal-abv-fig-title bal-abv-fig-desc"
+                     font-family="var(--mono, 'IBM Plex Mono', monospace)">
+                    <title id="bal-abv-fig-title">Automatic balancing valve symbol</title>
+                    <desc id="bal-abv-fig-desc">A short section of supply pipe with a bowtie-shaped balancing valve in the middle. A spring symbol inside the valve body indicates the internal cartridge that automatically modulates with differential pressure to hold flow constant within the valve's compensation range.</desc>
+
+                    <line x1="20" y1="90" x2="340" y2="90" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                    <!-- bowtie -->
+                    <polygon points="155,72 205,72 180,90" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                    <polygon points="155,108 205,108 180,90" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                    <!-- spring symbol inside body (vertical zigzag suggesting compensation) -->
+                    <polyline points="172,82 188,86 172,90 188,94 172,98" fill="none" stroke="var(--text-dim, #666e66)" stroke-width="1.5"/>
+                    <!-- label arrow + text -->
+                    <line x1="225" y1="90" x2="265" y2="55" stroke="var(--text-dim, #666e66)" stroke-width="1"/>
+                    <text x="270" y="50" font-size="9" font-style="italic" fill="var(--text-dim, #666e66)">spring-loaded</text>
+                    <text x="270" y="62" font-size="9" font-style="italic" fill="var(--text-dim, #666e66)">cartridge</text>
+                    <!-- design-flow label -->
+                    <text x="180" y="122" text-anchor="middle" font-size="9" fill="var(--text-dim, #666e66)">holds design Q across its Δp range</text>
+                </svg>
+                <span class="cap">Automatic balancing valve — internal cartridge closes against rising Δp to hold design flow without any technician intervention.</span>
+            </div>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);">
+                An ABV looks the same from the outside as a CBV, but the inside is different. There's a spring-loaded cartridge in the flow path, and the cartridge moves as Δp across the valve changes. Higher Δp pushes the cartridge to close the orifice down; lower Δp lets it open up. Within the valve's <em>compensation range</em> — typically something like 2 to 32 psi of Δp, depending on cartridge selection — the flow through the valve stays approximately constant. You pick the valve body and cartridge for the design flow you want, install it, and walk away. No trim, no procedure, no manometer.
+            </p>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:1.1rem;">
+                The compensation range is the load-bearing detail. Below the cartridge's minimum design Δp, the spring can't push the cartridge open any further — it's already fully open, and the valve behaves like a plain orifice; flow follows the same square-root-of-Δp curve a CBV would. Above the maximum design Δp, the spring is fully compressed and the cartridge is as closed as it gets; flow rises again with the square root of Δp. In between, you get the flat-flow behavior that's the whole point of buying an ABV. Sizing matters: pick a cartridge with a compensation range that comfortably brackets the Δp swings your system will actually see in operation, and the valve does its job; pick one too narrow and you've spent more money for a cartridge that spends most of its time outside the band where it works.
+            </p>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:1.1rem;">
+                Where ABVs fit: anywhere CBVs would have gone, when "set and forget" is worth the small price premium. Especially well-suited to systems where loads were sized at different times — additions, retrofits, phased construction — because each load's ABV just holds its own flow regardless of what its neighbours do. They also pair gracefully with variable-flow systems within reason; the compensation range usually covers a wide enough Δp window to handle realistic load swings. They don't handle pump-curve excursions outside their compensation range, though; if the system pressure drops far enough that every ABV in the building falls below its compensation Δp, the flat-flow behavior disappears and you're back to orifices everywhere.
+            </p>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:1.1rem;">
+                What goes wrong: the cartridge sticks. Scale, debris, rust, or just age can leave it half-closed and unresponsive. There's no way to see it from outside the valve body, and there are no test ports to measure Δp across the trim like you'd do on a CBV. Diagnosis usually means installing an external flow meter or P/T ports on the branch pipe — i.e., the equipment you bought an ABV to avoid needing. The other failure mode is undersized or oversized cartridges: the valve was specified at design without checking what the real Δp envelope looks like at part-load, and field operation sits half the time outside the compensation range.
+            </p>
+
+            <!-- ───────────────── 4 · PICVs ───────────────── -->
+            <div class="subhead">Pressure-Independent Control Valves (PICVs)</div>
+
+            <!-- Per-valve symbol diagram: bowtie + actuator + cartridge stack. -->
+            <div class="bal-valve-fig">
+                <svg viewBox="0 0 360 150" role="img" aria-labelledby="bal-picv-fig-title bal-picv-fig-desc"
+                     font-family="var(--mono, 'IBM Plex Mono', monospace)">
+                    <title id="bal-picv-fig-title">Pressure-independent control valve symbol</title>
+                    <desc id="bal-picv-fig-desc">A short section of supply pipe with a bowtie-shaped valve in the middle. A control actuator (rectangular box with a stem) sits on top of the valve body, and a spring cartridge symbol inside the body indicates the automatic pressure compensation. The combination gives a modulating control valve whose maximum flow is held constant by the cartridge regardless of system pressure swings.</desc>
+
+                    <line x1="20" y1="105" x2="340" y2="105" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                    <!-- bowtie -->
+                    <polygon points="155,87 205,87 180,105" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                    <polygon points="155,123 205,123 180,105" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                    <!-- spring symbol inside body -->
+                    <polyline points="172,97 188,101 172,105 188,109 172,113" fill="none" stroke="var(--text-dim, #666e66)" stroke-width="1.5"/>
+                    <!-- actuator stem + box -->
+                    <line x1="180" y1="87" x2="180" y2="60" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                    <rect x="158" y="32" width="44" height="28" rx="2" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                    <text x="180" y="51" text-anchor="middle" font-size="9" font-weight="600" fill="var(--text-bright, #1d251f)">ACT</text>
+                    <!-- labels -->
+                    <line x1="210" y1="46" x2="248" y2="38" stroke="var(--text-dim, #666e66)" stroke-width="1"/>
+                    <text x="252" y="34" font-size="9" font-style="italic" fill="var(--text-dim, #666e66)">modulating</text>
+                    <text x="252" y="46" font-size="9" font-style="italic" fill="var(--text-dim, #666e66)">control surface</text>
+                    <line x1="210" y1="105" x2="248" y2="100" stroke="var(--text-dim, #666e66)" stroke-width="1"/>
+                    <text x="252" y="96" font-size="9" font-style="italic" fill="var(--text-dim, #666e66)">internal</text>
+                    <text x="252" y="108" font-size="9" font-style="italic" fill="var(--text-dim, #666e66)">balancing cartridge</text>
+                    <!-- caption -->
+                    <text x="180" y="142" text-anchor="middle" font-size="9" fill="var(--text-dim, #666e66)">control valve + balancing valve, one body</text>
+                </svg>
+                <span class="cap">Pressure-independent control valve — a modulating control valve wrapped around an automatic balancing cartridge. Replaces a CBV + control valve pair.</span>
+            </div>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);">
+                A PICV puts the automatic-balancing cartridge of an ABV inside the body of a modulating control valve. The actuator on top is the same kind a BMS would drive on any other control valve — analog or floating-point input, 0–100 % open. What's different is what "100 % open" means: instead of "fully unobstructed orifice," it means "pass the design flow this cartridge was sized for." The internal cartridge keeps flow at that maximum regardless of system Δp; the actuator scales it from there. Tell the PICV to be 50 % open and you get 50 % of design flow, whether system Δp is at design or somewhere else within the cartridge's operating window.
+            </p>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:1.1rem;">
+                That single behaviour change is why PICVs have become the default on new variable-flow systems. Traditional control valves have an <em>authority</em> problem: as system Δp swings (other loads modulating, pump speed changing), the same valve position passes a different amount of flow, and the BMS loop has to chase its own valve to hold setpoint. PICVs eliminate the loop's need to compensate, because the valve already did it. The control loop tunes once, the valve does what it's told, and the BMS spends its energy on actual load tracking instead of fighting hydraulics.
+            </p>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:1.1rem;">
+                The pairing with <a href="/education/pump-control.html" style="color:var(--accent);">DP setpoint reset</a> is the other half of why they've spread. PICVs let the pump drop pressure further than fixed-DP control would, because each valve can hold its own flow as long as it has the cartridge's minimum operating Δp at the branch. A PICV-equipped building can run the system pump at very low Δp during low-demand hours without starving anybody, which is where the meaningful energy savings live. It's also the configuration that finally makes "most-open-valve reset" feel like the obvious thing to do, instead of a delicate tightrope.
+            </p>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:1.1rem;">
+                On constant-flow (three-way) systems, PICVs are usually overkill — the system Δp doesn't swing much, so an ABV (or even a well-set CBV) does the same job for less money. PICVs also have a minimum operating Δp; below that, the cartridge can't do its work and flow falls off. The minimum is typically lower than an ABV's because the cartridge is designed for control-valve modulation rather than just balancing, but it's not zero. And like any control valve, the PICV's actuator can fail or drift out of position relative to its internal feedback, which adds a failure mode that the dumber balancing valves don't have.
+            </p>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:1.1rem;">
+                What goes wrong: cartridge fouling, same as an ABV — and harder to diagnose, because the body looks like a control valve and the natural assumption is to chase the actuator or the BMS signal. The actuator can also go out of mechanical agreement with its position feedback; a 50 % command should yield 50 % of design flow, but doesn't, and the loop reads as a flow problem rather than a valve problem. A flow meter on the branch is the diagnostic of last resort, and is rarely installed for ongoing use. The good news is that a PICV that's failing usually fails toward "less flow" rather than "wrong flow direction," so the symptoms are noticeable rather than insidious.
+            </p>
+
+            <!-- ───────────────── 5 · The Widget ───────────────── -->
+            <div class="subhead">See it side-by-side under varying Δp</div>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);">
+                Three identical branches, each sized for the same design flow — <span data-us="30 GPM" data-metric="1.9 L/s">30 GPM</span> at a design Δp of <span data-us="20 ft" data-metric="6.1 m">20 ft</span> of water. One has a CBV, one has an ABV, one has a PICV. Drag the slider to change the available Δp across the branches and watch what each one passes. Hold each branch at design (<span class="bal-w-tag-design">HOLDING</span>) is the goal. <span class="bal-w-tag-starved">STARVED</span> means flow is below 85 % of design; <span class="bal-w-tag-over">OVER</span> means above 115 %.
+            </p>
+
+            <div class="bal-widget" id="balWidget">
+
+                <div class="bal-w-section-label">Available Δp across the load branches</div>
+                <div class="bal-w-slider-head">
+                    <span>System Δp</span>
+                    <span><span class="v" id="balDpVal">20</span> <span id="balDpUnit">ft</span></span>
+                </div>
+                <input class="bal-w-slider" id="balDpSlider" type="range" min="1" max="60" step="1" value="20"
+                       aria-label="System differential pressure across the load branches"/>
+                <div class="bal-w-slider-foot">
+                    <span>1</span>
+                    <span>60</span>
+                </div>
+                <div class="bal-w-design-tick">
+                    Design Δp = <em><span data-us="20 ft" data-metric="6.1 m">20 ft</span></em> · each branch sized for <em><span data-us="30 GPM" data-metric="1.9 L/s">30 GPM</span></em>
+                </div>
+
+                <div class="bal-w-branches">
+
+                    <!-- CBV branch -->
+                    <div class="bal-w-branch" id="balBchCbv" data-state="holding">
+                        <div class="bal-w-bch-tag">CBV</div>
+                        <div class="bal-w-bch-mid">
+                            <div class="bal-w-bch-flow">
+                                <span id="balCbvQ">30.0</span> <span data-us="GPM" data-metric="L/s">GPM</span>
+                                <span class="pct"><span id="balCbvPct">100</span>% of design</span>
+                            </div>
+                            <div class="bal-w-bch-bar" aria-hidden="true"><span id="balCbvBar"></span></div>
+                        </div>
+                        <div class="bal-w-bch-state" id="balCbvState">HOLDING</div>
+                    </div>
+
+                    <!-- ABV branch -->
+                    <div class="bal-w-branch" id="balBchAbv" data-state="holding">
+                        <div class="bal-w-bch-tag">ABV</div>
+                        <div class="bal-w-bch-mid">
+                            <div class="bal-w-bch-flow">
+                                <span id="balAbvQ">30.0</span> <span data-us="GPM" data-metric="L/s">GPM</span>
+                                <span class="pct"><span id="balAbvPct">100</span>% of design</span>
+                            </div>
+                            <div class="bal-w-bch-bar" aria-hidden="true"><span id="balAbvBar"></span></div>
+                        </div>
+                        <div class="bal-w-bch-state" id="balAbvState">HOLDING</div>
+                    </div>
+
+                    <!-- PICV branch -->
+                    <div class="bal-w-branch" id="balBchPicv" data-state="holding">
+                        <div class="bal-w-bch-tag">PICV</div>
+                        <div class="bal-w-bch-mid">
+                            <div class="bal-w-bch-flow">
+                                <span id="balPicvQ">30.0</span> <span data-us="GPM" data-metric="L/s">GPM</span>
+                                <span class="pct"><span id="balPicvPct">100</span>% of design</span>
+                            </div>
+                            <div class="bal-w-bch-bar" aria-hidden="true"><span id="balPicvBar"></span></div>
+                        </div>
+                        <div class="bal-w-bch-state" id="balPicvState">HOLDING</div>
+                    </div>
+
+                </div>
+
+                <!-- Reveal anecdote when DP drops critically low. Reserved height prevents
+                     reflow of the page below when the callout appears. Once shown in a
+                     session, stays pinned — yanking it back on the next slider tweak would
+                     undo the discovery. -->
+                <div class="bal-w-anecdote-wrap">
+                    <div class="bal-w-anecdote" id="balAnecdote" hidden>
+                        <strong>True story.</strong> A multi-floor heating system, CBV-balanced years back and never re-touched. The pumps got knocked off setpoint one season — somebody had been chasing energy numbers — and available Δp at the far branches dropped enough that flow at the last load fell off a cliff. Cold night, low flow, the far-end coil froze solid and burst. Not my fault, but I caught the cleanup. The pattern is right here in the widget: a CBV can't tell the difference between design pressure and half of it, it just passes whatever its orifice equation allows. A PICV would have held minimum flow all the way down.
+                    </div>
+                </div>
+
+            </div>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:1.25rem;">
+                Three takeaways from the slider. First: at design Δp, all three valves look the same. You don't see the difference between the technologies on the day of commissioning; you see it on the day the system has changed. Second: the CBV's behaviour scales with the square root of Δp — modest swings move it noticeably, and big swings move it a lot. Third: the PICV holds across the widest range, but it isn't magic. Below its minimum operating Δp it gives up too. The pump still has to be doing its job for any of this to work — the balance valves protect against ordinary system swings, not against pump failure.
+            </p>
+
+            <!-- ───────────────── 6 · Diagnostics ───────────────── -->
+            <div class="subhead">How do you know when the loop isn't balanced?</div>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);">
+                Balancing problems show up in two places: in occupied spaces and at the plant. Occupied-space symptoms are the obvious ones — too hot, too cold, complaints concentrated in a pattern — and they're often the first signal anyone notices. Plant-side symptoms are subtler and tend to live in BMS trends and manometer readings, and they're where the diagnostic actually lives, because they tell you <em>why</em> the occupied spaces are complaining.
+            </p>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:1.1rem;">
+                Below is the short version. None of these are conclusive on their own; treat them as a starting point for what to look at next. The actual confirmation almost always involves a manometer at a balance valve's P/T ports, an external flow meter on a branch, or a temperature differential measurement across a coil that should be doing more work than it's doing.
+            </p>
+
+            <table class="ref-table">
+                <thead>
+                    <tr><th>Symptom</th><th>What it usually means</th><th>How to confirm</th></tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Near loads run hot/cold-call satisfied easily; far loads can't keep up</td>
+                        <td>Classic unbalanced loop — near loads hogging flow, far loads starved</td>
+                        <td>Manometer reads at the far branch's balance valve; flow is well below design while near branches read above</td>
+                    </tr>
+                    <tr>
+                        <td>Coil ΔT collapses on a load — supply hot, return almost as hot</td>
+                        <td>Coil is over-pumped (too much flow, water passes through faster than it can give up heat) — typically a near load that's getting more than design</td>
+                        <td>Flow measurement at that branch; compare to design</td>
+                    </tr>
+                    <tr>
+                        <td>Coil ΔT runs wide — supply hot, return cold — but the space still under-performs</td>
+                        <td>Coil is under-pumped (too little flow, water gives up all its heat then sits there) — typically a far load that's starved</td>
+                        <td>Same: flow measurement at that branch, compared to design</td>
+                    </tr>
+                    <tr>
+                        <td>System pump running flat-out, hitting its high-speed limit, while the building reads OK in some zones and bad in others</td>
+                        <td>The pump can't deliver the design Δp everywhere because flow distribution is wrong — fixing the pump won't fix it</td>
+                        <td>Pump Hz at maximum, system Δp at the index circuit still below setpoint; the answer is balancing, not bigger pumps</td>
+                    </tr>
+                    <tr>
+                        <td>Sudden change in zone behavior after maintenance (boiler swap, pump rebuild, system refill, added load)</td>
+                        <td>The system curve moved; the old balance is invalid even though no balance valve was touched</td>
+                        <td>Re-walk the loop with a manometer; compare to commissioning records if they exist (they usually don't)</td>
+                    </tr>
+                    <tr>
+                        <td>Strainer pressure drop unusually high at one branch</td>
+                        <td>Strainer is plugging — restricting flow at that branch even though the balance valve is correct</td>
+                        <td>Clean or replace the strainer; re-check flow</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:1.25rem;">
+                Here's a worked-through version, because the table compresses a lot. Picture a small office building, four floors, balanced at commissioning with CBVs at every branch. Two years in, the boiler's tube bundle gets descaled and the system gets refilled. Nobody re-balances. The new system curve isn't quite the old one — friction is slightly different, the pump operates at a marginally different point. Floor 1 still feels fine; its balance valve was set generously at commissioning because Floor 1 is nearest the pump and would have hogged otherwise. Floor 4's valve is set near-closed for the same reason in reverse — to keep Floor 1 from winning. Now the available Δp at Floor 4 is a bit lower than it was, and Floor 4's already-tight CBV can't compensate by opening further. Tenants on 4 start calling about cold complaints in winter mornings. The BMS reads happy at the plant; supply temp is right, the pump is running normally, no faults. The diagnostic finally lands when somebody walks the riser with a manometer and reads Δp at the floor-1 vs. floor-4 valves — floor 1 is exactly where it should be, floor 4 is well short. The fix is the proportional balancing procedure all over again, this time updated to the post-descale system.
+            </p>
+
+            <!-- ───────────────── 7 · Tying it all back ───────────────── -->
+            <div class="subhead">Tying it back to the rest of the story</div>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);">
+                Three earlier lessons left forward-pointing breadcrumbs to this page. <a href="/education/hydronic-loops.html#d1" style="color:var(--accent);">Direct return</a> needed balance valves because the geometry guaranteed flow asymmetry between near and far loads; <a href="/education/hydronic-loops.html#d2" style="color:var(--accent);">reverse return</a> was self-balancing enough that the valves became trim work rather than load-bearing, though even reverse-return loops usually carry CBVs at each branch for fine adjustment.
+            </p>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:1.1rem;">
+                <a href="/education/load-piping.html" style="color:var(--accent);">Load piping</a> made the bigger claim that three-way (constant-flow) systems hold a steady demand on the system pump. That claim is true at the loop level — system flow stays constant — but it's only true at the individual load level if every branch is balanced; otherwise some loads see too much flow and others too little, and the pump satisfies the average while the extremes complain. CBVs and ABVs are the usual fit there. PICVs make less sense on three-way systems because the Δp doesn't swing enough to need them.
+            </p>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:1.1rem;">
+                <a href="/education/pump-control.html" style="color:var(--accent);">Pump control</a> made the variable-flow claim that DP setpoint reset can drop pump pressure as far as the worst-positioned valve allows. The worst-positioned valve is whatever's at the index circuit — the longest, most-restricted branch — and "as far as it allows" depends critically on whether that valve can hold its design flow at low Δp. A CBV can't; the reset has to be timid. A PICV can; the reset can be aggressive and the energy story actually shows up. That's why PICVs and DP-reset are the modern variable-flow pairing, and why the older CBV + fixed-DP combination, while still common, leaves the energy savings on the table.
+            </p>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:1.1rem;">
+                What this page doesn't cover: the actual job-site procedure of balancing a system at commissioning — what tools, what reference data, what sign-off looks like, what the proportional-balancing iteration actually feels like to perform. That's a different kind of content — process rather than equipment — and it'll get its own lesson when it's written. The forward-link is recorded; treat this page as the conceptual half and that future one as the practical half.
+            </p>
+
+            <!-- Forward callout to the future commissioning page. Mirrors the d3 discovery-prompt
+                 pattern: name what's missing, point to where it'll get resolved. -->
+            <div class="pid-term" style="margin-top:1.5rem;">
+                <p style="margin:0;font-size:0.92rem;line-height:1.75;color:var(--text);">
+                    <strong style="color:var(--text-bright);">Coming later:</strong> a lesson on commissioning — the job-site procedure for balancing a real system, what the proportional-balancing walk looks like in practice, what your sign-off documentation should capture, and how to leave a system that the next tech can actually re-balance when something changes.
+                </p>
+            </div>
+
+        </div>
+    </div>
+
+    <a class="back-link" href="/education/">← Back to Education</a>
+
+</main>
+
+<script src="/scripts/units.js"></script>
+
+<footer>
+    <span class="footer-text">controlsfreak.dev — open tools for controls professionals</span>
+    <span class="footer-text">v1.3 · 2026</span>
+</footer>
+
+<!-- Particle-flow animation over the riser diagram. Classic script,
+     loaded before the inline page script that calls FlowEngine.init().
+     The per-valve symbol diagrams above and the widget below are NOT
+     animated — they're either static schematic references or use their
+     own internal SVG state. Only paths with [data-flow] participate. -->
+<script src="/scripts/flow-engine.js"></script>
+<script>
+    // ─────────────────────────────────────────────
+    // Balancing — page glue.
+    //
+    // Two responsibilities:
+    //   1. Kick the flow engine on the riser diagram.
+    //   2. Drive the three-valve comparison widget (slider → flows →
+    //      state colours + anecdote reveal).
+    //
+    // Widget math is intentionally simple — single-axis Δp variation,
+    // each branch sized for the same design flow at design Δp. Real
+    // valves have a lot more nuance (cartridge curves, authority, valve
+    // body geometry); the goal here is to show the BEHAVIORAL difference
+    // between the three families, not to be a sizing tool.
+    // ─────────────────────────────────────────────
+    FlowEngine.init();
+
+    (function () {
+        'use strict';
+
+        // ── Design point ──────────────────────────────────────────────
+        // Canonical units throughout the math layer are US (GPM, ft of
+        // head). The unit toggle converts at the display boundary, same
+        // pattern as the pump-control widgets and the psychrometric chart.
+        var DESIGN_DP_FT  = 20;
+        var DESIGN_Q_GPM  = 30;
+
+        // ── Branch valve models ───────────────────────────────────────
+        // CBV: pure square-root orifice law, calibrated so Q = design at
+        // design Δp. No compensation; flow tracks √(Δp/Δp_design).
+        function flowCbv(dpFt) {
+            if (dpFt <= 0) return 0;
+            return DESIGN_Q_GPM * Math.sqrt(dpFt / DESIGN_DP_FT);
+        }
+
+        // ABV: holds design flow within a compensation range (3 ft .. 50 ft
+        // of head here — broadly representative of common cartridge specs
+        // when expressed in ft head rather than psi). Outside the range,
+        // behaves as a plain orifice with Kv matched at the band edge so
+        // there's no discontinuity in the curve.
+        function flowAbv(dpFt) {
+            var LO = 3, HI = 50;
+            if (dpFt <= 0) return 0;
+            if (dpFt >= LO && dpFt <= HI) return DESIGN_Q_GPM;
+            if (dpFt < LO) {
+                // orifice below the cartridge's minimum compensation Δp
+                return DESIGN_Q_GPM * Math.sqrt(dpFt / LO);
+            }
+            // orifice above the cartridge's maximum compensation Δp
+            return DESIGN_Q_GPM * Math.sqrt(dpFt / HI);
+        }
+
+        // PICV: holds design flow above a minimum operating Δp; below it,
+        // the cartridge can't do its job and flow drops linearly to zero
+        // (the actuator is still commanded to full open, but there's no
+        // pressure to drive design flow through). PICVs typically have a
+        // wider authority range than ABVs and no upper-limit orifice
+        // behavior over normal system pressures, so we model a flat ceiling.
+        function flowPicv(dpFt) {
+            var MIN = 2;
+            if (dpFt <= 0) return 0;
+            if (dpFt >= MIN) return DESIGN_Q_GPM;
+            return DESIGN_Q_GPM * (dpFt / MIN);
+        }
+
+        // ── State classification ──────────────────────────────────────
+        // Holding band: ±15 % of design. STARVED below, OVER above.
+        function classifyState(qGpm) {
+            var ratio = qGpm / DESIGN_Q_GPM;
+            if (ratio < 0.85) return 'starved';
+            if (ratio > 1.15) return 'over';
+            return 'holding';
+        }
+        function stateLabel(state) {
+            if (state === 'starved') return 'STARVED';
+            if (state === 'over')    return 'OVER';
+            return 'HOLDING';
+        }
+
+        // ── Display formatting ────────────────────────────────────────
+        // Flow displays in the unit suffix shown next to the number; the
+        // <span data-us="GPM" data-metric="L/s"> is rewritten by the units
+        // walker independently. Bar fill is on a 0–150 % scale (the bar
+        // tick at 66.6 % marks the design point — see CSS).
+        var BAR_MAX_PCT = 150;
+
+        function formatFlow(qGpm) {
+            if (Units.current() === 'metric') {
+                return (Units.display.waterFlow(qGpm)).toFixed(2);
+            }
+            return qGpm.toFixed(1);
+        }
+        function formatDp(dpFt) {
+            if (Units.current() === 'metric') {
+                return (Units.display.pumpHead(dpFt)).toFixed(1);
+            }
+            return dpFt.toFixed(0);
+        }
+        function unitDpLabel() {
+            return Units.current() === 'metric' ? 'm' : 'ft';
+        }
+
+        // ── Anecdote reveal — extreme-low-pressure trigger ────────────
+        // Threshold picked so the CBV branch is clearly starving and the
+        // PICV is still comfortably holding. Once shown in a session,
+        // stays shown — yanking the callout back on the next slider tweak
+        // would undo the reward and is petty.
+        var ANECDOTE_DP_FT = 4;
+        var anecdoteShown = false;
+
+        // ── DOM references ────────────────────────────────────────────
+        var slider   = document.getElementById('balDpSlider');
+        var dpVal    = document.getElementById('balDpVal');
+        var dpUnit   = document.getElementById('balDpUnit');
+        var anecdote = document.getElementById('balAnecdote');
+
+        var branches = [
+            { key: 'cbv',  flowFn: flowCbv,  qEl: document.getElementById('balCbvQ'),  pctEl: document.getElementById('balCbvPct'),  barEl: document.getElementById('balCbvBar'),  stateEl: document.getElementById('balCbvState'),  rowEl: document.getElementById('balBchCbv')  },
+            { key: 'abv',  flowFn: flowAbv,  qEl: document.getElementById('balAbvQ'),  pctEl: document.getElementById('balAbvPct'),  barEl: document.getElementById('balAbvBar'),  stateEl: document.getElementById('balAbvState'),  rowEl: document.getElementById('balBchAbv')  },
+            { key: 'picv', flowFn: flowPicv, qEl: document.getElementById('balPicvQ'), pctEl: document.getElementById('balPicvPct'), barEl: document.getElementById('balPicvBar'), stateEl: document.getElementById('balPicvState'), rowEl: document.getElementById('balBchPicv') }
+        ];
+
+        function redraw() {
+            var dpFt = parseFloat(slider.value);
+            if (!isFinite(dpFt)) return;
+
+            dpVal.textContent  = formatDp(dpFt);
+            dpUnit.textContent = unitDpLabel();
+
+            for (var i = 0; i < branches.length; i++) {
+                var b = branches[i];
+                var qGpm = b.flowFn(dpFt);
+                var pct  = Math.round((qGpm / DESIGN_Q_GPM) * 100);
+                var fillPct = Math.min(BAR_MAX_PCT, Math.max(0, pct));
+                var state = classifyState(qGpm);
+
+                b.qEl.textContent     = formatFlow(qGpm);
+                b.pctEl.textContent   = pct;
+                b.barEl.style.width   = (fillPct / BAR_MAX_PCT * 100) + '%';
+                b.stateEl.textContent = stateLabel(state);
+                b.rowEl.setAttribute('data-state', state);
+            }
+
+            if (!anecdoteShown && dpFt <= ANECDOTE_DP_FT) {
+                anecdote.hidden = false;
+                anecdoteShown = true;
+            }
+        }
+
+        slider.addEventListener('input', redraw);
+        document.addEventListener('unitschange', redraw);
+
+        // First paint after the units module has had a chance to run
+        // (it's loaded above and runs synchronously, so by the time this
+        // IIFE fires, Units.current() is already the right value).
+        redraw();
+    })();
+</script>
+</body>
+</html>

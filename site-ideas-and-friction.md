@@ -1162,65 +1162,133 @@ than the original planning):
   threads this implicitly through prose; a synthesis aid could
   help job-site readers map their plant onto the lesson.
 
-### Balancing — Education page *(stub; planned)*
-*One question (proposed): how do you make sure every load in a
-hydronic system actually receives the design flow it was sized
-for — and how do you know when it isn't?*
+### Balancing — Education page *(shipped 2026-05-16)*
+*One question: how do you make sure every load in a hydronic
+system actually receives the design flow it was sized for — and
+how do you know when it isn't?*
 
-Forward-referenced from `load-piping.html` (the three-way
-section's "even on a constant-flow setup, each load only sees
-its design flow if the loop is *balanced*" callout). The
-reference is plain prose — no live anchor — until the page
-ships, per the updated forward-link convention (anchor only if
-the target exists, plain text otherwise). Scoped as a peer to
-the load-piping page, following the "one question per page" rule.
+Closes out the variable-flow trilogy as a quartet (load piping →
+VFDs → pump control → balancing). The page inherits forward-link
+debts from THREE prior pages — `hydronic-loops.html` (d1 direct-
+return "every load needs a balancing valve" callout; d2 reverse-
+return self-balancing claim), `load-piping.html` (three-way
+constant-flow claim being conditional on balancing), and
+`pump-control.html` (DP setpoint reset depending on each load
+holding its own flow at low Δp) — and the closing section pays
+off all three explicitly.
 
-In scope (provisional):
-- Manual / calibrated balancing valves (CBVs / circuit setters)
-  — single-position trim, set once at commissioning. The
-  workhorse on older constant-flow systems.
-- Automatic balancing valves (ABVs) — flow-limiting cartridges
-  that hold design flow regardless of system pressure swings.
-- Pressure-independent control valves (PICVs) — combine
-  modulating control + automatic balancing in one body. The
-  modern default on new variable-flow systems.
-- The commissioning process — what "balancing" actually means
-  as a job-site activity: flow measurement, valve setting,
-  proportional balancing across a riser, signing off.
-- Diagnostic side — common symptoms of an unbalanced loop, how
-  to tell from the BMS, how to tell on a manometer.
+In scope (sections shipped):
+- *A real riser, with balance valves at every branch* — opening
+  hook quoting the hydronic-loops d1 half-sentence, plus the
+  page's main pipe-flow diagram (4-floor riser, CBV at every
+  branch, `.edu-svg` + flow-engine animated, pump in the basement
+  with near/far hydraulic-distance callouts)
+- *Calibrated Balancing Valves (CBVs)* — what they are, the √Δp
+  orifice behaviour, the proportional balancing procedure, where
+  they fit (constant-flow good, variable-flow awkward), failure
+  modes (trim drift, port clogging, system-change invalidation)
+- *Automatic Balancing Valves (ABVs)* — spring-loaded cartridge,
+  compensation range, sizing as the load-bearing detail, where
+  they fit, failure modes (cartridge stuck, sizing mismatch)
+- *Pressure-Independent Control Valves (PICVs)* — control valve
+  wrapped around an ABV cartridge, modern default for variable-
+  flow, pairing with DP setpoint reset, overkill on constant-
+  flow, actuator-failure mode
+- *See it side-by-side under varying Δp* — the page's interactive
+  widget (Widget structure below)
+- *How do you know when the loop isn't balanced?* — diagnostics
+  section, `.ref-table` of symptom → meaning → how-to-confirm,
+  plus one narrative walkthrough (CBV system + post-descale
+  refill drift starves floor 4)
+- *Tying it back to the rest of the story* — explicit closing
+  tie-backs to hydronic-loops, load-piping, and pump-control,
+  plus a forward-pointing callout to the future commissioning page
 
 Out of scope (forward links, not content):
-- System-level DPBV — covered on `load-piping.html` as part of
-  the variable-flow pump-protection story; balancing page can
-  cross-link rather than re-cover.
+- The commissioning procedure itself — proportional-balancing
+  walk-through, sign-off documentation, tooling — [future:
+  commissioning.html], referenced in the closing forward callout
+- System-level DPBV — covered on `load-piping.html` (cross-link)
 - Reverse return as a passive balancing approach — covered on
-  `hydronic-loops.html`'s d2 diagram; cross-link.
-- VFD pumping / pump-curve overlap with system-curve — [future:
-  vfds.html] or a dedicated pump-control page.
-- Coil sizing / mass-flow design (i.e. how the "design flow"
-  number gets set in the first place) — different page topic;
-  upstream of balancing.
+  `hydronic-loops.html` d2 (cross-link from closing section)
+- Coil sizing / mass-flow design ("where does the design flow
+  number come from") — [future: coil-selection.html], mentioned
+  in the diagnostics section
+- Specific manufacturer cartridge curves / Cv math / authority
+  algebra — keeps the cross-manufacturer pattern, same scope
+  discipline as the vfds page
 
-Forward-link inheritances from `load-piping.html`:
-- Load piping's "constant flow" claim for 3-way systems is
-  *conditional on balancing actually working*. The balancing
-  page should tie back to that claim and explain how it can
-  fail (a 3-way system whose individual loads are unbalanced
-  still has constant system flow, but the loads themselves are
-  starved or over-supplied).
-- Load piping's two-way / three-way distinction shapes which
-  balancing strategy fits. The balancing page should treat
-  these as two different parent contexts: balancing on a
-  variable-flow system (PICVs natural, ABVs viable, CBVs awkward
-  because the operating point moves) vs. constant-flow (CBVs
-  workable, ABVs/PICVs also fine, more historical inertia).
+**Widget — three branches, one slider.** Single slider on
+"available Δp across the load branches" (1–60 ft of head; design
+point = 20 ft). Three parallel rows — CBV / ABV / PICV — each
+sized for the same design flow (30 GPM @ 20 ft Δp) so the only
+difference between branches is the valve behaviour. Each row
+displays live flow (with US/metric toggle), % of design, a fill
+bar with a design-tick at 66.6 % of the 0–150 % scale, and a
+state pill (HOLDING / STARVED / OVER) that color-shifts via
+`data-state` on the row container. CBV uses pure √Δp orifice
+law calibrated at design; ABV holds within a 3–50 ft Δp
+compensation range and behaves as orifice outside; PICV holds
+above 2 ft Δp and linearly ramps to zero below. CSS prefix
+`bal-w-` inline on the page, matching the `pc-w-` pattern from
+pump-control.
 
-Stub status — declared the question and rough scope so the
-"Education page scope — one question per page" rule has
-something to point to when this page enters the queue. Not
-committing to scope or design until someone is ready to write
-it.
+**Anecdote — extreme-low-pressure reveal.** Trigger fires at
+Δp ≤ 4 ft (CBV branch clearly starving, PICV still comfortably
+holding). The reveal is the user's actual war story: multi-floor
+CBV-balanced heating system, pumps got knocked off setpoint
+seasonally, available Δp at the far branches dropped, far-end
+coil froze and burst. Once shown in a session, stays pinned (same
+semantic as the d3 widget anecdote, pump-control deadhead
+anecdote, and vfds classic-mistake reveal). Border-left is `--red`
+on the callout rather than `--blue` — heavier visual weight,
+because the failure mode under discussion is also more severe
+than the gentler "missed-setting" stories on prior pages.
+
+**Per-valve symbol diagrams.** Three small static SVGs (~360 ×
+120-150), one above each valve section, showing the distinguishing
+feature: CBV gets the handle wheel + position-lock indicator + P/T
+ports; ABV gets the spring cartridge inside the body; PICV gets
+the cartridge + actuator on top. Not `.edu-svg` — these are
+reference schematic snippets, not pipe-flow diagrams, so they
+carry a page-local `.bal-valve-fig` wrapper instead.
+
+**Tone — practitioner-heavy, as planned.** Each valve section
+follows the same internal rhythm: what it is mechanically / how
+it behaves / where it fits (variable-flow vs constant-flow
+context handled inside the section, per the valve-type spine
+decision) / how the trade actually uses it / what goes wrong.
+Section depth ~5 paragraphs each, matching pump-control's
+rhythm. Diagnostics section uses the symptoms-table-plus-narrative
+format (Round 3 answer); narrative case is a CBV system whose
+post-descale refill silently invalidated the original balance,
+caught on a manometer walk.
+
+**Forward-link debts this page incurred:**
+- `[future: commissioning.html]` — the explicit scope cut. Closing
+  callout names it as "Coming later: a lesson on commissioning."
+  When that page ships, it should tie back here for the
+  conceptual half ("balancing as equipment-and-procedure" lives
+  here; "balancing as job-site activity" lives there).
+- `[future: coil-selection.html]` — mentioned in the diagnostics
+  intro as the upstream source of the design-flow number. When
+  it ships, the balancing page can be cross-linked back.
+
+**CSS / pattern notes for the next Education page:**
+- Widget chrome is yet another instance of the
+  `recessed --surface-3 panel` + `mono section labels` + `blue
+  readouts` + `anecdote callout with min-height reservation`
+  pattern. Third Education widget after pump-control's two, plus
+  vfds's run/speed widget and hydronic-loops' d3 injection-pump
+  widget. The five widgets now share enough visual vocabulary
+  that promoting `.pc-w-*` / `.bal-w-*` / `.vfd-w-*` to a shared
+  `.edu-w-*` rule set in `styles.css` is starting to look like a
+  next-restructure-pass candidate. Not urgent (each page's prefix
+  reads cleanly); flag for when the sixth widget shows up.
+- The `data-state` attribute on the branch row, swapping border /
+  bar fill / state-pill colour, is a clean idiom worth reusing
+  for future state-driven widgets. Same idea as the
+  `flow-engine`'s `flow-active` CSS hook.
 
 ---
 
