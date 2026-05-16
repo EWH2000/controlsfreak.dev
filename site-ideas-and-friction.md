@@ -511,22 +511,24 @@ default `BAC0` = 47808), since EBO's hex string often includes it.
 Likely fits in the same "Networking" or "BACnet" category as the future
 BACnet object reference tool.
 
-### Thermistor calculator
-Two related modes (probably tabs, à la Signal Scaling):
+### Thermistor calculator *(lookup mode shipped + curves verified)*
+Two related modes were planned (probably tabs, à la Signal Scaling).
+Lookup is shipped and the curves are now datasheet-verified; identify
+mode is still future work.
 
-- **Lookup mode (must-have).** Pick a thermistor type, enter either
-  temp or resistance, get the other. Common types to support: 10K
-  Type II, 10K Type III, 10K Type 8.7K (Johnson), 10K Type 5 with
-  11K shunt (Schneider/EBO convention — Type 3 linearized with a
-  shunt resistor, common in older TAC/Andover gear), 20K, 3K, 1K
-  Balco (nickel-iron alloy, RTD-style — still appears in retrofits
-  on older Honeywell/Johnson jobs), plus Pt100 / Pt1000 RTDs (not
-  strictly thermistors but used the same way on the troubleshooting
-  side, so worth including with a label noting they're RTDs).
-  Probably also show the full R/T table for the selected type
+- **Lookup mode** *(shipped).* Pick a thermistor type, enter either
+  temp or resistance, get the other. Types live in
+  `html/scripts/thermistor-data.js`: 10K Type II, 10K Type III, 10K
+  + 8.7K (Johnson), 10K Type 5 with 11K shunt (Schneider/EBO
+  convention — Type 3 linearized with a shunt resistor, common in
+  older TAC/Andover gear), 20K, 3K, 1K Balco (nickel-iron alloy,
+  RTD-style — still appears in retrofits on older Honeywell/Johnson
+  jobs), plus Pt100 / Pt1000 RTDs (not strictly thermistors but used
+  the same way on the troubleshooting side, labeled "RTD" in the
+  card tag). Page shows the full R/T table for the selected type
   alongside the single answer — techs often want to scan the curve,
   not just one value.
-- **Identify mode (more ambitious).** User enters 2+ (temp, resistance)
+- **Identify mode** *(still future).* User enters 2+ (temp, resistance)
   pairs from an unknown sensor and the tool reports which standard
   type best fits, with a confidence indicator. Useful when there's an
   unlabeled sensor in the field. Needs a clear accuracy disclaimer —
@@ -535,12 +537,33 @@ Two related modes (probably tabs, à la Signal Scaling):
   points = better answer; maybe require 3 minimum and surface
   per-point residuals so the user can see how clean the fit is.
 
-Implementation question for later: lookup tables vs. Steinhart-Hart
-coefficients. Tables are bulletproof and match what's in
-manufacturer datasheets; coefficients are more compact and let you
-interpolate smoothly. Probably tables for the common types
-(copy-paste from datasheets, verified) — that's the "no surprises"
-answer for a tool people use on job sites.
+**Implementation question — settled.** The original open question was
+lookup tables vs. Steinhart-Hart coefficients. The codebase landed on
+a hybrid: each type carries a small `curve:` block (β, R25, shunt for
+the linearized 10K curves, R0 + temperature coefficient for the RTDs,
+Callendar–Van Dusen for Pt100/Pt1000), and the displayed R/T table is
+*generated* from that — single-β model for the NTC curves, linear for
+Balco, IEC 60751 polynomial for the platinum RTDs, then linear
+interpolation between displayed table rows for the page lookup. This
+means auditing the small parameter set covers all 500+ table cells.
+Trade-off documented in the data file header.
+
+**Verification pass — done (2026-05).** The 2026-05 pass cross-checked
+every type against published datasheets: BAPI 10K-2 / 10K-3 / 10K-3(11K)
+output tables, US Sensor "Curve G", Sontay's Compatibility Chart,
+Vector Controls' multi-curve reference, Schneider EBO's Balco chart,
+the ACI BALCO datasheet, IEC 60751:2008. The biggest finding was that
+the original Type III β (3976) was off by ~15 % at the cold end — the
+canonical Type III curve has effective β25/85 ≈ 3693 and is the
+*shallower* of the two common 10K curves, not the steeper one. Type
+III dragged Type 5 (TAC) with it (shunted Type III element). Both
+retuned. 1K Balco TCR was also 30 % too high; retuned to ACI's 2.2 Ω/°F.
+Pt100/Pt1000 confirmed exact against the international standard. JCI
+10K + 8.7K remains the one PENDING type — its canonical TE-6300
+Product Bulletin URL redirects to a docs-portal landing page and no
+public R/T table for the 8.7K-shunted variant has been located.
+The thermistor page now carries an "About these tables" tool-card
+surfacing the methodology and disclaimers to end users.
 
 ### Interactive psychrometric chart *(initial build shipped)*
 The state-point calculator + draggable dot shipped (v0.6, US units,

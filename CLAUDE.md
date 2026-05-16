@@ -44,11 +44,21 @@ but the project is the tools, not a personal homepage.
     and attribute surface documented in `site-ideas-and-friction.md`
     under "Engine attribute conventions."
   - `thermistor-data.js` — sensor R/T curves (exposes
-    `THERMISTOR_TYPES`). **The R/T tables are generated from nominal
-    curve parameters, not transcribed from datasheets, and are flagged
-    PENDING FIELD VERIFICATION** — see the file header for which curves
-    are highest/lowest confidence. A verification pass with a second
-    tech is planned before the tool is treated as authoritative.
+    `THERMISTOR_TYPES`). The R/T tables are *generated* from a small
+    set of curve parameters (β, R25, shunt, R0, TCR), so auditing
+    the parameters covers all 500+ cells. The parameters were
+    verified in the 2026-05 pass against BAPI 10K-2 / 10K-3 /
+    10K-3(11K) output tables, US Sensor "Curve G", Sontay's
+    Compatibility Chart, Vector Controls' multi-curve reference,
+    Schneider EBO's Balco chart, the ACI BALCO datasheet, and IEC
+    60751:2008. The file header lists per-type confidence
+    (HIGH / GOOD / PENDING). One type remains PENDING — the JCI
+    10K + 8.7K-shunt curve — because the canonical Johnson Controls
+    TE-6300 Product Bulletin URL redirects to a docs-portal landing
+    page and no public R/T table is available for that
+    configuration. The thermistor calculator page carries an "About
+    these tables" tool-card surfacing the methodology and disclaimers
+    to end users.
 - **Worker:** `src/worker.js` — ES-module Worker. Handles
   `POST /api/contact` (validate, drop honeypot hits silently, verify
   Turnstile, send via Resend with `reply_to` = submitter) and falls
@@ -129,7 +139,7 @@ controlsfreak.dev/
 │   ├── scripts/
 │   │   ├── pid-engine.js             # PID_PROC, simulatePid (classic script)
 │   │   ├── flow-engine.js            # FlowEngine.init(), refreshPath() — particle animation
-│   │   └── thermistor-data.js        # THERMISTOR_TYPES — tables PENDING field verification
+│   │   └── thermistor-data.js        # THERMISTOR_TYPES — curves verified 2026-05 (JCI 8.7K still PENDING)
 │   ├── tools/
 │   │   ├── index.html                # Tools landing — live grid + "Coming Soon"
 │   │   ├── signal-scaling.html
@@ -211,8 +221,13 @@ cards (the roadmap). Live tools:
   (`.ref-table-dense` in a scrollable box with sticky `thead`, current
   row highlighted) + notes. Interpolation is **linear between table
   rows** (the table is the source of truth — no Steinhart-Hart). Lookup
-  mode only; identify-mode is a future build (friction file). **Tables
-  pending field verification — see the data file.**
+  mode only; identify-mode is a future build (friction file). Curve
+  parameters verified 2026-05 against BAPI / US Sensor / Sontay /
+  Vector / Schneider EBO / ACI / IEC 60751 — see the data file header
+  for per-type confidence. **An "About these tables" tool-card below
+  the calculator surfaces the methodology and disclaimers to end
+  users** (uses page-local `.about-tables p` rules to restore
+  paragraph spacing past the global `* { margin: 0 }` reset).
 - **Mock VFD Interface** (`vfd-mock.html`, "Drives") — 2-col layout
   (keypad + LCD on the left, motor response + external inputs on the
   right; stacks on mobile). 13 parameters in 4 groups; 7-key keypad
