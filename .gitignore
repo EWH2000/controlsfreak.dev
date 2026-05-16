@@ -20,3 +20,6 @@ npm-debug.log*
 test-results/
 playwright-report/
 .playwright/
+
+# 11ty build output
+_site/

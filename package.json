@@ -4,7 +4,9 @@
   "description": "Open calculators and reference tools for building-controls engineers — BACnet, Modbus, HVAC, and building automation work. No login, no ads, just tools that are actually useful on a job site.",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "eleventy",
+    "dev": "eleventy --serve --port=8000",
+    "test": "playwright test --reporter=list"
   },
   "repository": {
     "type": "git",
@@ -18,6 +20,7 @@
   },
   "homepage": "https://github.com/EWH2000/controlsfreak.dev#readme",
   "devDependencies": {
+    "@11ty/eleventy": "^3.0.0",
     "@playwright/test": "^1.59.1",
     "wrangler": "^4.90.0"
   }
