@@ -950,22 +950,24 @@
 
         // ── Fan rotation tick ──────────────────────────────────────────
         // Independent from render() because the angle has to advance
-        // continuously, not just when state changes. 40 ms ≈ 25 fps,
-        // smooth enough for a slow-rotating fan without the rAF cost
-        // of full-frame rendering. Visual mapping: 60 Hz ⇒ 1 rev/sec
-        // (360 deg/sec) ⇒ 6 deg/sec per Hz. Slider all the way down
-        // (0 Hz) stops the blades regardless of run state. Honours
-        // prefers-reduced-motion by short-circuiting before the
-        // transform write.
+        // continuously, not just when state changes. rAF aligns the
+        // transform write with the browser's paint cadence and pauses
+        // automatically when the tab is backgrounded — no setInterval
+        // handle to manage. Visual mapping: 60 Hz ⇒ 1 rev/sec (360
+        // deg/sec) ⇒ 6 deg/sec per Hz. Slider all the way down (0 Hz)
+        // stops the blades regardless of run state. Honours
+        // prefers-reduced-motion by short-circuiting before the loop
+        // is ever started.
         const reducedMotion = window.matchMedia
             && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
         if (!reducedMotion) {
             let fanAngle = 0;
-            let lastFanTick = Date.now();
-            setInterval(function () {
-                const now = Date.now();
-                const dt = (now - lastFanTick) / 1000;
-                lastFanTick = now;
+            let lastT = null;
+            function fanFrame(t) {
+                if (lastT === null) lastT = t;
+                // Clamp dt — backgrounded tabs can return with a huge gap.
+                const dt = Math.min(0.1, (t - lastT) / 1000);
+                lastT = t;
                 if (isRunning() && state.speedHz > 0) {
                     fanAngle = (fanAngle + 6 * state.speedHz * dt) % 360;
                     fanBlades.setAttribute('transform', 'rotate(' + fanAngle.toFixed(1) + ' 50 50)');
@@ -974,7 +976,9 @@
                 // appear to coast to a halt visually because the
                 // motion stops abruptly but the user has already
                 // seen the run-state change).
-            }, 40);
+                requestAnimationFrame(fanFrame);
+            }
+            requestAnimationFrame(fanFrame);
         }
 
         render();

@@ -863,21 +863,24 @@
         });
         document.addEventListener('unitschange', render);
 
-        // Fan tick — identical structure to the VFDs widget. 60 Hz ⇒ 1 rev/sec.
+        // Fan tick — rAF for paint-aligned cadence and free
+        // backgrounded-tab pausing. 60 Hz ⇒ 1 rev/sec.
         const reducedMotion = window.matchMedia &&
             window.matchMedia('(prefers-reduced-motion: reduce)').matches;
         if (!reducedMotion) {
             let fanAngle = 0;
-            let lastFanTick = Date.now();
-            setInterval(function () {
-                const now = Date.now();
-                const dt = (now - lastFanTick) / 1000;
-                lastFanTick = now;
+            let lastT = null;
+            function fanFrame(t) {
+                if (lastT === null) lastT = t;
+                const dt = Math.min(0.1, (t - lastT) / 1000);
+                lastT = t;
                 if (state.hz > 0) {
                     fanAngle = (fanAngle + 6 * state.hz * dt) % 360;
                     fanBlades.setAttribute('transform', 'rotate(' + fanAngle.toFixed(1) + ' 50 50)');
                 }
-            }, 40);
+                requestAnimationFrame(fanFrame);
+            }
+            requestAnimationFrame(fanFrame);
         }
 
         render();

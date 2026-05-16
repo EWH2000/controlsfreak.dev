@@ -703,6 +703,12 @@
             renderLcd();
             renderRightPanel();
             renderParamTable();
+            // Any state-changing path eventually calls render(), so this
+            // is the single wake-up point for the motor tick. Idempotent
+            // — ensureTickRunning() returns early if the interval is
+            // already scheduled (including when render() is called from
+            // inside the tick itself).
+            ensureTickRunning();
         }
 
         // ── Keypad actions ─────────────────────────────────────────────
@@ -871,10 +877,35 @@
         // ── Tick loop ──────────────────────────────────────────────────
         // Drive motor model + flash-message expiry. 50 ms keeps the
         // gauge motion smooth without burning a frame on every paint.
-        setInterval(() => {
-            tickMotor();
-            render();
-        }, 50);
+        // Lazy: the interval auto-stops when there's no work to do
+        // (motor at commanded speed AND no flash message pending) and
+        // restarts the next time render() is called. Avoids waking the
+        // JS engine 20×/sec while the page sits idle.
+        let motorTickId = null;
+
+        function isIdle() {
+            // Mirror tickMotor's target calculation so the stop condition
+            // tracks what the motor model actually does.
+            const target = isRunning() ? activeSpeedRef() : 0;
+            return state.actualHz === target && state.flashUntil <= Date.now();
+        }
+
+        function ensureTickRunning() {
+            if (motorTickId !== null) return;
+            // Reset dt anchor so the first tick after a restart doesn't
+            // see a giant gap (e.g. after the user left the page idle
+            // for minutes — tickMotor already clamps, but resetting here
+            // is the principled fix).
+            state.lastTick = Date.now();
+            motorTickId = setInterval(() => {
+                tickMotor();
+                render();
+                if (isIdle()) {
+                    clearInterval(motorTickId);
+                    motorTickId = null;
+                }
+            }, 50);
+        }
 
         render();
     })();
