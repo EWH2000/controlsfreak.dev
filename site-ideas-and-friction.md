@@ -493,13 +493,24 @@ tool whose job is to be more correct than a pocket P-T card, not less.
   second piece exists before deciding, same logic as the engines
   question.
 
-### PID tuner — explicit loop speed numbers
-The current "fast loop / slow loop" framing is vague for users who
-don't already have intuition for what those mean in real units. Add
-concrete numbers — e.g. process time constant in seconds, loop period,
-or a small reference ("fast ≈ X s, medium ≈ Y s, slow ≈ Z s, typical
-HVAC examples for each"). Goal is to help someone who's never tuned a
-loop calibrate what they're looking at before they touch a slider.
+### PID tuner — explicit loop speed numbers *(shipped 2026-05-16)*
+The original ask was to put concrete time-constant numbers somewhere
+the user encounters them *before* picking a Process Type. Done in two
+places that now share a single source of truth:
+
+1. **Dropdown options carry τ ranges inline** — `Fast (τ ~5–15 s) —
+   e.g. duct static pressure`, `Medium (τ ~30 s – 2 min) — e.g.
+   discharge air temp`, `Slow (τ ~2–10 min) — e.g. space temperature`.
+   The calibration shows up at the moment of selection, not 800 px
+   down the page in the Reference column.
+2. **Loop Speed Reference table at the bottom of the Reference column**
+   (already in place) shows the same τ ranges + dead-time + fuller
+   HVAC examples + the dead-time/τ controllability ratio note.
+
+Numbers match between the two surfaces — if the table is ever
+retuned, the dropdown labels should follow. Kept the brief
+selector labels short enough that the τ range and one canonical
+HVAC example still fit on a single line at the rendered widths.
 
 ### BACnet/IP hex ↔ dotted-decimal converter
 EBO displays BACnet/IP device addresses in hex (e.g. `C0A80164`) instead
@@ -702,6 +713,75 @@ process-lines work distracting.
 Implementation note carried forward from phase 1: canvas was the right
 call (matches the PID plot's approach). The chip would be an absolutely
 positioned HTML element over the canvas, updated on each drag event.
+
+### Mock function-block editor *(larger build — may span multiple sessions)*
+A graphical function-block sandbox in the spirit of Niagara's wiresheet
+/ EBO function diagrams / Distech graphical programming — a teaching
+surface for newer techs who've never wired a logic diagram before, and
+a "what does this language even look like" sample for people coming in
+from PLC or line-code backgrounds. Same `mock` framing as
+`vfd-mock.html`: feels like the real thing, doesn't replace it.
+
+**Rough scope (provisional, settle when this enters the queue):**
+
+- *Block palette — basic logic and math.* Boolean: AND, OR, NOT, XOR,
+  RS latch. Comparators: =, ≠, >, <, ≥, ≤. Math: add, subtract,
+  multiply, divide, min, max, average. Timers: TON (on-delay), TOF
+  (off-delay), pulse. Selection: select (boolean switch), limit
+  (clamp). Sources/sinks: constant value, AI/AO/BI/BO point stubs,
+  display readout.
+- *Canvas + wiring.* Drag blocks from a palette onto a canvas; click
+  output pin → click input pin to wire. Live tick simulation runs in
+  the background so wires light up with their current value and
+  outputs update as inputs change. Probably no save/load in v1
+  (state survives the session, not a reload — same as the VFD mock).
+- *Example programs — canned scenarios that load with one click.*
+  Few candidates worth considering: start/stop interlock with
+  hand-off-auto, freeze-stat shutdown chain, occupancy override with
+  timed bypass, simple economizer enable (OAT < setpoint AND mode =
+  cool), pump alternation latch, simple PID-style cascade (the PID
+  block lives in the Tuner, but a placeholder block here could
+  consume its output). The examples are the value — palette without
+  worked programs is just a toy.
+- *No actual PID block here.* Same scope discipline as the VFD mock —
+  this tool is the wiring/logic surface, not the control-loop surface.
+  If the user wants a PID, the Tuner is one click away (cross-link).
+  A `PID` block stub can appear in the palette as a black box (inputs
+  for SP/PV, output 0–100%), with prose saying "see the Tuner" and
+  no actual loop math under the hood.
+
+**Open design questions for when this gets closer:**
+- *Pairing with an Education page.* "What is function-block
+  programming, and why do controls people use it?" might be a peer
+  Education page that this tool pays off. Same precedent as
+  vfds.html ↔ vfd-mock.html. Or the explainer prose lives on the
+  tool page itself if it stays short.
+- *Visual grammar.* Niagara wiresheet (boxes-on-grid, orthogonal
+  wires) vs. EBO function diagrams (similar, slightly different
+  chrome) vs. an on-brand "controlsfreak look" that isn't a copy of
+  either. Probably the third, drawing from the site's existing
+  palette and the recessed `--surface-3` panel idiom.
+- *Tick semantics.* Real controllers run blocks in a defined
+  evaluation order (often topologically sorted on the wires). v1
+  can probably get away with "evaluate every block every tick,
+  combinational logic settles in one pass," but feedback loops
+  (the RS latch wired through an OR with itself) will need a
+  one-tick-delay convention so they don't infinite-loop. Worth
+  thinking about up front so the engine isn't retrofitted.
+- *Persistence.* Same question the Controller commissioner entry
+  raises — does this tool save programs across sessions
+  (localStorage)? Does it export to a sharable JSON? Both add real
+  scope; v1 can probably ship without either.
+- *Mobile.* Almost certainly desktop-only. Drag-and-drop wiring on
+  a touch device is its own design problem, and the audience for
+  this tool overlaps heavily with the "at-a-desk learning" mode
+  rather than the "on-a-roof" mode.
+
+This entry is brief on purpose — flesh it out in the design chat
+when it enters the queue. Sits in the same "larger build, multiple
+sessions" bucket as the Controller commissioner below; if both ship,
+they might share a bit of visual vocabulary (block-palette + canvas
+layout, point-stub representation) but they're independent tools.
 
 ### Controller commissioner *(larger build — may span multiple sessions)*
 A point-by-point commissioning workbench. User defines the controller's
