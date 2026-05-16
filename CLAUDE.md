@@ -1,19 +1,16 @@
 # controlsfreak.dev
 
-> **Migration paused (2026-05-16):** Block B per
-> `codebase-issues.md` #4 — Eleventy (11ty) was adopted as a
-> templating layer. Infrastructure is in place (`.eleventy.js`,
-> `html/_includes/`, `html/html.11tydata.js`, `package.json`
-> build scripts) and verified building locally via
-> `npm run build`. Four pages were templated and pushed (commits
-> 6f1c708, e6d5835) but reverted in 4ea594d after they served as
-> raw template source in production — the Cloudflare Workers
-> Build dashboard was never configured to run the build step in
-> CI. Migration is paused until the dashboard build command is
-> set (`npm install && npm run build`) and an end-to-end test
-> deploy confirms the pipeline works. The notes below describe
-> the current production architecture — still hand-written HTML
-> served directly from `html/`.
+> **Migration in progress (2026-05-16):** Block B per
+> `codebase-issues.md` #4 — partial migration to Eleventy (11ty).
+> Build pipeline is live: Cloudflare Workers Build runs
+> `npm install && npm run build` on push, and `wrangler.jsonc`
+> serves `./_site/`. 4 of 17 pages are templated against
+> `html/_includes/` (`index`, `contact`, `tools/index`,
+> `education/index`); the rest are still in the original hand-
+> written shell and convert in upcoming batches. The notes below
+> describe the pre-migration architecture and get rewritten in
+> migration Step 6 once all pages are converted. Existing
+> templated pages are the reference for new work.
 
 A field-reference tool site for building-controls engineers — open
 calculators and lookup utilities for BACnet, Modbus, HVAC, and building

@@ -167,8 +167,7 @@ Scope of the migration (Block B):
 - 2026-05-16 — Step 1 (f4031f8): 11ty pipeline standing up.
   `.eleventy.js`, `package.json` scripts (build/dev/test), the
   `html.11tydata.js` permalink override, `_site/` gitignored,
-  `@11ty/eleventy ^3.0.0` installed. Verified locally: `npm run
-  build` produces a 30-file `_site/` byte-identical to `html/`.
+  `@11ty/eleventy ^3.0.0` installed.
 - 2026-05-16 — Step 2 (6f1c708) and Step 4 Batch 1 (e6d5835):
   layout + partials written; `index.html`, `contact.html`,
   `tools/index.html`, `education/index.html` converted to template
@@ -177,36 +176,26 @@ Scope of the migration (Block B):
   contact.html.
 - 2026-05-16 — **Emergency revert (4ea594d)**: the four templated
   pages restored to pre-conversion HTML. Production was serving
-  the raw template source (visible frontmatter,
-  `{% extends %}` directives, no `<head>` / styles.css / nav)
-  because the Cloudflare Workers Build dashboard was never
-  configured to run the build step in CI — wrangler.jsonc still
-  points at `./html`, and Cloudflare was serving the templated
-  source files directly. The migration infra stays in place,
-  dormant.
+  the raw template source because the Cloudflare Workers Build
+  dashboard was never configured to run the build step in CI —
+  `wrangler.jsonc` still pointed at `./html`. **Planning lesson:
+  the deploy-pipeline configuration must be a hard prerequisite
+  before any page conversion, not a Step-5 cleanup.**
+- 2026-05-16 — Recovery: Cloudflare Workers Build dashboard
+  configured with `npm install && npm run build`;
+  `wrangler.jsonc` flipped from `./html` to `./_site` (b1cc8b7);
+  build pipeline verified end-to-end in production (the leaked
+  `/_includes/*` URLs now 404 instead of 200, site renders
+  unchanged); Step 2 + Batch 1 conversions re-applied (c66e6a1).
+  **4 of 17 pages templated** and confirmed live.
 
-**Migration is paused.** Root cause was a planning gap — the
-deploy-pipeline configuration was scheduled as Step 5 (after page
-conversion), but should have been a hard prerequisite. The revised
-sequencing below corrects this.
-
-**Revised step ordering (use this on resume):**
-
-1. Configure Cloudflare Workers Build dashboard with build
-   command `npm install && npm run build`. **Human action —
-   dashboard only; not in this repo.**
-2. Flip `wrangler.jsonc` `assets.directory` from `./html` to
-   `./_site`.
-3. Push and verify production serves the built `_site/`. At this
-   point no pages are templated yet, so `_site/` is byte-identical
-   to `html/` — the live site should look unchanged. Smoke-test
-   to confirm the build step actually ran in CI.
-4. Only after the above verifies, re-apply the four conversions
-   (cherry-pick 6f1c708 and e6d5835, or redo them). Continue
-   with Batch 2 (6 education content pages), Batch 3 (6 simpler
-   tools), Batch 4 (psychrometric-chart).
-5. Step 6 (CLAUDE.md / README.md comprehensive rewrite) and
-   Step 7 (cleanup) after all pages converted.
+**Remaining:** Batch 2 (6 education content pages — `pid-basics`,
+`hydronic-loops`, `load-piping`, `vfds`, `pump-control`,
+`balancing`) → Batch 3 (6 simpler tools — `signal-scaling`,
+`bacnet-ip-converter`, `modbus-register-viewer`,
+`thermistor-calculator`, `pid-tuner`, `vfd-mock`) → Batch 4
+(`psychrometric-chart`) → Step 6 (CLAUDE.md / README.md
+comprehensive rewrite) → Step 7 (cleanup).
 
 ### 5. Widget chrome CSS consolidation
 
