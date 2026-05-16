@@ -1,27 +1,17 @@
 # controlsfreak.dev
 
-> **Migration in progress (2026-05-16):** Block B per
-> `codebase-issues.md` #4 — partial migration to Eleventy (11ty).
-> Build pipeline is live: Cloudflare Workers Build runs
-> `npm install && npm run build` on push, and `wrangler.jsonc`
-> serves `./_site/`. 4 of 17 pages are templated against
-> `html/_includes/` (`index`, `contact`, `tools/index`,
-> `education/index`); the rest are still in the original hand-
-> written shell and convert in upcoming batches. The notes below
-> describe the pre-migration architecture and get rewritten in
-> migration Step 6 once all pages are converted. Existing
-> templated pages are the reference for new work.
-
 A field-reference tool site for building-controls engineers — open
 calculators and lookup utilities for BACnet, Modbus, HVAC, and building
 automation work, plus plain-English explainers. "No login, no ads, just
-tools that are actually useful on a job site." Hand-written HTML pages
-plus a small Cloudflare Worker (only for `/contact`) — **no framework,
-no build step.** That's load-bearing: the browser loads pages, the
-shared `styles.css`, and any shared scripts directly — no bundler,
-transpiler, or generator. Sharing external CSS/JS files is fine; that's
-still no build step. There's a personal "About" card on the home page,
-but the project is the tools, not a personal homepage.
+tools that are actually useful on a job site." Source pages under
+`html/` plus a small Cloudflare Worker (only for `/contact`). The
+toolchain is deliberately minimal: 11ty (Eleventy) templates the
+shared chrome — `<head>`, nav, footer — out of every page;
+everything else is vanilla. No client-side framework, no bundler, no
+transpiler. View-source of the rendered page is still readable HTML,
+and browsers ten years from now will still run it. There's a personal
+"About" card on the home page, but the project is the tools, not a
+personal homepage.
 
 For per-page design history, scope decisions, and ideas-not-yet-shipped,
 see `site-ideas-and-friction.md`. For open code-quality items needing a
@@ -30,14 +20,52 @@ the site does, see `README.md`.
 
 ## Stack
 
-- **Static pages under `html/`**, bound to the Worker as `env.ASSETS`.
-- **`html/styles.css`** — the shared design system. Every page links it
-  with `<link rel="stylesheet" href="/styles.css">`. Shared rules live
-  in the file; page-only rules stay inline.
-- **Shared scripts** in `html/scripts/` are **classic scripts** (not ES
-  modules — modules would break the inline `on*` handlers). Load with
-  `<script src="/scripts/xxx.js"></script>` *before* the page's inline
-  `<script>`. Today:
+- **Eleventy (11ty) build pipeline.** `.eleventy.js` runs every
+  `.html` file under `html/` through Nunjucks and writes to `_site/`.
+  Pages carry YAML frontmatter and extend the shared layout (see
+  *Templating*, below). Static assets (`scripts/`, `styles.css`,
+  `assets/`, `robots.txt`, `sitemap.xml`) are passthrough-copied at
+  the same relative paths the pages reference. Build is fast (~0.2s
+  for 17 pages); there's no JS transpile or bundle step — Nunjucks
+  is the only thing the build does. Cloudflare Workers Build runs
+  `npm install && npm run build` on push to `main`; the deploy
+  serves `_site/`.
+- **Templates under `html/_includes/`:**
+  - `layouts/page.njk` — the page shell. Renders `<!DOCTYPE html>` /
+    `<html>` / `<head>` (via `head.njk`) / `<body>` / nav (via
+    `nav.njk`) / page content / footer (via `footer.njk`). Exposes
+    three named blocks for pages to fill: `{% block head %}` (inline
+    `<style>` or third-party loader scripts in the head),
+    `{% block content %}` (everything between nav and footer),
+    `{% block scripts %}` (end-of-body scripts — shared script
+    `<script src="…">` tags plus the page's inline `<script>`).
+  - `head.njk` — the standard `<head>` block: meta charset/viewport,
+    `<title>` / `<meta name="description">` / 6 Open Graph tags
+    (filled from frontmatter), 3 favicon links, Google Fonts
+    (preconnect + IBM Plex Mono + Overpass), `<link rel="stylesheet"
+    href="/styles.css">`, the units-bootstrap inline script.
+  - `nav.njk` — the shared top nav. `Tools` / `Education` / etc.
+    take `.active` based on the `nav` frontmatter value.
+  - `footer.njk` — `controlsfreak.dev — open tools…` line and the
+    version string. Bump the version here when shipping something
+    notable; it carries to every page automatically.
+- **Directory data file:** `html/html.11tydata.js` — overrides 11ty's
+  default pretty-URL permalink so `signal-scaling.html` lands at
+  `_site/tools/signal-scaling.html` with its original filename
+  intact (not `signal-scaling/index.html`). Load-bearing for two
+  reasons: every anchor on the site uses explicit `.html` extensions,
+  and wrangler's `assets.html_handling: auto-trailing-slash` expects
+  `foo.html` files, not `foo/index.html` directories.
+- **`html/styles.css`** — the shared design system. Every page picks
+  it up via `head.njk`'s `<link rel="stylesheet" href="/styles.css">`.
+  Shared rules live in the file; page-only rules stay inline via
+  `{% block head %}`.
+- **Shared scripts** in `html/scripts/` are **classic scripts** (not
+  ES modules — modules would break the inline `on*` handlers on
+  older pages, and there's no bundler doing module-graph work).
+  Loaded with `<script src="/scripts/xxx.js"></script>` inside
+  `{% block scripts %}`, *before* the page's inline `<script>`.
+  Today:
   - `pid-engine.js` — PID simulation core (FOPDT, conditional-
     integration anti-windup). Exposes `PID_PROC`, `simulatePid()`.
   - `flow-engine.js` — particle-flow animation for SVG schematics.
@@ -53,9 +81,9 @@ the site does, see `README.md`.
   - `units.js` — site-wide US/metric toggle. State in `localStorage`
     (`cf_units`), 12 quantity conversions, DOM walker for
     `data-us` / `data-metric` spans, `unitschange` event on
-    `document`. Exposes `window.Units`. A tiny inline `<script>` in
-    every page's `<head>` reads it before first paint to avoid a US
-    flash for metric visitors.
+    `document`. Exposes `window.Units`. The tiny inline bootstrap
+    in `head.njk` reads `localStorage` before first paint to avoid
+    a US flash for metric visitors.
   - `ui.js` — `switchTab(name, btn)`, `copyText(btn, text)`,
     `copyReadouts(btn, sep, ...ids)`. Clipboard failures fail
     silently (insecure context, no user activation).
@@ -66,27 +94,118 @@ the site does, see `README.md`.
   `TURNSTILE_SECRET`, `RESEND_API_KEY` (`wrangler secret put …`). The
   Turnstile *site* key lives in `contact.html`. `from`/`to` =
   `contact@controlsfreak.dev` (verified Resend sender).
-- **Fonts:** Google Fonts (IBM Plex Mono + Overpass) with `preconnect`,
-  per page. Self-hosting is reasonable future cleanup.
+- **Fonts:** Google Fonts (IBM Plex Mono + Overpass) with `preconnect`
+  — loaded once via `head.njk`. Self-hosting is reasonable future
+  cleanup.
 - **Hosting:** Cloudflare Workers. Auto-deploys on push to `main` via
-  GitHub integration (~60s).
+  GitHub integration (~60s); the dashboard's build step runs `npm
+  install && npm run build` before each deploy.
 - **Config:** `wrangler.jsonc` — `name`, `main`, `assets.directory`
-  (`./html`), `assets.binding` (`ASSETS`),
-  `assets.html_handling` (`auto-trailing-slash` — `/contact.html`
-  redirects to `/contact`, `/tools/` serves `tools/index.html`), and
-  `compatibility_date` are all load-bearing; touch carefully.
+  (`./_site` — built output, not the source `./html/`),
+  `assets.binding` (`ASSETS`), `assets.html_handling`
+  (`auto-trailing-slash` — `/contact.html` redirects to `/contact`,
+  `/tools/` serves `tools/index.html`), and `compatibility_date` are
+  all load-bearing; touch carefully. `_site/` is gitignored — only
+  source files commit.
+
+### Templating
+
+Every page in `html/` (other than the partials under `_includes/`)
+has this shape:
+
+```nunjucks
+---
+title: Signal Scaling — controlsfreak.dev
+description: mA / V analog signals to engineering units and back, plus a 2-point → slope/offset solver for y = mx + b.
+canonical: https://controlsfreak.dev/tools/signal-scaling.html
+nav: tools
+---
+{% extends "layouts/page.njk" %}
+
+{% block head %}
+    <style>
+        /* Page-specific CSS lives here. Indented to column 4 to
+           match the rest of the head's indentation. Inner rules
+           sit at column 8. */
+        .page-only { … }
+    </style>
+{% endblock %}
+
+{% block content %}
+<main>
+
+    <div class="section-header">…</div>
+
+    <div class="tool-card">…</div>
+
+    <a class="back-link" href="/tools/">← All tools</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="/scripts/units.js"></script>
+<script src="/scripts/pid-engine.js"></script>
+<script>
+    // page logic
+</script>
+{% endblock %}
+```
+
+Frontmatter fields:
+
+- `title` — used verbatim for both `<title>` and `og:title`. Em-dashes
+  and other Unicode are fine unquoted; quote the string if it contains
+  a YAML-special character at the start (`-`, `?`, `:`-followed-by-
+  space, etc.) or any of `: { } [ ] , & * # ? | < > = ! % @ \``.
+- `description` — used verbatim for both `<meta name="description">`
+  and `og:description`. 140–160 chars, human-written, never reused.
+  **Important:** the description renders through `{{ description }}`
+  which is HTML-autoescaped — an apostrophe becomes `&#39;`, a `<`
+  becomes `&lt;`. Visually identical in the page and to search
+  engines, but ugly in view-source. If a description has apostrophes
+  and you'd rather they stay as `'` in the rendered HTML, rephrase
+  to avoid them.
+- `canonical` — full URL with `.html` extension. Used for `og:url`.
+- `nav` — one of `home`, `tools`, `education`, `contact`. Drives the
+  `.active` marker on the top nav. Omit (or use an empty string) on
+  pages that don't fit one of those.
+
+Blocks:
+
+- `{% block head %}` is optional — only fill it if the page has
+  inline `<style>` or a third-party loader script that has to go in
+  the head (Turnstile on `contact.html` is the only current example).
+- `{% block content %}` is required and holds everything between the
+  nav and the footer — for almost every page, an outer `<main>…</main>`.
+- `{% block scripts %}` is where end-of-body scripts go. Shared
+  script `<script src="…">` tags first, then the page's inline
+  `<script>`. The order matters — the inline script references
+  symbols the shared scripts export.
+
+The layout uses `trimBlocks: true` + `lstripBlocks: true`
+(`.eleventy.js`), so empty `{% block %}{% endblock %}` pairs and
+indented `{% include %}` tags don't leak stray whitespace into the
+rendered HTML. Result: the rendered output looks like a hand-written
+file.
 
 ### Conventions
 
 - **Anchor `href`s use explicit `.html` extensions** (e.g.
   `/tools/signal-scaling.html`, `/contact.html`); directory URLs (`/`,
-  `/tools/`) stay clean. Works against `python -m http.server` locally
-  and against the Worker (which redirects to the clean form). Asset
-  references (`/styles.css`, `/scripts/…`) are absolute.
-- **Indentation: 4 spaces** everywhere — HTML, CSS, JS.
-- **Vanilla JS only** — no libraries, no frameworks, no build step.
-  Per-page logic in an inline `<script>` at the bottom; genuinely
-  shared JS goes in `html/scripts/` as a classic script.
+  `/tools/`) stay clean. Works against the eleventy dev server,
+  against `python -m http.server` serving `_site/`, and against the
+  Worker (which redirects to the clean form). Asset references
+  (`/styles.css`, `/scripts/…`) are absolute. The `html.11tydata.js`
+  permalink override is what keeps this working — 11ty's pretty-URL
+  default would break it.
+- **Indentation: 4 spaces** everywhere — HTML, CSS, JS, Nunjucks
+  template syntax.
+- **Vanilla JS only** — no libraries, no client-side frameworks. The
+  11ty build templates the shared chrome and does nothing else; JS
+  ships to the browser exactly as written, no transpile. Per-page
+  logic in an inline `<script>` inside `{% block scripts %}`;
+  genuinely shared JS goes in `html/scripts/` as a classic script.
 - Prefer semantic HTML over div soup. Fast and accessible: no heavy
   media, no auto-play, no tracking or analytics.
 - **Education page scope rule** (one question per page, forward-link
@@ -99,6 +218,25 @@ the site does, see `README.md`.
 
 ### Gotchas
 
+- **`{{ description }}` is HTML-autoescaped.** Apostrophes become
+  `&#39;`, quotes become `&quot;`. Renders fine, but if you care
+  about clean view-source, rephrase to avoid those characters in the
+  description. The title and canonical render through the same path
+  but rarely contain those characters.
+- **Inline `<style>` in `{% block head %}` is indented to column 4**
+  to match the surrounding head context (which is itself indented to
+  column 4 inside the rendered `<head>`). Inner CSS rules sit at
+  column 8. The `vfd-mock.html`, `pump-control.html`, and
+  `psychrometric-chart.html` heads are the canonical references.
+- **Read→Write silently normalizes U+00A0 to ASCII space.** Caught
+  once during the 11ty migration on `signal-scaling.html` — 4 NBSPs
+  in the inline script (value/unit separators and before ⚠ glyphs)
+  collapsed to ordinary spaces during a Write. Visually identical
+  in most rendering contexts, but NBSP suppresses line breaks at
+  that point. If a file has NBSPs and you're rewriting large
+  chunks, audit before and after with
+  `LC_ALL=C grep -ao $'\xc2\xa0' file | wc -l`; patch with `sed -i`
+  using literal `\xc2\xa0` if drift is detected.
 - **SVG files in `html/assets/` must avoid `--` sequences inside
   `<!-- comments -->`.** ImageMagick's librsvg parser rejects them as
   invalid XML even though most browsers tolerate them. Write `bg` or
@@ -126,20 +264,28 @@ controlsfreak.dev/
 ├── README.md
 ├── site-ideas-and-friction.md
 ├── codebase-issues.md
-├── wrangler.jsonc
-├── package.json
+├── .eleventy.js              # 11ty config — passthroughs, Nunjucks options
+├── wrangler.jsonc            # serves _site/ via env.ASSETS
+├── package.json              # scripts: build / dev / test
 ├── src/
 │   └── worker.js
-├── html/
+├── html/                     # source (input to 11ty)
+│   ├── html.11tydata.js      # permalink override — keeps .html extensions
+│   ├── _includes/
+│   │   ├── head.njk
+│   │   ├── nav.njk
+│   │   ├── footer.njk
+│   │   └── layouts/
+│   │       └── page.njk      # the shared layout, exposes 3 blocks
 │   ├── index.html
 │   ├── contact.html
-│   ├── styles.css
-│   ├── robots.txt
-│   ├── sitemap.xml          # hand-maintained — keep in sync
-│   ├── assets/              # og-image.svg/.png, favicons
-│   ├── scripts/             # pid-engine, flow-engine, thermistor-data, units, ui
+│   ├── styles.css            # passthrough → _site/styles.css
+│   ├── robots.txt            # passthrough
+│   ├── sitemap.xml           # passthrough; hand-maintained, keep in sync
+│   ├── assets/               # passthrough; og-image.svg/.png, favicons
+│   ├── scripts/              # passthrough; pid-engine, flow-engine, …
 │   ├── tools/
-│   │   ├── index.html       # Tools landing (live grid + "Coming Soon")
+│   │   ├── index.html        # Tools landing (live grid + "Coming Soon")
 │   │   ├── signal-scaling.html
 │   │   ├── modbus-register-viewer.html
 │   │   ├── pid-tuner.html
@@ -148,14 +294,15 @@ controlsfreak.dev/
 │   │   ├── thermistor-calculator.html
 │   │   └── vfd-mock.html
 │   └── education/
-│       ├── index.html       # Education landing
+│       ├── index.html        # Education landing
 │       ├── pid-basics.html
 │       ├── hydronic-loops.html
 │       ├── load-piping.html
 │       ├── vfds.html
 │       ├── pump-control.html
 │       └── balancing.html
-└── tests/                   # Playwright (smoke.spec.js, contact.spec.js)
+├── tests/                    # Playwright (smoke.spec.js, contact.spec.js)
+└── _site/                    # build output — gitignored
 ```
 
 ## Design landmarks
@@ -165,19 +312,20 @@ per-page history and the *why* behind each, see
 `site-ideas-and-friction.md`; for the user-facing tour, see
 `README.md`.
 
-- **Shared top nav** (`.site-nav`): Home / Tools / Education / Contact.
-  Hardcode `.active` on the current page's link; no JS. `Tools` and
-  `Education` link to hub landings (`/tools/`, `/education/`).
+- **Shared top nav** (`.site-nav`, in `nav.njk`): Home / Tools /
+  Education / Contact. The `nav` frontmatter field on each page
+  drives the `.active` marker; no JS. `Tools` and `Education` link
+  to hub landings (`/tools/`, `/education/`).
 - **Page archetypes:**
   - *Tools* mostly use the **three-column property-sheet layout**
     (`.tool-body-3col` + `.ps-*` + `.ref-table-dense`) — Input /
     Output / Reference side-by-side, Niagara-style label-left /
     value-right rows. Adopters: BACnet converter, Signal Scaling,
     Modbus Register Viewer, Psychrometric Chart (custom column
-    split + page-widened to 1280px inline), Thermistor (custom
-    left-biased split). A tool with no useful reference content
-    drops the third column and runs two (`grid-column: span 2` on
-    Output).
+    split + page-widened to 1280px via `{% block head %}`),
+    Thermistor (custom left-biased split). A tool with no useful
+    reference content drops the third column and runs two
+    (`grid-column: span 2` on Output).
   - *PID tuner* and *Mock VFD* keep **custom stacked layouts** — a
     simulator block doesn't fit Input/Output/Reference. PID tuner
     uses `.ps-section-label` standalone for its bottom Reference
@@ -256,11 +404,21 @@ well-grouped.
 
 ### JS patterns
 
-- Plain functions wired with inline `on*` attributes
-  (`oninput="calcScaling()"`, `onclick="switchTab(...)"`).
-- **Validate-and-mute:** read inputs with `parseFloat`; if anything is
-  `NaN` set the result to `class="result-value muted"` with text `—`
-  and clear the formula.
+- **Event wiring — two conventions, mid-transition.** Newer pages
+  (`vfd-mock`, `pump-control`, `vfds`, `load-piping`, `balancing`)
+  wrap their inline script in an IIFE and wire events via
+  `addEventListener`. Older pages (`psychrometric-chart`,
+  `signal-scaling`, `pid-basics`, `pid-tuner`,
+  `bacnet-ip-converter`, `thermistor-calculator`,
+  `modbus-register-viewer`, `contact`) still use inline `on*`
+  attributes (`oninput="calcScaling()"`, `onclick="switchTab(...)"`)
+  with bare top-level functions. **For new pages, use the
+  addEventListener-in-IIFE pattern.** The inline-handler pages are
+  queued for retrofit (codebase-issues #3, Block C).
+- **Validate-and-mute:** read inputs with `parseFloat`; if anything
+  isn't finite (use `Number.isFinite`, not `isNaN` — see
+  codebase-issues #2), set the result to
+  `class="result-value muted"` with text `—` and clear the formula.
 - **Tabs:** `switchTab(name, btn)` (from `/scripts/ui.js`) is scoped
   to the clicked button's nearest `.tool-card`, so a page with
   multiple tabbed tools doesn't clear another's panes.
@@ -272,37 +430,39 @@ well-grouped.
 
 ## Adding a new tool
 
-1. Create `html/tools/<tool-name>.html` from the standard page shell:
-   - `<head>`: charset/viewport; a unique `<title>`; a unique
-     `<meta name="description">` (140–160 chars, human-written, never
-     reused — duplicate metadata is worse than none).
-   - **Six Open Graph tags** immediately after: `og:title`,
-     `og:description`, `og:type=website`, `og:url` (canonical URL),
-     `og:image` = `https://controlsfreak.dev/assets/og-image.png`
-     (every page shares this), `og:site_name=controlsfreak.dev`.
-     `og:title` mirrors `<title>` and `og:description` mirrors the
-     meta description verbatim — don't reword.
-   - **Three favicon link tags** (byte-identical across pages):
-     `<link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">`,
-     `<link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png">`,
-     `<link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon-180.png">`.
-   - Google Fonts links, then `<link rel="stylesheet" href="/styles.css">`.
-   - `.site-nav` with `Tools` marked `.active`.
-   - `<main>` with `.section-header` + the `.tool-card` + an
+1. Create `html/tools/<tool-name>.html` from the template shape (see
+   *Templating* above for the full skeleton):
+   - **Frontmatter:**
+     - `title` — unique, ending in `— controlsfreak.dev`.
+     - `description` — 140–160 chars, human-written, never reused
+       (duplicate metadata is worse than none). Avoid apostrophes
+       and quotes unless you're OK with `&#39;` in view-source.
+     - `canonical` — full URL with `.html` extension.
+     - `nav: tools`.
+   - `{% extends "layouts/page.njk" %}` directly after the
+     frontmatter.
+   - `{% block head %}` only if the page needs inline `<style>` or a
+     third-party loader script — `<style>` indented to column 4,
+     inner rules to column 8.
+   - `{% block content %}` wrapping `<main>` with `.section-header`
+     + the `.tool-card` + an
      `<a class="back-link" href="/tools/">← All tools</a>`.
-   - Shared `<footer>`, then an inline `<script>` for page logic.
-     Load any shared scripts (`/scripts/pid-engine.js`,
-     `/scripts/flow-engine.js`, etc.) *before* the inline script.
+   - `{% block scripts %}` with the shared script tags first
+     (typically `<script src="/scripts/units.js"></script>`, plus
+     any engines like `pid-engine.js`), then the page's inline
+     `<script>`.
    - Anchor `href`s use explicit `.html` extensions.
-2. Follow the validate-and-mute JS pattern.
+2. For the page's logic, use the IIFE + `addEventListener` pattern
+   (see *JS patterns*). Apply validate-and-mute on numeric inputs.
 3. Add a `.nav-card` for the page to the `.card-grid` on
    `tools/index.html`.
 4. If it graduates a Coming-Soon item, delete the matching
    `.tool-preview` card from `tools/index.html`.
 5. Add the page's URL to `html/sitemap.xml` (hand-maintained — no
    generator).
-6. Bump the version string in the footer when shipping something
-   notable (currently `v1.3 · 2026`, carried by every page).
+6. Bump the version string in `html/_includes/footer.njk` when
+   shipping something notable (currently `v1.3 · 2026`, carried by
+   every page automatically).
 
 ## Workflow
 
@@ -321,29 +481,39 @@ asked, but defaults to waiting for permission. Specifically:
   staging, prefer specific file lists over `git add -A` / `git add .`
   to avoid sweeping in stray files.
 
-Typical loop: user asks for a change → Claude edits → user reviews
-the diff → user says "commit" → Claude commits → user pushes →
-Cloudflare auto-deploys within ~60s.
+Typical loop: user asks for a change → Claude edits source under
+`html/` → user reviews the diff → user says "commit" → Claude commits
+→ user pushes → Cloudflare Workers Build runs `npm install && npm run
+build` → deploy serves `_site/` within ~60s.
 
 ## Local preview & tests
 
-Playwright is set up (`@playwright/test`, dev dependency only — the
-site itself still has no build step). Use it to actually look at the
-page after a UI change instead of guessing.
+Two ways to view the site locally:
 
-- **Serve:** `python3 -m http.server 8000 --directory html` — specs
-  expect port 8000. No `webServer` block in the Playwright config;
-  start the server yourself.
-- **Run specs:** `npx playwright test --reporter=list`. Specs are in
-  `tests/`: `smoke.spec.js` (every page: 200, title, nav, no console
-  errors + behavior spot-checks); `contact.spec.js` (the form).
-  Chromium only. Don't restructure the Playwright scaffolding
-  (config, `package.json` scripts) without being asked.
+- **Live-reload dev server:** `npm run dev` — runs
+  `eleventy --serve --port=8000`. Rebuilds and reloads on every
+  source change. Best for iterating on a page.
+- **Build + static-serve:** `npm run build && python3 -m http.server
+  8000 --directory _site` — produces the same `_site/` Cloudflare
+  serves and exposes it on `http://localhost:8000`. This is what the
+  Playwright specs expect; start the server yourself before running
+  tests (there's no `webServer` block in the Playwright config).
+
+Tests:
+
+- **Run:** `npm test` (or `npx playwright test --reporter=list`).
+  Specs in `tests/`: `smoke.spec.js` (every page: 200, title, nav,
+  no console errors, plus behavior spot-checks) and
+  `contact.spec.js` (the form). Chromium only. Don't restructure
+  the Playwright scaffolding (config, `package.json` scripts)
+  without being asked.
 - **Eyeball a change:** `@playwright/test` re-exports browsers — use
   `const { chromium } = require('@playwright/test')`,
   `page.screenshot({ path, fullPage: true })`, read the PNG. Useful
-  for canvas rendering, layout, console errors. For `contact.html` use
-  `waitUntil: 'domcontentloaded'` (Turnstile never goes idle).
+  for canvas rendering, layout, console errors. For `contact.html`
+  use `waitUntil: 'domcontentloaded'` (Turnstile never goes idle).
+  Remember to rebuild (`npm run build`) before screenshotting if
+  you're serving `_site/` and haven't been running `npm run dev`.
 
 ## About the user
 
@@ -357,8 +527,19 @@ page after a UI change instead of guessing.
 
 ## What to avoid
 
-- Don't suggest frameworks, bundlers, transpilers, or static site
-  generators without being asked — "no build step" is a feature.
+- Don't write raw HTML pages without frontmatter + `{% extends %}` —
+  templated form is the convention. The build won't error on a
+  missing layout (the file would just render as-is), but it'd ship
+  a page that doesn't match the rest of the site.
+- Don't move page-local CSS or scripts into the shared partials
+  (`head.njk`, `nav.njk`, `footer.njk`). Page-only rules belong in
+  the page's `{% block head %}` or inline `<script>`.
+- Don't restructure `html.11tydata.js` or `.eleventy.js` casually —
+  the permalink override and the passthrough mappings are
+  load-bearing.
+- Don't suggest adding a client-side framework, a bundler, or a JS
+  transpiler. The 11ty build templates the HTML chrome; nothing
+  touches the JS or CSS shipped to the browser.
 - Don't run Git commands on the user's behalf.
 - Don't modify `wrangler.jsonc` casually — see Stack notes.
 - Don't add tracking, analytics, or third-party scripts.
@@ -374,8 +555,9 @@ on `tools/index.html`. Other near-term work — thermistor *identify
 mode*, psych chart *floating state-point chip*, more Education pages
 — lives in `site-ideas-and-friction.md`.
 
-Longer-term: possibly a static site generator (Hugo or 11ty) once the
-site outgrows hand-written pages. The nav/header markup copied across
-every page is the next thing pushing that way — appropriate when the
-page count reaches ~15–20. Keep markup patterns consistent so
-migration stays clean.
+Block C (post-migration cleanup) is queued in `codebase-issues.md`:
+the `isFinite`-vs-`isNaN` retrofit (#2), the inline-handler →
+`addEventListener` retrofit on the 8 older pages (#3), and the
+widget-shell CSS consolidation under a shared `.widget-*` prefix in
+`styles.css` (#5). These all wait until the migration is fully
+closed out so we don't touch the same files twice.

@@ -96,24 +96,37 @@ techs new to the industry and anyone wanting a refresh.
 ## How it's built
 
 A multi-page static site under `html/` plus a small Cloudflare
-Worker (only for `POST /api/contact`). **No framework, no build
-step.** That's load-bearing: the browser loads pages, the shared
-`styles.css`, and any shared scripts directly — no bundler, no
-transpiler, no generator. View-source shows the real code.
-Browsers ten years from now will still run it.
+Worker (only for `POST /api/contact`). The toolchain is deliberately
+minimal: 11ty (Eleventy) templates the shared chrome — `<head>`,
+nav, footer — out of every page; everything else is vanilla. No
+client-side framework, no bundler, no JS transpiler. View-source of
+the rendered page is still readable HTML, and browsers ten years
+from now will still run it.
 
 ### Architecture
 
-- **Static pages** under `html/`, bound to the Worker as
-  `env.ASSETS`. Hand-written HTML, four-space indentation, anchor
-  `href`s use explicit `.html` extensions.
+- **Source pages** under `html/` with YAML frontmatter, extending a
+  shared Nunjucks layout (`html/_includes/layouts/page.njk`).
+  Four-space indentation, anchor `href`s use explicit `.html`
+  extensions. The shared partials (`head.njk`, `nav.njk`,
+  `footer.njk`) supply the `<head>` block, the top nav, and the
+  footer.
+- **Build:** 11ty (`npm run build`) renders each page from its
+  frontmatter + the layout, passes through `styles.css`, `scripts/`,
+  `assets/`, `robots.txt`, and `sitemap.xml`, and writes to `_site/`.
+  Build is fast (~0.2s for 17 pages); the only thing the build does
+  is templating, no JS transpile or bundle. Cloudflare Workers Build
+  runs `npm install && npm run build` on push to `main` and serves
+  `_site/`.
 - **Shared design system** — `html/styles.css`. Flat
   "workstation" aesthetic borrowing visual grammar from BAS UIs
   (Niagara-ish property-sheet rows, EBO-clean panels, slightly
   shaded panel headers, flat underlined tabs). One design system,
-  applied across every page; page-specific CSS stays inline.
+  applied across every page; page-specific CSS stays inline via
+  the layout's `{% block head %}`.
 - **Shared scripts** in `html/scripts/` as *classic* scripts (not
-  ES modules — modules would break the inline `on*` handlers).
+  ES modules — modules would break the inline `on*` handlers on
+  older pages, and there's no bundler doing module-graph work).
   Loaded with `<script src="/scripts/xxx.js"></script>` before
   the page's inline `<script>`:
   - `pid-engine.js` — FOPDT process model + PID controller with
@@ -131,10 +144,12 @@ Browsers ten years from now will still run it.
   Turnstile, and sends via Resend. Falls through to
   `env.ASSETS.fetch(request)` for everything else.
 - **Hosting:** Cloudflare Workers. Auto-deploys on push to `main`
-  via the GitHub integration (~60s).
+  via the GitHub integration (~60s); the dashboard runs the 11ty
+  build before each deploy.
 - **Config:** `wrangler.jsonc` — `name`, `main`,
-  `assets.directory`, `assets.binding`, `assets.html_handling`,
-  and `compatibility_date` are all load-bearing; touch carefully.
+  `assets.directory` (`./_site`), `assets.binding`,
+  `assets.html_handling`, and `compatibility_date` are all
+  load-bearing; touch carefully.
 
 `CLAUDE.md` has the full architecture documentation, naming
 conventions, design-system component index, and per-page notes.
@@ -145,24 +160,28 @@ decision before they can be acted on.
 
 ## Local development
 
-The site has no build step, so most work is just edit-and-reload.
-
 ```sh
-# serve the static site locally on http://localhost:8000
-python3 -m http.server 8000 --directory html
-
-# install dev dependencies (Playwright only — the site itself
-# ships zero runtime JS dependencies)
+# install dev dependencies (11ty + Playwright + wrangler — the
+# site itself ships zero runtime JS dependencies)
 npm install
 
+# live-reload dev server on http://localhost:8000
+npm run dev
+
+# or: one-shot build + plain static serve (this is what the
+# Playwright specs expect)
+npm run build
+python3 -m http.server 8000 --directory _site
+
 # smoke tests cover every page + a few behaviour spot-checks
-npx playwright test --reporter=list
+npm test
 ```
 
 Tests live under `tests/`: `smoke.spec.js` (every page returns
 200, has the expected title and nav, no console errors, plus
 behaviour spot-checks) and `contact.spec.js` (the contact form).
-Chromium only.
+Chromium only. Start the server yourself before running tests —
+there's no `webServer` block in the Playwright config.
 
 For UI changes, screenshot the page after editing rather than
 guessing — `@playwright/test` re-exports `chromium` for one-shot
