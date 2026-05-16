@@ -72,6 +72,12 @@ techs new to the industry and anyone wanting a refresh.
   command from the BMS. Includes an interactive widget that reveals
   a war story when you set up the configuration mistake that
   catches everyone. Pairs with the Mock VFD interface tool.
+- **Pump Control** — how the BMS decides what speed reference to
+  send to a variable-flow pump. Pump curves and the operating point
+  (interactive chart), affinity laws, DP-based control with a remote
+  sensor, and DP setpoint reset for the bottom of the cube-law
+  savings. Two widgets, deadhead-anecdote reveal at zero demand.
+  Closes out the variable-flow story with Load Piping and VFDs.
 
 ## How it's built
 

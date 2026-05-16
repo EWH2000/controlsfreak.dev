@@ -945,3 +945,56 @@ input.ps-input:focus, select.ps-input:focus, textarea.ps-input:focus {
     .tool-body-3col > section { border-right: none; border-bottom: 1px solid var(--border); }
     .tool-body-3col > section:last-child { border-bottom: none; }
 }
+
+/* ──────────────────────────────────────────────────────────────────────
+ * EDUCATION-PAGE SVG DIAGRAMS
+ *
+ * Shared block + legend for hand-written inline schematics on Education
+ * pages with pipe-flow diagrams. Consolidated from the per-page
+ * .hd-svg / .lp-svg rules once the third page with pipe-flow diagrams
+ * (education/pump-control.html) landed — the trigger called out in the
+ * friction file's load-piping entry.
+ *
+ * Supply piping is solid + --blue; return piping is dashed + --blue-cool
+ * — distinguishable without colour. Element-level fallbacks (literal
+ * hex colours alongside the var()) live in the SVG markup itself, so a
+ * stylesheet failure still leaves a legible black-on-white diagram.
+ *
+ * The flow-active override below: while the flow-engine particle layer
+ * is running on an SVG, drop the dashed-return stroke pattern.
+ * Direction-of-motion alone distinguishes supply from return at that
+ * point, and the stationary dash pattern visually competes with the
+ * moving particles. flow-active is added by flow-engine.js only after
+ * its reduced-motion bail-out, so reduced-motion keeps the dashes;
+ * @media screen scopes the override so a printout still gets the
+ * dashed encoding even if the page was animating on screen. Selector
+ * intentionally targets any element type (paths and lines both carry
+ * data-flow). Page-specific structural diagrams without supply/return
+ * (e.g. the VFDs block diagram) stay separate from this family — see
+ * vfds.html for the .vfd-svg precedent.
+ * ────────────────────────────────────────────────────────────────────── */
+.edu-svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    margin: 1.5rem 0;
+}
+.edu-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 1.5rem;
+    font-family: var(--mono);
+    font-size: 0.66rem;
+    color: var(--text-dim);
+    margin: -0.5rem 0 0;
+    padding-left: 0.25rem;
+}
+.edu-legend .sw { display: inline-block; width: 26px; height: 0; vertical-align: middle; margin-right: 0.4rem; }
+.edu-legend .sw.supply { border-top: 3px solid var(--blue); }
+.edu-legend .sw.return { border-top: 3px dashed var(--blue-cool); }
+
+@media screen {
+    svg.flow-active [data-flow="return"] {
+        stroke-dasharray: none;
+    }
+}

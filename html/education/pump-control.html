@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pump Control — controlsfreak.dev</title>
+    <meta name="description" content="How a BMS controls a hydronic pump — pump curves and the operating point, variable-speed control with a VFD, differential-pressure sensors, and DP setpoint reset.">
+    <meta property="og:title" content="Pump Control — controlsfreak.dev">
+    <meta property="og:description" content="How a BMS controls a hydronic pump — pump curves and the operating point, variable-speed control with a VFD, differential-pressure sensors, and DP setpoint reset.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://controlsfreak.dev/education/pump-control.html">
+    <meta property="og:image" content="https://controlsfreak.dev/assets/og-image.png">
+    <meta property="og:site_name" content="controlsfreak.dev">
+    <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon-180.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&family=Overpass:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/styles.css">
+    <style>
+        /* Page-specific — widget chrome for the operating-point and
+           DP-reset widgets. Pipe-flow diagrams use the shared .edu-svg
+           rule in styles.css (Section 5 here is the third Education page
+           with pipe-flow diagrams; that's the trigger that landed the
+           consolidation, per the friction file). Widget-internal SVG
+           (the pump-curve chart and the small fan) stays inside the
+           widget styling here. */
+
+        /* Both widgets — shared chrome. Same recessed surface as the
+           d3 widget on hydronic-loops and the run/speed widget on vfds. */
+        .pc-widget {
+            margin-top: 1.25rem;
+            padding: 1.1rem 1.25rem;
+            background: var(--surface-3);
+            border: 1px solid var(--border);
+            border-radius: 3px;
+        }
+        .pc-w-try {
+            font-family: var(--mono);
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            margin-bottom: 0.85rem;
+            line-height: 1.7;
+        }
+        .pc-w-try .lbl { letter-spacing: 0.05em; text-transform: uppercase; margin-right: 0.6rem; }
+        .pc-w-try a {
+            color: var(--accent);
+            text-decoration: none;
+            margin-right: 0.85rem;
+            cursor: pointer;
+            border-bottom: 1px dashed var(--accent-dim);
+        }
+        .pc-w-try a:hover { color: var(--text-bright); border-bottom-color: var(--accent); }
+
+        .pc-w-section-label {
+            font-family: var(--mono);
+            font-size: 0.62rem;
+            color: var(--text-dim);
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin-bottom: 0.4rem;
+        }
+        .pc-w-slider-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            font-family: var(--mono);
+            font-size: 0.72rem;
+            color: var(--text-dim);
+            margin-bottom: 0.1rem;
+        }
+        .pc-w-slider-head .v {
+            color: var(--blue);
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+        .pc-w-slider { width: 100%; margin: 0.15rem 0 0.9rem; }
+
+        /* Widget 1 — operating-point chart layout. Chart on the left,
+           readouts panel on the right; stacks under ~700px. */
+        .pc-w1-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 12rem;
+            gap: 1.25rem;
+            align-items: start;
+        }
+        @media (max-width: 700px) {
+            .pc-w1-grid { grid-template-columns: 1fr; }
+        }
+        .pc-w1-chart-wrap {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            padding: 0.6rem;
+        }
+        .pc-w1-chart {
+            display: block;
+            width: 100%;
+            height: auto;
+        }
+        .pc-w1-readouts {
+            display: grid;
+            gap: 0.6rem;
+        }
+        .pc-w1-readout {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            padding: 0.55rem 0.75rem;
+        }
+        .pc-w-readout-label {
+            font-family: var(--mono);
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-dim);
+            margin-bottom: 0.18rem;
+        }
+        .pc-w-readout-value {
+            font-family: var(--mono);
+            font-size: 1.0rem;
+            font-weight: 600;
+            color: var(--blue);
+            line-height: 1.15;
+        }
+        .pc-w-readout-value .unit {
+            font-size: 0.65em;
+            color: var(--text-dim);
+            font-weight: 500;
+            margin-left: 0.2rem;
+        }
+
+        /* Fan — reused vocabulary from the VFDs widget. Slightly smaller
+           here since each pump-control widget gets its own copy. Rotation
+           rate proportional to the operating-point Hz (60 Hz ⇒ ~1 rev/sec)
+           with the same colour shift between stopped (--blue-cool) and
+           running (--blue). Honours prefers-reduced-motion via the same
+           short-circuit on the JS interval. */
+        .pc-w-fan ellipse {
+            fill: var(--blue-cool);
+            transition: fill 0.25s;
+        }
+        .pc-w-fan.spinning ellipse {
+            fill: var(--blue);
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .pc-w-fan-blades { transform: none !important; }
+        }
+        .pc-w-fan-wrap {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.55rem 0.75rem;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 3px;
+        }
+        .pc-w-fan-wrap .pc-w-fan { flex-shrink: 0; }
+        .pc-w-fan-wrap .pc-w-fan-label {
+            font-family: var(--mono);
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            line-height: 1.4;
+        }
+        .pc-w-fan-wrap .pc-w-fan-label .hz {
+            display: block;
+            color: var(--blue);
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        /* Widget 2 — DP-reset, valve row visual + readouts panel. */
+        .pc-w2-mode {
+            display: inline-flex;
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            overflow: hidden;
+            font-family: var(--mono);
+            font-size: 0.74rem;
+            margin-bottom: 0.85rem;
+        }
+        .pc-w2-mode button {
+            background: var(--surface);
+            border: 0;
+            color: var(--text-dim);
+            padding: 0.35rem 0.85rem;
+            cursor: pointer;
+        }
+        .pc-w2-mode button + button { border-left: 1px solid var(--border); }
+        .pc-w2-mode button.on { background: var(--blue); color: var(--surface); }
+
+        .pc-w2-valves {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 0.4rem;
+            margin: 0.85rem 0 1rem;
+        }
+        .pc-w2-valve {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            padding: 0.4rem 0.3rem 0.45rem;
+            text-align: center;
+        }
+        .pc-w2-valve .pct {
+            font-family: var(--mono);
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+        .pc-w2-valve .lbl {
+            font-family: var(--mono);
+            font-size: 0.55rem;
+            color: var(--text-dim);
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            margin-top: 0.1rem;
+        }
+        /* Tiny bar inside each valve cell shows openness. Filled portion
+           in --blue when the valve is meaningfully open, --border-faint
+           background. */
+        .pc-w2-valve .bar {
+            height: 4px;
+            background: var(--border-faint);
+            border-radius: 2px;
+            margin-top: 0.3rem;
+            overflow: hidden;
+        }
+        .pc-w2-valve .bar > span {
+            display: block;
+            height: 100%;
+            background: var(--blue);
+            transition: width 0.18s;
+        }
+
+        .pc-w2-readouts {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr));
+            gap: 0.55rem 0.85rem;
+            margin-bottom: 0.8rem;
+        }
+
+        /* Anecdote callout — same family as the d3 failure-state callout
+           and the vfds run/speed widget anecdote, for the cross-page
+           "extreme-state reward" pattern. min-height reserves vertical
+           space so reveals don't reflow the page below. */
+        .pc-w-anecdote-wrap { min-height: 1.5rem; margin-top: 0.6rem; }
+        .pc-w-anecdote {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-left: 4px solid var(--blue);
+            border-radius: 3px;
+            padding: 0.75rem 1rem;
+            font-size: 0.86rem;
+            line-height: 1.7;
+            color: var(--text);
+        }
+    </style>
+</head>
+<body>
+
+<nav class="site-nav">
+    <a class="site-nav-brand" href="/">controlsfreak<span>.dev</span></a>
+    <div class="site-nav-links">
+        <a href="/">Home</a>
+        <a href="/tools/">Tools</a>
+        <a href="/education/" class="active">Education</a>
+        <a href="/contact.html">Contact</a>
+    </div>
+</nav>
+
+<main>
+
+    <div class="section-header">
+        <span class="section-label">Education · Pump Control</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <div class="tool-card-title">Pump Control — How a BMS Drives the Pump <span class="tool-tag">Hydronics</span></div>
+        </div>
+        <div class="tool-body">
+
+            <p style="font-size:1.0rem;line-height:1.85;color:var(--text);max-width:680px;margin-bottom:1.75rem;">
+                On the <a href="/education/load-piping.html" style="color:var(--accent);">load piping</a> lesson we built up the picture of a variable-flow hydronic system from the load side: every coil throttled by a two-way valve, system flow rising and falling with the building's demand. On the <a href="/education/vfds.html" style="color:var(--accent);">VFDs</a> lesson we walked through the box that lets a pump run at any speed you ask for. This page is the bridge between the two — <em>how does the BMS decide what speed to ask for?</em> The short answer is "by watching a pressure sensor in the loop and slowing the pump down until the building barely notices." The long answer is everything below.
+            </p>
+
+            <!-- ───────────────── 1 · Constant-Speed Pumps ───────────────── -->
+            <div class="subhead">Constant-Speed Pumps — The Simplest Case</div>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);">
+                Before we get to the variable-flow story, name the thing it replaces. A <em>constant-speed</em> pump is exactly what it sounds like: a motor wired across the line, running at 60 Hz any time it's energised. The "control" surface from the BMS is one binary point — start it or stop it. There's no speed reference, no setpoint, no curve to live on. The pump produces whatever flow the system happens to demand at its single fixed operating point, and that's the day.
+            </p>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:1.25rem;">
+                This works fine as long as the system <em>wants</em> a constant flow. Old gravity-converted boiler loops with three-way valves at every load (constant system flow by design — that's the whole point of a three-way) sit at one operating point all day; a constant-speed pump is a sensible match. The problem shows up when constant-speed pumping meets the modern variable-flow building: every load on two-way valves, every valve throttling closed at part load, and the pump keeps pushing the same volume at the same head into a system that doesn't want it. Excess pressure dumps across the nearly-closed valves; the energy goes into noise and wear. And if every valve closes far enough at the same time and there's no bypass anywhere, you get a real failure mode — <em>deadhead</em>, where the pump spins against a closed loop with no flow path. We'll come back to it.
+            </p>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:1.25rem;">
+                The protection against the constant-speed-pump deadhead is the <em>differential pressure bypass valve</em> at the far end of the loop, covered on the <a href="/education/load-piping.html#two-way" style="color:var(--accent);">load-piping page</a>'s closing section — when system pressure climbs past a threshold (i.e. all the loads are closing in), the DPBV cracks open and gives the pump somewhere to go. It's a mechanical fix for a control problem that variable-speed pumping solves a different way: don't push pressure the system isn't asking for in the first place. That's the rest of this page.
+            </p>
+
+            <!-- ───────────────── 2 · Pump Curve and System Curve ───────────────── -->
+            <div class="subhead">Pump Curve and System Curve — The Operating Point</div>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);">
+                Two facts about a centrifugal pump — the kind on every hydronic system you'll touch — that are worth carrying around.
+            </p>
+
+            <ul style="font-size:0.95rem;line-height:1.85;color:var(--text);margin:0.5rem 0 1rem 1.5rem;">
+                <li><strong>A pump has a <em>curve</em>, not a flow rating.</strong> At zero flow (everything closed in front of it), the pump generates its maximum pressure — its <em>shutoff head</em>. As you let flow open up, head drops along a downward-curving line. At the right end of the curve — wide open, no system resistance — flow peaks and head falls toward zero. The pump can sit anywhere along that line; what it does depends on the system in front of it.</li>
+                <li><strong>A piped system has a <em>curve</em> too.</strong> Friction losses through pipe, fittings, valves, and coils rise with the square of flow. A loop with all valves wide open has a low, shallow system curve; throttle the valves and the curve gets steep — same flow takes more head to push through.</li>
+            </ul>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);">
+                Where the two curves cross is where the pump actually runs — the <em>operating point</em>. It's not a number the engineer picks; it's where physics settles. Open the valves, the system curve flattens, the intersection moves right and down (more flow, less head). Close them, the system curve steepens, intersection moves left and up (less flow, more head). The pump rides its curve up and down as the building demands.
+            </p>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:1.25rem;">
+                Drag both sliders below to see this in action. The thicker blue line is the pump curve at the chosen speed; the dim line is the same pump at full speed for reference. The green parabola is the system curve at the chosen valve position. The dot is where they meet — the operating point.
+            </p>
+
+            <!-- Widget 1 — operating-point chart. Inline JS at the bottom of the page redraws the
+                 pump curve, the reference (60 Hz) pump curve, and the system curve as the sliders
+                 move, and places the operating-point dot at the intersection. Math summary:
+                 pump curve H_p(Q, r) = 70*r² − 0.002*Q²   (r = Hz/60, parabola opening downward,
+                                                            shutoff head 70 ft at full speed)
+                 system curve H_s(Q, v) = (0.005 / (v/100)²) * Q²   (v = valves-open %, parabola
+                                                            through origin, steeper as valves close)
+                 intersection: Q = r * sqrt(70 / (R + 0.002)), where R is the system-curve slope.
+                 At r=1, v=100: Q = 100 GPM, H = 50 ft — the design operating point. -->
+            <div class="pc-widget" id="pcW1">
+                <div class="pc-w1-grid">
+                    <div>
+                        <div class="pc-w1-chart-wrap">
+                            <svg class="pc-w1-chart" id="pcW1Chart" viewBox="0 0 480 280" role="img" aria-labelledby="pc-w1-title pc-w1-desc">
+                                <title id="pc-w1-title">Pump curve and system curve</title>
+                                <desc id="pc-w1-desc">A chart with flow on the horizontal axis and head on the vertical axis. A pump curve falls from upper-left (shutoff head, zero flow) to lower-right (runout, low head). A system curve rises from the origin as a parabola. A marker sits at the intersection — the operating point. Moving the speed slider scales the pump curve; moving the valve-position slider rotates the system curve.</desc>
+
+                                <!-- axes -->
+                                <line x1="50" y1="240" x2="460" y2="240" stroke="var(--text-dim)" stroke-width="1"/>
+                                <line x1="50" y1="240" x2="50" y2="20" stroke="var(--text-dim)" stroke-width="1"/>
+
+                                <!-- axis labels -->
+                                <text x="255" y="270" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--text-dim)">flow (GPM)</text>
+                                <text x="16" y="130" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--text-dim)" transform="rotate(-90 16 130)">head (ft)</text>
+
+                                <!-- x-axis ticks: 0, 30, 60, 90, 120 -->
+                                <g font-family="var(--mono)" font-size="9" fill="var(--text-dim)" text-anchor="middle">
+                                    <text x="50"  y="254">0</text>
+                                    <text x="152" y="254">30</text>
+                                    <text x="255" y="254">60</text>
+                                    <text x="358" y="254">90</text>
+                                    <text x="460" y="254">120</text>
+                                </g>
+
+                                <!-- y-axis ticks: 0, 20, 40, 60, 80 -->
+                                <g font-family="var(--mono)" font-size="9" fill="var(--text-dim)" text-anchor="end">
+                                    <text x="44" y="244">0</text>
+                                    <text x="44" y="189">20</text>
+                                    <text x="44" y="134">40</text>
+                                    <text x="44" y="79">60</text>
+                                    <text x="44" y="24">80</text>
+                                </g>
+
+                                <!-- faint reference grid -->
+                                <g stroke="var(--border-faint)" stroke-width="1">
+                                    <line x1="50"  y1="189" x2="460" y2="189"/>
+                                    <line x1="50"  y1="134" x2="460" y2="134"/>
+                                    <line x1="50"  y1="79"  x2="460" y2="79"/>
+                                    <line x1="50"  y1="24"  x2="460" y2="24"/>
+                                    <line x1="152" y1="240" x2="152" y2="20"/>
+                                    <line x1="255" y1="240" x2="255" y2="20"/>
+                                    <line x1="358" y1="240" x2="358" y2="20"/>
+                                </g>
+
+                                <!-- pump curve at 60 Hz reference, faded -->
+                                <polyline id="pcW1PumpRef" fill="none" stroke="var(--blue-cool)" stroke-width="1.5" stroke-dasharray="4 3" points=""/>
+                                <!-- pump curve at current Hz -->
+                                <polyline id="pcW1Pump" fill="none" stroke="var(--blue)" stroke-width="2.5" points=""/>
+                                <!-- system curve at current valve position -->
+                                <polyline id="pcW1Sys" fill="none" stroke="var(--accent)" stroke-width="2.5" points=""/>
+                                <!-- operating-point dot -->
+                                <circle id="pcW1Op" cx="0" cy="0" r="6" fill="var(--text-bright)" stroke="var(--surface)" stroke-width="2"/>
+
+                                <!-- small inline legend, top-right of the plot area -->
+                                <g font-family="var(--mono)" font-size="10" fill="var(--text-dim)">
+                                    <line x1="320" y1="34" x2="345" y2="34" stroke="var(--blue)" stroke-width="2.5"/>
+                                    <text x="350" y="38">pump (now)</text>
+                                    <line x1="320" y1="50" x2="345" y2="50" stroke="var(--blue-cool)" stroke-width="1.5" stroke-dasharray="4 3"/>
+                                    <text x="350" y="54">pump (60 Hz)</text>
+                                    <line x1="320" y1="66" x2="345" y2="66" stroke="var(--accent)" stroke-width="2.5"/>
+                                    <text x="350" y="70">system</text>
+                                </g>
+                            </svg>
+                        </div>
+
+                        <div style="margin-top:1rem;">
+                            <div class="pc-w-section-label">Pump speed</div>
+                            <div class="pc-w-slider-head">
+                                <span>0 Hz</span>
+                                <span class="v"><span id="pcW1Hz">60</span> <span style="font-size:0.65em;color:var(--text-dim);font-weight:500;">Hz</span></span>
+                                <span>60 Hz</span>
+                            </div>
+                            <input class="pc-w-slider" id="pcW1HzSlider" type="range" min="0" max="60" step="1" value="60" aria-label="Pump speed in Hz"/>
+
+                            <div class="pc-w-section-label" style="margin-top:0.4rem;">Valves open</div>
+                            <div class="pc-w-slider-head">
+                                <span>10%</span>
+                                <span class="v"><span id="pcW1Valve">100</span> <span style="font-size:0.65em;color:var(--text-dim);font-weight:500;">%</span></span>
+                                <span>100%</span>
+                            </div>
+                            <input class="pc-w-slider" id="pcW1ValveSlider" type="range" min="10" max="100" step="1" value="100" aria-label="Valve open percentage"/>
+                        </div>
+                    </div>
+
+                    <div class="pc-w1-readouts">
+                        <div class="pc-w-fan-wrap">
+                            <svg class="pc-w-fan" id="pcW1Fan" viewBox="0 0 100 100" width="44" height="44" aria-hidden="true">
+                                <circle cx="50" cy="50" r="46" fill="none" stroke="var(--border)" stroke-width="2"/>
+                                <g class="pc-w-fan-blades" id="pcW1FanBlades">
+                                    <ellipse cx="50" cy="22" rx="7" ry="22"/>
+                                    <ellipse cx="50" cy="22" rx="7" ry="22" transform="rotate(72 50 50)"/>
+                                    <ellipse cx="50" cy="22" rx="7" ry="22" transform="rotate(144 50 50)"/>
+                                    <ellipse cx="50" cy="22" rx="7" ry="22" transform="rotate(216 50 50)"/>
+                                    <ellipse cx="50" cy="22" rx="7" ry="22" transform="rotate(288 50 50)"/>
+                                </g>
+                                <circle cx="50" cy="50" r="5" fill="var(--text-dim)"/>
+                            </svg>
+                            <div class="pc-w-fan-label">
+                                Pump motor<span class="hz" id="pcW1FanLabel">60 Hz</span>
+                            </div>
+                        </div>
+                        <div class="pc-w1-readout">
+                            <div class="pc-w-readout-label">Flow</div>
+                            <div class="pc-w-readout-value"><span id="pcW1Flow">100</span><span class="unit">GPM</span></div>
+                        </div>
+                        <div class="pc-w1-readout">
+                            <div class="pc-w-readout-label">Head</div>
+                            <div class="pc-w-readout-value"><span id="pcW1Head">50</span><span class="unit">ft</span></div>
+                        </div>
+                        <div class="pc-w1-readout">
+                            <div class="pc-w-readout-label">Power vs 60 Hz</div>
+                            <div class="pc-w-readout-value"><span id="pcW1Power">100</span><span class="unit">%</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:1.25rem;">
+                Two things to notice as you push the sliders around. First, with the pump at 60 Hz and the valves closing, the operating point walks up and left — flow drops, but head climbs hard. That's the constant-speed-pump problem; the pump doesn't care that the building stopped asking, it just pushes against the new resistance. Second, sliding the pump speed down at a constant valve position moves the operating point along the system curve — flow falls roughly with speed, head falls roughly with speed squared, and the cube-law shaped power readout drops faster than either. The pump is doing less work because the building asked for less, and the math is in our favour.
+            </p>
+
+            <!-- ───────────────── 3 · How a VFD Moves the Operating Point ───────────────── -->
+            <div class="subhead">How a VFD Moves the Operating Point — Affinity Laws</div>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);">
+                The math behind that "the pump curve scales when speed changes" move is the <em>affinity laws</em>. Three short statements that hold across every centrifugal pump and fan you'll touch, and they're the reason VFDs are everywhere:
+            </p>
+
+            <div class="pid-term" style="margin-top:1rem;">
+                <h4>Affinity laws — pump speed scaling</h4>
+                <ul style="margin:0.4rem 0 0 1.25rem;font-size:0.86rem;line-height:1.8;color:var(--text);">
+                    <li><strong>Flow scales with speed.</strong>&nbsp; Q&#8322; / Q&#8321; = N&#8322; / N&#8321;</li>
+                    <li><strong>Head scales with speed squared.</strong>&nbsp; H&#8322; / H&#8321; = (N&#8322; / N&#8321;)&#178;</li>
+                    <li><strong>Power scales with speed cubed.</strong>&nbsp; P&#8322; / P&#8321; = (N&#8322; / N&#8321;)&#179;</li>
+                </ul>
+                <p style="margin-top:0.7rem;color:var(--text-dim);">That last one is the same <a href="/education/vfds.html" style="color:var(--accent);">cube law</a> from the VFDs page, viewed from the pump side — drop the speed to 70% and the power needed for the duty drops to about 34%. The same equipment moving along its system curve.</p>
+            </div>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:1.25rem;">
+                There's a useful gotcha buried in the second law. Head is what overcomes <em>elevation</em> and <em>friction</em> in the loop, and on a closed loop the elevation contribution is zero (water gives back what it climbs). What's left is friction, which itself scales as Q² — same square. So as long as the system curve looks like H = R·Q², the operating point at lower speed walks neatly along it: lower speed, lower flow, much lower head, way lower power. The whole "VFD saves a fortune on the system pump" pitch is one neat triangle of arithmetic, no fudge factors.
+            </p>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:1.25rem;">
+                Two caveats worth holding. <em>Open-loop</em> systems — cooling towers, irrigation, anything that moves water uphill from a sump — have a fixed static-head component the affinity laws don't reduce; the pump still has to climb the elevation no matter how slowly it goes, so the savings shape changes. And on a real drive, inverter and motor losses chip a few points off the cube-law theoretical at low speed. The shape is right; the absolute numbers shade conservative.
+            </p>
+
+            <!-- ───────────────── 4 · DP-Based Control ───────────────── -->
+            <div class="subhead">DP-Based Control — Sensor at the Far End of the Loop</div>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);">
+                So the BMS has a VFD with a speed-reference input. What does it modulate against? The answer that's overwhelmingly common today is a <em>differential pressure</em> sensor wired into the loop, with the BMS running a PID loop that holds DP measured equal to a DP setpoint. Building demands more flow, valves open, DP drops, pump speeds up. Building demands less, valves close, DP rises, pump slows down. The feedback is direct and physical — the pump answers to the building, not to a clock.
+            </p>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:1.25rem;">
+                Where the sensor lives matters. Two common choices:
+            </p>
+
+            <ul style="font-size:0.95rem;line-height:1.85;color:var(--text);margin:0.5rem 0 1rem 1.5rem;">
+                <li><strong>At the pump (local DP).</strong> Cheap, no field wiring beyond the pump panel. Reads pump discharge pressure minus suction pressure — basically the head the pump is producing. Holds the pump output near a setpoint regardless of where in the building demand is coming from. The catch: it tells you nothing about what the <em>far end of the loop</em> is feeling. If the loop's friction climbs (dirty strainer, valves throttling), local DP looks fine while the worst-case load gets starved.</li>
+                <li><strong>At the hydraulically most-remote point (remote DP).</strong> A field-mounted sensor wired across the supply and return mains at the far end of the loop — usually beyond the last big load. Reads the pressure available to the worst-case load. The pump's job becomes "give the worst-case load at least this much DP," which is the variable the building actually cares about. Almost always the better choice on anything bigger than a small system.</li>
+            </ul>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);">
+                Below: the layout. Pump on the left with a VFD; supply main feeding three two-way loads; return main coming back; remote DP sensor wired across supply and return at the far end. The pump's speed reference is whatever a PID loop running off that DP sensor produces.
+            </p>
+
+            <!-- Pipe-flow diagram for DP control. Third Education page with pipe-flow diagrams =
+                 trigger to consolidate .hd-svg / .lp-svg into .edu-svg in styles.css (done — see
+                 the friction-file entry). Conventions inherited: supply solid + --blue, return
+                 dashed + --blue-cool, named <g> groups, semantic id prefix (pc-dp-), data-flow
+                 annotations so the particle engine animates without retrofit. Two converging-flow
+                 segments are avoided here — every tee is a simple drop into a horizontal that
+                 only carries one flow direction. -->
+            <svg class="edu-svg" viewBox="0 0 720 360" role="img" aria-labelledby="pc-dp-title pc-dp-desc"
+                 font-family="var(--mono, 'IBM Plex Mono', monospace)">
+                <title id="pc-dp-title">Variable-flow loop with remote DP sensor</title>
+                <desc id="pc-dp-desc">A pump on the left, driven by a VFD, pushes water up a left-side riser to a supply main running across the top of the loop. Three loads tap off the supply main in the middle of the diagram — each with a two-way modulating valve and a coil — and return their water to a return main running along the bottom. The return main loops back to the pump's intake on the left side. A differential pressure sensor sits at the far right of the loop, with sensing lines tapped into the supply and return mains; the sensor reading goes back to the BMS as the feedback variable for pump speed control.</desc>
+
+                <!-- piping: supply (solid, --blue). One path covers pump-discharge riser
+                     plus supply main horizontal, drawn in flow direction (up, then right). -->
+                <path id="pc-dp-supply-riser-main" data-flow="supply"
+                      d="M50 228 V 100 H 670"
+                      fill="none" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+
+                <!-- supply drops to each load -->
+                <line id="pc-dp-A-sup-top" data-flow="supply" x1="200" y1="100" x2="200" y2="135" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                <line id="pc-dp-A-sup-bot" data-flow="supply" x1="200" y1="165" x2="200" y2="180" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                <line id="pc-dp-B-sup-top" data-flow="supply" x1="380" y1="100" x2="380" y2="135" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                <line id="pc-dp-B-sup-bot" data-flow="supply" x1="380" y1="165" x2="380" y2="180" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                <line id="pc-dp-C-sup-top" data-flow="supply" x1="560" y1="100" x2="560" y2="135" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                <line id="pc-dp-C-sup-bot" data-flow="supply" x1="560" y1="165" x2="560" y2="180" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+
+                <!-- piping: return (dashed, --blue-cool). Coil drops to return main, then
+                     return main back along the bottom and up into the pump intake. -->
+                <line id="pc-dp-A-ret" data-flow="return" x1="200" y1="240" x2="200" y2="300" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="pc-dp-B-ret" data-flow="return" x1="380" y1="240" x2="380" y2="300" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="pc-dp-C-ret" data-flow="return" x1="560" y1="240" x2="560" y2="300" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
+                <path id="pc-dp-return-main-riser" data-flow="return"
+                      d="M670 300 H 50 V 272"
+                      fill="none" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
+
+                <!-- equipment: pump (circle, P label) + small VFD box to its left -->
+                <g id="pc-dp-pump">
+                    <circle cx="50" cy="250" r="22" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                    <text x="50" y="256" text-anchor="middle" font-size="14" font-weight="700" fill="var(--text-bright, #1d251f)">P</text>
+                </g>
+                <g id="pc-dp-vfd">
+                    <rect x="8" y="232" width="24" height="36" rx="2" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="1.5"/>
+                    <text x="20" y="254" text-anchor="middle" font-size="9" font-weight="600" fill="var(--text-bright, #1d251f)">VFD</text>
+                    <!-- thin wire from VFD to pump motor -->
+                    <line x1="32" y1="250" x2="28" y2="250" stroke="var(--text-dim, #666e66)" stroke-width="1" stroke-dasharray="2 2"/>
+                </g>
+
+                <!-- valves (bowtie symbols, ~15px square footprint each) -->
+                <g id="pc-dp-A-valve">
+                    <polygon points="188,135 212,135 200,148" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                    <polygon points="188,165 212,165 200,152" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                </g>
+                <g id="pc-dp-B-valve">
+                    <polygon points="368,135 392,135 380,148" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                    <polygon points="368,165 392,165 380,152" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                </g>
+                <g id="pc-dp-C-valve">
+                    <polygon points="548,135 572,135 560,148" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                    <polygon points="548,165 572,165 560,152" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                </g>
+
+                <!-- coils -->
+                <g id="pc-dp-A-coil">
+                    <rect x="170" y="180" width="60" height="60" rx="2" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                    <text x="200" y="215" text-anchor="middle" font-size="11" font-weight="600" fill="var(--text-bright, #1d251f)">COIL A</text>
+                </g>
+                <g id="pc-dp-B-coil">
+                    <rect x="350" y="180" width="60" height="60" rx="2" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                    <text x="380" y="215" text-anchor="middle" font-size="11" font-weight="600" fill="var(--text-bright, #1d251f)">COIL B</text>
+                </g>
+                <g id="pc-dp-C-coil">
+                    <rect x="530" y="180" width="60" height="60" rx="2" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                    <text x="560" y="215" text-anchor="middle" font-size="11" font-weight="600" fill="var(--text-bright, #1d251f)">COIL C</text>
+                </g>
+
+                <!-- DP sensor at the far right end of the loop. Sensing lines drawn thin and
+                     non-flow so the engine ignores them. -->
+                <g id="pc-dp-sensor">
+                    <!-- supply-side sensing tap -->
+                    <circle cx="670" cy="100" r="3.5" fill="var(--text-dim, #666e66)"/>
+                    <line x1="670" y1="103" x2="670" y2="195" stroke="var(--text-dim, #666e66)" stroke-width="1" stroke-dasharray="3 3"/>
+                    <!-- return-side sensing tap -->
+                    <circle cx="670" cy="300" r="3.5" fill="var(--text-dim, #666e66)"/>
+                    <line x1="670" y1="297" x2="670" y2="225" stroke="var(--text-dim, #666e66)" stroke-width="1" stroke-dasharray="3 3"/>
+                    <!-- sensor body -->
+                    <rect x="645" y="195" width="50" height="30" rx="2" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                    <text x="670" y="215" text-anchor="middle" font-size="12" font-weight="700" fill="var(--text-bright, #1d251f)">ΔP</text>
+                    <!-- "to BMS" wire breaking off to the right -->
+                    <line x1="695" y1="210" x2="710" y2="210" stroke="var(--text-dim, #666e66)" stroke-width="1" stroke-dasharray="3 3"/>
+                    <text x="708" y="222" text-anchor="end" font-size="9" font-style="italic" fill="var(--text-dim, #666e66)">to BMS</text>
+                </g>
+
+                <!-- flow arrows (static state encoding, kept so direction reads under reduced
+                     motion or before the engine kicks in) -->
+                <g id="pc-dp-flow-arrows">
+                    <!-- supply main -->
+                    <polygon points="110,95 119,100 110,105" fill="var(--blue, #1577b8)"/>
+                    <polygon points="280,95 289,100 280,105" fill="var(--blue, #1577b8)"/>
+                    <polygon points="460,95 469,100 460,105" fill="var(--blue, #1577b8)"/>
+                    <polygon points="620,95 629,100 620,105" fill="var(--blue, #1577b8)"/>
+                    <!-- supply riser (going up) -->
+                    <polygon points="45,170 50,159 55,170" fill="var(--blue, #1577b8)"/>
+                    <!-- supply drops at each load -->
+                    <polygon points="195,123 200,134 205,123" fill="var(--blue, #1577b8)"/>
+                    <polygon points="375,123 380,134 385,123" fill="var(--blue, #1577b8)"/>
+                    <polygon points="555,123 560,134 565,123" fill="var(--blue, #1577b8)"/>
+                    <!-- return drops at each load -->
+                    <polygon points="195,275 200,286 205,275" fill="var(--blue-cool, #5e8aa0)"/>
+                    <polygon points="375,275 380,286 385,275" fill="var(--blue-cool, #5e8aa0)"/>
+                    <polygon points="555,275 560,286 565,275" fill="var(--blue-cool, #5e8aa0)"/>
+                    <!-- return main (going right-to-left) -->
+                    <polygon points="120,305 111,300 120,295" fill="var(--blue-cool, #5e8aa0)"/>
+                    <polygon points="280,305 271,300 280,295" fill="var(--blue-cool, #5e8aa0)"/>
+                    <polygon points="460,305 451,300 460,295" fill="var(--blue-cool, #5e8aa0)"/>
+                    <polygon points="620,305 611,300 620,295" fill="var(--blue-cool, #5e8aa0)"/>
+                </g>
+
+                <!-- labels -->
+                <text x="80" y="90"  font-size="11" fill="var(--text, #38423a)">supply main →</text>
+                <text x="80" y="324" font-size="11" fill="var(--text, #38423a)">← return main</text>
+                <text x="50" y="298" text-anchor="middle" font-size="9" font-style="italic" fill="var(--text-dim, #666e66)">variable-speed</text>
+                <text x="670" y="93" text-anchor="end" font-size="9" font-style="italic" fill="var(--text-dim, #666e66)">remote DP sensor — at the hydraulically most-remote point</text>
+            </svg>
+            <div class="edu-legend">
+                <span><span class="sw supply"></span>supply water</span>
+                <span><span class="sw return"></span>return water</span>
+            </div>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:1.25rem;">
+                On a real job the field-mounted sensor is usually a wet-tap differential transducer with two stainless capillaries running back to a transmitter on the BMS network — BACnet, Modbus, or 4–20 mA hard-wired back to the same controller running the pump PID. Calibrate it against a hand gauge during commissioning and check it again on the second-year tune-up; transducers drift, and a drifted DP sensor is exactly the kind of slow leak in performance nobody notices for a season.
+            </p>
+
+            <!-- ───────────────── 5 · DP Setpoint Reset ───────────────── -->
+            <div class="subhead">DP Setpoint Reset — Squeezing the Last Bit</div>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);">
+                Fixed-DP control is already a big improvement over constant-speed pumping. But it leaves something on the table: the DP setpoint is sized for the <em>worst-case</em> load condition (peak demand, every valve open enough to need that pressure to pass design flow). The vast majority of operating hours look nothing like that — most of the time most of the valves are throttled back, and the pump is producing more pressure than any load actually needs. The remaining pressure just gets dropped across the throttled valves.
+            </p>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:1.25rem;">
+                <em>DP setpoint reset</em> (also called <em>valve-position reset</em>, or <em>most-open-valve reset</em>) is the sequence that closes that gap. The BMS reads back the position of every modulating valve on the system and resets the DP setpoint <em>downward</em> until the most-open valve in the building has opened to about 95% — meaning that valve is doing essentially no throttling, and the pump is producing exactly enough pressure for the worst-case load right now. Every other valve is opened wider than it would be at the fixed setpoint, and the pump runs slower. Slower pump, less head, less head <em>squared</em>, way less power. Cube law one more time.
+            </p>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:1.25rem;">
+                The widget below has five identical loads with two-way valves, fixed at the same demand for simplicity. Move the demand slider to vary how much heat (or cooling) the building is asking for. Toggle between <em>fixed DP</em> and <em>reset DP</em> to see the difference at part load. Watch the valves open up in reset mode, the pump's Hz drop, and the power readout collapse.
+            </p>
+
+            <!-- Widget 2 — DP setpoint reset. Approximate physics:
+                 Q (flow) = demand_pct (scale: design = 100 GPM at d=100)
+                 H_pump = DP_setpoint + R_pipe * Q²
+                 with R_pipe = 0.0025 (pipe friction; at d=100 yields 25 ft pipe loss → 50 ft total at 25 ft DP setpoint, matches widget 1 design point)
+                 r² = (H_pump + 0.002*Q²) / 70   (invert pump curve to find speed ratio)
+                 Hz = r * 60, clamped at min 10 Hz
+                 power_pct = r³ * 100
+                 In fixed-DP mode: DP_setpoint = 25 ft (constant)
+                 In reset-DP mode: DP_setpoint = max(5, 25*(d/100)) — walks down linearly toward a 5 ft floor
+                 Valve openness in reset mode: clamped to ~95% (the reset target)
+                 Valve openness in fixed mode: walks with demand (lower demand ⇒ more throttling) -->
+            <div class="pc-widget" id="pcW2">
+                <div class="pc-w-try">
+                    <span class="lbl">Try this:</span>
+                    <a id="pcW2TryDesign">design day (all valves wide)</a>
+                    <a id="pcW2TryMid">mid-day (60% demand)</a>
+                    <a id="pcW2TryNight">night setback (15% demand)</a>
+                </div>
+
+                <div class="pc-w2-mode" role="group" aria-label="DP control mode">
+                    <button id="pcW2ModeFixed" type="button" class="on">Fixed DP</button>
+                    <button id="pcW2ModeReset" type="button">Reset DP</button>
+                </div>
+
+                <div class="pc-w-section-label">Building demand</div>
+                <div class="pc-w-slider-head">
+                    <span>0%</span>
+                    <span class="v"><span id="pcW2Demand">100</span> <span style="font-size:0.65em;color:var(--text-dim);font-weight:500;">%</span></span>
+                    <span>100%</span>
+                </div>
+                <input class="pc-w-slider" id="pcW2DemandSlider" type="range" min="0" max="100" step="1" value="100" aria-label="Building demand percentage"/>
+
+                <div class="pc-w-section-label" style="margin-top:0.4rem;">Valve positions (5 loads)</div>
+                <div class="pc-w2-valves" id="pcW2Valves" aria-label="Valve positions"></div>
+
+                <div class="pc-w2-readouts">
+                    <div class="pc-w1-readout">
+                        <div class="pc-w-readout-label">DP setpoint</div>
+                        <div class="pc-w-readout-value"><span id="pcW2DpSet">25</span><span class="unit">ft</span></div>
+                    </div>
+                    <div class="pc-w1-readout">
+                        <div class="pc-w-readout-label">Pump speed</div>
+                        <div class="pc-w-readout-value"><span id="pcW2Hz">60</span><span class="unit">Hz</span></div>
+                    </div>
+                    <div class="pc-w1-readout">
+                        <div class="pc-w-readout-label">Flow</div>
+                        <div class="pc-w-readout-value"><span id="pcW2Flow">100</span><span class="unit">GPM</span></div>
+                    </div>
+                    <div class="pc-w1-readout">
+                        <div class="pc-w-readout-label">Power vs full</div>
+                        <div class="pc-w-readout-value"><span id="pcW2Power">100</span><span class="unit">%</span></div>
+                    </div>
+                </div>
+
+                <div class="pc-w-anecdote-wrap" id="pcW2AnecdoteWrap"></div>
+            </div>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:1.25rem;">
+                The reset can be smarter than this widget makes it look. Real installations have non-uniform demand — one zone is calling hard, the others are coasting — and the most-open-valve logic shines exactly there: the pump satisfies the one zone that's working and lets the rest sit nearly idle, instead of pressurising the whole loop to the worst-case zone's setpoint. There's an upper limit (the setpoint can't go below what it takes to push design flow through pipe friction alone — at some point you really do need to make pressure to move water through copper) and a lower limit (the BMS holds a small minimum setpoint so the loop never deadheads), but in the middle this is where most of the energy story lives.
+            </p>
+
+            <!-- ───────────────── 6 · Lead/Lag — brief ───────────────── -->
+            <div class="subhead">Lead/Lag and Parallel Pumps — A Note</div>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);">
+                Most real systems have <em>more than one</em> pump — at minimum a primary plus a standby for N+1 redundancy, often a pair (or three) of variable-speed pumps in parallel staged up and down as demand climbs. The sequence patterns that govern which pump runs when, how staging transitions are bumpless, how runtime gets rotated for even wear, how an end-of-curve protection trips before a pump finds itself drowning the system — that's its own topic, and it's all <em>sequencing</em> rather than pump-control proper. Worth flagging that it exists; not the question this page is answering.
+            </p>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:1.25rem;">
+                The short version: parallel variable-speed pumps run at the <em>same</em> speed reference (one DP loop, two motors), and a staging sequence brings the lag pump online when the lead is running near full speed for an extended period. Past that, the details get specific to the plant, the failure modes you're protecting against, and the BMS programmer's preferences. A dedicated sequencing lesson will land here when it ships.
+            </p>
+
+            <!-- ───────────────── 7 · Closing ───────────────── -->
+            <div class="subhead">Tying It Together</div>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);">
+                Three pages, one picture. On <a href="/education/load-piping.html" style="color:var(--accent);">load piping</a> we set up the variable-flow system from the coil's point of view — every load throttled by a two-way valve, system flow varying with the building. On <a href="/education/vfds.html" style="color:var(--accent);">VFDs</a> we walked through the drive that lets a pump motor follow a speed reference instead of running on/off at the line. On this page we filled in <em>what the BMS does with that speed reference</em>: hold a DP setpoint across the worst-case load, ideally one that walks down with the building, and ride the pump curve along the system curve as the day goes on. Variable-speed pumping is three concepts that have to land at once; isolated from each other, none of the three makes complete sense.
+            </p>
+
+            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:1.25rem;">
+                What comes next is the <em>sequence</em> layer above all of this — when a chiller stages on, what setpoints get reset against outside-air temperature, how a control loop transitions between modes, how a building goes from unoccupied night setback into morning warm-up without thrashing every piece of equipment in the plant. A sequencing lesson is the next-natural-step from here. Forward-link, breadcrumb dropped.
+            </p>
+
+        </div>
+    </div>
+
+    <a class="back-link" href="/education/">← Back to Education</a>
+
+</main>
+
+<footer>
+    <span class="footer-text">controlsfreak.dev — open tools for controls engineers</span>
+    <span class="footer-text">v1.1 · 2026</span>
+</footer>
+
+<script src="/scripts/flow-engine.js"></script>
+<script>
+    // ── Widget 1 — operating-point chart ──────────────────────────────
+    // Two sliders (pump speed, valves-open %) → recompute pump curve,
+    // system curve, and intersection. Polyline points generated by
+    // sampling Q at fixed steps; rendered with stroke-only polylines
+    // so they layer cleanly with the static axes and gridlines above.
+    //
+    // The math (kept here for the future reader):
+    //   Pump curve:      H_p(Q, r) = 70*r² − 0.002*Q²    where r = Hz / 60
+    //   System curve:    H_s(Q, v) = R(v) * Q²            where v = valves-open %
+    //                    R(v)      = 0.005 / (v/100)²    (steeper as valves close)
+    //   Intersection:    70*r² − 0.002*Q² = R(v)*Q²
+    //                    ⇒ Q = r * sqrt(70 / (R(v) + 0.002))
+    //                    ⇒ H = R(v) * Q²
+    //   Power vs full:   r³ * 100   (cube law — same as the VFDs page)
+    //
+    // Chart pixel mapping: plot area is (50, 240) lower-left to (460, 20)
+    // upper-right. Flow 0..120 GPM → x 50..460. Head 0..80 ft → y 240..20.
+    (function () {
+        const HZ_MAX     = 60;
+        const Q_MAX_AXIS = 120;
+        const H_MAX_AXIS = 80;
+        const PUMP_SHUTOFF = 70;   // ft head at zero flow, 60 Hz
+        const PUMP_K       = 0.002;
+        const SYS_K_FULL   = 0.005; // at v=100, system curve passes through (100 GPM, 50 ft)
+
+        const PLOT_X0 = 50, PLOT_X1 = 460, PLOT_Y0 = 240, PLOT_Y1 = 20;
+        const xPx = function (Q) { return PLOT_X0 + (Q / Q_MAX_AXIS) * (PLOT_X1 - PLOT_X0); };
+        const yPx = function (H) { return PLOT_Y0 - (Math.max(0, H) / H_MAX_AXIS) * (PLOT_Y0 - PLOT_Y1); };
+
+        // DOM
+        const hzSlider    = document.getElementById('pcW1HzSlider');
+        const valveSlider = document.getElementById('pcW1ValveSlider');
+        const hzLabel     = document.getElementById('pcW1Hz');
+        const valveLabel  = document.getElementById('pcW1Valve');
+        const flowEl      = document.getElementById('pcW1Flow');
+        const headEl      = document.getElementById('pcW1Head');
+        const powerEl     = document.getElementById('pcW1Power');
+        const fanEl       = document.getElementById('pcW1Fan');
+        const fanBlades   = document.getElementById('pcW1FanBlades');
+        const fanLabel    = document.getElementById('pcW1FanLabel');
+        const pumpRefEl   = document.getElementById('pcW1PumpRef');
+        const pumpEl      = document.getElementById('pcW1Pump');
+        const sysEl       = document.getElementById('pcW1Sys');
+        const opDot       = document.getElementById('pcW1Op');
+
+        const state = { hz: 60, valve: 100 };
+
+        function buildPolyline(fn, qMin, qMax, steps) {
+            const pts = [];
+            for (let i = 0; i <= steps; i++) {
+                const Q = qMin + (qMax - qMin) * (i / steps);
+                const H = fn(Q);
+                if (H < -1) break;   // pump curve dropping below zero — runout
+                pts.push(xPx(Q).toFixed(1) + ',' + yPx(H).toFixed(1));
+            }
+            return pts.join(' ');
+        }
+
+        function pumpCurve(r) {
+            return function (Q) { return PUMP_SHUTOFF * r * r - PUMP_K * Q * Q; };
+        }
+        function systemCurve(v) {
+            const ratio = v / 100;
+            const R = SYS_K_FULL / (ratio * ratio);
+            return function (Q) { return R * Q * Q; };
+        }
+
+        function operatingPoint(r, v) {
+            if (r <= 0) return { Q: 0, H: 0 };
+            const ratio = v / 100;
+            const R = SYS_K_FULL / (ratio * ratio);
+            const Q = r * Math.sqrt(PUMP_SHUTOFF / (R + PUMP_K));
+            const H = R * Q * Q;
+            return { Q: Q, H: H };
+        }
+
+        function render() {
+            const r = state.hz / HZ_MAX;
+            hzLabel.textContent = state.hz;
+            valveLabel.textContent = state.valve;
+
+            pumpRefEl.setAttribute('points', buildPolyline(pumpCurve(1), 0, Q_MAX_AXIS, 60));
+            pumpEl.setAttribute('points',    buildPolyline(pumpCurve(r), 0, Q_MAX_AXIS, 60));
+            sysEl.setAttribute('points',     buildPolyline(systemCurve(state.valve), 0, Q_MAX_AXIS, 60));
+
+            const op = operatingPoint(r, state.valve);
+            opDot.setAttribute('cx', xPx(op.Q));
+            opDot.setAttribute('cy', yPx(op.H));
+
+            flowEl.textContent  = op.Q.toFixed(0);
+            headEl.textContent  = op.H.toFixed(1);
+            powerEl.textContent = (r * r * r * 100).toFixed(0);
+
+            fanLabel.textContent = state.hz + ' Hz';
+            fanEl.classList.toggle('spinning', state.hz > 0);
+        }
+
+        hzSlider.addEventListener('input', function () {
+            state.hz = parseInt(hzSlider.value, 10);
+            render();
+        });
+        valveSlider.addEventListener('input', function () {
+            state.valve = parseInt(valveSlider.value, 10);
+            render();
+        });
+
+        // Fan tick — identical structure to the VFDs widget. 60 Hz ⇒ 1 rev/sec.
+        const reducedMotion = window.matchMedia &&
+            window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (!reducedMotion) {
+            let fanAngle = 0;
+            let lastFanTick = Date.now();
+            setInterval(function () {
+                const now = Date.now();
+                const dt = (now - lastFanTick) / 1000;
+                lastFanTick = now;
+                if (state.hz > 0) {
+                    fanAngle = (fanAngle + 6 * state.hz * dt) % 360;
+                    fanBlades.setAttribute('transform', 'rotate(' + fanAngle.toFixed(1) + ' 50 50)');
+                }
+            }, 40);
+        }
+
+        render();
+    })();
+
+    // ── Widget 2 — DP setpoint reset ──────────────────────────────────
+    // Demand slider drives flow; mode toggle switches between fixed-DP
+    // and reset-DP setpoint policy. Valve cells render the valves'
+    // openness (uniform-load model — all five valves at the same %).
+    // Easter-egg anecdote reveals at demand = 0% (the deadhead failure
+    // mode the rest of the page protects against).
+    (function () {
+        const DP_FIXED      = 25;    // ft head, fixed setpoint
+        const DP_RESET_FLOOR= 5;     // ft head, minimum on reset
+        const R_PIPE        = 0.0025;
+        const PUMP_SHUTOFF  = 70;
+        const PUMP_K        = 0.002;
+        const HZ_MIN        = 10;    // min frequency floor — typical VFD setting
+        const HZ_MAX        = 60;
+        const RESET_VALVE_TARGET = 95;   // target most-open-valve % under reset
+
+        // DOM
+        const demandSlider = document.getElementById('pcW2DemandSlider');
+        const demandLabel  = document.getElementById('pcW2Demand');
+        const dpSetEl      = document.getElementById('pcW2DpSet');
+        const hzEl         = document.getElementById('pcW2Hz');
+        const flowEl       = document.getElementById('pcW2Flow');
+        const powerEl      = document.getElementById('pcW2Power');
+        const valvesWrap   = document.getElementById('pcW2Valves');
+        const modeFixed    = document.getElementById('pcW2ModeFixed');
+        const modeReset    = document.getElementById('pcW2ModeReset');
+        const tryDesign    = document.getElementById('pcW2TryDesign');
+        const tryMid       = document.getElementById('pcW2TryMid');
+        const tryNight     = document.getElementById('pcW2TryNight');
+        const anecdoteEl   = document.getElementById('pcW2AnecdoteWrap');
+
+        const state = { demand: 100, mode: 'fixed', anecdoteShown: false };
+
+        // Build 5 valve cells once
+        const valveCells = [];
+        for (let i = 0; i < 5; i++) {
+            const cell = document.createElement('div');
+            cell.className = 'pc-w2-valve';
+            cell.innerHTML =
+                '<div class="pct">100<span style="color:var(--text-dim);font-size:0.7em;">%</span></div>' +
+                '<div class="bar"><span style="width:100%;"></span></div>' +
+                '<div class="lbl">V' + (i + 1) + '</div>';
+            valvesWrap.appendChild(cell);
+            valveCells.push({
+                cell: cell,
+                pctEl: cell.querySelector('.pct'),
+                barEl: cell.querySelector('.bar > span')
+            });
+        }
+
+        function compute() {
+            const d = state.demand;
+            const Q = d;                            // GPM (design Q = 100 at d=100)
+            // DP setpoint by mode
+            let dpSet;
+            if (state.mode === 'reset') {
+                dpSet = Math.max(DP_RESET_FLOOR, DP_FIXED * (d / 100));
+            } else {
+                dpSet = DP_FIXED;
+            }
+
+            // Head the pump has to produce: DP + pipe friction
+            const H_pump = dpSet + R_PIPE * Q * Q;
+            // Invert pump curve: r² = (H_pump + PUMP_K*Q²) / PUMP_SHUTOFF
+            let r = Math.sqrt(Math.max(0, (H_pump + PUMP_K * Q * Q) / PUMP_SHUTOFF));
+            // Clamp to min frequency floor (the real-world VFD parameter)
+            let hz = r * HZ_MAX;
+            if (d === 0) {
+                hz = HZ_MIN;
+                r = HZ_MIN / HZ_MAX;
+            } else if (hz < HZ_MIN) {
+                hz = HZ_MIN;
+                r = HZ_MIN / HZ_MAX;
+            }
+            // Cap at 60 Hz — pump can't do more than full speed
+            if (hz > HZ_MAX) { hz = HZ_MAX; r = 1; }
+
+            // Valve openness: in reset mode every valve sits at the ~95%
+            // target (the whole point of the reset is that the valves
+            // stay nearly fully open and the pump does the throttling).
+            // In fixed mode the valves throttle to roughly d% open to
+            // pass the demanded flow against the pump's higher head —
+            // a uniform-load approximation, plenty close enough for the
+            // pedagogy.
+            let valvePct;
+            if (d <= 0)                      valvePct = 0;
+            else if (state.mode === 'reset') valvePct = RESET_VALVE_TARGET;
+            else                             valvePct = d;
+
+            const flowActual = (d === 0) ? 0 : Q;
+            const powerPct = Math.round(r * r * r * 100);
+
+            return { dpSet: dpSet, hz: hz, flow: flowActual, valvePct: valvePct, powerPct: powerPct };
+        }
+
+        function render() {
+            demandLabel.textContent = state.demand;
+            modeFixed.classList.toggle('on', state.mode === 'fixed');
+            modeReset.classList.toggle('on', state.mode === 'reset');
+
+            const r = compute();
+            dpSetEl.textContent  = r.dpSet.toFixed(0);
+            hzEl.textContent     = r.hz.toFixed(0);
+            flowEl.textContent   = r.flow.toFixed(0);
+            powerEl.textContent  = r.powerPct.toFixed(0);
+
+            const pctRounded = Math.round(r.valvePct);
+            for (let i = 0; i < valveCells.length; i++) {
+                valveCells[i].pctEl.innerHTML = pctRounded +
+                    '<span style="color:var(--text-dim);font-size:0.7em;">%</span>';
+                valveCells[i].barEl.style.width = pctRounded + '%';
+            }
+
+            // Anecdote reveal at demand = 0 — the deadhead failure mode.
+            if (state.demand === 0) state.anecdoteShown = true;
+            if (state.anecdoteShown) {
+                anecdoteEl.innerHTML =
+                    '<div class="pc-w-anecdote">' +
+                    'At zero demand the loop has nowhere for the water to go. With proper DP control or a ' +
+                    'DPBV at the far end, the pump catches it — slows down, or the bypass opens. Without ' +
+                    'either, the pump <em>deadheads</em>: spinning at speed against a closed loop, water ' +
+                    "in the volute heating up because there's no flow to carry it away. I've done " +
+                    'it once on a loop with all 2-way valves and no bypass — lucky I was standing right ' +
+                    "there in the mechanical room, because the noise was unmistakable. That's the " +
+                    'failure mode this whole control story is protecting against.' +
+                    '</div>';
+            } else {
+                anecdoteEl.innerHTML = '';
+            }
+        }
+
+        function setMode(m) {
+            state.mode = m;
+            render();
+        }
+        function preset(mode, demand) {
+            state.mode = mode;
+            state.demand = demand;
+            demandSlider.value = demand;
+            render();
+        }
+
+        demandSlider.addEventListener('input', function () {
+            state.demand = parseInt(demandSlider.value, 10);
+            render();
+        });
+        modeFixed.addEventListener('click', function () { setMode('fixed'); });
+        modeReset.addEventListener('click', function () { setMode('reset'); });
+        tryDesign.addEventListener('click', function (e) { e.preventDefault(); preset('fixed', 100); });
+        tryMid.addEventListener('click',    function (e) { e.preventDefault(); preset('reset', 60);  });
+        tryNight.addEventListener('click',  function (e) { e.preventDefault(); preset('reset', 15);  });
+
+        render();
+    })();
+
+    // Start the flow-engine on the DP-control diagram. No-op under
+    // prefers-reduced-motion (engine short-circuits at init); static
+    // arrows + dashed return carry the meaning on their own.
+    if (window.FlowEngine) FlowEngine.init();
+</script>
+
+</body>
+</html>

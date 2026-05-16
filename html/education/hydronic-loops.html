@@ -18,45 +18,9 @@
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&family=Overpass:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/styles.css">
     <style>
-        /* Page-specific — the inline schematics. Colours come from the shared
-           CSS vars (with literal fallbacks on the SVG elements themselves, so a
-           failed stylesheet still leaves a legible black-on-white diagram).
-           Supply piping is solid + --blue; return piping is dashed + --blue-cool
-           — distinguishable without colour. */
-        .hd-svg {
-            display: block;
-            width: 100%;
-            height: auto;
-            margin: 1.5rem 0;
-        }
-        .hd-legend {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.4rem 1.5rem;
-            font-family: var(--mono);
-            font-size: 0.66rem;
-            color: var(--text-dim);
-            margin: -0.5rem 0 0;
-            padding-left: 0.25rem;
-        }
-        .hd-legend .sw { display: inline-block; width: 26px; height: 0; vertical-align: middle; margin-right: 0.4rem; }
-        .hd-legend .sw.supply { border-top: 3px solid var(--blue); }
-        .hd-legend .sw.return { border-top: 3px dashed var(--blue-cool); }
-
-        /* While particle animation is active on an SVG, drop the dashed
-           return-stroke pattern — direction-of-motion alone distinguishes
-           supply from return, and the stationary dash pattern visually
-           competes with the moving particles. The flow-active class is
-           added by flow-engine.js only after its reduced-motion bail-out,
-           so reduced-motion keeps the dashes. @media screen scopes the
-           override so a printout still gets the dashed encoding even if
-           the page was animating on screen. Selector intentionally targets
-           any element type (paths and lines both carry data-flow). */
-        @media screen {
-            svg.flow-active [data-flow="return"] {
-                stroke-dasharray: none;
-            }
-        }
+        /* Diagram + legend + flow-active rules moved to styles.css as
+           .edu-svg / .edu-legend; only the d3 widget styles remain
+           page-specific. */
 
         /* d3 injection-pump widget — slider + readouts + supply-temp swatch
            + alert area. Recessed surface to read as "instrument panel" against
@@ -202,7 +166,7 @@
                  solid + --blue; return pipe = dashed + --blue-cool; flow arrows = small triangles in
                  the pipe's colour. Named <g> groups + semantic ids so a future animated version (see
                  site-ideas-and-friction.md) can drive elements individually. -->
-            <svg class="hd-svg" viewBox="0 0 700 360" role="img" aria-labelledby="d1-title d1-desc"
+            <svg class="edu-svg" viewBox="0 0 700 360" role="img" aria-labelledby="d1-title d1-desc"
                  font-family="var(--mono, 'IBM Plex Mono', monospace)">
                 <title id="d1-title">2-pipe direct return</title>
                 <desc id="d1-desc">A boiler with a pump feeds a supply main running left to right past three loads in parallel. Each load returns into a separate return main that runs right to left, straight back to the boiler. The nearest load has a short loop; the farthest load's water travels the full length of the building and back, so flow naturally favours the near loads unless balanced.</desc>
@@ -265,7 +229,7 @@
                 <text x="350" y="76" text-anchor="middle" font-size="11" fill="var(--text, #38423a)">supply main →</text>
                 <text x="340" y="322" text-anchor="middle" font-size="11" fill="var(--text, #38423a)">← return main (straight back to the source)</text>
             </svg>
-            <div class="hd-legend">
+            <div class="edu-legend">
                 <span><span class="sw supply"></span>supply water</span>
                 <span><span class="sw return"></span>return water</span>
             </div>
@@ -281,7 +245,7 @@
                 Roughly equal path length means roughly equal resistance, which means the loads naturally split flow close to evenly — "self-balancing." (You'll still want balancing valves, but they're trimming, not doing the heavy lifting.) The price: that loop-back is a whole extra run of pipe — you're essentially doubling the return — so it costs more to install. Trade commissioning effort for pipe and labor; pick your poison.
             </p>
 
-            <svg class="hd-svg" viewBox="0 0 700 360" role="img" aria-labelledby="d2-title d2-desc"
+            <svg class="edu-svg" viewBox="0 0 700 360" role="img" aria-labelledby="d2-title d2-desc"
                  font-family="var(--mono, 'IBM Plex Mono', monospace)">
                 <title id="d2-title">2-pipe reverse return</title>
                 <desc id="d2-desc">A boiler with a pump feeds a supply main running left to right past three loads in parallel. Each load returns into a return main that also runs left to right, past all the loads, and only then doubles back the full length of the building to the boiler. The first load supplied is the last to return, so every load's total pipe path is roughly equal — naturally self-balancing — at the cost of the extra doubled-back run of pipe.</desc>
@@ -346,7 +310,7 @@
                 <text x="350" y="76" text-anchor="middle" font-size="11" fill="var(--text, #38423a)">supply main →</text>
                 <text x="370" y="318" text-anchor="middle" font-size="9" font-style="italic" fill="var(--text-dim, #666e66)">Return runs WITH the supply then the long way back. The extra pipe is the price of self-balancing</text>
             </svg>
-            <div class="hd-legend">
+            <div class="edu-legend">
                 <span><span class="sw supply"></span>supply water</span>
                 <span><span class="sw return"></span>return water</span>
             </div>
@@ -383,7 +347,7 @@
                  is the closely-spaced tees with the injection pump on the bridge. Dense flow arrows
                  around each loop (constant flow); a smaller, separate pair of arrows on the bridge
                  (the partial diversion). Named <g> groups + semantic ids for a future animated version. -->
-            <svg class="hd-svg" viewBox="0 0 800 360" role="img" aria-labelledby="d3-title d3-desc"
+            <svg class="edu-svg" viewBox="0 0 800 360" role="img" aria-labelledby="d3-title d3-desc"
                  font-family="var(--mono, 'IBM Plex Mono', monospace)">
                 <title id="d3-title">Primary-secondary "twin-T" boiler injection</title>
                 <desc id="d3-desc">Two separate loops. On the left, a small primary loop: a boiler and a dedicated boiler pump with water always circulating around it. On the right, a larger system loop: a system pump moving water through two building loads. The only connection between them is a short bridge with a pair of closely-spaced tees and an injection pump on it; the injection pump pulls a portion of hot water from the primary loop into the system loop, where it mixes with cooler return water. Most of the building's water never passes through the boiler — only the slice the injection pump diverts. The injection pump's speed is the control point for supply temperature.</desc>
@@ -470,7 +434,7 @@
                 <text x="600" y="78" text-anchor="middle" font-size="11" font-weight="600" fill="var(--text, #38423a)">SYSTEM LOOP</text>
                 <text x="360" y="174" text-anchor="middle" font-size="9" font-style="italic" fill="var(--text-dim, #666e66)">closely-spaced tees · ≈ no Δp</text>
             </svg>
-            <div class="hd-legend">
+            <div class="edu-legend">
                 <span><span class="sw supply"></span>hot supply water</span>
                 <span><span class="sw return"></span>cooler return / mixed water</span>
             </div>
@@ -518,7 +482,7 @@
 
 <footer>
     <span class="footer-text">controlsfreak.dev — open tools for controls engineers</span>
-    <span class="footer-text">v1.0 · 2026</span>
+    <span class="footer-text">v1.1 · 2026</span>
 </footer>
 
 <!-- Particle-flow animation over the diagram pipework. Classic script (not a

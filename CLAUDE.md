@@ -19,9 +19,14 @@ but the project is the tools, not a personal homepage.
   with `<link rel="stylesheet" href="/styles.css">`. Page-specific CSS
   stays inline on the page that needs it (currently: `contact.html`,
   `psychrometric-chart.html`, `thermistor-calculator.html`,
-  `hydronic-loops.html`, `load-piping.html`, `vfds.html`,
-  `vfd-mock.html`). Shared rules live in the file; page-only rules
-  stay inline.
+  `hydronic-loops.html`, `vfds.html`, `vfd-mock.html`,
+  `pump-control.html`). `load-piping.html` is now style-block-empty
+  after the `.edu-svg` consolidation; it links the shared sheet and
+  carries no inline rules. Shared rules live in the file; page-only
+  rules stay inline. Pipe-flow diagrams across Education pages share
+  `.edu-svg` / `.edu-legend` (defined in `styles.css`); the VFDs
+  block diagrams use a page-local `.vfd-svg` because they have no
+  `data-flow`/dashed-return concept.
 - **Shared scripts** in `html/scripts/` are **classic scripts** (not ES
   modules — modules would break the inline `on*` handlers). Load with
   `<script src="/scripts/xxx.js"></script>` *before* the page's inline
@@ -137,9 +142,10 @@ controlsfreak.dev/
 │   └── education/
 │       ├── index.html                # Education landing
 │       ├── pid-basics.html           # P/I/D explainer + three mini-sims (loads /scripts/pid-engine.js)
-│       ├── hydronic-loops.html       # 2-pipe direct → reverse → twin-T, inline SVG schematics
-│       ├── load-piping.html          # 2-way vs 3-way load valves, three SVG diagrams; pays off the twin-T #d3 forward callout
-│       └── vfds.html                 # block diagram + cube law + run/speed widget + parameter groups + bypass; pairs with tools/vfd-mock.html
+│       ├── hydronic-loops.html       # 2-pipe direct → reverse → twin-T, inline SVG schematics (.edu-svg)
+│       ├── load-piping.html          # 2-way vs 3-way load valves, four SVG diagrams (.edu-svg); pays off the twin-T #d3 forward callout
+│       ├── vfds.html                 # block diagram + cube law + run/speed widget + parameter groups + bypass; pairs with tools/vfd-mock.html
+│       └── pump-control.html         # pump curves + operating point + DP control + DP setpoint reset; two widgets (operating-point chart, DP-reset sim); pairs with vfds.html and load-piping.html
 └── tests/              # Playwright (smoke.spec.js, contact.spec.js)
 ```
 
@@ -308,6 +314,26 @@ cards (the roadmap). Live tools:
   A possible future enhancement is a small two-state diagram showing
   the DPBV closed at high demand vs. open at low demand — deferred
   per user preference for the simpler "add + prose" pass first.
+- **Pump Control** (`pump-control.html`) — completes the variable-flow
+  trio (load piping → VFDs → pump control). One question: how does
+  the BMS decide what speed reference to send? Seven sections:
+  *constant-speed pumps* (the foil), *pump curve and system curve*
+  (operating-point Widget 1: SVG chart with two sliders for pump
+  speed + valve openness, fan icon), *how a VFD moves the operating
+  point* (affinity laws, cube-law cross-link to vfds), *DP-based
+  control* (local vs. remote DP sensor, pipe-flow diagram with
+  pump+VFD on the left, three two-way loads, remote ΔP sensor at the
+  far end), *DP setpoint reset* (Widget 2: mode toggle Fixed/Reset,
+  demand slider, five valve cells, readouts; deadhead anecdote
+  reveals at demand=0%), *lead/lag — a note* (deliberately shallow,
+  forward-points to `[future: sequencing.html]`), *tying it
+  together* (closing payoff to load-piping + vfds). Inline JS, CSS
+  prefix `pc-w-`. The Widget 1 chart is SVG (small chart, short
+  polylines layer cleanly with static axes); the Widget 2 valve
+  cells are HTML/CSS not SVG. Pipe-flow diagram in Section 5 uses
+  `.edu-svg` from day one — this is the page that triggered the
+  `.hd-svg` / `.lp-svg` → `.edu-svg` consolidation in `styles.css`.
+
 - **VFDs** (`vfds.html`) — variable-frequency drives explainer paired
   with `tools/vfd-mock.html`. One question: *what is a VFD, and what
   does a controls tech need to know about it?* Seven sections, gentle
@@ -381,6 +407,10 @@ underlined tabs). No drop shadows, no background texture. Light-only
   `.sim-canvas-wrap` / `.sim-legend` (PID simulator); `.tool-grid` /
   `.tool-preview` (Coming Soon cards); `.card-grid` (+ `.two`) /
   `.nav-card` / `.nav-card-tag` / `.nav-card-name` / `.nav-card-desc`;
+  `.edu-svg` / `.edu-legend` (shared pipe-flow diagram styling for
+  Education pages — supply solid + `--blue`, return dashed +
+  `--blue-cool`; carries the `flow-active` `[data-flow="return"]`
+  override that drops the dashes while particles are running);
   `.back-link`; `.cta-button` (prominent in-page button-style anchor);
   `.hero` / `.hero-eyebrow` / `.hero-badges` / `.badge`; `.site-nav` /
   `.site-nav-brand` / `.site-nav-links`. Three-column layout (below):
@@ -461,7 +491,7 @@ underlined tabs). No drop shadows, no background texture. Light-only
 5. Add the page's URL to `html/sitemap.xml` (hand-maintained — no
    generator).
 6. Bump the version string in the footer when shipping something
-   notable (currently `v0.9 · 2026`, carried by every page).
+   notable (currently `v1.1 · 2026`, carried by every page).
 
 ## Workflow
 

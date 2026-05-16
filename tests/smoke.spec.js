@@ -20,6 +20,7 @@ const PAGES = [
     { name: 'education — hydronic loops', url: 'http://localhost:8000/education/hydronic-loops.html' },
     { name: 'education — load piping', url: 'http://localhost:8000/education/load-piping.html' },
     { name: 'education — vfds',       url: 'http://localhost:8000/education/vfds.html' },
+    { name: 'education — pump control', url: 'http://localhost:8000/education/pump-control.html' },
     { name: 'contact',                url: 'http://localhost:8000/contact.html' },
 ];
 
@@ -130,11 +131,12 @@ test('education hub links to its pages', async ({ page }) => {
     expect(hrefs).toContain('/education/hydronic-loops.html');
     expect(hrefs).toContain('/education/load-piping.html');
     expect(hrefs).toContain('/education/vfds.html');
+    expect(hrefs).toContain('/education/pump-control.html');
 });
 
 test('hydronic loops page renders its three SVG schematics', async ({ page }) => {
     await page.goto('http://localhost:8000/education/hydronic-loops.html');
-    const svgs = page.locator('main svg.hd-svg');
+    const svgs = page.locator('main svg.edu-svg');
     await expect(svgs).toHaveCount(3);
     // each diagram carries a <title> (the accessibility name) and real <text> labels
     for (let i = 0; i < 3; i++) {
@@ -150,7 +152,7 @@ test('hydronic loops page renders its three SVG schematics', async ({ page }) =>
 
 test('load piping page renders its four SVG schematics and ties back to the twin-T', async ({ page }) => {
     await page.goto('http://localhost:8000/education/load-piping.html');
-    const svgs = page.locator('main svg.lp-svg');
+    const svgs = page.locator('main svg.edu-svg');
     await expect(svgs).toHaveCount(4);
     for (let i = 0; i < 4; i++) {
         await expect(svgs.nth(i).locator('title')).toHaveCount(1);
@@ -185,6 +187,49 @@ test('vfd mock — run-source gating works from the keypad', async ({ page }) =>
     await expect(page.locator('#vfdmStateText')).toHaveText(/RAMPING UP|AT SPEED/);
     const actHz = parseFloat(await page.locator('#vfdmActHz').textContent());
     expect(actHz, 'drive should be ramping up in LOCAL mode').toBeGreaterThan(0);
+});
+
+test('pump control page renders its diagram and both widgets respond', async ({ page }) => {
+    await page.goto('http://localhost:8000/education/pump-control.html');
+
+    // pipe-flow diagram for DP control is present (the third edu-svg-styled
+    // page; the chart inside Widget 1 is .pc-w1-chart, not .edu-svg)
+    await expect(page.locator('main svg.edu-svg')).toHaveCount(1);
+    await expect(page.locator('#pc-dp-pump')).toHaveCount(1);
+    await expect(page.locator('#pc-dp-sensor')).toHaveCount(1);
+
+    // Widget 1 — operating point reads close to design (100 GPM, 50 ft) at default sliders
+    await expect(page.locator('#pcW1Flow')).toHaveText('100');
+    await expect(page.locator('#pcW1Head')).toHaveText('50.0');
+
+    // Move pump-speed slider to 30 Hz and check the operating point shifts
+    await page.locator('#pcW1HzSlider').evaluate((el) => {
+        el.value = '30';
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    const flowAt30 = parseInt(await page.locator('#pcW1Flow').textContent(), 10);
+    expect(flowAt30, 'flow should fall when pump speed drops').toBeLessThan(60);
+    // Power follows cube law — at half speed, ~12.5% of full power
+    const powerAt30 = parseInt(await page.locator('#pcW1Power').textContent(), 10);
+    expect(powerAt30).toBeGreaterThan(8);
+    expect(powerAt30).toBeLessThan(20);
+
+    // Widget 2 — fixed-DP at 50% demand should read higher pump Hz than reset-DP
+    await page.locator('#pcW2DemandSlider').evaluate((el) => {
+        el.value = '50';
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    const fixedHz = parseInt(await page.locator('#pcW2Hz').textContent(), 10);
+    await page.click('#pcW2ModeReset');
+    const resetHz = parseInt(await page.locator('#pcW2Hz').textContent(), 10);
+    expect(resetHz, 'reset DP should run pump slower than fixed DP at part load').toBeLessThan(fixedHz);
+
+    // Anecdote reveal at demand = 0
+    await page.locator('#pcW2DemandSlider').evaluate((el) => {
+        el.value = '0';
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await expect(page.locator('.pc-w-anecdote')).toBeVisible();
 });
 
 test('vfds page renders its diagrams and the run/speed widget is wired up', async ({ page }) => {

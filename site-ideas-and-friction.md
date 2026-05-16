@@ -11,6 +11,162 @@ tools.
 
 
 
+### Pump control — Education page *(shipped 2026-05-15)*
+*One question: how does the BMS decide what speed reference to send to
+a variable-flow pump?*
+
+Lands the third-leg of the variable-flow story (load piping → VFDs →
+pump control). The question framing held through drafting; widened
+slightly from the friction-file's narrowest version to also touch
+constant-speed pumping (one section), pump-curve / system-curve
+theory (Widget 1), affinity laws (cross-ref vfds cube law), DP-based
+control + sensor placement (pipe-flow diagram), DP setpoint reset
+(Widget 2), and a brief lead/lag note that forward-points to a
+future sequencing page. User chose the broader "How to control a
+pump" framing during scoping; the page held to a single question
+because the broader frame still answers *one* question (how),
+just with a longer chain of sub-answers.
+
+In scope (sections shipped):
+- *Constant-speed pumps — the simplest case* — the foil for the rest
+  of the page; DPBV cross-link to load-piping
+- *Pump curve and system curve — the operating point* — explainer
+  prose + Widget 1 (interactive pump/system curve chart with
+  operating-point dot, two sliders, fan icon)
+- *How a VFD moves the operating point — affinity laws* —
+  cube-law cross-link to vfds page
+- *DP-based control — sensor at the far end of the loop* — local DP
+  vs. remote DP tradeoff + a pipe-flow diagram (third Education page
+  with pipe-flow diagrams; this is the trigger that finally landed
+  the `.edu-svg` consolidation in styles.css — see consolidation
+  entry below)
+- *DP setpoint reset — squeezing the last bit* — most-open-valve
+  reset prose + Widget 2 (mode toggle, demand slider, valve cells,
+  readouts, deadhead anecdote at demand=0)
+- *Lead/lag and parallel pumps — a note* — short forward-link to
+  `[future: sequencing.html]`; user explicitly said "sequencing
+  should get a lot of attention" so this page deliberately stays
+  shallow on it
+- *Tying it together* — closing payoff to load-piping + VFDs
+
+Out of scope (forward links, not content):
+- Pump staging / lead-lag rotation / end-of-curve protection /
+  bumpless transitions — [future: sequencing.html]
+- Hydronic balancing — [future: balancing.html] (reachable from
+  load-piping)
+- Open-loop systems with static head (cooling towers, sumps) —
+  brief mention only; full treatment belongs to a different page
+- Specific pump-controller manufacturer parameter trees — keeps the
+  cross-manufacturer pattern, same scope discipline as the VFDs page
+
+**Two interactive widgets — Education-page idiom holds.** Per the
+"both" answer at scoping. Widget 1 (operating-point chart) introduces
+the concept; Widget 2 (DP-reset simulation) is the practitioner pay-
+off. Two widgets on one page is a lot, but PID Basics ships three
+mini-sims, so there's precedent. The widgets share the visual
+vocabulary established by the d3 injection-pump widget on
+hydronic-loops and the run/speed widget on vfds: recessed
+`--surface-3` background, mono section labels, blue readouts, fan
+icon for "the drive is energising something." Class prefix `pc-w-`
+inline on the page, mirroring the `vfd-w-` naming used on vfds.
+
+**Widget 1 — operating-point chart.** SVG-based chart (not canvas
+this time — the chart is small, the polylines are short, and SVG
+layered cleanly with the static axes/legend without a per-frame
+redraw cost). Sliders for pump speed (0–60 Hz, matching the VFDs
+widget) and valve openness (10–100%). Math is intentionally simple
+and recorded inline in the page script: pump curve as a downward
+parabola scaled by speed-ratio² per affinity laws, system curve
+as a parabola through origin steepening as valves close, operating
+point at the analytic intersection. Reference pump curve at 60 Hz
+stays drawn as a faded dashed line so the speed scaling reads
+visually. Numbers chosen so the design point lands at exactly
+(100 GPM, 50 ft) — easy to verify in the readouts and easy to
+sanity-check against intuition.
+
+**Widget 2 — DP setpoint reset.** Demand slider drives flow; mode
+toggle picks Fixed DP vs. Reset DP; five identical valve cells
+visualize valve openness; readouts show DP setpoint, pump Hz, flow,
+power-vs-full. Uniform-load model — all five valves at the same
+opening — simplifies the reset story (in real systems with
+non-uniform demand the reset advantage is even more dramatic).
+Approximate physics: pipe-friction coefficient sized so design
+operating point matches Widget 1, DP setpoint either fixed at 25 ft
+or walked linearly down to a 5 ft floor in reset mode, pump Hz
+inverted from the pump curve and clamped to a 10 Hz minimum (real
+VFD parameter). Recorded inline in the script for the next reader.
+
+**Deadhead anecdote — extreme-state reward.** Same pattern as the d3
+0 Hz failure-state and the vfds widget's classic-mistake reveal. The
+trigger here is demand = 0% (slider all the way down) — all valves
+closed, nowhere for water to go. The reveal callout is a short prose
+description of the deadhead failure mode followed by the user's
+own war story (deadheaded a pump on a loop with all 2-way valves,
+caught it because they were standing in the mechanical room and the
+noise was unmistakable). Frames the rest of the page's content as
+"this control story is what protects against this." Same pinned-
+once-shown semantic as the other anecdotes — yanking it back on the
+next slider tweak would be petty.
+
+**`.edu-svg` consolidation — finally landed.** The load-piping
+friction entry called out the *next* Education page with pipe-flow
+diagrams as the trigger to fold `.hd-svg` + `.lp-svg` into a shared
+`.edu-svg` rule in `styles.css`. The vfds page deferred the trigger
+because its diagrams were structurally different (no `data-flow`,
+no dashed-return override). Pump-control's Section 5 has a pipe-
+flow diagram, so the trigger fired:
+
+- New `.edu-svg` + `.edu-legend` block in `styles.css`, plus the
+  `@media screen { svg.flow-active [data-flow="return"] }` override
+  that previously lived inline on hydronic-loops and load-piping.
+- `hydronic-loops.html` and `load-piping.html` retrofitted: inline
+  style blocks shrunk to a one-line "moved to styles.css" comment
+  plus the page-specific d3-widget styles for hydronic-loops; class
+  attributes swapped from `hd-svg` / `hd-legend` and
+  `lp-svg` / `lp-legend` to `edu-svg` / `edu-legend`.
+- Smoke-test selectors updated to match (`svg.hd-svg` /
+  `svg.lp-svg` → `svg.edu-svg`).
+- Pump-control uses `.edu-svg` from day one for its Section 5
+  pipe-flow diagram. Widget-internal SVG (the pump-curve chart in
+  Widget 1, the fan icons) intentionally stay outside `.edu-svg` —
+  the rule is for pipe-flow schematics specifically, not for any
+  SVG on an Education page.
+
+The block-diagram-style `.vfd-svg` on vfds.html stays separate, per
+the rule recorded in the vfds friction entry (different shape:
+no supply/return, no `data-flow`, no dashed-return override). The
+`.edu-svg` family is for pipe-flow diagrams; `.vfd-svg` is for the
+VFDs page's structural diagrams; future page-specific diagram
+classes can follow either precedent depending on what they're
+drawing.
+
+**Forward-link debts this page incurred:**
+- `[future: sequencing.html]` — referenced in the lead/lag note
+  (heavy traffic going there: rotation, staging transitions,
+  end-of-curve protection, bumpless mode changes — a meaningful
+  page in its own right). User flagged sequencing should get a lot
+  of attention when it's its own page; the brief on this page is
+  deliberately shallow so it doesn't pre-cover ground.
+- `[future: sequencing.html]` (again, in the closing) — broader
+  scope: setpoint reset against outside-air temperature, mode
+  transitions, morning warm-up sequences, etc.
+- `[future: balancing.html]` — not directly forward-linked from
+  pump-control (the load-piping page already carries the link),
+  but worth noting that pump-control's "DP setpoint reset assumes
+  uniform demand" caveat would tie back to the balancing page if
+  both ship.
+
+**Forward-link payoffs landed:**
+- `vfds.html` closing was previously plain prose ("A pump-control
+  lesson will land here when it ships. Forward-link, breadcrumb
+  dropped."). Updated to an active anchor pointing at the new page.
+- `load-piping.html` two-way section's reference to the variable-
+  speed pump still anchors at vfds.html (which then forward-links
+  to pump-control); intentionally not retargeted, since load-
+  piping's hook is "what pump goes here?" → vfds (the equipment),
+  and pump-control is the next-step. The two-page chain reads
+  correctly.
+
 ### VFDs — Education page *(shipped 2026-05-14)*
 *One question: what is a VFD, and what does a controls tech need to
 know about it?*
