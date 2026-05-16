@@ -1,0 +1,16 @@
+<nav class="site-nav">
+    <a class="site-nav-brand" href="/">controlsfreak<span>.dev</span></a>
+    <div class="site-nav-links">
+        <a href="/"{% if nav == "home" %} class="active"{% endif %}>Home</a>
+        <a href="/tools/"{% if nav == "tools" %} class="active"{% endif %}>Tools</a>
+        <a href="/education/"{% if nav == "education" %} class="active"{% endif %}>Education</a>
+        <a href="/contact.html"{% if nav == "contact" %} class="active"{% endif %}>Contact</a>
+        <span class="units-toggle">
+            <span class="units-label">Units:</span>
+            <span class="units-toggle-pill">
+                <button class="units-btn" data-units="us" aria-pressed="true">US</button>
+                <button class="units-btn" data-units="metric" aria-pressed="false">Metric</button>
+            </span>
+        </span>
+    </div>
+</nav>

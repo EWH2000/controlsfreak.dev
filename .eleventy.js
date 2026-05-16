@@ -12,6 +12,17 @@ module.exports = function(eleventyConfig) {
     // rewriting).
     eleventyConfig.setTemplateFormats(["html", "njk"]);
 
+    // Strip the newline after a block tag and the indent before one.
+    // Keeps the rendered HTML close to what a hand-written file would
+    // look like — empty {% block %}{% endblock %} pairs no longer
+    // leave stray blank lines, and indented {% include %} tags don't
+    // double-indent the first line of the included content. Standard
+    // Jinja-family convention.
+    eleventyConfig.setNunjucksEnvironmentOptions({
+        trimBlocks: true,
+        lstripBlocks: true
+    });
+
     // Static assets — copied verbatim to _site/ at the same relative
     // paths the existing pages reference. The mapping object form
     // (`{src: dest}`) makes the output paths explicit: html/scripts
