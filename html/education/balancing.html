@@ -215,6 +215,22 @@
             .bal-w-bch-state { grid-area: state; }
         }
 
+        /* Inline state-tag spans used in the widget's intro paragraph
+           so the reader sees the same colour vocabulary they're about to
+           encounter in the branch rows. Match the per-state colours used
+           by .bal-w-branch[data-state="*"] above. */
+        .bal-w-tag-holding,
+        .bal-w-tag-starved,
+        .bal-w-tag-over {
+            font-family: var(--mono);
+            font-size: 0.85em;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+        }
+        .bal-w-tag-holding { color: var(--accent); }
+        .bal-w-tag-starved { color: var(--red); }
+        .bal-w-tag-over    { color: var(--heat); }
+
         /* Anecdote callout — same family as the d3 / pump-control / vfds
            extreme-state reveals. min-height reserves vertical space so the
            reveal doesn't reflow the page below. */
@@ -320,9 +336,10 @@
                     <!-- return riser down -->
                     <polygon points="595,260 600,271 605,260" fill="var(--blue-cool, #5e8aa0)"/>
                     <polygon points="595,420 600,431 605,420" fill="var(--blue-cool, #5e8aa0)"/>
-                    <!-- pump return leg -->
+                    <!-- pump return leg (flows LEFT from return riser to pump) -->
                     <polygon points="500,455 491,460 500,465" fill="var(--blue-cool, #5e8aa0)"/>
-                    <polygon points="300,455 309,460 300,465" fill="var(--blue, #1577b8)"/>
+                    <!-- pump supply leg (flows LEFT from pump to supply riser; apex at x=300 points left) -->
+                    <polygon points="309,455 300,460 309,465" fill="var(--blue, #1577b8)"/>
                     <!-- per-floor supply arrows (right) and return arrows (right) -->
                     <polygon points="225,95 234,100 225,105" fill="var(--blue, #1577b8)"/>
                     <polygon points="540,95 549,100 540,105" fill="var(--blue-cool, #5e8aa0)"/>
@@ -558,7 +575,7 @@
             <div class="subhead">See it side-by-side under varying Δp</div>
 
             <p style="font-size:0.95rem;line-height:1.8;color:var(--text);">
-                Three identical branches, each sized for the same design flow — <span data-us="30 GPM" data-metric="1.9 L/s">30 GPM</span> at a design Δp of <span data-us="20 ft" data-metric="6.1 m">20 ft</span> of water. One has a CBV, one has an ABV, one has a PICV. Drag the slider to change the available Δp across the branches and watch what each one passes. Hold each branch at design (<span class="bal-w-tag-design">HOLDING</span>) is the goal. <span class="bal-w-tag-starved">STARVED</span> means flow is below 85 % of design; <span class="bal-w-tag-over">OVER</span> means above 115 %.
+                Three identical branches, each sized for the same design flow — <span data-us="30 GPM" data-metric="1.9 L/s">30 GPM</span> at a design Δp of <span data-us="20 ft" data-metric="6.1 m">20 ft</span> of water. One has a CBV, one has an ABV, one has a PICV. Drag the slider to change the available Δp across the branches and watch what each one passes. <span class="bal-w-tag-holding">HOLDING</span> means flow is within ±15 % of design; <span class="bal-w-tag-starved">STARVED</span> is below 85 %; <span class="bal-w-tag-over">OVER</span> is above 115 %.
             </p>
 
             <div class="bal-widget" id="balWidget">
@@ -571,8 +588,8 @@
                 <input class="bal-w-slider" id="balDpSlider" type="range" min="1" max="60" step="1" value="20"
                        aria-label="System differential pressure across the load branches"/>
                 <div class="bal-w-slider-foot">
-                    <span>1</span>
-                    <span>60</span>
+                    <span data-us="1 ft" data-metric="0.3 m">1 ft</span>
+                    <span data-us="60 ft" data-metric="18 m">60 ft</span>
                 </div>
                 <div class="bal-w-design-tick">
                     Design Δp = <em><span data-us="20 ft" data-metric="6.1 m">20 ft</span></em> · each branch sized for <em><span data-us="30 GPM" data-metric="1.9 L/s">30 GPM</span></em>

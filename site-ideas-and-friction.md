@@ -1370,6 +1370,67 @@ caught on a manometer walk.
   for future state-driven widgets. Same idea as the
   `flow-engine`'s `flow-active` CSS hook.
 
+**Forward-link payoffs landed (this session).** Same convention as
+pump-control's "Forward-link payoffs landed" subsection — when a
+new page ships, sweep prior pages that forward-linked to it (or
+naturally mentioned the topic) and convert plain-prose mentions to
+active anchors per the "anchor only if the target exists today"
+rule. Three prior pages updated in this pass:
+- `load-piping.html` (the strongest debt) — the section-3 callout
+  was previously plain prose ("...will get its own lesson here when
+  it's written"). Now anchors to `balancing.html` with a one-sentence
+  frame of what the lesson covers.
+- `hydronic-loops.html` d1 and d2 — both naturally mention
+  "balancing valve(s)" in their closing prose. The phrase is now
+  an active anchor on each. No prose rewriting needed; just the
+  anchor.
+- `pump-control.html` "Tying It Together" closing — extended with
+  a one-sentence addition framing balancing as the load-side detail
+  underneath the variable-flow trio, and explicitly noting that
+  PICVs are the natural pairing for aggressive DP-reset. Threads
+  balancing into the variable-flow story without rebuilding the
+  closing paragraph.
+
+**Review-pass findings (post-ship 2026-05-16).** A focused review
+after the page first shipped surfaced four issues, all fixed in
+the same session:
+1. *Missing CSS classes referenced in prose.* The widget intro
+   paragraph used `<span class="bal-w-tag-design">HOLDING</span>`
+   (and the starved/over equivalents) to colour-prime the reader
+   on the state vocabulary they were about to encounter — but
+   those classes were never defined, so the spans rendered as
+   plain inline text. Added `.bal-w-tag-holding` /
+   `.bal-w-tag-starved` / `.bal-w-tag-over` to the widget style
+   block, mirroring the per-state colours used by
+   `.bal-w-branch[data-state="*"]` further down. Lesson: every
+   class name written into prose has to exist in the stylesheet,
+   and visual prose review (without rendering) can miss this.
+2. *Grammar in the same paragraph.* "Hold each branch at design
+   (HOLDING) is the goal" parses as a broken sentence. Rewritten
+   to lead with the state definitions: "HOLDING means flow is
+   within ±15 % of design; STARVED is below 85 %; OVER is above
+   115 %." Same information, sentence works.
+3. *Slider foot labels weren't unit-toggle aware.* The "1" and
+   "60" min/max labels under the slider were hardcoded ft values
+   — switching the global units toggle to metric would have left
+   them at "1" and "60" while the live readout above moved to m.
+   Added `data-us` / `data-metric` attributes so the units walker
+   rewrites them ("1 ft" ↔ "0.3 m", "60 ft" ↔ "18 m"). **General
+   lesson for future widgets:** every visible unit-bearing number
+   needs the toggle hooks, not just the live readout. Audit
+   widget chrome for absolute axis / range labels alongside the
+   live values.
+4. *One flow arrow drawn the wrong way.* The pump-to-supply leg
+   at the bottom of the riser (line `bal-riser-pump-to-supply`)
+   is drawn right-to-left (from x=385 to x=200) since flow leaves
+   the pump and enters the supply riser. The corresponding arrow
+   polygon at (300, 460) was authored with apex at x=309 (pointing
+   right) instead of x=300 (pointing left). A single-coord swap
+   fixed it. Same pattern as the "animating a diagram audits its
+   static markup" lesson recorded in the animation policy — even
+   without an animation pass, every arrow on a complex diagram
+   benefits from a tracing-the-flow walk-through during review.
+
 ---
 
 ## Site structure / organization

@@ -20,7 +20,7 @@ but the project is the tools, not a personal homepage.
   stays inline on the page that needs it (currently: `contact.html`,
   `psychrometric-chart.html`, `thermistor-calculator.html`,
   `hydronic-loops.html`, `vfds.html`, `vfd-mock.html`,
-  `pump-control.html`). `load-piping.html` is now style-block-empty
+  `pump-control.html`, `balancing.html`). `load-piping.html` is now style-block-empty
   after the `.edu-svg` consolidation; it links the shared sheet and
   carries no inline rules. Shared rules live in the file; page-only
   rules stay inline. Pipe-flow diagrams across Education pages share
@@ -155,7 +155,8 @@ controlsfreak.dev/
 │       ├── hydronic-loops.html       # 2-pipe direct → reverse → twin-T, inline SVG schematics (.edu-svg)
 │       ├── load-piping.html          # 2-way vs 3-way load valves, four SVG diagrams (.edu-svg); pays off the twin-T #d3 forward callout
 │       ├── vfds.html                 # block diagram + cube law + run/speed widget + parameter groups + bypass; pairs with tools/vfd-mock.html
-│       └── pump-control.html         # pump curves + operating point + DP control + DP setpoint reset; two widgets (operating-point chart, DP-reset sim); pairs with vfds.html and load-piping.html
+│       ├── pump-control.html         # pump curves + operating point + DP control + DP setpoint reset; two widgets (operating-point chart, DP-reset sim); pairs with vfds.html and load-piping.html
+│       └── balancing.html            # CBV / ABV / PICV explainer + 4-floor riser diagram + 3-branch comparison widget; pays off forward links from hydronic-loops, load-piping, and pump-control
 └── tests/              # Playwright (smoke.spec.js, contact.spec.js)
 ```
 
@@ -370,12 +371,40 @@ cards (the roadmap). Live tools:
   demand slider, five valve cells, readouts; deadhead anecdote
   reveals at demand=0%), *lead/lag — a note* (deliberately shallow,
   forward-points to `[future: sequencing.html]`), *tying it
-  together* (closing payoff to load-piping + vfds). Inline JS, CSS
-  prefix `pc-w-`. The Widget 1 chart is SVG (small chart, short
-  polylines layer cleanly with static axes); the Widget 2 valve
-  cells are HTML/CSS not SVG. Pipe-flow diagram in Section 5 uses
-  `.edu-svg` from day one — this is the page that triggered the
-  `.hd-svg` / `.lp-svg` → `.edu-svg` consolidation in `styles.css`.
+  together* (closing payoff to load-piping + vfds; updated to also
+  forward-link to balancing as the load-side detail underneath
+  DP-reset). Inline JS, CSS prefix `pc-w-`. The Widget 1 chart is
+  SVG (small chart, short polylines layer cleanly with static axes);
+  the Widget 2 valve cells are HTML/CSS not SVG. Pipe-flow diagram
+  in Section 5 uses `.edu-svg` from day one — this is the page that
+  triggered the `.hd-svg` / `.lp-svg` → `.edu-svg` consolidation in
+  `styles.css`.
+
+- **Hydronic Balancing** (`balancing.html`) — closes the variable-flow
+  story as a quartet (load piping → VFDs → pump control → balancing).
+  One question: how do you make sure every load actually receives the
+  design flow it was sized for, and how do you know when it isn't?
+  Four sections under a valve-type spine: *a real riser with balance
+  valves at every branch* (4-floor riser pipe-flow diagram via
+  `.edu-svg` + flow-engine, pump in the basement with near/far
+  hydraulic-distance callouts), *CBVs* / *ABVs* / *PICVs* (each
+  with a small inline symbol diagram + ~5 paragraphs covering
+  mechanism / context / where-it-fits / failure modes), the widget
+  (3-branch comparison under a single Δp slider; CBV / ABV / PICV
+  sized for the same design flow; per-row HOLDING / STARVED / OVER
+  pills swap colour via `data-state` on the row container; user's
+  burst-coil anecdote reveals at Δp ≤ 4 ft and stays pinned;
+  border-left of the callout is `--red` rather than `--blue`
+  because the failure mode is severe), and *diagnostics* (symptoms
+  `.ref-table` + one narrative case). Closing tie-back pays off
+  forward-link debts from hydronic-loops, load-piping, and
+  pump-control; closing forward callout names
+  `[future: commissioning.html]`. Per-valve symbol diagrams use a
+  page-local `.bal-valve-fig` wrapper (recessed surface, max-width
+  360px), not `.edu-svg` — they're reference schematics, not
+  pipe-flow. Widget CSS prefix `bal-w-`; inline state-tag spans
+  (`.bal-w-tag-holding` / `.bal-w-tag-starved` / `.bal-w-tag-over`)
+  prime the reader on the colour vocabulary in the intro paragraph.
 
 - **VFDs** (`vfds.html`) — variable-frequency drives explainer paired
   with `tools/vfd-mock.html`. One question: *what is a VFD, and what
