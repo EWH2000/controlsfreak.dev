@@ -495,12 +495,24 @@ underlined tabs). No drop shadows, no background texture. Light-only
 
 ## Workflow
 
-The user runs Git commands themselves. Claude Code's job is editing
-source files. Do not run `git add`, `git commit`, or `git push` unless
-explicitly asked.
+Claude Code edits source files and may write commits when explicitly
+asked, but defaults to waiting for permission. Specifically:
+
+- **Editing files** — go.
+- **`git commit`** — wait for explicit permission ("commit this," "go
+  ahead and commit," etc.). Don't auto-commit at the end of a task,
+  even if the work is "obviously done." Drafting a commit message in
+  text for the user to review is fine and often welcome.
+- **`git push`** — the user mostly pushes themselves after reviewing
+  the local commit. Only push when the user explicitly asks, or when
+  they're hitting errors with their own push and want help.
+- **`git add`** — staging is implicit in commit permission. When
+  staging, prefer specific file lists over `git add -A` / `git add .`
+  to avoid sweeping in stray files.
 
 Typical loop: user asks for a change → Claude edits → user reviews
-diff, commits, pushes → Cloudflare auto-deploys within ~60s.
+the diff → user says "commit" → Claude commits → user pushes →
+Cloudflare auto-deploys within ~60s.
 
 ## Local preview & tests
 
