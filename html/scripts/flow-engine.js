@@ -129,8 +129,21 @@
             lastT = t;
             const delta = VELOCITY * dt;
 
-            for (let p = 0; p < pools.length; p++) {
+            // Iterate backwards so an in-flight splice of a stale pool
+            // (its annotated element was removed from the DOM) doesn't
+            // skip the next pool. No current page mutates SVG geometry
+            // like this — recording the guard so a future animated
+            // widget can't leak a detached-element reference here.
+            for (let p = pools.length - 1; p >= 0; p--) {
                 const pool = pools[p];
+                if (!pool.el.isConnected) {
+                    for (let i = 0; i < pool.particles.length; i++) {
+                        pool.particles[i].circle.remove();
+                    }
+                    poolsByEl.delete(pool.el);
+                    pools.splice(p, 1);
+                    continue;
+                }
                 const len = pool.length;
                 for (let i = 0; i < pool.particles.length; i++) {
                     const part = pool.particles[i];

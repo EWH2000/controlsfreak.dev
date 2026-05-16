@@ -140,6 +140,8 @@ Browsers ten years from now will still run it.
 conventions, design-system component index, and per-page notes.
 `site-ideas-and-friction.md` is the running log of ideas,
 design decisions, and friction encountered while building.
+`codebase-issues.md` tracks code-quality items that need a design
+decision before they can be acted on.
 
 ## Local development
 

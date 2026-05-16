@@ -59,6 +59,25 @@ but the project is the tools, not a personal homepage.
     configuration. The thermistor calculator page carries an "About
     these tables" tool-card surfacing the methodology and disclaimers
     to end users.
+  - `units.js` — site-wide US/metric unit toggle. State + persistence
+    (`localStorage`, key `cf_units`), 12 quantity conversions
+    (temp / Δtemp / W / h / v / P / altitude / airflow / waterFlow /
+    pumpHead / heatCapacity / staticPressure), suffix-label builders,
+    DOM walker for `data-us` / `data-metric` prose spans, and a
+    `unitschange` event on `document`. Exposes `window.Units`
+    (`current()`, `set()`, `onChange()`, `suffix.*()`, `display.*()`,
+    `toCanonical.*()`, `convert()`, `applyToDOM()`). A tiny inline
+    `<script>` in every page's `<head>` sets `<html data-units>` from
+    `localStorage` before first paint so returning metric visitors
+    don't see a US flash.
+  - `ui.js` — tiny shared UI primitives: `switchTab(name, btn)`,
+    `copyText(btn, text)`, `copyReadouts(btn, sep, ...ids)`. The
+    last two share a single `.catch()`-aware `copyText` so
+    clipboard failures (insecure context, no user activation) fail
+    silently instead of surfacing as console-error noise. Used by
+    `tools/bacnet-ip-converter.html`,
+    `tools/signal-scaling.html`,
+    `tools/thermistor-calculator.html`.
 - **Worker:** `src/worker.js` — ES-module Worker. Handles
   `POST /api/contact` (validate, drop honeypot hits silently, verify
   Turnstile, send via Resend with `reply_to` = submitter) and falls
@@ -119,10 +138,12 @@ but the project is the tools, not a personal homepage.
 
 ```
 controlsfreak.dev/
-├── CLAUDE.md           # this file
+├── CLAUDE.md                 # this file
 ├── README.md
-├── wrangler.jsonc      # Cloudflare config (Worker + static assets) — touch carefully
-├── package.json        # dev tooling only (Playwright)
+├── site-ideas-and-friction.md  # running log: feature ideas, design decisions, lessons
+├── codebase-issues.md        # running log: code-quality items needing a design decision
+├── wrangler.jsonc            # Cloudflare config (Worker + static assets) — touch carefully
+├── package.json              # dev tooling only (Playwright)
 ├── src/
 │   └── worker.js       # POST /api/contact, else falls through to assets
 ├── html/               # static assets (bound as env.ASSETS)
@@ -139,7 +160,9 @@ controlsfreak.dev/
 │   ├── scripts/
 │   │   ├── pid-engine.js             # PID_PROC, simulatePid (classic script)
 │   │   ├── flow-engine.js            # FlowEngine.init(), refreshPath() — particle animation
-│   │   └── thermistor-data.js        # THERMISTOR_TYPES — curves verified 2026-05 (JCI 8.7K still PENDING)
+│   │   ├── thermistor-data.js        # THERMISTOR_TYPES — curves verified 2026-05 (JCI 8.7K still PENDING)
+│   │   ├── units.js                  # window.Units — US/metric toggle, conversions, DOM walker, unitschange event
+│   │   └── ui.js                     # switchTab, copyText, copyReadouts — shared UI primitives
 │   ├── tools/
 │   │   ├── index.html                # Tools landing — live grid + "Coming Soon"
 │   │   ├── signal-scaling.html

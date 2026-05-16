@@ -23,11 +23,11 @@
 (function () {
     'use strict';
 
-    var STORAGE_KEY = 'cf_units';
+    const STORAGE_KEY = 'cf_units';
 
     function load() {
         try {
-            var v = localStorage.getItem(STORAGE_KEY);
+            const v = localStorage.getItem(STORAGE_KEY);
             return v === 'metric' ? 'metric' : 'us';
         } catch (e) {
             return 'us';
@@ -38,60 +38,60 @@
         try { localStorage.setItem(STORAGE_KEY, u); } catch (e) { /* private mode etc. */ }
     }
 
-    var units = load();
+    let units = load();
 
     // ── Conversion primitives ──────────────────────────────────────────
     // Constants chosen to match common ASHRAE / NIST tables to the displayed
     // precision; absolute conversion factors are documented inline.
 
-    var F2C    = function (f)  { return (f - 32) * 5 / 9; };
-    var C2F    = function (c)  { return c * 9 / 5 + 32; };
-    var dF2dC  = function (df) { return df * 5 / 9; };          // delta (no offset)
-    var dC2dF  = function (dc) { return dc * 9 / 5; };
+    const F2C    = function (f)  { return (f - 32) * 5 / 9; };
+    const C2F    = function (c)  { return c * 9 / 5 + 32; };
+    const dF2dC  = function (df) { return df * 5 / 9; };          // delta (no offset)
+    const dC2dF  = function (dc) { return dc * 9 / 5; };
 
     // Humidity ratio. 7000 gr water per lb water, 1000 g per kg — so the ratio
     // of mass-ratios is 1000/7000 ≈ 0.1429 g/kg per gr/lb.
-    var grPerLb_to_gPerKg = function (w) { return w * (1000 / 7000); };
-    var gPerKg_to_grPerLb = function (w) { return w * 7; };
+    const grPerLb_to_gPerKg = function (w) { return w * (1000 / 7000); };
+    const gPerKg_to_grPerLb = function (w) { return w * 7; };
 
-    var btuPerLb_to_kJPerKg = function (h) { return h * 2.326; };
-    var kJPerKg_to_btuPerLb = function (h) { return h / 2.326; };
+    const btuPerLb_to_kJPerKg = function (h) { return h * 2.326; };
+    const kJPerKg_to_btuPerLb = function (h) { return h / 2.326; };
 
-    var ft3PerLb_to_m3PerKg = function (v) { return v * 0.0624280; };
-    var m3PerKg_to_ft3PerLb = function (v) { return v / 0.0624280; };
+    const ft3PerLb_to_m3PerKg = function (v) { return v * 0.0624280; };
+    const m3PerKg_to_ft3PerLb = function (v) { return v / 0.0624280; };
 
-    var psia_to_kPa = function (p) { return p * 6.89475729; };
-    var kPa_to_psia = function (p) { return p / 6.89475729; };
+    const psia_to_kPa = function (p) { return p * 6.89475729; };
+    const kPa_to_psia = function (p) { return p / 6.89475729; };
 
-    var ft_to_m = function (x) { return x * 0.3048; };
-    var m_to_ft = function (x) { return x / 0.3048; };
+    const ft_to_m = function (x) { return x * 0.3048; };
+    const m_to_ft = function (x) { return x / 0.3048; };
 
     // Airflow — user picked m³/h over L/s (closer to European AHU specs).
     // 1 CFM = 0.471948 L/s = 1.699011 m³/h.
-    var cfm_to_m3PerH = function (q) { return q * 1.699010796; };
-    var m3PerH_to_cfm = function (q) { return q / 1.699010796; };
+    const cfm_to_m3PerH = function (q) { return q * 1.699010796; };
+    const m3PerH_to_cfm = function (q) { return q / 1.699010796; };
 
     // Water flow — US gallons. 1 GPM = 3.78541 L/min = 0.0630902 L/s.
-    var gpm_to_LPerS = function (q) { return q * 0.0630902; };
-    var LPerS_to_gpm = function (q) { return q / 0.0630902; };
+    const gpm_to_LPerS = function (q) { return q * 0.0630902; };
+    const LPerS_to_gpm = function (q) { return q / 0.0630902; };
 
     // Pump head — user picked m of water (matches EU field practice).
     // Head is a length, so it's the straight ft↔m conversion.
-    var ftHead_to_mHead = ft_to_m;
-    var mHead_to_ftHead = m_to_ft;
+    const ftHead_to_mHead = ft_to_m;
+    const mHead_to_ftHead = m_to_ft;
 
     // Heat capacity. 1 MBH = 1000 BTU/hr; 1 BTU/hr = 0.293071 W.
-    var mbh_to_kW = function (q) { return q * 0.293071; };
-    var kW_to_mbh = function (q) { return q / 0.293071; };
+    const mbh_to_kW = function (q) { return q * 0.293071; };
+    const kW_to_mbh = function (q) { return q / 0.293071; };
 
     // Small static pressure (fast-loop / duct work). 1 in. w.c. = 248.84 Pa.
-    var inWC_to_Pa = function (p) { return p * 248.84; };
-    var Pa_to_inWC = function (p) { return p / 248.84; };
+    const inWC_to_Pa = function (p) { return p * 248.84; };
+    const Pa_to_inWC = function (p) { return p / 248.84; };
 
-    var isUS = function () { return units === 'us'; };
+    const isUS = function () { return units === 'us'; };
 
     // ── Suffix labels (drive rebuilds of page labels) ──────────────────
-    var suffix = {
+    const suffix = {
         temp:           function () { return isUS() ? '°F'   : '°C'; },
         deltaTemp:      function () { return isUS() ? '°F'   : '°C'; },
         humidityRatio:  function () { return isUS() ? 'gr/lb'    : 'g/kg'; },
@@ -107,7 +107,7 @@
     };
 
     // ── Display conversion (canonical US → display value) ──────────────
-    var display = {
+    const display = {
         temp:           function (f)  { return isUS() ? f  : F2C(f); },
         deltaTemp:      function (df) { return isUS() ? df : dF2dC(df); },
         humidityRatio:  function (w)  { return isUS() ? w  : grPerLb_to_gPerKg(w); },
@@ -124,7 +124,7 @@
 
     // Per-quantity conversion functions, keyed for the convert() helper below.
     // Each entry is { toCanonical: fn(metricValue) → US, fromCanonical: fn(usValue) → metric }.
-    var Q = {
+    const Q = {
         temp:           { toCanonical: C2F,                     fromCanonical: F2C },
         deltaTemp:      { toCanonical: dC2dF,                   fromCanonical: dF2dC },
         humidityRatio:  { toCanonical: gPerKg_to_grPerLb,       fromCanonical: grPerLb_to_gPerKg },
@@ -144,14 +144,14 @@
     // field's text from the old display value to the new display value.
     function convert(value, fromUnits, toUnits, quantity) {
         if (!isFinite(value) || fromUnits === toUnits) return value;
-        var q = Q[quantity];
+        const q = Q[quantity];
         if (!q) return value;
-        var canonical = (fromUnits === 'us') ? value : q.toCanonical(value);
+        const canonical = (fromUnits === 'us') ? value : q.toCanonical(value);
         return (toUnits === 'us') ? canonical : q.fromCanonical(canonical);
     }
 
     // ── Canonicalization (display input → canonical US value) ──────────
-    var toCanonical = {
+    const toCanonical = {
         temp:           function (x) { return isUS() ? x : C2F(x); },
         deltaTemp:      function (x) { return isUS() ? x : dC2dF(x); },
         humidityRatio:  function (x) { return isUS() ? x : gPerKg_to_grPerLb(x); },
@@ -169,25 +169,25 @@
     // ── DOM walker for static prose ────────────────────────────────────
     // <span data-us="100 GPM" data-metric="6.3 L/s">100 GPM</span>
     function applyToDOM(root) {
-        var r = root || document.body;
+        const r = root || document.body;
         if (!r) return;
-        var nodes = r.querySelectorAll('[data-us][data-metric]');
-        for (var i = 0; i < nodes.length; i++) {
+        const nodes = r.querySelectorAll('[data-us][data-metric]');
+        for (let i = 0; i < nodes.length; i++) {
             nodes[i].textContent = nodes[i].dataset[units];
         }
     }
 
     // ── Toggle UI ──────────────────────────────────────────────────────
     function syncToggleAria() {
-        var btns = document.querySelectorAll('.units-btn[data-units]');
-        for (var i = 0; i < btns.length; i++) {
+        const btns = document.querySelectorAll('.units-btn[data-units]');
+        for (let i = 0; i < btns.length; i++) {
             btns[i].setAttribute('aria-pressed', btns[i].dataset.units === units ? 'true' : 'false');
         }
     }
 
     function wireToggle() {
-        var btns = document.querySelectorAll('.units-btn[data-units]');
-        for (var i = 0; i < btns.length; i++) {
+        const btns = document.querySelectorAll('.units-btn[data-units]');
+        for (let i = 0; i < btns.length; i++) {
             (function (btn) {
                 btn.addEventListener('click', function () { setUnits(btn.dataset.units); });
             })(btns[i]);
@@ -198,7 +198,7 @@
     function setUnits(newUnits) {
         if (newUnits !== 'us' && newUnits !== 'metric') return;
         if (newUnits === units) return;
-        var previous = units;
+        const previous = units;
         units = newUnits;
         save(units);
         document.documentElement.dataset.units = units;

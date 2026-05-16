@@ -216,6 +216,7 @@
      (not a module), loaded before the inline glue below so the on* handlers
      see THERMISTOR_TYPES. Same loading pattern as /scripts/pid-engine.js. -->
 <script src="/scripts/thermistor-data.js"></script>
+<script src="/scripts/ui.js"></script>
 <script>
     // ─────────────────────────────────────────────────────────────────────
     // Thermistor / RTD Lookup — page glue around THERMISTOR_TYPES.
@@ -409,14 +410,11 @@
     }
 
     // ── Copy the bare result value to the clipboard ──
+    // Thin wrapper over copyText() from /scripts/ui.js — the only
+    // page-specific piece is what to copy (thLastRaw, the most recent
+    // resistance / temperature lookup result, kept in the outer scope).
     function thCopy(btn) {
-        if (btn.classList.contains('copied') || !thLastRaw) return;
-        navigator.clipboard.writeText(thLastRaw).then(() => {
-            const orig = btn.textContent;
-            btn.textContent = 'copied!';
-            btn.classList.add('copied');
-            setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 1800);
-        }).catch(() => {});   // clipboard can be blocked (no user activation, insecure context, …) — fail quietly
+        copyText(btn, thLastRaw);
     }
 
     // ── Units integration ──

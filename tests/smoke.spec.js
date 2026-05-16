@@ -320,4 +320,26 @@ test('balancing page renders riser, widget compares three branches, anecdote rev
 
     // Anecdote stays pinned once shown (extreme-state reward semantic).
     await expect(page.locator('#balAnecdote')).toBeVisible();
+
+    // Boundary check: at Δp = 3 ft, ABV is exactly at the low edge of its
+    // compensation range and should hold cleanly at design (no off-by-one
+    // into the orifice branch). CBV is still starved (~12 GPM / 39%).
+    await page.locator('#balDpSlider').evaluate((el) => {
+        el.value = '3';
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await expect(page.locator('#balBchAbv')).toHaveAttribute('data-state', 'holding');
+    await expect(page.locator('#balAbvQ')).toHaveText('30.0');
+    await expect(page.locator('#balBchCbv')).toHaveAttribute('data-state', 'starved');
+
+    // Boundary check: at Δp = 50 ft, ABV is at the upper edge — still
+    // holding (no off-by-one into the high-side orifice branch). CBV is
+    // well into OVER territory by here.
+    await page.locator('#balDpSlider').evaluate((el) => {
+        el.value = '50';
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await expect(page.locator('#balBchAbv')).toHaveAttribute('data-state', 'holding');
+    await expect(page.locator('#balAbvQ')).toHaveText('30.0');
+    await expect(page.locator('#balBchCbv')).toHaveAttribute('data-state', 'over');
 });
