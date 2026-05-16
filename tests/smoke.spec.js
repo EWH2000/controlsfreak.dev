@@ -94,11 +94,14 @@ test('thermistor calculator looks up a known reference value', async ({ page }) 
     await page.fill('#thTemp', '400');
     await expect(page.locator('#thResult')).toHaveText('—');
 
-    // switching units rescales the temperature field in place (no recompute error)
+    // flipping the global units toggle rescales the temperature field and label
+    // (the local °F/°C buttons were retired when the global selector landed)
     await page.fill('#thTemp', '50');
-    await page.click('#thUnitC');
+    await page.click('.units-btn[data-units="metric"]');
     await expect(page.locator('#thTempLbl')).toHaveText('Temperature (°C)');
     expect(parseFloat(await page.locator('#thTemp').inputValue())).toBeCloseTo(10, 0);   // 50 °F ≈ 10 °C
+    // flip back so this test doesn't leak metric state into the next page load
+    await page.click('.units-btn[data-units="us"]');
 });
 
 test('education page runs the PID mini-sims and they respond to input', async ({ page }) => {

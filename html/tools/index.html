@@ -17,6 +17,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&family=Overpass:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/styles.css">
+    <script>(function(){try{var u=localStorage.getItem('cf_units');document.documentElement.dataset.units=u==='metric'?'metric':'us';}catch(e){}})();</script>
 </head>
 <body>
 
@@ -27,6 +28,13 @@
         <a href="/tools/" class="active">Tools</a>
         <a href="/education/">Education</a>
         <a href="/contact.html">Contact</a>
+        <span class="units-toggle">
+            <span class="units-label">Units:</span>
+            <span class="units-toggle-pill">
+                <button class="units-btn" data-units="us" aria-pressed="true">US</button>
+                <button class="units-btn" data-units="metric" aria-pressed="false">Metric</button>
+            </span>
+        </span>
     </div>
 </nav>
 
@@ -65,7 +73,7 @@
         <a class="nav-card" href="/tools/psychrometric-chart.html">
             <span class="nav-card-tag">HVAC</span>
             <div class="nav-card-name">Psychrometric Chart</div>
-            <div class="nav-card-desc">Walk an AHU through its processes — mix outdoor + return air, then cool, heat, and humidify — on an interactive ASHRAE IP-unit chart. Drag OA and RA, or type leaving conditions; coil capacities appear in MBH when you set the airflow.</div>
+            <div class="nav-card-desc">Walk an AHU through its processes — mix outdoor + return air, then cool, heat, and humidify — on an interactive ASHRAE psychrometric chart that follows the header's US / Metric toggle. Drag OA and RA, or type leaving conditions; coil capacities appear when you set the airflow.</div>
         </a>
         <a class="nav-card" href="/tools/thermistor-calculator.html">
             <span class="nav-card-tag">Sensors</span>
@@ -81,10 +89,11 @@
 
 </main>
 
+<script src="/scripts/units.js"></script>
+
 <footer>
     <span class="footer-text">controlsfreak.dev — open tools for controls professionals</span>
     <span class="footer-text">v1.3 · 2026</span>
 </footer>
-
 </body>
 </html>

@@ -17,6 +17,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&family=Overpass:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/styles.css">
+    <script>(function(){try{var u=localStorage.getItem('cf_units');document.documentElement.dataset.units=u==='metric'?'metric':'us';}catch(e){}})();</script>
     <style>
         /* Page-specific — widget chrome for the operating-point and
            DP-reset widgets. Pipe-flow diagrams use the shared .edu-svg
@@ -266,6 +267,13 @@
         <a href="/tools/">Tools</a>
         <a href="/education/" class="active">Education</a>
         <a href="/contact.html">Contact</a>
+        <span class="units-toggle">
+            <span class="units-label">Units:</span>
+            <span class="units-toggle-pill">
+                <button class="units-btn" data-units="us" aria-pressed="true">US</button>
+                <button class="units-btn" data-units="metric" aria-pressed="false">Metric</button>
+            </span>
+        </span>
     </div>
 </nav>
 
@@ -343,25 +351,25 @@
                                 <line x1="50" y1="240" x2="50" y2="20" stroke="var(--text-dim)" stroke-width="1"/>
 
                                 <!-- axis labels -->
-                                <text x="255" y="270" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--text-dim)">flow (GPM)</text>
-                                <text x="16" y="130" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--text-dim)" transform="rotate(-90 16 130)">head (ft)</text>
+                                <text x="255" y="270" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--text-dim)" data-us="flow (GPM)" data-metric="flow (L/s)">flow (GPM)</text>
+                                <text x="16" y="130" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--text-dim)" transform="rotate(-90 16 130)" data-us="head (ft)" data-metric="head (m)">head (ft)</text>
 
                                 <!-- x-axis ticks: 0, 30, 60, 90, 120 -->
                                 <g font-family="var(--mono)" font-size="9" fill="var(--text-dim)" text-anchor="middle">
-                                    <text x="50"  y="254">0</text>
-                                    <text x="152" y="254">30</text>
-                                    <text x="255" y="254">60</text>
-                                    <text x="358" y="254">90</text>
-                                    <text x="460" y="254">120</text>
+                                    <text x="50"  y="254" data-us="0" data-metric="0">0</text>
+                                    <text x="152" y="254" data-us="30" data-metric="1.9">30</text>
+                                    <text x="255" y="254" data-us="60" data-metric="3.8">60</text>
+                                    <text x="358" y="254" data-us="90" data-metric="5.7">90</text>
+                                    <text x="460" y="254" data-us="120" data-metric="7.6">120</text>
                                 </g>
 
                                 <!-- y-axis ticks: 0, 20, 40, 60, 80 -->
                                 <g font-family="var(--mono)" font-size="9" fill="var(--text-dim)" text-anchor="end">
-                                    <text x="44" y="244">0</text>
-                                    <text x="44" y="189">20</text>
-                                    <text x="44" y="134">40</text>
-                                    <text x="44" y="79">60</text>
-                                    <text x="44" y="24">80</text>
+                                    <text x="44" y="244" data-us="0" data-metric="0">0</text>
+                                    <text x="44" y="189" data-us="20" data-metric="6.1">20</text>
+                                    <text x="44" y="134" data-us="40" data-metric="12.2">40</text>
+                                    <text x="44" y="79" data-us="60" data-metric="18.3">60</text>
+                                    <text x="44" y="24" data-us="80" data-metric="24.4">80</text>
                                 </g>
 
                                 <!-- faint reference grid -->
@@ -434,11 +442,11 @@
                         </div>
                         <div class="pc-w1-readout">
                             <div class="pc-w-readout-label">Flow</div>
-                            <div class="pc-w-readout-value"><span id="pcW1Flow">100</span><span class="unit">GPM</span></div>
+                            <div class="pc-w-readout-value"><span id="pcW1Flow">100</span><span class="unit" data-us="GPM" data-metric="L/s">GPM</span></div>
                         </div>
                         <div class="pc-w1-readout">
                             <div class="pc-w-readout-label">Head</div>
-                            <div class="pc-w-readout-value"><span id="pcW1Head">50</span><span class="unit">ft</span></div>
+                            <div class="pc-w-readout-value"><span id="pcW1Head">50</span><span class="unit" data-us="ft" data-metric="m">ft</span></div>
                         </div>
                         <div class="pc-w1-readout">
                             <div class="pc-w-readout-label">Power vs 60 Hz</div>
@@ -682,7 +690,7 @@
                 <div class="pc-w2-readouts">
                     <div class="pc-w1-readout">
                         <div class="pc-w-readout-label">DP setpoint</div>
-                        <div class="pc-w-readout-value"><span id="pcW2DpSet">25</span><span class="unit">ft</span></div>
+                        <div class="pc-w-readout-value"><span id="pcW2DpSet">25</span><span class="unit" data-us="ft" data-metric="m">ft</span></div>
                     </div>
                     <div class="pc-w1-readout">
                         <div class="pc-w-readout-label">Pump speed</div>
@@ -690,7 +698,7 @@
                     </div>
                     <div class="pc-w1-readout">
                         <div class="pc-w-readout-label">Flow</div>
-                        <div class="pc-w-readout-value"><span id="pcW2Flow">100</span><span class="unit">GPM</span></div>
+                        <div class="pc-w-readout-value"><span id="pcW2Flow">100</span><span class="unit" data-us="GPM" data-metric="L/s">GPM</span></div>
                     </div>
                     <div class="pc-w1-readout">
                         <div class="pc-w-readout-label">Power vs full</div>
@@ -733,6 +741,8 @@
     <a class="back-link" href="/education/">← Back to Education</a>
 
 </main>
+
+<script src="/scripts/units.js"></script>
 
 <footer>
     <span class="footer-text">controlsfreak.dev — open tools for controls professionals</span>
@@ -830,8 +840,13 @@
             opDot.setAttribute('cx', xPx(op.Q));
             opDot.setAttribute('cy', yPx(op.H));
 
-            flowEl.textContent  = op.Q.toFixed(0);
-            headEl.textContent  = op.H.toFixed(1);
+            // Internal model is in IP (GPM, ft head). Convert at the display
+            // boundary; the polylines are rendered in chart pixels so their
+            // shape doesn't change with units — only the readouts and the tick
+            // labels (the latter via the data-us/data-metric DOM walker).
+            const U = window.Units;
+            flowEl.textContent  = U.current() === 'us' ? op.Q.toFixed(0) : U.display.waterFlow(op.Q).toFixed(1);
+            headEl.textContent  = U.current() === 'us' ? op.H.toFixed(1) : U.display.pumpHead(op.H).toFixed(1);
             powerEl.textContent = (r * r * r * 100).toFixed(0);
 
             fanLabel.textContent = state.hz + ' Hz';
@@ -846,6 +861,7 @@
             state.valve = parseInt(valveSlider.value, 10);
             render();
         });
+        document.addEventListener('unitschange', render);
 
         // Fan tick — identical structure to the VFDs widget. 60 Hz ⇒ 1 rev/sec.
         const reducedMotion = window.matchMedia &&
@@ -968,9 +984,10 @@
             modeReset.classList.toggle('on', state.mode === 'reset');
 
             const r = compute();
-            dpSetEl.textContent  = r.dpSet.toFixed(0);
+            const U = window.Units;
+            dpSetEl.textContent  = U.current() === 'us' ? r.dpSet.toFixed(0) : U.display.pumpHead(r.dpSet).toFixed(1);
             hzEl.textContent     = r.hz.toFixed(0);
-            flowEl.textContent   = r.flow.toFixed(0);
+            flowEl.textContent   = U.current() === 'us' ? r.flow.toFixed(0)  : U.display.waterFlow(r.flow).toFixed(1);
             powerEl.textContent  = r.powerPct.toFixed(0);
 
             const pctRounded = Math.round(r.valvePct);
@@ -1019,6 +1036,8 @@
         tryMid.addEventListener('click',    function (e) { e.preventDefault(); preset('reset', 60);  });
         tryNight.addEventListener('click',  function (e) { e.preventDefault(); preset('reset', 15);  });
 
+        document.addEventListener('unitschange', render);
+
         render();
     })();
 
@@ -1027,6 +1046,5 @@
     // arrows + dashed return carry the meaning on their own.
     if (window.FlowEngine) FlowEngine.init();
 </script>
-
 </body>
 </html>

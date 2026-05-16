@@ -17,6 +17,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&family=Overpass:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/styles.css">
+    <script>(function(){try{var u=localStorage.getItem('cf_units');document.documentElement.dataset.units=u==='metric'?'metric':'us';}catch(e){}})();</script>
 </head>
 <body>
 
@@ -27,6 +28,13 @@
         <a href="/tools/">Tools</a>
         <a href="/education/" class="active">Education</a>
         <a href="/contact.html">Contact</a>
+        <span class="units-toggle">
+            <span class="units-label">Units:</span>
+            <span class="units-toggle-pill">
+                <button class="units-btn" data-units="us" aria-pressed="true">US</button>
+                <button class="units-btn" data-units="metric" aria-pressed="false">Metric</button>
+            </span>
+        </span>
     </div>
 </nav>
 
@@ -71,10 +79,11 @@
 
 </main>
 
+<script src="/scripts/units.js"></script>
+
 <footer>
     <span class="footer-text">controlsfreak.dev — open tools for controls professionals</span>
     <span class="footer-text">v1.3 · 2026</span>
 </footer>
-
 </body>
 </html>

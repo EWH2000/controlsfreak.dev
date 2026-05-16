@@ -17,6 +17,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&family=Overpass:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/styles.css">
+    <script>(function(){try{var u=localStorage.getItem('cf_units');document.documentElement.dataset.units=u==='metric'?'metric':'us';}catch(e){}})();</script>
 </head>
 <body>
 
@@ -27,13 +28,20 @@
         <a href="/tools/">Tools</a>
         <a href="/education/">Education</a>
         <a href="/contact.html">Contact</a>
+        <span class="units-toggle">
+            <span class="units-label">Units:</span>
+            <span class="units-toggle-pill">
+                <button class="units-btn" data-units="us" aria-pressed="true">US</button>
+                <button class="units-btn" data-units="metric" aria-pressed="false">Metric</button>
+            </span>
+        </span>
     </div>
 </nav>
 
 <section class="hero">
     <div class="hero-eyebrow">BMS Field Reference</div>
     <h1>Tools for those in controls,<br><em>built for the field.</em></h1>
-    <p>Open calculators and reference utilities for BACnet, Modbus, HVAC, and building automation work — plus common sense explainers for the newer techs. From the installer leveling up to the tech in the field to the engineer keeping this on a second monitor: no login, no ads, just stuff that's actually useful on a job site.</p>
+    <p>A reference site for building-controls people. Open calculators and lookups for the math you don't want to redo at the panel — BACnet/IP, Modbus registers, signal scaling, psychrometrics, thermistors. Alongside, a growing set of explainers that walk through hydronic loops, load piping, VFDs, and pump control end-to-end. No login, no ads, no tracking — view-source still works, and the same pages run ten years from now.</p>
     <div class="hero-badges">
         <span class="badge">AI / AO Scaling</span>
         <span class="badge">Modbus Register Viewer</span>
@@ -56,12 +64,12 @@
         <a class="nav-card" href="/tools/">
             <span class="nav-card-tag">Tools</span>
             <div class="nav-card-name">Calculators &amp; lookups →</div>
-            <div class="nav-card-desc">Signal scaling, a Modbus register viewer, a PID step-response simulator, a BACnet/IP hex converter — the job-site utilities. Open one and go.</div>
+            <div class="nav-card-desc">Calculators and lookups for the parts of the job that come up over and over — psychrometric staging, signal scaling, register and address conversions, thermistor curves, a practice VFD keypad. Open one, get an answer, get back to work.</div>
         </a>
         <a class="nav-card" href="/education/">
             <span class="nav-card-tag">Education</span>
             <div class="nav-card-name">Learn the fundamentals →</div>
-            <div class="nav-card-desc">Common sense explainers for techs coming up the curve — how PID control works, how a building's hydronic loops are piped, and more on the way.</div>
+            <div class="nav-card-desc">A connected set of explainers, not a glossary. The current arc: PID control → hydronic loops → load piping → VFDs → pump control, each page asking one question and answering it with diagrams, worked examples, and the occasional interactive widget.</div>
         </a>
     </div>
 
@@ -72,7 +80,7 @@
     <div class="tool-card">
         <div class="tool-body" style="max-width:640px;">
             <p style="font-size:1rem;line-height:1.85;color:var(--text);">
-                Hi, I'm a controls programmer based in the Northeast U.S. This is a side project I'm working on while exploring vibe coding. There's a genuine gap in easy reference websites for this trade, and I always have a million tabs open just to write one program. This site aims to address that by being a one stop shop for the common tools you need to get things done.
+                Hi, I'm a controls programmer based in the Northeast U.S. This is a side project I'm working on while exploring vibe coding. There's a genuine gap in easy reference websites and educational resources for this trade. This site started as just as a way to have some easy reference tools in once place, but has expanded to include much more. Teaching those in the trade has been a passion of mine since I began to grow my own knowledge. With this project I am to do that with a broader audience. I try to verify the accuracy of everything on this site the best that I can, but if anything in incorrect, please contact me and I will ensure I fix the accuracy issue. If there are any specific tools or topics you want to see covered, I want to hear about it!
             </p>
             <p style="font-family:var(--mono);font-size:0.72rem;color:var(--text-dim);margin-top:1.25rem;">
                 Bug reports, tool requests, or feedback — <a href="/contact.html" style="color:var(--accent);">get in touch</a>.
@@ -81,6 +89,8 @@
     </div>
 
 </main>
+
+<script src="/scripts/units.js"></script>
 
 <footer>
     <span class="footer-text">controlsfreak.dev — open tools for controls professionals</span>

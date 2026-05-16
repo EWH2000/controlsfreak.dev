@@ -17,6 +17,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&family=Overpass:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/styles.css">
+    <script>(function(){try{var u=localStorage.getItem('cf_units');document.documentElement.dataset.units=u==='metric'?'metric':'us';}catch(e){}})();</script>
     <style>
         /* Page-specific: a draggable psych chart with a process train needs more
            room than the standard 880px; this page widens the workspace to 1280
@@ -128,6 +129,13 @@
         <a href="/tools/" class="active">Tools</a>
         <a href="/education/">Education</a>
         <a href="/contact.html">Contact</a>
+        <span class="units-toggle">
+            <span class="units-label">Units:</span>
+            <span class="units-toggle-pill">
+                <button class="units-btn" data-units="us" aria-pressed="true">US</button>
+                <button class="units-btn" data-units="metric" aria-pressed="false">Metric</button>
+            </span>
+        </span>
     </div>
 </nav>
 
@@ -163,11 +171,11 @@
             <section>
                 <div class="ps-section-label">Air handler</div>
                 <div class="ps-row">
-                    <span class="ps-label">Altitude (ft)</span>
+                    <span class="ps-label" data-us="Altitude (ft)" data-metric="Altitude (m)">Altitude (ft)</span>
                     <input class="ps-input" type="number" id="psyAlt" step="100" placeholder="0" value="0" oninput="psyRecompute()">
                 </div>
                 <div class="ps-row">
-                    <span class="ps-label">AHU airflow (CFM)</span>
+                    <span class="ps-label" data-us="AHU airflow (CFM)" data-metric="AHU airflow (m³/h)">AHU airflow (CFM)</span>
                     <input class="ps-input" type="number" id="psyCfm" step="100" placeholder="optional" oninput="psyRecompute()">
                 </div>
 
@@ -184,7 +192,7 @@
                 <!-- OA editor -->
                 <div class="psy-editor shown" data-step="oa">
                     <div class="ps-row">
-                        <span class="ps-label">Dry-bulb (°F)</span>
+                        <span class="ps-label" data-us="Dry-bulb (°F)" data-metric="Dry-bulb (°C)">Dry-bulb (°F)</span>
                         <input class="ps-input" type="number" id="oa-tdb" step="0.5" value="92" oninput="psyRecompute()">
                     </div>
                     <div class="ps-row">
@@ -207,7 +215,7 @@
                 <!-- RA editor -->
                 <div class="psy-editor" data-step="ra">
                     <div class="ps-row">
-                        <span class="ps-label">Dry-bulb (°F)</span>
+                        <span class="ps-label" data-us="Dry-bulb (°F)" data-metric="Dry-bulb (°C)">Dry-bulb (°F)</span>
                         <input class="ps-input" type="number" id="ra-tdb" step="0.5" value="75" oninput="psyRecompute()">
                     </div>
                     <div class="ps-row">
@@ -234,8 +242,8 @@
                         <input class="ps-input" type="number" id="ma-pct" step="1" min="0" max="100" value="20" oninput="psyRecompute()">
                     </div>
                     <p class="ref-note">Mass-weighted mix of OA and RA. The mixed point falls on the straight line between OA and RA on the chart, at the OA% fraction of the way from RA to OA.</p>
-                    <div class="ps-row"><span class="ps-label">MA dry-bulb (°F)</span><span class="ps-value live" id="ma-tdb-out">—</span></div>
-                    <div class="ps-row"><span class="ps-label">MA humidity ratio (gr/lb)</span><span class="ps-value live" id="ma-w-out">—</span></div>
+                    <div class="ps-row"><span class="ps-label" data-us="MA dry-bulb (°F)" data-metric="MA dry-bulb (°C)">MA dry-bulb (°F)</span><span class="ps-value live" id="ma-tdb-out">—</span></div>
+                    <div class="ps-row"><span class="ps-label" data-us="MA humidity ratio (gr/lb)" data-metric="MA humidity ratio (g/kg)">MA humidity ratio (gr/lb)</span><span class="ps-value live" id="ma-w-out">—</span></div>
                     <div class="ps-row"><span class="ps-label">MA rel. humidity (%)</span><span class="ps-value live" id="ma-rh-out">—</span></div>
                 </div>
 
@@ -246,7 +254,7 @@
                         <label class="psy-toggle"><input type="checkbox" id="cc-on" checked onchange="psyRecompute()"> On</label>
                     </div>
                     <div class="ps-row">
-                        <span class="ps-label">Leaving DB (°F)</span>
+                        <span class="ps-label" data-us="Leaving DB (°F)" data-metric="Leaving DB (°C)">Leaving DB (°F)</span>
                         <input class="ps-input" type="number" id="cc-tdb" step="0.5" value="55" oninput="psyRecompute()">
                     </div>
                     <div class="ps-row">
@@ -329,36 +337,36 @@
                     <thead>
                         <tr>
                             <th></th>
-                            <th>DB °F</th>
-                            <th>gr/lb</th>
+                            <th data-us="DB °F" data-metric="DB °C">DB °F</th>
+                            <th data-us="gr/lb" data-metric="g/kg">gr/lb</th>
                             <th>RH %</th>
-                            <th>h Btu/lb</th>
-                            <th class="psy-q-col" style="display:none;">MBH</th>
+                            <th data-us="h Btu/lb" data-metric="h kJ/kg">h Btu/lb</th>
+                            <th class="psy-q-col" style="display:none;" data-us="MBH" data-metric="kW">MBH</th>
                         </tr>
                     </thead>
                     <tbody><!-- rows generated by JS --></tbody>
                 </table>
 
                 <div class="ps-section-label" id="psyDetailLabel" style="margin-top:1rem;">OA — Outdoor air</div>
-                <div class="ps-row"><span class="ps-label">Dry-bulb (°F)</span><span class="ps-value live" id="roDb">—</span></div>
-                <div class="ps-row"><span class="ps-label">Wet-bulb (°F)</span><span class="ps-value live" id="roWb">—</span></div>
-                <div class="ps-row"><span class="ps-label">Dew point (°F)</span><span class="ps-value live" id="roDp">—</span></div>
+                <div class="ps-row"><span class="ps-label" data-us="Dry-bulb (°F)" data-metric="Dry-bulb (°C)">Dry-bulb (°F)</span><span class="ps-value live" id="roDb">—</span></div>
+                <div class="ps-row"><span class="ps-label" data-us="Wet-bulb (°F)" data-metric="Wet-bulb (°C)">Wet-bulb (°F)</span><span class="ps-value live" id="roWb">—</span></div>
+                <div class="ps-row"><span class="ps-label" data-us="Dew point (°F)" data-metric="Dew point (°C)">Dew point (°F)</span><span class="ps-value live" id="roDp">—</span></div>
                 <div class="ps-row"><span class="ps-label">Rel. humidity (%)</span><span class="ps-value live" id="roRh">—</span></div>
-                <div class="ps-row"><span class="ps-label">Humidity ratio (gr/lb)</span><span class="ps-value live" id="roW">—</span></div>
-                <div class="ps-row"><span class="ps-label">Enthalpy (Btu/lb)</span><span class="ps-value live" id="roH">—</span></div>
-                <div class="ps-row"><span class="ps-label">Specific volume (ft³/lb)</span><span class="ps-value live" id="roV">—</span></div>
-                <div class="ps-row"><span class="ps-label">Vapor pressure (psia)</span><span class="ps-value live" id="roPw">—</span></div>
-                <div class="ps-row"><span class="ps-label">Barometric press. (psia)</span><span class="ps-value live" id="roP">—</span></div>
+                <div class="ps-row"><span class="ps-label" data-us="Humidity ratio (gr/lb)" data-metric="Humidity ratio (g/kg)">Humidity ratio (gr/lb)</span><span class="ps-value live" id="roW">—</span></div>
+                <div class="ps-row"><span class="ps-label" data-us="Enthalpy (Btu/lb)" data-metric="Enthalpy (kJ/kg)">Enthalpy (Btu/lb)</span><span class="ps-value live" id="roH">—</span></div>
+                <div class="ps-row"><span class="ps-label" data-us="Specific volume (ft³/lb)" data-metric="Specific volume (m³/kg)">Specific volume (ft³/lb)</span><span class="ps-value live" id="roV">—</span></div>
+                <div class="ps-row"><span class="ps-label" data-us="Vapor pressure (psia)" data-metric="Vapor pressure (kPa)">Vapor pressure (psia)</span><span class="ps-value live" id="roPw">—</span></div>
+                <div class="ps-row"><span class="ps-label" data-us="Barometric press. (psia)" data-metric="Barometric press. (kPa)">Barometric press. (psia)</span><span class="ps-value live" id="roP">—</span></div>
 
                 <div class="psy-process" id="psyProcessBlock" style="display:none;">
                     <div class="psy-process-label" id="psyProcessLabel">Process delta — across this stage</div>
-                    <div class="ps-row"><span class="ps-label">ΔDB (°F)</span><span class="ps-value live" id="pdDb">—</span></div>
-                    <div class="ps-row"><span class="ps-label">ΔW (gr/lb)</span><span class="ps-value live" id="pdW">—</span></div>
-                    <div class="ps-row"><span class="ps-label">Δh (Btu/lb)</span><span class="ps-value live" id="pdH">—</span></div>
+                    <div class="ps-row"><span class="ps-label" data-us="ΔDB (°F)" data-metric="ΔDB (°C)">ΔDB (°F)</span><span class="ps-value live" id="pdDb">—</span></div>
+                    <div class="ps-row"><span class="ps-label" data-us="ΔW (gr/lb)" data-metric="ΔW (g/kg)">ΔW (gr/lb)</span><span class="ps-value live" id="pdW">—</span></div>
+                    <div class="ps-row"><span class="ps-label" data-us="Δh (Btu/lb)" data-metric="Δh (kJ/kg)">Δh (Btu/lb)</span><span class="ps-value live" id="pdH">—</span></div>
                     <div class="ps-row" id="pdShrRow" style="display:none;"><span class="ps-label">Sensible heat ratio</span><span class="ps-value live" id="pdShr">—</span></div>
-                    <div class="ps-row" id="pdQtRow" style="display:none;"><span class="ps-label">Q total (MBH)</span><span class="ps-value live" id="pdQt">—</span></div>
-                    <div class="ps-row" id="pdQsRow" style="display:none;"><span class="ps-label">Q sensible (MBH)</span><span class="ps-value live" id="pdQs">—</span></div>
-                    <div class="ps-row" id="pdQlRow" style="display:none;"><span class="ps-label">Q latent (MBH)</span><span class="ps-value live" id="pdQl">—</span></div>
+                    <div class="ps-row" id="pdQtRow" style="display:none;"><span class="ps-label" data-us="Q total (MBH)" data-metric="Q total (kW)">Q total (MBH)</span><span class="ps-value live" id="pdQt">—</span></div>
+                    <div class="ps-row" id="pdQsRow" style="display:none;"><span class="ps-label" data-us="Q sensible (MBH)" data-metric="Q sensible (kW)">Q sensible (MBH)</span><span class="ps-value live" id="pdQs">—</span></div>
+                    <div class="ps-row" id="pdQlRow" style="display:none;"><span class="ps-label" data-us="Q latent (MBH)" data-metric="Q latent (kW)">Q latent (MBH)</span><span class="ps-value live" id="pdQl">—</span></div>
                 </div>
             </section>
 
@@ -366,9 +374,10 @@
 
         <div style="padding:1.25rem 1.5rem;border-top:1px solid var(--border);">
             <p class="pid-note" style="margin-top:0;">
-                Properties are per pound of dry air, from the ASHRAE Fundamentals (Chapter 1) IP equations. RH is taken as the
-                partial-pressure ratio (the usual approximation). Mixing is a mass-weighted enthalpy / humidity-ratio combination.
-                Adiabatic humidification holds wet-bulb constant. Coil capacities use AHU CFM and inlet specific volume:
+                Properties are per pound of dry air, computed internally from the ASHRAE Fundamentals (Chapter 1) IP equations
+                and converted to your selected display units. RH is taken as the partial-pressure ratio (the usual approximation).
+                Mixing is a mass-weighted enthalpy / humidity-ratio combination. Adiabatic humidification holds wet-bulb constant.
+                Coil capacities use AHU airflow and inlet specific volume:
                 Q = ṁ·Δh with ṁ = CFM·60/v<sub>in</sub>; Q<sub>sens</sub> = ṁ·(0.240 + 0.444·W<sub>in</sub>)·ΔT. For building feel
                 and quick design-day state-point checks — not a substitute for a calibrated load-study tool.
             </p>
@@ -378,6 +387,8 @@
     <a class="back-link" href="/tools/">← All tools</a>
 
 </main>
+
+<script src="/scripts/units.js"></script>
 
 <footer>
     <span class="footer-text">controlsfreak.dev — open tools for controls professionals</span>
@@ -494,14 +505,39 @@
         };
     }
 
-    // What the "second value" input means / shows for each mode.
-    const SECOND_PROP = {
-        rh: { label: 'Relative humidity (%)',     def: 50, step: 1,   fmt: s => s.rh.toFixed(1),                              get: s => s.rh },
-        wb: { label: 'Wet-bulb (°F)',             def: 60, step: 0.5, fmt: s => s.twb.toFixed(1),                             get: s => s.twb },
-        dp: { label: 'Dew point (°F)',            def: 50, step: 0.5, fmt: s => isFinite(s.tdp) ? s.tdp.toFixed(1) : '',      get: s => s.tdp },
-        w:  { label: 'Humidity ratio (gr/lb)',    def: 65, step: 1,   fmt: s => (s.W * GR_PER_LB).toFixed(1),                 get: s => s.W * GR_PER_LB },
-        h:  { label: 'Enthalpy (Btu/lb dry air)', def: 28, step: 0.5, fmt: s => s.h.toFixed(2),                               get: s => s.h },
-    };
+    // ── Display-unit formatting helpers (delegate to window.Units) ────
+    // Internal state stays in IP throughout (state.tdb in °F, state.W in
+    // lb/lb, state.h in Btu/lb dry air, etc.). Convert to whatever the
+    // global toggle currently shows only at the render boundary.
+    const U = window.Units;
+    const dispT  = f         => U.display.temp(f).toFixed(1);
+    const dispdT = df        => U.display.deltaTemp(df).toFixed(1);
+    const dispW  = lbPerLb   => U.display.humidityRatio(lbPerLb * GR_PER_LB).toFixed(1);
+    const dispdW = lbPerLb   => U.display.humidityRatio(lbPerLb * GR_PER_LB).toFixed(1);
+    const dispH  = btuPerLb  => U.display.enthalpy(btuPerLb).toFixed(U.current() === 'us' ? 2 : 1);
+    const dispdH = btuPerLb  => U.display.enthalpy(btuPerLb).toFixed(U.current() === 'us' ? 2 : 1);
+    const dispV  = ft3PerLb  => U.display.specificVolume(ft3PerLb).toFixed(U.current() === 'us' ? 3 : 4);
+    const dispP  = psia      => U.display.pressure(psia).toFixed(U.current() === 'us' ? 3 : 2);
+    const dispAlt = ft       => Math.round(U.display.altitude(ft)).toLocaleString();
+    const dispCfm = cfm      => Math.round(U.display.airflow(cfm)).toLocaleString();
+    const dispQ   = btuPerH  => U.display.heatCapacity(btuPerH / 1000).toFixed(1);  // input is BTU/h, MBH = /1000
+
+    // What the "second value" input means / shows for each mode. Labels, the
+    // pre-filled default, and the formatter all key off the active units —
+    // SECOND_PROP is rebuilt on every unit flip.
+    let SECOND_PROP;
+    function buildSecondProp() {
+        const u = U.current();
+        const tU = U.suffix.temp(), wU = U.suffix.humidityRatio(), hU = U.suffix.enthalpy();
+        SECOND_PROP = {
+            rh: { label: 'Relative humidity (%)',     def: 50,                                                 step: 1,                  fmt: s => s.rh.toFixed(1) },
+            wb: { label: `Wet-bulb (${tU})`,          def: u === 'us' ? 60 : +U.display.temp(60).toFixed(1),  step: u === 'us' ? 0.5 : 0.25, fmt: s => dispT(s.twb) },
+            dp: { label: `Dew point (${tU})`,         def: u === 'us' ? 50 : +U.display.temp(50).toFixed(1),  step: u === 'us' ? 0.5 : 0.25, fmt: s => isFinite(s.tdp) ? dispT(s.tdp) : '' },
+            w:  { label: `Humidity ratio (${wU})`,    def: u === 'us' ? 65 : +U.display.humidityRatio(65).toFixed(1), step: u === 'us' ? 1 : 0.1, fmt: s => dispW(s.W) },
+            h:  { label: `Enthalpy (${hU} dry air)`,  def: u === 'us' ? 28 : +U.display.enthalpy(28).toFixed(1),      step: 0.5,             fmt: s => dispH(s.h) },
+        };
+    }
+    buildSecondProp();
 
     // ── Chart bounds (drawn region; states outside still read out) ──
     const TDB_MIN = 30, TDB_MAX = 120;     // dry-bulb axis, °F
@@ -548,22 +584,40 @@
     // and the upstream readouts still update while the user types.
     // ──────────────────────────────────────────────────────────────────
     function solveChain() {
-        const alt    = parseFloat(document.getElementById('psyAlt').value) || 0;
-        const P      = pressFromAltitude(alt);
-        const cfmRaw = parseFloat(document.getElementById('psyCfm').value);
-        const cfm    = (isFinite(cfmRaw) && cfmRaw > 0) ? cfmRaw : null;
+        // Inputs come in display units; convert to canonical IP before the math.
+        // Altitude/CFM are simple scalar conversions; the "second value" is
+        // mode-dependent (rh stays %, temps go C→F, humidity ratio g/kg→gr/lb,
+        // enthalpy kJ/kg→Btu/lb).
+        const altDisp = parseFloat(document.getElementById('psyAlt').value) || 0;
+        const alt     = U.toCanonical.altitude(altDisp);
+        const P       = pressFromAltitude(alt);
+        const cfmRawD = parseFloat(document.getElementById('psyCfm').value);
+        const cfmRaw  = U.toCanonical.airflow(cfmRawD);
+        const cfm     = (isFinite(cfmRaw) && cfmRaw > 0) ? cfmRaw : null;
 
         const r = {};       // results keyed by step
         const stages = [];  // active process segments (cc/hc/hum only)
         let error = null;
         const setErr = (msg) => { if (!error) error = msg; };
 
+        // Convert the "second value" from display to canonical IP based on mode.
+        const secondToCanonical = (mode, val) => {
+            if (!isFinite(val)) return val;
+            if (mode === 'wb' || mode === 'dp') return U.toCanonical.temp(val);
+            if (mode === 'w')                   return U.toCanonical.humidityRatio(val);
+            if (mode === 'h')                   return U.toCanonical.enthalpy(val);
+            return val;  // 'rh' stays percent
+        };
+
         // OA / RA — independent state points
-        const readSt = pre => ({
-            mode:   document.getElementById(`${pre}-mode`).value,
-            tdb:    parseFloat(document.getElementById(`${pre}-tdb`).value),
-            second: parseFloat(document.getElementById(`${pre}-second`).value),
-        });
+        const readSt = pre => {
+            const mode = document.getElementById(`${pre}-mode`).value;
+            return {
+                mode,
+                tdb:    U.toCanonical.temp(parseFloat(document.getElementById(`${pre}-tdb`).value)),
+                second: secondToCanonical(mode, parseFloat(document.getElementById(`${pre}-second`).value)),
+            };
+        };
         const eOa = readSt('oa');
         r.oa = solveState(eOa.mode, eOa.tdb, eOa.second, P);
         if (!r.oa.ok) setErr('OA: ' + r.oa.error);
@@ -622,7 +676,9 @@
         const hcOn = document.getElementById('hc-on').checked;
         if (current && hcOn) {
             const mode = document.getElementById('hc-mode').value;
-            const val  = parseFloat(document.getElementById('hc-val').value);
+            const valD = parseFloat(document.getElementById('hc-val').value);
+            // 'ldb' is absolute temperature (C→F), 'dt' is a temperature rise (deltaC→deltaF).
+            const val  = (mode === 'dt') ? U.toCanonical.deltaTemp(valD) : U.toCanonical.temp(valD);
             if (!isFinite(val)) {
                 r.hc = { ok: false, enabled: true, error: 'enter a number' };
                 setErr('HC: enter a number');
@@ -739,7 +795,8 @@
 
     function onHcModeChange() {
         const mode = document.getElementById('hc-mode').value;
-        document.getElementById('hc-valLbl').textContent = mode === 'dt' ? 'ΔT rise (°F)' : 'Leaving DB (°F)';
+        const tU   = U.suffix.temp();
+        document.getElementById('hc-valLbl').textContent = mode === 'dt' ? `ΔT rise (${tU})` : `Leaving DB (${tU})`;
         psyRecompute();
     }
 
@@ -773,18 +830,19 @@
             const ok = s && s.ok;
             const cells = [`<td class="stage-key">${row.label}</td>`];
             if (ok) {
-                cells.push(`<td class="live">${s.tdb.toFixed(1)}</td>`);
-                cells.push(`<td class="live">${(s.W * GR_PER_LB).toFixed(1)}</td>`);
+                cells.push(`<td class="live">${dispT(s.tdb)}</td>`);
+                cells.push(`<td class="live">${dispW(s.W)}</td>`);
                 cells.push(`<td class="live">${s.rh.toFixed(1)}</td>`);
-                cells.push(`<td class="live">${s.h.toFixed(2)}</td>`);
+                cells.push(`<td class="live">${dispH(s.h)}</td>`);
             } else {
                 cells.push('<td class="muted">—</td><td class="muted">—</td><td class="muted">—</td><td class="muted">—</td>');
             }
             if (cfmOn) {
                 if (row.stage) {
                     const proc = computeProcess(row.stage, chain.cfm);
-                    const mbh = proc.qTotal !== null ? Math.abs(proc.qTotal) / 1000 : null;
-                    cells.push(mbh !== null ? `<td class="live">${mbh.toFixed(1)}</td>` : '<td class="muted">—</td>');
+                    cells.push(proc.qTotal !== null
+                        ? `<td class="live">${dispQ(Math.abs(proc.qTotal))}</td>`
+                        : '<td class="muted">—</td>');
                 } else {
                     cells.push('<td class="muted">—</td>');
                 }
@@ -805,16 +863,17 @@
             ['roDb','roWb','roDp','roRh','roW','roH','roV','roPw','roP'].forEach(id => ro(id, '—', false));
             return;
         }
-        ro('roDb', state.tdb.toFixed(1), true);
-        ro('roWb', state.twb.toFixed(1), true);
+        ro('roDb', dispT(state.tdb), true);
+        ro('roWb', dispT(state.twb), true);
         const dpOk = isFinite(state.tdp) && state.tdp > -60;
-        ro('roDp', dpOk ? state.tdp.toFixed(1) : '—', dpOk);
+        ro('roDp', dpOk ? dispT(state.tdp) : '—', dpOk);
         ro('roRh', state.rh.toFixed(1), true);
-        ro('roW',  (state.W * GR_PER_LB).toFixed(1), true);
-        ro('roH',  state.h.toFixed(2), true);
-        ro('roV',  state.v.toFixed(3), true);
-        ro('roPw', state.pw.toFixed(4), true);
-        ro('roP',  state.P.toFixed(3), true);
+        ro('roW',  dispW(state.W), true);
+        ro('roH',  dispH(state.h), true);
+        ro('roV',  dispV(state.v), true);
+        // Vapor pressure uses a wider precision in IP (psia) than in kPa.
+        ro('roPw', U.display.pressure(state.pw).toFixed(U.current() === 'us' ? 4 : 3), true);
+        ro('roP',  dispP(state.P), true);
     }
 
     function renderProcessBlock(stage, cfm) {
@@ -828,9 +887,9 @@
             el.textContent = txt;
             el.className = 'ps-value live';
         };
-        set('pdDb', proc.dDb.toFixed(1));
-        set('pdW',  (proc.dW * GR_PER_LB).toFixed(1));
-        set('pdH',  proc.dH.toFixed(2));
+        set('pdDb', dispdT(proc.dDb));
+        set('pdW',  dispdW(proc.dW));
+        set('pdH',  dispdH(proc.dH));
 
         const shrRow = document.getElementById('pdShrRow');
         if (stage.type === 'cool' && proc.shr !== null && isFinite(proc.shr)) {
@@ -845,9 +904,9 @@
         document.getElementById('pdQsRow').style.display = haveQ ? '' : 'none';
         document.getElementById('pdQlRow').style.display = haveQ ? '' : 'none';
         if (haveQ) {
-            set('pdQt', (Math.abs(proc.qTotal) / 1000).toFixed(1));
-            set('pdQs', (Math.abs(proc.qSens) / 1000).toFixed(1));
-            set('pdQl', (Math.abs(proc.qLat) / 1000).toFixed(1));
+            set('pdQt', dispQ(Math.abs(proc.qTotal)));
+            set('pdQs', dispQ(Math.abs(proc.qSens)));
+            set('pdQl', dispQ(Math.abs(proc.qLat)));
         }
     }
 
@@ -858,8 +917,8 @@
             el.className = live ? 'ps-value live' : 'ps-value muted';
         };
         if (maState && maState.ok) {
-            set('ma-tdb-out', maState.tdb.toFixed(1), true);
-            set('ma-w-out',   (maState.W * GR_PER_LB).toFixed(1), true);
+            set('ma-tdb-out', dispT(maState.tdb), true);
+            set('ma-w-out',   dispW(maState.W),   true);
             set('ma-rh-out',  maState.rh.toFixed(1), true);
         } else {
             ['ma-tdb-out','ma-w-out','ma-rh-out'].forEach(id => set(id, '—', false));
@@ -890,9 +949,9 @@
             msgEl.textContent = chain.error;
             msgEl.style.color = 'var(--red)';
         } else {
-            msgEl.textContent = (chain.alt === 0 ? 'Sea level' : `Altitude ${chain.alt.toLocaleString()} ft`)
-                                + ` — ${chain.P.toFixed(3)} psia`
-                                + (chain.cfm !== null ? ` · ${chain.cfm.toLocaleString()} CFM` : '');
+            msgEl.textContent = (chain.alt === 0 ? 'Sea level' : `Altitude ${dispAlt(chain.alt)} ${U.suffix.altitude()}`)
+                                + ` — ${dispP(chain.P)} ${U.suffix.pressure()}`
+                                + (chain.cfm !== null ? ` · ${dispCfm(chain.cfm)} ${U.suffix.airflow()}` : '');
             msgEl.style.color = '';
         }
 
@@ -941,31 +1000,48 @@
         ctx.font = "10px 'IBM Plex Mono', monospace";
         ctx.lineWidth = 1;
 
+        // Tick scales — IP uses every 10 °F across the 30–120 °F bounds and every
+        // 25 gr/lb up to 175. SI uses metric-clean ticks (every 5 °C across roughly
+        // 0–50 °C, every 5 g/kg up to 25), which are drawn at the equivalent canonical
+        // positions on the same underlying IP geometry.
+        const isMetric = U.current() === 'metric';
+        const dbTicks  = isMetric
+            ? [0, 5, 10, 15, 20, 25, 30, 35, 40, 45]                  // °C — labels
+            : [30, 40, 50, 60, 70, 80, 90, 100, 110, 120];            // °F — labels
+        const wTicks   = isMetric
+            ? [0, 5, 10, 15, 20, 25]                                  // g/kg — labels
+            : [0, 25, 50, 75, 100, 125, 150, 175];                    // gr/lb — labels
+
         // grid
         ctx.strokeStyle = cBorderF;
         ctx.fillStyle = cDim;
-        for (let t = TDB_MIN; t <= TDB_MAX; t += 10) {
-            const x = X(t);
+        for (const tickLbl of dbTicks) {
+            const tF = isMetric ? U.toCanonical.temp(tickLbl) : tickLbl;
+            if (tF < TDB_MIN - 0.5 || tF > TDB_MAX + 0.5) continue;
+            const x = X(tF);
             ctx.beginPath(); ctx.moveTo(x, padT); ctx.lineTo(x, padT + h); ctx.stroke();
             ctx.textAlign = 'center'; ctx.textBaseline = 'top';
-            ctx.fillText(String(t), x, padT + h + 5);
+            ctx.fillText(String(tickLbl), x, padT + h + 5);
         }
-        for (let g = 0; g <= 175; g += 25) {
-            const y = Y(g / GR_PER_LB);
+        for (const wLbl of wTicks) {
+            // wLbl is in current display units (gr/lb or g/kg). Convert back to lb/lb for Y mapping.
+            const wLbPerLb = isMetric ? (wLbl / 1000) : (wLbl / GR_PER_LB);
+            if (wLbPerLb < -1e-6 || wLbPerLb > W_MAX + 1e-6) continue;
+            const y = Y(wLbPerLb);
             ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(padL + w, y); ctx.stroke();
             ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-            ctx.fillText(String(g), padL + w + 5, y);
+            ctx.fillText(String(wLbl), padL + w + 5, y);
         }
         ctx.strokeStyle = cBorder;
         ctx.strokeRect(padL, padT, w, h);
         ctx.fillStyle = cDim;
         ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
-        ctx.fillText('Dry-bulb temperature · °F', padL + w / 2, cssH - 1);
+        ctx.fillText(`Dry-bulb temperature · ${U.suffix.temp()}`, padL + w / 2, cssH - 1);
         ctx.save();
         ctx.translate(cssW - 2, padT + h / 2);
         ctx.rotate(-Math.PI / 2);
         ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
-        ctx.fillText('Humidity ratio · gr/lb', 0, 0);
+        ctx.fillText(`Humidity ratio · ${U.suffix.humidityRatio()}`, 0, 0);
         ctx.restore();
 
         const curve = pts => {
@@ -982,20 +1058,26 @@
             if (on) ctx.stroke();
         };
 
-        // constant wet-bulb (light dashed)
+        // constant wet-bulb (light dashed) — labels picked in the active unit
+        // system. The curves themselves use the same °F sample grid either way;
+        // only the label values and the chosen contour temperatures change.
         ctx.strokeStyle = cBorder;
         ctx.setLineDash([3, 3]);
-        for (const twb of [30, 40, 50, 60, 70, 80, 90]) {
+        const wbContours = isMetric ? [0, 5, 10, 15, 20, 25, 30] : [30, 40, 50, 60, 70, 80, 90];
+        for (const wbLbl of wbContours) {
+            const twbF = isMetric ? U.toCanonical.temp(wbLbl) : wbLbl;
             const pts = [];
-            for (let t = twb; t <= TDB_MAX + 1; t += 1) pts.push([t, humRatioFromWetBulb(twb, t, P)]);
+            for (let t = twbF; t <= TDB_MAX + 1; t += 1) pts.push([t, humRatioFromWetBulb(twbF, t, P)]);
             curve(pts);
         }
         ctx.setLineDash([]);
         ctx.fillStyle = cDim; ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
-        for (const twb of [40, 50, 60, 70, 80]) {
-            const ww = satHumRatio(twb, P);
-            if (ww > W_MAX || twb < TDB_MIN) continue;
-            ctx.fillText(twb + '°', X(twb) - 3, Y(ww) - 2);
+        const wbLabels = isMetric ? [5, 10, 15, 20, 25] : [40, 50, 60, 70, 80];
+        for (const wbLbl of wbLabels) {
+            const twbF = isMetric ? U.toCanonical.temp(wbLbl) : wbLbl;
+            const ww = satHumRatio(twbF, P);
+            if (ww > W_MAX || twbF < TDB_MIN) continue;
+            ctx.fillText(wbLbl + '°', X(twbF) - 3, Y(ww) - 2);
         }
 
         // constant relative-humidity (light hairlines)
@@ -1135,7 +1217,8 @@
         tdb = Math.max(TDB_MIN, Math.min(TDB_MAX, tdb));
         W   = Math.max(0, Math.min(W, satHumRatio(tdb, P)));
         const tempState = buildState(tdb, W, P);
-        document.getElementById(`${prefix}-tdb`).value = tdb.toFixed(1);
+        // tdb is canonical IP; rewrite the input in current display units.
+        document.getElementById(`${prefix}-tdb`).value = dispT(tdb);
         const mode = document.getElementById(`${prefix}-mode`).value;
         const meta = SECOND_PROP[mode];
         const v = meta.fmt(tempState);
@@ -1185,10 +1268,120 @@
         c.addEventListener('pointercancel', stop);
     })();
 
+    // ──────────────────────────────────────────────────────────────────
+    // Units — initial conversion of the HTML defaults (which are written
+    // in US) when the user lands on the page in metric, plus a handler
+    // for live-switching once the page is up. The pattern: rewrite every
+    // unit-bearing input through the quantity it represents, rebuild the
+    // SECOND_PROP table, then re-render the dynamic labels (oa/ra/cc
+    // "Define by" labels + HC's mode-dependent label) and recompute.
+    // ──────────────────────────────────────────────────────────────────
+
+    // Resolve an input id to the canonical quantity it currently represents.
+    // The *-second inputs are mode-driven; hc-val is mode-driven too.
+    function inputQuantity(id) {
+        if (id === 'psyAlt') return 'altitude';
+        if (id === 'psyCfm') return 'airflow';
+        if (id === 'hc-val') return document.getElementById('hc-mode').value === 'dt' ? 'deltaTemp' : 'temp';
+        if (id.endsWith('-tdb')) return 'temp';
+        if (id.endsWith('-second')) {
+            const prefix = id.slice(0, -'-second'.length);
+            const mode = document.getElementById(`${prefix}-mode`).value;
+            if (mode === 'wb' || mode === 'dp') return 'temp';
+            if (mode === 'w') return 'humidityRatio';
+            if (mode === 'h') return 'enthalpy';
+        }
+        return null;  // % values (rh, ma-pct, hum-rh) — universal, no conversion
+    }
+
+    // Ids of every input whose displayed value may need to be reformatted on
+    // a unit-system flip. ma-pct and hum-rh are deliberately omitted (%).
+    const UNIT_INPUT_IDS = [
+        'psyAlt', 'psyCfm',
+        'oa-tdb', 'oa-second',
+        'ra-tdb', 'ra-second',
+        'cc-tdb', 'cc-second',
+        'hc-val',
+    ];
+
+    // Convert every input from `from` units to `to` units, leaving blanks alone.
+    function convertInputsBetween(from, to) {
+        if (from === to) return;
+        for (const id of UNIT_INPUT_IDS) {
+            const el = document.getElementById(id);
+            if (!el) continue;
+            const raw = el.value.trim();
+            if (raw === '') continue;
+            const v = parseFloat(raw);
+            if (!isFinite(v)) continue;
+            const q = inputQuantity(id);
+            if (!q) continue;
+            const conv = U.convert(v, from, to, q);
+            // Step depth follows the SECOND_PROP table for the *-second inputs
+            // and is tighter for metric on others; we pick a precision per quantity.
+            let digits;
+            if (q === 'altitude') digits = 0;
+            else if (q === 'airflow') digits = 0;
+            else if (q === 'humidityRatio') digits = 1;
+            else if (q === 'enthalpy') digits = to === 'us' ? 1 : 1;
+            else digits = 1;
+            el.value = (+conv.toFixed(digits)).toString();
+        }
+    }
+
+    // Update the inputs' `step` attribute to match SECOND_PROP entries after a
+    // unit flip — metric uses tighter steps (0.25 °C vs 0.5 °F, etc.).
+    function applyDynamicLabels() {
+        for (const prefix of ['oa', 'ra', 'cc']) {
+            const mode = document.getElementById(`${prefix}-mode`).value;
+            const meta = SECOND_PROP[mode];
+            const lblEl = document.getElementById(`${prefix}-secondLbl`);
+            const inpEl = document.getElementById(`${prefix}-second`);
+            if (lblEl) lblEl.textContent = meta.label;
+            if (inpEl) inpEl.step = meta.step;
+        }
+        // HC: depends on hc-mode (ldb vs dt). Just reuse the existing handler logic.
+        const hcMode = document.getElementById('hc-mode').value;
+        const tU     = U.suffix.temp();
+        document.getElementById('hc-valLbl').textContent =
+            hcMode === 'dt' ? `ΔT rise (${tU})` : `Leaving DB (${tU})`;
+    }
+
+    // Tighten input `step` on temp inputs in metric (0.25 °C reads finer than 0.5 °F).
+    function applyInputSteps() {
+        const stepT = U.current() === 'us' ? 0.5 : 0.25;
+        ['oa-tdb', 'ra-tdb', 'cc-tdb', 'hc-val'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.step = stepT;
+        });
+        // psyAlt step: 100 ft ≈ 30 m. Use 50 m increments in metric (round-feeling).
+        const psyAlt = document.getElementById('psyAlt');
+        if (psyAlt) psyAlt.step = U.current() === 'us' ? 100 : 50;
+    }
+
+    // On first paint (page may load directly in metric for returning visitors):
+    // the HTML defaults were authored in US, so convert if needed.
+    if (U.current() === 'metric') convertInputsBetween('us', 'metric');
+    buildSecondProp();
+    applyDynamicLabels();
+    applyInputSteps();
+
+    // Live switch — rebuild SECOND_PROP, convert every input, rerun. Using
+    // the raw 'unitschange' event (not Units.onChange) so we can read the
+    // previous units from event.detail.previous.
+    document.addEventListener('unitschange', ev => {
+        const prev = ev.detail && ev.detail.previous;
+        const next = ev.detail && ev.detail.units;
+        if (prev && next) convertInputsBetween(prev, next);
+        buildSecondProp();
+        applyDynamicLabels();
+        applyInputSteps();
+        psyRecompute();
+    });
+
     // ── Init ──
     psyRecompute();
     window.addEventListener('resize', () => drawPsychChart(lastChain));
 </script>
-
 </body>
 </html>

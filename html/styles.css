@@ -90,6 +90,54 @@ main { flex: 1; }
 .site-nav-links a:hover { color: var(--text); border-bottom-color: var(--accent); }
 .site-nav-links a.active { color: var(--text-bright); border-bottom-color: var(--accent); }
 
+/* ── UNITS TOGGLE ────────────────────────────────────────────────────
+   Sits inside .site-nav-links (rightmost child) so the existing nav
+   flex layout doesn't need rework. "Units:" label in mono dim text,
+   followed by a two-segment pill. Active button is filled with the
+   accent-dim tint via [data-units] on <html> — a tiny inline head
+   script sets that attribute before first paint to avoid flashing
+   the wrong button to returning metric users. The button's `.active`
+   class is a backstop; the [data-units] selector is the canonical
+   driver. */
+.units-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+}
+.units-label {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+.units-toggle-pill {
+    display: inline-flex;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+    background: var(--surface);
+}
+.units-btn {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    padding: 0.22rem 0.6rem;
+    background: transparent;
+    color: var(--text-dim);
+    border: none;
+    cursor: pointer;
+    letter-spacing: 0.03em;
+    transition: color 0.18s, background 0.18s;
+}
+.units-btn + .units-btn { border-left: 1px solid var(--border); }
+.units-btn:hover { color: var(--text); }
+html[data-units="us"]     .units-btn[data-units="us"],
+html[data-units="metric"] .units-btn[data-units="metric"] {
+    background: var(--accent-dim);
+    color: var(--accent);
+    font-weight: 600;
+}
+
 /* ── HERO ── */
 .hero {
     position: relative;
