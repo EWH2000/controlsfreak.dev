@@ -192,7 +192,7 @@
         <div class="tool-body" style="font-size: 0.92rem; line-height: 1.6;">
             <p><strong>Where the values come from.</strong> Each R/T table is <em>generated</em> from a small set of curve parameters — β and R25 for the NTC thermistors, the parallel shunt for the linearized 10K curves, R0 and a temperature coefficient for the RTDs. The Pt100 and Pt1000 tables come from the IEC 60751 Callendar–Van Dusen polynomial (the international standard). Auditing the parameters is what makes a 500+ cell table trustworthy in one pass, instead of one row at a time.</p>
 
-            <p><strong>Sources verified against (2026-05 pass).</strong> <em>10K Type II, 10K Type III, and 10K Type 5 (TAC)</em> — BAPI 10K-2 / 10K-3 / 10K-3(11K) output tables, cross-checked against US Sensor "Curve G", Sontay's Compatibility Chart, and Vector Controls' multi-curve reference. <em>20K and 3K</em> — Vector Controls and Sontay. <em>1K Balco</em> — a Schneider EcoStruxure Building Operation resistance chart plus the ACI BALCO datasheet. <em>Pt100 and Pt1000</em> — IEC 60751:2008 directly, cross-checked against Vector, Sontay, Fluke's table generator, and pt100.de. Where multiple sources disagreed, the site owner consulted with a second tech before settling on a curve.</p>
+            <p><strong>Sources verified against (2026-05 pass).</strong> <em>10K Type II, 10K Type III, and 10K Type 5 (TAC)</em> — BAPI 10K-2 / 10K-3 / 10K-3(11K) output tables, cross-checked against US Sensor "Curve G", Sontay's Compatibility Chart, and Vector Controls' multi-curve reference. <em>20K and 3K</em> — Vector Controls and Sontay. <em>1K Balco</em> — a Schneider EcoStruxure Building Operation resistance chart plus the ACI BALCO datasheet. <em>Pt100 and Pt1000</em> — IEC 60751:2008 directly, cross-checked against Vector, Sontay, Fluke's table generator, and pt100.de. Where multiple sources disagreed, I consulted with a second tech before settling on a curve.</p>
 
             <p><strong>What's still nominal.</strong> The Johnson Controls 10K + 8.7K-shunt curve is the one type without a public R/T table — the canonical TE-6300 Product Bulletin URL redirects to a docs-portal landing page. It's modeled as a 10K Type 2 element in parallel with 8.7 kΩ, which is folklore-confirmed but datasheet-unverified. If you have a known-good JCI sensor with calibration data, that's the better reference.</p>
 
@@ -205,7 +205,7 @@
 </main>
 
 <footer>
-    <span class="footer-text">controlsfreak.dev — open tools for controls engineers</span>
+    <span class="footer-text">controlsfreak.dev — open tools for controls professionals</span>
     <span class="footer-text">v1.2 · 2026</span>
 </footer>
 
