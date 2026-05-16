@@ -41,21 +41,18 @@ motor-tick handle isn't captured either.
 Browsers throttle background timers, so it's not catastrophic — but
 it's wasted work, and the fix is small.
 
-**Decisions blocking action:**
+**Decision (2026-05-16):** split by widget type.
 
-1. *Stay with `setInterval` and add lazy start/stop.* Capture the
-   handle, `clearInterval` when state requires no further work,
-   restart on demand. Smallest change; preserves the explicit-tick
-   model that all three widgets use.
-2. *Switch to `requestAnimationFrame`.* Browsers pause rAF in
-   backgrounded tabs automatically — no need to manage start/stop.
-   The friction file's vfds entry rejected CSS animations because
-   changing `animation-duration` mid-animation makes the angle jump,
-   but rAF doesn't have that issue since you still write the rotate
-   transform per-frame. Different animation cadence (variable
-   framerate vs. fixed 40 ms) may subtly affect the feel.
-
-A small experiment on the vfds fan would settle the question.
+- *Fan widgets (`vfds.html`, `pump-control.html`)* → switch to
+  `requestAnimationFrame`. Both already write a transform per frame
+  and the work is purely visual; rAF gives free background-tab
+  pausing and removes the need for a start/stop state machine.
+- *Motor tick (`vfd-mock.html`)* → keep `setInterval` with lazy
+  start/stop. Capture the handle; `clearInterval` when motor is at
+  rest AND no flash-message pending; restart on the next user
+  input. Preserves the fixed 50 ms dt the motor integrator depends
+  on; avoids gauge bouncing at high-refresh display rates.
+- *Scope:* all three in one pass (Block A — pre-migration).
 
 ### 2. `isFinite` vs `isNaN` convention drift
 
@@ -72,15 +69,15 @@ They behave differently on `Infinity` — `isFinite` rejects it,
 from `parseFloat` of `<input>` values, which can't produce Infinity)
 but a reader scanning the code has to think about which is in use
 here, and the distinction does matter for division-by-zero results.
+The signal-scaling tool's `1 / (maxEU - minEU)` is a live example:
+identical bounds produce `Infinity`, which the current `isNaN`-only
+check would not catch.
 
-**Decisions blocking action:**
-
-- Pick one as the canonical convention. `isFinite` is the safer
-  default (it also rejects `NaN`, `+Infinity`, `-Infinity`) and is
-  what the newer pages already use.
-- Update CLAUDE.md's "JS patterns" section to record the choice.
-- Retrofitting the older pages is a follow-on (per page, ideally
-  done when touching the page for another reason).
+**Decision (2026-05-16):** `isFinite` is canonical. Retrofit
+`signal-scaling.html` (8 sites) and `modbus-register-viewer.html` in
+one pass; update CLAUDE.md's JS-patterns section to record the
+choice. Lands as part of Block C (post-migration cleanup) so we
+don't touch the same files twice.
 
 ### 3. Inline `on*` handlers vs `addEventListener` — convention drift
 
@@ -100,21 +97,19 @@ inline script.
 | `contact.html` | 1 |
 | `vfd-mock`, `pump-control`, `vfds`, `load-piping`, `balancing` | **0** |
 
-CLAUDE.md (line 277) still recommends inline handlers as the JS
-pattern — that documentation is now stale relative to the
-newer-page reality. Inline handlers couple JS-function names to
-HTML; rename a function and the page silently breaks. The IIFE +
-`addEventListener` pattern that newer pages use is more robust and
-clearly scales.
+CLAUDE.md's "JS patterns" section still recommends inline handlers
+— that documentation is now stale relative to the newer-page
+reality. Inline handlers couple JS-function names to HTML; rename a
+function and the page silently breaks. They also can't coexist with
+an IIFE-wrapped script (handler can't see IIFE-private functions),
+and they require `unsafe-inline` script-src if CSP ever tightens.
 
-**Decisions blocking action:**
-
-- Which convention should new pages use? (Recommendation:
-  `addEventListener`, matching the newer pages.)
-- Update CLAUDE.md to reflect the chosen convention.
-- Is it worth retrofitting older pages? (Probably not in one pass —
-  too much surface area for the actual risk. Do it opportunistically
-  when touching the page for something else.)
+**Decision (2026-05-16):** `addEventListener` + IIFE is the
+convention for new pages and for the retrofit. Retrofit all 8
+older pages in one pass (~84 handler conversions); update CLAUDE.md
+JS-patterns section. Lands as part of Block C (post-migration
+cleanup) so handlers are wired against the templated source, not
+the soon-to-be-replaced HTML.
 
 ### 4. Per-page `<head>` boilerplate duplication
 
@@ -128,19 +123,39 @@ CLAUDE.md flags this as the next forcing function for a generator
 "when the page count reaches ~15–20." We're at 17. Each new page is
 another 25-line copy that has to stay in sync with the others.
 
-**Decisions blocking action:**
+**Decision (2026-05-16):** adopt 11ty (Eleventy) as a static site
+generator. This is a project-philosophy shift — the "no build step"
+note in CLAUDE.md gets revised. Reasons: active growth trajectory
+(5+ new pages planned), and the outcome (no duplication, clean
+static-HTML output) outweighs the source-purity loss. 11ty
+specifically because the source files stay mostly readable as HTML
+(`.html` source with `{% include %}` and frontmatter), the build is
+a single `npx eleventy`, and Cloudflare has native build-command
+support so the existing GitHub auto-deploy keeps working.
 
-- *Stay with copy-paste*, accept the per-page cost going forward,
-  re-evaluate at ~25 pages.
-- *Extract a small `<script>`-injected partial loader* (writes the
-  fonts + favicon links from JS at first paint). Breaks the
-  "view-source shows the real code" property and adds a FOUC risk
-  if the script hiccups.
-- *Adopt a static site generator (Hugo or 11ty per CLAUDE.md's
-  longer-term note).* Biggest change, but the cleanest fix —
-  templates absorb the duplication permanently.
+Scope of the migration (Block B):
 
-Worth a focused discussion before action.
+- New top-level `_includes/` with `head.njk`, `nav.njk`,
+  `footer.njk`, and a `layouts/page.njk` layout.
+- Each existing page gains YAML frontmatter (`title`,
+  `description`, `canonical`, `nav`, optional `extraHead`) and its
+  `<head>` + `.site-nav` + `<footer>` collapse into includes.
+- Per-page inline `<style>` / `<script>` blocks survive verbatim
+  via a `{% block extra %}` slot in the layout.
+- Output directory `_site/` (gitignored); `wrangler.jsonc`'s
+  `assets.directory` updates to point at it.
+- `html/scripts/`, `html/styles.css`, `html/assets/`,
+  `html/robots.txt`, `html/sitemap.xml` pass through unchanged.
+- Anchor `.html` extensions preserved by keeping source files as
+  `.html` (with `htmlTemplateEngine: "njk"` so templating still
+  runs).
+- Local dev shifts from `python3 -m http.server` to
+  `npx @11ty/eleventy --serve`.
+- Playwright smoke tests stay valid (output HTML matches today's
+  structure); they just run against the new dev server port.
+
+Detail planning lives outside this file — see the migration plan
+when it lands.
 
 ### 5. Widget chrome CSS consolidation
 
@@ -155,17 +170,18 @@ The balancing friction-file entry already calls this out:
 *"promoting to a shared `.edu-w-*` rule set in `styles.css` is
 starting to look like a next-restructure-pass candidate."*
 
-**Decisions blocking action:**
+Two distinct flavors of duplication hide here: the *widget shell*
+(recessed `--surface-3` panel, mono section labels, blue readouts,
+anecdote callout) is the ~80-line consolidation candidate; the
+*widget internals* (`.vfdm-key`, `.vfdm-lcd`, `.d3-w-temp-swatch`,
+etc.) are page-unique and stay where they are.
 
-- *Class-prefix naming.* `.edu-w-*` is awkward because `vfd-mock` is
-  a Tools page, not Education. Alternatives: `.widget-*` (clear,
-  slightly long), `.w-*` (terse but anonymous), `.fw-*` ("framework
-  widget" — meaningful but obscure).
-- *Scope of the retrofit.* All five pages in one pass (high churn,
-  one big diff) vs. one page at a time as each gets touched for an
-  unrelated reason (low risk but slow).
-- *Timing.* Wait until the next widget addition — the friction file
-  predicts a sixth widget is the trigger to take this seriously.
+**Decision (2026-05-16):** consolidate the widget shell rules under
+the `.widget-*` prefix in `styles.css`. Other prefix candidates
+(`.edu-w-*` page-locked, `.sim-*` semantics-locked, `.w-*` too
+anonymous, `.fw-*` obscure) rejected. Lands as part of Block C
+(post-migration cleanup) — extracting CSS before the 11ty migration
+would force two passes over the same five pages.
 
 ### 6. `psychrometric-chart.html` is monolithic
 
@@ -178,11 +194,16 @@ further. The math layer (`satPress`, `humRatioFromWetBulb`,
 `solveState`, `solveChain`) is a clean extraction candidate as
 `html/scripts/psychro-engine.js`.
 
-**Decision blocking action:** the friction file already records
-*"extract to `html/scripts/` only if a second tool needs them."* No
-second tool yet — wait for the next caller, or for the page to grow
-past a self-imposed budget. Flag if phase-3 ships and the file
-crosses (say) 3500 lines total.
+**Decision (2026-05-16):** hold. No second caller for the math
+today, and the 1387-line page is monolithic-but-coherent. **But**:
+the deferred phase-3 (floating state-point chip) is near-term, and
+adding 300+ lines of UI state on top of an already-large file is
+the wrong order to work in. When phase-3 begins, *first step* is
+extracting the math layer to `html/scripts/psychro-engine.js`
+(`satPress`, `humRatioFromWetBulb`, `solveState`, `solveChain`) so
+the chip lands against a smaller surface. Trigger: phase-3 work
+starting, OR a second tool needing psychrometric math (air-mixing,
+coil sizing, economizer-ratio would qualify).
 
 ### 7. Worker has no app-level rate limit on `/api/contact`
 
@@ -194,14 +215,14 @@ itself you'd need a Durable Object (counter per IP, expiring TTL),
 Workers KV (cheaper but eventually-consistent), or Cloudflare's
 paid Rate Limiting product.
 
-**Decisions blocking action:**
-
-- Implementation cost (Durable Object is a real architectural
-  addition; KV is cheap but the consistency model leaks abuse
-  through) vs. actual observed risk.
-- For a small personal site with Cloudflare's existing protection,
-  probably fine to defer. Flag for revisit if abuse actually
-  appears (Resend's dashboard would show it as send-volume spikes).
+**Decision (2026-05-16):** defer. Cloudflare edge protection +
+Turnstile + the silent honeypot already cover the realistic threat,
+and Resend's own send-volume limits cap the worst case. Trigger for
+revisit: Resend dashboard shows a send-volume spike. At that point
+the cheapest fix is a Workers KV-based per-IP throttle (~30 lines
+in `worker.js`, 60s TTL, eventually-consistent but plenty against
+the realistic attack); Cloudflare's paid Rate Limiting product
+($5/mo) is the no-code fallback.
 
 ### 8. `flow-engine.js` doesn't react to live `prefers-reduced-motion` changes
 
@@ -210,11 +231,15 @@ happens once at `init()`. If the user toggles their OS preference
 mid-session (rare — usually a one-time setup), the engine keeps
 animating.
 
-**Decision blocking action:** worth a
-`matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', ...)`
-listener that tears down all pools when the user flips on
-reduced-motion? Adds ~10 lines for a rare edge case. Probably skip
-— recording so it's not re-discovered as a "missing" feature later.
+**Decision (2026-05-16):** not pursuing. OS-level reduced-motion
+toggling mid-session is vanishingly rare; the user almost always
+sets it at accessibility-setup time and leaves it. Cost (~15 lines,
+a `matchMedia` listener plus per-pool teardown logic, plus state to
+make it survive page navigation) outweighs the benefit. Recorded
+here so this isn't re-discovered as a "missing accessibility
+feature" — it's a *considered-and-skipped* feature. Trigger that
+would change the call: an accessibility audit that specifically
+flags it, or evidence of users actually toggling mid-session.
 
 ---
 
