@@ -30,6 +30,7 @@
     --blue:         #1577b8;   /* data readouts / highlight — workstation blue; also "supply water" in the hydronic diagrams */
     --blue-cool:    #5e8aa0;   /* a muted, cooler companion to --blue — "return water" in the hydronic diagrams (paired with a dashed line so it reads without colour too) */
     --red:          #c4382f;   /* fault / alarm */
+    --heat:         #c8782a;   /* warm orange — "heating" on the psychrometric chart's process lines; companion to --blue for cooling */
     --mono:         'IBM Plex Mono', monospace;
     --sans:         'Overpass', sans-serif;
 }

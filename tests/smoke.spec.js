@@ -53,16 +53,25 @@ test('bacnet/ip converter converts a hex string', async ({ page }) => {
     await expect(page.locator('#b2i_port')).toHaveText('47808');
 });
 
-test('psychrometric chart computes a state on load', async ({ page }) => {
+test('psychrometric chart computes the AHU chain on load', async ({ page }) => {
     await page.goto('http://localhost:8000/tools/psychrometric-chart.html');
-    // default 75°F / 50% RH → wet-bulb ≈ 62.6, humidity ratio ≈ 64.6 gr/lb
-    await expect(page.locator('#roWb')).toHaveText('62.6');
-    await expect(page.locator('#roW')).toHaveText('64.6');
-    // an impossible state mutes the readouts
-    await page.selectOption('#psyMode', 'wb');
-    await page.fill('#psyDb', '70');
-    await page.fill('#psySecond', '80');   // wet-bulb above dry-bulb
+    // default summer cooling: OA 92 °F DB / 76 °F WB is the focused stage,
+    // so the right-hand detail block shows OA's state.
+    await expect(page.locator('#roDb')).toHaveText('92.0');
+    await expect(page.locator('#roWb')).toHaveText('76.0');
+    // stage table includes the active CC row (cooling coil is on by default)
+    await expect(page.locator('#psyStageTable tbody tr')).toHaveCount(5);  // OA, RA, MA, CC, SA
+    // CC leaving DB = 55 °F at row index 3 (0-based) — col 1 (DB)
+    await expect(page.locator('#psyStageTable tbody tr').nth(3).locator('td').nth(1)).toHaveText('55.0');
+    // pick RA so the detail block tracks the selection
+    await page.click('.psy-pill[data-step="ra"]');
+    await expect(page.locator('#roDb')).toHaveText('75.0');
+    // an impossible state mutes the readouts and surfaces an error
+    await page.selectOption('#ra-mode', 'wb');
+    await page.fill('#ra-tdb', '70');
+    await page.fill('#ra-second', '80');  // wet-bulb above dry-bulb
     await expect(page.locator('#roWb')).toHaveText('—');
+    await expect(page.locator('#psyMsg')).toContainText('Wet-bulb can');
 });
 
 test('thermistor calculator looks up a known reference value', async ({ page }) => {

@@ -565,36 +565,143 @@ public R/T table for the 8.7K-shunted variant has been located.
 The thermistor page now carries an "About these tables" tool-card
 surfacing the methodology and disclaimers to end users.
 
-### Interactive psychrometric chart *(initial build shipped)*
-The state-point calculator + draggable dot shipped (v0.6, US units,
-altitude-adjustable, full ASHRAE formulations). What's still pending:
+### Interactive psychrometric chart *(phase 2 — AHU process chain — shipped 2026-05-15)*
+Phase 1 (v0.6) shipped the state-point calculator + draggable dot on an
+altitude-adjustable ASHRAE IP-unit chart. Phase 2 (v1.3) turns the
+single-point surface into an air-handler process chain: outdoor air +
+return air mix to mixed air, then a cooling coil, a heating coil, and a
+humidifier walk the state toward supply air. Each stage is a labelled
+node on the chart connected by a color-coded process segment; everything
+downstream of the source nodes is computed from the editor's process
+parameters and updates live as you type or drag.
 
-**Process lines.** The original idea was a two-stage build — state
-point first, then processes on top. Stage two: draw mixing lines
-between two points, show sensible/latent heating and cooling paths,
-humidification and dehumidification. The "drag a state point" surface
-becomes a "pick two state points and a process type" surface for this.
-Worth keeping as the next-major-feature for this tool; the pattern's
-already partly there from the existing state-point interaction.
+In scope (shipped):
+- *AHU chain* — fixed canonical sequence `OA + RA → MA → CC → HC → HUM
+  → SA`. CC / HC / HUM each carry a per-stage off-toggle so a job
+  without (say) a humidifier just disables that stage and the chain
+  collapses cleanly to `OA + RA → MA → CC → HC → SA`.
+- *Step pills + single editor* — a horizontal pills row at the top of
+  the Inputs column picks the focused stage; the editor below swaps to
+  match. Same idea as Niagara's object inspector. Pills for disabled
+  stages render dim. Selected pill shows the accent.
+- *Hybrid editor inputs per stage* — each stage's editor takes the
+  inputs that match how a tech thinks about it:
+    - OA, RA — full v1 "DB + define-by {RH, WB, DP, W, h}" surface
+    - MA — single % OA field (mass-weighted mix), plus live readouts
+      for the resulting MA DB / W / RH so the user can sanity-check
+    - CC — leaving DB + the same "define-by" dropdown
+    - HC — toggle between `Leaving DB` and `ΔT rise`, single value field
+    - HUM — leaving RH %, adiabatic only (constant wet-bulb)
+- *Optional AHU airflow (CFM)* — when set, the per-stage table grows a
+  Q (MBH) column and the process-delta block adds Q total / Q sensible
+  / Q latent for each coil. Mass flow ṁ = CFM × 60 / v_inlet (lb_da/h);
+  Q_sens = ṁ × (0.240 + 0.444·W_in) × ΔT. Optional by design — the
+  per-lb-dry-air math reads cleanly without it.
+- *Process segments on the chart, color-coded by type* — mixing in
+  `--text-dim` gray, cooling/dehumidification in `--blue`, heating in
+  a new `--heat` orange, adiabatic humidification in `--accent` green
+  dashed. Caption under the chart names the four colors. Source nodes
+  (OA, RA) carry a faint outer ring as a drag-affordance cue.
+- *Node labels* — OA, RA, SA always labelled; intermediate stages
+  (MA / CC / HC / HUM) only labelled when their pill is selected.
+  Keeps the chart legible when all coils are on.
+- *Drag scope* — OA and RA only. Everything downstream is deterministic
+  from the editor. Hit-test radius 18 px; the drag preserves the
+  source's current "define by" mode (so dragging a state defined by RH
+  rewrites the RH input, not WB).
+- *Per-stage results table on the right* — compact `.ref-table-dense`
+  with one row per active stage (Leaving DB / W / RH / h), plus Q MBH
+  when CFM is set. Selected row gets the `--accent-dim` highlight.
+- *Selected-step detail block* — the full nine-property table from v1,
+  now driven by the selected pill rather than a single static point.
+  Label reads `OA — Outdoor air` / `MA — Mixed air` / etc.
+- *Process-delta block* — appears under the detail block only when a
+  coil/humidifier stage is selected AND on. Shows ΔDB, ΔW, Δh, SHR
+  (cool only), and Q total / Q sens / Q lat when CFM is set.
+- *Defaults open in summer cooling* — OA 92/76 WB, RA 75/63 WB, 20% OA,
+  CC on at 55/54 WB, HC off, HUM off. The visitor sees a coloured
+  process train on first paint, not an empty chart.
 
-**Floating state-point chip.** A small tooltip-style readout that
-follows the dot as it drags, showing maybe 2–3 key values (DB, WB, RH)
-next to the cursor. The full property table on the right still owns
-the complete state. Direct-manipulation feedback pattern — the most
-important values appear on the object the user is manipulating.
+The chain solver lives inline in the page (one consumer; no point
+factoring out a `psychro-engine.js` until a second tool needs the
+math). Algorithm walks each stage in order, threading the running
+`current` state and pushing successful coil/hum legs into a `stages[]`
+array used by the chart and the per-stage table. Failures are localised
+— if CC is on but its leaving condition is invalid, OA/RA/MA still
+render and the error surfaces in the status line; everything downstream
+mutes to "—".
 
-  Deferred until after process lines ship, because a fully opaque
-  chip would cover the process lines underneath as the user drags.
-  When we build it, lower the chip's background opacity (~70–80%)
-  so the underlying chart and process lines remain visible. May
-  also want to position the chip with an offset from the cursor
-  (e.g. 12–15px up-and-right of the dot) so the dot itself isn't
-  obscured.
+**Design decisions (locked during pre-build consultation, in order):**
+1. *Conceptual model* — AHU-style chain over "two-point + process" or
+   free-form points. Mirrors how a controls engineer reads an air
+   handler.
+2. *Process types* — mixing, sensible heat/cool, cooling+dehum, and
+   humidification (adiabatic only). Light treatment for humidification
+   per "less common on commercial jobs."
+3. *Input style* — hybrid per process: mixing by % OA, sensible by
+   ΔT or leaving DB, cooling by leaving DB + define-by, humidification
+   by leaving RH.
+4. *Chain shape* — fixed canonical with per-stage off-toggles, not
+   add/remove/reorder. Builder-style UI was out of scope for v1.3;
+   reconsider if DOAS / makeup-air / lab-exhaust use cases come up.
+5. *Editor layout* — step pills + single editor below, not a stack
+   of cards. Keeps the Inputs column tidy.
+6. *Airflow input* — optional CFM, primary readouts stay per-lb-dry-
+   air; MBH appears when filled. Tool works either way.
+7. *Drag scope* — OA + RA only. Downstream stages tweak by typing.
+8. *Initial state* — worked summer cooling example, not empty.
+9. *CC editor* — "Leaving DB + define-by" mirrors v1 (general,
+   familiar) over fixed leaving DB/WB pair or coil ADP + bypass.
+10. *HC editor* — `Leaving DB ↔ ΔT` toggle, both mental models
+    covered for tiny UI cost.
+11. *HUM editor* — adiabatic only with leaving RH %; steam left
+    deferred.
+12. *Segment colors* — per-process, with a new `--heat` orange added
+    to `:root` in `styles.css`. Reusing `--red` for heating risked
+    confusion with the fault/alarm semantics already established
+    elsewhere on the site.
+13. *Node labels* — always-on for chain endpoints (OA, RA, SA);
+    selected-only for intermediates.
 
-Implementation note from the initial build: canvas was the right call
-(matches the PID plot's approach). Drag handling on canvas works
-cleanly; the chip would be a straightforward HTML element positioned
-absolutely over the canvas, updated on each drag event.
+**Friction caught in the post-build audit:**
+- *SA label vanishing.* The initial dedup logic skipped drawing SA
+  entirely when SA coincided with the last upstream node, which is the
+  common case (default summer cooling: SA = CC leaving; all coils off:
+  SA = MA). The supply-air callout disappeared from the chart. Fixed
+  by folding `/ SA` into the coincident node's label rather than
+  dropping it — default now shows `SA` at the CC dot, all-off shows
+  `SA` at the MA dot, and HC-on shows `HC / SA`.
+- *Bypass detail label.* Clicking the CC / HC / HUM pill with the
+  stage toggled off kept the detail-block label as `CC — After cooling
+  coil` (etc.) while displaying the pass-through (= entering) values.
+  Reads like the coil is doing something. Fixed: when a selected
+  coil/humidifier is off, the detail label becomes
+  `CC — bypassed (pass-through)`.
+- *Default coil values assume the canonical chain.* HC's default
+  leaving DB of 75 °F and HUM's default leaving RH of 50 % only make
+  sense downstream of an active CC. Toggle CC off without adjusting
+  HC, and the chain errors because MA (~78 °F) > HC leaving (75 °F).
+  Decided to leave this as-is — the red error message is a teaching
+  moment about coil-stage dependencies, and "smart defaults" that
+  always pass would hide the lesson.
+- *Adiabatic-humidifier segment shares colour with the saturation
+  curve.* Both are `--accent` green; dashes-vs-solid is the only
+  distinction. Acceptable in practice — adiabatic humidification *is*
+  motion toward saturation, so the colour affinity is even thematically
+  apt.
+
+**Floating state-point chip — still deferred (now phase 3).** A small
+tooltip-style readout that follows the dragged dot, ~75 % opacity so
+process lines stay visible underneath, offset 12–15 px up-and-right so
+the dot itself isn't obscured. Shows 2–3 key values (DB, WB, RH); the
+full property table on the right still owns the complete state.
+Direct-manipulation feedback pattern. Build in a focused follow-up so
+the opacity / offset / property selection can be tuned without
+process-lines work distracting.
+
+Implementation note carried forward from phase 1: canvas was the right
+call (matches the PID plot's approach). The chip would be an absolutely
+positioned HTML element over the canvas, updated on each drag event.
 
 ### Controller commissioner *(larger build — may span multiple sessions)*
 A point-by-point commissioning workbench. User defines the controller's

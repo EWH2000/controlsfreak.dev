@@ -146,7 +146,7 @@ controlsfreak.dev/
 │   │   ├── modbus-register-viewer.html
 │   │   ├── pid-tuner.html            # loads /scripts/pid-engine.js; owns loop-speed reference table
 │   │   ├── bacnet-ip-converter.html
-│   │   ├── psychrometric-chart.html  # 3-col layout, widened to 1280px inline
+│   │   ├── psychrometric-chart.html  # 3-col layout widened to 1280px; AHU process chain (OA+RA → MA → CC → HC → HUM → SA) with step pills + per-process segment colors
 │   │   ├── thermistor-calculator.html # 3-col layout, loads /scripts/thermistor-data.js
 │   │   └── vfd-mock.html             # 2-col simulator: keypad + 20×4 LCD + linear-ramp motor model; pairs with education/vfds.html
 │   └── education/
@@ -201,15 +201,43 @@ cards (the roadmap). Live tools:
   port (`BAC0`/47808 default flagged). Reference column is a
   placeholder UDP-port lookup, marked `// user to verify`.
 - **Psychrometric Chart** (`psychrometric-chart.html`, "HVAC") — 3-col
-  layout (Inputs / Chart / State Point) with a **custom 25%/1fr/25%
-  split and page widened to 1280px inline** — a draggable canvas needs
-  the room. Drag the state point or type a dry-bulb plus one of {RH,
-  WB, DP, humidity ratio, enthalpy}; altitude-adjustable. ASHRAE
-  IP-unit psychrometrics + chart drawing + drag handling all live
-  inline in the page's `<script>` — extract to `html/scripts/` only if
-  a second tool needs them. For building feel, not calibrated load
-  studies. (Process lines / mixing is the deferred "step 2" — see
-  `site-ideas-and-friction.md`.)
+  layout (Inputs / Chart / Stages + State Point) with a **custom 26%/1fr/26%
+  split and page widened to 1280px inline** — a draggable canvas plus a
+  per-stage results table needs the room. Phase 2 (v1.3, 2026-05) turned
+  the single-point tool into a full AHU process chain: fixed canonical
+  sequence `OA + RA → MA → CC → HC → HUM → SA` with per-stage off-toggles
+  on CC / HC / HUM. Inputs column carries a row of **step pills** (mono
+  font, dim when their stage is off, accent when selected) that swaps the
+  editor below; one editor visible at a time. Per-stage editors use
+  **hybrid inputs** matching how a tech thinks about each:
+  OA/RA = DB + "define by" {RH, WB, DP, W, h} (same as phase 1);
+  MA = single `% OA` field with live MA-state readouts; CC = leaving DB +
+  "define by"; HC = `Leaving DB ↔ ΔT rise` toggle + value;
+  HUM = leaving RH % (adiabatic only, constant WB). Global inputs at top
+  of the Inputs column: Altitude (ft) and **optional AHU CFM** — when set,
+  the per-stage table grows a Q (MBH) column and the process-delta block
+  adds Q total / Q sens / Q lat per coil. **Chart** draws process
+  segments between active stages, color-coded: mixing in `--text-dim`
+  gray, cooling/dehum in `--blue`, heating in `--heat` (new orange added
+  to `:root` for this build), adiabatic humidification in `--accent`
+  green dashed. **Source nodes (OA, RA) carry an outer drag-affordance
+  ring**; drag scope is OA + RA only, everything downstream computed.
+  **Node labels** — OA, RA always; SA always (folded into the coincident
+  upstream node's label as `X / SA` when SA = last upstream); intermediate
+  labels only when the pill is selected. **Right column** is a compact
+  per-stage results table (`.ref-table-dense psy-stage-tbl`, page-local
+  tightening) above the v1 nine-property detail block, plus a
+  conditional process-delta block (ΔDB / ΔW / Δh / SHR for cooling /
+  Q values if CFM). The detail-block label reads
+  `CC — bypassed (pass-through)` when a selected coil/humidifier is off,
+  so the displayed values aren't misleading. Defaults open in summer
+  cooling (OA 92/76 WB, RA 75/63 WB, 20% OA, CC on at 55/54, HC + HUM
+  off) so visitors see a colored process train on first paint. ASHRAE
+  IP-unit psychrometrics + chain solver + chart drawing + drag handling
+  all live inline in the page's `<script>` — extract to `html/scripts/`
+  only if a second tool needs them. For building feel, not calibrated
+  load studies. (Floating state-point chip is the deferred "phase 3" —
+  see `site-ideas-and-friction.md`.)
 - **Thermistor / RTD Lookup** (`thermistor-calculator.html`, "Sensors")
   — 3-col layout with a **left-biased custom split** (defined inline).
   Type select with two `<optgroup>`s (NTC: 10K Type II/III, JCI
@@ -403,10 +431,14 @@ underlined tabs). No drop shadows, no background texture. Light-only
   green — chosen to stay readable on white), `--accent-dim`,
   `--accent-glow`. Text: `--text`, `--text-bright`, `--text-dim`. Data:
   `--blue` (`#1577b8`, live readouts; also "supply water" in hydronic
-  diagrams), `--blue-cool` (`#5e8aa0`, muted; "return water", paired
-  with dashed line so it reads without color). `--red` (fault/alarm).
-  Fonts: `--mono` (IBM Plex Mono), `--sans` (Overpass). The canvas
-  chart reads colors via `getComputedStyle` at draw time.
+  diagrams; also "cooling / dehumidification" on the psych chart's
+  process segments), `--blue-cool` (`#5e8aa0`, muted; "return water",
+  paired with dashed line so it reads without color). `--red`
+  (fault/alarm). `--heat` (`#c8782a`, warm orange — "heating" on the
+  psych chart's process segments; companion to `--blue` for cooling.
+  Added 2026-05 for the AHU process-chain build). Fonts: `--mono`
+  (IBM Plex Mono), `--sans` (Overpass). The canvas chart reads colors
+  via `getComputedStyle` at draw time.
 - **Component classes** (terse index — read `styles.css` for details):
   `.tool-card` / `.tool-card-header` / `.tool-card-title` / `.tool-tag`
   (+ `.pending` for "Coming Soon") / `.tool-body`; `.tabs` / `.tab-btn`
@@ -445,9 +477,11 @@ underlined tabs). No drop shadows, no background texture. Light-only
   form-control variant; qualified by element so it outranks the global
   `input[type=…]` / `select` block). **Adopters:** BACnet converter,
   Signal Scaling, Modbus Register Viewer, Psychrometric Chart (custom
-  column split, page-widened), Thermistor (custom column split). PID
-  tuner keeps its own custom stacked layout (uses `.ps-section-label`
-  standalone for its bottom Reference region). A tool with no useful
+  column split, page-widened, plus page-local **step-pills** that pick
+  the focused AHU stage and per-stage editors that swap underneath),
+  Thermistor (custom column split). PID tuner keeps its own custom
+  stacked layout (uses `.ps-section-label` standalone for its bottom
+  Reference region). A tool with no useful
   reference content drops the third column and runs two
   (`grid-column: span 2` on Output). At ≤900px the columns collapse
   to a single stack; purpose-built mobile is a future task. Naming
@@ -506,7 +540,7 @@ underlined tabs). No drop shadows, no background texture. Light-only
 5. Add the page's URL to `html/sitemap.xml` (hand-maintained — no
    generator).
 6. Bump the version string in the footer when shipping something
-   notable (currently `v1.1 · 2026`, carried by every page).
+   notable (currently `v1.3 · 2026`, carried by every page).
 
 ## Workflow
 
@@ -576,8 +610,9 @@ page after a UI change instead of guessing.
 Near-term tools are tracked as `.tool-preview` cards in "Coming Soon"
 on `tools/index.html` (Temperature Conversion, VAV Balancing, BACnet
 Object Reference, Modbus Function Codes, Duct Pressure Calculator).
-Other near-term work — thermistor *identify mode*, psych chart process
-lines / mixing, more Education pages — lives in
+Other near-term work — thermistor *identify mode*, psych chart
+*floating state-point chip* (deferred phase 3 after the AHU process
+chain shipped in v1.3), more Education pages — lives in
 `site-ideas-and-friction.md`.
 
 Longer-term: possibly a static site generator (Hugo or 11ty) once the

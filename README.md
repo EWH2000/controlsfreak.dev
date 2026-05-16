@@ -27,10 +27,14 @@ Calculators, converters, and lookups — open one, get an answer.
 - **BACnet/IP Hex Converter** — paste a hex device address (with
   or without an appended UDP port), get dotted-decimal back, and
   vice versa.
-- **Psychrometric Chart** — draggable state point on an
-  altitude-adjustable ASHRAE IP-unit chart. Type a dry-bulb plus
-  one of {RH, WB, DP, humidity ratio, enthalpy} and the rest fall
-  out. For building feel, not calibrated load studies.
+- **Psychrometric Chart** — walk an air handler through its
+  psychrometric processes on an altitude-adjustable ASHRAE IP-unit
+  chart: mix outdoor and return air, then cool, heat, and humidify.
+  Step pills pick the focused stage; OA and RA are draggable on the
+  chart. Process segments are color-coded (mixing, cooling/dehum,
+  heating, adiabatic humidification). Optional AHU airflow input
+  surfaces coil capacities in MBH with the sensible / latent split.
+  For building feel, not calibrated load studies.
 - **Thermistor / RTD Lookup** — table-driven R↔T curve for common
   sensor types (10K Type II/III, JCI 10K+8.7K shunt,
   Schneider/TAC "Type 5" 10K-3+11K shunt, 20K, 3K, 1K Balco,

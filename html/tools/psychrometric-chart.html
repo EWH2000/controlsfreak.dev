@@ -4,9 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Psychrometric Chart — controlsfreak.dev</title>
-    <meta name="description" content="Interactive psychrometric chart with altitude correction. Drag the state point to read all eight air properties: dry-bulb, wet-bulb, dew point, RH, and more.">
+    <meta name="description" content="Walk an AHU through psychrometric processes — mix OA and RA, then cool, heat, and humidify. Drag the source points; the rest follows from the editor.">
     <meta property="og:title" content="Psychrometric Chart — controlsfreak.dev">
-    <meta property="og:description" content="Interactive psychrometric chart with altitude correction. Drag the state point to read all eight air properties: dry-bulb, wet-bulb, dew point, RH, and more.">
+    <meta property="og:description" content="Walk an AHU through psychrometric processes — mix OA and RA, then cool, heat, and humidify. Drag the source points; the rest follows from the editor.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://controlsfreak.dev/tools/psychrometric-chart.html">
     <meta property="og:image" content="https://controlsfreak.dev/assets/og-image.png">
@@ -18,17 +18,104 @@
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&family=Overpass:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/styles.css">
     <style>
-        /* Page-specific: a draggable psych chart needs more room than the
-           standard 880px, so this page widens the workspace and uses a custom
-           3-column split — narrow inputs / wide chart / narrow live readouts.
-           The shared design system (.tool-body-3col, .ps-row, …) is otherwise
-           used as-is; these few rules just tune the proportions for this tool.
-           Collapses to a single stack on narrow screens. */
+        /* Page-specific: a draggable psych chart with a process train needs more
+           room than the standard 880px; this page widens the workspace to 1280
+           and uses a custom 3-column split — narrow inputs / wide chart / narrow
+           results. The shared design system (.tool-body-3col, .ps-row, …) is
+           otherwise used as-is; these few rules just tune the proportions. */
         main, footer { max-width: 1280px; }
-        .tool-body-3col { grid-template-columns: minmax(200px, 25%) 1fr minmax(200px, 25%); }
+        .tool-body-3col { grid-template-columns: minmax(220px, 26%) 1fr minmax(220px, 26%); }
         .tool-body-3col > section:last-child .ps-row { grid-template-columns: 1fr auto; }
         @media (max-width: 900px) {
             .tool-body-3col { grid-template-columns: 1fr; }
+        }
+
+        /* Step pills — a horizontal row of compact mono-font pills across the top
+           of the Inputs column that picks which AHU stage's editor is visible
+           below. CC/HC/HUM render dim when their off-toggle is off. */
+        .psy-pills {
+            display: flex;
+            gap: 4px;
+            padding: 0.55rem 1rem 0.7rem;
+            flex-wrap: wrap;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 0.6rem;
+        }
+        .psy-pill {
+            font-family: var(--mono);
+            font-size: 0.72rem;
+            font-weight: 600;
+            padding: 4px 9px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--text-dim);
+            cursor: pointer;
+            border-radius: 2px;
+            letter-spacing: 0.04em;
+            transition: color 80ms, border-color 80ms, background 80ms;
+        }
+        .psy-pill:hover { color: var(--text); border-color: var(--text-dim); }
+        .psy-pill.active {
+            color: var(--accent);
+            border-color: var(--accent);
+            background: var(--accent-dim);
+        }
+        .psy-pill.off { opacity: 0.45; }
+        .psy-pill.off.active { opacity: 0.78; }
+
+        .psy-editor { display: none; }
+        .psy-editor.shown { display: block; }
+
+        /* The on/off checkbox that sits inline with the .ps-row label for CC/HC/HUM. */
+        .psy-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-family: var(--sans);
+            font-size: 0.78rem;
+            color: var(--text);
+            cursor: pointer;
+            user-select: none;
+        }
+        .psy-toggle input { accent-color: var(--accent); cursor: pointer; }
+
+        /* Compact per-stage results table on the right column. Inherits from the
+           design system's .ref-table-dense; cell padding tightened so all five /
+           six columns fit in the narrow Output column. */
+        .psy-stage-tbl { font-size: 0.74rem; }
+        .psy-stage-tbl th, .psy-stage-tbl td {
+            padding: 5px 4px;
+            text-align: right;
+        }
+        .psy-stage-tbl th { font-size: 0.62rem; }
+        .psy-stage-tbl th:first-child, .psy-stage-tbl td:first-child {
+            text-align: left;
+        }
+        .psy-stage-tbl td.stage-key {
+            color: var(--text-bright);
+            font-weight: 600;
+        }
+        .psy-stage-tbl td.live { color: var(--blue); }
+        .psy-stage-tbl td.muted { color: var(--text-dim); }
+        .psy-stage-tbl tbody tr.selected td { background: var(--accent-dim); }
+        .psy-stage-tbl tbody tr.disabled td { color: var(--text-dim); font-style: italic; }
+
+        /* Process-delta block under the selected-state detail — visible only when
+           a coil / humidifier stage is selected and active. Sits below the 9-row
+           detail block, separated by a hairline. */
+        .psy-process {
+            margin-top: 0.6rem;
+            padding-top: 0.6rem;
+            border-top: 1px solid var(--border-faint);
+        }
+        .psy-process-label {
+            font-family: var(--sans);
+            font-size: 0.66rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-dim);
+            padding: 0 0 0.4rem 0;
         }
     </style>
 </head>
@@ -60,60 +147,199 @@
         </div>
 
         <p style="font-family:var(--mono);font-size:0.7rem;color:var(--text-dim);padding:1.1rem 1.5rem 0;line-height:1.7;">
-            Drag the dot anywhere below the saturation curve, or type a dry-bulb plus any one other property — the rest
-            of the state reads out alongside. For building feel and quick state-point checks — not a substitute for a
-            calibrated load-study tool.
+            Walk an air handler through its psychrometric processes — mix outdoor and return air, then cool, heat,
+            and humidify. Pick a stage with the pills, edit its parameters in the panel, or drag <strong>OA</strong>
+            and <strong>RA</strong> on the chart. The supply-air state and all intermediate points follow.
         </p>
 
-        <!-- Adopts the three-column property-sheet layout (like the BACnet converter, Signal
-             Scaling, and the Modbus viewer), with a custom column split — inputs left, the chart
-             canvas in the wide centre column, the live state on the right so every value stays
-             visible while you drag. The column proportions + page width live in the inline
-             <style> in <head>; the .ps-* classes themselves are the shared design system. -->
+        <!-- Same three-column property-sheet layout as the other tools (BACnet
+             converter, Signal Scaling, Modbus viewer), with a custom column
+             split — inputs left, chart canvas in the wide centre column, per-
+             stage results on the right. Column proportions live in the inline
+             <style> above; the .ps-* classes themselves are shared. -->
         <div class="tool-body-3col">
 
+            <!-- ────────── INPUTS COLUMN ────────── -->
             <section>
-                <div class="ps-section-label">Inputs</div>
+                <div class="ps-section-label">Air handler</div>
                 <div class="ps-row">
                     <span class="ps-label">Altitude (ft)</span>
                     <input class="ps-input" type="number" id="psyAlt" step="100" placeholder="0" value="0" oninput="psyRecompute()">
                 </div>
                 <div class="ps-row">
-                    <span class="ps-label">Dry-bulb (°F)</span>
-                    <input class="ps-input" type="number" id="psyDb" step="0.5" placeholder="75" value="75" oninput="psyRecompute()">
+                    <span class="ps-label">AHU airflow (CFM)</span>
+                    <input class="ps-input" type="number" id="psyCfm" step="100" placeholder="optional" oninput="psyRecompute()">
                 </div>
-                <div class="ps-row">
-                    <span class="ps-label">Define by</span>
-                    <select class="ps-input" id="psyMode" onchange="psyModeChanged()">
-                        <option value="rh" selected>Relative humidity</option>
-                        <option value="wb">Wet-bulb temperature</option>
-                        <option value="dp">Dew point temperature</option>
-                        <option value="w">Humidity ratio</option>
-                        <option value="h">Enthalpy</option>
-                    </select>
+
+                <div class="psy-pills" role="tablist">
+                    <button class="psy-pill active" data-step="oa" onclick="selectStep('oa')">OA</button>
+                    <button class="psy-pill" data-step="ra" onclick="selectStep('ra')">RA</button>
+                    <button class="psy-pill" data-step="ma" onclick="selectStep('ma')">MA</button>
+                    <button class="psy-pill" data-step="cc" onclick="selectStep('cc')">CC</button>
+                    <button class="psy-pill off" data-step="hc" onclick="selectStep('hc')">HC</button>
+                    <button class="psy-pill off" data-step="hum" onclick="selectStep('hum')">HUM</button>
+                    <button class="psy-pill" data-step="sa" onclick="selectStep('sa')">SA</button>
                 </div>
-                <div class="ps-row">
-                    <span class="ps-label" id="psySecondLbl">Relative humidity (%)</span>
-                    <input class="ps-input" type="number" id="psySecond" step="1" placeholder="50" value="50" oninput="psyRecompute()">
+
+                <!-- OA editor -->
+                <div class="psy-editor shown" data-step="oa">
+                    <div class="ps-row">
+                        <span class="ps-label">Dry-bulb (°F)</span>
+                        <input class="ps-input" type="number" id="oa-tdb" step="0.5" value="92" oninput="psyRecompute()">
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">Define by</span>
+                        <select class="ps-input" id="oa-mode" onchange="onModeChange('oa')">
+                            <option value="rh">Relative humidity</option>
+                            <option value="wb" selected>Wet-bulb temperature</option>
+                            <option value="dp">Dew point temperature</option>
+                            <option value="w">Humidity ratio</option>
+                            <option value="h">Enthalpy</option>
+                        </select>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label" id="oa-secondLbl">Wet-bulb (°F)</span>
+                        <input class="ps-input" type="number" id="oa-second" step="0.5" value="76" oninput="psyRecompute()">
+                    </div>
+                    <p class="ref-note">Outdoor air entering the air handler. Drag this dot on the chart, or edit values here.</p>
                 </div>
-                <p class="ref-note">Set the point here, or click / drag it on the chart. Sea-level pressure unless you enter an altitude.</p>
-                <p class="bit-hint" id="psyMsg" style="margin-top:0.6rem;margin-bottom:0;line-height:1.55;"></p>
+
+                <!-- RA editor -->
+                <div class="psy-editor" data-step="ra">
+                    <div class="ps-row">
+                        <span class="ps-label">Dry-bulb (°F)</span>
+                        <input class="ps-input" type="number" id="ra-tdb" step="0.5" value="75" oninput="psyRecompute()">
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">Define by</span>
+                        <select class="ps-input" id="ra-mode" onchange="onModeChange('ra')">
+                            <option value="rh">Relative humidity</option>
+                            <option value="wb" selected>Wet-bulb temperature</option>
+                            <option value="dp">Dew point temperature</option>
+                            <option value="w">Humidity ratio</option>
+                            <option value="h">Enthalpy</option>
+                        </select>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label" id="ra-secondLbl">Wet-bulb (°F)</span>
+                        <input class="ps-input" type="number" id="ra-second" step="0.5" value="63" oninput="psyRecompute()">
+                    </div>
+                    <p class="ref-note">Air returning from the conditioned space. Drag this dot on the chart, or edit values here.</p>
+                </div>
+
+                <!-- MA editor -->
+                <div class="psy-editor" data-step="ma">
+                    <div class="ps-row">
+                        <span class="ps-label">Outdoor air (%)</span>
+                        <input class="ps-input" type="number" id="ma-pct" step="1" min="0" max="100" value="20" oninput="psyRecompute()">
+                    </div>
+                    <p class="ref-note">Mass-weighted mix of OA and RA. The mixed point falls on the straight line between OA and RA on the chart, at the OA% fraction of the way from RA to OA.</p>
+                    <div class="ps-row"><span class="ps-label">MA dry-bulb (°F)</span><span class="ps-value live" id="ma-tdb-out">—</span></div>
+                    <div class="ps-row"><span class="ps-label">MA humidity ratio (gr/lb)</span><span class="ps-value live" id="ma-w-out">—</span></div>
+                    <div class="ps-row"><span class="ps-label">MA rel. humidity (%)</span><span class="ps-value live" id="ma-rh-out">—</span></div>
+                </div>
+
+                <!-- CC editor -->
+                <div class="psy-editor" data-step="cc">
+                    <div class="ps-row">
+                        <span class="ps-label">Cooling coil</span>
+                        <label class="psy-toggle"><input type="checkbox" id="cc-on" checked onchange="psyRecompute()"> On</label>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">Leaving DB (°F)</span>
+                        <input class="ps-input" type="number" id="cc-tdb" step="0.5" value="55" oninput="psyRecompute()">
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">Define by</span>
+                        <select class="ps-input" id="cc-mode" onchange="onModeChange('cc')">
+                            <option value="rh">Relative humidity</option>
+                            <option value="wb" selected>Wet-bulb temperature</option>
+                            <option value="dp">Dew point temperature</option>
+                            <option value="w">Humidity ratio</option>
+                            <option value="h">Enthalpy</option>
+                        </select>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label" id="cc-secondLbl">Wet-bulb (°F)</span>
+                        <input class="ps-input" type="number" id="cc-second" step="0.5" value="54" oninput="psyRecompute()">
+                    </div>
+                    <p class="ref-note">Coil leaving condition. Must be at or below entering DB; humidity ratio can't increase across a cooling coil.</p>
+                </div>
+
+                <!-- HC editor -->
+                <div class="psy-editor" data-step="hc">
+                    <div class="ps-row">
+                        <span class="ps-label">Heating coil</span>
+                        <label class="psy-toggle"><input type="checkbox" id="hc-on" onchange="psyRecompute()"> On</label>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">Specify by</span>
+                        <select class="ps-input" id="hc-mode" onchange="onHcModeChange()">
+                            <option value="ldb" selected>Leaving DB</option>
+                            <option value="dt">ΔT rise</option>
+                        </select>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label" id="hc-valLbl">Leaving DB (°F)</span>
+                        <input class="ps-input" type="number" id="hc-val" step="0.5" value="75" oninput="psyRecompute()">
+                    </div>
+                    <p class="ref-note">Sensible heating only — humidity ratio is unchanged across the coil. Leaving DB must be at or above entering DB.</p>
+                </div>
+
+                <!-- HUM editor -->
+                <div class="psy-editor" data-step="hum">
+                    <div class="ps-row">
+                        <span class="ps-label">Humidifier</span>
+                        <label class="psy-toggle"><input type="checkbox" id="hum-on" onchange="psyRecompute()"> On</label>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">Leaving RH (%)</span>
+                        <input class="ps-input" type="number" id="hum-rh" step="1" min="0" max="100" value="50" oninput="psyRecompute()">
+                    </div>
+                    <p class="ref-note">Adiabatic (constant wet-bulb) humidification — an evaporative pad or wetted media. Adds moisture; dry-bulb drops a little. Leaving RH must be at or above entering RH.</p>
+                </div>
+
+                <!-- SA editor (read-only) -->
+                <div class="psy-editor" data-step="sa">
+                    <p class="ref-note" style="margin-top:0.6rem;">Supply air is the leaving state of the last enabled stage in the chain. Full property table at right.</p>
+                </div>
+
+                <p class="bit-hint" id="psyMsg" style="margin:0.6rem 0 0;padding:0 1rem;line-height:1.55;"></p>
             </section>
 
+            <!-- ────────── CHART COLUMN ────────── -->
             <section>
                 <div class="ps-section-label">Chart</div>
                 <div class="sim-canvas-wrap">
                     <canvas id="psyCanvas" style="aspect-ratio:8/5;height:auto;touch-action:none;"></canvas>
                 </div>
                 <p class="bit-hint" style="margin-bottom:0;line-height:1.65;">
-                    Heavy curve = saturation (100% RH, the left/top boundary). Light curves rising to the right = constant
-                    relative humidity; light dashed lines sloping down to the right = constant wet-bulb (≈ constant enthalpy).
-                    States outside the drawn region still read out — they just aren't drawn.
+                    Heavy green = saturation. Light curves rising right = constant RH; light dashed = constant wet-bulb.
+                    Process segments are colored: <span style="color:var(--text-dim)">gray</span> = mixing,
+                    <span style="color:var(--blue)">blue</span> = cooling / dehumidification,
+                    <span style="color:var(--heat)">orange</span> = heating,
+                    <span style="color:var(--accent)">green dashed</span> = adiabatic humidification.
                 </p>
             </section>
 
+            <!-- ────────── OUTPUT COLUMN ────────── -->
             <section>
-                <div class="ps-section-label">State Point</div>
+                <div class="ps-section-label">Stages</div>
+                <table class="ref-table-dense psy-stage-tbl" id="psyStageTable">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th>DB °F</th>
+                            <th>gr/lb</th>
+                            <th>RH %</th>
+                            <th>h Btu/lb</th>
+                            <th class="psy-q-col" style="display:none;">MBH</th>
+                        </tr>
+                    </thead>
+                    <tbody><!-- rows generated by JS --></tbody>
+                </table>
+
+                <div class="ps-section-label" id="psyDetailLabel" style="margin-top:1rem;">OA — Outdoor air</div>
                 <div class="ps-row"><span class="ps-label">Dry-bulb (°F)</span><span class="ps-value live" id="roDb">—</span></div>
                 <div class="ps-row"><span class="ps-label">Wet-bulb (°F)</span><span class="ps-value live" id="roWb">—</span></div>
                 <div class="ps-row"><span class="ps-label">Dew point (°F)</span><span class="ps-value live" id="roDp">—</span></div>
@@ -123,17 +349,28 @@
                 <div class="ps-row"><span class="ps-label">Specific volume (ft³/lb)</span><span class="ps-value live" id="roV">—</span></div>
                 <div class="ps-row"><span class="ps-label">Vapor pressure (psia)</span><span class="ps-value live" id="roPw">—</span></div>
                 <div class="ps-row"><span class="ps-label">Barometric press. (psia)</span><span class="ps-value live" id="roP">—</span></div>
+
+                <div class="psy-process" id="psyProcessBlock" style="display:none;">
+                    <div class="psy-process-label" id="psyProcessLabel">Process delta — across this stage</div>
+                    <div class="ps-row"><span class="ps-label">ΔDB (°F)</span><span class="ps-value live" id="pdDb">—</span></div>
+                    <div class="ps-row"><span class="ps-label">ΔW (gr/lb)</span><span class="ps-value live" id="pdW">—</span></div>
+                    <div class="ps-row"><span class="ps-label">Δh (Btu/lb)</span><span class="ps-value live" id="pdH">—</span></div>
+                    <div class="ps-row" id="pdShrRow" style="display:none;"><span class="ps-label">Sensible heat ratio</span><span class="ps-value live" id="pdShr">—</span></div>
+                    <div class="ps-row" id="pdQtRow" style="display:none;"><span class="ps-label">Q total (MBH)</span><span class="ps-value live" id="pdQt">—</span></div>
+                    <div class="ps-row" id="pdQsRow" style="display:none;"><span class="ps-label">Q sensible (MBH)</span><span class="ps-value live" id="pdQs">—</span></div>
+                    <div class="ps-row" id="pdQlRow" style="display:none;"><span class="ps-label">Q latent (MBH)</span><span class="ps-value live" id="pdQl">—</span></div>
+                </div>
             </section>
 
         </div>
 
         <div style="padding:1.25rem 1.5rem;border-top:1px solid var(--border);">
             <p class="pid-note" style="margin-top:0;">
-                Properties are per pound of dry air, from the ASHRAE formulations in US customary units; relative humidity
-                is taken as the partial-pressure ratio (the usual approximation). Humidity ratio shown in grains per pound
-                (7000 gr = 1 lb). Wet-bulb here is the thermodynamic wet-bulb, which a sling psychrometer reads to within a
-                fraction of a degree. The drawn chart covers the lower-left region most HVAC air states live in; a state
-                outside that range still reads out, it just isn't drawn.
+                Properties are per pound of dry air, from the ASHRAE Fundamentals (Chapter 1) IP equations. RH is taken as the
+                partial-pressure ratio (the usual approximation). Mixing is a mass-weighted enthalpy / humidity-ratio combination.
+                Adiabatic humidification holds wet-bulb constant. Coil capacities use AHU CFM and inlet specific volume:
+                Q = ṁ·Δh with ṁ = CFM·60/v<sub>in</sub>; Q<sub>sens</sub> = ṁ·(0.240 + 0.444·W<sub>in</sub>)·ΔT. For building feel
+                and quick design-day state-point checks — not a substitute for a calibrated load-study tool.
             </p>
         </div>
     </div>
@@ -144,7 +381,7 @@
 
 <footer>
     <span class="footer-text">controlsfreak.dev — open tools for controls professionals</span>
-    <span class="footer-text">v1.2 · 2026</span>
+    <span class="footer-text">v1.3 · 2026</span>
 </footer>
 
 <script>
@@ -182,7 +419,7 @@
     const specificVolume       = (tdb, W, P) => R_DA * (tdb + 459.67) * (1 + 1.607858 * W) / P;
     const pressFromAltitude    = zFt => P_STD * Math.pow(1 - 6.8754e-6 * zFt, 5.2559);
 
-    // Humidity ratio from the (thermodynamic) wet-bulb temperature. twb, tdb in °F.
+    // Humidity ratio from (thermodynamic) wet-bulb temperature. twb, tdb in °F.
     function humRatioFromWetBulb(twb, tdb, P) {
         const Wsw = satHumRatio(twb, P);
         return (twb >= 32)
@@ -190,7 +427,7 @@
             : ((1220 - 0.04  * twb) * Wsw - 0.240 * (tdb - twb)) / (1220 + 0.444 * tdb - 0.48 * twb);
     }
 
-    // Dew point: the temperature where satPress(tdp) = pw.  (Bisection — robust & exact.)
+    // Dew point: temperature where satPress(tdp) = pw. Bisection.
     function dewPointFromVapPress(pw) {
         if (pw <= 0) return -Infinity;
         let lo = -148, hi = 250;
@@ -201,13 +438,11 @@
         return (lo + hi) / 2;
     }
 
-    // Wet-bulb from dry-bulb + humidity ratio.  Bisection on [dew point, dry-bulb]:
-    // humRatioFromWetBulb(·, tdb) is monotonic, equals W at twb = the answer, and
-    // equals the saturation ratio at twb = tdb.
+    // Wet-bulb from dry-bulb + humidity ratio. Bisection on [dew point, dry-bulb].
     function wetBulbFromHumRatio(W, tdb, P) {
         let lo = dewPointFromVapPress(vapPressFromHumRatio(Math.max(W, 0), P));
         let hi = tdb;
-        if (!isFinite(lo) || lo > hi) lo = Math.min(-148, hi - 200);   // bone-dry air
+        if (!isFinite(lo) || lo > hi) lo = Math.min(-148, hi - 200);
         for (let i = 0; i < 70; i++) {
             const mid = (lo + hi) / 2;
             if (humRatioFromWetBulb(mid, tdb, P) > W) hi = mid; else lo = mid;
@@ -215,10 +450,7 @@
         return (lo + hi) / 2;
     }
 
-    // Build the complete moist-air state from (mode, dry-bulb, the second value, pressure).
-    // `mode` is one of 'rh' | 'wb' | 'dp' | 'w' | 'h'. The second value's unit depends on mode
-    // (RH in %, temps in °F, humidity ratio in gr/lb, enthalpy in Btu/lb).
-    // Returns { ok:true, tdb, W, P, pw, rh, twb, tdp, h, v } or { ok:false, error }.
+    // Build moist-air state from (mode, dry-bulb, the second value, pressure). mode ∈ {rh,wb,dp,w,h}.
     function solveState(mode, tdb, second, P) {
         if (![tdb, second, P].every(isFinite) || P <= 0) return { ok: false, error: 'Enter numeric values.' };
         let W;
@@ -237,7 +469,7 @@
             if (W < -1e-9) return { ok: false, error: 'Humidity ratio can’t be negative.' };
         } else if (mode === 'h') {
             W = (second - 0.240 * tdb) / (1061 + 0.444 * tdb);
-            if (W < -1e-9) return { ok: false, error: 'That enthalpy is below dry air at this dry-bulb — impossible.' };
+            if (W < -1e-9) return { ok: false, error: 'Enthalpy is below dry air at this dry-bulb — impossible.' };
         } else {
             return { ok: false, error: 'Pick a property to define the point by.' };
         }
@@ -248,7 +480,7 @@
         return buildState(tdb, W, P);
     }
 
-    // Build a state object directly from a known (dry-bulb, humidity ratio) — used by chart drags.
+    // Build a state directly from (dry-bulb, humidity ratio).
     function buildState(tdb, W, P) {
         W = Math.max(0, Math.min(W, satHumRatio(tdb, P)));
         const pw = vapPressFromHumRatio(W, P);
@@ -264,95 +496,416 @@
 
     // What the "second value" input means / shows for each mode.
     const SECOND_PROP = {
-        rh: { label: 'Relative humidity (%)',     def: 50, step: 1,   fmt: s => s.rh.toFixed(1),            get: s => s.rh },
-        wb: { label: 'Wet-bulb (°F)',             def: 60, step: 0.5, fmt: s => s.twb.toFixed(1),           get: s => s.twb },
-        dp: { label: 'Dew point (°F)',            def: 50, step: 0.5, fmt: s => isFinite(s.tdp) ? s.tdp.toFixed(1) : '', get: s => s.tdp },
-        w:  { label: 'Humidity ratio (gr/lb)',    def: 65, step: 1,   fmt: s => (s.W * GR_PER_LB).toFixed(1), get: s => s.W * GR_PER_LB },
-        h:  { label: 'Enthalpy (Btu/lb dry air)', def: 28, step: 0.5, fmt: s => s.h.toFixed(2),             get: s => s.h },
+        rh: { label: 'Relative humidity (%)',     def: 50, step: 1,   fmt: s => s.rh.toFixed(1),                              get: s => s.rh },
+        wb: { label: 'Wet-bulb (°F)',             def: 60, step: 0.5, fmt: s => s.twb.toFixed(1),                             get: s => s.twb },
+        dp: { label: 'Dew point (°F)',            def: 50, step: 0.5, fmt: s => isFinite(s.tdp) ? s.tdp.toFixed(1) : '',      get: s => s.tdp },
+        w:  { label: 'Humidity ratio (gr/lb)',    def: 65, step: 1,   fmt: s => (s.W * GR_PER_LB).toFixed(1),                 get: s => s.W * GR_PER_LB },
+        h:  { label: 'Enthalpy (Btu/lb dry air)', def: 28, step: 0.5, fmt: s => s.h.toFixed(2),                               get: s => s.h },
     };
 
-    // ── Chart bounds (the drawn region; states outside it still read out) ──
+    // ── Chart bounds (drawn region; states outside still read out) ──
     const TDB_MIN = 30, TDB_MAX = 120;     // dry-bulb axis, °F
     const W_MAX   = 0.025;                  // humidity-ratio axis ceiling, lb/lb (= 175 gr/lb)
 
-    let psyP = P_STD;        // current barometric pressure
-    let psyState = null;     // last state object (or { ok:false, ... })
+    // ── Stage labels & ordering ──
+    const STEPS = ['oa', 'ra', 'ma', 'cc', 'hc', 'hum', 'sa'];
+    const STEP_LABEL = {
+        oa:  'OA — Outdoor air',
+        ra:  'RA — Return air',
+        ma:  'MA — Mixed air',
+        cc:  'CC — After cooling coil',
+        hc:  'HC — After heating coil',
+        hum: 'HUM — After humidifier',
+        sa:  'SA — Supply air',
+    };
+    const STEP_SHORT = { oa: 'OA', ra: 'RA', ma: 'MA', cc: 'CC', hc: 'HC', hum: 'HUM', sa: 'SA' };
+    const PROCESS_LABEL = {
+        cc:  'Cooling coil — process delta',
+        hc:  'Heating coil — process delta',
+        hum: 'Humidifier — process delta',
+    };
 
-    // ── Main recompute (driven by the input fields) ──
-    function psyRecompute() {
-        const mode   = document.getElementById('psyMode').value;
-        const P      = pressFromAltitude(parseFloat(document.getElementById('psyAlt').value) || 0);
-        const tdb    = parseFloat(document.getElementById('psyDb').value);
-        const second = parseFloat(document.getElementById('psySecond').value);
-        applyState(solveState(mode, tdb, second, P), P);
+    // Detail-block label that swaps in a "bypassed" variant when a selected
+    // coil / humidifier stage is toggled off — the values shown then are the
+    // pass-through state (= entering), so the static "After cooling coil"
+    // wording would mislead.
+    function detailLabelFor(key, results) {
+        if ((key === 'cc' || key === 'hc' || key === 'hum')
+            && results && results[key] && results[key].enabled === false) {
+            return STEP_SHORT[key] + ' — bypassed (pass-through)';
+        }
+        return STEP_LABEL[key];
     }
 
-    // ── "Define by" changed: keep the same point, just relabel & repopulate the second input ──
-    function psyModeChanged() {
-        const meta = SECOND_PROP[document.getElementById('psyMode').value];
-        document.getElementById('psySecondLbl').textContent = meta.label;
-        const inp = document.getElementById('psySecond');
-        inp.step = meta.step;
-        inp.value = (psyState && psyState.ok) ? meta.fmt(psyState) : meta.def;
+    let selectedStep = 'oa';
+    let lastChain    = null;
+
+    // ──────────────────────────────────────────────────────────────────
+    // Chain solver — walks the canonical AHU sequence:
+    //   OA + RA → MA → CC → HC → HUM → SA
+    // CC/HC/HUM are skippable via their per-stage off-toggle. The solver
+    // returns partial results when something fails mid-chain, so the chart
+    // and the upstream readouts still update while the user types.
+    // ──────────────────────────────────────────────────────────────────
+    function solveChain() {
+        const alt    = parseFloat(document.getElementById('psyAlt').value) || 0;
+        const P      = pressFromAltitude(alt);
+        const cfmRaw = parseFloat(document.getElementById('psyCfm').value);
+        const cfm    = (isFinite(cfmRaw) && cfmRaw > 0) ? cfmRaw : null;
+
+        const r = {};       // results keyed by step
+        const stages = [];  // active process segments (cc/hc/hum only)
+        let error = null;
+        const setErr = (msg) => { if (!error) error = msg; };
+
+        // OA / RA — independent state points
+        const readSt = pre => ({
+            mode:   document.getElementById(`${pre}-mode`).value,
+            tdb:    parseFloat(document.getElementById(`${pre}-tdb`).value),
+            second: parseFloat(document.getElementById(`${pre}-second`).value),
+        });
+        const eOa = readSt('oa');
+        r.oa = solveState(eOa.mode, eOa.tdb, eOa.second, P);
+        if (!r.oa.ok) setErr('OA: ' + r.oa.error);
+
+        const eRa = readSt('ra');
+        r.ra = solveState(eRa.mode, eRa.tdb, eRa.second, P);
+        if (!r.ra.ok) setErr('RA: ' + r.ra.error);
+
+        // MA — mass-weighted enthalpy + humidity-ratio mix
+        if (r.oa.ok && r.ra.ok) {
+            const pct = parseFloat(document.getElementById('ma-pct').value);
+            if (!isFinite(pct) || pct < 0 || pct > 100) {
+                r.ma = { ok: false, error: '% OA must be 0–100' };
+                setErr('MA: % OA must be 0–100');
+            } else {
+                const fOa = pct / 100, fRa = 1 - fOa;
+                const W_ma = fOa * r.oa.W + fRa * r.ra.W;
+                const h_ma = fOa * r.oa.h + fRa * r.ra.h;
+                // back out tdb from h = (0.240 + 0.444·W)·tdb + 1061·W
+                const tdb_ma = (h_ma - 1061 * W_ma) / (0.240 + 0.444 * W_ma);
+                r.ma = buildState(tdb_ma, W_ma, P);
+            }
+        } else {
+            r.ma = { ok: false, error: 'awaiting OA / RA' };
+        }
+
+        let current = r.ma.ok ? r.ma : null;
+
+        // CC — leaving state via the same "DB + define by" pattern
+        const ccOn = document.getElementById('cc-on').checked;
+        if (current && ccOn) {
+            const e = readSt('cc');
+            const sol = solveState(e.mode, e.tdb, e.second, P);
+            if (!sol.ok) {
+                r.cc = { ...sol, enabled: true };
+                setErr('CC: ' + sol.error);
+                current = null;
+            } else if (sol.tdb > current.tdb + 1e-6) {
+                r.cc = { ok: false, enabled: true, error: 'leaving DB must be ≤ entering' };
+                setErr('CC: leaving DB must be ≤ entering');
+                current = null;
+            } else if (sol.W > current.W + 1e-6) {
+                r.cc = { ok: false, enabled: true, error: 'leaving humidity ratio can’t exceed entering' };
+                setErr('CC: leaving humidity ratio can’t exceed entering');
+                current = null;
+            } else {
+                r.cc = { ...sol, enabled: true, inlet: current };
+                stages.push({ key: 'cc', type: 'cool', inlet: current, outlet: sol });
+                current = sol;
+            }
+        } else {
+            r.cc = current ? { ...current, enabled: false } : { ok: false, enabled: false };
+        }
+
+        // HC — sensible heating: constant W, leaving DB or ΔT
+        const hcOn = document.getElementById('hc-on').checked;
+        if (current && hcOn) {
+            const mode = document.getElementById('hc-mode').value;
+            const val  = parseFloat(document.getElementById('hc-val').value);
+            if (!isFinite(val)) {
+                r.hc = { ok: false, enabled: true, error: 'enter a number' };
+                setErr('HC: enter a number');
+                current = null;
+            } else {
+                const tdb_hc = (mode === 'dt') ? current.tdb + val : val;
+                if (tdb_hc < current.tdb - 1e-6) {
+                    r.hc = { ok: false, enabled: true, error: 'leaving DB must be ≥ entering' };
+                    setErr('HC: leaving DB must be ≥ entering');
+                    current = null;
+                } else {
+                    const hc = buildState(tdb_hc, current.W, P);
+                    r.hc = { ...hc, enabled: true, inlet: current };
+                    stages.push({ key: 'hc', type: 'heat', inlet: current, outlet: hc });
+                    current = hc;
+                }
+            }
+        } else {
+            r.hc = current ? { ...current, enabled: false } : { ok: false, enabled: false };
+        }
+
+        // HUM — adiabatic humidification: constant wet-bulb, target RH.
+        // On the constant-WB line RH ranges from inlet.rh (at inlet tdb) up to 100% (at tdb = twb).
+        // Bisect tdb between [twb, inlet.tdb] to hit the target RH.
+        const humOn = document.getElementById('hum-on').checked;
+        if (current && humOn) {
+            const targetRh = parseFloat(document.getElementById('hum-rh').value);
+            if (!isFinite(targetRh) || targetRh < 0 || targetRh > 100) {
+                r.hum = { ok: false, enabled: true, error: 'leaving RH must be 0–100' };
+                setErr('HUM: leaving RH must be 0–100');
+                current = null;
+            } else if (targetRh < current.rh - 1e-6) {
+                r.hum = { ok: false, enabled: true, error: 'leaving RH must be ≥ entering' };
+                setErr('HUM: leaving RH must be ≥ entering');
+                current = null;
+            } else {
+                let lo = current.twb, hi = current.tdb;
+                const rhAt = (t) => {
+                    const W = humRatioFromWetBulb(current.twb, t, P);
+                    return rhFromHumRatio(W, t, P);
+                };
+                for (let i = 0; i < 60; i++) {
+                    const mid = (lo + hi) / 2;
+                    if (rhAt(mid) > targetRh) lo = mid; else hi = mid;
+                }
+                const tdbH = (lo + hi) / 2;
+                const Wh = humRatioFromWetBulb(current.twb, tdbH, P);
+                const hum = buildState(tdbH, Wh, P);
+                r.hum = { ...hum, enabled: true, inlet: current };
+                stages.push({ key: 'hum', type: 'humid', inlet: current, outlet: hum });
+                current = hum;
+            }
+        } else {
+            r.hum = current ? { ...current, enabled: false } : { ok: false, enabled: false };
+        }
+
+        // SA — the last successfully computed point
+        r.sa = current ? { ...current } : { ok: false, error: 'awaiting upstream' };
+
+        return { ok: !error, error, results: r, stages, P, alt, cfm };
+    }
+
+    // ── Process-delta math for a single coil / humidifier segment ──
+    function computeProcess(stage, cfm) {
+        const { inlet, outlet, type } = stage;
+        const dDb = outlet.tdb - inlet.tdb;
+        const dW  = outlet.W - inlet.W;
+        const dH  = outlet.h - inlet.h;
+        let qTotal = null, qSens = null, qLat = null;
+        if (cfm && inlet.v > 0) {
+            const mDot = cfm * 60 / inlet.v;            // lb_da / h
+            qTotal = mDot * dH;                         // Btu/h
+            const cpIn = 0.240 + 0.444 * inlet.W;       // Btu/(lb_da·°F)
+            qSens = mDot * cpIn * dDb;
+            qLat  = qTotal - qSens;
+        }
+        let shr = null;
+        if (type === 'cool') {
+            // SHR by enthalpy ratios (CFM-independent — works even without flow).
+            const cpIn = 0.240 + 0.444 * inlet.W;
+            const dhSens = cpIn * dDb;
+            if (Math.abs(dH) > 1e-9) shr = dhSens / dH;
+        }
+        return { dDb, dW, dH, qTotal, qSens, qLat, shr };
+    }
+
+    // ──────────────────────────────────────────────────────────────────
+    // UI — pill selection, mode toggles, table & detail rendering
+    // ──────────────────────────────────────────────────────────────────
+    function selectStep(key) {
+        if (!STEPS.includes(key)) return;
+        selectedStep = key;
+        document.querySelectorAll('.psy-pill').forEach(p => p.classList.toggle('active', p.dataset.step === key));
+        document.querySelectorAll('.psy-editor').forEach(ed => ed.classList.toggle('shown', ed.dataset.step === key));
         psyRecompute();
     }
 
-    // ── Push a state to the readouts, the status line, and the chart ──
-    function applyState(state, P) {
-        psyP = P;
-        psyState = state;
-        // a .ps-value cell reads blue/bold when it holds a real value, muted "—" otherwise
+    function onModeChange(prefix) {
+        const meta = SECOND_PROP[document.getElementById(`${prefix}-mode`).value];
+        document.getElementById(`${prefix}-secondLbl`).textContent = meta.label;
+        const inp = document.getElementById(`${prefix}-second`);
+        inp.step = meta.step;
+        // re-format the second value from the most-recent valid state, so changing
+        // "Define by" doesn't move the point — just relabels how it's expressed.
+        const last = lastChain && lastChain.results[prefix];
+        if (last && last.ok) {
+            const v = meta.fmt(last);
+            inp.value = v === '' ? meta.def : v;
+        } else {
+            inp.value = meta.def;
+        }
+        psyRecompute();
+    }
+
+    function onHcModeChange() {
+        const mode = document.getElementById('hc-mode').value;
+        document.getElementById('hc-valLbl').textContent = mode === 'dt' ? 'ΔT rise (°F)' : 'Leaving DB (°F)';
+        psyRecompute();
+    }
+
+    function updatePillsOff() {
+        document.querySelector('.psy-pill[data-step="cc"]').classList.toggle('off',  !document.getElementById('cc-on').checked);
+        document.querySelector('.psy-pill[data-step="hc"]').classList.toggle('off',  !document.getElementById('hc-on').checked);
+        document.querySelector('.psy-pill[data-step="hum"]').classList.toggle('off', !document.getElementById('hum-on').checked);
+    }
+
+    function renderStageTable(chain) {
+        const tbody = document.querySelector('#psyStageTable tbody');
+        const cfmOn = chain.cfm !== null;
+        document.querySelectorAll('.psy-q-col').forEach(el => el.style.display = cfmOn ? '' : 'none');
+
+        // OA, RA, MA always shown; CC/HC/HUM only when enabled; SA always at the end.
+        const rows = [
+            { key: 'oa', label: 'OA', state: chain.results.oa },
+            { key: 'ra', label: 'RA', state: chain.results.ra },
+            { key: 'ma', label: 'MA', state: chain.results.ma },
+        ];
+        if (chain.results.cc.enabled)  rows.push({ key: 'cc',  label: 'CC',  state: chain.results.cc,  stage: chain.stages.find(s => s.key === 'cc')  });
+        if (chain.results.hc.enabled)  rows.push({ key: 'hc',  label: 'HC',  state: chain.results.hc,  stage: chain.stages.find(s => s.key === 'hc')  });
+        if (chain.results.hum.enabled) rows.push({ key: 'hum', label: 'HUM', state: chain.results.hum, stage: chain.stages.find(s => s.key === 'hum') });
+        rows.push({ key: 'sa', label: 'SA', state: chain.results.sa });
+
+        tbody.innerHTML = '';
+        for (const row of rows) {
+            const tr = document.createElement('tr');
+            if (row.key === selectedStep) tr.classList.add('selected');
+            const s = row.state;
+            const ok = s && s.ok;
+            const cells = [`<td class="stage-key">${row.label}</td>`];
+            if (ok) {
+                cells.push(`<td class="live">${s.tdb.toFixed(1)}</td>`);
+                cells.push(`<td class="live">${(s.W * GR_PER_LB).toFixed(1)}</td>`);
+                cells.push(`<td class="live">${s.rh.toFixed(1)}</td>`);
+                cells.push(`<td class="live">${s.h.toFixed(2)}</td>`);
+            } else {
+                cells.push('<td class="muted">—</td><td class="muted">—</td><td class="muted">—</td><td class="muted">—</td>');
+            }
+            if (cfmOn) {
+                if (row.stage) {
+                    const proc = computeProcess(row.stage, chain.cfm);
+                    const mbh = proc.qTotal !== null ? Math.abs(proc.qTotal) / 1000 : null;
+                    cells.push(mbh !== null ? `<td class="live">${mbh.toFixed(1)}</td>` : '<td class="muted">—</td>');
+                } else {
+                    cells.push('<td class="muted">—</td>');
+                }
+            }
+            tr.innerHTML = cells.join('');
+            tbody.appendChild(tr);
+        }
+    }
+
+    function renderDetail(state, label) {
+        document.getElementById('psyDetailLabel').textContent = label;
         const ro = (id, v, live) => {
             const el = document.getElementById(id);
             el.textContent = v;
             el.className = live ? 'ps-value live' : 'ps-value muted';
         };
-        const msgEl = document.getElementById('psyMsg');
-
-        if (!state.ok) {
+        if (!state || !state.ok) {
             ['roDb','roWb','roDp','roRh','roW','roH','roV','roPw','roP'].forEach(id => ro(id, '—', false));
-            msgEl.textContent = state.error;
+            return;
+        }
+        ro('roDb', state.tdb.toFixed(1), true);
+        ro('roWb', state.twb.toFixed(1), true);
+        const dpOk = isFinite(state.tdp) && state.tdp > -60;
+        ro('roDp', dpOk ? state.tdp.toFixed(1) : '—', dpOk);
+        ro('roRh', state.rh.toFixed(1), true);
+        ro('roW',  (state.W * GR_PER_LB).toFixed(1), true);
+        ro('roH',  state.h.toFixed(2), true);
+        ro('roV',  state.v.toFixed(3), true);
+        ro('roPw', state.pw.toFixed(4), true);
+        ro('roP',  state.P.toFixed(3), true);
+    }
+
+    function renderProcessBlock(stage, cfm) {
+        const block = document.getElementById('psyProcessBlock');
+        if (!stage) { block.style.display = 'none'; return; }
+        block.style.display = '';
+        document.getElementById('psyProcessLabel').textContent = PROCESS_LABEL[stage.key] || 'Process delta — across this stage';
+        const proc = computeProcess(stage, cfm);
+        const set = (id, txt) => {
+            const el = document.getElementById(id);
+            el.textContent = txt;
+            el.className = 'ps-value live';
+        };
+        set('pdDb', proc.dDb.toFixed(1));
+        set('pdW',  (proc.dW * GR_PER_LB).toFixed(1));
+        set('pdH',  proc.dH.toFixed(2));
+
+        const shrRow = document.getElementById('pdShrRow');
+        if (stage.type === 'cool' && proc.shr !== null && isFinite(proc.shr)) {
+            shrRow.style.display = '';
+            set('pdShr', proc.shr.toFixed(3));
+        } else {
+            shrRow.style.display = 'none';
+        }
+
+        const haveQ = proc.qTotal !== null;
+        document.getElementById('pdQtRow').style.display = haveQ ? '' : 'none';
+        document.getElementById('pdQsRow').style.display = haveQ ? '' : 'none';
+        document.getElementById('pdQlRow').style.display = haveQ ? '' : 'none';
+        if (haveQ) {
+            set('pdQt', (Math.abs(proc.qTotal) / 1000).toFixed(1));
+            set('pdQs', (Math.abs(proc.qSens) / 1000).toFixed(1));
+            set('pdQl', (Math.abs(proc.qLat) / 1000).toFixed(1));
+        }
+    }
+
+    function renderMaReadouts(maState) {
+        const set = (id, txt, live) => {
+            const el = document.getElementById(id);
+            el.textContent = txt;
+            el.className = live ? 'ps-value live' : 'ps-value muted';
+        };
+        if (maState && maState.ok) {
+            set('ma-tdb-out', maState.tdb.toFixed(1), true);
+            set('ma-w-out',   (maState.W * GR_PER_LB).toFixed(1), true);
+            set('ma-rh-out',  maState.rh.toFixed(1), true);
+        } else {
+            ['ma-tdb-out','ma-w-out','ma-rh-out'].forEach(id => set(id, '—', false));
+        }
+    }
+
+    // ── Main recompute — wires solver output to all UI surfaces ──
+    function psyRecompute() {
+        const chain = solveChain();
+        lastChain = chain;
+
+        updatePillsOff();
+        renderStageTable(chain);
+        renderMaReadouts(chain.results.ma);
+
+        const selRes = chain.results[selectedStep];
+        renderDetail(selRes && selRes.ok ? selRes : null, detailLabelFor(selectedStep, chain.results));
+
+        const stageKey = selectedStep;
+        const selStage = (stageKey === 'cc' || stageKey === 'hc' || stageKey === 'hum')
+                        && chain.results[stageKey].enabled
+                        ? chain.stages.find(s => s.key === stageKey)
+                        : null;
+        renderProcessBlock(selStage || null, chain.cfm);
+
+        const msgEl = document.getElementById('psyMsg');
+        if (chain.error) {
+            msgEl.textContent = chain.error;
             msgEl.style.color = 'var(--red)';
         } else {
-            ro('roDb', state.tdb.toFixed(1), true);
-            ro('roWb', state.twb.toFixed(1), true);
-            const dpOk = isFinite(state.tdp) && state.tdp > -60;
-            ro('roDp', dpOk ? state.tdp.toFixed(1) : '—', dpOk);
-            ro('roRh', state.rh.toFixed(1), true);
-            ro('roW',  (state.W * GR_PER_LB).toFixed(1), true);
-            ro('roH',  state.h.toFixed(2), true);
-            ro('roV',  state.v.toFixed(3), true);
-            ro('roPw', state.pw.toFixed(4), true);
-            ro('roP',  P.toFixed(3), true);
-            const z = parseFloat(document.getElementById('psyAlt').value) || 0;
-            msgEl.textContent = z === 0
-                ? `Sea level — ${P.toFixed(3)} psia.`
-                : `Altitude ${z.toLocaleString()} ft → ${P.toFixed(3)} psia.`;
+            msgEl.textContent = (chain.alt === 0 ? 'Sea level' : `Altitude ${chain.alt.toLocaleString()} ft`)
+                                + ` — ${chain.P.toFixed(3)} psia`
+                                + (chain.cfm !== null ? ` · ${chain.cfm.toLocaleString()} CFM` : '');
             msgEl.style.color = '';
         }
-        drawPsychChart();
-    }
 
-    // ── Set the point straight from a chart click/drag at (dry-bulb, humidity ratio) ──
-    function psySetFromChart(tdb, W) {
-        const P = pressFromAltitude(parseFloat(document.getElementById('psyAlt').value) || 0);
-        tdb = Math.max(TDB_MIN, Math.min(TDB_MAX, tdb));
-        const state = buildState(tdb, W, P);
-        // mirror the new point back into the input fields (in whatever "define by" mode is active)
-        document.getElementById('psyDb').value = tdb.toFixed(1);
-        const meta = SECOND_PROP[document.getElementById('psyMode').value];
-        const v = meta.fmt(state);
-        document.getElementById('psySecond').value = v === '' ? meta.def : v;
-        applyState(state, P);
+        drawPsychChart(chain);
     }
 
     // ──────────────────────────────────────────────────────────────────
-    // Chart drawing.  Colours come from the CSS custom properties so the
-    // chart tracks any palette change (same trick as the PID plot).
+    // Chart drawing — colours come from CSS custom properties so the
+    // chart tracks any palette change.
     // ──────────────────────────────────────────────────────────────────
-    let psyGeom = null;   // { padL, padT, w, h, X, Y } from the last draw — used to invert clicks
+    let psyGeom = null;  // { padL, padT, w, h, X, Y } from last draw
 
-    function drawPsychChart() {
+    function drawPsychChart(chain) {
         const canvas = document.getElementById('psyCanvas');
         if (!canvas) return;
         const cssW = canvas.clientWidth, cssH = canvas.clientHeight;
@@ -365,10 +918,14 @@
         ctx.clearRect(0, 0, cssW, cssH);
 
         const css = getComputedStyle(document.documentElement);
-        const v = (n, d) => css.getPropertyValue(n).trim() || d;
-        const cSurface = v('--surface', '#ffffff'), cBorder = v('--border', '#ccd7c8'),
-              cBorderF = v('--border-faint', '#e3e8df'), cDim = v('--text-dim', '#666e66'),
-              cAccent = v('--accent', '#43881c'), cBlue = v('--blue', '#1577b8');
+        const cv = (n, d) => css.getPropertyValue(n).trim() || d;
+        const cSurface  = cv('--surface',      '#ffffff'),
+              cBorder   = cv('--border',       '#ccd7c8'),
+              cBorderF  = cv('--border-faint', '#e3e8df'),
+              cDim      = cv('--text-dim',     '#666e66'),
+              cAccent   = cv('--accent',       '#43881c'),
+              cBlue     = cv('--blue',         '#1577b8'),
+              cHeat     = cv('--heat',         '#c8782a');
 
         ctx.fillStyle = cSurface;
         ctx.fillRect(0, 0, cssW, cssH);
@@ -376,7 +933,7 @@
         const padL = 14, padR = 50, padB = 30, padT = 16;
         const w = cssW - padL - padR, h = cssH - padT - padB;
         if (w <= 20 || h <= 20) return;
-        const P = psyP;
+        const P = chain.P;
         const X = t  => padL + (t - TDB_MIN) / (TDB_MAX - TDB_MIN) * w;
         const Y = ww => padT + h - ww / W_MAX * h;
         psyGeom = { padL, padT, w, h, X, Y };
@@ -399,21 +956,18 @@
             ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
             ctx.fillText(String(g), padL + w + 5, y);
         }
-        // border box
         ctx.strokeStyle = cBorder;
         ctx.strokeRect(padL, padT, w, h);
-        // axis titles
         ctx.fillStyle = cDim;
         ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
         ctx.fillText('Dry-bulb temperature · °F', padL + w / 2, cssH - 1);
         ctx.save();
         ctx.translate(cssW - 2, padT + h / 2);
-        ctx.rotate(-Math.PI / 2);                       // reads bottom-to-top, conventional for the right axis
+        ctx.rotate(-Math.PI / 2);
         ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
         ctx.fillText('Humidity ratio · gr/lb', 0, 0);
         ctx.restore();
 
-        // draw a polyline of [t, W] points, breaking wherever it leaves the chart box
         const curve = pts => {
             ctx.beginPath();
             let on = false;
@@ -428,7 +982,7 @@
             if (on) ctx.stroke();
         };
 
-        // constant wet-bulb / enthalpy lines (light dashed, sloping down to the right)
+        // constant wet-bulb (light dashed)
         ctx.strokeStyle = cBorder;
         ctx.setLineDash([3, 3]);
         for (const twb of [30, 40, 50, 60, 70, 80, 90]) {
@@ -444,9 +998,7 @@
             ctx.fillText(twb + '°', X(twb) - 3, Y(ww) - 2);
         }
 
-        // constant relative-humidity curves (light hairlines, rising to the right).
-        // Label each one where it crosses ~0.4·W_MAX — that's mid-chart and well clear of the
-        // right-axis tick numbers, and it spreads the labels nicely along the temperature axis.
+        // constant relative-humidity (light hairlines)
         ctx.strokeStyle = cBorder;
         const rhLblW = 0.4 * W_MAX;
         for (const rh of [20, 40, 60, 80]) {
@@ -467,7 +1019,6 @@
         for (let t = TDB_MIN; t <= TDB_MAX; t += 0.5) sat.push([t, satHumRatio(t, P)]);
         curve(sat);
         ctx.lineWidth = 1;
-        // "100% RH" label near where the saturation curve passes ~0.85·W_MAX
         let satLblT = null;
         for (let t = TDB_MIN; t <= TDB_MAX; t += 0.5) { if (satHumRatio(t, P) >= 0.85 * W_MAX) { satLblT = t; break; } }
         if (satLblT != null) {
@@ -475,46 +1026,168 @@
             ctx.fillText('100% RH', X(satLblT) + 4, Y(satHumRatio(satLblT, P)) + 2);
         }
 
-        // the state point
-        if (psyState && psyState.ok) {
-            const t = psyState.tdb, ww = psyState.W;
-            if (t >= TDB_MIN && t <= TDB_MAX && ww >= 0 && ww <= W_MAX) {
-                const px = X(t), py = Y(ww);
-                ctx.strokeStyle = cBlue; ctx.setLineDash([4, 3]); ctx.lineWidth = 1;
-                ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px, padT + h); ctx.stroke();
-                ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(padL + w, py); ctx.stroke();
-                ctx.setLineDash([]);
-                ctx.beginPath(); ctx.arc(px, py, 6, 0, 2 * Math.PI);
-                ctx.fillStyle = cAccent; ctx.fill();
-                ctx.lineWidth = 2; ctx.strokeStyle = cSurface; ctx.stroke();
-                ctx.lineWidth = 1; ctx.strokeStyle = cAccent; ctx.stroke();
+        // ────────── process segments ──────────
+        const inBounds = s => s && s.ok && s.tdb >= TDB_MIN && s.tdb <= TDB_MAX && s.W >= 0 && s.W <= W_MAX;
+        const drawSeg = (a, b, color, dashed) => {
+            if (!inBounds(a) || !inBounds(b)) return;
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2.5;
+            if (dashed) ctx.setLineDash([5, 4]); else ctx.setLineDash([]);
+            ctx.beginPath();
+            ctx.moveTo(X(a.tdb), Y(a.W));
+            ctx.lineTo(X(b.tdb), Y(b.W));
+            ctx.stroke();
+            ctx.setLineDash([]);
+            ctx.lineWidth = 1;
+        };
+
+        const r = chain.results;
+        // mixing: OA→MA and RA→MA (gray)
+        if (r.ma.ok) {
+            drawSeg(r.oa, r.ma, cDim, false);
+            drawSeg(r.ra, r.ma, cDim, false);
+        }
+        // coil & humidifier segments — colour by process type
+        for (const s of chain.stages) {
+            const color = s.type === 'cool' ? cBlue : s.type === 'heat' ? cHeat : cAccent;
+            drawSeg(s.inlet, s.outlet, color, s.type === 'humid');
+        }
+
+        // ────────── node dots & labels ──────────
+        // Visible nodes: OA, RA, MA always; CC/HC/HUM when their stage is enabled.
+        // SA collapses onto the last enabled node when they share coordinates
+        // (the common case — supply air *is* whatever leaves the last coil) and
+        // its label is folded into that node's label as "X / SA". Otherwise SA
+        // is its own dot.
+        const visibleKeys = ['oa', 'ra', 'ma'];
+        if (r.cc.enabled)  visibleKeys.push('cc');
+        if (r.hc.enabled)  visibleKeys.push('hc');
+        if (r.hum.enabled) visibleKeys.push('hum');
+        const lastUpstream = visibleKeys[visibleKeys.length - 1];
+        const last = r[lastUpstream];
+        const saCoincides = last && last.ok && r.sa.ok
+                            && Math.abs(last.tdb - r.sa.tdb) <= 0.05
+                            && Math.abs(last.W   - r.sa.W)   <= 1e-6;
+        if (!saCoincides) visibleKeys.push('sa');
+
+        // crosshair for the selected node (drawn first, behind dots)
+        const sel = r[selectedStep];
+        if (inBounds(sel)) {
+            ctx.strokeStyle = cBlue;
+            ctx.setLineDash([4, 3]);
+            ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(X(sel.tdb), Y(sel.W)); ctx.lineTo(X(sel.tdb), padT + h); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(X(sel.tdb), Y(sel.W)); ctx.lineTo(padL + w, Y(sel.W)); ctx.stroke();
+            ctx.setLineDash([]);
+        }
+
+        for (const key of visibleKeys) {
+            const s = r[key];
+            if (!inBounds(s)) continue;
+            const px = X(s.tdb), py = Y(s.W);
+            const isSel = (key === selectedStep);
+            const isSource = (key === 'oa' || key === 'ra');
+            // dot
+            ctx.beginPath();
+            ctx.arc(px, py, isSel ? 6 : 4.5, 0, 2 * Math.PI);
+            ctx.fillStyle = isSel ? cAccent : cSurface;
+            ctx.fill();
+            ctx.lineWidth = isSel ? 2 : 1.6;
+            ctx.strokeStyle = cAccent;
+            ctx.stroke();
+            ctx.lineWidth = 1;
+            // outer source-handle ring — visual cue that OA / RA are draggable
+            if (isSource) {
+                ctx.beginPath();
+                ctx.arc(px, py, 9, 0, 2 * Math.PI);
+                ctx.strokeStyle = cAccent;
+                ctx.globalAlpha = 0.35;
+                ctx.stroke();
+                ctx.globalAlpha = 1;
+            }
+            // labels: OA, RA, SA always; intermediates only when selected.
+            // When SA coincides with the last upstream node, fold "/ SA" into
+            // that node's label instead of dropping the supply-air callout.
+            const alwaysLabel = (key === 'oa' || key === 'ra' || key === 'sa');
+            const showOwnLabel = alwaysLabel || isSel;
+            let label = showOwnLabel ? STEP_SHORT[key] : null;
+            if (saCoincides && key === lastUpstream) {
+                label = label ? (label + ' / SA') : 'SA';
+            }
+            if (label) {
+                ctx.fillStyle = cAccent;
+                ctx.font = "11px 'IBM Plex Mono', monospace";
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'bottom';
+                ctx.fillText(label, px + (isSource ? 11 : 8), py - 7);
             }
         }
     }
 
-    // ── Click / drag on the chart ──
-    function psyPointToState(ev) {
-        if (!psyGeom) return;
-        const { padL, padT, w, h, X, Y } = psyGeom;
-        const tdb = TDB_MIN + (ev.offsetX - padL) / w * (TDB_MAX - TDB_MIN);
-        let W = (padT + h - ev.offsetY) / h * W_MAX;
-        const P = pressFromAltitude(parseFloat(document.getElementById('psyAlt').value) || 0);
-        W = Math.max(0, Math.min(W, satHumRatio(Math.max(TDB_MIN, Math.min(TDB_MAX, tdb)), P)));
-        psySetFromChart(tdb, W);
+    // ──────────────────────────────────────────────────────────────────
+    // Drag — only OA / RA. Hit-test the source dots, then translate the
+    // pointer to (tdb, W) and write back into the editor for whichever
+    // node is being dragged (preserving its current "Define by" mode).
+    // ──────────────────────────────────────────────────────────────────
+    function setSourceFromChart(prefix, tdb, W) {
+        if (!lastChain) return;
+        const P = lastChain.P;
+        tdb = Math.max(TDB_MIN, Math.min(TDB_MAX, tdb));
+        W   = Math.max(0, Math.min(W, satHumRatio(tdb, P)));
+        const tempState = buildState(tdb, W, P);
+        document.getElementById(`${prefix}-tdb`).value = tdb.toFixed(1);
+        const mode = document.getElementById(`${prefix}-mode`).value;
+        const meta = SECOND_PROP[mode];
+        const v = meta.fmt(tempState);
+        document.getElementById(`${prefix}-second`).value = (v === '' ? meta.def : v);
+        psyRecompute();
     }
+
+    function hitTestSource(ev) {
+        if (!psyGeom || !lastChain) return null;
+        const { X, Y } = psyGeom;
+        const px = ev.offsetX, py = ev.offsetY;
+        let best = null;
+        for (const key of ['oa', 'ra']) {
+            const s = lastChain.results[key];
+            if (!s || !s.ok) continue;
+            const d = Math.hypot(X(s.tdb) - px, Y(s.W) - py);
+            if (d <= 18 && (!best || d < best.d)) best = { key, d };
+        }
+        return best ? best.key : null;
+    }
+
     (function () {
         const c = document.getElementById('psyCanvas');
-        let dragging = false;
-        c.addEventListener('pointerdown', e => { dragging = true; c.setPointerCapture(e.pointerId); psyPointToState(e); });
-        c.addEventListener('pointermove', e => { if (dragging) { e.preventDefault(); psyPointToState(e); } });
-        const stop = () => { dragging = false; };
+        let dragKey = null;
+        const moveTo = (ev) => {
+            if (!psyGeom || !dragKey) return;
+            const { padL, padT, w, h } = psyGeom;
+            const tdb = TDB_MIN + (ev.offsetX - padL) / w * (TDB_MAX - TDB_MIN);
+            const W   = (padT + h - ev.offsetY) / h * W_MAX;
+            setSourceFromChart(dragKey, tdb, W);
+        };
+        c.addEventListener('pointerdown', e => {
+            const hit = hitTestSource(e);
+            if (!hit) return;
+            dragKey = hit;
+            selectStep(hit);
+            c.setPointerCapture(e.pointerId);
+            moveTo(e);
+        });
+        c.addEventListener('pointermove', e => {
+            if (!dragKey) return;
+            e.preventDefault();
+            moveTo(e);
+        });
+        const stop = () => { dragKey = null; };
         c.addEventListener('pointerup', stop);
         c.addEventListener('pointercancel', stop);
     })();
 
     // ── Init ──
     psyRecompute();
-    window.addEventListener('resize', drawPsychChart);
+    window.addEventListener('resize', () => drawPsychChart(lastChain));
 </script>
 
 </body>
