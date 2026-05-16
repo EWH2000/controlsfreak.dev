@@ -1,48 +1,12 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Load Piping — controlsfreak.dev</title>
-    <meta name="description" content="Two-way vs three-way valves at hydronic loads — variable vs constant system flow, when each one fits, and how the choice shapes the rest of the loop.">
-    <meta property="og:title" content="Load Piping — controlsfreak.dev">
-    <meta property="og:description" content="Two-way vs three-way valves at hydronic loads — variable vs constant system flow, when each one fits, and how the choice shapes the rest of the loop.">
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://controlsfreak.dev/education/load-piping.html">
-    <meta property="og:image" content="https://controlsfreak.dev/assets/og-image.png">
-    <meta property="og:site_name" content="controlsfreak.dev">
-    <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
-    <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon-180.png">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&family=Overpass:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/styles.css">
-    <script>(function(){try{var u=localStorage.getItem('cf_units');document.documentElement.dataset.units=u==='metric'?'metric':'us';}catch(e){}})();</script>
-    <style>
-        /* Diagram + legend + flow-active rules moved to styles.css as
-           .edu-svg / .edu-legend; this page has no page-specific styles
-           beyond the shared design system. */
-    </style>
-</head>
-<body>
+---
+title: Load Piping — controlsfreak.dev
+description: Two-way vs three-way valves at hydronic loads — variable vs constant system flow, when each one fits, and how the choice shapes the rest of the loop.
+canonical: https://controlsfreak.dev/education/load-piping.html
+nav: education
+---
+{% extends "layouts/page.njk" %}
 
-<nav class="site-nav">
-    <a class="site-nav-brand" href="/">controlsfreak<span>.dev</span></a>
-    <div class="site-nav-links">
-        <a href="/">Home</a>
-        <a href="/tools/">Tools</a>
-        <a href="/education/" class="active">Education</a>
-        <a href="/contact.html">Contact</a>
-        <span class="units-toggle">
-            <span class="units-label">Units:</span>
-            <span class="units-toggle-pill">
-                <button class="units-btn" data-units="us" aria-pressed="true">US</button>
-                <button class="units-btn" data-units="metric" aria-pressed="false">Metric</button>
-            </span>
-        </span>
-    </div>
-</nav>
-
+{% block content %}
 <main>
 
     <div class="section-header">
@@ -460,14 +424,10 @@
     <a class="back-link" href="/education/">← Back to Education</a>
 
 </main>
+{% endblock %}
 
+{% block scripts %}
 <script src="/scripts/units.js"></script>
-
-<footer>
-    <span class="footer-text">controlsfreak.dev — open tools for controls professionals</span>
-    <span class="footer-text">v1.3 · 2026</span>
-</footer>
-
 <!-- Particle-flow animation over the diagrams. Classic script (not a
      module), loaded before the inline init below. Engine respects
      prefers-reduced-motion and is a no-op on pages without [data-flow]
@@ -479,5 +439,4 @@
 <script>
     FlowEngine.init();
 </script>
-</body>
-</html>
+{% endblock %}
