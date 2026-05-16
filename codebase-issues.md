@@ -20,7 +20,7 @@ rest live here until someone decides what to do about them.
 
 ## Open
 
-### 1. Perpetual `setInterval` timers in widgets that don't always need them
+### 1. Perpetual `setInterval` timers in widgets that don't always need them *(addressed 2026-05-16)*
 
 Three widgets fire `setInterval` callbacks forever once the page
 loads:
