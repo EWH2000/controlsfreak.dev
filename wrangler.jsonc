@@ -5,10 +5,15 @@
   "main": "src/worker.js",
   "compatibility_date": "2025-05-10",
   "assets": {
-    "directory": "./html",
+    // Built by 11ty from html/ (see .eleventy.js). Cloudflare Workers
+    // Build dashboard runs `npm install && npm run build` to produce
+    // _site/ in CI; deploys serve from there. Source files in html/
+    // (including _includes/ and html.11tydata.js) stay out of the
+    // public URL space because 11ty skips _-prefixed paths.
+    "directory": "./_site",
     // Lets the Worker reference env.ASSETS to serve static files.
     "binding": "ASSETS",
-    // Clean URLs: /contact serves html/contact.html.
+    // Clean URLs: /contact serves contact.html.
     "html_handling": "auto-trailing-slash"
   }
 }
