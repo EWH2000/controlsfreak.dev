@@ -1,43 +1,12 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>controlsfreak.dev — BMS Field Reference</title>
-    <meta name="description" content="Free and open tools and educational concepts for HVAC controls professionals, aspiring and experienced.">
-    <meta property="og:title" content="controlsfreak.dev — BMS Field Reference">
-    <meta property="og:description" content="Free and open tools and educational concepts for HVAC controls professionals, aspiring and experienced.">
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://controlsfreak.dev/">
-    <meta property="og:image" content="https://controlsfreak.dev/assets/og-image.png">
-    <meta property="og:site_name" content="controlsfreak.dev">
-    <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
-    <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon-180.png">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&family=Overpass:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/styles.css">
-    <script>(function(){try{var u=localStorage.getItem('cf_units');document.documentElement.dataset.units=u==='metric'?'metric':'us';}catch(e){}})();</script>
-</head>
-<body>
+---
+title: controlsfreak.dev — BMS Field Reference
+description: Free and open tools and educational concepts for HVAC controls professionals, aspiring and experienced.
+canonical: https://controlsfreak.dev/
+nav: home
+---
+{% extends "layouts/page.njk" %}
 
-<nav class="site-nav">
-    <a class="site-nav-brand" href="/">controlsfreak<span>.dev</span></a>
-    <div class="site-nav-links">
-        <a href="/" class="active">Home</a>
-        <a href="/tools/">Tools</a>
-        <a href="/education/">Education</a>
-        <a href="/contact.html">Contact</a>
-        <span class="units-toggle">
-            <span class="units-label">Units:</span>
-            <span class="units-toggle-pill">
-                <button class="units-btn" data-units="us" aria-pressed="true">US</button>
-                <button class="units-btn" data-units="metric" aria-pressed="false">Metric</button>
-            </span>
-        </span>
-    </div>
-</nav>
-
+{% block content %}
 <section class="hero">
     <div class="hero-eyebrow">BMS Field Reference</div>
     <h1>Tools for those in controls,<br><em>built for the field.</em></h1>
@@ -83,7 +52,7 @@
                 Hi, I'm a controls programmer based in the Northeast U.S. This is a side project I'm working on while exploring vibe coding. There's a genuine gap in easy reference websites and educational resources for this trade. This site started as just as a way to have some easy reference tools in once place, but has expanded to include much more. Teaching those in the trade has been a passion of mine since I began to grow my own knowledge. With this project I aim to do that with a broader audience. I try to verify the accuracy of everything on this site the best that I can, but if anything in incorrect, please contact me and I will ensure I fix the accuracy issue. If there are any specific tools or topics you want to see covered, I want to hear about it!
             </p>
             <p style="font-size:1rem;line-height:1.85;color:var(--text);margin-top:1.25rem;">
-                All anecdotes on this site are real things I've encountered, not AI generated.
+                All anecdotes on this site are real things I've encountered, not AI generated. Although it may refine my writing for some of them.
             </p>
             <p style="font-family:var(--mono);font-size:0.72rem;color:var(--text-dim);margin-top:1.25rem;">
                 Bug reports, tool requests, or feedback — <a href="/contact.html" style="color:var(--accent);">get in touch</a>.
@@ -92,13 +61,8 @@
     </div>
 
 </main>
+{% endblock %}
 
+{% block scripts %}
 <script src="/scripts/units.js"></script>
-
-<footer>
-    <span class="footer-text">controlsfreak.dev — open tools for controls professionals</span>
-    <span class="footer-text">v1.3 · 2026</span>
-</footer>
-
-</body>
-</html>
+{% endblock %}
