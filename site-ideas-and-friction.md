@@ -1681,6 +1681,16 @@ patterns propagate to the other tools.
 
 ## Site architecture — the "no build step" question
 
+> **Note (2026-05-16):** This section is preserved as the
+> historical record of the earlier stance, when "no build step"
+> was load-bearing and a static site generator was considered
+> future-cleanup. After the page count grew to 17 and the
+> head / nav duplication cost stopped being tolerable, the
+> decision was revised: Eleventy (11ty) was adopted as a thin
+> templating layer. See `codebase-issues.md` entry #4 for the
+> revised decision and migration progress. The text below
+> documents the stance at the time it was written.
+
 `CLAUDE.md` describes the project as "no framework, no build step,
 hand-written" — which is two separate properties tangled together.
 

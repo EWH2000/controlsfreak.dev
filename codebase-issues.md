@@ -135,27 +135,78 @@ support so the existing GitHub auto-deploy keeps working.
 
 Scope of the migration (Block B):
 
-- New top-level `_includes/` with `head.njk`, `nav.njk`,
-  `footer.njk`, and a `layouts/page.njk` layout.
-- Each existing page gains YAML frontmatter (`title`,
-  `description`, `canonical`, `nav`, optional `extraHead`) and its
-  `<head>` + `.site-nav` + `<footer>` collapse into includes.
-- Per-page inline `<style>` / `<script>` blocks survive verbatim
-  via a `{% block extra %}` slot in the layout.
+- `html/_includes/` holds `head.njk`, `nav.njk`, `footer.njk`, and a
+  `layouts/page.njk` layout.
+- Each page gains YAML frontmatter (`title`, `description`,
+  `canonical`, `nav`) and uses Nunjucks `{% extends
+  "layouts/page.njk" %}` rather than 11ty's `layout:` convenience —
+  needed so pages can fill multiple named slots in the layout.
+- The layout exposes three named blocks: `{% block head %}` for
+  `<head>` additions (page-specific inline `<style>`, third-party
+  loader scripts), `{% block content %}` for the page body
+  (everything between nav and footer), `{% block scripts %}` for
+  end-of-body scripts.
 - Output directory `_site/` (gitignored); `wrangler.jsonc`'s
-  `assets.directory` updates to point at it.
+  `assets.directory` flips from `./html` to `./_site` in Step 5.
 - `html/scripts/`, `html/styles.css`, `html/assets/`,
-  `html/robots.txt`, `html/sitemap.xml` pass through unchanged.
+  `html/robots.txt`, `html/sitemap.xml` pass through unchanged via
+  `addPassthroughCopy()` in `.eleventy.js`.
 - Anchor `.html` extensions preserved by keeping source files as
   `.html` (with `htmlTemplateEngine: "njk"` so templating still
-  runs).
-- Local dev shifts from `python3 -m http.server` to
-  `npx @11ty/eleventy --serve`.
-- Playwright smoke tests stay valid (output HTML matches today's
-  structure); they just run against the new dev server port.
+  runs) and a directory data file (`html/html.11tydata.js`) that
+  overrides 11ty's default pretty-URL permalink.
+- `setNunjucksEnvironmentOptions({ trimBlocks: true,
+  lstripBlocks: true })` keeps empty `{% block %}{% endblock %}`
+  pairs from leaving stray whitespace in rendered HTML.
+- Dev command: `npm run dev` (= `eleventy --serve --port=8000`).
+  Test command: serve `_site/` with `python3 -m http.server 8000
+  --directory _site` and run Playwright as before.
 
-Detail planning lives outside this file — see the migration plan
-when it lands.
+**Progress:**
+
+- 2026-05-16 — Step 1 (f4031f8): 11ty pipeline standing up.
+  `.eleventy.js`, `package.json` scripts (build/dev/test), the
+  `html.11tydata.js` permalink override, `_site/` gitignored,
+  `@11ty/eleventy ^3.0.0` installed. Verified locally: `npm run
+  build` produces a 30-file `_site/` byte-identical to `html/`.
+- 2026-05-16 — Step 2 (6f1c708) and Step 4 Batch 1 (e6d5835):
+  layout + partials written; `index.html`, `contact.html`,
+  `tools/index.html`, `education/index.html` converted to template
+  form. Multi-slot mechanism (`{% block head %}` /
+  `{% block content %}` / `{% block scripts %}`) exercised by
+  contact.html.
+- 2026-05-16 — **Emergency revert (4ea594d)**: the four templated
+  pages restored to pre-conversion HTML. Production was serving
+  the raw template source (visible frontmatter,
+  `{% extends %}` directives, no `<head>` / styles.css / nav)
+  because the Cloudflare Workers Build dashboard was never
+  configured to run the build step in CI — wrangler.jsonc still
+  points at `./html`, and Cloudflare was serving the templated
+  source files directly. The migration infra stays in place,
+  dormant.
+
+**Migration is paused.** Root cause was a planning gap — the
+deploy-pipeline configuration was scheduled as Step 5 (after page
+conversion), but should have been a hard prerequisite. The revised
+sequencing below corrects this.
+
+**Revised step ordering (use this on resume):**
+
+1. Configure Cloudflare Workers Build dashboard with build
+   command `npm install && npm run build`. **Human action —
+   dashboard only; not in this repo.**
+2. Flip `wrangler.jsonc` `assets.directory` from `./html` to
+   `./_site`.
+3. Push and verify production serves the built `_site/`. At this
+   point no pages are templated yet, so `_site/` is byte-identical
+   to `html/` — the live site should look unchanged. Smoke-test
+   to confirm the build step actually ran in CI.
+4. Only after the above verifies, re-apply the four conversions
+   (cherry-pick 6f1c708 and e6d5835, or redo them). Continue
+   with Batch 2 (6 education content pages), Batch 3 (6 simpler
+   tools), Batch 4 (psychrometric-chart).
+5. Step 6 (CLAUDE.md / README.md comprehensive rewrite) and
+   Step 7 (cleanup) after all pages converted.
 
 ### 5. Widget chrome CSS consolidation
 
