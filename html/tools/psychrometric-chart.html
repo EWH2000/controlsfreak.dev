@@ -1,23 +1,12 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Psychrometric Chart — controlsfreak.dev</title>
-    <meta name="description" content="Walk an AHU through psychrometric processes — mix OA and RA, then cool, heat, and humidify. Drag the source points; the rest follows from the editor.">
-    <meta property="og:title" content="Psychrometric Chart — controlsfreak.dev">
-    <meta property="og:description" content="Walk an AHU through psychrometric processes — mix OA and RA, then cool, heat, and humidify. Drag the source points; the rest follows from the editor.">
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://controlsfreak.dev/tools/psychrometric-chart.html">
-    <meta property="og:image" content="https://controlsfreak.dev/assets/og-image.png">
-    <meta property="og:site_name" content="controlsfreak.dev">
-    <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
-    <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon-180.png">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&family=Overpass:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/styles.css">
-    <script>(function(){try{var u=localStorage.getItem('cf_units');document.documentElement.dataset.units=u==='metric'?'metric':'us';}catch(e){}})();</script>
+---
+title: Psychrometric Chart — controlsfreak.dev
+description: Walk an AHU through psychrometric processes — mix OA and RA, then cool, heat, and humidify. Drag the source points; the rest follows from the editor.
+canonical: https://controlsfreak.dev/tools/psychrometric-chart.html
+nav: tools
+---
+{% extends "layouts/page.njk" %}
+
+{% block head %}
     <style>
         /* Page-specific: a draggable psych chart with a process train needs more
            room than the standard 880px; this page widens the workspace to 1280
@@ -119,26 +108,9 @@
             padding: 0 0 0.4rem 0;
         }
     </style>
-</head>
-<body>
+{% endblock %}
 
-<nav class="site-nav">
-    <a class="site-nav-brand" href="/">controlsfreak<span>.dev</span></a>
-    <div class="site-nav-links">
-        <a href="/">Home</a>
-        <a href="/tools/" class="active">Tools</a>
-        <a href="/education/">Education</a>
-        <a href="/contact.html">Contact</a>
-        <span class="units-toggle">
-            <span class="units-label">Units:</span>
-            <span class="units-toggle-pill">
-                <button class="units-btn" data-units="us" aria-pressed="true">US</button>
-                <button class="units-btn" data-units="metric" aria-pressed="false">Metric</button>
-            </span>
-        </span>
-    </div>
-</nav>
-
+{% block content %}
 <main>
 
     <div class="section-header">
@@ -387,14 +359,10 @@
     <a class="back-link" href="/tools/">← All tools</a>
 
 </main>
+{% endblock %}
 
+{% block scripts %}
 <script src="/scripts/units.js"></script>
-
-<footer>
-    <span class="footer-text">controlsfreak.dev — open tools for controls professionals</span>
-    <span class="footer-text">v1.3 · 2026</span>
-</footer>
-
 <script>
     // ──────────────────────────────────────────────────────────────────
     // Psychrometrics — US customary units throughout:
@@ -1383,5 +1351,4 @@
     psyRecompute();
     window.addEventListener('resize', () => drawPsychChart(lastChain));
 </script>
-</body>
-</html>
+{% endblock %}
