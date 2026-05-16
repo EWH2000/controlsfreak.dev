@@ -111,7 +111,7 @@ JS-patterns section. Lands as part of Block C (post-migration
 cleanup) so handlers are wired against the templated source, not
 the soon-to-be-replaced HTML.
 
-### 4. Per-page `<head>` boilerplate duplication
+### 4. Per-page `<head>` boilerplate duplication *(addressed 2026-05-16)*
 
 All 17 pages have near-identical `<head>` sections: 3 favicon links,
 Google Fonts preconnect + load, the units-bootstrap inline script,
@@ -188,14 +188,32 @@ Scope of the migration (Block B):
   `/_includes/*` URLs now 404 instead of 200, site renders
   unchanged); Step 2 + Batch 1 conversions re-applied (c66e6a1).
   **4 of 17 pages templated** and confirmed live.
+- 2026-05-16 — Step 4 Batch 2 (7a63bec): 6 education content pages
+  converted (`pid-basics`, `hydronic-loops`, `load-piping`, `vfds`,
+  `pump-control`, `balancing`). **10 of 17.**
+- 2026-05-16 — Step 4 Batch 3 (1209e1e): 6 simpler tools converted
+  (`signal-scaling`, `bacnet-ip-converter`, `modbus-register-viewer`,
+  `thermistor-calculator`, `pid-tuner`, `vfd-mock`). Caught one
+  silent NBSP normalization on `signal-scaling.html` (4 NBSPs in the
+  inline script collapsed to ASCII space during Read→Write); patched
+  via `sed -i` with literal `\xc2\xa0`. Audited the other 15 pages —
+  no NBSP drift elsewhere. **16 of 17.**
+- 2026-05-16 — Step 4 Batch 4 (bda6c8b): `psychrometric-chart`
+  converted — the last and largest single-page conversion (~1387
+  lines, ~50KB inline JS untouched per #6). **17 of 17 templated
+  and live.**
+- 2026-05-16 — Step 6 (959750a): `CLAUDE.md` and `README.md`
+  rewritten for the templated layout. Migration banner dropped,
+  "no build step" framing replaced with "minimal 11ty build
+  templates the chrome only", new sections cover the partials,
+  layout blocks, frontmatter fields, and the gotchas that surfaced
+  during migration (HTML autoescape on `{{ description }}`,
+  column-4 indent for block head, NBSP-on-Read→Write drift). The
+  "Adding a new tool" walkthrough now starts from frontmatter.
 
-**Remaining:** Batch 2 (6 education content pages — `pid-basics`,
-`hydronic-loops`, `load-piping`, `vfds`, `pump-control`,
-`balancing`) → Batch 3 (6 simpler tools — `signal-scaling`,
-`bacnet-ip-converter`, `modbus-register-viewer`,
-`thermistor-calculator`, `pid-tuner`, `vfd-mock`) → Batch 4
-(`psychrometric-chart`) → Step 6 (CLAUDE.md / README.md
-comprehensive rewrite) → Step 7 (cleanup).
+Migration complete. Block C (codebase-issues #2, #3, #5) is the
+next forcing function and was deliberately deferred to land
+against the templated source.
 
 ### 5. Widget chrome CSS consolidation
 
