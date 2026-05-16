@@ -27,7 +27,13 @@ async function handleContact(request, env) {
         return json({ ok: false, error: "Could not read the form data." }, 400);
     }
 
-    const field = (name) => (form.get(name) || "").toString();
+    // formData.get returns string | File | null. The form has no file inputs,
+    // so a File here would be from a hand-crafted POST — coerce-to-empty so
+    // it can't sneak through as "[object File]".
+    const field = (name) => {
+        const v = form.get(name);
+        return typeof v === "string" ? v : "";
+    };
 
     // ── Honeypot ──────────────────────────────────────────────
     // The "website" field is hidden from humans (off-screen in CSS). If it
@@ -43,7 +49,7 @@ async function handleContact(request, env) {
     const message = field("message").trim();
     const token = field("cf-turnstile-response");
 
-    if (!email || !EMAIL_RE.test(email)) {
+    if (!email || email.length > 200 || !EMAIL_RE.test(email)) {
         return json({ ok: false, error: "Please enter a valid email address." }, 400);
     }
     if (!message || message.length > 5000) {

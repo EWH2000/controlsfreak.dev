@@ -193,6 +193,7 @@
 </main>
 
 <script src="/scripts/units.js"></script>
+<script src="/scripts/ui.js"></script>
 
 <footer>
     <span class="footer-text">controlsfreak.dev — open tools for controls professionals</span>
@@ -200,31 +201,8 @@
 </footer>
 
 <script>
-    // Tabs are scoped to the tool-card the clicked button lives in.
-    function switchTab(name, btn) {
-        const card = btn.closest('.tool-card');
-        card.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
-        card.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        document.getElementById('tab-' + name).classList.add('active');
-        btn.classList.add('active');
-    }
-
-    // Copy one or more readout values to the clipboard, joined by `sep`
-    // ('' = a single value). Empty "—" placeholders are dropped, so e.g.
-    // "Copy IP : port" on an address-only result just copies the IP. No-op
-    // if there's nothing real to copy, or while the button is already
-    // showing its "copied!" flash.
-    function copyReadouts(btn, sep, ...ids) {
-        if (btn.classList.contains('copied')) return;
-        const parts = ids.map(id => document.getElementById(id).textContent).filter(v => v && v !== '—');
-        if (!parts.length) return;
-        navigator.clipboard.writeText(parts.join(sep)).then(() => {
-            const orig = btn.textContent;
-            btn.textContent = 'copied!';
-            btn.classList.add('copied');
-            setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 1800);
-        });
-    }
+    // switchTab(name, btn) and copyReadouts(btn, sep, ...ids) come from
+    // /scripts/ui.js — see that file for documentation.
 
     // ─────────────────────────────────────────────
     // BACnet/IP Hex Converter

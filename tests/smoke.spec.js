@@ -21,6 +21,7 @@ const PAGES = [
     { name: 'education — load piping', url: 'http://localhost:8000/education/load-piping.html' },
     { name: 'education — vfds',       url: 'http://localhost:8000/education/vfds.html' },
     { name: 'education — pump control', url: 'http://localhost:8000/education/pump-control.html' },
+    { name: 'education — balancing',   url: 'http://localhost:8000/education/balancing.html' },
     { name: 'contact',                url: 'http://localhost:8000/contact.html' },
 ];
 
@@ -144,6 +145,7 @@ test('education hub links to its pages', async ({ page }) => {
     expect(hrefs).toContain('/education/load-piping.html');
     expect(hrefs).toContain('/education/vfds.html');
     expect(hrefs).toContain('/education/pump-control.html');
+    expect(hrefs).toContain('/education/balancing.html');
 });
 
 test('hydronic loops page renders its three SVG schematics', async ({ page }) => {
@@ -269,4 +271,75 @@ test('vfds page renders its diagrams and the run/speed widget is wired up', asyn
     await page.click('#vfdTryNetwork');
     await page.click('#vfdNetRun');
     await expect(page.locator('#vfdState')).toHaveText(/RUNNING/);
+});
+
+test('balancing page renders riser, widget compares three branches, anecdote reveals at low Δp', async ({ page }) => {
+    await page.goto('http://localhost:8000/education/balancing.html');
+
+    // Riser is the main pipe-flow diagram (.edu-svg + flow-engine animated).
+    // Per-valve symbol diagrams below are .bal-valve-fig wrappers, not edu-svg.
+    await expect(page.locator('main svg.edu-svg')).toHaveCount(1);
+    // Named equipment groups on the riser — four floor valves + the pump.
+    await expect(page.locator('#bal-riser-pump')).toHaveCount(1);
+    await expect(page.locator('#bal-riser-f1-valve')).toHaveCount(1);
+    await expect(page.locator('#bal-riser-f4-valve')).toHaveCount(1);
+    await expect(page.locator('#bal-riser-f4-coil')).toHaveCount(1);
+
+    // Widget — initial state at design Δp (20 ft) puts all three branches at design flow.
+    await expect(page.locator('#balCbvQ')).toHaveText('30.0');
+    await expect(page.locator('#balAbvQ')).toHaveText('30.0');
+    await expect(page.locator('#balPicvQ')).toHaveText('30.0');
+    await expect(page.locator('#balBchCbv')).toHaveAttribute('data-state', 'holding');
+    await expect(page.locator('#balBchAbv')).toHaveAttribute('data-state', 'holding');
+    await expect(page.locator('#balBchPicv')).toHaveAttribute('data-state', 'holding');
+
+    // Drop Δp to 2 ft — CBV starves (~9.5 GPM, 32% of design), ABV falls into
+    // orifice mode and also starves (~24.5 GPM, 82%), PICV holds at exactly
+    // its minimum operating Δp (30 GPM, holding).
+    await page.locator('#balDpSlider').evaluate((el) => {
+        el.value = '2';
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await expect(page.locator('#balBchCbv')).toHaveAttribute('data-state', 'starved');
+    await expect(page.locator('#balBchAbv')).toHaveAttribute('data-state', 'starved');
+    await expect(page.locator('#balBchPicv')).toHaveAttribute('data-state', 'holding');
+
+    // Anecdote reveal — Δp ≤ 4 ft triggers it; 2 is already past the threshold.
+    await expect(page.locator('#balAnecdote')).toBeVisible();
+
+    // Push Δp to 60 ft — CBV blows past design (~52 GPM, 173%) and goes OVER;
+    // ABV holds (its compensation range covers 3-50, then orifice above; at 60 ft
+    // outside compensation ABV is at ~33 GPM / 110% which is still inside the
+    // ±15% holding band). PICV holds.
+    await page.locator('#balDpSlider').evaluate((el) => {
+        el.value = '60';
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await expect(page.locator('#balBchCbv')).toHaveAttribute('data-state', 'over');
+    await expect(page.locator('#balBchPicv')).toHaveAttribute('data-state', 'holding');
+
+    // Anecdote stays pinned once shown (extreme-state reward semantic).
+    await expect(page.locator('#balAnecdote')).toBeVisible();
+
+    // Boundary check: at Δp = 3 ft, ABV is exactly at the low edge of its
+    // compensation range and should hold cleanly at design (no off-by-one
+    // into the orifice branch). CBV is still starved (~12 GPM / 39%).
+    await page.locator('#balDpSlider').evaluate((el) => {
+        el.value = '3';
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await expect(page.locator('#balBchAbv')).toHaveAttribute('data-state', 'holding');
+    await expect(page.locator('#balAbvQ')).toHaveText('30.0');
+    await expect(page.locator('#balBchCbv')).toHaveAttribute('data-state', 'starved');
+
+    // Boundary check: at Δp = 50 ft, ABV is at the upper edge — still
+    // holding (no off-by-one into the high-side orifice branch). CBV is
+    // well into OVER territory by here.
+    await page.locator('#balDpSlider').evaluate((el) => {
+        el.value = '50';
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await expect(page.locator('#balBchAbv')).toHaveAttribute('data-state', 'holding');
+    await expect(page.locator('#balAbvQ')).toHaveText('30.0');
+    await expect(page.locator('#balBchCbv')).toHaveAttribute('data-state', 'over');
 });

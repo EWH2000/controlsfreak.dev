@@ -85,6 +85,13 @@ techs new to the industry and anyone wanting a refresh.
   sensor, and DP setpoint reset for the bottom of the cube-law
   savings. Two widgets, deadhead-anecdote reveal at zero demand.
   Closes out the variable-flow story with Load Piping and VFDs.
+- **Hydronic Balancing** — getting design flow to every load on a
+  loop. Calibrated balancing valves, automatic balancing valves,
+  and pressure-independent control valves (PICVs) — what each one
+  is, how it behaves, and when to reach for it. Interactive widget
+  comparing all three branches under varying system Δp, with a
+  burst-coil anecdote at the low-pressure extreme. Pays off forward
+  links from Hydronic Loops, Load Piping, and Pump Control.
 
 ## How it's built
 
@@ -133,6 +140,8 @@ Browsers ten years from now will still run it.
 conventions, design-system component index, and per-page notes.
 `site-ideas-and-friction.md` is the running log of ideas,
 design decisions, and friction encountered while building.
+`codebase-issues.md` tracks code-quality items that need a design
+decision before they can be acted on.
 
 ## Local development
 
