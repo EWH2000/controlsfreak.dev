@@ -42,6 +42,11 @@
         /* re-assert the shared collapse-to-one-stack at narrow widths (our custom
            grid-template-columns above would otherwise out-cascade the shared rule) */
         @media (max-width: 900px) { .tool-body-3col { grid-template-columns: 1fr; } }
+        /* The "About these tables" card is the only place on this page with
+           prose paragraphs — the design system's global `* { margin: 0 }` reset
+           collapses them otherwise. Scoped here, not in styles.css. */
+        .about-tables p { margin-bottom: 0.9em; }
+        .about-tables p:last-child { margin-bottom: 0; }
     </style>
 </head>
 <body>
@@ -76,7 +81,7 @@
              on the right. No tabs — this is lookup mode only; the "identify an unknown
              sensor from data points" mode is a separate future build (see
              site-ideas-and-friction.md). The R/T tables come from /scripts/thermistor-data.js
-             and are PENDING FIELD VERIFICATION — see that file's header. -->
+             — see that file's header for per-type verification status. -->
         <div class="tool-body-3col">
 
             <section>
@@ -178,13 +183,30 @@
         <div class="result-formula" id="thWorked" style="margin:0;padding:0.7rem 1.25rem;"></div>
     </div>
 
+    <div class="tool-card about-tables">
+        <div class="tool-card-header">
+            <div class="tool-card-title">
+                About these tables
+            </div>
+        </div>
+        <div class="tool-body" style="font-size: 0.92rem; line-height: 1.6;">
+            <p><strong>Where the values come from.</strong> Each R/T table is <em>generated</em> from a small set of curve parameters — β and R25 for the NTC thermistors, the parallel shunt for the linearized 10K curves, R0 and a temperature coefficient for the RTDs. The Pt100 and Pt1000 tables come from the IEC 60751 Callendar–Van Dusen polynomial (the international standard). Auditing the parameters is what makes a 500+ cell table trustworthy in one pass, instead of one row at a time.</p>
+
+            <p><strong>Sources verified against (2026-05 pass).</strong> <em>10K Type II, 10K Type III, and 10K Type 5 (TAC)</em> — BAPI 10K-2 / 10K-3 / 10K-3(11K) output tables, cross-checked against US Sensor "Curve G", Sontay's Compatibility Chart, and Vector Controls' multi-curve reference. <em>20K and 3K</em> — Vector Controls and Sontay. <em>1K Balco</em> — a Schneider EcoStruxure Building Operation resistance chart plus the ACI BALCO datasheet. <em>Pt100 and Pt1000</em> — IEC 60751:2008 directly, cross-checked against Vector, Sontay, Fluke's table generator, and pt100.de. Where multiple sources disagreed, the site owner consulted with a second tech before settling on a curve.</p>
+
+            <p><strong>What's still nominal.</strong> The Johnson Controls 10K + 8.7K-shunt curve is the one type without a public R/T table — the canonical TE-6300 Product Bulletin URL redirects to a docs-portal landing page. It's modeled as a 10K Type 2 element in parallel with 8.7 kΩ, which is folklore-confirmed but datasheet-unverified. If you have a known-good JCI sensor with calibration data, that's the better reference.</p>
+
+            <p><strong>Use as a reference, not for calibration.</strong> A single-β model approximates a Steinhart-Hart curve; the fit is within roughly 1 °F across 32–150 °F (the BAS operating range) and degrades to 2–5 °F of equivalent temperature error at the −40 °F extreme for the bare 10K curves. Pt100 and Pt1000 are governed by the international standard and match it exactly. For calibration-grade work, measure your sensor directly against a known-good reference at the working temperature — don't trust any published table, ours or anyone else's, blindly.</p>
+        </div>
+    </div>
+
     <a class="back-link" href="/tools/">← All tools</a>
 
 </main>
 
 <footer>
     <span class="footer-text">controlsfreak.dev — open tools for controls engineers</span>
-    <span class="footer-text">v1.1 · 2026</span>
+    <span class="footer-text">v1.2 · 2026</span>
 </footer>
 
 <!-- Sensor curves — keyed by type id, each with a generated R/T table.
