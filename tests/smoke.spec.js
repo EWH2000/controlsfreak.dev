@@ -189,17 +189,17 @@ test('vfd mock — run-source gating works from the keypad', async ({ page }) =>
 
     // Default config is run-source=TERMINALS. Pressing keypad RUN should
     // NOT start the drive; the LCD's line 4 should flash the ignore msg.
-    await page.click('#vfdmKeyRun');
-    await expect(page.locator('#vfdmStateText')).toHaveText(/STOPPED/);
-    const lcdLines = await page.locator('#vfdmLcd .vfdm-lcd-line').allTextContents();
+    await page.click('#vfdm-key-run');
+    await expect(page.locator('#vfdm-state-text')).toHaveText(/STOPPED/);
+    const lcdLines = await page.locator('#vfdm-lcd .vfdm-lcd-line').allTextContents();
     expect(lcdLines[3]).toMatch(/IGN: SRC=TERMS/);
 
     // L/R into LOCAL — keypad now overrides source params and RUN actually starts the drive.
-    await page.click('#vfdmKeyLocal');
-    await page.click('#vfdmKeyRun');
+    await page.click('#vfdm-key-local');
+    await page.click('#vfdm-key-run');
     await page.waitForTimeout(300);  // let it ramp a bit
-    await expect(page.locator('#vfdmStateText')).toHaveText(/RAMPING UP|AT SPEED/);
-    const actHz = parseFloat(await page.locator('#vfdmActHz').textContent());
+    await expect(page.locator('#vfdm-state-text')).toHaveText(/RAMPING UP|AT SPEED/);
+    const actHz = parseFloat(await page.locator('#vfdm-act-hz').textContent());
     expect(actHz, 'drive should be ramping up in LOCAL mode').toBeGreaterThan(0);
 });
 
@@ -259,18 +259,18 @@ test('vfds page renders its diagrams and the run/speed widget is wired up', asyn
     await expect(page.locator('#vfd-bp-motor')).toHaveCount(1);
 
     // widget initial state: terminals/network, DI open → STOPPED
-    await expect(page.locator('#vfdState')).toHaveText(/STOPPED/);
+    await expect(page.locator('#vfd-state')).toHaveText(/STOPPED/);
 
     // pressing the network RUN with run-source=terminals shows the classic-mistake anecdote
-    await page.click('#vfdTryClassic');
-    await page.click('#vfdNetRun');
-    await expect(page.locator('#vfdState')).toHaveText(/STOPPED/);
+    await page.click('#vfd-try-classic');
+    await page.click('#vfd-net-run');
+    await expect(page.locator('#vfd-state')).toHaveText(/STOPPED/);
     await expect(page.locator('.widget-anecdote')).toBeVisible();
 
     // the all-network preset + a network RUN actually starts the drive
-    await page.click('#vfdTryNetwork');
-    await page.click('#vfdNetRun');
-    await expect(page.locator('#vfdState')).toHaveText(/RUNNING/);
+    await page.click('#vfd-try-network');
+    await page.click('#vfd-net-run');
+    await expect(page.locator('#vfd-state')).toHaveText(/RUNNING/);
 });
 
 test('balancing page renders riser, widget compares three branches, anecdote reveals at low Δp', async ({ page }) => {
