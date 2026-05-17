@@ -174,9 +174,8 @@ nav: education
            informational tone (the user has found something interesting,
            not broken anything). Vertical space reserved by min-height
            on the parent so toggling doesn't reflow the page below. */
-        /* Cube-law numbers callout — re-uses .pid-term styling (per the
-           friction-file note that .pid-term is now functionally a
-           "styled aside" class) but inlines a small numbers grid. */
+        /* Cube-law numbers callout — re-uses .callout styling and
+           inlines a small numbers grid below the prose. */
         .vfd-cube-numbers {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
@@ -285,7 +284,7 @@ nav: education
                 For centrifugal equipment — fans, pumps, most compressors — the power required scales roughly as the <em>cube</em> of the speed. Drop the speed to 80%, the power isn't 80% of design; it's 0.8³ ≈ <strong>51%</strong>. Drop it to 50% and the power's down to 0.5³ ≈ <strong>13%</strong>. You don't need that many minutes a day at part load before the drive pays for itself on the electric bill.
             </p>
 
-            <div class="pid-term" style="margin-top:1rem;">
+            <div class="callout" style="margin-top:1rem;">
                 <h4>Cube law — power vs. speed on centrifugal loads</h4>
                 <div class="vfd-cube-numbers">
                     <div><span class="pct">100% speed</span><span class="val">100% power</span></div>
@@ -438,28 +437,28 @@ nav: education
                 Every manufacturer organises parameters differently — ABB calls them parameter numbers, Yaskawa calls them Pn-codes, Danfoss uses three-level menus — but the <em>categories</em> the parameters fall into are basically the same across the industry. If you can name the categories, you can find what you need to change on any drive without reading the whole manual cover to cover. Six groups; everything you'll touch lives in one of them.
             </p>
 
-            <div class="pid-terms" style="margin-top:1.25rem;">
-                <div class="pid-term">
+            <div class="callout-grid" style="margin-top:1.25rem;">
+                <div class="callout">
                     <h4>Motor data <span>· nameplate</span></h4>
                     <p>Whatever's printed on the motor's nameplate, copied into the drive: <em>full-load amps (FLA), rated voltage, rated frequency, rated speed (RPM)</em>, sometimes motor type and power factor. The drive uses this to size its current limit and run an auto-tune that builds its internal model of the motor. Get this wrong and the drive either trips on overcurrent at modest loads or quietly cooks the motor. First thing entered when commissioning a new drive; rarely touched again.</p>
                 </div>
-                <div class="pid-term">
+                <div class="callout">
                     <h4>Ramps <span>· accel / decel</span></h4>
                     <p>How long the drive takes to ramp from 0 Hz to rated frequency on a start (<em>accel time</em>) and back down on a stop (<em>decel time</em>). Seconds. Sometimes a ramp <em>shape</em> parameter too (linear vs. S-curve) to ease mechanical shock. Too fast and you trip on overcurrent during accel or on overvoltage during decel (the motor regenerates back into the DC bus); too slow and the building feels sluggish or the sequence times out. Tune at startup; touch them again only if something complains.</p>
                 </div>
-                <div class="pid-term">
+                <div class="callout">
                     <h4>References &amp; sources <span>· what speed, from where</span></h4>
                     <p>The <em>speed-reference source</em> parameter (keypad / terminals / network / one of several presets), plus the bounds the reference is allowed to take: <em>minimum frequency, maximum frequency</em>, preset speeds, and the scaling that maps a 4–20 mA AI to a Hz range. Half the time a drive isn't ramping where you expect, this group is where the answer lives.</p>
                 </div>
-                <div class="pid-term">
+                <div class="callout">
                     <h4>Run/stop sources <span>· start command</span></h4>
                     <p>The <em>run-command source</em> parameter, independent from the speed source above. Choices are the same set (keypad / terminals / network), but the parameter is separate. Sometimes a 2-wire vs. 3-wire distinction (maintained DI for run vs. momentary start/stop), jog enables, and a forward/reverse selection. Touch this in commissioning to flip a drive over from "keypad bench-tested" to "running from the BMS."</p>
                 </div>
-                <div class="pid-term">
+                <div class="callout">
                     <h4>I/O configuration <span>· what each terminal does</span></h4>
                     <p>The drive's physical inputs and outputs are <em>software-assignable</em>. A digital input can be a run command, a fault reset, a jog enable, or a preset-speed select; an analog input can be the speed reference or a feedback channel; a digital output can signal "drive running," "fault active," or "at speed." This group is the map from physical terminal to logical function. Read it before wiring anything; verify it after.</p>
                 </div>
-                <div class="pid-term">
+                <div class="callout">
                     <h4>Faults &amp; protection <span>· what to do when it trips</span></h4>
                     <p>The <em>fault history</em> (the last N trips, with timestamps and the operating state at trip), plus the protective behaviour: <em>auto-reset enable</em>, auto-reset count and timeout, fault-output relay assignment, undervoltage ride-through, current-limit setting. Auto-reset is the parameter the maintenance crew turns on after they get tired of resetting drives, and that the controls tech turns off after they get tired of finding the same root cause re-tripping unnoticed.</p>
                 </div>

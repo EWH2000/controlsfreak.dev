@@ -186,11 +186,11 @@ In scope (sections delivered):
   → Inverter → AC OUT variable), labeled boxes only, no waveforms
   (trusts prose to carry "what variable frequency means")
 - *Why Drives Are Everywhere — the Cube Law* — prose + a
-  `.pid-term`-style numbers callout showing 80/70/50/30% speed →
+  `.callout`-style numbers callout showing 80/70/50/30% speed →
   power scaling
 - *Run Command vs. Speed Reference — the centerpiece* — explainer
   prose + the page's interactive widget (see below)
-- *The Parameter Groups Every Drive Has* — six `.pid-term` cards
+- *The Parameter Groups Every Drive Has* — six `.callout` cards
   (motor data, ramps, references/sources, run/stop sources, I/O,
   faults) — one card per group, ALL-CAPS sub-titles, worked
   per-group commentary
@@ -1740,56 +1740,9 @@ browser load shared files instead of duplicating them.
 
 ## Friction log
 
-### PID tuner — integral slider direction is confusing in Ti mode
-Coworker feedback: the integral slider feels unintuitive when the
-parameter style is set to Ti (reset time in minutes/seconds). Slider
-right = stronger integral action (canonical repeats/min goes up), but
-the displayed Ti *number* goes down (shorter reset time = more
-aggressive). The slider direction is "correct" by the principle
-"slider right = greater effect on the loop" — but the number moving
-the opposite way breaks intuition for people thinking in Ti.
-
-Possible directions (pick one or combine):
-- **Keep slider direction, clarify visually.** Add a "← weaker /
-  stronger →" label under the slider, or an arrow icon, so the user
-  isn't relying on the number alone to read direction. Cheapest fix,
-  doesn't compromise the design principle.
-- **Show both values side-by-side more prominently.** Make
-  repeats/min always visible next to Ti so the user sees the canonical
-  value going up while Ti goes down — turns the confusion into a
-  learning moment about *why* they're inverses.
-- **Per-user slider-direction option.** Setting that lets the user
-  pick "slider right = stronger" (current) or "slider right = larger
-  displayed number" (flips in Ti/Td mode). More work, but probably the
-  most honest answer since there's a real split in how techs think
-  about it.
-
-Lean toward the first two as a combined cheap fix; the toggle is
-nice-to-have if the friction keeps coming up. Either way, the
-underlying design principle to preserve: **slider right = stronger
-effect on the loop, regardless of parameter style.**
-
-### `.pid-term` class is becoming load-bearing for general aside duty
-
-The class started as the styled box for PID terminology cards on
-the Tuning Helper and PID Basics. It's now also doing duty for:
-- Worked-example asides on hydronic-loops (the 100/200/40 GPM
-  walkthrough)
-- The discovery-prompt callout under d3
-- The failure-state Easter-egg callout from the injection-pump
-  widget
-
-All four uses are visually identical, so functionally the class
-is just "styled aside" — but the name still says "PID term." The
-next person reading the markup will wonder why an HVAC
-worked-example uses a PID-named class. Two possible directions:
-
-- Rename to something neutral (`.aside-box`, `.callout`, etc.)
-  and grep-replace existing uses. Cheap mechanically; the name
-  survives future content additions.
-- Leave the class, accept that "pid-term" is now an etymology not
-  a description. Cheapest today, cost compounds slowly.
-
-**Open** — not blocking anything; flag for a future restructure
-pass when the cleanup pace is right for a rename.
+*(Both 2026-05 entries — PID tuner integral-slider direction in Ti
+mode, and the `.pid-term` → `.callout` rename — were cleared on
+2026-05-17. The slider-direction concern was retired without code
+changes; the class rename landed across `styles.css` and the five
+pages that used it.)*
 
