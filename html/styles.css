@@ -481,45 +481,6 @@ select option { background: var(--surface); }
     word-break: break-all;
 }
 
-/* ── ROADMAP GRID ── */
-.tool-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
-    gap: 1rem;
-}
-.tool-preview {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 1.25rem;
-    opacity: 0.55;
-    position: relative;
-    overflow: hidden;
-}
-.tool-preview::after {
-    content: 'COMING SOON';
-    position: absolute;
-    top: 0.55rem;
-    right: 0.75rem;
-    font-family: var(--mono);
-    font-size: 0.52rem;
-    letter-spacing: 0.1em;
-    color: var(--text-dim);
-}
-.tool-preview-icon { font-size: 1.5rem; margin-bottom: 0.6rem; }
-.tool-preview-name {
-    font-family: var(--mono);
-    font-size: 0.78rem;
-    font-weight: 600;
-    color: var(--text-bright);
-    margin-bottom: 0.35rem;
-}
-.tool-preview-desc {
-    font-size: 0.78rem;
-    color: var(--text-dim);
-    line-height: 1.55;
-}
-
 /* ── FOOTER ── */
 footer {
     position: relative;
@@ -726,10 +687,8 @@ input[type="range"]::-moz-range-thumb {
 }
 
 /* ──────────────────────────────────────────────────────────────────────
- * LANDING-PAGE CARDS — the clickable tiles on the home page and the Tools
- * landing. (Roadmap items still use .tool-preview above, which is
- * intentionally dimmed + "COMING SOON".) Same vocabulary, just a
- * link-shaped card.
+ * LANDING-PAGE CARDS — the clickable tiles on the home page and the
+ * Tools / Education landings.
  * ────────────────────────────────────────────────────────────────────── */
 .card-grid {
     display: grid;
@@ -814,13 +773,6 @@ input[type="range"]::-moz-range-thumb {
 }
 .cta-button:hover { background: var(--accent); color: var(--surface); }
 
-/* "Coming soon" variant of .tool-tag — for placeholder cards on Education
-   that aren't dimmed `.tool-preview`s but still need to read as not-yet-built. */
-.tool-tag.pending {
-    color: var(--text-dim);
-    background: transparent;
-    border-color: var(--border);
-}
 
 /* ──────────────────────────────────────────────────────────────────────
  * THREE-COLUMN PROPERTY-SHEET LAYOUT

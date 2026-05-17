@@ -512,15 +512,14 @@ retuned, the dropdown labels should follow. Kept the brief
 selector labels short enough that the τ range and one canonical
 HVAC example still fit on a single line at the rendered widths.
 
-### BACnet/IP hex ↔ dotted-decimal converter
-EBO displays BACnet/IP device addresses in hex (e.g. `C0A80164`) instead
-of the IPv4 form (`192.168.1.100`). Currently a hex-to-IP converter is
-needed every time. Build a small tool that converts both directions —
-paste hex, get dotted decimal, and vice versa. Probably worth also
-showing the UDP port (BACnet/IP appends a 2-byte port after the address,
-default `BAC0` = 47808), since EBO's hex string often includes it.
-Likely fits in the same "Networking" or "BACnet" category as the future
-BACnet object reference tool.
+### BACnet/IP hex ↔ dotted-decimal converter *(shipped)*
+EBO displays BACnet/IP device addresses in hex (e.g. `C0A80164`)
+instead of the IPv4 form (`192.168.1.100`), so a hex-to-IP converter
+was needed every time. Shipped at `/tools/bacnet-ip-converter.html`:
+converts both directions, paste hex → dotted decimal and vice versa.
+Also handles the optional 2-byte UDP port EBO often appends to the
+hex string (default `BAC0` = 47808). Sits under the BACnet category
+alongside the future BACnet object reference tool.
 
 ### Thermistor calculator *(lookup mode shipped + curves verified)*
 Two related modes were planned (probably tabs, à la Signal Scaling).
@@ -814,7 +813,7 @@ thinking about whether that pattern should generalize (e.g. PID tuner
 saves last sliders, Modbus viewer remembers last register) before
 hardcoding localStorage just for this one tool.
 
-### Improvements and more pages for Education *(in progress — hydronic loops first)*
+### Education page conventions
 
 **Engine conventions.** When functionality benefits from a shared
 script (the PID simulator, the flow animation engine, future
@@ -1566,71 +1565,6 @@ collapse uniformly) and there's no "mobile subset" or "hide on
 mobile" framework — every tool is the same tool on every device.
 Use this when picking *what to build* and *how the inputs flow*, not
 when deciding how the page itself is structured.
-
-### Split into "Tools" and "Education" sections
-When breaking the single page into multiple pages, organize the site
-into two top-level categories rather than one flat tool list:
-
-- **Tools** — the calculators / converters / viewers (Signal Scaling,
-  Modbus Register Viewer, BACnet/IP converter, etc.). Job-site
-  utilities.
-- **Education** — explainer content for newer techs. Could host things
-  like the P/I/D plain-English explainer (currently buried inside the
-  PID tuner), BACnet basics, Modbus basics, controls vocabulary, common
-  sequence-of-operations patterns, etc. Teaching new guys is one of the
-  best parts of the job — having a dedicated home for that on the site
-  fits naturally.
-
-Worth thinking about: some content straddles both (the PID tuner is a
-tool *with* an explainer baked in). Options — cross-link between
-sections, or duplicate the explainer in both places, or split the PID
-tuner so the explainer lives in Education and the simulator lives in
-Tools with a link to the explainer. Probably figure this out per-tool
-when restructuring.
-
-Top nav grows from `Home / Contact` to `Tools / Education / Contact`
-(or `Home / Tools / Education / Contact`).
-
-### PID tuner — Education/Tools split plan
-Concrete plan for how the PID content divides:
-
-**Tools side (the simulator page):**
-- The full sim — all parameters, parameter-style toggle, presets, plot,
-  metrics readouts. Stays as power-user surface.
-- The symptom → change cheat sheet, but **tightened** — favor short
-  codes / arrows over prose so it scans fast for people who already
-  know what's going on. Beginners are routed to Education instead of
-  babysat here. (Exact shorthand style TBD — see open Qs.)
-- A small "New to this? Start here →" link near the top pointing to the
-  Education page.
-
-**Education side (PID basics page):**
-- Long-form explainer, fleshed out well beyond the current blurb
-  (worked HVAC examples, the loop-speed-numbers content from above
-  folded in naturally, diagrams if worth it).
-- Three sequential mini-sims, one per parameter, encountered as the
-  reader works down the page. Each has a much simpler UI than the
-  main tool — pre-set process type, narrower controls (maybe
-  Low / Medium / High preset chips instead of free sliders), one knob
-  at a time exposed.
-- Leaning cumulative rather than isolated:
-  - Sim 1: P only → see steady-state offset
-  - Sim 2: P + I → see how I kills offset but can oscillate
-  - Sim 3: P + I + D → see how D damps the oscillation
-- "Try it for yourself →" button at the bottom linking to the full
-  tuner.
-
-**Architecture:** the simulation engine (first-order-plus-dead-time
-process + discrete-time stepping) lives in one place and is shared
-across all four UI surfaces (3 education sims + main tool). Pull it
-into a real external `.js` module during the restructure, loaded via
-`<script src=...>`. This is a deliberate shift from the current
-"everything inline per page" pattern — see the site-architecture
-note below for the reasoning.
-
-**Open questions:**
-- Exact form of the shortened cheat sheet (short codes? trimmed prose?
-  arrow grid?).
 
 ---
 

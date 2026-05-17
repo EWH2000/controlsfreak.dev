@@ -286,7 +286,7 @@ controlsfreak.dev/
 │   ├── assets/               # passthrough; og-image.svg/.png, favicons
 │   ├── scripts/              # passthrough; pid-engine, flow-engine, …
 │   ├── tools/
-│   │   ├── index.html        # Tools landing (live grid + "Coming Soon")
+│   │   ├── index.html        # Tools landing
 │   │   ├── signal-scaling.html
 │   │   ├── modbus-register-viewer.html
 │   │   ├── pid-tuner.html
@@ -356,9 +356,7 @@ per-page history and the *why* behind each, see
 - **Contact form:** `.tool-card` with name/email/message, an
   off-screen CSS honeypot (`.hp-field`, named `website`), Turnstile
   widget. POSTs form-encoded data to `/api/contact`.
-- **Tools landing** shows live tools as a `.nav-card` grid above a
-  "Coming Soon" `.tool-grid` of dimmed `.tool-preview` cards (the
-  roadmap surface).
+- **Tools landing** is a `.nav-card` grid of live tools.
 
 ## Design system
 
@@ -483,11 +481,9 @@ well-grouped.
    (see *JS patterns*). Apply validate-and-mute on numeric inputs.
 3. Add a `.nav-card` for the page to the `.card-grid` on
    `tools/index.html`.
-4. If it graduates a Coming-Soon item, delete the matching
-   `.tool-preview` card from `tools/index.html`.
-5. Add the page's URL to `html/sitemap.xml` (hand-maintained — no
+4. Add the page's URL to `html/sitemap.xml` (hand-maintained — no
    generator).
-6. Bump the version string in `html/_includes/footer.njk` when
+5. Bump the version string in `html/_includes/footer.njk` when
    shipping something notable (currently `v1.3 · 2026`, carried by
    every page automatically).
 
@@ -583,10 +579,10 @@ Tests:
 
 ## Roadmap
 
-Near-term tools are tracked as `.tool-preview` cards in "Coming Soon"
-on `tools/index.html`. Other near-term work — thermistor *identify
-mode*, psych chart *floating state-point chip*, more Education pages
-— lives in `site-ideas-and-friction.md`.
+Near-term work — new tools, thermistor *identify mode*, psych chart
+*floating state-point chip*, more Education pages — lives in
+`site-ideas-and-friction.md` (feature ideas) and
+`codebase-issues.md` (code-quality holds).
 
 Block C (post-migration cleanup) landed 2026-05-16: the
 `isFinite`-vs-`isNaN` retrofit (#2), the inline-handler →
