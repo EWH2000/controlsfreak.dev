@@ -397,7 +397,7 @@ nav: education
                  segments are avoided here — every tee is a simple drop into a horizontal that
                  only carries one flow direction. -->
             <svg class="edu-svg" viewBox="0 0 720 360" role="img" aria-labelledby="pc-dp-title pc-dp-desc"
-                 font-family="var(--mono, 'IBM Plex Mono', monospace)">
+                 font-family="var(--mono)">
                 <title id="pc-dp-title">Variable-flow loop with remote DP sensor</title>
                 <desc id="pc-dp-desc">A pump on the left, driven by a VFD, pushes water up a left-side riser to a supply main running across the top of the loop. Three loads tap off the supply main in the middle of the diagram — each with a two-way modulating valve and a coil — and return their water to a return main running along the bottom. The return main loops back to the pump's intake on the left side. A differential pressure sensor sits at the far right of the loop, with sensing lines tapped into the supply and return mains; the sensor reading goes back to the BMS as the feedback variable for pump speed control.</desc>
 
@@ -405,112 +405,112 @@ nav: education
                      plus supply main horizontal, drawn in flow direction (up, then right). -->
                 <path id="pc-dp-supply-riser-main" data-flow="supply"
                       d="M50 228 V 100 H 670"
-                      fill="none" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                      fill="none" stroke="var(--blue)" stroke-width="3"/>
 
                 <!-- supply drops to each load -->
-                <line id="pc-dp-a-sup-top" data-flow="supply" x1="200" y1="100" x2="200" y2="135" stroke="var(--blue, #1577b8)" stroke-width="3"/>
-                <line id="pc-dp-a-sup-bot" data-flow="supply" x1="200" y1="165" x2="200" y2="180" stroke="var(--blue, #1577b8)" stroke-width="3"/>
-                <line id="pc-dp-b-sup-top" data-flow="supply" x1="380" y1="100" x2="380" y2="135" stroke="var(--blue, #1577b8)" stroke-width="3"/>
-                <line id="pc-dp-b-sup-bot" data-flow="supply" x1="380" y1="165" x2="380" y2="180" stroke="var(--blue, #1577b8)" stroke-width="3"/>
-                <line id="pc-dp-c-sup-top" data-flow="supply" x1="560" y1="100" x2="560" y2="135" stroke="var(--blue, #1577b8)" stroke-width="3"/>
-                <line id="pc-dp-c-sup-bot" data-flow="supply" x1="560" y1="165" x2="560" y2="180" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                <line id="pc-dp-a-sup-top" data-flow="supply" x1="200" y1="100" x2="200" y2="135" stroke="var(--blue)" stroke-width="3"/>
+                <line id="pc-dp-a-sup-bot" data-flow="supply" x1="200" y1="165" x2="200" y2="180" stroke="var(--blue)" stroke-width="3"/>
+                <line id="pc-dp-b-sup-top" data-flow="supply" x1="380" y1="100" x2="380" y2="135" stroke="var(--blue)" stroke-width="3"/>
+                <line id="pc-dp-b-sup-bot" data-flow="supply" x1="380" y1="165" x2="380" y2="180" stroke="var(--blue)" stroke-width="3"/>
+                <line id="pc-dp-c-sup-top" data-flow="supply" x1="560" y1="100" x2="560" y2="135" stroke="var(--blue)" stroke-width="3"/>
+                <line id="pc-dp-c-sup-bot" data-flow="supply" x1="560" y1="165" x2="560" y2="180" stroke="var(--blue)" stroke-width="3"/>
 
                 <!-- piping: return (dashed, --blue-cool). Coil drops to return main, then
                      return main back along the bottom and up into the pump intake. -->
-                <line id="pc-dp-a-ret" data-flow="return" x1="200" y1="240" x2="200" y2="300" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
-                <line id="pc-dp-b-ret" data-flow="return" x1="380" y1="240" x2="380" y2="300" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
-                <line id="pc-dp-c-ret" data-flow="return" x1="560" y1="240" x2="560" y2="300" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="pc-dp-a-ret" data-flow="return" x1="200" y1="240" x2="200" y2="300" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="pc-dp-b-ret" data-flow="return" x1="380" y1="240" x2="380" y2="300" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="pc-dp-c-ret" data-flow="return" x1="560" y1="240" x2="560" y2="300" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
                 <path id="pc-dp-return-main-riser" data-flow="return"
                       d="M670 300 H 50 V 272"
-                      fill="none" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
+                      fill="none" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
 
                 <!-- equipment: pump (circle, P label) + small VFD box to its left -->
                 <g id="pc-dp-pump">
-                    <circle cx="50" cy="250" r="22" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
-                    <text x="50" y="256" text-anchor="middle" font-size="14" font-weight="700" fill="var(--text-bright, #1d251f)">P</text>
+                    <circle cx="50" cy="250" r="22" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <text x="50" y="256" text-anchor="middle" font-size="14" font-weight="700" fill="var(--text-bright)">P</text>
                 </g>
                 <g id="pc-dp-vfd">
-                    <rect x="8" y="232" width="24" height="36" rx="2" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="1.5"/>
-                    <text x="20" y="254" text-anchor="middle" font-size="9" font-weight="600" fill="var(--text-bright, #1d251f)">VFD</text>
+                    <rect x="8" y="232" width="24" height="36" rx="2" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="20" y="254" text-anchor="middle" font-size="9" font-weight="600" fill="var(--text-bright)">VFD</text>
                     <!-- thin wire from VFD to pump motor -->
-                    <line x1="32" y1="250" x2="28" y2="250" stroke="var(--text-dim, #666e66)" stroke-width="1" stroke-dasharray="2 2"/>
+                    <line x1="32" y1="250" x2="28" y2="250" stroke="var(--text-dim)" stroke-width="1" stroke-dasharray="2 2"/>
                 </g>
 
                 <!-- valves (bowtie symbols, ~15px square footprint each) -->
                 <g id="pc-dp-a-valve">
-                    <polygon points="188,135 212,135 200,148" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
-                    <polygon points="188,165 212,165 200,152" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                    <polygon points="188,135 212,135 200,148" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <polygon points="188,165 212,165 200,152" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
                 </g>
                 <g id="pc-dp-b-valve">
-                    <polygon points="368,135 392,135 380,148" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
-                    <polygon points="368,165 392,165 380,152" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                    <polygon points="368,135 392,135 380,148" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <polygon points="368,165 392,165 380,152" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
                 </g>
                 <g id="pc-dp-c-valve">
-                    <polygon points="548,135 572,135 560,148" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
-                    <polygon points="548,165 572,165 560,152" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
+                    <polygon points="548,135 572,135 560,148" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <polygon points="548,165 572,165 560,152" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
                 </g>
 
                 <!-- coils -->
                 <g id="pc-dp-a-coil">
-                    <rect x="170" y="180" width="60" height="60" rx="2" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
-                    <text x="200" y="215" text-anchor="middle" font-size="11" font-weight="600" fill="var(--text-bright, #1d251f)">COIL A</text>
+                    <rect x="170" y="180" width="60" height="60" rx="2" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <text x="200" y="215" text-anchor="middle" font-size="11" font-weight="600" fill="var(--text-bright)">COIL A</text>
                 </g>
                 <g id="pc-dp-b-coil">
-                    <rect x="350" y="180" width="60" height="60" rx="2" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
-                    <text x="380" y="215" text-anchor="middle" font-size="11" font-weight="600" fill="var(--text-bright, #1d251f)">COIL B</text>
+                    <rect x="350" y="180" width="60" height="60" rx="2" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <text x="380" y="215" text-anchor="middle" font-size="11" font-weight="600" fill="var(--text-bright)">COIL B</text>
                 </g>
                 <g id="pc-dp-c-coil">
-                    <rect x="530" y="180" width="60" height="60" rx="2" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
-                    <text x="560" y="215" text-anchor="middle" font-size="11" font-weight="600" fill="var(--text-bright, #1d251f)">COIL C</text>
+                    <rect x="530" y="180" width="60" height="60" rx="2" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <text x="560" y="215" text-anchor="middle" font-size="11" font-weight="600" fill="var(--text-bright)">COIL C</text>
                 </g>
 
                 <!-- DP sensor at the far right end of the loop. Sensing lines drawn thin and
                      non-flow so the engine ignores them. -->
                 <g id="pc-dp-sensor">
                     <!-- supply-side sensing tap -->
-                    <circle cx="670" cy="100" r="3.5" fill="var(--text-dim, #666e66)"/>
-                    <line x1="670" y1="103" x2="670" y2="195" stroke="var(--text-dim, #666e66)" stroke-width="1" stroke-dasharray="3 3"/>
+                    <circle cx="670" cy="100" r="3.5" fill="var(--text-dim)"/>
+                    <line x1="670" y1="103" x2="670" y2="195" stroke="var(--text-dim)" stroke-width="1" stroke-dasharray="3 3"/>
                     <!-- return-side sensing tap -->
-                    <circle cx="670" cy="300" r="3.5" fill="var(--text-dim, #666e66)"/>
-                    <line x1="670" y1="297" x2="670" y2="225" stroke="var(--text-dim, #666e66)" stroke-width="1" stroke-dasharray="3 3"/>
+                    <circle cx="670" cy="300" r="3.5" fill="var(--text-dim)"/>
+                    <line x1="670" y1="297" x2="670" y2="225" stroke="var(--text-dim)" stroke-width="1" stroke-dasharray="3 3"/>
                     <!-- sensor body -->
-                    <rect x="645" y="195" width="50" height="30" rx="2" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
-                    <text x="670" y="215" text-anchor="middle" font-size="12" font-weight="700" fill="var(--text-bright, #1d251f)">ΔP</text>
+                    <rect x="645" y="195" width="50" height="30" rx="2" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <text x="670" y="215" text-anchor="middle" font-size="12" font-weight="700" fill="var(--text-bright)">ΔP</text>
                     <!-- "to BMS" wire breaking off to the right -->
-                    <line x1="695" y1="210" x2="710" y2="210" stroke="var(--text-dim, #666e66)" stroke-width="1" stroke-dasharray="3 3"/>
-                    <text x="708" y="222" text-anchor="end" font-size="9" font-style="italic" fill="var(--text-dim, #666e66)">to BMS</text>
+                    <line x1="695" y1="210" x2="710" y2="210" stroke="var(--text-dim)" stroke-width="1" stroke-dasharray="3 3"/>
+                    <text x="708" y="222" text-anchor="end" font-size="9" font-style="italic" fill="var(--text-dim)">to BMS</text>
                 </g>
 
                 <!-- flow arrows (static state encoding, kept so direction reads under reduced
                      motion or before the engine kicks in) -->
                 <g id="pc-dp-flow-arrows">
                     <!-- supply main -->
-                    <polygon points="110,95 119,100 110,105" fill="var(--blue, #1577b8)"/>
-                    <polygon points="280,95 289,100 280,105" fill="var(--blue, #1577b8)"/>
-                    <polygon points="460,95 469,100 460,105" fill="var(--blue, #1577b8)"/>
-                    <polygon points="620,95 629,100 620,105" fill="var(--blue, #1577b8)"/>
+                    <polygon points="110,95 119,100 110,105" fill="var(--blue)"/>
+                    <polygon points="280,95 289,100 280,105" fill="var(--blue)"/>
+                    <polygon points="460,95 469,100 460,105" fill="var(--blue)"/>
+                    <polygon points="620,95 629,100 620,105" fill="var(--blue)"/>
                     <!-- supply riser (going up) -->
-                    <polygon points="45,170 50,159 55,170" fill="var(--blue, #1577b8)"/>
+                    <polygon points="45,170 50,159 55,170" fill="var(--blue)"/>
                     <!-- supply drops at each load -->
-                    <polygon points="195,123 200,134 205,123" fill="var(--blue, #1577b8)"/>
-                    <polygon points="375,123 380,134 385,123" fill="var(--blue, #1577b8)"/>
-                    <polygon points="555,123 560,134 565,123" fill="var(--blue, #1577b8)"/>
+                    <polygon points="195,123 200,134 205,123" fill="var(--blue)"/>
+                    <polygon points="375,123 380,134 385,123" fill="var(--blue)"/>
+                    <polygon points="555,123 560,134 565,123" fill="var(--blue)"/>
                     <!-- return drops at each load -->
-                    <polygon points="195,275 200,286 205,275" fill="var(--blue-cool, #5e8aa0)"/>
-                    <polygon points="375,275 380,286 385,275" fill="var(--blue-cool, #5e8aa0)"/>
-                    <polygon points="555,275 560,286 565,275" fill="var(--blue-cool, #5e8aa0)"/>
+                    <polygon points="195,275 200,286 205,275" fill="var(--blue-cool)"/>
+                    <polygon points="375,275 380,286 385,275" fill="var(--blue-cool)"/>
+                    <polygon points="555,275 560,286 565,275" fill="var(--blue-cool)"/>
                     <!-- return main (going right-to-left) -->
-                    <polygon points="120,305 111,300 120,295" fill="var(--blue-cool, #5e8aa0)"/>
-                    <polygon points="280,305 271,300 280,295" fill="var(--blue-cool, #5e8aa0)"/>
-                    <polygon points="460,305 451,300 460,295" fill="var(--blue-cool, #5e8aa0)"/>
-                    <polygon points="620,305 611,300 620,295" fill="var(--blue-cool, #5e8aa0)"/>
+                    <polygon points="120,305 111,300 120,295" fill="var(--blue-cool)"/>
+                    <polygon points="280,305 271,300 280,295" fill="var(--blue-cool)"/>
+                    <polygon points="460,305 451,300 460,295" fill="var(--blue-cool)"/>
+                    <polygon points="620,305 611,300 620,295" fill="var(--blue-cool)"/>
                 </g>
 
                 <!-- labels -->
-                <text x="80" y="90"  font-size="11" fill="var(--text, #38423a)">supply main →</text>
-                <text x="80" y="324" font-size="11" fill="var(--text, #38423a)">← return main</text>
-                <text x="50" y="298" text-anchor="middle" font-size="9" font-style="italic" fill="var(--text-dim, #666e66)">variable-speed</text>
-                <text x="670" y="93" text-anchor="end" font-size="9" font-style="italic" fill="var(--text-dim, #666e66)">remote DP sensor — at the hydraulically most-remote point</text>
+                <text x="80" y="90"  font-size="11" fill="var(--text)">supply main →</text>
+                <text x="80" y="324" font-size="11" fill="var(--text)">← return main</text>
+                <text x="50" y="298" text-anchor="middle" font-size="9" font-style="italic" fill="var(--text-dim)">variable-speed</text>
+                <text x="670" y="93" text-anchor="end" font-size="9" font-style="italic" fill="var(--text-dim)">remote DP sensor — at the hydraulically most-remote point</text>
             </svg>
             <div class="edu-legend">
                 <span><span class="sw supply"></span>supply water</span>

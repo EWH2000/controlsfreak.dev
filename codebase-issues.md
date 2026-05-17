@@ -1056,7 +1056,7 @@ with `-sim.ssErr` (its offset-below-SP convention), so the two
 PID surfaces share one formatter. Verified: tuner SSE reads
 "+0.8 °F" in US mode and "+0.5 °C" in metric.
 
-### 23. CSS custom-property hex fallbacks — drop the belt-and-braces
+### 23. CSS custom-property hex fallbacks — drop the belt-and-braces *(addressed 2026-05-17)*
 
 Split out from #19 pattern 5 once the four class-promotion
 patterns landed. Two surfaces:
@@ -1097,6 +1097,42 @@ runtime, since `:root` defines all the vars unconditionally).
 Could ship as one mechanical commit per surface (one for HTML
 SVGs, one for canvas-JS) plus a docs note retiring the fallback
 convention.
+
+**Resolution (2026-05-17):** landed as the planned two-commit
+sweep plus the docs close. Actual count was 572 HTML/SVG
+fallback drops (higher than the original ~392 estimate; the
+earlier audit undercounted `--mono`, `--accent`, `--heat`
+sites) plus 12 canvas-JS call-site drops across the two
+`cv(name, fallback)` helpers. Audit confirmed every fallback's
+hex matched its canonical `:root` value — except a small drift
+on `--border-faint` (two inline styles fell back to
+`rgba(0,0,0,0.07)` while `:root` defines `#e3e8df`; theoretical
+drift only — `:root` always defined the var so the rgba never
+rendered). The sweep closed both shapes equally.
+
+Sweep mechanism: Python helper with balanced-paren matching so
+both simple `#hex` and nested-paren `rgba()` fallbacks parsed
+correctly. Triggered only on `var(--…` prefixes, leaving
+unrelated commas inside CSS values untouched. Visual smoke
+(load-piping, hydronic-loops, psychrometric-chart canvas)
+confirmed zero rendered change — every fallback was matching
+its canonical value anyway. Drift-prevention going forward:
+CLAUDE.md "Design system" picks up a one-line note that every
+custom property used in HTML attributes or canvas-JS must be
+defined in `:root` first.
+
+Distribution of HTML/SVG drops, by file:
+- load-piping.html — 175 drops (the three-way mixing, three-way
+  diverting, two-way, and twin-T schematic SVGs).
+- hydronic-loops.html — 144 drops (d1/d2/d3 diagram inlines).
+- balancing.html — 123 drops (CBV/ABV/PICV branches + riser).
+- pump-control.html — 68 drops.
+- vfds.html — 61 drops.
+- vfd-mock.html — 1 drop (the lone `--border-faint` drift).
+
+Tool pages other than vfd-mock and psychrometric-chart had no
+HTML/SVG fallbacks; they compose entirely via class rules in
+styles.css and never inline `var(--x, #hex)` patterns.
 
 ---
 
