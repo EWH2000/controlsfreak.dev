@@ -204,67 +204,67 @@ nav: education
                  the pipe's colour. Named <g> groups + semantic ids so a future animated version (see
                  site-ideas-and-friction.md) can drive elements individually. -->
             <svg class="edu-svg" viewBox="0 0 700 360" role="img" aria-labelledby="d1-title d1-desc"
-                 font-family="var(--mono, 'IBM Plex Mono', monospace)">
+                 font-family="var(--mono)">
                 <title id="d1-title">2-pipe direct return</title>
                 <desc id="d1-desc">A boiler with a pump feeds a supply main running left to right past three loads in parallel. Each load returns into a separate return main that runs right to left, straight back to the boiler. The nearest load has a short loop; the farthest load's water travels the full length of the building and back, so flow naturally favours the near loads unless balanced.</desc>
 
                 <!-- piping: supply (solid, --blue) — out the boiler top, along the supply main.
                      data-flow="supply" hooks flow-engine.js; path/line drawing order matches flow direction. -->
-                <path id="d1-supply-main" data-flow="supply" d="M75 160 V85 H600" fill="none" stroke="var(--blue, #1577b8)" stroke-width="3"/>
-                <line id="d1-load1-supply" data-flow="supply" x1="240" y1="85" x2="240" y2="160" stroke="var(--blue, #1577b8)" stroke-width="3"/>
-                <line id="d1-load2-supply" data-flow="supply" x1="420" y1="85" x2="420" y2="160" stroke="var(--blue, #1577b8)" stroke-width="3"/>
-                <line id="d1-load3-supply" data-flow="supply" x1="600" y1="85" x2="600" y2="160" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                <path id="d1-supply-main" data-flow="supply" d="M75 160 V85 H600" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <line id="d1-load1-supply" data-flow="supply" x1="240" y1="85" x2="240" y2="160" stroke="var(--blue)" stroke-width="3"/>
+                <line id="d1-load2-supply" data-flow="supply" x1="420" y1="85" x2="420" y2="160" stroke="var(--blue)" stroke-width="3"/>
+                <line id="d1-load3-supply" data-flow="supply" x1="600" y1="85" x2="600" y2="160" stroke="var(--blue)" stroke-width="3"/>
                 <!-- piping: return (dashed, --blue-cool) — out the load bottoms, along the return main, back into the boiler bottom -->
-                <line id="d1-load1-return" data-flow="return" x1="240" y1="215" x2="240" y2="300" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
-                <line id="d1-load2-return" data-flow="return" x1="420" y1="215" x2="420" y2="300" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
-                <line id="d1-load3-return" data-flow="return" x1="600" y1="215" x2="600" y2="300" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
-                <path id="d1-return-main" data-flow="return" d="M600 300 H75 V235" fill="none" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="d1-load1-return" data-flow="return" x1="240" y1="215" x2="240" y2="300" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="d1-load2-return" data-flow="return" x1="420" y1="215" x2="420" y2="300" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="d1-load3-return" data-flow="return" x1="600" y1="215" x2="600" y2="300" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                <path id="d1-return-main" data-flow="return" d="M600 300 H75 V235" fill="none" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
 
                 <!-- flow arrows -->
                 <g id="d1-flow-arrows">
-                    <polygon points="70,135 75,124 80,135" fill="var(--blue, #1577b8)"/>
-                    <polygon points="155,80 164,85 155,90" fill="var(--blue, #1577b8)"/>
-                    <polygon points="490,80 499,85 490,90" fill="var(--blue, #1577b8)"/>
-                    <polygon points="235,120 240,131 245,120" fill="var(--blue, #1577b8)"/>
-                    <polygon points="415,120 420,131 425,120" fill="var(--blue, #1577b8)"/>
-                    <polygon points="595,120 600,131 605,120" fill="var(--blue, #1577b8)"/>
-                    <polygon points="240,255 235,244 245,244" fill="var(--blue-cool, #5e8aa0)"/>
-                    <polygon points="420,255 415,244 425,244" fill="var(--blue-cool, #5e8aa0)"/>
-                    <polygon points="600,255 595,244 605,244" fill="var(--blue-cool, #5e8aa0)"/>
-                    <polygon points="510,295 501,300 510,305" fill="var(--blue-cool, #5e8aa0)"/>
-                    <polygon points="340,295 331,300 340,305" fill="var(--blue-cool, #5e8aa0)"/>
-                    <polygon points="160,295 151,300 160,305" fill="var(--blue-cool, #5e8aa0)"/>
-                    <polygon points="70,260 75,249 80,260" fill="var(--blue-cool, #5e8aa0)"/>
+                    <polygon points="70,135 75,124 80,135" fill="var(--blue)"/>
+                    <polygon points="155,80 164,85 155,90" fill="var(--blue)"/>
+                    <polygon points="490,80 499,85 490,90" fill="var(--blue)"/>
+                    <polygon points="235,120 240,131 245,120" fill="var(--blue)"/>
+                    <polygon points="415,120 420,131 425,120" fill="var(--blue)"/>
+                    <polygon points="595,120 600,131 605,120" fill="var(--blue)"/>
+                    <polygon points="240,255 235,244 245,244" fill="var(--blue-cool)"/>
+                    <polygon points="420,255 415,244 425,244" fill="var(--blue-cool)"/>
+                    <polygon points="600,255 595,244 605,244" fill="var(--blue-cool)"/>
+                    <polygon points="510,295 501,300 510,305" fill="var(--blue-cool)"/>
+                    <polygon points="340,295 331,300 340,305" fill="var(--blue-cool)"/>
+                    <polygon points="160,295 151,300 160,305" fill="var(--blue-cool)"/>
+                    <polygon points="70,260 75,249 80,260" fill="var(--blue-cool)"/>
                 </g>
 
                 <!-- equipment -->
                 <g id="d1-boiler">
-                    <rect x="35" y="160" width="80" height="75" rx="2" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
-                    <text x="75" y="201" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text-bright, #1d251f)">BOILER</text>
+                    <rect x="35" y="160" width="80" height="75" rx="2" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <text x="75" y="201" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text-bright)">BOILER</text>
                 </g>
                 <g id="d1-pump">
-                    <circle cx="140" cy="85" r="13" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
-                    <polygon points="135,79 147,85 135,91" fill="var(--text-dim, #666e66)"/>
-                    <text x="140" y="63" text-anchor="middle" font-size="11" fill="var(--text, #38423a)">PUMP</text>
+                    <circle cx="140" cy="85" r="13" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <polygon points="135,79 147,85 135,91" fill="var(--text-dim)"/>
+                    <text x="140" y="63" text-anchor="middle" font-size="11" fill="var(--text)">PUMP</text>
                 </g>
                 <g id="d1-load-1">
-                    <rect x="205" y="160" width="70" height="55" rx="2" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
-                    <text x="240" y="184" text-anchor="middle" font-size="12" font-weight="600" fill="var(--text-bright, #1d251f)">LOAD 1</text>
-                    <text x="240" y="200" text-anchor="middle" font-size="9" fill="var(--text-dim, #666e66)">(nearest)</text>
+                    <rect x="205" y="160" width="70" height="55" rx="2" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <text x="240" y="184" text-anchor="middle" font-size="12" font-weight="600" fill="var(--text-bright)">LOAD 1</text>
+                    <text x="240" y="200" text-anchor="middle" font-size="9" fill="var(--text-dim)">(nearest)</text>
                 </g>
                 <g id="d1-load-2">
-                    <rect x="385" y="160" width="70" height="55" rx="2" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
-                    <text x="420" y="191" text-anchor="middle" font-size="12" font-weight="600" fill="var(--text-bright, #1d251f)">LOAD 2</text>
+                    <rect x="385" y="160" width="70" height="55" rx="2" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <text x="420" y="191" text-anchor="middle" font-size="12" font-weight="600" fill="var(--text-bright)">LOAD 2</text>
                 </g>
                 <g id="d1-load-3">
-                    <rect x="565" y="160" width="70" height="55" rx="2" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
-                    <text x="600" y="184" text-anchor="middle" font-size="12" font-weight="600" fill="var(--text-bright, #1d251f)">LOAD 3</text>
-                    <text x="600" y="200" text-anchor="middle" font-size="9" fill="var(--text-dim, #666e66)">(farthest)</text>
+                    <rect x="565" y="160" width="70" height="55" rx="2" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <text x="600" y="184" text-anchor="middle" font-size="12" font-weight="600" fill="var(--text-bright)">LOAD 3</text>
+                    <text x="600" y="200" text-anchor="middle" font-size="9" fill="var(--text-dim)">(farthest)</text>
                 </g>
 
                 <!-- labels -->
-                <text x="350" y="76" text-anchor="middle" font-size="11" fill="var(--text, #38423a)">supply main →</text>
-                <text x="340" y="322" text-anchor="middle" font-size="11" fill="var(--text, #38423a)">← return main (straight back to the source)</text>
+                <text x="350" y="76" text-anchor="middle" font-size="11" fill="var(--text)">supply main →</text>
+                <text x="340" y="322" text-anchor="middle" font-size="11" fill="var(--text)">← return main (straight back to the source)</text>
             </svg>
             <div class="edu-legend">
                 <span><span class="sw supply"></span>supply water</span>
@@ -283,69 +283,69 @@ nav: education
             </p>
 
             <svg class="edu-svg" viewBox="0 0 700 360" role="img" aria-labelledby="d2-title d2-desc"
-                 font-family="var(--mono, 'IBM Plex Mono', monospace)">
+                 font-family="var(--mono)">
                 <title id="d2-title">2-pipe reverse return</title>
                 <desc id="d2-desc">A boiler with a pump feeds a supply main running left to right past three loads in parallel. Each load returns into a return main that also runs left to right, past all the loads, and only then doubles back the full length of the building to the boiler. The first load supplied is the last to return, so every load's total pipe path is roughly equal — naturally self-balancing — at the cost of the extra doubled-back run of pipe.</desc>
 
                 <!-- piping: supply (solid, --blue) — out the boiler top, along the supply main.
                      data-flow="supply" hooks flow-engine.js; path/line drawing order matches flow direction. -->
-                <path id="d2-supply-main" data-flow="supply" d="M75 160 V85 H600" fill="none" stroke="var(--blue, #1577b8)" stroke-width="3"/>
-                <line id="d2-load1-supply" data-flow="supply" x1="240" y1="85" x2="240" y2="160" stroke="var(--blue, #1577b8)" stroke-width="3"/>
-                <line id="d2-load2-supply" data-flow="supply" x1="420" y1="85" x2="420" y2="160" stroke="var(--blue, #1577b8)" stroke-width="3"/>
-                <line id="d2-load3-supply" data-flow="supply" x1="600" y1="85" x2="600" y2="160" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                <path id="d2-supply-main" data-flow="supply" d="M75 160 V85 H600" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <line id="d2-load1-supply" data-flow="supply" x1="240" y1="85" x2="240" y2="160" stroke="var(--blue)" stroke-width="3"/>
+                <line id="d2-load2-supply" data-flow="supply" x1="420" y1="85" x2="420" y2="160" stroke="var(--blue)" stroke-width="3"/>
+                <line id="d2-load3-supply" data-flow="supply" x1="600" y1="85" x2="600" y2="160" stroke="var(--blue)" stroke-width="3"/>
                 <!-- piping: return (dashed, --blue-cool) — the collector runs WITH the supply past every load, then doubles back to the boiler -->
-                <line id="d2-load1-return" data-flow="return" x1="240" y1="215" x2="240" y2="295" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
-                <line id="d2-load2-return" data-flow="return" x1="420" y1="215" x2="420" y2="295" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
-                <line id="d2-load3-return" data-flow="return" x1="600" y1="215" x2="600" y2="295" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
-                <path id="d2-return-collector" data-flow="return" d="M240 295 H665" fill="none" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
-                <path id="d2-return-main" data-flow="return" d="M665 295 V325 H75 V235" fill="none" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="d2-load1-return" data-flow="return" x1="240" y1="215" x2="240" y2="295" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="d2-load2-return" data-flow="return" x1="420" y1="215" x2="420" y2="295" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="d2-load3-return" data-flow="return" x1="600" y1="215" x2="600" y2="295" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                <path id="d2-return-collector" data-flow="return" d="M240 295 H665" fill="none" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                <path id="d2-return-main" data-flow="return" d="M665 295 V325 H75 V235" fill="none" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
 
                 <!-- flow arrows -->
                 <g id="d2-flow-arrows">
-                    <polygon points="70,135 75,124 80,135" fill="var(--blue, #1577b8)"/>
-                    <polygon points="155,80 164,85 155,90" fill="var(--blue, #1577b8)"/>
-                    <polygon points="490,80 499,85 490,90" fill="var(--blue, #1577b8)"/>
-                    <polygon points="235,120 240,131 245,120" fill="var(--blue, #1577b8)"/>
-                    <polygon points="415,120 420,131 425,120" fill="var(--blue, #1577b8)"/>
-                    <polygon points="595,120 600,131 605,120" fill="var(--blue, #1577b8)"/>
-                    <polygon points="240,255 235,244 245,244" fill="var(--blue-cool, #5e8aa0)"/>
-                    <polygon points="420,255 415,244 425,244" fill="var(--blue-cool, #5e8aa0)"/>
-                    <polygon points="600,255 595,244 605,244" fill="var(--blue-cool, #5e8aa0)"/>
-                    <polygon points="320,290 329,295 320,300" fill="var(--blue-cool, #5e8aa0)"/>
-                    <polygon points="540,290 549,295 540,300" fill="var(--blue-cool, #5e8aa0)"/>
-                    <polygon points="520,320 511,325 520,330" fill="var(--blue-cool, #5e8aa0)"/>
-                    <polygon points="270,320 261,325 270,330" fill="var(--blue-cool, #5e8aa0)"/>
-                    <polygon points="70,260 75,249 80,260" fill="var(--blue-cool, #5e8aa0)"/>
+                    <polygon points="70,135 75,124 80,135" fill="var(--blue)"/>
+                    <polygon points="155,80 164,85 155,90" fill="var(--blue)"/>
+                    <polygon points="490,80 499,85 490,90" fill="var(--blue)"/>
+                    <polygon points="235,120 240,131 245,120" fill="var(--blue)"/>
+                    <polygon points="415,120 420,131 425,120" fill="var(--blue)"/>
+                    <polygon points="595,120 600,131 605,120" fill="var(--blue)"/>
+                    <polygon points="240,255 235,244 245,244" fill="var(--blue-cool)"/>
+                    <polygon points="420,255 415,244 425,244" fill="var(--blue-cool)"/>
+                    <polygon points="600,255 595,244 605,244" fill="var(--blue-cool)"/>
+                    <polygon points="320,290 329,295 320,300" fill="var(--blue-cool)"/>
+                    <polygon points="540,290 549,295 540,300" fill="var(--blue-cool)"/>
+                    <polygon points="520,320 511,325 520,330" fill="var(--blue-cool)"/>
+                    <polygon points="270,320 261,325 270,330" fill="var(--blue-cool)"/>
+                    <polygon points="70,260 75,249 80,260" fill="var(--blue-cool)"/>
                 </g>
 
                 <!-- equipment -->
                 <g id="d2-boiler">
-                    <rect x="35" y="160" width="80" height="75" rx="2" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
-                    <text x="75" y="201" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text-bright, #1d251f)">BOILER</text>
+                    <rect x="35" y="160" width="80" height="75" rx="2" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <text x="75" y="201" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text-bright)">BOILER</text>
                 </g>
                 <g id="d2-pump">
-                    <circle cx="140" cy="85" r="13" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
-                    <polygon points="135,79 147,85 135,91" fill="var(--text-dim, #666e66)"/>
-                    <text x="140" y="63" text-anchor="middle" font-size="11" fill="var(--text, #38423a)">PUMP</text>
+                    <circle cx="140" cy="85" r="13" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <polygon points="135,79 147,85 135,91" fill="var(--text-dim)"/>
+                    <text x="140" y="63" text-anchor="middle" font-size="11" fill="var(--text)">PUMP</text>
                 </g>
                 <g id="d2-load-1">
-                    <rect x="205" y="160" width="70" height="55" rx="2" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
-                    <text x="240" y="184" text-anchor="middle" font-size="12" font-weight="600" fill="var(--text-bright, #1d251f)">LOAD 1</text>
-                    <text x="240" y="200" text-anchor="middle" font-size="9" fill="var(--text-dim, #666e66)">(nearest)</text>
+                    <rect x="205" y="160" width="70" height="55" rx="2" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <text x="240" y="184" text-anchor="middle" font-size="12" font-weight="600" fill="var(--text-bright)">LOAD 1</text>
+                    <text x="240" y="200" text-anchor="middle" font-size="9" fill="var(--text-dim)">(nearest)</text>
                 </g>
                 <g id="d2-load-2">
-                    <rect x="385" y="160" width="70" height="55" rx="2" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
-                    <text x="420" y="191" text-anchor="middle" font-size="12" font-weight="600" fill="var(--text-bright, #1d251f)">LOAD 2</text>
+                    <rect x="385" y="160" width="70" height="55" rx="2" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <text x="420" y="191" text-anchor="middle" font-size="12" font-weight="600" fill="var(--text-bright)">LOAD 2</text>
                 </g>
                 <g id="d2-load-3">
-                    <rect x="565" y="160" width="70" height="55" rx="2" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
-                    <text x="600" y="184" text-anchor="middle" font-size="12" font-weight="600" fill="var(--text-bright, #1d251f)">LOAD 3</text>
-                    <text x="600" y="200" text-anchor="middle" font-size="9" fill="var(--text-dim, #666e66)">(farthest)</text>
+                    <rect x="565" y="160" width="70" height="55" rx="2" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <text x="600" y="184" text-anchor="middle" font-size="12" font-weight="600" fill="var(--text-bright)">LOAD 3</text>
+                    <text x="600" y="200" text-anchor="middle" font-size="9" fill="var(--text-dim)">(farthest)</text>
                 </g>
 
                 <!-- labels -->
-                <text x="350" y="76" text-anchor="middle" font-size="11" fill="var(--text, #38423a)">supply main →</text>
-                <text x="370" y="318" text-anchor="middle" font-size="9" font-style="italic" fill="var(--text-dim, #666e66)">Return runs WITH the supply then the long way back. The extra pipe is the price of self-balancing</text>
+                <text x="350" y="76" text-anchor="middle" font-size="11" fill="var(--text)">supply main →</text>
+                <text x="370" y="318" text-anchor="middle" font-size="9" font-style="italic" fill="var(--text-dim)">Return runs WITH the supply then the long way back. The extra pipe is the price of self-balancing</text>
             </svg>
             <div class="edu-legend">
                 <span><span class="sw supply"></span>supply water</span>
@@ -385,26 +385,26 @@ nav: education
                  around each loop (constant flow); a smaller, separate pair of arrows on the bridge
                  (the partial diversion). Named <g> groups + semantic ids for a future animated version. -->
             <svg class="edu-svg" viewBox="0 0 800 360" role="img" aria-labelledby="d3-title d3-desc"
-                 font-family="var(--mono, 'IBM Plex Mono', monospace)">
+                 font-family="var(--mono)">
                 <title id="d3-title">Primary-secondary "twin-T" boiler injection</title>
                 <desc id="d3-desc">Two separate loops. On the left, a small primary loop: a boiler and a dedicated boiler pump with water always circulating around it. On the right, a larger system loop: a system pump moving water through two building loads. The only connection between them is a short bridge with a pair of closely-spaced tees and an injection pump on it; the injection pump pulls a portion of hot water from the primary loop into the system loop, where it mixes with cooler return water. Most of the building's water never passes through the boiler — only the slice the injection pump diverts. The injection pump's speed is the control point for supply temperature.</desc>
 
                 <!-- ── PRIMARY loop piping — solid + --blue all the way around (it's a short loop; it stays hot).
                      data-flow="supply" carries the whole loop; constant flow at baseline density. -->
-                <path id="d3-primary-loop" data-flow="supply" d="M90 130 V60 H280 V270 H90 V200" fill="none" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                <path id="d3-primary-loop" data-flow="supply" d="M90 130 V60 H280 V270 H90 V200" fill="none" stroke="var(--blue)" stroke-width="3"/>
                 <!-- ── BRIDGE: upper = hot injection (solid --blue), lower = return to primary (dashed --blue-cool).
                      data-flow-density="0.4" encodes the worked-example ratio (~40 GPM diverted into a ~100 GPM
                      system) so the bridge reads as visibly sparser than either loop — that's the pedagogical
                      point of twin-T, and the injection-pump slider will mutate this attribute live. -->
-                <line id="d3-inject-pipe" data-flow="supply" data-flow-density="0.2" x1="280" y1="150" x2="440" y2="150" stroke="var(--blue, #1577b8)" stroke-width="3"/>
-                <line id="d3-bridge-return" data-flow="return" data-flow-density="0.2" x1="440" y1="190" x2="280" y2="190" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="d3-inject-pipe" data-flow="supply" data-flow-density="0.2" x1="280" y1="150" x2="440" y2="150" stroke="var(--blue)" stroke-width="3"/>
+                <line id="d3-bridge-return" data-flow="return" data-flow-density="0.2" x1="440" y1="190" x2="280" y2="190" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
                 <!-- ── SYSTEM loop piping: supply main + risers solid --blue, return main + risers dashed --blue-cool ── -->
-                <path id="d3-system-supply" data-flow="supply" d="M440 250 V90 H760" fill="none" stroke="var(--blue, #1577b8)" stroke-width="3"/>
-                <line id="d3-load-a-supply" data-flow="supply" x1="540" y1="90" x2="540" y2="150" stroke="var(--blue, #1577b8)" stroke-width="3"/>
-                <line id="d3-load-b-supply" data-flow="supply" x1="680" y1="90" x2="680" y2="150" stroke="var(--blue, #1577b8)" stroke-width="3"/>
-                <line id="d3-load-a-return" data-flow="return" x1="540" y1="205" x2="540" y2="250" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
-                <line id="d3-load-b-return" data-flow="return" x1="680" y1="205" x2="680" y2="250" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
-                <path id="d3-system-return" data-flow="return" d="M760 90 V250 H440" fill="none" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
+                <path id="d3-system-supply" data-flow="supply" d="M440 250 V90 H760" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <line id="d3-load-a-supply" data-flow="supply" x1="540" y1="90" x2="540" y2="150" stroke="var(--blue)" stroke-width="3"/>
+                <line id="d3-load-b-supply" data-flow="supply" x1="680" y1="90" x2="680" y2="150" stroke="var(--blue)" stroke-width="3"/>
+                <line id="d3-load-a-return" data-flow="return" x1="540" y1="205" x2="540" y2="250" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="d3-load-b-return" data-flow="return" x1="680" y1="205" x2="680" y2="250" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                <path id="d3-system-return" data-flow="return" d="M760 90 V250 H440" fill="none" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
 
                 <!-- flow arrows. The data-d3-arrow tags drive page-level
                      recoloring so primary-loop and system-supply arrows
@@ -415,67 +415,67 @@ nav: education
                      not color). -->
                 <g id="d3-flow-arrows">
                     <!-- primary loop — dense, constant flow -->
-                    <polygon data-d3-arrow="primary" points="85,100 90,89 95,100" fill="var(--blue, #1577b8)"/>
-                    <polygon data-d3-arrow="primary" points="150,55 159,60 150,65" fill="var(--blue, #1577b8)"/>
-                    <polygon data-d3-arrow="primary" points="240,55 249,60 240,65" fill="var(--blue, #1577b8)"/>
-                    <polygon data-d3-arrow="primary" points="275,110 280,121 285,110" fill="var(--blue, #1577b8)"/>
-                    <polygon data-d3-arrow="primary" points="275,230 280,241 285,230" fill="var(--blue, #1577b8)"/>
-                    <polygon data-d3-arrow="primary" points="240,265 231,270 240,275" fill="var(--blue, #1577b8)"/>
-                    <polygon data-d3-arrow="primary" points="150,265 141,270 150,275" fill="var(--blue, #1577b8)"/>
-                    <polygon data-d3-arrow="primary" points="85,240 90,229 95,240" fill="var(--blue, #1577b8)"/>
+                    <polygon data-d3-arrow="primary" points="85,100 90,89 95,100" fill="var(--blue)"/>
+                    <polygon data-d3-arrow="primary" points="150,55 159,60 150,65" fill="var(--blue)"/>
+                    <polygon data-d3-arrow="primary" points="240,55 249,60 240,65" fill="var(--blue)"/>
+                    <polygon data-d3-arrow="primary" points="275,110 280,121 285,110" fill="var(--blue)"/>
+                    <polygon data-d3-arrow="primary" points="275,230 280,241 285,230" fill="var(--blue)"/>
+                    <polygon data-d3-arrow="primary" points="240,265 231,270 240,275" fill="var(--blue)"/>
+                    <polygon data-d3-arrow="primary" points="150,265 141,270 150,275" fill="var(--blue)"/>
+                    <polygon data-d3-arrow="primary" points="85,240 90,229 95,240" fill="var(--blue)"/>
                     <!-- bridge — a smaller pair, the partial diversion -->
-                    <polygon points="416,146 423,150 416,154" fill="var(--blue, #1577b8)"/>
-                    <polygon points="312,186 305,190 312,194" fill="var(--blue-cool, #5e8aa0)"/>
+                    <polygon points="416,146 423,150 416,154" fill="var(--blue)"/>
+                    <polygon points="312,186 305,190 312,194" fill="var(--blue-cool)"/>
                     <!-- system loop — dense, constant flow -->
-                    <polygon data-d3-arrow="system-supply" points="435,160 440,149 445,160" fill="var(--blue, #1577b8)"/>
-                    <polygon data-d3-arrow="system-supply" points="500,85 509,90 500,95" fill="var(--blue, #1577b8)"/>
-                    <polygon data-d3-arrow="system-supply" points="630,85 639,90 630,95" fill="var(--blue, #1577b8)"/>
-                    <polygon points="755,150 760,161 765,150" fill="var(--blue-cool, #5e8aa0)"/>
-                    <polygon points="755,210 760,221 765,210" fill="var(--blue-cool, #5e8aa0)"/>
-                    <polygon data-d3-arrow="system-supply" points="535,120 540,131 545,120" fill="var(--blue, #1577b8)"/>
-                    <polygon data-d3-arrow="system-supply" points="675,120 680,131 685,120" fill="var(--blue, #1577b8)"/>
-                    <polygon points="540,230 535,219 545,219" fill="var(--blue-cool, #5e8aa0)"/>
-                    <polygon points="680,230 675,219 685,219" fill="var(--blue-cool, #5e8aa0)"/>
-                    <polygon points="619,245 610,250 619,255" fill="var(--blue-cool, #5e8aa0)"/>
-                    <polygon points="490,245 481,250 490,255" fill="var(--blue-cool, #5e8aa0)"/>
+                    <polygon data-d3-arrow="system-supply" points="435,160 440,149 445,160" fill="var(--blue)"/>
+                    <polygon data-d3-arrow="system-supply" points="500,85 509,90 500,95" fill="var(--blue)"/>
+                    <polygon data-d3-arrow="system-supply" points="630,85 639,90 630,95" fill="var(--blue)"/>
+                    <polygon points="755,150 760,161 765,150" fill="var(--blue-cool)"/>
+                    <polygon points="755,210 760,221 765,210" fill="var(--blue-cool)"/>
+                    <polygon data-d3-arrow="system-supply" points="535,120 540,131 545,120" fill="var(--blue)"/>
+                    <polygon data-d3-arrow="system-supply" points="675,120 680,131 685,120" fill="var(--blue)"/>
+                    <polygon points="540,230 535,219 545,219" fill="var(--blue-cool)"/>
+                    <polygon points="680,230 675,219 685,219" fill="var(--blue-cool)"/>
+                    <polygon points="619,245 610,250 619,255" fill="var(--blue-cool)"/>
+                    <polygon points="490,245 481,250 490,255" fill="var(--blue-cool)"/>
                 </g>
 
                 <!-- equipment -->
                 <g id="d3-boiler">
-                    <rect x="40" y="130" width="80" height="70" rx="2" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
-                    <text x="80" y="169" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text-bright, #1d251f)">BOILER</text>
+                    <rect x="40" y="130" width="80" height="70" rx="2" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <text x="80" y="169" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text-bright)">BOILER</text>
                 </g>
                 <g id="d3-boiler-pump">
-                    <circle cx="185" cy="270" r="13" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
-                    <rect class="d3-pump-blade" x="174" y="269" width="22" height="2" rx="1" fill="var(--text-dim, #666e66)"/>
-                    <text x="185" y="297" text-anchor="middle" font-size="11" fill="var(--text, #38423a)">BOILER PUMP</text>
-                    <text x="185" y="310" text-anchor="middle" font-size="9" font-style="italic" fill="var(--text-dim, #666e66)">constant flow</text>
+                    <circle cx="185" cy="270" r="13" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <rect class="d3-pump-blade" x="174" y="269" width="22" height="2" rx="1" fill="var(--text-dim)"/>
+                    <text x="185" y="297" text-anchor="middle" font-size="11" fill="var(--text)">BOILER PUMP</text>
+                    <text x="185" y="310" text-anchor="middle" font-size="9" font-style="italic" fill="var(--text-dim)">constant flow</text>
                 </g>
                 <g id="d3-injection-pump">
-                    <circle cx="360" cy="150" r="13" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
-                    <rect class="d3-pump-blade" x="349" y="149" width="22" height="2" rx="1" fill="var(--text-dim, #666e66)"/>
-                    <text x="360" y="111" text-anchor="middle" font-size="11" fill="var(--text, #38423a)">INJECTION PUMP</text>
-                    <text x="360" y="124" text-anchor="middle" font-size="9" font-style="italic" fill="var(--text-dim, #666e66)">the control point</text>
+                    <circle cx="360" cy="150" r="13" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <rect class="d3-pump-blade" x="349" y="149" width="22" height="2" rx="1" fill="var(--text-dim)"/>
+                    <text x="360" y="111" text-anchor="middle" font-size="11" fill="var(--text)">INJECTION PUMP</text>
+                    <text x="360" y="124" text-anchor="middle" font-size="9" font-style="italic" fill="var(--text-dim)">the control point</text>
                 </g>
                 <g id="d3-system-pump">
-                    <circle cx="440" cy="222" r="13" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
-                    <rect class="d3-pump-blade" x="429" y="221" width="22" height="2" rx="1" fill="var(--text-dim, #666e66)"/>
-                    <text x="378" y="226" text-anchor="middle" font-size="11" fill="var(--text, #38423a)">SYSTEM PUMP</text>
+                    <circle cx="440" cy="222" r="13" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <rect class="d3-pump-blade" x="429" y="221" width="22" height="2" rx="1" fill="var(--text-dim)"/>
+                    <text x="378" y="226" text-anchor="middle" font-size="11" fill="var(--text)">SYSTEM PUMP</text>
                 </g>
                 <g id="d3-load-a">
-                    <rect x="505" y="150" width="70" height="55" rx="2" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
-                    <text x="540" y="181" text-anchor="middle" font-size="12" font-weight="600" fill="var(--text-bright, #1d251f)">LOAD</text>
+                    <rect x="505" y="150" width="70" height="55" rx="2" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <text x="540" y="181" text-anchor="middle" font-size="12" font-weight="600" fill="var(--text-bright)">LOAD</text>
                 </g>
                 <g id="d3-load-b">
-                    <rect x="645" y="150" width="70" height="55" rx="2" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
-                    <text x="680" y="181" text-anchor="middle" font-size="12" font-weight="600" fill="var(--text-bright, #1d251f)">LOAD</text>
+                    <rect x="645" y="150" width="70" height="55" rx="2" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <text x="680" y="181" text-anchor="middle" font-size="12" font-weight="600" fill="var(--text-bright)">LOAD</text>
                 </g>
 
                 <!-- labels -->
-                <text x="200" y="100" text-anchor="middle" font-size="11" font-weight="600" fill="var(--text, #38423a)">PRIMARY LOOP</text>
-                <text x="200" y="113" text-anchor="middle" font-size="9" font-style="italic" fill="var(--text-dim, #666e66)">the boiler's own loop</text>
-                <text x="600" y="78" text-anchor="middle" font-size="11" font-weight="600" fill="var(--text, #38423a)">SYSTEM LOOP</text>
-                <text x="360" y="174" text-anchor="middle" font-size="9" font-style="italic" fill="var(--text-dim, #666e66)">closely-spaced tees · ≈ no Δp</text>
+                <text x="200" y="100" text-anchor="middle" font-size="11" font-weight="600" fill="var(--text)">PRIMARY LOOP</text>
+                <text x="200" y="113" text-anchor="middle" font-size="9" font-style="italic" fill="var(--text-dim)">the boiler's own loop</text>
+                <text x="600" y="78" text-anchor="middle" font-size="11" font-weight="600" fill="var(--text)">SYSTEM LOOP</text>
+                <text x="360" y="174" text-anchor="middle" font-size="9" font-style="italic" fill="var(--text-dim)">closely-spaced tees · ≈ no Δp</text>
             </svg>
             <div class="edu-legend">
                 <span><span class="sw supply"></span>hot supply water</span>
