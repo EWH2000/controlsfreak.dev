@@ -1288,6 +1288,28 @@ convention drift).
 verify the styling stays unchanged (the `.field-label` rule in
 styles.css already mirrors the `ps-label` shape).
 
+**Resolution (2026-05-17):** rejected the audit entry's "swap the
+class" path. The hedge — "`.field-label` already mirrors the
+`.ps-label` shape" — was a misread of `styles.css`: `.field-label`
+is grouped with the bare `label` selector at sans→mono / 0.66rem
+/ uppercase / 0.1em letter-spacing, while `.ps-label` carries
+explicit `text-transform: none; letter-spacing: normal` resets at
+sans / 0.82rem (the resets were added in #12's resolution
+specifically to keep `<label>`-element styling from leaking into
+ps-rows). Swapping the class on line 93 would render "Look up by"
+in mono uppercase smaller than its `Sensor type` / `Temperature
+(°F)` / `Resistance (Ω)` siblings in the same ps-row stack — a
+visual regression with no semantic payoff, since the
+`role="group"` + `aria-labelledby` wiring on lines 92-93 was
+already correct. Fixed the rule instead of the code: amended
+CLAUDE.md "Conventions → Form-input labels" to split the
+button-group caption rule by container — `field-label` inside a
+stacked `.field` (pid-tuner's preset row), `ps-label` inside a
+`.ps-row` left column (thermistor's lookup-by row). The
+thermistor HTML stays as-is; it was always the right shape, the
+rule just hadn't anticipated the second container. Mirrors the
+#25 resolution's reasoning.
+
 ### 27. Final-audit small leftovers — test convention drift, vfd-mock copy-paste twins, package.json defaults, stale wrangler compat date
 
 Bundle of small findings caught during the 2026-05-17 final audit
