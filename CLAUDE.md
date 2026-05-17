@@ -491,7 +491,14 @@ Light-only (`color-scheme: light`); no dark variant.
   dashed line), `--red` (fault/alarm), `--heat` (`#c8782a`, "heating"
   on the psych chart). Fonts: `--mono` (IBM Plex Mono), `--sans`
   (Overpass). The canvas chart reads colors via `getComputedStyle` at
-  draw time.
+  draw time. **No `var(--x, #hex)` fallbacks** — `var(--x)` is the
+  canonical form site-wide; every custom property used in HTML
+  attributes or canvas-JS must be defined in `:root` first.
+  Dropped 2026-05-17 (codebase-issues #23). If a property is
+  ever removed from `:root` without removing its consumers,
+  `var(--x)` returns empty and the consumer no-ops the color
+  — louder failure mode than silently rendering a stale fallback
+  hex, and easier to spot on a smoke screenshot.
 - **Three-column layout** — the grid sits directly inside a
   `.tab-pane` or `.tool-card`, not inside a padded `.tool-body`;
   tabs above take `.tabs.tabs-flush`. A row's value can be `.ps-value`
