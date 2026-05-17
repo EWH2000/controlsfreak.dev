@@ -1356,6 +1356,30 @@ individually.
 **Recommended action:** one mechanical commit, four files touched.
 Could land in the same branch as #25 or #26 if any of those land
 soon.
+
+**Resolution (2026-05-17):** all four landed as one commit on its
+own branch (#25 and #26 had already shipped separately, so the
+"could land in the same branch" hedge wasn't needed). Per-bullet
+notes: `tests/smoke.spec.js:148-151` swapped to `watchErrors(page)`
+— the helper at lines 8-13 was already in use by all 13 other test
+bodies; `vfd-mock.html`'s `vfdm-try-classic` got a one-line comment
+explaining the intentional byte-identity with `vfdm-try-default`,
+but `vfdm-try-default` itself stayed un-annotated (the audit
+entry's "1-line comment on each" framing was relaxed — "default =
+factory values" is self-explanatory and a redundant comment would
+read as cargo-culting); `wrangler.jsonc` `compatibility_date`
+bumped to `"2026-05-17"` without a Cloudflare compatibility-flags
+changelog audit (the site's Worker surface is tiny — one
+`/api/contact` POST, `fetch` against Resend/Turnstile, and
+`env.ASSETS.fetch` fall-through — so the realistic blast radius of
+a year of pinned-date drift is near-zero; rollback is one line);
+`package.json` `keywords` filled with seven site-relevant tags
+(`bacnet`, `modbus`, `hvac`, `building-automation`, `controls`,
+`psychrometrics`, `pid`) and `author` set to `"Controls Freak"`
+matching the git committer name. `license: "ISC"` (also an
+`npm init -y` default) wasn't in the audit entry's scope and was
+left in place.
+
 ---
 
 ## Recently addressed

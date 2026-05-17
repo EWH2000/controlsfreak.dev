@@ -146,9 +146,7 @@ test.describe('thermistor behavioral', () => {
 });
 
 test('education page runs the PID mini-sims and they respond to input', async ({ page }) => {
-    const errors = [];
-    page.on('pageerror', (e) => errors.push('pageerror: ' + e.message));
-    page.on('console', (m) => { if (m.type() === 'error') errors.push('console: ' + m.text()); });
+    const errors = watchErrors(page);
 
     await page.goto('http://localhost:8000/education/pid-basics.html');
 
