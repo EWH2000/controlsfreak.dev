@@ -454,7 +454,7 @@ new `.field-label` class shares the `label`-element rule. The
 convention is recorded under CLAUDE.md "Conventions → Form-input
 labels."
 
-### 13. Worker defense-in-depth bundle
+### 13. Worker defense-in-depth bundle *(addressed 2026-05-17)*
 
 `src/worker.js` handles the obvious risks well (Turnstile, honeypot,
 input length, File-vs-string coerce). Several cheap defense-in-depth
@@ -497,6 +497,23 @@ endpoint).
 
 **Recommended action:** land as one focused commit — all eight are
 < 60 lines total.
+
+**Resolution (2026-05-17):** all eight landed in one pass.
+`src/worker.js` now exports module-level constants for the limits
+(`MAX_BODY = 20 KB`, `FETCH_TIMEOUT_MS = 8000`, `ORIGIN_ALLOWED`).
+Order of operations in `handleContact`: Origin check → Content-Length
+pre-check (413) → formData parse → honeypot → field validation →
+empty-token short-circuit → Turnstile → Resend. The `json()` helper
+always emits `X-Content-Type-Options: nosniff` + `Cache-Control:
+no-store` and accepts an `extraHeaders` parameter (used to set
+`Allow: POST` on the 405 response). A `fetchWithTimeout()` wrapper
+applies `AbortController` to both Turnstile and Resend so a hung
+upstream returns 502 instead of stalling the user's spinner.
+`name` gains a `.replace(/[\r\n]+/g, " ")` scrub. The main
+`fetch()` handler now branches on the `/api/contact` path *first*
+so non-POST requests to that path return 405 with `Allow: POST`
+rather than falling through to `env.ASSETS.fetch` (which would
+serve the site's 404).
 
 ### 14. BACnet/IP port reference — TODO markers in production + duplicated table
 
