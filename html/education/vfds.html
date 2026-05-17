@@ -210,7 +210,7 @@ nav: education
             <!-- ───────────────── 1 · What a VFD Is ───────────────── -->
             <h2 class="subhead">What a VFD Is</h2>
 
-            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);">
+            <p>
                 A drive takes fixed-frequency AC line power (60 Hz in the U.S., 50 Hz most everywhere else) and converts it to AC at whatever frequency the controller asks for. Lower frequency, slower motor; higher frequency, faster motor. Three stages, in order:
             </p>
 
@@ -269,18 +269,18 @@ nav: education
                 <text x="360" y="190" text-anchor="middle" font-size="10" font-style="italic" fill="var(--text-dim, #666e66)">power flows left to right · the inverter's switching frequency is the part you control</text>
             </svg>
 
-            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:0.5rem;">
+            <p style="margin-top:0.5rem;">
                 Inside the drive that's a wall of insulated-gate bipolar transistors (IGBTs) switching the DC bus on and off thousands of times a second to synthesise a sine-shaped output. From a controls perspective none of that matters. What matters is the surface above it — the parameters that decide what frequency the inverter outputs, when it's allowed to run, and where it gets its commands from. That's where every "configure the drive" task lives, and it's the rest of this page.
             </p>
 
             <!-- ───────────────── 2 · Why Drives Are Everywhere ───────────────── -->
             <h2 class="subhead">Why Drives Are Everywhere — The Cube Law</h2>
 
-            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);">
+            <p>
                 Walk through any modern mechanical room and you'll see drives on the pumps, on the fans, sometimes on the compressors. Forty years ago the same equipment ran at one speed and dumped whatever it didn't need through bypass dampers, three-way valves, or vanes. The reason that changed isn't comfort or controllability (those are nice side effects). It's <em>energy</em>, and the math is short.
             </p>
 
-            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:1.25rem;">
+            <p style="margin-top:1.25rem;">
                 For centrifugal equipment — fans, pumps, most compressors — the power required scales roughly as the <em>cube</em> of the speed. Drop the speed to 80%, the power isn't 80% of design; it's 0.8³ ≈ <strong>51%</strong>. Drop it to 50% and the power's down to 0.5³ ≈ <strong>13%</strong>. You don't need that many minutes a day at part load before the drive pays for itself on the electric bill.
             </p>
 
@@ -296,14 +296,14 @@ nav: education
                 <p style="margin-top:0.7rem;color:var(--text-dim);">Real drives lose a few points to inverter and motor inefficiency, especially at very low speed, so don't expect the numbers above on the meter — but the shape of the curve is what's selling the drive.</p>
             </div>
 
-            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:1.25rem;">
+            <p style="margin-top:1.25rem;">
                 That's why a building with variable-flow pumping (every load <a href="/education/load-piping.html" style="color:var(--accent);">piped two-way</a>) almost always pairs with a VFD on the system pump — at part load you want the pump to slow down with the building, not push the same volume around all day. Same story on the air side: VAV systems with a VFD on the supply fan ramp down with the boxes, and the fan's the biggest energy hog on the unit. Cube law is the why; the rest of this page is the how.
             </p>
 
             <!-- ───────────────── 3 · Run Command vs. Speed Reference — THE WIDGET ───────────────── -->
             <h2 class="subhead">Run Command vs. Speed Reference — The Two Things You're Doing</h2>
 
-            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);">
+            <p>
                 Here's the thing that catches more techs than anything else about drives. To make a VFD run a motor, you're actually giving it <em>two</em> commands, not one — and each command has its own source parameter, configured independently in the drive. The two are:
             </p>
 
@@ -312,11 +312,11 @@ nav: education
                 <li><strong>Speed reference</strong> — if you <em>are</em> running, how fast? An analog value (Hz, RPM, %), sourced independently from one of the same three places: keypad, an <em>analog input</em> on the terminal strip (usually 4–20 mA), or a network write.</li>
             </ul>
 
-            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);">
+            <p>
                 The mistake — and it's a common one — is treating these as one thing. You set up the speed reference to come from BACnet, the BMS is happily writing 30 Hz to the speed-reference AV, and the drive doesn't run. Why? Because the <em>run-source</em> parameter is still set to "terminals" from the factory, and there's no digital-input run signal wired up. Two parameters; you only changed one.
             </p>
 
-            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:1.25rem;">
+            <p style="margin-top:1.25rem;">
                 Try it. The widget below is a tiny mock drive that respects whatever you set the run and speed sources to. Pick a configuration, then try to start it from each of the three command surfaces. The status panel tells you what it accepted and what it ignored.
             </p>
 
@@ -425,14 +425,14 @@ nav: education
                 <div class="widget-anecdote-wrap" id="vfd-anecdote-wrap"></div>
             </div>
 
-            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:1.25rem;">
+            <p style="margin-top:1.25rem;">
                 The takeaway every drive-shaped thing on a job site shares: <em>setting the speed reference is necessary, not sufficient.</em> If the run command isn't coming from the same place you expect it to, the drive will sit there ignoring you no matter how clean your BACnet write is. When troubleshooting a drive that "won't run from the BMS," the first two parameters to check are <em>both</em> source parameters — not one.
             </p>
 
             <!-- ───────────────── 4 · Parameter Groups ───────────────── -->
             <h2 class="subhead">The Parameter Groups Every Drive Has</h2>
 
-            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);">
+            <p>
                 Every manufacturer organises parameters differently — ABB calls them parameter numbers, Yaskawa calls them Pn-codes, Danfoss uses three-level menus — but the <em>categories</em> the parameters fall into are basically the same across the industry. If you can name the categories, you can find what you need to change on any drive without reading the whole manual cover to cover. Six groups; everything you'll touch lives in one of them.
             </p>
 
@@ -466,7 +466,7 @@ nav: education
             <!-- ───────────────── 5 · Network Integration ───────────────── -->
             <h2 class="subhead">Network Integration — Where Controls People Meet the Drive</h2>
 
-            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);">
+            <p>
                 The keypad on the front of the drive is for commissioning and panel-front diagnostics; in production the drive lives on a network and talks to the BMS over one of three protocols. Same three you'll meet anywhere else in the building, with the usual physical-layer tradeoffs.
             </p>
 
@@ -496,7 +496,7 @@ nav: education
                 </tbody>
             </table>
 
-            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:1.25rem;">
+            <p style="margin-top:1.25rem;">
                 What the BMS actually reads and writes is consistent across protocols, even when the addressing isn't. The four points worth knowing about on every drive:
             </p>
 
@@ -507,14 +507,14 @@ nav: education
                 <li><em>Actual frequency / current / fault code</em> — the analog and binary feedbacks. At minimum, the BMS should be logging actual Hz, motor current (an early indicator of mechanical trouble), and the active fault code if any.</li>
             </ul>
 
-            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);">
+            <p>
                 When you're pulling that hex address off an EBO BACnet/IP discovery and trying to make sense of it, the <a href="/tools/bacnet-ip-converter.html" style="color:var(--accent);">BACnet/IP converter</a> turns it into the dotted-decimal IP. If you're reaching for a Modbus register and need to see the bits, the <a href="/tools/modbus-register-viewer.html" style="color:var(--accent);">Modbus register viewer</a> lays a 16-bit word out for you.
             </p>
 
             <!-- ───────────────── 6 · Fault Codes ───────────────── -->
             <h2 class="subhead">Fault Codes — The Conceptual Categories</h2>
 
-            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);">
+            <p>
                 Every manufacturer's fault-code list looks different and is far too long to memorise. What you <em>can</em> hold in your head is the five or six categories the codes fall into — because the root cause of a category is the same across manufacturers even when the code number isn't. A drive's fault history almost always tells you "an overcurrent happened"; what changes between brands is just which integer they call it.
             </p>
 
@@ -556,14 +556,14 @@ nav: education
                 </tbody>
             </table>
 
-            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:1.25rem;">
+            <p style="margin-top:1.25rem;">
                 A drive that auto-resets through a fault every five minutes <em>is telling you something is still wrong</em>. Reading the fault category — not just clearing the alarm — is the difference between fixing the problem and burning the motor.
             </p>
 
             <!-- ───────────────── 7 · Bypass Arrangements ───────────────── -->
             <h2 class="subhead">Bypass Arrangements</h2>
 
-            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);">
+            <p>
                 On critical loads — life-safety fans, primary chilled-water pumps, anything where a drive failure shouldn't drop the equipment — the panel often includes a <em>bypass</em>. The selector switch routes line power either through the drive or directly to the motor across the contacts of a second contactor. Three positions: <em>OFF</em>, <em>DRIVE</em> (normal — variable speed), <em>BYPASS</em> (across-the-line — full speed, no drive). When the drive faults, you flip to BYPASS and the equipment keeps running at 60 Hz while someone gets a replacement on order.
             </p>
 
@@ -629,22 +629,22 @@ nav: education
                 <text x="330" y="25" text-anchor="middle" font-size="11" font-style="italic" fill="var(--text-dim, #666e66)">Two paths in parallel; the selector picks which is energised</text>
             </svg>
 
-            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:0.5rem;">
+            <p style="margin-top:0.5rem;">
                 Bypass is an electrical and operations topic more than a controls one — the BMS usually only sees a binary "in bypass" status feedback so the sequence can decide whether to keep modulating speed reference at a drive that isn't there. Worth knowing exists; not worth more than that on a controls-focused page.
             </p>
 
             <!-- ───────────────── Closing · Tie back to load piping ───────────────── -->
             <h2 class="subhead">Tying It Back to Load Piping</h2>
 
-            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);">
+            <p>
                 On the <a href="/education/load-piping.html" style="color:var(--accent);">load-piping</a> lesson we set up the variable-flow picture from the load side: every coil is throttled by a two-way valve; the system pump should slow down as the loads close in. The VFD is the answer to the pump side of that picture. The system pump's BMS-facing surface is a run command and a speed reference — exactly the two parameters we just walked through — and the BMS modulates the speed reference to hold whatever variable the sequence cares about (usually a differential pressure across the loop, sometimes a return-temperature setpoint, occasionally a valve-position reset on the most-open valve).
             </p>
 
-            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:1.25rem;">
+            <p style="margin-top:1.25rem;">
                 That last part — <em>how</em> the BMS decides what speed reference to send — is its own topic. The <a href="/education/pump-control.html" style="color:var(--accent);">pump-control lesson</a> picks up from here, walking through pump curves and the operating point, DP-based control with a remote sensor, and DP setpoint reset for the bottom of the cube-law savings.
             </p>
 
-            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:1.25rem;">
+            <p style="margin-top:1.25rem;">
                 And if you want to actually feel how the parameter tree on a real drive lays out — pressing up/down/enter/escape, finding the run-source parameter buried three menus deep, watching commanded Hz vs. actual Hz when you hit RUN — the <a href="/tools/vfd-mock.html" style="color:var(--accent);">mock VFD interface</a> is the next step. Same source-parameter pedagogy as the widget above, but with a keypad and a parameter tree to navigate.
             </p>
 

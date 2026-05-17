@@ -181,22 +181,22 @@ nav: education
             <!-- ───────────────── 1 · Constant-Speed Pumps ───────────────── -->
             <h2 class="subhead">Constant-Speed Pumps — The Simplest Case</h2>
 
-            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);">
+            <p>
                 Before we get to the variable-flow story, name the thing it replaces. A <em>constant-speed</em> pump is exactly what it sounds like: a motor wired across the line, running at 60 Hz any time it's energised. The "control" surface from the BMS is one binary point — start it or stop it. There's no speed reference, no setpoint, no curve to live on. The pump produces whatever flow the system happens to demand at its single fixed operating point, and that's the day.
             </p>
 
-            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:1.25rem;">
+            <p style="margin-top:1.25rem;">
                 This works fine as long as the system <em>wants</em> a constant flow. Old gravity-converted boiler loops with three-way valves at every load (constant system flow by design — that's the whole point of a three-way) sit at one operating point all day; a constant-speed pump is a sensible match. The problem shows up when constant-speed pumping meets the modern variable-flow building: every load on two-way valves, every valve throttling closed at part load, and the pump keeps pushing the same volume at the same head into a system that doesn't want it. Excess pressure dumps across the nearly-closed valves; the energy goes into noise and wear. And if every valve closes far enough at the same time and there's no bypass anywhere, you get a real failure mode — <em>deadhead</em>, where the pump spins against a closed loop with no flow path. We'll come back to it.
             </p>
 
-            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:1.25rem;">
+            <p style="margin-top:1.25rem;">
                 The protection against the constant-speed-pump deadhead is the <em>differential pressure bypass valve</em> at the far end of the loop, covered on the <a href="/education/load-piping.html#tie-back" style="color:var(--accent);">load-piping page</a>'s closing section — when system pressure climbs past a threshold (i.e. all the loads are closing in), the DPBV cracks open and gives the pump somewhere to go. It's a mechanical fix for a control problem that variable-speed pumping solves a different way: don't push pressure the system isn't asking for in the first place. That's the rest of this page.
             </p>
 
             <!-- ───────────────── 2 · Pump Curve and System Curve ───────────────── -->
             <h2 class="subhead">Pump Curve and System Curve — The Operating Point</h2>
 
-            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);">
+            <p>
                 Two facts about a centrifugal pump — the kind on every hydronic system you'll touch — that are worth carrying around.
             </p>
 
@@ -205,11 +205,11 @@ nav: education
                 <li><strong>A piped system has a <em>curve</em> too.</strong> Friction losses through pipe, fittings, valves, and coils rise with the square of flow. A loop with all valves wide open has a low, shallow system curve; throttle the valves and the curve gets steep — same flow takes more head to push through.</li>
             </ul>
 
-            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);">
+            <p>
                 Where the two curves cross is where the pump actually runs — the <em>operating point</em>. It's not a number the engineer picks; it's where physics settles. Open the valves, the system curve flattens, the intersection moves right and down (more flow, less head). Close them, the system curve steepens, intersection moves left and up (less flow, more head). The pump rides its curve up and down as the building demands.
             </p>
 
-            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:1.25rem;">
+            <p style="margin-top:1.25rem;">
                 Drag both sliders below to see this in action. The thicker blue line is the pump curve at the chosen speed; the dim line is the same pump at full speed for reference. The green parabola is the system curve at the chosen valve position. The dot is where they meet — the operating point.
             </p>
 
@@ -340,14 +340,14 @@ nav: education
                 </div>
             </div>
 
-            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:1.25rem;">
+            <p style="margin-top:1.25rem;">
                 Two things to notice as you push the sliders around. First, with the pump at 60 Hz and the valves closing, the operating point walks up and left — flow drops, but head climbs hard. That's the constant-speed-pump problem; the pump doesn't care that the building stopped asking, it just pushes against the new resistance. Second, sliding the pump speed down at a constant valve position moves the operating point along the system curve — flow falls roughly with speed, head falls roughly with speed squared, and the cube-law shaped power readout drops faster than either. The pump is doing less work because the building asked for less, and the math is in our favour.
             </p>
 
             <!-- ───────────────── 3 · How a VFD Moves the Operating Point ───────────────── -->
             <h2 class="subhead">How a VFD Moves the Operating Point — Affinity Laws</h2>
 
-            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);">
+            <p>
                 The math behind that "the pump curve scales when speed changes" move is the <em>affinity laws</em>. Three short statements that hold across every centrifugal pump and fan you'll touch, and they're the reason VFDs are everywhere:
             </p>
 
@@ -361,22 +361,22 @@ nav: education
                 <p style="margin-top:0.7rem;color:var(--text-dim);">That last one is the same <a href="/education/vfds.html" style="color:var(--accent);">cube law</a> from the VFDs page, viewed from the pump side — drop the speed to 70% and the power needed for the duty drops to about 34%. The same equipment moving along its system curve.</p>
             </div>
 
-            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:1.25rem;">
+            <p style="margin-top:1.25rem;">
                 There's a useful gotcha buried in the second law. Head is what overcomes <em>elevation</em> and <em>friction</em> in the loop, and on a closed loop the elevation contribution is zero (water gives back what it climbs). What's left is friction, which itself scales as Q² — same square. So as long as the system curve looks like H = R·Q², the operating point at lower speed walks neatly along it: lower speed, lower flow, much lower head, way lower power. The whole "VFD saves a fortune on the system pump" pitch is one neat triangle of arithmetic, no fudge factors.
             </p>
 
-            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:1.25rem;">
+            <p style="margin-top:1.25rem;">
                 Two caveats worth holding. <em>Open-loop</em> systems — cooling towers, irrigation, anything that moves water uphill from a sump — have a fixed static-head component the affinity laws don't reduce; the pump still has to climb the elevation no matter how slowly it goes, so the savings shape changes. And on a real drive, inverter and motor losses chip a few points off the cube-law theoretical at low speed. The shape is right; the absolute numbers shade conservative.
             </p>
 
             <!-- ───────────────── 4 · DP-Based Control ───────────────── -->
             <h2 class="subhead">DP-Based Control — Sensor at the Far End of the Loop</h2>
 
-            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);">
+            <p>
                 So the BMS has a VFD with a speed-reference input. What does it modulate against? The answer that's overwhelmingly common today is a <em>differential pressure</em> sensor wired into the loop, with the BMS running a PID loop that holds DP measured equal to a DP setpoint. Building demands more flow, valves open, DP drops, pump speeds up. Building demands less, valves close, DP rises, pump slows down. The feedback is direct and physical — the pump answers to the building, not to a clock.
             </p>
 
-            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:1.25rem;">
+            <p style="margin-top:1.25rem;">
                 Where the sensor lives matters. Two common choices:
             </p>
 
@@ -385,7 +385,7 @@ nav: education
                 <li><strong>At the hydraulically most-remote point (remote DP).</strong> A field-mounted sensor wired across the supply and return mains at the far end of the loop — usually beyond the last big load. Reads the pressure available to the worst-case load. The pump's job becomes "give the worst-case load at least this much DP," which is the variable the building actually cares about. Almost always the better choice on anything bigger than a small system.</li>
             </ul>
 
-            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);">
+            <p>
                 Below: the layout. Pump on the left with a VFD; supply main feeding three two-way loads; return main coming back; remote DP sensor wired across supply and return at the far end. The pump's speed reference is whatever a PID loop running off that DP sensor produces.
             </p>
 
@@ -517,22 +517,22 @@ nav: education
                 <span><span class="sw return"></span>return water</span>
             </div>
 
-            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:1.25rem;">
+            <p style="margin-top:1.25rem;">
                 On a real job the field-mounted sensor is usually a wet-tap differential transducer with two stainless capillaries running back to a transmitter on the BMS network — BACnet, Modbus, or 4–20 mA hard-wired back to the same controller running the pump PID. Calibrate it against a hand gauge during commissioning and check it again on the second-year tune-up; transducers drift, and a drifted DP sensor is exactly the kind of slow leak in performance nobody notices for a season.
             </p>
 
             <!-- ───────────────── 5 · DP Setpoint Reset ───────────────── -->
             <h2 class="subhead">DP Setpoint Reset — Squeezing the Last Bit</h2>
 
-            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);">
+            <p>
                 Fixed-DP control is already a big improvement over constant-speed pumping. But it leaves something on the table: the DP setpoint is sized for the <em>worst-case</em> load condition (peak demand, every valve open enough to need that pressure to pass design flow). The vast majority of operating hours look nothing like that — most of the time most of the valves are throttled back, and the pump is producing more pressure than any load actually needs. The remaining pressure just gets dropped across the throttled valves.
             </p>
 
-            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:1.25rem;">
+            <p style="margin-top:1.25rem;">
                 <em>DP setpoint reset</em> (also called <em>valve-position reset</em>, or <em>most-open-valve reset</em>) is the sequence that closes that gap. The BMS reads back the position of every modulating valve on the system and resets the DP setpoint <em>downward</em> until the most-open valve in the building has opened to about 95% — meaning that valve is doing essentially no throttling, and the pump is producing exactly enough pressure for the worst-case load right now. Every other valve is opened wider than it would be at the fixed setpoint, and the pump runs slower. Slower pump, less head, less head <em>squared</em>, way less power. Cube law one more time.
             </p>
 
-            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:1.25rem;">
+            <p style="margin-top:1.25rem;">
                 The widget below has five identical loads with two-way valves, fixed at the same demand for simplicity. Move the demand slider to vary how much heat (or cooling) the building is asking for. Toggle between <em>fixed DP</em> and <em>reset DP</em> to see the difference at part load. Watch the valves open up in reset mode, the pump's Hz drop, and the power readout collapse.
             </p>
 
@@ -593,29 +593,29 @@ nav: education
                 <div class="widget-anecdote-wrap" id="pc-w2-anecdote-wrap"></div>
             </div>
 
-            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:1.25rem;">
+            <p style="margin-top:1.25rem;">
                 The reset can be smarter than this widget makes it look. Real installations have non-uniform demand — one zone is calling hard, the others are coasting — and the most-open-valve logic shines exactly there: the pump satisfies the one zone that's working and lets the rest sit nearly idle, instead of pressurising the whole loop to the worst-case zone's setpoint. There's an upper limit (the setpoint can't go below what it takes to push design flow through pipe friction alone — at some point you really do need to make pressure to move water through copper) and a lower limit (the BMS holds a small minimum setpoint so the loop never deadheads), but in the middle this is where most of the energy story lives.
             </p>
 
             <!-- ───────────────── 6 · Lead/Lag — brief ───────────────── -->
             <h2 class="subhead">Lead/Lag and Parallel Pumps — A Note</h2>
 
-            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);">
+            <p>
                 Most real systems have <em>more than one</em> pump — at minimum a primary plus a standby for N+1 redundancy, often a pair (or three) of variable-speed pumps in parallel staged up and down as demand climbs. The sequence patterns that govern which pump runs when, how staging transitions are bumpless, how runtime gets rotated for even wear, how an end-of-curve protection trips before a pump finds itself drowning the system — that's its own topic, and it's all <em>sequencing</em> rather than pump-control proper. Worth flagging that it exists; not the question this page is answering.
             </p>
 
-            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:1.25rem;">
+            <p style="margin-top:1.25rem;">
                 The short version: parallel variable-speed pumps run at the <em>same</em> speed reference (one DP loop, two motors), and a staging sequence brings the lag pump online when the lead is running near full speed for an extended period. Past that, the details get specific to the plant, the failure modes you're protecting against, and the BMS programmer's preferences. A dedicated sequencing lesson will land here when it ships.
             </p>
 
             <!-- ───────────────── 7 · Closing ───────────────── -->
             <h2 class="subhead">Tying It Together</h2>
 
-            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);">
+            <p>
                 Three pages, one picture. On <a href="/education/load-piping.html" style="color:var(--accent);">load piping</a> we set up the variable-flow system from the coil's point of view — every load throttled by a two-way valve, system flow varying with the building. On <a href="/education/vfds.html" style="color:var(--accent);">VFDs</a> we walked through the drive that lets a pump motor follow a speed reference instead of running on/off at the line. On this page we filled in <em>what the BMS does with that speed reference</em>: hold a DP setpoint across the worst-case load, ideally one that walks down with the building, and ride the pump curve along the system curve as the day goes on. Variable-speed pumping is three concepts that have to land at once; isolated from each other, none of the three makes complete sense. Underneath all three, each load's connection valve has to hold its design flow as system pressure swings — that's what <a href="/education/balancing.html" style="color:var(--accent);">hydronic balancing</a> covers, and it's why pressure-independent control valves (PICVs) are the natural pairing for aggressive DP-reset.
             </p>
 
-            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:1.25rem;">
+            <p style="margin-top:1.25rem;">
                 What comes next is the <em>sequence</em> layer above all of this — when a chiller stages on, what setpoints get reset against outside-air temperature, how a control loop transitions between modes, how a building goes from unoccupied night setback into morning warm-up without thrashing every piece of equipment in the plant. A sequencing lesson is the next-natural-step from here. Forward-link, breadcrumb dropped.
             </p>
 
