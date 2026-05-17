@@ -35,8 +35,8 @@ nav: tools
                 <section>
                     <h2 class="ps-section-label">Input</h2>
                     <div class="ps-row">
-                        <label class="ps-label" for="sigType">Signal type</label>
-                        <select class="ps-input" id="sigType">
+                        <label class="ps-label" for="sig-type">Signal type</label>
+                        <select class="ps-input" id="sig-type">
                             <option value="4-20">4–20 mA</option>
                             <option value="0-20">0–20 mA</option>
                             <option value="0-10">0–10 V</option>
@@ -47,34 +47,34 @@ nav: tools
                         </select>
                     </div>
                     <div class="ps-row">
-                        <label class="ps-label" id="sigInputLabel" for="sigVal">Signal Value (mA)</label>
-                        <input class="ps-input" type="number" id="sigVal" step="0.01" placeholder="12.00">
+                        <label class="ps-label" id="sig-input-label" for="sig-val">Signal Value (mA)</label>
+                        <input class="ps-input" type="number" id="sig-val" step="0.01" placeholder="12.00">
                     </div>
-                    <div id="customRow" style="display:none">
+                    <div id="custom-row" style="display:none">
                         <div class="ps-row">
-                            <label class="ps-label" for="customMin">Range min</label>
-                            <input class="ps-input" type="number" id="customMin" step="any" placeholder="4">
+                            <label class="ps-label" for="custom-min">Range min</label>
+                            <input class="ps-input" type="number" id="custom-min" step="any" placeholder="4">
                         </div>
                         <div class="ps-row">
-                            <label class="ps-label" for="customMax">Range max</label>
-                            <input class="ps-input" type="number" id="customMax" step="any" placeholder="20">
+                            <label class="ps-label" for="custom-max">Range max</label>
+                            <input class="ps-input" type="number" id="custom-max" step="any" placeholder="20">
                         </div>
                         <div class="ps-row">
-                            <label class="ps-label" for="customUnit">Range unit</label>
-                            <input class="ps-input" type="text" id="customUnit" placeholder="mA">
+                            <label class="ps-label" for="custom-unit">Range unit</label>
+                            <input class="ps-input" type="text" id="custom-unit" placeholder="mA">
                         </div>
                     </div>
                     <div class="ps-row">
-                        <label class="ps-label" for="euMin">Eng. units min</label>
-                        <input class="ps-input" type="number" id="euMin" step="any" placeholder="0">
+                        <label class="ps-label" for="eu-min">Eng. units min</label>
+                        <input class="ps-input" type="number" id="eu-min" step="any" placeholder="0">
                     </div>
                     <div class="ps-row">
-                        <label class="ps-label" for="euMax">Eng. units max</label>
-                        <input class="ps-input" type="number" id="euMax" step="any" placeholder="100">
+                        <label class="ps-label" for="eu-max">Eng. units max</label>
+                        <input class="ps-input" type="number" id="eu-max" step="any" placeholder="100">
                     </div>
                     <div class="ps-row">
-                        <label class="ps-label" for="euLabelInput">Units label</label>
-                        <input class="ps-input" type="text" id="euLabelInput" placeholder="°F, °C, CFM, m³/h, %, …">
+                        <label class="ps-label" for="eu-label-input">Units label</label>
+                        <input class="ps-input" type="text" id="eu-label-input" placeholder="°F, °C, CFM, m³/h, %, …">
                     </div>
                 </section>
 
@@ -82,25 +82,25 @@ nav: tools
                     <h2 class="ps-section-label">Output</h2>
                     <div class="ps-row">
                         <span class="ps-label">Eng. value</span>
-                        <span class="ps-value muted" id="scalingOut">—</span>
+                        <span class="ps-value muted" id="scaling-out">—</span>
                     </div>
                     <div class="ps-row">
                         <span class="ps-label">% of span</span>
-                        <span class="ps-value muted" id="scalingPct">—</span>
+                        <span class="ps-value muted" id="scaling-pct">—</span>
                     </div>
                     <div class="range-bar-wrap">
                         <div class="range-bar-labels">
-                            <span id="barLabelMin">Min</span>
-                            <span id="barLabelMax">Max</span>
+                            <span id="bar-label-min">Min</span>
+                            <span id="bar-label-max">Max</span>
                         </div>
                         <div class="range-bar">
-                            <div class="range-bar-fill" id="rangeBarFill"></div>
+                            <div class="range-bar-fill" id="range-bar-fill"></div>
                         </div>
                     </div>
                     <div class="btn-row" style="margin-top:1rem;">
-                        <button class="copy-btn" id="ss_copyScaling">Copy value</button>
+                        <button class="copy-btn" id="ss-copy-scaling">Copy value</button>
                     </div>
-                    <div class="result-formula" id="scalingFormula" style="word-break:normal;overflow-wrap:break-word;"></div>
+                    <div class="result-formula" id="scaling-formula" style="word-break:normal;overflow-wrap:break-word;"></div>
                 </section>
 
                 <section>
@@ -133,8 +133,8 @@ nav: tools
                 <section>
                     <h2 class="ps-section-label">Input</h2>
                     <div class="ps-row">
-                        <label class="ps-label" for="revSigType">Signal type</label>
-                        <select class="ps-input" id="revSigType">
+                        <label class="ps-label" for="rev-sig-type">Signal type</label>
+                        <select class="ps-input" id="rev-sig-type">
                             <option value="4-20">4–20 mA</option>
                             <option value="0-20">0–20 mA</option>
                             <option value="0-10">0–10 V</option>
@@ -144,16 +144,16 @@ nav: tools
                         </select>
                     </div>
                     <div class="ps-row">
-                        <label class="ps-label" for="revEuVal">Eng. value</label>
-                        <input class="ps-input" type="number" id="revEuVal" step="any" placeholder="72.5">
+                        <label class="ps-label" for="rev-eu-val">Eng. value</label>
+                        <input class="ps-input" type="number" id="rev-eu-val" step="any" placeholder="72.5">
                     </div>
                     <div class="ps-row">
-                        <label class="ps-label" for="revEuMin">Eng. units min</label>
-                        <input class="ps-input" type="number" id="revEuMin" step="any" placeholder="0">
+                        <label class="ps-label" for="rev-eu-min">Eng. units min</label>
+                        <input class="ps-input" type="number" id="rev-eu-min" step="any" placeholder="0">
                     </div>
                     <div class="ps-row">
-                        <label class="ps-label" for="revEuMax">Eng. units max</label>
-                        <input class="ps-input" type="number" id="revEuMax" step="any" placeholder="100">
+                        <label class="ps-label" for="rev-eu-max">Eng. units max</label>
+                        <input class="ps-input" type="number" id="rev-eu-max" step="any" placeholder="100">
                     </div>
                 </section>
 
@@ -161,16 +161,16 @@ nav: tools
                     <h2 class="ps-section-label">Output</h2>
                     <div class="ps-row">
                         <span class="ps-label">Signal output</span>
-                        <span class="ps-value muted" id="reverseOut">—</span>
+                        <span class="ps-value muted" id="reverse-out">—</span>
                     </div>
                     <div class="ps-row">
                         <span class="ps-label">% of span</span>
-                        <span class="ps-value muted" id="reversePct">—</span>
+                        <span class="ps-value muted" id="reverse-pct">—</span>
                     </div>
                     <div class="btn-row" style="margin-top:1rem;">
-                        <button class="copy-btn" id="ss_copyReverse">Copy signal</button>
+                        <button class="copy-btn" id="ss-copy-reverse">Copy signal</button>
                     </div>
-                    <div class="result-formula" id="reverseFormula" style="word-break:normal;overflow-wrap:break-word;"></div>
+                    <div class="result-formula" id="reverse-formula" style="word-break:normal;overflow-wrap:break-word;"></div>
                 </section>
 
                 <section>
@@ -206,20 +206,20 @@ nav: tools
                 <section>
                     <h2 class="ps-section-label">Input — two IO pairs</h2>
                     <div class="ps-row">
-                        <label class="ps-label" for="so_x1">x₁ (raw)</label>
-                        <input class="ps-input" type="number" id="so_x1" step="any" placeholder="4">
+                        <label class="ps-label" for="so-x1">x₁ (raw)</label>
+                        <input class="ps-input" type="number" id="so-x1" step="any" placeholder="4">
                     </div>
                     <div class="ps-row">
-                        <label class="ps-label" for="so_y1">y₁ (eng.)</label>
-                        <input class="ps-input" type="number" id="so_y1" step="any" placeholder="0">
+                        <label class="ps-label" for="so-y1">y₁ (eng.)</label>
+                        <input class="ps-input" type="number" id="so-y1" step="any" placeholder="0">
                     </div>
                     <div class="ps-row">
-                        <label class="ps-label" for="so_x2">x₂ (raw)</label>
-                        <input class="ps-input" type="number" id="so_x2" step="any" placeholder="20">
+                        <label class="ps-label" for="so-x2">x₂ (raw)</label>
+                        <input class="ps-input" type="number" id="so-x2" step="any" placeholder="20">
                     </div>
                     <div class="ps-row">
-                        <label class="ps-label" for="so_y2">y₂ (eng.)</label>
-                        <input class="ps-input" type="number" id="so_y2" step="any" placeholder="100">
+                        <label class="ps-label" for="so-y2">y₂ (eng.)</label>
+                        <input class="ps-input" type="number" id="so-y2" step="any" placeholder="100">
                     </div>
                 </section>
 
@@ -228,20 +228,20 @@ nav: tools
                     <h2 class="ps-section-label">Output — y = mx + b</h2>
                     <div class="ps-row">
                         <span class="ps-label">Slope (m) — scale factor</span>
-                        <span class="ps-value muted" id="so_slope">—</span>
+                        <span class="ps-value muted" id="so-slope">—</span>
                     </div>
                     <div class="ps-row">
                         <span class="ps-label">Offset (b) — intercept</span>
-                        <span class="ps-value muted" id="so_offset">—</span>
+                        <span class="ps-value muted" id="so-offset">—</span>
                     </div>
                     <div class="btn-row" style="margin-top:1rem;">
-                        <button class="copy-btn" id="ss_copySlope">Copy m</button>
-                        <button class="copy-btn" id="ss_copyOffset">Copy b</button>
+                        <button class="copy-btn" id="ss-copy-slope">Copy m</button>
+                        <button class="copy-btn" id="ss-copy-offset">Copy b</button>
                     </div>
                 </section>
 
             </div>
-            <div class="result-formula" id="so_formula" style="margin:0;padding:0.7rem 1.25rem;"></div>
+            <div class="result-formula" id="so-formula" style="margin:0;padding:0.7rem 1.25rem;"></div>
         </div>
     </div>
 
@@ -274,32 +274,32 @@ nav: tools
         // Signal → Eng. Units
         // ─────────────────────────────────────────────
         function calcScaling() {
-            const key      = document.getElementById('sigType').value;
+            const key      = document.getElementById('sig-type').value;
             const isCustom = key === 'custom';
-            document.getElementById('customRow').style.display = isCustom ? 'grid' : 'none';
+            document.getElementById('custom-row').style.display = isCustom ? 'grid' : 'none';
 
             let sMin, sMax, sUnit;
             if (isCustom) {
-                sMin  = parseFloat(document.getElementById('customMin').value);
-                sMax  = parseFloat(document.getElementById('customMax').value);
-                sUnit = document.getElementById('customUnit').value || '';
+                sMin  = parseFloat(document.getElementById('custom-min').value);
+                sMax  = parseFloat(document.getElementById('custom-max').value);
+                sUnit = document.getElementById('custom-unit').value || '';
             } else {
                 ({ min: sMin, max: sMax, unit: sUnit } = SIG[key]);
             }
 
-            document.getElementById('sigInputLabel').textContent = `Signal Value (${sUnit})`;
+            document.getElementById('sig-input-label').textContent = `Signal Value (${sUnit})`;
 
-            const sig    = parseFloat(document.getElementById('sigVal').value);
-            const euMin  = parseFloat(document.getElementById('euMin').value);
-            const euMax  = parseFloat(document.getElementById('euMax').value);
-            const euUnit = document.getElementById('euLabelInput').value || '';
+            const sig    = parseFloat(document.getElementById('sig-val').value);
+            const euMin  = parseFloat(document.getElementById('eu-min').value);
+            const euMax  = parseFloat(document.getElementById('eu-max').value);
+            const euUnit = document.getElementById('eu-label-input').value || '';
 
-            const outEl  = document.getElementById('scalingOut');
-            const pctEl  = document.getElementById('scalingPct');
-            const fillEl = document.getElementById('rangeBarFill');
+            const outEl  = document.getElementById('scaling-out');
+            const pctEl  = document.getElementById('scaling-pct');
+            const fillEl = document.getElementById('range-bar-fill');
 
-            document.getElementById('barLabelMin').textContent = !isFinite(euMin) ? 'Min' : `${euMin}${euUnit ? ' ' + euUnit : ''}`;
-            document.getElementById('barLabelMax').textContent = !isFinite(euMax) ? 'Max' : `${euMax}${euUnit ? ' ' + euUnit : ''}`;
+            document.getElementById('bar-label-min').textContent = !isFinite(euMin) ? 'Min' : `${euMin}${euUnit ? ' ' + euUnit : ''}`;
+            document.getElementById('bar-label-max').textContent = !isFinite(euMax) ? 'Max' : `${euMax}${euUnit ? ' ' + euUnit : ''}`;
 
             if (!isFinite(sig) || !isFinite(euMin) || !isFinite(euMax) || !isFinite(sMin) || !isFinite(sMax) || sMax === sMin) {
                 outEl.className = 'ps-value muted';
@@ -307,7 +307,7 @@ nav: tools
                 pctEl.className = 'ps-value muted';
                 pctEl.textContent = '—';
                 fillEl.style.width = '0%';
-                document.getElementById('scalingFormula').textContent = '';
+                document.getElementById('scaling-formula').textContent = '';
                 return;
             }
 
@@ -325,7 +325,7 @@ nav: tools
             pctEl.className = 'ps-value live' + (outOfRange ? ' error' : '');
             pctEl.textContent = pctNum.toFixed(1) + '%' + (outOfRange ? ' ⚠' : '');
 
-            document.getElementById('scalingFormula').textContent =
+            document.getElementById('scaling-formula').textContent =
                 `Eng. value = ${euMin} + ((${sig} − ${sMin}) ÷ (${sMax} − ${sMin})) × (${euMax} − ${euMin}) = ${eu.toFixed(4)}${euUnit ? ' ' + euUnit : ''}`;
         }
 
@@ -333,20 +333,20 @@ nav: tools
         // Eng. Units → Signal
         // ─────────────────────────────────────────────
         function calcReverse() {
-            const key   = document.getElementById('revSigType').value;
+            const key   = document.getElementById('rev-sig-type').value;
             const { min: sMin, max: sMax, unit: sUnit } = SIG[key];
-            const eu    = parseFloat(document.getElementById('revEuVal').value);
-            const euMin = parseFloat(document.getElementById('revEuMin').value);
-            const euMax = parseFloat(document.getElementById('revEuMax').value);
-            const outEl = document.getElementById('reverseOut');
-            const pctEl = document.getElementById('reversePct');
+            const eu    = parseFloat(document.getElementById('rev-eu-val').value);
+            const euMin = parseFloat(document.getElementById('rev-eu-min').value);
+            const euMax = parseFloat(document.getElementById('rev-eu-max').value);
+            const outEl = document.getElementById('reverse-out');
+            const pctEl = document.getElementById('reverse-pct');
 
             if (!isFinite(eu) || !isFinite(euMin) || !isFinite(euMax) || euMax === euMin) {
                 outEl.className = 'ps-value muted';
                 outEl.textContent = '—';
                 pctEl.className = 'ps-value muted';
                 pctEl.textContent = '—';
-                document.getElementById('reverseFormula').textContent = '';
+                document.getElementById('reverse-formula').textContent = '';
                 return;
             }
 
@@ -360,7 +360,7 @@ nav: tools
             pctEl.className = 'ps-value live' + (outOfRange ? ' error' : '');
             pctEl.textContent = (ratio * 100).toFixed(1) + '%' + (outOfRange ? ' ⚠' : '');
 
-            document.getElementById('reverseFormula').textContent =
+            document.getElementById('reverse-formula').textContent =
                 `Signal = ${sMin} + ((${eu} − ${euMin}) ÷ (${euMax} − ${euMin})) × (${sMax} − ${sMin}) = ${sig.toFixed(4)} ${sUnit}`;
         }
 
@@ -368,14 +368,14 @@ nav: tools
         // 2-Point → Slope / Offset
         // ─────────────────────────────────────────────
         function calcSlopeOffset() {
-            const x1 = parseFloat(document.getElementById('so_x1').value);
-            const y1 = parseFloat(document.getElementById('so_y1').value);
-            const x2 = parseFloat(document.getElementById('so_x2').value);
-            const y2 = parseFloat(document.getElementById('so_y2').value);
+            const x1 = parseFloat(document.getElementById('so-x1').value);
+            const y1 = parseFloat(document.getElementById('so-y1').value);
+            const x2 = parseFloat(document.getElementById('so-x2').value);
+            const y2 = parseFloat(document.getElementById('so-y2').value);
 
-            const slopeEl   = document.getElementById('so_slope');
-            const offsetEl  = document.getElementById('so_offset');
-            const formulaEl = document.getElementById('so_formula');
+            const slopeEl   = document.getElementById('so-slope');
+            const offsetEl  = document.getElementById('so-offset');
+            const formulaEl = document.getElementById('so-formula');
 
             if (!isFinite(x1) || !isFinite(y1) || !isFinite(x2) || !isFinite(y2) || x1 === x2) {
                 slopeEl.className  = 'ps-value muted';
@@ -404,21 +404,21 @@ nav: tools
         document.querySelectorAll('[data-tab]').forEach(btn => {
             btn.addEventListener('click', e => switchTab(e.currentTarget.dataset.tab, e.currentTarget));
         });
-        ['sigType', 'sigVal', 'customMin', 'customMax', 'customUnit', 'euMin', 'euMax', 'euLabelInput'].forEach(id => {
+        ['sig-type', 'sig-val', 'custom-min', 'custom-max', 'custom-unit', 'eu-min', 'eu-max', 'eu-label-input'].forEach(id => {
             const el = document.getElementById(id);
             el.addEventListener(el.tagName === 'SELECT' ? 'change' : 'input', calcScaling);
         });
-        ['revSigType', 'revEuVal', 'revEuMin', 'revEuMax'].forEach(id => {
+        ['rev-sig-type', 'rev-eu-val', 'rev-eu-min', 'rev-eu-max'].forEach(id => {
             const el = document.getElementById(id);
             el.addEventListener(el.tagName === 'SELECT' ? 'change' : 'input', calcReverse);
         });
-        ['so_x1', 'so_y1', 'so_x2', 'so_y2'].forEach(id => {
+        ['so-x1', 'so-y1', 'so-x2', 'so-y2'].forEach(id => {
             document.getElementById(id).addEventListener('input', calcSlopeOffset);
         });
-        document.getElementById('ss_copyScaling').addEventListener('click', e => copyReadouts(e.currentTarget, '', 'scalingOut'));
-        document.getElementById('ss_copyReverse').addEventListener('click', e => copyReadouts(e.currentTarget, '', 'reverseOut'));
-        document.getElementById('ss_copySlope').addEventListener('click', e => copyReadouts(e.currentTarget, '', 'so_slope'));
-        document.getElementById('ss_copyOffset').addEventListener('click', e => copyReadouts(e.currentTarget, '', 'so_offset'));
+        document.getElementById('ss-copy-scaling').addEventListener('click', e => copyReadouts(e.currentTarget, '', 'scaling-out'));
+        document.getElementById('ss-copy-reverse').addEventListener('click', e => copyReadouts(e.currentTarget, '', 'reverse-out'));
+        document.getElementById('ss-copy-slope').addEventListener('click', e => copyReadouts(e.currentTarget, '', 'so-slope'));
+        document.getElementById('ss-copy-offset').addEventListener('click', e => copyReadouts(e.currentTarget, '', 'so-offset'));
     })();
 </script>
 {% endblock %}
