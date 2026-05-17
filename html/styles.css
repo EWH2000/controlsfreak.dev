@@ -1047,3 +1047,108 @@ input.ps-input:focus, select.ps-input:focus, textarea.ps-input:focus {
         stroke-dasharray: none;
     }
 }
+
+/* ──────────────────────────────────────────────────────────────────────
+   WIDGET CHROME — shared "interactive panel" vocabulary used by the
+   five widget pages: pump-control (×2 widgets), balancing, vfds,
+   vfd-mock, hydronic-loops (d3 twin-T injection-pump widget).
+
+   The widget shell is the recessed --surface-3 panel + the standard
+   bits inside it: a "Try this:" prompt-link row, mono caps section
+   labels, slider with label/value head, blue-readout pairs, and the
+   anecdote callout (with min-height to reserve space so reveals
+   don't reflow the page below). Page-specific INTERNALS (LCD,
+   keypad, fan, branch states, valve pills, temperature swatches,
+   pump-curve canvas) stay in each page's {% block head %} since
+   only that page uses them.
+
+   Default anecdote left rule is --blue (the "extreme-state reward"
+   variant on pump-control / vfds / hydronic-loops). The .warn
+   modifier flips it to --red for failure callouts (balancing).
+*/
+
+.widget {
+    margin-top: 1.25rem;
+    padding: 1.1rem 1.25rem;
+    background: var(--surface-3);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+}
+
+.widget-try {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    margin-bottom: 0.85rem;
+    line-height: 1.7;
+}
+.widget-try .lbl { letter-spacing: 0.05em; text-transform: uppercase; margin-right: 0.6rem; }
+.widget-try a {
+    color: var(--accent);
+    text-decoration: none;
+    margin-right: 0.85rem;
+    cursor: pointer;
+    border-bottom: 1px dashed var(--accent-dim);
+}
+.widget-try a:hover { color: var(--text-bright); border-bottom-color: var(--accent); }
+
+.widget-section-label {
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    color: var(--text-dim);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+}
+
+.widget-slider-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    margin-bottom: 0.1rem;
+}
+.widget-slider-head .v {
+    color: var(--blue);
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+.widget-slider { width: 100%; margin: 0.15rem 0 0.4rem; }
+
+.widget-readout-label {
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-dim);
+    margin-bottom: 0.15rem;
+}
+.widget-readout-value {
+    font-family: var(--mono);
+    font-size: 1.0rem;
+    font-weight: 600;
+    color: var(--blue);
+    line-height: 1.15;
+}
+.widget-readout-value .unit {
+    font-size: 0.65em;
+    color: var(--text-dim);
+    font-weight: 500;
+    margin-left: 0.2rem;
+}
+
+.widget-anecdote-wrap { min-height: 1.5rem; margin-top: 0.6rem; }
+.widget-anecdote {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--blue);
+    border-radius: 3px;
+    padding: 0.75rem 1rem;
+    font-size: 0.86rem;
+    line-height: 1.7;
+    color: var(--text);
+}
+.widget-anecdote strong { color: var(--text-bright); font-weight: 600; }
+.widget-anecdote.warn { border-left-color: var(--red); }

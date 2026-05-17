@@ -27,15 +27,6 @@ nav: tools
             .vfdm-grid { grid-template-columns: 1fr; }
         }
 
-        .vfdm-panel-label {
-            font-family: var(--mono);
-            font-size: 0.62rem;
-            color: var(--text-dim);
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-            margin-bottom: 0.5rem;
-        }
-
         /* LCD — fixed 20-char × 4-line mono panel.
            Using `ch` units locks the inner width to exactly 20 mono-
            character widths so a row that the page laid out as 20 chars
@@ -193,22 +184,11 @@ nav: tools
 
         /* "Try this" presets — same idiom as the d3 widget on hydronic-
            loops and the run/speed widget on the VFDs education page. */
-        .vfdm-try {
-            font-family: var(--mono);
-            font-size: 0.7rem;
-            color: var(--text-dim);
-            margin-bottom: 1.25rem;
-            line-height: 1.7;
-        }
-        .vfdm-try .lbl { letter-spacing: 0.05em; text-transform: uppercase; margin-right: 0.6rem; }
-        .vfdm-try a {
-            color: var(--accent);
-            text-decoration: none;
-            margin-right: 0.85rem;
-            cursor: pointer;
-            border-bottom: 1px dashed var(--accent-dim);
-        }
-        .vfdm-try a:hover { color: var(--text-bright); border-bottom-color: var(--accent); }
+        /* Widget-try and widget-section-label shells live in styles.css under
+           "WIDGET CHROME". Local override: the try row sits above a tall
+           grid on this page, so it needs more bottom margin than the
+           shared 0.85rem default. */
+        #vfdmTry { margin-bottom: 1.25rem; }
 
         /* Parameter reference table — small column to the right shows
            the live value so the user can see what the keypad navigation
@@ -246,7 +226,7 @@ nav: tools
                 live drive. New to drives? <a href="/education/vfds.html" style="color:var(--accent);">Start with VFD Basics →</a>
             </p>
 
-            <div class="vfdm-try">
+            <div class="widget-try" id="vfdmTry">
                 <span class="lbl">Try this:</span>
                 <a id="vfdmTryDefault">factory defaults</a>
                 <a id="vfdmTryKeypad">keypad commissioning</a>
@@ -258,7 +238,7 @@ nav: tools
 
                 <!-- ── LEFT COLUMN: drive front panel ── -->
                 <div>
-                    <div class="vfdm-panel-label">Drive Front Panel</div>
+                    <div class="widget-section-label">Drive Front Panel</div>
 
                     <!-- LCD: 20-char × 4-line fixed mono grid. Content set by
                          the render() loop. .blue class on a wrapping span tints
@@ -308,7 +288,7 @@ nav: tools
 
                 <!-- ── RIGHT COLUMN: motor response + external inputs ── -->
                 <div>
-                    <div class="vfdm-panel-label">Motor Response</div>
+                    <div class="widget-section-label">Motor Response</div>
                     <div class="vfdm-readouts">
                         <div class="vfdm-readout">
                             <span>Commanded</span>
@@ -328,7 +308,7 @@ nav: tools
                     </div>
 
                     <div class="vfdm-ext">
-                        <div class="vfdm-panel-label">External Inputs</div>
+                        <div class="widget-section-label">External Inputs</div>
 
                         <!-- Terminal DI run input. Active when run source = TERMINALS;
                              gray out otherwise (still operable — the wire is wired,

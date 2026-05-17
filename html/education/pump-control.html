@@ -18,53 +18,15 @@ nav: education
 
         /* Both widgets — shared chrome. Same recessed surface as the
            d3 widget on hydronic-loops and the run/speed widget on vfds. */
-        .pc-widget {
-            margin-top: 1.25rem;
-            padding: 1.1rem 1.25rem;
-            background: var(--surface-3);
-            border: 1px solid var(--border);
-            border-radius: 3px;
-        }
-        .pc-w-try {
-            font-family: var(--mono);
-            font-size: 0.7rem;
-            color: var(--text-dim);
-            margin-bottom: 0.85rem;
-            line-height: 1.7;
-        }
-        .pc-w-try .lbl { letter-spacing: 0.05em; text-transform: uppercase; margin-right: 0.6rem; }
-        .pc-w-try a {
-            color: var(--accent);
-            text-decoration: none;
-            margin-right: 0.85rem;
-            cursor: pointer;
-            border-bottom: 1px dashed var(--accent-dim);
-        }
-        .pc-w-try a:hover { color: var(--text-bright); border-bottom-color: var(--accent); }
+        /* Widget shell (.widget / .widget-try / .widget-section-label /
+           .widget-slider* / .widget-readout-*  / .widget-anecdote*) lives
+           in styles.css — see "WIDGET CHROME" there. */
 
-        .pc-w-section-label {
-            font-family: var(--mono);
-            font-size: 0.62rem;
-            color: var(--text-dim);
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-            margin-bottom: 0.4rem;
-        }
-        .pc-w-slider-head {
-            display: flex;
-            justify-content: space-between;
-            align-items: baseline;
-            font-family: var(--mono);
-            font-size: 0.72rem;
-            color: var(--text-dim);
-            margin-bottom: 0.1rem;
-        }
-        .pc-w-slider-head .v {
-            color: var(--blue);
-            font-weight: 600;
-            font-size: 0.95rem;
-        }
-        .pc-w-slider { width: 100%; margin: 0.15rem 0 0.9rem; }
+        /* Local override: this page's .widget-slider needs more bottom margin
+           than the shared 0.4rem, since the next thing below is the chart wrap
+           or the next slider's section label (not another tight slider).
+           Scoped to the two widget ids so it doesn't leak. */
+        #pcW1 .widget-slider, #pcW2 .widget-slider { margin-bottom: 0.9rem; }
 
         /* Widget 1 — operating-point chart layout. Chart on the left,
            readouts panel on the right; stacks under ~700px. */
@@ -98,28 +60,6 @@ nav: education
             border-radius: 3px;
             padding: 0.55rem 0.75rem;
         }
-        .pc-w-readout-label {
-            font-family: var(--mono);
-            font-size: 0.6rem;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            color: var(--text-dim);
-            margin-bottom: 0.18rem;
-        }
-        .pc-w-readout-value {
-            font-family: var(--mono);
-            font-size: 1.0rem;
-            font-weight: 600;
-            color: var(--blue);
-            line-height: 1.15;
-        }
-        .pc-w-readout-value .unit {
-            font-size: 0.65em;
-            color: var(--text-dim);
-            font-weight: 500;
-            margin-left: 0.2rem;
-        }
-
         /* Fan — reused vocabulary from the VFDs widget. Slightly smaller
            here since each pump-control widget gets its own copy. Rotation
            rate proportional to the operating-point Hz (60 Hz ⇒ ~1 rev/sec)
@@ -230,21 +170,6 @@ nav: education
             margin-bottom: 0.8rem;
         }
 
-        /* Anecdote callout — same family as the d3 failure-state callout
-           and the vfds run/speed widget anecdote, for the cross-page
-           "extreme-state reward" pattern. min-height reserves vertical
-           space so reveals don't reflow the page below. */
-        .pc-w-anecdote-wrap { min-height: 1.5rem; margin-top: 0.6rem; }
-        .pc-w-anecdote {
-            background: var(--bg);
-            border: 1px solid var(--border);
-            border-left: 4px solid var(--blue);
-            border-radius: 3px;
-            padding: 0.75rem 1rem;
-            font-size: 0.86rem;
-            line-height: 1.7;
-            color: var(--text);
-        }
     </style>
 {% endblock %}
 
@@ -310,7 +235,7 @@ nav: education
                                                             through origin, steeper as valves close)
                  intersection: Q = r * sqrt(70 / (R + 0.002)), where R is the system-curve slope.
                  At r=1, v=100: Q = 100 GPM, H = 50 ft — the design operating point. -->
-            <div class="pc-widget" id="pcW1">
+            <div class="widget" id="pcW1">
                 <div class="pc-w1-grid">
                     <div>
                         <div class="pc-w1-chart-wrap">
@@ -377,21 +302,21 @@ nav: education
                         </div>
 
                         <div style="margin-top:1rem;">
-                            <div class="pc-w-section-label">Pump speed</div>
-                            <div class="pc-w-slider-head">
+                            <div class="widget-section-label">Pump speed</div>
+                            <div class="widget-slider-head">
                                 <span>0 Hz</span>
                                 <span class="v"><span id="pcW1Hz">60</span> <span style="font-size:0.65em;color:var(--text-dim);font-weight:500;">Hz</span></span>
                                 <span>60 Hz</span>
                             </div>
-                            <input class="pc-w-slider" id="pcW1HzSlider" type="range" min="0" max="60" step="1" value="60" aria-label="Pump speed in Hz"/>
+                            <input class="widget-slider" id="pcW1HzSlider" type="range" min="0" max="60" step="1" value="60" aria-label="Pump speed in Hz"/>
 
-                            <div class="pc-w-section-label" style="margin-top:0.4rem;">Valves open</div>
-                            <div class="pc-w-slider-head">
+                            <div class="widget-section-label" style="margin-top:0.4rem;">Valves open</div>
+                            <div class="widget-slider-head">
                                 <span>10%</span>
                                 <span class="v"><span id="pcW1Valve">100</span> <span style="font-size:0.65em;color:var(--text-dim);font-weight:500;">%</span></span>
                                 <span>100%</span>
                             </div>
-                            <input class="pc-w-slider" id="pcW1ValveSlider" type="range" min="10" max="100" step="1" value="100" aria-label="Valve open percentage"/>
+                            <input class="widget-slider" id="pcW1ValveSlider" type="range" min="10" max="100" step="1" value="100" aria-label="Valve open percentage"/>
                         </div>
                     </div>
 
@@ -413,16 +338,16 @@ nav: education
                             </div>
                         </div>
                         <div class="pc-w1-readout">
-                            <div class="pc-w-readout-label">Flow</div>
-                            <div class="pc-w-readout-value"><span id="pcW1Flow">100</span><span class="unit" data-us="GPM" data-metric="L/s">GPM</span></div>
+                            <div class="widget-readout-label">Flow</div>
+                            <div class="widget-readout-value"><span id="pcW1Flow">100</span><span class="unit" data-us="GPM" data-metric="L/s">GPM</span></div>
                         </div>
                         <div class="pc-w1-readout">
-                            <div class="pc-w-readout-label">Head</div>
-                            <div class="pc-w-readout-value"><span id="pcW1Head">50</span><span class="unit" data-us="ft" data-metric="m">ft</span></div>
+                            <div class="widget-readout-label">Head</div>
+                            <div class="widget-readout-value"><span id="pcW1Head">50</span><span class="unit" data-us="ft" data-metric="m">ft</span></div>
                         </div>
                         <div class="pc-w1-readout">
-                            <div class="pc-w-readout-label">Power vs 60 Hz</div>
-                            <div class="pc-w-readout-value"><span id="pcW1Power">100</span><span class="unit">%</span></div>
+                            <div class="widget-readout-label">Power vs 60 Hz</div>
+                            <div class="widget-readout-value"><span id="pcW1Power">100</span><span class="unit">%</span></div>
                         </div>
                     </div>
                 </div>
@@ -635,8 +560,8 @@ nav: education
                  In reset-DP mode: DP_setpoint = max(5, 25*(d/100)) — walks down linearly toward a 5 ft floor
                  Valve openness in reset mode: clamped to ~95% (the reset target)
                  Valve openness in fixed mode: walks with demand (lower demand ⇒ more throttling) -->
-            <div class="pc-widget" id="pcW2">
-                <div class="pc-w-try">
+            <div class="widget" id="pcW2">
+                <div class="widget-try">
                     <span class="lbl">Try this:</span>
                     <a id="pcW2TryDesign">design day (all valves wide)</a>
                     <a id="pcW2TryMid">mid-day (60% demand)</a>
@@ -648,37 +573,37 @@ nav: education
                     <button id="pcW2ModeReset" type="button">Reset DP</button>
                 </div>
 
-                <div class="pc-w-section-label">Building demand</div>
-                <div class="pc-w-slider-head">
+                <div class="widget-section-label">Building demand</div>
+                <div class="widget-slider-head">
                     <span>0%</span>
                     <span class="v"><span id="pcW2Demand">100</span> <span style="font-size:0.65em;color:var(--text-dim);font-weight:500;">%</span></span>
                     <span>100%</span>
                 </div>
-                <input class="pc-w-slider" id="pcW2DemandSlider" type="range" min="0" max="100" step="1" value="100" aria-label="Building demand percentage"/>
+                <input class="widget-slider" id="pcW2DemandSlider" type="range" min="0" max="100" step="1" value="100" aria-label="Building demand percentage"/>
 
-                <div class="pc-w-section-label" style="margin-top:0.4rem;">Valve positions (5 loads)</div>
+                <div class="widget-section-label" style="margin-top:0.4rem;">Valve positions (5 loads)</div>
                 <div class="pc-w2-valves" id="pcW2Valves" aria-label="Valve positions"></div>
 
                 <div class="pc-w2-readouts">
                     <div class="pc-w1-readout">
-                        <div class="pc-w-readout-label">DP setpoint</div>
-                        <div class="pc-w-readout-value"><span id="pcW2DpSet">25</span><span class="unit" data-us="ft" data-metric="m">ft</span></div>
+                        <div class="widget-readout-label">DP setpoint</div>
+                        <div class="widget-readout-value"><span id="pcW2DpSet">25</span><span class="unit" data-us="ft" data-metric="m">ft</span></div>
                     </div>
                     <div class="pc-w1-readout">
-                        <div class="pc-w-readout-label">Pump speed</div>
-                        <div class="pc-w-readout-value"><span id="pcW2Hz">60</span><span class="unit">Hz</span></div>
+                        <div class="widget-readout-label">Pump speed</div>
+                        <div class="widget-readout-value"><span id="pcW2Hz">60</span><span class="unit">Hz</span></div>
                     </div>
                     <div class="pc-w1-readout">
-                        <div class="pc-w-readout-label">Flow</div>
-                        <div class="pc-w-readout-value"><span id="pcW2Flow">100</span><span class="unit" data-us="GPM" data-metric="L/s">GPM</span></div>
+                        <div class="widget-readout-label">Flow</div>
+                        <div class="widget-readout-value"><span id="pcW2Flow">100</span><span class="unit" data-us="GPM" data-metric="L/s">GPM</span></div>
                     </div>
                     <div class="pc-w1-readout">
-                        <div class="pc-w-readout-label">Power vs full</div>
-                        <div class="pc-w-readout-value"><span id="pcW2Power">100</span><span class="unit">%</span></div>
+                        <div class="widget-readout-label">Power vs full</div>
+                        <div class="widget-readout-value"><span id="pcW2Power">100</span><span class="unit">%</span></div>
                     </div>
                 </div>
 
-                <div class="pc-w-anecdote-wrap" id="pcW2AnecdoteWrap"></div>
+                <div class="widget-anecdote-wrap" id="pcW2AnecdoteWrap"></div>
             </div>
 
             <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:1.25rem;">
@@ -972,7 +897,7 @@ nav: education
             if (state.demand === 0) state.anecdoteShown = true;
             if (state.anecdoteShown) {
                 anecdoteEl.innerHTML =
-                    '<div class="pc-w-anecdote">' +
+                    '<div class="widget-anecdote">' +
                     'At zero demand the loop has nowhere for the water to go. With proper DP control or a ' +
                     'DPBV at the far end, the pump catches it — slows down, or the bypass opens. Without ' +
                     'either, the pump <em>deadheads</em>: spinning at speed against a closed loop, water ' +

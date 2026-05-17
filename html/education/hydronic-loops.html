@@ -16,42 +16,28 @@ nav: education
            + alert area. Recessed surface to read as "instrument panel" against
            the white tool-body, vocabulary borrowed from the 3-col tools'
            reference panel (--surface-3 + hairline border). */
-        .d3-widget {
-            margin-top: 1.25rem;
-            padding: 1rem 1.25rem;
-            background: var(--surface-3);
-            border: 1px solid var(--border);
-            border-radius: 3px;
-        }
+        /* Widget shell (.widget / .widget-readout-* / .widget-slider /
+           .widget-anecdote) lives in styles.css under "WIDGET CHROME".
+           Local overrides + d3-specific internals below. */
+
+        /* Slider needs more vertical breathing room here than the shared
+           0.15rem/0.4rem default — it sits between the readouts and the
+           temperature swatch, both visually weighty. */
+        #d3Widget .widget-slider { margin: 0.35rem 0 0.95rem; }
+
+        /* d3-specific: horizontal flex of three readouts at the top. */
         .d3-w-readouts {
             display: flex;
             flex-wrap: wrap;
             gap: 1.25rem 2rem;
             margin-bottom: 0.6rem;
         }
-        .d3-w-readout-label {
-            font-family: var(--mono);
-            font-size: 0.6rem;
-            color: var(--text-dim);
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-            margin-bottom: 0.15rem;
-        }
-        .d3-w-readout-value {
-            font-family: var(--mono);
-            font-size: 1.05rem;
-            font-weight: 600;
-            color: var(--blue);
-            line-height: 1.1;
-        }
-        .d3-w-readout-value .d3-w-warn-glyph {
+        /* Warning glyph that appears beside the GPM value when below the
+           hard-fail threshold. */
+        .widget-readout-value .d3-w-warn-glyph {
             color: var(--text-dim);
             font-size: 0.78em;
             margin-left: 0.25rem;
-        }
-        .d3-w-slider {
-            width: 100%;
-            margin: 0.35rem 0 0.95rem;
         }
         .d3-w-temp {
             display: flex;
@@ -91,23 +77,6 @@ nav: education
             font-style: italic;
             padding: 0.45rem 0.7rem;
             border-left: 2px solid var(--border);
-        }
-        /* Failure callout: same .pid-term family (border + radius + bg) but
-           with a heavier left rule in --blue. Chosen over --red (jarring)
-           and over a heavier --accent (already used by .pid-term's normal
-           left rule, so it wouldn't differentiate). --blue matches the
-           swatch dropping to --blue-cool at the same moment, and reads as
-           informational rather than alarming — fitting the "reward, not
-           punishment" tone of the anecdote. */
-        .d3-w-failure {
-            background: var(--bg);
-            border: 1px solid var(--border);
-            border-left: 4px solid var(--blue);
-            border-radius: 3px;
-            padding: 0.7rem 1rem;
-            font-size: 0.86rem;
-            line-height: 1.7;
-            color: var(--text);
         }
     </style>
 {% endblock %}
@@ -430,22 +399,22 @@ nav: education
                  data-flow-density on the two bridge paths so the engine particle
                  traffic on the bridge tracks the slider. See the inline <script> at
                  page bottom for the math and state machine. -->
-            <div class="d3-widget" id="d3Widget">
+            <div class="widget" id="d3Widget">
                 <div class="d3-w-readouts">
                     <div>
-                        <div class="d3-w-readout-label">Injection flow</div>
-                        <div class="d3-w-readout-value" id="d3wGpm">40.0 <span style="font-size:0.62em;color:var(--text-dim);font-weight:500;">GPM</span></div>
+                        <div class="widget-readout-label">Injection flow</div>
+                        <div class="widget-readout-value" id="d3wGpm">40.0 <span class="unit">GPM</span></div>
                     </div>
                     <div>
-                        <div class="d3-w-readout-label">Pump speed</div>
-                        <div class="d3-w-readout-value" id="d3wHz">45 <span style="font-size:0.62em;color:var(--text-dim);font-weight:500;">Hz</span></div>
+                        <div class="widget-readout-label">Pump speed</div>
+                        <div class="widget-readout-value" id="d3wHz">45 <span class="unit">Hz</span></div>
                     </div>
                     <div>
-                        <div class="d3-w-readout-label">% of design speed</div>
-                        <div class="d3-w-readout-value" id="d3wPct">75<span style="font-size:0.62em;color:var(--text-dim);font-weight:500;"> %</span></div>
+                        <div class="widget-readout-label">% of design speed</div>
+                        <div class="widget-readout-value" id="d3wPct">75<span class="unit"> %</span></div>
                     </div>
                 </div>
-                <input class="d3-w-slider" id="d3wSlider" type="range" min="0" max="60" step="1" value="45" aria-label="Injection pump speed (Hz)"/>
+                <input class="widget-slider" id="d3wSlider" type="range" min="0" max="60" step="1" value="45" aria-label="Injection pump speed (Hz)"/>
                 <div class="d3-w-temp">
                     <span>System supply temp:</span>
                     <span class="d3-w-temp-swatch" id="d3wSwatch"></span>
@@ -526,9 +495,9 @@ nav: education
 
             // Readouts. Keep the small unit spans intact by writing innerHTML
             // — the structure is fixed so there's no injection risk.
-            gpmEl.innerHTML = gpmDisp + ' <span style="font-size:0.62em;color:var(--text-dim);font-weight:500;">' + gpmU + '</span>';
-            pctEl.innerHTML = pct + '<span style="font-size:0.62em;color:var(--text-dim);font-weight:500;"> %</span>';
-            let hzInner = hz + ' <span style="font-size:0.62em;color:var(--text-dim);font-weight:500;">Hz</span>';
+            gpmEl.innerHTML = gpmDisp + ' <span class="unit">' + gpmU + '</span>';
+            pctEl.innerHTML = pct + '<span class="unit"> %</span>';
+            let hzInner = hz + ' <span class="unit">Hz</span>';
             if (hz > 0 && hz < 20) {
                 hzInner += '<span class="d3-w-warn-glyph" aria-hidden="true">⚠</span>';
             }
@@ -555,7 +524,7 @@ nav: education
             // Alert state. Vertical space reserved by .d3-w-alert min-height
             // so swaps don't reflow the page below.
             if (hz === 0) {
-                alertEl.innerHTML = '<div class="d3-w-failure">Forgot to enable the injection pump? I\'ve done it. Lucky the boiler I was working with had its own low-flow protection. Older ones don\'t — and it doesn\'t take an engineer to know what happens when there\'s too much heat and nowhere for it to go.</div>';
+                alertEl.innerHTML = '<div class="widget-anecdote">Forgot to enable the injection pump? I\'ve done it. Lucky the boiler I was working with had its own low-flow protection. Older ones don\'t — and it doesn\'t take an engineer to know what happens when there\'s too much heat and nowhere for it to go.</div>';
             } else if (hz < 20) {
                 alertEl.innerHTML = '<div class="d3-w-warning">Below min speed — most BMS configurations disable the pump entirely below ~20 Hz.</div>';
             } else {

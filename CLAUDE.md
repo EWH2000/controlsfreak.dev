@@ -399,6 +399,21 @@ Light-only (`color-scheme: light`); no dark variant.
   collision with `.section-label` (in `.section-header`); the live-
   value modifier is `.live` to avoid collision with `.readout` (the
   bit-viewer / PID-metrics box).
+- **Widget chrome (`.widget-*`)** — the recessed-panel idiom used by
+  the interactive widgets on `pump-control` (×2), `balancing`,
+  `vfds`, `vfd-mock`, `hydronic-loops` (d3 twin-T injection-pump
+  widget). `.widget` is the outer recessed `--surface-3` panel;
+  `.widget-try` is the "Try this:" prompt-link row; `.widget-section-label`
+  is the mono caps label; `.widget-slider-head` + `.v` is the
+  label-with-blue-live-value row above a `.widget-slider`;
+  `.widget-readout-label` / `.widget-readout-value` (+ `.unit`) is
+  the labeled blue mono readout; `.widget-anecdote-wrap` reserves
+  vertical space so a `.widget-anecdote` reveal doesn't reflow the
+  page below. `.widget-anecdote.warn` flips the left rule to
+  `--red` for failure callouts. Widget INTERNALS (LCDs, keypads,
+  branch states, valve pills, temperature swatches, pump-curve
+  canvases) stay in each page's `{% block head %}` since only that
+  page uses them.
 
 For the full component vocabulary, read `styles.css` — it's terse and
 well-grouped.

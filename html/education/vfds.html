@@ -30,29 +30,9 @@ nav: education
            reference slider in the middle; three command-attempt rows
            below (one per source); status panel at the bottom narrates
            which command was accepted and why. */
-        .vfd-widget {
-            margin-top: 1.25rem;
-            padding: 1.1rem 1.25rem;
-            background: var(--surface-3);
-            border: 1px solid var(--border);
-            border-radius: 3px;
-        }
-        .vfd-w-try {
-            font-family: var(--mono);
-            font-size: 0.7rem;
-            color: var(--text-dim);
-            margin-bottom: 0.85rem;
-            line-height: 1.7;
-        }
-        .vfd-w-try .lbl { letter-spacing: 0.05em; text-transform: uppercase; margin-right: 0.6rem; }
-        .vfd-w-try a {
-            color: var(--accent);
-            text-decoration: none;
-            margin-right: 0.85rem;
-            cursor: pointer;
-            border-bottom: 1px dashed var(--accent-dim);
-        }
-        .vfd-w-try a:hover { color: var(--text-bright); border-bottom-color: var(--accent); }
+        /* Widget shell (.widget / .widget-try / .widget-section-label /
+           .widget-slider* / .widget-anecdote*) lives in styles.css under
+           "WIDGET CHROME". */
 
         .vfd-w-sources {
             display: grid;
@@ -68,7 +48,7 @@ nav: education
             letter-spacing: 0.06em;
             text-transform: uppercase;
         }
-        .vfd-widget select {
+        #vfdWidget select {
             width: auto;
             padding: 0.4rem 0.7rem;
             font-size: 0.82rem;
@@ -86,7 +66,7 @@ nav: education
             }
             .vfd-w-sources label { margin-top: 0.4rem; }
             .vfd-w-sources label:first-child { margin-top: 0; }
-            .vfd-widget select {
+            #vfdWidget select {
                 min-width: 0;
                 width: 100%;
             }
@@ -97,31 +77,6 @@ nav: education
             padding-top: 0.85rem;
             border-top: 1px solid var(--border-faint, rgba(0,0,0,0.07));
         }
-        .vfd-w-section-label {
-            font-family: var(--mono);
-            font-size: 0.62rem;
-            color: var(--text-dim);
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-            margin-bottom: 0.5rem;
-        }
-
-        .vfd-w-slider-head {
-            display: flex;
-            justify-content: space-between;
-            align-items: baseline;
-            font-family: var(--mono);
-            font-size: 0.72rem;
-            color: var(--text-dim);
-            margin-bottom: 0.1rem;
-        }
-        .vfd-w-slider-head .v {
-            color: var(--blue);
-            font-weight: 600;
-            font-size: 0.95rem;
-        }
-        .vfd-w-slider { width: 100%; margin: 0.15rem 0 0.4rem; }
-
         .vfd-w-cmd-row {
             display: grid;
             grid-template-columns: 6rem 1fr;
@@ -230,18 +185,6 @@ nav: education
            informational tone (the user has found something interesting,
            not broken anything). Vertical space reserved by min-height
            on the parent so toggling doesn't reflow the page below. */
-        .vfd-w-anecdote-wrap { min-height: 1.5rem; margin-top: 0.6rem; }
-        .vfd-w-anecdote {
-            background: var(--bg);
-            border: 1px solid var(--border);
-            border-left: 4px solid var(--blue);
-            border-radius: 3px;
-            padding: 0.75rem 1rem;
-            font-size: 0.86rem;
-            line-height: 1.7;
-            color: var(--text);
-        }
-
         /* Cube-law numbers callout — re-uses .pid-term styling (per the
            friction-file note that .pid-term is now functionally a
            "styled aside" class) but inlines a small numbers grid. */
@@ -396,8 +339,8 @@ nav: education
                  speed=network) reveals an inline anecdote when the user attempts a network RUN
                  against an open DI — matches the d3 widget's failure-state reward pattern on
                  hydronic-loops. -->
-            <div class="vfd-widget" id="vfdWidget">
-                <div class="vfd-w-try">
+            <div class="widget" id="vfdWidget">
+                <div class="widget-try">
                     <span class="lbl">Try this:</span>
                     <a id="vfdTryKeypad">all keypad (commissioning)</a>
                     <a id="vfdTryNetwork">all network (BMS auto)</a>
@@ -421,17 +364,17 @@ nav: education
                 </div>
 
                 <div class="vfd-w-section">
-                    <div class="vfd-w-section-label">Speed reference (from <span id="vfdSpdSrcName">network</span>)</div>
-                    <div class="vfd-w-slider-head">
+                    <div class="widget-section-label">Speed reference (from <span id="vfdSpdSrcName">network</span>)</div>
+                    <div class="widget-slider-head">
                         <span>0 Hz</span>
                         <span class="v"><span id="vfdSpdVal">25</span> <span style="font-size:0.65em;color:var(--text-dim);font-weight:500;">Hz</span></span>
                         <span>60 Hz</span>
                     </div>
-                    <input class="vfd-w-slider" id="vfdSpdSlider" type="range" min="0" max="60" step="1" value="25" aria-label="Speed reference"/>
+                    <input class="widget-slider" id="vfdSpdSlider" type="range" min="0" max="60" step="1" value="25" aria-label="Speed reference"/>
                 </div>
 
                 <div class="vfd-w-section">
-                    <div class="vfd-w-section-label">Try a run command</div>
+                    <div class="widget-section-label">Try a run command</div>
 
                     <div class="vfd-w-cmd-row">
                         <span class="src">Keypad</span>
@@ -492,7 +435,7 @@ nav: education
                     </div>
                 </div>
 
-                <div class="vfd-w-anecdote-wrap" id="vfdAnecdoteWrap"></div>
+                <div class="widget-anecdote-wrap" id="vfdAnecdoteWrap"></div>
             </div>
 
             <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:1.25rem;">
@@ -740,7 +683,7 @@ nav: education
     // configuration (run=terminals, speed=network) and attempting a
     // network RUN with the DI open — i.e. the configuration that costs
     // techs an afternoon in the field. Reserved space for the anecdote
-    // is allocated by .vfd-w-anecdote-wrap min-height so toggles don't
+    // is allocated by .widget-anecdote-wrap min-height so toggles don't
     // reflow the page below.
     (function () {
         const SOURCES = ['keypad', 'terminals', 'network'];
@@ -880,7 +823,7 @@ nav: education
             if (classicMistake) state.anecdoteShown = true;
             if (state.anecdoteShown) {
                 anecdoteEl.innerHTML =
-                    '<div class="vfd-w-anecdote">' +
+                    '<div class="widget-anecdote">' +
                     'I lost half an afternoon to exactly this once. New chiller plant, drives on BACnet, ' +
                     'I could see the speed reference writing through to 30 Hz on the device readout — and the drive ' +
                     'sat there stopped. Spent an hour re-checking the sequence, the AV mapping, the network priority ' +

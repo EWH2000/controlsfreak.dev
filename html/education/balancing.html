@@ -43,37 +43,10 @@ nav: education
             line-height: 1.5;
         }
 
-        /* Widget chrome — same recessed panel idiom as pump-control. */
-        .bal-widget {
-            margin-top: 1.25rem;
-            padding: 1.1rem 1.25rem;
-            background: var(--surface-3);
-            border: 1px solid var(--border);
-            border-radius: 3px;
-        }
-        .bal-w-section-label {
-            font-family: var(--mono);
-            font-size: 0.62rem;
-            color: var(--text-dim);
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-            margin-bottom: 0.4rem;
-        }
-        .bal-w-slider-head {
-            display: flex;
-            justify-content: space-between;
-            align-items: baseline;
-            font-family: var(--mono);
-            font-size: 0.72rem;
-            color: var(--text-dim);
-            margin-bottom: 0.1rem;
-        }
-        .bal-w-slider-head .v {
-            color: var(--blue);
-            font-weight: 600;
-            font-size: 0.95rem;
-        }
-        .bal-w-slider { width: 100%; margin: 0.15rem 0 0.4rem; }
+        /* Widget shell (.widget / .widget-section-label / .widget-slider* /
+           .widget-anecdote* — anecdote uses .warn for the red burst-coil
+           callout) lives in styles.css under "WIDGET CHROME". */
+
         .bal-w-slider-foot {
             display: flex;
             justify-content: space-between;
@@ -220,24 +193,9 @@ nav: education
         .bal-w-tag-starved { color: var(--red); }
         .bal-w-tag-over    { color: var(--heat); }
 
-        /* Anecdote callout — same family as the d3 / pump-control / vfds
-           extreme-state reveals. min-height reserves vertical space so the
-           reveal doesn't reflow the page below. */
-        .bal-w-anecdote-wrap { min-height: 1rem; margin-top: 0.9rem; }
-        .bal-w-anecdote {
-            background: var(--bg);
-            border: 1px solid var(--border);
-            border-left: 4px solid var(--red);
-            border-radius: 3px;
-            padding: 0.75rem 1rem;
-            font-size: 0.86rem;
-            line-height: 1.7;
-            color: var(--text);
-        }
-        .bal-w-anecdote strong {
-            color: var(--text-bright);
-            font-weight: 600;
-        }
+        /* Local: tighter anecdote-wrap min-height than the shared 1.5rem,
+           since the callout sits closer to the bottom of the widget. */
+        #balWidget .widget-anecdote-wrap { min-height: 1rem; margin-top: 0.9rem; }
     </style>
 {% endblock %}
 
@@ -550,14 +508,14 @@ nav: education
                 Three identical branches, each sized for the same design flow — <span data-us="30 GPM" data-metric="1.9 L/s">30 GPM</span> at a design Δp of <span data-us="20 ft" data-metric="6.1 m">20 ft</span> of water. One has a CBV, one has an ABV, one has a PICV. Drag the slider to change the available Δp across the branches and watch what each one passes. <span class="bal-w-tag-holding">HOLDING</span> means flow is within ±15 % of design; <span class="bal-w-tag-starved">STARVED</span> is below 85 %; <span class="bal-w-tag-over">OVER</span> is above 115 %.
             </p>
 
-            <div class="bal-widget" id="balWidget">
+            <div class="widget" id="balWidget">
 
-                <div class="bal-w-section-label">Available Δp across the load branches</div>
-                <div class="bal-w-slider-head">
+                <div class="widget-section-label">Available Δp across the load branches</div>
+                <div class="widget-slider-head">
                     <span>System Δp</span>
                     <span><span class="v" id="balDpVal">20</span> <span id="balDpUnit">ft</span></span>
                 </div>
-                <input class="bal-w-slider" id="balDpSlider" type="range" min="1" max="60" step="1" value="20"
+                <input class="widget-slider" id="balDpSlider" type="range" min="1" max="60" step="1" value="20"
                        aria-label="System differential pressure across the load branches"/>
                 <div class="bal-w-slider-foot">
                     <span data-us="1 ft" data-metric="0.3 m">1 ft</span>
@@ -614,8 +572,8 @@ nav: education
                      reflow of the page below when the callout appears. Once shown in a
                      session, stays pinned — yanking it back on the next slider tweak would
                      undo the discovery. -->
-                <div class="bal-w-anecdote-wrap">
-                    <div class="bal-w-anecdote" id="balAnecdote" hidden>
+                <div class="widget-anecdote-wrap">
+                    <div class="widget-anecdote warn" id="balAnecdote" hidden>
                         <strong>True story.</strong> A multi-floor heating system, CBV-balanced years back and never re-touched. The pumps got knocked off setpoint one season — somebody had been chasing energy numbers — and available Δp at the far branches dropped enough that flow at the last load fell off a cliff. Cold night, low flow, the far-end coil froze solid and burst. Not my fault, but I caught the cleanup. The pattern is right here in the widget: a CBV can't tell the difference between design pressure and half of it, it just passes whatever its orifice equation allows. A PICV would have held minimum flow all the way down.
                     </div>
                 </div>

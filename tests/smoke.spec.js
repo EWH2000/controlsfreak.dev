@@ -243,7 +243,7 @@ test('pump control page renders its diagram and both widgets respond', async ({ 
         el.value = '0';
         el.dispatchEvent(new Event('input', { bubbles: true }));
     });
-    await expect(page.locator('.pc-w-anecdote')).toBeVisible();
+    await expect(page.locator('.widget-anecdote')).toBeVisible();
 });
 
 test('vfds page renders its diagrams and the run/speed widget is wired up', async ({ page }) => {
@@ -265,7 +265,7 @@ test('vfds page renders its diagrams and the run/speed widget is wired up', asyn
     await page.click('#vfdTryClassic');
     await page.click('#vfdNetRun');
     await expect(page.locator('#vfdState')).toHaveText(/STOPPED/);
-    await expect(page.locator('.vfd-w-anecdote')).toBeVisible();
+    await expect(page.locator('.widget-anecdote')).toBeVisible();
 
     // the all-network preset + a network RUN actually starts the drive
     await page.click('#vfdTryNetwork');
