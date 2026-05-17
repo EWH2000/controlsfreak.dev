@@ -54,7 +54,7 @@ it's wasted work, and the fix is small.
   on; avoids gauge bouncing at high-refresh display rates.
 - *Scope:* all three in one pass (Block A — pre-migration).
 
-### 2. `isFinite` vs `isNaN` convention drift
+### 2. `isFinite` vs `isNaN` convention drift *(addressed 2026-05-16)*
 
 Pages use both, inconsistently:
 
@@ -79,7 +79,7 @@ one pass; update CLAUDE.md's JS-patterns section to record the
 choice. Lands as part of Block C (post-migration cleanup) so we
 don't touch the same files twice.
 
-### 3. Inline `on*` handlers vs `addEventListener` — convention drift
+### 3. Inline `on*` handlers vs `addEventListener` — convention drift *(addressed 2026-05-16)*
 
 Older pages wire events via inline HTML attributes (`onclick="..."`);
 newer pages wire them via `addEventListener` inside an IIFE-wrapped
@@ -215,7 +215,7 @@ Migration complete. Block C (codebase-issues #2, #3, #5) is the
 next forcing function and was deliberately deferred to land
 against the templated source.
 
-### 5. Widget chrome CSS consolidation
+### 5. Widget chrome CSS consolidation *(addressed 2026-05-16)*
 
 Five widgets — `pc-w-*` (pump-control, two widgets), `bal-w-*`
 (balancing), `vfd-w-*` (vfds), `vfdm-*` (vfd-mock), `d3-w-*`

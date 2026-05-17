@@ -1365,6 +1365,13 @@ caught on a manometer walk.
   `.edu-w-*` rule set in `styles.css` is starting to look like a
   next-restructure-pass candidate. Not urgent (each page's prefix
   reads cleanly); flag for when the sixth widget shows up.
+  *(Followed up 2026-05-16: shared shell extracted to `.widget-*`
+  in `styles.css` as Block C #5 — see codebase-issues.md. Each
+  page's `.pc-w-*` / `.bal-w-*` / `.vfd-w-*` / `.vfdm-*` /
+  `.d3-w-*` prefixes still cover the page-unique internals — LCDs,
+  keypads, branch rows, valve pills, fan icons, temp swatches,
+  pump-curve canvases. The "sixth widget" trigger above is
+  effectively retired.)*
 - The `data-state` attribute on the branch row, swapping border /
   bar fill / state-pill colour, is a clean idiom worth reusing
   for future state-driven widgets. Same idea as the

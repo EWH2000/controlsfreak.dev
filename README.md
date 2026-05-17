@@ -125,10 +125,11 @@ from now will still run it.
   applied across every page; page-specific CSS stays inline via
   the layout's `{% block head %}`.
 - **Shared scripts** in `html/scripts/` as *classic* scripts (not
-  ES modules — modules would break the inline `on*` handlers on
-  older pages, and there's no bundler doing module-graph work).
-  Loaded with `<script src="/scripts/xxx.js"></script>` before
-  the page's inline `<script>`:
+  ES modules — there's no bundler doing module-graph work, and the
+  shared helpers expose globals like `Units`, `simulatePid`, and
+  `FlowEngine` that page IIFEs reach for by name). Loaded with
+  `<script src="/scripts/xxx.js"></script>` before the page's
+  inline `<script>`:
   - `pid-engine.js` — FOPDT process model + PID controller with
     conditional-integration anti-windup. Drives the PID Tuning
     Helper tool and the three PID Basics mini-sims.

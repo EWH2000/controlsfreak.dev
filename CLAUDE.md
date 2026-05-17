@@ -572,9 +572,10 @@ on `tools/index.html`. Other near-term work — thermistor *identify
 mode*, psych chart *floating state-point chip*, more Education pages
 — lives in `site-ideas-and-friction.md`.
 
-Block C (post-migration cleanup) is queued in `codebase-issues.md`:
-the `isFinite`-vs-`isNaN` retrofit (#2), the inline-handler →
-`addEventListener` retrofit on the 8 older pages (#3), and the
-widget-shell CSS consolidation under a shared `.widget-*` prefix in
-`styles.css` (#5). These all wait until the migration is fully
-closed out so we don't touch the same files twice.
+Block C (post-migration cleanup) landed 2026-05-16: the
+`isFinite`-vs-`isNaN` retrofit (#2), the inline-handler →
+`addEventListener` retrofit across the 8 older pages (#3), and the
+widget-shell CSS consolidation under the shared `.widget-*` prefix in
+`styles.css` (#5) are all done. Remaining open entries in
+`codebase-issues.md` (#6 psychrometric monolith, #7 worker rate-limit,
+#8 reduced-motion) are explicit *hold* decisions, not pending work.
