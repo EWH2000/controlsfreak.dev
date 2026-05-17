@@ -202,7 +202,7 @@ nav: tools
 <script src="/scripts/units.js"></script>
 <!-- Shared simulation core — the FOPDT process model + discrete-time stepping.
      Defines PID_PROC and simulatePid() as globals (classic script, not a module),
-     so the inline glue below and the on* handlers can see them. -->
+     so the IIFE-wrapped inline script below can reach them by name. -->
 <script src="/scripts/pid-engine.js"></script>
 <script>
     // ─────────────────────────────────────────────

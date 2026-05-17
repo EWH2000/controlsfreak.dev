@@ -181,8 +181,9 @@ nav: tools
 <script src="/scripts/units.js"></script>
 <!-- Sensor curves — keyed by type id, each with a generated R/T table.
      See the file header for per-type verification status. Classic script
-     (not a module), loaded before the inline glue below so the on* handlers
-     see THERMISTOR_TYPES. Same loading pattern as /scripts/pid-engine.js. -->
+     (not a module), loaded before the IIFE-wrapped inline script below so it
+     can reach THERMISTOR_TYPES by name. Same loading pattern as
+     /scripts/pid-engine.js. -->
 <script src="/scripts/thermistor-data.js"></script>
 <script src="/scripts/ui.js"></script>
 <script>

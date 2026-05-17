@@ -1,9 +1,9 @@
-// 11ty config — see codebase-issues.md entry #4 for the decision
-// rationale and migration-plan context. Step 1 of the migration
-// stands the build up without touching any pages: with no frontmatter
-// and no {% include %} directives in the existing files, every page
-// passes through Nunjucks unchanged, and the assets get passthrough-
-// copied. Step 3 fills in _includes/ and pages start opting in.
+// 11ty config — see codebase-issues.md entry #4 for the original
+// decision rationale. The build's only job is to template the shared
+// HTML chrome (head / nav / footer / layout) into each page; everything
+// else passes through unchanged. Per-page logic remains vanilla JS in
+// the page's inline <script>; shared engines live as classic scripts
+// under html/scripts/. No bundler, no transpile.
 
 module.exports = function(eleventyConfig) {
     // .html files run through Nunjucks so signal-scaling.html →
