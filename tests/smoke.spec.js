@@ -42,9 +42,9 @@ for (const { name, url } of PAGES) {
 test('pid tuner runs the shared simulation engine on load', async ({ page }) => {
     await page.goto('http://localhost:8000/tools/pid-tuner.html');
     // pid-engine.js drives the canvas + metrics on init; the readouts should fill in.
-    await expect(page.locator('#pidOver')).not.toHaveText('—');
-    await expect(page.locator('#pidSettle')).not.toHaveText('—');
-    await expect(page.locator('#pidErr')).not.toHaveText('—');
+    await expect(page.locator('#pid-over')).not.toHaveText('—');
+    await expect(page.locator('#pid-settle')).not.toHaveText('—');
+    await expect(page.locator('#pid-err')).not.toHaveText('—');
 });
 
 test('bacnet/ip converter converts a hex string', async ({ page }) => {
@@ -113,21 +113,21 @@ test('education page runs the PID mini-sims and they respond to input', async ({
     await page.goto('http://localhost:8000/education/pid-basics.html');
 
     // all three mini-sim canvases are present and visible
-    for (const id of ['#m1Canvas', '#m2Canvas', '#m3Canvas']) {
+    for (const id of ['#m1-canvas', '#m2-canvas', '#m3-canvas']) {
         await expect(page.locator(id)).toBeVisible();
     }
     // the shared engine ran on load — the key-metric callouts are filled in
-    await expect(page.locator('#m1Offset')).not.toHaveText('—');
-    await expect(page.locator('#m2Over')).not.toHaveText('—');
-    await expect(page.locator('#m3Settle')).not.toHaveText('—');
+    await expect(page.locator('#m1-offset')).not.toHaveText('—');
+    await expect(page.locator('#m2-over')).not.toHaveText('—');
+    await expect(page.locator('#m3-settle')).not.toHaveText('—');
 
     // moving Sim 1's gain slider re-runs the sim — the offset readout changes
-    const offsetBefore = await page.locator('#m1Offset').textContent();
-    await page.locator('#m1Slider').evaluate((el) => {
+    const offsetBefore = await page.locator('#m1-offset').textContent();
+    await page.locator('#m1-slider').evaluate((el) => {
         el.value = el.max;
         el.dispatchEvent(new Event('input', { bubbles: true }));
     });
-    await expect(page.locator('#m1Offset')).not.toHaveText(offsetBefore);
+    await expect(page.locator('#m1-offset')).not.toHaveText(offsetBefore);
 
     // a process-speed chip switches the model and takes the .active state
     const slowChip = page.locator('#sim2 .btn-row .copy-btn').filter({ hasText: 'Slow' });
