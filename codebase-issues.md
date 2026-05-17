@@ -831,7 +831,7 @@ fallbacks) is deferred — different concern ("drop belt-and-
 braces fallbacks") with its own subtlety (canvas
 `getPropertyValue` defaults). Opened as #23.
 
-### 20. Tests — weak assertions, brittle waits, dead `test.skip`
+### 20. Tests — weak assertions, brittle waits, dead `test.skip` *(addressed 2026-05-17)*
 
 Several specs pass states that don't verify what the test name
 implies, plus a few flake-prone patterns:
@@ -867,6 +867,55 @@ class of test debt).
 
 **Recommended action:** address as a small Block — single commit, no
 behavioral change to the site.
+
+**Resolution (2026-05-17):** landed as five per-bullet commits on
+one branch.
+
+- Bullet 1 (pump-control flow): added `expect(flowAt30).toBeGreaterThan(30)`
+  alongside the existing `< 60`. Design is 100 GPM @ 60 Hz, so the
+  envelope `30 < flow < 60` is wide enough to absorb model tuning but
+  catches a stall.
+- Bullet 2 (vfd-mock actHz): replaced the bare `> 0` with
+  `>= 1` and `<= setHz` (`setHz = 30`, the keypad default I01).
+- Bullet 3 (thermistor cleanup): wrapped the behavioral test in a
+  `test.describe('thermistor behavioral', …)` block with a scoped
+  `test.afterEach` that clears `cf_units` from localStorage directly.
+  Removes the manual restore click that the test body used to do
+  at the end.
+- Bullet 4 (listener attach): added a `watchErrors(page)` helper at
+  the top of `smoke.spec.js`; refactored the smoke loop to use it;
+  applied it to 11 behavioral tests. `contact.spec.js` deliberately
+  excluded — Cloudflare Turnstile produces unfilterable pageerror
+  noise on `contact.html` in the local-test environment, so an
+  errors-array assertion there would consistently fail without
+  signaling a real regression.
+- Bullet 5 (`test.skip` → `test.fixme`): renamed; updated the
+  comment header to TODO-style with the wrangler-dev prerequisite
+  spelled out.
+- Bullet 6 (`waitForTimeout` flake): replaced both 300 ms sleeps —
+  `contact.spec.js:22` dropped entirely (the subsequent
+  `toBeHidden()` auto-retry covers the settle); `smoke.spec.js:200`
+  swapped for `expect.poll(...).toBeGreaterThanOrEqual(1)` on the
+  actHz readout (timeout 1.5 s).
+- Bullet 7 (PAGES ↔ sitemap drift): new test reads
+  `html/sitemap.xml` at runtime, normalizes both lists to
+  path-only, and asserts equality. Catches drift in either
+  direction.
+
+**Caught in passing:** the bullet-4 listener attach surfaced a
+real bug on the psychrometric chart — `${prefix}-secondLbl`
+template-literal id construction (lines 752 and 1309) was missed
+by the #16 quote-aware kebab-case substitution and tried to look
+up `oa-secondLbl` / `cc-secondLbl` / `ra-secondLbl` (camelCase,
+doesn't exist post-#16). Fixed in the same PR as a small
+standalone commit. The broader concern (template literals are a
+substitution-method blind spot that may have left other camelCase
+id constructions undiscovered) is recorded as a one-line note
+under `## What to avoid` in CLAUDE.md should be considered for a
+future mass-rename — but a targeted grep for `\`\${[^}]+\}[^\`]*[A-Z]`
+across `html/**/*.html` and `html/scripts/*.js` returned zero
+other real hits today (the apparent matches are all variable
+interpolations in display text, not id constructions).
 
 ### 21. Site-wide accessibility bundle — small individual items
 
