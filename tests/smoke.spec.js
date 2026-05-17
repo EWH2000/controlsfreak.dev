@@ -49,9 +49,9 @@ test('pid tuner runs the shared simulation engine on load', async ({ page }) => 
 
 test('bacnet/ip converter converts a hex string', async ({ page }) => {
     await page.goto('http://localhost:8000/tools/bacnet-ip-converter.html');
-    await page.fill('#b2i_hex', 'C0A80164BAC0');
-    await expect(page.locator('#b2i_ip')).toHaveText('192.168.1.100');
-    await expect(page.locator('#b2i_port')).toHaveText('47808');
+    await page.fill('#b2i-hex', 'C0A80164BAC0');
+    await expect(page.locator('#b2i-ip')).toHaveText('192.168.1.100');
+    await expect(page.locator('#b2i-port')).toHaveText('47808');
 });
 
 test('psychrometric chart computes the AHU chain on load', async ({ page }) => {

@@ -23,8 +23,8 @@ nav: tools
         </div>
 
         <div class="tabs tabs-flush">
-            <button class="tab-btn active" id="bacnetTab_hex2ip">Hex → IP</button>
-            <button class="tab-btn" id="bacnetTab_ip2hex">IP → Hex</button>
+            <button class="tab-btn active" id="bacnet-tab-hex2ip">Hex → IP</button>
+            <button class="tab-btn" id="bacnet-tab-ip2hex">IP → Hex</button>
         </div>
 
         <!-- ── Hex → IP ── -->
@@ -34,16 +34,16 @@ nav: tools
                 <section>
                     <h2 class="ps-section-label">Input</h2>
                     <div class="ps-row">
-                        <label class="ps-label" for="b2i_hex">Hex string</label>
-                        <input class="ps-input" type="text" id="b2i_hex" placeholder="C0A80164BAC0">
+                        <label class="ps-label" for="b2i-hex">Hex string</label>
+                        <input class="ps-input" type="text" id="b2i-hex" placeholder="C0A80164BAC0">
                     </div>
                     <div class="ps-row">
                         <span class="ps-label">Length</span>
-                        <span class="ps-value muted" id="b2i_len">—</span>
+                        <span class="ps-value muted" id="b2i-len">—</span>
                     </div>
                     <div class="ps-row">
                         <span class="ps-label">Format</span>
-                        <span class="ps-value muted" id="b2i_fmt">—</span>
+                        <span class="ps-value muted" id="b2i-fmt">—</span>
                     </div>
                 </section>
 
@@ -51,24 +51,24 @@ nav: tools
                     <h2 class="ps-section-label">Output</h2>
                     <div class="ps-row">
                         <span class="ps-label">IP address</span>
-                        <span class="ps-value muted" id="b2i_ip">—</span>
+                        <span class="ps-value muted" id="b2i-ip">—</span>
                     </div>
                     <div class="ps-row">
                         <span class="ps-label">UDP port</span>
-                        <span class="ps-value muted" id="b2i_port">—</span>
+                        <span class="ps-value muted" id="b2i-port">—</span>
                     </div>
                     <div class="ps-row">
                         <span class="ps-label">Port notes</span>
-                        <span class="ps-value muted" id="b2i_notes">—</span>
+                        <span class="ps-value muted" id="b2i-notes">—</span>
                     </div>
                     <div class="btn-row" style="margin-top:1rem;">
-                        <button class="copy-btn" id="b2i_copyIp">Copy IP</button>
-                        <button class="copy-btn" id="b2i_copyIpPort">Copy IP : port</button>
+                        <button class="copy-btn" id="b2i-copy-ip">Copy IP</button>
+                        <button class="copy-btn" id="b2i-copy-ip-port">Copy IP : port</button>
                     </div>
                 </section>
 
             </div>
-            <div class="result-formula" id="b2i_formula" style="margin:0;padding:0.7rem 1.25rem;"></div>
+            <div class="result-formula" id="b2i-formula" style="margin:0;padding:0.7rem 1.25rem;"></div>
         </div>
 
         <!-- ── IP → Hex ── -->
@@ -78,16 +78,16 @@ nav: tools
                 <section>
                     <h2 class="ps-section-label">Input</h2>
                     <div class="ps-row">
-                        <label class="ps-label" for="i2h_ip">IP address</label>
-                        <input class="ps-input" type="text" id="i2h_ip" placeholder="192.168.1.100">
+                        <label class="ps-label" for="i2h-ip">IP address</label>
+                        <input class="ps-input" type="text" id="i2h-ip" placeholder="192.168.1.100">
                     </div>
                     <div class="ps-row">
-                        <label class="ps-label" for="i2h_port">UDP port</label>
-                        <input class="ps-input" type="number" id="i2h_port" min="0" max="65535" step="1" placeholder="47808 — optional">
+                        <label class="ps-label" for="i2h-port">UDP port</label>
+                        <input class="ps-input" type="number" id="i2h-port" min="0" max="65535" step="1" placeholder="47808 — optional">
                     </div>
                     <div class="ps-row">
                         <span class="ps-label">Output form</span>
-                        <span class="ps-value muted" id="i2h_form">—</span>
+                        <span class="ps-value muted" id="i2h-form">—</span>
                     </div>
                 </section>
 
@@ -95,23 +95,23 @@ nav: tools
                     <h2 class="ps-section-label">Output</h2>
                     <div class="ps-row">
                         <span class="ps-label">Hex string</span>
-                        <span class="ps-value muted" id="i2h_hex">—</span>
+                        <span class="ps-value muted" id="i2h-hex">—</span>
                     </div>
                     <div class="ps-row">
                         <span class="ps-label">Length</span>
-                        <span class="ps-value muted" id="i2h_len">—</span>
+                        <span class="ps-value muted" id="i2h-len">—</span>
                     </div>
                     <div class="ps-row">
                         <span class="ps-label">Port notes</span>
-                        <span class="ps-value muted" id="i2h_notes">—</span>
+                        <span class="ps-value muted" id="i2h-notes">—</span>
                     </div>
                     <div class="btn-row" style="margin-top:1rem;">
-                        <button class="copy-btn" id="i2h_copyHex">Copy hex</button>
+                        <button class="copy-btn" id="i2h-copy-hex">Copy hex</button>
                     </div>
                 </section>
 
             </div>
-            <div class="result-formula" id="i2h_formula" style="margin:0;padding:0.7rem 1.25rem;"></div>
+            <div class="result-formula" id="i2h-formula" style="margin:0;padding:0.7rem 1.25rem;"></div>
         </div>
     </div>
 
@@ -160,12 +160,12 @@ nav: tools
         }
 
         function bacnetHexToIp() {
-            const ipEl    = document.getElementById('b2i_ip');
-            const portEl  = document.getElementById('b2i_port');
-            const notesEl = document.getElementById('b2i_notes');
-            const lenEl   = document.getElementById('b2i_len');
-            const fmtEl   = document.getElementById('b2i_fmt');
-            const fEl     = document.getElementById('b2i_formula');
+            const ipEl    = document.getElementById('b2i-ip');
+            const portEl  = document.getElementById('b2i-port');
+            const notesEl = document.getElementById('b2i-notes');
+            const lenEl   = document.getElementById('b2i-len');
+            const fmtEl   = document.getElementById('b2i-fmt');
+            const fEl     = document.getElementById('b2i-formula');
 
             const mute = () => {
                 ipEl.className   = 'ps-value muted'; ipEl.textContent   = '—';
@@ -176,7 +176,7 @@ nav: tools
             };
 
             // Tolerant cleanup: drop a leading 0x, strip separators, uppercase.
-            const hex = document.getElementById('b2i_hex').value
+            const hex = document.getElementById('b2i-hex').value
                 .trim().replace(/^0x/i, '').replace(/[\s.:_-]/g, '').toUpperCase();
 
             lenEl.textContent = hex.length ? `${hex.length} character${hex.length === 1 ? '' : 's'}` : '—';
@@ -207,11 +207,11 @@ nav: tools
         }
 
         function bacnetIpToHex() {
-            const hexEl   = document.getElementById('i2h_hex');
-            const lenEl   = document.getElementById('i2h_len');
-            const notesEl = document.getElementById('i2h_notes');
-            const formEl  = document.getElementById('i2h_form');
-            const fEl     = document.getElementById('i2h_formula');
+            const hexEl   = document.getElementById('i2h-hex');
+            const lenEl   = document.getElementById('i2h-len');
+            const notesEl = document.getElementById('i2h-notes');
+            const formEl  = document.getElementById('i2h-form');
+            const fEl     = document.getElementById('i2h-formula');
 
             const mute = () => {
                 hexEl.className = 'ps-value muted'; hexEl.textContent = '—';
@@ -220,8 +220,8 @@ nav: tools
                 fEl.textContent = '';
             };
 
-            const ipRaw   = document.getElementById('i2h_ip').value.trim();
-            const portRaw = document.getElementById('i2h_port').value.trim();
+            const ipRaw   = document.getElementById('i2h-ip').value.trim();
+            const portRaw = document.getElementById('i2h-port').value.trim();
             formEl.textContent = portRaw === '' ? 'address only' : 'address + port';
 
             const m = ipRaw.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
@@ -252,14 +252,14 @@ nav: tools
                 `  ·  port ${port} = 0x${portHex}` + (isDefault ? ' (default BACnet/IP port)' : '');
         }
 
-        document.getElementById('bacnetTab_hex2ip').addEventListener('click', e => switchTab('hex2ip', e.currentTarget));
-        document.getElementById('bacnetTab_ip2hex').addEventListener('click', e => switchTab('ip2hex', e.currentTarget));
-        document.getElementById('b2i_hex').addEventListener('input', bacnetHexToIp);
-        document.getElementById('b2i_copyIp').addEventListener('click', e => copyReadouts(e.currentTarget, '', 'b2i_ip'));
-        document.getElementById('b2i_copyIpPort').addEventListener('click', e => copyReadouts(e.currentTarget, ':', 'b2i_ip', 'b2i_port'));
-        document.getElementById('i2h_ip').addEventListener('input', bacnetIpToHex);
-        document.getElementById('i2h_port').addEventListener('input', bacnetIpToHex);
-        document.getElementById('i2h_copyHex').addEventListener('click', e => copyReadouts(e.currentTarget, '', 'i2h_hex'));
+        document.getElementById('bacnet-tab-hex2ip').addEventListener('click', e => switchTab('hex2ip', e.currentTarget));
+        document.getElementById('bacnet-tab-ip2hex').addEventListener('click', e => switchTab('ip2hex', e.currentTarget));
+        document.getElementById('b2i-hex').addEventListener('input', bacnetHexToIp);
+        document.getElementById('b2i-copy-ip').addEventListener('click', e => copyReadouts(e.currentTarget, '', 'b2i-ip'));
+        document.getElementById('b2i-copy-ip-port').addEventListener('click', e => copyReadouts(e.currentTarget, ':', 'b2i-ip', 'b2i-port'));
+        document.getElementById('i2h-ip').addEventListener('input', bacnetIpToHex);
+        document.getElementById('i2h-port').addEventListener('input', bacnetIpToHex);
+        document.getElementById('i2h-copy-hex').addEventListener('click', e => copyReadouts(e.currentTarget, '', 'i2h-hex'));
     })();
 </script>
 {% endblock %}
