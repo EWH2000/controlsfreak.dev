@@ -23,7 +23,7 @@ nav: education
         /* Slider needs more vertical breathing room here than the shared
            0.15rem/0.4rem default — it sits between the readouts and the
            temperatures row, both visually weighty. */
-        #d3Widget .widget-slider { margin: 0.35rem 0 0.9rem; }
+        #d3-widget .widget-slider { margin: 0.35rem 0 0.9rem; }
 
         /* d3-specific: horizontal flex of three readouts at the top. */
         .d3-w-readouts {
@@ -130,12 +130,12 @@ nav: education
            transition. */
         #d3-primary-loop,
         #d3-system-supply,
-        #d3-loadA-supply,
-        #d3-loadB-supply,
+        #d3-load-a-supply,
+        #d3-load-b-supply,
         [data-d3-arrow],
         #d3-boiler rect,
-        #d3-load-A rect,
-        #d3-load-B rect,
+        #d3-load-a rect,
+        #d3-load-b rect,
         svg[aria-labelledby="d3-title d3-desc"] g.flow-particles > circle {
             transition: stroke 200ms linear, fill 200ms linear;
         }
@@ -400,10 +400,10 @@ nav: education
                 <line id="d3-bridge-return" data-flow="return" data-flow-density="0.2" x1="440" y1="190" x2="280" y2="190" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
                 <!-- ── SYSTEM loop piping: supply main + risers solid --blue, return main + risers dashed --blue-cool ── -->
                 <path id="d3-system-supply" data-flow="supply" d="M440 250 V90 H760" fill="none" stroke="var(--blue, #1577b8)" stroke-width="3"/>
-                <line id="d3-loadA-supply" data-flow="supply" x1="540" y1="90" x2="540" y2="150" stroke="var(--blue, #1577b8)" stroke-width="3"/>
-                <line id="d3-loadB-supply" data-flow="supply" x1="680" y1="90" x2="680" y2="150" stroke="var(--blue, #1577b8)" stroke-width="3"/>
-                <line id="d3-loadA-return" data-flow="return" x1="540" y1="205" x2="540" y2="250" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
-                <line id="d3-loadB-return" data-flow="return" x1="680" y1="205" x2="680" y2="250" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="d3-load-a-supply" data-flow="supply" x1="540" y1="90" x2="540" y2="150" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                <line id="d3-load-b-supply" data-flow="supply" x1="680" y1="90" x2="680" y2="150" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                <line id="d3-load-a-return" data-flow="return" x1="540" y1="205" x2="540" y2="250" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="d3-load-b-return" data-flow="return" x1="680" y1="205" x2="680" y2="250" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
                 <path id="d3-system-return" data-flow="return" d="M760 90 V250 H440" fill="none" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
 
                 <!-- flow arrows. The data-d3-arrow tags drive page-level
@@ -462,11 +462,11 @@ nav: education
                     <rect class="d3-pump-blade" x="429" y="221" width="22" height="2" rx="1" fill="var(--text-dim, #666e66)"/>
                     <text x="378" y="226" text-anchor="middle" font-size="11" fill="var(--text, #38423a)">SYSTEM PUMP</text>
                 </g>
-                <g id="d3-load-A">
+                <g id="d3-load-a">
                     <rect x="505" y="150" width="70" height="55" rx="2" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
                     <text x="540" y="181" text-anchor="middle" font-size="12" font-weight="600" fill="var(--text-bright, #1d251f)">LOAD</text>
                 </g>
-                <g id="d3-load-B">
+                <g id="d3-load-b">
                     <rect x="645" y="150" width="70" height="55" rx="2" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
                     <text x="680" y="181" text-anchor="middle" font-size="12" font-weight="600" fill="var(--text-bright, #1d251f)">LOAD</text>
                 </g>
@@ -493,36 +493,36 @@ nav: education
                  data-flow-density on the two bridge paths so the engine particle
                  traffic on the bridge tracks the slider. See the inline <script> at
                  page bottom for the math and state machine. -->
-            <div class="widget" id="d3Widget">
+            <div class="widget" id="d3-widget">
                 <div class="d3-w-readouts">
                     <div>
                         <div class="widget-readout-label">Injection flow</div>
-                        <div class="widget-readout-value" id="d3wGpm">40.0 <span class="unit">GPM</span></div>
+                        <div class="widget-readout-value" id="d3-w-gpm">40.0 <span class="unit">GPM</span></div>
                     </div>
                     <div>
                         <div class="widget-readout-label">Pump speed</div>
-                        <div class="widget-readout-value" id="d3wHz">45 <span class="unit">Hz</span></div>
+                        <div class="widget-readout-value" id="d3-w-hz">45 <span class="unit">Hz</span></div>
                     </div>
                     <div>
                         <div class="widget-readout-label">% of design speed</div>
-                        <div class="widget-readout-value" id="d3wPct">100<span class="unit"> %</span></div>
+                        <div class="widget-readout-value" id="d3-w-pct">100<span class="unit"> %</span></div>
                     </div>
                 </div>
-                <input class="widget-slider" id="d3wSlider" type="range" min="0" max="75" step="1" value="45" aria-label="Injection pump speed (Hz)"/>
+                <input class="widget-slider" id="d3-w-slider" type="range" min="0" max="75" step="1" value="45" aria-label="Injection pump speed (Hz)"/>
                 <div class="d3-w-temps">
                     <div class="d3-w-temp">
                         <span>Primary loop:</span>
-                        <span class="d3-w-temp-swatch" id="d3wPrimarySwatch"></span>
-                        <span class="d3-w-temp-value" id="d3wPrimaryTemp">180.0 °F</span>
+                        <span class="d3-w-temp-swatch" id="d3-w-primary-swatch"></span>
+                        <span class="d3-w-temp-value" id="d3-w-primary-temp">180.0 °F</span>
                     </div>
                     <div class="d3-w-temp">
                         <span>System supply:</span>
-                        <span class="d3-w-temp-swatch" id="d3wSystemSwatch"></span>
-                        <span class="d3-w-temp-value" id="d3wSystemTemp">148.0 °F</span>
+                        <span class="d3-w-temp-swatch" id="d3-w-system-swatch"></span>
+                        <span class="d3-w-temp-value" id="d3-w-system-temp">148.0 °F</span>
                     </div>
                 </div>
-                <div class="d3-w-status" id="d3wStatus">Normal operation</div>
-                <div class="d3-w-alert" id="d3wAlert"></div>
+                <div class="d3-w-status" id="d3-w-status">Normal operation</div>
+                <div class="d3-w-alert" id="d3-w-alert"></div>
             </div>
         </div>
     </div>
@@ -584,30 +584,30 @@ nav: education
         const C_WHITE     = [0xff, 0xff, 0xff];   // --surface
         const C_DIM       = [0x66, 0x6e, 0x66];   // --text-dim (default equipment stroke)
 
-        const slider           = document.getElementById('d3wSlider');
-        const gpmEl            = document.getElementById('d3wGpm');
-        const hzEl             = document.getElementById('d3wHz');
-        const pctEl            = document.getElementById('d3wPct');
-        const primaryTempEl    = document.getElementById('d3wPrimaryTemp');
-        const primarySwatchEl  = document.getElementById('d3wPrimarySwatch');
-        const systemTempEl     = document.getElementById('d3wSystemTemp');
-        const systemSwatchEl   = document.getElementById('d3wSystemSwatch');
-        const statusEl         = document.getElementById('d3wStatus');
-        const alertEl          = document.getElementById('d3wAlert');
+        const slider           = document.getElementById('d3-w-slider');
+        const gpmEl            = document.getElementById('d3-w-gpm');
+        const hzEl             = document.getElementById('d3-w-hz');
+        const pctEl            = document.getElementById('d3-w-pct');
+        const primaryTempEl    = document.getElementById('d3-w-primary-temp');
+        const primarySwatchEl  = document.getElementById('d3-w-primary-swatch');
+        const systemTempEl     = document.getElementById('d3-w-system-temp');
+        const systemSwatchEl   = document.getElementById('d3-w-system-swatch');
+        const statusEl         = document.getElementById('d3-w-status');
+        const alertEl          = document.getElementById('d3-w-alert');
         const injectPipe       = document.getElementById('d3-inject-pipe');
         const bridgeReturn     = document.getElementById('d3-bridge-return');
         const primaryLoopPipe  = document.getElementById('d3-primary-loop');
         const systemSupplyPipe = document.getElementById('d3-system-supply');
-        const loadASupplyPipe  = document.getElementById('d3-loadA-supply');
-        const loadBSupplyPipe  = document.getElementById('d3-loadB-supply');
+        const loadASupplyPipe  = document.getElementById('d3-load-a-supply');
+        const loadBSupplyPipe  = document.getElementById('d3-load-b-supply');
         const primaryArrows    = document.querySelectorAll('[data-d3-arrow="primary"]');
         const sysSupplyArrows  = document.querySelectorAll('[data-d3-arrow="system-supply"]');
         const boilerRect       = document.querySelector('#d3-boiler rect');
         const boilerText       = document.querySelector('#d3-boiler text');
-        const loadARect        = document.querySelector('#d3-load-A rect');
-        const loadAText        = document.querySelector('#d3-load-A text');
-        const loadBRect        = document.querySelector('#d3-load-B rect');
-        const loadBText        = document.querySelector('#d3-load-B text');
+        const loadARect        = document.querySelector('#d3-load-a rect');
+        const loadAText        = document.querySelector('#d3-load-a text');
+        const loadBRect        = document.querySelector('#d3-load-b rect');
+        const loadBText        = document.querySelector('#d3-load-b text');
 
         // ── Pump impeller rAF loop ────────────────────────────────────
         // Earlier this used a CSS keyframe animation with --spin as the

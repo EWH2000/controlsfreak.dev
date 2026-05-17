@@ -274,19 +274,19 @@ nav: education
                 <path id="lp-tt-system-return" data-flow="return" d="M760 90 V250 H440" fill="none" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
 
                 <!-- ── LOAD A (2-way) piping: supply riser split by valve, single return riser ── -->
-                <line id="lp-tt-loadA-supply-top" data-flow="supply" x1="540" y1="90" x2="540" y2="110" stroke="var(--blue, #1577b8)" stroke-width="3"/>
-                <line id="lp-tt-loadA-supply-bot" data-flow="supply" x1="540" y1="140" x2="540" y2="150" stroke="var(--blue, #1577b8)" stroke-width="3"/>
-                <line id="lp-tt-loadA-return" data-flow="return" x1="540" y1="205" x2="540" y2="250" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="lp-tt-load-a-supply-top" data-flow="supply" x1="540" y1="90" x2="540" y2="110" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                <line id="lp-tt-load-a-supply-bot" data-flow="supply" x1="540" y1="140" x2="540" y2="150" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                <line id="lp-tt-load-a-return" data-flow="return" x1="540" y1="205" x2="540" y2="250" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
 
                 <!-- ── LOAD B (3-way diverting) piping: supply tap → 3-way → coil; bypass right → down →
                      joins coil-return at a tee at (680, 225). Bypass segments are SUPPLY colour (hot
                      water hasn't lost heat); below the tee the combined line is RETURN colour. ── -->
-                <line id="lp-tt-loadB-supply-top" data-flow="supply" x1="680" y1="90" x2="680" y2="110" stroke="var(--blue, #1577b8)" stroke-width="3"/>
-                <line id="lp-tt-loadB-coil-supply" data-flow="supply" x1="680" y1="135" x2="680" y2="150" stroke="var(--blue, #1577b8)" stroke-width="3"/>
-                <line id="lp-tt-loadB-bypass-h" data-flow="supply" x1="695" y1="122" x2="720" y2="122" stroke="var(--blue, #1577b8)" stroke-width="3"/>
-                <line id="lp-tt-loadB-bypass-v" data-flow="supply" x1="720" y1="122" x2="720" y2="225" stroke="var(--blue, #1577b8)" stroke-width="3"/>
-                <line id="lp-tt-loadB-bypass-cross" data-flow="supply" x1="720" y1="225" x2="680" y2="225" stroke="var(--blue, #1577b8)" stroke-width="3"/>
-                <line id="lp-tt-loadB-coil-return" data-flow="return" x1="680" y1="205" x2="680" y2="250" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="lp-tt-load-b-supply-top" data-flow="supply" x1="680" y1="90" x2="680" y2="110" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                <line id="lp-tt-load-b-coil-supply" data-flow="supply" x1="680" y1="135" x2="680" y2="150" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                <line id="lp-tt-load-b-bypass-h" data-flow="supply" x1="695" y1="122" x2="720" y2="122" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                <line id="lp-tt-load-b-bypass-v" data-flow="supply" x1="720" y1="122" x2="720" y2="225" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                <line id="lp-tt-load-b-bypass-cross" data-flow="supply" x1="720" y1="225" x2="680" y2="225" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                <line id="lp-tt-load-b-coil-return" data-flow="return" x1="680" y1="205" x2="680" y2="250" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
 
                 <!-- flow arrows -->
                 <g id="lp-tt-flow-arrows">
@@ -343,12 +343,12 @@ nav: education
                 <!-- Load A — 2-way valve + coil. Valve label sits to the LEFT of the valve
                      (in the empty band between the system pump and the coil), so it doesn't
                      collide with Load B's "3-WAY (diverting)" label in the gap between loads. -->
-                <g id="lp-tt-loadA-valve">
+                <g id="lp-tt-load-a-valve">
                     <polygon points="530,110 550,110 540,125" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
                     <polygon points="530,140 550,140 540,125" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
                     <text x="525" y="129" text-anchor="end" font-size="9" font-weight="600" fill="var(--text-bright, #1d251f)">2-WAY</text>
                 </g>
-                <g id="lp-tt-loadA-coil">
+                <g id="lp-tt-load-a-coil">
                     <rect x="505" y="150" width="70" height="55" rx="2" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
                     <text x="540" y="181" text-anchor="middle" font-size="12" font-weight="600" fill="var(--text-bright, #1d251f)">LOAD A</text>
                 </g>
@@ -356,14 +356,14 @@ nav: education
                 <!-- Load B — 3-way valve + bypass + coil. Subtitle "diverting" uses italic + dim
                      styling to read as a subtitle to "3-WAY"; parens are redundant once the styling
                      already signals it. -->
-                <g id="lp-tt-loadB-valve">
+                <g id="lp-tt-load-b-valve">
                     <polygon points="670,110 690,110 680,125" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
                     <polygon points="670,135 690,135 680,125" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
                     <polygon points="695,117 695,133 680,125" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
                     <text x="615" y="123" text-anchor="end" font-size="9" font-weight="600" fill="var(--text-bright, #1d251f)">3-WAY</text>
                     <text x="615" y="135" text-anchor="end" font-size="9" font-style="italic" fill="var(--text-dim, #666e66)">diverting</text>
                 </g>
-                <g id="lp-tt-loadB-coil">
+                <g id="lp-tt-load-b-coil">
                     <rect x="645" y="150" width="70" height="55" rx="2" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
                     <text x="680" y="181" text-anchor="middle" font-size="12" font-weight="600" fill="var(--text-bright, #1d251f)">LOAD B</text>
                 </g>
@@ -386,12 +386,12 @@ nav: education
                 <!-- Consequence callouts under each load. Line 1 deliberately short ("If all 2-way:")
                      because at the loads' x-positions (540 and 680, 140 units apart) anything wider
                      than ~70 viewBox units crashes into the neighbour. -->
-                <g id="lp-tt-loadA-callout">
+                <g id="lp-tt-load-a-callout">
                     <text x="540" y="295" text-anchor="middle" font-size="11" font-weight="600" fill="var(--text-bright, #1d251f)">If all 2-way:</text>
                     <text x="540" y="312" text-anchor="middle" font-size="11" fill="var(--blue, #1577b8)">system Q varies</text>
                     <text x="540" y="330" text-anchor="middle" font-size="9" font-style="italic" fill="var(--text-dim, #666e66)">→ ramp the system pump</text>
                 </g>
-                <g id="lp-tt-loadB-callout">
+                <g id="lp-tt-load-b-callout">
                     <text x="680" y="295" text-anchor="middle" font-size="11" font-weight="600" fill="var(--text-bright, #1d251f)">If all 3-way:</text>
                     <text x="680" y="312" text-anchor="middle" font-size="11" fill="var(--blue, #1577b8)">system Q constant</text>
                     <text x="680" y="330" text-anchor="middle" font-size="9" font-style="italic" fill="var(--text-dim, #666e66)">→ fixed-speed pump fits</text>

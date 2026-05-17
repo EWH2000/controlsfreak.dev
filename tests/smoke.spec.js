@@ -177,8 +177,8 @@ test('load piping page renders its four SVG schematics and ties back to the twin
     await expect(page.locator('#lp-2w-valve')).toHaveCount(1);
     await expect(page.locator('#lp-3wm-valve')).toHaveCount(1);
     await expect(page.locator('#lp-3wd-valve')).toHaveCount(1);
-    await expect(page.locator('#lp-tt-loadA-valve')).toHaveCount(1);
-    await expect(page.locator('#lp-tt-loadB-valve')).toHaveCount(1);
+    await expect(page.locator('#lp-tt-load-a-valve')).toHaveCount(1);
+    await expect(page.locator('#lp-tt-load-b-valve')).toHaveCount(1);
     // the closing tie-back actually links back to the twin-T #d3 anchor
     const hrefs = await page.locator('main a').evaluateAll((els) => els.map((e) => e.getAttribute('href')));
     expect(hrefs).toContain('/education/hydronic-loops.html#d3');
@@ -213,33 +213,33 @@ test('pump control page renders its diagram and both widgets respond', async ({ 
     await expect(page.locator('#pc-dp-sensor')).toHaveCount(1);
 
     // Widget 1 — operating point reads close to design (100 GPM, 50 ft) at default sliders
-    await expect(page.locator('#pcW1Flow')).toHaveText('100');
-    await expect(page.locator('#pcW1Head')).toHaveText('50.0');
+    await expect(page.locator('#pc-w1-flow')).toHaveText('100');
+    await expect(page.locator('#pc-w1-head')).toHaveText('50.0');
 
     // Move pump-speed slider to 30 Hz and check the operating point shifts
-    await page.locator('#pcW1HzSlider').evaluate((el) => {
+    await page.locator('#pc-w1-hz-slider').evaluate((el) => {
         el.value = '30';
         el.dispatchEvent(new Event('input', { bubbles: true }));
     });
-    const flowAt30 = parseInt(await page.locator('#pcW1Flow').textContent(), 10);
+    const flowAt30 = parseInt(await page.locator('#pc-w1-flow').textContent(), 10);
     expect(flowAt30, 'flow should fall when pump speed drops').toBeLessThan(60);
     // Power follows cube law — at half speed, ~12.5% of full power
-    const powerAt30 = parseInt(await page.locator('#pcW1Power').textContent(), 10);
+    const powerAt30 = parseInt(await page.locator('#pc-w1-power').textContent(), 10);
     expect(powerAt30).toBeGreaterThan(8);
     expect(powerAt30).toBeLessThan(20);
 
     // Widget 2 — fixed-DP at 50% demand should read higher pump Hz than reset-DP
-    await page.locator('#pcW2DemandSlider').evaluate((el) => {
+    await page.locator('#pc-w2-demand-slider').evaluate((el) => {
         el.value = '50';
         el.dispatchEvent(new Event('input', { bubbles: true }));
     });
-    const fixedHz = parseInt(await page.locator('#pcW2Hz').textContent(), 10);
-    await page.click('#pcW2ModeReset');
-    const resetHz = parseInt(await page.locator('#pcW2Hz').textContent(), 10);
+    const fixedHz = parseInt(await page.locator('#pc-w2-hz').textContent(), 10);
+    await page.click('#pc-w2-mode-reset');
+    const resetHz = parseInt(await page.locator('#pc-w2-hz').textContent(), 10);
     expect(resetHz, 'reset DP should run pump slower than fixed DP at part load').toBeLessThan(fixedHz);
 
     // Anecdote reveal at demand = 0
-    await page.locator('#pcW2DemandSlider').evaluate((el) => {
+    await page.locator('#pc-w2-demand-slider').evaluate((el) => {
         el.value = '0';
         el.dispatchEvent(new Event('input', { bubbles: true }));
     });
@@ -286,60 +286,60 @@ test('balancing page renders riser, widget compares three branches, anecdote rev
     await expect(page.locator('#bal-riser-f4-coil')).toHaveCount(1);
 
     // Widget — initial state at design Δp (20 ft) puts all three branches at design flow.
-    await expect(page.locator('#balCbvQ')).toHaveText('30.0');
-    await expect(page.locator('#balAbvQ')).toHaveText('30.0');
-    await expect(page.locator('#balPicvQ')).toHaveText('30.0');
-    await expect(page.locator('#balBchCbv')).toHaveAttribute('data-state', 'holding');
-    await expect(page.locator('#balBchAbv')).toHaveAttribute('data-state', 'holding');
-    await expect(page.locator('#balBchPicv')).toHaveAttribute('data-state', 'holding');
+    await expect(page.locator('#bal-cbv-q')).toHaveText('30.0');
+    await expect(page.locator('#bal-abv-q')).toHaveText('30.0');
+    await expect(page.locator('#bal-picv-q')).toHaveText('30.0');
+    await expect(page.locator('#bal-bch-cbv')).toHaveAttribute('data-state', 'holding');
+    await expect(page.locator('#bal-bch-abv')).toHaveAttribute('data-state', 'holding');
+    await expect(page.locator('#bal-bch-picv')).toHaveAttribute('data-state', 'holding');
 
     // Drop Δp to 2 ft — CBV starves (~9.5 GPM, 32% of design), ABV falls into
     // orifice mode and also starves (~24.5 GPM, 82%), PICV holds at exactly
     // its minimum operating Δp (30 GPM, holding).
-    await page.locator('#balDpSlider').evaluate((el) => {
+    await page.locator('#bal-dp-slider').evaluate((el) => {
         el.value = '2';
         el.dispatchEvent(new Event('input', { bubbles: true }));
     });
-    await expect(page.locator('#balBchCbv')).toHaveAttribute('data-state', 'starved');
-    await expect(page.locator('#balBchAbv')).toHaveAttribute('data-state', 'starved');
-    await expect(page.locator('#balBchPicv')).toHaveAttribute('data-state', 'holding');
+    await expect(page.locator('#bal-bch-cbv')).toHaveAttribute('data-state', 'starved');
+    await expect(page.locator('#bal-bch-abv')).toHaveAttribute('data-state', 'starved');
+    await expect(page.locator('#bal-bch-picv')).toHaveAttribute('data-state', 'holding');
 
     // Anecdote reveal — Δp ≤ 4 ft triggers it; 2 is already past the threshold.
-    await expect(page.locator('#balAnecdote')).toBeVisible();
+    await expect(page.locator('#bal-anecdote')).toBeVisible();
 
     // Push Δp to 60 ft — CBV blows past design (~52 GPM, 173%) and goes OVER;
     // ABV holds (its compensation range covers 3-50, then orifice above; at 60 ft
     // outside compensation ABV is at ~33 GPM / 110% which is still inside the
     // ±15% holding band). PICV holds.
-    await page.locator('#balDpSlider').evaluate((el) => {
+    await page.locator('#bal-dp-slider').evaluate((el) => {
         el.value = '60';
         el.dispatchEvent(new Event('input', { bubbles: true }));
     });
-    await expect(page.locator('#balBchCbv')).toHaveAttribute('data-state', 'over');
-    await expect(page.locator('#balBchPicv')).toHaveAttribute('data-state', 'holding');
+    await expect(page.locator('#bal-bch-cbv')).toHaveAttribute('data-state', 'over');
+    await expect(page.locator('#bal-bch-picv')).toHaveAttribute('data-state', 'holding');
 
     // Anecdote stays pinned once shown (extreme-state reward semantic).
-    await expect(page.locator('#balAnecdote')).toBeVisible();
+    await expect(page.locator('#bal-anecdote')).toBeVisible();
 
     // Boundary check: at Δp = 3 ft, ABV is exactly at the low edge of its
     // compensation range and should hold cleanly at design (no off-by-one
     // into the orifice branch). CBV is still starved (~12 GPM / 39%).
-    await page.locator('#balDpSlider').evaluate((el) => {
+    await page.locator('#bal-dp-slider').evaluate((el) => {
         el.value = '3';
         el.dispatchEvent(new Event('input', { bubbles: true }));
     });
-    await expect(page.locator('#balBchAbv')).toHaveAttribute('data-state', 'holding');
-    await expect(page.locator('#balAbvQ')).toHaveText('30.0');
-    await expect(page.locator('#balBchCbv')).toHaveAttribute('data-state', 'starved');
+    await expect(page.locator('#bal-bch-abv')).toHaveAttribute('data-state', 'holding');
+    await expect(page.locator('#bal-abv-q')).toHaveText('30.0');
+    await expect(page.locator('#bal-bch-cbv')).toHaveAttribute('data-state', 'starved');
 
     // Boundary check: at Δp = 50 ft, ABV is at the upper edge — still
     // holding (no off-by-one into the high-side orifice branch). CBV is
     // well into OVER territory by here.
-    await page.locator('#balDpSlider').evaluate((el) => {
+    await page.locator('#bal-dp-slider').evaluate((el) => {
         el.value = '50';
         el.dispatchEvent(new Event('input', { bubbles: true }));
     });
-    await expect(page.locator('#balBchAbv')).toHaveAttribute('data-state', 'holding');
-    await expect(page.locator('#balAbvQ')).toHaveText('30.0');
-    await expect(page.locator('#balBchCbv')).toHaveAttribute('data-state', 'over');
+    await expect(page.locator('#bal-bch-abv')).toHaveAttribute('data-state', 'holding');
+    await expect(page.locator('#bal-abv-q')).toHaveText('30.0');
+    await expect(page.locator('#bal-bch-cbv')).toHaveAttribute('data-state', 'over');
 });

@@ -26,7 +26,7 @@ nav: education
            than the shared 0.4rem, since the next thing below is the chart wrap
            or the next slider's section label (not another tight slider).
            Scoped to the two widget ids so it doesn't leak. */
-        #pcW1 .widget-slider, #pcW2 .widget-slider { margin-bottom: 0.9rem; }
+        #pc-w1 .widget-slider, #pc-w2 .widget-slider { margin-bottom: 0.9rem; }
 
         /* Widget 1 — operating-point chart layout. Chart on the left,
            readouts panel on the right; stacks under ~700px. */
@@ -222,11 +222,11 @@ nav: education
                                                             through origin, steeper as valves close)
                  intersection: Q = r * sqrt(70 / (R + 0.002)), where R is the system-curve slope.
                  At r=1, v=100: Q = 100 GPM, H = 50 ft — the design operating point. -->
-            <div class="widget" id="pcW1">
+            <div class="widget" id="pc-w1">
                 <div class="pc-w1-grid">
                     <div>
                         <div class="pc-w1-chart-wrap">
-                            <svg class="pc-w1-chart" id="pcW1Chart" viewBox="0 0 480 280" role="img" aria-labelledby="pc-w1-title pc-w1-desc">
+                            <svg class="pc-w1-chart" id="pc-w1-chart" viewBox="0 0 480 280" role="img" aria-labelledby="pc-w1-title pc-w1-desc">
                                 <title id="pc-w1-title">Pump curve and system curve</title>
                                 <desc id="pc-w1-desc">A chart with flow on the horizontal axis and head on the vertical axis. A pump curve falls from upper-left (shutoff head, zero flow) to lower-right (runout, low head). A system curve rises from the origin as a parabola. A marker sits at the intersection — the operating point. Moving the speed slider scales the pump curve; moving the valve-position slider rotates the system curve.</desc>
 
@@ -268,13 +268,13 @@ nav: education
                                 </g>
 
                                 <!-- pump curve at 60 Hz reference, faded -->
-                                <polyline id="pcW1PumpRef" fill="none" stroke="var(--blue-cool)" stroke-width="1.5" stroke-dasharray="4 3" points=""/>
+                                <polyline id="pc-w1-pump-ref" fill="none" stroke="var(--blue-cool)" stroke-width="1.5" stroke-dasharray="4 3" points=""/>
                                 <!-- pump curve at current Hz -->
-                                <polyline id="pcW1Pump" fill="none" stroke="var(--blue)" stroke-width="2.5" points=""/>
+                                <polyline id="pc-w1-pump" fill="none" stroke="var(--blue)" stroke-width="2.5" points=""/>
                                 <!-- system curve at current valve position -->
-                                <polyline id="pcW1Sys" fill="none" stroke="var(--accent)" stroke-width="2.5" points=""/>
+                                <polyline id="pc-w1-sys" fill="none" stroke="var(--accent)" stroke-width="2.5" points=""/>
                                 <!-- operating-point dot -->
-                                <circle id="pcW1Op" cx="0" cy="0" r="6" fill="var(--text-bright)" stroke="var(--surface)" stroke-width="2"/>
+                                <circle id="pc-w1-op" cx="0" cy="0" r="6" fill="var(--text-bright)" stroke="var(--surface)" stroke-width="2"/>
 
                                 <!-- small inline legend, top-right of the plot area -->
                                 <g font-family="var(--mono)" font-size="10" fill="var(--text-dim)">
@@ -292,26 +292,26 @@ nav: education
                             <div class="widget-section-label">Pump speed</div>
                             <div class="widget-slider-head">
                                 <span>0 Hz</span>
-                                <span class="v"><span id="pcW1Hz">60</span> <span style="font-size:0.65em;color:var(--text-dim);font-weight:500;">Hz</span></span>
+                                <span class="v"><span id="pc-w1-hz">60</span> <span style="font-size:0.65em;color:var(--text-dim);font-weight:500;">Hz</span></span>
                                 <span>60 Hz</span>
                             </div>
-                            <input class="widget-slider" id="pcW1HzSlider" type="range" min="0" max="60" step="1" value="60" aria-label="Pump speed in Hz"/>
+                            <input class="widget-slider" id="pc-w1-hz-slider" type="range" min="0" max="60" step="1" value="60" aria-label="Pump speed in Hz"/>
 
                             <div class="widget-section-label" style="margin-top:0.4rem;">Valves open</div>
                             <div class="widget-slider-head">
                                 <span>10%</span>
-                                <span class="v"><span id="pcW1Valve">100</span> <span style="font-size:0.65em;color:var(--text-dim);font-weight:500;">%</span></span>
+                                <span class="v"><span id="pc-w1-valve">100</span> <span style="font-size:0.65em;color:var(--text-dim);font-weight:500;">%</span></span>
                                 <span>100%</span>
                             </div>
-                            <input class="widget-slider" id="pcW1ValveSlider" type="range" min="10" max="100" step="1" value="100" aria-label="Valve open percentage"/>
+                            <input class="widget-slider" id="pc-w1-valve-slider" type="range" min="10" max="100" step="1" value="100" aria-label="Valve open percentage"/>
                         </div>
                     </div>
 
                     <div class="pc-w1-readouts">
                         <div class="pc-w-fan-wrap">
-                            <svg class="widget-fan" id="pcW1Fan" viewBox="0 0 100 100" width="44" height="44" aria-hidden="true">
+                            <svg class="widget-fan" id="pc-w1-fan" viewBox="0 0 100 100" width="44" height="44" aria-hidden="true">
                                 <circle cx="50" cy="50" r="46" fill="none" stroke="var(--border)" stroke-width="2"/>
-                                <g class="widget-fan-blades" id="pcW1FanBlades">
+                                <g class="widget-fan-blades" id="pc-w1-fan-blades">
                                     <ellipse cx="50" cy="22" rx="7" ry="22"/>
                                     <ellipse cx="50" cy="22" rx="7" ry="22" transform="rotate(72 50 50)"/>
                                     <ellipse cx="50" cy="22" rx="7" ry="22" transform="rotate(144 50 50)"/>
@@ -321,20 +321,20 @@ nav: education
                                 <circle cx="50" cy="50" r="5" fill="var(--text-dim)"/>
                             </svg>
                             <div class="pc-w-fan-label">
-                                Pump motor<span class="hz" id="pcW1FanLabel">60 Hz</span>
+                                Pump motor<span class="hz" id="pc-w1-fan-label">60 Hz</span>
                             </div>
                         </div>
                         <div class="pc-w1-readout">
                             <div class="widget-readout-label">Flow</div>
-                            <div class="widget-readout-value"><span id="pcW1Flow">100</span><span class="unit" data-us="GPM" data-metric="L/s">GPM</span></div>
+                            <div class="widget-readout-value"><span id="pc-w1-flow">100</span><span class="unit" data-us="GPM" data-metric="L/s">GPM</span></div>
                         </div>
                         <div class="pc-w1-readout">
                             <div class="widget-readout-label">Head</div>
-                            <div class="widget-readout-value"><span id="pcW1Head">50</span><span class="unit" data-us="ft" data-metric="m">ft</span></div>
+                            <div class="widget-readout-value"><span id="pc-w1-head">50</span><span class="unit" data-us="ft" data-metric="m">ft</span></div>
                         </div>
                         <div class="pc-w1-readout">
                             <div class="widget-readout-label">Power vs 60 Hz</div>
-                            <div class="widget-readout-value"><span id="pcW1Power">100</span><span class="unit">%</span></div>
+                            <div class="widget-readout-value"><span id="pc-w1-power">100</span><span class="unit">%</span></div>
                         </div>
                     </div>
                 </div>
@@ -408,18 +408,18 @@ nav: education
                       fill="none" stroke="var(--blue, #1577b8)" stroke-width="3"/>
 
                 <!-- supply drops to each load -->
-                <line id="pc-dp-A-sup-top" data-flow="supply" x1="200" y1="100" x2="200" y2="135" stroke="var(--blue, #1577b8)" stroke-width="3"/>
-                <line id="pc-dp-A-sup-bot" data-flow="supply" x1="200" y1="165" x2="200" y2="180" stroke="var(--blue, #1577b8)" stroke-width="3"/>
-                <line id="pc-dp-B-sup-top" data-flow="supply" x1="380" y1="100" x2="380" y2="135" stroke="var(--blue, #1577b8)" stroke-width="3"/>
-                <line id="pc-dp-B-sup-bot" data-flow="supply" x1="380" y1="165" x2="380" y2="180" stroke="var(--blue, #1577b8)" stroke-width="3"/>
-                <line id="pc-dp-C-sup-top" data-flow="supply" x1="560" y1="100" x2="560" y2="135" stroke="var(--blue, #1577b8)" stroke-width="3"/>
-                <line id="pc-dp-C-sup-bot" data-flow="supply" x1="560" y1="165" x2="560" y2="180" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                <line id="pc-dp-a-sup-top" data-flow="supply" x1="200" y1="100" x2="200" y2="135" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                <line id="pc-dp-a-sup-bot" data-flow="supply" x1="200" y1="165" x2="200" y2="180" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                <line id="pc-dp-b-sup-top" data-flow="supply" x1="380" y1="100" x2="380" y2="135" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                <line id="pc-dp-b-sup-bot" data-flow="supply" x1="380" y1="165" x2="380" y2="180" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                <line id="pc-dp-c-sup-top" data-flow="supply" x1="560" y1="100" x2="560" y2="135" stroke="var(--blue, #1577b8)" stroke-width="3"/>
+                <line id="pc-dp-c-sup-bot" data-flow="supply" x1="560" y1="165" x2="560" y2="180" stroke="var(--blue, #1577b8)" stroke-width="3"/>
 
                 <!-- piping: return (dashed, --blue-cool). Coil drops to return main, then
                      return main back along the bottom and up into the pump intake. -->
-                <line id="pc-dp-A-ret" data-flow="return" x1="200" y1="240" x2="200" y2="300" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
-                <line id="pc-dp-B-ret" data-flow="return" x1="380" y1="240" x2="380" y2="300" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
-                <line id="pc-dp-C-ret" data-flow="return" x1="560" y1="240" x2="560" y2="300" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="pc-dp-a-ret" data-flow="return" x1="200" y1="240" x2="200" y2="300" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="pc-dp-b-ret" data-flow="return" x1="380" y1="240" x2="380" y2="300" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="pc-dp-c-ret" data-flow="return" x1="560" y1="240" x2="560" y2="300" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
                 <path id="pc-dp-return-main-riser" data-flow="return"
                       d="M670 300 H 50 V 272"
                       fill="none" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
@@ -437,29 +437,29 @@ nav: education
                 </g>
 
                 <!-- valves (bowtie symbols, ~15px square footprint each) -->
-                <g id="pc-dp-A-valve">
+                <g id="pc-dp-a-valve">
                     <polygon points="188,135 212,135 200,148" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
                     <polygon points="188,165 212,165 200,152" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
                 </g>
-                <g id="pc-dp-B-valve">
+                <g id="pc-dp-b-valve">
                     <polygon points="368,135 392,135 380,148" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
                     <polygon points="368,165 392,165 380,152" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
                 </g>
-                <g id="pc-dp-C-valve">
+                <g id="pc-dp-c-valve">
                     <polygon points="548,135 572,135 560,148" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
                     <polygon points="548,165 572,165 560,152" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
                 </g>
 
                 <!-- coils -->
-                <g id="pc-dp-A-coil">
+                <g id="pc-dp-a-coil">
                     <rect x="170" y="180" width="60" height="60" rx="2" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
                     <text x="200" y="215" text-anchor="middle" font-size="11" font-weight="600" fill="var(--text-bright, #1d251f)">COIL A</text>
                 </g>
-                <g id="pc-dp-B-coil">
+                <g id="pc-dp-b-coil">
                     <rect x="350" y="180" width="60" height="60" rx="2" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
                     <text x="380" y="215" text-anchor="middle" font-size="11" font-weight="600" fill="var(--text-bright, #1d251f)">COIL B</text>
                 </g>
-                <g id="pc-dp-C-coil">
+                <g id="pc-dp-c-coil">
                     <rect x="530" y="180" width="60" height="60" rx="2" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
                     <text x="560" y="215" text-anchor="middle" font-size="11" font-weight="600" fill="var(--text-bright, #1d251f)">COIL C</text>
                 </g>
@@ -547,50 +547,50 @@ nav: education
                  In reset-DP mode: DP_setpoint = max(5, 25*(d/100)) — walks down linearly toward a 5 ft floor
                  Valve openness in reset mode: clamped to ~95% (the reset target)
                  Valve openness in fixed mode: walks with demand (lower demand ⇒ more throttling) -->
-            <div class="widget" id="pcW2">
+            <div class="widget" id="pc-w2">
                 <div class="widget-try">
                     <span class="lbl">Try this:</span>
-                    <a id="pcW2TryDesign">design day (all valves wide)</a>
-                    <a id="pcW2TryMid">mid-day (60% demand)</a>
-                    <a id="pcW2TryNight">night setback (15% demand)</a>
+                    <a id="pc-w2-try-design">design day (all valves wide)</a>
+                    <a id="pc-w2-try-mid">mid-day (60% demand)</a>
+                    <a id="pc-w2-try-night">night setback (15% demand)</a>
                 </div>
 
                 <div class="pc-w2-mode" role="group" aria-label="DP control mode">
-                    <button id="pcW2ModeFixed" type="button" class="on">Fixed DP</button>
-                    <button id="pcW2ModeReset" type="button">Reset DP</button>
+                    <button id="pc-w2-mode-fixed" type="button" class="on">Fixed DP</button>
+                    <button id="pc-w2-mode-reset" type="button">Reset DP</button>
                 </div>
 
                 <div class="widget-section-label">Building demand</div>
                 <div class="widget-slider-head">
                     <span>0%</span>
-                    <span class="v"><span id="pcW2Demand">100</span> <span style="font-size:0.65em;color:var(--text-dim);font-weight:500;">%</span></span>
+                    <span class="v"><span id="pc-w2-demand">100</span> <span style="font-size:0.65em;color:var(--text-dim);font-weight:500;">%</span></span>
                     <span>100%</span>
                 </div>
-                <input class="widget-slider" id="pcW2DemandSlider" type="range" min="0" max="100" step="1" value="100" aria-label="Building demand percentage"/>
+                <input class="widget-slider" id="pc-w2-demand-slider" type="range" min="0" max="100" step="1" value="100" aria-label="Building demand percentage"/>
 
                 <div class="widget-section-label" style="margin-top:0.4rem;">Valve positions (5 loads)</div>
-                <div class="pc-w2-valves" id="pcW2Valves" aria-label="Valve positions"></div>
+                <div class="pc-w2-valves" id="pc-w2-valves" aria-label="Valve positions"></div>
 
                 <div class="pc-w2-readouts">
                     <div class="pc-w1-readout">
                         <div class="widget-readout-label">DP setpoint</div>
-                        <div class="widget-readout-value"><span id="pcW2DpSet">25</span><span class="unit" data-us="ft" data-metric="m">ft</span></div>
+                        <div class="widget-readout-value"><span id="pc-w2-dp-set">25</span><span class="unit" data-us="ft" data-metric="m">ft</span></div>
                     </div>
                     <div class="pc-w1-readout">
                         <div class="widget-readout-label">Pump speed</div>
-                        <div class="widget-readout-value"><span id="pcW2Hz">60</span><span class="unit">Hz</span></div>
+                        <div class="widget-readout-value"><span id="pc-w2-hz">60</span><span class="unit">Hz</span></div>
                     </div>
                     <div class="pc-w1-readout">
                         <div class="widget-readout-label">Flow</div>
-                        <div class="widget-readout-value"><span id="pcW2Flow">100</span><span class="unit" data-us="GPM" data-metric="L/s">GPM</span></div>
+                        <div class="widget-readout-value"><span id="pc-w2-flow">100</span><span class="unit" data-us="GPM" data-metric="L/s">GPM</span></div>
                     </div>
                     <div class="pc-w1-readout">
                         <div class="widget-readout-label">Power vs full</div>
-                        <div class="widget-readout-value"><span id="pcW2Power">100</span><span class="unit">%</span></div>
+                        <div class="widget-readout-value"><span id="pc-w2-power">100</span><span class="unit">%</span></div>
                     </div>
                 </div>
 
-                <div class="widget-anecdote-wrap" id="pcW2AnecdoteWrap"></div>
+                <div class="widget-anecdote-wrap" id="pc-w2-anecdote-wrap"></div>
             </div>
 
             <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:1.25rem;">
@@ -661,20 +661,20 @@ nav: education
         const yPx = function (H) { return PLOT_Y0 - (Math.max(0, H) / H_MAX_AXIS) * (PLOT_Y0 - PLOT_Y1); };
 
         // DOM
-        const hzSlider    = document.getElementById('pcW1HzSlider');
-        const valveSlider = document.getElementById('pcW1ValveSlider');
-        const hzLabel     = document.getElementById('pcW1Hz');
-        const valveLabel  = document.getElementById('pcW1Valve');
-        const flowEl      = document.getElementById('pcW1Flow');
-        const headEl      = document.getElementById('pcW1Head');
-        const powerEl     = document.getElementById('pcW1Power');
-        const fanEl       = document.getElementById('pcW1Fan');
-        const fanBlades   = document.getElementById('pcW1FanBlades');
-        const fanLabel    = document.getElementById('pcW1FanLabel');
-        const pumpRefEl   = document.getElementById('pcW1PumpRef');
-        const pumpEl      = document.getElementById('pcW1Pump');
-        const sysEl       = document.getElementById('pcW1Sys');
-        const opDot       = document.getElementById('pcW1Op');
+        const hzSlider    = document.getElementById('pc-w1-hz-slider');
+        const valveSlider = document.getElementById('pc-w1-valve-slider');
+        const hzLabel     = document.getElementById('pc-w1-hz');
+        const valveLabel  = document.getElementById('pc-w1-valve');
+        const flowEl      = document.getElementById('pc-w1-flow');
+        const headEl      = document.getElementById('pc-w1-head');
+        const powerEl     = document.getElementById('pc-w1-power');
+        const fanEl       = document.getElementById('pc-w1-fan');
+        const fanBlades   = document.getElementById('pc-w1-fan-blades');
+        const fanLabel    = document.getElementById('pc-w1-fan-label');
+        const pumpRefEl   = document.getElementById('pc-w1-pump-ref');
+        const pumpEl      = document.getElementById('pc-w1-pump');
+        const sysEl       = document.getElementById('pc-w1-sys');
+        const opDot       = document.getElementById('pc-w1-op');
 
         const state = { hz: 60, valve: 100 };
 
@@ -797,19 +797,19 @@ nav: education
         const RESET_VALVE_TARGET = 95;   // target most-open-valve % under reset
 
         // DOM
-        const demandSlider = document.getElementById('pcW2DemandSlider');
-        const demandLabel  = document.getElementById('pcW2Demand');
-        const dpSetEl      = document.getElementById('pcW2DpSet');
-        const hzEl         = document.getElementById('pcW2Hz');
-        const flowEl       = document.getElementById('pcW2Flow');
-        const powerEl      = document.getElementById('pcW2Power');
-        const valvesWrap   = document.getElementById('pcW2Valves');
-        const modeFixed    = document.getElementById('pcW2ModeFixed');
-        const modeReset    = document.getElementById('pcW2ModeReset');
-        const tryDesign    = document.getElementById('pcW2TryDesign');
-        const tryMid       = document.getElementById('pcW2TryMid');
-        const tryNight     = document.getElementById('pcW2TryNight');
-        const anecdoteEl   = document.getElementById('pcW2AnecdoteWrap');
+        const demandSlider = document.getElementById('pc-w2-demand-slider');
+        const demandLabel  = document.getElementById('pc-w2-demand');
+        const dpSetEl      = document.getElementById('pc-w2-dp-set');
+        const hzEl         = document.getElementById('pc-w2-hz');
+        const flowEl       = document.getElementById('pc-w2-flow');
+        const powerEl      = document.getElementById('pc-w2-power');
+        const valvesWrap   = document.getElementById('pc-w2-valves');
+        const modeFixed    = document.getElementById('pc-w2-mode-fixed');
+        const modeReset    = document.getElementById('pc-w2-mode-reset');
+        const tryDesign    = document.getElementById('pc-w2-try-design');
+        const tryMid       = document.getElementById('pc-w2-try-mid');
+        const tryNight     = document.getElementById('pc-w2-try-night');
+        const anecdoteEl   = document.getElementById('pc-w2-anecdote-wrap');
 
         const state = { demand: 100, mode: 'fixed', anecdoteShown: false };
 
