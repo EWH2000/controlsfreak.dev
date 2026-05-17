@@ -704,8 +704,8 @@ nav: education
         // Canonical units throughout the math layer are US (GPM, ft of
         // head). The unit toggle converts at the display boundary, same
         // pattern as the pump-control widgets and the psychrometric chart.
-        var DESIGN_DP_FT  = 20;
-        var DESIGN_Q_GPM  = 30;
+        const DESIGN_DP_FT  = 20;
+        const DESIGN_Q_GPM  = 30;
 
         // ── Branch valve models ───────────────────────────────────────
         // CBV: pure square-root orifice law, calibrated so Q = design at
@@ -721,7 +721,7 @@ nav: education
         // behaves as a plain orifice with Kv matched at the band edge so
         // there's no discontinuity in the curve.
         function flowAbv(dpFt) {
-            var LO = 3, HI = 50;
+            const LO = 3, HI = 50;
             if (dpFt <= 0) return 0;
             if (dpFt >= LO && dpFt <= HI) return DESIGN_Q_GPM;
             if (dpFt < LO) {
@@ -739,7 +739,7 @@ nav: education
         // wider authority range than ABVs and no upper-limit orifice
         // behavior over normal system pressures, so we model a flat ceiling.
         function flowPicv(dpFt) {
-            var MIN = 2;
+            const MIN = 2;
             if (dpFt <= 0) return 0;
             if (dpFt >= MIN) return DESIGN_Q_GPM;
             return DESIGN_Q_GPM * (dpFt / MIN);
@@ -748,7 +748,7 @@ nav: education
         // ── State classification ──────────────────────────────────────
         // Holding band: ±15 % of design. STARVED below, OVER above.
         function classifyState(qGpm) {
-            var ratio = qGpm / DESIGN_Q_GPM;
+            const ratio = qGpm / DESIGN_Q_GPM;
             if (ratio < 0.85) return 'starved';
             if (ratio > 1.15) return 'over';
             return 'holding';
@@ -764,7 +764,7 @@ nav: education
         // <span data-us="GPM" data-metric="L/s"> is rewritten by the units
         // walker independently. Bar fill is on a 0–150 % scale (the bar
         // tick at 66.6 % marks the design point — see CSS).
-        var BAR_MAX_PCT = 150;
+        const BAR_MAX_PCT = 150;
 
         function formatFlow(qGpm) {
             if (Units.current() === 'metric') {
@@ -787,34 +787,34 @@ nav: education
         // PICV is still comfortably holding. Once shown in a session,
         // stays shown — yanking the callout back on the next slider tweak
         // would undo the reward and is petty.
-        var ANECDOTE_DP_FT = 4;
-        var anecdoteShown = false;
+        const ANECDOTE_DP_FT = 4;
+        let anecdoteShown = false;
 
         // ── DOM references ────────────────────────────────────────────
-        var slider   = document.getElementById('balDpSlider');
-        var dpVal    = document.getElementById('balDpVal');
-        var dpUnit   = document.getElementById('balDpUnit');
-        var anecdote = document.getElementById('balAnecdote');
+        const slider   = document.getElementById('balDpSlider');
+        const dpVal    = document.getElementById('balDpVal');
+        const dpUnit   = document.getElementById('balDpUnit');
+        const anecdote = document.getElementById('balAnecdote');
 
-        var branches = [
+        const branches = [
             { key: 'cbv',  flowFn: flowCbv,  qEl: document.getElementById('balCbvQ'),  pctEl: document.getElementById('balCbvPct'),  barEl: document.getElementById('balCbvBar'),  stateEl: document.getElementById('balCbvState'),  rowEl: document.getElementById('balBchCbv')  },
             { key: 'abv',  flowFn: flowAbv,  qEl: document.getElementById('balAbvQ'),  pctEl: document.getElementById('balAbvPct'),  barEl: document.getElementById('balAbvBar'),  stateEl: document.getElementById('balAbvState'),  rowEl: document.getElementById('balBchAbv')  },
             { key: 'picv', flowFn: flowPicv, qEl: document.getElementById('balPicvQ'), pctEl: document.getElementById('balPicvPct'), barEl: document.getElementById('balPicvBar'), stateEl: document.getElementById('balPicvState'), rowEl: document.getElementById('balBchPicv') }
         ];
 
         function redraw() {
-            var dpFt = parseFloat(slider.value);
+            const dpFt = parseFloat(slider.value);
             if (!isFinite(dpFt)) return;
 
             dpVal.textContent  = formatDp(dpFt);
             dpUnit.textContent = unitDpLabel();
 
-            for (var i = 0; i < branches.length; i++) {
-                var b = branches[i];
-                var qGpm = b.flowFn(dpFt);
-                var pct  = Math.round((qGpm / DESIGN_Q_GPM) * 100);
-                var fillPct = Math.min(BAR_MAX_PCT, Math.max(0, pct));
-                var state = classifyState(qGpm);
+            for (let i = 0; i < branches.length; i++) {
+                const b = branches[i];
+                const qGpm = b.flowFn(dpFt);
+                const pct  = Math.round((qGpm / DESIGN_Q_GPM) * 100);
+                const fillPct = Math.min(BAR_MAX_PCT, Math.max(0, pct));
+                const state = classifyState(qGpm);
 
                 b.qEl.textContent     = formatFlow(qGpm);
                 b.pctEl.textContent   = pct;

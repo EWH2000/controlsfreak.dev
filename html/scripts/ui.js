@@ -2,9 +2,9 @@
 // ui.js — shared UI helpers (tab switching, clipboard buttons).
 //
 // Loaded as a *classic* script (same convention as pid-engine.js,
-// flow-engine.js, units.js) so a page's inline on* handlers and inline
-// <script> can see the helpers as plain globals. Include before any
-// inline <script> that uses them:
+// flow-engine.js, units.js) so a page's inline <script> can see the
+// helpers as plain globals. Include before any inline <script> that
+// uses them:
 //
 //     <script src="/scripts/ui.js"></script>
 //     <script>
@@ -22,8 +22,9 @@
     'use strict';
 
     // Switch tabs within the nearest .tool-card. Pages wire this with
-    // an inline handler — onclick="switchTab('foo', this)" — and the
-    // matching tab pane is expected to have id="tab-foo".
+    // an arrow-wrapped click listener — `btn.addEventListener('click',
+    // e => switchTab('foo', e.currentTarget))` — and the matching tab
+    // pane is expected to have id="tab-foo".
     function switchTab(name, btn) {
         const card = btn.closest('.tool-card');
         card.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));

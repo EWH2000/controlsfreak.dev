@@ -338,3 +338,23 @@ same session this file was created:
   compensation-band edges) so a future change to the cartridge
   range can't accidentally break the orifice-vs-compensation
   transition without the test catching it.
+
+### Post-audit re-evaluation sweep (2026-05-16)
+
+A second pass over the codebase after Block C closed caught two
+items the original audit missed:
+
+- **`html/education/balancing.html` still used `var` throughout its
+  inline IIFE** (20 sites) while the `units.js` bullet above
+  normalized the same drift in the shared scripts. Same convention
+  applied here: `const` for the 17 single-assignment bindings, `let`
+  for `anecdoteShown` (reassigned) and the `i` loop counter. The
+  `var`-normalization rule effectively now covers both shared
+  scripts *and* page-inline scripts; if a future page is ever a
+  conscious exception, record the reason here.
+- **`html/scripts/ui.js` carried stale comments** referencing the
+  inline `on*` handler call pattern that Block C #3 removed
+  site-wide. Both the file header and the `switchTab` doc-comment
+  now describe the `addEventListener` call site that pages actually
+  use. Slipped past the Block C closeout commit's "sweep stale
+  references" pass.

@@ -429,6 +429,12 @@ well-grouped.
   shape, prefer `data-*` attributes + a single `querySelectorAll`
   loop over per-button bindings. The convention is uniform — no
   inline `on*` attributes anywhere.
+- **Declarations:** `const` by default; `let` only for genuinely
+  reassigned bindings and for-loop counters. No `var` in shared
+  scripts under `html/scripts/` or in page-inline IIFEs. The one
+  intentional exception is the units-bootstrap one-liner in
+  `_includes/head.njk`, which runs before first paint and stays
+  maximally conservative.
 - **Validate-and-mute:** read inputs with `parseFloat`; if anything
   isn't finite (use `!isFinite(x)`, not `isNaN(x)` — `isFinite`
   also rejects `Infinity`, which `isNaN` doesn't, and the
