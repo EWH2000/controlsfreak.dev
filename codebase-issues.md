@@ -1184,7 +1184,140 @@ needed; the rule was already canonized as part of #23's docs
 commit. Going forward: future canvas-JS surfaces that read CSS
 custom properties should grep against `.js` files too, not just
 `.css` / `.html`.
+### 25. Orphaned `<span class="ps-label">` captions on `psychrometric-chart.html` checkbox toggles
 
+Same shape as #12 caught and swept — different sites. Three rows on
+the psychrometric chart use `<span class="ps-label">` as a caption
+above a checkbox without programmatically associating the two:
+
+- `html/tools/psychrometric-chart.html:225` — CC toggle:
+  ```html
+  <div class="ps-row">
+      <span class="ps-label">Cooling coil</span>
+      <label class="psy-toggle"><input type="checkbox" id="cc-on" checked> On</label>
+  </div>
+  ```
+- `html/tools/psychrometric-chart.html:252` — HC toggle (same shape).
+- `html/tools/psychrometric-chart.html:272` — HUM toggle (same shape).
+
+The `<span>` has no `for=`, no `id`, no `aria-labelledby` link to the
+checkbox. The inline `<label>` wrap supplies a programmatic label of
+just "On", so a screen reader reads "Cooling coil" (orphan text) →
+"On checkbox" — the visible caption never associates with the
+control.
+
+**Why it matters:** same a11y gap that #12 swept across the rest of
+the site. #12's resolution noted "refactor-to-label across the 5
+tool pages with property-sheet inputs (bacnet, signal-scaling,
+thermistor, psychrometric, modbus)" — psychrometric was in scope but
+the checkbox-toggle pattern wasn't part of the standard ps-input
+shape the sweep recognized.
+
+**Priority:** MEDIUM (real a11y gap; same severity as the rest of
+#12).
+
+**Recommended action:** two viable fixes —
+
+- *Group + aria-labelledby* (matches the `field-label` pattern #12
+  introduced for the pid-tuner button group):
+  ```html
+  <div class="ps-row" role="group" aria-labelledby="cc-toggle-label">
+      <span class="field-label" id="cc-toggle-label">Cooling coil</span>
+      <label class="psy-toggle"><input type="checkbox" id="cc-on" checked> On</label>
+  </div>
+  ```
+- *aria-label on the checkbox* (simpler):
+  ```html
+  <span class="ps-label">Cooling coil</span>
+  <label class="psy-toggle"><input type="checkbox" id="cc-on" aria-label="Cooling coil on" checked> On</label>
+  ```
+
+The first is more semantically rich and matches the existing
+field-label idiom; the second is one-line per site. Either way, the
+visual stays identical.
+
+### 26. Thermistor "Look up by" caption uses `ps-label` where CLAUDE.md says `field-label`
+
+`html/tools/thermistor-calculator.html:92-98` — the row that
+captions the Temperature / Resistance lookup-mode buttons:
+
+```html
+<div class="ps-row" role="group" aria-labelledby="th-by-label">
+    <span class="ps-label" id="th-by-label">Look up by</span>
+    <div class="btn-row">
+        <button class="copy-btn active" id="th-by-temp">Temperature</button>
+        <button class="copy-btn" id="th-by-res">Resistance</button>
+    </div>
+</div>
+```
+
+Functionally correct — `role="group"` + `aria-labelledby` is wired —
+but per CLAUDE.md "Conventions → Form-input labels":
+
+> For a button group, use `<div role="group" aria-labelledby="…">`
+> with a `<span class="field-label" id="…">` caption.
+
+`pid-tuner.html:59`'s "Try a Tuning" caption migrated to
+`field-label` in the #12 resolution; thermistor's equivalent shape
+didn't get the same treatment.
+
+**Why it matters:** convention drift that fights the documented rule.
+A future contributor adding a third button-group caption would see
+two patterns and not know which is canonical.
+
+**Priority:** LOW (no a11y bug — the aria wiring works; pure
+convention drift).
+
+**Recommended action:** swap `ps-label` for `field-label` on line 93;
+verify the styling stays unchanged (the `.field-label` rule in
+styles.css already mirrors the `ps-label` shape).
+
+### 27. Final-audit small leftovers — test convention drift, vfd-mock copy-paste twins, package.json defaults, stale wrangler compat date
+
+Bundle of small findings caught during the 2026-05-17 final audit
+pass. Each is a one-or-two-line touch:
+
+- **`tests/smoke.spec.js:148-151` inlines listener wiring** instead
+  of calling `watchErrors(page)`:
+  ```js
+  const errors = [];
+  page.on('pageerror', (e) => errors.push('pageerror: ' + e.message));
+  page.on('console', (m) => { if (m.type() === 'error') errors.push('console: ' + m.text()); });
+  ```
+  The `watchErrors` helper was added in #20's resolution for exactly
+  this purpose and is used by every other behavioral test in the
+  file. This one site didn't migrate. One-line swap.
+
+- **`html/tools/vfd-mock.html:810-825` — `vfdm-try-default` and
+  `vfdm-try-classic` apply byte-identical preset values**
+  `{ runSrc: 1, spdSrc: 2, local: false, diClosed: false }`.
+  Pedagogically intentional (the page's pitch is "factory defaults
+  are the classic mistake"), but reads as a copy-paste bug. Either
+  share a constant or add a 1-line comment on each making the
+  identity explicit.
+
+- **`wrangler.jsonc:6` `compatibility_date: "2025-05-10"` is ~a year
+  stale.** Cloudflare Workers stays on the pinned runtime semantics
+  by default — newer runtime behaviors gated behind the date
+  activate only on bump. Not a bug; a conscious-choice item. The
+  site is small enough that a bump should be safe; verify against
+  the Cloudflare compatibility-flags changelog before flipping.
+
+- **`package.json` still carries `"keywords": []` and
+  `"author": ""`** from `npm init -y` defaults. Harmless with
+  `"private": true` (which the earlier sweep added), but reads as
+  unfinished. Fill or remove.
+
+**Why it matters:** none are bugs; collectively this is the kind of
+drift that erodes the otherwise tight conventions if left
+accumulating. Easier to clean as one bundle than to chase
+individually.
+
+**Priority:** LOW.
+
+**Recommended action:** one mechanical commit, four files touched.
+Could land in the same branch as #25 or #26 if any of those land
+soon.
 ---
 
 ## Recently addressed
