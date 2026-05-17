@@ -198,9 +198,14 @@ HTML.
   with `<input/select/textarea class="ps-input" id="x">`. Rows that
   label a *readout* (`<span class="ps-value">`) stay `<span>` —
   `for=` is only valid for form controls. For a button group, use
-  `<div role="group" aria-labelledby="…">` with a
-  `<span class="field-label" id="…">` caption (a `<label>` without
-  `for=` or a wrapped control has no semantic meaning). The implicit
+  `<div role="group" aria-labelledby="…">` with the caption
+  carrying the matching `id=`; the class follows the container —
+  `<span class="field-label">` inside a stacked `.field` (matches
+  its uppercase-mono peers, e.g. `pid-tuner.html`'s preset row),
+  `<span class="ps-label">` inside a `.ps-row` left column
+  (matches its sans peers, e.g. `thermistor-calculator.html`'s
+  lookup-by row). A `<label>` without `for=` or a wrapped control
+  has no semantic meaning. The implicit
   `<label><input> Text</label>` wrap pattern is also fine.
 - **Skip-to-content link + `<main id="main">`.** Layout renders
   `<a href="#main" class="skip-link">` as the first body child; every
