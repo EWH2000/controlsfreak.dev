@@ -199,7 +199,7 @@ nav: education
 
     <div class="tool-card">
         <div class="tool-card-header">
-            <div class="tool-card-title">VFDs — Variable Frequency Drives <span class="tool-tag">Drives</span></div>
+            <h1 class="tool-card-title">VFDs — Variable Frequency Drives <span class="tool-tag">Drives</span></h1>
         </div>
         <div class="tool-body">
 
@@ -208,7 +208,7 @@ nav: education
             </p>
 
             <!-- ───────────────── 1 · What a VFD Is ───────────────── -->
-            <div class="subhead">What a VFD Is</div>
+            <h2 class="subhead">What a VFD Is</h2>
 
             <p style="font-size:0.95rem;line-height:1.8;color:var(--text);">
                 A drive takes fixed-frequency AC line power (60 Hz in the U.S., 50 Hz most everywhere else) and converts it to AC at whatever frequency the controller asks for. Lower frequency, slower motor; higher frequency, faster motor. Three stages, in order:
@@ -274,7 +274,7 @@ nav: education
             </p>
 
             <!-- ───────────────── 2 · Why Drives Are Everywhere ───────────────── -->
-            <div class="subhead">Why Drives Are Everywhere — The Cube Law</div>
+            <h2 class="subhead">Why Drives Are Everywhere — The Cube Law</h2>
 
             <p style="font-size:0.95rem;line-height:1.8;color:var(--text);">
                 Walk through any modern mechanical room and you'll see drives on the pumps, on the fans, sometimes on the compressors. Forty years ago the same equipment ran at one speed and dumped whatever it didn't need through bypass dampers, three-way valves, or vanes. The reason that changed isn't comfort or controllability (those are nice side effects). It's <em>energy</em>, and the math is short.
@@ -285,7 +285,7 @@ nav: education
             </p>
 
             <div class="callout" style="margin-top:1rem;">
-                <h4>Cube law — power vs. speed on centrifugal loads</h4>
+                <h3>Cube law — power vs. speed on centrifugal loads</h3>
                 <div class="vfd-cube-numbers">
                     <div><span class="pct">100% speed</span><span class="val">100% power</span></div>
                     <div><span class="pct">80% speed</span><span class="val">~51% power</span></div>
@@ -301,7 +301,7 @@ nav: education
             </p>
 
             <!-- ───────────────── 3 · Run Command vs. Speed Reference — THE WIDGET ───────────────── -->
-            <div class="subhead">Run Command vs. Speed Reference — The Two Things You're Doing</div>
+            <h2 class="subhead">Run Command vs. Speed Reference — The Two Things You're Doing</h2>
 
             <p style="font-size:0.95rem;line-height:1.8;color:var(--text);">
                 Here's the thing that catches more techs than anything else about drives. To make a VFD run a motor, you're actually giving it <em>two</em> commands, not one — and each command has its own source parameter, configured independently in the drive. The two are:
@@ -430,7 +430,7 @@ nav: education
             </p>
 
             <!-- ───────────────── 4 · Parameter Groups ───────────────── -->
-            <div class="subhead">The Parameter Groups Every Drive Has</div>
+            <h2 class="subhead">The Parameter Groups Every Drive Has</h2>
 
             <p style="font-size:0.95rem;line-height:1.8;color:var(--text);">
                 Every manufacturer organises parameters differently — ABB calls them parameter numbers, Yaskawa calls them Pn-codes, Danfoss uses three-level menus — but the <em>categories</em> the parameters fall into are basically the same across the industry. If you can name the categories, you can find what you need to change on any drive without reading the whole manual cover to cover. Six groups; everything you'll touch lives in one of them.
@@ -438,33 +438,33 @@ nav: education
 
             <div class="callout-grid" style="margin-top:1.25rem;">
                 <div class="callout">
-                    <h4>Motor data <span>· nameplate</span></h4>
+                    <h3>Motor data <span>· nameplate</span></h3>
                     <p>Whatever's printed on the motor's nameplate, copied into the drive: <em>full-load amps (FLA), rated voltage, rated frequency, rated speed (RPM)</em>, sometimes motor type and power factor. The drive uses this to size its current limit and run an auto-tune that builds its internal model of the motor. Get this wrong and the drive either trips on overcurrent at modest loads or quietly cooks the motor. First thing entered when commissioning a new drive; rarely touched again.</p>
                 </div>
                 <div class="callout">
-                    <h4>Ramps <span>· accel / decel</span></h4>
+                    <h3>Ramps <span>· accel / decel</span></h3>
                     <p>How long the drive takes to ramp from 0 Hz to rated frequency on a start (<em>accel time</em>) and back down on a stop (<em>decel time</em>). Seconds. Sometimes a ramp <em>shape</em> parameter too (linear vs. S-curve) to ease mechanical shock. Too fast and you trip on overcurrent during accel or on overvoltage during decel (the motor regenerates back into the DC bus); too slow and the building feels sluggish or the sequence times out. Tune at startup; touch them again only if something complains.</p>
                 </div>
                 <div class="callout">
-                    <h4>References &amp; sources <span>· what speed, from where</span></h4>
+                    <h3>References &amp; sources <span>· what speed, from where</span></h3>
                     <p>The <em>speed-reference source</em> parameter (keypad / terminals / network / one of several presets), plus the bounds the reference is allowed to take: <em>minimum frequency, maximum frequency</em>, preset speeds, and the scaling that maps a 4–20 mA AI to a Hz range. Half the time a drive isn't ramping where you expect, this group is where the answer lives.</p>
                 </div>
                 <div class="callout">
-                    <h4>Run/stop sources <span>· start command</span></h4>
+                    <h3>Run/stop sources <span>· start command</span></h3>
                     <p>The <em>run-command source</em> parameter, independent from the speed source above. Choices are the same set (keypad / terminals / network), but the parameter is separate. Sometimes a 2-wire vs. 3-wire distinction (maintained DI for run vs. momentary start/stop), jog enables, and a forward/reverse selection. Touch this in commissioning to flip a drive over from "keypad bench-tested" to "running from the BMS."</p>
                 </div>
                 <div class="callout">
-                    <h4>I/O configuration <span>· what each terminal does</span></h4>
+                    <h3>I/O configuration <span>· what each terminal does</span></h3>
                     <p>The drive's physical inputs and outputs are <em>software-assignable</em>. A digital input can be a run command, a fault reset, a jog enable, or a preset-speed select; an analog input can be the speed reference or a feedback channel; a digital output can signal "drive running," "fault active," or "at speed." This group is the map from physical terminal to logical function. Read it before wiring anything; verify it after.</p>
                 </div>
                 <div class="callout">
-                    <h4>Faults &amp; protection <span>· what to do when it trips</span></h4>
+                    <h3>Faults &amp; protection <span>· what to do when it trips</span></h3>
                     <p>The <em>fault history</em> (the last N trips, with timestamps and the operating state at trip), plus the protective behaviour: <em>auto-reset enable</em>, auto-reset count and timeout, fault-output relay assignment, undervoltage ride-through, current-limit setting. Auto-reset is the parameter the maintenance crew turns on after they get tired of resetting drives, and that the controls tech turns off after they get tired of finding the same root cause re-tripping unnoticed.</p>
                 </div>
             </div>
 
             <!-- ───────────────── 5 · Network Integration ───────────────── -->
-            <div class="subhead">Network Integration — Where Controls People Meet the Drive</div>
+            <h2 class="subhead">Network Integration — Where Controls People Meet the Drive</h2>
 
             <p style="font-size:0.95rem;line-height:1.8;color:var(--text);">
                 The keypad on the front of the drive is for commissioning and panel-front diagnostics; in production the drive lives on a network and talks to the BMS over one of three protocols. Same three you'll meet anywhere else in the building, with the usual physical-layer tradeoffs.
@@ -512,7 +512,7 @@ nav: education
             </p>
 
             <!-- ───────────────── 6 · Fault Codes ───────────────── -->
-            <div class="subhead">Fault Codes — The Conceptual Categories</div>
+            <h2 class="subhead">Fault Codes — The Conceptual Categories</h2>
 
             <p style="font-size:0.95rem;line-height:1.8;color:var(--text);">
                 Every manufacturer's fault-code list looks different and is far too long to memorise. What you <em>can</em> hold in your head is the five or six categories the codes fall into — because the root cause of a category is the same across manufacturers even when the code number isn't. A drive's fault history almost always tells you "an overcurrent happened"; what changes between brands is just which integer they call it.
@@ -561,7 +561,7 @@ nav: education
             </p>
 
             <!-- ───────────────── 7 · Bypass Arrangements ───────────────── -->
-            <div class="subhead">Bypass Arrangements</div>
+            <h2 class="subhead">Bypass Arrangements</h2>
 
             <p style="font-size:0.95rem;line-height:1.8;color:var(--text);">
                 On critical loads — life-safety fans, primary chilled-water pumps, anything where a drive failure shouldn't drop the equipment — the panel often includes a <em>bypass</em>. The selector switch routes line power either through the drive or directly to the motor across the contacts of a second contactor. Three positions: <em>OFF</em>, <em>DRIVE</em> (normal — variable speed), <em>BYPASS</em> (across-the-line — full speed, no drive). When the drive faults, you flip to BYPASS and the equipment keeps running at 60 Hz while someone gets a replacement on order.
@@ -634,7 +634,7 @@ nav: education
             </p>
 
             <!-- ───────────────── Closing · Tie back to load piping ───────────────── -->
-            <div class="subhead">Tying It Back to Load Piping</div>
+            <h2 class="subhead">Tying It Back to Load Piping</h2>
 
             <p style="font-size:0.95rem;line-height:1.8;color:var(--text);">
                 On the <a href="/education/load-piping.html" style="color:var(--accent);">load-piping</a> lesson we set up the variable-flow picture from the load side: every coil is throttled by a two-way valve; the system pump should slow down as the loads close in. The VFD is the answer to the pump side of that picture. The system pump's BMS-facing surface is a run command and a speed reference — exactly the two parameters we just walked through — and the BMS modulates the speed reference to hold whatever variable the sequence cares about (usually a differential pressure across the loop, sometimes a return-temperature setpoint, occasionally a valve-position reset on the most-open valve).
