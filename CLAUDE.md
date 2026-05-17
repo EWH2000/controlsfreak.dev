@@ -506,9 +506,18 @@ well-grouped.
   bounds produce `Infinity`. See codebase-issues #2), set the
   result to `class="result-value muted"` with text `—` and clear
   the formula.
-- **Tabs:** `switchTab(name, btn)` (from `/scripts/ui.js`) is scoped
-  to the clicked button's nearest `.tool-card`, so a page with
-  multiple tabbed tools doesn't clear another's panes.
+- **Tabs:** wire tab buttons with a `data-tab="<name>"` attribute
+  on each `.tab-btn`, then bind them in one pass with
+  `document.querySelectorAll('[data-tab]').forEach(btn =>
+  btn.addEventListener('click', e => switchTab(e.currentTarget
+  .dataset.tab, e.currentTarget)))`. The pane containers carry
+  matching `id="tab-<name>"` so `switchTab` (from
+  `/scripts/ui.js`) can find them via `'tab-' + name`.
+  `switchTab(name, btn)` is scoped to the clicked button's
+  nearest `.tool-card`, so a page with multiple tabbed tools
+  doesn't clear another's panes. Canonical example:
+  `tools/signal-scaling.html` (three tabs) / `tools/bacnet-ip-converter.html`
+  (two tabs).
 - Lookup tables for fixed domain data (e.g. `SIG`: signal type →
   `{ min, max, unit }`; `PID_PROC`: process type → FOPDT params).
 - **UI vocabulary:** **AI / AO** = analog input/output. Don't use
