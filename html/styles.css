@@ -310,7 +310,8 @@ main {
 }
 .field { display: flex; flex-direction: column; gap: 0.4rem; }
 
-label {
+label,
+.field-label {
     font-family: var(--mono);
     font-size: 0.66rem;
     text-transform: uppercase;
@@ -849,6 +850,8 @@ input[type="range"]::-moz-range-thumb {
     font-family: var(--sans);
     font-size: 0.82rem;
     color: var(--text-dim);
+    text-transform: none;
+    letter-spacing: normal;
 }
 .ps-value {
     font-family: var(--mono);

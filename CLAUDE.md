@@ -209,6 +209,20 @@ file.
   genuinely shared JS goes in `html/scripts/` as a classic script.
 - Prefer semantic HTML over div soup. Fast and accessible: no heavy
   media, no auto-play, no tracking or analytics.
+- **Form-input labels are `<label for="…">`, not `<span>`.** In the
+  property-sheet pattern, `<label class="ps-label" for="inputId">`
+  pairs with the next `<input/select/textarea class="ps-input"
+  id="inputId">`. The `.ps-label` rule resets `text-transform` and
+  `letter-spacing` so the visual matches the `<span>` it replaced.
+  ps-label rows that label a *readout* (`<span class="ps-value">`)
+  stay `<span>` — `for=` is only valid for form controls. For a
+  button group (e.g. PID tuner's "Try a Tuning"), use
+  `<div role="group" aria-labelledby="…">` with a
+  `<span class="field-label" id="…">` caption rather than a bare
+  `<label>` (a `<label>` without `for=` and without wrapping a
+  control has no semantic meaning). The implicit
+  `<label><input> Text</label>` wrap pattern is also fine
+  (psychrometric chart's `.psy-toggle` checkboxes use this).
 - **Heading hierarchy.** Every page has exactly one `<h1>`. The page
   topic is the `<h1>`: on content pages that's `.tool-card-title`
   (`<h1 class="tool-card-title">`); on landing pages with no

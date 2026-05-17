@@ -409,7 +409,7 @@ rules pick up `margin: 0` so heading default margins don't disturb
 the layout. The new convention is recorded under CLAUDE.md
 "Conventions → Heading hierarchy."
 
-### 12. Form-input labels not programmatically associated
+### 12. Form-input labels not programmatically associated *(addressed 2026-05-17)*
 
 Across 8 tool pages, **39 inputs** use the property-sheet pattern
 `<span class="ps-label">…</span><input class="ps-input">`: visually a
@@ -435,6 +435,24 @@ the input. Same severity as #11, same affected user.
 Refactor-to-label is the simpler call and matches form conventions
 everywhere else; bare `<label>` cases on pid-tuner / pid-basics get
 the `for=` added in the same pass.
+
+**Resolution (2026-05-17):** refactor-to-label across the 5 tool
+pages with property-sheet inputs (bacnet, signal-scaling, thermistor,
+psychrometric, modbus). 39 `<span class="ps-label">` paired with a
+ps-input got promoted to `<label class="ps-label" for="…">`; the 9
+bare `<label>` cases on `pid-tuner.html` (3 selects + 3 range
+sliders, plus the "Try a Tuning" button-group caption) and 3 on
+`pid-basics.html` (the mini-sim range sliders) gained `for=`
+associations against the matching control. The "Try a Tuning"
+button-group label became `<span class="field-label">` inside a
+`role="group" aria-labelledby="…"` wrapper since a `<label>` for
+multiple controls isn't legal HTML. The `.ps-label` CSS rule
+gained `text-transform: none; letter-spacing: normal;` resets so
+that promoting `<span>` to `<label>` (which carries the
+all-caps `label`-element styling) leaves the visual unchanged. The
+new `.field-label` class shares the `label`-element rule. The
+convention is recorded under CLAUDE.md "Conventions → Form-input
+labels."
 
 ### 13. Worker defense-in-depth bundle
 
