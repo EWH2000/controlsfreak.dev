@@ -531,6 +531,122 @@ well-grouped.
    shipping something notable (currently `v1.3 · 2026`, carried by
    every page automatically).
 
+## Git conventions
+
+Branch names, commit subjects, commit bodies, and PR descriptions
+follow a fixed shape so history stays scannable in `git log --oneline`
+and on GitHub. The `## Workflow` section below covers *when* to commit
+/ push / open a PR; this section covers *what those things should
+look like*.
+
+### Branch names
+
+`<type>/<slug>`, forward-slash separator, lowercase kebab-case. The
+slug is a short readable description (3–6 words, ~30–50 chars total).
+Types:
+
+- `issue-NN/<slug>` — one item from `codebase-issues.md` (e.g.
+  `issue-15/pid-chart-extract`). The issue number is load-bearing
+  for the sweep workflow.
+- `fix/<slug>` — a bug fix not tracked in codebase-issues.
+- `feat/<slug>` — a new tool, page, or visible feature.
+- `refactor/<slug>` — a change that preserves behavior (CSS
+  consolidation, function extraction, file move).
+- `docs/<slug>` — `*.md`, the friction file, comment-only sweeps.
+- `chore/<slug>` — dependency bumps, build config, `.gitignore`,
+  Playwright scaffolding.
+- `test/<slug>` — test-only changes (specs in `tests/`).
+
+The slash sorts cleanly in `git branch` and renders as a folder in
+Git GUIs. One issue or topic per branch; don't bundle.
+
+### Commit subjects
+
+Hybrid: lowercase, colon-separated, imperative mood, ≤72 chars,
+optional `(#NN)` suffix when the commit closes a codebase-issues
+item.
+
+- **Code changes** use a *semantic-area* prefix that names the code
+  area touched: `pid:`, `bacnet:`, `worker:`, `psychrometric:`,
+  `thermistor:`, `vfd:`, `modbus:`, `signal-scaling:`, `flow-engine:`,
+  `units:`. Cross-cutting concerns get their own: `a11y:`, `tests:`.
+- **Non-code changes** use a *Conventional Commits type*: `docs:`,
+  `chore:`, `test:`.
+
+Examples (from current history):
+
+    pid: extract drawPidChart + delta formatter to /scripts/pid-chart.js
+    a11y: associate every form-input label with its control (#12)
+    worker: defense-in-depth on /api/contact (#13)
+    bacnet: trim port reference to verified data + dedupe table (#14)
+    docs: catch CLAUDE.md drift after PR #8 (pid-chart extraction)
+
+When a change touches both code and docs in the same logical unit,
+use the code-area prefix; the docs update is part of that scope.
+
+### Commit bodies
+
+Every non-trivial commit has a body. The body covers two things:
+
+1. **Why** — the motivating problem, constraint, prior incident, or
+   decision. The subject states *what*; the body explains *why now*.
+   This is the part that ages well; the diff covers the *what*.
+2. **What changed, per file** — when the commit touches 3+ files, a
+   bullet list of `path/to/file.ext` followed by a one-line note on
+   what shifted there. The reviewer reads this before opening the
+   diff; it tells them where to focus.
+
+Body wraps at 72 columns. Footer carries `Co-Authored-By:` when
+Claude collaborated, and an optional `Refs: codebase-issues#NN` or
+`Closes codebase-issues#NN` line.
+
+Trivial commits (typo, comment punctuation, single-line CSS tweak)
+can ship subject-only.
+
+### PR descriptions
+
+Every PR carries three required sections, in this order:
+
+```markdown
+## Summary
+
+<1–3 sentences a stranger could read with no prior context. Names
+the area, the change, and the why in one breath.>
+
+## Changes
+
+<Bulleted list of what shipped, grouped by file or logical chunk.
+The human-readable diff index — what the reviewer scans before
+opening Files Changed.>
+
+## Test plan
+
+<Markdown checkbox list of what was tested or what reviewers should
+verify. `[x]` = done; `[ ]` = pending.>
+```
+
+Optional sections when relevant: `## Why now` (trigger / context for
+non-obvious timing), `## Risk / rollback` (blast radius, deploy
+caveats, revert procedure), `## Out-of-band` (changes outside the
+PR diff that matter for the reviewer's mental model — e.g. memory
+file writes, infra config flipped in the dashboard).
+
+PR titles use the same commit-subject style. For multi-commit PRs
+the title is thematic (area + umbrella change) and the individual
+commit subjects carry per-step detail.
+
+### Commits per PR
+
+As many commits as make natural review chunks. A two-step extraction
+(e.g. "extract function" then "rewire callers") ships as two commits
+on the same branch; a documentation fix caught during review ships
+as a third commit on the same PR. Each commit's body follows the
+why + what-per-file rule independently. Don't squash mid-development
+just to keep the count down — the granularity helps `git bisect` and
+makes review chunks visible — but don't fragment unnaturally either
+(a typo fix doesn't need its own commit unless it's genuinely
+separate from the work).
+
 ## Workflow
 
 Claude Code edits source files and may write commits when explicitly
