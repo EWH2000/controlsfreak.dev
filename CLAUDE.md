@@ -386,7 +386,7 @@ per-page history and the *why* behind each, see
   between them. The twin-T subhead in `hydronic-loops.html` carries
   `id="d3"` so `load-piping.html`'s closing section can deep-link.
 - **Tool ↔ Education pairings:** `tools/pid-tuner.html` ↔
-  `education/pid-basics.html` (share `pid-engine.js`);
+  `education/pid-basics.html` (share `pid-engine.js` + `pid-chart.js`);
   `tools/vfd-mock.html` ↔ `education/vfds.html` (source-parameter
   pedagogy, with a parameter tree to navigate on the tool side).
 - **Contact form:** `.tool-card` with name/email/message, an
@@ -510,8 +510,9 @@ well-grouped.
      `<a class="back-link" href="/tools/">← All tools</a>`.
    - `{% block scripts %}` with the shared script tags first
      (typically `<script src="/scripts/units.js"></script>`, plus
-     any engines like `pid-engine.js`), then the page's inline
-     `<script>`.
+     any shared engines / helpers — e.g. `pid-engine.js` +
+     `pid-chart.js` for a PID surface, `flow-engine.js` for a
+     pipe-flow diagram), then the page's inline `<script>`.
    - Anchor `href`s use explicit `.html` extensions.
 2. For the page's logic, use the IIFE + `addEventListener` pattern
    (see *JS patterns*). Apply validate-and-mute on numeric inputs.
