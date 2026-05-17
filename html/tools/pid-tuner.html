@@ -49,8 +49,8 @@ nav: tools
                     <select id="pidConv">
                         <option value="field" selected>Gain · Reset · Rate (field shorthand)</option>
                         <option value="timeMin">Gain · Ti · Td (minutes)</option>
-                        <option value="timeSec">Gain · Ti · Td (seconds)</option>
-                        <option value="pbSec">Prop. band · Ti · Td (sec) — EBO / Distech style</option>
+                        <option value="timeSec">Gain · Ti · Td (seconds) — EBO style</option>
+                        <option value="pbSec">Prop. band · Ti · Td (sec) — Distech style</option>
                     </select>
                 </div>
             </div>
@@ -183,7 +183,7 @@ nav: tools
             </p>
 
             <p class="pid-note">
-                Rule of thumb on this tool: most HVAC loops are PI, not full PID. Start with reset off, raise the gain until the loop just begins to cycle, back it off, then add only as much reset as you need. Vendors differ on the knobs — Niagara LoopPoint exposes bare proportional / integral / derivative constants (closest to the gain · reset · rate view), while EBO and Distech use a proportional band with integral and derivative times in seconds; flip the <em>Parameter Style</em> selector above to read the loop in whichever terms you use. Same idea, different clothes — the numbers here show the relationships between the knobs, not drop-in values for any one platform.
+                Rule of thumb on this tool: most HVAC loops are PI, not full PID. Start with reset off, raise the gain until the loop just begins to cycle, back it off, then add only as much reset as you need. Vendors differ on the knobs — Niagara LoopPoint exposes bare proportional / integral / derivative constants (closest to the gain · reset · rate view), EBO uses gain with integral and derivative times in seconds (Ti / Td), and Distech uses a proportional band with the same time-in-seconds Ti / Td; flip the <em>Parameter Style</em> selector above to read the loop in whichever terms you use. Same idea, different clothes — the numbers here show the relationships between the knobs, not drop-in values for any one platform.
             </p>
 
             <p class="pid-note">

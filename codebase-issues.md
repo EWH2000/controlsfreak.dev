@@ -805,6 +805,44 @@ small).
 **Recommended action:** address alongside #11 / #12 in one focused
 a11y commit.
 
+### 22. PID tuner Steady-State Error readout is unit-less and metric-unaware
+
+`html/tools/pid-tuner.html:273` renders the steady-state error as a
+bare number (`(sim.ssErr > 0 ? '+' : '') + sim.ssErr.toFixed(sim.dec)`)
+with no unit. The three `PID_PROC` entries the tuner runs against carry
+different canonical units — fast = in. w.c. (range 5), med / slow = °F
+— so the number's meaning shifts with the Process Type selector, and a
+metric-mode visitor sees the °F- or in.-w.c.-domain error labeled with
+nothing.
+
+The Education mini-sims (`html/education/pid-basics.html:253-263,
+320-339`) already solved this: `miniUnit(procKey)` returns the right
+unit string for the current units mode, `miniConvertDelta(value,
+procKey)` converts via `Units.display.deltaTemp` /
+`Units.display.staticPressure`, and a `unitschange` listener
+(`pid-basics.html:423-425`) refreshes the readouts without re-running
+the sim. Same shape would drop straight into the tuner — wire the
+listener inside the existing IIFE, refresh the metric on unitschange
+without re-running `runPidSim`.
+
+**Why it matters:** an unlabeled number is read as "whatever the
+visible PV units are." Today the chart axes are also unit-less so the
+friction is masked, but once *any* unit-aware element lands on the
+tuner the unit-less error becomes actively misleading for metric users.
+The same shape already works on `pid-basics.html`, so the inconsistency
+across the two PID surfaces is the immediate cost.
+
+**Priority:** LOW (no live bug today; mid-friction when the tuner gains
+any unit-aware element, and a parity gap with `pid-basics.html`).
+
+**Recommended action:** lift `miniUnit` / `miniConvertDelta` and the
+`unitschange` wiring from `pid-basics.html`. The mini-sims compute
+offset as `-sim.ssErr`; the tuner's existing convention is `+sim.ssErr`
+(positive = PV above SP), so keep the sign and convert only magnitude.
+Small standalone chunk — or fold into the broader #15 PID-engine
+extraction if that lands first (a shared `formatPidReadout(sim,
+procKey)` helper would naturally cover both surfaces).
+
 ---
 
 ## Recently addressed
