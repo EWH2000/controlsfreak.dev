@@ -310,7 +310,8 @@ main {
 }
 .field { display: flex; flex-direction: column; gap: 0.4rem; }
 
-label {
+label,
+.field-label {
     font-family: var(--mono);
     font-size: 0.66rem;
     text-transform: uppercase;
@@ -810,6 +811,19 @@ input[type="range"]::-moz-range-thumb {
     background: var(--surface-3);
 }
 
+/* same shape, two equal columns — for tools whose reference content lives
+   in a sibling .tool-card rather than the third column (e.g. the BACnet
+   converter). No recessed last-child since there is no reference panel. */
+.tool-body-2col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+}
+.tool-body-2col > section {
+    padding: 1.25rem 1.25rem 1.5rem;
+    border-right: 1px solid var(--border);
+}
+.tool-body-2col > section:last-child { border-right: none; }
+
 /* tabs sitting directly above a .tool-body-3col: inset the buttons to line
    up with the column padding, drop the bottom margin so the grid butts
    right up under the tab strip. (The .tab-btn underline indicator is
@@ -849,6 +863,8 @@ input[type="range"]::-moz-range-thumb {
     font-family: var(--sans);
     font-size: 0.82rem;
     color: var(--text-dim);
+    text-transform: none;
+    letter-spacing: normal;
 }
 .ps-value {
     font-family: var(--mono);
@@ -946,6 +962,9 @@ input.ps-input:focus, select.ps-input:focus, textarea.ps-input:focus {
     .tool-body-3col { grid-template-columns: 1fr; }
     .tool-body-3col > section { border-right: none; border-bottom: 1px solid var(--border); }
     .tool-body-3col > section:last-child { border-bottom: none; }
+    .tool-body-2col { grid-template-columns: 1fr; }
+    .tool-body-2col > section { border-right: none; border-bottom: 1px solid var(--border); }
+    .tool-body-2col > section:last-child { border-bottom: none; }
 }
 
 /* ──────────────────────────────────────────────────────────────────────

@@ -409,7 +409,7 @@ rules pick up `margin: 0` so heading default margins don't disturb
 the layout. The new convention is recorded under CLAUDE.md
 "Conventions → Heading hierarchy."
 
-### 12. Form-input labels not programmatically associated
+### 12. Form-input labels not programmatically associated *(addressed 2026-05-17)*
 
 Across 8 tool pages, **39 inputs** use the property-sheet pattern
 `<span class="ps-label">…</span><input class="ps-input">`: visually a
@@ -436,7 +436,25 @@ Refactor-to-label is the simpler call and matches form conventions
 everywhere else; bare `<label>` cases on pid-tuner / pid-basics get
 the `for=` added in the same pass.
 
-### 13. Worker defense-in-depth bundle
+**Resolution (2026-05-17):** refactor-to-label across the 5 tool
+pages with property-sheet inputs (bacnet, signal-scaling, thermistor,
+psychrometric, modbus). 39 `<span class="ps-label">` paired with a
+ps-input got promoted to `<label class="ps-label" for="…">`; the 9
+bare `<label>` cases on `pid-tuner.html` (3 selects + 3 range
+sliders, plus the "Try a Tuning" button-group caption) and 3 on
+`pid-basics.html` (the mini-sim range sliders) gained `for=`
+associations against the matching control. The "Try a Tuning"
+button-group label became `<span class="field-label">` inside a
+`role="group" aria-labelledby="…"` wrapper since a `<label>` for
+multiple controls isn't legal HTML. The `.ps-label` CSS rule
+gained `text-transform: none; letter-spacing: normal;` resets so
+that promoting `<span>` to `<label>` (which carries the
+all-caps `label`-element styling) leaves the visual unchanged. The
+new `.field-label` class shares the `label`-element rule. The
+convention is recorded under CLAUDE.md "Conventions → Form-input
+labels."
+
+### 13. Worker defense-in-depth bundle *(addressed 2026-05-17)*
 
 `src/worker.js` handles the obvious risks well (Turnstile, honeypot,
 input length, File-vs-string coerce). Several cheap defense-in-depth
@@ -480,7 +498,24 @@ endpoint).
 **Recommended action:** land as one focused commit — all eight are
 < 60 lines total.
 
-### 14. BACnet/IP port reference — TODO markers in production + duplicated table
+**Resolution (2026-05-17):** all eight landed in one pass.
+`src/worker.js` now exports module-level constants for the limits
+(`MAX_BODY = 20 KB`, `FETCH_TIMEOUT_MS = 8000`, `ORIGIN_ALLOWED`).
+Order of operations in `handleContact`: Origin check → Content-Length
+pre-check (413) → formData parse → honeypot → field validation →
+empty-token short-circuit → Turnstile → Resend. The `json()` helper
+always emits `X-Content-Type-Options: nosniff` + `Cache-Control:
+no-store` and accepts an `extraHeaders` parameter (used to set
+`Allow: POST` on the 405 response). A `fetchWithTimeout()` wrapper
+applies `AbortController` to both Turnstile and Resend so a hung
+upstream returns 502 instead of stalling the user's spinner.
+`name` gains a `.replace(/[\r\n]+/g, " ")` scrub. The main
+`fetch()` handler now branches on the `/api/contact` path *first*
+so non-POST requests to that path return 405 with `Allow: POST`
+rather than falling through to `env.ASSETS.fetch` (which would
+serve the site's 404).
+
+### 14. BACnet/IP port reference — TODO markers in production + duplicated table *(addressed 2026-05-17)*
 
 `html/tools/bacnet-ip-converter.html` carries four copies of the same
 HTML-comment marker:
@@ -518,6 +553,24 @@ default), MEDIUM for the dedupe.
    `{% include %}` fragment under `_includes/`, or factor to a
    `<template>` cloned at runtime. Rendering once outside the tabs
    is the smallest change.
+
+**Resolution (2026-05-17):** the user could only field-verify
+47808 / BAC0 (the IANA-registered port); the BAC1-BAC4 rows with
+"Network #2-5" labels were field-folklore the user couldn't
+authoritatively confirm, so the table was trimmed to a single row
+("47808 / BAC0 / Default BACnet/IP") with a ref-note that mentions
+ASHRAE 135 Annex J's multi-network convention without asserting the
+specific labels. For the dedupe, the standalone reference moved out
+of the tab panes into a sibling `.tool-card` below the converter
+(matching `thermistor-calculator.html`'s "About these tables"
+secondary-card pattern, `<h2 class="tool-card-title">`). The two
+tab panes shifted from `.tool-body-3col` to a new `.tool-body-2col`
+(four lines of CSS in `styles.css`, plus matching responsive
+override at the 900 px breakpoint). The four `// user to verify`
+markers are gone. The marker convention itself (`<!-- // user to
+verify … --!>`) now lives under CLAUDE.md "Conventions →
+Placeholder-content markers" so future audits look for both `//`
+and the canonical TODO/FIXME/XXX in the same sweep.
 
 ### 15. PID engine extraction owed by Block C #5 precedent
 

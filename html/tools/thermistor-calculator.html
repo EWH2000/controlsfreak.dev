@@ -68,7 +68,7 @@ nav: tools
                 <h2 class="ps-section-label">Input</h2>
 
                 <div class="ps-row">
-                    <span class="ps-label">Sensor</span>
+                    <label class="ps-label" for="thType">Sensor</label>
                     <!-- option values must match the keys in THERMISTOR_TYPES (scripts/thermistor-data.js);
                          option text mirrors each type's `name` there — the full maker / context lives in
                          that type's `notes`, shown under the R/T table -->
@@ -89,8 +89,8 @@ nav: tools
                     </select>
                 </div>
 
-                <div class="ps-row">
-                    <span class="ps-label">Look up by</span>
+                <div class="ps-row" role="group" aria-labelledby="thByLabel">
+                    <span class="ps-label" id="thByLabel">Look up by</span>
                     <div class="btn-row">
                         <button class="copy-btn active" id="thByTemp">Temperature</button>
                         <button class="copy-btn" id="thByRes">Resistance</button>
@@ -98,12 +98,12 @@ nav: tools
                 </div>
 
                 <div class="ps-row">
-                    <span class="ps-label" id="thTempLbl">Temperature (°F)</span>
+                    <label class="ps-label" id="thTempLbl" for="thTemp">Temperature (°F)</label>
                     <input class="ps-input" type="number" id="thTemp" step="1" placeholder="77" value="77">
                 </div>
 
                 <div class="ps-row">
-                    <span class="ps-label">Resistance (Ω)</span>
+                    <label class="ps-label" for="thRes">Resistance (Ω)</label>
                     <input class="ps-input" type="number" id="thRes" step="1" placeholder="10000" disabled>
                 </div>
             </section>
