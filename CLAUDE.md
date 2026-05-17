@@ -249,6 +249,18 @@ file.
   control has no semantic meaning). The implicit
   `<label><input> Text</label>` wrap pattern is also fine
   (psychrometric chart's `.psy-toggle` checkboxes use this).
+- **Skip-to-content link + `<main id="main">`.** The shared
+  layout (`_includes/layouts/page.njk`) renders a
+  `<a href="#main" class="skip-link">` as the first body child
+  on every page. Every page's `<main>` must carry `id="main"`
+  so the link's target works — if a new page wraps content in
+  a bare `<main>`, the link silently jumps nowhere. `.skip-link`
+  CSS lives in `styles.css` next to the body / `main { flex: 1 }`
+  block; positioned off-screen until focused (WebAIM pattern).
+  Section-header containers use `<div class="section-header">`
+  + `<div class="section-line">` site-wide; `<section>` is
+  reserved for actual document-outline sections, not visual
+  styling chrome.
 - **Heading hierarchy.** Every page has exactly one `<h1>`. The page
   topic is the `<h1>`: on content pages that's `.tool-card-title`
   (`<h1 class="tool-card-title">`); on landing pages with no
@@ -314,6 +326,19 @@ file.
   because the assertion runs before Turnstile's failure surfaces;
   do not extend the `watchErrors` helper pattern to `contact.spec.js`
   behavioral tests.
+- **`aria-pressed` flicker on units toggle is accepted.** The
+  buttons in `_includes/nav.njk` hard-code `aria-pressed="true"`
+  for US and `aria-pressed="false"` for Metric at render time;
+  the inline `<head>` units-bootstrap sets `[data-units]` on
+  the root before paint (so the visual state is correct for a
+  returning metric visitor), but cannot reach the buttons —
+  they're not parsed yet at that point. `units.js` re-syncs the
+  `aria-pressed` attributes at end-of-body. For a few tens of
+  ms a screen reader on a metric-preferring device hears "US
+  toggled on" while the page already displays metric values.
+  No clean fix (head bootstrap can't reach the buttons; moving
+  `units.js` to the head doesn't work either). Documented and
+  accepted (codebase-issues #21 item 2).
 - **Mass id-rename substitutions must cover template literals too.**
   The #16 kebab-case sweep used a quote-aware Python helper
   (`'X'`, `"X"`, `#X` patterns) that by design leaves bare JS

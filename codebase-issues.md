@@ -917,7 +917,7 @@ across `html/**/*.html` and `html/scripts/*.js` returned zero
 other real hits today (the apparent matches are all variable
 interpolations in display text, not id constructions).
 
-### 21. Site-wide accessibility bundle — small individual items
+### 21. Site-wide accessibility bundle — small individual items *(addressed 2026-05-17)*
 
 Several small a11y findings, each ≲ 10 lines individually:
 
@@ -963,6 +963,48 @@ small).
 
 **Recommended action:** address alongside #11 / #12 in one focused
 a11y commit.
+
+**Resolution (2026-05-17):** four bullets fixed, one deferred-by-
+design, one re-audited as not-actually-dead. Landed as four
+per-item commits plus a docs commit.
+
+- **Skip-to-main link** — `<a href="#main" class="skip-link">`
+  added as the first body child in `_includes/layouts/page.njk`;
+  every `<main>` site-wide (17 pages) gained `id="main"`.
+  `.skip-link` + `.skip-link:focus` rules added to
+  `styles.css` (WebAIM off-screen-until-focused pattern).
+  CLAUDE.md "Conventions" picked up a new bullet documenting
+  the rule so future pages can't drop the `id="main"` without
+  silently breaking the link.
+- **`aria-pressed` flicker on units toggle** — deferred per the
+  original entry's own recommendation. The flicker has no clean
+  fix (head bootstrap can't reach the buttons; `units.js`
+  re-syncing at end-of-body is the existing posture). Added a
+  CLAUDE.md "Gotchas" entry documenting the limitation so it's
+  not re-discovered as a finding.
+- **Canvas elements lack aria-label** — 5 canvases on
+  pid-basics (×3 mini-sims), pid-tuner, and psychrometric-chart
+  now carry `role="img" aria-label="…"` with labels that
+  describe each chart's pedagogical focus (P-only offset, P+I
+  overshoot, P+I+D damping, PV-vs-SP trace, OA→SA state path).
+- **Number inputs missing physical min/max** — 11 inputs gained
+  `min`/`max`. thermistor: `th-temp` (-50..200), `th-res`
+  (0..). psychrometric: `psy-alt` (0..15000), `psy-cfm` (0..),
+  7 temperature inputs (-50..200). The pre-existing `ma-pct`
+  and `hum-rh` bounds (0..100) were left as-is. signal-scaling's
+  12 number inputs were judged out of scope (custom signal-
+  calibration ranges that should stay open-ended).
+- **`<section class="section-header">` drift** — contact.html
+  was the lone outlier site-wide; normalized to
+  `<div class="section-header">` + `<div class="section-line">`
+  matching the other 20 instances. CLAUDE.md's new skip-link
+  bullet also folds in the section-header rule.
+- **Dead `id="sim1/2/3"` on pid-basics** — re-audit refuted the
+  issue's "Nothing references them" premise: `smoke.spec.js:173`
+  uses `#sim2 .btn-row .copy-btn` as a test-fixture selector
+  for the "Slow" chip inside Sim 2. Left in place; no deep-link
+  navigation introduced (the simulators read top-to-bottom and
+  don't need a jump nav).
 
 ### 22. PID tuner Steady-State Error readout is unit-less and metric-unaware *(addressed 2026-05-17)*
 
