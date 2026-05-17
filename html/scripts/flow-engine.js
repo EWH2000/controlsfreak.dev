@@ -100,11 +100,11 @@
     const SPACING  = 34;        // px between adjacent particles
     const RADIUS   = 3;         // circle r — small but readable
 
-    // Colours — matching the existing SVG element style (CSS var with
-    // a literal-hex fallback baked in, so a failed stylesheet still
-    // leaves the diagram legible).
-    const SUPPLY_FILL = 'var(--blue, #1577b8)';
-    const RETURN_FILL = 'var(--blue-cool, #5e8aa0)';
+    // Colours — read straight from the design-system custom properties.
+    // No `, #hex` fallback (see CLAUDE.md "Design system" — every var
+    // used here must be defined in styles.css :root).
+    const SUPPLY_FILL = 'var(--blue)';
+    const RETURN_FILL = 'var(--blue-cool)';
     const SVG_NS = 'http://www.w3.org/2000/svg';
 
     // Module-level state so refreshPath() can find an existing pool

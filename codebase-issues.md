@@ -1134,6 +1134,57 @@ Tool pages other than vfd-mock and psychrometric-chart had no
 HTML/SVG fallbacks; they compose entirely via class rules in
 styles.css and never inline `var(--x, #hex)` patterns.
 
+### 24. Hex fallbacks survived in `flow-engine.js` — #23 missed the third surface *(addressed 2026-05-17)*
+
+Follow-up to #23. The 2026-05-17 sweep closed two surfaces — HTML/SVG
+attribute fallbacks (572 drops) and the canvas-JS `cv()` helpers (12
+drops) — but missed a third: two JS string constants in
+`html/scripts/flow-engine.js:106-107`:
+
+```js
+const SUPPLY_FILL = 'var(--blue, #1577b8)';
+const RETURN_FILL = 'var(--blue-cool, #5e8aa0)';
+```
+
+These get written verbatim to `<circle fill="…">` on every flow
+particle. Same drift surface as the rest of #23: if `--blue` is ever
+retuned in `:root`, the inline hex disagrees with the source-of-truth
+until someone re-greps for `var(--`.
+
+The miss was a search-pattern blind spot. #23's Python helper grepped
+inside CSS/HTML files for `var(--…` patterns; it didn't run against
+`.js` files, and `flow-engine.js`'s string-constants live outside the
+two `cv(name, fallback)` helper shapes that the canvas-JS pass
+already caught.
+
+Same family as #9: the comment block above the constants
+(`flow-engine.js:103-105`) actively justified the now-banned pattern
+("CSS var with a literal-hex fallback baked in, so a failed
+stylesheet still leaves the diagram legible"). Future readers
+following this comment would re-introduce the fallback on a new
+constant.
+
+**Why it matters:** drift risk (same as the rest of #23) plus the
+stale-comment foothold for re-introduction. CSS custom properties
+have universal browser support; `var(--blue)` in an SVG presentation
+attribute resolves to the `:root` value, no fallback needed.
+
+**Priority:** LOW (mechanical follow-up to #23, no live bug).
+
+**Recommended action:** drop the `, #hex` portion from both string
+constants and rewrite the surrounding comment to match the new
+convention. One commit, two-line code change plus comment trim.
+
+**Resolution (2026-05-17):** lines 106-107 trimmed to bare
+`var(--blue)` / `var(--blue-cool)`. The header comment at 103-105
+rewritten — replaces the "literal-hex fallback baked in" framing with
+a pointer to the CLAUDE.md "Design system" rule ("every var used
+here must be defined in styles.css :root"). No CLAUDE.md change
+needed; the rule was already canonized as part of #23's docs
+commit. Going forward: future canvas-JS surfaces that read CSS
+custom properties should grep against `.js` files too, not just
+`.css` / `.html`.
+
 ---
 
 ## Recently addressed
