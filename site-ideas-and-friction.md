@@ -1550,6 +1550,23 @@ scoping today, but if they get substantially extended in a future
 session, that's the moment to declare their question retroactively
 and check that the additions answer it.
 
+### Field-use conditions for reference tools
+
+When building a calculator / converter / lookup that techs will
+pull up on a job site, design for the conditions: gloves on, bad
+cell signal, 30-second answer. Practical implications: tap-friendly
+inputs, client-side compute (no network round-trip for the answer),
+conservative external-resource weight, single-purpose tools that
+beat kitchen-sink ones for the "open it, get the number, close it"
+flow.
+
+This is a *content-and-feature* consideration, not a page-architecture
+rule. Pages render responsively (`≤900px` triggers the 3-col → stack
+collapse uniformly) and there's no "mobile subset" or "hide on
+mobile" framework — every tool is the same tool on every device.
+Use this when picking *what to build* and *how the inputs flow*, not
+when deciding how the page itself is structured.
+
 ### Split into "Tools" and "Education" sections
 When breaking the single page into multiple pages, organize the site
 into two top-level categories rather than one flat tool list:
@@ -1614,75 +1631,6 @@ note below for the reasoning.
 **Open questions:**
 - Exact form of the shortened cheat sheet (short codes? trimmed prose?
   arrow grid?).
-
----
-
-## Visual design — two products, one codebase
-
-The site serves two distinct use cases that should each get a
-purpose-fit experience, not a one-design-fits-both compromise.
-
-**Mobile = job-site reference tool.** Tech on a roof or ladder,
-gloves on, needs an answer in under 30 seconds. Calculators,
-converters, lookups, reference tables. Light, fast, scannable.
-*Not* the full PID sim (sliders unusable, chart unreadable on a
-phone). *Not* the mini-sims. Education is skim-readable at best —
-full study is a desktop activity.
-
-**Desktop = learning environment + workshop.** Tech (or new hire,
-or curious veteran) at a desk, time to read, time to play. Full
-sims, education content fleshed out, denser layouts with reference
-panels alongside active tools. The whole site, not a subset.
-
-### Implications
-
-- Mobile is a *subset*, not just a narrower desktop. Some surfaces
-  should hide on mobile entirely (the PID sim canvas, the mini-sims,
-  possibly long Education prose). "Hide on mobile" is a deliberate
-  design move under this framework, not a fallback.
-- The mobile home page eventually differs in *content shape* from
-  the desktop home. Desktop home is for browsing categories; mobile
-  home is for finding a specific tool fast. Same URL, layout swaps
-  via `@media`.
-- Mobile network constraints matter. Job sites have bad cell service.
-  Conservative about external requests; pushes toward self-hosting
-  fonts (already a known cleanup item) and being judicious about
-  anything network-dependent.
-
-### Visual grammar — Niagara-ish, EBO-clean, neither stolen
-
-The site should feel intuitive to BMS people without being a copy of
-any specific platform. Strategy: borrow Niagara's visual grammar
-(the most widespread, so the largest audience finds it familiar),
-keep EBO's cleanness (current site is already close to this), avoid
-either's specific palette or chrome.
-
-**Grammar to borrow (Niagara-ish):**
-- Property-sheet form rows — label LEFT, input/value RIGHT, hairline
-  divider between rows. Not the current label-above-input.
-- Dense data tables with tight row heights and zebra striping
-  (current `.ref-table` is close to this; push further).
-- Tabs with thin underline indicator (already in use — keep).
-- Slightly recessed panel headers, different background than panel
-  body (already in use via `.section-header`, `.subhead` — keep).
-- Accent colors reserved for actionable or live data values, never
-  decorative chrome (already mostly in use via `--blue` for readouts).
-- Reference panels sitting *alongside* active tools, not below them.
-  The single most "BMS-coded" move on the list.
-
-**To avoid:**
-- Niagara's specific palette (the Tridium teal-blues). Current green
-  is already distinct — keep it.
-- Wholesale window chrome that mimics Workbench too literally.
-- EBO's specific blues for the same reason.
-
-### Prototype strategy
-
-Don't redesign every page in one pass. **The BACnet/IP converter is
-the prototype** — small, side-by-side input/output layout is the
-most obvious fit for the new language, and the user uses it
-personally so feedback is immediate. Once that page feels right,
-patterns propagate to the other tools.
 
 ---
 
