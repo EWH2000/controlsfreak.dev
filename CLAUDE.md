@@ -209,6 +209,35 @@ file.
   genuinely shared JS goes in `html/scripts/` as a classic script.
 - Prefer semantic HTML over div soup. Fast and accessible: no heavy
   media, no auto-play, no tracking or analytics.
+- **Form-input labels are `<label for="…">`, not `<span>`.** In the
+  property-sheet pattern, `<label class="ps-label" for="inputId">`
+  pairs with the next `<input/select/textarea class="ps-input"
+  id="inputId">`. The `.ps-label` rule resets `text-transform` and
+  `letter-spacing` so the visual matches the `<span>` it replaced.
+  ps-label rows that label a *readout* (`<span class="ps-value">`)
+  stay `<span>` — `for=` is only valid for form controls. For a
+  button group (e.g. PID tuner's "Try a Tuning"), use
+  `<div role="group" aria-labelledby="…">` with a
+  `<span class="field-label" id="…">` caption rather than a bare
+  `<label>` (a `<label>` without `for=` and without wrapping a
+  control has no semantic meaning). The implicit
+  `<label><input> Text</label>` wrap pattern is also fine
+  (psychrometric chart's `.psy-toggle` checkboxes use this).
+- **Heading hierarchy.** Every page has exactly one `<h1>`. The page
+  topic is the `<h1>`: on content pages that's `.tool-card-title`
+  (`<h1 class="tool-card-title">`); on landing pages with no
+  tool-card-title (`/tools/`, `/education/`, and `pid-basics.html` as
+  a one-off) the eyebrow `.section-label` carries the `<h1>` instead.
+  Section dividers — both in-page `.section-header > .section-label`
+  and the three-column property-sheet `.ps-section-label` — are
+  `<h2>`. Long-lesson `.subhead` rules are also `<h2>`. Callout
+  cards inside `.tool-body` use `<h3>` (`.callout h3`). Secondary
+  `.tool-card-title`s nested under an `<h2>` step to `<h3>` (e.g.
+  `pid-basics.html`'s three mini-sims under "See Each Term in
+  Action"). The CSS rules `.section-label` / `.tool-card-title` /
+  `.ps-section-label` are element-agnostic and reset `margin: 0` so
+  the visual output is identical to the previous `<div>`/`<span>`
+  shape.
 - **Education page scope rule** (one question per page, forward-link
   for adjacent topics) lives in `site-ideas-and-friction.md` under
   "Education page scope — one question per page."
@@ -216,6 +245,13 @@ file.
   today; if it's still a future page, write the topic as plain prose
   so a visitor doesn't click into a 404. Either way, the friction file
   tracks the topic as `[future: <page>]`.
+- **Placeholder-content markers:** unverified data in a shipped page
+  carries an HTML comment in the form
+  `<!-- // user to verify <thing> — placeholder data, refine after review -->`,
+  ideally above and below the block. Pair the `//` prefix with `TODO`
+  / `FIXME` / `XXX` when grepping in sweeps — the `//` form is
+  what we actually use site-wide, but those familiar with other repos
+  may look for the latter first.
 
 ### Gotchas
 

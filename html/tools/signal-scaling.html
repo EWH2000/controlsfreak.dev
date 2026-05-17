@@ -16,10 +16,10 @@ nav: tools
 
     <div class="tool-card">
         <div class="tool-card-header">
-            <div class="tool-card-title">
+            <h1 class="tool-card-title">
                 Signal Scaling Calculator
                 <span class="tool-tag">Analog I/O</span>
-            </div>
+            </h1>
         </div>
 
         <div class="tabs tabs-flush">
@@ -33,9 +33,9 @@ nav: tools
             <div class="tool-body-3col">
 
                 <section>
-                    <div class="ps-section-label">Input</div>
+                    <h2 class="ps-section-label">Input</h2>
                     <div class="ps-row">
-                        <span class="ps-label">Signal type</span>
+                        <label class="ps-label" for="sigType">Signal type</label>
                         <select class="ps-input" id="sigType">
                             <option value="4-20">4–20 mA</option>
                             <option value="0-20">0–20 mA</option>
@@ -47,39 +47,39 @@ nav: tools
                         </select>
                     </div>
                     <div class="ps-row">
-                        <span class="ps-label" id="sigInputLabel">Signal Value (mA)</span>
+                        <label class="ps-label" id="sigInputLabel" for="sigVal">Signal Value (mA)</label>
                         <input class="ps-input" type="number" id="sigVal" step="0.01" placeholder="12.00">
                     </div>
                     <div id="customRow" style="display:none">
                         <div class="ps-row">
-                            <span class="ps-label">Range min</span>
+                            <label class="ps-label" for="customMin">Range min</label>
                             <input class="ps-input" type="number" id="customMin" step="any" placeholder="4">
                         </div>
                         <div class="ps-row">
-                            <span class="ps-label">Range max</span>
+                            <label class="ps-label" for="customMax">Range max</label>
                             <input class="ps-input" type="number" id="customMax" step="any" placeholder="20">
                         </div>
                         <div class="ps-row">
-                            <span class="ps-label">Range unit</span>
+                            <label class="ps-label" for="customUnit">Range unit</label>
                             <input class="ps-input" type="text" id="customUnit" placeholder="mA">
                         </div>
                     </div>
                     <div class="ps-row">
-                        <span class="ps-label">Eng. units min</span>
+                        <label class="ps-label" for="euMin">Eng. units min</label>
                         <input class="ps-input" type="number" id="euMin" step="any" placeholder="0">
                     </div>
                     <div class="ps-row">
-                        <span class="ps-label">Eng. units max</span>
+                        <label class="ps-label" for="euMax">Eng. units max</label>
                         <input class="ps-input" type="number" id="euMax" step="any" placeholder="100">
                     </div>
                     <div class="ps-row">
-                        <span class="ps-label">Units label</span>
+                        <label class="ps-label" for="euLabelInput">Units label</label>
                         <input class="ps-input" type="text" id="euLabelInput" placeholder="°F, °C, CFM, m³/h, %, …">
                     </div>
                 </section>
 
                 <section>
-                    <div class="ps-section-label">Output</div>
+                    <h2 class="ps-section-label">Output</h2>
                     <div class="ps-row">
                         <span class="ps-label">Eng. value</span>
                         <span class="ps-value muted" id="scalingOut">—</span>
@@ -104,7 +104,7 @@ nav: tools
                 </section>
 
                 <section>
-                    <div class="ps-section-label">Common Signal Types</div>
+                    <h2 class="ps-section-label">Common Signal Types</h2>
                     <table class="ref-table-dense">
                         <thead>
                             <tr><th>Signal</th><th>Live zero</th></tr>
@@ -131,9 +131,9 @@ nav: tools
             <div class="tool-body-3col">
 
                 <section>
-                    <div class="ps-section-label">Input</div>
+                    <h2 class="ps-section-label">Input</h2>
                     <div class="ps-row">
-                        <span class="ps-label">Signal type</span>
+                        <label class="ps-label" for="revSigType">Signal type</label>
                         <select class="ps-input" id="revSigType">
                             <option value="4-20">4–20 mA</option>
                             <option value="0-20">0–20 mA</option>
@@ -144,21 +144,21 @@ nav: tools
                         </select>
                     </div>
                     <div class="ps-row">
-                        <span class="ps-label">Eng. value</span>
+                        <label class="ps-label" for="revEuVal">Eng. value</label>
                         <input class="ps-input" type="number" id="revEuVal" step="any" placeholder="72.5">
                     </div>
                     <div class="ps-row">
-                        <span class="ps-label">Eng. units min</span>
+                        <label class="ps-label" for="revEuMin">Eng. units min</label>
                         <input class="ps-input" type="number" id="revEuMin" step="any" placeholder="0">
                     </div>
                     <div class="ps-row">
-                        <span class="ps-label">Eng. units max</span>
+                        <label class="ps-label" for="revEuMax">Eng. units max</label>
                         <input class="ps-input" type="number" id="revEuMax" step="any" placeholder="100">
                     </div>
                 </section>
 
                 <section>
-                    <div class="ps-section-label">Output</div>
+                    <h2 class="ps-section-label">Output</h2>
                     <div class="ps-row">
                         <span class="ps-label">Signal output</span>
                         <span class="ps-value muted" id="reverseOut">—</span>
@@ -174,7 +174,7 @@ nav: tools
                 </section>
 
                 <section>
-                    <div class="ps-section-label">Common Signal Types</div>
+                    <h2 class="ps-section-label">Common Signal Types</h2>
                     <table class="ref-table-dense">
                         <thead>
                             <tr><th>Signal</th><th>Live zero</th></tr>
@@ -204,28 +204,28 @@ nav: tools
             <div class="tool-body-3col">
 
                 <section>
-                    <div class="ps-section-label">Input — two IO pairs</div>
+                    <h2 class="ps-section-label">Input — two IO pairs</h2>
                     <div class="ps-row">
-                        <span class="ps-label">x₁ (raw)</span>
+                        <label class="ps-label" for="so_x1">x₁ (raw)</label>
                         <input class="ps-input" type="number" id="so_x1" step="any" placeholder="4">
                     </div>
                     <div class="ps-row">
-                        <span class="ps-label">y₁ (eng.)</span>
+                        <label class="ps-label" for="so_y1">y₁ (eng.)</label>
                         <input class="ps-input" type="number" id="so_y1" step="any" placeholder="0">
                     </div>
                     <div class="ps-row">
-                        <span class="ps-label">x₂ (raw)</span>
+                        <label class="ps-label" for="so_x2">x₂ (raw)</label>
                         <input class="ps-input" type="number" id="so_x2" step="any" placeholder="20">
                     </div>
                     <div class="ps-row">
-                        <span class="ps-label">y₂ (eng.)</span>
+                        <label class="ps-label" for="so_y2">y₂ (eng.)</label>
                         <input class="ps-input" type="number" id="so_y2" step="any" placeholder="100">
                     </div>
                 </section>
 
                 <!-- Output spans the right two-thirds; background:none — it's the output, not a recessed reference panel -->
                 <section style="grid-column:span 2;background:none;">
-                    <div class="ps-section-label">Output — y = mx + b</div>
+                    <h2 class="ps-section-label">Output — y = mx + b</h2>
                     <div class="ps-row">
                         <span class="ps-label">Slope (m) — scale factor</span>
                         <span class="ps-value muted" id="so_slope">—</span>

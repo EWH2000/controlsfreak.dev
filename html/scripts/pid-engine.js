@@ -1,15 +1,17 @@
 // ──────────────────────────────────────────────────────────────────────
 // pid-engine.js — shared PID step-response simulation core
 //
-// Loaded as a *classic* script (no type="module") on purpose: the site
-// wires its UI with inline on* handlers, which can only see globals, so the
-// engine exposes its API as plain globals — PID_PROC and simulatePid — not
-// as ES-module exports. Any page that wants the simulator just adds
+// Loaded as a *classic* script (no type="module") on purpose: each page's
+// logic lives in an IIFE-wrapped inline <script>, and an IIFE's bindings
+// can't be reached from outside it — so the engine exposes its API as plain
+// globals (PID_PROC and simulatePid), not as ES-module exports. Any page
+// that wants the simulator just adds
 //
 //     <script src="/scripts/pid-engine.js"></script>
 //
-// before its own inline <script>. (Still "no build step": the browser loads
-// the file directly; nothing transpiles or bundles it.)
+// before its own inline <script>. The 11ty build templates the HTML chrome
+// and copies this file through unchanged; the browser loads it directly,
+// nothing transpiles or bundles.
 //
 // What lives here: the toy process model + the discrete-time stepping + the
 // canonical-parameter interface (gain, repeats/min, minutes). What does NOT

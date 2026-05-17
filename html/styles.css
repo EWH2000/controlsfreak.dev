@@ -9,8 +9,9 @@
  *
  * Page-specific CSS still lives inline on the page that needs it
  * (e.g. contact.html's honeypot/intro rules) — only genuinely shared rules
- * belong here. This is a static no-build-step site: the browser just loads
- * this file; there is no bundler or preprocessor.
+ * belong here. The 11ty build templates the HTML chrome and passthrough-
+ * copies this file unchanged; the browser loads it directly, no bundler or
+ * preprocessor in the pipeline.
  * ────────────────────────────────────────────────────────────────────── */
 
 :root {
@@ -229,6 +230,7 @@ main {
     letter-spacing: 0.12em;
     color: var(--accent);
     white-space: nowrap;
+    margin: 0;
 }
 .section-line { flex: 1; height: 1px; background: var(--border); }
 
@@ -259,6 +261,7 @@ main {
     display: flex;
     align-items: center;
     gap: 0.7rem;
+    margin: 0;
 }
 .tool-tag {
     font-family: var(--mono);
@@ -305,11 +308,10 @@ main {
     gap: 1rem;
     margin-bottom: 1rem;
 }
-.form-row.three { grid-template-columns: 1fr 1fr 1fr; }
-
 .field { display: flex; flex-direction: column; gap: 0.4rem; }
 
-label {
+label,
+.field-label {
     font-family: var(--mono);
     font-size: 0.66rem;
     text-transform: uppercase;
@@ -509,7 +511,6 @@ footer {
 /* ── RESPONSIVE ── */
 @media (max-width: 620px) {
     .form-row        { grid-template-columns: 1fr; }
-    .form-row.three  { grid-template-columns: 1fr 1fr; }
     .bit-grid        { grid-template-columns: repeat(8, 1fr); }
     .bit-readouts    { grid-template-columns: 1fr 1fr; }
     .pid-controls    { grid-template-columns: 1fr; }
@@ -668,14 +669,14 @@ input[type="range"]::-moz-range-thumb {
     border-radius: 3px;
     padding: 1rem 1.25rem;
 }
-.callout h4 {
+.callout h3 {
     font-family: var(--mono);
     font-size: 0.8rem;
     color: var(--text-bright);
-    margin-bottom: 0.45rem;
+    margin: 0 0 0.45rem;
     font-weight: 600;
 }
-.callout h4 span { color: var(--text-dim); font-weight: 400; }
+.callout h3 span { color: var(--text-dim); font-weight: 400; }
 .callout p { font-size: 0.86rem; line-height: 1.7; }
 .callout em { color: var(--text-bright); font-style: normal; }
 .pid-note {
@@ -688,7 +689,8 @@ input[type="range"]::-moz-range-thumb {
 
 /* ──────────────────────────────────────────────────────────────────────
  * LANDING-PAGE CARDS — the clickable tiles on the home page and the
- * Tools / Education landings.
+ * Tools / Education landings. Link-shaped cards with a tag, title,
+ * and short description.
  * ────────────────────────────────────────────────────────────────────── */
 .card-grid {
     display: grid;
@@ -773,7 +775,6 @@ input[type="range"]::-moz-range-thumb {
 }
 .cta-button:hover { background: var(--accent); color: var(--surface); }
 
-
 /* ──────────────────────────────────────────────────────────────────────
  * THREE-COLUMN PROPERTY-SHEET LAYOUT
  *
@@ -810,6 +811,19 @@ input[type="range"]::-moz-range-thumb {
     background: var(--surface-3);
 }
 
+/* same shape, two equal columns — for tools whose reference content lives
+   in a sibling .tool-card rather than the third column (e.g. the BACnet
+   converter). No recessed last-child since there is no reference panel. */
+.tool-body-2col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+}
+.tool-body-2col > section {
+    padding: 1.25rem 1.25rem 1.5rem;
+    border-right: 1px solid var(--border);
+}
+.tool-body-2col > section:last-child { border-right: none; }
+
 /* tabs sitting directly above a .tool-body-3col: inset the buttons to line
    up with the column padding, drop the bottom margin so the grid butts
    right up under the tab strip. (The .tab-btn underline indicator is
@@ -827,7 +841,7 @@ input[type="range"]::-moz-range-thumb {
     color: var(--text-dim);
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    margin-bottom: 0.85rem;
+    margin: 0 0 0.85rem;
     padding-bottom: 0.5rem;
     border-bottom: 1px solid var(--border);
 }
@@ -849,6 +863,8 @@ input[type="range"]::-moz-range-thumb {
     font-family: var(--sans);
     font-size: 0.82rem;
     color: var(--text-dim);
+    text-transform: none;
+    letter-spacing: normal;
 }
 .ps-value {
     font-family: var(--mono);
@@ -946,6 +962,9 @@ input.ps-input:focus, select.ps-input:focus, textarea.ps-input:focus {
     .tool-body-3col { grid-template-columns: 1fr; }
     .tool-body-3col > section { border-right: none; border-bottom: 1px solid var(--border); }
     .tool-body-3col > section:last-child { border-bottom: none; }
+    .tool-body-2col { grid-template-columns: 1fr; }
+    .tool-body-2col > section { border-right: none; border-bottom: 1px solid var(--border); }
+    .tool-body-2col > section:last-child { border-bottom: none; }
 }
 
 /* ──────────────────────────────────────────────────────────────────────

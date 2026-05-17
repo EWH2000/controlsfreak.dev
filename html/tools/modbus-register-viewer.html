@@ -16,22 +16,22 @@ nav: tools
 
     <div class="tool-card">
         <div class="tool-card-header">
-            <div class="tool-card-title">
+            <h1 class="tool-card-title">
                 Modbus Register Viewer
                 <span class="tool-tag">Modbus</span>
-            </div>
+            </h1>
         </div>
 
         <div class="tool-body-3col">
 
             <section>
-                <div class="ps-section-label">Input</div>
+                <h2 class="ps-section-label">Input</h2>
                 <div class="ps-row">
-                    <span class="ps-label">Decimal (0–65535)</span>
+                    <label class="ps-label" for="modDec">Decimal (0–65535)</label>
                     <input class="ps-input" type="number" id="modDec" min="0" max="65535" step="1" placeholder="43981">
                 </div>
                 <div class="ps-row">
-                    <span class="ps-label">Hex (0x0000–0xFFFF)</span>
+                    <label class="ps-label" for="modHex">Hex (0x0000–0xFFFF)</label>
                     <input class="ps-input" type="text" id="modHex" placeholder="0xABCD">
                 </div>
                 <p class="bit-hint" style="margin-top:0.85rem;">Bit 15 = MSB (top-left) · Bit 0 = LSB (bottom-right) · click to toggle</p>
@@ -40,7 +40,7 @@ nav: tools
             </section>
 
             <section>
-                <div class="ps-section-label">Output</div>
+                <h2 class="ps-section-label">Output</h2>
                 <div class="ps-row">
                     <span class="ps-label">Decimal</span>
                     <span class="ps-value muted" id="readDec">—</span>
@@ -56,7 +56,7 @@ nav: tools
             </section>
 
             <section>
-                <div class="ps-section-label">Modbus Function Codes</div>
+                <h2 class="ps-section-label">Modbus Function Codes</h2>
                 <table class="ref-table-dense">
                     <thead>
                         <tr><th>FC</th><th>Hex</th><th class="use">Function</th></tr>

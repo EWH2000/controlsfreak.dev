@@ -10,7 +10,7 @@ nav: education
 <main>
 
     <div class="section-header">
-        <span class="section-label">Education · PID Basics</span>
+        <h1 class="section-label">Education · PID Basics</h1>
         <div class="section-line"></div>
     </div>
 
@@ -20,7 +20,7 @@ nav: education
 
     <!-- ── What P, I, and D Actually Do ── -->
     <div class="section-header">
-        <span class="section-label">What P, I, and D Actually Do</span>
+        <h2 class="section-label">What P, I, and D Actually Do</h2>
         <div class="section-line"></div>
     </div>
 
@@ -28,17 +28,17 @@ nav: education
         <div class="tool-body">
             <div class="callout-grid">
                 <div class="callout">
-                    <h4>P — Proportional <span>· how hard it pushes</span></h4>
+                    <h3>P — Proportional <span>· how hard it pushes</span></h3>
                     <p>Output is proportional to the current error: twice as far off, twice as much push. More gain means a stronger, faster response — but push too hard and the loop overshoots and hunts. In the field this is often dialed in as <em>proportional band</em>: PB&nbsp;=&nbsp;100&nbsp;÷&nbsp;gain, so a 20% PB swings the output across 20% of the input range.</p>
                     <p style="margin-top:0.6rem;"><em>Worked example.</em> A chilled-water valve, SP = <span data-us="55&nbsp;°F" data-metric="13&nbsp;°C">55&nbsp;°F</span>, PV = <span data-us="60&nbsp;°F" data-metric="16&nbsp;°C">60&nbsp;°F</span>, span = <span data-us="20&nbsp;°F" data-metric="11&nbsp;°C">20&nbsp;°F</span>. Error is <span data-us="5&nbsp;°F" data-metric="2.8&nbsp;°C">5&nbsp;°F</span> → 25% of span. With a gain of 4, the proportional output is 4&nbsp;×&nbsp;25% = 100% — valve commanded fully open. As the supply cools and PV drops, the output backs off proportionally. The catch: P on its own always leaves a small permanent offset (droop) — it needs <em>some</em> error to produce <em>any</em> output, so the loop settles a hair short of setpoint.</p>
                 </div>
                 <div class="callout">
-                    <h4>I — Integral / Reset <span>· how persistent it is</span></h4>
+                    <h3>I — Integral / Reset <span>· how persistent it is</span></h3>
                     <p>Keeps nudging the output in the same direction for as long as <em>any</em> error remains, so it erases the offset that P leaves behind. Usually set in repeats per minute (or its inverse, integral time in minutes per repeat). Too fast and you get slow rolling oscillation and overshoot; too slow and it takes forever to close the last bit of the gap. On most slow HVAC loops, integral is the term doing the real work.</p>
                     <p style="margin-top:0.6rem;"><em>Worked example.</em> A space-temp loop sits <span data-us="1&nbsp;°F" data-metric="0.6&nbsp;°C">1&nbsp;°F</span> under setpoint with P alone — the classic droop. Add 0.2&nbsp;repeats/min (Ti = 5 min) and the integral term accumulates that <span data-us="1&nbsp;°F" data-metric="0.6&nbsp;°C">1&nbsp;°F</span> of error over the next few minutes, slowly cranking the output up until PV reaches SP and error = 0. Now bump it to 2&nbsp;repeats/min: the integral wakes up too fast, the loop overshoots, and you get a slow oscillation around setpoint instead of a clean approach. That's the trade-off.</p>
                 </div>
                 <div class="callout">
-                    <h4>D — Derivative / Rate <span>· how fast it's changing</span></h4>
+                    <h3>D — Derivative / Rate <span>· how fast it's changing</span></h3>
                     <p>Reacts to how quickly the PV is moving and applies the brakes early, trimming overshoot on processes with a lot of lag. Set in minutes. Almost always small or zero in HVAC: it amplifies sensor noise, so on a twitchy input it does more harm than good. If you do use it, derivative-on-<em>measurement</em> (not on error) avoids a sudden kick when someone changes the setpoint.</p>
                     <p style="margin-top:0.6rem;"><em>When it earns its keep.</em> A big hot-water reheat coil with several minutes of lag: P + I will keep pushing while heat is still on its way through the coil, and you overshoot. A small Td — on the order of <sup>1</sup>⁄<sub>4</sub> to <sup>1</sup>⁄<sub>8</sub> of Ti as a starting point — lets the loop "see" PV racing toward SP and start backing off early. On a fast, clean loop (duct pressure, VFD speed), don't bother — most HVAC loops are PI, not full PID.</p>
                 </div>
@@ -52,7 +52,7 @@ nav: education
 
     <!-- ── See Each Term in Action — three working mini-sims ── -->
     <div class="section-header" style="margin-top:2.5rem;">
-        <span class="section-label">See Each Term in Action</span>
+        <h2 class="section-label">See Each Term in Action</h2>
         <div class="section-line"></div>
     </div>
 
@@ -63,10 +63,10 @@ nav: education
     <!-- ── Sim 1 — P only: the steady-state offset ── -->
     <div class="tool-card" id="sim1">
         <div class="tool-card-header">
-            <div class="tool-card-title">
+            <h3 class="tool-card-title">
                 P only
                 <span class="tool-tag">Sim 1</span>
-            </div>
+            </h3>
         </div>
         <div class="tool-body">
             <p style="font-size:0.92rem;line-height:1.75;color:var(--text);margin-bottom:1.1rem;">
@@ -83,7 +83,7 @@ nav: education
 
             <div class="slider-field" style="margin-bottom:1.1rem;">
                 <div class="slider-head">
-                    <label>Gain (Kc)</label>
+                    <label for="m1Slider">Gain (Kc)</label>
                     <span class="slider-val" id="m1Val">2.0</span>
                 </div>
                 <input type="range" id="m1Slider" min="0" max="20" step="0.1" value="2">
@@ -109,10 +109,10 @@ nav: education
     <!-- ── Sim 2 — P + I: offset closes, but it can oscillate ── -->
     <div class="tool-card" id="sim2">
         <div class="tool-card-header">
-            <div class="tool-card-title">
+            <h3 class="tool-card-title">
                 P + I
                 <span class="tool-tag">Sim 2</span>
-            </div>
+            </h3>
         </div>
         <div class="tool-body">
             <p style="font-size:0.92rem;line-height:1.75;color:var(--text);margin-bottom:1.1rem;">
@@ -129,7 +129,7 @@ nav: education
 
             <div class="slider-field" style="margin-bottom:1.1rem;">
                 <div class="slider-head">
-                    <label>Reset (rep/min) · gain 2.0 fixed</label>
+                    <label for="m2Slider">Reset (rep/min) · gain 2.0 fixed</label>
                     <span class="slider-val" id="m2Val">1.00</span>
                 </div>
                 <input type="range" id="m2Slider" min="0" max="6" step="0.05" value="1">
@@ -159,10 +159,10 @@ nav: education
     <!-- ── Sim 3 — P + I + D: derivative damps the oscillation ── -->
     <div class="tool-card" id="sim3">
         <div class="tool-card-header">
-            <div class="tool-card-title">
+            <h3 class="tool-card-title">
                 P + I + D
                 <span class="tool-tag">Sim 3</span>
-            </div>
+            </h3>
         </div>
         <div class="tool-body">
             <p style="font-size:0.92rem;line-height:1.75;color:var(--text);margin-bottom:1.1rem;">
@@ -180,7 +180,7 @@ nav: education
 
             <div class="slider-field" style="margin-bottom:1.1rem;">
                 <div class="slider-head">
-                    <label>Rate (Td, min) · gain 2.0 / reset 4.0 fixed</label>
+                    <label for="m3Slider">Rate (Td, min) · gain 2.0 / reset 4.0 fixed</label>
                     <span class="slider-val" id="m3Val">0.00</span>
                 </div>
                 <input type="range" id="m3Slider" min="0" max="0.5" step="0.01" value="0">
@@ -221,8 +221,8 @@ nav: education
 <script src="/scripts/units.js"></script>
 <!-- Shared simulation core — the FOPDT process model + discrete-time stepping
      (PID_PROC, simulatePid), the same engine the PID Tuning Helper runs on.
-     Classic script (not a module), loaded before the inline glue below so the
-     on* handlers can see its globals. -->
+     Classic script (not a module), loaded before the IIFE-wrapped inline
+     script below so it can reach those globals by name. -->
 <script src="/scripts/pid-engine.js"></script>
 <script>
     // ─────────────────────────────────────────────────────────────────────

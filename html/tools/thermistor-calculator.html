@@ -50,10 +50,10 @@ nav: tools
 
     <div class="tool-card">
         <div class="tool-card-header">
-            <div class="tool-card-title">
+            <h1 class="tool-card-title">
                 Thermistor / RTD Lookup
                 <span class="tool-tag" id="thTag">THERMISTOR</span>
-            </div>
+            </h1>
         </div>
 
         <!-- Three-column property-sheet layout, like the BACnet converter: Input left,
@@ -65,10 +65,10 @@ nav: tools
         <div class="tool-body-3col">
 
             <section>
-                <div class="ps-section-label">Input</div>
+                <h2 class="ps-section-label">Input</h2>
 
                 <div class="ps-row">
-                    <span class="ps-label">Sensor</span>
+                    <label class="ps-label" for="thType">Sensor</label>
                     <!-- option values must match the keys in THERMISTOR_TYPES (scripts/thermistor-data.js);
                          option text mirrors each type's `name` there — the full maker / context lives in
                          that type's `notes`, shown under the R/T table -->
@@ -89,8 +89,8 @@ nav: tools
                     </select>
                 </div>
 
-                <div class="ps-row">
-                    <span class="ps-label">Look up by</span>
+                <div class="ps-row" role="group" aria-labelledby="thByLabel">
+                    <span class="ps-label" id="thByLabel">Look up by</span>
                     <div class="btn-row">
                         <button class="copy-btn active" id="thByTemp">Temperature</button>
                         <button class="copy-btn" id="thByRes">Resistance</button>
@@ -98,18 +98,18 @@ nav: tools
                 </div>
 
                 <div class="ps-row">
-                    <span class="ps-label" id="thTempLbl">Temperature (°F)</span>
+                    <label class="ps-label" id="thTempLbl" for="thTemp">Temperature (°F)</label>
                     <input class="ps-input" type="number" id="thTemp" step="1" placeholder="77" value="77">
                 </div>
 
                 <div class="ps-row">
-                    <span class="ps-label">Resistance (Ω)</span>
+                    <label class="ps-label" for="thRes">Resistance (Ω)</label>
                     <input class="ps-input" type="number" id="thRes" step="1" placeholder="10000" disabled>
                 </div>
             </section>
 
             <section>
-                <div class="ps-section-label">Output</div>
+                <h2 class="ps-section-label">Output</h2>
 
                 <div class="ps-row">
                     <span class="ps-label">Defining point</span>
@@ -138,7 +138,7 @@ nav: tools
             </section>
 
             <section>
-                <div class="ps-section-label" id="thRtTitle">R / T Table</div>
+                <h2 class="ps-section-label" id="thRtTitle">R / T Table</h2>
                 <div id="thRtScroll">
                     <table class="ref-table-dense">
                         <thead>
@@ -157,9 +157,9 @@ nav: tools
 
     <div class="tool-card about-tables">
         <div class="tool-card-header">
-            <div class="tool-card-title">
+            <h2 class="tool-card-title">
                 About these tables
-            </div>
+            </h2>
         </div>
         <div class="tool-body" style="font-size: 0.92rem; line-height: 1.6;">
             <p><strong>Where the values come from.</strong> Each R/T table is <em>generated</em> from a small set of curve parameters — β and R25 for the NTC thermistors, the parallel shunt for the linearized 10K curves, R0 and a temperature coefficient for the RTDs. The Pt100 and Pt1000 tables come from the IEC 60751 Callendar–Van Dusen polynomial (the international standard). Auditing the parameters is what makes a 500+ cell table trustworthy in one pass, instead of one row at a time.</p>
@@ -181,8 +181,9 @@ nav: tools
 <script src="/scripts/units.js"></script>
 <!-- Sensor curves — keyed by type id, each with a generated R/T table.
      See the file header for per-type verification status. Classic script
-     (not a module), loaded before the inline glue below so the on* handlers
-     see THERMISTOR_TYPES. Same loading pattern as /scripts/pid-engine.js. -->
+     (not a module), loaded before the IIFE-wrapped inline script below so it
+     can reach THERMISTOR_TYPES by name. Same loading pattern as
+     /scripts/pid-engine.js. -->
 <script src="/scripts/thermistor-data.js"></script>
 <script src="/scripts/ui.js"></script>
 <script>

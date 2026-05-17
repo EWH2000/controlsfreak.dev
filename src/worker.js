@@ -11,15 +11,52 @@
 
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 const CONTACT_ADDRESS = "contact@controlsfreak.dev";
+const ORIGIN_ALLOWED = "https://controlsfreak.dev";
+const MAX_BODY = 20 * 1024;       // 20 KB — legitimate form is < 6 KB.
+const FETCH_TIMEOUT_MS = 8000;    // Turnstile + Resend upstream hard cap.
 
-function json(data, status = 200) {
+function json(data, status = 200, extraHeaders = {}) {
     return new Response(JSON.stringify(data), {
         status,
-        headers: { "content-type": "application/json; charset=utf-8" },
+        headers: {
+            "content-type": "application/json; charset=utf-8",
+            "x-content-type-options": "nosniff",
+            "cache-control": "no-store",
+            ...extraHeaders,
+        },
     });
 }
 
+// fetch() wrapper that aborts on timeout so a hung upstream can't stall the
+// user's spinner until Cloudflare kills the worker invocation.
+async function fetchWithTimeout(url, init, timeoutMs) {
+    const ac = new AbortController();
+    const timer = setTimeout(() => ac.abort(), timeoutMs);
+    try {
+        return await fetch(url, { ...init, signal: ac.signal });
+    } finally {
+        clearTimeout(timer);
+    }
+}
+
 async function handleContact(request, env) {
+    // ── Origin check ──────────────────────────────────────────
+    // Browsers send Origin on cross-origin POST. If it's present and not us,
+    // it's a CSRF / drive-by — short-circuit before any parsing cost.
+    const origin = request.headers.get("origin");
+    if (origin && origin !== ORIGIN_ALLOWED) {
+        return json({ ok: false, error: "Bad origin." }, 403);
+    }
+
+    // ── Body size pre-check ───────────────────────────────────
+    // Cloudflare caps bodies at 100 MB; we want < 20 KB. Trust the
+    // Content-Length header: a spoofed header still falls back to formData()
+    // which has its own ceiling.
+    const contentLength = parseInt(request.headers.get("content-length") || "0", 10);
+    if (contentLength > MAX_BODY) {
+        return json({ ok: false, error: "Request body too large." }, 413);
+    }
+
     let form;
     try {
         form = await request.formData();
@@ -44,7 +81,9 @@ async function handleContact(request, env) {
     }
 
     // ── Validate ──────────────────────────────────────────────
-    const name = field("name").trim();
+    // Strip CR/LF from name — today it lands in body text only, but this
+    // future-proofs against a refactor that ever templates name into a header.
+    const name = field("name").trim().replace(/[\r\n]+/g, " ");
     const email = field("email").trim();
     const message = field("message").trim();
     const token = field("cf-turnstile-response");
@@ -58,18 +97,25 @@ async function handleContact(request, env) {
     if (name.length > 200) {
         return json({ ok: false, error: "That name is too long." }, 400);
     }
+    if (!token) {
+        return json({ ok: false, error: "Verification failed." }, 400);
+    }
 
     // ── Turnstile ─────────────────────────────────────────────
     let verify;
     try {
-        const res = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
-            method: "POST",
-            headers: { "content-type": "application/x-www-form-urlencoded" },
-            body: new URLSearchParams({
-                secret: env.TURNSTILE_SECRET || "",
-                response: token,
-            }),
-        });
+        const res = await fetchWithTimeout(
+            "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+            {
+                method: "POST",
+                headers: { "content-type": "application/x-www-form-urlencoded" },
+                body: new URLSearchParams({
+                    secret: env.TURNSTILE_SECRET || "",
+                    response: token,
+                }),
+            },
+            FETCH_TIMEOUT_MS,
+        );
         verify = await res.json();
     } catch (err) {
         verify = { success: false };
@@ -90,21 +136,25 @@ async function handleContact(request, env) {
 
     let sent;
     try {
-        sent = await fetch("https://api.resend.com/emails", {
-            method: "POST",
-            headers: {
-                "authorization": "Bearer " + (env.RESEND_API_KEY || ""),
-                "content-type": "application/json",
+        sent = await fetchWithTimeout(
+            "https://api.resend.com/emails",
+            {
+                method: "POST",
+                headers: {
+                    "authorization": "Bearer " + (env.RESEND_API_KEY || ""),
+                    "content-type": "application/json",
+                },
+                body: JSON.stringify({
+                    from: CONTACT_ADDRESS,
+                    to: CONTACT_ADDRESS,
+                    // Reply goes to the actual sender, not back to ourselves.
+                    reply_to: email,
+                    subject,
+                    text,
+                }),
             },
-            body: JSON.stringify({
-                from: CONTACT_ADDRESS,
-                to: CONTACT_ADDRESS,
-                // Reply goes to the actual sender, not back to ourselves.
-                reply_to: email,
-                subject,
-                text,
-            }),
-        });
+            FETCH_TIMEOUT_MS,
+        );
     } catch (err) {
         console.error("Resend request failed", err);
         return json({ ok: false, error: "Could not send message right now." }, 502);
@@ -122,8 +172,15 @@ async function handleContact(request, env) {
 export default {
     async fetch(request, env) {
         const url = new URL(request.url);
-        if (request.method === "POST" && url.pathname === "/api/contact") {
-            return handleContact(request, env);
+        if (url.pathname === "/api/contact") {
+            if (request.method === "POST") {
+                return handleContact(request, env);
+            }
+            return json(
+                { ok: false, error: "Method not allowed." },
+                405,
+                { allow: "POST" },
+            );
         }
         return env.ASSETS.fetch(request);
     },

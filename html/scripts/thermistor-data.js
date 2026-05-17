@@ -3,12 +3,13 @@
 //
 // Loaded as a *classic* script (no type="module"), same pattern as
 // /scripts/pid-engine.js: it exposes one global, THERMISTOR_TYPES, so the
-// page's inline <script> and on* handlers can see it. Load it with
+// page's IIFE-wrapped inline <script> can reach it by name. Load it with
 //
 //     <script src="/scripts/thermistor-data.js"></script>
 //
-// before the page's own inline <script>. (Still "no build step" — the
-// browser loads the file directly; nothing transpiles or bundles it.)
+// before the page's own inline <script>. The 11ty build templates the HTML
+// chrome and copies this file through unchanged; the browser loads it
+// directly, nothing transpiles or bundles.
 //
 // ──────────────────────────────────────────────────────────────────────
 // VERIFICATION STATUS — READ BEFORE TRUSTING ANY NUMBER HERE
@@ -85,6 +86,7 @@ const THERMISTOR_TYPES = (function () {
             case 'ntc-shunt': return par(ntcR(curve.r25, curve.beta, tC), curve.shunt);
             case 'rtd-pt':    return ptR(curve.r0, tC);
             case 'rtd-balco': return curve.r0 * (1 + curve.alphaC * (tC - F2C(curve.refF)));
+            default:          throw new Error('unknown curve kind: ' + curve.kind);
         }
     }
 

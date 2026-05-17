@@ -187,10 +187,8 @@
 
     function wireToggle() {
         const btns = document.querySelectorAll('.units-btn[data-units]');
-        for (let i = 0; i < btns.length; i++) {
-            (function (btn) {
-                btn.addEventListener('click', function () { setUnits(btn.dataset.units); });
-            })(btns[i]);
+        for (const btn of btns) {
+            btn.addEventListener('click', function () { setUnits(btn.dataset.units); });
         }
         syncToggleAria();
     }
