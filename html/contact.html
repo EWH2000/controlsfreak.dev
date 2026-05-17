@@ -45,7 +45,7 @@ nav: contact
                 If a tool gave you a wrong number, a page has a typo, you'd like a tool that isn't built yet, or you just want to say hi — send a note. It comes straight to my inbox; I read everything and try to reply to most of it.
             </p>
 
-            <form id="contact-form" onsubmit="submitContact(event)">
+            <form id="contact-form">
                 <div class="form-row">
                     <div class="field">
                         <label for="contact-name">Name (optional)</label>
@@ -91,42 +91,46 @@ nav: contact
 {% block scripts %}
 <script src="/scripts/units.js"></script>
 <script>
-    async function submitContact(e) {
-        e.preventDefault();
-        const form = document.getElementById("contact-form");
-        const result = document.getElementById("contact-result");
-        const resultValue = document.getElementById("contact-result-value");
-        const submitBtn = form.querySelector("button[type=submit]");
+    (function () {
+        async function submitContact(e) {
+            e.preventDefault();
+            const form = document.getElementById("contact-form");
+            const result = document.getElementById("contact-result");
+            const resultValue = document.getElementById("contact-result-value");
+            const submitBtn = form.querySelector("button[type=submit]");
 
-        // Show pending state
-        result.style.display = "";
-        resultValue.className = "result-value muted";
-        resultValue.textContent = "Sending…";
-        submitBtn.disabled = true;
+            // Show pending state
+            result.style.display = "";
+            resultValue.className = "result-value muted";
+            resultValue.textContent = "Sending…";
+            submitBtn.disabled = true;
 
-        try {
-            const formData = new FormData(form);
-            const res = await fetch("/api/contact", {
-                method: "POST",
-                body: new URLSearchParams(formData)
-            });
-            const data = await res.json();
-            if (data.ok) {
-                resultValue.className = "result-value";
-                resultValue.textContent = "Message sent. Thanks!";
-                form.reset();
-                // Reset Turnstile so a second submission gets a fresh token
-                if (window.turnstile) window.turnstile.reset();
-            } else {
+            try {
+                const formData = new FormData(form);
+                const res = await fetch("/api/contact", {
+                    method: "POST",
+                    body: new URLSearchParams(formData)
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    resultValue.className = "result-value";
+                    resultValue.textContent = "Message sent. Thanks!";
+                    form.reset();
+                    // Reset Turnstile so a second submission gets a fresh token
+                    if (window.turnstile) window.turnstile.reset();
+                } else {
+                    resultValue.className = "result-value error";
+                    resultValue.textContent = data.error || "Something went wrong.";
+                }
+            } catch (err) {
                 resultValue.className = "result-value error";
-                resultValue.textContent = data.error || "Something went wrong.";
+                resultValue.textContent = "Network error. Please try again.";
+            } finally {
+                submitBtn.disabled = false;
             }
-        } catch (err) {
-            resultValue.className = "result-value error";
-            resultValue.textContent = "Network error. Please try again.";
-        } finally {
-            submitBtn.disabled = false;
         }
-    }
+
+        document.getElementById('contact-form').addEventListener('submit', submitContact);
+    })();
 </script>
 {% endblock %}

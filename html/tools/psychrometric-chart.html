@@ -144,32 +144,32 @@ nav: tools
                 <div class="ps-section-label">Air handler</div>
                 <div class="ps-row">
                     <span class="ps-label" data-us="Altitude (ft)" data-metric="Altitude (m)">Altitude (ft)</span>
-                    <input class="ps-input" type="number" id="psyAlt" step="100" placeholder="0" value="0" oninput="psyRecompute()">
+                    <input class="ps-input" type="number" id="psyAlt" step="100" placeholder="0" value="0">
                 </div>
                 <div class="ps-row">
                     <span class="ps-label" data-us="AHU airflow (CFM)" data-metric="AHU airflow (m³/h)">AHU airflow (CFM)</span>
-                    <input class="ps-input" type="number" id="psyCfm" step="100" placeholder="optional" oninput="psyRecompute()">
+                    <input class="ps-input" type="number" id="psyCfm" step="100" placeholder="optional">
                 </div>
 
                 <div class="psy-pills" role="tablist">
-                    <button class="psy-pill active" data-step="oa" onclick="selectStep('oa')">OA</button>
-                    <button class="psy-pill" data-step="ra" onclick="selectStep('ra')">RA</button>
-                    <button class="psy-pill" data-step="ma" onclick="selectStep('ma')">MA</button>
-                    <button class="psy-pill" data-step="cc" onclick="selectStep('cc')">CC</button>
-                    <button class="psy-pill off" data-step="hc" onclick="selectStep('hc')">HC</button>
-                    <button class="psy-pill off" data-step="hum" onclick="selectStep('hum')">HUM</button>
-                    <button class="psy-pill" data-step="sa" onclick="selectStep('sa')">SA</button>
+                    <button class="psy-pill active" data-step="oa">OA</button>
+                    <button class="psy-pill"        data-step="ra">RA</button>
+                    <button class="psy-pill"        data-step="ma">MA</button>
+                    <button class="psy-pill"        data-step="cc">CC</button>
+                    <button class="psy-pill off"    data-step="hc">HC</button>
+                    <button class="psy-pill off"    data-step="hum">HUM</button>
+                    <button class="psy-pill"        data-step="sa">SA</button>
                 </div>
 
                 <!-- OA editor -->
                 <div class="psy-editor shown" data-step="oa">
                     <div class="ps-row">
                         <span class="ps-label" data-us="Dry-bulb (°F)" data-metric="Dry-bulb (°C)">Dry-bulb (°F)</span>
-                        <input class="ps-input" type="number" id="oa-tdb" step="0.5" value="92" oninput="psyRecompute()">
+                        <input class="ps-input" type="number" id="oa-tdb" step="0.5" value="92">
                     </div>
                     <div class="ps-row">
                         <span class="ps-label">Define by</span>
-                        <select class="ps-input" id="oa-mode" onchange="onModeChange('oa')">
+                        <select class="ps-input" id="oa-mode">
                             <option value="rh">Relative humidity</option>
                             <option value="wb" selected>Wet-bulb temperature</option>
                             <option value="dp">Dew point temperature</option>
@@ -179,7 +179,7 @@ nav: tools
                     </div>
                     <div class="ps-row">
                         <span class="ps-label" id="oa-secondLbl">Wet-bulb (°F)</span>
-                        <input class="ps-input" type="number" id="oa-second" step="0.5" value="76" oninput="psyRecompute()">
+                        <input class="ps-input" type="number" id="oa-second" step="0.5" value="76">
                     </div>
                     <p class="ref-note">Outdoor air entering the air handler. Drag this dot on the chart, or edit values here.</p>
                 </div>
@@ -188,11 +188,11 @@ nav: tools
                 <div class="psy-editor" data-step="ra">
                     <div class="ps-row">
                         <span class="ps-label" data-us="Dry-bulb (°F)" data-metric="Dry-bulb (°C)">Dry-bulb (°F)</span>
-                        <input class="ps-input" type="number" id="ra-tdb" step="0.5" value="75" oninput="psyRecompute()">
+                        <input class="ps-input" type="number" id="ra-tdb" step="0.5" value="75">
                     </div>
                     <div class="ps-row">
                         <span class="ps-label">Define by</span>
-                        <select class="ps-input" id="ra-mode" onchange="onModeChange('ra')">
+                        <select class="ps-input" id="ra-mode">
                             <option value="rh">Relative humidity</option>
                             <option value="wb" selected>Wet-bulb temperature</option>
                             <option value="dp">Dew point temperature</option>
@@ -202,7 +202,7 @@ nav: tools
                     </div>
                     <div class="ps-row">
                         <span class="ps-label" id="ra-secondLbl">Wet-bulb (°F)</span>
-                        <input class="ps-input" type="number" id="ra-second" step="0.5" value="63" oninput="psyRecompute()">
+                        <input class="ps-input" type="number" id="ra-second" step="0.5" value="63">
                     </div>
                     <p class="ref-note">Air returning from the conditioned space. Drag this dot on the chart, or edit values here.</p>
                 </div>
@@ -211,7 +211,7 @@ nav: tools
                 <div class="psy-editor" data-step="ma">
                     <div class="ps-row">
                         <span class="ps-label">Outdoor air (%)</span>
-                        <input class="ps-input" type="number" id="ma-pct" step="1" min="0" max="100" value="20" oninput="psyRecompute()">
+                        <input class="ps-input" type="number" id="ma-pct" step="1" min="0" max="100" value="20">
                     </div>
                     <p class="ref-note">Mass-weighted mix of OA and RA. The mixed point falls on the straight line between OA and RA on the chart, at the OA% fraction of the way from RA to OA.</p>
                     <div class="ps-row"><span class="ps-label" data-us="MA dry-bulb (°F)" data-metric="MA dry-bulb (°C)">MA dry-bulb (°F)</span><span class="ps-value live" id="ma-tdb-out">—</span></div>
@@ -223,15 +223,15 @@ nav: tools
                 <div class="psy-editor" data-step="cc">
                     <div class="ps-row">
                         <span class="ps-label">Cooling coil</span>
-                        <label class="psy-toggle"><input type="checkbox" id="cc-on" checked onchange="psyRecompute()"> On</label>
+                        <label class="psy-toggle"><input type="checkbox" id="cc-on" checked> On</label>
                     </div>
                     <div class="ps-row">
                         <span class="ps-label" data-us="Leaving DB (°F)" data-metric="Leaving DB (°C)">Leaving DB (°F)</span>
-                        <input class="ps-input" type="number" id="cc-tdb" step="0.5" value="55" oninput="psyRecompute()">
+                        <input class="ps-input" type="number" id="cc-tdb" step="0.5" value="55">
                     </div>
                     <div class="ps-row">
                         <span class="ps-label">Define by</span>
-                        <select class="ps-input" id="cc-mode" onchange="onModeChange('cc')">
+                        <select class="ps-input" id="cc-mode">
                             <option value="rh">Relative humidity</option>
                             <option value="wb" selected>Wet-bulb temperature</option>
                             <option value="dp">Dew point temperature</option>
@@ -241,7 +241,7 @@ nav: tools
                     </div>
                     <div class="ps-row">
                         <span class="ps-label" id="cc-secondLbl">Wet-bulb (°F)</span>
-                        <input class="ps-input" type="number" id="cc-second" step="0.5" value="54" oninput="psyRecompute()">
+                        <input class="ps-input" type="number" id="cc-second" step="0.5" value="54">
                     </div>
                     <p class="ref-note">Coil leaving condition. Must be at or below entering DB; humidity ratio can't increase across a cooling coil.</p>
                 </div>
@@ -250,18 +250,18 @@ nav: tools
                 <div class="psy-editor" data-step="hc">
                     <div class="ps-row">
                         <span class="ps-label">Heating coil</span>
-                        <label class="psy-toggle"><input type="checkbox" id="hc-on" onchange="psyRecompute()"> On</label>
+                        <label class="psy-toggle"><input type="checkbox" id="hc-on"> On</label>
                     </div>
                     <div class="ps-row">
                         <span class="ps-label">Specify by</span>
-                        <select class="ps-input" id="hc-mode" onchange="onHcModeChange()">
+                        <select class="ps-input" id="hc-mode">
                             <option value="ldb" selected>Leaving DB</option>
                             <option value="dt">ΔT rise</option>
                         </select>
                     </div>
                     <div class="ps-row">
                         <span class="ps-label" id="hc-valLbl">Leaving DB (°F)</span>
-                        <input class="ps-input" type="number" id="hc-val" step="0.5" value="75" oninput="psyRecompute()">
+                        <input class="ps-input" type="number" id="hc-val" step="0.5" value="75">
                     </div>
                     <p class="ref-note">Sensible heating only — humidity ratio is unchanged across the coil. Leaving DB must be at or above entering DB.</p>
                 </div>
@@ -270,11 +270,11 @@ nav: tools
                 <div class="psy-editor" data-step="hum">
                     <div class="ps-row">
                         <span class="ps-label">Humidifier</span>
-                        <label class="psy-toggle"><input type="checkbox" id="hum-on" onchange="psyRecompute()"> On</label>
+                        <label class="psy-toggle"><input type="checkbox" id="hum-on"> On</label>
                     </div>
                     <div class="ps-row">
                         <span class="ps-label">Leaving RH (%)</span>
-                        <input class="ps-input" type="number" id="hum-rh" step="1" min="0" max="100" value="50" oninput="psyRecompute()">
+                        <input class="ps-input" type="number" id="hum-rh" step="1" min="0" max="100" value="50">
                     </div>
                     <p class="ref-note">Adiabatic (constant wet-bulb) humidification — an evaporative pad or wetted media. Adds moisture; dry-bulb drops a little. Leaving RH must be at or above entering RH.</p>
                 </div>
@@ -370,985 +370,1013 @@ nav: tools
     //   enthalpy Btu / lb dry air · specific volume ft³ / lb dry air
     // Formulas: ASHRAE 2017 Fundamentals, Chapter 1 (IP equations).
     // ──────────────────────────────────────────────────────────────────
-    const R_DA       = 0.370486;    // R_dry-air / 144, ft³·psi / (lb·°R)
-    const MW_RATIO   = 0.621945;    // M_water / M_dry-air
-    const GR_PER_LB  = 7000;
-    const P_STD      = 14.696;      // standard sea-level pressure, psia
+    (function () {
+        const R_DA       = 0.370486;    // R_dry-air / 144, ft³·psi / (lb·°R)
+        const MW_RATIO   = 0.621945;    // M_water / M_dry-air
+        const GR_PER_LB  = 7000;
+        const P_STD      = 14.696;      // standard sea-level pressure, psia
 
-    // Saturation vapor pressure (psia) over water (t ≥ 32 °F) or ice (t < 32 °F). t in °F.
-    function satPress(tF) {
-        const T = tF + 459.67;      // absolute temperature, °R
-        let lnP;
-        if (tF >= 32) {
-            lnP = -1.0440397e4 / T - 1.1294650e1 - 2.7022355e-2 * T
-                  + 1.2890360e-5 * T * T - 2.4780681e-9 * T * T * T + 6.5459673 * Math.log(T);
-        } else {
-            lnP = -1.0214165e4 / T - 4.8932428 - 5.3765794e-3 * T + 1.9202377e-7 * T * T
-                  + 3.5575832e-10 * T * T * T - 9.0344688e-14 * T * T * T * T + 4.1635019 * Math.log(T);
+        // Saturation vapor pressure (psia) over water (t ≥ 32 °F) or ice (t < 32 °F). t in °F.
+        function satPress(tF) {
+            const T = tF + 459.67;      // absolute temperature, °R
+            let lnP;
+            if (tF >= 32) {
+                lnP = -1.0440397e4 / T - 1.1294650e1 - 2.7022355e-2 * T
+                      + 1.2890360e-5 * T * T - 2.4780681e-9 * T * T * T + 6.5459673 * Math.log(T);
+            } else {
+                lnP = -1.0214165e4 / T - 4.8932428 - 5.3765794e-3 * T + 1.9202377e-7 * T * T
+                      + 3.5575832e-10 * T * T * T - 9.0344688e-14 * T * T * T * T + 4.1635019 * Math.log(T);
+            }
+            return Math.exp(lnP);
         }
-        return Math.exp(lnP);
-    }
 
-    const humRatioFromVapPress = (pw, P) => MW_RATIO * pw / (P - pw);
-    const vapPressFromHumRatio = (W, P) => P * W / (MW_RATIO + W);
-    const satHumRatio          = (tF, P) => humRatioFromVapPress(satPress(tF), P);
-    const humRatioFromRH       = (rhPct, tdb, P) => humRatioFromVapPress(rhPct / 100 * satPress(tdb), P);
-    const rhFromHumRatio       = (W, tdb, P) => vapPressFromHumRatio(W, P) / satPress(tdb) * 100;
-    const enthalpy             = (tdb, W) => 0.240 * tdb + W * (1061 + 0.444 * tdb);
-    const specificVolume       = (tdb, W, P) => R_DA * (tdb + 459.67) * (1 + 1.607858 * W) / P;
-    const pressFromAltitude    = zFt => P_STD * Math.pow(1 - 6.8754e-6 * zFt, 5.2559);
+        const humRatioFromVapPress = (pw, P) => MW_RATIO * pw / (P - pw);
+        const vapPressFromHumRatio = (W, P) => P * W / (MW_RATIO + W);
+        const satHumRatio          = (tF, P) => humRatioFromVapPress(satPress(tF), P);
+        const humRatioFromRH       = (rhPct, tdb, P) => humRatioFromVapPress(rhPct / 100 * satPress(tdb), P);
+        const rhFromHumRatio       = (W, tdb, P) => vapPressFromHumRatio(W, P) / satPress(tdb) * 100;
+        const enthalpy             = (tdb, W) => 0.240 * tdb + W * (1061 + 0.444 * tdb);
+        const specificVolume       = (tdb, W, P) => R_DA * (tdb + 459.67) * (1 + 1.607858 * W) / P;
+        const pressFromAltitude    = zFt => P_STD * Math.pow(1 - 6.8754e-6 * zFt, 5.2559);
 
-    // Humidity ratio from (thermodynamic) wet-bulb temperature. twb, tdb in °F.
-    function humRatioFromWetBulb(twb, tdb, P) {
-        const Wsw = satHumRatio(twb, P);
-        return (twb >= 32)
-            ? ((1093 - 0.556 * twb) * Wsw - 0.240 * (tdb - twb)) / (1093 + 0.444 * tdb - twb)
-            : ((1220 - 0.04  * twb) * Wsw - 0.240 * (tdb - twb)) / (1220 + 0.444 * tdb - 0.48 * twb);
-    }
-
-    // Dew point: temperature where satPress(tdp) = pw. Bisection.
-    function dewPointFromVapPress(pw) {
-        if (pw <= 0) return -Infinity;
-        let lo = -148, hi = 250;
-        for (let i = 0; i < 80; i++) {
-            const mid = (lo + hi) / 2;
-            if (satPress(mid) > pw) hi = mid; else lo = mid;
+        // Humidity ratio from (thermodynamic) wet-bulb temperature. twb, tdb in °F.
+        function humRatioFromWetBulb(twb, tdb, P) {
+            const Wsw = satHumRatio(twb, P);
+            return (twb >= 32)
+                ? ((1093 - 0.556 * twb) * Wsw - 0.240 * (tdb - twb)) / (1093 + 0.444 * tdb - twb)
+                : ((1220 - 0.04  * twb) * Wsw - 0.240 * (tdb - twb)) / (1220 + 0.444 * tdb - 0.48 * twb);
         }
-        return (lo + hi) / 2;
-    }
 
-    // Wet-bulb from dry-bulb + humidity ratio. Bisection on [dew point, dry-bulb].
-    function wetBulbFromHumRatio(W, tdb, P) {
-        let lo = dewPointFromVapPress(vapPressFromHumRatio(Math.max(W, 0), P));
-        let hi = tdb;
-        if (!isFinite(lo) || lo > hi) lo = Math.min(-148, hi - 200);
-        for (let i = 0; i < 70; i++) {
-            const mid = (lo + hi) / 2;
-            if (humRatioFromWetBulb(mid, tdb, P) > W) hi = mid; else lo = mid;
+        // Dew point: temperature where satPress(tdp) = pw. Bisection.
+        function dewPointFromVapPress(pw) {
+            if (pw <= 0) return -Infinity;
+            let lo = -148, hi = 250;
+            for (let i = 0; i < 80; i++) {
+                const mid = (lo + hi) / 2;
+                if (satPress(mid) > pw) hi = mid; else lo = mid;
+            }
+            return (lo + hi) / 2;
         }
-        return (lo + hi) / 2;
-    }
 
-    // Build moist-air state from (mode, dry-bulb, the second value, pressure). mode ∈ {rh,wb,dp,w,h}.
-    function solveState(mode, tdb, second, P) {
-        if (![tdb, second, P].every(isFinite) || P <= 0) return { ok: false, error: 'Enter numeric values.' };
-        let W;
-        if (mode === 'rh') {
-            if (second < 0)   return { ok: false, error: 'Relative humidity can’t be negative.' };
-            if (second > 100) return { ok: false, error: 'Relative humidity can’t exceed 100%.' };
-            W = humRatioFromRH(second, tdb, P);
-        } else if (mode === 'wb') {
-            if (second > tdb + 1e-6) return { ok: false, error: 'Wet-bulb can’t exceed dry-bulb.' };
-            W = humRatioFromWetBulb(second, tdb, P);
-        } else if (mode === 'dp') {
-            if (second > tdb + 1e-6) return { ok: false, error: 'Dew point can’t exceed dry-bulb.' };
-            W = humRatioFromVapPress(satPress(second), P);
-        } else if (mode === 'w') {
-            W = second / GR_PER_LB;
-            if (W < -1e-9) return { ok: false, error: 'Humidity ratio can’t be negative.' };
-        } else if (mode === 'h') {
-            W = (second - 0.240 * tdb) / (1061 + 0.444 * tdb);
-            if (W < -1e-9) return { ok: false, error: 'Enthalpy is below dry air at this dry-bulb — impossible.' };
-        } else {
-            return { ok: false, error: 'Pick a property to define the point by.' };
+        // Wet-bulb from dry-bulb + humidity ratio. Bisection on [dew point, dry-bulb].
+        function wetBulbFromHumRatio(W, tdb, P) {
+            let lo = dewPointFromVapPress(vapPressFromHumRatio(Math.max(W, 0), P));
+            let hi = tdb;
+            if (!isFinite(lo) || lo > hi) lo = Math.min(-148, hi - 200);
+            for (let i = 0; i < 70; i++) {
+                const mid = (lo + hi) / 2;
+                if (humRatioFromWetBulb(mid, tdb, P) > W) hi = mid; else lo = mid;
+            }
+            return (lo + hi) / 2;
         }
-        W = Math.max(0, W);
-        const Wsat = satHumRatio(tdb, P);
-        if (W > Wsat + 1e-6) return { ok: false, error: 'That point is past saturation (RH over 100%) — impossible.' };
-        W = Math.min(W, Wsat);
-        return buildState(tdb, W, P);
-    }
 
-    // Build a state directly from (dry-bulb, humidity ratio).
-    function buildState(tdb, W, P) {
-        W = Math.max(0, Math.min(W, satHumRatio(tdb, P)));
-        const pw = vapPressFromHumRatio(W, P);
-        return {
-            ok: true, tdb, W, P, pw,
-            rh:  W <= 0 ? 0 : rhFromHumRatio(W, tdb, P),
-            twb: wetBulbFromHumRatio(W, tdb, P),
-            tdp: W <= 0 ? -Infinity : dewPointFromVapPress(pw),
-            h:   enthalpy(tdb, W),
-            v:   specificVolume(tdb, W, P),
-        };
-    }
-
-    // ── Display-unit formatting helpers (delegate to window.Units) ────
-    // Internal state stays in IP throughout (state.tdb in °F, state.W in
-    // lb/lb, state.h in Btu/lb dry air, etc.). Convert to whatever the
-    // global toggle currently shows only at the render boundary.
-    const U = window.Units;
-    const dispT  = f         => U.display.temp(f).toFixed(1);
-    const dispdT = df        => U.display.deltaTemp(df).toFixed(1);
-    const dispW  = lbPerLb   => U.display.humidityRatio(lbPerLb * GR_PER_LB).toFixed(1);
-    const dispdW = lbPerLb   => U.display.humidityRatio(lbPerLb * GR_PER_LB).toFixed(1);
-    const dispH  = btuPerLb  => U.display.enthalpy(btuPerLb).toFixed(U.current() === 'us' ? 2 : 1);
-    const dispdH = btuPerLb  => U.display.enthalpy(btuPerLb).toFixed(U.current() === 'us' ? 2 : 1);
-    const dispV  = ft3PerLb  => U.display.specificVolume(ft3PerLb).toFixed(U.current() === 'us' ? 3 : 4);
-    const dispP  = psia      => U.display.pressure(psia).toFixed(U.current() === 'us' ? 3 : 2);
-    const dispAlt = ft       => Math.round(U.display.altitude(ft)).toLocaleString();
-    const dispCfm = cfm      => Math.round(U.display.airflow(cfm)).toLocaleString();
-    const dispQ   = btuPerH  => U.display.heatCapacity(btuPerH / 1000).toFixed(1);  // input is BTU/h, MBH = /1000
-
-    // What the "second value" input means / shows for each mode. Labels, the
-    // pre-filled default, and the formatter all key off the active units —
-    // SECOND_PROP is rebuilt on every unit flip.
-    let SECOND_PROP;
-    function buildSecondProp() {
-        const u = U.current();
-        const tU = U.suffix.temp(), wU = U.suffix.humidityRatio(), hU = U.suffix.enthalpy();
-        SECOND_PROP = {
-            rh: { label: 'Relative humidity (%)',     def: 50,                                                 step: 1,                  fmt: s => s.rh.toFixed(1) },
-            wb: { label: `Wet-bulb (${tU})`,          def: u === 'us' ? 60 : +U.display.temp(60).toFixed(1),  step: u === 'us' ? 0.5 : 0.25, fmt: s => dispT(s.twb) },
-            dp: { label: `Dew point (${tU})`,         def: u === 'us' ? 50 : +U.display.temp(50).toFixed(1),  step: u === 'us' ? 0.5 : 0.25, fmt: s => isFinite(s.tdp) ? dispT(s.tdp) : '' },
-            w:  { label: `Humidity ratio (${wU})`,    def: u === 'us' ? 65 : +U.display.humidityRatio(65).toFixed(1), step: u === 'us' ? 1 : 0.1, fmt: s => dispW(s.W) },
-            h:  { label: `Enthalpy (${hU} dry air)`,  def: u === 'us' ? 28 : +U.display.enthalpy(28).toFixed(1),      step: 0.5,             fmt: s => dispH(s.h) },
-        };
-    }
-    buildSecondProp();
-
-    // ── Chart bounds (drawn region; states outside still read out) ──
-    const TDB_MIN = 30, TDB_MAX = 120;     // dry-bulb axis, °F
-    const W_MAX   = 0.025;                  // humidity-ratio axis ceiling, lb/lb (= 175 gr/lb)
-
-    // ── Stage labels & ordering ──
-    const STEPS = ['oa', 'ra', 'ma', 'cc', 'hc', 'hum', 'sa'];
-    const STEP_LABEL = {
-        oa:  'OA — Outdoor air',
-        ra:  'RA — Return air',
-        ma:  'MA — Mixed air',
-        cc:  'CC — After cooling coil',
-        hc:  'HC — After heating coil',
-        hum: 'HUM — After humidifier',
-        sa:  'SA — Supply air',
-    };
-    const STEP_SHORT = { oa: 'OA', ra: 'RA', ma: 'MA', cc: 'CC', hc: 'HC', hum: 'HUM', sa: 'SA' };
-    const PROCESS_LABEL = {
-        cc:  'Cooling coil — process delta',
-        hc:  'Heating coil — process delta',
-        hum: 'Humidifier — process delta',
-    };
-
-    // Detail-block label that swaps in a "bypassed" variant when a selected
-    // coil / humidifier stage is toggled off — the values shown then are the
-    // pass-through state (= entering), so the static "After cooling coil"
-    // wording would mislead.
-    function detailLabelFor(key, results) {
-        if ((key === 'cc' || key === 'hc' || key === 'hum')
-            && results && results[key] && results[key].enabled === false) {
-            return STEP_SHORT[key] + ' — bypassed (pass-through)';
+        // Build moist-air state from (mode, dry-bulb, the second value, pressure). mode ∈ {rh,wb,dp,w,h}.
+        function solveState(mode, tdb, second, P) {
+            if (![tdb, second, P].every(isFinite) || P <= 0) return { ok: false, error: 'Enter numeric values.' };
+            let W;
+            if (mode === 'rh') {
+                if (second < 0)   return { ok: false, error: 'Relative humidity can’t be negative.' };
+                if (second > 100) return { ok: false, error: 'Relative humidity can’t exceed 100%.' };
+                W = humRatioFromRH(second, tdb, P);
+            } else if (mode === 'wb') {
+                if (second > tdb + 1e-6) return { ok: false, error: 'Wet-bulb can’t exceed dry-bulb.' };
+                W = humRatioFromWetBulb(second, tdb, P);
+            } else if (mode === 'dp') {
+                if (second > tdb + 1e-6) return { ok: false, error: 'Dew point can’t exceed dry-bulb.' };
+                W = humRatioFromVapPress(satPress(second), P);
+            } else if (mode === 'w') {
+                W = second / GR_PER_LB;
+                if (W < -1e-9) return { ok: false, error: 'Humidity ratio can’t be negative.' };
+            } else if (mode === 'h') {
+                W = (second - 0.240 * tdb) / (1061 + 0.444 * tdb);
+                if (W < -1e-9) return { ok: false, error: 'Enthalpy is below dry air at this dry-bulb — impossible.' };
+            } else {
+                return { ok: false, error: 'Pick a property to define the point by.' };
+            }
+            W = Math.max(0, W);
+            const Wsat = satHumRatio(tdb, P);
+            if (W > Wsat + 1e-6) return { ok: false, error: 'That point is past saturation (RH over 100%) — impossible.' };
+            W = Math.min(W, Wsat);
+            return buildState(tdb, W, P);
         }
-        return STEP_LABEL[key];
-    }
 
-    let selectedStep = 'oa';
-    let lastChain    = null;
-
-    // ──────────────────────────────────────────────────────────────────
-    // Chain solver — walks the canonical AHU sequence:
-    //   OA + RA → MA → CC → HC → HUM → SA
-    // CC/HC/HUM are skippable via their per-stage off-toggle. The solver
-    // returns partial results when something fails mid-chain, so the chart
-    // and the upstream readouts still update while the user types.
-    // ──────────────────────────────────────────────────────────────────
-    function solveChain() {
-        // Inputs come in display units; convert to canonical IP before the math.
-        // Altitude/CFM are simple scalar conversions; the "second value" is
-        // mode-dependent (rh stays %, temps go C→F, humidity ratio g/kg→gr/lb,
-        // enthalpy kJ/kg→Btu/lb).
-        const altDisp = parseFloat(document.getElementById('psyAlt').value) || 0;
-        const alt     = U.toCanonical.altitude(altDisp);
-        const P       = pressFromAltitude(alt);
-        const cfmRawD = parseFloat(document.getElementById('psyCfm').value);
-        const cfmRaw  = U.toCanonical.airflow(cfmRawD);
-        const cfm     = (isFinite(cfmRaw) && cfmRaw > 0) ? cfmRaw : null;
-
-        const r = {};       // results keyed by step
-        const stages = [];  // active process segments (cc/hc/hum only)
-        let error = null;
-        const setErr = (msg) => { if (!error) error = msg; };
-
-        // Convert the "second value" from display to canonical IP based on mode.
-        const secondToCanonical = (mode, val) => {
-            if (!isFinite(val)) return val;
-            if (mode === 'wb' || mode === 'dp') return U.toCanonical.temp(val);
-            if (mode === 'w')                   return U.toCanonical.humidityRatio(val);
-            if (mode === 'h')                   return U.toCanonical.enthalpy(val);
-            return val;  // 'rh' stays percent
-        };
-
-        // OA / RA — independent state points
-        const readSt = pre => {
-            const mode = document.getElementById(`${pre}-mode`).value;
+        // Build a state directly from (dry-bulb, humidity ratio).
+        function buildState(tdb, W, P) {
+            W = Math.max(0, Math.min(W, satHumRatio(tdb, P)));
+            const pw = vapPressFromHumRatio(W, P);
             return {
-                mode,
-                tdb:    U.toCanonical.temp(parseFloat(document.getElementById(`${pre}-tdb`).value)),
-                second: secondToCanonical(mode, parseFloat(document.getElementById(`${pre}-second`).value)),
+                ok: true, tdb, W, P, pw,
+                rh:  W <= 0 ? 0 : rhFromHumRatio(W, tdb, P),
+                twb: wetBulbFromHumRatio(W, tdb, P),
+                tdp: W <= 0 ? -Infinity : dewPointFromVapPress(pw),
+                h:   enthalpy(tdb, W),
+                v:   specificVolume(tdb, W, P),
             };
+        }
+
+        // ── Display-unit formatting helpers (delegate to window.Units) ────
+        // Internal state stays in IP throughout (state.tdb in °F, state.W in
+        // lb/lb, state.h in Btu/lb dry air, etc.). Convert to whatever the
+        // global toggle currently shows only at the render boundary.
+        const U = window.Units;
+        const dispT  = f         => U.display.temp(f).toFixed(1);
+        const dispdT = df        => U.display.deltaTemp(df).toFixed(1);
+        const dispW  = lbPerLb   => U.display.humidityRatio(lbPerLb * GR_PER_LB).toFixed(1);
+        const dispdW = lbPerLb   => U.display.humidityRatio(lbPerLb * GR_PER_LB).toFixed(1);
+        const dispH  = btuPerLb  => U.display.enthalpy(btuPerLb).toFixed(U.current() === 'us' ? 2 : 1);
+        const dispdH = btuPerLb  => U.display.enthalpy(btuPerLb).toFixed(U.current() === 'us' ? 2 : 1);
+        const dispV  = ft3PerLb  => U.display.specificVolume(ft3PerLb).toFixed(U.current() === 'us' ? 3 : 4);
+        const dispP  = psia      => U.display.pressure(psia).toFixed(U.current() === 'us' ? 3 : 2);
+        const dispAlt = ft       => Math.round(U.display.altitude(ft)).toLocaleString();
+        const dispCfm = cfm      => Math.round(U.display.airflow(cfm)).toLocaleString();
+        const dispQ   = btuPerH  => U.display.heatCapacity(btuPerH / 1000).toFixed(1);  // input is BTU/h, MBH = /1000
+
+        // What the "second value" input means / shows for each mode. Labels, the
+        // pre-filled default, and the formatter all key off the active units —
+        // SECOND_PROP is rebuilt on every unit flip.
+        let SECOND_PROP;
+        function buildSecondProp() {
+            const u = U.current();
+            const tU = U.suffix.temp(), wU = U.suffix.humidityRatio(), hU = U.suffix.enthalpy();
+            SECOND_PROP = {
+                rh: { label: 'Relative humidity (%)',     def: 50,                                                 step: 1,                  fmt: s => s.rh.toFixed(1) },
+                wb: { label: `Wet-bulb (${tU})`,          def: u === 'us' ? 60 : +U.display.temp(60).toFixed(1),  step: u === 'us' ? 0.5 : 0.25, fmt: s => dispT(s.twb) },
+                dp: { label: `Dew point (${tU})`,         def: u === 'us' ? 50 : +U.display.temp(50).toFixed(1),  step: u === 'us' ? 0.5 : 0.25, fmt: s => isFinite(s.tdp) ? dispT(s.tdp) : '' },
+                w:  { label: `Humidity ratio (${wU})`,    def: u === 'us' ? 65 : +U.display.humidityRatio(65).toFixed(1), step: u === 'us' ? 1 : 0.1, fmt: s => dispW(s.W) },
+                h:  { label: `Enthalpy (${hU} dry air)`,  def: u === 'us' ? 28 : +U.display.enthalpy(28).toFixed(1),      step: 0.5,             fmt: s => dispH(s.h) },
+            };
+        }
+        buildSecondProp();
+
+        // ── Chart bounds (drawn region; states outside still read out) ──
+        const TDB_MIN = 30, TDB_MAX = 120;     // dry-bulb axis, °F
+        const W_MAX   = 0.025;                  // humidity-ratio axis ceiling, lb/lb (= 175 gr/lb)
+
+        // ── Stage labels & ordering ──
+        const STEPS = ['oa', 'ra', 'ma', 'cc', 'hc', 'hum', 'sa'];
+        const STEP_LABEL = {
+            oa:  'OA — Outdoor air',
+            ra:  'RA — Return air',
+            ma:  'MA — Mixed air',
+            cc:  'CC — After cooling coil',
+            hc:  'HC — After heating coil',
+            hum: 'HUM — After humidifier',
+            sa:  'SA — Supply air',
         };
-        const eOa = readSt('oa');
-        r.oa = solveState(eOa.mode, eOa.tdb, eOa.second, P);
-        if (!r.oa.ok) setErr('OA: ' + r.oa.error);
+        const STEP_SHORT = { oa: 'OA', ra: 'RA', ma: 'MA', cc: 'CC', hc: 'HC', hum: 'HUM', sa: 'SA' };
+        const PROCESS_LABEL = {
+            cc:  'Cooling coil — process delta',
+            hc:  'Heating coil — process delta',
+            hum: 'Humidifier — process delta',
+        };
 
-        const eRa = readSt('ra');
-        r.ra = solveState(eRa.mode, eRa.tdb, eRa.second, P);
-        if (!r.ra.ok) setErr('RA: ' + r.ra.error);
-
-        // MA — mass-weighted enthalpy + humidity-ratio mix
-        if (r.oa.ok && r.ra.ok) {
-            const pct = parseFloat(document.getElementById('ma-pct').value);
-            if (!isFinite(pct) || pct < 0 || pct > 100) {
-                r.ma = { ok: false, error: '% OA must be 0–100' };
-                setErr('MA: % OA must be 0–100');
-            } else {
-                const fOa = pct / 100, fRa = 1 - fOa;
-                const W_ma = fOa * r.oa.W + fRa * r.ra.W;
-                const h_ma = fOa * r.oa.h + fRa * r.ra.h;
-                // back out tdb from h = (0.240 + 0.444·W)·tdb + 1061·W
-                const tdb_ma = (h_ma - 1061 * W_ma) / (0.240 + 0.444 * W_ma);
-                r.ma = buildState(tdb_ma, W_ma, P);
+        // Detail-block label that swaps in a "bypassed" variant when a selected
+        // coil / humidifier stage is toggled off — the values shown then are the
+        // pass-through state (= entering), so the static "After cooling coil"
+        // wording would mislead.
+        function detailLabelFor(key, results) {
+            if ((key === 'cc' || key === 'hc' || key === 'hum')
+                && results && results[key] && results[key].enabled === false) {
+                return STEP_SHORT[key] + ' — bypassed (pass-through)';
             }
-        } else {
-            r.ma = { ok: false, error: 'awaiting OA / RA' };
+            return STEP_LABEL[key];
         }
 
-        let current = r.ma.ok ? r.ma : null;
+        let selectedStep = 'oa';
+        let lastChain    = null;
 
-        // CC — leaving state via the same "DB + define by" pattern
-        const ccOn = document.getElementById('cc-on').checked;
-        if (current && ccOn) {
-            const e = readSt('cc');
-            const sol = solveState(e.mode, e.tdb, e.second, P);
-            if (!sol.ok) {
-                r.cc = { ...sol, enabled: true };
-                setErr('CC: ' + sol.error);
-                current = null;
-            } else if (sol.tdb > current.tdb + 1e-6) {
-                r.cc = { ok: false, enabled: true, error: 'leaving DB must be ≤ entering' };
-                setErr('CC: leaving DB must be ≤ entering');
-                current = null;
-            } else if (sol.W > current.W + 1e-6) {
-                r.cc = { ok: false, enabled: true, error: 'leaving humidity ratio can’t exceed entering' };
-                setErr('CC: leaving humidity ratio can’t exceed entering');
-                current = null;
+        // ──────────────────────────────────────────────────────────────────
+        // Chain solver — walks the canonical AHU sequence:
+        //   OA + RA → MA → CC → HC → HUM → SA
+        // CC/HC/HUM are skippable via their per-stage off-toggle. The solver
+        // returns partial results when something fails mid-chain, so the chart
+        // and the upstream readouts still update while the user types.
+        // ──────────────────────────────────────────────────────────────────
+        function solveChain() {
+            // Inputs come in display units; convert to canonical IP before the math.
+            // Altitude/CFM are simple scalar conversions; the "second value" is
+            // mode-dependent (rh stays %, temps go C→F, humidity ratio g/kg→gr/lb,
+            // enthalpy kJ/kg→Btu/lb).
+            const altDisp = parseFloat(document.getElementById('psyAlt').value) || 0;
+            const alt     = U.toCanonical.altitude(altDisp);
+            const P       = pressFromAltitude(alt);
+            const cfmRawD = parseFloat(document.getElementById('psyCfm').value);
+            const cfmRaw  = U.toCanonical.airflow(cfmRawD);
+            const cfm     = (isFinite(cfmRaw) && cfmRaw > 0) ? cfmRaw : null;
+
+            const r = {};       // results keyed by step
+            const stages = [];  // active process segments (cc/hc/hum only)
+            let error = null;
+            const setErr = (msg) => { if (!error) error = msg; };
+
+            // Convert the "second value" from display to canonical IP based on mode.
+            const secondToCanonical = (mode, val) => {
+                if (!isFinite(val)) return val;
+                if (mode === 'wb' || mode === 'dp') return U.toCanonical.temp(val);
+                if (mode === 'w')                   return U.toCanonical.humidityRatio(val);
+                if (mode === 'h')                   return U.toCanonical.enthalpy(val);
+                return val;  // 'rh' stays percent
+            };
+
+            // OA / RA — independent state points
+            const readSt = pre => {
+                const mode = document.getElementById(`${pre}-mode`).value;
+                return {
+                    mode,
+                    tdb:    U.toCanonical.temp(parseFloat(document.getElementById(`${pre}-tdb`).value)),
+                    second: secondToCanonical(mode, parseFloat(document.getElementById(`${pre}-second`).value)),
+                };
+            };
+            const eOa = readSt('oa');
+            r.oa = solveState(eOa.mode, eOa.tdb, eOa.second, P);
+            if (!r.oa.ok) setErr('OA: ' + r.oa.error);
+
+            const eRa = readSt('ra');
+            r.ra = solveState(eRa.mode, eRa.tdb, eRa.second, P);
+            if (!r.ra.ok) setErr('RA: ' + r.ra.error);
+
+            // MA — mass-weighted enthalpy + humidity-ratio mix
+            if (r.oa.ok && r.ra.ok) {
+                const pct = parseFloat(document.getElementById('ma-pct').value);
+                if (!isFinite(pct) || pct < 0 || pct > 100) {
+                    r.ma = { ok: false, error: '% OA must be 0–100' };
+                    setErr('MA: % OA must be 0–100');
+                } else {
+                    const fOa = pct / 100, fRa = 1 - fOa;
+                    const W_ma = fOa * r.oa.W + fRa * r.ra.W;
+                    const h_ma = fOa * r.oa.h + fRa * r.ra.h;
+                    // back out tdb from h = (0.240 + 0.444·W)·tdb + 1061·W
+                    const tdb_ma = (h_ma - 1061 * W_ma) / (0.240 + 0.444 * W_ma);
+                    r.ma = buildState(tdb_ma, W_ma, P);
+                }
             } else {
-                r.cc = { ...sol, enabled: true, inlet: current };
-                stages.push({ key: 'cc', type: 'cool', inlet: current, outlet: sol });
-                current = sol;
+                r.ma = { ok: false, error: 'awaiting OA / RA' };
             }
-        } else {
-            r.cc = current ? { ...current, enabled: false } : { ok: false, enabled: false };
-        }
 
-        // HC — sensible heating: constant W, leaving DB or ΔT
-        const hcOn = document.getElementById('hc-on').checked;
-        if (current && hcOn) {
-            const mode = document.getElementById('hc-mode').value;
-            const valD = parseFloat(document.getElementById('hc-val').value);
-            // 'ldb' is absolute temperature (C→F), 'dt' is a temperature rise (deltaC→deltaF).
-            const val  = (mode === 'dt') ? U.toCanonical.deltaTemp(valD) : U.toCanonical.temp(valD);
-            if (!isFinite(val)) {
-                r.hc = { ok: false, enabled: true, error: 'enter a number' };
-                setErr('HC: enter a number');
-                current = null;
-            } else {
-                const tdb_hc = (mode === 'dt') ? current.tdb + val : val;
-                if (tdb_hc < current.tdb - 1e-6) {
-                    r.hc = { ok: false, enabled: true, error: 'leaving DB must be ≥ entering' };
-                    setErr('HC: leaving DB must be ≥ entering');
+            let current = r.ma.ok ? r.ma : null;
+
+            // CC — leaving state via the same "DB + define by" pattern
+            const ccOn = document.getElementById('cc-on').checked;
+            if (current && ccOn) {
+                const e = readSt('cc');
+                const sol = solveState(e.mode, e.tdb, e.second, P);
+                if (!sol.ok) {
+                    r.cc = { ...sol, enabled: true };
+                    setErr('CC: ' + sol.error);
+                    current = null;
+                } else if (sol.tdb > current.tdb + 1e-6) {
+                    r.cc = { ok: false, enabled: true, error: 'leaving DB must be ≤ entering' };
+                    setErr('CC: leaving DB must be ≤ entering');
+                    current = null;
+                } else if (sol.W > current.W + 1e-6) {
+                    r.cc = { ok: false, enabled: true, error: 'leaving humidity ratio can’t exceed entering' };
+                    setErr('CC: leaving humidity ratio can’t exceed entering');
                     current = null;
                 } else {
-                    const hc = buildState(tdb_hc, current.W, P);
-                    r.hc = { ...hc, enabled: true, inlet: current };
-                    stages.push({ key: 'hc', type: 'heat', inlet: current, outlet: hc });
-                    current = hc;
+                    r.cc = { ...sol, enabled: true, inlet: current };
+                    stages.push({ key: 'cc', type: 'cool', inlet: current, outlet: sol });
+                    current = sol;
                 }
-            }
-        } else {
-            r.hc = current ? { ...current, enabled: false } : { ok: false, enabled: false };
-        }
-
-        // HUM — adiabatic humidification: constant wet-bulb, target RH.
-        // On the constant-WB line RH ranges from inlet.rh (at inlet tdb) up to 100% (at tdb = twb).
-        // Bisect tdb between [twb, inlet.tdb] to hit the target RH.
-        const humOn = document.getElementById('hum-on').checked;
-        if (current && humOn) {
-            const targetRh = parseFloat(document.getElementById('hum-rh').value);
-            if (!isFinite(targetRh) || targetRh < 0 || targetRh > 100) {
-                r.hum = { ok: false, enabled: true, error: 'leaving RH must be 0–100' };
-                setErr('HUM: leaving RH must be 0–100');
-                current = null;
-            } else if (targetRh < current.rh - 1e-6) {
-                r.hum = { ok: false, enabled: true, error: 'leaving RH must be ≥ entering' };
-                setErr('HUM: leaving RH must be ≥ entering');
-                current = null;
             } else {
-                let lo = current.twb, hi = current.tdb;
-                const rhAt = (t) => {
-                    const W = humRatioFromWetBulb(current.twb, t, P);
-                    return rhFromHumRatio(W, t, P);
-                };
-                for (let i = 0; i < 60; i++) {
-                    const mid = (lo + hi) / 2;
-                    if (rhAt(mid) > targetRh) lo = mid; else hi = mid;
-                }
-                const tdbH = (lo + hi) / 2;
-                const Wh = humRatioFromWetBulb(current.twb, tdbH, P);
-                const hum = buildState(tdbH, Wh, P);
-                r.hum = { ...hum, enabled: true, inlet: current };
-                stages.push({ key: 'hum', type: 'humid', inlet: current, outlet: hum });
-                current = hum;
+                r.cc = current ? { ...current, enabled: false } : { ok: false, enabled: false };
             }
-        } else {
-            r.hum = current ? { ...current, enabled: false } : { ok: false, enabled: false };
-        }
 
-        // SA — the last successfully computed point
-        r.sa = current ? { ...current } : { ok: false, error: 'awaiting upstream' };
-
-        return { ok: !error, error, results: r, stages, P, alt, cfm };
-    }
-
-    // ── Process-delta math for a single coil / humidifier segment ──
-    function computeProcess(stage, cfm) {
-        const { inlet, outlet, type } = stage;
-        const dDb = outlet.tdb - inlet.tdb;
-        const dW  = outlet.W - inlet.W;
-        const dH  = outlet.h - inlet.h;
-        let qTotal = null, qSens = null, qLat = null;
-        if (cfm && inlet.v > 0) {
-            const mDot = cfm * 60 / inlet.v;            // lb_da / h
-            qTotal = mDot * dH;                         // Btu/h
-            const cpIn = 0.240 + 0.444 * inlet.W;       // Btu/(lb_da·°F)
-            qSens = mDot * cpIn * dDb;
-            qLat  = qTotal - qSens;
-        }
-        let shr = null;
-        if (type === 'cool') {
-            // SHR by enthalpy ratios (CFM-independent — works even without flow).
-            const cpIn = 0.240 + 0.444 * inlet.W;
-            const dhSens = cpIn * dDb;
-            if (Math.abs(dH) > 1e-9) shr = dhSens / dH;
-        }
-        return { dDb, dW, dH, qTotal, qSens, qLat, shr };
-    }
-
-    // ──────────────────────────────────────────────────────────────────
-    // UI — pill selection, mode toggles, table & detail rendering
-    // ──────────────────────────────────────────────────────────────────
-    function selectStep(key) {
-        if (!STEPS.includes(key)) return;
-        selectedStep = key;
-        document.querySelectorAll('.psy-pill').forEach(p => p.classList.toggle('active', p.dataset.step === key));
-        document.querySelectorAll('.psy-editor').forEach(ed => ed.classList.toggle('shown', ed.dataset.step === key));
-        psyRecompute();
-    }
-
-    function onModeChange(prefix) {
-        const meta = SECOND_PROP[document.getElementById(`${prefix}-mode`).value];
-        document.getElementById(`${prefix}-secondLbl`).textContent = meta.label;
-        const inp = document.getElementById(`${prefix}-second`);
-        inp.step = meta.step;
-        // re-format the second value from the most-recent valid state, so changing
-        // "Define by" doesn't move the point — just relabels how it's expressed.
-        const last = lastChain && lastChain.results[prefix];
-        if (last && last.ok) {
-            const v = meta.fmt(last);
-            inp.value = v === '' ? meta.def : v;
-        } else {
-            inp.value = meta.def;
-        }
-        psyRecompute();
-    }
-
-    function onHcModeChange() {
-        const mode = document.getElementById('hc-mode').value;
-        const tU   = U.suffix.temp();
-        document.getElementById('hc-valLbl').textContent = mode === 'dt' ? `ΔT rise (${tU})` : `Leaving DB (${tU})`;
-        psyRecompute();
-    }
-
-    function updatePillsOff() {
-        document.querySelector('.psy-pill[data-step="cc"]').classList.toggle('off',  !document.getElementById('cc-on').checked);
-        document.querySelector('.psy-pill[data-step="hc"]').classList.toggle('off',  !document.getElementById('hc-on').checked);
-        document.querySelector('.psy-pill[data-step="hum"]').classList.toggle('off', !document.getElementById('hum-on').checked);
-    }
-
-    function renderStageTable(chain) {
-        const tbody = document.querySelector('#psyStageTable tbody');
-        const cfmOn = chain.cfm !== null;
-        document.querySelectorAll('.psy-q-col').forEach(el => el.style.display = cfmOn ? '' : 'none');
-
-        // OA, RA, MA always shown; CC/HC/HUM only when enabled; SA always at the end.
-        const rows = [
-            { key: 'oa', label: 'OA', state: chain.results.oa },
-            { key: 'ra', label: 'RA', state: chain.results.ra },
-            { key: 'ma', label: 'MA', state: chain.results.ma },
-        ];
-        if (chain.results.cc.enabled)  rows.push({ key: 'cc',  label: 'CC',  state: chain.results.cc,  stage: chain.stages.find(s => s.key === 'cc')  });
-        if (chain.results.hc.enabled)  rows.push({ key: 'hc',  label: 'HC',  state: chain.results.hc,  stage: chain.stages.find(s => s.key === 'hc')  });
-        if (chain.results.hum.enabled) rows.push({ key: 'hum', label: 'HUM', state: chain.results.hum, stage: chain.stages.find(s => s.key === 'hum') });
-        rows.push({ key: 'sa', label: 'SA', state: chain.results.sa });
-
-        tbody.innerHTML = '';
-        for (const row of rows) {
-            const tr = document.createElement('tr');
-            if (row.key === selectedStep) tr.classList.add('selected');
-            const s = row.state;
-            const ok = s && s.ok;
-            const cells = [`<td class="stage-key">${row.label}</td>`];
-            if (ok) {
-                cells.push(`<td class="live">${dispT(s.tdb)}</td>`);
-                cells.push(`<td class="live">${dispW(s.W)}</td>`);
-                cells.push(`<td class="live">${s.rh.toFixed(1)}</td>`);
-                cells.push(`<td class="live">${dispH(s.h)}</td>`);
-            } else {
-                cells.push('<td class="muted">—</td><td class="muted">—</td><td class="muted">—</td><td class="muted">—</td>');
-            }
-            if (cfmOn) {
-                if (row.stage) {
-                    const proc = computeProcess(row.stage, chain.cfm);
-                    cells.push(proc.qTotal !== null
-                        ? `<td class="live">${dispQ(Math.abs(proc.qTotal))}</td>`
-                        : '<td class="muted">—</td>');
+            // HC — sensible heating: constant W, leaving DB or ΔT
+            const hcOn = document.getElementById('hc-on').checked;
+            if (current && hcOn) {
+                const mode = document.getElementById('hc-mode').value;
+                const valD = parseFloat(document.getElementById('hc-val').value);
+                // 'ldb' is absolute temperature (C→F), 'dt' is a temperature rise (deltaC→deltaF).
+                const val  = (mode === 'dt') ? U.toCanonical.deltaTemp(valD) : U.toCanonical.temp(valD);
+                if (!isFinite(val)) {
+                    r.hc = { ok: false, enabled: true, error: 'enter a number' };
+                    setErr('HC: enter a number');
+                    current = null;
                 } else {
-                    cells.push('<td class="muted">—</td>');
+                    const tdb_hc = (mode === 'dt') ? current.tdb + val : val;
+                    if (tdb_hc < current.tdb - 1e-6) {
+                        r.hc = { ok: false, enabled: true, error: 'leaving DB must be ≥ entering' };
+                        setErr('HC: leaving DB must be ≥ entering');
+                        current = null;
+                    } else {
+                        const hc = buildState(tdb_hc, current.W, P);
+                        r.hc = { ...hc, enabled: true, inlet: current };
+                        stages.push({ key: 'hc', type: 'heat', inlet: current, outlet: hc });
+                        current = hc;
+                    }
                 }
+            } else {
+                r.hc = current ? { ...current, enabled: false } : { ok: false, enabled: false };
             }
-            tr.innerHTML = cells.join('');
-            tbody.appendChild(tr);
-        }
-    }
 
-    function renderDetail(state, label) {
-        document.getElementById('psyDetailLabel').textContent = label;
-        const ro = (id, v, live) => {
-            const el = document.getElementById(id);
-            el.textContent = v;
-            el.className = live ? 'ps-value live' : 'ps-value muted';
-        };
-        if (!state || !state.ok) {
-            ['roDb','roWb','roDp','roRh','roW','roH','roV','roPw','roP'].forEach(id => ro(id, '—', false));
-            return;
-        }
-        ro('roDb', dispT(state.tdb), true);
-        ro('roWb', dispT(state.twb), true);
-        const dpOk = isFinite(state.tdp) && state.tdp > -60;
-        ro('roDp', dpOk ? dispT(state.tdp) : '—', dpOk);
-        ro('roRh', state.rh.toFixed(1), true);
-        ro('roW',  dispW(state.W), true);
-        ro('roH',  dispH(state.h), true);
-        ro('roV',  dispV(state.v), true);
-        // Vapor pressure uses a wider precision in IP (psia) than in kPa.
-        ro('roPw', U.display.pressure(state.pw).toFixed(U.current() === 'us' ? 4 : 3), true);
-        ro('roP',  dispP(state.P), true);
-    }
-
-    function renderProcessBlock(stage, cfm) {
-        const block = document.getElementById('psyProcessBlock');
-        if (!stage) { block.style.display = 'none'; return; }
-        block.style.display = '';
-        document.getElementById('psyProcessLabel').textContent = PROCESS_LABEL[stage.key] || 'Process delta — across this stage';
-        const proc = computeProcess(stage, cfm);
-        const set = (id, txt) => {
-            const el = document.getElementById(id);
-            el.textContent = txt;
-            el.className = 'ps-value live';
-        };
-        set('pdDb', dispdT(proc.dDb));
-        set('pdW',  dispdW(proc.dW));
-        set('pdH',  dispdH(proc.dH));
-
-        const shrRow = document.getElementById('pdShrRow');
-        if (stage.type === 'cool' && proc.shr !== null && isFinite(proc.shr)) {
-            shrRow.style.display = '';
-            set('pdShr', proc.shr.toFixed(3));
-        } else {
-            shrRow.style.display = 'none';
-        }
-
-        const haveQ = proc.qTotal !== null;
-        document.getElementById('pdQtRow').style.display = haveQ ? '' : 'none';
-        document.getElementById('pdQsRow').style.display = haveQ ? '' : 'none';
-        document.getElementById('pdQlRow').style.display = haveQ ? '' : 'none';
-        if (haveQ) {
-            set('pdQt', dispQ(Math.abs(proc.qTotal)));
-            set('pdQs', dispQ(Math.abs(proc.qSens)));
-            set('pdQl', dispQ(Math.abs(proc.qLat)));
-        }
-    }
-
-    function renderMaReadouts(maState) {
-        const set = (id, txt, live) => {
-            const el = document.getElementById(id);
-            el.textContent = txt;
-            el.className = live ? 'ps-value live' : 'ps-value muted';
-        };
-        if (maState && maState.ok) {
-            set('ma-tdb-out', dispT(maState.tdb), true);
-            set('ma-w-out',   dispW(maState.W),   true);
-            set('ma-rh-out',  maState.rh.toFixed(1), true);
-        } else {
-            ['ma-tdb-out','ma-w-out','ma-rh-out'].forEach(id => set(id, '—', false));
-        }
-    }
-
-    // ── Main recompute — wires solver output to all UI surfaces ──
-    function psyRecompute() {
-        const chain = solveChain();
-        lastChain = chain;
-
-        updatePillsOff();
-        renderStageTable(chain);
-        renderMaReadouts(chain.results.ma);
-
-        const selRes = chain.results[selectedStep];
-        renderDetail(selRes && selRes.ok ? selRes : null, detailLabelFor(selectedStep, chain.results));
-
-        const stageKey = selectedStep;
-        const selStage = (stageKey === 'cc' || stageKey === 'hc' || stageKey === 'hum')
-                        && chain.results[stageKey].enabled
-                        ? chain.stages.find(s => s.key === stageKey)
-                        : null;
-        renderProcessBlock(selStage || null, chain.cfm);
-
-        const msgEl = document.getElementById('psyMsg');
-        if (chain.error) {
-            msgEl.textContent = chain.error;
-            msgEl.style.color = 'var(--red)';
-        } else {
-            msgEl.textContent = (chain.alt === 0 ? 'Sea level' : `Altitude ${dispAlt(chain.alt)} ${U.suffix.altitude()}`)
-                                + ` — ${dispP(chain.P)} ${U.suffix.pressure()}`
-                                + (chain.cfm !== null ? ` · ${dispCfm(chain.cfm)} ${U.suffix.airflow()}` : '');
-            msgEl.style.color = '';
-        }
-
-        drawPsychChart(chain);
-    }
-
-    // ──────────────────────────────────────────────────────────────────
-    // Chart drawing — colours come from CSS custom properties so the
-    // chart tracks any palette change.
-    // ──────────────────────────────────────────────────────────────────
-    let psyGeom = null;  // { padL, padT, w, h, X, Y } from last draw
-
-    function drawPsychChart(chain) {
-        const canvas = document.getElementById('psyCanvas');
-        if (!canvas) return;
-        const cssW = canvas.clientWidth, cssH = canvas.clientHeight;
-        if (!cssW || !cssH) return;
-        const dpr = window.devicePixelRatio || 1;
-        canvas.width  = Math.round(cssW * dpr);
-        canvas.height = Math.round(cssH * dpr);
-        const ctx = canvas.getContext('2d');
-        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        ctx.clearRect(0, 0, cssW, cssH);
-
-        const css = getComputedStyle(document.documentElement);
-        const cv = (n, d) => css.getPropertyValue(n).trim() || d;
-        const cSurface  = cv('--surface',      '#ffffff'),
-              cBorder   = cv('--border',       '#ccd7c8'),
-              cBorderF  = cv('--border-faint', '#e3e8df'),
-              cDim      = cv('--text-dim',     '#666e66'),
-              cAccent   = cv('--accent',       '#43881c'),
-              cBlue     = cv('--blue',         '#1577b8'),
-              cHeat     = cv('--heat',         '#c8782a');
-
-        ctx.fillStyle = cSurface;
-        ctx.fillRect(0, 0, cssW, cssH);
-
-        const padL = 14, padR = 50, padB = 30, padT = 16;
-        const w = cssW - padL - padR, h = cssH - padT - padB;
-        if (w <= 20 || h <= 20) return;
-        const P = chain.P;
-        const X = t  => padL + (t - TDB_MIN) / (TDB_MAX - TDB_MIN) * w;
-        const Y = ww => padT + h - ww / W_MAX * h;
-        psyGeom = { padL, padT, w, h, X, Y };
-
-        ctx.font = "10px 'IBM Plex Mono', monospace";
-        ctx.lineWidth = 1;
-
-        // Tick scales — IP uses every 10 °F across the 30–120 °F bounds and every
-        // 25 gr/lb up to 175. SI uses metric-clean ticks (every 5 °C across roughly
-        // 0–50 °C, every 5 g/kg up to 25), which are drawn at the equivalent canonical
-        // positions on the same underlying IP geometry.
-        const isMetric = U.current() === 'metric';
-        const dbTicks  = isMetric
-            ? [0, 5, 10, 15, 20, 25, 30, 35, 40, 45]                  // °C — labels
-            : [30, 40, 50, 60, 70, 80, 90, 100, 110, 120];            // °F — labels
-        const wTicks   = isMetric
-            ? [0, 5, 10, 15, 20, 25]                                  // g/kg — labels
-            : [0, 25, 50, 75, 100, 125, 150, 175];                    // gr/lb — labels
-
-        // grid
-        ctx.strokeStyle = cBorderF;
-        ctx.fillStyle = cDim;
-        for (const tickLbl of dbTicks) {
-            const tF = isMetric ? U.toCanonical.temp(tickLbl) : tickLbl;
-            if (tF < TDB_MIN - 0.5 || tF > TDB_MAX + 0.5) continue;
-            const x = X(tF);
-            ctx.beginPath(); ctx.moveTo(x, padT); ctx.lineTo(x, padT + h); ctx.stroke();
-            ctx.textAlign = 'center'; ctx.textBaseline = 'top';
-            ctx.fillText(String(tickLbl), x, padT + h + 5);
-        }
-        for (const wLbl of wTicks) {
-            // wLbl is in current display units (gr/lb or g/kg). Convert back to lb/lb for Y mapping.
-            const wLbPerLb = isMetric ? (wLbl / 1000) : (wLbl / GR_PER_LB);
-            if (wLbPerLb < -1e-6 || wLbPerLb > W_MAX + 1e-6) continue;
-            const y = Y(wLbPerLb);
-            ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(padL + w, y); ctx.stroke();
-            ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-            ctx.fillText(String(wLbl), padL + w + 5, y);
-        }
-        ctx.strokeStyle = cBorder;
-        ctx.strokeRect(padL, padT, w, h);
-        ctx.fillStyle = cDim;
-        ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
-        ctx.fillText(`Dry-bulb temperature · ${U.suffix.temp()}`, padL + w / 2, cssH - 1);
-        ctx.save();
-        ctx.translate(cssW - 2, padT + h / 2);
-        ctx.rotate(-Math.PI / 2);
-        ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
-        ctx.fillText(`Humidity ratio · ${U.suffix.humidityRatio()}`, 0, 0);
-        ctx.restore();
-
-        const curve = pts => {
-            ctx.beginPath();
-            let on = false;
-            for (const [t, ww] of pts) {
-                if (t < TDB_MIN || t > TDB_MAX || ww < 0 || ww > W_MAX) {
-                    if (on) { ctx.stroke(); ctx.beginPath(); on = false; }
-                    continue;
+            // HUM — adiabatic humidification: constant wet-bulb, target RH.
+            // On the constant-WB line RH ranges from inlet.rh (at inlet tdb) up to 100% (at tdb = twb).
+            // Bisect tdb between [twb, inlet.tdb] to hit the target RH.
+            const humOn = document.getElementById('hum-on').checked;
+            if (current && humOn) {
+                const targetRh = parseFloat(document.getElementById('hum-rh').value);
+                if (!isFinite(targetRh) || targetRh < 0 || targetRh > 100) {
+                    r.hum = { ok: false, enabled: true, error: 'leaving RH must be 0–100' };
+                    setErr('HUM: leaving RH must be 0–100');
+                    current = null;
+                } else if (targetRh < current.rh - 1e-6) {
+                    r.hum = { ok: false, enabled: true, error: 'leaving RH must be ≥ entering' };
+                    setErr('HUM: leaving RH must be ≥ entering');
+                    current = null;
+                } else {
+                    let lo = current.twb, hi = current.tdb;
+                    const rhAt = (t) => {
+                        const W = humRatioFromWetBulb(current.twb, t, P);
+                        return rhFromHumRatio(W, t, P);
+                    };
+                    for (let i = 0; i < 60; i++) {
+                        const mid = (lo + hi) / 2;
+                        if (rhAt(mid) > targetRh) lo = mid; else hi = mid;
+                    }
+                    const tdbH = (lo + hi) / 2;
+                    const Wh = humRatioFromWetBulb(current.twb, tdbH, P);
+                    const hum = buildState(tdbH, Wh, P);
+                    r.hum = { ...hum, enabled: true, inlet: current };
+                    stages.push({ key: 'hum', type: 'humid', inlet: current, outlet: hum });
+                    current = hum;
                 }
-                const x = X(t), y = Y(ww);
-                if (!on) { ctx.moveTo(x, y); on = true; } else ctx.lineTo(x, y);
+            } else {
+                r.hum = current ? { ...current, enabled: false } : { ok: false, enabled: false };
             }
-            if (on) ctx.stroke();
-        };
 
-        // constant wet-bulb (light dashed) — labels picked in the active unit
-        // system. The curves themselves use the same °F sample grid either way;
-        // only the label values and the chosen contour temperatures change.
-        ctx.strokeStyle = cBorder;
-        ctx.setLineDash([3, 3]);
-        const wbContours = isMetric ? [0, 5, 10, 15, 20, 25, 30] : [30, 40, 50, 60, 70, 80, 90];
-        for (const wbLbl of wbContours) {
-            const twbF = isMetric ? U.toCanonical.temp(wbLbl) : wbLbl;
-            const pts = [];
-            for (let t = twbF; t <= TDB_MAX + 1; t += 1) pts.push([t, humRatioFromWetBulb(twbF, t, P)]);
-            curve(pts);
-        }
-        ctx.setLineDash([]);
-        ctx.fillStyle = cDim; ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
-        const wbLabels = isMetric ? [5, 10, 15, 20, 25] : [40, 50, 60, 70, 80];
-        for (const wbLbl of wbLabels) {
-            const twbF = isMetric ? U.toCanonical.temp(wbLbl) : wbLbl;
-            const ww = satHumRatio(twbF, P);
-            if (ww > W_MAX || twbF < TDB_MIN) continue;
-            ctx.fillText(wbLbl + '°', X(twbF) - 3, Y(ww) - 2);
+            // SA — the last successfully computed point
+            r.sa = current ? { ...current } : { ok: false, error: 'awaiting upstream' };
+
+            return { ok: !error, error, results: r, stages, P, alt, cfm };
         }
 
-        // constant relative-humidity (light hairlines)
-        ctx.strokeStyle = cBorder;
-        const rhLblW = 0.4 * W_MAX;
-        for (const rh of [20, 40, 60, 80]) {
-            const pts = [];
-            for (let t = TDB_MIN; t <= TDB_MAX; t += 1) pts.push([t, humRatioFromRH(rh, t, P)]);
-            curve(pts);
-            let lblT = null;
-            for (let t = TDB_MIN; t <= TDB_MAX; t += 1) { if (humRatioFromRH(rh, t, P) >= rhLblW) { lblT = t; break; } }
-            if (lblT != null) {
-                ctx.fillStyle = cDim; ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
-                ctx.fillText(rh + '%', X(lblT) + 3, Y(humRatioFromRH(rh, lblT, P)) - 2);
+        // ── Process-delta math for a single coil / humidifier segment ──
+        function computeProcess(stage, cfm) {
+            const { inlet, outlet, type } = stage;
+            const dDb = outlet.tdb - inlet.tdb;
+            const dW  = outlet.W - inlet.W;
+            const dH  = outlet.h - inlet.h;
+            let qTotal = null, qSens = null, qLat = null;
+            if (cfm && inlet.v > 0) {
+                const mDot = cfm * 60 / inlet.v;            // lb_da / h
+                qTotal = mDot * dH;                         // Btu/h
+                const cpIn = 0.240 + 0.444 * inlet.W;       // Btu/(lb_da·°F)
+                qSens = mDot * cpIn * dDb;
+                qLat  = qTotal - qSens;
+            }
+            let shr = null;
+            if (type === 'cool') {
+                // SHR by enthalpy ratios (CFM-independent — works even without flow).
+                const cpIn = 0.240 + 0.444 * inlet.W;
+                const dhSens = cpIn * dDb;
+                if (Math.abs(dH) > 1e-9) shr = dhSens / dH;
+            }
+            return { dDb, dW, dH, qTotal, qSens, qLat, shr };
+        }
+
+        // ──────────────────────────────────────────────────────────────────
+        // UI — pill selection, mode toggles, table & detail rendering
+        // ──────────────────────────────────────────────────────────────────
+        function selectStep(key) {
+            if (!STEPS.includes(key)) return;
+            selectedStep = key;
+            document.querySelectorAll('.psy-pill').forEach(p => p.classList.toggle('active', p.dataset.step === key));
+            document.querySelectorAll('.psy-editor').forEach(ed => ed.classList.toggle('shown', ed.dataset.step === key));
+            psyRecompute();
+        }
+
+        function onModeChange(prefix) {
+            const meta = SECOND_PROP[document.getElementById(`${prefix}-mode`).value];
+            document.getElementById(`${prefix}-secondLbl`).textContent = meta.label;
+            const inp = document.getElementById(`${prefix}-second`);
+            inp.step = meta.step;
+            // re-format the second value from the most-recent valid state, so changing
+            // "Define by" doesn't move the point — just relabels how it's expressed.
+            const last = lastChain && lastChain.results[prefix];
+            if (last && last.ok) {
+                const v = meta.fmt(last);
+                inp.value = v === '' ? meta.def : v;
+            } else {
+                inp.value = meta.def;
+            }
+            psyRecompute();
+        }
+
+        function onHcModeChange() {
+            const mode = document.getElementById('hc-mode').value;
+            const tU   = U.suffix.temp();
+            document.getElementById('hc-valLbl').textContent = mode === 'dt' ? `ΔT rise (${tU})` : `Leaving DB (${tU})`;
+            psyRecompute();
+        }
+
+        function updatePillsOff() {
+            document.querySelector('.psy-pill[data-step="cc"]').classList.toggle('off',  !document.getElementById('cc-on').checked);
+            document.querySelector('.psy-pill[data-step="hc"]').classList.toggle('off',  !document.getElementById('hc-on').checked);
+            document.querySelector('.psy-pill[data-step="hum"]').classList.toggle('off', !document.getElementById('hum-on').checked);
+        }
+
+        function renderStageTable(chain) {
+            const tbody = document.querySelector('#psyStageTable tbody');
+            const cfmOn = chain.cfm !== null;
+            document.querySelectorAll('.psy-q-col').forEach(el => el.style.display = cfmOn ? '' : 'none');
+
+            // OA, RA, MA always shown; CC/HC/HUM only when enabled; SA always at the end.
+            const rows = [
+                { key: 'oa', label: 'OA', state: chain.results.oa },
+                { key: 'ra', label: 'RA', state: chain.results.ra },
+                { key: 'ma', label: 'MA', state: chain.results.ma },
+            ];
+            if (chain.results.cc.enabled)  rows.push({ key: 'cc',  label: 'CC',  state: chain.results.cc,  stage: chain.stages.find(s => s.key === 'cc')  });
+            if (chain.results.hc.enabled)  rows.push({ key: 'hc',  label: 'HC',  state: chain.results.hc,  stage: chain.stages.find(s => s.key === 'hc')  });
+            if (chain.results.hum.enabled) rows.push({ key: 'hum', label: 'HUM', state: chain.results.hum, stage: chain.stages.find(s => s.key === 'hum') });
+            rows.push({ key: 'sa', label: 'SA', state: chain.results.sa });
+
+            tbody.innerHTML = '';
+            for (const row of rows) {
+                const tr = document.createElement('tr');
+                if (row.key === selectedStep) tr.classList.add('selected');
+                const s = row.state;
+                const ok = s && s.ok;
+                const cells = [`<td class="stage-key">${row.label}</td>`];
+                if (ok) {
+                    cells.push(`<td class="live">${dispT(s.tdb)}</td>`);
+                    cells.push(`<td class="live">${dispW(s.W)}</td>`);
+                    cells.push(`<td class="live">${s.rh.toFixed(1)}</td>`);
+                    cells.push(`<td class="live">${dispH(s.h)}</td>`);
+                } else {
+                    cells.push('<td class="muted">—</td><td class="muted">—</td><td class="muted">—</td><td class="muted">—</td>');
+                }
+                if (cfmOn) {
+                    if (row.stage) {
+                        const proc = computeProcess(row.stage, chain.cfm);
+                        cells.push(proc.qTotal !== null
+                            ? `<td class="live">${dispQ(Math.abs(proc.qTotal))}</td>`
+                            : '<td class="muted">—</td>');
+                    } else {
+                        cells.push('<td class="muted">—</td>');
+                    }
+                }
+                tr.innerHTML = cells.join('');
+                tbody.appendChild(tr);
             }
         }
 
-        // saturation curve (heavy, accent)
-        ctx.strokeStyle = cAccent; ctx.lineWidth = 2;
-        const sat = [];
-        for (let t = TDB_MIN; t <= TDB_MAX; t += 0.5) sat.push([t, satHumRatio(t, P)]);
-        curve(sat);
-        ctx.lineWidth = 1;
-        let satLblT = null;
-        for (let t = TDB_MIN; t <= TDB_MAX; t += 0.5) { if (satHumRatio(t, P) >= 0.85 * W_MAX) { satLblT = t; break; } }
-        if (satLblT != null) {
-            ctx.fillStyle = cAccent; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
-            ctx.fillText('100% RH', X(satLblT) + 4, Y(satHumRatio(satLblT, P)) + 2);
+        function renderDetail(state, label) {
+            document.getElementById('psyDetailLabel').textContent = label;
+            const ro = (id, v, live) => {
+                const el = document.getElementById(id);
+                el.textContent = v;
+                el.className = live ? 'ps-value live' : 'ps-value muted';
+            };
+            if (!state || !state.ok) {
+                ['roDb','roWb','roDp','roRh','roW','roH','roV','roPw','roP'].forEach(id => ro(id, '—', false));
+                return;
+            }
+            ro('roDb', dispT(state.tdb), true);
+            ro('roWb', dispT(state.twb), true);
+            const dpOk = isFinite(state.tdp) && state.tdp > -60;
+            ro('roDp', dpOk ? dispT(state.tdp) : '—', dpOk);
+            ro('roRh', state.rh.toFixed(1), true);
+            ro('roW',  dispW(state.W), true);
+            ro('roH',  dispH(state.h), true);
+            ro('roV',  dispV(state.v), true);
+            // Vapor pressure uses a wider precision in IP (psia) than in kPa.
+            ro('roPw', U.display.pressure(state.pw).toFixed(U.current() === 'us' ? 4 : 3), true);
+            ro('roP',  dispP(state.P), true);
         }
 
-        // ────────── process segments ──────────
-        const inBounds = s => s && s.ok && s.tdb >= TDB_MIN && s.tdb <= TDB_MAX && s.W >= 0 && s.W <= W_MAX;
-        const drawSeg = (a, b, color, dashed) => {
-            if (!inBounds(a) || !inBounds(b)) return;
-            ctx.strokeStyle = color;
-            ctx.lineWidth = 2.5;
-            if (dashed) ctx.setLineDash([5, 4]); else ctx.setLineDash([]);
-            ctx.beginPath();
-            ctx.moveTo(X(a.tdb), Y(a.W));
-            ctx.lineTo(X(b.tdb), Y(b.W));
-            ctx.stroke();
-            ctx.setLineDash([]);
+        function renderProcessBlock(stage, cfm) {
+            const block = document.getElementById('psyProcessBlock');
+            if (!stage) { block.style.display = 'none'; return; }
+            block.style.display = '';
+            document.getElementById('psyProcessLabel').textContent = PROCESS_LABEL[stage.key] || 'Process delta — across this stage';
+            const proc = computeProcess(stage, cfm);
+            const set = (id, txt) => {
+                const el = document.getElementById(id);
+                el.textContent = txt;
+                el.className = 'ps-value live';
+            };
+            set('pdDb', dispdT(proc.dDb));
+            set('pdW',  dispdW(proc.dW));
+            set('pdH',  dispdH(proc.dH));
+
+            const shrRow = document.getElementById('pdShrRow');
+            if (stage.type === 'cool' && proc.shr !== null && isFinite(proc.shr)) {
+                shrRow.style.display = '';
+                set('pdShr', proc.shr.toFixed(3));
+            } else {
+                shrRow.style.display = 'none';
+            }
+
+            const haveQ = proc.qTotal !== null;
+            document.getElementById('pdQtRow').style.display = haveQ ? '' : 'none';
+            document.getElementById('pdQsRow').style.display = haveQ ? '' : 'none';
+            document.getElementById('pdQlRow').style.display = haveQ ? '' : 'none';
+            if (haveQ) {
+                set('pdQt', dispQ(Math.abs(proc.qTotal)));
+                set('pdQs', dispQ(Math.abs(proc.qSens)));
+                set('pdQl', dispQ(Math.abs(proc.qLat)));
+            }
+        }
+
+        function renderMaReadouts(maState) {
+            const set = (id, txt, live) => {
+                const el = document.getElementById(id);
+                el.textContent = txt;
+                el.className = live ? 'ps-value live' : 'ps-value muted';
+            };
+            if (maState && maState.ok) {
+                set('ma-tdb-out', dispT(maState.tdb), true);
+                set('ma-w-out',   dispW(maState.W),   true);
+                set('ma-rh-out',  maState.rh.toFixed(1), true);
+            } else {
+                ['ma-tdb-out','ma-w-out','ma-rh-out'].forEach(id => set(id, '—', false));
+            }
+        }
+
+        // ── Main recompute — wires solver output to all UI surfaces ──
+        function psyRecompute() {
+            const chain = solveChain();
+            lastChain = chain;
+
+            updatePillsOff();
+            renderStageTable(chain);
+            renderMaReadouts(chain.results.ma);
+
+            const selRes = chain.results[selectedStep];
+            renderDetail(selRes && selRes.ok ? selRes : null, detailLabelFor(selectedStep, chain.results));
+
+            const stageKey = selectedStep;
+            const selStage = (stageKey === 'cc' || stageKey === 'hc' || stageKey === 'hum')
+                            && chain.results[stageKey].enabled
+                            ? chain.stages.find(s => s.key === stageKey)
+                            : null;
+            renderProcessBlock(selStage || null, chain.cfm);
+
+            const msgEl = document.getElementById('psyMsg');
+            if (chain.error) {
+                msgEl.textContent = chain.error;
+                msgEl.style.color = 'var(--red)';
+            } else {
+                msgEl.textContent = (chain.alt === 0 ? 'Sea level' : `Altitude ${dispAlt(chain.alt)} ${U.suffix.altitude()}`)
+                                    + ` — ${dispP(chain.P)} ${U.suffix.pressure()}`
+                                    + (chain.cfm !== null ? ` · ${dispCfm(chain.cfm)} ${U.suffix.airflow()}` : '');
+                msgEl.style.color = '';
+            }
+
+            drawPsychChart(chain);
+        }
+
+        // ──────────────────────────────────────────────────────────────────
+        // Chart drawing — colours come from CSS custom properties so the
+        // chart tracks any palette change.
+        // ──────────────────────────────────────────────────────────────────
+        let psyGeom = null;  // { padL, padT, w, h, X, Y } from last draw
+
+        function drawPsychChart(chain) {
+            const canvas = document.getElementById('psyCanvas');
+            if (!canvas) return;
+            const cssW = canvas.clientWidth, cssH = canvas.clientHeight;
+            if (!cssW || !cssH) return;
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width  = Math.round(cssW * dpr);
+            canvas.height = Math.round(cssH * dpr);
+            const ctx = canvas.getContext('2d');
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            ctx.clearRect(0, 0, cssW, cssH);
+
+            const css = getComputedStyle(document.documentElement);
+            const cv = (n, d) => css.getPropertyValue(n).trim() || d;
+            const cSurface  = cv('--surface',      '#ffffff'),
+                  cBorder   = cv('--border',       '#ccd7c8'),
+                  cBorderF  = cv('--border-faint', '#e3e8df'),
+                  cDim      = cv('--text-dim',     '#666e66'),
+                  cAccent   = cv('--accent',       '#43881c'),
+                  cBlue     = cv('--blue',         '#1577b8'),
+                  cHeat     = cv('--heat',         '#c8782a');
+
+            ctx.fillStyle = cSurface;
+            ctx.fillRect(0, 0, cssW, cssH);
+
+            const padL = 14, padR = 50, padB = 30, padT = 16;
+            const w = cssW - padL - padR, h = cssH - padT - padB;
+            if (w <= 20 || h <= 20) return;
+            const P = chain.P;
+            const X = t  => padL + (t - TDB_MIN) / (TDB_MAX - TDB_MIN) * w;
+            const Y = ww => padT + h - ww / W_MAX * h;
+            psyGeom = { padL, padT, w, h, X, Y };
+
+            ctx.font = "10px 'IBM Plex Mono', monospace";
             ctx.lineWidth = 1;
-        };
 
-        const r = chain.results;
-        // mixing: OA→MA and RA→MA (gray)
-        if (r.ma.ok) {
-            drawSeg(r.oa, r.ma, cDim, false);
-            drawSeg(r.ra, r.ma, cDim, false);
-        }
-        // coil & humidifier segments — colour by process type
-        for (const s of chain.stages) {
-            const color = s.type === 'cool' ? cBlue : s.type === 'heat' ? cHeat : cAccent;
-            drawSeg(s.inlet, s.outlet, color, s.type === 'humid');
-        }
+            // Tick scales — IP uses every 10 °F across the 30–120 °F bounds and every
+            // 25 gr/lb up to 175. SI uses metric-clean ticks (every 5 °C across roughly
+            // 0–50 °C, every 5 g/kg up to 25), which are drawn at the equivalent canonical
+            // positions on the same underlying IP geometry.
+            const isMetric = U.current() === 'metric';
+            const dbTicks  = isMetric
+                ? [0, 5, 10, 15, 20, 25, 30, 35, 40, 45]                  // °C — labels
+                : [30, 40, 50, 60, 70, 80, 90, 100, 110, 120];            // °F — labels
+            const wTicks   = isMetric
+                ? [0, 5, 10, 15, 20, 25]                                  // g/kg — labels
+                : [0, 25, 50, 75, 100, 125, 150, 175];                    // gr/lb — labels
 
-        // ────────── node dots & labels ──────────
-        // Visible nodes: OA, RA, MA always; CC/HC/HUM when their stage is enabled.
-        // SA collapses onto the last enabled node when they share coordinates
-        // (the common case — supply air *is* whatever leaves the last coil) and
-        // its label is folded into that node's label as "X / SA". Otherwise SA
-        // is its own dot.
-        const visibleKeys = ['oa', 'ra', 'ma'];
-        if (r.cc.enabled)  visibleKeys.push('cc');
-        if (r.hc.enabled)  visibleKeys.push('hc');
-        if (r.hum.enabled) visibleKeys.push('hum');
-        const lastUpstream = visibleKeys[visibleKeys.length - 1];
-        const last = r[lastUpstream];
-        const saCoincides = last && last.ok && r.sa.ok
-                            && Math.abs(last.tdb - r.sa.tdb) <= 0.05
-                            && Math.abs(last.W   - r.sa.W)   <= 1e-6;
-        if (!saCoincides) visibleKeys.push('sa');
+            // grid
+            ctx.strokeStyle = cBorderF;
+            ctx.fillStyle = cDim;
+            for (const tickLbl of dbTicks) {
+                const tF = isMetric ? U.toCanonical.temp(tickLbl) : tickLbl;
+                if (tF < TDB_MIN - 0.5 || tF > TDB_MAX + 0.5) continue;
+                const x = X(tF);
+                ctx.beginPath(); ctx.moveTo(x, padT); ctx.lineTo(x, padT + h); ctx.stroke();
+                ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+                ctx.fillText(String(tickLbl), x, padT + h + 5);
+            }
+            for (const wLbl of wTicks) {
+                // wLbl is in current display units (gr/lb or g/kg). Convert back to lb/lb for Y mapping.
+                const wLbPerLb = isMetric ? (wLbl / 1000) : (wLbl / GR_PER_LB);
+                if (wLbPerLb < -1e-6 || wLbPerLb > W_MAX + 1e-6) continue;
+                const y = Y(wLbPerLb);
+                ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(padL + w, y); ctx.stroke();
+                ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+                ctx.fillText(String(wLbl), padL + w + 5, y);
+            }
+            ctx.strokeStyle = cBorder;
+            ctx.strokeRect(padL, padT, w, h);
+            ctx.fillStyle = cDim;
+            ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+            ctx.fillText(`Dry-bulb temperature · ${U.suffix.temp()}`, padL + w / 2, cssH - 1);
+            ctx.save();
+            ctx.translate(cssW - 2, padT + h / 2);
+            ctx.rotate(-Math.PI / 2);
+            ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+            ctx.fillText(`Humidity ratio · ${U.suffix.humidityRatio()}`, 0, 0);
+            ctx.restore();
 
-        // crosshair for the selected node (drawn first, behind dots)
-        const sel = r[selectedStep];
-        if (inBounds(sel)) {
-            ctx.strokeStyle = cBlue;
-            ctx.setLineDash([4, 3]);
-            ctx.lineWidth = 1;
-            ctx.beginPath(); ctx.moveTo(X(sel.tdb), Y(sel.W)); ctx.lineTo(X(sel.tdb), padT + h); ctx.stroke();
-            ctx.beginPath(); ctx.moveTo(X(sel.tdb), Y(sel.W)); ctx.lineTo(padL + w, Y(sel.W)); ctx.stroke();
-            ctx.setLineDash([]);
-        }
-
-        for (const key of visibleKeys) {
-            const s = r[key];
-            if (!inBounds(s)) continue;
-            const px = X(s.tdb), py = Y(s.W);
-            const isSel = (key === selectedStep);
-            const isSource = (key === 'oa' || key === 'ra');
-            // dot
-            ctx.beginPath();
-            ctx.arc(px, py, isSel ? 6 : 4.5, 0, 2 * Math.PI);
-            ctx.fillStyle = isSel ? cAccent : cSurface;
-            ctx.fill();
-            ctx.lineWidth = isSel ? 2 : 1.6;
-            ctx.strokeStyle = cAccent;
-            ctx.stroke();
-            ctx.lineWidth = 1;
-            // outer source-handle ring — visual cue that OA / RA are draggable
-            if (isSource) {
+            const curve = pts => {
                 ctx.beginPath();
-                ctx.arc(px, py, 9, 0, 2 * Math.PI);
-                ctx.strokeStyle = cAccent;
-                ctx.globalAlpha = 0.35;
+                let on = false;
+                for (const [t, ww] of pts) {
+                    if (t < TDB_MIN || t > TDB_MAX || ww < 0 || ww > W_MAX) {
+                        if (on) { ctx.stroke(); ctx.beginPath(); on = false; }
+                        continue;
+                    }
+                    const x = X(t), y = Y(ww);
+                    if (!on) { ctx.moveTo(x, y); on = true; } else ctx.lineTo(x, y);
+                }
+                if (on) ctx.stroke();
+            };
+
+            // constant wet-bulb (light dashed) — labels picked in the active unit
+            // system. The curves themselves use the same °F sample grid either way;
+            // only the label values and the chosen contour temperatures change.
+            ctx.strokeStyle = cBorder;
+            ctx.setLineDash([3, 3]);
+            const wbContours = isMetric ? [0, 5, 10, 15, 20, 25, 30] : [30, 40, 50, 60, 70, 80, 90];
+            for (const wbLbl of wbContours) {
+                const twbF = isMetric ? U.toCanonical.temp(wbLbl) : wbLbl;
+                const pts = [];
+                for (let t = twbF; t <= TDB_MAX + 1; t += 1) pts.push([t, humRatioFromWetBulb(twbF, t, P)]);
+                curve(pts);
+            }
+            ctx.setLineDash([]);
+            ctx.fillStyle = cDim; ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
+            const wbLabels = isMetric ? [5, 10, 15, 20, 25] : [40, 50, 60, 70, 80];
+            for (const wbLbl of wbLabels) {
+                const twbF = isMetric ? U.toCanonical.temp(wbLbl) : wbLbl;
+                const ww = satHumRatio(twbF, P);
+                if (ww > W_MAX || twbF < TDB_MIN) continue;
+                ctx.fillText(wbLbl + '°', X(twbF) - 3, Y(ww) - 2);
+            }
+
+            // constant relative-humidity (light hairlines)
+            ctx.strokeStyle = cBorder;
+            const rhLblW = 0.4 * W_MAX;
+            for (const rh of [20, 40, 60, 80]) {
+                const pts = [];
+                for (let t = TDB_MIN; t <= TDB_MAX; t += 1) pts.push([t, humRatioFromRH(rh, t, P)]);
+                curve(pts);
+                let lblT = null;
+                for (let t = TDB_MIN; t <= TDB_MAX; t += 1) { if (humRatioFromRH(rh, t, P) >= rhLblW) { lblT = t; break; } }
+                if (lblT != null) {
+                    ctx.fillStyle = cDim; ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+                    ctx.fillText(rh + '%', X(lblT) + 3, Y(humRatioFromRH(rh, lblT, P)) - 2);
+                }
+            }
+
+            // saturation curve (heavy, accent)
+            ctx.strokeStyle = cAccent; ctx.lineWidth = 2;
+            const sat = [];
+            for (let t = TDB_MIN; t <= TDB_MAX; t += 0.5) sat.push([t, satHumRatio(t, P)]);
+            curve(sat);
+            ctx.lineWidth = 1;
+            let satLblT = null;
+            for (let t = TDB_MIN; t <= TDB_MAX; t += 0.5) { if (satHumRatio(t, P) >= 0.85 * W_MAX) { satLblT = t; break; } }
+            if (satLblT != null) {
+                ctx.fillStyle = cAccent; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+                ctx.fillText('100% RH', X(satLblT) + 4, Y(satHumRatio(satLblT, P)) + 2);
+            }
+
+            // ────────── process segments ──────────
+            const inBounds = s => s && s.ok && s.tdb >= TDB_MIN && s.tdb <= TDB_MAX && s.W >= 0 && s.W <= W_MAX;
+            const drawSeg = (a, b, color, dashed) => {
+                if (!inBounds(a) || !inBounds(b)) return;
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 2.5;
+                if (dashed) ctx.setLineDash([5, 4]); else ctx.setLineDash([]);
+                ctx.beginPath();
+                ctx.moveTo(X(a.tdb), Y(a.W));
+                ctx.lineTo(X(b.tdb), Y(b.W));
                 ctx.stroke();
-                ctx.globalAlpha = 1;
+                ctx.setLineDash([]);
+                ctx.lineWidth = 1;
+            };
+
+            const r = chain.results;
+            // mixing: OA→MA and RA→MA (gray)
+            if (r.ma.ok) {
+                drawSeg(r.oa, r.ma, cDim, false);
+                drawSeg(r.ra, r.ma, cDim, false);
             }
-            // labels: OA, RA, SA always; intermediates only when selected.
-            // When SA coincides with the last upstream node, fold "/ SA" into
-            // that node's label instead of dropping the supply-air callout.
-            const alwaysLabel = (key === 'oa' || key === 'ra' || key === 'sa');
-            const showOwnLabel = alwaysLabel || isSel;
-            let label = showOwnLabel ? STEP_SHORT[key] : null;
-            if (saCoincides && key === lastUpstream) {
-                label = label ? (label + ' / SA') : 'SA';
+            // coil & humidifier segments — colour by process type
+            for (const s of chain.stages) {
+                const color = s.type === 'cool' ? cBlue : s.type === 'heat' ? cHeat : cAccent;
+                drawSeg(s.inlet, s.outlet, color, s.type === 'humid');
             }
-            if (label) {
-                ctx.fillStyle = cAccent;
-                ctx.font = "11px 'IBM Plex Mono', monospace";
-                ctx.textAlign = 'left';
-                ctx.textBaseline = 'bottom';
-                ctx.fillText(label, px + (isSource ? 11 : 8), py - 7);
+
+            // ────────── node dots & labels ──────────
+            // Visible nodes: OA, RA, MA always; CC/HC/HUM when their stage is enabled.
+            // SA collapses onto the last enabled node when they share coordinates
+            // (the common case — supply air *is* whatever leaves the last coil) and
+            // its label is folded into that node's label as "X / SA". Otherwise SA
+            // is its own dot.
+            const visibleKeys = ['oa', 'ra', 'ma'];
+            if (r.cc.enabled)  visibleKeys.push('cc');
+            if (r.hc.enabled)  visibleKeys.push('hc');
+            if (r.hum.enabled) visibleKeys.push('hum');
+            const lastUpstream = visibleKeys[visibleKeys.length - 1];
+            const last = r[lastUpstream];
+            const saCoincides = last && last.ok && r.sa.ok
+                                && Math.abs(last.tdb - r.sa.tdb) <= 0.05
+                                && Math.abs(last.W   - r.sa.W)   <= 1e-6;
+            if (!saCoincides) visibleKeys.push('sa');
+
+            // crosshair for the selected node (drawn first, behind dots)
+            const sel = r[selectedStep];
+            if (inBounds(sel)) {
+                ctx.strokeStyle = cBlue;
+                ctx.setLineDash([4, 3]);
+                ctx.lineWidth = 1;
+                ctx.beginPath(); ctx.moveTo(X(sel.tdb), Y(sel.W)); ctx.lineTo(X(sel.tdb), padT + h); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(X(sel.tdb), Y(sel.W)); ctx.lineTo(padL + w, Y(sel.W)); ctx.stroke();
+                ctx.setLineDash([]);
+            }
+
+            for (const key of visibleKeys) {
+                const s = r[key];
+                if (!inBounds(s)) continue;
+                const px = X(s.tdb), py = Y(s.W);
+                const isSel = (key === selectedStep);
+                const isSource = (key === 'oa' || key === 'ra');
+                // dot
+                ctx.beginPath();
+                ctx.arc(px, py, isSel ? 6 : 4.5, 0, 2 * Math.PI);
+                ctx.fillStyle = isSel ? cAccent : cSurface;
+                ctx.fill();
+                ctx.lineWidth = isSel ? 2 : 1.6;
+                ctx.strokeStyle = cAccent;
+                ctx.stroke();
+                ctx.lineWidth = 1;
+                // outer source-handle ring — visual cue that OA / RA are draggable
+                if (isSource) {
+                    ctx.beginPath();
+                    ctx.arc(px, py, 9, 0, 2 * Math.PI);
+                    ctx.strokeStyle = cAccent;
+                    ctx.globalAlpha = 0.35;
+                    ctx.stroke();
+                    ctx.globalAlpha = 1;
+                }
+                // labels: OA, RA, SA always; intermediates only when selected.
+                // When SA coincides with the last upstream node, fold "/ SA" into
+                // that node's label instead of dropping the supply-air callout.
+                const alwaysLabel = (key === 'oa' || key === 'ra' || key === 'sa');
+                const showOwnLabel = alwaysLabel || isSel;
+                let label = showOwnLabel ? STEP_SHORT[key] : null;
+                if (saCoincides && key === lastUpstream) {
+                    label = label ? (label + ' / SA') : 'SA';
+                }
+                if (label) {
+                    ctx.fillStyle = cAccent;
+                    ctx.font = "11px 'IBM Plex Mono', monospace";
+                    ctx.textAlign = 'left';
+                    ctx.textBaseline = 'bottom';
+                    ctx.fillText(label, px + (isSource ? 11 : 8), py - 7);
+                }
             }
         }
-    }
 
-    // ──────────────────────────────────────────────────────────────────
-    // Drag — only OA / RA. Hit-test the source dots, then translate the
-    // pointer to (tdb, W) and write back into the editor for whichever
-    // node is being dragged (preserving its current "Define by" mode).
-    // ──────────────────────────────────────────────────────────────────
-    function setSourceFromChart(prefix, tdb, W) {
-        if (!lastChain) return;
-        const P = lastChain.P;
-        tdb = Math.max(TDB_MIN, Math.min(TDB_MAX, tdb));
-        W   = Math.max(0, Math.min(W, satHumRatio(tdb, P)));
-        const tempState = buildState(tdb, W, P);
-        // tdb is canonical IP; rewrite the input in current display units.
-        document.getElementById(`${prefix}-tdb`).value = dispT(tdb);
-        const mode = document.getElementById(`${prefix}-mode`).value;
-        const meta = SECOND_PROP[mode];
-        const v = meta.fmt(tempState);
-        document.getElementById(`${prefix}-second`).value = (v === '' ? meta.def : v);
-        psyRecompute();
-    }
-
-    function hitTestSource(ev) {
-        if (!psyGeom || !lastChain) return null;
-        const { X, Y } = psyGeom;
-        const px = ev.offsetX, py = ev.offsetY;
-        let best = null;
-        for (const key of ['oa', 'ra']) {
-            const s = lastChain.results[key];
-            if (!s || !s.ok) continue;
-            const d = Math.hypot(X(s.tdb) - px, Y(s.W) - py);
-            if (d <= 18 && (!best || d < best.d)) best = { key, d };
-        }
-        return best ? best.key : null;
-    }
-
-    (function () {
-        const c = document.getElementById('psyCanvas');
-        let dragKey = null;
-        const moveTo = (ev) => {
-            if (!psyGeom || !dragKey) return;
-            const { padL, padT, w, h } = psyGeom;
-            const tdb = TDB_MIN + (ev.offsetX - padL) / w * (TDB_MAX - TDB_MIN);
-            const W   = (padT + h - ev.offsetY) / h * W_MAX;
-            setSourceFromChart(dragKey, tdb, W);
-        };
-        c.addEventListener('pointerdown', e => {
-            const hit = hitTestSource(e);
-            if (!hit) return;
-            dragKey = hit;
-            selectStep(hit);
-            c.setPointerCapture(e.pointerId);
-            moveTo(e);
-        });
-        c.addEventListener('pointermove', e => {
-            if (!dragKey) return;
-            e.preventDefault();
-            moveTo(e);
-        });
-        const stop = () => { dragKey = null; };
-        c.addEventListener('pointerup', stop);
-        c.addEventListener('pointercancel', stop);
-    })();
-
-    // ──────────────────────────────────────────────────────────────────
-    // Units — initial conversion of the HTML defaults (which are written
-    // in US) when the user lands on the page in metric, plus a handler
-    // for live-switching once the page is up. The pattern: rewrite every
-    // unit-bearing input through the quantity it represents, rebuild the
-    // SECOND_PROP table, then re-render the dynamic labels (oa/ra/cc
-    // "Define by" labels + HC's mode-dependent label) and recompute.
-    // ──────────────────────────────────────────────────────────────────
-
-    // Resolve an input id to the canonical quantity it currently represents.
-    // The *-second inputs are mode-driven; hc-val is mode-driven too.
-    function inputQuantity(id) {
-        if (id === 'psyAlt') return 'altitude';
-        if (id === 'psyCfm') return 'airflow';
-        if (id === 'hc-val') return document.getElementById('hc-mode').value === 'dt' ? 'deltaTemp' : 'temp';
-        if (id.endsWith('-tdb')) return 'temp';
-        if (id.endsWith('-second')) {
-            const prefix = id.slice(0, -'-second'.length);
-            const mode = document.getElementById(`${prefix}-mode`).value;
-            if (mode === 'wb' || mode === 'dp') return 'temp';
-            if (mode === 'w') return 'humidityRatio';
-            if (mode === 'h') return 'enthalpy';
-        }
-        return null;  // % values (rh, ma-pct, hum-rh) — universal, no conversion
-    }
-
-    // Ids of every input whose displayed value may need to be reformatted on
-    // a unit-system flip. ma-pct and hum-rh are deliberately omitted (%).
-    const UNIT_INPUT_IDS = [
-        'psyAlt', 'psyCfm',
-        'oa-tdb', 'oa-second',
-        'ra-tdb', 'ra-second',
-        'cc-tdb', 'cc-second',
-        'hc-val',
-    ];
-
-    // Convert every input from `from` units to `to` units, leaving blanks alone.
-    function convertInputsBetween(from, to) {
-        if (from === to) return;
-        for (const id of UNIT_INPUT_IDS) {
-            const el = document.getElementById(id);
-            if (!el) continue;
-            const raw = el.value.trim();
-            if (raw === '') continue;
-            const v = parseFloat(raw);
-            if (!isFinite(v)) continue;
-            const q = inputQuantity(id);
-            if (!q) continue;
-            const conv = U.convert(v, from, to, q);
-            // Step depth follows the SECOND_PROP table for the *-second inputs
-            // and is tighter for metric on others; we pick a precision per quantity.
-            let digits;
-            if (q === 'altitude') digits = 0;
-            else if (q === 'airflow') digits = 0;
-            else if (q === 'humidityRatio') digits = 1;
-            else if (q === 'enthalpy') digits = to === 'us' ? 1 : 1;
-            else digits = 1;
-            el.value = (+conv.toFixed(digits)).toString();
-        }
-    }
-
-    // Update the inputs' `step` attribute to match SECOND_PROP entries after a
-    // unit flip — metric uses tighter steps (0.25 °C vs 0.5 °F, etc.).
-    function applyDynamicLabels() {
-        for (const prefix of ['oa', 'ra', 'cc']) {
+        // ──────────────────────────────────────────────────────────────────
+        // Drag — only OA / RA. Hit-test the source dots, then translate the
+        // pointer to (tdb, W) and write back into the editor for whichever
+        // node is being dragged (preserving its current "Define by" mode).
+        // ──────────────────────────────────────────────────────────────────
+        function setSourceFromChart(prefix, tdb, W) {
+            if (!lastChain) return;
+            const P = lastChain.P;
+            tdb = Math.max(TDB_MIN, Math.min(TDB_MAX, tdb));
+            W   = Math.max(0, Math.min(W, satHumRatio(tdb, P)));
+            const tempState = buildState(tdb, W, P);
+            // tdb is canonical IP; rewrite the input in current display units.
+            document.getElementById(`${prefix}-tdb`).value = dispT(tdb);
             const mode = document.getElementById(`${prefix}-mode`).value;
             const meta = SECOND_PROP[mode];
-            const lblEl = document.getElementById(`${prefix}-secondLbl`);
-            const inpEl = document.getElementById(`${prefix}-second`);
-            if (lblEl) lblEl.textContent = meta.label;
-            if (inpEl) inpEl.step = meta.step;
+            const v = meta.fmt(tempState);
+            document.getElementById(`${prefix}-second`).value = (v === '' ? meta.def : v);
+            psyRecompute();
         }
-        // HC: depends on hc-mode (ldb vs dt). Just reuse the existing handler logic.
-        const hcMode = document.getElementById('hc-mode').value;
-        const tU     = U.suffix.temp();
-        document.getElementById('hc-valLbl').textContent =
-            hcMode === 'dt' ? `ΔT rise (${tU})` : `Leaving DB (${tU})`;
-    }
 
-    // Tighten input `step` on temp inputs in metric (0.25 °C reads finer than 0.5 °F).
-    function applyInputSteps() {
-        const stepT = U.current() === 'us' ? 0.5 : 0.25;
-        ['oa-tdb', 'ra-tdb', 'cc-tdb', 'hc-val'].forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.step = stepT;
-        });
-        // psyAlt step: 100 ft ≈ 30 m. Use 50 m increments in metric (round-feeling).
-        const psyAlt = document.getElementById('psyAlt');
-        if (psyAlt) psyAlt.step = U.current() === 'us' ? 100 : 50;
-    }
+        function hitTestSource(ev) {
+            if (!psyGeom || !lastChain) return null;
+            const { X, Y } = psyGeom;
+            const px = ev.offsetX, py = ev.offsetY;
+            let best = null;
+            for (const key of ['oa', 'ra']) {
+                const s = lastChain.results[key];
+                if (!s || !s.ok) continue;
+                const d = Math.hypot(X(s.tdb) - px, Y(s.W) - py);
+                if (d <= 18 && (!best || d < best.d)) best = { key, d };
+            }
+            return best ? best.key : null;
+        }
 
-    // On first paint (page may load directly in metric for returning visitors):
-    // the HTML defaults were authored in US, so convert if needed.
-    if (U.current() === 'metric') convertInputsBetween('us', 'metric');
-    buildSecondProp();
-    applyDynamicLabels();
-    applyInputSteps();
+        (function () {
+            const c = document.getElementById('psyCanvas');
+            let dragKey = null;
+            const moveTo = (ev) => {
+                if (!psyGeom || !dragKey) return;
+                const { padL, padT, w, h } = psyGeom;
+                const tdb = TDB_MIN + (ev.offsetX - padL) / w * (TDB_MAX - TDB_MIN);
+                const W   = (padT + h - ev.offsetY) / h * W_MAX;
+                setSourceFromChart(dragKey, tdb, W);
+            };
+            c.addEventListener('pointerdown', e => {
+                const hit = hitTestSource(e);
+                if (!hit) return;
+                dragKey = hit;
+                selectStep(hit);
+                c.setPointerCapture(e.pointerId);
+                moveTo(e);
+            });
+            c.addEventListener('pointermove', e => {
+                if (!dragKey) return;
+                e.preventDefault();
+                moveTo(e);
+            });
+            const stop = () => { dragKey = null; };
+            c.addEventListener('pointerup', stop);
+            c.addEventListener('pointercancel', stop);
+        })();
 
-    // Live switch — rebuild SECOND_PROP, convert every input, rerun. Using
-    // the raw 'unitschange' event (not Units.onChange) so we can read the
-    // previous units from event.detail.previous.
-    document.addEventListener('unitschange', ev => {
-        const prev = ev.detail && ev.detail.previous;
-        const next = ev.detail && ev.detail.units;
-        if (prev && next) convertInputsBetween(prev, next);
+        // ──────────────────────────────────────────────────────────────────
+        // Units — initial conversion of the HTML defaults (which are written
+        // in US) when the user lands on the page in metric, plus a handler
+        // for live-switching once the page is up. The pattern: rewrite every
+        // unit-bearing input through the quantity it represents, rebuild the
+        // SECOND_PROP table, then re-render the dynamic labels (oa/ra/cc
+        // "Define by" labels + HC's mode-dependent label) and recompute.
+        // ──────────────────────────────────────────────────────────────────
+
+        // Resolve an input id to the canonical quantity it currently represents.
+        // The *-second inputs are mode-driven; hc-val is mode-driven too.
+        function inputQuantity(id) {
+            if (id === 'psyAlt') return 'altitude';
+            if (id === 'psyCfm') return 'airflow';
+            if (id === 'hc-val') return document.getElementById('hc-mode').value === 'dt' ? 'deltaTemp' : 'temp';
+            if (id.endsWith('-tdb')) return 'temp';
+            if (id.endsWith('-second')) {
+                const prefix = id.slice(0, -'-second'.length);
+                const mode = document.getElementById(`${prefix}-mode`).value;
+                if (mode === 'wb' || mode === 'dp') return 'temp';
+                if (mode === 'w') return 'humidityRatio';
+                if (mode === 'h') return 'enthalpy';
+            }
+            return null;  // % values (rh, ma-pct, hum-rh) — universal, no conversion
+        }
+
+        // Ids of every input whose displayed value may need to be reformatted on
+        // a unit-system flip. ma-pct and hum-rh are deliberately omitted (%).
+        const UNIT_INPUT_IDS = [
+            'psyAlt', 'psyCfm',
+            'oa-tdb', 'oa-second',
+            'ra-tdb', 'ra-second',
+            'cc-tdb', 'cc-second',
+            'hc-val',
+        ];
+
+        // Convert every input from `from` units to `to` units, leaving blanks alone.
+        function convertInputsBetween(from, to) {
+            if (from === to) return;
+            for (const id of UNIT_INPUT_IDS) {
+                const el = document.getElementById(id);
+                if (!el) continue;
+                const raw = el.value.trim();
+                if (raw === '') continue;
+                const v = parseFloat(raw);
+                if (!isFinite(v)) continue;
+                const q = inputQuantity(id);
+                if (!q) continue;
+                const conv = U.convert(v, from, to, q);
+                // Step depth follows the SECOND_PROP table for the *-second inputs
+                // and is tighter for metric on others; we pick a precision per quantity.
+                let digits;
+                if (q === 'altitude') digits = 0;
+                else if (q === 'airflow') digits = 0;
+                else if (q === 'humidityRatio') digits = 1;
+                else if (q === 'enthalpy') digits = to === 'us' ? 1 : 1;
+                else digits = 1;
+                el.value = (+conv.toFixed(digits)).toString();
+            }
+        }
+
+        // Update the inputs' `step` attribute to match SECOND_PROP entries after a
+        // unit flip — metric uses tighter steps (0.25 °C vs 0.5 °F, etc.).
+        function applyDynamicLabels() {
+            for (const prefix of ['oa', 'ra', 'cc']) {
+                const mode = document.getElementById(`${prefix}-mode`).value;
+                const meta = SECOND_PROP[mode];
+                const lblEl = document.getElementById(`${prefix}-secondLbl`);
+                const inpEl = document.getElementById(`${prefix}-second`);
+                if (lblEl) lblEl.textContent = meta.label;
+                if (inpEl) inpEl.step = meta.step;
+            }
+            // HC: depends on hc-mode (ldb vs dt). Just reuse the existing handler logic.
+            const hcMode = document.getElementById('hc-mode').value;
+            const tU     = U.suffix.temp();
+            document.getElementById('hc-valLbl').textContent =
+                hcMode === 'dt' ? `ΔT rise (${tU})` : `Leaving DB (${tU})`;
+        }
+
+        // Tighten input `step` on temp inputs in metric (0.25 °C reads finer than 0.5 °F).
+        function applyInputSteps() {
+            const stepT = U.current() === 'us' ? 0.5 : 0.25;
+            ['oa-tdb', 'ra-tdb', 'cc-tdb', 'hc-val'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.step = stepT;
+            });
+            // psyAlt step: 100 ft ≈ 30 m. Use 50 m increments in metric (round-feeling).
+            const psyAlt = document.getElementById('psyAlt');
+            if (psyAlt) psyAlt.step = U.current() === 'us' ? 100 : 50;
+        }
+
+        // On first paint (page may load directly in metric for returning visitors):
+        // the HTML defaults were authored in US, so convert if needed.
+        if (U.current() === 'metric') convertInputsBetween('us', 'metric');
         buildSecondProp();
         applyDynamicLabels();
         applyInputSteps();
-        psyRecompute();
-    });
 
-    // ── Init ──
-    psyRecompute();
-    window.addEventListener('resize', () => drawPsychChart(lastChain));
+        // Live switch — rebuild SECOND_PROP, convert every input, rerun. Using
+        // the raw 'unitschange' event (not Units.onChange) so we can read the
+        // previous units from event.detail.previous.
+        document.addEventListener('unitschange', ev => {
+            const prev = ev.detail && ev.detail.previous;
+            const next = ev.detail && ev.detail.units;
+            if (prev && next) convertInputsBetween(prev, next);
+            buildSecondProp();
+            applyDynamicLabels();
+            applyInputSteps();
+            psyRecompute();
+        });
+
+        // ── Wiring ──
+        // Pill buttons: step selector (already carry data-step).
+        document.querySelectorAll('.psy-pill[data-step]').forEach(btn => {
+            btn.addEventListener('click', e => selectStep(e.currentTarget.dataset.step));
+        });
+        // Inputs / checkboxes that just re-run the chain on any change.
+        const RECOMPUTE_IDS = [
+            'psyAlt', 'psyCfm',
+            'oa-tdb', 'oa-second',
+            'ra-tdb', 'ra-second',
+            'ma-pct',
+            'cc-on', 'cc-tdb', 'cc-second',
+            'hc-on', 'hc-val',
+            'hum-on', 'hum-rh',
+        ];
+        RECOMPUTE_IDS.forEach(id => {
+            const el = document.getElementById(id);
+            const evt = el.type === 'checkbox' ? 'change' : 'input';
+            el.addEventListener(evt, psyRecompute);
+        });
+        // Mode selects: oa / ra / cc share onModeChange(prefix); hc has its own.
+        ['oa', 'ra', 'cc'].forEach(prefix => {
+            document.getElementById(prefix + '-mode').addEventListener('change', () => onModeChange(prefix));
+        });
+        document.getElementById('hc-mode').addEventListener('change', onHcModeChange);
+
+        // ── Init ──
+        psyRecompute();
+        window.addEventListener('resize', () => drawPsychChart(lastChain));
+    })();
 </script>
 {% endblock %}

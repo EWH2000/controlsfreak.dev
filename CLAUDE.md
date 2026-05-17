@@ -61,8 +61,9 @@ the site does, see `README.md`.
   Shared rules live in the file; page-only rules stay inline via
   `{% block head %}`.
 - **Shared scripts** in `html/scripts/` are **classic scripts** (not
-  ES modules — modules would break the inline `on*` handlers on
-  older pages, and there's no bundler doing module-graph work).
+  ES modules — there's no bundler doing module-graph work, and the
+  shared helpers expose globals like `Units`, `simulatePid`, and
+  `FlowEngine` that page IIFEs reach for by name).
   Loaded with `<script src="/scripts/xxx.js"></script>` inside
   `{% block scripts %}`, *before* the page's inline `<script>`.
   Today:
@@ -404,17 +405,15 @@ well-grouped.
 
 ### JS patterns
 
-- **Event wiring — two conventions, mid-transition.** Newer pages
-  (`vfd-mock`, `pump-control`, `vfds`, `load-piping`, `balancing`)
-  wrap their inline script in an IIFE and wire events via
-  `addEventListener`. Older pages (`psychrometric-chart`,
-  `signal-scaling`, `pid-basics`, `pid-tuner`,
-  `bacnet-ip-converter`, `thermistor-calculator`,
-  `modbus-register-viewer`, `contact`) still use inline `on*`
-  attributes (`oninput="calcScaling()"`, `onclick="switchTab(...)"`)
-  with bare top-level functions. **For new pages, use the
-  addEventListener-in-IIFE pattern.** The inline-handler pages are
-  queued for retrofit (codebase-issues #3, Block C).
+- **Event wiring:** every page wraps its inline script in an IIFE
+  (`(function () { … })();`) and binds events with
+  `addEventListener` against element ids. Buttons that need to pass
+  themselves to a handler (e.g. for an active-class toggle) go
+  through an arrow wrapper: `btn.addEventListener('click', e =>
+  fn(arg, e.currentTarget))`. Where several buttons share a handler
+  shape, prefer `data-*` attributes + a single `querySelectorAll`
+  loop over per-button bindings. The convention is uniform — no
+  inline `on*` attributes anywhere.
 - **Validate-and-mute:** read inputs with `parseFloat`; if anything
   isn't finite (use `!isFinite(x)`, not `isNaN(x)` — `isFinite`
   also rejects `Infinity`, which `isNaN` doesn't, and the
