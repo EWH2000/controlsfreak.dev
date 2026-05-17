@@ -79,28 +79,28 @@ test('thermistor calculator looks up a known reference value', async ({ page }) 
     await page.goto('http://localhost:8000/tools/thermistor-calculator.html');
 
     // the inputs + the reference table render on load
-    await expect(page.locator('#thType')).toBeVisible();
-    await expect(page.locator('#thTemp')).toBeVisible();
-    expect(await page.locator('#thRtBody tr').count(), 'R/T table should be populated').toBeGreaterThan(40);
+    await expect(page.locator('#th-type')).toBeVisible();
+    await expect(page.locator('#th-temp')).toBeVisible();
+    expect(await page.locator('#th-rt-body tr').count(), 'R/T table should be populated').toBeGreaterThan(40);
 
     // 10K Type III at 77 °F is the type's defining property — should land on ~10,000 Ω
-    await page.selectOption('#thType', '10k-3');
-    await page.fill('#thTemp', '77');
-    const r = parseFloat((await page.locator('#thResult').textContent()).replace(/[^0-9.]/g, ''));
+    await page.selectOption('#th-type', '10k-3');
+    await page.fill('#th-temp', '77');
+    const r = parseFloat((await page.locator('#th-result').textContent()).replace(/[^0-9.]/g, ''));
     expect(r, '10K-3 @ 77 °F should be ≈ 10,000 Ω').toBeGreaterThan(9700);
     expect(r).toBeLessThan(10300);
-    await expect(page.locator('#thStatus')).toHaveText('in range');
+    await expect(page.locator('#th-status')).toHaveText('in range');
 
     // a temperature outside the table range mutes the result
-    await page.fill('#thTemp', '400');
-    await expect(page.locator('#thResult')).toHaveText('—');
+    await page.fill('#th-temp', '400');
+    await expect(page.locator('#th-result')).toHaveText('—');
 
     // flipping the global units toggle rescales the temperature field and label
     // (the local °F/°C buttons were retired when the global selector landed)
-    await page.fill('#thTemp', '50');
+    await page.fill('#th-temp', '50');
     await page.click('.units-btn[data-units="metric"]');
-    await expect(page.locator('#thTempLbl')).toHaveText('Temperature (°C)');
-    expect(parseFloat(await page.locator('#thTemp').inputValue())).toBeCloseTo(10, 0);   // 50 °F ≈ 10 °C
+    await expect(page.locator('#th-temp-lbl')).toHaveText('Temperature (°C)');
+    expect(parseFloat(await page.locator('#th-temp').inputValue())).toBeCloseTo(10, 0);   // 50 °F ≈ 10 °C
     // flip back so this test doesn't leak metric state into the next page load
     await page.click('.units-btn[data-units="us"]');
 });

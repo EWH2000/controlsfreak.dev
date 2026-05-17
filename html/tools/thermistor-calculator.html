@@ -18,14 +18,14 @@ nav: tools
            visibly "off". The grid is slightly left-biased so the sensor-type
            dropdown has room. */
         .tool-body-3col { grid-template-columns: 1.2fr 1fr 1fr; }
-        #thRtScroll {
+        #th-rt-scroll {
             max-height: 250px;
             overflow-y: auto;
             border: 1px solid var(--border-faint);
             border-radius: 2px;
         }
-        #thRtScroll table { margin: 0; }
-        #thRtScroll thead th { position: sticky; top: 0; z-index: 1; }
+        #th-rt-scroll table { margin: 0; }
+        #th-rt-scroll thead th { position: sticky; top: 0; z-index: 1; }
         .ref-table-dense tbody tr.th-rt-now td { background: var(--accent-dim); }
         .ref-table-dense tbody tr.th-rt-now td:first-child { font-weight: 600; color: var(--accent); }
         input.ps-input:disabled { opacity: 0.55; cursor: not-allowed; }
@@ -52,7 +52,7 @@ nav: tools
         <div class="tool-card-header">
             <h1 class="tool-card-title">
                 Thermistor / RTD Lookup
-                <span class="tool-tag" id="thTag">THERMISTOR</span>
+                <span class="tool-tag" id="th-tag">THERMISTOR</span>
             </h1>
         </div>
 
@@ -68,11 +68,11 @@ nav: tools
                 <h2 class="ps-section-label">Input</h2>
 
                 <div class="ps-row">
-                    <label class="ps-label" for="thType">Sensor</label>
+                    <label class="ps-label" for="th-type">Sensor</label>
                     <!-- option values must match the keys in THERMISTOR_TYPES (scripts/thermistor-data.js);
                          option text mirrors each type's `name` there — the full maker / context lives in
                          that type's `notes`, shown under the R/T table -->
-                    <select class="ps-input" id="thType">
+                    <select class="ps-input" id="th-type">
                         <optgroup label="NTC Thermistors">
                             <option value="10k-2">10K Type II</option>
                             <option value="10k-3" selected>10K Type III</option>
@@ -89,22 +89,22 @@ nav: tools
                     </select>
                 </div>
 
-                <div class="ps-row" role="group" aria-labelledby="thByLabel">
-                    <span class="ps-label" id="thByLabel">Look up by</span>
+                <div class="ps-row" role="group" aria-labelledby="th-by-label">
+                    <span class="ps-label" id="th-by-label">Look up by</span>
                     <div class="btn-row">
-                        <button class="copy-btn active" id="thByTemp">Temperature</button>
-                        <button class="copy-btn" id="thByRes">Resistance</button>
+                        <button class="copy-btn active" id="th-by-temp">Temperature</button>
+                        <button class="copy-btn" id="th-by-res">Resistance</button>
                     </div>
                 </div>
 
                 <div class="ps-row">
-                    <label class="ps-label" id="thTempLbl" for="thTemp">Temperature (°F)</label>
-                    <input class="ps-input" type="number" id="thTemp" step="1" placeholder="77" value="77">
+                    <label class="ps-label" id="th-temp-lbl" for="th-temp">Temperature (°F)</label>
+                    <input class="ps-input" type="number" id="th-temp" step="1" placeholder="77" value="77">
                 </div>
 
                 <div class="ps-row">
-                    <label class="ps-label" for="thRes">Resistance (Ω)</label>
-                    <input class="ps-input" type="number" id="thRes" step="1" placeholder="10000" disabled>
+                    <label class="ps-label" for="th-res">Resistance (Ω)</label>
+                    <input class="ps-input" type="number" id="th-res" step="1" placeholder="10000" disabled>
                 </div>
             </section>
 
@@ -113,46 +113,46 @@ nav: tools
 
                 <div class="ps-row">
                     <span class="ps-label">Defining point</span>
-                    <span class="ps-value muted" id="thRefPoint">—</span>
+                    <span class="ps-value muted" id="th-ref-point">—</span>
                 </div>
                 <div class="ps-row">
                     <span class="ps-label">Looking up</span>
-                    <span class="ps-value muted" id="thDir">—</span>
+                    <span class="ps-value muted" id="th-dir">—</span>
                 </div>
                 <div class="ps-row">
                     <span class="ps-label">Result</span>
-                    <span class="ps-value live" id="thResult">—</span>
+                    <span class="ps-value live" id="th-result">—</span>
                 </div>
                 <div class="ps-row">
                     <span class="ps-label">Reading</span>
-                    <span class="ps-value muted" id="thKind">—</span>
+                    <span class="ps-value muted" id="th-kind">—</span>
                 </div>
                 <div class="ps-row">
                     <span class="ps-label">Range check</span>
-                    <span class="ps-value muted" id="thStatus">—</span>
+                    <span class="ps-value muted" id="th-status">—</span>
                 </div>
 
                 <div class="btn-row" style="margin-top:1rem;">
-                    <button class="copy-btn" id="thCopyBtn">Copy value</button>
+                    <button class="copy-btn" id="th-copy-btn">Copy value</button>
                 </div>
             </section>
 
             <section>
-                <h2 class="ps-section-label" id="thRtTitle">R / T Table</h2>
-                <div id="thRtScroll">
+                <h2 class="ps-section-label" id="th-rt-title">R / T Table</h2>
+                <div id="th-rt-scroll">
                     <table class="ref-table-dense">
                         <thead>
-                            <tr id="thRtHead"><th>Temperature</th><th>Resistance (Ω)</th></tr>
+                            <tr id="th-rt-head"><th>Temperature</th><th>Resistance (Ω)</th></tr>
                         </thead>
-                        <tbody id="thRtBody"></tbody>
+                        <tbody id="th-rt-body"></tbody>
                     </table>
                 </div>
-                <p class="ref-note" id="thNote">—</p>
+                <p class="ref-note" id="th-note">—</p>
             </section>
 
         </div>
 
-        <div class="result-formula" id="thWorked" style="margin:0;padding:0.7rem 1.25rem;"></div>
+        <div class="result-formula" id="th-worked" style="margin:0;padding:0.7rem 1.25rem;"></div>
     </div>
 
     <div class="tool-card about-tables">
@@ -207,7 +207,7 @@ nav: tools
         const C2F = c => c * 9 / 5 + 32;
         const thUnit = () => window.Units.current() === 'metric' ? 'C' : 'F';
 
-        function thType() { return THERMISTOR_TYPES[document.getElementById('thType').value]; }
+        function thType() { return THERMISTOR_TYPES[document.getElementById('th-type').value]; }
 
         // Resistance rounding — kept in step with thermistor-data.js's roundR so the
         // result of an interpolation matches the table's own precision.
@@ -226,8 +226,8 @@ nav: tools
         function thSetLookup(mode, btn) {
             thLookupBy = mode;
             btn.closest('.btn-row').querySelectorAll('.copy-btn').forEach(b => b.classList.toggle('active', b === btn));
-            document.getElementById('thTemp').disabled = (mode !== 'temp');
-            document.getElementById('thRes').disabled  = (mode !== 'res');
+            document.getElementById('th-temp').disabled = (mode !== 'temp');
+            document.getElementById('th-res').disabled  = (mode !== 'res');
             thRecompute();
         }
 
@@ -235,7 +235,7 @@ nav: tools
         // One temperature column in the active unit, plus the resistance column.
         function thRenderTable(T) {
             const u = thUnit();
-            document.getElementById('thRtHead').innerHTML =
+            document.getElementById('th-rt-head').innerHTML =
                 '<th>°' + u + '</th><th>Resistance (Ω)</th>';
             const kind = T.curve ? T.curve.kind : null;
             let html = '';
@@ -244,18 +244,18 @@ nav: tools
                 const r = (kind === 'rtd-pt' || kind === 'rtd-balco') ? R.toLocaleString() : Math.round(R).toLocaleString();
                 html += `<tr><td>${t}</td><td>${r}</td></tr>`;
             }
-            document.getElementById('thRtBody').innerHTML = html;
-            document.getElementById('thRtTitle').textContent = 'R / T Table — ' + T.name;
-            document.getElementById('thTag').textContent = (T.family === 'rtd') ? 'RTD' : 'THERMISTOR';
-            document.getElementById('thRefPoint').textContent = T.ref;
-            document.getElementById('thNote').innerHTML =
+            document.getElementById('th-rt-body').innerHTML = html;
+            document.getElementById('th-rt-title').textContent = 'R / T Table — ' + T.name;
+            document.getElementById('th-tag').textContent = (T.family === 'rtd') ? 'RTD' : 'THERMISTOR';
+            document.getElementById('th-ref-point').textContent = T.ref;
+            document.getElementById('th-note').innerHTML =
                 T.notes + ' <em>Curve values here are nominal — confirm against the sensor’s datasheet before using them for calibration.</em>';
         }
 
         // ── Highlight the table row nearest the given °F temperature; scroll it back
         //    into view only if it's drifted out (so small temp tweaks don't re-jump) ──
         function thHighlightRow(tF) {
-            const body = document.getElementById('thRtBody');
+            const body = document.getElementById('th-rt-body');
             body.querySelectorAll('tr.th-rt-now').forEach(tr => tr.classList.remove('th-rt-now'));
             if (tF == null) return;
             const tbl = thType().table;
@@ -264,7 +264,7 @@ nav: tools
             const tr = body.children[best];
             if (!tr) return;
             tr.classList.add('th-rt-now');
-            const box = document.getElementById('thRtScroll');
+            const box = document.getElementById('th-rt-scroll');
             const br = box.getBoundingClientRect(), rr = tr.getBoundingClientRect();
             if (rr.top < br.top + 28 || rr.bottom > br.bottom - 4) {     // ~28px allows for the sticky header
                 box.scrollTop += (rr.top - br.top) - box.clientHeight / 2 + rr.height / 2;
@@ -313,19 +313,19 @@ nav: tools
             const Rlo = Math.min(...Rends), Rhi = Math.max(...Rends);
 
             // re-render the reference table / tag / note when the type or unit changes
-            const tid = document.getElementById('thType').value;
+            const tid = document.getElementById('th-type').value;
             if (thRendered.typeId !== tid || thRendered.unit !== thUnit()) {
                 thRenderTable(T);
                 thRendered = { typeId: tid, unit: thUnit() };
             }
 
-            const resultEl = document.getElementById('thResult');
-            const kindEl   = document.getElementById('thKind');
-            const statusEl = document.getElementById('thStatus');
-            const dirEl    = document.getElementById('thDir');
-            const workedEl = document.getElementById('thWorked');
-            const tempEl   = document.getElementById('thTemp');
-            const resEl    = document.getElementById('thRes');
+            const resultEl = document.getElementById('th-result');
+            const kindEl   = document.getElementById('th-kind');
+            const statusEl = document.getElementById('th-status');
+            const dirEl    = document.getElementById('th-dir');
+            const workedEl = document.getElementById('th-worked');
+            const tempEl   = document.getElementById('th-temp');
+            const resEl    = document.getElementById('th-res');
 
             dirEl.textContent = thLookupBy === 'temp' ? 'resistance from temperature' : 'temperature from resistance';
 
@@ -394,7 +394,7 @@ nav: tools
         // thRecompute via the thRendered.unit change check).
         function thApplyUnit() {
             const u = thUnit();
-            document.getElementById('thTempLbl').textContent = 'Temperature (°' + u + ')';
+            document.getElementById('th-temp-lbl').textContent = 'Temperature (°' + u + ')';
         }
 
         document.addEventListener('unitschange', ev => {
@@ -402,7 +402,7 @@ nav: tools
             const next = ev.detail && ev.detail.units;
             // If the user has a value in the temperature box, convert it from old
             // display to new display so the *meaning* of the entry is preserved.
-            const tEl = document.getElementById('thTemp');
+            const tEl = document.getElementById('th-temp');
             const v = parseFloat(tEl.value);
             if (isFinite(v) && prev && next && prev !== next) {
                 tEl.value = (+window.Units.convert(v, prev, next, 'temp').toFixed(1)).toString();
@@ -411,12 +411,12 @@ nav: tools
             thRecompute();
         });
 
-        document.getElementById('thType').addEventListener('change', thRecompute);
-        document.getElementById('thByTemp').addEventListener('click', e => thSetLookup('temp', e.currentTarget));
-        document.getElementById('thByRes').addEventListener('click', e => thSetLookup('res', e.currentTarget));
-        document.getElementById('thTemp').addEventListener('input', thRecompute);
-        document.getElementById('thRes').addEventListener('input', thRecompute);
-        document.getElementById('thCopyBtn').addEventListener('click', e => thCopy(e.currentTarget));
+        document.getElementById('th-type').addEventListener('change', thRecompute);
+        document.getElementById('th-by-temp').addEventListener('click', e => thSetLookup('temp', e.currentTarget));
+        document.getElementById('th-by-res').addEventListener('click', e => thSetLookup('res', e.currentTarget));
+        document.getElementById('th-temp').addEventListener('input', thRecompute);
+        document.getElementById('th-res').addEventListener('input', thRecompute);
+        document.getElementById('th-copy-btn').addEventListener('click', e => thCopy(e.currentTarget));
 
         // ── Init ──
         thApplyUnit();
@@ -424,7 +424,7 @@ nav: tools
         // is in °F. Rewrite it to °C before the first compute so the displayed
         // input is coherent with the global toggle.
         if (window.Units.current() === 'metric') {
-            const tEl = document.getElementById('thTemp');
+            const tEl = document.getElementById('th-temp');
             const v = parseFloat(tEl.value);
             if (isFinite(v)) tEl.value = (+F2C(v).toFixed(1)).toString();
         }
