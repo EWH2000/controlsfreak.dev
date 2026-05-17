@@ -275,6 +275,21 @@ main {
     letter-spacing: 0.07em;
 }
 .tool-body { padding: 1.5rem; }
+.tool-body p { font-size: 0.95rem; line-height: 1.8; color: var(--text); }
+.tool-body a { color: var(--accent); }
+
+/* Lead paragraph on Education pages — the opening prose paragraph that
+   sets up the lesson. Wider line-height and a constrained max-width
+   keep the intro readable at narrative-length. Placed before .callout p
+   (cascade order) so .callout p's tighter font shape stays authoritative
+   inside callouts. */
+.page-intro {
+    font-size: 1.0rem;
+    line-height: 1.85;
+    color: var(--text);
+    max-width: 660px;
+    margin-bottom: 1.75rem;
+}
 
 /* ── TABS ── */
 .tabs {
@@ -384,6 +399,14 @@ select option { background: var(--surface); }
     font-style: italic;
     word-break: break-all;
 }
+/* .result-formula modifiers — formula blocks that need different layout
+   chrome than the default. .flush drops the top margin and border so the
+   formula sits flat under a tabbed Output panel (bacnet, signal-scaling
+   slope/offset, thermistor). .wrap relaxes the default break-all so
+   long readable expressions break on word boundaries instead of
+   mid-token (signal-scaling Forward + Reverse panels). */
+.result-formula.flush { margin: 0; padding: 0.7rem 1.25rem; }
+.result-formula.wrap  { word-break: normal; overflow-wrap: break-word; }
 
 /* ── RANGE BAR ── */
 .range-bar-wrap { margin-top: 1rem; }
@@ -410,7 +433,10 @@ select option { background: var(--surface); }
 }
 
 /* ── BIT VIEWER ── */
-.bit-hint {
+/* p.bit-hint (not .bit-hint) so the rule ties .tool-body p on
+   specificity and wins via cascade order. All current uses are on
+   `<p>` — see also p.pid-note and p.ref-note below. */
+p.bit-hint {
     font-family: var(--mono);
     font-size: 0.68rem;
     color: var(--text-dim);
@@ -679,7 +705,7 @@ input[type="range"]::-moz-range-thumb {
 .callout h3 span { color: var(--text-dim); font-weight: 400; }
 .callout p { font-size: 0.86rem; line-height: 1.7; }
 .callout em { color: var(--text-bright); font-style: normal; }
-.pid-note {
+p.pid-note {
     font-family: var(--mono);
     font-size: 0.72rem;
     color: var(--text-dim);
@@ -943,7 +969,7 @@ input.ps-input:focus, select.ps-input:focus, textarea.ps-input:focus {
 .ref-table-dense tbody tr:last-child td { border-bottom: none; }
 
 /* a short explanatory note under a reference table. */
-.ref-note {
+p.ref-note {
     font-family: var(--sans);
     font-size: 0.74rem;
     color: var(--text-dim);

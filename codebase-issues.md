@@ -738,7 +738,7 @@ statement inside the IIFE for the 12 page-inline scripts (matching
 balancing.html). CLAUDE.md "JS patterns" now carries an explicit
 `'use strict';` bullet recording the rule.
 
-### 19. Inline style proliferation — design-system items waiting to be born
+### 19. Inline style proliferation — design-system items waiting to be born *(patterns 1-4 addressed 2026-05-17; pattern 5 → #23)*
 
 Five patterns are inline-styled enough times that they're effectively
 design-system classes that haven't been named:
@@ -790,6 +790,46 @@ inline copies disagree with the source-of-truth).
 Drop the canvas-side hex fallbacks (use `getPropertyValue('--blue')`
 without a literal default; assume CSS-var support). Drop the SVG-side
 `var(--x, #hex)` fallbacks the same way.
+
+**Resolution — patterns 1-4 (2026-05-17):** the four class
+promotions landed.
+
+- `.page-intro` (1 rule) on the lead-paragraph of all six
+  education pages — 6 sites swept. Normalized variance:
+  max-width 640/660/680 → 660, font-size 1.0/1.02 → 1.0,
+  margin-bottom 1.75/2.25 → 1.75 (pid-basics outlier shifted).
+  Counts came in at 6 not the original entry's 8 estimate.
+- `.tool-body p` (font triplet) + `.tool-body a` (accent
+  colour). 88 paragraph triplet drops across the six education
+  pages; 32 of 34 accent-anchor inline styles dropped (the 2
+  remaining are in `.hero` blocks on `html/index.html` and
+  `html/education/index.html`, where `.tool-body a` doesn't
+  reach — kept inline). The sibling-spacing rule
+  (`.tool-body p + p`) recommended in the entry above is NOT
+  shipped; it would force a ~10px regression on callout-internal
+  paragraphs (existing `<p style="margin-top:0.6rem;">` cases)
+  because `.tool-body p + p` (specificity 0,0,1,1) is later in
+  the cascade than `.callout` doesn't carry a paragraph-spacing
+  rule. Leaving margin-top variants inline pending a spacing-
+  consolidation follow-up that audits per-context spacing
+  intent.
+- Specificity gotcha worth recording: `.tool-body p` is
+  (0,0,1,1) and would have overridden the existing `.bit-hint` /
+  `.pid-note` / `.ref-note` rules (all 0,0,1,0) on small
+  utility paragraphs inside `.tool-body`. Fix: those three
+  rules bumped to `p.bit-hint` / `p.pid-note` / `p.ref-note` —
+  same specificity as `.tool-body p`, cascade order picks the
+  later-in-file rule, small-text shapes preserved.
+- `.result-formula.flush` (4 sites: bacnet ×2, signal-scaling
+  slope/offset, thermistor) and `.result-formula.wrap` (2
+  sites: signal-scaling Forward/Reverse panes) landed cleanly.
+- CLAUDE.md "Design system" picked up a new bullet documenting
+  the prose-typography classes.
+
+Pattern 5 (canvas-side hex fallbacks and SVG `var(--x, #hex)`
+fallbacks) is deferred — different concern ("drop belt-and-
+braces fallbacks") with its own subtlety (canvas
+`getPropertyValue` defaults). Opened as #23.
 
 ### 20. Tests — weak assertions, brittle waits, dead `test.skip`
 
@@ -924,6 +964,48 @@ display-only). `pid-basics.html` migrated to the same helper called
 with `-sim.ssErr` (its offset-below-SP convention), so the two
 PID surfaces share one formatter. Verified: tuner SSE reads
 "+0.8 °F" in US mode and "+0.5 °C" in metric.
+
+### 23. CSS custom-property hex fallbacks — drop the belt-and-braces
+
+Split out from #19 pattern 5 once the four class-promotion
+patterns landed. Two surfaces:
+
+- **HTML / SVG-attribute fallbacks** — `var(--blue, #1577b8)` /
+  `var(--blue-cool, #5e8aa0)` / `var(--text-dim, #666e66)` /
+  `var(--surface, #ffffff)` / `var(--text-bright, #1d251f)` /
+  `var(--text, #38423a)` / etc. appear ~392 times across the
+  HTML pages (counts: 167 text-dim, 133 blue, 92 blue-cool, 83
+  surface, 44 text-bright, 37 text). Highest density on the
+  education-page SVG schematics where every stroke / fill
+  declaration carries the same fallback hex. CSS custom
+  properties have had universal browser support for years; the
+  fallbacks are belt-and-braces that now serve mainly as a
+  drift surface vs. the source-of-truth in `styles.css:18-37`.
+- **Canvas-drawing JS fallbacks** — two spots redeclare the
+  same hex strings as defaults on `getPropertyValue` reads:
+  - `html/scripts/pid-chart.js:52-58` — 5 reads: `--surface`
+    (#ffffff), `--border` (#ccd7c8), `--text-dim` (#666e66),
+    `--accent` (#43881c), `--accent-dim` (rgba…).
+  - `html/tools/psychrometric-chart.html:950-958` — 7 reads:
+    same 4 above plus `--border-faint` (#e3e8df), `--blue`
+    (#1577b8), `--heat` (#c8782a).
+
+**Why it matters:** each fallback is harmless alone; the drift
+surface is what costs — if `--surface` is ever retuned in
+`styles.css`, three+ inline hex copies (HTML SVGs + the two
+canvas-JS spots) silently disagree with the source-of-truth.
+
+**Priority:** LOW (no live bug; small risk; mechanical sweep).
+
+**Recommended action:** delete the `, #hex` fallback portion
+from every `var(--x, #hex)` site in HTML/SVG attributes — leave
+just `var(--x)`. In the canvas-JS spots, drop the second
+argument to the `cv()` helper (i.e., trust
+`getPropertyValue('--x')` to return a non-empty string at
+runtime, since `:root` defines all the vars unconditionally).
+Could ship as one mechanical commit per surface (one for HTML
+SVGs, one for canvas-JS) plus a docs note retiring the fallback
+convention.
 
 ---
 

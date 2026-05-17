@@ -183,19 +183,19 @@ nav: education
         </div>
         <div class="tool-body">
 
-            <p style="font-size:1.0rem;line-height:1.85;color:var(--text);max-width:640px;margin-bottom:1.75rem;">
+            <p class="page-intro">
                 "Hydronic" systems use water to transfer thermal energy throughout a building. We'll focus on the heating side — I understand boilers more than chillers — but most of the ideas transfer to chilled water just the same. The equipment is the easy part: a boiler or chiller adds or removes heat from the water, pumps push it, coils take what they need. The part that trips people up is the <em>piping topology</em> — how the loops are arranged, and why. Get the topology and a wall of pumps and tees stops looking like spaghetti and starts looking like three or four moves repeated. Here are the three you'll meet most.
             </p>
 
             <!-- ───────────────── 1 · 2-Pipe Direct Return ───────────────── -->
             <h2 class="subhead" id="d1">2-Pipe Direct Return</h2>
 
-            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);">
+            <p>
                 The simplest layout. The source — a boiler (or a chiller; the picture is the same for chilled water) — feeds a <em>supply main</em> that runs past every load. Each load taps off the supply, does its job, and dumps into a <em>return main</em> that heads straight back to the source. "Direct return" is exactly that: each load's return is "go back the way you came."
             </p>
 
-            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:1.25rem;">
-                The catch: the nearest load has a short total trip — a little out, a little back. The farthest load's water has to cross the whole building and the whole length back. Water, like current, takes the path of least resistance, so the near load <em>gets too much flow</em> and the far load <em>gets too little</em> — left alone, this layout self-unbalances. Every load needs a <a href="/education/balancing.html" style="color:var(--accent);">balancing valve</a>, and somebody has to set them. Cheap to pipe, fussy to commission.
+            <p style="margin-top:1.25rem;">
+                The catch: the nearest load has a short total trip — a little out, a little back. The farthest load's water has to cross the whole building and the whole length back. Water, like current, takes the path of least resistance, so the near load <em>gets too much flow</em> and the far load <em>gets too little</em> — left alone, this layout self-unbalances. Every load needs a <a href="/education/balancing.html">balancing valve</a>, and somebody has to set them. Cheap to pipe, fussy to commission.
             </p>
 
             <!-- Diagram 1: 2-pipe direct return. Conventions set here propagate to the other two:
@@ -274,12 +274,12 @@ nav: education
             <!-- ───────────────── 2 · 2-Pipe Reverse Return ───────────────── -->
             <h2 class="subhead" id="d2">2-Pipe Reverse Return</h2>
 
-            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);">
+            <p>
                 Same supply main, same loads. The trick is in the return: instead of running back toward the source, the return main keeps going <em>the same direction as the supply</em> — past every load — and only then loops the long way home. So the first load supplied is the last to return, and the last supplied is the first to return. Add up the pipe each load's water travels and it comes out about the same for everyone.
             </p>
 
-            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:1.25rem;">
-                Roughly equal path length means roughly equal resistance, which means the loads naturally split flow close to evenly — "self-balancing." (You'll still want <a href="/education/balancing.html" style="color:var(--accent);">balancing valves</a>, but they're trimming, not doing the heavy lifting.) The price: that loop-back is a whole extra run of pipe — you're essentially doubling the return — so it costs more to install. Trade commissioning effort for pipe and labor; pick your poison.
+            <p style="margin-top:1.25rem;">
+                Roughly equal path length means roughly equal resistance, which means the loads naturally split flow close to evenly — "self-balancing." (You'll still want <a href="/education/balancing.html">balancing valves</a>, but they're trimming, not doing the heavy lifting.) The price: that loop-back is a whole extra run of pipe — you're essentially doubling the return — so it costs more to install. Trade commissioning effort for pipe and labor; pick your poison.
             </p>
 
             <svg class="edu-svg" viewBox="0 0 700 360" role="img" aria-labelledby="d2-title d2-desc"
@@ -355,10 +355,10 @@ nav: education
             <!-- ─────── 3 · Primary-Secondary — the "Twin-T" Boiler Injection ─────── -->
             <h2 class="subhead" id="d3">Primary-Secondary — the "Twin-T" Boiler Injection</h2>
 
-            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);">
+            <p>
                 Here's the one that takes people forever. The natural assumption — and it's wrong — is that the whole building's water flows <em>through the boiler</em>: the boiler is just the spot in the loop where the water gets heated, like a kettle on the way around. It isn't. If it were, a <span data-us="100-GPM" data-metric="6.3-L/s">100-GPM</span> boiler couldn't serve a <span data-us="200-GPM" data-metric="12.6-L/s">200-GPM</span> building, and a boiler that hates low flow and thermal shock would get both every time the building turned down. So that's not how it's piped.
             </p>
-            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:0.9rem;">
+            <p style="margin-top:0.9rem;">
                 The boiler sits on its own <em>short</em> loop — the <em>primary</em> — with its own dedicated <em>boiler pump</em> keeping flow through the boiler constant, always, no matter what the building is doing. That constant flow is what protects the boiler. A separate <em>injection pump</em> taps hot water off the primary and pushes it into the <em>system</em> loop — the building loop — which has its own <em>system pump</em> moving water through the loads. At any moment, only the slice of flow the injection pump is pulling ever touches the boiler; the rest of the building's water is just circulating through the loads, mixing with whatever hot water the injection pump adds. The two tees where the loops meet sit right next to each other — the "closely-spaced tees," the "common pipe," the "twin-T" — so close that there's essentially no pressure drop between them. That's the whole mechanism: with no pressure difference across that little stub, the three pumps — boiler, injection, system — each do their own thing instead of fighting each other's discharge pressure.
             </p>
 
@@ -374,7 +374,7 @@ nav: education
                 <p style="font-size:0.86rem;line-height:1.7;">Colder outside, building wants more heat? The injection pump speeds up — pulls more hot water from the primary into the system — and the supply temperature to the loads climbs. The boiler's flow rate never changes. The injection pump is the control point.</p>
             </div>
 
-            <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:1.25rem;">
+            <p style="margin-top:1.25rem;">
                 Why it matters on the floor: those closely-spaced tees look like a mistake the first time you see them — like somebody piped a short-circuit straight across the boiler. They aren't. That little stub of common pipe is the <em>entire reason</em> a building whose demand swings all day can be served by a boiler that insists on a steady diet. Recognize the twin-T and the rest of the plant snaps into focus; miss it and you'll spend an afternoon convinced the pipefitter botched it.
             </p>
 
@@ -484,7 +484,7 @@ nav: education
 
             <div class="callout" style="margin-top:1.5rem;">
                 <p style="font-size:0.86rem;line-height:1.7;">
-                    Do you see a difference with this system I didn't mention? <a href="/education/load-piping.html" style="color:var(--accent);">Find out what it is →</a>
+                    Do you see a difference with this system I didn't mention? <a href="/education/load-piping.html">Find out what it is →</a>
                 </p>
             </div>
 

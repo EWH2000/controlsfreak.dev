@@ -478,6 +478,22 @@ Light-only (`color-scheme: light`); no dark variant.
   Widget INTERNALS (LCDs, keypads, branch states, valve pills,
   temperature swatches, pump-curve canvases) stay in each page's
   `{% block head %}` since only that page uses them.
+- **Prose typography classes** (`.page-intro`, `.tool-body p`,
+  `.tool-body a`, `.result-formula.flush`, `.result-formula.wrap`)
+  — the body-prose shape (`font-size:0.95rem;line-height:1.8;
+  color:var(--text);`) lives in `.tool-body p`, the accent colour
+  on body anchors lives in `.tool-body a`, and the wider lead
+  paragraph at the top of an education page wears
+  `<p class="page-intro">`. Use these instead of inlining the
+  same triplet. The two `.result-formula` modifiers cover the
+  ways a worked-formula block needs to break the default chrome:
+  `.flush` for "sits flat under a tabbed Output panel" and
+  `.wrap` for "long readable expressions, break on word
+  boundaries." The page-local utility classes `p.bit-hint`,
+  `p.pid-note`, `p.ref-note` are element-qualified (the `p` is
+  load-bearing) so they tie `.tool-body p` on specificity and
+  win on cascade — keep that shape when adding new small-text
+  utility paragraphs.
 
 For the full component vocabulary, read `styles.css` — it's terse and
 well-grouped.
