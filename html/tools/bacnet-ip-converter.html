@@ -23,8 +23,8 @@ nav: tools
         </div>
 
         <div class="tabs tabs-flush">
-            <button class="tab-btn active" id="bacnet-tab-hex2ip">Hex → IP</button>
-            <button class="tab-btn" id="bacnet-tab-ip2hex">IP → Hex</button>
+            <button class="tab-btn active" data-tab="hex2ip">Hex → IP</button>
+            <button class="tab-btn"        data-tab="ip2hex">IP → Hex</button>
         </div>
 
         <!-- ── Hex → IP ── -->
@@ -252,8 +252,9 @@ nav: tools
                 `  ·  port ${port} = 0x${portHex}` + (isDefault ? ' (default BACnet/IP port)' : '');
         }
 
-        document.getElementById('bacnet-tab-hex2ip').addEventListener('click', e => switchTab('hex2ip', e.currentTarget));
-        document.getElementById('bacnet-tab-ip2hex').addEventListener('click', e => switchTab('ip2hex', e.currentTarget));
+        document.querySelectorAll('[data-tab]').forEach(btn => {
+            btn.addEventListener('click', e => switchTab(e.currentTarget.dataset.tab, e.currentTarget));
+        });
         document.getElementById('b2i-hex').addEventListener('input', bacnetHexToIp);
         document.getElementById('b2i-copy-ip').addEventListener('click', e => copyReadouts(e.currentTarget, '', 'b2i-ip'));
         document.getElementById('b2i-copy-ip-port').addEventListener('click', e => copyReadouts(e.currentTarget, ':', 'b2i-ip', 'b2i-port'));
