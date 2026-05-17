@@ -1236,6 +1236,22 @@ The first is more semantically rich and matches the existing
 field-label idiom; the second is one-line per site. Either way, the
 visual stays identical.
 
+**Resolution (2026-05-17):** landed as a hybrid of the two
+recommended actions. The audit entry's option A would have
+class-swapped `ps-label` → `field-label`, but `.field-label`
+(grouped with the bare `label` selector) renders mono / 0.66rem /
+uppercase / 0.1em letter-spacing while `.ps-label` renders sans /
+0.82rem / normal-case / normal letter-spacing — inside a `.ps-row`
+context the swap would have visually orphaned the toggle caption
+from its adjacent `.ps-label` siblings in the same `.psy-editor`.
+Picked up the *semantic* improvement of option A (`role="group"` +
+`aria-labelledby` on the row, `id=` on the caption) but kept the
+`.ps-label` class so the visual is unchanged. Three sites updated
+(`cc-toggle-label` / `hc-toggle-label` / `hum-toggle-label`).
+Screen reader now announces "Cooling coil, group" → "On, checkbox"
+instead of orphan text + "On checkbox". The same logic informs the
+#26 resolution.
+
 ### 26. Thermistor "Look up by" caption uses `ps-label` where CLAUDE.md says `field-label`
 
 `html/tools/thermistor-calculator.html:92-98` — the row that
