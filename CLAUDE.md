@@ -306,7 +306,27 @@ file.
   "the bg color" rather than `--bg` when referring to a custom
   property in a comment.
 - **Turnstile never goes idle** — for Playwright on `contact.html` use
-  `waitUntil: 'domcontentloaded'`, not `'networkidle'`.
+  `waitUntil: 'domcontentloaded'`, not `'networkidle'`. Turnstile also
+  produces unfilterable `pageerror` + `console.error` noise against
+  `challenges.cloudflare.com` in the local-test environment (it can't
+  reach its challenge server from localhost), so the smoke loop's
+  `contact loads cleanly` empty-errors-array assertion passes only
+  because the assertion runs before Turnstile's failure surfaces;
+  do not extend the `watchErrors` helper pattern to `contact.spec.js`
+  behavioral tests.
+- **Mass id-rename substitutions must cover template literals too.**
+  The #16 kebab-case sweep used a quote-aware Python helper
+  (`'X'`, `"X"`, `#X` patterns) that by design leaves bare JS
+  identifiers alone — but template-literal id constructions
+  (`` `${prefix}-secondLbl` ``) live in neither shape and slipped past.
+  Caught one site on `pid-basics.html` during #16 by hand
+  (`'m' + n + 'Slider'` → `` `m${n}-slider` ``); a second site on
+  `psychrometric-chart.html:752, 1309` slipped through and only
+  surfaced when #20's listener-attach work caught the resulting
+  `null.textContent =` pageerror. Future mass renames: grep
+  `` `\$\{[^}]+\}[^`]*[A-Z]`` (template literal containing an
+  interpolation followed by a capital letter) for id constructions
+  before sweeping.
 - **Selectors targeting SVG geometry are attribute-only, not
   element-qualified.** Pipe runs mix `<line>` and `<path>`, so
   `path[id^="d1-return"]` silently drops half. Use `[id^="d1-return"]`

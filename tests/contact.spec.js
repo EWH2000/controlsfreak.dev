@@ -19,22 +19,27 @@ test('empty submit triggers built-in validation and makes no network call', asyn
     page.on('request', (r) => { if (r.url().includes('/api/contact')) apiCalled = true; });
 
     await page.click('#contact-form button[type="submit"]');
-    await page.waitForTimeout(300);
 
     // Required fields are empty, so the browser blocks submission before our
     // onsubmit handler runs: no fetch, the result panel stays hidden, and the
-    // form reports itself invalid.
+    // form reports itself invalid. No hard wait — the toBeHidden() check
+    // auto-retries; checkValidity() and apiCalled are settled the moment the
+    // synchronous click handler returns (browser-side validation is
+    // synchronous; if it had submitted the form, a fetch would have already
+    // been queued and the `request` listener triggered).
+    await expect(page.locator('#contact-result')).toBeHidden();
     expect(apiCalled).toBe(false);
     expect(await page.evaluate(() => document.getElementById('contact-form').checkValidity())).toBe(false);
-    await expect(page.locator('#contact-result')).toBeHidden();
 });
 
-// SKIPPED: this exercises POST /api/contact, which only exists on the Worker.
-// The local python http.server can't serve it. Run this against a deployed
-// Worker (or `wrangler dev`) to verify the honeypot path:
-//   filling the hidden "website" field should get back { ok: true } and no
-//   email should be sent.
-test.skip('honeypot submission returns { ok: true } without sending mail', async ({ page }) => {
+// TODO: this exercises POST /api/contact, which only exists on the Worker.
+// The local python http.server can't serve it. test.fixme (not test.skip)
+// marks the test as "expected to pass once the wrangler-dev fixture exists";
+// Playwright reports it with a fixme annotation that nudges follow-up.
+// Run against a deployed Worker (or `wrangler dev`) to verify the honeypot
+// path: filling the hidden "website" field should get back { ok: true } and
+// no email should be sent.
+test.fixme('honeypot submission returns { ok: true } without sending mail', async ({ page }) => {
     await page.goto(CONTACT_URL);
     const data = await page.evaluate(async () => {
         const body = new URLSearchParams({

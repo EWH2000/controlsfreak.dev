@@ -749,7 +749,7 @@ nav: tools
 
         function onModeChange(prefix) {
             const meta = SECOND_PROP[document.getElementById(`${prefix}-mode`).value];
-            document.getElementById(`${prefix}-secondLbl`).textContent = meta.label;
+            document.getElementById(`${prefix}-second-lbl`).textContent = meta.label;
             const inp = document.getElementById(`${prefix}-second`);
             inp.step = meta.step;
             // re-format the second value from the most-recent valid state, so changing
@@ -1306,7 +1306,7 @@ nav: tools
             for (const prefix of ['oa', 'ra', 'cc']) {
                 const mode = document.getElementById(`${prefix}-mode`).value;
                 const meta = SECOND_PROP[mode];
-                const lblEl = document.getElementById(`${prefix}-secondLbl`);
+                const lblEl = document.getElementById(`${prefix}-second-lbl`);
                 const inpEl = document.getElementById(`${prefix}-second`);
                 if (lblEl) lblEl.textContent = meta.label;
                 if (inpEl) inpEl.step = meta.step;
