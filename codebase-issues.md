@@ -572,7 +572,7 @@ verify … --!>`) now lives under CLAUDE.md "Conventions →
 Placeholder-content markers" so future audits look for both `//`
 and the canonical TODO/FIXME/XXX in the same sweep.
 
-### 15. PID engine extraction owed by Block C #5 precedent
+### 15. PID engine extraction owed by Block C #5 precedent *(addressed 2026-05-17)*
 
 Block C #5 set the precedent: when two pages share the same surface,
 consolidate. Two PID surfaces still share substantial code:
@@ -601,6 +601,20 @@ calls for adjacent topics) would mean three copies.
   `html/scripts/pid-chart.js`; options control the mini-sim
   variant (smaller grid, no legend, no settling marker). Both pages
   call the same function with different `opts`.
+
+**Resolution (2026-05-17):** all three pieces landed.
+`html/scripts/pid-engine.js` gained `PID_DMAX` (next to `PID_PROC`)
+and `fmtDur(sec)` — both pages now read from these instead of
+carrying their own copies (`MINI3_DMAX` and the two `fmtDur` clones
+are gone). A new `html/scripts/pid-chart.js` exports
+`drawPidChart(canvas, sim, opts)` with `opts.variant` in
+`{'full','mini'}` and `opts.shadeOffset` for Sim 1's offset band;
+the tuner calls it with `{variant:'full'}` and the three Education
+mini-sims call it with `{variant:'mini', shadeOffset: n===1}`. The
+hex fallbacks on the CSS-var reads were intentionally preserved —
+that's #19's scope, not this PR's. Net diff: −209/+69 across the
+two pages, +29 lines in pid-engine.js, +new pid-chart.js.
+Codebase-issues #22 (PID tuner SSE unit) folded in (see below).
 
 ### 16. ID naming convention chaos across pages
 
@@ -805,7 +819,7 @@ small).
 **Recommended action:** address alongside #11 / #12 in one focused
 a11y commit.
 
-### 22. PID tuner Steady-State Error readout is unit-less and metric-unaware
+### 22. PID tuner Steady-State Error readout is unit-less and metric-unaware *(addressed 2026-05-17)*
 
 `html/tools/pid-tuner.html:273` renders the steady-state error as a
 bare number (`(sim.ssErr > 0 ? '+' : '') + sim.ssErr.toFixed(sim.dec)`)
@@ -842,6 +856,18 @@ offset as `-sim.ssErr`; the tuner's existing convention is `+sim.ssErr`
 Small standalone chunk — or fold into the broader #15 PID-engine
 extraction if that lands first (a shared `formatPidReadout(sim,
 procKey)` helper would naturally cover both surfaces).
+
+**Resolution (2026-05-17):** folded into #15. The shared helper
+landed as `formatPidDelta(canonicalValue, sim, procKey)` in
+`html/scripts/pid-chart.js`, alongside `pidUnit(procKey)` and
+`pidConvertDelta(value, procKey)`. The tuner's `runPidSim` now
+calls it with `+sim.ssErr` (PV-above-SP sign convention preserved),
+plus an `unitschange` listener that refreshes the readout without
+re-running the simulation (engine is canonical, so a units flip is
+display-only). `pid-basics.html` migrated to the same helper called
+with `-sim.ssErr` (its offset-below-SP convention), so the two
+PID surfaces share one formatter. Verified: tuner SSE reads
+"+0.8 °F" in US mode and "+0.5 °C" in metric.
 
 ---
 
