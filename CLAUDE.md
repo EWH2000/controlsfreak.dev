@@ -209,6 +209,25 @@ file.
   default would break it.
 - **Indentation: 4 spaces** everywhere — HTML, CSS, JS, Nunjucks
   template syntax.
+- **ID naming: kebab-case site-wide.** Every `id="…"` is lowercase
+  ASCII letters, digits, and hyphens. Hyphens separate words;
+  digits attach without a hyphen when they're part of a token
+  (`d1`, `pc-w1`, `bal-f4-sup-a`). No underscores, no camelCase.
+  Per-page id prefixes align with the widget-CSS prefixes already
+  in `styles.css` (`pc-*` for pump-control, `bal-*` for balancing,
+  `vfd-*` / `vfdm-*` for the VFD pair, `d3-w-*` for the
+  hydronic-loops twin-T widget, `lp-*` for load-piping, `pid-*` /
+  `m1-*`–`m3-*` for the PID pair, `th-*` for thermistor, `mod-*`
+  for modbus, `b2i-*` / `i2h-*` / `bacnet-tab-*` for bacnet,
+  `psy-*` / `oa-*` / `ra-*` / `ma-*` / `cc-*` / `hc-*` / `hum-*` /
+  `ro-*` / `pd-*` for psychrometric, `sig-*` / `so-*` / `ss-*` for
+  signal-scaling). Adopted site-wide 2026-05-17 (codebase-issues
+  #16) — every page renamed in one PR, so the convention is
+  uniform end-to-end. Same id rule applies to in-page JS string
+  literals (`getElementById('…')`, `querySelector('#…')`,
+  template-literal id construction), CSS selectors inside
+  `{% block head %}`, and `aria-labelledby` / `aria-describedby` /
+  `for=` targets.
 - **Vanilla JS only** — no libraries, no client-side frameworks. The
   11ty build templates the shared chrome and does nothing else; JS
   ships to the browser exactly as written, no transpile. Per-page
@@ -521,6 +540,10 @@ well-grouped.
      `pid-chart.js` for a PID surface, `flow-engine.js` for a
      pipe-flow diagram), then the page's inline `<script>`.
    - Anchor `href`s use explicit `.html` extensions.
+   - Element `id`s use kebab-case (lowercase ASCII letters / digits
+     / hyphens, no camelCase). Pick a short page prefix consistent
+     with the widget-CSS prefix in `styles.css`; see Conventions →
+     ID naming for the full per-page table.
 2. For the page's logic, use the IIFE + `addEventListener` pattern
    (see *JS patterns*). Apply validate-and-mute on numeric inputs.
 3. Add a `.nav-card` for the page to the `.card-grid` on

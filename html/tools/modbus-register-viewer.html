@@ -27,31 +27,31 @@ nav: tools
             <section>
                 <h2 class="ps-section-label">Input</h2>
                 <div class="ps-row">
-                    <label class="ps-label" for="modDec">Decimal (0–65535)</label>
-                    <input class="ps-input" type="number" id="modDec" min="0" max="65535" step="1" placeholder="43981">
+                    <label class="ps-label" for="mod-dec">Decimal (0–65535)</label>
+                    <input class="ps-input" type="number" id="mod-dec" min="0" max="65535" step="1" placeholder="43981">
                 </div>
                 <div class="ps-row">
-                    <label class="ps-label" for="modHex">Hex (0x0000–0xFFFF)</label>
-                    <input class="ps-input" type="text" id="modHex" placeholder="0xABCD">
+                    <label class="ps-label" for="mod-hex">Hex (0x0000–0xFFFF)</label>
+                    <input class="ps-input" type="text" id="mod-hex" placeholder="0xABCD">
                 </div>
                 <p class="bit-hint" style="margin-top:0.85rem;">Bit 15 = MSB (top-left) · Bit 0 = LSB (bottom-right) · click to toggle</p>
                 <!-- 8 columns × 2 rows: the 16-bit grid won't stay legible at 16 cells in a third-width column -->
-                <div class="bit-grid" id="bitGrid" style="grid-template-columns:repeat(8, 1fr);"></div>
+                <div class="bit-grid" id="bit-grid" style="grid-template-columns:repeat(8, 1fr);"></div>
             </section>
 
             <section>
                 <h2 class="ps-section-label">Output</h2>
                 <div class="ps-row">
                     <span class="ps-label">Decimal</span>
-                    <span class="ps-value muted" id="readDec">—</span>
+                    <span class="ps-value muted" id="read-dec">—</span>
                 </div>
                 <div class="ps-row">
                     <span class="ps-label">Hex</span>
-                    <span class="ps-value muted" id="readHex">—</span>
+                    <span class="ps-value muted" id="read-hex">—</span>
                 </div>
                 <div class="ps-row">
                     <span class="ps-label">Binary</span>
-                    <span class="ps-value muted" id="readBin">—</span>
+                    <span class="ps-value muted" id="read-bin">—</span>
                 </div>
             </section>
 
@@ -95,7 +95,7 @@ nav: tools
         let bits = new Array(16).fill(0);
 
         function renderBits() {
-            const grid = document.getElementById('bitGrid');
+            const grid = document.getElementById('bit-grid');
             grid.innerHTML = '';
             for (let i = 15; i >= 0; i--) {
                 const cell = document.createElement('div');
@@ -108,16 +108,16 @@ nav: tools
 
         function syncFromBits() {
             const val = bits.reduce((acc, b, i) => acc + (b << i), 0);
-            document.getElementById('modDec').value = val;
-            document.getElementById('modHex').value = '0x' + val.toString(16).toUpperCase().padStart(4, '0');
+            document.getElementById('mod-dec').value = val;
+            document.getElementById('mod-hex').value = '0x' + val.toString(16).toUpperCase().padStart(4, '0');
             updateReadouts(val);
             renderBits();
         }
 
         function updateReadouts(val) {
-            const decEl = document.getElementById('readDec');
-            const hexEl = document.getElementById('readHex');
-            const binEl = document.getElementById('readBin');
+            const decEl = document.getElementById('read-dec');
+            const hexEl = document.getElementById('read-hex');
+            const binEl = document.getElementById('read-bin');
             decEl.className = 'ps-value live'; decEl.textContent = val;
             hexEl.className = 'ps-value live'; hexEl.textContent = '0x' + val.toString(16).toUpperCase().padStart(4, '0');
             const bin = val.toString(2).padStart(16, '0');
@@ -126,26 +126,26 @@ nav: tools
         }
 
         function fromDec() {
-            const val = parseInt(document.getElementById('modDec').value);
+            const val = parseInt(document.getElementById('mod-dec').value);
             if (!isFinite(val) || val < 0 || val > 65535) return;
             for (let i = 0; i < 16; i++) bits[i] = (val >> i) & 1;
-            document.getElementById('modHex').value = '0x' + val.toString(16).toUpperCase().padStart(4, '0');
+            document.getElementById('mod-hex').value = '0x' + val.toString(16).toUpperCase().padStart(4, '0');
             updateReadouts(val);
             renderBits();
         }
 
         function fromHex() {
-            let raw = document.getElementById('modHex').value.trim().replace(/^0x/i, '');
+            let raw = document.getElementById('mod-hex').value.trim().replace(/^0x/i, '');
             const val = parseInt(raw, 16);
             if (!isFinite(val) || val < 0 || val > 65535) return;
             for (let i = 0; i < 16; i++) bits[i] = (val >> i) & 1;
-            document.getElementById('modDec').value = val;
+            document.getElementById('mod-dec').value = val;
             updateReadouts(val);
             renderBits();
         }
 
-        document.getElementById('modDec').addEventListener('input', fromDec);
-        document.getElementById('modHex').addEventListener('input', fromHex);
+        document.getElementById('mod-dec').addEventListener('input', fromDec);
+        document.getElementById('mod-hex').addEventListener('input', fromHex);
 
         // ── Init ──
         renderBits();

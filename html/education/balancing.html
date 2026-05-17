@@ -195,7 +195,7 @@ nav: education
 
         /* Local: tighter anecdote-wrap min-height than the shared 1.5rem,
            since the callout sits closer to the bottom of the widget. */
-        #balWidget .widget-anecdote-wrap { min-height: 1rem; margin-top: 0.9rem; }
+        #bal-widget .widget-anecdote-wrap { min-height: 1rem; margin-top: 0.9rem; }
     </style>
 {% endblock %}
 
@@ -508,14 +508,14 @@ nav: education
                 Three identical branches, each sized for the same design flow — <span data-us="30 GPM" data-metric="1.9 L/s">30 GPM</span> at a design Δp of <span data-us="20 ft" data-metric="6.1 m">20 ft</span> of water. One has a CBV, one has an ABV, one has a PICV. Drag the slider to change the available Δp across the branches and watch what each one passes. <span class="bal-w-tag-holding">HOLDING</span> means flow is within ±15 % of design; <span class="bal-w-tag-starved">STARVED</span> is below 85 %; <span class="bal-w-tag-over">OVER</span> is above 115 %.
             </p>
 
-            <div class="widget" id="balWidget">
+            <div class="widget" id="bal-widget">
 
                 <div class="widget-section-label">Available Δp across the load branches</div>
                 <div class="widget-slider-head">
                     <span>System Δp</span>
-                    <span><span class="v" id="balDpVal">20</span> <span id="balDpUnit">ft</span></span>
+                    <span><span class="v" id="bal-dp-val">20</span> <span id="bal-dp-unit">ft</span></span>
                 </div>
-                <input class="widget-slider" id="balDpSlider" type="range" min="1" max="60" step="1" value="20"
+                <input class="widget-slider" id="bal-dp-slider" type="range" min="1" max="60" step="1" value="20"
                        aria-label="System differential pressure across the load branches"/>
                 <div class="bal-w-slider-foot">
                     <span data-us="1 ft" data-metric="0.3 m">1 ft</span>
@@ -528,42 +528,42 @@ nav: education
                 <div class="bal-w-branches">
 
                     <!-- CBV branch -->
-                    <div class="bal-w-branch" id="balBchCbv" data-state="holding">
+                    <div class="bal-w-branch" id="bal-bch-cbv" data-state="holding">
                         <div class="bal-w-bch-tag">CBV</div>
                         <div class="bal-w-bch-mid">
                             <div class="bal-w-bch-flow">
-                                <span id="balCbvQ">30.0</span> <span data-us="GPM" data-metric="L/s">GPM</span>
-                                <span class="pct"><span id="balCbvPct">100</span>% of design</span>
+                                <span id="bal-cbv-q">30.0</span> <span data-us="GPM" data-metric="L/s">GPM</span>
+                                <span class="pct"><span id="bal-cbv-pct">100</span>% of design</span>
                             </div>
-                            <div class="bal-w-bch-bar" aria-hidden="true"><span id="balCbvBar"></span></div>
+                            <div class="bal-w-bch-bar" aria-hidden="true"><span id="bal-cbv-bar"></span></div>
                         </div>
-                        <div class="bal-w-bch-state" id="balCbvState">HOLDING</div>
+                        <div class="bal-w-bch-state" id="bal-cbv-state">HOLDING</div>
                     </div>
 
                     <!-- ABV branch -->
-                    <div class="bal-w-branch" id="balBchAbv" data-state="holding">
+                    <div class="bal-w-branch" id="bal-bch-abv" data-state="holding">
                         <div class="bal-w-bch-tag">ABV</div>
                         <div class="bal-w-bch-mid">
                             <div class="bal-w-bch-flow">
-                                <span id="balAbvQ">30.0</span> <span data-us="GPM" data-metric="L/s">GPM</span>
-                                <span class="pct"><span id="balAbvPct">100</span>% of design</span>
+                                <span id="bal-abv-q">30.0</span> <span data-us="GPM" data-metric="L/s">GPM</span>
+                                <span class="pct"><span id="bal-abv-pct">100</span>% of design</span>
                             </div>
-                            <div class="bal-w-bch-bar" aria-hidden="true"><span id="balAbvBar"></span></div>
+                            <div class="bal-w-bch-bar" aria-hidden="true"><span id="bal-abv-bar"></span></div>
                         </div>
-                        <div class="bal-w-bch-state" id="balAbvState">HOLDING</div>
+                        <div class="bal-w-bch-state" id="bal-abv-state">HOLDING</div>
                     </div>
 
                     <!-- PICV branch -->
-                    <div class="bal-w-branch" id="balBchPicv" data-state="holding">
+                    <div class="bal-w-branch" id="bal-bch-picv" data-state="holding">
                         <div class="bal-w-bch-tag">PICV</div>
                         <div class="bal-w-bch-mid">
                             <div class="bal-w-bch-flow">
-                                <span id="balPicvQ">30.0</span> <span data-us="GPM" data-metric="L/s">GPM</span>
-                                <span class="pct"><span id="balPicvPct">100</span>% of design</span>
+                                <span id="bal-picv-q">30.0</span> <span data-us="GPM" data-metric="L/s">GPM</span>
+                                <span class="pct"><span id="bal-picv-pct">100</span>% of design</span>
                             </div>
-                            <div class="bal-w-bch-bar" aria-hidden="true"><span id="balPicvBar"></span></div>
+                            <div class="bal-w-bch-bar" aria-hidden="true"><span id="bal-picv-bar"></span></div>
                         </div>
-                        <div class="bal-w-bch-state" id="balPicvState">HOLDING</div>
+                        <div class="bal-w-bch-state" id="bal-picv-state">HOLDING</div>
                     </div>
 
                 </div>
@@ -573,7 +573,7 @@ nav: education
                      session, stays pinned — yanking it back on the next slider tweak would
                      undo the discovery. -->
                 <div class="widget-anecdote-wrap">
-                    <div class="widget-anecdote warn" id="balAnecdote" hidden>
+                    <div class="widget-anecdote warn" id="bal-anecdote" hidden>
                         <strong>True story.</strong> A multi-floor heating system, CBV-balanced years back and never re-touched. The pumps got knocked off setpoint one season — somebody had been chasing energy numbers — and available Δp at the far branches dropped enough that flow at the last load fell off a cliff. Cold night, low flow, the far-end coil froze solid and burst. Not my fault, but I caught the cleanup. The pattern is right here in the widget: a CBV can't tell the difference between design pressure and half of it, it just passes whatever its orifice equation allows. A PICV would have held minimum flow all the way down.
                     </div>
                 </div>
@@ -791,15 +791,15 @@ nav: education
         let anecdoteShown = false;
 
         // ── DOM references ────────────────────────────────────────────
-        const slider   = document.getElementById('balDpSlider');
-        const dpVal    = document.getElementById('balDpVal');
-        const dpUnit   = document.getElementById('balDpUnit');
-        const anecdote = document.getElementById('balAnecdote');
+        const slider   = document.getElementById('bal-dp-slider');
+        const dpVal    = document.getElementById('bal-dp-val');
+        const dpUnit   = document.getElementById('bal-dp-unit');
+        const anecdote = document.getElementById('bal-anecdote');
 
         const branches = [
-            { key: 'cbv',  flowFn: flowCbv,  qEl: document.getElementById('balCbvQ'),  pctEl: document.getElementById('balCbvPct'),  barEl: document.getElementById('balCbvBar'),  stateEl: document.getElementById('balCbvState'),  rowEl: document.getElementById('balBchCbv')  },
-            { key: 'abv',  flowFn: flowAbv,  qEl: document.getElementById('balAbvQ'),  pctEl: document.getElementById('balAbvPct'),  barEl: document.getElementById('balAbvBar'),  stateEl: document.getElementById('balAbvState'),  rowEl: document.getElementById('balBchAbv')  },
-            { key: 'picv', flowFn: flowPicv, qEl: document.getElementById('balPicvQ'), pctEl: document.getElementById('balPicvPct'), barEl: document.getElementById('balPicvBar'), stateEl: document.getElementById('balPicvState'), rowEl: document.getElementById('balBchPicv') }
+            { key: 'cbv',  flowFn: flowCbv,  qEl: document.getElementById('bal-cbv-q'),  pctEl: document.getElementById('bal-cbv-pct'),  barEl: document.getElementById('bal-cbv-bar'),  stateEl: document.getElementById('bal-cbv-state'),  rowEl: document.getElementById('bal-bch-cbv')  },
+            { key: 'abv',  flowFn: flowAbv,  qEl: document.getElementById('bal-abv-q'),  pctEl: document.getElementById('bal-abv-pct'),  barEl: document.getElementById('bal-abv-bar'),  stateEl: document.getElementById('bal-abv-state'),  rowEl: document.getElementById('bal-bch-abv')  },
+            { key: 'picv', flowFn: flowPicv, qEl: document.getElementById('bal-picv-q'), pctEl: document.getElementById('bal-picv-pct'), barEl: document.getElementById('bal-picv-bar'), stateEl: document.getElementById('bal-picv-state'), rowEl: document.getElementById('bal-bch-picv') }
         ];
 
         function redraw() {

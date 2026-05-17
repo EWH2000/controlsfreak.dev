@@ -83,15 +83,15 @@ nav: education
 
             <div class="slider-field" style="margin-bottom:1.1rem;">
                 <div class="slider-head">
-                    <label for="m1Slider">Gain (Kc)</label>
-                    <span class="slider-val" id="m1Val">2.0</span>
+                    <label for="m1-slider">Gain (Kc)</label>
+                    <span class="slider-val" id="m1-val">2.0</span>
                 </div>
-                <input type="range" id="m1Slider" min="0" max="20" step="0.1" value="2">
-                <span class="slider-sub" id="m1Sub"></span>
+                <input type="range" id="m1-slider" min="0" max="20" step="0.1" value="2">
+                <span class="slider-sub" id="m1-sub"></span>
             </div>
 
             <div class="sim-canvas-wrap">
-                <canvas id="m1Canvas" style="height:160px;"></canvas>
+                <canvas id="m1-canvas" style="height:160px;"></canvas>
             </div>
             <div class="sim-legend" style="margin-bottom:1rem;">
                 <span><span class="swatch pv"></span>Process Variable</span>
@@ -100,7 +100,7 @@ nav: education
 
             <div class="ps-row">
                 <span class="ps-label">Steady-state offset</span>
-                <span class="ps-value live" id="m1Offset">—</span>
+                <span class="ps-value live" id="m1-offset">—</span>
             </div>
             <p class="ref-note" style="margin-top:0.5rem;padding-top:0;border-top:none;">P alone can't close this — that gap is exactly what integral is for.</p>
         </div>
@@ -129,15 +129,15 @@ nav: education
 
             <div class="slider-field" style="margin-bottom:1.1rem;">
                 <div class="slider-head">
-                    <label for="m2Slider">Reset (rep/min) · gain 2.0 fixed</label>
-                    <span class="slider-val" id="m2Val">1.00</span>
+                    <label for="m2-slider">Reset (rep/min) · gain 2.0 fixed</label>
+                    <span class="slider-val" id="m2-val">1.00</span>
                 </div>
-                <input type="range" id="m2Slider" min="0" max="6" step="0.05" value="1">
-                <span class="slider-sub" id="m2Sub"></span>
+                <input type="range" id="m2-slider" min="0" max="6" step="0.05" value="1">
+                <span class="slider-sub" id="m2-sub"></span>
             </div>
 
             <div class="sim-canvas-wrap">
-                <canvas id="m2Canvas" style="height:160px;"></canvas>
+                <canvas id="m2-canvas" style="height:160px;"></canvas>
             </div>
             <div class="sim-legend" style="margin-bottom:1rem;">
                 <span><span class="swatch pv"></span>Process Variable</span>
@@ -146,11 +146,11 @@ nav: education
 
             <div class="ps-row">
                 <span class="ps-label">Steady-state offset</span>
-                <span class="ps-value live" id="m2Offset">—</span>
+                <span class="ps-value live" id="m2-offset">—</span>
             </div>
             <div class="ps-row">
                 <span class="ps-label">Overshoot</span>
-                <span class="ps-value live" id="m2Over">—</span>
+                <span class="ps-value live" id="m2-over">—</span>
             </div>
             <p class="ref-note" style="margin-top:0.5rem;padding-top:0;border-top:none;">Offset goes to zero — but the overshoot is the new problem to watch.</p>
         </div>
@@ -180,15 +180,15 @@ nav: education
 
             <div class="slider-field" style="margin-bottom:1.1rem;">
                 <div class="slider-head">
-                    <label for="m3Slider">Rate (Td, min) · gain 2.0 / reset 4.0 fixed</label>
-                    <span class="slider-val" id="m3Val">0.00</span>
+                    <label for="m3-slider">Rate (Td, min) · gain 2.0 / reset 4.0 fixed</label>
+                    <span class="slider-val" id="m3-val">0.00</span>
                 </div>
-                <input type="range" id="m3Slider" min="0" max="0.5" step="0.01" value="0">
-                <span class="slider-sub" id="m3Sub"></span>
+                <input type="range" id="m3-slider" min="0" max="0.5" step="0.01" value="0">
+                <span class="slider-sub" id="m3-sub"></span>
             </div>
 
             <div class="sim-canvas-wrap">
-                <canvas id="m3Canvas" style="height:160px;"></canvas>
+                <canvas id="m3-canvas" style="height:160px;"></canvas>
             </div>
             <div class="sim-legend" style="margin-bottom:1rem;">
                 <span><span class="swatch pv"></span>Process Variable</span>
@@ -197,11 +197,11 @@ nav: education
 
             <div class="ps-row">
                 <span class="ps-label">Overshoot</span>
-                <span class="ps-value live" id="m3Over">—</span>
+                <span class="ps-value live" id="m3-over">—</span>
             </div>
             <div class="ps-row">
                 <span class="ps-label">Settling time (±2%)</span>
-                <span class="ps-value live" id="m3Settle">—</span>
+                <span class="ps-value live" id="m3-settle">—</span>
             </div>
             <p class="ref-note" style="margin-top:0.5rem;padding-top:0;border-top:none;">A little D crushes the overshoot at almost no cost; overdo it and the loop just turns sluggish. The rate slider's range scales with the loop — derivative worth using on a 45-second process is a rounding error on a 4-minute one, which is part of why slow HVAC loops mostly run PI.</p>
         </div>
@@ -252,7 +252,7 @@ nav: education
             btn.closest('.btn-row').querySelectorAll('.copy-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             if (n === 3) {                                  // re-range the rate slider, keeping its position (fraction of range)
-                const s = document.getElementById('m3Slider');
+                const s = document.getElementById('m3-slider');
                 const frac = parseFloat(s.max) > 0 ? parseFloat(s.value) / parseFloat(s.max) : 0;
                 s.max = PID_DMAX[key];
                 s.value = (frac * PID_DMAX[key]).toFixed(2);
@@ -263,7 +263,7 @@ nav: education
         // ── Run one mini-sim: read its slider → run the engine → draw + show metrics ──
         function runMini(n) {
             const cfg = MINI[n];
-            cfg[MINI_KNOB[n]] = parseFloat(document.getElementById('m' + n + 'Slider').value);
+            cfg[MINI_KNOB[n]] = parseFloat(document.getElementById(`m${n}-slider`).value);
             updateMiniSlider(n, cfg);
             const sim = simulatePid(PID_PROC[cfg.proc], cfg.gain, cfg.rep, cfg.rate);
             miniLast[n] = sim;
@@ -273,7 +273,7 @@ nav: education
 
         // Sim 1 gets the offset-shading flag; Sims 2 & 3 don't.
         function drawMini(n, sim) {
-            drawPidChart(document.getElementById('m' + n + 'Canvas'), sim, {
+            drawPidChart(document.getElementById(`m${n}-canvas`), sim, {
                 variant: 'mini',
                 shadeOffset: n === 1,
             });
@@ -285,14 +285,14 @@ nav: education
         function updateMiniSlider(n, cfg) {
             const set = (id, t) => { document.getElementById(id).textContent = t; };
             if (n === 1) {
-                set('m1Val', cfg.gain.toFixed(1));
-                set('m1Sub', cfg.gain > 0 ? `prop. band ≈ ${Math.round(100 / cfg.gain)} %  ·  no integral, no rate` : 'gain is zero — the output never moves');
+                set('m1-val', cfg.gain.toFixed(1));
+                set('m1-sub', cfg.gain > 0 ? `prop. band ≈ ${Math.round(100 / cfg.gain)} %  ·  no integral, no rate` : 'gain is zero — the output never moves');
             } else if (n === 2) {
-                set('m2Val', cfg.rep.toFixed(2));
-                set('m2Sub', cfg.rep > 0 ? `reset time ≈ ${fmtTi(cfg.rep)}  ·  no rate` : 'integral off — this is just Sim 1 again');
+                set('m2-val', cfg.rep.toFixed(2));
+                set('m2-sub', cfg.rep > 0 ? `reset time ≈ ${fmtTi(cfg.rep)}  ·  no rate` : 'integral off — this is just Sim 1 again');
             } else {
-                set('m3Val', cfg.rate.toFixed(2));
-                set('m3Sub', cfg.rate > 0 ? `derivative time ≈ ${Math.round(cfg.rate * 60)} s` : 'derivative off — the aggressive P + I, left to oscillate');
+                set('m3-val', cfg.rate.toFixed(2));
+                set('m3-sub', cfg.rate > 0 ? `derivative time ≈ ${Math.round(cfg.rate * 60)} s` : 'derivative off — the aggressive P + I, left to oscillate');
             }
         }
 
@@ -305,19 +305,19 @@ nav: education
             const fmtPct = v => v < 0.05 ? 'none' : v.toFixed(1) + ' %';
             const fmtOffset = formatPidDelta(-sim.ssErr, sim, procKey);
             if (n === 1) {
-                set('m1Offset', fmtOffset);
+                set('m1-offset', fmtOffset);
             } else if (n === 2) {
-                set('m2Offset', Math.abs(sim.ssErr) < 0.02 * sim.step ? `≈ 0 ${pidUnit(procKey)}` : fmtOffset);
-                set('m2Over', fmtPct(sim.overshoot));
+                set('m2-offset', Math.abs(sim.ssErr) < 0.02 * sim.step ? `≈ 0 ${pidUnit(procKey)}` : fmtOffset);
+                set('m2-over', fmtPct(sim.overshoot));
             } else {
-                set('m3Over', fmtPct(sim.overshoot));
-                set('m3Settle', sim.settled === null ? '> ' + fmtDur(sim.win) : fmtDur(sim.settled));
+                set('m3-over', fmtPct(sim.overshoot));
+                set('m3-settle', sim.settled === null ? '> ' + fmtDur(sim.win) : fmtDur(sim.settled));
             }
         }
 
-        document.getElementById('m1Slider').addEventListener('input', () => runMini(1));
-        document.getElementById('m2Slider').addEventListener('input', () => runMini(2));
-        document.getElementById('m3Slider').addEventListener('input', () => runMini(3));
+        document.getElementById('m1-slider').addEventListener('input', () => runMini(1));
+        document.getElementById('m2-slider').addEventListener('input', () => runMini(2));
+        document.getElementById('m3-slider').addEventListener('input', () => runMini(3));
         document.querySelectorAll('[data-mini]').forEach(btn => {
             btn.addEventListener('click', e => {
                 const t = e.currentTarget;

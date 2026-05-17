@@ -48,7 +48,7 @@ nav: education
             letter-spacing: 0.06em;
             text-transform: uppercase;
         }
-        #vfdWidget select {
+        #vfd-widget select {
             width: auto;
             padding: 0.4rem 0.7rem;
             font-size: 0.82rem;
@@ -66,7 +66,7 @@ nav: education
             }
             .vfd-w-sources label { margin-top: 0.4rem; }
             .vfd-w-sources label:first-child { margin-top: 0; }
-            #vfdWidget select {
+            #vfd-widget select {
                 min-width: 0;
                 width: 100%;
             }
@@ -327,24 +327,24 @@ nav: education
                  speed=network) reveals an inline anecdote when the user attempts a network RUN
                  against an open DI — matches the d3 widget's failure-state reward pattern on
                  hydronic-loops. -->
-            <div class="widget" id="vfdWidget">
+            <div class="widget" id="vfd-widget">
                 <div class="widget-try">
                     <span class="lbl">Try this:</span>
-                    <a id="vfdTryKeypad">all keypad (commissioning)</a>
-                    <a id="vfdTryNetwork">all network (BMS auto)</a>
-                    <a id="vfdTryClassic">the classic mistake</a>
+                    <a id="vfd-try-keypad">all keypad (commissioning)</a>
+                    <a id="vfd-try-network">all network (BMS auto)</a>
+                    <a id="vfd-try-classic">the classic mistake</a>
                 </div>
 
                 <div class="vfd-w-sources">
-                    <label for="vfdRunSrc">Run source</label>
-                    <select id="vfdRunSrc" aria-label="Run command source">
+                    <label for="vfd-run-src">Run source</label>
+                    <select id="vfd-run-src" aria-label="Run command source">
                         <option value="keypad">Keypad (front-panel buttons)</option>
                         <option value="terminals" selected>Terminals (digital input)</option>
                         <option value="network">Network (BACnet / Modbus)</option>
                     </select>
 
-                    <label for="vfdSpdSrc">Speed source</label>
-                    <select id="vfdSpdSrc" aria-label="Speed reference source">
+                    <label for="vfd-spd-src">Speed source</label>
+                    <select id="vfd-spd-src" aria-label="Speed reference source">
                         <option value="keypad">Keypad (front-panel buttons)</option>
                         <option value="terminals">Terminals (4–20 mA AI)</option>
                         <option value="network" selected>Network (BACnet / Modbus)</option>
@@ -352,13 +352,13 @@ nav: education
                 </div>
 
                 <div class="vfd-w-section">
-                    <div class="widget-section-label">Speed reference (from <span id="vfdSpdSrcName">network</span>)</div>
+                    <div class="widget-section-label">Speed reference (from <span id="vfd-spd-src-name">network</span>)</div>
                     <div class="widget-slider-head">
                         <span>0 Hz</span>
-                        <span class="v"><span id="vfdSpdVal">25</span> <span style="font-size:0.65em;color:var(--text-dim);font-weight:500;">Hz</span></span>
+                        <span class="v"><span id="vfd-spd-val">25</span> <span style="font-size:0.65em;color:var(--text-dim);font-weight:500;">Hz</span></span>
                         <span>60 Hz</span>
                     </div>
-                    <input class="widget-slider" id="vfdSpdSlider" type="range" min="0" max="60" step="1" value="25" aria-label="Speed reference"/>
+                    <input class="widget-slider" id="vfd-spd-slider" type="range" min="0" max="60" step="1" value="25" aria-label="Speed reference"/>
                 </div>
 
                 <div class="vfd-w-section">
@@ -367,8 +367,8 @@ nav: education
                     <div class="vfd-w-cmd-row">
                         <span class="src">Keypad</span>
                         <span class="ctrls">
-                            <button class="vfd-w-btn" id="vfdKpRun" type="button">▶ RUN</button>
-                            <button class="vfd-w-btn" id="vfdKpStop" type="button">■ STOP</button>
+                            <button class="vfd-w-btn" id="vfd-kp-run" type="button">▶ RUN</button>
+                            <button class="vfd-w-btn" id="vfd-kp-stop" type="button">■ STOP</button>
                         </span>
                     </div>
 
@@ -377,8 +377,8 @@ nav: education
                         <span class="ctrls">
                             <span style="font-family:var(--mono);font-size:0.7rem;color:var(--text-dim);">DI run:</span>
                             <span class="vfd-w-di" role="group" aria-label="Digital input state">
-                                <button id="vfdDiOpen" type="button" class="on">Open</button>
-                                <button id="vfdDiClosed" type="button">Closed</button>
+                                <button id="vfd-di-open" type="button" class="on">Open</button>
+                                <button id="vfd-di-closed" type="button">Closed</button>
                             </span>
                         </span>
                     </div>
@@ -386,8 +386,8 @@ nav: education
                     <div class="vfd-w-cmd-row">
                         <span class="src">Network</span>
                         <span class="ctrls">
-                            <button class="vfd-w-btn" id="vfdNetRun" type="button">Send BACnet RUN</button>
-                            <button class="vfd-w-btn" id="vfdNetStop" type="button">Send BACnet STOP</button>
+                            <button class="vfd-w-btn" id="vfd-net-run" type="button">Send BACnet RUN</button>
+                            <button class="vfd-w-btn" id="vfd-net-stop" type="button">Send BACnet STOP</button>
                         </span>
                     </div>
                 </div>
@@ -404,9 +404,9 @@ nav: education
                              SVG transform attribute (not CSS) so the
                              rotation origin behaves consistently across
                              browsers. -->
-                        <svg class="widget-fan" id="vfdWFan" viewBox="0 0 100 100" width="56" height="56" aria-hidden="true">
+                        <svg class="widget-fan" id="vfd-w-fan" viewBox="0 0 100 100" width="56" height="56" aria-hidden="true">
                             <circle cx="50" cy="50" r="46" fill="none" stroke="var(--border)" stroke-width="2"/>
-                            <g class="widget-fan-blades" id="vfdWFanBlades">
+                            <g class="widget-fan-blades" id="vfd-w-fan-blades">
                                 <ellipse cx="50" cy="22" rx="7" ry="22"/>
                                 <ellipse cx="50" cy="22" rx="7" ry="22" transform="rotate(72 50 50)"/>
                                 <ellipse cx="50" cy="22" rx="7" ry="22" transform="rotate(144 50 50)"/>
@@ -416,13 +416,13 @@ nav: education
                             <circle cx="50" cy="50" r="5" fill="var(--text-dim)"/>
                         </svg>
                         <div class="vfd-w-status-text">
-                            <div class="vfd-w-state" id="vfdState">STOPPED</div>
-                            <div class="vfd-w-msgs" id="vfdMsgs"></div>
+                            <div class="vfd-w-state" id="vfd-state">STOPPED</div>
+                            <div class="vfd-w-msgs" id="vfd-msgs"></div>
                         </div>
                     </div>
                 </div>
 
-                <div class="widget-anecdote-wrap" id="vfdAnecdoteWrap"></div>
+                <div class="widget-anecdote-wrap" id="vfd-anecdote-wrap"></div>
             </div>
 
             <p style="font-size:0.95rem;line-height:1.8;color:var(--text);margin-top:1.25rem;">
@@ -677,25 +677,25 @@ nav: education
         const SOURCE_LABELS = { keypad: 'keypad', terminals: 'terminals (DI)', network: 'network' };
 
         // — DOM
-        const runSrcEl   = document.getElementById('vfdRunSrc');
-        const spdSrcEl   = document.getElementById('vfdSpdSrc');
-        const spdSrcName = document.getElementById('vfdSpdSrcName');
-        const spdSlider  = document.getElementById('vfdSpdSlider');
-        const spdVal     = document.getElementById('vfdSpdVal');
-        const kpRun      = document.getElementById('vfdKpRun');
-        const kpStop     = document.getElementById('vfdKpStop');
-        const diOpen     = document.getElementById('vfdDiOpen');
-        const diClosed   = document.getElementById('vfdDiClosed');
-        const netRun     = document.getElementById('vfdNetRun');
-        const netStop    = document.getElementById('vfdNetStop');
-        const stateEl    = document.getElementById('vfdState');
-        const msgsEl     = document.getElementById('vfdMsgs');
-        const anecdoteEl = document.getElementById('vfdAnecdoteWrap');
-        const fanEl      = document.getElementById('vfdWFan');
-        const fanBlades  = document.getElementById('vfdWFanBlades');
-        const tryKeypad  = document.getElementById('vfdTryKeypad');
-        const tryNetwork = document.getElementById('vfdTryNetwork');
-        const tryClassic = document.getElementById('vfdTryClassic');
+        const runSrcEl   = document.getElementById('vfd-run-src');
+        const spdSrcEl   = document.getElementById('vfd-spd-src');
+        const spdSrcName = document.getElementById('vfd-spd-src-name');
+        const spdSlider  = document.getElementById('vfd-spd-slider');
+        const spdVal     = document.getElementById('vfd-spd-val');
+        const kpRun      = document.getElementById('vfd-kp-run');
+        const kpStop     = document.getElementById('vfd-kp-stop');
+        const diOpen     = document.getElementById('vfd-di-open');
+        const diClosed   = document.getElementById('vfd-di-closed');
+        const netRun     = document.getElementById('vfd-net-run');
+        const netStop    = document.getElementById('vfd-net-stop');
+        const stateEl    = document.getElementById('vfd-state');
+        const msgsEl     = document.getElementById('vfd-msgs');
+        const anecdoteEl = document.getElementById('vfd-anecdote-wrap');
+        const fanEl      = document.getElementById('vfd-w-fan');
+        const fanBlades  = document.getElementById('vfd-w-fan-blades');
+        const tryKeypad  = document.getElementById('vfd-try-keypad');
+        const tryNetwork = document.getElementById('vfd-try-network');
+        const tryClassic = document.getElementById('vfd-try-classic');
 
         // — State
         const state = {

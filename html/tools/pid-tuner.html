@@ -37,16 +37,16 @@ nav: tools
 
             <div class="form-row">
                 <div class="field">
-                    <label for="pidProc">Process Type</label>
-                    <select id="pidProc">
+                    <label for="pid-proc">Process Type</label>
+                    <select id="pid-proc">
                         <option value="fast">Fast (τ ~5–15 s) — e.g. duct static pressure</option>
                         <option value="med" selected>Medium (τ ~30 s – 2 min) — e.g. discharge air temp</option>
                         <option value="slow">Slow (τ ~2–10 min) — e.g. space temperature</option>
                     </select>
                 </div>
                 <div class="field">
-                    <label for="pidConv">Parameter Style</label>
-                    <select id="pidConv">
+                    <label for="pid-conv">Parameter Style</label>
+                    <select id="pid-conv">
                         <option value="field" selected>Gain · Reset · Rate (field shorthand)</option>
                         <option value="timeMin">Gain · Ti · Td (minutes)</option>
                         <option value="timeSec">Gain · Ti · Td (seconds) — EBO style</option>
@@ -55,45 +55,45 @@ nav: tools
                 </div>
             </div>
 
-            <div class="field" role="group" aria-labelledby="pidPresetLbl" style="margin-bottom:1.25rem;">
-                <span id="pidPresetLbl" class="field-label">Try a Tuning</span>
+            <div class="field" role="group" aria-labelledby="pid-preset-lbl" style="margin-bottom:1.25rem;">
+                <span id="pid-preset-lbl" class="field-label">Try a Tuning</span>
                 <div class="btn-row">
-                    <button class="copy-btn"        id="pidPresetSluggish" data-preset="sluggish">Sluggish</button>
-                    <button class="copy-btn active" id="pidPresetDecent"   data-preset="decent">Decent PI</button>
-                    <button class="copy-btn"        id="pidPresetAggr"     data-preset="aggr">Aggressive</button>
-                    <button class="copy-btn"        id="pidPresetHot"      data-preset="hot">Too Hot</button>
+                    <button class="copy-btn"        id="pid-preset-sluggish" data-preset="sluggish">Sluggish</button>
+                    <button class="copy-btn active" id="pid-preset-decent"   data-preset="decent">Decent PI</button>
+                    <button class="copy-btn"        id="pid-preset-aggr"     data-preset="aggr">Aggressive</button>
+                    <button class="copy-btn"        id="pid-preset-hot"      data-preset="hot">Too Hot</button>
                 </div>
             </div>
 
             <div class="pid-controls">
                 <div class="slider-field">
                     <div class="slider-head">
-                        <label id="pidKcLbl" for="pidKc">Gain (Kc)</label>
-                        <span class="slider-val" id="pidKcVal">2.0</span>
+                        <label id="pid-kc-lbl" for="pid-kc">Gain (Kc)</label>
+                        <span class="slider-val" id="pid-kc-val">2.0</span>
                     </div>
-                    <input type="range" id="pidKc" min="0" max="20" step="0.1" value="2">
-                    <span class="slider-sub" id="pidKcSub"></span>
+                    <input type="range" id="pid-kc" min="0" max="20" step="0.1" value="2">
+                    <span class="slider-sub" id="pid-kc-sub"></span>
                 </div>
                 <div class="slider-field">
                     <div class="slider-head">
-                        <label id="pidKiLbl" for="pidKi">Reset (rep/min)</label>
-                        <span class="slider-val" id="pidKiVal">0.50</span>
+                        <label id="pid-ki-lbl" for="pid-ki">Reset (rep/min)</label>
+                        <span class="slider-val" id="pid-ki-val">0.50</span>
                     </div>
-                    <input type="range" id="pidKi" min="0" max="6" step="0.05" value="0.5">
-                    <span class="slider-sub" id="pidKiSub"></span>
+                    <input type="range" id="pid-ki" min="0" max="6" step="0.05" value="0.5">
+                    <span class="slider-sub" id="pid-ki-sub"></span>
                 </div>
                 <div class="slider-field">
                     <div class="slider-head">
-                        <label id="pidKdLbl" for="pidKd">Rate (Td, min)</label>
-                        <span class="slider-val" id="pidKdVal">0.00</span>
+                        <label id="pid-kd-lbl" for="pid-kd">Rate (Td, min)</label>
+                        <span class="slider-val" id="pid-kd-val">0.00</span>
                     </div>
-                    <input type="range" id="pidKd" min="0" max="0.5" step="0.01" value="0">
-                    <span class="slider-sub" id="pidKdSub"></span>
+                    <input type="range" id="pid-kd" min="0" max="0.5" step="0.01" value="0">
+                    <span class="slider-sub" id="pid-kd-sub"></span>
                 </div>
             </div>
 
             <div class="sim-canvas-wrap">
-                <canvas id="pidCanvas"></canvas>
+                <canvas id="pid-canvas"></canvas>
             </div>
             <div class="sim-legend">
                 <span><span class="swatch pv"></span>Process Variable</span>
@@ -103,15 +103,15 @@ nav: tools
             <div class="bit-readouts">
                 <div class="readout">
                     <div class="readout-label">Overshoot</div>
-                    <div class="readout-value" id="pidOver">—</div>
+                    <div class="readout-value" id="pid-over">—</div>
                 </div>
                 <div class="readout">
                     <div class="readout-label">Settling Time (±2%)</div>
-                    <div class="readout-value" id="pidSettle">—</div>
+                    <div class="readout-value" id="pid-settle">—</div>
                 </div>
                 <div class="readout">
                     <div class="readout-label">Steady-State Error</div>
-                    <div class="readout-value" id="pidErr">—</div>
+                    <div class="readout-value" id="pid-err">—</div>
                 </div>
             </div>
 
@@ -225,9 +225,9 @@ nav: tools
 
         function pidPreset(name, btn) {
             const p = PID_PRESETS[name];
-            document.getElementById('pidKc').value = p.kc;
-            document.getElementById('pidKi').value = p.ki;
-            document.getElementById('pidKd').value = p.kd;
+            document.getElementById('pid-kc').value = p.kc;
+            document.getElementById('pid-ki').value = p.ki;
+            document.getElementById('pid-kd').value = p.kd;
             document.querySelectorAll('.tool-card .btn-row .copy-btn').forEach(b => b.classList.remove('active'));
             if (btn) btn.classList.add('active');
             runPidSim();
@@ -236,8 +236,8 @@ nav: tools
         // Process Type changed: re-range the rate slider for the new loop speed,
         // keeping the thumb's position (its fraction of the range), then re-run.
         function pidProcChanged() {
-            const key = document.getElementById('pidProc').value;
-            const s = document.getElementById('pidKd');
+            const key = document.getElementById('pid-proc').value;
+            const s = document.getElementById('pid-kd');
             const frac = parseFloat(s.max) > 0 ? parseFloat(s.value) / parseFloat(s.max) : 0;
             s.max = PID_DMAX[key];
             s.value = (frac * PID_DMAX[key]).toFixed(2);
@@ -245,10 +245,10 @@ nav: tools
         }
 
         function runPidSim() {
-            const proc = PID_PROC[document.getElementById('pidProc').value];
-            const Kc   = parseFloat(document.getElementById('pidKc').value);
-            const rep  = parseFloat(document.getElementById('pidKi').value);   // reset, repeats / minute
-            const rate = parseFloat(document.getElementById('pidKd').value);   // rate, minutes
+            const proc = PID_PROC[document.getElementById('pid-proc').value];
+            const Kc   = parseFloat(document.getElementById('pid-kc').value);
+            const rep  = parseFloat(document.getElementById('pid-ki').value);   // reset, repeats / minute
+            const rate = parseFloat(document.getElementById('pid-kd').value);   // rate, minutes
 
             updatePidLabels(Kc, rep, rate);
 
@@ -257,9 +257,9 @@ nav: tools
             drawTunerChart();
 
             // ── metrics ──
-            const overEl = document.getElementById('pidOver');
-            const setEl  = document.getElementById('pidSettle');
-            const errEl  = document.getElementById('pidErr');
+            const overEl = document.getElementById('pid-over');
+            const setEl  = document.getElementById('pid-settle');
+            const errEl  = document.getElementById('pid-err');
 
             overEl.textContent = sim.overshoot < 0.05 ? 'none' : sim.overshoot.toFixed(1) + '%';
             overEl.classList.toggle('warn', sim.overshoot > 20);
@@ -270,12 +270,12 @@ nav: tools
             // Positive ssErr = PV above SP (standard PID convention). The mini-sims
             // on /education/pid-basics.html flip the sign to read as "offset below SP"
             // — keep that distinction; pass +ssErr here.
-            errEl.textContent = formatPidDelta(sim.ssErr, sim, document.getElementById('pidProc').value);
+            errEl.textContent = formatPidDelta(sim.ssErr, sim, document.getElementById('pid-proc').value);
             errEl.classList.toggle('warn', Math.abs(sim.ssErr) > 0.05 * sim.step);
         }
 
         function drawTunerChart() {
-            if (pidLast) drawPidChart(document.getElementById('pidCanvas'), pidLast, { variant: 'full' });
+            if (pidLast) drawPidChart(document.getElementById('pid-canvas'), pidLast, { variant: 'full' });
         }
 
         // Relabel the three sliders for the chosen parameter style. The slider
@@ -286,7 +286,7 @@ nav: tools
 
         function updatePidLabels(Kc, rep, rate) {
             const set = (id, t) => { document.getElementById(id).textContent = t; };
-            const conv = document.getElementById('pidConv').value;
+            const conv = document.getElementById('pid-conv').value;
 
             const intOff = rep <= 0;
             const propOff = Kc <= 0;
@@ -309,22 +309,22 @@ nav: tools
                 kdLbl = 'Derivative time (Td, s)'; kdVal = tdSec;
             }
 
-            set('pidKcLbl', kcLbl); set('pidKcVal', kcVal);
-            set('pidKiLbl', kiLbl); set('pidKiVal', kiVal);
-            set('pidKdLbl', kdLbl); set('pidKdVal', kdVal);
+            set('pid-kc-lbl', kcLbl); set('pid-kc-val', kcVal);
+            set('pid-ki-lbl', kiLbl); set('pid-ki-val', kiVal);
+            set('pid-kd-lbl', kdLbl); set('pid-kd-val', kdVal);
 
-            set('pidKcSub', `Kc ${Kc.toFixed(1)}  ·  PB ${propOff ? '—' : pb + '%'}`);
-            set('pidKiSub', intOff
+            set('pid-kc-sub', `Kc ${Kc.toFixed(1)}  ·  PB ${propOff ? '—' : pb + '%'}`);
+            set('pid-ki-sub', intOff
                 ? `integral off  ·  0.00 rep/min`
                 : `Ti ${tiMin} min  ·  ${tiSec} s  ·  ${rep.toFixed(2)} rep/min`);
-            set('pidKdSub', `Td ${tdMin} min  ·  ${tdSec} s`);
+            set('pid-kd-sub', `Td ${tdMin} min  ·  ${tdSec} s`);
         }
 
-        document.getElementById('pidProc').addEventListener('change', pidProcChanged);
-        document.getElementById('pidConv').addEventListener('change', runPidSim);
-        document.getElementById('pidKc').addEventListener('input', runPidSim);
-        document.getElementById('pidKi').addEventListener('input', runPidSim);
-        document.getElementById('pidKd').addEventListener('input', runPidSim);
+        document.getElementById('pid-proc').addEventListener('change', pidProcChanged);
+        document.getElementById('pid-conv').addEventListener('change', runPidSim);
+        document.getElementById('pid-kc').addEventListener('input', runPidSim);
+        document.getElementById('pid-ki').addEventListener('input', runPidSim);
+        document.getElementById('pid-kd').addEventListener('input', runPidSim);
         document.querySelectorAll('[data-preset]').forEach(btn => {
             btn.addEventListener('click', e => pidPreset(e.currentTarget.dataset.preset, e.currentTarget));
         });
@@ -338,8 +338,8 @@ nav: tools
         // on /education/pid-basics.html.
         document.addEventListener('unitschange', () => {
             if (!pidLast) return;
-            const errEl = document.getElementById('pidErr');
-            errEl.textContent = formatPidDelta(pidLast.ssErr, pidLast, document.getElementById('pidProc').value);
+            const errEl = document.getElementById('pid-err');
+            errEl.textContent = formatPidDelta(pidLast.ssErr, pidLast, document.getElementById('pid-proc').value);
         });
     })();
 </script>

@@ -42,65 +42,65 @@ for (const { name, url } of PAGES) {
 test('pid tuner runs the shared simulation engine on load', async ({ page }) => {
     await page.goto('http://localhost:8000/tools/pid-tuner.html');
     // pid-engine.js drives the canvas + metrics on init; the readouts should fill in.
-    await expect(page.locator('#pidOver')).not.toHaveText('—');
-    await expect(page.locator('#pidSettle')).not.toHaveText('—');
-    await expect(page.locator('#pidErr')).not.toHaveText('—');
+    await expect(page.locator('#pid-over')).not.toHaveText('—');
+    await expect(page.locator('#pid-settle')).not.toHaveText('—');
+    await expect(page.locator('#pid-err')).not.toHaveText('—');
 });
 
 test('bacnet/ip converter converts a hex string', async ({ page }) => {
     await page.goto('http://localhost:8000/tools/bacnet-ip-converter.html');
-    await page.fill('#b2i_hex', 'C0A80164BAC0');
-    await expect(page.locator('#b2i_ip')).toHaveText('192.168.1.100');
-    await expect(page.locator('#b2i_port')).toHaveText('47808');
+    await page.fill('#b2i-hex', 'C0A80164BAC0');
+    await expect(page.locator('#b2i-ip')).toHaveText('192.168.1.100');
+    await expect(page.locator('#b2i-port')).toHaveText('47808');
 });
 
 test('psychrometric chart computes the AHU chain on load', async ({ page }) => {
     await page.goto('http://localhost:8000/tools/psychrometric-chart.html');
     // default summer cooling: OA 92 °F DB / 76 °F WB is the focused stage,
     // so the right-hand detail block shows OA's state.
-    await expect(page.locator('#roDb')).toHaveText('92.0');
-    await expect(page.locator('#roWb')).toHaveText('76.0');
+    await expect(page.locator('#ro-db')).toHaveText('92.0');
+    await expect(page.locator('#ro-wb')).toHaveText('76.0');
     // stage table includes the active CC row (cooling coil is on by default)
-    await expect(page.locator('#psyStageTable tbody tr')).toHaveCount(5);  // OA, RA, MA, CC, SA
+    await expect(page.locator('#psy-stage-table tbody tr')).toHaveCount(5);  // OA, RA, MA, CC, SA
     // CC leaving DB = 55 °F at row index 3 (0-based) — col 1 (DB)
-    await expect(page.locator('#psyStageTable tbody tr').nth(3).locator('td').nth(1)).toHaveText('55.0');
+    await expect(page.locator('#psy-stage-table tbody tr').nth(3).locator('td').nth(1)).toHaveText('55.0');
     // pick RA so the detail block tracks the selection
     await page.click('.psy-pill[data-step="ra"]');
-    await expect(page.locator('#roDb')).toHaveText('75.0');
+    await expect(page.locator('#ro-db')).toHaveText('75.0');
     // an impossible state mutes the readouts and surfaces an error
     await page.selectOption('#ra-mode', 'wb');
     await page.fill('#ra-tdb', '70');
     await page.fill('#ra-second', '80');  // wet-bulb above dry-bulb
-    await expect(page.locator('#roWb')).toHaveText('—');
-    await expect(page.locator('#psyMsg')).toContainText('Wet-bulb can');
+    await expect(page.locator('#ro-wb')).toHaveText('—');
+    await expect(page.locator('#psy-msg')).toContainText('Wet-bulb can');
 });
 
 test('thermistor calculator looks up a known reference value', async ({ page }) => {
     await page.goto('http://localhost:8000/tools/thermistor-calculator.html');
 
     // the inputs + the reference table render on load
-    await expect(page.locator('#thType')).toBeVisible();
-    await expect(page.locator('#thTemp')).toBeVisible();
-    expect(await page.locator('#thRtBody tr').count(), 'R/T table should be populated').toBeGreaterThan(40);
+    await expect(page.locator('#th-type')).toBeVisible();
+    await expect(page.locator('#th-temp')).toBeVisible();
+    expect(await page.locator('#th-rt-body tr').count(), 'R/T table should be populated').toBeGreaterThan(40);
 
     // 10K Type III at 77 °F is the type's defining property — should land on ~10,000 Ω
-    await page.selectOption('#thType', '10k-3');
-    await page.fill('#thTemp', '77');
-    const r = parseFloat((await page.locator('#thResult').textContent()).replace(/[^0-9.]/g, ''));
+    await page.selectOption('#th-type', '10k-3');
+    await page.fill('#th-temp', '77');
+    const r = parseFloat((await page.locator('#th-result').textContent()).replace(/[^0-9.]/g, ''));
     expect(r, '10K-3 @ 77 °F should be ≈ 10,000 Ω').toBeGreaterThan(9700);
     expect(r).toBeLessThan(10300);
-    await expect(page.locator('#thStatus')).toHaveText('in range');
+    await expect(page.locator('#th-status')).toHaveText('in range');
 
     // a temperature outside the table range mutes the result
-    await page.fill('#thTemp', '400');
-    await expect(page.locator('#thResult')).toHaveText('—');
+    await page.fill('#th-temp', '400');
+    await expect(page.locator('#th-result')).toHaveText('—');
 
     // flipping the global units toggle rescales the temperature field and label
     // (the local °F/°C buttons were retired when the global selector landed)
-    await page.fill('#thTemp', '50');
+    await page.fill('#th-temp', '50');
     await page.click('.units-btn[data-units="metric"]');
-    await expect(page.locator('#thTempLbl')).toHaveText('Temperature (°C)');
-    expect(parseFloat(await page.locator('#thTemp').inputValue())).toBeCloseTo(10, 0);   // 50 °F ≈ 10 °C
+    await expect(page.locator('#th-temp-lbl')).toHaveText('Temperature (°C)');
+    expect(parseFloat(await page.locator('#th-temp').inputValue())).toBeCloseTo(10, 0);   // 50 °F ≈ 10 °C
     // flip back so this test doesn't leak metric state into the next page load
     await page.click('.units-btn[data-units="us"]');
 });
@@ -113,21 +113,21 @@ test('education page runs the PID mini-sims and they respond to input', async ({
     await page.goto('http://localhost:8000/education/pid-basics.html');
 
     // all three mini-sim canvases are present and visible
-    for (const id of ['#m1Canvas', '#m2Canvas', '#m3Canvas']) {
+    for (const id of ['#m1-canvas', '#m2-canvas', '#m3-canvas']) {
         await expect(page.locator(id)).toBeVisible();
     }
     // the shared engine ran on load — the key-metric callouts are filled in
-    await expect(page.locator('#m1Offset')).not.toHaveText('—');
-    await expect(page.locator('#m2Over')).not.toHaveText('—');
-    await expect(page.locator('#m3Settle')).not.toHaveText('—');
+    await expect(page.locator('#m1-offset')).not.toHaveText('—');
+    await expect(page.locator('#m2-over')).not.toHaveText('—');
+    await expect(page.locator('#m3-settle')).not.toHaveText('—');
 
     // moving Sim 1's gain slider re-runs the sim — the offset readout changes
-    const offsetBefore = await page.locator('#m1Offset').textContent();
-    await page.locator('#m1Slider').evaluate((el) => {
+    const offsetBefore = await page.locator('#m1-offset').textContent();
+    await page.locator('#m1-slider').evaluate((el) => {
         el.value = el.max;
         el.dispatchEvent(new Event('input', { bubbles: true }));
     });
-    await expect(page.locator('#m1Offset')).not.toHaveText(offsetBefore);
+    await expect(page.locator('#m1-offset')).not.toHaveText(offsetBefore);
 
     // a process-speed chip switches the model and takes the .active state
     const slowChip = page.locator('#sim2 .btn-row .copy-btn').filter({ hasText: 'Slow' });
@@ -177,8 +177,8 @@ test('load piping page renders its four SVG schematics and ties back to the twin
     await expect(page.locator('#lp-2w-valve')).toHaveCount(1);
     await expect(page.locator('#lp-3wm-valve')).toHaveCount(1);
     await expect(page.locator('#lp-3wd-valve')).toHaveCount(1);
-    await expect(page.locator('#lp-tt-loadA-valve')).toHaveCount(1);
-    await expect(page.locator('#lp-tt-loadB-valve')).toHaveCount(1);
+    await expect(page.locator('#lp-tt-load-a-valve')).toHaveCount(1);
+    await expect(page.locator('#lp-tt-load-b-valve')).toHaveCount(1);
     // the closing tie-back actually links back to the twin-T #d3 anchor
     const hrefs = await page.locator('main a').evaluateAll((els) => els.map((e) => e.getAttribute('href')));
     expect(hrefs).toContain('/education/hydronic-loops.html#d3');
@@ -189,17 +189,17 @@ test('vfd mock — run-source gating works from the keypad', async ({ page }) =>
 
     // Default config is run-source=TERMINALS. Pressing keypad RUN should
     // NOT start the drive; the LCD's line 4 should flash the ignore msg.
-    await page.click('#vfdmKeyRun');
-    await expect(page.locator('#vfdmStateText')).toHaveText(/STOPPED/);
-    const lcdLines = await page.locator('#vfdmLcd .vfdm-lcd-line').allTextContents();
+    await page.click('#vfdm-key-run');
+    await expect(page.locator('#vfdm-state-text')).toHaveText(/STOPPED/);
+    const lcdLines = await page.locator('#vfdm-lcd .vfdm-lcd-line').allTextContents();
     expect(lcdLines[3]).toMatch(/IGN: SRC=TERMS/);
 
     // L/R into LOCAL — keypad now overrides source params and RUN actually starts the drive.
-    await page.click('#vfdmKeyLocal');
-    await page.click('#vfdmKeyRun');
+    await page.click('#vfdm-key-local');
+    await page.click('#vfdm-key-run');
     await page.waitForTimeout(300);  // let it ramp a bit
-    await expect(page.locator('#vfdmStateText')).toHaveText(/RAMPING UP|AT SPEED/);
-    const actHz = parseFloat(await page.locator('#vfdmActHz').textContent());
+    await expect(page.locator('#vfdm-state-text')).toHaveText(/RAMPING UP|AT SPEED/);
+    const actHz = parseFloat(await page.locator('#vfdm-act-hz').textContent());
     expect(actHz, 'drive should be ramping up in LOCAL mode').toBeGreaterThan(0);
 });
 
@@ -213,33 +213,33 @@ test('pump control page renders its diagram and both widgets respond', async ({ 
     await expect(page.locator('#pc-dp-sensor')).toHaveCount(1);
 
     // Widget 1 — operating point reads close to design (100 GPM, 50 ft) at default sliders
-    await expect(page.locator('#pcW1Flow')).toHaveText('100');
-    await expect(page.locator('#pcW1Head')).toHaveText('50.0');
+    await expect(page.locator('#pc-w1-flow')).toHaveText('100');
+    await expect(page.locator('#pc-w1-head')).toHaveText('50.0');
 
     // Move pump-speed slider to 30 Hz and check the operating point shifts
-    await page.locator('#pcW1HzSlider').evaluate((el) => {
+    await page.locator('#pc-w1-hz-slider').evaluate((el) => {
         el.value = '30';
         el.dispatchEvent(new Event('input', { bubbles: true }));
     });
-    const flowAt30 = parseInt(await page.locator('#pcW1Flow').textContent(), 10);
+    const flowAt30 = parseInt(await page.locator('#pc-w1-flow').textContent(), 10);
     expect(flowAt30, 'flow should fall when pump speed drops').toBeLessThan(60);
     // Power follows cube law — at half speed, ~12.5% of full power
-    const powerAt30 = parseInt(await page.locator('#pcW1Power').textContent(), 10);
+    const powerAt30 = parseInt(await page.locator('#pc-w1-power').textContent(), 10);
     expect(powerAt30).toBeGreaterThan(8);
     expect(powerAt30).toBeLessThan(20);
 
     // Widget 2 — fixed-DP at 50% demand should read higher pump Hz than reset-DP
-    await page.locator('#pcW2DemandSlider').evaluate((el) => {
+    await page.locator('#pc-w2-demand-slider').evaluate((el) => {
         el.value = '50';
         el.dispatchEvent(new Event('input', { bubbles: true }));
     });
-    const fixedHz = parseInt(await page.locator('#pcW2Hz').textContent(), 10);
-    await page.click('#pcW2ModeReset');
-    const resetHz = parseInt(await page.locator('#pcW2Hz').textContent(), 10);
+    const fixedHz = parseInt(await page.locator('#pc-w2-hz').textContent(), 10);
+    await page.click('#pc-w2-mode-reset');
+    const resetHz = parseInt(await page.locator('#pc-w2-hz').textContent(), 10);
     expect(resetHz, 'reset DP should run pump slower than fixed DP at part load').toBeLessThan(fixedHz);
 
     // Anecdote reveal at demand = 0
-    await page.locator('#pcW2DemandSlider').evaluate((el) => {
+    await page.locator('#pc-w2-demand-slider').evaluate((el) => {
         el.value = '0';
         el.dispatchEvent(new Event('input', { bubbles: true }));
     });
@@ -259,18 +259,18 @@ test('vfds page renders its diagrams and the run/speed widget is wired up', asyn
     await expect(page.locator('#vfd-bp-motor')).toHaveCount(1);
 
     // widget initial state: terminals/network, DI open → STOPPED
-    await expect(page.locator('#vfdState')).toHaveText(/STOPPED/);
+    await expect(page.locator('#vfd-state')).toHaveText(/STOPPED/);
 
     // pressing the network RUN with run-source=terminals shows the classic-mistake anecdote
-    await page.click('#vfdTryClassic');
-    await page.click('#vfdNetRun');
-    await expect(page.locator('#vfdState')).toHaveText(/STOPPED/);
+    await page.click('#vfd-try-classic');
+    await page.click('#vfd-net-run');
+    await expect(page.locator('#vfd-state')).toHaveText(/STOPPED/);
     await expect(page.locator('.widget-anecdote')).toBeVisible();
 
     // the all-network preset + a network RUN actually starts the drive
-    await page.click('#vfdTryNetwork');
-    await page.click('#vfdNetRun');
-    await expect(page.locator('#vfdState')).toHaveText(/RUNNING/);
+    await page.click('#vfd-try-network');
+    await page.click('#vfd-net-run');
+    await expect(page.locator('#vfd-state')).toHaveText(/RUNNING/);
 });
 
 test('balancing page renders riser, widget compares three branches, anecdote reveals at low Δp', async ({ page }) => {
@@ -286,60 +286,60 @@ test('balancing page renders riser, widget compares three branches, anecdote rev
     await expect(page.locator('#bal-riser-f4-coil')).toHaveCount(1);
 
     // Widget — initial state at design Δp (20 ft) puts all three branches at design flow.
-    await expect(page.locator('#balCbvQ')).toHaveText('30.0');
-    await expect(page.locator('#balAbvQ')).toHaveText('30.0');
-    await expect(page.locator('#balPicvQ')).toHaveText('30.0');
-    await expect(page.locator('#balBchCbv')).toHaveAttribute('data-state', 'holding');
-    await expect(page.locator('#balBchAbv')).toHaveAttribute('data-state', 'holding');
-    await expect(page.locator('#balBchPicv')).toHaveAttribute('data-state', 'holding');
+    await expect(page.locator('#bal-cbv-q')).toHaveText('30.0');
+    await expect(page.locator('#bal-abv-q')).toHaveText('30.0');
+    await expect(page.locator('#bal-picv-q')).toHaveText('30.0');
+    await expect(page.locator('#bal-bch-cbv')).toHaveAttribute('data-state', 'holding');
+    await expect(page.locator('#bal-bch-abv')).toHaveAttribute('data-state', 'holding');
+    await expect(page.locator('#bal-bch-picv')).toHaveAttribute('data-state', 'holding');
 
     // Drop Δp to 2 ft — CBV starves (~9.5 GPM, 32% of design), ABV falls into
     // orifice mode and also starves (~24.5 GPM, 82%), PICV holds at exactly
     // its minimum operating Δp (30 GPM, holding).
-    await page.locator('#balDpSlider').evaluate((el) => {
+    await page.locator('#bal-dp-slider').evaluate((el) => {
         el.value = '2';
         el.dispatchEvent(new Event('input', { bubbles: true }));
     });
-    await expect(page.locator('#balBchCbv')).toHaveAttribute('data-state', 'starved');
-    await expect(page.locator('#balBchAbv')).toHaveAttribute('data-state', 'starved');
-    await expect(page.locator('#balBchPicv')).toHaveAttribute('data-state', 'holding');
+    await expect(page.locator('#bal-bch-cbv')).toHaveAttribute('data-state', 'starved');
+    await expect(page.locator('#bal-bch-abv')).toHaveAttribute('data-state', 'starved');
+    await expect(page.locator('#bal-bch-picv')).toHaveAttribute('data-state', 'holding');
 
     // Anecdote reveal — Δp ≤ 4 ft triggers it; 2 is already past the threshold.
-    await expect(page.locator('#balAnecdote')).toBeVisible();
+    await expect(page.locator('#bal-anecdote')).toBeVisible();
 
     // Push Δp to 60 ft — CBV blows past design (~52 GPM, 173%) and goes OVER;
     // ABV holds (its compensation range covers 3-50, then orifice above; at 60 ft
     // outside compensation ABV is at ~33 GPM / 110% which is still inside the
     // ±15% holding band). PICV holds.
-    await page.locator('#balDpSlider').evaluate((el) => {
+    await page.locator('#bal-dp-slider').evaluate((el) => {
         el.value = '60';
         el.dispatchEvent(new Event('input', { bubbles: true }));
     });
-    await expect(page.locator('#balBchCbv')).toHaveAttribute('data-state', 'over');
-    await expect(page.locator('#balBchPicv')).toHaveAttribute('data-state', 'holding');
+    await expect(page.locator('#bal-bch-cbv')).toHaveAttribute('data-state', 'over');
+    await expect(page.locator('#bal-bch-picv')).toHaveAttribute('data-state', 'holding');
 
     // Anecdote stays pinned once shown (extreme-state reward semantic).
-    await expect(page.locator('#balAnecdote')).toBeVisible();
+    await expect(page.locator('#bal-anecdote')).toBeVisible();
 
     // Boundary check: at Δp = 3 ft, ABV is exactly at the low edge of its
     // compensation range and should hold cleanly at design (no off-by-one
     // into the orifice branch). CBV is still starved (~12 GPM / 39%).
-    await page.locator('#balDpSlider').evaluate((el) => {
+    await page.locator('#bal-dp-slider').evaluate((el) => {
         el.value = '3';
         el.dispatchEvent(new Event('input', { bubbles: true }));
     });
-    await expect(page.locator('#balBchAbv')).toHaveAttribute('data-state', 'holding');
-    await expect(page.locator('#balAbvQ')).toHaveText('30.0');
-    await expect(page.locator('#balBchCbv')).toHaveAttribute('data-state', 'starved');
+    await expect(page.locator('#bal-bch-abv')).toHaveAttribute('data-state', 'holding');
+    await expect(page.locator('#bal-abv-q')).toHaveText('30.0');
+    await expect(page.locator('#bal-bch-cbv')).toHaveAttribute('data-state', 'starved');
 
     // Boundary check: at Δp = 50 ft, ABV is at the upper edge — still
     // holding (no off-by-one into the high-side orifice branch). CBV is
     // well into OVER territory by here.
-    await page.locator('#balDpSlider').evaluate((el) => {
+    await page.locator('#bal-dp-slider').evaluate((el) => {
         el.value = '50';
         el.dispatchEvent(new Event('input', { bubbles: true }));
     });
-    await expect(page.locator('#balBchAbv')).toHaveAttribute('data-state', 'holding');
-    await expect(page.locator('#balAbvQ')).toHaveText('30.0');
-    await expect(page.locator('#balBchCbv')).toHaveAttribute('data-state', 'over');
+    await expect(page.locator('#bal-bch-abv')).toHaveAttribute('data-state', 'holding');
+    await expect(page.locator('#bal-abv-q')).toHaveText('30.0');
+    await expect(page.locator('#bal-bch-cbv')).toHaveAttribute('data-state', 'over');
 });

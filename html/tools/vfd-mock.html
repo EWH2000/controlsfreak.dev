@@ -188,7 +188,7 @@ nav: tools
            "WIDGET CHROME". Local override: the try row sits above a tall
            grid on this page, so it needs more bottom margin than the
            shared 0.85rem default. */
-        #vfdmTry { margin-bottom: 1.25rem; }
+        #vfdm-try { margin-bottom: 1.25rem; }
 
         /* Parameter reference table — small column to the right shows
            the live value so the user can see what the keypad navigation
@@ -226,12 +226,12 @@ nav: tools
                 live drive. New to drives? <a href="/education/vfds.html" style="color:var(--accent);">Start with VFD Basics →</a>
             </p>
 
-            <div class="widget-try" id="vfdmTry">
+            <div class="widget-try" id="vfdm-try">
                 <span class="lbl">Try this:</span>
-                <a id="vfdmTryDefault">factory defaults</a>
-                <a id="vfdmTryKeypad">keypad commissioning</a>
-                <a id="vfdmTryBas">BAS auto (all network)</a>
-                <a id="vfdmTryClassic">the classic mistake</a>
+                <a id="vfdm-try-default">factory defaults</a>
+                <a id="vfdm-try-keypad">keypad commissioning</a>
+                <a id="vfdm-try-bas">BAS auto (all network)</a>
+                <a id="vfdm-try-classic">the classic mistake</a>
             </div>
 
             <div class="vfdm-grid">
@@ -244,7 +244,7 @@ nav: tools
                          the render() loop. .blue class on a wrapping span tints
                          live values; .dim tints hint/footer text. -->
                     <div class="vfdm-lcd">
-                        <div class="vfdm-lcd-inner" id="vfdmLcd"
+                        <div class="vfdm-lcd-inner" id="vfdm-lcd"
                              role="status" aria-live="polite" aria-label="Drive display">
                             <span class="vfdm-lcd-line"></span>
                             <span class="vfdm-lcd-line"></span>
@@ -257,32 +257,32 @@ nav: tools
                          second row with RUN/STOP/LOCAL-REMOTE. Sub-labels under
                          glyphs follow real-drive keypad legends. -->
                     <div class="vfdm-keypad" role="group" aria-label="Drive keypad">
-                        <button class="vfdm-key" id="vfdmKeyUp"    type="button" aria-label="Up">
+                        <button class="vfdm-key" id="vfdm-key-up"    type="button" aria-label="Up">
                             <span class="glyph">▲</span><span class="sub">UP</span>
                         </button>
-                        <button class="vfdm-key" id="vfdmKeyDown"  type="button" aria-label="Down">
+                        <button class="vfdm-key" id="vfdm-key-down"  type="button" aria-label="Down">
                             <span class="glyph">▼</span><span class="sub">DOWN</span>
                         </button>
-                        <button class="vfdm-key" id="vfdmKeyEnter" type="button" aria-label="Enter">
+                        <button class="vfdm-key" id="vfdm-key-enter" type="button" aria-label="Enter">
                             <span class="glyph">↵</span><span class="sub">ENT</span>
                         </button>
-                        <button class="vfdm-key" id="vfdmKeyEsc"   type="button" aria-label="Escape">
+                        <button class="vfdm-key" id="vfdm-key-esc"   type="button" aria-label="Escape">
                             <span class="glyph">×</span><span class="sub">ESC</span>
                         </button>
-                        <button class="vfdm-key run" id="vfdmKeyRun"  type="button" aria-label="Run">
+                        <button class="vfdm-key run" id="vfdm-key-run"  type="button" aria-label="Run">
                             <span class="glyph">▶</span><span class="sub">RUN</span>
                         </button>
-                        <button class="vfdm-key stop" id="vfdmKeyStop" type="button" aria-label="Stop">
+                        <button class="vfdm-key stop" id="vfdm-key-stop" type="button" aria-label="Stop">
                             <span class="glyph">■</span><span class="sub">STOP</span>
                         </button>
-                        <button class="vfdm-key" id="vfdmKeyLocal" type="button" aria-label="Local/Remote" style="grid-column: span 2;">
+                        <button class="vfdm-key" id="vfdm-key-local" type="button" aria-label="Local/Remote" style="grid-column: span 2;">
                             <span class="glyph">⇄</span><span class="sub">L / R</span>
                         </button>
                     </div>
 
-                    <div class="vfdm-localrem" id="vfdmLocalRemInd">
+                    <div class="vfdm-localrem" id="vfdm-local-rem-ind">
                         <span class="dot"></span>
-                        <span id="vfdmLocalRemTxt">REMOTE — drive follows configured sources</span>
+                        <span id="vfdm-local-rem-txt">REMOTE — drive follows configured sources</span>
                     </div>
                 </div>
 
@@ -292,18 +292,18 @@ nav: tools
                     <div class="vfdm-readouts">
                         <div class="vfdm-readout">
                             <span>Commanded</span>
-                            <span class="v"><span id="vfdmCmdHz">0.0</span> Hz</span>
+                            <span class="v"><span id="vfdm-cmd-hz">0.0</span> Hz</span>
                         </div>
                         <div class="vfdm-readout">
                             <span>Actual</span>
-                            <span class="v" id="vfdmActWrap"><span id="vfdmActHz">0.0</span> Hz</span>
+                            <span class="v" id="vfdm-act-wrap"><span id="vfdm-act-hz">0.0</span> Hz</span>
                         </div>
                         <div class="vfdm-gauge" aria-hidden="true">
-                            <div class="vfdm-gauge-fill" id="vfdmGaugeFill"></div>
+                            <div class="vfdm-gauge-fill" id="vfdm-gauge-fill"></div>
                         </div>
                         <div class="vfdm-readout">
                             <span>State</span>
-                            <span class="v" id="vfdmStateText">STOPPED</span>
+                            <span class="v" id="vfdm-state-text">STOPPED</span>
                         </div>
                     </div>
 
@@ -313,22 +313,22 @@ nav: tools
                         <!-- Terminal DI run input. Active when run source = TERMINALS;
                              gray out otherwise (still operable — the wire is wired,
                              the drive just isn't listening). -->
-                        <div class="vfdm-ext-row" id="vfdmDiRow">
+                        <div class="vfdm-ext-row" id="vfdm-di-row">
                             <span class="vfdm-ext-lbl">Terminal DI (run)</span>
                             <div>
                                 <span class="vfdm-di-toggle" role="group" aria-label="DI run input state">
-                                    <button id="vfdmDiOpen"   type="button" class="on">Open</button>
-                                    <button id="vfdmDiClosed" type="button">Closed</button>
+                                    <button id="vfdm-di-open"   type="button" class="on">Open</button>
+                                    <button id="vfdm-di-closed" type="button">Closed</button>
                                 </span>
                             </div>
                         </div>
 
                         <!-- Network run command. Active when run source = NETWORK. -->
-                        <div class="vfdm-ext-row" id="vfdmNetRow">
+                        <div class="vfdm-ext-row" id="vfdm-net-row">
                             <span class="vfdm-ext-lbl">Network RUN cmd</span>
                             <div class="vfdm-net-btns">
-                                <button class="vfdm-net-btn" id="vfdmNetRun"  type="button">Send RUN</button>
-                                <button class="vfdm-net-btn" id="vfdmNetStop" type="button">Send STOP</button>
+                                <button class="vfdm-net-btn" id="vfdm-net-run"  type="button">Send RUN</button>
+                                <button class="vfdm-net-btn" id="vfdm-net-stop" type="button">Send STOP</button>
                             </div>
                         </div>
 
@@ -338,11 +338,11 @@ nav: tools
                              value" — real drives have separate AI and network
                              registers, but the pedagogy doesn't need that
                              distinction). -->
-                        <div class="vfdm-ext-row" id="vfdmExtSpdRow">
+                        <div class="vfdm-ext-row" id="vfdm-ext-spd-row">
                             <span class="vfdm-ext-lbl">External speed ref</span>
                             <div style="display:flex;align-items:center;gap:0.55rem;">
-                                <input type="range" id="vfdmExtSpd" min="0" max="60" step="1" value="30" aria-label="External speed reference"/>
-                                <span class="vfdm-ext-val"><span id="vfdmExtSpdVal">30</span> Hz</span>
+                                <input type="range" id="vfdm-ext-spd" min="0" max="60" step="1" value="30" aria-label="External speed reference"/>
+                                <span class="vfdm-ext-val"><span id="vfdm-ext-spd-val">30</span> Hz</span>
                             </div>
                         </div>
                     </div>
@@ -363,7 +363,7 @@ nav: tools
                 <thead>
                     <tr><th style="width:7rem;">Group · ID</th><th>Name</th><th style="width:8rem;text-align:right;">Value</th></tr>
                 </thead>
-                <tbody id="vfdmParamsTbody"></tbody>
+                <tbody id="vfdm-params-tbody"></tbody>
             </table>
 
         </div>
@@ -447,22 +447,22 @@ nav: tools
         };
 
         // ── DOM ────────────────────────────────────────────────────────
-        const lcdLines = document.querySelectorAll('#vfdmLcd .vfdm-lcd-line');
-        const cmdHzEl  = document.getElementById('vfdmCmdHz');
-        const actHzEl  = document.getElementById('vfdmActHz');
-        const actWrap  = document.getElementById('vfdmActWrap');
-        const stateTxt = document.getElementById('vfdmStateText');
-        const gaugeFill= document.getElementById('vfdmGaugeFill');
-        const localInd = document.getElementById('vfdmLocalRemInd');
-        const localTxt = document.getElementById('vfdmLocalRemTxt');
-        const diOpen   = document.getElementById('vfdmDiOpen');
-        const diClosed = document.getElementById('vfdmDiClosed');
-        const extSpd   = document.getElementById('vfdmExtSpd');
-        const extSpdVal= document.getElementById('vfdmExtSpdVal');
-        const diRow    = document.getElementById('vfdmDiRow');
-        const netRow   = document.getElementById('vfdmNetRow');
-        const extSpdRow= document.getElementById('vfdmExtSpdRow');
-        const paramsBody = document.getElementById('vfdmParamsTbody');
+        const lcdLines = document.querySelectorAll('#vfdm-lcd .vfdm-lcd-line');
+        const cmdHzEl  = document.getElementById('vfdm-cmd-hz');
+        const actHzEl  = document.getElementById('vfdm-act-hz');
+        const actWrap  = document.getElementById('vfdm-act-wrap');
+        const stateTxt = document.getElementById('vfdm-state-text');
+        const gaugeFill= document.getElementById('vfdm-gauge-fill');
+        const localInd = document.getElementById('vfdm-local-rem-ind');
+        const localTxt = document.getElementById('vfdm-local-rem-txt');
+        const diOpen   = document.getElementById('vfdm-di-open');
+        const diClosed = document.getElementById('vfdm-di-closed');
+        const extSpd   = document.getElementById('vfdm-ext-spd');
+        const extSpdVal= document.getElementById('vfdm-ext-spd-val');
+        const diRow    = document.getElementById('vfdm-di-row');
+        const netRow   = document.getElementById('vfdm-net-row');
+        const extSpdRow= document.getElementById('vfdm-ext-spd-row');
+        const paramsBody = document.getElementById('vfdm-params-tbody');
 
         // ── Pure helpers ───────────────────────────────────────────────
         function pad20(left, right) {
@@ -753,13 +753,13 @@ nav: tools
         }
 
         // ── Wiring ─────────────────────────────────────────────────────
-        document.getElementById('vfdmKeyUp')   .addEventListener('click', () => { step(-1); render(); });
-        document.getElementById('vfdmKeyDown') .addEventListener('click', () => { step(+1); render(); });
-        document.getElementById('vfdmKeyEnter').addEventListener('click', () => { onEnter(); render(); });
-        document.getElementById('vfdmKeyEsc')  .addEventListener('click', () => { onEsc();   render(); });
-        document.getElementById('vfdmKeyRun')  .addEventListener('click', () => { onRun();   render(); });
-        document.getElementById('vfdmKeyStop') .addEventListener('click', () => { onStop();  render(); });
-        document.getElementById('vfdmKeyLocal').addEventListener('click', () => { onLocalRemote(); render(); });
+        document.getElementById('vfdm-key-up')   .addEventListener('click', () => { step(-1); render(); });
+        document.getElementById('vfdm-key-down') .addEventListener('click', () => { step(+1); render(); });
+        document.getElementById('vfdm-key-enter').addEventListener('click', () => { onEnter(); render(); });
+        document.getElementById('vfdm-key-esc')  .addEventListener('click', () => { onEsc();   render(); });
+        document.getElementById('vfdm-key-run')  .addEventListener('click', () => { onRun();   render(); });
+        document.getElementById('vfdm-key-stop') .addEventListener('click', () => { onStop();  render(); });
+        document.getElementById('vfdm-key-local').addEventListener('click', () => { onLocalRemote(); render(); });
 
         diOpen.addEventListener('click', () => {
             state.diClosed = false;
@@ -774,12 +774,12 @@ nav: tools
             render();
         });
 
-        document.getElementById('vfdmNetRun') .addEventListener('click', () => {
+        document.getElementById('vfdm-net-run') .addEventListener('click', () => {
             state.networkRun = true;
             flash('NET RUN sent');
             render();
         });
-        document.getElementById('vfdmNetStop').addEventListener('click', () => {
+        document.getElementById('vfdm-net-stop').addEventListener('click', () => {
             state.networkRun = false;
             flash('NET STOP sent');
             render();
@@ -805,19 +805,19 @@ nav: tools
             flash('> PRESET');
             render();
         }
-        document.getElementById('vfdmTryDefault').addEventListener('click', e => {
+        document.getElementById('vfdm-try-default').addEventListener('click', e => {
             e.preventDefault();
             applyPreset({ runSrc: 1, spdSrc: 2, local: false, diClosed: false });
         });
-        document.getElementById('vfdmTryKeypad').addEventListener('click', e => {
+        document.getElementById('vfdm-try-keypad').addEventListener('click', e => {
             e.preventDefault();
             applyPreset({ runSrc: 0, spdSrc: 0, local: true,  diClosed: false });
         });
-        document.getElementById('vfdmTryBas').addEventListener('click', e => {
+        document.getElementById('vfdm-try-bas').addEventListener('click', e => {
             e.preventDefault();
             applyPreset({ runSrc: 2, spdSrc: 2, local: false, diClosed: false });
         });
-        document.getElementById('vfdmTryClassic').addEventListener('click', e => {
+        document.getElementById('vfdm-try-classic').addEventListener('click', e => {
             e.preventDefault();
             applyPreset({ runSrc: 1, spdSrc: 2, local: false, diClosed: false });
         });
