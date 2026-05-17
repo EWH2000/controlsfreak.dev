@@ -51,10 +51,6 @@ Calculators, converters, and lookups — open one, get an answer.
   pedagogy from the VFDs explainer in hand: a keypad RUN with the
   run-source set to TERMINALS sits there and does nothing.
 
-Roadmap (Coming Soon cards on the Tools landing):
-Temperature Conversion, VAV Balancing, BACnet Object Reference,
-Modbus Function Codes, Duct Pressure Calculator.
-
 ### Education
 
 Plain-English explainers with hand-drawn SVG schematics. Aimed at
