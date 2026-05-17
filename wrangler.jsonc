@@ -3,7 +3,7 @@
   // Worker entry point — handles POST /api/contact, everything else falls
   // through to the static assets below via env.ASSETS.
   "main": "src/worker.js",
-  "compatibility_date": "2025-05-10",
+  "compatibility_date": "2026-05-17",
   "assets": {
     // Built by 11ty from html/ (see .eleventy.js). Cloudflare Workers
     // Build dashboard runs `npm install && npm run build` to produce

@@ -821,6 +821,9 @@ nav: tools
         });
         document.getElementById('vfdm-try-classic').addEventListener('click', e => {
             e.preventDefault();
+            // Intentional twin of `vfdm-try-default` — the "classic mistake"
+            // *is* factory defaults verbatim; that's the lesson this preset
+            // teaches.
             applyPreset({ runSrc: 1, spdSrc: 2, local: false, diClosed: false });
         });
 

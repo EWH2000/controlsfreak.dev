@@ -12,8 +12,16 @@
     "type": "git",
     "url": "git+https://github.com/EWH2000/controlsfreak.dev.git"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "bacnet",
+    "modbus",
+    "hvac",
+    "building-automation",
+    "controls",
+    "psychrometrics",
+    "pid"
+  ],
+  "author": "Controls Freak",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/EWH2000/controlsfreak.dev/issues"
