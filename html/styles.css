@@ -54,6 +54,27 @@ body {
 }
 main { flex: 1; }
 
+/* ── Skip-to-content link — keyboard users tab here first on every
+       page and can Enter to jump past the nav. Positioned off-screen
+       via negative top so it stays in the DOM (tabbable) but doesn't
+       show; slides into view when focused. Same idiom as the well-
+       known WebAIM pattern. */
+.skip-link {
+    position: absolute;
+    top: -100px;
+    left: 0.5rem;
+    z-index: 200;
+    padding: 0.6rem 1rem;
+    background: var(--accent);
+    color: var(--surface);
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    text-decoration: none;
+    border-radius: 0 0 3px 3px;
+    transition: top 0.15s;
+}
+.skip-link:focus { top: 0; outline: 2px solid var(--accent-glow); outline-offset: 2px; }
+
 /* ── SITE NAV (every page carries the same nav markup) ── */
 .site-nav {
     position: sticky;
