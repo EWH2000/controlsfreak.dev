@@ -75,34 +75,45 @@ test('psychrometric chart computes the AHU chain on load', async ({ page }) => {
     await expect(page.locator('#psy-msg')).toContainText('Wet-bulb can');
 });
 
-test('thermistor calculator looks up a known reference value', async ({ page }) => {
-    await page.goto('http://localhost:8000/tools/thermistor-calculator.html');
+test.describe('thermistor behavioral', () => {
+    // The test below mutates the global units preference (persisted in
+    // localStorage as `cf_units`). Without an afterEach, a failed mid-
+    // test assertion would leave the worker in metric mode and bleed
+    // into every subsequent page test. Clear the key directly so the
+    // cleanup runs regardless of test outcome.
+    test.afterEach(async ({ page }) => {
+        await page.goto('http://localhost:8000/tools/thermistor-calculator.html');
+        await page.evaluate(() => localStorage.removeItem('cf_units'));
+    });
 
-    // the inputs + the reference table render on load
-    await expect(page.locator('#th-type')).toBeVisible();
-    await expect(page.locator('#th-temp')).toBeVisible();
-    expect(await page.locator('#th-rt-body tr').count(), 'R/T table should be populated').toBeGreaterThan(40);
+    test('thermistor calculator looks up a known reference value', async ({ page }) => {
+        await page.goto('http://localhost:8000/tools/thermistor-calculator.html');
 
-    // 10K Type III at 77 °F is the type's defining property — should land on ~10,000 Ω
-    await page.selectOption('#th-type', '10k-3');
-    await page.fill('#th-temp', '77');
-    const r = parseFloat((await page.locator('#th-result').textContent()).replace(/[^0-9.]/g, ''));
-    expect(r, '10K-3 @ 77 °F should be ≈ 10,000 Ω').toBeGreaterThan(9700);
-    expect(r).toBeLessThan(10300);
-    await expect(page.locator('#th-status')).toHaveText('in range');
+        // the inputs + the reference table render on load
+        await expect(page.locator('#th-type')).toBeVisible();
+        await expect(page.locator('#th-temp')).toBeVisible();
+        expect(await page.locator('#th-rt-body tr').count(), 'R/T table should be populated').toBeGreaterThan(40);
 
-    // a temperature outside the table range mutes the result
-    await page.fill('#th-temp', '400');
-    await expect(page.locator('#th-result')).toHaveText('—');
+        // 10K Type III at 77 °F is the type's defining property — should land on ~10,000 Ω
+        await page.selectOption('#th-type', '10k-3');
+        await page.fill('#th-temp', '77');
+        const r = parseFloat((await page.locator('#th-result').textContent()).replace(/[^0-9.]/g, ''));
+        expect(r, '10K-3 @ 77 °F should be ≈ 10,000 Ω').toBeGreaterThan(9700);
+        expect(r).toBeLessThan(10300);
+        await expect(page.locator('#th-status')).toHaveText('in range');
 
-    // flipping the global units toggle rescales the temperature field and label
-    // (the local °F/°C buttons were retired when the global selector landed)
-    await page.fill('#th-temp', '50');
-    await page.click('.units-btn[data-units="metric"]');
-    await expect(page.locator('#th-temp-lbl')).toHaveText('Temperature (°C)');
-    expect(parseFloat(await page.locator('#th-temp').inputValue())).toBeCloseTo(10, 0);   // 50 °F ≈ 10 °C
-    // flip back so this test doesn't leak metric state into the next page load
-    await page.click('.units-btn[data-units="us"]');
+        // a temperature outside the table range mutes the result
+        await page.fill('#th-temp', '400');
+        await expect(page.locator('#th-result')).toHaveText('—');
+
+        // flipping the global units toggle rescales the temperature field and label
+        // (the local °F/°C buttons were retired when the global selector landed)
+        await page.fill('#th-temp', '50');
+        await page.click('.units-btn[data-units="metric"]');
+        await expect(page.locator('#th-temp-lbl')).toHaveText('Temperature (°C)');
+        expect(parseFloat(await page.locator('#th-temp').inputValue())).toBeCloseTo(10, 0);   // 50 °F ≈ 10 °C
+        // Units restore handled by the afterEach above — no manual click needed.
+    });
 });
 
 test('education page runs the PID mini-sims and they respond to input', async ({ page }) => {
