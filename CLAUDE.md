@@ -209,6 +209,21 @@ file.
   genuinely shared JS goes in `html/scripts/` as a classic script.
 - Prefer semantic HTML over div soup. Fast and accessible: no heavy
   media, no auto-play, no tracking or analytics.
+- **Heading hierarchy.** Every page has exactly one `<h1>`. The page
+  topic is the `<h1>`: on content pages that's `.tool-card-title`
+  (`<h1 class="tool-card-title">`); on landing pages with no
+  tool-card-title (`/tools/`, `/education/`, and `pid-basics.html` as
+  a one-off) the eyebrow `.section-label` carries the `<h1>` instead.
+  Section dividers — both in-page `.section-header > .section-label`
+  and the three-column property-sheet `.ps-section-label` — are
+  `<h2>`. Long-lesson `.subhead` rules are also `<h2>`. Callout
+  cards inside `.tool-body` use `<h3>` (`.callout h3`). Secondary
+  `.tool-card-title`s nested under an `<h2>` step to `<h3>` (e.g.
+  `pid-basics.html`'s three mini-sims under "See Each Term in
+  Action"). The CSS rules `.section-label` / `.tool-card-title` /
+  `.ps-section-label` are element-agnostic and reset `margin: 0` so
+  the visual output is identical to the previous `<div>`/`<span>`
+  shape.
 - **Education page scope rule** (one question per page, forward-link
   for adjacent topics) lives in `site-ideas-and-friction.md` under
   "Education page scope — one question per page."

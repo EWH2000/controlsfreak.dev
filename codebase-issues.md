@@ -359,7 +359,7 @@ roadmap surface)" is itself stale relative to `tools/index.html`.
 landmarks" prose still describes the roadmap surface — separate refresh
 when CLAUDE.md is next touched.
 
-### 11. No `<h1>` and broken heading hierarchy on inner pages
+### 11. No `<h1>` and broken heading hierarchy on inner pages *(addressed 2026-05-17)*
 
 `html/index.html` has a proper `<h1>` in its hero. Every other page on
 the site has zero, one, or wrong-level heading elements:
@@ -390,6 +390,24 @@ accessibility gap on the site.
   the existing class slot becomes the h1/h2 host visually, while
   staying one shared style. Then sweep the 17 pages. Lands cleanly
   against the templated layout; batch like Block B did.
+
+**Resolution (2026-05-17):** the element-agnostic sweep landed across
+all 17 pages. `.tool-card-title` is the `<h1>` host on every content
+page; landing pages (`/tools/`, `/education/`, plus `pid-basics.html`
+as a one-off — no top-level tool-card-title) promote the eyebrow
+`.section-label` to `<h1>` instead. In-page section dividers
+(second/third `.section-header > .section-label`) become `<h2>`, as
+do `.ps-section-label` (Input/Output/Reference) and `.subhead`
+(within-`.tool-body` thematic dividers). Existing `.callout h4`
+cards demote to `<h3>` (also: the rule itself moved from
+`.callout h4` to `.callout h3` in `styles.css`). Secondary
+`.tool-card-title`s nested under an `<h2>` step to `<h3>` (the three
+mini-sims on `pid-basics.html` under "See Each Term in Action"; the
+"About these tables" card on `thermistor-calculator.html` stays
+`<h2>` since no `<h2>` divides it from the page topic). The class
+rules pick up `margin: 0` so heading default margins don't disturb
+the layout. The new convention is recorded under CLAUDE.md
+"Conventions → Heading hierarchy."
 
 ### 12. Form-input labels not programmatically associated
 
