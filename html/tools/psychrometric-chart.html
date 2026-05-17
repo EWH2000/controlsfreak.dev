@@ -143,12 +143,12 @@ nav: tools
             <section>
                 <h2 class="ps-section-label">Air handler</h2>
                 <div class="ps-row">
-                    <label class="ps-label" data-us="Altitude (ft)" data-metric="Altitude (m)" for="psyAlt">Altitude (ft)</label>
-                    <input class="ps-input" type="number" id="psyAlt" step="100" placeholder="0" value="0">
+                    <label class="ps-label" data-us="Altitude (ft)" data-metric="Altitude (m)" for="psy-alt">Altitude (ft)</label>
+                    <input class="ps-input" type="number" id="psy-alt" step="100" placeholder="0" value="0">
                 </div>
                 <div class="ps-row">
-                    <label class="ps-label" data-us="AHU airflow (CFM)" data-metric="AHU airflow (m³/h)" for="psyCfm">AHU airflow (CFM)</label>
-                    <input class="ps-input" type="number" id="psyCfm" step="100" placeholder="optional">
+                    <label class="ps-label" data-us="AHU airflow (CFM)" data-metric="AHU airflow (m³/h)" for="psy-cfm">AHU airflow (CFM)</label>
+                    <input class="ps-input" type="number" id="psy-cfm" step="100" placeholder="optional">
                 </div>
 
                 <div class="psy-pills" role="tablist">
@@ -178,7 +178,7 @@ nav: tools
                         </select>
                     </div>
                     <div class="ps-row">
-                        <label class="ps-label" id="oa-secondLbl" for="oa-second">Wet-bulb (°F)</label>
+                        <label class="ps-label" id="oa-second-lbl" for="oa-second">Wet-bulb (°F)</label>
                         <input class="ps-input" type="number" id="oa-second" step="0.5" value="76">
                     </div>
                     <p class="ref-note">Outdoor air entering the air handler. Drag this dot on the chart, or edit values here.</p>
@@ -201,7 +201,7 @@ nav: tools
                         </select>
                     </div>
                     <div class="ps-row">
-                        <label class="ps-label" id="ra-secondLbl" for="ra-second">Wet-bulb (°F)</label>
+                        <label class="ps-label" id="ra-second-lbl" for="ra-second">Wet-bulb (°F)</label>
                         <input class="ps-input" type="number" id="ra-second" step="0.5" value="63">
                     </div>
                     <p class="ref-note">Air returning from the conditioned space. Drag this dot on the chart, or edit values here.</p>
@@ -240,7 +240,7 @@ nav: tools
                         </select>
                     </div>
                     <div class="ps-row">
-                        <label class="ps-label" id="cc-secondLbl" for="cc-second">Wet-bulb (°F)</label>
+                        <label class="ps-label" id="cc-second-lbl" for="cc-second">Wet-bulb (°F)</label>
                         <input class="ps-input" type="number" id="cc-second" step="0.5" value="54">
                     </div>
                     <p class="ref-note">Coil leaving condition. Must be at or below entering DB; humidity ratio can't increase across a cooling coil.</p>
@@ -260,7 +260,7 @@ nav: tools
                         </select>
                     </div>
                     <div class="ps-row">
-                        <label class="ps-label" id="hc-valLbl" for="hc-val">Leaving DB (°F)</label>
+                        <label class="ps-label" id="hc-val-lbl" for="hc-val">Leaving DB (°F)</label>
                         <input class="ps-input" type="number" id="hc-val" step="0.5" value="75">
                     </div>
                     <p class="ref-note">Sensible heating only — humidity ratio is unchanged across the coil. Leaving DB must be at or above entering DB.</p>
@@ -284,14 +284,14 @@ nav: tools
                     <p class="ref-note" style="margin-top:0.6rem;">Supply air is the leaving state of the last enabled stage in the chain. Full property table at right.</p>
                 </div>
 
-                <p class="bit-hint" id="psyMsg" style="margin:0.6rem 0 0;padding:0 1rem;line-height:1.55;"></p>
+                <p class="bit-hint" id="psy-msg" style="margin:0.6rem 0 0;padding:0 1rem;line-height:1.55;"></p>
             </section>
 
             <!-- ────────── CHART COLUMN ────────── -->
             <section>
                 <h2 class="ps-section-label">Chart</h2>
                 <div class="sim-canvas-wrap">
-                    <canvas id="psyCanvas" style="aspect-ratio:8/5;height:auto;touch-action:none;"></canvas>
+                    <canvas id="psy-canvas" style="aspect-ratio:8/5;height:auto;touch-action:none;"></canvas>
                 </div>
                 <p class="bit-hint" style="margin-bottom:0;line-height:1.65;">
                     Heavy green = saturation. Light curves rising right = constant RH; light dashed = constant wet-bulb.
@@ -305,7 +305,7 @@ nav: tools
             <!-- ────────── OUTPUT COLUMN ────────── -->
             <section>
                 <h2 class="ps-section-label">Stages</h2>
-                <table class="ref-table-dense psy-stage-tbl" id="psyStageTable">
+                <table class="ref-table-dense psy-stage-tbl" id="psy-stage-table">
                     <thead>
                         <tr>
                             <th></th>
@@ -319,26 +319,26 @@ nav: tools
                     <tbody><!-- rows generated by JS --></tbody>
                 </table>
 
-                <h2 class="ps-section-label" id="psyDetailLabel" style="margin-top:1rem;">OA — Outdoor air</h2>
-                <div class="ps-row"><span class="ps-label" data-us="Dry-bulb (°F)" data-metric="Dry-bulb (°C)">Dry-bulb (°F)</span><span class="ps-value live" id="roDb">—</span></div>
-                <div class="ps-row"><span class="ps-label" data-us="Wet-bulb (°F)" data-metric="Wet-bulb (°C)">Wet-bulb (°F)</span><span class="ps-value live" id="roWb">—</span></div>
-                <div class="ps-row"><span class="ps-label" data-us="Dew point (°F)" data-metric="Dew point (°C)">Dew point (°F)</span><span class="ps-value live" id="roDp">—</span></div>
-                <div class="ps-row"><span class="ps-label">Rel. humidity (%)</span><span class="ps-value live" id="roRh">—</span></div>
-                <div class="ps-row"><span class="ps-label" data-us="Humidity ratio (gr/lb)" data-metric="Humidity ratio (g/kg)">Humidity ratio (gr/lb)</span><span class="ps-value live" id="roW">—</span></div>
-                <div class="ps-row"><span class="ps-label" data-us="Enthalpy (Btu/lb)" data-metric="Enthalpy (kJ/kg)">Enthalpy (Btu/lb)</span><span class="ps-value live" id="roH">—</span></div>
-                <div class="ps-row"><span class="ps-label" data-us="Specific volume (ft³/lb)" data-metric="Specific volume (m³/kg)">Specific volume (ft³/lb)</span><span class="ps-value live" id="roV">—</span></div>
-                <div class="ps-row"><span class="ps-label" data-us="Vapor pressure (psia)" data-metric="Vapor pressure (kPa)">Vapor pressure (psia)</span><span class="ps-value live" id="roPw">—</span></div>
-                <div class="ps-row"><span class="ps-label" data-us="Barometric press. (psia)" data-metric="Barometric press. (kPa)">Barometric press. (psia)</span><span class="ps-value live" id="roP">—</span></div>
+                <h2 class="ps-section-label" id="psy-detail-label" style="margin-top:1rem;">OA — Outdoor air</h2>
+                <div class="ps-row"><span class="ps-label" data-us="Dry-bulb (°F)" data-metric="Dry-bulb (°C)">Dry-bulb (°F)</span><span class="ps-value live" id="ro-db">—</span></div>
+                <div class="ps-row"><span class="ps-label" data-us="Wet-bulb (°F)" data-metric="Wet-bulb (°C)">Wet-bulb (°F)</span><span class="ps-value live" id="ro-wb">—</span></div>
+                <div class="ps-row"><span class="ps-label" data-us="Dew point (°F)" data-metric="Dew point (°C)">Dew point (°F)</span><span class="ps-value live" id="ro-dp">—</span></div>
+                <div class="ps-row"><span class="ps-label">Rel. humidity (%)</span><span class="ps-value live" id="ro-rh">—</span></div>
+                <div class="ps-row"><span class="ps-label" data-us="Humidity ratio (gr/lb)" data-metric="Humidity ratio (g/kg)">Humidity ratio (gr/lb)</span><span class="ps-value live" id="ro-w">—</span></div>
+                <div class="ps-row"><span class="ps-label" data-us="Enthalpy (Btu/lb)" data-metric="Enthalpy (kJ/kg)">Enthalpy (Btu/lb)</span><span class="ps-value live" id="ro-h">—</span></div>
+                <div class="ps-row"><span class="ps-label" data-us="Specific volume (ft³/lb)" data-metric="Specific volume (m³/kg)">Specific volume (ft³/lb)</span><span class="ps-value live" id="ro-v">—</span></div>
+                <div class="ps-row"><span class="ps-label" data-us="Vapor pressure (psia)" data-metric="Vapor pressure (kPa)">Vapor pressure (psia)</span><span class="ps-value live" id="ro-pw">—</span></div>
+                <div class="ps-row"><span class="ps-label" data-us="Barometric press. (psia)" data-metric="Barometric press. (kPa)">Barometric press. (psia)</span><span class="ps-value live" id="ro-p">—</span></div>
 
-                <div class="psy-process" id="psyProcessBlock" style="display:none;">
-                    <div class="psy-process-label" id="psyProcessLabel">Process delta — across this stage</div>
-                    <div class="ps-row"><span class="ps-label" data-us="ΔDB (°F)" data-metric="ΔDB (°C)">ΔDB (°F)</span><span class="ps-value live" id="pdDb">—</span></div>
-                    <div class="ps-row"><span class="ps-label" data-us="ΔW (gr/lb)" data-metric="ΔW (g/kg)">ΔW (gr/lb)</span><span class="ps-value live" id="pdW">—</span></div>
-                    <div class="ps-row"><span class="ps-label" data-us="Δh (Btu/lb)" data-metric="Δh (kJ/kg)">Δh (Btu/lb)</span><span class="ps-value live" id="pdH">—</span></div>
-                    <div class="ps-row" id="pdShrRow" style="display:none;"><span class="ps-label">Sensible heat ratio</span><span class="ps-value live" id="pdShr">—</span></div>
-                    <div class="ps-row" id="pdQtRow" style="display:none;"><span class="ps-label" data-us="Q total (MBH)" data-metric="Q total (kW)">Q total (MBH)</span><span class="ps-value live" id="pdQt">—</span></div>
-                    <div class="ps-row" id="pdQsRow" style="display:none;"><span class="ps-label" data-us="Q sensible (MBH)" data-metric="Q sensible (kW)">Q sensible (MBH)</span><span class="ps-value live" id="pdQs">—</span></div>
-                    <div class="ps-row" id="pdQlRow" style="display:none;"><span class="ps-label" data-us="Q latent (MBH)" data-metric="Q latent (kW)">Q latent (MBH)</span><span class="ps-value live" id="pdQl">—</span></div>
+                <div class="psy-process" id="psy-process-block" style="display:none;">
+                    <div class="psy-process-label" id="psy-process-label">Process delta — across this stage</div>
+                    <div class="ps-row"><span class="ps-label" data-us="ΔDB (°F)" data-metric="ΔDB (°C)">ΔDB (°F)</span><span class="ps-value live" id="pd-db">—</span></div>
+                    <div class="ps-row"><span class="ps-label" data-us="ΔW (gr/lb)" data-metric="ΔW (g/kg)">ΔW (gr/lb)</span><span class="ps-value live" id="pd-w">—</span></div>
+                    <div class="ps-row"><span class="ps-label" data-us="Δh (Btu/lb)" data-metric="Δh (kJ/kg)">Δh (Btu/lb)</span><span class="ps-value live" id="pd-h">—</span></div>
+                    <div class="ps-row" id="pd-shr-row" style="display:none;"><span class="ps-label">Sensible heat ratio</span><span class="ps-value live" id="pd-shr">—</span></div>
+                    <div class="ps-row" id="pd-qt-row" style="display:none;"><span class="ps-label" data-us="Q total (MBH)" data-metric="Q total (kW)">Q total (MBH)</span><span class="ps-value live" id="pd-qt">—</span></div>
+                    <div class="ps-row" id="pd-qs-row" style="display:none;"><span class="ps-label" data-us="Q sensible (MBH)" data-metric="Q sensible (kW)">Q sensible (MBH)</span><span class="ps-value live" id="pd-qs">—</span></div>
+                    <div class="ps-row" id="pd-ql-row" style="display:none;"><span class="ps-label" data-us="Q latent (MBH)" data-metric="Q latent (kW)">Q latent (MBH)</span><span class="ps-value live" id="pd-ql">—</span></div>
                 </div>
             </section>
 
@@ -557,10 +557,10 @@ nav: tools
             // Altitude/CFM are simple scalar conversions; the "second value" is
             // mode-dependent (rh stays %, temps go C→F, humidity ratio g/kg→gr/lb,
             // enthalpy kJ/kg→Btu/lb).
-            const altDisp = parseFloat(document.getElementById('psyAlt').value) || 0;
+            const altDisp = parseFloat(document.getElementById('psy-alt').value) || 0;
             const alt     = U.toCanonical.altitude(altDisp);
             const P       = pressFromAltitude(alt);
-            const cfmRawD = parseFloat(document.getElementById('psyCfm').value);
+            const cfmRawD = parseFloat(document.getElementById('psy-cfm').value);
             const cfmRaw  = U.toCanonical.airflow(cfmRawD);
             const cfm     = (isFinite(cfmRaw) && cfmRaw > 0) ? cfmRaw : null;
 
@@ -765,7 +765,7 @@ nav: tools
         function onHcModeChange() {
             const mode = document.getElementById('hc-mode').value;
             const tU   = U.suffix.temp();
-            document.getElementById('hc-valLbl').textContent = mode === 'dt' ? `ΔT rise (${tU})` : `Leaving DB (${tU})`;
+            document.getElementById('hc-val-lbl').textContent = mode === 'dt' ? `ΔT rise (${tU})` : `Leaving DB (${tU})`;
             psyRecompute();
         }
 
@@ -776,7 +776,7 @@ nav: tools
         }
 
         function renderStageTable(chain) {
-            const tbody = document.querySelector('#psyStageTable tbody');
+            const tbody = document.querySelector('#psy-stage-table tbody');
             const cfmOn = chain.cfm !== null;
             document.querySelectorAll('.psy-q-col').forEach(el => el.style.display = cfmOn ? '' : 'none');
 
@@ -822,60 +822,60 @@ nav: tools
         }
 
         function renderDetail(state, label) {
-            document.getElementById('psyDetailLabel').textContent = label;
+            document.getElementById('psy-detail-label').textContent = label;
             const ro = (id, v, live) => {
                 const el = document.getElementById(id);
                 el.textContent = v;
                 el.className = live ? 'ps-value live' : 'ps-value muted';
             };
             if (!state || !state.ok) {
-                ['roDb','roWb','roDp','roRh','roW','roH','roV','roPw','roP'].forEach(id => ro(id, '—', false));
+                ['ro-db','ro-wb','ro-dp','ro-rh','ro-w','ro-h','ro-v','ro-pw','ro-p'].forEach(id => ro(id, '—', false));
                 return;
             }
-            ro('roDb', dispT(state.tdb), true);
-            ro('roWb', dispT(state.twb), true);
+            ro('ro-db', dispT(state.tdb), true);
+            ro('ro-wb', dispT(state.twb), true);
             const dpOk = isFinite(state.tdp) && state.tdp > -60;
-            ro('roDp', dpOk ? dispT(state.tdp) : '—', dpOk);
-            ro('roRh', state.rh.toFixed(1), true);
-            ro('roW',  dispW(state.W), true);
-            ro('roH',  dispH(state.h), true);
-            ro('roV',  dispV(state.v), true);
+            ro('ro-dp', dpOk ? dispT(state.tdp) : '—', dpOk);
+            ro('ro-rh', state.rh.toFixed(1), true);
+            ro('ro-w',  dispW(state.W), true);
+            ro('ro-h',  dispH(state.h), true);
+            ro('ro-v',  dispV(state.v), true);
             // Vapor pressure uses a wider precision in IP (psia) than in kPa.
-            ro('roPw', U.display.pressure(state.pw).toFixed(U.current() === 'us' ? 4 : 3), true);
-            ro('roP',  dispP(state.P), true);
+            ro('ro-pw', U.display.pressure(state.pw).toFixed(U.current() === 'us' ? 4 : 3), true);
+            ro('ro-p',  dispP(state.P), true);
         }
 
         function renderProcessBlock(stage, cfm) {
-            const block = document.getElementById('psyProcessBlock');
+            const block = document.getElementById('psy-process-block');
             if (!stage) { block.style.display = 'none'; return; }
             block.style.display = '';
-            document.getElementById('psyProcessLabel').textContent = PROCESS_LABEL[stage.key] || 'Process delta — across this stage';
+            document.getElementById('psy-process-label').textContent = PROCESS_LABEL[stage.key] || 'Process delta — across this stage';
             const proc = computeProcess(stage, cfm);
             const set = (id, txt) => {
                 const el = document.getElementById(id);
                 el.textContent = txt;
                 el.className = 'ps-value live';
             };
-            set('pdDb', dispdT(proc.dDb));
-            set('pdW',  dispdW(proc.dW));
-            set('pdH',  dispdH(proc.dH));
+            set('pd-db', dispdT(proc.dDb));
+            set('pd-w',  dispdW(proc.dW));
+            set('pd-h',  dispdH(proc.dH));
 
-            const shrRow = document.getElementById('pdShrRow');
+            const shrRow = document.getElementById('pd-shr-row');
             if (stage.type === 'cool' && proc.shr !== null && isFinite(proc.shr)) {
                 shrRow.style.display = '';
-                set('pdShr', proc.shr.toFixed(3));
+                set('pd-shr', proc.shr.toFixed(3));
             } else {
                 shrRow.style.display = 'none';
             }
 
             const haveQ = proc.qTotal !== null;
-            document.getElementById('pdQtRow').style.display = haveQ ? '' : 'none';
-            document.getElementById('pdQsRow').style.display = haveQ ? '' : 'none';
-            document.getElementById('pdQlRow').style.display = haveQ ? '' : 'none';
+            document.getElementById('pd-qt-row').style.display = haveQ ? '' : 'none';
+            document.getElementById('pd-qs-row').style.display = haveQ ? '' : 'none';
+            document.getElementById('pd-ql-row').style.display = haveQ ? '' : 'none';
             if (haveQ) {
-                set('pdQt', dispQ(Math.abs(proc.qTotal)));
-                set('pdQs', dispQ(Math.abs(proc.qSens)));
-                set('pdQl', dispQ(Math.abs(proc.qLat)));
+                set('pd-qt', dispQ(Math.abs(proc.qTotal)));
+                set('pd-qs', dispQ(Math.abs(proc.qSens)));
+                set('pd-ql', dispQ(Math.abs(proc.qLat)));
             }
         }
 
@@ -913,7 +913,7 @@ nav: tools
                             : null;
             renderProcessBlock(selStage || null, chain.cfm);
 
-            const msgEl = document.getElementById('psyMsg');
+            const msgEl = document.getElementById('psy-msg');
             if (chain.error) {
                 msgEl.textContent = chain.error;
                 msgEl.style.color = 'var(--red)';
@@ -934,7 +934,7 @@ nav: tools
         let psyGeom = null;  // { padL, padT, w, h, X, Y } from last draw
 
         function drawPsychChart(chain) {
-            const canvas = document.getElementById('psyCanvas');
+            const canvas = document.getElementById('psy-canvas');
             if (!canvas) return;
             const cssW = canvas.clientWidth, cssH = canvas.clientHeight;
             if (!cssW || !cssH) return;
@@ -1210,7 +1210,7 @@ nav: tools
         }
 
         (function () {
-            const c = document.getElementById('psyCanvas');
+            const c = document.getElementById('psy-canvas');
             let dragKey = null;
             const moveTo = (ev) => {
                 if (!psyGeom || !dragKey) return;
@@ -1249,8 +1249,8 @@ nav: tools
         // Resolve an input id to the canonical quantity it currently represents.
         // The *-second inputs are mode-driven; hc-val is mode-driven too.
         function inputQuantity(id) {
-            if (id === 'psyAlt') return 'altitude';
-            if (id === 'psyCfm') return 'airflow';
+            if (id === 'psy-alt') return 'altitude';
+            if (id === 'psy-cfm') return 'airflow';
             if (id === 'hc-val') return document.getElementById('hc-mode').value === 'dt' ? 'deltaTemp' : 'temp';
             if (id.endsWith('-tdb')) return 'temp';
             if (id.endsWith('-second')) {
@@ -1266,7 +1266,7 @@ nav: tools
         // Ids of every input whose displayed value may need to be reformatted on
         // a unit-system flip. ma-pct and hum-rh are deliberately omitted (%).
         const UNIT_INPUT_IDS = [
-            'psyAlt', 'psyCfm',
+            'psy-alt', 'psy-cfm',
             'oa-tdb', 'oa-second',
             'ra-tdb', 'ra-second',
             'cc-tdb', 'cc-second',
@@ -1312,7 +1312,7 @@ nav: tools
             // HC: depends on hc-mode (ldb vs dt). Just reuse the existing handler logic.
             const hcMode = document.getElementById('hc-mode').value;
             const tU     = U.suffix.temp();
-            document.getElementById('hc-valLbl').textContent =
+            document.getElementById('hc-val-lbl').textContent =
                 hcMode === 'dt' ? `ΔT rise (${tU})` : `Leaving DB (${tU})`;
         }
 
@@ -1324,7 +1324,7 @@ nav: tools
                 if (el) el.step = stepT;
             });
             // psyAlt step: 100 ft ≈ 30 m. Use 50 m increments in metric (round-feeling).
-            const psyAlt = document.getElementById('psyAlt');
+            const psyAlt = document.getElementById('psy-alt');
             if (psyAlt) psyAlt.step = U.current() === 'us' ? 100 : 50;
         }
 
@@ -1355,7 +1355,7 @@ nav: tools
         });
         // Inputs / checkboxes that just re-run the chain on any change.
         const RECOMPUTE_IDS = [
-            'psyAlt', 'psyCfm',
+            'psy-alt', 'psy-cfm',
             'oa-tdb', 'oa-second',
             'ra-tdb', 'ra-second',
             'ma-pct',
