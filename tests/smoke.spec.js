@@ -37,6 +37,18 @@ const PAGES = [
     { name: 'contact',                url: 'http://localhost:8000/contact.html' },
 ];
 
+test('PAGES array stays in sync with html/sitemap.xml', () => {
+    const fs = require('fs');
+    const sitemap = fs.readFileSync('html/sitemap.xml', 'utf8');
+    const sitemapPaths = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)]
+        .map(m => m[1].replace(/^https?:\/\/[^/]+/, ''))
+        .sort();
+    const pagesPaths = PAGES
+        .map(p => p.url.replace(/^https?:\/\/[^/]+/, ''))
+        .sort();
+    expect(pagesPaths, 'every sitemap.xml entry should appear in PAGES and vice versa').toEqual(sitemapPaths);
+});
+
 for (const { name, url } of PAGES) {
     test(`${name} loads cleanly`, async ({ page }) => {
         const errors = watchErrors(page);
