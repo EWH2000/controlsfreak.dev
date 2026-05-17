@@ -297,10 +297,10 @@ nav: tools
         const pctEl  = document.getElementById('scalingPct');
         const fillEl = document.getElementById('rangeBarFill');
 
-        document.getElementById('barLabelMin').textContent = isNaN(euMin) ? 'Min' : `${euMin}${euUnit ? ' ' + euUnit : ''}`;
-        document.getElementById('barLabelMax').textContent = isNaN(euMax) ? 'Max' : `${euMax}${euUnit ? ' ' + euUnit : ''}`;
+        document.getElementById('barLabelMin').textContent = !isFinite(euMin) ? 'Min' : `${euMin}${euUnit ? ' ' + euUnit : ''}`;
+        document.getElementById('barLabelMax').textContent = !isFinite(euMax) ? 'Max' : `${euMax}${euUnit ? ' ' + euUnit : ''}`;
 
-        if (isNaN(sig) || isNaN(euMin) || isNaN(euMax) || isNaN(sMin) || isNaN(sMax) || sMax === sMin) {
+        if (!isFinite(sig) || !isFinite(euMin) || !isFinite(euMax) || !isFinite(sMin) || !isFinite(sMax) || sMax === sMin) {
             outEl.className = 'ps-value muted';
             outEl.textContent = '—';
             pctEl.className = 'ps-value muted';
@@ -340,7 +340,7 @@ nav: tools
         const outEl = document.getElementById('reverseOut');
         const pctEl = document.getElementById('reversePct');
 
-        if (isNaN(eu) || isNaN(euMin) || isNaN(euMax) || euMax === euMin) {
+        if (!isFinite(eu) || !isFinite(euMin) || !isFinite(euMax) || euMax === euMin) {
             outEl.className = 'ps-value muted';
             outEl.textContent = '—';
             pctEl.className = 'ps-value muted';
@@ -376,7 +376,7 @@ nav: tools
         const offsetEl  = document.getElementById('so_offset');
         const formulaEl = document.getElementById('so_formula');
 
-        if (isNaN(x1) || isNaN(y1) || isNaN(x2) || isNaN(y2) || x1 === x2) {
+        if (!isFinite(x1) || !isFinite(y1) || !isFinite(x2) || !isFinite(y2) || x1 === x2) {
             slopeEl.className  = 'ps-value muted';
             offsetEl.className = 'ps-value muted';
             slopeEl.textContent  = '—';

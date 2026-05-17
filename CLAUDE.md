@@ -416,9 +416,12 @@ well-grouped.
   addEventListener-in-IIFE pattern.** The inline-handler pages are
   queued for retrofit (codebase-issues #3, Block C).
 - **Validate-and-mute:** read inputs with `parseFloat`; if anything
-  isn't finite (use `Number.isFinite`, not `isNaN` — see
-  codebase-issues #2), set the result to
-  `class="result-value muted"` with text `—` and clear the formula.
+  isn't finite (use `!isFinite(x)`, not `isNaN(x)` — `isFinite`
+  also rejects `Infinity`, which `isNaN` doesn't, and the
+  difference matters on calcs like `1 / (max - min)` where equal
+  bounds produce `Infinity`. See codebase-issues #2), set the
+  result to `class="result-value muted"` with text `—` and clear
+  the formula.
 - **Tabs:** `switchTab(name, btn)` (from `/scripts/ui.js`) is scoped
   to the clicked button's nearest `.tool-card`, so a page with
   multiple tabbed tools doesn't clear another's panes.

@@ -126,7 +126,7 @@ nav: tools
 
     function fromDec() {
         const val = parseInt(document.getElementById('modDec').value);
-        if (isNaN(val) || val < 0 || val > 65535) return;
+        if (!isFinite(val) || val < 0 || val > 65535) return;
         for (let i = 0; i < 16; i++) bits[i] = (val >> i) & 1;
         document.getElementById('modHex').value = '0x' + val.toString(16).toUpperCase().padStart(4, '0');
         updateReadouts(val);
@@ -136,7 +136,7 @@ nav: tools
     function fromHex() {
         let raw = document.getElementById('modHex').value.trim().replace(/^0x/i, '');
         const val = parseInt(raw, 16);
-        if (isNaN(val) || val < 0 || val > 65535) return;
+        if (!isFinite(val) || val < 0 || val > 65535) return;
         for (let i = 0; i < 16; i++) bits[i] = (val >> i) & 1;
         document.getElementById('modDec').value = val;
         updateReadouts(val);
