@@ -175,7 +175,7 @@ nav: education
         <div class="tool-body">
 
             <p class="page-intro">
-                On the <a href="/education/load-piping.html" style="color:var(--accent);">load piping</a> lesson we built up the picture of a variable-flow hydronic system from the load side: every coil throttled by a two-way valve, system flow rising and falling with the building's demand. On the <a href="/education/vfds.html" style="color:var(--accent);">VFDs</a> lesson we walked through the box that lets a pump run at any speed you ask for. This page is the bridge between the two — <em>how does the BMS decide what speed to ask for?</em> The short answer is "by watching a pressure sensor in the loop and slowing the pump down until the building barely notices." The long answer is everything below.
+                On the <a href="/education/load-piping.html">load piping</a> lesson we built up the picture of a variable-flow hydronic system from the load side: every coil throttled by a two-way valve, system flow rising and falling with the building's demand. On the <a href="/education/vfds.html">VFDs</a> lesson we walked through the box that lets a pump run at any speed you ask for. This page is the bridge between the two — <em>how does the BMS decide what speed to ask for?</em> The short answer is "by watching a pressure sensor in the loop and slowing the pump down until the building barely notices." The long answer is everything below.
             </p>
 
             <!-- ───────────────── 1 · Constant-Speed Pumps ───────────────── -->
@@ -190,7 +190,7 @@ nav: education
             </p>
 
             <p style="margin-top:1.25rem;">
-                The protection against the constant-speed-pump deadhead is the <em>differential pressure bypass valve</em> at the far end of the loop, covered on the <a href="/education/load-piping.html#tie-back" style="color:var(--accent);">load-piping page</a>'s closing section — when system pressure climbs past a threshold (i.e. all the loads are closing in), the DPBV cracks open and gives the pump somewhere to go. It's a mechanical fix for a control problem that variable-speed pumping solves a different way: don't push pressure the system isn't asking for in the first place. That's the rest of this page.
+                The protection against the constant-speed-pump deadhead is the <em>differential pressure bypass valve</em> at the far end of the loop, covered on the <a href="/education/load-piping.html#tie-back">load-piping page</a>'s closing section — when system pressure climbs past a threshold (i.e. all the loads are closing in), the DPBV cracks open and gives the pump somewhere to go. It's a mechanical fix for a control problem that variable-speed pumping solves a different way: don't push pressure the system isn't asking for in the first place. That's the rest of this page.
             </p>
 
             <!-- ───────────────── 2 · Pump Curve and System Curve ───────────────── -->
@@ -358,7 +358,7 @@ nav: education
                     <li><strong>Head scales with speed squared.</strong>&nbsp; H&#8322; / H&#8321; = (N&#8322; / N&#8321;)&#178;</li>
                     <li><strong>Power scales with speed cubed.</strong>&nbsp; P&#8322; / P&#8321; = (N&#8322; / N&#8321;)&#179;</li>
                 </ul>
-                <p style="margin-top:0.7rem;color:var(--text-dim);">That last one is the same <a href="/education/vfds.html" style="color:var(--accent);">cube law</a> from the VFDs page, viewed from the pump side — drop the speed to 70% and the power needed for the duty drops to about 34%. The same equipment moving along its system curve.</p>
+                <p style="margin-top:0.7rem;color:var(--text-dim);">That last one is the same <a href="/education/vfds.html">cube law</a> from the VFDs page, viewed from the pump side — drop the speed to 70% and the power needed for the duty drops to about 34%. The same equipment moving along its system curve.</p>
             </div>
 
             <p style="margin-top:1.25rem;">
@@ -612,7 +612,7 @@ nav: education
             <h2 class="subhead">Tying It Together</h2>
 
             <p>
-                Three pages, one picture. On <a href="/education/load-piping.html" style="color:var(--accent);">load piping</a> we set up the variable-flow system from the coil's point of view — every load throttled by a two-way valve, system flow varying with the building. On <a href="/education/vfds.html" style="color:var(--accent);">VFDs</a> we walked through the drive that lets a pump motor follow a speed reference instead of running on/off at the line. On this page we filled in <em>what the BMS does with that speed reference</em>: hold a DP setpoint across the worst-case load, ideally one that walks down with the building, and ride the pump curve along the system curve as the day goes on. Variable-speed pumping is three concepts that have to land at once; isolated from each other, none of the three makes complete sense. Underneath all three, each load's connection valve has to hold its design flow as system pressure swings — that's what <a href="/education/balancing.html" style="color:var(--accent);">hydronic balancing</a> covers, and it's why pressure-independent control valves (PICVs) are the natural pairing for aggressive DP-reset.
+                Three pages, one picture. On <a href="/education/load-piping.html">load piping</a> we set up the variable-flow system from the coil's point of view — every load throttled by a two-way valve, system flow varying with the building. On <a href="/education/vfds.html">VFDs</a> we walked through the drive that lets a pump motor follow a speed reference instead of running on/off at the line. On this page we filled in <em>what the BMS does with that speed reference</em>: hold a DP setpoint across the worst-case load, ideally one that walks down with the building, and ride the pump curve along the system curve as the day goes on. Variable-speed pumping is three concepts that have to land at once; isolated from each other, none of the three makes complete sense. Underneath all three, each load's connection valve has to hold its design flow as system pressure swings — that's what <a href="/education/balancing.html">hydronic balancing</a> covers, and it's why pressure-independent control valves (PICVs) are the natural pairing for aggressive DP-reset.
             </p>
 
             <p style="margin-top:1.25rem;">

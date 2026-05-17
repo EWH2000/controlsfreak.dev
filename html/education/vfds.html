@@ -204,7 +204,7 @@ nav: education
         <div class="tool-body">
 
             <p class="page-intro">
-                On the <a href="/education/load-piping.html" style="color:var(--accent);">load piping</a> lesson we said variable-flow systems need a pump that can vary too — and forward-pointed to "the VFDs lesson" for what that pump actually is. This is that page. A <em>variable frequency drive</em> is the box between the line voltage and a motor that lets the motor run at any speed you ask for. It's also the box every controls tech ends up writing to from the BMS, and the box where half the "why won't this thing run" service calls trace back to a single misconfigured parameter. We'll cover both ends — what a VFD is, and what the controls-tech-facing surface of it looks like once it's on a network.
+                On the <a href="/education/load-piping.html">load piping</a> lesson we said variable-flow systems need a pump that can vary too — and forward-pointed to "the VFDs lesson" for what that pump actually is. This is that page. A <em>variable frequency drive</em> is the box between the line voltage and a motor that lets the motor run at any speed you ask for. It's also the box every controls tech ends up writing to from the BMS, and the box where half the "why won't this thing run" service calls trace back to a single misconfigured parameter. We'll cover both ends — what a VFD is, and what the controls-tech-facing surface of it looks like once it's on a network.
             </p>
 
             <!-- ───────────────── 1 · What a VFD Is ───────────────── -->
@@ -297,7 +297,7 @@ nav: education
             </div>
 
             <p style="margin-top:1.25rem;">
-                That's why a building with variable-flow pumping (every load <a href="/education/load-piping.html" style="color:var(--accent);">piped two-way</a>) almost always pairs with a VFD on the system pump — at part load you want the pump to slow down with the building, not push the same volume around all day. Same story on the air side: VAV systems with a VFD on the supply fan ramp down with the boxes, and the fan's the biggest energy hog on the unit. Cube law is the why; the rest of this page is the how.
+                That's why a building with variable-flow pumping (every load <a href="/education/load-piping.html">piped two-way</a>) almost always pairs with a VFD on the system pump — at part load you want the pump to slow down with the building, not push the same volume around all day. Same story on the air side: VAV systems with a VFD on the supply fan ramp down with the boxes, and the fan's the biggest energy hog on the unit. Cube law is the why; the rest of this page is the how.
             </p>
 
             <!-- ───────────────── 3 · Run Command vs. Speed Reference — THE WIDGET ───────────────── -->
@@ -508,7 +508,7 @@ nav: education
             </ul>
 
             <p>
-                When you're pulling that hex address off an EBO BACnet/IP discovery and trying to make sense of it, the <a href="/tools/bacnet-ip-converter.html" style="color:var(--accent);">BACnet/IP converter</a> turns it into the dotted-decimal IP. If you're reaching for a Modbus register and need to see the bits, the <a href="/tools/modbus-register-viewer.html" style="color:var(--accent);">Modbus register viewer</a> lays a 16-bit word out for you.
+                When you're pulling that hex address off an EBO BACnet/IP discovery and trying to make sense of it, the <a href="/tools/bacnet-ip-converter.html">BACnet/IP converter</a> turns it into the dotted-decimal IP. If you're reaching for a Modbus register and need to see the bits, the <a href="/tools/modbus-register-viewer.html">Modbus register viewer</a> lays a 16-bit word out for you.
             </p>
 
             <!-- ───────────────── 6 · Fault Codes ───────────────── -->
@@ -637,15 +637,15 @@ nav: education
             <h2 class="subhead">Tying It Back to Load Piping</h2>
 
             <p>
-                On the <a href="/education/load-piping.html" style="color:var(--accent);">load-piping</a> lesson we set up the variable-flow picture from the load side: every coil is throttled by a two-way valve; the system pump should slow down as the loads close in. The VFD is the answer to the pump side of that picture. The system pump's BMS-facing surface is a run command and a speed reference — exactly the two parameters we just walked through — and the BMS modulates the speed reference to hold whatever variable the sequence cares about (usually a differential pressure across the loop, sometimes a return-temperature setpoint, occasionally a valve-position reset on the most-open valve).
+                On the <a href="/education/load-piping.html">load-piping</a> lesson we set up the variable-flow picture from the load side: every coil is throttled by a two-way valve; the system pump should slow down as the loads close in. The VFD is the answer to the pump side of that picture. The system pump's BMS-facing surface is a run command and a speed reference — exactly the two parameters we just walked through — and the BMS modulates the speed reference to hold whatever variable the sequence cares about (usually a differential pressure across the loop, sometimes a return-temperature setpoint, occasionally a valve-position reset on the most-open valve).
             </p>
 
             <p style="margin-top:1.25rem;">
-                That last part — <em>how</em> the BMS decides what speed reference to send — is its own topic. The <a href="/education/pump-control.html" style="color:var(--accent);">pump-control lesson</a> picks up from here, walking through pump curves and the operating point, DP-based control with a remote sensor, and DP setpoint reset for the bottom of the cube-law savings.
+                That last part — <em>how</em> the BMS decides what speed reference to send — is its own topic. The <a href="/education/pump-control.html">pump-control lesson</a> picks up from here, walking through pump curves and the operating point, DP-based control with a remote sensor, and DP setpoint reset for the bottom of the cube-law savings.
             </p>
 
             <p style="margin-top:1.25rem;">
-                And if you want to actually feel how the parameter tree on a real drive lays out — pressing up/down/enter/escape, finding the run-source parameter buried three menus deep, watching commanded Hz vs. actual Hz when you hit RUN — the <a href="/tools/vfd-mock.html" style="color:var(--accent);">mock VFD interface</a> is the next step. Same source-parameter pedagogy as the widget above, but with a keypad and a parameter tree to navigate.
+                And if you want to actually feel how the parameter tree on a real drive lays out — pressing up/down/enter/escape, finding the run-source parameter buried three menus deep, watching commanded Hz vs. actual Hz when you hit RUN — the <a href="/tools/vfd-mock.html">mock VFD interface</a> is the next step. Same source-parameter pedagogy as the widget above, but with a keypad and a parameter tree to navigate.
             </p>
 
         </div>
