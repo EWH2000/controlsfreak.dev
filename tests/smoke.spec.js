@@ -197,14 +197,17 @@ test('vfd mock — run-source gating works from the keypad', async ({ page }) =>
     // L/R into LOCAL — keypad now overrides source params and RUN actually starts the drive.
     await page.click('#vfdm-key-local');
     await page.click('#vfdm-key-run');
-    await page.waitForTimeout(300);  // let it ramp a bit
     await expect(page.locator('#vfdm-state-text')).toHaveText(/RAMPING UP|AT SPEED/);
-    const actHz = parseFloat(await page.locator('#vfdm-act-hz').textContent());
-    // setHz = 30 (keypad default I01); the drive must be ramping (≥ 1 Hz
-    // after 300 ms at the 6 Hz/s default ramp rate) and must not exceed
-    // the configured setpoint.
+
+    // setHz = 30 (keypad default I01). Poll for actHz to climb to ≥ 1 Hz
+    // (deterministic stop condition instead of a hard 300 ms wait) capped
+    // at 1.5 s; then read once and assert the ramp stays under setpoint.
     const setHz = 30;
-    expect(actHz, 'drive should be ramping up in LOCAL mode').toBeGreaterThanOrEqual(1);
+    await expect.poll(
+        async () => parseFloat(await page.locator('#vfdm-act-hz').textContent()),
+        { timeout: 1500, message: 'drive should be ramping up in LOCAL mode' }
+    ).toBeGreaterThanOrEqual(1);
+    const actHz = parseFloat(await page.locator('#vfdm-act-hz').textContent());
     expect(actHz, 'drive should not exceed the configured setpoint during ramp').toBeLessThanOrEqual(setHz);
 });
 

@@ -19,14 +19,17 @@ test('empty submit triggers built-in validation and makes no network call', asyn
     page.on('request', (r) => { if (r.url().includes('/api/contact')) apiCalled = true; });
 
     await page.click('#contact-form button[type="submit"]');
-    await page.waitForTimeout(300);
 
     // Required fields are empty, so the browser blocks submission before our
     // onsubmit handler runs: no fetch, the result panel stays hidden, and the
-    // form reports itself invalid.
+    // form reports itself invalid. No hard wait — the toBeHidden() check
+    // auto-retries; checkValidity() and apiCalled are settled the moment the
+    // synchronous click handler returns (browser-side validation is
+    // synchronous; if it had submitted the form, a fetch would have already
+    // been queued and the `request` listener triggered).
+    await expect(page.locator('#contact-result')).toBeHidden();
     expect(apiCalled).toBe(false);
     expect(await page.evaluate(() => document.getElementById('contact-form').checkValidity())).toBe(false);
-    await expect(page.locator('#contact-result')).toBeHidden();
 });
 
 // SKIPPED: this exercises POST /api/contact, which only exists on the Worker.
