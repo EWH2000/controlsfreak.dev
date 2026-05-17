@@ -99,12 +99,12 @@ nav: tools
 
                 <div class="ps-row">
                     <label class="ps-label" id="th-temp-lbl" for="th-temp">Temperature (°F)</label>
-                    <input class="ps-input" type="number" id="th-temp" step="1" placeholder="77" value="77">
+                    <input class="ps-input" type="number" id="th-temp" step="1" min="-50" max="200" placeholder="77" value="77">
                 </div>
 
                 <div class="ps-row">
                     <label class="ps-label" for="th-res">Resistance (Ω)</label>
-                    <input class="ps-input" type="number" id="th-res" step="1" placeholder="10000" disabled>
+                    <input class="ps-input" type="number" id="th-res" step="1" min="0" placeholder="10000" disabled>
                 </div>
             </section>
 

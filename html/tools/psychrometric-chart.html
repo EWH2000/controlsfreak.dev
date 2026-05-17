@@ -144,11 +144,11 @@ nav: tools
                 <h2 class="ps-section-label">Air handler</h2>
                 <div class="ps-row">
                     <label class="ps-label" data-us="Altitude (ft)" data-metric="Altitude (m)" for="psy-alt">Altitude (ft)</label>
-                    <input class="ps-input" type="number" id="psy-alt" step="100" placeholder="0" value="0">
+                    <input class="ps-input" type="number" id="psy-alt" step="100" min="0" max="15000" placeholder="0" value="0">
                 </div>
                 <div class="ps-row">
                     <label class="ps-label" data-us="AHU airflow (CFM)" data-metric="AHU airflow (m³/h)" for="psy-cfm">AHU airflow (CFM)</label>
-                    <input class="ps-input" type="number" id="psy-cfm" step="100" placeholder="optional">
+                    <input class="ps-input" type="number" id="psy-cfm" step="100" min="0" placeholder="optional">
                 </div>
 
                 <div class="psy-pills" role="tablist">
@@ -165,7 +165,7 @@ nav: tools
                 <div class="psy-editor shown" data-step="oa">
                     <div class="ps-row">
                         <label class="ps-label" data-us="Dry-bulb (°F)" data-metric="Dry-bulb (°C)" for="oa-tdb">Dry-bulb (°F)</label>
-                        <input class="ps-input" type="number" id="oa-tdb" step="0.5" value="92">
+                        <input class="ps-input" type="number" id="oa-tdb" step="0.5" min="-50" max="200" value="92">
                     </div>
                     <div class="ps-row">
                         <label class="ps-label" for="oa-mode">Define by</label>
@@ -179,7 +179,7 @@ nav: tools
                     </div>
                     <div class="ps-row">
                         <label class="ps-label" id="oa-second-lbl" for="oa-second">Wet-bulb (°F)</label>
-                        <input class="ps-input" type="number" id="oa-second" step="0.5" value="76">
+                        <input class="ps-input" type="number" id="oa-second" step="0.5" min="-50" max="200" value="76">
                     </div>
                     <p class="ref-note">Outdoor air entering the air handler. Drag this dot on the chart, or edit values here.</p>
                 </div>
@@ -188,7 +188,7 @@ nav: tools
                 <div class="psy-editor" data-step="ra">
                     <div class="ps-row">
                         <label class="ps-label" data-us="Dry-bulb (°F)" data-metric="Dry-bulb (°C)" for="ra-tdb">Dry-bulb (°F)</label>
-                        <input class="ps-input" type="number" id="ra-tdb" step="0.5" value="75">
+                        <input class="ps-input" type="number" id="ra-tdb" step="0.5" min="-50" max="200" value="75">
                     </div>
                     <div class="ps-row">
                         <label class="ps-label" for="ra-mode">Define by</label>
@@ -202,7 +202,7 @@ nav: tools
                     </div>
                     <div class="ps-row">
                         <label class="ps-label" id="ra-second-lbl" for="ra-second">Wet-bulb (°F)</label>
-                        <input class="ps-input" type="number" id="ra-second" step="0.5" value="63">
+                        <input class="ps-input" type="number" id="ra-second" step="0.5" min="-50" max="200" value="63">
                     </div>
                     <p class="ref-note">Air returning from the conditioned space. Drag this dot on the chart, or edit values here.</p>
                 </div>
@@ -227,7 +227,7 @@ nav: tools
                     </div>
                     <div class="ps-row">
                         <label class="ps-label" data-us="Leaving DB (°F)" data-metric="Leaving DB (°C)" for="cc-tdb">Leaving DB (°F)</label>
-                        <input class="ps-input" type="number" id="cc-tdb" step="0.5" value="55">
+                        <input class="ps-input" type="number" id="cc-tdb" step="0.5" min="-50" max="200" value="55">
                     </div>
                     <div class="ps-row">
                         <label class="ps-label" for="cc-mode">Define by</label>
@@ -241,7 +241,7 @@ nav: tools
                     </div>
                     <div class="ps-row">
                         <label class="ps-label" id="cc-second-lbl" for="cc-second">Wet-bulb (°F)</label>
-                        <input class="ps-input" type="number" id="cc-second" step="0.5" value="54">
+                        <input class="ps-input" type="number" id="cc-second" step="0.5" min="-50" max="200" value="54">
                     </div>
                     <p class="ref-note">Coil leaving condition. Must be at or below entering DB; humidity ratio can't increase across a cooling coil.</p>
                 </div>
@@ -261,7 +261,7 @@ nav: tools
                     </div>
                     <div class="ps-row">
                         <label class="ps-label" id="hc-val-lbl" for="hc-val">Leaving DB (°F)</label>
-                        <input class="ps-input" type="number" id="hc-val" step="0.5" value="75">
+                        <input class="ps-input" type="number" id="hc-val" step="0.5" min="-50" max="200" value="75">
                     </div>
                     <p class="ref-note">Sensible heating only — humidity ratio is unchanged across the coil. Leaving DB must be at or above entering DB.</p>
                 </div>
