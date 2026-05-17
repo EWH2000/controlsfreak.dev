@@ -616,7 +616,7 @@ that's #19's scope, not this PR's. Net diff: −209/+69 across the
 two pages, +29 lines in pid-engine.js, +new pid-chart.js.
 Codebase-issues #22 (PID tuner SSE unit) folded in (see below).
 
-### 16. ID naming convention chaos across pages
+### 16. ID naming convention chaos across pages *(addressed 2026-05-17)*
 
 The site uses three id conventions concurrently with no rule:
 
@@ -641,6 +641,28 @@ patterns" or "Adding a new tool." kebab-case matches the HTML/CSS /
 SVG-id patterns already in education and is the lowest-cost sweep.
 Decide whether to retrofit existing pages (≈ 12 pages touched) or
 freeze the rule for new pages only.
+
+**Resolution (2026-05-17):** kebab-case canonized site-wide; full
+retrofit landed in one PR across eight commits (one per page or
+tight tools↔education pair) plus a docs commit. Roughly 250 ids
+renamed across 12 pages plus the four already-kebab pages that
+carried capital-A/B/C diagram-position suffixes (`pc-dp-A-coil`,
+`d3-load-A`, `d3-loadA-supply`, `lp-tt-loadA-callout`) lowercased
+in the same sweep. Reference sites moved in lockstep — all
+`<label for=…>` (~50), Playwright test locators (58 unique),
+aria-labelledby / aria-describedby (~18), inline-`<style>` CSS
+selectors (`#vfdmTry`, `#vfdWidget`, `#pcW1`, `#pcW2`,
+`#balWidget`, `#d3Widget`, `#d3-load-A`, `#d3-loadA-*`,
+`#thRtScroll`, `#psyStageTable`), and two dynamic-id template
+literals in `pid-basics.html` (`` `m${n}-slider` ``,
+`` `m${n}-canvas` ``). The convention is recorded under CLAUDE.md
+"Conventions → ID naming" with the per-page prefix table and
+under "Adding a new tool" as a reminder. Substitution method
+worth flagging for future renames: quote-aware (`'X'`, `"X"`,
+`#X` patterns) only — never bare-token, because page-inline
+scripts frequently reuse the id name as a JS local variable
+(`euMin`, `diClosed`) and a bare substitution corrupts JS that
+otherwise has no relation to the rename.
 
 ### 17. Tab wiring pattern drift
 
