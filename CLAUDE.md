@@ -507,6 +507,12 @@ asked, but defaults to waiting for permission. Specifically:
 - **`git add`** — staging is implicit in commit permission. When
   staging, prefer specific file lists over `git add -A` / `git add .`
   to avoid sweeping in stray files.
+- **Logging caught issues** — any code-quality issue noticed in
+  passing, *even if unrelated to the current task*, gets a new entry
+  appended to `codebase-issues.md` under *Open*. Don't silently fix
+  it inline (scope creep) and don't drop it on the floor (it'll get
+  lost). Mention it to the user when surfacing it so they know to
+  expect the appended entry.
 
 Typical loop: user asks for a change → Claude edits source under
 `html/` → user reviews the diff → user says "commit" → Claude commits
