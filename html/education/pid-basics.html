@@ -221,8 +221,8 @@ nav: education
 <script src="/scripts/units.js"></script>
 <!-- Shared simulation core — the FOPDT process model + discrete-time stepping
      (PID_PROC, simulatePid), the same engine the PID Tuning Helper runs on.
-     Classic script (not a module), loaded before the inline glue below so the
-     on* handlers can see its globals. -->
+     Classic script (not a module), loaded before the IIFE-wrapped inline
+     script below so it can reach those globals by name. -->
 <script src="/scripts/pid-engine.js"></script>
 <script>
     // ─────────────────────────────────────────────────────────────────────

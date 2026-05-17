@@ -16,6 +16,12 @@ Thumbs.db
 node_modules/
 npm-debug.log*
 
+# Local secrets — wrangler dev --local convention (.dev.vars) and any
+# .env that creeps in. Worker secrets live in `wrangler secret put`.
+.env
+.env.*
+.dev.vars
+
 # Playwright
 test-results/
 playwright-report/
