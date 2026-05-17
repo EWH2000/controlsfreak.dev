@@ -23,8 +23,8 @@ nav: tools
         </div>
 
         <div class="tabs tabs-flush">
-            <button class="tab-btn active" onclick="switchTab('hex2ip', this)">Hex → IP</button>
-            <button class="tab-btn" onclick="switchTab('ip2hex', this)">IP → Hex</button>
+            <button class="tab-btn active" id="bacnetTab_hex2ip">Hex → IP</button>
+            <button class="tab-btn" id="bacnetTab_ip2hex">IP → Hex</button>
         </div>
 
         <!-- ── Hex → IP ── -->
@@ -35,7 +35,7 @@ nav: tools
                     <div class="ps-section-label">Input</div>
                     <div class="ps-row">
                         <span class="ps-label">Hex string</span>
-                        <input class="ps-input" type="text" id="b2i_hex" placeholder="C0A80164BAC0" oninput="bacnetHexToIp()">
+                        <input class="ps-input" type="text" id="b2i_hex" placeholder="C0A80164BAC0">
                     </div>
                     <div class="ps-row">
                         <span class="ps-label">Length</span>
@@ -62,8 +62,8 @@ nav: tools
                         <span class="ps-value muted" id="b2i_notes">—</span>
                     </div>
                     <div class="btn-row" style="margin-top:1rem;">
-                        <button class="copy-btn" onclick="copyReadouts(this, '', 'b2i_ip')">Copy IP</button>
-                        <button class="copy-btn" onclick="copyReadouts(this, ':', 'b2i_ip', 'b2i_port')">Copy IP : port</button>
+                        <button class="copy-btn" id="b2i_copyIp">Copy IP</button>
+                        <button class="copy-btn" id="b2i_copyIpPort">Copy IP : port</button>
                     </div>
                 </section>
 
@@ -100,11 +100,11 @@ nav: tools
                     <div class="ps-section-label">Input</div>
                     <div class="ps-row">
                         <span class="ps-label">IP address</span>
-                        <input class="ps-input" type="text" id="i2h_ip" placeholder="192.168.1.100" oninput="bacnetIpToHex()">
+                        <input class="ps-input" type="text" id="i2h_ip" placeholder="192.168.1.100">
                     </div>
                     <div class="ps-row">
                         <span class="ps-label">UDP port</span>
-                        <input class="ps-input" type="number" id="i2h_port" min="0" max="65535" step="1" placeholder="47808 — optional" oninput="bacnetIpToHex()">
+                        <input class="ps-input" type="number" id="i2h_port" min="0" max="65535" step="1" placeholder="47808 — optional">
                     </div>
                     <div class="ps-row">
                         <span class="ps-label">Output form</span>
@@ -127,7 +127,7 @@ nav: tools
                         <span class="ps-value muted" id="i2h_notes">—</span>
                     </div>
                     <div class="btn-row" style="margin-top:1rem;">
-                        <button class="copy-btn" onclick="copyReadouts(this, '', 'i2h_hex')">Copy hex</button>
+                        <button class="copy-btn" id="i2h_copyHex">Copy hex</button>
                     </div>
                 </section>
 
@@ -172,106 +172,117 @@ nav: tools
     // ─────────────────────────────────────────────
     // BACnet/IP Hex Converter
     // ─────────────────────────────────────────────
-    // BACnet/IP packs the device address as 4 bytes IPv4, optionally
-    // followed by 2 bytes of UDP port. The default port is 47808 = 0xBAC0.
-    const BACNET_DEFAULT_PORT = 47808;   // 0xBAC0
+    (function () {
+        // BACnet/IP packs the device address as 4 bytes IPv4, optionally
+        // followed by 2 bytes of UDP port. The default port is 47808 = 0xBAC0.
+        const BACNET_DEFAULT_PORT = 47808;   // 0xBAC0
 
-    // group a hex string into space-separated byte pairs for the worked line
-    function groupHexBytes(hex) {
-        return hex.match(/../g).join(' ');
-    }
-
-    function bacnetHexToIp() {
-        const ipEl    = document.getElementById('b2i_ip');
-        const portEl  = document.getElementById('b2i_port');
-        const notesEl = document.getElementById('b2i_notes');
-        const lenEl   = document.getElementById('b2i_len');
-        const fmtEl   = document.getElementById('b2i_fmt');
-        const fEl     = document.getElementById('b2i_formula');
-
-        const mute = () => {
-            ipEl.className   = 'ps-value muted'; ipEl.textContent   = '—';
-            portEl.className = 'ps-value muted'; portEl.textContent = '—';
-            notesEl.textContent = '—';
-            fmtEl.textContent   = '—';
-            fEl.textContent = '';
-        };
-
-        // Tolerant cleanup: drop a leading 0x, strip separators, uppercase.
-        const hex = document.getElementById('b2i_hex').value
-            .trim().replace(/^0x/i, '').replace(/[\s.:_-]/g, '').toUpperCase();
-
-        lenEl.textContent = hex.length ? `${hex.length} character${hex.length === 1 ? '' : 's'}` : '—';
-
-        if (!/^[0-9A-F]+$/.test(hex) || (hex.length !== 8 && hex.length !== 12)) { mute(); return; }
-
-        const bytes = hex.match(/../g).map(h => parseInt(h, 16));
-        const ip = bytes.slice(0, 4).join('.');
-        ipEl.className = 'ps-value live'; ipEl.textContent = ip;
-
-        if (hex.length === 8) {
-            portEl.className = 'ps-value muted'; portEl.textContent = '—';
-            notesEl.textContent = '—';
-            fmtEl.textContent = 'IP only';
-            fEl.textContent = `${groupHexBytes(hex)} → ${ip} · address only (no port in this string)`;
-            return;
+        // group a hex string into space-separated byte pairs for the worked line
+        function groupHexBytes(hex) {
+            return hex.match(/../g).join(' ');
         }
 
-        const port = bytes[4] * 256 + bytes[5];
-        const portHex = hex.slice(8);
-        const isDefault = port === BACNET_DEFAULT_PORT;
-        portEl.className = 'ps-value live'; portEl.textContent = port;
-        notesEl.textContent = isDefault ? 'default BACnet/IP' : '—';
-        fmtEl.textContent = 'IP + port';
-        fEl.textContent =
-            `${groupHexBytes(hex.slice(0, 8))} → ${ip}  ·  ${groupHexBytes(portHex)} → port ${port}` +
-            (isDefault ? ' (default BACnet/IP port)' : '');
-    }
+        function bacnetHexToIp() {
+            const ipEl    = document.getElementById('b2i_ip');
+            const portEl  = document.getElementById('b2i_port');
+            const notesEl = document.getElementById('b2i_notes');
+            const lenEl   = document.getElementById('b2i_len');
+            const fmtEl   = document.getElementById('b2i_fmt');
+            const fEl     = document.getElementById('b2i_formula');
 
-    function bacnetIpToHex() {
-        const hexEl   = document.getElementById('i2h_hex');
-        const lenEl   = document.getElementById('i2h_len');
-        const notesEl = document.getElementById('i2h_notes');
-        const formEl  = document.getElementById('i2h_form');
-        const fEl     = document.getElementById('i2h_formula');
+            const mute = () => {
+                ipEl.className   = 'ps-value muted'; ipEl.textContent   = '—';
+                portEl.className = 'ps-value muted'; portEl.textContent = '—';
+                notesEl.textContent = '—';
+                fmtEl.textContent   = '—';
+                fEl.textContent = '';
+            };
 
-        const mute = () => {
-            hexEl.className = 'ps-value muted'; hexEl.textContent = '—';
-            lenEl.textContent   = '—';
-            notesEl.textContent = '—';
-            fEl.textContent = '';
-        };
+            // Tolerant cleanup: drop a leading 0x, strip separators, uppercase.
+            const hex = document.getElementById('b2i_hex').value
+                .trim().replace(/^0x/i, '').replace(/[\s.:_-]/g, '').toUpperCase();
 
-        const ipRaw   = document.getElementById('i2h_ip').value.trim();
-        const portRaw = document.getElementById('i2h_port').value.trim();
-        formEl.textContent = portRaw === '' ? 'address only' : 'address + port';
+            lenEl.textContent = hex.length ? `${hex.length} character${hex.length === 1 ? '' : 's'}` : '—';
 
-        const m = ipRaw.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
-        if (!m) { mute(); return; }
-        const octets = m.slice(1, 5).map(Number);
-        if (octets.some(o => o > 255)) { mute(); return; }
+            if (!/^[0-9A-F]+$/.test(hex) || (hex.length !== 8 && hex.length !== 12)) { mute(); return; }
 
-        const ipHex = octets.map(o => o.toString(16).padStart(2, '0')).join('').toUpperCase();
+            const bytes = hex.match(/../g).map(h => parseInt(h, 16));
+            const ip = bytes.slice(0, 4).join('.');
+            ipEl.className = 'ps-value live'; ipEl.textContent = ip;
 
-        if (portRaw === '') {
-            hexEl.className = 'ps-value live'; hexEl.textContent = ipHex;
-            lenEl.textContent = '8 characters';
-            notesEl.textContent = '—';
-            fEl.textContent = `${octets.join('.')} → ${ipHex} · address only (no port)`;
-            return;
+            if (hex.length === 8) {
+                portEl.className = 'ps-value muted'; portEl.textContent = '—';
+                notesEl.textContent = '—';
+                fmtEl.textContent = 'IP only';
+                fEl.textContent = `${groupHexBytes(hex)} → ${ip} · address only (no port in this string)`;
+                return;
+            }
+
+            const port = bytes[4] * 256 + bytes[5];
+            const portHex = hex.slice(8);
+            const isDefault = port === BACNET_DEFAULT_PORT;
+            portEl.className = 'ps-value live'; portEl.textContent = port;
+            notesEl.textContent = isDefault ? 'default BACnet/IP' : '—';
+            fmtEl.textContent = 'IP + port';
+            fEl.textContent =
+                `${groupHexBytes(hex.slice(0, 8))} → ${ip}  ·  ${groupHexBytes(portHex)} → port ${port}` +
+                (isDefault ? ' (default BACnet/IP port)' : '');
         }
 
-        const port = Number(portRaw);
-        if (!Number.isInteger(port) || port < 0 || port > 65535) { mute(); return; }
-        const portHex = port.toString(16).padStart(4, '0').toUpperCase();
-        const isDefault = port === BACNET_DEFAULT_PORT;
+        function bacnetIpToHex() {
+            const hexEl   = document.getElementById('i2h_hex');
+            const lenEl   = document.getElementById('i2h_len');
+            const notesEl = document.getElementById('i2h_notes');
+            const formEl  = document.getElementById('i2h_form');
+            const fEl     = document.getElementById('i2h_formula');
 
-        hexEl.className = 'ps-value live'; hexEl.textContent = ipHex + portHex;
-        lenEl.textContent = '12 characters';
-        notesEl.textContent = isDefault ? 'default BACnet/IP' : '—';
-        fEl.textContent =
-            `${octets.join('.')} : ${port} → ${ipHex} ${portHex}` +
-            `  ·  port ${port} = 0x${portHex}` + (isDefault ? ' (default BACnet/IP port)' : '');
-    }
+            const mute = () => {
+                hexEl.className = 'ps-value muted'; hexEl.textContent = '—';
+                lenEl.textContent   = '—';
+                notesEl.textContent = '—';
+                fEl.textContent = '';
+            };
+
+            const ipRaw   = document.getElementById('i2h_ip').value.trim();
+            const portRaw = document.getElementById('i2h_port').value.trim();
+            formEl.textContent = portRaw === '' ? 'address only' : 'address + port';
+
+            const m = ipRaw.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+            if (!m) { mute(); return; }
+            const octets = m.slice(1, 5).map(Number);
+            if (octets.some(o => o > 255)) { mute(); return; }
+
+            const ipHex = octets.map(o => o.toString(16).padStart(2, '0')).join('').toUpperCase();
+
+            if (portRaw === '') {
+                hexEl.className = 'ps-value live'; hexEl.textContent = ipHex;
+                lenEl.textContent = '8 characters';
+                notesEl.textContent = '—';
+                fEl.textContent = `${octets.join('.')} → ${ipHex} · address only (no port)`;
+                return;
+            }
+
+            const port = Number(portRaw);
+            if (!Number.isInteger(port) || port < 0 || port > 65535) { mute(); return; }
+            const portHex = port.toString(16).padStart(4, '0').toUpperCase();
+            const isDefault = port === BACNET_DEFAULT_PORT;
+
+            hexEl.className = 'ps-value live'; hexEl.textContent = ipHex + portHex;
+            lenEl.textContent = '12 characters';
+            notesEl.textContent = isDefault ? 'default BACnet/IP' : '—';
+            fEl.textContent =
+                `${octets.join('.')} : ${port} → ${ipHex} ${portHex}` +
+                `  ·  port ${port} = 0x${portHex}` + (isDefault ? ' (default BACnet/IP port)' : '');
+        }
+
+        document.getElementById('bacnetTab_hex2ip').addEventListener('click', e => switchTab('hex2ip', e.currentTarget));
+        document.getElementById('bacnetTab_ip2hex').addEventListener('click', e => switchTab('ip2hex', e.currentTarget));
+        document.getElementById('b2i_hex').addEventListener('input', bacnetHexToIp);
+        document.getElementById('b2i_copyIp').addEventListener('click', e => copyReadouts(e.currentTarget, '', 'b2i_ip'));
+        document.getElementById('b2i_copyIpPort').addEventListener('click', e => copyReadouts(e.currentTarget, ':', 'b2i_ip', 'b2i_port'));
+        document.getElementById('i2h_ip').addEventListener('input', bacnetIpToHex);
+        document.getElementById('i2h_port').addEventListener('input', bacnetIpToHex);
+        document.getElementById('i2h_copyHex').addEventListener('click', e => copyReadouts(e.currentTarget, '', 'i2h_hex'));
+    })();
 </script>
 {% endblock %}

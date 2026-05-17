@@ -72,7 +72,7 @@ nav: tools
                     <!-- option values must match the keys in THERMISTOR_TYPES (scripts/thermistor-data.js);
                          option text mirrors each type's `name` there — the full maker / context lives in
                          that type's `notes`, shown under the R/T table -->
-                    <select class="ps-input" id="thType" onchange="thRecompute()">
+                    <select class="ps-input" id="thType">
                         <optgroup label="NTC Thermistors">
                             <option value="10k-2">10K Type II</option>
                             <option value="10k-3" selected>10K Type III</option>
@@ -92,19 +92,19 @@ nav: tools
                 <div class="ps-row">
                     <span class="ps-label">Look up by</span>
                     <div class="btn-row">
-                        <button class="copy-btn active" id="thByTemp" onclick="thSetLookup('temp', this)">Temperature</button>
-                        <button class="copy-btn" id="thByRes" onclick="thSetLookup('res', this)">Resistance</button>
+                        <button class="copy-btn active" id="thByTemp">Temperature</button>
+                        <button class="copy-btn" id="thByRes">Resistance</button>
                     </div>
                 </div>
 
                 <div class="ps-row">
                     <span class="ps-label" id="thTempLbl">Temperature (°F)</span>
-                    <input class="ps-input" type="number" id="thTemp" step="1" placeholder="77" value="77" oninput="thRecompute()">
+                    <input class="ps-input" type="number" id="thTemp" step="1" placeholder="77" value="77">
                 </div>
 
                 <div class="ps-row">
                     <span class="ps-label">Resistance (Ω)</span>
-                    <input class="ps-input" type="number" id="thRes" step="1" placeholder="10000" oninput="thRecompute()" disabled>
+                    <input class="ps-input" type="number" id="thRes" step="1" placeholder="10000" disabled>
                 </div>
             </section>
 
@@ -133,7 +133,7 @@ nav: tools
                 </div>
 
                 <div class="btn-row" style="margin-top:1rem;">
-                    <button class="copy-btn" onclick="thCopy(this)">Copy value</button>
+                    <button class="copy-btn" id="thCopyBtn">Copy value</button>
                 </div>
             </section>
 
@@ -192,233 +192,242 @@ nav: tools
     // get the other (linear-interpolating between R/T table rows), plus the
     // full table for that type with the closest row highlighted.
     // ─────────────────────────────────────────────────────────────────────
+    (function () {
 
-    // The site-wide unit toggle drives this page now (formerly there was a
-    // page-local °F/°C toggle just for the calculator; the global selector
-    // replaced it). Curves remain canonical °F internally; we convert on
-    // read and on render.
-    let thLookupBy = 'temp';                       // 'temp' | 'res' — which field is the input
-    let thRendered = { typeId: null, unit: null }; // what the Reference table currently shows
-    let thLastRaw  = '';                           // bare result string for the Copy button
+        // The site-wide unit toggle drives this page now (formerly there was a
+        // page-local °F/°C toggle just for the calculator; the global selector
+        // replaced it). Curves remain canonical °F internally; we convert on
+        // read and on render.
+        let thLookupBy = 'temp';                       // 'temp' | 'res' — which field is the input
+        let thRendered = { typeId: null, unit: null }; // what the Reference table currently shows
+        let thLastRaw  = '';                           // bare result string for the Copy button
 
-    const F2C = f => (f - 32) * 5 / 9;
-    const C2F = c => c * 9 / 5 + 32;
-    const thUnit = () => window.Units.current() === 'metric' ? 'C' : 'F';
+        const F2C = f => (f - 32) * 5 / 9;
+        const C2F = c => c * 9 / 5 + 32;
+        const thUnit = () => window.Units.current() === 'metric' ? 'C' : 'F';
 
-    function thType() { return THERMISTOR_TYPES[document.getElementById('thType').value]; }
+        function thType() { return THERMISTOR_TYPES[document.getElementById('thType').value]; }
 
-    // Resistance rounding — kept in step with thermistor-data.js's roundR so the
-    // result of an interpolation matches the table's own precision.
-    function thRoundR(r, kind) {
-        if (kind === 'rtd-pt' || kind === 'rtd-balco') return Math.round(r * 10) / 10;
-        if (r >= 100000) return Math.round(r / 1000) * 1000;
-        if (r >= 10000)  return Math.round(r / 100) * 100;
-        if (r >= 1000)   return Math.round(r / 10) * 10;
-        if (r >= 100)    return Math.round(r);
-        return Math.round(r * 10) / 10;
-    }
-    const thFmtR = (r, kind) => thRoundR(r, kind).toLocaleString();           // "10,500" / "612.3"
-    const thFmtT = tF => thUnit() === 'C' ? F2C(tF).toFixed(1) + ' °C' : tF + ' °F';   // a temperature in the display unit
-
-    // ── Toggle which field is the active input ──
-    function thSetLookup(mode, btn) {
-        thLookupBy = mode;
-        btn.closest('.btn-row').querySelectorAll('.copy-btn').forEach(b => b.classList.toggle('active', b === btn));
-        document.getElementById('thTemp').disabled = (mode !== 'temp');
-        document.getElementById('thRes').disabled  = (mode !== 'res');
-        thRecompute();
-    }
-
-    // ── (Re)render the Reference column's R/T table for the given type ──
-    // One temperature column in the active unit, plus the resistance column.
-    function thRenderTable(T) {
-        const u = thUnit();
-        document.getElementById('thRtHead').innerHTML =
-            '<th>°' + u + '</th><th>Resistance (Ω)</th>';
-        const kind = T.curve ? T.curve.kind : null;
-        let html = '';
-        for (const [tF, tC, R] of T.table) {
-            const t = u === 'F' ? tF : tC.toFixed(1);
-            const r = (kind === 'rtd-pt' || kind === 'rtd-balco') ? R.toLocaleString() : Math.round(R).toLocaleString();
-            html += `<tr><td>${t}</td><td>${r}</td></tr>`;
+        // Resistance rounding — kept in step with thermistor-data.js's roundR so the
+        // result of an interpolation matches the table's own precision.
+        function thRoundR(r, kind) {
+            if (kind === 'rtd-pt' || kind === 'rtd-balco') return Math.round(r * 10) / 10;
+            if (r >= 100000) return Math.round(r / 1000) * 1000;
+            if (r >= 10000)  return Math.round(r / 100) * 100;
+            if (r >= 1000)   return Math.round(r / 10) * 10;
+            if (r >= 100)    return Math.round(r);
+            return Math.round(r * 10) / 10;
         }
-        document.getElementById('thRtBody').innerHTML = html;
-        document.getElementById('thRtTitle').textContent = 'R / T Table — ' + T.name;
-        document.getElementById('thTag').textContent = (T.family === 'rtd') ? 'RTD' : 'THERMISTOR';
-        document.getElementById('thRefPoint').textContent = T.ref;
-        document.getElementById('thNote').innerHTML =
-            T.notes + ' <em>Curve values here are nominal — confirm against the sensor’s datasheet before using them for calibration.</em>';
-    }
+        const thFmtR = (r, kind) => thRoundR(r, kind).toLocaleString();           // "10,500" / "612.3"
+        const thFmtT = tF => thUnit() === 'C' ? F2C(tF).toFixed(1) + ' °C' : tF + ' °F';   // a temperature in the display unit
 
-    // ── Highlight the table row nearest the given °F temperature; scroll it back
-    //    into view only if it's drifted out (so small temp tweaks don't re-jump) ──
-    function thHighlightRow(tF) {
-        const body = document.getElementById('thRtBody');
-        body.querySelectorAll('tr.th-rt-now').forEach(tr => tr.classList.remove('th-rt-now'));
-        if (tF == null) return;
-        const tbl = thType().table;
-        let best = 0, bd = Infinity;
-        for (let i = 0; i < tbl.length; i++) { const d = Math.abs(tbl[i][0] - tF); if (d < bd) { bd = d; best = i; } }
-        const tr = body.children[best];
-        if (!tr) return;
-        tr.classList.add('th-rt-now');
-        const box = document.getElementById('thRtScroll');
-        const br = box.getBoundingClientRect(), rr = tr.getBoundingClientRect();
-        if (rr.top < br.top + 28 || rr.bottom > br.bottom - 4) {     // ~28px allows for the sticky header
-            box.scrollTop += (rr.top - br.top) - box.clientHeight / 2 + rr.height / 2;
-        }
-    }
-
-    // ── Interpolate the table:  temperature (°F) → resistance ──
-    function thLerpByTemp(tbl, tF) {
-        for (let i = 0; i < tbl.length - 1; i++) {
-            const a = tbl[i], b = tbl[i + 1];
-            if (tF >= a[0] - 1e-6 && tF <= b[0] + 1e-6) {
-                if (Math.abs(tF - a[0]) < 1e-6) return { value: a[2], exact: true, lo: a, hi: a };
-                if (Math.abs(tF - b[0]) < 1e-6) return { value: b[2], exact: true, lo: b, hi: b };
-                const f = (tF - a[0]) / (b[0] - a[0]);
-                return { value: a[2] + f * (b[2] - a[2]), exact: false, lo: a, hi: b };
-            }
-        }
-        const last = tbl[tbl.length - 1];
-        return tF <= tbl[0][0] ? { value: tbl[0][2], exact: true, lo: tbl[0], hi: tbl[0] }
-                               : { value: last[2], exact: true, lo: last, hi: last };
-    }
-
-    // ── Interpolate the table:  resistance → temperature (°F).  Handles both monotone directions. ──
-    function thLerpByRes(tbl, r) {
-        for (let i = 0; i < tbl.length - 1; i++) {
-            const a = tbl[i], b = tbl[i + 1];
-            const lo = Math.min(a[2], b[2]), hi = Math.max(a[2], b[2]);
-            if (r >= lo - 1e-6 && r <= hi + 1e-6) {
-                if (Math.abs(r - a[2]) < 1e-6) return { tF: a[0], exact: true, lo: a, hi: a };
-                if (Math.abs(r - b[2]) < 1e-6) return { tF: b[0], exact: true, lo: b, hi: b };
-                const f = (r - a[2]) / (b[2] - a[2]);   // b[2] − a[2] carries the right sign for either direction
-                return { tF: a[0] + f * (b[0] - a[0]), exact: false, lo: a, hi: b };
-            }
-        }
-        const last = tbl[tbl.length - 1];
-        return { tF: last[0], exact: true, lo: last, hi: last };
-    }
-
-    // ── Main recompute — driven by every input change ──
-    function thRecompute() {
-        const T   = thType();
-        const tbl = T.table;
-        const kind = T.curve ? T.curve.kind : null;
-        const Flo = tbl[0][0], Fhi = tbl[tbl.length - 1][0];
-        const Rends = [tbl[0][2], tbl[tbl.length - 1][2]];
-        const Rlo = Math.min(...Rends), Rhi = Math.max(...Rends);
-
-        // re-render the reference table / tag / note when the type or unit changes
-        const tid = document.getElementById('thType').value;
-        if (thRendered.typeId !== tid || thRendered.unit !== thUnit()) {
-            thRenderTable(T);
-            thRendered = { typeId: tid, unit: thUnit() };
+        // ── Toggle which field is the active input ──
+        function thSetLookup(mode, btn) {
+            thLookupBy = mode;
+            btn.closest('.btn-row').querySelectorAll('.copy-btn').forEach(b => b.classList.toggle('active', b === btn));
+            document.getElementById('thTemp').disabled = (mode !== 'temp');
+            document.getElementById('thRes').disabled  = (mode !== 'res');
+            thRecompute();
         }
 
-        const resultEl = document.getElementById('thResult');
-        const kindEl   = document.getElementById('thKind');
-        const statusEl = document.getElementById('thStatus');
-        const dirEl    = document.getElementById('thDir');
-        const workedEl = document.getElementById('thWorked');
-        const tempEl   = document.getElementById('thTemp');
-        const resEl    = document.getElementById('thRes');
-
-        dirEl.textContent = thLookupBy === 'temp' ? 'resistance from temperature' : 'temperature from resistance';
-
-        const mute = (status, statusClass) => {
-            resultEl.className = 'ps-value muted'; resultEl.textContent = '—';
-            kindEl.className   = 'ps-value muted'; kindEl.textContent   = '—';
-            statusEl.className = 'ps-value ' + (statusClass || 'muted'); statusEl.textContent = status || '—';
-            workedEl.textContent = '';
-            thLastRaw = '';
-            if (thLookupBy === 'temp') resEl.value = ''; else tempEl.value = '';
-            thHighlightRow(null);
-        };
-
-        if (thLookupBy === 'temp') {
-            const raw = parseFloat(tempEl.value);
-            if (!isFinite(raw)) { mute('enter a temperature'); return; }
-            const tF = thUnit() === 'C' ? C2F(raw) : raw;
-            if (tF < Flo - 1e-6 || tF > Fhi + 1e-6) {
-                mute(`out of range — table covers ${Flo} to ${Fhi} °F (${Math.round(F2C(Flo))} to ${Math.round(F2C(Fhi))} °C)`, 'error');
-                return;
-            }
-            const r = thLerpByTemp(tbl, tF);
-            resultEl.className = 'ps-value live'; resultEl.textContent = thFmtR(r.value, kind) + ' Ω';
-            thLastRaw = String(thRoundR(r.value, kind));
-            resEl.value = thRoundR(r.value, kind);
-            kindEl.className = 'ps-value muted'; kindEl.textContent = r.exact ? 'table value' : 'interpolated';
-            statusEl.className = 'ps-value live'; statusEl.textContent = 'in range';
-            workedEl.textContent = r.exact
-                ? `${thFmtT(r.lo[0])}  →  ${thFmtR(r.lo[2], kind)} Ω   (exact table row)`
-                : `interpolated between ${thFmtT(r.lo[0])} (${thFmtR(r.lo[2], kind)} Ω) and ${thFmtT(r.hi[0])} (${thFmtR(r.hi[2], kind)} Ω)`;
-            thHighlightRow(tF);
-        } else {
-            const r = parseFloat(resEl.value);
-            if (!isFinite(r) || r <= 0) { mute('enter a resistance in ohms'); return; }
-            if (r < Rlo - 1e-6 || r > Rhi + 1e-6) {
-                mute(`out of range — for this type the table covers ${thFmtR(Rlo, kind)} to ${thFmtR(Rhi, kind)} Ω`, 'error');
-                return;
-            }
-            const t = thLerpByRes(tbl, r);
+        // ── (Re)render the Reference column's R/T table for the given type ──
+        // One temperature column in the active unit, plus the resistance column.
+        function thRenderTable(T) {
             const u = thUnit();
-            const tDisp = u === 'C' ? F2C(t.tF) : t.tF;
-            resultEl.className = 'ps-value live'; resultEl.textContent = tDisp.toFixed(1) + ' °' + u;
-            thLastRaw = tDisp.toFixed(1);
-            tempEl.value = tDisp.toFixed(1);
-            kindEl.className = 'ps-value muted'; kindEl.textContent = t.exact ? 'table value' : 'interpolated';
-            statusEl.className = 'ps-value live'; statusEl.textContent = 'in range';
-            workedEl.textContent = t.exact
-                ? `${thFmtR(t.lo[2], kind)} Ω  →  ${thFmtT(t.lo[0])}   (exact table row)`
-                : `interpolated between ${thFmtR(t.lo[2], kind)} Ω (${thFmtT(t.lo[0])}) and ${thFmtR(t.hi[2], kind)} Ω (${thFmtT(t.hi[0])})`;
-            thHighlightRow(t.tF);
+            document.getElementById('thRtHead').innerHTML =
+                '<th>°' + u + '</th><th>Resistance (Ω)</th>';
+            const kind = T.curve ? T.curve.kind : null;
+            let html = '';
+            for (const [tF, tC, R] of T.table) {
+                const t = u === 'F' ? tF : tC.toFixed(1);
+                const r = (kind === 'rtd-pt' || kind === 'rtd-balco') ? R.toLocaleString() : Math.round(R).toLocaleString();
+                html += `<tr><td>${t}</td><td>${r}</td></tr>`;
+            }
+            document.getElementById('thRtBody').innerHTML = html;
+            document.getElementById('thRtTitle').textContent = 'R / T Table — ' + T.name;
+            document.getElementById('thTag').textContent = (T.family === 'rtd') ? 'RTD' : 'THERMISTOR';
+            document.getElementById('thRefPoint').textContent = T.ref;
+            document.getElementById('thNote').innerHTML =
+                T.notes + ' <em>Curve values here are nominal — confirm against the sensor’s datasheet before using them for calibration.</em>';
         }
-    }
 
-    // ── Copy the bare result value to the clipboard ──
-    // Thin wrapper over copyText() from /scripts/ui.js — the only
-    // page-specific piece is what to copy (thLastRaw, the most recent
-    // resistance / temperature lookup result, kept in the outer scope).
-    function thCopy(btn) {
-        copyText(btn, thLastRaw);
-    }
-
-    // ── Units integration ──
-    // Update the temperature label, convert the entered value through the
-    // temperature input, and rerun the lookup whenever the global unit
-    // toggle flips. The R/T table also re-renders (triggered inside
-    // thRecompute via the thRendered.unit change check).
-    function thApplyUnit() {
-        const u = thUnit();
-        document.getElementById('thTempLbl').textContent = 'Temperature (°' + u + ')';
-    }
-
-    document.addEventListener('unitschange', ev => {
-        const prev = ev.detail && ev.detail.previous;
-        const next = ev.detail && ev.detail.units;
-        // If the user has a value in the temperature box, convert it from old
-        // display to new display so the *meaning* of the entry is preserved.
-        const tEl = document.getElementById('thTemp');
-        const v = parseFloat(tEl.value);
-        if (isFinite(v) && prev && next && prev !== next) {
-            tEl.value = (+window.Units.convert(v, prev, next, 'temp').toFixed(1)).toString();
+        // ── Highlight the table row nearest the given °F temperature; scroll it back
+        //    into view only if it's drifted out (so small temp tweaks don't re-jump) ──
+        function thHighlightRow(tF) {
+            const body = document.getElementById('thRtBody');
+            body.querySelectorAll('tr.th-rt-now').forEach(tr => tr.classList.remove('th-rt-now'));
+            if (tF == null) return;
+            const tbl = thType().table;
+            let best = 0, bd = Infinity;
+            for (let i = 0; i < tbl.length; i++) { const d = Math.abs(tbl[i][0] - tF); if (d < bd) { bd = d; best = i; } }
+            const tr = body.children[best];
+            if (!tr) return;
+            tr.classList.add('th-rt-now');
+            const box = document.getElementById('thRtScroll');
+            const br = box.getBoundingClientRect(), rr = tr.getBoundingClientRect();
+            if (rr.top < br.top + 28 || rr.bottom > br.bottom - 4) {     // ~28px allows for the sticky header
+                box.scrollTop += (rr.top - br.top) - box.clientHeight / 2 + rr.height / 2;
+            }
         }
+
+        // ── Interpolate the table:  temperature (°F) → resistance ──
+        function thLerpByTemp(tbl, tF) {
+            for (let i = 0; i < tbl.length - 1; i++) {
+                const a = tbl[i], b = tbl[i + 1];
+                if (tF >= a[0] - 1e-6 && tF <= b[0] + 1e-6) {
+                    if (Math.abs(tF - a[0]) < 1e-6) return { value: a[2], exact: true, lo: a, hi: a };
+                    if (Math.abs(tF - b[0]) < 1e-6) return { value: b[2], exact: true, lo: b, hi: b };
+                    const f = (tF - a[0]) / (b[0] - a[0]);
+                    return { value: a[2] + f * (b[2] - a[2]), exact: false, lo: a, hi: b };
+                }
+            }
+            const last = tbl[tbl.length - 1];
+            return tF <= tbl[0][0] ? { value: tbl[0][2], exact: true, lo: tbl[0], hi: tbl[0] }
+                                   : { value: last[2], exact: true, lo: last, hi: last };
+        }
+
+        // ── Interpolate the table:  resistance → temperature (°F).  Handles both monotone directions. ──
+        function thLerpByRes(tbl, r) {
+            for (let i = 0; i < tbl.length - 1; i++) {
+                const a = tbl[i], b = tbl[i + 1];
+                const lo = Math.min(a[2], b[2]), hi = Math.max(a[2], b[2]);
+                if (r >= lo - 1e-6 && r <= hi + 1e-6) {
+                    if (Math.abs(r - a[2]) < 1e-6) return { tF: a[0], exact: true, lo: a, hi: a };
+                    if (Math.abs(r - b[2]) < 1e-6) return { tF: b[0], exact: true, lo: b, hi: b };
+                    const f = (r - a[2]) / (b[2] - a[2]);   // b[2] − a[2] carries the right sign for either direction
+                    return { tF: a[0] + f * (b[0] - a[0]), exact: false, lo: a, hi: b };
+                }
+            }
+            const last = tbl[tbl.length - 1];
+            return { tF: last[0], exact: true, lo: last, hi: last };
+        }
+
+        // ── Main recompute — driven by every input change ──
+        function thRecompute() {
+            const T   = thType();
+            const tbl = T.table;
+            const kind = T.curve ? T.curve.kind : null;
+            const Flo = tbl[0][0], Fhi = tbl[tbl.length - 1][0];
+            const Rends = [tbl[0][2], tbl[tbl.length - 1][2]];
+            const Rlo = Math.min(...Rends), Rhi = Math.max(...Rends);
+
+            // re-render the reference table / tag / note when the type or unit changes
+            const tid = document.getElementById('thType').value;
+            if (thRendered.typeId !== tid || thRendered.unit !== thUnit()) {
+                thRenderTable(T);
+                thRendered = { typeId: tid, unit: thUnit() };
+            }
+
+            const resultEl = document.getElementById('thResult');
+            const kindEl   = document.getElementById('thKind');
+            const statusEl = document.getElementById('thStatus');
+            const dirEl    = document.getElementById('thDir');
+            const workedEl = document.getElementById('thWorked');
+            const tempEl   = document.getElementById('thTemp');
+            const resEl    = document.getElementById('thRes');
+
+            dirEl.textContent = thLookupBy === 'temp' ? 'resistance from temperature' : 'temperature from resistance';
+
+            const mute = (status, statusClass) => {
+                resultEl.className = 'ps-value muted'; resultEl.textContent = '—';
+                kindEl.className   = 'ps-value muted'; kindEl.textContent   = '—';
+                statusEl.className = 'ps-value ' + (statusClass || 'muted'); statusEl.textContent = status || '—';
+                workedEl.textContent = '';
+                thLastRaw = '';
+                if (thLookupBy === 'temp') resEl.value = ''; else tempEl.value = '';
+                thHighlightRow(null);
+            };
+
+            if (thLookupBy === 'temp') {
+                const raw = parseFloat(tempEl.value);
+                if (!isFinite(raw)) { mute('enter a temperature'); return; }
+                const tF = thUnit() === 'C' ? C2F(raw) : raw;
+                if (tF < Flo - 1e-6 || tF > Fhi + 1e-6) {
+                    mute(`out of range — table covers ${Flo} to ${Fhi} °F (${Math.round(F2C(Flo))} to ${Math.round(F2C(Fhi))} °C)`, 'error');
+                    return;
+                }
+                const r = thLerpByTemp(tbl, tF);
+                resultEl.className = 'ps-value live'; resultEl.textContent = thFmtR(r.value, kind) + ' Ω';
+                thLastRaw = String(thRoundR(r.value, kind));
+                resEl.value = thRoundR(r.value, kind);
+                kindEl.className = 'ps-value muted'; kindEl.textContent = r.exact ? 'table value' : 'interpolated';
+                statusEl.className = 'ps-value live'; statusEl.textContent = 'in range';
+                workedEl.textContent = r.exact
+                    ? `${thFmtT(r.lo[0])}  →  ${thFmtR(r.lo[2], kind)} Ω   (exact table row)`
+                    : `interpolated between ${thFmtT(r.lo[0])} (${thFmtR(r.lo[2], kind)} Ω) and ${thFmtT(r.hi[0])} (${thFmtR(r.hi[2], kind)} Ω)`;
+                thHighlightRow(tF);
+            } else {
+                const r = parseFloat(resEl.value);
+                if (!isFinite(r) || r <= 0) { mute('enter a resistance in ohms'); return; }
+                if (r < Rlo - 1e-6 || r > Rhi + 1e-6) {
+                    mute(`out of range — for this type the table covers ${thFmtR(Rlo, kind)} to ${thFmtR(Rhi, kind)} Ω`, 'error');
+                    return;
+                }
+                const t = thLerpByRes(tbl, r);
+                const u = thUnit();
+                const tDisp = u === 'C' ? F2C(t.tF) : t.tF;
+                resultEl.className = 'ps-value live'; resultEl.textContent = tDisp.toFixed(1) + ' °' + u;
+                thLastRaw = tDisp.toFixed(1);
+                tempEl.value = tDisp.toFixed(1);
+                kindEl.className = 'ps-value muted'; kindEl.textContent = t.exact ? 'table value' : 'interpolated';
+                statusEl.className = 'ps-value live'; statusEl.textContent = 'in range';
+                workedEl.textContent = t.exact
+                    ? `${thFmtR(t.lo[2], kind)} Ω  →  ${thFmtT(t.lo[0])}   (exact table row)`
+                    : `interpolated between ${thFmtR(t.lo[2], kind)} Ω (${thFmtT(t.lo[0])}) and ${thFmtR(t.hi[2], kind)} Ω (${thFmtT(t.hi[0])})`;
+                thHighlightRow(t.tF);
+            }
+        }
+
+        // ── Copy the bare result value to the clipboard ──
+        // Thin wrapper over copyText() from /scripts/ui.js — the only
+        // page-specific piece is what to copy (thLastRaw, the most recent
+        // resistance / temperature lookup result, kept in the outer scope).
+        function thCopy(btn) {
+            copyText(btn, thLastRaw);
+        }
+
+        // ── Units integration ──
+        // Update the temperature label, convert the entered value through the
+        // temperature input, and rerun the lookup whenever the global unit
+        // toggle flips. The R/T table also re-renders (triggered inside
+        // thRecompute via the thRendered.unit change check).
+        function thApplyUnit() {
+            const u = thUnit();
+            document.getElementById('thTempLbl').textContent = 'Temperature (°' + u + ')';
+        }
+
+        document.addEventListener('unitschange', ev => {
+            const prev = ev.detail && ev.detail.previous;
+            const next = ev.detail && ev.detail.units;
+            // If the user has a value in the temperature box, convert it from old
+            // display to new display so the *meaning* of the entry is preserved.
+            const tEl = document.getElementById('thTemp');
+            const v = parseFloat(tEl.value);
+            if (isFinite(v) && prev && next && prev !== next) {
+                tEl.value = (+window.Units.convert(v, prev, next, 'temp').toFixed(1)).toString();
+            }
+            thApplyUnit();
+            thRecompute();
+        });
+
+        document.getElementById('thType').addEventListener('change', thRecompute);
+        document.getElementById('thByTemp').addEventListener('click', e => thSetLookup('temp', e.currentTarget));
+        document.getElementById('thByRes').addEventListener('click', e => thSetLookup('res', e.currentTarget));
+        document.getElementById('thTemp').addEventListener('input', thRecompute);
+        document.getElementById('thRes').addEventListener('input', thRecompute);
+        document.getElementById('thCopyBtn').addEventListener('click', e => thCopy(e.currentTarget));
+
+        // ── Init ──
         thApplyUnit();
+        // If the page is loaded directly in metric, the HTML default value="77"
+        // is in °F. Rewrite it to °C before the first compute so the displayed
+        // input is coherent with the global toggle.
+        if (window.Units.current() === 'metric') {
+            const tEl = document.getElementById('thTemp');
+            const v = parseFloat(tEl.value);
+            if (isFinite(v)) tEl.value = (+F2C(v).toFixed(1)).toString();
+        }
         thRecompute();
-    });
-
-    // ── Init ──
-    thApplyUnit();
-    // If the page is loaded directly in metric, the HTML default value="77"
-    // is in °F. Rewrite it to °C before the first compute so the displayed
-    // input is coherent with the global toggle.
-    if (window.Units.current() === 'metric') {
-        const tEl = document.getElementById('thTemp');
-        const v = parseFloat(tEl.value);
-        if (isFinite(v)) tEl.value = (+F2C(v).toFixed(1)).toString();
-    }
-    thRecompute();
+    })();
 </script>
 {% endblock %}

@@ -28,11 +28,11 @@ nav: tools
                 <div class="ps-section-label">Input</div>
                 <div class="ps-row">
                     <span class="ps-label">Decimal (0–65535)</span>
-                    <input class="ps-input" type="number" id="modDec" min="0" max="65535" step="1" placeholder="43981" oninput="fromDec()">
+                    <input class="ps-input" type="number" id="modDec" min="0" max="65535" step="1" placeholder="43981">
                 </div>
                 <div class="ps-row">
                     <span class="ps-label">Hex (0x0000–0xFFFF)</span>
-                    <input class="ps-input" type="text" id="modHex" placeholder="0xABCD" oninput="fromHex()">
+                    <input class="ps-input" type="text" id="modHex" placeholder="0xABCD">
                 </div>
                 <p class="bit-hint" style="margin-top:0.85rem;">Bit 15 = MSB (top-left) · Bit 0 = LSB (bottom-right) · click to toggle</p>
                 <!-- 8 columns × 2 rows: the 16-bit grid won't stay legible at 16 cells in a third-width column -->
@@ -91,59 +91,64 @@ nav: tools
     // ─────────────────────────────────────────────
     // Modbus Bit Viewer
     // ─────────────────────────────────────────────
-    let bits = new Array(16).fill(0);
+    (function () {
+        let bits = new Array(16).fill(0);
 
-    function renderBits() {
-        const grid = document.getElementById('bitGrid');
-        grid.innerHTML = '';
-        for (let i = 15; i >= 0; i--) {
-            const cell = document.createElement('div');
-            cell.className = 'bit' + (bits[i] ? ' on' : '');
-            cell.innerHTML = `<span class="bit-val">${bits[i]}</span><span class="bit-idx">${i}</span>`;
-            cell.addEventListener('click', () => { bits[i] ^= 1; syncFromBits(); });
-            grid.appendChild(cell);
+        function renderBits() {
+            const grid = document.getElementById('bitGrid');
+            grid.innerHTML = '';
+            for (let i = 15; i >= 0; i--) {
+                const cell = document.createElement('div');
+                cell.className = 'bit' + (bits[i] ? ' on' : '');
+                cell.innerHTML = `<span class="bit-val">${bits[i]}</span><span class="bit-idx">${i}</span>`;
+                cell.addEventListener('click', () => { bits[i] ^= 1; syncFromBits(); });
+                grid.appendChild(cell);
+            }
         }
-    }
 
-    function syncFromBits() {
-        const val = bits.reduce((acc, b, i) => acc + (b << i), 0);
-        document.getElementById('modDec').value = val;
-        document.getElementById('modHex').value = '0x' + val.toString(16).toUpperCase().padStart(4, '0');
-        updateReadouts(val);
+        function syncFromBits() {
+            const val = bits.reduce((acc, b, i) => acc + (b << i), 0);
+            document.getElementById('modDec').value = val;
+            document.getElementById('modHex').value = '0x' + val.toString(16).toUpperCase().padStart(4, '0');
+            updateReadouts(val);
+            renderBits();
+        }
+
+        function updateReadouts(val) {
+            const decEl = document.getElementById('readDec');
+            const hexEl = document.getElementById('readHex');
+            const binEl = document.getElementById('readBin');
+            decEl.className = 'ps-value live'; decEl.textContent = val;
+            hexEl.className = 'ps-value live'; hexEl.textContent = '0x' + val.toString(16).toUpperCase().padStart(4, '0');
+            const bin = val.toString(2).padStart(16, '0');
+            binEl.className = 'ps-value live';
+            binEl.textContent = bin.slice(0,4) + ' ' + bin.slice(4,8) + ' ' + bin.slice(8,12) + ' ' + bin.slice(12,16);
+        }
+
+        function fromDec() {
+            const val = parseInt(document.getElementById('modDec').value);
+            if (!isFinite(val) || val < 0 || val > 65535) return;
+            for (let i = 0; i < 16; i++) bits[i] = (val >> i) & 1;
+            document.getElementById('modHex').value = '0x' + val.toString(16).toUpperCase().padStart(4, '0');
+            updateReadouts(val);
+            renderBits();
+        }
+
+        function fromHex() {
+            let raw = document.getElementById('modHex').value.trim().replace(/^0x/i, '');
+            const val = parseInt(raw, 16);
+            if (!isFinite(val) || val < 0 || val > 65535) return;
+            for (let i = 0; i < 16; i++) bits[i] = (val >> i) & 1;
+            document.getElementById('modDec').value = val;
+            updateReadouts(val);
+            renderBits();
+        }
+
+        document.getElementById('modDec').addEventListener('input', fromDec);
+        document.getElementById('modHex').addEventListener('input', fromHex);
+
+        // ── Init ──
         renderBits();
-    }
-
-    function updateReadouts(val) {
-        const decEl = document.getElementById('readDec');
-        const hexEl = document.getElementById('readHex');
-        const binEl = document.getElementById('readBin');
-        decEl.className = 'ps-value live'; decEl.textContent = val;
-        hexEl.className = 'ps-value live'; hexEl.textContent = '0x' + val.toString(16).toUpperCase().padStart(4, '0');
-        const bin = val.toString(2).padStart(16, '0');
-        binEl.className = 'ps-value live';
-        binEl.textContent = bin.slice(0,4) + ' ' + bin.slice(4,8) + ' ' + bin.slice(8,12) + ' ' + bin.slice(12,16);
-    }
-
-    function fromDec() {
-        const val = parseInt(document.getElementById('modDec').value);
-        if (!isFinite(val) || val < 0 || val > 65535) return;
-        for (let i = 0; i < 16; i++) bits[i] = (val >> i) & 1;
-        document.getElementById('modHex').value = '0x' + val.toString(16).toUpperCase().padStart(4, '0');
-        updateReadouts(val);
-        renderBits();
-    }
-
-    function fromHex() {
-        let raw = document.getElementById('modHex').value.trim().replace(/^0x/i, '');
-        const val = parseInt(raw, 16);
-        if (!isFinite(val) || val < 0 || val > 65535) return;
-        for (let i = 0; i < 16; i++) bits[i] = (val >> i) & 1;
-        document.getElementById('modDec').value = val;
-        updateReadouts(val);
-        renderBits();
-    }
-
-    // ── Init ──
-    renderBits();
+    })();
 </script>
 {% endblock %}
