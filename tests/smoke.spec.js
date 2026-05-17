@@ -200,7 +200,12 @@ test('vfd mock — run-source gating works from the keypad', async ({ page }) =>
     await page.waitForTimeout(300);  // let it ramp a bit
     await expect(page.locator('#vfdm-state-text')).toHaveText(/RAMPING UP|AT SPEED/);
     const actHz = parseFloat(await page.locator('#vfdm-act-hz').textContent());
-    expect(actHz, 'drive should be ramping up in LOCAL mode').toBeGreaterThan(0);
+    // setHz = 30 (keypad default I01); the drive must be ramping (≥ 1 Hz
+    // after 300 ms at the 6 Hz/s default ramp rate) and must not exceed
+    // the configured setpoint.
+    const setHz = 30;
+    expect(actHz, 'drive should be ramping up in LOCAL mode').toBeGreaterThanOrEqual(1);
+    expect(actHz, 'drive should not exceed the configured setpoint during ramp').toBeLessThanOrEqual(setHz);
 });
 
 test('pump control page renders its diagram and both widgets respond', async ({ page }) => {
@@ -222,6 +227,9 @@ test('pump control page renders its diagram and both widgets respond', async ({ 
         el.dispatchEvent(new Event('input', { bubbles: true }));
     });
     const flowAt30 = parseInt(await page.locator('#pc-w1-flow').textContent(), 10);
+    // Design is 100 GPM @ 60 Hz; halving the speed lands ~50 GPM, so the
+    // valid envelope is "dropped from 100 but didn't stall to 0".
+    expect(flowAt30, 'flow should fall when pump speed drops').toBeGreaterThan(30);
     expect(flowAt30, 'flow should fall when pump speed drops').toBeLessThan(60);
     // Power follows cube law — at half speed, ~12.5% of full power
     const powerAt30 = parseInt(await page.locator('#pc-w1-power').textContent(), 10);
