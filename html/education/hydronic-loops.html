@@ -120,35 +120,44 @@ nav: education
            a JS color update on the primary loop (climbs toward --red as
            injection drops and the boiler has no return cooling) and the
            system supply mains (cool when injection is low, warm when
-           it overshoots). Smooth interp keeps the drag responsive. */
+           it overshoots). Smooth interp keeps the drag responsive. The
+           tagged arrow polygons and the particle circles on the same
+           pipes track the same color updates and ride the same
+           transition timing so the diagram stays internally consistent
+           — pipe, arrow, and dot move together. The particle selector
+           is scoped to the d3 SVG via aria-labelledby so d1 and d2
+           particles, which never recolor, don't pay for an idle
+           transition. */
         #d3-primary-loop,
         #d3-system-supply,
         #d3-loadA-supply,
-        #d3-loadB-supply {
-            transition: stroke 200ms linear;
+        #d3-loadB-supply,
+        [data-d3-arrow],
+        svg[aria-labelledby="d3-title d3-desc"] g.flow-particles > circle {
+            transition: stroke 200ms linear, fill 200ms linear;
         }
 
         /* Pump impellers — a small 2-blade bar centered on each of the
            three d3 pumps, replacing the static directional triangle.
            Boiler and system pumps hold constant flow → constant spin.
-           The injection pump's spin rate is driven by the slider via
-           the --spin custom property (and paused at 0 Hz), giving the
-           cause side of the cause/effect visual. Flow direction is
-           still encoded by the arrow polygons on the pipes. */
+           The injection pump's spin rate is driven by the slider, giving
+           the cause side of the cause/effect visual. Flow direction is
+           still encoded by the arrow polygons on the pipes.
+
+           Rotation is applied by a per-frame rAF loop in the inline
+           script — see the comment block on the loop. Earlier this used
+           a CSS keyframe animation with --spin as the animation-duration,
+           but changing animation-duration mid-rotation made the blade
+           visibly jump on slider drag (the browser recomputes progress
+           as elapsed/new-duration, snapping to a new angle). The rAF
+           loop integrates a continuous angle so speed can change without
+           breaking the rotation. */
         .d3-pump-blade {
             transform-box: fill-box;
             transform-origin: center;
-            animation: d3-pump-spin 0.7s linear infinite;
-        }
-        #d3-injection-pump .d3-pump-blade {
-            animation: d3-pump-spin var(--spin, 0.7s) linear infinite;
-            animation-play-state: var(--play, running);
-        }
-        @keyframes d3-pump-spin {
-            to { transform: rotate(360deg); }
         }
         @media (prefers-reduced-motion: reduce) {
-            .d3-pump-blade { animation: none; }
+            .d3-pump-blade { transform: none !important; }
         }
     </style>
 {% endblock %}
@@ -390,28 +399,34 @@ nav: education
                 <line id="d3-loadB-return" data-flow="return" x1="680" y1="205" x2="680" y2="250" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
                 <path id="d3-system-return" data-flow="return" d="M760 90 V250 H440" fill="none" stroke="var(--blue-cool, #5e8aa0)" stroke-width="3" stroke-dasharray="9 5"/>
 
-                <!-- flow arrows -->
+                <!-- flow arrows. The data-d3-arrow tags drive page-level
+                     recoloring so primary-loop and system-supply arrows
+                     track their pipe stroke as the slider mutates loop
+                     temperatures. Return-side arrows and the bridge pair
+                     stay at the default tokens (return is always at fixed
+                     T_RETURN in the model; bridge pipes change density,
+                     not color). -->
                 <g id="d3-flow-arrows">
                     <!-- primary loop — dense, constant flow -->
-                    <polygon points="85,100 90,89 95,100" fill="var(--blue, #1577b8)"/>
-                    <polygon points="150,55 159,60 150,65" fill="var(--blue, #1577b8)"/>
-                    <polygon points="240,55 249,60 240,65" fill="var(--blue, #1577b8)"/>
-                    <polygon points="275,110 280,121 285,110" fill="var(--blue, #1577b8)"/>
-                    <polygon points="275,230 280,241 285,230" fill="var(--blue, #1577b8)"/>
-                    <polygon points="240,265 231,270 240,275" fill="var(--blue, #1577b8)"/>
-                    <polygon points="150,265 141,270 150,275" fill="var(--blue, #1577b8)"/>
-                    <polygon points="85,240 90,229 95,240" fill="var(--blue, #1577b8)"/>
+                    <polygon data-d3-arrow="primary" points="85,100 90,89 95,100" fill="var(--blue, #1577b8)"/>
+                    <polygon data-d3-arrow="primary" points="150,55 159,60 150,65" fill="var(--blue, #1577b8)"/>
+                    <polygon data-d3-arrow="primary" points="240,55 249,60 240,65" fill="var(--blue, #1577b8)"/>
+                    <polygon data-d3-arrow="primary" points="275,110 280,121 285,110" fill="var(--blue, #1577b8)"/>
+                    <polygon data-d3-arrow="primary" points="275,230 280,241 285,230" fill="var(--blue, #1577b8)"/>
+                    <polygon data-d3-arrow="primary" points="240,265 231,270 240,275" fill="var(--blue, #1577b8)"/>
+                    <polygon data-d3-arrow="primary" points="150,265 141,270 150,275" fill="var(--blue, #1577b8)"/>
+                    <polygon data-d3-arrow="primary" points="85,240 90,229 95,240" fill="var(--blue, #1577b8)"/>
                     <!-- bridge — a smaller pair, the partial diversion -->
                     <polygon points="416,146 423,150 416,154" fill="var(--blue, #1577b8)"/>
                     <polygon points="312,186 305,190 312,194" fill="var(--blue-cool, #5e8aa0)"/>
                     <!-- system loop — dense, constant flow -->
-                    <polygon points="435,160 440,149 445,160" fill="var(--blue, #1577b8)"/>
-                    <polygon points="500,85 509,90 500,95" fill="var(--blue, #1577b8)"/>
-                    <polygon points="630,85 639,90 630,95" fill="var(--blue, #1577b8)"/>
+                    <polygon data-d3-arrow="system-supply" points="435,160 440,149 445,160" fill="var(--blue, #1577b8)"/>
+                    <polygon data-d3-arrow="system-supply" points="500,85 509,90 500,95" fill="var(--blue, #1577b8)"/>
+                    <polygon data-d3-arrow="system-supply" points="630,85 639,90 630,95" fill="var(--blue, #1577b8)"/>
                     <polygon points="755,150 760,161 765,150" fill="var(--blue-cool, #5e8aa0)"/>
                     <polygon points="755,210 760,221 765,210" fill="var(--blue-cool, #5e8aa0)"/>
-                    <polygon points="535,120 540,131 545,120" fill="var(--blue, #1577b8)"/>
-                    <polygon points="675,120 680,131 685,120" fill="var(--blue, #1577b8)"/>
+                    <polygon data-d3-arrow="system-supply" points="535,120 540,131 545,120" fill="var(--blue, #1577b8)"/>
+                    <polygon data-d3-arrow="system-supply" points="675,120 680,131 685,120" fill="var(--blue, #1577b8)"/>
                     <polygon points="540,230 535,219 545,219" fill="var(--blue-cool, #5e8aa0)"/>
                     <polygon points="680,230 675,219 685,219" fill="var(--blue-cool, #5e8aa0)"/>
                     <polygon points="619,245 610,250 619,255" fill="var(--blue-cool, #5e8aa0)"/>
@@ -571,11 +586,50 @@ nav: education
         const alertEl          = document.getElementById('d3wAlert');
         const injectPipe       = document.getElementById('d3-inject-pipe');
         const bridgeReturn     = document.getElementById('d3-bridge-return');
-        const injectionPumpEl  = document.getElementById('d3-injection-pump');
         const primaryLoopPipe  = document.getElementById('d3-primary-loop');
         const systemSupplyPipe = document.getElementById('d3-system-supply');
         const loadASupplyPipe  = document.getElementById('d3-loadA-supply');
         const loadBSupplyPipe  = document.getElementById('d3-loadB-supply');
+        const primaryArrows    = document.querySelectorAll('[data-d3-arrow="primary"]');
+        const sysSupplyArrows  = document.querySelectorAll('[data-d3-arrow="system-supply"]');
+
+        // ── Pump impeller rAF loop ────────────────────────────────────
+        // Earlier this used a CSS keyframe animation with --spin as the
+        // animation-duration, set per slider Hz. Changing animation-
+        // duration mid-rotation made the blade visibly jump — the browser
+        // recomputes progress as elapsed/new-duration, snapping the
+        // current angle. Integrating an angle ourselves means a speed
+        // change applies cleanly from the current angle: no restart, no
+        // jump as the slider drags. Boiler/system spin at CONST_SPEED
+        // (they hold constant flow); injection's speed is updated by
+        // update() on each slider change.
+        const CONST_SPEED  = 360 / 0.7;       // deg/sec, one rev per 0.7s
+        let   injectionSpeed = CONST_SPEED;   // overwritten on first update()
+        const blades = {
+            boiler:    document.querySelector('#d3-boiler-pump .d3-pump-blade'),
+            injection: document.querySelector('#d3-injection-pump .d3-pump-blade'),
+            system:    document.querySelector('#d3-system-pump .d3-pump-blade'),
+        };
+        const angles = { boiler: 0, injection: 0, system: 0 };
+        const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (!reduceMotion) {
+            let lastT = null;
+            const frame = function (t) {
+                if (lastT === null) lastT = t;
+                // Clamp dt — backgrounded tab can fire rAF with a huge
+                // gap on resume; no point catching up.
+                const dt = Math.min(0.1, (t - lastT) / 1000);
+                lastT = t;
+                angles.boiler    = (angles.boiler    + CONST_SPEED    * dt) % 360;
+                angles.injection = (angles.injection + injectionSpeed * dt) % 360;
+                angles.system    = (angles.system    + CONST_SPEED    * dt) % 360;
+                blades.boiler.style.transform    = 'rotate(' + angles.boiler.toFixed(2) + 'deg)';
+                blades.injection.style.transform = 'rotate(' + angles.injection.toFixed(2) + 'deg)';
+                blades.system.style.transform    = 'rotate(' + angles.system.toFixed(2) + 'deg)';
+                requestAnimationFrame(frame);
+            };
+            requestAnimationFrame(frame);
+        }
 
         // Linear RGB lerp. Good enough for short hops across the
         // workstation palette; out-of-gamut midpoints aren't a concern
@@ -649,24 +703,30 @@ nav: education
             systemSwatchEl.style.background  = systemColor(tSystem);
 
             // Diagram pipe strokes — the whole-diagram signal that
-            // makes the slider feel connected.
-            primaryLoopPipe.setAttribute('stroke', primaryColor(tPrimary));
+            // makes the slider feel connected. Same color values feed
+            // the tagged static arrows and the engine particles on
+            // these paths so pipe, arrow, and dot all read one
+            // temperature at a time.
+            const priCol = primaryColor(tPrimary);
             const sysCol = systemColor(tSystem);
+            primaryLoopPipe.setAttribute('stroke', priCol);
             systemSupplyPipe.setAttribute('stroke', sysCol);
             loadASupplyPipe.setAttribute('stroke', sysCol);
             loadBSupplyPipe.setAttribute('stroke', sysCol);
-
-            // Injection pump impeller: spin period inversely proportional
-            // to Hz; paused at 0 Hz. Tuned so the pump matches the constant
-            // boiler/system pumps at design (0.7s/rev). Min clamp at 0.25s
-            // so very high Hz doesn't strobe.
-            if (hz === 0) {
-                injectionPumpEl.style.setProperty('--play', 'paused');
-            } else {
-                injectionPumpEl.style.setProperty('--play', 'running');
-                const spinSec = Math.max(0.25, 0.7 * (DESIGN_HZ / hz));
-                injectionPumpEl.style.setProperty('--spin', spinSec.toFixed(2) + 's');
+            primaryArrows.forEach(function (a) { a.setAttribute('fill', priCol); });
+            sysSupplyArrows.forEach(function (a) { a.setAttribute('fill', sysCol); });
+            if (window.FlowEngine && window.FlowEngine.setPathColor) {
+                FlowEngine.setPathColor(primaryLoopPipe, priCol);
+                FlowEngine.setPathColor(systemSupplyPipe, sysCol);
+                FlowEngine.setPathColor(loadASupplyPipe, sysCol);
+                FlowEngine.setPathColor(loadBSupplyPipe, sysCol);
             }
+
+            // Injection pump impeller speed (deg/sec). Linear with Hz;
+            // paused at 0 Hz. The rAF loop above integrates this each
+            // frame, so changes here apply continuously rather than
+            // restarting the rotation cycle.
+            injectionSpeed = hz === 0 ? 0 : CONST_SPEED * (hz / DESIGN_HZ);
 
             // Engine density on the two bridge paths: sparser flow at low
             // Qinj, denser as more is diverted. Clamped at 0.01 floor (the

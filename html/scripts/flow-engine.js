@@ -75,6 +75,16 @@
 //                                    easy to reason about. No-op under
 //                                    reduced-motion, since init() never
 //                                    built any pools to refresh.
+//   FlowEngine.setPathColor(el, c) — recolor the existing particles for
+//                                    one annotated element in place (no
+//                                    rebuild, no per-frame stutter). For
+//                                    pages that drive particle fill from
+//                                    something the engine doesn't know
+//                                    about — e.g. the d3 twin-T widget,
+//                                    where the slider mutates pipe stroke
+//                                    AND wants the dots on those pipes to
+//                                    track. Call after each state change;
+//                                    idempotent. No-op under reduced-motion.
 //
 // What's NOT here: anything page-specific. No per-diagram tuning, no
 // hooks for play/pause UI, no speed coupling to a slider. Add those
@@ -167,6 +177,19 @@
         if (!frameStarted) return;
         if (!el || !el.hasAttribute || !el.hasAttribute('data-flow')) return;
         buildPoolForEl(el);
+    }
+
+    // setPathColor recolors the existing particles for one annotated
+    // element without rebuilding the pool. Cheap (just N setAttribute
+    // calls) and avoids the one-frame stutter that refreshPath would
+    // cause if a page is mutating colors live (slider drag).
+    function setPathColor(el, color) {
+        if (!frameStarted) return;
+        const pool = poolsByEl.get(el);
+        if (!pool) return;
+        for (let i = 0; i < pool.particles.length; i++) {
+            pool.particles[i].circle.setAttribute('fill', color);
+        }
     }
 
     // Build (or rebuild in place) the particle pool for one annotated
@@ -266,5 +289,5 @@
         part.circle.setAttribute('cy', pt.y);
     }
 
-    window.FlowEngine = { init: init, refreshPath: refreshPath };
+    window.FlowEngine = { init: init, refreshPath: refreshPath, setPathColor: setPathColor };
 })();
