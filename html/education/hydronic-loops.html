@@ -133,9 +133,16 @@ nav: education
         #d3-loadA-supply,
         #d3-loadB-supply,
         [data-d3-arrow],
+        #d3-boiler rect,
+        #d3-load-A rect,
+        #d3-load-B rect,
         svg[aria-labelledby="d3-title d3-desc"] g.flow-particles > circle {
             transition: stroke 200ms linear, fill 200ms linear;
         }
+        /* Equipment label fill swaps discretely at the heat-ratio
+           midpoint (set from JS) so dark-on-pink doesn't lerp through
+           low-contrast greys — better to snap once the box is clearly
+           red than to spend a 200ms drag at unreadable mid-tones. */
 
         /* Pump impellers — a small 2-blade bar centered on each of the
            three d3 pumps, replacing the static directional triangle.
@@ -568,11 +575,14 @@ nav: education
         const MAX_HZ        = 75;       // slider max — overspeed territory above DESIGN_HZ
 
         // Design-system color tokens duplicated here as RGB triples so
-        // we can lerp into intermediate values for the diagram strokes.
-        // Keep in sync with --blue / --blue-cool / --red in styles.css.
+        // we can lerp into intermediate values for the diagram strokes
+        // and equipment fills. Keep in sync with --blue / --blue-cool /
+        // --red / --surface / --text-dim in styles.css.
         const C_BLUE      = [0x15, 0x77, 0xb8];
         const C_BLUE_COOL = [0x5e, 0x8a, 0xa0];
         const C_RED       = [0xc4, 0x38, 0x2f];
+        const C_WHITE     = [0xff, 0xff, 0xff];   // --surface
+        const C_DIM       = [0x66, 0x6e, 0x66];   // --text-dim (default equipment stroke)
 
         const slider           = document.getElementById('d3wSlider');
         const gpmEl            = document.getElementById('d3wGpm');
@@ -592,6 +602,12 @@ nav: education
         const loadBSupplyPipe  = document.getElementById('d3-loadB-supply');
         const primaryArrows    = document.querySelectorAll('[data-d3-arrow="primary"]');
         const sysSupplyArrows  = document.querySelectorAll('[data-d3-arrow="system-supply"]');
+        const boilerRect       = document.querySelector('#d3-boiler rect');
+        const boilerText       = document.querySelector('#d3-boiler text');
+        const loadARect        = document.querySelector('#d3-load-A rect');
+        const loadAText        = document.querySelector('#d3-load-A text');
+        const loadBRect        = document.querySelector('#d3-load-B rect');
+        const loadBText        = document.querySelector('#d3-load-B text');
 
         // ── Pump impeller rAF loop ────────────────────────────────────
         // Earlier this used a CSS keyframe animation with --spin as the
@@ -721,6 +737,34 @@ nav: education
                 FlowEngine.setPathColor(loadASupplyPipe, sysCol);
                 FlowEngine.setPathColor(loadBSupplyPipe, sysCol);
             }
+
+            // Equipment overheat tinting. Boiler box tints with the same
+            // 180 → 220 °F ratio that drives the primary loop pipe color;
+            // load boxes tint with the same 148 → 156 °F ratio that drives
+            // the system supply. Labels flip to white once the box passes
+            // the 50% mark — past that point dark-on-pink loses contrast
+            // and white reads cleanly all the way to full --red. The flip
+            // isn't transitioned (a 200ms lerp through mid-grey would be
+            // less readable than either endpoint), so it snaps once the
+            // box is clearly red.
+            const boilerHeat = Math.max(0, Math.min(1, (tPrimary - T_PRIMARY) / (T_HIGH_LIMIT - T_PRIMARY)));
+            const loadsHeat  = Math.max(0, Math.min(1, (tSystem  - T_SETPOINT) / 8));
+            const TEXT_FLIP  = 0.5;
+            const boilerFill   = lerpRgb(C_WHITE, C_RED, boilerHeat);
+            const boilerStroke = lerpRgb(C_DIM,   C_RED, boilerHeat);
+            const loadsFill    = lerpRgb(C_WHITE, C_RED, loadsHeat);
+            const loadsStroke  = lerpRgb(C_DIM,   C_RED, loadsHeat);
+            boilerRect.setAttribute('fill',   boilerFill);
+            boilerRect.setAttribute('stroke', boilerStroke);
+            loadARect.setAttribute('fill',    loadsFill);
+            loadARect.setAttribute('stroke',  loadsStroke);
+            loadBRect.setAttribute('fill',    loadsFill);
+            loadBRect.setAttribute('stroke',  loadsStroke);
+            const boilerTextCol = boilerHeat >= TEXT_FLIP ? '#ffffff' : '#1d251f';
+            const loadsTextCol  = loadsHeat  >= TEXT_FLIP ? '#ffffff' : '#1d251f';
+            boilerText.setAttribute('fill', boilerTextCol);
+            loadAText.setAttribute('fill',  loadsTextCol);
+            loadBText.setAttribute('fill',  loadsTextCol);
 
             // Injection pump impeller speed (deg/sec). Linear with Hz;
             // paused at 0 Hz. The rAF loop above integrates this each
