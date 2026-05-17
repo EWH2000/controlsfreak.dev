@@ -60,22 +60,9 @@ nav: education
             border-radius: 3px;
             padding: 0.55rem 0.75rem;
         }
-        /* Fan — reused vocabulary from the VFDs widget. Slightly smaller
-           here since each pump-control widget gets its own copy. Rotation
-           rate proportional to the operating-point Hz (60 Hz ⇒ ~1 rev/sec)
-           with the same colour shift between stopped (--blue-cool) and
-           running (--blue). Honours prefers-reduced-motion via the same
-           short-circuit on the JS interval. */
-        .pc-w-fan ellipse {
-            fill: var(--blue-cool);
-            transition: fill 0.25s;
-        }
-        .pc-w-fan.spinning ellipse {
-            fill: var(--blue);
-        }
-        @media (prefers-reduced-motion: reduce) {
-            .pc-w-fan-blades { transform: none !important; }
-        }
+        /* Fan icon visuals (palette, reduced-motion) live in styles.css
+           under .widget-fan; this page provides the labeled-chip wrapper
+           around it (mono Hz readout to the right of the spinning fan). */
         .pc-w-fan-wrap {
             display: flex;
             align-items: center;
@@ -85,7 +72,7 @@ nav: education
             border: 1px solid var(--border);
             border-radius: 3px;
         }
-        .pc-w-fan-wrap .pc-w-fan { flex-shrink: 0; }
+        .pc-w-fan-wrap .widget-fan { flex-shrink: 0; }
         .pc-w-fan-wrap .pc-w-fan-label {
             font-family: var(--mono);
             font-size: 0.7rem;
@@ -322,9 +309,9 @@ nav: education
 
                     <div class="pc-w1-readouts">
                         <div class="pc-w-fan-wrap">
-                            <svg class="pc-w-fan" id="pcW1Fan" viewBox="0 0 100 100" width="44" height="44" aria-hidden="true">
+                            <svg class="widget-fan" id="pcW1Fan" viewBox="0 0 100 100" width="44" height="44" aria-hidden="true">
                                 <circle cx="50" cy="50" r="46" fill="none" stroke="var(--border)" stroke-width="2"/>
-                                <g class="pc-w-fan-blades" id="pcW1FanBlades">
+                                <g class="widget-fan-blades" id="pcW1FanBlades">
                                     <ellipse cx="50" cy="22" rx="7" ry="22"/>
                                     <ellipse cx="50" cy="22" rx="7" ry="22" transform="rotate(72 50 50)"/>
                                     <ellipse cx="50" cy="22" rx="7" ry="22" transform="rotate(144 50 50)"/>

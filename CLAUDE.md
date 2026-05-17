@@ -410,10 +410,14 @@ Light-only (`color-scheme: light`); no dark variant.
   the labeled blue mono readout; `.widget-anecdote-wrap` reserves
   vertical space so a `.widget-anecdote` reveal doesn't reflow the
   page below. `.widget-anecdote.warn` flips the left rule to
-  `--red` for failure callouts. Widget INTERNALS (LCDs, keypads,
-  branch states, valve pills, temperature swatches, pump-curve
-  canvases) stay in each page's `{% block head %}` since only that
-  page uses them.
+  `--red` for failure callouts. `.widget-fan` / `.widget-fan-blades`
+  is the 5-blade fan icon shared between the vfds run/speed widget
+  and pump-control's Widget 1; pages add their own positioning
+  rules (e.g. `.vfd-w-status-row .widget-fan`,
+  `.pc-w-fan-wrap .widget-fan`) and own their own animation loop.
+  Widget INTERNALS (LCDs, keypads, branch states, valve pills,
+  temperature swatches, pump-curve canvases) stay in each page's
+  `{% block head %}` since only that page uses them.
 
 For the full component vocabulary, read `styles.css` — it's terse and
 well-grouped.

@@ -1055,12 +1055,13 @@ input.ps-input:focus, select.ps-input:focus, textarea.ps-input:focus {
 
    The widget shell is the recessed --surface-3 panel + the standard
    bits inside it: a "Try this:" prompt-link row, mono caps section
-   labels, slider with label/value head, blue-readout pairs, and the
+   labels, slider with label/value head, blue-readout pairs, the
    anecdote callout (with min-height to reserve space so reveals
-   don't reflow the page below). Page-specific INTERNALS (LCD,
-   keypad, fan, branch states, valve pills, temperature swatches,
-   pump-curve canvas) stay in each page's {% block head %} since
-   only that page uses them.
+   don't reflow the page below), and the 5-blade fan icon shared
+   between the pump-control and vfds widgets. Page-specific
+   INTERNALS (LCD, keypad, branch states, valve pills, temperature
+   swatches, pump-curve canvas) stay in each page's {% block head %}
+   since only that page uses them.
 
    Default anecdote left rule is --blue (the "extreme-state reward"
    variant on pump-control / vfds / hydronic-loops). The .warn
@@ -1152,3 +1153,28 @@ input.ps-input:focus, select.ps-input:focus, textarea.ps-input:focus {
 }
 .widget-anecdote strong { color: var(--text-bright); font-weight: 600; }
 .widget-anecdote.warn { border-left-color: var(--red); }
+
+/* 5-blade fan icon — visual handle for "the drive is energising
+   something." Used by the run/speed widget on vfds and both
+   pump-control widgets. The SVG markup (center + 4 ellipses at
+   72°/144°/216°/288° around 50,50) lives inline on each page; the
+   per-frame rAF loop writes a rotate transform onto the .widget-
+   fan-blades group. Pages add their own positioning/sizing
+   alongside (e.g. .vfd-w-status-row .widget-fan or .pc-w-fan-wrap
+   .widget-fan).
+
+   Reduced-motion: the JS engine short-circuits when the OS pref
+   is set, leaving blade angle at 0. The colour swap below still
+   communicates running vs stopped. The !important override on
+   .widget-fan-blades is belt-and-braces against a stale transform
+   attribute lingering on the group. */
+.widget-fan ellipse {
+    fill: var(--blue-cool);
+    transition: fill 0.25s;
+}
+.widget-fan.spinning ellipse {
+    fill: var(--blue);
+}
+@media (prefers-reduced-motion: reduce) {
+    .widget-fan-blades { transform: none !important; }
+}

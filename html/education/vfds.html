@@ -160,24 +160,13 @@ nav: education
             align-items: flex-start;
             gap: 1rem;
         }
-        .vfd-w-fan {
+        /* .widget-fan visuals (palette, reduced-motion) live in
+           styles.css; positioning inside the status row is page-local. */
+        .vfd-w-status-row .widget-fan {
             flex-shrink: 0;
             margin-top: 0.1rem;
         }
-        .vfd-w-fan ellipse {
-            fill: var(--blue-cool);
-            transition: fill 0.25s;
-        }
-        .vfd-w-fan.spinning ellipse {
-            fill: var(--blue);
-        }
         .vfd-w-status-text { flex: 1; min-width: 0; }
-        @media (prefers-reduced-motion: reduce) {
-            /* The JS engine short-circuits when reduced-motion is set,
-               so the blades stay at angle 0. The colour change still
-               communicates running vs stopped without movement. */
-            .vfd-w-fan-blades { transform: none !important; }
-        }
 
         /* Anecdote callout — same family as the d3 failure-state callout
            on hydronic-loops, so the "extreme-state reward" pattern reads
@@ -416,10 +405,10 @@ nav: education
                              SVG transform attribute (not CSS) so the
                              rotation origin behaves consistently across
                              browsers. -->
-                        <svg class="vfd-w-fan" id="vfdWFan" viewBox="0 0 100 100" width="56" height="56" aria-hidden="true" role="img">
+                        <svg class="widget-fan" id="vfdWFan" viewBox="0 0 100 100" width="56" height="56" aria-hidden="true" role="img">
                             <title>Motor fan</title>
                             <circle cx="50" cy="50" r="46" fill="none" stroke="var(--border)" stroke-width="2"/>
-                            <g class="vfd-w-fan-blades" id="vfdWFanBlades">
+                            <g class="widget-fan-blades" id="vfdWFanBlades">
                                 <ellipse cx="50" cy="22" rx="7" ry="22"/>
                                 <ellipse cx="50" cy="22" rx="7" ry="22" transform="rotate(72 50 50)"/>
                                 <ellipse cx="50" cy="22" rx="7" ry="22" transform="rotate(144 50 50)"/>

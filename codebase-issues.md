@@ -358,3 +358,18 @@ items the original audit missed:
   now describe the `addEventListener` call site that pages actually
   use. Slipped past the Block C closeout commit's "sweep stale
   references" pass.
+- **Fan-icon visuals duplicated** between `pump-control.html`
+  (`.pc-w-fan*`) and `vfds.html` (`.vfd-w-fan*`) — same 5-blade SVG,
+  same `--blue-cool`/`--blue` palette swap, same reduced-motion
+  override. Block C #5's "widget chrome only, internals stay
+  page-local" rule treated the fan as an internal, but the second
+  use already exists today (the precedent #5 itself set was "two
+  uses is the trigger"). Took the CSS-only consolidation path:
+  three rules moved to `styles.css` under `.widget-fan` /
+  `.widget-fan-blades`; SVG markup and the per-page rAF animation
+  loop stay page-local (each page reads Hz from its own state
+  shape). Pages keep page-local positioning by scoping through the
+  parent (`.vfd-w-status-row .widget-fan`,
+  `.pc-w-fan-wrap .widget-fan`). Full engine extraction
+  (`fan-icon.js` mirroring `flow-engine.js`) deferred until a
+  third use lands and the API shape clarifies.
