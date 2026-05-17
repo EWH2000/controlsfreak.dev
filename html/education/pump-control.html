@@ -680,11 +680,25 @@ nav: education
 
         function buildPolyline(fn, qMin, qMax, steps) {
             const pts = [];
+            let prevQ = null, prevH = null;
             for (let i = 0; i <= steps; i++) {
                 const Q = qMin + (qMax - qMin) * (i / steps);
                 const H = fn(Q);
                 if (H < -1) break;   // pump curve dropping below zero — runout
+                if (H > H_MAX_AXIS) {
+                    // System curve climbing off the top of the chart at low
+                    // valve %. Interpolate the crossing so the line ends
+                    // exactly at the axis top instead of overshooting.
+                    if (prevH !== null && prevH <= H_MAX_AXIS) {
+                        const t = (H_MAX_AXIS - prevH) / (H - prevH);
+                        const Qc = prevQ + t * (Q - prevQ);
+                        pts.push(xPx(Qc).toFixed(1) + ',' + yPx(H_MAX_AXIS).toFixed(1));
+                    }
+                    break;
+                }
                 pts.push(xPx(Q).toFixed(1) + ',' + yPx(H).toFixed(1));
+                prevQ = Q;
+                prevH = H;
             }
             return pts.join(' ');
         }
