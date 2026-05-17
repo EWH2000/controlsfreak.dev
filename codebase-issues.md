@@ -664,7 +664,7 @@ scripts frequently reuse the id name as a JS local variable
 (`euMin`, `diClosed`) and a bare substitution corrupts JS that
 otherwise has no relation to the rename.
 
-### 17. Tab wiring pattern drift
+### 17. Tab wiring pattern drift *(addressed 2026-05-17)*
 
 Two patterns coexist after the Block C #3 sweep:
 
@@ -685,6 +685,24 @@ forces per-button bindings.
 **Recommended action:** retrofit `bacnet-ip-converter.html` to the
 `data-tab` + loop pattern; document the canonical pattern under
 CLAUDE.md "JS patterns" while you're there.
+
+**Resolution (2026-05-17):** retrofit landed in one commit;
+`bacnet-ip-converter.html:26-27` swapped per-id buttons for
+`data-tab="hex2ip"` / `data-tab="ip2hex"`, and `:255-256` collapsed
+the two `document.getElementById(...).addEventListener(...)` calls
+into one `document.querySelectorAll('[data-tab]').forEach(btn =>
+btn.addEventListener('click', e => switchTab(e.currentTarget
+.dataset.tab, e.currentTarget)))` loop — verbatim shape of
+`signal-scaling.html:404-406`. The two now-removed button ids
+(`bacnet-tab-hex2ip`, `bacnet-tab-ip2hex`) had no tests, no CSS,
+and no aria targets referencing them, so the removal was a clean
+delete. The pane container ids on the `.tab-pane` divs
+(`tab-hex2ip`, `tab-ip2hex`) stay — those are what `switchTab`
+locates via `'tab-' + name`. The CLAUDE.md "JS patterns → Tabs"
+bullet now documents the canonical wiring shape (data-tab attr
++ querySelectorAll loop), not just the `switchTab` helper — that
+was the documentation gap that let the older per-id pattern keep
+looking acceptable.
 
 ### 18. `'use strict'` adoption drift
 
