@@ -200,10 +200,13 @@ nav: tools
 
 {% block scripts %}
 <script src="/scripts/units.js"></script>
-<!-- Shared simulation core — the FOPDT process model + discrete-time stepping.
-     Defines PID_PROC and simulatePid() as globals (classic script, not a module),
-     so the IIFE-wrapped inline script below can reach them by name. -->
+<!-- Shared simulation core — the FOPDT process model + discrete-time stepping
+     (PID_PROC, PID_DMAX, simulatePid, fmtDur) plus the canvas drawer and
+     unit-aware delta formatter (drawPidChart, formatPidDelta). Defined as
+     globals on classic scripts so the IIFE-wrapped inline script below can
+     reach them by name. -->
 <script src="/scripts/pid-engine.js"></script>
+<script src="/scripts/pid-chart.js"></script>
 <script>
     // ─────────────────────────────────────────────
     // PID Tuning Helper — page glue around the shared engine.
@@ -218,12 +221,6 @@ nav: tools
             aggr:     { kc: 6.0,  ki: 2.00, kd: 0 },
             hot:      { kc: 14.0, ki: 4.00, kd: 0 },
         };
-        // Rate-slider max per process: useful derivative time scales with the loop's
-        // time constant, so a static range can't serve fast and slow loops both —
-        // a 30 s rate is plenty on a 45 s loop and a rounding error on a 4 min one.
-        // (Gain and reset need no such re-ranging; their useful ranges hold across
-        // process speeds.) Mirrors the Education page's mini-sim.
-        const PID_DMAX = { fast: 0.15, med: 0.5, slow: 2.0 };   // minutes
         let pidLast = null;   // last sim result, kept so a window resize can redraw
 
         function pidPreset(name, btn) {
@@ -257,7 +254,7 @@ nav: tools
 
             const sim = simulatePid(proc, Kc, rep, rate);
             pidLast = sim;
-            drawPidChart();
+            drawTunerChart();
 
             // ── metrics ──
             const overEl = document.getElementById('pidOver');
@@ -270,14 +267,15 @@ nav: tools
             setEl.textContent = sim.settled === null ? '> ' + fmtDur(sim.win) : fmtDur(sim.settled);
             setEl.classList.toggle('warn', sim.settled === null);
 
-            errEl.textContent = (sim.ssErr > 0 ? '+' : '') + sim.ssErr.toFixed(sim.dec);
+            // Positive ssErr = PV above SP (standard PID convention). The mini-sims
+            // on /education/pid-basics.html flip the sign to read as "offset below SP"
+            // — keep that distinction; pass +ssErr here.
+            errEl.textContent = formatPidDelta(sim.ssErr, sim, document.getElementById('pidProc').value);
             errEl.classList.toggle('warn', Math.abs(sim.ssErr) > 0.05 * sim.step);
         }
 
-        function fmtDur(sec) {
-            if (sec < 100) return Math.round(sec) + ' s';
-            const m = Math.floor(sec / 60), s = Math.round(sec - m * 60);
-            return s ? m + ':' + String(s).padStart(2, '0') + ' min' : m + ' min';
+        function drawTunerChart() {
+            if (pidLast) drawPidChart(document.getElementById('pidCanvas'), pidLast, { variant: 'full' });
         }
 
         // Relabel the three sliders for the chosen parameter style. The slider
@@ -322,85 +320,6 @@ nav: tools
             set('pidKdSub', `Td ${tdMin} min  ·  ${tdSec} s`);
         }
 
-        function drawPidChart() {
-            const canvas = document.getElementById('pidCanvas');
-            if (!canvas || !pidLast) return;
-            const cssW = canvas.clientWidth, cssH = canvas.clientHeight;
-            if (!cssW || !cssH) return;
-            const dpr = window.devicePixelRatio || 1;
-            canvas.width = Math.round(cssW * dpr);
-            canvas.height = Math.round(cssH * dpr);
-            const ctx = canvas.getContext('2d');
-            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-            ctx.clearRect(0, 0, cssW, cssH);
-
-            const css = getComputedStyle(document.documentElement);
-            const cSurface = css.getPropertyValue('--surface').trim() || '#ffffff';
-            const cBorder  = css.getPropertyValue('--border').trim()  || '#ccd7c8';
-            const cDim     = css.getPropertyValue('--text-dim').trim() || '#666e66';
-            const cAccent  = css.getPropertyValue('--accent').trim()   || '#43881c';
-            const cFill    = css.getPropertyValue('--accent-dim').trim() || 'rgba(67,136,28,0.1)';
-            ctx.fillStyle = cSurface;
-            ctx.fillRect(0, 0, cssW, cssH);
-
-            const { t, pv, sp, bias, win, dec } = pidLast;
-            const padL = 46, padR = 12, padT = 12, padB = 22;
-            const w = cssW - padL - padR, h = cssH - padT - padB;
-            if (w <= 0 || h <= 0) return;
-
-            let yMax = sp + (sp - bias) * 0.6;
-            let yMin = bias - (sp - bias) * 0.15;
-            for (const v of pv) { if (v > yMax) yMax = v; if (v < yMin) yMin = v; }
-            const yp = (yMax - yMin) * 0.05 || 1;
-            yMax += yp; yMin -= yp;
-            if (yMax === yMin) yMax = yMin + 1;
-
-            const X = tt => padL + (tt / win) * w;
-            const Y = vv => padT + h - ((vv - yMin) / (yMax - yMin)) * h;
-
-            ctx.font = "10px 'IBM Plex Mono', monospace";
-            ctx.lineWidth = 1;
-
-            // grid + axis labels
-            ctx.strokeStyle = cBorder;
-            ctx.fillStyle = cDim;
-            for (let i = 0; i <= 4; i++) {
-                const v = yMin + (i / 4) * (yMax - yMin);
-                const yy = Y(v);
-                ctx.beginPath(); ctx.moveTo(padL, yy); ctx.lineTo(padL + w, yy); ctx.stroke();
-                ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
-                ctx.fillText(v.toFixed(dec), padL - 6, yy);
-            }
-            for (let i = 0; i <= 4; i++) {
-                const tt = (i / 4) * win;
-                const xx = X(tt);
-                ctx.beginPath(); ctx.moveTo(xx, padT); ctx.lineTo(xx, padT + h); ctx.stroke();
-                ctx.textAlign = 'center'; ctx.textBaseline = 'top';
-                ctx.fillText(win <= 120 ? Math.round(tt) + 's' : Math.round(tt / 60) + 'm', xx, padT + h + 5);
-            }
-
-            // setpoint (dashed)
-            ctx.strokeStyle = cDim;
-            ctx.setLineDash([5, 4]);
-            ctx.beginPath(); ctx.moveTo(padL, Y(sp)); ctx.lineTo(padL + w, Y(sp)); ctx.stroke();
-            ctx.setLineDash([]);
-
-            // PV curve + soft fill
-            ctx.beginPath();
-            for (let i = 0; i < t.length; i++) {
-                const xx = X(t[i]), yy = Y(pv[i]);
-                i === 0 ? ctx.moveTo(xx, yy) : ctx.lineTo(xx, yy);
-            }
-            ctx.strokeStyle = cAccent;
-            ctx.lineWidth = 2;
-            ctx.stroke();
-            ctx.lineTo(X(t[t.length - 1]), padT + h);
-            ctx.lineTo(X(0), padT + h);
-            ctx.closePath();
-            ctx.fillStyle = cFill;
-            ctx.fill();
-        }
-
         document.getElementById('pidProc').addEventListener('change', pidProcChanged);
         document.getElementById('pidConv').addEventListener('change', runPidSim);
         document.getElementById('pidKc').addEventListener('input', runPidSim);
@@ -412,7 +331,16 @@ nav: tools
 
         // ── Init ──
         runPidSim();
-        window.addEventListener('resize', drawPidChart);
+        window.addEventListener('resize', drawTunerChart);
+        // The engine runs in canonical units, so a units flip doesn't require
+        // re-simulating — only the steady-state error readout (the one display
+        // element that's unit-aware) needs refreshing. Mirrors the mini-sims
+        // on /education/pid-basics.html.
+        document.addEventListener('unitschange', () => {
+            if (!pidLast) return;
+            const errEl = document.getElementById('pidErr');
+            errEl.textContent = formatPidDelta(pidLast.ssErr, pidLast, document.getElementById('pidProc').value);
+        });
     })();
 </script>
 {% endblock %}

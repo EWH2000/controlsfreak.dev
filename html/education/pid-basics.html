@@ -219,11 +219,12 @@ nav: education
 
 {% block scripts %}
 <script src="/scripts/units.js"></script>
-<!-- Shared simulation core — the FOPDT process model + discrete-time stepping
-     (PID_PROC, simulatePid), the same engine the PID Tuning Helper runs on.
-     Classic script (not a module), loaded before the IIFE-wrapped inline
-     script below so it can reach those globals by name. -->
+<!-- Shared simulation core (PID_PROC, PID_DMAX, simulatePid, fmtDur) plus the
+     canvas drawer and unit-aware delta formatter (drawPidChart, formatPidDelta).
+     The same files drive /tools/pid-tuner.html. Classic scripts (not modules),
+     loaded before the IIFE below so it can reach those globals by name. -->
 <script src="/scripts/pid-engine.js"></script>
+<script src="/scripts/pid-chart.js"></script>
 <script>
     // ─────────────────────────────────────────────────────────────────────
     // Education PID mini-sims — three stripped-down surfaces over the shared
@@ -243,29 +244,6 @@ nav: education
             3: { proc: 'med', gain: 2.0, rep: 4.0, rate: 0 },   // P + I + D — slider drives rate (the aggressive P+I from Sim 2)
         };
         const MINI_KNOB = { 1: 'gain', 2: 'rep', 3: 'rate' };          // which knob each slider drives
-
-        // Per-process unit labels and conversion helpers for the offset readouts.
-        // The simulation runs in canonical units (fast loop in in. w.c., med/slow
-        // in °F); convert at the display boundary when the global toggle is set
-        // to metric. Offsets are deltas, so use deltaTemp / staticPressure
-        // conversions (both happen to be linear, but the right primitives keep
-        // the call sites correct for any future ones that aren't).
-        function miniUnit(procKey) {
-            const u = window.Units.current();
-            if (procKey === 'fast') return u === 'us' ? 'in. w.c.' : 'Pa';
-            return u === 'us' ? '°F' : '°C';
-        }
-        function miniConvertDelta(value, procKey) {
-            if (window.Units.current() === 'us') return value;
-            return procKey === 'fast'
-                ? window.Units.display.staticPressure(value)
-                : window.Units.display.deltaTemp(value);
-        }
-        // Sim 3's rate slider re-ranges per loop: useful derivative time scales with
-        // the process time constant, so a 30 s rate that's plenty on a 45 s loop is
-        // a rounding error on a 4 min one. (Gain / reset — Sims 1 & 2 — need no such
-        // re-ranging; their useful ranges are the same across process speeds.)
-        const MINI3_DMAX = { fast: 0.15, med: 0.5, slow: 2.0 };        // rate-slider max, minutes
         const miniLast  = {};                                          // last sim result per sim — for redraw on resize
 
         // ── Pick the process model (Fast / Medium / Slow chip) for sim n ──
@@ -276,8 +254,8 @@ nav: education
             if (n === 3) {                                  // re-range the rate slider, keeping its position (fraction of range)
                 const s = document.getElementById('m3Slider');
                 const frac = parseFloat(s.max) > 0 ? parseFloat(s.value) / parseFloat(s.max) : 0;
-                s.max = MINI3_DMAX[key];
-                s.value = (frac * MINI3_DMAX[key]).toFixed(2);
+                s.max = PID_DMAX[key];
+                s.value = (frac * PID_DMAX[key]).toFixed(2);
             }
             runMini(n);
         }
@@ -289,8 +267,16 @@ nav: education
             updateMiniSlider(n, cfg);
             const sim = simulatePid(PID_PROC[cfg.proc], cfg.gain, cfg.rep, cfg.rate);
             miniLast[n] = sim;
-            drawMiniChart(document.getElementById('m' + n + 'Canvas'), sim, n === 1);
+            drawMini(n, sim);
             showMiniMetrics(n, sim, cfg.proc);
+        }
+
+        // Sim 1 gets the offset-shading flag; Sims 2 & 3 don't.
+        function drawMini(n, sim) {
+            drawPidChart(document.getElementById('m' + n + 'Canvas'), sim, {
+                variant: 'mini',
+                shadeOffset: n === 1,
+            });
         }
 
         // ── Slider value + sub-line (the label text itself is static in the markup) ──
@@ -311,95 +297,22 @@ nav: education
         }
 
         // ── Key-metric callouts under each chart ──
-        function fmtDur(sec) {
-            if (sec < 100) return Math.round(sec) + ' s';
-            const m = Math.floor(sec / 60), s = Math.round(sec - m * 60);
-            return s ? `${m}:${String(s).padStart(2, '0')} min` : `${m} min`;
-        }
-
+        // The mini-sims express the steady-state error as an *offset* (how far
+        // below SP the PV settled), so flip the sign: -sim.ssErr. The full tuner
+        // on /tools/pid-tuner.html uses the standard +sim.ssErr (PV above SP).
         function showMiniMetrics(n, sim, procKey) {
             const set = (id, t) => { const el = document.getElementById(id); if (el) el.textContent = t; };
-            const unit = miniUnit(procKey);
             const fmtPct = v => v < 0.05 ? 'none' : v.toFixed(1) + ' %';
-            const offsetCanonical = -sim.ssErr;                   // canonical-unit offset
-            const offsetDisplay   = miniConvertDelta(offsetCanonical, procKey);
-            // Round at the same precision the canonical value used, with one
-            // extra digit in metric for the fast loop (Pa values are larger).
-            const dec = (procKey === 'fast' && window.Units.current() === 'metric') ? 0 : sim.dec;
-            const fmtOffset = `${offsetDisplay > 0 ? '+' : ''}${offsetDisplay.toFixed(dec)} ${unit}`;
+            const fmtOffset = formatPidDelta(-sim.ssErr, sim, procKey);
             if (n === 1) {
                 set('m1Offset', fmtOffset);
             } else if (n === 2) {
-                set('m2Offset', Math.abs(sim.ssErr) < 0.02 * sim.step ? `≈ 0 ${unit}` : fmtOffset);
+                set('m2Offset', Math.abs(sim.ssErr) < 0.02 * sim.step ? `≈ 0 ${pidUnit(procKey)}` : fmtOffset);
                 set('m2Over', fmtPct(sim.overshoot));
             } else {
                 set('m3Over', fmtPct(sim.overshoot));
                 set('m3Settle', sim.settled === null ? '> ' + fmtDur(sim.win) : fmtDur(sim.settled));
             }
-        }
-
-        // ── Compact PV-vs-setpoint plot — a stripped-down cousin of the tuner's
-        //    chart: about half the height, no axis numbers, just the trace, the
-        //    setpoint line, and (Sim 1 only) a faint band marking the offset.
-        //    Colours come from the CSS custom properties, same trick as the tuner. ──
-        function drawMiniChart(canvas, sim, shadeOffset) {
-            if (!canvas) return;
-            const cssW = canvas.clientWidth, cssH = canvas.clientHeight;
-            if (!cssW || !cssH) return;
-            const dpr = window.devicePixelRatio || 1;
-            canvas.width  = Math.round(cssW * dpr);
-            canvas.height = Math.round(cssH * dpr);
-            const ctx = canvas.getContext('2d');
-            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-            ctx.clearRect(0, 0, cssW, cssH);
-
-            const css = getComputedStyle(document.documentElement);
-            const cv = (name, d) => css.getPropertyValue(name).trim() || d;
-            const cSurface = cv('--surface', '#ffffff'), cBorder = cv('--border', '#ccd7c8'),
-                  cDim = cv('--text-dim', '#666e66'), cAccent = cv('--accent', '#43881c'),
-                  cFill = cv('--accent-dim', 'rgba(67,136,28,0.1)');
-            ctx.fillStyle = cSurface; ctx.fillRect(0, 0, cssW, cssH);
-
-            const { t, pv, sp, bias, win } = sim;
-            const pad = 8;
-            const w = cssW - 2 * pad, h = cssH - 2 * pad;
-            if (w <= 0 || h <= 0) return;
-
-            // tighter headroom than the full tuner's plot, so overshoot / offset read clearly
-            let yMax = sp + (sp - bias) * 0.4, yMin = bias - (sp - bias) * 0.12;
-            for (const v of pv) { if (v > yMax) yMax = v; if (v < yMin) yMin = v; }
-            const yp = (yMax - yMin) * 0.06 || 1; yMax += yp; yMin -= yp;
-            if (yMax === yMin) yMax += 1;
-            const X = tt => pad + (tt / win) * w;
-            const Y = vv => pad + h - ((vv - yMin) / (yMax - yMin)) * h;
-
-            ctx.lineWidth = 1; ctx.strokeStyle = cBorder;
-            ctx.strokeRect(pad, pad, w, h);
-
-            if (shadeOffset) {                                   // Sim 1: a faint band = the gap P can't close
-                const yPv = Y(pv[pv.length - 1]), ySp = Y(sp);
-                ctx.fillStyle = 'rgba(196,56,47,0.10)';
-                ctx.fillRect(pad, Math.min(yPv, ySp), w, Math.max(1, Math.abs(yPv - ySp)));
-            }
-
-            ctx.strokeStyle = cDim; ctx.setLineDash([5, 3]);     // setpoint
-            ctx.beginPath(); ctx.moveTo(pad, Y(sp)); ctx.lineTo(pad + w, Y(sp)); ctx.stroke();
-            ctx.setLineDash([]);
-
-            ctx.beginPath();                                     // PV trace + soft fill
-            for (let i = 0; i < t.length; i++) {
-                const xx = X(t[i]), yy = Y(pv[i]);
-                i === 0 ? ctx.moveTo(xx, yy) : ctx.lineTo(xx, yy);
-            }
-            ctx.strokeStyle = cAccent; ctx.lineWidth = 2; ctx.stroke();
-            ctx.lineTo(X(t[t.length - 1]), pad + h);
-            ctx.lineTo(X(0), pad + h);
-            ctx.closePath();
-            ctx.fillStyle = cFill; ctx.fill();
-
-            ctx.font = "9px 'IBM Plex Mono', monospace";          // "SP" tag on the setpoint line
-            ctx.fillStyle = cDim; ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
-            ctx.fillText('SP', pad + w - 3, Y(sp) - 2);
         }
 
         document.getElementById('m1Slider').addEventListener('input', () => runMini(1));
@@ -415,7 +328,7 @@ nav: education
         // ── Init: run all three on load; redraw (not re-simulate) on resize. ──
         [1, 2, 3].forEach(n => runMini(n));
         window.addEventListener('resize', () => [1, 2, 3].forEach(n => {
-            if (miniLast[n]) drawMiniChart(document.getElementById('m' + n + 'Canvas'), miniLast[n], n === 1);
+            if (miniLast[n]) drawMini(n, miniLast[n]);
         }));
         // Re-render the offset readouts when the global units flip. The sim
         // itself doesn't need re-running (the engine is canonical); just refresh

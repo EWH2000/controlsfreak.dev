@@ -68,7 +68,14 @@ the site does, see `README.md`.
   `{% block scripts %}`, *before* the page's inline `<script>`.
   Today:
   - `pid-engine.js` — PID simulation core (FOPDT, conditional-
-    integration anti-windup). Exposes `PID_PROC`, `simulatePid()`.
+    integration anti-windup). Exposes `PID_PROC`, `PID_DMAX`,
+    `simulatePid()`, `fmtDur()`. Pure math + data; no DOM, no Units.
+  - `pid-chart.js` — canvas drawer for PV-vs-setpoint plots and the
+    unit-aware steady-state-error formatter. Exposes
+    `drawPidChart(canvas, sim, opts)` (opts.variant `'full'`|`'mini'`,
+    opts.shadeOffset boolean for Sim 1) and `formatPidDelta(value, sim,
+    procKey)`. Driven by both `tools/pid-tuner.html` and
+    `education/pid-basics.html`.
   - `flow-engine.js` — particle-flow animation for SVG schematics.
     Walks `<circle>` particles along paths annotated with
     `data-flow="supply"|"return"` via `getPointAtLength()`. Exposes

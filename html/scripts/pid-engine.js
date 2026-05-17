@@ -14,11 +14,13 @@
 // nothing transpiles or bundles.
 //
 // What lives here: the toy process model + the discrete-time stepping + the
-// canonical-parameter interface (gain, repeats/min, minutes). What does NOT
-// live here: anything UI — slider wiring, label/unit relabeling, the canvas
-// drawing, preset chips. Those stay on whichever page hosts a sim surface
-// (today: tools/pid-tuner.html; later: the Education mini-sims), so the same
-// engine can drive a full power-user UI or a stripped-down teaching widget.
+// canonical-parameter interface (gain, repeats/min, minutes), plus two pure
+// helpers (PID_DMAX, fmtDur) that both PID surfaces need but that don't
+// belong on a single page. What does NOT live here: anything that touches
+// the DOM or the units toggle — slider wiring, the canvas drawing, the
+// unit-aware readout formatting. Canvas drawing lives in /scripts/pid-chart.js;
+// per-page slider/preset glue stays on the page that hosts the sim
+// (today: tools/pid-tuner.html and education/pid-basics.html).
 //
 // The model is a first-order lag plus dead time driven by a PID controller
 // working on error as a % of the loop's nominal span — so the gain means the
@@ -33,6 +35,14 @@ const PID_PROC = {
     med:  { tau: 45,  dead: 6,  win: 480,  sp: 70,  bias: 55, range: 50, kproc: 1.6 * 15  / 100, dec: 1 },
     slow: { tau: 240, dead: 30, win: 2400, sp: 72,  bias: 65, range: 20, kproc: 1.6 * 7   / 100, dec: 1 },
 };
+
+// Rate-slider max (minutes) per process speed: useful derivative time scales
+// with the loop's time constant, so a static range can't serve fast and slow
+// loops both — a 30 s rate is plenty on a 45 s loop and a rounding error on
+// a 4 min one. (Gain and reset need no such re-ranging; their useful ranges
+// hold across process speeds.) Both the full tuner and the Education mini-sims
+// read from this table.
+const PID_DMAX = { fast: 0.15, med: 0.5, slow: 2.0 };
 
 // Run one step-response simulation.
 //   proc — an entry from PID_PROC (or anything with the same shape)
@@ -98,4 +108,13 @@ function simulatePid(proc, Kc, rep, rate) {
         t: T, pv: PV, sp: SP, bias: proc.bias, win: proc.win, dec: proc.dec,
         step, overshoot, ssErr, settled,
     };
+}
+
+// Format a duration in seconds for one of the PID readouts. Switches to
+// minutes-and-seconds past 100 s so a 4-minute settling time reads as
+// "4:23 min" rather than "263 s". Pure helper, no DOM / no Units.
+function fmtDur(sec) {
+    if (sec < 100) return Math.round(sec) + ' s';
+    const m = Math.floor(sec / 60), s = Math.round(sec - m * 60);
+    return s ? `${m}:${String(s).padStart(2, '0')} min` : `${m} min`;
 }
