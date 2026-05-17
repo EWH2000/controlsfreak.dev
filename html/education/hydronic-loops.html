@@ -22,8 +22,8 @@ nav: education
 
         /* Slider needs more vertical breathing room here than the shared
            0.15rem/0.4rem default — it sits between the readouts and the
-           temperature swatch, both visually weighty. */
-        #d3Widget .widget-slider { margin: 0.35rem 0 0.95rem; }
+           temperatures row, both visually weighty. */
+        #d3Widget .widget-slider { margin: 0.35rem 0 0.9rem; }
 
         /* d3-specific: horizontal flex of three readouts at the top. */
         .d3-w-readouts {
@@ -32,42 +32,79 @@ nav: education
             gap: 1.25rem 2rem;
             margin-bottom: 0.6rem;
         }
-        /* Warning glyph that appears beside the GPM value when below the
+        /* Warning glyph that appears beside the Hz value when below the
            hard-fail threshold. */
         .widget-readout-value .d3-w-warn-glyph {
             color: var(--text-dim);
             font-size: 0.78em;
             margin-left: 0.25rem;
         }
+
+        /* Temperatures row: primary loop + system supply, each with a
+           swatch tied to the same gradient that colors the loop pipes
+           on the diagram above. Confirms the diagram's color at a glance
+           and gives a precise numeric readout alongside. */
+        .d3-w-temps {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.7rem 1.75rem;
+            margin-bottom: 0.7rem;
+            font-size: 0.86rem;
+            color: var(--text);
+        }
         .d3-w-temp {
             display: flex;
             align-items: center;
-            gap: 0.6rem;
-            font-size: 0.86rem;
-            color: var(--text);
-            margin-bottom: 0.5rem;
+            gap: 0.55rem;
         }
         .d3-w-temp-swatch {
             display: inline-block;
-            width: 18px;
-            height: 18px;
+            width: 16px;
+            height: 16px;
             border-radius: 3px;
             border: 1px solid var(--border);
-            background: var(--blue-cool);
-            transition: background 80ms linear;
+            background: var(--blue);
+            transition: background 200ms linear;
         }
         .d3-w-temp-value {
             font-family: var(--mono);
             font-size: 0.95rem;
             font-weight: 600;
-            color: var(--blue);
+            color: var(--text-bright);
         }
-        /* Reserve vertical space so warning/failure swaps don't reflow the
-           page below. Sized for the failure anecdote at desktop column width;
-           on the 375px mobile column the failure text may slightly exceed
-           this and reflow once — that's acceptable for the edge case. */
+
+        /* Status line: names the current operating state ("Normal
+           operation", "Boiler over-temperature trip", etc.). Always
+           present so state changes don't reflow the rows below. Uses
+           the same left-stripe idiom as .widget-anecdote, but slimmer
+           and color-coded — green for normal, --heat for warn, --red
+           for fault. */
+        .d3-w-status {
+            font-family: var(--mono);
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            padding: 0.45rem 0.7rem;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--accent);
+            border-radius: 2px;
+            color: var(--text-bright);
+            margin-bottom: 0.5rem;
+            transition: border-left-color 200ms linear;
+        }
+        .d3-w-status.warn  { border-left-color: var(--heat); }
+        .d3-w-status.fault { border-left-color: var(--red); }
+
+        /* Alert area below the status line — the existing personal
+           anecdote at 0 Hz, optional italic notes at other slider
+           positions. Vertical space reserved so reveals don't reflow
+           the page below. Sized for the failure anecdote at desktop
+           column width; on the 375px mobile column the failure text
+           may slightly exceed this and reflow once — acceptable for
+           the edge case. */
         .d3-w-alert {
-            min-height: 4.5rem;
+            min-height: 4.0rem;
             margin-top: 0.25rem;
         }
         .d3-w-warning {
@@ -77,6 +114,41 @@ nav: education
             font-style: italic;
             padding: 0.45rem 0.7rem;
             border-left: 2px solid var(--border);
+        }
+
+        /* Pipe-stroke transitions on the d3 diagram. The slider drives
+           a JS color update on the primary loop (climbs toward --red as
+           injection drops and the boiler has no return cooling) and the
+           system supply mains (cool when injection is low, warm when
+           it overshoots). Smooth interp keeps the drag responsive. */
+        #d3-primary-loop,
+        #d3-system-supply,
+        #d3-loadA-supply,
+        #d3-loadB-supply {
+            transition: stroke 200ms linear;
+        }
+
+        /* Pump impellers — a small 2-blade bar centered on each of the
+           three d3 pumps, replacing the static directional triangle.
+           Boiler and system pumps hold constant flow → constant spin.
+           The injection pump's spin rate is driven by the slider via
+           the --spin custom property (and paused at 0 Hz), giving the
+           cause side of the cause/effect visual. Flow direction is
+           still encoded by the arrow polygons on the pipes. */
+        .d3-pump-blade {
+            transform-box: fill-box;
+            transform-origin: center;
+            animation: d3-pump-spin 0.7s linear infinite;
+        }
+        #d3-injection-pump .d3-pump-blade {
+            animation: d3-pump-spin var(--spin, 0.7s) linear infinite;
+            animation-play-state: var(--play, running);
+        }
+        @keyframes d3-pump-spin {
+            to { transform: rotate(360deg); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .d3-pump-blade { animation: none; }
         }
     </style>
 {% endblock %}
@@ -353,19 +425,19 @@ nav: education
                 </g>
                 <g id="d3-boiler-pump">
                     <circle cx="185" cy="270" r="13" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
-                    <polygon points="191,264 179,270 191,276" fill="var(--text-dim, #666e66)"/>
+                    <rect class="d3-pump-blade" x="174" y="269" width="22" height="2" rx="1" fill="var(--text-dim, #666e66)"/>
                     <text x="185" y="297" text-anchor="middle" font-size="11" fill="var(--text, #38423a)">BOILER PUMP</text>
                     <text x="185" y="310" text-anchor="middle" font-size="9" font-style="italic" fill="var(--text-dim, #666e66)">constant flow</text>
                 </g>
                 <g id="d3-injection-pump">
                     <circle cx="360" cy="150" r="13" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
-                    <polygon points="354,144 366,150 354,156" fill="var(--text-dim, #666e66)"/>
+                    <rect class="d3-pump-blade" x="349" y="149" width="22" height="2" rx="1" fill="var(--text-dim, #666e66)"/>
                     <text x="360" y="111" text-anchor="middle" font-size="11" fill="var(--text, #38423a)">INJECTION PUMP</text>
                     <text x="360" y="124" text-anchor="middle" font-size="9" font-style="italic" fill="var(--text-dim, #666e66)">the control point</text>
                 </g>
                 <g id="d3-system-pump">
                     <circle cx="440" cy="222" r="13" fill="var(--surface, #ffffff)" stroke="var(--text-dim, #666e66)" stroke-width="2"/>
-                    <polygon points="434,228 440,216 446,228" fill="var(--text-dim, #666e66)"/>
+                    <rect class="d3-pump-blade" x="429" y="221" width="22" height="2" rx="1" fill="var(--text-dim, #666e66)"/>
                     <text x="378" y="226" text-anchor="middle" font-size="11" fill="var(--text, #38423a)">SYSTEM PUMP</text>
                 </g>
                 <g id="d3-load-A">
@@ -411,15 +483,23 @@ nav: education
                     </div>
                     <div>
                         <div class="widget-readout-label">% of design speed</div>
-                        <div class="widget-readout-value" id="d3wPct">75<span class="unit"> %</span></div>
+                        <div class="widget-readout-value" id="d3wPct">100<span class="unit"> %</span></div>
                     </div>
                 </div>
-                <input class="widget-slider" id="d3wSlider" type="range" min="0" max="60" step="1" value="45" aria-label="Injection pump speed (Hz)"/>
-                <div class="d3-w-temp">
-                    <span>System supply temp:</span>
-                    <span class="d3-w-temp-swatch" id="d3wSwatch"></span>
-                    <span class="d3-w-temp-value" id="d3wTemp">148.0 °F</span>
+                <input class="widget-slider" id="d3wSlider" type="range" min="0" max="75" step="1" value="45" aria-label="Injection pump speed (Hz)"/>
+                <div class="d3-w-temps">
+                    <div class="d3-w-temp">
+                        <span>Primary loop:</span>
+                        <span class="d3-w-temp-swatch" id="d3wPrimarySwatch"></span>
+                        <span class="d3-w-temp-value" id="d3wPrimaryTemp">180.0 °F</span>
+                    </div>
+                    <div class="d3-w-temp">
+                        <span>System supply:</span>
+                        <span class="d3-w-temp-swatch" id="d3wSystemSwatch"></span>
+                        <span class="d3-w-temp-value" id="d3wSystemTemp">148.0 °F</span>
+                    </div>
                 </div>
+                <div class="d3-w-status" id="d3wStatus">Normal operation</div>
                 <div class="d3-w-alert" id="d3wAlert"></div>
             </div>
         </div>
@@ -445,73 +525,154 @@ nav: education
     // ── d3 injection-pump widget ──────────────────────────────────────
     // Mixing model: a simple mass-balance. System supply temp =
     // (Qinj·Tprimary + (Qsys-Qinj)·Treturn) / Qsys. Fixed end-temps
-    // (180 °F primary, 140 °F return) and a fixed system flow (100 GPM)
-    // — this is a teaching widget, not a plant simulator. The slider
-    // drives Qinj via the first affinity law (linear Hz → GPM), and the
-    // same Qinj sets the engine density on the two bridge paths so the
-    // particle traffic on the bridge visually tracks the slider.
+    // (180 °F primary supply, 140 °F system return) and a fixed system
+    // flow (200 GPM) — this is a teaching widget, not a plant simulator.
+    //
+    // The slider drives Qinj via the first affinity law (linear Hz → GPM),
+    // and that Qinj fans out into four visible effects on the diagram:
+    //   1) engine density on the two bridge paths (sparse at low Qinj,
+    //      heavier as more is diverted),
+    //   2) the injection pump's impeller spins at a rate proportional
+    //      to Hz (paused at 0 Hz),
+    //   3) the primary loop's pipe stroke climbs from --blue toward
+    //      --red as Qinj drops below design — no cool return reaches
+    //      the boiler, primary water heads to high-limit trip,
+    //   4) the system supply main + load risers shift from --blue-cool
+    //      (Qinj = 0, system gets pure return temp) through --blue (at
+    //      design setpoint) toward --red (Qinj overshoots design and
+    //      cooks the loads).
+    // A named status line ties the failure modes together in words.
     (function () {
-        const T_PRIMARY = 180;          // °F, fixed
-        const T_RETURN  = 140;          // °F, fixed
-        const Q_SYSTEM  = 200;          // GPM, fixed — matches the worked example above
-        const DESIGN_HZ = 45;
-        const DESIGN_Q  = 40;           // GPM at DESIGN_HZ (matches the worked example)
+        const T_PRIMARY     = 180;      // °F, boiler design supply temp
+        const T_RETURN      = 140;      // °F, system return — fixed
+        const T_HIGH_LIMIT  = 220;      // °F, boiler high-limit trip point
+        const T_SETPOINT    = 148;      // °F, system supply at design Qinj — the "normal blue" anchor
+        const Q_SYSTEM      = 200;      // GPM — matches the worked example above
+        const DESIGN_HZ     = 45;
+        const DESIGN_Q      = 40;       // GPM at DESIGN_HZ — matches the worked example
+        const MAX_HZ        = 75;       // slider max — overspeed territory above DESIGN_HZ
 
-        const slider   = document.getElementById('d3wSlider');
-        const gpmEl    = document.getElementById('d3wGpm');
-        const hzEl     = document.getElementById('d3wHz');
-        const pctEl    = document.getElementById('d3wPct');
-        const tempEl   = document.getElementById('d3wTemp');
-        const swatchEl = document.getElementById('d3wSwatch');
-        const alertEl  = document.getElementById('d3wAlert');
-        const injectPipe   = document.getElementById('d3-inject-pipe');
-        const bridgeReturn = document.getElementById('d3-bridge-return');
+        // Design-system color tokens duplicated here as RGB triples so
+        // we can lerp into intermediate values for the diagram strokes.
+        // Keep in sync with --blue / --blue-cool / --red in styles.css.
+        const C_BLUE      = [0x15, 0x77, 0xb8];
+        const C_BLUE_COOL = [0x5e, 0x8a, 0xa0];
+        const C_RED       = [0xc4, 0x38, 0x2f];
 
-        // Linear RGB interpolation between --blue-cool at 140 °F and a
-        // warm rust at 180 °F. Spec'd as RGB-linear; the midrange goes
-        // through a warm-gray, which is fine for this small swatch.
-        function tempColor(t) {
-            const k = Math.max(0, Math.min(1, (t - T_RETURN) / (T_PRIMARY - T_RETURN)));
-            const r = Math.round( 94 + (217 -  94) * k);
-            const g = Math.round(138 + ( 90 - 138) * k);
-            const b = Math.round(160 + ( 44 - 160) * k);
-            return 'rgb(' + r + ',' + g + ',' + b + ')';
+        const slider           = document.getElementById('d3wSlider');
+        const gpmEl            = document.getElementById('d3wGpm');
+        const hzEl             = document.getElementById('d3wHz');
+        const pctEl            = document.getElementById('d3wPct');
+        const primaryTempEl    = document.getElementById('d3wPrimaryTemp');
+        const primarySwatchEl  = document.getElementById('d3wPrimarySwatch');
+        const systemTempEl     = document.getElementById('d3wSystemTemp');
+        const systemSwatchEl   = document.getElementById('d3wSystemSwatch');
+        const statusEl         = document.getElementById('d3wStatus');
+        const alertEl          = document.getElementById('d3wAlert');
+        const injectPipe       = document.getElementById('d3-inject-pipe');
+        const bridgeReturn     = document.getElementById('d3-bridge-return');
+        const injectionPumpEl  = document.getElementById('d3-injection-pump');
+        const primaryLoopPipe  = document.getElementById('d3-primary-loop');
+        const systemSupplyPipe = document.getElementById('d3-system-supply');
+        const loadASupplyPipe  = document.getElementById('d3-loadA-supply');
+        const loadBSupplyPipe  = document.getElementById('d3-loadB-supply');
+
+        // Linear RGB lerp. Good enough for short hops across the
+        // workstation palette; out-of-gamut midpoints aren't a concern
+        // for these small swatches and 3 px strokes.
+        function lerpRgb(a, b, k) {
+            const t = Math.max(0, Math.min(1, k));
+            return 'rgb(' + Math.round(a[0] + (b[0] - a[0]) * t) + ','
+                          + Math.round(a[1] + (b[1] - a[1]) * t) + ','
+                          + Math.round(a[2] + (b[2] - a[2]) * t) + ')';
+        }
+
+        // Primary loop color: --blue at design (180 °F), interpolating
+        // toward --red as the loop heads for high-limit (220 °F).
+        function primaryColor(t) {
+            return lerpRgb(C_BLUE, C_RED, (t - T_PRIMARY) / (T_HIGH_LIMIT - T_PRIMARY));
+        }
+
+        // System supply color, two-sided: below setpoint, fade toward
+        // --blue-cool (system getting raw return temp); above setpoint,
+        // warm toward --red. The above-setpoint range is compressed to
+        // 8 °F so the modest overshoot the physics allows (~5 °F at
+        // MAX_HZ) still produces a visible warm tint without lying
+        // about the numbers — the numeric readout next to the swatch
+        // is canonical, the color is the pedagogical signal.
+        function systemColor(t) {
+            if (t <= T_SETPOINT) {
+                return lerpRgb(C_BLUE, C_BLUE_COOL, (T_SETPOINT - t) / (T_SETPOINT - T_RETURN));
+            }
+            return lerpRgb(C_BLUE, C_RED, (t - T_SETPOINT) / 8);
         }
 
         function update(hz) {
             const gpm = (hz / DESIGN_HZ) * DESIGN_Q;
-            const pct = Math.round((hz / 60) * 100);
-            const tSupply = hz === 0
+            const pctDesign = Math.round((hz / DESIGN_HZ) * 100);
+
+            // System supply: mass-balance mix of primary + return at Qsys.
+            const tSystem = hz === 0
                 ? T_RETURN
                 : (gpm * T_PRIMARY + (Q_SYSTEM - gpm) * T_RETURN) / Q_SYSTEM;
 
-            // Internal model is in IP (GPM, °F). Convert at the display
-            // boundary; the engine density and the mixing math stay canonical.
-            const U = window.Units;
-            const gpmDisp = U.current() === 'us' ? gpm.toFixed(1)               : U.display.waterFlow(gpm).toFixed(2);
-            const gpmU    = U.suffix.waterFlow();
-            const tDisp   = U.current() === 'us' ? tSupply.toFixed(1)           : U.display.temp(tSupply).toFixed(1);
-            const tU      = U.suffix.temp();
+            // Primary loop temp climbs above design supply when injection
+            // can't keep returning cool water to the boiler. Linear from
+            // 180 °F at design down to 220 °F (high-limit) at 0 Hz; pinned
+            // at 180 °F whenever injection is at-or-above design.
+            const injRatio = Math.min(1, gpm / DESIGN_Q);
+            const tPrimary = T_PRIMARY + (1 - injRatio) * (T_HIGH_LIMIT - T_PRIMARY);
 
-            // Readouts. Keep the small unit spans intact by writing innerHTML
-            // — the structure is fixed so there's no injection risk.
+            // Internal model is in IP (GPM, °F). Convert at the display
+            // boundary; the engine density, mixing math, and color lerps
+            // all stay canonical.
+            const U = window.Units;
+            const gpmDisp = U.current() === 'us' ? gpm.toFixed(1)     : U.display.waterFlow(gpm).toFixed(2);
+            const gpmU    = U.suffix.waterFlow();
+            const tSysDisp = U.current() === 'us' ? tSystem.toFixed(1)  : U.display.temp(tSystem).toFixed(1);
+            const tPriDisp = U.current() === 'us' ? tPrimary.toFixed(1) : U.display.temp(tPrimary).toFixed(1);
+            const tU       = U.suffix.temp();
+
+            // Readouts. Fixed structure → safe innerHTML for the unit span.
             gpmEl.innerHTML = gpmDisp + ' <span class="unit">' + gpmU + '</span>';
-            pctEl.innerHTML = pct + '<span class="unit"> %</span>';
+            pctEl.innerHTML = pctDesign + '<span class="unit"> %</span>';
             let hzInner = hz + ' <span class="unit">Hz</span>';
             if (hz > 0 && hz < 20) {
                 hzInner += '<span class="d3-w-warn-glyph" aria-hidden="true">⚠</span>';
             }
             hzEl.innerHTML = hzInner;
 
-            tempEl.textContent = tDisp + ' ' + tU;
-            swatchEl.style.background = (hz === 0)
-                ? 'var(--blue-cool, #5e8aa0)'
-                : tempColor(tSupply);
+            // Temperatures + their swatches.
+            primaryTempEl.textContent = tPriDisp + ' ' + tU;
+            primarySwatchEl.style.background = primaryColor(tPrimary);
+            systemTempEl.textContent  = tSysDisp + ' ' + tU;
+            systemSwatchEl.style.background  = systemColor(tSystem);
 
-            // Engine density: clamp at 0.01 floor (the engine treats ≤0 as
-            // "fall back to baseline 1.0", which would be wrong here — at
-            // 0 Hz we want "almost no flow," not "full flow"). Cap at 1.0
-            // for symmetry with the engine clamp.
+            // Diagram pipe strokes — the whole-diagram signal that
+            // makes the slider feel connected.
+            primaryLoopPipe.setAttribute('stroke', primaryColor(tPrimary));
+            const sysCol = systemColor(tSystem);
+            systemSupplyPipe.setAttribute('stroke', sysCol);
+            loadASupplyPipe.setAttribute('stroke', sysCol);
+            loadBSupplyPipe.setAttribute('stroke', sysCol);
+
+            // Injection pump impeller: spin period inversely proportional
+            // to Hz; paused at 0 Hz. Tuned so the pump matches the constant
+            // boiler/system pumps at design (0.7s/rev). Min clamp at 0.25s
+            // so very high Hz doesn't strobe.
+            if (hz === 0) {
+                injectionPumpEl.style.setProperty('--play', 'paused');
+            } else {
+                injectionPumpEl.style.setProperty('--play', 'running');
+                const spinSec = Math.max(0.25, 0.7 * (DESIGN_HZ / hz));
+                injectionPumpEl.style.setProperty('--spin', spinSec.toFixed(2) + 's');
+            }
+
+            // Engine density on the two bridge paths: sparser flow at low
+            // Qinj, denser as more is diverted. Clamped at 0.01 floor (the
+            // engine treats ≤0 as "fall back to baseline 1.0," which would
+            // be wrong — at 0 Hz we want almost no flow, not full flow);
+            // capped at 1.0 for symmetry with the engine clamp.
             const density = Math.max(0.01, Math.min(1.0, gpm / Q_SYSTEM));
             const densStr = density.toFixed(3);
             injectPipe.setAttribute('data-flow-density', densStr);
@@ -521,12 +682,35 @@ nav: education
                 FlowEngine.refreshPath(bridgeReturn);
             }
 
-            // Alert state. Vertical space reserved by .d3-w-alert min-height
-            // so swaps don't reflow the page below.
+            // Status line: names the current state. Three color stripes
+            // (normal/warn/fault), five messages. The warn states above
+            // 20 Hz key off the calculated temps rather than slider Hz so
+            // the text agrees with the pipe color the user is looking at.
+            let statusClass, statusText;
             if (hz === 0) {
-                alertEl.innerHTML = '<div class="widget-anecdote">Forgot to enable the injection pump? I\'ve done it. Lucky the boiler I was working with had its own low-flow protection. Older ones don\'t — and it doesn\'t take an engineer to know what happens when there\'s too much heat and nowhere for it to go.</div>';
+                statusClass = 'fault';
+                statusText  = 'Boiler over-temperature — high-limit trip';
             } else if (hz < 20) {
-                alertEl.innerHTML = '<div class="d3-w-warning">Below min speed — most BMS configurations disable the pump entirely below ~20 Hz.</div>';
+                statusClass = 'warn';
+                statusText  = 'Below minimum pump speed';
+            } else if (tSystem > 150) {
+                statusClass = 'warn';
+                statusText  = 'System supply above setpoint — loads overheating';
+            } else if (tPrimary > 192) {
+                statusClass = 'warn';
+                statusText  = 'Below design — primary climbing toward high-limit';
+            } else {
+                statusClass = '';
+                statusText  = 'Normal operation';
+            }
+            statusEl.className = 'd3-w-status' + (statusClass ? ' ' + statusClass : '');
+            statusEl.textContent = statusText;
+
+            // Detail anecdote / warning area below the status line.
+            if (hz === 0) {
+                alertEl.innerHTML = '<div class="widget-anecdote warn">Forgot to enable the injection pump? I\'ve done it. Lucky the boiler I was working with had its own low-flow protection. Older ones don\'t — and it doesn\'t take an engineer to know what happens when there\'s too much heat and nowhere for it to go.</div>';
+            } else if (hz < 20) {
+                alertEl.innerHTML = '<div class="d3-w-warning">Most BMS configurations disable the pump entirely below ~20 Hz.</div>';
             } else {
                 alertEl.innerHTML = '';
             }
