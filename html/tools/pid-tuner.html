@@ -38,7 +38,7 @@ nav: tools
             <div class="form-row">
                 <div class="field">
                     <label>Process Type</label>
-                    <select id="pidProc" onchange="pidProcChanged()">
+                    <select id="pidProc">
                         <option value="fast">Fast (τ ~5–15 s) — e.g. duct static pressure</option>
                         <option value="med" selected>Medium (τ ~30 s – 2 min) — e.g. discharge air temp</option>
                         <option value="slow">Slow (τ ~2–10 min) — e.g. space temperature</option>
@@ -46,7 +46,7 @@ nav: tools
                 </div>
                 <div class="field">
                     <label>Parameter Style</label>
-                    <select id="pidConv" onchange="runPidSim()">
+                    <select id="pidConv">
                         <option value="field" selected>Gain · Reset · Rate (field shorthand)</option>
                         <option value="timeMin">Gain · Ti · Td (minutes)</option>
                         <option value="timeSec">Gain · Ti · Td (seconds)</option>
@@ -58,10 +58,10 @@ nav: tools
             <div class="field" style="margin-bottom:1.25rem;">
                 <label>Try a Tuning</label>
                 <div class="btn-row">
-                    <button class="copy-btn" onclick="pidPreset('sluggish', this)">Sluggish</button>
-                    <button class="copy-btn active" onclick="pidPreset('decent', this)">Decent PI</button>
-                    <button class="copy-btn" onclick="pidPreset('aggr', this)">Aggressive</button>
-                    <button class="copy-btn" onclick="pidPreset('hot', this)">Too Hot</button>
+                    <button class="copy-btn"        id="pidPresetSluggish" data-preset="sluggish">Sluggish</button>
+                    <button class="copy-btn active" id="pidPresetDecent"   data-preset="decent">Decent PI</button>
+                    <button class="copy-btn"        id="pidPresetAggr"     data-preset="aggr">Aggressive</button>
+                    <button class="copy-btn"        id="pidPresetHot"      data-preset="hot">Too Hot</button>
                 </div>
             </div>
 
@@ -71,7 +71,7 @@ nav: tools
                         <label id="pidKcLbl">Gain (Kc)</label>
                         <span class="slider-val" id="pidKcVal">2.0</span>
                     </div>
-                    <input type="range" id="pidKc" min="0" max="20" step="0.1" value="2" oninput="runPidSim()">
+                    <input type="range" id="pidKc" min="0" max="20" step="0.1" value="2">
                     <span class="slider-sub" id="pidKcSub"></span>
                 </div>
                 <div class="slider-field">
@@ -79,7 +79,7 @@ nav: tools
                         <label id="pidKiLbl">Reset (rep/min)</label>
                         <span class="slider-val" id="pidKiVal">0.50</span>
                     </div>
-                    <input type="range" id="pidKi" min="0" max="6" step="0.05" value="0.5" oninput="runPidSim()">
+                    <input type="range" id="pidKi" min="0" max="6" step="0.05" value="0.5">
                     <span class="slider-sub" id="pidKiSub"></span>
                 </div>
                 <div class="slider-field">
@@ -87,7 +87,7 @@ nav: tools
                         <label id="pidKdLbl">Rate (Td, min)</label>
                         <span class="slider-val" id="pidKdVal">0.00</span>
                     </div>
-                    <input type="range" id="pidKd" min="0" max="0.5" step="0.01" value="0" oninput="runPidSim()">
+                    <input type="range" id="pidKd" min="0" max="0.5" step="0.01" value="0">
                     <span class="slider-sub" id="pidKdSub"></span>
                 </div>
             </div>
@@ -211,197 +211,208 @@ nav: tools
     // this file owns the sliders, preset chips, label/unit relabeling, and
     // the canvas drawing — everything UI.)
     // ─────────────────────────────────────────────
-    const PID_PRESETS = {
-        sluggish: { kc: 0.5,  ki: 0.10, kd: 0 },
-        decent:   { kc: 2.0,  ki: 0.50, kd: 0 },
-        aggr:     { kc: 6.0,  ki: 2.00, kd: 0 },
-        hot:      { kc: 14.0, ki: 4.00, kd: 0 },
-    };
-    // Rate-slider max per process: useful derivative time scales with the loop's
-    // time constant, so a static range can't serve fast and slow loops both —
-    // a 30 s rate is plenty on a 45 s loop and a rounding error on a 4 min one.
-    // (Gain and reset need no such re-ranging; their useful ranges hold across
-    // process speeds.) Mirrors the Education page's mini-sim.
-    const PID_DMAX = { fast: 0.15, med: 0.5, slow: 2.0 };   // minutes
-    let pidLast = null;   // last sim result, kept so a window resize can redraw
+    (function () {
+        const PID_PRESETS = {
+            sluggish: { kc: 0.5,  ki: 0.10, kd: 0 },
+            decent:   { kc: 2.0,  ki: 0.50, kd: 0 },
+            aggr:     { kc: 6.0,  ki: 2.00, kd: 0 },
+            hot:      { kc: 14.0, ki: 4.00, kd: 0 },
+        };
+        // Rate-slider max per process: useful derivative time scales with the loop's
+        // time constant, so a static range can't serve fast and slow loops both —
+        // a 30 s rate is plenty on a 45 s loop and a rounding error on a 4 min one.
+        // (Gain and reset need no such re-ranging; their useful ranges hold across
+        // process speeds.) Mirrors the Education page's mini-sim.
+        const PID_DMAX = { fast: 0.15, med: 0.5, slow: 2.0 };   // minutes
+        let pidLast = null;   // last sim result, kept so a window resize can redraw
 
-    function pidPreset(name, btn) {
-        const p = PID_PRESETS[name];
-        document.getElementById('pidKc').value = p.kc;
-        document.getElementById('pidKi').value = p.ki;
-        document.getElementById('pidKd').value = p.kd;
-        document.querySelectorAll('.tool-card .btn-row .copy-btn').forEach(b => b.classList.remove('active'));
-        if (btn) btn.classList.add('active');
+        function pidPreset(name, btn) {
+            const p = PID_PRESETS[name];
+            document.getElementById('pidKc').value = p.kc;
+            document.getElementById('pidKi').value = p.ki;
+            document.getElementById('pidKd').value = p.kd;
+            document.querySelectorAll('.tool-card .btn-row .copy-btn').forEach(b => b.classList.remove('active'));
+            if (btn) btn.classList.add('active');
+            runPidSim();
+        }
+
+        // Process Type changed: re-range the rate slider for the new loop speed,
+        // keeping the thumb's position (its fraction of the range), then re-run.
+        function pidProcChanged() {
+            const key = document.getElementById('pidProc').value;
+            const s = document.getElementById('pidKd');
+            const frac = parseFloat(s.max) > 0 ? parseFloat(s.value) / parseFloat(s.max) : 0;
+            s.max = PID_DMAX[key];
+            s.value = (frac * PID_DMAX[key]).toFixed(2);
+            runPidSim();
+        }
+
+        function runPidSim() {
+            const proc = PID_PROC[document.getElementById('pidProc').value];
+            const Kc   = parseFloat(document.getElementById('pidKc').value);
+            const rep  = parseFloat(document.getElementById('pidKi').value);   // reset, repeats / minute
+            const rate = parseFloat(document.getElementById('pidKd').value);   // rate, minutes
+
+            updatePidLabels(Kc, rep, rate);
+
+            const sim = simulatePid(proc, Kc, rep, rate);
+            pidLast = sim;
+            drawPidChart();
+
+            // ── metrics ──
+            const overEl = document.getElementById('pidOver');
+            const setEl  = document.getElementById('pidSettle');
+            const errEl  = document.getElementById('pidErr');
+
+            overEl.textContent = sim.overshoot < 0.05 ? 'none' : sim.overshoot.toFixed(1) + '%';
+            overEl.classList.toggle('warn', sim.overshoot > 20);
+
+            setEl.textContent = sim.settled === null ? '> ' + fmtDur(sim.win) : fmtDur(sim.settled);
+            setEl.classList.toggle('warn', sim.settled === null);
+
+            errEl.textContent = (sim.ssErr > 0 ? '+' : '') + sim.ssErr.toFixed(sim.dec);
+            errEl.classList.toggle('warn', Math.abs(sim.ssErr) > 0.05 * sim.step);
+        }
+
+        function fmtDur(sec) {
+            if (sec < 100) return Math.round(sec) + ' s';
+            const m = Math.floor(sec / 60), s = Math.round(sec - m * 60);
+            return s ? m + ':' + String(s).padStart(2, '0') + ' min' : m + ' min';
+        }
+
+        // Relabel the three sliders for the chosen parameter style. The slider
+        // values are always canonical (gain, repeats/min, minutes); these only
+        // change the displayed names and units. Ti = 1 / reset, Td = rate, PB = 100 / Kc.
+        const fmtSec = s => Math.round(s).toString();
+        const fmtTiMin = rep => { const ti = 1 / rep; return (ti >= 10 ? ti.toFixed(1) : ti.toFixed(2)); };
+
+        function updatePidLabels(Kc, rep, rate) {
+            const set = (id, t) => { document.getElementById(id).textContent = t; };
+            const conv = document.getElementById('pidConv').value;
+
+            const intOff = rep <= 0;
+            const propOff = Kc <= 0;
+            const tdMin = rate.toFixed(2), tdSec = fmtSec(rate * 60);
+            const tiMin = intOff ? null : fmtTiMin(rep), tiSec = intOff ? null : fmtSec(60 / rep);
+            const pb = propOff ? null : Math.round(100 / Kc);
+
+            let kcLbl = 'Gain (Kc)', kcVal = Kc.toFixed(1);
+            if (conv === 'pbSec') { kcLbl = 'Prop. band (PB %)'; kcVal = pb === null ? '—' : String(pb); }
+
+            let kiLbl, kiVal, kdLbl, kdVal;
+            if (conv === 'field') {
+                kiLbl = 'Reset (rep/min)';         kiVal = rep.toFixed(2);
+                kdLbl = 'Rate (Td, min)';          kdVal = tdMin;
+            } else if (conv === 'timeMin') {
+                kiLbl = 'Integral time (Ti, min)'; kiVal = intOff ? 'off' : tiMin;
+                kdLbl = 'Derivative time (Td, min)'; kdVal = tdMin;
+            } else { // timeSec, pbSec
+                kiLbl = 'Integral time (Ti, s)';   kiVal = intOff ? 'off' : tiSec;
+                kdLbl = 'Derivative time (Td, s)'; kdVal = tdSec;
+            }
+
+            set('pidKcLbl', kcLbl); set('pidKcVal', kcVal);
+            set('pidKiLbl', kiLbl); set('pidKiVal', kiVal);
+            set('pidKdLbl', kdLbl); set('pidKdVal', kdVal);
+
+            set('pidKcSub', `Kc ${Kc.toFixed(1)}  ·  PB ${propOff ? '—' : pb + '%'}`);
+            set('pidKiSub', intOff
+                ? `integral off  ·  0.00 rep/min`
+                : `Ti ${tiMin} min  ·  ${tiSec} s  ·  ${rep.toFixed(2)} rep/min`);
+            set('pidKdSub', `Td ${tdMin} min  ·  ${tdSec} s`);
+        }
+
+        function drawPidChart() {
+            const canvas = document.getElementById('pidCanvas');
+            if (!canvas || !pidLast) return;
+            const cssW = canvas.clientWidth, cssH = canvas.clientHeight;
+            if (!cssW || !cssH) return;
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = Math.round(cssW * dpr);
+            canvas.height = Math.round(cssH * dpr);
+            const ctx = canvas.getContext('2d');
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            ctx.clearRect(0, 0, cssW, cssH);
+
+            const css = getComputedStyle(document.documentElement);
+            const cSurface = css.getPropertyValue('--surface').trim() || '#ffffff';
+            const cBorder  = css.getPropertyValue('--border').trim()  || '#ccd7c8';
+            const cDim     = css.getPropertyValue('--text-dim').trim() || '#666e66';
+            const cAccent  = css.getPropertyValue('--accent').trim()   || '#43881c';
+            const cFill    = css.getPropertyValue('--accent-dim').trim() || 'rgba(67,136,28,0.1)';
+            ctx.fillStyle = cSurface;
+            ctx.fillRect(0, 0, cssW, cssH);
+
+            const { t, pv, sp, bias, win, dec } = pidLast;
+            const padL = 46, padR = 12, padT = 12, padB = 22;
+            const w = cssW - padL - padR, h = cssH - padT - padB;
+            if (w <= 0 || h <= 0) return;
+
+            let yMax = sp + (sp - bias) * 0.6;
+            let yMin = bias - (sp - bias) * 0.15;
+            for (const v of pv) { if (v > yMax) yMax = v; if (v < yMin) yMin = v; }
+            const yp = (yMax - yMin) * 0.05 || 1;
+            yMax += yp; yMin -= yp;
+            if (yMax === yMin) yMax = yMin + 1;
+
+            const X = tt => padL + (tt / win) * w;
+            const Y = vv => padT + h - ((vv - yMin) / (yMax - yMin)) * h;
+
+            ctx.font = "10px 'IBM Plex Mono', monospace";
+            ctx.lineWidth = 1;
+
+            // grid + axis labels
+            ctx.strokeStyle = cBorder;
+            ctx.fillStyle = cDim;
+            for (let i = 0; i <= 4; i++) {
+                const v = yMin + (i / 4) * (yMax - yMin);
+                const yy = Y(v);
+                ctx.beginPath(); ctx.moveTo(padL, yy); ctx.lineTo(padL + w, yy); ctx.stroke();
+                ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+                ctx.fillText(v.toFixed(dec), padL - 6, yy);
+            }
+            for (let i = 0; i <= 4; i++) {
+                const tt = (i / 4) * win;
+                const xx = X(tt);
+                ctx.beginPath(); ctx.moveTo(xx, padT); ctx.lineTo(xx, padT + h); ctx.stroke();
+                ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+                ctx.fillText(win <= 120 ? Math.round(tt) + 's' : Math.round(tt / 60) + 'm', xx, padT + h + 5);
+            }
+
+            // setpoint (dashed)
+            ctx.strokeStyle = cDim;
+            ctx.setLineDash([5, 4]);
+            ctx.beginPath(); ctx.moveTo(padL, Y(sp)); ctx.lineTo(padL + w, Y(sp)); ctx.stroke();
+            ctx.setLineDash([]);
+
+            // PV curve + soft fill
+            ctx.beginPath();
+            for (let i = 0; i < t.length; i++) {
+                const xx = X(t[i]), yy = Y(pv[i]);
+                i === 0 ? ctx.moveTo(xx, yy) : ctx.lineTo(xx, yy);
+            }
+            ctx.strokeStyle = cAccent;
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            ctx.lineTo(X(t[t.length - 1]), padT + h);
+            ctx.lineTo(X(0), padT + h);
+            ctx.closePath();
+            ctx.fillStyle = cFill;
+            ctx.fill();
+        }
+
+        document.getElementById('pidProc').addEventListener('change', pidProcChanged);
+        document.getElementById('pidConv').addEventListener('change', runPidSim);
+        document.getElementById('pidKc').addEventListener('input', runPidSim);
+        document.getElementById('pidKi').addEventListener('input', runPidSim);
+        document.getElementById('pidKd').addEventListener('input', runPidSim);
+        document.querySelectorAll('[data-preset]').forEach(btn => {
+            btn.addEventListener('click', e => pidPreset(e.currentTarget.dataset.preset, e.currentTarget));
+        });
+
+        // ── Init ──
         runPidSim();
-    }
-
-    // Process Type changed: re-range the rate slider for the new loop speed,
-    // keeping the thumb's position (its fraction of the range), then re-run.
-    function pidProcChanged() {
-        const key = document.getElementById('pidProc').value;
-        const s = document.getElementById('pidKd');
-        const frac = parseFloat(s.max) > 0 ? parseFloat(s.value) / parseFloat(s.max) : 0;
-        s.max = PID_DMAX[key];
-        s.value = (frac * PID_DMAX[key]).toFixed(2);
-        runPidSim();
-    }
-
-    function runPidSim() {
-        const proc = PID_PROC[document.getElementById('pidProc').value];
-        const Kc   = parseFloat(document.getElementById('pidKc').value);
-        const rep  = parseFloat(document.getElementById('pidKi').value);   // reset, repeats / minute
-        const rate = parseFloat(document.getElementById('pidKd').value);   // rate, minutes
-
-        updatePidLabels(Kc, rep, rate);
-
-        const sim = simulatePid(proc, Kc, rep, rate);
-        pidLast = sim;
-        drawPidChart();
-
-        // ── metrics ──
-        const overEl = document.getElementById('pidOver');
-        const setEl  = document.getElementById('pidSettle');
-        const errEl  = document.getElementById('pidErr');
-
-        overEl.textContent = sim.overshoot < 0.05 ? 'none' : sim.overshoot.toFixed(1) + '%';
-        overEl.classList.toggle('warn', sim.overshoot > 20);
-
-        setEl.textContent = sim.settled === null ? '> ' + fmtDur(sim.win) : fmtDur(sim.settled);
-        setEl.classList.toggle('warn', sim.settled === null);
-
-        errEl.textContent = (sim.ssErr > 0 ? '+' : '') + sim.ssErr.toFixed(sim.dec);
-        errEl.classList.toggle('warn', Math.abs(sim.ssErr) > 0.05 * sim.step);
-    }
-
-    function fmtDur(sec) {
-        if (sec < 100) return Math.round(sec) + ' s';
-        const m = Math.floor(sec / 60), s = Math.round(sec - m * 60);
-        return s ? m + ':' + String(s).padStart(2, '0') + ' min' : m + ' min';
-    }
-
-    // Relabel the three sliders for the chosen parameter style. The slider
-    // values are always canonical (gain, repeats/min, minutes); these only
-    // change the displayed names and units. Ti = 1 / reset, Td = rate, PB = 100 / Kc.
-    const fmtSec = s => Math.round(s).toString();
-    const fmtTiMin = rep => { const ti = 1 / rep; return (ti >= 10 ? ti.toFixed(1) : ti.toFixed(2)); };
-
-    function updatePidLabels(Kc, rep, rate) {
-        const set = (id, t) => { document.getElementById(id).textContent = t; };
-        const conv = document.getElementById('pidConv').value;
-
-        const intOff = rep <= 0;
-        const propOff = Kc <= 0;
-        const tdMin = rate.toFixed(2), tdSec = fmtSec(rate * 60);
-        const tiMin = intOff ? null : fmtTiMin(rep), tiSec = intOff ? null : fmtSec(60 / rep);
-        const pb = propOff ? null : Math.round(100 / Kc);
-
-        let kcLbl = 'Gain (Kc)', kcVal = Kc.toFixed(1);
-        if (conv === 'pbSec') { kcLbl = 'Prop. band (PB %)'; kcVal = pb === null ? '—' : String(pb); }
-
-        let kiLbl, kiVal, kdLbl, kdVal;
-        if (conv === 'field') {
-            kiLbl = 'Reset (rep/min)';         kiVal = rep.toFixed(2);
-            kdLbl = 'Rate (Td, min)';          kdVal = tdMin;
-        } else if (conv === 'timeMin') {
-            kiLbl = 'Integral time (Ti, min)'; kiVal = intOff ? 'off' : tiMin;
-            kdLbl = 'Derivative time (Td, min)'; kdVal = tdMin;
-        } else { // timeSec, pbSec
-            kiLbl = 'Integral time (Ti, s)';   kiVal = intOff ? 'off' : tiSec;
-            kdLbl = 'Derivative time (Td, s)'; kdVal = tdSec;
-        }
-
-        set('pidKcLbl', kcLbl); set('pidKcVal', kcVal);
-        set('pidKiLbl', kiLbl); set('pidKiVal', kiVal);
-        set('pidKdLbl', kdLbl); set('pidKdVal', kdVal);
-
-        set('pidKcSub', `Kc ${Kc.toFixed(1)}  ·  PB ${propOff ? '—' : pb + '%'}`);
-        set('pidKiSub', intOff
-            ? `integral off  ·  0.00 rep/min`
-            : `Ti ${tiMin} min  ·  ${tiSec} s  ·  ${rep.toFixed(2)} rep/min`);
-        set('pidKdSub', `Td ${tdMin} min  ·  ${tdSec} s`);
-    }
-
-    function drawPidChart() {
-        const canvas = document.getElementById('pidCanvas');
-        if (!canvas || !pidLast) return;
-        const cssW = canvas.clientWidth, cssH = canvas.clientHeight;
-        if (!cssW || !cssH) return;
-        const dpr = window.devicePixelRatio || 1;
-        canvas.width = Math.round(cssW * dpr);
-        canvas.height = Math.round(cssH * dpr);
-        const ctx = canvas.getContext('2d');
-        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        ctx.clearRect(0, 0, cssW, cssH);
-
-        const css = getComputedStyle(document.documentElement);
-        const cSurface = css.getPropertyValue('--surface').trim() || '#ffffff';
-        const cBorder  = css.getPropertyValue('--border').trim()  || '#ccd7c8';
-        const cDim     = css.getPropertyValue('--text-dim').trim() || '#666e66';
-        const cAccent  = css.getPropertyValue('--accent').trim()   || '#43881c';
-        const cFill    = css.getPropertyValue('--accent-dim').trim() || 'rgba(67,136,28,0.1)';
-        ctx.fillStyle = cSurface;
-        ctx.fillRect(0, 0, cssW, cssH);
-
-        const { t, pv, sp, bias, win, dec } = pidLast;
-        const padL = 46, padR = 12, padT = 12, padB = 22;
-        const w = cssW - padL - padR, h = cssH - padT - padB;
-        if (w <= 0 || h <= 0) return;
-
-        let yMax = sp + (sp - bias) * 0.6;
-        let yMin = bias - (sp - bias) * 0.15;
-        for (const v of pv) { if (v > yMax) yMax = v; if (v < yMin) yMin = v; }
-        const yp = (yMax - yMin) * 0.05 || 1;
-        yMax += yp; yMin -= yp;
-        if (yMax === yMin) yMax = yMin + 1;
-
-        const X = tt => padL + (tt / win) * w;
-        const Y = vv => padT + h - ((vv - yMin) / (yMax - yMin)) * h;
-
-        ctx.font = "10px 'IBM Plex Mono', monospace";
-        ctx.lineWidth = 1;
-
-        // grid + axis labels
-        ctx.strokeStyle = cBorder;
-        ctx.fillStyle = cDim;
-        for (let i = 0; i <= 4; i++) {
-            const v = yMin + (i / 4) * (yMax - yMin);
-            const yy = Y(v);
-            ctx.beginPath(); ctx.moveTo(padL, yy); ctx.lineTo(padL + w, yy); ctx.stroke();
-            ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
-            ctx.fillText(v.toFixed(dec), padL - 6, yy);
-        }
-        for (let i = 0; i <= 4; i++) {
-            const tt = (i / 4) * win;
-            const xx = X(tt);
-            ctx.beginPath(); ctx.moveTo(xx, padT); ctx.lineTo(xx, padT + h); ctx.stroke();
-            ctx.textAlign = 'center'; ctx.textBaseline = 'top';
-            ctx.fillText(win <= 120 ? Math.round(tt) + 's' : Math.round(tt / 60) + 'm', xx, padT + h + 5);
-        }
-
-        // setpoint (dashed)
-        ctx.strokeStyle = cDim;
-        ctx.setLineDash([5, 4]);
-        ctx.beginPath(); ctx.moveTo(padL, Y(sp)); ctx.lineTo(padL + w, Y(sp)); ctx.stroke();
-        ctx.setLineDash([]);
-
-        // PV curve + soft fill
-        ctx.beginPath();
-        for (let i = 0; i < t.length; i++) {
-            const xx = X(t[i]), yy = Y(pv[i]);
-            i === 0 ? ctx.moveTo(xx, yy) : ctx.lineTo(xx, yy);
-        }
-        ctx.strokeStyle = cAccent;
-        ctx.lineWidth = 2;
-        ctx.stroke();
-        ctx.lineTo(X(t[t.length - 1]), padT + h);
-        ctx.lineTo(X(0), padT + h);
-        ctx.closePath();
-        ctx.fillStyle = cFill;
-        ctx.fill();
-    }
-
-    // ── Init ──
-    runPidSim();
-    window.addEventListener('resize', drawPidChart);
+        window.addEventListener('resize', drawPidChart);
+    })();
 </script>
 {% endblock %}
