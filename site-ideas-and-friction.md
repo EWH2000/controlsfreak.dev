@@ -713,6 +713,22 @@ Implementation note carried forward from phase 1: canvas was the right
 call (matches the PID plot's approach). The chip would be an absolutely
 positioned HTML element over the canvas, updated on each drag event.
 
+**`.psy-toggle` polish — bundle into phase 3.** Two small fixes on the
+CC / HC / HUM on/off rows surfaced when reviewing the #25 aria-wiring
+PR visually:
+
+- *"On" text reads as top-aligned against the checkbox.*
+  `<label class="psy-toggle">` already declares
+  `display: inline-flex; align-items: center;`, yet the text rides
+  higher than the checkbox glyph — probably a baseline-vs-flex-center
+  quirk or a line-height mismatch between 0.78rem sans text and the
+  checkbox's intrinsic height. Want it vertically centered.
+- *Dynamic "On" / "Off" label.* The visible text is static "On"; it
+  should read "Off" when the checkbox is unchecked, matching the
+  state. Two viable shapes: wrap the text in a `<span>` and toggle
+  alongside the existing cc/hc/hum state plumbing, or use a
+  `::after` content + `:checked` sibling pattern (CSS-only).
+
 ### Mock function-block editor *(larger build — may span multiple sessions)*
 A graphical function-block sandbox in the spirit of Niagara's wiresheet
 / EBO function diagrams / Distech graphical programming — a teaching
