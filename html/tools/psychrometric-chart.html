@@ -948,14 +948,14 @@ nav: tools
             ctx.clearRect(0, 0, cssW, cssH);
 
             const css = getComputedStyle(document.documentElement);
-            const cv = (n, d) => css.getPropertyValue(n).trim() || d;
-            const cSurface  = cv('--surface',      '#ffffff'),
-                  cBorder   = cv('--border',       '#ccd7c8'),
-                  cBorderF  = cv('--border-faint', '#e3e8df'),
-                  cDim      = cv('--text-dim',     '#666e66'),
-                  cAccent   = cv('--accent',       '#43881c'),
-                  cBlue     = cv('--blue',         '#1577b8'),
-                  cHeat     = cv('--heat',         '#c8782a');
+            const cv = (n) => css.getPropertyValue(n).trim();
+            const cSurface  = cv('--surface'),
+                  cBorder   = cv('--border'),
+                  cBorderF  = cv('--border-faint'),
+                  cDim      = cv('--text-dim'),
+                  cAccent   = cv('--accent'),
+                  cBlue     = cv('--blue'),
+                  cHeat     = cv('--heat');
 
             ctx.fillStyle = cSurface;
             ctx.fillRect(0, 0, cssW, cssH);

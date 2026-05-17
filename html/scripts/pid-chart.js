@@ -50,12 +50,12 @@ function drawPidChart(canvas, sim, opts) {
     ctx.clearRect(0, 0, cssW, cssH);
 
     const css = getComputedStyle(document.documentElement);
-    const cv = (name, fallback) => css.getPropertyValue(name).trim() || fallback;
-    const cSurface = cv('--surface',    '#ffffff');
-    const cBorder  = cv('--border',     '#ccd7c8');
-    const cDim     = cv('--text-dim',   '#666e66');
-    const cAccent  = cv('--accent',     '#43881c');
-    const cFill    = cv('--accent-dim', 'rgba(67,136,28,0.1)');
+    const cv = (name) => css.getPropertyValue(name).trim();
+    const cSurface = cv('--surface');
+    const cBorder  = cv('--border');
+    const cDim     = cv('--text-dim');
+    const cAccent  = cv('--accent');
+    const cFill    = cv('--accent-dim');
     ctx.fillStyle = cSurface;
     ctx.fillRect(0, 0, cssW, cssH);
 
