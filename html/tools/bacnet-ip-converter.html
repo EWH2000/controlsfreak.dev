@@ -29,7 +29,7 @@ nav: tools
 
         <!-- ── Hex → IP ── -->
         <div id="tab-hex2ip" class="tab-pane active">
-            <div class="tool-body-3col">
+            <div class="tool-body-2col">
 
                 <section>
                     <h2 class="ps-section-label">Input</h2>
@@ -67,34 +67,13 @@ nav: tools
                     </div>
                 </section>
 
-                <section>
-                    <h2 class="ps-section-label">BACnet/IP Port Reference</h2>
-                    <!-- // user to verify BACnet port reference content — placeholder data, refine after review -->
-                    <table class="ref-table-dense">
-                        <thead>
-                            <tr><th>Port</th><th>Hex</th><th class="use">Typical use</th></tr>
-                        </thead>
-                        <tbody>
-                            <tr><td>47808</td><td>BAC0</td><td class="use">Default BACnet/IP</td></tr>
-                            <tr><td>47809</td><td>BAC1</td><td class="use">Network #2</td></tr>
-                            <tr><td>47810</td><td>BAC2</td><td class="use">Network #3</td></tr>
-                            <tr><td>47811</td><td>BAC3</td><td class="use">Network #4</td></tr>
-                            <tr><td>47812</td><td>BAC4</td><td class="use">Network #5</td></tr>
-                        </tbody>
-                    </table>
-                    <!-- // user to verify BACnet port reference content -->
-                    <p class="ref-note">
-                        Multiple logical BACnet/IP networks on the same host use sequential UDP ports starting at 47808. BBMDs (Broadcast Management Devices) typically share 47808 but live on different subnets — confirm against the site's actual BACnet design.
-                    </p>
-                </section>
-
             </div>
             <div class="result-formula" id="b2i_formula" style="margin:0;padding:0.7rem 1.25rem;"></div>
         </div>
 
         <!-- ── IP → Hex ── -->
         <div id="tab-ip2hex" class="tab-pane">
-            <div class="tool-body-3col">
+            <div class="tool-body-2col">
 
                 <section>
                     <h2 class="ps-section-label">Input</h2>
@@ -131,29 +110,27 @@ nav: tools
                     </div>
                 </section>
 
-                <section>
-                    <h2 class="ps-section-label">BACnet/IP Port Reference</h2>
-                    <!-- // user to verify BACnet port reference content — placeholder data, refine after review -->
-                    <table class="ref-table-dense">
-                        <thead>
-                            <tr><th>Port</th><th>Hex</th><th class="use">Typical use</th></tr>
-                        </thead>
-                        <tbody>
-                            <tr><td>47808</td><td>BAC0</td><td class="use">Default BACnet/IP</td></tr>
-                            <tr><td>47809</td><td>BAC1</td><td class="use">Network #2</td></tr>
-                            <tr><td>47810</td><td>BAC2</td><td class="use">Network #3</td></tr>
-                            <tr><td>47811</td><td>BAC3</td><td class="use">Network #4</td></tr>
-                            <tr><td>47812</td><td>BAC4</td><td class="use">Network #5</td></tr>
-                        </tbody>
-                    </table>
-                    <!-- // user to verify BACnet port reference content -->
-                    <p class="ref-note">
-                        Multiple logical BACnet/IP networks on the same host use sequential UDP ports starting at 47808. BBMDs (Broadcast Management Devices) typically share 47808 but live on different subnets — confirm against the site's actual BACnet design.
-                    </p>
-                </section>
-
             </div>
             <div class="result-formula" id="i2h_formula" style="margin:0;padding:0.7rem 1.25rem;"></div>
+        </div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h2 class="tool-card-title">BACnet/IP Port Reference</h2>
+        </div>
+        <div class="tool-body">
+            <table class="ref-table-dense">
+                <thead>
+                    <tr><th>Port</th><th>Hex</th><th class="use">Typical use</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>47808</td><td>BAC0</td><td class="use">Default BACnet/IP</td></tr>
+                </tbody>
+            </table>
+            <p class="ref-note" style="margin-top:1rem;">
+                UDP 47808 (0xBAC0) is the IANA-registered BACnet port and the only one you'll encounter in the field unless you're running multiple logical BACnet/IP networks on the same host. ASHRAE 135 Annex J describes a convention for additional networks on sequential ports (47809 / BAC1 and up) — those are not IANA-registered. Confirm against the site's actual BACnet design.
+            </p>
         </div>
     </div>
 

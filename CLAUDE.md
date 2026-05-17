@@ -245,6 +245,13 @@ file.
   today; if it's still a future page, write the topic as plain prose
   so a visitor doesn't click into a 404. Either way, the friction file
   tracks the topic as `[future: <page>]`.
+- **Placeholder-content markers:** unverified data in a shipped page
+  carries an HTML comment in the form
+  `<!-- // user to verify <thing> — placeholder data, refine after review -->`,
+  ideally above and below the block. Pair the `//` prefix with `TODO`
+  / `FIXME` / `XXX` when grepping in sweeps — the `//` form is
+  what we actually use site-wide, but those familiar with other repos
+  may look for the latter first.
 
 ### Gotchas
 
