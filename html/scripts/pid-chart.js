@@ -31,6 +31,8 @@
 // build templates the HTML chrome and copies this file through unchanged.
 // ──────────────────────────────────────────────────────────────────────
 
+'use strict';
+
 function drawPidChart(canvas, sim, opts) {
     opts = opts || {};
     const variant = opts.variant || 'full';

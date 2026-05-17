@@ -704,7 +704,7 @@ bullet now documents the canonical wiring shape (data-tab attr
 was the documentation gap that let the older per-id pattern keep
 looking acceptable.
 
-### 18. `'use strict'` adoption drift
+### 18. `'use strict'` adoption drift *(addressed 2026-05-17)*
 
 Present in: `html/scripts/flow-engine.js`, `html/scripts/units.js`,
 `html/scripts/ui.js`, `html/education/balancing.html` page IIFE.
@@ -721,6 +721,22 @@ non-configurables, octal literals) but the inconsistency reads as
 
 **Recommended action:** either adopt site-wide (a one-line addition
 × ~10 sites) or drop entirely. Adoption is cheaper to defend.
+
+**Resolution (2026-05-17):** adopted site-wide. The actual site count
+turned out to be 15 (not ~10): 3 shared scripts (`pid-engine.js`,
+`pid-chart.js`, `thermistor-data.js`) + 12 page IIFEs (every page-
+inline `<script>` other than balancing.html, which already had it).
+`src/worker.js` is ES-module and implicit-strict, no directive
+needed; `education/load-piping.html` has no inline IIFE (just a
+top-level `FlowEngine.init()` call), so it stays out of the rule.
+Audit found zero existing strict-mode violations across the missing
+files — retrofit was purely additive (one directive per scope, no
+refactor). Placement matches existing conventions: top-of-file
+after the header-comment block for the three top-level classic
+shared scripts (pid-engine/pid-chart/thermistor-data) and first
+statement inside the IIFE for the 12 page-inline scripts (matching
+balancing.html). CLAUDE.md "JS patterns" now carries an explicit
+`'use strict';` bullet recording the rule.
 
 ### 19. Inline style proliferation — design-system items waiting to be born
 

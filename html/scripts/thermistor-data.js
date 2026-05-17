@@ -66,6 +66,8 @@
 //   { kind:'rtd-balco', r0, refF, alphaC }   — nickel-iron (Balco) RTD, ~linear:  R = r0·(1 + alphaC·(T − Tref°C))
 // ──────────────────────────────────────────────────────────────────────
 
+'use strict';
+
 const THERMISTOR_TYPES = (function () {
     const F2C = f => (f - 32) * 5 / 9;
     const K   = c => c + 273.15;

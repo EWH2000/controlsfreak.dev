@@ -28,6 +28,8 @@
 // tuning a real loop.
 // ──────────────────────────────────────────────────────────────────────
 
+'use strict';
+
 // Process-model presets — the "plant", independent of any controller tuning.
 //         lag(s)  dead(s)  window(s)   SP    rest  span   process gain (Δunits per %out)   decimals
 const PID_PROC = {

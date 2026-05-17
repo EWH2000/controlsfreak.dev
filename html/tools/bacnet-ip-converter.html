@@ -150,6 +150,8 @@ nav: tools
     // BACnet/IP Hex Converter
     // ─────────────────────────────────────────────
     (function () {
+        'use strict';
+
         // BACnet/IP packs the device address as 4 bytes IPv4, optionally
         // followed by 2 bytes of UDP port. The default port is 47808 = 0xBAC0.
         const BACNET_DEFAULT_PORT = 47808;   // 0xBAC0

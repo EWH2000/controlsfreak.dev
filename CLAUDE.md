@@ -499,6 +499,18 @@ well-grouped.
   intentional exception is the units-bootstrap one-liner in
   `_includes/head.njk`, which runs before first paint and stays
   maximally conservative.
+- **`'use strict';`** — first statement inside every page-inline
+  IIFE; first statement (after the header comment block) of
+  every shared classic script under `html/scripts/`. The
+  directive must be the first *statement* in its scope to take
+  effect — comments above it are fine. Catches accidental
+  undeclared-global assignment, octal literals, duplicate
+  parameter names, writes to read-only built-ins, and a few
+  other footguns. `src/worker.js` is an ES module and is
+  implicit-strict, so no directive needed there. The one page
+  IIFE that this rule doesn't apply to is
+  `html/education/load-piping.html` — it has no inline IIFE,
+  just a top-level `FlowEngine.init()` call.
 - **Validate-and-mute:** read inputs with `parseFloat`; if anything
   isn't finite (use `!isFinite(x)`, not `isNaN(x)` — `isFinite`
   also rejects `Infinity`, which `isNaN` doesn't, and the
