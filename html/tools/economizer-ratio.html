@@ -27,6 +27,17 @@ nav: tools
         .er-feas.ok    { border-color: var(--accent);    background: var(--accent-dim); }
         .er-feas.warn  { border-color: var(--heat);      color: var(--heat); }
         .er-feas.error { border-color: var(--red);       color: var(--red); }
+
+        /* "Example below" pattern — the worked example sits as a full-
+           width row beneath the 2-col Input / Output grid rather than
+           taking a third column on the right. Preserves the recessed
+           --surface-3 cue from the 3-col last-child convention so the
+           example still reads as supporting reference content. */
+        .er-example {
+            padding: 1.25rem 1.25rem 1.5rem;
+            border-top: 1px solid var(--border);
+            background: var(--surface-3);
+        }
     </style>
 {% endblock %}
 
@@ -46,13 +57,11 @@ nav: tools
             </h1>
         </div>
 
-        <p class="page-intro">
-            How far do I open the outdoor-air damper to hit a mixed-air
-            setpoint at these conditions? Dry-bulb tab is the calc a tech
-            runs at the panel. Enthalpy tab adds the full mixed state and
-            the OA-vs-RA enthalpy-changeover verdict a high-end BAS
-            economizer uses to decide whether free cooling is worth
-            running in the first place.
+        <p style="font-family:var(--mono);font-size:0.7rem;color:var(--text-dim);padding:1.1rem 1.5rem 0;line-height:1.7;">
+            How far do I open the outdoor-air damper to hit a mixed-air setpoint at these conditions?
+            Dry-bulb tab is the calc a tech runs at the panel. Enthalpy tab adds the full mixed state
+            and the OA-vs-RA enthalpy-changeover verdict a high-end BAS economizer uses to decide
+            whether free cooling is worth running in the first place.
         </p>
 
         <div class="tabs tabs-flush">
@@ -62,7 +71,7 @@ nav: tools
 
         <!-- ── Dry-bulb tab ── -->
         <div id="tab-db" class="tab-pane active">
-            <div class="tool-body-3col">
+            <div class="tool-body-2col">
 
                 <section>
                     <h2 class="ps-section-label">Input</h2>
@@ -93,37 +102,37 @@ nav: tools
                     <div class="er-feas" id="er-db-feas">Enter values to see feasibility.</div>
                 </section>
 
-                <section>
-                    <h2 class="ps-section-label">Worked example</h2>
-                    <p class="ref-note" style="margin-top:0;">
-                        Summer cooling on an economizer-favorable morning —
-                        OA <span data-us="60 °F" data-metric="15.6 °C">60 °F</span>,
-                        RA <span data-us="75 °F" data-metric="23.9 °C">75 °F</span>,
-                        mixed-air setpoint <span data-us="55 °F" data-metric="12.8 °C">55 °F</span>.
-                    </p>
-                    <ol class="ref-note" style="padding-left:1.2em;">
-                        <li>Setpoint sits between OA and RA → feasible.</li>
-                        <li>The damper has to bring in enough OA to drag the mix down to setpoint:<br>
-                            <code>% OA = (MA − RA) ÷ (OA − RA) × 100</code></li>
-                        <li>Plug in: <code>(55 − 75) ÷ (60 − 75) × 100 = 133 %</code>.</li>
-                        <li>Above 100 % — even 100 % outdoor air can't get there. The
-                            damper goes wide open and the coil picks up the rest.</li>
-                    </ol>
-                    <p class="ref-note">
-                        When the calc lands between 0 and 100 %, that's the damper
-                        command. Below 0 % means OA is hotter than the setpoint AND
-                        than the room — minimum-OA only, no economizer; above 100 %
-                        means OA is cooler than the setpoint but not cold enough to
-                        carry the whole load alone.
-                    </p>
-                </section>
-
             </div>
+
+            <section class="er-example">
+                <h2 class="ps-section-label">Worked example</h2>
+                <p class="ref-note" style="margin-top:0;">
+                    Summer cooling on an economizer-favorable morning —
+                    OA <span data-us="60 °F" data-metric="15.6 °C">60 °F</span>,
+                    RA <span data-us="75 °F" data-metric="23.9 °C">75 °F</span>,
+                    mixed-air setpoint <span data-us="55 °F" data-metric="12.8 °C">55 °F</span>.
+                </p>
+                <ol class="ref-note" style="padding-left:1.2em;">
+                    <li>Setpoint sits between OA and RA → feasible.</li>
+                    <li>The damper has to bring in enough OA to drag the mix down to setpoint:<br>
+                        <code>% OA = (MA − RA) ÷ (OA − RA) × 100</code></li>
+                    <li>Plug in: <code>(55 − 75) ÷ (60 − 75) × 100 = 133 %</code>.</li>
+                    <li>Above 100 % — even 100 % outdoor air can't get there. The
+                        damper goes wide open and the coil picks up the rest.</li>
+                </ol>
+                <p class="ref-note">
+                    When the calc lands between 0 and 100 %, that's the damper
+                    command. Below 0 % means OA is hotter than the setpoint AND
+                    than the room — minimum-OA only, no economizer; above 100 %
+                    means OA is cooler than the setpoint but not cold enough to
+                    carry the whole load alone.
+                </p>
+            </section>
         </div>
 
         <!-- ── Enthalpy (full state) tab ── -->
         <div id="tab-h" class="tab-pane">
-            <div class="tool-body-3col">
+            <div class="tool-body-2col">
 
                 <section>
                     <h2 class="ps-section-label">Input</h2>
@@ -205,39 +214,39 @@ nav: tools
                     <div class="er-feas" id="er-h-changeover">Enter values to see the changeover verdict.</div>
                 </section>
 
-                <section>
-                    <h2 class="ps-section-label">Worked example</h2>
-                    <p class="ref-note" style="margin-top:0;">
-                        Mild-but-muggy morning — OA
-                        <span data-us="78 °F / 68 °F WB" data-metric="25.6 °C / 20 °C WB">78 °F / 68 °F WB</span>,
-                        RA <span data-us="75 °F / 63 °F WB" data-metric="23.9 °C / 17.2 °C WB">75 °F / 63 °F WB</span>,
-                        MA setpoint <span data-us="65 °F" data-metric="18.3 °C">65 °F</span>.
-                    </p>
-                    <ol class="ref-note" style="padding-left:1.2em;">
-                        <li>Dry-bulb is what the damper modulates to.
-                            <code>% OA = (65 − 75) ÷ (78 − 75) × 100</code> = a
-                            negative number — OA is hotter than RA, so even on
-                            dry-bulb alone the economizer can't help. Minimum-OA
-                            position.</li>
-                        <li>The mixed-state readouts show what the coil would see
-                            at the calc's %OA — useful when the answer lands
-                            between 0 and 100.</li>
-                        <li>The enthalpy comparison is the real reason a high-end
-                            BAS is more conservative: an OA that's two degrees
-                            cooler than RA but soaked with moisture carries more
-                            heat per pound than RA does. Free cooling on dry-bulb
-                            alone, latent penalty on the coil.</li>
-                    </ol>
-                    <p class="ref-note">
-                        Most commercial economizer logic is dry-bulb with a
-                        humidity high-limit; enthalpy economizer logic
-                        compares <code>h<sub>OA</sub></code> vs.
-                        <code>h<sub>RA</sub></code> to gate the damper before
-                        any dry-bulb modulation runs.
-                    </p>
-                </section>
-
             </div>
+
+            <section class="er-example">
+                <h2 class="ps-section-label">Worked example</h2>
+                <p class="ref-note" style="margin-top:0;">
+                    Mild-but-muggy morning — OA
+                    <span data-us="78 °F / 68 °F WB" data-metric="25.6 °C / 20 °C WB">78 °F / 68 °F WB</span>,
+                    RA <span data-us="75 °F / 63 °F WB" data-metric="23.9 °C / 17.2 °C WB">75 °F / 63 °F WB</span>,
+                    MA setpoint <span data-us="65 °F" data-metric="18.3 °C">65 °F</span>.
+                </p>
+                <ol class="ref-note" style="padding-left:1.2em;">
+                    <li>Dry-bulb is what the damper modulates to.
+                        <code>% OA = (65 − 75) ÷ (78 − 75) × 100</code> = a
+                        negative number — OA is hotter than RA, so even on
+                        dry-bulb alone the economizer can't help. Minimum-OA
+                        position.</li>
+                    <li>The mixed-state readouts show what the coil would see
+                        at the calc's %OA — useful when the answer lands
+                        between 0 and 100.</li>
+                    <li>The enthalpy comparison is the real reason a high-end
+                        BAS is more conservative: an OA that's two degrees
+                        cooler than RA but soaked with moisture carries more
+                        heat per pound than RA does. Free cooling on dry-bulb
+                        alone, latent penalty on the coil.</li>
+                </ol>
+                <p class="ref-note">
+                    Most commercial economizer logic is dry-bulb with a
+                    humidity high-limit; enthalpy economizer logic
+                    compares <code>h<sub>OA</sub></code> vs.
+                    <code>h<sub>RA</sub></code> to gate the damper before
+                    any dry-bulb modulation runs.
+                </p>
+            </section>
         </div>
     </div>
 
