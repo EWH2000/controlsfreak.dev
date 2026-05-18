@@ -568,6 +568,13 @@ footer {
     .site-nav        { padding: 0.7rem 1rem; }
     .hero, main      { padding-left: 1rem; padding-right: 1rem; }
     footer           { padding: 1.25rem 1rem; flex-direction: column; gap: 0.4rem; }
+    /* Long section-header labels (e.g. psychrometrics-basics' "The Seven
+       Properties — What Each One Tells You") would otherwise force
+       horizontal scroll on narrow viewports because of the desktop
+       white-space:nowrap. Allow wrapping below the mobile breakpoint —
+       the trailing .section-line still sits centered alongside the
+       wrapped label. */
+    .section-label   { white-space: normal; }
 }
 /* ── COPY BUTTON ── */
 .copy-btn {
