@@ -737,37 +737,82 @@ mutes to "—".
   motion toward saturation, so the colour affinity is even thematically
   apt.
 
-### Psychrometrics — paired Education page
+### Psychrometrics — paired Education page *(shipped 2026-05-18)*
 
-Promoted from a follow-up note during phase-3 planning: the chart page is
-dense even for someone fluent in psychrometrics (the chip's "DB / WB / RH"
-readout assumes the reader knows what those mean), and learning more about
-psychrometrics is one of the explicit personal goals of building the page.
-Pair the tool with a lesson in the spirit of `pid-tuner.html` ↔
-`pid-basics.html`.
+**The page's one question:** "What are the seven properties on a
+psychrometric chart, and which combinations of them actually let a
+controls engineer hold a space?"
 
-Scope sketch:
-- The seven properties — DB, WB, DP, W, RH, h, v — what each means
-  physically, which measurement instrument tells you which, and the
-  pairwise relationships ("DB + RH gives you everything; DB + WB also
-  gives you everything; but DB alone gives you nothing about moisture
-  content"). The Mollier intuition: at constant pressure you only need
-  two independent properties to lock the state.
-- The process families on the chart — sensible heat vs. latent vs.
-  mixing vs. adiabatic humidification. Why dew point shifts under
-  cooling+dehumidification but not under sensible heating; why mixing
-  lands on the straight line between sources; why adiabatic
-  humidification follows the wet-bulb line.
-- Common gotchas — what RH actually measures at saturation (and why
-  RH alone tells you almost nothing without a temperature), why
-  enthalpy is the right basis for "how much heat is the coil moving,"
-  and the dew-point ≈ glass-of-ice-water mental model.
+`html/education/psychrometrics-basics.html` ships as the lesson half of
+the `psychrometric-chart.html` pairing, matching the
+`pid-tuner.html` ↔ `pid-basics.html` model. Page lead is the natatorium
+anecdote in the user's voice (high-stakes humidity control on a real
+pool job), establishing credibility before any equations show up; the
+rest is the vocabulary for that fight.
 
-Cross-link both ways: tool page → "Learn the psychrometrics behind this
-chart" link in a `.tool-card` callout; lesson page → "Try this on the
-interactive chart" link at the relevant sections.
+**What shipped (in document order):**
+- *Two properties lock the rest* — the Mollier intuition (moist air
+  has 2 DOF at fixed P), with a short pairwise-source table (DB+RH,
+  DB+WB, DB+DP, DB+W, DB+h — where each one comes from in the field).
+- *The seven properties* — a `.callout-grid` of seven `.callout`s
+  (DB, WB, DP, W, RH, h, v), each with what it physically is, which
+  instrument measures it, and the controls relevance.
+- *Pool-space condensation widget* — three sliders (space DB, space
+  RH, coldest surface temp), live readouts for W, dew point,
+  enthalpy, and the safety margin (surface − dew-point), plus a
+  three-state status panel (green / orange / red) keyed off canonical
+  IP margin. Reuses `humRatioFromRH`, `vapPressFromHumRatio`,
+  `dewPointFromVapPress`, `enthalpy`, plus `P_STD` and `GR_PER_LB`
+  from `psychro-engine.js`. Discovery-payoff anecdote fires at the
+  natatorium corner of the slider space (warm DB + high RH + cold
+  surface + condensation state).
+- *Process families on the chart* — four short paragraphs on
+  sensible heat / cooling+dehum / mixing / adiabatic humidification,
+  naming what each one changes and what it leaves alone. Forward-
+  links to the chart tool's interactive surface rather than re-doing
+  the visualisation in prose.
+- *Gotchas* — a four-callout grid: RH alone tells you nothing; dew
+  point is the property that condenses; enthalpy is the right basis
+  for coil capacity; specific volume is the CFM-to-mass-flow bridge.
 
-Working title: `education/psychrometrics-basics.html`.
+**Cross-links wired both directions:**
+- Chart tool → lesson via a small `.tool-card` callout below the main
+  chart card, above the back-link.
+- Lesson → chart via the `.cta-button` at the bottom and inline
+  anchors in the two-properties / process-families / gotchas sections.
+
+**Scope decisions during build:**
+- Single page, not a two-page split. The friction-file scope sketch
+  (properties + processes + gotchas) was three sections; scoped tight
+  with one widget and one short process-families section, it fits the
+  "one question per page" rule. Process families get prose only — the
+  chart tool already does the visual heavy lifting, so prose-then-
+  forward-link beats a redundant mini-diagram.
+- Widget pick: pool / condensation guard rather than a same-RH
+  comparator or a coil sensible-vs-latent split. The pool widget
+  replays the lead anecdote, hammers the dew-point lesson viscerally,
+  and ties the whole page to the controls problem the user actually
+  fought.
+- Anecdote handled in the lead (verbatim, in the user's voice). A
+  smaller discovery payoff fires in the widget at the natatorium
+  regime, callback rather than repeat.
+- Slider canonicalisation: state stays in IP throughout; sliders
+  rebuild on `unitschange` with unit-system-specific step sizes
+  (1 °F / 0.5 °C; 1 % RH in both). Same pattern as
+  `tools/psychrometric-chart.html`'s `buildSecondProp`.
+
+**Out-of-scope (parked, forward-linked where the lesson touches them):**
+- Air-mixing N-stream calculator *(tracked as candidate tool below)*
+- Coil-sizing calculator *(tracked)*
+- Economizer-ratio helper *(tracked)*
+- Comfort zone overlay / ASHRAE 55 — different question (comfort vs.
+  process control); not added.
+- DOAS / ERV / makeup-air psychrometrics — different question; not
+  added.
+- A second, deeper "Psychrometric Processes" Education page if the
+  one-paragraph process-families treatment ever feels insufficient.
+  Not promoted today — the chart tool plus the lesson's process
+  section read coherently together.
 
 ### Air-mixing calculator *(candidate psych-tool follow-up)*
 
