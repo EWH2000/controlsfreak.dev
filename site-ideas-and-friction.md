@@ -814,6 +814,33 @@ rest is the vocabulary for that fight.
   Not promoted today — the chart tool plus the lesson's process
   section read coherently together.
 
+**Reframed 2026-05-18** — same day as ship, after a re-read on a
+cold open. The natatorium anecdote opened the page with confidence
+but also opened it with a *pool job*, which is one of the hardest
+applications on the chart. A tech meeting psychrometrics for the
+first time was being shown the deep end before the words on the
+chart even resolved. Three changes shipped in this pass:
+
+- *Lead quote replaced.* The natatorium quote moved down to the
+  pool widget where it pays for itself against the simulator.
+  The new lead is the page's actual mission statement — the
+  chart looks intimidating; this page makes it approachable.
+- *Section reorder — vocabulary → elegance → processes → gotchas
+  → widget.* The seven properties come first so the words on the
+  chart resolve before any 2-DOF intuition or process-families
+  prose. The pool widget becomes the page's applied capstone
+  instead of a mid-page demo.
+- *Structural alignment with peer Education pages.* The page now
+  uses the single `.tool-card` shape that `vfds`, `pump-control`,
+  `balancing`, `hydronic-loops`, and `load-piping` all use:
+  eyebrow section-header on top, one outer card with
+  `h1.tool-card-title` + `<span class="tool-tag">HVAC</span>` +
+  `.page-intro` + `h2.subhead` subsections inside. The pool
+  widget is broken out as a second `.tool-card` capstone (a
+  small departure from the strict peer pattern, but it lets the
+  widget read as the page's deliverable rather than another
+  inline diagram).
+
 ### Air-mixing calculator *(candidate psych-tool follow-up)*
 
 Generalize the chart's OA + RA mass-weighted mix to N streams: mix two

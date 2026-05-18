@@ -1,6 +1,6 @@
 ---
 title: Psychrometrics Basics — controlsfreak.dev
-description: The seven properties on a psychrometric chart, what each one tells a controls engineer, and the gotchas that bite — with a pool-room widget that shows why dew point is the number to watch.
+description: The seven properties on a psychrometric chart, why two of them lock the rest, and how to read the chart without feeling like you need an engineering degree.
 canonical: https://controlsfreak.dev/education/psychrometrics-basics.html
 nav: education
 ---
@@ -71,63 +71,31 @@ nav: education
 <main id="main">
 
     <div class="section-header">
-        <h1 class="section-label">Education · Psychrometrics Basics</h1>
-        <div class="section-line"></div>
-    </div>
-
-    <p class="page-intro">
-        “I have been fighting to understand this better myself for a while now. I programmed a pool unit on a job and the engineer speced it with very tight tolerance for efficiency, and I’ve had to fight to keep zone humidity down.”
-    </p>
-
-    <p style="max-width:700px;margin-bottom:2rem;color:var(--text);line-height:1.8;">
-        Pool rooms are one of the hardest places in a building to control moist air — high latent loads from the pool surface, cold outer surfaces ready to sweat the moment dew point climbs up to meet them, and a tight humidity band the design engineer signed up to defend. This page is the vocabulary for that fight: the seven properties on a psychrometric chart, what each one tells a controls engineer, and the gotchas that bite. The interactive <a href="/tools/psychrometric-chart.html">Psychrometric Chart</a> tool is where it all comes together once you have the words.
-    </p>
-
-    <!-- ── Two properties lock the rest ─────────────────────────────────── -->
-    <div class="section-header">
-        <h2 class="section-label">Two Properties Lock the Rest</h2>
+        <span class="section-label">Education · Psychrometrics Basics</span>
         <div class="section-line"></div>
     </div>
 
     <div class="tool-card">
-        <div class="tool-body">
-            <p>
-                At a fixed pressure (which, for an indoor space at a given altitude, you can treat as constant), moist air has <em>two</em> independent degrees of freedom. Pick any two independent properties — say, dry-bulb and relative humidity — and the other five fall out: wet-bulb, dew point, humidity ratio, enthalpy, and specific volume all become arithmetic from those two. That is why every psychrometric chart is two-axis, and why the chart tool’s <strong>Define&nbsp;by</strong> dropdown is not UX whimsy: it lets you pick whichever pair you actually have a reading for and reads off the rest.
-            </p>
-            <p>
-                Some pairs are common and easy to come by; some are technically valid but rare. The table below is the practical short list — what the field tech and the controls engineer typically have to work with.
-            </p>
-
-            <table class="ref-table-dense" style="margin-top:1rem;">
-                <thead>
-                    <tr>
-                        <th>Pair</th>
-                        <th>Where it comes from</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr><td><strong>DB + RH</strong></td><td>Almost every space sensor — BACnet AHU return, wall stat, IAQ probe. The everyday pair, and the one with the most footguns.</td></tr>
-                    <tr><td><strong>DB + WB</strong></td><td>Sling psychrometer or aspirated wet/dry pair. The original field measurement; still the gold standard for a coil leaving-air reading.</td></tr>
-                    <tr><td><strong>DB + DP</strong></td><td>Chilled-mirror dewpoint sensor plus a temperature element. Less common in HVAC; more common in clean rooms, labs, museums.</td></tr>
-                    <tr><td><strong>DB + W</strong></td><td>Computed — either a transmitter that outputs grains directly, or a downstream calc from RH. Useful for mass-balance work.</td></tr>
-                    <tr><td><strong>DB + h</strong></td><td>Computed — enthalpy economizer logic lives here. The right pair for "how much heat is moving through this coil."</td></tr>
-                </tbody>
-            </table>
-
-            <p class="ref-note" style="margin-top:0.85rem;">
-                Some pairs are degenerate at the edges. At saturation (RH&nbsp;=&nbsp;100%) DB equals WB equals DP and you only really have one number; above saturation isn’t a valid state at all — the chart’s heavy green curve is a hard ceiling.
-            </p>
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">Psychrometrics Basics — The Words on the Chart and How to Understand Them <span class="tool-tag">HVAC</span></h1>
         </div>
-    </div>
-
-    <!-- ── The seven properties ─────────────────────────────────────────── -->
-    <div class="section-header" style="margin-top:2.5rem;">
-        <h2 class="section-label">The Seven Properties — What Each One Tells You</h2>
-        <div class="section-line"></div>
-    </div>
-
-    <div class="tool-card">
         <div class="tool-body">
+
+            <p class="page-intro">
+                “This is a concept many find really scary. The first time a lot of techs look at a psych chart, they feel like they need an engineering degree just to understand it. This page aims to simplify the learning process.”
+            </p>
+
+            <p>
+                Psychrometrics is just the study of moist air — temperature, humidity, and the way those two interact when a coil, a humidifier, or an outside-air mixer changes one of them. Pull up an ASHRAE psych chart cold and it can look like a lot: seven properties tangled across two axes, a curved saturation line, and not much that says where to start. The trick is you do not have to read the whole chart at once. Get the seven words down, learn why only two of them are ever independent at a time, and the rest follows. The interactive <a href="/tools/psychrometric-chart.html">Psychrometric Chart</a> tool is where it all comes together once you have the vocabulary.
+            </p>
+
+            <!-- ── The seven properties — vocabulary first ──────────────────── -->
+            <h2 class="subhead">The Seven Properties — What Each One Tells You</h2>
+
+            <p>
+                Every reading you will meet on a psychrometric chart is one of seven properties of moist air. Get the words down first; the relationships come next.
+            </p>
+
             <div class="callout-grid">
                 <div class="callout">
                     <h3>DB — Dry-bulb temperature <span>· what the thermometer reads</span></h3>
@@ -158,10 +126,94 @@ nav: education
                     <p>The volume one pound of dry air occupies at its current state. The translator between volumetric airflow (CFM — what the fan delivers) and mass flow (lb/h — what every load calc runs on). Warm humid air has a larger specific volume than cool dry air, so the same CFM moves <em>less</em> mass through the coil on a hot day. One reason coil performance drops off in design conditions, and one reason engineers can’t skip this number.</p>
                 </div>
             </div>
+
+            <!-- ── Two properties lock the rest — the elegance ──────────────── -->
+            <h2 class="subhead">Two Properties Lock the Rest</h2>
+
+            <p>
+                Now look at those seven properties from the other direction. At a fixed pressure (which, for an indoor space at a given altitude, you can treat as constant), moist air has <em>two</em> independent degrees of freedom. Pick any two independent properties — say, dry-bulb and relative humidity — and the other five fall out: wet-bulb, dew point, humidity ratio, enthalpy, and specific volume all become arithmetic from those two. That is why every psychrometric chart is two-axis, and why the chart tool’s <strong>Define&nbsp;by</strong> dropdown is not UX whimsy: it lets you pick whichever pair you actually have a reading for and reads off the rest.
+            </p>
+            <p>
+                Some pairs are common and easy to come by; some are technically valid but rare. The table below is the practical short list — what the field tech and the controls engineer typically have to work with.
+            </p>
+
+            <table class="ref-table-dense" style="margin-top:1rem;">
+                <thead>
+                    <tr>
+                        <th>Pair</th>
+                        <th>Where it comes from</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td><strong>DB + RH</strong></td><td>Almost every space sensor — BACnet AHU return, wall stat, IAQ probe. The everyday pair, and the one with the most footguns.</td></tr>
+                    <tr><td><strong>DB + WB</strong></td><td>Sling psychrometer or aspirated wet/dry pair. The original field measurement; still the gold standard for a coil leaving-air reading.</td></tr>
+                    <tr><td><strong>DB + DP</strong></td><td>Chilled-mirror dewpoint sensor plus a temperature element. Less common in HVAC; more common in clean rooms, labs, museums.</td></tr>
+                    <tr><td><strong>DB + W</strong></td><td>Computed — either a transmitter that outputs grains directly, or a downstream calc from RH. Useful for mass-balance work.</td></tr>
+                    <tr><td><strong>DB + h</strong></td><td>Computed — enthalpy economizer logic lives here. The right pair for "how much heat is moving through this coil."</td></tr>
+                </tbody>
+            </table>
+
+            <p class="ref-note" style="margin-top:0.85rem;">
+                Some pairs are degenerate at the edges. At saturation (RH&nbsp;=&nbsp;100%) DB equals WB equals DP and you only really have one number; above saturation isn’t a valid state at all — the chart’s heavy green curve is a hard ceiling.
+            </p>
+
+            <!-- ── Process families — how the state point moves ─────────────── -->
+            <h2 class="subhead">Process Families on the Chart</h2>
+
+            <p>
+                Every air-handler stage moves the state point in a characteristic direction on the chart. Four families cover almost everything a controls engineer meets — naming them out loud makes it easier to read what a coil is doing the next time the leaving-air state stops making sense.
+            </p>
+
+            <h3 class="subhead">Sensible heating or cooling</h3>
+            <p>
+                A heating coil with no humidifier, or a cooling coil where the leaving DB stays above the entering dew point. The state point slides horizontally: DB moves, but humidity ratio stays put — no moisture has been added or removed. RH falls (heating drives the air away from saturation) or rises (cooling drives it toward saturation). Enthalpy follows DB.
+            </p>
+
+            <h3 class="subhead">Cooling + dehumidification</h3>
+            <p>
+                The cooling coil dips below the entering dew point. Moisture condenses out, drains away, and the leaving air has lower W and lower DP. The state-point path bends down-and-to-the-left toward the coil’s apparatus dew point. Both sensible and latent enthalpy leave the airstream; on a humid day the latent share is most of the load. This is the process that does the real work in any dehumidification application — natatorium included.
+            </p>
+
+            <h3 class="subhead">Mixing two streams</h3>
+            <p>
+                Outdoor air meeting return air in an AHU mixing box, or a bypass leg meeting a coil-leaving stream. The mixed point lands on the straight line between the two source points on the chart, at the mass-weighted fraction. 20% OA + 80% RA puts you 20% of the way from RA to OA, in a straight line. The chart tool’s <strong>MA</strong> node is doing exactly this math.
+            </p>
+
+            <h3 class="subhead">Adiabatic humidification</h3>
+            <p>
+                An evaporative pad or wetted-media humidifier — water evaporates into the airstream, taking its evaporation heat <em>from</em> the airstream. The state point slides up-and-to-the-left along a constant wet-bulb line: W rises, DB drops, total enthalpy is essentially unchanged. The latent gain is paid for by a sensible drop. (Steam injection is different — that adds enthalpy and sits higher on the chart; the chart tool only models the adiabatic case for now.)
+            </p>
+
+            <p style="margin-top:1rem;">
+                Each of these is a coloured segment on the <a href="/tools/psychrometric-chart.html">interactive chart</a> — drag the OA and RA points around and watch the process colours change as the chain re-solves.
+            </p>
+
+            <!-- ── Gotchas — the field consequences ─────────────────────────── -->
+            <h2 class="subhead">Gotchas That Bite Controls Engineers</h2>
+
+            <div class="callout-grid">
+                <div class="callout">
+                    <h3>RH alone tells you nothing</h3>
+                    <p>Two airstreams at 60% RH but different DB carry very different moisture and pose very different condensation risks. A humidity spec written without a temperature spec is half a spec. When a pool engineer writes "≤&nbsp;60% RH at design conditions," they are really defending a dew-point ceiling — the RH number is convenient shorthand for it.</p>
+                </div>
+                <div class="callout">
+                    <h3>Dew point is the property that condenses</h3>
+                    <p>Whenever you are worried about water on a surface, the controlling number is dew point. The glass-of-ice-water mental model holds everywhere — pool windows, supply-duct condensation in unconditioned ceiling cavities, sweating chilled-water piping in a humid mechanical room, cold-floor lobbies in shoulder seasons. If you can back dew point out from the sensors you already have, you have the controlling number.</p>
+                </div>
+                <div class="callout">
+                    <h3>Enthalpy is the right basis for coil capacity</h3>
+                    <p>Sensible-only <code>ṁ·Cp·ΔT</code> misses the latent share — sometimes the bulk of cooling-coil load on a humid day. Use <code>ṁ·Δh</code> for the total and you will size the coil right, alarm against the right capacity, and write economizer logic that actually picks the lower-load outdoor air. The chart tool’s per-stage <strong>Δh</strong> column is the same calculation.</p>
+                </div>
+                <div class="callout">
+                    <h3>Specific volume is the CFM-to-mass-flow bridge</h3>
+                    <p>Fans deliver volumetric flow; coils, loads, and energy balances run on mass flow. <code>ṁ = CFM · 60 / v<sub>in</sub></code>, so the same CFM at warmer or wetter entering air moves less mass per unit time. Coil-sizing programs handle this internally; if you are ever doing the math by hand for a sanity check, do not skip it.</p>
+                </div>
+            </div>
+
         </div>
     </div>
 
-    <!-- ── Pool-space condensation widget ───────────────────────────────── -->
+    <!-- ── Pool-space condensation widget — capstone in its own card ────── -->
     <div class="section-header" style="margin-top:2.5rem;">
         <h2 class="section-label">Does This Air Sweat the Windows?</h2>
         <div class="section-line"></div>
@@ -169,6 +221,9 @@ nav: education
 
     <div class="tool-card">
         <div class="tool-body">
+            <p class="page-intro">
+                “I have been fighting to understand this better myself for a while now. I programmed a pool unit on a job and the engineer speced it with very tight tolerance for efficiency, and I’ve had to fight to keep zone humidity down.”
+            </p>
             <p>
                 The pool-room control problem in one sentence: <strong>dew point has to stay below the coldest surface in the room, with margin to spare.</strong> Any surface colder than dew point grows water out of the air. Slide the space dry-bulb and relative humidity around below, plus a slider for the coldest surface in the room. The readouts back out humidity ratio, dew point, and enthalpy; the status panel tells you whether the glass stays dry.
             </p>
@@ -230,73 +285,6 @@ nav: education
             <p class="ref-note" style="margin-top:1rem;">
                 Math: <code>W = humRatioFromRH(RH, DB)</code> → <code>dewPoint(W)</code> → <code>h = enthalpy(DB, W)</code>, all from the ASHRAE Fundamentals (Chapter&nbsp;1) IP equations at standard sea-level pressure. Surface temperature is your independent input — that is a thermal-bridging / envelope question, not a psychrometric one. <span data-us="50 °F" data-metric="10 °C">50 °F</span> is a fair guess for single-pane glass on a cold winter day; double-pane and low-e will sit warmer, a poorly insulated metal frame can sit colder.
             </p>
-        </div>
-    </div>
-
-    <!-- ── Process families ─────────────────────────────────────────────── -->
-    <div class="section-header" style="margin-top:2.5rem;">
-        <h2 class="section-label">Process Families on the Chart</h2>
-        <div class="section-line"></div>
-    </div>
-
-    <div class="tool-card">
-        <div class="tool-body">
-            <p>
-                Every air-handler stage moves the state point in a characteristic direction on the chart. Four families cover almost everything a controls engineer meets — naming them out loud makes it easier to read what a coil is doing the next time the leaving-air state stops making sense.
-            </p>
-
-            <h3 class="subhead">Sensible heating or cooling</h3>
-            <p>
-                A heating coil with no humidifier, or a cooling coil where the leaving DB stays above the entering dew point. The state point slides horizontally: DB moves, but humidity ratio stays put — no moisture has been added or removed. RH falls (heating drives the air away from saturation) or rises (cooling drives it toward saturation). Enthalpy follows DB.
-            </p>
-
-            <h3 class="subhead">Cooling + dehumidification</h3>
-            <p>
-                The cooling coil dips below the entering dew point. Moisture condenses out, drains away, and the leaving air has lower W and lower DP. The state-point path bends down-and-to-the-left toward the coil’s apparatus dew point. Both sensible and latent enthalpy leave the airstream; on a humid day the latent share is most of the load. This is the process that does the real work in any dehumidification application — natatorium included.
-            </p>
-
-            <h3 class="subhead">Mixing two streams</h3>
-            <p>
-                Outdoor air meeting return air in an AHU mixing box, or a bypass leg meeting a coil-leaving stream. The mixed point lands on the straight line between the two source points on the chart, at the mass-weighted fraction. 20% OA + 80% RA puts you 20% of the way from RA to OA, in a straight line. The chart tool’s <strong>MA</strong> node is doing exactly this math.
-            </p>
-
-            <h3 class="subhead">Adiabatic humidification</h3>
-            <p>
-                An evaporative pad or wetted-media humidifier — water evaporates into the airstream, taking its evaporation heat <em>from</em> the airstream. The state point slides up-and-to-the-left along a constant wet-bulb line: W rises, DB drops, total enthalpy is essentially unchanged. The latent gain is paid for by a sensible drop. (Steam injection is different — that adds enthalpy and sits higher on the chart; the chart tool only models the adiabatic case for now.)
-            </p>
-
-            <p style="margin-top:1rem;">
-                Each of these is a coloured segment on the <a href="/tools/psychrometric-chart.html">interactive chart</a> — drag the OA and RA points around and watch the process colours change as the chain re-solves.
-            </p>
-        </div>
-    </div>
-
-    <!-- ── Gotchas ──────────────────────────────────────────────────────── -->
-    <div class="section-header" style="margin-top:2.5rem;">
-        <h2 class="section-label">Gotchas That Bite Controls Engineers</h2>
-        <div class="section-line"></div>
-    </div>
-
-    <div class="tool-card">
-        <div class="tool-body">
-            <div class="callout-grid">
-                <div class="callout">
-                    <h3>RH alone tells you nothing</h3>
-                    <p>Two airstreams at 60% RH but different DB carry very different moisture and pose very different condensation risks. A humidity spec written without a temperature spec is half a spec. When a pool engineer writes "≤&nbsp;60% RH at design conditions," they are really defending a dew-point ceiling — the RH number is convenient shorthand for it.</p>
-                </div>
-                <div class="callout">
-                    <h3>Dew point is the property that condenses</h3>
-                    <p>Whenever you are worried about water on a surface, the controlling number is dew point. The glass-of-ice-water mental model holds everywhere — pool windows, supply-duct condensation in unconditioned ceiling cavities, sweating chilled-water piping in a humid mechanical room, cold-floor lobbies in shoulder seasons. If you can back dew point out from the sensors you already have, you have the controlling number.</p>
-                </div>
-                <div class="callout">
-                    <h3>Enthalpy is the right basis for coil capacity</h3>
-                    <p>Sensible-only <code>ṁ·Cp·ΔT</code> misses the latent share — sometimes the bulk of cooling-coil load on a humid day. Use <code>ṁ·Δh</code> for the total and you will size the coil right, alarm against the right capacity, and write economizer logic that actually picks the lower-load outdoor air. The chart tool’s per-stage <strong>Δh</strong> column is the same calculation.</p>
-                </div>
-                <div class="callout">
-                    <h3>Specific volume is the CFM-to-mass-flow bridge</h3>
-                    <p>Fans deliver volumetric flow; coils, loads, and energy balances run on mass flow. <code>ṁ = CFM · 60 / v<sub>in</sub></code>, so the same CFM at warmer or wetter entering air moves less mass per unit time. Coil-sizing programs handle this internally; if you are ever doing the math by hand for a sanity check, do not skip it.</p>
-                </div>
-            </div>
         </div>
     </div>
 
