@@ -362,119 +362,21 @@ nav: tools
 {% endblock %}
 
 {% block scripts %}
+<script src="/scripts/psychro-engine.js"></script>
 <script src="/scripts/units.js"></script>
 <script>
     // ──────────────────────────────────────────────────────────────────
-    // Psychrometrics — US customary units throughout:
-    //   temperatures °F · pressures psia · humidity ratio lb water / lb dry air
-    //   enthalpy Btu / lb dry air · specific volume ft³ / lb dry air
-    // Formulas: ASHRAE 2017 Fundamentals, Chapter 1 (IP equations).
+    // Psychrometric chart — page logic. The moist-air math itself lives in
+    // /scripts/psychro-engine.js (ASHRAE primitives at top level; the
+    // higher-level solver under window.Psychro). This page reads inputs,
+    // orchestrates the chain (solveChain below), drives the canvas chart,
+    // and formats readouts through window.Units. Internal state stays in
+    // canonical IP (°F, lb/lb, Btu/lb, psia) throughout — conversion to
+    // whatever the units toggle is showing happens only at the render
+    // boundary via the disp* helpers.
     // ──────────────────────────────────────────────────────────────────
     (function () {
         'use strict';
-
-        const R_DA       = 0.370486;    // R_dry-air / 144, ft³·psi / (lb·°R)
-        const MW_RATIO   = 0.621945;    // M_water / M_dry-air
-        const GR_PER_LB  = 7000;
-        const P_STD      = 14.696;      // standard sea-level pressure, psia
-
-        // Saturation vapor pressure (psia) over water (t ≥ 32 °F) or ice (t < 32 °F). t in °F.
-        function satPress(tF) {
-            const T = tF + 459.67;      // absolute temperature, °R
-            let lnP;
-            if (tF >= 32) {
-                lnP = -1.0440397e4 / T - 1.1294650e1 - 2.7022355e-2 * T
-                      + 1.2890360e-5 * T * T - 2.4780681e-9 * T * T * T + 6.5459673 * Math.log(T);
-            } else {
-                lnP = -1.0214165e4 / T - 4.8932428 - 5.3765794e-3 * T + 1.9202377e-7 * T * T
-                      + 3.5575832e-10 * T * T * T - 9.0344688e-14 * T * T * T * T + 4.1635019 * Math.log(T);
-            }
-            return Math.exp(lnP);
-        }
-
-        const humRatioFromVapPress = (pw, P) => MW_RATIO * pw / (P - pw);
-        const vapPressFromHumRatio = (W, P) => P * W / (MW_RATIO + W);
-        const satHumRatio          = (tF, P) => humRatioFromVapPress(satPress(tF), P);
-        const humRatioFromRH       = (rhPct, tdb, P) => humRatioFromVapPress(rhPct / 100 * satPress(tdb), P);
-        const rhFromHumRatio       = (W, tdb, P) => vapPressFromHumRatio(W, P) / satPress(tdb) * 100;
-        const enthalpy             = (tdb, W) => 0.240 * tdb + W * (1061 + 0.444 * tdb);
-        const specificVolume       = (tdb, W, P) => R_DA * (tdb + 459.67) * (1 + 1.607858 * W) / P;
-        const pressFromAltitude    = zFt => P_STD * Math.pow(1 - 6.8754e-6 * zFt, 5.2559);
-
-        // Humidity ratio from (thermodynamic) wet-bulb temperature. twb, tdb in °F.
-        function humRatioFromWetBulb(twb, tdb, P) {
-            const Wsw = satHumRatio(twb, P);
-            return (twb >= 32)
-                ? ((1093 - 0.556 * twb) * Wsw - 0.240 * (tdb - twb)) / (1093 + 0.444 * tdb - twb)
-                : ((1220 - 0.04  * twb) * Wsw - 0.240 * (tdb - twb)) / (1220 + 0.444 * tdb - 0.48 * twb);
-        }
-
-        // Dew point: temperature where satPress(tdp) = pw. Bisection.
-        function dewPointFromVapPress(pw) {
-            if (pw <= 0) return -Infinity;
-            let lo = -148, hi = 250;
-            for (let i = 0; i < 80; i++) {
-                const mid = (lo + hi) / 2;
-                if (satPress(mid) > pw) hi = mid; else lo = mid;
-            }
-            return (lo + hi) / 2;
-        }
-
-        // Wet-bulb from dry-bulb + humidity ratio. Bisection on [dew point, dry-bulb].
-        function wetBulbFromHumRatio(W, tdb, P) {
-            let lo = dewPointFromVapPress(vapPressFromHumRatio(Math.max(W, 0), P));
-            let hi = tdb;
-            if (!isFinite(lo) || lo > hi) lo = Math.min(-148, hi - 200);
-            for (let i = 0; i < 70; i++) {
-                const mid = (lo + hi) / 2;
-                if (humRatioFromWetBulb(mid, tdb, P) > W) hi = mid; else lo = mid;
-            }
-            return (lo + hi) / 2;
-        }
-
-        // Build moist-air state from (mode, dry-bulb, the second value, pressure). mode ∈ {rh,wb,dp,w,h}.
-        function solveState(mode, tdb, second, P) {
-            if (![tdb, second, P].every(isFinite) || P <= 0) return { ok: false, error: 'Enter numeric values.' };
-            let W;
-            if (mode === 'rh') {
-                if (second < 0)   return { ok: false, error: 'Relative humidity can’t be negative.' };
-                if (second > 100) return { ok: false, error: 'Relative humidity can’t exceed 100%.' };
-                W = humRatioFromRH(second, tdb, P);
-            } else if (mode === 'wb') {
-                if (second > tdb + 1e-6) return { ok: false, error: 'Wet-bulb can’t exceed dry-bulb.' };
-                W = humRatioFromWetBulb(second, tdb, P);
-            } else if (mode === 'dp') {
-                if (second > tdb + 1e-6) return { ok: false, error: 'Dew point can’t exceed dry-bulb.' };
-                W = humRatioFromVapPress(satPress(second), P);
-            } else if (mode === 'w') {
-                W = second / GR_PER_LB;
-                if (W < -1e-9) return { ok: false, error: 'Humidity ratio can’t be negative.' };
-            } else if (mode === 'h') {
-                W = (second - 0.240 * tdb) / (1061 + 0.444 * tdb);
-                if (W < -1e-9) return { ok: false, error: 'Enthalpy is below dry air at this dry-bulb — impossible.' };
-            } else {
-                return { ok: false, error: 'Pick a property to define the point by.' };
-            }
-            W = Math.max(0, W);
-            const Wsat = satHumRatio(tdb, P);
-            if (W > Wsat + 1e-6) return { ok: false, error: 'That point is past saturation (RH over 100%) — impossible.' };
-            W = Math.min(W, Wsat);
-            return buildState(tdb, W, P);
-        }
-
-        // Build a state directly from (dry-bulb, humidity ratio).
-        function buildState(tdb, W, P) {
-            W = Math.max(0, Math.min(W, satHumRatio(tdb, P)));
-            const pw = vapPressFromHumRatio(W, P);
-            return {
-                ok: true, tdb, W, P, pw,
-                rh:  W <= 0 ? 0 : rhFromHumRatio(W, tdb, P),
-                twb: wetBulbFromHumRatio(W, tdb, P),
-                tdp: W <= 0 ? -Infinity : dewPointFromVapPress(pw),
-                h:   enthalpy(tdb, W),
-                v:   specificVolume(tdb, W, P),
-            };
-        }
 
         // ── Display-unit formatting helpers (delegate to window.Units) ────
         // Internal state stays in IP throughout (state.tdb in °F, state.W in
@@ -590,11 +492,11 @@ nav: tools
                 };
             };
             const eOa = readSt('oa');
-            r.oa = solveState(eOa.mode, eOa.tdb, eOa.second, P);
+            r.oa = Psychro.solveState(eOa.mode, eOa.tdb, eOa.second, P);
             if (!r.oa.ok) setErr('OA: ' + r.oa.error);
 
             const eRa = readSt('ra');
-            r.ra = solveState(eRa.mode, eRa.tdb, eRa.second, P);
+            r.ra = Psychro.solveState(eRa.mode, eRa.tdb, eRa.second, P);
             if (!r.ra.ok) setErr('RA: ' + r.ra.error);
 
             // MA — mass-weighted enthalpy + humidity-ratio mix
@@ -609,7 +511,7 @@ nav: tools
                     const h_ma = fOa * r.oa.h + fRa * r.ra.h;
                     // back out tdb from h = (0.240 + 0.444·W)·tdb + 1061·W
                     const tdb_ma = (h_ma - 1061 * W_ma) / (0.240 + 0.444 * W_ma);
-                    r.ma = buildState(tdb_ma, W_ma, P);
+                    r.ma = Psychro.buildState(tdb_ma, W_ma, P);
                 }
             } else {
                 r.ma = { ok: false, error: 'awaiting OA / RA' };
@@ -621,7 +523,7 @@ nav: tools
             const ccOn = document.getElementById('cc-on').checked;
             if (current && ccOn) {
                 const e = readSt('cc');
-                const sol = solveState(e.mode, e.tdb, e.second, P);
+                const sol = Psychro.solveState(e.mode, e.tdb, e.second, P);
                 if (!sol.ok) {
                     r.cc = { ...sol, enabled: true };
                     setErr('CC: ' + sol.error);
@@ -661,7 +563,7 @@ nav: tools
                         setErr('HC: leaving DB must be ≥ entering');
                         current = null;
                     } else {
-                        const hc = buildState(tdb_hc, current.W, P);
+                        const hc = Psychro.buildState(tdb_hc, current.W, P);
                         r.hc = { ...hc, enabled: true, inlet: current };
                         stages.push({ key: 'hc', type: 'heat', inlet: current, outlet: hc });
                         current = hc;
@@ -697,7 +599,7 @@ nav: tools
                     }
                     const tdbH = (lo + hi) / 2;
                     const Wh = humRatioFromWetBulb(current.twb, tdbH, P);
-                    const hum = buildState(tdbH, Wh, P);
+                    const hum = Psychro.buildState(tdbH, Wh, P);
                     r.hum = { ...hum, enabled: true, inlet: current };
                     stages.push({ key: 'hum', type: 'humid', inlet: current, outlet: hum });
                     current = hum;
@@ -710,30 +612,6 @@ nav: tools
             r.sa = current ? { ...current } : { ok: false, error: 'awaiting upstream' };
 
             return { ok: !error, error, results: r, stages, P, alt, cfm };
-        }
-
-        // ── Process-delta math for a single coil / humidifier segment ──
-        function computeProcess(stage, cfm) {
-            const { inlet, outlet, type } = stage;
-            const dDb = outlet.tdb - inlet.tdb;
-            const dW  = outlet.W - inlet.W;
-            const dH  = outlet.h - inlet.h;
-            let qTotal = null, qSens = null, qLat = null;
-            if (cfm && inlet.v > 0) {
-                const mDot = cfm * 60 / inlet.v;            // lb_da / h
-                qTotal = mDot * dH;                         // Btu/h
-                const cpIn = 0.240 + 0.444 * inlet.W;       // Btu/(lb_da·°F)
-                qSens = mDot * cpIn * dDb;
-                qLat  = qTotal - qSens;
-            }
-            let shr = null;
-            if (type === 'cool') {
-                // SHR by enthalpy ratios (CFM-independent — works even without flow).
-                const cpIn = 0.240 + 0.444 * inlet.W;
-                const dhSens = cpIn * dDb;
-                if (Math.abs(dH) > 1e-9) shr = dhSens / dH;
-            }
-            return { dDb, dW, dH, qTotal, qSens, qLat, shr };
         }
 
         // ──────────────────────────────────────────────────────────────────
@@ -810,7 +688,7 @@ nav: tools
                 }
                 if (cfmOn) {
                     if (row.stage) {
-                        const proc = computeProcess(row.stage, chain.cfm);
+                        const proc = Psychro.computeProcess(row.stage, chain.cfm);
                         cells.push(proc.qTotal !== null
                             ? `<td class="live">${dispQ(Math.abs(proc.qTotal))}</td>`
                             : '<td class="muted">—</td>');
@@ -852,7 +730,7 @@ nav: tools
             if (!stage) { block.style.display = 'none'; return; }
             block.style.display = '';
             document.getElementById('psy-process-label').textContent = PROCESS_LABEL[stage.key] || 'Process delta — across this stage';
-            const proc = computeProcess(stage, cfm);
+            const proc = Psychro.computeProcess(stage, cfm);
             const set = (id, txt) => {
                 const el = document.getElementById(id);
                 el.textContent = txt;
@@ -1187,7 +1065,7 @@ nav: tools
             const P = lastChain.P;
             tdb = Math.max(TDB_MIN, Math.min(TDB_MAX, tdb));
             W   = Math.max(0, Math.min(W, satHumRatio(tdb, P)));
-            const tempState = buildState(tdb, W, P);
+            const tempState = Psychro.buildState(tdb, W, P);
             // tdb is canonical IP; rewrite the input in current display units.
             document.getElementById(`${prefix}-tdb`).value = dispT(tdb);
             const mode = document.getElementById(`${prefix}-mode`).value;
