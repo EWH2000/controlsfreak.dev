@@ -1467,6 +1467,87 @@ on-its-own.*
 
 Could share a branch with #25 or #26 (both still open and small).
 
+### 29. `.tool-body-3col` produces uneven column lengths on tools whose Output is sparse and whose Reference column is dense
+
+Caught during PR #29 review on the live preview link. The Input /
+Output / Reference grid only reads visually balanced when all three
+columns have comparable vertical density. Several tools have a
+sparse Output column (3-4 readouts and a Copy button), a medium-
+density Input column (3-6 form rows), and a Reference column that's
+a table or a worked-example with prose + ordered list. The columns
+end at different y-coordinates and the recessed `--surface-3` panel
+on the Reference column reads as an arbitrarily tall slab next to
+two shorter ones — the user called it "sloppy" and they're right.
+
+**Where it currently hurts.**
+
+- `html/tools/signal-scaling.html` — clearest example. Output is a
+  4-row readout block ending well above the Input column (5 form
+  rows) and well above the Reference column (6-row signal-types
+  table + live-zero note). Empty space below Output is the eyesore.
+  All three of the page's tabs share this shape.
+- `html/tools/economizer-ratio.html` — *was* on 3-col before this PR
+  fixed it. Worked-example column was vertical prose + ordered list
+  + closing paragraph, ran taller than Input and Output on both
+  tabs.
+
+**Where it doesn't hurt (and why — useful prior art).**
+
+- `html/tools/bacnet-ip-converter.html` — already on `.tool-body-
+  2col`. Reference content lives in a sibling `.tool-card` below
+  rather than as a third column.
+- `html/tools/psychrometric-chart.html` — custom column widths
+  (`grid-template-columns: minmax(220px, 26%) 1fr minmax(220px,
+  26%)`) plus the middle column being a chart canvas that dominates
+  the visual frame. The three columns end close enough.
+- `html/tools/modbus-register-viewer.html` — bit-grid in the middle
+  column anchors the visual height; Reference (Function Codes
+  table) and Input/Output land close to it. Not pretty but not
+  obviously off.
+- `html/tools/thermistor-calculator.html` — Reference is the full
+  R/T table and is intentionally tall (it's the page's anchor — the
+  user *wants* to scan it). Input column is short by design,
+  Reference is the deliverable.
+
+**Pattern shipped in PR #29.** "2-col + example below" — Input /
+Output stay in a `.tool-body-2col` grid; reference / worked-example
+content moves to a full-width row beneath the grid, preserving the
+recessed `--surface-3` cue via a page-local section class. Landed
+on `economizer-ratio.html` as `.er-example` inside the page's
+`{% block head %}`. Vertical prose + ordered list reads more
+comfortably as a wide row anyway — wrapped lines stay short relative
+to the row's width, the ordered list breathes.
+
+**Why it matters.** Visual polish across the tools landing. Each
+tool independently looks fine; back-to-back they betray the uneven-
+column drift, and the live tools-landing card grid is the first
+thing a visitor sees.
+
+**Priority:** LOW. Cosmetic; no broken interaction. Cluster fix
+candidate.
+
+**Recommended action — two-step.**
+
+- *Step 1 (when a second consumer wants it):* promote the page-local
+  `.er-example` class to a shared utility in `styles.css` — name TBD
+  (`.tool-body-row`, `.tool-body-reference-row`, or similar). Keeps
+  the recessed `--surface-3` background, the top border, the
+  `1.25rem 1.25rem 1.5rem` padding. Until a second consumer exists,
+  the page-local class is the right scope; promoting prematurely
+  bakes in the wrong vocabulary.
+- *Step 2 (cosmetic-sweep branch):* retrofit `signal-scaling.html` —
+  switch each of its three tabs from `.tool-body-3col` to
+  `.tool-body-2col`, move the Common Signal Types table to a sibling
+  row below the grid. The signal-types table is the same content on
+  all three tabs (it doesn't change between Signal→EU, EU→Signal,
+  and 2-point modes), so moving it out of the tab structure entirely
+  — one shared reference row below all three tabs — is also worth
+  considering. That second move is its own design decision.
+
+No retrofit needed on `psychrometric-chart.html`, `modbus-register-
+viewer.html`, or `thermistor-calculator.html`; their column-density
+balance is acceptable as-is.
+
 ---
 
 ## Recently addressed
