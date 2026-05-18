@@ -39,18 +39,6 @@ nav: tools
         .am-status.warn  { border-color: var(--heat);   color: var(--heat); }
         .am-status.error { border-color: var(--red);    color: var(--red); }
 
-        /* "Example below" pattern — second consumer of economizer-ratio's
-           .er-example. Lifts the same recessed-panel cue (--surface-3 +
-           top border) so the worked example reads as supporting reference
-           content beneath the 2-col Input / Output grid. When a third
-           consumer earns it, the two go to a shared utility in styles.css
-           (codebase-issues #29 step 1). */
-        .am-example {
-            padding: 1.25rem 1.25rem 1.5rem;
-            border-top: 1px solid var(--border);
-            background: var(--surface-3);
-        }
-
         /* Altitude strip — shared between both tabs, sits above the tabs
            as a thin one-row band. Padded to match section padding so the
            input's left edge aligns with section content. */
@@ -206,7 +194,7 @@ nav: tools
 
             </div>
 
-            <section class="am-example">
+            <section class="tool-body-row">
                 <h2 class="ps-section-label">Worked example</h2>
                 <p class="ref-note" style="margin-top:0;">
                     Summer AHU with energy recovery — three streams meeting in the mixing plenum.
@@ -344,7 +332,7 @@ nav: tools
 
             </div>
 
-            <section class="am-example">
+            <section class="tool-body-row">
                 <h2 class="ps-section-label">Worked example</h2>
                 <p class="ref-note" style="margin-top:0;">
                     Same three streams expressed as mass fractions —
