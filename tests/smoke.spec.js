@@ -143,11 +143,17 @@ test('air mixing — three-stream blend computes on both tabs', async ({ page })
     const errors = watchErrors(page);
     await page.goto('http://localhost:8000/tools/air-mixing.html');
 
-    // By-mass-flow tab: defaults are a 1000/3000/500 CFM OA-RA-exhaust mix.
-    // Hand calc lands the mixed DB in the high 70s °F (mass-weighted, dominated
-    // by the 3000 CFM 75 °F return stream).
-    await expect(page.locator('#am-flow-ma-tdb')).toContainText('77');
-    await expect(page.locator('#am-flow-ma-rh')).not.toHaveText('—');
+    // By-mass-flow tab: defaults are a 1000/3000/500 CFM blend of
+    // 95/75WB, 75/50%RH, and 60/55WB. Mass-weighted (dominated by the
+    // 3000 CFM stream), engine produces tdb=77.6 / wb=64.8 / rh=50.3 /
+    // h=29.7 / w=70.9 gr/lb / v=13.76 ft³/lb. Substring matchers stay
+    // loose enough to absorb cosmetic-rounding tweaks but tight enough
+    // to fail on any ~5 %+ engine drift.
+    await expect(page.locator('#am-flow-ma-tdb')).toContainText('77.');
+    await expect(page.locator('#am-flow-ma-wb' )).toContainText('64.');
+    await expect(page.locator('#am-flow-ma-rh' )).toContainText('50.');
+    await expect(page.locator('#am-flow-ma-h'  )).toContainText('29.');
+    await expect(page.locator('#am-flow-ma-w'  )).toContainText('70.');
     await expect(page.locator('#am-flow-status')).toContainText('Mixed state computed');
 
     // A bad stream input (WB > DB) surfaces inline + mutes the output.
@@ -160,8 +166,13 @@ test('air mixing — three-stream blend computes on both tabs', async ({ page })
     await page.fill('#am-flow-s1-second', '75');
     await page.click('[data-tab="frac"]');
 
-    // Fraction defaults (22/67/11) should compute close to the mass-flow result.
-    await expect(page.locator('#am-frac-ma-tdb')).toContainText('77');
+    // Fraction defaults (22/67/11) at the same per-stream air states
+    // compute to tdb=77.8 / rh=50.1 / h=29.8 — close to the mass-flow
+    // result above (the 22 % fraction is a slight overstatement of the
+    // hot stream's mass weight, hence the 0.2 °F bump).
+    await expect(page.locator('#am-frac-ma-tdb')).toContainText('77.');
+    await expect(page.locator('#am-frac-ma-rh' )).toContainText('50.');
+    await expect(page.locator('#am-frac-ma-h'  )).toContainText('29.');
 
     // Fractions that don't sum to 100 surface a tab-level warning.
     await page.fill('#am-frac-s1-w', '30');
