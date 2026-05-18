@@ -193,12 +193,33 @@ test('economizer ratio — dry-bulb and enthalpy tabs compute their cases', asyn
     await expect(page.locator('#er-db-feas')).toContainText('Infeasible');
 
     // Enthalpy tab — defaults: OA 78/68WB, RA 75/63WB, MA target 65.
-    // h_OA ≈ 32.4 Btu/lb, h_RA ≈ 28.6 Btu/lb (OA carries more enthalpy → unfavorable).
+    // Engine raw: h_OA = 32.27 / h_RA = 28.43 Btu/lb (OA carries more
+    // enthalpy → unfavorable). Page renders one decimal: 32.3 / 28.4.
     await page.click('[data-tab="h"]');
     await expect(page.locator('#er-h-changeover')).toContainText('Unfavorable');
     // OA dry-bulb (78) > RA dry-bulb (75), MA target 65 < both → infeasible.
     await expect(page.locator('#er-h-feas')).toContainText('Infeasible');
     await expect(page.locator('#er-h-ma-h')).not.toHaveText('—');
+    await expect(page.locator('#er-h-oa-h')).toContainText('32.3');
+    await expect(page.locator('#er-h-ra-h')).toContainText('28.4');
+
+    // Non-WB Define-by mode: switch OA to RH=50% at 78 °F → h ≈ 29.9
+    // (down from 32.3 at 68 °F WB). Exercises the rh branch in
+    // Psychro.solveState; the value drop proves the mode-dispatch reran.
+    await page.selectOption('#er-h-oa-mode', 'rh');
+    await page.fill('#er-h-oa-second', '50');
+    await expect(page.locator('#er-h-oa-h')).toContainText('29.9');
+
+    // OA == RA dry-bulb edge case — hits the no-unique-%OA guard at
+    // economizer-ratio.html:467. Reset OA back to WB defaults, then set
+    // RA dry-bulb to match OA's 78 °F.
+    await page.selectOption('#er-h-oa-mode', 'wb');
+    await page.fill('#er-h-oa-second', '68');
+    await page.fill('#er-h-ra-tdb', '78');
+    await expect(page.locator('#er-h-feas')).toContainText('OA and RA dry-bulbs are identical');
+    await expect(page.locator('#er-h-pct')).toHaveText('—');
+    await expect(page.locator('#er-h-pct')).toHaveClass(/muted/);
+    await expect(page.locator('#er-h-pct')).toHaveClass(/error/);
 
     expect(errors, 'economizer behavioral should log no page / console errors').toEqual([]);
 });
