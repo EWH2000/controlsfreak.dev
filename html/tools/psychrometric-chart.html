@@ -56,17 +56,25 @@ nav: tools
         .psy-editor { display: none; }
         .psy-editor.shown { display: block; }
 
-        /* The on/off checkbox that sits inline with the .ps-row label for CC/HC/HUM. */
+        /* The on/off checkbox that sits inline with the .ps-row label for CC/HC/HUM.
+           The label text is generated content driven by :has(:checked) so it
+           reads "On" when checked and "Off" when not — no static text in the
+           HTML, no JS plumbing needed. line-height: 1 keeps the text vertically
+           centered against the checkbox glyph (sans 0.78rem text and a default
+           checkbox have different intrinsic line heights otherwise). */
         .psy-toggle {
             display: inline-flex;
             align-items: center;
             gap: 0.4rem;
             font-family: var(--sans);
             font-size: 0.78rem;
+            line-height: 1;
             color: var(--text);
             cursor: pointer;
             user-select: none;
         }
+        .psy-toggle::after { content: 'Off'; }
+        .psy-toggle:has(input:checked)::after { content: 'On'; }
         .psy-toggle input { accent-color: var(--accent); cursor: pointer; }
 
         /* Compact per-stage results table on the right column. Inherits from the
@@ -107,6 +115,34 @@ nav: tools
             color: var(--text-dim);
             padding: 0 0 0.4rem 0;
         }
+
+        /* Floating state-point chip — anchored to .sim-canvas-wrap (which carries
+           position: relative in styles.css). Shows the DB / WB / RH of the
+           currently dragged or hovered draggable node (OA / RA / MA) so the
+           visitor gets a direct-manipulation readout without sweeping their eye
+           to the right-column property table. Positioned in JS with an
+           edge-flip so it never falls off the wrapper. pointer-events: none
+           because the canvas needs to keep receiving pointermove during drag —
+           the chip would otherwise eat the events when the pointer is over it. */
+        .psy-chip {
+            position: absolute;
+            pointer-events: none;
+            opacity: 0.88;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 2px;
+            padding: 4px 8px;
+            font-family: var(--mono);
+            font-size: 0.7rem;
+            line-height: 1.55;
+            color: var(--text);
+            white-space: nowrap;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+            z-index: 1;
+        }
+        .psy-chip[hidden] { display: none; }
+        .psy-chip .lbl { color: var(--text-dim); margin-right: 0.45em; }
+        .psy-chip .val { color: var(--blue); }
     </style>
 {% endblock %}
 
@@ -223,7 +259,7 @@ nav: tools
                 <div class="psy-editor" data-step="cc">
                     <div class="ps-row" role="group" aria-labelledby="cc-toggle-label">
                         <span class="ps-label" id="cc-toggle-label">Cooling coil</span>
-                        <label class="psy-toggle"><input type="checkbox" id="cc-on" checked> On</label>
+                        <label class="psy-toggle"><input type="checkbox" id="cc-on" checked></label>
                     </div>
                     <div class="ps-row">
                         <label class="ps-label" data-us="Leaving DB (°F)" data-metric="Leaving DB (°C)" for="cc-tdb">Leaving DB (°F)</label>
@@ -250,7 +286,7 @@ nav: tools
                 <div class="psy-editor" data-step="hc">
                     <div class="ps-row" role="group" aria-labelledby="hc-toggle-label">
                         <span class="ps-label" id="hc-toggle-label">Heating coil</span>
-                        <label class="psy-toggle"><input type="checkbox" id="hc-on"> On</label>
+                        <label class="psy-toggle"><input type="checkbox" id="hc-on"></label>
                     </div>
                     <div class="ps-row">
                         <label class="ps-label" for="hc-mode">Specify by</label>
@@ -270,7 +306,7 @@ nav: tools
                 <div class="psy-editor" data-step="hum">
                     <div class="ps-row" role="group" aria-labelledby="hum-toggle-label">
                         <span class="ps-label" id="hum-toggle-label">Humidifier</span>
-                        <label class="psy-toggle"><input type="checkbox" id="hum-on"> On</label>
+                        <label class="psy-toggle"><input type="checkbox" id="hum-on"></label>
                     </div>
                     <div class="ps-row">
                         <label class="ps-label" for="hum-rh">Leaving RH (%)</label>
@@ -292,6 +328,7 @@ nav: tools
                 <h2 class="ps-section-label">Chart</h2>
                 <div class="sim-canvas-wrap">
                     <canvas id="psy-canvas" style="aspect-ratio:8/5;height:auto;touch-action:none;" role="img" aria-label="Psychrometric chart showing the air handler state path from outside air to supply air"></canvas>
+                    <div id="psy-chip" class="psy-chip" hidden aria-hidden="true"></div>
                 </div>
                 <p class="bit-hint" style="margin-bottom:0;line-height:1.65;">
                     Heavy green = saturation. Light curves rising right = constant RH; light dashed = constant wet-bulb.
@@ -805,6 +842,14 @@ nav: tools
             }
 
             drawPsychChart(chain);
+            // If the chip is visible, the chart underneath it just moved —
+            // reposition against the freshly recomputed psyGeom so the chip
+            // tracks its node across units flips, resizes, and edits that
+            // shift OA / RA / MA.
+            if (chipKey) {
+                const s = chain.results[chipKey];
+                if (s && s.ok) positionChip(s); else hideChip();
+            }
         }
 
         // ──────────────────────────────────────────────────────────────────
@@ -1017,7 +1062,7 @@ nav: tools
                 if (!inBounds(s)) continue;
                 const px = X(s.tdb), py = Y(s.W);
                 const isSel = (key === selectedStep);
-                const isSource = (key === 'oa' || key === 'ra');
+                const isDraggable = DRAGGABLE_KEYS.has(key);
                 // dot
                 ctx.beginPath();
                 ctx.arc(px, py, isSel ? 6 : 4.5, 0, 2 * Math.PI);
@@ -1027,8 +1072,10 @@ nav: tools
                 ctx.strokeStyle = cAccent;
                 ctx.stroke();
                 ctx.lineWidth = 1;
-                // outer source-handle ring — visual cue that OA / RA are draggable
-                if (isSource) {
+                // outer drag-handle ring — visual cue that OA / RA / MA are draggable
+                // (OA and RA drag freely on the chart; MA slides along the OA-RA mix
+                // line). CC / HC / HUM / SA are click-to-select only — no ring.
+                if (isDraggable) {
                     ctx.beginPath();
                     ctx.arc(px, py, 9, 0, 2 * Math.PI);
                     ctx.strokeStyle = cAccent;
@@ -1050,16 +1097,74 @@ nav: tools
                     ctx.font = "11px 'IBM Plex Mono', monospace";
                     ctx.textAlign = 'left';
                     ctx.textBaseline = 'bottom';
-                    ctx.fillText(label, px + (isSource ? 11 : 8), py - 7);
+                    ctx.fillText(label, px + (isDraggable ? 11 : 8), py - 7);
                 }
             }
         }
 
         // ──────────────────────────────────────────────────────────────────
-        // Drag — only OA / RA. Hit-test the source dots, then translate the
-        // pointer to (tdb, W) and write back into the editor for whichever
-        // node is being dragged (preserving its current "Define by" mode).
+        // Chart interactions — three layers:
+        //
+        //   1. Drag for the chart's three driveable points (OA / RA / MA).
+        //      OA / RA fall freely; MA slides along the OA-RA mix line and
+        //      writes the OA-fraction back to ma-pct.
+        //   2. Click-to-select for every visible node, draggable or not.
+        //      CC / HC / HUM / SA aren't dragged but selecting their pill
+        //      should still respond to clicking the dot.
+        //   3. A floating state-point chip that follows the dragged or
+        //      hovered draggable node (DB / WB / RH at current units). The
+        //      full property table on the right still owns the complete
+        //      state; the chip is the at-the-cursor glance aid.
         // ──────────────────────────────────────────────────────────────────
+
+        // Keys whose dot the user can grab and drag on the chart. CC / HC /
+        // HUM / SA are computed downstream of the editor — clickable for
+        // selection only.
+        const DRAGGABLE_KEYS = new Set(['oa', 'ra', 'ma']);
+
+        // ── Chip controller ──
+        const chipEl = document.getElementById('psy-chip');
+        let chipKey  = null;          // current chip target, or null when hidden
+
+        function showChip(key) {
+            if (!psyGeom || !lastChain) { hideChip(); return; }
+            const s = lastChain.results[key];
+            if (!s || !s.ok) { hideChip(); return; }
+            const tU = U.suffix.temp();
+            chipEl.innerHTML =
+                `<span class="lbl">DB</span><span class="val">${dispT(s.tdb)} ${tU}</span><br>` +
+                `<span class="lbl">WB</span><span class="val">${dispT(s.twb)} ${tU}</span><br>` +
+                `<span class="lbl">RH</span><span class="val">${s.rh.toFixed(1)}%</span>`;
+            chipEl.hidden = false;
+            chipKey = key;
+            positionChip(s);
+        }
+
+        function positionChip(s) {
+            if (chipEl.hidden || !psyGeom) return;
+            const c = document.getElementById('psy-canvas');
+            const px = c.offsetLeft + psyGeom.X(s.tdb);
+            const py = c.offsetTop  + psyGeom.Y(s.W);
+            const wrap = chipEl.parentElement;
+            const cw = chipEl.offsetWidth, ch = chipEl.offsetHeight;
+            const OFF = 14;
+            // Default: up-and-right of the dot. Flip per edge so the chip
+            // always stays inside the wrapper.
+            let left = px + OFF;
+            let top  = py - OFF - ch;
+            if (left + cw > wrap.clientWidth - 4) left = px - OFF - cw;
+            if (top < 4)                            top  = py + OFF;
+            chipEl.style.left = left + 'px';
+            chipEl.style.top  = top  + 'px';
+        }
+
+        function hideChip() {
+            chipEl.hidden = true;
+            chipKey = null;
+        }
+
+        // ── Drag math ──
+        // OA / RA: pointer is the new state point directly.
         function setSourceFromChart(prefix, tdb, W) {
             if (!lastChain) return;
             const P = lastChain.P;
@@ -1075,12 +1180,55 @@ nav: tools
             psyRecompute();
         }
 
-        function hitTestSource(ev) {
+        // MA: project the pointer onto the OA-RA mix line in canvas-pixel
+        // space (which is the same as the state-space mix line because both
+        // X(tdb) and Y(W) are linear). The projection parameter is the
+        // OA-fraction along the segment — t = 0 at RA, t = 1 at OA — so
+        // ma-pct = t · 100, clamped to [0, 100].
+        function setMaFromChart(pxCanvas, pyCanvas) {
+            if (!psyGeom || !lastChain) return;
+            const oa = lastChain.results.oa, ra = lastChain.results.ra;
+            if (!oa || !oa.ok || !ra || !ra.ok) return;
+            const { X, Y } = psyGeom;
+            const oaX = X(oa.tdb), oaY = Y(oa.W);
+            const raX = X(ra.tdb), raY = Y(ra.W);
+            const dx = oaX - raX, dy = oaY - raY;
+            const len2 = dx * dx + dy * dy;
+            if (len2 < 1) return;                     // OA and RA coincide
+            let t = ((pxCanvas - raX) * dx + (pyCanvas - raY) * dy) / len2;
+            t = Math.max(0, Math.min(1, t));
+            const pct = Math.round(t * 100);
+            const input = document.getElementById('ma-pct');
+            if (input.value === String(pct)) return;  // no change → skip recompute
+            input.value = pct;
+            psyRecompute();
+        }
+
+        // ── Hit-testing ──
+        // Visible-node set mirrors drawPsychChart's logic: OA / RA / MA
+        // always; CC / HC / HUM only when their stage is enabled; SA only
+        // when it doesn't coincide with the last upstream node (otherwise
+        // the SA dot is folded into that node's label).
+        function getVisibleKeys(chain) {
+            const r = chain.results;
+            const keys = ['oa', 'ra', 'ma'];
+            if (r.cc.enabled)  keys.push('cc');
+            if (r.hc.enabled)  keys.push('hc');
+            if (r.hum.enabled) keys.push('hum');
+            const last = r[keys[keys.length - 1]];
+            const saCoincides = last && last.ok && r.sa.ok
+                && Math.abs(last.tdb - r.sa.tdb) <= 0.05
+                && Math.abs(last.W   - r.sa.W)   <= 1e-6;
+            if (!saCoincides) keys.push('sa');
+            return keys;
+        }
+
+        function hitTestNode(ev) {
             if (!psyGeom || !lastChain) return null;
             const { X, Y } = psyGeom;
             const px = ev.offsetX, py = ev.offsetY;
             let best = null;
-            for (const key of ['oa', 'ra']) {
+            for (const key of getVisibleKeys(lastChain)) {
                 const s = lastChain.results[key];
                 if (!s || !s.ok) continue;
                 const d = Math.hypot(X(s.tdb) - px, Y(s.W) - py);
@@ -1089,32 +1237,54 @@ nav: tools
             return best ? best.key : null;
         }
 
+        // ── Pointer wiring ──
         (function () {
             const c = document.getElementById('psy-canvas');
             let dragKey = null;
-            const moveTo = (ev) => {
+
+            const applyDrag = (ev) => {
                 if (!psyGeom || !dragKey) return;
-                const { padL, padT, w, h } = psyGeom;
-                const tdb = TDB_MIN + (ev.offsetX - padL) / w * (TDB_MAX - TDB_MIN);
-                const W   = (padT + h - ev.offsetY) / h * W_MAX;
-                setSourceFromChart(dragKey, tdb, W);
+                if (dragKey === 'ma') {
+                    setMaFromChart(ev.offsetX, ev.offsetY);
+                } else {
+                    const { padL, padT, w, h } = psyGeom;
+                    const tdb = TDB_MIN + (ev.offsetX - padL) / w * (TDB_MAX - TDB_MIN);
+                    const W   = (padT + h - ev.offsetY) / h * W_MAX;
+                    setSourceFromChart(dragKey, tdb, W);
+                }
+                showChip(dragKey);
             };
+
             c.addEventListener('pointerdown', e => {
-                const hit = hitTestSource(e);
+                const hit = hitTestNode(e);
                 if (!hit) return;
-                dragKey = hit;
                 selectStep(hit);
-                c.setPointerCapture(e.pointerId);
-                moveTo(e);
+                if (DRAGGABLE_KEYS.has(hit)) {
+                    dragKey = hit;
+                    c.setPointerCapture(e.pointerId);
+                    applyDrag(e);
+                }
             });
+
             c.addEventListener('pointermove', e => {
-                if (!dragKey) return;
-                e.preventDefault();
-                moveTo(e);
+                if (dragKey) {
+                    e.preventDefault();
+                    applyDrag(e);
+                    return;
+                }
+                // Hover — show chip when pointer is over a draggable node.
+                const hit = hitTestNode(e);
+                if (hit && DRAGGABLE_KEYS.has(hit)) {
+                    showChip(hit);
+                } else {
+                    hideChip();
+                }
             });
-            const stop = () => { dragKey = null; };
-            c.addEventListener('pointerup', stop);
-            c.addEventListener('pointercancel', stop);
+
+            const endDrag = () => { dragKey = null; hideChip(); };
+            c.addEventListener('pointerup', endDrag);
+            c.addEventListener('pointercancel', endDrag);
+            c.addEventListener('pointerleave', () => { if (!dragKey) hideChip(); });
         })();
 
         // ──────────────────────────────────────────────────────────────────
