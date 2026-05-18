@@ -575,7 +575,7 @@ public R/T table for the 8.7K-shunted variant has been located.
 The thermistor page now carries an "About these tables" tool-card
 surfacing the methodology and disclaimers to end users.
 
-### Interactive psychrometric chart *(phase 3 in progress — math extracted 2026-05-17; chip + toggle polish next)*
+### Interactive psychrometric chart *(phase 3 shipped 2026-05-17)*
 Phase 1 (v0.6) shipped the state-point calculator + draggable dot on an
 altitude-adjustable ASHRAE IP-unit chart. Phase 2 (v1.3, shipped 2026-05-15)
 turned the single-point surface into an air-handler process chain: outdoor
@@ -585,11 +585,42 @@ node on the chart connected by a color-coded process segment; everything
 downstream of the source nodes is computed from the editor's process
 parameters and updates live as you type or drag.
 
-Phase 3 ships in two PRs: PR 1 (2026-05-17) extracted the pure psych math
-to `html/scripts/psychro-engine.js` ahead of the chip work so the chip
-lands on a smaller surface (page is now 1262 lines, down from 1384).
-PR 2 — still in flight — adds the floating state-point chip and the
-`.psy-toggle` polish noted below.
+Phase 3 (shipped 2026-05-17) added three things, in two PRs:
+
+- **PR 1 — math extraction.** Pure psych math moved to
+  `html/scripts/psychro-engine.js` with a two-tier API (ASHRAE primitives
+  flat, `Psychro.solveState` / `buildState` / `computeProcess` namespaced)
+  so the chip lands on a smaller page. See codebase-issues #6 for the
+  resolution note.
+- **PR 2 — chart-side interactions.** Three changes:
+  - *Floating state-point chip.* Small monospace tooltip that follows the
+    OA / RA / MA dot on hover and during drag, showing DB / WB / RH at
+    current display units. Absolutely positioned over the canvas, anchored
+    to `.sim-canvas-wrap` (which now carries `position: relative`).
+    Edge-flipped in JS so it never leaves the wrapper. Opacity 0.88 — high
+    enough to read clearly, low enough that process lines still show
+    through. The full property table on the right still owns the complete
+    state; the chip is the at-the-cursor glance aid.
+  - *MA draggable along the OA-RA line.* The mixed-air dot now slides
+    along the canvas-pixel mix line between OA and RA; the projection's
+    OA-fraction parameter writes back to `ma-pct`, clamped to [0, 100].
+    OA / RA still drag freely; MA's drag is constrained by the chain's
+    own geometry. MA gets the same outer drag-handle ring OA and RA carry,
+    so the affordance reads from the chart alone.
+  - *Click-to-select on every visible node.* Clicking any rendered dot
+    (OA / RA / MA / CC / HC / HUM / SA) activates that stage's pill — the
+    chart and the pill row stay in sync regardless of which one the user
+    drives. CC / HC / HUM / SA stay non-draggable (they're chain-derived);
+    they're click-to-select only and don't get the outer ring.
+- **`.psy-toggle` polish.** Dropped the static "On" text from the CC / HC
+  / HUM checkboxes; replaced with a `::after { content }` rule keyed on
+  `:has(input:checked)` so the label reads "Off" when unchecked, "On"
+  when checked. Added `line-height: 1` to the label so the text aligns
+  vertically against the checkbox glyph instead of riding above it.
+
+The "Floating state-point chip" and "`.psy-toggle` polish" deferred items
+that lived in this section below have shipped under the PR 2 summary
+above; their detail blocks have been removed.
 
 In scope (shipped):
 - *AHU chain* — fixed canonical sequence `OA + RA → MA → CC → HC → HUM
@@ -705,35 +736,6 @@ mutes to "—".
   distinction. Acceptable in practice — adiabatic humidification *is*
   motion toward saturation, so the colour affinity is even thematically
   apt.
-
-**Floating state-point chip — still deferred (now phase 3).** A small
-tooltip-style readout that follows the dragged dot, ~75 % opacity so
-process lines stay visible underneath, offset 12–15 px up-and-right so
-the dot itself isn't obscured. Shows 2–3 key values (DB, WB, RH); the
-full property table on the right still owns the complete state.
-Direct-manipulation feedback pattern. Build in a focused follow-up so
-the opacity / offset / property selection can be tuned without
-process-lines work distracting.
-
-Implementation note carried forward from phase 1: canvas was the right
-call (matches the PID plot's approach). The chip would be an absolutely
-positioned HTML element over the canvas, updated on each drag event.
-
-**`.psy-toggle` polish — bundle into phase 3.** Two small fixes on the
-CC / HC / HUM on/off rows surfaced when reviewing the #25 aria-wiring
-PR visually:
-
-- *"On" text reads as top-aligned against the checkbox.*
-  `<label class="psy-toggle">` already declares
-  `display: inline-flex; align-items: center;`, yet the text rides
-  higher than the checkbox glyph — probably a baseline-vs-flex-center
-  quirk or a line-height mismatch between 0.78rem sans text and the
-  checkbox's intrinsic height. Want it vertically centered.
-- *Dynamic "On" / "Off" label.* The visible text is static "On"; it
-  should read "Off" when the checkbox is unchecked, matching the
-  state. Two viable shapes: wrap the text in a `<span>` and toggle
-  alongside the existing cc/hc/hum state plumbing, or use a
-  `::after` content + `:checked` sibling pattern (CSS-only).
 
 ### Psychrometrics — paired Education page
 
