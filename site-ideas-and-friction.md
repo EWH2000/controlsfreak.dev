@@ -575,15 +575,21 @@ public R/T table for the 8.7K-shunted variant has been located.
 The thermistor page now carries an "About these tables" tool-card
 surfacing the methodology and disclaimers to end users.
 
-### Interactive psychrometric chart *(phase 2 — AHU process chain — shipped 2026-05-15)*
+### Interactive psychrometric chart *(phase 3 in progress — math extracted 2026-05-17; chip + toggle polish next)*
 Phase 1 (v0.6) shipped the state-point calculator + draggable dot on an
-altitude-adjustable ASHRAE IP-unit chart. Phase 2 (v1.3) turns the
-single-point surface into an air-handler process chain: outdoor air +
-return air mix to mixed air, then a cooling coil, a heating coil, and a
-humidifier walk the state toward supply air. Each stage is a labelled
+altitude-adjustable ASHRAE IP-unit chart. Phase 2 (v1.3, shipped 2026-05-15)
+turned the single-point surface into an air-handler process chain: outdoor
+air + return air mix to mixed air, then a cooling coil, a heating coil,
+and a humidifier walk the state toward supply air. Each stage is a labelled
 node on the chart connected by a color-coded process segment; everything
 downstream of the source nodes is computed from the editor's process
 parameters and updates live as you type or drag.
+
+Phase 3 ships in two PRs: PR 1 (2026-05-17) extracted the pure psych math
+to `html/scripts/psychro-engine.js` ahead of the chip work so the chip
+lands on a smaller surface (page is now 1262 lines, down from 1384).
+PR 2 — still in flight — adds the floating state-point chip and the
+`.psy-toggle` polish noted below.
 
 In scope (shipped):
 - *AHU chain* — fixed canonical sequence `OA + RA → MA → CC → HC → HUM
@@ -728,6 +734,111 @@ PR visually:
   state. Two viable shapes: wrap the text in a `<span>` and toggle
   alongside the existing cc/hc/hum state plumbing, or use a
   `::after` content + `:checked` sibling pattern (CSS-only).
+
+### Psychrometrics — paired Education page
+
+Promoted from a follow-up note during phase-3 planning: the chart page is
+dense even for someone fluent in psychrometrics (the chip's "DB / WB / RH"
+readout assumes the reader knows what those mean), and learning more about
+psychrometrics is one of the explicit personal goals of building the page.
+Pair the tool with a lesson in the spirit of `pid-tuner.html` ↔
+`pid-basics.html`.
+
+Scope sketch:
+- The seven properties — DB, WB, DP, W, RH, h, v — what each means
+  physically, which measurement instrument tells you which, and the
+  pairwise relationships ("DB + RH gives you everything; DB + WB also
+  gives you everything; but DB alone gives you nothing about moisture
+  content"). The Mollier intuition: at constant pressure you only need
+  two independent properties to lock the state.
+- The process families on the chart — sensible heat vs. latent vs.
+  mixing vs. adiabatic humidification. Why dew point shifts under
+  cooling+dehumidification but not under sensible heating; why mixing
+  lands on the straight line between sources; why adiabatic
+  humidification follows the wet-bulb line.
+- Common gotchas — what RH actually measures at saturation (and why
+  RH alone tells you almost nothing without a temperature), why
+  enthalpy is the right basis for "how much heat is the coil moving,"
+  and the dew-point ≈ glass-of-ice-water mental model.
+
+Cross-link both ways: tool page → "Learn the psychrometrics behind this
+chart" link in a `.tool-card` callout; lesson page → "Try this on the
+interactive chart" link at the relevant sections.
+
+Working title: `education/psychrometrics-basics.html`.
+
+### Air-mixing calculator *(candidate psych-tool follow-up)*
+
+Generalize the chart's OA + RA mass-weighted mix to N streams: mix two
+or more known states by mass flow (or by mass fraction) into a single
+mixed state. Useful any time a tech is sizing an outside-air mixing
+plenum, blending economizer plus return, or sanity-checking an energy-
+recovery wheel's output state.
+
+In scope (sketch):
+- Two-tab UI: by-mass-flow (each stream gets a CFM or a lb/h) vs.
+  by-fraction (each stream gets a %, must sum to 100).
+- Per-stream input row using the chart page's "Define by" pattern —
+  DB + (RH / WB / DP / W / h).
+- Output: mixed-air DB, W, h, RH, v, plus optional altitude/pressure.
+- Reuses `humRatioFromRH`, `humRatioFromWetBulb`, `enthalpy`,
+  `pressFromAltitude` from `psychro-engine.js` (flat primitives) and
+  `Psychro.buildState` to materialize the result. No new math.
+
+First second-consumer that lands triggers a review of the engine's
+two-tier API — if it wants its own solver methods, those become the
+test of whether `Psychro.*` is the right namespace shape.
+
+### Coil-sizing calculator *(candidate psych-tool follow-up)*
+
+A single-stage calculator: given entering state + leaving state +
+airflow, return total / sensible / latent capacity and SHR. Or invert —
+given entering + airflow + target capacity, solve for leaving state.
+Same math as the chart's CC stage in isolation, surfaced as its own
+tool so a tech sizing a coil doesn't have to build a whole AHU chain
+just to check one capacity.
+
+In scope (sketch):
+- Coil type toggle: cooling, heating, humidifying.
+- Entering and leaving state editors (the "Define by" pattern again).
+- Airflow input (CFM or m³/h).
+- Output: total MBH, sensible MBH, latent MBH, SHR (cooling only),
+  ΔDB / ΔW / Δh.
+- Solve-for mode: lock any three of {entering, leaving, airflow,
+  capacity}, the fourth falls out.
+- Reuses `Psychro.solveState`, `Psychro.buildState`, and
+  `Psychro.computeProcess` — the last one being the exact math the
+  chart's per-stage table runs today.
+
+Same "first second-consumer triggers API review" note as air-mixing.
+
+### Economizer-ratio helper *(candidate psych-tool follow-up — small)*
+
+Given OA temp + RA temp + mixed-air setpoint (or OA enthalpy + RA
+enthalpy + mixed-air setpoint for an enthalpy-economizer surface),
+return the required % OA. The single-knob version of the chart's MA
+stage. Tiny tool — fits in a `.tool-body-3col` with about six rows of
+inputs and one readout — but it's the calculation a controls tech
+actually runs at the panel ("how far do I open the OA damper to hit
+55 °F mixed at these conditions?") more often than they'd build out a
+full chain.
+
+In scope (sketch):
+- Dry-bulb mode and enthalpy mode toggle. Dry-bulb mode is most of the
+  daily use; enthalpy mode is the more correct calc and the one a
+  high-end BAS economizer actually performs.
+- OA, RA, and mixed-setpoint inputs.
+- Output: required % OA, plus a "feasibility" annotation (whether the
+  setpoint sits between OA and RA — outside that range, no mix gets
+  you there).
+- Reuses `humRatioFromRH`, `humRatioFromWetBulb`, `enthalpy` for the
+  enthalpy-mode case. Dry-bulb mode is pure mass-balance (no engine
+  call needed); enthalpy mode wants the engine's primitives.
+
+Same "first second-consumer triggers API review" note. Of the three
+candidates, this is the lightest — and would be the cleanest test of
+whether the engine's flat primitives are ergonomic for a tool that
+doesn't need the full solver.
 
 ### Mock function-block editor *(larger build — may span multiple sessions)*
 A graphical function-block sandbox in the spirit of Niagara's wiresheet

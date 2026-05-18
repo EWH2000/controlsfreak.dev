@@ -241,7 +241,7 @@ anonymous, `.fw-*` obscure) rejected. Lands as part of Block C
 (post-migration cleanup) — extracting CSS before the 11ty migration
 would force two passes over the same five pages.
 
-### 6. `psychrometric-chart.html` is monolithic
+### 6. `psychrometric-chart.html` is monolithic *(addressed 2026-05-17)*
 
 1356 lines of inline JS + 1319 lines of inline CSS + 46
 `getElementById` calls — by far the biggest single page. It's one
@@ -262,6 +262,23 @@ extracting the math layer to `html/scripts/psychro-engine.js`
 the chip lands against a smaller surface. Trigger: phase-3 work
 starting, OR a second tool needing psychrometric math (air-mixing,
 coil sizing, economizer-ratio would qualify).
+
+**Resolution (2026-05-17, PR 1 of phase 3):** math layer extracted to
+`html/scripts/psychro-engine.js` with a two-tier API — ASHRAE primitives
+(satPress, humRatioFromVapPress, vapPressFromHumRatio, satHumRatio,
+humRatioFromRH, rhFromHumRatio, enthalpy, specificVolume, pressFromAltitude,
+humRatioFromWetBulb, wetBulbFromHumRatio, dewPointFromVapPress) at the top
+level as script-scoped globals, and the higher-level solver (solveState,
+buildState, computeProcess) namespaced under `window.Psychro` so a future
+second consumer can grow its own solver methods without bare-name
+collisions. The chain solver (`solveChain`) stays on the page — it reads
+DOM and converts through `window.Units`, so it's the DOM↔engine bridge
+not a pure math function. Page drops from 1384 → 1262 lines. The
+candidate second-consumer hedges (air-mixing, coil-sizing, economizer-
+ratio) are promoted to first-class roadmap entries in
+`site-ideas-and-friction.md` so the engine's API shape is reviewed against
+real second-tool needs when one of them lands. Phase-3 chip work follows
+in PR 2 on the smaller page.
 
 ### 7. Worker has no app-level rate limit on `/api/contact`
 
