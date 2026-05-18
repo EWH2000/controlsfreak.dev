@@ -34,6 +34,7 @@ const PAGES = [
     { name: 'education — vfds',       url: 'http://localhost:8000/education/vfds.html' },
     { name: 'education — pump control', url: 'http://localhost:8000/education/pump-control.html' },
     { name: 'education — balancing',   url: 'http://localhost:8000/education/balancing.html' },
+    { name: 'education — psychrometrics basics', url: 'http://localhost:8000/education/psychrometrics-basics.html' },
     { name: 'contact',                url: 'http://localhost:8000/contact.html' },
 ];
 
