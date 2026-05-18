@@ -886,33 +886,68 @@ In scope (sketch):
 
 Same "first second-consumer triggers API review" note as air-mixing.
 
-### Economizer-ratio helper *(candidate psych-tool follow-up — small)*
+### Economizer-ratio helper *(shipped 2026-05-18)*
 
-Given OA temp + RA temp + mixed-air setpoint (or OA enthalpy + RA
-enthalpy + mixed-air setpoint for an enthalpy-economizer surface),
-return the required % OA. The single-knob version of the chart's MA
-stage. Tiny tool — fits in a `.tool-body-3col` with about six rows of
-inputs and one readout — but it's the calculation a controls tech
-actually runs at the panel ("how far do I open the OA damper to hit
-55 °F mixed at these conditions?") more often than they'd build out a
-full chain.
+Ships at `/tools/economizer-ratio.html` as a two-tab `.tool-body-3col`
+tool. Tab 1 (dry-bulb) is the calc a tech runs at the panel — three
+temperature inputs, one %OA out, feasibility verdict. Tab 2 (enthalpy /
+full state) takes full OA + RA states via the chart-page Define-by
+pattern and adds two things on top of the dry-bulb answer: the
+**resulting mixed-air state** (DB, WB, W, RH, h — what the coil actually
+sees) and an **OA-vs-RA enthalpy-changeover verdict** (favorable /
+wash / unfavorable), which is the high-limit gate a real enthalpy
+economizer uses to decide whether free cooling is worth running before
+any dry-bulb modulation runs. Both tabs follow the global Units toggle
+with input-value conversion on flip; sea-level pressure for v1 (an
+altitude field would have leaked from chart-tool surface for marginal
+gain, see "Out of scope" below).
 
-In scope (sketch):
-- Dry-bulb mode and enthalpy mode toggle. Dry-bulb mode is most of the
-  daily use; enthalpy mode is the more correct calc and the one a
-  high-end BAS economizer actually performs.
-- OA, RA, and mixed-setpoint inputs.
-- Output: required % OA, plus a "feasibility" annotation (whether the
-  setpoint sits between OA and RA — outside that range, no mix gets
-  you there).
-- Reuses `humRatioFromRH`, `humRatioFromWetBulb`, `enthalpy` for the
-  enthalpy-mode case. Dry-bulb mode is pure mass-balance (no engine
-  call needed); enthalpy mode wants the engine's primitives.
+**Framing decision settled during build.** The friction-file scope
+sketch read as "OA enthalpy + RA enthalpy + MA enthalpy setpoint → %OA"
+for the enthalpy tab. In practice no controls engineer specifies an MA
+enthalpy setpoint — they specify an MA *dry-bulb* setpoint, and a
+high-end BAS uses enthalpy only as the changeover criterion (not the
+modulating variable). The tool reflects that: %OA on both tabs is a
+DB mass balance; enthalpy buys you the full mixed-state readouts plus
+the changeover comparison.
 
-Same "first second-consumer triggers API review" note. Of the three
-candidates, this is the lightest — and would be the cleanest test of
-whether the engine's flat primitives are ergonomic for a tool that
-doesn't need the full solver.
+**Engine API review — `psychro-engine.js` flat primitives.** First
+second-consumer landed; the API survived as-is:
+- `Psychro.solveState(mode, tdb, second, P)` was the ergonomic call on
+  the OA / RA editors — three lookups (Define-by selector, dry-bulb
+  input, second value) feed straight in, error path is uniform.
+- `Psychro.buildState(tdb, W, P)` was the right shape for the mixed
+  state once %OA was known; humidity ratio is a clean mix variable
+  alongside dry-bulb.
+- No new primitives needed; the existing `enthalpy`, `humRatioFromRH`,
+  etc. flat exports weren't touched directly because solveState covers
+  every Define-by mode behind one function.
+- One small drag: `solveState` returns `{ ok, error }` *or* the state
+  object, and consumers have to keep both shapes in mind. Not a redesign
+  trigger — three of three call sites in this tool branch on `.ok`
+  cleanly — but if a fourth consumer wants a "just throw on bad input"
+  variant, that'd be the time to add a sibling rather than refactor.
+- `computeProcess` wasn't needed (no coil-process delta to compute);
+  appropriately namespace-only.
+
+Verdict: **the two-tier API holds.** Air-mixing calculator and
+coil-sizing calculator can land against the current surface without
+preliminary refactor; flag a re-audit when one of those exposes a
+real shape mismatch.
+
+**Out of scope (deliberate, parked):**
+- *Altitude / pressure input* — kept sea-level for v1. Chart tool has
+  altitude and that's the right place for it; this tool's job is the
+  fast panel calc. Pulling altitude over would have meant a wider
+  Input column and rebuilt-on-flip pressure plumbing for no
+  daily-use payoff. The "atmospheric pressure fixed at sea level"
+  note in the enthalpy tab forward-points to the chart for an
+  altitude-adjusted answer.
+- *MA enthalpy setpoint input* — see framing decision above.
+- *Economizer-changeover threshold reference table* (ASHRAE 90.1 by
+  climate zone) — would have made the Reference column denser without
+  changing the math. Worked-example walkthrough won the slot; the
+  changeover-verdict pill in the enthalpy tab is the live equivalent.
 
 ### Mock function-block editor *(larger build — may span multiple sessions)*
 A graphical function-block sandbox in the spirit of Niagara's wiresheet

@@ -35,6 +35,15 @@ Calculators, converters, and lookups — open one, get an answer.
   heating, adiabatic humidification). Optional AHU airflow input
   surfaces coil capacities in MBH with the sensible / latent split.
   For building feel, not calibrated load studies.
+- **Economizer Ratio Helper** — required %OA to mix outdoor and
+  return air down to a mixed-air dry-bulb setpoint, with a
+  feasibility verdict ("setpoint between OA and RA — feasible",
+  "OA hotter than setpoint — infeasible", "OA cool but not enough —
+  damper goes 100 % OA, coil picks up the rest"). Enthalpy tab
+  takes full OA/RA states (Define-by pattern, same as the chart
+  tool) and adds the resulting full mixed state plus the OA-vs-RA
+  enthalpy changeover verdict a high-end BAS uses to gate free
+  cooling before any dry-bulb modulation runs.
 - **Thermistor / RTD Lookup** — table-driven R↔T curve for common
   sensor types (10K Type II/III, JCI 10K+8.7K shunt,
   Schneider/TAC "Type 5" 10K-3+11K shunt, 20K, 3K, 1K Balco,
