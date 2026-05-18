@@ -654,6 +654,7 @@ input[type="range"]::-moz-range-thumb {
 .btn-row { display: flex; flex-wrap: wrap; gap: 0.4rem; }
 
 .sim-canvas-wrap {
+    position: relative;            /* anchor for absolute-positioned overlays (e.g. psychrometric chart's state-point chip) */
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 3px;
