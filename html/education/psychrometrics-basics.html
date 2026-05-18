@@ -1,0 +1,465 @@
+---
+title: Psychrometrics Basics — controlsfreak.dev
+description: The seven properties on a psychrometric chart, what each one tells a controls engineer, and the gotchas that bite — with a pool-room widget that shows why dew point is the number to watch.
+canonical: https://controlsfreak.dev/education/psychrometrics-basics.html
+nav: education
+---
+{% extends "layouts/page.njk" %}
+
+{% block head %}
+    <style>
+        /* Page-only — chrome for the pool-condensation widget. The shared
+           widget shell (.widget / .widget-section-label / .widget-slider* /
+           .widget-readout-* / .widget-anecdote*) lives in styles.css; only
+           this page's grid + status-panel rules sit here. CSS class prefix
+           on widget internals is `pool-w-`, matching the per-widget prefix
+           convention used by pump-control's `.pc-w-*` and vfds' `.vfd-w-*`. */
+
+        .pool-w-controls { margin-bottom: 1.1rem; }
+        .pool-w-controls .pool-w-slider + .pool-w-slider { margin-top: 0.4rem; }
+
+        .pool-w-readouts {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.8rem 1rem;
+            margin-bottom: 1rem;
+        }
+        @media (max-width: 600px) {
+            .pool-w-readouts { grid-template-columns: repeat(2, 1fr); }
+        }
+        .pool-w-readouts > div { min-width: 0; }
+
+        /* Three-state status panel keyed off canonical-IP (surface − dew-point)
+           margin. Border-left + label colour carry the state — no animations.
+           Same visual family as .widget-anecdote. */
+        .pool-w-status {
+            padding: 0.85rem 1rem;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-left: 4px solid var(--accent);
+            border-radius: 3px;
+        }
+        .pool-w-status[data-state="watch"] { border-left-color: var(--heat); }
+        .pool-w-status[data-state="bad"]   { border-left-color: var(--red);  }
+        .pool-w-status .lbl {
+            font-family: var(--mono);
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--accent);
+            letter-spacing: 0.04em;
+            margin-bottom: 0.25rem;
+        }
+        .pool-w-status[data-state="watch"] .lbl { color: var(--heat); }
+        .pool-w-status[data-state="bad"]   .lbl { color: var(--red);  }
+        .pool-w-status .sub {
+            font-family: var(--mono);
+            font-size: 0.74rem;
+            color: var(--text-dim);
+            line-height: 1.6;
+        }
+
+        /* Margin readout — surface − dew-point — colour-matches the status
+           panel so the pair reads as one signal. Override is keyed off the
+           parent readouts' data-state attribute. */
+        #pool-margin-val { color: var(--accent); }
+        .pool-w-readouts[data-state="watch"] #pool-margin-val { color: var(--heat); }
+        .pool-w-readouts[data-state="bad"]   #pool-margin-val { color: var(--red);  }
+    </style>
+{% endblock %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <h1 class="section-label">Education · Psychrometrics Basics</h1>
+        <div class="section-line"></div>
+    </div>
+
+    <p class="page-intro">
+        “I have been fighting to understand this better myself for a while now. I programmed a pool unit on a job and the engineer speced it with very tight tolerance for efficiency, and I’ve had to fight to keep zone humidity down.”
+    </p>
+
+    <p style="max-width:700px;margin-bottom:2rem;color:var(--text);line-height:1.8;">
+        Pool rooms are one of the hardest places in a building to control moist air — high latent loads from the water, cold outer surfaces that condense any time you slip, and a tight humidity band that the design engineer signed up to defend. This page is the vocabulary for that fight: the seven properties on a psychrometric chart, what each one tells a controls engineer, and the gotchas that bite. The interactive <a href="/tools/psychrometric-chart.html">Psychrometric Chart</a> tool is where it all comes together once you have the words.
+    </p>
+
+    <!-- ── Two properties lock the rest ─────────────────────────────────── -->
+    <div class="section-header">
+        <h2 class="section-label">Two Properties Lock the Rest</h2>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-body">
+            <p>
+                At a fixed pressure (which, for an indoor space at a given altitude, you can treat as constant), moist air has <em>two</em> independent degrees of freedom. Pick any two independent properties — say, dry-bulb and relative humidity — and the other five fall out: wet-bulb, dew point, humidity ratio, enthalpy, specific volume, and vapor pressure all become arithmetic from those two. That is why every psychrometric chart is two-axis, and why the chart tool’s <strong>Define&nbsp;by</strong> dropdown is not UX whimsy: it lets you pick whichever pair you actually have a reading for and reads off the rest.
+            </p>
+            <p>
+                Some pairs are common and easy to come by; some are technically valid but rare. The table below is the practical short list — what the field tech and the controls engineer typically have to work with.
+            </p>
+
+            <table class="ref-table-dense" style="margin-top:1rem;">
+                <thead>
+                    <tr>
+                        <th>Pair</th>
+                        <th>Where it comes from</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td><strong>DB + RH</strong></td><td>Almost every space sensor — BACnet AHU return, wall stat, IAQ probe. The everyday pair, and the one with the most footguns.</td></tr>
+                    <tr><td><strong>DB + WB</strong></td><td>Sling psychrometer or aspirated wet/dry pair. The original field measurement; still the gold standard for a coil leaving-air reading.</td></tr>
+                    <tr><td><strong>DB + DP</strong></td><td>Chilled-mirror dewpoint sensor plus a temperature element. Less common in HVAC; more common in clean rooms, labs, museums.</td></tr>
+                    <tr><td><strong>DB + W</strong></td><td>Computed — either a transmitter that outputs grains directly, or a downstream calc from RH. Useful for mass-balance work.</td></tr>
+                    <tr><td><strong>DB + h</strong></td><td>Computed — enthalpy economizer logic lives here. The right pair for "how much heat is moving through this coil."</td></tr>
+                </tbody>
+            </table>
+
+            <p class="ref-note" style="margin-top:0.85rem;">
+                Some pairs are degenerate at the edges. At saturation (RH&nbsp;=&nbsp;100%) DB equals WB equals DP and you only really have one number; above saturation isn’t a valid state at all — the chart’s heavy green curve is a hard ceiling.
+            </p>
+        </div>
+    </div>
+
+    <!-- ── The seven properties ─────────────────────────────────────────── -->
+    <div class="section-header" style="margin-top:2.5rem;">
+        <h2 class="section-label">The Seven Properties — What Each One Tells You</h2>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-body">
+            <div class="callout-grid">
+                <div class="callout">
+                    <h3>DB — Dry-bulb temperature <span>· what the thermometer reads</span></h3>
+                    <p>The plain air temperature, no moisture correction. Every space sensor, every duct probe, every supply-air RTD is reading dry-bulb. It is the most familiar number — and on its own, it tells you nothing about how much water is in the air. A <span data-us="75&nbsp;°F" data-metric="24&nbsp;°C">75&nbsp;°F</span> space is comfortable at 50% RH and sticky at 80%.</p>
+                </div>
+                <div class="callout">
+                    <h3>WB — Wet-bulb temperature <span>· the evaporative-cooling floor</span></h3>
+                    <p>The temperature a thermometer reads with a wet sock over the bulb in moving air: water evaporates off the sock and pulls the reading down toward the air’s evaporative limit. Comes from a sling psychrometer or a fixed aspirated wet/dry pair. WB equals DB at saturation; the drier the air, the bigger the depression. The cooling-tower industry lives on this number — it is the lowest temperature you can ever cool water to with that air.</p>
+                </div>
+                <div class="callout">
+                    <h3>DP — Dew point <span>· the glass-of-ice-water temperature</span></h3>
+                    <p>The temperature you have to cool the air to before water vapor starts condensing. Pour ice water into a glass: the surface chills near <span data-us="32&nbsp;°F" data-metric="0&nbsp;°C">32&nbsp;°F</span>, the air against it cools to its dew point, water condenses, the glass sweats. Any space surface below dew point sweats — windows, ducts in unconditioned ceiling cavities, cold-floor lobbies, pool glazing. This is the property the natatorium spec is really defending, even when it is written as RH.</p>
+                </div>
+                <div class="callout">
+                    <h3>W — Humidity ratio <span>· grains per pound of dry air</span></h3>
+                    <p>Mass of water vapor per unit mass of dry air. Stated as gr/lb (US) or g/kg (metric). The mass-balance quantity: when a coil dehumidifies, this is what drops; when a humidifier adds moisture, this is what climbs. Unlike RH it does not depend on temperature, so it is the right number to compare two airstreams at different temperatures or to balance moisture loads across a system.</p>
+                </div>
+                <div class="callout">
+                    <h3>RH — Relative humidity <span>· how full the air is at this temperature</span></h3>
+                    <p>The vapor pressure of the moisture in the air, divided by the saturation vapor pressure at the air’s current dry-bulb, expressed as a percent. 100% means saturated — any colder surface will condense; 0% means bone-dry. The catch: <em>at this temperature</em> is load-bearing. Two airstreams at 60% RH but different DB carry very different moisture and very different dew points. RH is the property people quote, and the property that bites them.</p>
+                </div>
+                <div class="callout">
+                    <h3>h — Enthalpy <span>· total heat per pound of dry air</span></h3>
+                    <p>Sensible (DB-driven) plus latent (moisture-driven) heat, rolled together in one number. Btu per pound of dry air (or kJ/kg). The right basis for "how much heat is the coil moving" — multiply Δh by mass flow through the coil and you get total Btu/h, sensible and latent together. An enthalpy economizer compares OA vs RA on this number, not DB alone, because hot-but-dry OA can carry less total heat than cool-but-wet RA.</p>
+                </div>
+                <div class="callout">
+                    <h3>v — Specific volume <span>· ft³ per pound of dry air</span></h3>
+                    <p>The volume one pound of dry air occupies at its current state. The translator between volumetric airflow (CFM — what the fan delivers) and mass flow (lb/h — what every load calc runs on). Warm humid air has a larger specific volume than cool dry air, so the same CFM moves <em>less</em> mass through the coil on a hot day. One reason coil performance drops off in design conditions, and one reason engineers can’t skip this number.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Pool-space condensation widget ───────────────────────────────── -->
+    <div class="section-header" style="margin-top:2.5rem;">
+        <h2 class="section-label">Does This Air Sweat the Windows?</h2>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-body">
+            <p>
+                The pool-room control problem in one sentence: <strong>dew point has to stay below the coldest surface in the room, with margin to spare.</strong> Any surface colder than dew point grows water out of the air. Slide the space dry-bulb and relative humidity around below, plus a slider for the coldest surface in the room. The readouts back out humidity ratio, dew point, and enthalpy; the status panel tells you whether the glass stays dry.
+            </p>
+
+            <div class="widget" id="pool-widget">
+                <div class="widget-section-label">Space conditions</div>
+
+                <div class="pool-w-controls">
+                    <div class="pool-w-slider">
+                        <div class="widget-slider-head">
+                            <label for="pool-db">Space dry-bulb</label>
+                            <span class="v"><span id="pool-db-val">82</span><span class="unit" data-us="°F" data-metric="°C">°F</span></span>
+                        </div>
+                        <input class="widget-slider" id="pool-db" type="range" min="60" max="95" step="1" value="82"/>
+                    </div>
+                    <div class="pool-w-slider">
+                        <div class="widget-slider-head">
+                            <label for="pool-rh">Space relative humidity</label>
+                            <span class="v"><span id="pool-rh-val">60</span><span class="unit">%</span></span>
+                        </div>
+                        <input class="widget-slider" id="pool-rh" type="range" min="20" max="90" step="1" value="60"/>
+                    </div>
+                    <div class="pool-w-slider">
+                        <div class="widget-slider-head">
+                            <label for="pool-tsurf">Coldest surface (single-pane glass, cold day)</label>
+                            <span class="v"><span id="pool-tsurf-val">50</span><span class="unit" data-us="°F" data-metric="°C">°F</span></span>
+                        </div>
+                        <input class="widget-slider" id="pool-tsurf" type="range" min="30" max="80" step="1" value="50"/>
+                    </div>
+                </div>
+
+                <div class="pool-w-readouts" id="pool-readouts">
+                    <div>
+                        <div class="widget-readout-label">Humidity ratio</div>
+                        <div class="widget-readout-value"><span id="pool-w-val">—</span><span class="unit" data-us="gr/lb" data-metric="g/kg">gr/lb</span></div>
+                    </div>
+                    <div>
+                        <div class="widget-readout-label">Dew point</div>
+                        <div class="widget-readout-value"><span id="pool-dp-val">—</span><span class="unit" data-us="°F" data-metric="°C">°F</span></div>
+                    </div>
+                    <div>
+                        <div class="widget-readout-label">Enthalpy</div>
+                        <div class="widget-readout-value"><span id="pool-h-val">—</span><span class="unit" data-us="Btu/lb" data-metric="kJ/kg">Btu/lb</span></div>
+                    </div>
+                    <div>
+                        <div class="widget-readout-label">Surface − dew point</div>
+                        <div class="widget-readout-value"><span id="pool-margin-val">—</span><span class="unit" data-us="°F" data-metric="°C">°F</span></div>
+                    </div>
+                </div>
+
+                <div class="pool-w-status" id="pool-status" data-state="ok">
+                    <div class="lbl" id="pool-status-lbl">GLASS STAYS DRY</div>
+                    <div class="sub" id="pool-status-sub">Margin is healthy — surface temperature comfortably above dew point.</div>
+                </div>
+
+                <div class="widget-anecdote-wrap" id="pool-anecdote-wrap"></div>
+            </div>
+
+            <p class="ref-note" style="margin-top:1rem;">
+                Math: <code>W = humRatioFromRH(RH, DB)</code> → <code>dewPoint(W)</code> → <code>h = enthalpy(DB, W)</code>, all from the ASHRAE Fundamentals (Chapter&nbsp;1) IP equations at standard sea-level pressure. Surface temperature is your independent input — that is a thermal-bridging / envelope question, not a psychrometric one. <span data-us="50 °F" data-metric="10 °C">50 °F</span> is a fair guess for single-pane glass on a cold winter day; double-pane and low-e will sit warmer, a poorly insulated metal frame can sit colder.
+            </p>
+        </div>
+    </div>
+
+    <!-- ── Process families ─────────────────────────────────────────────── -->
+    <div class="section-header" style="margin-top:2.5rem;">
+        <h2 class="section-label">Process Families on the Chart</h2>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-body">
+            <p>
+                Every air-handler stage moves the state point in a characteristic direction on the chart. Four families cover almost everything a controls engineer meets — naming them out loud makes it easier to read what a coil is doing the next time the leaving-air state stops making sense.
+            </p>
+
+            <h3 class="subhead">Sensible heating or cooling</h3>
+            <p>
+                A heating coil with no humidifier, or a cooling coil where the leaving DB stays above the entering dew point. The state point slides horizontally: DB moves, but humidity ratio stays put — no moisture has been added or removed. RH falls (heating drives the air away from saturation) or rises (cooling drives it toward saturation). Enthalpy follows DB.
+            </p>
+
+            <h3 class="subhead">Cooling + dehumidification</h3>
+            <p>
+                The cooling coil dips below the entering dew point. Moisture condenses out, drains away, and the leaving air has lower W and lower DP. The state-point path bends down-and-to-the-left toward the coil’s apparatus dew point. Both sensible and latent enthalpy leave the airstream; on a humid day the latent share is most of the load. This is the process that does the real work in any dehumidification application — natatorium included.
+            </p>
+
+            <h3 class="subhead">Mixing two streams</h3>
+            <p>
+                Outdoor air meeting return air in an AHU mixing box, or a bypass leg meeting a coil-leaving stream. The mixed point lands on the straight line between the two source points on the chart, at the mass-weighted fraction. 20% OA + 80% RA puts you 20% of the way from RA to OA, in a straight line. The chart tool’s <strong>MA</strong> node is doing exactly this math.
+            </p>
+
+            <h3 class="subhead">Adiabatic humidification</h3>
+            <p>
+                An evaporative pad or wetted-media humidifier — water evaporates into the airstream, taking its evaporation heat <em>from</em> the airstream. The state point slides up-and-to-the-left along a constant wet-bulb line: W rises, DB drops, total enthalpy is essentially unchanged. The latent gain is paid for by a sensible drop. (Steam injection is different — that adds enthalpy and sits higher on the chart; the chart tool only models the adiabatic case for now.)
+            </p>
+
+            <p style="margin-top:1rem;">
+                Each of these is a coloured segment on the <a href="/tools/psychrometric-chart.html">interactive chart</a> — drag the OA and RA points around and watch the process colours change as the chain re-solves.
+            </p>
+        </div>
+    </div>
+
+    <!-- ── Gotchas ──────────────────────────────────────────────────────── -->
+    <div class="section-header" style="margin-top:2.5rem;">
+        <h2 class="section-label">Gotchas That Bite Controls Engineers</h2>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-body">
+            <div class="callout-grid">
+                <div class="callout">
+                    <h3>RH alone tells you nothing</h3>
+                    <p>Two airstreams at 60% RH but different DB carry very different moisture and pose very different condensation risks. A humidity spec written without a temperature spec is half a spec. When a pool engineer writes "≤&nbsp;60% RH at design conditions," they are really defending a dew-point ceiling — the RH number is convenient shorthand for it.</p>
+                </div>
+                <div class="callout">
+                    <h3>Dew point is the property that condenses</h3>
+                    <p>Whenever you are worried about water on a surface, the controlling number is dew point. The glass-of-ice-water mental model holds everywhere — pool windows, supply-duct condensation in unconditioned ceiling cavities, sweating chilled-water piping in a humid mechanical room, cold-floor lobbies in shoulder seasons. If you can back dew point out from the sensors you already have, you have the controlling number.</p>
+                </div>
+                <div class="callout">
+                    <h3>Enthalpy is the right basis for coil capacity</h3>
+                    <p>Sensible-only <code>ṁ·Cp·ΔT</code> misses the latent share — sometimes the bulk of cooling-coil load on a humid day. Use <code>ṁ·Δh</code> for the total and you will size the coil right, alarm against the right capacity, and write economizer logic that actually picks the lower-load outdoor air. The chart tool’s per-stage <strong>Δh</strong> column is the same calculation.</p>
+                </div>
+                <div class="callout">
+                    <h3>Specific volume is the CFM-to-mass-flow bridge</h3>
+                    <p>Fans deliver volumetric flow; coils, loads, and energy balances run on mass flow. <code>ṁ = CFM · 60 / v<sub>in</sub></code>, so the same CFM at warmer or wetter entering air moves less mass per unit time. Coil-sizing programs handle this internally; if you are ever doing the math by hand for a sanity check, do not skip it.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── CTA + back link ──────────────────────────────────────────────── -->
+    <p style="margin-top:2.5rem;">
+        <a class="cta-button" href="/tools/psychrometric-chart.html">Try it on the interactive chart →</a>
+    </p>
+
+    <a class="back-link" href="/education/">← Back to Education</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="/scripts/units.js"></script>
+<!-- Shared moist-air math: ASHRAE primitives at top level (humRatioFromRH,
+     vapPressFromHumRatio, dewPointFromVapPress, enthalpy, GR_PER_LB, P_STD)
+     plus the namespaced Psychro.* solver. Same engine that powers the
+     interactive chart at /tools/psychrometric-chart.html. Classic script,
+     loaded before the IIFE below so it can reach those globals by name. -->
+<script src="/scripts/psychro-engine.js"></script>
+<script>
+    // ─────────────────────────────────────────────────────────────────────
+    // Pool-space condensation widget — three sliders (DB / RH / surface temp)
+    // run through the moist-air primitives in psychro-engine.js. The widget
+    // is the page-local interactive surface; the heavy chart lives on the
+    // tool side.
+    //
+    // Internal state stays in canonical IP (°F, %, °F). Sliders display in
+    // current units via window.Units; on a units flip the slider min/max/
+    // step/value get rebuilt from the canonical config and the readouts
+    // re-render — no re-computation of the moist-air state is needed since
+    // the canonical state hasn't moved.
+    // ─────────────────────────────────────────────────────────────────────
+    (function () {
+        'use strict';
+
+        const U = window.Units;
+
+        // Canonical IP config for each slider. Step is unit-system-specific so
+        // metric gets a 0.5 °C grain instead of an awkward 0.55 °C jump.
+        const CFG = {
+            db:    { min: 60, max: 95, def: 82, isTemp: true,  stepUS: 1, stepMetric: 0.5 },
+            rh:    { min: 20, max: 90, def: 60, isTemp: false, stepUS: 1, stepMetric: 1   },
+            tsurf: { min: 30, max: 80, def: 50, isTemp: true,  stepUS: 1, stepMetric: 0.5 },
+        };
+
+        // Canonical state — what the engine math runs against, regardless of
+        // which units the visitor is looking at.
+        const state = { db: CFG.db.def, rh: CFG.rh.def, tsurf: CFG.tsurf.def };
+
+        const el = id => document.getElementById(id);
+
+        // Quantize canonical → display value to the current step, so the
+        // slider always lands on a clean tick after a unit flip.
+        function quantize(val, step) {
+            return Math.round(val / step) * step;
+        }
+
+        // Build (or rebuild) one slider's range + step + value from canonical
+        // state. Called on init and on every unitschange.
+        function rebuildSlider(key) {
+            const c       = CFG[key];
+            const sliderEl = el(`pool-${key}`);
+            const step    = U.current() === 'us' ? c.stepUS : c.stepMetric;
+            const conv    = v => c.isTemp ? U.display.temp(v) : v;
+            sliderEl.min   = quantize(conv(c.min), step);
+            sliderEl.max   = quantize(conv(c.max), step);
+            sliderEl.step  = step;
+            sliderEl.value = quantize(conv(state[key]), step);
+            paintSliderValue(key);
+        }
+
+        // Slider value label sits inside the .widget-slider-head .v span.
+        // Integer in US for °F, one decimal in metric for °C (matches the
+        // 0.5 step); RH is integer in both.
+        function paintSliderValue(key) {
+            const c = CFG[key];
+            const v = parseFloat(el(`pool-${key}`).value);
+            const decimals = c.isTemp ? (U.current() === 'us' ? 0 : 1) : 0;
+            el(`pool-${key}-val`).textContent = v.toFixed(decimals);
+        }
+
+        // Read one slider, push canonical state, recompute readouts.
+        function syncFromSlider(key) {
+            const c   = CFG[key];
+            const raw = parseFloat(el(`pool-${key}`).value);
+            state[key] = c.isTemp ? U.toCanonical.temp(raw) : raw;
+            paintSliderValue(key);
+            recompute();
+        }
+
+        // ── Moist-air calc on canonical state, then render through Units ──
+        function recompute() {
+            const tdb = state.db, rh = state.rh, tSurf = state.tsurf;
+            const W   = humRatioFromRH(rh, tdb, P_STD);            // lb/lb
+            const pw  = vapPressFromHumRatio(W, P_STD);            // psia
+            const tdp = dewPointFromVapPress(pw);                  // °F
+            const h   = enthalpy(tdb, W);                          // Btu/lb dry air
+            const margin = tSurf - tdp;                             // °F
+
+            const u      = U.current();
+            const dispT  = f   => U.display.temp(f).toFixed(1);
+            const dispdT = df  => U.display.deltaTemp(df).toFixed(1);
+            const dispW  = lbPerLb => U.display.humidityRatio(lbPerLb * GR_PER_LB).toFixed(1);
+            const dispH  = btu => U.display.enthalpy(btu).toFixed(u === 'us' ? 2 : 1);
+
+            el('pool-w-val').textContent      = dispW(W);
+            el('pool-dp-val').textContent     = isFinite(tdp) ? dispT(tdp) : '—';
+            el('pool-h-val').textContent      = dispH(h);
+            el('pool-margin-val').textContent = dispdT(margin);
+
+            // Three-state status, keyed on canonical IP margin so the
+            // boundaries don't shift on a unit flip. 5 °F watch band; below
+            // zero is condensation, above 5 °F is healthy.
+            let st, lbl, sub;
+            if (margin <= 0) {
+                st  = 'bad';
+                lbl = 'CONDENSATION ON GLASS';
+                sub = 'Dew point is at or above the surface — water is already growing on the cold side.';
+            } else if (margin <= 5) {
+                st  = 'watch';
+                lbl = 'WATCH THE GLASS';
+                sub = 'Margin is thin — a small drop in surface temperature or a small humidity climb will start condensation.';
+            } else {
+                st  = 'ok';
+                lbl = 'GLASS STAYS DRY';
+                sub = 'Margin is healthy — surface temperature comfortably above dew point.';
+            }
+            el('pool-status').dataset.state    = st;
+            el('pool-readouts').dataset.state  = st;
+            el('pool-status-lbl').textContent  = lbl;
+            el('pool-status-sub').textContent  = sub;
+
+            // Discovery payoff — natatorium regime + condensation = the
+            // engineer's spec earning its keep. Only fires in the corner of
+            // the slider space that mirrors the lead anecdote, so the
+            // visitor who lands at defaults sees it; a visitor exploring
+            // other regimes doesn't get spammed by it.
+            const wrap = el('pool-anecdote-wrap');
+            const inPoolRegime = st === 'bad' && tdb >= 80 && rh >= 65 && tSurf <= 55;
+            if (inPoolRegime && !wrap.firstChild) {
+                const cb = document.createElement('div');
+                cb.className = 'widget-anecdote';
+                cb.innerHTML = 'This is the regime a natatorium lives in — warm pool space, cold winter glazing, an air condition that doesn\'t leave much margin. <strong>The "tight tolerance" on the engineer\'s drawing is a dew-point ceiling, dressed up as RH.</strong> The chart tool\'s cooling-coil stage is where this fight gets won: drive coil leaving-air dew point well below the coldest surface in the room and the building stays dry.';
+                wrap.appendChild(cb);
+            } else if (!inPoolRegime && wrap.firstChild) {
+                wrap.textContent = '';
+            }
+        }
+
+        // ── Init: build sliders from canonical state, wire input events,
+        //    run the math once, and subscribe to unit flips. ─────────────
+        ['db', 'rh', 'tsurf'].forEach(key => {
+            rebuildSlider(key);
+            el(`pool-${key}`).addEventListener('input', () => syncFromSlider(key));
+        });
+        recompute();
+
+        document.addEventListener('unitschange', () => {
+            ['db', 'rh', 'tsurf'].forEach(rebuildSlider);
+            recompute();
+        });
+    })();
+</script>
+{% endblock %}
