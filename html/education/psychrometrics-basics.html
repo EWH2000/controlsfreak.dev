@@ -149,7 +149,7 @@ nav: education
                     <tr><td><strong>DB + WB</strong></td><td>Sling psychrometer or aspirated wet/dry pair. The original field measurement; still the gold standard for a coil leaving-air reading.</td></tr>
                     <tr><td><strong>DB + DP</strong></td><td>Chilled-mirror dewpoint sensor plus a temperature element. Less common in HVAC; more common in clean rooms, labs, museums.</td></tr>
                     <tr><td><strong>DB + W</strong></td><td>Computed — either a transmitter that outputs grains directly, or a downstream calc from RH. Useful for mass-balance work.</td></tr>
-                    <tr><td><strong>DB + h</strong></td><td>Computed — enthalpy economizer logic lives here. The right pair for "how much heat is moving through this coil."</td></tr>
+                    <tr><td><strong>DB + h</strong></td><td>Computed — <a href="/tools/economizer-ratio.html">enthalpy economizer logic</a> lives here. The right pair for "how much heat is moving through this coil."</td></tr>
                 </tbody>
             </table>
 
@@ -202,7 +202,7 @@ nav: education
                 </div>
                 <div class="callout">
                     <h3>Enthalpy is the right basis for coil capacity</h3>
-                    <p>Sensible-only <code>ṁ·Cp·ΔT</code> misses the latent share — sometimes the bulk of cooling-coil load on a humid day. Use <code>ṁ·Δh</code> for the total and you will size the coil right, alarm against the right capacity, and write economizer logic that actually picks the lower-load outdoor air. The chart tool’s per-stage <strong>Δh</strong> column is the same calculation.</p>
+                    <p>Sensible-only <code>ṁ·Cp·ΔT</code> misses the latent share — sometimes the bulk of cooling-coil load on a humid day. Use <code>ṁ·Δh</code> for the total and you will size the coil right, alarm against the right capacity, and write <a href="/tools/economizer-ratio.html">economizer logic</a> that actually picks the lower-load outdoor air. The chart tool’s per-stage <strong>Δh</strong> column is the same calculation.</p>
                 </div>
                 <div class="callout">
                     <h3>Specific volume is the CFM-to-mass-flow bridge</h3>

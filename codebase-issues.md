@@ -1397,6 +1397,157 @@ matching the git committer name. `license: "ISC"` (also an
 `npm init -y` default) wasn't in the audit entry's scope and was
 left in place.
 
+### 28. Psychrometric math test coverage — engine-direct + economizer-ratio behavioral gaps
+
+Surfaced during PR #29 (economizer-ratio helper) review. Two related
+gaps in the math-test posture for `html/scripts/psychro-engine.js`
+and its consumers.
+
+**Engine-direct tests are absent.** The engine is exercised only
+indirectly — once through `tools/psychrometric-chart.html`'s
+behavioral test (`smoke.spec.js:84`) and once through
+`tools/economizer-ratio.html`'s (`smoke.spec.js:107`). Both rely on
+visible DOM readouts, so the assertions are "matches text X" or "is
+not '—'", not "matches a known reference value." A regression that
+silently scaled (say) `enthalpy()`'s latent term by 2× could produce
+on-screen numbers that *look plausible* without failing the suite.
+The engine extraction (issue #6) intentionally deferred direct tests
+until the API shape had settled against a second consumer; the
+economizer tool was that consumer (engine-API audit at
+`site-ideas-and-friction.md` lines 914–936), so the deferral can
+end.
+
+**`tests/smoke.spec.js:107` behavioral coverage is thin.**
+Specifically:
+
+- Only the **WB** Define-by mode is exercised on the enthalpy tab.
+  The `rh` / `dp` / `w` / `h` branches in `Psychro.solveState` never
+  run from this test's perspective; a silent break in the
+  mode-dispatch wouldn't fail.
+- `er-h-ma-h` / `er-h-oa-h` / `er-h-ra-h` are asserted to be `not
+  '—'` (i.e. populated) but their **numeric values** aren't checked.
+  The inline comment at lines 128–129 documents expected values
+  (`h_OA ≈ 32.4`, `h_RA ≈ 28.6`) — those should become assertions
+  rather than comments. (And update the numbers — current engine
+  output is 32.27 / 28.43 at the defaults.)
+- The `oa.tdb === ra.tdb` warn-pill branches in `calcDryBulb` (line
+  327) and `calcEnthalpy` (line 458) are never exercised.
+
+**Why it matters:** the engine is load-bearing math for one shipped
+tool and at least two candidate tools (air-mixing, coil-sizing —
+both tracked in `site-ideas-and-friction.md`). Future second-
+consumers will inherit whatever coverage is in place; the longer
+this stays untested, the bigger the surprise when the first silent
+drift lands.
+
+**Priority:** MEDIUM. No active bug — the math was verified manually
+during PR #29 review against published ASHRAE points (see PR #29
+review transcript: 80 °F / 60 %RH → W=92.1 gr/lb / h=33.6 Btu/lb;
+95 °F / 75 °F WB → W=98.5 gr/lb / h=38.3 Btu/lb; both match
+published values to 1 sig fig in the fraction). This entry tracks
+the gap between *math-is-right-today* and *math-will-stay-right-
+on-its-own.*
+
+**Recommended action:** one branch, two commits.
+
+- *Commit 1 — engine-direct spec.* New `tests/psychro-engine.spec.js`
+  that loads `html/scripts/psychro-engine.js` via `vm.runInContext`
+  and asserts known ASHRAE reference values + 5-mode round-trip
+  identity (define the same point via `wb`, `dp`, `w`, `h`, and
+  `rh` → all return matching state to N decimals). No browser
+  needed; runs as a plain Node test under the existing Playwright
+  runner. ~50–80 lines.
+- *Commit 2 — economizer-ratio behavioral.* Extend the existing
+  test at `smoke.spec.js:107` with: (a) numeric assertions on
+  `er-h-oa-h` / `er-h-ra-h` against current engine output
+  (`toContainText('32.')` / `toContainText('28.')` is loose enough
+  to survive cosmetic rounding); (b) one non-WB-mode case (RH or
+  DP) to exercise the mode dispatch; (c) one OA==RA edge case
+  hitting the warn-pill branch. ~25 lines.
+
+Could share a branch with #25 or #26 (both still open and small).
+
+### 29. `.tool-body-3col` produces uneven column lengths on tools whose Output is sparse and whose Reference column is dense
+
+Caught during PR #29 review on the live preview link. The Input /
+Output / Reference grid only reads visually balanced when all three
+columns have comparable vertical density. Several tools have a
+sparse Output column (3-4 readouts and a Copy button), a medium-
+density Input column (3-6 form rows), and a Reference column that's
+a table or a worked-example with prose + ordered list. The columns
+end at different y-coordinates and the recessed `--surface-3` panel
+on the Reference column reads as an arbitrarily tall slab next to
+two shorter ones — the user called it "sloppy" and they're right.
+
+**Where it currently hurts.**
+
+- `html/tools/signal-scaling.html` — clearest example. Output is a
+  4-row readout block ending well above the Input column (5 form
+  rows) and well above the Reference column (6-row signal-types
+  table + live-zero note). Empty space below Output is the eyesore.
+  All three of the page's tabs share this shape.
+- `html/tools/economizer-ratio.html` — *was* on 3-col before this PR
+  fixed it. Worked-example column was vertical prose + ordered list
+  + closing paragraph, ran taller than Input and Output on both
+  tabs.
+
+**Where it doesn't hurt (and why — useful prior art).**
+
+- `html/tools/bacnet-ip-converter.html` — already on `.tool-body-
+  2col`. Reference content lives in a sibling `.tool-card` below
+  rather than as a third column.
+- `html/tools/psychrometric-chart.html` — custom column widths
+  (`grid-template-columns: minmax(220px, 26%) 1fr minmax(220px,
+  26%)`) plus the middle column being a chart canvas that dominates
+  the visual frame. The three columns end close enough.
+- `html/tools/modbus-register-viewer.html` — bit-grid in the middle
+  column anchors the visual height; Reference (Function Codes
+  table) and Input/Output land close to it. Not pretty but not
+  obviously off.
+- `html/tools/thermistor-calculator.html` — Reference is the full
+  R/T table and is intentionally tall (it's the page's anchor — the
+  user *wants* to scan it). Input column is short by design,
+  Reference is the deliverable.
+
+**Pattern shipped in PR #29.** "2-col + example below" — Input /
+Output stay in a `.tool-body-2col` grid; reference / worked-example
+content moves to a full-width row beneath the grid, preserving the
+recessed `--surface-3` cue via a page-local section class. Landed
+on `economizer-ratio.html` as `.er-example` inside the page's
+`{% block head %}`. Vertical prose + ordered list reads more
+comfortably as a wide row anyway — wrapped lines stay short relative
+to the row's width, the ordered list breathes.
+
+**Why it matters.** Visual polish across the tools landing. Each
+tool independently looks fine; back-to-back they betray the uneven-
+column drift, and the live tools-landing card grid is the first
+thing a visitor sees.
+
+**Priority:** LOW. Cosmetic; no broken interaction. Cluster fix
+candidate.
+
+**Recommended action — two-step.**
+
+- *Step 1 (when a second consumer wants it):* promote the page-local
+  `.er-example` class to a shared utility in `styles.css` — name TBD
+  (`.tool-body-row`, `.tool-body-reference-row`, or similar). Keeps
+  the recessed `--surface-3` background, the top border, the
+  `1.25rem 1.25rem 1.5rem` padding. Until a second consumer exists,
+  the page-local class is the right scope; promoting prematurely
+  bakes in the wrong vocabulary.
+- *Step 2 (cosmetic-sweep branch):* retrofit `signal-scaling.html` —
+  switch each of its three tabs from `.tool-body-3col` to
+  `.tool-body-2col`, move the Common Signal Types table to a sibling
+  row below the grid. The signal-types table is the same content on
+  all three tabs (it doesn't change between Signal→EU, EU→Signal,
+  and 2-point modes), so moving it out of the tab structure entirely
+  — one shared reference row below all three tabs — is also worth
+  considering. That second move is its own design decision.
+
+No retrofit needed on `psychrometric-chart.html`, `modbus-register-
+viewer.html`, or `thermistor-calculator.html`; their column-density
+balance is acceptable as-is.
+
 ---
 
 ## Recently addressed
