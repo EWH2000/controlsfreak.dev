@@ -25,6 +25,7 @@ const PAGES = [
     { name: 'pid tuner',              url: 'http://localhost:8000/tools/pid-tuner.html' },
     { name: 'bacnet/ip converter',    url: 'http://localhost:8000/tools/bacnet-ip-converter.html' },
     { name: 'psychrometric chart',    url: 'http://localhost:8000/tools/psychrometric-chart.html' },
+    { name: 'economizer ratio',       url: 'http://localhost:8000/tools/economizer-ratio.html' },
     { name: 'thermistor calculator',  url: 'http://localhost:8000/tools/thermistor-calculator.html' },
     { name: 'vfd mock',               url: 'http://localhost:8000/tools/vfd-mock.html' },
     { name: 'education hub',          url: 'http://localhost:8000/education/' },
@@ -101,6 +102,38 @@ test('psychrometric chart computes the AHU chain on load', async ({ page }) => {
     await expect(page.locator('#ro-wb')).toHaveText('—');
     await expect(page.locator('#psy-msg')).toContainText('Wet-bulb can');
     expect(errors, 'psychrometric behavioral should log no page / console errors').toEqual([]);
+});
+
+test('economizer ratio — dry-bulb and enthalpy tabs compute their cases', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('http://localhost:8000/tools/economizer-ratio.html');
+
+    // Dry-bulb tab loads with the worked-example defaults: 60 / 75 / 55 °F.
+    // (55 − 75) / (60 − 75) × 100 = 133.3 % — flagged as out-of-range.
+    await expect(page.locator('#er-db-pct')).toHaveText('133.3 %');
+    await expect(page.locator('#er-db-feas')).toContainText('100 % OA');
+
+    // Switch to feasible case: setpoint between OA and RA.
+    await page.fill('#er-db-oa', '50');
+    await page.fill('#er-db-ma', '65');
+    // (65 − 75) / (50 − 75) × 100 = 40 %
+    await expect(page.locator('#er-db-pct')).toHaveText('40.0 %');
+    await expect(page.locator('#er-db-feas')).toContainText('Feasible');
+
+    // Infeasible — OA hotter than the setpoint AND than RA.
+    await page.fill('#er-db-oa', '85');
+    await page.fill('#er-db-ma', '60');
+    await expect(page.locator('#er-db-feas')).toContainText('Infeasible');
+
+    // Enthalpy tab — defaults: OA 78/68WB, RA 75/63WB, MA target 65.
+    // h_OA ≈ 32.4 Btu/lb, h_RA ≈ 28.6 Btu/lb (OA carries more enthalpy → unfavorable).
+    await page.click('[data-tab="h"]');
+    await expect(page.locator('#er-h-changeover')).toContainText('Unfavorable');
+    // OA dry-bulb (78) > RA dry-bulb (75), MA target 65 < both → infeasible.
+    await expect(page.locator('#er-h-feas')).toContainText('Infeasible');
+    await expect(page.locator('#er-h-ma-h')).not.toHaveText('—');
+
+    expect(errors, 'economizer behavioral should log no page / console errors').toEqual([]);
 });
 
 test.describe('thermistor behavioral', () => {

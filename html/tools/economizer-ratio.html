@@ -1,0 +1,580 @@
+---
+title: Economizer Ratio Helper — controlsfreak.dev
+description: Required percent outdoor air to mix outdoor and return air down to a target mixed-air dry-bulb setpoint, with an enthalpy-changeover sanity check for high-end economizer logic.
+canonical: https://controlsfreak.dev/tools/economizer-ratio.html
+nav: tools
+---
+{% extends "layouts/page.njk" %}
+
+{% block head %}
+    <style>
+        /* Output-side enthalpy comparison panel — small status pill that
+           lives below the %OA readout in the enthalpy tab. Mirrors the
+           pump-control widget's anecdote pill in spirit (a one-line
+           verdict you can scan) but uses the shared ps-row chrome
+           rather than its own surface. */
+        .er-feas {
+            margin-top: 1rem;
+            padding: 0.5rem 0.75rem;
+            border-radius: 4px;
+            font-family: var(--mono);
+            font-size: 0.82rem;
+            line-height: 1.5;
+            border: 1px solid var(--border);
+            background: var(--surface-2);
+            color: var(--text);
+        }
+        .er-feas.ok    { border-color: var(--accent);    background: var(--accent-dim); }
+        .er-feas.warn  { border-color: var(--heat);      color: var(--heat); }
+        .er-feas.error { border-color: var(--red);       color: var(--red); }
+    </style>
+{% endblock %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">HVAC</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">
+                Economizer Ratio Helper
+                <span class="tool-tag">HVAC</span>
+            </h1>
+        </div>
+
+        <p class="page-intro">
+            How far do I open the outdoor-air damper to hit a mixed-air
+            setpoint at these conditions? Dry-bulb tab is the calc a tech
+            runs at the panel. Enthalpy tab adds the full mixed state and
+            the OA-vs-RA enthalpy-changeover verdict a high-end BAS
+            economizer uses to decide whether free cooling is worth
+            running in the first place.
+        </p>
+
+        <div class="tabs tabs-flush">
+            <button class="tab-btn active" data-tab="db">Dry-bulb</button>
+            <button class="tab-btn"        data-tab="h">Enthalpy (full state)</button>
+        </div>
+
+        <!-- ── Dry-bulb tab ── -->
+        <div id="tab-db" class="tab-pane active">
+            <div class="tool-body-3col">
+
+                <section>
+                    <h2 class="ps-section-label">Input</h2>
+                    <div class="ps-row">
+                        <label class="ps-label" data-us="Outdoor air dry-bulb (°F)" data-metric="Outdoor air dry-bulb (°C)" for="er-db-oa">Outdoor air dry-bulb (°F)</label>
+                        <input class="ps-input" type="number" id="er-db-oa" step="0.5" min="-50" max="200" value="60">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" data-us="Return air dry-bulb (°F)" data-metric="Return air dry-bulb (°C)" for="er-db-ra">Return air dry-bulb (°F)</label>
+                        <input class="ps-input" type="number" id="er-db-ra" step="0.5" min="-50" max="200" value="75">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" data-us="Mixed-air setpoint (°F)" data-metric="Mixed-air setpoint (°C)" for="er-db-ma">Mixed-air setpoint (°F)</label>
+                        <input class="ps-input" type="number" id="er-db-ma" step="0.5" min="-50" max="200" value="55">
+                    </div>
+                </section>
+
+                <section>
+                    <h2 class="ps-section-label">Output</h2>
+                    <div class="ps-row">
+                        <span class="ps-label">Required outdoor air</span>
+                        <span class="ps-value muted" id="er-db-pct">—</span>
+                    </div>
+                    <div class="btn-row" style="margin-top:1rem;">
+                        <button class="copy-btn" id="er-db-copy">Copy %OA</button>
+                    </div>
+                    <div class="result-formula wrap" id="er-db-formula"></div>
+                    <div class="er-feas" id="er-db-feas">Enter values to see feasibility.</div>
+                </section>
+
+                <section>
+                    <h2 class="ps-section-label">Worked example</h2>
+                    <p class="ref-note" style="margin-top:0;">
+                        Summer cooling on an economizer-favorable morning —
+                        OA <span data-us="60 °F" data-metric="15.6 °C">60 °F</span>,
+                        RA <span data-us="75 °F" data-metric="23.9 °C">75 °F</span>,
+                        mixed-air setpoint <span data-us="55 °F" data-metric="12.8 °C">55 °F</span>.
+                    </p>
+                    <ol class="ref-note" style="padding-left:1.2em;">
+                        <li>Setpoint sits between OA and RA → feasible.</li>
+                        <li>The damper has to bring in enough OA to drag the mix down to setpoint:<br>
+                            <code>% OA = (MA − RA) ÷ (OA − RA) × 100</code></li>
+                        <li>Plug in: <code>(55 − 75) ÷ (60 − 75) × 100 = 133 %</code>.</li>
+                        <li>Above 100 % — even 100 % outdoor air can't get there. The
+                            damper goes wide open and the coil picks up the rest.</li>
+                    </ol>
+                    <p class="ref-note">
+                        When the calc lands between 0 and 100 %, that's the damper
+                        command. Below 0 % means OA is hotter than the setpoint AND
+                        than the room — minimum-OA only, no economizer; above 100 %
+                        means OA is cooler than the setpoint but not cold enough to
+                        carry the whole load alone.
+                    </p>
+                </section>
+
+            </div>
+        </div>
+
+        <!-- ── Enthalpy (full state) tab ── -->
+        <div id="tab-h" class="tab-pane">
+            <div class="tool-body-3col">
+
+                <section>
+                    <h2 class="ps-section-label">Input</h2>
+
+                    <h3 class="subhead">Outdoor air</h3>
+                    <div class="ps-row">
+                        <label class="ps-label" data-us="Dry-bulb (°F)" data-metric="Dry-bulb (°C)" for="er-h-oa-tdb">Dry-bulb (°F)</label>
+                        <input class="ps-input" type="number" id="er-h-oa-tdb" step="0.5" min="-50" max="200" value="78">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="er-h-oa-mode">Define by</label>
+                        <select class="ps-input" id="er-h-oa-mode">
+                            <option value="rh">Relative humidity</option>
+                            <option value="wb" selected>Wet-bulb temperature</option>
+                            <option value="dp">Dew point temperature</option>
+                            <option value="w">Humidity ratio</option>
+                            <option value="h">Enthalpy</option>
+                        </select>
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" id="er-h-oa-second-lbl" for="er-h-oa-second">Wet-bulb (°F)</label>
+                        <input class="ps-input" type="number" id="er-h-oa-second" step="0.5" value="68">
+                    </div>
+
+                    <h3 class="subhead">Return air</h3>
+                    <div class="ps-row">
+                        <label class="ps-label" data-us="Dry-bulb (°F)" data-metric="Dry-bulb (°C)" for="er-h-ra-tdb">Dry-bulb (°F)</label>
+                        <input class="ps-input" type="number" id="er-h-ra-tdb" step="0.5" min="-50" max="200" value="75">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="er-h-ra-mode">Define by</label>
+                        <select class="ps-input" id="er-h-ra-mode">
+                            <option value="rh">Relative humidity</option>
+                            <option value="wb" selected>Wet-bulb temperature</option>
+                            <option value="dp">Dew point temperature</option>
+                            <option value="w">Humidity ratio</option>
+                            <option value="h">Enthalpy</option>
+                        </select>
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" id="er-h-ra-second-lbl" for="er-h-ra-second">Wet-bulb (°F)</label>
+                        <input class="ps-input" type="number" id="er-h-ra-second" step="0.5" value="63">
+                    </div>
+
+                    <h3 class="subhead">Mixed-air target</h3>
+                    <div class="ps-row">
+                        <label class="ps-label" data-us="MA setpoint (°F)" data-metric="MA setpoint (°C)" for="er-h-ma">MA setpoint (°F)</label>
+                        <input class="ps-input" type="number" id="er-h-ma" step="0.5" min="-50" max="200" value="65">
+                    </div>
+                    <p class="ref-note">
+                        Atmospheric pressure fixed at sea level for v1; humidity and
+                        enthalpy match the chart tool at 0 ft altitude. Open the
+                        chart tool if you need an altitude-adjusted answer.
+                    </p>
+                </section>
+
+                <section>
+                    <h2 class="ps-section-label">Output</h2>
+                    <div class="ps-row">
+                        <span class="ps-label">Required outdoor air</span>
+                        <span class="ps-value muted" id="er-h-pct">—</span>
+                    </div>
+                    <div class="btn-row" style="margin-top:1rem;">
+                        <button class="copy-btn" id="er-h-copy">Copy %OA</button>
+                    </div>
+                    <div class="result-formula wrap" id="er-h-formula"></div>
+                    <div class="er-feas" id="er-h-feas">Enter values to see feasibility.</div>
+
+                    <h3 class="subhead">Resulting mixed-air state</h3>
+                    <div class="ps-row"><span class="ps-label" data-us="MA dry-bulb (°F)" data-metric="MA dry-bulb (°C)">MA dry-bulb (°F)</span><span class="ps-value muted" id="er-h-ma-db">—</span></div>
+                    <div class="ps-row"><span class="ps-label" data-us="MA wet-bulb (°F)" data-metric="MA wet-bulb (°C)">MA wet-bulb (°F)</span><span class="ps-value muted" id="er-h-ma-wb">—</span></div>
+                    <div class="ps-row"><span class="ps-label" data-us="Humidity ratio (gr/lb)" data-metric="Humidity ratio (g/kg)">Humidity ratio (gr/lb)</span><span class="ps-value muted" id="er-h-ma-w">—</span></div>
+                    <div class="ps-row"><span class="ps-label">Rel. humidity (%)</span><span class="ps-value muted" id="er-h-ma-rh">—</span></div>
+                    <div class="ps-row"><span class="ps-label" data-us="Enthalpy (Btu/lb)" data-metric="Enthalpy (kJ/kg)">Enthalpy (Btu/lb)</span><span class="ps-value muted" id="er-h-ma-h">—</span></div>
+
+                    <h3 class="subhead">Enthalpy changeover</h3>
+                    <div class="ps-row"><span class="ps-label" data-us="OA enthalpy (Btu/lb)" data-metric="OA enthalpy (kJ/kg)">OA enthalpy (Btu/lb)</span><span class="ps-value muted" id="er-h-oa-h">—</span></div>
+                    <div class="ps-row"><span class="ps-label" data-us="RA enthalpy (Btu/lb)" data-metric="RA enthalpy (kJ/kg)">RA enthalpy (Btu/lb)</span><span class="ps-value muted" id="er-h-ra-h">—</span></div>
+                    <div class="er-feas" id="er-h-changeover">Enter values to see the changeover verdict.</div>
+                </section>
+
+                <section>
+                    <h2 class="ps-section-label">Worked example</h2>
+                    <p class="ref-note" style="margin-top:0;">
+                        Mild-but-muggy morning — OA
+                        <span data-us="78 °F / 68 °F WB" data-metric="25.6 °C / 20 °C WB">78 °F / 68 °F WB</span>,
+                        RA <span data-us="75 °F / 63 °F WB" data-metric="23.9 °C / 17.2 °C WB">75 °F / 63 °F WB</span>,
+                        MA setpoint <span data-us="65 °F" data-metric="18.3 °C">65 °F</span>.
+                    </p>
+                    <ol class="ref-note" style="padding-left:1.2em;">
+                        <li>Dry-bulb is what the damper modulates to.
+                            <code>% OA = (65 − 75) ÷ (78 − 75) × 100</code> = a
+                            negative number — OA is hotter than RA, so even on
+                            dry-bulb alone the economizer can't help. Minimum-OA
+                            position.</li>
+                        <li>The mixed-state readouts show what the coil would see
+                            at the calc's %OA — useful when the answer lands
+                            between 0 and 100.</li>
+                        <li>The enthalpy comparison is the real reason a high-end
+                            BAS is more conservative: an OA that's two degrees
+                            cooler than RA but soaked with moisture carries more
+                            heat per pound than RA does. Free cooling on dry-bulb
+                            alone, latent penalty on the coil.</li>
+                    </ol>
+                    <p class="ref-note">
+                        Most commercial economizer logic is dry-bulb with a
+                        humidity high-limit; enthalpy economizer logic
+                        compares <code>h<sub>OA</sub></code> vs.
+                        <code>h<sub>RA</sub></code> to gate the damper before
+                        any dry-bulb modulation runs.
+                    </p>
+                </section>
+
+            </div>
+        </div>
+    </div>
+
+    <a class="back-link" href="/tools/">← All tools</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="/scripts/units.js"></script>
+<script src="/scripts/ui.js"></script>
+<script src="/scripts/psychro-engine.js"></script>
+<script>
+    // switchTab(name, btn) and copyReadouts(btn, sep, ...ids) come from
+    // /scripts/ui.js — see that file for documentation.
+    // Psychro.solveState / buildState + flat ASHRAE primitives come from
+    // /scripts/psychro-engine.js. P_STD = 14.696 psia (sea level).
+    (function () {
+        'use strict';
+
+        const U = window.Units;
+        const P_AIR = 14.696;  // psia, sea-level standard pressure
+
+        // ── Display helpers ───────────────────────────────────────────
+        const dispT  = f       => U.display.temp(f).toFixed(1);
+        const dispW  = wLbLb   => U.display.humidityRatio(wLbLb * 7000).toFixed(1);  // canonical W is lb/lb; display in gr/lb (US) or g/kg (metric)
+        const dispH  = btuPerLb=> U.display.enthalpy(btuPerLb).toFixed(1);
+        const tU     = ()      => U.suffix.temp();
+        const wU     = ()      => U.suffix.humidityRatio();
+        const hU     = ()      => U.suffix.enthalpy();
+        const tCanon = x       => U.toCanonical.temp(x);
+
+        // ── Second-prop catalog (label, default in display units, step) ──
+        // Same shape as the chart tool's SECOND_PROP — rebuilt on unitschange
+        // so labels and pre-filled defaults follow the active unit system.
+        let SECOND_PROP;
+        function buildSecondProp() {
+            const u = U.current();
+            SECOND_PROP = {
+                rh: { label: 'Relative humidity (%)',  step: 1 },
+                wb: { label: `Wet-bulb (${tU()})`,     step: u === 'us' ? 0.5 : 0.25 },
+                dp: { label: `Dew point (${tU()})`,    step: u === 'us' ? 0.5 : 0.25 },
+                w:  { label: `Humidity ratio (${wU()})`, step: u === 'us' ? 1 : 0.1 },
+                h:  { label: `Enthalpy (${hU()} dry air)`, step: 0.5 },
+            };
+        }
+        buildSecondProp();
+
+        // Convert a Define-by "second" input from its current display units to
+        // canonical US units before handing it to Psychro.solveState. RH is
+        // unitless; everything else flips with the toggle.
+        function secondToCanonical(mode, value) {
+            if (!isFinite(value)) return value;
+            switch (mode) {
+                case 'rh': return value;
+                case 'wb':
+                case 'dp': return U.toCanonical.temp(value);
+                case 'w':  return U.toCanonical.humidityRatio(value) / 7000;  // gr/lb → lb/lb
+                case 'h':  return U.toCanonical.enthalpy(value);
+                default:   return value;
+            }
+        }
+
+        // ── Dry-bulb tab ──────────────────────────────────────────────
+        const DB_IDS = ['er-db-oa', 'er-db-ra', 'er-db-ma'];
+
+        function setFeas(el, text, kind) {
+            el.textContent = text;
+            el.className = 'er-feas' + (kind ? ' ' + kind : '');
+        }
+
+        function calcDryBulb() {
+            const oa = tCanon(parseFloat(document.getElementById('er-db-oa').value));
+            const ra = tCanon(parseFloat(document.getElementById('er-db-ra').value));
+            const ma = tCanon(parseFloat(document.getElementById('er-db-ma').value));
+            const outEl     = document.getElementById('er-db-pct');
+            const formulaEl = document.getElementById('er-db-formula');
+            const feasEl    = document.getElementById('er-db-feas');
+
+            if (![oa, ra, ma].every(isFinite)) {
+                outEl.className = 'ps-value muted';
+                outEl.textContent = '—';
+                formulaEl.textContent = '';
+                setFeas(feasEl, 'Enter values to see feasibility.', '');
+                return;
+            }
+            if (oa === ra) {
+                outEl.className = 'ps-value muted error';
+                outEl.textContent = '—';
+                formulaEl.textContent = 'OA equals RA — mixing changes nothing, no unique %OA.';
+                setFeas(feasEl, 'OA and RA are identical; any mix is identical too.', 'warn');
+                return;
+            }
+
+            const pct = (ma - ra) / (oa - ra) * 100;
+            outEl.className = 'ps-value live';
+            outEl.textContent = pct.toFixed(1) + ' %';
+
+            // Display the formula in the user's current units, but the math
+            // ran in canonical IP — display them coherently by formatting
+            // each input through the display helper before showing.
+            const oaD = U.display.temp(oa).toFixed(1);
+            const raD = U.display.temp(ra).toFixed(1);
+            const maD = U.display.temp(ma).toFixed(1);
+            formulaEl.textContent =
+                `% OA = (MA − RA) ÷ (OA − RA) × 100 ` +
+                `= (${maD} − ${raD}) ÷ (${oaD} − ${raD}) × 100 ` +
+                `= ${pct.toFixed(1)} %`;
+
+            // Three feasibility regimes.
+            const within = (ma >= Math.min(oa, ra)) && (ma <= Math.max(oa, ra));
+            if (within) {
+                setFeas(feasEl,
+                    `Feasible — setpoint is between OA and RA, so a ${pct.toFixed(1)} %OA mix lands on it. Below ~10 %, the damper is at minimum-position; near 100 %, the coil picks up everything past the mix.`,
+                    'ok');
+            } else if (pct > 100) {
+                const extra = ((ma - oa) / (oa - ra) * 100).toFixed(1);
+                setFeas(feasEl,
+                    `Out of range — OA is cooler than the setpoint, but not cold enough to drag RA down on its own. Damper goes 100 % OA; the cooling coil still has to remove the remaining ${Math.abs(extra)} %OA-equivalent of load.`,
+                    'warn');
+            } else {
+                setFeas(feasEl,
+                    'Infeasible — OA is hotter than the setpoint. No mix gets you there; close the economizer to minimum OA and let the cooling coil do all the work.',
+                    'error');
+            }
+        }
+
+        // ── Enthalpy tab ──────────────────────────────────────────────
+        const H_OA_IDS = ['er-h-oa-tdb', 'er-h-oa-mode', 'er-h-oa-second'];
+        const H_RA_IDS = ['er-h-ra-tdb', 'er-h-ra-mode', 'er-h-ra-second'];
+
+        function refreshSecondLabel(prefix) {
+            const mode = document.getElementById(prefix + '-mode').value;
+            const lbl  = document.getElementById(prefix + '-second-lbl');
+            const inp  = document.getElementById(prefix + '-second');
+            lbl.textContent = SECOND_PROP[mode].label;
+            inp.step = SECOND_PROP[mode].step;
+        }
+
+        function readState(prefix) {
+            const mode = document.getElementById(prefix + '-mode').value;
+            const tdbD = parseFloat(document.getElementById(prefix + '-tdb').value);
+            const secD = parseFloat(document.getElementById(prefix + '-second').value);
+            return {
+                ok: isFinite(tdbD) && isFinite(secD),
+                state: Psychro.solveState(mode, U.toCanonical.temp(tdbD), secondToCanonical(mode, secD), P_AIR),
+            };
+        }
+
+        function clearEnthalpyOutputs(msg) {
+            for (const id of ['er-h-pct', 'er-h-ma-db', 'er-h-ma-wb', 'er-h-ma-w', 'er-h-ma-rh', 'er-h-ma-h', 'er-h-oa-h', 'er-h-ra-h']) {
+                const el = document.getElementById(id);
+                el.className = 'ps-value muted';
+                el.textContent = '—';
+            }
+            document.getElementById('er-h-formula').textContent = '';
+            setFeas(document.getElementById('er-h-feas'), msg, '');
+            setFeas(document.getElementById('er-h-changeover'), 'Need both OA and RA states to compare.', '');
+        }
+
+        function setLive(id, text) {
+            const el = document.getElementById(id);
+            el.className = 'ps-value live';
+            el.textContent = text;
+        }
+
+        function calcEnthalpy() {
+            refreshSecondLabel('er-h-oa');
+            refreshSecondLabel('er-h-ra');
+
+            const oaR = readState('er-h-oa');
+            const raR = readState('er-h-ra');
+            const maD = parseFloat(document.getElementById('er-h-ma').value);
+
+            if (!oaR.ok || !raR.ok || !isFinite(maD)) {
+                clearEnthalpyOutputs('Enter values to see feasibility.');
+                return;
+            }
+            if (!oaR.state.ok) {
+                clearEnthalpyOutputs('Outdoor air — ' + oaR.state.error);
+                return;
+            }
+            if (!raR.state.ok) {
+                clearEnthalpyOutputs('Return air — ' + raR.state.error);
+                return;
+            }
+
+            const oa = oaR.state;
+            const ra = raR.state;
+            const maTarget = U.toCanonical.temp(maD);
+
+            // Always surface OA / RA enthalpies — independent of MA feasibility.
+            setLive('er-h-oa-h', dispH(oa.h) + ' ' + hU());
+            setLive('er-h-ra-h', dispH(ra.h) + ' ' + hU());
+
+            // Enthalpy-changeover verdict — the high-limit gate.
+            const dh = oa.h - ra.h;
+            const changeoverEl = document.getElementById('er-h-changeover');
+            if (Math.abs(dh) < 0.5) {
+                setFeas(changeoverEl,
+                    `OA and RA enthalpies are within 0.5 ${hU()} — call it a wash; minimum-OA is the safer call.`,
+                    'warn');
+            } else if (oa.h < ra.h) {
+                setFeas(changeoverEl,
+                    `Favorable — OA carries ${Math.abs(dh).toFixed(1)} ${hU()} less heat per pound of dry air than RA. Bringing in OA reduces total coil load.`,
+                    'ok');
+            } else {
+                setFeas(changeoverEl,
+                    `Unfavorable — OA carries ${dh.toFixed(1)} ${hU()} more heat per pound of dry air than RA. Even if it's cooler on dry-bulb, the latent load makes it a net loss. Minimum-OA.`,
+                    'error');
+            }
+
+            // Damper calc is on dry-bulb (what the BAS actually modulates to).
+            const pctEl     = document.getElementById('er-h-pct');
+            const formulaEl = document.getElementById('er-h-formula');
+            const feasEl    = document.getElementById('er-h-feas');
+
+            if (oa.tdb === ra.tdb) {
+                pctEl.className = 'ps-value muted error';
+                pctEl.textContent = '—';
+                formulaEl.textContent = 'OA and RA have identical dry-bulb — no unique %OA.';
+                setFeas(feasEl, 'OA and RA dry-bulbs are identical; mix temperature is fixed.', 'warn');
+                return;
+            }
+
+            const pct = (maTarget - ra.tdb) / (oa.tdb - ra.tdb) * 100;
+            setLive('er-h-pct', pct.toFixed(1) + ' %');
+
+            const oaD = U.display.temp(oa.tdb).toFixed(1);
+            const raD = U.display.temp(ra.tdb).toFixed(1);
+            const maDD = U.display.temp(maTarget).toFixed(1);
+            formulaEl.textContent =
+                `% OA = (MA − RA) ÷ (OA − RA) × 100 ` +
+                `= (${maDD} − ${raD}) ÷ (${oaD} − ${raD}) × 100 ` +
+                `= ${pct.toFixed(1)} %`;
+
+            // Feasibility — same regimes as the dry-bulb tab.
+            const within = (maTarget >= Math.min(oa.tdb, ra.tdb)) && (maTarget <= Math.max(oa.tdb, ra.tdb));
+            if (within) {
+                setFeas(feasEl,
+                    `Feasible — setpoint is between OA and RA dry-bulbs; a ${pct.toFixed(1)} %OA mix lands on it.`,
+                    'ok');
+            } else if (pct > 100) {
+                setFeas(feasEl,
+                    'Out of range — OA is cooler than the setpoint, but not cold enough to drag RA down alone. Damper goes 100 % OA and the coil picks up the rest.',
+                    'warn');
+            } else {
+                setFeas(feasEl,
+                    'Infeasible — OA is hotter than the setpoint. No mix gets you there; close to minimum OA.',
+                    'error');
+            }
+
+            // Resulting mixed state — clamp ratio to [0, 1] before building so
+            // negative-pct or above-100 cases don't render a physically
+            // impossible MA state. Show the clamped result + a note in the
+            // formula line.
+            const ratio = Math.max(0, Math.min(1, pct / 100));
+            const maW    = ratio * oa.W   + (1 - ratio) * ra.W;
+            const maTdb  = ratio * oa.tdb + (1 - ratio) * ra.tdb;
+            const maState = Psychro.buildState(maTdb, maW, P_AIR);
+            if (!maState || !isFinite(maState.h)) {
+                clearEnthalpyOutputs('Mixed state out of range — check inputs.');
+                return;
+            }
+            setLive('er-h-ma-db', dispT(maState.tdb) + ' ' + tU());
+            setLive('er-h-ma-wb', isFinite(maState.twb) ? dispT(maState.twb) + ' ' + tU() : '—');
+            setLive('er-h-ma-w',  dispW(maState.W) + ' ' + wU());
+            setLive('er-h-ma-rh', maState.rh.toFixed(1) + ' %');
+            setLive('er-h-ma-h',  dispH(maState.h) + ' ' + hU());
+        }
+
+        // ── Wiring ────────────────────────────────────────────────────
+        document.querySelectorAll('[data-tab]').forEach(btn => {
+            btn.addEventListener('click', e => switchTab(e.currentTarget.dataset.tab, e.currentTarget));
+        });
+
+        for (const id of DB_IDS) {
+            document.getElementById(id).addEventListener('input', calcDryBulb);
+        }
+
+        const H_INPUTS = [...H_OA_IDS, ...H_RA_IDS, 'er-h-ma'];
+        for (const id of H_INPUTS) {
+            const el = document.getElementById(id);
+            el.addEventListener(el.tagName === 'SELECT' ? 'change' : 'input', calcEnthalpy);
+        }
+
+        document.getElementById('er-db-copy').addEventListener('click', e => copyReadouts(e.currentTarget, '', 'er-db-pct'));
+        document.getElementById('er-h-copy').addEventListener('click', e => copyReadouts(e.currentTarget, '', 'er-h-pct'));
+
+        // ── Unit-flip resync ──────────────────────────────────────────
+        // On unit toggle: convert every number input from old display units
+        // to new display units, rebuild the second-prop catalog, refresh
+        // labels, and recompute both tabs.
+        function rewriteInput(id, quantity, fromU, toU) {
+            const el = document.getElementById(id);
+            const v  = parseFloat(el.value);
+            if (!isFinite(v)) return;
+            const next = U.convert(v, fromU, toU, quantity);
+            // Tidy display — temps to 1 decimal, others to engine-friendly precision.
+            el.value = (Math.round(next * 100) / 100).toString();
+        }
+
+        // The "second" input's quantity depends on the active Define-by mode
+        // — RH stays as-is, wb/dp follow temp, w follows humidityRatio,
+        // h follows enthalpy. Quantity keyed off the current select value.
+        function quantityForMode(mode) {
+            switch (mode) {
+                case 'wb':
+                case 'dp': return 'temp';
+                case 'w':  return 'humidityRatio';
+                case 'h':  return 'enthalpy';
+                default:   return null;  // rh — no rewrite
+            }
+        }
+
+        U.onChange(function (newUnits) {
+            const oldUnits = newUnits === 'us' ? 'metric' : 'us';
+            for (const id of ['er-db-oa', 'er-db-ra', 'er-db-ma', 'er-h-oa-tdb', 'er-h-ra-tdb', 'er-h-ma']) {
+                rewriteInput(id, 'temp', oldUnits, newUnits);
+            }
+            for (const prefix of ['er-h-oa', 'er-h-ra']) {
+                const mode = document.getElementById(prefix + '-mode').value;
+                const q    = quantityForMode(mode);
+                if (q) rewriteInput(prefix + '-second', q, oldUnits, newUnits);
+            }
+            buildSecondProp();
+            refreshSecondLabel('er-h-oa');
+            refreshSecondLabel('er-h-ra');
+            calcDryBulb();
+            calcEnthalpy();
+        });
+
+        // ── Initial paint ─────────────────────────────────────────────
+        refreshSecondLabel('er-h-oa');
+        refreshSecondLabel('er-h-ra');
+        calcDryBulb();
+        calcEnthalpy();
+    })();
+</script>
+{% endblock %}
