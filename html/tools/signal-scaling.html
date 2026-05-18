@@ -30,7 +30,7 @@ nav: tools
 
         <!-- ── Signal → Eng. Units ── -->
         <div id="tab-scaling" class="tab-pane active">
-            <div class="tool-body-3col">
+            <div class="tool-body-2col">
 
                 <section>
                     <h2 class="ps-section-label">Input</h2>
@@ -103,32 +103,12 @@ nav: tools
                     <div class="result-formula wrap" id="scaling-formula"></div>
                 </section>
 
-                <section>
-                    <h2 class="ps-section-label">Common Signal Types</h2>
-                    <table class="ref-table-dense">
-                        <thead>
-                            <tr><th>Signal</th><th>Live zero</th></tr>
-                        </thead>
-                        <tbody>
-                            <tr><td>4–20 mA</td><td>yes</td></tr>
-                            <tr><td>0–20 mA</td><td>no</td></tr>
-                            <tr><td>0–10 V</td><td>no</td></tr>
-                            <tr><td>2–10 V</td><td>yes</td></tr>
-                            <tr><td>0–5 V</td><td>no</td></tr>
-                            <tr><td>1–5 V</td><td>yes</td></tr>
-                        </tbody>
-                    </table>
-                    <p class="ref-note">
-                        "Live zero": a broken wire reads below-range and faults, not as a valid 0%.
-                    </p>
-                </section>
-
             </div>
         </div>
 
         <!-- ── Eng. Units → Signal ── -->
         <div id="tab-reverse" class="tab-pane">
-            <div class="tool-body-3col">
+            <div class="tool-body-2col">
 
                 <section>
                     <h2 class="ps-section-label">Input</h2>
@@ -173,35 +153,12 @@ nav: tools
                     <div class="result-formula wrap" id="reverse-formula"></div>
                 </section>
 
-                <section>
-                    <h2 class="ps-section-label">Common Signal Types</h2>
-                    <table class="ref-table-dense">
-                        <thead>
-                            <tr><th>Signal</th><th>Live zero</th></tr>
-                        </thead>
-                        <tbody>
-                            <tr><td>4–20 mA</td><td>yes</td></tr>
-                            <tr><td>0–20 mA</td><td>no</td></tr>
-                            <tr><td>0–10 V</td><td>no</td></tr>
-                            <tr><td>2–10 V</td><td>yes</td></tr>
-                            <tr><td>0–5 V</td><td>no</td></tr>
-                            <tr><td>1–5 V</td><td>yes</td></tr>
-                        </tbody>
-                    </table>
-                    <p class="ref-note">
-                        "Live zero": a broken wire reads below-range and faults, not as a valid 0%.
-                    </p>
-                </section>
-
             </div>
         </div>
 
         <!-- ── 2-Point → Slope / Offset ── -->
-        <!-- Two-column: the worked formula has nowhere useful to grow into, so there's no
-             Reference section here. Uses the .tool-body-3col grid with the Output section
-             spanning the right two-thirds; on mobile the @media stack rule still applies. -->
         <div id="tab-slopeoffset" class="tab-pane">
-            <div class="tool-body-3col">
+            <div class="tool-body-2col">
 
                 <section>
                     <h2 class="ps-section-label">Input — two IO pairs</h2>
@@ -223,8 +180,7 @@ nav: tools
                     </div>
                 </section>
 
-                <!-- Output spans the right two-thirds; background:none — it's the output, not a recessed reference panel -->
-                <section style="grid-column:span 2;background:none;">
+                <section>
                     <h2 class="ps-section-label">Output — y = mx + b</h2>
                     <div class="ps-row">
                         <span class="ps-label">Slope (m) — scale factor</span>
@@ -243,6 +199,31 @@ nav: tools
             </div>
             <div class="result-formula flush" id="so-formula"></div>
         </div>
+
+        <!-- Shared reference row: the same Common Signal Types content
+             previously duplicated as the third column of tabs 1 and 2.
+             Sits outside the .tab-pane elements so it stays visible
+             regardless of which tab is active; switchTab (ui.js) only
+             toggles .tab-pane descendants of .tool-card. -->
+        <section class="tool-body-row">
+            <h2 class="ps-section-label">Common Signal Types</h2>
+            <table class="ref-table-dense">
+                <thead>
+                    <tr><th>Signal</th><th>Live zero</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>4–20 mA</td><td>yes</td></tr>
+                    <tr><td>0–20 mA</td><td>no</td></tr>
+                    <tr><td>0–10 V</td><td>no</td></tr>
+                    <tr><td>2–10 V</td><td>yes</td></tr>
+                    <tr><td>0–5 V</td><td>no</td></tr>
+                    <tr><td>1–5 V</td><td>yes</td></tr>
+                </tbody>
+            </table>
+            <p class="ref-note">
+                "Live zero": a broken wire reads below-range and faults, not as a valid 0%.
+            </p>
+        </section>
     </div>
 
     <a class="back-link" href="/tools/">← All tools</a>

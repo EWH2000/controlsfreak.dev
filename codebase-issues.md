@@ -1467,7 +1467,7 @@ on-its-own.*
 
 Could share a branch with #25 or #26 (both still open and small).
 
-### 29. `.tool-body-3col` produces uneven column lengths on tools whose Output is sparse and whose Reference column is dense
+### 29. `.tool-body-3col` produces uneven column lengths on tools whose Output is sparse and whose Reference column is dense *(addressed 2026-05-18)*
 
 Caught during PR #29 review on the live preview link. The Input /
 Output / Reference grid only reads visually balanced when all three
@@ -1547,6 +1547,23 @@ candidate.
 No retrofit needed on `psychrometric-chart.html`, `modbus-register-
 viewer.html`, or `thermistor-calculator.html`; their column-density
 balance is acceptable as-is.
+
+**Resolution (2026-05-18):** both steps landed in one PR. Step 1: the
+byte-identical `.er-example` (economizer-ratio) and `.am-example`
+(air-mixing) rules promote to a single `.tool-body-row` utility in
+`html/styles.css`, alongside `.tool-body-2col` / `.tool-body-3col`.
+Name picked from the three candidates — `.tool-body-row` reads as the
+cross-axis sibling of the column-family classes, and is layout-shape
+rather than content-semantic (so a future "related tools" or "footer
+note" row can reuse it without naming awkwardness). Step 2: all three
+`signal-scaling.html` tabs switch from `.tool-body-3col` to
+`.tool-body-2col` (Input / Output), and the Common Signal Types table
+hoists out of tabs 1 & 2 into one shared `<section class="tool-body-
+row">` sitting inside `.tool-card` after the last `.tab-pane`. The
+2-Point tab's `style="grid-column:span 2;background:none;"` workaround
+on its Output section is now redundant and removed. `switchTab`
+(`html/scripts/ui.js:28–34`) only toggles `.tab-pane` descendants, so
+the shared row stays visible across all tab switches.
 
 ---
 
