@@ -178,6 +178,13 @@ nav: tools
             <!-- ────────── INPUTS COLUMN ────────── -->
             <section>
                 <h2 class="ps-section-label">Air handler</h2>
+                <div class="ps-row" role="group" aria-labelledby="psy-range-label">
+                    <span class="ps-label" id="psy-range-label">Chart range</span>
+                    <div class="btn-row">
+                        <button class="copy-btn active" id="psy-range-standard" data-range="standard">Standard</button>
+                        <button class="copy-btn"        id="psy-range-cold"     data-range="cold">Cold</button>
+                    </div>
+                </div>
                 <div class="ps-row">
                     <label class="ps-label" data-us="Altitude (ft)" data-metric="Altitude (m)" for="psy-alt">Altitude (ft)</label>
                     <input class="ps-input" type="number" id="psy-alt" step="100" min="0" max="15000" placeholder="0" value="0">
@@ -458,8 +465,29 @@ nav: tools
         buildSecondProp();
 
         // ── Chart bounds (drawn region; states outside still read out) ──
-        const TDB_MIN = 30, TDB_MAX = 120;     // dry-bulb axis, °F
-        const W_MAX   = 0.025;                  // humidity-ratio axis ceiling, lb/lb (= 175 gr/lb)
+        // TDB_MIN / TDB_MAX swap with the active range preset (Standard
+        // 30–120 °F vs Cold –20–100 °F). Always canonical °F — metric
+        // tick labels are derived from these bounds at draw time. W_MAX
+        // stays fixed across presets; cold air is drier, so the extra
+        // headroom at the top of the cold chart reads correctly.
+        let TDB_MIN, TDB_MAX;
+        const W_MAX = 0.025;                    // humidity-ratio axis ceiling, lb/lb (= 175 gr/lb)
+        const RANGE_KEY = 'cf_psy_range';
+        function loadRange() {
+            try {
+                const v = localStorage.getItem(RANGE_KEY);
+                return v === 'cold' ? 'cold' : 'standard';
+            } catch (e) { return 'standard'; }
+        }
+        function saveRange(r) {
+            try { localStorage.setItem(RANGE_KEY, r); } catch (e) { /* private mode etc. */ }
+        }
+        function setRangeBounds(preset) {
+            if (preset === 'cold') { TDB_MIN = -20; TDB_MAX = 100; }
+            else                    { TDB_MIN =  30; TDB_MAX = 120; }
+        }
+        let chartRange = loadRange();
+        setRangeBounds(chartRange);
 
         // ── Stage labels & ordering ──
         const STEPS = ['oa', 'ra', 'ma', 'cc', 'hc', 'hum', 'sa'];
@@ -902,14 +930,17 @@ nav: tools
             ctx.font = "10px 'IBM Plex Mono', monospace";
             ctx.lineWidth = 1;
 
-            // Tick scales — IP uses every 10 °F across the 30–120 °F bounds and every
-            // 25 gr/lb up to 175. SI uses metric-clean ticks (every 5 °C across roughly
-            // 0–50 °C, every 5 g/kg up to 25), which are drawn at the equivalent canonical
-            // positions on the same underlying IP geometry.
+            // Tick scales — IP uses every 10 °F across the active range; SI uses
+            // metric-clean ticks (every 5 °C on Standard, every 10 °C on Cold to
+            // avoid crowding the wider –30…40 span). Drawn at the equivalent
+            // canonical positions on the same underlying IP geometry.
             const isMetric = U.current() === 'metric';
+            const isCold   = chartRange === 'cold';
             const dbTicks  = isMetric
-                ? [0, 5, 10, 15, 20, 25, 30, 35, 40, 45]                  // °C — labels
-                : [30, 40, 50, 60, 70, 80, 90, 100, 110, 120];            // °F — labels
+                ? (isCold ? [-30, -20, -10, 0, 10, 20, 30, 40]                          // °C — labels (cold)
+                          : [0, 5, 10, 15, 20, 25, 30, 35, 40, 45])                     // °C — labels (standard)
+                : (isCold ? [-20, -10, 0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]      // °F — labels (cold)
+                          : [30, 40, 50, 60, 70, 80, 90, 100, 110, 120]);               // °F — labels (standard)
             const wTicks   = isMetric
                 ? [0, 5, 10, 15, 20, 25]                                  // g/kg — labels
                 : [0, 25, 50, 75, 100, 125, 150, 175];                    // gr/lb — labels
@@ -965,7 +996,9 @@ nav: tools
             // only the label values and the chosen contour temperatures change.
             ctx.strokeStyle = cBorder;
             ctx.setLineDash([3, 3]);
-            const wbContours = isMetric ? [0, 5, 10, 15, 20, 25, 30] : [30, 40, 50, 60, 70, 80, 90];
+            const wbContours = isMetric
+                ? (isCold ? [-20, -15, -10, -5, 0, 5, 10, 15, 20, 25, 30] : [0, 5, 10, 15, 20, 25, 30])
+                : (isCold ? [-10, 0, 10, 20, 30, 40, 50, 60, 70, 80, 90]  : [30, 40, 50, 60, 70, 80, 90]);
             for (const wbLbl of wbContours) {
                 const twbF = isMetric ? U.toCanonical.temp(wbLbl) : wbLbl;
                 const pts = [];
@@ -974,7 +1007,9 @@ nav: tools
             }
             ctx.setLineDash([]);
             ctx.fillStyle = cDim; ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
-            const wbLabels = isMetric ? [5, 10, 15, 20, 25] : [40, 50, 60, 70, 80];
+            const wbLabels = isMetric
+                ? (isCold ? [-15, -10, -5, 0, 5, 10, 15, 20, 25] : [5, 10, 15, 20, 25])
+                : (isCold ? [0, 10, 20, 30, 40, 50, 60, 70, 80]  : [40, 50, 60, 70, 80]);
             for (const wbLbl of wbLabels) {
                 const twbF = isMetric ? U.toCanonical.temp(wbLbl) : wbLbl;
                 const ww = satHumRatio(twbF, P);
@@ -1410,6 +1445,32 @@ nav: tools
         // Pill buttons: step selector (already carry data-step).
         document.querySelectorAll('.psy-pill[data-step]').forEach(btn => {
             btn.addEventListener('click', e => selectStep(e.currentTarget.dataset.step));
+        });
+
+        // Range-preset toggle (Standard / Cold). Sync .active to the loaded
+        // preset before binding, so a returning Cold visitor sees the right
+        // button highlighted on first paint.
+        function syncRangeButtons() {
+            document.querySelectorAll('[data-range]').forEach(b => {
+                b.classList.toggle('active', b.dataset.range === chartRange);
+            });
+        }
+        function setChartRange(next) {
+            if (next !== 'standard' && next !== 'cold') return;
+            if (next === chartRange) return;
+            chartRange = next;
+            saveRange(next);
+            setRangeBounds(next);
+            syncRangeButtons();
+            // Re-clamp any state points to the new bounds (handled inside
+            // the chain re-solve + redraw via setSourceFromChart on subsequent
+            // drag, but values entered into inputs stay as typed — the chart
+            // just won't render them outside the new bounds).
+            psyRecompute();
+        }
+        syncRangeButtons();
+        document.querySelectorAll('[data-range]').forEach(btn => {
+            btn.addEventListener('click', e => setChartRange(e.currentTarget.dataset.range));
         });
         // Inputs / checkboxes that just re-run the chain on any change.
         const RECOMPUTE_IDS = [

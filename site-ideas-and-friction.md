@@ -737,6 +737,56 @@ mutes to "—".
   motion toward saturation, so the colour affinity is even thematically
   apt.
 
+### Psychrometric chart — Cold-climate range preset *(shipped 2026-05-18)*
+
+Triggered by the user working in a climate where outdoor air stays
+below 20 °F for months. The chart was hardcoded to TDB 30–120 °F, so
+sub-30 °F state points simply didn't render. Adds a two-button "Chart
+range" toggle in the Air handler input column:
+
+- **Standard** — 30–120 °F (0–50 °C), the original.
+- **Cold** — −20–100 °F (−30–40 °C). Trims the top by 20 °F so the
+  wider DB span doesn't squash vertically — aspect ratio reads close
+  to Standard.
+
+Preset persists across sessions in `localStorage` under
+`cf_psy_range`. Same sticky-once-picked semantics as the units toggle.
+
+**Design choice that held — binary preset over dynamic.** Three
+options were considered: binary preset (Standard/Cold), three-preset
+(adds a "Wide" or "chilled-water" variant), and dynamic min/max DB
+inputs. Picked binary because:
+
+- The mental model is binary at heart — "my chart" vs. "the other
+  chart." Field techs pick one for where they work and leave it.
+- Each preset can be hand-tuned (gridline density, wb contour set,
+  label placement) — looks intentional at both zoom levels rather
+  than math-derived.
+- Dynamic adds real edge cases (axis re-tuning, validation of
+  `max > min + something`, a user entering 50–55 producing a chart
+  that's mostly empty space). High complexity for low usage.
+
+Third preset (chilled-water 0–80 °F or similar) waits for a second
+user to ask. The `setRangeBounds()` helper extends cleanly with a new
+case if it earns its keep.
+
+**Implementation — single-let swap is the whole story.** `TDB_MIN /
+TDB_MAX` flipped from `const` to `let`, set from a small helper at
+init and on toggle. Every existing call site (X-mapping, in-bounds
+filters, curve sample ranges, drag clamp, drag inverse) reads them
+dynamically — no other math changed. Tick arrays for both axes and wb
+contours / labels gain a per-preset variant. RH labels stay shared
+across presets. Redraw runs through the same `psyRecompute()` entry
+the units toggle already uses, so no new redraw plumbing.
+
+**Out of scope (parked):**
+- *Dynamic / user-defined min/max DB* — see "Design choice."
+- *Auto-detect from a setting or IP geolocate* — the user picks.
+- *Per-preset W_MAX tuning* — `W_MAX` stays shared. Cold air is drier,
+  so a bit of extra W headroom at the top of the cold chart reads
+  correctly and reinforces the "this air can't hold much water"
+  intuition.
+
 ### Psychrometrics — paired Education page *(shipped 2026-05-18)*
 
 **The page's one question:** "What are the seven properties on a
@@ -841,27 +891,69 @@ chart even resolved. Three changes shipped in this pass:
   widget read as the page's deliverable rather than another
   inline diagram).
 
-### Air-mixing calculator *(candidate psych-tool follow-up)*
+### Air-mixing calculator *(shipped 2026-05-18)*
 
-Generalize the chart's OA + RA mass-weighted mix to N streams: mix two
-or more known states by mass flow (or by mass fraction) into a single
-mixed state. Useful any time a tech is sizing an outside-air mixing
-plenum, blending economizer plus return, or sanity-checking an energy-
-recovery wheel's output state.
+Ships at `/tools/air-mixing.html` as a two-tab `.tool-body-2col` tool
+with a worked-example row beneath the grid (second consumer of
+economizer-ratio's `.er-example` pattern, per codebase-issues #29 step
+1). Generalizes the chart's and economizer's two-stream mix to three
+streams. Tab 1 (by mass flow) takes a CFM and a full Define-by state
+per stream; tab 2 (by mass fraction) takes percentages that must sum
+to 100 % (±0.1 tolerance). Output column shows the mixed-air state —
+DB, WB, DP, W, RH, h, v — plus a Copy button. Per-stream `solveState`
+errors surface inline below the bad stream; tab-level warnings
+(fraction-sum drift, zero total mass, mixed-state out of range) land
+in a status pill above the readouts. Shared altitude input above the
+tabs feeds `pressFromAltitude` into both tabs.
 
-In scope (sketch):
-- Two-tab UI: by-mass-flow (each stream gets a CFM or a lb/h) vs.
-  by-fraction (each stream gets a %, must sum to 100).
-- Per-stream input row using the chart page's "Define by" pattern —
-  DB + (RH / WB / DP / W / h).
-- Output: mixed-air DB, W, h, RH, v, plus optional altitude/pressure.
-- Reuses `humRatioFromRH`, `humRatioFromWetBulb`, `enthalpy`,
-  `pressFromAltitude` from `psychro-engine.js` (flat primitives) and
-  `Psychro.buildState` to materialize the result. No new math.
+**Framing decisions settled during build:**
+- *Three streams, not dynamic.* The use cases that actually surface
+  in practice (OA + RA + ERV exhaust; economizer + return + makeup;
+  recovery-wheel sanity check) are all three-stream. A 4th-stream ask
+  hasn't come up, and dynamic add/remove buttons would add an
+  interaction pattern not used elsewhere on the site for no current
+  payoff. Zeroing a stream's weight drops it from the mix cleanly.
+- *Altitude shared, not per-stream.* One input above the tabs feeds
+  both. Streams "mixing under different pressures" don't physically
+  mix without flow work — single pressure is the honest model.
+- *Mass-fraction tab surfaces the percentage check.* `|Σ − 100| > 0.1`
+  surfaces a tab-level warning rather than silently renormalizing.
+  Renormalize-on-input would hide the bug class where a tech mistypes
+  one digit and doesn't notice.
 
-First second-consumer that lands triggers a review of the engine's
-two-tier API — if it wants its own solver methods, those become the
-test of whether `Psychro.*` is the right namespace shape.
+**Engine API review — `psychro-engine.js` flat primitives (second
+audit).** Second second-consumer landed; the API survived again:
+- `Psychro.solveState` covered all three per-stream Define-by call
+  sites without modification. Same `.ok` branching as economizer.
+- `Psychro.buildState` materialized the mixed state from the recovered
+  `(T_mix, W_mix)` cleanly. The "build from two scalars at pressure"
+  shape is the right one for this kind of derived state.
+- `pressFromAltitude` is the first non-namespaced primitive a tool has
+  called directly other than the chart (economizer hardcoded `P_STD`).
+  Worked fine as a top-level `const` reachable from a later inline
+  script — the classic-script global pattern holds.
+- The only new math was the algebraic inversion of `enthalpy(tdb, W)`
+  to recover `T_mix` from `(W_mix, h_mix)`. One inline line — not
+  engine surface; the algebra is shape-of-tool, not shape-of-air.
+- No new primitives added. Two of two predicted second-consumers
+  (economizer-ratio, air-mixing) shipped without touching the engine.
+  Two-tier API is now validated across three pages. Coil-sizing
+  remains the next probe; if its solve-for-leaving-state shape wants
+  a `Psychro.invertProcess` sibling, that's the trigger.
+
+**Out of scope (deliberate, parked):**
+- *4th stream / dynamic stream count* — see "Framing decisions."
+- *By-volume-flow without specific-volume adjustment* — not exposed.
+  CFM is volumetric; the tool derives mass from `CFM ÷ v` per stream,
+  which is the right thing.
+- *Different pressures per stream* — see "Framing decisions."
+- *localStorage persistence of last-entered values* — no tool persists
+  input state today; not changing that pattern for this one. The
+  controller-commissioner entry is the right place to start that
+  conversation.
+- *Promote `.am-example` and `.er-example` to a shared
+  `.tool-body-row` utility in `styles.css`* — separate PR. Pattern
+  now has two consumers, so codebase-issues #29 step 1 fires.
 
 ### Coil-sizing calculator *(candidate psych-tool follow-up)*
 

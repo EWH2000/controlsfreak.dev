@@ -1,0 +1,627 @@
+---
+title: Air-Mixing Calculator — controlsfreak.dev
+description: Mix three air streams by mass flow or mass fraction and read out the resulting dry-bulb, humidity, enthalpy, and dew point of the blend. ASHRAE psychrometrics.
+canonical: https://controlsfreak.dev/tools/air-mixing.html
+nav: tools
+---
+{% extends "layouts/page.njk" %}
+
+{% block head %}
+    <style>
+        /* Per-stream input error — sits just below the second-value row
+           when the stream's solveState rejects the inputs. Quiet by
+           default; colors and shows only when populated. Same shape as
+           a result-formula but warm-toned for a soft signal. */
+        .am-stream-err {
+            font-family: var(--mono);
+            font-size: 0.72rem;
+            line-height: 1.5;
+            color: var(--heat);
+            min-height: 1.05em;
+            margin: 0.35rem 0 0.6rem;
+        }
+        .am-stream-err:empty { display: none; }
+
+        /* Tab-level status pill — mirrors economizer-ratio's .er-feas in
+           role and styling. Shown above the mixed-state readouts. */
+        .am-status {
+            margin-top: 1rem;
+            padding: 0.5rem 0.75rem;
+            border-radius: 4px;
+            font-family: var(--mono);
+            font-size: 0.82rem;
+            line-height: 1.5;
+            border: 1px solid var(--border);
+            background: var(--surface-2);
+            color: var(--text);
+        }
+        .am-status.ok    { border-color: var(--accent); background: var(--accent-dim); }
+        .am-status.warn  { border-color: var(--heat);   color: var(--heat); }
+        .am-status.error { border-color: var(--red);    color: var(--red); }
+
+        /* "Example below" pattern — second consumer of economizer-ratio's
+           .er-example. Lifts the same recessed-panel cue (--surface-3 +
+           top border) so the worked example reads as supporting reference
+           content beneath the 2-col Input / Output grid. When a third
+           consumer earns it, the two go to a shared utility in styles.css
+           (codebase-issues #29 step 1). */
+        .am-example {
+            padding: 1.25rem 1.25rem 1.5rem;
+            border-top: 1px solid var(--border);
+            background: var(--surface-3);
+        }
+
+        /* Altitude strip — shared between both tabs, sits above the tabs
+           as a thin one-row band. Padded to match section padding so the
+           input's left edge aligns with section content. */
+        .am-alt-strip {
+            padding: 0.9rem 1.25rem 0.4rem;
+            border-bottom: 1px solid var(--border);
+        }
+        .am-alt-strip .ps-row { margin-bottom: 0; }
+    </style>
+{% endblock %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">HVAC</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">
+                Air-Mixing Calculator
+                <span class="tool-tag">HVAC</span>
+            </h1>
+        </div>
+
+        <p style="font-family:var(--mono);font-size:0.7rem;color:var(--text-dim);padding:1.1rem 1.5rem 0;line-height:1.7;">
+            Mix three air streams — pick the weight shape your data is in. By mass flow when you
+            have CFMs at the panel (outdoor + return + ERV exhaust, economizer + return + makeup).
+            By mass fraction when you have percentages off a schematic. The math is the same
+            mass-weighted blend either way; the tab just picks how you tell the tool what the
+            weights are.
+        </p>
+
+        <section class="am-alt-strip">
+            <div class="ps-row">
+                <label class="ps-label" data-us="Altitude (ft)" data-metric="Altitude (m)" for="am-alt">Altitude (ft)</label>
+                <input class="ps-input" type="number" id="am-alt" step="100" min="0" max="15000" placeholder="0" value="0">
+            </div>
+        </section>
+
+        <div class="tabs tabs-flush">
+            <button class="tab-btn active" data-tab="flow">By mass flow</button>
+            <button class="tab-btn"        data-tab="frac">By mass fraction</button>
+        </div>
+
+        <!-- ── By mass flow ── -->
+        <div id="tab-flow" class="tab-pane active">
+            <div class="tool-body-2col">
+
+                <section>
+                    <h2 class="ps-section-label">Input</h2>
+
+                    <h3 class="subhead">Stream 1</h3>
+                    <div class="ps-row">
+                        <label class="ps-label" data-us="Mass flow (CFM)" data-metric="Mass flow (m³/h)" for="am-flow-s1-w">Mass flow (CFM)</label>
+                        <input class="ps-input" type="number" id="am-flow-s1-w" step="50" min="0" value="1000">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" data-us="Dry-bulb (°F)" data-metric="Dry-bulb (°C)" for="am-flow-s1-tdb">Dry-bulb (°F)</label>
+                        <input class="ps-input" type="number" id="am-flow-s1-tdb" step="0.5" min="-50" max="200" value="95">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="am-flow-s1-mode">Define by</label>
+                        <select class="ps-input" id="am-flow-s1-mode">
+                            <option value="rh">Relative humidity</option>
+                            <option value="wb" selected>Wet-bulb temperature</option>
+                            <option value="dp">Dew point temperature</option>
+                            <option value="w">Humidity ratio</option>
+                            <option value="h">Enthalpy</option>
+                        </select>
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" id="am-flow-s1-second-lbl" for="am-flow-s1-second">Wet-bulb (°F)</label>
+                        <input class="ps-input" type="number" id="am-flow-s1-second" step="0.5" value="75">
+                    </div>
+                    <div class="am-stream-err" id="am-flow-s1-err"></div>
+
+                    <h3 class="subhead">Stream 2</h3>
+                    <div class="ps-row">
+                        <label class="ps-label" data-us="Mass flow (CFM)" data-metric="Mass flow (m³/h)" for="am-flow-s2-w">Mass flow (CFM)</label>
+                        <input class="ps-input" type="number" id="am-flow-s2-w" step="50" min="0" value="3000">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" data-us="Dry-bulb (°F)" data-metric="Dry-bulb (°C)" for="am-flow-s2-tdb">Dry-bulb (°F)</label>
+                        <input class="ps-input" type="number" id="am-flow-s2-tdb" step="0.5" min="-50" max="200" value="75">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="am-flow-s2-mode">Define by</label>
+                        <select class="ps-input" id="am-flow-s2-mode">
+                            <option value="rh" selected>Relative humidity</option>
+                            <option value="wb">Wet-bulb temperature</option>
+                            <option value="dp">Dew point temperature</option>
+                            <option value="w">Humidity ratio</option>
+                            <option value="h">Enthalpy</option>
+                        </select>
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" id="am-flow-s2-second-lbl" for="am-flow-s2-second">Relative humidity (%)</label>
+                        <input class="ps-input" type="number" id="am-flow-s2-second" step="1" value="50">
+                    </div>
+                    <div class="am-stream-err" id="am-flow-s2-err"></div>
+
+                    <h3 class="subhead">Stream 3</h3>
+                    <div class="ps-row">
+                        <label class="ps-label" data-us="Mass flow (CFM)" data-metric="Mass flow (m³/h)" for="am-flow-s3-w">Mass flow (CFM)</label>
+                        <input class="ps-input" type="number" id="am-flow-s3-w" step="50" min="0" value="500">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" data-us="Dry-bulb (°F)" data-metric="Dry-bulb (°C)" for="am-flow-s3-tdb">Dry-bulb (°F)</label>
+                        <input class="ps-input" type="number" id="am-flow-s3-tdb" step="0.5" min="-50" max="200" value="60">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="am-flow-s3-mode">Define by</label>
+                        <select class="ps-input" id="am-flow-s3-mode">
+                            <option value="rh">Relative humidity</option>
+                            <option value="wb" selected>Wet-bulb temperature</option>
+                            <option value="dp">Dew point temperature</option>
+                            <option value="w">Humidity ratio</option>
+                            <option value="h">Enthalpy</option>
+                        </select>
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" id="am-flow-s3-second-lbl" for="am-flow-s3-second">Wet-bulb (°F)</label>
+                        <input class="ps-input" type="number" id="am-flow-s3-second" step="0.5" value="55">
+                    </div>
+                    <div class="am-stream-err" id="am-flow-s3-err"></div>
+
+                    <p class="ref-note">
+                        Specific volume comes off each stream's state; mass flow per stream is
+                        <code>CFM ÷ v</code>. Zero a stream's CFM to drop it out of the mix.
+                    </p>
+                </section>
+
+                <section>
+                    <h2 class="ps-section-label">Output</h2>
+                    <div class="am-status" id="am-flow-status">Enter values to see the mix.</div>
+
+                    <h3 class="subhead">Mixed-air state</h3>
+                    <div class="ps-row"><span class="ps-label" data-us="Dry-bulb (°F)"          data-metric="Dry-bulb (°C)">Dry-bulb (°F)</span>          <span class="ps-value muted" id="am-flow-ma-tdb">—</span></div>
+                    <div class="ps-row"><span class="ps-label" data-us="Wet-bulb (°F)"          data-metric="Wet-bulb (°C)">Wet-bulb (°F)</span>          <span class="ps-value muted" id="am-flow-ma-wb">—</span></div>
+                    <div class="ps-row"><span class="ps-label" data-us="Dew point (°F)"         data-metric="Dew point (°C)">Dew point (°F)</span>         <span class="ps-value muted" id="am-flow-ma-dp">—</span></div>
+                    <div class="ps-row"><span class="ps-label" data-us="Humidity ratio (gr/lb)" data-metric="Humidity ratio (g/kg)">Humidity ratio (gr/lb)</span> <span class="ps-value muted" id="am-flow-ma-w">—</span></div>
+                    <div class="ps-row"><span class="ps-label">Rel. humidity (%)</span>          <span class="ps-value muted" id="am-flow-ma-rh">—</span></div>
+                    <div class="ps-row"><span class="ps-label" data-us="Enthalpy (Btu/lb)"      data-metric="Enthalpy (kJ/kg)">Enthalpy (Btu/lb)</span>      <span class="ps-value muted" id="am-flow-ma-h">—</span></div>
+                    <div class="ps-row"><span class="ps-label" data-us="Specific volume (ft³/lb)" data-metric="Specific volume (m³/kg)">Specific volume (ft³/lb)</span> <span class="ps-value muted" id="am-flow-ma-v">—</span></div>
+
+                    <div class="btn-row" style="margin-top:1rem;">
+                        <button class="copy-btn" id="am-flow-copy">Copy mixed state</button>
+                    </div>
+                </section>
+
+            </div>
+
+            <section class="am-example">
+                <h2 class="ps-section-label">Worked example</h2>
+                <p class="ref-note" style="margin-top:0;">
+                    Summer AHU with energy recovery — three streams meeting in the mixing plenum.
+                    Outdoor at <span data-us="1000 CFM / 95 °F / 75 °F WB" data-metric="1700 m³/h / 35 °C / 23.9 °C WB">1000 CFM / 95 °F / 75 °F WB</span>,
+                    return at <span data-us="3000 CFM / 75 °F / 50 % RH" data-metric="5100 m³/h / 23.9 °C / 50 % RH">3000 CFM / 75 °F / 50 % RH</span>,
+                    ERV exhaust bleed at <span data-us="500 CFM / 60 °F / 55 °F WB" data-metric="850 m³/h / 15.6 °C / 12.8 °C WB">500 CFM / 60 °F / 55 °F WB</span>.
+                </p>
+                <ol class="ref-note" style="padding-left:1.2em;">
+                    <li>For each stream, solve the state (the engine returns specific volume
+                        <code>v</code> alongside <code>W</code> and <code>h</code>).</li>
+                    <li>Convert volumetric flow to mass: <code>m<sub>i</sub> = CFM<sub>i</sub> ÷ v<sub>i</sub></code>.
+                        Cold streams are denser; warm streams less so.</li>
+                    <li>Mass-weight the two variables that mix linearly with mass —
+                        humidity ratio and enthalpy:<br>
+                        <code>W<sub>mix</sub> = Σ(m<sub>i</sub> · W<sub>i</sub>) ÷ Σm<sub>i</sub></code>,
+                        <code>h<sub>mix</sub> = Σ(m<sub>i</sub> · h<sub>i</sub>) ÷ Σm<sub>i</sub></code>.</li>
+                    <li>Recover dry-bulb by inverting the enthalpy formula
+                        <code>h = (0.240 + 0.444·W)·T + 1061·W</code>:<br>
+                        <code>T<sub>mix</sub> = (h<sub>mix</sub> − 1061·W<sub>mix</sub>) ÷ (0.240 + 0.444·W<sub>mix</sub>)</code>.</li>
+                    <li>Materialize the full state at the site pressure to read out RH, WB, DP, and v.</li>
+                </ol>
+                <p class="ref-note">
+                    The output column shows the answer the AHU actually sees — RH and WB are
+                    what determine whether the cooling coil works dry or wet at this mix.
+                </p>
+            </section>
+        </div>
+
+        <!-- ── By mass fraction ── -->
+        <div id="tab-frac" class="tab-pane">
+            <div class="tool-body-2col">
+
+                <section>
+                    <h2 class="ps-section-label">Input</h2>
+
+                    <h3 class="subhead">Stream 1</h3>
+                    <div class="ps-row">
+                        <label class="ps-label" for="am-frac-s1-w">Mass fraction (%)</label>
+                        <input class="ps-input" type="number" id="am-frac-s1-w" step="1" min="0" max="100" value="22">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" data-us="Dry-bulb (°F)" data-metric="Dry-bulb (°C)" for="am-frac-s1-tdb">Dry-bulb (°F)</label>
+                        <input class="ps-input" type="number" id="am-frac-s1-tdb" step="0.5" min="-50" max="200" value="95">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="am-frac-s1-mode">Define by</label>
+                        <select class="ps-input" id="am-frac-s1-mode">
+                            <option value="rh">Relative humidity</option>
+                            <option value="wb" selected>Wet-bulb temperature</option>
+                            <option value="dp">Dew point temperature</option>
+                            <option value="w">Humidity ratio</option>
+                            <option value="h">Enthalpy</option>
+                        </select>
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" id="am-frac-s1-second-lbl" for="am-frac-s1-second">Wet-bulb (°F)</label>
+                        <input class="ps-input" type="number" id="am-frac-s1-second" step="0.5" value="75">
+                    </div>
+                    <div class="am-stream-err" id="am-frac-s1-err"></div>
+
+                    <h3 class="subhead">Stream 2</h3>
+                    <div class="ps-row">
+                        <label class="ps-label" for="am-frac-s2-w">Mass fraction (%)</label>
+                        <input class="ps-input" type="number" id="am-frac-s2-w" step="1" min="0" max="100" value="67">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" data-us="Dry-bulb (°F)" data-metric="Dry-bulb (°C)" for="am-frac-s2-tdb">Dry-bulb (°F)</label>
+                        <input class="ps-input" type="number" id="am-frac-s2-tdb" step="0.5" min="-50" max="200" value="75">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="am-frac-s2-mode">Define by</label>
+                        <select class="ps-input" id="am-frac-s2-mode">
+                            <option value="rh" selected>Relative humidity</option>
+                            <option value="wb">Wet-bulb temperature</option>
+                            <option value="dp">Dew point temperature</option>
+                            <option value="w">Humidity ratio</option>
+                            <option value="h">Enthalpy</option>
+                        </select>
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" id="am-frac-s2-second-lbl" for="am-frac-s2-second">Relative humidity (%)</label>
+                        <input class="ps-input" type="number" id="am-frac-s2-second" step="1" value="50">
+                    </div>
+                    <div class="am-stream-err" id="am-frac-s2-err"></div>
+
+                    <h3 class="subhead">Stream 3</h3>
+                    <div class="ps-row">
+                        <label class="ps-label" for="am-frac-s3-w">Mass fraction (%)</label>
+                        <input class="ps-input" type="number" id="am-frac-s3-w" step="1" min="0" max="100" value="11">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" data-us="Dry-bulb (°F)" data-metric="Dry-bulb (°C)" for="am-frac-s3-tdb">Dry-bulb (°F)</label>
+                        <input class="ps-input" type="number" id="am-frac-s3-tdb" step="0.5" min="-50" max="200" value="60">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="am-frac-s3-mode">Define by</label>
+                        <select class="ps-input" id="am-frac-s3-mode">
+                            <option value="rh">Relative humidity</option>
+                            <option value="wb" selected>Wet-bulb temperature</option>
+                            <option value="dp">Dew point temperature</option>
+                            <option value="w">Humidity ratio</option>
+                            <option value="h">Enthalpy</option>
+                        </select>
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" id="am-frac-s3-second-lbl" for="am-frac-s3-second">Wet-bulb (°F)</label>
+                        <input class="ps-input" type="number" id="am-frac-s3-second" step="0.5" value="55">
+                    </div>
+                    <div class="am-stream-err" id="am-frac-s3-err"></div>
+
+                    <p class="ref-note">
+                        Fractions are by mass and must sum to 100 % (±0.1 % tolerance).
+                        Use this tab when your data already comes in as percentages —
+                        otherwise the mass-flow tab is the one to use.
+                    </p>
+                </section>
+
+                <section>
+                    <h2 class="ps-section-label">Output</h2>
+                    <div class="am-status" id="am-frac-status">Enter values to see the mix.</div>
+
+                    <h3 class="subhead">Mixed-air state</h3>
+                    <div class="ps-row"><span class="ps-label" data-us="Dry-bulb (°F)"          data-metric="Dry-bulb (°C)">Dry-bulb (°F)</span>          <span class="ps-value muted" id="am-frac-ma-tdb">—</span></div>
+                    <div class="ps-row"><span class="ps-label" data-us="Wet-bulb (°F)"          data-metric="Wet-bulb (°C)">Wet-bulb (°F)</span>          <span class="ps-value muted" id="am-frac-ma-wb">—</span></div>
+                    <div class="ps-row"><span class="ps-label" data-us="Dew point (°F)"         data-metric="Dew point (°C)">Dew point (°F)</span>         <span class="ps-value muted" id="am-frac-ma-dp">—</span></div>
+                    <div class="ps-row"><span class="ps-label" data-us="Humidity ratio (gr/lb)" data-metric="Humidity ratio (g/kg)">Humidity ratio (gr/lb)</span> <span class="ps-value muted" id="am-frac-ma-w">—</span></div>
+                    <div class="ps-row"><span class="ps-label">Rel. humidity (%)</span>          <span class="ps-value muted" id="am-frac-ma-rh">—</span></div>
+                    <div class="ps-row"><span class="ps-label" data-us="Enthalpy (Btu/lb)"      data-metric="Enthalpy (kJ/kg)">Enthalpy (Btu/lb)</span>      <span class="ps-value muted" id="am-frac-ma-h">—</span></div>
+                    <div class="ps-row"><span class="ps-label" data-us="Specific volume (ft³/lb)" data-metric="Specific volume (m³/kg)">Specific volume (ft³/lb)</span> <span class="ps-value muted" id="am-frac-ma-v">—</span></div>
+
+                    <div class="btn-row" style="margin-top:1rem;">
+                        <button class="copy-btn" id="am-frac-copy">Copy mixed state</button>
+                    </div>
+                </section>
+
+            </div>
+
+            <section class="am-example">
+                <h2 class="ps-section-label">Worked example</h2>
+                <p class="ref-note" style="margin-top:0;">
+                    Same three streams expressed as mass fractions —
+                    <span data-us="22 % / 67 % / 11 %" data-metric="22 % / 67 % / 11 %">22 % / 67 % / 11 %</span>.
+                </p>
+                <ol class="ref-note" style="padding-left:1.2em;">
+                    <li>Skip the volumetric-to-mass step — fractions are already in mass units.</li>
+                    <li>Mass-weight humidity ratio and enthalpy directly:
+                        <code>W<sub>mix</sub> = 0.22·W<sub>1</sub> + 0.67·W<sub>2</sub> + 0.11·W<sub>3</sub></code>,
+                        same for <code>h<sub>mix</sub></code>.</li>
+                    <li>Recover dry-bulb the same way and materialize the full state.</li>
+                </ol>
+                <p class="ref-note">
+                    A schedule that lists "fraction OA" alongside DBs and WBs lands here cleanly.
+                    A panel reading with CFMs and damper positions lands in the mass-flow tab.
+                </p>
+            </section>
+        </div>
+    </div>
+
+    <a class="back-link" href="/tools/">← All tools</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="/scripts/units.js"></script>
+<script src="/scripts/ui.js"></script>
+<script src="/scripts/psychro-engine.js"></script>
+<script>
+    // switchTab(name, btn) and copyReadouts(btn, sep, ...ids) come from
+    // /scripts/ui.js; Psychro.solveState / buildState + flat ASHRAE
+    // primitives come from /scripts/psychro-engine.js.
+    (function () {
+        'use strict';
+
+        const U = window.Units;
+        const TABS = ['flow', 'frac'];
+        const STREAMS = ['s1', 's2', 's3'];
+
+        // ── Display helpers ───────────────────────────────────────────
+        const dispT = f       => U.display.temp(f).toFixed(1);
+        const dispW = wLbLb   => U.display.humidityRatio(wLbLb * 7000).toFixed(1);
+        const dispH = btuPerLb=> U.display.enthalpy(btuPerLb).toFixed(1);
+        const dispV = ft3PerLb=> U.display.specificVolume(ft3PerLb).toFixed(2);
+        const tU    = ()      => U.suffix.temp();
+        const wU    = ()      => U.suffix.humidityRatio();
+        const hU    = ()      => U.suffix.enthalpy();
+        const vU    = ()      => U.suffix.specificVolume();
+
+        // ── Second-prop catalog — rebuilt on unitschange so labels and
+        // input steps follow the active unit system. Same shape as the
+        // chart / economizer tools.
+        let SECOND_PROP;
+        function buildSecondProp() {
+            const u = U.current();
+            SECOND_PROP = {
+                rh: { label: 'Relative humidity (%)',      step: 1 },
+                wb: { label: `Wet-bulb (${tU()})`,         step: u === 'us' ? 0.5 : 0.25 },
+                dp: { label: `Dew point (${tU()})`,        step: u === 'us' ? 0.5 : 0.25 },
+                w:  { label: `Humidity ratio (${wU()})`,   step: u === 'us' ? 1 : 0.1 },
+                h:  { label: `Enthalpy (${hU()} dry air)`, step: 0.5 },
+            };
+        }
+        buildSecondProp();
+
+        function secondToCanonical(mode, value) {
+            if (!isFinite(value)) return value;
+            switch (mode) {
+                case 'rh': return value;
+                case 'wb':
+                case 'dp': return U.toCanonical.temp(value);
+                case 'w':  return U.toCanonical.humidityRatio(value) / 7000;  // gr/lb → lb/lb
+                case 'h':  return U.toCanonical.enthalpy(value);
+                default:   return value;
+            }
+        }
+
+        function quantityForMode(mode) {
+            switch (mode) {
+                case 'wb':
+                case 'dp': return 'temp';
+                case 'w':  return 'humidityRatio';
+                case 'h':  return 'enthalpy';
+                default:   return null;
+            }
+        }
+
+        function refreshSecondLabel(prefix) {
+            const mode = document.getElementById(prefix + '-mode').value;
+            document.getElementById(prefix + '-second-lbl').textContent = SECOND_PROP[mode].label;
+            document.getElementById(prefix + '-second').step = SECOND_PROP[mode].step;
+        }
+
+        function setLive(id, text) {
+            const el = document.getElementById(id);
+            el.className = 'ps-value live';
+            el.textContent = text;
+        }
+
+        function clearOutputs(tab) {
+            for (const k of ['ma-tdb', 'ma-wb', 'ma-dp', 'ma-w', 'ma-rh', 'ma-h', 'ma-v']) {
+                const el = document.getElementById('am-' + tab + '-' + k);
+                el.className = 'ps-value muted';
+                el.textContent = '—';
+            }
+        }
+
+        function setStatus(tab, text, kind) {
+            const el = document.getElementById('am-' + tab + '-status');
+            el.textContent = text;
+            el.className = 'am-status' + (kind ? ' ' + kind : '');
+        }
+
+        function setStreamErr(prefix, msg) {
+            document.getElementById(prefix + '-err').textContent = msg || '';
+        }
+
+        function pressure() {
+            const altD = parseFloat(document.getElementById('am-alt').value);
+            const altF = isFinite(altD) ? U.toCanonical.altitude(altD) : 0;
+            return pressFromAltitude(altF);
+        }
+
+        // ── Per-stream solve ──────────────────────────────────────────
+        function readStream(tab, sn, P) {
+            const prefix = 'am-' + tab + '-' + sn;
+            refreshSecondLabel(prefix);
+            const tdbD = parseFloat(document.getElementById(prefix + '-tdb').value);
+            const mode = document.getElementById(prefix + '-mode').value;
+            const secD = parseFloat(document.getElementById(prefix + '-second').value);
+            if (!isFinite(tdbD) || !isFinite(secD)) {
+                return { ok: false, error: 'Enter dry-bulb and second value.' };
+            }
+            return Psychro.solveState(mode, U.toCanonical.temp(tdbD), secondToCanonical(mode, secD), P);
+        }
+
+        // ── Tab calculation ───────────────────────────────────────────
+        function calcTab(tab) {
+            const P = pressure();
+            const states = STREAMS.map(sn => readStream(tab, sn, P));
+
+            // Surface per-stream errors inline.
+            let anyErr = false;
+            STREAMS.forEach((sn, i) => {
+                const prefix = 'am-' + tab + '-' + sn;
+                if (!states[i].ok) {
+                    setStreamErr(prefix, states[i].error);
+                    anyErr = true;
+                } else {
+                    setStreamErr(prefix, '');
+                }
+            });
+            if (anyErr) {
+                setStatus(tab, 'Fix the stream input(s) above to see the mix.', 'warn');
+                clearOutputs(tab);
+                return;
+            }
+
+            // Per-stream weight → mass.
+            const wRaw = STREAMS.map(sn => parseFloat(document.getElementById('am-' + tab + '-' + sn + '-w').value));
+            if (!wRaw.every(isFinite)) {
+                setStatus(tab, 'Enter a weight for each stream.', 'warn');
+                clearOutputs(tab);
+                return;
+            }
+            if (wRaw.some(w => w < 0)) {
+                setStatus(tab, 'Weights can’t be negative.', 'warn');
+                clearOutputs(tab);
+                return;
+            }
+
+            let m;
+            if (tab === 'flow') {
+                // Volumetric flow → mass-flow via per-stream specific volume.
+                // CFM canonical (toCanonical.airflow gives ft³/min equivalent).
+                m = wRaw.map((cfmD, i) => U.toCanonical.airflow(cfmD) / states[i].v);
+            } else {
+                // Fractions must sum to 100 within ±0.1.
+                const sum = wRaw.reduce((a, b) => a + b, 0);
+                if (Math.abs(sum - 100) > 0.1) {
+                    setStatus(tab, `Fractions sum to ${sum.toFixed(1)} %; must sum to 100 % (±0.1).`, 'warn');
+                    clearOutputs(tab);
+                    return;
+                }
+                m = wRaw;
+            }
+
+            const M = m.reduce((a, b) => a + b, 0);
+            if (!(M > 0)) {
+                setStatus(tab, 'Total mass flow is zero — no mix to compute.', 'warn');
+                clearOutputs(tab);
+                return;
+            }
+
+            const W_mix = (m[0] * states[0].W + m[1] * states[1].W + m[2] * states[2].W) / M;
+            const h_mix = (m[0] * states[0].h + m[1] * states[1].h + m[2] * states[2].h) / M;
+            // Invert h = (0.240 + 0.444·W)·T + 1061·W to recover dry-bulb.
+            const T_mix = (h_mix - 1061 * W_mix) / (0.240 + 0.444 * W_mix);
+
+            const maState = Psychro.buildState(T_mix, W_mix, P);
+            if (!maState || !isFinite(maState.h)) {
+                setStatus(tab, 'Mixed state out of range — check inputs.', 'error');
+                clearOutputs(tab);
+                return;
+            }
+
+            setStatus(tab, 'Mixed state computed at ' + (P).toFixed(2) + ' psia.', 'ok');
+            setLive('am-' + tab + '-ma-tdb', dispT(maState.tdb) + ' ' + tU());
+            setLive('am-' + tab + '-ma-wb',  isFinite(maState.twb) ? dispT(maState.twb) + ' ' + tU() : '—');
+            setLive('am-' + tab + '-ma-dp',  isFinite(maState.tdp) ? dispT(maState.tdp) + ' ' + tU() : '—');
+            setLive('am-' + tab + '-ma-w',   dispW(maState.W) + ' ' + wU());
+            setLive('am-' + tab + '-ma-rh',  maState.rh.toFixed(1) + ' %');
+            setLive('am-' + tab + '-ma-h',   dispH(maState.h) + ' ' + hU());
+            setLive('am-' + tab + '-ma-v',   dispV(maState.v) + ' ' + vU());
+        }
+
+        function calcAll() { calcTab('flow'); calcTab('frac'); }
+
+        // ── Wiring ────────────────────────────────────────────────────
+        document.querySelectorAll('[data-tab]').forEach(btn => {
+            btn.addEventListener('click', e => switchTab(e.currentTarget.dataset.tab, e.currentTarget));
+        });
+
+        // Altitude — shared by both tabs; one input, recompute both.
+        document.getElementById('am-alt').addEventListener('input', calcAll);
+
+        for (const tab of TABS) {
+            for (const sn of STREAMS) {
+                const prefix = 'am-' + tab + '-' + sn;
+                ['w', 'tdb', 'second'].forEach(suffix => {
+                    document.getElementById(prefix + '-' + suffix).addEventListener('input', () => calcTab(tab));
+                });
+                document.getElementById(prefix + '-mode').addEventListener('change', () => calcTab(tab));
+            }
+            document.getElementById('am-' + tab + '-copy').addEventListener('click', e => copyReadouts(
+                e.currentTarget, '',
+                'am-' + tab + '-ma-tdb',
+                'am-' + tab + '-ma-wb',
+                'am-' + tab + '-ma-dp',
+                'am-' + tab + '-ma-w',
+                'am-' + tab + '-ma-rh',
+                'am-' + tab + '-ma-h',
+                'am-' + tab + '-ma-v'
+            ));
+        }
+
+        // ── Unit-flip resync ──────────────────────────────────────────
+        function rewriteInput(id, quantity, fromU, toU) {
+            const el = document.getElementById(id);
+            const v  = parseFloat(el.value);
+            if (!isFinite(v)) return;
+            const next = U.convert(v, fromU, toU, quantity);
+            el.value = (Math.round(next * 100) / 100).toString();
+        }
+
+        U.onChange(function (newUnits) {
+            const oldUnits = newUnits === 'us' ? 'metric' : 'us';
+            rewriteInput('am-alt', 'altitude', oldUnits, newUnits);
+            for (const tab of TABS) {
+                for (const sn of STREAMS) {
+                    const prefix = 'am-' + tab + '-' + sn;
+                    rewriteInput(prefix + '-tdb', 'temp', oldUnits, newUnits);
+                    if (tab === 'flow') {
+                        rewriteInput(prefix + '-w', 'airflow', oldUnits, newUnits);
+                    }
+                    const mode = document.getElementById(prefix + '-mode').value;
+                    const q = quantityForMode(mode);
+                    if (q) rewriteInput(prefix + '-second', q, oldUnits, newUnits);
+                }
+            }
+            buildSecondProp();
+            calcAll();
+        });
+
+        // ── Initial paint ─────────────────────────────────────────────
+        calcAll();
+    })();
+</script>
+{% endblock %}

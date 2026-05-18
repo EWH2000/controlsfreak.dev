@@ -26,6 +26,7 @@ const PAGES = [
     { name: 'bacnet/ip converter',    url: 'http://localhost:8000/tools/bacnet-ip-converter.html' },
     { name: 'psychrometric chart',    url: 'http://localhost:8000/tools/psychrometric-chart.html' },
     { name: 'economizer ratio',       url: 'http://localhost:8000/tools/economizer-ratio.html' },
+    { name: 'air mixing',             url: 'http://localhost:8000/tools/air-mixing.html' },
     { name: 'thermistor calculator',  url: 'http://localhost:8000/tools/thermistor-calculator.html' },
     { name: 'vfd mock',               url: 'http://localhost:8000/tools/vfd-mock.html' },
     { name: 'education hub',          url: 'http://localhost:8000/education/' },
@@ -102,6 +103,72 @@ test('psychrometric chart computes the AHU chain on load', async ({ page }) => {
     await expect(page.locator('#ro-wb')).toHaveText('—');
     await expect(page.locator('#psy-msg')).toContainText('Wet-bulb can');
     expect(errors, 'psychrometric behavioral should log no page / console errors').toEqual([]);
+});
+
+test.describe('psychrometric chart — Cold range preset', () => {
+    // The preset persists in localStorage; clean up so other tests
+    // (including the on-load chart test above) see the default Standard.
+    test.afterEach(async ({ page }) => {
+        await page.goto('http://localhost:8000/tools/psychrometric-chart.html');
+        await page.evaluate(() => localStorage.removeItem('cf_psy_range'));
+    });
+
+    test('toggle switches active button + persists to localStorage', async ({ page }) => {
+        const errors = watchErrors(page);
+        await page.goto('http://localhost:8000/tools/psychrometric-chart.html');
+
+        // Fresh visit defaults to Standard (no localStorage entry yet).
+        await expect(page.locator('[data-range="standard"]')).toHaveClass(/active/);
+        await expect(page.locator('[data-range="cold"]')).not.toHaveClass(/active/);
+
+        // Click Cold; both class state and localStorage flip.
+        await page.click('[data-range="cold"]');
+        await expect(page.locator('[data-range="cold"]')).toHaveClass(/active/);
+        await expect(page.locator('[data-range="standard"]')).not.toHaveClass(/active/);
+        expect(await page.evaluate(() => localStorage.getItem('cf_psy_range'))).toBe('cold');
+
+        // Reload: the preset persists.
+        await page.reload({ waitUntil: 'load' });
+        await expect(page.locator('[data-range="cold"]')).toHaveClass(/active/);
+
+        // Flip back to Standard; localStorage updates.
+        await page.click('[data-range="standard"]');
+        expect(await page.evaluate(() => localStorage.getItem('cf_psy_range'))).toBe('standard');
+
+        expect(errors, 'psychrometric range-preset behavioral should log no page / console errors').toEqual([]);
+    });
+});
+
+test('air mixing — three-stream blend computes on both tabs', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('http://localhost:8000/tools/air-mixing.html');
+
+    // By-mass-flow tab: defaults are a 1000/3000/500 CFM OA-RA-exhaust mix.
+    // Hand calc lands the mixed DB in the high 70s °F (mass-weighted, dominated
+    // by the 3000 CFM 75 °F return stream).
+    await expect(page.locator('#am-flow-ma-tdb')).toContainText('77');
+    await expect(page.locator('#am-flow-ma-rh')).not.toHaveText('—');
+    await expect(page.locator('#am-flow-status')).toContainText('Mixed state computed');
+
+    // A bad stream input (WB > DB) surfaces inline + mutes the output.
+    await page.fill('#am-flow-s1-second', '200');
+    await expect(page.locator('#am-flow-s1-err')).toContainText('Wet-bulb can');
+    await expect(page.locator('#am-flow-ma-tdb')).toHaveText('—');
+    await expect(page.locator('#am-flow-status')).toContainText('Fix the stream');
+
+    // Restore stream 1 and switch to by-mass-fraction tab.
+    await page.fill('#am-flow-s1-second', '75');
+    await page.click('[data-tab="frac"]');
+
+    // Fraction defaults (22/67/11) should compute close to the mass-flow result.
+    await expect(page.locator('#am-frac-ma-tdb')).toContainText('77');
+
+    // Fractions that don't sum to 100 surface a tab-level warning.
+    await page.fill('#am-frac-s1-w', '30');
+    await expect(page.locator('#am-frac-status')).toContainText('must sum to 100');
+    await expect(page.locator('#am-frac-ma-tdb')).toHaveText('—');
+
+    expect(errors, 'air-mixing behavioral should log no page / console errors').toEqual([]);
 });
 
 test('economizer ratio — dry-bulb and enthalpy tabs compute their cases', async ({ page }) => {
