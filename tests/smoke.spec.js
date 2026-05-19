@@ -82,6 +82,43 @@ test('bacnet/ip converter converts a hex string', async ({ page }) => {
     expect(errors, 'bacnet behavioral should log no page / console errors').toEqual([]);
 });
 
+test('modbus register viewer — single + pair tabs decode bits and bytes correctly', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('http://localhost:8000/tools/modbus-register-viewer.html');
+
+    // Single Register tab — set value via hex; readouts mirror it.
+    await page.fill('#mod-hex', '0xABCD');
+    await expect(page.locator('#read-dec')).toHaveText('43981');
+    await expect(page.locator('#read-hex')).toHaveText('0xABCD');
+    await expect(page.locator('#read-bin')).toHaveText('1010 1011 1100 1101');
+
+    // Signed toggle flips the decimal interpretation only — hex / bin
+    // are bit-level views and stay put.
+    await page.fill('#mod-hex', '0xFFFF');
+    await expect(page.locator('#read-dec')).toHaveText('65535');
+    await page.selectOption('#mod-signed', 'signed');
+    await expect(page.locator('#read-dec')).toHaveText('-1');
+    await expect(page.locator('#read-hex')).toHaveText('0xFFFF');
+    await expect(page.locator('#read-bin')).toHaveText('1111 1111 1111 1111');
+
+    // 32-bit Pair tab — 0x4248F5C3 is the canonical big-endian IEEE-754
+    // representation of ≈ 50.24. ABCD decodes to ~50.24; the other three
+    // orderings produce dramatically different values, proving the
+    // byte-shuffle math is working.
+    await page.click('[data-tab="pair"]');
+    await page.fill('#pair-r1-hex', '0x4248');
+    await page.fill('#pair-r2-hex', '0xF5C3');
+    await expect(page.locator('#pair-abcd-f32')).toContainText('50.2');
+    // uint32 of 0x4248F5C3 = 1112077763; MSB clear, so int32 matches.
+    await expect(page.locator('#pair-abcd-u32')).toHaveText('1112077763');
+    await expect(page.locator('#pair-abcd-i32')).toHaveText('1112077763');
+    // CDAB swaps the words; resulting float is in the e+32 range.
+    await expect(page.locator('#pair-cdab-f32')).not.toContainText('50.2');
+    await expect(page.locator('#pair-cdab-f32')).toContainText('e+32');
+
+    expect(errors, 'modbus behavioral should log no page / console errors').toEqual([]);
+});
+
 test('psychrometric chart computes the AHU chain on load', async ({ page }) => {
     const errors = watchErrors(page);
     await page.goto('http://localhost:8000/tools/psychrometric-chart.html');
