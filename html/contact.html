@@ -69,8 +69,18 @@ nav: contact
                     <input type="text" id="contact-website" name="website" tabindex="-1" autocomplete="off">
                 </div>
 
-                <!-- Cloudflare Turnstile  -->
-                <div class="cf-turnstile" data-sitekey="0x4AAAAAADMxtgbuzZieosAM" data-theme="light" style="margin-bottom:1rem;"></div>
+                <!-- Cloudflare Turnstile. The three data-*-callback hooks
+                     flip the submit button's disabled state — onTsError /
+                     onTsExpired disable, onTsOk re-enables. No status panel
+                     write; the widget itself renders Cloudflare's error
+                     chrome, and the disabled submit is the second cue. -->
+                <div class="cf-turnstile"
+                     data-sitekey="0x4AAAAAADMxtgbuzZieosAM"
+                     data-theme="light"
+                     data-callback="onTsOk"
+                     data-expired-callback="onTsExpired"
+                     data-error-callback="onTsError"
+                     style="margin-bottom:1rem;"></div>
 
                 <div class="btn-row">
                     <button type="submit" class="copy-btn">Send message</button>
@@ -94,12 +104,18 @@ nav: contact
     (function () {
         'use strict';
 
+        const form = document.getElementById("contact-form");
+        const submitBtn = form.querySelector("button[type=submit]");
+
+        // Turnstile reads these by name from the global scope.
+        window.onTsOk = function () { submitBtn.disabled = false; };
+        window.onTsExpired = function () { submitBtn.disabled = true; };
+        window.onTsError = function () { submitBtn.disabled = true; };
+
         async function submitContact(e) {
             e.preventDefault();
-            const form = document.getElementById("contact-form");
             const result = document.getElementById("contact-result");
             const resultValue = document.getElementById("contact-result-value");
-            const submitBtn = form.querySelector("button[type=submit]");
 
             // Show pending state
             result.style.display = "";
@@ -132,7 +148,7 @@ nav: contact
             }
         }
 
-        document.getElementById('contact-form').addEventListener('submit', submitContact);
+        form.addEventListener('submit', submitContact);
     })();
 </script>
 {% endblock %}

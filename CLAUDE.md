@@ -267,6 +267,17 @@ HTML.
   empty-errors-array assertion passes only because it runs before
   Turnstile's failure surfaces. Don't extend the `watchErrors` helper
   pattern to `contact.spec.js` behavioral tests.
+- **Turnstile callbacks live on `window`.** `contact.html` exposes
+  `window.onTsOk` / `window.onTsExpired` / `window.onTsError` from
+  inside the page IIFE so the `cf-turnstile` div's `data-callback` /
+  `data-expired-callback` / `data-error-callback` can find them.
+  They flip the submit button's `disabled` state only — no panel
+  status writes, which keeps `contact.spec.js` test 2 (empty-submit
+  validation) from racing against an `onTsError` fire on localhost.
+  The submit button starts enabled in HTML; on localhost the error
+  callback will eventually disable it, but the existing test
+  finishes before Turnstile's failure surfaces (same race-tolerance
+  the gotcha above relies on).
 - **`aria-pressed` flicker on units toggle is accepted.** Nav buttons
   hard-code `aria-pressed="true"` for US at render time; the head
   units-bootstrap sets `[data-units]` before paint but can't reach
