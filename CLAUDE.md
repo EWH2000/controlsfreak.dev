@@ -37,9 +37,14 @@ the site does, see `README.md`.
     inline script.
   - `nav.njk` — shared top nav; `.active` driven by the `nav`
     frontmatter value.
-  - `footer.njk` — tagline + version string. Bump the version here
-    when shipping something notable; carried to every page
-    automatically.
+  - `footer.njk` — tagline + version string. The version reads
+    `{{ site.version }}` from `html/_data/site.js`, which re-exports
+    `package.json.version` verbatim (full semver, including the
+    patch segment) — so bumping the version is a one-line edit in
+    `package.json` and the footer follows automatically on next
+    build. Carried to every page. Bump cadence: minor (`1.X.0`) for
+    new tools / new pages / visible features, patch (`1.X.Y`) for
+    bug fixes and small polish.
 - **Directory data file:** `html/html.11tydata.js` — overrides 11ty's
   pretty-URL permalink so `signal-scaling.html` lands at
   `_site/tools/signal-scaling.html` (not `signal-scaling/index.html`).
@@ -492,8 +497,9 @@ well-grouped.
    apply validate-and-mute on numeric inputs.
 3. Add a `.nav-card` to the `.card-grid` on `tools/index.html`.
 4. Add the page's URL to `html/sitemap.xml` (hand-maintained).
-5. Bump the version string in `html/_includes/footer.njk` when
-   shipping something notable.
+5. Bump `package.json.version` when shipping something notable; the
+   footer reads it via `html/_data/site.js`. A new tool is a minor
+   bump (`1.X.0`); a bug fix is a patch bump (`1.X.Y`).
 
 ## Git conventions
 

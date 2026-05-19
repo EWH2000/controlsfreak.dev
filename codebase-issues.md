@@ -1637,7 +1637,7 @@ CLAUDE.md "Design system" should pick up a bullet recording the
 `:focus-visible` rule (every interactive element with a custom
 `:hover` needs a paired `:focus-visible`).
 
-### 31. Version drift between `footer.njk` and `package.json`
+### 31. Version drift between `footer.njk` and `package.json` *(addressed 2026-05-19)*
 
 `html/_includes/footer.njk:3` reads `v1.9 · 2026`; `package.json:3`
 declares `1.3.0`. Issue #27's resolution deliberately synced these
@@ -1669,6 +1669,19 @@ trustworthiness).
 
 The data-file path is the smaller drift surface long-term; the
 co-update path is the smaller diff today.
+
+**Resolution (2026-05-19):** data-file path. New
+`html/_data/site.js` re-exports `package.json.version`;
+`footer.njk` now reads `v{{ site.version }} · 2026`. Caught-up
+bump of `package.json` from `1.3.0` to `1.9.0` so the rendered
+footer matches the state it had been showing for six bumps.
+Footer now displays the full semver verbatim (`v1.9.0` not
+`v1.9`) — a deliberate format change paired with a new
+convention: minor bumps (`1.X.0`) for features / new pages /
+new tools, patch bumps (`1.X.Y`) for bug fixes and small
+polish. CLAUDE.md "Stack" (footer.njk bullet) and "Adding a
+new tool" (step 5) updated to reflect both the new source of
+truth and the bump cadence.
 
 ### 32. Worker Turnstile success-check accepts malformed responses *(addressed 2026-05-19)*
 
