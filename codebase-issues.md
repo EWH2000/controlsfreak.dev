@@ -1201,7 +1201,7 @@ needed; the rule was already canonized as part of #23's docs
 commit. Going forward: future canvas-JS surfaces that read CSS
 custom properties should grep against `.js` files too, not just
 `.css` / `.html`.
-### 25. Orphaned `<span class="ps-label">` captions on `psychrometric-chart.html` checkbox toggles
+### 25. Orphaned `<span class="ps-label">` captions on `psychrometric-chart.html` checkbox toggles *(addressed 2026-05-17)*
 
 Same shape as #12 caught and swept — different sites. Three rows on
 the psychrometric chart use `<span class="ps-label">` as a caption
@@ -1269,7 +1269,7 @@ Screen reader now announces "Cooling coil, group" → "On, checkbox"
 instead of orphan text + "On checkbox". The same logic informs the
 #26 resolution.
 
-### 26. Thermistor "Look up by" caption uses `ps-label` where CLAUDE.md says `field-label`
+### 26. Thermistor "Look up by" caption uses `ps-label` where CLAUDE.md says `field-label` *(addressed 2026-05-17)*
 
 `html/tools/thermistor-calculator.html:92-98` — the row that
 captions the Temperature / Resistance lookup-mode buttons:
@@ -1327,7 +1327,7 @@ thermistor HTML stays as-is; it was always the right shape, the
 rule just hadn't anticipated the second container. Mirrors the
 #25 resolution's reasoning.
 
-### 27. Final-audit small leftovers — test convention drift, vfd-mock copy-paste twins, package.json defaults, stale wrangler compat date
+### 27. Final-audit small leftovers — test convention drift, vfd-mock copy-paste twins, package.json defaults, stale wrangler compat date *(addressed 2026-05-17)*
 
 Bundle of small findings caught during the 2026-05-17 final audit
 pass. Each is a one-or-two-line touch:
