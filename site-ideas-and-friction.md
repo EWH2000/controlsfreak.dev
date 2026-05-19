@@ -1765,6 +1765,52 @@ the same session:
    without an animation pass, every arrow on a complex diagram
    benefits from a tracing-the-flow walk-through during review.
 
+### Protocol education pages — future
+
+The site's education footprint is HVAC + hydronics heavy today (PID,
+VFDs, pump control, balancing, load piping, hydronic loops,
+psychrometrics). But building-controls work is at least as protocol-
+heavy as it is HVAC-heavy — and on the protocol side the site has
+*tools* (BACnet/IP converter, Modbus register viewer) without
+*explainers*. Until a fuller education page exists, each tool carries
+its own forward-link debt: the Modbus tool ships with a five-bullet
+"essentials" row beneath it (PR for codebase-issues#29 successor,
+2026-05-18); the BACnet/IP converter doesn't yet, but should once a
+BACnet education page is on deck.
+
+Candidate pages, each scoped to follow the "one question per page"
+rule from `## Site structure / organization` rather than becoming
+8000-word reference dumps:
+
+- *Modbus fundamentals.* The data model (coils / discrete inputs /
+  input registers / holding registers), the 5-digit addressing
+  convention vs the wire address, why byte order is painful, FC03
+  vs FC04 + FC06 vs FC16, exception responses. Forward-link from
+  the Modbus register viewer tips row. Might be one page or two —
+  the data-model explainer and the byte-order explainer are
+  different questions.
+- *BACnet fundamentals.* Object model, services, MS/TP vs BACnet/IP
+  framing, the discovery flow. Pairs with the existing BACnet/IP
+  converter — the tool turns an EBO-discovered hex blob into a
+  dotted-decimal IP; the page would explain why that blob looks
+  the way it does.
+- *Niagara Fox / Niagara N4.* Tighter audience (Tridium ecosystem),
+  but the field reality is that many BAS techs see Fox more often
+  than they see BACnet on the wire. Lower priority.
+- *LonWorks / KNX.* Sketched only — audience demand drives whether
+  these warrant their own pages. Possibly a single "legacy and
+  European protocols" page that covers both at a tour-level depth,
+  with the deeper pages following if demand surfaces.
+
+Open question: should the tools-landing card grid grow a sibling
+"Protocols" hub (e.g. `/protocols/` or `/protocols/modbus.html`),
+or do the protocol pages live under `/education/` alongside the
+HVAC pages? Reading-order argues for `/education/` since the
+existing nav has Tools / Education and a third hub would crowd it.
+Discoverability argues for at least a tools-landing cross-link from
+the protocol-focused tools to their corresponding education pages
+once they exist.
+
 ---
 
 ## Site structure / organization
