@@ -1637,7 +1637,7 @@ CLAUDE.md "Design system" should pick up a bullet recording the
 `:focus-visible` rule (every interactive element with a custom
 `:hover` needs a paired `:focus-visible`).
 
-### 31. Version drift between `footer.njk` and `package.json`
+### 31. Version drift between `footer.njk` and `package.json` *(addressed 2026-05-19)*
 
 `html/_includes/footer.njk:3` reads `v1.9 · 2026`; `package.json:3`
 declares `1.3.0`. Issue #27's resolution deliberately synced these
@@ -1669,6 +1669,19 @@ trustworthiness).
 
 The data-file path is the smaller drift surface long-term; the
 co-update path is the smaller diff today.
+
+**Resolution (2026-05-19):** data-file path. New
+`html/_data/site.js` re-exports `package.json.version`;
+`footer.njk` now reads `v{{ site.version }} · 2026`. Caught-up
+bump of `package.json` from `1.3.0` to `1.9.0` so the rendered
+footer matches the state it had been showing for six bumps.
+Footer now displays the full semver verbatim (`v1.9.0` not
+`v1.9`) — a deliberate format change paired with a new
+convention: minor bumps (`1.X.0`) for features / new pages /
+new tools, patch bumps (`1.X.Y`) for bug fixes and small
+polish. CLAUDE.md "Stack" (footer.njk bullet) and "Adding a
+new tool" (step 5) updated to reflect both the new source of
+truth and the bump cadence.
 
 ### 32. Worker Turnstile success-check accepts malformed responses *(addressed 2026-05-19)*
 
@@ -1729,7 +1742,7 @@ Lands in the same one-commit defense-in-depth touch as #32.
 or other non-2xx siteverify result fails closed instead of trusting
 whatever the body happens to parse to. Paired with #32 in one commit.
 
-### 34. Turnstile widget on contact form has no error / expired callbacks
+### 34. Turnstile widget on contact form has no error / expired callbacks *(addressed 2026-05-19)*
 
 `html/contact.html:73` — the `cf-turnstile` div declares
 `data-sitekey` and `data-theme` only. No `data-error-callback`,
@@ -1772,6 +1785,23 @@ disabled state and write a short status into the existing
 `#contact-result-value` panel. Document the callback contract
 under CLAUDE.md "Gotchas" alongside the existing Turnstile notes
 (Playwright wait-until pattern, pageerror noise).
+
+**Resolution (2026-05-19):** *silent* variant — the three
+callbacks (`onTsOk` / `onTsExpired` / `onTsError`) live on
+`window` inside `contact.html`'s page IIFE and flip the submit
+button's `disabled` state only. No writes to
+`#contact-result-value`; Cloudflare's widget renders its own
+error chrome, and the disabled button is the second cue. Submit
+starts enabled in HTML so `contact.spec.js` test 2 (empty-submit
+validation, which clicks the button on localhost) doesn't race
+against an `onTsError` fire — same race-tolerance the existing
+"contact loads cleanly" smoke assertion relies on. CLAUDE.md
+"Gotchas" picked up a new bullet documenting the callback
+contract next to the existing Turnstile notes. The *loud* variant
+(panel status writes + start-disabled) was the alternative; it
+needed parallel `contact.spec.js` edits to avoid the
+toBeHidden-races-Turnstile failure, which #36's behavioral test
+expansion would land alongside.
 
 ### 35. Frontmatter description-length drift — eight pages outside the 140–160 char target
 
