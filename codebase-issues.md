@@ -1670,7 +1670,7 @@ trustworthiness).
 The data-file path is the smaller drift surface long-term; the
 co-update path is the smaller diff today.
 
-### 32. Worker Turnstile success-check accepts malformed responses
+### 32. Worker Turnstile success-check accepts malformed responses *(addressed 2026-05-19)*
 
 `src/worker.js:123` — `if (!verify || verify.success === false)`.
 The gate only rejects when `success` is explicitly `false`.
@@ -1694,7 +1694,13 @@ character change, no test impact (the test surface for
 `/api/contact` is `test.fixme()` per #20's carve-out and #7's
 deferred posture).
 
-### 33. Worker doesn't check `res.ok` on Turnstile `siteverify`
+**Resolution (2026-05-19):** `src/worker.js:123` swapped to
+`verify.success !== true`, landed in the same one-touch pass as
+#33's `res.ok` guard. A short header comment in the Turnstile
+block notes the explicit `success === true` posture so a future
+refactor doesn't relax it back to a not-falsy check.
+
+### 33. Worker doesn't check `res.ok` on Turnstile `siteverify` *(addressed 2026-05-19)*
 
 `src/worker.js:107–119` calls `await res.json()` on the siteverify
 response without first checking `res.ok` or `res.status`. If
@@ -1717,6 +1723,11 @@ verify = res.ok ? await res.json() : { success: false };
 ```
 
 Lands in the same one-commit defense-in-depth touch as #32.
+
+**Resolution (2026-05-19):** the siteverify response now goes through
+`verify = res.ok ? await res.json() : { success: false }`, so a 5xx
+or other non-2xx siteverify result fails closed instead of trusting
+whatever the body happens to parse to. Paired with #32 in one commit.
 
 ### 34. Turnstile widget on contact form has no error / expired callbacks
 
@@ -1860,7 +1871,7 @@ gets updated to drop the manual server-start step (the
 `reuseExistingServer: true` flag preserves the `npm run dev`
 workflow for iterating on a single page).
 
-### 38. `.tool-card:nth-child(1/2)` fade-in animation is a near-no-op on most pages
+### 38. `.tool-card:nth-child(1/2)` fade-in animation is a near-no-op on most pages *(addressed 2026-05-19)*
 
 `html/styles.css:266–267`:
 
@@ -1907,7 +1918,14 @@ pid-basics):
 Pairs with #42 (reduced-motion) so the animation suppresses
 cleanly on that preference.
 
-### 39. `pid-engine.js` overshoot calc has an undefended divide
+**Resolution (2026-05-19):** switched to `:nth-of-type` and extended
+to four indices (the longest tool-card stack on `pid-basics.html`).
+A short comment in `styles.css` records why `nth-of-type` is correct
+here — counting `.tool-card` siblings independently of the leading
+`.section-header` div that every content page now opens with. Landed
+in the same commit as #42's universal-selector reduced-motion rule.
+
+### 39. `pid-engine.js` overshoot calc has an undefended divide *(addressed 2026-05-19)*
 
 `html/scripts/pid-engine.js:99, 102`:
 
@@ -1941,6 +1959,13 @@ const overshoot = step === 0 ? 0 : Math.max(0, (maxPv - SP) / step * 100);
 The same touch could audit `ssErr` / `bandTol` for parallel
 guards (today both are safe with `step !== 0` but the same
 future-preset case would hit them).
+
+**Resolution (2026-05-19):** one-line ternary guard on the
+overshoot line — `step === 0 ? 0 : Math.max(0, (maxPv - SP) /
+step * 100)`. The `ssErr` and `bandTol` lines stay as-is; they're
+safe under the `step === 0` case too (`SP - last_pv` and
+`0.02 * |step|` both produce finite results when step is zero),
+so the audit-the-neighbors expansion was not needed.
 
 ### 40. `ui.js` helpers don't guard null DOM lookups
 
@@ -1997,7 +2022,7 @@ leading/trailing dots in the local part, or accept the cosmetic
 gap and let Resend surface the 502. Either way, document the
 choice in the worker header comment.
 
-### 42. `prefers-reduced-motion` only honored for `.widget-fan-blades`
+### 42. `prefers-reduced-motion` only honored for `.widget-fan-blades` *(addressed 2026-05-19)*
 
 `html/styles.css:1215` —
 
@@ -2042,7 +2067,15 @@ addressed as a bundle.
 WebAIM-recommended pattern. Lands in one commit with the #38
 animation fix so the two animation-rule changes land together.
 
-### 43. Contact form required fields have no visual "required" marker
+**Resolution (2026-05-19):** universal-selector rule landed inside
+the existing `@media (prefers-reduced-motion: reduce)` block in
+`html/styles.css` alongside the `.widget-fan-blades` rule that
+was already there, so a single media-query block carries both
+the existing widget-fan exception and the new site-wide
+animation / transition suppression. The JS-side liveness
+deferred under #8 stays deferred.
+
+### 43. Contact form required fields have no visual "required" marker *(addressed 2026-05-19)*
 
 `html/contact.html:55–56, 62` — Email and Message inputs carry
 the HTML `required` attribute, but the labels render as plain
@@ -2066,7 +2099,12 @@ injected asterisk via `label[for="contact-email"]::after` /
 `label[for="contact-message"]::after` with `content: " *"`. Text
 suffix matches the existing pattern.
 
-### 44. `head.njk` lacks `theme-color` meta
+**Resolution (2026-05-19):** text-suffix path picked to match the
+existing "(optional)" idiom on the Name field. Both Email and
+Message labels in `html/contact.html` now read "Email (required)"
+and "Message (required)".
+
+### 44. `head.njk` lacks `theme-color` meta *(addressed 2026-05-19)*
 
 `html/_includes/head.njk` has no `<meta name="theme-color" …>`.
 Mobile browsers (Safari, Chrome on Android, Samsung Internet)
@@ -2090,6 +2128,13 @@ favicons / OG tags / units-bootstrap.
 …or pull the color from a `:root` token via a build-time
 substitution if you want it to track `--surface`. Static literal
 is simpler.
+
+**Resolution (2026-05-19):** static literal `#ffffff` (matches
+`--surface`) added to `html/_includes/head.njk` between the
+description and OG-title metas, so every page picks it up. Build-
+time substitution against `:root` was the alternative but adds a
+data-file hop for a one-token mirror; if `--surface` ever moves
+off white, this is a one-line follow-up in `head.njk`.
 
 ### 45. Sitemap `<lastmod>` dates are stale and hand-maintained
 
@@ -2141,7 +2186,7 @@ speed. Branch-protect `main` to require the check. No deploy-
 pipeline change — Cloudflare Workers Build keeps owning the
 deploy.
 
-### 47. "17 pages" wording is stale across CLAUDE.md and codebase-issues.md
+### 47. "17 pages" wording is stale across CLAUDE.md and codebase-issues.md *(addressed 2026-05-19)*
 
 CLAUDE.md describes the site as "17 pages" in multiple places
 (Stack section: "Build is fast (~0.2s for 17 pages)"); and
@@ -2167,6 +2212,18 @@ the count is descriptive, and consider rephrasing to a page-
 count-agnostic form ("every page", "across the site") where the
 count was incidental. The build-time count is `ls html/*.html
 html/tools/*.html html/education/*.html | wc -l`.
+
+**Resolution (2026-05-19):** the two descriptive-of-current-state
+references updated (`CLAUDE.md:28` and `README.md:130` —
+both the "Build is fast (~0.2s for 17 pages)" line). Historical
+references inside this file's already-addressed entries (#4 / #11
+/ #21 resolutions describing what shipped at the time) and the
+quoted drift-history bullet in `CLAUDE.md` "Workflow → drift
+audit cycles" stay as-is — they're a record of the state at
+write-time, not a present-tense count. Page-count-agnostic
+rephrasing was the alternative; sticking with the literal count
+matches the existing prose voice and re-anchors the figure for
+the next reader.
 
 ---
 

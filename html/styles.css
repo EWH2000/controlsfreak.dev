@@ -263,8 +263,14 @@ main {
     overflow: hidden;
     margin-bottom: 1.5rem;
 }
-.tool-card:nth-child(1) { animation: fadeUp 0.5s 0.08s ease both; }
-.tool-card:nth-child(2) { animation: fadeUp 0.5s 0.16s ease both; }
+/* :nth-of-type counts tool-card siblings independently of a leading
+   .section-header div; nth-child counts all siblings and would shift
+   indices by one on every content page. Four indices covers the longest
+   tool-card stack today (4 on pid-basics: page topic + 3 mini-sims). */
+.tool-card:nth-of-type(1) { animation: fadeUp 0.5s 0.08s ease both; }
+.tool-card:nth-of-type(2) { animation: fadeUp 0.5s 0.16s ease both; }
+.tool-card:nth-of-type(3) { animation: fadeUp 0.5s 0.24s ease both; }
+.tool-card:nth-of-type(4) { animation: fadeUp 0.5s 0.32s ease both; }
 
 .tool-card-header {
     display: flex;
@@ -1214,4 +1220,9 @@ p.ref-note {
 }
 @media (prefers-reduced-motion: reduce) {
     .widget-fan-blades { transform: none !important; }
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
 }

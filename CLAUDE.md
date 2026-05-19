@@ -25,7 +25,7 @@ the site does, see `README.md`.
   Pages carry YAML frontmatter and extend the shared layout (see
   *Templating*). Static assets (`scripts/`, `styles.css`, `assets/`,
   `robots.txt`, `sitemap.xml`) are passthrough-copied. Build is fast
-  (~0.2s for 17 pages); Nunjucks is the only thing the build does —
+  (~0.2s for 20 pages); Nunjucks is the only thing the build does —
   no JS transpile or bundle step.
 - **Templates under `html/_includes/`:**
   - `layouts/page.njk` — the page shell. Composes `head.njk` / `nav.njk`
