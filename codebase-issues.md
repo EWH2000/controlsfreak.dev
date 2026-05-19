@@ -1397,7 +1397,7 @@ matching the git committer name. `license: "ISC"` (also an
 `npm init -y` default) wasn't in the audit entry's scope and was
 left in place.
 
-### 28. Psychrometric math test coverage — engine-direct + economizer-ratio behavioral gaps
+### 28. Psychrometric math test coverage — engine-direct + economizer-ratio behavioral gaps *(addressed 2026-05-18)*
 
 Surfaced during PR #29 (economizer-ratio helper) review. Two related
 gaps in the math-test posture for `html/scripts/psychro-engine.js`
@@ -1466,6 +1466,22 @@ on-its-own.*
   hitting the warn-pill branch. ~25 lines.
 
 Could share a branch with #25 or #26 (both still open and small).
+
+**Resolution (2026-05-18):** both commits landed. A new
+`tests/psychro-engine.spec.js` runs under the existing Playwright
+runner (no second test framework) — it loads `psychro-engine.js` via
+`vm.runInNewContext` (trailing-expression trick so the IIFE-bound
+`Psychro` is reachable) and asserts two ASHRAE reference points
+(80 °F / 60 %RH; 95 °F / 75 °F WB) plus a 5-mode round-trip identity
+proving the wb / rh / dp / w / h dispatch in `Psychro.solveState`
+all converge on the same state. The existing economizer-ratio
+behavioral test in `tests/smoke.spec.js` gained substring assertions
+on `#er-h-oa-h` / `#er-h-ra-h` against current engine output, a
+non-WB Define-by case (`rh` mode at 78 °F / 50 %RH → ~29.9), and an
+OA==RA dry-bulb edge case hitting the no-unique-%OA warn-pill at
+`economizer-ratio.html:467`. While in the file, air-mixing's
+behavioral test (PR #30) also gained numeric substring matches on
+its mixed-state readouts on both tabs.
 
 ### 29. `.tool-body-3col` produces uneven column lengths on tools whose Output is sparse and whose Reference column is dense *(addressed 2026-05-18)*
 

@@ -15,9 +15,17 @@ Calculators, converters, and lookups — open one, get an answer.
 
 - **Signal Scaling** — mA / V analog signals to engineering units
   and back, plus a 2-point → slope/offset solver for `y = mx + b`.
-- **Modbus Register Viewer** — a 16-bit register as a clickable
-  bit grid with decimal / hex / binary readouts, alongside an
-  FC01–16 function-code reference.
+- **Modbus Register Viewer** — Single Register tab: a 16-bit
+  register as a clickable bit grid with decimal / hex / binary
+  readouts plus a signed/unsigned toggle on the decimal
+  interpretation. 32-bit Pair tab: feed two consecutive registers,
+  see the combined value decoded as int32 / uint32 / IEEE-754 float
+  across all four byte orderings (ABCD / CDAB / BADC / DCBA) — the
+  word-order question that bites every Modbus tech, surfaced as a
+  scannable table. "Modbus essentials" tips row beneath both tabs
+  covers addressing offsets, signed/unsigned, byte order, function
+  codes, and exception responses; FC01–16 reference table sits
+  there too.
 - **PID Tuning Helper** — step-response simulator with process-type
   presets and a parameter-style toggle (Niagara gain·reset·rate
   vs. EBO Ti·Td vs. Distech proportional-band conventions; the

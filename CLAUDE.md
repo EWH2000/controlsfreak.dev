@@ -320,16 +320,31 @@ per-page history and the *why* behind each, see
   drives the `.active` marker; no JS. `Tools` and `Education` link
   to hub landings (`/tools/`, `/education/`).
 - **Page archetypes:**
-  - *Tools* mostly use the **three-column property-sheet layout**
-    (`.tool-body-3col` + `.ps-*` + `.ref-table-dense`) — Input /
-    Output / Reference side-by-side, Niagara-style label-left /
-    value-right rows. A tool with no useful reference content drops
-    the third column (`grid-column: span 2` on Output).
+  - *Tools* mostly use the **property-sheet layout** (`.ps-*` +
+    `.ref-table-dense`) — Niagara-style label-left / value-right
+    rows. Two flavors of grid carry it:
+    - **2-col + below-grid row** (`.tool-body-2col` + sibling
+      `.tool-body-row`) — Input | Output side-by-side, with
+      reference / worked-example / tips content flowing full-width
+      beneath. The dominant pattern (`bacnet-ip-converter`,
+      `economizer-ratio`, `air-mixing`, `signal-scaling`,
+      `modbus-register-viewer`). The `.tool-body-row` sibling can
+      sit inside a `.tab-pane` (per-tab worked example, as on
+      economizer-ratio / air-mixing) or as a sibling of all the
+      tab-panes inside `.tool-card` (shared reference, as on
+      signal-scaling / modbus-register-viewer — `switchTab` in
+      `ui.js` only toggles `.tab-pane` descendants).
+    - **3-col** (`.tool-body-3col`) — Input | Output | Reference
+      side-by-side. Right for tools whose middle / reference column
+      has comparable density to Input + Output (`psychrometric-chart`
+      with its canvas mid-column; `thermistor-calculator` with its
+      tall R/T table as the page's deliverable). Codebase-issues #29
+      documents when *not* to reach for this.
   - *PID tuner* and *Mock VFD* keep **custom stacked layouts** — a
     simulator block doesn't fit Input/Output/Reference.
   - *Education* pages use the **lesson layout** (`.tool-card` /
-    `.tool-body`), NOT the 3-col pattern. **Prose sits above each
-    diagram; the diagram is the visual capstone.**
+    `.tool-body`), NOT the column-grid patterns. **Prose sits above
+    each diagram; the diagram is the visual capstone.**
 - **Animation:** pages with pipe-flow diagrams load
   `/scripts/flow-engine.js`; pipes annotated `data-flow="supply"|"return"`
   carry particle flow at constant velocity (longer paths = longer
@@ -379,16 +394,22 @@ Light-only (`color-scheme: light`); no dark variant.
   first. If a property is ever removed from `:root` without removing
   its consumers, `var(--x)` returns empty and the consumer no-ops
   the color — louder failure mode than a stale fallback hex.
-- **Three-column layout** — the grid sits directly inside a
-  `.tab-pane` or `.tool-card`, not inside a padded `.tool-body`; tabs
-  above take `.tabs.tabs-flush`. A row's value can be `.ps-value`
-  (mono, plus `.live` / `.muted` / `.error`) or an
-  `input/select/textarea.ps-input` (form-control variant; qualified
-  by element so it outranks the global `input[type=…]` / `select`
-  block). At ≤900px columns collapse to a single stack. Note:
-  `.ps-section-label` is named that to avoid collision with
-  `.section-label`; the live-value modifier is `.live` to avoid
-  collision with `.readout`.
+- **Column-grid layouts** (`.tool-body-2col` / `.tool-body-3col` /
+  `.tool-body-row`) — all live in `styles.css` as one family.
+  `.tool-body-2col` is two equal columns; `.tool-body-3col` is three;
+  `.tool-body-row` is the full-width sibling that sits below either
+  grid (recessed `--surface-3` background + top border — same recess
+  the 3-col third column gets via `:last-child`). Each `.tool-body-*`
+  grid sits directly inside a `.tab-pane` or `.tool-card`, not inside
+  a padded `.tool-body`; tabs above take `.tabs.tabs-flush`. A row's
+  value can be `.ps-value` (mono, plus `.live` / `.muted` / `.error`)
+  or an `input/select/textarea.ps-input` (form-control variant;
+  qualified by element so it outranks the global `input[type=…]` /
+  `select` block). At ≤900px the 2-col / 3-col grids collapse to a
+  single stack; `.tool-body-row` has no grid template to collapse
+  and just stays full-width. Note: `.ps-section-label` is named that
+  to avoid collision with `.section-label`; the live-value modifier
+  is `.live` to avoid collision with `.readout`.
 - **Widget chrome (`.widget-*`)** — the recessed-panel idiom used by
   interactive widgets on `pump-control`, `balancing`, `vfds`,
   `vfd-mock`, and `hydronic-loops`. The shared vocabulary

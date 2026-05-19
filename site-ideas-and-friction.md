@@ -952,8 +952,12 @@ audit).** Second second-consumer landed; the API survived again:
   controller-commissioner entry is the right place to start that
   conversation.
 - *Promote `.am-example` and `.er-example` to a shared
-  `.tool-body-row` utility in `styles.css`* — separate PR. Pattern
-  now has two consumers, so codebase-issues #29 step 1 fires.
+  `.tool-body-row` utility in `styles.css`* — **shipped 2026-05-18**
+  in the codebase-issues #29 PR. Both pages now apply
+  `class="tool-body-row"` directly; the page-local rules dropped from
+  each page's `{% block head %}`. Same PR retrofitted
+  `signal-scaling.html` (3-col → 2-col + shared row) and PR #33
+  added a third consumer on `modbus-register-viewer.html`.
 
 ### Coil-sizing calculator *(candidate psych-tool follow-up)*
 
