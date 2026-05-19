@@ -27,17 +27,6 @@ nav: tools
         .er-feas.ok    { border-color: var(--accent);    background: var(--accent-dim); }
         .er-feas.warn  { border-color: var(--heat);      color: var(--heat); }
         .er-feas.error { border-color: var(--red);       color: var(--red); }
-
-        /* "Example below" pattern — the worked example sits as a full-
-           width row beneath the 2-col Input / Output grid rather than
-           taking a third column on the right. Preserves the recessed
-           --surface-3 cue from the 3-col last-child convention so the
-           example still reads as supporting reference content. */
-        .er-example {
-            padding: 1.25rem 1.25rem 1.5rem;
-            border-top: 1px solid var(--border);
-            background: var(--surface-3);
-        }
     </style>
 {% endblock %}
 
@@ -104,7 +93,7 @@ nav: tools
 
             </div>
 
-            <section class="er-example">
+            <section class="tool-body-row">
                 <h2 class="ps-section-label">Worked example</h2>
                 <p class="ref-note" style="margin-top:0;">
                     Summer cooling on an economizer-favorable morning —
@@ -216,7 +205,7 @@ nav: tools
 
             </div>
 
-            <section class="er-example">
+            <section class="tool-body-row">
                 <h2 class="ps-section-label">Worked example</h2>
                 <p class="ref-note" style="margin-top:0;">
                     Mild-but-muggy morning — OA

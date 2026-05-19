@@ -877,6 +877,18 @@ p.pid-note {
 }
 .tool-body-2col > section:last-child { border-right: none; }
 
+/* Full-width sibling row that sits below a .tool-body-2col grid. Same
+   recessed surface + top border as the .tool-body-3col reference column —
+   used when a sparse Output column would leave a dense reference / worked-
+   example column visually orphaned at the right. No grid template to
+   collapse, so no responsive variant needed; the parent (.tab-pane or
+   .tool-card) already handles viewport-width changes. */
+.tool-body-row {
+    padding: 1.25rem 1.25rem 1.5rem;
+    border-top: 1px solid var(--border);
+    background: var(--surface-3);
+}
+
 /* tabs sitting directly above a .tool-body-3col: inset the buttons to line
    up with the column padding, drop the bottom margin so the grid butts
    right up under the tab strip. (The .tab-btn underline indicator is
