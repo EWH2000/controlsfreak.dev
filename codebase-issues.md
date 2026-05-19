@@ -1581,6 +1581,593 @@ on its Output section is now redundant and removed. `switchTab`
 (`html/scripts/ui.js:28–34`) only toggles `.tab-pane` descendants, so
 the shared row stays visible across all tab switches.
 
+### 30. Missing `:focus` styles on custom-styled interactive elements
+
+`html/styles.css` carries three `:focus` rules: `.skip-link:focus`
+(line 76), `input/textarea/select:focus` (line 375), and
+`input.ps-input:focus` (line 971). The custom-styled interactive
+elements have none:
+
+- `.copy-btn` (line 578) — every Copy / "Try a Tuning" preset / the
+  contact form's Send button (34+ instances site-wide).
+- `.tab-btn` — every tabbed tool's tab switcher.
+- `.units-btn` — the US / Metric toggle in the shared nav.
+- `.cta-button` — the hero CTA on `html/index.html`.
+- `.back-link` — the "← All tools" / "← All lessons" anchors at
+  the bottom of every tool and education page.
+- `.nav-card` — the tools-landing and education-landing card grids
+  (entire surface is clickable but has no focus cue).
+- `input[type="range"]` thumbs (`::-webkit-slider-thumb`,
+  `::-moz-range-thumb`) — PID tuner sliders, education-page
+  widget sliders.
+
+`outline: none` is set on `.skip-link`, on `input/textarea/select`
+(line 376), and on the range track (lines 633/647), so the
+browser default is suppressed without anything replacing it on the
+buttons / links / nav-cards that inherit no default outline once
+they're styled.
+
+**Why it matters:** WCAG 2.4.7 (Focus Visible) — once a sighted-
+keyboard user gets past the site-wide skip-link (shipped in #21)
+they're flying blind across Copy buttons, tab switchers, the units
+toggle, the hero CTA, the back-link, and the entire landing
+grids. Largest current a11y gap, same severity class as #11 / #12.
+
+**Priority:** HIGH.
+
+**Recommended action:** add a shared focus rule next to each
+`:hover` block. `:focus-visible` is the precise tool — browser
+heuristics keep the indicator off the mouse path. Suggested shape:
+
+```css
+.copy-btn:focus-visible,
+.tab-btn:focus-visible,
+.units-btn:focus-visible,
+.cta-button:focus-visible,
+.back-link:focus-visible,
+.nav-card:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+input[type="range"]:focus-visible::-webkit-slider-thumb { … }
+input[type="range"]:focus-visible::-moz-range-thumb { … }
+```
+
+CLAUDE.md "Design system" should pick up a bullet recording the
+`:focus-visible` rule (every interactive element with a custom
+`:hover` needs a paired `:focus-visible`).
+
+### 31. Version drift between `footer.njk` and `package.json`
+
+`html/_includes/footer.njk:3` reads `v1.9 · 2026`; `package.json:3`
+declares `1.3.0`. Issue #27's resolution deliberately synced these
+at v1.3 ("`version` to 1.3.0 (sync from footer's v1.3)"). The
+footer has since bumped six minor versions (per CLAUDE.md "Bump
+the version here when shipping something notable") and
+`package.json` hasn't followed.
+
+**Why it matters:** the #27 entry made `package.json.version` the
+machine-readable mirror of the footer's human-facing version.
+Drift means a future contributor (or automated tool) can no longer
+trust one as the canonical source. Same drift class as #9 (stale
+comments after migration), #16 (id-naming chaos), #17 (tab wiring)
+— convention exists on paper, breaks in practice.
+
+**Priority:** HIGH (not for a live bug; for the convention's
+trustworthiness).
+
+**Recommended action:** two viable shapes —
+
+- *Single source of truth in `package.json`*: expose the version
+  to Nunjucks via a 11ty data file (`_data/site.js` returning
+  `{ version: require('../package.json').version }`); footer.njk
+  reads `{{ site.version }}`. Footer bumps become a `package.json`
+  edit, build templates it everywhere.
+- *Co-update at commit time*: keep both, document under CLAUDE.md
+  git conventions and "Adding a new tool" that a footer bump
+  ships in the same commit as the matching `package.json` bump.
+
+The data-file path is the smaller drift surface long-term; the
+co-update path is the smaller diff today.
+
+### 32. Worker Turnstile success-check accepts malformed responses
+
+`src/worker.js:123` — `if (!verify || verify.success === false)`.
+The gate only rejects when `success` is explicitly `false`.
+Responses of `{success: undefined}`, `{}`, `{success: null}`,
+`{success: 0}`, `{success: "true"}` (string) all pass through and
+the email gets sent unverified.
+
+**Why it matters:** companion gap to the #13 defense-in-depth
+bundle. Cloudflare's siteverify API is stable so realistic
+exposure is low — but the same "tighten the gate by one character"
+shape is exactly what #13 did across eight other sites; this one
+didn't get caught because the explicit-`false` form looked
+symmetric with the explicit-`true` truthiness check elsewhere in
+the file.
+
+**Priority:** HIGH (defense-in-depth on the only mutating
+endpoint, same severity class as #13).
+
+**Recommended action:** swap `=== false` for `!== true`. One-
+character change, no test impact (the test surface for
+`/api/contact` is `test.fixme()` per #20's carve-out and #7's
+deferred posture).
+
+### 33. Worker doesn't check `res.ok` on Turnstile `siteverify`
+
+`src/worker.js:107–119` calls `await res.json()` on the siteverify
+response without first checking `res.ok` or `res.status`. If
+Cloudflare's API ever returns a 5xx with a body that happens to
+lack a `success` field (or has `{success: true}` in a degraded
+path), the worker trusts it — same downstream effect as #32.
+
+**Why it matters:** same as #32. The two together close the
+"Cloudflare API behaves anomalously" failure mode in the same
+way `fetchWithTimeout()` (#13) closed the "Cloudflare API hangs"
+failure mode.
+
+**Priority:** HIGH.
+
+**Recommended action:** guard the JSON parse:
+
+```js
+const res = await fetchWithTimeout(...);
+verify = res.ok ? await res.json() : { success: false };
+```
+
+Lands in the same one-commit defense-in-depth touch as #32.
+
+### 34. Turnstile widget on contact form has no error / expired callbacks
+
+`html/contact.html:73` — the `cf-turnstile` div declares
+`data-sitekey` and `data-theme` only. No `data-error-callback`,
+`data-expired-callback`, or `data-callback`.
+
+Failure modes the missing callbacks leave silent:
+
+- Turnstile JS fails to load (CDN blip, ad-blocker, network
+  partition) → widget never appears → user submits → server
+  rejects with "Verification failed." → user has no path to
+  diagnose.
+- Token expires after Turnstile's default lifetime (~5 min) →
+  same opaque "Verification failed" on submit → re-fill required.
+- Network error during challenge resolution → no surfaced
+  indicator → user assumes the form is broken.
+
+**Why it matters:** the contact form is the only mutating surface
+on the site, and a UX gap that converts a transient infrastructure
+hiccup into "the form just doesn't work" wastes the bug-report
+path the form exists to support. The Resend / Worker side already
+returns user-readable error text; the gap is entirely client-side
+around Turnstile.
+
+**Priority:** MEDIUM (UX, not security).
+
+**Recommended action:** ~10 lines of frontend —
+
+```html
+<div class="cf-turnstile"
+     data-sitekey="…"
+     data-theme="light"
+     data-callback="onTsOk"
+     data-expired-callback="onTsExpired"
+     data-error-callback="onTsError">
+</div>
+```
+
+…paired with three small handlers that flip the submit button's
+disabled state and write a short status into the existing
+`#contact-result-value` panel. Document the callback contract
+under CLAUDE.md "Gotchas" alongside the existing Turnstile notes
+(Playwright wait-until pattern, pageerror noise).
+
+### 35. Frontmatter description-length drift — eight pages outside the 140–160 char target
+
+CLAUDE.md "Templating" specifies "140–160 chars" for the
+`description` frontmatter field. Counts measured from source:
+
+| Page | Chars |
+|---|---:|
+| `html/contact.html` | **76** (too short) |
+| `html/index.html` | **103** (too short) |
+| `html/education/index.html` | **138** (1 short) |
+| `html/education/pump-control.html` | **164** (1 over) |
+| `html/education/balancing.html` | **179** (truncates) |
+| `html/tools/economizer-ratio.html` | **176** (truncates) |
+| `html/tools/index.html` | **178** (truncates) |
+| `html/tools/modbus-register-viewer.html` | **195** (truncates hard) |
+
+Other 12 pages are in range.
+
+**Why it matters:** SERP snippets truncate at ~160 chars; short
+descriptions waste the snippet. The two landing pages (root and
+tools-index) and the contact page are the highest-traffic
+surfaces and the most-off. The convention exists in CLAUDE.md but
+isn't measurable from a per-page change, so each new page is
+written against the writer's intuition instead of a check.
+
+**Priority:** MEDIUM.
+
+**Recommended action:** rewrite the eight outliers in one pass.
+Optional: a tiny build-time guard — a `description.length` check
+in `.eleventy.js` (transform) that warns when a page renders with
+description outside 140–160. Fails the build = too sharp; logs a
+one-liner = right size. Same "convention with a check" shape as
+the PAGES ↔ sitemap drift test added in #20's bullet 7.
+
+### 36. `education/psychrometrics-basics.html` has only smoke-loop test coverage
+
+`tests/smoke.spec.js` `PAGES` includes psychrometrics-basics, so
+the page gets the standard 200 + title + nav + no-console-errors
+loop. But no behavioral test exercises its widget — the
+natatorium-pool state machine, condensation margin readout, the
+sliders that drive it. Every other widget-bearing education page
+has behavioral assertions (`vfds`, `pump-control`, `balancing`,
+`hydronic-loops`, `load-piping`).
+
+**Why it matters:** the page shipped (2026-05-18) after the #20
+test-gap sweep closed, so it inherited the smoke-loop default
+without anyone adding the behavioral coverage that the
+established convention requires for a widget page. Drift class:
+"convention from a closed audit doesn't auto-apply to pages added
+after the audit."
+
+**Priority:** MEDIUM.
+
+**Recommended action:** add a behavioral block to
+`tests/smoke.spec.js` that drives the condensation slider through
+its range and asserts state transitions / margin readout updates.
+Match the shape of the `psychrometric-chart` test
+(`tests/smoke.spec.js:122–143`) — same domain. ~30 lines.
+
+### 37. No `playwright.config.js`
+
+The test suite has no Playwright config file. `tests/smoke.spec.js`
+hardcodes `http://localhost:8000` in every `.goto()` (18+ sites),
+and the manual workflow per CLAUDE.md (lines 638–641) requires
+the developer to build, then start `python3 -m http.server
+--directory _site 8000` in a second terminal, then run
+`npm test`. No `webServer` block means `npm test` from a fresh
+checkout silently fails to find a server.
+
+**Why it matters:** the per-call URL hardcoding is the same drift
+class the PAGES-array sync test caught in #20 — a value that's
+the same site-wide but lives in many places. A standard
+`playwright.config.js` with `use.baseURL` reduces that to one
+declaration, and a `webServer` block makes `npm test` self-
+sufficient from a fresh checkout.
+
+**Priority:** MEDIUM.
+
+**Recommended action:** add `playwright.config.js`:
+
+```js
+module.exports = {
+    use: { baseURL: 'http://localhost:8000' },
+    webServer: {
+        command: 'npm run build && python3 -m http.server -d _site 8000',
+        url: 'http://localhost:8000',
+        reuseExistingServer: true,
+    },
+    reporter: 'list',
+};
+```
+
+Then strip the `http://localhost:8000` prefix from each
+`page.goto()` call. CLAUDE.md's "Local preview & tests" section
+gets updated to drop the manual server-start step (the
+`reuseExistingServer: true` flag preserves the `npm run dev`
+workflow for iterating on a single page).
+
+### 38. `.tool-card:nth-child(1/2)` fade-in animation is a near-no-op on most pages
+
+`html/styles.css:266–267`:
+
+```css
+.tool-card:nth-child(1) { animation: fadeUp 0.5s 0.08s ease both; }
+.tool-card:nth-child(2) { animation: fadeUp 0.5s 0.16s ease both; }
+```
+
+`nth-child(N)` counts position among all siblings of the parent,
+not among `.tool-card`-class siblings. On every content page the
+first child of `<main>` is `<div class="section-header">`, so:
+
+- `.tool-card:nth-child(1)` matches nothing (the 1st child is the
+  section-header div, not a `.tool-card`).
+- `.tool-card:nth-child(2)` matches the *first* tool-card.
+- Tool-cards in positions 3+ match nothing — they snap in while
+  the first one fades.
+
+Pages with multiple tool-cards lose the staggered effect: the
+first fades, the rest pop. `education/pid-basics.html` has 4
+tool-cards (3 mini-sim cards plus the page-topic card);
+`tools/psychrometric-chart.html` has 2.
+
+**Why it matters:** the staggered fade was clearly intended; the
+rule is matching by accident on the pages that have at most one
+tool-card. Visual inconsistency that gets worse as pages gain
+tool-cards. Same drift class as #36 — convention written before
+the structural assumption it depends on changed.
+
+**Priority:** MEDIUM.
+
+**Recommended action:** switch to `:nth-of-type(N)` so the rule
+counts `.tool-card` siblings independently, then extend to as
+many indices as the longest tool-card stack uses (today: 4 on
+pid-basics):
+
+```css
+.tool-card:nth-of-type(1) { animation: fadeUp 0.5s 0.08s ease both; }
+.tool-card:nth-of-type(2) { animation: fadeUp 0.5s 0.16s ease both; }
+.tool-card:nth-of-type(3) { animation: fadeUp 0.5s 0.24s ease both; }
+.tool-card:nth-of-type(4) { animation: fadeUp 0.5s 0.32s ease both; }
+```
+
+Pairs with #42 (reduced-motion) so the animation suppresses
+cleanly on that preference.
+
+### 39. `pid-engine.js` overshoot calc has an undefended divide
+
+`html/scripts/pid-engine.js:99, 102`:
+
+```js
+const step = SP - proc.bias;
+…
+const overshoot = Math.max(0, (maxPv - SP) / step * 100);
+```
+
+All three current `PID_PROC` entries have `sp !== bias` (fast:
+1.5/0, med: 70/55, slow: 72/65), so `step !== 0` today. If a
+future fourth process preset ever ships with `sp === bias`, the
+divide produces `Infinity` (or `NaN` if `maxPv === SP`) and
+`Math.max(0, NaN)` → `NaN`, which the UI then `toFixed`s to the
+string `"NaN"`.
+
+**Why it matters:** small footgun on a shared engine that's been
+extracted specifically to grow new callers (#15 set the
+precedent). Same shape as the `signal-scaling.html` `1 / (max -
+min)` Infinity case that motivated the `isFinite`-over-`isNaN`
+sweep in #2 — guard the divide, don't rely on the caller's data.
+
+**Priority:** MEDIUM.
+
+**Recommended action:** one-line guard:
+
+```js
+const overshoot = step === 0 ? 0 : Math.max(0, (maxPv - SP) / step * 100);
+```
+
+The same touch could audit `ssErr` / `bandTol` for parallel
+guards (today both are safe with `step !== 0` but the same
+future-preset case would hit them).
+
+### 40. `ui.js` helpers don't guard null DOM lookups
+
+`html/scripts/ui.js`:
+
+- `switchTab(name, btn)` at line 28: `btn.closest('.tool-card')`
+  → `card.querySelectorAll(...)` (line 30) crashes if the button
+  isn't inside a `.tool-card`; `document.getElementById('tab-' +
+  name)` (line 32) crashes if the constructed id doesn't exist.
+- `copyReadouts(btn, sep, ...ids)` at line 60: `ids.map(id =>
+  document.getElementById(id).textContent)` (line 62) throws a
+  TypeError on the first missing id (the `.filter(v => v && v
+  !== '—')` chain runs *after* the `.textContent` access).
+
+No current call site hits the bug — every page wires the helpers
+against valid structure. But the helpers are shared and a typo on
+a future page (`data-tab="copy"` paired with a pane id of
+`tab-cpy`) silently breaks the IIFE with no console pointer to
+the wiring error.
+
+**Why it matters:** low-impact today; defensive-quality only. The
+#20 `watchErrors` helper would catch the `pageerror` during a
+smoke run, but only if a smoke test happens to click the broken
+button. Contrast with `copyText`'s silent-on-clipboard-rejection
+(line 53) — that's correct *user-facing* behavior; a typo-induced
+null-deref is a *dev-time* bug and should be loud.
+
+**Priority:** LOW.
+
+**Recommended action:** filter nulls before `.textContent`, and
+defensive-return in `switchTab` if `card` or the target pane is
+null. A `console.warn` on null pane id would surface wiring typos
+during dev without changing user behavior.
+
+### 41. Worker email regex accepts edge cases
+
+`src/worker.js:12` — `/^[^@\s]+@[^@\s]+\.[^@\s]+$/` accepts
+addresses like `user@.example.com`, `.user@example.com`, and
+`user.@example.com` (dots in pathological positions per RFC
+5321). Resend rejects these and the user sees a generic
+"Could not send message right now." 502 instead of "Please enter
+a valid email address." 400.
+
+**Why it matters:** cosmetic UX — the user can't distinguish a
+parse error (their input is malformed) from a server error (retry
+later). The regex is intentionally simple (#13 audit called email
+validation "obvious risks handled well") so any tightening should
+stay simple too.
+
+**Priority:** LOW.
+
+**Recommended action:** a slightly stricter regex that bans
+leading/trailing dots in the local part, or accept the cosmetic
+gap and let Resend surface the 502. Either way, document the
+choice in the worker header comment.
+
+### 42. `prefers-reduced-motion` only honored for `.widget-fan-blades`
+
+`html/styles.css:1215` —
+
+```css
+@media (prefers-reduced-motion: reduce) {
+    .widget-fan-blades { animation: none; }
+}
+```
+
+The other site-wide animations don't honor the preference:
+
+- `.tool-card:nth-child(...)` fadeUp (lines 266–267) — the (mostly
+  broken, see #38) staggered page-load animation.
+- Hero-block animations (if any) and the various CSS transitions
+  throughout (`transition:` on `.copy-btn`, `.tab-btn`, sliders,
+  hover states).
+
+Issue #8 deferred the JS-side reduced-motion *liveness* in
+`flow-engine.js` (the engine reads the preference once at
+`init()` and doesn't react to mid-session toggles); CSS-side
+support is a different concern and is roughly one rule:
+
+```css
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+```
+
+**Why it matters:** the reduced-motion preference is a low-cost
+accessibility win and the project already covers the loudest
+animation. Closing the rest matches the posture #21 set for
+skip-link / canvas aria / number-input bounds — small a11y items,
+addressed as a bundle.
+
+**Priority:** LOW.
+
+**Recommended action:** the universal-selector rule above is the
+WebAIM-recommended pattern. Lands in one commit with the #38
+animation fix so the two animation-rule changes land together.
+
+### 43. Contact form required fields have no visual "required" marker
+
+`html/contact.html:55–56, 62` — Email and Message inputs carry
+the HTML `required` attribute, but the labels render as plain
+"Email" / "Message" with no asterisk, "(required)" suffix, or
+CSS-injected marker. By contrast, the Name field (line 51) has
+an explicit "(optional)" label — so the page does distinguish
+optionality, just only at the optional end.
+
+**Why it matters:** sighted users scanning the form get no
+indication of which fields are mandatory until Submit fires the
+browser's native validation tooltip. Asymmetric: explicit
+"(optional)" on Name implies the others are required by
+inference. Screen-reader users get `<input required>` announced
+as "required" anyway, so the gap is specifically sighted-user.
+
+**Priority:** LOW.
+
+**Recommended action:** add a marker — match the "(optional)"
+idiom with a "(required)" suffix on lines 55 and 61, or a CSS-
+injected asterisk via `label[for="contact-email"]::after` /
+`label[for="contact-message"]::after` with `content: " *"`. Text
+suffix matches the existing pattern.
+
+### 44. `head.njk` lacks `theme-color` meta
+
+`html/_includes/head.njk` has no `<meta name="theme-color" …>`.
+Mobile browsers (Safari, Chrome on Android, Samsung Internet)
+read this to colorize the browser chrome to match the site
+surface. Default behavior: each browser picks a white-ish
+approximation based on the page background — small cue, but the
+mismatch is visible on iOS Safari especially.
+
+**Why it matters:** small polish item; one line in `head.njk`.
+Matches the "minimal but considered" posture of the existing
+favicons / OG tags / units-bootstrap.
+
+**Priority:** LOW.
+
+**Recommended action:** add
+
+```html
+<meta name="theme-color" content="#ffffff">
+```
+
+…or pull the color from a `:root` token via a build-time
+substitution if you want it to track `--surface`. Static literal
+is simpler.
+
+### 45. Sitemap `<lastmod>` dates are stale and hand-maintained
+
+`html/sitemap.xml` carries `<lastmod>` dates per entry, all hand-
+typed. Most are stuck at `2026-05-13` or `2026-05-15` despite
+later changes (e.g. `signal-scaling` was restructured in #29 on
+2026-05-18, `psychrometric-chart` got the `${prefix}-secondLbl`
+fix in #20's resolution on 2026-05-17, `thermistor-calculator`
+got #12's label refactor on 2026-05-17). Only `economizer-ratio`,
+`air-mixing`, and `psychrometrics-basics` (the three pages added
+2026-05-18) have current dates.
+
+**Why it matters:** search engines weigh `<lastmod>` for recrawl
+scheduling. Stale dates de-prioritize re-indexing of pages that
+have actually changed. The PAGES ↔ sitemap drift test added in
+#20's bullet 7 catches URL-set drift but not date drift.
+
+**Priority:** LOW.
+
+**Recommended action:** generate `<lastmod>` at build time from
+git's last-touch date for each file. Either a small `.eleventy.js`
+filter (synchronous `git log -1 --format=%cd --date=short
+-- html/<path>` per page), or render the sitemap from a Nunjucks
+template that walks the collections API. The 11ty data file
+`page.date` defaults to file mtime in `_site/`, which 11ty
+rewrites on build, so the more robust source is git itself.
+
+### 46. No CI workflow runs tests pre-deploy
+
+The repo has no `.github/workflows/` directory. Cloudflare Workers
+Build runs `npm install && npm run build` on push to `main` and
+serves `_site/` (~60s deploy), but doesn't run `npm test`. Broken
+tests don't block deploy; a regression that slips past local-test
+execution lands in production unchallenged.
+
+**Why it matters:** the test suite is good (#20 sweep, #28 engine-
+direct tests) but only as good as the discipline that runs it.
+A CI gate makes the test pass a structural property of merge
+eligibility rather than a habit. The deploy path itself is already
+CI-on-merge — adding a test step in front matches the same shape.
+
+**Priority:** LOW (the manual workflow has held for 10 days across
+3 audit cycles; no live regression reached production).
+
+**Recommended action:** minimal `.github/workflows/test.yml`
+running `npm ci && npm run build && npx playwright install
+chromium && npm test` on PR. Cache `~/.cache/ms-playwright` for
+speed. Branch-protect `main` to require the check. No deploy-
+pipeline change — Cloudflare Workers Build keeps owning the
+deploy.
+
+### 47. "17 pages" wording is stale across CLAUDE.md and codebase-issues.md
+
+CLAUDE.md describes the site as "17 pages" in multiple places
+(Stack section: "Build is fast (~0.2s for 17 pages)"); and
+`codebase-issues.md` carries the same figure in entries #4 ("each
+new page is another 25-line copy"), #11 ("the element-agnostic
+sweep landed across all 17 pages"), and #16 ("250 ids renamed
+across 12 pages plus the four already-kebab pages"). Actual count
+on disk: **20** — three pages added since the #4 migration
+(`air-mixing`, `economizer-ratio`, `psychrometrics-basics`).
+
+**Why it matters:** documentation-drift class. The page count
+isn't load-bearing in any rule, but it's the running tally a new
+contributor (or future Claude session) uses to gauge the site's
+size, and the stale figure rots the precision of sentences that
+hang off it ("all 17 pages" reads as exhaustive when it isn't).
+Same drift class as the stale-comments sweeps in #9.
+
+**Priority:** LOW.
+
+**Recommended action:** one mechanical pass over CLAUDE.md and
+`codebase-issues.md` — replace "17 pages" with "20 pages" where
+the count is descriptive, and consider rephrasing to a page-
+count-agnostic form ("every page", "across the site") where the
+count was incidental. The build-time count is `ls html/*.html
+html/tools/*.html html/education/*.html | wc -l`.
+
 ---
 
 ## Recently addressed

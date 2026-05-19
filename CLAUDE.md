@@ -621,6 +621,52 @@ by default.
   appended to `codebase-issues.md` under *Open*. Don't silently fix
   it inline (scope creep) and don't drop it on the floor. Mention it
   to the user so they know to expect the appended entry.
+- **Sweeping convention changes site-wide** — when a convention
+  changes (a new CLAUDE.md bullet, a new shared rule in `styles.css`,
+  a new `:root` token, a renamed id pattern, a frontmatter-shape
+  adjustment, a new shared script) *or* when a new page lands, grep
+  the change site-wide before closing the PR. The codebase-issues.md
+  log is the after-the-fact catch; this is the before-the-fact
+  catch. Same `git log --oneline` + `grep` motion the existing audit
+  cycles already use — applied at the moment the convention shifts
+  rather than at the next audit pass.
+
+  Two directions to sweep:
+
+  - *Convention → consumers.* New shared rule / token / pattern →
+    grep every existing page for the old pattern and update in the
+    same PR. Don't leave the new convention floating without
+    consumer alignment.
+  - *New page → conventions.* New page added → re-run the
+    convention checks against it before merging: description
+    length (140–160 chars per *Templating*), `'use strict';` on
+    the IIFE (per *JS patterns*), `<main id="main">` for the
+    skip-link, the heading-hierarchy / id-naming / form-label
+    rules under *Conventions*, behavioral-test coverage if it's a
+    widget page, and a sitemap entry. Don't inherit the smoke-
+    loop default by accident.
+
+  Drift the audit cycles caught only after the fact — each one
+  was a "convention exists, the trigger that should have applied
+  it didn't fire":
+
+  - `package.json.version` synced to footer at v1.3 (#27) but the
+    footer kept bumping without it for six versions (#31).
+  - `.tool-card:nth-child` rule (#38) written when pages had no
+    leading `.section-header`; later pages added one and the rule
+    silently stopped matching the cards it was meant to animate.
+  - Description-length target documented but eight pages drifted
+    outside the range (#35).
+  - Pages added after the original 11ty migration didn't inherit
+    the established behavioral-test convention for widget pages
+    (#36 caught psychrometrics-basics).
+  - `:focus-visible` rule didn't exist when most styled buttons
+    were written; no sweep retroactively added it (#30).
+  - "17 pages" wording across docs (#47) survived past the third
+    new tool landing.
+
+  When a sweep would be large, log it under `codebase-issues.md`
+  rather than skip — same posture as the rest of the file.
 
 Typical loop: user asks for a change → Claude branches, edits,
 commits, pushes, opens PR → user reviews on GitHub → user merges →
