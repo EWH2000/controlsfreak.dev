@@ -102,6 +102,9 @@ async function handleContact(request, env) {
     }
 
     // ── Turnstile ─────────────────────────────────────────────
+    // Gate explicitly on success === true (not "not false"): a degraded
+    // siteverify response of {}, {success: null}, {success: "true"}, or a
+    // non-2xx body that happens to lack a success field must fail closed.
     let verify;
     try {
         const res = await fetchWithTimeout(
@@ -116,11 +119,11 @@ async function handleContact(request, env) {
             },
             FETCH_TIMEOUT_MS,
         );
-        verify = await res.json();
+        verify = res.ok ? await res.json() : { success: false };
     } catch (err) {
         verify = { success: false };
     }
-    if (!verify || verify.success === false) {
+    if (!verify || verify.success !== true) {
         return json({ ok: false, error: "Verification failed." }, 400);
     }
 
