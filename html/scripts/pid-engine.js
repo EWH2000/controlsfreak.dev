@@ -99,7 +99,7 @@ function simulatePid(proc, Kc, rep, rate) {
     const step = SP - proc.bias;
     let maxPv = -Infinity;
     for (const v of PV) if (v > maxPv) maxPv = v;
-    const overshoot = Math.max(0, (maxPv - SP) / step * 100);
+    const overshoot = step === 0 ? 0 : Math.max(0, (maxPv - SP) / step * 100);
     const ssErr = SP - PV[PV.length - 1];
     const bandTol = 0.02 * Math.abs(step);
     let lastOut = 0;
