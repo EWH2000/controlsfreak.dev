@@ -127,7 +127,7 @@ from now will still run it.
 - **Build:** 11ty (`npm run build`) renders each page from its
   frontmatter + the layout, passes through `styles.css`, `scripts/`,
   `assets/`, `robots.txt`, and `sitemap.xml`, and writes to `_site/`.
-  Build is fast (~0.2s for 17 pages); the only thing the build does
+  Build is fast (~0.2s for 20 pages); the only thing the build does
   is templating, no JS transpile or bundle. Cloudflare Workers Build
   runs `npm install && npm run build` on push to `main` and serves
   `_site/`.
