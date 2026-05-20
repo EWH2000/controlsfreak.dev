@@ -13,6 +13,13 @@ test('contact page loads', async ({ page }) => {
 });
 
 test('empty submit triggers built-in validation and makes no network call', async ({ page }) => {
+    // Block Turnstile. It can't reach challenges.cloudflare.com from a
+    // sandboxed / CI localhost, and its onTsError callback disables the
+    // submit button — which would make the click below wait out its
+    // timeout and flake. With the script blocked, no widget renders, the
+    // callbacks never fire, and the button keeps its HTML-default enabled
+    // state. The empty-required-field validation under test is unaffected.
+    await page.route('https://challenges.cloudflare.com/**', route => route.abort());
     await page.goto(CONTACT_URL);
 
     let apiCalled = false;
