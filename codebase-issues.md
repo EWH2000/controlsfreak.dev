@@ -2713,7 +2713,7 @@ submit (the old code set `style.display = ''`, reverting to
 same). Scope held to the two pages the entry named; see #54 for
 the same pattern on `psychrometric-chart.html`.
 
-### 54. Inline `style="display:none"` on `psychrometric-chart.html` — same pattern as #53
+### 54. Inline `style="display:none"` on `psychrometric-chart.html` — same pattern as #53 *(addressed 2026-05-20)*
 
 While addressing #53, a site-wide grep for inline `display:none`
 turned up six more on `html/tools/psychrometric-chart.html`, all
@@ -2747,6 +2747,25 @@ before swapping: the `<th>`/`<td>` cells revert to `table-cell`
 when `.hidden` is removed (correct), but confirm no `.psy-q-col`
 rule sets a competing `display` — if one does, the
 equal-specificity cascade order (#53's resolution) applies.
+
+**Resolution (2026-05-20):** all six inline `style="display:none"`
+swapped to additive `class="hidden"` (the `psy-q-col` `<th>`, the
+`psy-process` block, the four `pd-*-row` divs), and the eight
+imperative `.style.display` assignments in `renderStageTable` /
+`renderProcessBlock` swapped to `classList.toggle('hidden', …)` /
+`.add` / `.remove`. The caveat cleared cleanly during planning —
+unlike #53's `.result-panel`, none of the three affected
+selectors poses a cascade conflict: `.psy-q-col` has no CSS rule
+at all (cells fall back to the UA-default `table-cell` when
+`.hidden` is removed); `.ps-row` is `display:grid` at
+`styles.css:963` but `.hidden` at `:1279` is later in the same
+file and wins the equal-specificity tie; `.psy-process` (page
+inline `<style>`) sets no `display`, so there is nothing to tie
+with. No `styles.css` change needed — `.hidden` already exists
+from #53. Verified in a browser that the process block reveals
+on the `cc` stage and hides on the others, and that the CFM
+column toggles with the CFM input, with no console errors. No
+version bump — pure consistency, nothing renders differently.
 
 ---
 
