@@ -576,3 +576,59 @@ test('balancing page renders riser, widget compares three branches, anecdote rev
     await expect(page.locator('#bal-bch-cbv')).toHaveAttribute('data-state', 'over');
     expect(errors, 'balancing behavioral should log no page / console errors').toEqual([]);
 });
+
+test('psychrometrics basics — pool widget sweeps surface temp through dry / watch / condensing states', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('http://localhost:8000/education/psychrometrics-basics.html');
+
+    // Set a slider to a value and fire the `input` event the widget listens on
+    // (syncFromSlider) — same idiom as the balancing test above.
+    const setSlider = (id, value) => page.locator(id).evaluate((el, v) => {
+        el.value = String(v);
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+    }, value);
+
+    // On load: defaults DB 82 °F / RH 60% / surface 50 °F. Dew point is
+    // 66.8 °F, so the 50 °F surface sits 16.8 °F below it — condensing. The
+    // anecdote stays absent: RH 60 is outside the natatorium regime (RH >= 65).
+    await expect(page.locator('#pool-dp-val')).toHaveText('66.8');
+    await expect(page.locator('#pool-margin-val')).toHaveText('-16.8');
+    await expect(page.locator('#pool-status')).toHaveAttribute('data-state', 'bad');
+    await expect(page.locator('#pool-readouts')).toHaveAttribute('data-state', 'bad');
+    await expect(page.locator('#pool-status-lbl')).toHaveText('CONDENSATION ON GLASS');
+    await expect(page.locator('#pool-anecdote-wrap .widget-anecdote')).toHaveCount(0);
+
+    // Hold DB 82 / RH 60 (dew point fixed at 66.8 °F) and sweep only the
+    // coldest-surface slider. Surface 80 °F clears dew point by 13.2 °F — dry.
+    await setSlider('#pool-tsurf', 80);
+    await expect(page.locator('#pool-dp-val')).toHaveText('66.8');  // surface temp doesn't move dew point
+    await expect(page.locator('#pool-margin-val')).toHaveText('13.2');
+    await expect(page.locator('#pool-status')).toHaveAttribute('data-state', 'ok');
+    await expect(page.locator('#pool-status-lbl')).toHaveText('GLASS STAYS DRY');
+
+    // Surface 70 °F — only 3.2 °F of margin, inside the 5 °F watch band.
+    await setSlider('#pool-tsurf', 70);
+    await expect(page.locator('#pool-margin-val')).toHaveText('3.2');
+    await expect(page.locator('#pool-status')).toHaveAttribute('data-state', 'watch');
+    await expect(page.locator('#pool-readouts')).toHaveAttribute('data-state', 'watch');
+    await expect(page.locator('#pool-status-lbl')).toHaveText('WATCH THE GLASS');
+
+    // Surface 65 °F — 1.8 °F below dew point, condensing again.
+    await setSlider('#pool-tsurf', 65);
+    await expect(page.locator('#pool-margin-val')).toHaveText('-1.8');
+    await expect(page.locator('#pool-status')).toHaveAttribute('data-state', 'bad');
+    await expect(page.locator('#pool-status-lbl')).toHaveText('CONDENSATION ON GLASS');
+
+    // Natatorium regime — DB >= 80, RH >= 65, surface <= 55, condensing —
+    // reveals the anecdote callout.
+    await setSlider('#pool-rh', 90);
+    await setSlider('#pool-tsurf', 50);
+    await expect(page.locator('#pool-anecdote-wrap .widget-anecdote')).toHaveCount(1);
+
+    // Leaving the regime (RH back to 60) removes it — not pinned, unlike the
+    // balancing widget's anecdote.
+    await setSlider('#pool-rh', 60);
+    await expect(page.locator('#pool-anecdote-wrap .widget-anecdote')).toHaveCount(0);
+
+    expect(errors, 'psychrometrics-basics behavioral should log no page / console errors').toEqual([]);
+});
