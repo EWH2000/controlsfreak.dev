@@ -1573,6 +1573,51 @@ than the original planning):
   threads this implicitly through prose; a synthesis aid could
   help job-site readers map their plant onto the lesson.
 
+Interactive-widget payoff (flagged by the user; widget concept
+below is Claude-suggested, not yet user-vetted):
+- **The page has no interactive payoff.** It closes on the
+  `lp-tt-` tie-back diagram + prose. Of the variable-flow
+  quartet (`load-piping` → `vfds` → `pump-control` →
+  `balancing`), load-piping is the only page that ends without
+  a manipulable widget — `vfds`, `pump-control`, and
+  `balancing` each close on one, and `hydronic-loops` has the
+  twin-T injection-pump widget. The page's one question ("what
+  does the connection point decide?") is a cause→effect
+  relationship — valve type at the load sets whether *system*
+  flow varies or holds constant — which is exactly what a
+  widget makes vivid. Right now the reader is *told* it; a
+  widget would let them watch it.
+- **Widget concept — "Watch what the pump sees."** An
+  `lp-w-`-prefixed `.widget-*` block:
+  - One slider — **load demand** 0–100% (the call at the coil).
+  - One segmented toggle — **valve type**: 2-way /
+    3-way mixing / 3-way diverting.
+  - Readouts — **coil flow**, **bypass flow**, **system/loop
+    flow** (what the pump sees), in GPM.
+  - Payoff: drag demand down and — 2-way → coil flow *and*
+    system flow fall together ("variable system flow");
+    3-way → coil flow falls but system flow stays pinned at
+    design, the bypass leg picking up the slack ("constant
+    system flow"). A small inline schematic (or one of the
+    existing SVGs) lights the bypass leg as demand drops on a
+    3-way.
+  - Discovery reward (the inward-pointing Easter-egg idiom):
+    at very low demand with a **2-way** valve, an anecdote —
+    the pump is near-deadheaded, which is exactly where the
+    next pages pick up — forward-linking `vfds.html` /
+    `pump-control.html` and paying off two of this page's
+    existing forward-link debts.
+  - Math is a trivial proportional flow split — no engine. The
+    mixing-vs-diverting nuance can stay a label/diagram detail
+    (both give constant system flow); the widget's job is the
+    2-way-vs-3-way contrast.
+- **Scope guard.** It stays a teaching widget — Education page,
+  no Tools card (per "Where interactive widgets live"), and per
+  "one question per page" it must stay on *valve choice →
+  system flow varies or not*. It must not drift into balancing,
+  pump curves, or VFD speed control — those are the sibling
+  pages.
+
 ### Balancing — Education page *(shipped 2026-05-16)*
 *One question: how do you make sure every load in a hydronic
 system actually receives the design flow it was sized for — and
