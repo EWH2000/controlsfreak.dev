@@ -2255,6 +2255,299 @@ rephrasing was the alternative; sticking with the literal count
 matches the existing prose voice and re-anchors the figure for
 the next reader.
 
+### 48. Define-by widget duplication — `SECOND_PROP` / `buildSecondProp` / `secondToCanonical` / `refreshSecondLabel` across three pages
+
+Three psych tools each carry their own copy of the Define-by
+widget's DOM-side helpers:
+
+- `html/tools/psychrometric-chart.html:453–465, 550, 702, 1220, 1399, 1427, 1438`
+- `html/tools/air-mixing.html:389–400, 402–412, 424–428, 607`
+- `html/tools/economizer-ratio.html:274–285, 290–300, 370–376, 564`
+
+Each defines the same four things:
+
+- `SECOND_PROP` — five-mode catalog (`rh`, `wb`, `dp`, `w`, `h`) with
+  per-mode label + input step. Step values are byte-identical across
+  the three (`0.5 / 0.25` for temps US/metric, `1 / 0.1` for humidity
+  ratio, `0.5` for enthalpy, `1` for RH).
+- `buildSecondProp()` — rebuilds the catalog on every `unitschange`
+  so labels and steps track the active unit system.
+- `secondToCanonical(mode, value)` — five-case switch converting
+  the Define-by input from display units to canonical IP before
+  handing it to `Psychro.solveState`. Byte-identical across the
+  three.
+- `refreshSecondLabel(prefix)` — reads mode, writes the matching
+  label and step onto the row's `<label>` + `<input>` elements.
+
+**Why it matters:** same drift class as #15 (PID engine extraction
+triggered at the second consumer). We now have three consumers
+and the candidate fourth (coil-sizing) is already named in
+`psychro-engine.js`'s header comment as a future Psychro.*
+consumer. The label / step constants in particular are the same
+data five places (each tool also writes initial labels into HTML
+for the first paint), so adding a sixth mode in the future would
+need a six-site sync to ship cleanly.
+
+The engine itself can't host this: `psychro-engine.js`
+deliberately doesn't touch the DOM or `window.Units` (its file
+header is explicit about that — "anything pure" / "nothing that
+touches the DOM, window.Units, or any specific page's HTML
+structure"). The extraction target is a new sibling classic-
+script — `/scripts/psy-widget.js` or `/scripts/psy-define-by.js`
+— that owns the catalog + the canonical-conversion helper.
+Per-page wiring stays on the page (each page's ids carry their
+own prefix scheme).
+
+**Priority:** HIGH (size of the duplication; second-consumer
+threshold passed twice over).
+
+**Recommended action:** extract two helpers to a new shared
+script. Sketch:
+
+```js
+// /scripts/psy-widget.js — Define-by widget helpers.
+(function () {
+    'use strict';
+    function buildSecondProp(U) {
+        const u = U.current();
+        return {
+            rh: { label: 'Relative humidity (%)',                            step: 1 },
+            wb: { label: `Wet-bulb (${U.suffix.temp()})`,                    step: u === 'us' ? 0.5 : 0.25 },
+            dp: { label: `Dew point (${U.suffix.temp()})`,                   step: u === 'us' ? 0.5 : 0.25 },
+            w:  { label: `Humidity ratio (${U.suffix.humidityRatio()})`,     step: u === 'us' ? 1   : 0.1  },
+            h:  { label: `Enthalpy (${U.suffix.enthalpy()} dry air)`,        step: 0.5 },
+        };
+    }
+    function secondToCanonical(U, mode, value) {
+        if (!isFinite(value)) return value;
+        switch (mode) {
+            case 'rh': return value;
+            case 'wb':
+            case 'dp': return U.toCanonical.temp(value);
+            case 'w':  return U.toCanonical.humidityRatio(value) / 7000;
+            case 'h':  return U.toCanonical.enthalpy(value);
+            default:   return value;
+        }
+    }
+    window.PsyWidget = { buildSecondProp, secondToCanonical };
+})();
+```
+
+Pages keep their own `refreshSecondLabel(prefix)` helpers — those
+are id-prefix-aware and tied to per-page DOM, so they're not
+candidate-extractable yet. Promote *just* the catalog + the
+canonical-conversion switch first; revisit `refreshSecondLabel`
+extraction if a fourth consumer arrives.
+
+CLAUDE.md "Stack → Shared scripts" picks up a bullet for the new
+file alongside the existing `pid-engine.js`, `flow-engine.js`,
+`psychro-engine.js`, `units.js`, `ui.js` entries.
+
+### 49. `economizer-ratio.html` re-declares `P_AIR` shadowing the engine's `P_STD`
+
+`html/tools/economizer-ratio.html:260`:
+
+```js
+const P_AIR = 14.696;  // psia, sea-level standard pressure
+```
+
+`psychro-engine.js:65` already exposes `P_STD = 14.696` as a
+top-level global, and the engine's header comment (lines 19–28)
+documents it as part of the public API. The other two psych-tool
+consumers do this right: `psychrometrics-basics.html:383–384`
+references `P_STD` directly; `air-mixing.html` calls
+`pressFromAltitude(altF)` from the engine (which uses `P_STD`
+internally at sea level). The economizer page is the only
+shadow.
+
+**Why it matters:** the engine's whole point is to be the source
+of truth for the moist-air math, including its constants. A
+local shadow of `P_STD` is a quiet drift: same value, two names,
+future contributors copy-paste whichever they happen to see
+first. Same drift class as the `isFinite`-over-`isNaN` (#2) and
+var-elimination (post-audit sweep) cleanups — convention exists
+on paper, breaks at one site.
+
+**Priority:** MEDIUM.
+
+**Recommended action:** delete the `const P_AIR = 14.696` line;
+find/replace `P_AIR` → `P_STD` in the file's two call sites
+(`html/tools/economizer-ratio.html:384, 498`). Lands cleanly as
+part of the same touch as #48 or stands alone.
+
+### 50. Inline-style proliferation, second wave — patterns #19 didn't catch
+
+#19 promoted four inline-style patterns to design-system classes
+(body-prose triplet, lead paragraph, accent anchor,
+`.result-formula` modifiers). Site-wide count is now 222 inline
+`style="..."` attributes; another set of repeated shapes has
+accumulated since.
+
+**Pattern 1 — Tool-card preamble paragraph.** Mono small-caps
+caption under a tool-card-header. Same six-property shape across
+3 sites:
+
+- `html/tools/pid-tuner.html:31`
+- `html/tools/economizer-ratio.html:49`
+- `html/tools/air-mixing.html:69`
+
+Shape: `font-family:var(--mono);font-size:0.7rem;color:var(--text-dim);padding/margin;line-height:1.7;`.
+Candidate class: `p.tool-preamble` (element-qualified to outrank
+`.tool-body p`'s sans triplet on specificity).
+
+**Pattern 2 — `<p style="margin-top:1.25rem;">` after a diagram
+or callout block** on education pages. 14+ instances:
+
+- `html/education/load-piping.html` × 7
+- `html/education/pump-control.html` × 7
+- `html/education/hydronic-loops.html` × 3
+- `html/education/psychrometrics-basics.html` × 1
+
+Borderline — `margin-top:1.25rem` is a one-off adjustment to the
+standard prose, used wherever a paragraph follows an SVG /
+diagram. Candidate utility: `.after-diagram` or
+`.tool-body p.after-diagram`; alternatively keep inline if the
+"first paragraph after a diagram" pattern is genuinely the only
+consumer.
+
+**Pattern 3 — `<div class="btn-row" style="margin-top:1rem;">`** —
+preset-row spacing after a section heading. 8+ instances across
+`bacnet-ip-converter.html`, `economizer-ratio.html`,
+`air-mixing.html`, `signal-scaling.html`. Two viable shapes:
+
+- Bake `margin-top: 1rem` into the base `.btn-row` rule (most
+  uses want it). Audit the existing call sites first — a couple
+  of in-line copy-button uses on `vfd-mock.html` may want zero
+  spacing.
+- Or add a `.btn-row.spaced` modifier and opt-in per site.
+
+**Pattern 4 — Worked-example pair** — `<p class="ref-note" style="margin-top:0;">`
+followed by `<ol class="ref-note" style="padding-left:1.2em;">`. 4
+sites across `economizer-ratio.html` and `air-mixing.html`.
+Promote to `.ref-note.worked-intro` + `ol.ref-note.worked-list`
+(or to a single `.worked-example` container class wrapping both).
+
+**Pattern 5 — `<p class="ref-note" style="margin-top:0.5rem;padding-top:0;border-top:none;">`** —
+compact caption under a mini-sim canvas on `pid-basics.html`. 2
+sites. A `.ref-note.compact` modifier covers it.
+
+**Why it matters:** same as #19 — drift accumulates between
+sweeps because writing inline is the path of least resistance.
+The hit-rate now (3+ consumers on patterns 1 / 3; 14+ on pattern
+2; 4 on pattern 4; 2 on pattern 5) is firmly past the
+"second/third consumer = extract" threshold from #19's own rule
+of thumb.
+
+**Priority:** MEDIUM. Patterns 1, 4, 5 are mechanical and
+lowest-risk; pattern 3 is mechanical but has a small base-vs-
+modifier design call to make; pattern 2 is one-off enough that
+it might rightly stay inline.
+
+**Recommended action:** promote patterns 1, 4, 5 in one commit;
+take pattern 3 as a second commit (base-or-modifier decision
+explicit); defer pattern 2 unless the 14+-site footprint feels
+worth chasing. Each promoted pattern also gets a swept
+replacement of its inline-style consumers — same shape as #19's
+per-pattern commits.
+
+### 51. Description-length drift — three more outliers, missed by #35
+
+Re-measurement on 2026-05-19 (after #35) finds three pages
+outside the 140–160 char target that #35's table didn't list:
+
+| Page | Chars | Off by |
+|---|---:|---:|
+| `html/tools/pid-tuner.html` | **133** | 7 short |
+| `html/tools/bacnet-ip-converter.html` | **137** | 3 short |
+| `html/education/hydronic-loops.html` | **168** | 8 over |
+
+#35's eight outliers all still hold (within ±2 chars of that
+entry's table). The new three were apparently not flagged in
+#35's original measurement; whichever audit pass generated the
+table missed them. Total off-range count is now 11 of 20 pages.
+
+**Why it matters:** #35's whole framing is that the 140–160 char
+target is a convention without a measurable check — each new
+page or edit lands without verification. This addendum confirms
+that the convention degrades incrementally between sweeps. The
+build-time guard #35 suggested (a `description.length` check in
+`.eleventy.js` that warns when a page renders outside 140–160)
+would have caught all three of these on the commit that
+introduced them.
+
+**Priority:** MEDIUM. Same severity as #35.
+
+**Recommended action:** fold into #35's scope. One pass rewrites
+all 11 outliers (8 from #35 + 3 here) and lands the optional
+build-time guard in the same commit. Naming this as a separate
+entry only because #35 was already shipped through plan-mode
+review before the re-measurement.
+
+### 52. Redundant inline `color:var(--accent)` on an anchor inside `.tool-body`
+
+`html/index.html:58`:
+
+```html
+<p style="font-family:var(--mono);font-size:0.72rem;color:var(--text-dim);margin-top:1.25rem;">
+    Bug reports, tool requests, or feedback — <a href="/contact.html" style="color:var(--accent);">get in touch</a>.
+</p>
+```
+
+The `<a>` is inside `<div class="tool-body" ...>` (the About
+card, line 50). #19's resolution added
+`.tool-body a { color: var(--accent); }` to `styles.css` exactly
+to make accent-anchor styling site-wide without per-page inline.
+The `style="color:var(--accent);"` here is redundant with that
+cascade — would render identically without it.
+
+`html/education/index.html:18` carries the same inline-color
+anchor but is NOT inside a `.tool-body` (it's a top-level
+paragraph in `<main>`), so the cascade doesn't reach it — that
+one's *not* redundant; leave it.
+
+**Why it matters:** small drift, but #19's resolution wrote down
+"accent anchor in `.tool-body`" as the canonical form. A future
+reader who copies the inline pattern from `index.html`
+re-introduces the kind of duplication #19 was scoped to
+eliminate.
+
+**Priority:** LOW.
+
+**Recommended action:** strip the `style="color:var(--accent);"`
+from `index.html:58`. One-line touch.
+
+### 53. Inline `style="display:none"` for JS-toggled visibility
+
+Two pages mark a section as initially hidden via inline
+`style="display:none"`, then toggle visibility from JS:
+
+- `html/tools/signal-scaling.html:53` —
+  `<div id="custom-row" style="display:none">`, shown when the
+  user picks "Custom" from the signal-type dropdown.
+- `html/contact.html:90` —
+  `<div id="contact-result" class="result-panel" style="display:none">`,
+  shown after submit with `result.style.display = 'block'`.
+
+The site has no `.hidden` utility class today; pages do the
+toggling imperatively (e.g. `el.style.display = 'block'` /
+`el.style.display = 'none'`).
+
+**Why it matters:** the inline-style pattern + per-page
+imperative toggle is mechanically fine, but it's the kind of
+small convention sprawl that the design-system promotions (#19,
+this audit's #50) keep cleaning up. A shared
+`.hidden { display: none; }` utility lets both call sites use
+`classList.toggle('hidden', cond)` and reads more cleanly.
+Lowest-impact item in this audit batch — pure consistency.
+
+**Priority:** LOW.
+
+**Recommended action:** add `.hidden { display: none; }` to
+`styles.css` (one line, alongside `.tab-pane`'s display-toggle
+idiom). Strip the inline `style="display:none"` from both
+sites; swap the imperative JS to
+`classList.toggle('hidden', ...)`. ~6 lines touched total.
+
 ---
 
 ## Recently addressed
