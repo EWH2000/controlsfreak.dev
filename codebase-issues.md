@@ -2549,7 +2549,7 @@ left untouched as the entry directs — its anchor is a top-level
 `<main>` paragraph, outside any `.tool-body`, so the cascade does
 not reach it and the inline color there is not redundant.
 
-### 53. Inline `style="display:none"` for JS-toggled visibility
+### 53. Inline `style="display:none"` for JS-toggled visibility *(addressed 2026-05-20)*
 
 Two pages mark a section as initially hidden via inline
 `style="display:none"`, then toggle visibility from JS:
@@ -2580,6 +2580,60 @@ Lowest-impact item in this audit batch — pure consistency.
 idiom). Strip the inline `style="display:none"` from both
 sites; swap the imperative JS to
 `classList.toggle('hidden', ...)`. ~6 lines touched total.
+
+**Resolution (2026-05-20):** `.hidden { display: none; }` added to
+`styles.css`. Placed at the end of the component rules (just
+before the closing `prefers-reduced-motion` media block) rather
+than alongside `.tab-pane` as the entry sketched — `.hidden` and
+`.result-panel` are both single-class selectors (equal
+specificity), so `.hidden` has to come *later* in the file to win
+the cascade tie and actually hide `#contact-result` (which carries
+both classes). `signal-scaling.html`'s `#custom-row` swapped to
+`class="hidden"` + `classList.toggle('hidden', !isCustom)`; the
+old code set `display:'grid'` when shown, but `#custom-row` has no
+grid template of its own (it just stacks three `.ps-row`s, each
+its own grid), so the div's default `block` renders identically.
+`contact.html`'s `#contact-result` swapped to
+`class="result-panel hidden"` + `classList.remove('hidden')` on
+submit (the old code set `style.display = ''`, reverting to
+`.result-panel`'s `display:flex` — `.hidden`-removal does the
+same). Scope held to the two pages the entry named; see #54 for
+the same pattern on `psychrometric-chart.html`.
+
+### 54. Inline `style="display:none"` on `psychrometric-chart.html` — same pattern as #53
+
+While addressing #53, a site-wide grep for inline `display:none`
+turned up six more on `html/tools/psychrometric-chart.html`, all
+the same JS-toggled-visibility pattern #53's `.hidden` utility now
+serves — #53's scope deliberately covered only `signal-scaling`
+and `contact`:
+
+- `:377` `<div class="psy-process" id="psy-process-block">` —
+  toggled `block.style.display = 'none' / ''` at `:801-802`.
+- `:382` `#pd-shr-row` — toggled `'' / 'none'` at `:816, :819`.
+- `:383-385` `#pd-qt-row` / `#pd-qs-row` / `#pd-ql-row` — toggled
+  `haveQ ? '' : 'none'` at `:823-825`.
+- `:360` `<th class="psy-q-col" …>` — one of several `.psy-q-col`
+  cells toggled in bulk by `el.style.display = cfmOn ? '' : 'none'`
+  at `:732`.
+
+**Why it matters:** identical to #53 — small convention sprawl,
+and now that `.hidden` exists the inline form is the off-pattern
+one. Same drift class as #51 vs #35: an audit named a fixed page
+list and a later grep finds the rest.
+
+**Priority:** LOW (pure consistency; no live bug).
+
+**Recommended action:** swap each inline `style="display:none"`
+to `class="hidden"` (additive where the element already has a
+class) and the imperative `.style.display = '' / 'none'` toggles
+to `classList.toggle('hidden', …)` / `.remove('hidden')`. The
+`.psy-q-col` bulk toggle becomes
+`el.classList.toggle('hidden', !cfmOn)`. One caveat to check
+before swapping: the `<th>`/`<td>` cells revert to `table-cell`
+when `.hidden` is removed (correct), but confirm no `.psy-q-col`
+rule sets a competing `display` — if one does, the
+equal-specificity cascade order (#53's resolution) applies.
 
 ---
 

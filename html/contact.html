@@ -86,7 +86,7 @@ nav: contact
                 </div>
             </form>
 
-            <div id="contact-result" class="result-panel" style="display:none">
+            <div id="contact-result" class="result-panel hidden">
                 <div class="result-label">Status</div>
                 <div class="result-value" id="contact-result-value">—</div>
             </div>
@@ -117,7 +117,7 @@ nav: contact
             const resultValue = document.getElementById("contact-result-value");
 
             // Show pending state
-            result.style.display = "";
+            result.classList.remove("hidden");
             resultValue.className = "result-value muted";
             resultValue.textContent = "Sending…";
             submitBtn.disabled = true;
