@@ -260,7 +260,6 @@ nav: tools
         'use strict';
 
         const U = window.Units;
-        const P_AIR = 14.696;  // psia, sea-level standard pressure
 
         // ── Display helpers ───────────────────────────────────────────
         const dispT  = f       => U.display.temp(f).toFixed(1);
@@ -357,7 +356,7 @@ nav: tools
             const secD = parseFloat(document.getElementById(prefix + '-second').value);
             return {
                 ok: isFinite(tdbD) && isFinite(secD),
-                state: Psychro.solveState(mode, U.toCanonical.temp(tdbD), PsyWidget.secondToCanonical(mode, secD), P_AIR),
+                state: Psychro.solveState(mode, U.toCanonical.temp(tdbD), PsyWidget.secondToCanonical(mode, secD), P_STD),
             };
         }
 
@@ -471,7 +470,7 @@ nav: tools
             const ratio = Math.max(0, Math.min(1, pct / 100));
             const maW    = ratio * oa.W   + (1 - ratio) * ra.W;
             const maTdb  = ratio * oa.tdb + (1 - ratio) * ra.tdb;
-            const maState = Psychro.buildState(maTdb, maW, P_AIR);
+            const maState = Psychro.buildState(maTdb, maW, P_STD);
             if (!maState || !isFinite(maState.h)) {
                 clearEnthalpyOutputs('Mixed state out of range — check inputs.');
                 return;
