@@ -1,0 +1,39 @@
+name: test
+
+# Runs the Playwright suite on every PR to main. `npm test` is
+# self-sufficient — playwright.config.js's webServer block builds the
+# site and serves _site/ (python3 is preinstalled on ubuntu-latest),
+# and GitHub Actions sets CI so reuseExistingServer stays off. The
+# deploy pipeline (Cloudflare Workers Build) is untouched.
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: npm
+
+      - run: npm ci
+
+      - name: Cache Playwright browser
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('package-lock.json') }}
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run tests
+        run: npm test

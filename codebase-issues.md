@@ -2258,7 +2258,7 @@ template that walks the collections API. The 11ty data file
 `page.date` defaults to file mtime in `_site/`, which 11ty
 rewrites on build, so the more robust source is git itself.
 
-### 46. No CI workflow runs tests pre-deploy
+### 46. No CI workflow runs tests pre-deploy *(addressed 2026-05-20)*
 
 The repo has no `.github/workflows/` directory. Cloudflare Workers
 Build runs `npm install && npm run build` on push to `main` and
@@ -2281,6 +2281,25 @@ chromium && npm test` on PR. Cache `~/.cache/ms-playwright` for
 speed. Branch-protect `main` to require the check. No deploy-
 pipeline change — Cloudflare Workers Build keeps owning the
 deploy.
+
+**Resolution (2026-05-20):** added `.github/workflows/test.yml` —
+a single `test` job on `pull_request` to `main`: checkout,
+`setup-node` (`lts/*`, npm cache), `npm ci`, an `actions/cache`
+step for `~/.cache/ms-playwright` keyed on `package-lock.json`,
+`npx playwright install --with-deps chromium`, `npm test`. The
+explicit `npm run build` from the sketch above was dropped — #37's
+`playwright.config.js` `webServer` block already builds the site
+and serves `_site/` for the run, so the workflow is just install +
+`npm test`. `permissions: contents: read` for least privilege. A
+`retries: process.env.CI ? 2 : 0` line was added to
+`playwright.config.js` (CI-only, so a genuine flake gets two more
+chances without masking a local failure). CLAUDE.md "Local preview
+& tests" and the "Workflow" loop now record the CI gate. The
+deploy pipeline is untouched — Cloudflare Workers Build still owns
+the deploy; CI only gates the PR. Branch-protecting `main` to
+require the `test` check is a GitHub-settings step left to the
+repo owner (the check name only appears in that UI after the
+workflow has run once).
 
 ### 47. "17 pages" wording is stale across CLAUDE.md and codebase-issues.md *(addressed 2026-05-19)*
 

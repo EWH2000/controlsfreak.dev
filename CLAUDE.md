@@ -712,9 +712,10 @@ by default.
   rather than skip — same posture as the rest of the file.
 
 Typical loop: user asks for a change → Claude branches, edits,
-commits, pushes, opens PR → user reviews on GitHub → user merges →
-Cloudflare Workers Build runs `npm install && npm run build` →
-deploy serves `_site/` within ~60s.
+commits, pushes, opens PR → GitHub Actions runs the test suite on the
+PR (`.github/workflows/test.yml`) → user reviews on GitHub → user
+merges → Cloudflare Workers Build runs `npm install && npm run build`
+→ deploy serves `_site/` within ~60s.
 
 ## Local preview & tests
 
@@ -742,6 +743,11 @@ Tests:
   behavior spot-checks), `contact.spec.js`, and `psychro-engine.spec.js`
   (pure-Node engine math). Don't restructure the scaffolding without
   being asked.
+- **CI:** `.github/workflows/test.yml` runs the same `npm test` on
+  every PR to `main` (Chromium installed in the runner; the config's
+  `webServer` build means the `descriptionLengthGuard` runs too). The
+  deploy itself stays with Cloudflare Workers Build — CI gates the
+  PR, it doesn't deploy.
 - **Eyeball a change:** `const { chromium } = require('@playwright/test')`
   + `page.screenshot({ path, fullPage: true })`. Useful for canvas
   rendering, layout, console errors. For `contact.html` use

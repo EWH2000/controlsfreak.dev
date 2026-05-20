@@ -10,6 +10,9 @@ const { defineConfig } = require('@playwright/test');
 module.exports = defineConfig({
     testDir: './tests',
     reporter: 'list',
+    // Retry in CI only — absorbs a genuine flake without masking a
+    // local failure (process.env.CI is set by GitHub Actions).
+    retries: process.env.CI ? 2 : 0,
     use: {
         baseURL: 'http://localhost:8000',
     },
