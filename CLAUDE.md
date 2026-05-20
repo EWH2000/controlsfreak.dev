@@ -725,17 +725,23 @@ Two ways to view the site locally:
   source change. Best for iterating on a page.
 - **Build + static-serve:** `npm run build && python3 -m http.server
   8000 --directory _site` — produces the same `_site/` Cloudflare
-  serves and exposes it on `http://localhost:8000`. This is what the
-  Playwright specs expect; start the server yourself before running
-  tests (there's no `webServer` block in the Playwright config).
+  serves and exposes it on `http://localhost:8000`. Useful for
+  eyeballing the built output directly; the test suite no longer
+  needs you to start this by hand (see below).
 
 Tests:
 
-- **Run:** `npm test` (or `npx playwright test --reporter=list`).
-  Chromium only. Specs in `tests/`: `smoke.spec.js` (every page: 200,
-  title, nav, no console errors, behavior spot-checks) and
-  `contact.spec.js`. Don't restructure the scaffolding without being
-  asked.
+- **Run:** `npm test` (or `npx playwright test`). Chromium only.
+  Self-sufficient — `playwright.config.js` carries a `webServer`
+  block that builds the site and serves `_site/` for the run, so a
+  fresh checkout needs no second terminal. If a dev server
+  (`npm run dev`, same port 8000) is already up, `reuseExistingServer`
+  reuses it instead of starting another. `baseURL` in the config is
+  the test host, so specs use leading-slash paths. Specs in `tests/`:
+  `smoke.spec.js` (every page: 200, title, nav, no console errors,
+  behavior spot-checks), `contact.spec.js`, and `psychro-engine.spec.js`
+  (pure-Node engine math). Don't restructure the scaffolding without
+  being asked.
 - **Eyeball a change:** `const { chromium } = require('@playwright/test')`
   + `page.screenshot({ path, fullPage: true })`. Useful for canvas
   rendering, layout, console errors. For `contact.html` use

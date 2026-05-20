@@ -3,7 +3,7 @@ const { test, expect } = require('@playwright/test');
 // In production the page is served at the clean URL "/contact" via the
 // Worker's html_handling; the local `python -m http.server` only knows the
 // real file path, so the tests hit /contact.html.
-const CONTACT_URL = 'http://localhost:8000/contact.html';
+const CONTACT_URL = '/contact.html';
 
 test('contact page loads', async ({ page }) => {
     const res = await page.goto(CONTACT_URL);
