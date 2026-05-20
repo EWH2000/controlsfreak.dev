@@ -2299,7 +2299,7 @@ rephrasing was the alternative; sticking with the literal count
 matches the existing prose voice and re-anchors the figure for
 the next reader.
 
-### 48. Define-by widget duplication — `SECOND_PROP` / `buildSecondProp` / `secondToCanonical` / `refreshSecondLabel` across three pages
+### 48. Define-by widget duplication — `SECOND_PROP` / `buildSecondProp` / `secondToCanonical` / `refreshSecondLabel` across three pages *(addressed 2026-05-19)*
 
 Three psych tools each carry their own copy of the Define-by
 widget's DOM-side helpers:
@@ -2387,7 +2387,24 @@ CLAUDE.md "Stack → Shared scripts" picks up a bullet for the new
 file alongside the existing `pid-engine.js`, `flow-engine.js`,
 `psychro-engine.js`, `units.js`, `ui.js` entries.
 
-### 49. `economizer-ratio.html` re-declares `P_AIR` shadowing the engine's `P_STD`
+**Resolution (2026-05-19):** extracted `/scripts/psy-widget.js`, a
+new shared classic-script exposing `PsyWidget.buildSecondProp()` (the
+per-mode `{ label, step }` catalog carrying the active unit suffix)
+and `PsyWidget.secondToCanonical(mode, value)` (display-units →
+canonical IP). All three psych tools — `psychrometric-chart`,
+`air-mixing`, `economizer-ratio` — now build their catalog and
+convert through the shared helpers; their local `SECOND_PROP` +
+`secondToCanonical` duplicates are gone. `psychrometric-chart` keeps
+its chart-specific per-mode `def` (defaults) and `fmt` (state →
+display formatter) enrichments by spreading them onto the shared
+base. Per-page `refreshSecondLabel(prefix)` wiring stayed on each
+page as the entry directed — it is id-prefix-aware and tied to
+per-page DOM, so not candidate-extractable until a fourth consumer
+arrives. The new file follows `pid-chart.js`'s header conventions
+(dashed-border export block, classic-script note, no DOM access).
+CLAUDE.md "Stack → Shared scripts" gained the `psy-widget.js` bullet.
+
+### 49. `economizer-ratio.html` re-declares `P_AIR` shadowing the engine's `P_STD` *(addressed 2026-05-19)*
 
 `html/tools/economizer-ratio.html:260`:
 
@@ -2419,7 +2436,16 @@ find/replace `P_AIR` → `P_STD` in the file's two call sites
 (`html/tools/economizer-ratio.html:384, 498`). Lands cleanly as
 part of the same touch as #48 or stands alone.
 
-### 50. Inline-style proliferation, second wave — patterns #19 didn't catch
+**Resolution (2026-05-19):** the `const P_AIR = 14.696` shadow
+deleted from `economizer-ratio.html` and its two call sites
+repointed to the engine's `P_STD` (`psychro-engine.js`). The
+adjacent comment already named `P_STD` correctly, so no docs change
+was needed. economizer-ratio now matches the other two psych
+consumers — it sources sea-level standard pressure from the engine
+rather than re-declaring it. Shipped as its own commit, not folded
+into #48.
+
+### 50. Inline-style proliferation, second wave — patterns #19 didn't catch *(addressed 2026-05-19)*
 
 #19 promoted four inline-style patterns to design-system classes
 (body-prose triplet, lead paragraph, accent anchor,
@@ -2493,6 +2519,34 @@ explicit); defer pattern 2 unless the 14+-site footprint feels
 worth chasing. Each promoted pattern also gets a swept
 replacement of its inline-style consumers — same shape as #19's
 per-pattern commits.
+
+**Resolution (2026-05-19):** patterns 1, 4, 5 shipped in one commit
+and pattern 3 in a second; pattern 2 deliberately left inline per
+the entry's own recommendation.
+
+- **Pattern 1 → `p.tool-preamble`** — element-qualified typography-
+  only class (padding/margin stays per-site, since it varies by
+  whether the preamble sits inside or outside `.tool-body`). The
+  audit's count of 3 undercounted: `vfd-mock.html` ×2 and
+  `psychrometric-chart.html` were also carrying the shape, so 6
+  sites were swept.
+- **Pattern 3 → base `.btn-row`** — `margin-top: 1rem` baked into
+  the base rule (the dominant calc/converter shape), with a narrow
+  `.ps-row > .btn-row { margin-top: 0 }` exception keeping the two
+  in-`.ps-row` toggle groups centered against their label sibling.
+  10 inline `margin-top` drops plus 1 paired Turnstile
+  `margin-bottom` drop on `contact.html` (now redundant).
+- **Pattern 4 → `.ref-note.worked-intro` + `ol.ref-note.worked-list`**
+  — modifier pair for the 4 worked-example blocks across
+  `economizer-ratio` and `air-mixing`; 8 inline styles swept.
+- **Pattern 5 → `.ref-note.compact`** — mini-sim caption modifier
+  on `pid-basics.html`; 3 sites (audit's count of 2 missed Sim 3).
+- **Pattern 2** (`<p style="margin-top:1.25rem;">` after diagrams,
+  14+ sites) — left inline. The entry flagged it as a one-off
+  candidate to skip, and that call was taken.
+
+CLAUDE.md "Design system → Prose typography classes" picked up
+bullets documenting the new classes.
 
 ### 51. Description-length drift — three more outliers, missed by #35 *(addressed 2026-05-20)*
 
