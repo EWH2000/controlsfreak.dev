@@ -76,6 +76,12 @@ the site does, see `README.md`.
     paint to avoid a US flash for metric visitors.
   - `ui.js` — `switchTab`, `copyText`, `copyReadouts`. Clipboard
     failures fail silently.
+  - `psy-widget.js` — Define-by widget helpers shared by
+    `psychrometric-chart`, `air-mixing`, and `economizer-ratio`.
+    Exposes `buildSecondProp()` (per-mode label + step catalog that
+    tracks the active unit system) and `secondToCanonical(mode,
+    value)` (display-units → canonical-IP conversion). No DOM
+    access; pages keep their own id-prefix-aware wiring.
 - **Worker:** `src/worker.js` — ES-module Worker. Handles
   `POST /api/contact` (validate, drop honeypot silently, verify
   Turnstile, send via Resend with `reply_to` = submitter); falls
