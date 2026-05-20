@@ -416,11 +416,15 @@ nav: tools
 {% block scripts %}
 <script src="/scripts/psychro-engine.js"></script>
 <script src="/scripts/units.js"></script>
+<script src="/scripts/psy-widget.js"></script>
 <script>
     // ──────────────────────────────────────────────────────────────────
     // Psychrometric chart — page logic. The moist-air math itself lives in
     // /scripts/psychro-engine.js (ASHRAE primitives at top level; the
-    // higher-level solver under window.Psychro). This page reads inputs,
+    // higher-level solver under window.Psychro). The Define-by catalog
+    // shape (label + step per mode) comes from /scripts/psy-widget.js;
+    // this page enriches each entry with its own `def` and `fmt` fields
+    // for the chart-specific UI. This page reads inputs,
     // orchestrates the chain (solveChain below), drives the canvas chart,
     // and formats readouts through window.Units. Internal state stays in
     // canonical IP (°F, lb/lb, Btu/lb, psia) throughout — conversion to
@@ -447,19 +451,21 @@ nav: tools
         const dispCfm = cfm      => Math.round(U.display.airflow(cfm)).toLocaleString();
         const dispQ   = btuPerH  => U.display.heatCapacity(btuPerH / 1000).toFixed(1);  // input is BTU/h, MBH = /1000
 
-        // What the "second value" input means / shows for each mode. Labels, the
-        // pre-filled default, and the formatter all key off the active units —
-        // SECOND_PROP is rebuilt on every unit flip.
+        // What the "second value" input means / shows for each mode. The
+        // label + step base comes from PsyWidget; this page enriches each
+        // entry with `def` (per-mode default in display units) and `fmt`
+        // (state → display formatter) — both chart-specific. Rebuilt on
+        // every unit flip so labels, steps, and defaults follow the toggle.
         let SECOND_PROP;
         function buildSecondProp() {
             const u = U.current();
-            const tU = U.suffix.temp(), wU = U.suffix.humidityRatio(), hU = U.suffix.enthalpy();
+            const base = PsyWidget.buildSecondProp();
             SECOND_PROP = {
-                rh: { label: 'Relative humidity (%)',     def: 50,                                                 step: 1,                  fmt: s => s.rh.toFixed(1) },
-                wb: { label: `Wet-bulb (${tU})`,          def: u === 'us' ? 60 : +U.display.temp(60).toFixed(1),  step: u === 'us' ? 0.5 : 0.25, fmt: s => dispT(s.twb) },
-                dp: { label: `Dew point (${tU})`,         def: u === 'us' ? 50 : +U.display.temp(50).toFixed(1),  step: u === 'us' ? 0.5 : 0.25, fmt: s => isFinite(s.tdp) ? dispT(s.tdp) : '' },
-                w:  { label: `Humidity ratio (${wU})`,    def: u === 'us' ? 65 : +U.display.humidityRatio(65).toFixed(1), step: u === 'us' ? 1 : 0.1, fmt: s => dispW(s.W) },
-                h:  { label: `Enthalpy (${hU} dry air)`,  def: u === 'us' ? 28 : +U.display.enthalpy(28).toFixed(1),      step: 0.5,             fmt: s => dispH(s.h) },
+                rh: { ...base.rh, def: 50,                                                             fmt: s => s.rh.toFixed(1) },
+                wb: { ...base.wb, def: u === 'us' ? 60 : +U.display.temp(60).toFixed(1),               fmt: s => dispT(s.twb) },
+                dp: { ...base.dp, def: u === 'us' ? 50 : +U.display.temp(50).toFixed(1),               fmt: s => isFinite(s.tdp) ? dispT(s.tdp) : '' },
+                w:  { ...base.w,  def: u === 'us' ? 65 : +U.display.humidityRatio(65).toFixed(1),      fmt: s => dispW(s.W) },
+                h:  { ...base.h,  def: u === 'us' ? 28 : +U.display.enthalpy(28).toFixed(1),           fmt: s => dispH(s.h) },
             };
         }
         buildSecondProp();
@@ -546,22 +552,14 @@ nav: tools
             let error = null;
             const setErr = (msg) => { if (!error) error = msg; };
 
-            // Convert the "second value" from display to canonical IP based on mode.
-            const secondToCanonical = (mode, val) => {
-                if (!isFinite(val)) return val;
-                if (mode === 'wb' || mode === 'dp') return U.toCanonical.temp(val);
-                if (mode === 'w')                   return U.toCanonical.humidityRatio(val);
-                if (mode === 'h')                   return U.toCanonical.enthalpy(val);
-                return val;  // 'rh' stays percent
-            };
-
-            // OA / RA — independent state points
+            // OA / RA — independent state points. The display→canonical
+            // conversion for the second value lives in PsyWidget.
             const readSt = pre => {
                 const mode = document.getElementById(`${pre}-mode`).value;
                 return {
                     mode,
                     tdb:    U.toCanonical.temp(parseFloat(document.getElementById(`${pre}-tdb`).value)),
-                    second: secondToCanonical(mode, parseFloat(document.getElementById(`${pre}-second`).value)),
+                    second: PsyWidget.secondToCanonical(mode, parseFloat(document.getElementById(`${pre}-second`).value)),
                 };
             };
             const eOa = readSt('oa');

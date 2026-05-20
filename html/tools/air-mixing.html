@@ -362,10 +362,12 @@ nav: tools
 <script src="/scripts/units.js"></script>
 <script src="/scripts/ui.js"></script>
 <script src="/scripts/psychro-engine.js"></script>
+<script src="/scripts/psy-widget.js"></script>
 <script>
     // switchTab(name, btn) and copyReadouts(btn, sep, ...ids) come from
     // /scripts/ui.js; Psychro.solveState / buildState + flat ASHRAE
-    // primitives come from /scripts/psychro-engine.js.
+    // primitives come from /scripts/psychro-engine.js; the Define-by
+    // catalog + display→canonical conversion come from /scripts/psy-widget.js.
     (function () {
         'use strict';
 
@@ -383,33 +385,9 @@ nav: tools
         const hU    = ()      => U.suffix.enthalpy();
         const vU    = ()      => U.suffix.specificVolume();
 
-        // ── Second-prop catalog — rebuilt on unitschange so labels and
-        // input steps follow the active unit system. Same shape as the
-        // chart / economizer tools.
-        let SECOND_PROP;
-        function buildSecondProp() {
-            const u = U.current();
-            SECOND_PROP = {
-                rh: { label: 'Relative humidity (%)',      step: 1 },
-                wb: { label: `Wet-bulb (${tU()})`,         step: u === 'us' ? 0.5 : 0.25 },
-                dp: { label: `Dew point (${tU()})`,        step: u === 'us' ? 0.5 : 0.25 },
-                w:  { label: `Humidity ratio (${wU()})`,   step: u === 'us' ? 1 : 0.1 },
-                h:  { label: `Enthalpy (${hU()} dry air)`, step: 0.5 },
-            };
-        }
-        buildSecondProp();
-
-        function secondToCanonical(mode, value) {
-            if (!isFinite(value)) return value;
-            switch (mode) {
-                case 'rh': return value;
-                case 'wb':
-                case 'dp': return U.toCanonical.temp(value);
-                case 'w':  return U.toCanonical.humidityRatio(value);  // gr/lb (engine divides by GR_PER_LB internally)
-                case 'h':  return U.toCanonical.enthalpy(value);
-                default:   return value;
-            }
-        }
+        // Define-by catalog — rebuilt on unitschange so labels and input
+        // steps follow the active unit system. See /scripts/psy-widget.js.
+        let SECOND_PROP = PsyWidget.buildSecondProp();
 
         function quantityForMode(mode) {
             switch (mode) {
@@ -467,7 +445,7 @@ nav: tools
             if (!isFinite(tdbD) || !isFinite(secD)) {
                 return { ok: false, error: 'Enter dry-bulb and second value.' };
             }
-            return Psychro.solveState(mode, U.toCanonical.temp(tdbD), secondToCanonical(mode, secD), P);
+            return Psychro.solveState(mode, U.toCanonical.temp(tdbD), PsyWidget.secondToCanonical(mode, secD), P);
         }
 
         // ── Tab calculation ───────────────────────────────────────────
@@ -604,7 +582,7 @@ nav: tools
                     if (q) rewriteInput(prefix + '-second', q, oldUnits, newUnits);
                 }
             }
-            buildSecondProp();
+            SECOND_PROP = PsyWidget.buildSecondProp();
             calcAll();
         });
 
