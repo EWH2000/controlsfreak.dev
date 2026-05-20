@@ -1861,7 +1861,7 @@ The guard's gate is *fail the build* rather than the warn-only
 option this entry leaned toward — chosen on review as the harder
 gate, since a warn line is easy to scroll past in a 20-page build.
 
-### 36. `education/psychrometrics-basics.html` has only smoke-loop test coverage
+### 36. `education/psychrometrics-basics.html` has only smoke-loop test coverage *(addressed 2026-05-20)*
 
 `tests/smoke.spec.js` `PAGES` includes psychrometrics-basics, so
 the page gets the standard 200 + title + nav + no-console-errors
@@ -1885,6 +1885,26 @@ after the audit."
 its range and asserts state transitions / margin readout updates.
 Match the shape of the `psychrometric-chart` test
 (`tests/smoke.spec.js:122–143`) — same domain. ~30 lines.
+
+**Resolution (2026-05-20):** added the `psychrometrics basics —
+pool widget sweeps surface temp through dry / watch / condensing
+states` test to `tests/smoke.spec.js`, appended after the
+`balancing` test so it sits with the other education-page
+behavioral tests. It asserts the on-load condensing state (defaults
+DB 82 / RH 60 / surface 50 — dew point 66.8 °F, margin −16.8 °F),
+then holds DB and RH fixed and sweeps only the coldest-surface
+slider through three positions that land the margin in each band:
+surface 80 °F → `ok` (margin 13.2), 70 °F → `watch` (3.2, inside
+the 5 °F band), 65 °F → `bad` (−1.8). `data-state` is checked on
+both `#pool-status` and `#pool-readouts`, plus the status label and
+the exact `#pool-margin-val` readout. A final pair drives the
+natatorium regime (DB ≥ 80, RH ≥ 65, surface ≤ 55, condensing) to
+confirm the anecdote callout appears, then leaves the regime to
+confirm it is *removed* — distinct from the `balancing` widget's
+pinned-once-shown anecdote. Verified the test catches a real
+regression by perturbing the watch threshold in the built page and
+confirming the `ok`-state assertion fails. Test-only change — no
+page edit, no version bump.
 
 ### 37. No `playwright.config.js`
 
