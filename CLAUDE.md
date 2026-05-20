@@ -280,12 +280,15 @@ HTML.
   inside the page IIFE so the `cf-turnstile` div's `data-callback` /
   `data-expired-callback` / `data-error-callback` can find them.
   They flip the submit button's `disabled` state only — no panel
-  status writes, which keeps `contact.spec.js` test 2 (empty-submit
-  validation) from racing against an `onTsError` fire on localhost.
-  The submit button starts enabled in HTML; on localhost the error
-  callback will eventually disable it, but the existing test
-  finishes before Turnstile's failure surfaces (same race-tolerance
-  the gotcha above relies on).
+  status writes. The submit button starts enabled in HTML; on a
+  sandboxed / CI localhost Turnstile can't reach its challenge
+  server, `onTsError` fires, and the button gets disabled.
+  `contact.spec.js`'s "empty submit" test therefore route-blocks
+  `challenges.cloudflare.com` before navigating — no widget loads,
+  no callback fires, the button stays enabled, and the click is
+  deterministic (codebase-issues #55). The `smoke.spec.js`
+  `contact loads cleanly` check still leans on the race-tolerance
+  above — it runs before Turnstile's failure surfaces.
 - **`aria-pressed` flicker on units toggle is accepted.** Nav buttons
   hard-code `aria-pressed="true"` for US at render time; the head
   units-bootstrap sets `[data-units]` before paint but can't reach

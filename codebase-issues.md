@@ -2786,6 +2786,53 @@ on the `cc` stage and hides on the others, and that the CFM
 column toggles with the CFM input, with no console errors. No
 version bump — pure consistency, nothing renders differently.
 
+### 55. `contact.spec.js` "empty submit" test flakes in CI on Turnstile *(addressed 2026-05-20)*
+
+#46's CI workflow went green on its first run (PR #50) but reported
+**1 flaky**: `contact.spec.js`'s "empty submit triggers built-in
+validation and makes no network call" test failed its first attempt
+with a 30 s timeout, then passed on retry #1.
+
+Cause: the test does `page.click('#contact-form
+button[type="submit"]')`. The contact form's Turnstile widget can't
+reach `challenges.cloudflare.com` from a sandboxed / CI localhost,
+so its `onTsError` callback fires and disables the submit button;
+Playwright then waits out the click timeout. The test was written
+assuming it would finish before `onTsError` surfaced (the CLAUDE.md
+"Turnstile callbacks" gotcha), but that race is lost reliably here
+and on the CI runner's first attempt.
+
+**Why it matters:** CI stays green only because #46's
+`retries: 2` lets the test through on a re-run — retry-roulette. An
+occasional run burns all three attempts, turns the `test` check
+red, and blocks a merge. The gate should not depend on luck. Caught
+during #46's first CI run.
+
+**Priority:** LOW (CI hygiene; the test logic itself is sound).
+
+**Recommended action:** block the Turnstile script in the test
+rather than `test.fixme` it — the test exercises browser-native
+required-field validation, which needs no Worker and no Turnstile,
+so it should keep running. Intercept `challenges.cloudflare.com`
+before navigating so the widget never loads, the callbacks never
+fire, and the submit button keeps its HTML-default enabled state.
+
+**Resolution (2026-05-20):** added
+`await page.route('https://challenges.cloudflare.com/**', route =>
+route.abort())` as the first line of the "empty submit" test, before
+`page.goto`. With Turnstile's `api.js` blocked, no widget renders,
+`onTsOk/onTsExpired/onTsError` never fire, and the submit button
+stays enabled — the click is deterministic. Nothing the test
+asserts changed: empty required fields still block submission and
+still produce no `/api/contact` fetch. Scope held to that one test
+— `contact page loads` is not flaky and the honeypot test is
+`test.fixme`. `test.fixme` was the alternative but was rejected: it
+would discard a runnable, meaningful test (unlike the honeypot
+test, which genuinely needs the Worker). CLAUDE.md's "Turnstile
+callbacks" gotcha updated to record the route-block; the
+`smoke.spec.js` race-tolerance note stays (that file is out of
+scope). No version bump — test-only.
+
 ---
 
 ## Recently addressed
