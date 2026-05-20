@@ -1,6 +1,6 @@
 {
   "name": "controlsfreak.dev",
-  "version": "1.9.1",
+  "version": "1.9.2",
   "private": true,
   "description": "Open calculators and reference tools for building-controls engineers — BACnet, Modbus, HVAC, and building automation work. No login, no ads, just tools that are actually useful on a job site.",
   "scripts": {

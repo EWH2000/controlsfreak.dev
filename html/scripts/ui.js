@@ -27,9 +27,20 @@
     // pane is expected to have id="tab-foo".
     function switchTab(name, btn) {
         const card = btn.closest('.tool-card');
+        if (!card) {
+            console.warn('switchTab: button is not inside a .tool-card — ignoring.');
+            return;
+        }
+        // Resolve the target pane up front: a bad name should be a clean
+        // no-op, not deactivate every pane and then throw.
+        const pane = document.getElementById('tab-' + name);
+        if (!pane) {
+            console.warn('switchTab: no pane with id "tab-' + name + '" — ignoring.');
+            return;
+        }
         card.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
         card.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        document.getElementById('tab-' + name).classList.add('active');
+        pane.classList.add('active');
         btn.classList.add('active');
     }
 
@@ -59,7 +70,14 @@
     // copies the IP. No-op if every requested id is empty / placeholder.
     function copyReadouts(btn, sep, ...ids) {
         const parts = ids
-            .map(id => document.getElementById(id).textContent)
+            .map(id => {
+                const el = document.getElementById(id);
+                if (!el) {
+                    console.warn('copyReadouts: no element with id "' + id + '" — skipping.');
+                    return null;
+                }
+                return el.textContent;
+            })
             .filter(v => v && v !== '—');
         if (!parts.length) return;
         copyText(btn, parts.join(sep));
