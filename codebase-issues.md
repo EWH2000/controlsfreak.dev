@@ -1803,7 +1803,7 @@ needed parallel `contact.spec.js` edits to avoid the
 toBeHidden-races-Turnstile failure, which #36's behavioral test
 expansion would land alongside.
 
-### 35. Frontmatter description-length drift — eight pages outside the 140–160 char target
+### 35. Frontmatter description-length drift — eight pages outside the 140–160 char target *(addressed 2026-05-20)*
 
 CLAUDE.md "Templating" specifies "140–160 chars" for the
 `description` frontmatter field. Counts measured from source:
@@ -1836,6 +1836,13 @@ in `.eleventy.js` (transform) that warns when a page renders with
 description outside 140–160. Fails the build = too sharp; logs a
 one-liner = right size. Same "convention with a check" shape as
 the PAGES ↔ sitemap drift test added in #20's bullet 7.
+
+**Resolution (2026-05-20):** addressed together with #51 — see the
+combined resolution under #51. All 11 outliers (the 8 here + the 3
+in #51) rewritten in one pass, and the build-time guard landed.
+The guard's gate is *fail the build* rather than the warn-only
+option this entry leaned toward — chosen on review as the harder
+gate, since a warn line is easy to scroll past in a 20-page build.
 
 ### 36. `education/psychrometrics-basics.html` has only smoke-loop test coverage
 
@@ -2450,7 +2457,7 @@ worth chasing. Each promoted pattern also gets a swept
 replacement of its inline-style consumers — same shape as #19's
 per-pattern commits.
 
-### 51. Description-length drift — three more outliers, missed by #35
+### 51. Description-length drift — three more outliers, missed by #35 *(addressed 2026-05-20)*
 
 Re-measurement on 2026-05-19 (after #35) finds three pages
 outside the 140–160 char target that #35's table didn't list:
@@ -2482,6 +2489,23 @@ all 11 outliers (8 from #35 + 3 here) and lands the optional
 build-time guard in the same commit. Naming this as a separate
 entry only because #35 was already shipped through plan-mode
 review before the re-measurement.
+
+**Resolution (2026-05-20):** all 11 outliers (8 from #35 + the 3
+here) rewritten in one pass into the 140–160 char band — verified
+against `String.length`, the same measure CLAUDE.md "Templating"
+documents and the guard below uses. The build-time guard landed in
+`.eleventy.js` as a named collection (`descriptionLengthGuard`):
+it walks `collectionApi.getAll()`, reads each page's resolved
+`data.description`, and throws — failing the build — if any falls
+outside 140–160, listing every offender with its char count. A
+named collection rather than a transform because the collection
+callback gets the resolved data cascade directly (`item.data
+.description`), so the check measures the source frontmatter, not
+the HTML-autoescaped rendered string. CLAUDE.md "Templating" now
+records that the `description` length is build-enforced. Guard
+verified both directions: passes with all 20 pages in range, fails
+with a clear message when a description is forced out of range.
+The hard-gate vs. warn-only choice went to *fail the build*.
 
 ### 52. Redundant inline `color:var(--accent)` on an anchor inside `.tool-body`
 

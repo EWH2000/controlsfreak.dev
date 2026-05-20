@@ -150,10 +150,12 @@ Frontmatter fields:
 - `title` — used verbatim for `<title>` and `og:title`. Quote only
   if it starts with a YAML-special character.
 - `description` — used verbatim for `<meta name="description">` and
-  `og:description`. 140–160 chars, human-written, never reused.
-  Renders HTML-autoescaped: `'` becomes `&#39;`, `<` becomes `&lt;`
-  in view-source. Rephrase to avoid those characters if clean
-  view-source matters.
+  `og:description`. 140–160 chars, human-written, never reused —
+  enforced by a build-time guard in `.eleventy.js` (the
+  `descriptionLengthGuard` collection) that fails the build on any
+  out-of-range description. Renders HTML-autoescaped: `'` becomes
+  `&#39;`, `<` becomes `&lt;` in view-source. Rephrase to avoid those
+  characters if clean view-source matters.
 - `canonical` — full URL with `.html` extension. Used for `og:url`.
 - `nav` — one of `home`, `tools`, `education`, `contact`. Drives the
   `.active` marker on the top nav. Omit (or empty string) on pages
