@@ -2507,7 +2507,7 @@ verified both directions: passes with all 20 pages in range, fails
 with a clear message when a description is forced out of range.
 The hard-gate vs. warn-only choice went to *fail the build*.
 
-### 52. Redundant inline `color:var(--accent)` on an anchor inside `.tool-body`
+### 52. Redundant inline `color:var(--accent)` on an anchor inside `.tool-body` *(addressed 2026-05-20)*
 
 `html/index.html:58`:
 
@@ -2539,6 +2539,15 @@ eliminate.
 
 **Recommended action:** strip the `style="color:var(--accent);"`
 from `index.html:58`. One-line touch.
+
+**Resolution (2026-05-20):** the inline `style="color:var(--accent);"`
+removed from the `<a href="/contact.html">` on `index.html:58`. The
+anchor sits inside the About card's `.tool-body`, so the
+`.tool-body a { color: var(--accent); }` cascade rule (styles.css:306,
+from #19) already renders it identically. `education/index.html:18`
+left untouched as the entry directs — its anchor is a top-level
+`<main>` paragraph, outside any `.tool-body`, so the cascade does
+not reach it and the inline color there is not redundant.
 
 ### 53. Inline `style="display:none"` for JS-toggled visibility
 
