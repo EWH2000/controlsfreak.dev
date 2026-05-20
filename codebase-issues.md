@@ -2063,7 +2063,7 @@ safe under the `step === 0` case too (`SP - last_pv` and
 `0.02 * |step|` both produce finite results when step is zero),
 so the audit-the-neighbors expansion was not needed.
 
-### 40. `ui.js` helpers don't guard null DOM lookups
+### 40. `ui.js` helpers don't guard null DOM lookups *(addressed 2026-05-20)*
 
 `html/scripts/ui.js`:
 
@@ -2095,6 +2095,23 @@ null-deref is a *dev-time* bug and should be loud.
 defensive-return in `switchTab` if `card` or the target pane is
 null. A `console.warn` on null pane id would surface wiring typos
 during dev without changing user behavior.
+
+**Resolution (2026-05-20):** both helpers in `html/scripts/ui.js`
+hardened. `switchTab` now resolves `btn.closest('.tool-card')` and
+the `tab-<name>` pane *up front* — before any `.active` mutation —
+and `console.warn`s + returns if either is null; resolving the pane
+first means a bad `name` is a clean no-op instead of deactivating
+every pane and then throwing. `copyReadouts` resolves each id to an
+element before reading `.textContent`, `console.warn`s + yields
+`null` for any missing id, and lets the existing
+`.filter(v => v && v !== '—')` drop it. `console.warn` (not
+`console.error`) is used in both so the #20 `watchErrors`
+smoke-test assertion isn't tripped. The recommended-action text
+named `console.warn` for `switchTab` only; it was applied to
+`copyReadouts` too since a missing readout id is the same class of
+dev-time wiring typo. No call site changed behavior — the existing
+smoke specs (tab switching, copy buttons) pass unchanged. Patch
+bump 1.9.1 → 1.9.2.
 
 ### 41. Worker email regex accepts edge cases
 
