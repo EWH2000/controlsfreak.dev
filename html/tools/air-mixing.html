@@ -66,7 +66,7 @@ nav: tools
             </h1>
         </div>
 
-        <p style="font-family:var(--mono);font-size:0.7rem;color:var(--text-dim);padding:1.1rem 1.5rem 0;line-height:1.7;">
+        <p class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
             Mix three air streams — pick the weight shape your data is in. By mass flow when you
             have CFMs at the panel (outdoor + return + ERV exhaust, economizer + return + makeup).
             By mass fraction when you have percentages off a schematic. The math is the same
@@ -196,13 +196,13 @@ nav: tools
 
             <section class="tool-body-row">
                 <h2 class="ps-section-label">Worked example</h2>
-                <p class="ref-note" style="margin-top:0;">
+                <p class="ref-note worked-intro">
                     Summer AHU with energy recovery — three streams meeting in the mixing plenum.
                     Outdoor at <span data-us="1000 CFM / 95 °F / 75 °F WB" data-metric="1700 m³/h / 35 °C / 23.9 °C WB">1000 CFM / 95 °F / 75 °F WB</span>,
                     return at <span data-us="3000 CFM / 75 °F / 50 % RH" data-metric="5100 m³/h / 23.9 °C / 50 % RH">3000 CFM / 75 °F / 50 % RH</span>,
                     ERV exhaust bleed at <span data-us="500 CFM / 60 °F / 55 °F WB" data-metric="850 m³/h / 15.6 °C / 12.8 °C WB">500 CFM / 60 °F / 55 °F WB</span>.
                 </p>
-                <ol class="ref-note" style="padding-left:1.2em;">
+                <ol class="ref-note worked-list">
                     <li>For each stream, solve the state (the engine returns specific volume
                         <code>v</code> alongside <code>W</code> and <code>h</code>).</li>
                     <li>Convert volumetric flow to mass: <code>m<sub>i</sub> = CFM<sub>i</sub> ÷ v<sub>i</sub></code>.
@@ -334,11 +334,11 @@ nav: tools
 
             <section class="tool-body-row">
                 <h2 class="ps-section-label">Worked example</h2>
-                <p class="ref-note" style="margin-top:0;">
+                <p class="ref-note worked-intro">
                     Same three streams expressed as mass fractions —
                     <span data-us="22 % / 67 % / 11 %" data-metric="22 % / 67 % / 11 %">22 % / 67 % / 11 %</span>.
                 </p>
-                <ol class="ref-note" style="padding-left:1.2em;">
+                <ol class="ref-note worked-list">
                     <li>Skip the volumetric-to-mass step — fractions are already in mass units.</li>
                     <li>Mass-weight humidity ratio and enthalpy directly:
                         <code>W<sub>mix</sub> = 0.22·W<sub>1</sub> + 0.67·W<sub>2</sub> + 0.11·W<sub>3</sub></code>,

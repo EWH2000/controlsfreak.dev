@@ -305,6 +305,19 @@ main {
 .tool-body p { font-size: 0.95rem; line-height: 1.8; color: var(--text); }
 .tool-body a { color: var(--accent); }
 
+/* Mono small-caps preamble caption that sits under a .tool-card-header.
+   Element-qualified to tie .tool-body p's (0,0,1,1) specificity and win
+   on cascade order, matching p.bit-hint / p.pid-note / p.ref-note.
+   Padding/margin stays per-site inline — value varies by whether the
+   preamble sits outside .tool-body (between header and the next block)
+   or inside .tool-body (where .tool-body's own padding applies). */
+p.tool-preamble {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    line-height: 1.7;
+}
+
 /* Lead paragraph on Education pages — the opening prose paragraph that
    sets up the lesson. Wider line-height and a constrained max-width
    keep the intro readable at narrative-length. Placed before .callout p
@@ -1022,6 +1035,19 @@ p.ref-note {
     margin-top: 0.85rem;
     padding-top: 0.85rem;
     border-top: 1px solid var(--border-faint);
+}
+/* worked-example pair — .worked-intro paragraph + .worked-list <ol>
+   sit together inside a "Worked example" .tool-body-row section. The
+   intro paragraph kills the base ref-note's top spacing (the section
+   label above already provides it); the list adds its own indent. */
+p.ref-note.worked-intro { margin-top: 0; }
+ol.ref-note.worked-list { padding-left: 1.2em; }
+/* compact ref-note variant for mini-sim captions sitting tight under
+   a canvas readout — drops the base rule's border + heavy top spacing. */
+p.ref-note.compact {
+    margin-top: 0.5rem;
+    padding-top: 0;
+    border-top: none;
 }
 
 /* mobile / responsive — collapse the three columns to a single stack
