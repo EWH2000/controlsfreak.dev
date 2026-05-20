@@ -450,10 +450,17 @@ Light-only (`color-scheme: light`); no dark variant.
   same triplet. `.result-formula` has two modifiers: `.flush` (sits
   flat under a tabbed Output panel) and `.wrap` (long readable
   expressions, break on word boundaries). Page-local utility classes
-  (`p.bit-hint`, `p.pid-note`, `p.ref-note`) are element-qualified —
-  the `p` is load-bearing so they tie `.tool-body p` on specificity
-  and win on cascade. Keep that shape when adding new small-text
-  utility paragraphs.
+  (`p.bit-hint`, `p.pid-note`, `p.ref-note`, `p.tool-preamble`) are
+  element-qualified — the `p` is load-bearing so they tie
+  `.tool-body p` on specificity and win on cascade. Keep that shape
+  when adding new small-text utility paragraphs. `p.tool-preamble`
+  is the mono small-caps caption that sits under a
+  `.tool-card-header` (typography only — padding/margin varies by
+  whether it sits inside `.tool-body` or in the gap above it).
+  `.ref-note` carries two modifiers: `.worked-intro` /
+  `ol.ref-note.worked-list` for the worked-example paragraph+list
+  pair inside a `.tool-body-row`, and `.compact` for mini-sim
+  captions that sit tight under a canvas readout (no top border).
 
 For the full component vocabulary, read `styles.css` — it's terse and
 well-grouped.
