@@ -293,7 +293,7 @@ nav: tools
                 case 'rh': return value;
                 case 'wb':
                 case 'dp': return U.toCanonical.temp(value);
-                case 'w':  return U.toCanonical.humidityRatio(value) / 7000;  // gr/lb → lb/lb
+                case 'w':  return U.toCanonical.humidityRatio(value);  // gr/lb (engine divides by GR_PER_LB internally)
                 case 'h':  return U.toCanonical.enthalpy(value);
                 default:   return value;
             }
