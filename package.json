@@ -6,7 +6,7 @@
   "scripts": {
     "build": "eleventy",
     "dev": "eleventy --serve --port=8000",
-    "test": "playwright test --reporter=list"
+    "test": "playwright test"
   },
   "repository": {
     "type": "git",

@@ -1906,7 +1906,7 @@ regression by perturbing the watch threshold in the built page and
 confirming the `ok`-state assertion fails. Test-only change — no
 page edit, no version bump.
 
-### 37. No `playwright.config.js`
+### 37. No `playwright.config.js` *(addressed 2026-05-20)*
 
 The test suite has no Playwright config file. `tests/smoke.spec.js`
 hardcodes `http://localhost:8000` in every `.goto()` (18+ sites),
@@ -1944,6 +1944,28 @@ Then strip the `http://localhost:8000` prefix from each
 gets updated to drop the manual server-start step (the
 `reuseExistingServer: true` flag preserves the `npm run dev`
 workflow for iterating on a single page).
+
+**Resolution (2026-05-20):** added `playwright.config.js` at the
+repo root — `defineConfig` with `use.baseURL`, a `webServer` block,
+`reporter: 'list'`, and `testDir: './tests'`. The 37 hardcoded
+`http://localhost:8000` strings (18 in `smoke.spec.js`'s `PAGES`
+array, 18 standalone `page.goto()` calls, 1 `CONTACT_URL` constant
+in `contact.spec.js`) are now leading-slash paths resolved against
+`baseURL`. Two deliberate deviations from the sketch above:
+`reuseExistingServer: !process.env.CI` rather than a flat `true`
+(Playwright's recommended form — reuses a running `npm run dev`
+locally, always starts clean in CI, which keeps #46 from inheriting
+a stale server); and `reporter: 'list'` moved into the config so
+`package.json`'s `test` script drops its `--reporter=list` flag.
+The `webServer.command` runs `npm run build` then serves `_site/`,
+so `npm test` is self-sufficient from a fresh checkout. The
+PAGES↔sitemap sync test needed no change — its host-stripping
+regex is a harmless no-op on the now-relative PAGES urls and still
+load-bearing for the sitemap's absolute `<loc>` entries.
+`tests/psychro-engine.spec.js` (pure-Node, no URLs) was untouched.
+CLAUDE.md "Local preview & tests" updated to drop the manual
+server-start instruction. No version bump — test-infrastructure
+only. The CI workflow that consumes this config is #46.
 
 ### 38. `.tool-card:nth-child(1/2)` fade-in animation is a near-no-op on most pages *(addressed 2026-05-19)*
 

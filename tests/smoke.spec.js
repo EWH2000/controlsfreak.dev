@@ -18,26 +18,26 @@ function watchErrors(page) {
 // the .html files directly — a directory like /tools/ still resolves to its
 // index.html, so that one stays clean.
 const PAGES = [
-    { name: 'home',                   url: 'http://localhost:8000/' },
-    { name: 'tools landing',          url: 'http://localhost:8000/tools/' },
-    { name: 'signal scaling',         url: 'http://localhost:8000/tools/signal-scaling.html' },
-    { name: 'modbus register viewer', url: 'http://localhost:8000/tools/modbus-register-viewer.html' },
-    { name: 'pid tuner',              url: 'http://localhost:8000/tools/pid-tuner.html' },
-    { name: 'bacnet/ip converter',    url: 'http://localhost:8000/tools/bacnet-ip-converter.html' },
-    { name: 'psychrometric chart',    url: 'http://localhost:8000/tools/psychrometric-chart.html' },
-    { name: 'economizer ratio',       url: 'http://localhost:8000/tools/economizer-ratio.html' },
-    { name: 'air mixing',             url: 'http://localhost:8000/tools/air-mixing.html' },
-    { name: 'thermistor calculator',  url: 'http://localhost:8000/tools/thermistor-calculator.html' },
-    { name: 'vfd mock',               url: 'http://localhost:8000/tools/vfd-mock.html' },
-    { name: 'education hub',          url: 'http://localhost:8000/education/' },
-    { name: 'education — pid basics',  url: 'http://localhost:8000/education/pid-basics.html' },
-    { name: 'education — hydronic loops', url: 'http://localhost:8000/education/hydronic-loops.html' },
-    { name: 'education — load piping', url: 'http://localhost:8000/education/load-piping.html' },
-    { name: 'education — vfds',       url: 'http://localhost:8000/education/vfds.html' },
-    { name: 'education — pump control', url: 'http://localhost:8000/education/pump-control.html' },
-    { name: 'education — balancing',   url: 'http://localhost:8000/education/balancing.html' },
-    { name: 'education — psychrometrics basics', url: 'http://localhost:8000/education/psychrometrics-basics.html' },
-    { name: 'contact',                url: 'http://localhost:8000/contact.html' },
+    { name: 'home',                   url: '/' },
+    { name: 'tools landing',          url: '/tools/' },
+    { name: 'signal scaling',         url: '/tools/signal-scaling.html' },
+    { name: 'modbus register viewer', url: '/tools/modbus-register-viewer.html' },
+    { name: 'pid tuner',              url: '/tools/pid-tuner.html' },
+    { name: 'bacnet/ip converter',    url: '/tools/bacnet-ip-converter.html' },
+    { name: 'psychrometric chart',    url: '/tools/psychrometric-chart.html' },
+    { name: 'economizer ratio',       url: '/tools/economizer-ratio.html' },
+    { name: 'air mixing',             url: '/tools/air-mixing.html' },
+    { name: 'thermistor calculator',  url: '/tools/thermistor-calculator.html' },
+    { name: 'vfd mock',               url: '/tools/vfd-mock.html' },
+    { name: 'education hub',          url: '/education/' },
+    { name: 'education — pid basics',  url: '/education/pid-basics.html' },
+    { name: 'education — hydronic loops', url: '/education/hydronic-loops.html' },
+    { name: 'education — load piping', url: '/education/load-piping.html' },
+    { name: 'education — vfds',       url: '/education/vfds.html' },
+    { name: 'education — pump control', url: '/education/pump-control.html' },
+    { name: 'education — balancing',   url: '/education/balancing.html' },
+    { name: 'education — psychrometrics basics', url: '/education/psychrometrics-basics.html' },
+    { name: 'contact',                url: '/contact.html' },
 ];
 
 test('PAGES array stays in sync with html/sitemap.xml', () => {
@@ -65,7 +65,7 @@ for (const { name, url } of PAGES) {
 
 test('pid tuner runs the shared simulation engine on load', async ({ page }) => {
     const errors = watchErrors(page);
-    await page.goto('http://localhost:8000/tools/pid-tuner.html');
+    await page.goto('/tools/pid-tuner.html');
     // pid-engine.js drives the canvas + metrics on init; the readouts should fill in.
     await expect(page.locator('#pid-over')).not.toHaveText('—');
     await expect(page.locator('#pid-settle')).not.toHaveText('—');
@@ -75,7 +75,7 @@ test('pid tuner runs the shared simulation engine on load', async ({ page }) => 
 
 test('bacnet/ip converter converts a hex string', async ({ page }) => {
     const errors = watchErrors(page);
-    await page.goto('http://localhost:8000/tools/bacnet-ip-converter.html');
+    await page.goto('/tools/bacnet-ip-converter.html');
     await page.fill('#b2i-hex', 'C0A80164BAC0');
     await expect(page.locator('#b2i-ip')).toHaveText('192.168.1.100');
     await expect(page.locator('#b2i-port')).toHaveText('47808');
@@ -84,7 +84,7 @@ test('bacnet/ip converter converts a hex string', async ({ page }) => {
 
 test('modbus register viewer — single + pair tabs decode bits and bytes correctly', async ({ page }) => {
     const errors = watchErrors(page);
-    await page.goto('http://localhost:8000/tools/modbus-register-viewer.html');
+    await page.goto('/tools/modbus-register-viewer.html');
 
     // Single Register tab — set value via hex; readouts mirror it.
     await page.fill('#mod-hex', '0xABCD');
@@ -121,7 +121,7 @@ test('modbus register viewer — single + pair tabs decode bits and bytes correc
 
 test('psychrometric chart computes the AHU chain on load', async ({ page }) => {
     const errors = watchErrors(page);
-    await page.goto('http://localhost:8000/tools/psychrometric-chart.html');
+    await page.goto('/tools/psychrometric-chart.html');
     // default summer cooling: OA 92 °F DB / 76 °F WB is the focused stage,
     // so the right-hand detail block shows OA's state.
     await expect(page.locator('#ro-db')).toHaveText('92.0');
@@ -146,13 +146,13 @@ test.describe('psychrometric chart — Cold range preset', () => {
     // The preset persists in localStorage; clean up so other tests
     // (including the on-load chart test above) see the default Standard.
     test.afterEach(async ({ page }) => {
-        await page.goto('http://localhost:8000/tools/psychrometric-chart.html');
+        await page.goto('/tools/psychrometric-chart.html');
         await page.evaluate(() => localStorage.removeItem('cf_psy_range'));
     });
 
     test('toggle switches active button + persists to localStorage', async ({ page }) => {
         const errors = watchErrors(page);
-        await page.goto('http://localhost:8000/tools/psychrometric-chart.html');
+        await page.goto('/tools/psychrometric-chart.html');
 
         // Fresh visit defaults to Standard (no localStorage entry yet).
         await expect(page.locator('[data-range="standard"]')).toHaveClass(/active/);
@@ -178,7 +178,7 @@ test.describe('psychrometric chart — Cold range preset', () => {
 
 test('air mixing — three-stream blend computes on both tabs', async ({ page }) => {
     const errors = watchErrors(page);
-    await page.goto('http://localhost:8000/tools/air-mixing.html');
+    await page.goto('/tools/air-mixing.html');
 
     // By-mass-flow tab: defaults are a 1000/3000/500 CFM blend of
     // 95/75WB, 75/50%RH, and 60/55WB. Mass-weighted (dominated by the
@@ -221,7 +221,7 @@ test('air mixing — three-stream blend computes on both tabs', async ({ page })
 
 test('economizer ratio — dry-bulb and enthalpy tabs compute their cases', async ({ page }) => {
     const errors = watchErrors(page);
-    await page.goto('http://localhost:8000/tools/economizer-ratio.html');
+    await page.goto('/tools/economizer-ratio.html');
 
     // Dry-bulb tab loads with the worked-example defaults: 60 / 75 / 55 °F.
     // (55 − 75) / (60 − 75) × 100 = 133.3 % — flagged as out-of-range.
@@ -279,13 +279,13 @@ test.describe('thermistor behavioral', () => {
     // into every subsequent page test. Clear the key directly so the
     // cleanup runs regardless of test outcome.
     test.afterEach(async ({ page }) => {
-        await page.goto('http://localhost:8000/tools/thermistor-calculator.html');
+        await page.goto('/tools/thermistor-calculator.html');
         await page.evaluate(() => localStorage.removeItem('cf_units'));
     });
 
     test('thermistor calculator looks up a known reference value', async ({ page }) => {
         const errors = watchErrors(page);
-        await page.goto('http://localhost:8000/tools/thermistor-calculator.html');
+        await page.goto('/tools/thermistor-calculator.html');
 
         // the inputs + the reference table render on load
         await expect(page.locator('#th-type')).toBeVisible();
@@ -318,7 +318,7 @@ test.describe('thermistor behavioral', () => {
 test('education page runs the PID mini-sims and they respond to input', async ({ page }) => {
     const errors = watchErrors(page);
 
-    await page.goto('http://localhost:8000/education/pid-basics.html');
+    await page.goto('/education/pid-basics.html');
 
     // all three mini-sim canvases are present and visible
     for (const id of ['#m1-canvas', '#m2-canvas', '#m3-canvas']) {
@@ -347,7 +347,7 @@ test('education page runs the PID mini-sims and they respond to input', async ({
 
 test('education hub links to its pages', async ({ page }) => {
     const errors = watchErrors(page);
-    await page.goto('http://localhost:8000/education/');
+    await page.goto('/education/');
     const hrefs = await page.locator('.nav-card').evaluateAll((els) => els.map((e) => e.getAttribute('href')));
     expect(hrefs).toContain('/education/pid-basics.html');
     expect(hrefs).toContain('/education/hydronic-loops.html');
@@ -360,7 +360,7 @@ test('education hub links to its pages', async ({ page }) => {
 
 test('hydronic loops page renders its three SVG schematics', async ({ page }) => {
     const errors = watchErrors(page);
-    await page.goto('http://localhost:8000/education/hydronic-loops.html');
+    await page.goto('/education/hydronic-loops.html');
     const svgs = page.locator('main svg.edu-svg');
     await expect(svgs).toHaveCount(3);
     // each diagram carries a <title> (the accessibility name) and real <text> labels
@@ -378,7 +378,7 @@ test('hydronic loops page renders its three SVG schematics', async ({ page }) =>
 
 test('load piping page renders its four SVG schematics and ties back to the twin-T', async ({ page }) => {
     const errors = watchErrors(page);
-    await page.goto('http://localhost:8000/education/load-piping.html');
+    await page.goto('/education/load-piping.html');
     const svgs = page.locator('main svg.edu-svg');
     await expect(svgs).toHaveCount(4);
     for (let i = 0; i < 4; i++) {
@@ -400,7 +400,7 @@ test('load piping page renders its four SVG schematics and ties back to the twin
 
 test('vfd mock — run-source gating works from the keypad', async ({ page }) => {
     const errors = watchErrors(page);
-    await page.goto('http://localhost:8000/tools/vfd-mock.html');
+    await page.goto('/tools/vfd-mock.html');
 
     // Default config is run-source=TERMINALS. Pressing keypad RUN should
     // NOT start the drive; the LCD's line 4 should flash the ignore msg.
@@ -429,7 +429,7 @@ test('vfd mock — run-source gating works from the keypad', async ({ page }) =>
 
 test('pump control page renders its diagram and both widgets respond', async ({ page }) => {
     const errors = watchErrors(page);
-    await page.goto('http://localhost:8000/education/pump-control.html');
+    await page.goto('/education/pump-control.html');
 
     // pipe-flow diagram for DP control is present (the third edu-svg-styled
     // page; the chart inside Widget 1 is .pc-w1-chart, not .edu-svg)
@@ -477,7 +477,7 @@ test('pump control page renders its diagram and both widgets respond', async ({ 
 
 test('vfds page renders its diagrams and the run/speed widget is wired up', async ({ page }) => {
     const errors = watchErrors(page);
-    await page.goto('http://localhost:8000/education/vfds.html');
+    await page.goto('/education/vfds.html');
 
     // block diagram + bypass diagram are present
     const svgs = page.locator('main svg.vfd-svg');
@@ -506,7 +506,7 @@ test('vfds page renders its diagrams and the run/speed widget is wired up', asyn
 
 test('balancing page renders riser, widget compares three branches, anecdote reveals at low Δp', async ({ page }) => {
     const errors = watchErrors(page);
-    await page.goto('http://localhost:8000/education/balancing.html');
+    await page.goto('/education/balancing.html');
 
     // Riser is the main pipe-flow diagram (.edu-svg + flow-engine animated).
     // Per-valve symbol diagrams below are .bal-valve-fig wrappers, not edu-svg.
@@ -579,7 +579,7 @@ test('balancing page renders riser, widget compares three branches, anecdote rev
 
 test('psychrometrics basics — pool widget sweeps surface temp through dry / watch / condensing states', async ({ page }) => {
     const errors = watchErrors(page);
-    await page.goto('http://localhost:8000/education/psychrometrics-basics.html');
+    await page.goto('/education/psychrometrics-basics.html');
 
     // Set a slider to a value and fire the `input` event the widget listens on
     // (syncFromSlider) — same idiom as the balancing test above.
