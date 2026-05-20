@@ -675,7 +675,13 @@ input[type="range"]::-moz-range-thumb {
     box-shadow: 0 0 0 1px var(--accent);
 }
 
-.btn-row { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+/* default top spacing matches the dominant calc/converter shape:
+   data row above, button row below. The .ps-row exception keeps
+   toggle groups (Look up by, Chart range) vertically centered with
+   their label sibling — .ps-row's grid + align-items: center would
+   otherwise offset the buttons by ~0.5rem. */
+.btn-row { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 1rem; }
+.ps-row > .btn-row { margin-top: 0; }
 
 .sim-canvas-wrap {
     position: relative;            /* anchor for absolute-positioned overlays (e.g. psychrometric chart's state-point chip) */
