@@ -1250,6 +1250,13 @@ p.ref-note.compact {
 .widget-fan.spinning ellipse {
     fill: var(--blue);
 }
+
+/* Utility: hide an element that JS toggles into view. display:none
+   drops it from layout and the accessibility tree. Placed after the
+   component rules so it wins the specificity tie against a
+   single-class display rule (e.g. .result-panel's display:flex). */
+.hidden { display: none; }
+
 @media (prefers-reduced-motion: reduce) {
     .widget-fan-blades { transform: none !important; }
     *, *::before, *::after {

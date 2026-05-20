@@ -50,7 +50,7 @@ nav: tools
                         <label class="ps-label" id="sig-input-label" for="sig-val">Signal Value (mA)</label>
                         <input class="ps-input" type="number" id="sig-val" step="0.01" placeholder="12.00">
                     </div>
-                    <div id="custom-row" style="display:none">
+                    <div id="custom-row" class="hidden">
                         <div class="ps-row">
                             <label class="ps-label" for="custom-min">Range min</label>
                             <input class="ps-input" type="number" id="custom-min" step="any" placeholder="4">
@@ -259,7 +259,7 @@ nav: tools
         function calcScaling() {
             const key      = document.getElementById('sig-type').value;
             const isCustom = key === 'custom';
-            document.getElementById('custom-row').style.display = isCustom ? 'grid' : 'none';
+            document.getElementById('custom-row').classList.toggle('hidden', !isCustom);
 
             let sMin, sMax, sUnit;
             if (isCustom) {
