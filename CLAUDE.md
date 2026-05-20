@@ -692,25 +692,6 @@ by default.
     widget page, and a sitemap entry. Don't inherit the smoke-
     loop default by accident.
 
-  Drift the audit cycles caught only after the fact — each one
-  was a "convention exists, the trigger that should have applied
-  it didn't fire":
-
-  - `package.json.version` synced to footer at v1.3 (#27) but the
-    footer kept bumping without it for six versions (#31).
-  - `.tool-card:nth-child` rule (#38) written when pages had no
-    leading `.section-header`; later pages added one and the rule
-    silently stopped matching the cards it was meant to animate.
-  - Description-length target documented but eight pages drifted
-    outside the range (#35).
-  - Pages added after the original 11ty migration didn't inherit
-    the established behavioral-test convention for widget pages
-    (#36 caught psychrometrics-basics).
-  - `:focus-visible` rule didn't exist when most styled buttons
-    were written; no sweep retroactively added it (#30).
-  - "17 pages" wording across docs (#47) survived past the third
-    new tool landing.
-
   When a sweep would be large, log it under `codebase-issues.md`
   rather than skip — same posture as the rest of the file.
 
@@ -766,28 +747,6 @@ Tests:
 - Comfortable in a terminal, getting comfortable with Git.
 - Wants to understand what's happening, not just have it work — when
   introducing a new concept or command, briefly explain it.
-
-## What to avoid
-
-- Don't write raw HTML pages without frontmatter + `{% extends %}` —
-  templated form is the convention. The build won't error on a
-  missing layout (the file would just render as-is), but it'd ship
-  a page that doesn't match the rest of the site.
-- Don't move page-local CSS or scripts into the shared partials
-  (`head.njk`, `nav.njk`, `footer.njk`). Page-only rules belong in
-  the page's `{% block head %}` or inline `<script>`.
-- Don't restructure `html.11tydata.js` or `.eleventy.js` casually —
-  the permalink override and the passthrough mappings are
-  load-bearing.
-- Don't suggest adding a client-side framework, a bundler, or a JS
-  transpiler. The 11ty build templates the HTML chrome; nothing
-  touches the JS or CSS shipped to the browser.
-- Don't modify `wrangler.jsonc` casually — see Stack notes.
-- Don't add tracking, analytics, or third-party scripts.
-- Don't restyle existing tools to introduce a new look — extend the
-  design system in `styles.css` instead.
-- Don't inline CSS that belongs in `styles.css`, and don't move
-  page-only rules into it.
 
 ## Roadmap
 
