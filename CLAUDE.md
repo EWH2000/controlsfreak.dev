@@ -418,6 +418,17 @@ Light-only (`color-scheme: light`); no dark variant.
   first. If a property is ever removed from `:root` without removing
   its consumers, `var(--x)` returns empty and the consumer no-ops
   the color — louder failure mode than a stale fallback hex.
+- **Focus indicators (`:focus-visible`).** Every custom-styled
+  interactive element with a `:hover` rule needs a paired
+  `:focus-visible` — the browser default outline is suppressed by
+  the `outline: none` on `.skip-link` / form inputs / the range
+  track, so a styled button or link inherits no focus cue without
+  one. All such rules live in the single consolidated
+  `FOCUS INDICATORS` block in `styles.css` (`outline: 2px solid
+  var(--accent)` for buttons/links/cards; an extra `--accent-glow`
+  ring on the range-slider thumb). When adding a new custom
+  interactive, add its selector to that block — don't scatter a
+  one-off rule next to the `:hover`.
 - **Column-grid layouts** (`.tool-body-2col` / `.tool-body-3col` /
   `.tool-body-row`) — all live in `styles.css` as one family.
   `.tool-body-2col` is two equal columns; `.tool-body-3col` is three;

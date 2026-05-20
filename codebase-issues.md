@@ -1581,7 +1581,7 @@ on its Output section is now redundant and removed. `switchTab`
 (`html/scripts/ui.js:28–34`) only toggles `.tab-pane` descendants, so
 the shared row stays visible across all tab switches.
 
-### 30. Missing `:focus` styles on custom-styled interactive elements
+### 30. Missing `:focus` styles on custom-styled interactive elements *(addressed 2026-05-20)*
 
 `html/styles.css` carries three `:focus` rules: `.skip-link:focus`
 (line 76), `input/textarea/select:focus` (line 375), and
@@ -1636,6 +1636,23 @@ input[type="range"]:focus-visible::-moz-range-thumb { … }
 CLAUDE.md "Design system" should pick up a bullet recording the
 `:focus-visible` rule (every interactive element with a custom
 `:hover` needs a paired `:focus-visible`).
+
+**Resolution (2026-05-20):** added a consolidated
+`/* ── FOCUS INDICATORS ── */` block to `styles.css` (right after the
+range-slider thumb rules). One selector list — `.copy-btn`,
+`.tab-btn`, `.units-btn`, `.cta-button`, `.back-link`, `.nav-card`,
+each `:focus-visible` — gets `outline: 2px solid var(--accent);
+outline-offset: 2px;`, matching the existing `.skip-link:focus`
+treatment. The range-slider thumbs (`::-webkit-slider-thumb` /
+`::-moz-range-thumb`), where `outline` can't cleanly target the
+pseudo-element, instead extend their existing
+`box-shadow: 0 0 0 1px var(--accent)` ring with an outer
+`0 0 0 4px var(--accent-glow)` glow on `:focus-visible`.
+`:focus-visible` (not `:focus`) keeps the indicator off the
+mouse-click path. No HTML pages touched — every targeted class was
+already in use. CLAUDE.md "Design system" gained a bullet recording
+the convention and pointing future interactives at the consolidated
+block.
 
 ### 31. Version drift between `footer.njk` and `package.json` *(addressed 2026-05-19)*
 
