@@ -33,6 +33,32 @@ module.exports = function(eleventyConfig) {
     eleventyConfig.addPassthroughCopy({ "html/robots.txt": "robots.txt" });
     eleventyConfig.addPassthroughCopy({ "html/sitemap.xml": "sitemap.xml" });
 
+    // Build-time guard for the 140–160 char `description` frontmatter
+    // target documented in CLAUDE.md "Templating". The convention had
+    // no measurable check, so it drifted across eleven pages between
+    // audits (codebase-issues.md #35 / #51) — this fails the build on
+    // any out-of-range description. A named collection is the cleanest
+    // hook with access to the resolved data cascade; it returns nothing
+    // and exists only for the side-effecting length check.
+    eleventyConfig.addCollection("descriptionLengthGuard", (collectionApi) => {
+        const MIN = 140;
+        const MAX = 160;
+        const offenders = collectionApi.getAll()
+            .filter((item) => typeof item.data.description === "string")
+            .filter((item) => {
+                const len = item.data.description.length;
+                return len < MIN || len > MAX;
+            })
+            .map((item) => `  ${item.inputPath} — ${item.data.description.length} chars`);
+        if (offenders.length) {
+            throw new Error(
+                `description frontmatter must be ${MIN}–${MAX} chars ` +
+                `(CLAUDE.md "Templating"):\n${offenders.join("\n")}`
+            );
+        }
+        return [];
+    });
+
     return {
         dir: {
             input: "html",
