@@ -5,6 +5,8 @@
 // the page's inline <script>; shared engines live as classic scripts
 // under html/scripts/. No bundler, no transpile.
 
+const { execFileSync } = require("child_process");
+
 module.exports = function(eleventyConfig) {
     // .html files run through Nunjucks so signal-scaling.html →
     // _site/tools/signal-scaling.html (preserves the existing URL
@@ -31,7 +33,9 @@ module.exports = function(eleventyConfig) {
     eleventyConfig.addPassthroughCopy({ "html/styles.css": "styles.css" });
     eleventyConfig.addPassthroughCopy({ "html/assets": "assets" });
     eleventyConfig.addPassthroughCopy({ "html/robots.txt": "robots.txt" });
-    eleventyConfig.addPassthroughCopy({ "html/sitemap.xml": "sitemap.xml" });
+    // sitemap.xml is no longer passthrough — html/sitemap.njk renders it
+    // from the sitemapPages collection (see below) with git-derived
+    // <lastmod> dates. codebase-issues.md #45.
 
     // Build-time guard for the 140–160 char `description` frontmatter
     // target documented in CLAUDE.md "Templating". The convention had
@@ -57,6 +61,35 @@ module.exports = function(eleventyConfig) {
             );
         }
         return [];
+    });
+
+    // Pages for sitemap.njk: every template that carries a `canonical`
+    // frontmatter (all 20 real pages — the sitemap template itself has
+    // none, so it self-excludes). Sorted by canonical URL for a stable,
+    // diff-friendly output order.
+    eleventyConfig.addCollection("sitemapPages", (collectionApi) =>
+        collectionApi.getAll()
+            .filter((item) => typeof item.data.canonical === "string")
+            .sort((a, b) => a.data.canonical.localeCompare(b.data.canonical))
+    );
+
+    // Last-modified date for a source file, from git's last commit that
+    // touched it — `git log -1 --format=%cd --date=short -- <path>`.
+    // execFileSync (no shell) passes the path as an argv element.
+    // Falls back to today's date if git has no record (an uncommitted
+    // file, or a build environment without full history). Used by
+    // sitemap.njk for <lastmod>. codebase-issues.md #45.
+    eleventyConfig.addFilter("gitLastmod", (inputPath) => {
+        try {
+            const out = execFileSync(
+                "git",
+                ["log", "-1", "--format=%cd", "--date=short", "--", inputPath],
+                { encoding: "utf8" }
+            ).trim();
+            return out || new Date().toISOString().slice(0, 10);
+        } catch (err) {
+            return new Date().toISOString().slice(0, 10);
+        }
     });
 
     return {

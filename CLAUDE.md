@@ -24,9 +24,9 @@ the site does, see `README.md`.
   `.html` under `html/` through Nunjucks and writes to `_site/`.
   Pages carry YAML frontmatter and extend the shared layout (see
   *Templating*). Static assets (`scripts/`, `styles.css`, `assets/`,
-  `robots.txt`, `sitemap.xml`) are passthrough-copied. Build is fast
-  (~0.2s for 20 pages); Nunjucks is the only thing the build does —
-  no JS transpile or bundle step.
+  `robots.txt`) are passthrough-copied; `sitemap.xml` is generated
+  (see *Sitemap*). Build is fast (~0.3s for 20 pages); Nunjucks is
+  the only thing the build does — no JS transpile or bundle step.
 - **Templates under `html/_includes/`:**
   - `layouts/page.njk` — the page shell. Composes `head.njk` / `nav.njk`
     / `footer.njk` and exposes three named blocks (`head`, `content`,
@@ -175,6 +175,23 @@ Blocks:
 The layout uses `trimBlocks: true` + `lstripBlocks: true`, so empty
 blocks and indented includes don't leak whitespace into the rendered
 HTML.
+
+### Sitemap
+
+`html/sitemap.njk` renders `_site/sitemap.xml` at build time — it is
+not a hand-maintained file. The `sitemapPages` collection in
+`.eleventy.js` gathers every template carrying a `canonical`
+frontmatter (all 20 real pages; the sitemap template has none, so it
+self-excludes) and sorts by canonical URL. Each `<loc>` is the page's
+`canonical`; each `<lastmod>` comes from the `gitLastmod` filter,
+which runs `git log -1 --format=%cd --date=short -- <inputPath>` and
+falls back to the build date if git has no record. A new page with a
+`canonical` is picked up automatically — no sitemap edit needed (do
+update the `PAGES` array in `tests/smoke.spec.js`, which the drift
+test checks against the built sitemap). CI checks out with
+`fetch-depth: 0` so the dates resolve; if the Cloudflare deploy build
+ever shallow-clones, every `<lastmod>` collapses to the build date —
+harmless, but the signal is lost.
 
 ### Conventions
 
@@ -325,7 +342,7 @@ controlsfreak.dev/
 │   ├── styles.css            # passthrough → _site/styles.css
 │   ├── scripts/              # passthrough; pid-engine, flow-engine, units, …
 │   ├── assets/               # passthrough; og-image, favicons
-│   ├── sitemap.xml           # passthrough; hand-maintained
+│   ├── sitemap.njk           # generated → _site/sitemap.xml (see Sitemap)
 │   ├── robots.txt            # passthrough
 │   ├── index.html
 │   ├── contact.html
@@ -536,7 +553,10 @@ well-grouped.
 2. Wrap page logic in an IIFE + `addEventListener` (see *JS patterns*);
    apply validate-and-mute on numeric inputs.
 3. Add a `.nav-card` to the `.card-grid` on `tools/index.html`.
-4. Add the page's URL to `html/sitemap.xml` (hand-maintained).
+4. Add the page's URL to the `PAGES` array in `tests/smoke.spec.js`.
+   The sitemap picks the page up automatically — any template with a
+   `canonical` frontmatter is included (see *Sitemap*) — but the
+   `PAGES` ↔ sitemap drift test will fail until `PAGES` is updated.
 5. Bump `package.json.version` when shipping something notable; the
    footer reads it via `html/_data/site.js`. A new tool is a minor
    bump (`1.X.0`); a bug fix is a patch bump (`1.X.Y`).
@@ -689,8 +709,9 @@ by default.
     the IIFE (per *JS patterns*), `<main id="main">` for the
     skip-link, the heading-hierarchy / id-naming / form-label
     rules under *Conventions*, behavioral-test coverage if it's a
-    widget page, and a sitemap entry. Don't inherit the smoke-
-    loop default by accident.
+    widget page, and a `PAGES` entry in `smoke.spec.js` (the
+    sitemap itself is generated — see *Sitemap*). Don't inherit
+    the smoke-loop default by accident.
 
   When a sweep would be large, log it under `codebase-issues.md`
   rather than skip — same posture as the rest of the file.

@@ -40,16 +40,19 @@ const PAGES = [
     { name: 'contact',                url: '/contact.html' },
 ];
 
-test('PAGES array stays in sync with html/sitemap.xml', () => {
+test('PAGES array stays in sync with the generated sitemap', () => {
+    // sitemap.xml is built from html/sitemap.njk (the sitemapPages
+    // collection), so read the build output, not a source file. The
+    // webServer in playwright.config.js builds _site/ before the run.
     const fs = require('fs');
-    const sitemap = fs.readFileSync('html/sitemap.xml', 'utf8');
+    const sitemap = fs.readFileSync('_site/sitemap.xml', 'utf8');
     const sitemapPaths = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)]
         .map(m => m[1].replace(/^https?:\/\/[^/]+/, ''))
         .sort();
     const pagesPaths = PAGES
         .map(p => p.url.replace(/^https?:\/\/[^/]+/, ''))
         .sort();
-    expect(pagesPaths, 'every sitemap.xml entry should appear in PAGES and vice versa').toEqual(sitemapPaths);
+    expect(pagesPaths, 'every sitemap entry should appear in PAGES and vice versa').toEqual(sitemapPaths);
 });
 
 for (const { name, url } of PAGES) {
