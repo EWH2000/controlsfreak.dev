@@ -297,7 +297,7 @@ nav: education
             </div>
 
             <p style="margin-top:1.25rem;">
-                That's why a building with variable-flow pumping (every load <a href="/education/load-piping.html">piped two-way</a>) almost always pairs with a VFD on the system pump — at part load you want the pump to slow down with the building, not push the same volume around all day. Same story on the air side: VAV systems with a VFD on the supply fan ramp down with the boxes, and the fan's the biggest energy hog on the unit. Cube law is the why; the rest of this page is the how.
+                That's why a building with variable-flow pumping (every load <a href="/education/load-piping.html">piped two-way</a>) almost always pairs with a VFD on the system pump — at part load you want the pump to slow down with the building, not push the same volume around all day. Same story on the air side: VAV (variable-air-volume) systems with a VFD on the supply fan ramp down with the boxes, and the fan's the biggest energy hog on the unit. Cube law is the why; the rest of this page is the how.
             </p>
 
             <!-- ───────────────── 3 · Run Command vs. Speed Reference — THE WIDGET ───────────────── -->
@@ -313,7 +313,7 @@ nav: education
             </ul>
 
             <p>
-                The mistake — and it's a common one — is treating these as one thing. You set up the speed reference to come from BACnet, the BMS is happily writing 30 Hz to the speed-reference AV, and the drive doesn't run. Why? Because the <em>run-source</em> parameter is still set to "terminals" from the factory, and there's no digital-input run signal wired up. Two parameters; you only changed one.
+                The mistake — and it's a common one — is treating these as one thing. You set up the speed reference to come from BACnet, the BMS is happily writing 30 Hz to the speed-reference AV (a BACnet Analog Value object), and the drive doesn't run. Why? Because the <em>run-source</em> parameter is still set to "terminals" from the factory, and there's no digital-input run signal wired up. Two parameters; you only changed one.
             </p>
 
             <p style="margin-top:1.25rem;">
