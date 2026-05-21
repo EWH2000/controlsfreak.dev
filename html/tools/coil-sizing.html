@@ -1,0 +1,632 @@
+---
+title: Coil-Sizing Calculator — controlsfreak.dev
+description: Size a cooling or heating coil — total, sensible, and latent capacity from entering and leaving air, or solve the leaving-air state back from a known load.
+canonical: https://controlsfreak.dev/tools/coil-sizing.html
+nav: tools
+---
+{% extends "layouts/page.njk" %}
+
+{% block head %}
+    <style>
+        /* Status pill — a one-line verdict below the readouts. Same chrome
+           as economizer-ratio's .er-feas and air-mixing's .am-status. */
+        .cs-status {
+            margin-top: 1rem;
+            padding: 0.5rem 0.75rem;
+            border-radius: 4px;
+            font-family: var(--mono);
+            font-size: 0.82rem;
+            line-height: 1.5;
+            border: 1px solid var(--border);
+            background: var(--surface-2);
+            color: var(--text);
+        }
+        .cs-status.ok    { border-color: var(--accent); background: var(--accent-dim); }
+        .cs-status.warn  { border-color: var(--heat);   color: var(--heat); }
+        .cs-status.error { border-color: var(--red);    color: var(--red); }
+
+        /* Coil-type strip — shared between both tabs, sits above the tabs
+           as a thin one-row band. Mirrors air-mixing's .am-alt-strip. */
+        .cs-type-strip {
+            padding: 0.9rem 1.25rem 0.4rem;
+            border-bottom: 1px solid var(--border);
+        }
+        .cs-type-strip .ps-row { margin-bottom: 0; }
+    </style>
+{% endblock %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">HVAC</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">
+                Coil-Sizing Calculator
+                <span class="tool-tag">HVAC</span>
+            </h1>
+        </div>
+
+        <p class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
+            One coil, in isolation. Capacity tab: enter the air going in and the air coming out,
+            get total / sensible / latent capacity and the sensible heat ratio. Leaving-state tab
+            runs it backwards — entering air plus the load the coil has to carry, solve for the
+            leaving-air state. Same math the psychrometric chart runs on its coil stages, surfaced
+            on its own so a quick capacity check doesn't need a whole AHU chain.
+        </p>
+
+        <section class="cs-type-strip">
+            <div class="ps-row">
+                <label class="ps-label" for="cs-coil-type">Coil type</label>
+                <select class="ps-input" id="cs-coil-type">
+                    <option value="cool" selected>Cooling coil</option>
+                    <option value="heat">Heating coil</option>
+                </select>
+            </div>
+        </section>
+
+        <div class="tabs tabs-flush">
+            <button class="tab-btn active" data-tab="cap">Capacity</button>
+            <button class="tab-btn"        data-tab="leaving">Leaving state</button>
+        </div>
+
+        <!-- ── Capacity tab ── -->
+        <div id="tab-cap" class="tab-pane active">
+            <div class="tool-body-2col">
+
+                <section>
+                    <h2 class="ps-section-label">Input</h2>
+
+                    <h3 class="subhead">Entering air</h3>
+                    <div class="ps-row">
+                        <label class="ps-label" data-us="Dry-bulb (°F)" data-metric="Dry-bulb (°C)" for="cs-cap-ent-tdb">Dry-bulb (°F)</label>
+                        <input class="ps-input" type="number" id="cs-cap-ent-tdb" step="0.5" min="-50" max="200" value="80">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="cs-cap-ent-mode">Define by</label>
+                        <select class="ps-input" id="cs-cap-ent-mode">
+                            <option value="rh">Relative humidity</option>
+                            <option value="wb" selected>Wet-bulb temperature</option>
+                            <option value="dp">Dew point temperature</option>
+                            <option value="w">Humidity ratio</option>
+                            <option value="h">Enthalpy</option>
+                        </select>
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" id="cs-cap-ent-second-lbl" for="cs-cap-ent-second">Wet-bulb (°F)</label>
+                        <input class="ps-input" type="number" id="cs-cap-ent-second" step="0.5" value="67">
+                    </div>
+
+                    <h3 class="subhead">Leaving air</h3>
+                    <div class="ps-row">
+                        <label class="ps-label" data-us="Dry-bulb (°F)" data-metric="Dry-bulb (°C)" for="cs-cap-lvg-tdb">Dry-bulb (°F)</label>
+                        <input class="ps-input" type="number" id="cs-cap-lvg-tdb" step="0.5" min="-50" max="200" value="55">
+                    </div>
+                    <div class="ps-row cs-cool-only">
+                        <label class="ps-label" for="cs-cap-lvg-mode">Define by</label>
+                        <select class="ps-input" id="cs-cap-lvg-mode">
+                            <option value="rh">Relative humidity</option>
+                            <option value="wb" selected>Wet-bulb temperature</option>
+                            <option value="dp">Dew point temperature</option>
+                            <option value="w">Humidity ratio</option>
+                            <option value="h">Enthalpy</option>
+                        </select>
+                    </div>
+                    <div class="ps-row cs-cool-only">
+                        <label class="ps-label" id="cs-cap-lvg-second-lbl" for="cs-cap-lvg-second">Wet-bulb (°F)</label>
+                        <input class="ps-input" type="number" id="cs-cap-lvg-second" step="0.5" value="54">
+                    </div>
+                    <p class="ref-note cs-heat-only">
+                        A heating coil rides humidity ratio through unchanged —
+                        leaving air carries the entering air's moisture, so only
+                        the leaving dry-bulb is needed.
+                    </p>
+
+                    <h3 class="subhead">Airflow</h3>
+                    <div class="ps-row">
+                        <label class="ps-label" data-us="Airflow (CFM)" data-metric="Airflow (m³/h)" for="cs-cap-cfm">Airflow (CFM)</label>
+                        <input class="ps-input" type="number" id="cs-cap-cfm" step="50" min="0" value="2000">
+                    </div>
+                </section>
+
+                <section>
+                    <h2 class="ps-section-label">Output</h2>
+                    <div class="ps-row">
+                        <span class="ps-label" data-us="Total capacity (MBH)" data-metric="Total capacity (kW)">Total capacity (MBH)</span>
+                        <span class="ps-value muted" id="cs-cap-q-total">—</span>
+                    </div>
+                    <div class="ps-row cs-cool-only">
+                        <span class="ps-label" data-us="Sensible capacity (MBH)" data-metric="Sensible capacity (kW)">Sensible capacity (MBH)</span>
+                        <span class="ps-value muted" id="cs-cap-q-sens">—</span>
+                    </div>
+                    <div class="ps-row cs-cool-only">
+                        <span class="ps-label" data-us="Latent capacity (MBH)" data-metric="Latent capacity (kW)">Latent capacity (MBH)</span>
+                        <span class="ps-value muted" id="cs-cap-q-lat">—</span>
+                    </div>
+                    <div class="ps-row cs-cool-only">
+                        <span class="ps-label">Sensible heat ratio</span>
+                        <span class="ps-value muted" id="cs-cap-shr">—</span>
+                    </div>
+
+                    <h3 class="subhead">Process change</h3>
+                    <div class="ps-row">
+                        <span class="ps-label" data-us="Δ Dry-bulb (°F)" data-metric="Δ Dry-bulb (°C)">Δ Dry-bulb (°F)</span>
+                        <span class="ps-value muted" id="cs-cap-ddb">—</span>
+                    </div>
+                    <div class="ps-row cs-cool-only">
+                        <span class="ps-label" data-us="Δ Humidity ratio (gr/lb)" data-metric="Δ Humidity ratio (g/kg)">Δ Humidity ratio (gr/lb)</span>
+                        <span class="ps-value muted" id="cs-cap-dw">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label" data-us="Δ Enthalpy (Btu/lb)" data-metric="Δ Enthalpy (kJ/kg)">Δ Enthalpy (Btu/lb)</span>
+                        <span class="ps-value muted" id="cs-cap-dh">—</span>
+                    </div>
+
+                    <div class="btn-row">
+                        <button class="copy-btn" id="cs-cap-copy">Copy capacity</button>
+                    </div>
+                    <div class="result-formula wrap" id="cs-cap-formula"></div>
+                    <div class="cs-status" id="cs-cap-status">Enter values to size the coil.</div>
+                </section>
+
+            </div>
+
+            <section class="tool-body-row">
+                <h2 class="ps-section-label">Worked example</h2>
+                <p class="ref-note worked-intro">
+                    A cooling coil — <span data-us="2000 CFM" data-metric="3400 m³/h">2000 CFM</span>
+                    of entering air at <span data-us="80 °F / 67 °F WB" data-metric="26.7 °C / 19.4 °C WB">80 °F / 67 °F WB</span>,
+                    leaving at <span data-us="55 °F / 54 °F WB" data-metric="12.8 °C / 12.2 °C WB">55 °F / 54 °F WB</span>.
+                </p>
+                <ol class="ref-note worked-list">
+                    <li>Each air state fixes its enthalpy <code>h</code> and humidity
+                        ratio <code>W</code> from the ASHRAE chart math.</li>
+                    <li>Convert volumetric flow to mass flow of dry air:<br>
+                        <code>ṁ = CFM × 60 ÷ v<sub>entering</sub></code> (lb dry air / h).</li>
+                    <li>Total capacity is the enthalpy swing:
+                        <code>q<sub>total</sub> = ṁ × Δh</code>. Sensible is the
+                        dry-bulb swing:
+                        <code>q<sub>sens</sub> = ṁ × (0.240 + 0.444·W) × ΔDB</code>.
+                        Latent is whatever's left: <code>q<sub>total</sub> − q<sub>sens</sub></code>.</li>
+                    <li>The sensible heat ratio
+                        <code>SHR = q<sub>sens</sub> ÷ q<sub>total</sub></code> says how
+                        much of the coil's work drops temperature versus wringing
+                        out water — a low SHR is a coil fighting a humid space.</li>
+                </ol>
+                <p class="ref-note">
+                    Atmospheric pressure is fixed at sea level. For an
+                    altitude-adjusted answer, the
+                    <a href="/tools/psychrometric-chart.html">psychrometric chart</a>
+                    carries an altitude input.
+                </p>
+            </section>
+        </div>
+
+        <!-- ── Leaving-state tab ── -->
+        <div id="tab-leaving" class="tab-pane">
+            <div class="tool-body-2col">
+
+                <section>
+                    <h2 class="ps-section-label">Input</h2>
+
+                    <h3 class="subhead">Entering air</h3>
+                    <div class="ps-row">
+                        <label class="ps-label" data-us="Dry-bulb (°F)" data-metric="Dry-bulb (°C)" for="cs-lvg-ent-tdb">Dry-bulb (°F)</label>
+                        <input class="ps-input" type="number" id="cs-lvg-ent-tdb" step="0.5" min="-50" max="200" value="80">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="cs-lvg-ent-mode">Define by</label>
+                        <select class="ps-input" id="cs-lvg-ent-mode">
+                            <option value="rh">Relative humidity</option>
+                            <option value="wb" selected>Wet-bulb temperature</option>
+                            <option value="dp">Dew point temperature</option>
+                            <option value="w">Humidity ratio</option>
+                            <option value="h">Enthalpy</option>
+                        </select>
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" id="cs-lvg-ent-second-lbl" for="cs-lvg-ent-second">Wet-bulb (°F)</label>
+                        <input class="ps-input" type="number" id="cs-lvg-ent-second" step="0.5" value="67">
+                    </div>
+
+                    <h3 class="subhead">Airflow</h3>
+                    <div class="ps-row">
+                        <label class="ps-label" data-us="Airflow (CFM)" data-metric="Airflow (m³/h)" for="cs-lvg-cfm">Airflow (CFM)</label>
+                        <input class="ps-input" type="number" id="cs-lvg-cfm" step="50" min="0" value="2000">
+                    </div>
+
+                    <h3 class="subhead">Coil load</h3>
+                    <div class="ps-row cs-cool-only">
+                        <label class="ps-label" data-us="Sensible load (MBH)" data-metric="Sensible load (kW)" for="cs-lvg-q-sens">Sensible load (MBH)</label>
+                        <input class="ps-input" type="number" id="cs-lvg-q-sens" step="1" min="0" value="40">
+                    </div>
+                    <div class="ps-row cs-cool-only">
+                        <label class="ps-label" data-us="Latent load (MBH)" data-metric="Latent load (kW)" for="cs-lvg-q-lat">Latent load (MBH)</label>
+                        <input class="ps-input" type="number" id="cs-lvg-q-lat" step="1" min="0" value="15">
+                    </div>
+                    <div class="ps-row cs-heat-only">
+                        <label class="ps-label" data-us="Coil capacity (MBH)" data-metric="Coil capacity (kW)" for="cs-lvg-q-heat">Coil capacity (MBH)</label>
+                        <input class="ps-input" type="number" id="cs-lvg-q-heat" step="1" min="0" value="50">
+                    </div>
+                    <p class="ref-note">
+                        Atmospheric pressure is fixed at sea level. A heating
+                        coil's load is all sensible — humidity ratio rides
+                        through unchanged.
+                    </p>
+                </section>
+
+                <section>
+                    <h2 class="ps-section-label">Output</h2>
+                    <h3 class="subhead">Leaving air</h3>
+                    <div class="ps-row">
+                        <span class="ps-label" data-us="Dry-bulb (°F)" data-metric="Dry-bulb (°C)">Dry-bulb (°F)</span>
+                        <span class="ps-value muted" id="cs-lvg-out-db">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label" data-us="Wet-bulb (°F)" data-metric="Wet-bulb (°C)">Wet-bulb (°F)</span>
+                        <span class="ps-value muted" id="cs-lvg-out-wb">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label" data-us="Humidity ratio (gr/lb)" data-metric="Humidity ratio (g/kg)">Humidity ratio (gr/lb)</span>
+                        <span class="ps-value muted" id="cs-lvg-out-w">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">Rel. humidity (%)</span>
+                        <span class="ps-value muted" id="cs-lvg-out-rh">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label" data-us="Dew point (°F)" data-metric="Dew point (°C)">Dew point (°F)</span>
+                        <span class="ps-value muted" id="cs-lvg-out-dp">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label" data-us="Enthalpy (Btu/lb)" data-metric="Enthalpy (kJ/kg)">Enthalpy (Btu/lb)</span>
+                        <span class="ps-value muted" id="cs-lvg-out-h">—</span>
+                    </div>
+
+                    <div class="btn-row">
+                        <button class="copy-btn" id="cs-lvg-copy">Copy leaving DB</button>
+                    </div>
+                    <div class="result-formula wrap" id="cs-lvg-formula"></div>
+                    <div class="cs-status" id="cs-lvg-status">Enter values to solve the leaving state.</div>
+                </section>
+
+            </div>
+
+            <section class="tool-body-row">
+                <h2 class="ps-section-label">Worked example</h2>
+                <p class="ref-note worked-intro">
+                    Run it backwards — entering air plus the load the coil has to
+                    carry, solve for what comes out.
+                </p>
+                <ol class="ref-note worked-list">
+                    <li>The mass flow <code>ṁ</code> comes from airflow and the
+                        entering specific volume, same as the Capacity tab.</li>
+                    <li>For a cooling coil, the sensible load sets the dry-bulb
+                        drop: <code>ΔDB = −q<sub>sens</sub> ÷ (ṁ × (0.240 + 0.444·W))</code>.
+                        The total load (sensible + latent) sets the enthalpy
+                        drop: <code>Δh = −q<sub>total</sub> ÷ ṁ</code>. Dry-bulb
+                        and enthalpy together fix the leaving point.</li>
+                    <li>If the latent load is more than the air can shed at that
+                        sensible split, the leaving point lands on the saturation
+                        curve — the coil's apparatus dew point. The status line
+                        flags it.</li>
+                    <li>For a heating coil it's pure sensible: the capacity sets
+                        <code>ΔDB</code> and humidity ratio rides through, so the
+                        leaving point is just warmer air at the same moisture.</li>
+                </ol>
+                <p class="ref-note">
+                    This is the inverse of the Capacity tab — feed a leaving
+                    state from here into that tab and the capacities come back
+                    out.
+                </p>
+            </section>
+        </div>
+    </div>
+
+    <a class="back-link" href="/tools/">← All tools</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="/scripts/units.js"></script>
+<script src="/scripts/ui.js"></script>
+<script src="/scripts/psychro-engine.js"></script>
+<script src="/scripts/psy-widget.js"></script>
+<script>
+    // switchTab(name, btn) and copyReadouts(btn, sep, ...ids) come from
+    // /scripts/ui.js. Psychro.solveState / buildState / computeProcess /
+    // invertProcess + the flat ASHRAE primitives come from
+    // /scripts/psychro-engine.js. P_STD = 14.696 psia (sea level). The
+    // Define-by catalog + display→canonical conversion come from
+    // /scripts/psy-widget.js.
+    (function () {
+        'use strict';
+
+        const U = window.Units;
+
+        // ── Display helpers ───────────────────────────────────────────
+        const dispT     = f        => U.display.temp(f).toFixed(1);
+        const dispDT    = df       => U.display.deltaTemp(df).toFixed(1);
+        const dispW     = wLbLb    => U.display.humidityRatio(wLbLb * 7000).toFixed(1);
+        const dispH     = btuPerLb => U.display.enthalpy(btuPerLb).toFixed(1);
+        const dispCap   = mbh      => U.display.heatCapacity(mbh).toFixed(1);
+        const tU        = ()       => U.suffix.temp();
+        const wU        = ()       => U.suffix.humidityRatio();
+        const hU        = ()       => U.suffix.enthalpy();
+        const capU      = ()       => U.suffix.heatCapacity();
+        const flowU     = ()       => U.suffix.airflow();
+        const signed    = (n, d)   => (n > 0 ? '+' : '') + n.toFixed(d);
+        const getVal    = id       => document.getElementById(id).value;
+
+        // Define-by catalog — rebuilt on unitschange so labels and steps
+        // follow the active unit system. See /scripts/psy-widget.js.
+        let SECOND_PROP = PsyWidget.buildSecondProp();
+
+        const isCool = () => document.getElementById('cs-coil-type').value === 'cool';
+
+        // ── Shared element helpers ────────────────────────────────────
+        function setLive(id, text) {
+            const el = document.getElementById(id);
+            el.className = 'ps-value live';
+            el.textContent = text;
+        }
+        function mute(id) {
+            const el = document.getElementById(id);
+            el.className = 'ps-value muted';
+            el.textContent = '—';
+        }
+        function setStatus(id, text, kind) {
+            const el = document.getElementById(id);
+            el.textContent = text;
+            el.className = 'cs-status' + (kind ? ' ' + kind : '');
+        }
+
+        function refreshSecondLabel(prefix) {
+            const mode = document.getElementById(prefix + '-mode').value;
+            const lbl  = document.getElementById(prefix + '-second-lbl');
+            const inp  = document.getElementById(prefix + '-second');
+            lbl.textContent = SECOND_PROP[mode].label;
+            inp.step = SECOND_PROP[mode].step;
+        }
+
+        // Solve a moist-air state from a `<prefix>-tdb / -mode / -second`
+        // input trio. Returns { ok (inputs numeric), state }.
+        function readState(prefix) {
+            const mode = document.getElementById(prefix + '-mode').value;
+            const tdbD = parseFloat(getVal(prefix + '-tdb'));
+            const secD = parseFloat(getVal(prefix + '-second'));
+            return {
+                ok: isFinite(tdbD) && isFinite(secD),
+                state: Psychro.solveState(mode, U.toCanonical.temp(tdbD), PsyWidget.secondToCanonical(mode, secD), P_STD),
+            };
+        }
+
+        // ── Capacity tab ──────────────────────────────────────────────
+        const CAP_OUT = ['cs-cap-q-total', 'cs-cap-q-sens', 'cs-cap-q-lat', 'cs-cap-shr', 'cs-cap-ddb', 'cs-cap-dw', 'cs-cap-dh'];
+
+        function clearCap(msg, kind) {
+            CAP_OUT.forEach(mute);
+            document.getElementById('cs-cap-formula').textContent = '';
+            setStatus('cs-cap-status', msg, kind || '');
+        }
+
+        function calcCapacity() {
+            refreshSecondLabel('cs-cap-ent');
+            refreshSecondLabel('cs-cap-lvg');
+            const cool = isCool();
+            const type = cool ? 'cool' : 'heat';
+
+            const entR = readState('cs-cap-ent');
+            const cfmD = parseFloat(getVal('cs-cap-cfm'));
+
+            // Leaving air — full define-by for cooling; dry-bulb only for
+            // heating (humidity ratio rides through from entering air).
+            let lvgInputsOk, lvgState;
+            if (cool) {
+                const lvgR = readState('cs-cap-lvg');
+                lvgInputsOk = lvgR.ok;
+                lvgState = lvgR.state;
+            } else {
+                const lvgTdbD = parseFloat(getVal('cs-cap-lvg-tdb'));
+                lvgInputsOk = isFinite(lvgTdbD);
+                lvgState = { ok: false, pendingTdb: lvgTdbD };
+            }
+
+            if (!entR.ok || !lvgInputsOk || !isFinite(cfmD)) {
+                clearCap('Enter values to size the coil.');
+                return;
+            }
+            if (!entR.state.ok) { clearCap('Entering air — ' + entR.state.error, 'error'); return; }
+            const entState = entR.state;
+            if (cool) {
+                if (!lvgState.ok) { clearCap('Leaving air — ' + lvgState.error, 'error'); return; }
+            } else {
+                lvgState = Psychro.buildState(U.toCanonical.temp(lvgState.pendingTdb), entState.W, P_STD);
+            }
+
+            const cfm = U.toCanonical.airflow(cfmD);
+            if (!(cfm > 0)) { clearCap('Airflow must be a positive number.', 'error'); return; }
+
+            const res = Psychro.computeProcess({ inlet: entState, outlet: lvgState, type }, cfm);
+            const totMbh  = Math.abs(res.qTotal) / 1000;
+            const sensMbh = Math.abs(res.qSens) / 1000;
+            const latMbh  = Math.abs(res.qLat) / 1000;
+
+            setLive('cs-cap-q-total', dispCap(totMbh) + ' ' + capU());
+            if (cool) {
+                setLive('cs-cap-q-sens', dispCap(sensMbh) + ' ' + capU());
+                setLive('cs-cap-q-lat',  dispCap(latMbh) + ' ' + capU());
+                setLive('cs-cap-shr', isFinite(res.shr) ? res.shr.toFixed(2) : '—');
+            } else {
+                mute('cs-cap-q-sens'); mute('cs-cap-q-lat'); mute('cs-cap-shr');
+            }
+            setLive('cs-cap-ddb', signed(U.display.deltaTemp(res.dDb), 1) + ' ' + tU());
+            if (cool) {
+                setLive('cs-cap-dw', signed(U.display.humidityRatio(res.dW * 7000), 1) + ' ' + wU());
+            } else {
+                mute('cs-cap-dw');
+            }
+            setLive('cs-cap-dh', signed(U.display.enthalpy(res.dH), 1) + ' ' + hU());
+
+            const mDot = cfm * 60 / entState.v;
+            document.getElementById('cs-cap-formula').textContent =
+                `ṁ = ${cfmD} ${flowU()} × 60 ÷ v = ${Math.round(mDot)} lb dry air/h · ` +
+                `total = ṁ × Δh = ${dispCap(totMbh)} ${capU()}`;
+
+            // Direction sanity check — coil type vs. what the numbers say.
+            if (cool && res.dDb > 0.05) {
+                setStatus('cs-cap-status',
+                    'Leaving air is warmer than entering — that’s a heating process. Switch the coil type to Heating.', 'warn');
+            } else if (!cool && res.dDb < -0.05) {
+                setStatus('cs-cap-status',
+                    'Leaving air is cooler than entering — that’s a cooling process. Switch the coil type to Cooling.', 'warn');
+            } else if (cool && res.dW > 1e-5) {
+                setStatus('cs-cap-status',
+                    'Leaving air carries more moisture than entering — a cooling coil removes water, it can’t add it.', 'warn');
+            } else if (cool) {
+                setStatus('cs-cap-status',
+                    `Cooling coil — ${dispCap(totMbh)} ${capU()} total, SHR ${isFinite(res.shr) ? res.shr.toFixed(2) : '—'}.`, 'ok');
+            } else {
+                setStatus('cs-cap-status', `Heating coil — ${dispCap(totMbh)} ${capU()} sensible.`, 'ok');
+            }
+        }
+
+        // ── Leaving-state tab ─────────────────────────────────────────
+        const LVG_OUT = ['cs-lvg-out-db', 'cs-lvg-out-wb', 'cs-lvg-out-w', 'cs-lvg-out-rh', 'cs-lvg-out-dp', 'cs-lvg-out-h'];
+
+        function clearLvg(msg, kind) {
+            LVG_OUT.forEach(mute);
+            document.getElementById('cs-lvg-formula').textContent = '';
+            setStatus('cs-lvg-status', msg, kind || '');
+        }
+
+        function calcLeaving() {
+            refreshSecondLabel('cs-lvg-ent');
+            const cool = isCool();
+            const type = cool ? 'cool' : 'heat';
+
+            const entR = readState('cs-lvg-ent');
+            const cfmD = parseFloat(getVal('cs-lvg-cfm'));
+            const qSensMbh = cool ? parseFloat(getVal('cs-lvg-q-sens')) : parseFloat(getVal('cs-lvg-q-heat'));
+            const qLatMbh  = cool ? parseFloat(getVal('cs-lvg-q-lat'))  : 0;
+
+            if (!entR.ok || !isFinite(cfmD) || !isFinite(qSensMbh) || !isFinite(qLatMbh)) {
+                clearLvg('Enter values to solve the leaving state.');
+                return;
+            }
+            if (!entR.state.ok) { clearLvg('Entering air — ' + entR.state.error, 'error'); return; }
+
+            const entState = entR.state;
+            const cfm   = U.toCanonical.airflow(cfmD);
+            const qSens = U.toCanonical.heatCapacity(qSensMbh) * 1000;   // MBH → Btu/h
+            const qLat  = U.toCanonical.heatCapacity(qLatMbh) * 1000;
+
+            const out = Psychro.invertProcess(entState, { type, cfm, qSens, qLat });
+            if (!out.ok) { clearLvg(out.error, 'error'); return; }
+
+            setLive('cs-lvg-out-db', dispT(out.tdb) + ' ' + tU());
+            setLive('cs-lvg-out-wb', isFinite(out.twb) ? dispT(out.twb) + ' ' + tU() : '—');
+            setLive('cs-lvg-out-w',  dispW(out.W) + ' ' + wU());
+            setLive('cs-lvg-out-rh', out.rh.toFixed(1) + ' %');
+            setLive('cs-lvg-out-dp', isFinite(out.tdp) ? dispT(out.tdp) + ' ' + tU() : '—');
+            setLive('cs-lvg-out-h',  dispH(out.h) + ' ' + hU());
+
+            const ddb = out.tdb - entState.tdb;
+            document.getElementById('cs-lvg-formula').textContent =
+                `ΔDB = ${signed(U.display.deltaTemp(ddb), 1)} ${tU()} · ` +
+                `leaving ${dispT(out.tdb)} ${tU()} / ${out.rh.toFixed(0)} % RH`;
+
+            if (out.saturated) {
+                setStatus('cs-lvg-status',
+                    'Leaving point lands on the saturation curve — the coil’s apparatus dew point. It can’t shed that much latent load at this sensible split; drop the latent load or accept fully-saturated leaving air.', 'warn');
+            } else {
+                setStatus('cs-lvg-status',
+                    cool ? 'Cooling coil — leaving state solved.' : 'Heating coil — leaving state solved.', 'ok');
+            }
+        }
+
+        // ── Coil-type toggle ──────────────────────────────────────────
+        function applyCoilType() {
+            const cool = isCool();
+            document.querySelectorAll('.cs-cool-only').forEach(el => { el.style.display = cool ? '' : 'none'; });
+            document.querySelectorAll('.cs-heat-only').forEach(el => { el.style.display = cool ? 'none' : ''; });
+        }
+
+        // ── Wiring ────────────────────────────────────────────────────
+        document.querySelectorAll('[data-tab]').forEach(btn => {
+            btn.addEventListener('click', e => switchTab(e.currentTarget.dataset.tab, e.currentTarget));
+        });
+
+        const CAP_INPUTS = ['cs-cap-ent-tdb', 'cs-cap-ent-mode', 'cs-cap-ent-second',
+                             'cs-cap-lvg-tdb', 'cs-cap-lvg-mode', 'cs-cap-lvg-second', 'cs-cap-cfm'];
+        const LVG_INPUTS = ['cs-lvg-ent-tdb', 'cs-lvg-ent-mode', 'cs-lvg-ent-second', 'cs-lvg-cfm',
+                            'cs-lvg-q-sens', 'cs-lvg-q-lat', 'cs-lvg-q-heat'];
+
+        for (const id of CAP_INPUTS) {
+            const el = document.getElementById(id);
+            el.addEventListener(el.tagName === 'SELECT' ? 'change' : 'input', calcCapacity);
+        }
+        for (const id of LVG_INPUTS) {
+            const el = document.getElementById(id);
+            el.addEventListener(el.tagName === 'SELECT' ? 'change' : 'input', calcLeaving);
+        }
+
+        document.getElementById('cs-coil-type').addEventListener('change', () => {
+            applyCoilType();
+            calcCapacity();
+            calcLeaving();
+        });
+
+        document.getElementById('cs-cap-copy').addEventListener('click', e => copyReadouts(e.currentTarget, '', 'cs-cap-q-total'));
+        document.getElementById('cs-lvg-copy').addEventListener('click', e => copyReadouts(e.currentTarget, '', 'cs-lvg-out-db'));
+
+        // ── Unit-flip resync ──────────────────────────────────────────
+        function rewriteInput(id, quantity, fromU, toU) {
+            const el = document.getElementById(id);
+            const v  = parseFloat(el.value);
+            if (!isFinite(v)) return;
+            const next = U.convert(v, fromU, toU, quantity);
+            el.value = (Math.round(next * 100) / 100).toString();
+        }
+        function quantityForMode(mode) {
+            switch (mode) {
+                case 'wb':
+                case 'dp': return 'temp';
+                case 'w':  return 'humidityRatio';
+                case 'h':  return 'enthalpy';
+                default:   return null;  // rh — no rewrite
+            }
+        }
+
+        U.onChange(function (newUnits) {
+            const oldUnits = newUnits === 'us' ? 'metric' : 'us';
+            for (const id of ['cs-cap-ent-tdb', 'cs-cap-lvg-tdb', 'cs-lvg-ent-tdb']) {
+                rewriteInput(id, 'temp', oldUnits, newUnits);
+            }
+            for (const id of ['cs-cap-cfm', 'cs-lvg-cfm']) {
+                rewriteInput(id, 'airflow', oldUnits, newUnits);
+            }
+            for (const id of ['cs-lvg-q-sens', 'cs-lvg-q-lat', 'cs-lvg-q-heat']) {
+                rewriteInput(id, 'heatCapacity', oldUnits, newUnits);
+            }
+            for (const prefix of ['cs-cap-ent', 'cs-cap-lvg', 'cs-lvg-ent']) {
+                const q = quantityForMode(document.getElementById(prefix + '-mode').value);
+                if (q) rewriteInput(prefix + '-second', q, oldUnits, newUnits);
+            }
+            SECOND_PROP = PsyWidget.buildSecondProp();
+            calcCapacity();
+            calcLeaving();
+        });
+
+        // ── Initial paint ─────────────────────────────────────────────
+        applyCoilType();
+        calcCapacity();
+        calcLeaving();
+    })();
+</script>
+{% endblock %}

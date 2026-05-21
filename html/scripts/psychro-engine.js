@@ -31,6 +31,7 @@
 //        Psychro.solveState(mode, tdb, second, P)
 //        Psychro.buildState(tdb, W, P)
 //        Psychro.computeProcess(stage, cfm)
+//        Psychro.invertProcess(inlet, opts)
 //
 // Why two tiers: the primitives are the unopinionated ASHRAE math any
 // future psych tool will want directly (a coil-sizing calculator wants
@@ -197,5 +198,40 @@ const Psychro = (function () {
         return { dDb, dW, dH, qTotal, qSens, qLat, shr };
     }
 
-    return { solveState, buildState, computeProcess };
+    // Inverse of computeProcess for a single coil: given the entering-air
+    // state, the coil type, the airflow, and the load the coil must carry,
+    // solve the leaving-air state. The arithmetic is the exact inverse of
+    // computeProcess's q-formulas — feed a result of one into the other and
+    // it round-trips. Loads are positive magnitudes; `type` decides whether
+    // the coil warms or cools the air. opts = { type, cfm, qSens, qLat }:
+    // qSens is the sensible load (Btu/h), qLat the latent load (Btu/h,
+    // cooling only — a heating coil rides humidity ratio through unchanged,
+    // so qLat is ignored when type !== 'cool'). The returned state carries
+    // an extra `saturated` flag — true when the requested latent load drives
+    // the leaving point onto the saturation curve (its apparatus dew point),
+    // where buildState clamps it.
+    function invertProcess(inlet, opts) {
+        if (!inlet || !inlet.ok) return { ok: false, error: 'Entering-air state is invalid.' };
+        const type = opts.type;
+        const cfm  = opts.cfm;
+        if (!isFinite(cfm) || cfm <= 0) return { ok: false, error: 'Enter a positive airflow.' };
+        if (inlet.v <= 0) return { ok: false, error: 'Entering-air state is invalid.' };
+        const qSens = opts.qSens;
+        const qLat  = type === 'cool' ? (opts.qLat || 0) : 0;
+        if (!isFinite(qSens) || qSens < 0) return { ok: false, error: 'Sensible load can’t be negative.' };
+        if (type === 'cool' && (!isFinite(qLat) || qLat < 0)) return { ok: false, error: 'Latent load can’t be negative.' };
+        const mDot = cfm * 60 / inlet.v;                 // lb dry air / h
+        const cpIn = 0.240 + 0.444 * inlet.W;            // Btu / (lb_da·°F)
+        const sign = type === 'cool' ? -1 : 1;           // cooling lowers dry-bulb and enthalpy
+        const tdbOut = inlet.tdb + sign * qSens / (mDot * cpIn);
+        const hOut   = inlet.h   + sign * (qSens + qLat) / mDot;
+        const Wout   = (hOut - 0.240 * tdbOut) / (1061 + 0.444 * tdbOut);
+        if (Wout < -1e-9) return { ok: false, error: 'That load drives the air past bone-dry — check the inputs.' };
+        const Wsat = satHumRatio(tdbOut, inlet.P);
+        const out  = buildState(tdbOut, Math.max(0, Wout), inlet.P);
+        out.saturated = Wout > Wsat + 1e-6;
+        return out;
+    }
+
+    return { solveState, buildState, computeProcess, invertProcess };
 })();

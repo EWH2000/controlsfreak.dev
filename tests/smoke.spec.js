@@ -27,6 +27,7 @@ const PAGES = [
     { name: 'psychrometric chart',    url: '/tools/psychrometric-chart.html' },
     { name: 'economizer ratio',       url: '/tools/economizer-ratio.html' },
     { name: 'air mixing',             url: '/tools/air-mixing.html' },
+    { name: 'coil sizing',            url: '/tools/coil-sizing.html' },
     { name: 'thermistor calculator',  url: '/tools/thermistor-calculator.html' },
     { name: 'vfd mock',               url: '/tools/vfd-mock.html' },
     { name: 'education hub',          url: '/education/' },
@@ -273,6 +274,52 @@ test('economizer ratio — dry-bulb and enthalpy tabs compute their cases', asyn
     await expect(page.locator('#er-h-pct')).toHaveClass(/error/);
 
     expect(errors, 'economizer behavioral should log no page / console errors').toEqual([]);
+});
+
+test('coil sizing — capacity and leaving-state tabs compute their cases', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('/tools/coil-sizing.html');
+
+    // Capacity tab — cooling defaults: 2000 CFM, entering 80/67WB,
+    // leaving 55/54WB. Engine: 76.9 MBH total, 53.1 sensible, 23.9
+    // latent, SHR 0.69. Substring matchers absorb cosmetic rounding
+    // tweaks but fail on any ~5 %+ engine drift.
+    await expect(page.locator('#cs-cap-q-total')).toContainText('76.');
+    await expect(page.locator('#cs-cap-q-sens' )).toContainText('53.');
+    await expect(page.locator('#cs-cap-q-lat'  )).toContainText('23.');
+    await expect(page.locator('#cs-cap-shr'    )).toHaveText('0.69');
+    await expect(page.locator('#cs-cap-status' )).toContainText('Cooling coil');
+
+    // Switch to a heating coil — the sensible / latent / SHR rows drop
+    // out, and a leaving dry-bulb above entering reads as heating.
+    await page.selectOption('#cs-coil-type', 'heat');
+    await expect(page.locator('#cs-cap-q-sens')).toBeHidden();
+    await page.fill('#cs-cap-lvg-tdb', '95');
+    await expect(page.locator('#cs-cap-ddb'   )).toContainText('+15.0');
+    await expect(page.locator('#cs-cap-status')).toContainText('Heating coil');
+
+    // Leaving-state tab — back to cooling defaults: entering 80/67WB,
+    // 2000 CFM, 40 MBH sensible + 15 MBH latent → leaving ≈ 61 °F /
+    // 83 % RH.
+    await page.selectOption('#cs-coil-type', 'cool');
+    await page.click('[data-tab="leaving"]');
+    await expect(page.locator('#cs-lvg-out-db' )).toContainText('61.');
+    await expect(page.locator('#cs-lvg-out-rh' )).toContainText('83.');
+    await expect(page.locator('#cs-lvg-status' )).toContainText('solved');
+
+    // A sensible load past what the air can shed without saturating
+    // pins the leaving point on the saturation curve (apparatus dew
+    // point) — 90 MBH sensible drives leaving air to 100 % RH.
+    await page.fill('#cs-lvg-q-sens', '90');
+    await expect(page.locator('#cs-lvg-status')).toContainText('saturation curve');
+
+    // Bad entering-air state (WB > DB) surfaces inline and mutes output.
+    await page.fill('#cs-lvg-q-sens', '40');
+    await page.fill('#cs-lvg-ent-second', '200');
+    await expect(page.locator('#cs-lvg-status')).toContainText('Wet-bulb can');
+    await expect(page.locator('#cs-lvg-out-db')).toHaveText('—');
+
+    expect(errors, 'coil-sizing behavioral should log no page / console errors').toEqual([]);
 });
 
 test.describe('thermistor behavioral', () => {

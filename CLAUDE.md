@@ -25,7 +25,7 @@ the site does, see `README.md`.
   Pages carry YAML frontmatter and extend the shared layout (see
   *Templating*). Static assets (`scripts/`, `styles.css`, `assets/`,
   `robots.txt`) are passthrough-copied; `sitemap.xml` is generated
-  (see *Sitemap*). Build is fast (~0.3s for 20 pages); Nunjucks is
+  (see *Sitemap*). Build is fast (~0.3s for 21 pages); Nunjucks is
   the only thing the build does — no JS transpile or bundle step.
 - **Templates under `html/_includes/`:**
   - `layouts/page.njk` — the page shell. Composes `head.njk` / `nav.njk`
@@ -77,7 +77,8 @@ the site does, see `README.md`.
   - `ui.js` — `switchTab`, `copyText`, `copyReadouts`. Clipboard
     failures fail silently.
   - `psy-widget.js` — Define-by widget helpers shared by
-    `psychrometric-chart`, `air-mixing`, and `economizer-ratio`.
+    `psychrometric-chart`, `air-mixing`, `economizer-ratio`, and
+    `coil-sizing`.
     Exposes `buildSecondProp()` (per-mode label + step catalog that
     tracks the active unit system) and `secondToCanonical(mode,
     value)` (display-units → canonical-IP conversion). No DOM
@@ -181,7 +182,7 @@ HTML.
 `html/sitemap.njk` renders `_site/sitemap.xml` at build time — it is
 not a hand-maintained file. The `sitemapPages` collection in
 `.eleventy.js` gathers every template carrying a `canonical`
-frontmatter (all 20 real pages; the sitemap template has none, so it
+frontmatter (all 21 real pages; the sitemap template has none, so it
 self-excludes) and sorts by canonical URL. Each `<loc>` is the page's
 `canonical`; each `<lastmod>` comes from the `gitLastmod` filter,
 which runs `git log -1 --format=%cd --date=short -- <inputPath>` and
@@ -371,8 +372,9 @@ per-page history and the *why* behind each, see
       `.tool-body-row`) — Input | Output side-by-side, with
       reference / worked-example / tips content flowing full-width
       beneath. The dominant pattern (`bacnet-ip-converter`,
-      `economizer-ratio`, `air-mixing`, `signal-scaling`,
-      `modbus-register-viewer`). The `.tool-body-row` sibling can
+      `economizer-ratio`, `air-mixing`, `coil-sizing`,
+      `signal-scaling`, `modbus-register-viewer`). The
+      `.tool-body-row` sibling can
       sit inside a `.tab-pane` (per-tab worked example, as on
       economizer-ratio / air-mixing) or as a sibling of all the
       tab-panes inside `.tool-card` (shared reference, as on
