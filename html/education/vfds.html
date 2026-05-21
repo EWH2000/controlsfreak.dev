@@ -307,7 +307,7 @@ nav: education
                 Here's the thing that catches more techs than anything else about drives. To make a VFD run a motor, you're actually giving it <em>two</em> commands, not one — and each command has its own source parameter, configured independently in the drive. The two are:
             </p>
 
-            <ul style="font-size:0.95rem;line-height:1.85;color:var(--text);margin:0.5rem 0 1rem 1.5rem;">
+            <ul style="margin:0.5rem 0 1rem 1.5rem;">
                 <li><strong>Run command</strong> — should the drive be running right now? On/off, start/stop. Sourced from one of: the drive's <em>keypad</em>, a hardwired <em>digital input</em> on the terminal strip, or a write over the <em>network</em> (BACnet, Modbus, etc.).</li>
                 <li><strong>Speed reference</strong> — if you <em>are</em> running, how fast? An analog value (Hz, RPM, %), sourced independently from one of the same three places: keypad, an <em>analog input</em> on the terminal strip (usually 4–20 mA), or a network write.</li>
             </ul>
@@ -500,7 +500,7 @@ nav: education
                 What the BMS actually reads and writes is consistent across protocols, even when the addressing isn't. The four points worth knowing about on every drive:
             </p>
 
-            <ul style="font-size:0.95rem;line-height:1.85;color:var(--text);margin:0.5rem 0 1rem 1.5rem;">
+            <ul style="margin:0.5rem 0 1rem 1.5rem;">
                 <li><em>Run command</em> — a binary value the BMS writes. Setpoint, not feedback. (And only effective if the drive's run-source parameter is set to "network" — see the widget above.)</li>
                 <li><em>Speed reference</em> — an analog value the BMS writes, usually in Hz or as a percentage of rated frequency. Same caveat: only effective if the speed-source parameter points at the network.</li>
                 <li><em>Run status</em> — a binary the BMS reads back. <em>This is what tells you the drive actually started</em>; never trust the BMS's own "I just sent the run command" view of the world.</li>

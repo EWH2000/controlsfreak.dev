@@ -304,6 +304,10 @@ main {
 .tool-body { padding: 1.5rem; }
 .tool-body p { font-size: 0.95rem; line-height: 1.8; color: var(--text); }
 .tool-body a { color: var(--accent); }
+/* Body-prose lists — same font triplet as .tool-body p. Per-list margin
+   stays inline (it varies). A page that wants a tighter small-text list
+   overrides font-size/line-height inline; the inline style wins. */
+.tool-body ul { font-size: 0.95rem; line-height: 1.8; color: var(--text); }
 
 /* Mono small-caps preamble caption that sits under a .tool-card-header.
    Element-qualified to tie .tool-body p's (0,0,1,1) specificity and win
