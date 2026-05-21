@@ -2113,7 +2113,7 @@ dev-time wiring typo. No call site changed behavior — the existing
 smoke specs (tab switching, copy buttons) pass unchanged. Patch
 bump 1.9.1 → 1.9.2.
 
-### 41. Worker email regex accepts edge cases
+### 41. Worker email regex accepts edge cases *(addressed 2026-05-20)*
 
 `src/worker.js:12` — `/^[^@\s]+@[^@\s]+\.[^@\s]+$/` accepts
 addresses like `user@.example.com`, `.user@example.com`, and
@@ -2134,6 +2134,21 @@ stay simple too.
 leading/trailing dots in the local part, or accept the cosmetic
 gap and let Resend surface the 502. Either way, document the
 choice in the worker header comment.
+
+**Resolution (2026-05-20):** tightened, not accepted-as-gap.
+`EMAIL_RE` in `src/worker.js` became
+`/^[^\s@.](?:[^\s@]*[^\s@.])?@[^\s@.](?:[^\s@]*[^\s@.])?\.[^\s@.](?:[^\s@]*[^\s@.])?$/`
+— the token `[^\s@.](?:[^\s@]*[^\s@.])?` reads "a non-dot char,
+optionally followed by anything then another non-dot char", applied
+to the local part and to each side of the domain dot. This rejects
+`.user@x.com`, `user.@x.com`, `user@.x.com`, and `user@x.com.` (all
+of which Resend would 502 on) while still accepting single-char
+local parts, `+tag` addresses, and subdomains. Stayed deliberately
+non-RFC-exact per the #13 "obvious risks handled well" framing;
+internal and consecutive dots are still tolerated since only the
+pathological-dot positions were in scope. The choice is documented
+in a comment above the constant. Verified with a `node -e` case
+table (9 reject / 6 accept, all pass). Patch bump 1.9.2 → 1.9.3.
 
 ### 42. `prefers-reduced-motion` only honored for `.widget-fan-blades` *(addressed 2026-05-19)*
 
