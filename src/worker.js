@@ -9,7 +9,13 @@
 //   TURNSTILE_SECRET   — Cloudflare Turnstile secret key
 //   RESEND_API_KEY     — Resend API key
 
-const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+// Not RFC 5321-exact — deliberately simple. Rejects empty parts and
+// leading/trailing dots in the local part and the domain (.user@x.com,
+// user.@x.com, user@.x.com, user@x.com.) so malformed input gets a 400
+// "valid email" here instead of Resend's generic 502. Internal and
+// consecutive dots are still tolerated — only the pathological-dot
+// positions are in scope.
+const EMAIL_RE = /^[^\s@.](?:[^\s@]*[^\s@.])?@[^\s@.](?:[^\s@]*[^\s@.])?\.[^\s@.](?:[^\s@]*[^\s@.])?$/;
 const CONTACT_ADDRESS = "contact@controlsfreak.dev";
 const ORIGIN_ALLOWED = "https://controlsfreak.dev";
 const MAX_BODY = 20 * 1024;       // 20 KB — legitimate form is < 6 KB.
