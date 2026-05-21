@@ -203,7 +203,7 @@ nav: education
                 <span class="ps-label">Settling time (±2%)</span>
                 <span class="ps-value live" id="m3-settle">—</span>
             </div>
-            <p class="ref-note compact">A little D crushes the overshoot at almost no cost; overdo it and the loop just turns sluggish. The rate slider's range scales with the loop — derivative worth using on a 45-second process is a rounding error on a 4-minute one, which is part of why slow HVAC loops mostly run PI.</p>
+            <p class="ref-note compact">A little D crushes the overshoot at almost no cost; overdo it and the loop just turns sluggish. The rate slider's range scales with the loop — a useful Td grows right along with τ, so derivative has room to act on a slow process too. The reason slow HVAC loops mostly run PI is a different one: D works off the rate of change of the measurement, and on a slow, noisy sensor that's mostly amplified noise.</p>
         </div>
     </div>
 

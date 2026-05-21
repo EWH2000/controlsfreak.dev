@@ -104,6 +104,13 @@ rounding error — Td scales with the loop, and the engine's own
 `PID_DMAX` table scales the rate slider up to 2 min for slow loops
 precisely so D *can* act there.
 
+**Resolution (2026-05-21):** Sim 3 caption rewritten. The wrong clause
+(Td "is a rounding error" on a slow loop) is gone; the caption now keeps
+the true "rate slider's range scales with the loop" and states a useful
+Td grows with τ, then attributes "slow HVAC loops mostly run PI" to D
+amplifying a noisy, slowly-changing measurement — consistent with the
+D callout and the pid-tuner cheat sheet.
+
 ### 2. load-piping.html ↔ pump-control.html — the DPBV is framed two different ways
 
 **Location:** load-piping "Tying it back to the twin-T" (DPBV paragraph)
