@@ -200,7 +200,7 @@ nav: education
                 Two facts about a centrifugal pump — the kind on every hydronic system you'll touch — that are worth carrying around.
             </p>
 
-            <ul style="font-size:0.95rem;line-height:1.85;color:var(--text);margin:0.5rem 0 1rem 1.5rem;">
+            <ul style="margin:0.5rem 0 1rem 1.5rem;">
                 <li><strong>A pump has a <em>curve</em>, not a flow rating.</strong> At zero flow (everything closed in front of it), the pump generates its maximum pressure — its <em>shutoff head</em>. As you let flow open up, head drops along a downward-curving line. At the right end of the curve — wide open, no system resistance — flow peaks and head falls toward zero. The pump can sit anywhere along that line; what it does depends on the system in front of it.</li>
                 <li><strong>A piped system has a <em>curve</em> too.</strong> Friction losses through pipe, fittings, valves, and coils rise with the square of flow. A loop with all valves wide open has a low, shallow system curve; throttle the valves and the curve gets steep — same flow takes more head to push through.</li>
             </ul>
@@ -380,7 +380,7 @@ nav: education
                 Where the sensor lives matters. Two common choices:
             </p>
 
-            <ul style="font-size:0.95rem;line-height:1.85;color:var(--text);margin:0.5rem 0 1rem 1.5rem;">
+            <ul style="margin:0.5rem 0 1rem 1.5rem;">
                 <li><strong>At the pump (local DP).</strong> Cheap, no field wiring beyond the pump panel. Reads pump discharge pressure minus suction pressure — basically the head the pump is producing. Holds the pump output near a setpoint regardless of where in the building demand is coming from. The catch: it tells you nothing about what the <em>far end of the loop</em> is feeling. If the loop's friction climbs (dirty strainer, valves throttling), local DP looks fine while the worst-case load gets starved.</li>
                 <li><strong>At the hydraulically most-remote point (remote DP).</strong> A field-mounted sensor wired across the supply and return mains at the far end of the loop — usually beyond the last big load. Reads the pressure available to the worst-case load. The pump's job becomes "give the worst-case load at least this much DP," which is the variable the building actually cares about. Almost always the better choice on anything bigger than a small system.</li>
             </ul>
