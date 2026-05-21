@@ -142,6 +142,15 @@ diagram, and whether the device shown is a ΔP-controlled DPBV (constant
 speed) or a minimum-flow bypass (variable speed), then make both pages
 agree.
 
+**Resolution (2026-05-21):** the load-piping twin-T device is relabelled
+a *minimum-flow bypass* (SVG label `MIN-FLOW`, `<g>` id
+`lp-tt-minflow`, `<desc>` and "Tying it back" prose all reworded). It's
+now the variable-flow / VFD-pump device — guarantees a flow floor — and
+the prose explicitly distinguishes it from the ΔP-setpoint DPBV, linking
+pump-control. `pump-control.html` keeps the DPBV as the constant-speed
+fix and no longer claims load-piping "covers" it; instead it points at
+load-piping's minimum-flow bypass as the variable-flow counterpart.
+
 ### 3. vfds.html — "clogged filter" listed as a cause of motor overload
 
 **Location:** Fault-code category table, "Motor overload" row, "usual
