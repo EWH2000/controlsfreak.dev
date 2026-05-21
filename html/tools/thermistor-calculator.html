@@ -1,6 +1,6 @@
 ---
-title: Thermistor / RTD Lookup — controlsfreak.dev
-description: "Thermistor calculator working in both directions for common HVAC thermistors and RTDs: 10K Type II/III, Johnson, Schneider Type 5, Balco, Pt100, and Pt1000."
+title: Thermistor / RTD Calculator — controlsfreak.dev
+description: "Thermistor and RTD calculator: convert temperature to resistance both ways, or identify an unknown 10K, 20K, 3K, Balco, or Pt100/Pt1000 sensor."
 canonical: https://controlsfreak.dev/tools/thermistor-calculator.html
 nav: tools
 ---
@@ -37,6 +37,36 @@ nav: tools
            collapses them otherwise. Scoped here, not in styles.css. */
         .about-tables p { margin-bottom: 0.9em; }
         .about-tables p:last-child { margin-bottom: 0; }
+        /* ── Identify mode ────────────────────────────────────────────────
+           The measured-points editor is a small grid of number-input rows;
+           inputs fill their cell, the # and remove columns stay narrow, and
+           the editor table drops the zebra striping (it reads as a form, not
+           a data table). The ranked-candidate table reuses the R/T table's
+           "current row" highlight for the best fit; a type whose curve can't
+           span every entered point reads muted. Each ranked row's type name
+           is a button — built on .copy-btn so it inherits the shared focus
+           ring — that jumps back to Lookup with that type selected. */
+        .th-id-input td { padding: 5px 6px; }
+        .th-id-input th:first-child, .th-id-input td:first-child { width: 2.2em; text-align: center; color: var(--text-dim); }
+        .th-id-input th:last-child,  .th-id-input td:last-child  { width: 2.8em; text-align: center; }
+        .th-id-input input.ps-input { padding: 4px 6px; }
+        .th-id-input tbody tr:nth-child(even) td { background: none; }
+        .th-id-del { padding: 3px 7px; }
+        .th-id-del:hover { border-color: var(--red); color: var(--red); }
+        .ref-table-dense tbody tr.th-id-top td { background: var(--accent-dim); }
+        .ref-table-dense tbody tr.th-id-top td:first-child { font-weight: 600; }
+        .th-id-oor td { color: var(--text-dim); }
+        .th-id-pick {
+            border-color: transparent;
+            background: none;
+            padding: 2px 0;
+            font-family: var(--mono);
+            font-size: inherit;
+            text-transform: none;
+            letter-spacing: normal;
+            color: var(--accent);
+        }
+        .th-id-pick:hover { border-color: transparent; color: var(--accent); text-decoration: underline; }
     </style>
 {% endblock %}
 
@@ -51,108 +81,194 @@ nav: tools
     <div class="tool-card">
         <div class="tool-card-header">
             <h1 class="tool-card-title">
-                Thermistor / RTD Lookup
+                Thermistor / RTD Calculator
                 <span class="tool-tag" id="th-tag">THERMISTOR</span>
             </h1>
         </div>
 
-        <!-- Three-column property-sheet layout, like the BACnet converter: Input left,
-             the computed answer in the middle, the full R/T table for the selected type
-             on the right. No tabs — this is lookup mode only; the "identify an unknown
-             sensor from data points" mode is a separate future build (see
-             site-ideas-and-friction.md). The R/T tables come from /scripts/thermistor-data.js
-             — see that file's header for per-type verification status. -->
-        <div class="tool-body-3col">
-
-            <section>
-                <h2 class="ps-section-label">Input</h2>
-
-                <div class="ps-row">
-                    <label class="ps-label" for="th-type">Sensor</label>
-                    <!-- option values must match the keys in THERMISTOR_TYPES (scripts/thermistor-data.js);
-                         option text mirrors each type's `name` there — the full maker / context lives in
-                         that type's `notes`, shown under the R/T table -->
-                    <select class="ps-input" id="th-type">
-                        <optgroup label="NTC Thermistors">
-                            <option value="10k-2">10K Type II</option>
-                            <option value="10k-3" selected>10K Type III</option>
-                            <option value="10k-jci">10K + 8.7K (JCI)</option>
-                            <option value="10k-5-tac">10K Type 5 (TAC)</option>
-                            <option value="20k">20K NTC</option>
-                            <option value="3k">3K NTC</option>
-                        </optgroup>
-                        <optgroup label="RTDs — resistance rises with temperature">
-                            <option value="balco-1k">1K Balco (RTD)</option>
-                            <option value="pt100">Pt100 RTD</option>
-                            <option value="pt1000">Pt1000 RTD</option>
-                        </optgroup>
-                    </select>
-                </div>
-
-                <div class="ps-row" role="group" aria-labelledby="th-by-label">
-                    <span class="ps-label" id="th-by-label">Look up by</span>
-                    <div class="btn-row">
-                        <button class="copy-btn active" id="th-by-temp">Temperature</button>
-                        <button class="copy-btn" id="th-by-res">Resistance</button>
-                    </div>
-                </div>
-
-                <div class="ps-row">
-                    <label class="ps-label" id="th-temp-lbl" for="th-temp">Temperature (°F)</label>
-                    <input class="ps-input" type="number" id="th-temp" step="1" min="-50" max="200" placeholder="77" value="77">
-                </div>
-
-                <div class="ps-row">
-                    <label class="ps-label" for="th-res">Resistance (Ω)</label>
-                    <input class="ps-input" type="number" id="th-res" step="1" min="0" placeholder="10000" disabled>
-                </div>
-            </section>
-
-            <section>
-                <h2 class="ps-section-label">Output</h2>
-
-                <div class="ps-row">
-                    <span class="ps-label">Defining point</span>
-                    <span class="ps-value muted" id="th-ref-point">—</span>
-                </div>
-                <div class="ps-row">
-                    <span class="ps-label">Looking up</span>
-                    <span class="ps-value muted" id="th-dir">—</span>
-                </div>
-                <div class="ps-row">
-                    <span class="ps-label">Result</span>
-                    <span class="ps-value live" id="th-result">—</span>
-                </div>
-                <div class="ps-row">
-                    <span class="ps-label">Reading</span>
-                    <span class="ps-value muted" id="th-kind">—</span>
-                </div>
-                <div class="ps-row">
-                    <span class="ps-label">Range check</span>
-                    <span class="ps-value muted" id="th-status">—</span>
-                </div>
-
-                <div class="btn-row">
-                    <button class="copy-btn" id="th-copy-btn">Copy value</button>
-                </div>
-            </section>
-
-            <section>
-                <h2 class="ps-section-label" id="th-rt-title">R / T Table</h2>
-                <div id="th-rt-scroll">
-                    <table class="ref-table-dense">
-                        <thead>
-                            <tr id="th-rt-head"><th>Temperature</th><th>Resistance (Ω)</th></tr>
-                        </thead>
-                        <tbody id="th-rt-body"></tbody>
-                    </table>
-                </div>
-                <p class="ref-note" id="th-note">—</p>
-            </section>
-
+        <!-- Two modes, à la Signal Scaling. LOOKUP: pick a known type, enter a
+             temperature OR a resistance, get the other plus the full R/T table.
+             IDENTIFY: enter measured (temperature, resistance) pairs from an
+             UNKNOWN sensor and the tool ranks every standard type by how well
+             its published curve fits. Both modes read the same THERMISTOR_TYPES
+             from /scripts/thermistor-data.js — see that file's header for
+             per-type verification status. -->
+        <div class="tabs tabs-flush">
+            <button class="tab-btn active" id="th-tab-lookup"   data-tab="lookup">Lookup</button>
+            <button class="tab-btn"        id="th-tab-identify" data-tab="identify">Identify</button>
         </div>
 
-        <div class="result-formula flush" id="th-worked"></div>
+        <!-- ── LOOKUP ───────────────────────────────────────────────────────
+             Three-column property-sheet layout, like the BACnet converter:
+             Input left, the computed answer in the middle, the full R/T table
+             for the selected type on the right. -->
+        <div id="tab-lookup" class="tab-pane active">
+            <div class="tool-body-3col">
+
+                <section>
+                    <h2 class="ps-section-label">Input</h2>
+
+                    <div class="ps-row">
+                        <label class="ps-label" for="th-type">Sensor</label>
+                        <!-- option values must match the keys in THERMISTOR_TYPES (scripts/thermistor-data.js);
+                             option text mirrors each type's `name` there — the full maker / context lives in
+                             that type's `notes`, shown under the R/T table -->
+                        <select class="ps-input" id="th-type">
+                            <optgroup label="NTC Thermistors">
+                                <option value="10k-2">10K Type II</option>
+                                <option value="10k-3" selected>10K Type III</option>
+                                <option value="10k-jci">10K + 8.7K (JCI)</option>
+                                <option value="10k-5-tac">10K Type 5 (TAC)</option>
+                                <option value="20k">20K NTC</option>
+                                <option value="3k">3K NTC</option>
+                            </optgroup>
+                            <optgroup label="RTDs — resistance rises with temperature">
+                                <option value="balco-1k">1K Balco (RTD)</option>
+                                <option value="pt100">Pt100 RTD</option>
+                                <option value="pt1000">Pt1000 RTD</option>
+                            </optgroup>
+                        </select>
+                    </div>
+
+                    <div class="ps-row" role="group" aria-labelledby="th-by-label">
+                        <span class="ps-label" id="th-by-label">Look up by</span>
+                        <div class="btn-row">
+                            <button class="copy-btn active" id="th-by-temp">Temperature</button>
+                            <button class="copy-btn" id="th-by-res">Resistance</button>
+                        </div>
+                    </div>
+
+                    <div class="ps-row">
+                        <label class="ps-label" id="th-temp-lbl" for="th-temp">Temperature (°F)</label>
+                        <input class="ps-input" type="number" id="th-temp" step="1" min="-50" max="200" placeholder="77" value="77">
+                    </div>
+
+                    <div class="ps-row">
+                        <label class="ps-label" for="th-res">Resistance (Ω)</label>
+                        <input class="ps-input" type="number" id="th-res" step="1" min="0" placeholder="10000" disabled>
+                    </div>
+                </section>
+
+                <section>
+                    <h2 class="ps-section-label">Output</h2>
+
+                    <div class="ps-row">
+                        <span class="ps-label">Defining point</span>
+                        <span class="ps-value muted" id="th-ref-point">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">Looking up</span>
+                        <span class="ps-value muted" id="th-dir">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">Result</span>
+                        <span class="ps-value live" id="th-result">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">Reading</span>
+                        <span class="ps-value muted" id="th-kind">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">Range check</span>
+                        <span class="ps-value muted" id="th-status">—</span>
+                    </div>
+
+                    <div class="btn-row">
+                        <button class="copy-btn" id="th-copy-btn">Copy value</button>
+                    </div>
+                </section>
+
+                <section>
+                    <h2 class="ps-section-label" id="th-rt-title">R / T Table</h2>
+                    <div id="th-rt-scroll">
+                        <table class="ref-table-dense">
+                            <thead>
+                                <tr id="th-rt-head"><th>Temperature</th><th>Resistance (Ω)</th></tr>
+                            </thead>
+                            <tbody id="th-rt-body"></tbody>
+                        </table>
+                    </div>
+                    <p class="ref-note" id="th-note">—</p>
+                </section>
+
+            </div>
+
+            <div class="result-formula flush" id="th-worked"></div>
+        </div>
+
+        <!-- ── IDENTIFY ──────────────────────────────────────────────────────
+             Measured points on the left, the ranked best-match on the right,
+             the per-point fit breakdown for the winner in the row below. -->
+        <div id="tab-identify" class="tab-pane">
+            <div class="tool-body-2col">
+
+                <section>
+                    <h2 class="ps-section-label">Measured points</h2>
+                    <p class="ref-note compact">Enter temperature + resistance pairs read off the unknown sensor. Three or more readings spread across a wide span give the cleanest match.</p>
+                    <table class="ref-table-dense th-id-input">
+                        <thead>
+                            <tr>
+                                <th scope="col">#</th>
+                                <th scope="col" id="th-id-t-head">Temp (°F)</th>
+                                <th scope="col">Resistance (Ω)</th>
+                                <th scope="col"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="th-id-rows"></tbody>
+                    </table>
+                    <div class="btn-row">
+                        <button class="copy-btn" id="th-id-add">+ Add point</button>
+                    </div>
+                </section>
+
+                <section>
+                    <h2 class="ps-section-label">Best match</h2>
+
+                    <div class="ps-row">
+                        <span class="ps-label">Likely type</span>
+                        <span class="ps-value live" id="th-id-best">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">Confidence</span>
+                        <span class="ps-value muted" id="th-id-conf">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">Points used</span>
+                        <span class="ps-value muted" id="th-id-npts">—</span>
+                    </div>
+
+                    <p class="ref-note compact">Every standard type, ranked by how far its published curve sits from your readings. Pick a row to open that type in Lookup.</p>
+                    <table class="ref-table-dense">
+                        <thead>
+                            <tr>
+                                <th scope="col">Sensor type</th>
+                                <th scope="col">Equiv. temp error</th>
+                                <th scope="col">Resistance error</th>
+                            </tr>
+                        </thead>
+                        <tbody id="th-id-rank-body"></tbody>
+                    </table>
+                </section>
+
+            </div>
+
+            <div class="tool-body-row">
+                <h2 class="ps-section-label" id="th-id-resid-title">Per-point fit</h2>
+                <table class="ref-table-dense">
+                    <thead>
+                        <tr>
+                            <th scope="col">#</th>
+                            <th scope="col">Measured temp</th>
+                            <th scope="col">Measured Ω</th>
+                            <th scope="col">Curve says</th>
+                            <th scope="col">Off by</th>
+                        </tr>
+                    </thead>
+                    <tbody id="th-id-resid-body"></tbody>
+                </table>
+                <p class="ref-note">Identify mode compares your readings against the same generated nominal curves Lookup uses — not calibration data. Sensor tolerance (±0.1 to ±1 °C is typical), meter accuracy, and self-heating all shift the numbers. Two points often cannot separate similar curves: a 10K Type II and a 10K Type III both pass through 10 kΩ at 77 °F and only diverge away from it. Spread readings across as wide a temperature span as the job allows, use three or more, and treat a close call as “one of these two” rather than a definitive ID.</p>
+            </div>
+        </div>
     </div>
 
     <div class="tool-card about-tables">
@@ -188,10 +304,11 @@ nav: tools
 <script src="/scripts/ui.js"></script>
 <script>
     // ─────────────────────────────────────────────────────────────────────
-    // Thermistor / RTD Lookup — page glue around THERMISTOR_TYPES.
-    // Lookup mode only: pick a type, enter a temperature OR a resistance,
-    // get the other (linear-interpolating between R/T table rows), plus the
-    // full table for that type with the closest row highlighted.
+    // Thermistor / RTD Calculator — page glue around THERMISTOR_TYPES.
+    // Two modes share one IIFE: LOOKUP (pick a type, enter temperature OR
+    // resistance, get the other by interpolating the R/T table) and
+    // IDENTIFY (enter measured points, rank every type by how well its
+    // curve fits).
     // ─────────────────────────────────────────────────────────────────────
     (function () {
         'use strict';
@@ -399,18 +516,249 @@ nav: tools
             document.getElementById('th-temp-lbl').textContent = 'Temperature (°' + u + ')';
         }
 
+        // ─────────────────────────────────────────────────────────────────
+        // IDENTIFY MODE — rank every standard type against measured points.
+        //
+        // The user enters (temperature, resistance) pairs read off an unknown
+        // sensor. For each candidate type we score the fit two ways:
+        //   • equivalent temperature error — push the measured resistance
+        //     through that type's curve, see what temperature it implies,
+        //     and compare to the measured temperature; RMS across points, in
+        //     °F. This is the ranking key — unit-meaningful ("this type would
+        //     read 3° off") and comparable across every curve.
+        //   • resistance error — push the measured temperature through the
+        //     curve for a predicted resistance, compare to the measured
+        //     resistance as a percentage. Shown alongside, not ranked on.
+        // A type whose curve cannot span every entered point is flagged
+        // out-of-range rather than scored — clamping would invent a fit.
+        // ─────────────────────────────────────────────────────────────────
+
+        // non-clamping temperature(°F) → resistance; null outside the table's
+        // temperature span. (thLerpByTemp clamps to the ends — wrong for a fit
+        // score, which must penalise a curve that can't reach the point.)
+        function idRAtTemp(tbl, tF) {
+            if (tF < tbl[0][0] - 1e-6 || tF > tbl[tbl.length - 1][0] + 1e-6) return null;
+            for (let i = 0; i < tbl.length - 1; i++) {
+                const a = tbl[i], b = tbl[i + 1];
+                if (tF >= a[0] - 1e-6 && tF <= b[0] + 1e-6) {
+                    return a[2] + (tF - a[0]) / (b[0] - a[0]) * (b[2] - a[2]);
+                }
+            }
+            return tbl[tbl.length - 1][2];
+        }
+
+        // non-clamping resistance → temperature(°F); null if the resistance
+        // falls outside this type's whole curve.
+        function idTempAtR(tbl, r) {
+            for (let i = 0; i < tbl.length - 1; i++) {
+                const a = tbl[i], b = tbl[i + 1], dR = b[2] - a[2];
+                const lo = Math.min(a[2], b[2]), hi = Math.max(a[2], b[2]);
+                if (r >= lo - 1e-6 && r <= hi + 1e-6) {
+                    if (dR === 0) return a[0];
+                    return a[0] + (r - a[2]) / dR * (b[0] - a[0]);
+                }
+            }
+            return null;
+        }
+
+        // Read the editor: rows with BOTH fields filled become points (the
+        // temperature converted to canonical °F). A complete row whose
+        // temperature lands outside the −40…250 °F table span is counted as
+        // `ignored` — no type's table can score it.
+        function idReadPoints() {
+            const pts = [];
+            let ignored = 0;
+            document.querySelectorAll('#th-id-rows tr').forEach(tr => {
+                const tv = parseFloat(tr.querySelector('.th-id-t').value);
+                const rv = parseFloat(tr.querySelector('.th-id-r').value);
+                if (!isFinite(tv) || !isFinite(rv) || rv <= 0) return;
+                const tF = thUnit() === 'C' ? C2F(tv) : tv;
+                if (tF < -40 - 1e-6 || tF > 250 + 1e-6) { ignored++; return; }
+                pts.push({ tF: tF, r: rv });
+            });
+            return { pts: pts, ignored: ignored };
+        }
+
+        // Score one type against the points. `oor` is true if any point fell
+        // off this type's curve; rmsT is the RMS equivalent-temperature error
+        // in °F, rmsP the RMS resistance error in percent. `per` is aligned
+        // with the points array (null entry where a point was off-curve).
+        function idScore(T, pts) {
+            const per = [];
+            let sumT2 = 0, sumP2 = 0, n = 0, oor = false;
+            for (const p of pts) {
+                const impliedT = idTempAtR(T.table, p.r);
+                const predR    = idRAtTemp(T.table, p.tF);
+                if (impliedT === null || predR === null || predR <= 0) {
+                    oor = true;
+                    per.push(null);
+                    continue;
+                }
+                const dT = impliedT - p.tF;
+                const dPct = (p.r - predR) / predR * 100;
+                sumT2 += dT * dT;
+                sumP2 += dPct * dPct;
+                n++;
+                per.push({ impliedT: impliedT, dT: dT, dPct: dPct });
+            }
+            return {
+                type: T,
+                oor: oor,
+                rmsT: n ? Math.sqrt(sumT2 / n) : null,
+                rmsP: n ? Math.sqrt(sumP2 / n) : null,
+                per: per,
+            };
+        }
+
+        // Equivalent-temperature error magnitude in the active display unit
+        // (the curves are canonical °F, so a metric error is just ×5/9).
+        const idFmtErr = errF => (thUnit() === 'C' ? errF * 5 / 9 : errF).toFixed(1) + ' °' + thUnit();
+
+        function idApplyUnit() {
+            document.getElementById('th-id-t-head').textContent = 'Temp (°' + thUnit() + ')';
+        }
+
+        // ── Main recompute for Identify mode ──
+        function idRecompute() {
+            const u        = thUnit();
+            const bestEl   = document.getElementById('th-id-best');
+            const confEl   = document.getElementById('th-id-conf');
+            const nptsEl   = document.getElementById('th-id-npts');
+            const rankBody = document.getElementById('th-id-rank-body');
+            const residEl  = document.getElementById('th-id-resid-body');
+            const residTtl = document.getElementById('th-id-resid-title');
+
+            const read = idReadPoints();
+            const pts  = read.pts;
+
+            nptsEl.textContent = pts.length + (pts.length === 1 ? ' point' : ' points')
+                + (read.ignored ? ' · ' + read.ignored + ' ignored (outside −40 to 250 °F)' : '');
+
+            const idMute = msg => {
+                bestEl.className = 'ps-value muted'; bestEl.textContent = '—';
+                confEl.className = 'ps-value muted'; confEl.textContent = msg;
+                rankBody.innerHTML = '';
+                residEl.innerHTML  = '';
+                residTtl.textContent = 'Per-point fit';
+            };
+
+            if (pts.length < 2) { idMute('enter at least 2 (temp, resistance) points'); return; }
+
+            // score every type, then rank: scorable types by rmsT ascending,
+            // out-of-range types sorted to the bottom (still listed, flagged).
+            const scores = Object.keys(THERMISTOR_TYPES).map(id => {
+                const s = idScore(THERMISTOR_TYPES[id], pts);
+                s.id = id;
+                return s;
+            });
+            scores.sort((a, b) => {
+                if (a.oor !== b.oor) return a.oor ? 1 : -1;
+                return (a.rmsT == null ? Infinity : a.rmsT) - (b.rmsT == null ? Infinity : b.rmsT);
+            });
+
+            const best   = (!scores[0].oor && scores[0].rmsT != null) ? scores[0] : null;
+            const runner = best ? scores.find((s, i) => i > 0 && !s.oor && s.rmsT != null) : null;
+
+            // ranked candidate table
+            let rows = '';
+            scores.forEach(s => {
+                const cls  = s === best ? ' class="th-id-top"' : (s.oor ? ' class="th-id-oor"' : '');
+                const pick = '<button type="button" class="copy-btn th-id-pick" data-type="' + s.id + '">' + s.type.name + '</button>';
+                rows += s.oor
+                    ? '<tr' + cls + '><td>' + pick + '</td><td>out of range</td><td>—</td></tr>'
+                    : '<tr' + cls + '><td>' + pick + '</td><td>' + idFmtErr(s.rmsT) + '</td><td>' + s.rmsP.toFixed(1) + ' %</td></tr>';
+            });
+            rankBody.innerHTML = rows;
+
+            if (!best) {
+                bestEl.className = 'ps-value muted'; bestEl.textContent = '—';
+                confEl.className = 'ps-value muted';
+                confEl.textContent = 'no type covers every reading — re-check the entries';
+                residEl.innerHTML = '';
+                residTtl.textContent = 'Per-point fit';
+                return;
+            }
+
+            // confidence — heuristic. Thresholds are in °F of equivalent
+            // temperature error; `gap` is how much worse the runner-up fits.
+            // A small gap means two curves fit about equally and the entered
+            // points genuinely cannot tell them apart.
+            const gap = runner ? runner.rmsT - best.rmsT : Infinity;
+            let verdict, strong = false;
+            if      (best.rmsT > 6)    verdict = 'no standard type fits well';
+            else if (gap < 1)          verdict = 'ambiguous — top types fit about equally';
+            else if (best.rmsT <= 1) { verdict = 'strong match'; strong = true; }
+            else if (best.rmsT <= 3) { verdict = 'likely match'; strong = true; }
+            else                       verdict = 'weak — loose fit, best available';
+
+            bestEl.className = 'ps-value live';
+            bestEl.textContent = best.type.name;
+            confEl.className = 'ps-value ' + (strong ? 'live' : 'muted');
+            confEl.textContent = verdict + ' · ' + idFmtErr(best.rmsT) + ' avg error';
+
+            // per-point fit for the winner
+            residTtl.textContent = 'Per-point fit — ' + best.type.name;
+            let rhtml = '';
+            best.per.forEach((pp, i) => {
+                const p  = pts[i];
+                const mt = u === 'C' ? F2C(p.tF) : p.tF;
+                const it = u === 'C' ? F2C(pp.impliedT) : pp.impliedT;
+                const dd = u === 'C' ? pp.dT * 5 / 9 : pp.dT;
+                const sign = dd >= 0 ? '+' : '−';
+                rhtml += '<tr><td>' + (i + 1) + '</td><td>' + mt.toFixed(1) + ' °' + u + '</td>'
+                       + '<td>' + p.r.toLocaleString() + '</td><td>' + it.toFixed(1) + ' °' + u + '</td>'
+                       + '<td>' + sign + Math.abs(dd).toFixed(1) + ' °' + u + '</td></tr>';
+            });
+            residEl.innerHTML = rhtml;
+        }
+
+        // ── Identify-mode editor row management ──
+        function idRenumber() {
+            const rows = document.querySelectorAll('#th-id-rows tr');
+            rows.forEach((tr, i) => {
+                tr.querySelector('.th-id-num').textContent = i + 1;
+                tr.querySelector('.th-id-t').setAttribute('aria-label', 'Point ' + (i + 1) + ' temperature');
+                tr.querySelector('.th-id-r').setAttribute('aria-label', 'Point ' + (i + 1) + ' resistance');
+                tr.querySelector('.th-id-del').setAttribute('aria-label', 'Remove point ' + (i + 1));
+            });
+            // keep at least two rows — disable every remove button at the floor
+            const atFloor = rows.length <= 2;
+            rows.forEach(tr => { tr.querySelector('.th-id-del').disabled = atFloor; });
+        }
+
+        function idAddRow() {
+            const tr = document.createElement('tr');
+            tr.innerHTML =
+                '<td class="th-id-num"></td>'
+              + '<td><input class="ps-input th-id-t" type="number" step="any" inputmode="decimal"></td>'
+              + '<td><input class="ps-input th-id-r" type="number" step="any" min="0" inputmode="decimal"></td>'
+              + '<td><button type="button" class="copy-btn th-id-del">✕</button></td>';
+            document.getElementById('th-id-rows').appendChild(tr);
+            idRenumber();
+        }
+
         document.addEventListener('unitschange', ev => {
             const prev = ev.detail && ev.detail.previous;
             const next = ev.detail && ev.detail.units;
-            // If the user has a value in the temperature box, convert it from old
-            // display to new display so the *meaning* of the entry is preserved.
+            const changed = prev && next && prev !== next;
+            // Lookup: convert the single temperature field through the change
+            // so the *meaning* of the entry is preserved.
             const tEl = document.getElementById('th-temp');
             const v = parseFloat(tEl.value);
-            if (isFinite(v) && prev && next && prev !== next) {
+            if (isFinite(v) && changed) {
                 tEl.value = (+window.Units.convert(v, prev, next, 'temp').toFixed(1)).toString();
             }
+            // Identify: convert every filled temperature cell the same way.
+            if (changed) {
+                document.querySelectorAll('#th-id-rows .th-id-t').forEach(inp => {
+                    const tv = parseFloat(inp.value);
+                    if (isFinite(tv)) inp.value = (+window.Units.convert(tv, prev, next, 'temp').toFixed(1)).toString();
+                });
+            }
             thApplyUnit();
+            idApplyUnit();
             thRecompute();
+            idRecompute();
         });
 
         document.getElementById('th-type').addEventListener('change', thRecompute);
@@ -420,8 +768,40 @@ nav: tools
         document.getElementById('th-res').addEventListener('input', thRecompute);
         document.getElementById('th-copy-btn').addEventListener('click', e => thCopy(e.currentTarget));
 
+        // ── Identify-mode wiring ──
+        document.getElementById('th-id-add').addEventListener('click', idAddRow);
+        document.getElementById('th-id-rows').addEventListener('input', idRecompute);
+        document.getElementById('th-id-rows').addEventListener('click', e => {
+            const del = e.target.closest('.th-id-del');
+            if (!del || del.disabled) return;
+            del.closest('tr').remove();
+            idRenumber();
+            idRecompute();
+        });
+        // pick a ranked candidate → open it in Lookup mode
+        document.getElementById('th-id-rank-body').addEventListener('click', e => {
+            const pick = e.target.closest('.th-id-pick');
+            if (!pick) return;
+            document.getElementById('th-type').value = pick.dataset.type;
+            switchTab('lookup', document.getElementById('th-tab-lookup'));
+            thRecompute();   // type changed → re-renders the table, note, and card tag
+        });
+        // tab switching — Identify has no single sensor type, so the card tag
+        // reads IDENTIFY; returning to Lookup restores the type-driven tag.
+        document.getElementById('th-tab-lookup').addEventListener('click', e => {
+            switchTab('lookup', e.currentTarget);
+            const T = thType();
+            document.getElementById('th-tag').textContent = (T.family === 'rtd') ? 'RTD' : 'THERMISTOR';
+        });
+        document.getElementById('th-tab-identify').addEventListener('click', e => {
+            switchTab('identify', e.currentTarget);
+            document.getElementById('th-tag').textContent = 'IDENTIFY';
+            idRecompute();
+        });
+
         // ── Init ──
         thApplyUnit();
+        idApplyUnit();
         // If the page is loaded directly in metric, the HTML default value="77"
         // is in °F. Rewrite it to °C before the first compute so the displayed
         // input is coherent with the global toggle.
@@ -431,6 +811,12 @@ nav: tools
             if (isFinite(v)) tEl.value = (+F2C(v).toFixed(1)).toString();
         }
         thRecompute();
+        // Identify mode opens with three blank rows — the recommended entry
+        // count, and one above the two-point minimum.
+        idAddRow();
+        idAddRow();
+        idAddRow();
+        idRecompute();
     })();
 </script>
 {% endblock %}

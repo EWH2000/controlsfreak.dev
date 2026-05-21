@@ -65,15 +65,17 @@ Calculators, converters, and lookups — open one, get an answer.
   leaving-air state, flagging the apparatus dew point when a latent
   load drives the leaving point onto the saturation curve. Cooling
   or heating coil; sea-level pressure.
-- **Thermistor / RTD Lookup** — table-driven R↔T curve for common
-  sensor types (10K Type II/III, JCI 10K+8.7K shunt,
+- **Thermistor / RTD Calculator** — table-driven R↔T curve for
+  common sensor types (10K Type II/III, JCI 10K+8.7K shunt,
   Schneider/TAC "Type 5" 10K-3+11K shunt, 20K, 3K, 1K Balco,
-  Pt100, Pt1000) with the full R/T table alongside the single
-  answer. Curve parameters verified against BAPI, Vector Controls,
-  Sontay, US Sensor, Schneider EBO, ACI, and IEC 60751 — see the
-  data file header for per-type confidence and the page's "About
-  these tables" card for the methodology. JCI 8.7K-shunt curve
-  is the one type still nominal (no public R/T table).
+  Pt100, Pt1000). Lookup mode gives temperature ↔ resistance with
+  the full R/T table alongside; Identify mode ranks every type
+  against measured points to name an unknown sensor. Curve
+  parameters verified against BAPI, Vector Controls, Sontay, US
+  Sensor, Schneider EBO, ACI, and IEC 60751 — see the data file
+  header for per-type confidence and the page's "About these
+  tables" card for the methodology. JCI 8.7K-shunt curve is the
+  one type still nominal (no public R/T table).
 - **Mock VFD Interface** — generic drive keypad to practice
   navigating a parameter tree without a live drive in front of you.
   13 parameters in 4 groups, fixed 20×4 mono LCD, linear-ramp motor
