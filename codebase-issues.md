@@ -2889,7 +2889,7 @@ callbacks" gotcha updated to record the route-block; the
 `smoke.spec.js` race-tolerance note stays (that file is out of
 scope). No version bump — test-only.
 
-### 56. `coil-sizing.html` toggles row visibility with `el.style.display` instead of the `.hidden` class
+### 56. `coil-sizing.html` toggles row visibility with `el.style.display` instead of the `.hidden` class *(addressed 2026-05-21)*
 
 Surfaced during the 2026-05-21 content-audit pass (delta sweep of the
 post-2026-05-20 code).
@@ -2923,6 +2923,12 @@ who tries to show one of these rows via `.hidden` finds it doesn't work.
 already exists in `styles.css` from #53; no CSS change needed. Confirm
 the `.cs-cool-only` / `.cs-heat-only` selectors carry no `display` rule
 of their own that would tie with `.hidden` on specificity.
+
+**Resolution (2026-05-21):** `applyCoilType()` now uses
+`el.classList.toggle('hidden', …)` for both row sets. Confirmed
+`.cs-cool-only` / `.cs-heat-only` carry no CSS rule of their own (page
+inline `<style>` or `styles.css`), so `.hidden` wins cleanly. No CSS
+change — `.hidden` was already in `styles.css` from #53.
 
 ### 57. Education body-prose inline triplet on `<ul>` lists — missed by #19 / #50
 

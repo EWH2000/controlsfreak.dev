@@ -553,8 +553,8 @@ nav: tools
         // ── Coil-type toggle ──────────────────────────────────────────
         function applyCoilType() {
             const cool = isCool();
-            document.querySelectorAll('.cs-cool-only').forEach(el => { el.style.display = cool ? '' : 'none'; });
-            document.querySelectorAll('.cs-heat-only').forEach(el => { el.style.display = cool ? 'none' : ''; });
+            document.querySelectorAll('.cs-cool-only').forEach(el => el.classList.toggle('hidden', !cool));
+            document.querySelectorAll('.cs-heat-only').forEach(el => el.classList.toggle('hidden', cool));
         }
 
         // ── Wiring ────────────────────────────────────────────────────
