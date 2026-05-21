@@ -363,6 +363,47 @@ test.describe('thermistor behavioral', () => {
         // Units restore handled by the afterEach above — no manual click needed.
         expect(errors, 'thermistor behavioral should log no page / console errors').toEqual([]);
     });
+
+    test('identify mode names the type its points came from', async ({ page }) => {
+        const errors = watchErrors(page);
+        await page.goto('/tools/thermistor-calculator.html');
+
+        // pull three points off the 10K Type III curve using Lookup mode
+        await page.selectOption('#th-type', '10k-3');
+        const pairs = [];
+        for (const t of ['35', '77', '150']) {
+            await page.fill('#th-temp', t);
+            const r = (await page.locator('#th-result').textContent()).replace(/[^0-9.]/g, '');
+            pairs.push([t, r]);
+        }
+
+        // enter them in Identify mode — the tool should name 10K Type III
+        await page.click('#th-tab-identify');
+        const rows = page.locator('#th-id-rows tr');
+        await expect(rows).toHaveCount(3);
+        for (let i = 0; i < 3; i++) {
+            await rows.nth(i).locator('.th-id-t').fill(pairs[i][0]);
+            await rows.nth(i).locator('.th-id-r').fill(pairs[i][1]);
+        }
+        await expect(page.locator('#th-id-best')).toHaveText('10K Type III');
+
+        // the ranked table lists every type, best row first
+        expect(await page.locator('#th-id-rank-body tr').count(), 'one ranked row per type').toBe(9);
+        await expect(page.locator('#th-id-rank-body tr').first()).toHaveClass(/th-id-top/);
+
+        // add a point row, then remove it
+        await page.click('#th-id-add');
+        await expect(rows).toHaveCount(4);
+        await rows.nth(3).locator('.th-id-del').click();
+        await expect(rows).toHaveCount(3);
+
+        // picking a ranked row jumps back to Lookup with that type selected
+        await page.locator('#th-id-rank-body .th-id-pick').first().click();
+        await expect(page.locator('#tab-lookup')).toHaveClass(/active/);
+        await expect(page.locator('#th-type')).toHaveValue('10k-3');
+
+        expect(errors, 'identify behavioral should log no page / console errors').toEqual([]);
+    });
 });
 
 test('education page runs the PID mini-sims and they respond to input', async ({ page }) => {

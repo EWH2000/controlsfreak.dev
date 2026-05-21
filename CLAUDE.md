@@ -773,7 +773,7 @@ Tests:
 
 ## Roadmap
 
-Near-term work — new tools, thermistor *identify mode*, psych chart
-*floating state-point chip*, more Education pages — lives in
+Near-term work — new tools, psych chart *floating state-point chip*,
+more Education pages — lives in
 `site-ideas-and-friction.md` (feature ideas) and
 `codebase-issues.md` (code-quality holds).

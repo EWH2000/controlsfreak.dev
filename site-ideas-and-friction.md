@@ -521,10 +521,9 @@ Also handles the optional 2-byte UDP port EBO often appends to the
 hex string (default `BAC0` = 47808). Sits under the BACnet category
 alongside the future BACnet object reference tool.
 
-### Thermistor calculator *(lookup mode shipped + curves verified)*
-Two related modes were planned (probably tabs, à la Signal Scaling).
-Lookup is shipped and the curves are now datasheet-verified; identify
-mode is still future work.
+### Thermistor calculator *(both modes shipped + curves verified)*
+Two modes, tabs à la Signal Scaling. Both are shipped and the curves
+are datasheet-verified.
 
 - **Lookup mode** *(shipped).* Pick a thermistor type, enter either
   temp or resistance, get the other. Types live in
@@ -538,14 +537,28 @@ mode is still future work.
   card tag). Page shows the full R/T table for the selected type
   alongside the single answer — techs often want to scan the curve,
   not just one value.
-- **Identify mode** *(still future).* User enters 2+ (temp, resistance)
-  pairs from an unknown sensor and the tool reports which standard
-  type best fits, with a confidence indicator. Useful when there's an
-  unlabeled sensor in the field. Needs a clear accuracy disclaimer —
-  sensor tolerance, measurement noise, and the fact that 2 points
-  often can't distinguish between similar curves all matter. More
-  points = better answer; maybe require 3 minimum and surface
-  per-point residuals so the user can see how clean the fit is.
+- **Identify mode** *(shipped).* A second tab. The user enters
+  measured (temp, resistance) pairs from an unknown sensor — three
+  blank rows by default, add/remove as needed, two filled minimum —
+  and the tool ranks every standard type by fit. Each type carries
+  two error figures: an equivalent-temperature error (the ranking
+  key — push the measured resistance through the type's curve,
+  compare the implied temperature to the measured one, RMS across
+  points) and a resistance percent error shown alongside. A type
+  whose curve can't span every entered point is listed but flagged
+  "out of range" rather than scored. The winner gets a confidence
+  verdict (strong / likely / ambiguous / weak — heuristic
+  thresholds on the °F error and the gap to the runner-up) plus a
+  per-point fit breakdown. Each ranked row is a button that opens
+  that type in Lookup mode. An accuracy disclaimer under the
+  breakdown covers sensor tolerance, meter noise, and the fact that
+  two close points often can't separate similar curves. Open
+  follow-up: the dropped pieces from the original sketch were a
+  per-input out-of-range marker (a complete row outside −40–250 °F
+  is silently counted in the "ignored" tally instead) and a
+  resistance-error column in the per-point table (the aggregate %
+  lives in the ranked table; the breakdown shows the temp residual
+  only).
 
 **Implementation question — settled.** The original open question was
 lookup tables vs. Steinhart-Hart coefficients. The codebase landed on
