@@ -25,7 +25,7 @@ the site does, see `README.md`.
   Pages carry YAML frontmatter and extend the shared layout (see
   *Templating*). Static assets (`scripts/`, `styles.css`, `assets/`,
   `robots.txt`) are passthrough-copied; `sitemap.xml` is generated
-  (see *Sitemap*). Build is fast (~0.3s for 20 pages); Nunjucks is
+  (see *Sitemap*). Build is fast (~0.3s for 21 pages); Nunjucks is
   the only thing the build does — no JS transpile or bundle step.
 - **Templates under `html/_includes/`:**
   - `layouts/page.njk` — the page shell. Composes `head.njk` / `nav.njk`
@@ -182,7 +182,7 @@ HTML.
 `html/sitemap.njk` renders `_site/sitemap.xml` at build time — it is
 not a hand-maintained file. The `sitemapPages` collection in
 `.eleventy.js` gathers every template carrying a `canonical`
-frontmatter (all 20 real pages; the sitemap template has none, so it
+frontmatter (all 21 real pages; the sitemap template has none, so it
 self-excludes) and sorts by canonical URL. Each `<loc>` is the page's
 `canonical`; each `<lastmod>` comes from the `gitLastmod` filter,
 which runs `git log -1 --format=%cd --date=short -- <inputPath>` and

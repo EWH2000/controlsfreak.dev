@@ -52,6 +52,19 @@ Calculators, converters, and lookups — open one, get an answer.
   tool) and adds the resulting full mixed state plus the OA-vs-RA
   enthalpy changeover verdict a high-end BAS uses to gate free
   cooling before any dry-bulb modulation runs.
+- **Air-Mixing Calculator** — blend three air streams by mass flow
+  (CFMs at the panel) or by mass fraction (percentages off a
+  schematic) and read out the full mixed-air state — dry-bulb,
+  wet-bulb, humidity, enthalpy, dew point. The mass-fraction tab
+  flags fractions that don't sum to 100 % rather than silently
+  renormalizing.
+- **Coil-Sizing Calculator** — one coil in isolation. Capacity tab:
+  entering air + leaving air + airflow → total / sensible / latent
+  capacity and the sensible heat ratio. Leaving-state tab runs it
+  backwards — entering air + airflow + the coil's load → the
+  leaving-air state, flagging the apparatus dew point when a latent
+  load drives the leaving point onto the saturation curve. Cooling
+  or heating coil; sea-level pressure.
 - **Thermistor / RTD Lookup** — table-driven R↔T curve for common
   sensor types (10K Type II/III, JCI 10K+8.7K shunt,
   Schneider/TAC "Type 5" 10K-3+11K shunt, 20K, 3K, 1K Balco,
@@ -127,7 +140,7 @@ from now will still run it.
 - **Build:** 11ty (`npm run build`) renders each page from its
   frontmatter + the layout, passes through `styles.css`, `scripts/`,
   `assets/`, `robots.txt`, and `sitemap.xml`, and writes to `_site/`.
-  Build is fast (~0.2s for 20 pages); the only thing the build does
+  Build is fast (~0.2s for 21 pages); the only thing the build does
   is templating, no JS transpile or bundle. Cloudflare Workers Build
   runs `npm install && npm run build` on push to `main` and serves
   `_site/`.
