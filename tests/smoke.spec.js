@@ -29,6 +29,7 @@ const PAGES = [
     { name: 'air mixing',             url: '/tools/air-mixing.html' },
     { name: 'coil sizing',            url: '/tools/coil-sizing.html' },
     { name: 'thermistor calculator',  url: '/tools/thermistor-calculator.html' },
+    { name: 'refrigerant p-t',        url: '/tools/refrigerant-pt.html' },
     { name: 'vfd mock',               url: '/tools/vfd-mock.html' },
     { name: 'education hub',          url: '/education/' },
     { name: 'education — pid basics',  url: '/education/pid-basics.html' },
@@ -404,6 +405,50 @@ test.describe('thermistor behavioral', () => {
 
         expect(errors, 'identify behavioral should log no page / console errors').toEqual([]);
     });
+});
+
+test('refrigerant p-t — saturation lookup, glide blend, and superheat', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('/tools/refrigerant-pt.html');
+
+    // P-T tab, R-410A defaults: 118 psig → bubble/dew ≈ 39.6 / 39.8 °F,
+    // near-zero glide (near-azeotropic). Substring matchers absorb
+    // cosmetic rounding but fail on a real interpolation drift.
+    await expect(page.locator('#rf-pt-bubble')).toContainText('39.');
+    await expect(page.locator('#rf-pt-dew'   )).toContainText('39.');
+    await expect(page.locator('#rf-pt-status')).toContainText('negligible glide');
+
+    // R-407C at 100 psig is a transcribed chart row: bubble 51.1 °F,
+    // dew 61.6 °F — ~10 °F glide, the case a single-column card botches.
+    await page.selectOption('#rf-refrigerant', 'r407c');
+    await page.fill('#rf-pt-pressure', '100');
+    await expect(page.locator('#rf-pt-bubble')).toContainText('51.1');
+    await expect(page.locator('#rf-pt-dew'   )).toContainText('61.6');
+    await expect(page.locator('#rf-pt-glide' )).toContainText('10.5');
+    await expect(page.locator('#rf-pt-status')).toContainText('glide blend');
+
+    // A pressure past the chart range mutes the output.
+    await page.fill('#rf-pt-pressure', '9000');
+    await expect(page.locator('#rf-pt-bubble')).toHaveText('—');
+    await expect(page.locator('#rf-pt-status')).toContainText('Out of range');
+
+    // Superheat / Subcooling tab — R-410A suction defaults: 118 psig,
+    // 50 °F line → dew ≈ 39.8 °F, superheat ≈ 10 °F.
+    await page.selectOption('#rf-refrigerant', 'r410a');
+    await page.click('[data-tab="sc"]');
+    await expect(page.locator('#rf-sc-result-lbl')).toHaveText('Superheat');
+    await expect(page.locator('#rf-sc-result'    )).toContainText('10.');
+
+    // Liquid line — the label flips to Subcooling; 319 psig bubble
+    // ≈ 100 °F, 90 °F line → subcooling ≈ 10 °F.
+    await page.click('#rf-sc-liquid');
+    await expect(page.locator('#rf-sc-result-lbl')).toHaveText('Subcooling');
+    await page.fill('#rf-sc-pressure', '319');
+    await page.fill('#rf-sc-temp', '90');
+    await expect(page.locator('#rf-sc-result')).toContainText('10.');
+    await expect(page.locator('#rf-sc-status')).toContainText('typical range');
+
+    expect(errors, 'refrigerant p-t behavioral should log no page / console errors').toEqual([]);
 });
 
 test('education page runs the PID mini-sims and they respond to input', async ({ page }) => {
