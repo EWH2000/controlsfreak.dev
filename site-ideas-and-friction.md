@@ -959,28 +959,59 @@ audit).** Second second-consumer landed; the API survived again:
   `signal-scaling.html` (3-col → 2-col + shared row) and PR #33
   added a third consumer on `modbus-register-viewer.html`.
 
-### Coil-sizing calculator *(candidate psych-tool follow-up)*
+### Coil-sizing calculator *(shipped 2026-05-21)*
 
-A single-stage calculator: given entering state + leaving state +
-airflow, return total / sensible / latent capacity and SHR. Or invert —
-given entering + airflow + target capacity, solve for leaving state.
-Same math as the chart's CC stage in isolation, surfaced as its own
-tool so a tech sizing a coil doesn't have to build a whole AHU chain
-just to check one capacity.
+Ships at `/tools/coil-sizing.html` as a two-tab `.tool-body-2col` tool
+with a worked-example `.tool-body-row` beneath each tab — same shell as
+`economizer-ratio.html` and `air-mixing.html`. Page-id prefix `cs-`. A
+single coil in isolation: the math the psychrometric chart runs on its
+CC / HC stages, surfaced on its own so a quick capacity check doesn't
+need a whole AHU chain.
 
-In scope (sketch):
-- Coil type toggle: cooling, heating, humidifying.
-- Entering and leaving state editors (the "Define by" pattern again).
-- Airflow input (CFM or m³/h).
-- Output: total MBH, sensible MBH, latent MBH, SHR (cooling only),
-  ΔDB / ΔW / Δh.
-- Solve-for mode: lock any three of {entering, leaving, airflow,
-  capacity}, the fourth falls out.
-- Reuses `Psychro.solveState`, `Psychro.buildState`, and
-  `Psychro.computeProcess` — the last one being the exact math the
-  chart's per-stage table runs today.
+In scope (shipped):
+- *Coil-type toggle* — Cooling / Heating, shared above the tabs in a
+  thin `.cs-type-strip` band (mirrors air-mixing's altitude strip).
+  Humidifying was dropped from the v1 sketch — humidifier sizing is a
+  different question and a rare ask; coil sizing is the cooling/heating
+  pair. Cooling-only rows carry `.cs-cool-only`, heating-only rows
+  `.cs-heat-only`; the toggle shows/hides them and recomputes.
+- *Capacity tab (forward)* — entering state + leaving state (both the
+  "Define by" pattern) + airflow → total / sensible / latent MBH, SHR
+  (cooling only), ΔDB / ΔW / Δh. For a heating coil the leaving editor
+  collapses to a single dry-bulb field — humidity ratio rides through
+  unchanged, so the define-by rows hide. Straight `Psychro.solveState`
+  ×2 → `Psychro.computeProcess` — no new engine math.
+- *Leaving-state tab (inverse)* — entering state + airflow + the load
+  the coil carries → the leaving-air state. Cooling takes sensible +
+  latent MBH as two fields (a load calc hands you both); heating takes
+  one capacity field.
+- *Sea-level pressure for v1* — same call as economizer-ratio; the
+  worked example forward-links to the chart tool for altitude.
 
-Same "first second-consumer triggers API review" note as air-mixing.
+**Engine — `Psychro.invertProcess` added.** The friction-file note on
+this entry and the air-mixing entry both flagged the coil-sizing
+inverse as the trigger for a `Psychro.invertProcess` sibling. It
+landed: `invertProcess(inlet, { type, cfm, qSens, qLat })` is the
+exact algebraic inverse of `computeProcess`'s q-formulas — feed a
+result of one into the other and it round-trips. Loads are positive
+magnitudes; `type` sets the sign. The returned state carries an extra
+`saturated` flag — true when the requested latent load drives the
+leaving point onto the saturation curve (its apparatus dew point),
+which the leaving-state tab surfaces as a `warn` status. Heating is
+the clean case (pure sensible, W constant); cooling needs the latent
+split, hence the two load fields. No other engine surface changed —
+`solveState` / `buildState` / `computeProcess` were untouched.
+
+**Friction caught in build:**
+- *Coil type vs. what the numbers say.* Entering a leaving dry-bulb
+  warmer than the entering air on a coil set to "Cooling" (or cooler,
+  on "Heating") is a real mistake a tech can make. Rather than error,
+  the Capacity tab's status pill warns and names the actual process —
+  a teaching nudge, same spirit as the chart's coil-stage error
+  messages.
+- *Cooling that adds moisture.* If the leaving state on the Capacity
+  tab is more humid than entering, the status warns — a cooling coil
+  removes water, it can't add it.
 
 ### Economizer-ratio helper *(shipped 2026-05-18)*
 

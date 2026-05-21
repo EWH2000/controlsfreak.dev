@@ -77,7 +77,8 @@ the site does, see `README.md`.
   - `ui.js` — `switchTab`, `copyText`, `copyReadouts`. Clipboard
     failures fail silently.
   - `psy-widget.js` — Define-by widget helpers shared by
-    `psychrometric-chart`, `air-mixing`, and `economizer-ratio`.
+    `psychrometric-chart`, `air-mixing`, `economizer-ratio`, and
+    `coil-sizing`.
     Exposes `buildSecondProp()` (per-mode label + step catalog that
     tracks the active unit system) and `secondToCanonical(mode,
     value)` (display-units → canonical-IP conversion). No DOM
@@ -371,8 +372,9 @@ per-page history and the *why* behind each, see
       `.tool-body-row`) — Input | Output side-by-side, with
       reference / worked-example / tips content flowing full-width
       beneath. The dominant pattern (`bacnet-ip-converter`,
-      `economizer-ratio`, `air-mixing`, `signal-scaling`,
-      `modbus-register-viewer`). The `.tool-body-row` sibling can
+      `economizer-ratio`, `air-mixing`, `coil-sizing`,
+      `signal-scaling`, `modbus-register-viewer`). The
+      `.tool-body-row` sibling can
       sit inside a `.tab-pane` (per-tab worked example, as on
       economizer-ratio / air-mixing) or as a sibling of all the
       tab-panes inside `.tool-card` (shared reference, as on
