@@ -2249,7 +2249,7 @@ time substitution against `:root` was the alternative but adds a
 data-file hop for a one-token mirror; if `--surface` ever moves
 off white, this is a one-line follow-up in `head.njk`.
 
-### 45. Sitemap `<lastmod>` dates are stale and hand-maintained
+### 45. Sitemap `<lastmod>` dates are stale and hand-maintained *(addressed 2026-05-20)*
 
 `html/sitemap.xml` carries `<lastmod>` dates per entry, all hand-
 typed. Most are stuck at `2026-05-13` or `2026-05-15` despite
@@ -2274,6 +2274,30 @@ filter (synchronous `git log -1 --format=%cd --date=short
 template that walks the collections API. The 11ty data file
 `page.date` defaults to file mtime in `_site/`, which 11ty
 rewrites on build, so the more robust source is git itself.
+
+**Resolution (2026-05-20):** both recommended pieces combined.
+`html/sitemap.xml` was deleted; `html/sitemap.njk` now renders
+`_site/sitemap.xml` from a `sitemapPages` collection (every
+template with a `canonical` frontmatter — the 20 real pages —
+sorted by canonical URL). Each `<loc>` is the page's `canonical`;
+each `<lastmod>` comes from a new `gitLastmod` 11ty filter running
+`git log -1 --format=%cd --date=short -- <inputPath>` via
+`execFileSync` (no shell), falling back to the build date if git
+has no record. The sitemap passthrough-copy is removed from
+`.eleventy.js`. The #20 `PAGES` ↔ sitemap drift test now reads the
+built `_site/sitemap.xml` instead of the (now-gone) source file.
+CI's `actions/checkout` gains `fetch-depth: 0` so the dates
+resolve in CI — the default depth-1 shallow clone would collapse
+every `<lastmod>` to the build date. CLAUDE.md picked up a new
+*Sitemap* subsection and the *Adding a new tool* / repo-structure
+mentions were corrected (the sitemap is no longer hand-edited;
+new pages only need a `PAGES` entry). **Open caveat:** the
+Cloudflare Workers Build deploy clone depth is unverified — if it
+shallow-clones, the deployed `<lastmod>`s all fall back to the
+build date (functionally harmless, signal lost). Verify against
+the live `/sitemap.xml` after first deploy. Patch bump to 1.9.3
+(shares the version slot with the in-flight #41 PR — whichever
+merges second rebases the `package.json` line to 1.9.4).
 
 ### 46. No CI workflow runs tests pre-deploy *(addressed 2026-05-20)*
 

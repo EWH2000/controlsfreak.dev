@@ -18,6 +18,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        # Full history — sitemap.njk derives <lastmod> from `git log` per
+        # page; the default shallow clone would collapse every date to
+        # the build date.
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-node@v4
         with:
