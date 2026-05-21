@@ -157,6 +157,11 @@ clogged filter does (it moves the system curve, along the fan curve).
 or replace the example with a cleaner motor-overload cause (mechanical
 bind, undersized motor — both already in the same cell).
 
+**Resolution (2026-05-21):** the "clogged filter pushing a fan past its
+curve" clause was dropped from the Motor-overload row. The cell still
+reads correctly with "Mechanical bind" and "undersized motor for the
+actual load" — both accurate causes.
+
 ### 4. thermistor — type notes quote values the page's own table doesn't show
 
 **Location:** `thermistor-data.js` 10K Type II `notes` (rendered
