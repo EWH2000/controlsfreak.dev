@@ -2889,6 +2889,72 @@ callbacks" gotcha updated to record the route-block; the
 `smoke.spec.js` race-tolerance note stays (that file is out of
 scope). No version bump — test-only.
 
+### 56. `coil-sizing.html` toggles row visibility with `el.style.display` instead of the `.hidden` class
+
+Surfaced during the 2026-05-21 content-audit pass (delta sweep of the
+post-2026-05-20 code).
+
+`coil-sizing.html`'s `applyCoilType()` shows/hides the cooling-only and
+heating-only rows by writing inline `display` from JS:
+
+```js
+document.querySelectorAll('.cs-cool-only').forEach(el => { el.style.display = cool ? '' : 'none'; });
+document.querySelectorAll('.cs-heat-only').forEach(el => { el.style.display = cool ? 'none' : ''; });
+```
+
+Issues #53 and #54 established the `.hidden` utility class as the
+site-wide idiom for JS-toggled visibility — `signal-scaling.html`'s
+custom-row toggle uses `classList.toggle('hidden', !isCustom)`,
+`psychrometric-chart.html` uses `.hidden` for its process block and CFM
+column, `contact.html` uses it for the result panel. `coil-sizing.html`
+is a newer page (shipped after #53/#54) and is the lone site-wide user
+of JS `el.style.display` toggling — exactly the drift the CLAUDE.md
+"new page → conventions" sweep is meant to catch.
+
+**Why it matters:** small, but it's the convention drifting back the
+day after it was established. A `el.style.display = 'none'` left on an
+element also out-ranks a later class-based rule, so the next contributor
+who tries to show one of these rows via `.hidden` finds it doesn't work.
+
+**Priority:** LOW (no live bug — the page works; pure consistency).
+
+**Recommended action:** swap both lines to
+`el.classList.toggle('hidden', !cool)` / `('hidden', cool)`. `.hidden`
+already exists in `styles.css` from #53; no CSS change needed. Confirm
+the `.cs-cool-only` / `.cs-heat-only` selectors carry no `display` rule
+of their own that would tie with `.hidden` on specificity.
+
+### 57. Education body-prose inline triplet on `<ul>` lists — missed by #19 / #50
+
+Surfaced during the 2026-05-21 content-audit pass.
+
+Issue #19 promoted the education body-prose font triplet
+(`font-size:0.95rem; line-height:1.85; color:var(--text)`) to a
+`.tool-body p` rule and swept the inline copies off `<p>` elements.
+The sweep was scoped to paragraphs; it did not cover `<ul>` lists
+carrying the same inline triplet. Those survive on at least:
+
+- `html/education/vfds.html` — the run-command/speed-reference list and
+  the network-points list (2 `<ul>`).
+- `html/education/pump-control.html` — the centrifugal-pump-facts list
+  and the local-vs-remote-DP list (2 `<ul>`).
+
+Each is `<ul style="font-size:0.95rem;line-height:1.85;color:var(--text);
+margin:…">`.
+
+**Why it matters:** same design-system-leakage argument as #19 — a
+future retune of education body-prose line-height has these inline
+copies to chase. Low-stakes (no live bug), but it's the same pattern
+#19 set out to eliminate, just on a different element.
+
+**Priority:** LOW.
+
+**Recommended action:** decide whether `.tool-body ul` / `.tool-body li`
+deserves a promoted rule alongside `.tool-body p` (the cleanest fix), or
+whether the handful of inline list styles are tolerable. If promoted,
+mind the same specificity gotcha #19 hit with `p.bit-hint` et al. —
+check no list-scoped utility class is out-ranked.
+
 ---
 
 ## Recently addressed
