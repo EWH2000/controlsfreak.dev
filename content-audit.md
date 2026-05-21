@@ -182,6 +182,12 @@ tables*"). The "About these tables" card already explains the
 generated-vs-canonical gap in general terms; the note just needs to not
 contradict the table beside it.
 
+**Resolution (2026-05-21):** the 10K Type II `notes` string keeps the
+canonical published values and now appends a half-sentence — "Those are
+canonical published values; the generated table above differs by up to
+~1 °F — see 'About these tables'." — so the note no longer silently
+contradicts the table beside it.
+
 ### 5. balancing.html — ABV compensation range: prose and widget disagree
 
 **Location:** "Automatic Balancing Valves" prose vs. the comparison
