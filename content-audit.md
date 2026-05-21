@@ -230,6 +230,11 @@ numbers.
 the prose range, or add a one-line note that the widget models a single
 representative cartridge rather than the full "typical" envelope.
 
+**Resolution (2026-05-21):** the prose range was changed to match the
+widget — "2 to 32 psi" → "1 to 22 psi" (the widget's 3–50 ft-of-head
+band ≈ 1.3–21.7 psi). The widget JS is unchanged, so the smoke-test
+boundary assertions at 3 ft / 50 ft are untouched.
+
 ---
 
 ## Minor polish
