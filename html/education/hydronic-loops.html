@@ -508,7 +508,7 @@ nav: education
                         <div class="widget-readout-value" id="d3-w-pct">100<span class="unit"> %</span></div>
                     </div>
                 </div>
-                <input class="widget-slider" id="d3-w-slider" type="range" min="0" max="75" step="1" value="45" aria-label="Injection pump speed (Hz)"/>
+                <input class="widget-slider" id="d3-w-slider" type="range" min="0" max="60" step="1" value="45" aria-label="Injection pump speed (Hz)"/>
                 <div class="d3-w-temps">
                     <div class="d3-w-temp">
                         <span>Primary loop:</span>
@@ -574,7 +574,7 @@ nav: education
         const Q_SYSTEM      = 200;      // GPM — matches the worked example above
         const DESIGN_HZ     = 45;
         const DESIGN_Q      = 40;       // GPM at DESIGN_HZ — matches the worked example
-        const MAX_HZ        = 75;       // slider max — overspeed territory above DESIGN_HZ
+        const MAX_HZ        = 60;       // slider max — line frequency, the ceiling for a standard induction motor
 
         // Design-system color tokens duplicated here as RGB triples so
         // we can lerp into intermediate values for the diagram strokes
@@ -668,7 +668,7 @@ nav: education
         // System supply color, two-sided: below setpoint, fade toward
         // --blue-cool (system getting raw return temp); above setpoint,
         // warm toward --red. The above-setpoint range is compressed to
-        // 8 °F so the modest overshoot the physics allows (~5 °F at
+        // 8 °F so the modest overshoot the physics allows (~3 °F at
         // MAX_HZ) still produces a visible warm tint without lying
         // about the numbers — the numeric readout next to the swatch
         // is canonical, the color is the pedagogical signal.

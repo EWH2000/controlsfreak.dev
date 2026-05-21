@@ -242,6 +242,17 @@ boundary assertions at 3 ft / 50 ft are untouched.
 Phrasing, undefined jargon, and small wording imprecisions. None change
 what the page teaches; each is a quick editorial pass.
 
+**Resolution (2026-05-21):** all items below addressed in one minor-polish
+pass — glosses added (PV / SP; AV / VAV; RTD / AHU / IAQ / apparatus dew
+point / natatorium); the load-piping SVG "system Q" annotations relabelled
+"system flow"; the hydronic-loops d3 injection-pump slider capped at 60 Hz
+(`MAX_HZ` 75 → 60); the pid-tuner dead-time-ratio sentence reworded to refer
+to the presets' nominal operating points rather than the table's full
+ranges; the unverifiable "Distech" vendor name dropped from the pid-tuner
+prose and the Parameter Style selector (the EBO description was owner-
+confirmed and kept); the air-mixing "Mass flow (CFM)" label changed to
+"Airflow (CFM)"; the two index.html About-card typos fixed.
+
 - **pid-basics.html** — "process variable" and "setpoint" (PV / SP) are
   used from the intro onward without a one-line definition, on a page
   pitched at PID newcomers. *(newcomer)*
