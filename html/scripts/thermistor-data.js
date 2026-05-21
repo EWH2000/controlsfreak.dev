@@ -122,7 +122,7 @@ const THERMISTOR_TYPES = (function () {
             name:   '10K Type II',
             family: 'thermistor', group: 'NTC Thermistors',
             ref:    '10,000 Ω at 77 °F (25 °C)',
-            notes:  'The most widespread BAS thermistor curve — Honeywell, Johnson Controls, Continental Industries and many OEMs call it "Type 2". Steeper curve than Type 3, not interchangeable: at 32 °F a Type 2 reads ≈ 32.7 kΩ, a Type 3 ≈ 29.5 kΩ; at 185 °F a Type 2 reads ≈ 1.07 kΩ, a Type 3 ≈ 1.26 kΩ.',
+            notes:  'The most widespread BAS thermistor curve — Honeywell, Johnson Controls, Continental Industries and many OEMs call it "Type 2". Steeper curve than Type 3, not interchangeable: at 32 °F a Type 2 reads ≈ 32.7 kΩ, a Type 3 ≈ 29.5 kΩ; at 185 °F a Type 2 reads ≈ 1.07 kΩ, a Type 3 ≈ 1.26 kΩ. Those are canonical published values; the generated table above differs by up to ~1 °F — see "About these tables".',
             // source: verified against BAPI 10K-2 + Vector Controls Tn10 + Sontay 10K3A1 (all three published tables agree to within 1 Ω across the range). The canonical Type 2 table is a Steinhart-Hart fit; its effective β varies from ≈3720 (β₂₅/₋₄₀) to ≈3976 (β₂₅/₈₅). β=3900 minimizes RMS temperature error across the BAS range — residual ~0.8 °F overall, under 1 °F across 30-150 °F; degrades to ~2-4 °F at the -40 °F extreme where the single-β model can't track the curve.
             curve:  { kind: 'ntc', r25: 10000, beta: 3900 },
         },
