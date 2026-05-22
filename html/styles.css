@@ -1118,9 +1118,12 @@ p.ref-note.compact {
  * @media screen scopes the override so a printout still gets the
  * dashed encoding even if the page was animating on screen. Selector
  * intentionally targets any element type (paths and lines both carry
- * data-flow). Page-specific structural diagrams without supply/return
- * (e.g. the VFDs block diagram) stay separate from this family — see
- * vfds.html for the .vfd-svg precedent.
+ * data-flow). The .edu-legend return swatch mirrors this: solid by
+ * default (matching the animated diagram), dashed again under
+ * @media print / prefers-reduced-motion, so the key always agrees
+ * with what that visitor actually sees. Page-specific structural
+ * diagrams without supply/return (e.g. the VFDs block diagram) stay
+ * separate from this family — see vfds.html for the .vfd-svg precedent.
  * ────────────────────────────────────────────────────────────────────── */
 .edu-svg {
     display: block;
@@ -1140,12 +1143,16 @@ p.ref-note.compact {
 }
 .edu-legend .sw { display: inline-block; width: 26px; height: 0; vertical-align: middle; margin-right: 0.4rem; }
 .edu-legend .sw.supply { border-top: 3px solid var(--blue); }
-.edu-legend .sw.return { border-top: 3px dashed var(--blue-cool); }
+.edu-legend .sw.return { border-top: 3px solid var(--blue-cool); }
 
 @media screen {
     svg.flow-active [data-flow="return"] {
         stroke-dasharray: none;
     }
+}
+
+@media print, (prefers-reduced-motion: reduce) {
+    .edu-legend .sw.return { border-top-style: dashed; }
 }
 
 /* ──────────────────────────────────────────────────────────────────────
