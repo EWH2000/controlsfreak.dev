@@ -2962,6 +2962,44 @@ whether the handful of inline list styles are tolerable. If promoted,
 mind the same specificity gotcha #19 hit with `p.bit-hint` et al. —
 check no list-scoped utility class is out-ranked.
 
+### 58. Numeric-input values not converted on initial paint for metric visitors
+
+Surfaced while building `refrigerant-pt.html` (2026-05-21).
+
+`units.js` runs `applyToDOM()` on load, which swaps every
+`[data-us][data-metric]` element's text to the metric variant for a
+returning metric visitor — including form-input *labels* like
+`<label data-us="Dry-bulb (°F)" data-metric="Dry-bulb (°C)">`. But the
+input *values* are authored as static US numbers (`value="80"`) and
+nothing converts them until the visitor toggles the units control. So a
+metric visitor's first paint shows a US number under a metric label —
+e.g. `80` next to `Dry-bulb (°C)`.
+
+`thermistor-calculator.html` handles this — its IIFE converts the temp
+input in the initial-paint block when `Units.current()` is `'metric'`.
+The other two-column calculator tools do not:
+
+- `html/tools/coil-sizing.html` — entering/leaving dry-bulb, second-
+  property, airflow, and load inputs.
+- `html/tools/economizer-ratio.html` — the dry-bulb and full-state
+  temperature inputs.
+- `html/tools/air-mixing.html` — per-stream temperature / second-property
+  inputs.
+
+(`refrigerant-pt.html` itself ships with the fix — it converts its four
+inputs up front, matching thermistor.)
+
+**Why it matters:** wrong numbers on screen for a metric visitor until
+they happen to toggle the control. Low-frequency (US is the default and
+most of the audience), but it's a correctness bug, not just cosmetics.
+
+**Priority:** LOW (US-default audience; self-corrects on first toggle).
+
+**Recommended action:** in each tool's IIFE initial-paint block, when
+`Units.current() === 'metric'`, run the existing `rewriteInput` /
+unit-flip path once with `from='us', to='metric'` before the first
+compute. The conversion helpers already exist on each page; this is a
+3–5 line addition per tool, no new shared code.
 **Resolution (2026-05-21):** promoted `.tool-body ul` in `styles.css`
 next to `.tool-body p` — same font triplet (`font-size: 0.95rem;
 line-height: 1.8; color: var(--text)`; normalized off the inline 1.85).

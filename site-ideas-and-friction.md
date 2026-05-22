@@ -487,6 +487,56 @@ will quietly be a few degrees wrong on the systems where being right
 matters most. Worth shipping later than ship-with-bugs — this is a
 tool whose job is to be more correct than a pocket P-T card, not less.
 
+**P-T / superheat tool — shipped 2026-05-21.** Ships at
+`/tools/refrigerant-pt.html` as a two-tab `.tool-body-2col` tool
+(page-id prefix `rf-`), the calculator half of this idea; the
+Education pages above stay future work (no forward-links, since the
+target pages don't exist yet).
+
+Decisions settled during scoping:
+- *Two tabs* — P-T (saturation) with a Pressure ↔ Temperature
+  "look up by" toggle, and Superheat / Subcooling with a Suction /
+  Liquid line toggle. Suction → superheat off the dew point; liquid
+  → subcooling off the bubble point — the same procedure printed on
+  a manufacturer P-T chart.
+- *Gauge pressure (psig / kPa-gauge)* — matches manifold gauges and
+  the source charts. Canonical internal unit is psig, not psia: the
+  source charts are psig and the input is psig, so no absolute-
+  pressure conversion is needed. The site Units `pressure` quantity
+  is a pure scale (1 psi = 6.89476 kPa) so it converts psig ↔
+  kPa-gauge unchanged; only the suffix label is overridden ('psig' /
+  'kPa', not `U.suffix.pressure`'s 'psia' / 'kPa').
+- *Always show bubble + dew* on the P-T tab, with the glide between
+  them — glide is visible by default, not hidden until a blend is
+  picked. Pure refrigerants show the two equal.
+- *Number + caveated guidance* on the SH/SC verdict — the pill names
+  the likely fault direction (low superheat → floodback, high →
+  starved evaporator, etc.) but states plainly that the target is
+  system- and metering-device-specific.
+
+Data — `html/scripts/refrigerant-data.js`, a transcribed-table data
+file in the `thermistor-data.js` mould (one global,
+`REFRIGERANT_TYPES`; raw tables normalized to bubble/dew curves in a
+load-time IIFE). v1 covers six refrigerants: R-410A, R-22, R-134a,
+R-407C, R-404A, R-454B. **The data is transcribed, not modeled** —
+every row is keyed off a published manufacturer P-T chart (Honeywell
+Genetron/Solstice for five of them; an iGas chart for R-410A). The
+remaining verification step is a row-by-row proofread against the
+source PDFs; the smoke suite spot-checks a transcribed R-407C row
+(100 psig → 51.1 / 61.6 °F) and the R-410A interpolation.
+
+Out of scope / parked:
+- *R-32* — dropped from v1; no good full-range P-T chart sourced yet.
+  Slots in as one more data entry when a chart turns up.
+- *Bonus refrigerants* — the Honeywell chart also covers R-448A,
+  R-507A, R-422D, R-407F and older blends; not added, but each is a
+  cheap follow-up data entry.
+- *Sourcing lesson* — manufacturer P-T PDFs don't parse via WebFetch
+  (binary streams) and chart-site HTML 403s; a *charging* chart
+  (subcooling grid) is not a P-T chart and can't substitute. The
+  user supplied the source PDFs directly. The PDFs are authoring
+  inputs only — deleted before the PR, never committed.
+
 **Open questions for the design chat when this gets closer:**
 - The P-T calculator and a future refrigerant-cycle animation might
   share saturation-curve / state-point math. Or not — wait until the
