@@ -37,6 +37,7 @@ const PAGES = [
     { name: 'education — load piping', url: '/education/load-piping.html' },
     { name: 'education — vfds',       url: '/education/vfds.html' },
     { name: 'education — pump control', url: '/education/pump-control.html' },
+    { name: 'education — equipment staging', url: '/education/equipment-staging.html' },
     { name: 'education — balancing',   url: '/education/balancing.html' },
     { name: 'education — psychrometrics basics', url: '/education/psychrometrics-basics.html' },
     { name: 'contact',                url: '/contact.html' },
@@ -609,6 +610,48 @@ test('pump control page renders its diagram and both widgets respond', async ({ 
     });
     await expect(page.locator('.widget-anecdote')).toBeVisible();
     expect(errors, 'pump-control behavioral should log no page / console errors').toEqual([]);
+});
+
+test('equipment staging — staging widget stages up, rotation widget equalizes runtime', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('/education/equipment-staging.html');
+
+    // Intro schematic renders with its named pump groups.
+    await expect(page.locator('main svg.es-fig')).toHaveCount(1);
+    await expect(page.locator('#es-fig-p1')).toHaveCount(1);
+
+    // Widget 1 — one pump running at the light default demand.
+    await expect(page.locator('#es-w1-running')).toHaveText('1');
+    await expect(page.locator('.es-pump')).toHaveCount(3);
+
+    // Push demand to design day; the sequence stages up to all three
+    // pumps. Each change waits out its stage delay plus the minimum
+    // stage time, so this takes several seconds — poll generously.
+    await page.locator('#es-w1-demand-slider').evaluate((el) => {
+        el.value = '95';
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await expect.poll(
+        async () => parseInt(await page.locator('#es-w1-running').textContent(), 10),
+        { timeout: 20000, message: 'all three pumps should stage on at design demand' }
+    ).toBe(3);
+    await expect(page.locator('.es-pump[data-on="true"]')).toHaveCount(3);
+
+    // Widget 2 — fixed lead piles all runtime onto Pump 1.
+    const step = page.locator('#es-w2-step');
+    for (let i = 0; i < 3; i++) await step.click();
+    await expect(page.locator('#es-w2-weeks')).toHaveText('3');
+    await expect(page.locator('.es-runtime').nth(0).locator('.h')).toHaveText('504');
+    await expect(page.locator('.es-runtime').nth(1).locator('.h')).toHaveText('0');
+
+    // Runtime-equalized hands the lead to the lowest-hour pump, and
+    // stepping spreads the hours instead of concentrating them.
+    await page.click('#es-w2-equal');
+    await expect(page.locator('.es-runtime').nth(1)).toHaveAttribute('data-lead', 'true');
+    await step.click();
+    await expect(page.locator('.es-runtime').nth(1).locator('.h')).toHaveText('168');
+
+    expect(errors, 'equipment-staging behavioral should log no page / console errors').toEqual([]);
 });
 
 test('vfds page renders its diagrams and the run/speed widget is wired up', async ({ page }) => {

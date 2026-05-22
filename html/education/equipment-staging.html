@@ -1,0 +1,676 @@
+---
+title: Equipment Staging — controlsfreak.dev
+description: Several identical pumps in parallel and one staging sequence — how a BMS decides how many to run, when to add or drop one, and which pump takes the lead.
+canonical: https://controlsfreak.dev/education/equipment-staging.html
+nav: education
+---
+{% extends "layouts/page.njk" %}
+
+{% block head %}
+    <style>
+        /* Page-specific — widget chrome for the two staging widgets.
+           Shared widget shell (.widget / .widget-try / .widget-slider* /
+           .widget-section-label / .widget-readout-* / .widget-anecdote*)
+           lives in styles.css; only this page's INTERNALS (pump cells,
+           runtime bars, the stage-status banner, the strategy toggle)
+           sit here. */
+
+        /* Static intro schematic — three pumps in parallel. Not a
+           flow-engine diagram (no data-flow, no animation), so it gets
+           its own framing rather than the shared .edu-svg rule. */
+        .es-fig {
+            display: block;
+            width: 100%;
+            height: auto;
+            max-width: 660px;
+            margin: 1.4rem auto;
+        }
+
+        /* Three-cell row shared by both widgets — pump-state cells in
+           Widget 1, runtime bars in Widget 2. */
+        .es-cells {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.5rem;
+            margin: 0.85rem 0 1rem;
+        }
+
+        /* Widget 1 — pump-state cells (running / standby). */
+        .es-pump {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            padding: 0.6rem 0.4rem;
+            text-align: center;
+            transition: border-color 0.18s;
+        }
+        .es-pump[data-on="true"] { border-color: var(--blue); }
+        .es-pump .num {
+            font-family: var(--mono);
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-dim);
+        }
+        .es-pump .state {
+            font-family: var(--mono);
+            font-size: 0.82rem;
+            font-weight: 600;
+            margin-top: 0.25rem;
+            color: var(--text-dim);
+        }
+        .es-pump[data-on="true"] .state { color: var(--blue); }
+
+        /* Widget 1 — stage-status banner. Min-height reserves two
+           lines so the delay / hold countdowns don't reflow the page. */
+        .es-w1-status {
+            font-family: var(--mono);
+            font-size: 0.78rem;
+            line-height: 1.5;
+            color: var(--text);
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-left: 4px solid var(--accent-dim);
+            border-radius: 3px;
+            padding: 0.55rem 0.8rem;
+            min-height: 3.3rem;
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.9rem;
+        }
+        .es-w1-status[data-kind="pending"] { border-left-color: var(--blue); }
+        .es-w1-status[data-kind="held"]    { border-left-color: var(--red); }
+
+        #es-w1 .widget-slider { margin-bottom: 0.9rem; }
+
+        /* Readout cells — shared by both widgets. */
+        .es-readouts {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+            gap: 0.55rem 0.85rem;
+        }
+        .es-readout {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            padding: 0.55rem 0.75rem;
+        }
+
+        /* Widget 2 — strategy toggle. Same idiom as pump-control's
+           DP-mode toggle: segmented buttons, .on marks the active one. */
+        .es-w2-strategy {
+            display: inline-flex;
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            overflow: hidden;
+            font-family: var(--mono);
+            font-size: 0.74rem;
+            margin-bottom: 0.85rem;
+        }
+        .es-w2-strategy button {
+            background: var(--surface);
+            border: 0;
+            color: var(--text-dim);
+            padding: 0.35rem 0.85rem;
+            cursor: pointer;
+        }
+        .es-w2-strategy button + button { border-left: 1px solid var(--border); }
+        .es-w2-strategy button.on { background: var(--blue); color: var(--surface); }
+
+        .es-w2-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 0.95rem;
+        }
+
+        /* Widget 2 — per-pump runtime cell with an accumulated-hours bar. */
+        .es-runtime {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            padding: 0.55rem 0.65rem 0.6rem;
+            transition: border-color 0.18s;
+        }
+        .es-runtime[data-lead="true"] { border-color: var(--blue); }
+        .es-runtime .head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .es-runtime .num {
+            font-family: var(--mono);
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-dim);
+        }
+        .es-runtime .lead-tag {
+            font-family: var(--mono);
+            font-size: 0.52rem;
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+            color: var(--surface);
+            background: var(--blue);
+            border-radius: 2px;
+            padding: 0.06rem 0.32rem;
+        }
+        .es-runtime[data-lead="false"] .lead-tag { visibility: hidden; }
+        .es-runtime .hrs {
+            font-family: var(--mono);
+            font-size: 0.92rem;
+            font-weight: 600;
+            color: var(--blue);
+            margin: 0.32rem 0 0.4rem;
+        }
+        .es-runtime .hrs .u {
+            font-size: 0.62em;
+            color: var(--text-dim);
+            font-weight: 500;
+        }
+        .es-runtime .bar {
+            height: 6px;
+            background: var(--border-faint);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .es-runtime .bar > span {
+            display: block;
+            height: 100%;
+            width: 0;
+            background: var(--blue);
+            transition: width 0.35s;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Education · Equipment Staging</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">Equipment Staging — Running Pumps in Parallel <span class="tool-tag">Sequencing</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                The <a href="/education/pump-control.html">pump control</a> lesson closed on a loose end: most real systems have <em>more than one</em> pump. A primary plus a standby at the least, often two or three pumps piped in parallel that the building automation system brings on and takes off as demand rises and falls. This page is about that decision — the <em>staging sequence</em>. Pumps are the worked example here, but the logic is the same one a BMS uses to stage boilers, chillers, and cooling-tower cells: when you have several identical units, how does it decide <em>how many</em> to run, and <em>which ones?</em>
+            </p>
+
+            <!-- ───────────────── 1 · Why parallel units ───────────────── -->
+            <h2 class="subhead">Why a Plant Runs Several Identical Units</h2>
+
+            <p>
+                Before the staging question makes sense, name why the plant has more than one pump at all. A single pump sized for the building's <em>peak</em> load is oversized for nearly every hour that isn't the peak. A variable-speed pump rides that out gracefully for a while — slow down, follow the building, that's the whole pump-control story — but only down to a point. Every VFD has a minimum speed, and below the flow that minimum produces you're back to the problems variable-speed pumping was meant to solve: pressure dumped across throttled valves, and at the extreme the <em>deadhead</em> the pump-control page ended on. One pump can only turn down so far.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                Split the duty across several smaller pumps and the turndown problem softens. At light load you run one pump at a sensible point on its curve; as demand climbs you bring on a second, then a third. And there's a second reason that has nothing to do with efficiency: <em>redundancy</em>. A plant built N+1 — one more pump than the peak load needs — keeps running when a pump fails or gets pulled for service. The building doesn't care that a bearing let go at 2 a.m.; the standby picks up the load and a technician deals with it in daylight.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                So picture three identical pumps on a common header — a common suction main feeding all three, a common discharge main collecting what they deliver. That's the plant the rest of this page works with.
+            </p>
+
+            <!-- Static schematic — three pumps in parallel. No flow animation;
+                 it orients the reader before the widgets do the teaching. -->
+            <svg class="es-fig" viewBox="0 0 660 220" role="img" aria-labelledby="es-fig-title es-fig-desc"
+                 font-family="var(--mono)">
+                <title id="es-fig-title">Three identical pumps piped in parallel</title>
+                <desc id="es-fig-desc">Three pumps drawn side by side between a common suction header running along the bottom and a common discharge header running along the top. Each pump draws water from the suction header and delivers it into the discharge header through a check valve. The discharge header carries the combined flow out to the building system; the suction header collects the water returning from the system.</desc>
+
+                <!-- discharge header (top) -->
+                <line x1="120" y1="56" x2="540" y2="56" stroke="var(--blue)" stroke-width="3"/>
+                <!-- suction header (bottom) -->
+                <line x1="120" y1="182" x2="540" y2="182" stroke="var(--blue-cool)" stroke-width="3"/>
+
+                <!-- system connections at the right end -->
+                <path d="M540 56 H 568 V 30" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <polygon points="563,36 568,25 573,36" fill="var(--blue)"/>
+                <text x="578" y="34" font-size="11" fill="var(--text)">to system</text>
+                <path d="M540 182 H 568 V 206" fill="none" stroke="var(--blue-cool)" stroke-width="3"/>
+                <polygon points="563,196 568,207 573,196" fill="var(--blue-cool)"/>
+                <text x="578" y="204" font-size="11" fill="var(--text)">from system</text>
+
+                <!-- three pump branches -->
+                <g id="es-fig-p1">
+                    <line x1="180" y1="182" x2="180" y2="141" stroke="var(--blue-cool)" stroke-width="3"/>
+                    <line x1="180" y1="97" x2="180" y2="56" stroke="var(--blue)" stroke-width="3"/>
+                    <circle cx="180" cy="119" r="22" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <text x="180" y="124" text-anchor="middle" font-size="13" font-weight="700" fill="var(--text-bright)">P1</text>
+                    <polygon points="172,84 188,84 180,73" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                </g>
+                <g id="es-fig-p2">
+                    <line x1="330" y1="182" x2="330" y2="141" stroke="var(--blue-cool)" stroke-width="3"/>
+                    <line x1="330" y1="97" x2="330" y2="56" stroke="var(--blue)" stroke-width="3"/>
+                    <circle cx="330" cy="119" r="22" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <text x="330" y="124" text-anchor="middle" font-size="13" font-weight="700" fill="var(--text-bright)">P2</text>
+                    <polygon points="322,84 338,84 330,73" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                </g>
+                <g id="es-fig-p3">
+                    <line x1="480" y1="182" x2="480" y2="141" stroke="var(--blue-cool)" stroke-width="3"/>
+                    <line x1="480" y1="97" x2="480" y2="56" stroke="var(--blue)" stroke-width="3"/>
+                    <circle cx="480" cy="119" r="22" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <text x="480" y="124" text-anchor="middle" font-size="13" font-weight="700" fill="var(--text-bright)">P3</text>
+                    <polygon points="472,84 488,84 480,73" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                </g>
+
+                <!-- header labels -->
+                <text x="120" y="46" font-size="11" fill="var(--text)">common discharge header</text>
+                <text x="120" y="200" font-size="11" fill="var(--text)">common suction header</text>
+                <text x="210" y="78" font-size="9" font-style="italic" fill="var(--text-dim)">check valve</text>
+            </svg>
+
+            <p style="margin-top:1.25rem;">
+                Now the BMS has two questions to answer, continuously, all day: <em>how many</em> of those three pumps should be running right now, and <em>which ones?</em> Take them in order.
+            </p>
+
+            <!-- ───────────────── 2 · Staging up and down ───────────────── -->
+            <h2 class="subhead">Staging Up and Down — How Many to Run</h2>
+
+            <p>
+                The sequence needs a signal that stands in for "how hard is the building working." On a variable-speed plant the natural one is already in hand: the speed reference the DP loop is producing (the pump-control page's whole subject). When the running pumps have been pinned near full speed for a while, they're out of room — the building wants more than they can give, and it's time to add a pump. When the speed reference has been sitting low, the running pumps are loafing, and one of them can probably be shut off.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                That turns into two thresholds: a <em>stage-up</em> point and a <em>stage-down</em> point. The important detail is that they are <em>not the same number</em>. The stage-down point sits well below the stage-up point, and the gap between them is a deliberate <em>deadband</em>. If a single threshold did both jobs, a demand hovering right at that line would add a pump, which drops the load on each running pump, which pushes demand back below the line, which drops the pump, which pushes demand back up — the sequence would <em>hunt</em>, cycling a pump on and off indefinitely. The deadband means the conditions that bring a pump on are clearly different from the conditions that take one off, so the plant settles.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                Two timers finish the picture. A crossed threshold doesn't act <em>immediately</em> — a <em>stage delay</em> requires the demand to stay across the line for a sustained period before the sequence acts, so a brief swing (a single zone slamming open, a momentary pressure dip) doesn't churn the whole plant. And once a stage change does happen, a <em>minimum stage time</em> blocks the next change for a while. A pump that just started shouldn't be asked to stop sixty seconds later; short-cycling is hard on the motor windings, hard on the starter, and hard on the pump itself.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                The widget below has the three pumps from the schematic. Drag the demand slider and watch the sequence work — pumps stage on and off at the thresholds, the stage delay counts down before each change, and the minimum stage time holds off changes that come too fast. Try dragging the slider up and down quickly: the sequence refuses to chase you.
+            </p>
+
+            <!-- Widget 1 — staging simulator. Logic recorded inline in the
+                 script below: stage-up / stage-down thresholds per running
+                 count (with a deadband between them), a stage-delay timer,
+                 and a minimum-stage-time lock after each change. -->
+            <div class="widget" id="es-w1">
+                <div class="widget-try">
+                    <span class="lbl">Try this:</span>
+                    <a data-demand="12">light load (12%)</a>
+                    <a data-demand="50">mid load (50%)</a>
+                    <a data-demand="95">design day (95%)</a>
+                </div>
+
+                <div class="widget-section-label">Building demand</div>
+                <div class="widget-slider-head">
+                    <span>0%</span>
+                    <span class="v"><span id="es-w1-demand">20</span> <span style="font-size:0.65em;color:var(--text-dim);font-weight:500;">%</span></span>
+                    <span>100%</span>
+                </div>
+                <input class="widget-slider" id="es-w1-demand-slider" type="range" min="0" max="100" step="1" value="20" aria-label="Building demand, percent"/>
+
+                <div class="widget-section-label">Pumps</div>
+                <div class="es-cells" id="es-w1-pumps" aria-label="Pump states"></div>
+
+                <div class="es-w1-status" id="es-w1-status" data-kind="steady" aria-live="polite"></div>
+
+                <div class="es-readouts">
+                    <div class="es-readout">
+                        <div class="widget-readout-label">Pumps running</div>
+                        <div class="widget-readout-value"><span id="es-w1-running">1</span><span class="unit">of 3</span></div>
+                    </div>
+                    <div class="es-readout">
+                        <div class="widget-readout-label">Online capacity</div>
+                        <div class="widget-readout-value"><span id="es-w1-capacity">33</span><span class="unit">%</span></div>
+                    </div>
+                    <div class="es-readout">
+                        <div class="widget-readout-label">Stage-up at</div>
+                        <div class="widget-readout-value"><span id="es-w1-up">30%</span></div>
+                    </div>
+                    <div class="es-readout">
+                        <div class="widget-readout-label">Stage-down at</div>
+                        <div class="widget-readout-value"><span id="es-w1-down">—</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <p style="margin-top:1.25rem;">
+                Two things are worth pulling out. Walk the demand slider slowly across the point where the second pump comes on, then slowly back down — the pump doesn't leave at the same place it arrived. That space you have to travel back through is the deadband. And jump straight to <em>design day</em>: the pumps don't all snap on at once. Each stage change waits out its delay, and the minimum stage time spaces them — the plant comes up to full capacity deliberately, not all in one lurch.
+            </p>
+
+            <!-- ───────────────── 3 · Lead/lag and rotation ───────────────── -->
+            <h2 class="subhead">Lead/Lag and Rotation — Which Ones</h2>
+
+            <p>
+                With <em>how many</em> answered, the sequence still has to pick <em>which</em> physical pumps. The one that runs first is the <em>lead</em>; the next to come on is the <em>lag</em> (with three pumps, first lag and second lag). On its own that's just an ordering — but it matters more than it looks, because of wear.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                If the lead designation is nailed to one physical pump, that pump runs every hour the plant runs. After a year it has logged thousands of hours while its siblings have logged almost none. The lead wears out — bearings, seals, the mechanical parts that only age under running — and the "redundant" standby pumps haven't earned their keep. So a good sequence <em>rotates</em> the lead. The simplest version swaps lead on a fixed schedule, say weekly. The better version rotates to <em>equalize runtime</em>: the BMS tracks accumulated run-hours per pump and hands the lead to whichever pump has the fewest, so the whole set wears down together instead of one at a time.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                Rotation also keeps the standby honest. A pump that never runs isn't being preserved — it's deteriorating a different way, with bearings taking a set and seals drying out, so that the day it's finally called on is the day you discover it doesn't work. (Sequences often add a <em>standby exercise</em> for exactly this — running an idle pump briefly on a schedule to keep it limber.) And rotation rides alongside the failure case: when the lead faults — trips, loses its drive, throws a flow alarm — the sequence has to <em>promote</em> a standby immediately and without fuss. Redundancy is only real if the swap is automatic.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                None of this is specific to pumps. A central plant stages lead/lag boilers and lead/lag chillers on the identical pattern — the staging signal is plant heating or cooling load instead of pump speed, and the timers are tuned to the equipment, but "how many, and which ones, rotated for even wear" is the same sequence. The widget below runs the plant forward a week at a time so the rotation question stands on its own. Pick a strategy, step the weeks, and watch the runtime bars.
+            </p>
+
+            <!-- Widget 2 — rotation / runtime equalization. Each step is one
+                 week; the lead pump logs the week's hours. Fixed-lead pins
+                 the lead to P1; runtime-equalized hands it to the lowest-
+                 hour pump each week. -->
+            <div class="widget" id="es-w2">
+                <div class="widget-section-label">Rotation strategy</div>
+                <div class="es-w2-strategy" role="group" aria-label="Rotation strategy">
+                    <button id="es-w2-fixed" type="button" class="on">Fixed lead</button>
+                    <button id="es-w2-equal" type="button">Runtime-equalized</button>
+                </div>
+
+                <div class="es-w2-controls">
+                    <button id="es-w2-step" type="button" class="copy-btn">Run one week</button>
+                    <button id="es-w2-reset" type="button" class="copy-btn">Reset</button>
+                </div>
+
+                <div class="widget-section-label">Accumulated runtime</div>
+                <div class="es-cells" id="es-w2-pumps" aria-label="Per-pump accumulated runtime"></div>
+
+                <div class="es-readouts">
+                    <div class="es-readout">
+                        <div class="widget-readout-label">Weeks elapsed</div>
+                        <div class="widget-readout-value"><span id="es-w2-weeks">0</span></div>
+                    </div>
+                    <div class="es-readout">
+                        <div class="widget-readout-label">Runtime spread</div>
+                        <div class="widget-readout-value"><span id="es-w2-spread">0</span><span class="unit">h</span></div>
+                    </div>
+                </div>
+
+                <div class="widget-anecdote-wrap" id="es-w2-anecdote-wrap"></div>
+            </div>
+
+            <p style="margin-top:1.25rem;">
+                Run a dozen weeks on <em>fixed lead</em> and the spread tells the story — one pump carries everything, the other two are cold. Then switch to <em>runtime-equalized</em> and keep stepping: the lead jumps to the lowest-hour pump each week, and the bars pull back together. Same three pumps, same duty — the only difference is a sequence that spreads the wear instead of concentrating it.
+            </p>
+
+            <!-- ───────────────── 4 · Closing ───────────────── -->
+            <h2 class="subhead">Tying It Together</h2>
+
+            <p>
+                This closes the loop the pump-control page opened. <a href="/education/load-piping.html">Load piping</a>, <a href="/education/vfds.html">VFDs</a>, and <a href="/education/pump-control.html">pump control</a> built up one pump answering the building — throttled loads, a drive that follows a speed reference, a DP loop deciding what that reference should be. Staging is the layer above: when one pump isn't enough, or isn't wanted, a sequence decides how many run and rotates which ones carry the hours. The deadband, the stage delays, the minimum stage time, the runtime equalization — none of it is exotic, but all of it is the difference between a plant that settles and one that hunts itself to an early grave.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                Staging is one kind of sequence. The same BMS runs others this page hasn't touched — resetting setpoints against outside-air temperature, shifting a building between occupied and unoccupied modes, easing through a morning warm-up without every piece of equipment slamming on at once. Those are sequencing topics for pages of their own. Closer to home, keeping a pump from running off the end of its curve — end-of-curve protection — belongs to the same family of safeties a real staging sequence carries; the pump-control page met its worst case as the deadhead. Staging is where the plant stops being a collection of equipment and starts being a system.
+            </p>
+
+        </div>
+    </div>
+
+    <a class="back-link" href="/education/">← Back to Education</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="/scripts/units.js"></script>
+<script>
+    // ── Widget 1 — staging simulator ──────────────────────────────────
+    // Three identical parallel pumps. Demand 0-100% of full-plant
+    // capacity; online capacity with N pumps is N/3 of the plant. The
+    // sequence adds a pump when demand climbs past the stage-up
+    // threshold for the current count and drops one when it falls past
+    // the (lower) stage-down threshold — the gap between the two is the
+    // deadband that stops it hunting. A crossed threshold doesn't act
+    // at once: a stage delay rides out brief swings, and a minimum-
+    // stage-time lock after any change blocks the next one.
+    //
+    // Thresholds are chosen so a pump is added when the running pumps
+    // would otherwise sit near 90% of capacity, and dropped with
+    // hysteresis well below that.
+    (function () {
+        'use strict';
+
+        const STAGE_UP   = { 1: 30, 2: 60 };   // running count → stage-up demand %
+        const STAGE_DOWN = { 2: 20, 3: 43 };   // running count → stage-down demand %
+        const STAGE_DELAY_MS = 2000;           // demand must hold across the line this long
+        const MIN_STAGE_MS   = 4000;           // lock after a change before the next one
+
+        const demandSlider = document.getElementById('es-w1-demand-slider');
+        const demandLabel  = document.getElementById('es-w1-demand');
+        const statusEl     = document.getElementById('es-w1-status');
+        const runningEl    = document.getElementById('es-w1-running');
+        const capacityEl   = document.getElementById('es-w1-capacity');
+        const upEl         = document.getElementById('es-w1-up');
+        const downEl       = document.getElementById('es-w1-down');
+        const pumpsWrap    = document.getElementById('es-w1-pumps');
+
+        // demand: slider value. running: pumps online (1-3).
+        // pending: a stage change waiting out its delay. lockUntil:
+        // timestamp the minimum-stage-time lock clears.
+        const state = { demand: 20, running: 1, pending: null, lockUntil: 0 };
+
+        // Build the three pump cells once.
+        const pumpCells = [];
+        for (let i = 0; i < 3; i++) {
+            const cell = document.createElement('div');
+            cell.className = 'es-pump';
+            cell.setAttribute('data-on', 'false');
+            cell.innerHTML =
+                '<div class="num">Pump ' + (i + 1) + '</div>' +
+                '<div class="state">Standby</div>';
+            pumpsWrap.appendChild(cell);
+            pumpCells.push({ cell: cell, stateEl: cell.querySelector('.state') });
+        }
+
+        // Which way the sequence wants to move, given count + demand.
+        function wantedDirection() {
+            const r = state.running, d = state.demand;
+            if (r < 3 && d > STAGE_UP[r]) return 1;
+            if (r > 1 && d < STAGE_DOWN[r]) return -1;
+            return 0;
+        }
+
+        // The 100 ms loop only needs to run while a delay or a hold is
+        // counting down — lazy start/stop keeps it from spinning idle
+        // forever (codebase-issues #1).
+        let loopHandle = null;
+        function needsLoop() {
+            return state.pending !== null ||
+                (wantedDirection() !== 0 && Date.now() < state.lockUntil);
+        }
+
+        function evaluate() {
+            const now = Date.now();
+            const want = wantedDirection();
+            const locked = now < state.lockUntil;
+
+            if (want === 0 || locked) {
+                state.pending = null;
+            } else {
+                if (!state.pending || state.pending.dir !== want) {
+                    state.pending = { dir: want, readyAt: now + STAGE_DELAY_MS };
+                }
+                if (now >= state.pending.readyAt) {
+                    state.running += state.pending.dir;
+                    state.lockUntil = now + MIN_STAGE_MS;
+                    state.pending = null;
+                }
+            }
+            render(now);
+
+            if (loopHandle !== null && !needsLoop()) {
+                clearInterval(loopHandle);
+                loopHandle = null;
+            }
+        }
+
+        function render(now) {
+            now = now || Date.now();
+            demandLabel.textContent = state.demand;
+            runningEl.textContent = state.running;
+            const capPct = Math.round((state.running / 3) * 100);
+            capacityEl.textContent = capPct;
+            upEl.textContent   = state.running < 3 ? STAGE_UP[state.running] + '%' : '—';
+            downEl.textContent = state.running > 1 ? STAGE_DOWN[state.running] + '%' : '—';
+
+            for (let i = 0; i < 3; i++) {
+                const on = i < state.running;
+                pumpCells[i].cell.setAttribute('data-on', on ? 'true' : 'false');
+                pumpCells[i].stateEl.textContent = on ? 'Running' : 'Standby';
+            }
+
+            const want = wantedDirection();
+            const locked = now < state.lockUntil;
+            let kind, msg;
+            if (want !== 0 && locked) {
+                kind = 'held';
+                msg = 'Stage change held — minimum stage time ('
+                    + ((state.lockUntil - now) / 1000).toFixed(1) + ' s)';
+            } else if (state.pending) {
+                kind = 'pending';
+                const left = ((state.pending.readyAt - now) / 1000).toFixed(1);
+                msg = (state.pending.dir > 0 ? 'Adding a pump' : 'Dropping a pump')
+                    + ' — stage delay ' + left + ' s';
+            } else {
+                kind = 'steady';
+                const noun = state.running === 1 ? ' pump' : ' pumps';
+                msg = state.running + noun + ' running — '
+                    + (state.demand > capPct ? 'demand near capacity' : 'load steady');
+            }
+            statusEl.setAttribute('data-kind', kind);
+            statusEl.textContent = msg;
+        }
+
+        function onChange() {
+            evaluate();
+            if (loopHandle === null && needsLoop()) {
+                loopHandle = setInterval(evaluate, 100);
+            }
+        }
+
+        demandSlider.addEventListener('input', function () {
+            state.demand = parseInt(demandSlider.value, 10);
+            onChange();
+        });
+
+        // Preset links — light / mid / design-day demand.
+        document.querySelectorAll('#es-w1 [data-demand]').forEach(function (a) {
+            a.addEventListener('click', function (e) {
+                e.preventDefault();
+                state.demand = parseInt(a.dataset.demand, 10);
+                demandSlider.value = state.demand;
+                onChange();
+            });
+        });
+
+        render();
+    })();
+
+    // ── Widget 2 — rotation / runtime equalization ────────────────────
+    // Three identical pumps; one runs lead each week and logs the
+    // week's hours, the others sit idle. Fixed-lead keeps Pump 1 as
+    // lead forever; runtime-equalized hands the lead to whichever pump
+    // has the fewest accumulated hours at the start of each week, so
+    // wear spreads evenly across the set.
+    (function () {
+        'use strict';
+
+        const WEEK_HOURS = 168;
+
+        const ANECDOTE =
+            'Twelve-plus weeks of fixed-lead operation and one pump has logged ' +
+            'over two thousand hours while the other two have logged none. The ' +
+            'lead wears out — bearings, seals, the parts that only age under ' +
+            'running — while the standby pumps age sitting still, bearings taking ' +
+            'a set and seals drying out. The day the lead finally fails, the pump ' +
+            'that takes over has never turned, and you find out whether it works ' +
+            'at the worst possible time. Switch to <strong>Runtime-equalized</strong> ' +
+            'and keep stepping: the sequence hands the lead to the lowest-hour pump ' +
+            'each week and the bars converge. Three pumps that wear as one — that ' +
+            'is the whole point of rotation.';
+
+        const strategyFixed = document.getElementById('es-w2-fixed');
+        const strategyEqual = document.getElementById('es-w2-equal');
+        const stepBtn       = document.getElementById('es-w2-step');
+        const resetBtn      = document.getElementById('es-w2-reset');
+        const weeksEl       = document.getElementById('es-w2-weeks');
+        const spreadEl      = document.getElementById('es-w2-spread');
+        const pumpsWrap     = document.getElementById('es-w2-pumps');
+        const anecdoteEl    = document.getElementById('es-w2-anecdote-wrap');
+
+        const state = { strategy: 'fixed', weeks: 0, runtime: [0, 0, 0], anecdoteShown: false };
+
+        // Build the three runtime cells once.
+        const cells = [];
+        for (let i = 0; i < 3; i++) {
+            const cell = document.createElement('div');
+            cell.className = 'es-runtime';
+            cell.setAttribute('data-lead', 'false');
+            cell.innerHTML =
+                '<div class="head"><span class="num">Pump ' + (i + 1) + '</span>' +
+                '<span class="lead-tag">Lead</span></div>' +
+                '<div class="hrs"><span class="h">0</span> <span class="u">h</span></div>' +
+                '<div class="bar"><span></span></div>';
+            pumpsWrap.appendChild(cell);
+            cells.push({
+                cell: cell,
+                hrsEl: cell.querySelector('.h'),
+                barEl: cell.querySelector('.bar > span')
+            });
+        }
+
+        // The pump that runs lead next: P1 under fixed-lead, the
+        // lowest-hour pump under runtime-equalized (ties → lowest index).
+        function nextLead() {
+            if (state.strategy === 'fixed') return 0;
+            let lo = 0;
+            for (let i = 1; i < 3; i++) {
+                if (state.runtime[i] < state.runtime[lo]) lo = i;
+            }
+            return lo;
+        }
+
+        function render() {
+            weeksEl.textContent = state.weeks;
+            const max = Math.max(state.runtime[0], state.runtime[1], state.runtime[2]);
+            const min = Math.min(state.runtime[0], state.runtime[1], state.runtime[2]);
+            spreadEl.textContent = max - min;
+
+            const lead = nextLead();
+            for (let i = 0; i < 3; i++) {
+                cells[i].hrsEl.textContent = state.runtime[i];
+                cells[i].barEl.style.width = (max > 0 ? (state.runtime[i] / max) * 100 : 0) + '%';
+                cells[i].cell.setAttribute('data-lead', i === lead ? 'true' : 'false');
+            }
+
+            strategyFixed.classList.toggle('on', state.strategy === 'fixed');
+            strategyEqual.classList.toggle('on', state.strategy === 'equal');
+
+            // Reveal once the fixed-lead spread has run away — and keep
+            // it pinned, so switching to equalized to "fix it" still
+            // leaves the lesson on screen.
+            if (state.strategy === 'fixed' && state.weeks >= 12) state.anecdoteShown = true;
+            anecdoteEl.innerHTML = state.anecdoteShown
+                ? '<div class="widget-anecdote">' + ANECDOTE + '</div>'
+                : '';
+        }
+
+        strategyFixed.addEventListener('click', function () { state.strategy = 'fixed'; render(); });
+        strategyEqual.addEventListener('click', function () { state.strategy = 'equal'; render(); });
+        stepBtn.addEventListener('click', function () {
+            state.runtime[nextLead()] += WEEK_HOURS;
+            state.weeks += 1;
+            render();
+        });
+        resetBtn.addEventListener('click', function () {
+            state.weeks = 0;
+            state.runtime = [0, 0, 0];
+            render();
+        });
+
+        render();
+    })();
+</script>
+{% endblock %}
