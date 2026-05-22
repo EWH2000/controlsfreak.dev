@@ -587,6 +587,23 @@ nav: tools
         });
 
         // ── Initial paint ─────────────────────────────────────────────
+        // Input values are authored in US units; convert once up front for a
+        // returning metric visitor so the numbers match the labels units.js
+        // has already swapped (same fix as thermistor-calculator / refrigerant-pt).
+        if (U.current() === 'metric') {
+            rewriteInput('am-alt', 'altitude', 'us', 'metric');
+            for (const tab of TABS) {
+                for (const sn of STREAMS) {
+                    const prefix = 'am-' + tab + '-' + sn;
+                    rewriteInput(prefix + '-tdb', 'temp', 'us', 'metric');
+                    if (tab === 'flow') {
+                        rewriteInput(prefix + '-w', 'airflow', 'us', 'metric');
+                    }
+                    const q = quantityForMode(document.getElementById(prefix + '-mode').value);
+                    if (q) rewriteInput(prefix + '-second', q, 'us', 'metric');
+                }
+            }
+        }
         calcAll();
     })();
 </script>

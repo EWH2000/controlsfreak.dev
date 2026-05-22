@@ -2955,7 +2955,7 @@ whether the handful of inline list styles are tolerable. If promoted,
 mind the same specificity gotcha #19 hit with `p.bit-hint` et al. —
 check no list-scoped utility class is out-ranked.
 
-### 58. Numeric-input values not converted on initial paint for metric visitors
+### 58. Numeric-input values not converted on initial paint for metric visitors *(addressed 2026-05-21)*
 
 Surfaced while building `refrigerant-pt.html` (2026-05-21).
 
@@ -2993,6 +2993,19 @@ most of the audience), but it's a correctness bug, not just cosmetics.
 unit-flip path once with `from='us', to='metric'` before the first
 compute. The conversion helpers already exist on each page; this is a
 3–5 line addition per tool, no new shared code.
+
+**Resolution (2026-05-21):** each of the three tools' inline IIFE got
+a `U.current() === 'metric'` guard in its initial-paint block that
+calls the page's existing `rewriteInput` helper once per input with
+`from='us', to='metric'` before the first compute. Each block reuses
+the exact input-id lists and `quantityForMode` helper its `U.onChange`
+handler already uses — temps as `temp`, define-by second values by
+mode, airflow as `airflow`, loads as `heatCapacity`, `coil-sizing` /
+`economizer-ratio` second values via `quantityForMode`, `air-mixing`
+altitude as `altitude`. No new shared code, no CSS. Matches the
+`thermistor-calculator.html` / `refrigerant-pt.html` pattern the entry
+cites. No version bump — a metric visitor's first paint is now
+correct, but nothing renders differently for the US-default majority.
 
 ---
 
