@@ -3066,6 +3066,29 @@ same session this file was created:
   range can't accidentally break the orifice-vs-compensation
   transition without the test catching it.
 
+### 59. `'use strict';` missing on `pump-control.html` Widget 2 IIFE
+
+Caught while building `education/equipment-staging.html` (2026-05-21),
+reading `pump-control.html` as the layout reference.
+
+`html/education/pump-control.html`'s inline `<script>` has two page
+IIFEs. Widget 1 (operating-point chart) opens with `'use strict';` as
+its first statement; Widget 2 (DP setpoint reset, the IIFE at
+`pump-control.html:791`) does not — it jumps straight to its `const`
+declarations.
+
+Per *JS patterns* in CLAUDE.md, `'use strict';` is the required first
+statement inside every page-inline IIFE. Issue #18 was the site-wide
+`'use strict'` adoption sweep (addressed 2026-05-17); pump-control
+shipped 2026-05-15, so this IIFE should have been caught by that
+sweep and wasn't — a one-line miss.
+
+**Why it matters:** small, but it's a real convention gap — strict
+mode catches undeclared-global assignment and a few other footguns,
+and Widget 2 currently runs sloppy. Low-risk fix: add the directive
+as the first line inside the `pump-control.html:791` IIFE. Not fixed
+inline here to keep the equipment-staging PR scoped to its own work.
+
 ### Post-audit re-evaluation sweep (2026-05-16)
 
 A second pass over the codebase after Block C closed caught two

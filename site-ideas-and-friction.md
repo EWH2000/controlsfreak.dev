@@ -141,15 +141,18 @@ classes can follow either precedent depending on what they're
 drawing.
 
 **Forward-link debts this page incurred:**
-- `[future: sequencing.html]` — referenced in the lead/lag note
-  (heavy traffic going there: rotation, staging transitions,
-  end-of-curve protection, bumpless mode changes — a meaningful
-  page in its own right). User flagged sequencing should get a lot
-  of attention when it's its own page; the brief on this page is
-  deliberately shallow so it doesn't pre-cover ground.
-- `[future: sequencing.html]` (again, in the closing) — broader
-  scope: setpoint reset against outside-air temperature, mode
-  transitions, morning warm-up sequences, etc.
+- `equipment-staging.html` — the lead/lag note. **Paid 2026-05-21.**
+  The note's plain-prose "a dedicated sequencing lesson will land
+  here when it ships" is now a live link to the equipment-staging
+  page (staging up/down + lead/lag rotation). The user's flag that
+  sequencing should get real attention held — staging got a full
+  page with two widgets, and this page stayed deliberately shallow
+  on it so it didn't pre-cover ground.
+- `[future: sequencing.html]` (the closing) — **partly paid.** The
+  closing's staging mention now links to equipment-staging.html;
+  the rest of the broader sequence layer — setpoint reset against
+  outside-air temperature, mode transitions, morning warm-up —
+  stays plain-prose forward-link for future pages.
 - `[future: balancing.html]` — not directly forward-linked from
   pump-control (the load-piping page already carries the link),
   but worth noting that pump-control's "DP setpoint reset assumes
@@ -166,6 +169,82 @@ drawing.
   piping's hook is "what pump goes here?" → vfds (the equipment),
   and pump-control is the next-step. The two-page chain reads
   correctly.
+
+### Equipment staging — Education page *(shipped 2026-05-21)*
+*One question: when a plant has several identical units, how does the
+BMS decide how many to run, and which ones?*
+
+The first **sequencing** page. `sequencing.html` had been a `[future:]`
+target since pump-control shipped; the friction file flagged the topic
+as deliberately broad (staging, lead/lag rotation, end-of-curve
+protection, bumpless mode changes, OAT/setpoint reset, morning warm-up),
+and the one-question-per-page rule won't carry all of that. Per the
+scope rule's item 4, a *function* like staging is its own page — so
+this page is scoped to staging + lead/lag only, and named
+`equipment-staging.html` rather than claiming the broad
+`sequencing.html` slug. The remaining sequencing topics keep their
+`[future:]` markers for later pages.
+
+Worked example: parallel **pumps** (chosen with the user during
+scoping), continuing the variable-flow story (load-piping → vfds →
+pump-control → balancing) and paying pump-control's lead/lag
+forward-link debt directly. One sentence notes the logic is identical
+for boilers and chillers.
+
+In scope (sections shipped):
+- *Why a plant runs several identical units* — the foil: the turndown
+  limits of one pump, N+1 redundancy. Static parallel-pump schematic.
+- *Staging up and down — how many to run* — the demand signal, the
+  stage-up / stage-down thresholds, the deadband between them
+  (anti-hunting), stage-delay timers, minimum-stage-time /
+  anti-short-cycle. Widget 1.
+- *Lead/lag and rotation — which ones* — lead/lag designation,
+  runtime-equalized rotation, standby exercise, failure promotion.
+  Widget 2.
+- *Tying it together* — pays the pump-control debt; forward-points (as
+  plain prose) to the still-future reset / modes / warm-up pages.
+
+Out of scope (forward links, not content):
+- Setpoint / OAT reset, mode transitions, optimal / morning warm-up
+  start, bumpless transitions — [future: sequencing page(s)]
+- End-of-curve protection / deadhead — covered on pump-control;
+  linked back, not re-taught
+- Manufacturer-specific staging logic — keeps the cross-manufacturer
+  discipline of the vfds / pump-control pages
+- Chiller / boiler plant-optimization specifics — different systems,
+  brief mention only
+
+**Two interactive widgets** (per the user's scoping choice — "two
+smaller widgets" over one combined sim). Class prefix `es-` inline on
+the page; no styles.css edits — widget internals are page-local, and
+the step/reset buttons reuse the shared `.copy-btn`.
+- *Widget 1 — staging simulator.* A demand slider drives three pumps;
+  stage-up near 90% of online capacity, stage-down with hysteresis
+  well below. A stage-delay countdown gates each change; a
+  minimum-stage-time lock after a change blocks the next — drag the
+  slider fast and the sequence shows a "stage change held" state. The
+  100 ms timing loop uses lazy start/stop (codebase-issues #1) so it
+  doesn't spin idle.
+- *Widget 2 — runtime equalization.* Step the plant forward a week at
+  a time; Fixed-lead pins the lead to P1, Runtime-equalized hands it
+  to the lowest-hour pump. Runtime bars + spread readout. The
+  discovery-reward callout reveals after 12 fixed-lead weeks (the
+  worn-lead-pump consequence) and stays pinned. Written as generic
+  prose, not a first-person war story — the user can swap in a
+  personal anecdote later if they have one.
+
+The intro schematic is an animated pipe-flow diagram — `.edu-svg` +
+`flow-engine.js` + `data-flow` annotations, same idiom as the
+load-piping / pump-control diagrams (supply solid, return dashed,
+particles walking; suction header + from-system drop walk reversed).
+The two widgets are the visual capstones of their own sections.
+
+**Forward-link payoffs landed:**
+- pump-control's lead/lag note — the plain-prose "a dedicated
+  sequencing lesson will land here" is now a live link to this page.
+- pump-control's closing — the staging mention now links here; the
+  broader sequence-layer breadcrumb (reset, modes, warm-up) stays
+  plain prose.
 
 ### VFDs — Education page *(shipped 2026-05-14)*
 *One question: what is a VFD, and what does a controls tech need to
