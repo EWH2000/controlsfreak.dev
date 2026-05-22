@@ -31,6 +31,7 @@ const PAGES = [
     { name: 'thermistor calculator',  url: '/tools/thermistor-calculator.html' },
     { name: 'refrigerant p-t',        url: '/tools/refrigerant-pt.html' },
     { name: 'vfd mock',               url: '/tools/vfd-mock.html' },
+    { name: 'function-block editor',  url: '/tools/function-block-editor.html' },
     { name: 'education hub',          url: '/education/' },
     { name: 'education — pid basics',  url: '/education/pid-basics.html' },
     { name: 'education — hydronic loops', url: '/education/hydronic-loops.html' },
@@ -450,6 +451,43 @@ test('refrigerant p-t — saturation lookup, glide blend, and superheat', async 
     await expect(page.locator('#rf-sc-status')).toContainText('typical range');
 
     expect(errors, 'refrigerant p-t behavioral should log no page / console errors').toEqual([]);
+});
+
+test('function-block editor — examples run, and blocks add and wire up', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('/tools/function-block-editor.html');
+
+    // The economizer example loads by default — six blocks, evaluated.
+    await expect(page.locator('.fbe-block')).toHaveCount(6);
+    // OAT 68 °F is not below the 60 °F changeover setpoint → no free
+    // cooling, so the economizer-enable output sits FALSE.
+    await expect(page.locator('.fbe-block[data-id="econ"] .fbe-block-val')).toHaveText('FALSE');
+
+    // Edit the OAT analog input through the inspector — drop it below the
+    // setpoint and the enable output flips TRUE on the next tick.
+    await page.locator('.fbe-block[data-id="oat"] .fbe-block-head').click();
+    await page.fill('#fbe-p-value', '55');
+    await expect(page.locator('.fbe-block[data-id="econ"] .fbe-block-val')).toHaveText('TRUE');
+
+    // Freeze-stat example: tripping the freeze contact latches the alarm
+    // on and drops the fan — the SR latch holding state.
+    await page.click('[data-example="freeze"]');
+    await expect(page.locator('.fbe-block[data-id="alarm"] .fbe-block-val')).toHaveText('FALSE');
+    await page.locator('.fbe-block[data-id="fz"] .fbe-block-val').click();
+    await expect(page.locator('.fbe-block[data-id="alarm"] .fbe-block-val')).toHaveText('TRUE');
+    await expect(page.locator('.fbe-block[data-id="fan"] .fbe-block-val')).toHaveText('FALSE');
+
+    // Clear the sheet, add two blocks from the palette, and wire them.
+    await page.click('#fbe-clear');
+    await expect(page.locator('.fbe-block')).toHaveCount(0);
+    await page.locator('.fbe-palette-btn', { hasText: 'CONSTANT' }).click();
+    await page.locator('.fbe-palette-btn', { hasText: 'READOUT' }).click();
+    await expect(page.locator('.fbe-block')).toHaveCount(2);
+    await page.locator('.fbe-block[data-id="b1"] .fbe-pin-out').click();
+    await page.locator('.fbe-block[data-id="b2"] .fbe-pin-in').click();
+    await expect(page.locator('.fbe-wire')).toHaveCount(1);
+
+    expect(errors, 'function-block editor behavioral should log no page / console errors').toEqual([]);
 });
 
 test('education page runs the PID mini-sims and they respond to input', async ({ page }) => {

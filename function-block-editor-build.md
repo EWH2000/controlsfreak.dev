@@ -95,19 +95,29 @@ chip row (`.widget-try` idiom).
 
 ## Phase checklist
 
-- [ ] **P0 Scaffold** — branch, this doc, stub page.
-- [ ] **P1 Engine** — `fbe-engine.js` (registry + topo-sort tick) +
+- [x] **P0 Scaffold** — branch, this doc, stub page.
+- [x] **P1 Engine** — `fbe-engine.js` (registry + topo-sort tick) +
       `tests/fbe-engine.spec.js`.
-- [ ] **P2 Canvas (static)** — palette, drag block onto canvas, move,
-      select, inspector param edit. No wiring.
-- [ ] **P3 Wiring** — pin→pin SVG wires, kind type-check, delete.
-- [ ] **P4 Simulation** — tick loop ↔ engine, live values, wire
+- [x] **P2 Canvas (static)** — palette, click-to-add block, drag-move,
+      select, inspector param edit.
+- [x] **P3 Wiring** — pin→pin SVG wires, kind type-check, delete.
+- [x] **P4 Simulation** — tick loop ↔ engine, live values, wire
       highlight, visibility pause.
-- [ ] **P5 Example programs** — 5 canned graphs + chip row.
-- [ ] **P6 Polish + a11y** — focus-visible, narrow-screen message, page
+- [x] **P5 Example programs** — 5 canned graphs + chip row.
+- [x] **P6 Polish + a11y** — focus-visible, narrow-screen message, page
       prose, behavioral test in `smoke.spec.js`.
 - [ ] **P7 Education page** — `function-blocks.html` + cross-links.
-- [ ] **P8 Ship** — description length, `PAGES`, version bump, sweep, PRs.
+- [ ] **P8 Ship** — `site-ideas-and-friction.md` entry, delete this doc,
+      convention sweep, PRs.
+
+**P2–P6 notes:** layout settled as palette · canvas (2-col) with the
+inspector a full-width strip below — the 3-col version left the canvas
+too narrow. Blocks add by clicking a palette button (cascades into a
+grid), not drag-from-palette — click-to-add is simpler and works on
+touch. Canvas is 900×480 and scrolls (normal for a wiresheet); examples
+laid out left→right. Default example on load: economizer. Version
+bumped to 1.14.0; nav-card + `PAGES` entry added. Tool PR is ready;
+P7/P8 are the Education-page PR.
 
 ## Conventions
 
