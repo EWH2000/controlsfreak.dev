@@ -41,6 +41,7 @@ const PAGES = [
     { name: 'education — equipment staging', url: '/education/equipment-staging.html' },
     { name: 'education — balancing',   url: '/education/balancing.html' },
     { name: 'education — psychrometrics basics', url: '/education/psychrometrics-basics.html' },
+    { name: 'education — function blocks', url: '/education/function-blocks.html' },
     { name: 'contact',                url: '/contact.html' },
 ];
 

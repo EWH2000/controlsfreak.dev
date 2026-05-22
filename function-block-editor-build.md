@@ -106,9 +106,19 @@ chip row (`.widget-try` idiom).
 - [x] **P5 Example programs** — 5 canned graphs + chip row.
 - [x] **P6 Polish + a11y** — focus-visible, narrow-screen message, page
       prose, behavioral test in `smoke.spec.js`.
-- [ ] **P7 Education page** — `function-blocks.html` + cross-links.
+- [x] **P7 Education page** — `function-blocks.html` + cross-links.
 - [ ] **P8 Ship** — `site-ideas-and-friction.md` entry, delete this doc,
       convention sweep, PRs.
+
+**P7 notes:** static lesson, two hand-drawn SVGs (`.fb-svg`, the
+`.vfd-svg` precedent — page-local structural-diagram class, not
+`.edu-svg` which is for pipe-flow). Diagram A is an annotated AND
+block (anatomy); diagram B is the full economizer wiresheet (the
+worked-example capstone), blue analog wires, green digital wires,
+matching the tool's colour vocabulary. Cross-links both ways (tool ↔
+lesson) — the tool's preamble already pointed here. Education-hub
+nav-card added (tag "Logic"). No mini-demo embed — the editor is the
+interactivity, one click away. Version bumped 1.14.0 → 1.15.0.
 
 **P2–P6 notes:** layout settled as palette · canvas (2-col) with the
 inspector a full-width strip below — the 3-col version left the canvas

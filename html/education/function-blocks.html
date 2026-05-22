@@ -1,0 +1,295 @@
+---
+title: Function-Block Basics — controlsfreak.dev
+description: Function-block programming for building-controls techs — what a block and a wiresheet are, why control sequences are built this way, and how a sheet evaluates.
+canonical: https://controlsfreak.dev/education/function-blocks.html
+nav: education
+---
+{% extends "layouts/page.njk" %}
+
+{% block head %}
+    <style>
+        /* Page-specific — two static block diagrams. Structurally these
+           are labeled-box schematics, not pipe-flow diagrams, so they
+           take a page-local .fb-svg class (the .vfd-svg precedent) rather
+           than the pipe-flow .edu-svg family. */
+        .fb-svg {
+            display: block;
+            width: 100%;
+            height: auto;
+            max-width: 540px;
+            margin: 1.4rem auto 0.6rem;
+        }
+        .fb-svg.wide { max-width: 740px; }
+    </style>
+{% endblock %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Education · Function Blocks</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">Function-Block Basics <span class="tool-tag">Logic</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                Open a modern building-automation controller — Niagara, EBO, Distech, almost
+                any of them — and the control program isn't lines of code. It's a sheet of
+                little boxes joined by wires. That sheet is a <em>function-block program</em>,
+                and learning to read one is most of what it takes to understand what a
+                controller is actually doing. If you came up on PLC ladder logic, or from the
+                IT side, or you've just never had anyone walk you through it, this page is the
+                walk-through: what a block is, what the wires mean, and why the whole industry
+                builds sequences this way.
+            </p>
+
+            <h2 class="subhead">Blocks and wiresheets</h2>
+
+            <p>
+                A <strong>function block</strong> is a small box that does one job. Values come
+                in on the left, the block does something with them, and a result leaves on the
+                right. The connection points are called <em>pins</em>: input pins on the left
+                edge, output pins on the right. An <code>AND</code> block takes two
+                true/false inputs and outputs TRUE only when both inputs are TRUE. An
+                <code>ADD</code> block takes two numbers and outputs their sum. A block doesn't
+                run once and finish — it is re-evaluated continuously, many times a second, so
+                its output always reflects whatever its inputs are right now.
+            </p>
+
+            <svg class="fb-svg" viewBox="0 0 520 190" role="img"
+                 aria-labelledby="fb-anat-title fb-anat-desc">
+                <title id="fb-anat-title">Anatomy of a function block</title>
+                <desc id="fb-anat-desc">An AND function block drawn as a box. Two input pins, labeled A and B, enter the left edge; one output pin, labeled Q, leaves the right edge. A caption reads: Q is TRUE only when A and B are both TRUE.</desc>
+
+                <text x="140" y="34" text-anchor="middle" font-family="var(--mono)" font-size="10" font-style="italic" fill="var(--text-dim)">input pins</text>
+                <text x="392" y="59" text-anchor="middle" font-family="var(--mono)" font-size="10" font-style="italic" fill="var(--text-dim)">output pin</text>
+
+                <line x1="95" y1="80"  x2="185" y2="80"  stroke="var(--accent)" stroke-width="2.4"/>
+                <line x1="95" y1="110" x2="185" y2="110" stroke="var(--accent)" stroke-width="2.4"/>
+                <circle cx="185" cy="80"  r="4.5" fill="var(--accent)"/>
+                <circle cx="185" cy="110" r="4.5" fill="var(--accent)"/>
+                <text x="84" y="84"  text-anchor="end" font-family="var(--mono)" font-size="12" fill="var(--text)">A</text>
+                <text x="84" y="114" text-anchor="end" font-family="var(--mono)" font-size="12" fill="var(--text)">B</text>
+
+                <rect x="185" y="55" width="150" height="80" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                <text x="260" y="92"  text-anchor="middle" font-family="var(--mono)" font-size="17" font-weight="600" fill="var(--text-bright)">AND</text>
+                <text x="260" y="112" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--text-dim)">function block</text>
+
+                <line x1="335" y1="95" x2="425" y2="95" stroke="var(--accent)" stroke-width="2.4"/>
+                <circle cx="335" cy="95" r="4.5" fill="var(--accent)"/>
+                <text x="437" y="99" font-family="var(--mono)" font-size="12" fill="var(--text)">Q</text>
+
+                <text x="260" y="168" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--text)">Q is TRUE only when A and B are both TRUE</text>
+            </svg>
+
+            <p>
+                A <strong>wiresheet</strong> (the term comes from Niagara; other tools just
+                call it the program or the function diagram) is a page full of these blocks
+                with their pins joined by <em>wires</em>. A wire carries one block's output to
+                another block's input. Signals come in two flavors, and a tool won't let you
+                cross them: <em>digital</em> (also called binary or boolean — a plain
+                true/false) and <em>analog</em> (a number — a temperature, a percent, a
+                setpoint). The data flows left to right across the sheet, from the inputs that
+                read the real world, through the logic, to the outputs that command equipment.
+            </p>
+
+            <h2 class="subhead">Why controls people work this way</h2>
+
+            <p>
+                Graphical programming isn't the only way to write a sequence — PLCs have
+                ladder and structured text, and plenty of controllers can be scripted. But
+                function blocks won the building-automation world for reasons that matter on a
+                job site:
+            </p>
+
+            <p>
+                <strong>The diagram is the program.</strong> There's no gap between the
+                documentation and the code, because the wiresheet <em>is</em> both. A tech
+                who has never seen this particular controller can still open the sheet and
+                follow the wires. <strong>You can watch it run.</strong> A live wiresheet
+                shows the current value on every wire — you see the freeze-stat go true, you
+                see the setpoint arrive at the comparator, you watch the loop output climb.
+                Troubleshooting becomes <em>follow the wire back from the wrong output until
+                the value stops making sense</em>. <strong>The vocabulary travels.</strong>
+                An <code>AND</code>, a comparator, a PID block, an on-delay timer — these mean
+                the same thing on every platform. Learn the blocks once and you can read a
+                sheet on a controller you've never touched.
+            </p>
+
+            <h2 class="subhead">The block families</h2>
+
+            <p>
+                A controller's block palette can run to dozens of types, but they sort into a
+                handful of families. Name the families and almost any block you meet is a
+                variation on one you already know.
+            </p>
+
+            <div class="callout-grid" style="margin-top:1.25rem;">
+                <div class="callout">
+                    <h3>Inputs &amp; outputs <span>· the real world</span></h3>
+                    <p>The sheet's connection to physical points and to constants. An analog or binary <em>input</em> brings in a sensor or a contact; an analog or binary <em>output</em> commands a damper, a valve, a relay. A <em>constant</em> is a fixed number typed into the sheet — a setpoint, a deadband, a limit.</p>
+                </div>
+                <div class="callout">
+                    <h3>Boolean logic <span>· true / false</span></h3>
+                    <p><code>AND</code>, <code>OR</code>, <code>NOT</code>, <code>XOR</code> combine true/false signals; an <code>SR latch</code> remembers a state — once set, it stays set until something resets it. This is the family that makes interlocks, permissives, and safety chains.</p>
+                </div>
+                <div class="callout">
+                    <h3>Comparators <span>· number → true / false</span></h3>
+                    <p>Greater-than, less-than, equal. A comparator is the bridge from the analog world to the digital one: it watches a number against a threshold and outputs a true/false the logic blocks can use.</p>
+                </div>
+                <div class="callout">
+                    <h3>Math <span>· compute a value</span></h3>
+                    <p>Add, subtract, multiply, divide, min, max. Math blocks build a setpoint from a base value and an offset, average a pair of sensors, or compute a reset — the everyday arithmetic of a sequence.</p>
+                </div>
+                <div class="callout">
+                    <h3>Timers <span>· delay and hold</span></h3>
+                    <p>An <em>on-delay</em> (TON) waits before passing a true signal through; an <em>off-delay</em> (TOF) holds a signal true for a while after it drops. Timers debounce noisy inputs, enforce minimum run times, and stop short-cycling.</p>
+                </div>
+                <div class="callout">
+                    <h3>Control <span>· the loop</span></h3>
+                    <p>The <code>PID</code> block is a whole control loop in one box: feed it a setpoint and a measurement, and it outputs a 0&ndash;100&nbsp;% command that drives the measurement toward the setpoint. <a href="/education/pid-basics.html">PID Basics</a> covers what's inside it.</p>
+                </div>
+            </div>
+
+            <h2 class="subhead">How a wiresheet runs</h2>
+
+            <p>
+                The controller evaluates the whole sheet over and over on a fixed cycle — a
+                <em>scan</em>. Each scan it reads the inputs, works through the blocks, and
+                writes the outputs; then it does it again. Scan rates vary, but think of it as
+                several to ten times a second.
+            </p>
+
+            <p>
+                Within one scan, a plain chain of logic settles all at once: a comparator's
+                result reaches the <code>AND</code> downstream of it in the same scan, because
+                the controller evaluates blocks in dependency order — sources first, then
+                whatever depends on them. The interesting case is <em>feedback</em> — a wire
+                that loops a block's output back into its own chain, which is exactly what an
+                <code>SR latch</code> is. A controller handles this by letting the feedback
+                wire carry the <em>previous</em> scan's value: the latch reads where it was
+                last scan, decides where it is now, and the loop resolves cleanly instead of
+                chasing itself. That one-scan memory is why a latch can hold a state and why a
+                sheet with a loop in it never freezes.
+            </p>
+
+            <h2 class="subhead">A worked sheet — economizer enable</h2>
+
+            <p>
+                Here's a small real sequence. An air handler should use outdoor air for free
+                cooling, but only when two things are true at once: the outdoor air is cool
+                enough to actually help, <em>and</em> the unit is calling for cooling in the
+                first place. That's a sentence with an "and" in it — so the sheet has an
+                <code>AND</code> block at its heart.
+            </p>
+
+            <p>
+                Reading the diagram below left to right: the outdoor-air temperature (an
+                analog input, 55 in this example) and a changeover setpoint (a constant, 60)
+                feed a <em>less-than</em> comparator — is it cool enough? The comparator's
+                true/false answer feeds one input of the <code>AND</code>. The cooling-mode
+                signal (a digital input) feeds the other. Only when both are TRUE does the
+                <code>AND</code> output go true and enable the economizer. Outdoor air at 55 is
+                below the 60 changeover point and the unit is calling for cooling, so both
+                inputs are satisfied and the economizer is enabled.
+            </p>
+
+            <svg class="fb-svg wide" viewBox="0 0 740 290" role="img"
+                 aria-labelledby="fb-econ-title fb-econ-desc">
+                <title id="fb-econ-title">Economizer-enable wiresheet</title>
+                <desc id="fb-econ-desc">A function-block sheet with six blocks. An outdoor-air-temperature analog input of 55 and a setpoint constant of 60 wire into a less-than comparator. The comparator's output and a cooling-mode digital input wire into an AND block. The AND block's output wires into an economizer-enable digital output. With outdoor air below the setpoint and cooling mode on, every digital signal is TRUE and the economizer is enabled.</desc>
+
+                <!-- wires (drawn first, behind the blocks) -->
+                <line x1="145" y1="48"  x2="255" y2="62"  stroke="var(--blue)"   stroke-width="2.4" stroke-linecap="round"/>
+                <line x1="145" y1="138" x2="255" y2="82"  stroke="var(--blue)"   stroke-width="2.4" stroke-linecap="round"/>
+                <line x1="385" y1="72"  x2="470" y2="136" stroke="var(--accent)" stroke-width="2.4" stroke-linecap="round"/>
+                <line x1="145" y1="228" x2="470" y2="156" stroke="var(--accent)" stroke-width="2.4" stroke-linecap="round"/>
+                <line x1="600" y1="146" x2="610" y2="146" stroke="var(--accent)" stroke-width="2.4" stroke-linecap="round"/>
+
+                <!-- OAT -->
+                <g id="fb-econ-oat">
+                    <rect x="15" y="20" width="130" height="56" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="27" y="39" font-family="var(--mono)" font-size="8.5" letter-spacing="0.5" fill="var(--text-dim)">ANALOG IN</text>
+                    <text x="27" y="60" font-family="var(--mono)" font-size="13" font-weight="600" fill="var(--text-bright)">OAT  55</text>
+                    <circle cx="145" cy="48" r="3.8" fill="var(--blue)"/>
+                </g>
+                <!-- SETPOINT -->
+                <g id="fb-econ-sp">
+                    <rect x="15" y="110" width="130" height="56" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="27" y="129" font-family="var(--mono)" font-size="8.5" letter-spacing="0.5" fill="var(--text-dim)">CONSTANT</text>
+                    <text x="27" y="150" font-family="var(--mono)" font-size="13" font-weight="600" fill="var(--text-bright)">SP  60</text>
+                    <circle cx="145" cy="138" r="3.8" fill="var(--blue)"/>
+                </g>
+                <!-- COOLING MODE -->
+                <g id="fb-econ-cool">
+                    <rect x="15" y="200" width="130" height="56" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="27" y="219" font-family="var(--mono)" font-size="8.5" letter-spacing="0.5" fill="var(--text-dim)">BINARY IN</text>
+                    <text x="27" y="240" font-family="var(--mono)" font-size="13" font-weight="600" fill="var(--accent)">COOL  ON</text>
+                    <circle cx="145" cy="228" r="3.8" fill="var(--accent)"/>
+                </g>
+                <!-- COMPARATOR -->
+                <g id="fb-econ-cmp">
+                    <rect x="255" y="44" width="130" height="56" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="320" y="68" text-anchor="middle" font-family="var(--mono)" font-size="13" font-weight="600" fill="var(--text-bright)">OAT &lt; SP</text>
+                    <text x="320" y="86" text-anchor="middle" font-family="var(--mono)" font-size="9" fill="var(--text-dim)">compare</text>
+                    <circle cx="255" cy="62" r="3.8" fill="var(--blue)"/>
+                    <circle cx="255" cy="82" r="3.8" fill="var(--blue)"/>
+                    <circle cx="385" cy="72" r="3.8" fill="var(--accent)"/>
+                </g>
+                <!-- AND -->
+                <g id="fb-econ-and">
+                    <rect x="470" y="118" width="130" height="56" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="535" y="151" text-anchor="middle" font-family="var(--mono)" font-size="15" font-weight="600" fill="var(--text-bright)">AND</text>
+                    <circle cx="470" cy="136" r="3.8" fill="var(--accent)"/>
+                    <circle cx="470" cy="156" r="3.8" fill="var(--accent)"/>
+                    <circle cx="600" cy="146" r="3.8" fill="var(--accent)"/>
+                </g>
+                <!-- ECON ENABLE -->
+                <g id="fb-econ-out">
+                    <rect x="610" y="118" width="130" height="56" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="622" y="137" font-family="var(--mono)" font-size="8.5" letter-spacing="0.5" fill="var(--text-dim)">BINARY OUT</text>
+                    <text x="622" y="158" font-family="var(--mono)" font-size="12" font-weight="600" fill="var(--accent)">ECON  ON</text>
+                    <circle cx="610" cy="146" r="3.8" fill="var(--accent)"/>
+                </g>
+            </svg>
+
+            <p class="ref-note compact" style="text-align:center;">
+                Green wires carry a TRUE digital signal; blue wires carry an analog value.
+            </p>
+
+            <p>
+                That's the whole idea. Every sequence you'll meet — a freeze-stat that latches
+                a fan off, a staging routine, a reset schedule — is the same move: real-world
+                signals in on the left, blocks doing one small job each, commands out on the
+                right. A big sheet is just a lot of small, readable steps.
+            </p>
+
+            <h2 class="subhead">Build one yourself</h2>
+
+            <p>
+                Reading about wiresheets only goes so far — the thing clicks when you wire one
+                up and watch it run. The <a href="/tools/function-block-editor.html">Function-Block
+                Editor</a> is a sandbox for exactly that: drag blocks onto a sheet, wire them,
+                and watch the values move. It ships with the economizer above already built,
+                plus a freeze-stat shutdown, a pair of thermostats, and a PID loop — load one,
+                poke at the inputs, and see the logic respond.
+            </p>
+
+            <a class="cta-button" href="/tools/function-block-editor.html">Open the Function-Block Editor →</a>
+
+        </div>
+    </div>
+
+    <a class="back-link" href="/education/">← Back to Education</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="/scripts/units.js"></script>
+{% endblock %}
