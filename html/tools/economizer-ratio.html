@@ -546,6 +546,18 @@ nav: tools
         // ── Initial paint ─────────────────────────────────────────────
         refreshSecondLabel('er-h-oa');
         refreshSecondLabel('er-h-ra');
+        // Input values are authored in US units; convert once up front for a
+        // returning metric visitor so the numbers match the labels units.js
+        // has already swapped (same fix as thermistor-calculator / refrigerant-pt).
+        if (U.current() === 'metric') {
+            for (const id of ['er-db-oa', 'er-db-ra', 'er-db-ma', 'er-h-oa-tdb', 'er-h-ra-tdb', 'er-h-ma']) {
+                rewriteInput(id, 'temp', 'us', 'metric');
+            }
+            for (const prefix of ['er-h-oa', 'er-h-ra']) {
+                const q = quantityForMode(document.getElementById(prefix + '-mode').value);
+                if (q) rewriteInput(prefix + '-second', q, 'us', 'metric');
+            }
+        }
         calcDryBulb();
         calcEnthalpy();
     })();

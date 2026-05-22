@@ -625,6 +625,24 @@ nav: tools
 
         // ── Initial paint ─────────────────────────────────────────────
         applyCoilType();
+        // Input values are authored in US units; convert once up front for a
+        // returning metric visitor so the numbers match the labels units.js
+        // has already swapped (same fix as thermistor-calculator / refrigerant-pt).
+        if (U.current() === 'metric') {
+            for (const id of ['cs-cap-ent-tdb', 'cs-cap-lvg-tdb', 'cs-lvg-ent-tdb']) {
+                rewriteInput(id, 'temp', 'us', 'metric');
+            }
+            for (const id of ['cs-cap-cfm', 'cs-lvg-cfm']) {
+                rewriteInput(id, 'airflow', 'us', 'metric');
+            }
+            for (const id of ['cs-lvg-q-sens', 'cs-lvg-q-lat', 'cs-lvg-q-heat']) {
+                rewriteInput(id, 'heatCapacity', 'us', 'metric');
+            }
+            for (const prefix of ['cs-cap-ent', 'cs-cap-lvg', 'cs-lvg-ent']) {
+                const q = quantityForMode(document.getElementById(prefix + '-mode').value);
+                if (q) rewriteInput(prefix + '-second', q, 'us', 'metric');
+            }
+        }
         calcCapacity();
         calcLeaving();
     })();
