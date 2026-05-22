@@ -347,8 +347,11 @@ nav: tools
                 reposition. To wire, click an <strong>output</strong> pin (right edge) then a
                 compatible <strong>input</strong> pin (left edge) — pins only connect
                 like-to-like, analog to analog and digital to digital. Click a block or a
-                wire to select it; the <strong>Reset</strong> key removes the selection, and
-                the inspector on the right edits the selected block's parameters live.
+                wire to select it; press <code>Delete</code> to remove the selection, or
+                <code>Escape</code> to cancel a wire-in-progress. The inspector below the
+                canvas edits the selected block's parameters live. Placing and wiring
+                blocks needs a mouse or touch; the inspector and the sim-bar buttons
+                take keyboard too.
             </p>
             <p>
                 The sequence evaluates ten times a second. Pure logic settles in a single
@@ -759,6 +762,10 @@ nav: tools
 
         function deleteSelected() {
             if (!selected) return;
+            // A pending wire from the soon-to-be-deleted block would
+            // outlive its source; clear it unconditionally — the user
+            // can re-pick a source pin if they were mid-wire elsewhere.
+            cancelWire();
             if (selected.kind === 'block') {
                 graph.wires = graph.wires.filter(
                     (w) => w.from[0] !== selected.id && w.to[0] !== selected.id);
