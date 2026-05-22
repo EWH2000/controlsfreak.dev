@@ -347,9 +347,18 @@ const FBE = (function () {
     function makeGraph(def) {
         const g = JSON.parse(JSON.stringify(def));
         g.blocks.forEach((b) => {
+            const bdef = BLOCKS[b.type];
+            // Reject unknown block types at graph-construction time —
+            // tick() short-circuits past them, but the param-backfill
+            // loop below would crash on `bdef.params`. createBlock()
+            // throws on the same case; match its shape.
+            if (!bdef) {
+                throw new Error('unknown block type: ' + b.type +
+                                ' (block ' + b.id + ')');
+            }
             b.params = b.params || {};
             // Backfill any param the literal omitted.
-            (BLOCKS[b.type].params || []).forEach((p) => {
+            (bdef.params || []).forEach((p) => {
                 if (!(p.name in b.params)) b.params[p.name] = p.default;
             });
             b.state = {};

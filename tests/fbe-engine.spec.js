@@ -63,6 +63,20 @@ test.describe('fbe-engine: catalog + helpers', () => {
         g.blocks[0].params.value = 999;
         expect(def.blocks[0].params.value).toBe(7);
     });
+
+    test('makeGraph throws a clear error on an unknown block type', () => {
+        // tick() short-circuits past unknown sources, but makeGraph's
+        // param-backfill loop would have crashed on `.params` of an
+        // undefined catalog entry. Now it throws at construction time
+        // with the bad type and the offending block id.
+        const FBE = loadEngine();
+        const def = {
+            blocks: [{ id: 'x', type: 'no-such-block', x: 0, y: 0 }],
+            wires: [],
+        };
+        expect(() => FBE.makeGraph(def)).toThrow(/no-such-block/);
+        expect(() => FBE.makeGraph(def)).toThrow(/block x/);
+    });
 });
 
 test.describe('fbe-engine: evaluation', () => {
