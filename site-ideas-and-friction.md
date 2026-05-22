@@ -233,9 +233,11 @@ the step/reset buttons reuse the shared `.copy-btn`.
   prose, not a first-person war story — the user can swap in a
   personal anecdote later if they have one.
 
-No `flow-engine.js` — there are no pipe-flow diagrams; the intro
-schematic is a static SVG (page-local `.es-fig`, no `data-flow`), and
-the two widgets are the visual capstones of their sections.
+The intro schematic is an animated pipe-flow diagram — `.edu-svg` +
+`flow-engine.js` + `data-flow` annotations, same idiom as the
+load-piping / pump-control diagrams (supply solid, return dashed,
+particles walking; suction header + from-system drop walk reversed).
+The two widgets are the visual capstones of their own sections.
 
 **Forward-link payoffs landed:**
 - pump-control's lead/lag note — the plain-prose "a dedicated

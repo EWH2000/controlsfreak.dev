@@ -616,8 +616,8 @@ test('equipment staging — staging widget stages up, rotation widget equalizes 
     const errors = watchErrors(page);
     await page.goto('/education/equipment-staging.html');
 
-    // Intro schematic renders with its named pump groups.
-    await expect(page.locator('main svg.es-fig')).toHaveCount(1);
+    // Pipe-flow schematic renders with its named pump groups.
+    await expect(page.locator('main svg.edu-svg')).toHaveCount(1);
     await expect(page.locator('#es-fig-p1')).toHaveCount(1);
 
     // Widget 1 — one pump running at the light default demand.
