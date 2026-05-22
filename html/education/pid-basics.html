@@ -15,7 +15,7 @@ nav: education
     </div>
 
     <p class="page-intro">
-        PID is three knobs that, together, push a process variable toward a setpoint. This is a common sense walk through what each one does on a typical HVAC loop, plus three small sims you can play with one knob at a time. By the end, the full <a href="/tools/pid-tuner.html">PID Tuning Helper</a> should make a lot more sense.
+        PID is three knobs that, together, push a process variable (PV — the thing you're measuring) toward a setpoint (SP — the value you want it to hold). This is a common sense walk through what each one does on a typical HVAC loop, plus three small sims you can play with one knob at a time. By the end, the full <a href="/tools/pid-tuner.html">PID Tuning Helper</a> should make a lot more sense.
     </p>
 
     <!-- ── What P, I, and D Actually Do ── -->
@@ -203,7 +203,7 @@ nav: education
                 <span class="ps-label">Settling time (±2%)</span>
                 <span class="ps-value live" id="m3-settle">—</span>
             </div>
-            <p class="ref-note compact">A little D crushes the overshoot at almost no cost; overdo it and the loop just turns sluggish. The rate slider's range scales with the loop — derivative worth using on a 45-second process is a rounding error on a 4-minute one, which is part of why slow HVAC loops mostly run PI.</p>
+            <p class="ref-note compact">A little D crushes the overshoot at almost no cost; overdo it and the loop just turns sluggish. The rate slider's range scales with the loop — a useful Td grows right along with τ, so derivative has room to act on a slow process too. The reason slow HVAC loops mostly run PI is a different one: D works off the rate of change of the measurement, and on a slow, noisy sensor that's mostly amplified noise.</p>
         </div>
     </div>
 

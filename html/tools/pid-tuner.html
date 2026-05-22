@@ -50,7 +50,7 @@ nav: tools
                         <option value="field" selected>Gain · Reset · Rate (field shorthand)</option>
                         <option value="timeMin">Gain · Ti · Td (minutes)</option>
                         <option value="timeSec">Gain · Ti · Td (seconds) — EBO style</option>
-                        <option value="pbSec">Prop. band · Ti · Td (sec) — Distech style</option>
+                        <option value="pbSec">Prop. band · Ti · Td (sec)</option>
                     </select>
                 </div>
             </div>
@@ -152,7 +152,7 @@ nav: tools
             </table>
 
             <p class="pid-note">
-                The ratio that matters most for controllability is dead&nbsp;time&nbsp;÷&nbsp;τ. Below ~0.2 the loop is well-behaved; up around 0.5 you need to be careful (slower gain, longer reset); past 1.0 you're usually fighting transport delay, and a Smith predictor or feedforward starts to look attractive. The three buckets above all sit comfortably under 0.2, which is most HVAC.
+                The ratio that matters most for controllability is dead&nbsp;time&nbsp;÷&nbsp;τ. Below ~0.2 the loop is well-behaved; up around 0.5 you need to be careful (slower gain, longer reset); past 1.0 you're usually fighting transport delay, and a Smith predictor or feedforward starts to look attractive. At their preset operating points the three buckets above all sit comfortably under 0.2, which is most HVAC — though toward the slow end of a bucket's range the ratio climbs.
             </p>
 
             <h2 class="ps-section-label" style="margin-top:2.25rem;">Symptom → Tuning Move</h2>
@@ -183,7 +183,7 @@ nav: tools
             </p>
 
             <p class="pid-note">
-                Rule of thumb on this tool: most HVAC loops are PI, not full PID. Start with reset off, raise the gain until the loop just begins to cycle, back it off, then add only as much reset as you need. Vendors differ on the knobs — Niagara LoopPoint exposes bare proportional / integral / derivative constants (closest to the gain · reset · rate view), EBO uses gain with integral and derivative times in seconds (Ti / Td), and Distech uses a proportional band with the same time-in-seconds Ti / Td; flip the <em>Parameter Style</em> selector above to read the loop in whichever terms you use. Same idea, different clothes — the numbers here show the relationships between the knobs, not drop-in values for any one platform.
+                Rule of thumb on this tool: most HVAC loops are PI, not full PID. Start with reset off, raise the gain until the loop just begins to cycle, back it off, then add only as much reset as you need. Vendors differ on the knobs — Niagara LoopPoint exposes bare proportional / integral / derivative constants (closest to the gain · reset · rate view), EBO uses gain with integral and derivative times in seconds (Ti / Td), and a proportional-band style swaps the gain for a proportional band while keeping the same time-in-seconds Ti / Td; flip the <em>Parameter Style</em> selector above to read the loop in whichever terms you use. Same idea, different clothes — the numbers here show the relationships between the knobs, not drop-in values for any one platform.
             </p>
 
             <p class="pid-note">

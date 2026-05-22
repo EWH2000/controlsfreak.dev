@@ -104,6 +104,13 @@ rounding error — Td scales with the loop, and the engine's own
 `PID_DMAX` table scales the rate slider up to 2 min for slow loops
 precisely so D *can* act there.
 
+**Resolution (2026-05-21):** Sim 3 caption rewritten. The wrong clause
+(Td "is a rounding error" on a slow loop) is gone; the caption now keeps
+the true "rate slider's range scales with the loop" and states a useful
+Td grows with τ, then attributes "slow HVAC loops mostly run PI" to D
+amplifying a noisy, slowly-changing measurement — consistent with the
+D callout and the pid-tuner cheat sheet.
+
 ### 2. load-piping.html ↔ pump-control.html — the DPBV is framed two different ways
 
 **Location:** load-piping "Tying it back to the twin-T" (DPBV paragraph)
@@ -135,6 +142,15 @@ diagram, and whether the device shown is a ΔP-controlled DPBV (constant
 speed) or a minimum-flow bypass (variable speed), then make both pages
 agree.
 
+**Resolution (2026-05-21):** the load-piping twin-T device is relabelled
+a *minimum-flow bypass* (SVG label `MIN-FLOW`, `<g>` id
+`lp-tt-minflow`, `<desc>` and "Tying it back" prose all reworded). It's
+now the variable-flow / VFD-pump device — guarantees a flow floor — and
+the prose explicitly distinguishes it from the ΔP-setpoint DPBV, linking
+pump-control. `pump-control.html` keeps the DPBV as the constant-speed
+fix and no longer claims load-piping "covers" it; instead it points at
+load-piping's minimum-flow bypass as the variable-flow counterpart.
+
 ### 3. vfds.html — "clogged filter" listed as a cause of motor overload
 
 **Location:** Fault-code category table, "Motor overload" row, "usual
@@ -156,6 +172,11 @@ clogged filter does (it moves the system curve, along the fan curve).
 **Suggested direction:** either spell out the VFD-compensation chain,
 or replace the example with a cleaner motor-overload cause (mechanical
 bind, undersized motor — both already in the same cell).
+
+**Resolution (2026-05-21):** the "clogged filter pushing a fan past its
+curve" clause was dropped from the Motor-overload row. The cell still
+reads correctly with "Mechanical bind" and "undersized motor for the
+actual load" — both accurate causes.
 
 ### 4. thermistor — type notes quote values the page's own table doesn't show
 
@@ -182,6 +203,12 @@ tables*"). The "About these tables" card already explains the
 generated-vs-canonical gap in general terms; the note just needs to not
 contradict the table beside it.
 
+**Resolution (2026-05-21):** the 10K Type II `notes` string keeps the
+canonical published values and now appends a half-sentence — "Those are
+canonical published values; the generated table above differs by up to
+~1 °F — see 'About these tables'." — so the note no longer silently
+contradicts the table beside it.
+
 ### 5. balancing.html — ABV compensation range: prose and widget disagree
 
 **Location:** "Automatic Balancing Valves" prose vs. the comparison
@@ -203,12 +230,28 @@ numbers.
 the prose range, or add a one-line note that the widget models a single
 representative cartridge rather than the full "typical" envelope.
 
+**Resolution (2026-05-21):** the prose range was changed to match the
+widget — "2 to 32 psi" → "1 to 22 psi" (the widget's 3–50 ft-of-head
+band ≈ 1.3–21.7 psi). The widget JS is unchanged, so the smoke-test
+boundary assertions at 3 ft / 50 ft are untouched.
+
 ---
 
 ## Minor polish
 
 Phrasing, undefined jargon, and small wording imprecisions. None change
 what the page teaches; each is a quick editorial pass.
+
+**Resolution (2026-05-21):** all items below addressed in one minor-polish
+pass — glosses added (PV / SP; AV / VAV; RTD / AHU / IAQ / apparatus dew
+point / natatorium); the load-piping SVG "system Q" annotations relabelled
+"system flow"; the hydronic-loops d3 injection-pump slider capped at 60 Hz
+(`MAX_HZ` 75 → 60); the pid-tuner dead-time-ratio sentence reworded to refer
+to the presets' nominal operating points rather than the table's full
+ranges; the unverifiable "Distech" vendor name dropped from the pid-tuner
+prose and the Parameter Style selector (the EBO description was owner-
+confirmed and kept); the air-mixing "Mass flow (CFM)" label changed to
+"Airflow (CFM)"; the two index.html About-card typos fixed.
 
 - **pid-basics.html** — "process variable" and "setpoint" (PV / SP) are
   used from the intro onward without a one-line definition, on a page

@@ -99,7 +99,7 @@ nav: education
             <div class="callout-grid">
                 <div class="callout">
                     <h3>DB — Dry-bulb temperature <span>· what the thermometer reads</span></h3>
-                    <p>The plain air temperature, no moisture correction. Every space sensor, every duct probe, every supply-air RTD is reading dry-bulb. It is the most familiar number — and on its own, it tells you nothing about how much water is in the air. A <span data-us="75&nbsp;°F" data-metric="24&nbsp;°C">75&nbsp;°F</span> space is comfortable at 50% RH and sticky at 80%.</p>
+                    <p>The plain air temperature, no moisture correction. Every space sensor, every duct probe, every supply-air RTD (resistance temperature detector) is reading dry-bulb. It is the most familiar number — and on its own, it tells you nothing about how much water is in the air. A <span data-us="75&nbsp;°F" data-metric="24&nbsp;°C">75&nbsp;°F</span> space is comfortable at 50% RH and sticky at 80%.</p>
                 </div>
                 <div class="callout">
                     <h3>WB — Wet-bulb temperature <span>· the evaporative-cooling floor</span></h3>
@@ -107,7 +107,7 @@ nav: education
                 </div>
                 <div class="callout">
                     <h3>DP — Dew point <span>· the glass-of-ice-water temperature</span></h3>
-                    <p>The temperature you have to cool the air to before water vapor starts condensing. Pour ice water into a glass: the surface chills near <span data-us="32&nbsp;°F" data-metric="0&nbsp;°C">32&nbsp;°F</span>, the air against it cools to its dew point, water condenses, the glass sweats. Any space surface below dew point sweats — windows, ducts in unconditioned ceiling cavities, cold-floor lobbies, pool glazing. This is the property the natatorium spec is really defending, even when it is written as RH.</p>
+                    <p>The temperature you have to cool the air to before water vapor starts condensing. Pour ice water into a glass: the surface chills near <span data-us="32&nbsp;°F" data-metric="0&nbsp;°C">32&nbsp;°F</span>, the air against it cools to its dew point, water condenses, the glass sweats. Any space surface below dew point sweats — windows, ducts in unconditioned ceiling cavities, cold-floor lobbies, pool glazing. This is the property the natatorium (indoor-pool) spec is really defending, even when it is written as RH.</p>
                 </div>
                 <div class="callout">
                     <h3>W — Humidity ratio <span>· grains per pound of dry air</span></h3>
@@ -145,7 +145,7 @@ nav: education
                     </tr>
                 </thead>
                 <tbody>
-                    <tr><td><strong>DB + RH</strong></td><td>Almost every space sensor — BACnet AHU return, wall stat, IAQ probe. The everyday pair, and the one with the most footguns.</td></tr>
+                    <tr><td><strong>DB + RH</strong></td><td>Almost every space sensor — BACnet AHU (air-handling unit) return, wall stat, IAQ (indoor-air-quality) probe. The everyday pair, and the one with the most footguns.</td></tr>
                     <tr><td><strong>DB + WB</strong></td><td>Sling psychrometer or aspirated wet/dry pair. The original field measurement; still the gold standard for a coil leaving-air reading.</td></tr>
                     <tr><td><strong>DB + DP</strong></td><td>Chilled-mirror dewpoint sensor plus a temperature element. Less common in HVAC; more common in clean rooms, labs, museums.</td></tr>
                     <tr><td><strong>DB + W</strong></td><td>Computed — either a transmitter that outputs grains directly, or a downstream calc from RH. Useful for mass-balance work.</td></tr>
@@ -171,7 +171,7 @@ nav: education
 
             <h3 class="subhead">Cooling + dehumidification</h3>
             <p>
-                The cooling coil dips below the entering dew point. Moisture condenses out, drains away, and the leaving air has lower W and lower DP. The state-point path bends down-and-to-the-left toward the coil’s apparatus dew point. Both sensible and latent enthalpy leave the airstream; on a humid day the latent share is most of the load. This is the process that does the real work in any dehumidification application — natatorium included.
+                The cooling coil dips below the entering dew point. Moisture condenses out, drains away, and the leaving air has lower W and lower DP. The state-point path bends down-and-to-the-left toward the coil’s apparatus dew point — the effective coil-surface temperature the leaving air is pulled toward. Both sensible and latent enthalpy leave the airstream; on a humid day the latent share is most of the load. This is the process that does the real work in any dehumidification application — natatorium included.
             </p>
 
             <h3 class="subhead">Mixing two streams</h3>

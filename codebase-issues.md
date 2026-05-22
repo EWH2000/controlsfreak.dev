@@ -2889,7 +2889,7 @@ callbacks" gotcha updated to record the route-block; the
 `smoke.spec.js` race-tolerance note stays (that file is out of
 scope). No version bump — test-only.
 
-### 56. `coil-sizing.html` toggles row visibility with `el.style.display` instead of the `.hidden` class
+### 56. `coil-sizing.html` toggles row visibility with `el.style.display` instead of the `.hidden` class *(addressed 2026-05-21)*
 
 Surfaced during the 2026-05-21 content-audit pass (delta sweep of the
 post-2026-05-20 code).
@@ -2923,6 +2923,13 @@ who tries to show one of these rows via `.hidden` finds it doesn't work.
 already exists in `styles.css` from #53; no CSS change needed. Confirm
 the `.cs-cool-only` / `.cs-heat-only` selectors carry no `display` rule
 of their own that would tie with `.hidden` on specificity.
+
+### 57. Education body-prose inline triplet on `<ul>` lists — missed by #19 / #50 *(addressed 2026-05-21)*
+**Resolution (2026-05-21):** `applyCoilType()` now uses
+`el.classList.toggle('hidden', …)` for both row sets. Confirmed
+`.cs-cool-only` / `.cs-heat-only` carry no CSS rule of their own (page
+inline `<style>` or `styles.css`), so `.hidden` wins cleanly. No CSS
+change — `.hidden` was already in `styles.css` from #53.
 
 ### 57. Education body-prose inline triplet on `<ul>` lists — missed by #19 / #50
 
@@ -2993,6 +3000,18 @@ most of the audience), but it's a correctness bug, not just cosmetics.
 unit-flip path once with `from='us', to='metric'` before the first
 compute. The conversion helpers already exist on each page; this is a
 3–5 line addition per tool, no new shared code.
+**Resolution (2026-05-21):** promoted `.tool-body ul` in `styles.css`
+next to `.tool-body p` — same font triplet (`font-size: 0.95rem;
+line-height: 1.8; color: var(--text)`; normalized off the inline 1.85).
+A `li` rule isn't needed — `<li>` children inherit font/colour from the
+`<ul>`. The inline triplet was dropped from the 4 target `<ul>`s
+(`vfds.html` ×2, `pump-control.html` ×2); each keeps its per-list
+`margin` inline since that value varies. The three other education
+`<ul>`s (`hydronic-loops.html`, `pump-control.html` — smaller 0.86rem
+lists) keep their inline font styling, which out-ranks the new rule, so
+they are unchanged. `modbus-register-viewer.html`'s `<ul class="ref-note">`
+sits in a `.tool-body-row`, not a `.tool-body`, so the new descendant
+selector doesn't reach it. No list-scoped utility class is out-ranked.
 
 ---
 
