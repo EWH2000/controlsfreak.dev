@@ -1218,74 +1218,189 @@ real shape mismatch.
   changing the math. Worked-example walkthrough won the slot; the
   changeover-verdict pill in the enthalpy tab is the live equivalent.
 
-### Mock function-block editor *(larger build — may span multiple sessions)*
-A graphical function-block sandbox in the spirit of Niagara's wiresheet
-/ EBO function diagrams / Distech graphical programming — a teaching
-surface for newer techs who've never wired a logic diagram before, and
-a "what does this language even look like" sample for people coming in
-from PLC or line-code backgrounds. Same `mock` framing as
-`vfd-mock.html`: feels like the real thing, doesn't replace it.
+### Mock function-block editor *(shipped 2026-05-22)*
+*One question: what does it feel like to build a control sequence
+out of function blocks, and how does a wiresheet actually evaluate?*
 
-**Rough scope (provisional, settle when this enters the queue):**
+Ships at `/tools/function-block-editor.html` as a custom-layout tool
+(palette · canvas with a full-width inspector strip below), page-id
+prefix `fbe-`. The graphical wiresheet half of the BAS programming
+story — same `mock` framing as `vfd-mock.html`: feels like the real
+thing, doesn't replace it. Paired with the
+`/education/function-blocks.html` explainer (entry below), matching
+the `vfd-mock ↔ vfds` and `pid-tuner ↔ pid-basics` precedents.
 
-- *Block palette — basic logic and math.* Boolean: AND, OR, NOT, XOR,
-  RS latch. Comparators: =, ≠, >, <, ≥, ≤. Math: add, subtract,
-  multiply, divide, min, max, average. Timers: TON (on-delay), TOF
-  (off-delay), pulse. Selection: select (boolean switch), limit
-  (clamp). Sources/sinks: constant value, AI/AO/BI/BO point stubs,
-  display readout.
-- *Canvas + wiring.* Drag blocks from a palette onto a canvas; click
-  output pin → click input pin to wire. Live tick simulation runs in
-  the background so wires light up with their current value and
-  outputs update as inputs change. Probably no save/load in v1
-  (state survives the session, not a reload — same as the VFD mock).
-- *Example programs — canned scenarios that load with one click.*
-  Few candidates worth considering: start/stop interlock with
-  hand-off-auto, freeze-stat shutdown chain, occupancy override with
-  timed bypass, simple economizer enable (OAT < setpoint AND mode =
-  cool), pump alternation latch, simple PID-style cascade (the PID
-  block lives in the Tuner, but a placeholder block here could
-  consume its output). The examples are the value — palette without
-  worked programs is just a toy.
-- *No actual PID block here.* Same scope discipline as the VFD mock —
-  this tool is the wiring/logic surface, not the control-loop surface.
-  If the user wants a PID, the Tuner is one click away (cross-link).
-  A `PID` block stub can appear in the palette as a black box (inputs
-  for SP/PV, output 0–100%), with prose saying "see the Tuner" and
-  no actual loop math under the hood.
+**Engine extraction landed day-one** — `html/scripts/fbe-engine.js`
+holds the block catalog and the per-tick evaluator as a pure classic
+script (`window.FBE`, no DOM); the page owns canvas / drag / wiring /
+tick loop. Codebase-issues #6's "extract before the page becomes a
+monolith" lesson applied directly: the paired Education page is the
+near-certain second consumer, and the engine is a clean boundary
+(block registry + topological evaluator). Mirrors pid-engine.js /
+psychro-engine.js. Engine-direct unit tests
+(`tests/fbe-engine.spec.js`) cover catalog shape, combinational
+settling, set-dominant SR latch, TON delay, PID step, and
+feedback-cycle one-tick delay.
 
-**Open design questions for when this gets closer:**
-- *Pairing with an Education page.* "What is function-block
-  programming, and why do controls people use it?" might be a peer
-  Education page that this tool pays off. Same precedent as
-  vfds.html ↔ vfd-mock.html. Or the explainer prose lives on the
-  tool page itself if it stays short.
-- *Visual grammar.* Niagara wiresheet (boxes-on-grid, orthogonal
-  wires) vs. EBO function diagrams (similar, slightly different
-  chrome) vs. an on-brand "controlsfreak look" that isn't a copy of
-  either. Probably the third, drawing from the site's existing
-  palette and the recessed `--surface-3` panel idiom.
-- *Tick semantics.* Real controllers run blocks in a defined
-  evaluation order (often topologically sorted on the wires). v1
-  can probably get away with "evaluate every block every tick,
-  combinational logic settles in one pass," but feedback loops
-  (the RS latch wired through an OR with itself) will need a
-  one-tick-delay convention so they don't infinite-loop. Worth
-  thinking about up front so the engine isn't retrofitted.
-- *Persistence.* Same question the Controller commissioner entry
-  raises — does this tool save programs across sessions
-  (localStorage)? Does it export to a sharable JSON? Both add real
-  scope; v1 can probably ship without either.
-- *Mobile.* Almost certainly desktop-only. Drag-and-drop wiring on
-  a touch device is its own design problem, and the audience for
-  this tool overlaps heavily with the "at-a-desk learning" mode
-  rather than the "on-a-roof" mode.
+**Block roster — 28 blocks** across six palette categories. Boolean:
+AND / OR / NOT / XOR / SR latch (set-dominant). Comparators:
+= / ≠ / > / < / ≥ / ≤. Math: add / sub / mul / div / min / max
+(divide guards `/0 → 0`). Timers: TON / TOF, both stateful with a
+preset-time param. Selection: select (boolean switch) and limit
+(clamp). I/O: constant, AI / BI / AO / BO point stubs, and a
+generic readout sink. Control: a real per-tick PID. Friction-file
+long-tail (pulse timer, average) parked — trivial registry entries
+to add later if a real use case asks.
 
-This entry is brief on purpose — flesh it out in the design chat
-when it enters the queue. Sits in the same "larger build, multiple
-sessions" bucket as the Controller commissioner below; if both ship,
-they might share a bit of visual vocabulary (block-palette + canvas
-layout, point-stub representation) but they're independent tools.
+**Real working PID in v1 — architectural argument.** The pre-build
+sketch on this entry said "no actual PID block" for scope discipline
+(echoing the VFD-mock posture). Re-evaluated during planning:
+TON / TOF and SR latch already force a *stateful-block* engine, so
+a real per-tick PID is the same category — retrofit cost ≈ build-in
+cost. Built it in, with the PID-loop example program (PV + SP → PID
+→ AO + readout) as the tie-back to `pid-tuner.html`. Implementation
+is a fresh ~20-line per-tick controller with conditional-integration
+anti-windup, output clamped 0–100 %; distinct from `pid-engine.js`'s
+`simulatePid`, which is a whole step-response simulation (different
+shape). The pid-tuner / pid-basics pages remain the place for PID
+internals; this tool just lets you wire the loop into a sequence.
+
+**Five canned example programs** load via a `widget-try` chip row:
+1. *Freeze-stat shutdown chain* — freeze BI sets an SR latch, the
+   latch drops the fan via NOT and lights an alarm BO.
+2. *Economizer enable* — AI(OAT) `<` const(setpoint) AND BI(cool
+   mode) → BO. Six blocks; default-loaded on first paint as the
+   most immediately legible sheet.
+3. *Direct-acting (cooling) thermostat* — AI(temp), const(SP),
+   const(deadband); add / sub build the band edges; GT/LT feed an
+   SR latch (set on over-temp, reset on under-temp); output drives
+   a cooling BO. Output rises with temperature = direct-acting.
+4. *Reverse-acting (heating) thermostat* — same nine-block shape,
+   the SR latch's S and R inputs swapped — output rises as
+   temperature falls = reverse-acting. The two thermostats
+   deliberately ship as a pair to teach the direct / reverse-acting
+   vocabulary.
+5. *PID loop* — AI(PV), const(SP), PID block, AO + readout. The
+   loop visibly climbs toward setpoint once running.
+
+**Tick semantics — one-tick delay for cycles.** Kahn topological
+sort on the wire DAG; combinational chains settle in dependency
+order within a single tick (a comparator's result reaches the
+downstream AND in the same tick). Cycles (feedback edges) read the
+*previous* tick's value — so an SR latch holds, a NOT wired back to
+itself toggles each tick instead of looping forever, and the engine
+never hangs. Stateful blocks carry their own state across ticks.
+Tested explicitly in `fbe-engine.spec.js`. Tick rate: 100 ms (10 Hz),
+a fixed dt the page passes to `FBE.tick(graph, dt)` — fixed dt
+matters for the PID integrator and timer resolution (same reasoning
+as codebase-issues #1's motor-tick decision). The page's
+`setInterval` is captured and paused on `visibilitychange` hidden,
+honouring #1's "no idle background work" posture.
+
+**Interaction settled during build:**
+- *Click-to-add from palette*, not drag-from-palette. Simpler,
+  keyboard- and touch-friendly, robust. New blocks cascade into a
+  tidy 5-column grid so they don't stack.
+- *Pin wiring is two clicks*: click an output pin, then a compatible
+  input pin. Kind-checked (analog can't feed digital). One wire per
+  input pin — wiring a second wire to the same input replaces the
+  first.
+- *Drag blocks by their title bar* via pointer events (works on
+  touch). Pin clicks short-circuit drag, so a click on a pin always
+  reaches the wiring handler.
+- *Inspector* is a full-width strip below the canvas — not a third
+  column, which left the canvas too narrow. Horizontal row of
+  stacked label / field pairs for the selected block's params; live
+  edits feed back on the next tick.
+- *Delete / Backspace* removes the selected block (and its wires) or
+  the selected wire. *Escape* cancels a pending wire.
+- *Run / Pause / Step / Reset / Clear* sit above the workspace.
+  Reset clears every block's state without altering the graph
+  (timers restart, PID integral zeroes, latches drop).
+- *Wire colours encode pin kind* — analog = `--blue`, digital TRUE
+  = `--accent`, digital FALSE = `--border` (gray). No new `:root`
+  token needed.
+
+**Layout — desktop-first interaction, intentionally.** The
+friction-file pre-accepted desktop-only ("drag-wiring on a touch
+device is its own design problem"). Below the 860 px breakpoint the
+palette stacks above the canvas, a `.fbe-narrow-note` sets
+expectations, and the tool still functions (pointer events cover
+touch for both dragging and click-wiring) — the real cost on small
+screens is screen real estate. Canvas inner is 900×480 with
+horizontal scroll; examples lay out left-to-right within it.
+Wiresheet scrolling is the expected behaviour for this kind of tool
+— every real wiresheet scrolls.
+
+**Out of scope (deliberate, parked):**
+- *Persistence / save / load / JSON export.* Session-only — same as
+  every other tool on the site. The Controller-commissioner entry
+  remains the place to start the persistence conversation.
+- *Touch-optimised drag-wiring.* Pre-accepted desktop-first.
+- *Pulse timer, average, additional comparators.* Trivial registry
+  entries; add when a real use case asks.
+- *Deeper pid-tuner ↔ editor integration.* The PID block stands on
+  its own; deeper PID pedagogy stays on `pid-basics.html` (cross-
+  linked from the lesson, accessible via the PID block's behaviour).
+- *Multi-pass settling beyond one tick.* One-tick-delay is
+  sufficient for v1 and matches how real controllers behave.
+
+### Function-block programming — paired Education page *(shipped 2026-05-22)*
+
+**One question:** *what is function-block programming, and why do
+controls people use it?* Ships at
+`html/education/function-blocks.html` as the lesson half of the
+Function-Block Editor pairing, mirroring `vfd-mock ↔ vfds` and
+`pid-tuner ↔ pid-basics`.
+
+In scope (sections shipped):
+- *Blocks and wiresheets* — what a block is (pins, body, output),
+  what a wiresheet is, the digital / analog distinction. Anchored
+  by a static SVG annotating a single AND block (inputs ·
+  behavior · output).
+- *Why controls people work this way* — the diagram is the program,
+  you can watch it run, the vocabulary travels across vendors.
+- *The block families* — a six-callout grid (I/O · Boolean ·
+  Comparator · Math · Timer · Control), one paragraph each. The
+  Control card forward-links to `pid-basics.html` for PID
+  internals.
+- *How a wiresheet runs* — the scan, combinational settling in
+  dependency order, the one-tick-delay for feedback. The same
+  semantics the editor's engine implements; the lesson explains the
+  *why* the editor demonstrates.
+- *A worked sheet — economizer enable* — capstone walkthrough of
+  the same six-block sequence the editor ships as a default
+  example. A full static SVG wiresheet with blue analog wires and
+  green digital-TRUE wires.
+- *Build one yourself* — `.cta-button` to the editor as the closing.
+
+Out of scope (forward-links, not content):
+- The editor itself — full hands-on lives in the tool (closing CTA;
+  the tool's preamble links back).
+- *PID internals* — `pid-basics.html` cross-link.
+- *Vendor-specific environments* — cross-manufacturer discipline,
+  brief mention only.
+- *An embedded live mini-demo using `fbe-engine.js`* — considered
+  during scoping, parked: the editor is the interactivity, one
+  click away, and a redundant demo would dilute it. Same logic the
+  psychrometrics-basics page applied (forward-link to the chart
+  tool rather than re-doing the visualisation).
+
+**Diagram CSS — page-local `.fb-svg` class** (precedent: `.vfd-svg`).
+Block-diagram structural drawings get their own page-local class;
+the `.edu-svg` family stays scoped to pipe-flow diagrams with
+`data-flow` annotations. Two SVGs ship on the page: the
+anatomy-of-a-block schematic and the economizer-enable wiresheet.
+
+**Cross-links wired both directions:**
+- Tool → lesson: the editor's `.tool-preamble` carries "New to it?
+  Start with Function-Block Basics →" from day one.
+- Lesson → tool: inline anchors plus the closing `.cta-button`.
+
+**Forward-link debts this page incurred:** none net-new — the
+related future page (`pid-basics.html`) already exists, so the
+lesson cross-links to it for PID internals without a `[future:]`
+marker.
 
 ### Controller commissioner *(larger build — may span multiple sessions)*
 A point-by-point commissioning workbench. User defines the controller's

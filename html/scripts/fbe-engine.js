@@ -45,6 +45,8 @@
 // their own state across ticks, so feedback through them is stable.
 // ──────────────────────────────────────────────────────────────────────
 
+'use strict';
+
 const FBE = (function () {
     'use strict';
 
