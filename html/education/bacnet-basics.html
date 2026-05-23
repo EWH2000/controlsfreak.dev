@@ -1,0 +1,682 @@
+---
+title: BACnet Basics — controlsfreak.dev
+description: BACnet on the wire — the self-describing object model, the services that read and write properties, the priority array, and Who-Is / I-Am discovery.
+canonical: https://controlsfreak.dev/education/bacnet-basics.html
+nav: education
+---
+{% extends "layouts/page.njk" %}
+
+{% block head %}
+    <style>
+        /* Page-specific — static block-and-byte diagrams. .bac-svg follows
+           the .mb-svg / .fb-svg precedent (labeled-box schematics, not
+           pipe-flow), separate from the .edu-svg family. Shared with
+           bacnet-networking.html but defined per-page since each is its
+           own consumer; promote to styles.css when a third page lands. */
+        .bac-svg {
+            display: block;
+            width: 100%;
+            height: auto;
+            max-width: 620px;
+            margin: 1.4rem auto 0.6rem;
+        }
+        .bac-svg.wide { max-width: 740px; }
+
+        /* Reuse the function-blocks-page idiom for grouped category
+           cards. Same definition as the Modbus pages. */
+        .callout-grid.loose { margin-top: 1.25rem; }
+    </style>
+{% endblock %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Education · BACnet Basics</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">BACnet Basics <span class="tool-tag">BACnet</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                BACnet is the protocol most modern building automation runs on. ASHRAE
+                started work on it in 1987 to give building controls one common language
+                that didn't belong to any single vendor, and ASHRAE 135 — the standard
+                that defines it — has been a moving target ever since, picking up new
+                object types and services as the industry's needs have changed. If you
+                touch a chiller plant control panel, a VAV controller, a JACE, an EBO
+                field controller, a Distech actuator, or a Honeywell rooftop, you're
+                almost certainly talking to BACnet. This page is the explainer the
+                <a href="/tools/bacnet-ip-converter.html">BACnet/IP Hex Converter</a>
+                tool's footnote keeps pointing toward.
+            </p>
+
+            <h2 class="subhead">What BACnet is, and isn't</h2>
+
+            <p>
+                The defining BACnet idea is that <em>devices describe themselves</em>.
+                A BACnet device on the network doesn't just expose a block of memory
+                full of numbers; it exposes a list of named, typed <em>objects</em>,
+                each with named, typed <em>properties</em>. Ask a device what it has,
+                and it answers. Ask any individual object for its name, units, or
+                current value, and it answers. The protocol carries enough metadata
+                that a client can walk into a building it has never seen before, query
+                a controller, and produce a working point list. That alone makes it
+                feel different from anything older.
+            </p>
+
+            <p>
+                The contrast that comes up most is with Modbus.
+                <a href="/education/modbus-basics.html">Modbus</a> is deliberately
+                dumb — a register is just sixteen bits, and the only thing that knows
+                whether those bits are a temperature in tenths of a degree or a packed
+                status word is the vendor's manual. BACnet flips this. A BACnet
+                Analog Input object <em>knows</em> its `Object_Name`, its `Units`,
+                its `Description`, its current `Present_Value`, its high and low
+                limits, and a couple dozen other properties — none of which need to
+                live in a separate document. The protocol carries the labels and the
+                values together.
+            </p>
+
+            <p>
+                The other thing BACnet isn't is one specific wire. ASHRAE 135 defines
+                the protocol logic — objects, properties, services, addressing — once,
+                and then defines several <em>data-link options</em> for carrying that
+                logic over different physical media. The two you'll meet in the field
+                are <strong>BACnet/IP</strong> (the protocol over UDP datagrams on a
+                normal Ethernet/IP network) and <strong>BACnet MS/TP</strong> (the
+                protocol over RS-485 twisted-pair, with a token-passing master ring).
+                Newer options like <strong>BACnet/SC</strong> (Secure Connect, over
+                TLS WebSockets) and the older <strong>BACnet/Ethernet</strong> exist
+                but are rarer in BAS work. The object model and the services don't
+                care which one is underneath.
+            </p>
+
+            <h2 class="subhead">Devices, objects, properties</h2>
+
+            <p>
+                Three nested layers carry everything. A <strong>device</strong> is
+                the controller — a JACE, a VAV box controller, a chiller's onboard
+                BACnet card, an MS/TP thermostat. Each device has one globally
+                unique <em>device instance number</em> on the BACnet network (a value
+                from 0 to 4,194,302; you'll often see it written as
+                <code>device:1001</code>) and exposes itself as one
+                <strong>Device object</strong>.
+            </p>
+
+            <p>
+                Inside the device live the <strong>objects</strong>. Every input,
+                output, setpoint, schedule, alarm, calendar entry, file, and logic
+                point the device wants to make visible on the network is an object.
+                Each object has a type (<code>Analog Input</code>, <code>Binary
+                Output</code>, <code>Multi-state Value</code>, <code>Schedule</code>,
+                …) and an instance number that is unique <em>within the device</em>.
+                Together those two values form the object's
+                <code>Object_Identifier</code> — packed into a single 32-bit value
+                as 10 bits of object type plus 22 bits of instance number, but
+                always written as the human-readable pair, e.g.
+                <code>analog-input,3</code> or <code>AI:3</code>.
+            </p>
+
+            <p>
+                Inside the object live the <strong>properties</strong>. Every object
+                has at least <code>Object_Identifier</code>, <code>Object_Name</code>,
+                <code>Object_Type</code>, and a current <code>Present_Value</code>;
+                most have a dozen or more on top of that. An Analog Input typically
+                also exposes <code>Units</code>, <code>Description</code>,
+                <code>Status_Flags</code>, <code>High_Limit</code>,
+                <code>Low_Limit</code>, <code>COV_Increment</code>, and several
+                others. The properties are where the actual data lives — every
+                read and every write targets a specific property on a specific
+                object on a specific device.
+            </p>
+
+            <svg class="bac-svg" viewBox="0 0 620 270" role="img"
+                 aria-labelledby="bb-hier-title bb-hier-desc">
+                <title id="bb-hier-title">Device, object, property hierarchy</title>
+                <desc id="bb-hier-desc">A device box labeled "device:1001" contains four object boxes — analog-input,1; analog-output,1; binary-value,3; and device,1001 itself. An arrow leads from the analog-input,1 object to an exploded property list to the right showing Object_Identifier, Object_Name set to "OAT", Object_Type set to ANALOG_INPUT, Present_Value set to 58.4, Units set to DEGREES_FAHRENHEIT, and Status_Flags. The point is that the device contains objects, and each object contains named, typed properties.</desc>
+
+                <!-- Device box (outer) -->
+                <rect x="20" y="40" width="240" height="220" rx="4" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                <text x="140" y="60" text-anchor="middle" font-family="var(--mono)" font-size="12" font-weight="600" fill="var(--text-bright)">device:1001</text>
+                <text x="140" y="74" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--text-dim)">(a controller)</text>
+
+                <!-- Object boxes inside the device -->
+                <g font-family="var(--mono)" font-size="11" text-anchor="middle">
+                    <rect x="38"  y="92"  width="100" height="34" rx="3" fill="var(--surface)" stroke="var(--accent)" stroke-width="1.6"/>
+                    <text x="88"  y="113" font-weight="600" fill="var(--accent)">AI:1</text>
+
+                    <rect x="142" y="92"  width="100" height="34" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.4"/>
+                    <text x="192" y="113" fill="var(--text-bright)">AO:1</text>
+
+                    <rect x="38"  y="134" width="100" height="34" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.4"/>
+                    <text x="88"  y="155" fill="var(--text-bright)">BV:3</text>
+
+                    <rect x="142" y="134" width="100" height="34" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.4"/>
+                    <text x="192" y="155" fill="var(--text-bright)">SCHED:1</text>
+
+                    <rect x="38"  y="176" width="204" height="34" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.4"/>
+                    <text x="140" y="197" fill="var(--text-bright)">DEV:1001</text>
+                </g>
+                <text x="140" y="232" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--text-dim)">objects inside the device</text>
+
+                <!-- Arrow: AI:1 exploded to property list -->
+                <line x1="138" y1="109" x2="335" y2="109" stroke="var(--accent)" stroke-width="1.6"/>
+                <polygon points="325,104 335,109 325,114" fill="var(--accent)"/>
+
+                <!-- Property list (right) -->
+                <rect x="335" y="50" width="265" height="200" rx="3" fill="var(--surface)" stroke="var(--accent)" stroke-width="1.6"/>
+                <text x="467" y="68" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--accent)">analog-input,1 · properties</text>
+
+                <g font-family="var(--mono)" font-size="10.5">
+                    <text x="345" y="92"  fill="var(--text-dim)">Object_Identifier</text><text x="595" y="92"  text-anchor="end" fill="var(--text-bright)">AI:1</text>
+                    <text x="345" y="113" fill="var(--text-dim)">Object_Name</text>      <text x="595" y="113" text-anchor="end" fill="var(--text-bright)">"OAT"</text>
+                    <text x="345" y="134" fill="var(--text-dim)">Object_Type</text>      <text x="595" y="134" text-anchor="end" fill="var(--text-bright)">ANALOG_INPUT</text>
+                    <text x="345" y="155" fill="var(--text-dim)">Present_Value</text>    <text x="595" y="155" text-anchor="end" fill="var(--blue)">58.4</text>
+                    <text x="345" y="176" fill="var(--text-dim)">Units</text>            <text x="595" y="176" text-anchor="end" fill="var(--text-bright)">DEGREES_FAHRENHEIT</text>
+                    <text x="345" y="197" fill="var(--text-dim)">Description</text>     <text x="595" y="197" text-anchor="end" fill="var(--text-bright)">"Outside air temp"</text>
+                    <text x="345" y="218" fill="var(--text-dim)">Status_Flags</text>     <text x="595" y="218" text-anchor="end" fill="var(--text-bright)">{F, F, F, F}</text>
+                    <text x="345" y="239" fill="var(--text-dim)">COV_Increment</text>    <text x="595" y="239" text-anchor="end" fill="var(--text-bright)">0.5</text>
+                </g>
+            </svg>
+
+            <p>
+                The object types group into a handful of recognizable families. The
+                analog/binary/multi-state split is the one to hold in your head:
+            </p>
+
+            <div class="callout-grid loose">
+                <div class="callout">
+                    <h3>Analog <span>· AI · AO · AV</span></h3>
+                    <p>32-bit floating-point values. <code>Analog Input</code> for a sensor reading, <code>Analog Output</code> for a hardware output the controller drives, <code>Analog Value</code> for a setpoint or computed value that lives only in software.</p>
+                </div>
+                <div class="callout">
+                    <h3>Binary <span>· BI · BO · BV</span></h3>
+                    <p>Two-state values (ACTIVE / INACTIVE). <code>Binary Input</code> for a contact closure, <code>Binary Output</code> for a relay the controller drives, <code>Binary Value</code> for a software-only enable or override flag.</p>
+                </div>
+                <div class="callout">
+                    <h3>Multi-state <span>· MSI · MSO · MSV</span></h3>
+                    <p>Enumerated values — three or more named states, like OFF / LOW / HIGH or AUTO / HEAT / COOL / OFF. The state names live in the object's <code>State_Text</code> property, addressed by 1-based integer.</p>
+                </div>
+                <div class="callout">
+                    <h3>Device <span>· DEV</span></h3>
+                    <p>The controller itself, exposed as an object. Carries the device instance number, the vendor ID, the model, the firmware version, and the list of every other object the controller hosts.</p>
+                </div>
+            </div>
+
+            <p>
+                Beyond these are <code>Schedule</code>, <code>Calendar</code>,
+                <code>Trend Log</code>, <code>Notification Class</code>, <code>File</code>,
+                <code>Loop</code>, <code>Group</code>, and several others — each its
+                own object type with its own property set. Most BAS work touches the
+                analog / binary / multi-state families, the Device object for
+                discovery, and the Schedule family for time-of-day logic; the rest
+                show up when a specific feature does.
+            </p>
+
+            <h2 class="subhead">The services you'll see</h2>
+
+            <p>
+                A <em>service</em> is a verb against the object model — the request
+                a client puts on the wire to read a property, write a property,
+                acknowledge an alarm, or subscribe to a change notification. ASHRAE
+                135 defines roughly thirty-five services; a handful do almost all
+                the work in a normal BAS:
+            </p>
+
+            <ul>
+                <li><strong><code>ReadProperty</code></strong> — fetch one property
+                    of one object. The everyday read: "what's
+                    <code>Present_Value</code> on <code>AI:3</code> of
+                    <code>device:1001</code>?" The response carries the typed value
+                    (real, integer, boolean, enumerated, string) the property holds.</li>
+                <li><strong><code>WriteProperty</code></strong> — set one property
+                    of one object. The everyday write: "set
+                    <code>Present_Value</code> on <code>AO:1</code> to 75 % at
+                    priority 16." On commandable objects, the priority is part of
+                    the write — see the next section.</li>
+                <li><strong><code>ReadPropertyMultiple</code> /
+                    <code>WritePropertyMultiple</code></strong> — fetch or set
+                    many properties in a single request. Polling a controller for
+                    a graphic's worth of points uses these, not a thousand
+                    individual ReadProperty calls; the network overhead is the same
+                    for one property or thirty.</li>
+                <li><strong><code>SubscribeCOV</code> +
+                    <code>ConfirmedCOV-Notification</code></strong> —
+                    <em>Change of Value</em>. Instead of polling, the client
+                    subscribes once and the device sends a notification each time
+                    the value changes by more than the property's
+                    <code>COV_Increment</code>. Push instead of pull. Where Modbus
+                    forces a client to poll often enough to catch a change, BACnet
+                    lets the device tell the client when one happens. Subscriptions
+                    have a lifetime; clients re-subscribe before it expires.</li>
+                <li><strong><code>Who-Is</code> / <code>I-Am</code></strong> — the
+                    pair of unconfirmed broadcasts that handle discovery. Their
+                    own section is next.</li>
+            </ul>
+
+            <p>
+                Other services — <code>AcknowledgeAlarm</code>,
+                <code>ReinitializeDevice</code>, <code>AtomicReadFile</code>,
+                <code>CreateObject</code>, the time-synchronization services — show
+                up when a specific feature does. The five above carry almost every
+                everyday read, write, and notification across a building.
+            </p>
+
+            <h2 class="subhead">The priority array — BACnet's command stack</h2>
+
+            <p>
+                Every <em>commandable</em> object — Analog Output, Binary Output,
+                and Analog/Binary/Multi-state Value when configured commandable —
+                has a special property called <code>Priority_Array</code>: a
+                16-slot array, indexed 1 to 16, that holds pending commands. A
+                <code>WriteProperty</code> against <code>Present_Value</code> does
+                not simply overwrite the value; it writes into one slot of the
+                array, at a chosen priority. The object's actual
+                <code>Present_Value</code> is then computed as <em>the value in
+                the lowest-numbered non-null slot</em>, or — if every slot is null
+                — the value of the
+                <code>Relinquish_Default</code> property.
+            </p>
+
+            <p>
+                Slot 1 is the highest priority and slot 16 is the lowest. The
+                convention across the industry is that low slot numbers are
+                reserved for high-stakes commands (slot 1 is manual life-safety;
+                slots 6 and 7 are critical-equipment / minimum-on-off), slot 8 is
+                the operator's manual override, and slot 16 is the slot the BMS's
+                normal sequence writes from. Slots 9–15 are largely available for
+                application-specific use. The full reservation table is in ASHRAE
+                135; for everyday troubleshooting, "slot 8 beats slot 16, and a
+                null at slot 8 lets slot 16 take over" is most of what you need.
+            </p>
+
+            <p>
+                Walking the worked example: the BMS's sequence writes a damper
+                position of 65 % to slot 16. A tech, standing at the operator
+                workstation, hand-overrides the same damper to 0 % at slot 8.
+                The object's <code>Present_Value</code> now resolves to 0 %
+                — the slot-8 override wins because it sits at a lower (higher-
+                priority) index than the sequence at slot 16. When the tech is
+                done, they write <em>null</em> into slot 8 (the same
+                <code>WriteProperty</code> request, with a null value). Slot 8
+                becomes empty; the lowest non-null slot is now slot 16; the
+                damper drops back to 65 %. The sequence never had to be told
+                anything; it just becomes the new winner.
+            </p>
+
+            <svg class="bac-svg" viewBox="0 0 620 380" role="img"
+                 aria-labelledby="bb-pri-title bb-pri-desc">
+                <title id="bb-pri-title">Priority array — slot 8 override beats slot 16 sequence</title>
+                <desc id="bb-pri-desc">A vertical stack of sixteen labeled slots numbered 1 at the top to 16 at the bottom. Slot 1 is labeled "life safety" and holds null. Slot 8 is labeled "manual override" and holds 0 percent, highlighted in the accent color. Slots 2 through 7 and 9 through 15 are null and dimmed. Slot 16 is labeled "BMS sequence" and holds 65 percent. An arrow from slot 8 points to a Present_Value box on the right showing 0 percent and labeled "lowest non-null slot wins." A note at the bottom says: write null to slot 8 and the value drops to 65 percent because slot 16 becomes the lowest non-null slot.</desc>
+
+                <!-- Header -->
+                <text x="135" y="22" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--text-dim)">Priority_Array of AO:1</text>
+                <text x="475" y="22" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--text-dim)">Present_Value</text>
+
+                <!-- 16 slot rows -->
+                <g font-family="var(--mono)" font-size="10.5">
+                    <!-- Helper: each row is 18px tall, starting at y=36 -->
+                    <!-- slot 1: life safety, null -->
+                    <rect x="20"  y="36"  width="260" height="18" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="0.8"/>
+                    <text x="32"  y="49" fill="var(--text-dim)">1</text>
+                    <text x="55"  y="49" fill="var(--text-dim)">life safety</text>
+                    <text x="268" y="49" text-anchor="end" fill="var(--text-dim)">null</text>
+
+                    <!-- slot 2 -->
+                    <rect x="20"  y="54"  width="260" height="18" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="0.8"/>
+                    <text x="32"  y="67" fill="var(--text-dim)">2</text>
+                    <text x="268" y="67" text-anchor="end" fill="var(--text-dim)">null</text>
+
+                    <!-- slot 3 -->
+                    <rect x="20"  y="72"  width="260" height="18" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="0.8"/>
+                    <text x="32"  y="85" fill="var(--text-dim)">3</text>
+                    <text x="268" y="85" text-anchor="end" fill="var(--text-dim)">null</text>
+
+                    <!-- slot 4 -->
+                    <rect x="20"  y="90"  width="260" height="18" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="0.8"/>
+                    <text x="32"  y="103" fill="var(--text-dim)">4</text>
+                    <text x="268" y="103" text-anchor="end" fill="var(--text-dim)">null</text>
+
+                    <!-- slot 5 -->
+                    <rect x="20"  y="108" width="260" height="18" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="0.8"/>
+                    <text x="32"  y="121" fill="var(--text-dim)">5</text>
+                    <text x="268" y="121" text-anchor="end" fill="var(--text-dim)">null</text>
+
+                    <!-- slot 6 -->
+                    <rect x="20"  y="126" width="260" height="18" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="0.8"/>
+                    <text x="32"  y="139" fill="var(--text-dim)">6</text>
+                    <text x="55"  y="139" fill="var(--text-dim)">critical equipment</text>
+                    <text x="268" y="139" text-anchor="end" fill="var(--text-dim)">null</text>
+
+                    <!-- slot 7 -->
+                    <rect x="20"  y="144" width="260" height="18" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="0.8"/>
+                    <text x="32"  y="157" fill="var(--text-dim)">7</text>
+                    <text x="55"  y="157" fill="var(--text-dim)">min on/off</text>
+                    <text x="268" y="157" text-anchor="end" fill="var(--text-dim)">null</text>
+
+                    <!-- slot 8: manual override — populated, highlighted -->
+                    <rect x="20"  y="162" width="260" height="20" fill="var(--surface)" stroke="var(--accent)" stroke-width="1.8"/>
+                    <text x="32"  y="176" font-weight="700" fill="var(--accent)">8</text>
+                    <text x="55"  y="176" font-weight="600" fill="var(--accent)">manual override</text>
+                    <text x="268" y="176" text-anchor="end" font-weight="700" fill="var(--accent)">0 %</text>
+
+                    <!-- slot 9 -->
+                    <rect x="20"  y="182" width="260" height="18" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="0.8"/>
+                    <text x="32"  y="195" fill="var(--text-dim)">9</text>
+                    <text x="268" y="195" text-anchor="end" fill="var(--text-dim)">null</text>
+
+                    <!-- slot 10 -->
+                    <rect x="20"  y="200" width="260" height="18" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="0.8"/>
+                    <text x="32"  y="213" fill="var(--text-dim)">10</text>
+                    <text x="268" y="213" text-anchor="end" fill="var(--text-dim)">null</text>
+
+                    <!-- slot 11 -->
+                    <rect x="20"  y="218" width="260" height="18" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="0.8"/>
+                    <text x="32"  y="231" fill="var(--text-dim)">11</text>
+                    <text x="268" y="231" text-anchor="end" fill="var(--text-dim)">null</text>
+
+                    <!-- slot 12 -->
+                    <rect x="20"  y="236" width="260" height="18" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="0.8"/>
+                    <text x="32"  y="249" fill="var(--text-dim)">12</text>
+                    <text x="268" y="249" text-anchor="end" fill="var(--text-dim)">null</text>
+
+                    <!-- slot 13 -->
+                    <rect x="20"  y="254" width="260" height="18" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="0.8"/>
+                    <text x="32"  y="267" fill="var(--text-dim)">13</text>
+                    <text x="268" y="267" text-anchor="end" fill="var(--text-dim)">null</text>
+
+                    <!-- slot 14 -->
+                    <rect x="20"  y="272" width="260" height="18" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="0.8"/>
+                    <text x="32"  y="285" fill="var(--text-dim)">14</text>
+                    <text x="268" y="285" text-anchor="end" fill="var(--text-dim)">null</text>
+
+                    <!-- slot 15 -->
+                    <rect x="20"  y="290" width="260" height="18" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="0.8"/>
+                    <text x="32"  y="303" fill="var(--text-dim)">15</text>
+                    <text x="268" y="303" text-anchor="end" fill="var(--text-dim)">null</text>
+
+                    <!-- slot 16: BMS sequence — populated, lighter highlight -->
+                    <rect x="20"  y="308" width="260" height="20" fill="var(--surface)" stroke="var(--blue-cool)" stroke-width="1.4"/>
+                    <text x="32"  y="322" fill="var(--blue-cool)">16</text>
+                    <text x="55"  y="322" fill="var(--blue-cool)">BMS sequence</text>
+                    <text x="268" y="322" text-anchor="end" fill="var(--blue-cool)">65 %</text>
+                </g>
+
+                <!-- Arrow from slot 8 -> Present_Value box -->
+                <line x1="285" y1="172" x2="395" y2="172" stroke="var(--accent)" stroke-width="2"/>
+                <polygon points="385,167 395,172 385,177" fill="var(--accent)"/>
+                <text x="340" y="163" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--accent)">lowest non-null wins</text>
+
+                <!-- Present_Value box -->
+                <rect x="395" y="138" width="160" height="70" rx="3" fill="var(--surface)" stroke="var(--accent)" stroke-width="1.8"/>
+                <text x="475" y="158" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="var(--text-dim)">Present_Value</text>
+                <text x="475" y="190" text-anchor="middle" font-family="var(--mono)" font-size="22" font-weight="700" fill="var(--accent)">0 %</text>
+
+                <!-- Caption -->
+                <text x="310" y="354" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--text)">write null to slot 8 → slot 16 wins → Present_Value drops to 65 %</text>
+            </svg>
+
+            <p>
+                Two things to hold in your head when reading commandable BACnet
+                points: first, that the value you see on the graphic is the
+                <em>resolved</em> value, not necessarily the value the BMS
+                sequence is writing. A sequence writing 65 % at priority 16 can
+                appear to be "broken" because slot 8 still carries a years-old
+                override someone forgot to release. Second, that <em>writing null
+                releases</em>; it doesn't overwrite. Forgetting to release an
+                override is the most common way priority-array logic goes
+                wrong in the field.
+            </p>
+
+            <h2 class="subhead">Who-Is / I-Am — how devices announce themselves</h2>
+
+            <p>
+                Two unconfirmed services handle device discovery. A client (a BMS,
+                an engineering tool, a JACE) sends a <code>Who-Is</code> request as
+                a network-wide broadcast: <em>any device whose instance number is
+                in this range, please identify yourself.</em> The request can carry
+                a specific range (low and high device-instance bounds) or no range
+                at all — "everybody on the network, speak up."
+            </p>
+
+            <p>
+                Every device that hears the broadcast and matches the range
+                responds with <code>I-Am</code>, an unconfirmed broadcast carrying
+                its own device instance number, its maximum APDU length (how big a
+                single message it can accept), its segmentation support, and its
+                vendor ID. The handshake is one-and-done; nothing else is
+                negotiated.
+            </p>
+
+            <svg class="bac-svg" viewBox="0 0 620 240" role="img"
+                 aria-labelledby="bb-who-title bb-who-desc">
+                <title id="bb-who-title">Who-Is broadcast and I-Am replies</title>
+                <desc id="bb-who-desc">Four boxes. The leftmost is a client labeled "JACE — Who-Is sender." Three device boxes sit to its right: device:1001, device:1002, and device:2050. An arrow from the client labeled "Who-Is broadcast" reaches all three devices. Each device sends back an "I-Am" reply carrying its device instance number, max APDU, and vendor ID.</desc>
+
+                <!-- Client (left) -->
+                <rect x="20" y="80" width="130" height="80" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                <text x="85" y="115" text-anchor="middle" font-family="var(--mono)" font-size="13" font-weight="600" fill="var(--text-bright)">JACE</text>
+                <text x="85" y="135" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--text-dim)">(discovering)</text>
+
+                <!-- Three devices (right) -->
+                <g font-family="var(--mono)" font-size="10.5">
+                    <rect x="430" y="32"  width="170" height="48" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.6"/>
+                    <text x="515" y="52"  text-anchor="middle" font-weight="600" fill="var(--text-bright)">device:1001</text>
+                    <text x="515" y="69"  text-anchor="middle" font-size="9.5" fill="var(--text-dim)">VAV-101</text>
+
+                    <rect x="430" y="100" width="170" height="48" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.6"/>
+                    <text x="515" y="120" text-anchor="middle" font-weight="600" fill="var(--text-bright)">device:1002</text>
+                    <text x="515" y="137" text-anchor="middle" font-size="9.5" fill="var(--text-dim)">VAV-102</text>
+
+                    <rect x="430" y="168" width="170" height="48" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.6"/>
+                    <text x="515" y="188" text-anchor="middle" font-weight="600" fill="var(--text-bright)">device:2050</text>
+                    <text x="515" y="205" text-anchor="middle" font-size="9.5" fill="var(--text-dim)">RTU-1</text>
+                </g>
+
+                <!-- Who-Is broadcast: client → all three -->
+                <g stroke="var(--blue)" stroke-width="2" fill="none">
+                    <line x1="150" y1="105" x2="425" y2="56"/>
+                    <line x1="150" y1="120" x2="425" y2="124"/>
+                    <line x1="150" y1="135" x2="425" y2="192"/>
+                </g>
+                <polygon points="416,53 425,56 419,63" fill="var(--blue)"/>
+                <polygon points="416,121 425,124 416,131" fill="var(--blue)"/>
+                <polygon points="418,188 425,192 419,199" fill="var(--blue)"/>
+                <text x="285" y="78" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--blue)">Who-Is (broadcast)</text>
+
+                <!-- I-Am replies: each device → client -->
+                <g stroke="var(--blue-cool)" stroke-width="1.6" fill="none" stroke-dasharray="5 4">
+                    <line x1="425" y1="68"  x2="155" y2="100"/>
+                    <line x1="425" y1="132" x2="155" y2="125"/>
+                    <line x1="425" y1="204" x2="155" y2="150"/>
+                </g>
+                <polygon points="164,97 155,100 162,107" fill="var(--blue-cool)"/>
+                <polygon points="165,122 155,125 163,132" fill="var(--blue-cool)"/>
+                <polygon points="164,147 155,150 163,157" fill="var(--blue-cool)"/>
+                <text x="285" y="170" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--blue-cool)">I-Am (one each)</text>
+
+                <!-- caption -->
+                <text x="310" y="232" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--text)">"who's out there?" → three devices answer with their identities</text>
+            </svg>
+
+            <p>
+                What this looks like in practice: open EBO's discovery dialog, an
+                N4 Workbench's BACnet network scan, or a tool like Yabe — they
+                fire Who-Is, populate a device list from the I-Am responses, and
+                build the rest of the point browser on top of subsequent
+                <code>ReadProperty</code> calls. A device that doesn't show up in
+                that list almost always has a Who-Is / I-Am problem: the broadcast
+                didn't reach it, or its reply didn't make it back. That story —
+                why discovery sometimes can't cross a router — is the opening of
+                <a href="/education/bacnet-networking.html">BACnet Networking</a>.
+            </p>
+
+            <h2 class="subhead">MS/TP vs BACnet/IP — same protocol, different transport</h2>
+
+            <p>
+                The two BACnet data links you'll meet are MS/TP and BACnet/IP. The
+                object model, the property names, the services, and the priority
+                array are identical between them; only the framing around each
+                message changes.
+            </p>
+
+            <p>
+                <strong>BACnet MS/TP</strong> runs over a two-wire RS-485 bus. Up
+                to about thirty masters share the bus by passing a token: only
+                the controller holding the token may transmit, and once it has
+                sent its message (or used its allotted frame budget) it passes the
+                token to the next master in numeric order. The bus runs at one of
+                a small set of baud rates (typically 38400 or 76800), and the
+                whole bus is one BACnet <em>network</em> sharing a single 16-bit
+                network number. Slow compared to Ethernet, but cheap and robust
+                — most VAV controllers, many small unit controllers, and most
+                MS/TP-only thermostats use it.
+            </p>
+
+            <p>
+                <strong>BACnet/IP</strong> wraps the same BACnet messages inside
+                normal UDP datagrams on a normal Ethernet network. The IANA-
+                registered port is <strong>UDP 47808</strong> (which is
+                <strong>0xBAC0</strong> in hex — the source of the "BACnet" port
+                mnemonic). A controller on BACnet/IP is reachable by its IP
+                address and port, identifies itself by the same device instance
+                number, and speaks all the same services. The framing wrapping
+                each message — a small BACnet Virtual Link Layer header, then
+                the BACnet network-layer header, then the actual service — is
+                what's different, along with the broadcast story that
+                <a href="/education/bacnet-networking.html">BACnet Networking</a>
+                opens with.
+            </p>
+
+            <svg class="bac-svg wide" viewBox="0 0 740 230" role="img"
+                 aria-labelledby="bb-frame-title bb-frame-desc">
+                <title id="bb-frame-title">MS/TP framing vs BACnet/IP framing</title>
+                <desc id="bb-frame-desc">Two horizontal framing stacks side by side. The left stack is labeled MS/TP and shows six segments: Preamble (2 bytes), Frame Type (1 byte), Destination (1 byte), Source (1 byte), Length (2 bytes), and BACnet NPDU plus APDU (the common payload), followed by a 2-byte CRC. The right stack is labeled BACnet/IP and shows five segments: IP header, UDP header (port 47808 = 0xBAC0), BVLL (4 bytes), BACnet NPDU, and APDU. A bracket above each stack highlights that everything except NPDU and APDU is the data-link wrapper; the NPDU and APDU below the bracket are common to both transports.</desc>
+
+                <!-- Headers -->
+                <text x="180" y="22" text-anchor="middle" font-family="var(--mono)" font-size="12" font-weight="600" fill="var(--text-bright)">BACnet MS/TP</text>
+                <text x="560" y="22" text-anchor="middle" font-family="var(--mono)" font-size="12" font-weight="600" fill="var(--text-bright)">BACnet/IP</text>
+
+                <!-- MS/TP stack -->
+                <g font-family="var(--mono)" font-size="10" text-anchor="middle">
+                    <rect x="50"  y="40" width="55" height="38" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.4"/>
+                    <text x="77.5" y="60" fill="var(--text-bright)">Preamble</text>
+                    <text x="77.5" y="73" font-size="9" fill="var(--text-dim)">2 B</text>
+
+                    <rect x="105" y="40" width="40" height="38" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.4"/>
+                    <text x="125" y="58" fill="var(--text-bright)">Frame</text>
+                    <text x="125" y="69" fill="var(--text-bright)">Type</text>
+
+                    <rect x="145" y="40" width="35" height="38" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.4"/>
+                    <text x="162.5" y="60" fill="var(--text-bright)">Dest</text>
+
+                    <rect x="180" y="40" width="35" height="38" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.4"/>
+                    <text x="197.5" y="60" fill="var(--text-bright)">Src</text>
+
+                    <rect x="215" y="40" width="40" height="38" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.4"/>
+                    <text x="235" y="60" fill="var(--text-bright)">Length</text>
+
+                    <rect x="255" y="40" width="35" height="38" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.4"/>
+                    <text x="272.5" y="60" fill="var(--text-bright)">CRC</text>
+                </g>
+
+                <!-- BACnet/IP stack -->
+                <g font-family="var(--mono)" font-size="10" text-anchor="middle">
+                    <rect x="380" y="40" width="60" height="38" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.4"/>
+                    <text x="410" y="60" fill="var(--text-bright)">IP hdr</text>
+                    <text x="410" y="73" font-size="9" fill="var(--text-dim)">20 B</text>
+
+                    <rect x="440" y="40" width="80" height="38" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.4"/>
+                    <text x="480" y="58" fill="var(--text-bright)">UDP hdr</text>
+                    <text x="480" y="71" font-size="8.5" fill="var(--text-dim)">port 47808</text>
+
+                    <rect x="520" y="40" width="60" height="38" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.4"/>
+                    <text x="550" y="60" fill="var(--accent)">BVLL</text>
+                    <text x="550" y="73" font-size="9" fill="var(--text-dim)">4 B</text>
+                </g>
+
+                <!-- "data-link wrapper" brackets -->
+                <g stroke="var(--text-dim)" stroke-width="1.2" fill="none">
+                    <path d="M 50 92 V 100 H 290 V 92"/>
+                    <path d="M 380 92 V 100 H 580 V 92"/>
+                </g>
+                <text x="170" y="116" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="var(--text-dim)">data-link wrapper (changes per transport)</text>
+                <text x="480" y="116" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="var(--text-dim)">data-link wrapper (changes per transport)</text>
+
+                <!-- Shared NPDU + APDU -->
+                <text x="370" y="146" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--text-dim)">↓ identical payload below ↓</text>
+
+                <g font-family="var(--mono)" font-size="11" text-anchor="middle">
+                    <rect x="170" y="160" width="180" height="44" fill="var(--surface)" stroke="var(--accent)" stroke-width="1.6"/>
+                    <text x="260" y="180" font-weight="600" fill="var(--accent)">NPDU</text>
+                    <text x="260" y="196" font-size="9.5" fill="var(--text-dim)">network layer header</text>
+
+                    <rect x="390" y="160" width="180" height="44" fill="var(--surface)" stroke="var(--accent)" stroke-width="1.6"/>
+                    <text x="480" y="180" font-weight="600" fill="var(--accent)">APDU</text>
+                    <text x="480" y="196" font-size="9.5" fill="var(--text-dim)">the actual service</text>
+                </g>
+
+                <!-- caption -->
+                <text x="370" y="223" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--text)">protocol logic is the same; only the wrapper changes</text>
+            </svg>
+
+            <p>
+                The split matters for one practical reason: <em>where</em> a
+                conversation can happen. An MS/TP bus is a closed, low-speed
+                serial loop — fast to commission, but every device on it has to
+                be physically on that loop. BACnet/IP rides whatever Ethernet
+                already exists in the building — a riser, a switch, a VLAN — and
+                can carry a conversation between any two devices on the same IP
+                segment. Crossing an L3 boundary (a router, a different subnet)
+                introduces broadcast rules that take their own page to unpack:
+                that's what <a href="/education/bacnet-networking.html">BACnet
+                Networking</a> opens with.
+            </p>
+
+            <p>
+                The deeper MS/TP story — token rotation, the master/slave token-
+                passing mechanic, <code>Max_Master</code> and
+                <code>Max_Info_Frames</code>, the per-segment device-count and
+                cable-length limits — belongs on its own future page, since
+                most BMS techs touch it only at commissioning and bus-fault
+                troubleshooting.
+            </p>
+
+            <h2 class="subhead">What this page didn't cover</h2>
+
+            <p>
+                The shape of the protocol is enough to read a BACnet point list,
+                form a Read or Write, recognize a priority-array override, and
+                start a Who-Is discovery. The next question is what happens when
+                the device you want to talk to isn't on the same Ethernet segment
+                you're sending from — the broadcast story, the BBMD and Foreign
+                Device Registration machinery, the three layers of addressing,
+                and the EBO hex blob the
+                <a href="/tools/bacnet-ip-converter.html">BACnet/IP converter</a>
+                tool decodes for you. <a href="/education/bacnet-networking.html">BACnet
+                Networking</a> is the companion page that walks through each.
+            </p>
+
+            <p>
+                Out of scope here, by design: the deep MS/TP token mechanics
+                (token rotation, <code>Max_Master</code>,
+                <code>Max_Info_Frames</code>, baud rates and cable-length budgets),
+                segmentation of long messages, alarms and event notifications,
+                schedules and calendars as their own object types, trend logs,
+                and the file / group / loop / notification-class objects. Each is
+                its own future page; this one stays on the object model, the
+                services, and the priority array.
+            </p>
+
+        </div>
+    </div>
+
+    <a class="back-link" href="/education/">← Back to Education</a>
+
+</main>
+{% endblock %}

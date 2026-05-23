@@ -1,0 +1,654 @@
+---
+title: BACnet Networking — controlsfreak.dev
+description: BACnet networking — the three layers of addressing, the BVLL/NPDU/APDU frame, BBMDs and Foreign Device Registration, and reading the EBO hex blob.
+canonical: https://controlsfreak.dev/education/bacnet-networking.html
+nav: education
+---
+{% extends "layouts/page.njk" %}
+
+{% block head %}
+    <style>
+        /* Page-specific — static block-and-byte diagrams. .bac-svg
+           follows the .mb-svg / .fb-svg precedent (labeled-box
+           schematics, not pipe-flow), shared with bacnet-basics.html
+           but defined per-page since this is its second consumer;
+           promote to styles.css when a third page lands. */
+        .bac-svg {
+            display: block;
+            width: 100%;
+            height: auto;
+            max-width: 620px;
+            margin: 1.4rem auto 0.6rem;
+        }
+        .bac-svg.wide { max-width: 760px; }
+    </style>
+{% endblock %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Education · BACnet Networking</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">BACnet Networking <span class="tool-tag">BACnet</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                <a href="/education/bacnet-basics.html">BACnet Basics</a> covered the
+                object model and the services — how to read a property, write a
+                priority-array slot, and discover devices on the same network. This
+                page is the other half of the story: <em>how devices on different
+                networks find each other</em>, why a normal Ethernet broadcast
+                doesn't reach across a router, and what the BBMD and Foreign Device
+                Registration machinery is actually doing. It also unpacks the EBO
+                hex blob the <a href="/tools/bacnet-ip-converter.html">BACnet/IP Hex
+                Converter</a> tool decodes for you — same string, but now you can
+                see what each byte is doing.
+            </p>
+
+            <h2 class="subhead">Three addresses, one device</h2>
+
+            <p>
+                Every BACnet conversation eventually targets a specific property on
+                a specific object on a specific device. The <em>property</em> and
+                the <em>object</em> are application-layer concepts that
+                <a href="/education/bacnet-basics.html">BACnet Basics</a> already
+                covered; addressing the <em>device</em> takes three different
+                identifiers, each at a different layer of the stack.
+            </p>
+
+            <ul>
+                <li><strong>Device instance number.</strong> A 22-bit unsigned
+                    integer (range 0 to 4,194,302) that uniquely identifies a
+                    controller across the entire BACnet internetwork. This is the
+                    identifier the application layer speaks in —
+                    <code>device:1001</code> is a device instance. It does not
+                    encode location or topology; two controllers physically on
+                    opposite sides of a building must still pick different
+                    instance numbers if both are visible to the same BMS.</li>
+                <li><strong>Network number.</strong> A 16-bit integer that names
+                    a BACnet network <em>segment</em> — a group of devices that
+                    share a single data link (one MS/TP bus, or one BACnet/IP
+                    UDP broadcast domain). Network number <code>0</code> means
+                    "the local network — wherever this message originated";
+                    <code>65535</code> means "broadcast to every network."
+                    Useful network numbers are 1 to 65534, assigned by the
+                    system designer. The network-layer header on every BACnet
+                    message carries source and destination network numbers when
+                    a message crosses between networks.</li>
+                <li><strong>MAC address.</strong> The data-link identifier that
+                    a specific transport uses to deliver the message. On
+                    <strong>BACnet/IP</strong> the MAC is six bytes: four bytes
+                    of IPv4 address plus two bytes of UDP port (almost always
+                    <code>0xBAC0</code> — 47808). On <strong>MS/TP</strong> the
+                    MAC is a single byte: the device's station address on the
+                    RS-485 bus, in the range 0 to 127.</li>
+            </ul>
+
+            <svg class="bac-svg" viewBox="0 0 620 240" role="img"
+                 aria-labelledby="bn-addr-title bn-addr-desc">
+                <title id="bn-addr-title">Three addresses for one BACnet device</title>
+                <desc id="bn-addr-desc">A controller box at the centre, labeled "VAV-101." Three labeled lines point inward from outside the box. The top label is "device:1001 — application-layer device instance." The middle label is "net 5 — network-layer segment number." The bottom label is "192.168.1.100 : 47808 — data-link IP plus UDP port." Each label sits at a different layer of the stack.</desc>
+
+                <!-- Centre device box -->
+                <rect x="220" y="90" width="180" height="80" rx="4" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                <text x="310" y="125" text-anchor="middle" font-family="var(--mono)" font-size="14" font-weight="600" fill="var(--text-bright)">VAV-101</text>
+                <text x="310" y="145" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--text-dim)">(one controller)</text>
+
+                <!-- Top label: device instance -->
+                <line x1="310" y1="38" x2="310" y2="88" stroke="var(--accent)" stroke-width="1.6"/>
+                <polygon points="305,82 310,90 315,82" fill="var(--accent)"/>
+                <text x="310" y="25" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--accent)">device:1001</text>
+                <text x="310" y="40" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--text-dim)">application — device instance</text>
+
+                <!-- Left label: network number -->
+                <line x1="218" y1="130" x2="138" y2="130" stroke="var(--accent)" stroke-width="1.6"/>
+                <polygon points="222,125 218,131 222,135" fill="var(--accent)"/>
+                <text x="78"  y="125" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--accent)">net 5</text>
+                <text x="78"  y="140" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--text-dim)">network</text>
+                <text x="78"  y="153" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--text-dim)">segment</text>
+
+                <!-- Right + bottom label: data-link -->
+                <line x1="402" y1="130" x2="482" y2="130" stroke="var(--accent)" stroke-width="1.6"/>
+                <polygon points="398,125 402,131 398,135" fill="var(--accent)"/>
+                <text x="542" y="125" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--accent)">192.168.1.100</text>
+                <text x="542" y="140" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--accent)">: 47808</text>
+                <text x="542" y="155" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--text-dim)">data-link MAC</text>
+
+                <!-- caption -->
+                <text x="310" y="210" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--text)">three identifiers, three stack layers — only the device instance is forever</text>
+            </svg>
+
+            <p>
+                A useful way to think about which layer to reach for: the device
+                instance is what the BMS graphic remembers and what the sequence
+                programs against; the network number is how a router decides
+                which way to send the message; the MAC is how the cable, switch,
+                or RS-485 chip actually delivers it. Change the network topology
+                — a new BBMD, a re-IP, a moved controller — and the MAC and
+                network numbers may shift, but a device's instance number is
+                still the same instance number.
+            </p>
+
+            <h2 class="subhead">The BACnet/IP frame — BVLL + NPDU + APDU</h2>
+
+            <p>
+                When you put a Wireshark capture on a BACnet/IP segment, every
+                BACnet message expands into three nested layers above the
+                standard UDP/IP wrapping. From outside in:
+            </p>
+
+            <ul>
+                <li><strong>BVLL — BACnet Virtual Link Layer.</strong> A 4-byte
+                    header that names what kind of BACnet/IP packet this is.
+                    Byte 1 is always <code>0x81</code> (the BVLL type marker
+                    for BACnet/IP). Byte 2 is the BVLL function — values like
+                    <code>0x0A</code> for <em>Original-Unicast-NPDU</em>,
+                    <code>0x0B</code> for <em>Original-Broadcast-NPDU</em>, or
+                    <code>0x04</code> for <em>Forwarded-NPDU</em> (a broadcast
+                    a BBMD has unicast across to a peer). Bytes 3–4 are the
+                    total BVLL message length. A Forwarded-NPDU additionally
+                    carries the originating IP and port as the next six bytes,
+                    so the original source survives the forward.</li>
+                <li><strong>NPDU — Network Protocol Data Unit.</strong> The
+                    BACnet network-layer header. Carries the version byte, a
+                    control byte (whose flags say whether destination /
+                    source / expecting-reply fields are present), and —
+                    when set — destination network number, destination MAC
+                    length and bytes, hop count, source network number, source
+                    MAC length and bytes. Local-network messages are short;
+                    cross-network messages carry the full address pair.</li>
+                <li><strong>APDU — Application Protocol Data Unit.</strong>
+                    The actual service: a <code>ReadProperty</code> request,
+                    an <code>I-Am</code> announcement, a
+                    <code>SubscribeCOV</code> message. The APDU's first byte
+                    encodes the PDU type (confirmed-request, unconfirmed-
+                    request, simple-ACK, complex-ACK, error, reject, abort)
+                    and segmentation flags; the rest is the encoded service
+                    parameters.</li>
+            </ul>
+
+            <svg class="bac-svg wide" viewBox="0 0 760 290" role="img"
+                 aria-labelledby="bn-frame-title bn-frame-desc">
+                <title id="bn-frame-title">A Forwarded-NPDU Who-Is on the wire</title>
+                <desc id="bn-frame-desc">A horizontal frame breakdown for a Who-Is broadcast forwarded by a BBMD. From left to right: IP header (20 bytes), UDP header with destination port 47808, then a BVLL block highlighted in the accent color showing type 0x81, function 0x04 for Forwarded-NPDU, length, and the originating IP plus port (6 bytes). Next is the NPDU block, with the destination set to network 65535 — the BACnet broadcast-everywhere network. Finally the APDU block with the Who-Is service body. A bracket above the BVLL block calls out that the function byte is what makes this a forwarded packet rather than an original broadcast.</desc>
+
+                <!-- Headers -->
+                <text x="380" y="22" text-anchor="middle" font-family="var(--mono)" font-size="11" font-weight="600" fill="var(--text-bright)">a Who-Is, forwarded by a BBMD</text>
+
+                <!-- IP header -->
+                <rect x="20" y="50" width="80" height="60" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.4"/>
+                <text x="60" y="74" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="var(--text-bright)">IP hdr</text>
+                <text x="60" y="91" text-anchor="middle" font-family="var(--mono)" font-size="9" fill="var(--text-dim)">20 B</text>
+
+                <!-- UDP header -->
+                <rect x="100" y="50" width="80" height="60" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.4"/>
+                <text x="140" y="71" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="var(--text-bright)">UDP hdr</text>
+                <text x="140" y="86" text-anchor="middle" font-family="var(--mono)" font-size="9" fill="var(--text-dim)">dst port</text>
+                <text x="140" y="99" text-anchor="middle" font-family="var(--mono)" font-size="9" fill="var(--text-dim)">47808</text>
+
+                <!-- BVLL: highlighted -->
+                <rect x="180" y="50" width="240" height="60" fill="var(--surface)" stroke="var(--accent)" stroke-width="1.8"/>
+                <text x="300" y="68" text-anchor="middle" font-family="var(--mono)" font-size="11" font-weight="700" fill="var(--accent)">BVLL · 10 B</text>
+                <line x1="225" y1="74" x2="225" y2="105" stroke="var(--text-dim)" stroke-width="0.6" stroke-dasharray="2 2"/>
+                <line x1="270" y1="74" x2="270" y2="105" stroke="var(--text-dim)" stroke-width="0.6" stroke-dasharray="2 2"/>
+                <line x1="315" y1="74" x2="315" y2="105" stroke="var(--text-dim)" stroke-width="0.6" stroke-dasharray="2 2"/>
+                <text x="203" y="86" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--text-bright)">0x81</text>
+                <text x="203" y="99" text-anchor="middle" font-family="var(--mono)" font-size="8.5" fill="var(--text-dim)">type</text>
+                <text x="247" y="86" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--text-bright)">0x04</text>
+                <text x="247" y="99" text-anchor="middle" font-family="var(--mono)" font-size="8.5" fill="var(--text-dim)">fwd</text>
+                <text x="292" y="86" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--text-bright)">len</text>
+                <text x="292" y="99" text-anchor="middle" font-family="var(--mono)" font-size="8.5" fill="var(--text-dim)">2 B</text>
+                <text x="367" y="86" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--text-bright)">orig IP+port</text>
+                <text x="367" y="99" text-anchor="middle" font-family="var(--mono)" font-size="8.5" fill="var(--text-dim)">6 B</text>
+
+                <!-- NPDU -->
+                <rect x="420" y="50" width="160" height="60" fill="var(--surface)" stroke="var(--accent)" stroke-width="1.6"/>
+                <text x="500" y="68" text-anchor="middle" font-family="var(--mono)" font-size="11" font-weight="600" fill="var(--accent)">NPDU</text>
+                <text x="500" y="86" text-anchor="middle" font-family="var(--mono)" font-size="9" fill="var(--text-dim)">version · control</text>
+                <text x="500" y="99" text-anchor="middle" font-family="var(--mono)" font-size="9" fill="var(--text-dim)">dest-net 65535 · hop</text>
+
+                <!-- APDU -->
+                <rect x="580" y="50" width="160" height="60" fill="var(--surface)" stroke="var(--accent)" stroke-width="1.6"/>
+                <text x="660" y="68" text-anchor="middle" font-family="var(--mono)" font-size="11" font-weight="600" fill="var(--accent)">APDU</text>
+                <text x="660" y="86" text-anchor="middle" font-family="var(--mono)" font-size="9" fill="var(--text-dim)">unconfirmed-request</text>
+                <text x="660" y="99" text-anchor="middle" font-family="var(--mono)" font-size="9" fill="var(--text-dim)">Who-Is service</text>
+
+                <!-- Bracket pointing at BVLL function byte -->
+                <g stroke="var(--accent)" stroke-width="1.3" fill="none">
+                    <path d="M 247 130 V 145 L 380 145 L 380 165"/>
+                </g>
+                <polygon points="376,160 380,170 384,160" fill="var(--accent)"/>
+                <text x="380" y="186" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--accent)">0x04 = Forwarded-NPDU</text>
+                <text x="380" y="201" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--text-dim)">a BBMD captured an Original-Broadcast and unicast it here;</text>
+                <text x="380" y="214" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--text-dim)">the originating IP+port travels in the BVLL so the source survives</text>
+
+                <!-- Caption -->
+                <text x="380" y="265" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--text)">three nested layers: BVLL says "what kind of BACnet/IP packet"; NPDU routes between networks; APDU is the service</text>
+            </svg>
+
+            <p>
+                Most BACnet/IP traffic on a healthy network is
+                <code>Original-Unicast-NPDU</code> (a normal read or write to a
+                known device) or <code>Original-Broadcast-NPDU</code> (a Who-Is
+                or I-Am on the local segment). Forwarded-NPDU is the giveaway
+                that a BBMD is doing the work of carrying a broadcast somewhere
+                it wouldn't otherwise go — which is the next section.
+            </p>
+
+            <h2 class="subhead">BBMDs — broadcasts across an L3 boundary</h2>
+
+            <p>
+                BACnet uses broadcasts heavily — Who-Is, I-Am, the
+                <code>Time-Synchronization</code> service, COV notifications
+                to the network-broadcast address. On a single subnet that's
+                fine: UDP broadcasts are something every Ethernet switch
+                handles. But the moment two BACnet/IP devices sit on different
+                IP subnets — a router between them — the broadcast story
+                breaks. Routers, by design, do not forward UDP broadcasts.
+                Without help, a Who-Is from subnet A is invisible to every
+                device on subnet B.
+            </p>
+
+            <p>
+                The help is the <strong>BBMD — BACnet/IP Broadcast Management
+                Device</strong>. A BBMD is just a BACnet/IP node (often a JACE,
+                an EBO server, or a software service running on a controller)
+                configured with a <strong>Broadcast Distribution Table</strong>
+                — the BDT — that lists the IP addresses of peer BBMDs on
+                other subnets. When the BBMD sees a local broadcast on its
+                own subnet, it captures the message, wraps it in a
+                <em>Forwarded-NPDU</em> BVLL header (so the original source
+                IP and port survive), and unicasts a copy to each peer BBMD
+                in its BDT. Each peer BBMD then re-broadcasts the message on
+                <em>its</em> subnet, where local devices pick it up the
+                normal way.
+            </p>
+
+            <svg class="bac-svg wide" viewBox="0 0 760 320" role="img"
+                 aria-labelledby="bn-bbmd-title bn-bbmd-desc">
+                <title id="bn-bbmd-title">A Who-Is crossing two subnets via BBMDs</title>
+                <desc id="bn-bbmd-desc">Two subnet panels separated by a router in the middle. The left subnet is labeled 192.168.1.0/24 and contains a workstation, a controller, and a BBMD at 192.168.1.10. The right subnet is labeled 10.0.5.0/24 and contains a target controller and a BBMD at 10.0.5.10. Each BBMD's Broadcast Distribution Table is shown beside it, listing the other BBMD's IP address. Four numbered arrows trace the path of a Who-Is from the left workstation: step 1 is a broadcast on the left subnet captured by the local BBMD; step 2 is the BBMD unicasting a Forwarded-NPDU across the router to the right BBMD; step 3 is the right BBMD re-broadcasting on its local subnet; step 4 is the target controller receiving the message.</desc>
+
+                <!-- Left subnet panel -->
+                <rect x="20" y="60" width="280" height="220" rx="4" fill="var(--surface-3)" stroke="var(--text-dim)" stroke-width="1.4"/>
+                <text x="160" y="80" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--text-dim)">subnet A · 192.168.1.0/24</text>
+
+                <!-- Workstation -->
+                <rect x="40"  y="100" width="100" height="40" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.4"/>
+                <text x="90"  y="120" text-anchor="middle" font-family="var(--mono)" font-size="10" font-weight="600" fill="var(--text-bright)">workstation</text>
+                <text x="90"  y="133" text-anchor="middle" font-family="var(--mono)" font-size="9" fill="var(--text-dim)">.50</text>
+
+                <!-- BBMD (left) -->
+                <rect x="160" y="100" width="120" height="40" rx="3" fill="var(--surface)" stroke="var(--accent)" stroke-width="1.8"/>
+                <text x="220" y="120" text-anchor="middle" font-family="var(--mono)" font-size="10" font-weight="600" fill="var(--accent)">BBMD A</text>
+                <text x="220" y="133" text-anchor="middle" font-family="var(--mono)" font-size="9" fill="var(--text-dim)">192.168.1.10</text>
+
+                <!-- BDT (left) -->
+                <rect x="40"  y="180" width="240" height="60" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1"/>
+                <text x="160" y="198" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--text-dim)">BDT of BBMD A</text>
+                <text x="160" y="215" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="var(--text-bright)">10.0.5.10 : 47808</text>
+                <text x="160" y="231" text-anchor="middle" font-family="var(--mono)" font-size="8.5" fill="var(--text-dim)">(BBMD B's IP)</text>
+
+                <!-- Router (middle) -->
+                <rect x="320" y="140" width="100" height="80" rx="4" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                <text x="370" y="175" text-anchor="middle" font-family="var(--mono)" font-size="12" font-weight="600" fill="var(--text-bright)">router</text>
+                <text x="370" y="195" text-anchor="middle" font-family="var(--mono)" font-size="9" fill="var(--text-dim)">drops broadcasts</text>
+
+                <!-- Right subnet panel -->
+                <rect x="440" y="60" width="300" height="220" rx="4" fill="var(--surface-3)" stroke="var(--text-dim)" stroke-width="1.4"/>
+                <text x="590" y="80" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--text-dim)">subnet B · 10.0.5.0/24</text>
+
+                <!-- BBMD (right) -->
+                <rect x="460" y="100" width="120" height="40" rx="3" fill="var(--surface)" stroke="var(--accent)" stroke-width="1.8"/>
+                <text x="520" y="120" text-anchor="middle" font-family="var(--mono)" font-size="10" font-weight="600" fill="var(--accent)">BBMD B</text>
+                <text x="520" y="133" text-anchor="middle" font-family="var(--mono)" font-size="9" fill="var(--text-dim)">10.0.5.10</text>
+
+                <!-- Target controller (right) -->
+                <rect x="600" y="100" width="120" height="40" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.4"/>
+                <text x="660" y="120" text-anchor="middle" font-family="var(--mono)" font-size="10" font-weight="600" fill="var(--text-bright)">VAV-101</text>
+                <text x="660" y="133" text-anchor="middle" font-family="var(--mono)" font-size="9" fill="var(--text-dim)">10.0.5.42</text>
+
+                <!-- BDT (right) -->
+                <rect x="460" y="180" width="260" height="60" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1"/>
+                <text x="590" y="198" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--text-dim)">BDT of BBMD B</text>
+                <text x="590" y="215" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="var(--text-bright)">192.168.1.10 : 47808</text>
+                <text x="590" y="231" text-anchor="middle" font-family="var(--mono)" font-size="8.5" fill="var(--text-dim)">(BBMD A's IP)</text>
+
+                <!-- Step 1: workstation broadcast on subnet A -->
+                <line x1="90" y1="100" x2="160" y2="100" stroke="var(--blue)" stroke-width="2"/>
+                <polygon points="152,96 160,100 152,104" fill="var(--blue)"/>
+                <text x="125" y="90" text-anchor="middle" font-family="var(--mono)" font-size="11" font-weight="700" fill="var(--blue)">1</text>
+
+                <!-- Step 2: unicast Forwarded-NPDU across router -->
+                <line x1="280" y1="120" x2="460" y2="120" stroke="var(--blue)" stroke-width="2"/>
+                <polygon points="452,116 460,120 452,124" fill="var(--blue)"/>
+                <text x="370" y="110" text-anchor="middle" font-family="var(--mono)" font-size="11" font-weight="700" fill="var(--blue)">2 · Forwarded-NPDU (unicast)</text>
+
+                <!-- Step 3: BBMD B re-broadcasts -->
+                <line x1="580" y1="120" x2="600" y2="120" stroke="var(--blue)" stroke-width="2"/>
+                <polygon points="592,116 600,120 592,124" fill="var(--blue)"/>
+                <text x="590" y="155" text-anchor="middle" font-family="var(--mono)" font-size="11" font-weight="700" fill="var(--blue)">3 · re-broadcast on subnet B</text>
+
+                <!-- Step 4: target receives + replies (I-Am path implied)  -->
+                <text x="660" y="155" text-anchor="middle" font-family="var(--mono)" font-size="11" font-weight="700" fill="var(--blue-cool)">4 · target picks up Who-Is</text>
+
+                <!-- Caption -->
+                <text x="380" y="302" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--text)">a local broadcast becomes a unicast across the router and a local broadcast again on the far side</text>
+            </svg>
+
+            <p>
+                Two BBMDs is the simplest case. A real installation may have
+                three, four, or a dozen — every subnet that hosts BACnet/IP
+                devices and wants to participate in cross-network broadcasts
+                needs one BBMD, with each BBMD's BDT carrying every other
+                BBMD's IP. The BDTs must be kept symmetric: if BBMD A's BDT
+                lists BBMD B but BBMD B's BDT does not list BBMD A, broadcasts
+                from A reach B but the reverse silently fails. The asymmetric-
+                BDT trap is one of the most common BBMD misconfigurations in
+                the field.
+            </p>
+
+            <p>
+                One BBMD per subnet, no more. Two BBMDs on the same subnet
+                create a broadcast loop — every Forwarded-NPDU arriving from
+                a peer gets re-broadcast by both BBMDs, each of which the
+                other captures and re-forwards. The condition produces a
+                quiet but persistent storm that scales with the number of
+                peers and is usually only noticed once a Wireshark capture
+                makes the duplicate frames visible.
+            </p>
+
+            <h2 class="subhead">Foreign Device Registration — joining from outside</h2>
+
+            <p>
+                A BBMD handles broadcasts <em>between</em> subnets that each
+                have their own BBMD. What about a device that sits on a
+                subnet with <em>no</em> local BBMD — a laptop on a guest
+                Wi-Fi, an engineering workstation tunneled in over a VPN, a
+                remote monitoring server in another building? It can't hear
+                local broadcasts on its own subnet (nobody on that subnet is
+                speaking BACnet), and it has no local BBMD to forward through.
+            </p>
+
+            <p>
+                The answer is <strong>Foreign Device Registration</strong>.
+                The remote device sends a
+                <code>Register-Foreign-Device</code> BVLL message — a
+                unicast — to a BBMD it can reach on the BAS network. The
+                request carries a <em>Time-to-Live</em>: how long the
+                registration should stay valid (in seconds). The BBMD adds
+                an entry to its <strong>FDT — Foreign Device Table</strong>
+                with the remote device's IP, port, and TTL. From that
+                moment, every broadcast the BBMD would have re-broadcast
+                locally also gets unicast to the foreign device. The remote
+                gains broadcast visibility into the BAS network as if it
+                were locally attached, without needing its own BBMD.
+            </p>
+
+            <svg class="bac-svg wide" viewBox="0 0 760 280" role="img"
+                 aria-labelledby="bn-fdr-title bn-fdr-desc">
+                <title id="bn-fdr-title">Foreign Device Registration with a BBMD</title>
+                <desc id="bn-fdr-desc">A remote engineering workstation sits to the left; the BAS subnet sits to the right, with a BBMD and a controller inside it. The workstation sends a Register-Foreign-Device request (a unicast) to the BBMD across a WAN. The BBMD's Foreign Device Table gains an entry: workstation IP, port 47808, time-to-live 600 seconds. From then on, broadcasts the BBMD would re-broadcast locally also unicast to the workstation. The workstation has broadcast visibility without being on the local subnet.</desc>
+
+                <!-- Remote workstation (left) -->
+                <rect x="20" y="100" width="160" height="80" rx="4" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.6"/>
+                <text x="100" y="125" text-anchor="middle" font-family="var(--mono)" font-size="11" font-weight="600" fill="var(--text-bright)">remote workstation</text>
+                <text x="100" y="143" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--text-dim)">203.0.113.55</text>
+                <text x="100" y="158" text-anchor="middle" font-family="var(--mono)" font-size="9" fill="var(--text-dim)">(VPN, no local BBMD)</text>
+
+                <!-- WAN cloud / divider -->
+                <ellipse cx="270" cy="140" rx="55" ry="28" fill="var(--surface-3)" stroke="var(--text-dim)" stroke-width="1.2" stroke-dasharray="4 3"/>
+                <text x="270" y="145" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--text-dim)">WAN</text>
+
+                <!-- BAS subnet panel -->
+                <rect x="360" y="60" width="380" height="180" rx="4" fill="var(--surface-3)" stroke="var(--text-dim)" stroke-width="1.4"/>
+                <text x="550" y="80" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--text-dim)">BAS subnet · 192.168.1.0/24</text>
+
+                <!-- BBMD -->
+                <rect x="380" y="100" width="130" height="50" rx="3" fill="var(--surface)" stroke="var(--accent)" stroke-width="1.8"/>
+                <text x="445" y="122" text-anchor="middle" font-family="var(--mono)" font-size="11" font-weight="600" fill="var(--accent)">BBMD</text>
+                <text x="445" y="138" text-anchor="middle" font-family="var(--mono)" font-size="9" fill="var(--text-dim)">192.168.1.10</text>
+
+                <!-- FDT box -->
+                <rect x="380" y="170" width="220" height="58" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1"/>
+                <text x="490" y="188" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--text-dim)">FDT of BBMD</text>
+                <text x="490" y="205" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="var(--text-bright)">203.0.113.55 : 47808</text>
+                <text x="490" y="220" text-anchor="middle" font-family="var(--mono)" font-size="8.5" fill="var(--text-dim)">TTL 600 s</text>
+
+                <!-- Controller -->
+                <rect x="620" y="100" width="100" height="50" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.4"/>
+                <text x="670" y="122" text-anchor="middle" font-family="var(--mono)" font-size="10" font-weight="600" fill="var(--text-bright)">VAV-101</text>
+                <text x="670" y="138" text-anchor="middle" font-family="var(--mono)" font-size="9" fill="var(--text-dim)">192.168.1.42</text>
+
+                <!-- Registration arrow (workstation -> BBMD) -->
+                <line x1="180" y1="125" x2="378" y2="125" stroke="var(--accent)" stroke-width="2"/>
+                <polygon points="370,121 378,125 370,129" fill="var(--accent)"/>
+                <text x="270" y="116" text-anchor="middle" font-family="var(--mono)" font-size="10" font-weight="700" fill="var(--accent)">1 · Register-Foreign-Device</text>
+
+                <!-- Forwarded broadcast arrow (BBMD -> workstation) -->
+                <line x1="378" y1="160" x2="180" y2="160" stroke="var(--blue-cool)" stroke-width="1.8" stroke-dasharray="5 4"/>
+                <polygon points="188,156 180,160 188,164" fill="var(--blue-cool)"/>
+                <text x="270" y="178" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="var(--blue-cool)">2 · forwarded broadcasts → workstation</text>
+
+                <!-- Caption -->
+                <text x="380" y="262" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--text)">register with a TTL, re-register before it expires, and the BBMD keeps forwarding</text>
+            </svg>
+
+            <p>
+                The TTL is the catch. If the foreign device fails to send a
+                fresh <code>Register-Foreign-Device</code> before the previous
+                TTL expires, the BBMD silently drops the FDT entry and
+                broadcasts stop arriving — no error, no notification. The
+                remote tool just stops discovering. Most workstations and
+                engineering tools handle re-registration automatically, but
+                lab-built clients and ad-hoc scripts often don't, and a
+                forgotten TTL is a classic cause of "I could see this device
+                yesterday and now I can't."
+            </p>
+
+            <h2 class="subhead">Reading the hex blob EBO shows you</h2>
+
+            <p>
+                EBO and several other BAS workstations display a discovered
+                BACnet/IP device address as a hex string rather than the
+                dotted-decimal form. The string is just the device's MAC —
+                the four-byte IPv4 address, optionally followed by the
+                two-byte UDP port. Decoded:
+            </p>
+
+            <svg class="bac-svg" viewBox="0 0 620 260" role="img"
+                 aria-labelledby="bn-hex-title bn-hex-desc">
+                <title id="bn-hex-title">Decoding C0A80164BAC0 to IP and port</title>
+                <desc id="bn-hex-desc">A 12-character hex string C0A80164BAC0 sits at the top. The first eight characters are grouped together in the accent color (the IP-address bytes). The last four characters are grouped in a second color (the UDP port bytes). Below, the first group decodes to 192.168.1.100 byte by byte: C0 to 192, A8 to 168, 01 to 1, 64 to 100. The second group decodes to port 47808 — 0xBAC0 written in hex. A caption notes that an 8-character hex string is IP only; 12 characters carries the port too.</desc>
+
+                <!-- Big hex string -->
+                <text x="310" y="32" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--text-dim)">EBO discovery shows</text>
+                <g font-family="var(--mono)" font-size="22" font-weight="700" text-anchor="middle">
+                    <text x="170" y="68"><tspan fill="var(--accent)">C0 A8 01 64</tspan></text>
+                    <text x="430" y="68"><tspan fill="var(--blue)">BA C0</tspan></text>
+                </g>
+
+                <!-- IP bytes decoding -->
+                <g font-family="var(--mono)" font-size="11">
+                    <rect x="60"  y="108" width="50" height="34" rx="3" fill="var(--surface)" stroke="var(--accent)" stroke-width="1.4"/>
+                    <text x="85"  y="129" text-anchor="middle" font-weight="700" fill="var(--accent)">C0</text>
+                    <text x="85"  y="160" text-anchor="middle" fill="var(--text-bright)">192</text>
+
+                    <rect x="120" y="108" width="50" height="34" rx="3" fill="var(--surface)" stroke="var(--accent)" stroke-width="1.4"/>
+                    <text x="145" y="129" text-anchor="middle" font-weight="700" fill="var(--accent)">A8</text>
+                    <text x="145" y="160" text-anchor="middle" fill="var(--text-bright)">168</text>
+
+                    <rect x="180" y="108" width="50" height="34" rx="3" fill="var(--surface)" stroke="var(--accent)" stroke-width="1.4"/>
+                    <text x="205" y="129" text-anchor="middle" font-weight="700" fill="var(--accent)">01</text>
+                    <text x="205" y="160" text-anchor="middle" fill="var(--text-bright)">1</text>
+
+                    <rect x="240" y="108" width="50" height="34" rx="3" fill="var(--surface)" stroke="var(--accent)" stroke-width="1.4"/>
+                    <text x="265" y="129" text-anchor="middle" font-weight="700" fill="var(--accent)">64</text>
+                    <text x="265" y="160" text-anchor="middle" fill="var(--text-bright)">100</text>
+                </g>
+                <text x="175" y="184" text-anchor="middle" font-family="var(--mono)" font-size="12" font-weight="700" fill="var(--accent)">192.168.1.100</text>
+                <text x="175" y="200" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--text-dim)">IPv4 address (4 bytes)</text>
+
+                <!-- Port bytes decoding -->
+                <g font-family="var(--mono)" font-size="11">
+                    <rect x="370" y="108" width="50" height="34" rx="3" fill="var(--surface)" stroke="var(--blue)" stroke-width="1.4"/>
+                    <text x="395" y="129" text-anchor="middle" font-weight="700" fill="var(--blue)">BA</text>
+
+                    <rect x="430" y="108" width="50" height="34" rx="3" fill="var(--surface)" stroke="var(--blue)" stroke-width="1.4"/>
+                    <text x="455" y="129" text-anchor="middle" font-weight="700" fill="var(--blue)">C0</text>
+                </g>
+                <text x="425" y="184" text-anchor="middle" font-family="var(--mono)" font-size="12" font-weight="700" fill="var(--blue)">port 47808</text>
+                <text x="425" y="200" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--text-dim)">0xBAC0 — default BACnet/IP port</text>
+
+                <!-- Caption -->
+                <text x="310" y="234" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--text)">8 hex chars = IP only · 12 hex chars = IP + port · port suffix often omitted on the default</text>
+            </svg>
+
+            <p>
+                The default port (<code>0xBAC0</code> = 47808) is almost
+                always omitted from the displayed hex — an 8-character
+                string is normal, and any 12-character string ending in
+                <code>BAC0</code> is the IP at the default port written
+                long-hand. A 12-character string ending in something else
+                (<code>BAC1</code> = 47809, for example) means the device is
+                on a non-default BACnet/IP port, usually because someone
+                stood up a second logical BACnet/IP network on the same
+                host using ASHRAE 135 Annex J's sequential-port convention.
+            </p>
+
+            <p>
+                The <a href="/tools/bacnet-ip-converter.html">BACnet/IP Hex
+                Converter</a> tool does the same decoding in both directions
+                — paste a hex string from an EBO discovery dialog and read
+                the IP + port back, or assemble the hex string from an IP
+                and port to paste into a configuration field. The math is
+                trivial; the tool exists so you don't lose flow context
+                doing it by hand.
+            </p>
+
+            <h2 class="subhead">When discovery silently fails</h2>
+
+            <p>
+                BACnet has no "couldn't deliver" feedback for broadcasts.
+                When discovery doesn't work, the symptom is almost always
+                "I can't see a device I expect to see," with no error to
+                grep for. The list below is what to check, in roughly the
+                order it bites in the field:
+            </p>
+
+            <ul>
+                <li><strong>No BBMD on the remote subnet.</strong> The
+                    target device sits on a subnet with no BBMD configured
+                    at all. Local devices on that subnet see each other
+                    fine; cross-network discovery never reaches them.
+                    Stand up a BBMD on that subnet and add it to every
+                    peer's BDT.</li>
+                <li><strong>Asymmetric BDT.</strong> BBMD A lists B, but
+                    B's BDT doesn't list A. Discovery from A reaches B,
+                    but the I-Am reply doesn't make it back. Symmetric
+                    BDT entries are a deployment hygiene rule; every
+                    BBMD's BDT needs every other BBMD.</li>
+                <li><strong>Firewall blocks UDP 47808.</strong> A firewall
+                    rule (host-based on the BBMD, network ACL on the
+                    router, or a corporate edge filter) is dropping UDP
+                    47808 between the subnets. Symptom: BBMDs are
+                    configured correctly but no Forwarded-NPDU ever
+                    arrives. Confirm with a Wireshark capture or by
+                    pinging UDP 47808 between the two BBMDs.</li>
+                <li><strong>Network-number collision.</strong> Two BACnet
+                    network segments routed together both claim the same
+                    network number. The network layer can't disambiguate;
+                    routers and BBMDs throw the message away or send it
+                    the wrong way. Every BACnet network in an
+                    internetwork needs a unique number.</li>
+                <li><strong>BBMD on the wrong VLAN.</strong> The BBMD's IP
+                    is on a different VLAN than the BACnet/IP devices it's
+                    supposed to serve. The BBMD captures nothing because
+                    it isn't actually on the broadcast domain. The fix is
+                    network plumbing: put the BBMD's NIC on the BAS VLAN,
+                    or trunk the VLAN to it.</li>
+                <li><strong>FDR TTL expired.</strong> A foreign-registered
+                    workstation isn't re-sending
+                    <code>Register-Foreign-Device</code> often enough; the
+                    BBMD's FDT entry timed out. Most engineering tools
+                    handle this automatically; a custom client may not.
+                    Symptom: discovery works briefly after a re-connect,
+                    then stops.</li>
+                <li><strong>Two BBMDs on one subnet.</strong> Someone added
+                    a second BBMD to a subnet that already had one. Every
+                    Forwarded-NPDU arriving from a peer gets re-broadcast
+                    by both — and each of those re-broadcasts gets captured
+                    by the other BBMD and forwarded again. A slow,
+                    expensive loop. One BBMD per subnet is the rule.</li>
+                <li><strong>Max APDU mismatch on segmented replies.</strong>
+                    The client asks for a property whose value is too
+                    large for a single APDU; the device tries to send a
+                    segmented reply; segmentation is disabled or the
+                    client's <code>Max APDU</code> doesn't match what the
+                    device announced in its I-Am. The exchange falls on
+                    the floor. Rare in everyday work, common when reading
+                    very large object-property lists from a Device object.</li>
+            </ul>
+
+            <h2 class="subhead">What this page didn't cover</h2>
+
+            <p>
+                Two pages on BACnet — one on the object model and services,
+                one on addressing and networking — cover what most BMS techs
+                need to read a point list, form a request, route a message
+                across a router, and reason about why a device isn't
+                showing up in a discovery scan. What's left, deliberately
+                out of scope on this pair:
+            </p>
+
+            <ul>
+                <li><strong>MS/TP on the wire.</strong> Token rotation, the
+                    master-token-passing mechanic,
+                    <code>Max_Master</code> and
+                    <code>Max_Info_Frames</code>, baud rates, the cable-
+                    length and device-count limits per segment. Its own
+                    future page when MS/TP commissioning content earns one.</li>
+                <li><strong>Segmentation of long messages.</strong> When an
+                    APDU is too big for one frame, how segmentation breaks
+                    it up and how the receiver reassembles. Hinted at in
+                    the discovery-fails list above; a deeper treatment
+                    belongs on its own page.</li>
+                <li><strong>BACnet/SC — Secure Connect.</strong> The newer
+                    TLS-WebSocket transport. Different framing, different
+                    discovery (no broadcasts at all — hub-and-spoke), worth
+                    its own page once it's common enough in BAS work to
+                    justify the depth.</li>
+                <li><strong>Capture-driven troubleshooting.</strong> A
+                    Wireshark or Yabe walkthrough — what a Who-Is looks like
+                    in a capture, how to spot a Forwarded-NPDU, what an
+                    Abort or Reject PDU is telling you. Worth its own
+                    treatment given how often a capture is the fastest path
+                    to a root cause.</li>
+                <li><strong>Alarms and event notifications.</strong> The
+                    confirmed and unconfirmed alarm services, the
+                    Notification Class object, recipient lists, COV-style
+                    push for events. Their own page; touches BACnet's
+                    biggest object-model surface outside the
+                    analog/binary/multi-state core.</li>
+                <li><strong>Vendor profile differences.</strong> The
+                    practical reality that two BACnet devices, both
+                    advertising the same object types, may expose them
+                    with very different property sets and command
+                    behavior. Vendor-specific notes don't fit on a general
+                    education page; they belong on per-platform pages
+                    (Niagara, EBO, …) when those land.</li>
+            </ul>
+
+        </div>
+    </div>
+
+    <a class="back-link" href="/education/">← Back to Education</a>
+
+</main>
+{% endblock %}

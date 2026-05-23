@@ -131,6 +131,14 @@ nav: tools
             <p class="ref-note" style="margin-top:1rem;">
                 UDP 47808 (0xBAC0) is the IANA-registered BACnet port and the only one you'll encounter in the field unless you're running multiple logical BACnet/IP networks on the same host. ASHRAE 135 Annex J describes a convention for additional networks on sequential ports (47809 / BAC1 and up) — those are not IANA-registered. Confirm against the site's actual BACnet design.
             </p>
+            <p class="ref-note">
+                <a href="/education/bacnet-basics.html">BACnet Basics</a> covers the
+                object model, the services, the priority array, and how Who-Is / I-Am
+                discovery works. <a href="/education/bacnet-networking.html">BACnet Networking</a>
+                is the companion page on the gotchas behind the hex-blob conversion above —
+                the three layers of addressing, BBMDs and Foreign Device Registration, and
+                the BVLL/NPDU/APDU frame each BACnet/IP message wraps itself in.
+            </p>
         </div>
     </div>
 
