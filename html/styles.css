@@ -875,6 +875,7 @@ input[type="range"]::-moz-range-thumb {
 .units-btn:focus-visible,
 .cta-button:focus-visible,
 .back-link:focus-visible,
+.filter-chip:focus-visible,
 .nav-card:focus-visible {
     outline: 2px solid var(--accent);
     outline-offset: 3px;   /* v2.0.0 — was 2px; lifted so the accent ring no longer kisses the border on .nav-card */
@@ -988,6 +989,48 @@ p.pid-note {
     margin-bottom: 2.5rem;
 }
 .card-grid.two { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+
+/* Filter chip row above the .card-grid on /tools/ and /education/.
+   Each chip toggles which .nav-card[data-category] is visible; URL hash
+   tracks state. Chips borrow the .nav-card-tag pill aesthetic but are
+   <button>s, larger, and stateful. */
+.filter-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-bottom: 1.5rem;
+}
+.filter-chip {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.4rem;
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 0.35rem 0.75rem;
+    cursor: pointer;
+    transition: border-color 0.18s, background 0.18s, color 0.18s;
+}
+.filter-chip:hover { border-color: var(--accent); color: var(--accent); }
+.filter-chip.active {
+    color: var(--accent);
+    background: var(--accent-dim);
+    border-color: var(--accent-glow);
+}
+.filter-chip-count {
+    font-size: 0.65rem;
+    color: var(--text-dim);
+}
+.filter-chip.active .filter-chip-count { color: var(--accent); opacity: 0.75; }
+/* The .nav-card rule below sets display:block, which would override the UA
+   `hidden { display: none }` and leave hidden cards consuming grid slots.
+   Re-assert display: none for the [hidden] case. */
+.nav-card[hidden] { display: none; }
 
 .nav-card {
     display: block;

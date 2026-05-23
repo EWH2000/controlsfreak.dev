@@ -521,6 +521,59 @@ test('education page runs the PID mini-sims and they respond to input', async ({
     expect(errors, 'education page should log no page / console errors').toEqual([]);
 });
 
+test('tools landing — filter chip narrows to one category and All restores', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('/tools/');
+
+    // [All] active on a fresh visit; every card visible.
+    await expect(page.locator('.filter-chip[data-category="all"]')).toHaveClass(/active/);
+    const totalCards = await page.locator('.nav-card').count();
+    await expect(page.locator('.nav-card:not([hidden])')).toHaveCount(totalCards);
+
+    // Click HVAC chip → only HVAC-tagged cards remain; chip flips active.
+    await page.click('.filter-chip[data-category="hvac"]');
+    await expect(page.locator('.filter-chip[data-category="hvac"]')).toHaveClass(/active/);
+    await expect(page.locator('.filter-chip[data-category="all"]')).not.toHaveClass(/active/);
+    const visibleHvac = await page.locator('.nav-card:not([hidden])').count();
+    expect(visibleHvac, 'only HVAC cards should remain visible').toBe(5);
+    // hash updates (replaceState — no scroll, no back-history pollution)
+    expect(new URL(page.url()).hash).toBe('#hvac');
+
+    // Click [All] → restored.
+    await page.click('.filter-chip[data-category="all"]');
+    await expect(page.locator('.nav-card:not([hidden])')).toHaveCount(totalCards);
+    expect(new URL(page.url()).hash).toBe('');
+
+    expect(errors, 'tools-filter behavioral should log no errors').toEqual([]);
+});
+
+test('tools landing — URL hash deep-links to a category on initial load', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('/tools/#protocols');
+
+    // Page boots with Protocols active.
+    await expect(page.locator('.filter-chip[data-category="protocols"]')).toHaveClass(/active/);
+    expect(await page.locator('.nav-card:not([hidden])').count()).toBe(2);
+
+    // Unknown hash falls back to [All].
+    await page.goto('/tools/#nonsense');
+    await expect(page.locator('.filter-chip[data-category="all"]')).toHaveClass(/active/);
+    const total = await page.locator('.nav-card').count();
+    await expect(page.locator('.nav-card:not([hidden])')).toHaveCount(total);
+
+    expect(errors, 'tools-hash behavioral should log no errors').toEqual([]);
+});
+
+test('education landing — Hydronics chip narrows to the 4 hydronic lessons', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('/education/#hydronics');
+
+    await expect(page.locator('.filter-chip[data-category="hydronics"]')).toHaveClass(/active/);
+    expect(await page.locator('.nav-card:not([hidden])').count()).toBe(4);
+
+    expect(errors, 'education-filter behavioral should log no errors').toEqual([]);
+});
+
 test('education hub links to its pages', async ({ page }) => {
     const errors = watchErrors(page);
     await page.goto('/education/');
