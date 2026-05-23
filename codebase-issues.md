@@ -3257,7 +3257,7 @@ during the audit. Exposing every internal engine helper would bloat
 third caller, at which point it becomes a candidate for
 `FBE.util.clamp(...)` or a tiny shared `html/scripts/util.js`.
 
-### 66. Function-block editor drop-grid wraps after 20 blocks; comment overstates
+### 66. Function-block editor drop-grid wraps after 20 blocks; comment overstates *(addressed 2026-05-22)*
 
 `html/tools/function-block-editor.html:540–541` positions a newly-
 added palette block via `x = 40 + (n % 5) * 150; y = 40 +
@@ -3278,6 +3278,12 @@ grid; further blocks may overlap and need a drag" — one-line fix,
 matches the existing low-stakes posture; or (b) extend the cycle
 (shift y down on each wrap, or jitter the position).
 
+**Resolution (2026-05-22):** took option (a). The comment now reads
+"Drop new blocks into a tidy 5×4 grid; the cycle wraps after 20, so
+further blocks may overlap and need a drag." Behavior is unchanged
+— a user past 20 blocks on the canvas is placing them deliberately
+anyway, and the cycle extension wasn't worth the added math.
+
 ### 67. Function-block editor — type-mismatch on wire creation doesn't cancel pending
 
 `html/tools/function-block-editor.html:913–916` — when the user
@@ -3294,7 +3300,7 @@ intentional.
 
 **Recommended action:** none.
 
-### 68. Function-block editor — no visible hint that keyboard Delete / Escape are bound
+### 68. Function-block editor — no visible hint that keyboard Delete / Escape are bound *(addressed 2026-05-22)*
 
 `html/tools/function-block-editor.html:1029–1038` binds Delete /
 Backspace to remove the selected block or wire, and Escape to
@@ -3313,6 +3319,17 @@ read the "How it works" prose will miss the keyboard shortcuts.
 **Recommended action:** append a subtitle to the empty-state
 inspector text ("Press Delete to remove · Escape to cancel a wire"),
 or attach a key hint to the active-state Delete button.
+
+**Resolution (2026-05-22):** appended a second `<p
+class="fbe-insp-keys">Press Delete to remove · Escape to cancel a
+wire.</p>` paragraph to the empty-state inspector in
+`renderInspector()`. Styled in the page's `{% block head %}` CSS as
+mono small-caps text (font-size 0.62rem, `--text-dim` colour,
+opacity 0.85) so it reads as a quiet keyboard-hint subtitle rather
+than competing with the primary empty-state prose. Only the
+empty-state branch was changed — the wire-selected and block-
+selected branches already expose a "Delete block" / "Delete wire"
+button that documents the affordance.
 
 ### Post-audit re-evaluation sweep (2026-05-16)
 

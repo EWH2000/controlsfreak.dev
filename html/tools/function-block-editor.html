@@ -188,6 +188,13 @@ nav: tools
             align-self: center;
         }
         .fbe-insp-empty { font-size: 0.78rem; color: var(--text-dim); align-self: center; }
+        .fbe-insp-keys {
+            font-family: var(--mono);
+            font-size: 0.62rem;
+            color: var(--text-dim);
+            align-self: center;
+            opacity: 0.85;
+        }
         .fbe-insp-row { display: flex; flex-direction: column; }
         .fbe-insp-row label {
             font-family: var(--mono);
@@ -542,7 +549,8 @@ nav: tools
 
         function addBlock(type) {
             const id = 'b' + (++blockSeq);
-            // Drop new blocks into a tidy grid so they don't stack.
+            // Drop new blocks into a tidy 5×4 grid; the cycle wraps after
+            // 20, so further blocks may overlap and need a drag.
             const n = dropSeq++;
             const x = 40 + (n % 5) * 150;
             const y = 40 + Math.floor((n % 20) / 5) * 120;
@@ -795,6 +803,10 @@ nav: tools
                 p.textContent = 'Select a block to edit its parameters, or a wire to '
                     + 'remove it. Click a palette block to add one.';
                 inspector.appendChild(p);
+                const keys = document.createElement('p');
+                keys.className = 'fbe-insp-keys';
+                keys.textContent = 'Press Delete to remove · Escape to cancel a wire.';
+                inspector.appendChild(keys);
                 return;
             }
             if (selected.kind === 'wire') {
