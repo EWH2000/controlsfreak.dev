@@ -781,6 +781,47 @@ test('vfds page renders its diagrams and the run/speed widget is wired up', asyn
     expect(errors, 'vfds behavioral should log no page / console errors').toEqual([]);
 });
 
+test('load piping — bypass widget protects pump from deadhead at zero demand', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('/education/load-piping.html');
+
+    // Widget mounts in the default OK state (demand=50, VFD, bypass off).
+    await expect(page.locator('#lp-w')).toBeVisible();
+    await expect(page.locator('#lp-w')).toHaveAttribute('data-state', 'ok');
+    await expect(page.locator('#lp-w-anecdote')).toBeHidden();
+
+    // Drag demand to zero with VFD + bypass off (the deadhead corner).
+    // Pump-type / bypass buttons stay at their default 'on' positions;
+    // click them anyway to exercise the segmented-group handlers and to
+    // be explicit about the asserted scenario.
+    await page.locator('#lp-w-demand-slider').evaluate((el) => {
+        el.value = '0';
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await page.click('#lp-w-pump-vfd');
+    await page.click('#lp-w-bypass-off');
+    await expect(page.locator('#lp-w')).toHaveAttribute('data-state', 'deadhead');
+    await expect(page.locator('#lp-w-state-text')).toHaveText('DEADHEAD');
+    await expect(page.locator('#lp-w-anecdote')).toBeVisible();
+
+    // Flip the bypass on — state clears to OK and bypass flow lands at the
+    // floor (25% of 60 GPM = 15 GPM in default US units).
+    await page.click('#lp-w-bypass-on');
+    await expect(page.locator('#lp-w')).toHaveAttribute('data-state', 'ok');
+    await expect(page.locator('#lp-w-bypass-flow')).toHaveText('15');
+    await expect(page.locator('#lp-w-sys-flow')).toHaveText('15');
+
+    // Anecdote stays pinned once shown (balancing-style reward semantic).
+    await expect(page.locator('#lp-w-anecdote')).toBeVisible();
+
+    // The CS pump-type swap relabels the PUMP readout and bar to "Pump head".
+    await page.click('#lp-w-pump-cs');
+    await expect(page.locator('#lp-w-pump-readout-label')).toHaveText('Pump head');
+    await expect(page.locator('#lp-w-bar-label')).toHaveText('Pump head');
+
+    expect(errors, 'load-piping behavioural should log no page / console errors').toEqual([]);
+});
+
 test('balancing page renders riser, widget compares three branches, anecdote reveals at low Δp', async ({ page }) => {
     const errors = watchErrors(page);
     await page.goto('/education/balancing.html');

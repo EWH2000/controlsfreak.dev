@@ -1861,50 +1861,62 @@ than the original planning):
   threads this implicitly through prose; a synthesis aid could
   help job-site readers map their plant onto the lesson.
 
-Interactive-widget payoff (flagged by the user; widget concept
-below is Claude-suggested, not yet user-vetted):
-- **The page has no interactive payoff.** It closes on the
-  `lp-tt-` tie-back diagram + prose. Of the variable-flow
-  quartet (`load-piping` → `vfds` → `pump-control` →
-  `balancing`), load-piping is the only page that ends without
-  a manipulable widget — `vfds`, `pump-control`, and
-  `balancing` each close on one, and `hydronic-loops` has the
-  twin-T injection-pump widget. The page's one question ("what
-  does the connection point decide?") is a cause→effect
-  relationship — valve type at the load sets whether *system*
-  flow varies or holds constant — which is exactly what a
-  widget makes vivid. Right now the reader is *told* it; a
-  widget would let them watch it.
-- **Widget concept — "Watch what the pump sees."** An
-  `lp-w-`-prefixed `.widget-*` block:
-  - One slider — **load demand** 0–100% (the call at the coil).
-  - One segmented toggle — **valve type**: 2-way /
-    3-way mixing / 3-way diverting.
-  - Readouts — **coil flow**, **bypass flow**, **system/loop
-    flow** (what the pump sees), in GPM.
-  - Payoff: drag demand down and — 2-way → coil flow *and*
-    system flow fall together ("variable system flow");
-    3-way → coil flow falls but system flow stays pinned at
-    design, the bypass leg picking up the slack ("constant
-    system flow"). A small inline schematic (or one of the
-    existing SVGs) lights the bypass leg as demand drops on a
-    3-way.
-  - Discovery reward (the inward-pointing Easter-egg idiom):
-    at very low demand with a **2-way** valve, an anecdote —
-    the pump is near-deadheaded, which is exactly where the
-    next pages pick up — forward-linking `vfds.html` /
-    `pump-control.html` and paying off two of this page's
-    existing forward-link debts.
-  - Math is a trivial proportional flow split — no engine. The
-    mixing-vs-diverting nuance can stay a label/diagram detail
-    (both give constant system flow); the widget's job is the
-    2-way-vs-3-way contrast.
-- **Scope guard.** It stays a teaching widget — Education page,
-  no Tools card (per "Where interactive widgets live"), and per
-  "one question per page" it must stay on *valve choice →
-  system flow varies or not*. It must not drift into balancing,
-  pump curves, or VFD speed control — those are the sibling
-  pages.
+Closing widget *(shipped 2026-05-23)*:
+- **"See what the bypass does"** — capstone widget at the end
+  of `.tool-body`, after the closing prose at the bottom of the
+  twin-T tie-back section. Closes out the load-piping page's
+  former "no interactive payoff" gap and brings the page into
+  line with the rest of the variable-flow quartet (`vfds` /
+  `pump-control` / `balancing`), each of which already closes
+  on a widget.
+- **Job — make the MIN-FLOW callout vivid.** Section 3's
+  prose introduces the bypass as a fixture that protects a
+  system pump from dead-heading when 2-way loads throttle
+  down, but the reader was only *told*. The widget lets them
+  watch the floor disappear and reappear under one toggle.
+- **Three knobs, four readouts, one schematic.** Slider on
+  *building demand* (0–100%, throttles all three loads in
+  unison); segmented toggle for *pump type* (`vfd` / `cs`);
+  segmented toggle for *min-flow bypass* (`off` / `on`).
+  Readouts: a PUMP state pill (`OK` / `WARN` / `DEADHEAD`,
+  color-shifted via `data-state` on `#lp-w`, mirroring
+  balancing's per-row idiom), SYS FLOW (GPM/L·s), PUMP SPEED
+  or PUMP HEAD (% only — label swaps with mode), BYPASS FLOW.
+  Full-width head/speed bar under the columns with a design
+  tick at 100% (CSS `::after` cribbed from
+  `.bal-w-bch-bar::after`); the bar dual-codes — in VFD mode
+  it tracks pump speed (shrinks below 100%), in CS mode it
+  tracks pump head (grows past 100% toward shutoff at 140%).
+  Small SVG schematic on the left: 3 loads with bowtie 2-way
+  valves on a supply/return main, system pump at the bottom
+  left, MIN-FLOW crossover at the far right. Bypass-leg
+  particles toggle via `FlowEngine.setPathColor()` (the engine
+  can't tear down particle pools when `data-flow` is removed —
+  `flow-engine.js:178` / `:149` — so recolouring to
+  `transparent` is the honest workaround; pipe stroke stays
+  visible since the bypass is a present-but-closed fixture).
+  CSS prefix `lp-w-`, matching the `pc-w-` / `bal-w-` / `vfd-w-`
+  family.
+- **Easter-egg anecdote — pinned once shown.** Reveals when
+  `data-state="deadhead"` with VFD selected and bypass off
+  (the canonical failure-mode corner); forward-links
+  `vfds.html` and `pump-control.html`, paying off two of the
+  page's existing forward-link debts. Same pinned-once-shown
+  semantic as the balancing / pump-control / vfds anecdotes.
+- **Presets — `design day` (50% / CS / off) and `quiet night`
+  (10% / VFD / off).** One-click path to the deadhead corner
+  for keyboard or time-strapped readers; standard `.widget-try`
+  row at the top of the widget.
+- **Deliberately deferred (scope discipline).** No H-Q curve
+  canvas (that's `pump-control.html` widget 1's job). No Hz
+  or ft anywhere — only `%` on PUMP SPEED / PUMP HEAD.
+  Pump-control owns the dimensioned pump-curve teaching. The
+  VFD/CS toggle is the *only* place this widget flexes the
+  page's "one question" scope — it does so because the bypass
+  means very different things on the two pump types and the
+  MIN-FLOW lesson collapses if only one type is shown. Future
+  reviewers: don't "fix" the absent Hz axis. It's absent on
+  purpose.
 
 ### Balancing — Education page *(shipped 2026-05-16)*
 *One question: how do you make sure every load in a hydronic
