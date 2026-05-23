@@ -480,26 +480,29 @@ nav: education
                     <text x="515" y="205" text-anchor="middle" font-size="9.5" fill="var(--text-dim)">RTU-1</text>
                 </g>
 
-                <!-- Who-Is broadcast: client → all three -->
+                <!-- Who-Is broadcast: client → all three. Arrowhead polygons
+                     are rotated to match each line's slope — a symmetric
+                     horizontal triangle reads as misaligned on a tilted line. -->
                 <g stroke="var(--blue)" stroke-width="2" fill="none">
                     <line x1="150" y1="105" x2="425" y2="56"/>
                     <line x1="150" y1="120" x2="425" y2="124"/>
                     <line x1="150" y1="135" x2="425" y2="192"/>
                 </g>
-                <polygon points="416,53 425,56 419,63" fill="var(--blue)"/>
-                <polygon points="416,121 425,124 416,131" fill="var(--blue)"/>
-                <polygon points="418,188 425,192 419,199" fill="var(--blue)"/>
+                <polygon points="414,53 425,56 416,63" fill="var(--blue)"/>
+                <polygon points="415,119 425,124 415,129" fill="var(--blue)"/>
+                <polygon points="416,185 425,192 414,195" fill="var(--blue)"/>
                 <text x="240" y="68" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--blue)">Who-Is (broadcast)</text>
 
-                <!-- I-Am replies: each device → client -->
+                <!-- I-Am replies: each device → client. Arrowhead polygons
+                     rotated to match each line's slope, same as above. -->
                 <g stroke="var(--blue-cool)" stroke-width="1.6" fill="none" stroke-dasharray="5 4">
                     <line x1="425" y1="68"  x2="155" y2="100"/>
                     <line x1="425" y1="132" x2="155" y2="125"/>
                     <line x1="425" y1="204" x2="155" y2="150"/>
                 </g>
-                <polygon points="164,97 155,100 162,107" fill="var(--blue-cool)"/>
-                <polygon points="165,122 155,125 163,132" fill="var(--blue-cool)"/>
-                <polygon points="164,147 155,150 163,157" fill="var(--blue-cool)"/>
+                <polygon points="164,94 155,100 166,104" fill="var(--blue-cool)"/>
+                <polygon points="165,120 155,125 165,130" fill="var(--blue-cool)"/>
+                <polygon points="166,147 155,150 164,157" fill="var(--blue-cool)"/>
                 <text x="240" y="180" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--blue-cool)">I-Am (one each)</text>
 
                 <!-- caption -->
