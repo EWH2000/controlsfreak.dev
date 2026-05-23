@@ -139,8 +139,18 @@ nav: tools
             line-height: 1.55;
             color: var(--text);
             white-space: nowrap;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 0 0 4px rgba(67, 136, 28, 0.14);
             z-index: 1;
+            /* BAS flare: slow breathing ring around the chip. The shared
+               `.bas-breathe` keyframes assume no baseline shadow; we need
+               a page-local pair because the chip's 1px micro-shadow
+               (above) anchors it visually over the canvas. The global
+               prefers-reduced-motion guard disables the animation. */
+            animation: psy-chip-breathe 1.8s ease-in-out infinite;
+        }
+        @keyframes psy-chip-breathe {
+            0%, 100% { box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 0 0 4px rgba(67, 136, 28, 0.18); }
+            50%      { box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 0 0 8px rgba(67, 136, 28, 0.05); }
         }
         .psy-chip[hidden] { display: none; }
         .psy-chip .lbl { color: var(--text-dim); margin-right: 0.45em; }

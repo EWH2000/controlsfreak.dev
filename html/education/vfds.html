@@ -130,12 +130,19 @@ nav: education
             border: 1px solid var(--border);
             border-radius: 3px;
         }
+        .vfd-w-state-row {
+            display: flex;
+            align-items: center;
+            gap: 0.55rem;
+            margin-bottom: 0.45rem;
+            padding: 0.05rem 0.1rem;
+            border-radius: 3px;
+        }
         .vfd-w-state {
             font-family: var(--mono);
             font-size: 0.95rem;
             font-weight: 600;
             color: var(--text-bright);
-            margin-bottom: 0.45rem;
         }
         .vfd-w-state.running { color: var(--blue); }
         .vfd-w-state .hz { font-size: 0.78em; color: var(--text-dim); font-weight: 500; margin-left: 0.25rem; }
@@ -416,7 +423,10 @@ nav: education
                             <circle cx="50" cy="50" r="5" fill="var(--text-dim)"/>
                         </svg>
                         <div class="vfd-w-status-text">
-                            <div class="vfd-w-state" id="vfd-state">STOPPED</div>
+                            <div class="vfd-w-state-row">
+                                <span class="bas-led" id="vfd-state-led" aria-hidden="true"></span>
+                                <div class="vfd-w-state" id="vfd-state">STOPPED</div>
+                            </div>
                             <div class="vfd-w-msgs" id="vfd-msgs"></div>
                         </div>
                     </div>
@@ -691,6 +701,8 @@ nav: education
         const netRun     = document.getElementById('vfd-net-run');
         const netStop    = document.getElementById('vfd-net-stop');
         const stateEl    = document.getElementById('vfd-state');
+        const stateLed   = document.getElementById('vfd-state-led');
+        const stateRow   = stateEl.parentElement;
         const msgsEl     = document.getElementById('vfd-msgs');
         const anecdoteEl = document.getElementById('vfd-anecdote-wrap');
         const fanEl      = document.getElementById('vfd-w-fan');
@@ -708,7 +720,8 @@ nav: education
             diClosed: false,       // terminals DI input state
             netLatch: false,       // network run latch
             lastAttempt: null,     // { source, verb } — most recent command attempt
-            anecdoteShown: false   // once revealed, keep it pinned this session
+            anecdoteShown: false,  // once revealed, keep it pinned this session
+            lastRunning: false     // tracks running flag for BAS-flare state-flash on transition
         };
 
         function isRunning() {
@@ -768,6 +781,16 @@ nav: education
                 stateEl.innerHTML = 'RUNNING <span class="hz">at ' + state.speedHz + ' Hz</span>';
             } else {
                 stateEl.textContent = 'STOPPED';
+            }
+
+            // BAS flare: LED tracks the running state; the row gets a
+            // one-shot accent-ring flash on every state transition.
+            stateLed.classList.toggle('active', running);
+            if (running !== state.lastRunning) {
+                stateRow.classList.remove('bas-state-flash');
+                void stateRow.offsetWidth;
+                stateRow.classList.add('bas-state-flash');
+                state.lastRunning = running;
             }
             // Fan colour tracks running state; rotation (driven by the
             // interval below) only advances when running && speed > 0.
