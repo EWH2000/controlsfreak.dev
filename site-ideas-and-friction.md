@@ -2206,8 +2206,11 @@ class).
 - `modbus-decoding.html` — **paid 2026-05-23.** The closing section's
   plain-prose forward-link is now an active anchor; see the next
   entry for the companion page.
-- `bacnet-basics.html` — one parenthetical comparison only;
-  acknowledged as a `[future:]` marker rather than a forward-link.
+- `bacnet-basics.html` — **paid 2026-05-23.** The "A BACnet object
+  knows its own type, units, scale, and name" parenthetical now
+  anchors to the shipped BACnet Basics page; same paragraph stays
+  short on this page since the contrast grew into a section over
+  there rather than expanding here.
 - `modbus-wire.html` — sketched here as the third Modbus page if
   demand surfaces (RS-485 / CRC / timing). No prose mention on
   the page itself — the topic is parked entirely in this entry.
@@ -2300,22 +2303,246 @@ would be the consolidation trigger.
   essentials row now anchors both Modbus pages, framing them as the
   paired explainer for the five-bullet field cheat sheet.
 
-### BACnet — Education page *(future)*
+### BACnet Basics — Education page *(shipped 2026-05-23)*
+*One question: what is BACnet, and what does a conversation between
+a controller and a device actually look like?*
 
-The second protocol explainer, paying a forward-link debt the
-BACnet/IP converter doesn't yet carry but would once a BACnet
-education page is on deck. Scoping pass deferred to the session
-when this gets picked up; sketch surface from the original
-candidate list:
+The third protocol explainer (after the Modbus pair), paying the
+BACnet/IP Hex Converter tool's forward-link debt. Scoped per the
+"one question per page" rule (decided during this scoping pass): the
+BACnet surface is large enough that a single page exceeds the four-
+item in-scope ceiling, so the protocol explainer ships as a pair —
+this page covers the object model + services + priority array +
+discovery; the companion (`bacnet-networking.html`) covers the
+addressing / BBMD / hex-blob side. The modbus-basics "one
+parenthetical comparison" grew into the `What BACnet is, and isn't`
+section here rather than staying parenthetical.
 
-- Object model, services, MS/TP vs BACnet/IP framing, discovery
-  flow. Pairs with the existing BACnet/IP converter — the tool
-  turns an EBO-discovered hex blob into a dotted-decimal IP; the
-  page would explain why that blob looks the way it does. Also a
-  natural place for the *one parenthetical comparison* dropped on
-  `modbus-basics.html` to grow into a section.
+In scope (sections shipped):
 
-Lower-priority candidates parked here for completeness:
+- *What BACnet is, and isn't* — ASHRAE 135 since 1987, the self-
+  describing object model as the defining contrast with Modbus
+  (parenthetical from modbus-basics grew to a paragraph), the
+  multiple-data-links framing (MS/TP / IP / SC / Ethernet — protocol
+  logic identical across them).
+- *Devices, objects, properties* — the three-layer nesting; device
+  instance numbers (0–4,194,302); Object_Identifier encoded as
+  10-bit type + 22-bit instance but written human-readable
+  (`AI:3`); the property list as where actual data lives. Static
+  SVG of a device box containing object boxes with one object
+  exploded to its property list. Four-card `.callout-grid` for the
+  object-type families (Analog / Binary / Multi-state / Device).
+- *The services you'll see* — `ReadProperty`, `WriteProperty`,
+  `ReadPropertyMultiple` / `WritePropertyMultiple`, the
+  `SubscribeCOV` + `ConfirmedCOV-Notification` push pair (with the
+  push-vs-poll contrast to Modbus), `Who-Is` / `I-Am` named here
+  and expanded in §5. The thirty-five-services-in-the-standard
+  number called out so the reader knows the listed five are a
+  practitioner shortlist, not the full set.
+- *The priority array — BACnet's command stack* — dedicated H2,
+  per scoping decision. 16-slot array, lowest-non-null wins,
+  `Relinquish_Default` as the floor, conventional slot ownership
+  (life-safety = 1, manual override = 8, BMS sequence = 16, slots
+  9–15 free, slots 6/7 reserved). Worked example: BMS at slot 16
+  writes 65 %, tech overrides at slot 8 with 0 %, resolved value
+  is 0 %; writing null to slot 8 releases the override and value
+  drops to 65 %. Tall static SVG of the 16-slot stack with slot 8
+  and slot 16 highlighted and an arrow to the resolved
+  Present_Value. Closes with the "value on the graphic is the
+  resolved value, not what the sequence writes" practitioner trap.
+- *Who-Is / I-Am — how devices announce themselves* — the
+  broadcast / reply pair, optional device-instance range on
+  Who-Is, what I-Am carries (instance + max APDU + segmentation
+  + vendor ID). Static SVG of one client → three-device fan-out
+  with Who-Is broadcast and three I-Am replies. Closes by setting
+  up `bacnet-networking.html`'s BBMD section as "what happens
+  when discovery has to cross a router."
+- *MS/TP vs BACnet/IP — same protocol, different transport* —
+  short H2 acknowledging both data links. RS-485 token ring vs
+  UDP/47808 (0xBAC0). Defers token-rotation / `Max_Master` /
+  `Max_Info_Frames` / baud / cable limits to
+  `[future: bacnet-mstp.html]`. Static SVG of the two framing
+  stacks side-by-side, with the shared NPDU+APDU payload below a
+  bracket marking the data-link wrapper.
+
+Out of scope (forward links):
+
+- BBMD / Foreign Device Registration / the three layers of
+  addressing / the BVLL+NPDU+APDU frame breakdown / the EBO hex
+  blob — `bacnet-networking.html`, the second page of this pair
+  (forward-linked from the closing "what this page didn't cover"
+  section and from the MS/TP-vs-IP section as a live anchor).
+- MS/TP deep mechanics — `[future: bacnet-mstp.html]`. Token
+  rotation, master polling, baud rates, segment limits. Named in
+  both the MS/TP-vs-IP section and the closing.
+- Priority-array deeper mechanics (writeable `Relinquish_Default`,
+  command prioritization under heavy override, the standard's
+  full slot reservation table) — `[future: bacnet-priority.html]`
+  if demand surfaces. The current section names slots 1 / 8 / 16
+  and waves at the rest.
+- Alarms / event notifications, schedules, calendars, trend logs,
+  file / group / loop / notification-class objects — named in the
+  closing as out-of-scope. Each likely its own future page.
+
+**Widget decision — drafted out (same as Modbus pages).** A priority-
+array interactive (16-slot panel, type values into slots, watch
+Present_Value resolve) was considered during scoping. The static
+16-slot SVG with the worked-example arrow carries the concept on
+first read; consistency with the Modbus pages' pure-prose +
+static-SVG posture wins. Revisitable if the section reads weak in
+review.
+
+**Page-local CSS — `.bac-svg`.** Block-and-byte schematic class
+following the `.mb-svg` / `.fb-svg` / `.vfd-svg` precedent.
+Currently defined on both BACnet pages (and not consolidated to
+`styles.css`); a third BACnet-side page would be the consolidation
+trigger.
+
+**Forward-link debts this page incurred:**
+- `bacnet-networking.html` — **paid 2026-05-23.** The closing
+  section's forward-link to the companion page is an active anchor;
+  see the next entry.
+- `bacnet-mstp.html` — named in §6 (MS/TP vs IP) and in the closing.
+  The page doesn't exist yet; topic parked entirely in this entry.
+- `bacnet-priority.html` — named in the closing as the eventual
+  destination for deeper priority-array mechanics.
+
+**Forward-link payoffs landed:**
+- BACnet/IP Hex Converter tool — the `BACnet/IP Port Reference`
+  card's `ref-note` paragraph (`html/tools/bacnet-ip-converter.html`)
+  gained a second `ref-note` that anchors both BACnet pages: this
+  one for the object-model side, BACnet Networking for the BBMD /
+  hex-blob context.
+- `modbus-basics.html` — the parenthetical "A BACnet object knows
+  its own type, units, scale, and name" is now an active anchor to
+  this page; the parenthetical itself stayed short here since the
+  contrast grew into a full paragraph in §1.
+- `vfds.html` — the "speed-reference AV (a BACnet Analog Value
+  object)" sentence in the run-vs-speed-source section now anchors
+  to BACnet Basics, paying the long-standing debt of naming a
+  BACnet-specific object type without an explainer to back it up.
+  (Single-link policy held: the other seven BACnet mentions on
+  vfds.html stay plain prose.)
+
+### BACnet Networking — Education page *(shipped 2026-05-23)*
+*One question: how do BACnet devices find each other on real
+networks, and why does discovery sometimes silently fail?*
+
+The companion to BACnet Basics. Pays the BACnet/IP Hex Converter
+tool's primary forward-link debt by explaining the EBO hex blob in
+context — what each byte is doing, why the port suffix is usually
+omitted, and what makes the converter exist in the first place.
+Together with BACnet Basics, this closes the BACnet integration
+loop from "what is an object" through "why doesn't this device show
+up in my discovery scan."
+
+In scope (sections shipped):
+
+- *Three addresses, one device* — device instance (application
+  layer, 22-bit identifier, the only one that's forever), network
+  number (network-layer 16-bit segment ID; `0` = local, `65535` =
+  broadcast-everywhere), MAC (data-link: 6 bytes on BACnet/IP =
+  IPv4+UDP-port, 1 byte on MS/TP = station address). Static SVG of
+  a controller box with three labeled arrows pointing inward, each
+  identifier at its layer.
+- *The BACnet/IP frame — BVLL + NPDU + APDU* — the three nested
+  layers. BVLL: type byte `0x81`, function (`0x0A` Original-Unicast,
+  `0x0B` Original-Broadcast, `0x04` Forwarded-NPDU), length, and
+  the originating IP+port on a Forwarded-NPDU. NPDU: version,
+  control, optional dest/src network-number + MAC fields, hop
+  count. APDU: PDU type + service body. Static SVG of an annotated
+  Forwarded-NPDU Who-Is frame with the BVLL function byte
+  highlighted in `--accent` and a bracket explanation.
+- *BBMDs — broadcasts across an L3 boundary* — the practitioner
+  meat. Routers drop UDP broadcasts; BBMDs capture local broadcasts
+  and unicast Forwarded-NPDUs to peer BBMDs whose IPs sit in the
+  BDT (Broadcast Distribution Table); peer BBMDs re-broadcast
+  locally. Static SVG of two subnets + router + two BBMDs + BDTs +
+  the four-step path of a Who-Is from subnet A reaching a device
+  on subnet B. Closes with the symmetric-BDT discipline rule and
+  the "one BBMD per subnet" loop-prevention rule.
+- *Foreign Device Registration — joining from outside* — when a
+  device has no local BBMD, it registers with one on another
+  subnet via `Register-Foreign-Device` (carrying a TTL) and the
+  BBMD's FDT (Foreign Device Table) gains an entry; forwarded
+  broadcasts then unicast to the foreign device. Static SVG of a
+  remote workstation across a WAN registering with a BBMD; the
+  FDT entry; subsequent forwarded-broadcasts back. Closes with
+  the TTL-expiry trap (the "I could see this yesterday and now I
+  can't" failure mode).
+- *Reading the hex blob EBO shows you* — the converter-tool
+  forward-link payoff in section form. Walks `C0A80164BAC0` as a
+  side-by-side decode: `C0 A8 01 64` → `192.168.1.100`,
+  `BA C0` → `0xBAC0` = port `47808`. Notes the 8-vs-12 character
+  convention (port suffix omitted on default; present when on a
+  non-default port per Annex J's sequential-port convention).
+  Cross-links the converter tool as the live decoder.
+- *When discovery silently fails* — bulleted-paragraph list of
+  what to check in roughly the field-incidence order: no remote
+  BBMD; asymmetric BDT; UDP-47808 firewall block; network-number
+  collision; BBMD on wrong VLAN; expired FDR TTL; two BBMDs on
+  one subnet (the storm condition); Max APDU mismatch on
+  segmented replies. Modbus-Decoding's closing-section
+  practitioner-trap energy.
+
+Out of scope (forward links):
+
+- MS/TP on the wire — `[future: bacnet-mstp.html]`. Token rotation,
+  `Max_Master`, `Max_Info_Frames`, baud rates, cable / device-count
+  limits. Named in the closing.
+- Segmentation of long messages — `[future: bacnet-segmentation.html]`
+  if it earns a page. The discovery-fails list mentions it; depth
+  belongs elsewhere.
+- BACnet/SC (Secure Connect) — `[future: bacnet-sc.html]`. Different
+  framing, different (hub-and-spoke) discovery story; deserves its
+  own page once it's common enough in BAS work.
+- Capture-driven troubleshooting — `[future: bacnet-wireshark.html]`.
+  Walking a Wireshark capture, naming Forwarded-NPDU vs
+  Original-Broadcast on the wire, reading Abort / Reject PDUs.
+  Named in the closing.
+- Alarms and event notifications — their own future page; touches
+  the largest object-model surface outside the analog/binary/multi-
+  state core (Notification Class object, recipient lists,
+  confirmed/unconfirmed alarm services).
+- Vendor profile differences (Niagara / EBO / Distech / Honeywell
+  exposing the same object types differently) — platform-specific,
+  belongs on the eventual per-platform pages.
+
+**Widget decision — drafted out (same as Modbus + BACnet Basics).**
+A live BBMD-topology visualizer was considered (drag two BBMDs into
+a network, watch a Who-Is fan out) and not built. Five static SVGs
+carry the page (three-addresses, Forwarded-NPDU frame, BBMD
+worked-example, FDR workstation, hex-blob decode). The Education /
+Tools-split idiom holds: the interactive form for the hex-blob
+decode lives on the BACnet/IP converter already.
+
+**Page-local CSS — `.bac-svg` reused.** Same definition as
+`bacnet-basics.html`; the class is now defined on two BACnet pages
+in addition to the two Modbus pages defining `.mb-svg`. The
+consolidation trigger for both class families is a third page in
+either family — at that point both classes likely move to
+`styles.css` together as one block-and-byte-diagram block.
+
+**Forward-link debts this page incurred:**
+- `bacnet-mstp.html` — sketched in the closing section. Carries the
+  MS/TP wire story.
+- `bacnet-segmentation.html` — named in the discovery-fails list
+  and in the closing. Segmentation deserves its own treatment.
+- `bacnet-sc.html` — named in the closing. The transport is rare
+  enough today that this page can wait.
+- `bacnet-wireshark.html` — named in the closing. A capture-driven
+  troubleshooting walkthrough is more pedagogically dense than the
+  current discovery-fails list can carry.
+
+**Forward-link payoffs landed:**
+- `bacnet-basics.html` closing — the forward-link to this page is
+  now an active anchor.
+- BACnet/IP Hex Converter tool — same `ref-note` paragraph as the
+  Basics entry's payoff: this page anchors there for the BBMD /
+  three-addresses / frame-breakdown context that the hex-blob
+  decoding sits inside.
+
+Lower-priority candidates still parked here for completeness:
 
 - *Niagara Fox / Niagara N4* — tighter audience (Tridium
   ecosystem), but field reality is that many BAS techs see Fox
