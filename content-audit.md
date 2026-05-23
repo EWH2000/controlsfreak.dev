@@ -457,6 +457,16 @@ no functional gain.
   setpoint and watch the AND output flip" — to set the expectation
   explicitly. Either reconciles the two pages.
 
+**Resolution (2026-05-23):** primary direction — lowered
+`EXAMPLES.econ.blocks[0].params.value` from `68` to `55` in
+`html/tools/function-block-editor.html`. A reader following the CTA
+from `function-blocks` into the editor now sees, on first paint, the
+exact configuration the lesson's prose and SVG walked them through
+(OAT 55 < setpoint 60, AND TRUE, `ECON ON`). The lesson's CTA
+wording ("the economizer above already built … load one, poke at
+the inputs, and see the logic respond") needs no edit — it now
+matches the editor's landing state.
+
 ### 8. Function-block PID is derivative-on-error; pid-basics tells the reader to use derivative-on-measurement
 
 - **Where:** `html/scripts/fbe-engine.js` lines 305–326 — the PID
