@@ -21,6 +21,16 @@ const ORIGIN_ALLOWED = "https://controlsfreak.dev";
 const MAX_BODY = 20 * 1024;       // 20 KB — legitimate form is < 6 KB.
 const FETCH_TIMEOUT_MS = 8000;    // Turnstile + Resend upstream hard cap.
 
+// Pages that moved from /tools/ to /simulators/ when the Simulators section
+// landed. 301 so search engines transfer signal to the new URL and so any
+// older bookmarks / inbound links keep working. html_handling on the assets
+// binding handles the .html → clean-URL hop on the new path on its own.
+const LEGACY_TOOL_REDIRECTS = {
+    "/tools/pid-tuner.html":             "/simulators/pid-tuner.html",
+    "/tools/vfd-mock.html":              "/simulators/vfd-mock.html",
+    "/tools/function-block-editor.html": "/simulators/function-block-editor.html",
+};
+
 function json(data, status = 200, extraHeaders = {}) {
     return new Response(JSON.stringify(data), {
         status,
@@ -181,6 +191,10 @@ async function handleContact(request, env) {
 export default {
     async fetch(request, env) {
         const url = new URL(request.url);
+        const legacyTarget = LEGACY_TOOL_REDIRECTS[url.pathname];
+        if (legacyTarget) {
+            return Response.redirect(new URL(legacyTarget, url.origin), 301);
+        }
         if (url.pathname === "/api/contact") {
             if (request.method === "POST") {
                 return handleContact(request, env);

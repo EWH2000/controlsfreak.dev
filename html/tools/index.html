@@ -20,7 +20,7 @@ nav: tools
 
     <div class="filter-chips" role="group" aria-label="Filter tools by category">
         <button type="button" class="filter-chip active" data-category="all" aria-pressed="true">
-            All <span class="filter-chip-count">12</span>
+            All <span class="filter-chip-count">9</span>
         </button>
         <button type="button" class="filter-chip" data-category="hvac" aria-pressed="false">
             HVAC <span class="filter-chip-count">5</span>
@@ -30,12 +30,6 @@ nav: tools
         </button>
         <button type="button" class="filter-chip" data-category="signals" aria-pressed="false">
             Signals <span class="filter-chip-count">2</span>
-        </button>
-        <button type="button" class="filter-chip" data-category="control" aria-pressed="false">
-            Control <span class="filter-chip-count">2</span>
-        </button>
-        <button type="button" class="filter-chip" data-category="drives" aria-pressed="false">
-            Drives <span class="filter-chip-count">1</span>
         </button>
     </div>
 
@@ -49,11 +43,6 @@ nav: tools
             <span class="nav-card-tag">Modbus</span>
             <div class="nav-card-name">Modbus Register Viewer</div>
             <div class="nav-card-desc">A 16-bit register laid out as a clickable bit grid, two-way bound to decimal / hex, with dec / hex / binary readouts.</div>
-        </a>
-        <a class="nav-card" data-category="control" href="/tools/pid-tuner.html">
-            <span class="nav-card-tag">Loops</span>
-            <div class="nav-card-name">PID Tuning Helper</div>
-            <div class="nav-card-desc">A step-response simulator — gain · reset · rate (or Ti·Td / proportional band), preset tunings, a PV-vs-setpoint plot, and a symptom → tuning-move cheat sheet.</div>
         </a>
         <a class="nav-card" data-category="protocols" href="/tools/bacnet-ip-converter.html">
             <span class="nav-card-tag">BACnet</span>
@@ -89,16 +78,6 @@ nav: tools
             <span class="nav-card-tag">Sensors</span>
             <div class="nav-card-name">Thermistor / RTD Calculator</div>
             <div class="nav-card-desc">Temperature ↔ resistance for the common HVAC sensors — 10K Type II / III, Johnson 8.7K, Schneider Type 5, 20K, 3K, 1K Balco, Pt100, Pt1000 — looked up both ways, or identify an unknown sensor from measured readings.</div>
-        </a>
-        <a class="nav-card" data-category="drives" href="/tools/vfd-mock.html">
-            <span class="nav-card-tag">Drives</span>
-            <div class="nav-card-name">Mock VFD Interface</div>
-            <div class="nav-card-desc">Practice navigating a generic drive's parameter tree on a clickable keypad — feel the run-source / speed-source gating before you're at a real drive. Paired with the VFD Basics explainer.</div>
-        </a>
-        <a class="nav-card" data-category="control" href="/tools/function-block-editor.html">
-            <span class="nav-card-tag">Logic</span>
-            <div class="nav-card-name">Function-Block Editor</div>
-            <div class="nav-card-desc">A graphical wiresheet sandbox — drop logic, math, timer, and PID blocks, wire them up, and watch a control sequence run live. Five worked examples built in. Paired with the Function-Block Basics explainer.</div>
         </a>
     </div>
 

@@ -1,0 +1,40 @@
+---
+title: Simulators — controlsfreak.dev
+description: Running models for building-controls work — practice PID tuning on a tunable process, drive a mock VFD keypad, and wire up function-block sequences.
+canonical: https://controlsfreak.dev/simulators/
+nav: simulators
+---
+{% extends "layouts/page.njk" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <h1 class="section-label">Simulators</h1>
+        <div class="section-line"></div>
+    </div>
+
+    <p style="font-weight:300;color:var(--text);max-width:560px;margin-bottom:2rem;line-height:1.8;">
+        Interactive models you can poke at, right in the browser. Practice on the controls before you're standing in front of the real thing — no login, nothing to install, nothing tracked.
+    </p>
+
+    <div class="card-grid">
+        <a class="nav-card" href="/simulators/pid-tuner.html">
+            <span class="nav-card-tag">Loops</span>
+            <div class="nav-card-name">PID Tuning Helper</div>
+            <div class="nav-card-desc">A step-response simulator — gain · reset · rate (or Ti·Td / proportional band), preset tunings, a PV-vs-setpoint plot, and a symptom → tuning-move cheat sheet.</div>
+        </a>
+        <a class="nav-card" href="/simulators/vfd-mock.html">
+            <span class="nav-card-tag">Drives</span>
+            <div class="nav-card-name">Mock VFD Interface</div>
+            <div class="nav-card-desc">Practice navigating a generic drive's parameter tree on a clickable keypad — feel the run-source / speed-source gating before you're at a real drive. Paired with the VFD Basics explainer.</div>
+        </a>
+        <a class="nav-card" href="/simulators/function-block-editor.html">
+            <span class="nav-card-tag">Logic</span>
+            <div class="nav-card-name">Function-Block Editor</div>
+            <div class="nav-card-desc">A graphical wiresheet sandbox — drop logic, math, timer, and PID blocks, wire them up, and watch a control sequence run live. Five worked examples built in. Paired with the Function-Block Basics explainer.</div>
+        </a>
+    </div>
+
+</main>
+{% endblock %}

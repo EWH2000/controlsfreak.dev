@@ -22,7 +22,6 @@ const PAGES = [
     { name: 'tools landing',          url: '/tools/' },
     { name: 'signal scaling',         url: '/tools/signal-scaling.html' },
     { name: 'modbus register viewer', url: '/tools/modbus-register-viewer.html' },
-    { name: 'pid tuner',              url: '/tools/pid-tuner.html' },
     { name: 'bacnet/ip converter',    url: '/tools/bacnet-ip-converter.html' },
     { name: 'psychrometric chart',    url: '/tools/psychrometric-chart.html' },
     { name: 'economizer ratio',       url: '/tools/economizer-ratio.html' },
@@ -30,8 +29,10 @@ const PAGES = [
     { name: 'coil sizing',            url: '/tools/coil-sizing.html' },
     { name: 'thermistor calculator',  url: '/tools/thermistor-calculator.html' },
     { name: 'refrigerant p-t',        url: '/tools/refrigerant-pt.html' },
-    { name: 'vfd mock',               url: '/tools/vfd-mock.html' },
-    { name: 'function-block editor',  url: '/tools/function-block-editor.html' },
+    { name: 'simulators landing',     url: '/simulators/' },
+    { name: 'pid tuner',              url: '/simulators/pid-tuner.html' },
+    { name: 'vfd mock',               url: '/simulators/vfd-mock.html' },
+    { name: 'function-block editor',  url: '/simulators/function-block-editor.html' },
     { name: 'education hub',          url: '/education/' },
     { name: 'education — pid basics',  url: '/education/pid-basics.html' },
     { name: 'education — hydronic loops', url: '/education/hydronic-loops.html' },
@@ -75,7 +76,7 @@ for (const { name, url } of PAGES) {
 
 test('pid tuner runs the shared simulation engine on load', async ({ page }) => {
     const errors = watchErrors(page);
-    await page.goto('/tools/pid-tuner.html');
+    await page.goto('/simulators/pid-tuner.html');
     // pid-engine.js drives the canvas + metrics on init; the readouts should fill in.
     await expect(page.locator('#pid-over')).not.toHaveText('—');
     await expect(page.locator('#pid-settle')).not.toHaveText('—');
@@ -458,7 +459,7 @@ test('refrigerant p-t — saturation lookup, glide blend, and superheat', async 
 
 test('function-block editor — examples run, and blocks add and wire up', async ({ page }) => {
     const errors = watchErrors(page);
-    await page.goto('/tools/function-block-editor.html');
+    await page.goto('/simulators/function-block-editor.html');
 
     // The economizer example loads by default — six blocks, evaluated.
     await expect(page.locator('.fbe-block')).toHaveCount(6);
@@ -632,7 +633,7 @@ test('load piping page renders its four SVG schematics and ties back to the twin
 
 test('vfd mock — run-source gating works from the keypad', async ({ page }) => {
     const errors = watchErrors(page);
-    await page.goto('/tools/vfd-mock.html');
+    await page.goto('/simulators/vfd-mock.html');
 
     // Default config is run-source=TERMINALS. Pressing keypad RUN should
     // NOT start the drive; the LCD's line 4 should flash the ignore msg.
@@ -964,7 +965,7 @@ test('psychrometrics basics — pool widget sweeps surface temp through dry / wa
 test.describe('function-block editor — interactions', () => {
     test('Delete key removes a selected block', async ({ page }) => {
         const errors = watchErrors(page);
-        await page.goto('/tools/function-block-editor.html');
+        await page.goto('/simulators/function-block-editor.html');
         await page.click('#fbe-clear');
         await page.locator('.fbe-palette-btn', { hasText: 'CONSTANT' }).click();
         // newly-added block is auto-selected; Delete (the keyboard path,
@@ -977,7 +978,7 @@ test.describe('function-block editor — interactions', () => {
 
     test('Backspace also deletes a selection', async ({ page }) => {
         const errors = watchErrors(page);
-        await page.goto('/tools/function-block-editor.html');
+        await page.goto('/simulators/function-block-editor.html');
         await page.click('#fbe-clear');
         await page.locator('.fbe-palette-btn', { hasText: 'CONSTANT' }).click();
         await page.keyboard.press('Backspace');
@@ -987,7 +988,7 @@ test.describe('function-block editor — interactions', () => {
 
     test('Escape cancels a pending wire', async ({ page }) => {
         const errors = watchErrors(page);
-        await page.goto('/tools/function-block-editor.html');
+        await page.goto('/simulators/function-block-editor.html');
         await page.click('#fbe-clear');
         await page.locator('.fbe-palette-btn', { hasText: 'CONSTANT' }).click();
         await page.locator('.fbe-palette-btn', { hasText: 'READOUT' }).click();
@@ -1002,7 +1003,7 @@ test.describe('function-block editor — interactions', () => {
 
     test('type-mismatch on wire creation leaves no connection', async ({ page }) => {
         const errors = watchErrors(page);
-        await page.goto('/tools/function-block-editor.html');
+        await page.goto('/simulators/function-block-editor.html');
         await page.click('#fbe-clear');
         // BINARY IN emits a bool; READOUT consumes a number — incompatible.
         await page.locator('.fbe-palette-btn', { hasText: 'BINARY IN' }).click();
@@ -1016,7 +1017,7 @@ test.describe('function-block editor — interactions', () => {
 
     test('self-loop on a single block is rejected', async ({ page }) => {
         const errors = watchErrors(page);
-        await page.goto('/tools/function-block-editor.html');
+        await page.goto('/simulators/function-block-editor.html');
         await page.click('#fbe-clear');
         await page.locator('.fbe-palette-btn', { hasText: 'AND' }).click();
         await page.locator('.fbe-block[data-id="b1"] .fbe-pin-out').click();
@@ -1028,7 +1029,7 @@ test.describe('function-block editor — interactions', () => {
 
     test('pause / run / step toggles the sim status', async ({ page }) => {
         const errors = watchErrors(page);
-        await page.goto('/tools/function-block-editor.html');
+        await page.goto('/simulators/function-block-editor.html');
         // economizer example loads and runs by default.
         await expect(page.locator('#fbe-run')).toHaveText('Pause');
         await expect(page.locator('#fbe-status')).toHaveText('Running');
@@ -1047,7 +1048,7 @@ test.describe('function-block editor — interactions', () => {
 
     test('non-AI inspector edit flows to the output — PID gain to zero zeros the readout', async ({ page }) => {
         const errors = watchErrors(page);
-        await page.goto('/tools/function-block-editor.html');
+        await page.goto('/simulators/function-block-editor.html');
         await page.click('[data-example="pid"]');
         // PID example: sp=72, pv=70, kc=4 — output is non-zero on every
         // tick. Zero the gain via the inspector and the readout collapses.
@@ -1063,7 +1064,7 @@ test.describe('function-block editor — interactions', () => {
         // deleteSelected() must clear `pending` so a subsequent input-pin
         // click can't form a wire whose source block no longer exists.
         const errors = watchErrors(page);
-        await page.goto('/tools/function-block-editor.html');
+        await page.goto('/simulators/function-block-editor.html');
         await page.click('#fbe-clear');
         await page.locator('.fbe-palette-btn', { hasText: 'CONSTANT' }).click();
         await page.locator('.fbe-palette-btn', { hasText: 'READOUT' }).click();
