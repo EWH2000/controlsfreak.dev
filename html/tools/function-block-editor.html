@@ -265,6 +265,10 @@ nav: tools
             margin: 0.6rem 0;
         }
 
+        /* Page-local modifier — the preamble sits right above the example
+           chips and wants a smaller gap than the global rule's default. */
+        p.tool-preamble.tight { margin-bottom: 0.85rem; }
+
         /* Desktop-only interaction by design (drag-wiring wants room and
            a pointer). Below the breakpoint the regions stack and a note
            sets expectations — nothing is hidden, the tool still works. */
@@ -290,7 +294,7 @@ nav: tools
         </div>
         <div class="tool-body">
 
-            <p class="tool-preamble" style="margin-bottom:0.85rem;">
+            <p class="tool-preamble tight">
                 A graphical wiresheet sandbox — the kind of logic surface Niagara, EBO, and
                 Distech all use. Add blocks, wire an output pin to an input pin, and a live
                 tick loop carries values through the sheet. Not modelled on any one product;
@@ -314,10 +318,10 @@ nav: tools
             </div>
 
             <div class="fbe-simbar">
-                <button type="button" class="copy-btn" id="fbe-run">Pause</button>
-                <button type="button" class="copy-btn" id="fbe-step">Step</button>
-                <button type="button" class="copy-btn" id="fbe-reset">Reset</button>
-                <button type="button" class="copy-btn" id="fbe-clear">Clear</button>
+                <button type="button" class="copy-btn" id="fbe-run" data-action="run">Pause</button>
+                <button type="button" class="copy-btn" id="fbe-step" data-action="step">Step</button>
+                <button type="button" class="copy-btn" id="fbe-reset" data-action="reset">Reset</button>
+                <button type="button" class="copy-btn" id="fbe-clear" data-action="clear">Clear</button>
                 <span class="fbe-status" id="fbe-status" role="status" aria-live="polite">Running</span>
             </div>
 
@@ -1011,13 +1015,18 @@ nav: tools
         // ── wiring up the page ──────────────────────────────────────
         buildPalette();
 
-        runBtn.addEventListener('click', () => setRunning(!running));
-        document.getElementById('fbe-step').addEventListener('click', () => {
-            if (running) setRunning(false);
-            stepOnce();
+        // Sim-bar buttons — one delegated handler over data-action,
+        // mirroring the [data-example] chip pattern below.
+        document.querySelectorAll('.fbe-simbar [data-action]').forEach((btn) => {
+            btn.addEventListener('click', () => {
+                switch (btn.dataset.action) {
+                    case 'run':   setRunning(!running); break;
+                    case 'step':  if (running) setRunning(false); stepOnce(); break;
+                    case 'reset': resetSim(); break;
+                    case 'clear': clearCanvas(); break;
+                }
+            });
         });
-        document.getElementById('fbe-reset').addEventListener('click', resetSim);
-        document.getElementById('fbe-clear').addEventListener('click', clearCanvas);
 
         document.getElementById('fbe-examples')
             .querySelectorAll('[data-example]')

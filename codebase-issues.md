@@ -3120,6 +3120,7 @@ it's the most load-bearing miss.
 interactions', () => { ... })` block at the end of
 `tests/smoke.spec.js`, one test per corner case. ~80 lines.
 
+### 61. Function-block editor sim-bar buttons use per-button `addEventListener` *(addressed 2026-05-22)*
 **Resolution (2026-05-22):** added a `test.describe('function-block
 editor — interactions')` block at the end of `tests/smoke.spec.js`
 with eight cases: Delete-key delete, Backspace delete, Escape cancels
@@ -3162,6 +3163,15 @@ collapsing to one body.
 the buttons; one `querySelectorAll('[data-action]').forEach` loop
 with a switch on `dataset.action`.
 
+**Resolution (2026-05-22):** added
+`data-action="run|step|reset|clear"` to the four sim-bar buttons and
+replaced the four individual `addEventListener` calls with a single
+`document.querySelectorAll('.fbe-simbar [data-action]').forEach`
+loop dispatching on `btn.dataset.action`. The buttons keep their
+existing `id="fbe-..."` attributes so the smoke specs continue to
+click them by id (and `runBtn` is still resolved by id for the
+textContent flip in `setRunning`); only the binding shape changed.
+
 ### 62. Function-block editor palette uses per-button `addEventListener` inside a forEach
 
 `html/tools/function-block-editor.html:530` inside `buildPalette()`
@@ -3181,7 +3191,7 @@ functional benefit.
 **Recommended action:** none unless the codebase decides to move to
 the `data-*` pattern across all dynamically-built UI.
 
-### 63. Inline `style=` attributes on the function-block editor and education page
+### 63. Inline `style=` attributes on the function-block editor and education page *(addressed 2026-05-22)*
 
 Two one-shot overrides slipped in on `feat/function-block-editor`:
 
@@ -3202,6 +3212,17 @@ is one rule; cheap to sweep.
 adjust the spacing of `.tool-preamble` if globally appropriate) and
 a `.callout-grid-loose` modifier; remove the inline styles. Bundle
 with the next inline-style sweep.
+
+**Resolution (2026-05-22):** lifted both inline styles into page-
+local modifier classes defined in each page's `{% block head %}`
+CSS — `p.tool-preamble.tight { margin-bottom: 0.85rem; }` on
+`function-block-editor.html` and `.callout-grid.loose { margin-top:
+1.25rem; }` on `function-blocks.html`. The HTML now reads
+`class="tool-preamble tight"` / `class="callout-grid loose"`; no
+`style=` attributes remain on either element. Page-local rather
+than promoted to `styles.css` since each rule has exactly one
+caller — fits the "page-only rules stay inline via `{% block head
+%}`" convention.
 
 ### 64. `package.json` version bump skipped 1.14 on the function-block-editor ship
 
