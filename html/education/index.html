@@ -18,48 +18,72 @@ nav: education
         Common sense lessons for techs new to the industry. All of these are based on things I struggled with when I was new. This includes how a system actually works, why it's piped or wired the way it is, and what the equipment is doing. Not calculators (those live in <a href="/tools/" style="color:var(--accent);">Tools</a>). If you have any requests or corrections, feel free to reach out.
     </p>
 
+    <div class="filter-chips" role="group" aria-label="Filter lessons by category">
+        <button type="button" class="filter-chip active" data-category="all" aria-pressed="true">
+            All <span class="filter-chip-count">9</span>
+        </button>
+        <button type="button" class="filter-chip" data-category="hydronics" aria-pressed="false">
+            Hydronics <span class="filter-chip-count">4</span>
+        </button>
+        <button type="button" class="filter-chip" data-category="drives" aria-pressed="false">
+            Drives <span class="filter-chip-count">1</span>
+        </button>
+        <button type="button" class="filter-chip" data-category="control" aria-pressed="false">
+            Control <span class="filter-chip-count">1</span>
+        </button>
+        <button type="button" class="filter-chip" data-category="hvac" aria-pressed="false">
+            HVAC <span class="filter-chip-count">1</span>
+        </button>
+        <button type="button" class="filter-chip" data-category="sequencing" aria-pressed="false">
+            Sequencing <span class="filter-chip-count">1</span>
+        </button>
+        <button type="button" class="filter-chip" data-category="logic" aria-pressed="false">
+            Logic <span class="filter-chip-count">1</span>
+        </button>
+    </div>
+
     <div class="card-grid">
-        <a class="nav-card" href="/education/pid-basics.html">
+        <a class="nav-card" data-category="control" href="/education/pid-basics.html">
             <span class="nav-card-tag">PID</span>
             <div class="nav-card-name">PID Basics</div>
             <div class="nav-card-desc">What proportional, integral, and derivative actually do on an HVAC loop — with three small sims you can play with one knob at a time.</div>
         </a>
-        <a class="nav-card" href="/education/hydronic-loops.html">
+        <a class="nav-card" data-category="hydronics" href="/education/hydronic-loops.html">
             <span class="nav-card-tag">Hydronics</span>
             <div class="nav-card-name">Hydronic Loops</div>
             <div class="nav-card-desc">How water gets around a building — 2-pipe direct vs. reverse return, and why the closely-spaced tees on a boiler aren't a piping mistake.</div>
         </a>
-        <a class="nav-card" href="/education/load-piping.html">
+        <a class="nav-card" data-category="hydronics" href="/education/load-piping.html">
             <span class="nav-card-tag">Hydronics</span>
             <div class="nav-card-name">Load Piping</div>
             <div class="nav-card-desc">Two-way vs three-way valves at the load — variable vs constant system flow, when each one fits, and how the choice shapes the rest of the loop.</div>
         </a>
-        <a class="nav-card" href="/education/vfds.html">
+        <a class="nav-card" data-category="drives" href="/education/vfds.html">
             <span class="nav-card-tag">Drives</span>
             <div class="nav-card-name">VFDs</div>
             <div class="nav-card-desc">What a variable frequency drive does, the cube-law energy story, and the run-command vs. speed-reference parameters every controls tech meets — with a widget for the configuration mistake that catches everyone.</div>
         </a>
-        <a class="nav-card" href="/education/pump-control.html">
+        <a class="nav-card" data-category="hydronics" href="/education/pump-control.html">
             <span class="nav-card-tag">Hydronics</span>
             <div class="nav-card-name">Pump Control</div>
             <div class="nav-card-desc">How the BMS controls a hydronic pump — pump curves and the operating point, DP control with a remote sensor, and DP setpoint reset. Pairs with VFDs and Load Piping.</div>
         </a>
-        <a class="nav-card" href="/education/equipment-staging.html">
+        <a class="nav-card" data-category="sequencing" href="/education/equipment-staging.html">
             <span class="nav-card-tag">Sequencing</span>
             <div class="nav-card-name">Equipment Staging</div>
             <div class="nav-card-desc">How a BMS staging sequence decides how many parallel pumps to run, when to add or drop one, and which pump leads — with widgets for staging delays and lead/lag rotation.</div>
         </a>
-        <a class="nav-card" href="/education/balancing.html">
+        <a class="nav-card" data-category="hydronics" href="/education/balancing.html">
             <span class="nav-card-tag">Hydronics</span>
             <div class="nav-card-name">Hydronic Balancing</div>
             <div class="nav-card-desc">Getting design flow to every load — calibrated balancing valves, automatic balancing valves, and PICVs. With a widget that shows what each one does when system pressure swings.</div>
         </a>
-        <a class="nav-card" href="/education/psychrometrics-basics.html">
+        <a class="nav-card" data-category="hvac" href="/education/psychrometrics-basics.html">
             <span class="nav-card-tag">HVAC</span>
             <div class="nav-card-name">Psychrometrics Basics</div>
             <div class="nav-card-desc">The seven properties on a psychrometric chart, what each one tells a controls engineer, and the gotchas that bite — with a pool-room widget that shows why dew point is the number to watch.</div>
         </a>
-        <a class="nav-card" href="/education/function-blocks.html">
+        <a class="nav-card" data-category="logic" href="/education/function-blocks.html">
             <span class="nav-card-tag">Logic</span>
             <div class="nav-card-name">Function-Block Basics</div>
             <div class="nav-card-desc">What a function block and a wiresheet are, why building-controls sequences are built from boxes-and-wires, and how a sheet evaluates — paired with the Function-Block Editor.</div>
@@ -71,4 +95,44 @@ nav: education
 
 {% block scripts %}
 <script src="/scripts/units.js"></script>
+<script>
+    (function () {
+        'use strict';
+        const grid = document.querySelector('.card-grid');
+        const chips = document.querySelectorAll('.filter-chip');
+        if (!grid || !chips.length) return;
+
+        const validSlugs = new Set();
+        chips.forEach(c => validSlugs.add(c.dataset.category));
+
+        function apply(slug) {
+            const showAll = slug === 'all';
+            chips.forEach(c => {
+                const on = c.dataset.category === slug;
+                c.classList.toggle('active', on);
+                c.setAttribute('aria-pressed', on ? 'true' : 'false');
+            });
+            grid.querySelectorAll('.nav-card').forEach(card => {
+                const match = showAll || card.dataset.category === slug;
+                if (match) card.removeAttribute('hidden');
+                else card.setAttribute('hidden', '');
+            });
+        }
+
+        function slugFromHash() {
+            const h = (location.hash || '').slice(1).toLowerCase();
+            return validSlugs.has(h) ? h : 'all';
+        }
+
+        chips.forEach(chip => chip.addEventListener('click', () => {
+            const slug = chip.dataset.category;
+            const newHash = slug === 'all' ? '' : '#' + slug;
+            history.replaceState(null, '', location.pathname + newHash);
+            apply(slug);
+        }));
+
+        window.addEventListener('hashchange', () => apply(slugFromHash()));
+        apply(slugFromHash());
+    })();
+</script>
 {% endblock %}
