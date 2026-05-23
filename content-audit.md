@@ -409,6 +409,19 @@ on R-410A's `blend` flag.
   education pages if the BAS flavor is wanted only there. Owner's
   editorial call.
 
+**Resolution (2026-05-23):** option (b) — swapped the rendered prefix
+from `AV:NNN` to `SEC:NNN`. Keeps the BAS-instrument `class:instance`
+rhythm; `SEC` reads as "section" (the thing the heading actually
+marks) without claiming any BACnet object-class semantics, and the
+per-page instance numbering now reads as each page's section sequence
+rather than a (fake) device-wide instance. Single-file change in
+`html/styles.css` — the `::before content` string plus the two
+comment blocks (v2.0.0 `.section-line` note and the rule preamble)
+that had framed the prefix as a BACnet object ref. The `data-objref`
+attribute name on the five h2s stays — it's an internal hook, not
+user-visible, and renaming it would touch every consuming page for
+no functional gain.
+
 ### 7. Function-Block Editor's default econ example loads with the economizer disabled, while the partner lesson illustrates it enabled
 
 - **Where:** `html/tools/function-block-editor.html` line 444 — the
