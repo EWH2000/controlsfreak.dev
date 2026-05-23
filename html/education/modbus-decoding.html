@@ -1,0 +1,437 @@
+---
+title: Modbus Decoding — controlsfreak.dev
+description: Why a Modbus value comes back wrong even when the read succeeded — the 5-digit register trap, signed vs unsigned, the four byte orders, and scaling.
+canonical: https://controlsfreak.dev/education/modbus-decoding.html
+nav: education
+---
+{% extends "layouts/page.njk" %}
+
+{% block head %}
+    <style>
+        /* Page-specific — static decoding diagrams. .mb-svg follows the
+           .fb-svg / .vfd-svg precedent (labeled-box schematics, not
+           pipe-flow), shared with modbus-basics.html but defined per-
+           page since this is its second consumer; promote to styles.css
+           when a third page lands. */
+        .mb-svg {
+            display: block;
+            width: 100%;
+            height: auto;
+            max-width: 620px;
+            margin: 1.4rem auto 0.6rem;
+        }
+        .mb-svg.wide { max-width: 760px; }
+
+        /* Reuse the function-blocks-page idiom for grouped category
+           cards. Same definition as modbus-basics.html. */
+        .callout-grid.loose { margin-top: 1.25rem; }
+    </style>
+{% endblock %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Education · Modbus Decoding</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">Modbus Decoding <span class="tool-tag">Modbus</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                <a href="/education/modbus-basics.html">Modbus Basics</a> covered getting a
+                response back at all — what device to ask, what function code to use, what
+                an exception means. This page is the companion: what to <em>do</em> with the
+                sixteen bits when they arrive. Modbus is famous (notorious) for handing back
+                a number that's somehow wrong even after the read succeeded — <code>40001</code>
+                isn't where the vendor docs said it would be, a temperature reads <code>−12</code>
+                instead of <code>533</code>, a 32-bit float comes back gibberish. None of those
+                are protocol bugs; they're interpretation choices the protocol leaves to you.
+                This page walks through the four common ones and how they go sideways.
+            </p>
+
+            <h2 class="subhead">The 5-digit numbering trap</h2>
+
+            <p>
+                Open a vendor's Modbus integration table and you'll see addresses like
+                <code>40001</code>, <code>30005</code>, <code>10012</code>, <code>00007</code>.
+                Plug <code>40001</code> into your tool, hit read, get an exception. The
+                off-by-one is real, and it's not a bug. It's a documentation convention older
+                than most people debugging it.
+            </p>
+
+            <p>
+                The leading digit <em>names which data table</em> the address lives in —
+                <code>0</code> for coils, <code>1</code> for discrete inputs, <code>3</code>
+                for input registers, <code>4</code> for holding registers. It is not part of
+                the wire address. The remaining four digits are the <em>1-based</em> index
+                inside that table. So <code>40001</code> means <em>the first holding
+                register</em> — which on the wire is holding-register address <code>0</code>.
+                <code>40123</code> means the 123rd holding register — wire address
+                <code>122</code>. The off-by-one comes from the 1-based numbering meeting the
+                wire's 0-based addressing.
+            </p>
+
+            <svg class="mb-svg" viewBox="0 0 620 220" role="img"
+                 aria-labelledby="mb-5digit-title mb-5digit-desc">
+                <title id="mb-5digit-title">Translating 5-digit vendor numbering to wire addresses</title>
+                <desc id="mb-5digit-desc">Two columns. The left column lists three example addresses as a vendor would write them: 40001, 40123, and 30005. The leading digit of each is highlighted in the accent color and labeled "table prefix." The remaining four digits are the 1-based index inside that table. The right column shows the wire-address translation: 40001 becomes "holding table, address 0"; 40123 becomes "holding table, address 122"; 30005 becomes "input table, address 4." A note reminds the reader that the wire address is the documented number minus one.</desc>
+
+                <text x="135" y="34" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--text-dim)">vendor docs say</text>
+                <text x="445" y="34" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--text-dim)">on the wire</text>
+
+                <!-- Row 1: 40001 -->
+                <g font-family="var(--mono)" font-size="20" font-weight="700">
+                    <text x="135" y="80" text-anchor="middle">
+                        <tspan fill="var(--accent)">4</tspan><tspan fill="var(--text-bright)">0001</tspan>
+                    </text>
+                </g>
+                <line x1="200" y1="74" x2="370" y2="74" stroke="var(--text-dim)" stroke-width="1.4"/>
+                <polygon points="360,69 370,74 360,79" fill="var(--text-dim)"/>
+                <text x="445" y="73" text-anchor="middle" font-family="var(--mono)" font-size="12" fill="var(--text)">holding table</text>
+                <text x="445" y="88" text-anchor="middle" font-family="var(--mono)" font-size="12" fill="var(--text)">address 0</text>
+
+                <!-- Row 2: 40123 -->
+                <g font-family="var(--mono)" font-size="20" font-weight="700">
+                    <text x="135" y="130" text-anchor="middle">
+                        <tspan fill="var(--accent)">4</tspan><tspan fill="var(--text-bright)">0123</tspan>
+                    </text>
+                </g>
+                <line x1="200" y1="124" x2="370" y2="124" stroke="var(--text-dim)" stroke-width="1.4"/>
+                <polygon points="360,119 370,124 360,129" fill="var(--text-dim)"/>
+                <text x="445" y="123" text-anchor="middle" font-family="var(--mono)" font-size="12" fill="var(--text)">holding table</text>
+                <text x="445" y="138" text-anchor="middle" font-family="var(--mono)" font-size="12" fill="var(--text)">address 122</text>
+
+                <!-- Row 3: 30005 -->
+                <g font-family="var(--mono)" font-size="20" font-weight="700">
+                    <text x="135" y="180" text-anchor="middle">
+                        <tspan fill="var(--accent)">3</tspan><tspan fill="var(--text-bright)">0005</tspan>
+                    </text>
+                </g>
+                <line x1="200" y1="174" x2="370" y2="174" stroke="var(--text-dim)" stroke-width="1.4"/>
+                <polygon points="360,169 370,174 360,179" fill="var(--text-dim)"/>
+                <text x="445" y="173" text-anchor="middle" font-family="var(--mono)" font-size="12" fill="var(--text)">input table</text>
+                <text x="445" y="188" text-anchor="middle" font-family="var(--mono)" font-size="12" fill="var(--text)">address 4</text>
+
+                <!-- Caption -->
+                <text x="310" y="212" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--text)">prefix names the table; wire address = (documented number − 1)</text>
+            </svg>
+
+            <p>
+                Two related conventions to know about:
+            </p>
+
+            <ul>
+                <li>Some vendors drop the prefix and the +1 entirely — a "Modicon-style"
+                    address table lists wire addresses straight: <code>0</code>,
+                    <code>1</code>, <code>2</code>. The function code names the table; no
+                    leading digit needed. The same physical register may appear as
+                    <code>40001</code> in one vendor's manual and <code>0</code> in
+                    another's.</li>
+                <li>When the register count exceeds 9999, some vendors switch to a 6-digit
+                    "extended" form (<code>400001</code> for the first holding register).
+                    Same convention, one more digit of headroom.</li>
+            </ul>
+
+            <p>
+                Rule of thumb on the bench: when a vendor's address starts with
+                <code>4</code> or <code>3</code> and has four digits after it, it's almost
+                certainly 5-digit Modbus numbering. The wire address is the documented
+                number minus one, with the leading digit pointing you at FC03/FC16 (holdings)
+                or FC04 (inputs).
+            </p>
+
+            <h2 class="subhead">Signed vs unsigned interpretation</h2>
+
+            <p>
+                The right register answers, the response carries sixteen bits, and now you
+                have to choose what those bits <em>mean</em>. The protocol stores them; it
+                doesn't tell you whether to read them as a positive count from <code>0</code>
+                to <code>65535</code> or a signed count from <code>−32768</code> to
+                <code>+32767</code>. Same bits, different intent.
+            </p>
+
+            <svg class="mb-svg" viewBox="0 0 560 220" role="img"
+                 aria-labelledby="mb-sign-title mb-sign-desc">
+                <title id="mb-sign-title">A single 16-bit register, two valid interpretations</title>
+                <desc id="mb-sign-desc">The hex value 0xFFF3 is shown as a 16-bit binary number. An arrow splits into two branches. The left branch labels it "unsigned, 65523." The right branch labels it "signed two's complement, −13" with a note that the high bit being 1 means negative.</desc>
+
+                <!-- The 16-bit value -->
+                <rect x="100" y="40" width="360" height="46" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.6"/>
+                <text x="280" y="62" text-anchor="middle" font-family="var(--mono)" font-size="11.5" fill="var(--text-dim)">0xFFF3</text>
+                <text x="280" y="79" text-anchor="middle" font-family="var(--mono)" font-size="13" font-weight="600" fill="var(--text-bright)">1111&nbsp;1111&nbsp;1111&nbsp;0011</text>
+
+                <!-- Branch lines -->
+                <path d="M 280 86 V 110 H 175 V 130" stroke="var(--text-dim)" stroke-width="1.4" fill="none"/>
+                <path d="M 280 86 V 110 H 385 V 130" stroke="var(--text-dim)" stroke-width="1.4" fill="none"/>
+                <polygon points="170,128 175,138 180,128" fill="var(--text-dim)"/>
+                <polygon points="380,128 385,138 390,128" fill="var(--text-dim)"/>
+
+                <!-- Unsigned branch -->
+                <text x="175" y="158" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--text-dim)">unsigned (UINT16)</text>
+                <text x="175" y="186" text-anchor="middle" font-family="var(--mono)" font-size="20" font-weight="700" fill="var(--text-bright)">65523</text>
+
+                <!-- Signed branch -->
+                <text x="385" y="158" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--text-dim)">signed (INT16)</text>
+                <text x="385" y="186" text-anchor="middle" font-family="var(--mono)" font-size="20" font-weight="700" fill="var(--red)">−13</text>
+
+                <!-- Caption -->
+                <text x="280" y="210" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--text)">high bit is 1 → signed reading is negative; unsigned reading is large</text>
+            </svg>
+
+            <p>
+                Two's complement is the rule the signed interpretation follows: if the
+                highest bit (the "sign bit") is <code>0</code>, the number is what the bit
+                pattern says. If the sign bit is <code>1</code>, the number is the bit pattern
+                minus <code>65536</code>. So <code>0xFFF3</code> (the example above) is
+                either <code>65523</code> read unsigned, or <code>65523 − 65536 = −13</code>
+                read signed.
+            </p>
+
+            <p>
+                The clue lives in the vendor docs: <code>INT16</code> means signed,
+                <code>UINT16</code> means unsigned. When the docs don't say, the values in
+                use tell the story. The signature of a negative-as-unsigned misread is
+                values jumping near <code>65535</code> — a sensor reading
+                <code>65521</code> isn't measuring 65521 of anything, it's a signed
+                <code>−15</code> being read with the wrong type. Same trap on a smaller
+                scale with offset values that swing around zero.
+            </p>
+
+            <p>
+                Signed values show up in building controls anywhere a reading can go
+                negative: outdoor-air temperatures, signed deltas, offset values, anything
+                referenced to a baseline. Unsigned values are typical for counters,
+                runtimes, percentages, setpoints, and packed bit-flag words.
+            </p>
+
+            <h2 class="subhead">32-bit values and the four byte orders</h2>
+
+            <p>
+                A 16-bit register can hold a temperature with a tenth of a degree of
+                resolution, a 0&ndash;100 % setpoint, or a small counter. It cannot hold a
+                32-bit floating-point number, a 32-bit signed integer, or a four-byte
+                timestamp. When the vendor wants to communicate one of those, they map it
+                across <em>two</em> consecutive 16-bit registers — and there is no 32-bit-
+                anything in the Modbus data model to enforce a byte order. So four orderings
+                exist in the wild, all of them in current shipments, none of them the
+                "standard."
+            </p>
+
+            <p>
+                Pick a four-byte value with bytes labeled <strong>A B C D</strong> in
+                transmission order — <code>0x12 0x34 0x56 0x78</code> for a worked example.
+                Each register holds two of those bytes. The four orderings are the four ways
+                a device may have laid them into the two registers:
+            </p>
+
+            <svg class="mb-svg wide" viewBox="0 0 740 320" role="img"
+                 aria-labelledby="mb-byteorder-title mb-byteorder-desc">
+                <title id="mb-byteorder-title">The four Modbus byte orderings for a 32-bit value</title>
+                <desc id="mb-byteorder-desc">A 32-bit value with bytes labeled A, B, C, D in transmission order is shown four ways across two consecutive registers. ABCD is byte order A-B in the first register, C-D in the second — the strict Modbus standard. CDAB swaps word order: C-D in the first register, A-B in the second — the Modicon byte-swap. BADC swaps bytes within each word: B-A in the first register, D-C in the second. DCBA does both — D-C in the first register, B-A in the second.</desc>
+
+                <!-- Column headers: register N+0 / register N+1 -->
+                <text x="265" y="34" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--text-dim)">register N</text>
+                <text x="525" y="34" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--text-dim)">register N+1</text>
+
+                <!-- Each row: one ordering -->
+                <!-- Row 1: ABCD -->
+                <text x="50"  y="78" font-family="var(--mono)" font-size="14" font-weight="700" fill="var(--accent)">ABCD</text>
+                <rect x="190" y="58" width="65"  height="40" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.4"/>
+                <text x="222" y="84" text-anchor="middle" font-family="var(--mono)" font-size="13" font-weight="700" fill="var(--text-bright)">A</text>
+                <rect x="255" y="58" width="65"  height="40" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.4"/>
+                <text x="287" y="84" text-anchor="middle" font-family="var(--mono)" font-size="13" font-weight="700" fill="var(--text-bright)">B</text>
+                <rect x="450" y="58" width="65"  height="40" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.4"/>
+                <text x="482" y="84" text-anchor="middle" font-family="var(--mono)" font-size="13" font-weight="700" fill="var(--text-bright)">C</text>
+                <rect x="515" y="58" width="65"  height="40" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.4"/>
+                <text x="547" y="84" text-anchor="middle" font-family="var(--mono)" font-size="13" font-weight="700" fill="var(--text-bright)">D</text>
+                <text x="650" y="83" font-family="var(--mono)" font-size="10" fill="var(--text-dim)">strict-Modbus</text>
+
+                <!-- Row 2: CDAB -->
+                <text x="50"  y="138" font-family="var(--mono)" font-size="14" font-weight="700" fill="var(--accent)">CDAB</text>
+                <rect x="190" y="118" width="65" height="40" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.4"/>
+                <text x="222" y="144" text-anchor="middle" font-family="var(--mono)" font-size="13" font-weight="700" fill="var(--text-bright)">C</text>
+                <rect x="255" y="118" width="65" height="40" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.4"/>
+                <text x="287" y="144" text-anchor="middle" font-family="var(--mono)" font-size="13" font-weight="700" fill="var(--text-bright)">D</text>
+                <rect x="450" y="118" width="65" height="40" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.4"/>
+                <text x="482" y="144" text-anchor="middle" font-family="var(--mono)" font-size="13" font-weight="700" fill="var(--text-bright)">A</text>
+                <rect x="515" y="118" width="65" height="40" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.4"/>
+                <text x="547" y="144" text-anchor="middle" font-family="var(--mono)" font-size="13" font-weight="700" fill="var(--text-bright)">B</text>
+                <text x="650" y="143" font-family="var(--mono)" font-size="10" fill="var(--text-dim)">Modicon swap</text>
+
+                <!-- Row 3: BADC -->
+                <text x="50"  y="198" font-family="var(--mono)" font-size="14" font-weight="700" fill="var(--accent)">BADC</text>
+                <rect x="190" y="178" width="65" height="40" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.4"/>
+                <text x="222" y="204" text-anchor="middle" font-family="var(--mono)" font-size="13" font-weight="700" fill="var(--text-bright)">B</text>
+                <rect x="255" y="178" width="65" height="40" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.4"/>
+                <text x="287" y="204" text-anchor="middle" font-family="var(--mono)" font-size="13" font-weight="700" fill="var(--text-bright)">A</text>
+                <rect x="450" y="178" width="65" height="40" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.4"/>
+                <text x="482" y="204" text-anchor="middle" font-family="var(--mono)" font-size="13" font-weight="700" fill="var(--text-bright)">D</text>
+                <rect x="515" y="178" width="65" height="40" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.4"/>
+                <text x="547" y="204" text-anchor="middle" font-family="var(--mono)" font-size="13" font-weight="700" fill="var(--text-bright)">C</text>
+                <text x="650" y="203" font-family="var(--mono)" font-size="10" fill="var(--text-dim)">byte-in-word</text>
+
+                <!-- Row 4: DCBA -->
+                <text x="50"  y="258" font-family="var(--mono)" font-size="14" font-weight="700" fill="var(--accent)">DCBA</text>
+                <rect x="190" y="238" width="65" height="40" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.4"/>
+                <text x="222" y="264" text-anchor="middle" font-family="var(--mono)" font-size="13" font-weight="700" fill="var(--text-bright)">D</text>
+                <rect x="255" y="238" width="65" height="40" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.4"/>
+                <text x="287" y="264" text-anchor="middle" font-family="var(--mono)" font-size="13" font-weight="700" fill="var(--text-bright)">C</text>
+                <rect x="450" y="238" width="65" height="40" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.4"/>
+                <text x="482" y="264" text-anchor="middle" font-family="var(--mono)" font-size="13" font-weight="700" fill="var(--text-bright)">B</text>
+                <rect x="515" y="238" width="65" height="40" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.4"/>
+                <text x="547" y="264" text-anchor="middle" font-family="var(--mono)" font-size="13" font-weight="700" fill="var(--text-bright)">A</text>
+                <text x="650" y="263" font-family="var(--mono)" font-size="10" fill="var(--text-dim)">full reverse</text>
+
+                <!-- Caption -->
+                <text x="370" y="305" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--text)">network order: A · B · C · D — devices lay it into two 16-bit registers four ways</text>
+            </svg>
+
+            <div class="callout-grid loose">
+                <div class="callout">
+                    <h3>ABCD <span>· strict-Modbus</span></h3>
+                    <p>Big-endian word, big-endian byte. Bytes lie in the two registers in their natural transmission order. The closest thing to a Modbus "standard"; common on modern IP-side gear and platform controllers.</p>
+                </div>
+                <div class="callout">
+                    <h3>CDAB <span>· Modicon byte-swap</span></h3>
+                    <p>Little-endian word, big-endian byte. Each register's bytes are in network order, but the two registers are swapped. Legacy Modicon PLCs exposed an internal little-endian word layout to the wire this way.</p>
+                </div>
+                <div class="callout">
+                    <h3>BADC <span>· byte-in-word swap</span></h3>
+                    <p>Big-endian word, little-endian byte. Word order preserved, byte order within each word reversed. Less common; turns up on some specialty meters and older industrial gear.</p>
+                </div>
+                <div class="callout">
+                    <h3>DCBA <span>· full reverse</span></h3>
+                    <p>Little-endian word, little-endian byte. The whole 32-bit value is byte-reversed. Common on x86-derived devices that store the value in CPU-native form and forward it raw.</p>
+                </div>
+            </div>
+
+            <p>
+                How to find which one a device uses: pick a register pair where you know
+                the expected value — a configured setpoint, a calibration constant, a
+                baseline reading. Read the two registers. The four reconstructions produce
+                four wildly different decimal values; one of them matches the expected, and
+                that's the device's ordering. The
+                <a href="/tools/modbus-register-viewer.html">Modbus Register Viewer</a>
+                tool's 32-bit Pair tab shows all four side-by-side for exactly this
+                exercise — you don't have to compute them by hand.
+            </p>
+
+            <p>
+                Once you've identified the ordering for a device, it holds across every
+                32-bit value on that device. Manufacturers don't mix orderings within a
+                product. So this is figure-out-once, document-it-on-the-job work, not a
+                per-register decision.
+            </p>
+
+            <h2 class="subhead">Scaling and engineering units</h2>
+
+            <p>
+                The last piece — and the one Modbus is most famously dumb about — is the
+                jump from the integer stored in the register to a value with units. A
+                holding register holds a number; the protocol doesn't know whether that
+                number is in tenths of a degree, in percent times 10, in raw ADC counts, or
+                in something else entirely. The vendor decides; the vendor's docs are the
+                only thing that knows.
+            </p>
+
+            <svg class="mb-svg" viewBox="0 0 580 170" role="img"
+                 aria-labelledby="mb-scale-title mb-scale-desc">
+                <title id="mb-scale-title">Applying a scale factor to a raw register value</title>
+                <desc id="mb-scale-desc">Three boxes left to right. The left box shows the raw register value 523. An arrow labeled "× 0.1 (per docs)" leads to the middle position. The right box shows the engineering value 52.3 degrees Fahrenheit. A caption notes that the protocol stores the raw integer; the units and scale live only in the vendor's manual.</desc>
+
+                <!-- Raw value -->
+                <rect x="60"  y="50" width="130" height="60" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.6"/>
+                <text x="125" y="46" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--text-dim)">raw register</text>
+                <text x="125" y="88" text-anchor="middle" font-family="var(--mono)" font-size="22" font-weight="700" fill="var(--text-bright)">523</text>
+
+                <!-- Arrow with scale -->
+                <line x1="200" y1="80" x2="385" y2="80" stroke="var(--accent)" stroke-width="2"/>
+                <polygon points="375,75 385,80 375,85" fill="var(--accent)"/>
+                <text x="292" y="71" text-anchor="middle" font-family="var(--mono)" font-size="11.5" fill="var(--accent)">× 0.1</text>
+                <text x="292" y="98" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="var(--text-dim)">scale from the vendor docs</text>
+
+                <!-- Engineering value -->
+                <rect x="390" y="50" width="130" height="60" rx="3" fill="var(--surface)" stroke="var(--accent)" stroke-width="1.8"/>
+                <text x="455" y="46" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--text-dim)">engineering</text>
+                <text x="455" y="88" text-anchor="middle" font-family="var(--mono)" font-size="22" font-weight="700" fill="var(--accent)">52.3&nbsp;°F</text>
+
+                <!-- Caption -->
+                <text x="290" y="148" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--text)">the protocol stores the integer; the units and scale live only in the manual</text>
+            </svg>
+
+            <p>
+                The patterns to recognize:
+            </p>
+
+            <ul>
+                <li><strong>Implicit decimal point.</strong> The most common pattern. The
+                    vendor stores the value × 10 (or × 100) to preserve one or two decimal
+                    places in an integer register. A reading of <code>523</code> with the
+                    docs noting <em>scale 0.1, units °F</em> means 52.3 °F. A reading of
+                    <code>1024</code> with <em>scale 0.01</em> means 10.24.</li>
+                <li><strong>Offset + scale.</strong> Less common, but real. The stored
+                    value is <code>(actual − offset) × scale</code>. The docs name both
+                    numbers; both have to be applied. Older equipment that exposed
+                    calibration values directly tends to use this.</li>
+                <li><strong>Native unit.</strong> Some values are stored directly in the
+                    units the docs claim. An event counter doesn't need scaling; an
+                    integer setpoint in percent often doesn't either.</li>
+                <li><strong>Packed multi-field encoding.</strong> A status word may pack
+                    several flags into one register's bits, with the docs naming what each
+                    bit means. The Modbus Register Viewer tool's binary readout is built
+                    for these.</li>
+            </ul>
+
+            <p>
+                Scaling is where the "vendor docs are load-bearing" framing from
+                <a href="/education/modbus-basics.html">Modbus Basics</a> gets concrete.
+                A raw register without its scale tag is meaningless — and a register read
+                with the <em>wrong</em> scale tag is worse than meaningless. The classic
+                failure is treating an unsigned register that's actually signed-and-scaled.
+                A temperature reads <code>6553.5</code> (a 0.1-scaled raw
+                <code>65535</code>) when it's actually <code>−0.1</code> (raw
+                <code>−1</code> read signed, scaled by 0.1). The wrong number looks
+                plausible enough to log without flagging; the real value is a sensor at
+                the bottom of its range. Both interpretation choices have to be right.
+            </p>
+
+            <h2 class="subhead">What this page didn't cover</h2>
+
+            <p>
+                Two questions stay out of scope, both deliberately:
+            </p>
+
+            <ul>
+                <li><strong>Modbus RTU on the wire</strong> — RS-485 multidrop wiring,
+                    baud rates, parity, the two-byte CRC computation, the inter-character
+                    framing timeout. Most BMS techs touch this layer only at commissioning;
+                    a third Modbus page may land here if demand surfaces.</li>
+                <li><strong>The integration story</strong> — how a Niagara gateway or an
+                    EBO field controller maps Modbus points into the BAS object space, how
+                    poll rates are set, how stale-data flags propagate. Platform-specific
+                    work that belongs on the eventual Niagara / EBO pages, not here.</li>
+            </ul>
+
+            <p>
+                Between the two pages: a device address, the right function code, the
+                right register, the right sign interpretation, the right byte order, and
+                the right scale to engineering units. That's the BMS integration loop, end
+                to end — enough to read a vendor's Modbus table, write the config, and
+                trust the number on the graphic. The practitioner-grade interactive surface
+                (signed/unsigned toggle, the four-order viewer, decimal/hex/binary readouts)
+                lives on the <a href="/tools/modbus-register-viewer.html">Modbus Register
+                Viewer</a> tool, one click away.
+            </p>
+
+        </div>
+    </div>
+
+    <a class="back-link" href="/education/">← Back to Education</a>
+
+</main>
+{% endblock %}
