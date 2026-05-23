@@ -168,9 +168,13 @@ html[data-units="metric"] .units-btn[data-units="metric"] {
     max-width: 1120px;
     margin: 0 auto;
     width: 100%;   /* don't shrink-to-fit inside body's flex column */
+    text-align: center;
     animation: fadeUp 0.5s ease both;
 }
 
+/* Centered eyebrow: short accent line on each side of the label so the
+   visual weight balances. ::before stays for the original left line;
+   ::after mirrors it on the right. */
 .hero-eyebrow {
     font-family: var(--mono);
     font-size: 0.7rem;
@@ -180,9 +184,11 @@ html[data-units="metric"] .units-btn[data-units="metric"] {
     margin-bottom: 1.25rem;
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 0.6rem;
 }
-.hero-eyebrow::before {
+.hero-eyebrow::before,
+.hero-eyebrow::after {
     content: '';
     display: block;
     width: 22px;
@@ -206,11 +212,11 @@ html[data-units="metric"] .units-btn[data-units="metric"] {
     font-weight: 300;
     color: var(--text);
     max-width: 540px;
-    margin-bottom: 2rem;
+    margin: 0 auto 2rem;   /* auto x-margins center the constrained paragraph */
     line-height: 1.8;
 }
 
-.hero-badges { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.hero-badges { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem; }
 .badge {
     font-family: var(--mono);
     font-size: 0.68rem;
@@ -837,9 +843,9 @@ p.pid-note {
 }
 .nav-card:hover .nav-card-name { color: var(--accent); }
 .nav-card-desc {
-    font-size: 0.85rem;
-    color: var(--text-dim);
-    line-height: 1.6;
+    font-size: 0.95rem;
+    color: var(--text);
+    line-height: 1.65;
 }
 
 /* ──────────────────────────────────────────────────────────────────────
