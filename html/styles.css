@@ -42,16 +42,21 @@ html { scroll-behavior: smooth; }
 
 body {
     background-color: var(--bg);
-    /* v2.0.1 — blueprint grid behind everything. 1px hairlines in
-       --border-faint every 40px. Sits only in the regions of body that
+    /* v2.0.1 — blueprint grid behind everything. 1.5px hairlines in
+       --border every 40px. Sits only in the regions of body that
        AREN'T covered by an opaque content panel — nav (--surface),
        hero (--surface), tool-cards (--surface), footer (--surface-2)
        all paint over it, so the grid only reads in the gutters around
        and below the content. Hidden on print via the @media print
-       block at the bottom of this file. */
+       block below.
+       Weight tuned on feedback after the first pass: 1px in
+       --border-faint was too quiet to read as drafting paper; 3-4px
+       crosses into graph-paper foreground. 1.5px in --border is the
+       balance — confident in the gutters, never patterning against
+       the panels. */
     background-image:
-        linear-gradient(to right,  var(--border-faint) 1px, transparent 1px),
-        linear-gradient(to bottom, var(--border-faint) 1px, transparent 1px);
+        linear-gradient(to right,  var(--border) 1.5px, transparent 1.5px),
+        linear-gradient(to bottom, var(--border) 1.5px, transparent 1.5px);
     background-size: 40px 40px;
     color: var(--text);
     font-family: var(--sans);
