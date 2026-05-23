@@ -26,12 +26,6 @@ Calculators, converters, and lookups — open one, get an answer.
   covers addressing offsets, signed/unsigned, byte order, function
   codes, and exception responses; FC01–16 reference table sits
   there too.
-- **PID Tuning Helper** — step-response simulator with process-type
-  presets and a parameter-style toggle (Niagara gain·reset·rate
-  vs. EBO Ti·Td vs. Distech proportional-band conventions; the
-  controller runs canonical units, the labels follow you). Bottom
-  reference panel has a loop-speed table and a symptom → tuning-move
-  cheat sheet. Cross-links to the PID Basics explainer.
 - **BACnet/IP Hex Converter** — paste a hex device address (with
   or without an appended UDP port), get dotted-decimal back, and
   vice versa.
@@ -76,12 +70,30 @@ Calculators, converters, and lookups — open one, get an answer.
   header for per-type confidence and the page's "About these
   tables" card for the methodology. JCI 8.7K-shunt curve is the
   one type still nominal (no public R/T table).
+
+### Simulators
+
+Running models you can play with — no install, no sign-in. Each one
+is paired with an Education explainer for the underlying concepts.
+
+- **PID Tuning Helper** — step-response simulator with process-type
+  presets and a parameter-style toggle (Niagara gain·reset·rate
+  vs. EBO Ti·Td vs. Distech proportional-band conventions; the
+  controller runs canonical units, the labels follow you). Bottom
+  reference panel has a loop-speed table and a symptom → tuning-move
+  cheat sheet. Cross-links to the PID Basics explainer.
 - **Mock VFD Interface** — generic drive keypad to practice
   navigating a parameter tree without a live drive in front of you.
   13 parameters in 4 groups, fixed 20×4 mono LCD, linear-ramp motor
   model, LOCAL/REMOTE override. The run-source / speed-source
   pedagogy from the VFDs explainer in hand: a keypad RUN with the
   run-source set to TERMINALS sits there and does nothing.
+- **Function-Block Editor** — graphical wiresheet sandbox: drag
+  logic, math, timer, and PID blocks onto a sheet, wire them up,
+  and watch a control sequence run live. Five worked examples
+  built in (economizer-enable, freeze-stat lockout, dual-thermostat
+  staging, heating PID, divide-by-zero edge case). Pairs with the
+  Function-Block Basics explainer.
 
 ### Education
 
@@ -160,7 +172,9 @@ from now will still run it.
   inline `<script>`:
   - `pid-engine.js` — FOPDT process model + PID controller with
     conditional-integration anti-windup. Drives the PID Tuning
-    Helper tool and the three PID Basics mini-sims.
+    Helper simulator and the three PID Basics mini-sims.
+  - `fbe-engine.js` — function-block catalog + per-tick evaluator
+    behind the Function-Block Editor simulator.
   - `flow-engine.js` — particle-flow animation engine for SVG
     schematics on the hydronic Education pages. Walks
     `<circle>` particles along paths annotated with

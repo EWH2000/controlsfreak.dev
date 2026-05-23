@@ -9,7 +9,7 @@ I want a creative design pass on **controlsfreak.dev** — a field-reference sit
 - `site-ideas-and-friction.md` — design history, scope decisions, what's been tried and ruled out
 - `README.md` — the user-facing tour
 - The home page (`html/index.html`) — the v2 hero / About card live here; the home is the canonical sample of the new identity
-- 1–2 representative pages from `html/tools/` and `html/education/`
+- 1–2 representative pages from `html/tools/`, `html/simulators/`, and `html/education/`
 
 ## Aesthetic the site has earned (do not violate)
 

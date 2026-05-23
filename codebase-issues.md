@@ -29,7 +29,7 @@ rest live here until someone decides what to do about them.
 Three widgets fire `setInterval` callbacks forever once the page
 loads:
 
-- `html/tools/vfd-mock.html:874` — 50 ms motor tick. Always calls
+- `html/simulators/vfd-mock.html:874` — 50 ms motor tick. Always calls
   `tickMotor()` + `render()` whether or not anything's changed. Real
   per-tick work, the worst of the three.
 - `html/education/vfds.html:965` — 40 ms fan-rotation tick. The
@@ -295,7 +295,7 @@ pattern.
 
 - `html/scripts/pid-engine.js:5`
 - `html/scripts/thermistor-data.js:6`
-- `html/tools/pid-tuner.html:205`
+- `html/simulators/pid-tuner.html:205`
 - `html/tools/thermistor-calculator.html:184`
 - `html/education/pid-basics.html:225`
 
@@ -563,7 +563,7 @@ Block C #5 set the precedent: when two pages share the same surface,
 consolidate. Two PID surfaces still share substantial code:
 
 - **`PID_DMAX` table** — `{ fast: 0.15, med: 0.5, slow: 2.0 }` —
-  duplicated at `html/tools/pid-tuner.html:226` and
+  duplicated at `html/simulators/pid-tuner.html:226` and
   `html/education/pid-basics.html:268`, with near-identical comments.
 - **PID-chart drawing** — `drawPidChart` in `pid-tuner.html:325-402`
   and `drawMiniChart` in `pid-basics.html:345-399` share canvas
@@ -923,7 +923,7 @@ Several small a11y findings, each ≲ 10 lines individually:
   — likely "accept the mismatch and document it" rather than chase a
   small SR-only flicker.
 - **Canvas elements lack `aria-label` / fallback text** —
-  `tools/psychrometric-chart.html:294`, `tools/pid-tuner.html:96`,
+  `tools/psychrometric-chart.html:294`, `simulators/pid-tuner.html:96`,
   `education/pid-basics.html:94, 140, 191`. SVG diagrams across the
   site carry `role="img" aria-labelledby="…title …desc"`; the canvas
   charts don't get the same treatment. A static `aria-label`
@@ -993,7 +993,7 @@ per-item commits plus a docs commit.
 
 ### 22. PID tuner Steady-State Error readout is unit-less and metric-unaware *(addressed 2026-05-17)*
 
-`html/tools/pid-tuner.html:273` renders the steady-state error as a
+`html/simulators/pid-tuner.html:273` renders the steady-state error as a
 bare number (`(sim.ssErr > 0 ? '+' : '') + sim.ssErr.toFixed(sim.dec)`)
 with no unit. The three `PID_PROC` entries the tuner runs against carry
 different canonical units — fast = in. w.c. (range 5), med / slow = °F
@@ -1311,7 +1311,7 @@ pass. Each is a one-or-two-line touch:
   this purpose and is used by every other behavioral test in the
   file. This one site didn't migrate. One-line swap.
 
-- **`html/tools/vfd-mock.html:810-825` — `vfdm-try-default` and
+- **`html/simulators/vfd-mock.html:810-825` — `vfdm-try-default` and
   `vfdm-try-classic` apply byte-identical preset values**
   `{ runSrc: 1, spdSrc: 2, local: false, diClosed: false }`.
   Pedagogically intentional (the page's pitch is "factory defaults
@@ -2522,7 +2522,7 @@ accumulated since.
 caption under a tool-card-header. Same six-property shape across
 3 sites:
 
-- `html/tools/pid-tuner.html:31`
+- `html/simulators/pid-tuner.html:31`
 - `html/tools/economizer-ratio.html:49`
 - `html/tools/air-mixing.html:69`
 
@@ -2620,7 +2620,7 @@ outside the 140–160 char target that #35's table didn't list:
 
 | Page | Chars | Off by |
 |---|---:|---:|
-| `html/tools/pid-tuner.html` | **133** | 7 short |
+| `html/simulators/pid-tuner.html` | **133** | 7 short |
 | `html/tools/bacnet-ip-converter.html` | **137** | 3 short |
 | `html/education/hydronic-loops.html` | **168** | 8 over |
 
