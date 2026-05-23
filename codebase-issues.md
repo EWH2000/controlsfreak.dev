@@ -3089,7 +3089,7 @@ and Widget 2 currently runs sloppy. Low-risk fix: add the directive
 as the first line inside the `pump-control.html:791` IIFE. Not fixed
 inline here to keep the equipment-staging PR scoped to its own work.
 
-### 60. Smoke spec gaps on the function-block editor
+### 60. Smoke spec gaps on the function-block editor *(addressed 2026-05-22)*
 
 Caught during the post-ship audit of `feat/function-block-editor`
 (2026-05-22). The behavioral block added in
@@ -3119,6 +3119,21 @@ it's the most load-bearing miss.
 **Recommended action:** a `test.describe('function-block editor —
 interactions', () => { ... })` block at the end of
 `tests/smoke.spec.js`, one test per corner case. ~80 lines.
+
+**Resolution (2026-05-22):** added a `test.describe('function-block
+editor — interactions')` block at the end of `tests/smoke.spec.js`
+with eight cases: Delete-key delete, Backspace delete, Escape cancels
+a pending wire, type-mismatch rejection, self-loop rejection, the
+pause / run / step state machine, a PID `kc` inspector edit flowing
+to the READOUT, and the mid-wire-then-delete-source regression. The
+last test goes through `page.keyboard.press('Delete')` — the same
+keyboard path the BUG-2 fix lives on — and asserts no `.fbe-wire`
+forms after a follow-on input-pin click. The `visibilitychange`-stops-
+tick path is left uncovered: Playwright's `page.evaluate(() => { ...
+document.dispatchEvent(...) })` can flip `document.hidden` but only
+within a single frame, and there's no externally-observable signal
+that the interval was cleared. Filed in the audit as a stretch goal
+rather than load-bearing.
 
 ### 61. Function-block editor sim-bar buttons use per-button `addEventListener`
 
