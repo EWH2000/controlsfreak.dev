@@ -329,15 +329,15 @@ p.tool-preamble {
 }
 
 /* Lead paragraph on Education pages — the opening prose paragraph that
-   sets up the lesson. Wider line-height and a constrained max-width
-   keep the intro readable at narrative-length. Placed before .callout p
-   (cascade order) so .callout p's tighter font shape stays authoritative
-   inside callouts. */
+   sets up the lesson. Slightly larger / wider line-height than the body
+   .tool-body p shape. Spans the full .tool-body width so the intro
+   doesn't read as marooned in the left half of the card. Placed before
+   .callout p (cascade order) so .callout p's tighter font shape stays
+   authoritative inside callouts. */
 .page-intro {
     font-size: 1.0rem;
     line-height: 1.85;
     color: var(--text);
-    max-width: 660px;
     margin-bottom: 1.75rem;
 }
 
