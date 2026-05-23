@@ -20,6 +20,11 @@ nav: education
             margin: 1.4rem auto 0.6rem;
         }
         .fb-svg.wide { max-width: 740px; }
+
+        /* Page-local modifier — the families grid sits below an intro
+           paragraph and wants a touch more breathing room than the
+           global .callout-grid default. */
+        .callout-grid.loose { margin-top: 1.25rem; }
     </style>
 {% endblock %}
 
@@ -129,7 +134,7 @@ nav: education
                 variation on one you already know.
             </p>
 
-            <div class="callout-grid" style="margin-top:1.25rem;">
+            <div class="callout-grid loose">
                 <div class="callout">
                     <h3>Inputs &amp; outputs <span>· the real world</span></h3>
                     <p>The sheet's connection to physical points and to constants. An analog or binary <em>input</em> brings in a sensor or a contact; an analog or binary <em>output</em> commands a damper, a valve, a relay. A <em>constant</em> is a fixed number typed into the sheet — a setpoint, a deadband, a limit.</p>

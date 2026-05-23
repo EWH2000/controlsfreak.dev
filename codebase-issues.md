@@ -3089,7 +3089,7 @@ and Widget 2 currently runs sloppy. Low-risk fix: add the directive
 as the first line inside the `pump-control.html:791` IIFE. Not fixed
 inline here to keep the equipment-staging PR scoped to its own work.
 
-### 60. Smoke spec gaps on the function-block editor
+### 60. Smoke spec gaps on the function-block editor *(addressed 2026-05-22)*
 
 Caught during the post-ship audit of `feat/function-block-editor`
 (2026-05-22). The behavioral block added in
@@ -3120,6 +3120,22 @@ it's the most load-bearing miss.
 interactions', () => { ... })` block at the end of
 `tests/smoke.spec.js`, one test per corner case. ~80 lines.
 
+### 61. Function-block editor sim-bar buttons use per-button `addEventListener` *(addressed 2026-05-22)*
+**Resolution (2026-05-22):** added a `test.describe('function-block
+editor — interactions')` block at the end of `tests/smoke.spec.js`
+with eight cases: Delete-key delete, Backspace delete, Escape cancels
+a pending wire, type-mismatch rejection, self-loop rejection, the
+pause / run / step state machine, a PID `kc` inspector edit flowing
+to the READOUT, and the mid-wire-then-delete-source regression. The
+last test goes through `page.keyboard.press('Delete')` — the same
+keyboard path the BUG-2 fix lives on — and asserts no `.fbe-wire`
+forms after a follow-on input-pin click. The `visibilitychange`-stops-
+tick path is left uncovered: Playwright's `page.evaluate(() => { ...
+document.dispatchEvent(...) })` can flip `document.hidden` but only
+within a single frame, and there's no externally-observable signal
+that the interval was cleared. Filed in the audit as a stretch goal
+rather than load-bearing.
+
 ### 61. Function-block editor sim-bar buttons use per-button `addEventListener`
 
 `html/tools/function-block-editor.html:1007–1013` binds handlers
@@ -3146,6 +3162,15 @@ collapsing to one body.
 **Recommended action:** add `data-action="run|step|reset|clear"` to
 the buttons; one `querySelectorAll('[data-action]').forEach` loop
 with a switch on `dataset.action`.
+
+**Resolution (2026-05-22):** added
+`data-action="run|step|reset|clear"` to the four sim-bar buttons and
+replaced the four individual `addEventListener` calls with a single
+`document.querySelectorAll('.fbe-simbar [data-action]').forEach`
+loop dispatching on `btn.dataset.action`. The buttons keep their
+existing `id="fbe-..."` attributes so the smoke specs continue to
+click them by id (and `runBtn` is still resolved by id for the
+textContent flip in `setRunning`); only the binding shape changed.
 
 ### 62. Function-block editor palette uses per-button `addEventListener` inside a forEach
 
@@ -3177,7 +3202,7 @@ collapses to one call, not when the loop variable is the payload.
 Revisit only if the codebase moves to `data-*` across all
 dynamically-built UI as a uniform convention.
 
-### 63. Inline `style=` attributes on the function-block editor and education page
+### 63. Inline `style=` attributes on the function-block editor and education page *(addressed 2026-05-22)*
 
 Two one-shot overrides slipped in on `feat/function-block-editor`:
 
@@ -3198,6 +3223,17 @@ is one rule; cheap to sweep.
 adjust the spacing of `.tool-preamble` if globally appropriate) and
 a `.callout-grid-loose` modifier; remove the inline styles. Bundle
 with the next inline-style sweep.
+
+**Resolution (2026-05-22):** lifted both inline styles into page-
+local modifier classes defined in each page's `{% block head %}`
+CSS — `p.tool-preamble.tight { margin-bottom: 0.85rem; }` on
+`function-block-editor.html` and `.callout-grid.loose { margin-top:
+1.25rem; }` on `function-blocks.html`. The HTML now reads
+`class="tool-preamble tight"` / `class="callout-grid loose"`; no
+`style=` attributes remain on either element. Page-local rather
+than promoted to `styles.css` since each rule has exactly one
+caller — fits the "page-only rules stay inline via `{% block head
+%}`" convention.
 
 ### 64. `package.json` version bump skipped 1.14 on the function-block-editor ship
 
@@ -3247,7 +3283,7 @@ side-by-side and stay in step. Trigger for revisit: a third call
 site, at which point promote to `FBE.util.clamp(...)` or a tiny
 shared `html/scripts/util.js`.
 
-### 66. Function-block editor drop-grid wraps after 20 blocks; comment overstates
+### 66. Function-block editor drop-grid wraps after 20 blocks; comment overstates *(addressed 2026-05-22)*
 
 `html/tools/function-block-editor.html:540–541` positions a newly-
 added palette block via `x = 40 + (n % 5) * 150; y = 40 +
@@ -3267,6 +3303,12 @@ guarantee.
 grid; further blocks may overlap and need a drag" — one-line fix,
 matches the existing low-stakes posture; or (b) extend the cycle
 (shift y down on each wrap, or jitter the position).
+
+**Resolution (2026-05-22):** took option (a). The comment now reads
+"Drop new blocks into a tidy 5×4 grid; the cycle wraps after 20, so
+further blocks may overlap and need a drag." Behavior is unchanged
+— a user past 20 blocks on the canvas is placing them deliberately
+anyway, and the cycle extension wasn't worth the added math.
 
 ### 67. Function-block editor — type-mismatch on wire creation doesn't cancel pending
 
@@ -3292,7 +3334,7 @@ the intent so a future "fix" PR doesn't add a `cancelWire()` here
 thinking it's a bug; the canvas-empty-area click and the Escape
 keystroke are the explicit cancel paths.
 
-### 68. Function-block editor — no visible hint that keyboard Delete / Escape are bound
+### 68. Function-block editor — no visible hint that keyboard Delete / Escape are bound *(addressed 2026-05-22)*
 
 `html/tools/function-block-editor.html:1029–1038` binds Delete /
 Backspace to remove the selected block or wire, and Escape to
@@ -3311,6 +3353,17 @@ read the "How it works" prose will miss the keyboard shortcuts.
 **Recommended action:** append a subtitle to the empty-state
 inspector text ("Press Delete to remove · Escape to cancel a wire"),
 or attach a key hint to the active-state Delete button.
+
+**Resolution (2026-05-22):** appended a second `<p
+class="fbe-insp-keys">Press Delete to remove · Escape to cancel a
+wire.</p>` paragraph to the empty-state inspector in
+`renderInspector()`. Styled in the page's `{% block head %}` CSS as
+mono small-caps text (font-size 0.62rem, `--text-dim` colour,
+opacity 0.85) so it reads as a quiet keyboard-hint subtitle rather
+than competing with the primary empty-state prose. Only the
+empty-state branch was changed — the wire-selected and block-
+selected branches already expose a "Delete block" / "Delete wire"
+button that documents the affordance.
 
 ### Post-audit re-evaluation sweep (2026-05-16)
 
