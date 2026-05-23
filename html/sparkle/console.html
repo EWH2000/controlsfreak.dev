@@ -1,0 +1,403 @@
+---
+title: Sparkle · Workstation Console — controlsfreak.dev
+description: Sparkle sketch — Workstation Console direction. Faux BAS title bar, live status line, property-sheet About panel, BACnet-reference section markers.
+nav: ""
+---
+{% extends "layouts/page.njk" %}
+
+{% block head %}
+    <meta name="robots" content="noindex">
+    <style>
+        /* ──────────────────────────────────────────────────────────
+         * DIRECTION A — WORKSTATION CONSOLE
+         * Page-local sketch. Every rule scoped under .sparkle-console
+         * (descendants of <main>) or `body:has(.sparkle-console)`
+         * (siblings — the real nav and footer).
+         * Never let a bare selector ship from here.
+         * ────────────────────────────────────────────────────────── */
+
+        /* ── KEYFRAMES ── */
+        @keyframes sparkle-console-pulse {
+            0%, 100% { opacity: 1; }
+            50%      { opacity: 0.35; }
+        }
+        @keyframes sparkle-console-breathe {
+            0%, 100% { opacity: 1; }
+            50%      { opacity: 0.55; }
+        }
+
+        /* ── NAV: brand-mark .dev breathes; nav-card hover swaps the
+              translateY for a soft accent ring ── */
+        body:has(.sparkle-console) .site-nav-brand span {
+            animation: sparkle-console-breathe 4s ease-in-out infinite;
+        }
+        body:has(.sparkle-console) .nav-card:hover {
+            transform: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+
+        /* ── PREVIEW BANNER ── small chip at the top so a stray
+              visitor knows this is a mood-board sketch, not a real page. */
+        .sparkle-console .preview-banner {
+            margin: 1.25rem auto -0.5rem;
+            max-width: 1120px;
+            padding: 0.45rem 1rem;
+            border: 1px dashed var(--border);
+            border-radius: 3px;
+            font-family: var(--mono);
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            background: var(--surface-2);
+        }
+        .sparkle-console .preview-banner strong { color: var(--accent); font-weight: 600; }
+
+        /* ── HERO: window-chrome wrapper ── */
+        .sparkle-console .hero {
+            padding: 0;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            background: var(--surface);
+            margin-top: 2rem;
+            margin-bottom: 2.5rem;
+            text-align: left;
+            overflow: hidden;
+        }
+        .sparkle-console .console-titlebar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.55rem 1rem;
+            border-bottom: 1px solid var(--border);
+            background: var(--surface-2);
+            font-family: var(--mono);
+            font-size: 0.7rem;
+            color: var(--text);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+        .sparkle-console .console-titlebar .titlebar-dots {
+            color: var(--text-dim);
+            margin: 0 0.4rem;
+        }
+        .sparkle-console .ok-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            background: var(--accent-dim);
+            color: var(--accent);
+            border: 1px solid var(--accent-glow);
+            padding: 0.1rem 0.5rem;
+            border-radius: 2px;
+            font-family: var(--mono);
+            font-size: 0.62rem;
+            letter-spacing: 0.07em;
+            text-transform: uppercase;
+        }
+        .sparkle-console .ok-pill::before {
+            content: "";
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--accent);
+        }
+        .sparkle-console .hero-body {
+            padding: 4rem 2rem 3rem;
+            text-align: center;
+        }
+        .sparkle-console .hero-eyebrow { margin-bottom: 1.1rem; }
+        .sparkle-console .console-statusline {
+            padding: 0.7rem 1rem;
+            border-top: 1px solid var(--border);
+            background: var(--surface-2);
+            font-family: var(--mono);
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            gap: 0.5rem 1.25rem;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            font-variant-numeric: tabular-nums;
+        }
+        .sparkle-console .console-statusline span strong {
+            color: var(--text);
+            font-weight: 600;
+            margin-left: 0.35rem;
+        }
+
+        /* ── SECTION MARKERS: AV:NNN · LABEL ── */
+        .sparkle-console .section-header {
+            gap: 0.6rem;
+            align-items: baseline;
+        }
+        .sparkle-console .section-line { display: none; }
+        .sparkle-console .section-label {
+            font-family: var(--mono);
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-bright);
+        }
+        .sparkle-console .section-label::before {
+            content: "AV:" attr(data-objref) " · ";
+            color: var(--accent);
+            font-variant-numeric: tabular-nums;
+            margin-right: 0.1rem;
+            font-weight: 600;
+        }
+
+        /* ── ABOUT CARD: property-sheet + recessed prose ── */
+        .sparkle-console .about-rebuild .ps-row {
+            display: grid;
+            grid-template-columns: minmax(120px, 26%) 1fr;
+            gap: 12px;
+            padding: 9px 1.25rem;
+            border-bottom: 1px solid var(--border-faint);
+            align-items: center;
+        }
+        .sparkle-console .about-rebuild .ps-row:first-child { padding-top: 1rem; }
+        .sparkle-console .about-rebuild .ps-row:last-of-type {
+            border-bottom: 1px solid var(--border);
+        }
+        .sparkle-console .about-rebuild .ps-label {
+            font-family: var(--mono);
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+        .sparkle-console .about-rebuild .ps-value {
+            font-family: var(--mono);
+            font-size: 0.85rem;
+            color: var(--text-bright);
+            font-variant-numeric: tabular-nums;
+        }
+        .sparkle-console .about-rebuild .ps-value.live {
+            color: var(--accent);
+            font-weight: 600;
+        }
+        .sparkle-console .about-rebuild .ps-value.live::before {
+            content: "";
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--accent);
+            margin-right: 0.4rem;
+            vertical-align: middle;
+            animation: sparkle-console-pulse 2s ease-in-out infinite;
+        }
+        .sparkle-console .about-prose {
+            margin: 1rem 1.25rem 1.25rem;
+            padding: 0.85rem 1rem;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--blue);
+            border-radius: 3px;
+            font-size: 0.92rem;
+            line-height: 1.75;
+            color: var(--text);
+        }
+        .sparkle-console .about-prose p + p { margin-top: 0.85rem; }
+        .sparkle-console .about-prose .colophon {
+            font-family: var(--mono);
+            font-size: 0.72rem;
+            color: var(--text-dim);
+            margin-top: 1rem;
+        }
+        .sparkle-console .about-prose a { color: var(--accent); }
+
+        /* ── DROP CAP on .page-intro — square block, accent fill ── */
+        .sparkle-console .page-intro::first-letter {
+            float: left;
+            margin: 0.05em 0.55rem 0 0;
+            padding: 0.15em 0.32em 0.05em;
+            background: var(--accent);
+            color: var(--surface);
+            font-family: var(--mono);
+            font-size: 2.6rem;
+            font-weight: 600;
+            line-height: 1;
+        }
+
+        /* ── Tabular nums on numeric value classes (direction-scoped;
+              promoted to baseline in PR 2) ── */
+        .sparkle-console .ps-value,
+        .sparkle-console .readout-value,
+        .sparkle-console .result-value,
+        .sparkle-console .widget-readout-value,
+        .sparkle-console .footer-text {
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* ── CUSTOM FOOTER (sparkle-footer); real footer hidden ── */
+        body:has(.sparkle-console) > footer:not(.sparkle-footer) { display: none; }
+        .sparkle-console + .sparkle-footer,
+        .sparkle-footer.sparkle-console-footer {
+            position: relative;
+            z-index: 1;
+            border-top: 1px solid var(--border);
+            background: var(--surface-2);
+            padding: 0.85rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            max-width: 1120px;
+            margin: 2.5rem auto 0;
+            width: 100%;
+            font-family: var(--mono);
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            gap: 1rem;
+        }
+        .sparkle-console-footer .footer-left,
+        .sparkle-console-footer .footer-right {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.6rem;
+            flex-wrap: wrap;
+        }
+        .sparkle-console-footer .heartbeat-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent);
+            animation: sparkle-console-pulse 2s ease-in-out infinite;
+        }
+        .sparkle-console-footer .footer-right strong {
+            color: var(--text);
+            font-weight: 600;
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* ── Narrow viewport tweaks ── */
+        @media (max-width: 720px) {
+            .sparkle-console .hero-body { padding: 2.5rem 1.25rem 2rem; }
+            .sparkle-console .console-titlebar,
+            .sparkle-console .console-statusline { font-size: 0.62rem; }
+            .sparkle-console-footer { flex-direction: column; align-items: flex-start; }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<main id="main" class="sparkle sparkle-console">
+
+    <div class="preview-banner">
+        <strong>Sparkle preview</strong> · Direction A — Workstation Console · Not a real page
+    </div>
+
+    <section class="hero">
+        <div class="console-titlebar">
+            <span>controlsfreak.dev <span class="titlebar-dots">///</span> FIELD REFERENCE</span>
+            <span class="ok-pill">OK</span>
+        </div>
+        <div class="hero-body">
+            <div class="hero-eyebrow">BMS Field Reference</div>
+            <h1>Tools for those in controls,<br><em>built for the field.</em></h1>
+            <p>A reference site for building-controls people. Open calculators and lookups for the math you don't want to redo at the panel — BACnet/IP, Modbus registers, signal scaling, psychrometrics, thermistors. Alongside, a growing set of explainers that walk through hydronic loops, load piping, VFDs, and pump control end-to-end.</p>
+            <div class="hero-badges">
+                <span class="badge">AI / AO Scaling</span>
+                <span class="badge">Modbus Register Viewer</span>
+                <span class="badge">PID Tuning</span>
+                <span class="badge">BACnet/IP Hex</span>
+                <span class="badge">Psychrometric Chart</span>
+                <span class="badge">Thermistor / RTD Lookup</span>
+            </div>
+        </div>
+        <div class="console-statusline">
+            <span class="ok-pill">OK</span>
+            <span>VERSION <strong>v{{ site.version }}</strong></span>
+            <span>LAST BUILT <strong>2026-05-22</strong></span>
+            <span>UPTIME <strong>24×7</strong></span>
+        </div>
+    </section>
+
+    <div class="section-header">
+        <h2 class="section-label" data-objref="001">START HERE</h2>
+    </div>
+
+    <div class="card-grid two">
+        <a class="nav-card" href="/tools/">
+            <span class="nav-card-tag">Tools</span>
+            <div class="nav-card-name">Calculators &amp; lookups →</div>
+            <div class="nav-card-desc">Calculators and lookups for the parts of the job that come up over and over — psychrometric staging, signal scaling, register and address conversions, thermistor curves, a practice VFD keypad. Open one, get an answer, get back to work.</div>
+        </a>
+        <a class="nav-card" href="/education/">
+            <span class="nav-card-tag">Education</span>
+            <div class="nav-card-name">Learn the fundamentals →</div>
+            <div class="nav-card-desc">A connected set of explainers, not a glossary. The current arc: PID control → hydronic loops → load piping → VFDs → pump control, each page asking one question and answering it with diagrams, worked examples, and the occasional interactive widget.</div>
+        </a>
+    </div>
+
+    <div class="section-header" style="margin-top:3rem;">
+        <h2 class="section-label" data-objref="002">ABOUT</h2>
+    </div>
+
+    <div class="tool-card about-rebuild">
+        <div class="ps-row">
+            <span class="ps-label">Role</span>
+            <span class="ps-value">Controls Programmer</span>
+        </div>
+        <div class="ps-row">
+            <span class="ps-label">Industry</span>
+            <span class="ps-value">BAS / Building Automation</span>
+        </div>
+        <div class="ps-row">
+            <span class="ps-label">Location</span>
+            <span class="ps-value">Northeast U.S.</span>
+        </div>
+        <div class="ps-row">
+            <span class="ps-label">Verified</span>
+            <span class="ps-value">2026</span>
+        </div>
+        <div class="ps-row">
+            <span class="ps-label">Status</span>
+            <span class="ps-value live">Active</span>
+        </div>
+        <div class="about-prose">
+            <p>Hi, I'm a controls programmer based in the Northeast U.S. This is a side project I'm working on while exploring vibe coding. There's a genuine gap in easy reference websites and educational resources for this trade. This site started as just a way to have some easy reference tools in one place, but has expanded to include much more.</p>
+            <p>All anecdotes on this site are real things I've encountered, not AI generated. Although it may refine my writing for some of them.</p>
+            <p class="colophon">Bug reports, tool requests, or feedback — <a href="/contact.html">get in touch</a>.</p>
+        </div>
+    </div>
+
+    <div class="section-header" style="margin-top:3rem;">
+        <h2 class="section-label" data-objref="003">EDUCATION SAMPLE</h2>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-body">
+            <p class="page-intro">
+                PID is three knobs that, together, push a process variable (PV — the thing you're measuring) toward a setpoint (SP — the value you want it to hold). This is a common sense walk through what each one does on a typical HVAC loop, plus three small sims you can play with one knob at a time.
+            </p>
+            <p style="font-size:0.85rem;color:var(--text-dim);margin-top:1rem;font-family:var(--mono);">
+                ↑ The .page-intro paragraph above carries the direction-specific drop cap. Education pages would use the same treatment.
+            </p>
+        </div>
+    </div>
+
+</main>
+
+<footer class="sparkle-footer sparkle-console-footer">
+    <span class="footer-left">
+        <span class="ok-pill">OK</span>
+        <span>controlsfreak.dev · open tools for controls professionals</span>
+    </span>
+    <span class="footer-right">
+        <span>v<strong>{{ site.version }}</strong> · BUILT <strong>2026</strong></span>
+        <span class="heartbeat-dot" aria-hidden="true"></span>
+    </span>
+</footer>
+{% endblock %}
+
+{% block scripts %}
+<script src="/scripts/units.js"></script>
+{% endblock %}
