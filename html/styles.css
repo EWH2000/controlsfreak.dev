@@ -43,7 +43,7 @@ body {
     background: var(--bg);
     color: var(--text);
     font-family: var(--sans);
-    font-size: 16px;
+    font-size: 18px;
     line-height: 1.6;
     min-height: 100vh;
     /* sticky footer: stack nav / (hero?) / main / footer in a flex column
@@ -128,7 +128,7 @@ main { flex: 1; }
 }
 .units-label {
     font-family: var(--mono);
-    font-size: 0.68rem;
+    font-size: 0.7rem;
     color: var(--text-dim);
     text-transform: uppercase;
     letter-spacing: 0.08em;
@@ -165,12 +165,16 @@ html[data-units="metric"] .units-btn[data-units="metric"] {
     position: relative;
     z-index: 1;
     padding: 5rem 2rem 4rem;
-    max-width: 880px;
+    max-width: 1120px;
     margin: 0 auto;
     width: 100%;   /* don't shrink-to-fit inside body's flex column */
+    text-align: center;
     animation: fadeUp 0.5s ease both;
 }
 
+/* Centered eyebrow: short accent line on each side of the label so the
+   visual weight balances. ::before stays for the original left line;
+   ::after mirrors it on the right. */
 .hero-eyebrow {
     font-family: var(--mono);
     font-size: 0.7rem;
@@ -180,9 +184,11 @@ html[data-units="metric"] .units-btn[data-units="metric"] {
     margin-bottom: 1.25rem;
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 0.6rem;
 }
-.hero-eyebrow::before {
+.hero-eyebrow::before,
+.hero-eyebrow::after {
     content: '';
     display: block;
     width: 22px;
@@ -206,11 +212,11 @@ html[data-units="metric"] .units-btn[data-units="metric"] {
     font-weight: 300;
     color: var(--text);
     max-width: 540px;
-    margin-bottom: 2rem;
+    margin: 0 auto 2rem;   /* auto x-margins center the constrained paragraph */
     line-height: 1.8;
 }
 
-.hero-badges { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.hero-badges { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem; }
 .badge {
     font-family: var(--mono);
     font-size: 0.68rem;
@@ -230,7 +236,7 @@ html[data-units="metric"] .units-btn[data-units="metric"] {
 main {
     position: relative;
     z-index: 1;
-    max-width: 880px;
+    max-width: 1120px;
     margin: 0 auto;
     padding: 2.5rem 2rem 4rem;
     width: 100%;
@@ -372,7 +378,7 @@ p.tool-preamble {
 label,
 .field-label {
     font-family: var(--mono);
-    font-size: 0.66rem;
+    font-size: 0.7rem;
     text-transform: uppercase;
     letter-spacing: 0.1em;
     color: var(--text-dim);
@@ -416,7 +422,7 @@ select option { background: var(--surface); }
 }
 .result-label {
     font-family: var(--mono);
-    font-size: 0.65rem;
+    font-size: 0.7rem;
     text-transform: uppercase;
     letter-spacing: 0.1em;
     color: var(--text-dim);
@@ -458,7 +464,7 @@ select option { background: var(--surface); }
     display: flex;
     justify-content: space-between;
     font-family: var(--mono);
-    font-size: 0.63rem;
+    font-size: 0.7rem;
     color: var(--text-dim);
     margin-bottom: 0.35rem;
 }
@@ -482,7 +488,7 @@ select option { background: var(--surface); }
    `<p>` — see also p.pid-note and p.ref-note below. */
 p.bit-hint {
     font-family: var(--mono);
-    font-size: 0.68rem;
+    font-size: 0.7rem;
     color: var(--text-dim);
     margin-bottom: 0.85rem;
 }
@@ -539,7 +545,7 @@ p.bit-hint {
 }
 .readout-label {
     font-family: var(--mono);
-    font-size: 0.6rem;
+    font-size: 0.7rem;
     text-transform: uppercase;
     letter-spacing: 0.1em;
     color: var(--text-dim);
@@ -562,13 +568,13 @@ footer {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    max-width: 880px;
+    max-width: 1120px;
     margin: 0 auto;
     width: 100%;   /* don't shrink-to-fit inside body's flex column */
 }
 .footer-text {
     font-family: var(--mono);
-    font-size: 0.68rem;
+    font-size: 0.7rem;
     color: var(--text-dim);
 }
 
@@ -600,7 +606,7 @@ footer {
 /* ── COPY BUTTON ── */
 .copy-btn {
     font-family: var(--mono);
-    font-size: 0.62rem;
+    font-size: 0.7rem;
     text-transform: uppercase;
     letter-spacing: 0.08em;
     padding: 0.2rem 0.55rem;
@@ -619,7 +625,7 @@ footer {
 /* ── SUBHEAD (within a tool body) ── */
 .subhead {
     font-family: var(--mono);
-    font-size: 0.66rem;
+    font-size: 0.7rem;
     text-transform: uppercase;
     letter-spacing: 0.12em;
     color: var(--accent);
@@ -645,7 +651,7 @@ footer {
 .slider-val { font-family: var(--mono); font-size: 0.8rem; color: var(--accent); }
 .slider-sub {
     font-family: var(--mono);
-    font-size: 0.6rem;
+    font-size: 0.7rem;
     color: var(--text-dim);
     letter-spacing: 0.02em;
 }
@@ -721,7 +727,7 @@ input[type="range"]:focus-visible::-moz-range-thumb {
     display: flex;
     gap: 1.5rem;
     font-family: var(--mono);
-    font-size: 0.64rem;
+    font-size: 0.7rem;
     color: var(--text-dim);
     margin-bottom: 1rem;
     padding-left: 0.25rem;
@@ -749,7 +755,7 @@ input[type="range"]:focus-visible::-moz-range-thumb {
 }
 .ref-table thead th {
     font-family: var(--mono);
-    font-size: 0.62rem;
+    font-size: 0.7rem;
     text-transform: uppercase;
     letter-spacing: 0.1em;
     color: var(--text-dim);
@@ -837,9 +843,9 @@ p.pid-note {
 }
 .nav-card:hover .nav-card-name { color: var(--accent); }
 .nav-card-desc {
-    font-size: 0.85rem;
-    color: var(--text-dim);
-    line-height: 1.6;
+    font-size: 0.95rem;
+    color: var(--text);
+    line-height: 1.65;
 }
 
 /* ──────────────────────────────────────────────────────────────────────
@@ -1081,15 +1087,23 @@ p.ref-note.compact {
     border-top: none;
 }
 
-/* mobile / responsive — collapse the three columns to a single stack
-   (Input → Output → Reference). The "two products, one codebase" plan
-   eventually wants a purpose-built mobile experience for this tool; this
-   is just the conservative first pass.
+/* mobile / responsive — collapse the multi-column grids to a single stack
+   (Input → Output → Reference). 3-col collapses earlier (≤1000px) than
+   2-col (≤900px): three columns at the new 1120px main cap still leave
+   each column ~340px, but at viewport ~1000px (1120px container minus
+   side padding minus borders) each column is back to today's cramped
+   ~290px. Collapsing 3-col at 1000px keeps psychrometric-chart /
+   thermistor-calculator readable on narrow desktops and tablets. 2-col
+   tools have headroom and only need to collapse at the tablet break.
+   The "two products, one codebase" plan eventually wants a purpose-built
+   mobile experience for these tools; this is the conservative pass.
    // mobile-first treatment of this tool is a future task — see site-ideas-and-friction.md */
-@media (max-width: 900px) {
+@media (max-width: 1000px) {
     .tool-body-3col { grid-template-columns: 1fr; }
     .tool-body-3col > section { border-right: none; border-bottom: 1px solid var(--border); }
     .tool-body-3col > section:last-child { border-bottom: none; }
+}
+@media (max-width: 900px) {
     .tool-body-2col { grid-template-columns: 1fr; }
     .tool-body-2col > section { border-right: none; border-bottom: 1px solid var(--border); }
     .tool-body-2col > section:last-child { border-bottom: none; }
@@ -1136,7 +1150,7 @@ p.ref-note.compact {
     flex-wrap: wrap;
     gap: 0.4rem 1.5rem;
     font-family: var(--mono);
-    font-size: 0.66rem;
+    font-size: 0.7rem;
     color: var(--text-dim);
     margin: -0.5rem 0 0;
     padding-left: 0.25rem;
@@ -1202,7 +1216,7 @@ p.ref-note.compact {
 
 .widget-section-label {
     font-family: var(--mono);
-    font-size: 0.62rem;
+    font-size: 0.7rem;
     color: var(--text-dim);
     letter-spacing: 0.08em;
     text-transform: uppercase;
@@ -1227,7 +1241,7 @@ p.ref-note.compact {
 
 .widget-readout-label {
     font-family: var(--mono);
-    font-size: 0.6rem;
+    font-size: 0.7rem;
     text-transform: uppercase;
     letter-spacing: 0.08em;
     color: var(--text-dim);

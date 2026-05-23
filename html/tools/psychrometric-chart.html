@@ -9,14 +9,16 @@ nav: tools
 {% block head %}
     <style>
         /* Page-specific: a draggable psych chart with a process train needs more
-           room than the standard 880px; this page widens the workspace to 1280
+           room than the standard 1120px; this page widens the workspace to 1280
            and uses a custom 3-column split — narrow inputs / wide chart / narrow
            results. The shared design system (.tool-body-3col, .ps-row, …) is
-           otherwise used as-is; these few rules just tune the proportions. */
+           otherwise used as-is; these few rules just tune the proportions. The
+           local @media matches the site-wide 3-col collapse at ≤1000px (set in
+           styles.css). */
         main, footer { max-width: 1280px; }
         .tool-body-3col { grid-template-columns: minmax(220px, 26%) 1fr minmax(220px, 26%); }
         .tool-body-3col > section:last-child .ps-row { grid-template-columns: 1fr auto; }
-        @media (max-width: 900px) {
+        @media (max-width: 1000px) {
             .tool-body-3col { grid-template-columns: 1fr; }
         }
 

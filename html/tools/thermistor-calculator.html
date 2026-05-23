@@ -30,8 +30,9 @@ nav: tools
         .ref-table-dense tbody tr.th-rt-now td:first-child { font-weight: 600; color: var(--accent); }
         input.ps-input:disabled { opacity: 0.55; cursor: not-allowed; }
         /* re-assert the shared collapse-to-one-stack at narrow widths (our custom
-           grid-template-columns above would otherwise out-cascade the shared rule) */
-        @media (max-width: 900px) { .tool-body-3col { grid-template-columns: 1fr; } }
+           grid-template-columns above would otherwise out-cascade the shared rule).
+           Matches the site-wide 3-col collapse at ≤1000px set in styles.css. */
+        @media (max-width: 1000px) { .tool-body-3col { grid-template-columns: 1fr; } }
         /* The "About these tables" card is the only place on this page with
            prose paragraphs — the design system's global `* { margin: 0 }` reset
            collapses them otherwise. Scoped here, not in styles.css. */
