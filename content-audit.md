@@ -629,3 +629,31 @@ quick editorial pass.
   output, not `Infinity` or `NaN`. Not a bug — but a small note in
   the editor's "How it works" section, or a tooltip on the DIVIDE
   palette entry, would set expectations. *(engineer)*
+
+**Resolution (2026-05-23):** all eight items addressed in one
+editorial sweep (matches the first-pass `c8f6544` shape).
+
+- `html/education/function-blocks.html` — glossed "freeze-stat" and
+  "reset schedule" inline in the closing paragraph; extended the
+  econ-diagram caption to note that a FALSE digital wire reads grey
+  in the editor (so the diagram's all-TRUE example lines up with what
+  a CTA-follower sees on landing).
+- `html/education/equipment-staging.html` — added a `.ref-note.compact`
+  caption between Widget 1 and the follow-up prose calling out that
+  the 2-second stage delay / 4-second minimum stage time are
+  theatrical (real plants run minutes); glossed "design day" inline
+  in the next paragraph.
+- `html/tools/function-block-editor.html` — renamed the `PID loop`
+  preset chip to `heating PID` so the chip text matches the loaded
+  graph's `action: 'reverse'`; added a one-line `.ref-note` under
+  "How it works" documenting that `DIVIDE` outputs `0` on a `0`
+  divisor.
+- `html/tools/refrigerant-pt.html` — expanded "TXV" to "TXV
+  (thermostatic expansion valve)" on first use in the worked-example
+  prose; disambiguated the metric pressure unit from `kPa` to `kPag`
+  in input labels, worked-example body spans, the gauge-convention
+  sentence, and the runtime suffix helper, matching the unambiguous
+  `psig` on the US side.
+- `package.json` — version bump `2.3.0` → `2.3.1` (covers the
+  whole second-pass audit-fix session: #6–#9 substantive items plus
+  this minor-polish sweep, matching the first-pass roll-up cadence).

@@ -98,7 +98,7 @@ nav: tools
                     </div>
 
                     <div class="ps-row">
-                        <label class="ps-label" data-us="Gauge pressure (psig)" data-metric="Gauge pressure (kPa)" for="rf-pt-pressure">Gauge pressure (psig)</label>
+                        <label class="ps-label" data-us="Gauge pressure (psig)" data-metric="Gauge pressure (kPag)" for="rf-pt-pressure">Gauge pressure (psig)</label>
                         <input class="ps-input" type="number" id="rf-pt-pressure" step="1" value="118">
                     </div>
                     <div class="ps-row">
@@ -135,7 +135,7 @@ nav: tools
                 <h2 class="ps-section-label">Worked example</h2>
                 <p class="ref-note worked-intro">
                     An R-410A system, suction gauge reading
-                    <span data-us="118 psig" data-metric="814 kPa">118 psig</span> at
+                    <span data-us="118 psig" data-metric="814 kPag">118 psig</span> at
                     the evaporator outlet.
                 </p>
                 <ol class="ref-note worked-list">
@@ -180,7 +180,7 @@ nav: tools
                     </div>
 
                     <div class="ps-row">
-                        <label class="ps-label" data-us="Gauge pressure (psig)" data-metric="Gauge pressure (kPa)" for="rf-sc-pressure">Gauge pressure (psig)</label>
+                        <label class="ps-label" data-us="Gauge pressure (psig)" data-metric="Gauge pressure (kPag)" for="rf-sc-pressure">Gauge pressure (psig)</label>
                         <input class="ps-input" type="number" id="rf-sc-pressure" step="1" value="118">
                     </div>
                     <div class="ps-row">
@@ -218,7 +218,7 @@ nav: tools
                 <h2 class="ps-section-label">Worked example</h2>
                 <p class="ref-note worked-intro">
                     Same R-410A system: suction
-                    <span data-us="118 psig" data-metric="814 kPa">118 psig</span>,
+                    <span data-us="118 psig" data-metric="814 kPag">118 psig</span>,
                     a clamp-on thermometer on the suction line reading
                     <span data-us="50 °F" data-metric="10 °C">50 °F</span>.
                 </p>
@@ -236,9 +236,10 @@ nav: tools
                         compressor; high superheat of a starved evaporator. Low
                         subcooling points to undercharge or a liquid-line
                         restriction. The target numbers are
-                        <em>system-specific</em> — a TXV holds a different
-                        superheat than a fixed orifice — so treat the verdict as
-                        a direction, not a setpoint.</li>
+                        <em>system-specific</em> — a TXV (thermostatic
+                        expansion valve) holds a different superheat than a
+                        fixed orifice — so treat the verdict as a direction,
+                        not a setpoint.</li>
                 </ol>
                 <p class="ref-note">
                     This is the same procedure printed on a manufacturer P-T
@@ -274,7 +275,7 @@ nav: tools
                 averages the two and is quietly wrong on every glide blend.
             </p>
             <p>
-                <strong>Pressures are gauge (psig / kPa),</strong> as read at the
+                <strong>Pressures are gauge (psig / kPag),</strong> as read at the
                 manifold — not absolute. <strong>Target superheat and subcooling
                 depend on the system</strong> — metering device, equipment
                 manufacturer, operating conditions. This tool gives you the
@@ -312,7 +313,7 @@ nav: tools
         const dispP  = p  => Math.round(U.display.pressure(p));
         const tU     = () => U.suffix.temp();
         const dtU    = () => U.suffix.deltaTemp();
-        const pU     = () => U.current() === 'metric' ? 'kPa' : 'psig';
+        const pU     = () => U.current() === 'metric' ? 'kPag' : 'psig';
         const getNum = id => parseFloat(document.getElementById(id).value);
 
         // ── State ─────────────────────────────────────────────────────
