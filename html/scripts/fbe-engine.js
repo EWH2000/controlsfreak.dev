@@ -288,6 +288,8 @@ const FBE = (function () {
             // Output is clamped 0–100 %. `action` picks the error sign:
             // reverse-acting (heating) raises output as PV falls below
             // SP; direct-acting (cooling) raises it as PV climbs above.
+            // The derivative term is on PV (not on error) — an SP change
+            // doesn't kick the output, matching the rule in pid-basics.
             // Distinct from pid-engine.js's simulatePid (a whole
             // step-response simulation) — this is one controller block.
             label: 'PID', category: 'Control', stateful: true,
@@ -308,7 +310,11 @@ const FBE = (function () {
                 const ti = asNum(p.ti);
                 const td = asNum(p.td);
                 const err = p.action === 'direct' ? pv - sp : sp - pv;
-                const deriv = s.init ? (err - s.prevErr) / dt : 0;
+                // Derivative on PV: a rising PV adds to a direct-acting
+                // controller's output, subtracts from a reverse-acting
+                // one. Equivalent to d(err)/dt when SP is constant.
+                const dPv = s.init ? (pv - s.prevPv) / dt : 0;
+                const deriv = p.action === 'direct' ? dPv : -dPv;
                 const integral = s.integral || 0;
                 const iTry = integral + err * dt;
                 const term = (iv) => kc * (err + (ti > 0 ? iv / ti : 0) + td * deriv);
@@ -320,7 +326,7 @@ const FBE = (function () {
                 } else {
                     s.integral = iTry;
                 }
-                s.prevErr = err;
+                s.prevPv = pv;
                 s.init = true;
                 return { out: { OUT: clamp(raw, 0, 100) } };
             },
