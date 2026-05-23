@@ -425,9 +425,11 @@ Light-only (`color-scheme: light`); no dark variant.
 
 - **Layout:** body is a flex column (`min-height:100vh`) with
   `main { flex: 1 }` so the footer sits at the viewport bottom on
-  short pages. `main` / `.hero` / `footer` need `width: 100%` alongside
+  short pages. `main` / `.hero` need `width: 100%` alongside
   `margin: 0 auto` — without it, `margin: 0 auto` on a flex child
-  shrinks instead of centering.
+  shrinks instead of centering. `.site-nav` and `footer` are
+  full-bleed (no max-width cap) — they're status-bar chrome, not
+  centered content.
 - **CSS custom properties** in `:root` — change colors by editing
   these, not by hardcoding. Surface / border / accent / text /
   data-color / font families are all defined there; read `styles.css`
