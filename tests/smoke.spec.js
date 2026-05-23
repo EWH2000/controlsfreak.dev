@@ -850,3 +850,125 @@ test('psychrometrics basics — pool widget sweeps surface temp through dry / wa
 
     expect(errors, 'psychrometrics-basics behavioral should log no page / console errors').toEqual([]);
 });
+
+test.describe('function-block editor — interactions', () => {
+    test('Delete key removes a selected block', async ({ page }) => {
+        const errors = watchErrors(page);
+        await page.goto('/tools/function-block-editor.html');
+        await page.click('#fbe-clear');
+        await page.locator('.fbe-palette-btn', { hasText: 'CONSTANT' }).click();
+        // newly-added block is auto-selected; Delete (the keyboard path,
+        // not the inspector button) removes it.
+        await expect(page.locator('.fbe-block')).toHaveCount(1);
+        await page.keyboard.press('Delete');
+        await expect(page.locator('.fbe-block')).toHaveCount(0);
+        expect(errors, 'Delete-key behavioral should log no errors').toEqual([]);
+    });
+
+    test('Backspace also deletes a selection', async ({ page }) => {
+        const errors = watchErrors(page);
+        await page.goto('/tools/function-block-editor.html');
+        await page.click('#fbe-clear');
+        await page.locator('.fbe-palette-btn', { hasText: 'CONSTANT' }).click();
+        await page.keyboard.press('Backspace');
+        await expect(page.locator('.fbe-block')).toHaveCount(0);
+        expect(errors, 'Backspace behavioral should log no errors').toEqual([]);
+    });
+
+    test('Escape cancels a pending wire', async ({ page }) => {
+        const errors = watchErrors(page);
+        await page.goto('/tools/function-block-editor.html');
+        await page.click('#fbe-clear');
+        await page.locator('.fbe-palette-btn', { hasText: 'CONSTANT' }).click();
+        await page.locator('.fbe-palette-btn', { hasText: 'READOUT' }).click();
+        await page.locator('.fbe-block[data-id="b1"] .fbe-pin-out').click();
+        // Pending wire — compatible input pins light up as targets.
+        await expect(page.locator('.fbe-pin-target')).toHaveCount(1);
+        await page.keyboard.press('Escape');
+        await expect(page.locator('.fbe-pin-target')).toHaveCount(0);
+        await expect(page.locator('.fbe-wire')).toHaveCount(0);
+        expect(errors, 'Escape behavioral should log no errors').toEqual([]);
+    });
+
+    test('type-mismatch on wire creation leaves no connection', async ({ page }) => {
+        const errors = watchErrors(page);
+        await page.goto('/tools/function-block-editor.html');
+        await page.click('#fbe-clear');
+        // BINARY IN emits a bool; READOUT consumes a number — incompatible.
+        await page.locator('.fbe-palette-btn', { hasText: 'BINARY IN' }).click();
+        await page.locator('.fbe-palette-btn', { hasText: 'READOUT' }).click();
+        await page.locator('.fbe-block[data-id="b1"] .fbe-pin-out').click();
+        await page.locator('.fbe-block[data-id="b2"] .fbe-pin-in').click();
+        await expect(page.locator('.fbe-wire')).toHaveCount(0);
+        await expect(page.locator('#fbe-status')).toContainText('Type mismatch');
+        expect(errors, 'type-mismatch behavioral should log no errors').toEqual([]);
+    });
+
+    test('self-loop on a single block is rejected', async ({ page }) => {
+        const errors = watchErrors(page);
+        await page.goto('/tools/function-block-editor.html');
+        await page.click('#fbe-clear');
+        await page.locator('.fbe-palette-btn', { hasText: 'AND' }).click();
+        await page.locator('.fbe-block[data-id="b1"] .fbe-pin-out').click();
+        await page.locator('.fbe-block[data-id="b1"] .fbe-pin-in').first().click();
+        await expect(page.locator('.fbe-wire')).toHaveCount(0);
+        await expect(page.locator('#fbe-status')).toContainText('wire to itself');
+        expect(errors, 'self-loop behavioral should log no errors').toEqual([]);
+    });
+
+    test('pause / run / step toggles the sim status', async ({ page }) => {
+        const errors = watchErrors(page);
+        await page.goto('/tools/function-block-editor.html');
+        // economizer example loads and runs by default.
+        await expect(page.locator('#fbe-run')).toHaveText('Pause');
+        await expect(page.locator('#fbe-status')).toHaveText('Running');
+        await page.click('#fbe-run');
+        await expect(page.locator('#fbe-run')).toHaveText('Run');
+        await expect(page.locator('#fbe-status')).toHaveText('Paused');
+        // Step keeps the sim paused and advances one tick — no exception.
+        await page.click('#fbe-step');
+        await expect(page.locator('#fbe-run')).toHaveText('Run');
+        // Resume — Run label flips back to Pause, status back to Running.
+        await page.click('#fbe-run');
+        await expect(page.locator('#fbe-run')).toHaveText('Pause');
+        await expect(page.locator('#fbe-status')).toHaveText('Running');
+        expect(errors, 'sim-bar behavioral should log no errors').toEqual([]);
+    });
+
+    test('non-AI inspector edit flows to the output — PID gain to zero zeros the readout', async ({ page }) => {
+        const errors = watchErrors(page);
+        await page.goto('/tools/function-block-editor.html');
+        await page.click('[data-example="pid"]');
+        // PID example: sp=72, pv=70, kc=4 — output is non-zero on every
+        // tick. Zero the gain via the inspector and the readout collapses.
+        await page.locator('.fbe-block[data-id="ctl"] .fbe-block-head').click();
+        await page.fill('#fbe-p-kc', '0');
+        await expect(page.locator('.fbe-block[data-id="rd"] .fbe-block-val')).toHaveText('0');
+        await expect(page.locator('.fbe-block[data-id="out"] .fbe-block-val')).toHaveText('0');
+        expect(errors, 'PID-gain behavioral should log no errors').toEqual([]);
+    });
+
+    test('mid-wire then delete the source block leaves no ghost wire', async ({ page }) => {
+        // Regression test for the BUG-2 fix on fix/fbe-mid-wire-and-prose —
+        // deleteSelected() must clear `pending` so a subsequent input-pin
+        // click can't form a wire whose source block no longer exists.
+        const errors = watchErrors(page);
+        await page.goto('/tools/function-block-editor.html');
+        await page.click('#fbe-clear');
+        await page.locator('.fbe-palette-btn', { hasText: 'CONSTANT' }).click();
+        await page.locator('.fbe-palette-btn', { hasText: 'READOUT' }).click();
+        // Start a wire from the CONSTANT output pin.
+        await page.locator('.fbe-block[data-id="b1"] .fbe-pin-out').click();
+        await expect(page.locator('.fbe-pin-target')).toHaveCount(1);
+        // Select the CONSTANT block (the wire's source) and Delete it via
+        // the keyboard path — this is where the cancelWire() fix lives.
+        await page.locator('.fbe-block[data-id="b1"] .fbe-block-head').click();
+        await page.keyboard.press('Delete');
+        // Now click the READOUT input pin. Without the fix, a ghost wire
+        // would form with a dangling `from` reference.
+        await page.locator('.fbe-block[data-id="b2"] .fbe-pin-in').click();
+        await expect(page.locator('.fbe-wire')).toHaveCount(0);
+        await expect(page.locator('.fbe-pin-target')).toHaveCount(0);
+        expect(errors, 'mid-wire-delete behavioral should log no errors').toEqual([]);
+    });
+});
