@@ -506,6 +506,18 @@ matches the editor's landing state.
   the SP at the inspector, demonstrate the derivative-kick the
   partner page just warned them about.
 
+**Resolution (2026-05-23):** primary direction — switched the PID
+block in `html/scripts/fbe-engine.js` to derivative-on-PV. State now
+carries `prevPv` instead of `prevErr`; the derivative term is
+`(pv - prevPv) / dt` for direct action and the negation of that for
+reverse, so a rising PV still bumps a direct-acting controller's
+output up and a reverse-acting one's output down. When SP is
+constant the math is identical to the previous derivative-on-error
+formulation, so the existing worked PID example (which ships with
+`td: 0`) is unaffected; nudging SP at the inspector with `td > 0` no
+longer produces the derivative kick that pid-basics warned against.
+Block docstring updated to record the choice.
+
 ### 9. `refrigerant-data.js` marks R-410A `blend: false` but the file's own header rule says near-azeotropic blends are `blend: true`
 
 - **Where:** `html/scripts/refrigerant-data.js` line 76 — R-410A
