@@ -17,6 +17,14 @@ nav: tools
            "feels like a drive keypad" goal lives in the layout and the
            grid; we don't need to also mimic dark plastic). */
 
+        /* Page-specific main cap: the LCD + keypad in the .vfdm-grid's left
+           column are fixed-character / fixed-key widths that don't stretch;
+           inside the site-wide 1120px main, the two panels would drift apart
+           with dead space between. Capping main here re-centers the whole
+           tool (grid + parameter-reference table) at the narrower width that
+           matches the "drive front panel" design. Same pattern as
+           psychrometric-chart's custom cap. */
+        main, footer { max-width: 880px; }
         .vfdm-grid {
             display: grid;
             grid-template-columns: minmax(320px, 1fr) minmax(280px, 1fr);

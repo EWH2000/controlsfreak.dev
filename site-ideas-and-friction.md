@@ -2271,8 +2271,8 @@ beat kitchen-sink ones for the "open it, get the number, close it"
 flow.
 
 This is a *content-and-feature* consideration, not a page-architecture
-rule. Pages render responsively (`≤900px` triggers the 3-col → stack
-collapse uniformly) and there's no "mobile subset" or "hide on
+rule. Pages render responsively (3-col grids collapse at ≤1000px,
+2-col at ≤900px) and there's no "mobile subset" or "hide on
 mobile" framework — every tool is the same tool on every device.
 Use this when picking *what to build* and *how the inputs flow*, not
 when deciding how the page itself is structured.

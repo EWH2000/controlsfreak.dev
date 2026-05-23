@@ -462,9 +462,11 @@ Light-only (`color-scheme: light`); no dark variant.
   value can be `.ps-value` (mono, plus `.live` / `.muted` / `.error`)
   or an `input/select/textarea.ps-input` (form-control variant;
   qualified by element so it outranks the global `input[type=…]` /
-  `select` block). At ≤900px the 2-col / 3-col grids collapse to a
-  single stack; `.tool-body-row` has no grid template to collapse
-  and just stays full-width. Note: `.ps-section-label` is named that
+  `select` block). The grids collapse to a single stack at
+  different breakpoints — `.tool-body-3col` at ≤1000px (three
+  columns get cramped earlier inside the 1120px main cap),
+  `.tool-body-2col` at ≤900px. `.tool-body-row` has no grid
+  template to collapse and just stays full-width. Note: `.ps-section-label` is named that
   to avoid collision with `.section-label`; the live-value modifier
   is `.live` to avoid collision with `.readout`.
 - **Widget chrome (`.widget-*`)** — the recessed-panel idiom used by
