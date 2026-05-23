@@ -1577,6 +1577,99 @@ p.ref-note.compact {
     fill: var(--blue);
 }
 
+/* ──────────────────────────────────────────────────────────────────────
+ * BAS FLARE — "BAS-instrument quiet" widget polish.
+ *
+ * Subtle panel-instrument hooks reused across widgets:
+ *   .bas-led / .bas-led.active / .bas-led.fault — 6px round status
+ *     dot. Neutral by default; .active gets the accent fill + a soft
+ *     pulsing ring; .fault swaps to --red and pulses faster. aria-
+ *     hidden in pages since the adjacent text-state already conveys
+ *     status to screen readers.
+ *   .lcd-scanline — overlay class on an LCD-style panel. Adds a
+ *     near-invisible horizontal scanline pattern via ::after; pure
+ *     visual texture, no motion.
+ *   .lcd-flicker — one-shot 150ms opacity dip; JS adds the class
+ *     then removes it on a setTimeout to trigger the dip on every
+ *     LCD value update.
+ *   .bas-state-flash — one-shot 350ms outer accent-glow ring around
+ *     a row/card. JS adds the class on a state transition and
+ *     removes it on a setTimeout.
+ *   .bas-breathe — slow box-shadow breathing ring; used by the
+ *     psychrometric chart's state-point chip.
+ *
+ * Reduced motion: the global @media (prefers-reduced-motion: reduce)
+ * block below already disables all keyframe animations site-wide, so
+ * these rules don't need their own guard. LEDs still color-code state
+ * — only the pulse goes quiet.
+ * ────────────────────────────────────────────────────────────────────── */
+.bas-led {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--text-dim);
+    border: 1px solid var(--border);
+    vertical-align: middle;
+    flex-shrink: 0;
+}
+.bas-led.active {
+    background: var(--accent);
+    border-color: var(--accent-glow);
+    box-shadow: 0 0 0 2px var(--accent-soft);
+    animation: bas-led-pulse 2s ease-in-out infinite;
+}
+.bas-led.fault {
+    background: var(--red);
+    border-color: rgba(196,56,47,0.32);
+    box-shadow: 0 0 0 2px rgba(196,56,47,0.08);
+    animation: bas-led-pulse 1.2s ease-in-out infinite;
+}
+.bas-led.warn {
+    background: var(--heat);
+    border-color: rgba(200,120,42,0.32);
+    box-shadow: 0 0 0 2px rgba(200,120,42,0.08);
+    animation: bas-led-pulse 1.6s ease-in-out infinite;
+}
+@keyframes bas-led-pulse {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.55; }
+}
+
+.lcd-scanline { position: relative; }
+.lcd-scanline::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+        0deg,
+        transparent 0,
+        transparent 2px,
+        rgba(29,37,31,0.045) 2px,
+        rgba(29,37,31,0.045) 3px
+    );
+    border-radius: inherit;
+}
+@keyframes lcd-flicker {
+    0%   { opacity: 1; }
+    45%  { opacity: 0.68; }
+    100% { opacity: 1; }
+}
+.lcd-flicker { animation: lcd-flicker 150ms ease-in-out 1; }
+
+@keyframes bas-state-flash {
+    0%   { box-shadow: 0 0 0 2px var(--accent-glow), 0 0 0 4px var(--accent-soft); }
+    100% { box-shadow: 0 0 0 2px transparent,        0 0 0 4px transparent; }
+}
+.bas-state-flash { animation: bas-state-flash 350ms ease-out 1; }
+
+@keyframes bas-breathe {
+    0%, 100% { box-shadow: 0 0 0 6px rgba(67,136,28,0.16); }
+    50%      { box-shadow: 0 0 0 11px rgba(67,136,28,0.05); }
+}
+.bas-breathe { animation: bas-breathe 1.8s ease-in-out infinite; }
+
 /* Utility: hide an element that JS toggles into view. display:none
    drops it from layout and the accessibility tree. Placed after the
    component rules so it wins the specificity tie against a

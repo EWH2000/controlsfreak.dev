@@ -33,6 +33,14 @@
 
 'use strict';
 
+// Tiny hex → rgba helper for the afterglow trace gradient below. Assumes
+// the input is a 6-digit hex string returned by getComputedStyle on a
+// :root CSS custom property (the one and only call site today).
+function hexToRgba(hex, a) {
+    const v = parseInt(hex.replace('#', ''), 16);
+    return 'rgba(' + ((v >> 16) & 255) + ',' + ((v >> 8) & 255) + ',' + (v & 255) + ',' + a + ')';
+}
+
 function drawPidChart(canvas, sim, opts) {
     opts = opts || {};
     const variant = opts.variant || 'full';
@@ -123,13 +131,21 @@ function drawPidChart(canvas, sim, opts) {
     ctx.beginPath(); ctx.moveTo(padL, Y(sp)); ctx.lineTo(padL + w, Y(sp)); ctx.stroke();
     ctx.setLineDash([]);
 
-    // PV trace + soft fill below
+    // PV trace + soft fill below — BAS-flare afterglow: the trace fades
+    // from low alpha at t=0 to full intensity at the most recent sample,
+    // so the eye is pulled to the right edge ("what just happened?") the
+    // way it would on a live ticker. Static chart, but the gradient lends
+    // the same alive feeling.
     ctx.beginPath();
     for (let i = 0; i < t.length; i++) {
         const xx = X(t[i]), yy = Y(pv[i]);
         i === 0 ? ctx.moveTo(xx, yy) : ctx.lineTo(xx, yy);
     }
-    ctx.strokeStyle = cAccent;
+    const traceGrad = ctx.createLinearGradient(padL, 0, padL + w, 0);
+    traceGrad.addColorStop(0,    hexToRgba(cAccent, 0.42));
+    traceGrad.addColorStop(0.75, hexToRgba(cAccent, 0.92));
+    traceGrad.addColorStop(1,    cAccent);
+    ctx.strokeStyle = traceGrad;
     ctx.lineWidth = 2;
     ctx.stroke();
     ctx.lineTo(X(t[t.length - 1]), padT + h);

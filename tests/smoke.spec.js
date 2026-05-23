@@ -638,10 +638,16 @@ test('vfd mock — run-source gating works from the keypad', async ({ page }) =>
     const lcdLines = await page.locator('#vfdm-lcd .vfdm-lcd-line').allTextContents();
     expect(lcdLines[3]).toMatch(/IGN: SRC=TERMS/);
 
+    // BAS-flare LED — neutral when stopped (no .active class).
+    await expect(page.locator('#vfdm-state-led')).not.toHaveClass(/active/);
+
     // L/R into LOCAL — keypad now overrides source params and RUN actually starts the drive.
     await page.click('#vfdm-key-local');
     await page.click('#vfdm-key-run');
     await expect(page.locator('#vfdm-state-text')).toHaveText(/RAMPING UP|AT SPEED/);
+
+    // BAS-flare LED activates as the drive starts running.
+    await expect(page.locator('#vfdm-state-led')).toHaveClass(/active/);
 
     // setHz = 30 (keypad default I01). Poll for actHz to climb to ≥ 1 Hz
     // (deterministic stop condition instead of a hard 300 ms wait) capped
@@ -807,6 +813,10 @@ test('balancing page renders riser, widget compares three branches, anecdote rev
     await expect(page.locator('#bal-bch-abv')).toHaveAttribute('data-state', 'starved');
     await expect(page.locator('#bal-bch-picv')).toHaveAttribute('data-state', 'holding');
 
+    // BAS-flare LEDs — color matches state per branch.
+    await expect(page.locator('#bal-bch-cbv  .bas-led')).toHaveClass(/fault/);
+    await expect(page.locator('#bal-bch-picv .bas-led')).toHaveClass(/active/);
+
     // Anecdote reveal — Δp ≤ 4 ft triggers it; 2 is already past the threshold.
     await expect(page.locator('#bal-anecdote')).toBeVisible();
 
@@ -820,6 +830,9 @@ test('balancing page renders riser, widget compares three branches, anecdote rev
     });
     await expect(page.locator('#bal-bch-cbv')).toHaveAttribute('data-state', 'over');
     await expect(page.locator('#bal-bch-picv')).toHaveAttribute('data-state', 'holding');
+
+    // BAS-flare LED on the OVER branch flips to .warn (orange).
+    await expect(page.locator('#bal-bch-cbv .bas-led')).toHaveClass(/warn/);
 
     // Anecdote stays pinned once shown (extreme-state reward semantic).
     await expect(page.locator('#bal-anecdote')).toBeVisible();

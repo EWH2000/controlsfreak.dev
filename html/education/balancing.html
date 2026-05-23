@@ -537,7 +537,7 @@ nav: education
                             </div>
                             <div class="bal-w-bch-bar" aria-hidden="true"><span id="bal-cbv-bar"></span></div>
                         </div>
-                        <div class="bal-w-bch-state" id="bal-cbv-state">HOLDING</div>
+                        <div class="bal-w-bch-state" id="bal-cbv-state"><span class="bas-led active" aria-hidden="true"></span><span>HOLDING</span></div>
                     </div>
 
                     <!-- ABV branch -->
@@ -550,7 +550,7 @@ nav: education
                             </div>
                             <div class="bal-w-bch-bar" aria-hidden="true"><span id="bal-abv-bar"></span></div>
                         </div>
-                        <div class="bal-w-bch-state" id="bal-abv-state">HOLDING</div>
+                        <div class="bal-w-bch-state" id="bal-abv-state"><span class="bas-led active" aria-hidden="true"></span><span>HOLDING</span></div>
                     </div>
 
                     <!-- PICV branch -->
@@ -563,7 +563,7 @@ nav: education
                             </div>
                             <div class="bal-w-bch-bar" aria-hidden="true"><span id="bal-picv-bar"></span></div>
                         </div>
-                        <div class="bal-w-bch-state" id="bal-picv-state">HOLDING</div>
+                        <div class="bal-w-bch-state" id="bal-picv-state"><span class="bas-led active" aria-hidden="true"></span><span>HOLDING</span></div>
                     </div>
 
                 </div>
@@ -796,10 +796,28 @@ nav: education
         const dpUnit   = document.getElementById('bal-dp-unit');
         const anecdote = document.getElementById('bal-anecdote');
 
+        // BAS-flare additions on each branch entry:
+        //   ledEl       — the .bas-led span inside the state pill
+        //   stateTxtEl  — the trailing text span (so the LED isn't wiped)
+        //   lastState   — previous state, used to detect transitions
+        function pickBranch(key) {
+            const stateEl = document.getElementById('bal-' + key + '-state');
+            return {
+                key,
+                qEl:    document.getElementById('bal-' + key + '-q'),
+                pctEl:  document.getElementById('bal-' + key + '-pct'),
+                barEl:  document.getElementById('bal-' + key + '-bar'),
+                stateEl,
+                stateTxtEl: stateEl.querySelector('span:not(.bas-led)'),
+                ledEl:  stateEl.querySelector('.bas-led'),
+                rowEl:  document.getElementById('bal-bch-' + key),
+                lastState: 'holding',
+            };
+        }
         const branches = [
-            { key: 'cbv',  flowFn: flowCbv,  qEl: document.getElementById('bal-cbv-q'),  pctEl: document.getElementById('bal-cbv-pct'),  barEl: document.getElementById('bal-cbv-bar'),  stateEl: document.getElementById('bal-cbv-state'),  rowEl: document.getElementById('bal-bch-cbv')  },
-            { key: 'abv',  flowFn: flowAbv,  qEl: document.getElementById('bal-abv-q'),  pctEl: document.getElementById('bal-abv-pct'),  barEl: document.getElementById('bal-abv-bar'),  stateEl: document.getElementById('bal-abv-state'),  rowEl: document.getElementById('bal-bch-abv')  },
-            { key: 'picv', flowFn: flowPicv, qEl: document.getElementById('bal-picv-q'), pctEl: document.getElementById('bal-picv-pct'), barEl: document.getElementById('bal-picv-bar'), stateEl: document.getElementById('bal-picv-state'), rowEl: document.getElementById('bal-bch-picv') }
+            Object.assign(pickBranch('cbv'),  { flowFn: flowCbv  }),
+            Object.assign(pickBranch('abv'),  { flowFn: flowAbv  }),
+            Object.assign(pickBranch('picv'), { flowFn: flowPicv })
         ];
 
         function redraw() {
@@ -816,11 +834,26 @@ nav: education
                 const fillPct = Math.min(BAR_MAX_PCT, Math.max(0, pct));
                 const state = classifyState(qGpm);
 
-                b.qEl.textContent     = formatFlow(qGpm);
-                b.pctEl.textContent   = pct;
-                b.barEl.style.width   = (fillPct / BAR_MAX_PCT * 100) + '%';
-                b.stateEl.textContent = stateLabel(state);
+                b.qEl.textContent       = formatFlow(qGpm);
+                b.pctEl.textContent     = pct;
+                b.barEl.style.width     = (fillPct / BAR_MAX_PCT * 100) + '%';
+                b.stateTxtEl.textContent = stateLabel(state);
                 b.rowEl.setAttribute('data-state', state);
+
+                // BAS flare: LED color tracks the state; on a transition
+                // give the row a brief accent-ring flash so the change
+                // catches the eye.
+                const ledClass = state === 'starved' ? 'fault'
+                               : state === 'over'    ? 'warn'
+                               :                       'active';
+                b.ledEl.classList.remove('active', 'fault', 'warn');
+                b.ledEl.classList.add(ledClass);
+                if (state !== b.lastState) {
+                    b.rowEl.classList.remove('bas-state-flash');
+                    void b.rowEl.offsetWidth;
+                    b.rowEl.classList.add('bas-state-flash');
+                    b.lastState = state;
+                }
             }
 
             if (!anecdoteShown && dpFt <= ANECDOTE_DP_FT) {
