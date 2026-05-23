@@ -365,7 +365,7 @@ main {
     margin: 0;
 }
 /* The trailing hairline that used to follow every section-label is
-   hidden in v2.0.0 — the AV:NNN object-reference prefix on h2 labels
+   hidden in v2.0.0 — the SEC:NNN section-number prefix on h2 labels
    carries enough left-side weight that a trailing line is noise. The
    markup stays in existing pages as a no-op so a future tweak can flip
    it back without retroactive edits; new pages can omit it. */
@@ -373,10 +373,11 @@ main {
 
 /* h2.section-label is the section-divider variant (vs h1.section-label
    which is a landing-page title). When carrying a `data-objref`
-   attribute, h2 labels render with a BACnet object-reference style
-   prefix: `AV:NNN · LABEL`. The accent color attaches to the prefix,
+   attribute, h2 labels render with a BAS-instrument section-number
+   prefix: `SEC:NNN · LABEL`. The accent color attaches to the prefix,
    not the label — the prefix becomes the wayfinding mark, the label
-   reads as a quiet workstation heading.
+   reads as a quiet workstation heading. The numbering is per-page
+   (each page's section sequence), not a device-wide instance.
    Pages without `data-objref` are unaffected (no prefix; existing
    accent label color preserved). */
 h2.section-label[data-objref] {
@@ -385,7 +386,7 @@ h2.section-label[data-objref] {
     color: var(--text-bright);
 }
 h2.section-label[data-objref]::before {
-    content: "AV:" attr(data-objref) " · ";
+    content: "SEC:" attr(data-objref) " · ";
     color: var(--accent);
     font-variant-numeric: tabular-nums;
     margin-right: 0.1rem;
