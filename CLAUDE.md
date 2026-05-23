@@ -158,7 +158,7 @@ Frontmatter fields:
   `&#39;`, `<` becomes `&lt;` in view-source. Rephrase to avoid those
   characters if clean view-source matters.
 - `canonical` — full URL with `.html` extension. Used for `og:url`.
-- `nav` — one of `home`, `tools`, `education`, `contact`. Drives the
+- `nav` — one of `home`, `tools`, `simulators`, `education`, `contact`. Drives the
   `.active` marker on the top nav. Omit (or empty string) on pages
   that don't fit.
 
@@ -247,7 +247,7 @@ harmless, but the signal is lost.
 - **Heading hierarchy.** Every page has exactly one `<h1>` — the page
   topic. On content pages it's `.tool-card-title`
   (`<h1 class="tool-card-title">`); on landings without a tool-card
-  (`/tools/`, `/education/`, `pid-basics.html`) the eyebrow
+  (`/tools/`, `/simulators/`, `/education/`, `pid-basics.html`) the eyebrow
   `.section-label` carries the `<h1>` instead. Section dividers
   (`.section-header > .section-label`, `.ps-section-label`) and
   `.subhead` are `<h2>`. Callout cards (`.callout h3`) and secondary
@@ -348,6 +348,7 @@ controlsfreak.dev/
 │   ├── index.html
 │   ├── contact.html
 │   ├── tools/                # tool pages + tools/index.html landing
+│   ├── simulators/           # simulator pages + simulators/index.html landing
 │   └── education/            # lesson pages + education/index.html landing
 ├── tests/                    # Playwright (smoke.spec.js, contact.spec.js)
 └── _site/                    # build output — gitignored
@@ -361,9 +362,10 @@ per-page history and the *why* behind each, see
 `README.md`.
 
 - **Shared top nav** (`.site-nav`, in `nav.njk`): Home / Tools /
-  Education / Contact. The `nav` frontmatter field on each page
-  drives the `.active` marker; no JS. `Tools` and `Education` link
-  to hub landings (`/tools/`, `/education/`).
+  Simulators / Education / Contact. The `nav` frontmatter field on
+  each page drives the `.active` marker; no JS. `Tools`, `Simulators`,
+  and `Education` link to hub landings (`/tools/`, `/simulators/`,
+  `/education/`).
 - **Page archetypes:**
   - *Tools* mostly use the **property-sheet layout** (`.ps-*` +
     `.ref-table-dense`) — Niagara-style label-left / value-right
@@ -386,8 +388,11 @@ per-page history and the *why* behind each, see
       with its canvas mid-column; `thermistor-calculator` with its
       tall R/T table as the page's deliverable). Codebase-issues #29
       documents when *not* to reach for this.
-  - *PID tuner* and *Mock VFD* keep **custom stacked layouts** — a
-    simulator block doesn't fit Input/Output/Reference.
+  - *Simulators* (`/simulators/`) keep **custom stacked layouts** —
+    a running model (PID tuner, Mock VFD, Function-Block Editor)
+    doesn't fit Input/Output/Reference. They live in their own
+    section rather than under `/tools/` because they're for *playing
+    with a model*, not *looking something up*.
   - *Education* pages use the **lesson layout** (`.tool-card` /
     `.tool-body`), NOT the column-grid patterns. **Prose sits above
     each diagram; the diagram is the visual capstone.**
@@ -404,14 +409,24 @@ per-page history and the *why* behind each, see
   `balancing` form a quartet. Cross-links pay off forward-link debts
   between them. The twin-T subhead in `hydronic-loops.html` carries
   `id="d3"` so `load-piping.html`'s closing section can deep-link.
-- **Tool ↔ Education pairings:** `tools/pid-tuner.html` ↔
+- **Simulator ↔ Education pairings:** `simulators/pid-tuner.html` ↔
   `education/pid-basics.html` (share `pid-engine.js` + `pid-chart.js`);
-  `tools/vfd-mock.html` ↔ `education/vfds.html` (source-parameter
-  pedagogy, with a parameter tree to navigate on the tool side).
+  `simulators/vfd-mock.html` ↔ `education/vfds.html` (source-parameter
+  pedagogy, with a parameter tree to navigate on the sim side);
+  `simulators/function-block-editor.html` ↔
+  `education/function-blocks.html` (share `fbe-engine.js`).
 - **Contact form:** `.tool-card` with name/email/message, an
   off-screen CSS honeypot (`.hp-field`, named `website`), Turnstile
   widget. POSTs form-encoded data to `/api/contact`.
-- **Tools landing** is a `.nav-card` grid of live tools.
+- **Tools landing** is a `.nav-card` grid of live tools, with a
+  filter-chip row above. **Simulators landing** is the same
+  `.nav-card` grid minus the filter chips — add the row back if
+  the section grows past ~6 entries.
+- **Legacy redirects:** when a page moves between sections (e.g.
+  the original Tools → Simulators migration that introduced
+  `/simulators/`), add the old URL to `LEGACY_TOOL_REDIRECTS` in
+  `src/worker.js`. The Worker 301s old paths to the new ones so
+  inbound links keep working.
 
 ## Design system
 
@@ -559,6 +574,8 @@ well-grouped.
 2. Wrap page logic in an IIFE + `addEventListener` (see *JS patterns*);
    apply validate-and-mute on numeric inputs.
 3. Add a `.nav-card` to the `.card-grid` on `tools/index.html`.
+   Bump the All chip count and add a per-category chip if the new
+   tool opens a category not already represented.
 4. Add the page's URL to the `PAGES` array in `tests/smoke.spec.js`.
    The sitemap picks the page up automatically — any template with a
    `canonical` frontmatter is included (see *Sitemap*) — but the
@@ -566,6 +583,11 @@ well-grouped.
 5. Bump `package.json.version` when shipping something notable; the
    footer reads it via `html/_data/site.js`. A new tool is a minor
    bump (`1.X.0`); a bug fix is a patch bump (`1.X.Y`).
+
+**Adding a new simulator** follows the same steps under
+`html/simulators/` instead, with `nav: simulators` in the
+frontmatter and the new `.nav-card` added to
+`simulators/index.html`. No filter chips to recount there.
 
 ## Git conventions
 

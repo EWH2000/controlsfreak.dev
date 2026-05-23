@@ -374,7 +374,7 @@ correctly when someone next reaches for it.
   back as the natural follow-up for "how the BMS decides what speed
   reference to send." The pump-control page, when it ships, should
   tie back to VFDs for the parameter-surface context.
-- `/tools/vfd-mock.html` — explicit CTA at the end of the page,
+- `/simulators/vfd-mock.html` — explicit CTA at the end of the page,
   paid off by the Mock VFD interface entry below.
 
 ### Mock VFD interface — tool *(shipped 2026-05-15)*
@@ -1222,7 +1222,7 @@ real shape mismatch.
 *One question: what does it feel like to build a control sequence
 out of function blocks, and how does a wiresheet actually evaluate?*
 
-Ships at `/tools/function-block-editor.html` as a custom-layout tool
+Ships at `/simulators/function-block-editor.html` as a custom-layout simulator
 (palette · canvas with a full-width inspector strip below), page-id
 prefix `fbe-`. The graphical wiresheet half of the BAS programming
 story — same `mock` framing as `vfd-mock.html`: feels like the real
@@ -2329,21 +2329,59 @@ Lower-priority candidates parked here for completeness:
 ## Site structure / organization
 ### Where interactive widgets live
 
+Three sections, three jobs:
+
 Tools = calculators, converters, lookups. Pull-it-up-and-use-it
 utilities. Standalone, get a Tools-landing card, show up in "Coming
 Soon" while pending.
+
+Simulators = running models you can play with. PID Tuning Helper,
+Mock VFD Interface, Function-Block Editor. They sit in their own
+section rather than under Tools because they're for *playing with
+a model*, not *looking something up*. Each one is paired with an
+Education explainer (`pid-basics`, `vfds`, `function-blocks`).
 
 Education = prose + diagrams + sometimes interactive widgets that exist
 to teach a specific concept. The PID mini-sims (P only → P+I → P+I+D)
 and the Twin-T injection-pump widget on Hydronic Loops are on Education
 pages on purpose — the widget *is part of the explanation*, not a
-standalone tool, and it gets read in sequence with the prose around it.
+standalone simulator, and it gets read in sequence with the prose
+around it.
 
-The rule: standalone "open it and use it" cases go to Tools. Teaching
-widgets stay in Education and don't get a Tools-landing card. If a
-piece of interactive content is useful both ways, the simulator goes
-to Tools and a stripped-down teaching version goes to Education (the
-PID tuner is the worked example of this split).
+The rule: standalone "open it and use it" cases go to Tools.
+Standalone "open it and play with the model" cases go to Simulators.
+Teaching widgets stay in Education and don't get their own landing
+card. If a piece of interactive content is useful both ways, the
+full simulator goes to Simulators and a stripped-down teaching
+version goes to Education (the PID tuner is the worked example of
+this split).
+
+### Simulators section — split out from Tools *(2026-05-23)*
+
+Originally `/tools/` was the home for everything interactive, simulators
+included. With three sims shipped (PID tuner, Mock VFD, Function-Block
+Editor) the Tools landing started reading as two unrelated lists
+stapled together — utilities you check numbers in, vs. models you
+play with. Moving the sims to `/simulators/` sharpens the conceptual
+split, lines up the new section's pages with their Education partners,
+and gives the future refrigerant-loop sim a clear home.
+
+The move:
+- `git mv` of the three pages from `html/tools/` to `html/simulators/`;
+  canonicals and `nav:` frontmatter retargeted.
+- New `html/simulators/index.html` landing — same `.nav-card` grid as
+  `tools/index.html` minus the filter-chip row (three cards don't
+  warrant filtering; add it back if the section grows past ~6).
+- Nav slot inserted between Tools and Education — keeps the two
+  "doing" sections adjacent.
+- `LEGACY_TOOL_REDIRECTS` block in `src/worker.js` 301s the three
+  old `/tools/<slug>.html` URLs to their new `/simulators/`
+  equivalents so any inbound links keep working.
+
+Next sim on the radar is a refrigerant-loop sim, paired with the
+refrigerant-cycle Education page (entry above under "Refrigerant cycle
+— Education section, possibly with calculator"). When it ships, the
+filter-chip question on the landing will resurface — re-evaluate then.
 
 ### Discovery prompt + reward — Education page idiom
 
