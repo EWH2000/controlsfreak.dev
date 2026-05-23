@@ -707,9 +707,7 @@ footer {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    max-width: 1120px;
-    margin: 0 auto;
-    width: 100%;   /* don't shrink-to-fit inside body's flex column */
+    width: 100%;   /* full-bleed status bar — matches .site-nav */
     gap: 1rem;
 }
 .footer-left,
