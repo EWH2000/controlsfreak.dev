@@ -315,7 +315,7 @@ nav: tools
                 <a data-example="econ">economizer enable</a>
                 <a data-example="tstat-cool">cooling thermostat</a>
                 <a data-example="tstat-heat">heating thermostat</a>
-                <a data-example="pid">PID loop</a>
+                <a data-example="pid">heating PID</a>
             </div>
 
             <div class="fbe-narrow-note">
@@ -371,6 +371,11 @@ nav: tools
                 output blocks show their value; a digital wire turns green when it carries
                 TRUE. Nothing is saved — reload, or pick a <em>Try this</em> example, to
                 start fresh.
+            </p>
+            <p class="ref-note">
+                <strong>DIVIDE</strong> outputs <code>0</code> when its divisor is
+                <code>0</code> — a guard, so a downstream comparator stays sane
+                instead of reading <code>Infinity</code> or <code>NaN</code>.
             </p>
 
         </div>
