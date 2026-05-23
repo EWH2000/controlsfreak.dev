@@ -42,6 +42,7 @@ const PAGES = [
     { name: 'education — balancing',   url: '/education/balancing.html' },
     { name: 'education — psychrometrics basics', url: '/education/psychrometrics-basics.html' },
     { name: 'education — function blocks', url: '/education/function-blocks.html' },
+    { name: 'education — modbus basics', url: '/education/modbus-basics.html' },
     { name: 'contact',                url: '/contact.html' },
 ];
 

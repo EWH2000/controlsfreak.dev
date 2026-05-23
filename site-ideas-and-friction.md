@@ -2114,51 +2114,134 @@ the same session:
    without an animation pass, every arrow on a complex diagram
    benefits from a tracing-the-flow walk-through during review.
 
-### Protocol education pages — future
+### Protocol education pages — Modbus shipping, BACnet to follow
 
-The site's education footprint is HVAC + hydronics heavy today (PID,
-VFDs, pump control, balancing, load piping, hydronic loops,
-psychrometrics). But building-controls work is at least as protocol-
-heavy as it is HVAC-heavy — and on the protocol side the site has
-*tools* (BACnet/IP converter, Modbus register viewer) without
-*explainers*. Until a fuller education page exists, each tool carries
-its own forward-link debt: the Modbus tool ships with a five-bullet
-"essentials" row beneath it (PR for codebase-issues#29 successor,
-2026-05-18); the BACnet/IP converter doesn't yet, but should once a
-BACnet education page is on deck.
+The site's education footprint was HVAC + hydronics heavy through
+2026-05; building-controls work is at least as protocol-heavy. The
+protocol-side tools (BACnet/IP converter, Modbus register viewer)
+shipped first; this section is where their paired explainers live.
+**Nav-placement open question settled (2026-05-23):** pages land
+under `/education/` alongside the HVAC pages. Reading-order argument
+won — adding a third top-nav hub would crowd Tools / Education /
+Contact, and discoverability is paid by tool-page cross-links.
+A new `Protocols` filter-chip was added to `/education/` so the
+chip grid still gives the protocol pages a one-click pull-out.
 
-Candidate pages, each scoped to follow the "one question per page"
-rule from `## Site structure / organization` rather than becoming
-8000-word reference dumps:
+### Modbus Basics — Education page *(shipped 2026-05-23)*
+*One question: what is Modbus, and what shape does a request on the
+wire actually take?*
 
-- *Modbus fundamentals.* The data model (coils / discrete inputs /
-  input registers / holding registers), the 5-digit addressing
-  convention vs the wire address, why byte order is painful, FC03
-  vs FC04 + FC06 vs FC16, exception responses. Forward-link from
-  the Modbus register viewer tips row. Might be one page or two —
-  the data-model explainer and the byte-order explainer are
-  different questions.
-- *BACnet fundamentals.* Object model, services, MS/TP vs BACnet/IP
-  framing, the discovery flow. Pairs with the existing BACnet/IP
-  converter — the tool turns an EBO-discovered hex blob into a
-  dotted-decimal IP; the page would explain why that blob looks
-  the way it does.
-- *Niagara Fox / Niagara N4.* Tighter audience (Tridium ecosystem),
-  but the field reality is that many BAS techs see Fox more often
-  than they see BACnet on the wire. Lower priority.
-- *LonWorks / KNX.* Sketched only — audience demand drives whether
-  these warrant their own pages. Possibly a single "legacy and
-  European protocols" page that covers both at a tour-level depth,
-  with the deeper pages following if demand surfaces.
+The first protocol explainer, paying the Modbus Register Viewer
+tool's forward-link debt — its five-bullet "essentials" row closed
+with *"A fuller Modbus education page is on the roadmap"* and now
+points at this page. Scoped per the friction file's two-page split
+(decided during this scoping pass): page 1 covers the message shape
+and the data model; page 2 (`modbus-decoding.html`, future) will
+cover what the sixteen bits returned in a successful response
+actually mean.
 
-Open question: should the tools-landing card grid grow a sibling
-"Protocols" hub (e.g. `/protocols/` or `/protocols/modbus.html`),
-or do the protocol pages live under `/education/` alongside the
-HVAC pages? Reading-order argues for `/education/` since the
-existing nav has Tools / Education and a third hub would crowd it.
-Discoverability argues for at least a tools-landing cross-link from
-the protocol-focused tools to their corresponding education pages
-once they exist.
+In scope (sections shipped):
+
+- *What Modbus is, and isn't* — Modicon 1979, function codes + data
+  model, the RTU-vs-TCP framing-only difference, the "dumb on
+  purpose" framing, client/server polling pattern (modernizing the
+  master/slave terminology in one parenthetical). Static SVG of the
+  client→request, server→response flow.
+- *The four data tables* — coils / discrete inputs / input registers
+  / holding registers, sorted along read/write × 1-bit/16-bit.
+  Rendered as a `.callout-grid` of four cards in the
+  function-blocks-page idiom rather than a 2×2 matrix SVG — the
+  callout-grid carries the same information with less custom markup
+  and matches the precedent.
+- *Function codes — reading and writing* — FC01–06/15/16 pattern
+  (single vs multiple, coil vs register), with FC03/04/06/16 named
+  as the BMS-frequent quartet. Defers the full FC table to the
+  Modbus tool's reference panel rather than reprinting it. Static
+  SVG of an FC03 request frame (eight labeled byte cells: server,
+  FC, starting address ×2, quantity ×2, CRC ×2) with grouping
+  brackets and a worked caption.
+- *When something goes wrong — exception responses* — the high-bit-
+  set FC echo (`0x03` → `0x83`), the one-byte exception code, the
+  four most-common codes in BMS work (`0x01`–`0x04`) explained with
+  a typical scenario each. Static SVG of a three-byte exception
+  frame with the high-bit byte highlighted in `--red` and an
+  annotation arrow.
+
+Out of scope (forward links):
+
+- Byte order / 32-bit pairs / scaling / signed vs unsigned / 5-digit
+  vendor numbering — `modbus-decoding.html`, the second page of this
+  pair (forward-linked in the closing section as plain prose since
+  the target page doesn't exist yet; the closing also anchors back
+  to the Modbus Register Viewer tool as the practitioner cheat
+  sheet).
+- BACnet's object-property model as the *anti*-Modbus design choice
+  — `[future: bacnet-basics.html]`, contrasted only by a single
+  parenthetical ("A BACnet object knows its own type, units, scale,
+  and name; a Modbus register is just sixteen bits") rather than a
+  scoped section.
+- Modbus RTU CRC computation, RS-485 multidrop wiring, baud-rate
+  config — `[future: modbus-wire.html]` if demand surfaces. v1 stays
+  protocol-logic-only; the wire details are a different question.
+
+**Widget decision — drafted out.** The framing-widget candidate
+(pick an FC, see the request/response frame shape) was considered
+during scoping and not built. The static FC03 request-frame SVG +
+the exception-frame SVG carry the byte-structure story on first
+read; the practitioner-grade interactive lives one click away on
+the Modbus Register Viewer tool already. The friction-file's
+Education/Tools-split idiom — the page can defer to the tool rather
+than ship a stripped-down twin — held here.
+
+**Page-local CSS — `.mb-svg`.** Block-and-byte schematic class, in
+the `.fb-svg` / `.vfd-svg` precedent (labeled-box diagrams, not
+pipe-flow). Separate from the `.edu-svg` family. Local
+`.callout-grid.loose` selector reuses the function-blocks-page
+idiom for the families grid; not promoted to `styles.css` since
+two pages share it and a third would be the consolidation trigger
+(same posture as `.fb-svg` taking its time before earning a shared
+class).
+
+**Forward-link debts this page incurred:**
+- `modbus-decoding.html` — the second Modbus page. The closing
+  section forward-points to it in plain prose (per the forward-link
+  convention: anchor only if the target exists). Pays off when
+  page 2 ships.
+- `bacnet-basics.html` — one parenthetical comparison only;
+  acknowledged as a `[future:]` marker rather than a forward-link.
+- `modbus-wire.html` — sketched here as the third Modbus page if
+  demand surfaces (RS-485 / CRC / timing). No prose mention on
+  the page itself — the topic is parked entirely in this entry.
+
+**Forward-link payoffs landed:**
+- Modbus Register Viewer tool — the *"A fuller Modbus education
+  page is on the roadmap"* paragraph (`html/tools/modbus-register-viewer.html:179–184`)
+  becomes an active anchor to this page and a plain-prose
+  forward-link to the future `modbus-decoding.html`.
+
+### BACnet — Education page *(future)*
+
+The second protocol explainer, paying a forward-link debt the
+BACnet/IP converter doesn't yet carry but would once a BACnet
+education page is on deck. Scoping pass deferred to the session
+when this gets picked up; sketch surface from the original
+candidate list:
+
+- Object model, services, MS/TP vs BACnet/IP framing, discovery
+  flow. Pairs with the existing BACnet/IP converter — the tool
+  turns an EBO-discovered hex blob into a dotted-decimal IP; the
+  page would explain why that blob looks the way it does. Also a
+  natural place for the *one parenthetical comparison* dropped on
+  `modbus-basics.html` to grow into a section.
+
+Lower-priority candidates parked here for completeness:
+
+- *Niagara Fox / Niagara N4* — tighter audience (Tridium
+  ecosystem), but field reality is that many BAS techs see Fox
+  more often than BACnet on the wire.
+- *LonWorks / KNX* — sketched only. Possibly a single "legacy and
+  European protocols" page at tour-level depth, deeper pages
+  following if demand surfaces.
 
 ---
 
