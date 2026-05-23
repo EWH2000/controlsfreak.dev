@@ -549,6 +549,21 @@ Block docstring updated to record the choice.
   thing that actually drives any future "is this a glide blend?"
   display logic. Either way: `blend` and the rule should agree.
 
+**Resolution (2026-05-23):** primary direction + the optional
+refinement. Flipped R-410A's `blend: false` → `blend: true` in
+`html/scripts/refrigerant-data.js` so the field now consistently
+follows ASHRAE 34 classification (R-410A, R-404A, R-407C, and
+R-454B all carry `blend: true`; R-22 and R-134a stay `false`).
+Rewrote the header-comment rule to spell out that `blend` is the
+ASHRAE-classification flag while `glide` is the practical "does
+the glide matter in the field?" filter — a near-azeotropic blend
+with ≤ 1 °F glide behaves effectively pure for superheat /
+subcooling math, so a future page that wants to surface "is this
+a glide blend you actually have to think about?" should branch on
+`glide`, not `blend`. The field is still dormant on the page
+today; this is internal-data hygiene against the moment a future
+consumer wires it up.
+
 ---
 
 ## Minor polish (second pass)

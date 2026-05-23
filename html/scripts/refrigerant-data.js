@@ -48,9 +48,16 @@
 //   <id>: {
 //     name:    short label for the dropdown,
 //     safety:  ASHRAE 34 safety class (A1, A2L, …) — shown in the About card,
-//     blend:   true for zeotropic/near-azeotropic blends, false for single
-//              component — drives a note only; the page always shows bubble+dew,
-//     glide:   nominal temperature glide in °F (display/About only),
+//     blend:   ASHRAE classification — true for any zeotropic or near-
+//              azeotropic blend, false only for a single component. Drives
+//              a note only; the page always shows bubble+dew. Note that a
+//              near-azeotropic blend with ≤ 1 °F glide behaves effectively
+//              pure for superheat/subcooling math — that practical
+//              distinction lives in `glide`, not `blend`.
+//     glide:   nominal temperature glide in °F (display/About only; also
+//              the practical "is this a glide blend?" filter — `blend`
+//              alone doesn't tell you whether the glide matters in the
+//              field),
 //     note:    one-line field context,
 //     ref:     the source-chart citation,
 //     bubble:  [[psig, °F], ...] — saturated-liquid curve, ascending by psig,
@@ -73,7 +80,7 @@ const REFRIGERANT_TYPES = (function () {
 
         // ── R-410A — iGas R410A P-T Chart (temp-indexed, Liquid/Vapor psig) ──
         'r410a': {
-            name: 'R-410A', safety: 'A1', blend: false, glide: 0.2,
+            name: 'R-410A', safety: 'A1', blend: true, glide: 0.2,
             note: 'The dominant refrigerant in commercial RTUs and splits. Near-azeotropic — bubble and dew sit ~0.2 °F apart, so it behaves like a pure refrigerant.',
             ref: 'iGas R410A Pressure-Temperature Chart',
             index: 'temp',
