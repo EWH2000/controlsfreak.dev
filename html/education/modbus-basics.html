@@ -336,13 +336,13 @@ nav: education
                 one comes back. The next question is the one the
                 <a href="/tools/modbus-register-viewer.html">Modbus Register Viewer</a> tool
                 was built around: <em>the response came back successfully, so what do those
-                sixteen bits actually mean?</em> Vendor docs paper over the 5-digit register
-                numbering convention (<code>40001</code> in the manual is holding register 0
-                on the wire), a 16-bit value can be signed or unsigned, 32-bit values span
-                two registers with four possible byte orderings, and the value almost
-                always wants a scale factor to make it useful. That's a second Modbus page
-                on decoding; until it ships, the Modbus Register Viewer tool's essentials
-                row is the field cheat sheet.
+                sixteen bits actually mean?</em> The 5-digit register numbering convention
+                (<code>40001</code> in the manual is holding register 0 on the wire),
+                signed vs unsigned interpretation, 32-bit values that span two registers
+                with four possible byte orderings, and the scale factor that turns a raw
+                integer into engineering units —
+                <a href="/education/modbus-decoding.html">Modbus Decoding</a> is the
+                companion page that walks through each.
             </p>
 
         </div>

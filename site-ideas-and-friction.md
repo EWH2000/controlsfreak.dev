@@ -2203,10 +2203,9 @@ two pages share it and a third would be the consolidation trigger
 class).
 
 **Forward-link debts this page incurred:**
-- `modbus-decoding.html` — the second Modbus page. The closing
-  section forward-points to it in plain prose (per the forward-link
-  convention: anchor only if the target exists). Pays off when
-  page 2 ships.
+- `modbus-decoding.html` — **paid 2026-05-23.** The closing section's
+  plain-prose forward-link is now an active anchor; see the next
+  entry for the companion page.
 - `bacnet-basics.html` — one parenthetical comparison only;
   acknowledged as a `[future:]` marker rather than a forward-link.
 - `modbus-wire.html` — sketched here as the third Modbus page if
@@ -2216,8 +2215,90 @@ class).
 **Forward-link payoffs landed:**
 - Modbus Register Viewer tool — the *"A fuller Modbus education
   page is on the roadmap"* paragraph (`html/tools/modbus-register-viewer.html:179–184`)
-  becomes an active anchor to this page and a plain-prose
-  forward-link to the future `modbus-decoding.html`.
+  becomes an active anchor to this page. After the decoding page
+  shipped, the same paragraph now anchors *both* pages — Basics
+  for the protocol shape, Decoding for the bit-interpretation
+  gotchas.
+
+### Modbus Decoding — Education page *(shipped 2026-05-23)*
+*One question: I read a Modbus value successfully — why don't the
+numbers make sense?*
+
+The companion to Modbus Basics. Pays the second half of the Modbus
+tool's five-bullet "essentials" forward-link debt — the bullets on
+register addressing, signed/unsigned, byte order, and the implicit
+scaling that vendor docs encode. Together with Modbus Basics, this
+closes the Modbus integration loop from "how do I form a request"
+through "how do I trust the number on the graphic."
+
+In scope (sections shipped):
+
+- *The 5-digit numbering trap* — the prefix names the table, the
+  remaining four digits are 1-based, wire address = documented − 1.
+  Static SVG with the leading digit (table prefix) highlighted in
+  `--accent` and the offset rows showing the translation. Side note
+  on the 6-digit extended form and the Modicon-style "wire-address"
+  docs that drop the prefix entirely.
+- *Signed vs unsigned interpretation* — two's complement in one
+  paragraph, the canonical `0xFFF3` example (`65523` unsigned vs
+  `−13` signed), the "negative-as-unsigned misread" failure signal
+  (values jumping near 65535), and where each interpretation tends
+  to live in HVAC kit.
+- *32-bit values and the four byte orders* — bytes labeled A/B/C/D
+  in the standard transmission order, four orderings (ABCD / CDAB /
+  BADC / DCBA) shown as a four-row SVG of which bytes land in which
+  register, followed by a four-card `.callout-grid` naming each.
+  Cross-links the Modbus Register Viewer tool's 32-bit Pair tab as
+  the practitioner-grade interactive — "figure out once per device,
+  document it" framing.
+- *Scaling and engineering units* — the raw-integer-to-engineering-
+  value jump. Static SVG of `523 × 0.1 = 52.3 °F`, then a four-
+  pattern list (implicit decimal, offset + scale, native unit,
+  packed multi-field). Closes with the "wrong scale tag is worse
+  than meaningless" failure: a 0.1-scaled signed register read
+  unsigned reads `6553.5` when the truth is `−0.1`.
+
+Out of scope (forward links):
+
+- Modbus RTU on the wire (RS-485, CRC, framing timeout) —
+  `[future: modbus-wire.html]`. Same parking spot as on the Basics
+  page; named on this page in the closing "what this page didn't
+  cover" section.
+- The integration story (Niagara / EBO point-mapping, poll rates,
+  stale-data flags) — platform-specific, belongs on the eventual
+  Niagara / EBO pages.
+
+**Widget decision — drafted out (same as Basics).** The framing-
+widget candidate was considered and not built. The byte-order
+interactive already lives on the Modbus Register Viewer tool's
+32-bit Pair tab; per the Education/Tools-split idiom, the teaching
+page diagrams the four orderings statically and cross-links the
+tool for the interactive form. Four static SVGs carry the page
+(5-digit translation, signed/unsigned branching, byte-order matrix,
+scaling arrow).
+
+**Page-local CSS — `.mb-svg` reused.** Same `.fb-svg` / `.vfd-svg`
+precedent as Modbus Basics; class is now defined on two Modbus
+pages (and not consolidated to `styles.css`). The third page —
+either `modbus-wire.html` or a future BACnet-side equivalent —
+would be the consolidation trigger.
+
+**Forward-link debts this page incurred:**
+- `modbus-wire.html` — the third Modbus page, sketched in the
+  closing section. Named, not anchored, since the page doesn't
+  exist yet. Carries the RS-485 / CRC / timing story.
+- Niagara / EBO integration pages — named in the closing section
+  as plain prose. No `[future:]` marker because these are
+  larger-arc Tridium / Schneider pages, not pinpoint forward-link
+  targets.
+
+**Forward-link payoffs landed:**
+- `modbus-basics.html` closing — the plain-prose "a second Modbus
+  page on decoding will land here" forward-link is now an active
+  anchor to this page.
+- Modbus Register Viewer tool — the `ref-note` beneath the
+  essentials row now anchors both Modbus pages, framing them as the
+  paired explainer for the five-bullet field cheat sheet.
 
 ### BACnet — Education page *(future)*
 
