@@ -1,0 +1,462 @@
+---
+title: Sparkle · Schematic — controlsfreak.dev
+description: Sparkle sketch — Schematic direction. P&ID drafting-sheet hero with title block, tag-bubble section markers, drafting-stamp About, revision-block footer.
+nav: ""
+---
+{% extends "layouts/page.njk" %}
+
+{% block head %}
+    <meta name="robots" content="noindex">
+    <style>
+        /* ──────────────────────────────────────────────────────────
+         * DIRECTION B — SCHEMATIC
+         * Page-local sketch. Scope every rule under .sparkle-schematic
+         * (descendants of <main>) or `body:has(.sparkle-schematic)`
+         * for the real nav/footer siblings.
+         * ────────────────────────────────────────────────────────── */
+
+        /* ── NAV: subtle accent underline on the active link gets a
+              tag-bubble-like end cap; brand stays static (no breathing
+              here — the drafting feel is precise, not living). ── */
+        body:has(.sparkle-schematic) .nav-card:hover {
+            transform: none;
+            border-color: var(--accent);
+            background-image:
+                linear-gradient(to right, var(--accent) 0, var(--accent) 18px, transparent 18px);
+            background-repeat: no-repeat;
+            background-size: 18px 1px;
+            background-position: 0 0;
+        }
+
+        /* ── PREVIEW BANNER ── */
+        .sparkle-schematic .preview-banner {
+            margin: 1.25rem auto -0.5rem;
+            max-width: 1120px;
+            padding: 0.45rem 1rem;
+            border: 1px dashed var(--border);
+            border-radius: 3px;
+            font-family: var(--mono);
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            background: var(--surface-2);
+        }
+        .sparkle-schematic .preview-banner strong { color: var(--accent); font-weight: 600; }
+
+        /* ── HERO: drafting-sheet treatment ── */
+        .sparkle-schematic .hero {
+            position: relative;
+            padding: 0;
+            margin-top: 2rem;
+            margin-bottom: 2.5rem;
+            border: 1.5px solid var(--text-bright);
+            border-radius: 0;
+            background: var(--surface);
+            text-align: left;
+            background-image:
+                linear-gradient(to right, var(--border-faint) 1px, transparent 1px),
+                linear-gradient(to bottom, var(--border-faint) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+        .sparkle-schematic .hero-inner {
+            padding: 4.5rem 2.5rem 9rem;
+            text-align: center;
+        }
+        .sparkle-schematic .hero-eyebrow {
+            justify-content: center;
+            color: var(--text-dim);
+        }
+        .sparkle-schematic .hero-eyebrow::before,
+        .sparkle-schematic .hero-eyebrow::after { background: var(--text-dim); }
+        .sparkle-schematic .hero h1 em {
+            font-family: var(--sans);
+            font-style: italic;
+            font-weight: 400;
+            color: var(--accent);
+        }
+
+        /* North arrow — bottom-left wayfinding mark. */
+        .sparkle-schematic .north-arrow {
+            position: absolute;
+            left: 1.25rem;
+            bottom: 1.25rem;
+            width: 38px;
+            height: 60px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.15rem;
+            color: var(--text-dim);
+            font-family: var(--mono);
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+        }
+        .sparkle-schematic .north-arrow svg { display: block; }
+
+        /* Title block — bottom-right of the hero sheet. */
+        .sparkle-schematic .titleblock {
+            position: absolute;
+            right: 1.25rem;
+            bottom: 1.25rem;
+            min-width: 240px;
+            border: 1.5px solid var(--text-bright);
+            background: var(--surface);
+            font-family: var(--mono);
+            font-size: 0.7rem;
+            color: var(--text);
+            font-variant-numeric: tabular-nums lining-nums;
+        }
+        .sparkle-schematic .titleblock-head {
+            padding: 0.35rem 0.6rem;
+            background: var(--text-bright);
+            color: var(--surface);
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            font-size: 0.62rem;
+            text-align: center;
+        }
+        .sparkle-schematic .titleblock-row {
+            display: grid;
+            grid-template-columns: minmax(58px, 30%) 1fr;
+            border-top: 1px solid var(--text-bright);
+        }
+        .sparkle-schematic .titleblock-row .k {
+            padding: 0.3rem 0.5rem;
+            border-right: 1px solid var(--text-bright);
+            color: var(--text-dim);
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            font-size: 0.62rem;
+            background: var(--surface-2);
+        }
+        .sparkle-schematic .titleblock-row .v {
+            padding: 0.3rem 0.5rem;
+            color: var(--text-bright);
+            font-weight: 600;
+        }
+
+        /* ── SECTION MARKERS: tag-bubble + hairline ── */
+        .sparkle-schematic .section-header {
+            gap: 0.65rem;
+            align-items: center;
+        }
+        .sparkle-schematic .section-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.65rem;
+            font-family: var(--mono);
+            font-size: 0.8rem;
+            color: var(--text-bright);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            white-space: nowrap;
+        }
+        .sparkle-schematic .section-label::before {
+            content: attr(data-tag);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: 1.5px solid var(--accent);
+            background: var(--surface);
+            color: var(--accent);
+            font-family: var(--mono);
+            font-size: 0.78rem;
+            font-weight: 600;
+            font-variant-numeric: tabular-nums;
+            line-height: 1;
+            flex-shrink: 0;
+        }
+        .sparkle-schematic .section-line {
+            background: var(--text-bright);
+            height: 1.5px;
+            position: relative;
+        }
+        .sparkle-schematic .section-line::before,
+        .sparkle-schematic .section-line::after {
+            content: "";
+            position: absolute;
+            top: -3px;
+            width: 1.5px;
+            height: 7px;
+            background: var(--text-bright);
+        }
+        .sparkle-schematic .section-line::before { left: 0; }
+        .sparkle-schematic .section-line::after { right: 0; }
+
+        /* ── ABOUT CARD: P&ID callout balloon + draftsman stamp ── */
+        .sparkle-schematic .about-rebuild {
+            position: relative;
+            background: var(--surface);
+            border: 1.5px solid var(--text-bright);
+            border-radius: 0;
+            padding: 2.5rem 1.5rem 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .sparkle-schematic .about-rebuild::before {
+            content: "(A)";
+            position: absolute;
+            left: -1.25rem;
+            top: -1.25rem;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: 1.5px solid var(--accent);
+            background: var(--surface);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--mono);
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--accent);
+            letter-spacing: 0.04em;
+        }
+        .sparkle-schematic .about-rebuild .about-prose p {
+            font-size: 0.95rem;
+            line-height: 1.85;
+            color: var(--text);
+            margin-bottom: 1.1rem;
+        }
+        .sparkle-schematic .about-rebuild .about-prose p:last-of-type { margin-bottom: 0; }
+        .sparkle-schematic .about-rebuild .about-prose a { color: var(--accent); }
+        .sparkle-schematic .about-rebuild .about-colophon {
+            font-family: var(--mono);
+            font-size: 0.72rem;
+            color: var(--text-dim);
+            margin-top: 1.25rem;
+        }
+        .sparkle-schematic .draftsman-stamp {
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1.5px solid var(--text-bright);
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 0.5rem;
+            font-family: var(--mono);
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-dim);
+            font-variant-numeric: tabular-nums lining-nums;
+        }
+        .sparkle-schematic .draftsman-stamp strong {
+            color: var(--text-bright);
+            font-weight: 600;
+        }
+
+        /* ── DROP CAP on .page-intro — thin-stroke accent initial ── */
+        .sparkle-schematic .page-intro::first-letter {
+            float: left;
+            margin: 0.08em 0.5rem 0 0;
+            padding: 0;
+            color: var(--accent);
+            font-family: var(--mono);
+            font-weight: 400;
+            font-size: 3.4rem;
+            line-height: 0.9;
+        }
+
+        /* ── Numerals get lining/tabular numerics across the direction ── */
+        .sparkle-schematic .ps-value,
+        .sparkle-schematic .readout-value,
+        .sparkle-schematic .result-value,
+        .sparkle-schematic .widget-readout-value,
+        .sparkle-schematic .footer-text,
+        .sparkle-schematic .badge {
+            font-variant-numeric: tabular-nums lining-nums;
+        }
+
+        /* ── HERO BADGES — restyle as drafting "block" tags ── */
+        .sparkle-schematic .hero-badges {
+            justify-content: center;
+            margin-top: 2rem;
+        }
+        .sparkle-schematic .badge {
+            border-radius: 0;
+            border: 1px solid var(--text-bright);
+            color: var(--text-bright);
+            background: var(--surface);
+        }
+
+        /* ── CUSTOM FOOTER — revision block ── */
+        body:has(.sparkle-schematic) > footer:not(.sparkle-footer) { display: none; }
+        .sparkle-schematic-footer {
+            position: relative;
+            z-index: 1;
+            border-top: 1.5px solid var(--text-bright);
+            background: var(--surface);
+            padding: 0;
+            max-width: 1120px;
+            margin: 2.5rem auto 0;
+            width: 100%;
+            font-family: var(--mono);
+            font-size: 0.7rem;
+            color: var(--text);
+            font-variant-numeric: tabular-nums lining-nums;
+        }
+        .sparkle-schematic-footer .rev-rows {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+        }
+        .sparkle-schematic-footer .rev-cell {
+            padding: 0.75rem 1rem;
+            border-right: 1px solid var(--text-bright);
+            display: flex;
+            justify-content: space-between;
+            gap: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+        .sparkle-schematic-footer .rev-cell:last-child { border-right: none; }
+        .sparkle-schematic-footer .rev-cell .k { color: var(--text-dim); }
+        .sparkle-schematic-footer .rev-cell .v {
+            color: var(--text-bright);
+            font-weight: 600;
+        }
+        .sparkle-schematic-footer .rev-footer-text {
+            padding: 0.5rem 1rem;
+            border-top: 1px solid var(--text-bright);
+            color: var(--text-dim);
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            font-size: 0.62rem;
+        }
+        /* Notched terminators on the footer's top hairline echo a
+           dimension-line cap. Implemented as ::before/::after on the
+           wrapper. */
+        .sparkle-schematic-footer::before,
+        .sparkle-schematic-footer::after {
+            content: "";
+            position: absolute;
+            top: -5px;
+            width: 1.5px;
+            height: 10px;
+            background: var(--text-bright);
+        }
+        .sparkle-schematic-footer::before { left: 0; }
+        .sparkle-schematic-footer::after { right: 0; }
+
+        /* ── Narrow viewport tweaks ── */
+        @media (max-width: 800px) {
+            .sparkle-schematic .hero-inner { padding: 3rem 1.25rem 11rem; }
+            .sparkle-schematic .titleblock { min-width: auto; right: 0.75rem; bottom: 0.75rem; font-size: 0.62rem; }
+            .sparkle-schematic .north-arrow { display: none; }
+            .sparkle-schematic-footer .rev-rows { grid-template-columns: 1fr; }
+            .sparkle-schematic-footer .rev-cell { border-right: none; border-bottom: 1px solid var(--text-bright); }
+            .sparkle-schematic-footer .rev-cell:last-child { border-bottom: none; }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<main id="main" class="sparkle sparkle-schematic">
+
+    <div class="preview-banner">
+        <strong>Sparkle preview</strong> · Direction B — Schematic · Not a real page
+    </div>
+
+    <section class="hero">
+        <div class="hero-inner">
+            <div class="hero-eyebrow">BMS Field Reference</div>
+            <h1>Tools for those in controls,<br><em>built for the field.</em></h1>
+            <p>A reference site for building-controls people. Open calculators and lookups for the math you don't want to redo at the panel — BACnet/IP, Modbus registers, signal scaling, psychrometrics, thermistors. Alongside, a growing set of explainers that walk through hydronic loops, load piping, VFDs, and pump control end-to-end.</p>
+            <div class="hero-badges">
+                <span class="badge">AI / AO Scaling</span>
+                <span class="badge">Modbus Register Viewer</span>
+                <span class="badge">PID Tuning</span>
+                <span class="badge">BACnet/IP Hex</span>
+                <span class="badge">Psychrometric Chart</span>
+                <span class="badge">Thermistor / RTD Lookup</span>
+            </div>
+        </div>
+
+        <div class="north-arrow" aria-hidden="true">
+            <svg width="22" height="32" viewBox="0 0 22 32" fill="none">
+                <path d="M11 2 L20 30 L11 24 L2 30 Z" stroke="currentColor" stroke-width="1.4" fill="var(--accent)" fill-opacity="0.18"/>
+            </svg>
+            <span>N</span>
+        </div>
+
+        <div class="titleblock" aria-hidden="true">
+            <div class="titleblock-head">TITLE BLOCK</div>
+            <div class="titleblock-row"><span class="k">DWG</span><span class="v">2026-001</span></div>
+            <div class="titleblock-row"><span class="k">REV</span><span class="v">2.0</span></div>
+            <div class="titleblock-row"><span class="k">DATE</span><span class="v">2026-05-22</span></div>
+            <div class="titleblock-row"><span class="k">SCALE</span><span class="v">1:1</span></div>
+            <div class="titleblock-row"><span class="k">SHEET</span><span class="v">1 / 1</span></div>
+        </div>
+    </section>
+
+    <div class="section-header">
+        <h2 class="section-label" data-tag="1">Start Here</h2>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="card-grid two">
+        <a class="nav-card" href="/tools/">
+            <span class="nav-card-tag">Tools</span>
+            <div class="nav-card-name">Calculators &amp; lookups →</div>
+            <div class="nav-card-desc">Calculators and lookups for the parts of the job that come up over and over — psychrometric staging, signal scaling, register and address conversions, thermistor curves, a practice VFD keypad. Open one, get an answer, get back to work.</div>
+        </a>
+        <a class="nav-card" href="/education/">
+            <span class="nav-card-tag">Education</span>
+            <div class="nav-card-name">Learn the fundamentals →</div>
+            <div class="nav-card-desc">A connected set of explainers, not a glossary. The current arc: PID control → hydronic loops → load piping → VFDs → pump control, each page asking one question and answering it with diagrams, worked examples, and the occasional interactive widget.</div>
+        </a>
+    </div>
+
+    <div class="section-header" style="margin-top:3rem;">
+        <h2 class="section-label" data-tag="2">About</h2>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="about-rebuild">
+        <div class="about-prose">
+            <p>Hi, I'm a controls programmer based in the Northeast U.S. This is a side project I'm working on while exploring vibe coding. There's a genuine gap in easy reference websites and educational resources for this trade. This site started as just a way to have some easy reference tools in one place, but has expanded to include much more.</p>
+            <p>All anecdotes on this site are real things I've encountered, not AI generated. Although it may refine my writing for some of them.</p>
+            <p class="about-colophon">Bug reports, tool requests, or feedback — <a href="/contact.html">get in touch</a>.</p>
+        </div>
+        <div class="draftsman-stamp">
+            <span>controlsfreak.dev</span>
+            <span>REV <strong>2.0</strong></span>
+            <span>ISSUED <strong>2026-05-22</strong></span>
+        </div>
+    </div>
+
+    <div class="section-header" style="margin-top:3rem;">
+        <h2 class="section-label" data-tag="3">Education Sample</h2>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="about-rebuild" style="padding-top:1.75rem;">
+        <p class="page-intro">
+            PID is three knobs that, together, push a process variable (PV — the thing you're measuring) toward a setpoint (SP — the value you want it to hold). This is a common sense walk through what each one does on a typical HVAC loop, plus three small sims you can play with one knob at a time.
+        </p>
+        <p style="font-size:0.85rem;color:var(--text-dim);margin-top:1rem;font-family:var(--mono);">
+            ↑ The .page-intro paragraph carries the direction-specific drop cap — a thin-stroke accent initial, drafted not stamped.
+        </p>
+    </div>
+
+</main>
+
+<footer class="sparkle-footer sparkle-schematic-footer">
+    <div class="rev-rows">
+        <div class="rev-cell"><span class="k">Rev</span><span class="v">2.0</span></div>
+        <div class="rev-cell"><span class="k">Issued</span><span class="v">2026-05-22</span></div>
+        <div class="rev-cell"><span class="k">Sheet</span><span class="v">1 / 1</span></div>
+    </div>
+    <div class="rev-footer-text">
+        controlsfreak.dev · open tools for controls professionals · v{{ site.version }}
+    </div>
+</footer>
+{% endblock %}
+
+{% block scripts %}
+<script src="/scripts/units.js"></script>
+{% endblock %}
