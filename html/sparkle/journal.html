@@ -1,0 +1,415 @@
+---
+title: Sparkle · Trade Journal — controlsfreak.dev
+description: Sparkle sketch — Trade Journal direction. Masthead hero with vol/no line, single-rule byline About, roman-numeral section markers, colophon footer.
+nav: ""
+---
+{% extends "layouts/page.njk" %}
+
+{% block head %}
+    <meta name="robots" content="noindex">
+    <style>
+        /* ──────────────────────────────────────────────────────────
+         * DIRECTION C — TRADE JOURNAL
+         * Publication-grade editorial polish. Scope every rule under
+         * .sparkle-journal or `body:has(.sparkle-journal)`.
+         * ────────────────────────────────────────────────────────── */
+
+        /* ── Nav: nothing flashy, just the existing site treatment ── */
+        body:has(.sparkle-journal) .nav-card:hover {
+            transform: none;
+            border-color: var(--accent);
+        }
+        body:has(.sparkle-journal) :focus-visible { outline-offset: 3px; }
+        body:has(.sparkle-journal) .tool-body a,
+        body:has(.sparkle-journal) main a {
+            text-decoration: underline;
+            text-decoration-thickness: 1px;
+            text-decoration-color: var(--accent-glow);
+            text-underline-offset: 3px;
+            transition: text-decoration-color 0.22s, text-decoration-thickness 0.22s;
+        }
+        body:has(.sparkle-journal) main a:hover {
+            text-decoration-thickness: 2px;
+            text-decoration-color: var(--accent);
+        }
+
+        /* ── PREVIEW BANNER ── */
+        .sparkle-journal .preview-banner {
+            margin: 1.25rem auto -0.5rem;
+            max-width: 1120px;
+            padding: 0.45rem 1rem;
+            border: 1px dashed var(--border);
+            border-radius: 3px;
+            font-family: var(--mono);
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            background: var(--surface-2);
+        }
+        .sparkle-journal .preview-banner strong { color: var(--accent); font-weight: 600; }
+
+        /* ── HERO: masthead treatment ── */
+        .sparkle-journal .hero {
+            padding: 5rem 2rem 4.5rem;
+            background: var(--surface);
+            border-top: 2px solid var(--text-bright);
+            border-bottom: 1px solid var(--border);
+            position: relative;
+        }
+        .sparkle-journal .hero::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 64px;
+            height: 6px;
+            background: var(--accent);
+        }
+        .sparkle-journal .masthead {
+            display: flex;
+            justify-content: center;
+            align-items: baseline;
+            gap: 0.8rem;
+            font-family: var(--mono);
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.18em;
+            margin-bottom: 2.5rem;
+            font-variant-numeric: tabular-nums lining-nums;
+        }
+        .sparkle-journal .masthead .pub {
+            color: var(--text-bright);
+            font-weight: 600;
+        }
+        .sparkle-journal .masthead .sep {
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        /* Issue numeral (decoration, hidden on narrow). */
+        .sparkle-journal .hero-h1-wrap {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            align-items: center;
+            gap: 1.5rem;
+            justify-content: center;
+            max-width: 880px;
+            margin: 0 auto;
+        }
+        .sparkle-journal .issue-numeral {
+            font-family: var(--mono);
+            font-weight: 300;
+            font-size: clamp(4rem, 8vw, 6rem);
+            color: var(--accent);
+            line-height: 1;
+            letter-spacing: -0.04em;
+            font-variant-numeric: tabular-nums lining-nums;
+        }
+        .sparkle-journal .hero h1 {
+            font-family: var(--mono);
+            font-size: clamp(1.8rem, 4.2vw, 2.85rem);
+            font-weight: 700;
+            color: var(--text-bright);
+            line-height: 1.14;
+            letter-spacing: -0.025em;
+            text-align: left;
+            margin-bottom: 0;
+        }
+        .sparkle-journal .hero h1 em {
+            font-style: italic;
+            font-family: var(--sans);
+            font-weight: 400;
+            color: var(--accent);
+        }
+        .sparkle-journal .hero p {
+            max-width: 500px;
+            margin: 1.75rem auto 0;
+            line-height: 1.85;
+            font-size: 1.05rem;
+            font-weight: 300;
+            text-align: center;
+        }
+        .sparkle-journal .hero p::first-line {
+            font-variant: small-caps;
+            font-weight: 400;
+            letter-spacing: 0.04em;
+            color: var(--text-bright);
+        }
+
+        /* Hero badges retire — they don't fit the editorial frame. */
+        .sparkle-journal .hero-badges { display: none; }
+
+        /* ── SECTION MARKERS: roman-numeral eyebrows ── */
+        .sparkle-journal .section-header {
+            display: block;
+            margin-bottom: 1.5rem;
+        }
+        .sparkle-journal .section-line { display: none; }
+        .sparkle-journal .section-label {
+            display: inline-flex;
+            align-items: baseline;
+            gap: 0.6rem;
+            font-family: var(--mono);
+            font-size: 0.82rem;
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+            color: var(--text-bright);
+            font-weight: 600;
+        }
+        .sparkle-journal .section-label::before {
+            content: "";
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent);
+            align-self: center;
+            flex-shrink: 0;
+        }
+        .sparkle-journal .section-label .num {
+            color: var(--accent);
+            font-weight: 700;
+            font-variant-numeric: tabular-nums lining-nums;
+        }
+        .sparkle-journal .section-label .num::after {
+            content: ".";
+            color: var(--text-dim);
+            margin-left: 0.05rem;
+        }
+
+        /* ── ABOUT: strip card chrome; single-rule byline + pullquote ── */
+        .sparkle-journal .about-rebuild {
+            background: transparent;
+            border: none;
+            border-radius: 0;
+            padding: 0;
+            margin-bottom: 2rem;
+        }
+        .sparkle-journal .byline {
+            font-family: var(--mono);
+            font-size: 0.78rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+            padding-bottom: 0.85rem;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 1.75rem;
+            font-variant-numeric: tabular-nums lining-nums;
+        }
+        .sparkle-journal .byline .sep {
+            color: var(--accent);
+            margin: 0 0.45rem;
+            font-weight: 600;
+        }
+        .sparkle-journal .about-prose p {
+            font-family: var(--sans);
+            font-size: 1.0rem;
+            line-height: 1.9;
+            color: var(--text);
+            max-width: 70ch;
+            margin-bottom: 1.25rem;
+        }
+        .sparkle-journal .about-prose p.pullquote {
+            border-left: 3px solid var(--accent);
+            padding: 0.2rem 0 0.2rem 1.25rem;
+            font-style: italic;
+            font-size: 1.1rem;
+            color: var(--text-bright);
+            margin: 1.75rem 0;
+            max-width: 60ch;
+        }
+        .sparkle-journal .about-prose .colophon {
+            font-family: var(--mono);
+            font-size: 0.74rem;
+            color: var(--text-dim);
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-faint);
+        }
+
+        /* ── DROP CAP — classic 3-line publication initial ── */
+        .sparkle-journal .page-intro::first-letter {
+            float: left;
+            margin: 0.06em 0.6rem 0 0;
+            padding: 0;
+            font-family: var(--mono);
+            font-weight: 600;
+            font-size: 4.2rem;
+            line-height: 0.95;
+            color: var(--accent);
+        }
+        .sparkle-journal .page-intro {
+            font-family: var(--sans);
+            font-size: 1.05rem;
+            line-height: 1.85;
+            max-width: 70ch;
+        }
+        .sparkle-journal .page-intro dfn {
+            font-style: italic;
+            color: var(--text-bright);
+        }
+
+        /* ── Tabular nums on readouts only ── */
+        .sparkle-journal .ps-value,
+        .sparkle-journal .readout-value,
+        .sparkle-journal .result-value,
+        .sparkle-journal .widget-readout-value {
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* ── CUSTOM FOOTER — justified set with centered colophon ── */
+        body:has(.sparkle-journal) > footer:not(.sparkle-footer) { display: none; }
+        .sparkle-journal-footer {
+            position: relative;
+            z-index: 1;
+            border-top: 1px solid var(--border);
+            padding: 1.75rem 2rem 2rem;
+            max-width: 1120px;
+            margin: 3rem auto 0;
+            width: 100%;
+            font-family: var(--mono);
+            font-size: 0.72rem;
+            color: var(--text-dim);
+            font-variant-numeric: tabular-nums lining-nums;
+            text-align: center;
+        }
+        .sparkle-journal-footer .justified-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        .sparkle-journal-footer .colophon {
+            display: inline-block;
+            padding-top: 0.85rem;
+            border-top: 1px solid var(--border-faint);
+            font-size: 0.7rem;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+        }
+        .sparkle-journal-footer .colophon .sep {
+            color: var(--accent);
+            margin: 0 0.45rem;
+            font-weight: 600;
+        }
+        .sparkle-journal-footer .footer-left strong,
+        .sparkle-journal-footer .footer-right strong {
+            color: var(--text);
+            font-weight: 600;
+        }
+
+        /* ── Narrow viewport ── */
+        @media (max-width: 720px) {
+            .sparkle-journal .hero { padding: 3.5rem 1.25rem 3rem; }
+            .sparkle-journal .hero-h1-wrap {
+                grid-template-columns: 1fr;
+                gap: 0.85rem;
+                text-align: center;
+            }
+            .sparkle-journal .hero h1 { text-align: center; }
+            .sparkle-journal .issue-numeral { font-size: 3rem; }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<main id="main" class="sparkle sparkle-journal">
+
+    <div class="preview-banner">
+        <strong>Sparkle preview</strong> · Direction C — Trade Journal · Not a real page
+    </div>
+
+    <section class="hero">
+        <div class="masthead">
+            <span class="pub">CONTROLSFREAK</span>
+            <span class="sep">·</span>
+            <span>VOL. 2</span>
+            <span class="sep">·</span>
+            <span>NO. 0</span>
+            <span class="sep">·</span>
+            <span>2026</span>
+        </div>
+
+        <div class="hero-h1-wrap">
+            <div class="issue-numeral" aria-hidden="true">01</div>
+            <h1>Tools for those in controls,<br><em>built for the field.</em></h1>
+        </div>
+
+        <p>A reference site for building-controls people. Open calculators and lookups for the math you don't want to redo at the panel — BACnet/IP, Modbus registers, signal scaling, psychrometrics, thermistors. Alongside, a growing set of explainers that walk through hydronic loops, load piping, VFDs, and pump control end-to-end.</p>
+    </section>
+
+    <div class="section-header">
+        <h2 class="section-label"><span class="num">I</span>Start Here</h2>
+    </div>
+
+    <div class="card-grid two">
+        <a class="nav-card" href="/tools/">
+            <span class="nav-card-tag">Tools</span>
+            <div class="nav-card-name">Calculators &amp; lookups →</div>
+            <div class="nav-card-desc">Calculators and lookups for the parts of the job that come up over and over — psychrometric staging, signal scaling, register and address conversions, thermistor curves, a practice VFD keypad. Open one, get an answer, get back to work.</div>
+        </a>
+        <a class="nav-card" href="/education/">
+            <span class="nav-card-tag">Education</span>
+            <div class="nav-card-name">Learn the fundamentals →</div>
+            <div class="nav-card-desc">A connected set of explainers, not a glossary. The current arc: PID control → hydronic loops → load piping → VFDs → pump control, each page asking one question and answering it with diagrams, worked examples, and the occasional interactive widget.</div>
+        </a>
+    </div>
+
+    <div class="section-header" style="margin-top:3rem;">
+        <h2 class="section-label"><span class="num">II</span>About</h2>
+    </div>
+
+    <div class="about-rebuild">
+        <div class="byline">
+            <span>Controls Programmer</span>
+            <span class="sep">·</span>
+            <span>Northeast U.S.</span>
+            <span class="sep">·</span>
+            <span>Est. 2026</span>
+        </div>
+        <div class="about-prose">
+            <p>Hi, I'm a controls programmer based in the Northeast U.S. This is a side project I'm working on while exploring vibe coding. There's a genuine gap in easy reference websites and educational resources for this trade. This site started as just a way to have some easy reference tools in one place, but has expanded to include much more.</p>
+            <p class="pullquote">All anecdotes on this site are real things I've encountered, not AI generated. Although it may refine my writing for some of them.</p>
+            <p class="colophon">Bug reports, tool requests, or feedback — <a href="/contact.html">get in touch</a>.</p>
+        </div>
+    </div>
+
+    <div class="section-header" style="margin-top:3rem;">
+        <h2 class="section-label"><span class="num">III</span>Education Sample</h2>
+    </div>
+
+    <div class="about-rebuild">
+        <p class="page-intro">
+            PID is three knobs that, together, push a process variable (<dfn>PV</dfn> — the thing you're measuring) toward a setpoint (<dfn>SP</dfn> — the value you want it to hold). This is a common sense walk through what each one does on a typical HVAC loop, plus three small sims you can play with one knob at a time.
+        </p>
+        <p style="font-size:0.85rem;color:var(--text-dim);margin-top:1rem;font-family:var(--mono);">
+            ↑ The .page-intro paragraph carries the direction-specific drop cap — a classic 3-line publication initial. Inline definitions use &lt;dfn&gt; italic.
+        </p>
+    </div>
+
+</main>
+
+<footer class="sparkle-footer sparkle-journal-footer">
+    <div class="justified-row">
+        <span class="footer-left">controlsfreak.dev</span>
+        <span class="footer-right">v<strong>{{ site.version }}</strong> · <strong>2026-05-22</strong></span>
+    </div>
+    <span class="colophon">
+        Set in Overpass and IBM Plex Mono
+        <span class="sep">·</span>
+        Issue No. 0
+        <span class="sep">·</span>
+        v{{ site.version }}
+    </span>
+</footer>
+{% endblock %}
+
+{% block scripts %}
+<script src="/scripts/units.js"></script>
+{% endblock %}
