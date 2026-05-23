@@ -37,20 +37,14 @@ the site does, see `README.md`.
     inline script.
   - `nav.njk` — shared top nav; `.active` driven by the `nav`
     frontmatter value.
-  - `footer.njk` — tagline + version string. The version reads
-    `{{ site.version }}` from `html/_data/site.js`, which re-exports
-    `package.json.version` verbatim (full semver, including the
-    patch segment) — so bumping the version is a one-line edit in
-    `package.json` and the footer follows automatically on next
-    build. Carried to every page. Bump cadence: minor (`1.X.0`) for
-    new tools / new pages / visible features, patch (`1.X.Y`) for
-    bug fixes and small polish.
+  - `footer.njk` — tagline + version string. `{{ site.version }}`
+    re-exports `package.json.version` via `html/_data/site.js`, so
+    bumping the version is a one-line edit in `package.json`. Bump
+    cadence under *Adding a new tool*.
 - **Directory data file:** `html/html.11tydata.js` — overrides 11ty's
   pretty-URL permalink so `signal-scaling.html` lands at
   `_site/tools/signal-scaling.html` (not `signal-scaling/index.html`).
-  Load-bearing: site anchors use explicit `.html` extensions, and
-  wrangler's `assets.html_handling: auto-trailing-slash` expects
-  `foo.html`, not `foo/index.html`.
+  Load-bearing for the `.html`-extension convention (see *Conventions*).
 - **`html/styles.css`** — the shared design system. Every page picks
   it up via `head.njk`'s `<link rel="stylesheet" href="/styles.css">`.
   Shared rules live in the file; page-only rules stay inline via
@@ -229,31 +223,24 @@ harmless, but the signal is lost.
   with `<input/select/textarea class="ps-input" id="x">`. Rows that
   label a *readout* (`<span class="ps-value">`) stay `<span>` —
   `for=` is only valid for form controls. For a button group, use
-  `<div role="group" aria-labelledby="…">` with the caption
-  carrying the matching `id=`; the class follows the container —
-  `<span class="field-label">` inside a stacked `.field` (matches
-  its uppercase-mono peers, e.g. `pid-tuner.html`'s preset row),
-  `<span class="ps-label">` inside a `.ps-row` left column
-  (matches its sans peers, e.g. `thermistor-calculator.html`'s
-  lookup-by row). A `<label>` without `for=` or a wrapped control
-  has no semantic meaning. The implicit
-  `<label><input> Text</label>` wrap pattern is also fine.
+  `<div role="group" aria-labelledby="…">` with the caption carrying
+  the matching `id=`; the caption's class matches the container's
+  type peers (`field-label` inside `.field`, `ps-label` inside
+  `.ps-row`). A `<label>` without `for=` or a wrapped control has no
+  semantic meaning; implicit `<label><input> Text</label>` wraps are
+  fine.
 - **Skip-to-content link + `<main id="main">`.** Layout renders
   `<a href="#main" class="skip-link">` as the first body child; every
   `<main>` must carry `id="main"` or the link jumps nowhere.
   Section-header containers use `<div class="section-header">` +
   `<div class="section-line">`; `<section>` is reserved for actual
   document-outline sections, not visual chrome.
-- **Heading hierarchy.** Every page has exactly one `<h1>` — the page
-  topic. On content pages it's `.tool-card-title`
-  (`<h1 class="tool-card-title">`); on landings without a tool-card
-  (`/tools/`, `/simulators/`, `/education/`, `pid-basics.html`) the eyebrow
-  `.section-label` carries the `<h1>` instead. Section dividers
-  (`.section-header > .section-label`, `.ps-section-label`) and
-  `.subhead` are `<h2>`. Callout cards (`.callout h3`) and secondary
-  `.tool-card-title`s nested under an `<h2>` are `<h3>`. The
-  `.section-label` / `.tool-card-title` / `.ps-section-label` rules
-  are element-agnostic and reset `margin: 0`.
+- **Heading hierarchy.** Exactly one `<h1>` per page — usually
+  `.tool-card-title`; on landings without a tool-card, the eyebrow
+  `.section-label` carries it instead. `.section-label` /
+  `.ps-section-label` / `.subhead` are `<h2>`; callout cards and
+  nested `.tool-card-title`s are `<h3>`. The label classes are
+  element-agnostic and reset `margin: 0`.
 - **Education page scope rule** (one question per page, forward-link
   for adjacent topics) lives in `site-ideas-and-friction.md` under
   "Education page scope — one question per page."
@@ -270,11 +257,6 @@ harmless, but the signal is lost.
 
 ### Gotchas
 
-- **`{{ description }}` is HTML-autoescaped.** Apostrophes become
-  `&#39;`, quotes become `&quot;`. Renders fine, but if you care
-  about clean view-source, rephrase to avoid those characters in the
-  description. The title and canonical render through the same path
-  but rarely contain those characters.
 - **Inline `<style>` in `{% block head %}` is indented to column 4**
   to match the surrounding head context (which is itself indented to
   column 4 inside the rendered `<head>`). Inner CSS rules sit at
@@ -285,28 +267,19 @@ harmless, but the signal is lost.
   invalid XML even though most browsers tolerate them. Write `bg` or
   "the bg color" rather than `--bg` when referring to a custom
   property in a comment.
-- **Turnstile never goes idle** — for Playwright on `contact.html` use
-  `waitUntil: 'domcontentloaded'`, not `'networkidle'`. Turnstile also
-  produces unfilterable `pageerror` + `console.error` noise against
-  `challenges.cloudflare.com` from localhost (can't reach its
-  challenge server), so the smoke loop's `contact loads cleanly`
-  empty-errors-array assertion passes only because it runs before
-  Turnstile's failure surfaces. Don't extend the `watchErrors` helper
-  pattern to `contact.spec.js` behavioral tests.
-- **Turnstile callbacks live on `window`.** `contact.html` exposes
-  `window.onTsOk` / `window.onTsExpired` / `window.onTsError` from
-  inside the page IIFE so the `cf-turnstile` div's `data-callback` /
-  `data-expired-callback` / `data-error-callback` can find them.
-  They flip the submit button's `disabled` state only — no panel
-  status writes. The submit button starts enabled in HTML; on a
-  sandboxed / CI localhost Turnstile can't reach its challenge
-  server, `onTsError` fires, and the button gets disabled.
-  `contact.spec.js`'s "empty submit" test therefore route-blocks
-  `challenges.cloudflare.com` before navigating — no widget loads,
-  no callback fires, the button stays enabled, and the click is
-  deterministic (codebase-issues #55). The `smoke.spec.js`
-  `contact loads cleanly` check still leans on the race-tolerance
-  above — it runs before Turnstile's failure surfaces.
+- **Turnstile on `contact.html`.** Never goes idle, so Playwright
+  navigations use `waitUntil: 'domcontentloaded'` (not `'networkidle'`).
+  On sandboxed/CI localhost it can't reach `challenges.cloudflare.com`,
+  produces unfilterable `pageerror` + `console.error` noise, and fires
+  `onTsError` which disables the submit button. Callbacks
+  (`window.onTsOk` / `onTsExpired` / `onTsError`) live on `window` so
+  the widget's `data-callback` attrs can find them; they only flip the
+  submit button's `disabled` state. `smoke.spec.js`'s `contact loads
+  cleanly` check passes by racing in before Turnstile's failure
+  surfaces — don't extend that `watchErrors` pattern to
+  `contact.spec.js`. `contact.spec.js`'s "empty submit" route-blocks
+  `challenges.cloudflare.com` before navigating so the click is
+  deterministic (codebase-issues #55).
 - **`aria-pressed` flicker on units toggle is accepted.** Nav buttons
   hard-code `aria-pressed="true"` for US at render time; the head
   units-bootstrap sets `[data-units]` before paint but can't reach
@@ -403,8 +376,7 @@ per-page history and the *why* behind each, see
   (`.edu-svg`, `.edu-legend`) in `styles.css`: supply solid `--blue`,
   return dashed `--blue-cool`, `flow-active [data-flow="return"]`
   drops dashes while running. VFDs page uses a page-local `.vfd-svg`
-  (no `data-flow`); the next pipe-flow Education page is the
-  consolidation trigger.
+  (no `data-flow`).
 - **Variable-flow story:** `load-piping` → `vfds` → `pump-control` →
   `balancing` form a quartet. Cross-links pay off forward-link debts
   between them. The twin-T subhead in `hydronic-loops.html` carries
@@ -548,18 +520,12 @@ well-grouped.
   rejects `Infinity`, which matters on calcs like `1 / (max - min)`
   where equal bounds produce `Infinity`), set the result to
   `class="result-value muted"` with text `—` and clear the formula.
-- **Tabs:** wire tab buttons with a `data-tab="<name>"` attribute
-  on each `.tab-btn`, then bind them in one pass with
-  `document.querySelectorAll('[data-tab]').forEach(btn =>
-  btn.addEventListener('click', e => switchTab(e.currentTarget
-  .dataset.tab, e.currentTarget)))`. The pane containers carry
-  matching `id="tab-<name>"` so `switchTab` (from
-  `/scripts/ui.js`) can find them via `'tab-' + name`.
-  `switchTab(name, btn)` is scoped to the clicked button's
-  nearest `.tool-card`, so a page with multiple tabbed tools
-  doesn't clear another's panes. Canonical example:
-  `tools/signal-scaling.html` (three tabs) / `tools/bacnet-ip-converter.html`
-  (two tabs).
+- **Tabs:** `.tab-btn` carries `data-tab="<name>"`, the pane carries
+  `id="tab-<name>"`, and one `querySelectorAll('[data-tab]')` pass
+  wires them to `switchTab` (from `/scripts/ui.js`). `switchTab` is
+  scoped to the clicked button's nearest `.tool-card`, so multiple
+  tabbed tools on a page don't clear each other. See
+  `tools/signal-scaling.html` for the canonical wiring.
 - Lookup tables for fixed domain data (e.g. `SIG`: signal type →
   `{ min, max, unit }`; `PID_PROC`: process type → FOPDT params).
 - **UI vocabulary:** **AI / AO** = analog input/output. Don't use
@@ -576,10 +542,9 @@ well-grouped.
 3. Add a `.nav-card` to the `.card-grid` on `tools/index.html`.
    Bump the All chip count and add a per-category chip if the new
    tool opens a category not already represented.
-4. Add the page's URL to the `PAGES` array in `tests/smoke.spec.js`.
-   The sitemap picks the page up automatically — any template with a
-   `canonical` frontmatter is included (see *Sitemap*) — but the
-   `PAGES` ↔ sitemap drift test will fail until `PAGES` is updated.
+4. Add the page's URL to the `PAGES` array in `tests/smoke.spec.js`
+   (the sitemap is automatic — see *Sitemap* — but the drift test
+   fails until `PAGES` is updated).
 5. Bump `package.json.version` when shipping something notable; the
    footer reads it via `html/_data/site.js`. A new tool is a minor
    bump (`1.X.0`); a bug fix is a patch bump (`1.X.Y`).
@@ -692,76 +657,37 @@ it's genuinely separate from the work.
 
 ## Workflow
 
-The standard loop is branch → edit → commit → push → open PR. The
-user reviews on GitHub and merges themselves; Claude does not merge
-by default.
+The standard loop is branch → edit → commit → push → open PR (shapes
+under *Git conventions*). Stage specific file lists, not
+`git add -A` / `git add .`.
 
-- **Editing files** — go.
-- **Branching** — `git checkout -b <type>/<slug>` (see Git
-  conventions) at the start of a task.
-- **`git add` / `git commit`** — Claude commits as part of the task.
-  Stage specific file lists, not `git add -A` / `git add .`. Drafting
-  the commit message in text first is welcome but not required.
-- **`git push`** — push the branch to `origin` once commits are in
-  place (`git push -u origin <branch>` the first time).
-- **`gh pr create`** — open the PR with the standard three-section
-  description (Summary / Changes / Test plan; see Git conventions).
-  Return the PR URL to the user.
-- **`gh pr merge`** — never merge by default. Only run on explicit
-  request ("merge it," "go ahead and merge"). The user merges on
-  GitHub after review.
-- **Logging caught issues** — any code-quality issue noticed in
-  passing, *even if unrelated to the current task*, gets a new entry
-  appended to `codebase-issues.md` under *Open*. Don't silently fix
-  it inline (scope creep) and don't drop it on the floor. Mention it
-  to the user so they know to expect the appended entry.
-- **Sweeping convention changes site-wide** — when a convention
-  changes (a new CLAUDE.md bullet, a new shared rule in `styles.css`,
-  a new `:root` token, a renamed id pattern, a frontmatter-shape
-  adjustment, a new shared script) *or* when a new page lands, grep
-  the change site-wide before closing the PR. The codebase-issues.md
-  log is the after-the-fact catch; this is the before-the-fact
-  catch. Same `git log --oneline` + `grep` motion the existing audit
-  cycles already use — applied at the moment the convention shifts
-  rather than at the next audit pass.
+- **Never merge by default.** `gh pr merge` only on explicit request
+  ("merge it," "go ahead and merge"). The user merges on GitHub
+  after review.
+- **Log caught issues.** Code-quality issues noticed in passing —
+  *even if unrelated to the current task* — get appended to
+  `codebase-issues.md` under *Open*. Don't silently fix inline
+  (scope creep) or drop on the floor; mention the appended entry
+  to the user.
+- **Sweep on convention shifts.** When a convention changes (new
+  CLAUDE.md bullet, new shared rule in `styles.css`, new `:root`
+  token, renamed id pattern, frontmatter-shape adjustment, new
+  shared script) *or* when a new page lands, grep site-wide before
+  closing the PR. Two directions:
+  - *Convention → consumers.* Grep existing pages for the old
+    pattern and update in the same PR.
+  - *New page → conventions.* Re-run the *Adding a new tool*
+    checklist against it before merging.
 
-  Two directions to sweep:
+  Large sweeps log under `codebase-issues.md` rather than skip.
 
-  - *Convention → consumers.* New shared rule / token / pattern →
-    grep every existing page for the old pattern and update in the
-    same PR. Don't leave the new convention floating without
-    consumer alignment.
-  - *New page → conventions.* New page added → re-run the
-    convention checks against it before merging: description
-    length (140–160 chars per *Templating*), `'use strict';` on
-    the IIFE (per *JS patterns*), `<main id="main">` for the
-    skip-link, the heading-hierarchy / id-naming / form-label
-    rules under *Conventions*, behavioral-test coverage if it's a
-    widget page, and a `PAGES` entry in `smoke.spec.js` (the
-    sitemap itself is generated — see *Sitemap*). Don't inherit
-    the smoke-loop default by accident.
-
-  When a sweep would be large, log it under `codebase-issues.md`
-  rather than skip — same posture as the rest of the file.
-
-Typical loop: user asks for a change → Claude branches, edits,
-commits, pushes, opens PR → GitHub Actions runs the test suite on the
-PR (`.github/workflows/test.yml`) → user reviews on GitHub → user
-merges → Cloudflare Workers Build runs `npm install && npm run build`
-→ deploy serves `_site/` within ~60s.
+CI on every PR runs `npm test` (`.github/workflows/test.yml`);
+Cloudflare Workers Build deploys `_site/` ~60s after merge.
 
 ## Local preview & tests
 
-Two ways to view the site locally:
-
-- **Live-reload dev server:** `npm run dev` — runs
-  `eleventy --serve --port=8000`. Rebuilds and reloads on every
-  source change. Best for iterating on a page.
-- **Build + static-serve:** `npm run build && python3 -m http.server
-  8000 --directory _site` — produces the same `_site/` Cloudflare
-  serves and exposes it on `http://localhost:8000`. Useful for
-  eyeballing the built output directly; the test suite no longer
-  needs you to start this by hand (see below).
+Preview: `npm run dev` runs `eleventy --serve --port=8000` with
+live reload — best for iterating on a page.
 
 Tests:
 
