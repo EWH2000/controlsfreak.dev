@@ -15,7 +15,7 @@ nav: education
     </div>
 
     <p class="page-intro">
-        PID is three knobs that, together, push a process variable (PV — the thing you're measuring) toward a setpoint (SP — the value you want it to hold). This is a common sense walk through what each one does on a typical HVAC loop, plus three small sims you can play with one knob at a time. By the end, the full <a href="/tools/pid-tuner.html">PID Tuning Helper</a> should make a lot more sense.
+        PID is three knobs that, together, push a process variable (PV — the thing you're measuring) toward a setpoint (SP — the value you want it to hold). This is a common sense walk through what each one does on a typical HVAC loop, plus three small sims you can play with one knob at a time. By the end, the full <a href="/simulators/pid-tuner.html">PID Tuning Helper</a> should make a lot more sense.
     </p>
 
     <!-- ── What P, I, and D Actually Do ── -->
@@ -57,7 +57,7 @@ nav: education
     </div>
 
     <p style="max-width:640px;margin-bottom:1.5rem;">
-        Three small simulators, in order — each adds one term to the one before. One knob is live; the Fast / Medium / Slow chips set how quickly the loop reacts. Move anything and the plot redraws right away. (Want all three knobs at once? Jump to the full <a href="/tools/pid-tuner.html">PID Tuning Helper</a>.)
+        Three small simulators, in order — each adds one term to the one before. One knob is live; the Fast / Medium / Slow chips set how quickly the loop reacts. Move anything and the plot redraws right away. (Want all three knobs at once? Jump to the full <a href="/simulators/pid-tuner.html">PID Tuning Helper</a>.)
     </p>
 
     <!-- ── Sim 1 — P only: the steady-state offset ── -->
@@ -214,7 +214,7 @@ nav: education
 
     <!-- ── CTA + back link ── -->
     <p style="margin-top:2.5rem;">
-        <a class="cta-button" href="/tools/pid-tuner.html">Try it for yourself →</a>
+        <a class="cta-button" href="/simulators/pid-tuner.html">Try it for yourself →</a>
     </p>
 
     <a class="back-link" href="/education/">← Back to Education</a>
@@ -226,7 +226,7 @@ nav: education
 <script src="/scripts/units.js"></script>
 <!-- Shared simulation core (PID_PROC, PID_DMAX, simulatePid, fmtDur) plus the
      canvas drawer and unit-aware delta formatter (drawPidChart, formatPidDelta).
-     The same files drive /tools/pid-tuner.html. Classic scripts (not modules),
+     The same files drive /simulators/pid-tuner.html. Classic scripts (not modules),
      loaded before the IIFE below so it can reach those globals by name. -->
 <script src="/scripts/pid-engine.js"></script>
 <script src="/scripts/pid-chart.js"></script>
@@ -306,7 +306,7 @@ nav: education
         // ── Key-metric callouts under each chart ──
         // The mini-sims express the steady-state error as an *offset* (how far
         // below SP the PV settled), so flip the sign: -sim.ssErr. The full tuner
-        // on /tools/pid-tuner.html uses the standard +sim.ssErr (PV above SP).
+        // on /simulators/pid-tuner.html uses the standard +sim.ssErr (PV above SP).
         function showMiniMetrics(n, sim, procKey) {
             const set = (id, t) => { const el = document.getElementById(id); if (el) el.textContent = t; };
             const fmtPct = v => v < 0.05 ? 'none' : v.toFixed(1) + ' %';

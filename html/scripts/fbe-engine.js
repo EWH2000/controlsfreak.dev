@@ -1,6 +1,6 @@
 // ──────────────────────────────────────────────────────────────────────
 // fbe-engine.js — function-block simulation core for the Function-Block
-// Editor (/tools/function-block-editor.html).
+// Editor (/simulators/function-block-editor.html).
 //
 // Loaded as a *classic* script (no type="module"): the page's logic lives
 // in an IIFE-wrapped inline <script> whose bindings can't be reached from

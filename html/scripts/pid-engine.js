@@ -20,7 +20,7 @@
 // the DOM or the units toggle — slider wiring, the canvas drawing, the
 // unit-aware readout formatting. Canvas drawing lives in /scripts/pid-chart.js;
 // per-page slider/preset glue stays on the page that hosts the sim
-// (today: tools/pid-tuner.html and education/pid-basics.html).
+// (today: simulators/pid-tuner.html and education/pid-basics.html).
 //
 // The model is a first-order lag plus dead time driven by a PID controller
 // working on error as a % of the loop's nominal span — so the gain means the

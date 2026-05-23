@@ -3,7 +3,7 @@
 //
 // Two PID surfaces draw the same step-response chart (PV trace + setpoint
 // line + soft fill) and would otherwise carry near-duplicate drawing code:
-// the full tuner (tools/pid-tuner.html) and the three Education mini-sims
+// the full tuner (simulators/pid-tuner.html) and the three Education mini-sims
 // (education/pid-basics.html). This file is the consolidation.
 //
 // API (classic-script globals, same pattern as /scripts/pid-engine.js):
