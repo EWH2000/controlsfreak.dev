@@ -33,6 +33,9 @@
     --blue-cool:    #5e8aa0;   /* a muted, cooler companion to --blue — "return water" in the hydronic diagrams (paired with a dashed line so it reads without colour too) */
     --red:          #c4382f;   /* fault / alarm */
     --heat:         #c8782a;   /* warm orange — "heating" on the psychrometric chart's process lines; companion to --blue for cooling */
+    --teal:         #4a8a8a;   /* desaturated teal — data/comm traces on the background schematic (BACnet, IP) */
+    --amber:        #c9a14a;   /* desaturated amber — energized control wiring on the background schematic */
+    --plum:         #8a5e7e;   /* desaturated plum — logic-signal lines on the background schematic */
     --mono:         'IBM Plex Mono', monospace;
     --sans:         'Overpass', sans-serif;
 }
@@ -68,6 +71,13 @@ body {
        instead of leaving a big gap underneath. */
     display: flex;
     flex-direction: column;
+    /* Stacking context for the gutter schematic SVGs (.schematic-bg),
+       which sit at z-index:-1 — above body's bg-image grid but below
+       every content surface (nav, hero, main, footer). Without
+       isolation:isolate the SVGs would fall behind body's background
+       and disappear entirely. */
+    position: relative;
+    isolation: isolate;
 }
 main { flex: 1; }
 
@@ -78,6 +88,79 @@ main { flex: 1; }
    under any future print-CSS overrides too.) */
 @media print {
     body { background-image: none; }
+}
+
+/* ──────────────────────────────────────────────────────────────────
+ * SCHEMATIC BACKGROUND — gutter as-builts
+ *
+ * Two narrow vertical strips, one in each side gutter, holding
+ * inline-SVG schematic motifs (piping, control wiring, function
+ * blocks). Each motif draws itself in via stroke-dashoffset as it
+ * scrolls into view — see /scripts/schematic-bg.js for the
+ * IntersectionObserver that toggles .is-drawn.
+ *
+ * The strips paint at z-index:-1 inside body's stacking context, so
+ * they sit above body's grid background but below every content
+ * surface (nav, hero, tool-cards, footer). Width tracks the gutter
+ * via clamp() so the strips stay narrow on narrow viewports and
+ * never push into the 1120px content column. Below 1240px the
+ * gutter gets too cramped to read — strips drop out entirely there.
+ *
+ * Hidden in print (matches the grid). Reduced-motion: the global
+ * block at the bottom of this file collapses transition-duration
+ * to 0.01ms, and schematic-bg.js draws every motif synchronously
+ * on load instead of observing — so reduced-motion users see the
+ * end state with no reveal. */
+.schematic-bg {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    z-index: -1;
+    pointer-events: none;
+    width: clamp(80px, calc((100vw - 1180px) / 2), 200px);
+    overflow: hidden;
+}
+.schematic-bg--left  { left: 8px; }
+.schematic-bg--right { right: 8px; }
+
+.sbg-motif {
+    position: absolute;
+    left: 0;
+    top: var(--sbg-y, 0);
+    width: 100%;
+    height: auto;
+    opacity: 0;
+    transition: opacity 700ms ease;
+}
+/* `fill: none` on stroked paths is set as an inline presentation
+   attribute in the partial — CSS selectors inside <use> shadow
+   trees aren't reliable in Chromium, and an open <path> with no
+   explicit fill defaults to black, which renders as a filled lens
+   between the path's endpoints. The remaining rules here ARE
+   inherited through <use> shadow trees (stroke-width et al. are
+   inherited SVG properties), so they're safe to set in CSS. */
+.sbg-motif [data-sbg-stroke] {
+    stroke-width: 1.4;
+    vector-effect: non-scaling-stroke;
+    stroke-dasharray: 800;
+    stroke-dashoffset: 800;
+    transition: stroke-dashoffset 1400ms ease-out;
+}
+.sbg-motif.is-drawn { opacity: 1; }
+.sbg-motif.is-drawn [data-sbg-stroke] { stroke-dashoffset: 0; }
+
+.sbg-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    fill: var(--text-dim);
+    letter-spacing: 0.04em;
+}
+
+@media (max-width: 1240px) {
+    .schematic-bg { display: none; }
+}
+@media print {
+    .schematic-bg { display: none; }
 }
 
 /* ── Skip-to-content link — keyboard users tab here first on every

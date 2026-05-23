@@ -1,0 +1,171 @@
+{# ─────────────────────────────────────────────────────────────────
+    SCHEMATIC BACKGROUND — gutter as-builts.
+
+    Two narrow vertical strips, one in each gutter, holding inline-
+    SVG motifs (piping, control wiring, function blocks, BACnet
+    nodes). Strips sit at z-index:-1 inside body's stacking context
+    (above the blueprint grid, below every content surface).
+
+    A `<svg>` of <symbol> defs lives at the top, hidden in zero-size
+    so it doesn't take layout — both gutters <use href="#sbg-…"/>
+    from those defs. Motif Y offsets are set via the `--sbg-y` CSS
+    custom property; the wrapper <svg class="sbg-motif"> is the
+    IntersectionObserver target wired up in /scripts/schematic-bg.js.
+
+    CSS lives in styles.css under the SCHEMATIC BACKGROUND block.
+    Hidden below 1240px viewport (no real gutter to fill) and on
+    print. Decorative only: aria-hidden, pointer-events:none.
+#}
+
+<svg class="sbg-defs" aria-hidden="true" focusable="false" style="position:absolute; width:0; height:0; overflow:hidden;">
+    <defs>
+
+        {# ── Piping run with valve — supply over return.
+              Supply line breaks AT the valve (schematically correct
+              and keeps the pipe stroke from passing through the bowtie
+              outlines, which would crowd into a dark blob at small
+              render scale). Return line is continuous (no valve). #}
+        <symbol id="sbg-pipe-valve" viewBox="0 0 200 80">
+            <line x1="4"   y1="28" x2="88"  y2="28" stroke="var(--blue)" data-sbg-stroke/>
+            <line x1="112" y1="28" x2="196" y2="28" stroke="var(--blue)" data-sbg-stroke/>
+            <line x1="4"   y1="56" x2="196" y2="56" stroke="var(--blue-cool)" data-sbg-stroke/>
+            <path d="M88 20 L88 36 L100 28 Z M112 20 L112 36 L100 28 Z" stroke="var(--blue)" fill="none" data-sbg-stroke/>
+            <text x="14" y="16" class="sbg-label">SUP</text>
+            <text x="14" y="74" class="sbg-label">RET</text>
+        </symbol>
+
+        {# ── Pump + coil — small AHU vignette ── #}
+        <symbol id="sbg-pump-coil" viewBox="0 0 200 90">
+            <rect x="14" y="26" width="56" height="38" stroke="var(--blue)" fill="var(--surface)" data-sbg-stroke/>
+            <path d="M22 34 L62 34 M22 42 L62 42 M22 50 L62 50 M22 58 L62 58" stroke="var(--blue)" fill="none" data-sbg-stroke/>
+            <line x1="70" y1="45" x2="138" y2="45" stroke="var(--blue)" data-sbg-stroke/>
+            <circle cx="158" cy="45" r="20" stroke="var(--blue)" fill="var(--surface)" data-sbg-stroke/>
+            <path d="M148 45 L168 45 M158 35 L158 55" stroke="var(--blue)" fill="none" data-sbg-stroke/>
+            <text x="14" y="18" class="sbg-label">COIL</text>
+            <text x="158" y="82" text-anchor="middle" class="sbg-label">P-1</text>
+        </symbol>
+
+        {# ── AI/AO terminal pair — amber (energized analog) trace ── #}
+        <symbol id="sbg-terminals-ao" viewBox="0 0 200 70">
+            <rect x="10" y="22" width="38" height="26" stroke="var(--text-dim)" fill="var(--surface)" data-sbg-stroke/>
+            <circle cx="20" cy="35" r="2.5" fill="var(--amber)"/>
+            <circle cx="38" cy="35" r="2.5" fill="var(--amber)"/>
+            <text x="29" y="16" text-anchor="middle" class="sbg-label">AI1</text>
+
+            <rect x="152" y="22" width="38" height="26" stroke="var(--text-dim)" fill="var(--surface)" data-sbg-stroke/>
+            <circle cx="162" cy="35" r="2.5" fill="var(--amber)"/>
+            <circle cx="180" cy="35" r="2.5" fill="var(--amber)"/>
+            <text x="171" y="16" text-anchor="middle" class="sbg-label">AO1</text>
+
+            <path d="M48 35 Q90 35 100 50 Q110 65 152 35" stroke="var(--amber)" fill="none" data-sbg-stroke/>
+        </symbol>
+
+        {# ── BI/BO terminal pair — gray (binary) trace ── #}
+        <symbol id="sbg-terminals-bo" viewBox="0 0 200 70">
+            <rect x="10" y="22" width="38" height="26" stroke="var(--text-dim)" fill="var(--surface)" data-sbg-stroke/>
+            <circle cx="20" cy="35" r="2.5" fill="var(--text-dim)"/>
+            <circle cx="38" cy="35" r="2.5" fill="var(--text-dim)"/>
+            <text x="29" y="16" text-anchor="middle" class="sbg-label">BI1</text>
+
+            <rect x="152" y="22" width="38" height="26" stroke="var(--text-dim)" fill="var(--surface)" data-sbg-stroke/>
+            <circle cx="162" cy="35" r="2.5" fill="var(--text-dim)"/>
+            <circle cx="180" cy="35" r="2.5" fill="var(--text-dim)"/>
+            <text x="171" y="16" text-anchor="middle" class="sbg-label">BO1</text>
+
+            <line x1="48" y1="35" x2="152" y2="35" stroke="var(--text-dim)" data-sbg-stroke/>
+        </symbol>
+
+        {# ── Logic chain — TMR → AND → PID, plum signal lines ── #}
+        <symbol id="sbg-logic-chain" viewBox="0 0 200 110">
+            <rect x="14" y="14" width="56" height="28" stroke="var(--plum)" fill="var(--surface)" data-sbg-stroke/>
+            <text x="42" y="33" text-anchor="middle" class="sbg-label">TMR</text>
+
+            <rect x="74" y="50" width="56" height="28" stroke="var(--plum)" fill="var(--surface)" data-sbg-stroke/>
+            <text x="102" y="69" text-anchor="middle" class="sbg-label">AND</text>
+
+            <rect x="134" y="80" width="52" height="22" stroke="var(--plum)" fill="var(--surface)" data-sbg-stroke/>
+            <text x="160" y="96" text-anchor="middle" class="sbg-label">PID</text>
+
+            <path d="M70 28 L82 28 L82 64 L74 64" stroke="var(--plum)" fill="none" data-sbg-stroke/>
+            <path d="M130 64 L142 64 L142 91 L134 91" stroke="var(--plum)" fill="none" data-sbg-stroke/>
+        </symbol>
+
+        {# ── BACnet node — chip + two teal traces to neighbors ── #}
+        <symbol id="sbg-bacnet-node" viewBox="0 0 200 90">
+            <rect x="14" y="34" width="76" height="26" stroke="var(--teal)" fill="var(--surface)" data-sbg-stroke/>
+            <text x="52" y="51" text-anchor="middle" class="sbg-label">BACnet/IP</text>
+
+            <path d="M90 42 L130 42 L160 22" stroke="var(--teal)" fill="none" data-sbg-stroke/>
+            <circle cx="160" cy="22" r="3" fill="var(--teal)"/>
+            <text x="172" y="20" class="sbg-label">N2</text>
+
+            <path d="M90 52 L130 52 L160 72" stroke="var(--teal)" fill="none" data-sbg-stroke/>
+            <circle cx="160" cy="72" r="3" fill="var(--teal)"/>
+            <text x="172" y="76" class="sbg-label">N5</text>
+        </symbol>
+
+    </defs>
+</svg>
+
+{#  Per-gutter rotations. Sequences are deliberately offset between
+    left and right so a visitor with a wide screen sees varied
+    motifs across both gutters rather than a mirrored pair. Each
+    entry is { id: symbol-suffix, y: top-offset-px, h: viewBox-height }. #}
+
+{% set sbgLeftMotifs = [
+    { id: 'pipe-valve',    y:   60, h:  80 },
+    { id: 'terminals-ao',  y:  200, h:  70 },
+    { id: 'pump-coil',     y:  340, h:  90 },
+    { id: 'logic-chain',   y:  500, h: 110 },
+    { id: 'bacnet-node',   y:  680, h:  90 },
+    { id: 'pipe-valve',    y:  840, h:  80 },
+    { id: 'terminals-bo',  y:  980, h:  70 },
+    { id: 'pump-coil',     y: 1120, h:  90 },
+    { id: 'logic-chain',   y: 1280, h: 110 },
+    { id: 'bacnet-node',   y: 1460, h:  90 },
+    { id: 'pipe-valve',    y: 1620, h:  80 },
+    { id: 'terminals-ao',  y: 1760, h:  70 },
+    { id: 'pump-coil',     y: 1900, h:  90 },
+    { id: 'logic-chain',   y: 2060, h: 110 },
+    { id: 'bacnet-node',   y: 2240, h:  90 },
+    { id: 'pipe-valve',    y: 2400, h:  80 },
+    { id: 'terminals-bo',  y: 2540, h:  70 },
+    { id: 'pump-coil',     y: 2680, h:  90 },
+    { id: 'logic-chain',   y: 2840, h: 110 },
+    { id: 'bacnet-node',   y: 3020, h:  90 }
+] %}
+
+{% set sbgRightMotifs = [
+    { id: 'terminals-bo',  y:  120, h:  70 },
+    { id: 'logic-chain',   y:  260, h: 110 },
+    { id: 'pipe-valve',    y:  440, h:  80 },
+    { id: 'bacnet-node',   y:  580, h:  90 },
+    { id: 'pump-coil',     y:  740, h:  90 },
+    { id: 'terminals-ao',  y:  900, h:  70 },
+    { id: 'pipe-valve',    y: 1040, h:  80 },
+    { id: 'logic-chain',   y: 1180, h: 110 },
+    { id: 'bacnet-node',   y: 1360, h:  90 },
+    { id: 'pump-coil',     y: 1520, h:  90 },
+    { id: 'terminals-bo',  y: 1680, h:  70 },
+    { id: 'pipe-valve',    y: 1820, h:  80 },
+    { id: 'logic-chain',   y: 1960, h: 110 },
+    { id: 'bacnet-node',   y: 2140, h:  90 },
+    { id: 'pump-coil',     y: 2300, h:  90 },
+    { id: 'terminals-ao',  y: 2460, h:  70 },
+    { id: 'logic-chain',   y: 2600, h: 110 },
+    { id: 'pipe-valve',    y: 2780, h:  80 },
+    { id: 'bacnet-node',   y: 2920, h:  90 },
+    { id: 'pump-coil',     y: 3080, h:  90 }
+] %}
+
+<div class="schematic-bg schematic-bg--left" aria-hidden="true">
+    {% for m in sbgLeftMotifs %}
+    <svg class="sbg-motif" data-sbg-motif viewBox="0 0 200 {{ m.h }}" style="--sbg-y: {{ m.y }}px;" preserveAspectRatio="xMidYMin meet" focusable="false"><use href="#sbg-{{ m.id }}"/></svg>
+    {% endfor %}
+</div>
+
+<div class="schematic-bg schematic-bg--right" aria-hidden="true">
+    {% for m in sbgRightMotifs %}
+    <svg class="sbg-motif" data-sbg-motif viewBox="0 0 200 {{ m.h }}" style="--sbg-y: {{ m.y }}px;" preserveAspectRatio="xMidYMin meet" focusable="false"><use href="#sbg-{{ m.id }}"/></svg>
+    {% endfor %}
+</div>

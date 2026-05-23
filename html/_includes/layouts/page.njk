@@ -7,11 +7,14 @@
 <body>
 <a href="#main" class="skip-link">Skip to content</a>
 
+{% include "schematic-bg.njk" %}
+
 {% include "nav.njk" %}
 
 {% block content %}{% endblock %}
 
 {% include "footer.njk" %}
+<script src="/scripts/schematic-bg.js" defer></script>
 {% block scripts %}{% endblock %}
 </body>
 </html>
