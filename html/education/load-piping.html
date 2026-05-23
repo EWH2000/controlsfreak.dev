@@ -6,6 +6,175 @@ nav: education
 ---
 {% extends "layouts/page.njk" %}
 
+{% block head %}
+    <style>
+        /* Page-specific — load-piping closing widget ("See what the
+           bypass does"). Schematic-left, controls-right grid with a
+           full-width head/speed bar and anecdote spanning beneath.
+           Widget shell (.widget / .widget-try / .widget-section-label /
+           .widget-slider* / .widget-readout-* / .widget-anecdote*)
+           lives in styles.css under WIDGET CHROME. The bypass-leg
+           animation toggle uses FlowEngine.setPathColor() rather than
+           opacity or attribute removal — see the IIFE header comment
+           for why. */
+
+        #lp-w .widget-slider { margin-bottom: 0.55rem; }
+
+        .lp-w-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 14rem;
+            gap: 1.1rem;
+            align-items: start;
+        }
+        @media (max-width: 700px) {
+            .lp-w-grid { grid-template-columns: 1fr; }
+        }
+        .lp-w-schematic-wrap {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            padding: 0.6rem;
+        }
+        .lp-w-schematic {
+            display: block;
+            width: 100%;
+            height: auto;
+        }
+
+        /* Right column: vertical stack of controls + readouts. */
+        .lp-w-controls {
+            display: grid;
+            gap: 0.5rem;
+            align-content: start;
+        }
+        .lp-w-controls .widget-section-label { margin-top: 0.3rem; }
+        .lp-w-controls > .widget-section-label:first-child { margin-top: 0; }
+
+        /* Segmented two-button group, reused for PUMP TYPE and BYPASS.
+           Same shape as .pc-w2-mode in pump-control.html. */
+        .lp-w-seg {
+            display: flex;
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            overflow: hidden;
+            font-family: var(--mono);
+            font-size: 0.74rem;
+        }
+        .lp-w-seg button {
+            flex: 1;
+            background: var(--surface);
+            border: 0;
+            color: var(--text-dim);
+            padding: 0.35rem 0.6rem;
+            cursor: pointer;
+            letter-spacing: 0.06em;
+        }
+        .lp-w-seg button + button { border-left: 1px solid var(--border); }
+        .lp-w-seg button.on { background: var(--blue); color: var(--surface); }
+        .lp-w-seg button:hover:not(.on) { color: var(--text); }
+        .lp-w-seg button:focus-visible {
+            outline: 2px solid var(--accent);
+            outline-offset: -2px;
+        }
+
+        /* Readout chips — label-left, value-right, stacked vertically. */
+        .lp-w-readouts {
+            display: grid;
+            gap: 0.4rem;
+            margin-top: 0.5rem;
+        }
+        .lp-w-readout {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            padding: 0.4rem 0.65rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 0.5rem;
+        }
+        .lp-w-readout .widget-readout-label { margin: 0; }
+        .lp-w-readout .widget-readout-value { font-size: 0.88rem; }
+        .lp-w-readout .unit {
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            margin-left: 0.15rem;
+            font-weight: 500;
+        }
+
+        /* PUMP state pill — prominent first chip; colour-shifts via container data-state. */
+        .lp-w-state-pill { padding: 0.5rem 0.7rem; }
+        .lp-w-state-pill .widget-readout-value {
+            font-size: 0.92rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+        }
+        #lp-w[data-state="ok"]       .lp-w-state-pill { border-color: var(--accent-dim); }
+        #lp-w[data-state="ok"]       .lp-w-state-pill .widget-readout-value { color: var(--accent); }
+        #lp-w[data-state="warn"]     .lp-w-state-pill { border-color: var(--heat); }
+        #lp-w[data-state="warn"]     .lp-w-state-pill .widget-readout-value { color: var(--heat); }
+        #lp-w[data-state="deadhead"] .lp-w-state-pill { border-color: var(--red); }
+        #lp-w[data-state="deadhead"] .lp-w-state-pill .widget-readout-value { color: var(--red); }
+
+        /* Full-width head/speed bar — spans both grid columns underneath. */
+        .lp-w-bar-wrap {
+            grid-column: 1 / -1;
+            margin-top: 0.85rem;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            padding: 0.55rem 0.85rem;
+        }
+        .lp-w-bar-wrap .widget-section-label {
+            display: block;
+            margin: 0 0 0.4rem;
+        }
+        .lp-w-bar {
+            height: 6px;
+            background: var(--border-faint);
+            border-radius: 3px;
+            overflow: hidden;
+            position: relative;
+        }
+        .lp-w-bar > span {
+            display: block;
+            height: 100%;
+            background: var(--blue);
+            border-radius: 3px;
+            transition: width 0.2s, background 0.25s;
+        }
+        /* Design tick at 100% mark (within the 0..140% scale, that's
+           at 100/140 = 71.4% from the left). Mirrors .bal-w-bch-bar::after. */
+        .lp-w-bar::after {
+            content: '';
+            position: absolute;
+            left: 71.4%;
+            top: -3px;
+            bottom: -3px;
+            width: 1px;
+            background: var(--text-dim);
+            opacity: 0.6;
+        }
+        #lp-w[data-state="warn"]     .lp-w-bar > span { background: var(--heat); }
+        #lp-w[data-state="deadhead"] .lp-w-bar > span { background: var(--red); }
+
+        /* Anecdote-wrap — tight, matches balancing's local override. */
+        #lp-w .widget-anecdote-wrap { min-height: 1rem; margin-top: 0.85rem; }
+
+        /* Schematic — MIN-FLOW bowtie valve toggles fill via .closed.
+           Particles on the bypass leg are toggled via setPathColor in
+           the IIFE; pipe strokes stay visible always (the bypass is a
+           present-but-closed fixture when the toggle is off). */
+        .lp-w-svg-valve-bow {
+            fill: var(--surface);
+            stroke: var(--text-dim);
+            stroke-width: 2;
+            transition: fill 0.2s;
+        }
+        .lp-w-svg-valve-bow.closed { fill: var(--text-dim); }
+    </style>
+{% endblock %}
+
 {% block content %}
 <main id="main">
 
@@ -418,6 +587,201 @@ nav: education
                 That's the difference the twin-T diagram didn't mention. Pick the wrong load type for the rest of your system and you end up with a constant-speed system pump fighting a building full of throttling two-way valves, or a variable-speed pump trying to ramp down on a building full of three-ways that won't let it. The connection point at each load doesn't look like much on a riser diagram, but it determines what the rest of the loop is allowed to do.
             </p>
 
+            <!-- ───────────────── 4 · See what the bypass does ───────────────── -->
+            <h2 class="subhead">See what the bypass does</h2>
+
+            <p style="margin-top:1.25rem;">
+                Three knobs below: a <em>building demand</em> slider that throttles all three two-way loads in unison, a <em>pump type</em> toggle between VFD and constant-speed, and the <em>min-flow bypass</em> itself. Pull demand down with the bypass off and the PUMP state pill tips into <em>WARN</em> and then <em>DEADHEAD</em> — there's nowhere left for water to go. Flick the bypass on and the floor reappears.
+            </p>
+
+            <!-- Capstone widget. Three knobs (demand, pump type, bypass) feed a
+                 simple flow model that lights the PUMP state pill OK / WARN /
+                 DEADHEAD via data-state on the container. Math is intentionally
+                 abstract — % only, no Hz / ft / H-Q curve (those belong to
+                 pump-control.html). Page-id prefix lp-w- (matches pc-w- /
+                 bal-w- / vfd-w-). -->
+            <div class="widget" id="lp-w" data-state="ok">
+
+                <div class="widget-try">
+                    Try it:
+                    <a href="#" id="lp-w-try-design">design day</a> ·
+                    <a href="#" id="lp-w-try-night">quiet night</a>
+                </div>
+
+                <div class="lp-w-grid">
+
+                    <!-- LEFT: schematic. Three loads on a supply/return main with
+                         the system pump on the left and a MIN-FLOW bypass at the
+                         far right. Pipes carry data-flow="supply|return" so the
+                         shared flow-engine animates them. The bypass leg's
+                         particles toggle visibility via FlowEngine.setPathColor()
+                         from the IIFE below. -->
+                    <div class="lp-w-schematic-wrap">
+                        <svg class="lp-w-schematic" id="lp-w-svg" viewBox="0 0 580 260"
+                             role="img" aria-labelledby="lp-w-svg-title lp-w-svg-desc"
+                             font-family="var(--mono)">
+                            <title id="lp-w-svg-title">Three loads on a hydronic loop with a min-flow bypass at the far end</title>
+                            <desc id="lp-w-svg-desc">A simplified hydronic loop: a system pump at the bottom left pushes water up into a supply main running across the top. Three loads (A, B, C) tap off the supply main with bowtie two-way valves, drop through coils, and return into a return main running back along the bottom to the pump. At the far right end, opposite the pump, a min-flow bypass connects the supply main to the return main through a single bowtie valve. When the bypass valve is open and the building loads are throttled down, a controlled trickle of water shortcuts the loads and protects the pump from dead-heading.</desc>
+
+                            <!-- piping: supply main (solid, --blue) -->
+                            <path id="lp-w-svg-supply" data-flow="supply" d="M40 50 H 540" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                            <!-- piping: return main (dashed, --blue-cool); drawn right-to-left so engine particles walk that direction -->
+                            <path id="lp-w-svg-return" data-flow="return" d="M540 210 H 40" fill="none" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                            <!-- pump-side vertical link (the pump body covers this; not animated) -->
+                            <line id="lp-w-svg-pump-leg" x1="40" y1="50" x2="40" y2="210" stroke="var(--blue)" stroke-width="3"/>
+
+                            <!-- Load A risers -->
+                            <line id="lp-w-svg-load-a-sup-top" data-flow="supply" x1="170" y1="50"  x2="170" y2="110" stroke="var(--blue)" stroke-width="3"/>
+                            <line id="lp-w-svg-load-a-sup-bot" data-flow="supply" x1="170" y1="130" x2="170" y2="150" stroke="var(--blue)" stroke-width="3"/>
+                            <line id="lp-w-svg-load-a-ret"     data-flow="return" x1="170" y1="190" x2="170" y2="210" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                            <!-- Load B risers -->
+                            <line id="lp-w-svg-load-b-sup-top" data-flow="supply" x1="290" y1="50"  x2="290" y2="110" stroke="var(--blue)" stroke-width="3"/>
+                            <line id="lp-w-svg-load-b-sup-bot" data-flow="supply" x1="290" y1="130" x2="290" y2="150" stroke="var(--blue)" stroke-width="3"/>
+                            <line id="lp-w-svg-load-b-ret"     data-flow="return" x1="290" y1="190" x2="290" y2="210" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                            <!-- Load C risers -->
+                            <line id="lp-w-svg-load-c-sup-top" data-flow="supply" x1="410" y1="50"  x2="410" y2="110" stroke="var(--blue)" stroke-width="3"/>
+                            <line id="lp-w-svg-load-c-sup-bot" data-flow="supply" x1="410" y1="130" x2="410" y2="150" stroke="var(--blue)" stroke-width="3"/>
+                            <line id="lp-w-svg-load-c-ret"     data-flow="return" x1="410" y1="190" x2="410" y2="210" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+
+                            <!-- MIN-FLOW bypass leg (grouped; particles toggled via setPathColor from the IIFE) -->
+                            <g id="lp-w-bypass-leg">
+                                <line id="lp-w-svg-bypass-up"   data-flow="supply" x1="520" y1="50"  x2="520" y2="110" stroke="var(--blue)" stroke-width="3"/>
+                                <line id="lp-w-svg-bypass-down" data-flow="supply" x1="520" y1="130" x2="520" y2="210" stroke="var(--blue)" stroke-width="3"/>
+                            </g>
+
+                            <!-- Static directional arrows — read under reduced-motion too -->
+                            <g id="lp-w-svg-arrows-supply" fill="var(--blue)">
+                                <polygon points="100,45 109,50 100,55"/>
+                                <polygon points="225,45 234,50 225,55"/>
+                                <polygon points="345,45 354,50 345,55"/>
+                                <polygon points="470,45 479,50 470,55"/>
+                                <polygon points="165,90 170,101 175,90"/>
+                                <polygon points="285,90 290,101 295,90"/>
+                                <polygon points="405,90 410,101 415,90"/>
+                            </g>
+                            <g id="lp-w-svg-arrows-return" fill="var(--blue-cool)">
+                                <polygon points="470,215 461,210 470,205"/>
+                                <polygon points="345,215 336,210 345,205"/>
+                                <polygon points="225,215 216,210 225,205"/>
+                                <polygon points="100,215 91,210 100,205"/>
+                                <polygon points="165,200 170,189 175,189"/>
+                                <polygon points="285,200 290,189 295,189"/>
+                                <polygon points="405,200 410,189 415,189"/>
+                            </g>
+
+                            <!-- Two-way valves at each load -->
+                            <g id="lp-w-svg-load-a-valve">
+                                <polygon class="lp-w-svg-valve-bow" points="155,110 185,110 170,120"/>
+                                <polygon class="lp-w-svg-valve-bow" points="155,130 185,130 170,120"/>
+                            </g>
+                            <g id="lp-w-svg-load-b-valve">
+                                <polygon class="lp-w-svg-valve-bow" points="275,110 305,110 290,120"/>
+                                <polygon class="lp-w-svg-valve-bow" points="275,130 305,130 290,120"/>
+                            </g>
+                            <g id="lp-w-svg-load-c-valve">
+                                <polygon class="lp-w-svg-valve-bow" points="395,110 425,110 410,120"/>
+                                <polygon class="lp-w-svg-valve-bow" points="395,130 425,130 410,120"/>
+                            </g>
+
+                            <!-- Coils -->
+                            <g id="lp-w-svg-load-a-coil">
+                                <rect x="140" y="150" width="60" height="40" rx="2" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                                <text x="170" y="176" text-anchor="middle" font-size="12" font-weight="600" fill="var(--text-bright)">A</text>
+                            </g>
+                            <g id="lp-w-svg-load-b-coil">
+                                <rect x="260" y="150" width="60" height="40" rx="2" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                                <text x="290" y="176" text-anchor="middle" font-size="12" font-weight="600" fill="var(--text-bright)">B</text>
+                            </g>
+                            <g id="lp-w-svg-load-c-coil">
+                                <rect x="380" y="150" width="60" height="40" rx="2" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                                <text x="410" y="176" text-anchor="middle" font-size="12" font-weight="600" fill="var(--text-bright)">C</text>
+                            </g>
+
+                            <!-- MIN-FLOW bypass valve (default .closed; .closed toggled by the IIFE) -->
+                            <g id="lp-w-svg-minflow-valve">
+                                <polygon id="lp-w-svg-minflow-bow-top" class="lp-w-svg-valve-bow closed" points="505,110 535,110 520,120"/>
+                                <polygon id="lp-w-svg-minflow-bow-bot" class="lp-w-svg-valve-bow closed" points="505,130 535,130 520,120"/>
+                                <text x="500" y="125" text-anchor="end" font-size="9" font-weight="600" fill="var(--text-bright)">MIN-FLOW</text>
+                            </g>
+
+                            <!-- System pump at bottom-left, sitting on the supply↔return vertical link -->
+                            <g id="lp-w-svg-pump">
+                                <circle cx="40" cy="130" r="14" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                                <polygon points="34,138 46,138 40,122" fill="var(--text-dim)"/>
+                                <text x="60" y="134" font-size="10" fill="var(--text)">SYS PUMP</text>
+                            </g>
+
+                            <!-- Context labels -->
+                            <text x="80" y="38" font-size="10" fill="var(--text-dim)">supply main →</text>
+                            <text x="80" y="232" font-size="10" fill="var(--text-dim)">← return main</text>
+                        </svg>
+                    </div>
+
+                    <!-- RIGHT: controls + readouts -->
+                    <div class="lp-w-controls">
+
+                        <label class="widget-section-label" for="lp-w-demand-slider">Building demand</label>
+                        <div class="widget-slider-head">
+                            <span></span>
+                            <span class="v"><span id="lp-w-demand-val">50</span>%</span>
+                        </div>
+                        <input class="widget-slider" type="range" id="lp-w-demand-slider"
+                               min="0" max="100" step="1" value="50"
+                               aria-label="Building demand percentage"/>
+
+                        <span class="widget-section-label" id="lp-w-pump-label">Pump type</span>
+                        <div class="lp-w-seg" role="group" aria-labelledby="lp-w-pump-label">
+                            <button type="button" id="lp-w-pump-vfd" class="on" data-pump="vfd" aria-pressed="true">VFD</button>
+                            <button type="button" id="lp-w-pump-cs"             data-pump="cs"  aria-pressed="false">CS</button>
+                        </div>
+
+                        <span class="widget-section-label" id="lp-w-bypass-label">Min-flow bypass</span>
+                        <div class="lp-w-seg" role="group" aria-labelledby="lp-w-bypass-label">
+                            <button type="button" id="lp-w-bypass-off" class="on" data-bypass="off" aria-pressed="true">OFF</button>
+                            <button type="button" id="lp-w-bypass-on"             data-bypass="on"  aria-pressed="false">ON</button>
+                        </div>
+
+                        <div class="lp-w-readouts">
+                            <div class="lp-w-readout lp-w-state-pill" aria-live="polite">
+                                <span class="widget-readout-label">Pump</span>
+                                <span class="widget-readout-value" id="lp-w-state-text">OK</span>
+                            </div>
+                            <div class="lp-w-readout">
+                                <span class="widget-readout-label">Sys flow</span>
+                                <span class="widget-readout-value"><span id="lp-w-sys-flow">30</span><span class="unit" data-us="GPM" data-metric="L/s">GPM</span></span>
+                            </div>
+                            <div class="lp-w-readout">
+                                <span class="widget-readout-label" id="lp-w-pump-readout-label">Pump speed</span>
+                                <span class="widget-readout-value"><span id="lp-w-pump-value">50</span><span class="unit">%</span></span>
+                            </div>
+                            <div class="lp-w-readout">
+                                <span class="widget-readout-label">Bypass flow</span>
+                                <span class="widget-readout-value"><span id="lp-w-bypass-flow">0</span><span class="unit" data-us="GPM" data-metric="L/s">GPM</span></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- FULL-WIDTH bar (grid-column: 1 / -1). Dual-coded:
+                         in VFD mode it tracks pump speed (shrinks below 100%);
+                         in CS mode it tracks pump head (grows past 100% toward
+                         shutoff at 140%). The 100% design tick anchors both. -->
+                    <div class="lp-w-bar-wrap">
+                        <span class="widget-section-label" id="lp-w-bar-label">Pump speed</span>
+                        <div class="lp-w-bar" aria-hidden="true">
+                            <span id="lp-w-bar-fill" style="width: 35.7%;"></span>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="widget-anecdote-wrap">
+                    <p class="widget-anecdote warn" id="lp-w-anecdote" hidden>
+                        <strong>You've found it.</strong> Zero demand, VFD pump, no bypass — the loop has nowhere for water to go. The drive can't slow below ~25%, and the load valves are all the way shut, so the pump dead-heads against a closed loop, water in the volute heating up. The min-flow bypass is the floor that catches this. The rest of the variable-flow story picks up on <a href="/education/vfds.html">VFDs</a> (the drive that lets the pump slow down at all) and <a href="/education/pump-control.html">pump control</a> (the BMS sequence that decides when to ask it to).
+                    </p>
+                </div>
+
+            </div>
+
         </div>
     </div>
 
@@ -431,12 +795,249 @@ nav: education
 <!-- Particle-flow animation over the diagrams. Classic script (not a
      module), loaded before the inline init below. Engine respects
      prefers-reduced-motion and is a no-op on pages without [data-flow]
-     paths. All four diagrams on this page are annotated. No
-     interactive widgets to drive density mutations here — the engine
-     just runs at uniform density per the d1/d2 convention on
-     hydronic-loops. -->
+     paths. The four static diagrams plus the closing widget's
+     schematic are all annotated. The widget IIFE below drives
+     bypass-leg particle visibility via FlowEngine.setPathColor()
+     after the engine has built its pools. -->
 <script src="/scripts/flow-engine.js"></script>
 <script>
     FlowEngine.init();
+
+    // ─────────────────────────────────────────────
+    // Load-piping closing widget — "See what the bypass does".
+    //
+    // Three knobs (demand slider, pump-type segment, bypass segment)
+    // drive a deliberately abstract pump-physics model. The output is
+    // a PUMP state pill (OK / WARN / DEADHEAD) on a data-state attribute,
+    // four numeric readouts, and a head/speed bar. The bar dual-codes:
+    // in VFD mode it tracks pump speed (shrinks below 100%); in CS mode
+    // it tracks pump head (grows past 100% toward shutoff at 140%). A
+    // design tick at 100% anchors both readings.
+    //
+    // Bypass-leg particle visibility uses FlowEngine.setPathColor(el,
+    // 'transparent' | 'var(--blue)') rather than data-flow attribute
+    // removal: the engine's refreshPath returns early for un-annotated
+    // elements (flow-engine.js:178) and the existing particle pool isn't
+    // torn down, so removal leaves ghost particles. Recolouring to
+    // transparent keeps the bypass pipe visible as a fixture while
+    // toggling whether water is shown flowing through it. The MIN-FLOW
+    // valve bowtie toggles a .closed class for the open/closed visual.
+    //
+    // No Hz, no ft, no H-Q curve — those belong to pump-control. The
+    // CS / VFD toggle is the only place this widget flexes the page's
+    // one-question scope (see friction file for the rationale).
+    // ─────────────────────────────────────────────
+    (function () {
+        'use strict';
+
+        // ── Constants (all canonical US: GPM, %) ──
+        const N_LOADS                = 3;
+        const PER_LOAD_DESIGN_GPM    = 20;
+        const SYS_DESIGN_GPM         = N_LOADS * PER_LOAD_DESIGN_GPM;
+        const VFD_MIN_SPEED_PCT      = 25;
+        const BYPASS_SETPOINT_PCT    = 25;
+        const BYPASS_FLOOR_GPM       = SYS_DESIGN_GPM * BYPASS_SETPOINT_PCT / 100;
+        const WARN_THRESHOLD_PCT     = 20;
+        const DEADHEAD_THRESHOLD_PCT = 10;
+        const BAR_MAX_PCT            = 140;
+        const CS_SHUTOFF_PCT         = 140;
+
+        // ── DOM ──
+        const root          = document.getElementById('lp-w');
+        const demandSlider  = document.getElementById('lp-w-demand-slider');
+        const demandVal     = document.getElementById('lp-w-demand-val');
+        const pumpButtons   = root.querySelectorAll('[data-pump]');
+        const bypassButtons = root.querySelectorAll('[data-bypass]');
+        const sysFlowEl     = document.getElementById('lp-w-sys-flow');
+        const pumpValEl     = document.getElementById('lp-w-pump-value');
+        const pumpLabelEl   = document.getElementById('lp-w-pump-readout-label');
+        const bypassFlowEl  = document.getElementById('lp-w-bypass-flow');
+        const stateTextEl   = document.getElementById('lp-w-state-text');
+        const barFillEl     = document.getElementById('lp-w-bar-fill');
+        const barLabelEl    = document.getElementById('lp-w-bar-label');
+        const anecdoteEl    = document.getElementById('lp-w-anecdote');
+        const tryDesignEl   = document.getElementById('lp-w-try-design');
+        const tryNightEl    = document.getElementById('lp-w-try-night');
+        const minflowBowTop = document.getElementById('lp-w-svg-minflow-bow-top');
+        const minflowBowBot = document.getElementById('lp-w-svg-minflow-bow-bot');
+        const bypassUpEl    = document.getElementById('lp-w-svg-bypass-up');
+        const bypassDownEl  = document.getElementById('lp-w-svg-bypass-down');
+
+        // Load-riser pipes split by data-flow type so we can restore the
+        // right colour when un-suppressing particles.
+        const loadSupplyPipes = ['a', 'b', 'c'].flatMap(function (k) {
+            return [
+                document.getElementById('lp-w-svg-load-' + k + '-sup-top'),
+                document.getElementById('lp-w-svg-load-' + k + '-sup-bot')
+            ];
+        });
+        const loadReturnPipes = ['a', 'b', 'c'].map(function (k) {
+            return document.getElementById('lp-w-svg-load-' + k + '-ret');
+        });
+        const loadValveBows = root.querySelectorAll(
+            '#lp-w-svg-load-a-valve .lp-w-svg-valve-bow,'
+            + ' #lp-w-svg-load-b-valve .lp-w-svg-valve-bow,'
+            + ' #lp-w-svg-load-c-valve .lp-w-svg-valve-bow'
+        );
+
+        // ── State ──
+        const state = {
+            demand: 50,
+            pump: 'vfd',
+            bypass: 'off',
+            anecdoteShown: false
+        };
+
+        // ── Compute ──
+        function compute() {
+            const demand = state.demand;
+            const loadsDraw = (demand / 100) * SYS_DESIGN_GPM;
+
+            let bypassFlow = 0;
+            let sysFlow = loadsDraw;
+            if (state.bypass === 'on') {
+                bypassFlow = Math.max(0, BYPASS_FLOOR_GPM - loadsDraw);
+                sysFlow = loadsDraw + bypassFlow;
+            }
+
+            const sysPct = (sysFlow / SYS_DESIGN_GPM) * 100;
+            let stateName;
+            if (sysPct < DEADHEAD_THRESHOLD_PCT)  stateName = 'deadhead';
+            else if (sysPct < WARN_THRESHOLD_PCT) stateName = 'warn';
+            else                                   stateName = 'ok';
+
+            let pumpVal;
+            if (state.pump === 'vfd') {
+                // VFD speed tracks flow but floors at the drive's minimum.
+                pumpVal = Math.max(VFD_MIN_SPEED_PCT, sysPct);
+            } else {
+                // CS pump head climbs as flow falls — operating point walks
+                // up the system curve toward shutoff at zero flow.
+                pumpVal = Math.min(CS_SHUTOFF_PCT, 100 + (1 - sysFlow / SYS_DESIGN_GPM) * 40);
+            }
+
+            return { sysFlow: sysFlow, bypassFlow: bypassFlow, pumpVal: pumpVal, stateName: stateName, sysPct: sysPct };
+        }
+
+        // ── Display formatting (units boundary) ──
+        function formatFlow(qGpm) {
+            if (window.Units && Units.current() === 'metric') {
+                return Units.display.waterFlow(qGpm).toFixed(2);
+            }
+            return Math.round(qGpm).toString();
+        }
+
+        // ── Render ──
+        function render() {
+            const r = compute();
+
+            demandVal.textContent    = state.demand;
+            sysFlowEl.textContent    = formatFlow(r.sysFlow);
+            bypassFlowEl.textContent = formatFlow(r.bypassFlow);
+            pumpValEl.textContent    = Math.round(r.pumpVal);
+
+            const pumpLabel = state.pump === 'vfd' ? 'Pump speed' : 'Pump head';
+            pumpLabelEl.textContent = pumpLabel;
+            barLabelEl.textContent  = pumpLabel;
+
+            stateTextEl.textContent = r.stateName.toUpperCase();
+            root.setAttribute('data-state', r.stateName);
+
+            const barWidth = Math.min(100, (r.pumpVal / BAR_MAX_PCT) * 100);
+            barFillEl.style.width = barWidth + '%';
+
+            // Bypass leg — particles only when actual flow > 0; valve symbol
+            // tracks toggle state (open whenever the valve is enabled, even
+            // if no water is moving through it at the moment).
+            const showBypassParticles = state.bypass === 'on' && r.bypassFlow > 0;
+            if (window.FlowEngine && FlowEngine.setPathColor) {
+                const color = showBypassParticles ? 'var(--blue)' : 'transparent';
+                FlowEngine.setPathColor(bypassUpEl, color);
+                FlowEngine.setPathColor(bypassDownEl, color);
+            }
+            const valveOpen = state.bypass === 'on';
+            minflowBowTop.classList.toggle('closed', !valveOpen);
+            minflowBowBot.classList.toggle('closed', !valveOpen);
+
+            // Load risers — when demand reaches zero, the 2-way valves are
+            // all the way shut. Visually close the valve bowties and hide
+            // particles on the load risers so the schematic matches the
+            // "loop has nowhere for water to go" prose.
+            const loadsClosed = state.demand <= 0;
+            loadValveBows.forEach(function (b) { b.classList.toggle('closed', loadsClosed); });
+            if (window.FlowEngine && FlowEngine.setPathColor) {
+                const supColor = loadsClosed ? 'transparent' : 'var(--blue)';
+                const retColor = loadsClosed ? 'transparent' : 'var(--blue-cool)';
+                loadSupplyPipes.forEach(function (el) { FlowEngine.setPathColor(el, supColor); });
+                loadReturnPipes.forEach(function (el) { FlowEngine.setPathColor(el, retColor); });
+            }
+
+            // Anecdote — pinned once shown (balancing-style: yanking the
+            // reward back on the next slider tweak would undo it and is petty).
+            if (r.stateName === 'deadhead' && state.pump === 'vfd' && state.bypass === 'off') {
+                state.anecdoteShown = true;
+            }
+            anecdoteEl.hidden = !state.anecdoteShown;
+        }
+
+        // ── Event wiring ──
+        demandSlider.addEventListener('input', function (e) {
+            const v = parseFloat(e.target.value);
+            if (!isFinite(v)) return;
+            state.demand = v;
+            render();
+        });
+
+        function bindSegGroup(buttons, key) {
+            buttons.forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    state[key] = btn.dataset[key];
+                    buttons.forEach(function (b) {
+                        const active = b === btn;
+                        b.classList.toggle('on', active);
+                        b.setAttribute('aria-pressed', active ? 'true' : 'false');
+                    });
+                    render();
+                });
+            });
+        }
+        bindSegGroup(pumpButtons, 'pump');
+        bindSegGroup(bypassButtons, 'bypass');
+
+        // Units toggle — re-format readouts on the fly.
+        document.addEventListener('unitschange', render);
+
+        // Presets — one-click path to two pedagogically interesting corners.
+        function applyPreset(demand, pump, bypass) {
+            state.demand = demand;
+            state.pump = pump;
+            state.bypass = bypass;
+            demandSlider.value = demand;
+            pumpButtons.forEach(function (b) {
+                const active = b.dataset.pump === pump;
+                b.classList.toggle('on', active);
+                b.setAttribute('aria-pressed', active ? 'true' : 'false');
+            });
+            bypassButtons.forEach(function (b) {
+                const active = b.dataset.bypass === bypass;
+                b.classList.toggle('on', active);
+                b.setAttribute('aria-pressed', active ? 'true' : 'false');
+            });
+            render();
+        }
+        tryDesignEl.addEventListener('click', function (e) {
+            e.preventDefault();
+            applyPreset(50, 'cs', 'off');
+        });
+        tryNightEl.addEventListener('click', function (e) {
+            e.preventDefault();
+            applyPreset(0, 'vfd', 'off');
+        });
+
+        // First paint. FlowEngine.init() above ran synchronously, so its
+        // pools exist (under reduced-motion they don't, but setPathColor
+        // is a safe no-op in that case).
+        render();
+    })();
 </script>
 {% endblock %}
