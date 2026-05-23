@@ -25,6 +25,7 @@
     --accent:       #43881c;   /* the green — readable on white for text & UI */
     --accent-dim:   rgba(67,136,28,0.10);
     --accent-glow:  rgba(67,136,28,0.22);
+    --accent-soft:  rgba(67,136,28,0.06);  /* one notch under --accent-dim — backdrops for status pills, inset washes; never compete with --accent-glow on focus rings */
     --text:         #38423a;   /* body copy */
     --text-bright:  #1d251f;   /* headings */
     --text-dim:     #666e66;   /* labels, secondary text */
@@ -97,7 +98,10 @@ main { flex: 1; }
     letter-spacing: 0.01em;
     text-decoration: none;
 }
-.site-nav-brand span { color: var(--accent); }
+.site-nav-brand span {
+    color: var(--accent);
+    animation: breathe 4s ease-in-out infinite;
+}
 .site-nav-brand:hover { color: var(--text-bright); }
 .site-nav-links { display: flex; flex-wrap: wrap; gap: 1.75rem; }
 .site-nav-links a {
@@ -160,16 +164,92 @@ html[data-units="metric"] .units-btn[data-units="metric"] {
     font-weight: 600;
 }
 
-/* ── HERO ── */
+/* ── HERO — "workstation panel" treatment (v2.0.0).
+       The hero is now a bordered surface with a faux BAS title bar above
+       and a live status line below. Existing eyebrow / h1 / p / badges
+       move INSIDE a .hero-body wrapper that carries the old padding. The
+       outer .hero supplies the chrome; .hero-body supplies the content.
+       Sub-pages don't carry a .hero, so this only affects the home page. */
 .hero {
     position: relative;
     z-index: 1;
-    padding: 5rem 2rem 4rem;
+    padding: 0;
     max-width: 1120px;
-    margin: 0 auto;
+    margin: 2.5rem auto 2rem;
     width: 100%;   /* don't shrink-to-fit inside body's flex column */
-    text-align: center;
+    text-align: left;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
     animation: fadeUp 0.5s ease both;
+}
+.hero-body {
+    padding: 5rem 2rem 4rem;
+    text-align: center;
+}
+.console-titlebar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.55rem 1rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-2);
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    color: var(--text);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+.console-titlebar .titlebar-dots {
+    color: var(--text-dim);
+    margin: 0 0.4rem;
+}
+.console-statusline {
+    padding: 0.7rem 1rem;
+    border-top: 1px solid var(--border);
+    background: var(--surface-2);
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.5rem 1.25rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    font-variant-numeric: tabular-nums;
+}
+.console-statusline > span strong {
+    color: var(--text);
+    font-weight: 600;
+    margin-left: 0.35rem;
+}
+
+/* The .ok-pill: a small accent pill with a leading dot. Used in the
+   title bar, status line, footer, and anywhere a "live / running"
+   marker is wanted. */
+.ok-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    background: var(--accent-dim);
+    color: var(--accent);
+    border: 1px solid var(--accent-glow);
+    padding: 0.1rem 0.5rem;
+    border-radius: 2px;
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+.ok-pill::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
 }
 
 /* Centered eyebrow: short accent line on each side of the label so the
@@ -245,8 +325,8 @@ main {
 
 .section-header {
     display: flex;
-    align-items: center;
-    gap: 1rem;
+    align-items: baseline;
+    gap: 0.6rem;
     margin-bottom: 1.5rem;
 }
 .section-label {
@@ -254,12 +334,38 @@ main {
     font-size: 0.82rem;
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.12em;
+    letter-spacing: 0.1em;
     color: var(--accent);
     white-space: nowrap;
     margin: 0;
 }
-.section-line { flex: 1; height: 1px; background: var(--border); }
+/* The trailing hairline that used to follow every section-label is
+   hidden in v2.0.0 — the AV:NNN object-reference prefix on h2 labels
+   carries enough left-side weight that a trailing line is noise. The
+   markup stays in existing pages as a no-op so a future tweak can flip
+   it back without retroactive edits; new pages can omit it. */
+.section-line { display: none; }
+
+/* h2.section-label is the section-divider variant (vs h1.section-label
+   which is a landing-page title). When carrying a `data-objref`
+   attribute, h2 labels render with a BACnet object-reference style
+   prefix: `AV:NNN · LABEL`. The accent color attaches to the prefix,
+   not the label — the prefix becomes the wayfinding mark, the label
+   reads as a quiet workstation heading.
+   Pages without `data-objref` are unaffected (no prefix; existing
+   accent label color preserved). */
+h2.section-label[data-objref] {
+    font-size: 0.78rem;
+    letter-spacing: 0.06em;
+    color: var(--text-bright);
+}
+h2.section-label[data-objref]::before {
+    content: "AV:" attr(data-objref) " · ";
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+    margin-right: 0.1rem;
+    font-weight: 600;
+}
 
 /* ── TOOL CARD ── */
 .tool-card {
@@ -339,6 +445,23 @@ p.tool-preamble {
     line-height: 1.85;
     color: var(--text);
     margin-bottom: 1.75rem;
+}
+/* v2.0.0 — Workstation drop cap on every education-page lead paragraph.
+   A filled accent rectangle with the initial reversed out in cream. Sits
+   only on `.page-intro` so the body prose downstream gets no second-
+   paragraph treatment. The padding numbers are tuned for IBM Plex Mono
+   capitals — wider letters (M, W) sit comfortably; narrow ones (I)
+   read slightly compressed but recognizable. */
+.page-intro::first-letter {
+    float: left;
+    margin: 0.05em 0.55rem 0 0;
+    padding: 0.15em 0.32em 0.05em;
+    background: var(--accent);
+    color: var(--surface);
+    font-family: var(--mono);
+    font-size: 2.6rem;
+    font-weight: 600;
+    line-height: 1;
 }
 
 /* ── TABS ── */
@@ -434,6 +557,7 @@ select option { background: var(--surface); }
     font-weight: 600;
     color: var(--blue);
     letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
     transition: color 0.18s;
 }
 .result-value.error { color: var(--red); }
@@ -557,31 +681,75 @@ p.bit-hint {
     font-weight: 600;
     color: var(--text-bright);
     word-break: break-all;
+    font-variant-numeric: tabular-nums;
 }
 
-/* ── FOOTER ── */
+/* ── FOOTER — v2.0.0 status-bar treatment.
+       Mono caps, --surface-2 background, an [OK] pill + site name on the
+       left and version / build datestamp / heartbeat dot on the right.
+       The dot pulses on a 2-second keyframe — GPU-cheap, honored by
+       prefers-reduced-motion via the global block at the bottom of this
+       file. */
 footer {
     position: relative;
     z-index: 1;
     border-top: 1px solid var(--border);
-    padding: 1.5rem 2rem;
+    background: var(--surface-2);
+    padding: 0.85rem 2rem;
     display: flex;
     align-items: center;
     justify-content: space-between;
     max-width: 1120px;
     margin: 0 auto;
     width: 100%;   /* don't shrink-to-fit inside body's flex column */
+    gap: 1rem;
+}
+.footer-left,
+.footer-right {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
 }
 .footer-text {
     font-family: var(--mono);
     font-size: 0.7rem;
     color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-variant-numeric: tabular-nums;
+}
+.footer-text strong {
+    color: var(--text);
+    font-weight: 600;
+}
+.heartbeat-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: heartbeat 2s ease-in-out infinite;
 }
 
 /* ── ANIMATIONS ── */
 @keyframes fadeUp {
     from { opacity: 0; transform: translateY(14px); }
     to   { opacity: 1; transform: translateY(0); }
+}
+/* v2.0.0 — `heartbeat` powers the footer dot and the About-card status
+   row's live indicator. 2-second cycle, eased — a quiet "this system is
+   running" cue. `breathe` is the slower 4-second version used on the
+   .site-nav-brand span (.dev) — peripheral, never the focal point.
+   Both are squashed by the global prefers-reduced-motion block at the
+   bottom of this file. */
+@keyframes heartbeat {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.35; }
+}
+@keyframes breathe {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.55; }
 }
 
 /* ── RESPONSIVE ── */
@@ -595,8 +763,12 @@ footer {
     .sim-canvas-wrap canvas { height: 200px; }
     .sim-legend      { gap: 1rem; }
     .site-nav        { padding: 0.7rem 1rem; }
-    .hero, main      { padding-left: 1rem; padding-right: 1rem; }
-    footer           { padding: 1.25rem 1rem; flex-direction: column; gap: 0.4rem; }
+    main             { padding-left: 1rem; padding-right: 1rem; }
+    .hero            { margin-left: 1rem; margin-right: 1rem; width: auto; }
+    .hero-body       { padding: 3rem 1.25rem 2.5rem; }
+    .console-titlebar,
+    .console-statusline { padding: 0.5rem 0.75rem; font-size: 0.62rem; }
+    footer           { padding: 0.85rem 1rem; flex-direction: column; align-items: flex-start; gap: 0.5rem; }
     /* Long section-header labels would otherwise force horizontal scroll
        on narrow viewports because of the desktop white-space:nowrap.
        Allow wrapping below the mobile breakpoint — the trailing
@@ -697,7 +869,7 @@ input[type="range"]::-moz-range-thumb {
 .back-link:focus-visible,
 .nav-card:focus-visible {
     outline: 2px solid var(--accent);
-    outline-offset: 2px;
+    outline-offset: 3px;   /* v2.0.0 — was 2px; lifted so the accent ring no longer kisses the border on .nav-card */
 }
 input[type="range"]:focus-visible::-webkit-slider-thumb {
     box-shadow: 0 0 0 1px var(--accent), 0 0 0 4px var(--accent-glow);
@@ -849,6 +1021,61 @@ p.pid-note {
 }
 
 /* ──────────────────────────────────────────────────────────────────────
+ * ABOUT-CARD REBUILD — v2.0.0 home page only
+ * The home's About panel reframes the wall-of-prose pattern as a BAS-
+ * inspector view: a property-sheet header (role / location / industry /
+ * verified / status) followed by a recessed prose block (`.about-prose`)
+ * with a blue left rule — the same shape as `.widget-anecdote`. The
+ * `.live` modifier on a `.ps-value` adds a pulsing accent dot to signal
+ * a "running" state, reused from the same `heartbeat` keyframe that
+ * drives the footer dot.
+ * Only `html/index.html` uses these today. Internals here are the
+ * decoration layered on top of the shared `.ps-row` / `.ps-label` /
+ * `.ps-value` vocabulary.
+ * ────────────────────────────────────────────────────────────────────── */
+.about-rebuild .ps-row {
+    padding: 9px 1.25rem;
+}
+.about-rebuild .ps-row:first-child { padding-top: 1rem; }
+.about-rebuild .ps-row:last-of-type {
+    border-bottom: 1px solid var(--border);
+}
+.about-rebuild .ps-value.live {
+    color: var(--accent);
+    font-weight: 600;
+}
+.about-rebuild .ps-value.live::before {
+    content: "";
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    margin-right: 0.4rem;
+    vertical-align: middle;
+    animation: heartbeat 2s ease-in-out infinite;
+}
+.about-prose {
+    margin: 1rem 1.25rem 1.25rem;
+    padding: 0.85rem 1rem;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--blue);
+    border-radius: 3px;
+    font-size: 0.92rem;
+    line-height: 1.75;
+    color: var(--text);
+}
+.about-prose p + p { margin-top: 0.85rem; }
+.about-prose a { color: var(--accent); }
+.about-prose .colophon {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    margin-top: 1rem;
+}
+
+/* ──────────────────────────────────────────────────────────────────────
  * BACK LINK — the small "← All tools" / "← Back to …" anchor that lives
  * under a tool's .tool-card. Kept as its own class so the size and color
  * are consistent across pages (and easy to bump from one place).
@@ -991,6 +1218,7 @@ p.pid-note {
     font-family: var(--mono);
     font-size: 0.82rem;
     color: var(--text);
+    font-variant-numeric: tabular-nums;
 }
 /* a live / actionable output value. (The mockup called this modifier
    `.readout`; renamed to `.live` because there is already a global
@@ -1253,6 +1481,7 @@ p.ref-note.compact {
     font-weight: 600;
     color: var(--blue);
     line-height: 1.15;
+    font-variant-numeric: tabular-nums;
 }
 .widget-readout-value .unit {
     font-size: 0.65em;
