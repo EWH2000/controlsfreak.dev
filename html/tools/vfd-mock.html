@@ -25,6 +25,42 @@ nav: tools
            matches the "drive front panel" design. Same pattern as
            psychrometric-chart's custom cap. */
         main, footer { max-width: 880px; }
+
+        /* Dial-arc — circular tachometer mirror of the linear .vfdm-gauge.
+           Same value (% of S04 max freq), shown as a 270° arc fill so the
+           Motor Response panel reads as a small workstation gauge cluster
+           instead of just a flat bar. Path = 270° arc, length ≈ 70.7,
+           stroke-dashoffset shrinks from 70.7 (empty) to 0 (full) as JS
+           updates it. */
+        .vfdm-dial-row {
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+            margin: 0.45rem 0 0.55rem;
+        }
+        .vfdm-dial { flex-shrink: 0; }
+        .vfdm-dial-track { stroke: var(--border); }
+        .vfdm-dial-fill {
+            stroke: var(--blue);
+            transition: stroke-dashoffset 80ms linear;
+        }
+        .vfdm-dial-label {
+            font-family: var(--mono);
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            letter-spacing: 0.07em;
+            text-transform: uppercase;
+        }
+        .vfdm-dial-label .pct {
+            display: block;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--blue);
+            font-variant-numeric: tabular-nums;
+            letter-spacing: 0;
+            text-transform: none;
+        }
+        .vfdm-dial-label .pct.stopped { color: var(--text-dim); }
         .vfdm-grid {
             display: grid;
             grid-template-columns: minmax(320px, 1fr) minmax(280px, 1fr);
@@ -127,6 +163,9 @@ nav: tools
             font-variant-numeric: tabular-nums;
         }
         .vfdm-readout .v.stopped { color: var(--text-dim); }
+        /* BAS-flare LED inline with the State readout — small right margin
+           so the dot doesn't crowd the text label next to it. */
+        .vfdm-readout .bas-led { margin-right: 0.5rem; }
 
         .vfdm-gauge {
             height: 12px;
@@ -250,8 +289,9 @@ nav: tools
 
                     <!-- LCD: 20-char × 4-line fixed mono grid. Content set by
                          the render() loop. .blue class on a wrapping span tints
-                         live values; .dim tints hint/footer text. -->
-                    <div class="vfdm-lcd">
+                         live values; .dim tints hint/footer text. .lcd-scanline
+                         lays a faint horizontal-stripe overlay on top. -->
+                    <div class="vfdm-lcd lcd-scanline">
                         <div class="vfdm-lcd-inner" id="vfdm-lcd"
                              role="status" aria-live="polite" aria-label="Drive display">
                             <span class="vfdm-lcd-line"></span>
@@ -309,9 +349,30 @@ nav: tools
                         <div class="vfdm-gauge" aria-hidden="true">
                             <div class="vfdm-gauge-fill" id="vfdm-gauge-fill"></div>
                         </div>
+                        <!-- Dial-arc: a circular companion to the gauge bar. Same
+                             percentage as .vfdm-gauge-fill, drawn as a 270° arc.
+                             Pure visual flare; the gauge bar above remains the
+                             primary readout. -->
+                        <div class="vfdm-dial-row" aria-hidden="true">
+                            <svg class="vfdm-dial" viewBox="0 0 40 40" width="48" height="48">
+                                <path class="vfdm-dial-track" d="M 7,27.5 A 15,15 0 1 1 33,27.5"
+                                      fill="none" stroke-width="3" stroke-linecap="round"/>
+                                <path id="vfdm-dial-fill" class="vfdm-dial-fill"
+                                      d="M 7,27.5 A 15,15 0 1 1 33,27.5"
+                                      fill="none" stroke-width="3" stroke-linecap="round"
+                                      stroke-dasharray="70.7" stroke-dashoffset="70.7"/>
+                            </svg>
+                            <div class="vfdm-dial-label">
+                                Of max
+                                <span class="pct stopped" id="vfdm-dial-pct">0%</span>
+                            </div>
+                        </div>
                         <div class="vfdm-readout">
                             <span>State</span>
-                            <span class="v" id="vfdm-state-text">STOPPED</span>
+                            <span class="v" id="vfdm-state-wrap">
+                                <span class="bas-led" id="vfdm-state-led" aria-hidden="true"></span>
+                                <span id="vfdm-state-text">STOPPED</span>
+                            </span>
                         </div>
                     </div>
 
@@ -454,17 +515,32 @@ nav: tools
             // `flashText` on line 4 instead of the default L/R footer.
             flashText: '',
             flashUntil: 0,
+
+            // BAS flare: tracks the last rendered LCD content so the
+            // .lcd-flicker class only retriggers when something changed.
+            lastLcd: '',
         };
 
         // ── DOM ────────────────────────────────────────────────────────
+        const lcdEl    = document.getElementById('vfdm-lcd');
         const lcdLines = document.querySelectorAll('#vfdm-lcd .vfdm-lcd-line');
         const cmdHzEl  = document.getElementById('vfdm-cmd-hz');
         const actHzEl  = document.getElementById('vfdm-act-hz');
         const actWrap  = document.getElementById('vfdm-act-wrap');
         const stateTxt = document.getElementById('vfdm-state-text');
+        const stateLed = document.getElementById('vfdm-state-led');
         const gaugeFill= document.getElementById('vfdm-gauge-fill');
+        const dialFill = document.getElementById('vfdm-dial-fill');
+        const dialPct  = document.getElementById('vfdm-dial-pct');
         const localInd = document.getElementById('vfdm-local-rem-ind');
         const localTxt = document.getElementById('vfdm-local-rem-txt');
+
+        // Use the path's measured length for dial-fill math — robust against
+        // the path string getting tweaked later. dasharray = full path, so
+        // strokeDashoffset = pathLen shows nothing and 0 shows everything.
+        const dialPathLen = dialFill.getTotalLength();
+        dialFill.style.strokeDasharray = dialPathLen.toFixed(2);
+        dialFill.style.strokeDashoffset = dialPathLen.toFixed(2);
         const diOpen   = document.getElementById('vfdm-di-open');
         const diClosed = document.getElementById('vfdm-di-closed');
         const extSpd   = document.getElementById('vfdm-ext-spd');
@@ -588,6 +664,19 @@ nav: tools
                 }
                 lines[3] = 'ENT save  ESC cancel';
             }
+            // BAS flare: one-shot character-flicker when LCD content
+            // changes (not on every 50ms tick). Track the joined string
+            // and only retrigger the animation when something visible
+            // actually moved.
+            const joined = lines.join('\n');
+            if (joined !== state.lastLcd) {
+                state.lastLcd = joined;
+                lcdEl.classList.remove('lcd-flicker');
+                // Force reflow so removing+adding the class restarts the
+                // keyframe instead of getting deduped.
+                void lcdEl.offsetWidth;
+                lcdEl.classList.add('lcd-flicker');
+            }
             for (let i = 0; i < 4; i++) {
                 lcdLines[i].textContent = lines[i];
             }
@@ -615,6 +704,15 @@ nav: tools
             const max = byId('S04').value;
             const pct = max > 0 ? Math.max(0, Math.min(100, (state.actualHz / max) * 100)) : 0;
             gaugeFill.style.width = pct + '%';
+
+            // Dial-arc mirrors the gauge fill. Offset shrinks from
+            // dialPathLen (empty) to 0 (full).
+            dialFill.style.strokeDashoffset = (dialPathLen * (1 - pct / 100)).toFixed(2);
+            dialPct.textContent = Math.round(pct) + '%';
+            dialPct.classList.toggle('stopped', !running && state.actualHz < 0.05);
+
+            // State LED — pulses when the drive is actively running.
+            stateLed.classList.toggle('active', running);
 
             // State text reflects what the motor is doing right now.
             let stateLabel;
