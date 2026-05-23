@@ -12,6 +12,10 @@ rest live here until someone decides what to do about them.
   trade-offs the decision involves, and what action would follow.
 - Resolved entries get a *(addressed YYYY-MM-DD)* marker — or get
   deleted if the resolution turned out to be "not worth doing."
+- Considered-and-skipped entries get a *(deferred YYYY-MM-DD)* marker
+  and live under the `### Deferred / Won't fix (with revisit trigger)`
+  subsection at the end of `## Open`. The body carries an explicit
+  trigger condition that would change the call.
 - New entries land here as code issues surface (same running-list
   spirit as `site-ideas-and-friction.md`, but scoped to code quality
   rather than features / content).
@@ -279,42 +283,6 @@ ratio) are promoted to first-class roadmap entries in
 `site-ideas-and-friction.md` so the engine's API shape is reviewed against
 real second-tool needs when one of them lands. Phase-3 chip work follows
 in PR 2 on the smaller page.
-
-### 7. Worker has no app-level rate limit on `/api/contact`
-
-Cloudflare's edge DDoS protection covers gross abuse, but a public
-contact form is a classic abuse target — a determined attacker can
-hammer a single endpoint with thousands of submissions within the
-edge's normal-request envelope. For per-IP throttling on the worker
-itself you'd need a Durable Object (counter per IP, expiring TTL),
-Workers KV (cheaper but eventually-consistent), or Cloudflare's
-paid Rate Limiting product.
-
-**Decision (2026-05-16):** defer. Cloudflare edge protection +
-Turnstile + the silent honeypot already cover the realistic threat,
-and Resend's own send-volume limits cap the worst case. Trigger for
-revisit: Resend dashboard shows a send-volume spike. At that point
-the cheapest fix is a Workers KV-based per-IP throttle (~30 lines
-in `worker.js`, 60s TTL, eventually-consistent but plenty against
-the realistic attack); Cloudflare's paid Rate Limiting product
-($5/mo) is the no-code fallback.
-
-### 8. `flow-engine.js` doesn't react to live `prefers-reduced-motion` changes
-
-`html/scripts/flow-engine.js:110` — the reduced-motion check
-happens once at `init()`. If the user toggles their OS preference
-mid-session (rare — usually a one-time setup), the engine keeps
-animating.
-
-**Decision (2026-05-16):** not pursuing. OS-level reduced-motion
-toggling mid-session is vanishingly rare; the user almost always
-sets it at accessibility-setup time and leaves it. Cost (~15 lines,
-a `matchMedia` listener plus per-pool teardown logic, plus state to
-make it survive page navigation) outweighs the benefit. Recorded
-here so this isn't re-discovered as a "missing accessibility
-feature" — it's a *considered-and-skipped* feature. Trigger that
-would change the call: an accessibility audit that specifically
-flags it, or evidence of users actually toggling mid-session.
 
 ### 9. Stale comments — second sweep after Block C and the 11ty migration *(addressed 2026-05-17)*
 
@@ -2924,14 +2892,13 @@ already exists in `styles.css` from #53; no CSS change needed. Confirm
 the `.cs-cool-only` / `.cs-heat-only` selectors carry no `display` rule
 of their own that would tie with `.hidden` on specificity.
 
-### 57. Education body-prose inline triplet on `<ul>` lists — missed by #19 / #50 *(addressed 2026-05-21)*
 **Resolution (2026-05-21):** `applyCoilType()` now uses
 `el.classList.toggle('hidden', …)` for both row sets. Confirmed
 `.cs-cool-only` / `.cs-heat-only` carry no CSS rule of their own (page
 inline `<style>` or `styles.css`), so `.hidden` wins cleanly. No CSS
 change — `.hidden` was already in `styles.css` from #53.
 
-### 57. Education body-prose inline triplet on `<ul>` lists — missed by #19 / #50
+### 57. Education body-prose inline triplet on `<ul>` lists — missed by #19 / #50 *(addressed 2026-05-21)*
 
 Surfaced during the 2026-05-21 content-audit pass.
 
@@ -2961,6 +2928,19 @@ deserves a promoted rule alongside `.tool-body p` (the cleanest fix), or
 whether the handful of inline list styles are tolerable. If promoted,
 mind the same specificity gotcha #19 hit with `p.bit-hint` et al. —
 check no list-scoped utility class is out-ranked.
+
+**Resolution (2026-05-21):** promoted `.tool-body ul` in `styles.css`
+next to `.tool-body p` — same font triplet (`font-size: 0.95rem;
+line-height: 1.8; color: var(--text)`; normalized off the inline 1.85).
+A `li` rule isn't needed — `<li>` children inherit font/colour from the
+`<ul>`. The inline triplet was dropped from the 4 target `<ul>`s
+(`vfds.html` ×2, `pump-control.html` ×2); each keeps its per-list
+`margin` inline since that value varies. The three other education
+`<ul>`s (`hydronic-loops.html`, `pump-control.html` — smaller 0.86rem
+lists) keep their inline font styling, which out-ranks the new rule, so
+they are unchanged. `modbus-register-viewer.html`'s `<ul class="ref-note">`
+sits in a `.tool-body-row`, not a `.tool-body`, so the new descendant
+selector doesn't reach it. No list-scoped utility class is out-ranked.
 
 ### 58. Numeric-input values not converted on initial paint for metric visitors *(addressed 2026-05-21)*
 
@@ -3000,18 +2980,6 @@ most of the audience), but it's a correctness bug, not just cosmetics.
 unit-flip path once with `from='us', to='metric'` before the first
 compute. The conversion helpers already exist on each page; this is a
 3–5 line addition per tool, no new shared code.
-**Resolution (2026-05-21):** promoted `.tool-body ul` in `styles.css`
-next to `.tool-body p` — same font triplet (`font-size: 0.95rem;
-line-height: 1.8; color: var(--text)`; normalized off the inline 1.85).
-A `li` rule isn't needed — `<li>` children inherit font/colour from the
-`<ul>`. The inline triplet was dropped from the 4 target `<ul>`s
-(`vfds.html` ×2, `pump-control.html` ×2); each keeps its per-list
-`margin` inline since that value varies. The three other education
-`<ul>`s (`hydronic-loops.html`, `pump-control.html` — smaller 0.86rem
-lists) keep their inline font styling, which out-ranks the new rule, so
-they are unchanged. `modbus-register-viewer.html`'s `<ul class="ref-note">`
-sits in a `.tool-body-row`, not a `.tool-body`, so the new descendant
-selector doesn't reach it. No list-scoped utility class is out-ranked.
 
 **Resolution (2026-05-21):** each of the three tools' inline IIFE got
 a `U.current() === 'metric'` guard in its initial-paint block that
@@ -3025,6 +2993,98 @@ altitude as `altitude`. No new shared code, no CSS. Matches the
 `thermistor-calculator.html` / `refrigerant-pt.html` pattern the entry
 cites. No version bump — a metric visitor's first paint is now
 correct, but nothing renders differently for the US-default majority.
+
+### 59. `'use strict';` missing on `pump-control.html` Widget 2 IIFE
+
+Caught while building `education/equipment-staging.html` (2026-05-21),
+reading `pump-control.html` as the layout reference.
+
+`html/education/pump-control.html`'s inline `<script>` has two page
+IIFEs. Widget 1 (operating-point chart) opens with `'use strict';` as
+its first statement; Widget 2 (DP setpoint reset, the IIFE at
+`pump-control.html:791`) does not — it jumps straight to its `const`
+declarations.
+
+Per *JS patterns* in CLAUDE.md, `'use strict';` is the required first
+statement inside every page-inline IIFE. Issue #18 was the site-wide
+`'use strict'` adoption sweep (addressed 2026-05-17); pump-control
+shipped 2026-05-15, so this IIFE should have been caught by that
+sweep and wasn't — a one-line miss.
+
+**Why it matters:** small, but it's a real convention gap — strict
+mode catches undeclared-global assignment and a few other footguns,
+and Widget 2 currently runs sloppy. Low-risk fix: add the directive
+as the first line inside the `pump-control.html:791` IIFE. Not fixed
+inline here to keep the equipment-staging PR scoped to its own work.
+
+---
+
+### Deferred / Won't fix (with revisit trigger)
+
+Items considered during an audit and deliberately not pursued, each
+with an explicit trigger that would change the call. The full entries
+for #7 and #8 sit below; four more deferrals from the 2026-05-22
+audit cycle (#62 / #64 / #65 / #67) stayed in their original
+numerical position under `## Recently addressed` to keep the audit
+batch intact — each carries the same `*(deferred 2026-05-22)*` marker
+and an explicit **Decision** block. A pointer list to those four sits
+at the bottom of this subsection.
+
+### 7. Worker has no app-level rate limit on `/api/contact` *(deferred 2026-05-16)*
+
+Cloudflare's edge DDoS protection covers gross abuse, but a public
+contact form is a classic abuse target — a determined attacker can
+hammer a single endpoint with thousands of submissions within the
+edge's normal-request envelope. For per-IP throttling on the worker
+itself you'd need a Durable Object (counter per IP, expiring TTL),
+Workers KV (cheaper but eventually-consistent), or Cloudflare's
+paid Rate Limiting product.
+
+**Decision (2026-05-16):** defer. Cloudflare edge protection +
+Turnstile + the silent honeypot already cover the realistic threat,
+and Resend's own send-volume limits cap the worst case. Trigger for
+revisit: Resend dashboard shows a send-volume spike. At that point
+the cheapest fix is a Workers KV-based per-IP throttle (~30 lines
+in `worker.js`, 60s TTL, eventually-consistent but plenty against
+the realistic attack); Cloudflare's paid Rate Limiting product
+($5/mo) is the no-code fallback.
+
+### 8. `flow-engine.js` doesn't react to live `prefers-reduced-motion` changes *(deferred 2026-05-16)*
+
+`html/scripts/flow-engine.js:110` — the reduced-motion check
+happens once at `init()`. If the user toggles their OS preference
+mid-session (rare — usually a one-time setup), the engine keeps
+animating.
+
+**Decision (2026-05-16):** not pursuing. OS-level reduced-motion
+toggling mid-session is vanishingly rare; the user almost always
+sets it at accessibility-setup time and leaves it. Cost (~15 lines,
+a `matchMedia` listener plus per-pool teardown logic, plus state to
+make it survive page navigation) outweighs the benefit. Recorded
+here so this isn't re-discovered as a "missing accessibility
+feature" — it's a *considered-and-skipped* feature. Trigger that
+would change the call: an accessibility audit that specifically
+flags it, or evidence of users actually toggling mid-session.
+
+**Also deferred from the 2026-05-22 audit cycle** — full entries
+remain in `## Recently addressed` at their numerical position:
+
+- **#62. Function-block editor palette uses per-button
+  `addEventListener` inside a forEach.** Trigger: the codebase moves
+  to a uniform `data-*` + delegated-handler pattern across all
+  dynamically-built UI.
+- **#64. `package.json` version bump skipped 1.14 on the
+  function-block-editor ship.** Trigger: the version-bump cadence
+  becomes a hard rule.
+- **#65. `clamp()` is defined twice — once in `fbe-engine.js`, once
+  in the editor page IIFE.** Trigger: a third caller appears,
+  promoting `clamp` to `FBE.util.clamp(...)` or a shared
+  `html/scripts/util.js`.
+- **#67. Function-block editor — type-mismatch on wire creation
+  doesn't cancel pending.** Behavior is intentional (saves the user
+  re-clicking the source pin); recorded so a future "fix" PR doesn't
+  add a `cancelWire()` here. Trigger: an explicit UX decision to
+  change the cancel-on-mismatch behavior.
 
 ---
 
@@ -3066,29 +3126,6 @@ same session this file was created:
   range can't accidentally break the orifice-vs-compensation
   transition without the test catching it.
 
-### 59. `'use strict';` missing on `pump-control.html` Widget 2 IIFE
-
-Caught while building `education/equipment-staging.html` (2026-05-21),
-reading `pump-control.html` as the layout reference.
-
-`html/education/pump-control.html`'s inline `<script>` has two page
-IIFEs. Widget 1 (operating-point chart) opens with `'use strict';` as
-its first statement; Widget 2 (DP setpoint reset, the IIFE at
-`pump-control.html:791`) does not — it jumps straight to its `const`
-declarations.
-
-Per *JS patterns* in CLAUDE.md, `'use strict';` is the required first
-statement inside every page-inline IIFE. Issue #18 was the site-wide
-`'use strict'` adoption sweep (addressed 2026-05-17); pump-control
-shipped 2026-05-15, so this IIFE should have been caught by that
-sweep and wasn't — a one-line miss.
-
-**Why it matters:** small, but it's a real convention gap — strict
-mode catches undeclared-global assignment and a few other footguns,
-and Widget 2 currently runs sloppy. Low-risk fix: add the directive
-as the first line inside the `pump-control.html:791` IIFE. Not fixed
-inline here to keep the equipment-staging PR scoped to its own work.
-
 ### 60. Smoke spec gaps on the function-block editor *(addressed 2026-05-22)*
 
 Caught during the post-ship audit of `feat/function-block-editor`
@@ -3120,7 +3157,6 @@ it's the most load-bearing miss.
 interactions', () => { ... })` block at the end of
 `tests/smoke.spec.js`, one test per corner case. ~80 lines.
 
-### 61. Function-block editor sim-bar buttons use per-button `addEventListener` *(addressed 2026-05-22)*
 **Resolution (2026-05-22):** added a `test.describe('function-block
 editor — interactions')` block at the end of `tests/smoke.spec.js`
 with eight cases: Delete-key delete, Backspace delete, Escape cancels
@@ -3136,7 +3172,7 @@ within a single frame, and there's no externally-observable signal
 that the interval was cleared. Filed in the audit as a stretch goal
 rather than load-bearing.
 
-### 61. Function-block editor sim-bar buttons use per-button `addEventListener`
+### 61. Function-block editor sim-bar buttons use per-button `addEventListener` *(addressed 2026-05-22)*
 
 `html/tools/function-block-editor.html:1007–1013` binds handlers
 individually for the four sim-bar buttons:
@@ -3172,7 +3208,7 @@ existing `id="fbe-..."` attributes so the smoke specs continue to
 click them by id (and `runBtn` is still resolved by id for the
 textContent flip in `setRunning`); only the binding shape changed.
 
-### 62. Function-block editor palette uses per-button `addEventListener` inside a forEach
+### 62. Function-block editor palette uses per-button `addEventListener` inside a forEach *(deferred 2026-05-22)*
 
 `html/tools/function-block-editor.html:530` inside `buildPalette()`
 generates per-category buttons in a nested loop and binds each
@@ -3235,7 +3271,7 @@ than promoted to `styles.css` since each rule has exactly one
 caller — fits the "page-only rules stay inline via `{% block head
 %}`" convention.
 
-### 64. `package.json` version bump skipped 1.14 on the function-block-editor ship
+### 64. `package.json` version bump skipped 1.14 on the function-block-editor ship *(deferred 2026-05-22)*
 
 `package.json` went from `1.13.1` to `1.15.0` when the function-
 block editor + paired Function-Block Basics education page shipped.
@@ -3258,7 +3294,7 @@ to backfill it would buy nothing. Filed because the audit caught it,
 documented so a future "should the cadence become a hard rule?"
 conversation has a referent.
 
-### 65. `clamp()` is defined twice — once in `fbe-engine.js`, once in the editor page IIFE
+### 65. `clamp()` is defined twice — once in `fbe-engine.js`, once in the editor page IIFE *(deferred 2026-05-22)*
 
 `html/scripts/fbe-engine.js:54` defines a closure-scoped
 `clamp(x, lo, hi)`; `html/tools/function-block-editor.html:897`
@@ -3310,7 +3346,7 @@ further blocks may overlap and need a drag." Behavior is unchanged
 — a user past 20 blocks on the canvas is placing them deliberately
 anyway, and the cycle extension wasn't worth the added math.
 
-### 67. Function-block editor — type-mismatch on wire creation doesn't cancel pending
+### 67. Function-block editor — type-mismatch on wire creation doesn't cancel pending *(deferred 2026-05-22)*
 
 `html/tools/function-block-editor.html:913–916` — when the user
 starts a wire from an output pin and clicks an incompatible-type
