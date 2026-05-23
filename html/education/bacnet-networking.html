@@ -229,7 +229,8 @@ nav: education
                 <text x="380" y="214" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--text-dim)">the originating IP+port travels in the BVLL so the source survives</text>
 
                 <!-- Caption -->
-                <text x="380" y="265" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--text)">three nested layers: BVLL says "what kind of BACnet/IP packet"; NPDU routes between networks; APDU is the service</text>
+                <text x="380" y="258" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--text)">three nested layers: BVLL tags the packet kind,</text>
+                <text x="380" y="273" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--text)">NPDU routes between networks, APDU is the service</text>
             </svg>
 
             <p>
@@ -333,10 +334,10 @@ nav: education
                 <!-- Step 3: BBMD B re-broadcasts -->
                 <line x1="580" y1="120" x2="600" y2="120" stroke="var(--blue)" stroke-width="2"/>
                 <polygon points="592,116 600,120 592,124" fill="var(--blue)"/>
-                <text x="590" y="155" text-anchor="middle" font-family="var(--mono)" font-size="11" font-weight="700" fill="var(--blue)">3 · re-broadcast on subnet B</text>
+                <text x="590" y="92" text-anchor="middle" font-family="var(--mono)" font-size="11" font-weight="700" fill="var(--blue)">3 · re-broadcast on subnet B</text>
 
                 <!-- Step 4: target receives + replies (I-Am path implied)  -->
-                <text x="660" y="155" text-anchor="middle" font-family="var(--mono)" font-size="11" font-weight="700" fill="var(--blue-cool)">4 · target picks up Who-Is</text>
+                <text x="660" y="166" text-anchor="middle" font-family="var(--mono)" font-size="11" font-weight="700" fill="var(--blue-cool)">4 · target picks up Who-Is</text>
 
                 <!-- Caption -->
                 <text x="380" y="302" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--text)">a local broadcast becomes a unicast across the router and a local broadcast again on the far side</text>
@@ -402,9 +403,10 @@ nav: education
                 <text x="100" y="143" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--text-dim)">203.0.113.55</text>
                 <text x="100" y="158" text-anchor="middle" font-family="var(--mono)" font-size="9" fill="var(--text-dim)">(VPN, no local BBMD)</text>
 
-                <!-- WAN cloud / divider -->
-                <ellipse cx="270" cy="140" rx="55" ry="28" fill="var(--surface-3)" stroke="var(--text-dim)" stroke-width="1.2" stroke-dasharray="4 3"/>
-                <text x="270" y="145" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--text-dim)">WAN</text>
+                <!-- WAN cloud / divider — sits between the two arrows so it
+                     doesn't obscure either label. -->
+                <ellipse cx="270" cy="143" rx="42" ry="12" fill="var(--surface-3)" stroke="var(--text-dim)" stroke-width="1.2" stroke-dasharray="4 3"/>
+                <text x="270" y="147" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="var(--text-dim)">WAN</text>
 
                 <!-- BAS subnet panel -->
                 <rect x="360" y="60" width="380" height="180" rx="4" fill="var(--surface-3)" stroke="var(--text-dim)" stroke-width="1.4"/>
@@ -507,7 +509,7 @@ nav: education
                 <text x="425" y="200" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--text-dim)">0xBAC0 — default BACnet/IP port</text>
 
                 <!-- Caption -->
-                <text x="310" y="234" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--text)">8 hex chars = IP only · 12 hex chars = IP + port · port suffix often omitted on the default</text>
+                <text x="310" y="234" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--text)">8 hex chars = IP only · 12 hex chars = IP + port · suffix usually omitted on the default</text>
             </svg>
 
             <p>

@@ -145,13 +145,15 @@ nav: education
                 <text x="140" y="60" text-anchor="middle" font-family="var(--mono)" font-size="12" font-weight="600" fill="var(--text-bright)">device:1001</text>
                 <text x="140" y="74" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--text-dim)">(a controller)</text>
 
-                <!-- Object boxes inside the device -->
+                <!-- Object boxes inside the device. AI:1 sits in the top-right
+                     position so the explode arrow to the property panel has a
+                     clean path with no other object boxes in the way. -->
                 <g font-family="var(--mono)" font-size="11" text-anchor="middle">
-                    <rect x="38"  y="92"  width="100" height="34" rx="3" fill="var(--surface)" stroke="var(--accent)" stroke-width="1.6"/>
-                    <text x="88"  y="113" font-weight="600" fill="var(--accent)">AI:1</text>
+                    <rect x="38"  y="92"  width="100" height="34" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.4"/>
+                    <text x="88"  y="113" fill="var(--text-bright)">AO:1</text>
 
-                    <rect x="142" y="92"  width="100" height="34" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.4"/>
-                    <text x="192" y="113" fill="var(--text-bright)">AO:1</text>
+                    <rect x="142" y="92"  width="100" height="34" rx="3" fill="var(--surface)" stroke="var(--accent)" stroke-width="1.6"/>
+                    <text x="192" y="113" font-weight="600" fill="var(--accent)">AI:1</text>
 
                     <rect x="38"  y="134" width="100" height="34" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.4"/>
                     <text x="88"  y="155" fill="var(--text-bright)">BV:3</text>
@@ -165,7 +167,7 @@ nav: education
                 <text x="140" y="232" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--text-dim)">objects inside the device</text>
 
                 <!-- Arrow: AI:1 exploded to property list -->
-                <line x1="138" y1="109" x2="335" y2="109" stroke="var(--accent)" stroke-width="1.6"/>
+                <line x1="242" y1="109" x2="335" y2="109" stroke="var(--accent)" stroke-width="1.6"/>
                 <polygon points="325,104 335,109 325,114" fill="var(--accent)"/>
 
                 <!-- Property list (right) -->
@@ -487,7 +489,7 @@ nav: education
                 <polygon points="416,53 425,56 419,63" fill="var(--blue)"/>
                 <polygon points="416,121 425,124 416,131" fill="var(--blue)"/>
                 <polygon points="418,188 425,192 419,199" fill="var(--blue)"/>
-                <text x="285" y="78" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--blue)">Who-Is (broadcast)</text>
+                <text x="240" y="68" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--blue)">Who-Is (broadcast)</text>
 
                 <!-- I-Am replies: each device → client -->
                 <g stroke="var(--blue-cool)" stroke-width="1.6" fill="none" stroke-dasharray="5 4">
@@ -498,7 +500,7 @@ nav: education
                 <polygon points="164,97 155,100 162,107" fill="var(--blue-cool)"/>
                 <polygon points="165,122 155,125 163,132" fill="var(--blue-cool)"/>
                 <polygon points="164,147 155,150 163,157" fill="var(--blue-cool)"/>
-                <text x="285" y="170" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--blue-cool)">I-Am (one each)</text>
+                <text x="240" y="180" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--blue-cool)">I-Am (one each)</text>
 
                 <!-- caption -->
                 <text x="310" y="232" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--text)">"who's out there?" → three devices answer with their identities</text>
