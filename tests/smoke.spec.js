@@ -460,15 +460,16 @@ test('function-block editor — examples run, and blocks add and wire up', async
 
     // The economizer example loads by default — six blocks, evaluated.
     await expect(page.locator('.fbe-block')).toHaveCount(6);
-    // OAT 68 °F is not below the 60 °F changeover setpoint → no free
-    // cooling, so the economizer-enable output sits FALSE.
-    await expect(page.locator('.fbe-block[data-id="econ"] .fbe-block-val')).toHaveText('FALSE');
-
-    // Edit the OAT analog input through the inspector — drop it below the
-    // setpoint and the enable output flips TRUE on the next tick.
-    await page.locator('.fbe-block[data-id="oat"] .fbe-block-head').click();
-    await page.fill('#fbe-p-value', '55');
+    // OAT 55 °F is below the 60 °F changeover setpoint → free cooling
+    // available, so the economizer-enable output sits TRUE on first paint
+    // (matching the worked illustration on the partner education page).
     await expect(page.locator('.fbe-block[data-id="econ"] .fbe-block-val')).toHaveText('TRUE');
+
+    // Edit the OAT analog input through the inspector — raise it above the
+    // setpoint and the enable output flips FALSE on the next tick.
+    await page.locator('.fbe-block[data-id="oat"] .fbe-block-head').click();
+    await page.fill('#fbe-p-value', '68');
+    await expect(page.locator('.fbe-block[data-id="econ"] .fbe-block-val')).toHaveText('FALSE');
 
     // Freeze-stat example: tripping the freeze contact latches the alarm
     // on and drops the fan — the SR latch holding state.
