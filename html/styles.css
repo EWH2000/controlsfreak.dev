@@ -41,7 +41,23 @@
 html { scroll-behavior: smooth; }
 
 body {
-    background: var(--bg);
+    background-color: var(--bg);
+    /* v2.0.1 — blueprint grid behind everything. 1.5px hairlines in
+       --border every 40px. Sits only in the regions of body that
+       AREN'T covered by an opaque content panel — nav (--surface),
+       hero (--surface), tool-cards (--surface), footer (--surface-2)
+       all paint over it, so the grid only reads in the gutters around
+       and below the content. Hidden on print via the @media print
+       block below.
+       Weight tuned on feedback after the first pass: 1px in
+       --border-faint was too quiet to read as drafting paper; 3-4px
+       crosses into graph-paper foreground. 1.5px in --border is the
+       balance — confident in the gutters, never patterning against
+       the panels. */
+    background-image:
+        linear-gradient(to right,  var(--border) 1.5px, transparent 1.5px),
+        linear-gradient(to bottom, var(--border) 1.5px, transparent 1.5px);
+    background-size: 40px 40px;
     color: var(--text);
     font-family: var(--sans);
     font-size: 18px;
@@ -54,6 +70,15 @@ body {
     flex-direction: column;
 }
 main { flex: 1; }
+
+/* Hide the blueprint grid on print — a printable page wants a clean
+   white background, not drafting paper. (Same posture browsers take
+   for background-image: most won't print it by default anyway, but
+   the explicit rule keeps the behavior unambiguous and disables it
+   under any future print-CSS overrides too.) */
+@media print {
+    body { background-image: none; }
+}
 
 /* ── Skip-to-content link — keyboard users tab here first on every
        page and can Enter to jump past the nav. Positioned off-screen
@@ -445,23 +470,6 @@ p.tool-preamble {
     line-height: 1.85;
     color: var(--text);
     margin-bottom: 1.75rem;
-}
-/* v2.0.0 — Workstation drop cap on every education-page lead paragraph.
-   A filled accent rectangle with the initial reversed out in cream. Sits
-   only on `.page-intro` so the body prose downstream gets no second-
-   paragraph treatment. The padding numbers are tuned for IBM Plex Mono
-   capitals — wider letters (M, W) sit comfortably; narrow ones (I)
-   read slightly compressed but recognizable. */
-.page-intro::first-letter {
-    float: left;
-    margin: 0.05em 0.55rem 0 0;
-    padding: 0.15em 0.32em 0.05em;
-    background: var(--accent);
-    color: var(--surface);
-    font-family: var(--mono);
-    font-size: 2.6rem;
-    font-weight: 600;
-    line-height: 1;
 }
 
 /* ── TABS ── */
