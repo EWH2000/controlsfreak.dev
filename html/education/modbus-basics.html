@@ -1,0 +1,354 @@
+---
+title: Modbus Basics — controlsfreak.dev
+description: Modbus on the wire — what the protocol is, the four data tables, the function codes that read and write them, and what an exception response means.
+canonical: https://controlsfreak.dev/education/modbus-basics.html
+nav: education
+---
+{% extends "layouts/page.njk" %}
+
+{% block head %}
+    <style>
+        /* Page-specific — static block-and-byte diagrams. .mb-svg follows
+           the .fb-svg / .vfd-svg precedent (labeled-box schematics, not
+           pipe-flow), separate from the .edu-svg family. */
+        .mb-svg {
+            display: block;
+            width: 100%;
+            height: auto;
+            max-width: 620px;
+            margin: 1.4rem auto 0.6rem;
+        }
+        .mb-svg.wide { max-width: 740px; }
+
+        /* Page-local — the families grid wants the same loose top
+           margin function-blocks introduced. */
+        .callout-grid.loose { margin-top: 1.25rem; }
+    </style>
+{% endblock %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Education · Modbus Basics</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">Modbus Basics <span class="tool-tag">Modbus</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                Modbus is older than most building automation. Modicon released it in 1979 so
+                that a programmable controller and a host could trade a handful of values over
+                a serial line, and the same protocol — barely changed — now carries readings
+                between half the BMS-adjacent gear on a job site. Variable-frequency drives,
+                power meters, BTU meters, packaged units with their own controllers, plenty of
+                small specialty kit nobody else integrates: any of them might speak it. If you
+                integrate equipment, you'll meet it. This page is the explainer the
+                <a href="/tools/modbus-register-viewer.html">Modbus Register Viewer</a> footnote
+                keeps pointing toward.
+            </p>
+
+            <h2 class="subhead">What Modbus is, and isn't</h2>
+
+            <p>
+                At its core, Modbus is two things: a small set of <em>function codes</em> that
+                say "read these locations" or "write this location," and a tiny <em>data
+                model</em> of locations to read and write. The transport — whether the message
+                runs over a serial line (<strong>Modbus RTU</strong>) or an Ethernet TCP
+                connection (<strong>Modbus TCP</strong>) — changes the framing around the
+                message but not the function codes or the data model. Either flavor, the same
+                nine or ten function codes are doing the work.
+            </p>
+
+            <p>
+                What Modbus is <em>not</em> is self-describing. A BACnet object knows its own
+                type, units, scale, and name; a Modbus register is just sixteen bits. Nothing
+                on the wire says holding register 12 is in tenths of a degree Fahrenheit, or
+                that the value 524 means 52.4 °F. That mapping lives only in the vendor's
+                documentation. <strong>Modbus is dumb on purpose:</strong> the protocol stays
+                simple, and the device's manual carries the load. Lose the manual and you
+                have data without meaning.
+            </p>
+
+            <p>
+                The other thing Modbus assumes is one <em>client</em> talking to one or more
+                <em>servers</em>. (Older docs say master/slave; the function codes and the
+                wire are unchanged, only the names have moved on.) Every conversation starts
+                when the client sends a request to a specific server's address; the server
+                returns a response, then waits silently for the next request. Servers don't
+                initiate — there is no asynchronous "by the way, this just changed" notification.
+                If a sequence cares how fast it sees a new value, the client has to poll fast
+                enough to catch it.
+            </p>
+
+            <svg class="mb-svg" viewBox="0 0 540 200" role="img"
+                 aria-labelledby="mb-flow-title mb-flow-desc">
+                <title id="mb-flow-title">Modbus client-server message flow</title>
+                <desc id="mb-flow-desc">Two boxes side by side. The left box is labeled Client; the right box is labeled Server. An upper arrow runs from the client to the server, labeled request — for example, function code 03 to read ten holding registers starting at zero. A lower arrow runs from the server back to the client, labeled response — ten register values. The server does not speak on its own; the client polls and the server answers.</desc>
+
+                <!-- equipment: client + server boxes -->
+                <rect x="20"  y="60" width="120" height="80" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                <text x="80"  y="95"  text-anchor="middle" font-family="var(--mono)" font-size="14" font-weight="600" fill="var(--text-bright)">Client</text>
+                <text x="80"  y="115" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--text-dim)">(the master)</text>
+
+                <rect x="400" y="60" width="120" height="80" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                <text x="460" y="95"  text-anchor="middle" font-family="var(--mono)" font-size="14" font-weight="600" fill="var(--text-bright)">Server</text>
+                <text x="460" y="115" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--text-dim)">(the slave)</text>
+
+                <!-- request arrow: client → server -->
+                <line x1="140" y1="80" x2="395" y2="80" stroke="var(--blue)" stroke-width="2.4"/>
+                <polygon points="385,75 395,80 385,85" fill="var(--blue)"/>
+                <text x="267" y="70" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--blue)">request</text>
+                <text x="267" y="98" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--text-dim)">"FC03 read 10 regs from 0"</text>
+
+                <!-- response arrow: server → client -->
+                <line x1="140" y1="125" x2="395" y2="125" stroke="var(--blue-cool)" stroke-width="2.4"/>
+                <polygon points="150,120 140,125 150,130" fill="var(--blue-cool)"/>
+                <text x="267" y="116" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--blue-cool)">response</text>
+                <text x="267" y="143" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--text-dim)">"10 register values"</text>
+
+                <!-- caption -->
+                <text x="270" y="175" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--text)">the client polls; the server only ever answers</text>
+            </svg>
+
+            <h2 class="subhead">The four data tables</h2>
+
+            <p>
+                The data model has four tables, sorted along two dimensions: what each item
+                <em>is</em> (a single bit or a 16-bit word), and whether the client can
+                <em>write</em> it or only read it. The two single-bit tables — <strong>coils</strong>
+                and <strong>discrete inputs</strong> — predate the registers; they map back to
+                relay-style controllers, where "coil" meant the energizing coil of a control
+                relay the master could write, and "discrete input" was a contact closure it
+                could only read. The two 16-bit tables — <strong>input registers</strong> and
+                <strong>holding registers</strong> — are where the analog values live.
+            </p>
+
+            <div class="callout-grid loose">
+                <div class="callout">
+                    <h3>Coils <span>· 1-bit · read/write</span></h3>
+                    <p>A writable bit. Enables, overrides, commanded states. Read with FC01; write with FC05 (one) or FC15 (many). Rare in modern BMS gear; common in older industrial controllers.</p>
+                </div>
+                <div class="callout">
+                    <h3>Discrete inputs <span>· 1-bit · read-only</span></h3>
+                    <p>A read-only bit. Switch positions, status flags, freezestats, alarm bits. Read with FC02. The server reports them; the client cannot change them.</p>
+                </div>
+                <div class="callout">
+                    <h3>Input registers <span>· 16-bit · read-only</span></h3>
+                    <p>A read-only 16-bit value. Sensor readings, measured values, computed feedback. Read with FC04. On a VFD, the speed <em>feedback</em> typically lives here.</p>
+                </div>
+                <div class="callout">
+                    <h3>Holding registers <span>· 16-bit · read/write</span></h3>
+                    <p>A read/write 16-bit value. Setpoints, commands, configuration. Read with FC03; write with FC06 (one) or FC16 (many). On a VFD, the speed <em>command</em> lives here.</p>
+                </div>
+            </div>
+
+            <p>
+                Four tables, named for forty-year-old reasons, addressed independently —
+                register 0 in the input table and register 0 in the holding table are
+                <em>different storage locations</em>. The address alone doesn't tell you
+                which table; the function code that names which table to act on does.
+                That's where the next section starts.
+            </p>
+
+            <h2 class="subhead">Function codes — reading and writing</h2>
+
+            <p>
+                Each table gets two function codes: one to read it, and (where applicable)
+                one to write it. Read function codes can return up to a few hundred items in
+                one request — the protocol caps coils at 2000 per read and registers at 125,
+                but most devices set tighter limits in their docs. Writes come in two flavors,
+                <em>single</em> and <em>multiple</em>, so a one-byte setpoint update doesn't
+                drag a whole block along with it.
+            </p>
+
+            <p>
+                The pairs that come up most in building controls are <strong>FC03 / FC16</strong>
+                for holding registers (read a setpoint or a command, write a setpoint or a
+                command), and <strong>FC04</strong> for input registers (read a sensor).
+                <strong>FC06</strong> appears when only one register is being changed at a
+                time. The bit-table function codes — FC01, FC02, FC05, FC15 — show up less
+                often in BMS work and more in older industrial gear. The full list lives on
+                the <a href="/tools/modbus-register-viewer.html">Modbus Register Viewer</a>
+                tool's reference panel; this page treats it as a lookup rather than
+                reprinting it.
+            </p>
+
+            <p>
+                Every request follows the same shape. On Modbus RTU, the byte sequence is the
+                server's address (which device on the bus), the function code (what to do),
+                a data field whose contents depend on the function (which register, how many,
+                what value), and a two-byte CRC at the end for line-error detection. Modbus
+                TCP wraps the same function code + data payload in a small TCP header and
+                drops the CRC — TCP already handles error detection. The two transports
+                speak the same language; only the envelope changes.
+            </p>
+
+            <svg class="mb-svg wide" viewBox="0 0 720 230" role="img"
+                 aria-labelledby="mb-frame-title mb-frame-desc">
+                <title id="mb-frame-title">An FC03 read request on Modbus RTU</title>
+                <desc id="mb-frame-desc">Eight labeled bytes in a row representing an FC03 read request on Modbus RTU. Byte one is the server address, here 0x01 — device one on the bus. Byte two is the function code, here 0x03 — read holding registers. Bytes three and four are the starting register address as a 16-bit value, here zero. Bytes five and six are the quantity of registers to read, here ten. Bytes seven and eight are the CRC for error detection. A bracket groups bytes three and four under the label "starting address" and bytes five and six under "quantity."</desc>
+
+                <!-- byte cells -->
+                <g font-family="var(--mono)" font-size="13" text-anchor="middle">
+                    <!-- byte 1: server address -->
+                    <rect x="20"  y="60" width="70" height="50" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.6"/>
+                    <text x="55"  y="92" font-weight="700" fill="var(--text-bright)">0x01</text>
+                    <text x="55"  y="48" font-size="10" fill="var(--text-dim)">server</text>
+                    <text x="55"  y="129" font-size="9.5" fill="var(--text)">device #1</text>
+
+                    <!-- byte 2: function code -->
+                    <rect x="90"  y="60" width="70" height="50" rx="3" fill="var(--surface)" stroke="var(--accent)" stroke-width="1.8"/>
+                    <text x="125" y="92" font-weight="700" fill="var(--accent)">0x03</text>
+                    <text x="125" y="48" font-size="10" fill="var(--text-dim)">FC</text>
+                    <text x="125" y="129" font-size="9.5" fill="var(--text)">read holdings</text>
+
+                    <!-- bytes 3-4: starting address -->
+                    <rect x="170" y="60" width="70" height="50" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.6"/>
+                    <text x="205" y="92" font-weight="700" fill="var(--text-bright)">0x00</text>
+                    <rect x="240" y="60" width="70" height="50" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.6"/>
+                    <text x="275" y="92" font-weight="700" fill="var(--text-bright)">0x00</text>
+
+                    <!-- bytes 5-6: quantity -->
+                    <rect x="320" y="60" width="70" height="50" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.6"/>
+                    <text x="355" y="92" font-weight="700" fill="var(--text-bright)">0x00</text>
+                    <rect x="390" y="60" width="70" height="50" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.6"/>
+                    <text x="425" y="92" font-weight="700" fill="var(--text-bright)">0x0A</text>
+
+                    <!-- bytes 7-8: CRC -->
+                    <rect x="480" y="60" width="70" height="50" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.6"/>
+                    <text x="515" y="92" font-weight="700" fill="var(--text-bright)">CRC</text>
+                    <rect x="550" y="60" width="70" height="50" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.6"/>
+                    <text x="585" y="92" font-weight="700" fill="var(--text-bright)">CRC</text>
+                    <text x="550" y="48" font-size="10" fill="var(--text-dim)">CRC (2 B)</text>
+                    <text x="550" y="129" font-size="9.5" fill="var(--text)">RTU only</text>
+                </g>
+
+                <!-- grouping brackets -->
+                <g stroke="var(--text-dim)" stroke-width="1.4" fill="none">
+                    <path d="M 170 145 V 152 H 310 V 145"/>
+                    <path d="M 320 145 V 152 H 460 V 145"/>
+                </g>
+                <text x="240" y="170" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--text)">starting address (0)</text>
+                <text x="390" y="170" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--text)">quantity (10)</text>
+
+                <!-- caption -->
+                <text x="320" y="205" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--text)">"on device #1, read 10 holding registers starting at address 0"</text>
+            </svg>
+
+            <p>
+                The response carries the same server address and function code echoed back,
+                a byte count, and the requested values back-to-back. Two-byte starting
+                address and quantity in the request, multi-byte payload in the response —
+                that's most of what a Modbus request looks like on the wire.
+            </p>
+
+            <h2 class="subhead">When something goes wrong — exception responses</h2>
+
+            <p>
+                When the server can't or won't honor a request, it returns an <em>exception
+                response</em> instead of the data. The shape is deliberately simple: it
+                echoes the function code back with the high bit set (FC <code>0x03</code>
+                comes back as <code>0x83</code>), followed by a one-byte exception code that
+                names what went wrong.
+            </p>
+
+            <svg class="mb-svg" viewBox="0 0 540 220" role="img"
+                 aria-labelledby="mb-exc-title mb-exc-desc">
+                <title id="mb-exc-title">A Modbus exception response</title>
+                <desc id="mb-exc-desc">Three labeled bytes in a row representing a Modbus exception response. Byte one is the server address, 0x01. Byte two is the original function code with the high bit set, here 0x83 instead of 0x03 — the high-bit marker is the universal exception signal. Byte three is the exception code, here 0x02 — illegal data address. An arrow points at the high-bit byte with the label "high bit set."</desc>
+
+                <g font-family="var(--mono)" font-size="13" text-anchor="middle">
+                    <!-- byte 1: server address -->
+                    <rect x="100" y="80" width="80" height="55" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.6"/>
+                    <text x="140" y="115" font-weight="700" fill="var(--text-bright)">0x01</text>
+                    <text x="140" y="68"  font-size="10" fill="var(--text-dim)">server</text>
+
+                    <!-- byte 2: FC with high bit -->
+                    <rect x="180" y="80" width="80" height="55" rx="3" fill="var(--surface)" stroke="var(--red)" stroke-width="1.8"/>
+                    <text x="220" y="115" font-weight="700" fill="var(--red)">0x83</text>
+                    <text x="220" y="68"  font-size="10" fill="var(--text-dim)">FC | 0x80</text>
+
+                    <!-- byte 3: exception code -->
+                    <rect x="260" y="80" width="80" height="55" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.6"/>
+                    <text x="300" y="115" font-weight="700" fill="var(--text-bright)">0x02</text>
+                    <text x="300" y="68"  font-size="10" fill="var(--text-dim)">exception</text>
+                </g>
+
+                <!-- annotation arrow at the high-bit byte -->
+                <g stroke="var(--red)" stroke-width="1.4" fill="none">
+                    <path d="M 220 158 L 220 145"/>
+                </g>
+                <polygon points="216,148 220,140 224,148" fill="var(--red)"/>
+                <text x="220" y="175" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--red)">high bit set</text>
+                <text x="220" y="193" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="var(--text-dim)">FC 0x03 → 0x83</text>
+
+                <!-- caption -->
+                <text x="270" y="35" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--text)">"the FC03 request you sent failed — illegal data address"</text>
+            </svg>
+
+            <p>
+                The exception codes that show up most often in building controls:
+            </p>
+
+            <ul>
+                <li><strong><code>0x01</code> Illegal Function.</strong> The server doesn't
+                    implement this function code. Often the client tried FC03 on registers
+                    that only exist in the input-register table — the server has FC04 but
+                    not the requested holding-register map.</li>
+                <li><strong><code>0x02</code> Illegal Data Address.</strong> The function
+                    code is fine; the address is outside the device's documented range. A
+                    vendor manual that documents holding registers 0–127 and a client asking
+                    for register 200 produces this.</li>
+                <li><strong><code>0x03</code> Illegal Data Value.</strong> Address is fine,
+                    the value being written is not. Writing 200 to a 0&ndash;100 % setpoint
+                    register is the canonical example.</li>
+                <li><strong><code>0x04</code> Server Failure.</strong> An internal device
+                    error — a sensor fault, an internal comms problem on a multi-board unit,
+                    a coprocessor that didn't answer. The device is telling you it can't
+                    produce a meaningful answer.</li>
+            </ul>
+
+            <p>
+                Higher codes (<code>0x05</code> through <code>0x0B</code>) cover acknowledge-
+                and-retry, target-device-busy, and gateway-routing variants. Most BMS techs
+                will see <code>0x02</code> and <code>0x03</code> more than the rest, and
+                <code>0x01</code> whenever a function code is mistyped or a register has
+                been mapped to the wrong table.
+            </p>
+
+            <p>
+                A response that arrives with the function code echoed and <em>no</em> high
+                bit set is a normal response — the bytes after it are the data that was
+                asked for. The high-bit-set echo is the universal "look at the next byte,
+                that's the error" signal.
+            </p>
+
+            <h2 class="subhead">What this page didn't cover</h2>
+
+            <p>
+                That's the message shape and the data model — enough to read a vendor's
+                Modbus integration table, build a request, and recognize an exception when
+                one comes back. The next question is the one the
+                <a href="/tools/modbus-register-viewer.html">Modbus Register Viewer</a> tool
+                was built around: <em>the response came back successfully, so what do those
+                sixteen bits actually mean?</em> Vendor docs paper over the 5-digit register
+                numbering convention (<code>40001</code> in the manual is holding register 0
+                on the wire), a 16-bit value can be signed or unsigned, 32-bit values span
+                two registers with four possible byte orderings, and the value almost
+                always wants a scale factor to make it useful. That's a second Modbus page
+                on decoding; until it ships, the Modbus Register Viewer tool's essentials
+                row is the field cheat sheet.
+            </p>
+
+        </div>
+    </div>
+
+    <a class="back-link" href="/education/">← Back to Education</a>
+
+</main>
+{% endblock %}
