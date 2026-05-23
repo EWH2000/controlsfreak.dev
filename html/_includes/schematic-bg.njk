@@ -112,50 +112,57 @@
     motifs across both gutters rather than a mirrored pair. Each
     entry is { id: symbol-suffix, y: top-offset-px, h: viewBox-height }. #}
 
+{#  Y offsets tuned for the widened strips (CSS caps the strip at
+    340px). At that width, motifs render ~1.7× the viewBox height
+    via the SVG's width:100% + auto-height, so the spacing here is
+    a ~230px row stride. Strips run ~4500px tall before repeating
+    out — pages shorter than that just clip the tail (overflow:
+    hidden on the container). #}
+
 {% set sbgLeftMotifs = [
-    { id: 'pipe-valve',    y:   60, h:  80 },
-    { id: 'terminals-ao',  y:  200, h:  70 },
-    { id: 'pump-coil',     y:  340, h:  90 },
-    { id: 'logic-chain',   y:  500, h: 110 },
-    { id: 'bacnet-node',   y:  680, h:  90 },
-    { id: 'pipe-valve',    y:  840, h:  80 },
-    { id: 'terminals-bo',  y:  980, h:  70 },
-    { id: 'pump-coil',     y: 1120, h:  90 },
-    { id: 'logic-chain',   y: 1280, h: 110 },
-    { id: 'bacnet-node',   y: 1460, h:  90 },
-    { id: 'pipe-valve',    y: 1620, h:  80 },
-    { id: 'terminals-ao',  y: 1760, h:  70 },
-    { id: 'pump-coil',     y: 1900, h:  90 },
-    { id: 'logic-chain',   y: 2060, h: 110 },
-    { id: 'bacnet-node',   y: 2240, h:  90 },
+    { id: 'pipe-valve',    y:  100, h:  80 },
+    { id: 'terminals-ao',  y:  330, h:  70 },
+    { id: 'pump-coil',     y:  560, h:  90 },
+    { id: 'logic-chain',   y:  790, h: 110 },
+    { id: 'bacnet-node',   y: 1020, h:  90 },
+    { id: 'pipe-valve',    y: 1250, h:  80 },
+    { id: 'terminals-bo',  y: 1480, h:  70 },
+    { id: 'pump-coil',     y: 1710, h:  90 },
+    { id: 'logic-chain',   y: 1940, h: 110 },
+    { id: 'bacnet-node',   y: 2170, h:  90 },
     { id: 'pipe-valve',    y: 2400, h:  80 },
-    { id: 'terminals-bo',  y: 2540, h:  70 },
-    { id: 'pump-coil',     y: 2680, h:  90 },
-    { id: 'logic-chain',   y: 2840, h: 110 },
-    { id: 'bacnet-node',   y: 3020, h:  90 }
+    { id: 'terminals-ao',  y: 2630, h:  70 },
+    { id: 'pump-coil',     y: 2860, h:  90 },
+    { id: 'logic-chain',   y: 3090, h: 110 },
+    { id: 'bacnet-node',   y: 3320, h:  90 },
+    { id: 'pipe-valve',    y: 3550, h:  80 },
+    { id: 'terminals-bo',  y: 3780, h:  70 },
+    { id: 'pump-coil',     y: 4010, h:  90 },
+    { id: 'logic-chain',   y: 4240, h: 110 },
+    { id: 'bacnet-node',   y: 4470, h:  90 }
 ] %}
 
 {% set sbgRightMotifs = [
-    { id: 'terminals-bo',  y:  120, h:  70 },
-    { id: 'logic-chain',   y:  260, h: 110 },
-    { id: 'pipe-valve',    y:  440, h:  80 },
-    { id: 'bacnet-node',   y:  580, h:  90 },
-    { id: 'pump-coil',     y:  740, h:  90 },
-    { id: 'terminals-ao',  y:  900, h:  70 },
-    { id: 'pipe-valve',    y: 1040, h:  80 },
-    { id: 'logic-chain',   y: 1180, h: 110 },
-    { id: 'bacnet-node',   y: 1360, h:  90 },
-    { id: 'pump-coil',     y: 1520, h:  90 },
-    { id: 'terminals-bo',  y: 1680, h:  70 },
-    { id: 'pipe-valve',    y: 1820, h:  80 },
-    { id: 'logic-chain',   y: 1960, h: 110 },
-    { id: 'bacnet-node',   y: 2140, h:  90 },
-    { id: 'pump-coil',     y: 2300, h:  90 },
-    { id: 'terminals-ao',  y: 2460, h:  70 },
-    { id: 'logic-chain',   y: 2600, h: 110 },
-    { id: 'pipe-valve',    y: 2780, h:  80 },
-    { id: 'bacnet-node',   y: 2920, h:  90 },
-    { id: 'pump-coil',     y: 3080, h:  90 }
+    { id: 'terminals-bo',  y:  220, h:  70 },
+    { id: 'logic-chain',   y:  450, h: 110 },
+    { id: 'pipe-valve',    y:  680, h:  80 },
+    { id: 'bacnet-node',   y:  910, h:  90 },
+    { id: 'pump-coil',     y: 1140, h:  90 },
+    { id: 'terminals-ao',  y: 1370, h:  70 },
+    { id: 'pipe-valve',    y: 1600, h:  80 },
+    { id: 'logic-chain',   y: 1830, h: 110 },
+    { id: 'bacnet-node',   y: 2060, h:  90 },
+    { id: 'pump-coil',     y: 2290, h:  90 },
+    { id: 'terminals-bo',  y: 2520, h:  70 },
+    { id: 'pipe-valve',    y: 2750, h:  80 },
+    { id: 'logic-chain',   y: 2980, h: 110 },
+    { id: 'bacnet-node',   y: 3210, h:  90 },
+    { id: 'pump-coil',     y: 3440, h:  90 },
+    { id: 'terminals-ao',  y: 3670, h:  70 },
+    { id: 'logic-chain',   y: 3900, h: 110 },
+    { id: 'pipe-valve',    y: 4130, h:  80 },
+    { id: 'bacnet-node',   y: 4360, h:  90 },
+    { id: 'pump-coil',     y: 4590, h:  90 }
 ] %}
 
 <div class="schematic-bg schematic-bg--left" aria-hidden="true">
