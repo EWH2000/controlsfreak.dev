@@ -3191,6 +3191,17 @@ functional benefit.
 **Recommended action:** none unless the codebase decides to move to
 the `data-*` pattern across all dynamically-built UI.
 
+**Decision (2026-05-22):** leave as-is. The per-button binding in
+`buildPalette()` doesn't leak (palette is rendered once at first
+paint and never re-bound, so no listener accumulation) and the
+`addBlock(type)` closure is naturally tied to the loop iteration. A
+`[data-block-type]` rewrite would carry the same indirection cost
+as a delegated handler with no functional benefit — the chip-row
+`[data-example]` pattern is the right idiom when the handler body
+collapses to one call, not when the loop variable is the payload.
+Revisit only if the codebase moves to `data-*` across all
+dynamically-built UI as a uniform convention.
+
 ### 63. Inline `style=` attributes on the function-block editor and education page *(addressed 2026-05-22)*
 
 Two one-shot overrides slipped in on `feat/function-block-editor`:
@@ -3240,6 +3251,13 @@ is documented and the skip breaks the sequence.
 
 **Recommended action:** none unless the cadence becomes a hard rule.
 
+**Decision (2026-05-22):** not actioning. The footer just reflects
+whatever's in `package.json`; the missed `1.14.0` step is a one-time
+inconsistency rather than a recurring pattern, and rewriting history
+to backfill it would buy nothing. Filed because the audit caught it,
+documented so a future "should the cadence become a hard rule?"
+conversation has a referent.
+
 ### 65. `clamp()` is defined twice — once in `fbe-engine.js`, once in the editor page IIFE
 
 `html/scripts/fbe-engine.js:54` defines a closure-scoped
@@ -3256,6 +3274,14 @@ during the audit. Exposing every internal engine helper would bloat
 **Recommended action:** none unless `clamp` ends up needed in a
 third caller, at which point it becomes a candidate for
 `FBE.util.clamp(...)` or a tiny shared `html/scripts/util.js`.
+
+**Decision (2026-05-22):** not pursuing until a third caller
+appears. Exposing every internal engine helper would bloat the
+`FBE` namespace's surface area for a marginal saving — three lines
+of helper per caller is acceptable when both callers already exist
+side-by-side and stay in step. Trigger for revisit: a third call
+site, at which point promote to `FBE.util.clamp(...)` or a tiny
+shared `html/scripts/util.js`.
 
 ### 66. Function-block editor drop-grid wraps after 20 blocks; comment overstates *(addressed 2026-05-22)*
 
@@ -3299,6 +3325,14 @@ intentional.
 **Priority:** LOW. Considered-and-accepted.
 
 **Recommended action:** none.
+
+**Decision (2026-05-22):** accepted as designed. The status text
+explains the mismatch and `pending` stays active so the user can
+retarget at a compatible input pin — saves them re-clicking the
+source pin, which is the more common ergonomic mistake. Recording
+the intent so a future "fix" PR doesn't add a `cancelWire()` here
+thinking it's a bug; the canvas-empty-area click and the Escape
+keystroke are the explicit cancel paths.
 
 ### 68. Function-block editor — no visible hint that keyboard Delete / Escape are bound *(addressed 2026-05-22)*
 
