@@ -28,5 +28,11 @@ function gitLastCommitDate() {
 module.exports = {
     version:   require("../../package.json").version,
     buildDate: gitLastCommitDate(),
-    buildYear: String(new Date().getFullYear())
+    buildYear: String(new Date().getFullYear()),
+    // Manual cadence — bump when a content-review sweep lands across
+    // pages. NOT git-derived: the whole point of REV is editorial
+    // cadence (when the site was last audited end-to-end), not commit
+    // cadence. Last sweep: PRs #110–113 (Batches 1–4 of the content
+    // audit), landed 2026-05-24.
+    lastRev:   '2026-05-24',
 };
