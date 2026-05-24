@@ -1429,3 +1429,252 @@ screenshots.
 No standalone codebase-issues entries this batch — the code-side
 work all sits downstream of editorial picks the user will make
 during triage.
+
+---
+
+## Audit scope — refinement period, Batch 3: Simulators (2026-05-24)
+
+Third batch of the section-at-a-time refinement-period audit. Same
+Shape B (3 lenses × 4 dimensions) applied to the 3 simulator pages.
+Numbering continues from Batch 2 (which lives on `docs/audit-tools`
+/ PR #111 at write time).
+
+### Coverage checklist
+
+Simulators — [x] `pid-tuner` · [x] `vfd-mock` ·
+[x] `function-block-editor`.
+
+Mechanism: dev server + Playwright screenshots at 1440 / 700 / 375
+viewports (9 captures). Source-read for each page's eyebrow,
+preamble, prereq cross-link, presets row, sim-bar, narrow-width
+behavior.
+
+### Substantive findings
+
+### 27. Function-Block Editor eyebrow still reads "Tools" — stale from the section move
+
+**[lens: engineer | dimension: content + consistency]**
+
+Location: `html/simulators/function-block-editor.html:12` —
+`<span class="section-label">Tools</span>`.
+
+The function-block-editor page moved from `html/tools/` to
+`html/simulators/` on 2026-05-23 (recorded in
+`site-ideas-and-friction.md` under "Simulators section — split out
+from Tools"). Its `nav:` frontmatter was retargeted to
+`simulators`, the canonical URL updated, the legacy redirect added
+in the Worker — but the page's eyebrow label stayed "Tools."
+
+Live consequence: the page's eyebrow reads `TOOLS` above the title
+`Function-Block Editor (LOGIC pill)`, while the top nav has
+`Simulators` highlighted as the active section. A visitor sees two
+different section names on the same page.
+
+Peer sims for context — `pid-tuner` carries `Loops`, `vfd-mock`
+carries `Drives`. Both are nouns naming the conceptual or
+equipment category. "Tools" is neither — it's the legacy section
+name and reads as a leftover.
+
+What it would take to fix: change `<span class="section-label">Tools</span>`
+to a category noun matching the page's content. Candidates:
+`Logic` (matches the existing tool-tag pill), `Wiresheet` (the
+surface metaphor — same word used in the title-bar of the
+`/simulators/` landing card), or `Sequencing` (the application).
+`Logic` aligns most cleanly with the pill already on the page.
+
+Verification: **confirmed** — `grep "section-label" html/simulators/*.html`.
+
+### 28. Prereq cross-link placement varies across sims — two follow fbe/vfd top-of-page model; pid-tuner mirrors the psych-chart bottom-of-page problem
+
+**[lens: newcomer | dimension: UX + consistency]**
+
+The four "tool/sim paired with an Education explainer" surfaces
+on the site have the prereq cross-link in two different places:
+
+| Surface | Prereq link placement |
+|---|---|
+| `simulators/function-block-editor.html` | **Top** — inline in preamble: *"New to it? Start with Function-Block Basics →"* |
+| `simulators/vfd-mock.html` | **Top** — inline in preamble: *"New to drives? Start with VFD Basics →"* |
+| `simulators/pid-tuner.html` | **Bottom** — `pid-note` paragraph at line 181, after the chart, the symptom→tuning table, and three explanatory notes |
+| `tools/psychrometric-chart.html` | **Bottom** — flagged as Batch 1 finding #22 (substantive) |
+
+The function-block-editor and vfd-mock placement is correct — a
+newcomer who lands cold sees the prereq link *before* they hit
+content that assumes the prereq vocabulary. PID Tuner and Psych
+Chart force the newcomer to scroll past the whole tool to find the
+explainer that would have made the tool legible.
+
+This is a continuation of Batch 1 finding #22 (psych chart); same
+pattern, same fix. The fbe/vfd shape exists on the site already
+as the model:
+
+```html
+<p class="page-intro">
+    A generic drive keypad — not modelled on any specific
+    manufacturer's product. The goal is to practice navigating a
+    parameter tree, and to feel how the source parameters gate
+    every command, before you're standing in front of a live
+    drive. <strong>New to drives? <a
+    href="/education/vfds.html">Start with VFD Basics →</a></strong>
+</p>
+```
+
+What it would take to fix: move pid-tuner's prereq link from the
+bottom-of-page `pid-note` to inline in the preamble (around line
+146–149), matching the fbe/vfd shape. Same edit shape for psych
+chart per Batch 1 #22.
+
+Verification: **confirmed** — `grep -n "education" html/simulators/*.html
+html/tools/psychrometric-chart.html` shows the placement on each
+page.
+
+### 29. Sim eyebrow taxonomy is inconsistent — concept / equipment / legacy
+
+**[lens: engineer | dimension: consistency]**
+
+The three sim pages' eyebrow `section-label`:
+
+- `pid-tuner` → **"Loops"** (conceptual category — *control loops*)
+- `vfd-mock` → **"Drives"** (equipment category — *the device class*)
+- `function-block-editor` → **"Tools"** (legacy section name —
+  see finding #27)
+
+After #27 fixes the legacy label, the underlying taxonomy
+question remains: do eyebrows name a *concept* (Loops), an
+*equipment family* (Drives), or a *surface metaphor / application*
+(Logic / Wiresheet / Sequencing)?
+
+Each pick reads fine in isolation. Side-by-side across the three
+sims (and across the broader catalog of tool pages where eyebrows
+also vary — *Analog I/O / Modbus / BACnet / Sensors / HVAC*), the
+discipline reads ad-hoc.
+
+The existing pattern that holds best: eyebrow names the
+**conceptual category** the visitor would search for. *Loops* and
+*Drives* fit this. *Logic* would fit too. *HVAC* on the chart tool
+fits. *Tools* doesn't.
+
+What it would take to fix: pick a taxonomy rule (recommendation:
+"conceptual category the visitor would search for; one word
+ideally; not a section name") and document in CLAUDE.md under
+*Conventions*. Sweep the 12 tool+sim pages for stragglers (most
+align already). Specific re-picks needed: function-block-editor
+(#27) and possibly the protocol pages (BACnet → BACnet?, Modbus
+→ Modbus?, which are arguably fine).
+
+Verification: **confirmed** by the grep in #27 plus the survey
+of eyebrows on tool pages from Batch 2.
+
+### 30. Function-Block Editor's narrow-width honesty callout is a positive pattern the rest of the site could borrow
+
+**[lens: field-tech | dimension: UX + content]**
+
+Location: `html/simulators/function-block-editor.html` — at
+narrow widths a small callout appears between the preamble and
+the sim bar:
+
+> *"This editor is built for a wider screen and a pointer —
+> wiring blocks on a phone is cramped. The regions stack below,
+> and it still works, but a laptop gives it room to breathe."*
+
+This is the field-tech voice the friction file's *field-use
+conditions* rule asks for, applied honestly: instead of
+pretending the editor is optimized for mobile, it tells the user
+the tradeoff and lets them decide whether to switch devices.
+The page still renders functionally at 375 px; it just doesn't
+oversell.
+
+Compare to Modbus Register Viewer (Batch 2 finding #23) — the
+bit grid falls below tap-target threshold at mobile width but
+has no equivalent honesty callout. A user lands at the cramped
+state with no signal that the desktop experience is the
+intended one.
+
+Compare to Psychrometric Chart at 375 px — chart canvas
+compresses substantially, controls dense, no narrow-width
+guidance. A user lands at the cramped state, scrolls a 3000 px
+mobile page, and probably bounces.
+
+The fbe callout's shape works because:
+- It's *above* the cramped affordance, not after.
+- It tells the user *what* is cramped and *why*.
+- It doesn't apologize or block — the tool still works.
+
+Recommended: canonize this pattern. Any tool/sim with a known
+narrow-width tradeoff (modbus bit-grid, psych chart canvas,
+PID tuner chart) gets a similarly-styled callout at narrow
+widths only. The callout's class could be promoted to
+`styles.css` (e.g., `.narrow-width-note { display: none; }
+@media (max-width: 700px) { .narrow-width-note { display:
+block; ... } }`) and reused.
+
+Verification: **confirmed** — visible in
+`/tmp/audit-sims-screens/function-block-editor-tablet.png`
+(the callout shows at 700 px); cross-check against the
+modbus/psych mobile screenshots from Batch 2's
+`/tmp/audit-tools-screens/`.
+
+### Minor polish
+
+- **pid-tuner — preamble line** opens "A fan loop. Set your
+  loops..." — the second word `loops` reads almost as a typo for
+  `controls` until the visitor parses it as "your control loops."
+  Slight stumble on a load-bearing intro sentence. *(content)*
+- **pid-tuner — TRY A TUNING preset chip styling** doesn't visually
+  distinguish *the answer state* (RIGHT) from *the problem states*
+  (SLUGGISH, NEEDS DECAY, TOO SOFT). A visitor clicking through
+  has to read each label to know which is the target vs the
+  starting point. The fbe / vfd / refrig-pt preset chips have a
+  similar issue but with less semantic loading. *(visual / UX)*
+- **vfd-mock — "TRY THIS" preset link "the classic mistake"** is
+  the configuration that demonstrates the run-source / speed-source
+  gating bug from the VFDs explainer. Excellent pedagogy. Worth
+  flagging as a *strength* — the discovery-prompt-pattern presets
+  could pop up elsewhere (e.g., function-block-editor's
+  "freeze-stat shutdown" is conceptually similar). *(strength /
+  consistency)*
+- **vfd-mock — preamble link "New to drives? Start with VFD Basics →"**
+  styles the `Start with VFD Basics →` as the anchor; on
+  function-block-editor the same shape exists. PID Tuner's
+  bottom-of-page link uses the same phrase ("Start with the basics
+  →") but at the bottom. The phrase is canonical across the three;
+  only the placement varies. *(consistency)*
+- **function-block-editor — sim bar uses standard text buttons
+  (PAUSE / STEP / RESET / CLEAR) plus a plain-text "Running"
+  status pill**. The status pill could carry the same `ok-pill`
+  treatment used elsewhere on the site (hero, nav-card titlebar)
+  for visual consistency. *(visual / consistency)*
+- **function-block-editor — Inspector panel says "Select a block
+  to edit its parameters, or a wire to remove it. Click a palette
+  block to add one."** plus "Press Delete to remove · Escape to
+  cancel a wire." A newcomer who's never used a wiresheet might
+  not know what "palette" refers to (the left-column block list).
+  Add a one-word gloss or use "the left column" in the first
+  sentence. *(content / newcomer)*
+- **All three sims — preset chip rows are inline-styled (variants
+  of `.try-chip` or similar inline class shapes).** Codebase-issues
+  may already track this; if not, the preset-chip class is a
+  shared pattern across all 3 sims + refrigerant-pt + a few tools
+  and could promote to `styles.css`. *(consistency / engineer)*
+- **pid-tuner — Parameter Style toggle dropdown ("Gain · Reset
+  · Rate (ISA standard)" / "Kp Ti Td (EBO)" / "PB Ti Td (Distech)")**
+  is excellent pedagogy but lives in a `<select>` — a button group
+  (like the chart-range toggle on psych chart) would invite more
+  exploration. *(UX)*
+
+### Code items split to `codebase-issues.md`
+
+- **Function-Block Editor stale eyebrow** (substantive #27) — pure
+  content edit, one-line fix. Not logged separately.
+- **Narrow-width honesty callout** (substantive #30) — if the
+  pattern is canonized, a `.narrow-width-note` class promotion
+  to `styles.css` is the code-side follow-up. Worth a
+  codebase-issues entry when the editorial direction is picked
+  during triage. Not logged today.
+- **Preset-chip class promotion** (minor polish) — same shape: a
+  shared `.try-chip` or `.preset-link` class consolidation
+  candidate, worth a codebase-issues entry once the convention is
+  picked. Not logged today.
+
+No standalone codebase-issues entries this batch — all code work
+sits downstream of editorial picks.
