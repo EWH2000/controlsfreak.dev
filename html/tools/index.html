@@ -5,6 +5,7 @@ canonical: https://controlsfreak.dev/tools/
 nav: tools
 ---
 {% extends "layouts/page.njk" %}
+{% from "nav-card.njk" import navCard %}
 
 {% block content %}
 <main id="main">
@@ -34,51 +35,87 @@ nav: tools
     </div>
 
     <div class="card-grid">
-        <a class="nav-card" data-category="signals" href="/tools/signal-scaling.html">
-            <span class="nav-card-tag">Analog I/O</span>
-            <div class="nav-card-name">Signal Scaling Calculator</div>
-            <div class="nav-card-desc">mA / V signal ↔ engineering units, with % of span and a 2-point → slope/offset tab ready to paste into Niagara's ProxyExt.</div>
-        </a>
-        <a class="nav-card" data-category="protocols" href="/tools/modbus-register-viewer.html">
-            <span class="nav-card-tag">Modbus</span>
-            <div class="nav-card-name">Modbus Register Viewer</div>
-            <div class="nav-card-desc">A 16-bit register laid out as a clickable bit grid, two-way bound to decimal / hex, with dec / hex / binary readouts.</div>
-        </a>
-        <a class="nav-card" data-category="protocols" href="/tools/bacnet-ip-converter.html">
-            <span class="nav-card-tag">BACnet</span>
-            <div class="nav-card-name">BACnet/IP Hex Converter</div>
-            <div class="nav-card-desc">The hex address strings EBO shows for BACnet/IP devices ↔ dotted-decimal IP and UDP port, both directions.</div>
-        </a>
-        <a class="nav-card" data-category="hvac" href="/tools/psychrometric-chart.html">
-            <span class="nav-card-tag">HVAC</span>
-            <div class="nav-card-name">Psychrometric Chart</div>
-            <div class="nav-card-desc">Walk an AHU through its processes — mix outdoor + return air, then cool, heat, and humidify — on an interactive ASHRAE psychrometric chart that follows the header's US / Metric toggle. Drag OA and RA, or type leaving conditions; coil capacities appear when you set the airflow.</div>
-        </a>
-        <a class="nav-card" data-category="hvac" href="/tools/economizer-ratio.html">
-            <span class="nav-card-tag">HVAC</span>
-            <div class="nav-card-name">Economizer Ratio Helper</div>
-            <div class="nav-card-desc">Required %OA to mix outdoor and return air down to a mixed-air dry-bulb setpoint, with a feasibility verdict and an OA-vs-RA enthalpy-changeover sanity check for high-end economizer logic.</div>
-        </a>
-        <a class="nav-card" data-category="hvac" href="/tools/air-mixing.html">
-            <span class="nav-card-tag">HVAC</span>
-            <div class="nav-card-name">Air-Mixing Calculator</div>
-            <div class="nav-card-desc">Blend three air streams by mass flow (CFMs at the panel) or mass fraction (percentages off a schematic) and read out the full mixed-air state — dry-bulb, humidity, enthalpy, dew point.</div>
-        </a>
-        <a class="nav-card" data-category="hvac" href="/tools/coil-sizing.html">
-            <span class="nav-card-tag">HVAC</span>
-            <div class="nav-card-name">Coil-Sizing Calculator</div>
-            <div class="nav-card-desc">Total, sensible, and latent capacity for a cooling or heating coil from its entering and leaving air — or run it backwards to solve the leaving-air state from a known load.</div>
-        </a>
-        <a class="nav-card" data-category="hvac" href="/tools/refrigerant-pt.html">
-            <span class="nav-card-tag">HVAC</span>
-            <div class="nav-card-name">Refrigerant P-T &amp; Superheat Calculator</div>
-            <div class="nav-card-desc">Saturation pressure ↔ temperature for R-410A, R-22, R-134a, R-407C, R-404A and R-454B — bubble and dew both, so blend glide is in plain sight — plus a superheat / subcooling check off a measured line temperature.</div>
-        </a>
-        <a class="nav-card" data-category="signals" href="/tools/thermistor-calculator.html">
-            <span class="nav-card-tag">Sensors</span>
-            <div class="nav-card-name">Thermistor / RTD Calculator</div>
-            <div class="nav-card-desc">Temperature ↔ resistance for the common HVAC sensors — 10K Type II / III, Johnson 8.7K, Schneider Type 5, 20K, 3K, 1K Balco, Pt100, Pt1000 — looked up both ways, or identify an unknown sensor from measured readings.</div>
-        </a>
+        {{ navCard({
+            section:    'tools',
+            href:       '/tools/signal-scaling.html',
+            titleShort: 'Sig Scaling',
+            titleFull:  'Signal Scaling Calculator',
+            desc:       'mA / V signal ↔ engineering units, with % of span and a 2-point → slope/offset tab ready to paste into Niagara\'s ProxyExt.',
+            pills:      ['Analog I/O', '4-20 mA', '0-10 V', 'Slope / Offset'],
+            category:   'signals'
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/tools/modbus-register-viewer.html',
+            titleShort: 'Modbus Reg',
+            titleFull:  'Modbus Register Viewer',
+            desc:       'A 16-bit register laid out as a clickable bit grid, two-way bound to decimal / hex, with dec / hex / binary readouts.',
+            pills:      ['Modbus', '16-bit', 'Dec / Hex / Bin'],
+            category:   'protocols'
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/tools/bacnet-ip-converter.html',
+            titleShort: 'BACnet/IP Hex',
+            titleFull:  'BACnet/IP Hex Converter',
+            desc:       'The hex address strings EBO shows for BACnet/IP devices ↔ dotted-decimal IP and UDP port, both directions.',
+            pills:      ['BACnet/IP', 'UDP 47808', 'Hex ↔ Dec'],
+            category:   'protocols'
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/tools/psychrometric-chart.html',
+            titleShort: 'Psych Chart',
+            titleFull:  'Psychrometric Chart',
+            desc:       'Walk an AHU through its processes — mix outdoor + return air, then cool, heat, and humidify — on an interactive ASHRAE psychrometric chart that follows the header\'s US / Metric toggle. Drag OA and RA, or type leaving conditions; coil capacities appear when you set the airflow.',
+            pills:      ['HVAC', 'Psychrometrics', 'ASHRAE', 'US / Metric'],
+            category:   'hvac'
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/tools/economizer-ratio.html',
+            titleShort: 'Econ Ratio',
+            titleFull:  'Economizer Ratio Helper',
+            desc:       'Required %OA to mix outdoor and return air down to a mixed-air dry-bulb setpoint, with a feasibility verdict and an OA-vs-RA enthalpy-changeover sanity check for high-end economizer logic.',
+            pills:      ['HVAC', '% Outdoor Air', 'Mix Setpoint', 'Enthalpy Check'],
+            category:   'hvac'
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/tools/air-mixing.html',
+            titleShort: 'Air Mixing',
+            titleFull:  'Air-Mixing Calculator',
+            desc:       'Blend three air streams by mass flow (CFMs at the panel) or mass fraction (percentages off a schematic) and read out the full mixed-air state — dry-bulb, humidity, enthalpy, dew point.',
+            pills:      ['HVAC', '3-Stream Mix', 'CFM or %', 'Mixed-Air State'],
+            category:   'hvac'
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/tools/coil-sizing.html',
+            titleShort: 'Coil Sizing',
+            titleFull:  'Coil-Sizing Calculator',
+            desc:       'Total, sensible, and latent capacity for a cooling or heating coil from its entering and leaving air — or run it backwards to solve the leaving-air state from a known load.',
+            pills:      ['HVAC', 'Cool / Heat', 'Sensible / Latent', 'Forward & Reverse'],
+            category:   'hvac'
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/tools/refrigerant-pt.html',
+            titleShort: 'Refrig P-T',
+            titleFull:  'Refrigerant P-T & Superheat Calculator',
+            desc:       'Saturation pressure ↔ temperature for R-410A, R-22, R-134a, R-407C, R-404A and R-454B — bubble and dew both, so blend glide is in plain sight — plus a superheat / subcooling check off a measured line temperature.',
+            pills:      ['HVAC', '6 Refrigerants', 'Bubble / Dew', 'Superheat / Subcool'],
+            category:   'hvac'
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/tools/thermistor-calculator.html',
+            titleShort: 'Thermistor',
+            titleFull:  'Thermistor / RTD Calculator',
+            desc:       'Temperature ↔ resistance for the common HVAC sensors — 10K Type II / III, Johnson 8.7K, Schneider Type 5, 20K, 3K, 1K Balco, Pt100, Pt1000 — looked up both ways, or identify an unknown sensor from measured readings.',
+            pills:      ['Sensors', 'NTC / RTD', 'T ↔ R', 'ID Unknown'],
+            category:   'signals'
+        }) }}
     </div>
 
 </main>

@@ -5,6 +5,7 @@ canonical: https://controlsfreak.dev/simulators/
 nav: simulators
 ---
 {% extends "layouts/page.njk" %}
+{% from "nav-card.njk" import navCard %}
 
 {% block content %}
 <main id="main">
@@ -19,21 +20,30 @@ nav: simulators
     </p>
 
     <div class="card-grid">
-        <a class="nav-card" href="/simulators/pid-tuner.html">
-            <span class="nav-card-tag">Loops</span>
-            <div class="nav-card-name">PID Tuning Helper</div>
-            <div class="nav-card-desc">A step-response simulator — gain · reset · rate (or Ti·Td / proportional band), preset tunings, a PV-vs-setpoint plot, and a symptom → tuning-move cheat sheet.</div>
-        </a>
-        <a class="nav-card" href="/simulators/vfd-mock.html">
-            <span class="nav-card-tag">Drives</span>
-            <div class="nav-card-name">Mock VFD Interface</div>
-            <div class="nav-card-desc">Practice navigating a generic drive's parameter tree on a clickable keypad — feel the run-source / speed-source gating before you're at a real drive. Paired with the VFD Basics explainer.</div>
-        </a>
-        <a class="nav-card" href="/simulators/function-block-editor.html">
-            <span class="nav-card-tag">Logic</span>
-            <div class="nav-card-name">Function-Block Editor</div>
-            <div class="nav-card-desc">A graphical wiresheet sandbox — drop logic, math, timer, and PID blocks, wire them up, and watch a control sequence run live. Five worked examples built in. Paired with the Function-Block Basics explainer.</div>
-        </a>
+        {{ navCard({
+            section:    'simulators',
+            href:       '/simulators/pid-tuner.html',
+            titleShort: 'PID Tuner',
+            titleFull:  'PID Tuning Helper',
+            desc:       'A step-response simulator — gain · reset · rate (or Ti·Td / proportional band), preset tunings, a PV-vs-setpoint plot, and a symptom → tuning-move cheat sheet.',
+            pills:      ['PID Loop', 'Step Response', 'FOPDT', 'Tuning Cheat']
+        }) }}
+        {{ navCard({
+            section:    'simulators',
+            href:       '/simulators/vfd-mock.html',
+            titleShort: 'Mock VFD',
+            titleFull:  'Mock VFD Interface',
+            desc:       'Practice navigating a generic drive\'s parameter tree on a clickable keypad — feel the run-source / speed-source gating before you\'re at a real drive. Paired with the VFD Basics explainer.',
+            pills:      ['VFD', 'Keypad Sim', 'Parameter Tree', 'Run / Speed Source']
+        }) }}
+        {{ navCard({
+            section:    'simulators',
+            href:       '/simulators/function-block-editor.html',
+            titleShort: 'Wiresheet',
+            titleFull:  'Function-Block Editor',
+            desc:       'A graphical wiresheet sandbox — drop logic, math, timer, and PID blocks, wire them up, and watch a control sequence run live. Five worked examples built in. Paired with the Function-Block Basics explainer.',
+            pills:      ['Wiresheet', 'Logic / Math / Timer / PID', '5 Examples']
+        }) }}
     </div>
 
 </main>

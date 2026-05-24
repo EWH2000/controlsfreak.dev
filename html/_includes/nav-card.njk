@@ -1,0 +1,67 @@
+{# ─────────────────────────────────────────────────────────────────
+    nav-card.njk — macro for a hero-style nav card.
+
+    Emits the chrome (titlebar with section prefix + status pill,
+    body with full name + description, statusline with mono-uppercase
+    bullet-separated pills). Section drives the prefix word and the
+    status pill color via the .nav-card--<section> modifier (CSS in
+    styles.css under "v2.1.0 — nav cards moved …").
+
+    Usage (in a page template):
+
+        {%- from "nav-card.njk" import navCard -%}
+        {{ navCard({
+            section:    'tools',
+            href:       '/tools/signal-scaling.html',
+            titleShort: 'Signal Scaling',
+            titleFull:  'Signal Scaling Calculator',
+            desc:       'mA / V signal ↔ engineering units …',
+            pills:      ['Analog I/O', '4-20 mA', '0-10 V', 'Slope / Offset'],
+            category:   'signals'
+        }) }}
+
+    Fields:
+      section     'tools' | 'education' | 'simulators' | 'home'
+      href        link target
+      titleShort  short name for the titlebar (rendered uppercase)
+      titleFull   full title for the card body
+      desc        long description (one or two sentences)
+      pills       array of strings for the statusline; rendered in
+                  mono-uppercase, separated by bullets
+      category    optional — sets data-category for the filter
+                  chips on /tools/ and /education/
+
+    The macro derives the section prefix word (TOOL/LESSON/SIM/SECTION)
+    and the status pill word (LIVE/READ/RUN/OK) from `section` so the
+    page only has to pick which family the card belongs to.
+#}
+
+{% macro navCard(opts) -%}
+    {%- set sectionWord = {
+        tools:      'TOOL',
+        education:  'LESSON',
+        simulators: 'SIM',
+        home:       'SECTION'
+    }[opts.section] or 'REF' -%}
+    {%- set statusWord = {
+        tools:      'LIVE',
+        education:  'READ',
+        simulators: 'RUN',
+        home:       'OK'
+    }[opts.section] or 'OK' -%}
+<a class="nav-card nav-card--{{ opts.section }}"{% if opts.category %} data-category="{{ opts.category }}"{% endif %} href="{{ opts.href }}">
+    <div class="nav-card-titlebar">
+        <span>{{ sectionWord }} <span class="titlebar-dots">::</span> {{ opts.titleShort | upper }}</span>
+        <span class="ok-pill">{{ statusWord }}</span>
+    </div>
+    <div class="nav-card-body">
+        <div class="nav-card-name">{{ opts.titleFull }}</div>
+        <div class="nav-card-desc">{{ opts.desc }}</div>
+    </div>
+    {%- if opts.pills and opts.pills.length %}
+    <div class="nav-card-statusline">
+        {%- for p in opts.pills %}<span class="nav-card-pill">{{ p }}</span>{% endfor %}
+    </div>
+    {%- endif %}
+</a>
+{%- endmacro %}

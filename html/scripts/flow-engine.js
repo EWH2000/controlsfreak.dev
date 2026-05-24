@@ -1,7 +1,19 @@
 // ──────────────────────────────────────────────────────────────────────
-// flow-engine.js — particle-flow animation engine for the hydronic
-// diagrams (and any other SVG schematic that wants to show direction
-// of flow with motion).
+// flow-engine.js — particle-flow + signal-pulse animation engine for
+// SVG schematics (hydronic piping, control wiring, function-block
+// chains, BACnet/IP comm traces).
+//
+// Two motion modes, both reading the document for opted-in elements:
+//
+//   data-flow="supply|return"  — continuous particle stream along the
+//                                path (hydronic-style: shows direction
+//                                of flow with motion).
+//   data-pulse="signal"        — discrete pulse that launches along the
+//                                path, travels at speed, and retires.
+//                                EBO-style "wire just updated" cue;
+//                                also the primitive the function-block
+//                                editor uses to show a connection
+//                                carrying live data.
 //
 // Loaded as a *classic* script (same pattern as pid-engine.js) so a
 // page's inline <script> can call its global API directly:
@@ -9,11 +21,9 @@
 //     <script src="/scripts/flow-engine.js"></script>
 //     <script>FlowEngine.init();</script>
 //
-// at the bottom of <body> is the whole integration. The engine scans
-// the document for SVG geometry elements with a `data-flow` attribute
-// and animates discrete particles along them. Pages opt in
-// element-by-element by annotating their static SVG; the engine
-// itself is page-agnostic and a no-op where no `data-flow` exists.
+// at the bottom of <body> is the whole integration. The engine is
+// page-agnostic and a no-op where no `data-flow` / `data-pulse`
+// element exists.
 //
 // Mechanic: each annotated element gets its own pool of <circle>
 // particles, injected into a single per-SVG `<g class="flow-particles">`
@@ -58,6 +68,28 @@
 // never speed. See "Engine attribute conventions" in
 // site-ideas-and-friction.md.
 //
+// Pulse attributes (per-element overrides):
+//   data-pulse-color="<css color>"   — fill for the pulse head + trail.
+//                                      Default reads the element's `stroke`
+//                                      attribute; ultimate fallback is
+//                                      var(--accent). Same `var(--name)`
+//                                      pattern as data-flow colors.
+//   data-pulse-speed="<px/sec>"      — travel speed. Default 220.
+//   data-pulse-interval="<ms>"       — auto-fire cadence. Default 4000.
+//                                      Set to 0 (or any non-positive) to
+//                                      disable auto-fire — the path then
+//                                      only animates when something calls
+//                                      FlowEngine.pulse(el) explicitly.
+//                                      That's the function-block-editor
+//                                      mode: pulse on signal update.
+//
+// Pulse visibility: auto-firing is gated by IntersectionObserver, so
+// pulses don't fire on motifs that aren't currently in the viewport
+// (the gutter as-builts in particular cover ~5000px of vertical
+// extent — letting them all pulse offscreen would spend a lot of
+// SVG-element churn for no visible payoff). Explicit FlowEngine.pulse()
+// calls bypass the gate.
+//
 // Public API:
 //   FlowEngine.init()              — scan the document, build pools,
 //                                    start the frame loop. Idempotent
@@ -85,6 +117,14 @@
 //                                    AND wants the dots on those pipes to
 //                                    track. Call after each state change;
 //                                    idempotent. No-op under reduced-motion.
+//   FlowEngine.pulse(el)           — fire a single pulse on a pulse-
+//                                    annotated element right now,
+//                                    regardless of its auto-fire interval
+//                                    or viewport visibility. The primitive
+//                                    a wired-up function-block editor
+//                                    calls when a signal updates. No-op
+//                                    under reduced-motion or for elements
+//                                    init() didn't register.
 //
 // What's NOT here: anything page-specific. No per-diagram tuning, no
 // hooks for play/pause UI, no speed coupling to a slider. Add those
@@ -100,6 +140,17 @@
     const SPACING  = 34;        // px between adjacent particles
     const RADIUS   = 3;         // circle r — small but readable
 
+    // Pulse tuning — defaults for data-pulse paths.
+    const PULSE_SPEED_DEFAULT    = 220;    // px/sec
+    const PULSE_INTERVAL_DEFAULT = 4000;   // ms between auto-fires
+    const PULSE_INTERVAL_JITTER  = 0.3;    // ±30% on each next-fire
+    const PULSE_HEAD_RADIUS      = 3.2;    // px (head circle)
+    const PULSE_TRAIL_LEN        = 4;      // trailing circles behind the head
+    const PULSE_TRAIL_GAP        = 5;      // px between trail circles along the path
+    const PULSE_TAIL_RADIUS_STEP = 0.18;   // radius shrink per trail step
+    const PULSE_TAIL_OPACITY_STEP = 0.22;  // opacity drop per trail step
+    const PULSE_FILL_DEFAULT     = 'var(--accent)';
+
     // Colours — read straight from the design-system custom properties.
     // No `, #hex` fallback (see CLAUDE.md "Design system" — every var
     // used here must be defined in styles.css :root).
@@ -107,11 +158,15 @@
     const RETURN_FILL = 'var(--blue-cool)';
     const SVG_NS = 'http://www.w3.org/2000/svg';
 
-    // Module-level state so refreshPath() can find an existing pool
-    // without walking the array. `pools` is the iteration order for
-    // the frame loop; `poolsByEl` is the O(1) lookup.
+    // Module-level state. Flow + pulse pools live side by side; the
+    // single rAF loop ticks both. Lookup Maps let refresh / external
+    // pulse() find an existing registration without walking the array.
     const pools = [];
     const poolsByEl = new Map();
+    const pulsePaths = new Map();   // el -> { length, color, speed, intervalMs, nextFireAt }
+    const activePulses = [];        // [{ el, length, speed, headOffset, circles: [...] }]
+    const visiblePulseEls = new Set();
+    let pulseIO = null;
     let frameStarted = false;
 
     function init() {
@@ -121,12 +176,13 @@
             return;
         }
 
-        const annotated = document.querySelectorAll('[data-flow]');
-        if (!annotated.length) return;
+        const annotatedFlow  = document.querySelectorAll('[data-flow]');
+        const annotatedPulse = document.querySelectorAll('[data-pulse]');
+        annotatedFlow.forEach(buildPoolForEl);
+        annotatedPulse.forEach(buildPulsePathFor);
 
-        annotated.forEach(buildPoolForEl);
-
-        if (!pools.length || frameStarted) return;
+        if (!pools.length && !pulsePaths.size) return;
+        if (frameStarted) return;
         frameStarted = true;
 
         let lastT = null;
@@ -162,6 +218,8 @@
                     setPos(pool, part);
                 }
             }
+
+            tickPulses(dt);
 
             requestAnimationFrame(frame);
         }
@@ -289,5 +347,150 @@
         part.circle.setAttribute('cy', pt.y);
     }
 
-    window.FlowEngine = { init: init, refreshPath: refreshPath, setPathColor: setPathColor };
+    // ── PULSE MODE ─────────────────────────────────────────────────
+    // Register one pulse-annotated element. Same SVGGeometryElement
+    // duck-typing as buildPoolForEl. Attribute reads here are
+    // one-shot — pulses don't refresh on attribute mutation today
+    // (no current page needs that), but the path can still pulse
+    // externally via FlowEngine.pulse(el).
+    function buildPulsePathFor(el) {
+        if (typeof el.getTotalLength !== 'function' || typeof el.getPointAtLength !== 'function') return;
+        const length = el.getTotalLength();
+        if (!isFinite(length) || length < 1) return;
+
+        // Default pulse color: element's stroke attribute (handles
+        // `var(--name)` literally — the browser resolves it at fill
+        // time, same as the SUPPLY_FILL / RETURN_FILL constants). If
+        // there's no stroke attribute, fall back to --accent.
+        const color = el.getAttribute('data-pulse-color')
+                   || el.getAttribute('stroke')
+                   || PULSE_FILL_DEFAULT;
+
+        let speed = parseFloat(el.getAttribute('data-pulse-speed'));
+        if (!isFinite(speed) || speed <= 0) speed = PULSE_SPEED_DEFAULT;
+
+        let intervalMs = parseFloat(el.getAttribute('data-pulse-interval'));
+        if (!isFinite(intervalMs) || intervalMs < 0) intervalMs = PULSE_INTERVAL_DEFAULT;
+
+        // Stagger initial firing across the first interval window so
+        // motifs don't all pulse together on page load.
+        const nextFireAt = performance.now() + (intervalMs > 0 ? Math.random() * intervalMs : 0);
+
+        pulsePaths.set(el, { length: length, color: color, speed: speed, intervalMs: intervalMs, nextFireAt: nextFireAt });
+
+        if (intervalMs > 0) {
+            ensurePulseIO();
+            pulseIO.observe(el);
+        }
+    }
+
+    function ensurePulseIO() {
+        if (pulseIO) return;
+        // rootMargin lets us start firing pulses just before the path
+        // scrolls in — the first pulse is mid-travel as the path
+        // appears, which reads better than a dead path that suddenly
+        // wakes up.
+        pulseIO = new IntersectionObserver(function (entries) {
+            for (let i = 0; i < entries.length; i++) {
+                const e = entries[i];
+                if (e.isIntersecting) visiblePulseEls.add(e.target);
+                else visiblePulseEls.delete(e.target);
+            }
+        }, { rootMargin: '120px 0px' });
+    }
+
+    // Fire one pulse along a registered pulse path. External callers
+    // (function-block editor) use this to indicate a signal update on
+    // a specific wire. No-op for unregistered elements or under
+    // reduced-motion (frameStarted gates both).
+    function firePulse(el) {
+        if (!frameStarted) return;
+        const cfg = pulsePaths.get(el);
+        if (!cfg) return;
+        const svg = el.ownerSVGElement;
+        if (!svg) return;
+        const layer = ensureParticleLayer(svg);
+
+        const circles = [];
+        for (let i = 0; i < PULSE_TRAIL_LEN + 1; i++) {
+            const c = document.createElementNS(SVG_NS, 'circle');
+            c.setAttribute('r', Math.max(0.6, PULSE_HEAD_RADIUS * (1 - i * PULSE_TAIL_RADIUS_STEP)));
+            c.setAttribute('fill', cfg.color);
+            c.setAttribute('opacity', Math.max(0, 1 - i * PULSE_TAIL_OPACITY_STEP));
+            layer.appendChild(c);
+            circles.push(c);
+        }
+
+        activePulses.push({ el: el, length: cfg.length, speed: cfg.speed, headOffset: 0, circles: circles });
+    }
+
+    // Advance every in-flight pulse and fire newly-due auto-pulses.
+    // Called from the rAF loop after the flow particles tick.
+    function tickPulses(dt) {
+        // 1) Auto-fire newly due pulses on currently-visible paths.
+        if (pulsePaths.size) {
+            const now = performance.now();
+            pulsePaths.forEach(function (cfg, el) {
+                if (cfg.intervalMs <= 0) return;
+                if (now < cfg.nextFireAt) return;
+                if (!visiblePulseEls.has(el)) {
+                    // Path isn't on-screen — skip the fire but reset
+                    // the timer so it doesn't burst the moment it
+                    // comes back into view.
+                    cfg.nextFireAt = now + cfg.intervalMs;
+                    return;
+                }
+                firePulse(el);
+                const jitter = 1 + (Math.random() - 0.5) * 2 * PULSE_INTERVAL_JITTER;
+                cfg.nextFireAt = now + cfg.intervalMs * jitter;
+            });
+        }
+
+        // 2) Advance every in-flight pulse. Iterate backwards so the
+        //    in-place splice for a retiring pulse doesn't skip the next.
+        for (let p = activePulses.length - 1; p >= 0; p--) {
+            const pulse = activePulses[p];
+            // If the path was removed from the DOM mid-flight, retire
+            // the pulse silently (matches the stale-pool handling
+            // above for flow particles).
+            if (!pulse.el.isConnected) {
+                for (let i = 0; i < pulse.circles.length; i++) pulse.circles[i].remove();
+                activePulses.splice(p, 1);
+                continue;
+            }
+
+            pulse.headOffset += pulse.speed * dt;
+
+            // Retire when the entire trail has passed the end of the
+            // path. Without this guard the last trail circle freezes
+            // at the path end for a frame or two before opacity 0
+            // catches up.
+            const trailLenPx = PULSE_TRAIL_LEN * PULSE_TRAIL_GAP;
+            if (pulse.headOffset - trailLenPx > pulse.length) {
+                for (let i = 0; i < pulse.circles.length; i++) pulse.circles[i].remove();
+                activePulses.splice(p, 1);
+                continue;
+            }
+
+            for (let i = 0; i < pulse.circles.length; i++) {
+                const tailOffset = pulse.headOffset - i * PULSE_TRAIL_GAP;
+                const c = pulse.circles[i];
+                if (tailOffset < 0 || tailOffset > pulse.length) {
+                    c.setAttribute('opacity', '0');
+                } else {
+                    const pt = pulse.el.getPointAtLength(tailOffset);
+                    c.setAttribute('cx', pt.x);
+                    c.setAttribute('cy', pt.y);
+                    c.setAttribute('opacity', Math.max(0, 1 - i * PULSE_TAIL_OPACITY_STEP));
+                }
+            }
+        }
+    }
+
+    window.FlowEngine = {
+        init: init,
+        refreshPath: refreshPath,
+        setPathColor: setPathColor,
+        pulse: firePulse
+    };
 })();

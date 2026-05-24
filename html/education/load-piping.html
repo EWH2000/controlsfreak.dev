@@ -798,8 +798,10 @@ nav: education
      paths. The four static diagrams plus the closing widget's
      schematic are all annotated. The widget IIFE below drives
      bypass-leg particle visibility via FlowEngine.setPathColor()
-     after the engine has built its pools. -->
-<script src="/scripts/flow-engine.js"></script>
+     after the engine has built its pools. flow-engine.js is loaded
+     site-wide from layouts/page.njk (gutter schematic motifs); the
+     page's FlowEngine.init() below is a no-op refresh since
+     schematic-bg.js already called init first. -->
 <script>
     FlowEngine.init();
 

@@ -675,11 +675,11 @@ nav: education
 {% block scripts %}
 <script src="/scripts/units.js"></script>
 <!-- Particle-flow animation over the riser diagram. Classic script,
-     loaded before the inline page script that calls FlowEngine.init().
+     loaded site-wide from layouts/page.njk (gutter schematic motifs);
+     the inline page script's FlowEngine.init() below is a no-op refresh.
      The per-valve symbol diagrams above and the widget below are NOT
      animated — they're either static schematic references or use their
      own internal SVG state. Only paths with [data-flow] participate. -->
-<script src="/scripts/flow-engine.js"></script>
 <script>
     // ─────────────────────────────────────────────
     // Balancing — page glue.

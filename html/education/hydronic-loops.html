@@ -539,8 +539,11 @@ nav: education
      prefers-reduced-motion and is a no-op on pages without [data-flow] paths.
      All three diagrams are annotated; the d3 widget below mutates
      data-flow-density on the bridge paths live and calls FlowEngine.refreshPath
-     to push the change into the engine. -->
-<script src="/scripts/flow-engine.js"></script>
+     to push the change into the engine. flow-engine.js is loaded
+     site-wide from layouts/page.njk (for the gutter schematic motifs);
+     the page's FlowEngine.init() call below is a no-op refresh since
+     schematic-bg.js called init first, but kept here so the page reads
+     standalone. -->
 <script>
     FlowEngine.init();
 

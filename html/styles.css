@@ -33,6 +33,13 @@
     --blue-cool:    #5e8aa0;   /* a muted, cooler companion to --blue — "return water" in the hydronic diagrams (paired with a dashed line so it reads without colour too) */
     --red:          #c4382f;   /* fault / alarm */
     --heat:         #c8782a;   /* warm orange — "heating" on the psychrometric chart's process lines; companion to --blue for cooling */
+    --teal:         #4a8a8a;   /* desaturated teal — data/comm traces on the background schematic (BACnet, IP) */
+    --teal-dim:     rgba(74,138,138,0.10);
+    --teal-glow:    rgba(74,138,138,0.22);
+    --amber:        #c9a14a;   /* desaturated amber — energized control wiring on the background schematic */
+    --plum:         #8a5e7e;   /* desaturated plum — logic-signal lines on the background schematic */
+    --plum-dim:     rgba(138,94,126,0.10);
+    --plum-glow:    rgba(138,94,126,0.22);
     --mono:         'IBM Plex Mono', monospace;
     --sans:         'Overpass', sans-serif;
 }
@@ -68,6 +75,13 @@ body {
        instead of leaving a big gap underneath. */
     display: flex;
     flex-direction: column;
+    /* Stacking context for the gutter schematic SVGs (.schematic-bg),
+       which sit at z-index:-1 — above body's bg-image grid but below
+       every content surface (nav, hero, main, footer). Without
+       isolation:isolate the SVGs would fall behind body's background
+       and disappear entirely. */
+    position: relative;
+    isolation: isolate;
 }
 main { flex: 1; }
 
@@ -78,6 +92,98 @@ main { flex: 1; }
    under any future print-CSS overrides too.) */
 @media print {
     body { background-image: none; }
+}
+
+/* ──────────────────────────────────────────────────────────────────
+ * SCHEMATIC BACKGROUND — gutter as-builts
+ *
+ * Two narrow vertical strips, one in each side gutter, holding
+ * inline-SVG schematic motifs (piping, control wiring, function
+ * blocks). Each motif draws itself in via stroke-dashoffset as it
+ * scrolls into view — see /scripts/schematic-bg.js for the
+ * IntersectionObserver that toggles .is-drawn.
+ *
+ * The strips paint at z-index:-1 inside body's stacking context, so
+ * they sit above body's grid background but below every content
+ * surface (nav, hero, tool-cards, footer). Width tracks the gutter
+ * via clamp() so the strips stay narrow on narrow viewports and
+ * never push into the 1120px content column. Below 1240px the
+ * gutter gets too cramped to read — strips drop out entirely there.
+ *
+ * Hidden in print (matches the grid). Reduced-motion: the global
+ * block at the bottom of this file collapses transition-duration
+ * to 0.01ms, and schematic-bg.js draws every motif synchronously
+ * on load instead of observing — so reduced-motion users see the
+ * end state with no reveal. */
+.schematic-bg {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    z-index: -1;
+    pointer-events: none;
+    /* Fill (almost) all of the gutter on wide displays so motifs scale
+       up via the SVG's width:100% and read across the strip, not just
+       the outer half. Capped at 340px so ultra-wide displays don't
+       balloon them into competing with content. */
+    width: min(340px, calc((100vw - 1180px) / 2));
+    overflow: hidden;
+}
+.schematic-bg--left  { left: 8px; }
+.schematic-bg--right { right: 8px; }
+
+.sbg-motif {
+    position: absolute;
+    left: 0;
+    top: var(--sbg-y, 0);
+    width: 100%;
+    height: auto;
+    opacity: 0;
+    transition: opacity 700ms ease;
+}
+/* `fill: none` on stroked paths is set as an inline presentation
+   attribute in the partial — left over from when motifs used <use>
+   shadow trees; kept inline because it costs nothing.
+
+   Draw-in via a generous fixed dasharray. The largest motif path
+   here is ~200 user units (the BACnet chip's perimeter); 600 puts
+   us comfortably above that with margin to spare, so dashoffset:600
+   parks every path fully invisible and the transition to 0 sweeps
+   the whole path on for every motif. Earlier per-path measurement
+   approaches (getTotalLength-derived --sbg-len, then pathLength=1
+   normalization) both hit Chromium quirks on quadratic-Bezier paths
+   and circles — the AI/AO amber trace and the pump-coil circle
+   refused to fully draw even with offset=0. A fixed dasharray well
+   above any path length sidesteps both bugs entirely.
+
+   Trade-off: drawing is no longer proportional to path length —
+   short logic-chain wires finish in ~10% of the transition and
+   then sit still while long pipe runs continue drawing. Acceptable
+   given ease-out timing softens the disparity; correctness beats
+   uniformity here. */
+.sbg-motif [data-sbg-stroke] {
+    stroke-width: 1.4;
+    vector-effect: non-scaling-stroke;
+    stroke-dasharray: 600;
+    stroke-dashoffset: 600;
+}
+.sbg-motif.is-drawn { opacity: 1; }
+.sbg-motif.is-drawn [data-sbg-stroke] {
+    stroke-dashoffset: 0;
+    transition: stroke-dashoffset 3000ms ease-out;
+}
+
+.sbg-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    fill: var(--text-dim);
+    letter-spacing: 0.04em;
+}
+
+@media (max-width: 1240px) {
+    .schematic-bg { display: none; }
+}
+@media print {
+    .schematic-bg { display: none; }
 }
 
 /* ── Skip-to-content link — keyboard users tab here first on every
@@ -1031,18 +1137,116 @@ p.pid-note {
    Re-assert display: none for the [hidden] case. */
 .nav-card[hidden] { display: none; }
 
+/* v2.1.0 — nav cards moved from a flat surface+padding shape to a
+   faux-instrument frame that mirrors the home hero (.console-titlebar
+   + body + .console-statusline). The outer .nav-card supplies the
+   chrome; the inner .nav-card-body carries the prose. Section accent
+   (--section-accent) defaults to --accent and is overridden by the
+   --tools / --education / --simulators / --home modifier so the
+   hover border, name color, and status pill all track the section's
+   identity color (matches the gutter motif palette). See
+   _includes/nav-card.njk for the macro that emits the chrome — pages
+   call it instead of hand-rolling the markup. */
 .nav-card {
-    display: block;
+    --section-accent:      var(--accent);
+    --section-accent-dim:  var(--accent-dim);
+    --section-accent-glow: var(--accent-glow);
+    display: flex;
+    flex-direction: column;
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 4px;
-    padding: 1.3rem 1.4rem;
+    padding: 0;
+    overflow: hidden;
     text-decoration: none;
     color: inherit;
     transition: border-color 0.18s, transform 0.18s;
 }
-.nav-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+.nav-card--tools      { --section-accent: var(--accent); --section-accent-dim: var(--accent-dim); --section-accent-glow: var(--accent-glow); }
+.nav-card--education  { --section-accent: var(--plum);   --section-accent-dim: var(--plum-dim);   --section-accent-glow: var(--plum-glow); }
+.nav-card--simulators { --section-accent: var(--teal);   --section-accent-dim: var(--teal-dim);   --section-accent-glow: var(--teal-glow); }
+.nav-card--home       { --section-accent: var(--accent); --section-accent-dim: var(--accent-dim); --section-accent-glow: var(--accent-glow); }
+
+.nav-card:hover { border-color: var(--section-accent); transform: translateY(-2px); }
+
+/* Card chrome — sized down from the hero (.console-titlebar /
+   .console-statusline) so a grid of cards stays readable. Smaller
+   padding, smaller font, same vocabulary. */
+.nav-card-titlebar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.45rem 0.85rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-2);
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    color: var(--text);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+/* Title text must single-line — the 4-col card grid at 1920px viewport
+   only leaves ~195px for the title beside the right-side status pill,
+   and a wrapped titlebar pushes the body down inconsistently across
+   the grid. titleShort values in the partial are trimmed to fit; this
+   ellipsis safety catches anything that still spills over (a long
+   future name, an unforeseen viewport). `min-width:0` is required for
+   text-overflow to take effect inside a flex parent — without it the
+   span won't shrink below its intrinsic width. */
+.nav-card-titlebar > span:first-child {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+}
+.nav-card-titlebar .titlebar-dots {
+    color: var(--text-dim);
+    margin: 0 0.35rem;
+}
+.nav-card-titlebar .ok-pill {
+    /* Per-section status-pill tint. Same .ok-pill shape as the hero;
+       the colors come from the .nav-card--<section> tokens above. */
+    background: var(--section-accent-dim);
+    color: var(--section-accent);
+    border-color: var(--section-accent-glow);
+}
+.nav-card-titlebar .ok-pill::before {
+    background: var(--section-accent);
+}
+
+.nav-card-body {
+    padding: 1.1rem 1.2rem;
+    flex: 1;
+}
+
+.nav-card-statusline {
+    padding: 0.5rem 1rem;
+    border-top: 1px solid var(--border);
+    background: var(--surface-2);
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    color: var(--text-dim);
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    font-variant-numeric: tabular-nums;
+}
+.nav-card-pill {
+    display: inline;
+}
+.nav-card-pill:not(:last-child)::after {
+    content: '•';
+    margin: 0 0.35rem;
+    color: var(--border);
+}
+
 .nav-card-tag {
+    /* Legacy — UNUSED after v2.1.0. The old .nav-card layout placed a
+       single category pill at the top of each card; that role moved to
+       the .nav-card-titlebar's prefix word + the first .nav-card-pill
+       in the statusline. No consumer remains in html/. Safe to delete
+       this rule on the next styles.css sweep — no grep hits anywhere
+       except this comment and the rule itself. */
     display: inline-block;
     font-family: var(--mono);
     font-size: 0.6rem;
@@ -1063,7 +1267,7 @@ p.pid-note {
     margin-bottom: 0.4rem;
     transition: color 0.18s;
 }
-.nav-card:hover .nav-card-name { color: var(--accent); }
+.nav-card:hover .nav-card-name { color: var(--section-accent); }
 .nav-card-desc {
     font-size: 0.95rem;
     color: var(--text);

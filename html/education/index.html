@@ -5,6 +5,7 @@ canonical: https://controlsfreak.dev/education/
 nav: education
 ---
 {% extends "layouts/page.njk" %}
+{% from "nav-card.njk" import navCard %}
 
 {% block content %}
 <main id="main">
@@ -46,71 +47,123 @@ nav: education
     </div>
 
     <div class="card-grid">
-        <a class="nav-card" data-category="control" href="/education/pid-basics.html">
-            <span class="nav-card-tag">PID</span>
-            <div class="nav-card-name">PID Basics</div>
-            <div class="nav-card-desc">What proportional, integral, and derivative actually do on an HVAC loop — with three small sims you can play with one knob at a time.</div>
-        </a>
-        <a class="nav-card" data-category="hydronics" href="/education/hydronic-loops.html">
-            <span class="nav-card-tag">Hydronics</span>
-            <div class="nav-card-name">Hydronic Loops</div>
-            <div class="nav-card-desc">How water gets around a building — 2-pipe direct vs. reverse return, and why the closely-spaced tees on a boiler aren't a piping mistake.</div>
-        </a>
-        <a class="nav-card" data-category="hydronics" href="/education/load-piping.html">
-            <span class="nav-card-tag">Hydronics</span>
-            <div class="nav-card-name">Load Piping</div>
-            <div class="nav-card-desc">Two-way vs three-way valves at the load — variable vs constant system flow, when each one fits, and how the choice shapes the rest of the loop.</div>
-        </a>
-        <a class="nav-card" data-category="drives" href="/education/vfds.html">
-            <span class="nav-card-tag">Drives</span>
-            <div class="nav-card-name">VFDs</div>
-            <div class="nav-card-desc">What a variable frequency drive does, the cube-law energy story, and the run-command vs. speed-reference parameters every controls tech meets — with a widget for the configuration mistake that catches everyone.</div>
-        </a>
-        <a class="nav-card" data-category="hydronics" href="/education/pump-control.html">
-            <span class="nav-card-tag">Hydronics</span>
-            <div class="nav-card-name">Pump Control</div>
-            <div class="nav-card-desc">How the BMS controls a hydronic pump — pump curves and the operating point, DP control with a remote sensor, and DP setpoint reset. Pairs with VFDs and Load Piping.</div>
-        </a>
-        <a class="nav-card" data-category="sequencing" href="/education/equipment-staging.html">
-            <span class="nav-card-tag">Sequencing</span>
-            <div class="nav-card-name">Equipment Staging</div>
-            <div class="nav-card-desc">How a BMS staging sequence decides how many parallel pumps to run, when to add or drop one, and which pump leads — with widgets for staging delays and lead/lag rotation.</div>
-        </a>
-        <a class="nav-card" data-category="hydronics" href="/education/balancing.html">
-            <span class="nav-card-tag">Hydronics</span>
-            <div class="nav-card-name">Hydronic Balancing</div>
-            <div class="nav-card-desc">Getting design flow to every load — calibrated balancing valves, automatic balancing valves, and PICVs. With a widget that shows what each one does when system pressure swings.</div>
-        </a>
-        <a class="nav-card" data-category="hvac" href="/education/psychrometrics-basics.html">
-            <span class="nav-card-tag">HVAC</span>
-            <div class="nav-card-name">Psychrometrics Basics</div>
-            <div class="nav-card-desc">The seven properties on a psychrometric chart, what each one tells a controls engineer, and the gotchas that bite — with a pool-room widget that shows why dew point is the number to watch.</div>
-        </a>
-        <a class="nav-card" data-category="logic" href="/education/function-blocks.html">
-            <span class="nav-card-tag">Logic</span>
-            <div class="nav-card-name">Function-Block Basics</div>
-            <div class="nav-card-desc">What a function block and a wiresheet are, why building-controls sequences are built from boxes-and-wires, and how a sheet evaluates — paired with the Function-Block Editor.</div>
-        </a>
-        <a class="nav-card" data-category="protocols" href="/education/modbus-basics.html">
-            <span class="nav-card-tag">Modbus</span>
-            <div class="nav-card-name">Modbus Basics</div>
-            <div class="nav-card-desc">What Modbus is, how a request looks on the wire, the four data tables, the function codes that read and write them, and what an exception response means.</div>
-        </a>
-        <a class="nav-card" data-category="protocols" href="/education/modbus-decoding.html">
-            <span class="nav-card-tag">Modbus</span>
-            <div class="nav-card-name">Modbus Decoding</div>
-            <div class="nav-card-desc">Why a Modbus value comes back wrong even when the read succeeded — the 5-digit register trap, signed vs unsigned, the four byte orders, and scaling.</div>
-        </a>
-        <a class="nav-card" data-category="protocols" href="/education/bacnet-basics.html">
-            <span class="nav-card-tag">BACnet</span>
-            <div class="nav-card-name">BACnet Basics</div>
-            <div class="nav-card-desc">BACnet on the wire — the self-describing object model, the services that read and write properties, the priority array, and Who-Is / I-Am discovery.</div>
-        </a>
-        <a class="nav-card" data-category="protocols" href="/education/bacnet-networking.html">
-            <span class="nav-card-tag">BACnet</span>
-            <div class="nav-card-name">BACnet Networking</div>
-            <div class="nav-card-desc">BACnet networking — the three layers of addressing, the BVLL/NPDU/APDU frame, BBMDs and Foreign Device Registration, and reading the EBO hex blob.</div>
-        </a>
+        {{ navCard({
+            section:    'education',
+            href:       '/education/pid-basics.html',
+            titleShort: 'PID Basics',
+            titleFull:  'PID Basics',
+            desc:       'What proportional, integral, and derivative actually do on an HVAC loop — with three small sims you can play with one knob at a time.',
+            pills:      ['PID', 'P · I · D', '3 Mini Sims'],
+            category:   'control'
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/education/hydronic-loops.html',
+            titleShort: 'Hyd Loops',
+            titleFull:  'Hydronic Loops',
+            desc:       'How water gets around a building — 2-pipe direct vs. reverse return, and why the closely-spaced tees on a boiler aren\'t a piping mistake.',
+            pills:      ['Hydronics', 'Direct Return', 'Reverse Return', 'Primary / Secondary'],
+            category:   'hydronics'
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/education/load-piping.html',
+            titleShort: 'Load Piping',
+            titleFull:  'Load Piping',
+            desc:       'Two-way vs three-way valves at the load — variable vs constant system flow, when each one fits, and how the choice shapes the rest of the loop.',
+            pills:      ['Hydronics', '2-Way Valves', '3-Way Valves', 'Variable / Constant'],
+            category:   'hydronics'
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/education/vfds.html',
+            titleShort: 'VFDs',
+            titleFull:  'VFDs',
+            desc:       'What a variable frequency drive does, the cube-law energy story, and the run-command vs. speed-reference parameters every controls tech meets — with a widget for the configuration mistake that catches everyone.',
+            pills:      ['Drives', 'Cube Law', 'Run / Speed Source', 'Widget'],
+            category:   'drives'
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/education/pump-control.html',
+            titleShort: 'Pump Ctrl',
+            titleFull:  'Pump Control',
+            desc:       'How the BMS controls a hydronic pump — pump curves and the operating point, DP control with a remote sensor, and DP setpoint reset. Pairs with VFDs and Load Piping.',
+            pills:      ['Hydronics', 'Pump Curve', 'DP Control', 'Setpoint Reset'],
+            category:   'hydronics'
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/education/equipment-staging.html',
+            titleShort: 'Staging',
+            titleFull:  'Equipment Staging',
+            desc:       'How a BMS staging sequence decides how many parallel pumps to run, when to add or drop one, and which pump leads — with widgets for staging delays and lead/lag rotation.',
+            pills:      ['Sequencing', 'Stage Up / Down', 'Lead / Lag', 'Rotation'],
+            category:   'sequencing'
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/education/balancing.html',
+            titleShort: 'Balancing',
+            titleFull:  'Hydronic Balancing',
+            desc:       'Getting design flow to every load — calibrated balancing valves, automatic balancing valves, and PICVs. With a widget that shows what each one does when system pressure swings.',
+            pills:      ['Hydronics', 'Manual / Auto / PICV', 'Design Flow', 'Widget'],
+            category:   'hydronics'
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/education/psychrometrics-basics.html',
+            titleShort: 'Psych',
+            titleFull:  'Psychrometrics Basics',
+            desc:       'The seven properties on a psychrometric chart, what each one tells a controls engineer, and the gotchas that bite — with a pool-room widget that shows why dew point is the number to watch.',
+            pills:      ['HVAC', '7 Properties', 'Pool-Room Widget', 'Dew Point'],
+            category:   'hvac'
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/education/function-blocks.html',
+            titleShort: 'Fn Blocks',
+            titleFull:  'Function-Block Basics',
+            desc:       'What a function block and a wiresheet are, why building-controls sequences are built from boxes-and-wires, and how a sheet evaluates — paired with the Function-Block Editor.',
+            pills:      ['Logic', 'Wiresheet', 'Evaluation Order'],
+            category:   'logic'
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/education/modbus-basics.html',
+            titleShort: 'Modbus',
+            titleFull:  'Modbus Basics',
+            desc:       'What Modbus is, how a request looks on the wire, the four data tables, the function codes that read and write them, and what an exception response means.',
+            pills:      ['Modbus', '4 Data Tables', 'Function Codes', 'Exceptions'],
+            category:   'protocols'
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/education/modbus-decoding.html',
+            titleShort: 'Modbus Dec',
+            titleFull:  'Modbus Decoding',
+            desc:       'Why a Modbus value comes back wrong even when the read succeeded — the 5-digit register trap, signed vs unsigned, the four byte orders, and scaling.',
+            pills:      ['Modbus', '5-Digit Trap', 'Signed / Unsigned', 'Byte Order'],
+            category:   'protocols'
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/education/bacnet-basics.html',
+            titleShort: 'BACnet',
+            titleFull:  'BACnet Basics',
+            desc:       'BACnet on the wire — the self-describing object model, the services that read and write properties, the priority array, and Who-Is / I-Am discovery.',
+            pills:      ['BACnet', 'Object Model', 'Priority Array', 'Who-Is / I-Am'],
+            category:   'protocols'
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/education/bacnet-networking.html',
+            titleShort: 'BACnet Net',
+            titleFull:  'BACnet Networking',
+            desc:       'BACnet networking — the three layers of addressing, the BVLL/NPDU/APDU frame, BBMDs and Foreign Device Registration, and reading the EBO hex blob.',
+            pills:      ['BACnet', '3 Addr Layers', 'BVLL / NPDU / APDU', 'BBMD / FDR'],
+            category:   'protocols'
+        }) }}
     </div>
 
 </main>

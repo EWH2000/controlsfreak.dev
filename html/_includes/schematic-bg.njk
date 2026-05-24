@@ -1,0 +1,139 @@
+{# ─────────────────────────────────────────────────────────────────
+    SCHEMATIC BACKGROUND — gutter as-builts.
+
+    Two narrow vertical strips, one in each gutter, holding inline-
+    SVG motifs (piping, control wiring, function blocks, BACnet
+    nodes). Strips sit at z-index:-1 inside body's stacking context
+    (above the blueprint grid, below every content surface).
+
+    Each motif is inlined directly into its <svg class="sbg-motif">
+    wrapper — no <symbol>/<use>. flow-engine.js reads path geometry
+    via getTotalLength() / getPointAtLength(), and that doesn't pierce
+    <use> shadow trees in Chromium (same root cause that bit us with
+    `fill:none` on the first pass). The trade-off is repeated markup
+    across motifs — kept manageable by the {% macro motifBody %}
+    below, which expands by id.
+
+    Path tagging conventions:
+        data-flow="supply"|"return"   continuous particle flow
+                                      (hydronic pipes; flow-engine.js
+                                      handles the rest)
+        data-pulse="signal"           EBO-style discrete pulse on the
+                                      wire (analog/binary control
+                                      wiring, function-block signal
+                                      lines, BACnet/IP comm traces)
+        data-pulse-color="<var()>"    pulse fill; default = the path's
+                                      stroke attr
+        data-pulse-interval="<ms>"    auto-fire cadence (default 4000)
+        data-sbg-stroke               carries the scroll-reveal
+                                      stroke-dashoffset transition
+                                      (CSS rule in styles.css)
+
+    Hidden below 1240px viewport (no real gutter to fill) and on
+    print. Decorative only: aria-hidden, pointer-events:none.
+#}
+
+{% macro motifBody(id) -%}
+{%- if id == 'pipe-valve' -%}
+<line x1="4"   y1="28" x2="88"  y2="28" stroke="var(--blue)" data-flow="supply" data-sbg-stroke/>
+<line x1="112" y1="28" x2="196" y2="28" stroke="var(--blue)" data-flow="supply" data-sbg-stroke/>
+<line x1="4"   y1="56" x2="196" y2="56" stroke="var(--blue-cool)" data-flow="return" data-sbg-stroke/>
+<path d="M88 20 L88 36 L100 28 Z M112 20 L112 36 L100 28 Z" stroke="var(--blue)" fill="none" data-sbg-stroke/>
+<text x="14" y="16" class="sbg-label">SUP</text>
+<text x="14" y="74" class="sbg-label">RET</text>
+{%- elif id == 'pump-coil' -%}
+<rect x="14" y="26" width="56" height="38" stroke="var(--blue)" fill="var(--surface)" data-sbg-stroke/>
+<path d="M22 34 L62 34 M22 42 L62 42 M22 50 L62 50 M22 58 L62 58" stroke="var(--blue)" fill="none" data-sbg-stroke/>
+<line x1="70" y1="45" x2="138" y2="45" stroke="var(--blue)" data-flow="supply" data-sbg-stroke/>
+<circle cx="158" cy="45" r="20" stroke="var(--blue)" fill="var(--surface)" data-sbg-stroke/>
+<path d="M148 45 L168 45 M158 35 L158 55" stroke="var(--blue)" fill="none" data-sbg-stroke/>
+<text x="14" y="18" class="sbg-label">COIL</text>
+<text x="158" y="82" text-anchor="middle" class="sbg-label">P-1</text>
+{%- elif id == 'terminals-ao' -%}
+<rect x="10" y="22" width="38" height="26" stroke="var(--text-dim)" fill="var(--surface)" data-sbg-stroke/>
+<circle cx="20" cy="35" r="2.5" fill="var(--amber)"/>
+<circle cx="38" cy="35" r="2.5" fill="var(--amber)"/>
+<text x="29" y="16" text-anchor="middle" class="sbg-label">AI1</text>
+<rect x="152" y="22" width="38" height="26" stroke="var(--text-dim)" fill="var(--surface)" data-sbg-stroke/>
+<circle cx="162" cy="35" r="2.5" fill="var(--amber)"/>
+<circle cx="180" cy="35" r="2.5" fill="var(--amber)"/>
+<text x="171" y="16" text-anchor="middle" class="sbg-label">AO1</text>
+<path d="M48 35 Q90 35 100 50 Q110 65 152 35" stroke="var(--amber)" fill="none" data-pulse="signal" data-sbg-stroke/>
+{%- elif id == 'terminals-bo' -%}
+<rect x="10" y="22" width="38" height="26" stroke="var(--text-dim)" fill="var(--surface)" data-sbg-stroke/>
+<circle cx="20" cy="35" r="2.5" fill="var(--text-dim)"/>
+<circle cx="38" cy="35" r="2.5" fill="var(--text-dim)"/>
+<text x="29" y="16" text-anchor="middle" class="sbg-label">BI1</text>
+<rect x="152" y="22" width="38" height="26" stroke="var(--text-dim)" fill="var(--surface)" data-sbg-stroke/>
+<circle cx="162" cy="35" r="2.5" fill="var(--text-dim)"/>
+<circle cx="180" cy="35" r="2.5" fill="var(--text-dim)"/>
+<text x="171" y="16" text-anchor="middle" class="sbg-label">BO1</text>
+<line x1="48" y1="35" x2="152" y2="35" stroke="var(--text-dim)" data-pulse="signal" data-pulse-interval="6000" data-sbg-stroke/>
+{%- elif id == 'logic-chain' -%}
+<rect x="14" y="14" width="56" height="28" stroke="var(--plum)" fill="var(--surface)" data-sbg-stroke/>
+<text x="42" y="33" text-anchor="middle" class="sbg-label">TMR</text>
+<rect x="74" y="50" width="56" height="28" stroke="var(--plum)" fill="var(--surface)" data-sbg-stroke/>
+<text x="102" y="69" text-anchor="middle" class="sbg-label">AND</text>
+<rect x="134" y="80" width="52" height="22" stroke="var(--plum)" fill="var(--surface)" data-sbg-stroke/>
+<text x="160" y="96" text-anchor="middle" class="sbg-label">PID</text>
+<path d="M70 28 L82 28 L82 64 L74 64" stroke="var(--plum)" fill="none" data-pulse="signal" data-sbg-stroke/>
+<path d="M130 64 L142 64 L142 91 L134 91" stroke="var(--plum)" fill="none" data-pulse="signal" data-pulse-interval="4500" data-sbg-stroke/>
+{%- elif id == 'bacnet-node' -%}
+<rect x="14" y="34" width="76" height="26" stroke="var(--teal)" fill="var(--surface)" data-sbg-stroke/>
+<text x="52" y="51" text-anchor="middle" class="sbg-label">BACnet/IP</text>
+<path d="M90 42 L130 42 L160 22" stroke="var(--teal)" fill="none" data-pulse="signal" data-sbg-stroke/>
+<circle cx="160" cy="22" r="3" fill="var(--teal)"/>
+<text x="172" y="20" class="sbg-label">N2</text>
+<path d="M90 52 L130 52 L160 72" stroke="var(--teal)" fill="none" data-pulse="signal" data-pulse-interval="5500" data-sbg-stroke/>
+<circle cx="160" cy="72" r="3" fill="var(--teal)"/>
+<text x="172" y="76" class="sbg-label">N5</text>
+{%- endif -%}
+{%- endmacro %}
+
+{#  Motifs are placed at uniform Y stride down each gutter, cycling
+    through a short sequence so a long page never runs out of motifs.
+    Stride = 230px so the tallest motif (logic-chain at 110px
+    rendered ~1.7× = ~190px at the strip's 340px cap) fits with
+    breathing room above and below. Count = 60 covers ~14000px of
+    page; pages shorter than that just clip the tail via
+    overflow:hidden on the strip container.
+
+    Two sequences are offset between left/right so a wide viewport
+    doesn't show a mirrored pair. Heights table is shared because
+    the macro renders motifs at their viewBox aspect — only the
+    h value here matters (sets the SVG's viewBox height). #}
+
+{% set sbgHeights = {
+    'pipe-valve': 80,
+    'pump-coil':  90,
+    'terminals-ao': 70,
+    'terminals-bo': 70,
+    'logic-chain': 110,
+    'bacnet-node': 90
+} %}
+{% set sbgLeftCycle = [
+    'pipe-valve', 'terminals-ao', 'pump-coil', 'logic-chain', 'bacnet-node',
+    'pipe-valve', 'terminals-bo', 'pump-coil', 'logic-chain', 'bacnet-node'
+] %}
+{% set sbgRightCycle = [
+    'terminals-bo', 'logic-chain', 'pipe-valve', 'bacnet-node', 'pump-coil',
+    'terminals-ao', 'pipe-valve',  'logic-chain', 'bacnet-node', 'pump-coil'
+] %}
+{% set sbgCount  = 60 %}
+{% set sbgStride = 230 %}
+
+<div class="schematic-bg schematic-bg--left" aria-hidden="true">
+    {%- for i in range(sbgCount) -%}
+        {%- set mid = sbgLeftCycle[i % sbgLeftCycle.length] -%}
+        {%- set y = 100 + i * sbgStride -%}
+    <svg class="sbg-motif" data-sbg-motif viewBox="0 0 200 {{ sbgHeights[mid] }}" style="--sbg-y: {{ y }}px;" preserveAspectRatio="xMidYMin meet" focusable="false">{{ motifBody(mid) | safe }}</svg>
+    {% endfor %}
+</div>
+
+<div class="schematic-bg schematic-bg--right" aria-hidden="true">
+    {%- for i in range(sbgCount) -%}
+        {%- set mid = sbgRightCycle[i % sbgRightCycle.length] -%}
+        {%- set y = 220 + i * sbgStride -%}
+    <svg class="sbg-motif" data-sbg-motif viewBox="0 0 200 {{ sbgHeights[mid] }}" style="--sbg-y: {{ y }}px;" preserveAspectRatio="xMidYMin meet" focusable="false">{{ motifBody(mid) | safe }}</svg>
+    {% endfor %}
+</div>
