@@ -78,6 +78,11 @@ nav: tools
                         <span class="ps-label">Binary</span>
                         <span class="ps-value muted" id="read-bin">—</span>
                     </div>
+                    <div class="btn-row">
+                        <button class="copy-btn" id="mod-copy-dec">Copy decimal</button>
+                        <button class="copy-btn" id="mod-copy-hex">Copy hex</button>
+                        <button class="copy-btn" id="mod-copy-bin">Copy binary</button>
+                    </div>
                     <div class="failure-callout" id="mod-single-callout" hidden></div>
                 </section>
 
@@ -317,6 +322,9 @@ nav: tools
             signedMode = e.currentTarget.value;
             updateReadouts(currentSingleVal());
         });
+        document.getElementById('mod-copy-dec').addEventListener('click', e => copyReadouts(e.currentTarget, '', 'read-dec'));
+        document.getElementById('mod-copy-hex').addEventListener('click', e => copyReadouts(e.currentTarget, '', 'read-hex'));
+        document.getElementById('mod-copy-bin').addEventListener('click', e => copyReadouts(e.currentTarget, '', 'read-bin'));
 
         // ── 32-bit Pair tab ──
         // Two 16-bit registers → 32 bits → four byte orderings → int32 / uint32 / float.
