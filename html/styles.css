@@ -141,18 +141,25 @@ main { flex: 1; }
     transition: opacity 700ms ease;
 }
 /* `fill: none` on stroked paths is set as an inline presentation
-   attribute in the partial — CSS selectors inside <use> shadow
-   trees aren't reliable in Chromium, and an open <path> with no
-   explicit fill defaults to black, which renders as a filled lens
-   between the path's endpoints. The remaining rules here ARE
-   inherited through <use> shadow trees (stroke-width et al. are
-   inherited SVG properties), so they're safe to set in CSS. */
+   attribute in the partial — left over from when motifs used <use>
+   shadow trees; kept inline because it costs nothing.
+
+   Per-path dasharray. schematic-bg.js measures getTotalLength() on
+   each [data-sbg-stroke] and writes it as --sbg-len so every path
+   takes the same wall-clock time to draw, regardless of its length
+   — without this, short logic-chain wires (~30px) would finish in
+   a tenth of the time long pipe runs (~190px) take, and the user
+   asked for a more deliberate draw. The 800 fallback is the pre-JS
+   value: paths stay invisible until the JS pass sets the real
+   length (offset == dasharray == hidden stroke). 3000ms wall time
+   gives a clear "drawing" beat after the opacity fade (700ms) has
+   already settled. */
 .sbg-motif [data-sbg-stroke] {
     stroke-width: 1.4;
     vector-effect: non-scaling-stroke;
-    stroke-dasharray: 800;
-    stroke-dashoffset: 800;
-    transition: stroke-dashoffset 1400ms ease-out;
+    stroke-dasharray: var(--sbg-len, 800);
+    stroke-dashoffset: var(--sbg-len, 800);
+    transition: stroke-dashoffset 3000ms ease-out;
 }
 .sbg-motif.is-drawn { opacity: 1; }
 .sbg-motif.is-drawn [data-sbg-stroke] { stroke-dashoffset: 0; }
