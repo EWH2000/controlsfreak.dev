@@ -3185,7 +3185,22 @@ canonical `max-width` (660 px is the median used by `.page-intro`
 today; 700 is the education value). One-PR sweep, two files
 modified (`styles.css` + the three landings).
 
----
+**Resolution (2026-05-24):** new `.landing-intro` class promoted to
+`styles.css` (kept `.page-intro` scoped to its existing education-
+content-page use; the two contexts have different visual shapes —
+landings use `font-weight:300` and a `max-width:660px` cap, content
+pages don't). The class carries `.landing-intro a { color:
+var(--accent); }` so inline anchors in landing leads no longer need
+per-link inline color overrides — three such overrides were dropped
+in the same sweep (`tools/` lead's anchor on `Tools`, `education/`
+lead's anchors on `Tools` and `reach out`). Inline `style=`
+attributes dropped from all three landings.
+
+`max-width:660` is the median between the prior 560 (tools / sims)
+and 700 (education) values — picked per this entry's recommendation.
+The visual change is small: tools / sims leads gain ~100 px of line
+length at wide viewports; education's lead loses ~40 px. Subjectively
+all three now read at the same cadence.
 
 ### Deferred / Won't fix (with revisit trigger)
 

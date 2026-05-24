@@ -611,6 +611,23 @@ p.tool-preamble {
     margin-bottom: 1.75rem;
 }
 
+/* Lead paragraph on section landings (/tools/, /simulators/,
+   /education/) — opens with a single intro paragraph above the
+   filter chips / card grid. Lighter font-weight than .page-intro
+   (which is for education content pages) and capped to a readable
+   line length on wide viewports. The accent-coloured anchor scoped
+   below covers inline links in landing leads without needing
+   per-link inline styles. */
+.landing-intro {
+    font-weight: 300;
+    font-size: 1.0rem;
+    color: var(--text);
+    max-width: 660px;
+    margin-bottom: 2rem;
+    line-height: 1.8;
+}
+.landing-intro a { color: var(--accent); }
+
 /* ── TABS ── */
 .tabs {
     display: flex;
