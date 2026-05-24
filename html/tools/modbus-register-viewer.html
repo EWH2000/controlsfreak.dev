@@ -18,6 +18,7 @@ nav: tools
         .bit-grid { grid-template-columns: repeat(8, 1fr); }
         @media (max-width: 700px) {
             .bit-grid { grid-template-columns: repeat(4, 1fr); }
+            .narrow-width-note { display: block; }
         }
     </style>
 {% endblock %}
@@ -68,6 +69,9 @@ nav: tools
                         <input class="ps-input" type="text" id="mod-hex" placeholder="0xABCD">
                     </div>
                     <p class="bit-hint" style="margin-top:0.85rem;">Bit 15 = MSB (top-left) · Bit 0 = LSB (bottom-right) · click to toggle</p>
+                    <div class="narrow-width-note">
+                        On narrow screens the grid becomes 4×4 — the high-byte / low-byte boundary moves between rows 2 and 3.
+                    </div>
                     <!-- Default 8×2 layout (page-local CSS in {% block head %}) — mirrors
                          the register's high-byte / low-byte rows so the visual matches the
                          binary readout. Flips to 4×4 below 700px viewport for tap-target
