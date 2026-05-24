@@ -19,27 +19,17 @@ nav: education
         Common sense lessons for techs new to the industry. All of these are based on things I struggled with when I was new. This includes how a system actually works, why it's piped or wired the way it is, and what the equipment is doing. Not calculators (those live in <a href="/tools/">Tools</a>). If you have any requests or corrections, feel free to <a href="/contact.html">reach out</a>.
     </p>
 
+    <p class="chip-row-preamble">Know your way around? Jump to:</p>
+
     <div class="filter-chips" role="group" aria-label="Filter lessons by category">
         <button type="button" class="filter-chip active" data-category="all" aria-pressed="true">
             All <span class="filter-chip-count">13</span>
         </button>
+        <button type="button" class="filter-chip" data-category="fundamentals" aria-pressed="false">
+            Fundamentals <span class="filter-chip-count">5</span>
+        </button>
         <button type="button" class="filter-chip" data-category="hydronics" aria-pressed="false">
             Hydronics <span class="filter-chip-count">4</span>
-        </button>
-        <button type="button" class="filter-chip" data-category="drives" aria-pressed="false">
-            Drives <span class="filter-chip-count">1</span>
-        </button>
-        <button type="button" class="filter-chip" data-category="control" aria-pressed="false">
-            Control <span class="filter-chip-count">1</span>
-        </button>
-        <button type="button" class="filter-chip" data-category="hvac" aria-pressed="false">
-            HVAC <span class="filter-chip-count">1</span>
-        </button>
-        <button type="button" class="filter-chip" data-category="sequencing" aria-pressed="false">
-            Sequencing <span class="filter-chip-count">1</span>
-        </button>
-        <button type="button" class="filter-chip" data-category="logic" aria-pressed="false">
-            Logic <span class="filter-chip-count">1</span>
         </button>
         <button type="button" class="filter-chip" data-category="protocols" aria-pressed="false">
             Protocols <span class="filter-chip-count">4</span>
@@ -181,15 +171,22 @@ nav: education
         const validSlugs = new Set();
         chips.forEach(c => validSlugs.add(c.dataset.category));
 
+        // "Fundamentals" is a UX-level catch-all that maps to the per-card
+        // categories that only have one card each. The card-level data-category
+        // values stay granular (drives / control / hvac / sequencing / logic)
+        // so a future split can put chips back without touching every navCard.
+        const FUNDAMENTALS = new Set(['drives', 'control', 'hvac', 'sequencing', 'logic']);
+
         function apply(slug) {
-            const showAll = slug === 'all';
             chips.forEach(c => {
                 const on = c.dataset.category === slug;
                 c.classList.toggle('active', on);
                 c.setAttribute('aria-pressed', on ? 'true' : 'false');
             });
             grid.querySelectorAll('.nav-card').forEach(card => {
-                const match = showAll || card.dataset.category === slug;
+                const cat = card.dataset.category;
+                const match = slug === 'all'
+                    || (slug === 'fundamentals' ? FUNDAMENTALS.has(cat) : cat === slug);
                 if (match) card.removeAttribute('hidden');
                 else card.setAttribute('hidden', '');
             });
