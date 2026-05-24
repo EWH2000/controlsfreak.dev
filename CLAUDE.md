@@ -418,7 +418,10 @@ headers.
 4. Add the page's URL to the `PAGES` array in `tests/smoke.spec.js`
    (the sitemap is automatic — see *Sitemap* — but the drift test
    fails until `PAGES` is updated).
-5. Bump `package.json.version` when shipping something notable; the
+5. Consider bumping the home-page hero's `Latest: <name>` badge
+   to point at the new tool — `html/index.html`, the last entry
+   in `.hero-badges`. Editorial pick; skip on small revisions.
+6. Bump `package.json.version` when shipping something notable; the
    footer reads it via `html/_data/site.js`. A new tool is a minor
    bump (`1.X.0`); a bug fix is a patch bump (`1.X.Y`).
 
