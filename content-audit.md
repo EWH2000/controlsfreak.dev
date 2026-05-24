@@ -1007,54 +1007,54 @@ Phrasing, spacing, alignment, undefined-jargon items that don't
 rise to a substantive finding but should bundle into one editorial
 pass after triage.
 
-- **Home — Stage 1 cards** — the 4-card row is visually tight on
+- ~~**Home — Stage 1 cards** — the 4-card row is visually tight on
   tablet (700 px) where each card's description wraps to 6–7 lines
   with narrow line-length. Consider tightening descriptions to ~3
   lines on the Sig Scaling and BACnet/IP cards (currently 2–3
-  sentences each). *(field-tech)*
-- **Home — About card stat-row "Verified: 2026"** — ambiguous what
+  sentences each). *(field-tech)*~~ — **Skipped — editorial tightening of card descriptions left for a future visual pass; out of audit-impl scope.**
+- ~~**Home — About card stat-row "Verified: 2026"** — ambiguous what
   was verified. Author identity? Last content audit? Year of activity?
   A one-word clarification ("Active since: 2026" or "Content
-  reviewed: 2026") would settle it. *(newcomer)*
-- **Home — Footer + console-statusline overlap** — the bottom of
+  reviewed: 2026") would settle it. *(newcomer)*~~ — **Resolved in PR #8 (audit-impl) — row is now `REV: 2026-05-24` driven by `site.lastRev`.**
+- ~~**Home — Footer + console-statusline overlap** — the bottom of
   the page shows a footer ("controlsfreak.dev · OPEN TOOLS FOR
   CONTROLS PROFESSIONALS") plus the same statline-style version /
   build chrome that's already in the hero. Two console frames
   bookend the page; mostly fine, but on a short page (e.g.,
   simulators landing at desktop) the two are very close together
-  with little content between. *(engineer)*
-- **Tools landing — card order clusters by category except for
+  with little content between. *(engineer)*~~ — **Skipped — visual nit, no clear single-line fix; rethinking footer/hero relationship is out of audit-impl scope.**
+- ~~**Tools landing — card order clusters by category except for
   Thermistor** — `signals → protocols → hvac × 5 → signals
   (thermistor)`. With Thermistor moved up next to Signal Scaling,
   the visual clustering matches the categorical taxonomy and the
   trailing-lone-card spot in the 4-col grid stays the same shape
-  it does now (the 9-card row count doesn't change). *(engineer)*
-- **Tools landing — no eyebrow/identity beyond "Tools" h1** —
+  it does now (the 9-card row count doesn't change). *(engineer)*~~ — **Resolved in PR #9 (audit-impl) — Thermistor moved to the second slot, right after Signal Scaling.**
+- ~~**Tools landing — no eyebrow/identity beyond "Tools" h1** —
   compare to home's stage labels. Could carry a short identity
   framing ("Field calculators & lookups" / "Open it, get the
-  number, close it") in the same section-header treatment. *(newcomer)*
-- **Simulators landing — 3 cards in 4-col grid at desktop leaves
+  number, close it") in the same section-header treatment. *(newcomer)*~~ — **Skipped — landing-page identity-framing is a separate editorial direction (per-section eyebrow shape); not addressed in audit-impl phase.**
+- ~~**Simulators landing — 3 cards in 4-col grid at desktop leaves
   an empty fourth column** — currently the schematic-bg motifs
   fill the visual space, but the grid breakpoint could shift to
   3-col for this page specifically so the cards center under the
-  lead. *(engineer)*
-- **Education landing — chip row at mobile takes two lines** —
+  lead. *(engineer)*~~ — **Skipped — minor visual nit; nav-card grid revisit is parked as a follow-up after the audit-impl phase per the handoff.**
+- ~~**Education landing — chip row at mobile takes two lines** —
   8 chips at 375 px wrap to 2 rows of 4. Functional, but if
   finding #12 trims the chip count this resolves automatically.
-  *(field-tech)*
-- **Education landing — "Common sense lessons for techs new to
+  *(field-tech)*~~ — **Resolved in PR #7 (audit-impl) — chip count dropped from 8 to 4 (All · Fundamentals · Hydronics · Protocols); fits one row at 375 px.**
+- ~~**Education landing — "Common sense lessons for techs new to
   the industry"** — "common sense" reads as slightly self-
   deprecating (implying the lessons aren't sophisticated). The
   intent is probably "practical / no-nonsense"; consider
   "Practical lessons for techs new to the industry" or
-  "Plain-English lessons…". *(newcomer)*
-- **Cross-landing consistency — lead paragraph max-widths
+  "Plain-English lessons…". *(newcomer)*~~ — **Resolved in PR #9 (audit-impl) — lead now reads "Practical lessons for techs new to the industry."**
+- ~~**Cross-landing consistency — lead paragraph max-widths
   (560/560/700)** — see substantive finding #18; the visual
-  inconsistency is observable on mobile especially. *(engineer)*
-- **Education lesson card pills — short capitalization mixed** —
+  inconsistency is observable on mobile especially. *(engineer)*~~ — **Skipped — tracked separately via substantive finding #18; outside the Minor-polish sweep scope.**
+- ~~**Education lesson card pills — short capitalization mixed** —
   some pills read "Manual / Auto / PICV" (slashes), others read
   "Lead / Lag" (slash with spaces), others "2-Way Valves" (hyphen,
-  no slash). Minor visual rhythm break across the grid. *(engineer)*
+  no slash). Minor visual rhythm break across the grid. *(engineer)*~~ — **Skipped — visual rhythm nit; canonicalizing pill punctuation across 13 nav-cards is a per-card editorial pass, deferred.**
 
 ### Code items split to `codebase-issues.md`
 
@@ -1359,55 +1359,55 @@ screenshots.
 
 ### Minor polish
 
-- **signal-scaling, modbus, bacnet** — no eyebrow phrase distinct
+- ~~**signal-scaling, modbus, bacnet** — no eyebrow phrase distinct
   from the tool title; the section-header label just repeats the
   tool category ("Analog I/O", "Modbus", "BACnet"). HVAC tools'
   eyebrows do the same thing — the issue is the section-label is
   doing the same work as the page title's tag-pill. Could be
-  trimmed to just one of them. *(visual)*
-- **modbus-register-viewer "Modbus essentials" lead** — opens with
+  trimmed to just one of them. *(visual)*~~ — **Resolved in PR #2 (audit-impl) — eyebrows standardized to "Tools · <Page>"; they now identify the page, not echo the tag-pill.**
+- ~~**modbus-register-viewer "Modbus essentials" lead** — opens with
   the author's voice ("Modbus was the protocol that took me the
   longest to get a handle on"), then the next paragraph reverts to
   third-person impersonal. Voice swing on adjacent sentences.
-  *(voice)*
-- **coil-sizing — Airflow gets its own section header for one CFM
+  *(voice)*~~ — **Resolved in PR #9 (audit-impl) — lead rewritten to match the dry/field-tech voice of the section's other paragraphs.**
+- ~~**coil-sizing — Airflow gets its own section header for one CFM
   input.** Three section headers (ENTERING AIR / LEAVING AIR /
   AIRFLOW) where the third is a single-row field. Promote to a
   ps-row at the bottom of LEAVING AIR or use a smaller subhead.
-  *(visual)*
-- **signal-scaling "Live zero" footnote at the bottom of the
+  *(visual)*~~ — **Resolved in PR #9 (audit-impl) — `<h3 class="subhead">Airflow</h3>` deleted on both tabs; row sits as a visual continuation of the preceding section.**
+- ~~**signal-scaling "Live zero" footnote at the bottom of the
   reference table** — single sentence with no expansion of *why*
   live-zero detection matters (a broken wire below 4 mA is a
   fault, not a 0 % reading). On a tool whose customer is a tech
   troubleshooting a 4-20 wire, this is the load-bearing concept;
-  it could be a small callout, not a footnote. *(content / engineer)*
-- **Tab-label punctuation drift across tools** — arrows
+  it could be a small callout, not a footnote. *(content / engineer)*~~ — **Skipped — promoting the live-zero footnote to a callout would need its own design (callout placement, prose expansion); deferred from audit-impl.**
+- ~~**Tab-label punctuation drift across tools** — arrows
   (`Signal → Eng. Units`), parens (`P-T (Saturation)`), slashes
   (`Superheat / Subcooling`), word-only (`Single Register`). Each
   feels right in context but the visual rhythm across tools is
-  loose. *(consistency)*
-- **thermistor-calculator — "About these tables" card at the
+  loose. *(consistency)*~~ — **Skipped — site-wide tab-label rethink; each label reads right in context, and a unified punctuation convention would degrade some pages' clarity.**
+- ~~**thermistor-calculator — "About these tables" card at the
   bottom** — strong content, but the methodology / data-provenance
   card is structurally similar to the recommended preamble-above-
   inputs shape from #21. Could absorb a one-line "what this tool
   does" framing at the top while the existing card stays as the
-  full-provenance section. *(content)*
-- **refrigerant-pt — green callout for the "no glide" R-410A case
+  full-provenance section. *(content)*~~ — **Partially resolved in PR #3 (audit-impl) — task-framed preamble added at the top of the tool. The "About these tables" provenance card remains as-is at the bottom (correct outcome per the suggestion).**
+- ~~**refrigerant-pt — green callout for the "no glide" R-410A case
   shares colour with the saturation curve on the chart-tool page.**
   Minor cross-tool collision; only visible if you load both pages
-  back-to-back. *(visual)*
-- **psychrometric-chart "Chart range" Standard/Cold toggle** — the
+  back-to-back. *(visual)*~~ — **Skipped — cross-page visual collision only visible to a back-to-back tab-flipper; not a real-world issue.**
+- ~~**psychrometric-chart "Chart range" Standard/Cold toggle** — the
   pair-of-buttons treatment is the canonical "look up by" toggle
   pattern on other pages, but here it controls chart axis bounds,
   not the input define-by. The pattern works either way; if the
   define-by widget shape is canonicalised in `codebase-issues #48`
   (which already did some consolidation), this could carry a different
   treatment to distinguish "view setting" from "input mode." *(visual /
-  consistency)*
-- **All tool pages — section-header label is rendered as `<span class="section-label">`** instead of the `<h1 class="section-label">` shape used on landings, and the page's actual `<h1>` is `.tool-card-title`. The heading hierarchy is fine
+  consistency)*~~ — **Skipped — visual/consistency distinction; works either way, would need a separate canonicalization pass.**
+- ~~**All tool pages — section-header label is rendered as `<span class="section-label">`** instead of the `<h1 class="section-label">` shape used on landings, and the page's actual `<h1>` is `.tool-card-title`. The heading hierarchy is fine
   (per codebase-issues #11) but the same class element-swaps depending
   on page archetype. Worth a one-line note in CLAUDE.md if not already
-  documented. *(consistency / engineer)*
+  documented. *(consistency / engineer)*~~ — **Skipped — heading hierarchy already documented in CLAUDE.md `## Conventions`; the class element-swap is the correct shape per archetype, not drift.**
 
 ### Code items split to `codebase-issues.md`
 
@@ -1616,51 +1616,51 @@ modbus/psych mobile screenshots from Batch 2's
 
 ### Minor polish
 
-- **pid-tuner — preamble line** opens "A fan loop. Set your
+- ~~**pid-tuner — preamble line** opens "A fan loop. Set your
   loops..." — the second word `loops` reads almost as a typo for
   `controls` until the visitor parses it as "your control loops."
-  Slight stumble on a load-bearing intro sentence. *(content)*
-- **pid-tuner — TRY A TUNING preset chip styling** doesn't visually
+  Slight stumble on a load-bearing intro sentence. *(content)*~~ — **Already resolved by a prior edit — current preamble opens "A toy loop, not your loop — the process below is a simple first-order model with dead time.", which doesn't have the loops-vs-controls ambiguity.**
+- ~~**pid-tuner — TRY A TUNING preset chip styling** doesn't visually
   distinguish *the answer state* (RIGHT) from *the problem states*
   (SLUGGISH, NEEDS DECAY, TOO SOFT). A visitor clicking through
   has to read each label to know which is the target vs the
   starting point. The fbe / vfd / refrig-pt preset chips have a
-  similar issue but with less semantic loading. *(visual / UX)*
-- **vfd-mock — "TRY THIS" preset link "the classic mistake"** is
+  similar issue but with less semantic loading. *(visual / UX)*~~ — **Skipped — preset-chip styling redesign is a separate visual pass; deferred from audit-impl.**
+- ~~**vfd-mock — "TRY THIS" preset link "the classic mistake"** is
   the configuration that demonstrates the run-source / speed-source
   gating bug from the VFDs explainer. Excellent pedagogy. Worth
   flagging as a *strength* — the discovery-prompt-pattern presets
   could pop up elsewhere (e.g., function-block-editor's
   "freeze-stat shutdown" is conceptually similar). *(strength /
-  consistency)*
-- **vfd-mock — preamble link "New to drives? Start with VFD Basics →"**
+  consistency)*~~ — **N/A — strength flag, no action item. Recorded for posterity.**
+- ~~**vfd-mock — preamble link "New to drives? Start with VFD Basics →"**
   styles the `Start with VFD Basics →` as the anchor; on
   function-block-editor the same shape exists. PID Tuner's
   bottom-of-page link uses the same phrase ("Start with the basics
   →") but at the bottom. The phrase is canonical across the three;
-  only the placement varies. *(consistency)*
-- **function-block-editor — sim bar uses standard text buttons
+  only the placement varies. *(consistency)*~~ — **Skipped — placement variance noted; no clear single-line fix that doesn't degrade per-page flow.**
+- ~~**function-block-editor — sim bar uses standard text buttons
   (PAUSE / STEP / RESET / CLEAR) plus a plain-text "Running"
   status pill**. The status pill could carry the same `ok-pill`
   treatment used elsewhere on the site (hero, nav-card titlebar)
-  for visual consistency. *(visual / consistency)*
-- **function-block-editor — Inspector panel says "Select a block
+  for visual consistency. *(visual / consistency)*~~ — **Skipped — visual consistency tweak; would need styling work to match `.ok-pill` shape without breaking the sim-bar layout.**
+- ~~**function-block-editor — Inspector panel says "Select a block
   to edit its parameters, or a wire to remove it. Click a palette
   block to add one."** plus "Press Delete to remove · Escape to
   cancel a wire." A newcomer who's never used a wiresheet might
   not know what "palette" refers to (the left-column block list).
   Add a one-word gloss or use "the left column" in the first
-  sentence. *(content / newcomer)*
-- **All three sims — preset chip rows are inline-styled (variants
+  sentence. *(content / newcomer)*~~ — **Resolved in PR #9 (audit-impl) — Inspector default hint now reads "Click a block in the left-column palette to add one."**
+- ~~**All three sims — preset chip rows are inline-styled (variants
   of `.try-chip` or similar inline class shapes).** Codebase-issues
   may already track this; if not, the preset-chip class is a
   shared pattern across all 3 sims + refrigerant-pt + a few tools
-  and could promote to `styles.css`. *(consistency / engineer)*
-- **pid-tuner — Parameter Style toggle dropdown ("Gain · Reset
+  and could promote to `styles.css`. *(consistency / engineer)*~~ — **Skipped — code-side consolidation; tracked separately as a styles.css promotion candidate, not Minor-polish sweep work.**
+- ~~**pid-tuner — Parameter Style toggle dropdown ("Gain · Reset
   · Rate (ISA standard)" / "Kp Ti Td (EBO)" / "PB Ti Td (Distech)")**
   is excellent pedagogy but lives in a `<select>` — a button group
   (like the chart-range toggle on psych chart) would invite more
-  exploration. *(UX)*
+  exploration. *(UX)*~~ — **Skipped — UX-pattern redesign (select → button group); needs its own design pass.**
 
 ### Code items split to `codebase-issues.md`
 
@@ -1907,49 +1907,49 @@ inadvertently break them.
   "bare" pattern) or rewrite to the question shape (e.g.,
   *"VFDs — What the Drive Actually Does Between the Wire and
   the Motor"*). *(content)*~~ — **Resolved in PR #2 (audit-impl) — subtitle dropped; H1 is bare "VFDs".**
-- **vfds — section-header subhead "RUN COMMAND VS SPEED
+- ~~**vfds — section-header subhead "RUN COMMAND VS SPEED
   REFERENCE — THE TWO THINGS YOU'VE LEARNED"** — *you've learned*
   presumes the reader is several scrolls in, but the subhead
   also reads as a stand-alone section title for someone arriving
   via the table of contents (which doesn't exist on the site,
   but might land later for long pages). Slightly conversational.
   Drop "— THE TWO THINGS YOU'VE LEARNED" for *"RUN COMMAND VS.
-  SPEED REFERENCE."* *(content)*
-- **modbus-basics + modbus-decoding lead paragraphs** — both
+  SPEED REFERENCE."* *(content)*~~ — **Resolved in PR #9 (audit-impl) — subhead trimmed to "Run Command vs. Speed Reference"; the audit-time text was "The Two Things You're Doing" (already edited from "You've Learned").**
+- ~~**modbus-basics + modbus-decoding lead paragraphs** — both
   cross-link to each other in the lead, which is good wiring,
   but the duplicated "Modbus Basics covered..." / "Modbus
   Decoding covers..." openings make the pair feel like one
   document split. Could tighten one to lead with "Read [Modbus
-  Basics](/education/modbus-basics.html) first." *(content)*
-- **bacnet-networking — page title vs lead voice asymmetry.** Lead
+  Basics](/education/modbus-basics.html) first." *(content)*~~ — **Partially resolved by prior edit — modbus-basics now opens with a historical/contextual lead ("Modbus is older than most building automation..."), no longer mirroring modbus-decoding's back-reference shape. The remaining `Modbus Basics covered…` opener on modbus-decoding stays — its informative summary of what Basics covered is more useful than a bare "Read [Basics] first" link.**
+- ~~**bacnet-networking — page title vs lead voice asymmetry.** Lead
   starts factual ("BACnet Basics covered..."); the page-intro pattern
   on hydronics pages opens with field voice ("On the load-piping
   lesson..." or "Two ways to handle the bypass..."). The protocol
-  pages read more clinical. *(voice)*
+  pages read more clinical. *(voice)*~~ — **Skipped — voice-asymmetry rewrite would need a meaningful editorial pass on the lead prose; out of audit-impl scope.**
 - ~~**psychrometrics-basics — title is the longest of any education
   page** (`Psychrometrics Basics — The Words on the Chart and How
   to Understand Them` = 75 chars). Could trim to *"...The Words
   on the Chart"* without losing the framing. *(content)*~~ — **Resolved in PR #2 (audit-impl) — subtitle dropped entirely; H1 is bare "Psychrometrics Basics".**
-- **All hydronics pages — SVG flow-diagram styling uses `.edu-svg`
+- ~~**All hydronics pages — SVG flow-diagram styling uses `.edu-svg`
   (per codebase-issues consolidation history)** but the captions
   underneath are still inline-styled across pages. Captions like
   *"← supply main, return main →"* appear inline on hydronic-loops,
   load-piping, pump-control with similar but not identical styling
   — could promote to a shared `.edu-caption` class for consistency.
-  *(consistency)*
-- **equipment-staging — Widget 1 "stage delay countdown" lacks
+  *(consistency)*~~ — **Skipped — code-side promotion candidate; tracked separately as a `.edu-caption` class consolidation, not Minor-polish sweep work.**
+- ~~**equipment-staging — Widget 1 "stage delay countdown" lacks
   visible scrubber** for the user to drag time forward instead of
   waiting. Not a substantive UX bug (the widget's pedagogy is the
   natural-time experience), but if a tech wants to demo the
   stage-up-then-down cycle quickly, they're waiting 4–6 seconds
   per state. Mentioned for completeness; if widget UX gets
-  consolidated, this could ride along. *(UX)*
-- **function-blocks — page is the shortest of the 13** (~3300 px
+  consolidated, this could ride along. *(UX)*~~ — **Skipped — UX feature add (scrubber control); the audit itself flags it as not a substantive bug. Deferred for a widget UX consolidation pass.**
+- ~~**function-blocks — page is the shortest of the 13** (~3300 px
   desktop full-page) and uses no widget, no anecdote. Reads as
   setup material before the simulator, which is exactly its job.
   Worth flagging that this *shape* is itself a valid education-page
   archetype (vocabulary-only, sim-paired) — codify if a future page
-  needs the same shape. *(strength / pattern)*
+  needs the same shape. *(strength / pattern)*~~ — **N/A — strength flag, no action item. Recorded for posterity.**
 
 ### Code items split to `codebase-issues.md`
 
