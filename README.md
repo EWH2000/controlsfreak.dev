@@ -154,32 +154,49 @@ from now will still run it.
 - **Build:** 11ty (`npm run build`) renders each page from its
   frontmatter + the layout, passes through `styles.css`, `scripts/`,
   `assets/`, `robots.txt`, and `sitemap.xml`, and writes to `_site/`.
-  Build is fast (~0.2s for 21 pages); the only thing the build does
+  Build is fast (~0.3s for 30 pages); the only thing the build does
   is templating, no JS transpile or bundle. Cloudflare Workers Build
   runs `npm install && npm run build` on push to `main` and serves
   `_site/`.
 - **Shared design system** — `html/styles.css`. Flat
   "workstation" aesthetic borrowing visual grammar from BAS UIs
   (Niagara-ish property-sheet rows, EBO-clean panels, slightly
-  shaded panel headers, flat underlined tabs). One design system,
-  applied across every page; page-specific CSS stays inline via
-  the layout's `{% block head %}`.
+  shaded panel headers, flat underlined tabs). On wide screens
+  (≥1240px), the side gutters carry an as-built schematic
+  collage — pipe-valves, pump-coils, AI/AO terminals, logic-chain
+  blocks, BACnet/IP nodes — that draws itself in as it scrolls
+  into view. Decorative, not navigational; hidden on smaller
+  screens where load weight outranks decoration. Nav cards across
+  Home / Tools / Simulators / Education share an instrument-frame
+  shape (titlebar with a section prefix + status pill, body, and
+  a bullet-separated semantic statusline) so the landings read as
+  instrument racks. One design system, applied across every page;
+  page-specific CSS stays inline via the layout's
+  `{% block head %}`.
 - **Shared scripts** in `html/scripts/` as *classic* scripts (not
   ES modules — there's no bundler doing module-graph work, and the
   shared helpers expose globals like `Units`, `simulatePid`, and
-  `FlowEngine` that page IIFEs reach for by name). Loaded with
-  `<script src="/scripts/xxx.js"></script>` before the page's
-  inline `<script>`:
+  `FlowEngine` that page IIFEs reach for by name). Most pages
+  load them per-page with `<script src="/scripts/xxx.js"></script>`
+  before the inline `<script>`; `flow-engine.js` and
+  `schematic-bg.js` are loaded site-wide by the layout so the
+  gutter art animates everywhere.
   - `pid-engine.js` — FOPDT process model + PID controller with
     conditional-integration anti-windup. Drives the PID Tuning
     Helper simulator and the three PID Basics mini-sims.
   - `fbe-engine.js` — function-block catalog + per-tick evaluator
     behind the Function-Block Editor simulator.
-  - `flow-engine.js` — particle-flow animation engine for SVG
-    schematics on the hydronic Education pages. Walks
-    `<circle>` particles along paths annotated with
-    `data-flow="supply"|"return"`. Respects
+  - `flow-engine.js` — animation engine for SVG schematics with
+    two modes: continuous particle flow on `data-flow` paths
+    (hydronic supply / return), and discrete pulses on
+    `data-pulse` paths (control wiring, logic-block signal
+    chains, BACnet/IP comm traces). The function-block editor
+    drives the discrete-pulse mode directly via
+    `FlowEngine.pulse(el)` when a wire updates. Respects
     `prefers-reduced-motion`.
+  - `schematic-bg.js` — scroll-driven reveal for the gutter
+    schematic motifs; bootstraps `flow-engine.js` once on
+    DOMContentLoaded.
   - `thermistor-data.js` — sensor R/T curves consumed by the
     Thermistor Lookup tool.
 - **Worker** at `src/worker.js` — ES-module Worker. Validates
