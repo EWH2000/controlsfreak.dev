@@ -48,7 +48,7 @@ nav: tools
                     </div>
                     <div class="ps-row">
                         <label class="ps-label" id="sig-input-label" for="sig-val">Signal Value (mA)</label>
-                        <input class="ps-input" type="number" id="sig-val" step="0.01" placeholder="12.00">
+                        <input class="ps-input" type="number" id="sig-val" step="0.01" placeholder="12.00" value="12">
                     </div>
                     <div id="custom-row" class="hidden">
                         <div class="ps-row">
@@ -66,15 +66,15 @@ nav: tools
                     </div>
                     <div class="ps-row">
                         <label class="ps-label" for="eu-min">Eng. units min</label>
-                        <input class="ps-input" type="number" id="eu-min" step="any" placeholder="0">
+                        <input class="ps-input" type="number" id="eu-min" step="any" placeholder="0" value="0">
                     </div>
                     <div class="ps-row">
                         <label class="ps-label" for="eu-max">Eng. units max</label>
-                        <input class="ps-input" type="number" id="eu-max" step="any" placeholder="100">
+                        <input class="ps-input" type="number" id="eu-max" step="any" placeholder="100" value="100">
                     </div>
                     <div class="ps-row">
                         <label class="ps-label" for="eu-label-input">Units label</label>
-                        <input class="ps-input" type="text" id="eu-label-input" placeholder="°F, °C, CFM, m³/h, %, …">
+                        <input class="ps-input" type="text" id="eu-label-input" placeholder="°F, °C, CFM, m³/h, %, …" value="psi">
                     </div>
                 </section>
 
@@ -125,15 +125,15 @@ nav: tools
                     </div>
                     <div class="ps-row">
                         <label class="ps-label" for="rev-eu-val">Eng. value</label>
-                        <input class="ps-input" type="number" id="rev-eu-val" step="any" placeholder="72.5">
+                        <input class="ps-input" type="number" id="rev-eu-val" step="any" placeholder="72.5" value="50">
                     </div>
                     <div class="ps-row">
                         <label class="ps-label" for="rev-eu-min">Eng. units min</label>
-                        <input class="ps-input" type="number" id="rev-eu-min" step="any" placeholder="0">
+                        <input class="ps-input" type="number" id="rev-eu-min" step="any" placeholder="0" value="0">
                     </div>
                     <div class="ps-row">
                         <label class="ps-label" for="rev-eu-max">Eng. units max</label>
-                        <input class="ps-input" type="number" id="rev-eu-max" step="any" placeholder="100">
+                        <input class="ps-input" type="number" id="rev-eu-max" step="any" placeholder="100" value="100">
                     </div>
                 </section>
 
@@ -164,19 +164,19 @@ nav: tools
                     <h2 class="ps-section-label">Input — two IO pairs</h2>
                     <div class="ps-row">
                         <label class="ps-label" for="so-x1">x₁ (raw)</label>
-                        <input class="ps-input" type="number" id="so-x1" step="any" placeholder="4">
+                        <input class="ps-input" type="number" id="so-x1" step="any" placeholder="4" value="4">
                     </div>
                     <div class="ps-row">
                         <label class="ps-label" for="so-y1">y₁ (eng.)</label>
-                        <input class="ps-input" type="number" id="so-y1" step="any" placeholder="0">
+                        <input class="ps-input" type="number" id="so-y1" step="any" placeholder="0" value="0">
                     </div>
                     <div class="ps-row">
                         <label class="ps-label" for="so-x2">x₂ (raw)</label>
-                        <input class="ps-input" type="number" id="so-x2" step="any" placeholder="20">
+                        <input class="ps-input" type="number" id="so-x2" step="any" placeholder="20" value="20">
                     </div>
                     <div class="ps-row">
                         <label class="ps-label" for="so-y2">y₂ (eng.)</label>
-                        <input class="ps-input" type="number" id="so-y2" step="any" placeholder="100">
+                        <input class="ps-input" type="number" id="so-y2" step="any" placeholder="100" value="100">
                     </div>
                 </section>
 
@@ -402,6 +402,11 @@ nav: tools
         document.getElementById('ss-copy-reverse').addEventListener('click', e => copyReadouts(e.currentTarget, '', 'reverse-out'));
         document.getElementById('ss-copy-slope').addEventListener('click', e => copyReadouts(e.currentTarget, '', 'so-slope'));
         document.getElementById('ss-copy-offset').addEventListener('click', e => copyReadouts(e.currentTarget, '', 'so-offset'));
+
+        // First-paint defaults — every tab computes on load so a visitor sees the tool working.
+        calcScaling();
+        calcReverse();
+        calcSlopeOffset();
     })();
 </script>
 {% endblock %}
