@@ -1116,8 +1116,9 @@ p.pid-note {
 
 /* Filter chip row above the .card-grid on /tools/ and /education/.
    Each chip toggles which .nav-card[data-category] is visible; URL hash
-   tracks state. Chips borrow the .nav-card-tag pill aesthetic but are
-   <button>s, larger, and stateful. */
+   tracks state. Chips are <button>s with a mono pill shape — same
+   family as the .nav-card-pill statusline items, just larger and
+   stateful. */
 .filter-chips {
     display: flex;
     flex-wrap: wrap;
@@ -1259,25 +1260,6 @@ p.pid-note {
     color: var(--border);
 }
 
-.nav-card-tag {
-    /* Legacy — UNUSED after v2.1.0. The old .nav-card layout placed a
-       single category pill at the top of each card; that role moved to
-       the .nav-card-titlebar's prefix word + the first .nav-card-pill
-       in the statusline. No consumer remains in html/. Safe to delete
-       this rule on the next styles.css sweep — no grep hits anywhere
-       except this comment and the rule itself. */
-    display: inline-block;
-    font-family: var(--mono);
-    font-size: 0.6rem;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--accent);
-    background: var(--accent-dim);
-    border: 1px solid var(--accent-glow);
-    border-radius: 2px;
-    padding: 0.13rem 0.45rem;
-    margin-bottom: 0.7rem;
-}
 .nav-card-name {
     font-family: var(--mono);
     font-size: 0.95rem;
