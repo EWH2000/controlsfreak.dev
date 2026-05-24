@@ -6,6 +6,22 @@ nav: tools
 ---
 {% extends "layouts/page.njk" %}
 
+{% block head %}
+    <style>
+        /* Bit-grid layout — 8-col on desktop (mirrors the 16-bit
+           register as two byte-rows: bit 15 top-left, bit 8 closes
+           row 1 above bit 0). Below 700px each cell would compress
+           under the 44px tap floor, so the grid flips to 4×4.
+           Cell size at 375px viewport works out to ~74px square,
+           well above the floor. The companion .narrow-width-note
+           lives above the grid and reveals at the same breakpoint. */
+        .bit-grid { grid-template-columns: repeat(8, 1fr); }
+        @media (max-width: 700px) {
+            .bit-grid { grid-template-columns: repeat(4, 1fr); }
+        }
+    </style>
+{% endblock %}
+
 {% block content %}
 <main id="main">
 
