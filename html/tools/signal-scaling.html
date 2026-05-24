@@ -332,6 +332,9 @@ nav: tools
 
             document.getElementById('scaling-formula').textContent =
                 `Eng. value = ${euMin} + ((${sig} − ${sMin}) ÷ (${sMax} − ${sMin})) × (${euMax} − ${euMin}) = ${eu.toFixed(4)}${euUnit ? ' ' + euUnit : ''}`;
+
+            // Dynamic copy-button label — names the unit the user is copying.
+            document.getElementById('ss-copy-scaling').textContent = euUnit ? `Copy ${euUnit}` : 'Copy value';
         }
 
         // ─────────────────────────────────────────────
@@ -378,6 +381,9 @@ nav: tools
 
             document.getElementById('reverse-formula').textContent =
                 `Signal = ${sMin} + ((${eu} − ${euMin}) ÷ (${euMax} − ${euMin})) × (${sMax} − ${sMin}) = ${sig.toFixed(4)} ${sUnit}`;
+
+            // Dynamic copy-button label — names the signal's natural unit (mA / V).
+            document.getElementById('ss-copy-reverse').textContent = `Copy ${sUnit}`;
         }
 
         // ─────────────────────────────────────────────
