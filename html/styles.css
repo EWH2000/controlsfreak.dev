@@ -144,27 +144,46 @@ main { flex: 1; }
    attribute in the partial — left over from when motifs used <use>
    shadow trees; kept inline because it costs nothing.
 
-   Draw-in via a generous fixed dasharray. The largest motif path
-   here is ~200 user units (the BACnet chip's perimeter); 600 puts
-   us comfortably above that with margin to spare, so dashoffset:600
-   parks every path fully invisible and the transition to 0 sweeps
-   the whole path on for every motif. Earlier per-path measurement
-   approaches (getTotalLength-derived --sbg-len, then pathLength=1
-   normalization) both hit Chromium quirks on quadratic-Bezier paths
-   and circles — the AI/AO amber trace and the pump-coil circle
-   refused to fully draw even with offset=0. A fixed dasharray well
-   above any path length sidesteps both bugs entirely.
+   Draw-in via stroke-dashoffset. Two modes case-split by element
+   safety:
 
-   Trade-off: drawing is no longer proportional to path length —
-   short logic-chain wires finish in ~10% of the transition and
-   then sit still while long pipe runs continue drawing. Acceptable
-   given ease-out timing softens the disparity; correctness beats
-   uniformity here. */
+   1. Fixed-dasharray mode (default). Applies to every [data-sbg-stroke]
+      that does NOT carry pathLength="1": <circle>, <rect>, and the
+      AO amber trace's quadratic-Bezier <path>. Earlier per-path
+      measurement approaches (getTotalLength-derived --sbg-len, then
+      pathLength=1 normalization) hit Chromium quirks on Bezier paths
+      and circles — those shapes refused to fully draw even with
+      offset=0. A fixed dasharray (600, well above any motif path
+      length ~200 user units) sidesteps the bug: dashoffset:600 parks
+      the path entirely in the gap, transition to 0 reveals it.
+      Trade-off accepted: short rects/circles finish drawing in the
+      first ~30% of the transition and then sit still.
+
+   2. Length-normalized mode. Applies to every [data-sbg-stroke] that
+      ALSO carries pathLength="1" — opted in on the partial's <line>
+      elements and L-only <path> elements (logic-chain wires, BACnet
+      traces, pump-coil grid, diverting-valve triangles). These shapes
+      don't trigger the Chromium quirk, so we use the standard SVG
+      "uniform draw" idiom: pathLength=1 normalizes the path's effective
+      length to 1, dasharray:1 / dashoffset:1 parks it fully invisible,
+      transition to 0 draws it end-to-end over the full 3000ms.
+      Result: a short logic-chain wire and a long pipe run now finish
+      drawing at the same moment.
+
+   The split is a one-attribute opt-in per element (pathLength="1") —
+   anything new in the partial without it falls through to the safe
+   fixed-dasharray default. When a future motif uses a curve or a
+   shape that has never been verified, leave pathLength off; only
+   add it once the element is known to render dashoffset cleanly. */
 .sbg-motif [data-sbg-stroke] {
     stroke-width: 1.4;
     vector-effect: non-scaling-stroke;
     stroke-dasharray: 600;
     stroke-dashoffset: 600;
+}
+.sbg-motif [data-sbg-stroke][pathLength="1"] {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
 }
 .sbg-motif.is-drawn { opacity: 1; }
 .sbg-motif.is-drawn [data-sbg-stroke] {
