@@ -1171,6 +1171,20 @@ p.pid-note {
     text-transform: uppercase;
     letter-spacing: 0.08em;
 }
+/* Title text must single-line — the 4-col card grid at 1920px viewport
+   only leaves ~195px for the title beside the right-side status pill,
+   and a wrapped titlebar pushes the body down inconsistently across
+   the grid. titleShort values in the partial are trimmed to fit; this
+   ellipsis safety catches anything that still spills over (a long
+   future name, an unforeseen viewport). `min-width:0` is required for
+   text-overflow to take effect inside a flex parent — without it the
+   span won't shrink below its intrinsic width. */
+.nav-card-titlebar > span:first-child {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+}
 .nav-card-titlebar .titlebar-dots {
     color: var(--text-dim);
     margin: 0 0.35rem;
@@ -1212,8 +1226,12 @@ p.pid-note {
 }
 
 .nav-card-tag {
-    /* Legacy pill — kept for any non-card consumer; new cards use
-       the statusline pills via .nav-card-pill instead. */
+    /* Legacy — UNUSED after v2.1.0. The old .nav-card layout placed a
+       single category pill at the top of each card; that role moved to
+       the .nav-card-titlebar's prefix word + the first .nav-card-pill
+       in the statusline. No consumer remains in html/. Safe to delete
+       this rule on the next styles.css sweep — no grep hits anywhere
+       except this comment and the rule itself. */
     display: inline-block;
     font-family: var(--mono);
     font-size: 0.6rem;
