@@ -2618,13 +2618,18 @@ runs across every page. Four shipped pieces:
 
 **1. Gutter schematic-collage.** Two narrow SVG strips, one in each
 side gutter (`_includes/schematic-bg.njk`), each holding ~60
-inline-SVG motifs drawn from a six-element library: pipe-valve,
-pump-coil, AI/AO terminals, BI/BO terminals, logic-chain (TMR /
-AND / PID blocks), BACnet/IP node. Motifs cycle through a sequence
-with a 230px stride, two staggered sequences (left vs right) so a
-wide viewport never shows a mirrored pair. The strips sit at
-`z-index: -1` inside body's stacking context — above the blueprint
-grid background, below every content surface.
+inline-SVG motifs drawn from a six-element library. Original library
+shipped 2026-05 as: pipe-valve, pump-coil, AI/AO terminals, BI/BO
+terminals, logic-chain (TMR / AND / PID blocks), BACnet/IP node;
+sweep-refreshed 2026-05-24 (PRs #126–132) to: 3-way diverting valve
++ coil + bypass, closed-loop pump-coil with supply + return,
+compare-bo (AI₁ > AI₂ → BO1), and-bo (BI₁ AND BI₂ → BO1),
+current-loop (PSU/TX/AI 2-wire 4-20mA), supervisor (JACE + AHU/VAV/BLR
+star). Motifs cycle through a sequence with a 270px stride (bumped
+from 230 to accommodate the taller pipe-valve), two staggered
+sequences (left vs right) so a wide viewport never shows a mirrored
+pair. The strips sit at `z-index: -1` inside body's stacking context —
+above the blueprint grid background, below every content surface.
 
 *Why gutter, not background.* The blueprint grid was already
 established (v2.0.1) for the body background; a second decorative
@@ -2669,7 +2674,7 @@ Permanent fallback (commit `e700c2a`): a single fixed dasharray
 (600, well above any motif's ~200 user units) applied to every
 `[data-sbg-stroke]`. Safe across every element type and every
 browser. Trade-off accepted: drawing is no longer proportional
-to path length — short logic-chain wires finish in ~10% of the
+to path length — short signal wires finish in ~10% of the
 transition and then sit still while long pipe runs continue.
 The ease-out timing softens the disparity; correctness beats
 uniformity here. Tracked in `codebase-issues#69` with a revisit
