@@ -211,9 +211,8 @@ from now will still run it.
   `assets.html_handling`, and `compatibility_date` are all
   load-bearing; touch carefully.
 
-`CLAUDE.md` has the full architecture documentation, naming
-conventions, design-system component index, and per-page notes.
-`site-ideas-and-friction.md` is the running log of ideas,
+`CLAUDE.md` has the architecture documentation, conventions, and
+gotchas. `site-ideas-and-friction.md` is the running log of ideas,
 design decisions, and friction encountered while building.
 `codebase-issues.md` tracks code-quality items that need a design
 decision before they can be acted on.
