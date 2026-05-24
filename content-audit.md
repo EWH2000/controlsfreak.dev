@@ -1068,3 +1068,364 @@ content/UX. Tracked in the partner file per
   but for landings. (See finding #18 above for the user-visible
   inconsistency this also caused.)
 
+---
+
+## Audit scope — refinement period, Batch 2: Tools (2026-05-24)
+
+Second batch of the section-at-a-time refinement-period audit. Same
+multi-lens Shape B (working BMS engineer / field tech at a panel /
+newcomer to the trade × content / visual / UX / consistency) applied
+to the 9 tool pages. Numbering continues from Batch 1 (which lives
+on `docs/audit-landings` / PR #110 at write time).
+
+### Coverage checklist
+
+Tools — [x] `signal-scaling` · [x] `modbus-register-viewer` ·
+[x] `bacnet-ip-converter` · [x] `thermistor-calculator` ·
+[x] `psychrometric-chart` · [x] `air-mixing` · [x] `coil-sizing` ·
+[x] `economizer-ratio` · [x] `refrigerant-pt`.
+
+Mechanism: dev server + Playwright screenshots at 1440 / 700 / 375
+viewports per page (27 captures). Source-read for each page's
+input/output structure, initial-state defaults, preamble shape, and
+cross-link wiring.
+
+### Substantive findings
+
+### 20. Three tools land cold; six land with a worked example — no rule
+
+**[lens: newcomer + field-tech | dimension: UX + consistency]**
+
+A scan for input `value=` defaults across the 9 tool pages:
+
+```
+bacnet-ip-converter      : 0
+modbus-register-viewer   : 0
+signal-scaling           : 0
+thermistor-calculator    : 1   (single temp default)
+refrigerant-pt           : 4
+economizer-ratio         : 8
+psychrometric-chart      : 10
+coil-sizing              : 11
+air-mixing               : 19
+```
+
+The three protocols/signals tools (BACnet/IP, Modbus, Signal Scaling)
+land with every input *blank-with-placeholder* — output muted to "—",
+no formula rendered, no visible signal of what the tool produces.
+The six HVAC tools (psych, mixing, coil, econ, refrig) plus thermistor
+land *worked*: their default state is a credible scenario (psych =
+summer cooling, econ = OA cooler than setpoint, refrig = R-410A at
+118 psig, etc.) so first paint shows a real computed result.
+
+Worked-state landings teach what the tool does in a glance; cold
+landings require the visitor to know what to type before they know
+what they'll get. The split makes the simpler tools harder to
+approach for a newcomer, even though their math is the most
+trivial — exactly inverted from where the friction should be.
+
+The cold landings are also inconsistent with the friction-file's
+"field-use conditions" rule (gloves on, 30-sec answer). A tech
+wanting to convert 12 mA to 0–100 psi has to type four values on
+the cold sig-scaling page; on a worked-default version, they'd
+override the one input that differs and ignore the rest.
+
+What it would take to fix: add `value=` defaults to the three cold
+tools. The picks have to be credible enough to teach the tool's
+purpose. Suggested starting points:
+- **signal-scaling** — 12 mA on a 4–20 mA signal with 0–100 psi
+  span and unit "psi" → 50.0 psi · 50.0 % of span.
+- **modbus-register-viewer** — decimal 43981 (0xABCD), which the
+  source already uses as the *placeholder* — promote to `value=`.
+- **bacnet-ip-converter** — hex `C0A80164BAC0` (the placeholder
+  today, decodes to 192.168.1.100 + port 47808).
+
+Verification: **confirmed** — `grep -c '<input[^>]*value="' html/tools/*.html`
+gives the counts above.
+
+### 21. HVAC tools carry preambles; the simpler tools don't
+
+**[lens: newcomer | dimension: content + consistency]**
+
+The five HVAC tools (psychrometric-chart, air-mixing, coil-sizing,
+economizer-ratio, refrigerant-pt) each open with a task-framed
+preamble paragraph above the inputs:
+
+> *Economizer Ratio Helper:* "How far do I open the outdoor-air
+> damper to hit a mixed-air setpoint at these conditions? Dry-bulb
+> tab is the calc a tech runs at the panel. Enthalpy tab adds the
+> full mixed state and the OA-vs-RA enthalpy-changeover verdict a
+> high-end BAS economizer uses to decide whether free cooling is
+> worth running in the first place."
+
+These preambles are excellent — they answer "what is this tool
+for?" before any input field appears, and they distinguish tabs in
+a way that a tech can read once and never revisit.
+
+The four non-HVAC tools (signal-scaling, modbus-register-viewer,
+bacnet-ip-converter, thermistor-calculator) have **no preamble at
+the top of the tool**. Modbus and thermistor compensate with
+reference / "About these tables" cards *below* the calculator;
+bacnet has a port-reference card below; signal-scaling has neither.
+
+The asymmetry mirrors the worked-default split from finding #20
+and stacks with it: signal-scaling, modbus, and bacnet are
+simultaneously the hardest to approach for a newcomer (no
+preamble, no worked default) *and* the most mechanical (a one-step
+unit conversion or look-up).
+
+What it would take to fix: write a 2–4 sentence task-framed
+preamble for each of the four non-HVAC tools, modeled on
+economizer-ratio's shape. Pin it above the tabs (or above the
+first input section if no tabs). The HVAC tools' existing prose
+is a stylebook for this; don't reinvent.
+
+Verification: **confirmed** — visible in
+`/tmp/audit-tools-screens/{signal-scaling,modbus-register-viewer,bacnet-ip-converter,thermistor-calculator}-desktop.png`
+vs the HVAC tool screenshots in the same directory.
+
+### 22. Psychrometric Chart's "New to Psychrometrics?" prereq link sits at the bottom
+
+**[lens: newcomer | dimension: UX + content]**
+
+Location: `html/tools/psychrometric-chart.html` — the
+`Psychrometrics Basics` cross-link callout sits at the bottom of
+the page, after the chart, the per-stage table, and the detail
+property block.
+
+Psychrometric Chart is the densest tool on the site — chart canvas,
+step pills for 7 stages, define-by toggles, multiple readout tables,
+process delta block. A newcomer landing cold sees the loaded summer-
+cooling chart and the seven properties (DB / WB / DP / W / RH / h / v),
+many of which they may not yet recognize. The honest move for them
+is to read `psychrometrics-basics.html` first — but the link to do so
+is only visible after they've scrolled past everything that confused
+them.
+
+By contrast, the education-page side of the pair has its CTA to the
+chart tool *at the bottom* — which makes sense, because the lesson
+walks you through the vocabulary and then offers the practice
+surface. The reverse direction needs the opposite placement: the
+prereq link should sit *above* the chart, not below.
+
+What it would take to fix: move the `.tool-card` callout that
+contains "Psychrometrics Basics" up to immediately under the page's
+preamble paragraph, before the chart. Phrase it as a prerequisite
+hint rather than a footer ("New to this? Start with
+[Psychrometrics Basics](/education/psychrometrics-basics.html)").
+
+Verification: **confirmed** — visible on desktop screenshot
+(callout appears in lower third); the source `/education/`
+anchor is the last interactive element before the footer.
+
+### 23. Modbus bit-grid cells are below the mobile tap-target threshold
+
+**[lens: field-tech | dimension: UX]**
+
+Location: `html/tools/modbus-register-viewer.html` — bit-grid
+(8 cols × 2 rows of clickable bit cells, `id="bit-grid"`).
+
+At 375 px mobile viewport, each bit cell renders at roughly 30 px
+square — below Apple's HIG / Material's recommended 44 px minimum
+for touch targets and noticeably below thumbable size with gloves
+on. The tool's whole pedagogy turns on toggling individual bits to
+see how a 16-bit value resolves; a tech in the field who can't
+hit individual bits without zooming defeats the affordance.
+
+On desktop and tablet the grid sizes fine — this is a mobile-only
+finding.
+
+What it would take to fix: at narrow widths, restructure the grid
+to 4 cols × 4 rows (each cell roughly 65 px) instead of 8 × 2,
+or accept that bit-grid interaction is desktop-primary and surface
+a fallback mobile UI (binary string editor, or dec/hex-input-only
+without the grid). The 8×2 choice is documented in source as an
+editorial pick — the friction file would track this if it ever
+ships a re-pick.
+
+Verification: **confirmed** — `/tmp/audit-tools-screens/modbus-register-viewer-mobile.png`
+shows the 8×2 grid at 375 px; the cells span less than 1/8 of the
+content width (≈ 30 px after gutters).
+
+### 24. BACnet/IP Converter puts derived "Length" and "Format" readouts in the Input column
+
+**[lens: engineer | dimension: UX + consistency]**
+
+Location: `html/tools/bacnet-ip-converter.html` — Input section
+contains `Hex string` (an editable input), then `Length` and
+`Format` rows that display "—" until input is provided and become
+computed diagnostic values after (length in characters, "address
+only" vs "address + port").
+
+The Input / Output convention site-wide is *Input takes what the
+user types; Output shows what the tool computes.* Length and
+Format are computed from the input — they belong in Output. Today
+they sit alongside the Hex string editable field, blurring the
+column's semantic.
+
+Functionally fine — users figure it out — but on a 9-tool site
+where every other calculator respects the convention rigidly, this
+one wobble is noticeable in a side-by-side scan.
+
+What it would take to fix: move the `Length` and `Format` `ps-row`
+pairs from the Input `<section>` to the Output `<section>` above
+the IP address / UDP port readouts. Or, if they're intended as
+inline input validation feedback, restyle them visibly as that
+(small italic hint under the Hex string input rather than ps-row
+treatment).
+
+Verification: **confirmed** — visible in
+`/tmp/audit-tools-screens/bacnet-ip-converter-desktop.png`; source
+lines around `<section><h2>Input</h2>...` contain both editable
+and readout rows.
+
+### 25. Failure-state UX varies across tools — no shared idiom for "this doesn't compute"
+
+**[lens: field-tech + engineer | dimension: UX + consistency]**
+
+When inputs land in a state the math can't (or shouldn't) resolve,
+the tools handle it five different ways:
+
+- **economizer-ratio** — amber callout block with detailed prose
+  ("Out of range — OA is cooler than the setpoint, but not cold
+  enough to drag RA down on its own. Damper goes 100% OA; the
+  cooling coil still has to remove the remaining 33.3 %OA-equivalent
+  of load."). Best-in-class — names the failure mode, explains the
+  physics, suggests the action.
+- **thermistor-calculator** — discreet `Range check` row reading
+  "In range" / "Out of range" in the Output ps-rows.
+- **signal-scaling / modbus / bacnet** — outputs mute to "—",
+  formula blanks. No callout, no diagnostic.
+- **psychrometric-chart** — status-line text with red color tint
+  when a coil leaving condition is invalid.
+- **refrigerant-pt** — green-callout for the *normal* result
+  (negligible glide), no special handling for out-of-range
+  pressures observed in the default state.
+
+Five tools, four idioms. The economizer-ratio shape is the
+strongest by a margin — it teaches *while* it fails, which is
+exactly the field-reference angle. A tech who lands an out-of-range
+state and only sees "—" learns nothing about why.
+
+What it would take to fix: pick the economizer-ratio amber-callout
+shape as canonical for "computed but unphysical / out-of-range"
+states, and retrofit the other tools' invalid-state branches to
+use it. The shape exists in `styles.css` already (it's the same
+class structure as the existing notice/alert chrome).
+
+Verification: **confirmed** by direct inspection of the default
+or near-default state across all 9 tool screenshots.
+
+### 26. Copy-button labels swing between generic and task-specific
+
+**[lens: field-tech | dimension: consistency]**
+
+Copy-button audit across the 9 tools:
+
+| Tool | Copy button label |
+|---|---|
+| signal-scaling | "Copy value" |
+| thermistor-calculator | "Copy value" |
+| refrigerant-pt | "Copy value" |
+| economizer-ratio | "Copy %OA" |
+| air-mixing | "COPY MIXED STATE" |
+| bacnet-ip-converter | "COPY IP" / "COPY IP : PORT" (two buttons) |
+| coil-sizing | (not surfaced — to confirm) |
+| modbus-register-viewer | (no copy button) |
+| psychrometric-chart | (no top-level copy — chip-style only) |
+
+Three patterns: generic "Copy value" (3 tools), task-specific
+("Copy %OA" / "Copy mixed state" / "Copy IP", 3 tools), and
+none (3 tools).
+
+Task-specific labels are clearer for a tech who's checking which
+of three open tabs has the value they want — the disambiguation
+lives in the button text instead of in muscle memory of which tab
+they're on. Generic "Copy value" relies on the user knowing what
+the active output is.
+
+Modbus and Psychrometric Chart having no copy is also notable —
+on Modbus a tech might want to copy the binary or hex; on
+Psychrometric Chart copying the property table for the selected
+stage would be useful for pasting into a calc spreadsheet.
+
+What it would take to fix: pick a copy-button labeling convention
+(task-specific reads better; generic costs nothing to write) and
+either add or rename across the 9 tools. Decide whether Modbus
+and Psychrometric Chart need copy primitives at all.
+
+Verification: **confirmed** — labels visible in respective
+screenshots.
+
+### Minor polish
+
+- **signal-scaling, modbus, bacnet** — no eyebrow phrase distinct
+  from the tool title; the section-header label just repeats the
+  tool category ("Analog I/O", "Modbus", "BACnet"). HVAC tools'
+  eyebrows do the same thing — the issue is the section-label is
+  doing the same work as the page title's tag-pill. Could be
+  trimmed to just one of them. *(visual)*
+- **modbus-register-viewer "Modbus essentials" lead** — opens with
+  the author's voice ("Modbus was the protocol that took me the
+  longest to get a handle on"), then the next paragraph reverts to
+  third-person impersonal. Voice swing on adjacent sentences.
+  *(voice)*
+- **coil-sizing — Airflow gets its own section header for one CFM
+  input.** Three section headers (ENTERING AIR / LEAVING AIR /
+  AIRFLOW) where the third is a single-row field. Promote to a
+  ps-row at the bottom of LEAVING AIR or use a smaller subhead.
+  *(visual)*
+- **signal-scaling "Live zero" footnote at the bottom of the
+  reference table** — single sentence with no expansion of *why*
+  live-zero detection matters (a broken wire below 4 mA is a
+  fault, not a 0 % reading). On a tool whose customer is a tech
+  troubleshooting a 4-20 wire, this is the load-bearing concept;
+  it could be a small callout, not a footnote. *(content / engineer)*
+- **Tab-label punctuation drift across tools** — arrows
+  (`Signal → Eng. Units`), parens (`P-T (Saturation)`), slashes
+  (`Superheat / Subcooling`), word-only (`Single Register`). Each
+  feels right in context but the visual rhythm across tools is
+  loose. *(consistency)*
+- **thermistor-calculator — "About these tables" card at the
+  bottom** — strong content, but the methodology / data-provenance
+  card is structurally similar to the recommended preamble-above-
+  inputs shape from #21. Could absorb a one-line "what this tool
+  does" framing at the top while the existing card stays as the
+  full-provenance section. *(content)*
+- **refrigerant-pt — green callout for the "no glide" R-410A case
+  shares colour with the saturation curve on the chart-tool page.**
+  Minor cross-tool collision; only visible if you load both pages
+  back-to-back. *(visual)*
+- **psychrometric-chart "Chart range" Standard/Cold toggle** — the
+  pair-of-buttons treatment is the canonical "look up by" toggle
+  pattern on other pages, but here it controls chart axis bounds,
+  not the input define-by. The pattern works either way; if the
+  define-by widget shape is canonicalised in `codebase-issues #48`
+  (which already did some consolidation), this could carry a different
+  treatment to distinguish "view setting" from "input mode." *(visual /
+  consistency)*
+- **All tool pages — section-header label is rendered as `<span class="section-label">`** instead of the `<h1 class="section-label">` shape used on landings, and the page's actual `<h1>` is `.tool-card-title`. The heading hierarchy is fine
+  (per codebase-issues #11) but the same class element-swaps depending
+  on page archetype. Worth a one-line note in CLAUDE.md if not already
+  documented. *(consistency / engineer)*
+
+### Code items split to `codebase-issues.md`
+
+- **BACnet/IP Converter readout columns** (substantive #24) — partly
+  structural (HTML reshuffle in the Input/Output sections), partly
+  semantic (the ps-row treatment for readouts). Logged here in the
+  audit; the actual move is a content-page edit not a code item.
+  Not logged separately to codebase-issues.
+- **Failure-state idiom consolidation** (substantive #25) — if the
+  amber-callout shape becomes canonical, it warrants a new shared
+  class (or scoped use of existing) in `styles.css` plus a
+  CLAUDE.md note. Worth a codebase-issues entry when the editorial
+  direction is picked. Not logged today (depends on triage).
+- **Mobile bit-grid responsive switch** (substantive #23) — a CSS
+  media-query rewrite of `grid-template-columns` at narrow widths.
+  Small enough that it can ride along with the editorial response to
+  finding #23, no separate codebase-issues entry needed yet.
+
+No standalone codebase-issues entries this batch — the code-side
+work all sits downstream of editorial picks the user will make
+during triage.
