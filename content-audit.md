@@ -1900,13 +1900,13 @@ inadvertently break them.
 
 ### Minor polish
 
-- **vfds — title pattern is acronym-expansion, not question.**
+- ~~**vfds — title pattern is acronym-expansion, not question.**
   "VFDs — Variable Frequency Drives" expands the acronym (which
   the lead does anyway in its first sentence) instead of asking
   the page's question. Either drop the subtitle (matches the
   "bare" pattern) or rewrite to the question shape (e.g.,
   *"VFDs — What the Drive Actually Does Between the Wire and
-  the Motor"*). *(content)*
+  the Motor"*). *(content)*~~ — **Resolved in PR #2 (audit-impl) — subtitle dropped; H1 is bare "VFDs".**
 - **vfds — section-header subhead "RUN COMMAND VS SPEED
   REFERENCE — THE TWO THINGS YOU'VE LEARNED"** — *you've learned*
   presumes the reader is several scrolls in, but the subhead
@@ -1926,10 +1926,10 @@ inadvertently break them.
   on hydronics pages opens with field voice ("On the load-piping
   lesson..." or "Two ways to handle the bypass..."). The protocol
   pages read more clinical. *(voice)*
-- **psychrometrics-basics — title is the longest of any education
+- ~~**psychrometrics-basics — title is the longest of any education
   page** (`Psychrometrics Basics — The Words on the Chart and How
   to Understand Them` = 75 chars). Could trim to *"...The Words
-  on the Chart"* without losing the framing. *(content)*
+  on the Chart"* without losing the framing. *(content)*~~ — **Resolved in PR #2 (audit-impl) — subtitle dropped entirely; H1 is bare "Psychrometrics Basics".**
 - **All hydronics pages — SVG flow-diagram styling uses `.edu-svg`
   (per codebase-issues consolidation history)** but the captions
   underneath are still inline-styled across pages. Captions like
