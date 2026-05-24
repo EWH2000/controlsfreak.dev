@@ -71,16 +71,30 @@
 <path d="M148 45 L168 45 M158 35 L158 55" stroke="var(--blue)" fill="none" data-sbg-stroke/>
 <text x="14" y="18" class="sbg-label">COIL</text>
 <text x="158" y="82" text-anchor="middle" class="sbg-label">P-1</text>
-{%- elif id == 'terminals-ao' -%}
-<rect x="10" y="22" width="38" height="26" stroke="var(--text-dim)" fill="var(--surface)" data-sbg-stroke/>
-<circle cx="20" cy="35" r="2.5" fill="var(--amber)"/>
-<circle cx="38" cy="35" r="2.5" fill="var(--amber)"/>
-<text x="29" y="16" text-anchor="middle" class="sbg-label">AI1</text>
-<rect x="152" y="22" width="38" height="26" stroke="var(--text-dim)" fill="var(--surface)" data-sbg-stroke/>
-<circle cx="162" cy="35" r="2.5" fill="var(--amber)"/>
-<circle cx="180" cy="35" r="2.5" fill="var(--amber)"/>
-<text x="171" y="16" text-anchor="middle" class="sbg-label">AO1</text>
-<path d="M48 35 Q90 35 100 50 Q110 65 152 35" stroke="var(--amber)" fill="none" data-pulse="signal" data-sbg-stroke/>
+{%- elif id == 'compare-bo' -%}
+{# Small piece of real BAS logic: two analog inputs feed a greater-than
+   comparator whose binary result drives a BO. Pattern shows up everywhere
+   (high-limit cutoff, OAT-vs-setpoint enable, freezestat). AI sides are
+   amber (analog signal), the comparator is plum (matches the logic-chain
+   family), the BO side is gray (binary). Pulse intervals are staggered
+   so the three wires don't fire in lockstep. #}
+<rect x="10" y="10" width="38" height="24" stroke="var(--text-dim)" fill="var(--surface)" data-sbg-stroke/>
+<circle cx="20" cy="22" r="2.5" fill="var(--amber)"/>
+<circle cx="38" cy="22" r="2.5" fill="var(--amber)"/>
+<text x="29" y="6" text-anchor="middle" class="sbg-label">AI1</text>
+<rect x="10" y="66" width="38" height="24" stroke="var(--text-dim)" fill="var(--surface)" data-sbg-stroke/>
+<circle cx="20" cy="78" r="2.5" fill="var(--amber)"/>
+<circle cx="38" cy="78" r="2.5" fill="var(--amber)"/>
+<text x="29" y="98" text-anchor="middle" class="sbg-label">AI2</text>
+<rect x="86" y="39" width="28" height="22" stroke="var(--plum)" fill="var(--surface)" data-sbg-stroke/>
+<text x="100" y="55" text-anchor="middle" class="sbg-label">&gt;</text>
+<rect x="152" y="39" width="38" height="22" stroke="var(--text-dim)" fill="var(--surface)" data-sbg-stroke/>
+<circle cx="162" cy="50" r="2.5" fill="var(--text-dim)"/>
+<circle cx="180" cy="50" r="2.5" fill="var(--text-dim)"/>
+<text x="171" y="35" text-anchor="middle" class="sbg-label">BO1</text>
+<path d="M48 22 L66 22 L66 45 L86 45" stroke="var(--amber)" fill="none" data-pulse="signal" data-sbg-stroke/>
+<path d="M48 78 L66 78 L66 55 L86 55" stroke="var(--amber)" fill="none" data-pulse="signal" data-pulse-interval="5500" data-sbg-stroke/>
+<path d="M114 50 L152 50" stroke="var(--text-dim)" fill="none" data-pulse="signal" data-pulse-interval="4500" data-sbg-stroke/>
 {%- elif id == 'terminals-bo' -%}
 <rect x="10" y="22" width="38" height="26" stroke="var(--text-dim)" fill="var(--surface)" data-sbg-stroke/>
 <circle cx="20" cy="35" r="2.5" fill="var(--text-dim)"/>
@@ -128,18 +142,18 @@
 {% set sbgHeights = {
     'pipe-valve': 130,
     'pump-coil':  90,
-    'terminals-ao': 70,
+    'compare-bo': 100,
     'terminals-bo': 70,
     'logic-chain': 110,
     'bacnet-node': 90
 } %}
 {% set sbgLeftCycle = [
-    'pipe-valve', 'terminals-ao', 'pump-coil', 'logic-chain', 'bacnet-node',
+    'pipe-valve', 'compare-bo',  'pump-coil', 'logic-chain', 'bacnet-node',
     'pipe-valve', 'terminals-bo', 'pump-coil', 'logic-chain', 'bacnet-node'
 ] %}
 {% set sbgRightCycle = [
     'terminals-bo', 'logic-chain', 'pipe-valve', 'bacnet-node', 'pump-coil',
-    'terminals-ao', 'pipe-valve',  'logic-chain', 'bacnet-node', 'pump-coil'
+    'compare-bo',   'pipe-valve',  'logic-chain', 'bacnet-node', 'pump-coil'
 ] %}
 {% set sbgCount  = 60 %}
 {% set sbgStride = 270 %}
