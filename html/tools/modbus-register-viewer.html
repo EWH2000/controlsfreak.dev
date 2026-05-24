@@ -6,6 +6,23 @@ nav: tools
 ---
 {% extends "layouts/page.njk" %}
 
+{% block head %}
+    <style>
+        /* Bit-grid layout — 8-col on desktop (mirrors the 16-bit
+           register as two byte-rows: bit 15 top-left, bit 8 closes
+           row 1 above bit 0). Below 700px each cell would compress
+           under the 44px tap floor, so the grid flips to 4×4.
+           Cell size at 375px viewport works out to ~74px square,
+           well above the floor. The companion .narrow-width-note
+           lives above the grid and reveals at the same breakpoint. */
+        .bit-grid { grid-template-columns: repeat(8, 1fr); }
+        @media (max-width: 700px) {
+            .bit-grid { grid-template-columns: repeat(4, 1fr); }
+            .narrow-width-note { display: block; }
+        }
+    </style>
+{% endblock %}
+
 {% block content %}
 <main id="main">
 
@@ -52,9 +69,14 @@ nav: tools
                         <input class="ps-input" type="text" id="mod-hex" placeholder="0xABCD">
                     </div>
                     <p class="bit-hint" style="margin-top:0.85rem;">Bit 15 = MSB (top-left) · Bit 0 = LSB (bottom-right) · click to toggle</p>
-                    <!-- 8 columns × 2 rows: an editorial choice now — 16 cells in a row would compress
-                         to ~25 px each in the 2-col layout, less legible than the 50 px we get at 8×2. -->
-                    <div class="bit-grid" id="bit-grid" style="grid-template-columns:repeat(8, 1fr);"></div>
+                    <div class="narrow-width-note">
+                        On narrow screens the grid becomes 4×4 — the high-byte / low-byte boundary moves between rows 2 and 3.
+                    </div>
+                    <!-- Default 8×2 layout (page-local CSS in the page's head block) — mirrors
+                         the register's high-byte / low-byte rows so the visual matches the
+                         binary readout. Flips to 4×4 below 700px viewport for tap-target
+                         reasons; see the matching .narrow-width-note above the grid. -->
+                    <div class="bit-grid" id="bit-grid"></div>
                 </section>
 
                 <section>
