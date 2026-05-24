@@ -64,12 +64,20 @@
 <text x="14" y="14"  class="sbg-label">SUP</text>
 <text x="14" y="124" class="sbg-label">RET</text>
 {%- elif id == 'pump-coil' -%}
-<rect x="14" y="26" width="56" height="38" stroke="var(--blue)" fill="var(--surface)" data-sbg-stroke/>
-<path d="M22 34 L62 34 M22 42 L62 42 M22 50 L62 50 M22 58 L62 58" stroke="var(--blue)" fill="none" data-sbg-stroke/>
-<line x1="70" y1="45" x2="138" y2="45" stroke="var(--blue)" data-flow="supply" data-sbg-stroke/>
+{# Closed-loop coil + pump: pump pushes supply (top pipe, walking R→L
+   from pump out to coil) and pulls return (bottom pipe, walking L→R
+   from coil back to pump). Opposing flows reinforce the loop concept
+   — same reversed-coords trick as pipe-valve. Pipes terminate tangent
+   to the pump circle at (158, 25) and (158, 65); the single-point
+   connections read as "plumbed in" because of the matching y-extent
+   of the coil rect (y=25-65) on the other side. #}
+<rect x="14" y="25" width="56" height="40" stroke="var(--blue)" fill="var(--surface)" data-sbg-stroke/>
+<path d="M22 32 L62 32 M22 40 L62 40 M22 48 L62 48 M22 56 L62 56" stroke="var(--blue)" fill="none" data-sbg-stroke/>
 <circle cx="158" cy="45" r="20" stroke="var(--blue)" fill="var(--surface)" data-sbg-stroke/>
 <path d="M148 45 L168 45 M158 35 L158 55" stroke="var(--blue)" fill="none" data-sbg-stroke/>
-<text x="14" y="18" class="sbg-label">COIL</text>
+<line x1="158" y1="25" x2="70"  y2="25" stroke="var(--blue)"      data-flow="supply" data-sbg-stroke/>
+<line x1="70"  y1="65" x2="158" y2="65" stroke="var(--blue-cool)" data-flow="return" data-sbg-stroke/>
+<text x="14"  y="18" class="sbg-label">COIL</text>
 <text x="158" y="82" text-anchor="middle" class="sbg-label">P-1</text>
 {%- elif id == 'compare-bo' -%}
 {# Small piece of real BAS logic: two analog inputs feed a greater-than
