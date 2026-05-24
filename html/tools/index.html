@@ -46,6 +46,15 @@ nav: tools
         }) }}
         {{ navCard({
             section:    'tools',
+            href:       '/tools/thermistor-calculator.html',
+            titleShort: 'Thermistor',
+            titleFull:  'Thermistor / RTD Calculator',
+            desc:       'Temperature ↔ resistance for the common HVAC sensors — 10K Type II / III, Johnson 8.7K, Schneider Type 5, 20K, 3K, 1K Balco, Pt100, Pt1000 — looked up both ways, or identify an unknown sensor from measured readings.',
+            pills:      ['Sensors', 'NTC / RTD', 'T ↔ R', 'ID Unknown'],
+            category:   'signals'
+        }) }}
+        {{ navCard({
+            section:    'tools',
             href:       '/tools/modbus-register-viewer.html',
             titleShort: 'Modbus Reg',
             titleFull:  'Modbus Register Viewer',
@@ -106,15 +115,6 @@ nav: tools
             desc:       'Saturation pressure ↔ temperature for R-410A, R-22, R-134a, R-407C, R-404A and R-454B — bubble and dew both, so blend glide is in plain sight — plus a superheat / subcooling check off a measured line temperature.',
             pills:      ['HVAC', '6 Refrigerants', 'Bubble / Dew', 'Superheat / Subcool'],
             category:   'hvac'
-        }) }}
-        {{ navCard({
-            section:    'tools',
-            href:       '/tools/thermistor-calculator.html',
-            titleShort: 'Thermistor',
-            titleFull:  'Thermistor / RTD Calculator',
-            desc:       'Temperature ↔ resistance for the common HVAC sensors — 10K Type II / III, Johnson 8.7K, Schneider Type 5, 20K, 3K, 1K Balco, Pt100, Pt1000 — looked up both ways, or identify an unknown sensor from measured readings.',
-            pills:      ['Sensors', 'NTC / RTD', 'T ↔ R', 'ID Unknown'],
-            category:   'signals'
         }) }}
     </div>
 
