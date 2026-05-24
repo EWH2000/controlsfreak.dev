@@ -38,7 +38,39 @@ nav: home
 <main id="main">
 
     <div class="section-header">
-        <h2 class="section-label" data-objref="001">Start Here</h2>
+        <h2 class="section-label" data-stage="1">My Most Common Tools</h2>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="card-grid">
+        {{ navCard({
+            section:    'tools',
+            href:       '/tools/signal-scaling.html',
+            titleShort: 'Sig Scaling',
+            titleFull:  'Signal Scaling Calculator',
+            desc:       'mA / V signal ↔ engineering units, with % of span and a 2-point → slope/offset tab ready to paste into Niagara\'s ProxyExt.',
+            pills:      ['Analog I/O', '4-20 mA', '0-10 V', 'Slope / Offset']
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/tools/bacnet-ip-converter.html',
+            titleShort: 'BACnet/IP Hex',
+            titleFull:  'BACnet/IP Hex Converter',
+            desc:       'The hex address strings EBO shows for BACnet/IP devices ↔ dotted-decimal IP and UDP port, both directions.',
+            pills:      ['BACnet/IP', 'UDP 47808', 'Hex ↔ Dec']
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/tools/thermistor-calculator.html',
+            titleShort: 'Thermistor',
+            titleFull:  'Thermistor / RTD Calculator',
+            desc:       'Temperature ↔ resistance for the common HVAC sensors — 10K Type II / III, Johnson 8.7K, Schneider Type 5, 20K, 3K, 1K Balco, Pt100, Pt1000 — looked up both ways, or identify an unknown sensor from measured readings.',
+            pills:      ['Sensors', 'NTC / RTD', 'T ↔ R', 'ID Unknown']
+        }) }}
+    </div>
+
+    <div class="section-header" style="margin-top:3rem;">
+        <h2 class="section-label" data-stage="2">Browse</h2>
         <div class="section-line"></div>
     </div>
 
@@ -62,7 +94,7 @@ nav: home
     </div>
 
     <div class="section-header" style="margin-top:3rem;">
-        <h2 class="section-label" data-objref="002">About</h2>
+        <h2 class="section-label" data-stage="3">About</h2>
         <div class="section-line"></div>
     </div>
 

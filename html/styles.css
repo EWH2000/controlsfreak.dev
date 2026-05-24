@@ -494,25 +494,41 @@ main {
 .section-line { display: none; }
 
 /* h2.section-label is the section-divider variant (vs h1.section-label
-   which is a landing-page title). When carrying a `data-objref`
-   attribute, h2 labels render with a BAS-instrument section-number
-   prefix: `SEC:NNN · LABEL`. The accent color attaches to the prefix,
-   not the label — the prefix becomes the wayfinding mark, the label
-   reads as a quiet workstation heading. The numbering is per-page
-   (each page's section sequence), not a device-wide instance.
-   Pages without `data-objref` are unaffected (no prefix; existing
-   accent label color preserved). */
-h2.section-label[data-objref] {
+   which is a landing-page title). Two BAS-instrument prefix modes,
+   chosen by attribute:
+
+   - `data-objref="NNN"` renders `SEC:NNN · LABEL`. The numbering is
+     per-page (each page's section sequence), evokes a BACnet object
+     reference. Used on education pages where the sections are
+     content units.
+   - `data-stage="N"` renders `STAGE:N · LABEL`. Evokes equipment
+     staging (Stage 1 / Stage 2 cooling, lead/lag pumps) — used on
+     the home page where the sections read as a staged sequence:
+     Stage 1 first, then Stage 2 if you want more, then Stage 3 for
+     backstory.
+
+   The accent color attaches to the prefix, not the label — the prefix
+   becomes the wayfinding mark, the label reads as a quiet workstation
+   heading. Pages without either attribute are unaffected (no prefix;
+   existing accent label color preserved). */
+h2.section-label[data-objref],
+h2.section-label[data-stage] {
     font-size: 0.78rem;
     letter-spacing: 0.06em;
     color: var(--text-bright);
 }
-h2.section-label[data-objref]::before {
-    content: "SEC:" attr(data-objref) " · ";
+h2.section-label[data-objref]::before,
+h2.section-label[data-stage]::before {
     color: var(--accent);
     font-variant-numeric: tabular-nums;
     margin-right: 0.1rem;
     font-weight: 600;
+}
+h2.section-label[data-objref]::before {
+    content: "SEC:" attr(data-objref) " · ";
+}
+h2.section-label[data-stage]::before {
+    content: "STAGE:" attr(data-stage) " · ";
 }
 
 /* ── TOOL CARD ── */
