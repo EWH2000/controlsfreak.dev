@@ -657,3 +657,414 @@ editorial sweep (matches the first-pass `c8f6544` shape).
 - `package.json` — version bump `2.3.0` → `2.3.1` (covers the
   whole second-pass audit-fix session: #6–#9 substantive items plus
   this minor-polish sweep, matching the first-pass roll-up cadence).
+
+---
+
+## Audit scope — refinement period, Batch 1: Landings + chrome (2026-05-24)
+
+First batch of a section-at-a-time refinement-period audit. Plan file
+`it-s-time-spicy-wolf.md`; running shape recorded in the
+`feedback_content_audit` memory as *Shape B*. Three lenses applied
+per page (working BMS engineer, *field tech at a panel* — gloves on,
+30-sec answer — newcomer to the trade) across four dimensions
+(content clarity & voice, visual & layout polish, UX & interaction
+friction, cross-page consistency). Findings tagged inline.
+
+Mechanism: dev server + Playwright screenshots at 1440 / 700 / 375
+viewports; interactive pass for units toggle, filter chips, deep-link
+hash routing, and tab order.
+
+### Coverage checklist
+
+Landings — [x] `/` (home) · [x] `/tools/` · [x] `/simulators/` ·
+[x] `/education/`.
+
+Site chrome seen in passing across all four — [x] top nav · [x]
+units toggle · [x] footer · [x] schematic-bg (visible only ≥1240 px) ·
+[x] hero console-titlebar / statusline · [x] `navCard()` macro shape.
+
+### Interactive behavior — verified clean
+
+Worth recording up front so the substantive findings below stay
+focused on what *isn't* working:
+
+- **Units toggle** flips `aria-pressed` cleanly on click (US true →
+  false; Metric false → true). Persists across pages.
+- **Tools filter chips** (`#all`, `#hvac`, `#protocols`, `#signals`)
+  toggle hidden state correctly; counts match (HVAC = 5, Protocols
+  = 2, Signals = 2).
+- **Education filter chips** likewise correct mechanically (each
+  category returns its claimed count — Drives / Control / HVAC /
+  Sequencing / Logic each show 1 card, Hydronics 4, Protocols 4).
+  Mechanical correctness; the *design* of singleton filtering is
+  finding #12.
+- **Hash deep-link routing** works (`/tools/#protocols` lands with
+  the Protocols chip active and the two cards visible).
+- **Tab order** is well-formed on home: skip-to-content link first,
+  then site brand, then top nav left-to-right, then units toggle,
+  then page content.
+
+### Substantive findings
+
+### 10. Home Browse stage is missing a Simulators card
+
+**[lens: engineer + newcomer | dimension: consistency + content]**
+
+Location: `html/index.html` Stage 2 ("Browse").
+
+Home Stage 2 surfaces two large cards — Tools and Education — that
+link to the two corresponding section landings. Simulators is a
+peer top-level section (it has a nav slot, its own `/simulators/`
+landing, and its own section accent color), but it's *not* in the
+Browse row. A visitor scanning home without looking at the top nav
+sees the site as two-sectioned, not three.
+
+Pump-control / VFDs / function-blocks Education pages all forward-
+link to their paired Simulator, so a newcomer can still get there
+indirectly via reading. A returning engineer who knows the site as
+"Tools + Education + Sims" notices the asymmetry immediately.
+
+What it would take to fix: add a third `navCard` to the
+`.card-grid.two` block on `html/index.html:85`, pointing at
+`/simulators/` with parallel framing to the existing two; revisit
+whether the grid class stays `.two` or becomes `.three`.
+
+Verification: **confirmed** (screenshot at desktop / tablet / mobile
+all show two Browse cards; nav has all three sections).
+
+### 11. "My Most Common Tools" framing is author-centric
+
+**[lens: newcomer + engineer | dimension: content + voice]**
+
+Location: `html/index.html:41` — Stage 1 section header reads "MY
+MOST COMMON TOOLS".
+
+The site's About section sits two stages down the page; on first
+landing, a visitor doesn't yet know who "I" is. The Stage 1
+eyebrow then asks them to read "my most common" without an
+antecedent — fine for a personal portfolio, slightly off for a
+field-reference site whose value proposition is "useful regardless
+of who built it."
+
+The four picked tools (Signal Scaling, BACnet/IP Hex, Thermistor,
+Psych Chart) are genuinely the most-reached-for from the catalog,
+so the framing isn't wrong — it's just under-justified for someone
+who hasn't read the About paragraph yet.
+
+What it would take to fix: rename to a visitor-oriented eyebrow
+("Most-reached-for tools" / "Quick access" / "Field favorites") or
+add a short subhead under the section label explaining why these
+four are surfaced. The first-person framing is consistent across
+the home page (About uses "Hi, I'm…"); changing this one wouldn't
+break the voice elsewhere.
+
+Verification: **flagged** — this is editorial judgment, not factual.
+
+### 12. Education filter chips for singleton categories are non-features
+
+**[lens: field-tech + newcomer | dimension: UX]**
+
+Location: `html/education/index.html:22-47` — 8 filter chips, of
+which 5 (Drives, Control, HVAC, Sequencing, Logic) each tie to
+exactly one lesson.
+
+Clicking a singleton chip hides 12 cards and reveals 1. The grid
+UI — chips above, multi-card area below — implies "narrow this
+collection." Yielding a single card reads as a broken or empty
+state, especially on a desktop viewport where the lone card sits
+top-left in a 4-col grid of empty space (see
+`/tmp/audit-landings-screens/education-filter-drives-singleton.png`).
+On mobile the chip row itself takes two lines, which a field-tech
+tapping with gloves has to thumb past for what amounts to a
+glorified direct link.
+
+The mechanical implementation is correct (deep-linking, hash
+sync, aria-pressed all work — see "Interactive behavior verified"
+above); the design choice is what's off.
+
+What it would take to fix: a few options, picking one is editorial.
+(a) Drop singleton chips, keep only Hydronics (4) and Protocols
+(4), promote everything else into an "Other" or "Concepts" bucket.
+(b) Drop chips entirely until categories grow — 13 cards browse
+fine in one view. (c) Reorganize the grid into category clusters
+with subheads (no filtering, visual grouping does the same job).
+(d) Keep chips, but switch single-category chips to *highlight in
+place* (scroll-to + accent) instead of hide-others.
+
+Verification: **confirmed** — chip counts and visible-card counts
+match exactly; the UX issue is the count itself, not the wiring.
+
+### 13. titleShort abbreviation discipline drifts across nav cards
+
+**[lens: engineer | dimension: consistency + visual]**
+
+Locations: `tools/index.html`, `education/index.html`,
+`simulators/index.html` `navCard` calls site-wide.
+
+The macro signature reserves `titleShort` for the titlebar's
+narrow slot; the long `titleFull` displays as the card title. The
+abbreviation discipline is inconsistent across cards:
+
+- Education shortens some lessons (`Hyd Loops`, `Pump Ctrl`,
+  `Fn Blocks`, `BACnet Net`) but leaves others full
+  (`Load Piping`, `Balancing`, `Equipment Staging`,
+  `PID Basics` — same length as the un-shortened ones).
+- Tools shortens to genuine clip-needed lengths (`Modbus Reg`,
+  `Sig Scaling`, `Refrig P-T`) but `Air Mixing` and `Coil Sizing`
+  remain full — they fit fine, but so would `Air-Mix Calc` if the
+  rule were "always include the type." There isn't a written rule.
+- Simulators uses `Wiresheet` for the Function-Block Editor card.
+  The titlebar then reads `SIM :: WIRESHEET` — see finding #14.
+
+The CLAUDE.md "titleShort" bullet under *Schematic-bg chrome*
+(line 2718) only says "Trim `titleShort` enough to fit one line"
+— a length cap, no normalisation rule.
+
+What it would take to fix: pick a normalisation rule (e.g., "use
+the conventional in-trade abbreviation if one exists, otherwise
+the full name") and sweep the 25 navCard calls. Or accept the
+case-by-case treatment but document that as the rule.
+
+Verification: **confirmed** — pattern is observable from the
+landing screenshots.
+
+### 14. Simulators "Wiresheet" titleShort misnames the editor product
+
+**[lens: newcomer + engineer | dimension: content]**
+
+Location: `html/simulators/index.html:42` — third card's
+`titleShort: 'Wiresheet'` with `titleFull: 'Function-Block Editor'`.
+
+The titlebar renders as `SIM :: WIRESHEET`, while the
+`titleFull` (and the actual tool name, deep-linked from
+education/function-blocks and the home nav) is *Function-Block
+Editor*. "Wiresheet" is a Niagara-flavored term for the canvas;
+it's correct as a description of the surface but isn't the product
+name. A newcomer reading "wiresheet" with no prior context has to
+infer that the card means "the function-block editor" — the chip
+the home nav and the education page both call by a different
+phrase.
+
+Adjacent inconsistency on the same card: the pills row reads
+`Wiresheet · Logic / Math / Timer / PID · 5 Examples`; the first
+pill repeats the titleShort while the card body and titleFull use
+"Function-Block." So the page swings between three names for one
+thing.
+
+What it would take to fix: rename `titleShort` to one of
+`FB Editor`, `Fn Blocks`, or `Block Editor` — all read as
+"function-block thing" without using the surface term as the
+identifier. Adjust the first pill in lockstep.
+
+Verification: **confirmed** — visible in
+`/tmp/audit-landings-screens/simulators-desktop.png`.
+
+### 15. Hero "More coming" badge reads as apologetic
+
+**[lens: engineer + field-tech | dimension: content + voice]**
+
+Location: `html/index.html:27` — hero badges row ends with
+`<span class="badge">More coming</span>`.
+
+The site is 25 pages and growing actively (8+ shipped in the last
+two weeks). The "More coming" badge framing is from an earlier
+era when the catalog was thin enough to need apologising for. To
+a first-time visitor scanning the hero, the badge reads as "this
+isn't done yet" — undercuts the surrounding badges' confidence
+(BACnet/IP Hex, Modbus Register Viewer, etc., each of which names
+a shipped, capable thing).
+
+What it would take to fix: drop the badge, or replace with a
+concrete next badge ("Psychrometrics" already there; could add
+"Refrigerant P-T" or "Function-Block Editor"). The set is
+illustrative, not exhaustive — there's no obligation to mark its
+incompleteness.
+
+Verification: **flagged** — editorial judgment on tone.
+
+### 16. Hero UPTIME 24×7 statline is the only beat that breaks the field-reference frame
+
+**[lens: engineer | dimension: voice]**
+
+Location: `html/index.html:34` — console-statusline reads
+`UPTIME 24×7`.
+
+The hero console-statusline mirrors a BAS device's status frame
+(`OK · VERSION v2.8.0 · LAST BUILT 2026-05-24 · UPTIME 24×7`).
+The first three carry meaning (the OK pill is the engine-running
+metaphor; version + build date are useful provenance markers).
+`UPTIME 24×7` is a static-site claim about uptime that the site
+doesn't actually measure — it's a gag stat. The other three are
+straight; this one swings to joke.
+
+Not a bug; just inconsistent with the otherwise-credible
+field-reference frame the site cultivates everywhere else (no
+ads, no tracking, accuracy-first content audits, etc.). A real
+BAS controller's statline wouldn't claim "24×7"; it'd show an
+uptime counter.
+
+What it would take to fix: drop the line, replace with something
+verifiable (e.g., `RESPONSE <1S` referencing the lack of network
+round-trip for tool answers, or just `PUBLIC` to mirror "no
+login"). Editorial.
+
+Verification: **flagged** — judgment on tone consistency.
+
+### 17. Education card ordering tells one story; chip UI invites a different one
+
+**[lens: newcomer | dimension: UX + content]**
+
+Location: `html/education/index.html` card grid.
+
+Cards are ordered as a *curriculum sequence* — PID Basics →
+Hydronic Loops → Load Piping → VFDs → Pump Control → Equipment
+Staging → Hydronic Balancing → Psychrometrics → Function-Block
+Basics → Modbus Basics → Modbus Decoding → BACnet Basics →
+BACnet Networking. The friction file's *Education page scope*
+section establishes this carefully: pages forward-link, "pay off"
+prior callouts, and earn their slot in sequence.
+
+The filter chip row at the top of the page (`All / Hydronics /
+Drives / Control / HVAC / Sequencing / Logic / Protocols`) tells
+the user *categorical browsing is the way to use this page*. A
+newcomer who came in cold and tapped "Hydronics" gets a 4-card
+view that doesn't include the prerequisite PID Basics; one who
+tapped "Protocols" first gets BACnet/Modbus topics that the
+sequence puts *last* on purpose. The chips don't break the
+content, but they obscure the curriculum.
+
+What it would take to fix: a few options. (a) Reframe the chip
+row as "Already comfortable with X? Jump to:" — explicitly the
+shortcut for non-newcomers. (b) Add a small "Read in order" hint
+above the grid (`If you're new to this, start at the top and
+work down`). (c) If finding #12 (singleton chips are
+non-features) gets fixed by dropping chips, this resolves
+incidentally — the ordered cards then read as the only
+intended path.
+
+Verification: **flagged** — judgment on whether the curriculum
+framing is the intended use.
+
+### 18. Same lead-paragraph pattern, three different max-widths and one inline-style copy per landing
+
+**[lens: engineer | dimension: consistency + visual]**
+
+Locations: `tools/index.html:18`, `simulators/index.html:18`,
+`education/index.html:18`.
+
+All three section-landing pages open with the same shape: section
+h1, then a single-paragraph lead, then either a chip row + grid
+or just a grid. The three lead paragraphs are styled with nearly-
+matched inline `style="font-weight:300;color:var(--text);max-width:Xpx;margin-bottom:2rem;line-height:1.8;"`
+declarations — but `X` is `560` on tools, `560` on simulators,
+and `700` on education. The visual cadence between the three
+landings is therefore broken: edu has a wider lead, tools/sims
+have narrower ones, no visible justification for the difference
+beyond edu's longer prose.
+
+This is the same shape codebase-issues #19 promoted to
+`.page-intro` on education *content* pages; it never reached the
+landing pages because the original pattern sweep didn't
+include them.
+
+What it would take to fix: promote a `.landing-intro` (or rename
+`.page-intro` to cover both contexts) and sweep the three landing
+leads to use the shared class. Pick one max-width — 660 is the
+median used by `.page-intro`. Log to `codebase-issues.md` per
+the cross-doc convention; this entry stays in `content-audit.md`
+to record the *user-visible* inconsistency it caused.
+
+Verification: **confirmed** — three inline-style attributes,
+three max-widths, no rationale.
+
+### 19. Education lead asks for "requests or corrections" but doesn't link to contact
+
+**[lens: field-tech + newcomer | dimension: UX + content]**
+
+Location: `html/education/index.html:19` — lead ends with "If you
+have any requests or corrections, feel free to reach out."
+
+The page has the site's lone explicit "send me feedback" framing
+on the education side, but the phrase "reach out" has no link
+behind it. A reader who takes the invitation has to either remember
+the top-nav Contact item or scroll to find it. The tools lead just
+above says "no login, nothing to install, nothing tracked" — also
+field-tech-targeted, also without any actionable next step.
+
+Compare to the lead's other inline anchor: "those live in
+[Tools](/tools/)" *is* a link, so the pattern is established
+within the same paragraph. The contact CTA just got missed.
+
+What it would take to fix: wrap "reach out" in `<a
+href="/contact.html">`, or rephrase to "send a note via the
+[Contact page](/contact.html)". One-line edit.
+
+Verification: **confirmed** — the link is missing in source.
+
+### Minor polish
+
+Phrasing, spacing, alignment, undefined-jargon items that don't
+rise to a substantive finding but should bundle into one editorial
+pass after triage.
+
+- **Home — Stage 1 cards** — the 4-card row is visually tight on
+  tablet (700 px) where each card's description wraps to 6–7 lines
+  with narrow line-length. Consider tightening descriptions to ~3
+  lines on the Sig Scaling and BACnet/IP cards (currently 2–3
+  sentences each). *(field-tech)*
+- **Home — About card stat-row "Verified: 2026"** — ambiguous what
+  was verified. Author identity? Last content audit? Year of activity?
+  A one-word clarification ("Active since: 2026" or "Content
+  reviewed: 2026") would settle it. *(newcomer)*
+- **Home — Footer + console-statusline overlap** — the bottom of
+  the page shows a footer ("controlsfreak.dev · OPEN TOOLS FOR
+  CONTROLS PROFESSIONALS") plus the same statline-style version /
+  build chrome that's already in the hero. Two console frames
+  bookend the page; mostly fine, but on a short page (e.g.,
+  simulators landing at desktop) the two are very close together
+  with little content between. *(engineer)*
+- **Tools landing — card order clusters by category except for
+  Thermistor** — `signals → protocols → hvac × 5 → signals
+  (thermistor)`. With Thermistor moved up next to Signal Scaling,
+  the visual clustering matches the categorical taxonomy and the
+  trailing-lone-card spot in the 4-col grid stays the same shape
+  it does now (the 9-card row count doesn't change). *(engineer)*
+- **Tools landing — no eyebrow/identity beyond "Tools" h1** —
+  compare to home's stage labels. Could carry a short identity
+  framing ("Field calculators & lookups" / "Open it, get the
+  number, close it") in the same section-header treatment. *(newcomer)*
+- **Simulators landing — 3 cards in 4-col grid at desktop leaves
+  an empty fourth column** — currently the schematic-bg motifs
+  fill the visual space, but the grid breakpoint could shift to
+  3-col for this page specifically so the cards center under the
+  lead. *(engineer)*
+- **Education landing — chip row at mobile takes two lines** —
+  8 chips at 375 px wrap to 2 rows of 4. Functional, but if
+  finding #12 trims the chip count this resolves automatically.
+  *(field-tech)*
+- **Education landing — "Common sense lessons for techs new to
+  the industry"** — "common sense" reads as slightly self-
+  deprecating (implying the lessons aren't sophisticated). The
+  intent is probably "practical / no-nonsense"; consider
+  "Practical lessons for techs new to the industry" or
+  "Plain-English lessons…". *(newcomer)*
+- **Cross-landing consistency — lead paragraph max-widths
+  (560/560/700)** — see substantive finding #18; the visual
+  inconsistency is observable on mobile especially. *(engineer)*
+- **Education lesson card pills — short capitalization mixed** —
+  some pills read "Manual / Auto / PICV" (slashes), others read
+  "Lead / Lag" (slash with spaces), others "2-Way Valves" (hyphen,
+  no slash). Minor visual rhythm break across the grid. *(engineer)*
+
+### Code items split to `codebase-issues.md`
+
+Findings caught during this batch that are code-side rather than
+content/UX. Tracked in the partner file per
+`feedback_codebase_issues_sweep`:
+
+- Lead-paragraph inline-style duplication across three landing
+  pages — `.landing-intro` class promotion candidate. Mirrors
+  the prior `.page-intro` extraction (#19 in codebase-issues)
+  but for landings. (See finding #18 above for the user-visible
+  inconsistency this also caused.)
+
