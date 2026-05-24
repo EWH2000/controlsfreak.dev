@@ -1678,3 +1678,309 @@ modbus/psych mobile screenshots from Batch 2's
 
 No standalone codebase-issues entries this batch — all code work
 sits downstream of editorial picks.
+
+---
+
+## Audit scope — refinement period, Batch 4: Education (2026-05-24)
+
+Fourth and final batch of the section-at-a-time refinement-period
+audit. Same Shape B (3 lenses × 4 dimensions) applied to the 13
+education pages. Numbering continues from Batch 3 (PR #112 at
+write time); after this batch the full audit is in-file and
+ready for triage.
+
+Two prior content-audit passes (2026-05-21 first pass, 2026-05-23
+second pass) already swept these pages for accuracy and clarity.
+Batch 4's findings are mostly *cross-page structural* — patterns
+in titles, eyebrows, and cross-link wiring that read as drift
+when seen side-by-side across the 13 pages.
+
+### Coverage checklist
+
+Hydronics cluster — [x] `hydronic-loops` · [x] `load-piping` ·
+[x] `pump-control` · [x] `balancing`.
+
+Drives + sequencing cluster — [x] `vfds` · [x] `equipment-staging` ·
+[x] `function-blocks`.
+
+HVAC + control cluster — [x] `pid-basics` ·
+[x] `psychrometrics-basics`.
+
+Protocols cluster — [x] `modbus-basics` · [x] `modbus-decoding` ·
+[x] `bacnet-basics` · [x] `bacnet-networking`.
+
+Mechanism: dev server + Playwright screenshots at 1440 / 700 / 375
+viewports (39 captures, with top/bottom crops). Source-read for
+title shapes, eyebrow shapes, preamble patterns, cross-link
+wiring, and `data-objref` numbering distribution.
+
+### Substantive findings
+
+### 31. Education page title pattern splits 8/5 — older pages carry an em-dash subtitle, newer ones go bare
+
+**[lens: newcomer | dimension: content + consistency]**
+
+`.tool-card-title` text across the 13 education pages:
+
+**With em-dash subtitle (8 pages):**
+
+| Page | Title |
+|---|---|
+| hydronic-loops | Hydronic Loops — How Water Gets Around a Building |
+| load-piping | Load Piping — How Loads Connect to the Loop |
+| pump-control | Pump Control — How a BMS Drives the Pump |
+| balancing | Hydronic Balancing — Getting Design Flow to Every Load |
+| equipment-staging | Equipment Staging — Running Pumps in Parallel |
+| psychrometrics-basics | Psychrometrics Basics — The Words on the Chart and How to Understand Them |
+| vfds | VFDs — Variable Frequency Drives (*acronym expansion, not a question* — see polish item below) |
+
+**Bare title (5 pages):**
+
+| Page | Title |
+|---|---|
+| bacnet-basics | BACnet Basics |
+| bacnet-networking | BACnet Networking |
+| function-blocks | Function-Block Basics |
+| modbus-basics | Modbus Basics |
+| modbus-decoding | Modbus Decoding |
+
+(pid-basics is excluded — see #29 from Batch 3; it has no
+`.tool-card-title` because the page structure is mini-sim-heavy
+rather than tool-card-wrapped.)
+
+The 8 pages with subtitles read as "here's what you'll learn"
+on first glance. The 5 bare titles read as "here's the topic;
+figure it out from the prose." The pages with subtitles are
+older and were shaped during a period where titles got the
+"question framing" treatment; the 4 newer protocol/logic pages
+(plus the *VFDs* outlier) didn't.
+
+The split tracks chronology, not page type — every old page got
+a subtitle, every new page didn't. Suggests the convention drifted
+mid-project rather than the newer pages making a deliberate
+different call.
+
+What it would take to fix: pick the pattern and sweep. Direction
+options:
+- *Adopt subtitle pattern across all 13.* Suggested for each bare:
+  - `BACnet Basics — Objects, Properties, and the Wire`
+  - `BACnet Networking — Three Addresses and How the Frame Travels`
+  - `Function-Block Basics — Logic by Wiresheet`
+  - `Modbus Basics — What's on the Wire and How a Request Looks`
+  - `Modbus Decoding — Why the Register Reads Wrong`
+- *Adopt bare pattern across all 13.* Drop the existing em-dash
+  clauses; each page's lead sentence does the same job anyway.
+- *Keep both, document the rule.* If subtitles are for "narrative"
+  pages and bare titles are for "reference" pages, codify the
+  distinction in CLAUDE.md.
+
+Verification: **confirmed** — `grep "class=\"tool-card-title\"" html/education/*.html`.
+
+### 32. Cross-section eyebrow shape: Education uses `Education · Page Name`; Tools and Simulators use just the category
+
+**[lens: engineer | dimension: consistency]**
+
+Three section types, three eyebrow shapes:
+
+- **Tools** — `<span class="section-label">Analog I/O</span>`,
+  `Modbus`, `BACnet`, `Sensors`, `HVAC`. Just the category, one
+  to two words.
+- **Simulators** — `<span class="section-label">Loops</span>`,
+  `Drives`, `Tools` *(stale — Batch 3 #27)*. Just the category.
+- **Education** — `<span class="section-label">Education · Pump
+  Control</span>`. Two-part: section name + page name.
+
+Education's two-part shape carries useful context for a deep-link
+lander ("I'm on an Education page about Pump Control") but
+duplicates information already visible in the top-nav active
+section, the URL, and the page title. Tools and Simulators get
+by without the section name in the eyebrow because the eyebrow's
+job is to carry the *category* (the implicit "Education" prefix
+is established by being on the page already).
+
+The asymmetry is functional but reads as a third drift pattern
+when the three landings are walked back-to-back-to-back.
+
+What it would take to fix: pick a shape and sweep.
+- *Drop the "Education · " prefix from education page eyebrows.*
+  Each page's eyebrow becomes just the page name (e.g. "Pump
+  Control" or "Hydronic Loops"). Matches tools/sims shape;
+  active-nav highlight + page title do the rest.
+- *Add the section name to tools/sims eyebrows.* e.g.
+  `Tools · Signal Scaling`, `Simulators · PID Tuner`. Heavier
+  but explicit.
+- *Keep both, document the rule.* "Education pages carry their
+  section in the eyebrow because the curriculum framing matters;
+  tools/sims don't because they're standalone utilities." Same
+  shape pickable on a stylebook basis.
+
+Verification: **confirmed** by surveys done for Batch 2 #14
+(tools eyebrows), Batch 3 #29 (sims eyebrows), and this batch
+(education eyebrows).
+
+### 33. `data-objref` SEC:NNN numbering lives on 2 pages of 13 — visual signal of "this is a curriculum sequence" doesn't extend to the rest
+
+**[lens: newcomer + engineer | dimension: consistency + content]**
+
+Two education pages carry `data-objref="NNN"` on their h2
+subheads, rendered via CSS as `SEC:001 · LABEL` (the rename from
+`AV:001` happened in the second-pass audit, finding #6):
+
+- `pid-basics.html` — SEC:001 / SEC:002 on two subheads
+- `psychrometrics-basics.html` — SEC:001 on one subhead
+
+The other 11 education pages have no SEC:NNN prefixes — their
+subheads are plain text. The prefix is a visual cue that the
+page's content is sequenced (sections 1, 2, 3...). On a
+curriculum-driven site where every page is one question answered
+through ordered sections, the cue arguably belongs everywhere or
+nowhere — landing on two of thirteen reads as decoration that
+got applied here-and-there rather than a system.
+
+Two possible reads:
+- The two pages with `data-objref` are the *paired-with-a-sim*
+  cohort (pid-basics ↔ pid-tuner; psychrometrics-basics ↔
+  psychrometric-chart) — but function-blocks is also paired with
+  a sim and doesn't have the prefix, so the cohort doesn't hold.
+- These two were the first education pages shipped with the
+  BACnet-flavored numbering experiment and the others simply
+  weren't retrofitted.
+
+What it would take to fix: editorial pick.
+- *Drop the SEC:NNN prefix on the two pages.* Removes the
+  decoration; sub-section ordering is implicit in document order
+  already.
+- *Add SEC:NNN to all 13 pages.* Commits to the curriculum-
+  sequence framing visually. More work; only worth it if the
+  cue actually helps a newcomer navigate.
+- *Keep limited to the two paired-with-sim pages and add to
+  function-blocks (the third such page) for completeness.* If
+  the original intent was "the paired-with-sim pages get the
+  BACnet-flair," then function-blocks just got missed.
+
+Verification: **confirmed** — `grep -l 'data-objref' html/education/*.html`
+returns only the two pages; the rendering rule lives in
+`styles.css` (`h2.section-label[data-objref]::before { content:
+"SEC:" attr(data-objref) " · "; }`).
+
+### Strengths flagged (cross-page wiring done well)
+
+These aren't problems — they're positive patterns from the
+education batch worth recording so subsequent edits don't
+inadvertently break them.
+
+- **Hydronics forward-link chain** — load-piping → pump-control →
+  equipment-staging → balancing each open with an inline reference
+  to the predecessor page and close with a forward-link to the
+  next. The chain is intact end-to-end; a newcomer following the
+  forward-link discipline reads them in order without ever
+  bouncing back to the section landing. Documented in
+  `site-ideas-and-friction.md` under "Education page scope" —
+  the audit confirms the discipline held across all five
+  hydronics+drives pages.
+- **Lesson → tool cross-link discipline** — every lesson paired
+  with a tool or sim carries the cross-link inline in the
+  preamble: modbus-basics → Modbus Register Viewer (inline),
+  modbus-decoding → Modbus Register Viewer (inline),
+  function-blocks → Function-Block Editor (inline),
+  bacnet-basics → BACnet/IP Hex Converter (inline). This is the
+  *correct* placement (compare Batch 1 #22 + Batch 3 #28: psych
+  chart and pid-tuner have it at the *bottom*, which is the
+  wrong direction). The education side does it right; the tool
+  side has the drift.
+- **Field-voice anecdote density** — pump-control (deadhead at
+  0 demand), vfds (the classic-mistake reveal), balancing
+  (burst-coil at low ΔP), equipment-staging (worn-lead-pump),
+  psychrometrics-basics (the natatorium quote on the pool
+  widget). The friction-file's "discovery prompt + reward"
+  Education-page idiom holds — most education pages have at least
+  one anecdote-driven payoff. The 3 pages without
+  (function-blocks, modbus-basics, pid-basics) are mostly
+  vocabulary-oriented; the anecdotes wouldn't fit naturally.
+
+### Minor polish
+
+- **vfds — title pattern is acronym-expansion, not question.**
+  "VFDs — Variable Frequency Drives" expands the acronym (which
+  the lead does anyway in its first sentence) instead of asking
+  the page's question. Either drop the subtitle (matches the
+  "bare" pattern) or rewrite to the question shape (e.g.,
+  *"VFDs — What the Drive Actually Does Between the Wire and
+  the Motor"*). *(content)*
+- **vfds — section-header subhead "RUN COMMAND VS SPEED
+  REFERENCE — THE TWO THINGS YOU'VE LEARNED"** — *you've learned*
+  presumes the reader is several scrolls in, but the subhead
+  also reads as a stand-alone section title for someone arriving
+  via the table of contents (which doesn't exist on the site,
+  but might land later for long pages). Slightly conversational.
+  Drop "— THE TWO THINGS YOU'VE LEARNED" for *"RUN COMMAND VS.
+  SPEED REFERENCE."* *(content)*
+- **modbus-basics + modbus-decoding lead paragraphs** — both
+  cross-link to each other in the lead, which is good wiring,
+  but the duplicated "Modbus Basics covered..." / "Modbus
+  Decoding covers..." openings make the pair feel like one
+  document split. Could tighten one to lead with "Read [Modbus
+  Basics](/education/modbus-basics.html) first." *(content)*
+- **bacnet-networking — page title vs lead voice asymmetry.** Lead
+  starts factual ("BACnet Basics covered..."); the page-intro pattern
+  on hydronics pages opens with field voice ("On the load-piping
+  lesson..." or "Two ways to handle the bypass..."). The protocol
+  pages read more clinical. *(voice)*
+- **psychrometrics-basics — title is the longest of any education
+  page** (`Psychrometrics Basics — The Words on the Chart and How
+  to Understand Them` = 75 chars). Could trim to *"...The Words
+  on the Chart"* without losing the framing. *(content)*
+- **All hydronics pages — SVG flow-diagram styling uses `.edu-svg`
+  (per codebase-issues consolidation history)** but the captions
+  underneath are still inline-styled across pages. Captions like
+  *"← supply main, return main →"* appear inline on hydronic-loops,
+  load-piping, pump-control with similar but not identical styling
+  — could promote to a shared `.edu-caption` class for consistency.
+  *(consistency)*
+- **equipment-staging — Widget 1 "stage delay countdown" lacks
+  visible scrubber** for the user to drag time forward instead of
+  waiting. Not a substantive UX bug (the widget's pedagogy is the
+  natural-time experience), but if a tech wants to demo the
+  stage-up-then-down cycle quickly, they're waiting 4–6 seconds
+  per state. Mentioned for completeness; if widget UX gets
+  consolidated, this could ride along. *(UX)*
+- **function-blocks — page is the shortest of the 13** (~3300 px
+  desktop full-page) and uses no widget, no anecdote. Reads as
+  setup material before the simulator, which is exactly its job.
+  Worth flagging that this *shape* is itself a valid education-page
+  archetype (vocabulary-only, sim-paired) — codify if a future page
+  needs the same shape. *(strength / pattern)*
+
+### Code items split to `codebase-issues.md`
+
+- **`.edu-caption` class promotion** (minor polish bullet) — the
+  edu-svg caption styling is currently inline. If the pattern is
+  canonized, a class promotion is the codebase-side follow-up.
+  Worth a codebase-issues entry once the editorial direction is
+  picked. Not logged today.
+
+No standalone codebase-issues entries this batch — same posture
+as Batches 2 and 3: code work depends on editorial picks the user
+will make during triage.
+
+### End of audit — full picture posture
+
+This is the fourth and final batch of the refinement-period audit.
+After all four PRs merge, `content-audit.md` carries:
+
+- **Batch 1 (Landings + chrome)** — findings #10–19 (10 substantive)
+- **Batch 2 (Tools)** — findings #20–26 (7 substantive)
+- **Batch 3 (Simulators)** — findings #27–30 (4 substantive)
+- **Batch 4 (Education)** — findings #31–33 (3 substantive)
+
+24 substantive findings total across the 28-page audit, plus
+minor-polish lists, plus one standalone codebase-issues entry
+(#72 — landing lead inline-style duplication). Cross-cutting
+patterns dominate (worked-default split, preamble presence,
+prereq link placement, eyebrow taxonomy, title pattern) over
+per-page issues — the site is structurally consistent in many
+ways and structurally drifting in a handful of specific shapes.
+
+Per the plan, triage of the full audit is the next step. The
+nav-card grid question (parked since the plan kickoff) gets
+re-evaluated with the full audit as context.
