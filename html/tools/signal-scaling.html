@@ -22,6 +22,14 @@ nav: tools
             </h1>
         </div>
 
+        <p class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
+            An analog signal from a sensor (mA / V) ↔ engineering units, both directions,
+            plus a calibrator-style 2-point → slope/offset solver for paste-into-Niagara setup.
+            <em>Signal → Eng. Units</em> takes a raw reading and scales it to the published range.
+            <em>Eng. Units → Signal</em> runs it backwards — what mA should an output drive to land on a setpoint?
+            <em>2-Point → Slope / Offset</em> takes two known (raw, eng.) pairs and solves m and b directly.
+        </p>
+
         <div class="tabs tabs-flush">
             <button class="tab-btn active" data-tab="scaling">Signal → Eng. Units</button>
             <button class="tab-btn"        data-tab="reverse">Eng. Units → Signal</button>

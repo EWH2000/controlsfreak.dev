@@ -22,6 +22,14 @@ nav: tools
             </h1>
         </div>
 
+        <p class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
+            The hex blob EBO and other BACnet tools show for a BACnet/IP device ↔ a dotted-decimal
+            IP and UDP port, both directions.
+            <em>Hex → IP</em> decodes an 8-character (IP only) or 12-character (IP + port) hex string.
+            <em>IP → Hex</em> builds the string from a dotted-decimal IP and an optional port — the default
+            is 47808 (0xBAC0).
+        </p>
+
         <div class="tabs tabs-flush">
             <button class="tab-btn active" data-tab="hex2ip">Hex → IP</button>
             <button class="tab-btn"        data-tab="ip2hex">IP → Hex</button>

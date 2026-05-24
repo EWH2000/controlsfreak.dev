@@ -22,6 +22,16 @@ nav: tools
             </h1>
         </div>
 
+        <p class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
+            Decode a Modbus register the way the device sees it — decimal, hex, binary,
+            signed/unsigned, and individual bits, all synced as you change any one.
+            <em>Single Register</em> lets you toggle bits directly or type a decimal or hex value.
+            <em>32-bit Pair</em> takes two consecutive registers and shows the int32 / uint32 / float reading
+            under all four byte orderings vendors use — the one whose float reads plausibly is yours.
+            New to Modbus? Read <a href="/education/modbus-basics.html">Modbus Basics</a> for the protocol shape,
+            then <a href="/education/modbus-decoding.html">Modbus Decoding</a> for the gotchas behind these tabs.
+        </p>
+
         <div class="tabs tabs-flush">
             <button class="tab-btn active" data-tab="single">Single Register</button>
             <button class="tab-btn"        data-tab="pair">32-bit Pair</button>
