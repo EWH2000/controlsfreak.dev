@@ -31,6 +31,7 @@ nav: simulators
             <p class="tool-preamble" style="margin-bottom:1.5rem;">
                 A toy loop, not your loop — the process below is a simple first-order model with dead time.
                 It's here to build a feel for what each knob does, not to hand you gains for a real system.
+                <strong>New to PID?</strong> <a href="/education/pid-basics.html">Start with the basics →</a>
             </p>
 
             <h2 class="subhead">Step-Response Simulator</h2>
@@ -178,11 +179,6 @@ nav: simulators
             </table>
 
             <p class="pid-note" style="margin-top:1.5rem;">
-                New to PID? <a href="/education/pid-basics.html">Start with the basics →</a>
-                — the plain-English walk through proportional, integral, and derivative, with worked HVAC examples and three small step-by-step sims.
-            </p>
-
-            <p class="pid-note">
                 Rule of thumb on this tool: most HVAC loops are PI, not full PID. Start with reset off, raise the gain until the loop just begins to cycle, back it off, then add only as much reset as you need. Vendors differ on the knobs — Niagara LoopPoint exposes bare proportional / integral / derivative constants (closest to the gain · reset · rate view), EBO uses gain with integral and derivative times in seconds (Ti / Td), and a proportional-band style swaps the gain for a proportional band while keeping the same time-in-seconds Ti / Td; flip the <em>Parameter Style</em> selector above to read the loop in whichever terms you use. Same idea, different clothes — the numbers here show the relationships between the knobs, not drop-in values for any one platform.
             </p>
 
