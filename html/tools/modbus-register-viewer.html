@@ -35,7 +35,7 @@ nav: tools
                     <h2 class="ps-section-label">Input</h2>
                     <div class="ps-row">
                         <label class="ps-label" for="mod-dec">Decimal (0–65535)</label>
-                        <input class="ps-input" type="number" id="mod-dec" min="0" max="65535" step="1" placeholder="43981">
+                        <input class="ps-input" type="number" id="mod-dec" min="0" max="65535" step="1" placeholder="43981" value="43981">
                     </div>
                     <div class="ps-row">
                         <label class="ps-label" for="mod-hex">Hex (0x0000–0xFFFF)</label>
@@ -91,7 +91,7 @@ nav: tools
                     <h3 class="subhead">Register 1 (bytes A B)</h3>
                     <div class="ps-row">
                         <label class="ps-label" for="pair-r1-dec">Decimal (0–65535)</label>
-                        <input class="ps-input" type="number" id="pair-r1-dec" min="0" max="65535" step="1" placeholder="16968">
+                        <input class="ps-input" type="number" id="pair-r1-dec" min="0" max="65535" step="1" placeholder="16968" value="16968">
                     </div>
                     <div class="ps-row">
                         <label class="ps-label" for="pair-r1-hex">Hex (0x0000–0xFFFF)</label>
@@ -101,7 +101,7 @@ nav: tools
                     <h3 class="subhead">Register 2 (bytes C D)</h3>
                     <div class="ps-row">
                         <label class="ps-label" for="pair-r2-dec">Decimal (0–65535)</label>
-                        <input class="ps-input" type="number" id="pair-r2-dec" min="0" max="65535" step="1" placeholder="62915">
+                        <input class="ps-input" type="number" id="pair-r2-dec" min="0" max="65535" step="1" placeholder="62915" value="62915">
                     </div>
                     <div class="ps-row">
                         <label class="ps-label" for="pair-r2-hex">Hex (0x0000–0xFFFF)</label>
@@ -367,8 +367,12 @@ nav: tools
             btn.addEventListener('click', e => switchTab(e.currentTarget.dataset.tab, e.currentTarget));
         });
 
-        // ── Init ──
-        renderBits();
+        // ── Init ── First-paint defaults: read the value= attrs on mod-dec / pair-r1-dec /
+        //   pair-r2-dec, sync everything else (hex inputs, bit grid, readouts, pair table).
+        //   fromDec() is a strict superset of renderBits() — it populates bits[] from
+        //   mod-dec, then renders the grid and updates the readouts.
+        fromDec();
+        calcPair();
     })();
 </script>
 {% endblock %}
