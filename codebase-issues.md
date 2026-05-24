@@ -3017,6 +3017,130 @@ and Widget 2 currently runs sloppy. Low-risk fix: add the directive
 as the first line inside the `pump-control.html:791` IIFE. Not fixed
 inline here to keep the equipment-staging PR scoped to its own work.
 
+### 69. `[data-sbg-stroke]` fixed-dasharray draws short paths early *(deferred 2026-05-24)*
+
+Caught during the schematic-bg doc-audit (2026-05-23). The
+schematic-bg gutter motifs use `stroke-dashoffset` for the
+scroll-reveal draw-in. Commit `e700c2a` set
+`stroke-dasharray: 600` site-wide on every `[data-sbg-stroke]`
+element to dodge a Chromium quirk where dashoffset on Bezier
+paths and circles refused to fully draw. Side effect: short
+straight wires (logic-chain L-paths ~56 user units, BACnet
+traces, the pump-coil grid, the diverting-valve triangles) finish
+drawing in roughly the first 10% of the 3000ms transition while
+long pipe runs take the full duration.
+
+**Why it matters:** the disparity reads as a stutter — short paths
+"flash on" while long paths sweep. Not broken, but inconsistent
+with the as-builts pedagogy ("the wire draws as you read past it").
+
+**Attempted fix (2026-05-23, commit `b8dae2b`):** case-split into
+two modes by SVG safety. `<line>` and L-only `<path>` elements
+carried `pathLength="1"`, and a new CSS rule
+`.sbg-motif [data-sbg-stroke][pathLength="1"]` used
+`stroke-dasharray: 1; stroke-dashoffset: 1` to draw them end-to-end
+across the full 3000ms. `<circle>`, `<rect>`, and Bezier `<path>`
+fell through to the safe fixed-600 default.
+
+**Reverted (2026-05-24, commit `98223a5`):** in-browser inspection
+showed the case-split rendered broken on every pathLength element.
+Chromium does NOT honor `pathLength="1"` for `stroke-dasharray`
+computation — verified by `getComputedStyle(el).strokeDasharray`
+returning `"1px"` against a line whose `getTotalLength()` returned
+the geometric length (104). The CSS `stroke-dasharray: 1` was
+treated as 1 actual pixel, rendering the path as ~50 tiny dashes
+that read as a near-invisible speckle. The BI1/BO1 connector
+disappeared entirely, the pump-coil crosshair lost its vertical
+segment, and several other short elements rendered as broken or
+empty. Spec-wise pathLength should apply to dasharray, but the
+Chromium implementation only honors it for the JS API
+(`getTotalLength` / `getPointAtLength`).
+
+This is the *third* length-normalization approach to hit a
+Chromium quirk: `getTotalLength`-derived `--sbg-len` (broken on
+Beziers / circles), full `pathLength="1"` normalization (same
+class of bug), and case-split `pathLength="1"` on safe straight
+elements (this one — the dasharray side effect).
+
+**Decision (2026-05-24):** defer / accept the stutter. The fixed-
+600 dasharray is the only approach that renders reliably across
+every motif element type. Short-path stutter is the trade-off.
+**Trigger for revisit:** Chromium ships proper pathLength
+support for `stroke-dasharray`, OR a non-pathLength approach is
+found (e.g., per-element CSS variable populated by JS at init
+time with the actual `getTotalLength()` value — viable but
+trades CSS-only simplicity for a JS bootstrap pass; would need
+its own trade-off analysis).
+
+### 70. Schematic-bg motif library inlines ~360 SVGs into every page DOM
+
+Caught during the schematic-bg doc-audit (2026-05-23). The
+`_includes/schematic-bg.njk` partial emits 60 motifs per side
+(2 sides × 60 = 120 SVG wrappers), each holding 4–8 child
+elements (paths, rects, circles, lines, text labels). Net DOM
+weight per page: roughly 360 stroked SVG elements plus 120 SVG
+wrappers, layered behind every content surface via
+`position: absolute; z-index: -1`.
+
+The standard SVG-economy fix would be `<symbol>` + `<use>` shadow
+trees — one definition, 60 cheap references per side. Tried
+during the earlier development of this branch; abandoned because
+`flow-engine.js` reads each path's geometry via `getTotalLength()`
+and `getPointAtLength()`, and those calls don't pierce `<use>`
+shadow trees reliably in Chromium (some paths return length 0,
+others throw). Without engine-driven motion the gutter art
+becomes static decoration — which kills half the value.
+
+**Why it matters:** for now, the IntersectionObserver-gated
+per-frame work in `flow-engine.js` (only motifs in the viewport
+churn pulses) keeps the CPU cost negligible. The DOM weight
+itself is the only measurable cost — and even that gzips well
+since the repeated markup compresses heavily.
+
+**Decision (2026-05-23):** defer / accept. The standard fix is
+blocked by a Chromium-specific limitation that's outside our
+control. Inline duplication is the working alternative.
+**Trigger for revisit:** any of
+- Chromium ships `getTotalLength()` support through `<use>` shadow
+  trees (changes the engineering math entirely; collapse to
+  `<symbol>` + `<use>` immediately).
+- A measurable LCP / TTI regression on long pages tied to the
+  schematic-bg DOM weight (currently no signal — pages well under
+  100KB gzipped).
+- Flow-engine itself moves off `getTotalLength()` (e.g., to
+  CSS Motion Path with `offset-path: path()`), at which point
+  `<use>` becomes viable regardless.
+
+### 71. `flow-engine.js` init() docstring described first-call semantics under site-wide loading *(addressed 2026-05-23)*
+
+Caught during the schematic-bg doc-audit (2026-05-23). Since
+commit `c8fb4aa` made the engine site-wide-loaded by
+`schematic-bg.js`, `FlowEngine.init()` is called once on every
+page automatically. The header docstring and the Public API
+entry both still described init as a first-call operation: "scan
+the document, build pools, start the frame loop. Idempotent for
+already-built pools (a second call rebuilds them in place)" — true
+but underspecified about *which* call is the page's first.
+
+**Why it matters:** any new contributor reading the docstring
+would assume a page-level `<script>FlowEngine.init();</script>`
+in an education page is the bootstrap. It isn't (anymore) — it's
+a refresh of paths the site-wide call already registered. The
+`frameStarted` guard prevents a double rAF loop and `poolsByEl`
+de-dupes per-element pools, so the page-level call is safe, just
+nominally redundant.
+
+**Resolution (2026-05-23):** tightened both the top-of-file block
+and the Public API `init()` entry (commit `8e24313`) to describe:
+
+- That the engine is loaded + initialized site-wide.
+- That `frameStarted` and `poolsByEl` make re-calls safe by
+  construction.
+- When a page-level call is still useful (after the page mutates
+  SVG geometry, e.g. swapping a path's `d` attribute).
+
+Docs-only, no behavior change.
+
 ---
 
 ### Deferred / Won't fix (with revisit trigger)
@@ -3028,7 +3152,11 @@ audit cycle (#62 / #64 / #65 / #67) stayed in their original
 numerical position under `## Recently addressed` to keep the audit
 batch intact — each carries the same `*(deferred 2026-05-22)*` marker
 and an explicit **Decision** block. A pointer list to those four sits
-at the bottom of this subsection.
+at the bottom of this subsection. Two more deferrals from the
+2026-05-23 schematic-bg doc-audit sit at their numerical positions
+above: #69 (short-path dasharray stutter — case-split attempt
+reverted 2026-05-24 after the Chromium pathLength/dasharray finding),
+and #70 (~360 SVGs inlined per page).
 
 ### 7. Worker has no app-level rate limit on `/api/contact` *(deferred 2026-05-16)*
 

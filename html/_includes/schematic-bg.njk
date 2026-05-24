@@ -27,7 +27,12 @@
         data-pulse-interval="<ms>"    auto-fire cadence (default 4000)
         data-sbg-stroke               carries the scroll-reveal
                                       stroke-dashoffset transition
-                                      (CSS rule in styles.css)
+                                      (CSS rule in styles.css uses a
+                                      fixed dasharray well above any
+                                      path length — see the block
+                                      comment there for why all
+                                      length-normalization approaches
+                                      hit Chromium quirks).
 
     Hidden below 1240px viewport (no real gutter to fill) and on
     print. Decorative only: aria-hidden, pointer-events:none.

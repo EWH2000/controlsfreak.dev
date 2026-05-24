@@ -25,13 +25,15 @@ the site does, see `README.md`.
   Pages carry YAML frontmatter and extend the shared layout (see
   *Templating*). Static assets (`scripts/`, `styles.css`, `assets/`,
   `robots.txt`) are passthrough-copied; `sitemap.xml` is generated
-  (see *Sitemap*). Build is fast (~0.3s for 21 pages); Nunjucks is
+  (see *Sitemap*). Build is fast (~0.3s for 30 pages); Nunjucks is
   the only thing the build does — no JS transpile or bundle step.
 - **Templates under `html/_includes/`:**
-  - `layouts/page.njk` — the page shell. Composes `head.njk` / `nav.njk`
-    / `footer.njk` and exposes three named blocks (`head`, `content`,
-    `scripts`) for pages to fill. See *Templating* for the block
-    contract.
+  - `layouts/page.njk` — the page shell. Composes `head.njk` /
+    `schematic-bg.njk` / `nav.njk` / `footer.njk`, loads the
+    site-wide shared scripts (`flow-engine.js`, `schematic-bg.js`)
+    at end-of-body, and exposes three named blocks (`head`,
+    `content`, `scripts`) for pages to fill. See *Templating* for
+    the block contract.
   - `head.njk` — standard `<head>`: meta tags, OG tags from
     frontmatter, favicons, Google Fonts, `/styles.css`, units-bootstrap
     inline script.
@@ -41,6 +43,26 @@ the site does, see `README.md`.
     re-exports `package.json.version` via `html/_data/site.js`, so
     bumping the version is a one-line edit in `package.json`. Bump
     cadence under *Adding a new tool*.
+  - `schematic-bg.njk` — the gutter schematic-collage: two narrow
+    vertical SVG strips in the side gutters, each holding ~60
+    inline-SVG motifs (pipe-valves, pump-coils, AI/AO terminals,
+    BI/BO terminals, logic-chains, BACnet/IP nodes) drawn from a
+    `motifBody` macro. Included by `layouts/page.njk` directly —
+    no per-page opt-in. Hidden below 1240px viewport ("field
+    device" cutoff — see *Gotchas*) and in print; reduced-motion
+    snaps to drawn state. Path tagging conventions
+    (`data-flow` / `data-pulse` / `data-sbg-stroke` / `pathLength="1"`)
+    are documented in the partial's header.
+  - `nav-card.njk` — `navCard()` macro that produces a hero-frame
+    nav-card. All 27 nav cards on the home / tools / education /
+    simulators landings share this shape: `.nav-card-titlebar`
+    (mono caps prefix + ellipsis-clipped title + OK pill),
+    `.nav-card-body`, and `.nav-card-statusline` (bullet-separated
+    semantic pills). Sections drive an accent-color cascade via
+    `.nav-card--{home,tools,education,simulators}` and the
+    `--section-accent` / `--section-accent-dim` / `--section-accent-glow`
+    tokens. Macro params: `section`, `href`, `titleShort`,
+    `titleFull`, `desc`, `pills[]`, optional `category`.
 - **Directory data file:** `html/html.11tydata.js` — overrides 11ty's
   pretty-URL permalink so `signal-scaling.html` lands at
   `_site/tools/signal-scaling.html` (not `signal-scaling/index.html`).
@@ -52,15 +74,39 @@ the site does, see `README.md`.
 - **Shared scripts** in `html/scripts/` are **classic scripts** (not
   ES modules — no bundler, and helpers expose globals like `Units`,
   `simulatePid`, `FlowEngine` that page IIFEs reach for by name).
-  Loaded via `<script src="/scripts/xxx.js"></script>` inside
-  `{% block scripts %}`, *before* the page's inline `<script>`. Each
-  script's file header documents its exports.
+  Most are loaded per-page via `<script src="/scripts/xxx.js"></script>`
+  inside `{% block scripts %}`, *before* the page's inline
+  `<script>`; `flow-engine.js` and `schematic-bg.js` are loaded
+  site-wide by `layouts/page.njk` instead (gutter motifs need them
+  on every page). Each script's file header documents its exports.
   - `pid-engine.js` — PID simulation core (FOPDT + conditional-
     integration anti-windup). Pure math, no DOM. Paired with
     `pid-chart.js` (canvas drawer + unit-aware delta formatter).
-  - `flow-engine.js` — particle-flow animation for SVG schematics
-    (paths annotated `data-flow="supply"|"return"`). Engine attribute
-    conventions in `site-ideas-and-friction.md`.
+  - `flow-engine.js` — animation engine for SVG schematics. Two
+    motion modes:
+    - `data-flow="supply"|"return"` — continuous particle stream
+      (hydronic pipes; longer paths = longer cycles, direct-vs-
+      reverse-return pedagogy).
+    - `data-pulse="signal"` — discrete pulse (head + 4-circle trail)
+      that travels the path once and retires; EBO-style "signal
+      just updated" cue. Auto-fires on `data-pulse-interval` (default
+      4000ms) and is IO-gated so off-screen motifs don't churn.
+      External callers fire on demand with `FlowEngine.pulse(el)` —
+      the function-block editor uses this to flash a wire when its
+      source block updates.
+    `init()` is idempotent (rAF loop has a `frameStarted` guard;
+    pools de-dupe via `poolsByEl`), so `schematic-bg.js`'s site-wide
+    init call composes safely with any page-level `FlowEngine.init()`.
+    Engine attribute conventions also documented in
+    `site-ideas-and-friction.md`.
+  - `schematic-bg.js` — scroll-driven reveal for the gutter
+    schematic motifs. IntersectionObserver toggles `.is-drawn` on
+    each motif as it scrolls in (CSS handles the stroke-dashoffset
+    transition); also calls `FlowEngine.init()` once on
+    DOMContentLoaded so the gutter pipes carry particles and the
+    wiring / logic-chain / BACnet paths auto-pulse. Under
+    `prefers-reduced-motion: reduce`, snaps every motif to drawn
+    state synchronously instead.
   - `thermistor-data.js` — R/T curves generated from per-type
     parameters (β, R25, shunt, R0, TCR); file header tracks
     per-type confidence.
@@ -176,7 +222,7 @@ HTML.
 `html/sitemap.njk` renders `_site/sitemap.xml` at build time — it is
 not a hand-maintained file. The `sitemapPages` collection in
 `.eleventy.js` gathers every template carrying a `canonical`
-frontmatter (all 21 real pages; the sitemap template has none, so it
+frontmatter (all 30 real pages; the sitemap template has none, so it
 self-excludes) and sorts by canonical URL. Each `<loc>` is the page's
 `canonical`; each `<lastmod>` comes from the `gitLastmod` filter,
 which runs `git log -1 --format=%cd --date=short -- <inputPath>` and
@@ -297,6 +343,38 @@ harmless, but the signal is lost.
   and would miscolor the still-hot half as return. Split into two
   segments (e.g. `lp-3wd-coil-to-tee` left half dashed/return walking
   L→R; `lp-3wd-bypass-to-tee` right half solid/supply walking R→L).
+- **Gutter schematic-bg is hidden below 1240px viewport.** Don't
+  use motifs to convey page semantics — they're chrome. The cutoff
+  is deliberate: anything that small is a "field device" (laptop on
+  a roof, phone on a ladder, tablet in a mech room), and load
+  weight outranks decoration there. Print also drops them. The
+  reduced-motion path keeps them visible but snaps them to drawn
+  state instead of revealing.
+- **`[data-sbg-stroke]` draw-in uses a single fixed dasharray, not
+  per-path normalization.** The CSS rule sets
+  `stroke-dasharray: 600; stroke-dashoffset: 600` on every
+  `[data-sbg-stroke]` element (motif paths are ~200 user units at
+  most). Three earlier approaches — `getTotalLength()`-driven
+  `--sbg-len`, `pathLength="1"` on every element, and case-split
+  `pathLength="1"` on safe straight elements only — all hit
+  Chromium quirks. The last attempt (case-split on `<line>` /
+  L-only `<path>`) failed in a particularly subtle way:
+  `pathLength="1"` IS honored for `getTotalLength()` (the API
+  returned the actual geometric length, 104px on a sample line),
+  but NOT for `stroke-dasharray` computation, where Chromium
+  treats `1` as 1 actual pixel and renders the path as ~50 tiny
+  speckled dashes instead of one normalized dash. Permanent
+  fallback: trust the fixed-600 + accept that short paths finish
+  drawing in ~10% of the transition. See codebase-issues#69.
+- **`FlowEngine.init()` is idempotent.** `schematic-bg.js` calls
+  it once site-wide on DOMContentLoaded; page-level
+  `FlowEngine.init()` calls in education pages with their own
+  animations (hydronic-loops, load-piping, balancing) are
+  effectively refreshes — the `frameStarted` guard prevents a
+  second rAF loop and `poolsByEl` de-dupes pool registration.
+  Pages with no `[data-flow]` / `[data-pulse]` elements can omit
+  their own init entirely (it's still called once by
+  `schematic-bg.js`).
 
 ## Repo structure
 
@@ -312,7 +390,7 @@ controlsfreak.dev/
 ├── src/worker.js
 ├── html/                     # source (input to 11ty)
 │   ├── html.11tydata.js      # permalink override — keeps .html extensions
-│   ├── _includes/            # head.njk, nav.njk, footer.njk, layouts/page.njk
+│   ├── _includes/            # head.njk, nav.njk, nav-card.njk, schematic-bg.njk, footer.njk, layouts/page.njk
 │   ├── styles.css            # passthrough → _site/styles.css
 │   ├── scripts/              # passthrough; pid-engine, flow-engine, units, …
 │   ├── assets/               # passthrough; og-image, favicons
@@ -369,14 +447,35 @@ per-page history and the *why* behind each, see
   - *Education* pages use the **lesson layout** (`.tool-card` /
     `.tool-body`), NOT the column-grid patterns. **Prose sits above
     each diagram; the diagram is the visual capstone.**
-- **Animation:** pages with pipe-flow diagrams load
-  `/scripts/flow-engine.js`; pipes annotated `data-flow="supply"|"return"`
-  carry particle flow at constant velocity (longer paths = longer
-  cycles, direct-vs-reverse-return pedagogy). Shared styling
-  (`.edu-svg`, `.edu-legend`) in `styles.css`: supply solid `--blue`,
-  return dashed `--blue-cool`, `flow-active [data-flow="return"]`
-  drops dashes while running. VFDs page uses a page-local `.vfd-svg`
-  (no `data-flow`).
+- **Animation:** the shared engine `/scripts/flow-engine.js`
+  (loaded site-wide from `layouts/page.njk`) drives two motion
+  primitives:
+  - **Continuous particle flow** on `data-flow="supply"|"return"`
+    paths — constant velocity, longer paths = longer cycles
+    (direct-vs-reverse-return pedagogy). Shared styling (`.edu-svg`,
+    `.edu-legend`) in `styles.css`: supply solid `--blue`, return
+    dashed `--blue-cool`, `flow-active [data-flow="return"]` drops
+    dashes while running. The encoding is "physical media moving
+    through pipes / air handlers."
+  - **Discrete signal pulse** on `data-pulse="signal"` paths — a
+    head + trailing 4-circle tail launches from the path start,
+    travels at fixed pixel-speed, and retires at the end. The
+    encoding is "control signal just updated" (an analog wire
+    sampling, a logic block firing, a BACnet/IP comm trace
+    delivering). Auto-fires on `data-pulse-interval`; the
+    function-block editor calls `FlowEngine.pulse(el)` directly
+    when a wire's source block updates.
+- **Schematic-collage gutter art:** `_includes/schematic-bg.njk`
+  emits two narrow SVG strips in the side gutters (left + right,
+  ~60 motifs each, 230px stride), holding inline-SVG instrument
+  primitives — pipe-valves and pump-coils (carry continuous flow),
+  AI/AO and BI/BO terminals (amber wiring + binary signal lines
+  pulse), logic-chains (plum AND/PID block wires pulse), BACnet/IP
+  nodes (teal comm traces pulse). Each motif draws itself in via
+  stroke-dashoffset as it scrolls in (IntersectionObserver in
+  `schematic-bg.js` toggles `.is-drawn`). Hidden below 1240px viewport
+  — anything that small is a "field device" where load time outranks
+  decoration. VFDs page uses a page-local `.vfd-svg` (no `data-flow`).
 - **Variable-flow story:** `load-piping` → `vfds` → `pump-control` →
   `balancing` form a quartet. Cross-links pay off forward-link debts
   between them. The twin-T subhead in `hydronic-loops.html` carries
@@ -390,6 +489,17 @@ per-page history and the *why* behind each, see
 - **Contact form:** `.tool-card` with name/email/message, an
   off-screen CSS honeypot (`.hp-field`, named `website`), Turnstile
   widget. POSTs form-encoded data to `/api/contact`.
+- **Nav cards** (all 27 across home / tools / education / simulators)
+  are rendered by the `navCard()` macro in `_includes/nav-card.njk`,
+  not hand-rolled. Each card is a hero-style instrument frame:
+  `.nav-card-titlebar` (mono-caps section prefix — TOOL / LESSON /
+  SIM / SECTION — plus ellipsis-clipped title + status pill) on
+  top, body in the middle, `.nav-card-statusline` (bullet-separated
+  semantic pills) on the bottom. Section drives an accent-color
+  cascade via `.nav-card--{home,tools,education,simulators}`. Pass
+  `titleShort` trimmed enough to fit one line at the 4-col 1920px
+  breakpoint (the title region clips with ellipsis, so over-long
+  values truncate silently — see `8cfedff` for the prior sweep).
 - **Tools landing** is a `.nav-card` grid of live tools, with a
   filter-chip row above. **Simulators landing** is the same
   `.nav-card` grid minus the filter chips — add the row back if
@@ -420,15 +530,28 @@ Light-only (`color-scheme: light`); no dark variant.
 - **CSS custom properties** in `:root` — change colors by editing
   these, not by hardcoding. Surface / border / accent / text /
   data-color / font families are all defined there; read `styles.css`
-  for the full set and per-color semantics (e.g. `--blue` is supply
-  water + live readouts, `--blue-cool` is return water, `--heat` is
-  heating on the psych chart). The canvas chart reads colors via
-  `getComputedStyle` at draw time. **No `var(--x, #hex)` fallbacks** —
-  `var(--x)` is the canonical form site-wide; every custom property
-  used in HTML attributes or canvas-JS must be defined in `:root`
-  first. If a property is ever removed from `:root` without removing
-  its consumers, `var(--x)` returns empty and the consumer no-ops
-  the color — louder failure mode than a stale fallback hex.
+  for the full set and per-color semantics. Two palette families:
+  - **Physical-media palette** — `--blue` (supply water + live
+    readouts), `--blue-cool` (return water), `--red` /
+    `--accent` (heat / general highlight), `--heat` (heating on
+    the psych chart).
+  - **Control-vocabulary palette** (added with the schematic-bg
+    gutter art) — desaturated hues for the *control* side of a
+    diagram: `--teal` / `--teal-dim` / `--teal-glow` for BACnet/IP
+    comm traces; `--amber` for energized analog control wiring
+    (AI/AO traces); `--plum` / `--plum-dim` / `--plum-glow` for
+    logic-block signal lines (AND, PID, TMR chains). Same `--*-dim`
+    / `--*-glow` pattern as `--accent-dim` / `--accent-glow` — the
+    dim variants drive subtle backgrounds and the glow variants
+    drive borders / focus rings.
+
+  The canvas chart reads colors via `getComputedStyle` at draw time.
+  **No `var(--x, #hex)` fallbacks** — `var(--x)` is the canonical
+  form site-wide; every custom property used in HTML attributes or
+  canvas-JS must be defined in `:root` first. If a property is ever
+  removed from `:root` without removing its consumers, `var(--x)`
+  returns empty and the consumer no-ops the color — louder failure
+  mode than a stale fallback hex.
 - **Focus indicators (`:focus-visible`).** Every custom-styled
   interactive element with a `:hover` rule needs a paired
   `:focus-visible` — the browser default outline is suppressed by

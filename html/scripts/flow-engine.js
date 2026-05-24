@@ -15,15 +15,21 @@
 //                                editor uses to show a connection
 //                                carrying live data.
 //
-// Loaded as a *classic* script (same pattern as pid-engine.js) so a
-// page's inline <script> can call its global API directly:
+// Loaded as a *classic* script (same pattern as pid-engine.js).
+// `flow-engine.js` is now wired site-wide from layouts/page.njk —
+// alongside `schematic-bg.js`, which calls `FlowEngine.init()` once
+// on DOMContentLoaded so the gutter motifs animate automatically.
+// A page-level `<script>FlowEngine.init();</script>` is therefore
+// optional but still safe: init() is idempotent (re-registers any
+// new paths, doesn't restart the rAF loop or duplicate pools — see
+// the `frameStarted` guard and the `poolsByEl` lookup).
 //
-//     <script src="/scripts/flow-engine.js"></script>
-//     <script>FlowEngine.init();</script>
-//
-// at the bottom of <body> is the whole integration. The engine is
-// page-agnostic and a no-op where no `data-flow` / `data-pulse`
-// element exists.
+// Use a page-level init call when the page mutates its SVG geometry
+// after DOMContentLoaded (e.g. swaps a path's d attribute) and needs
+// the engine to pick up the new geometry without waiting for the
+// next full reload. For static schematics, no page-level call is
+// needed. The engine is page-agnostic and a no-op where no
+// `data-flow` / `data-pulse` element exists.
 //
 // Mechanic: each annotated element gets its own pool of <circle>
 // particles, injected into a single per-SVG `<g class="flow-particles">`
@@ -91,10 +97,22 @@
 // calls bypass the gate.
 //
 // Public API:
-//   FlowEngine.init()              — scan the document, build pools,
-//                                    start the frame loop. Idempotent
-//                                    for already-built pools (a second
-//                                    call rebuilds them in place).
+//   FlowEngine.init()              — scan the document for [data-flow]
+//                                    and [data-pulse] elements, build
+//                                    pools for any new ones, and start
+//                                    the rAF loop on the first call.
+//                                    Idempotent across calls: the
+//                                    `frameStarted` guard means a
+//                                    second call only re-registers
+//                                    paths, never spins up a second
+//                                    loop; per-element pools are
+//                                    rebuilt in place via `poolsByEl`
+//                                    so duplicates are impossible.
+//                                    Called once site-wide from
+//                                    schematic-bg.js; page-level
+//                                    callers can re-call after
+//                                    mutating SVG geometry without
+//                                    worrying about state.
 //   FlowEngine.refreshPath(el)     — rebuild the particle pool for one
 //                                    annotated element after the page
 //                                    mutated its `data-flow-density`
