@@ -3141,6 +3141,50 @@ and the Public API `init()` entry (commit `8e24313`) to describe:
 
 Docs-only, no behavior change.
 
+### 72. Landing-page lead paragraphs each carry their own inline-style copy of the same shape
+
+Caught during the refinement-period content audit, Batch 1 — Landings
+(2026-05-24). The three section-landing pages each open with a single
+lead paragraph styled via inline `style="..."` attribute:
+
+- `html/tools/index.html:18` —
+  `font-weight:300;color:var(--text);max-width:560px;margin-bottom:2rem;line-height:1.8`
+- `html/simulators/index.html:18` —
+  `font-weight:300;color:var(--text);max-width:560px;margin-bottom:2rem;line-height:1.8`
+- `html/education/index.html:18` —
+  `font-weight:300;color:var(--text);max-width:700px;margin-bottom:2rem;line-height:1.8`
+
+Identical declaration apart from the `max-width` (560 / 560 / 700).
+This is the same pattern issue #19's pattern-1 promotion addressed for
+education *content* pages by extracting `.page-intro` — but the
+*landing* pages were not in that sweep's scope, so the inline shape
+persists on three pages.
+
+User-visible consequence is documented under
+`content-audit.md` finding #18 (Batch 1 refinement-period audit):
+the three landings render with inconsistent lead widths that read
+as cadence drift between peer pages.
+
+**Why it matters:** retunes to lead typography (line-height,
+font-weight, color contrast) require touching three files and
+keeping their inline rules in sync. The pattern also models "inline
+is fine here" for any future landing page (the refrigerant Education
+landing the friction file hints at would inherit the bad pattern).
+
+**Recommended action:** promote one of:
+- a new `.landing-intro` class in `styles.css` (separates landing
+  intros from content-page intros, leaves `.page-intro` scoped to
+  the content surface)
+- a broader `.page-intro` reuse that covers both landing and content
+  contexts (single class, one rule to retune)
+
+Either way, the three inline `style=` attributes on
+`/tools/`, `/simulators/`, `/education/` index pages get dropped to
+`class="landing-intro"` (or `class="page-intro"`). Pick one
+canonical `max-width` (660 px is the median used by `.page-intro`
+today; 700 is the education value). One-PR sweep, two files
+modified (`styles.css` + the three landings).
+
 ---
 
 ### Deferred / Won't fix (with revisit trigger)
