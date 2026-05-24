@@ -109,6 +109,7 @@ nav: tools
                         <button class="copy-btn" id="ss-copy-scaling">Copy value</button>
                     </div>
                     <div class="result-formula wrap" id="scaling-formula"></div>
+                    <div class="failure-callout" id="ss-scaling-callout" hidden></div>
                 </section>
 
             </div>
@@ -159,6 +160,7 @@ nav: tools
                         <button class="copy-btn" id="ss-copy-reverse">Copy signal</button>
                     </div>
                     <div class="result-formula wrap" id="reverse-formula"></div>
+                    <div class="failure-callout" id="ss-reverse-callout" hidden></div>
                 </section>
 
             </div>
@@ -206,6 +208,7 @@ nav: tools
 
             </div>
             <div class="result-formula flush" id="so-formula"></div>
+            <div class="failure-callout" id="ss-slopeoffset-callout" hidden></div>
         </div>
 
         <!-- Shared reference row: the same Common Signal Types content
@@ -285,22 +288,33 @@ nav: tools
             const euMax  = parseFloat(document.getElementById('eu-max').value);
             const euUnit = document.getElementById('eu-label-input').value || '';
 
-            const outEl  = document.getElementById('scaling-out');
-            const pctEl  = document.getElementById('scaling-pct');
-            const fillEl = document.getElementById('range-bar-fill');
+            const outEl     = document.getElementById('scaling-out');
+            const pctEl     = document.getElementById('scaling-pct');
+            const fillEl    = document.getElementById('range-bar-fill');
+            const calloutEl = document.getElementById('ss-scaling-callout');
 
             document.getElementById('bar-label-min').textContent = !isFinite(euMin) ? 'Min' : `${euMin}${euUnit ? ' ' + euUnit : ''}`;
             document.getElementById('bar-label-max').textContent = !isFinite(euMax) ? 'Max' : `${euMax}${euUnit ? ' ' + euUnit : ''}`;
 
-            if (!isFinite(sig) || !isFinite(euMin) || !isFinite(euMax) || !isFinite(sMin) || !isFinite(sMax) || sMax === sMin) {
+            const muteOutputs = (msg) => {
                 outEl.className = 'ps-value muted';
                 outEl.textContent = '—';
                 pctEl.className = 'ps-value muted';
                 pctEl.textContent = '—';
                 fillEl.style.width = '0%';
                 document.getElementById('scaling-formula').textContent = '';
+                calloutEl.textContent = msg;
+                calloutEl.hidden = false;
+            };
+            if (!isFinite(sig) || !isFinite(euMin) || !isFinite(euMax) || !isFinite(sMin) || !isFinite(sMax)) {
+                muteOutputs('Enter a signal value and engineering-unit range to compute.');
                 return;
             }
+            if (sMax === sMin || euMax === euMin) {
+                muteOutputs('Range high equals range low — there’s no span to scale across. Set them to different values.');
+                return;
+            }
+            calloutEl.hidden = true;
 
             const span    = sMax - sMin;
             const ratio   = (sig - sMin) / span;
@@ -329,17 +343,28 @@ nav: tools
             const eu    = parseFloat(document.getElementById('rev-eu-val').value);
             const euMin = parseFloat(document.getElementById('rev-eu-min').value);
             const euMax = parseFloat(document.getElementById('rev-eu-max').value);
-            const outEl = document.getElementById('reverse-out');
-            const pctEl = document.getElementById('reverse-pct');
+            const outEl     = document.getElementById('reverse-out');
+            const pctEl     = document.getElementById('reverse-pct');
+            const calloutEl = document.getElementById('ss-reverse-callout');
 
-            if (!isFinite(eu) || !isFinite(euMin) || !isFinite(euMax) || euMax === euMin) {
+            const muteOutputs = (msg) => {
                 outEl.className = 'ps-value muted';
                 outEl.textContent = '—';
                 pctEl.className = 'ps-value muted';
                 pctEl.textContent = '—';
                 document.getElementById('reverse-formula').textContent = '';
+                calloutEl.textContent = msg;
+                calloutEl.hidden = false;
+            };
+            if (!isFinite(eu) || !isFinite(euMin) || !isFinite(euMax)) {
+                muteOutputs('Enter an engineering value and engineering-unit range to compute.');
                 return;
             }
+            if (euMax === euMin) {
+                muteOutputs('Engineering range high equals range low — there’s no span to scale across. Set them to different values.');
+                return;
+            }
+            calloutEl.hidden = true;
 
             const ratio = (eu - euMin) / (euMax - euMin);
             const sig   = sMin + ratio * (sMax - sMin);
@@ -367,15 +392,26 @@ nav: tools
             const slopeEl   = document.getElementById('so-slope');
             const offsetEl  = document.getElementById('so-offset');
             const formulaEl = document.getElementById('so-formula');
+            const calloutEl = document.getElementById('ss-slopeoffset-callout');
 
-            if (!isFinite(x1) || !isFinite(y1) || !isFinite(x2) || !isFinite(y2) || x1 === x2) {
+            const muteOutputs = (msg) => {
                 slopeEl.className  = 'ps-value muted';
                 offsetEl.className = 'ps-value muted';
                 slopeEl.textContent  = '—';
                 offsetEl.textContent = '—';
-                formulaEl.textContent = x1 === x2 ? 'x₁ and x₂ cannot be equal — division by zero.' : '';
+                formulaEl.textContent = '';
+                calloutEl.textContent = msg;
+                calloutEl.hidden = false;
+            };
+            if (!isFinite(x1) || !isFinite(y1) || !isFinite(x2) || !isFinite(y2)) {
+                muteOutputs('Enter both (x, y) pairs to solve.');
                 return;
             }
+            if (x1 === x2) {
+                muteOutputs('x₁ equals x₂ — the slope is undefined (division by zero). Set x₁ and x₂ to different values.');
+                return;
+            }
+            calloutEl.hidden = true;
 
             const m = (y2 - y1) / (x2 - x1);
             const b = y1 - m * x1;

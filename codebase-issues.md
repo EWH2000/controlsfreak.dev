@@ -3202,6 +3202,38 @@ The visual change is small: tools / sims leads gain ~100 px of line
 length at wide viewports; education's lead loses ~40 px. Subjectively
 all three now read at the same cadence.
 
+### 73. Page-local failure-pill DRY — four tools each define their own warn/error chrome
+
+**Where.** `economizer-ratio.html` (`.er-feas`), `air-mixing.html`
+(`.am-status`), `coil-sizing.html` (`.cs-status`),
+`refrigerant-pt.html` (`.rf-status`). Each `{% block head %}` defines
+a near-identical class block: warm-orange `var(--heat)` left border
+on `.warn`, red `var(--red)` on `.error`, accent-green
+`var(--accent-dim)` background on `.ok`. The comments in
+`coil-sizing.html` and `refrigerant-pt.html` literally point at each
+other ("same chrome as economizer-ratio's `.er-feas` and air-mixing's
+`.am-status`") — the duplication is self-acknowledged.
+
+**Why not addressed in PR #4 (audit-impl).** PR #4 added the shared
+`.failure-callout` class (PR #1) to the three tools with no failure
+chrome at all (signal-scaling, modbus, bacnet). It chose to leave
+the four already-conforming tools alone because their existing pills
+carry positive "ok" affirmation states (green background) that
+`.failure-callout` doesn't have today — a naïve migration would
+degrade UX.
+
+**What it would take to fix.** Grow `.failure-callout` into a
+multi-state pill with `.ok` / `.warn` / `.error` modifiers that
+match the existing per-page chrome, then sweep the four tools to
+remove their page-local definitions and rename the consumer markup
++ `setStatus()` calls. Estimate: ~30 LOC removed per page, ~25 LOC
+added to `styles.css`. Net reduction modest; main payoff is one
+source of truth for failure-state visuals across the site.
+
+**Revisit trigger.** A fifth tool needs failure-state chrome, OR a
+visual refresh of the warn/error palette ships and the duplication
+becomes a real maintenance cost.
+
 ### Deferred / Won't fix (with revisit trigger)
 
 Items considered during an audit and deliberately not pursued, each

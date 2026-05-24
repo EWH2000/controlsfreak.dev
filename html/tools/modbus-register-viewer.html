@@ -78,6 +78,7 @@ nav: tools
                         <span class="ps-label">Binary</span>
                         <span class="ps-value muted" id="read-bin">—</span>
                     </div>
+                    <div class="failure-callout" id="mod-single-callout" hidden></div>
                 </section>
 
             </div>
@@ -142,6 +143,7 @@ nav: tools
                         looks like nonsense at one ordering and plausible at
                         another, the other ordering is the vendor's.
                     </p>
+                    <div class="failure-callout" id="mod-pair-callout" hidden></div>
                 </section>
 
             </div>
@@ -274,9 +276,20 @@ nav: tools
             return bits.reduce((acc, b, i) => acc + (b << i), 0);
         }
 
+        // Single-register failure callout — shared between fromDec / fromHex.
+        // Both write the same message; whichever field the user is actively
+        // editing is the one whose validity the callout reflects.
+        const singleCallout = document.getElementById('mod-single-callout');
+        const SINGLE_FAIL_MSG = 'Enter a whole number from 0 to 65535, or hex 0x0000–0xFFFF.';
+
         function fromDec() {
             const val = parseInt(document.getElementById('mod-dec').value);
-            if (!isFinite(val) || val < 0 || val > 65535) return;
+            if (!isFinite(val) || val < 0 || val > 65535) {
+                singleCallout.textContent = SINGLE_FAIL_MSG;
+                singleCallout.hidden = false;
+                return;
+            }
+            singleCallout.hidden = true;
             for (let i = 0; i < 16; i++) bits[i] = (val >> i) & 1;
             document.getElementById('mod-hex').value = '0x' + val.toString(16).toUpperCase().padStart(4, '0');
             updateReadouts(val);
@@ -286,7 +299,12 @@ nav: tools
         function fromHex() {
             const raw = document.getElementById('mod-hex').value.trim().replace(/^0x/i, '');
             const val = parseInt(raw, 16);
-            if (!isFinite(val) || val < 0 || val > 65535) return;
+            if (!isFinite(val) || val < 0 || val > 65535) {
+                singleCallout.textContent = SINGLE_FAIL_MSG;
+                singleCallout.hidden = false;
+                return;
+            }
+            singleCallout.hidden = true;
             for (let i = 0; i < 16; i++) bits[i] = (val >> i) & 1;
             document.getElementById('mod-dec').value = val;
             updateReadouts(val);
@@ -337,13 +355,18 @@ nav: tools
             setPairCell(`pair-${order}-f32`, f32.toString());
         }
 
+        const pairCallout = document.getElementById('mod-pair-callout');
+
         function calcPair() {
             const r1 = parseInt(document.getElementById('pair-r1-dec').value);
             const r2 = parseInt(document.getElementById('pair-r2-dec').value);
             if (!isFinite(r1) || r1 < 0 || r1 > 65535 || !isFinite(r2) || r2 < 0 || r2 > 65535) {
                 clearPairOutputs();
+                pairCallout.textContent = 'Both registers must be whole numbers from 0 to 65535 to decode the pair.';
+                pairCallout.hidden = false;
                 return;
             }
+            pairCallout.hidden = true;
             const A = (r1 >> 8) & 0xFF, B = r1 & 0xFF;
             const C = (r2 >> 8) & 0xFF, D = r2 & 0xFF;
             decodeOrdering(A, B, C, D, 'abcd');
