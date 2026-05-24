@@ -2,152 +2,72 @@
 
 A field-reference tool site for building-controls engineers — open
 calculators and lookup utilities for BACnet, Modbus, HVAC, and building
-automation work, plus plain-English explainers. "No login, no ads, just
-tools that are actually useful on a job site." Source pages under
-`html/` plus a small Cloudflare Worker (only for `/contact`). The
-toolchain is deliberately minimal: 11ty (Eleventy) templates the
-shared chrome — `<head>`, nav, footer — out of every page;
-everything else is vanilla. No client-side framework, no bundler, no
-transpiler. View-source of the rendered page is still readable HTML,
-and browsers ten years from now will still run it. There's a personal
-"About" card on the home page, but the project is the tools, not a
-personal homepage.
+automation work, plus plain-English explainers. Source pages under
+`html/` plus a small Cloudflare Worker (only for `/contact`). 11ty
+templates the shared chrome (`<head>`, nav, footer) out of every page;
+everything else is vanilla — no client-side framework, no bundler, no
+transpiler.
 
-For per-page design history, scope decisions, and ideas-not-yet-shipped,
-see `site-ideas-and-friction.md`. For open code-quality items needing a
-decision, see `codebase-issues.md`. For the user-facing tour of what
-the site does, see `README.md`.
+Companion docs: `README.md` for the user-facing tour;
+`site-ideas-and-friction.md` for per-page design history and
+ideas-not-yet-shipped; `codebase-issues.md` for open code-quality
+items needing a decision.
 
 ## Stack
 
 - **Eleventy (11ty) build pipeline.** `.eleventy.js` runs every
-  `.html` under `html/` through Nunjucks and writes to `_site/`.
-  Pages carry YAML frontmatter and extend the shared layout (see
-  *Templating*). Static assets (`scripts/`, `styles.css`, `assets/`,
-  `robots.txt`) are passthrough-copied; `sitemap.xml` is generated
-  (see *Sitemap*). Build is fast (~0.3s for 30 pages); Nunjucks is
-  the only thing the build does — no JS transpile or bundle step.
+  `.html` under `html/` through Nunjucks and writes to `_site/`. YAML
+  frontmatter + shared layout (see *Templating*). Static assets
+  (`scripts/`, `styles.css`, `assets/`, `robots.txt`) passthrough;
+  `sitemap.xml` generated (see *Sitemap*). Build ~0.3s for 30 pages;
+  no JS transpile or bundle step.
 - **Templates under `html/_includes/`:**
-  - `layouts/page.njk` — the page shell. Composes `head.njk` /
-    `schematic-bg.njk` / `nav.njk` / `footer.njk`, loads the
-    site-wide shared scripts (`flow-engine.js`, `schematic-bg.js`)
-    at end-of-body, and exposes three named blocks (`head`,
-    `content`, `scripts`) for pages to fill. See *Templating* for
-    the block contract.
-  - `head.njk` — standard `<head>`: meta tags, OG tags from
-    frontmatter, favicons, Google Fonts, `/styles.css`, units-bootstrap
-    inline script.
-  - `nav.njk` — shared top nav; `.active` driven by the `nav`
-    frontmatter value.
-  - `footer.njk` — tagline + version string. `{{ site.version }}`
-    re-exports `package.json.version` via `html/_data/site.js`, so
-    bumping the version is a one-line edit in `package.json`. Bump
-    cadence under *Adding a new tool*.
-  - `schematic-bg.njk` — the gutter schematic-collage: two narrow
-    vertical SVG strips in the side gutters, each holding ~60
-    inline-SVG motifs (pipe-valves, pump-coils, AI/AO terminals,
-    BI/BO terminals, logic-chains, BACnet/IP nodes) drawn from a
-    `motifBody` macro. Included by `layouts/page.njk` directly —
-    no per-page opt-in. Hidden below 1240px viewport ("field
-    device" cutoff — see *Gotchas*) and in print; reduced-motion
-    snaps to drawn state. Path tagging conventions
-    (`data-flow` / `data-pulse` / `data-sbg-stroke` / `pathLength="1"`)
-    are documented in the partial's header.
-  - `nav-card.njk` — `navCard()` macro that produces a hero-frame
-    nav-card. All 27 nav cards on the home / tools / education /
-    simulators landings share this shape: `.nav-card-titlebar`
-    (mono caps prefix + ellipsis-clipped title + OK pill),
-    `.nav-card-body`, and `.nav-card-statusline` (bullet-separated
-    semantic pills). Sections drive an accent-color cascade via
-    `.nav-card--{home,tools,education,simulators}` and the
-    `--section-accent` / `--section-accent-dim` / `--section-accent-glow`
-    tokens. Macro params: `section`, `href`, `titleShort`,
-    `titleFull`, `desc`, `pills[]`, optional `category`.
-- **Directory data file:** `html/html.11tydata.js` — overrides 11ty's
+  - `layouts/page.njk` — page shell. Composes `head.njk` /
+    `schematic-bg.njk` / `nav.njk` / `footer.njk`; loads
+    `flow-engine.js` + `schematic-bg.js` at end-of-body; exposes
+    `head` / `content` / `scripts` blocks. See *Templating*.
+  - `head.njk` — `<head>`: meta, OG, favicons, fonts, `/styles.css`,
+    units-bootstrap inline script.
+  - `nav.njk` — top nav; `.active` driven by `nav` frontmatter.
+  - `footer.njk` — tagline + version string (re-exports
+    `package.json.version` via `html/_data/site.js`).
+  - `schematic-bg.njk` — gutter SVG collage. Hidden below 1240px
+    (see *Gotchas*). Path-tagging conventions in the partial's
+    header.
+  - `nav-card.njk` — `navCard()` macro for the hero-frame nav-cards
+    used across home / tools / education / simulators landings.
+    Params: `section`, `href`, `titleShort`, `titleFull`, `desc`,
+    `pills[]`, optional `category`.
+- **Directory data:** `html/html.11tydata.js` overrides 11ty's
   pretty-URL permalink so `signal-scaling.html` lands at
-  `_site/tools/signal-scaling.html` (not `signal-scaling/index.html`).
-  Load-bearing for the `.html`-extension convention (see *Conventions*).
-- **`html/styles.css`** — the shared design system. Every page picks
-  it up via `head.njk`'s `<link rel="stylesheet" href="/styles.css">`.
-  Shared rules live in the file; page-only rules stay inline via
-  `{% block head %}`.
-- **Shared scripts** in `html/scripts/` are **classic scripts** (not
-  ES modules — no bundler, and helpers expose globals like `Units`,
-  `simulatePid`, `FlowEngine` that page IIFEs reach for by name).
-  Most are loaded per-page via `<script src="/scripts/xxx.js"></script>`
-  inside `{% block scripts %}`, *before* the page's inline
-  `<script>`; `flow-engine.js` and `schematic-bg.js` are loaded
-  site-wide by `layouts/page.njk` instead (gutter motifs need them
-  on every page). Each script's file header documents its exports.
-  - `pid-engine.js` — PID simulation core (FOPDT + conditional-
-    integration anti-windup). Pure math, no DOM. Paired with
-    `pid-chart.js` (canvas drawer + unit-aware delta formatter).
-  - `flow-engine.js` — animation engine for SVG schematics. Two
-    motion modes:
-    - `data-flow="supply"|"return"` — continuous particle stream
-      (hydronic pipes; longer paths = longer cycles, direct-vs-
-      reverse-return pedagogy).
-    - `data-pulse="signal"` — discrete pulse (head + 4-circle trail)
-      that travels the path once and retires; EBO-style "signal
-      just updated" cue. Auto-fires on `data-pulse-interval` (default
-      4000ms) and is IO-gated so off-screen motifs don't churn.
-      External callers fire on demand with `FlowEngine.pulse(el)` —
-      the function-block editor uses this to flash a wire when its
-      source block updates.
-    `init()` is idempotent (rAF loop has a `frameStarted` guard;
-    pools de-dupe via `poolsByEl`), so `schematic-bg.js`'s site-wide
-    init call composes safely with any page-level `FlowEngine.init()`.
-    Engine attribute conventions also documented in
-    `site-ideas-and-friction.md`.
-  - `schematic-bg.js` — scroll-driven reveal for the gutter
-    schematic motifs. IntersectionObserver toggles `.is-drawn` on
-    each motif as it scrolls in (CSS handles the stroke-dashoffset
-    transition); also calls `FlowEngine.init()` once on
-    DOMContentLoaded so the gutter pipes carry particles and the
-    wiring / logic-chain / BACnet paths auto-pulse. Under
-    `prefers-reduced-motion: reduce`, snaps every motif to drawn
-    state synchronously instead.
-  - `thermistor-data.js` — R/T curves generated from per-type
-    parameters (β, R25, shunt, R0, TCR); file header tracks
-    per-type confidence.
-  - `units.js` — site-wide US/metric toggle. State in `localStorage`
-    (`cf_units`), `unitschange` event on `document`, exposes
-    `window.Units`. Head bootstrap reads `localStorage` before first
-    paint to avoid a US flash for metric visitors.
-  - `ui.js` — `switchTab`, `copyText`, `copyReadouts`. Clipboard
-    failures fail silently.
-  - `psy-widget.js` — Define-by widget helpers shared by
-    `psychrometric-chart`, `air-mixing`, `economizer-ratio`, and
-    `coil-sizing`.
-    Exposes `buildSecondProp()` (per-mode label + step catalog that
-    tracks the active unit system) and `secondToCanonical(mode,
-    value)` (display-units → canonical-IP conversion). No DOM
-    access; pages keep their own id-prefix-aware wiring.
+  `_site/tools/signal-scaling.html`. Load-bearing for the
+  `.html`-extension convention.
+- **`html/styles.css`** — shared design system; every page links it
+  via `head.njk`. Page-only rules stay inline via `{% block head %}`.
+- **Shared scripts** in `html/scripts/` are **classic scripts** (no
+  ES modules, no bundler) that expose globals like `Units`,
+  `simulatePid`, `FlowEngine` for page IIFEs to reach by name. Each
+  file has a thorough header — **read it for the API**.
+  `flow-engine.js` and `schematic-bg.js` are loaded site-wide from
+  `layouts/page.njk`; the rest load per-page inside `{% block scripts %}`
+  *before* the page's inline `<script>`.
 - **Worker:** `src/worker.js` — ES-module Worker. Handles
-  `POST /api/contact` (validate, drop honeypot silently, verify
-  Turnstile, send via Resend with `reply_to` = submitter); falls
-  through to `env.ASSETS.fetch(request)` otherwise. Secrets:
-  `TURNSTILE_SECRET`, `RESEND_API_KEY` (`wrangler secret put …`).
-  Turnstile *site* key lives in `contact.html`. `from`/`to` =
-  `contact@controlsfreak.dev` (verified Resend sender).
-- **Fonts:** Google Fonts (IBM Plex Mono + Overpass) with `preconnect`
-  — loaded once via `head.njk`. Self-hosting is reasonable future
-  cleanup.
-- **Hosting:** Cloudflare Workers. Auto-deploys on push to `main` via
-  GitHub integration (~60s); the dashboard runs
-  `npm install && npm run build` before each deploy and serves
-  `_site/`.
+  `POST /api/contact` (validate, honeypot, Turnstile, Resend); falls
+  through to `env.ASSETS.fetch(request)`. Secrets: `TURNSTILE_SECRET`,
+  `RESEND_API_KEY` via `wrangler secret put …`. Turnstile *site* key
+  lives in `contact.html`.
+- **Hosting:** Cloudflare Workers; auto-deploys ~60s on push to
+  `main` (the dashboard runs `npm install && npm run build` and
+  serves `_site/`).
 - **Config:** `wrangler.jsonc` — `name`, `main`, `assets.directory`
-  (`./_site`, not the source `./html/`), `assets.binding` (`ASSETS`),
-  `assets.html_handling` (`auto-trailing-slash` —
-  `/contact.html` redirects to `/contact`, `/tools/` serves
-  `tools/index.html`), and `compatibility_date` are all load-bearing.
-  `_site/` is gitignored.
+  (`./_site`), `assets.binding` (`ASSETS`), `assets.html_handling`
+  (`auto-trailing-slash`), and `compatibility_date` are all
+  load-bearing.
 
 ### Templating
 
-Every page in `html/` (other than the partials under `_includes/`)
-has this shape:
+Every page in `html/` (other than partials under `_includes/`) has
+this shape:
 
 ```nunjucks
 ---
@@ -186,53 +106,35 @@ nav: tools
 {% endblock %}
 ```
 
-Frontmatter fields:
+Frontmatter:
 
-- `title` — used verbatim for `<title>` and `og:title`. Quote only
-  if it starts with a YAML-special character.
-- `description` — used verbatim for `<meta name="description">` and
-  `og:description`. 140–160 chars, human-written, never reused —
-  enforced by a build-time guard in `.eleventy.js` (the
-  `descriptionLengthGuard` collection) that fails the build on any
-  out-of-range description. Renders HTML-autoescaped: `'` becomes
-  `&#39;`, `<` becomes `&lt;` in view-source. Rephrase to avoid those
-  characters if clean view-source matters.
-- `canonical` — full URL with `.html` extension. Used for `og:url`.
-- `nav` — one of `home`, `tools`, `simulators`, `education`, `contact`. Drives the
-  `.active` marker on the top nav. Omit (or empty string) on pages
-  that don't fit.
+- `title` — verbatim for `<title>` and `og:title`.
+- `description` — verbatim for `<meta name=description>` and
+  `og:description`. **140–160 chars**, human-written, never reused —
+  enforced by `descriptionLengthGuard` in `.eleventy.js` (fails the
+  build on out-of-range). Renders HTML-autoescaped, so rephrase to
+  avoid `'` and `<` if clean view-source matters.
+- `canonical` — full URL with `.html` extension; used for `og:url`.
+- `nav` — one of `home`, `tools`, `simulators`, `education`,
+  `contact`; drives the `.active` marker. Omit on pages that don't
+  fit.
 
-Blocks:
-
-- `{% block head %}` — optional; for inline `<style>` or a head-loaded
-  third-party script (Turnstile on `contact.html` is the only current
-  example).
-- `{% block content %}` — required; everything between nav and footer
-  (for almost every page, an outer `<main>…</main>`).
-- `{% block scripts %}` — end-of-body scripts. Shared `<script src>`
-  tags first, then the page's inline `<script>` — order matters since
-  the inline code references symbols the shared scripts export.
-
-The layout uses `trimBlocks: true` + `lstripBlocks: true`, so empty
-blocks and indented includes don't leak whitespace into the rendered
-HTML.
+Blocks: `head` (optional — inline `<style>` or head-loaded script;
+Turnstile on `contact.html` is the only current head-script example);
+`content` (required); `scripts` (end-of-body — shared `<script src>`
+first, then the page's inline `<script>`, since the inline code
+references symbols the shared scripts export).
 
 ### Sitemap
 
-`html/sitemap.njk` renders `_site/sitemap.xml` at build time — it is
-not a hand-maintained file. The `sitemapPages` collection in
-`.eleventy.js` gathers every template carrying a `canonical`
-frontmatter (all 30 real pages; the sitemap template has none, so it
-self-excludes) and sorts by canonical URL. Each `<loc>` is the page's
-`canonical`; each `<lastmod>` comes from the `gitLastmod` filter,
-which runs `git log -1 --format=%cd --date=short -- <inputPath>` and
-falls back to the build date if git has no record. A new page with a
-`canonical` is picked up automatically — no sitemap edit needed (do
-update the `PAGES` array in `tests/smoke.spec.js`, which the drift
-test checks against the built sitemap). CI checks out with
-`fetch-depth: 0` so the dates resolve; if the Cloudflare deploy build
-ever shallow-clones, every `<lastmod>` collapses to the build date —
-harmless, but the signal is lost.
+`html/sitemap.njk` renders `_site/sitemap.xml` at build time from the
+`sitemapPages` collection (every template with a `canonical`
+frontmatter). `<lastmod>` comes from the `gitLastmod` filter
+(`git log -1 --format=%cd --date=short`), falls back to build date.
+A new page with `canonical` is picked up automatically — but **update
+the `PAGES` array in `tests/smoke.spec.js`** (the drift test checks
+it against the built sitemap). CI uses `fetch-depth: 0` so dates
+resolve.
 
 ### Conventions
 
@@ -378,282 +280,130 @@ harmless, but the signal is lost.
 
 ## Repo structure
 
-```
-controlsfreak.dev/
-├── CLAUDE.md
-├── README.md
-├── site-ideas-and-friction.md
-├── codebase-issues.md
-├── .eleventy.js              # 11ty config — passthroughs, Nunjucks options
-├── wrangler.jsonc            # serves _site/ via env.ASSETS
-├── package.json              # scripts: build / dev / test
-├── src/worker.js
-├── html/                     # source (input to 11ty)
-│   ├── html.11tydata.js      # permalink override — keeps .html extensions
-│   ├── _includes/            # head.njk, nav.njk, nav-card.njk, schematic-bg.njk, footer.njk, layouts/page.njk
-│   ├── styles.css            # passthrough → _site/styles.css
-│   ├── scripts/              # passthrough; pid-engine, flow-engine, units, …
-│   ├── assets/               # passthrough; og-image, favicons
-│   ├── sitemap.njk           # generated → _site/sitemap.xml (see Sitemap)
-│   ├── robots.txt            # passthrough
-│   ├── index.html
-│   ├── contact.html
-│   ├── tools/                # tool pages + tools/index.html landing
-│   ├── simulators/           # simulator pages + simulators/index.html landing
-│   └── education/            # lesson pages + education/index.html landing
-├── tests/                    # Playwright (smoke.spec.js, contact.spec.js)
-└── _site/                    # build output — gitignored
-```
+- `html/` — source (input to 11ty). Pages, `_includes/` partials,
+  `styles.css`, `scripts/`, `assets/`, `sitemap.njk`, `robots.txt`,
+  `html.11tydata.js`.
+- `src/worker.js` — the Cloudflare Worker.
+- `tests/` — Playwright specs (`smoke.spec.js`, `contact.spec.js`,
+  `psychro-engine.spec.js`).
+- `_site/` — build output (gitignored).
+- Root: `CLAUDE.md`, `README.md`, `site-ideas-and-friction.md`,
+  `codebase-issues.md`, `.eleventy.js`, `wrangler.jsonc`,
+  `package.json`.
 
 ## Design landmarks
 
-Cross-cutting decisions that aren't obvious from any single file. For
-per-page history and the *why* behind each, see
+Cross-cutting decisions. For per-page history and *why*, see
 `site-ideas-and-friction.md`; for the user-facing tour, see
-`README.md`.
+`README.md`. This section only carries what's load-bearing when
+adding or moving pages.
 
-- **Shared top nav** (`.site-nav`, in `nav.njk`): Home / Tools /
-  Simulators / Education / Contact. The `nav` frontmatter field on
-  each page drives the `.active` marker; no JS. `Tools`, `Simulators`,
-  and `Education` link to hub landings (`/tools/`, `/simulators/`,
-  `/education/`).
+- **Shared top nav:** Home / Tools / Simulators / Education /
+  Contact. `nav` frontmatter drives `.active`. Tools / Simulators /
+  Education link to hub landings.
 - **Page archetypes:**
   - *Tools* mostly use the **property-sheet layout** (`.ps-*` +
-    `.ref-table-dense`) — Niagara-style label-left / value-right
-    rows. Two flavors of grid carry it:
-    - **2-col + below-grid row** (`.tool-body-2col` + sibling
-      `.tool-body-row`) — Input | Output side-by-side, with
-      reference / worked-example / tips content flowing full-width
-      beneath. The dominant pattern (`bacnet-ip-converter`,
-      `economizer-ratio`, `air-mixing`, `coil-sizing`,
-      `signal-scaling`, `modbus-register-viewer`). The
-      `.tool-body-row` sibling can
-      sit inside a `.tab-pane` (per-tab worked example, as on
-      economizer-ratio / air-mixing) or as a sibling of all the
-      tab-panes inside `.tool-card` (shared reference, as on
-      signal-scaling / modbus-register-viewer — `switchTab` in
-      `ui.js` only toggles `.tab-pane` descendants).
-    - **3-col** (`.tool-body-3col`) — Input | Output | Reference
-      side-by-side. Right for tools whose middle / reference column
-      has comparable density to Input + Output (`psychrometric-chart`
-      with its canvas mid-column; `thermistor-calculator` with its
-      tall R/T table as the page's deliverable). Codebase-issues #29
-      documents when *not* to reach for this.
+    `.ref-table-dense`). Two grid flavors:
+    - `.tool-body-2col` + sibling `.tool-body-row` — Input | Output
+      side-by-side, reference / worked-example flowing full-width
+      beneath (the dominant pattern). The `.tool-body-row` can sit
+      inside a `.tab-pane` (per-tab worked example) or as a sibling
+      of all tab-panes inside `.tool-card` (shared reference) —
+      `switchTab` in `ui.js` only toggles `.tab-pane` descendants.
+    - `.tool-body-3col` — Input | Output | Reference side-by-side.
+      Right for tools whose Reference column has comparable density
+      (`psychrometric-chart`, `thermistor-calculator`).
+      Codebase-issues #29 documents when *not* to reach for this.
   - *Simulators* (`/simulators/`) keep **custom stacked layouts** —
-    a running model (PID tuner, Mock VFD, Function-Block Editor)
-    doesn't fit Input/Output/Reference. They live in their own
-    section rather than under `/tools/` because they're for *playing
-    with a model*, not *looking something up*.
+    a running model doesn't fit Input/Output/Reference.
   - *Education* pages use the **lesson layout** (`.tool-card` /
-    `.tool-body`), NOT the column-grid patterns. **Prose sits above
-    each diagram; the diagram is the visual capstone.**
-- **Animation:** the shared engine `/scripts/flow-engine.js`
-  (loaded site-wide from `layouts/page.njk`) drives two motion
-  primitives:
-  - **Continuous particle flow** on `data-flow="supply"|"return"`
-    paths — constant velocity, longer paths = longer cycles
-    (direct-vs-reverse-return pedagogy). Shared styling (`.edu-svg`,
-    `.edu-legend`) in `styles.css`: supply solid `--blue`, return
-    dashed `--blue-cool`, `flow-active [data-flow="return"]` drops
-    dashes while running. The encoding is "physical media moving
-    through pipes / air handlers."
-  - **Discrete signal pulse** on `data-pulse="signal"` paths — a
-    head + trailing 4-circle tail launches from the path start,
-    travels at fixed pixel-speed, and retires at the end. The
-    encoding is "control signal just updated" (an analog wire
-    sampling, a logic block firing, a BACnet/IP comm trace
-    delivering). Auto-fires on `data-pulse-interval`; the
-    function-block editor calls `FlowEngine.pulse(el)` directly
-    when a wire's source block updates.
-- **Schematic-collage gutter art:** `_includes/schematic-bg.njk`
-  emits two narrow SVG strips in the side gutters (left + right,
-  ~60 motifs each, 230px stride), holding inline-SVG instrument
-  primitives — pipe-valves and pump-coils (carry continuous flow),
-  AI/AO and BI/BO terminals (amber wiring + binary signal lines
-  pulse), logic-chains (plum AND/PID block wires pulse), BACnet/IP
-  nodes (teal comm traces pulse). Each motif draws itself in via
-  stroke-dashoffset as it scrolls in (IntersectionObserver in
-  `schematic-bg.js` toggles `.is-drawn`). Hidden below 1240px viewport
-  — anything that small is a "field device" where load time outranks
-  decoration. VFDs page uses a page-local `.vfd-svg` (no `data-flow`).
-- **Variable-flow story:** `load-piping` → `vfds` → `pump-control` →
-  `balancing` form a quartet. Cross-links pay off forward-link debts
-  between them. The twin-T subhead in `hydronic-loops.html` carries
-  `id="d3"` so `load-piping.html`'s closing section can deep-link.
-- **Simulator ↔ Education pairings:** `simulators/pid-tuner.html` ↔
-  `education/pid-basics.html` (share `pid-engine.js` + `pid-chart.js`);
-  `simulators/vfd-mock.html` ↔ `education/vfds.html` (source-parameter
-  pedagogy, with a parameter tree to navigate on the sim side);
-  `simulators/function-block-editor.html` ↔
-  `education/function-blocks.html` (share `fbe-engine.js`).
-- **Contact form:** `.tool-card` with name/email/message, an
-  off-screen CSS honeypot (`.hp-field`, named `website`), Turnstile
-  widget. POSTs form-encoded data to `/api/contact`.
-- **Nav cards** (all 27 across home / tools / education / simulators)
-  are rendered by the `navCard()` macro in `_includes/nav-card.njk`,
-  not hand-rolled. Each card is a hero-style instrument frame:
-  `.nav-card-titlebar` (mono-caps section prefix — TOOL / LESSON /
-  SIM / SECTION — plus ellipsis-clipped title + status pill) on
-  top, body in the middle, `.nav-card-statusline` (bullet-separated
-  semantic pills) on the bottom. Section drives an accent-color
-  cascade via `.nav-card--{home,tools,education,simulators}`. Pass
-  `titleShort` trimmed enough to fit one line at the 4-col 1920px
-  breakpoint (the title region clips with ellipsis, so over-long
-  values truncate silently — see `8cfedff` for the prior sweep).
-- **Tools landing** is a `.nav-card` grid of live tools, with a
-  filter-chip row above. **Simulators landing** is the same
-  `.nav-card` grid minus the filter chips — add the row back if
-  the section grows past ~6 entries.
-- **Legacy redirects:** when a page moves between sections (e.g.
-  the original Tools → Simulators migration that introduced
-  `/simulators/`), add the old URL to `LEGACY_TOOL_REDIRECTS` in
-  `src/worker.js`. The Worker 301s old paths to the new ones so
-  inbound links keep working.
+    `.tool-body`). **Prose sits above each diagram; the diagram is
+    the visual capstone.**
+- **Nav cards** are rendered by the `navCard()` macro in
+  `_includes/nav-card.njk` (NOT hand-rolled) for all landings.
+  Hero-frame shape with `.nav-card-titlebar` + `.nav-card-body` +
+  `.nav-card-statusline`. Section drives an accent cascade
+  (`.nav-card--{home,tools,education,simulators}`). Trim `titleShort`
+  enough to fit one line at the 4-col 1920px breakpoint — the title
+  region clips with ellipsis, so over-long values truncate silently.
+- **Tools landing** has a filter-chip row above the card grid;
+  bump the All chip count when adding a tool, add a per-category
+  chip if the new tool opens a new category. **Simulators landing**
+  is the same grid minus chips — add chips back if it grows past
+  ~6 entries.
+- **Legacy redirects.** When a page moves between sections, add the
+  old URL to `LEGACY_TOOL_REDIRECTS` in `src/worker.js`. The Worker
+  301s old paths to the new ones so inbound links keep working.
 
 ## Design system
 
-The design system lives in `html/styles.css`. A new tool/page should
-be built from this vocabulary, not freshly styled. Aesthetic: flat,
-light "workstation" look — white panels on light gray-green chrome,
-hairline borders, a green accent — with quiet nods to BAS UIs
-(slightly shaded panel headers, property-sheet-style zebra tables,
-flat underlined tabs). No drop shadows, no background texture.
-Light-only (`color-scheme: light`); no dark variant.
+The design system lives in `html/styles.css` — flat "workstation"
+look (white panels on light gray-green chrome, hairline borders,
+green accent) with quiet nods to BAS UIs. Light-only
+(`color-scheme: light`). A new tool/page should be built from this
+vocabulary, not freshly styled. Read `styles.css` for the full
+component catalog — it's terse and well-grouped with section
+headers.
 
-- **Layout:** body is a flex column (`min-height:100vh`) with
-  `main { flex: 1 }` so the footer sits at the viewport bottom on
-  short pages. `main` / `.hero` need `width: 100%` alongside
-  `margin: 0 auto` — without it, `margin: 0 auto` on a flex child
-  shrinks instead of centering. `.site-nav` and `footer` are
-  full-bleed (no max-width cap) — they're status-bar chrome, not
-  centered content.
-- **CSS custom properties** in `:root` — change colors by editing
-  these, not by hardcoding. Surface / border / accent / text /
-  data-color / font families are all defined there; read `styles.css`
-  for the full set and per-color semantics. Two palette families:
-  - **Physical-media palette** — `--blue` (supply water + live
-    readouts), `--blue-cool` (return water), `--red` /
-    `--accent` (heat / general highlight), `--heat` (heating on
-    the psych chart).
-  - **Control-vocabulary palette** (added with the schematic-bg
-    gutter art) — desaturated hues for the *control* side of a
-    diagram: `--teal` / `--teal-dim` / `--teal-glow` for BACnet/IP
-    comm traces; `--amber` for energized analog control wiring
-    (AI/AO traces); `--plum` / `--plum-dim` / `--plum-glow` for
-    logic-block signal lines (AND, PID, TMR chains). Same `--*-dim`
-    / `--*-glow` pattern as `--accent-dim` / `--accent-glow` — the
-    dim variants drive subtle backgrounds and the glow variants
-    drive borders / focus rings.
-
-  The canvas chart reads colors via `getComputedStyle` at draw time.
-  **No `var(--x, #hex)` fallbacks** — `var(--x)` is the canonical
-  form site-wide; every custom property used in HTML attributes or
-  canvas-JS must be defined in `:root` first. If a property is ever
+- **CSS custom properties** in `:root` are the theme — change colors
+  there, not by hardcoding. **No `var(--x, #hex)` fallbacks**:
+  `var(--x)` is the canonical form site-wide. If a property is ever
   removed from `:root` without removing its consumers, `var(--x)`
   returns empty and the consumer no-ops the color — louder failure
   mode than a stale fallback hex.
-- **Focus indicators (`:focus-visible`).** Every custom-styled
-  interactive element with a `:hover` rule needs a paired
-  `:focus-visible` — the browser default outline is suppressed by
-  the `outline: none` on `.skip-link` / form inputs / the range
-  track, so a styled button or link inherits no focus cue without
-  one. All such rules live in the single consolidated
-  `FOCUS INDICATORS` block in `styles.css` (`outline: 2px solid
-  var(--accent)` for buttons/links/cards; an extra `--accent-glow`
-  ring on the range-slider thumb). When adding a new custom
-  interactive, add its selector to that block — don't scatter a
-  one-off rule next to the `:hover`.
-- **Column-grid layouts** (`.tool-body-2col` / `.tool-body-3col` /
-  `.tool-body-row`) — all live in `styles.css` as one family.
-  `.tool-body-2col` is two equal columns; `.tool-body-3col` is three;
-  `.tool-body-row` is the full-width sibling that sits below either
-  grid (recessed `--surface-3` background + top border — same recess
-  the 3-col third column gets via `:last-child`). Each `.tool-body-*`
-  grid sits directly inside a `.tab-pane` or `.tool-card`, not inside
-  a padded `.tool-body`; tabs above take `.tabs.tabs-flush`. A row's
-  value can be `.ps-value` (mono, plus `.live` / `.muted` / `.error`)
-  or an `input/select/textarea.ps-input` (form-control variant;
-  qualified by element so it outranks the global `input[type=…]` /
-  `select` block). The grids collapse to a single stack at
-  different breakpoints — `.tool-body-3col` at ≤1000px (three
-  columns get cramped earlier inside the 1120px main cap),
-  `.tool-body-2col` at ≤900px. `.tool-body-row` has no grid
-  template to collapse and just stays full-width. Note: `.ps-section-label` is named that
-  to avoid collision with `.section-label`; the live-value modifier
-  is `.live` to avoid collision with `.readout`.
-- **Widget chrome (`.widget-*`)** — the recessed-panel idiom used by
-  interactive widgets on `pump-control`, `balancing`, `vfds`,
-  `vfd-mock`, and `hydronic-loops`. The shared vocabulary
-  (`.widget`, `.widget-try`, `.widget-section-label`,
-  `.widget-slider-head` + `.v`, `.widget-readout-label/value`,
-  `.widget-anecdote-wrap` + `.widget-anecdote[.warn]`, `.widget-fan`)
-  lives in `styles.css`; grep there for the full set. Pages add their
-  own positioning rules and own their own animation loops. Widget
-  INTERNALS (LCDs, keypads, branch states, valve pills, temperature
-  swatches, pump-curve canvases) stay in each page's `{% block head %}`
-  since only that page uses them.
-- **Prose typography classes** — body-prose shape lives in
-  `.tool-body p`; accent colour on body anchors in `.tool-body a`;
-  the lead paragraph at the top of an education page wears
-  `<p class="page-intro">`. Use these instead of inlining the
-  same triplet. `.result-formula` has two modifiers: `.flush` (sits
-  flat under a tabbed Output panel) and `.wrap` (long readable
-  expressions, break on word boundaries). Page-local utility classes
-  (`p.bit-hint`, `p.pid-note`, `p.ref-note`, `p.tool-preamble`) are
-  element-qualified — the `p` is load-bearing so they tie
-  `.tool-body p` on specificity and win on cascade. Keep that shape
-  when adding new small-text utility paragraphs. `p.tool-preamble`
-  is the mono small-caps caption that sits under a
-  `.tool-card-header` (typography only — padding/margin varies by
-  whether it sits inside `.tool-body` or in the gap above it).
-  `.ref-note` carries two modifiers: `.worked-intro` /
-  `ol.ref-note.worked-list` for the worked-example paragraph+list
-  pair inside a `.tool-body-row`, and `.compact` for mini-sim
-  captions that sit tight under a canvas readout (no top border).
-
-For the full component vocabulary, read `styles.css` — it's terse and
-well-grouped.
+- **Focus indicators (`:focus-visible`)** live in one consolidated
+  `FOCUS INDICATORS` block in `styles.css` (the browser default
+  outline is suppressed elsewhere). When adding a new custom-styled
+  interactive element with a `:hover` rule, add its selector to that
+  block — don't scatter a one-off rule next to the `:hover`.
+- **Column-grid family** — `.tool-body-2col` / `.tool-body-3col` /
+  `.tool-body-row` all live in `styles.css`. Each grid sits directly
+  inside a `.tab-pane` or `.tool-card`, not inside a padded
+  `.tool-body`; tabs above take `.tabs.tabs-flush`. Collapse
+  breakpoints: 3col at ≤1000px, 2col at ≤900px. `.tool-body-row`
+  stays full-width.
+- **Widget chrome** (`.widget-*`) is shared in `styles.css`; widget
+  INTERNALS (LCDs, keypads, pump-curve canvases, valve pills) stay
+  in each page's `{% block head %}` since only that page uses them.
+- **Prose typography utility classes are element-qualified**
+  (`p.bit-hint`, `p.pid-note`, `p.ref-note`, `p.tool-preamble`).
+  The `p` is load-bearing — it ties `.tool-body p` on specificity
+  and wins on cascade. Keep that shape when adding new small-text
+  utility paragraphs.
 
 ### JS patterns
 
 - **Event wiring:** every page wraps its inline script in an IIFE
   (`(function () { … })();`) and binds events with
   `addEventListener` against element ids. Buttons that need to pass
-  themselves to a handler (e.g. for an active-class toggle) go
-  through an arrow wrapper: `btn.addEventListener('click', e =>
-  fn(arg, e.currentTarget))`. Where several buttons share a handler
-  shape, prefer `data-*` attributes + a single `querySelectorAll`
-  loop over per-button bindings. The convention is uniform — no
-  inline `on*` attributes anywhere.
+  themselves to a handler go through an arrow wrapper:
+  `btn.addEventListener('click', e => fn(arg, e.currentTarget))`.
+  Where several buttons share a handler shape, prefer `data-*`
+  attributes + a single `querySelectorAll` loop over per-button
+  bindings. No inline `on*` attributes anywhere.
 - **Declarations:** `const` by default; `let` only for genuinely
   reassigned bindings and for-loop counters. No `var` in shared
-  scripts under `html/scripts/` or in page-inline IIFEs. The one
-  intentional exception is the units-bootstrap one-liner in
-  `_includes/head.njk`, which runs before first paint and stays
-  maximally conservative.
+  scripts or page-inline IIFEs. The one intentional exception is
+  the units-bootstrap one-liner in `_includes/head.njk`.
 - **`'use strict';`** — first statement inside every page-inline
-  IIFE and every shared classic script under `html/scripts/`
-  (after the header comment block). Catches undeclared-global
-  assignment and a few other footguns. `src/worker.js` is an
-  ES module (implicit-strict), so no directive needed there.
-  `html/education/load-piping.html` is the one exception — it has
-  no inline IIFE, just a top-level `FlowEngine.init()` call.
+  IIFE and every shared classic script under `html/scripts/`.
+  `src/worker.js` is an ES module (implicit-strict).
+  `html/education/load-piping.html` is the one exception — no
+  inline IIFE, just a top-level `FlowEngine.init()` call.
 - **Validate-and-mute:** read inputs with `parseFloat`; if anything
-  isn't finite (use `!isFinite(x)`, not `isNaN(x)` — `isFinite` also
-  rejects `Infinity`, which matters on calcs like `1 / (max - min)`
-  where equal bounds produce `Infinity`), set the result to
-  `class="result-value muted"` with text `—` and clear the formula.
-- **Tabs:** `.tab-btn` carries `data-tab="<name>"`, the pane carries
+  isn't finite (use `!isFinite(x)`, not `isNaN(x)` — `isFinite`
+  also rejects `Infinity`, which matters on calcs like
+  `1 / (max - min)` where equal bounds produce `Infinity`), set the
+  result to `class="result-value muted"` with text `—` and clear
+  the formula.
+- **Tabs:** `.tab-btn` carries `data-tab="<name>"`, pane carries
   `id="tab-<name>"`, and one `querySelectorAll('[data-tab]')` pass
   wires them to `switchTab` (from `/scripts/ui.js`). `switchTab` is
   scoped to the clicked button's nearest `.tool-card`, so multiple
   tabbed tools on a page don't clear each other. See
-  `tools/signal-scaling.html` for the canonical wiring.
-- Lookup tables for fixed domain data (e.g. `SIG`: signal type →
-  `{ min, max, unit }`; `PID_PROC`: process type → FOPDT params).
+  `tools/signal-scaling.html` for canonical wiring.
 - **UI vocabulary:** **AI / AO** = analog input/output. Don't use
-  "EU" — ambiguous (electrical vs engineering unit); say "Eng. Units"
-  / "Engineering Value" instead.
+  "EU" — ambiguous; say "Eng. Units" / "Engineering Value" instead.
 
 ## Adding a new tool
 
@@ -809,32 +559,22 @@ Cloudflare Workers Build deploys `_site/` ~60s after merge.
 
 ## Local preview & tests
 
-Preview: `npm run dev` runs `eleventy --serve --port=8000` with
-live reload — best for iterating on a page.
-
-Tests:
-
-- **Run:** `npm test` (or `npx playwright test`). Chromium only.
-  Self-sufficient — `playwright.config.js` carries a `webServer`
-  block that builds the site and serves `_site/` for the run, so a
-  fresh checkout needs no second terminal. If a dev server
-  (`npm run dev`, same port 8000) is already up, `reuseExistingServer`
-  reuses it instead of starting another. `baseURL` in the config is
-  the test host, so specs use leading-slash paths. Specs in `tests/`:
-  `smoke.spec.js` (every page: 200, title, nav, no console errors,
-  behavior spot-checks), `contact.spec.js`, and `psychro-engine.spec.js`
-  (pure-Node engine math). Don't restructure the scaffolding without
-  being asked.
+- **Preview:** `npm run dev` (`eleventy --serve --port=8000`, live
+  reload).
+- **Tests:** `npm test` (Chromium only). `playwright.config.js` has
+  a `webServer` block that builds and serves `_site/`, so a fresh
+  checkout needs no second terminal; a running `npm run dev` on
+  port 8000 is reused. Specs in `tests/`: `smoke.spec.js` (every
+  page: 200, title, nav, no console errors, behavior spot-checks),
+  `contact.spec.js`, `psychro-engine.spec.js` (pure-Node engine
+  math). Don't restructure scaffolding without being asked.
 - **CI:** `.github/workflows/test.yml` runs the same `npm test` on
-  every PR to `main` (Chromium installed in the runner; the config's
-  `webServer` build means the `descriptionLengthGuard` runs too). The
-  deploy itself stays with Cloudflare Workers Build — CI gates the
-  PR, it doesn't deploy.
+  every PR to `main`. Deploy stays with Cloudflare Workers Build —
+  CI gates the PR, it doesn't deploy.
 - **Eyeball a change:** `const { chromium } = require('@playwright/test')`
-  + `page.screenshot({ path, fullPage: true })`. Useful for canvas
-  rendering, layout, console errors. For `contact.html` use
-  `waitUntil: 'domcontentloaded'`. Rebuild (`npm run build`) before
-  screenshotting `_site/` unless `npm run dev` is running.
+  + `page.screenshot({ path, fullPage: true })`. For `contact.html`
+  use `waitUntil: 'domcontentloaded'`. Rebuild (`npm run build`)
+  before screenshotting `_site/` unless `npm run dev` is running.
 
 ## About the user
 
@@ -849,6 +589,5 @@ Tests:
 ## Roadmap
 
 Near-term work — new tools, psych chart *floating state-point chip*,
-more Education pages — lives in
-`site-ideas-and-friction.md` (feature ideas) and
-`codebase-issues.md` (code-quality holds).
+more Education pages — lives in `site-ideas-and-friction.md`
+(feature ideas) and `codebase-issues.md` (code-quality holds).
