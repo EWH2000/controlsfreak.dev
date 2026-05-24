@@ -5,6 +5,7 @@ canonical: https://controlsfreak.dev/
 nav: home
 ---
 {% extends "layouts/page.njk" %}
+{% from "nav-card.njk" import navCard %}
 
 {% block content %}
 <section class="hero">
@@ -42,16 +43,22 @@ nav: home
     </div>
 
     <div class="card-grid two">
-        <a class="nav-card" href="/tools/">
-            <span class="nav-card-tag">Tools</span>
-            <div class="nav-card-name">Calculators &amp; lookups →</div>
-            <div class="nav-card-desc">Calculators and lookups for the parts of the job that come up over and over — psychrometric staging, signal scaling, register and address conversions, thermistor curves, a practice VFD keypad. Open one, get an answer, get back to work.</div>
-        </a>
-        <a class="nav-card" href="/education/">
-            <span class="nav-card-tag">Education</span>
-            <div class="nav-card-name">Learn the fundamentals →</div>
-            <div class="nav-card-desc">A connected set of explainers, not a glossary. The current arc: PID control → hydronic loops → load piping → VFDs → pump control, each page asking one question and answering it with diagrams, worked examples, and the occasional interactive widget.</div>
-        </a>
+        {{ navCard({
+            section:    'home',
+            href:       '/tools/',
+            titleShort: 'Tools',
+            titleFull:  'Calculators & lookups →',
+            desc:       'Calculators and lookups for the parts of the job that come up over and over — psychrometric staging, signal scaling, register and address conversions, thermistor curves, a practice VFD keypad. Open one, get an answer, get back to work.',
+            pills:      ['Calculators', 'Lookups', 'Converters', '9 Tools']
+        }) }}
+        {{ navCard({
+            section:    'home',
+            href:       '/education/',
+            titleShort: 'Education',
+            titleFull:  'Learn the fundamentals →',
+            desc:       'A connected set of explainers, not a glossary. The current arc: PID control → hydronic loops → load piping → VFDs → pump control, each page asking one question and answering it with diagrams, worked examples, and the occasional interactive widget.',
+            pills:      ['Explainers', 'Diagrams', 'Widgets', '13 Lessons']
+        }) }}
     </div>
 
     <div class="section-header" style="margin-top:3rem;">

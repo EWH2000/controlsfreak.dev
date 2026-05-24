@@ -34,8 +34,12 @@
     --red:          #c4382f;   /* fault / alarm */
     --heat:         #c8782a;   /* warm orange — "heating" on the psychrometric chart's process lines; companion to --blue for cooling */
     --teal:         #4a8a8a;   /* desaturated teal — data/comm traces on the background schematic (BACnet, IP) */
+    --teal-dim:     rgba(74,138,138,0.10);
+    --teal-glow:    rgba(74,138,138,0.22);
     --amber:        #c9a14a;   /* desaturated amber — energized control wiring on the background schematic */
     --plum:         #8a5e7e;   /* desaturated plum — logic-signal lines on the background schematic */
+    --plum-dim:     rgba(138,94,126,0.10);
+    --plum-glow:    rgba(138,94,126,0.22);
     --mono:         'IBM Plex Mono', monospace;
     --sans:         'Overpass', sans-serif;
 }
@@ -1118,18 +1122,98 @@ p.pid-note {
    Re-assert display: none for the [hidden] case. */
 .nav-card[hidden] { display: none; }
 
+/* v2.1.0 — nav cards moved from a flat surface+padding shape to a
+   faux-instrument frame that mirrors the home hero (.console-titlebar
+   + body + .console-statusline). The outer .nav-card supplies the
+   chrome; the inner .nav-card-body carries the prose. Section accent
+   (--section-accent) defaults to --accent and is overridden by the
+   --tools / --education / --simulators / --home modifier so the
+   hover border, name color, and status pill all track the section's
+   identity color (matches the gutter motif palette). See
+   _includes/nav-card.njk for the macro that emits the chrome — pages
+   call it instead of hand-rolling the markup. */
 .nav-card {
-    display: block;
+    --section-accent:      var(--accent);
+    --section-accent-dim:  var(--accent-dim);
+    --section-accent-glow: var(--accent-glow);
+    display: flex;
+    flex-direction: column;
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 4px;
-    padding: 1.3rem 1.4rem;
+    padding: 0;
+    overflow: hidden;
     text-decoration: none;
     color: inherit;
     transition: border-color 0.18s, transform 0.18s;
 }
-.nav-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+.nav-card--tools      { --section-accent: var(--accent); --section-accent-dim: var(--accent-dim); --section-accent-glow: var(--accent-glow); }
+.nav-card--education  { --section-accent: var(--plum);   --section-accent-dim: var(--plum-dim);   --section-accent-glow: var(--plum-glow); }
+.nav-card--simulators { --section-accent: var(--teal);   --section-accent-dim: var(--teal-dim);   --section-accent-glow: var(--teal-glow); }
+.nav-card--home       { --section-accent: var(--accent); --section-accent-dim: var(--accent-dim); --section-accent-glow: var(--accent-glow); }
+
+.nav-card:hover { border-color: var(--section-accent); transform: translateY(-2px); }
+
+/* Card chrome — sized down from the hero (.console-titlebar /
+   .console-statusline) so a grid of cards stays readable. Smaller
+   padding, smaller font, same vocabulary. */
+.nav-card-titlebar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.45rem 0.85rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-2);
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    color: var(--text);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+.nav-card-titlebar .titlebar-dots {
+    color: var(--text-dim);
+    margin: 0 0.35rem;
+}
+.nav-card-titlebar .ok-pill {
+    /* Per-section status-pill tint. Same .ok-pill shape as the hero;
+       the colors come from the .nav-card--<section> tokens above. */
+    background: var(--section-accent-dim);
+    color: var(--section-accent);
+    border-color: var(--section-accent-glow);
+}
+.nav-card-titlebar .ok-pill::before {
+    background: var(--section-accent);
+}
+
+.nav-card-body {
+    padding: 1.1rem 1.2rem;
+    flex: 1;
+}
+
+.nav-card-statusline {
+    padding: 0.5rem 1rem;
+    border-top: 1px solid var(--border);
+    background: var(--surface-2);
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    color: var(--text-dim);
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    font-variant-numeric: tabular-nums;
+}
+.nav-card-pill {
+    display: inline;
+}
+.nav-card-pill:not(:last-child)::after {
+    content: '•';
+    margin: 0 0.35rem;
+    color: var(--border);
+}
+
 .nav-card-tag {
+    /* Legacy pill — kept for any non-card consumer; new cards use
+       the statusline pills via .nav-card-pill instead. */
     display: inline-block;
     font-family: var(--mono);
     font-size: 0.6rem;
@@ -1150,7 +1234,7 @@ p.pid-note {
     margin-bottom: 0.4rem;
     transition: color 0.18s;
 }
-.nav-card:hover .nav-card-name { color: var(--accent); }
+.nav-card:hover .nav-card-name { color: var(--section-accent); }
 .nav-card-desc {
     font-size: 0.95rem;
     color: var(--text);
