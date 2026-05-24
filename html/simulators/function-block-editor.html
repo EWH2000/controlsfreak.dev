@@ -261,28 +261,18 @@ nav: simulators
         .fbe-sw-on { border-color: var(--accent); }
         .fbe-sw-off { border-color: var(--border); }
 
-        .fbe-narrow-note {
-            display: none;
-            font-size: 0.8rem;
-            color: var(--text-dim);
-            background: var(--surface-3);
-            border: 1px solid var(--border);
-            border-radius: 3px;
-            padding: 0.6rem 0.8rem;
-            margin: 0.6rem 0;
-        }
-
         /* Page-local modifier — the preamble sits right above the example
            chips and wants a smaller gap than the global rule's default. */
         p.tool-preamble.tight { margin-bottom: 0.85rem; }
 
         /* Desktop-only interaction by design (drag-wiring wants room and
-           a pointer). Below the breakpoint the regions stack and a note
-           sets expectations — nothing is hidden, the tool still works. */
+           a pointer). Below the breakpoint the regions stack and the
+           shared .narrow-width-note flips visible — nothing is hidden,
+           the tool still works. */
         @media (max-width: 860px) {
             .fbe-workspace { grid-template-columns: 1fr; }
             .fbe-palette { max-height: 12rem; }
-            .fbe-narrow-note { display: block; }
+            .narrow-width-note { display: block; }
         }
     </style>
 {% endblock %}
@@ -318,7 +308,7 @@ nav: simulators
                 <a data-example="pid">heating PID</a>
             </div>
 
-            <div class="fbe-narrow-note">
+            <div class="narrow-width-note">
                 This editor is built for a wider screen and a pointer — wiring blocks on a
                 phone is cramped. The regions stack below, and it still works, but a laptop
                 gives it room to breathe.
