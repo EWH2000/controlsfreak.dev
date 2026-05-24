@@ -14,7 +14,16 @@
 {% block content %}{% endblock %}
 
 {% include "footer.njk" %}
-<script src="/scripts/schematic-bg.js" defer></script>
+{# flow-engine.js is loaded site-wide because the gutter schematic
+   motifs (schematic-bg.njk) opt in via data-flow / data-pulse on
+   every page. Pages with their own diagrams stop including it
+   themselves — a duplicate <script src> would start a second rAF
+   loop with its own state. schematic-bg.js calls FlowEngine.init()
+   once on DOMContentLoaded; page-level FlowEngine.init() calls
+   stay (idempotent — second call refreshes pools, doesn't restart
+   the loop). #}
+<script src="/scripts/flow-engine.js"></script>
+<script src="/scripts/schematic-bg.js"></script>
 {% block scripts %}{% endblock %}
 </body>
 </html>
