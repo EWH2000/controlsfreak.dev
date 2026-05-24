@@ -185,7 +185,8 @@ nav: tools
                     </div>
 
                     <div class="btn-row">
-                        <button class="copy-btn" id="th-copy-btn">Copy value</button>
+                        <button class="copy-btn" id="th-copy-btn">Copy resistance</button>
+                        <button class="copy-btn" id="th-copy-pair">Copy T + R</button>
                     </div>
                 </section>
 
@@ -358,6 +359,8 @@ nav: tools
             btn.closest('.btn-row').querySelectorAll('.copy-btn').forEach(b => b.classList.toggle('active', b === btn));
             document.getElementById('th-temp').disabled = (mode !== 'temp');
             document.getElementById('th-res').disabled  = (mode !== 'res');
+            // Dynamic copy label — the single-value button copies whichever side is the result.
+            document.getElementById('th-copy-btn').textContent = mode === 'temp' ? 'Copy resistance' : 'Copy temperature';
             thRecompute();
         }
 
@@ -515,6 +518,21 @@ nav: tools
         // resistance / temperature lookup result, kept in the outer scope).
         function thCopy(btn) {
             copyText(btn, thLastRaw);
+        }
+
+        // ── Copy the full lookup row (T · R) to the clipboard ──
+        // Reads the visible field text for the active input and the result
+        // row for the derived value, joins with a center dot. Skips on
+        // muted / out-of-range state (result === '—').
+        function thCopyPair(btn) {
+            const result = document.getElementById('th-result').textContent;
+            if (result === '—') return;
+            const tInputRaw = document.getElementById('th-temp').value;
+            const rInputRaw = document.getElementById('th-res').value;
+            const pair = thLookupBy === 'temp'
+                ? `${tInputRaw} °${thUnit()} · ${result}`
+                : `${result} · ${Number(rInputRaw).toLocaleString()} Ω`;
+            copyText(btn, pair);
         }
 
         // ── Units integration ──
@@ -778,6 +796,7 @@ nav: tools
         document.getElementById('th-temp').addEventListener('input', thRecompute);
         document.getElementById('th-res').addEventListener('input', thRecompute);
         document.getElementById('th-copy-btn').addEventListener('click', e => thCopy(e.currentTarget));
+        document.getElementById('th-copy-pair').addEventListener('click', e => thCopyPair(e.currentTarget));
 
         // ── Identify-mode wiring ──
         document.getElementById('th-id-add').addEventListener('click', idAddRow);
