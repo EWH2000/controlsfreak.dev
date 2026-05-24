@@ -37,23 +37,6 @@
             window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
         if (motifs.length) {
-            // Measure every stroked path and write its length to
-            // --sbg-len. The CSS rule in styles.css under
-            // "Per-path dasharray" reads this; the 800 fallback in
-            // CSS keeps paths invisible if for any reason length
-            // measurement fails (e.g. a path whose geometry isn't
-            // laid out yet).
-            motifs.forEach(m => {
-                m.querySelectorAll('[data-sbg-stroke]').forEach(p => {
-                    if (typeof p.getTotalLength !== 'function') return;
-                    const len = p.getTotalLength();
-                    if (!isFinite(len) || len <= 0) return;
-                    // Small padding so the final visible nub clears
-                    // any subpixel rounding at the path end.
-                    p.style.setProperty('--sbg-len', (len + 2));
-                });
-            });
-
             if (reduceMotion || typeof IntersectionObserver === 'undefined') {
                 motifs.forEach(m => m.classList.add('is-drawn'));
             } else {

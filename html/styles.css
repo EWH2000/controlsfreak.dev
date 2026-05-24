@@ -144,25 +144,33 @@ main { flex: 1; }
    attribute in the partial — left over from when motifs used <use>
    shadow trees; kept inline because it costs nothing.
 
-   Per-path dasharray. schematic-bg.js measures getTotalLength() on
-   each [data-sbg-stroke] and writes it as --sbg-len so every path
-   takes the same wall-clock time to draw, regardless of its length
-   — without this, short logic-chain wires (~30px) would finish in
-   a tenth of the time long pipe runs (~190px) take, and the user
-   asked for a more deliberate draw. The 800 fallback is the pre-JS
-   value: paths stay invisible until the JS pass sets the real
-   length (offset == dasharray == hidden stroke). 3000ms wall time
-   gives a clear "drawing" beat after the opacity fade (700ms) has
-   already settled. */
+   Draw-in via a generous fixed dasharray. The largest motif path
+   here is ~200 user units (the BACnet chip's perimeter); 600 puts
+   us comfortably above that with margin to spare, so dashoffset:600
+   parks every path fully invisible and the transition to 0 sweeps
+   the whole path on for every motif. Earlier per-path measurement
+   approaches (getTotalLength-derived --sbg-len, then pathLength=1
+   normalization) both hit Chromium quirks on quadratic-Bezier paths
+   and circles — the AI/AO amber trace and the pump-coil circle
+   refused to fully draw even with offset=0. A fixed dasharray well
+   above any path length sidesteps both bugs entirely.
+
+   Trade-off: drawing is no longer proportional to path length —
+   short logic-chain wires finish in ~10% of the transition and
+   then sit still while long pipe runs continue drawing. Acceptable
+   given ease-out timing softens the disparity; correctness beats
+   uniformity here. */
 .sbg-motif [data-sbg-stroke] {
     stroke-width: 1.4;
     vector-effect: non-scaling-stroke;
-    stroke-dasharray: var(--sbg-len, 800);
-    stroke-dashoffset: var(--sbg-len, 800);
-    transition: stroke-dashoffset 3000ms ease-out;
+    stroke-dasharray: 600;
+    stroke-dashoffset: 600;
 }
 .sbg-motif.is-drawn { opacity: 1; }
-.sbg-motif.is-drawn [data-sbg-stroke] { stroke-dashoffset: 0; }
+.sbg-motif.is-drawn [data-sbg-stroke] {
+    stroke-dashoffset: 0;
+    transition: stroke-dashoffset 3000ms ease-out;
+}
 
 .sbg-label {
     font-family: var(--mono);
