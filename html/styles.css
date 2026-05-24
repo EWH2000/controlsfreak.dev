@@ -1123,6 +1123,22 @@ input[type="range"]:focus-visible::-moz-range-thumb {
 .callout h3 span { color: var(--text-dim); font-weight: 400; }
 .callout p { font-size: 0.86rem; line-height: 1.7; }
 .callout em { color: var(--text-bright); font-style: normal; }
+
+/* ── NARROW-WIDTH ORIENTATION NOTE — hidden by default; pages flip to
+   display:block inside their own @media at whatever breakpoint their
+   layout shifts. Frames a layout change as mental-model orientation,
+   NOT as apology. Voice reference: function-block-editor.html. ── */
+.narrow-width-note {
+    display: none;
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    background: var(--surface-3);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 0.6rem 0.8rem;
+    margin: 0.6rem 0;
+}
+
 p.pid-note {
     font-family: var(--mono);
     font-size: 0.72rem;
@@ -1788,6 +1804,25 @@ p.ref-note.compact {
 }
 .widget-anecdote strong { color: var(--text-bright); font-weight: 600; }
 .widget-anecdote.warn { border-left-color: var(--red); }
+
+/* ── FAILURE-STATE CALLOUT — sits below a .ps-row result when the input
+   branch is invalid (result-value goes muted '—', this callout names
+   the failure mode AND the action). Sibling to .widget-anecdote (same
+   shell shape, different domain: tool outputs, not education widgets).
+   Warm-orange left rule matches the in-use failure-warning hue on
+   economizer-ratio's .er-feas.warn pill. ── */
+.failure-callout {
+    margin-top: 0.6rem;
+    padding: 0.75rem 1rem;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--heat);
+    border-radius: 3px;
+    font-size: 0.86rem;
+    line-height: 1.7;
+    color: var(--text);
+}
+.failure-callout strong { color: var(--text-bright); font-weight: 600; }
 
 /* 5-blade fan icon — visual handle for "the drive is energising
    something." Used by the run/speed widget on vfds and both
