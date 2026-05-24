@@ -95,16 +95,31 @@
 <path d="M48 22 L66 22 L66 45 L86 45" stroke="var(--amber)" fill="none" data-pulse="signal" data-sbg-stroke/>
 <path d="M48 78 L66 78 L66 55 L86 55" stroke="var(--amber)" fill="none" data-pulse="signal" data-pulse-interval="5500" data-sbg-stroke/>
 <path d="M114 50 L152 50" stroke="var(--text-dim)" fill="none" data-pulse="signal" data-pulse-interval="4500" data-sbg-stroke/>
-{%- elif id == 'terminals-bo' -%}
-<rect x="10" y="22" width="38" height="26" stroke="var(--text-dim)" fill="var(--surface)" data-sbg-stroke/>
-<circle cx="20" cy="35" r="2.5" fill="var(--text-dim)"/>
-<circle cx="38" cy="35" r="2.5" fill="var(--text-dim)"/>
-<text x="29" y="16" text-anchor="middle" class="sbg-label">BI1</text>
-<rect x="152" y="22" width="38" height="26" stroke="var(--text-dim)" fill="var(--surface)" data-sbg-stroke/>
-<circle cx="162" cy="35" r="2.5" fill="var(--text-dim)"/>
-<circle cx="180" cy="35" r="2.5" fill="var(--text-dim)"/>
-<text x="171" y="16" text-anchor="middle" class="sbg-label">BO1</text>
-<line x1="48" y1="35" x2="152" y2="35" stroke="var(--text-dim)" data-pulse="signal" data-pulse-interval="6000" data-sbg-stroke/>
+{%- elif id == 'and-bo' -%}
+{# Sibling of compare-bo: two binary inputs through an AND gate to a BO.
+   Pattern shows up everywhere in BAS — "all proofs made AND schedule
+   occupied" before energizing a starter, two safety interlocks both
+   need to be true, etc. Layout mirrors compare-bo exactly (same block
+   geometry, wire routing, pulse staggering) so the two motifs read as
+   a family; only difference is everything is gray (binary) and the
+   logic block carries "AND" instead of ">". #}
+<rect x="10" y="10" width="38" height="24" stroke="var(--text-dim)" fill="var(--surface)" data-sbg-stroke/>
+<circle cx="20" cy="22" r="2.5" fill="var(--text-dim)"/>
+<circle cx="38" cy="22" r="2.5" fill="var(--text-dim)"/>
+<text x="29" y="6" text-anchor="middle" class="sbg-label">BI1</text>
+<rect x="10" y="66" width="38" height="24" stroke="var(--text-dim)" fill="var(--surface)" data-sbg-stroke/>
+<circle cx="20" cy="78" r="2.5" fill="var(--text-dim)"/>
+<circle cx="38" cy="78" r="2.5" fill="var(--text-dim)"/>
+<text x="29" y="98" text-anchor="middle" class="sbg-label">BI2</text>
+<rect x="86" y="39" width="28" height="22" stroke="var(--plum)" fill="var(--surface)" data-sbg-stroke/>
+<text x="100" y="54" text-anchor="middle" class="sbg-label">AND</text>
+<rect x="152" y="39" width="38" height="22" stroke="var(--text-dim)" fill="var(--surface)" data-sbg-stroke/>
+<circle cx="162" cy="50" r="2.5" fill="var(--text-dim)"/>
+<circle cx="180" cy="50" r="2.5" fill="var(--text-dim)"/>
+<text x="171" y="35" text-anchor="middle" class="sbg-label">BO1</text>
+<path d="M48 22 L66 22 L66 45 L86 45" stroke="var(--text-dim)" fill="none" data-pulse="signal" data-sbg-stroke/>
+<path d="M48 78 L66 78 L66 55 L86 55" stroke="var(--text-dim)" fill="none" data-pulse="signal" data-pulse-interval="5500" data-sbg-stroke/>
+<path d="M114 50 L152 50" stroke="var(--text-dim)" fill="none" data-pulse="signal" data-pulse-interval="4500" data-sbg-stroke/>
 {%- elif id == 'logic-chain' -%}
 <rect x="14" y="14" width="56" height="28" stroke="var(--plum)" fill="var(--surface)" data-sbg-stroke/>
 <text x="42" y="33" text-anchor="middle" class="sbg-label">TMR</text>
@@ -143,17 +158,17 @@
     'pipe-valve': 130,
     'pump-coil':  90,
     'compare-bo': 100,
-    'terminals-bo': 70,
+    'and-bo':     100,
     'logic-chain': 110,
     'bacnet-node': 90
 } %}
 {% set sbgLeftCycle = [
-    'pipe-valve', 'compare-bo',  'pump-coil', 'logic-chain', 'bacnet-node',
-    'pipe-valve', 'terminals-bo', 'pump-coil', 'logic-chain', 'bacnet-node'
+    'pipe-valve', 'compare-bo', 'pump-coil', 'logic-chain', 'bacnet-node',
+    'pipe-valve', 'and-bo',     'pump-coil', 'logic-chain', 'bacnet-node'
 ] %}
 {% set sbgRightCycle = [
-    'terminals-bo', 'logic-chain', 'pipe-valve', 'bacnet-node', 'pump-coil',
-    'compare-bo',   'pipe-valve',  'logic-chain', 'bacnet-node', 'pump-coil'
+    'and-bo',     'logic-chain', 'pipe-valve', 'bacnet-node', 'pump-coil',
+    'compare-bo', 'pipe-valve',  'logic-chain', 'bacnet-node', 'pump-coil'
 ] %}
 {% set sbgCount  = 60 %}
 {% set sbgStride = 270 %}
