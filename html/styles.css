@@ -1159,6 +1159,17 @@ p.pid-note {
     gap: 0.4rem;
     margin-bottom: 1.5rem;
 }
+
+/* ── CHIP-ROW PREAMBLE ── Soft one-liner above a .filter-chips row.
+   Element-qualified p. per site convention so .tool-body p doesn't
+   out-cascade it. Mirrors p.bit-hint's shape (small mono dim text)
+   with tighter bottom-margin since it sits flush above the chips. */
+p.chip-row-preamble {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    margin-bottom: 0.5rem;
+}
 .filter-chip {
     display: inline-flex;
     align-items: baseline;
