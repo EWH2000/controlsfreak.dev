@@ -5,9 +5,13 @@
 //
 // Two motion modes, both reading the document for opted-in elements:
 //
-//   data-flow="supply|return"  — continuous particle stream along the
-//                                path (hydronic-style: shows direction
-//                                of flow with motion).
+//   data-flow="supply|return|current"
+//                              — continuous particle stream along the
+//                                path. "supply"/"return" for hydronic
+//                                pipes (blue / blue-cool). "current"
+//                                for electrical loops (amber) — same
+//                                visual treatment, just colored to
+//                                match the analog-signal family.
 //   data-pulse="signal"        — discrete pulse that launches along the
 //                                path, travels at speed, and retires.
 //                                EBO-style "wire just updated" cue;
@@ -172,8 +176,9 @@
     // Colours — read straight from the design-system custom properties.
     // No `, #hex` fallback (see CLAUDE.md "Design system" — every var
     // used here must be defined in styles.css :root).
-    const SUPPLY_FILL = 'var(--blue)';
-    const RETURN_FILL = 'var(--blue-cool)';
+    const SUPPLY_FILL  = 'var(--blue)';
+    const RETURN_FILL  = 'var(--blue-cool)';
+    const CURRENT_FILL = 'var(--amber)';
     const SVG_NS = 'http://www.w3.org/2000/svg';
 
     // Module-level state. Flow + pulse pools live side by side; the
@@ -285,7 +290,9 @@
 
         const flow = el.getAttribute('data-flow');
         const reverse = el.getAttribute('data-flow-reverse') === 'true';
-        const fill = flow === 'return' ? RETURN_FILL : SUPPLY_FILL;
+        const fill = flow === 'return'  ? RETURN_FILL
+                   : flow === 'current' ? CURRENT_FILL
+                   : SUPPLY_FILL;
 
         // Per-path density: clamp to (0, 1.0] at the engine. The page
         // doesn't have to police bounds; non-finite or out-of-range
