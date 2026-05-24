@@ -123,7 +123,7 @@ nav: tools
                     </div>
 
                     <div class="btn-row">
-                        <button class="copy-btn" id="rf-pt-copy">Copy result</button>
+                        <button class="copy-btn" id="rf-pt-copy">Copy temperature</button>
                     </div>
                     <div class="result-formula wrap" id="rf-pt-formula"></div>
                     <div class="rf-status" id="rf-pt-status">Enter a pressure to read the saturation temperature.</div>
@@ -206,7 +206,7 @@ nav: tools
                     </div>
 
                     <div class="btn-row">
-                        <button class="copy-btn" id="rf-sc-copy">Copy result</button>
+                        <button class="copy-btn" id="rf-sc-copy">Copy superheat</button>
                     </div>
                     <div class="result-formula wrap" id="rf-sc-formula"></div>
                     <div class="rf-status" id="rf-sc-status">Enter a pressure and a line temperature.</div>
@@ -513,11 +513,15 @@ nav: tools
             btn.closest('.btn-row').querySelectorAll('.copy-btn').forEach(b => b.classList.toggle('active', b === btn));
             document.getElementById('rf-pt-pressure').disabled = (mode !== 'pressure');
             document.getElementById('rf-pt-temp').disabled     = (mode !== 'temp');
+            // Dynamic copy label — the result is whichever direction we're solving toward.
+            document.getElementById('rf-pt-copy').textContent = mode === 'pressure' ? 'Copy temperature' : 'Copy pressure';
             calcPt();
         }
         function setScLine(line, btn) {
             scLine = line;
             btn.closest('.btn-row').querySelectorAll('.copy-btn').forEach(b => b.classList.toggle('active', b === btn));
+            // Dynamic copy label — suction line gives superheat, liquid line gives subcooling.
+            document.getElementById('rf-sc-copy').textContent = line === 'suction' ? 'Copy superheat' : 'Copy subcooling';
             calcSc();
         }
 
