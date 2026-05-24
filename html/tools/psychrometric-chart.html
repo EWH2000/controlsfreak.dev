@@ -387,6 +387,10 @@ nav: tools
                 <div class="ps-row"><span class="ps-label" data-us="Vapor pressure (psia)" data-metric="Vapor pressure (kPa)">Vapor pressure (psia)</span><span class="ps-value live" id="ro-pw">—</span></div>
                 <div class="ps-row"><span class="ps-label" data-us="Barometric press. (psia)" data-metric="Barometric press. (kPa)">Barometric press. (psia)</span><span class="ps-value live" id="ro-p">—</span></div>
 
+                <div class="btn-row">
+                    <button class="copy-btn" id="psy-copy-state">Copy OA properties</button>
+                </div>
+
                 <div class="psy-process hidden" id="psy-process-block">
                     <div class="psy-process-label" id="psy-process-label">Process delta — across this stage</div>
                     <div class="ps-row"><span class="ps-label" data-us="ΔDB (°F)" data-metric="ΔDB (°C)">ΔDB (°F)</span><span class="ps-value live" id="pd-db">—</span></div>
@@ -698,7 +702,25 @@ nav: tools
             selectedStep = key;
             document.querySelectorAll('.psy-pill').forEach(p => p.classList.toggle('active', p.dataset.step === key));
             document.querySelectorAll('.psy-editor').forEach(ed => ed.classList.toggle('shown', ed.dataset.step === key));
+            document.getElementById('psy-copy-state').textContent = `Copy ${STEP_SHORT[key]} properties`;
             psyRecompute();
+        }
+
+        // ── Copy the 9 property readouts as a multi-line text block ──
+        // Reads whatever labels are currently active (the data-us / data-metric
+        // swap is already baked into textContent by units.js by paint time).
+        // Skips rows whose value is '—' so a partially-failed state still
+        // copies the meaningful properties.
+        function psyCopyState(btn) {
+            const title = document.getElementById('psy-detail-label').textContent;
+            const lines = [title];
+            document.querySelectorAll('[id^="ro-"]').forEach(v => {
+                if (v.textContent === '—') return;
+                const label = v.previousElementSibling;
+                lines.push(`  ${label.textContent}: ${v.textContent}`);
+            });
+            if (lines.length === 1) return;
+            copyText(btn, lines.join('\n'));
         }
 
         function onModeChange(prefix) {
@@ -1449,6 +1471,7 @@ nav: tools
         document.querySelectorAll('.psy-pill[data-step]').forEach(btn => {
             btn.addEventListener('click', e => selectStep(e.currentTarget.dataset.step));
         });
+        document.getElementById('psy-copy-state').addEventListener('click', e => psyCopyState(e.currentTarget));
 
         // Range-preset toggle (Standard / Cold). Sync .active to the loaded
         // preset before binding, so a returning Cold visitor sees the right
