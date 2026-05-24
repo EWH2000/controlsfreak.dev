@@ -40,12 +40,29 @@
 
 {% macro motifBody(id) -%}
 {%- if id == 'pipe-valve' -%}
-<line x1="4"   y1="28" x2="88"  y2="28" stroke="var(--blue)" data-flow="supply" data-sbg-stroke/>
-<line x1="112" y1="28" x2="196" y2="28" stroke="var(--blue)" data-flow="supply" data-sbg-stroke/>
-<line x1="4"   y1="56" x2="196" y2="56" stroke="var(--blue-cool)" data-flow="return" data-sbg-stroke/>
-<path d="M88 20 L88 36 L100 28 Z M112 20 L112 36 L100 28 Z" stroke="var(--blue)" fill="none" data-sbg-stroke/>
-<text x="14" y="16" class="sbg-label">SUP</text>
-<text x="14" y="74" class="sbg-label">RET</text>
+{# 3-way diverting valve serving a coil with a bypass loop back to return.
+   Supply main runs L→R across the top; return main runs R→L across the
+   bottom (reversed x1/x2 makes flow-engine walk return particles
+   right-to-left, so the two mains read as opposing conveyors).
+   Bypass-to-tee and coil-to-tee are split at the tee at (120,92) per the
+   "converging-flow segments need two paths" rule — bypass arrives R→L
+   still tagged supply (hasn't been through the coil), coil-out arrives
+   L→R tagged return. Mirrors the convention on education/load-piping.html. #}
+<line x1="4"   y1="18"  x2="196" y2="18"  stroke="var(--blue)"      data-flow="supply" data-sbg-stroke/>
+<line x1="80"  y1="18"  x2="80"  y2="26"  stroke="var(--blue)"      data-flow="supply" data-sbg-stroke/>
+<path d="M72 26 L88 26 L80 32 Z  M72 38 L88 38 L80 32 Z  M92 26 L92 38 L80 32 Z" stroke="var(--blue)" fill="none" data-sbg-stroke/>
+<line x1="80"  y1="38"  x2="80"  y2="42"  stroke="var(--blue)"      data-flow="supply" data-sbg-stroke/>
+<rect x="60"   y="42"   width="40" height="24" stroke="var(--blue)" fill="var(--surface)" data-sbg-stroke/>
+<path d="M66 48 L94 48 M66 54 L94 54 M66 60 L94 60" stroke="var(--blue)" fill="none" data-sbg-stroke/>
+<line x1="80"  y1="66"  x2="80"  y2="92"  stroke="var(--blue-cool)" data-flow="return" data-sbg-stroke/>
+<line x1="80"  y1="92"  x2="120" y2="92"  stroke="var(--blue-cool)" data-flow="return" data-sbg-stroke/>
+<line x1="92"  y1="32"  x2="170" y2="32"  stroke="var(--blue)"      data-flow="supply" data-sbg-stroke/>
+<line x1="170" y1="32"  x2="170" y2="92"  stroke="var(--blue)"      data-flow="supply" data-sbg-stroke/>
+<line x1="170" y1="92"  x2="120" y2="92"  stroke="var(--blue)"      data-flow="supply" data-sbg-stroke/>
+<line x1="120" y1="92"  x2="120" y2="108" stroke="var(--blue-cool)" data-flow="return" data-sbg-stroke/>
+<line x1="196" y1="108" x2="4"   y2="108" stroke="var(--blue-cool)" data-flow="return" data-sbg-stroke/>
+<text x="14" y="14"  class="sbg-label">SUP</text>
+<text x="14" y="124" class="sbg-label">RET</text>
 {%- elif id == 'pump-coil' -%}
 <rect x="14" y="26" width="56" height="38" stroke="var(--blue)" fill="var(--surface)" data-sbg-stroke/>
 <path d="M22 34 L62 34 M22 42 L62 42 M22 50 L62 50 M22 58 L62 58" stroke="var(--blue)" fill="none" data-sbg-stroke/>
@@ -97,9 +114,9 @@
 
 {#  Motifs are placed at uniform Y stride down each gutter, cycling
     through a short sequence so a long page never runs out of motifs.
-    Stride = 230px so the tallest motif (logic-chain at 110px
-    rendered ~1.7× = ~190px at the strip's 340px cap) fits with
-    breathing room above and below. Count = 60 covers ~14000px of
+    Stride = 270px so the tallest motif (pipe-valve at 130px
+    rendered ~1.7× = ~221px at the strip's 340px cap) fits with
+    breathing room above and below. Count = 60 covers ~16200px of
     page; pages shorter than that just clip the tail via
     overflow:hidden on the strip container.
 
@@ -109,7 +126,7 @@
     h value here matters (sets the SVG's viewBox height). #}
 
 {% set sbgHeights = {
-    'pipe-valve': 80,
+    'pipe-valve': 130,
     'pump-coil':  90,
     'terminals-ao': 70,
     'terminals-bo': 70,
@@ -125,7 +142,7 @@
     'terminals-ao', 'pipe-valve',  'logic-chain', 'bacnet-node', 'pump-coil'
 ] %}
 {% set sbgCount  = 60 %}
-{% set sbgStride = 230 %}
+{% set sbgStride = 270 %}
 
 <div class="schematic-bg schematic-bg--left" aria-hidden="true">
     {%- for i in range(sbgCount) -%}
