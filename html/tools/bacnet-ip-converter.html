@@ -22,6 +22,14 @@ nav: tools
             </h1>
         </div>
 
+        <p class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
+            The hex blob EBO and other BACnet tools show for a BACnet/IP device ↔ a dotted-decimal
+            IP and UDP port, both directions.
+            <em>Hex → IP</em> decodes an 8-character (IP only) or 12-character (IP + port) hex string.
+            <em>IP → Hex</em> builds the string from a dotted-decimal IP and an optional port — the default
+            is 47808 (0xBAC0).
+        </p>
+
         <div class="tabs tabs-flush">
             <button class="tab-btn active" data-tab="hex2ip">Hex → IP</button>
             <button class="tab-btn"        data-tab="ip2hex">IP → Hex</button>
@@ -35,7 +43,7 @@ nav: tools
                     <h2 class="ps-section-label">Input</h2>
                     <div class="ps-row">
                         <label class="ps-label" for="b2i-hex">Hex string</label>
-                        <input class="ps-input" type="text" id="b2i-hex" placeholder="C0A80164BAC0">
+                        <input class="ps-input" type="text" id="b2i-hex" placeholder="C0A80164BAC0" value="C0A80164BAC0">
                     </div>
                 </section>
 
@@ -79,11 +87,11 @@ nav: tools
                     <h2 class="ps-section-label">Input</h2>
                     <div class="ps-row">
                         <label class="ps-label" for="i2h-ip">IP address</label>
-                        <input class="ps-input" type="text" id="i2h-ip" placeholder="192.168.1.100">
+                        <input class="ps-input" type="text" id="i2h-ip" placeholder="192.168.1.100" value="192.168.1.100">
                     </div>
                     <div class="ps-row">
                         <label class="ps-label" for="i2h-port">UDP port</label>
-                        <input class="ps-input" type="number" id="i2h-port" min="0" max="65535" step="1" placeholder="47808 — optional">
+                        <input class="ps-input" type="number" id="i2h-port" min="0" max="65535" step="1" placeholder="47808 — optional" value="47808">
                     </div>
                 </section>
 
@@ -271,6 +279,12 @@ nav: tools
         document.getElementById('i2h-ip').addEventListener('input', bacnetIpToHex);
         document.getElementById('i2h-port').addEventListener('input', bacnetIpToHex);
         document.getElementById('i2h-copy-hex').addEventListener('click', e => copyReadouts(e.currentTarget, '', 'i2h-hex'));
+
+        // First-paint defaults — both tabs compute on load from the value= attrs
+        // (192.168.1.100:47808 ↔ C0A80164BAC0). addEventListener only fires on user
+        // input, so without these the page would still land muted on first paint.
+        bacnetHexToIp();
+        bacnetIpToHex();
     })();
 </script>
 {% endblock %}

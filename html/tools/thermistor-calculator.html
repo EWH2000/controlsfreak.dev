@@ -87,6 +87,16 @@ nav: tools
             </h1>
         </div>
 
+        <p class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
+            Temperature ↔ resistance for the common HVAC sensors — 10K Type II / III, Johnson 8.7K,
+            Schneider Type 5, 20K, 3K, Balco, Pt100, Pt1000 — both directions, plus an
+            identification mode if you don't know the type yet.
+            <em>Lookup</em> takes a temperature or resistance on a chosen type and gives the other
+            plus the full R/T table.
+            <em>Identify</em> takes (temp, resistance) pairs measured off an unknown sensor and ranks
+            every type by curve fit.
+        </p>
+
         <!-- Two modes, à la Signal Scaling. LOOKUP: pick a known type, enter a
              temperature OR a resistance, get the other plus the full R/T table.
              IDENTIFY: enter measured (temperature, resistance) pairs from an
