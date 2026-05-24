@@ -77,6 +77,7 @@ nav: tools
 
             </div>
             <div class="result-formula flush" id="b2i-formula"></div>
+            <div class="failure-callout" id="b2i-callout" hidden></div>
         </div>
 
         <!-- ── IP → Hex ── -->
@@ -120,6 +121,7 @@ nav: tools
 
             </div>
             <div class="result-formula flush" id="i2h-formula"></div>
+            <div class="failure-callout" id="i2h-callout" hidden></div>
         </div>
     </div>
 
@@ -178,12 +180,13 @@ nav: tools
         }
 
         function bacnetHexToIp() {
-            const ipEl    = document.getElementById('b2i-ip');
-            const portEl  = document.getElementById('b2i-port');
-            const notesEl = document.getElementById('b2i-notes');
-            const lenEl   = document.getElementById('b2i-len');
-            const fmtEl   = document.getElementById('b2i-fmt');
-            const fEl     = document.getElementById('b2i-formula');
+            const ipEl      = document.getElementById('b2i-ip');
+            const portEl    = document.getElementById('b2i-port');
+            const notesEl   = document.getElementById('b2i-notes');
+            const lenEl     = document.getElementById('b2i-len');
+            const fmtEl     = document.getElementById('b2i-fmt');
+            const fEl       = document.getElementById('b2i-formula');
+            const calloutEl = document.getElementById('b2i-callout');
 
             const mute = () => {
                 ipEl.className   = 'ps-value muted'; ipEl.textContent   = '—';
@@ -191,6 +194,8 @@ nav: tools
                 notesEl.textContent = '—';
                 fmtEl.textContent   = '—';
                 fEl.textContent = '';
+                calloutEl.textContent = 'Hex must be 8 characters (IP only) or 12 characters (IP + port). Hex digits only; spaces, dashes, and colons are ignored.';
+                calloutEl.hidden = false;
             };
 
             // Tolerant cleanup: drop a leading 0x, strip separators, uppercase.
@@ -200,6 +205,7 @@ nav: tools
             lenEl.textContent = hex.length ? `${hex.length} character${hex.length === 1 ? '' : 's'}` : '—';
 
             if (!/^[0-9A-F]+$/.test(hex) || (hex.length !== 8 && hex.length !== 12)) { mute(); return; }
+            calloutEl.hidden = true;
 
             const bytes = hex.match(/../g).map(h => parseInt(h, 16));
             const ip = bytes.slice(0, 4).join('.');
@@ -225,17 +231,20 @@ nav: tools
         }
 
         function bacnetIpToHex() {
-            const hexEl   = document.getElementById('i2h-hex');
-            const lenEl   = document.getElementById('i2h-len');
-            const notesEl = document.getElementById('i2h-notes');
-            const formEl  = document.getElementById('i2h-form');
-            const fEl     = document.getElementById('i2h-formula');
+            const hexEl     = document.getElementById('i2h-hex');
+            const lenEl     = document.getElementById('i2h-len');
+            const notesEl   = document.getElementById('i2h-notes');
+            const formEl    = document.getElementById('i2h-form');
+            const fEl       = document.getElementById('i2h-formula');
+            const calloutEl = document.getElementById('i2h-callout');
 
             const mute = () => {
                 hexEl.className = 'ps-value muted'; hexEl.textContent = '—';
                 lenEl.textContent   = '—';
                 notesEl.textContent = '—';
                 fEl.textContent = '';
+                calloutEl.textContent = 'IP must be four dotted decimals each 0–255. UDP port (if entered) must be a whole number from 0 to 65535.';
+                calloutEl.hidden = false;
             };
 
             const ipRaw   = document.getElementById('i2h-ip').value.trim();
@@ -246,6 +255,7 @@ nav: tools
             if (!m) { mute(); return; }
             const octets = m.slice(1, 5).map(Number);
             if (octets.some(o => o > 255)) { mute(); return; }
+            calloutEl.hidden = true;
 
             const ipHex = octets.map(o => o.toString(16).padStart(2, '0')).join('').toUpperCase();
 
