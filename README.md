@@ -163,8 +163,9 @@ from now will still run it.
   (Niagara-ish property-sheet rows, EBO-clean panels, slightly
   shaded panel headers, flat underlined tabs). On wide screens
   (≥1240px), the side gutters carry an as-built schematic
-  collage — pipe-valves, pump-coils, AI/AO terminals, logic-chain
-  blocks, BACnet/IP nodes — that draws itself in as it scrolls
+  collage — 3-way diverting valves, hydronic pump-coil loops,
+  4-20mA current loops, comparator and AND-gate logic snippets, and
+  JACE supervisor trunks — that draws itself in as it scrolls
   into view. Decorative, not navigational; hidden on smaller
   screens where load weight outranks decoration. Nav cards across
   Home / Tools / Simulators / Education share an instrument-frame

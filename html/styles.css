@@ -171,11 +171,11 @@ main { flex: 1; }
 
    A fixed dasharray well above any path length sidesteps all three
    bugs. Trade-off accepted: drawing is no longer proportional to
-   path length — short logic-chain wires finish in ~10% of the
-   transition and then sit still while long pipe runs continue
-   drawing. The ease-out timing softens the disparity, and
-   correctness beats uniformity here. See codebase-issues#69 for the
-   full history and the revisit trigger. */
+   path length — short signal wires finish in ~10% of the transition
+   and then sit still while long pipe runs continue drawing. The
+   ease-out timing softens the disparity, and correctness beats
+   uniformity here. See codebase-issues#69 for the full history and
+   the revisit trigger. */
 .sbg-motif [data-sbg-stroke] {
     stroke-width: 1.4;
     vector-effect: non-scaling-stroke;

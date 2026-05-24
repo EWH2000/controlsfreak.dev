@@ -12,8 +12,9 @@
 //      styles.css under SCHEMATIC BACKGROUND handles the opacity +
 //      stroke-dashoffset transitions);
 //   2. calls FlowEngine.init() once, so the pipes start carrying
-//      particles and the wiring / logic-chain / BACnet paths begin
-//      auto-firing pulses on their own intervals.
+//      particles (water + 4-20mA current loops) and the comparator
+//      / supervisor signal wires begin auto-firing pulses on their
+//      own intervals.
 //
 // On `prefers-reduced-motion: reduce` we skip the IntersectionObserver
 // entirely and snap every motif to its drawn state on load.

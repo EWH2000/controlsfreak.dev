@@ -3025,10 +3025,10 @@ scroll-reveal draw-in. Commit `e700c2a` set
 `stroke-dasharray: 600` site-wide on every `[data-sbg-stroke]`
 element to dodge a Chromium quirk where dashoffset on Bezier
 paths and circles refused to fully draw. Side effect: short
-straight wires (logic-chain L-paths ~56 user units, BACnet
-traces, the pump-coil grid, the diverting-valve triangles) finish
-drawing in roughly the first 10% of the 3000ms transition while
-long pipe runs take the full duration.
+straight wires (compare-bo / and-bo signal wires ~76 user units,
+supervisor fan-out traces, the pump-coil grid, the diverting-valve
+triangles) finish drawing in roughly the first 10% of the 3000ms
+transition while long pipe runs take the full duration.
 
 **Why it matters:** the disparity reads as a stutter — short paths
 "flash on" while long paths sweep. Not broken, but inconsistent

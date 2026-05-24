@@ -82,27 +82,31 @@
 {%- elif id == 'compare-bo' -%}
 {# Small piece of real BAS logic: two analog inputs feed a greater-than
    comparator whose binary result drives a BO. Pattern shows up everywhere
-   (high-limit cutoff, OAT-vs-setpoint enable, freezestat). AI sides are
-   amber (analog signal), the comparator is plum (matches the logic-chain
-   family), the BO side is gray (binary). Pulse intervals are staggered
-   so the three wires don't fire in lockstep. #}
-<rect x="10" y="10" width="38" height="24" stroke="var(--text-dim)" fill="var(--surface)" data-sbg-stroke/>
-<circle cx="20" cy="22" r="2.5" fill="var(--amber)"/>
-<circle cx="38" cy="22" r="2.5" fill="var(--amber)"/>
-<text x="29" y="6" text-anchor="middle" class="sbg-label">AI1</text>
-<rect x="10" y="66" width="38" height="24" stroke="var(--text-dim)" fill="var(--surface)" data-sbg-stroke/>
-<circle cx="20" cy="78" r="2.5" fill="var(--amber)"/>
-<circle cx="38" cy="78" r="2.5" fill="var(--amber)"/>
-<text x="29" y="98" text-anchor="middle" class="sbg-label">AI2</text>
-<rect x="86" y="39" width="28" height="22" stroke="var(--plum)" fill="var(--surface)" data-sbg-stroke/>
-<text x="100" y="55" text-anchor="middle" class="sbg-label">&gt;</text>
-<rect x="152" y="39" width="38" height="22" stroke="var(--text-dim)" fill="var(--surface)" data-sbg-stroke/>
-<circle cx="162" cy="50" r="2.5" fill="var(--text-dim)"/>
-<circle cx="180" cy="50" r="2.5" fill="var(--text-dim)"/>
-<text x="171" y="35" text-anchor="middle" class="sbg-label">BO1</text>
-<path d="M48 22 L66 22 L66 45 L86 45" stroke="var(--amber)" fill="none" data-pulse="signal" data-sbg-stroke/>
-<path d="M48 78 L66 78 L66 55 L86 55" stroke="var(--amber)" fill="none" data-pulse="signal" data-pulse-interval="5500" data-sbg-stroke/>
-<path d="M114 50 L152 50" stroke="var(--text-dim)" fill="none" data-pulse="signal" data-pulse-interval="4500" data-sbg-stroke/>
+   (high-limit cutoff, OAT-vs-setpoint enable, freezestat). AI1 sits in
+   the same row as the comparator and BO1 with a single straight wire
+   running the whole way across (the "primary signal path"); AI2 sits
+   below and its wire makes one 90° turn to enter the comparator from
+   underneath — reads as "AI2 is the variable being tested against the
+   AI1 threshold." Amber for analog wires, gray for the binary BO leg,
+   plum for the logic block. Staggered pulse intervals so the three
+   wires don't fire in lockstep. #}
+<rect x="10" y="20" width="38" height="22" stroke="var(--text-dim)" fill="var(--surface)" data-sbg-stroke/>
+<circle cx="20" cy="31" r="2.5" fill="var(--amber)"/>
+<circle cx="38" cy="31" r="2.5" fill="var(--amber)"/>
+<text x="29" y="16" text-anchor="middle" class="sbg-label">AI1</text>
+<rect x="86" y="20" width="28" height="22" stroke="var(--plum)" fill="var(--surface)" data-sbg-stroke/>
+<text x="100" y="35" text-anchor="middle" class="sbg-label">&gt;</text>
+<rect x="152" y="20" width="38" height="22" stroke="var(--text-dim)" fill="var(--surface)" data-sbg-stroke/>
+<circle cx="162" cy="31" r="2.5" fill="var(--text-dim)"/>
+<circle cx="180" cy="31" r="2.5" fill="var(--text-dim)"/>
+<text x="171" y="16" text-anchor="middle" class="sbg-label">BO1</text>
+<rect x="10" y="64" width="38" height="22" stroke="var(--text-dim)" fill="var(--surface)" data-sbg-stroke/>
+<circle cx="20" cy="75" r="2.5" fill="var(--amber)"/>
+<circle cx="38" cy="75" r="2.5" fill="var(--amber)"/>
+<text x="29" y="96" text-anchor="middle" class="sbg-label">AI2</text>
+<line x1="48"  y1="31" x2="86"  y2="31" stroke="var(--amber)"    data-pulse="signal" data-sbg-stroke/>
+<line x1="114" y1="31" x2="152" y2="31" stroke="var(--text-dim)" data-pulse="signal" data-pulse-interval="4500" data-sbg-stroke/>
+<path d="M48 75 L100 75 L100 42" stroke="var(--amber)" fill="none" data-pulse="signal" data-pulse-interval="5500" data-sbg-stroke/>
 {%- elif id == 'and-bo' -%}
 {# Sibling of compare-bo: two binary inputs through an AND gate to a BO.
    Pattern shows up everywhere in BAS — "all proofs made AND schedule
@@ -111,23 +115,23 @@
    geometry, wire routing, pulse staggering) so the two motifs read as
    a family; only difference is everything is gray (binary) and the
    logic block carries "AND" instead of ">". #}
-<rect x="10" y="10" width="38" height="24" stroke="var(--text-dim)" fill="var(--surface)" data-sbg-stroke/>
-<circle cx="20" cy="22" r="2.5" fill="var(--text-dim)"/>
-<circle cx="38" cy="22" r="2.5" fill="var(--text-dim)"/>
-<text x="29" y="6" text-anchor="middle" class="sbg-label">BI1</text>
-<rect x="10" y="66" width="38" height="24" stroke="var(--text-dim)" fill="var(--surface)" data-sbg-stroke/>
-<circle cx="20" cy="78" r="2.5" fill="var(--text-dim)"/>
-<circle cx="38" cy="78" r="2.5" fill="var(--text-dim)"/>
-<text x="29" y="98" text-anchor="middle" class="sbg-label">BI2</text>
-<rect x="86" y="39" width="28" height="22" stroke="var(--plum)" fill="var(--surface)" data-sbg-stroke/>
-<text x="100" y="54" text-anchor="middle" class="sbg-label">AND</text>
-<rect x="152" y="39" width="38" height="22" stroke="var(--text-dim)" fill="var(--surface)" data-sbg-stroke/>
-<circle cx="162" cy="50" r="2.5" fill="var(--text-dim)"/>
-<circle cx="180" cy="50" r="2.5" fill="var(--text-dim)"/>
-<text x="171" y="35" text-anchor="middle" class="sbg-label">BO1</text>
-<path d="M48 22 L66 22 L66 45 L86 45" stroke="var(--text-dim)" fill="none" data-pulse="signal" data-sbg-stroke/>
-<path d="M48 78 L66 78 L66 55 L86 55" stroke="var(--text-dim)" fill="none" data-pulse="signal" data-pulse-interval="5500" data-sbg-stroke/>
-<path d="M114 50 L152 50" stroke="var(--text-dim)" fill="none" data-pulse="signal" data-pulse-interval="4500" data-sbg-stroke/>
+<rect x="10" y="20" width="38" height="22" stroke="var(--text-dim)" fill="var(--surface)" data-sbg-stroke/>
+<circle cx="20" cy="31" r="2.5" fill="var(--text-dim)"/>
+<circle cx="38" cy="31" r="2.5" fill="var(--text-dim)"/>
+<text x="29" y="16" text-anchor="middle" class="sbg-label">BI1</text>
+<rect x="86" y="20" width="28" height="22" stroke="var(--plum)" fill="var(--surface)" data-sbg-stroke/>
+<text x="100" y="35" text-anchor="middle" class="sbg-label">AND</text>
+<rect x="152" y="20" width="38" height="22" stroke="var(--text-dim)" fill="var(--surface)" data-sbg-stroke/>
+<circle cx="162" cy="31" r="2.5" fill="var(--text-dim)"/>
+<circle cx="180" cy="31" r="2.5" fill="var(--text-dim)"/>
+<text x="171" y="16" text-anchor="middle" class="sbg-label">BO1</text>
+<rect x="10" y="64" width="38" height="22" stroke="var(--text-dim)" fill="var(--surface)" data-sbg-stroke/>
+<circle cx="20" cy="75" r="2.5" fill="var(--text-dim)"/>
+<circle cx="38" cy="75" r="2.5" fill="var(--text-dim)"/>
+<text x="29" y="96" text-anchor="middle" class="sbg-label">BI2</text>
+<line x1="48"  y1="31" x2="86"  y2="31" stroke="var(--text-dim)" data-pulse="signal" data-sbg-stroke/>
+<line x1="114" y1="31" x2="152" y2="31" stroke="var(--text-dim)" data-pulse="signal" data-pulse-interval="4500" data-sbg-stroke/>
+<path d="M48 75 L100 75 L100 42" stroke="var(--text-dim)" fill="none" data-pulse="signal" data-pulse-interval="5500" data-sbg-stroke/>
 {%- elif id == 'current-loop' -%}
 {# 2-wire 4-20mA current loop: PSU drives current through a loop-powered
    transmitter (TX) and back through a controller's analog input (AI),
@@ -186,8 +190,8 @@
 {% set sbgHeights = {
     'pipe-valve': 130,
     'pump-coil':  90,
-    'compare-bo': 100,
-    'and-bo':     100,
+    'compare-bo': 102,
+    'and-bo':     102,
     'current-loop': 90,
     'supervisor':   90
 } %}
