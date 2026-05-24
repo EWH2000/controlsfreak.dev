@@ -2643,23 +2643,39 @@ the engine's IntersectionObserver gates per-frame work to motifs
 currently in the viewport, and the markup gzips well anyway. See
 `codebase-issues#70` for the revisit trigger.
 
-*Draw-in via stroke-dashoffset, case-split.* Initial attempts at
-per-path normalization (`pathLength=1` site-wide, then a
-`--sbg-len` CSS var driven by `getTotalLength()`) both hit a
-Chromium bug where dashoffset on Bezier paths and circles refused
-to fully draw, leaving partial strokes. The first fix
-(commit `e700c2a`) was a single fixed dasharray (600) across all
-elements — safe everywhere, but short straight wires finished
-drawing in ~10% of the 3000ms transition while pipe runs took the
-full duration. The second fix (commit `b8dae2b`, in the doc-sweep
-PR) case-splits by SVG element type:
+*Draw-in via stroke-dashoffset.* Three length-normalization
+approaches all hit Chromium quirks:
 
-- `<line>` and L-only `<path>` carry `pathLength="1"` → CSS rule
-  `[data-sbg-stroke][pathLength="1"]` uses `dasharray:1; dashoffset:1`;
-  draws end-to-end across the full 3000ms regardless of length.
-- `<circle>`, `<rect>`, and `<path>` with Bezier (`Q`/`C`/`A`)
-  commands omit `pathLength` and fall through to the safe
-  default `dasharray:600; dashoffset:600`.
+- `--sbg-len` CSS var driven by `getTotalLength()` — broken on
+  Bezier paths and circles (the AI/AO amber trace, the pump-coil
+  circle), which refused to draw fully even at offset=0.
+- `pathLength="1"` site-wide normalization — same class of bug
+  on the same elements.
+- Case-split `pathLength="1"` on safe straight elements only
+  (`<line>` + L-only `<path>`), with Beziers/circles/rects falling
+  through to a fixed default. Shipped in commit `b8dae2b`,
+  reverted same-PR in commit `98223a5` after in-browser inspection
+  showed every pathLength element rendering as broken speckle.
+  Chromium honors `pathLength="1"` for the JS API
+  (`getTotalLength()` returns the geometric length, 104 on a sample
+  line) but NOT for `stroke-dasharray` — a CSS value of `1` is
+  treated as 1 actual pixel rather than 1 normalized path unit,
+  rendering a 104px line as ~50 tiny dashes that visually read as
+  invisible. This is the most subtle of the three quirks because
+  the path-length API works correctly; only the dasharray side
+  effect breaks.
+
+Permanent fallback (commit `e700c2a`): a single fixed dasharray
+(600, well above any motif's ~200 user units) applied to every
+`[data-sbg-stroke]`. Safe across every element type and every
+browser. Trade-off accepted: drawing is no longer proportional
+to path length — short logic-chain wires finish in ~10% of the
+transition and then sit still while long pipe runs continue.
+The ease-out timing softens the disparity; correctness beats
+uniformity here. Tracked in `codebase-issues#69` with a revisit
+trigger (Chromium ships proper pathLength/dasharray support, or
+a per-element JS-driven CSS-variable approach proves worth the
+bootstrap complexity).
 
 *1240px viewport cutoff.* Below 1240px both gutter strips drop
 out via `@media (max-width: 1240px) { display: none; }`. That

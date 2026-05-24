@@ -350,20 +350,22 @@ harmless, but the signal is lost.
   weight outranks decoration there. Print also drops them. The
   reduced-motion path keeps them visible but snaps them to drawn
   state instead of revealing.
-- **Two `[data-sbg-stroke]` draw-in modes case-split by SVG safety.**
-  `<line>` and L-only `<path>` elements in `_includes/schematic-bg.njk`
-  carry `pathLength="1"` so the CSS rule
-  `.sbg-motif [data-sbg-stroke][pathLength="1"]` uses
-  `dasharray: 1; dashoffset: 1;` — these draw end-to-end across the
-  full 3000ms transition regardless of geometric length. `<circle>`,
-  `<rect>`, and `<path>` with Bezier (`Q`/`C`/`A`) commands omit
-  `pathLength` and fall through to the safe default
-  `dasharray: 600; dashoffset: 600;` — Chromium has a long-standing
-  dashoffset bug on those shapes that fixed-600 sidesteps. When
-  adding a new motif element, leave `pathLength` off until you've
-  verified the dashoffset transition renders fully — the safe
-  default is uniform across all browsers; the normalized mode is
-  the special case.
+- **`[data-sbg-stroke]` draw-in uses a single fixed dasharray, not
+  per-path normalization.** The CSS rule sets
+  `stroke-dasharray: 600; stroke-dashoffset: 600` on every
+  `[data-sbg-stroke]` element (motif paths are ~200 user units at
+  most). Three earlier approaches — `getTotalLength()`-driven
+  `--sbg-len`, `pathLength="1"` on every element, and case-split
+  `pathLength="1"` on safe straight elements only — all hit
+  Chromium quirks. The last attempt (case-split on `<line>` /
+  L-only `<path>`) failed in a particularly subtle way:
+  `pathLength="1"` IS honored for `getTotalLength()` (the API
+  returned the actual geometric length, 104px on a sample line),
+  but NOT for `stroke-dasharray` computation, where Chromium
+  treats `1` as 1 actual pixel and renders the path as ~50 tiny
+  speckled dashes instead of one normalized dash. Permanent
+  fallback: trust the fixed-600 + accept that short paths finish
+  drawing in ~10% of the transition. See codebase-issues#69.
 - **`FlowEngine.init()` is idempotent.** `schematic-bg.js` calls
   it once site-wide on DOMContentLoaded; page-level
   `FlowEngine.init()` calls in education pages with their own

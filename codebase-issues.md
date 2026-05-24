@@ -3017,7 +3017,7 @@ and Widget 2 currently runs sloppy. Low-risk fix: add the directive
 as the first line inside the `pump-control.html:791` IIFE. Not fixed
 inline here to keep the equipment-staging PR scoped to its own work.
 
-### 69. `[data-sbg-stroke]` fixed-dasharray drew short paths early *(addressed 2026-05-23)*
+### 69. `[data-sbg-stroke]` fixed-dasharray draws short paths early *(deferred 2026-05-24)*
 
 Caught during the schematic-bg doc-audit (2026-05-23). The
 schematic-bg gutter motifs use `stroke-dashoffset` for the
@@ -3026,32 +3026,51 @@ scroll-reveal draw-in. Commit `e700c2a` set
 element to dodge a Chromium quirk where dashoffset on Bezier
 paths and circles refused to fully draw. Side effect: short
 straight wires (logic-chain L-paths ~56 user units, BACnet
-traces, the pump-coil grid, the diverting-valve triangles) finished
+traces, the pump-coil grid, the diverting-valve triangles) finish
 drawing in roughly the first 10% of the 3000ms transition while
-long pipe runs took the full duration.
+long pipe runs take the full duration.
 
 **Why it matters:** the disparity reads as a stutter — short paths
 "flash on" while long paths sweep. Not broken, but inconsistent
 with the as-builts pedagogy ("the wire draws as you read past it").
 
-**Resolution (2026-05-23):** case-split into two modes by SVG safety
-(commit `b8dae2b`):
+**Attempted fix (2026-05-23, commit `b8dae2b`):** case-split into
+two modes by SVG safety. `<line>` and L-only `<path>` elements
+carried `pathLength="1"`, and a new CSS rule
+`.sbg-motif [data-sbg-stroke][pathLength="1"]` used
+`stroke-dasharray: 1; stroke-dashoffset: 1` to draw them end-to-end
+across the full 3000ms. `<circle>`, `<rect>`, and Bezier `<path>`
+fell through to the safe fixed-600 default.
 
-- Safe elements (`<line>` and `<path>` with L-only commands) carry
-  `pathLength="1"` in `_includes/schematic-bg.njk`. CSS rule
-  `.sbg-motif [data-sbg-stroke][pathLength="1"]` uses
-  `stroke-dasharray: 1; stroke-dashoffset: 1` — these draw end-to-
-  end across the full 3000ms regardless of geometric length.
-- Unsafe elements (`<circle>`, `<rect>`, `<path>` with Bezier
-  `Q`/`C`/`A` commands) omit `pathLength` and fall through to the
-  safe default `dasharray: 600; dashoffset: 600`.
+**Reverted (2026-05-24, commit `98223a5`):** in-browser inspection
+showed the case-split rendered broken on every pathLength element.
+Chromium does NOT honor `pathLength="1"` for `stroke-dasharray`
+computation — verified by `getComputedStyle(el).strokeDasharray`
+returning `"1px"` against a line whose `getTotalLength()` returned
+the geometric length (104). The CSS `stroke-dasharray: 1` was
+treated as 1 actual pixel, rendering the path as ~50 tiny dashes
+that read as a near-invisible speckle. The BI1/BO1 connector
+disappeared entirely, the pump-coil crosshair lost its vertical
+segment, and several other short elements rendered as broken or
+empty. Spec-wise pathLength should apply to dasharray, but the
+Chromium implementation only honors it for the JS API
+(`getTotalLength` / `getPointAtLength`).
 
-Added 12 `pathLength="1"` attributes across the six motifs covering
-every straight element. Future motifs should leave `pathLength`
-off until the dashoffset transition is verified rendering fully on
-that element type — safe default is uniform across all browsers;
-the normalized mode is the special case. Documented as a Gotcha in
-CLAUDE.md.
+This is the *third* length-normalization approach to hit a
+Chromium quirk: `getTotalLength`-derived `--sbg-len` (broken on
+Beziers / circles), full `pathLength="1"` normalization (same
+class of bug), and case-split `pathLength="1"` on safe straight
+elements (this one — the dasharray side effect).
+
+**Decision (2026-05-24):** defer / accept the stutter. The fixed-
+600 dasharray is the only approach that renders reliably across
+every motif element type. Short-path stutter is the trade-off.
+**Trigger for revisit:** Chromium ships proper pathLength
+support for `stroke-dasharray`, OR a non-pathLength approach is
+found (e.g., per-element CSS variable populated by JS at init
+time with the actual `getTotalLength()` value — viable but
+trades CSS-only simplicity for a JS bootstrap pass; would need
+its own trade-off analysis).
 
 ### 70. Schematic-bg motif library inlines ~360 SVGs into every page DOM
 
@@ -3133,9 +3152,11 @@ audit cycle (#62 / #64 / #65 / #67) stayed in their original
 numerical position under `## Recently addressed` to keep the audit
 batch intact — each carries the same `*(deferred 2026-05-22)*` marker
 and an explicit **Decision** block. A pointer list to those four sits
-at the bottom of this subsection. One more deferral from the
-2026-05-23 schematic-bg doc-audit (#70, ~360 SVGs inlined per page)
-sits at its numerical position above with the same shape.
+at the bottom of this subsection. Two more deferrals from the
+2026-05-23 schematic-bg doc-audit sit at their numerical positions
+above: #69 (short-path dasharray stutter — case-split attempt
+reverted 2026-05-24 after the Chromium pathLength/dasharray finding),
+and #70 (~360 SVGs inlined per page).
 
 ### 7. Worker has no app-level rate limit on `/api/contact` *(deferred 2026-05-16)*
 
