@@ -2610,6 +2610,167 @@ refrigerant-cycle Education page (entry above under "Refrigerant cycle
 — Education section, possibly with calculator"). When it ships, the
 filter-chip question on the landing will resurface — re-evaluate then.
 
+### Schematic-bg chrome — gutter as-builts, hero-frame nav cards, discrete-pulse mode *(shipped 2026-05-23)*
+
+A major chrome overhaul on top of the existing v2.0 workstation
+aesthetic — not a new tool or page, but a new visual identity that
+runs across every page. Four shipped pieces:
+
+**1. Gutter schematic-collage.** Two narrow SVG strips, one in each
+side gutter (`_includes/schematic-bg.njk`), each holding ~60
+inline-SVG motifs drawn from a six-element library: pipe-valve,
+pump-coil, AI/AO terminals, BI/BO terminals, logic-chain (TMR /
+AND / PID blocks), BACnet/IP node. Motifs cycle through a sequence
+with a 230px stride, two staggered sequences (left vs right) so a
+wide viewport never shows a mirrored pair. The strips sit at
+`z-index: -1` inside body's stacking context — above the blueprint
+grid background, below every content surface.
+
+*Why gutter, not background.* The blueprint grid was already
+established (v2.0.1) for the body background; a second decorative
+layer there would have competed with content legibility. Putting
+the motifs in the side gutters keeps them as "as-builts in the
+margin" — decoration that reads as part of the workshop, not as
+chrome cluttering the work.
+
+*Why inlined SVG, not `<use>` shadow trees.* The motifs need to be
+animated by `flow-engine.js` via `getTotalLength()` /
+`getPointAtLength()`, and those calls don't pierce `<use>` shadow
+trees reliably in Chromium (same root cause that bit an earlier
+attempt at `fill:none` inheritance). The trade-off — ~360 SVG
+elements inlined into every page's DOM — is acceptable because
+the engine's IntersectionObserver gates per-frame work to motifs
+currently in the viewport, and the markup gzips well anyway. See
+`codebase-issues#70` for the revisit trigger.
+
+*Draw-in via stroke-dashoffset, case-split.* Initial attempts at
+per-path normalization (`pathLength=1` site-wide, then a
+`--sbg-len` CSS var driven by `getTotalLength()`) both hit a
+Chromium bug where dashoffset on Bezier paths and circles refused
+to fully draw, leaving partial strokes. The first fix
+(commit `e700c2a`) was a single fixed dasharray (600) across all
+elements — safe everywhere, but short straight wires finished
+drawing in ~10% of the 3000ms transition while pipe runs took the
+full duration. The second fix (commit `b8dae2b`, in the doc-sweep
+PR) case-splits by SVG element type:
+
+- `<line>` and L-only `<path>` carry `pathLength="1"` → CSS rule
+  `[data-sbg-stroke][pathLength="1"]` uses `dasharray:1; dashoffset:1`;
+  draws end-to-end across the full 3000ms regardless of length.
+- `<circle>`, `<rect>`, and `<path>` with Bezier (`Q`/`C`/`A`)
+  commands omit `pathLength` and fall through to the safe
+  default `dasharray:600; dashoffset:600`.
+
+*1240px viewport cutoff.* Below 1240px both gutter strips drop
+out via `@media (max-width: 1240px) { display: none; }`. That
+covers most laptops 13"-and-smaller and every phone / tablet — the
+"field device" segment where load weight and battery outrank
+decoration. Print also drops them; reduced-motion keeps them but
+snaps to drawn state.
+
+**2. Hero-frame nav cards.** All 27 nav cards (9 tools, 13 education,
+3 simulators, 2 home) moved from the old `.nav-card-tag` + body shape
+to a three-part instrument frame mirroring the hero's
+`.console-titlebar`:
+
+- `.nav-card-titlebar` — mono small-caps prefix word (TOOL / LESSON
+  / SIM / SECTION) + ellipsis-clipped title + status pill (LIVE /
+  READ / RUN / OK)
+- `.nav-card-body` — the card's existing description / dot grid
+- `.nav-card-statusline` — bullet-separated `.nav-card-pill` spans
+  carrying semantic tags (e.g., a hydronic lesson's pills read
+  "Hydronics • Direct Return • Reverse Return • Primary / Secondary")
+
+A `navCard()` macro in `_includes/nav-card.njk` takes all 27
+through a single signature. Section drives an accent-color
+cascade via `.nav-card--{home,tools,education,simulators}` and the
+three `--section-accent{,-dim,-glow}` tokens.
+
+*Why mirror the hero on every nav card.* The hero already
+established the instrument-frame shape (titlebar + body +
+statusline) as the page's "thing with an identity strip" element.
+Carrying that shape into the nav cards makes the landings read as
+indices of instruments rather than as link grids — and turns the
+two landings (Tools, Education) into instrument racks. The pills
+also encode more than a category: instead of a single category
+tag, they sketch the *scope* of the page.
+
+*titleShort trimming.* The titlebar single-lines at the 4-col
+1920px breakpoint with ~195px of room beside the status pill.
+Long names ("Modbus Register Viewer", "Function-Block Editor")
+needed manual `titleShort` values ("Modbus Reg", "FB Editor");
+CSS adds ellipsis safety via `min-width: 0` on the flex child
+(commit `8cfedff`).
+
+*`.nav-card-tag` is gone.* The old single-category-pill class
+was deprecated when the new shape landed; commit `5ee8f50`
+removed the dead rule.
+
+**3. Discrete-pulse animation mode.** `flow-engine.js` grew a second
+motion primitive alongside the existing continuous particle flow:
+
+- `data-flow="supply|return"` — the original. Continuous stream of
+  particles along the path, constant velocity. Encoding: physical
+  media moving (water through pipes, air through ducts).
+- `data-pulse="signal"` — new. A pulse head + four-circle trail
+  launches from the path start, travels at fixed pixel-speed
+  (default 220 px/sec), and retires at the end. Encoding: a
+  control signal just updated (an analog wire sampling, a logic
+  block firing, a BACnet/IP comm trace delivering).
+
+Auto-fires on a per-path `data-pulse-interval` (default 4000ms,
+±30% jitter so paths don't synchronize); external code calls
+`FlowEngine.pulse(el)` for on-demand firing. The function-block
+editor uses the external call to flash a wire when its source
+block updates — the visual primitive for "this signal just changed."
+Auto-firing is gated by an IntersectionObserver
+(`rootMargin: 120px`) so the 60-deep gutter doesn't churn
+pulses off-screen; explicit `FlowEngine.pulse()` bypasses the
+gate.
+
+Trail tuning constants (`PULSE_HEAD_RADIUS = 3.2px`,
+`PULSE_TRAIL_LEN = 4`, `PULSE_TRAIL_GAP = 5px`, taper steps
+`0.18` radius / `0.22` opacity) are module-level — no per-wire
+knob. Pulse colour reads from `data-pulse-color`, then the
+element's `stroke` attribute, then `var(--accent)` as ultimate
+fallback (same cascade as `data-flow` colours).
+
+**4. Control-vocabulary color family — teal / amber / plum.** Three
+new desaturated hues added to `:root` for the *control* side of a
+schematic:
+
+- `--teal` (`#4a8a8a`) — BACnet/IP comm traces; the wire that
+  carries packets, not water.
+- `--amber` (`#c9a14a`) — energized analog control wiring (AI / AO
+  signal paths); the wire that carries 4-20mA or 0-10V.
+- `--plum` (`#8a5e7e`) — logic-block signal lines (AND / OR / PID
+  / TMR chains); the wire inside a wiresheet.
+
+Each carries `--*-dim` and `--*-glow` companions (10% / 22% alpha)
+matching the `--accent-dim` / `--accent-glow` pattern, so the
+section-accent cascade on nav cards reaches into background tints
+and focus rings cleanly. The split with the physical-media palette
+(`--blue`, `--blue-cool`, `--red` / `--accent`, `--heat`) is
+deliberate: physical media palette = "water, air, energy moving";
+control palette = "comm, wiring, logic." Diagrams that show both
+read in two registers without color clashes.
+
+*Section-accent cascade.* Each nav-card section gets one of these
+hues as its primary: tools = `--accent` (existing green),
+education = `--plum`, simulators = `--teal`, home = `--accent`.
+Setting `.nav-card--education { --section-accent: var(--plum); }`
+and consuming `var(--section-accent)` in `.nav-card:hover` /
+`.nav-card-name` / `.ok-pill` flows the colour through every
+themed element without per-section duplication.
+
+**What didn't make it into this round.** Per-pulse-trail knob
+(`data-pulse-trail`) — not needed by any current consumer; left
+for the function-block editor to ask for if the per-wire-type
+distinction becomes useful (currently all wires use the same
+trail shape). Adjustable Bezier-path dashoffset draw — gave up
+on this when the Chromium quirk proved durable; the fixed-600
+fallback for curved elements is permanent until that bug closes.
+
 ### Discovery prompt + reward — Education page idiom
 
 Two patterns appearing together on d3 (twin-T), establishing the
