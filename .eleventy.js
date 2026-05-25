@@ -150,6 +150,18 @@ module.exports = function(eleventyConfig) {
         });
     });
 
+    // JSON.stringify, but with every `<` escaped to `<` so the result is
+    // safe to drop directly into an inline `<script>` tag without risking a
+    // `</script>` sequence inside a string terminating the tag early. The
+    // round-tripped value is byte-identical to the unescaped form once the
+    // browser parses the JSON literal; this only affects the embedded HTML
+    // representation. Used for the quiz pages' inline `const questions = …`
+    // injection (the same data is also emitted as FAQPage JSON-LD via
+    // faqPageJsonLd below — same safety story applies there too).
+    eleventyConfig.addFilter("safeScriptJson", (value) =>
+        JSON.stringify(value).replace(/</g, "\\u003c")
+    );
+
     // TechArticle JSON-LD for education pages — establishes content type,
     // attributes authorship to the Person entity declared on the home page
     // (E-E-A-T), and carries datePublished / dateModified from git history.
