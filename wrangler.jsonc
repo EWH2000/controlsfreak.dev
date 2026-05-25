@@ -14,6 +14,11 @@
     // Lets the Worker reference env.ASSETS to serve static files.
     "binding": "ASSETS",
     // Clean URLs: /contact serves contact.html.
-    "html_handling": "auto-trailing-slash"
+    "html_handling": "auto-trailing-slash",
+    // Serve _site/404.html with a 404 status for any URL that doesn't
+    // match an asset (instead of CF's generic default). html/404.html
+    // is the source; it carries `noindex` + `eleventyExcludeFromCollections`
+    // so it stays out of the sitemap.
+    "not_found_handling": "404-page"
   }
 }
