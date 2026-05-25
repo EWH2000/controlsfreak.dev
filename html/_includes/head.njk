@@ -34,6 +34,9 @@
     {% if nav == "practice" and quizzes[page.fileSlug] %}
     <script type="application/ld+json">{{ canonical | faqPageJsonLd(quizzes[page.fileSlug], title) | safe }}</script>
     {% endif %}
+    {% if nav == "tools" and page.url != "/tools/" %}
+    <script type="application/ld+json">{{ canonical | softwareApplicationJsonLd(title, description) | safe }}</script>
+    {% endif %}
     <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
     <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png">
     <link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon-180.png">
