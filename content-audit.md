@@ -879,13 +879,14 @@ identifier. Adjust the first pill in lockstep.
 Verification: **confirmed** — visible in
 `/tmp/audit-landings-screens/simulators-desktop.png`.
 
-**Resolution (2026-05-24):** `titleShort` on the FBE card was renamed
-from `'Wiresheet'` to `'FB Editor'` (`3c7cc5c`); the titlebar now
-reads `SIM :: FB EDITOR`. **Partial:** the first pill in the same
-card (`html/simulators/index.html:45`) still reads `'Wiresheet'`,
-which the audit calls for syncing in lockstep. Item stays unchecked
-in `refinement-priorities.md` until the pill ships; logged as a
-follow-up minor-polish sweep.
+**Resolution (2026-05-25):** `titleShort` on the FBE card was renamed
+from `'Wiresheet'` to `'FB Editor'` (`3c7cc5c`, 2026-05-24); the
+titlebar now reads `SIM :: FB EDITOR`. The first pill at
+`html/simulators/index.html:45` was synced from `'Wiresheet'` to
+`'Logic Sandbox'` to finish the lockstep call — picked to match the
+sibling cards' first-pill shape (subject-domain noun, cf. `'PID Loop'`
+/ `'VFD'`) and the card's own `desc` copy. The `desc` keeps
+"wiresheet" as a load-bearing descriptor of the canvas type.
 
 ### 15. Hero "More coming" badge reads as apologetic
 
