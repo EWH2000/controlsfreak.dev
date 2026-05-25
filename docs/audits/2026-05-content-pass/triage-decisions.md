@@ -1,6 +1,6 @@
-# audit-triage-decisions.md
+# triage-decisions.md
 
-Decisions captured during the triage walkthrough of `audit-triage.md`. Source of truth for the implementation phase.
+Decisions captured during the triage walkthrough of `triage.md`. Source of truth for the implementation phase.
 
 ---
 
@@ -208,7 +208,7 @@ All four bundled sub-questions resolved explicitly during triage (the fifth — 
 
 ### Remaining sweep items
 
-The Minor-polish lists in each batch of `content-audit.md` (phrasing nits, undefined jargon, alignment, voice-swing items not flagged here) roll into the same editorial sweep with implementation judgment — fix inline or strike through with a one-line reason.
+The Minor-polish lists in each batch of `../../content-audit.md` (phrasing nits, undefined jargon, alignment, voice-swing items not flagged here) roll into the same editorial sweep with implementation judgment — fix inline or strike through with a one-line reason.
 
 ---
 
@@ -225,7 +225,7 @@ Implementation phase happens in a fresh session with this doc as input. Suggeste
 7. **Education landing** — drop singleton chips + add `Fundamentals` catch-all + `Know your way around? Jump to:` preamble.
 8. **Home hero polish** — `Most-reached-for tools` eyebrow, `Latest: <newest tool>` badge, drop UPTIME line, `REV: <date>` About-card label (with `lastRev` field in `_data/site.js`).
 9. **Function-Block Editor sim card** — `titleShort: FB Editor`.
-10. **Editorial sweep** — modbus lead voice, coil-sizing AIRFLOW collapse, plus the rolling Minor-polish lists in `content-audit.md`.
+10. **Editorial sweep** — modbus lead voice, coil-sizing AIRFLOW collapse, plus the rolling Minor-polish lists in `../../content-audit.md`.
 
 Group #1 is a prerequisite for #4 and #6. The rest can land in any order; some can bundle if the diffs stay scannable.
 

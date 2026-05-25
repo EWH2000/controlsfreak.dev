@@ -1,4 +1,4 @@
-# audit-triage.md
+# triage.md
 
 A handoff prompt for walking through the 17 remaining substantive findings from the refinement-period content audit, one decision at a time, with pros and cons spelled out for each.
 
@@ -6,7 +6,7 @@ This document is a **conversation script**, not a spec — paste / point a Claud
 
 ## Context
 
-The audit (PRs #110–113, all merged) produced 24 substantive findings across 28 pages in `content-audit.md`. The 7 unambiguous mechanical fixes shipped in PR #114 (`polish/mechanical-audit-fixes`). The 17 remaining findings need editorial picks: convention rules, copy choices, voice/framing calls, UX trade-offs.
+The audit (PRs #110–113, all merged) produced 24 substantive findings across 28 pages in `../../content-audit.md`. The 7 unambiguous mechanical fixes shipped in PR #114 (`polish/mechanical-audit-fixes`). The 17 remaining findings need editorial picks: convention rules, copy choices, voice/framing calls, UX trade-offs.
 
 The audit also produced minor-polish lists in each batch section. Those are NOT in this file — they roll up into an editorial sweep at the end once the substantive picks are settled.
 
@@ -15,7 +15,7 @@ The audit also produced minor-polish lists in each batch section. Those are NOT 
 1. **One decision at a time.** Use `AskUserQuestion` per decision, not batched. Per `feedback_design_questions_one_at_a_time` in the user's memory, decisions that invite content elaboration get individual prompts.
 2. **Lead with the audit's recommendation.** Where the audit suggested a direction, present that as the first option labeled `(Audit recommendation)`. The user can still pick differently.
 3. **Stop and confirm if a pick has downstream dependencies.** Several decisions cascade — flagged inline below as `Depends on: <other>`. If the upstream decision hasn't been settled, ask about it first.
-4. **Log decisions as you go.** Append each pick to a fresh `audit-triage-decisions.md` in repo root, with the finding number, the chosen option, and a one-line note on why (the user's actual words if they elaborated). This becomes the source of truth for the implementation phase.
+4. **Log decisions as you go.** Append each pick to a fresh `triage-decisions.md` in repo root, with the finding number, the chosen option, and a one-line note on why (the user's actual words if they elaborated). This becomes the source of truth for the implementation phase.
 5. **Don't implement during triage.** Pure decision-gathering. Implementation gets a separate session with the decisions doc as input.
 6. **Pause every ~4 decisions** to check whether the user wants a break or to keep going. Triage fatigue is real.
 
@@ -445,7 +445,7 @@ If #8 drops chips, no separate fix needed. The card order tells the only story.
 
 ## 15 — Minor-polish sweep
 
-Each batch's audit section in `content-audit.md` has a *Minor polish* list — phrasing, undefined-jargon, alignment, voice-swing items that don't rise to substantive but accumulate.
+Each batch's audit section in `../../content-audit.md` has a *Minor polish* list — phrasing, undefined-jargon, alignment, voice-swing items that don't rise to substantive but accumulate.
 
 **Recommendation:** treat as a single editorial sweep after the 14 design-choice picks above land. One PR, one commit per batch (or one commit per page if it stays clean), each items in the lists either fixed inline or struck through with a one-line reason for skipping.
 
@@ -461,13 +461,13 @@ Each batch's audit section in `content-audit.md` has a *Minor polish* list — p
 
 ## After all decisions
 
-Implementation phase happens in a fresh session with `audit-triage-decisions.md` as input. The assistant should:
+Implementation phase happens in a fresh session with `triage-decisions.md` as input. The assistant should:
 
 1. Read the decisions doc.
 2. Propose a PR grouping that batches related decisions (e.g., all eyebrow renames in one PR, all preamble adds in one PR, etc.).
 3. Run the changes in one branch with focused commits.
 4. Run tests, push, open PR.
 5. Update `codebase-issues.md` for any newly-arisen code items.
-6. Update the *Minor polish* lists in `content-audit.md` to strike through items that got resolved inline during the substantive fixes.
+6. Update the *Minor polish* lists in `../../content-audit.md` to strike through items that got resolved inline during the substantive fixes.
 
 After the implementation PR merges, revisit the nav-card grid question (parked since the plan kickoff) — the implementation choices may have changed what the grid needs to be.

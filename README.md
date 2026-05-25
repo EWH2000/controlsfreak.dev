@@ -228,8 +228,7 @@ npm install
 # live-reload dev server on http://localhost:8000
 npm run dev
 
-# or: one-shot build + plain static serve (this is what the
-# Playwright specs expect)
+# or: one-shot build + plain static serve
 npm run build
 python3 -m http.server 8000 --directory _site
 
@@ -239,9 +238,11 @@ npm test
 
 Tests live under `tests/`: `smoke.spec.js` (every page returns
 200, has the expected title and nav, no console errors, plus
-behaviour spot-checks) and `contact.spec.js` (the contact form).
-Chromium only. Start the server yourself before running tests —
-there's no `webServer` block in the Playwright config.
+behaviour spot-checks), `contact.spec.js` (the contact form),
+and `psychro-engine.spec.js` (pure-Node engine math). Chromium
+only. The Playwright config has a `webServer` block that builds
+and serves `_site/`, so `npm test` is self-sufficient on a fresh
+checkout — a running `npm run dev` on port 8000 is reused.
 
 For UI changes, screenshot the page after editing rather than
 guessing — `@playwright/test` re-exports `chromium` for one-shot

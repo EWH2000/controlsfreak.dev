@@ -1,26 +1,26 @@
-# audit-implementation.md
+# implementation.md
 
 A handoff prompt for executing the 15 decisions captured during audit triage.
 
-This document is a **process script**, not a spec — paste / point a Claude Code session at it (or read top-to-bottom yourself). The actual decisions live in `audit-triage-decisions.md`; the per-finding rationale and rejected alternatives live in `audit-triage.md`; the source observations from the audit live in `content-audit.md`. Nothing in this file is acted on by reading it.
+This document is a **process script**, not a spec — paste / point a Claude Code session at it (or read top-to-bottom yourself). The actual decisions live in `triage-decisions.md`; the per-finding rationale and rejected alternatives live in `triage.md`; the source observations from the audit live in `../../content-audit.md`. Nothing in this file is acted on by reading it.
 
 ## Inputs
 
 Read these in order before starting:
 
-1. **`audit-triage-decisions.md`** — source of truth for what to do. Each H2 is a finding; under it is the pick + a note explaining intent and (where applicable) implementation hints. Sub-picks live under H3s within the parent finding.
-2. **`audit-triage.md`** — the triage script that produced the decisions doc. Reach for it only when a decision-doc note feels ambiguous and you need the original options + pros/cons.
-3. **`content-audit.md`** — the raw audit findings (PRs #110–113). Reach for it when you need page-level observations the decision doc doesn't include (e.g., which specific tools fall in the "9 tools" cohort for the failure-state sweep).
-4. **`CLAUDE.md`** — project conventions. The git workflow, frontmatter shape, kebab-case ids, indentation, `'use strict'`, validate-and-mute, etc., all apply to every commit in this implementation phase.
-5. **`codebase-issues.md`** — open code-quality holds. Cross-reference before touching shared CSS or shared scripts (especially the failure-state pattern work — there may already be an open issue for related chrome).
+1. **`triage-decisions.md`** — source of truth for what to do. Each H2 is a finding; under it is the pick + a note explaining intent and (where applicable) implementation hints. Sub-picks live under H3s within the parent finding.
+2. **`triage.md`** — the triage script that produced the decisions doc. Reach for it only when a decision-doc note feels ambiguous and you need the original options + pros/cons.
+3. **`../../content-audit.md`** — the raw audit findings (PRs #110–113). Reach for it when you need page-level observations the decision doc doesn't include (e.g., which specific tools fall in the "9 tools" cohort for the failure-state sweep).
+4. **`../../CLAUDE.md`** — project conventions. The git workflow, frontmatter shape, kebab-case ids, indentation, `'use strict'`, validate-and-mute, etc., all apply to every commit in this implementation phase.
+5. **`../../codebase-issues.md`** — open code-quality holds. Cross-reference before touching shared CSS or shared scripts (especially the failure-state pattern work — there may already be an open issue for related chrome).
 
 ## Instructions for the assistant reading this
 
 1. **Use plan mode at the start of each PR.** Per `feedback_codebase_issues_sweep` in user memory, sweep-style work runs plan-mode-first per item. A PR groups one or more decisions, so the plan is "what's the diff shape for this batch, what files get touched, what's the verification."
 2. **One branch per PR group.** Use the suggested groupings below; if a group is genuinely large (e.g., the failure-state callout sweep touching 9 tools), split into commits within the same branch, not separate branches.
-3. **Commit cadence.** One commit per logical chunk inside a PR — see CLAUDE.md `## Git conventions` for subject/body shape and the per-file body rule. Don't squash mid-development.
+3. **Commit cadence.** One commit per logical chunk inside a PR — see ../../CLAUDE.md `## Git conventions` for subject/body shape and the per-file body rule. Don't squash mid-development.
 4. **User merges.** Never `gh pr merge`. Open the PR and stop; the user reviews on GitHub.
-5. **Log incidental findings.** Anything code-quality you notice in passing goes to `codebase-issues.md` under *Open*, not inline fix. Mention the append to the user.
+5. **Log incidental findings.** Anything code-quality you notice in passing goes to `../../codebase-issues.md` under *Open*, not inline fix. Mention the append to the user.
 6. **Verification per PR.** Run `npm test` and an `npm run build` before pushing. For UI-touching PRs (failure-state sweep, narrow-width callouts, bit-grid restructure, education landing changes, home hero polish), also use the `verify` skill or a manual Playwright screenshot pass to confirm the visual lands as intended.
 7. **Pause for engineering-credibility review.** Before shipping PR #3 (cold-tool defaults), surface the proposed `value=` defaults to the user as a confirmation step — the triage doc explicitly flagged that wrong defaults teach the wrong intuition on first paint.
 
@@ -58,7 +58,7 @@ Order matters — groups 1 and 2 set up chrome that later groups consume.
   - signal-scaling: 12 mA on 4–20 mA, 0–100 psi span, unit "psi" → 50.0 psi · 50.0 % of span
   - modbus-register-viewer: decimal 43981 / hex 0xABCD
   - bacnet-ip-converter: hex `C0A80164BAC0` → 192.168.1.100:47808
-- **Preambles.** Use econ-ratio's preamble as the voice reference. Each preamble is a task-framed lead sentence + a sentence per tab if tabs differ. Add to: `signal-scaling`, `modbus-register-viewer`, `bacnet-ip-converter`, `thermistor-calculator`. Wrap in `<p class="tool-preamble">` (the existing class per CLAUDE.md `## Design system`).
+- **Preambles.** Use econ-ratio's preamble as the voice reference. Each preamble is a task-framed lead sentence + a sentence per tab if tabs differ. Add to: `signal-scaling`, `modbus-register-viewer`, `bacnet-ip-converter`, `thermistor-calculator`. Wrap in `<p class="tool-preamble">` (the existing class per ../../CLAUDE.md `## Design system`).
 - **Prereq links.** Only modbus's preamble gets inline anchor links — to `/education/modbus-basics.html` and `/education/modbus-decoding.html`. The other 3 stay tool-only.
 
 **Verification.** Visit each of the 3 cold tools and verify the computed result on first paint matches the expected value. Visit each of the 4 tools and verify the preamble reads well. `npm test`.
@@ -67,9 +67,9 @@ Order matters — groups 1 and 2 set up chrome that later groups consume.
 
 **Decisions:** #1 (canonize amber-callout pattern across all 9 tools).
 
-The 9 tools are the audit cohort — cross-reference `content-audit.md` if the list isn't obvious from `tools/` directory contents. For each tool:
+The 9 tools are the audit cohort — cross-reference `../../content-audit.md` if the list isn't obvious from `tools/` directory contents. For each tool:
 
-- Identify every invalid-input branch where the current output is `—` (validate-and-mute, per CLAUDE.md `## JS patterns`).
+- Identify every invalid-input branch where the current output is `—` (validate-and-mute, per ../../CLAUDE.md `## JS patterns`).
 - Add an amber callout (the class from PR #1) below the result row, with prose naming **the failure mode AND the action**. Econ-ratio's existing callout is the voice reference.
 - Some failure modes are harder to write than others — signal-scaling's equal-bounds / divide-by-zero in particular doesn't have a clean physical explanation. Write the best plain-English description you can ("Span is zero — pick a different high or low value to compute a slope"); flag to the user if any tool's failure mode genuinely defies a teaching callout, and decide together whether to fall back to the leaner pill (Option B from triage) for just that case.
 - Result-row stays muted (`class="result-value muted"`, text `—`) per existing convention; the callout sits below, not in place of.
@@ -94,7 +94,7 @@ The 9 tools are the audit cohort — cross-reference `content-audit.md` if the l
 **Decisions:** #7 4×4 grid + mental-model orientation callout on modbus, #6 narrow-width-note class deployment on other tools that warrant it.
 
 - **Bit-grid 4×4.** Media-query the modbus bit-grid: `grid-template-columns` from 8 cols to 4 cols below ~700px. Verify cell size lands ≥44px square at 375px viewport. Adjust bit-label positioning if needed.
-- **Bit-grid callout.** Add a `.narrow-width-note` above the bit-grid (`display: none` desktop; visible at the same narrow-width breakpoint). Copy must frame the layout shift as **mental-model orientation, not apology** — e.g., "Layout shifts to 4×4 on narrow screens — bit 8 wraps next to bit 11 instead of next to bit 0." See `audit-triage-decisions.md` #7 note for the framing trap to avoid.
+- **Bit-grid callout.** Add a `.narrow-width-note` above the bit-grid (`display: none` desktop; visible at the same narrow-width breakpoint). Copy must frame the layout shift as **mental-model orientation, not apology** — e.g., "Layout shifts to 4×4 on narrow screens — bit 8 wraps next to bit 11 instead of next to bit 0." See `triage-decisions.md` #7 note for the framing trap to avoid.
 - **Other narrow-width deployments.** Per #6, deploy `.narrow-width-note` to other tools with real mobile UX trade-offs — psych chart canvas and PID tuner are the candidates flagged in triage. Skip if the trade-off doesn't have a clean one-sentence explanation; don't force a callout just to use the class.
 
 **Verification.** Resize a browser to 375px and walk modbus + each narrow-width-callout target. Confirm the bit-grid is thumbable and the callouts read correctly. `npm test`.
@@ -123,12 +123,12 @@ The 9 tools are the audit cohort — cross-reference `content-audit.md` if the l
 
 ### PR #9 — Editorial sweep + minor polish
 
-**Decisions:** #15 sub-picks (lead word, modbus voice, coil-sizing AIRFLOW) + the rolling Minor-polish lists in `content-audit.md`.
+**Decisions:** #15 sub-picks (lead word, modbus voice, coil-sizing AIRFLOW) + the rolling Minor-polish lists in `../../content-audit.md`.
 
 - **Education landing lead:** replace "common sense" → "practical".
 - **Modbus Essentials lead:** tighten to single voice (read the existing lead, identify the swing, rewrite for consistency toward the dry/field-tech end).
 - **Coil-sizing AIRFLOW:** collapse the single-input section to a `.ps-row` inside LEAVING AIR labeled "Airflow."
-- **Minor-polish lists.** Walk each batch's *Minor polish* section in `content-audit.md`. Each item: fix inline OR strike through with a one-line reason for skipping. One commit per batch (or per page if each stays clean).
+- **Minor-polish lists.** Walk each batch's *Minor polish* section in `../../content-audit.md`. Each item: fix inline OR strike through with a one-line reason for skipping. One commit per batch (or per page if each stays clean).
 
 **Verification.** Eyeball the touched pages. `npm test`.
 
@@ -138,31 +138,31 @@ These apply to every PR in this implementation phase:
 
 - **Update `tests/smoke.spec.js` `PAGES` array** only if a new page lands (no new pages in this triage — but if one is added incidentally, the drift test fails until `PAGES` updates).
 - **`descriptionLengthGuard`** in `.eleventy.js` enforces 140–160 char descriptions and fails the build out-of-range. Any frontmatter `description` edit must verify length.
-- **`.html` extension convention.** New anchors use explicit `.html`. See CLAUDE.md `## Conventions`.
-- **Kebab-case ids.** Every new `id="…"` is lowercase + digits + hyphens, no underscores or camelCase. See CLAUDE.md `## Conventions`.
+- **`.html` extension convention.** New anchors use explicit `.html`. See ../../CLAUDE.md `## Conventions`.
+- **Kebab-case ids.** Every new `id="…"` is lowercase + digits + hyphens, no underscores or camelCase. See ../../CLAUDE.md `## Conventions`.
 - **`'use strict';`** first inside every page-inline IIFE and every shared classic script.
 - **Validate-and-mute** for any new numeric input (use `!isFinite(x)`, not `isNaN(x)`).
 - **Bump `package.json.version`** when shipping something notable — the footer reads it via `html/_data/site.js`. Most of these PRs are minor bumps (`1.X.0`); a pure copy-only sweep is a patch bump.
-- **Update the "Adding a new tool" checklist in CLAUDE.md** when PR #8 lands to include "set `Latest: <name>` in the hero badge" alongside the existing PAGES-array + chip-count steps.
-- **Sweep on convention shifts.** When a PR introduces a new convention (e.g., section-prefix eyebrows in PR #2, amber-callout pattern in PR #4), grep site-wide for old patterns and update in the same PR. See CLAUDE.md `## Workflow` for the sweep rule.
+- **Update the "Adding a new tool" checklist in ../../CLAUDE.md** when PR #8 lands to include "set `Latest: <name>` in the hero badge" alongside the existing PAGES-array + chip-count steps.
+- **Sweep on convention shifts.** When a PR introduces a new convention (e.g., section-prefix eyebrows in PR #2, amber-callout pattern in PR #4), grep site-wide for old patterns and update in the same PR. See ../../CLAUDE.md `## Workflow` for the sweep rule.
 
 ## Risk callouts
 
 - **PR #3 cold-tool defaults.** Wrong defaults teach the wrong intuition on first paint. Surface the proposed values for confirmation before editing.
 - **PR #4 failure-state callouts.** Some tools' failure modes don't have clean physical explanations (signal-scaling equal-bounds is the canonical example). Flag any genuinely defiant case for a fall-back-to-leaner-pill discussion rather than ship a forced explanation.
-- **PR #6 bit-grid callout copy.** The mental-model-orientation framing is load-bearing — re-read `audit-triage-decisions.md` #7 note before writing the copy. The trap is the "this is cramped on mobile" voice.
+- **PR #6 bit-grid callout copy.** The mental-model-orientation framing is load-bearing — re-read `triage-decisions.md` #7 note before writing the copy. The trap is the "this is cramped on mobile" voice.
 - **PR #8 `REV:` field.** `lastRev` is editorial cadence, NOT git-derived. Don't wire it to `gitLastmod` — that defeats the point and recreates the duplication-with-hero issue the user explicitly rejected during triage.
 
 ## Out of scope for this implementation
 
 - No merges. User merges on GitHub.
-- No restructuring of triage docs (`audit-triage.md`, `audit-triage-decisions.md`, `content-audit.md`) — user said they'll clean up later.
+- No restructuring of triage docs (`triage.md`, `triage-decisions.md`, `../../content-audit.md`) — user said they'll clean up later.
 - No nav-card grid revisit — parked from earlier; comes back as a separate task after these PRs land.
 
 ## Definition of done
 
 - All 9 PRs opened (or fewer if some genuinely bundle without losing review clarity).
 - Each PR's verification has been run + reported in the PR description's *Test plan* section.
-- `codebase-issues.md` updated for any incidental findings that surfaced during implementation.
-- `content-audit.md` *Minor polish* lists struck through for items resolved inline.
+- `../../codebase-issues.md` updated for any incidental findings that surfaced during implementation.
+- `../../content-audit.md` *Minor polish* lists struck through for items resolved inline.
 - A short closing note to the user listing PR URLs in the order they should be reviewed, with a flag on any PR that hit a decision that needed re-confirmation mid-implementation.
