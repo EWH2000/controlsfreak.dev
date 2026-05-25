@@ -52,7 +52,7 @@ Pick from the top; most are one-string or one-block edits.
       has no href** while other inline anchors on the page are
       wired. **S** — wrap the text in `<a href="/contact.html">`.
 
-- [ ] `[content-audit #14]` **Simulators "Wiresheet" titleShort
+- [x] `[content-audit #14]` **Simulators "Wiresheet" titleShort
       misnames the FBE.** The product is "Function-Block Editor";
       `Wiresheet` is a surface metaphor. Rename to `FB Editor` or
       `Fn Blocks` and sync the first pill label. **S** — one
