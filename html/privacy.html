@@ -1,0 +1,178 @@
+---
+title: Privacy — controlsfreak.dev
+description: What controlsfreak.dev does with your data — what the contact form collects, who else processes request data (Cloudflare, Google Fonts), and your rights.
+canonical: https://controlsfreak.dev/privacy.html
+---
+{% extends "layouts/page.njk" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Privacy</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">
+                Privacy policy
+                <span class="tool-tag">Privacy</span>
+            </h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="tool-preamble">Last updated: 2026-05-24</p>
+
+            <p>
+                controlsfreak.dev is run by one person. There are no
+                analytics, no ads, no user accounts, and nothing on the
+                page that tries to identify you. The contact form is
+                the only place the site asks for any information. This
+                page covers what happens with that information, and
+                what the few third-party services involved in serving
+                the page can see.
+            </p>
+
+            <section>
+                <h2 class="subhead">Contact form</h2>
+                <p>
+                    The contact form takes a name (optional), an email
+                    address (required), and a message. A Cloudflare
+                    Worker receives the submission at
+                    <code>/api/contact</code> and hands it to
+                    <a href="https://resend.com/legal/privacy-policy" rel="noopener">Resend</a>,
+                    which delivers it to my inbox as an email.
+                </p>
+                <p>
+                    That message is read only by me. It is not added
+                    to any mailing list, not shared with anyone else,
+                    and not used for anything other than replying.
+                    Resend and my email provider keep the message in
+                    their systems for as long as a delivered email
+                    normally lives there. The chain will be removed
+                    from my inbox once any discussion has concluded.
+                </p>
+            </section>
+
+            <section>
+                <h2 class="subhead">Cloudflare</h2>
+                <p>
+                    The site sits behind Cloudflare, which serves the
+                    pages, blocks abusive traffic, and absorbs attacks.
+                    To do that, Cloudflare processes the standard
+                    request data your browser sends — including your
+                    IP address, the URL you requested, your
+                    User-Agent string, and similar headers. See
+                    <a href="https://www.cloudflare.com/privacypolicy/" rel="noopener">Cloudflare's privacy policy</a>
+                    for what they retain and for how long.
+                </p>
+            </section>
+
+            <section>
+                <h2 class="subhead">Cloudflare Turnstile</h2>
+                <p>
+                    The contact form uses
+                    <a href="https://www.cloudflare.com/application-services/products/turnstile/" rel="noopener">Cloudflare Turnstile</a>
+                    to keep bots out. Turnstile loads a small script
+                    from <code>challenges.cloudflare.com</code> and
+                    runs a silent check in your browser before the
+                    form will submit — there is no puzzle to solve.
+                    It shares minimal browser data with Cloudflare to
+                    evaluate that check.
+                </p>
+            </section>
+
+            <section>
+                <h2 class="subhead">Google Fonts</h2>
+                <p>
+                    The page loads typography from
+                    <code>fonts.googleapis.com</code> and
+                    <code>fonts.gstatic.com</code>. As a side effect
+                    of those font requests, Google sees the IP address
+                    that requested them. See
+                    <a href="https://policies.google.com/privacy" rel="noopener">Google's privacy policy</a>
+                    for what they do with it.
+                </p>
+            </section>
+
+            <section>
+                <h2 class="subhead">No analytics, no tracking, no cookies set by me</h2>
+                <p>
+                    There is no analytics platform on this site, no
+                    advertising script, no fingerprinting, and no
+                    cookie set by the site itself. Nothing on the
+                    page tries to identify you across visits.
+                </p>
+                <p>
+                    The site does use one piece of browser-side
+                    storage: a single <code>localStorage</code> entry
+                    that remembers whether you have the US or Metric
+                    units toggle selected. That value stays on your
+                    device and is never sent to me or to anyone else.
+                </p>
+                <p>
+                    Cloudflare may set its own cookies for security
+                    and bot protection, independently of anything on
+                    this site. Those are covered by their privacy
+                    policy linked above.
+                </p>
+            </section>
+
+            <section>
+                <h2 class="subhead">Your rights</h2>
+                <p>
+                    If you are in the EU or the UK, the GDPR (or the
+                    UK GDPR) gives you a few rights over data that
+                    identifies you. In the case of this site, the
+                    data that identifies you is whatever you put into
+                    the contact form. You can ask me to send you a
+                    copy of what you submitted, correct it, or delete
+                    it. To make a request, send a note through the
+                    <a href="/contact.html">contact form</a> from the
+                    same email address you used originally so I can
+                    match it up. I will reply as soon as possible.
+                    With the current amount of emails, that normally
+                    means within 24 to 48 hours.
+                </p>
+                <p>
+                    Request data that Cloudflare and Google see as
+                    part of delivering the page is handled under
+                    their own policies; if you want to exercise
+                    rights against them, you would need to contact
+                    them directly.
+                </p>
+            </section>
+
+            <section>
+                <h2 class="subhead">Children</h2>
+                <p>
+                    The site is not directed at children under 13 and
+                    does not knowingly collect information from them.
+                </p>
+            </section>
+
+            <section>
+                <h2 class="subhead">Changes to this policy</h2>
+                <p>
+                    If something material changes — a new third-party
+                    service appears on a page, the contact form
+                    starts collecting something new — this page will
+                    be updated and the "Last updated" date at the top
+                    will move.
+                </p>
+            </section>
+
+            <section>
+                <h2 class="subhead">Questions</h2>
+                <p>
+                    For any privacy-related question, send a note
+                    through the <a href="/contact.html">contact form</a>.
+                </p>
+            </section>
+
+        </div>
+    </div>
+
+</main>
+{% endblock %}
