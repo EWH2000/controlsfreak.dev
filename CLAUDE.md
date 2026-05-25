@@ -11,7 +11,8 @@ transpiler.
 Companion docs: `README.md` for the user-facing tour;
 `site-ideas-and-friction.md` for per-page design history and
 ideas-not-yet-shipped; `codebase-issues.md` for open code-quality
-items needing a decision.
+items needing a decision; `content-audit.md` for editorial
+findings from the recurring content-accuracy audits.
 
 ## Stack
 
@@ -267,7 +268,7 @@ resolve.
   treats `1` as 1 actual pixel and renders the path as ~50 tiny
   speckled dashes instead of one normalized dash. Permanent
   fallback: trust the fixed-600 + accept that short paths finish
-  drawing in ~10% of the transition. See codebase-issues#69.
+  drawing in ~10% of the transition. See codebase-issues #69.
 - **`FlowEngine.init()` is idempotent.** `schematic-bg.js` calls
   it once site-wide on DOMContentLoaded; page-level
   `FlowEngine.init()` calls in education pages with their own
@@ -287,9 +288,13 @@ resolve.
 - `tests/` — Playwright specs (`smoke.spec.js`, `contact.spec.js`,
   `psychro-engine.spec.js`).
 - `_site/` — build output (gitignored).
+- `docs/` — archived audit artifacts and one-shot prompts.
+  `docs/audits/<topic>/` collects the triage / decisions /
+  implementation docs from each completed audit cycle in one
+  place; `docs/prompts/` collects one-shot creative briefs.
 - Root: `CLAUDE.md`, `README.md`, `site-ideas-and-friction.md`,
-  `codebase-issues.md`, `.eleventy.js`, `wrangler.jsonc`,
-  `package.json`.
+  `codebase-issues.md`, `content-audit.md`, `.eleventy.js`,
+  `wrangler.jsonc`, `package.json`.
 
 ## Design landmarks
 

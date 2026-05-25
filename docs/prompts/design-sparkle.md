@@ -4,12 +4,12 @@ I want a creative design pass on **controlsfreak.dev** — a field-reference sit
 
 ## Read first (in this order)
 
-- `CLAUDE.md` — full project + design-system documentation
-- `html/styles.css` — the entire visual vocabulary lives here
-- `site-ideas-and-friction.md` — design history, scope decisions, what's been tried and ruled out
-- `README.md` — the user-facing tour
-- The home page (`html/index.html`) — the v2 hero / About card live here; the home is the canonical sample of the new identity
-- 1–2 representative pages from `html/tools/`, `html/simulators/`, and `html/education/`
+- `../../CLAUDE.md` — full project + design-system documentation
+- `../../html/styles.css` — the entire visual vocabulary lives here
+- `../../site-ideas-and-friction.md` — design history, scope decisions, what's been tried and ruled out
+- `../../README.md` — the user-facing tour
+- The home page (`../../html/index.html`) — the v2 hero / About card live here; the home is the canonical sample of the new identity
+- 1–2 representative pages from `../../html/tools/`, `../../html/simulators/`, and `../../html/education/`
 
 ## Aesthetic the site has earned (do not violate)
 
@@ -23,7 +23,7 @@ I want a creative design pass on **controlsfreak.dev** — a field-reference sit
 
 ## What v2.0.0 / v2.0.1 already absorbed (don't re-suggest)
 
-These ideas have already been tried, shipped, or explicitly ruled out — re-pitching them is wasted motion. Read the commits / `site-ideas-and-friction.md` for the full story before proposing.
+These ideas have already been tried, shipped, or explicitly ruled out — re-pitching them is wasted motion. Read the commits / `../../site-ideas-and-friction.md` for the full story before proposing.
 
 - **Drop caps on education page intros** — tried in v2.0.1 (commit faa31c5), pulled the same day (commit 17b3dea). Reads as decorative-for-its-own-sake on the workstation aesthetic. Don't bring it back.
 - **Console title bars on the hero** — shipped in v2.0.0 (`.console-titlebar` with `///` separator + `OK` pill).
@@ -46,8 +46,8 @@ These ideas have already been tried, shipped, or explicitly ruled out — re-pit
 
 ## Hard constraints
 
-- **Vanilla CSS only** (in `html/styles.css` or page-local `<style>` blocks). No frameworks, no preprocessors, no build steps beyond the existing 11ty templating.
-- **No JS dependencies**. The classic scripts in `html/scripts/` are the ceiling — no npm packages, no CDN libraries.
+- **Vanilla CSS only** (in `../../html/styles.css` or page-local `<style>` blocks). No frameworks, no preprocessors, no build steps beyond the existing 11ty templating.
+- **No JS dependencies**. The classic scripts in `../../html/scripts/` are the ceiling — no npm packages, no CDN libraries.
 - **No tracking, no analytics, no new third-party origins**. Google Fonts is already loaded; nothing else.
 - **No AI-generic aesthetics**. Avoid gradient blobs, glassmorphism, generic SaaS hero patterns, particle-field backgrounds, glow effects for their own sake.
 - **Mission first**: "tools that are actually useful on a job site." Sparkle should *support* the workstation-honest feel, not fight it. The v2 identity has earned the right to be quietly elaborate; it has not earned the right to be precious.
@@ -57,7 +57,7 @@ These ideas have already been tried, shipped, or explicitly ruled out — re-pit
 - Use the **`/frontend-design`** skill — it's tuned for this kind of creative exploration.
 - Show me a few directions before going deep. I'd rather compare 2–4 sketched possibilities than receive one finished thing I have to undo.
 - Branch convention: `feat/<slug>` or `refactor/<slug>`. Commit prefix: `css:` for styling.
-- Open a PR with Summary / Changes / Test plan sections (see CLAUDE.md "Git conventions").
+- Open a PR with Summary / Changes / Test plan sections (see ../../CLAUDE.md "Git conventions").
 - Do **not** merge — I review on GitHub.
 
 ## Deliverable
