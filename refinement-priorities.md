@@ -42,13 +42,13 @@ Pick from the top; most are one-string or one-block edits.
       replace with a verifiable claim (`RESPONSE <1S`, `PUBLIC`).
       **S** — one string. *Do with #11/#15.*
 
-- [ ] `[content-audit #10]` **Home Browse stage is missing a
+- [x] `[content-audit #10]` **Home Browse stage is missing a
       Simulators card** — Stage 2 surfaces Tools and Education but
       not Simulators, even though the section exists in nav.
       **S** — add one `navCard()` call to the `.card-grid.two`
       block.
 
-- [ ] `[content-audit #19]` **Education lead's "reach out" CTA
+- [x] `[content-audit #19]` **Education lead's "reach out" CTA
       has no href** while other inline anchors on the page are
       wired. **S** — wrap the text in `<a href="/contact.html">`.
 
@@ -58,7 +58,7 @@ Pick from the top; most are one-string or one-block edits.
       `Fn Blocks` and sync the first pill label. **S** — one
       string + a pill label.
 
-- [ ] `[content-audit #27]` **Function-Block Editor eyebrow still
+- [x] `[content-audit #27]` **Function-Block Editor eyebrow still
       reads "Tools"** — stale from the May-23 section move
       (`html/simulators/function-block-editor.html:12`). The page
       reads `TOOLS` while nav highlights `Simulators`. Change to
@@ -67,7 +67,7 @@ Pick from the top; most are one-string or one-block edits.
       indirectly; the one-word change is safe regardless of how
       that lands.*
 
-- [ ] `[content-audit #22]` **Psychrometric Chart prereq
+- [x] `[content-audit #22]` **Psychrometric Chart prereq
       cross-link sits at the bottom** of the densest tool on the
       site — a newcomer scrolls past the chart that confused them
       before they find the link that would have helped. Move the
@@ -77,13 +77,13 @@ Pick from the top; most are one-string or one-block edits.
       one-line rephrase. *Same fix as #28; do them in the same
       session.*
 
-- [ ] `[content-audit #28]` **PID Tuner prereq cross-link sits at
+- [x] `[content-audit #28]` **PID Tuner prereq cross-link sits at
       the bottom** — same shape as #22. Move from the bottom
       `.pid-note` paragraph to inline in the preamble around line
       146–149, matching the `fbe`/`vfd` shape. **S** — same
       shape as #22; do them together.
 
-- [ ] `[content-audit #24]` **BACnet/IP Converter puts derived
+- [x] `[content-audit #24]` **BACnet/IP Converter puts derived
       readouts in the Input column.** `Length` and `Format` are
       computed from the hex string but sit alongside the editable
       input, violating the site-wide Input/Output convention.
@@ -105,7 +105,7 @@ Pick from the top; most are one-string or one-block edits.
 Worth a longer session. Several batch naturally; the rationale
 notes the pairings.
 
-- [ ] `[content-audit #12 + #17]` **Education chips conflict with
+- [x] `[content-audit #12 + #17]` **Education chips conflict with
       curriculum sequencing.** Five of eight chips show one
       lesson each (broken filter UX, #12); meanwhile cards are
       sequenced as a prerequisite chain that chip-jumping skips
@@ -115,7 +115,7 @@ notes the pairings.
       **M** — design call + restructure. *Cluster issue — pick
       one direction and the rest collapses.*
 
-- [ ] `[content-audit #20 + #21]` **The simplest tools are the
+- [x] `[content-audit #20 + #21]` **The simplest tools are the
       hardest to approach.** Signal Scaling / Modbus /
       BACnet-IP land *cold* (every input blank, output muted
       to "—", no formula rendered) and carry *no preamble* —
@@ -126,7 +126,7 @@ notes the pairings.
       **M** — three defaults + 3 preambles. *Highest leverage
       for newcomer experience.*
 
-- [ ] `[content-audit #18]` **Landing-page lead `<p>`s carry
+- [x] `[content-audit #18]` **Landing-page lead `<p>`s carry
       three different inline `max-width`s (560 / 560 / 700)** —
       same pattern, copy-pasted with drift. Promote to a shared
       `.landing-intro` class (or expand `.page-intro` scope) at
@@ -141,13 +141,13 @@ notes the pairings.
       — decision + mechanical sweep. *Document the rule in
       CLAUDE.md once picked.*
 
-- [ ] `[content-audit #26]` **Copy-button labels swing between
+- [x] `[content-audit #26]` **Copy-button labels swing between
       generic and task-specific.** Three tools say "Copy value,"
       three say "Copy %OA" / "Copy IP" etc., three have no copy.
       Pick a convention (task-specific reads better) and sweep
       the 9 tool pages. **M** — decision + 6 edits.
 
-- [ ] `[content-audit #23]` **Modbus bit-grid cells are below the
+- [x] `[content-audit #23]` **Modbus bit-grid cells are below the
       mobile tap-target threshold** (~30 px at 375 px viewport,
       vs. 44 px HIG minimum). Either restructure to 4×4 at narrow
       widths via media query, OR adopt the #30 honesty-callout
@@ -177,7 +177,7 @@ notes the pairings.
 Visible so they don't fall off the radar. Pick when a longer
 session opens up; several pair with smaller items in Tier 1/2.
 
-- [ ] `[content-audit #25]` **Failure-state UX has no shared
+- [x] `[content-audit #25]` **Failure-state UX has no shared
       idiom across tools.** Five tools, four different shapes for
       "this doesn't compute" — from amber callout with physics
       explanation (`economizer-ratio`, best-in-class) down to a
@@ -188,7 +188,7 @@ session opens up; several pair with smaller items in Tier 1/2.
       ground every time a tool silently mutes instead of
       teaching.*
 
-- [ ] `[content-audit #29 + #32]` **Eyebrow taxonomy is
+- [x] `[content-audit #29 + #32]` **Eyebrow taxonomy is
       inconsistent across sections.** Tools use category nouns
       (`Modbus`, `HVAC`); Simulators mostly do (`Loops`, `Drives`)
       with one stale (`Tools`, see #27); Education uses a
@@ -206,14 +206,14 @@ session opens up; several pair with smaller items in Tier 1/2.
       chart`, and `pid-tuner`. **L** — class promotion + per-page
       callout authoring. *Unlocks #23's mobile direction.*
 
-- [ ] `[content-audit #31]` **Education title pattern splits
+- [x] `[content-audit #31]` **Education title pattern splits
       8/5** — 8 older pages use `Topic — Subtitle`, 5 newer ones
       go bare. Pick a pattern (either adopt subtitles across all
       13 or drop them all) and sweep. **M** — decision +
       mechanical edit across 5 or 8 pages. *Suggested subtitles
       for the bare pages are already drafted in #31.*
 
-- [ ] `[content-audit #33]` **SEC:NNN numbering lives on 2 of 13
+- [x] `[content-audit #33]` **SEC:NNN numbering lives on 2 of 13
       education pages** — read as decoration applied
       here-and-there rather than a system. Decide: drop it on the
       two pages, add it to all 13, or extend to the
