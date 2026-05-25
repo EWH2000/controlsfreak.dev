@@ -968,22 +968,28 @@ footer {
     z-index: 2;
     display: inline-flex;
     align-items: center;
-    justify-content: center;
-    width: 1.85rem;
-    height: 1.85rem;
-    padding: 0;
+    gap: 0.4rem;
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 0.32rem 0.6rem 0.32rem 0.55rem;
     background: var(--surface);
-    border: 1px solid var(--border);
+    border: 1px solid var(--accent);
     border-radius: 2px;
-    color: var(--text-dim);
+    color: var(--accent);
     cursor: pointer;
-    transition: color 0.15s, border-color 0.15s;
+    transition: color 0.15s, border-color 0.15s, background 0.15s;
 }
-.tool-card-fullscreen-btn:hover { border-color: var(--accent); color: var(--accent); }
-.tool-card-fullscreen-btn svg { width: 0.95rem; height: 0.95rem; display: block; }
-.tool-card-fullscreen-btn .fs-icon-exit { display: none; }
-.tool-card.is-fullscreen .tool-card-fullscreen-btn .fs-icon-enter { display: none; }
+.tool-card-fullscreen-btn:hover { background: var(--accent-soft); }
+.tool-card-fullscreen-btn svg { width: 0.85rem; height: 0.85rem; display: block; }
+.tool-card-fullscreen-btn .fs-icon-exit,
+.tool-card-fullscreen-btn .fs-label-exit { display: none; }
+.tool-card.is-fullscreen .tool-card-fullscreen-btn .fs-icon-enter,
+.tool-card.is-fullscreen .tool-card-fullscreen-btn .fs-label-enter { display: none; }
 .tool-card.is-fullscreen .tool-card-fullscreen-btn .fs-icon-exit  { display: block; }
+.tool-card.is-fullscreen .tool-card-fullscreen-btn .fs-label-exit { display: inline; }
 @media (max-width: 999px) {
     .tool-card-fullscreen-btn.fs-desktop-only { display: none; }
 }

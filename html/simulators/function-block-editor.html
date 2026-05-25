@@ -271,14 +271,51 @@ nav: simulators
            shared .narrow-width-note flips visible — nothing is hidden,
            the tool still works. */
         /* Fullscreen overrides — let the workspace use the bigger viewport. The
-           canvas height swaps to viewport-relative, .fbe-canvas-inner stretches
-           to fill the canvas, and .fbe-palette drops its max-height. The page's
-           IIFE also lifts INNER_W / INNER_H and updates the wire-layer viewBox
-           on the 'fullscreenchange' event from /scripts/fullscreen-toggle.js. */
-        .tool-card.is-fullscreen .fbe-canvas { height: calc(100vh - 22rem); min-height: 30rem; }
+           grid flips from [palette | canvas] to a single column with the canvas
+           on top filling the freed-up horizontal space and the palette wrapped
+           horizontally below (uses the dead space and keeps every block in
+           sight without the side rail's scroll). The page's IIFE lifts
+           INNER_W / INNER_H and updates the wire-layer viewBox on the
+           'fullscreenchange' event from /scripts/fullscreen-toggle.js. */
+        .tool-card.is-fullscreen .fbe-workspace {
+            grid-template-areas: "canvas" "palette";
+            grid-template-columns: 1fr;
+            grid-template-rows: 1fr auto;
+            height: calc(100vh - 23rem);
+            min-height: 30rem;
+            gap: 0.55rem;
+        }
+        .tool-card.is-fullscreen .fbe-canvas { grid-area: canvas; height: auto; min-height: 0; }
         .tool-card.is-fullscreen .fbe-canvas-inner { width: 100%; height: 100%; }
         .tool-card.is-fullscreen .fbe-wire-layer { width: 100%; height: 100%; }
-        .tool-card.is-fullscreen .fbe-palette { max-height: none; }
+        .tool-card.is-fullscreen .fbe-palette {
+            grid-area: palette;
+            max-height: none;
+            overflow: visible;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.35rem 0.4rem;
+            padding: 0.5rem 0.6rem;
+        }
+        .tool-card.is-fullscreen .fbe-palette-label {
+            margin: 0;
+            padding: 0 0.5rem 0 0.55rem;
+            border-left: 1px solid var(--border);
+            align-self: stretch;
+            display: flex;
+            align-items: center;
+        }
+        .tool-card.is-fullscreen .fbe-palette-label:first-child {
+            border-left: 0;
+            padding-left: 0;
+        }
+        .tool-card.is-fullscreen .fbe-palette-btn {
+            display: inline-block;
+            width: auto;
+            margin: 0;
+            padding: 0.3rem 0.55rem;
+        }
 
         @media (max-width: 860px) {
             .fbe-workspace { grid-template-columns: 1fr; }
@@ -299,7 +336,8 @@ nav: simulators
     <div class="tool-card">
         <button type="button" class="tool-card-fullscreen-btn fs-desktop-only"
                 data-fullscreen-target=".tool-card"
-                aria-pressed="false" aria-label="Enter fullscreen">
+                aria-pressed="false" aria-label="Enter fullscreen"
+                title="Toggle fullscreen — Esc to exit">
             <svg class="fs-icon-enter" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <polyline points="15 3 21 3 21 9"/>
                 <polyline points="9 21 3 21 3 15"/>
@@ -312,6 +350,8 @@ nav: simulators
                 <line x1="14" y1="10" x2="21" y2="3"/>
                 <line x1="3" y1="21" x2="10" y2="14"/>
             </svg>
+            <span class="fs-label-enter">Fullscreen</span>
+            <span class="fs-label-exit">Exit</span>
         </button>
         <div class="tool-card-header">
             <h1 class="tool-card-title">Function-Block Editor <span class="tool-tag">Logic</span></h1>
@@ -836,7 +876,7 @@ nav: simulators
                 const p = document.createElement('p');
                 p.className = 'fbe-insp-empty';
                 p.textContent = 'Select a block to edit its parameters, or a wire to '
-                    + 'remove it. Click a block in the left-column palette to add one.';
+                    + 'remove it. Click a block in the palette to add one.';
                 inspector.appendChild(p);
                 const keys = document.createElement('p');
                 keys.className = 'fbe-insp-keys';
