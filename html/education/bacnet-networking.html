@@ -5,6 +5,7 @@ canonical: https://controlsfreak.dev/education/bacnet-networking.html
 nav: education
 ---
 {% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
 
 {% block head %}
     <style>
@@ -657,6 +658,15 @@ nav: education
 
         </div>
     </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/tools/bacnet-ip-converter.html', label: 'BACnet/IP Hex Converter'}
+        ],
+        lessons: [
+            {href: '/education/bacnet-basics.html', label: 'BACnet Basics'}
+        ]
+    }) }}
 
     <a class="back-link" href="/education/">← Back to Education</a>
 

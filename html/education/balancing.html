@@ -5,6 +5,7 @@ canonical: https://controlsfreak.dev/education/balancing.html
 nav: education
 ---
 {% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
 
 {% block head %}
     <style>
@@ -666,6 +667,13 @@ nav: education
 
         </div>
     </div>
+
+    {{ relatedLinks({
+        lessons: [
+            {href: '/education/load-piping.html', label: 'Load Piping'},
+            {href: '/education/hydronic-loops.html', label: 'Hydronic Loops'}
+        ]
+    }) }}
 
     <a class="back-link" href="/education/">← Back to Education</a>
 

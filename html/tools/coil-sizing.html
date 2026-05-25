@@ -5,6 +5,7 @@ canonical: https://controlsfreak.dev/tools/coil-sizing.html
 nav: tools
 ---
 {% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
 
 {% block head %}
     <style>
@@ -324,6 +325,16 @@ nav: tools
             </section>
         </div>
     </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/tools/psychrometric-chart.html', label: 'Psychrometric Chart'},
+            {href: '/tools/refrigerant-pt.html', label: 'Refrigerant P-T & Superheat'}
+        ],
+        lessons: [
+            {href: '/education/psychrometrics-basics.html', label: 'Psychrometrics Basics'}
+        ]
+    }) }}
 
     <a class="back-link" href="/tools/">← All tools</a>
 

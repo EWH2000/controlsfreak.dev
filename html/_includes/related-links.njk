@@ -1,0 +1,57 @@
+{# Related links — internal cross-linking at the bottom of deep pages
+   (tools, simulators, education). Builds topic clusters so link equity
+   flows horizontally between related pages instead of pooling at the
+   section landings. Pure SEO + UX, no behavior.
+
+   Accepts an `opts` object with up to three optional arrays of
+   {href, label} pairs:
+
+       {{ relatedLinks({
+           tools:      [{href: '/tools/foo.html',      label: 'Foo'}],
+           simulators: [{href: '/simulators/bar.html', label: 'Bar'}],
+           lessons:    [{href: '/education/baz.html',  label: 'Baz'}]
+       }) }}
+
+   Rendering rules:
+   - Each non-empty group becomes a labelled column.
+   - The whole block renders nothing if every group is empty.
+   - Only anchor pages that actually exist today (per the CLAUDE.md
+     "Forward-link convention") — don't add href entries to pages that
+     are still future work.
+
+   Placement: inside <main>, directly above the `.back-link`. Styling
+   in html/styles.css under "RELATED LINKS". #}
+
+{% macro relatedLinks(opts) %}
+    {% set hasTools = opts.tools and opts.tools.length %}
+    {% set hasSims = opts.simulators and opts.simulators.length %}
+    {% set hasLessons = opts.lessons and opts.lessons.length %}
+    {% if hasTools or hasSims or hasLessons %}
+    <aside class="related-links" aria-label="Related">
+        {% if hasTools %}
+        <div class="related-group">
+            <h2 class="related-label">Related tools</h2>
+            <ul>
+                {% for t in opts.tools %}<li><a href="{{ t.href }}">{{ t.label }}</a></li>{% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+        {% if hasSims %}
+        <div class="related-group">
+            <h2 class="related-label">Related simulators</h2>
+            <ul>
+                {% for s in opts.simulators %}<li><a href="{{ s.href }}">{{ s.label }}</a></li>{% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+        {% if hasLessons %}
+        <div class="related-group">
+            <h2 class="related-label">Related lessons</h2>
+            <ul>
+                {% for l in opts.lessons %}<li><a href="{{ l.href }}">{{ l.label }}</a></li>{% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+    </aside>
+    {% endif %}
+{% endmacro %}

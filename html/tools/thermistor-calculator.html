@@ -5,6 +5,7 @@ canonical: https://controlsfreak.dev/tools/thermistor-calculator.html
 nav: tools
 ---
 {% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
 
 {% block head %}
     <style>
@@ -299,6 +300,12 @@ nav: tools
             <p><strong>Use as a reference, not for calibration.</strong> A single-β model approximates a Steinhart-Hart curve; the fit is within <span data-us="roughly 1 °F across 32–150 °F (the BAS operating range)" data-metric="roughly 0.5 °C across 0–65 °C (the BAS operating range)">roughly 1 °F across 32–150 °F (the BAS operating range)</span> and degrades to <span data-us="2–5 °F of equivalent temperature error at the −40 °F extreme" data-metric="1–3 °C of equivalent temperature error at the −40 °C extreme">2–5 °F of equivalent temperature error at the −40 °F extreme</span> for the bare 10K curves. Pt100 and Pt1000 are governed by the international standard and match it exactly. For calibration-grade work, measure your sensor directly against a known-good reference at the working temperature — don't trust any published table, ours or anyone else's, blindly.</p>
         </div>
     </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/tools/signal-scaling.html', label: 'Signal Scaling Calculator'}
+        ]
+    }) }}
 
     <a class="back-link" href="/tools/">← All tools</a>
 

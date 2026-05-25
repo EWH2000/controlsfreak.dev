@@ -5,6 +5,7 @@ canonical: https://controlsfreak.dev/education/equipment-staging.html
 nav: education
 ---
 {% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
 
 {% block head %}
     <style>
@@ -431,6 +432,13 @@ nav: education
 
         </div>
     </div>
+
+    {{ relatedLinks({
+        lessons: [
+            {href: '/education/pid-basics.html', label: 'PID Basics'},
+            {href: '/education/pump-control.html', label: 'Pump Control'}
+        ]
+    }) }}
 
     <a class="back-link" href="/education/">← Back to Education</a>
 

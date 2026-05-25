@@ -5,6 +5,7 @@ canonical: https://controlsfreak.dev/education/pid-basics.html
 nav: education
 ---
 {% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
 
 {% block content %}
 <main id="main">
@@ -216,6 +217,16 @@ nav: education
     <p style="margin-top:2.5rem;">
         <a class="cta-button" href="/simulators/pid-tuner.html">Try it for yourself →</a>
     </p>
+
+    {{ relatedLinks({
+        simulators: [
+            {href: '/simulators/pid-tuner.html', label: 'PID Tuning Helper'},
+            {href: '/simulators/function-block-editor.html', label: 'Function-Block Editor'}
+        ],
+        lessons: [
+            {href: '/education/function-blocks.html', label: 'Function-Block Basics'}
+        ]
+    }) }}
 
     <a class="back-link" href="/education/">← Back to Education</a>
 

@@ -5,6 +5,7 @@ canonical: https://controlsfreak.dev/education/modbus-basics.html
 nav: education
 ---
 {% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
 
 {% block head %}
     <style>
@@ -347,6 +348,15 @@ nav: education
 
         </div>
     </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/tools/modbus-register-viewer.html', label: 'Modbus Register Viewer'}
+        ],
+        lessons: [
+            {href: '/education/modbus-decoding.html', label: 'Modbus Decoding'}
+        ]
+    }) }}
 
     <a class="back-link" href="/education/">← Back to Education</a>
 
