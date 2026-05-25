@@ -5,6 +5,7 @@ canonical: https://controlsfreak.dev/tools/air-mixing.html
 nav: tools
 ---
 {% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
 
 {% block head %}
     <style>
@@ -352,6 +353,16 @@ nav: tools
             </section>
         </div>
     </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/tools/psychrometric-chart.html', label: 'Psychrometric Chart'},
+            {href: '/tools/economizer-ratio.html', label: 'Economizer Ratio Helper'}
+        ],
+        lessons: [
+            {href: '/education/psychrometrics-basics.html', label: 'Psychrometrics Basics'}
+        ]
+    }) }}
 
     <a class="back-link" href="/tools/">← All tools</a>
 

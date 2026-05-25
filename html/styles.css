@@ -1028,7 +1028,8 @@ input[type="range"]::-moz-range-thumb {
 .cta-button:focus-visible,
 .back-link:focus-visible,
 .filter-chip:focus-visible,
-.nav-card:focus-visible {
+.nav-card:focus-visible,
+.related-links a:focus-visible {
     outline: 2px solid var(--accent);
     outline-offset: 3px;   /* v2.0.0 — was 2px; lifted so the accent ring no longer kisses the border on .nav-card */
 }
@@ -1400,6 +1401,60 @@ p.chip-row-preamble {
     transition: color 0.18s;
 }
 .back-link:hover { color: var(--text-bright); }
+
+/* ──────────────────────────────────────────────────────────────────────
+ * RELATED LINKS — end-of-page cross-links to topically related tools,
+ * simulators, and lessons. SEO topic-clustering signal that also helps
+ * a reader navigate sideways instead of bouncing back to a landing.
+ * Rendered by html/_includes/related-links.njk; sits inside <main>
+ * directly above .back-link.
+ * ────────────────────────────────────────────────────────────────────── */
+.related-links {
+    margin-top: 2rem;
+    padding: 1.1rem 1.5rem 1.2rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.1rem 2.5rem;
+}
+.related-label {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--accent);
+    margin: 0 0 0.6rem;
+}
+.related-links ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.7;
+}
+.related-links li {
+    padding-left: 0.95rem;
+    position: relative;
+}
+.related-links li::before {
+    content: "→";
+    position: absolute;
+    left: 0;
+    color: var(--accent);
+    font-family: var(--mono);
+}
+.related-links a {
+    color: var(--text);
+    text-decoration: none;
+    border-bottom: 1px dotted var(--border);
+    transition: color 0.18s, border-color 0.18s;
+}
+.related-links a:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+}
 
 /* ──────────────────────────────────────────────────────────────────────
  * CTA BUTTON — a prominent in-page link styled like a primary button.

@@ -5,6 +5,7 @@ canonical: https://controlsfreak.dev/education/function-blocks.html
 nav: education
 ---
 {% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
 
 {% block head %}
     <style>
@@ -292,6 +293,16 @@ nav: education
 
         </div>
     </div>
+
+    {{ relatedLinks({
+        simulators: [
+            {href: '/simulators/function-block-editor.html', label: 'Function-Block Editor'},
+            {href: '/simulators/pid-tuner.html', label: 'PID Tuning Helper'}
+        ],
+        lessons: [
+            {href: '/education/pid-basics.html', label: 'PID Basics'}
+        ]
+    }) }}
 
     <a class="back-link" href="/education/">← Back to Education</a>
 

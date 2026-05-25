@@ -5,6 +5,7 @@ canonical: https://controlsfreak.dev/tools/refrigerant-pt.html
 nav: tools
 ---
 {% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
 
 {% block head %}
     <style>
@@ -284,6 +285,12 @@ nav: tools
             </p>
         </div>
     </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/tools/coil-sizing.html', label: 'Coil-Sizing Calculator'}
+        ]
+    }) }}
 
     <a class="back-link" href="/tools/">← All tools</a>
 

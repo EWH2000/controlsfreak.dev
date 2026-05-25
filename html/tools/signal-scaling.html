@@ -5,6 +5,7 @@ canonical: https://controlsfreak.dev/tools/signal-scaling.html
 nav: tools
 ---
 {% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
 
 {% block content %}
 <main id="main">
@@ -236,6 +237,12 @@ nav: tools
             </p>
         </section>
     </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/tools/thermistor-calculator.html', label: 'Thermistor / RTD Calculator'}
+        ]
+    }) }}
 
     <a class="back-link" href="/tools/">← All tools</a>
 

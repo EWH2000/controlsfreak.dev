@@ -5,6 +5,7 @@ canonical: https://controlsfreak.dev/tools/bacnet-ip-converter.html
 nav: tools
 ---
 {% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
 
 {% block content %}
 <main id="main">
@@ -151,6 +152,16 @@ nav: tools
             </p>
         </div>
     </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/tools/modbus-register-viewer.html', label: 'Modbus Register Viewer'}
+        ],
+        lessons: [
+            {href: '/education/bacnet-basics.html', label: 'BACnet Basics'},
+            {href: '/education/bacnet-networking.html', label: 'BACnet Networking'}
+        ]
+    }) }}
 
     <a class="back-link" href="/tools/">← All tools</a>
 

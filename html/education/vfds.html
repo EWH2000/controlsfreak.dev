@@ -5,6 +5,7 @@ canonical: https://controlsfreak.dev/education/vfds.html
 nav: education
 ---
 {% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
 
 {% block head %}
     <style>
@@ -660,6 +661,16 @@ nav: education
 
         </div>
     </div>
+
+    {{ relatedLinks({
+        simulators: [
+            {href: '/simulators/vfd-mock.html', label: 'Mock VFD Interface'}
+        ],
+        lessons: [
+            {href: '/education/pump-control.html', label: 'Pump Control'},
+            {href: '/education/hydronic-loops.html', label: 'Hydronic Loops'}
+        ]
+    }) }}
 
     <a class="back-link" href="/education/">← Back to Education</a>
 

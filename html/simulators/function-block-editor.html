@@ -5,6 +5,7 @@ canonical: https://controlsfreak.dev/simulators/function-block-editor.html
 nav: simulators
 ---
 {% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
 
 {% block head %}
     <style>
@@ -370,6 +371,16 @@ nav: simulators
 
         </div>
     </div>
+
+    {{ relatedLinks({
+        simulators: [
+            {href: '/simulators/pid-tuner.html', label: 'PID Tuning Helper'}
+        ],
+        lessons: [
+            {href: '/education/function-blocks.html', label: 'Function-Block Basics'},
+            {href: '/education/pid-basics.html', label: 'PID Basics'}
+        ]
+    }) }}
 
     <a class="back-link" href="/simulators/">← All simulators</a>
 
