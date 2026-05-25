@@ -90,7 +90,7 @@ Pick from the top; most are one-string or one-block edits.
       Move both `ps-row` pairs from the Input `<section>` to the
       Output `<section>`. **S-M** — one file, two rows.
 
-- [ ] `[SEO]` **Add `rel="related"` to anchors in
+- [x] `[SEO]` **Add `rel="related"` to anchors in
       `related-links.njk`.** The macro already builds cross-link
       blocks across tools / sims / lessons / quizzes but its
       `<a>` tags carry no `rel` attribute. Adding `rel="related"`
