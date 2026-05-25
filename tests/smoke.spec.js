@@ -48,6 +48,7 @@ const PAGES = [
     { name: 'education — bacnet basics', url: '/education/bacnet-basics.html' },
     { name: 'education — bacnet networking', url: '/education/bacnet-networking.html' },
     { name: 'contact',                url: '/contact.html' },
+    { name: 'privacy',                url: '/privacy.html' },
 ];
 
 test('PAGES array stays in sync with the generated sitemap', () => {
