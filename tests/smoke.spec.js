@@ -49,6 +49,7 @@ const PAGES = [
     { name: 'education — bacnet networking', url: '/education/bacnet-networking.html' },
     { name: 'practice landing',       url: '/practice/' },
     { name: 'practice — modbus decoding', url: '/practice/modbus-decoding.html' },
+    { name: 'practice — surviving first months', url: '/practice/surviving-first-months.html' },
     { name: 'contact',                url: '/contact.html' },
     { name: 'privacy',                url: '/privacy.html' },
 ];
@@ -1127,25 +1128,25 @@ test('practice landing — Modbus chip collapses sections + filters cards', asyn
     await expect(page.locator('.filter-chip[data-category="all"]')).toHaveClass(/active/);
     await expect(page.locator('.practice-section[data-section="content"] .practice-section-heading')).toBeVisible();
     await expect(page.locator('.practice-section[data-section="field"]   .practice-section-heading')).toBeVisible();
-    // Modbus card visible; field drills empty-state visible.
+    // Both cards visible: Modbus quiz under Content Quizzes, field drill under Field Drills.
     await expect(page.locator('.nav-card[data-category="modbus"]:not([hidden])')).toHaveCount(1);
-    await expect(page.locator('.practice-empty:not([hidden])')).toHaveCount(1);
+    await expect(page.locator('.nav-card[data-category="field"]:not([hidden])')).toHaveCount(1);
 
-    // Click Modbus chip → section headings + empty-state hide; Modbus card
-    // still visible; URL hash updates.
+    // Click Modbus chip → section headings collapse; field-drill card hides;
+    // Modbus card stays visible; URL hash updates.
     await page.click('.filter-chip[data-category="modbus"]');
     await expect(page.locator('.filter-chip[data-category="modbus"]')).toHaveClass(/active/);
     await expect(page.locator('.filter-chip[data-category="all"]')).not.toHaveClass(/active/);
     await expect(page.locator('.practice-section[data-section="content"]')).toHaveClass(/filtered/);
     await expect(page.locator('.practice-section[data-section="field"]')).toHaveClass(/filtered/);
-    await expect(page.locator('.practice-empty')).toBeHidden();
     await expect(page.locator('.nav-card[data-category="modbus"]:not([hidden])')).toHaveCount(1);
+    await expect(page.locator('.nav-card[data-category="field"]')).toBeHidden();
     expect(new URL(page.url()).hash).toBe('#modbus');
 
-    // Click [All] → restored.
+    // Click [All] → restored: both cards visible, sections un-filtered.
     await page.click('.filter-chip[data-category="all"]');
     await expect(page.locator('.practice-section[data-section="content"]')).not.toHaveClass(/filtered/);
-    await expect(page.locator('.practice-empty:not([hidden])')).toHaveCount(1);
+    await expect(page.locator('.nav-card[data-category="field"]:not([hidden])')).toHaveCount(1);
     expect(new URL(page.url()).hash).toBe('');
 
     expect(errors, 'practice-landing behavioral should log no errors').toEqual([]);

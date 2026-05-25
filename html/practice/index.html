@@ -47,22 +47,6 @@ nav: practice
             display: none;
         }
         .practice-section.filtered { margin-bottom: 0; }
-
-        /* Field-drills empty-state — small dim panel that holds the
-           section visible until the first drill page lands. Matches
-           the .callout left-bar vocabulary so it doesn't introduce
-           new chrome. */
-        .practice-empty {
-            border: 1px dashed var(--border);
-            border-left: 2px solid var(--amber);
-            border-radius: 3px;
-            padding: 0.95rem 1.1rem;
-            font-size: 0.9rem;
-            line-height: 1.65;
-            color: var(--text-dim);
-            background: var(--surface);
-        }
-        .practice-empty strong { color: var(--text); font-weight: 600; }
     </style>
 {% endblock %}
 
@@ -86,7 +70,7 @@ nav: practice
 
     <div class="filter-chips" role="group" aria-label="Filter practice by topic">
         <button type="button" class="filter-chip active" data-category="all" aria-pressed="true">
-            All <span class="filter-chip-count">1</span>
+            All <span class="filter-chip-count">2</span>
         </button>
         <button type="button" class="filter-chip" data-category="modbus" aria-pressed="false">
             Modbus <span class="filter-chip-count">1</span>
@@ -121,16 +105,20 @@ nav: practice
             <span class="practice-section-tag">broader scope · field-knowledge</span>
         </h2>
         <p class="practice-section-intro">
-            Wider scope than the lessons — scenarios, troubleshooting, interview prep, cert review. Explanations
-            stay inline since not every topic has a matching site page yet; when one keeps coming up, it becomes
-            a candidate for a new education page.
+            Wider scope than the lessons — scenarios, troubleshooting, the kind of habits and surprises that
+            don't always have a matching page on the site. Explanations stay inline since not every topic is
+            covered here yet; when one keeps coming up, it becomes a candidate for a new education page.
         </p>
         <div class="card-grid">
-            <div class="practice-empty">
-                <p><strong>First drills are on the bench.</strong> The starter set will be Field Wiring &amp; Sensors
-                (thermistor curves, RTD 2/3/4-wire, 4-20 mA vs 0-10 V failure modes) and a Junior Interview Prep
-                sampler. They'll land alongside the next batch of education pages.</p>
-            </div>
+            {{ navCard({
+                section:    'practice',
+                href:       '/practice/surviving-first-months.html',
+                titleShort: 'First Months',
+                titleFull:  'Surviving Your First Months',
+                desc:       'Broad sampler for techs in their first few months in the field — safety basics, panel anatomy, sensor failure modes, 4-20 mA live zero, VFD quirks, and workflow habits that pay off early.',
+                pills:      ['10 Questions', 'Field Sampler', '~ 5 min'],
+                category:   'field'
+            }) }}
         </div>
     </section>
 
@@ -160,14 +148,6 @@ nav: practice
             });
             sections.forEach(section => {
                 section.classList.toggle('filtered', !showAll);
-                // Hide the empty-state placeholder in Field Drills when
-                // a topic chip is active — it isn't a card and doesn't
-                // belong in a flat filtered list.
-                const empty = section.querySelector('.practice-empty');
-                if (empty) {
-                    if (showAll) empty.removeAttribute('hidden');
-                    else empty.setAttribute('hidden', '');
-                }
                 section.querySelectorAll('.nav-card').forEach(card => {
                     const match = showAll || card.dataset.category === slug;
                     if (match) card.removeAttribute('hidden');
