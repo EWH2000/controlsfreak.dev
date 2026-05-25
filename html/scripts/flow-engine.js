@@ -157,8 +157,12 @@
     'use strict';
 
     // Global tuning — one velocity, one spacing, applied uniformly to
-    // every annotated path. Tuned by eye on the d1 diagram.
-    const VELOCITY = 55;        // px/sec along the path
+    // every annotated path. Tuned by eye on the d1 diagram and then
+    // damped (55 → 30 px/sec) once the gutter motif library landed —
+    // calmer motion that doesn't pull the eye off the main content
+    // area. Pulse speed (PULSE_SPEED_DEFAULT below) is unaffected on
+    // purpose: data-transfer cues are *meant* to draw the eye.
+    const VELOCITY = 30;        // px/sec along the path
     const SPACING  = 34;        // px between adjacent particles
     const RADIUS   = 3;         // circle r — small but readable
 

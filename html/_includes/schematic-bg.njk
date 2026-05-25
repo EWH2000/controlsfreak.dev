@@ -63,22 +63,26 @@
 <line x1="196" y1="108" x2="4"   y2="108" stroke="var(--blue-cool)" data-flow="return" data-sbg-stroke/>
 <text x="14" y="14"  class="sbg-label">SUP</text>
 <text x="14" y="124" class="sbg-label">RET</text>
-{%- elif id == 'pump-coil' -%}
-{# Closed-loop coil + pump: pump pushes supply (top pipe, walking R→L
-   from pump out to coil) and pulls return (bottom pipe, walking L→R
-   from coil back to pump). Opposing flows reinforce the loop concept
-   — same reversed-coords trick as pipe-valve. Pipes terminate tangent
-   to the pump circle at (158, 25) and (158, 65); the single-point
-   connections read as "plumbed in" because of the matching y-extent
-   of the coil rect (y=25-65) on the other side. #}
-<rect x="14" y="25" width="56" height="40" stroke="var(--blue)" fill="var(--surface)" data-sbg-stroke/>
-<path d="M22 32 L62 32 M22 40 L62 40 M22 48 L62 48 M22 56 L62 56" stroke="var(--blue)" fill="none" data-sbg-stroke/>
-<circle cx="158" cy="45" r="20" stroke="var(--blue)" fill="var(--surface)" data-sbg-stroke/>
-<path d="M148 45 L168 45 M158 35 L158 55" stroke="var(--blue)" fill="none" data-sbg-stroke/>
-<line x1="158" y1="25" x2="70"  y2="25" stroke="var(--blue)"      data-flow="supply" data-sbg-stroke/>
-<line x1="70"  y1="65" x2="158" y2="65" stroke="var(--blue-cool)" data-flow="return" data-sbg-stroke/>
-<text x="14"  y="18" class="sbg-label">COIL</text>
-<text x="158" y="82" text-anchor="middle" class="sbg-label">P-1</text>
+{%- elif id == 'fcu' -%}
+{# Fan-coil unit: chilled or heated water circulates through a finned
+   coil while a fan moves room air across the fins. Supply and return
+   hydronic tubes connect to the cabinet from the gutter edge with
+   the opposing-flow trick (supply L→R into the coil, return R→L back
+   out) — same convention as pipe-valve. Air-side animation is
+   intentionally omitted; the fan icon implies it without adding a
+   third particle stream competing for the viewer's attention. The
+   cabinet outline groups fan + coil as a single packaged unit, which
+   is what "FCU" means to a controls engineer. #}
+<rect x="70"  y="15" width="120" height="60" stroke="var(--blue)" fill="var(--surface)" data-sbg-stroke/>
+<rect x="80"  y="25" width="40"  height="40" stroke="var(--blue)" fill="var(--surface)" data-sbg-stroke/>
+<path d="M86 32 L114 32 M86 40 L114 40 M86 48 L114 48 M86 56 L114 56" stroke="var(--blue)" fill="none" data-sbg-stroke/>
+<circle cx="155" cy="45" r="13" stroke="var(--blue)" fill="var(--surface)" data-sbg-stroke/>
+<text x="155" y="49" text-anchor="middle" class="sbg-label">F</text>
+<line x1="4"  y1="30" x2="70" y2="30" stroke="var(--blue)"      data-flow="supply" data-sbg-stroke/>
+<line x1="70" y1="60" x2="4"  y2="60" stroke="var(--blue-cool)" data-flow="return" data-sbg-stroke/>
+<text x="14"  y="14" class="sbg-label">SUP</text>
+<text x="14"  y="78" class="sbg-label">RET</text>
+<text x="130" y="88" text-anchor="middle" class="sbg-label">FCU</text>
 {%- elif id == 'compare-bo' -%}
 {# Small piece of real BAS logic: two analog inputs feed a greater-than
    comparator whose binary result drives a BO. Pattern shows up everywhere
@@ -189,19 +193,19 @@
 
 {% set sbgHeights = {
     'pipe-valve': 130,
-    'pump-coil':  90,
+    'fcu':         95,
     'compare-bo': 102,
     'and-bo':     102,
     'current-loop': 90,
     'supervisor':   90
 } %}
 {% set sbgLeftCycle = [
-    'pipe-valve', 'compare-bo', 'pump-coil', 'current-loop', 'supervisor',
-    'pipe-valve', 'and-bo',     'pump-coil', 'current-loop', 'supervisor'
+    'pipe-valve', 'compare-bo', 'fcu', 'current-loop', 'supervisor',
+    'pipe-valve', 'and-bo',     'fcu', 'current-loop', 'supervisor'
 ] %}
 {% set sbgRightCycle = [
-    'and-bo',     'current-loop', 'pipe-valve', 'supervisor', 'pump-coil',
-    'compare-bo', 'pipe-valve',   'current-loop', 'supervisor', 'pump-coil'
+    'and-bo',     'current-loop', 'pipe-valve', 'supervisor', 'fcu',
+    'compare-bo', 'pipe-valve',   'current-loop', 'supervisor', 'fcu'
 ] %}
 {% set sbgCount  = 60 %}
 {% set sbgStride = 270 %}
