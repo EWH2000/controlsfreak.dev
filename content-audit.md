@@ -760,6 +760,14 @@ break the voice elsewhere.
 
 Verification: **flagged** — this is editorial judgment, not factual.
 
+**Resolution (2026-05-24):** the Stage 1 section header was renamed
+from "MY MOST COMMON TOOLS" to "Most-Reached-For Tools" — a
+visitor-oriented framing that matches the suggested fix and drops the
+first-person "my" antecedent the Stage 1 reader doesn't yet have. The
+About section's "Hi, I'm…" voice is unchanged; the eyebrow now reads
+true for any visitor regardless of whether they've scrolled to the
+author paragraph. Single string edit at `html/index.html:70`.
+
 ### 12. Education filter chips for singleton categories are non-features
 
 **[lens: field-tech + newcomer | dimension: UX]**
@@ -882,6 +890,15 @@ incompleteness.
 
 Verification: **flagged** — editorial judgment on tone.
 
+**Resolution (2026-05-24):** the `<span class="badge">More coming</span>`
+slot was dropped from the hero badges row; the trailing slot now carries
+a concrete `Latest: …` badge that gets bumped per ship (currently
+`Latest: Practice — Modbus Decoding`). The "apologetic" framing is gone
+and the bumping pattern reads as a steady stream of new shipped work
+rather than an incomplete catalog. Matches the suggested direction
+("replace with a concrete next badge"); the surrounding badges keep
+their illustrative-not-exhaustive set.
+
 ### 16. Hero UPTIME 24×7 statline is the only beat that breaks the field-reference frame
 
 **[lens: engineer | dimension: voice]**
@@ -909,6 +926,14 @@ round-trip for tool answers, or just `PUBLIC` to mirror "no
 login"). Editorial.
 
 Verification: **flagged** — judgment on tone consistency.
+
+**Resolution (2026-05-24):** the `UPTIME 24×7` span was removed from
+the console-statusline; final shape is
+`OK · VERSION v<X> · LAST BUILT <date>` — three credible status markers
+and no gag stat. The OK pill keeps the engine-running metaphor; the
+version + build-date pair carries useful provenance. The field-reference
+frame the rest of the site cultivates is no longer broken by the one
+joke beat at the hero foot.
 
 ### 17. Education card ordering tells one story; chip UI invites a different one
 
