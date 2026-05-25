@@ -34,7 +34,7 @@
         <div class="related-group">
             <h2 class="related-label">Related tools</h2>
             <ul>
-                {% for t in opts.tools %}<li><a href="{{ t.href }}">{{ t.label }}</a></li>{% endfor %}
+                {% for t in opts.tools %}<li><a href="{{ t.href }}" rel="related">{{ t.label }}</a></li>{% endfor %}
             </ul>
         </div>
         {% endif %}
@@ -42,7 +42,7 @@
         <div class="related-group">
             <h2 class="related-label">Related simulators</h2>
             <ul>
-                {% for s in opts.simulators %}<li><a href="{{ s.href }}">{{ s.label }}</a></li>{% endfor %}
+                {% for s in opts.simulators %}<li><a href="{{ s.href }}" rel="related">{{ s.label }}</a></li>{% endfor %}
             </ul>
         </div>
         {% endif %}
@@ -50,7 +50,7 @@
         <div class="related-group">
             <h2 class="related-label">Related lessons</h2>
             <ul>
-                {% for l in opts.lessons %}<li><a href="{{ l.href }}">{{ l.label }}</a></li>{% endfor %}
+                {% for l in opts.lessons %}<li><a href="{{ l.href }}" rel="related">{{ l.label }}</a></li>{% endfor %}
             </ul>
         </div>
         {% endif %}
@@ -58,7 +58,7 @@
         <div class="related-group">
             <h2 class="related-label">Test yourself</h2>
             <ul>
-                {% for q in opts.quizzes %}<li><a href="{{ q.href }}">{{ q.label }}</a></li>{% endfor %}
+                {% for q in opts.quizzes %}<li><a href="{{ q.href }}" rel="related">{{ q.label }}</a></li>{% endfor %}
             </ul>
         </div>
         {% endif %}
