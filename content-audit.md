@@ -732,6 +732,11 @@ whether the grid class stays `.two` or becomes `.three`.
 Verification: **confirmed** (screenshot at desktop / tablet / mobile
 all show two Browse cards; nav has all three sections).
 
+**Resolution (2026-05-24):** the Browse stage now carries a third
+`navCard` for `/simulators/` alongside Tools and Education
+(`773fb8d`); the `.card-grid.two` was kept as-is and CSS grid handles
+the three-card row without a class rename. Top-nav parity restored.
+
 ### 11. "My Most Common Tools" framing is author-centric
 
 **[lens: newcomer + engineer | dimension: content + voice]**
@@ -802,6 +807,13 @@ place* (scroll-to + accent) instead of hide-others.
 Verification: **confirmed** — chip counts and visible-card counts
 match exactly; the UX issue is the count itself, not the wiring.
 
+**Resolution (2026-05-24):** the five singleton chips (Drives, Control,
+HVAC, Sequencing, Logic) were folded into a new `Fundamentals`
+catch-all (`d0f7bc4`); the chip row went from 8 chips to 4 (All /
+Fundamentals / Hydronics / Protocols). The chip-row preamble was
+reworded to "Know your way around? Jump to:" — framing the chips as
+a returning-user shortcut, not a newcomer's filter. Pairs with #17.
+
 ### 13. titleShort abbreviation discipline drifts across nav cards
 
 **[lens: engineer | dimension: consistency + visual]**
@@ -866,6 +878,14 @@ identifier. Adjust the first pill in lockstep.
 
 Verification: **confirmed** — visible in
 `/tmp/audit-landings-screens/simulators-desktop.png`.
+
+**Resolution (2026-05-24):** `titleShort` on the FBE card was renamed
+from `'Wiresheet'` to `'FB Editor'` (`3c7cc5c`); the titlebar now
+reads `SIM :: FB EDITOR`. **Partial:** the first pill in the same
+card (`html/simulators/index.html:45`) still reads `'Wiresheet'`,
+which the audit calls for syncing in lockstep. Item stays unchecked
+in `refinement-priorities.md` until the pill ships; logged as a
+follow-up minor-polish sweep.
 
 ### 15. Hero "More coming" badge reads as apologetic
 
@@ -970,6 +990,14 @@ intended path.
 Verification: **flagged** — judgment on whether the curriculum
 framing is the intended use.
 
+**Resolution (2026-05-24):** the chip refactor in #12 (`d0f7bc4`)
+resolved this implicitly — singleton chips collapsed into
+`Fundamentals` so chip-jumping no longer skips half the curriculum,
+and the chip-row preamble explicitly frames the chips as a
+returning-user shortcut. Card-grid sequencing is unchanged; the
+prereq chain still tells its story top-to-bottom without competing
+chip-UI signals.
+
 ### 18. Same lead-paragraph pattern, three different max-widths and one inline-style copy per landing
 
 **[lens: engineer | dimension: consistency + visual]**
@@ -1002,6 +1030,13 @@ to record the *user-visible* inconsistency it caused.
 Verification: **confirmed** — three inline-style attributes,
 three max-widths, no rationale.
 
+**Resolution (2026-05-24):** a shared `.landing-intro` class was
+promoted to `styles.css` (`365a1b1`); the three landings swept off
+their inline `max-width` attributes. A follow-up (`0adbba1`) widened
+the class to span the full content column rather than the audit's
+suggested ~660px cap, giving the lead paragraphs the breathing room
+the page composition needed.
+
 ### 19. Education lead asks for "requests or corrections" but doesn't link to contact
 
 **[lens: field-tech + newcomer | dimension: UX + content]**
@@ -1025,6 +1060,11 @@ href="/contact.html">`, or rephrase to "send a note via the
 [Contact page](/contact.html)". One-line edit.
 
 Verification: **confirmed** — the link is missing in source.
+
+**Resolution (2026-05-24):** the "reach out" text on
+`html/education/index.html` was wrapped in `<a href="/contact.html">`
+(`8e6829f`); the inline CTA is now an actual anchor matching the
+other in-page links.
 
 ### Minor polish
 
@@ -1168,6 +1208,13 @@ purpose. Suggested starting points:
 Verification: **confirmed** — `grep -c '<input[^>]*value="' html/tools/*.html`
 gives the counts above.
 
+**Resolution (2026-05-24):** the three cold tools were given credible
+`value=` defaults — `signal-scaling` warm-starts all three tabs
+(`4c18a50`), `modbus-register-viewer` defaults to `43981` on both
+tabs (`dc3879b`), and `bacnet-ip-converter` defaults to a recognizable
+hex string (`6407832`). Each tool now lands with a worked example on
+the page rather than blank inputs + a muted `—`. Pairs with #21.
+
 ### 21. HVAC tools carry preambles; the simpler tools don't
 
 **[lens: newcomer | dimension: content + consistency]**
@@ -1209,6 +1256,12 @@ Verification: **confirmed** — visible in
 `/tmp/audit-tools-screens/{signal-scaling,modbus-register-viewer,bacnet-ip-converter,thermistor-calculator}-desktop.png`
 vs the HVAC tool screenshots in the same directory.
 
+**Resolution (2026-05-24):** the four cold tools without preambles
+gained `.tool-preamble` paragraphs in a single editorial pass
+(`23a611f`) — task-framed leads in the style of `economizer-ratio`.
+Pairs with #20: defaults give the visitor a worked example; the
+preambles give them the framing.
+
 ### 22. Psychrometric Chart's "New to Psychrometrics?" prereq link sits at the bottom
 
 **[lens: newcomer | dimension: UX + content]**
@@ -1243,6 +1296,12 @@ Verification: **confirmed** — visible on desktop screenshot
 (callout appears in lower third); the source `/education/`
 anchor is the last interactive element before the footer.
 
+**Resolution (2026-05-24):** the Psychrometrics Basics prereq link
+was moved from the bottom of the page to inline near the preamble
+(`0b0b192`); the visitor confused by the chart now reads
+"New to psychrometrics? Start with the basics →" before scrolling
+past it. Matches the `fbe`/`vfd` placement shape. Pairs with #28.
+
 ### 23. Modbus bit-grid cells are below the mobile tap-target threshold
 
 **[lens: field-tech | dimension: UX]**
@@ -1271,6 +1330,13 @@ ships a re-pick.
 Verification: **confirmed** — `/tmp/audit-tools-screens/modbus-register-viewer-mobile.png`
 shows the 8×2 grid at 375 px; the cells span less than 1/8 of the
 content width (≈ 30 px after gutters).
+
+**Resolution (2026-05-24):** the Modbus bit-grid gained a media query
+that restructures to a 4×4 grid below 700px viewport (`4797e33` /
+`05ef25b`), paired with a `.narrow-width-note` callout that flags the
+desktop-primary intent (`7c259b0`). The mobile tap-target threshold
+is met without giving up the desktop 16-bit row layout. Adopts the
+#30 honesty-callout pattern.
 
 ### 24. BACnet/IP Converter puts derived "Length" and "Format" readouts in the Input column
 
@@ -1303,6 +1369,13 @@ Verification: **confirmed** — visible in
 `/tmp/audit-tools-screens/bacnet-ip-converter-desktop.png`; source
 lines around `<section><h2>Input</h2>...` contain both editable
 and readout rows.
+
+**Resolution (2026-05-24):** `Length` and `Format` readouts were moved
+from the Input `<section>` to the Output `<section>` on both tabs of
+`bacnet-ip-converter.html` (`f97faef`); the site-wide Input/Output
+convention is restored, and the editable hex string sits alone in the
+Input column with its diagnostics rendered alongside the decoded
+address.
 
 ### 25. Failure-state UX varies across tools — no shared idiom for "this doesn't compute"
 
@@ -1340,6 +1413,14 @@ class structure as the existing notice/alert chrome).
 
 Verification: **confirmed** by direct inspection of the default
 or near-default state across all 9 tool screenshots.
+
+**Resolution (2026-05-24):** a shared `.failure-callout` class was
+promoted to `styles.css` (`2566830`); the three cold tools were swept
+onto it — `signal-scaling` on all three tabs (`f3d1e11`),
+`modbus-register-viewer` on both tabs (`4f12f38`), and
+`bacnet-ip-converter` on both tabs (`b9181de`). The amber-callout
+idiom now applies wherever a tool says "this doesn't compute"; the
+silent `—` mute path is gone from the swept tools.
 
 ### 26. Copy-button labels swing between generic and task-specific
 
@@ -1381,6 +1462,17 @@ and Psychrometric Chart need copy primitives at all.
 
 Verification: **confirmed** — labels visible in respective
 screenshots.
+
+**Resolution (2026-05-24):** copy-button labels were swept to a
+dynamic / task-specific pattern — `signal-scaling` updates per active
+unit (`Copy °F`, `Copy psi`, `644a521`); `refrigerant-pt` swaps by
+direction mode (`f05655a`); `thermistor-calculator` gained Copy T +
+Copy R (`eea00f9`); `modbus-register-viewer` split into Copy decimal /
+hex / binary (`a5855a0`); `psychrometric-chart` copies the full
+state-point block (`6d72f22`). The literal `Copy value` initial text
+in `signal-scaling.html:110` is the empty-state fallback shown only
+before a unit is picked — once the warm default from #20 loads, the
+dynamic label takes over.
 
 ### Minor polish
 
@@ -1509,6 +1601,12 @@ surface metaphor — same word used in the title-bar of the
 
 Verification: **confirmed** — `grep "section-label" html/simulators/*.html`.
 
+**Resolution (2026-05-24):** the FBE eyebrow was changed from `Tools`
+to `Logic` (`600a797`); the page header now reads cleanly under the
+Simulators nav-active state, and the tool-tag pill on the h1 already
+carried `Logic`, so the two markers agree. Stale-after-section-move
+artifact fully cleared.
+
 ### 28. Prereq cross-link placement varies across sims — two follow fbe/vfd top-of-page model; pid-tuner mirrors the psych-chart bottom-of-page problem
 
 **[lens: newcomer | dimension: UX + consistency]**
@@ -1553,6 +1651,11 @@ Verification: **confirmed** — `grep -n "education" html/simulators/*.html
 html/tools/psychrometric-chart.html` shows the placement on each
 page.
 
+**Resolution (2026-05-24):** the PID Basics prereq link was moved
+from the bottom `.pid-note` paragraph to inline in the preamble
+(`880e35f`), matching the `fbe`/`vfd` placement and pairing with #22's
+twin fix on the psych chart.
+
 ### 29. Sim eyebrow taxonomy is inconsistent — concept / equipment / legacy
 
 **[lens: engineer | dimension: consistency]**
@@ -1589,6 +1692,16 @@ align already). Specific re-picks needed: function-block-editor
 
 Verification: **confirmed** by the grep in #27 plus the survey
 of eyebrows on tool pages from Batch 2.
+
+**Resolution (2026-05-24):** the eyebrow taxonomy was swept to a
+uniform `<Section> · <Page Name>` shape across tools and simulators
+(`4dbcb16`); paired with `600a797` which cleared the stale `Tools`
+eyebrow on the FBE. Different direction than the audit's "conceptual
+category, one word" suggestion — the team chose section-name prefix
+paired with the page title, which scans predictably and matches
+Education's existing pattern. Open follow-up: document the rule in
+CLAUDE.md under *Conventions* so the next session doesn't re-drift
+(paired with #13).
 
 ### 30. Function-Block Editor's narrow-width honesty callout is a positive pattern the rest of the site could borrow
 
@@ -1638,6 +1751,15 @@ Verification: **confirmed** — visible in
 (the callout shows at 700 px); cross-check against the
 modbus/psych mobile screenshots from Batch 2's
 `/tmp/audit-tools-screens/`.
+
+**Resolution (2026-05-24):** `.narrow-width-note` was promoted to a
+shared class in `styles.css` (`2566830`); the FBE migrated off its
+page-local `.fbe-narrow-note` (`2a4c4da`) and `modbus-register-viewer`
+adopted the callout alongside its #23 bit-grid restructure (`7c259b0`).
+**Partial:** the audit also calls for `psychrometric-chart` and
+`pid-tuner` to carry the callout — those two deploys are still open.
+Class is canonized; per-page sweep is half-done. Item stays unchecked
+in `refinement-priorities.md` until the two remaining pages ship.
 
 ### Minor polish
 
@@ -1801,6 +1923,11 @@ options:
 
 Verification: **confirmed** — `grep "class=\"tool-card-title\"" html/education/*.html`.
 
+**Resolution (2026-05-24):** the em-dash subtitle pattern was stripped
+from the seven older education pages that carried it (`2d1753f`),
+unifying all 13 lessons on the bare-title shape. The titlecard
+inventory now reads as a single set rather than two cohorts.
+
 ### 32. Cross-section eyebrow shape: Education uses `Education · Page Name`; Tools and Simulators use just the category
 
 **[lens: engineer | dimension: consistency]**
@@ -1842,6 +1969,12 @@ What it would take to fix: pick a shape and sweep.
 Verification: **confirmed** by surveys done for Batch 2 #14
 (tools eyebrows), Batch 3 #29 (sims eyebrows), and this batch
 (education eyebrows).
+
+**Resolution (2026-05-24):** addressed alongside #29 — `4dbcb16` swept
+tools and simulators onto the `<Section> · <Page>` shape that
+education was already using. The cross-section inconsistency that
+made #29 and #32 a pair is gone; same open follow-up applies
+(document the rule in CLAUDE.md).
 
 ### 33. `data-objref` SEC:NNN numbering lives on 2 pages of 13 — visual signal of "this is a curriculum sequence" doesn't extend to the rest
 
@@ -1887,6 +2020,13 @@ Verification: **confirmed** — `grep -l 'data-objref' html/education/*.html`
 returns only the two pages; the rendering rule lives in
 `styles.css` (`h2.section-label[data-objref]::before { content:
 "SEC:" attr(data-objref) " · "; }`).
+
+**Resolution (2026-05-24):** the SEC:NNN numbering was dropped from
+the two education pages that carried it (`1a0f2e8`), matching the
+audit's "drop it" option. The two-of-thirteen inconsistency that
+made the numbering read as decoration applied arbitrarily is gone;
+education pages now scan as a unified set without the
+partial-system signal.
 
 ### Strengths flagged (cross-page wiring done well)
 
