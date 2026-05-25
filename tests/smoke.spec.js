@@ -73,9 +73,39 @@ for (const { name, url } of PAGES) {
         expect(res.status(), `${url} should return 200`).toBe(200);
         await expect(page).toHaveTitle(/controlsfreak\.dev/);
         await expect(page.locator('nav.site-nav')).toBeVisible();
+        // SEO meta: every PAGES entry has a canonical frontmatter, so it
+        // must render <link rel="canonical"> + twitter:card. Non-home
+        // pages also carry a BreadcrumbList JSON-LD block (home gets
+        // WebSite + Person instead). The canonical attribute is checked
+        // by full string match to catch typos in path/scheme.
+        const canonicalHref = await page.locator('link[rel="canonical"]').getAttribute('href');
+        expect(canonicalHref, `${url} should have canonical link`).toMatch(/^https:\/\/controlsfreak\.dev\//);
+        await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute('content', 'summary_large_image');
+        if (url !== '/') {
+            const jsonLd = await page.locator('script[type="application/ld+json"]').first().textContent();
+            expect(jsonLd, `${url} should carry a BreadcrumbList`).toContain('BreadcrumbList');
+        }
         expect(errors, `${url} should log no page / console errors`).toEqual([]);
     });
 }
+
+test('404 page noindexes, has no canonical, and lists key sections', async ({ page }) => {
+    // The 404 file is served directly as a 200 by python -m http.server;
+    // the deployed Worker is what returns it with HTTP 404 status. The
+    // file-level assertions (noindex meta, no canonical, helpful links)
+    // are what matters either way.
+    const errors = watchErrors(page);
+    const res = await page.goto('/404.html');
+    expect(res.status()).toBe(200);
+    await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', 'noindex');
+    expect(await page.locator('link[rel="canonical"]').count()).toBe(0);
+    await expect(page.locator('main h1')).toContainText('Page not found');
+    // Sanity-check the four key recovery links are present and resolve.
+    for (const href of ['/', '/tools/', '/simulators/', '/education/', '/contact.html']) {
+        await expect(page.locator(`main a[href="${href}"]`)).toBeVisible();
+    }
+    expect(errors, '404 page should log no page / console errors').toEqual([]);
+});
 
 test('pid tuner runs the shared simulation engine on load', async ({ page }) => {
     const errors = watchErrors(page);

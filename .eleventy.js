@@ -92,6 +92,85 @@ module.exports = function(eleventyConfig) {
         }
     });
 
+    // First-modified (created) date for a source file — the date of the
+    // earliest commit touching the path. Used by head.njk for the
+    // `datePublished` field of TechArticle JSON-LD on education pages
+    // (`dateModified` reuses gitLastmod). Same fallback shape.
+    eleventyConfig.addFilter("gitFirstmod", (inputPath) => {
+        try {
+            const out = execFileSync(
+                "git",
+                ["log", "--format=%cd", "--date=short", "--reverse", "--", inputPath],
+                { encoding: "utf8" }
+            ).trim().split("\n")[0];
+            return out || new Date().toISOString().slice(0, 10);
+        } catch (err) {
+            return new Date().toISOString().slice(0, 10);
+        }
+    });
+
+    // BreadcrumbList JSON-LD for a page, driven by its `canonical` URL,
+    // `nav` frontmatter, and `title`. Returns a JSON string for embedding
+    // inside <script type="application/ld+json">, or an empty string when
+    // a breadcrumb doesn't apply (home page, pages without `nav`).
+    // Google still surfaces breadcrumbs as a rich result under the snippet.
+    const SECTION_MAP = {
+        tools:      { name: "Tools",      url: "https://controlsfreak.dev/tools/" },
+        simulators: { name: "Simulators", url: "https://controlsfreak.dev/simulators/" },
+        education:  { name: "Education",  url: "https://controlsfreak.dev/education/" },
+        contact:    { name: "Contact",    url: "https://controlsfreak.dev/contact.html" }
+    };
+    eleventyConfig.addFilter("breadcrumbJsonLd", (canonical, nav, title) => {
+        if (!canonical || canonical === "https://controlsfreak.dev/") return "";
+        const cleanTitle = (title || "").replace(/\s+—\s+controlsfreak\.dev\s*$/, "");
+        const items = [{ name: "Home", url: "https://controlsfreak.dev/" }];
+        const section = SECTION_MAP[nav];
+        if (section) {
+            if (canonical === section.url) {
+                items.push({ name: section.name, url: canonical });
+            } else {
+                items.push(section);
+                items.push({ name: cleanTitle, url: canonical });
+            }
+        } else {
+            // No recognized section (e.g. /privacy.html) — flat
+            // Home → Page breadcrumb. Skipping unknown nav values would
+            // leave top-level utility pages without any breadcrumb at all.
+            items.push({ name: cleanTitle, url: canonical });
+        }
+        return JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            "itemListElement": items.map((item, i) => ({
+                "@type": "ListItem",
+                "position": i + 1,
+                "name": item.name,
+                "item": item.url
+            }))
+        });
+    });
+
+    // TechArticle JSON-LD for education pages — establishes content type,
+    // attributes authorship to the Person entity declared on the home page
+    // (E-E-A-T), and carries datePublished / dateModified from git history.
+    // Emitted from head.njk only when `nav: education`.
+    eleventyConfig.addFilter("techArticleJsonLd", (canonical, title, description, datePublished, dateModified) => {
+        if (!canonical) return "";
+        const cleanTitle = (title || "").replace(/\s+—\s+controlsfreak\.dev\s*$/, "");
+        return JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "TechArticle",
+            "headline": cleanTitle,
+            "description": description,
+            "url": canonical,
+            "mainEntityOfPage": canonical,
+            "datePublished": datePublished,
+            "dateModified": dateModified,
+            "author": { "@id": "https://controlsfreak.dev/#author" },
+            "publisher": { "@id": "https://controlsfreak.dev/#website" }
+        });
+    });
+
     return {
         dir: {
             input: "html",

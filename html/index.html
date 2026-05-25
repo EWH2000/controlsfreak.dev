@@ -7,6 +7,36 @@ nav: home
 {% extends "layouts/page.njk" %}
 {% from "nav-card.njk" import navCard %}
 
+{% block head %}
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@graph": [
+            {
+                "@type": "WebSite",
+                "@id": "https://controlsfreak.dev/#website",
+                "url": "https://controlsfreak.dev/",
+                "name": "controlsfreak.dev",
+                "description": "Field-reference calculators and plain-English explainers for building-controls engineers — BACnet, Modbus, HVAC."
+            },
+            {
+                "@type": "Person",
+                "@id": "https://controlsfreak.dev/#author",
+                "name": "Controls Freak",
+                "jobTitle": "Controls Programmer",
+                "knowsAbout": ["BACnet", "Modbus", "HVAC", "Building Automation", "Niagara", "EBO", "Psychrometrics", "PID control"],
+                "url": "https://controlsfreak.dev/",
+                "contactPoint": {
+                    "@type": "ContactPoint",
+                    "url": "https://controlsfreak.dev/contact.html",
+                    "contactType": "general inquiry"
+                }
+            }
+        ]
+    }
+    </script>
+{% endblock %}
+
 {% block content %}
 <section class="hero">
     <div class="console-titlebar">
