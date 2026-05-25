@@ -162,6 +162,49 @@ module.exports = function(eleventyConfig) {
         JSON.stringify(value).replace(/</g, "\\u003c")
     );
 
+    // FAQPage JSON-LD for quiz pages. Each question in the bank becomes a
+    // Question entity with an Answer that combines the correct choice (or
+    // True/False, or the numeric value) with the explanation prose, both
+    // stripped of HTML for schema cleanliness. The same data the inline IIFE
+    // uses to mount the quiz engine in the browser. Emitted from head.njk
+    // only when nav: practice AND _data/quizzes/<page.fileSlug>.js exists,
+    // so the practice landing (which has neither) gets nothing.
+    const stripHtml = (s) =>
+        String(s || "").replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
+    const buildQuestionName = (q) =>
+        stripHtml(q.prompt) + (q.snippet ? " " + stripHtml(q.snippet) : "");
+    const buildAnswerText = (q) => {
+        let answer = "";
+        if (q.type === "tf") {
+            answer = q.answer ? "True" : "False";
+        } else if (q.type === "numeric") {
+            answer = String(q.answer) + (q.unit ? " " + q.unit : "");
+        } else {
+            const correct = (q.choices || []).find((c) => c.correct);
+            answer = correct ? stripHtml(correct.text) : "";
+        }
+        const explanation = stripHtml(q.explain);
+        return answer + (answer && explanation ? ". " : "") + explanation;
+    };
+    eleventyConfig.addFilter("faqPageJsonLd", (canonical, questions, title) => {
+        if (!canonical || !Array.isArray(questions) || !questions.length) return "";
+        const cleanTitle = (title || "").replace(/\s+—\s+controlsfreak\.dev\s*$/, "");
+        return JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            "name": cleanTitle,
+            "url": canonical,
+            "mainEntity": questions.map((q) => ({
+                "@type": "Question",
+                "name": buildQuestionName(q),
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": buildAnswerText(q),
+                },
+            })),
+        });
+    });
+
     // TechArticle JSON-LD for education pages — establishes content type,
     // attributes authorship to the Person entity declared on the home page
     // (E-E-A-T), and carries datePublished / dateModified from git history.
