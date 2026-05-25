@@ -155,7 +155,7 @@ notes the pairings.
       — depends on direction (the media query is small; the
       honesty callout depends on #30 landing first).
 
-- [ ] `[SEO]` **`FAQPage` / `QAPage` JSON-LD on quiz pages.** The
+- [x] `[SEO]` **`FAQPage` / `QAPage` JSON-LD on quiz pages.** The
       quiz engine already structures questions and answers; emit
       them as schema in the page's head so search engines can
       index the Q&A corpus. The Modbus Decoding page is the v1
