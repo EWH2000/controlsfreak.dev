@@ -270,6 +270,16 @@ nav: simulators
            a pointer). Below the breakpoint the regions stack and the
            shared .narrow-width-note flips visible — nothing is hidden,
            the tool still works. */
+        /* Fullscreen overrides — let the workspace use the bigger viewport. The
+           canvas height swaps to viewport-relative, .fbe-canvas-inner stretches
+           to fill the canvas, and .fbe-palette drops its max-height. The page's
+           IIFE also lifts INNER_W / INNER_H and updates the wire-layer viewBox
+           on the 'fullscreenchange' event from /scripts/fullscreen-toggle.js. */
+        .tool-card.is-fullscreen .fbe-canvas { height: calc(100vh - 22rem); min-height: 30rem; }
+        .tool-card.is-fullscreen .fbe-canvas-inner { width: 100%; height: 100%; }
+        .tool-card.is-fullscreen .fbe-wire-layer { width: 100%; height: 100%; }
+        .tool-card.is-fullscreen .fbe-palette { max-height: none; }
+
         @media (max-width: 860px) {
             .fbe-workspace { grid-template-columns: 1fr; }
             .fbe-palette { max-height: 12rem; }
@@ -287,6 +297,22 @@ nav: simulators
     </div>
 
     <div class="tool-card">
+        <button type="button" class="tool-card-fullscreen-btn fs-desktop-only"
+                data-fullscreen-target=".tool-card"
+                aria-pressed="false" aria-label="Enter fullscreen">
+            <svg class="fs-icon-enter" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="15 3 21 3 21 9"/>
+                <polyline points="9 21 3 21 3 15"/>
+                <line x1="21" y1="3" x2="14" y2="10"/>
+                <line x1="3" y1="21" x2="10" y2="14"/>
+            </svg>
+            <svg class="fs-icon-exit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="4 14 10 14 10 20"/>
+                <polyline points="20 10 14 10 14 4"/>
+                <line x1="14" y1="10" x2="21" y2="3"/>
+                <line x1="3" y1="21" x2="10" y2="14"/>
+            </svg>
+        </button>
         <div class="tool-card-header">
             <h1 class="tool-card-title">Function-Block Editor <span class="tool-tag">Logic</span></h1>
         </div>
@@ -403,7 +429,10 @@ nav: simulators
         'use strict';
 
         const DT = 0.1;                       // tick step, seconds (10 Hz)
-        const INNER_W = 900, INNER_H = 480;    // canvas content bounds
+        // INNER_W / INNER_H grow when the user enters fullscreen so blocks
+        // can be dragged into the new space; they never shrink back below
+        // 900×480 so blocks placed off-screen stay reachable after exit.
+        let INNER_W = 900, INNER_H = 480;      // canvas content bounds
         const BLOCK_W = 136;                   // matches .fbe-block width
 
         const inner     = document.getElementById('fbe-inner');
@@ -1060,15 +1089,47 @@ nav: simulators
         });
 
         // Delete / Backspace removes the selection (Escape cancels a wire).
+        // The Escape branch claims the keypress (stopPropagation) only when a
+        // wire was actually pending — otherwise the press bubbles up to the
+        // window-level fullscreen-toggle.js listener, which exits fullscreen.
         document.addEventListener('keydown', (e) => {
             const t = e.target;
             if (t && (t.tagName === 'INPUT' || t.tagName === 'SELECT')) return;
             if (e.key === 'Delete' || e.key === 'Backspace') {
                 if (selected) { e.preventDefault(); deleteSelected(); }
             } else if (e.key === 'Escape') {
+                const hadPending = !!pending;
                 cancelWire();
                 setStatus(running ? 'Running' : 'Paused');
+                if (hadPending) e.stopPropagation();
             }
+        });
+
+        // Fullscreen entry/exit reflows .fbe-canvas-inner: in fullscreen, CSS
+        // expands it to fill the viewport-relative canvas; on exit we pin it
+        // inline at the largest size used so blocks dragged into the extra
+        // space remain reachable via the canvas scrollbar. The SVG wire layer
+        // needs an explicit size + viewBox update at every transition since
+        // its viewBox is the user-space coordinate system the wires + blocks
+        // share. INNER_W / INNER_H follow so the drag clamp uses the new bounds.
+        document.querySelector('.tool-card').addEventListener('fullscreenchange', (e) => {
+            const isFs = e.detail && e.detail.fullscreen;
+            if (isFs) {
+                inner.style.width = '';
+                inner.style.height = '';
+                const r = inner.getBoundingClientRect();
+                INNER_W = Math.max(INNER_W, Math.round(r.width));
+                INNER_H = Math.max(INNER_H, Math.round(r.height));
+            } else {
+                inner.style.width  = INNER_W + 'px';
+                inner.style.height = INNER_H + 'px';
+            }
+            if (svg) {
+                svg.style.width  = INNER_W + 'px';
+                svg.style.height = INNER_H + 'px';
+                svg.setAttribute('viewBox', '0 0 ' + INNER_W + ' ' + INNER_H);
+            }
+            drawWires();
         });
 
         // Pause the loop in a backgrounded tab — no idle work (the

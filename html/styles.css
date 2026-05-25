@@ -531,6 +531,7 @@ h2.section-label[data-stage]::before {
 
 /* ── TOOL CARD ── */
 .tool-card {
+    position: relative;            /* anchor for the .tool-card-fullscreen-btn */
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 4px;
@@ -954,6 +955,65 @@ footer {
 .copy-btn.copied { border-color: var(--blue); color: var(--blue); }
 .copy-btn.active { border-color: var(--accent); color: var(--accent); }
 
+/* ── FULLSCREEN MODE ──
+   Toggle button in the .tool-card corner pins the card to the viewport via
+   .is-fullscreen. Wired by /scripts/fullscreen-toggle.js — pages opt in by
+   adding a [data-fullscreen-target] button anywhere in the card. ESC exits.
+   Add the .fs-desktop-only modifier on tools that don't make sense below
+   the 1000px breakpoint (e.g. drag-wiring editors). */
+.tool-card-fullscreen-btn {
+    position: absolute;
+    top: 0.55rem;
+    right: 0.55rem;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.85rem;
+    height: 1.85rem;
+    padding: 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+}
+.tool-card-fullscreen-btn:hover { border-color: var(--accent); color: var(--accent); }
+.tool-card-fullscreen-btn svg { width: 0.95rem; height: 0.95rem; display: block; }
+.tool-card-fullscreen-btn .fs-icon-exit { display: none; }
+.tool-card.is-fullscreen .tool-card-fullscreen-btn .fs-icon-enter { display: none; }
+.tool-card.is-fullscreen .tool-card-fullscreen-btn .fs-icon-exit  { display: block; }
+@media (max-width: 999px) {
+    .tool-card-fullscreen-btn.fs-desktop-only { display: none; }
+}
+
+.tool-card.is-fullscreen {
+    position: fixed;
+    inset: 0;
+    z-index: 300;                  /* above .site-nav (100) and .skip-link (200) */
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+    max-width: none;
+    overflow: auto;
+}
+/* The "← All tools" / "← All simulators" back-link sits as a sibling of
+   .tool-card inside <main>. Hide it when its preceding sibling is the
+   fullscreen card — back-navigation makes no sense in fullscreen. */
+.tool-card.is-fullscreen + .back-link,
+.tool-card.is-fullscreen ~ .back-link { display: none; }
+
+body.has-fullscreen-tool { overflow: hidden; }
+/* In fullscreen the .tool-card overlay covers everything, but leave the
+   nav and footer in place in the DOM — they're hidden by the overlay,
+   not removed. The <main> element creates a stacking context of its own
+   (position: relative + z-index: 1) so a fixed-positioned card inside it
+   can't out-rank .site-nav (z-index: 100) on its own merits — its z-index
+   only applies *within* main's context. Lift main above the nav (and
+   footer, z-index: 1) while a tool is fullscreen. */
+body.has-fullscreen-tool main { z-index: 400; }
+
 /* ── SUBHEAD (within a tool body) ── */
 .subhead {
     font-family: var(--mono);
@@ -1029,7 +1089,8 @@ input[type="range"]::-moz-range-thumb {
 .back-link:focus-visible,
 .filter-chip:focus-visible,
 .nav-card:focus-visible,
-.related-links a:focus-visible {
+.related-links a:focus-visible,
+.tool-card-fullscreen-btn:focus-visible {
     outline: 2px solid var(--accent);
     outline-offset: 3px;   /* v2.0.0 — was 2px; lifted so the accent ring no longer kisses the border on .nav-card */
 }

@@ -24,6 +24,12 @@
    the loop). #}
 <script src="/scripts/flow-engine.js"></script>
 <script src="/scripts/schematic-bg.js"></script>
+{# fullscreen-toggle.js is loaded site-wide so any future tool can opt
+   into fullscreen with a single button. Pages without a
+   [data-fullscreen-target] button cost nothing. Loaded before
+   {% block scripts %} so its keydown listener registers before any
+   page-level keydown handler. #}
+<script src="/scripts/fullscreen-toggle.js"></script>
 {% block scripts %}{% endblock %}
 </body>
 </html>
