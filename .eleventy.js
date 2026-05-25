@@ -205,6 +205,34 @@ module.exports = function(eleventyConfig) {
         });
     });
 
+    // SoftwareApplication JSON-LD for tool pages — declares the per-tool
+    // calculator as a free, web-only utility app for Google's
+    // SoftwareApplication rich-result eligibility. Uniform shape across all
+    // 9 tools (applicationCategory + operatingSystem don't vary
+    // meaningfully); per-page data comes from the existing `title`,
+    // `description`, and `canonical` frontmatter. `offers` with price=0
+    // satisfies Google's "free app" validation (alternative would be
+    // aggregateRating, which we don't have). Emitted from head.njk only
+    // when nav: tools AND not on the tools landing itself.
+    eleventyConfig.addFilter("softwareApplicationJsonLd", (canonical, title, description) => {
+        if (!canonical) return "";
+        const cleanTitle = (title || "").replace(/\s+—\s+controlsfreak\.dev\s*$/, "");
+        return JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "SoftwareApplication",
+            "name": cleanTitle,
+            "description": description,
+            "url": canonical,
+            "applicationCategory": "UtilityApplication",
+            "operatingSystem": "Web",
+            "offers": {
+                "@type": "Offer",
+                "price": "0",
+                "priceCurrency": "USD",
+            },
+        });
+    });
+
     // TechArticle JSON-LD for education pages — establishes content type,
     // attributes authorship to the Person entity declared on the home page
     // (E-E-A-T), and carries datePublished / dateModified from git history.

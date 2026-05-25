@@ -220,7 +220,7 @@ session opens up; several pair with smaller items in Tier 1/2.
       paired-with-sim cohort (the third such page is
       `function-blocks`). **M** — editorial pick + sweep.
 
-- [ ] `[SEO]` **`SoftwareApplication` JSON-LD on tool pages.**
+- [x] `[SEO]` **`SoftwareApplication` JSON-LD on tool pages.**
       The 9 tools are interactive web calculators; declaring the
       schema (`applicationCategory: "UtilityApplication"`,
       `operatingSystem: "Web"`) increases structured-data depth.
