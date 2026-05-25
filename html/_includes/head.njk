@@ -27,6 +27,9 @@
     {% endif %}
     {% if nav == "education" %}
     <script type="application/ld+json">{{ canonical | techArticleJsonLd(title, description, page.inputPath | gitFirstmod, page.inputPath | gitLastmod) | safe }}</script>
+    {% set eduRels = educationSequence[page.url] %}
+    {% if eduRels.prev %}<link rel="prev" href="{{ eduRels.prev }}">{% endif %}
+    {% if eduRels.next %}<link rel="next" href="{{ eduRels.next }}">{% endif %}
     {% endif %}
     <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
     <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png">
