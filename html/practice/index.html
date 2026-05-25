@@ -1,0 +1,195 @@
+---
+title: Practice — controlsfreak.dev
+description: Active-recall quizzes and drills for HVAC building-controls techs — pair them with the education pages, or use the field drills as interview and cert prep.
+canonical: https://controlsfreak.dev/practice/
+nav: practice
+---
+{% extends "layouts/page.njk" %}
+{% from "nav-card.njk" import navCard %}
+
+{% block head %}
+    <style>
+        /* Practice landing layout. Two H2-led card grids (Content Quizzes
+           and Field Drills) live in their own .practice-section wrappers
+           so a topic chip can collapse both sections into a flat
+           filtered view. When the chip row reads "All", the wrappers
+           render normally — the visitor sees two clearly-labeled
+           sections. When a topic chip is active, the .practice-section
+           wrappers drop their headings / intros via the .filtered
+           modifier and the .nav-card[hidden] filter does the rest. */
+        .practice-section {
+            margin-bottom: 1rem;
+        }
+        .practice-section-heading {
+            font-family: var(--mono);
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-bright);
+            margin: 0 0 0.45rem;
+        }
+        .practice-section-heading .practice-section-tag {
+            color: var(--text-dim);
+            font-weight: 400;
+            font-size: 0.78rem;
+            margin-left: 0.5rem;
+            letter-spacing: 0.06em;
+        }
+        .practice-section-intro {
+            font-size: 0.94rem;
+            line-height: 1.7;
+            color: var(--text);
+            margin: 0 0 1.1rem;
+            max-width: 56rem;
+        }
+        .practice-section.filtered .practice-section-heading,
+        .practice-section.filtered .practice-section-intro {
+            display: none;
+        }
+        .practice-section.filtered { margin-bottom: 0; }
+
+        /* Field-drills empty-state — small dim panel that holds the
+           section visible until the first drill page lands. Matches
+           the .callout left-bar vocabulary so it doesn't introduce
+           new chrome. */
+        .practice-empty {
+            border: 1px dashed var(--border);
+            border-left: 2px solid var(--amber);
+            border-radius: 3px;
+            padding: 0.95rem 1.1rem;
+            font-size: 0.9rem;
+            line-height: 1.65;
+            color: var(--text-dim);
+            background: var(--surface);
+        }
+        .practice-empty strong { color: var(--text); font-weight: 600; }
+    </style>
+{% endblock %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <h1 class="section-label">Practice</h1>
+        <div class="section-line"></div>
+    </div>
+
+    <p class="landing-intro">
+        Quick, no-login quizzes for sharpening field knowledge. <strong>Content quizzes</strong> pair with the
+        <a href="/education/">Education pages</a> — every question links back to the lesson it came from, so you
+        can flip a page you just read into a quick self-check. <strong>Field drills</strong> reach broader: scenarios,
+        protocol quirks, troubleshooting, and the kind of "things you'd be asked in an interview" set that doesn't
+        always have a matching page on this site yet. Pick a card.
+    </p>
+
+    <p class="chip-row-preamble">Filter by topic:</p>
+
+    <div class="filter-chips" role="group" aria-label="Filter practice by topic">
+        <button type="button" class="filter-chip active" data-category="all" aria-pressed="true">
+            All <span class="filter-chip-count">1</span>
+        </button>
+        <button type="button" class="filter-chip" data-category="modbus" aria-pressed="false">
+            Modbus <span class="filter-chip-count">1</span>
+        </button>
+    </div>
+
+    <section class="practice-section" data-section="content">
+        <h2 class="practice-section-heading">
+            Content Quizzes
+            <span class="practice-section-tag">covered by the site</span>
+        </h2>
+        <p class="practice-section-intro">
+            Every question links to the lesson or tool that explains it. Newcomers can read a page, then quiz
+            themselves; reviewers can drill the gotchas without re-reading the whole thing.
+        </p>
+        <div class="card-grid">
+            {{ navCard({
+                section:    'practice',
+                href:       '/practice/modbus-decoding.html',
+                titleShort: 'Modbus Decoding',
+                titleFull:  'Modbus Decoding',
+                desc:       'Drill the four gotchas from the Modbus Decoding lesson — the 5-digit address trap, signed vs unsigned, byte order, scaling — plus FC03 / FC04 confusion and exception responses.',
+                pills:      ['10 Questions', 'MCQ · TF · Gotcha · Numeric', '~ 5 min'],
+                category:   'modbus'
+            }) }}
+        </div>
+    </section>
+
+    <section class="practice-section" data-section="field">
+        <h2 class="practice-section-heading">
+            Field Drills
+            <span class="practice-section-tag">broader scope · field-knowledge</span>
+        </h2>
+        <p class="practice-section-intro">
+            Wider scope than the lessons — scenarios, troubleshooting, interview prep, cert review. Explanations
+            stay inline since not every topic has a matching site page yet; when one keeps coming up, it becomes
+            a candidate for a new education page.
+        </p>
+        <div class="card-grid">
+            <div class="practice-empty">
+                <p><strong>First drills are on the bench.</strong> The starter set will be Field Wiring &amp; Sensors
+                (thermistor curves, RTD 2/3/4-wire, 4-20 mA vs 0-10 V failure modes) and a Junior Interview Prep
+                sampler. They'll land alongside the next batch of education pages.</p>
+            </div>
+        </div>
+    </section>
+
+    <a class="back-link" href="/">← Home</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="/scripts/units.js"></script>
+<script>
+    (function () {
+        'use strict';
+        const sections = document.querySelectorAll('.practice-section');
+        const chips = document.querySelectorAll('.filter-chip');
+        if (!sections.length || !chips.length) return;
+
+        const validSlugs = new Set();
+        chips.forEach(c => validSlugs.add(c.dataset.category));
+
+        function apply(slug) {
+            const showAll = slug === 'all';
+            chips.forEach(c => {
+                const on = c.dataset.category === slug;
+                c.classList.toggle('active', on);
+                c.setAttribute('aria-pressed', on ? 'true' : 'false');
+            });
+            sections.forEach(section => {
+                section.classList.toggle('filtered', !showAll);
+                // Hide the empty-state placeholder in Field Drills when
+                // a topic chip is active — it isn't a card and doesn't
+                // belong in a flat filtered list.
+                const empty = section.querySelector('.practice-empty');
+                if (empty) {
+                    if (showAll) empty.removeAttribute('hidden');
+                    else empty.setAttribute('hidden', '');
+                }
+                section.querySelectorAll('.nav-card').forEach(card => {
+                    const match = showAll || card.dataset.category === slug;
+                    if (match) card.removeAttribute('hidden');
+                    else card.setAttribute('hidden', '');
+                });
+            });
+        }
+
+        function slugFromHash() {
+            const h = (location.hash || '').slice(1).toLowerCase();
+            return validSlugs.has(h) ? h : 'all';
+        }
+
+        chips.forEach(chip => chip.addEventListener('click', () => {
+            const slug = chip.dataset.category;
+            const newHash = slug === 'all' ? '' : '#' + slug;
+            history.replaceState(null, '', location.pathname + newHash);
+            apply(slug);
+        }));
+
+        window.addEventListener('hashchange', () => apply(slugFromHash()));
+        apply(slugFromHash());
+    })();
+</script>
+{% endblock %}

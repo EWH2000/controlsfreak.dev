@@ -36,7 +36,9 @@
     --teal:         #4a8a8a;   /* desaturated teal — data/comm traces on the background schematic (BACnet, IP) */
     --teal-dim:     rgba(74,138,138,0.10);
     --teal-glow:    rgba(74,138,138,0.22);
-    --amber:        #c9a14a;   /* desaturated amber — energized control wiring on the background schematic */
+    --amber:        #c9a14a;   /* desaturated amber — energized control wiring on the background schematic; section accent for /practice/ */
+    --amber-dim:    rgba(201,161,74,0.10);
+    --amber-glow:   rgba(201,161,74,0.22);
     --plum:         #8a5e7e;   /* desaturated plum — logic-signal lines on the background schematic */
     --plum-dim:     rgba(138,94,126,0.10);
     --plum-glow:    rgba(138,94,126,0.22);
@@ -1096,7 +1098,11 @@ input[type="range"]::-moz-range-thumb {
 .filter-chip:focus-visible,
 .nav-card:focus-visible,
 .related-links a:focus-visible,
-.tool-card-fullscreen-btn:focus-visible {
+.tool-card-fullscreen-btn:focus-visible,
+.quiz-choice:focus-visible,
+.quiz-action:focus-visible,
+.quiz-reset-best:focus-visible,
+.quiz-restart-now:focus-visible {
     outline: 2px solid var(--accent);
     outline-offset: 3px;   /* v2.0.0 — was 2px; lifted so the accent ring no longer kisses the border on .nav-card */
 }
@@ -1308,6 +1314,7 @@ p.chip-row-preamble {
 .nav-card--tools      { --section-accent: var(--accent); --section-accent-dim: var(--accent-dim); --section-accent-glow: var(--accent-glow); }
 .nav-card--education  { --section-accent: var(--plum);   --section-accent-dim: var(--plum-dim);   --section-accent-glow: var(--plum-glow); }
 .nav-card--simulators { --section-accent: var(--teal);   --section-accent-dim: var(--teal-dim);   --section-accent-glow: var(--teal-glow); }
+.nav-card--practice   { --section-accent: var(--amber);  --section-accent-dim: var(--amber-dim);  --section-accent-glow: var(--amber-glow); }
 .nav-card--home       { --section-accent: var(--accent); --section-accent-dim: var(--accent-dim); --section-accent-glow: var(--accent-glow); }
 
 .nav-card:hover { border-color: var(--section-accent); transform: translateY(-2px); }
@@ -1521,6 +1528,393 @@ p.chip-row-preamble {
 .related-links a:hover {
     color: var(--accent);
     border-color: var(--accent);
+}
+
+/* ──────────────────────────────────────────────────────────────────────
+ * PRACTICE / QUIZ — the engine in /scripts/quiz-engine.js renders the
+ * shell described here inside the page's <div id="quiz"></div>. Pages
+ * provide only the empty container + the questions array + the call to
+ * Quiz.mount. The accent for the Practice section comes from --amber
+ * (see .nav-card--practice above).
+ *
+ * Visual vocabulary: choices are .quiz-choice buttons styled in the
+ * same family as .filter-chip / .units-btn — hairline border, mono
+ * caps off here since choice text is sentence-case. Selected and post-
+ * reveal correct / wrong states get accent / red borders. Reveal panel
+ * borrows the .callout left-bar treatment with --correct (accent) and
+ * --incorrect (red) variants. Results card uses .ref-table-dense for
+ * the miss list to match the rest of the site's reference-table look.
+ * ────────────────────────────────────────────────────────────────────── */
+
+.quiz { display: block; }
+
+.quiz-settings {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.6rem 1rem;
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.85rem;
+    border-bottom: 1px solid var(--border-faint);
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--text-dim);
+}
+.quiz-settings-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+.quiz-settings-select {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--text);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 0.2rem 0.5rem;
+}
+.quiz-best-readout {
+    margin-left: auto;          /* push to the right on wide; wraps below on narrow */
+    font-size: 0.74rem;
+    letter-spacing: 0.04em;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+}
+.quiz-reset-best {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-dim);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 0.25rem 0.6rem;
+    cursor: pointer;
+    transition: border-color 0.18s, color 0.18s;
+}
+.quiz-reset-best:hover { border-color: var(--accent); color: var(--accent); }
+
+.quiz-dirty-notice {
+    margin: 0 0 1rem;
+    padding: 0.55rem 0.85rem;
+    background: var(--amber-dim);
+    border: 1px solid var(--amber-glow);
+    border-radius: 3px;
+    font-family: var(--mono);
+    font-size: 0.74rem;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+}
+.quiz-restart-now {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--amber);
+    background: transparent;
+    border: 1px solid var(--amber);
+    border-radius: 3px;
+    padding: 0.2rem 0.55rem;
+    cursor: pointer;
+    transition: color 0.18s, background 0.18s;
+}
+.quiz-restart-now:hover { color: var(--surface); background: var(--amber); }
+/* The dirty-notice and numeric rows below set display: flex / inline-flex,
+   which would override the UA-default `[hidden] { display: none }`. Same
+   trap that .nav-card[hidden] solves above — re-assert hidden for the
+   elements the engine toggles via the `hidden` attribute. */
+.quiz-dirty-notice[hidden],
+.quiz-numeric[hidden] { display: none; }
+
+.quiz-progress {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    margin-bottom: 1.4rem;
+}
+.quiz-progress-text {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-dim);
+    margin: 0;
+}
+.quiz-progress-bar {
+    height: 4px;
+    background: var(--surface-3);
+    border-radius: 2px;
+    overflow: hidden;
+}
+.quiz-progress-fill {
+    height: 100%;
+    width: 0%;
+    background: var(--amber);
+    /* Global @media (prefers-reduced-motion: reduce) below squashes
+       transitions to 0.01ms — no defensive selector needed here. */
+    transition: width 220ms ease;
+}
+
+.quiz-question-pane {
+    display: flex;
+    flex-direction: column;
+    gap: 1.1rem;
+}
+.quiz-prompt {
+    font-size: 1.05rem;
+    line-height: 1.7;
+    color: var(--text);
+}
+.quiz-prompt code {
+    font-family: var(--mono);
+    font-size: 0.92em;
+    background: var(--surface-3);
+    padding: 0.05em 0.35em;
+    border-radius: 2px;
+}
+
+.quiz-snippet-slot { margin: 0; }
+.quiz-snippet {
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    line-height: 1.55;
+    color: var(--text);
+    background: var(--surface-3);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 0.85rem 1rem;
+    white-space: pre;
+    overflow-x: auto;
+}
+
+.quiz-choices {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+}
+.quiz-choice {
+    display: block;
+    width: 100%;
+    text-align: left;
+    font-family: var(--sans);
+    font-size: 0.95rem;
+    line-height: 1.55;
+    color: var(--text);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 0.7rem 0.95rem;
+    cursor: pointer;
+    transition: border-color 0.18s, background 0.18s, color 0.18s;
+}
+.quiz-choice code {
+    font-family: var(--mono);
+    font-size: 0.9em;
+    background: var(--surface-3);
+    padding: 0.02em 0.3em;
+    border-radius: 2px;
+}
+.quiz-choice:hover { border-color: var(--amber); }
+.quiz-choice[aria-checked="true"],
+.quiz-choice.selected {
+    border-color: var(--amber);
+    background: var(--amber-dim);
+    color: var(--text-bright);
+}
+.quiz-choice[aria-disabled="true"],
+.quiz-choice:disabled {
+    cursor: default;
+    opacity: 0.7;
+}
+.quiz-choice.correct {
+    border-color: var(--accent);
+    background: var(--accent-dim);
+    color: var(--text-bright);
+    opacity: 1;
+}
+.quiz-choice.wrong {
+    border-color: var(--red);
+    background: rgba(196,56,47,0.10);
+    color: var(--text-bright);
+    opacity: 1;
+}
+
+.quiz-numeric {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.5rem;
+}
+.quiz-numeric-input {
+    font-family: var(--mono);
+    font-size: 1rem;
+    color: var(--text);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 0.5rem 0.75rem;
+    width: 9rem;
+}
+.quiz-numeric-input:focus {
+    outline: none;
+    border-color: var(--amber);
+    box-shadow: 0 0 0 2px var(--amber-glow);
+}
+.quiz-numeric-unit {
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    color: var(--text-dim);
+}
+.quiz-numeric.correct .quiz-numeric-input { border-color: var(--accent); background: var(--accent-dim); }
+.quiz-numeric.wrong .quiz-numeric-input { border-color: var(--red); background: rgba(196,56,47,0.10); }
+
+.quiz-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.6rem;
+    margin-top: 1.4rem;
+}
+.quiz-action {
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    letter-spacing: 0.02em;
+    padding: 0.6rem 1.2rem;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: color 0.18s, background 0.18s, border-color 0.18s;
+}
+.quiz-action-primary {
+    color: var(--surface);
+    background: var(--amber);
+    border: 1px solid var(--amber);
+}
+.quiz-action-primary:hover { background: var(--text-bright); border-color: var(--text-bright); }
+.quiz-action-primary:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+}
+.quiz-action-secondary {
+    color: var(--text-dim);
+    background: var(--surface);
+    border: 1px solid var(--border);
+}
+.quiz-action-secondary:hover { color: var(--text); border-color: var(--text-dim); }
+.quiz-action-secondary:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+}
+
+.quiz-reveal {
+    margin-top: 1.2rem;
+    padding: 0 0 0 1rem;
+    border-left: 2px solid transparent;
+    /* The panel exists in the DOM at all times so aria-live announces
+       on content change, not on insertion. Empty state has no visible
+       chrome — only the .--correct / .--incorrect modifiers paint a
+       border. */
+}
+.quiz-reveal:empty { padding: 0; border-left-color: transparent; }
+.quiz-reveal--correct { border-left-color: var(--accent); }
+.quiz-reveal--incorrect { border-left-color: var(--red); }
+.quiz-reveal-status {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin: 0 0 0.55rem;
+    color: var(--text-dim);
+}
+.quiz-reveal--correct .quiz-reveal-status { color: var(--accent); }
+.quiz-reveal--incorrect .quiz-reveal-status { color: var(--red); }
+.quiz-reveal-right {
+    font-size: 0.9rem;
+    color: var(--text);
+    margin: 0 0 0.6rem;
+}
+.quiz-reveal-explain {
+    font-size: 0.92rem;
+    line-height: 1.65;
+    color: var(--text);
+}
+.quiz-reveal-explain p + p { margin-top: 0.6rem; }
+.quiz-reveal-explain code {
+    font-family: var(--mono);
+    font-size: 0.9em;
+    background: var(--surface-3);
+    padding: 0.05em 0.35em;
+    border-radius: 2px;
+}
+.quiz-reveal-learn-more {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    margin-top: 0.7rem;
+    color: var(--text-dim);
+}
+.quiz-reveal-learn-more a {
+    color: var(--accent);
+    text-decoration: none;
+    border-bottom: 1px dotted var(--border);
+}
+.quiz-reveal-learn-more a:hover {
+    border-color: var(--accent);
+}
+
+.quiz-results {
+    padding: 1.5rem 0.25rem 0.5rem;
+    text-align: center;
+}
+.quiz-results-headline {
+    font-family: var(--mono);
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--text-bright);
+    margin: 0 0 0.35rem;
+    font-variant-numeric: tabular-nums;
+}
+.quiz-results-sub {
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    color: var(--text-dim);
+    margin: 0 0 1.6rem;
+}
+.quiz-results-newbest {
+    color: var(--amber);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.74rem;
+}
+.quiz-results-misses-heading {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-dim);
+    margin: 0 0 0.65rem;
+    text-align: left;
+}
+.quiz-results-misses {
+    text-align: left;
+    margin-bottom: 1.4rem;
+}
+.quiz-results-misses td { vertical-align: top; }
+.quiz-results-misses a { color: var(--accent); text-decoration: none; border-bottom: 1px dotted var(--border); }
+.quiz-results-misses a:hover { border-color: var(--accent); }
+.quiz-results-actions { justify-content: center; }
+.quiz-restart-btn { background: var(--amber); border-color: var(--amber); color: var(--surface); }
+.quiz-restart-btn:hover { background: var(--text-bright); border-color: var(--text-bright); }
+
+/* Narrow viewports — stack the action row full-width so a thumb can
+   reach both buttons; settings wrap onto multiple lines. The
+   .quiz-best-readout flex auto-margin already drops it below on wrap. */
+@media (max-width: 560px) {
+    .quiz-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .quiz-action { width: 100%; }
 }
 
 /* ──────────────────────────────────────────────────────────────────────
