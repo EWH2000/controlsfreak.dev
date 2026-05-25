@@ -22,6 +22,9 @@ nav: tools
         @media (max-width: 1000px) {
             .tool-body-3col { grid-template-columns: 1fr; }
         }
+        @media (max-width: 700px) {
+            .narrow-width-note { display: block; }
+        }
 
         /* Step pills — a horizontal row of compact mono-font pills across the top
            of the Inputs column that picks which AHU stage's editor is visible
@@ -200,6 +203,12 @@ nav: tools
             and <strong>RA</strong> on the chart. The supply-air state and all intermediate points follow.
             <strong>New to psychrometrics?</strong> The <a href="/education/psychrometrics-basics.html">Psychrometrics Basics</a> lesson walks the seven properties on the chart and the dew-point gotcha first.
         </p>
+
+        <div class="narrow-width-note">
+            The chart is built for a wider screen — on a phone the three-column workspace
+            collapses and the canvas compresses. Dragging OA / RA still works, but a laptop
+            or tablet gives the chart room to read.
+        </div>
 
         <!-- Same three-column property-sheet layout as the other tools (BACnet
              converter, Signal Scaling, Modbus viewer), with a custom column

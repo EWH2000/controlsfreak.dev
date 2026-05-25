@@ -197,7 +197,7 @@ session opens up; several pair with smaller items in Tier 1/2.
       sweep ~25 pages. Document in CLAUDE.md under *Conventions*.
       **M-L** — decision + sweep + doc.
 
-- [ ] `[content-audit #30]` **Canonize the FBE narrow-width
+- [x] `[content-audit #30]` **Canonize the FBE narrow-width
       honesty callout.** A small `.narrow-width-note` shown at
       mobile-only tells the user "this is built for desktop"
       *above* the cramped affordance. The pattern is already

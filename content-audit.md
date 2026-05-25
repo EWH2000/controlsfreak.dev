@@ -1753,14 +1753,16 @@ Verification: **confirmed** — visible in
 modbus/psych mobile screenshots from Batch 2's
 `/tmp/audit-tools-screens/`.
 
-**Resolution (2026-05-24):** `.narrow-width-note` was promoted to a
-shared class in `styles.css` (`2566830`); the FBE migrated off its
-page-local `.fbe-narrow-note` (`2a4c4da`) and `modbus-register-viewer`
-adopted the callout alongside its #23 bit-grid restructure (`7c259b0`).
-**Partial:** the audit also calls for `psychrometric-chart` and
-`pid-tuner` to carry the callout — those two deploys are still open.
-Class is canonized; per-page sweep is half-done. Item stays unchecked
-in `refinement-priorities.md` until the two remaining pages ship.
+**Resolution (2026-05-25):** `.narrow-width-note` was promoted to a
+shared class in `styles.css` on 2026-05-24 (`2566830`); the FBE
+migrated off its page-local `.fbe-narrow-note` (`2a4c4da`) and
+`modbus-register-viewer` adopted the callout alongside its #23
+bit-grid restructure (`7c259b0`). The remaining two deploys
+(`psychrometric-chart` and `pid-tuner`) shipped 2026-05-25, both
+gated at `@media (max-width: 700px)` and placed directly above the
+cramped affordance — the chart canvas in both cases. Pattern is now
+canonized across all four targets the audit named; future tools
+with a desktop-primary affordance can reach for the same class.
 
 ### Minor polish
 
