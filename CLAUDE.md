@@ -36,9 +36,13 @@ findings from the recurring content-accuracy audits.
     (see *Gotchas*). Path-tagging conventions in the partial's
     header.
   - `nav-card.njk` — `navCard()` macro for the hero-frame nav-cards
-    used across home / tools / education / simulators landings.
-    Params: `section`, `href`, `titleShort`, `titleFull`, `desc`,
-    `pills[]`, optional `category`.
+    used across home / tools / education / simulators / practice
+    landings. Params: `section`, `href`, `titleShort`, `titleFull`,
+    `desc`, `pills[]`, optional `category`.
+  - `related-links.njk` — `relatedLinks()` macro for end-of-page
+    cross-links. Takes up to four optional groups: `tools`,
+    `simulators`, `lessons`, `quizzes` — each `[{href, label}]`.
+    Per the forward-link convention, only link pages that exist.
 - **Directory data:** `html/html.11tydata.js` overrides 11ty's
   pretty-URL permalink so `signal-scaling.html` lands at
   `_site/tools/signal-scaling.html`. Load-bearing for the
@@ -47,8 +51,8 @@ findings from the recurring content-accuracy audits.
   via `head.njk`. Page-only rules stay inline via `{% block head %}`.
 - **Shared scripts** in `html/scripts/` are **classic scripts** (no
   ES modules, no bundler) that expose globals like `Units`,
-  `simulatePid`, `FlowEngine` for page IIFEs to reach by name. Each
-  file has a thorough header — **read it for the API**.
+  `simulatePid`, `FlowEngine`, `Quiz` for page IIFEs to reach by
+  name. Each file has a thorough header — **read it for the API**.
   `flow-engine.js` and `schematic-bg.js` are loaded site-wide from
   `layouts/page.njk`; the rest load per-page inside `{% block scripts %}`
   *before* the page's inline `<script>`.
@@ -117,8 +121,8 @@ Frontmatter:
   avoid `'` and `<` if clean view-source matters.
 - `canonical` — full URL with `.html` extension; used for `og:url`.
 - `nav` — one of `home`, `tools`, `simulators`, `education`,
-  `contact`; drives the `.active` marker. Omit on pages that don't
-  fit.
+  `practice`, `contact`; drives the `.active` marker. Omit on pages
+  that don't fit.
 
 Blocks: `head` (optional — inline `<style>` or head-loaded script;
 Turnstile on `contact.html` is the only current head-script example);
@@ -304,8 +308,8 @@ Cross-cutting decisions. For per-page history and *why*, see
 adding or moving pages.
 
 - **Shared top nav:** Home / Tools / Simulators / Education /
-  Contact. `nav` frontmatter drives `.active`. Tools / Simulators /
-  Education link to hub landings.
+  Practice / Contact. `nav` frontmatter drives `.active`. Tools /
+  Simulators / Education / Practice link to hub landings.
 - **Page archetypes:**
   - *Tools* mostly use the **property-sheet layout** (`.ps-*` +
     `.ref-table-dense`). Two grid flavors:
@@ -324,18 +328,31 @@ adding or moving pages.
   - *Education* pages use the **lesson layout** (`.tool-card` /
     `.tool-body`). **Prose sits above each diagram; the diagram is
     the visual capstone.**
+  - *Practice* pages (`/practice/<slug>.html`) wrap the shared
+    `Quiz` engine: a single `.tool-card` containing an empty
+    `<div id="quiz"></div>`, with an inline IIFE that defines a
+    `const questions = [...]` bank and calls `Quiz.mount`. The
+    engine owns every DOM node inside the mount target (settings
+    row, progress, prompt, choices/numeric, reveal panel, results
+    card). See `html/scripts/quiz-engine.js` for the schema + the
+    Modbus Decoding page for canonical wiring.
 - **Nav cards** are rendered by the `navCard()` macro in
   `_includes/nav-card.njk` (NOT hand-rolled) for all landings.
   Hero-frame shape with `.nav-card-titlebar` + `.nav-card-body` +
   `.nav-card-statusline`. Section drives an accent cascade
-  (`.nav-card--{home,tools,education,simulators}`). Trim `titleShort`
-  enough to fit one line at the 4-col 1920px breakpoint — the title
-  region clips with ellipsis, so over-long values truncate silently.
+  (`.nav-card--{home,tools,education,simulators,practice}`). Trim
+  `titleShort` enough to fit one line at the 4-col 1920px breakpoint
+  — the title region clips with ellipsis, so over-long values
+  truncate silently.
 - **Tools landing** has a filter-chip row above the card grid;
   bump the All chip count when adding a tool, add a per-category
   chip if the new tool opens a new category. **Simulators landing**
   is the same grid minus chips — add chips back if it grows past
-  ~6 entries.
+  ~6 entries. **Practice landing** is two H2 sections (Content
+  Quizzes / Field Drills) with a topic chip row above; chips
+  collapse both grids into a flat filtered view, `[All]` restores
+  the sectioned layout. Drill cards use `category: 'field'` (no
+  chip) so they hide under any topic-specific chip.
 - **Legacy redirects.** When a page moves between sections, add the
   old URL to `LEGACY_TOOL_REDIRECTS` in `src/worker.js`. The Worker
   301s old paths to the new ones so inbound links keep working.
@@ -434,6 +451,36 @@ headers.
 `html/simulators/` instead, with `nav: simulators` in the
 frontmatter and the new `.nav-card` added to
 `simulators/index.html`. No filter chips to recount there.
+
+**Adding a new quiz / drill** follows a similar shape under
+`html/practice/`:
+
+1. Create `html/practice/<slug>.html`. Frontmatter `nav: practice`;
+   `.tool-card` with the page's `<h1 class="tool-card-title">` +
+   a short `.page-intro` + an empty `<div id="quiz"></div>`. See
+   `practice/modbus-decoding.html` for canonical wiring.
+2. `{% block scripts %}` loads `/scripts/quiz-engine.js`, then an
+   inline IIFE defines `const questions = [ … ]` and calls
+   `Quiz.mount('#quiz', questions, { slug: '<slug>', title: '…' })`.
+   The slug **must be kebab-case** (engine validates) and is the
+   namespace for `cf_quiz_<slug>_*` localStorage keys.
+3. Question schema lives in `quiz-engine.js`'s header — `type` is
+   one of `mcq` / `tf` / `gotcha` / `numeric`; shared
+   `id` / `prompt` / `explain` / `learnMore` / `tags` across all
+   types. `id` is kebab-case and stable across edits.
+4. Add a `navCard` (section `'practice'`) to the appropriate H2
+   section on `html/practice/index.html` — *Content Quizzes* if
+   every question maps to an existing page, *Field Drills* if the
+   scope is broader. Use `category: 'modbus'` (or the topic), or
+   `category: 'field'` for drills with no specific topic. Bump the
+   All chip count; add a per-topic chip if the new entry opens a
+   topic not already represented.
+5. Cross-link from the paired Education page via the
+   `relatedLinks({...})` call — add a `quizzes:` group.
+6. Add the new URL to `PAGES` in `tests/smoke.spec.js`; consider
+   a behavioral spot-check for any new format the engine hasn't
+   exercised yet.
+7. Same `Latest:` badge + `package.json.version` rules as tools.
 
 ## Git conventions
 

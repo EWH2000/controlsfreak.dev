@@ -1,5 +1,16 @@
 # controlsfreak.dev — Quiz Section Planning
 
+> **Status: v1 shipped 2026-05-25 in PR #141.** Lane is live at
+> `/practice/` (named "Practice" — picked over "Drills" / "Quizzes"
+> during scoping). Engine + Modbus Decoding content quiz + Surviving
+> Your First Months field drill all in the v1 ship. Graduating note
+> with v1 design decisions lives in
+> [`site-ideas-and-friction.md`](site-ideas-and-friction.md) under
+> *Practice section — quizzes + field drills*. v2 and v3 increments
+> below are still active planning — file stays at root until v3 ships,
+> at which point it moves to `docs/audits/quiz/` per the original
+> self-direction below.
+
 Planning doc for a new top-level section: quizzes / drills for
 building-controls techs. Companion to `site-ideas-and-friction.md`
 (general feature ideas) and `codebase-issues.md` (code-quality holds).
@@ -374,24 +385,33 @@ prompt area — promising because it makes the format feel native.
 
 Three increments — each ships independently, no big-bang.
 
-1. **v1 — engine + 1 quiz.** Build the quiz engine + the landing
-   page (with a single card to start) + one quiz: **Modbus
-   Decoding**. It's the densest gotcha set on the site, so it
-   exercises MCQ + spot-the-gotcha + numeric in one go. Validates
-   the engine, the styling vocabulary, and the localStorage shape.
+1. **v1 — engine + 1 quiz.** ✅ **Shipped 2026-05-25 in PR #141.**
+   Built the quiz engine + the landing page + the **Modbus Decoding**
+   content quiz. Also shipped the **Surviving Your First Months**
+   field drill in the same PR so the Field Drills section opened
+   populated rather than carrying an empty-state placeholder. v1
+   exercised MCQ + T/F + spot-the-gotcha + numeric formats and
+   validated the engine, the styling vocabulary, the `cf_quiz_<slug>_*`
+   localStorage shape, and the two-section landing with topic-chip
+   refinement. See `site-ideas-and-friction.md` for the design-
+   decisions writeup.
 2. **v2 — second wave of site-content quizzes.** Add BACnet Basics,
    BACnet Networking, Modbus Basics, PID Basics, VFDs. Five new
    quizzes, all directly mapped to existing pages, no new question
    types. Fills the landing in.
-3. **v3 — field drills + mixes.** Add the Junior Interview Prep
-   drill (showing the field-drill format), then the All-Protocols
-   and All-Hydronics Mix quizzes (showing cross-page reuse). Defer
-   order-the-steps and identify-on-diagram formats unless one
-   becomes clearly necessary by then.
+3. **v3 — field drills + mixes.** More specialized field drills
+   (Field Wiring & Sensors, Sequencing Scenarios, Junior Interview
+   Prep), then the All-Protocols and All-Hydronics Mix quizzes
+   (showing cross-page reuse via a shared `_data/quiz-banks/` data
+   file). Defer order-the-steps and identify-on-diagram formats
+   unless one becomes clearly necessary by then. Surviving Your
+   First Months may be retired here if the specialized drills cover
+   the same ground better.
 
 Pause for review between each increment so the visual + UX choices
 get a real check before propagating.
 
 ---
 
-*Last updated 2026-05-25 — planning only, nothing shipped yet.*
+*Last updated 2026-05-25 — v1 shipped in PR #141; v2 / v3 still
+planning.*
