@@ -7,6 +7,19 @@ nav: simulators
 {% extends "layouts/page.njk" %}
 {% from "related-links.njk" import relatedLinks %}
 
+{% block head %}
+    <style>
+        /* Page-only: flip the shared .narrow-width-note visible at phone widths.
+           The chart canvas compresses substantially below 700px and the curves
+           bunch together; the callout (above the canvas) names the tradeoff
+           without blocking the tool. Same breakpoint as modbus-register-viewer
+           and the audit's e.g. value. */
+        @media (max-width: 700px) {
+            .narrow-width-note { display: block; }
+        }
+    </style>
+{% endblock %}
+
 {% block content %}
 <main id="main">
 
@@ -92,6 +105,12 @@ nav: simulators
                     <input type="range" id="pid-kd" min="0" max="0.5" step="0.01" value="0">
                     <span class="slider-sub" id="pid-kd-sub"></span>
                 </div>
+            </div>
+
+            <div class="narrow-width-note">
+                The step-response chart reads best on a wider screen — at phone width the time
+                axis compresses and the PV / setpoint curves bunch together. The sliders still
+                drive the model, but a laptop gives the chart room to read.
             </div>
 
             <div class="sim-canvas-wrap">
