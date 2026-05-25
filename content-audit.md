@@ -848,6 +848,22 @@ case-by-case treatment but document that as the rule.
 Verification: **confirmed** — pattern is observable from the
 landing screenshots.
 
+**Resolution (2026-05-25):** picked the audit's suggested direction
+— *use the conventional in-trade abbreviation if one exists (`PID`,
+`VFD`, `BACnet`, `P-T`, `FB`); otherwise the full title.* Documented
+under CLAUDE.md *Conventions* alongside the eyebrow-shape rule.
+Eleven nav cards swept (home / tools / education landings) — the
+informal shortenings (`Sig`, `Hyd`, `Pump Ctrl`, `Staging`, `Psych`,
+`Fn Blocks`, `Modbus Dec`, `BACnet Net`, `Econ Ratio`, `Modbus Reg`)
+all promoted to their fuller forms. Conventional ones (`PID Basics`,
+`PID Tuner`, `Mock VFD`, `BACnet`, `Modbus`, `FB Editor`, `Refrig P-T`,
+`Psych Chart` — `psych` is in-trade when qualifying *chart*) stayed
+in place. Suffix-dropping (`Calculator` / `Converter` / `Interface` /
+`Helper`) was preserved as a separate convention, also captured in
+the new bullet. Verified at 1920px viewport that the longest titles
+(`LESSON :: EQUIPMENT STAGING`, `LESSON :: BACNET NETWORKING`) still
+fit the titlebar slot without truncation.
+
 ### 14. Simulators "Wiresheet" titleShort misnames the editor product
 
 **[lens: newcomer + engineer | dimension: content]**
@@ -1700,9 +1716,9 @@ uniform `<Section> · <Page Name>` shape across tools and simulators
 eyebrow on the FBE. Different direction than the audit's "conceptual
 category, one word" suggestion — the team chose section-name prefix
 paired with the page title, which scans predictably and matches
-Education's existing pattern. Open follow-up: document the rule in
-CLAUDE.md under *Conventions* so the next session doesn't re-drift
-(paired with #13).
+Education's existing pattern. **Documented (2026-05-25):** the rule
+landed in CLAUDE.md under *Conventions* alongside the #13 titleShort
+sweep so the next session doesn't re-drift.
 
 ### 30. Function-Block Editor's narrow-width honesty callout is a positive pattern the rest of the site could borrow
 
@@ -1976,8 +1992,8 @@ Verification: **confirmed** by surveys done for Batch 2 #14
 **Resolution (2026-05-24):** addressed alongside #29 — `4dbcb16` swept
 tools and simulators onto the `<Section> · <Page>` shape that
 education was already using. The cross-section inconsistency that
-made #29 and #32 a pair is gone; same open follow-up applies
-(document the rule in CLAUDE.md).
+made #29 and #32 a pair is gone. **Documented (2026-05-25):** rule
+captured in CLAUDE.md under *Conventions* alongside #29 and #13.
 
 ### 33. `data-objref` SEC:NNN numbering lives on 2 pages of 13 — visual signal of "this is a curriculum sequence" doesn't extend to the rest
 

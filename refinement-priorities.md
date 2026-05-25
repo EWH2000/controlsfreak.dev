@@ -133,7 +133,7 @@ notes the pairings.
       a single value (~660 px) and sweep the three landings.
       **S-M** — one CSS rule + three inline-style removals.
 
-- [ ] `[content-audit #13]` **titleShort abbreviation discipline
+- [x] `[content-audit #13]` **titleShort abbreviation discipline
       drifts** across 25+ `navCard()` calls — no written rule,
       so some aggressively abbreviate, others stay full-length.
       Pick a rule (suggest: conventional abbreviation if one
