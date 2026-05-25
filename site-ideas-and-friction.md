@@ -11,6 +11,98 @@ tools.
 
 
 
+### Practice section — quizzes + field drills *(v1 shipped 2026-05-25)*
+*One question: how does someone using the site as a self-paced course
+know what they actually absorbed, and how do techs prepping for
+interviews / certs get a free no-login drill site?*
+
+Sixth top-level nav lane at `/practice/`. Closes the Education loop
+with active recall (read a page → quiz yourself on its gotchas) and
+opens a new audience lane (techs studying for interviews, BAS Pro,
+journeyman exams). Full planning doc with rationale + the v2/v3
+roadmap lives in `quiz-section-plan.md` at the root; this entry is
+the friction-doc graduating note.
+
+**v1 ships:**
+- **Engine** at `html/scripts/quiz-engine.js` — classic script
+  exposing `window.Quiz` with `Quiz.mount(target, questions, opts)`.
+  Page provides an empty `<div>` + a `const questions = [...]`
+  array; the engine owns every DOM node inside the mount target
+  (settings row, progress, prompt, choices/numeric, reveal panel,
+  results card). Schema covers `mcq` / `tf` / `gotcha` / `numeric`;
+  validated on mount with a single `console.warn` on bad input.
+  ARIA radio pattern on choice lists (`aria-checked`, not
+  `aria-pressed`); `aria-live="polite"` reveal panel built in a
+  `DocumentFragment` so screen readers announce once per submit.
+- **Landing** at `/practice/` — two `<h2>` sections (Content
+  Quizzes / Field Drills) with a topic chip row above. Chips
+  collapse both grids into a flat filtered view; `[All]` restores
+  the sectioned layout. Field-drill cards use `category: 'field'`
+  (no chip) so they hide under any topic chip.
+- **Modbus Decoding quiz** — content quiz, 10 questions exercising
+  MCQ + T/F + spot-the-gotcha + numeric in one drill (densest
+  gotcha set on the site — chosen to validate all four formats on
+  the first quiz).
+- **Surviving Your First Months** — field drill, 10-question
+  sampler for techs in their first months. Replaced the
+  empty-state placeholder so the section ships populated. Topic
+  is intentionally broad; may be retired once more specialized
+  drills (Field Wiring & Sensors, Sequencing Scenarios, Junior
+  Interview Prep) land.
+
+**Design decisions that landed:**
+- *Single nav lane, not two* — "Practice" covers both quizzes and
+  drills; the landing carries the disambiguation.
+- *"Practice" over "Drills"/"Quizzes"* — softer label that covers
+  both inner categories without label/content mismatch. URL is
+  `/practice/`.
+- *Two-section landing with chip refinement* — visual headings make
+  the scope difference obvious to a first-time visitor; chips give
+  returning visitors topic-filter ergonomics.
+- *Amber section accent* — `--amber-dim` / `--amber-glow` triple
+  added to `:root`; `.nav-card--practice` follows the existing
+  `.nav-card--{section}` pattern.
+- *localStorage* — per the site-wide `cf_<feature>_<key>`
+  convention: `cf_quiz_<slug>_{best,best_total,best_time_ms,attempts,last_iso}`.
+  Quiet failure in private mode. No in-progress save/restore in
+  v1; refresh = restart. Mid-quiz setting changes surface a
+  "Restart to apply" notice rather than silently reshuffling.
+- *Cross-link path* — extended `related-links.njk` macro with a
+  fourth optional `quizzes` group rendered as "Test yourself"
+  after lessons. Education pages opt in by adding a `quizzes:`
+  array to their `relatedLinks()` call (Modbus Decoding lesson
+  did this in v1).
+- *Stable anchor ids on lesson `<h2>`s* — added to
+  `modbus-decoding.html` (`five-digit-trap`, `signed-vs-unsigned`,
+  `byte-order`, `scaling`) and `modbus-basics.html`
+  (`function-codes`, `exceptions`) so the quiz's per-question
+  `learnMore` deep-links land in the right section.
+- *nav-card.njk macro extended* — `section: 'practice'` maps to
+  prefix word `QUIZ` and status pill `GO`.
+
+**Parked for v2 / v3** (full detail in `quiz-section-plan.md`):
+- More content quizzes paired with existing lessons (BACnet Basics,
+  BACnet Networking, Modbus Basics, PID Basics, VFDs).
+- More field drills (Field Wiring & Sensors, Sequencing Scenarios,
+  Troubleshooting, Commissioning, Tridium / EBO quirks, full
+  Junior + Senior Interview Prep). First specialized drills land
+  alongside the next batch of education pages.
+- Cross-page Mix quizzes (All Protocols, All Hydronics) once 2+
+  banks exist. Shared `_data/quiz-banks/` data file at build time.
+- Order-the-steps + identify-on-diagram question formats — both
+  schema additions, deferred until a question genuinely needs them.
+
+**Hard nos** (explicit non-goals in `quiz-section-plan.md`):
+accounts / leaderboards / server-side scoring / adaptive difficulty
+/ spaced repetition / drill-of-the-day / share images / on-site
+authoring UI.
+
+`quiz-section-plan.md` stays at the root for now since v2/v3
+increments are still active planning; full file moves to
+`docs/audits/quiz/` once v3 ships per the doc's own self-direction.
+
+---
+
 ### Pump control — Education page *(shipped 2026-05-15)*
 *One question: how does the BMS decide what speed reference to send to
 a variable-flow pump?*

@@ -133,6 +133,37 @@ techs new to the industry and anyone wanting a refresh.
   burst-coil anecdote at the low-pressure extreme. Pays off forward
   links from Hydronic Loops, Load Piping, and Pump Control.
 
+### Practice
+
+Active-recall quizzes and drills that pair with the lessons or
+reach beyond them. No login, scores live in localStorage. Two
+flavors share the same engine:
+
+- **Content quizzes** — every question links back to the lesson or
+  tool that explains it. Built to be the self-check after reading a
+  page.
+- **Field drills** — broader scope; explanations stay inline since
+  the topics don't always have a matching page on the site yet.
+  When a topic recurs in feedback, it becomes a candidate for a
+  new education page.
+
+Shipped so far:
+
+- **Modbus Decoding** *(content quiz)* — 10 questions covering the
+  4 gotchas from the Modbus Decoding lesson — the 5-digit
+  numbering trap, signed vs unsigned interpretation, the four
+  32-bit byte orderings, scaling — plus FC03/FC04 confusion and
+  exception responses. Exercises MCQ, T/F, spot-the-gotcha, and
+  numeric formats in one drill.
+- **Surviving Your First Months** *(field drill)* — a broad
+  sampler for techs in their first few months in the field. OSHA
+  LOTO + verify-on-known-live, 4-20 mA live-zero wire-break
+  signature, DMM continuity mode, 24VAC R/C convention, BAS
+  panel transformer voltage, photo-before-changing, VFD carrier-
+  frequency whine, the 10K thermistor at room temp, setpoint vs
+  actual, and the two-hour escalation budget. Removable later if
+  more specialized drills replace it.
+
 ## How it's built
 
 A multi-page static site under `html/` plus a small Cloudflare
@@ -168,10 +199,10 @@ from now will still run it.
   JACE supervisor trunks — that draws itself in as it scrolls
   into view. Decorative, not navigational; hidden on smaller
   screens where load weight outranks decoration. Nav cards across
-  Home / Tools / Simulators / Education share an instrument-frame
-  shape (titlebar with a section prefix + status pill, body, and
-  a bullet-separated semantic statusline) so the landings read as
-  instrument racks. One design system, applied across every page;
+  Home / Tools / Simulators / Education / Practice share an
+  instrument-frame shape (titlebar with a section prefix + status
+  pill, body, and a bullet-separated semantic statusline) so the
+  landings read as instrument racks. One design system, applied across every page;
   page-specific CSS stays inline via the layout's
   `{% block head %}`.
 - **Shared scripts** in `html/scripts/` as *classic* scripts (not
@@ -200,6 +231,13 @@ from now will still run it.
     DOMContentLoaded.
   - `thermistor-data.js` — sensor R/T curves consumed by the
     Thermistor Lookup tool.
+  - `quiz-engine.js` — engine behind the Practice section. Owns
+    DOM construction (settings row, progress, prompt panel,
+    choices / numeric input, reveal panel, results card) inside a
+    page-provided `<div id="quiz"></div>`. Schema covers MCQ /
+    T/F / spot-the-gotcha / numeric question types. Best score
+    persists to `localStorage` under
+    `cf_quiz_<slug>_{best,best_total,best_time_ms,attempts,last_iso}`.
 - **Worker** at `src/worker.js` — ES-module Worker. Validates
   the contact form, drops honeypot submissions silently, verifies
   Turnstile, and sends via Resend. Falls through to

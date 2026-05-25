@@ -1,15 +1,16 @@
 {# Related links — internal cross-linking at the bottom of deep pages
-   (tools, simulators, education). Builds topic clusters so link equity
-   flows horizontally between related pages instead of pooling at the
-   section landings. Pure SEO + UX, no behavior.
+   (tools, simulators, education, practice). Builds topic clusters so
+   link equity flows horizontally between related pages instead of
+   pooling at the section landings. Pure SEO + UX, no behavior.
 
-   Accepts an `opts` object with up to three optional arrays of
+   Accepts an `opts` object with up to four optional arrays of
    {href, label} pairs:
 
        {{ relatedLinks({
            tools:      [{href: '/tools/foo.html',      label: 'Foo'}],
            simulators: [{href: '/simulators/bar.html', label: 'Bar'}],
-           lessons:    [{href: '/education/baz.html',  label: 'Baz'}]
+           lessons:    [{href: '/education/baz.html',  label: 'Baz'}],
+           quizzes:    [{href: '/practice/qux.html',   label: 'Qux'}]
        }) }}
 
    Rendering rules:
@@ -26,7 +27,8 @@
     {% set hasTools = opts.tools and opts.tools.length %}
     {% set hasSims = opts.simulators and opts.simulators.length %}
     {% set hasLessons = opts.lessons and opts.lessons.length %}
-    {% if hasTools or hasSims or hasLessons %}
+    {% set hasQuizzes = opts.quizzes and opts.quizzes.length %}
+    {% if hasTools or hasSims or hasLessons or hasQuizzes %}
     <aside class="related-links" aria-label="Related">
         {% if hasTools %}
         <div class="related-group">
@@ -49,6 +51,14 @@
             <h2 class="related-label">Related lessons</h2>
             <ul>
                 {% for l in opts.lessons %}<li><a href="{{ l.href }}">{{ l.label }}</a></li>{% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+        {% if hasQuizzes %}
+        <div class="related-group">
+            <h2 class="related-label">Test yourself</h2>
+            <ul>
+                {% for q in opts.quizzes %}<li><a href="{{ q.href }}">{{ q.label }}</a></li>{% endfor %}
             </ul>
         </div>
         {% endif %}

@@ -21,7 +21,7 @@
         }) }}
 
     Fields:
-      section     'tools' | 'education' | 'simulators' | 'home'
+      section     'tools' | 'education' | 'simulators' | 'practice' | 'home'
       href        link target
       titleShort  short name for the titlebar (rendered uppercase)
       titleFull   full title for the card body
@@ -29,10 +29,10 @@
       pills       array of strings for the statusline; rendered in
                   mono-uppercase, separated by bullets
       category    optional — sets data-category for the filter
-                  chips on /tools/ and /education/
+                  chips on /tools/, /education/, and /practice/
 
-    The macro derives the section prefix word (TOOL/LESSON/SIM/SECTION)
-    and the status pill word (LIVE/READ/RUN/OK) from `section` so the
+    The macro derives the section prefix word (TOOL/LESSON/SIM/QUIZ/SECTION)
+    and the status pill word (LIVE/READ/RUN/GO/OK) from `section` so the
     page only has to pick which family the card belongs to.
 #}
 
@@ -41,12 +41,14 @@
         tools:      'TOOL',
         education:  'LESSON',
         simulators: 'SIM',
+        practice:   'QUIZ',
         home:       'SECTION'
     }[opts.section] or 'REF' -%}
     {%- set statusWord = {
         tools:      'LIVE',
         education:  'READ',
         simulators: 'RUN',
+        practice:   'GO',
         home:       'OK'
     }[opts.section] or 'OK' -%}
 <a class="nav-card nav-card--{{ opts.section }}"{% if opts.category %} data-category="{{ opts.category }}"{% endif %} href="{{ opts.href }}">

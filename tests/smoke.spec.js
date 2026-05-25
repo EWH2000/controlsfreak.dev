@@ -47,6 +47,9 @@ const PAGES = [
     { name: 'education — modbus decoding', url: '/education/modbus-decoding.html' },
     { name: 'education — bacnet basics', url: '/education/bacnet-basics.html' },
     { name: 'education — bacnet networking', url: '/education/bacnet-networking.html' },
+    { name: 'practice landing',       url: '/practice/' },
+    { name: 'practice — modbus decoding', url: '/practice/modbus-decoding.html' },
+    { name: 'practice — surviving first months', url: '/practice/surviving-first-months.html' },
     { name: 'contact',                url: '/contact.html' },
     { name: 'privacy',                url: '/privacy.html' },
 ];
@@ -1114,5 +1117,131 @@ test.describe('function-block editor — interactions', () => {
         await expect(page.locator('.fbe-wire')).toHaveCount(0);
         await expect(page.locator('.fbe-pin-target')).toHaveCount(0);
         expect(errors, 'mid-wire-delete behavioral should log no errors').toEqual([]);
+    });
+});
+
+test('practice landing — Modbus chip collapses sections + filters cards', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('/practice/');
+
+    // [All] active on a fresh visit; both sections render with their headings.
+    await expect(page.locator('.filter-chip[data-category="all"]')).toHaveClass(/active/);
+    await expect(page.locator('.practice-section[data-section="content"] .practice-section-heading')).toBeVisible();
+    await expect(page.locator('.practice-section[data-section="field"]   .practice-section-heading')).toBeVisible();
+    // Both cards visible: Modbus quiz under Content Quizzes, field drill under Field Drills.
+    await expect(page.locator('.nav-card[data-category="modbus"]:not([hidden])')).toHaveCount(1);
+    await expect(page.locator('.nav-card[data-category="field"]:not([hidden])')).toHaveCount(1);
+
+    // Click Modbus chip → section headings collapse; field-drill card hides;
+    // Modbus card stays visible; URL hash updates.
+    await page.click('.filter-chip[data-category="modbus"]');
+    await expect(page.locator('.filter-chip[data-category="modbus"]')).toHaveClass(/active/);
+    await expect(page.locator('.filter-chip[data-category="all"]')).not.toHaveClass(/active/);
+    await expect(page.locator('.practice-section[data-section="content"]')).toHaveClass(/filtered/);
+    await expect(page.locator('.practice-section[data-section="field"]')).toHaveClass(/filtered/);
+    await expect(page.locator('.nav-card[data-category="modbus"]:not([hidden])')).toHaveCount(1);
+    await expect(page.locator('.nav-card[data-category="field"]')).toBeHidden();
+    expect(new URL(page.url()).hash).toBe('#modbus');
+
+    // Click [All] → restored: both cards visible, sections un-filtered.
+    await page.click('.filter-chip[data-category="all"]');
+    await expect(page.locator('.practice-section[data-section="content"]')).not.toHaveClass(/filtered/);
+    await expect(page.locator('.nav-card[data-category="field"]:not([hidden])')).toHaveCount(1);
+    expect(new URL(page.url()).hash).toBe('');
+
+    expect(errors, 'practice-landing behavioral should log no errors').toEqual([]);
+});
+
+test.describe('practice — modbus decoding quiz', () => {
+    // Quiz state lives in localStorage under cf_quiz_modbus-decoding_*.
+    // Clear after every test so subsequent runs (and the page-load smoke
+    // assertion above) start from a clean "Best: —" baseline.
+    test.afterEach(async ({ page }) => {
+        await page.goto('/practice/modbus-decoding.html');
+        await page.evaluate(() => {
+            ['best', 'best_total', 'best_time_ms', 'attempts', 'last_iso']
+                .forEach(k => localStorage.removeItem('cf_quiz_modbus-decoding_' + k));
+        });
+    });
+
+    test('answers one correct + one wrong, completes 5 questions, persists best to localStorage', async ({ page }) => {
+        const errors = watchErrors(page);
+        await page.goto('/practice/modbus-decoding.html');
+
+        // Engine mounts: settings row + first question's choices.
+        await expect(page.locator('.quiz-settings')).toBeVisible();
+        await expect(page.locator('.quiz-best-readout')).toHaveText('Best: —');
+
+        // Shrink to a 5-question run so the test stays fast. Changing the
+        // count mid-mount surfaces the dirty notice + a "Restart now"
+        // button; click it to apply.
+        await page.selectOption('#quiz-modbus-decoding-count', '5');
+        await expect(page.locator('.quiz-dirty-notice')).toBeVisible();
+        await page.locator('.quiz-restart-now').click();
+        await expect(page.locator('.quiz-dirty-notice')).toBeHidden();
+        await expect(page.locator('.quiz-progress-text')).toHaveText('Question 1 of 5');
+
+        // Q1: pick the correct choice (the [data-correct="true"] one),
+        // submit, and expect the reveal panel to flip to --correct.
+        await page.locator('.quiz-choice[data-correct="true"]').click();
+        await page.locator('.quiz-action-primary').click();
+        await expect(page.locator('.quiz-reveal')).toHaveClass(/quiz-reveal--correct/);
+        await expect(page.locator('.quiz-reveal-status')).toHaveText('Correct.');
+
+        // Q2: pick the WRONG choice on purpose (a non-correct .quiz-choice)
+        // so the reveal flips to --incorrect and a "Right answer:" line
+        // renders.
+        await page.locator('.quiz-action-primary').click();   // "Next question →"
+        await expect(page.locator('.quiz-progress-text')).toHaveText('Question 2 of 5');
+        await page.locator('.quiz-choice[data-correct="false"]').first().click();
+        await page.locator('.quiz-action-primary').click();
+        await expect(page.locator('.quiz-reveal')).toHaveClass(/quiz-reveal--incorrect/);
+        await expect(page.locator('.quiz-reveal-status')).toHaveText('Not quite.');
+        await expect(page.locator('.quiz-reveal-right')).toBeVisible();
+
+        // Q3, Q4, Q5: pick the correct choice each time and advance. The
+        // engine handles MCQ, TF, gotcha, and numeric — branch on the
+        // visible input type so the same loop works across them.
+        for (let i = 3; i <= 5; i++) {
+            await page.locator('.quiz-action-primary').click();
+            await expect(page.locator('.quiz-progress-text')).toHaveText('Question ' + i + ' of 5');
+            const isNumeric = await page.locator('.quiz-numeric:not([hidden])').count() > 0;
+            if (isNumeric) {
+                // The Modbus quiz's numeric Qs are 52.3 and 202.4 within
+                // ±0.05; just type the actual answer for whichever lands.
+                const promptText = await page.locator('.quiz-prompt').textContent();
+                const value = /523/.test(promptText) ? '52.3' : '202.4';
+                await page.locator('.quiz-numeric-input').fill(value);
+            } else {
+                await page.locator('.quiz-choice[data-correct="true"]').click();
+            }
+            await page.locator('.quiz-action-primary').click();
+        }
+
+        // Final action: "See results →" — results card appears, question
+        // card hides.
+        await page.locator('.quiz-action-primary').click();
+        await expect(page.locator('.quiz-results')).toBeVisible();
+        await expect(page.locator('.quiz-results-headline')).toHaveText('4 / 5 correct');
+        await expect(page.locator('.quiz-results-newbest')).toBeVisible();
+
+        // localStorage carries the run.
+        const best = await page.evaluate(() => localStorage.getItem('cf_quiz_modbus-decoding_best'));
+        const bestTotal = await page.evaluate(() => localStorage.getItem('cf_quiz_modbus-decoding_best_total'));
+        const attempts = await page.evaluate(() => localStorage.getItem('cf_quiz_modbus-decoding_attempts'));
+        expect(best).toBe('4');
+        expect(bestTotal).toBe('5');
+        expect(attempts).toBe('1');
+
+        // Reload: the "Best:" readout reads from storage.
+        await page.reload({ waitUntil: 'load' });
+        await expect(page.locator('.quiz-best-readout')).toContainText('Best: 4 / 5');
+
+        // Reset best clears the keys + repaints to "Best: —".
+        await page.locator('.quiz-reset-best').click();
+        await expect(page.locator('.quiz-best-readout')).toHaveText('Best: —');
+        expect(await page.evaluate(() => localStorage.getItem('cf_quiz_modbus-decoding_best'))).toBeNull();
+
+        expect(errors, 'modbus-decoding quiz behavioral should log no errors').toEqual([]);
     });
 });
