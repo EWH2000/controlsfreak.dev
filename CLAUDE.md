@@ -194,6 +194,22 @@ resolve.
   `.ps-section-label` / `.subhead` are `<h2>`; callout cards and
   nested `.tool-card-title`s are `<h3>`. The label classes are
   element-agnostic and reset `margin: 0`.
+- **Section-label eyebrow shape.** Deep pages (tools, simulators,
+  education, practice) use the `<Section> · <Page Name>` shape in
+  their `<span class="section-label">` — e.g. `Tools · Signal
+  Scaling`, `Simulators · PID Tuner`, `Education · Hydronic Loops`.
+  The section word matches the top-nav active section. Landings
+  carry just the section word as the page's `<h1>` (`Tools`,
+  `Simulators`, etc.). Avoid bare-category eyebrows (`Loops`,
+  `Drives`, `Logic`) — they fragment the shape across sections and
+  read as ad-hoc taxonomy.
+- **`titleShort` discipline (nav cards).** Use the conventional
+  in-trade abbreviation if one exists (`PID`, `VFD`, `BACnet`,
+  `P-T`, `FB`); otherwise the full title. Drop trailing scaffolding
+  words like `Calculator`, `Converter`, `Interface`, `Helper`. Don't
+  invent informal shortenings (`Hyd`, `Sig`, `Econ`, `Ctrl`, `Reg`,
+  `Net`, `Fn`) — those save keystrokes, not recognition. Length cap
+  still applies (see *Design landmarks → Nav cards*).
 - **Education page scope rule** (one question per page, forward-link
   for adjacent topics) lives in `site-ideas-and-friction.md` under
   "Education page scope — one question per page."
