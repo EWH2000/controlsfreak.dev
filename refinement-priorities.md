@@ -162,7 +162,7 @@ notes the pairings.
       tester; sweep to subsequent quizzes once the shape is set.
       **M** — engine change + head template addition.
 
-- [ ] `[SEO]` **`rel="prev"` / `rel="next"` on education pages.**
+- [x] `[SEO]` **`rel="prev"` / `rel="next"` on education pages.**
       Education is a deliberate prerequisite chain (per #17 +
       `site-ideas-and-friction.md` notes); declaring the sequence
       in `<head>` link relations helps both search-engine sequence
