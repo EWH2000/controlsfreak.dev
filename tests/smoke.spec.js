@@ -41,6 +41,7 @@ const PAGES = [
     { name: 'education — pump control', url: '/education/pump-control.html' },
     { name: 'education — equipment staging', url: '/education/equipment-staging.html' },
     { name: 'education — balancing',   url: '/education/balancing.html' },
+    { name: 'education — refrigerant cycle basics', url: '/education/refrigerant-cycle-basics.html' },
     { name: 'education — psychrometrics basics', url: '/education/psychrometrics-basics.html' },
     { name: 'education — function blocks', url: '/education/function-blocks.html' },
     { name: 'education — modbus basics', url: '/education/modbus-basics.html' },

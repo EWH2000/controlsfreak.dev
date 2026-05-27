@@ -23,13 +23,16 @@ nav: education
 
     <div class="filter-chips" role="group" aria-label="Filter lessons by category">
         <button type="button" class="filter-chip active" data-category="all" aria-pressed="true">
-            All <span class="filter-chip-count">13</span>
+            All <span class="filter-chip-count">14</span>
         </button>
         <button type="button" class="filter-chip" data-category="fundamentals" aria-pressed="false">
             Fundamentals <span class="filter-chip-count">5</span>
         </button>
         <button type="button" class="filter-chip" data-category="hydronics" aria-pressed="false">
             Hydronics <span class="filter-chip-count">4</span>
+        </button>
+        <button type="button" class="filter-chip" data-category="refrigerant" aria-pressed="false">
+            Refrigerant <span class="filter-chip-count">1</span>
         </button>
         <button type="button" class="filter-chip" data-category="protocols" aria-pressed="false">
             Protocols <span class="filter-chip-count">4</span>
@@ -99,6 +102,15 @@ nav: education
             desc:       'Getting design flow to every load — calibrated balancing valves, automatic balancing valves, and PICVs. With a widget that shows what each one does when system pressure swings.',
             pills:      ['Hydronics', 'Manual / Auto / PICV', 'Design Flow', 'Widget'],
             category:   'hydronics'
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/education/refrigerant-cycle-basics.html',
+            titleShort: 'Refrigerant Cycle',
+            titleFull:  'Refrigerant Cycle Basics',
+            desc:       'How a vapor-compression system moves heat — the four components, high side vs low side, and the saturation P-T relationship behind every refrigerant sensor reading.',
+            pills:      ['HVAC', '4 Components', 'High vs Low Side', 'P-T'],
+            category:   'refrigerant'
         }) }}
         {{ navCard({
             section:    'education',

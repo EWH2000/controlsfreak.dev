@@ -22,6 +22,7 @@ const order = [
     "/education/pump-control.html",
     "/education/equipment-staging.html",
     "/education/balancing.html",
+    "/education/refrigerant-cycle-basics.html",
     "/education/psychrometrics-basics.html",
     "/education/function-blocks.html",
     "/education/modbus-basics.html",
