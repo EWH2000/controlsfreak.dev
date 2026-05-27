@@ -1,16 +1,22 @@
 # Refinement-phase handoff
 
+> **Archived 2026-05-27.** The refinement phase closed when all three
+> tiers of `priorities.md` shipped (PRs #142–#150 + the tidy-up PR
+> that retired this folder). Kept as a record of the cadence used
+> during the cycle; future refinement phases can borrow the per-item
+> lifecycle and tracker-hygiene shape from here.
+
 Operating doc for picking up the refinement backlog one item at a
-time. Built 2026-05-25 alongside `refinement-priorities.md`, which
+time. Built 2026-05-25 alongside `priorities.md`, which
 is the source of truth for what to work on.
 
-This handoff is the *how*; `refinement-priorities.md` is the *what*.
+This handoff is the *how*; `priorities.md` is the *what*.
 
 ---
 
 ## Start here
 
-1. **Open `refinement-priorities.md`.** Pick the top unchecked
+1. **Open `priorities.md`.** Pick the top unchecked
    item in the highest tier you have time for (Tier 1 = quick
    wins, Tier 2 = medium lifts, Tier 3 = structural).
 2. **Check the source.** Each item carries a `[content-audit #N]`
@@ -61,7 +67,7 @@ review).
 ## Batching pairs
 
 Most items ship as their own branch/PR. A few in
-`refinement-priorities.md` are explicitly noted to batch — when
+`priorities.md` are explicitly noted to batch — when
 those, ship them as one branch with multiple commits (one per
 finding) so each fix is independently bisectable but the design
 context lands together:
@@ -90,7 +96,7 @@ faster.
 
 Every PR should include the bookkeeping for what it closed:
 
-- **Check the item off in `refinement-priorities.md`** (turn
+- **Check the item off in `priorities.md`** (turn
   `- [ ]` into `- [x]` in the same commit that lands the fix, or
   a final commit on the PR). Keeps the file functional as a
   tracker.
@@ -149,7 +155,7 @@ directions:
 - *New page → conventions.* Re-run the *Adding a new tool*
   checklist against any new page.
 
-Several Tier 2/3 items in `refinement-priorities.md` are
+Several Tier 2/3 items in `priorities.md` are
 convention shifts (eyebrow taxonomy, titleShort discipline,
 failure-state idiom, narrow-width callout pattern, copy-button
 labels). Each is a sweep-on-close candidate.
@@ -158,7 +164,7 @@ labels). Each is a sweep-on-close candidate.
 
 ## What's NOT in scope
 
-The "Deferred / out-of-scope" tail of `refinement-priorities.md`
+The "Deferred / out-of-scope" tail of `priorities.md`
 enumerates these. Headline: **wishlist features stay parked**
 (refrigerant cycle education, controller commissioner sim, more
 quizzes, multi-select question type). Those are v2/v3
@@ -170,7 +176,7 @@ with the user — don't quietly pull it into a refinement PR.
 
 ## When to retire this doc + the priorities file
 
-Retire when Tier 1 of `refinement-priorities.md` is empty. At
+Retire when Tier 1 of `priorities.md` is empty. At
 that point either:
 
 - **The refinement phase is done** — close the file, update the
@@ -184,13 +190,13 @@ that point either:
 
 ## Quick reference
 
-- **Source of truth:** `refinement-priorities.md`.
+- **Source of truth:** `priorities.md`.
 - **Per-item workflow:** `feedback_codebase_issues_sweep` memory
   + CLAUDE.md `## Git conventions` + `## Workflow`.
 - **What lands in this PR vs. gets logged:** code-quality
   issues → `codebase-issues.md`; new content findings →
   `content-audit.md`; resolutions → check off the item in
-  `refinement-priorities.md` AND add a Resolution line to the
+  `priorities.md` AND add a Resolution line to the
   source audit finding.
 - **Stop point:** every PR ends at `gh pr create` + URL
   surfaced — never auto-pick the next item.
