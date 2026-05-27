@@ -166,9 +166,12 @@ module.exports = function(eleventyConfig) {
     // Question entity with an Answer that combines the correct choice (or
     // True/False, or the numeric value) with the explanation prose, both
     // stripped of HTML for schema cleanliness. The same data the inline IIFE
-    // uses to mount the quiz engine in the browser. Emitted from head.njk
-    // only when nav: practice AND _data/quizzes/<page.fileSlug>.js exists,
-    // so the practice landing (which has neither) gets nothing.
+    // uses to mount the quiz engine in the browser. When the quiz sets
+    // `pairedLesson:` frontmatter (a single 1:1 lesson companion), the node
+    // also carries `isPartOf` pointing at the lesson's TechArticle node —
+    // the reciprocal of the lesson's `hasPart`. Emitted from head.njk only
+    // when nav: practice AND _data/quizzes/<page.fileSlug>.js exists, so the
+    // practice landing (which has neither) gets nothing.
     const stripHtml = (s) =>
         String(s || "").replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
     const buildQuestionName = (q) =>
@@ -186,10 +189,10 @@ module.exports = function(eleventyConfig) {
         const explanation = stripHtml(q.explain);
         return answer + (answer && explanation ? ". " : "") + explanation;
     };
-    eleventyConfig.addFilter("faqPageJsonLd", (canonical, questions, title) => {
+    eleventyConfig.addFilter("faqPageJsonLd", (canonical, questions, title, pairedLesson) => {
         if (!canonical || !Array.isArray(questions) || !questions.length) return "";
         const cleanTitle = (title || "").replace(/\s+—\s+controlsfreak\.dev\s*$/, "");
-        return JSON.stringify({
+        const node = {
             "@context": "https://schema.org",
             "@type": "FAQPage",
             "name": cleanTitle,
@@ -202,7 +205,11 @@ module.exports = function(eleventyConfig) {
                     "text": buildAnswerText(q),
                 },
             })),
-        });
+        };
+        if (pairedLesson) {
+            node.isPartOf = { "@type": "TechArticle", "@id": pairedLesson };
+        }
+        return JSON.stringify(node);
     });
 
     // SoftwareApplication JSON-LD for tool pages — declares the per-tool
@@ -236,11 +243,15 @@ module.exports = function(eleventyConfig) {
     // TechArticle JSON-LD for education pages — establishes content type,
     // attributes authorship to the Person entity declared on the home page
     // (E-E-A-T), and carries datePublished / dateModified from git history.
+    // When the lesson sets `pairedQuiz:` frontmatter (a single 1:1 quiz
+    // companion), the node also carries `hasPart` pointing at the quiz's
+    // FAQPage node — schema.org pairing that mirrors the
+    // `relatedLinks({quizzes: …})` cross-link rendered in the body.
     // Emitted from head.njk only when `nav: education`.
-    eleventyConfig.addFilter("techArticleJsonLd", (canonical, title, description, datePublished, dateModified) => {
+    eleventyConfig.addFilter("techArticleJsonLd", (canonical, title, description, datePublished, dateModified, pairedQuiz) => {
         if (!canonical) return "";
         const cleanTitle = (title || "").replace(/\s+—\s+controlsfreak\.dev\s*$/, "");
-        return JSON.stringify({
+        const node = {
             "@context": "https://schema.org",
             "@type": "TechArticle",
             "headline": cleanTitle,
@@ -251,7 +262,11 @@ module.exports = function(eleventyConfig) {
             "dateModified": dateModified,
             "author": { "@id": "https://controlsfreak.dev/#author" },
             "publisher": { "@id": "https://controlsfreak.dev/#website" }
-        });
+        };
+        if (pairedQuiz) {
+            node.hasPart = { "@type": "FAQPage", "@id": pairedQuiz };
+        }
+        return JSON.stringify(node);
     });
 
     return {

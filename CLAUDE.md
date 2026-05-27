@@ -492,7 +492,12 @@ frontmatter and the new `.nav-card` added to
    All chip count; add a per-topic chip if the new entry opens a
    topic not already represented.
 5. Cross-link from the paired Education page via the
-   `relatedLinks({...})` call — add a `quizzes:` group.
+   `relatedLinks({...})` call — add a `quizzes:` group. If the quiz
+   pairs 1:1 with a single lesson, also set `pairedQuiz:` (full URL)
+   on the lesson's frontmatter and `pairedLesson:` (full URL) on the
+   quiz's frontmatter — the head template emits reciprocal `hasPart`
+   / `isPartOf` JSON-LD off those keys. Field drills with broader
+   scope (multiple paired lessons) omit both — no single parent.
 6. Add the new URL to `PAGES` in `tests/smoke.spec.js`; consider
    a behavioral spot-check for any new format the engine hasn't
    exercised yet.
