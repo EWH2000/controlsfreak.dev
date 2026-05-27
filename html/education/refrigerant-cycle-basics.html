@@ -1,0 +1,300 @@
+---
+title: Refrigerant Cycle Basics — controlsfreak.dev
+description: Vapor-compression cycle for controls people — the four components, high vs low side, and the P-T relationship that anchors every sensor reading.
+canonical: https://controlsfreak.dev/education/refrigerant-cycle-basics.html
+nav: education
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block head %}
+    <style>
+        /* Page-specific — refrigerant-cycle diagram. .rc-svg follows the
+           .edu-svg precedent but the legend swatches override the
+           supply/return blue family to the hot/cold pair used for the
+           refrigerant cycle (high side = --heat, low side = --blue-cool).
+           Defined per-page since this is the first refrigerant-cycle
+           diagram; promote to styles.css when pages 2 and 3 land their
+           own cycle visuals. The hot swatch is solid; the cold swatch
+           dashes under print + prefers-reduced-motion, matching the
+           companion CSS rule for .edu-svg [data-flow="return"] paths. */
+        .rc-leg.edu-legend .sw.hot  { border-top: 3px solid var(--heat); }
+        .rc-leg.edu-legend .sw.cold { border-top: 3px solid var(--blue-cool); }
+        @media print, (prefers-reduced-motion: reduce) {
+            .rc-leg.edu-legend .sw.cold { border-top-style: dashed; }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Education · Refrigerant Cycle Basics</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">Refrigerant Cycle Basics <span class="tool-tag">HVAC</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                The refrigerant side is where most controls people have a fuzzy grasp and few have a clear one. You meet the cycle through sensor readings — a low-suction alarm, a head-pressure trip, a discharge temperature that looks wrong — and have to decide whether the system is fine or whether the sensor is. That decision is much easier once the cycle stops being a black box. It's four components and one load-bearing relationship between pressure and temperature, and once you can see those, the readings on a unit-controller graphic start telling a story instead of just lighting up.
+            </p>
+
+            <h2 class="subhead">The four components</h2>
+
+            <p>
+                A refrigerant doesn't <em>cool</em> the air the way a heater <em>heats</em> it. The refrigerant moves heat — from inside the building to outside, in cooling mode — by going through a phase change in two different places. Liquid absorbs heat as it boils into vapor; vapor releases heat as it condenses back to liquid. The four components are the choreography that keeps that boil-and-condense routine running.
+            </p>
+
+            <p>
+                <strong>The compressor</strong> is the pump of the loop. Cool, low-pressure vapor arrives at its inlet (the <em>suction line</em>); the compressor squeezes it and pushes hot, high-pressure vapor out the other side (the <em>discharge line</em>). The compressor is also the boundary between low side and high side — pressure rises across it. On a typical packaged unit it's a scroll or reciprocating compressor inside a sealed shell; from the controls side it's a piece of equipment that either runs or doesn't, with current draw, suction pressure, and discharge pressure as the readings that tell you whether what it's doing is normal.
+            </p>
+
+            <p>
+                <strong>The condenser</strong> is where the high-pressure vapor gives up its heat. A fan blows outdoor air (or, in a water-cooled chiller, water) across a coil; the refrigerant inside the coil, hotter than the air outside, sheds heat to that air and condenses to a high-pressure liquid. The condenser sits on the high side: pressure stays high all the way from the compressor's discharge port to the inlet of the next component.
+            </p>
+
+            <p>
+                <strong>The metering device</strong> is a deliberate restriction in the line — a small orifice the high-pressure liquid has to squeeze through. Pressure drops sharply across it. On the upstream side, warm liquid at high pressure; on the downstream side, cold low-pressure mix of liquid and flash vapor. The two common types are a <em>TXV</em> (thermostatic expansion valve, mechanical, self-regulating) and an <em>EEV</em> (electronic expansion valve, stepper-driven, commanded by a unit controller or BMS). Both do the same job. Page 3 of this chapter walks through how each one decides how much to open.
+            </p>
+
+            <p>
+                <strong>The evaporator</strong> is the cold coil — the one that does the actual cooling work, even though it lives in the conditioned space and gets called "the cold coil" almost casually. A fan blows return air across it; the cold refrigerant inside is colder than the air, so heat moves from the air into the refrigerant, and along the way the refrigerant boils. By the time it leaves the evaporator outlet, the refrigerant is back to cool, low-pressure vapor — exactly what the compressor wants on its suction line. The loop is closed.
+            </p>
+
+            <h2 class="subhead">High side vs. low side</h2>
+
+            <p>
+                The compressor and the metering device split the loop into two pressure zones. From the compressor discharge, around through the condenser, down to the inlet of the metering device — that's the <strong>high side</strong>, all at the discharge pressure. From the metering device outlet, across the evaporator, back to the compressor suction — that's the <strong>low side</strong>, all at the suction pressure. The compressor jumps refrigerant from low to high; the metering device drops it back from high to low. Everything else in between is just plumbing.
+            </p>
+
+            <p>
+                That's why a unit controller reads <em>two</em> pressures, not one. Suction pressure (low side) tells you what's happening on the cold half of the system; discharge pressure (high side) tells you what's happening on the hot half. The two are coupled — change one and the other reacts within seconds — but they're separately measurable, and they're separately informative. A high suction pressure with a normal discharge says something very different than a high discharge with a normal suction.
+            </p>
+
+            <h2 class="subhead">The pressure-temperature relationship</h2>
+
+            <p>
+                Here's the load-bearing concept for the whole rest of this chapter. <strong>When a refrigerant is at saturation — when it's actively boiling or condensing, in either component — pressure and temperature are locked to each other.</strong> Given one, the published P-T chart for that refrigerant tells you the other. R-410A at 118 psig is boiling at 40 °F. Not "around 40 °F" — at 40 °F. If you measured the same refrigerant at the same pressure with no air in the system, you'd read 40 °F every time.
+            </p>
+
+            <p>
+                This is what makes the controls-side measurements meaningful. Read a suction pressure of 118 psig on an R-410A unit and you know the saturation temperature inside the evaporator is 40 °F. Read a discharge pressure of 340 psig and you know the saturation temperature inside the condenser is roughly 105 °F. You didn't have to measure either temperature directly — the refrigerant table did the conversion for you, the same way the <a href="/tools/refrigerant-pt.html">Refrigerant P-T tool</a> does it on this site.
+            </p>
+
+            <p>
+                Two important footnotes ride along with this. First, the lock only holds <em>at saturation</em>: in the spans of pipe where the refrigerant is pure vapor (the suction and discharge lines) or pure liquid (the liquid line), pressure and temperature drift apart, and the gap between them is what page 2 turns into <em>superheat</em> and <em>subcooling</em> measurements. Second, blends like R-407C have noticeable <em>glide</em> — the saturation temperature isn't one value but a small range between a <em>bubble</em> point and a <em>dew</em> point, with the two sides used for different measurements. Pure refrigerants and near-azeotropic blends like R-410A skip that complication; zeotropic blends don't. The P-T tool always shows bubble and dew so the glide is visible by default.
+            </p>
+
+            <h2 class="subhead">The cycle, end to end</h2>
+
+            <p>
+                Putting the four components and the two pressure zones together: refrigerant flows around the loop in one direction, changing state twice (vapor → liquid at the condenser, liquid → vapor at the evaporator), with the compressor and metering device as the pressure boundaries. The diagram below traces that walk and color-codes the two sides. Orange is the high side; muted blue is the low side. Heat enters the evaporator from indoor air (cooling the space) and leaves the condenser to outdoor air (rejecting the heat the system carried out).
+            </p>
+
+            <!-- Cycle diagram. Closed rectangular loop, counterclockwise flow.
+                 Compressor (circle) at the left, condenser (rect) on top, metering
+                 device (diamond) on the right, evaporator (rect) on bottom.
+                 Hot-side pipes (discharge + liquid) carry data-flow="supply" and
+                 get their particles recolored from blue to --heat in the inline
+                 script after init; cold-side pipes (expansion + suction) carry
+                 data-flow="return" so they pick up --blue-cool particles
+                 automatically (and the dashed-return CSS rule handles the
+                 print / reduced-motion fallback). Selectors are attribute-only
+                 per the CLAUDE.md gotcha (the pipes are <path>, not <line>, but
+                 the engine treats them identically via getPointAtLength). -->
+            <svg class="edu-svg" id="rc-cycle" viewBox="0 0 720 460"
+                 role="img" aria-labelledby="rc-cycle-title rc-cycle-desc"
+                 font-family="var(--mono)">
+                <title id="rc-cycle-title">The four-component vapor-compression cycle</title>
+                <desc id="rc-cycle-desc">A closed rectangular loop. A compressor sits on the left side as a labeled circle; a condenser spans the top as a labeled rectangle with arrows above showing heat rejected to outdoor air; a metering device sits on the right side as a small labeled diamond; an evaporator spans the bottom as a labeled rectangle with arrows below showing heat absorbed from indoor air. Refrigerant flows clockwise around the loop, leaving the compressor upward into the condenser and returning along the bottom from the evaporator. The upper half of the loop — discharge line up from the compressor, through the condenser, liquid line down to the metering device — is the high-pressure, hot side, drawn in orange. The lower half — expansion line down from the metering device, across the evaporator, suction line back up to the compressor — is the low-pressure, cool side, drawn in muted blue. The four pipe segments carry labels for the refrigerant state along each one: hot vapor on the discharge, warm liquid on the liquid line, cold mix on the expansion line, cool vapor on the suction line. A small dashed line through the middle of the loop marks the equator between high side and low side.</desc>
+
+                <!-- ── HIGH-SIDE pipes (orange / --heat) ── -->
+                <path id="rc-discharge" data-flow="supply" d="M 120 193 V 85 H 200" fill="none"
+                      stroke="var(--heat)" stroke-width="3"/>
+                <path id="rc-liquid"    data-flow="supply" d="M 520 85 H 600 V 195" fill="none"
+                      stroke="var(--heat)" stroke-width="3"/>
+
+                <!-- ── LOW-SIDE pipes (cool / --blue-cool). data-flow="return" gives the
+                     engine blue-cool particles automatically; stroke-dasharray is the
+                     reduced-motion / print fallback (the screen+animation override in
+                     styles.css drops the dashes once the engine adds .flow-active). ── -->
+                <path id="rc-expansion" data-flow="return" d="M 600 235 V 345 H 520" fill="none"
+                      stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                <path id="rc-suction"   data-flow="return" d="M 200 345 H 120 V 237" fill="none"
+                      stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+
+                <!-- Direction arrows. One per leg per segment so the loop direction
+                     reads under reduced-motion and on paper. -->
+                <g id="rc-arrows-hot" fill="var(--heat)">
+                    <polygon points="120,135 115,146 125,146"/>          <!-- discharge ↑ -->
+                    <polygon points="155,80 164,85 155,90"/>             <!-- discharge → -->
+                    <polygon points="555,80 564,85 555,90"/>             <!-- liquid → -->
+                    <polygon points="595,140 600,151 605,140"/>          <!-- liquid ↓ -->
+                </g>
+                <g id="rc-arrows-cold" fill="var(--blue-cool)">
+                    <polygon points="595,290 600,301 605,290"/>          <!-- expansion ↓ -->
+                    <polygon points="560,350 551,345 560,340"/>          <!-- expansion ← -->
+                    <polygon points="160,350 151,345 160,340"/>          <!-- suction ← -->
+                    <polygon points="120,290 115,301 125,301"/>          <!-- suction ↑ -->
+                </g>
+
+                <!-- HIGH / LOW SIDE region labels in the empty interior bands. -->
+                <text x="360" y="165" text-anchor="middle" font-size="10" letter-spacing="0.15em"
+                      fill="var(--text-dim)">HIGH SIDE · HOT</text>
+                <text x="360" y="275" text-anchor="middle" font-size="10" letter-spacing="0.15em"
+                      fill="var(--text-dim)">LOW SIDE · COOL</text>
+
+                <!-- Faint divider at the equator between high and low side. -->
+                <line x1="160" y1="215" x2="580" y2="215" stroke="var(--text-dim)" stroke-width="1"
+                      stroke-dasharray="2 5" opacity="0.45"/>
+
+                <!-- ── COMPRESSOR ── -->
+                <g id="rc-compressor">
+                    <circle cx="120" cy="215" r="22" fill="var(--surface)"
+                            stroke="var(--text-dim)" stroke-width="2"/>
+                    <!-- Upward triangle inside: pushes refrigerant up the discharge. -->
+                    <polygon points="113,225 127,225 120,209" fill="var(--text-dim)"/>
+                    <text x="80" y="219" text-anchor="end" font-size="11" font-weight="600"
+                          fill="var(--text-bright)">COMPRESSOR</text>
+                </g>
+
+                <!-- ── CONDENSER ── -->
+                <g id="rc-condenser">
+                    <rect x="200" y="55" width="320" height="60" rx="2" fill="var(--surface)"
+                          stroke="var(--text-dim)" stroke-width="2"/>
+                    <text x="360" y="91" text-anchor="middle" font-size="14" font-weight="600"
+                          fill="var(--text-bright)">CONDENSER</text>
+                    <!-- Heat rejected to outdoor air — short arrows pointing up out of the box. -->
+                    <g fill="var(--heat)" stroke="var(--heat)" stroke-width="1.4">
+                        <line x1="250" y1="55" x2="250" y2="36"/>
+                        <polygon points="250,30 245,40 255,40"/>
+                        <line x1="310" y1="55" x2="310" y2="36"/>
+                        <polygon points="310,30 305,40 315,40"/>
+                        <line x1="370" y1="55" x2="370" y2="36"/>
+                        <polygon points="370,30 365,40 375,40"/>
+                        <line x1="430" y1="55" x2="430" y2="36"/>
+                        <polygon points="430,30 425,40 435,40"/>
+                        <line x1="490" y1="55" x2="490" y2="36"/>
+                        <polygon points="490,30 485,40 495,40"/>
+                    </g>
+                    <text x="535" y="38" font-size="9" font-style="italic" fill="var(--text-dim)">
+                        heat → outdoor air
+                    </text>
+                </g>
+
+                <!-- ── METERING DEVICE (diamond) ── -->
+                <g id="rc-metering">
+                    <polygon points="600,200 615,215 600,230 585,215" fill="var(--surface)"
+                             stroke="var(--text-dim)" stroke-width="2"/>
+                    <text x="630" y="219" font-size="11" font-weight="600"
+                          fill="var(--text-bright)">METERING</text>
+                </g>
+
+                <!-- ── EVAPORATOR ── -->
+                <g id="rc-evaporator">
+                    <rect x="200" y="315" width="320" height="60" rx="2" fill="var(--surface)"
+                          stroke="var(--text-dim)" stroke-width="2"/>
+                    <text x="360" y="351" text-anchor="middle" font-size="14" font-weight="600"
+                          fill="var(--text-bright)">EVAPORATOR</text>
+                    <!-- Heat absorbed from indoor air — short arrows pointing up into the box. -->
+                    <g fill="var(--blue-cool)" stroke="var(--blue-cool)" stroke-width="1.4">
+                        <line x1="250" y1="395" x2="250" y2="376"/>
+                        <polygon points="250,370 245,380 255,380"/>
+                        <line x1="310" y1="395" x2="310" y2="376"/>
+                        <polygon points="310,370 305,380 315,380"/>
+                        <line x1="370" y1="395" x2="370" y2="376"/>
+                        <polygon points="370,370 365,380 375,380"/>
+                        <line x1="430" y1="395" x2="430" y2="376"/>
+                        <polygon points="430,370 425,380 435,380"/>
+                        <line x1="490" y1="395" x2="490" y2="376"/>
+                        <polygon points="490,370 485,380 495,380"/>
+                    </g>
+                    <text x="535" y="395" font-size="9" font-style="italic" fill="var(--text-dim)">
+                        heat ← indoor air
+                    </text>
+                </g>
+
+                <!-- State annotations on each pipe leg. -->
+                <text x="135" y="140" font-size="10" fill="var(--heat)">hot vapor</text>
+                <text x="585" y="140" text-anchor="end" font-size="10" fill="var(--heat)">warm liquid</text>
+                <text x="585" y="290" text-anchor="end" font-size="10" fill="var(--blue-cool)">cold mix</text>
+                <text x="135" y="290" font-size="10" fill="var(--blue-cool)">cool vapor</text>
+            </svg>
+            <div class="edu-legend rc-leg">
+                <span><span class="sw hot"></span>high side · hot</span>
+                <span><span class="sw cold"></span>low side · cool</span>
+            </div>
+
+            <p style="margin-top:1.25rem;">
+                Put real numbers on it. An R-410A air conditioner on a typical summer afternoon might read about <strong>118 psig</strong> on the suction-side gauge — saturation temperature 40 °F. Inside the evaporator, refrigerant boiling off the coil surface is at 40 °F, which is what makes the indoor coil cold enough to dry and cool the air sweeping across it. The discharge-side gauge might read <strong>340 psig</strong> — saturation temperature about 105 °F. Inside the condenser, refrigerant condensing on the tube surface is at 105 °F, hot enough that the outdoor air can pick that heat up as it passes over the fins. Type either number into the <a href="/tools/refrigerant-pt.html">Refrigerant P-T tool</a> with R-410A selected and you'll read the same saturation temperatures back; they come from the published P-T chart, not from a model.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                Those two pressures aren't independent measurements of two different things. They're how the system is trading heat from one place to another — a low side cold enough to pull heat <em>in</em> from indoor air, a high side hot enough to push heat <em>out</em> to outdoor air, and a compressor doing the work of moving refrigerant between the two. Change the outdoor temperature, change the indoor load, change the refrigerant charge — and both pressures will move together in characteristic ways. Recognizing those patterns is a longer story; the foundation is just this: pressure and temperature, locked together at saturation, in two pressure zones separated by the compressor and the metering device.
+            </p>
+
+            <h2 class="subhead">What this sets up</h2>
+
+            <p>
+                Two questions fall straight out of everything above. First, if pressure and temperature are locked at saturation, what does it mean when the measured temperature on a line <em>doesn't</em> match the saturation temperature for that line's pressure? That's the <em>superheat</em> and <em>subcooling</em> story — the two field measurements that prove a cycle is actually running right, not just running. They're the next page in this chapter.
+            </p>
+
+            <p>
+                Second, what's actually inside the metering device that decides how wide-open it is at any given moment? A TXV does it mechanically with a sensing bulb on the suction line. An EEV does it electronically with a stepper motor and a unit-controller algorithm. From the BMS side you mostly meet the EEV; from a service-tech side you mostly meet the TXV. They behave similarly enough that the controls vocabulary is shared and different enough that mistaking one for the other gets embarrassing. That's page 3.
+            </p>
+
+            <p>
+                In the meantime, the <a href="/tools/refrigerant-pt.html">Refrigerant P-T &amp; Superheat Calculator</a> already covers the saturation-temperature lookup and the superheat / subcooling math for six refrigerants, glide handled. Bring a suction pressure and a clamp-on suction temperature back to the calculator and you've got the first of those two measurements waiting for you.
+            </p>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/tools/refrigerant-pt.html', label: 'Refrigerant P-T & Superheat Calculator'},
+            {href: '/tools/coil-sizing.html', label: 'Coil-Sizing Calculator'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/education/">← Back to Education</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Recolor the hot-side particles from the engine's default --blue
+    // (data-flow="supply") to --heat so the orange pipes and the dots
+    // walking inside them are in the same colour family. The cold-side
+    // paths use data-flow="return" and already pick up --blue-cool
+    // particles automatically — no recolour needed there.
+    //
+    // Timing: schematic-bg.js (loaded just before this block by
+    // layouts/page.njk) registers a DOMContentLoaded listener that
+    // calls FlowEngine.init() to build pools — and a re-init tears
+    // down and rebuilds particles with the engine's default colour,
+    // which would wipe an early setPathColor. So this script registers
+    // its own DOMContentLoaded listener; it fires AFTER schematic-bg's
+    // (listeners run in registration order), with the pools already
+    // built. Under prefers-reduced-motion the engine short-circuits
+    // and setPathColor is a no-op.
+    (function () {
+        'use strict';
+        function recolor() {
+            FlowEngine.setPathColor(document.getElementById('rc-discharge'), 'var(--heat)');
+            FlowEngine.setPathColor(document.getElementById('rc-liquid'),    'var(--heat)');
+        }
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', recolor);
+        } else {
+            recolor();
+        }
+    })();
+</script>
+{% endblock %}
