@@ -2994,7 +2994,7 @@ altitude as `altitude`. No new shared code, no CSS. Matches the
 cites. No version bump — a metric visitor's first paint is now
 correct, but nothing renders differently for the US-default majority.
 
-### 59. `'use strict';` missing on `pump-control.html` Widget 2 IIFE
+### 59. `'use strict';` missing on `pump-control.html` Widget 2 IIFE *(addressed 2026-05-27)*
 
 Caught while building `education/equipment-staging.html` (2026-05-21),
 reading `pump-control.html` as the layout reference.
@@ -3016,6 +3016,12 @@ mode catches undeclared-global assignment and a few other footguns,
 and Widget 2 currently runs sloppy. Low-risk fix: add the directive
 as the first line inside the `pump-control.html:791` IIFE. Not fixed
 inline here to keep the equipment-staging PR scoped to its own work.
+
+**Resolution (2026-05-27):** added `'use strict';` as the first
+statement of the Widget 2 IIFE (line drifted to `pump-control.html:802`
+between this entry being written and the fix landing). Matches
+Widget 1's shape one screen up. No behavior change — Widget 2 wasn't
+relying on sloppy-mode semantics.
 
 ### 69. `[data-sbg-stroke]` fixed-dasharray draws short paths early *(deferred 2026-05-24)*
 
