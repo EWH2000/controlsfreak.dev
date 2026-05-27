@@ -1,5 +1,13 @@
 # Refinement priorities
 
+> **Archived 2026-05-27.** Every tier in this file shipped (PRs
+> #142–#150 + the tidy-up PR that retired this folder). The
+> "Deferred / out-of-scope" tail is the live forward-looking record —
+> SVG diagram alt-text audit (still open as a future SEO bottleneck),
+> the wishlist parking list (refrigerant Education trio, controller
+> commissioner, more quizzes / drills, multi-select / order-the-steps
+> formats — all carried in `site-ideas-and-friction.md`).
+
 Working backlog for the post-Practice refinement phase. Built by
 walking the four buckets (`content-audit.md`, `codebase-issues.md`,
 `site-ideas-and-friction.md`, SEO baseline) and ranking by leverage
@@ -270,3 +278,5 @@ change.
 
 - **`hasPart` / `isPartOf` JSON-LD linking quizzes ↔ lessons
   (SEO)** — depends on FAQ schema landing first; revisit then.
+  *Shipped 2026-05-27 in the tidy-up PR (see commit
+  "seo: emit hasPart/isPartOf JSON-LD on paired lesson↔quiz pages").*

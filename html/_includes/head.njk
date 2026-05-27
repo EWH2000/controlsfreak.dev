@@ -26,13 +26,13 @@
     <script type="application/ld+json">{{ breadcrumbJson | safe }}</script>
     {% endif %}
     {% if nav == "education" %}
-    <script type="application/ld+json">{{ canonical | techArticleJsonLd(title, description, page.inputPath | gitFirstmod, page.inputPath | gitLastmod) | safe }}</script>
+    <script type="application/ld+json">{{ canonical | techArticleJsonLd(title, description, page.inputPath | gitFirstmod, page.inputPath | gitLastmod, pairedQuiz) | safe }}</script>
     {% set eduRels = educationSequence[page.url] %}
     {% if eduRels.prev %}<link rel="prev" href="{{ eduRels.prev }}">{% endif %}
     {% if eduRels.next %}<link rel="next" href="{{ eduRels.next }}">{% endif %}
     {% endif %}
     {% if nav == "practice" and quizzes[page.fileSlug] %}
-    <script type="application/ld+json">{{ canonical | faqPageJsonLd(quizzes[page.fileSlug], title) | safe }}</script>
+    <script type="application/ld+json">{{ canonical | faqPageJsonLd(quizzes[page.fileSlug], title, pairedLesson) | safe }}</script>
     {% endif %}
     {% if nav == "tools" and page.url != "/tools/" %}
     <script type="application/ld+json">{{ canonical | softwareApplicationJsonLd(title, description) | safe }}</script>
