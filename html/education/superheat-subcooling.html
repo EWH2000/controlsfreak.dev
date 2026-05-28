@@ -113,18 +113,29 @@ nav: education
                 <polygon points="478,291 487,296 478,301" fill="var(--heat)"/>
                 <text x="442" y="318" text-anchor="middle" font-size="10" fill="var(--heat)">superheat = line T − dew T</text>
 
-                <!-- ── SUBCOOLING EXAMPLE — high pressure (y=160), liquid-line side ── -->
+                <!-- ── SUBCOOLING EXAMPLE — high pressure (y=160), liquid-line side ──
+                     The curve is steep through this y-band, so the arrow and the
+                     formula are placed where the curve cannot cross them: arrow
+                     ABOVE the markers (curve at y=144 has already swept right past
+                     x=578); formula well below in the open liquid region (curve at
+                     y=195 sits at x=521, label entirely left of it). The "bubble T"
+                     label is shifted right past where the curve crosses y≈146-159. -->
                 <line x1="480" y1="160" x2="560" y2="160" stroke="var(--text-dim)" stroke-width="1" stroke-dasharray="2 4" opacity="0.55"/>
                 <!-- Line-temp point in the liquid region -->
                 <circle cx="480" cy="160" r="5.5" fill="var(--blue-cool)" stroke="var(--surface)" stroke-width="2"/>
                 <text x="468" y="156" text-anchor="end" font-size="10" fill="var(--blue-cool)">line T</text>
                 <!-- Bubble point on curve -->
                 <circle cx="560" cy="160" r="4.5" fill="var(--text)" stroke="var(--surface)" stroke-width="1.5"/>
-                <text x="572" y="156" font-size="10" fill="var(--text-dim)">bubble T</text>
-                <!-- Arrow bubble → line (leftward), labelled with the formula -->
-                <line x1="555" y1="176" x2="487" y2="176" stroke="var(--blue-cool)" stroke-width="2"/>
-                <polygon points="487,171 478,176 487,181" fill="var(--blue-cool)"/>
-                <text x="520" y="198" text-anchor="middle" font-size="10" fill="var(--blue-cool)">subcooling = bubble T − line T</text>
+                <text x="583" y="156" font-size="10" fill="var(--text-dim)">bubble T</text>
+                <!-- Arrow bubble → line (leftward), placed ABOVE the markers so
+                     the line stays entirely in the liquid region (clear of the
+                     curve which is at x=578+ along the y-band of this arrow). -->
+                <line x1="555" y1="144" x2="487" y2="144" stroke="var(--blue-cool)" stroke-width="2"/>
+                <polygon points="487,139 478,144 487,149" fill="var(--blue-cool)"/>
+                <!-- Formula in the open lower-left of the liquid region, well
+                     clear of where the curve passes (x=521 at y=195). Colour
+                     ties it back to the matching arrow. -->
+                <text x="400" y="195" text-anchor="middle" font-size="10" fill="var(--blue-cool)">subcooling = bubble T − line T</text>
             </svg>
             <div class="edu-legend shsc-leg">
                 <span><span class="sw sat"></span>saturation curve</span>
