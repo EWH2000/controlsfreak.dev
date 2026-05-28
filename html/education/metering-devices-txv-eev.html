@@ -89,10 +89,13 @@ nav: education
                     <text x="525" y="107" font-size="10" fill="var(--text)">sensing bulb (feels suction T)</text>
                 </g>
 
-                <!-- ── CAPILLARY TUBE from bulb down to top of valve body ── -->
+                <!-- ── CAPILLARY TUBE from bulb down to top of valve body.
+                     Label sits to the right of the curve at this y (curve passes
+                     x≈406 at y=160, label start x=420 keeps it clear of the
+                     letters at the ascender height where the curve is at x≈412). -->
                 <path d="M 466 113 Q 410 145 380 195" fill="none"
                       stroke="var(--text-dim)" stroke-width="1.6"/>
-                <text x="395" y="160" font-size="10" fill="var(--text-dim)">capillary</text>
+                <text x="420" y="160" font-size="10" fill="var(--text-dim)">capillary</text>
 
                 <!-- ── VALVE BODY (main rectangle) ── -->
                 <rect x="270" y="195" width="200" height="190" rx="3"
@@ -180,7 +183,7 @@ nav: education
                  to a controller box; output to a stepper on top of a
                  simplified valve body; HP liquid in and LP mix out
                  arrows match the TXV diagram's colour family. -->
-            <svg class="edu-svg" id="txv-eev-stepper" viewBox="0 0 720 320"
+            <svg class="edu-svg" id="txv-eev-stepper" viewBox="0 0 720 345"
                  role="img" aria-labelledby="txv-eev-stepper-title txv-eev-stepper-desc"
                  font-family="var(--mono)">
                 <title id="txv-eev-stepper-title">Electronic expansion valve — controller-driven loop</title>
@@ -237,10 +240,14 @@ nav: education
                 <polygon points="310,292 324,299 310,306" fill="var(--heat)"/>
                 <text x="60" y="286" font-size="10" fill="var(--heat)">HP liquid in (from liquid line)</text>
 
-                <!-- ── LP mix out (down) ── -->
-                <line x1="380" y1="306" x2="380" y2="315"
+                <!-- ── LP mix out (down). Pipe + arrowhead mirror the TXV
+                     diagram's downstream shape so both metering pages read
+                     the same way; viewBox is taller than the TXV-cutaway by
+                     just enough to land the arrow tip. ── -->
+                <line x1="380" y1="306" x2="380" y2="335"
                       stroke="var(--blue-cool)" stroke-width="6"/>
-                <text x="400" y="313" font-size="10" fill="var(--blue-cool)">LP mix out → evaporator</text>
+                <polygon points="373,327 387,327 380,343" fill="var(--blue-cool)"/>
+                <text x="400" y="325" font-size="10" fill="var(--blue-cool)">LP mix out → evaporator</text>
             </svg>
 
             <p style="margin-top:1.25rem;">
