@@ -23,7 +23,7 @@ nav: education
 
     <div class="filter-chips" role="group" aria-label="Filter lessons by category">
         <button type="button" class="filter-chip active" data-category="all" aria-pressed="true">
-            All <span class="filter-chip-count">15</span>
+            All <span class="filter-chip-count">16</span>
         </button>
         <button type="button" class="filter-chip" data-category="fundamentals" aria-pressed="false">
             Fundamentals <span class="filter-chip-count">5</span>
@@ -32,7 +32,7 @@ nav: education
             Hydronics <span class="filter-chip-count">4</span>
         </button>
         <button type="button" class="filter-chip" data-category="refrigerant" aria-pressed="false">
-            Refrigerant <span class="filter-chip-count">2</span>
+            Refrigerant <span class="filter-chip-count">3</span>
         </button>
         <button type="button" class="filter-chip" data-category="protocols" aria-pressed="false">
             Protocols <span class="filter-chip-count">4</span>
@@ -119,6 +119,15 @@ nav: education
             titleFull:  'Superheat & Subcooling',
             desc:       'The two measurements that prove a refrigerant cycle is running right — what each measures, the sensors that compute them, and what abnormal readings tell you.',
             pills:      ['HVAC', 'Superheat', 'Subcooling', 'Fault Direction'],
+            category:   'refrigerant'
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/education/metering-devices-txv-eev.html',
+            titleShort: 'TXV vs EEV',
+            titleFull:  'TXVs vs. EEVs',
+            desc:       'The two metering-device designs that hold superheat at a target — the TXV\'s mechanical force balance and the EEV\'s controller-driven stepper loop.',
+            pills:      ['HVAC', 'TXV', 'EEV', 'Force Balance'],
             category:   'refrigerant'
         }) }}
         {{ navCard({

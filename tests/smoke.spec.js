@@ -43,6 +43,7 @@ const PAGES = [
     { name: 'education — balancing',   url: '/education/balancing.html' },
     { name: 'education — refrigerant cycle basics', url: '/education/refrigerant-cycle-basics.html' },
     { name: 'education — superheat & subcooling', url: '/education/superheat-subcooling.html' },
+    { name: 'education — txv vs eev', url: '/education/metering-devices-txv-eev.html' },
     { name: 'education — psychrometrics basics', url: '/education/psychrometrics-basics.html' },
     { name: 'education — function blocks', url: '/education/function-blocks.html' },
     { name: 'education — modbus basics', url: '/education/modbus-basics.html' },

@@ -5,6 +5,106 @@ work. Paste this (or its key sections) as the first message of a
 fresh conversation when picking up the chapter.
 
 Generated 2026-05-27 after the refinement phase closed (PRs #142–#151).
+Last updated 2026-05-28 after page 2 shipped (PR #153).
+
+---
+
+## Resume here (2026-05-28)
+
+**State: 2 of 3 pages shipped. Page 3 (TXVs vs EEVs) is next.**
+
+You are on branch `feat/metering-devices-txv-eev`, the working
+branch for page 3. The branch is page-3-only; the chapter-level
+chrome and pages 1–2 are already on `main`.
+
+### What's already on main
+
+- **Page 1 — Refrigerant Cycle Basics**
+  (`/education/refrigerant-cycle-basics.html`), PR #152, merged
+  2026-05-27. Page-id prefix `rc-*`. Cycle SVG with flow-engine
+  animated particles (hot-side recoloured to `--heat` via
+  `setPathColor`). Established the saturation P-T lock as the
+  chapter's load-bearing concept.
+- **Page 2 — Superheat & Subcooling**
+  (`/education/superheat-subcooling.html`), PR #153, merged
+  2026-05-28. Page-id prefix `shsc-*`. Static conceptual P-T
+  saturation diagram with one SH and one SC example marked, plus
+  one abnormal-reading walkthrough in the worked example. Vocabulary
+  mirrors the P-T tool's verdict-pill language.
+
+### Chapter-level chrome already in place (do NOT re-ask these)
+
+- **Sequence slot.** Page 3 lands at slot 10 in
+  `educationSequence.js`, between `superheat-subcooling.html` and
+  `psychrometrics-basics.html`.
+- **Filter chip.** A `Refrigerant` chip exists on
+  `education/index.html`. When page 3 ships, bump `Refrigerant`
+  2→3 and `All` 15→16. Category for the new nav card:
+  `'refrigerant'`.
+- **P-T tool cross-link.** `tools/refrigerant-pt.html` already has
+  a `lessons:` group on its `relatedLinks` call listing pages 1
+  and 2; append page 3 when it ships.
+- **Forward-link convention.** Both pages 1 and 2 currently
+  reference page 3 *as prose only* (page 1's "What this sets up"
+  section names TXV/EEV; page 2's "What abnormal readings tell
+  you" closes with a paragraph about metering devices). When page
+  3 ships, turn those prose references into anchors per the
+  forward-link convention.
+- **Latest hero badge.** Currently
+  `Latest: Education — Superheat & Subcooling`. Bump to page 3
+  when it ships.
+- **`package.json` version.** Currently `2.13.0`. Minor bump for a
+  new page → `2.14.0` when page 3 ships.
+
+### Page-3 design questions to settle in plan mode
+
+The "Per-page lifecycle" section below lists "diagram approach,
+prereq cross-links, depth of the worked example" as the
+likely settle-in-plan-mode topics. Concrete questions to consider:
+
+1. **Number and shape of diagrams.** A TXV bulb-on-suction-line
+   cross-section is the iconic visual (handoff calls it out).
+   Does the page also want an EEV stepper-driven schematic in
+   parallel, or is the EEV better explained as a side-by-side
+   comparison block or inline prose riding off the TXV diagram?
+2. **Where the TXV-as-RaT-sensor anecdote lands.** A standalone
+   callout? Folded into the TXV section? Page intro hook? The
+   chapter handoff is explicit: *once, in context — not the
+   spine of the page.*
+3. **Worked-example continuity.** Page 2 closed at R-410A 118 psig
+   + 50 °F suction → 10 °F superheat. Page 3 could continue that
+   scenario (TXV / EEV holding the 10 °F SH by modulating as load
+   or ambient changes) or pick a fresh framing.
+4. **Page-id prefix.** Pages 1 and 2 use `rc-*` and `shsc-*`.
+   Page 3 needs its own — likely `txv-*` or `meter-*` (both
+   unambiguous against `rc-*` / `shsc-*` / the tool's `rf-*`).
+
+### How to start (this new session)
+
+1. You are on branch `feat/metering-devices-txv-eev`, pulled from
+   origin. Page 3 is the only outstanding work in the chapter.
+2. Re-read this plan file in full. Re-read
+   `/education/refrigerant-cycle-basics.html` and
+   `/education/superheat-subcooling.html` on disk for vocabulary
+   continuity. The "Pitfalls specific to this domain" section
+   stays load-bearing — refrigerant content is unforgiving.
+3. Enter plan mode. Walk through the page-3 design questions
+   above via `AskUserQuestion` (sequentially — they invite real
+   content elaboration). Write the plan file (overwriting the
+   page-2 plan at the path the system gives you).
+   `ExitPlanMode` for approval.
+4. Execute: author the page, wire the chrome list above, build /
+   test / screenshot, commit on this branch, push, open the PR.
+   Stop and surface the URL — do not merge.
+
+### Recommended starter prompt for the new conversation
+
+> Pick up the refrigerant Education chapter. Pages 1 and 2 are
+> shipped on `main`; page 3 (TXVs vs EEVs) is next, and I'm on
+> branch `feat/metering-devices-txv-eev`. Read
+> `refrigerant-education-plan.md` start to bottom — the
+> "Resume here" block at the top is the load-bearing state
+> summary — then proceed.
 
 ---
 
@@ -230,6 +330,11 @@ by techs in the field. Push back on these:
   608 certification implications. Stay in the explainer lane.
 
 ## How to start
+
+*Note (2026-05-28): pages 1 and 2 are shipped. If you're resuming
+the chapter, the "Resume here" section at the top of this file is
+the authoritative starting point — it supersedes the page-1-era
+guidance below.*
 
 Open `site-ideas-and-friction.md` to lines 609–715 first, then
 `/tools/refrigerant-pt.html` to see the shipped vocabulary, then
