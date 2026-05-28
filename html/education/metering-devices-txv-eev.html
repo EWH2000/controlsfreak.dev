@@ -183,7 +183,7 @@ nav: education
                  to a controller box; output to a stepper on top of a
                  simplified valve body; HP liquid in and LP mix out
                  arrows match the TXV diagram's colour family. -->
-            <svg class="edu-svg" id="txv-eev-stepper" viewBox="0 0 720 320"
+            <svg class="edu-svg" id="txv-eev-stepper" viewBox="0 0 720 345"
                  role="img" aria-labelledby="txv-eev-stepper-title txv-eev-stepper-desc"
                  font-family="var(--mono)">
                 <title id="txv-eev-stepper-title">Electronic expansion valve — controller-driven loop</title>
@@ -240,10 +240,14 @@ nav: education
                 <polygon points="310,292 324,299 310,306" fill="var(--heat)"/>
                 <text x="60" y="286" font-size="10" fill="var(--heat)">HP liquid in (from liquid line)</text>
 
-                <!-- ── LP mix out (down) ── -->
-                <line x1="380" y1="306" x2="380" y2="315"
+                <!-- ── LP mix out (down). Pipe + arrowhead mirror the TXV
+                     diagram's downstream shape so both metering pages read
+                     the same way; viewBox is taller than the TXV-cutaway by
+                     just enough to land the arrow tip. ── -->
+                <line x1="380" y1="306" x2="380" y2="335"
                       stroke="var(--blue-cool)" stroke-width="6"/>
-                <text x="400" y="313" font-size="10" fill="var(--blue-cool)">LP mix out → evaporator</text>
+                <polygon points="373,327 387,327 380,343" fill="var(--blue-cool)"/>
+                <text x="400" y="325" font-size="10" fill="var(--blue-cool)">LP mix out → evaporator</text>
             </svg>
 
             <p style="margin-top:1.25rem;">
