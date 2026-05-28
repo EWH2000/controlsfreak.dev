@@ -651,6 +651,20 @@ Cloudflare Workers Build deploys `_site/` ~60s after merge.
   + `page.screenshot({ path, fullPage: true })`. For `contact.html`
   use `waitUntil: 'domcontentloaded'`. Rebuild (`npm run build`)
   before screenshotting `_site/` unless `npm run dev` is running.
+- **Diagram audit pass:** `npm run screenshots` (with a server on
+  :8000) dumps every diagram-class SVG across the sitemap to
+  `/tmp/audit-<page>-<id>.png`. Use it as the starting point for any
+  visual review of diagrams — coordinate math on the source misses
+  real overlaps that font rendering surfaces. Script:
+  `tests/screenshot-diagrams.mjs`; add a class to its
+  `DIAGRAM_SELECTOR` when a new diagram family lands.
+- **Fedora Chromium deps:** Playwright's bundled headless Chromium
+  isn't statically linked, and `npx playwright install-deps` only
+  knows Debian/Ubuntu. On Fedora 44 the runtime set is:
+  `sudo dnf install atk at-spi2-atk alsa-lib mesa-libgbm
+  libXcomposite libXdamage libXfixes libXrandr`. If `npm test` or
+  `npm run screenshots` fails with `error while loading shared
+  libraries`, this is the missing piece.
 
 ## About the user
 

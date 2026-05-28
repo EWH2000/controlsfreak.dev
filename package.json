@@ -6,7 +6,8 @@
   "scripts": {
     "build": "eleventy",
     "dev": "eleventy --serve --port=8000",
-    "test": "playwright test"
+    "test": "playwright test",
+    "screenshots": "node tests/screenshot-diagrams.mjs"
   },
   "repository": {
     "type": "git",
