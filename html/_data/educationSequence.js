@@ -24,6 +24,7 @@ const order = [
     "/education/balancing.html",
     "/education/refrigerant-cycle-basics.html",
     "/education/superheat-subcooling.html",
+    "/education/metering-devices-txv-eev.html",
     "/education/psychrometrics-basics.html",
     "/education/function-blocks.html",
     "/education/modbus-basics.html",

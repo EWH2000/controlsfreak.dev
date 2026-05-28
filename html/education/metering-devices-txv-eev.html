@@ -1,0 +1,301 @@
+---
+title: TXVs vs. EEVs — controlsfreak.dev
+description: Metering devices for controls people — the mechanical TXV force balance, the electronic EEV control loop, and how each holds a target superheat as load drifts.
+canonical: https://controlsfreak.dev/education/metering-devices-txv-eev.html
+nav: education
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block head %}
+    <style>
+        /* Page-specific — TXV cutaway and EEV control-loop diagrams.
+           Both follow the .edu-svg precedent set by pages 1 and 2 of the
+           refrigerant chapter (rc-cycle, shsc-pt). The legend swatches
+           override the supply/return blue family to the hot/cold pair
+           used across this chapter (high side = --heat, low side =
+           --blue-cool). Defined per-page; the rc-leg / shsc-leg / txv-leg
+           shape is still inline-only across the three pages — promote
+           the shared swatch overrides to styles.css if a fourth
+           refrigerant-themed diagram lands and the rule starts
+           genuinely repeating across pages. */
+        .txv-leg.edu-legend .sw.hot   { border-top: 3px solid var(--heat); }
+        .txv-leg.edu-legend .sw.cold  { border-top: 3px solid var(--blue-cool); }
+        .txv-leg.edu-legend .sw.force { border-top: 3px solid var(--text); }
+    </style>
+{% endblock %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Education · TXVs vs. EEVs</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">TXVs vs. EEVs <span class="tool-tag">HVAC</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                <a href="/education/refrigerant-cycle-basics.html">Page 1</a> named the metering device as one of the four components of the refrigerant cycle and left its insides for later. <a href="/education/superheat-subcooling.html">Page 2</a> showed that the metering device is what a unit controller leans on to <em>hold</em> superheat at a target — it's not a fixed orifice, it's a feedback element. This page opens the box. Two common designs sit behind the same job description: a <strong>thermostatic expansion valve (TXV)</strong> does the work mechanically with a sensing bulb on the suction line, and an <strong>electronic expansion valve (EEV)</strong> does it electronically with a stepper motor and a controller algorithm. Service techs mostly meet TXVs in the field; BMS engineers mostly meet EEVs in the controller. Knowing which one is which — and how each decides how wide-open to be at any moment — is the cleanest way to keep their behavior straight.
+            </p>
+
+            <h2 class="subhead">What the metering device does</h2>
+
+            <p>
+                A quick recap. The high-side liquid leaving the condenser is warm and pressurized; the evaporator on the low side needs cold, low-pressure refrigerant to boil and absorb heat. The metering device sits at the boundary and throttles the liquid through a small port, dropping its pressure sharply. Upstream of the port: warm liquid at high pressure. Downstream: a cold, low-pressure mix of liquid and flash vapor heading into the evaporator. So far that's just a restriction in a pipe; a fixed orifice or capillary tube does the same thing. What makes a TXV or an EEV different is that the port isn't fixed. Both kinds of valve <em>modulate</em> how wide-open the port is in response to what's happening downstream, and the target they're modulating against is the evaporator-outlet <em>superheat</em>. Too little feed and the coil starves (SH climbs); too much and liquid escapes the coil (SH falls toward zero, then negative). The valve's job is to keep that number sitting at the target.
+            </p>
+
+            <h2 class="subhead">The TXV — a mechanical control loop</h2>
+
+            <p>
+                A TXV is a control loop made of metal. Three pressures push on a diaphragm inside the valve body; the diaphragm position decides how far open the port is. The sensing bulb, strapped tight to the suction line just downstream of the evaporator, is filled with a charge of refrigerant (often the same one the system uses). The bulb is connected to the top side of the diaphragm by a thin capillary tube. Whatever temperature the suction line is at, the bulb settles to the same temperature within seconds, and the saturation pressure of the bulb charge at that temperature pushes <em>down</em> on the diaphragm. On the bottom side of the diaphragm, two forces push <em>up</em>: a stiff spring (adjustable on most valves, set at install for a target superheat) and the evaporator pressure itself, fed to the bottom chamber through a small external equalizer line tapped into the suction line near the bulb.
+            </p>
+
+            <p>
+                That's the force balance: bulb pressure on top opens the valve; spring plus evaporator pressure on the bottom closes it. The diaphragm settles wherever the two sides match, and the needle hanging off the diaphragm settles into a matching port position. Now follow what happens when superheat drifts. Say the evaporator load drops — cooler air over the coil on a milder day, or a damper closing in the conditioned space. Less heat into the refrigerant means less boiling per pound of liquid fed; liquid lingers further into the coil; the suction line at the bulb runs <em>cooler</em>. The bulb charge cools with it, its saturation pressure drops, the downward force on the diaphragm drops, the spring and evaporator pressure push the diaphragm up, and the port closes a touch. Less refrigerant feed lets the coil catch up — the lingering liquid finishes boiling, suction T rises, and the system settles at the same target superheat with a smaller mass flow. Load swings the other way and the chain runs in reverse: warmer bulb, more downward force, port opens, more feed, evaporator handles the larger load. The valve does this continuously and silently, no power supply, no controller, no setpoint to enter.
+            </p>
+
+            <!-- TXV cutaway. Cross-section of the valve body with the
+                 sensing bulb on the suction line, the capillary running
+                 down to the diaphragm chamber, the diaphragm + spring
+                 + needle/port stack, and the external equalizer. The
+                 force-balance is the lesson, so the two opposing arrows
+                 inside the chambers carry the load. Static; no flow
+                 engine — the mechanism is the story, not the flow.
+                 All ids prefixed txv-*. -->
+            <svg class="edu-svg" id="txv-cutaway" viewBox="0 0 720 460"
+                 role="img" aria-labelledby="txv-cutaway-title txv-cutaway-desc"
+                 font-family="var(--mono)">
+                <title id="txv-cutaway-title">Thermostatic expansion valve — mechanical force balance</title>
+                <desc id="txv-cutaway-desc">A cross-section of a thermostatic expansion valve. Across the top of the diagram runs the suction line, a horizontal pipe coloured muted blue, with an arrow at the right showing vapor heading back to the compressor. A small oval sensing bulb is clamped to the underside of the suction line near the right. A thin capillary tube descends from the bulb in a gentle curve to the top of the valve body in the centre of the diagram. The valve body is a tall rectangle split by a horizontal diaphragm line into an upper and lower chamber. The upper chamber is labelled "bulb pressure — opens" with a downward arrow in orange. The lower chamber holds a spring symbol and is labelled "spring + evap pressure — closes" with an upward arrow in muted blue. Below the lower chamber, a needle hangs from the diaphragm stack and points into a port at the base of the valve body. A horizontal pipe enters the valve body from the left, coloured orange, labelled "high-pressure liquid in". A vertical pipe exits the bottom of the valve body, coloured muted blue, labelled "low-pressure mix out, to evaporator". A thin dashed line — the external equalizer — runs from the suction line down and around to the side of the lower chamber, feeding evaporator pressure to the bottom of the diaphragm.</desc>
+
+                <!-- ── SUCTION LINE (top horizontal pipe, low-side blue) ── -->
+                <line x1="60" y1="80" x2="660" y2="80"
+                      stroke="var(--blue-cool)" stroke-width="6"/>
+                <polygon points="660,73 674,80 660,87" fill="var(--blue-cool)"/>
+                <text x="60" y="65" font-size="10" fill="var(--blue-cool)">suction line · vapor → compressor</text>
+
+                <!-- ── SENSING BULB (clamped to underside of suction line) ── -->
+                <g id="txv-bulb">
+                    <ellipse cx="480" cy="103" rx="34" ry="11"
+                             fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <!-- two strap legs going up over the pipe -->
+                    <line x1="456" y1="80" x2="456" y2="98" stroke="var(--text-dim)" stroke-width="1.2"/>
+                    <line x1="504" y1="80" x2="504" y2="98" stroke="var(--text-dim)" stroke-width="1.2"/>
+                    <text x="525" y="107" font-size="10" fill="var(--text)">sensing bulb (feels suction T)</text>
+                </g>
+
+                <!-- ── CAPILLARY TUBE from bulb down to top of valve body ── -->
+                <path d="M 466 113 Q 410 145 380 195" fill="none"
+                      stroke="var(--text-dim)" stroke-width="1.6"/>
+                <text x="395" y="160" font-size="10" fill="var(--text-dim)">capillary</text>
+
+                <!-- ── VALVE BODY (main rectangle) ── -->
+                <rect x="270" y="195" width="200" height="190" rx="3"
+                      fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+
+                <!-- ── UPPER CHAMBER label + opens-force arrow (downward, orange) ── -->
+                <text x="370" y="220" text-anchor="middle" font-size="10" fill="var(--heat)">bulb pressure · OPENS</text>
+                <line x1="370" y1="230" x2="370" y2="252" stroke="var(--heat)" stroke-width="2"/>
+                <polygon points="365,250 375,250 370,262" fill="var(--heat)"/>
+
+                <!-- ── DIAPHRAGM line dividing upper / lower chambers ── -->
+                <line x1="282" y1="272" x2="458" y2="272"
+                      stroke="var(--text-bright)" stroke-width="2.5"/>
+                <text x="478" y="276" font-size="10" fill="var(--text-bright)">diaphragm</text>
+
+                <!-- ── LOWER CHAMBER label + closes-force arrow (upward, cool) ── -->
+                <text x="370" y="295" text-anchor="middle" font-size="10" fill="var(--blue-cool)">spring + evap pressure · CLOSES</text>
+                <line x1="370" y1="320" x2="370" y2="305" stroke="var(--blue-cool)" stroke-width="2"/>
+                <polygon points="365,308 375,308 370,295" fill="var(--blue-cool)"/>
+
+                <!-- ── SPRING coil under the diaphragm ── -->
+                <path d="M 350 332 q 5 -5 10 0 q 5 5 10 0 q 5 -5 10 0 q 5 5 10 0"
+                      fill="none" stroke="var(--text-dim)" stroke-width="1.4"/>
+
+                <!-- ── PUSH-ROD / NEEDLE descending from diaphragm stack ── -->
+                <line x1="370" y1="272" x2="370" y2="358" stroke="var(--text-dim)" stroke-width="1.5"/>
+                <polygon points="362,348 378,348 370,365" fill="var(--text-dim)"
+                         stroke="var(--text)" stroke-width="1.2"/>
+                <text x="395" y="354" font-size="10" fill="var(--text-dim)">needle</text>
+
+                <!-- ── PORT / SEAT — two short heavy lines at the base, gap = open port ── -->
+                <line x1="334" y1="385" x2="358" y2="385" stroke="var(--text)" stroke-width="2.8"/>
+                <line x1="382" y1="385" x2="406" y2="385" stroke="var(--text)" stroke-width="2.8"/>
+                <text x="334" y="401" font-size="10" fill="var(--text)">port / seat</text>
+
+                <!-- ── HIGH-PRESSURE LIQUID INLET (orange, from the left) ── -->
+                <line x1="60" y1="385" x2="268" y2="385"
+                      stroke="var(--heat)" stroke-width="6"/>
+                <polygon points="260,378 274,385 260,392" fill="var(--heat)"/>
+                <text x="60" y="372" font-size="10" fill="var(--heat)">HP liquid in (from liquid line)</text>
+
+                <!-- ── LOW-PRESSURE MIX OUTLET (blue, exiting down) ── -->
+                <line x1="370" y1="385" x2="370" y2="440"
+                      stroke="var(--blue-cool)" stroke-width="6"/>
+                <polygon points="363,432 377,432 370,448" fill="var(--blue-cool)"/>
+                <text x="390" y="430" font-size="10" fill="var(--blue-cool)">LP mix out → evaporator</text>
+
+                <!-- ── EXTERNAL EQUALIZER (thin dashed line from suction line to lower chamber) ── -->
+                <path d="M 570 80 V 305 H 470" fill="none"
+                      stroke="var(--text-dim)" stroke-width="1.4" stroke-dasharray="4 3"/>
+                <text x="582" y="175" font-size="9" font-style="italic" fill="var(--text-dim)">external</text>
+                <text x="582" y="189" font-size="9" font-style="italic" fill="var(--text-dim)">equalizer</text>
+                <text x="582" y="203" font-size="9" font-style="italic" fill="var(--text-dim)">(feeds evap P</text>
+                <text x="582" y="217" font-size="9" font-style="italic" fill="var(--text-dim)">to lower chamber)</text>
+            </svg>
+            <div class="edu-legend txv-leg">
+                <span><span class="sw hot"></span>opens-the-port force (bulb pressure)</span>
+                <span><span class="sw cold"></span>closes-the-port force (spring + evap P)</span>
+                <span><span class="sw force"></span>diaphragm / mechanical parts</span>
+            </div>
+
+            <p style="margin-top:1.25rem;">
+                A few practical notes ride along with the picture. The spring is what sets the <em>target</em> superheat — bigger spring force, higher SH target, because the bulb has to get warmer (more downward force) to balance it. Service techs turn an adjustment screw on the bottom of the valve to change that spring tension, in fractions of a turn; the manufacturer's data sheet says how much SH per turn. The external equalizer matters more than it looks: without it, the pressure on the bottom of the diaphragm is whatever the pressure is right at the valve outlet, which on systems with much evaporator pressure drop is meaningfully different from the pressure where the bulb actually lives. The equalizer routes the suction-line pressure (at the bulb) back to the lower chamber so the force balance reflects what's happening at the coil outlet, not what's happening immediately past the valve. Older or very small systems may skip it — internally-equalized TXVs exist — but anything with a multi-circuit distributor between the valve and the coil needs an external equalizer.
+            </p>
+
+            <div class="callout">
+                <h3>Field note <span>· the TXV's most embarrassing look-alike</span></h3>
+                <p>A sensing bulb strapped to a suction line, fed by a thin tube into a box on the wall, looks an awful lot like a return-air temperature sensor strapped to a duct, fed by a thin lead into a controller. The shape is the same and the install is the same. The cue is the line the bulb is touching — bare copper instead of duct wrap, and a body lower down whose other connections are refrigerant pipes, not low-voltage wires. People who've spent years in BMS land but no time in mechanical rooms sometimes mistake one for the other, and once is enough; from then on the silhouette is unmistakable. The TXV's bulb is one of the iconic shapes in the refrigerant cycle, and worth being able to point at on a unit you'll never service yourself.</p>
+            </div>
+
+            <h2 class="subhead">The EEV — an electronic control loop</h2>
+
+            <p>
+                An EEV does the same job — modulate the port to hold superheat — but with a digital control loop replacing the mechanical force balance. The sensing parts are a pressure transducer and a temperature sensor mounted on the suction line, both wired into the unit controller (on a packaged piece of equipment) or sometimes into the BMS itself (on built-up systems and chillers). The controller reads both inputs, looks up the saturation temperature for the measured pressure, subtracts to get superheat, and compares to a target value held in a parameter. Whatever direction the error sits in, the controller commands a stepper motor on top of the valve to rotate the port a few steps wider or a few steps tighter. The stepper holds position when power is off — no power, no movement, last commanded position stays put — and a typical EEV port has somewhere between a few hundred and a few thousand discrete steps from fully closed to fully open. That's the resolution the BMS gets to work with.
+            </p>
+
+            <p>
+                The control loop is just PID, or sometimes a simpler proportional-with-deadband scheme; the controller manufacturer picks the algorithm and exposes a few tuning parameters (target SH, gain, sometimes an integral time). From the BMS side you see a point list with a few familiar shapes — <em>superheat actual</em>, <em>superheat setpoint</em>, <em>valve position</em>, sometimes a <em>valve position override</em> — and the trend lines look like any other feedback loop. The EEV's advantages over the TXV are the ones electronics tend to have: a target you can change without a wrench, faster reaction to load steps, the ability to hold a different SH at different operating conditions (say, a lower SH at low load to maximize evaporator use), and a position reading that's visible on a graphic. The disadvantages are the ones electronics tend to have: a sensor that drifts is invisible until something downstream complains, a stuck stepper looks like a flat-line on the trend, and a control algorithm that hunts will hunt with no mechanical damping to save it.
+            </p>
+
+            <!-- EEV control-loop block diagram. Same width as the TXV
+                 cutaway but shorter; the lesson here is the closed-loop
+                 path, not the valve internals. Suction line at the top
+                 with a P transducer and a T sensor; signal lines down
+                 to a controller box; output to a stepper on top of a
+                 simplified valve body; HP liquid in and LP mix out
+                 arrows match the TXV diagram's colour family. -->
+            <svg class="edu-svg" id="txv-eev-stepper" viewBox="0 0 720 320"
+                 role="img" aria-labelledby="txv-eev-stepper-title txv-eev-stepper-desc"
+                 font-family="var(--mono)">
+                <title id="txv-eev-stepper-title">Electronic expansion valve — controller-driven loop</title>
+                <desc id="txv-eev-stepper-desc">A block-diagram view of an electronic expansion valve's control loop. Across the top of the diagram runs the suction line, coloured muted blue, with an arrow at the right showing vapor heading back to the compressor. Two sensors sit on the underside of the line near the right: a small circle labelled P (pressure transducer) and a small rectangle labelled T (temperature sensor). Thin signal lines descend from both sensors into the top of a labelled rectangle in the centre of the diagram representing the unit controller or BMS. Inside the controller, a short caption reads "computes superheat, compares to setpoint, commands port position". A signal line exits the bottom of the controller and runs to a labelled rectangle representing the stepper motor, which sits on top of a simplified rectangular valve body. A horizontal orange pipe enters the valve body from the left labelled "high-pressure liquid in"; a vertical muted-blue pipe exits the bottom labelled "low-pressure mix out, to evaporator".</desc>
+
+                <!-- ── SUCTION LINE (top, low-side blue) ── -->
+                <line x1="60" y1="50" x2="660" y2="50"
+                      stroke="var(--blue-cool)" stroke-width="6"/>
+                <polygon points="660,43 674,50 660,57" fill="var(--blue-cool)"/>
+                <text x="60" y="35" font-size="10" fill="var(--blue-cool)">suction line · vapor → compressor</text>
+
+                <!-- ── PRESSURE TRANSDUCER (circle labelled P) ── -->
+                <circle cx="420" cy="72" r="13"
+                        fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.8"/>
+                <text x="420" y="76" text-anchor="middle" font-size="11" font-weight="600" fill="var(--text)">P</text>
+                <line x1="420" y1="59" x2="420" y2="50" stroke="var(--text-dim)" stroke-width="1.4"/>
+
+                <!-- ── TEMPERATURE SENSOR (small rect labelled T) ── -->
+                <rect x="475" y="60" width="26" height="22" rx="2"
+                      fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.8"/>
+                <text x="488" y="76" text-anchor="middle" font-size="11" font-weight="600" fill="var(--text)">T</text>
+                <line x1="488" y1="60" x2="488" y2="50" stroke="var(--text-dim)" stroke-width="1.4"/>
+
+                <!-- ── SIGNAL LINES from sensors down to controller ── -->
+                <path d="M 420 85 V 130 H 360 V 165" fill="none"
+                      stroke="var(--text-dim)" stroke-width="1.4"/>
+                <path d="M 488 82 V 145 H 400 V 165" fill="none"
+                      stroke="var(--text-dim)" stroke-width="1.4"/>
+
+                <!-- ── CONTROLLER BOX ── -->
+                <rect x="240" y="165" width="280" height="70" rx="3"
+                      fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                <text x="380" y="188" text-anchor="middle" font-size="12" font-weight="600" fill="var(--text-bright)">UNIT CONTROLLER / BMS</text>
+                <text x="380" y="208" text-anchor="middle" font-size="10" fill="var(--text-dim)">computes SH = T − T_sat(P), compares to setpoint,</text>
+                <text x="380" y="222" text-anchor="middle" font-size="10" fill="var(--text-dim)">commands port-position step</text>
+
+                <!-- ── COMMAND LINE controller → stepper ── -->
+                <path d="M 380 235 V 260" fill="none"
+                      stroke="var(--text-dim)" stroke-width="1.4"/>
+                <polygon points="375,256 385,256 380,268" fill="var(--text-dim)"/>
+
+                <!-- ── STEPPER MOTOR (cylinder on top of valve body) ── -->
+                <rect x="340" y="270" width="80" height="22" rx="3"
+                      fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                <text x="380" y="285" text-anchor="middle" font-size="10" font-weight="600" fill="var(--text-bright)">STEPPER</text>
+
+                <!-- ── VALVE BODY (simplified rectangle below the stepper) ── -->
+                <rect x="320" y="292" width="120" height="14" rx="2"
+                      fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+
+                <!-- ── HP liquid in (from left) ── -->
+                <line x1="60" y1="299" x2="318" y2="299"
+                      stroke="var(--heat)" stroke-width="6"/>
+                <polygon points="310,292 324,299 310,306" fill="var(--heat)"/>
+                <text x="60" y="286" font-size="10" fill="var(--heat)">HP liquid in (from liquid line)</text>
+
+                <!-- ── LP mix out (down) ── -->
+                <line x1="380" y1="306" x2="380" y2="315"
+                      stroke="var(--blue-cool)" stroke-width="6"/>
+                <text x="400" y="313" font-size="10" fill="var(--blue-cool)">LP mix out → evaporator</text>
+            </svg>
+
+            <p style="margin-top:1.25rem;">
+                The same load swing that closed the TXV's port closes the EEV's port too, just by a different route. Cooler air over the coil → less boiling → cooler suction line → suction temperature drops while suction pressure changes only slightly → the controller's computed superheat falls below setpoint → the algorithm decrements the port-position command → the stepper rotates that many steps closed → mass flow into the coil drops → the lingering liquid in the evaporator finishes boiling → SH climbs back to the setpoint. The controller, the bulb, and the diaphragm are all doing the same kind of work; only the medium changes. On a unit-controller trend graphic you can usually watch the loop in motion — valve position changes step by step, superheat hugs the target with a few degrees of ripple, and the relationship between the two should look orderly. If valve position is hard-rail at 0% or 100% with superheat still off-target, the loop has run out of authority — feed isn't the limit anymore (charge is, or the coil load is wrong, or a sensor is lying).
+            </p>
+
+            <h2 class="subhead">Same job, two different surfaces</h2>
+
+            <p>
+                If you spend most of your time in the BMS, the EEV is the surface you'll see — valve position as a point, superheat as a point, a setpoint you can change. The TXV doesn't put any of that on a network; from a BMS that's looking at a packaged unit with a TXV, the only refrigerant-side points are usually suction and discharge pressure, and the metering device is implicit in the readings. If you spend most of your time turning wrenches on equipment, the TXV is the surface you'll see — it's the thing in your hand when a system runs the wrong superheat, and the bulb's location on the suction line is one of the first things to check when something's off (loose strap, missing insulation, lost bulb charge, all common). When a controls tech and a mechanical tech compare notes on the same system, the same valve gets described from two angles, and the names don't always line up. Knowing both surfaces lets you bridge that conversation.
+            </p>
+
+            <h2 class="subhead">A worked example — holding superheat as load drifts</h2>
+
+            <p>
+                Bring the same R-410A split system from <a href="/education/superheat-subcooling.html">page 2</a>. Steady state on a typical operating day: suction-side gauge reads <strong>118 psig</strong>, suction-line thermometer <strong>50 °F</strong>, so superheat sits at <code>50 − 40 = 10 °F</code>. Liquid-side gauge reads <strong>340 psig</strong>, liquid-line thermometer <strong>95 °F</strong>, so subcooling sits at <code>105 − 95 = 10 °F</code>. The metering device — a TXV in one variant, an EEV in the other — is the element holding that 10 °F superheat by feeding the evaporator at whatever rate the coil load demands.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                A cloud passes, the outdoor temperature drops a few degrees, and the indoor return air follows it down. Heat into the evaporator coil drops with the load. With the metering device's current port position, more refrigerant is being fed than the coil can boil; liquid lingers further out toward the suction header; the suction-line temperature at the bulb starts to fall. Within a couple of degrees of drift — suction T sliding from 50 °F toward, say, 47 °F at the same 118 psig — superheat has fallen from 10 °F toward 7 °F.
+            </p>
+
+            <p>
+                On the <strong>TXV system</strong>: the bulb cools with the suction line. The bulb charge contracts, its saturation pressure drops, the downward force on the diaphragm drops, the spring and evaporator pressure overpower the new equilibrium, and the diaphragm rises by some small amount. The needle rides up with it and the port tightens — fractionally, on the order of a fraction of a turn's worth of opening. Mass flow into the coil drops to match the new boiling rate, the lingering liquid finishes its phase change, suction T climbs back, and the bulb settles at whatever temperature gives the spring its target counterbalance. The system is back at 10 °F superheat, with a slightly lower mass flow rate, no controller involved, no setpoint changed.
+            </p>
+
+            <p>
+                On the <strong>EEV system</strong>: the suction-line temperature sensor reports a cooler reading; the pressure transducer reports essentially the same 118 psig (a small drop with the lower load). The controller looks up the dew temperature for the current pressure, subtracts, and computes a superheat of about 7 °F against a 10 °F setpoint. The control algorithm decrements the port-position command by a few steps. The stepper rotates, the port tightens, mass flow drops, the coil empties, suction T climbs, and the computed superheat returns to 10 °F. Same outcome as the TXV; the trend graphic shows it as a small step in valve position and a brief dip-and-recovery in superheat.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                The other direction works the same way in reverse. The load picks back up later in the afternoon; the coil boils faster than the current feed can supply; the suction line warms past 50 °F; superheat climbs past 10 °F. The TXV's bulb warms, its charge expands, the diaphragm pushes down, the port opens, more feed, SH returns to target. The EEV's controller sees a higher computed superheat, increments the port command, the stepper rotates open, same recovery. Both valves are doing classic closed-loop control on the same process variable; what's different is what they use as their controller (a spring + a sealed gas charge, vs. a CPU + a trended sensor) and what surface that controller exposes to the people working on the system.
+            </p>
+
+            <h2 class="subhead">What this chapter sets up</h2>
+
+            <p>
+                That closes the three-page chapter. <a href="/education/refrigerant-cycle-basics.html">Page 1</a> built the cycle and the saturation lock; <a href="/education/superheat-subcooling.html">page 2</a> turned the lock into superheat and subcooling, the two measurements that prove the cycle is running right; this page opened the metering device that holds superheat in place. With those three concepts in hand, the <a href="/tools/refrigerant-pt.html">Refrigerant P-T &amp; Superheat Calculator</a> turns from a black box into a tool whose every input and output is something you can place inside the cycle and read against the saturation curve. Bring a suction pressure, a clamp-on suction-line temperature, and a refrigerant name back to that calculator and you've already done the measurement half of refrigerant troubleshooting; the verdict pill just reads off what your numbers mean.
+            </p>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/tools/refrigerant-pt.html', label: 'Refrigerant P-T & Superheat Calculator'},
+            {href: '/tools/coil-sizing.html', label: 'Coil-Sizing Calculator'}
+        ],
+        lessons: [
+            {href: '/education/refrigerant-cycle-basics.html', label: 'Refrigerant Cycle Basics'},
+            {href: '/education/superheat-subcooling.html', label: 'Superheat & Subcooling'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/education/">← Back to Education</a>
+
+</main>
+{% endblock %}
