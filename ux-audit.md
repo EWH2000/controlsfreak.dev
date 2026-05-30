@@ -257,6 +257,15 @@ Cross-referenced as a flagged clarity item in `content-audit.md` #34
 (the prose describes a behavior the model can't show); the primary fix
 is the sim envelope, so it's filed here.
 
+**Addressed (2026-05-30).** Took the "add a high dead-time preset" path.
+A fourth process, **High dead-time** (dead ÷ τ ≈ 0.5, `tau: 40, dead: 20`),
+joins `PID_PROC`; its ultimate gain lands near Kc 8, well inside the 0–20
+slider, so cranking gain on it overshoots (~14 % at Kc 8, ~21 % at the
+maxima), rings, and won't settle — tripping the existing >20 % overshoot
+warn. The cheat-sheet note now points at it as the process to pick to see
+the symptoms. The three well-behaved buckets are unchanged, and
+`content-audit.md` #34 is resolved by the same change.
+
 #### 7. Content quizzes don't cue a cold visitor to read the lesson first, and there's no "easiest first" nudge
 
 **Persona:** newcomer. **Location:** `/practice/` landing + each content
