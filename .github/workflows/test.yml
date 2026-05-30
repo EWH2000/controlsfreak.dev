@@ -43,22 +43,23 @@ jobs:
       - name: Install Playwright system dependencies
         run: npx playwright install-deps chromium
 
-      # The browser-binary download from cdn.playwright.dev intermittently
-      # stalls at ~100% on the runner's network and never returns — a whole-
-      # job rerun hits the same stall because it's a fresh cold download
-      # every time and there's no per-attempt timeout. Bound each attempt
-      # with `timeout` and retry on a fresh connection; once it succeeds the
-      # browser is cached (step above) so later runs skip the download.
-      - name: Install Playwright Chromium
+      # Headless CI (no `channel` set in playwright.config.js, headless by
+      # default) only needs the chromium *headless shell* — a smaller,
+      # separately-hosted artifact, not the full ~170 MB Chrome-for-Testing
+      # build whose download was stalling at 100% on the runner's network.
+      # Each attempt is bounded and hard-killed (-k) so a stuck download
+      # actually dies and the retry fires on a fresh connection; the cache
+      # above spares later runs the download entirely.
+      - name: Install Playwright Chromium (headless shell)
         run: |
           for attempt in 1 2 3; do
-            echo "Playwright Chromium install — attempt $attempt"
-            if timeout 300 npx playwright install chromium; then
+            echo "Playwright chromium headless-shell install — attempt $attempt"
+            if timeout -k 30 240 npx playwright install --only-shell chromium; then
               exit 0
             fi
             echo "attempt $attempt stalled or failed; retrying on a fresh connection"
           done
-          echo "Playwright Chromium install failed after 3 attempts" >&2
+          echo "Playwright install failed after 3 attempts" >&2
           exit 1
 
       - name: Run tests
