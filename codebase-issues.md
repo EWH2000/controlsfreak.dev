@@ -3240,6 +3240,50 @@ source of truth for failure-state visuals across the site.
 visual refresh of the warn/error palette ships and the duplication
 becomes a real maintenance cost.
 
+### 74. No shared minimum touch-target floor — several interactive families render below 44px on mobile
+
+Surfaced during the 2026-05-29 UX walkthrough (`ux-audit.md`, field-tech
+persona, findings 3 / 8 / 9).
+
+**Where.** Tap-target sizing is per-component, and several interactive
+families independently land under the ~44px comfortable-thumb threshold
+when measured at a 390px phone viewport:
+
+- `.units-btn` (`styles.css`, `padding: 0.22rem 0.6rem`) — **34×21px
+  (US) / 64×21px (Metric)**. This is the control the field-tech persona
+  reaches for most on a US/metric mixed site; 21px tall is the worst
+  offender.
+- `.site-nav-links a` (`nav.njk` / `styles.css`) — text-only with no
+  vertical padding, rendering **26–29px** tall ("Home" 42×29).
+- `.tab-btn` (tabbed tools: bacnet, modbus, thermistor, coil-sizing,
+  economizer, air-mixing, refrigerant) — **34–35px** tall. These switch
+  the tool's whole mode, so a missed tap interrupts the workflow.
+- `.quiz-settings-select` + the quiz reset button (all 10 practice
+  pages) — **24px** tall.
+
+**Why it matters.** Each new interactive element re-rolls the dice on
+hit-area; the four families above are the same root cause surfacing in
+four places. The site's *answer* controls are already good (quiz answer
+buttons and tool Submit/Copy are full-width ~39px), so the gap is
+specifically the chrome-level controls (nav, units, tabs, settings) —
+which is where the field tech spends taps. This generalizes
+`content-audit.md` #23 (Modbus bit-grid cells below the tap threshold),
+which is one instance of the same missing floor.
+
+**What it would take to fix.** Establish a documented minimum-tap-height
+convention — e.g. a shared `min-height` / padding floor on the
+interactive-element families, or a `@media (hover: none)` block that
+pads them — and note it in CLAUDE.md's design-system section so new
+controls inherit it. The nav already `flex-wrap`s on phone, so taller
+rows cost little layout budget. Lowest-effort / highest-leverage single
+change: lift `.units-btn` vertical padding first (the 21px worst case on
+the most-tapped control).
+
+**Open question for the owner.** Whether to chase a strict 44px (WCAG
+2.5.5 AAA / Apple HIG) or a looser ~40px floor, and whether the nav-link
+row should grow on touch only or everywhere. Decision needed before a
+sweep.
+
 ### Deferred / Won't fix (with revisit trigger)
 
 Items considered during an audit and deliberately not pursued, each
