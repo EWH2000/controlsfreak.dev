@@ -455,6 +455,22 @@ html[data-units="metric"] .units-btn[data-units="metric"] {
     line-height: 1.8;
 }
 
+/* Beginner onramp — a single line above the badges pointing newcomers at
+   the Education lane, since the badges/Browse stage presume you already
+   know which tool you need. Element-qualified (p.hero-onramp) so it ties
+   `.hero p` on specificity and wins the cascade, overriding the centered
+   subhead paragraph styling. */
+p.hero-onramp {
+    font-size: 0.9rem;
+    font-weight: 400;
+    color: var(--text-dim);
+    max-width: none;
+    margin: 0 auto 1.4rem;
+    line-height: 1.6;
+}
+p.hero-onramp a { color: var(--accent); white-space: nowrap; border-bottom: 1px solid transparent; }
+p.hero-onramp a:hover { border-bottom-color: var(--accent); }
+
 .hero-badges { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem; }
 .badge {
     font-family: var(--mono);
