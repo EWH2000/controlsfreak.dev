@@ -304,6 +304,15 @@ first" more prominent for first-time / zero-score visitors, and/or
 surface the gentler field drill (`Surviving Your First Months`) as the
 recommended newcomer starting point on the Practice landing.
 
+**Addressed (2026-05-30).** Both. The Practice landing intro now points a
+newcomer at the gentler `Surviving Your First Months` drill as the place
+to start. Each of the eight content-quiz intros was reworded to *lead*
+with the paired-lesson link and the read-it-first frame ("Read the
+<Lesson> lesson first, then test yourself — …"), instead of burying the
+link mid-sentence — so a cold visitor landing on Question 1 sees the
+lesson door first. The question banks and the FAQPage JSON-LD (sourced
+from `_data/quizzes/*`) are untouched.
+
 #### 8. Quiz settings-row controls render ~24px tall
 
 **Persona:** field tech / mobile. **Location:** all 10 `/practice/*`
