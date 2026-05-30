@@ -375,6 +375,13 @@ extended to the touch/drag mismatch specifically.)
 banner ("the wiresheet is built for a mouse — best on a laptop"); no
 layout change.
 
+**Addressed (2026-05-30).** Extended the existing `.narrow-width-note`
+(no new banner, no layout change) to name the touch-drag-vs-mouse mismatch
+explicitly and call out the tablet case — "Wiring is drag work, too: a
+mouse or trackpad beats a finger here, so even on a roomy tablet it goes
+smoother with a pointer." The note already covered phone width; it now
+also covers the finger-on-a-big-screen gap the finding flagged.
+
 #### 11. Economizer-ratio surfaces an out-of-range (>100%) mix fraction as the headline value
 
 **Persona:** engineer. **Location:** `/tools/economizer-ratio.html` —
