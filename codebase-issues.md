@@ -3240,7 +3240,7 @@ source of truth for failure-state visuals across the site.
 visual refresh of the warn/error palette ships and the duplication
 becomes a real maintenance cost.
 
-### 74. No shared minimum touch-target floor — several interactive families render below 44px on mobile
+### 74. No shared minimum touch-target floor — several interactive families render below 44px on mobile *(addressed 2026-05-29)*
 
 Surfaced during the 2026-05-29 UX walkthrough (`ux-audit.md`, field-tech
 persona, findings 3 / 8 / 9).
@@ -3283,6 +3283,21 @@ the most-tapped control).
 2.5.5 AAA / Apple HIG) or a looser ~40px floor, and whether the nav-link
 row should grow on touch only or everywhere. Decision needed before a
 sweep.
+
+**Resolution (2026-05-29).** Chose **strict 44px, touch-only**. A single
+consolidated `TOUCH-TARGET FLOOR` block now lives in `styles.css` (right
+after `FOCUS INDICATORS`), scoped to `@media (hover: none)` so pointer
+users keep the compact desktop density. It pads the four chrome-level
+families — `.site-nav-links a`, `.units-btn`, `.tab-btn`,
+`.quiz-settings-select`, and `.quiz-reset-best` — to `min-height: 44px`
+via `display: inline-flex` centering (nav links also get a small
+`padding-inline`). Documented as a design-system convention in CLAUDE.md
+so new chrome-level interactives inherit the floor rather than re-rolling
+hit-area per component. Answer-level controls (`.quiz-choice`,
+`.quiz-action`, `.ps-input`, copy/submit) already cleared 44px and are
+deliberately not in the block. The related Modbus bit-grid tap target
+(`content-audit.md` #23) is a separate page-local widget and stays
+tracked there.
 
 ### Deferred / Won't fix (with revisit trigger)
 

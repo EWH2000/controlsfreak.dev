@@ -169,6 +169,11 @@ root cause with findings 8 and 9 and is logged once as a code-quality
 convention in `codebase-issues.md` #74; the per-control UX cost is
 recorded here.
 
+**Addressed (2026-05-29, `codebase-issues.md` #74).** `.site-nav-links a`
+and `.units-btn` now hit `min-height: 44px` on touch via the consolidated
+`@media (hover: none)` `TOUCH-TARGET FLOOR` block in `styles.css`; desktop
+density unchanged.
+
 #### 4. Psychrometric chart's touch-drag is fiddly on a phone, and the typed-input fallback isn't signposted there
 
 **Persona:** field tech / mobile. **Location:**
@@ -274,6 +279,10 @@ page.
 generous answer buttons below. (Same root cause as findings 3 and 9 →
 `codebase-issues.md` #74.)
 
+**Addressed (2026-05-29, `codebase-issues.md` #74).** `.quiz-settings-select`
+and `.quiz-reset-best` now hit `min-height: 44px` on touch via the
+`TOUCH-TARGET FLOOR` block in `styles.css`.
+
 #### 9. Tool tab buttons render ~34–35px tall
 
 **Persona:** field tech / mobile. **Location:** tabbed tools —
@@ -290,6 +299,10 @@ is core to the workflow). **Suggested direction:** a few px more
 vertical padding on `.tab-btn` clears 40px without disturbing the
 desktop layout. (Same root cause as findings 3 and 8 →
 `codebase-issues.md` #74.)
+
+**Addressed (2026-05-29, `codebase-issues.md` #74).** `.tab-btn` now hits
+`min-height: 44px` on touch via the `TOUCH-TARGET FLOOR` block in
+`styles.css`.
 
 #### 10. Function-Block Editor gives a tablet user no "this wants a laptop" signal
 
