@@ -70,7 +70,7 @@ nav: practice
 
     <div class="filter-chips" role="group" aria-label="Filter practice by topic">
         <button type="button" class="filter-chip active" data-category="all" aria-pressed="true">
-            All <span class="filter-chip-count">9</span>
+            All <span class="filter-chip-count">10</span>
         </button>
         <button type="button" class="filter-chip" data-category="modbus" aria-pressed="false">
             Modbus <span class="filter-chip-count">2</span>
@@ -186,6 +186,15 @@ nav: practice
                 titleFull:  'Surviving Your First Months',
                 desc:       'Broad sampler for techs in their first few months in the field — safety basics, panel anatomy, sensor failure modes, 4-20 mA live zero, VFD quirks, and workflow habits that pay off early.',
                 pills:      ['10 Questions', 'Field Sampler', '~ 5 min'],
+                category:   'field'
+            }) }}
+            {{ navCard({
+                section:    'practice',
+                href:       '/practice/controller-swap.html',
+                titleShort: 'Controller Swap',
+                titleFull:  'Controller Swap',
+                desc:       'Replacing a DDC controller end to end — documenting and re-landing field wiring, re-using the MS/TP address and device instance, EOL termination, config backup, download, graphics re-bind, and commissioning the sequence.',
+                pills:      ['10 Questions', 'Hardware + Software', '~ 5 min'],
                 category:   'field'
             }) }}
         </div>
