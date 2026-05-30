@@ -3,6 +3,7 @@ title: BACnet Networking — controlsfreak.dev
 description: BACnet networking — the three layers of addressing, the BVLL/NPDU/APDU frame, BBMDs and Foreign Device Registration, and reading the EBO hex blob.
 canonical: https://controlsfreak.dev/education/bacnet-networking.html
 nav: education
+pairedQuiz: https://controlsfreak.dev/practice/bacnet-networking.html
 ---
 {% extends "layouts/page.njk" %}
 {% from "related-links.njk" import relatedLinks %}
@@ -52,7 +53,7 @@ nav: education
                 see what each byte is doing.
             </p>
 
-            <h2 class="subhead">Three addresses, one device</h2>
+            <h2 class="subhead" id="three-addresses">Three addresses, one device</h2>
 
             <p>
                 Every BACnet conversation eventually targets a specific property on
@@ -136,7 +137,7 @@ nav: education
                 still the same instance number.
             </p>
 
-            <h2 class="subhead">The BACnet/IP frame — BVLL + NPDU + APDU</h2>
+            <h2 class="subhead" id="bvll-npdu-apdu">The BACnet/IP frame — BVLL + NPDU + APDU</h2>
 
             <p>
                 When you put a Wireshark capture on a BACnet/IP segment, every
@@ -243,7 +244,7 @@ nav: education
                 it wouldn't otherwise go — which is the next section.
             </p>
 
-            <h2 class="subhead">BBMDs — broadcasts across an L3 boundary</h2>
+            <h2 class="subhead" id="bbmd">BBMDs — broadcasts across an L3 boundary</h2>
 
             <p>
                 BACnet uses broadcasts heavily — Who-Is, I-Am, the
@@ -370,7 +371,7 @@ nav: education
                 makes the duplicate frames visible.
             </p>
 
-            <h2 class="subhead">Foreign Device Registration — joining from outside</h2>
+            <h2 class="subhead" id="fdr">Foreign Device Registration — joining from outside</h2>
 
             <p>
                 A BBMD handles broadcasts <em>between</em> subnets that each
@@ -463,7 +464,7 @@ nav: education
                 yesterday and now I can't."
             </p>
 
-            <h2 class="subhead">Reading the hex blob EBO shows you</h2>
+            <h2 class="subhead" id="hex-blob">Reading the hex blob EBO shows you</h2>
 
             <p>
                 EBO and several other BAS workstations display a discovered
@@ -665,6 +666,9 @@ nav: education
         ],
         lessons: [
             {href: '/education/bacnet-basics.html', label: 'BACnet Basics'}
+        ],
+        quizzes: [
+            {href: '/practice/bacnet-networking.html', label: 'BACnet Networking'}
         ]
     }) }}
 

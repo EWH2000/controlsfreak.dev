@@ -70,10 +70,13 @@ nav: practice
 
     <div class="filter-chips" role="group" aria-label="Filter practice by topic">
         <button type="button" class="filter-chip active" data-category="all" aria-pressed="true">
-            All <span class="filter-chip-count">2</span>
+            All <span class="filter-chip-count">5</span>
         </button>
         <button type="button" class="filter-chip" data-category="modbus" aria-pressed="false">
-            Modbus <span class="filter-chip-count">1</span>
+            Modbus <span class="filter-chip-count">2</span>
+        </button>
+        <button type="button" class="filter-chip" data-category="bacnet" aria-pressed="false">
+            BACnet <span class="filter-chip-count">2</span>
         </button>
     </div>
 
@@ -89,12 +92,39 @@ nav: practice
         <div class="card-grid">
             {{ navCard({
                 section:    'practice',
+                href:       '/practice/modbus-basics.html',
+                titleShort: 'Modbus Basics',
+                titleFull:  'Modbus Basics',
+                desc:       'Drill the fundamentals from the Modbus Basics lesson — the four data tables, the FC03 / FC04 / FC16 pairs, the client-polls model, and how exception responses signal failure with the high bit set.',
+                pills:      ['10 Questions', 'MCQ · TF · Gotcha · Numeric', '~ 5 min'],
+                category:   'modbus'
+            }) }}
+            {{ navCard({
+                section:    'practice',
                 href:       '/practice/modbus-decoding.html',
                 titleShort: 'Modbus Decoding',
                 titleFull:  'Modbus Decoding',
                 desc:       'Drill the four gotchas from the Modbus Decoding lesson — the 5-digit address trap, signed vs unsigned, byte order, scaling — plus FC03 / FC04 confusion and exception responses.',
                 pills:      ['10 Questions', 'MCQ · TF · Gotcha · Numeric', '~ 5 min'],
                 category:   'modbus'
+            }) }}
+            {{ navCard({
+                section:    'practice',
+                href:       '/practice/bacnet-basics.html',
+                titleShort: 'BACnet Basics',
+                titleFull:  'BACnet Basics',
+                desc:       'Drill the fundamentals from the BACnet Basics lesson — the self-describing object model, device instances, the everyday services, and the priority array\'s lowest-non-null-slot rule.',
+                pills:      ['10 Questions', 'MCQ · TF · Gotcha · Numeric', '~ 5 min'],
+                category:   'bacnet'
+            }) }}
+            {{ navCard({
+                section:    'practice',
+                href:       '/practice/bacnet-networking.html',
+                titleShort: 'BACnet Networking',
+                titleFull:  'BACnet Networking',
+                desc:       'Drill the addressing and broadcast story from the BACnet Networking lesson — the three identifier layers, BBMDs and the asymmetric-BDT trap, Foreign Device TTLs, and EBO hex decoding.',
+                pills:      ['10 Questions', 'MCQ · TF · Gotcha · Numeric', '~ 5 min'],
+                category:   'bacnet'
             }) }}
         </div>
     </section>

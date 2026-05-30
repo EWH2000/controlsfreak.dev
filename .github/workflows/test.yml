@@ -1,10 +1,22 @@
 name: test
 
-# Runs the Playwright suite on every PR to main. `npm test` is
-# self-sufficient — playwright.config.js's webServer block builds the
-# site and serves _site/ (python3 is preinstalled on ubuntu-latest),
-# and GitHub Actions sets CI so reuseExistingServer stays off. The
-# deploy pipeline (Cloudflare Workers Build) is untouched.
+# Runs the Playwright suite on every PR to main, inside the official
+# Playwright container image — browsers and their system libraries are
+# baked in, so CI never downloads a browser from cdn.playwright.dev.
+# That download was hanging *at 100%* (post-transfer, during extraction
+# / connection-close) deterministically on the GitHub-hosted runners,
+# across full-Chrome and headless-shell alike, and blocking merges.
+#
+# The image tag MUST track the @playwright/test version in
+# package.json / package-lock.json (currently pinned 1.59.1, browser
+# revision v1217) — a mismatch makes Playwright try to fetch the right
+# revision at runtime, reintroducing the very download this avoids.
+# Bump the tag and the dependency together.
+#
+# playwright.config.js's webServer block builds the site and serves
+# _site/ with python3 (the guard step below ensures it's present);
+# GitHub Actions sets CI so reuseExistingServer stays off. The deploy
+# pipeline (Cloudflare Workers Build) is untouched.
 
 on:
   pull_request:
@@ -16,6 +28,8 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v1.59.1-noble
     steps:
       - uses: actions/checkout@v4
         # Full history — sitemap.njk derives <lastmod> from `git log` per
@@ -24,6 +38,13 @@ jobs:
         with:
           fetch-depth: 0
 
+      # The workspace is checked out under a different owner than the
+      # container user, so git refuses to run there by default. The
+      # gitLastmod / gitFirstmod filters in .eleventy.js shell out to
+      # `git log` during the build, so clear the dubious-ownership guard.
+      - name: Trust the workspace for git
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
       - uses: actions/setup-node@v4
         with:
           node-version: lts/*
@@ -31,14 +52,10 @@ jobs:
 
       - run: npm ci
 
-      - name: Cache Playwright browser
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/ms-playwright
-          key: ${{ runner.os }}-playwright-${{ hashFiles('package-lock.json') }}
-
-      - name: Install Playwright Chromium
-        run: npx playwright install --with-deps chromium
+      # The test webServer serves _site/ with `python3 -m http.server`.
+      # No-op if the image already ships python3; installs it otherwise.
+      - name: Ensure python3 for the static file server
+        run: command -v python3 || (apt-get update && apt-get install -y --no-install-recommends python3)
 
       - name: Run tests
         run: npm test

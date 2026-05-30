@@ -346,12 +346,17 @@ adding or moving pages.
     the visual capstone.**
   - *Practice* pages (`/practice/<slug>.html`) wrap the shared
     `Quiz` engine: a single `.tool-card` containing an empty
-    `<div id="quiz"></div>`, with an inline IIFE that defines a
-    `const questions = [...]` bank and calls `Quiz.mount`. The
-    engine owns every DOM node inside the mount target (settings
-    row, progress, prompt, choices/numeric, reveal panel, results
-    card). See `html/scripts/quiz-engine.js` for the schema + the
-    Modbus Decoding page for canonical wiring.
+    `<div id="quiz"></div>`, with an inline IIFE that calls
+    `Quiz.mount`. The question bank lives in a **separate data
+    file** `html/_data/quizzes/<slug>.js` (`module.exports = [...]`),
+    injected into the IIFE as
+    `const questions = {{ quizzes['<slug>'] | safeScriptJson | safe }};`
+    — kept out-of-line so two consumers read one source: the
+    browser-side engine and the FAQPage JSON-LD emitter in
+    `head.njk`. The engine owns every DOM node inside the mount
+    target (settings row, progress, prompt, choices/numeric, reveal
+    panel, results card). See `html/scripts/quiz-engine.js` for the
+    schema + the Modbus Decoding page for canonical wiring.
 - **Nav cards** are rendered by the `navCard()` macro in
   `_includes/nav-card.njk` (NOT hand-rolled) for all landings.
   Hero-frame shape with `.nav-card-titlebar` + `.nav-card-body` +
@@ -475,11 +480,18 @@ frontmatter and the new `.nav-card` added to
    `.tool-card` with the page's `<h1 class="tool-card-title">` +
    a short `.page-intro` + an empty `<div id="quiz"></div>`. See
    `practice/modbus-decoding.html` for canonical wiring.
-2. `{% block scripts %}` loads `/scripts/quiz-engine.js`, then an
-   inline IIFE defines `const questions = [ … ]` and calls
+2. Put the question bank in its own data file
+   `html/_data/quizzes/<slug>.js` (`module.exports = [ … ]`), NOT
+   inline — `head.njk`'s FAQPage JSON-LD reads the same source via
+   `quizzes['<slug>']`, so the page and the structured data can't
+   drift. `{% block scripts %}` loads `/scripts/quiz-engine.js`,
+   then an inline IIFE pulls the bank in with
+   `const questions = {{ quizzes['<slug>'] | safeScriptJson | safe }};`
+   and calls
    `Quiz.mount('#quiz', questions, { slug: '<slug>', title: '…' })`.
-   The slug **must be kebab-case** (engine validates) and is the
-   namespace for `cf_quiz_<slug>_*` localStorage keys.
+   The slug **must be kebab-case** (engine validates), **must match
+   the page's filename** (the JSON-LD keys off `page.fileSlug`), and
+   is the namespace for `cf_quiz_<slug>_*` localStorage keys.
 3. Question schema lives in `quiz-engine.js`'s header — `type` is
    one of `mcq` / `tf` / `gotcha` / `numeric`; shared
    `id` / `prompt` / `explain` / `learnMore` / `tags` across all

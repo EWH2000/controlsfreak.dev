@@ -3,6 +3,7 @@ title: BACnet Basics — controlsfreak.dev
 description: BACnet on the wire — the self-describing object model, the services that read and write properties, the priority array, and Who-Is / I-Am discovery.
 canonical: https://controlsfreak.dev/education/bacnet-basics.html
 nav: education
+pairedQuiz: https://controlsfreak.dev/practice/bacnet-basics.html
 ---
 {% extends "layouts/page.njk" %}
 {% from "related-links.njk" import relatedLinks %}
@@ -56,7 +57,7 @@ nav: education
                 tool's footnote keeps pointing toward.
             </p>
 
-            <h2 class="subhead">What BACnet is, and isn't</h2>
+            <h2 class="subhead" id="what-bacnet-is">What BACnet is, and isn't</h2>
 
             <p>
                 The defining BACnet idea is that <em>devices describe themselves</em>.
@@ -97,7 +98,7 @@ nav: education
                 care which one is underneath.
             </p>
 
-            <h2 class="subhead">Devices, objects, properties</h2>
+            <h2 class="subhead" id="objects">Devices, objects, properties</h2>
 
             <p>
                 Three nested layers carry everything. A <strong>device</strong> is
@@ -221,7 +222,7 @@ nav: education
                 show up when a specific feature does.
             </p>
 
-            <h2 class="subhead">The services you'll see</h2>
+            <h2 class="subhead" id="services">The services you'll see</h2>
 
             <p>
                 A <em>service</em> is a verb against the object model — the request
@@ -270,7 +271,7 @@ nav: education
                 everyday read, write, and notification across a building.
             </p>
 
-            <h2 class="subhead">The priority array — BACnet's command stack</h2>
+            <h2 class="subhead" id="priority-array">The priority array — BACnet's command stack</h2>
 
             <p>
                 Every <em>commandable</em> object — Analog Output, Binary Output,
@@ -522,7 +523,7 @@ nav: education
                 <a href="/education/bacnet-networking.html">BACnet Networking</a>.
             </p>
 
-            <h2 class="subhead">MS/TP vs BACnet/IP — same protocol, different transport</h2>
+            <h2 class="subhead" id="mstp-vs-ip">MS/TP vs BACnet/IP — same protocol, different transport</h2>
 
             <p>
                 The two BACnet data links you'll meet are MS/TP and BACnet/IP. The
@@ -688,6 +689,9 @@ nav: education
         ],
         lessons: [
             {href: '/education/bacnet-networking.html', label: 'BACnet Networking'}
+        ],
+        quizzes: [
+            {href: '/practice/bacnet-basics.html', label: 'BACnet Basics'}
         ]
     }) }}
 
