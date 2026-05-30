@@ -2168,3 +2168,40 @@ ways and structurally drifting in a handful of specific shapes.
 Per the plan, triage of the full audit is the next step. The
 nav-card grid question (parked since the plan kickoff) gets
 re-evaluated with the full audit as context.
+
+## Audit scope — UX walkthrough spillover (2026-05-29)
+
+The 2026-05-29 three-persona UX walkthrough (deliverable:
+`ux-audit.md`) was an experience pass, not a content pass — but one
+finding is a content-clarity issue and is logged here. Numbers
+exercised across the calc tools during that walk all checked out
+(signal-scaling, coil-sizing, air-mixing, economizer-ratio,
+refrigerant-pt glide caveat, modbus byte/word-order, bacnet-ip);
+nothing new and confirmed-wrong surfaced.
+
+### 34. PID tuner's tuning cheat-sheet describes failure modes the simulator can't reach
+
+**Location:** `/simulators/pid-tuner.html` — the on-page tuning
+guidance ("Overshoots, then recovers → ↓ P") vs. the model's reachable
+behavior. **Lens:** working engineer. **Verification status: flagged**
+(engineering-judgment, not a wrong number).
+
+The cheat-sheet prose describes ringing / overshoot-then-recover as a
+condition the user should tune away. But the three modeled FOPDT
+processes sit at low dead-time ratios (≈0.13) and modest process gain,
+so even at the slider maxima (Kc=20, Ki=6) the loop stays well-damped:
+measured overshoot was `none` (fast), `6.7%` (med), `8.4%` (slow). No
+reported value is *wrong* — every readout is internally consistent —
+but the guidance points at a behavior the simulator can't demonstrate
+within its sliders, so a reader who tries to reproduce the "too much
+gain" case can't, and may read the tame response as a broken metric.
+Distinct from the existing pid-tuner notes (which cover the dead-time
+ratio prose and vendor parameter-style claims, not the reachable
+overshoot envelope).
+
+**Suggested direction:** see `ux-audit.md` finding 6 — widen the Kc
+range or add a higher-dead-time process preset so the unstable regime
+is reachable, or caption that the modeled processes are deliberately
+well-behaved and won't ring. The primary fix is the simulator's
+reachable envelope, so the finding lives in `ux-audit.md`; this entry
+is the content-clarity cross-reference.
