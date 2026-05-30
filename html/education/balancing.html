@@ -3,6 +3,7 @@ title: Hydronic Balancing — controlsfreak.dev
 description: Getting design flow to every load in a hydronic system — calibrated and automatic balancing valves, PICVs, and how to tell when a loop is out of balance.
 canonical: https://controlsfreak.dev/education/balancing.html
 nav: education
+pairedQuiz: https://controlsfreak.dev/practice/balancing.html
 ---
 {% extends "layouts/page.njk" %}
 {% from "related-links.njk" import relatedLinks %}
@@ -358,7 +359,7 @@ nav: education
             </p>
 
             <!-- ───────────────── 2 · CBVs ───────────────── -->
-            <h2 class="subhead">Calibrated Balancing Valves (CBVs)</h2>
+            <h2 class="subhead" id="cbv">Calibrated Balancing Valves (CBVs)</h2>
 
             <!-- Per-valve symbol diagram: bowtie + handle wheel + locking position indicator. -->
             <div class="bal-valve-fig">
@@ -408,7 +409,7 @@ nav: education
             </p>
 
             <!-- ───────────────── 3 · ABVs ───────────────── -->
-            <h2 class="subhead">Automatic Balancing Valves (ABVs)</h2>
+            <h2 class="subhead" id="abv">Automatic Balancing Valves (ABVs)</h2>
 
             <!-- Per-valve symbol diagram: bowtie + internal cartridge / spring. -->
             <div class="bal-valve-fig">
@@ -450,7 +451,7 @@ nav: education
             </p>
 
             <!-- ───────────────── 4 · PICVs ───────────────── -->
-            <h2 class="subhead">Pressure-Independent Control Valves (PICVs)</h2>
+            <h2 class="subhead" id="picv">Pressure-Independent Control Valves (PICVs)</h2>
 
             <!-- Per-valve symbol diagram: bowtie + actuator + cartridge stack. -->
             <div class="bal-valve-fig">
@@ -586,7 +587,7 @@ nav: education
             </p>
 
             <!-- ───────────────── 6 · Diagnostics ───────────────── -->
-            <h2 class="subhead">How do you know when the loop isn't balanced?</h2>
+            <h2 class="subhead" id="diagnose">How do you know when the loop isn't balanced?</h2>
 
             <p>
                 Balancing problems show up in two places: in occupied spaces and at the plant. Occupied-space symptoms are the obvious ones — too hot, too cold, complaints concentrated in a pattern — and they're often the first signal anyone notices. Plant-side symptoms are subtler and tend to live in BMS trends and manometer readings, and they're where the diagnostic actually lives, because they tell you <em>why</em> the occupied spaces are complaining.
@@ -672,6 +673,9 @@ nav: education
         lessons: [
             {href: '/education/load-piping.html', label: 'Load Piping'},
             {href: '/education/hydronic-loops.html', label: 'Hydronic Loops'}
+        ],
+        quizzes: [
+            {href: '/practice/balancing.html', label: 'Hydronic Balancing'}
         ]
     }) }}
 

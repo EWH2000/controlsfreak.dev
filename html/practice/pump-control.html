@@ -1,0 +1,71 @@
+---
+title: Pump Control Quiz — controlsfreak.dev
+description: Ten questions on the Pump Control gotchas — the operating point, the affinity laws and the cube law, remote vs local DP sensing, and DP setpoint reset.
+canonical: https://controlsfreak.dev/practice/pump-control.html
+nav: practice
+pairedLesson: https://controlsfreak.dev/education/pump-control.html
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Practice · Pump Control</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">Pump Control Quiz <span class="tool-tag">Hydronics</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                Ten questions on how a BMS drives a hydronic pump, from the
+                <a href="/education/pump-control.html">Pump Control</a> lesson — the operating point where the
+                pump and system curves cross, the affinity laws and the cube-law energy case, why the DP sensor
+                belongs at the most-remote point, and how DP setpoint reset squeezes out the last of the savings.
+                Each reveal links back to the section it came from.
+            </p>
+
+            <div id="quiz"></div>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        simulators: [
+            {href: '/simulators/vfd-mock.html', label: 'Mock VFD Interface'}
+        ],
+        lessons: [
+            {href: '/education/pump-control.html', label: 'Pump Control'},
+            {href: '/education/vfds.html', label: 'VFDs'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/practice/">← All practice</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="/scripts/quiz-engine.js"></script>
+<script>
+    (function () {
+        'use strict';
+
+        // Question bank lives in html/_data/quizzes/pump-control.js so the
+        // FAQPage JSON-LD emitted from head.njk can read the same source.
+        const questions = {{ quizzes['pump-control'] | safeScriptJson | safe }};
+
+        Quiz.mount('#quiz', questions, {
+            slug: 'pump-control',
+            title: 'Pump Control',
+            defaultCount: 10,
+            defaultOrder: 'sequential'
+        });
+    })();
+</script>
+{% endblock %}

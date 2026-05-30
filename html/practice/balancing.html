@@ -1,0 +1,68 @@
+---
+title: Hydronic Balancing Quiz — controlsfreak.dev
+description: Ten questions on the Hydronic Balancing gotchas — CBVs and the square-root law, ABV compensation range, PICVs, and diagnosing an unbalanced loop.
+canonical: https://controlsfreak.dev/practice/balancing.html
+nav: practice
+pairedLesson: https://controlsfreak.dev/education/balancing.html
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Practice · Hydronic Balancing</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">Hydronic Balancing Quiz <span class="tool-tag">Hydronics</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                Ten questions on the three balancing-valve families and how loops drift, from the
+                <a href="/education/balancing.html">Hydronic Balancing</a> lesson — CBVs and the square-root
+                law, ABV compensation ranges, PICVs and why they pair with DP reset, and reading the symptoms
+                of an unbalanced loop. Each reveal links back to the section it came from.
+            </p>
+
+            <div id="quiz"></div>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        lessons: [
+            {href: '/education/balancing.html', label: 'Hydronic Balancing'},
+            {href: '/education/load-piping.html', label: 'Load Piping'},
+            {href: '/education/pump-control.html', label: 'Pump Control'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/practice/">← All practice</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="/scripts/quiz-engine.js"></script>
+<script>
+    (function () {
+        'use strict';
+
+        // Question bank lives in html/_data/quizzes/balancing.js so the
+        // FAQPage JSON-LD emitted from head.njk can read the same source.
+        const questions = {{ quizzes['balancing'] | safeScriptJson | safe }};
+
+        Quiz.mount('#quiz', questions, {
+            slug: 'balancing',
+            title: 'Hydronic Balancing',
+            defaultCount: 10,
+            defaultOrder: 'sequential'
+        });
+    })();
+</script>
+{% endblock %}
