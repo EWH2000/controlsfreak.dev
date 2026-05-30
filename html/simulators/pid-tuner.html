@@ -57,6 +57,7 @@ nav: simulators
                         <option value="fast">Fast (τ ~5–15 s) — e.g. duct static pressure</option>
                         <option value="med" selected>Medium (τ ~30 s – 2 min) — e.g. discharge air temp</option>
                         <option value="slow">Slow (τ ~2–10 min) — e.g. space temperature</option>
+                        <option value="vhigh">High dead-time (τ ~40 s, dead ~20 s) — e.g. long duct, downstream sensor</option>
                     </select>
                 </div>
                 <div class="field">
@@ -173,7 +174,7 @@ nav: simulators
             </table>
 
             <p class="pid-note">
-                The ratio that matters most for controllability is dead&nbsp;time&nbsp;÷&nbsp;τ. Below ~0.2 the loop is well-behaved; up around 0.5 you need to be careful (slower gain, longer reset); past 1.0 you're usually fighting transport delay, and a Smith predictor or feedforward starts to look attractive. At their preset operating points the three buckets above all sit comfortably under 0.2, which is most HVAC — though toward the slow end of a bucket's range the ratio climbs.
+                The ratio that matters most for controllability is dead&nbsp;time&nbsp;÷&nbsp;τ. Below ~0.2 the loop is well-behaved; up around 0.5 you need to be careful (slower gain, longer reset); past 1.0 you're usually fighting transport delay, and a Smith predictor or feedforward starts to look attractive. The first three buckets above all sit comfortably under 0.2, which is most HVAC — though toward the slow end of a bucket's range the ratio climbs. The fourth process, <strong>High dead-time</strong> (dead&nbsp;÷&nbsp;τ&nbsp;≈&nbsp;0.5), is the one to pick when you want to <em>see</em> the symptoms in the next table: crank the gain on it and the loop overshoots, then rings, then won't settle — the "too much P" failure the well-behaved buckets never quite reach.
             </p>
 
             <h2 class="ps-section-label" style="margin-top:2.25rem;">Symptom → Tuning Move</h2>

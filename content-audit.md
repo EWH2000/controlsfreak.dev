@@ -2205,3 +2205,12 @@ is reachable, or caption that the modeled processes are deliberately
 well-behaved and won't ring. The primary fix is the simulator's
 reachable envelope, so the finding lives in `ux-audit.md`; this entry
 is the content-clarity cross-reference.
+
+**Addressed (2026-05-30).** Added a fourth process preset, **High
+dead-time** (dead ÷ τ ≈ 0.5), to `PID_PROC`. Cranking gain on it now
+overshoots (~14 % at Kc 8), rings, and won't settle, tripping the >20 %
+overshoot warn at the slider maxima — so the cheat-sheet's "Overshoots,
+then recovers" / "Oscillates / hunts" rows now describe behavior the user
+can actually produce. The pid-note above the cheat-sheet points at the new
+preset as the one to pick to *see* the symptoms. The well-behaved buckets
+are unchanged. Primary fix logged at `ux-audit.md` #6.

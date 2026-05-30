@@ -33,9 +33,15 @@
 // Process-model presets — the "plant", independent of any controller tuning.
 //         lag(s)  dead(s)  window(s)   SP    rest  span   process gain (Δunits per %out)   decimals
 const PID_PROC = {
-    fast: { tau: 8,   dead: 1,  win: 80,   sp: 1.5, bias: 0,  range: 5,  kproc: 1.6 * 1.5 / 100, dec: 2 },
-    med:  { tau: 45,  dead: 6,  win: 480,  sp: 70,  bias: 55, range: 50, kproc: 1.6 * 15  / 100, dec: 1 },
-    slow: { tau: 240, dead: 30, win: 2400, sp: 72,  bias: 65, range: 20, kproc: 1.6 * 7   / 100, dec: 1 },
+    fast:  { tau: 8,   dead: 1,  win: 80,   sp: 1.5, bias: 0,  range: 5,  kproc: 1.6 * 1.5 / 100, dec: 2 },
+    med:   { tau: 45,  dead: 6,  win: 480,  sp: 70,  bias: 55, range: 50, kproc: 1.6 * 15  / 100, dec: 1 },
+    slow:  { tau: 240, dead: 30, win: 2400, sp: 72,  bias: 65, range: 20, kproc: 1.6 * 7   / 100, dec: 1 },
+    // Dead-time-dominant loop: dead ÷ τ ≈ 0.5, where transport delay
+    // starts to bite. Unlike the three buckets above (all under ~0.2),
+    // this one rings as gain climbs and goes unstable past the ultimate
+    // gain (Kc ≈ 8 here), so the "too much P" lesson the cheat-sheet
+    // describes is actually reachable on the slider. ux-audit #6.
+    vhigh: { tau: 40,  dead: 20, win: 600,  sp: 70,  bias: 55, range: 50, kproc: 1.6 * 15  / 100, dec: 1 },
 };
 
 // Rate-slider max (minutes) per process speed: useful derivative time scales
@@ -44,7 +50,7 @@ const PID_PROC = {
 // a 4 min one. (Gain and reset need no such re-ranging; their useful ranges
 // hold across process speeds.) Both the full tuner and the Education mini-sims
 // read from this table.
-const PID_DMAX = { fast: 0.15, med: 0.5, slow: 2.0 };
+const PID_DMAX = { fast: 0.15, med: 0.5, slow: 2.0, vhigh: 0.5 };
 
 // Run one step-response simulation.
 //   proc — an entry from PID_PROC (or anything with the same shape)

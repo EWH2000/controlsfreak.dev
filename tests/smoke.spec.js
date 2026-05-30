@@ -131,6 +131,21 @@ test('pid tuner runs the shared simulation engine on load', async ({ page }) => 
     expect(errors, 'pid tuner behavioral should log no page / console errors').toEqual([]);
 });
 
+test('pid tuner — high dead-time process reaches the unstable regime', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('/simulators/pid-tuner.html');
+    // The three well-behaved buckets barely overshoot even at the slider
+    // maxima; the High dead-time process (dead/τ ≈ 0.5) can be driven to
+    // ring — the "too much P" lesson the cheat-sheet describes. ux-audit #6.
+    await page.selectOption('#pid-proc', 'vhigh');
+    await page.$eval('#pid-kc', el => { el.value = '20'; el.dispatchEvent(new Event('input', { bubbles: true })); });
+    await page.$eval('#pid-ki', el => { el.value = '6';  el.dispatchEvent(new Event('input', { bubbles: true })); });
+    // Overshoot clears the >20 % warn threshold, so the readout flags it.
+    await expect(page.locator('#pid-over')).toHaveClass(/warn/);
+    await expect(page.locator('#pid-settle')).toContainText('>');   // never settles in window
+    expect(errors, 'pid high-dead-time behavioral should log no page / console errors').toEqual([]);
+});
+
 test('bacnet/ip converter converts a hex string', async ({ page }) => {
     const errors = watchErrors(page);
     await page.goto('/tools/bacnet-ip-converter.html');
