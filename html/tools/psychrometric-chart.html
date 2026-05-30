@@ -206,8 +206,9 @@ nav: tools
 
         <div class="narrow-width-note">
             The chart is built for a wider screen — on a phone the three-column workspace
-            collapses and the canvas compresses. Dragging OA / RA still works, but a laptop
-            or tablet gives the chart room to read.
+            collapses and the canvas compresses. The fastest path on a phone is typing each
+            state into the Input column above; dragging OA / RA on the chart still works, but
+            a laptop or tablet gives it room to read.
         </div>
 
         <!-- Same three-column property-sheet layout as the other tools (BACnet
@@ -1332,6 +1333,12 @@ nav: tools
             return keys;
         }
 
+        // Grab tolerance for a node hit. A finger on the dense chart needs
+        // more slack than a mouse, so coarse pointers (touch) get a wider
+        // radius. ux-audit #4. Evaluated once — the primary pointer doesn't
+        // change mid-session.
+        const GRAB_RADIUS = (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) ? 24 : 18;
+
         function hitTestNode(ev) {
             if (!psyGeom || !lastChain) return null;
             const { X, Y } = psyGeom;
@@ -1341,7 +1348,7 @@ nav: tools
                 const s = lastChain.results[key];
                 if (!s || !s.ok) continue;
                 const d = Math.hypot(X(s.tdb) - px, Y(s.W) - py);
-                if (d <= 18 && (!best || d < best.d)) best = { key, d };
+                if (d <= GRAB_RADIUS && (!best || d < best.d)) best = { key, d };
             }
             return best ? best.key : null;
         }
