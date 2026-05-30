@@ -840,8 +840,13 @@ nav: simulators
             if (state.localMode) { state.keypadRun = true; flash('RUN (LOCAL)'); return; }
             const src = byId('S01').value;
             if (src === 0) { state.keypadRun = true; flash('RUN OK'); }
-            else if (src === 1) flash('IGN: SRC=TERMS');
-            else if (src === 2) flash('IGN: SRC=NET');
+            // Keypad RUN is correctly ignored when the run source isn't the
+            // keypad — that realism is the lesson, but a bare "IGN: SRC=TERMS"
+            // reads as a dead button. Name the source AND the fix (press L/R
+            // to take local keypad control), and hold it a beat longer so the
+            // press doesn't look swallowed (ux-audit #5). 20-char LCD line.
+            else if (src === 1) flash('IGN: SRC=TERM, L/R', 3500);
+            else if (src === 2) flash('IGN: SRC=NET, L/R', 3500);
         }
         function onStop() {
             backToHome();

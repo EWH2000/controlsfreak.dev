@@ -683,11 +683,12 @@ test('vfd mock — run-source gating works from the keypad', async ({ page }) =>
     await page.goto('/simulators/vfd-mock.html');
 
     // Default config is run-source=TERMINALS. Pressing keypad RUN should
-    // NOT start the drive; the LCD's line 4 should flash the ignore msg.
+    // NOT start the drive; the LCD's line 4 flashes the ignore msg, which
+    // now names the run source AND the fix (press L/R) — ux-audit #5.
     await page.click('#vfdm-key-run');
     await expect(page.locator('#vfdm-state-text')).toHaveText(/STOPPED/);
     const lcdLines = await page.locator('#vfdm-lcd .vfdm-lcd-line').allTextContents();
-    expect(lcdLines[3]).toMatch(/IGN: SRC=TERMS/);
+    expect(lcdLines[3]).toMatch(/IGN: SRC=TERM, L\/R/);
 
     // BAS-flare LED — neutral when stopped (no .active class).
     await expect(page.locator('#vfdm-state-led')).not.toHaveClass(/active/);
