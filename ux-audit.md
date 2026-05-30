@@ -222,6 +222,15 @@ note ("RUN ignored — run source is TERMINALS; press L/R for keypad
 control") instead of absorbing the press. Turns a dead-end into the
 exact lesson the page wants to teach.
 
+**Addressed (2026-05-29).** Calibration note: the press wasn't *fully*
+silent — `onRun()` already flashed `IGN: SRC=TERMS` on LCD line 4 — but
+the code was cryptic and gave no next step, which is why it read as a
+dead button. Reworded to name the source **and** the fix within the
+20-char LCD line (`IGN: SRC=TERM, L/R` for terminals, `IGN: SRC=NET, L/R`
+for network) and held a beat longer (3500 ms) so the press doesn't look
+swallowed. The keypad-STOP gated case (`STOP IGN: DI HW`) is a separate,
+rarer path and was left as-is.
+
 #### 6. PID tuner can't be driven into overshoot/instability, so the headline tuning lesson is unreachable
 
 **Persona:** engineer. **Location:** `/simulators/pid-tuner.html` —
