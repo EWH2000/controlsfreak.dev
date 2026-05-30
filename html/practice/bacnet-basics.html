@@ -1,0 +1,71 @@
+---
+title: BACnet Basics Quiz — controlsfreak.dev
+description: Ten questions on the BACnet Basics gotchas — the self-describing object model, device instances, the services, and the priority array's lowest-non-null rule.
+canonical: https://controlsfreak.dev/practice/bacnet-basics.html
+nav: practice
+pairedLesson: https://controlsfreak.dev/education/bacnet-basics.html
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Practice · BACnet Basics</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">BACnet Basics Quiz <span class="tool-tag">BACnet</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                Ten questions on the fundamentals from the
+                <a href="/education/bacnet-basics.html">BACnet Basics</a> lesson — the self-describing
+                device / object / property model, the analog / binary / multi-state families, the everyday
+                services, and the priority array's lowest-non-null-slot rule (plus how writing null releases
+                an override). Each reveal links back to the section of the lesson it came from.
+            </p>
+
+            <div id="quiz"></div>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/tools/bacnet-ip-converter.html', label: 'BACnet/IP Hex Converter'}
+        ],
+        lessons: [
+            {href: '/education/bacnet-basics.html', label: 'BACnet Basics'},
+            {href: '/education/bacnet-networking.html', label: 'BACnet Networking'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/practice/">← All practice</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="/scripts/quiz-engine.js"></script>
+<script>
+    (function () {
+        'use strict';
+
+        // Question bank lives in html/_data/quizzes/bacnet-basics.js so the
+        // FAQPage JSON-LD emitted from head.njk can read the same source.
+        const questions = {{ quizzes['bacnet-basics'] | safeScriptJson | safe }};
+
+        Quiz.mount('#quiz', questions, {
+            slug: 'bacnet-basics',
+            title: 'BACnet Basics',
+            defaultCount: 10,
+            defaultOrder: 'sequential'
+        });
+    })();
+</script>
+{% endblock %}

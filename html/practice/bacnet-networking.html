@@ -1,0 +1,71 @@
+---
+title: BACnet Networking Quiz — controlsfreak.dev
+description: Ten questions on the BACnet Networking gotchas — the three addressing layers, BBMDs and the asymmetric-BDT trap, Foreign Device TTLs, and EBO hex decoding.
+canonical: https://controlsfreak.dev/practice/bacnet-networking.html
+nav: practice
+pairedLesson: https://controlsfreak.dev/education/bacnet-networking.html
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Practice · BACnet Networking</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">BACnet Networking Quiz <span class="tool-tag">BACnet</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                Ten questions on the addressing and broadcast story from the
+                <a href="/education/bacnet-networking.html">BACnet Networking</a> lesson — the three
+                identifier layers (device instance, network number, MAC), why routers drop broadcasts, the
+                BBMD / BDT machinery and the asymmetric-BDT trap, Foreign Device Registration TTLs, and
+                reading the EBO hex blob. Each reveal links back to the section it came from.
+            </p>
+
+            <div id="quiz"></div>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/tools/bacnet-ip-converter.html', label: 'BACnet/IP Hex Converter'}
+        ],
+        lessons: [
+            {href: '/education/bacnet-networking.html', label: 'BACnet Networking'},
+            {href: '/education/bacnet-basics.html', label: 'BACnet Basics'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/practice/">← All practice</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="/scripts/quiz-engine.js"></script>
+<script>
+    (function () {
+        'use strict';
+
+        // Question bank lives in html/_data/quizzes/bacnet-networking.js so the
+        // FAQPage JSON-LD emitted from head.njk can read the same source.
+        const questions = {{ quizzes['bacnet-networking'] | safeScriptJson | safe }};
+
+        Quiz.mount('#quiz', questions, {
+            slug: 'bacnet-networking',
+            title: 'BACnet Networking',
+            defaultCount: 10,
+            defaultOrder: 'sequential'
+        });
+    })();
+</script>
+{% endblock %}

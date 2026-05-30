@@ -1,0 +1,71 @@
+---
+title: Modbus Basics Quiz — controlsfreak.dev
+description: Ten questions on the Modbus Basics gotchas — the four data tables, FC03 vs FC04, the dumb-on-purpose data model, exception responses, and the high-bit marker.
+canonical: https://controlsfreak.dev/practice/modbus-basics.html
+nav: practice
+pairedLesson: https://controlsfreak.dev/education/modbus-basics.html
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Practice · Modbus Basics</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">Modbus Basics Quiz <span class="tool-tag">Modbus</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                Ten questions on the fundamentals from the
+                <a href="/education/modbus-basics.html">Modbus Basics</a> lesson — the four data tables and
+                their independent addressing, the FC03 / FC04 / FC16 function-code pairs, the client-polls /
+                server-answers model, and how an exception response signals failure with the high bit set.
+                Each reveal links back to the section of the lesson it came from.
+            </p>
+
+            <div id="quiz"></div>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/tools/modbus-register-viewer.html', label: 'Modbus Register Viewer'}
+        ],
+        lessons: [
+            {href: '/education/modbus-basics.html', label: 'Modbus Basics'},
+            {href: '/education/modbus-decoding.html', label: 'Modbus Decoding'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/practice/">← All practice</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="/scripts/quiz-engine.js"></script>
+<script>
+    (function () {
+        'use strict';
+
+        // Question bank lives in html/_data/quizzes/modbus-basics.js so the
+        // FAQPage JSON-LD emitted from head.njk can read the same source.
+        const questions = {{ quizzes['modbus-basics'] | safeScriptJson | safe }};
+
+        Quiz.mount('#quiz', questions, {
+            slug: 'modbus-basics',
+            title: 'Modbus Basics',
+            defaultCount: 10,
+            defaultOrder: 'sequential'
+        });
+    })();
+</script>
+{% endblock %}

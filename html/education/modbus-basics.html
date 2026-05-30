@@ -3,6 +3,7 @@ title: Modbus Basics — controlsfreak.dev
 description: Modbus on the wire — what the protocol is, the four data tables, the function codes that read and write them, and what an exception response means.
 canonical: https://controlsfreak.dev/education/modbus-basics.html
 nav: education
+pairedQuiz: https://controlsfreak.dev/practice/modbus-basics.html
 ---
 {% extends "layouts/page.njk" %}
 {% from "related-links.njk" import relatedLinks %}
@@ -53,7 +54,7 @@ nav: education
                 keeps pointing toward.
             </p>
 
-            <h2 class="subhead">What Modbus is, and isn't</h2>
+            <h2 class="subhead" id="what-modbus-is">What Modbus is, and isn't</h2>
 
             <p>
                 At its core, Modbus is two things: a small set of <em>function codes</em> that
@@ -116,7 +117,7 @@ nav: education
                 <text x="270" y="175" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--text)">the client polls; the server only ever answers</text>
             </svg>
 
-            <h2 class="subhead">The four data tables</h2>
+            <h2 class="subhead" id="data-tables">The four data tables</h2>
 
             <p>
                 The data model has four tables, sorted along two dimensions: what each item
@@ -355,6 +356,9 @@ nav: education
         ],
         lessons: [
             {href: '/education/modbus-decoding.html', label: 'Modbus Decoding'}
+        ],
+        quizzes: [
+            {href: '/practice/modbus-basics.html', label: 'Modbus Basics'}
         ]
     }) }}
 
