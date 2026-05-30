@@ -127,6 +127,13 @@ the home-page entries #10/#11/#15/#16 cover the Browse cards, the
 "Most-Reached-For" eyebrow, and badge tone, but none address a beginner
 onramp — this isn't a parked-and-rejected idea.)
 
+**Addressed (2026-05-30).** Added a one-line onramp in the hero, above the
+badge row so the beginner door is read before the expert quick-access:
+"New to building controls? Start with the explainers →" linking
+`/education/`. New `p.hero-onramp` rule in `styles.css` (element-qualified
+to win over the centered `.hero p`); the badges keep their expert-shortcut
+role.
+
 #### 2. BACnet Basics opens by front-loading undefined acronyms before BACnet itself is defined
 
 **Persona:** newcomer. **Location:** `/education/bacnet-basics.html` —
