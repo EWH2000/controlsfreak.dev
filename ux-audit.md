@@ -147,6 +147,16 @@ examples as illustration. The terms are technically correct — this is a
 flow/ordering issue, not an accuracy one, which is why it's logged here
 and not in `content-audit.md`.
 
+**Addressed (2026-05-30).** Calibration note: the lead already *opened*
+plain-English ("BACnet is the protocol most modern building automation
+runs on") — the friction was that the dense ASHRAE/ASHRAE-135 standards
+history landed in sentence 2, before the relatable "if you touch X you're
+talking to BACnet" payoff. Light reorder within the intro: definition →
+where you meet it → the standards history (now flagged "for background")
+→ why this page exists. No content added or removed, and the "devices
+describe themselves" framing stays the job of the next section rather than
+being duplicated up here.
+
 #### 3. Top-nav links and the units toggle fall below the 44px touch target, site-wide
 
 **Persona:** field tech / mobile. **Location:** every page — top nav
