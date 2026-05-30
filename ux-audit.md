@@ -333,6 +333,16 @@ same failure-state-idiom inconsistency tracked editorially in
 `content-audit.md` #25 and at the CSS layer in `codebase-issues.md` #73;
 the display-value rail itself is the fix here.
 
+**Addressed (2026-05-29).** Both tabs now mute `#er-db-pct` / `#er-h-pct`
+to `—` (the air-mixing nonsensical-input idiom) when the fraction lands
+outside 0–100 %, letting the feasibility callout carry the why; the
+formula line still shows the raw computation so the >100 % math is
+visible. The dry-bulb default was retuned to a feasible case
+(OA 60 / RA 75 / MA 65 → 66.7 %) so the page loads with a confident
+number and the worked example leads feasible, with the out-of-range
+behavior described below it (this also fixed a latent worked-example
+slip: the old default, MA 55, was labelled "feasible" but sits below OA).
+
 #### 12. Coil-sizing doesn't print the entering-air specific-volume basis in the worked output
 
 **Persona:** engineer. **Location:** `/tools/coil-sizing.html` — capacity

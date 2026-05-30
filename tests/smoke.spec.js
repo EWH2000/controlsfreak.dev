@@ -281,21 +281,32 @@ test('economizer ratio — dry-bulb and enthalpy tabs compute their cases', asyn
     const errors = watchErrors(page);
     await page.goto('/tools/economizer-ratio.html');
 
-    // Dry-bulb tab loads with the worked-example defaults: 60 / 75 / 55 °F.
-    // (55 − 75) / (60 − 75) × 100 = 133.3 % — flagged as out-of-range.
-    await expect(page.locator('#er-db-pct')).toHaveText('133.3 %');
+    // Dry-bulb tab loads with the worked-example defaults: 60 / 75 / 65 °F.
+    // (65 − 75) / (60 − 75) × 100 = 66.7 % — feasible, shown as the headline.
+    await expect(page.locator('#er-db-pct')).toHaveText('66.7 %');
+    await expect(page.locator('#er-db-feas')).toContainText('Feasible');
+
+    // Out-of-range (>100 %): drop the setpoint below OA. (55 − 75) / (60 − 75)
+    // × 100 = 133.3 % — a simple mix can't get there, so the headline mutes to
+    // — and the feasibility callout carries the explanation (ux-audit #11).
+    await page.fill('#er-db-ma', '55');
+    await expect(page.locator('#er-db-pct')).toHaveText('—');
+    await expect(page.locator('#er-db-pct')).toHaveClass(/muted/);
     await expect(page.locator('#er-db-feas')).toContainText('100 % OA');
 
-    // Switch to feasible case: setpoint between OA and RA.
+    // Another feasible case: setpoint between OA and RA.
     await page.fill('#er-db-oa', '50');
     await page.fill('#er-db-ma', '65');
     // (65 − 75) / (50 − 75) × 100 = 40 %
     await expect(page.locator('#er-db-pct')).toHaveText('40.0 %');
     await expect(page.locator('#er-db-feas')).toContainText('Feasible');
 
-    // Infeasible — OA hotter than the setpoint AND than RA.
+    // Infeasible (<0 %) — OA hotter than the setpoint AND than RA. Headline
+    // mutes here too; feasibility line explains minimum-OA only.
     await page.fill('#er-db-oa', '85');
     await page.fill('#er-db-ma', '60');
+    await expect(page.locator('#er-db-pct')).toHaveText('—');
+    await expect(page.locator('#er-db-pct')).toHaveClass(/muted/);
     await expect(page.locator('#er-db-feas')).toContainText('Infeasible');
 
     // Enthalpy tab — defaults: OA 78/68WB, RA 75/63WB, MA target 65.

@@ -75,7 +75,7 @@ nav: tools
                     </div>
                     <div class="ps-row">
                         <label class="ps-label" data-us="Mixed-air setpoint (°F)" data-metric="Mixed-air setpoint (°C)" for="er-db-ma">Mixed-air setpoint (°F)</label>
-                        <input class="ps-input" type="number" id="er-db-ma" step="0.5" min="-50" max="200" value="55">
+                        <input class="ps-input" type="number" id="er-db-ma" step="0.5" min="-50" max="200" value="65">
                     </div>
                 </section>
 
@@ -100,22 +100,27 @@ nav: tools
                     Summer cooling on an economizer-favorable morning —
                     OA <span data-us="60 °F" data-metric="15.6 °C">60 °F</span>,
                     RA <span data-us="75 °F" data-metric="23.9 °C">75 °F</span>,
-                    mixed-air setpoint <span data-us="55 °F" data-metric="12.8 °C">55 °F</span>.
+                    mixed-air setpoint <span data-us="65 °F" data-metric="18.3 °C">65 °F</span>.
                 </p>
                 <ol class="ref-note worked-list">
                     <li>Setpoint sits between OA and RA → feasible.</li>
                     <li>The damper has to bring in enough OA to drag the mix down to setpoint:<br>
                         <code>% OA = (MA − RA) ÷ (OA − RA) × 100</code></li>
-                    <li>Plug in: <code>(55 − 75) ÷ (60 − 75) × 100 = 133 %</code>.</li>
-                    <li>Above 100 % — even 100 % outdoor air can't get there. The
-                        damper goes wide open and the coil picks up the rest.</li>
+                    <li>Plug in: <code>(65 − 75) ÷ (60 − 75) × 100 = 66.7 %</code>.</li>
+                    <li>Two-thirds outdoor air, one-third return — that's the
+                        damper command.</li>
                 </ol>
                 <p class="ref-note">
                     When the calc lands between 0 and 100 %, that's the damper
-                    command. Below 0 % means OA is hotter than the setpoint AND
-                    than the room — minimum-OA only, no economizer; above 100 %
-                    means OA is cooler than the setpoint but not cold enough to
-                    carry the whole load alone.
+                    command. Outside that band the mix is physically impossible,
+                    so the readout blanks to <code>—</code> and the feasibility
+                    line carries the why: below 0 % means OA is hotter than the
+                    setpoint AND than the room — minimum-OA only, no economizer;
+                    above 100 % means OA is cooler than the setpoint but not cold
+                    enough to carry the whole load alone (drop the setpoint to
+                    <span data-us="55 °F" data-metric="12.8 °C">55 °F</span> to
+                    see it — the damper goes wide open and the coil makes up the
+                    rest).
                 </p>
             </section>
         </div>
@@ -317,8 +322,21 @@ nav: tools
             }
 
             const pct = (ma - ra) / (oa - ra) * 100;
-            outEl.className = 'ps-value live';
-            outEl.textContent = pct.toFixed(1) + ' %';
+            const within = (ma >= Math.min(oa, ra)) && (ma <= Math.max(oa, ra));
+
+            // Headline %OA only when the mix is physically in range (0–100 %).
+            // A setpoint outside the OA–RA bracket yields a >100 % or <0 %
+            // fraction a simple two-stream mix can't produce; mute it to — and
+            // let the feasibility callout below carry the why (the air-mixing
+            // nonsensical-input idiom — a number you can't physically read
+            // doesn't earn the headline).
+            if (within) {
+                outEl.className = 'ps-value live';
+                outEl.textContent = pct.toFixed(1) + ' %';
+            } else {
+                outEl.className = 'ps-value muted';
+                outEl.textContent = '—';
+            }
 
             // Display the formula in the user's current units, but the math
             // ran in canonical IP — display them coherently by formatting
@@ -331,8 +349,7 @@ nav: tools
                 `= (${maD} − ${raD}) ÷ (${oaD} − ${raD}) × 100 ` +
                 `= ${pct.toFixed(1)} %`;
 
-            // Three feasibility regimes.
-            const within = (ma >= Math.min(oa, ra)) && (ma <= Math.max(oa, ra));
+            // Three feasibility regimes (within computed above).
             if (within) {
                 setFeas(feasEl,
                     `Feasible — setpoint is between OA and RA, so a ${pct.toFixed(1)} %OA mix lands on it. Below ~10 %, the damper is at minimum-position; near 100 %, the coil picks up everything past the mix.`,
@@ -448,7 +465,17 @@ nav: tools
             }
 
             const pct = (maTarget - ra.tdb) / (oa.tdb - ra.tdb) * 100;
-            setLive('er-h-pct', pct.toFixed(1) + ' %');
+            const within = (maTarget >= Math.min(oa.tdb, ra.tdb)) && (maTarget <= Math.max(oa.tdb, ra.tdb));
+
+            // Headline %OA only when the mix is physically in range (0–100 %);
+            // otherwise mute to — and let the feasibility callout carry the why
+            // (matches the dry-bulb tab + the air-mixing nonsensical-input idiom).
+            if (within) {
+                setLive('er-h-pct', pct.toFixed(1) + ' %');
+            } else {
+                pctEl.className = 'ps-value muted';
+                pctEl.textContent = '—';
+            }
 
             const oaD = U.display.temp(oa.tdb).toFixed(1);
             const raD = U.display.temp(ra.tdb).toFixed(1);
@@ -458,8 +485,7 @@ nav: tools
                 `= (${maDD} − ${raD}) ÷ (${oaD} − ${raD}) × 100 ` +
                 `= ${pct.toFixed(1)} %`;
 
-            // Feasibility — same regimes as the dry-bulb tab.
-            const within = (maTarget >= Math.min(oa.tdb, ra.tdb)) && (maTarget <= Math.max(oa.tdb, ra.tdb));
+            // Feasibility — same regimes as the dry-bulb tab (within above).
             if (within) {
                 setFeas(feasEl,
                     `Feasible — setpoint is between OA and RA dry-bulbs; a ${pct.toFixed(1)} %OA mix lands on it.`,
