@@ -399,6 +399,17 @@ headers.
   outline is suppressed elsewhere). When adding a new custom-styled
   interactive element with a `:hover` rule, add its selector to that
   block — don't scatter a one-off rule next to the `:hover`.
+- **Touch-target floor** lives in one consolidated `TOUCH-TARGET
+  FLOOR` block in `styles.css` (right after `FOCUS INDICATORS`),
+  scoped to `@media (hover: none)`. On touch devices the chrome-level
+  controls (`.site-nav-links a`, `.units-btn`, `.tab-btn`,
+  `.quiz-settings-select`, `.quiz-reset-best`) are padded to ≥44px
+  (WCAG 2.5.5 / Apple HIG) while desktop pointer density stays
+  compact. When adding a new *chrome-level* interactive (nav,
+  toggle, tab, settings control), add its selector here rather than
+  setting a per-component `min-height`. Answer-level controls
+  (`.quiz-choice`, `.quiz-action`, `.ps-input`, copy/submit buttons)
+  already clear 44px and aren't in the block.
 - **Column-grid family** — `.tool-body-2col` / `.tool-body-3col` /
   `.tool-body-row` all live in `styles.css`. Each grid sits directly
   inside a `.tab-pane` or `.tool-card`, not inside a padded

@@ -1113,6 +1113,31 @@ input[type="range"]:focus-visible::-moz-range-thumb {
     box-shadow: 0 0 0 1px var(--accent), 0 0 0 4px var(--accent-glow);
 }
 
+/* ── TOUCH-TARGET FLOOR ──
+   On touch devices (coarse pointer, no hover), the chrome-level
+   controls — top-nav links, units toggle, tool tabs, quiz settings —
+   are padded to a >=44px hit area (WCAG 2.5.5 / Apple HIG). Scoped to
+   (hover: none) so pointer users keep the compact desktop workstation
+   density; the answer-level controls (.quiz-choice, .quiz-action,
+   .ps-input, copy/submit buttons) already clear 44px and aren't
+   repeated here. Like FOCUS INDICATORS above, this is the single
+   consolidated home for the floor — add new chrome-level interactives
+   here rather than scattering per-component min-heights.
+   See codebase-issues #74 / ux-audit #3 / #8 / #9 for the why. */
+@media (hover: none) {
+    .site-nav-links a,
+    .units-btn,
+    .tab-btn,
+    .quiz-reset-best {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 44px;
+    }
+    .site-nav-links a { padding-inline: 0.2rem; }
+    .quiz-settings-select { min-height: 44px; }
+}
+
 /* default top spacing matches the dominant calc/converter shape:
    data row above, button row below. The .ps-row exception keeps
    toggle groups (Look up by, Chart range) vertically centered with
