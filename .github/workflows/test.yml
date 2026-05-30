@@ -37,8 +37,29 @@ jobs:
           path: ~/.cache/ms-playwright
           key: ${{ runner.os }}-playwright-${{ hashFiles('package-lock.json') }}
 
+      # apt system libs for Chromium. Reliable on its own; kept separate
+      # from the browser-binary download so a stalled download only retries
+      # the part that stalls, not the (working) apt step.
+      - name: Install Playwright system dependencies
+        run: npx playwright install-deps chromium
+
+      # The browser-binary download from cdn.playwright.dev intermittently
+      # stalls at ~100% on the runner's network and never returns — a whole-
+      # job rerun hits the same stall because it's a fresh cold download
+      # every time and there's no per-attempt timeout. Bound each attempt
+      # with `timeout` and retry on a fresh connection; once it succeeds the
+      # browser is cached (step above) so later runs skip the download.
       - name: Install Playwright Chromium
-        run: npx playwright install --with-deps chromium
+        run: |
+          for attempt in 1 2 3; do
+            echo "Playwright Chromium install — attempt $attempt"
+            if timeout 300 npx playwright install chromium; then
+              exit 0
+            fi
+            echo "attempt $attempt stalled or failed; retrying on a fresh connection"
+          done
+          echo "Playwright Chromium install failed after 3 attempts" >&2
+          exit 1
 
       - name: Run tests
         run: npm test
