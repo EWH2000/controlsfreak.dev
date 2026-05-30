@@ -190,6 +190,13 @@ the states in the panel above — dragging is easier on a wide screen").
 (Related but distinct from `content-audit.md` #23, which is about the
 Modbus bit-grid tap targets.)
 
+**Addressed (2026-05-29).** Did both. The existing `.narrow-width-note`
+now leads with the typed-input fallback ("the fastest path on a phone is
+typing each state into the Input column"), and `hitTestNode`'s grab
+tolerance widens from 18px to 24px on coarse pointers
+(`matchMedia('(pointer: coarse)')`), so a finger has more slack while the
+mouse keeps the tighter target.
+
 #### 5. VFD mock — pressing the keypad RUN button in REMOTE silently does nothing
 
 **Persona:** engineer. **Location:** `/simulators/vfd-mock.html` —
