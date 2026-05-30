@@ -3,6 +3,7 @@ title: Load Piping — controlsfreak.dev
 description: Two-way vs three-way valves at hydronic loads — variable vs constant system flow, when each one fits, and how the choice shapes the rest of the loop.
 canonical: https://controlsfreak.dev/education/load-piping.html
 nav: education
+pairedQuiz: https://controlsfreak.dev/practice/load-piping.html
 ---
 {% extends "layouts/page.njk" %}
 {% from "related-links.njk" import relatedLinks %}
@@ -195,7 +196,7 @@ nav: education
             </p>
 
             <!-- ───────────────── 1 · Two-Way Valve — Variable System Flow ───────────────── -->
-            <h2 class="subhead">Two-Way Valve — Variable System Flow</h2>
+            <h2 class="subhead" id="two-way">Two-Way Valve — Variable System Flow</h2>
 
             <p>
                 A <em>two-way</em> valve is exactly what it sounds like: two ports, in and out, sitting in the supply line to the load. The controller modulates it open or closed to vary how much flow reaches the coil. Demand high, valve opens, more water through the coil, more heat (or cooling) transferred. Demand low, valve closes, less water — and here's the part worth pausing on: when the valve throttles down, that flow doesn't go <em>anywhere else</em>. It just stops. The whole branch pulls less, and the system loop's total flow drops with it.
@@ -259,7 +260,7 @@ nav: education
             </p>
 
             <!-- ───────────────── 2 · Three-Way Valve — Constant System Flow ───────────────── -->
-            <h2 class="subhead">Three-Way Valve — Constant System Flow</h2>
+            <h2 class="subhead" id="three-way">Three-Way Valve — Constant System Flow</h2>
 
             <p>
                 A <em>three-way</em> valve has, as expected, three ports. What it adds to the picture is a <em>bypass</em>: a short loop of pipe that lets water get from the supply side to the return side <em>without going through the coil</em>. When the load needs less, the valve doesn't choke flow off — it sends it around the coil instead. The water still moves; it just doesn't pick up (or drop off) heat on the way through. From the system loop's point of view, the branch's total flow stays the same. The pump sees the same demand all day.
@@ -791,6 +792,9 @@ nav: education
             {href: '/education/hydronic-loops.html', label: 'Hydronic Loops'},
             {href: '/education/pump-control.html', label: 'Pump Control'},
             {href: '/education/balancing.html', label: 'Hydronic Balancing'}
+        ],
+        quizzes: [
+            {href: '/practice/load-piping.html', label: 'Load Piping'}
         ]
     }) }}
 

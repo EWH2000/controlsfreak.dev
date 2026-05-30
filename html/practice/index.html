@@ -70,13 +70,16 @@ nav: practice
 
     <div class="filter-chips" role="group" aria-label="Filter practice by topic">
         <button type="button" class="filter-chip active" data-category="all" aria-pressed="true">
-            All <span class="filter-chip-count">5</span>
+            All <span class="filter-chip-count">9</span>
         </button>
         <button type="button" class="filter-chip" data-category="modbus" aria-pressed="false">
             Modbus <span class="filter-chip-count">2</span>
         </button>
         <button type="button" class="filter-chip" data-category="bacnet" aria-pressed="false">
             BACnet <span class="filter-chip-count">2</span>
+        </button>
+        <button type="button" class="filter-chip" data-category="hydronics" aria-pressed="false">
+            Hydronics <span class="filter-chip-count">4</span>
         </button>
     </div>
 
@@ -125,6 +128,42 @@ nav: practice
                 desc:       'Drill the addressing and broadcast story from the BACnet Networking lesson — the three identifier layers, BBMDs and the asymmetric-BDT trap, Foreign Device TTLs, and EBO hex decoding.',
                 pills:      ['10 Questions', 'MCQ · TF · Gotcha · Numeric', '~ 5 min'],
                 category:   'bacnet'
+            }) }}
+            {{ navCard({
+                section:    'practice',
+                href:       '/practice/pump-control.html',
+                titleShort: 'Pump Control',
+                titleFull:  'Pump Control',
+                desc:       'Drill the Pump Control lesson — the operating point where pump and system curves cross, the affinity laws and cube law, remote vs local DP sensing, and DP setpoint reset.',
+                pills:      ['10 Questions', 'MCQ · TF · Gotcha · Numeric', '~ 5 min'],
+                category:   'hydronics'
+            }) }}
+            {{ navCard({
+                section:    'practice',
+                href:       '/practice/hydronic-loops.html',
+                titleShort: 'Hydronic Loops',
+                titleFull:  'Hydronic Loops',
+                desc:       'Drill the Hydronic Loops lesson — why direct return self-unbalances and reverse return self-balances, plus the primary-secondary twin-T and its closely-spaced tees.',
+                pills:      ['10 Questions', 'MCQ · TF · Gotcha · Numeric', '~ 5 min'],
+                category:   'hydronics'
+            }) }}
+            {{ navCard({
+                section:    'practice',
+                href:       '/practice/load-piping.html',
+                titleShort: 'Load Piping',
+                titleFull:  'Load Piping',
+                desc:       'Drill the Load Piping lesson — two-way vs three-way valves, variable vs constant system flow, mixing vs diverting, pump pairing, and the minimum-flow bypass.',
+                pills:      ['10 Questions', 'MCQ · TF · Gotcha', '~ 5 min'],
+                category:   'hydronics'
+            }) }}
+            {{ navCard({
+                section:    'practice',
+                href:       '/practice/balancing.html',
+                titleShort: 'Hydronic Balancing',
+                titleFull:  'Hydronic Balancing',
+                desc:       'Drill the Hydronic Balancing lesson — CBVs and the square-root law, ABV compensation range, PICVs and DP reset, and reading the symptoms of an unbalanced loop.',
+                pills:      ['10 Questions', 'MCQ · TF · Gotcha · Numeric', '~ 5 min'],
+                category:   'hydronics'
             }) }}
         </div>
     </section>

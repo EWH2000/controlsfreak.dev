@@ -1,0 +1,69 @@
+---
+title: Hydronic Loops Quiz — controlsfreak.dev
+description: Ten questions on the Hydronic Loops gotchas — direct vs reverse return balancing, and the primary-secondary twin-T with its closely-spaced tees.
+canonical: https://controlsfreak.dev/practice/hydronic-loops.html
+nav: practice
+pairedLesson: https://controlsfreak.dev/education/hydronic-loops.html
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Practice · Hydronic Loops</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">Hydronic Loops Quiz <span class="tool-tag">Hydronics</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                Ten questions on hydronic piping topology, from the
+                <a href="/education/hydronic-loops.html">Hydronic Loops</a> lesson — why direct return
+                self-unbalances and reverse return self-balances, and the primary-secondary "twin-T" with its
+                closely-spaced tees, constant boiler flow, and injection-pump control point. Each reveal links
+                back to the section it came from.
+            </p>
+
+            <div id="quiz"></div>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        lessons: [
+            {href: '/education/hydronic-loops.html', label: 'Hydronic Loops'},
+            {href: '/education/load-piping.html', label: 'Load Piping'},
+            {href: '/education/pump-control.html', label: 'Pump Control'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/practice/">← All practice</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="/scripts/quiz-engine.js"></script>
+<script>
+    (function () {
+        'use strict';
+
+        // Question bank lives in html/_data/quizzes/hydronic-loops.js so the
+        // FAQPage JSON-LD emitted from head.njk can read the same source.
+        const questions = {{ quizzes['hydronic-loops'] | safeScriptJson | safe }};
+
+        Quiz.mount('#quiz', questions, {
+            slug: 'hydronic-loops',
+            title: 'Hydronic Loops',
+            defaultCount: 10,
+            defaultOrder: 'sequential'
+        });
+    })();
+</script>
+{% endblock %}

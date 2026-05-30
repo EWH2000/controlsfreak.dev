@@ -3,6 +3,7 @@ title: Pump Control — controlsfreak.dev
 description: How a BMS controls a hydronic pump — pump curves and the operating point, variable-speed VFD control, differential-pressure sensors, and DP setpoint reset.
 canonical: https://controlsfreak.dev/education/pump-control.html
 nav: education
+pairedQuiz: https://controlsfreak.dev/practice/pump-control.html
 ---
 {% extends "layouts/page.njk" %}
 {% from "related-links.njk" import relatedLinks %}
@@ -180,7 +181,7 @@ nav: education
             </p>
 
             <!-- ───────────────── 1 · Constant-Speed Pumps ───────────────── -->
-            <h2 class="subhead">Constant-Speed Pumps — The Simplest Case</h2>
+            <h2 class="subhead" id="constant-speed">Constant-Speed Pumps — The Simplest Case</h2>
 
             <p>
                 Before we get to the variable-flow story, name the thing it replaces. A <em>constant-speed</em> pump is exactly what it sounds like: a motor wired across the line, running at 60 Hz any time it's energised. The "control" surface from the BMS is one binary point — start it or stop it. There's no speed reference, no setpoint, no curve to live on. The pump produces whatever flow the system happens to demand at its single fixed operating point, and that's the day.
@@ -195,7 +196,7 @@ nav: education
             </p>
 
             <!-- ───────────────── 2 · Pump Curve and System Curve ───────────────── -->
-            <h2 class="subhead">Pump Curve and System Curve — The Operating Point</h2>
+            <h2 class="subhead" id="operating-point">Pump Curve and System Curve — The Operating Point</h2>
 
             <p>
                 Two facts about a centrifugal pump — the kind on every hydronic system you'll touch — that are worth carrying around.
@@ -346,7 +347,7 @@ nav: education
             </p>
 
             <!-- ───────────────── 3 · How a VFD Moves the Operating Point ───────────────── -->
-            <h2 class="subhead">How a VFD Moves the Operating Point — Affinity Laws</h2>
+            <h2 class="subhead" id="affinity-laws">How a VFD Moves the Operating Point — Affinity Laws</h2>
 
             <p>
                 The math behind that "the pump curve scales when speed changes" move is the <em>affinity laws</em>. Three short statements that hold across every centrifugal pump and fan you'll touch, and they're the reason VFDs are everywhere:
@@ -371,7 +372,7 @@ nav: education
             </p>
 
             <!-- ───────────────── 4 · DP-Based Control ───────────────── -->
-            <h2 class="subhead">DP-Based Control — Sensor at the Far End of the Loop</h2>
+            <h2 class="subhead" id="dp-control">DP-Based Control — Sensor at the Far End of the Loop</h2>
 
             <p>
                 So the BMS has a VFD with a speed-reference input. What does it modulate against? The answer that's overwhelmingly common today is a <em>differential pressure</em> sensor wired into the loop, with the BMS running a PID loop that holds DP measured equal to a DP setpoint. Building demands more flow, valves open, DP drops, pump speeds up. Building demands less, valves close, DP rises, pump slows down. The feedback is direct and physical — the pump answers to the building, not to a clock.
@@ -523,7 +524,7 @@ nav: education
             </p>
 
             <!-- ───────────────── 5 · DP Setpoint Reset ───────────────── -->
-            <h2 class="subhead">DP Setpoint Reset — Squeezing the Last Bit</h2>
+            <h2 class="subhead" id="dp-reset">DP Setpoint Reset — Squeezing the Last Bit</h2>
 
             <p>
                 Fixed-DP control is already a big improvement over constant-speed pumping. But it leaves something on the table: the DP setpoint is sized for the <em>worst-case</em> load condition (peak demand, every valve open enough to need that pressure to pass design flow). The vast majority of operating hours look nothing like that — most of the time most of the valves are throttled back, and the pump is producing more pressure than any load actually needs. The remaining pressure just gets dropped across the throttled valves.
@@ -599,7 +600,7 @@ nav: education
             </p>
 
             <!-- ───────────────── 6 · Lead/Lag — brief ───────────────── -->
-            <h2 class="subhead">Lead/Lag and Parallel Pumps — A Note</h2>
+            <h2 class="subhead" id="lead-lag">Lead/Lag and Parallel Pumps — A Note</h2>
 
             <p>
                 Most real systems have <em>more than one</em> pump — at minimum a primary plus a standby for N+1 redundancy, often a pair (or three) of variable-speed pumps in parallel staged up and down as demand climbs. The sequence patterns that govern which pump runs when, how staging transitions are bumpless, how runtime gets rotated for even wear, how an end-of-curve protection trips before a pump finds itself drowning the system — that's its own topic, and it's all <em>sequencing</em> rather than pump-control proper. Worth flagging that it exists; not the question this page is answering.
@@ -631,6 +632,9 @@ nav: education
             {href: '/education/vfds.html', label: 'VFDs'},
             {href: '/education/hydronic-loops.html', label: 'Hydronic Loops'},
             {href: '/education/load-piping.html', label: 'Load Piping'}
+        ],
+        quizzes: [
+            {href: '/practice/pump-control.html', label: 'Pump Control'}
         ]
     }) }}
 
