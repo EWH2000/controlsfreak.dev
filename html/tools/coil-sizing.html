@@ -364,7 +364,9 @@ nav: tools
         const dispW     = wLbLb    => U.display.humidityRatio(wLbLb * 7000).toFixed(1);
         const dispH     = btuPerLb => U.display.enthalpy(btuPerLb).toFixed(1);
         const dispCap   = mbh      => U.display.heatCapacity(mbh).toFixed(1);
+        const dispV     = ft3PerLb => U.display.specificVolume(ft3PerLb).toFixed(2);
         const tU        = ()       => U.suffix.temp();
+        const vU        = ()       => U.suffix.specificVolume();
         const wU        = ()       => U.suffix.humidityRatio();
         const hU        = ()       => U.suffix.enthalpy();
         const capU      = ()       => U.suffix.heatCapacity();
@@ -484,7 +486,8 @@ nav: tools
 
             const mDot = cfm * 60 / entState.v;
             document.getElementById('cs-cap-formula').textContent =
-                `ṁ = ${cfmD} ${flowU()} × 60 ÷ v = ${Math.round(mDot)} lb dry air/h · ` +
+                `ṁ = ${cfmD} ${flowU()} × 60 ÷ v = ${Math.round(mDot)} lb dry air/h ` +
+                `(v = ${dispV(entState.v)} ${vU()} at entering ${dispT(entState.tdb)}/${dispT(entState.twb)} ${tU()}) · ` +
                 `total = ṁ × Δh = ${dispCap(totMbh)} ${capU()}`;
 
             // Direction sanity check — coil type vs. what the numbers say.

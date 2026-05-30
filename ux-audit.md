@@ -350,6 +350,14 @@ mass-flow basis matches.
 its basis inline (`v = 13.85 ft³/lb at entering 80/67`), the way the
 formula already spells out the other terms.
 
+**Addressed (2026-05-29).** The capacity-tab formula now prints
+`(v = 13.85 ft³/lb at entering 80.0/67.0 °F)` inline (new `dispV` / `vU`
+display helpers off `U.display.specificVolume` / `U.suffix.specificVolume`),
+unit-aware in metric. Surfacing the divisor exposed a separate, pre-existing
+display incoherence in the *metric* formula line (mass flow stays in `lb/h`
+and the `× 60` is the IP minutes-per-hour) — logged as `codebase-issues.md`
+#75, not fixed here.
+
 ### Strengths confirmed
 
 Recorded so the audit's silence on these areas isn't read as "didn't

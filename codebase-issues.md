@@ -3284,6 +3284,35 @@ the most-tapped control).
 row should grow on touch only or everywhere. Decision needed before a
 sweep.
 
+### 75. coil-sizing capacity formula is dimensionally incoherent in metric mode
+
+Surfaced while implementing ux-audit #12 (printing the entering-air
+specific volume in `#cs-cap-formula`), which drew attention to the rest
+of the line.
+
+**Where.** `html/tools/coil-sizing.html`, `calcCapacity()` — the worked
+`ṁ` formula string (`ṁ = … ÷ v = … lb dry air/h · total = …`).
+
+**What.** In US the line is correct: `ṁ = 2000 CFM × 60 ÷ v = 8665 lb dry
+air/h` (CFM × 60 min/h ÷ ft³/lb → lb/h). In **metric** it renders
+`ṁ = 3398.02 m³/h × 60 ÷ v = 8665 lb dry air/h`: the airflow is converted
+to `m³/h` (already per-hour, so the `× 60` minutes-per-hour factor no
+longer applies), the specific volume divisor is `m³/kg`, yet the mass
+flow result stays hard-coded in `lb dry air/h` (canonical IP). So the
+shown arithmetic doesn't reduce to the shown result, and the unit is
+wrong. The downstream `total = ṁ × Δh` value is fine — only the
+formula's *display* is incoherent in metric. (The ux #12 change added the
+`v` basis but did not touch this; the `8665 lb dry air/h` term and the
+`× 60` literal predate it.)
+
+**What it would take to fix.** Either (a) display the mass flow in metric
+(`kg dry air/h`) with the correct metric form (`m³/h ÷ (m³/kg)`), dropping
+the `× 60`; or (b) keep the formula in canonical IP regardless of toggle
+and label it as such. (a) is the consistent-with-the-rest-of-the-page
+choice but needs an `airflow`-to-per-hour helper and a mass-flow display
+unit that don't exist yet. Low severity — the headline capacity readouts
+are all correct and unit-aware; this is the explanatory formula line only.
+
 ### Deferred / Won't fix (with revisit trigger)
 
 Items considered during an audit and deliberately not pursued, each
