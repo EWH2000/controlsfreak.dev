@@ -20,7 +20,7 @@ findings from the recurring content-accuracy audits.
   `.html` under `html/` through Nunjucks and writes to `_site/`. YAML
   frontmatter + shared layout (see *Templating*). Static assets
   (`scripts/`, `styles.css`, `assets/`, `robots.txt`) passthrough;
-  `sitemap.xml` generated (see *Sitemap*). Build ~0.3s for 30 pages;
+  `sitemap.xml` generated (see *Sitemap*). Build ~0.3s for ~45 pages;
   no JS transpile or bundle step.
 - **Templates under `html/_includes/`:**
   - `layouts/page.njk` — page shell. Composes `head.njk` /

@@ -147,22 +147,28 @@ flavors share the same engine:
   When a topic recurs in feedback, it becomes a candidate for a
   new education page.
 
-Shipped so far:
+Shipped so far — eight content quizzes (each 10 questions, paired
+1:1 with its lesson and deep-linking the gotchas) plus two field
+drills:
 
-- **Modbus Decoding** *(content quiz)* — 10 questions covering the
-  4 gotchas from the Modbus Decoding lesson — the 5-digit
-  numbering trap, signed vs unsigned interpretation, the four
-  32-bit byte orderings, scaling — plus FC03/FC04 confusion and
-  exception responses. Exercises MCQ, T/F, spot-the-gotcha, and
-  numeric formats in one drill.
-- **Surviving Your First Months** *(field drill)* — a broad
-  sampler for techs in their first few months in the field. OSHA
-  LOTO + verify-on-known-live, 4-20 mA live-zero wire-break
-  signature, DMM continuity mode, 24VAC R/C convention, BAS
-  panel transformer voltage, photo-before-changing, VFD carrier-
-  frequency whine, the 10K thermistor at room temp, setpoint vs
-  actual, and the two-hour escalation budget. Removable later if
-  more specialized drills replace it.
+- **Content quizzes — protocols:** Modbus Basics, Modbus Decoding,
+  BACnet Basics, BACnet Networking. The data tables and function
+  codes, the 5-digit / signed / byte-order / scaling decoding traps,
+  the self-describing object model and priority array, and the
+  three-layer addressing with BBMDs and Foreign Device Registration.
+- **Content quizzes — hydronics:** Pump Control, Hydronic Loops,
+  Load Piping, Hydronic Balancing. The operating point and affinity
+  laws, direct/reverse return and the primary-secondary twin-T,
+  two-way vs three-way flow, and the CBV / ABV / PICV families.
+- **Surviving Your First Months** *(field drill)* — a broad sampler
+  for techs in their first few months: LOTO and verify-on-known-live,
+  the 4-20 mA live-zero wire-break signature, DMM continuity mode,
+  the 24VAC R/C convention, VFD carrier whine, and the like.
+- **Controller Swap** *(field drill)* — replacing a DDC controller
+  end to end: documenting and re-landing field wiring, re-using the
+  MS/TP address and BACnet device instance, EOL termination, config
+  backup, application download, graphics re-bind, and commissioning
+  the sequence (not just confirming the points read).
 
 ## How it's built
 

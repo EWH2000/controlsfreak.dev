@@ -1,15 +1,20 @@
 # controlsfreak.dev — Quiz Section Planning
 
-> **Status: v1 shipped 2026-05-25 in PR #141.** Lane is live at
+> **Status: v1 shipped 2026-05-25 (PR #141); v2 batch shipped
+> 2026-05-29/30 (PRs #157 / #158 / #159).** Lane is live at
 > `/practice/` (named "Practice" — picked over "Drills" / "Quizzes"
-> during scoping). Engine + Modbus Decoding content quiz + Surviving
-> Your First Months field drill all in the v1 ship. Graduating note
-> with v1 design decisions lives in
-> [`site-ideas-and-friction.md`](site-ideas-and-friction.md) under
-> *Practice section — quizzes + field drills*. v2 and v3 increments
-> below are still active planning — file stays at root until v3 ships,
-> at which point it moves to `docs/audits/quiz/` per the original
-> self-direction below.
+> during scoping). v1 shipped the engine + Modbus Decoding content
+> quiz + Surviving Your First Months field drill. v2 added seven more
+> content quizzes (Modbus Basics, BACnet Basics, BACnet Networking,
+> Pump Control, Hydronic Loops, Load Piping, Hydronic Balancing) and
+> the Controller Swap field drill — eight content quizzes and two
+> drills now live. Graduating note with the v1 design decisions lives
+> in [`site-ideas-and-friction.md`](site-ideas-and-friction.md) under
+> *Practice section — quizzes + field drills* (which also tracks the
+> v2 ship and the re-scoped v3 list). v3 increments below are still
+> active planning — file stays at root until v3 ships, at which point
+> it moves to `docs/audits/quiz/` per the original self-direction
+> below.
 
 Planning doc for a new top-level section: quizzes / drills for
 building-controls techs. Companion to `site-ideas-and-friction.md`
@@ -395,23 +400,30 @@ Three increments — each ships independently, no big-bang.
    localStorage shape, and the two-section landing with topic-chip
    refinement. See `site-ideas-and-friction.md` for the design-
    decisions writeup.
-2. **v2 — second wave of site-content quizzes.** Add BACnet Basics,
-   BACnet Networking, Modbus Basics, PID Basics, VFDs. Five new
-   quizzes, all directly mapped to existing pages, no new question
-   types. Fills the landing in.
-3. **v3 — field drills + mixes.** More specialized field drills
-   (Field Wiring & Sensors, Sequencing Scenarios, Junior Interview
-   Prep), then the All-Protocols and All-Hydronics Mix quizzes
-   (showing cross-page reuse via a shared `_data/quiz-banks/` data
-   file). Defer order-the-steps and identify-on-diagram formats
-   unless one becomes clearly necessary by then. Surviving Your
-   First Months may be retired here if the specialized drills cover
-   the same ground better.
+2. **v2 — second wave of site-content quizzes.** ✅ **Shipped
+   2026-05-29/30 across PRs #157 / #158 / #159.** Landed the protocol
+   trio (Modbus Basics, BACnet Basics, BACnet Networking) and the
+   four hydronics quizzes (Pump Control, Hydronic Loops, Load Piping,
+   Hydronic Balancing), plus the **Controller Swap** field drill — all
+   mapped to existing pages, no new question types. PID Basics and VFDs
+   slipped to v3 (see below). Also fixed CI to run in the prebuilt
+   Playwright container so the browser-download stall stopped blocking
+   merges.
+3. **v3 — remaining quizzes, field drills + mixes.** The deferred
+   content quizzes (PID Basics, VFDs, Psychrometrics, Function Blocks,
+   Equipment Staging, the refrigerant set), more specialized field
+   drills (Field Wiring & Sensors, Sequencing Scenarios, Junior
+   Interview Prep), then the **now-unblocked** All-Protocols and
+   All-Hydronics Mix quizzes (cross-page reuse via a shared
+   `_data/quiz-banks/` data file — enough banks now exist). Defer
+   order-the-steps and identify-on-diagram formats unless one becomes
+   clearly necessary. Surviving Your First Months may be retired here
+   if the specialized drills cover the same ground better.
 
 Pause for review between each increment so the visual + UX choices
 get a real check before propagating.
 
 ---
 
-*Last updated 2026-05-25 — v1 shipped in PR #141; v2 / v3 still
-planning.*
+*Last updated 2026-05-30 — v1 shipped in PR #141, v2 in PRs
+#157 / #158 / #159; v3 still planning.*
