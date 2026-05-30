@@ -1,0 +1,72 @@
+---
+title: Controller Swap Drill — controlsfreak.dev
+description: A field drill on replacing a DDC controller — the hardware (wiring, addressing, EOL terminations) and software (backup, download, commissioning) sides.
+canonical: https://controlsfreak.dev/practice/controller-swap.html
+nav: practice
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Practice · Controller Swap</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">Controller Swap Drill <span class="tool-tag">Field Drill</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                Ten questions on the real-world job of replacing a DDC controller — both halves of it. The
+                <strong>hardware</strong>: documenting and re-landing field wiring, re-using the MS/TP station
+                address and the BACnet device instance, and getting end-of-line termination right. The
+                <strong>software</strong>: backing up the old config before it's gone, re-downloading the
+                application, re-binding graphics, and actually commissioning the sequence instead of stopping
+                at "the points read." Reveal panels explain inline; a few link out to the protocol and balancing
+                lessons where the underlying concept lives.
+            </p>
+
+            <div id="quiz"></div>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/tools/bacnet-ip-converter.html', label: 'BACnet/IP Hex Converter'}
+        ],
+        lessons: [
+            {href: '/education/bacnet-networking.html', label: 'BACnet Networking'},
+            {href: '/education/bacnet-basics.html', label: 'BACnet Basics'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/practice/">← All practice</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="/scripts/quiz-engine.js"></script>
+<script>
+    (function () {
+        'use strict';
+
+        // Question bank lives in html/_data/quizzes/controller-swap.js so the
+        // FAQPage JSON-LD emitted from head.njk can read the same source.
+        const questions = {{ quizzes['controller-swap'] | safeScriptJson | safe }};
+
+        Quiz.mount('#quiz', questions, {
+            slug: 'controller-swap',
+            title: 'Controller Swap',
+            defaultCount: 10,
+            defaultOrder: 'sequential'
+        });
+    })();
+</script>
+{% endblock %}
