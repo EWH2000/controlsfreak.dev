@@ -80,15 +80,31 @@ the friction-doc graduating note.
 - *nav-card.njk macro extended* — `section: 'practice'` maps to
   prefix word `QUIZ` and status pill `GO`.
 
-**Parked for v2 / v3** (full detail in `quiz-section-plan.md`):
-- More content quizzes paired with existing lessons (BACnet Basics,
-  BACnet Networking, Modbus Basics, PID Basics, VFDs).
-- More field drills (Field Wiring & Sensors, Sequencing Scenarios,
-  Troubleshooting, Commissioning, Tridium / EBO quirks, full
-  Junior + Senior Interview Prep). First specialized drills land
-  alongside the next batch of education pages.
-- Cross-page Mix quizzes (All Protocols, All Hydronics) once 2+
-  banks exist. Shared `_data/quiz-banks/` data file at build time.
+**v2 batch shipped 2026-05-29/30** (three PRs):
+- Protocol content quizzes — Modbus Basics, BACnet Basics, BACnet
+  Networking (joining the v1 Modbus Decoding quiz). New `BACnet`
+  topic chip.
+- Hydronics content quizzes — Pump Control, Hydronic Loops, Load
+  Piping, Hydronic Balancing. New `Hydronics` topic chip.
+- Controller Swap field drill — self-contained (no paired lesson),
+  hardware + software coverage of replacing a DDC controller.
+- All paired lessons gained `pairedQuiz` + a "Test yourself" group,
+  and the `<h2>` anchors their `learnMore` deep-links needed.
+
+**Still parked for v3** (full detail in `quiz-section-plan.md`):
+- Content quizzes for the remaining lessons (PID Basics, VFDs,
+  Psychrometrics, Function Blocks, Equipment Staging, the refrigerant
+  set).
+- More specialized field drills (Field Wiring & Sensors, Sequencing
+  Scenarios, Troubleshooting, Commissioning, Tridium / EBO quirks,
+  full Junior + Senior Interview Prep).
+- **Cross-page Mix quizzes (All Protocols, All Hydronics) — now
+  unblocked:** 2+ protocol banks and 4 hydronics banks exist. Needs
+  the shared `_data/quiz-banks/` aggregation at build time. Good
+  next increment.
+- A **Commissioning education lesson** would give the Controller
+  Swap drill (and a future Commissioning drill) a proper parent to
+  pair against — today the drill is self-contained by necessity.
 - Order-the-steps + identify-on-diagram question formats — both
   schema additions, deferred until a question genuinely needs them.
 
@@ -606,7 +622,18 @@ the integration point is `setExternalSpeedHz()` on the VFD mock
 and a new "external write" sink on the PID tuner.
 
 
-### Refrigerant cycle — Education section, possibly with calculator
+### Refrigerant cycle — Education section, possibly with calculator *(parked 2026-05-29 — revisit when the topic is next picked up)*
+
+**Parked 2026-05-29.** The user is happy with where the refrigerant
+section sits. Shipped so far: the P-T / superheat tool
+(`/tools/refrigerant-pt.html`) and three Education pages
+(`refrigerant-cycle-basics.html`, `superheat-subcooling.html`,
+`metering-devices-txv-eev.html`). Everything still open below — the
+optional "Refrigerants and their pressures" page, the parked data
+follow-ups (R-32 entry, bonus blends R-448A / R-507A / R-422D /
+R-407F), and the possible refrigerant-cycle animation sharing
+saturation math — is parked until the topic is revisited. Detail
+preserved below.
 
 The refrigerant side is where everyone in HVAC has a fuzzy grasp and
 few have a clear one — especially controls people, who tend to treat
