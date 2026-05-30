@@ -354,6 +354,8 @@ test('coil sizing — capacity and leaving-state tabs compute their cases', asyn
     await expect(page.locator('#cs-cap-q-lat'  )).toContainText('23.');
     await expect(page.locator('#cs-cap-shr'    )).toHaveText('0.69');
     await expect(page.locator('#cs-cap-status' )).toContainText('Cooling coil');
+    // Worked formula prints the entering-air specific-volume basis (ux #12).
+    await expect(page.locator('#cs-cap-formula')).toContainText('v = 13.85 ft³/lb at entering 80.0/67.0 °F');
 
     // Switch to a heating coil — the sensible / latent / SHR rows drop
     // out, and a leaving dry-bulb above entering reads as heating.
