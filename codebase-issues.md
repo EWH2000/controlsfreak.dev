@@ -3328,6 +3328,31 @@ choice but needs an `airflow`-to-per-hour helper and a mass-flow display
 unit that don't exist yet. Low severity — the headline capacity readouts
 are all correct and unit-aware; this is the explanatory formula line only.
 
+### 76. Privacy-policy storage section heading reads "no cookies" but the section now also covers localStorage
+
+Surfaced while bringing the storage disclosure up to date (PR #174):
+the body was corrected to enumerate all three functional `localStorage`
+uses (units toggle, psych-chart range, per-quiz best score / attempts /
+last-played), but the section heading was left untouched.
+
+**Where.** `html/privacy.html`, the `<h2 class="subhead">` for the
+storage section — currently `No analytics, no tracking, no cookies set
+by me`.
+
+**What.** The heading is accurate about cookies (the site sets none) but
+now under-describes its own section: the bulk of the body is about
+browser-side `localStorage`, which the title doesn't mention. A reader
+skimming headings sees "no cookies" and may not realize the section also
+explains the functional storage the site *does* use. Minor editorial /
+findability nit, not a correctness or compliance problem — the body is
+accurate and the storage is functional, device-only, non-tracking.
+
+**What it would take to fix.** Reword the heading to name both ideas,
+e.g. `No tracking; what the site stores on your device` or `No cookies
+or tracking — just a few on-device settings`. Pure copy edit; check it
+still reads cleanly against the sibling `.subhead` headings and doesn't
+overflow on narrow viewports. Editorial call on exact wording.
+
 ### Deferred / Won't fix (with revisit trigger)
 
 Items considered during an audit and deliberately not pursued, each
