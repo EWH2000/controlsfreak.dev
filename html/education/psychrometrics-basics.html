@@ -3,6 +3,7 @@ title: Psychrometrics Basics — controlsfreak.dev
 description: The seven properties on a psychrometric chart, why two of them lock the rest, and how to read the chart without feeling like you need an engineering degree.
 canonical: https://controlsfreak.dev/education/psychrometrics-basics.html
 nav: education
+pairedQuiz: https://controlsfreak.dev/practice/psychrometrics-basics.html
 ---
 {% extends "layouts/page.njk" %}
 {% from "related-links.njk" import relatedLinks %}
@@ -91,7 +92,7 @@ nav: education
             </p>
 
             <!-- ── The seven properties — vocabulary first ──────────────────── -->
-            <h2 class="subhead">The Seven Properties — What Each One Tells You</h2>
+            <h2 class="subhead" id="properties">The Seven Properties — What Each One Tells You</h2>
 
             <p>
                 Every reading you will meet on a psychrometric chart is one of seven properties of moist air. Get the words down first; the relationships come next.
@@ -129,7 +130,7 @@ nav: education
             </div>
 
             <!-- ── Two properties lock the rest — the elegance ──────────────── -->
-            <h2 class="subhead">Two Properties Lock the Rest</h2>
+            <h2 class="subhead" id="two-lock">Two Properties Lock the Rest</h2>
 
             <p>
                 Now look at those seven properties from the other direction. At a fixed pressure (which, for an indoor space at a given altitude, you can treat as constant), moist air has <em>two</em> independent degrees of freedom. Pick any two independent properties — say, dry-bulb and relative humidity — and the other five fall out: wet-bulb, dew point, humidity ratio, enthalpy, and specific volume all become arithmetic from those two. That is why every psychrometric chart is two-axis, and why the chart tool’s <strong>Define&nbsp;by</strong> dropdown is not UX whimsy: it lets you pick whichever pair you actually have a reading for and reads off the rest.
@@ -159,7 +160,7 @@ nav: education
             </p>
 
             <!-- ── Process families — how the state point moves ─────────────── -->
-            <h2 class="subhead">Process Families on the Chart</h2>
+            <h2 class="subhead" id="processes">Process Families on the Chart</h2>
 
             <p>
                 Every air-handler stage moves the state point in a characteristic direction on the chart. Four families cover almost everything a controls engineer meets — naming them out loud makes it easier to read what a coil is doing the next time the leaving-air state stops making sense.
@@ -190,7 +191,7 @@ nav: education
             </p>
 
             <!-- ── Gotchas — the field consequences ─────────────────────────── -->
-            <h2 class="subhead">Gotchas That Bite Controls Engineers</h2>
+            <h2 class="subhead" id="gotchas">Gotchas That Bite Controls Engineers</h2>
 
             <div class="callout-grid">
                 <div class="callout">
@@ -299,6 +300,9 @@ nav: education
             {href: '/tools/psychrometric-chart.html', label: 'Psychrometric Chart'},
             {href: '/tools/air-mixing.html', label: 'Air-Mixing Calculator'},
             {href: '/tools/economizer-ratio.html', label: 'Economizer Ratio Helper'}
+        ],
+        quizzes: [
+            {href: '/practice/psychrometrics-basics.html', label: 'Psychrometrics Basics Quiz'}
         ]
     }) }}
 

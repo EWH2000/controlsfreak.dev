@@ -91,10 +91,20 @@ the friction-doc graduating note.
 - All paired lessons gained `pairedQuiz` + a "Test yourself" group,
   and the `<h2>` anchors their `learnMore` deep-links needed.
 
+**Content-quiz matrix completed 2026-06-05** (three PRs — the v3
+content-quiz arm): the remaining eight lessons gained paired quizzes,
+so all 16 Education pages now have a 1:1 Practice quiz. Refrigeration
+(Refrigerant Cycle Basics, Superheat & Subcooling, TXVs vs. EEVs;
+new `Refrigeration` chip), Controls & Logic (PID Basics, VFDs,
+Function Blocks; new `Controls` chip), and Air & Pumps (Psychrometrics
+Basics → new `Psychrometrics` chip; Equipment Staging → joined the
+`Hydronics` chip). Each ships the reciprocal FAQPage / `hasPart` /
+`isPartOf` JSON-LD off the paired frontmatter, and added the `<h2>`
+(or P/I/D callout) anchors its `learnMore` deep-links needed. Topic
+chips are now All(18) · Modbus · BACnet · Hydronics(5) ·
+Refrigeration(3) · Controls(3) · Psychrometrics(1).
+
 **Still parked for v3** (full detail in `quiz-section-plan.md`):
-- Content quizzes for the remaining lessons (PID Basics, VFDs,
-  Psychrometrics, Function Blocks, Equipment Staging, the refrigerant
-  set).
 - More specialized field drills (Field Wiring & Sensors, Sequencing
   Scenarios, Troubleshooting, Commissioning, Tridium / EBO quirks,
   full Junior + Senior Interview Prep).

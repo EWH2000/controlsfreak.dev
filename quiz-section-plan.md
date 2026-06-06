@@ -11,10 +11,14 @@
 > drills now live. Graduating note with the v1 design decisions lives
 > in [`site-ideas-and-friction.md`](site-ideas-and-friction.md) under
 > *Practice section — quizzes + field drills* (which also tracks the
-> v2 ship and the re-scoped v3 list). v3 increments below are still
-> active planning — file stays at root until v3 ships, at which point
-> it moves to `docs/audits/quiz/` per the original self-direction
-> below.
+> v2 ship and the re-scoped v3 list). The **v3 content-quiz arm shipped
+> 2026-06-05** across three more PRs (Refrigeration, Controls & Logic,
+> Air & Pumps) — all 16 Education lessons now have a 1:1 paired quiz.
+> What remains of v3 is the cross-page **Mix quizzes** and the
+> **specialized field drills** (plus a Commissioning lesson to parent
+> the Controller Swap drill). File stays at root until those land, at
+> which point it moves to `docs/audits/quiz/` per the original
+> self-direction below.
 
 Planning doc for a new top-level section: quizzes / drills for
 building-controls techs. Companion to `site-ideas-and-friction.md`
@@ -409,21 +413,28 @@ Three increments — each ships independently, no big-bang.
    slipped to v3 (see below). Also fixed CI to run in the prebuilt
    Playwright container so the browser-download stall stopped blocking
    merges.
-3. **v3 — remaining quizzes, field drills + mixes.** The deferred
-   content quizzes (PID Basics, VFDs, Psychrometrics, Function Blocks,
-   Equipment Staging, the refrigerant set), more specialized field
-   drills (Field Wiring & Sensors, Sequencing Scenarios, Junior
-   Interview Prep), then the **now-unblocked** All-Protocols and
-   All-Hydronics Mix quizzes (cross-page reuse via a shared
-   `_data/quiz-banks/` data file — enough banks now exist). Defer
-   order-the-steps and identify-on-diagram formats unless one becomes
-   clearly necessary. Surviving Your First Months may be retired here
-   if the specialized drills cover the same ground better.
+3. **v3 — remaining quizzes, field drills + mixes.** The content-quiz
+   arm ✅ **shipped 2026-06-05** across three PRs: Refrigeration
+   (Refrigerant Cycle Basics, Superheat & Subcooling, TXVs vs. EEVs),
+   Controls & Logic (PID Basics, VFDs, Function Blocks), and Air &
+   Pumps (Psychrometrics Basics, Equipment Staging) — completing the
+   1:1 lesson↔quiz matrix (all 16 lessons paired) and adding the
+   `Refrigeration`, `Controls`, and `Psychrometrics` topic chips
+   (Equipment Staging filed under `Hydronics`). **Still open:** more
+   specialized field drills (Field Wiring & Sensors, Sequencing
+   Scenarios, Junior Interview Prep), then the **now-unblocked**
+   All-Protocols and All-Hydronics Mix quizzes (cross-page reuse via a
+   shared `_data/quiz-banks/` data file — enough banks now exist).
+   Defer order-the-steps and identify-on-diagram formats unless one
+   becomes clearly necessary. Surviving Your First Months may be
+   retired here if the specialized drills cover the same ground better.
 
 Pause for review between each increment so the visual + UX choices
 get a real check before propagating.
 
 ---
 
-*Last updated 2026-05-30 — v1 shipped in PR #141, v2 in PRs
-#157 / #158 / #159; v3 still planning.*
+*Last updated 2026-06-05 — v1 shipped in PR #141, v2 in PRs
+#157 / #158 / #159; v3 content-quiz arm shipped 2026-06-05 (all 16
+lessons now paired). Mix quizzes + specialized field drills still
+open.*

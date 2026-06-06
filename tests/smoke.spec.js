@@ -65,6 +65,8 @@ const PAGES = [
     { name: 'practice — pid basics', url: '/practice/pid-basics.html' },
     { name: 'practice — vfds', url: '/practice/vfds.html' },
     { name: 'practice — function blocks', url: '/practice/function-blocks.html' },
+    { name: 'practice — psychrometrics basics', url: '/practice/psychrometrics-basics.html' },
+    { name: 'practice — equipment staging', url: '/practice/equipment-staging.html' },
     { name: 'practice — surviving first months', url: '/practice/surviving-first-months.html' },
     { name: 'practice — controller swap', url: '/practice/controller-swap.html' },
     { name: 'contact',                url: '/contact.html' },

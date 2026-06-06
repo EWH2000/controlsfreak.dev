@@ -3,6 +3,7 @@ title: Equipment Staging — controlsfreak.dev
 description: Several identical pumps in parallel and one staging sequence — how a BMS decides how many to run, when to add or drop one, and which pump takes the lead.
 canonical: https://controlsfreak.dev/education/equipment-staging.html
 nav: education
+pairedQuiz: https://controlsfreak.dev/practice/equipment-staging.html
 ---
 {% extends "layouts/page.njk" %}
 {% from "related-links.njk" import relatedLinks %}
@@ -196,7 +197,7 @@ nav: education
             </p>
 
             <!-- ───────────────── 1 · Why parallel units ───────────────── -->
-            <h2 class="subhead">Why a Plant Runs Several Identical Units</h2>
+            <h2 class="subhead" id="why-parallel">Why a Plant Runs Several Identical Units</h2>
 
             <p>
                 Before the staging question makes sense, name why the plant has more than one pump at all. A single pump sized for the building's <em>peak</em> load is oversized for nearly every hour that isn't the peak. A variable-speed pump rides that out gracefully for a while — slow down, follow the building, that's the whole pump-control story — but only down to a point. Every VFD has a minimum speed, and below the flow that minimum produces you're back to the problems variable-speed pumping was meant to solve: pressure dumped across throttled valves, and at the extreme the <em>deadhead</em> the pump-control page ended on. One pump can only turn down so far.
@@ -290,7 +291,7 @@ nav: education
             </p>
 
             <!-- ───────────────── 2 · Staging up and down ───────────────── -->
-            <h2 class="subhead">Staging Up and Down — How Many to Run</h2>
+            <h2 class="subhead" id="staging">Staging Up and Down — How Many to Run</h2>
 
             <p>
                 The sequence needs a signal that stands in for "how hard is the building working." On a variable-speed plant the natural one is already in hand: the speed reference the DP loop is producing (the pump-control page's whole subject). When the running pumps have been pinned near full speed for a while, they're out of room — the building wants more than they can give, and it's time to add a pump. When the speed reference has been sitting low, the running pumps are loafing, and one of them can probably be shut off.
@@ -364,7 +365,7 @@ nav: education
             </p>
 
             <!-- ───────────────── 3 · Lead/lag and rotation ───────────────── -->
-            <h2 class="subhead">Lead/Lag and Rotation — Which Ones</h2>
+            <h2 class="subhead" id="rotation">Lead/Lag and Rotation — Which Ones</h2>
 
             <p>
                 With <em>how many</em> answered, the sequence still has to pick <em>which</em> physical pumps. The one that runs first is the <em>lead</em>; the next to come on is the <em>lag</em> (with three pumps, first lag and second lag). On its own that's just an ordering — but it matters more than it looks, because of wear.
@@ -437,6 +438,9 @@ nav: education
         lessons: [
             {href: '/education/pid-basics.html', label: 'PID Basics'},
             {href: '/education/pump-control.html', label: 'Pump Control'}
+        ],
+        quizzes: [
+            {href: '/practice/equipment-staging.html', label: 'Equipment Staging Quiz'}
         ]
     }) }}
 
