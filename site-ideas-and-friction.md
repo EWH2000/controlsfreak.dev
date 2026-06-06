@@ -816,6 +816,23 @@ Sits under Protocols at `/tools/bacnet-objects.html`; cross-linked from
 both BACnet lessons. First of the v3.1 tools batch closing the
 protocols/hydronics tooling gap.
 
+### Valve Cv sizing *(shipped)*
+Hydronics had five education pages and zero tools — the worst
+content-to-tooling gap on the site. This is the cluster's first tool.
+Two tabs on the property-sheet shell: a `Cv = Q√(SG/ΔP)` solver with a
+"solve for" select (Cv / flow / ΔP, hiding whichever quantity is the
+output — the signal-scaling custom-row idiom) and a valve-authority
+check (`β = ΔP_valve,open ÷ total`) with an ok / marginal / poor
+verdict pill mirroring the economizer feasibility line. Kept US-native
+(Cv, GPM, psi — Cv's defining units) rather than wiring the global
+US/Metric toggle, because the coefficient itself changes name and
+meaning across unit systems (Cv vs Kv); instead it carries a permanent
+`Kv ≈ 0.865 · Cv` readout. The authority tab is unit-agnostic (a
+ratio). Introduces a new **Hydronics** tools chip at
+`/tools/valve-cv.html`; cross-linked from Balancing + Load Piping.
+Future refinement: metric flow/pressure inputs alongside the Kv
+readout, if a metric user asks.
+
 ### Thermistor calculator *(both modes shipped + curves verified)*
 Two modes, tabs à la Signal Scaling. Both are shipped and the curves
 are datasheet-verified.

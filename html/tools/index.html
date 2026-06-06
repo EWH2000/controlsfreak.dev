@@ -21,7 +21,7 @@ nav: tools
 
     <div class="filter-chips" role="group" aria-label="Filter tools by category">
         <button type="button" class="filter-chip active" data-category="all" aria-pressed="true">
-            All <span class="filter-chip-count">10</span>
+            All <span class="filter-chip-count">11</span>
         </button>
         <button type="button" class="filter-chip" data-category="hvac" aria-pressed="false">
             HVAC <span class="filter-chip-count">5</span>
@@ -31,6 +31,9 @@ nav: tools
         </button>
         <button type="button" class="filter-chip" data-category="signals" aria-pressed="false">
             Signals <span class="filter-chip-count">2</span>
+        </button>
+        <button type="button" class="filter-chip" data-category="hydronics" aria-pressed="false">
+            Hydronics <span class="filter-chip-count">1</span>
         </button>
     </div>
 
@@ -124,6 +127,15 @@ nav: tools
             desc:       'Saturation pressure ↔ temperature for R-410A, R-22, R-134a, R-407C, R-404A and R-454B — bubble and dew both, so blend glide is in plain sight — plus a superheat / subcooling check off a measured line temperature.',
             pills:      ['HVAC', '6 Refrigerants', 'Bubble / Dew', 'Superheat / Subcool'],
             category:   'hvac'
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/tools/valve-cv.html',
+            titleShort: 'Valve Cv',
+            titleFull:  'Valve Cv Sizing',
+            desc:       'Size a control valve from its flow coefficient — Cv = Q√(SG/ΔP) solved any direction — plus a valve-authority check and a Kv equivalent for metric work.',
+            pills:      ['Hydronics', 'Cv / Kv', 'Authority', 'Flow / ΔP'],
+            category:   'hydronics'
         }) }}
     </div>
 

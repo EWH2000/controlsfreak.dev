@@ -1,0 +1,350 @@
+---
+title: Valve Cv Sizing — controlsfreak.dev
+description: Size a control valve from its flow coefficient — Cv = Q√(SG/ΔP), solved for Cv, flow, or pressure drop — with a valve-authority check and a Kv equivalent.
+canonical: https://controlsfreak.dev/tools/valve-cv.html
+nav: tools
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block head %}
+    <style>
+        /* Page-only — the authority verdict pill. Same idiom as the
+           economizer feasibility line: a one-line verdict on shared
+           ps-row chrome, recolored by outcome. */
+        .cv-verdict {
+            margin-top: 1rem;
+            padding: 0.5rem 0.75rem;
+            border-radius: 4px;
+            font-family: var(--mono);
+            font-size: 0.82rem;
+            line-height: 1.5;
+            border: 1px solid var(--border);
+            background: var(--surface-2);
+            color: var(--text);
+        }
+        .cv-verdict.ok    { border-color: var(--accent); background: var(--accent-dim); }
+        .cv-verdict.warn  { border-color: var(--heat);   color: var(--heat); }
+        .cv-verdict.error { border-color: var(--red);    color: var(--red); }
+    </style>
+{% endblock %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Tools · Valve Cv</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">
+                Valve Cv Sizing
+                <span class="tool-tag">Hydronics</span>
+            </h1>
+        </div>
+
+        <p class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
+            A control valve is rated by its flow coefficient <em>Cv</em> — the GPM of water it passes at 1 psi drop.
+            <em>Cv / flow / ΔP</em> solves the sizing equation in any direction: the Cv you need for a flow at a drop, the flow a known valve passes, or the drop it imposes.
+            <em>Valve authority</em> checks the other half of the job — whether the valve takes enough of the circuit's pressure drop to actually control flow.
+        </p>
+
+        <div class="tabs tabs-flush">
+            <button class="tab-btn active" data-tab="size">Cv / flow / ΔP</button>
+            <button class="tab-btn"        data-tab="auth">Valve authority</button>
+        </div>
+
+        <!-- ── Cv / flow / ΔP solver ── -->
+        <div id="tab-size" class="tab-pane active">
+            <div class="tool-body-2col">
+
+                <section>
+                    <h2 class="ps-section-label">Input</h2>
+                    <div class="ps-row">
+                        <label class="ps-label" for="cv-solve">Solve for</label>
+                        <select class="ps-input" id="cv-solve">
+                            <option value="cv">Required Cv</option>
+                            <option value="flow">Flow (GPM)</option>
+                            <option value="dp">Pressure drop (psi)</option>
+                        </select>
+                    </div>
+                    <div class="ps-row" id="cv-row-cv">
+                        <label class="ps-label" for="cv-cv">Flow coefficient Cv</label>
+                        <input class="ps-input" type="number" id="cv-cv" step="any" min="0" placeholder="11" value="11">
+                    </div>
+                    <div class="ps-row" id="cv-row-flow">
+                        <label class="ps-label" for="cv-flow">Flow (GPM)</label>
+                        <input class="ps-input" type="number" id="cv-flow" step="any" min="0" placeholder="20" value="20">
+                    </div>
+                    <div class="ps-row" id="cv-row-dp">
+                        <label class="ps-label" for="cv-dp">Pressure drop ΔP (psi)</label>
+                        <input class="ps-input" type="number" id="cv-dp" step="any" min="0" placeholder="3.3" value="3.3">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="cv-sg">Specific gravity (water = 1)</label>
+                        <input class="ps-input" type="number" id="cv-sg" step="any" min="0" placeholder="1.0" value="1">
+                    </div>
+                </section>
+
+                <section>
+                    <h2 class="ps-section-label">Output</h2>
+                    <div class="ps-row">
+                        <span class="ps-label" id="cv-out-label">Required Cv</span>
+                        <span class="ps-value muted" id="cv-out">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">Kv equivalent (m³/h·bar<sup>−½</sup>)</span>
+                        <span class="ps-value muted" id="cv-kv">—</span>
+                    </div>
+                    <div class="btn-row">
+                        <button class="copy-btn" id="cv-copy">Copy value</button>
+                    </div>
+                    <div class="result-formula wrap" id="cv-formula"></div>
+                    <div class="failure-callout" id="cv-callout" hidden></div>
+                </section>
+
+            </div>
+
+            <section class="tool-body-row">
+                <h2 class="ps-section-label">Worked example</h2>
+                <p class="ref-note worked-intro">
+                    A coil needs 20 GPM of water (SG 1.0) and the schedule allows a 3.3 psi drop across the control valve at design flow.
+                </p>
+                <ol class="ref-note worked-list">
+                    <li>The sizing equation: <code>Cv = Q × √(SG ÷ ΔP)</code>.</li>
+                    <li>Plug in: <code>Cv = 20 × √(1.0 ÷ 3.3) = 11.0</code>.</li>
+                    <li>Pick the cataloged valve whose rated Cv sits at or just above 11 — slightly under is fine; significantly over costs you authority (next tab).</li>
+                </ol>
+                <p class="ref-note">
+                    Flip <em>Solve for</em> to read the other way — how much flow a known-Cv valve passes at a given drop, or what drop a valve imposes at a target flow. The metric coefficient rides along: <code>Kv ≈ 0.865 × Cv</code> (Kv is m³/h at 1 bar).
+                </p>
+            </section>
+        </div>
+
+        <!-- ── Valve authority ── -->
+        <div id="tab-auth" class="tab-pane">
+            <div class="tool-body-2col">
+
+                <section>
+                    <h2 class="ps-section-label">Input</h2>
+                    <div class="ps-row">
+                        <label class="ps-label" for="cv-auth-valve">ΔP across valve, wide open at design flow</label>
+                        <input class="ps-input" type="number" id="cv-auth-valve" step="any" min="0" placeholder="7" value="7">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="cv-auth-rest">ΔP across the rest of the controlled branch</label>
+                        <input class="ps-input" type="number" id="cv-auth-rest" step="any" min="0" placeholder="3" value="3">
+                    </div>
+                    <p class="ref-note">
+                        Use any consistent pressure unit — authority is a ratio, so the units cancel. The "rest of the branch" is everything whose drop changes as the valve strokes: the coil, the balancing valve, the fittings on that controlled circuit.
+                    </p>
+                </section>
+
+                <section>
+                    <h2 class="ps-section-label">Output</h2>
+                    <div class="ps-row">
+                        <span class="ps-label">Valve authority β</span>
+                        <span class="ps-value muted" id="cv-auth-beta">—</span>
+                    </div>
+                    <div class="result-formula wrap" id="cv-auth-formula"></div>
+                    <div class="cv-verdict" id="cv-auth-verdict">Enter both pressure drops to see the verdict.</div>
+                </section>
+
+            </div>
+
+            <section class="tool-body-row">
+                <h2 class="ps-section-label">What authority means</h2>
+                <p class="ref-note">
+                    A control valve only controls flow if it claims a healthy share of the circuit's pressure drop. Authority <code>β = ΔP<sub>valve, open</sub> ÷ (ΔP<sub>valve, open</sub> + ΔP<sub>rest</sub>)</code> compares the drop across the wide-open valve to the total drop across the part of the circuit that varies with the valve. Low authority means the valve does almost all of its throttling in the first sliver of stroke — the loop hunts and the rest of the travel does nothing.
+                </p>
+                <table class="ref-table-dense">
+                    <thead>
+                        <tr><th>β</th><th>Control quality</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>≥ 0.5</td><td>Good — installed characteristic stays close to linear.</td></tr>
+                        <tr><td>0.25 – 0.5</td><td>Marginal — distorted, front-loaded stroke.</td></tr>
+                        <tr><td>&lt; 0.25</td><td>Poor — little real control, prone to hunting.</td></tr>
+                    </tbody>
+                </table>
+                <p class="ref-note">
+                    An equal-percentage valve is the usual pick precisely because, fighting a circuit's rising resistance, its installed characteristic lands near linear — but only when authority is high enough to begin with. Oversizing on Cv is the quiet killer: a valve far bigger than the duty barely cracks open and authority collapses.
+                </p>
+            </section>
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        lessons: [
+            {href: '/education/balancing.html', label: 'Hydronic Balancing'},
+            {href: '/education/load-piping.html', label: 'Load Piping'}
+        ],
+        quizzes: [
+            {href: '/practice/balancing.html', label: 'Hydronic Balancing'},
+            {href: '/practice/load-piping.html', label: 'Load Piping'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/tools/">← All tools</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="/scripts/ui.js"></script>
+<script>
+    // switchTab(name, btn) and copyReadouts(btn, sep, ...ids) come from
+    // /scripts/ui.js. This tool is US-native (Cv, GPM, psi) — Cv is
+    // defined in those units — so it does not load units.js; the Kv
+    // readout (Kv ≈ 0.865 · Cv) carries the metric coefficient instead.
+    (function () {
+        'use strict';
+
+        const KV_PER_CV = 0.865;   // Kv [m³/h·bar^-½] ≈ 0.865 · Cv
+
+        // Trim trailing zeros so 11.00 reads 11 but 11.01 stays put.
+        const tidy = (n, dp) => parseFloat(n.toFixed(dp)).toString();
+
+        // ── Cv / flow / ΔP solver ─────────────────────────────────────
+        const solveEl   = document.getElementById('cv-solve');
+        const cvEl       = document.getElementById('cv-cv');
+        const flowEl     = document.getElementById('cv-flow');
+        const dpEl       = document.getElementById('cv-dp');
+        const sgEl       = document.getElementById('cv-sg');
+        const outEl      = document.getElementById('cv-out');
+        const outLabelEl = document.getElementById('cv-out-label');
+        const kvEl       = document.getElementById('cv-kv');
+        const formulaEl  = document.getElementById('cv-formula');
+        const calloutEl  = document.getElementById('cv-callout');
+        const copyBtn    = document.getElementById('cv-copy');
+
+        function muteSize(msg) {
+            outEl.className = 'ps-value muted';
+            outEl.textContent = '—';
+            kvEl.className = 'ps-value muted';
+            kvEl.textContent = '—';
+            formulaEl.textContent = '';
+            calloutEl.textContent = msg;
+            calloutEl.hidden = false;
+        }
+
+        function calcSize() {
+            const solve = solveEl.value;
+            // Hide whichever quantity is the output.
+            document.getElementById('cv-row-cv').classList.toggle('hidden', solve === 'cv');
+            document.getElementById('cv-row-flow').classList.toggle('hidden', solve === 'flow');
+            document.getElementById('cv-row-dp').classList.toggle('hidden', solve === 'dp');
+
+            const sg   = parseFloat(sgEl.value);
+            const cv   = parseFloat(cvEl.value);
+            const flow = parseFloat(flowEl.value);
+            const dp   = parseFloat(dpEl.value);
+
+            if (!isFinite(sg) || sg <= 0) {
+                muteSize('Specific gravity must be greater than 0 (water = 1).');
+                return;
+            }
+
+            let result, label, unit, formula, cvForKv;
+            if (solve === 'cv') {
+                if (!isFinite(flow) || !isFinite(dp)) { muteSize('Enter flow and pressure drop to size the valve.'); return; }
+                if (flow < 0 || dp <= 0) { muteSize('Flow must be ≥ 0 and pressure drop greater than 0.'); return; }
+                result = flow * Math.sqrt(sg / dp);
+                label = 'Required Cv'; unit = ''; cvForKv = result;
+                formula = `Cv = ${tidy(flow, 4)} × √(${tidy(sg, 4)} ÷ ${tidy(dp, 4)}) = ${tidy(result, 2)}`;
+            } else if (solve === 'flow') {
+                if (!isFinite(cv) || !isFinite(dp)) { muteSize('Enter Cv and pressure drop to find the flow.'); return; }
+                if (cv < 0 || dp < 0) { muteSize('Cv and pressure drop can’t be negative.'); return; }
+                result = cv * Math.sqrt(dp / sg);
+                label = 'Flow'; unit = ' GPM'; cvForKv = cv;
+                formula = `Q = ${tidy(cv, 4)} × √(${tidy(dp, 4)} ÷ ${tidy(sg, 4)}) = ${tidy(result, 2)} GPM`;
+            } else {
+                if (!isFinite(cv) || !isFinite(flow)) { muteSize('Enter Cv and flow to find the pressure drop.'); return; }
+                if (cv <= 0) { muteSize('Cv must be greater than 0 to compute a pressure drop.'); return; }
+                if (flow < 0) { muteSize('Flow can’t be negative.'); return; }
+                result = sg * Math.pow(flow / cv, 2);
+                label = 'Pressure drop ΔP'; unit = ' psi'; cvForKv = cv;
+                formula = `ΔP = ${tidy(sg, 4)} × (${tidy(flow, 4)} ÷ ${tidy(cv, 4)})² = ${tidy(result, 3)} psi`;
+            }
+
+            calloutEl.hidden = true;
+            outLabelEl.textContent = label;
+            outEl.className = 'ps-value live';
+            outEl.textContent = tidy(result, unit === ' psi' ? 3 : 2) + unit;
+            kvEl.className = 'ps-value live';
+            kvEl.textContent = tidy(cvForKv * KV_PER_CV, 2);
+            formulaEl.textContent = formula;
+            copyBtn.textContent = 'Copy ' + (unit ? unit.trim() : 'Cv');
+        }
+
+        // ── Valve authority ───────────────────────────────────────────
+        const valveEl   = document.getElementById('cv-auth-valve');
+        const restEl     = document.getElementById('cv-auth-rest');
+        const betaEl      = document.getElementById('cv-auth-beta');
+        const authFormEl  = document.getElementById('cv-auth-formula');
+        const verdictEl   = document.getElementById('cv-auth-verdict');
+
+        function setVerdict(text, kind) {
+            verdictEl.textContent = text;
+            verdictEl.className = 'cv-verdict' + (kind ? ' ' + kind : '');
+        }
+
+        function calcAuth() {
+            const valve = parseFloat(valveEl.value);
+            const rest  = parseFloat(restEl.value);
+
+            if (!isFinite(valve) || !isFinite(rest)) {
+                betaEl.className = 'ps-value muted';
+                betaEl.textContent = '—';
+                authFormEl.textContent = '';
+                setVerdict('Enter both pressure drops to see the verdict.', '');
+                return;
+            }
+            if (valve < 0 || rest < 0) {
+                betaEl.className = 'ps-value muted error';
+                betaEl.textContent = '—';
+                authFormEl.textContent = '';
+                setVerdict('Pressure drops can’t be negative.', 'error');
+                return;
+            }
+            const total = valve + rest;
+            if (total === 0) {
+                betaEl.className = 'ps-value muted error';
+                betaEl.textContent = '—';
+                authFormEl.textContent = '';
+                setVerdict('Total drop is zero — there’s no circuit to take authority over.', 'error');
+                return;
+            }
+
+            const beta = valve / total;
+            betaEl.className = 'ps-value live';
+            betaEl.textContent = beta.toFixed(2);
+            authFormEl.textContent =
+                `β = ${tidy(valve, 4)} ÷ (${tidy(valve, 4)} + ${tidy(rest, 4)}) = ${beta.toFixed(2)}`;
+
+            if (beta >= 0.5) {
+                setVerdict(`Good authority (β = ${beta.toFixed(2)}). The valve keeps real control over flow across its stroke; 0.5 is the common design floor.`, 'ok');
+            } else if (beta >= 0.25) {
+                setVerdict(`Marginal authority (β = ${beta.toFixed(2)}). Control turns nonlinear — most of the throttling happens early in the stroke. Aim for more drop across the valve.`, 'warn');
+            } else {
+                setVerdict(`Poor authority (β = ${beta.toFixed(2)}). The valve barely controls flow and the loop will hunt. Resize for a larger share of the circuit drop, or check for oversizing.`, 'error');
+            }
+        }
+
+        // ── Wiring ────────────────────────────────────────────────────
+        document.querySelectorAll('[data-tab]').forEach(btn => {
+            btn.addEventListener('click', e => switchTab(e.currentTarget.dataset.tab, e.currentTarget));
+        });
+        [solveEl, cvEl, flowEl, dpEl, sgEl].forEach(el => {
+            el.addEventListener(el.tagName === 'SELECT' ? 'change' : 'input', calcSize);
+        });
+        [valveEl, restEl].forEach(el => el.addEventListener('input', calcAuth));
+        copyBtn.addEventListener('click', e => copyReadouts(e.currentTarget, '', 'cv-out'));
+
+        calcSize();
+        calcAuth();
+    })();
+</script>
+{% endblock %}
