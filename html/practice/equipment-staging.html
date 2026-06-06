@@ -1,0 +1,74 @@
+---
+title: Equipment Staging Quiz — controlsfreak.dev
+description: Ten questions on the Equipment Staging lesson — why plants run parallel units, the stage-up/stage-down deadband and timers, and lead rotation for even wear.
+canonical: https://controlsfreak.dev/practice/equipment-staging.html
+nav: practice
+pairedLesson: https://controlsfreak.dev/education/equipment-staging.html
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Practice · Equipment Staging</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">Equipment Staging Quiz <span class="tool-tag">Sequencing</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                Read the
+                <a href="/education/equipment-staging.html">Equipment Staging</a> lesson first, then test yourself —
+                ten questions on the sequence that runs several identical units: why a plant runs parallel pumps
+                (turndown and N+1 redundancy), how stage-up/stage-down thresholds and the deadband keep it from
+                hunting, what the stage delay and minimum stage time each protect, and lead rotation for even wear.
+                Each reveal links back to the section it came from.
+            </p>
+
+            <div id="quiz"></div>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        lessons: [
+            {href: '/education/equipment-staging.html', label: 'Equipment Staging'},
+            {href: '/education/pump-control.html', label: 'Pump Control'},
+            {href: '/education/vfds.html', label: 'VFDs'}
+        ],
+        quizzes: [
+            {href: '/practice/pump-control.html', label: 'Pump Control Quiz'},
+            {href: '/practice/vfds.html', label: 'VFDs Quiz'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/practice/">← All practice</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="/scripts/quiz-engine.js"></script>
+<script>
+    (function () {
+        'use strict';
+
+        // Question bank lives in html/_data/quizzes/equipment-staging.js so the
+        // FAQPage JSON-LD emitted from head.njk can read the same source.
+        const questions = {{ quizzes['equipment-staging'] | safeScriptJson | safe }};
+
+        Quiz.mount('#quiz', questions, {
+            slug: 'equipment-staging',
+            title: 'Equipment Staging',
+            defaultCount: 10,
+            defaultOrder: 'sequential'
+        });
+    })();
+</script>
+{% endblock %}

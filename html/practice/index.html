@@ -72,7 +72,7 @@ nav: practice
 
     <div class="filter-chips" role="group" aria-label="Filter practice by topic">
         <button type="button" class="filter-chip active" data-category="all" aria-pressed="true">
-            All <span class="filter-chip-count">16</span>
+            All <span class="filter-chip-count">18</span>
         </button>
         <button type="button" class="filter-chip" data-category="modbus" aria-pressed="false">
             Modbus <span class="filter-chip-count">2</span>
@@ -81,13 +81,16 @@ nav: practice
             BACnet <span class="filter-chip-count">2</span>
         </button>
         <button type="button" class="filter-chip" data-category="hydronics" aria-pressed="false">
-            Hydronics <span class="filter-chip-count">4</span>
+            Hydronics <span class="filter-chip-count">5</span>
         </button>
         <button type="button" class="filter-chip" data-category="refrigeration" aria-pressed="false">
             Refrigeration <span class="filter-chip-count">3</span>
         </button>
         <button type="button" class="filter-chip" data-category="controls" aria-pressed="false">
             Controls <span class="filter-chip-count">3</span>
+        </button>
+        <button type="button" class="filter-chip" data-category="psychrometrics" aria-pressed="false">
+            Psychrometrics <span class="filter-chip-count">1</span>
         </button>
     </div>
 
@@ -175,6 +178,15 @@ nav: practice
             }) }}
             {{ navCard({
                 section:    'practice',
+                href:       '/practice/equipment-staging.html',
+                titleShort: 'Equipment Staging',
+                titleFull:  'Equipment Staging',
+                desc:       'Drill the Equipment Staging lesson — why plants run parallel units, the stage-up/stage-down deadband, the stage delay and minimum stage time, and lead rotation for even wear.',
+                pills:      ['10 Questions', 'MCQ · TF · Gotcha · Numeric', '~ 5 min'],
+                category:   'hydronics'
+            }) }}
+            {{ navCard({
+                section:    'practice',
                 href:       '/practice/refrigerant-cycle-basics.html',
                 titleShort: 'Refrigerant Cycle',
                 titleFull:  'Refrigerant Cycle Basics',
@@ -226,6 +238,15 @@ nav: practice
                 desc:       'Drill the Function-Block Basics lesson — blocks and pins, digital vs. analog wires, the block families, how a scan resolves feedback, and a worked economizer sheet.',
                 pills:      ['10 Questions', 'MCQ · TF · Gotcha', '~ 5 min'],
                 category:   'controls'
+            }) }}
+            {{ navCard({
+                section:    'practice',
+                href:       '/practice/psychrometrics-basics.html',
+                titleShort: 'Psychrometrics',
+                titleFull:  'Psychrometrics Basics',
+                desc:       'Drill the Psychrometrics Basics lesson — the seven properties, why any two lock the rest, the four chart process families, and the RH / dew-point / enthalpy gotchas.',
+                pills:      ['10 Questions', 'MCQ · TF · Gotcha · Numeric', '~ 5 min'],
+                category:   'psychrometrics'
             }) }}
         </div>
     </section>

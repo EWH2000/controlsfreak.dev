@@ -1,0 +1,73 @@
+---
+title: Psychrometrics Basics Quiz — controlsfreak.dev
+description: Ten questions on the Psychrometrics Basics lesson — the seven properties, why two lock the rest, four process families, and the gotchas RH and dew point hide.
+canonical: https://controlsfreak.dev/practice/psychrometrics-basics.html
+nav: practice
+pairedLesson: https://controlsfreak.dev/education/psychrometrics-basics.html
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Practice · Psychrometrics Basics</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">Psychrometrics Basics Quiz <span class="tool-tag">Psychrometrics</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                Read the
+                <a href="/education/psychrometrics-basics.html">Psychrometrics Basics</a> lesson first, then test
+                yourself — ten questions on reading the chart without the engineering-degree dread: what each of the
+                seven properties tells you, why any two lock the other five, the four process families a coil walks
+                through, and the RH / dew-point / enthalpy gotchas that bite. Each reveal links back to the section
+                it came from.
+            </p>
+
+            <div id="quiz"></div>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        lessons: [
+            {href: '/education/psychrometrics-basics.html', label: 'Psychrometrics Basics'}
+        ],
+        tools: [
+            {href: '/tools/psychrometric-chart.html', label: 'Psychrometric Chart'},
+            {href: '/tools/air-mixing.html', label: 'Air-Mixing Calculator'},
+            {href: '/tools/economizer-ratio.html', label: 'Economizer Ratio Helper'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/practice/">← All practice</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="/scripts/quiz-engine.js"></script>
+<script>
+    (function () {
+        'use strict';
+
+        // Question bank lives in html/_data/quizzes/psychrometrics-basics.js
+        // so the FAQPage JSON-LD emitted from head.njk can read the same source.
+        const questions = {{ quizzes['psychrometrics-basics'] | safeScriptJson | safe }};
+
+        Quiz.mount('#quiz', questions, {
+            slug: 'psychrometrics-basics',
+            title: 'Psychrometrics Basics',
+            defaultCount: 10,
+            defaultOrder: 'sequential'
+        });
+    })();
+</script>
+{% endblock %}
