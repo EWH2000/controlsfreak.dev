@@ -861,6 +861,51 @@ Validated in the smoke suite against the canonical 0x4B37 check value
 for "123456789". At `/tools/modbus-functions.html`; cross-linked from
 both Modbus lessons.
 
+### Equipment Staging Sequencer — 4th simulator *(shipped 2026-06-06)*
+The last page of the v3.x batch and the simulators wing's missing
+category: plant **sequencing**. Spins the demo-only logic from the
+Equipment Staging *lesson* (two hard-coded widgets — staging up/down,
+fixed-vs-equalized rotation) into one configurable, continuously
+running plant. Custom stacked layout (like the PID tuner / VFD mock),
+prefix `stg-`, at `/simulators/staging-sequencer.html`.
+
+What it adds over the lesson:
+- **A live sim clock + day-load curve.** A single clock advances while
+  playing (adjustable sim-hours/sec, Play/Pause/Reset). Demand follows
+  a smooth 24-hour load curve (one mid-afternoon peak) by default, or a
+  Manual toggle hands the demand slider to the operator. Per-unit
+  runtime accrues in sim-hours as it runs, so staging *and* rotation
+  play out hands-free.
+- **Two deliberate changes when porting the lesson math.** (1) Timers
+  run on the *sim* clock (sim-seconds), not `Date.now()`, so the speed
+  slider makes the stage delay / minimum-stage-time observable.
+  (2) Thresholds generalize to any unit count via per-unit load
+  `L = d·N/k`: add a unit when `d > U·k/N`, drop one when
+  `d < D·(k−1)/N`. `D < U` is enforced — that gap *is* the deadband and
+  provably stops re-stage hunting in either direction. Defaults U=85 /
+  D=45 reproduce the lesson's 3-pump behavior.
+- **A live trend chart** (canvas, not SVG — so out of the
+  `screenshot-diagrams` SVG audit, same as the PID tuner) plotting
+  demand (blue) vs. online staged capacity (green step) over the
+  scrolling window, plus a `role="log"` **event log** of every
+  stage/rotate/fault move — the feature that makes it a simulator, not
+  a lesson widget.
+- **Three rotation strategies** (Fixed / Runtime-equalized / Scheduled
+  weekly auto-rotate), **fault injection** ("Trip lead" → promote a
+  standby, faulted unit locked out until cleared; a capacity-shortfall
+  banner when redundancy is exhausted — the N+1 lesson), and
+  **configurable 2–4 units** + a cosmetic type label
+  (pumps/boilers/chillers).
+- **Reduced motion:** starts paused on a seeded static day rather than
+  auto-playing ambient motion; Play is always user-initiated.
+
+Cross-linked reciprocally with the Equipment Staging lesson (plain
+`relatedLinks` both ways — `head.njk` emits pairing JSON-LD only for
+quiz↔lesson, not sims). Smoke spec spot-checks a stage-up event.
+Possible future refinement: a standby-exercise timer (run an idle unit
+briefly on a schedule), which the lesson mentions but the sim doesn't
+model yet.
+
 ### Thermistor calculator *(both modes shipped + curves verified)*
 Two modes, tabs à la Signal Scaling. Both are shipped and the curves
 are datasheet-verified.

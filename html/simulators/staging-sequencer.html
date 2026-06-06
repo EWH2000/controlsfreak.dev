@@ -1,0 +1,1056 @@
+---
+title: Equipment Staging Sequencer — controlsfreak.dev
+description: A live plant-staging sim — demand rides a day-load curve while a configurable plant stages units up and down, rotates lead, trips a fault, and logs each move.
+canonical: https://controlsfreak.dev/simulators/staging-sequencer.html
+nav: simulators
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block head %}
+    <style>
+        /* Page-only — internals for the staging sequencer. The shared
+           sim/widget shell (.form-row / .field / .copy-btn / .btn-row /
+           .widget-slider* / .bit-readouts / .readout* / .sim-canvas-wrap /
+           .sim-legend / .ref-table-dense) lives in styles.css; only the
+           stg-* pieces this page alone uses sit here — the run/clock bar,
+           the demand-mode + status chrome, the per-unit cells (state +
+           runtime bar + lead tag), and the event log. Adapted from the
+           equipment-staging lesson's .es-* widget internals. */
+
+        /* Sim-clock + run bar. */
+        .stg-runbar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.6rem 1rem;
+            margin-bottom: 1rem;
+        }
+        .stg-clock {
+            font-family: var(--mono);
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--blue);
+            font-variant-numeric: tabular-nums;
+            margin-left: auto;
+        }
+        .stg-clock .lbl {
+            color: var(--text-dim);
+            font-weight: 400;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-right: 0.4rem;
+        }
+
+        /* Segmented toggle (demand mode) — same idiom as the lesson's
+           strategy toggle: a button group, .on marks the active one. */
+        .stg-seg {
+            display: inline-flex;
+            border: 1px solid var(--border);
+            border-radius: 0;
+            overflow: hidden;
+            font-family: var(--mono);
+            font-size: 0.72rem;
+        }
+        .stg-seg button {
+            background: var(--surface);
+            border: 0;
+            color: var(--text-dim);
+            padding: 0.35rem 0.8rem;
+            cursor: pointer;
+            transition: background 0.15s, color 0.15s;
+        }
+        .stg-seg button + button { border-left: 1px solid var(--border); }
+        .stg-seg button.on { background: var(--blue); color: var(--surface); }
+
+        /* The scheduled-interval field hides unless strategy = scheduled. */
+        .stg-sched-field[hidden] { display: none; }
+
+        /* Invalid threshold input (stage-up must sit above stage-down). */
+        input.input-bad {
+            border-color: var(--red);
+            box-shadow: 0 0 0 3px var(--red-dim);
+        }
+
+        /* Stage-status banner — reserves two lines so countdowns don't
+           reflow the page. */
+        .stg-status {
+            font-family: var(--mono);
+            font-size: 0.78rem;
+            line-height: 1.5;
+            color: var(--text);
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-left: 4px solid var(--accent-dim);
+            border-radius: 0;
+            padding: 0.55rem 0.8rem;
+            min-height: 3.1rem;
+            display: flex;
+            align-items: center;
+            margin: 0.2rem 0 1rem;
+        }
+        .stg-status[data-kind="pending"]  { border-left-color: var(--blue); }
+        .stg-status[data-kind="held"]     { border-left-color: var(--amber); }
+        .stg-status[data-kind="fault"]    { border-left-color: var(--red); }
+        .stg-status[data-kind="shortfall"]{ border-left-color: var(--red); }
+
+        /* Legend swatches — demand (blue) vs online capacity (green). */
+        .sim-legend .swatch.stg-demand { border-top: 2px solid var(--blue); }
+        .sim-legend .swatch.stg-cap    { border-top: 2px solid var(--accent); }
+
+        /* Per-unit cells — one cell per unit merges the lesson's two cell
+           types: running/standby/fault state, a LEAD tag, and the
+           accumulated-runtime bar. */
+        .stg-units {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr));
+            gap: 0.6rem;
+            margin: 0.4rem 0 1.1rem;
+        }
+        .stg-unit {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 0;
+            padding: 0.6rem 0.7rem 0.65rem;
+            transition: border-color 0.18s;
+        }
+        .stg-unit[data-state="run"]   { border-color: var(--accent); }
+        .stg-unit[data-state="fault"] { border-color: var(--red); }
+        .stg-unit .head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        .stg-unit .num {
+            font-family: var(--mono);
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-dim);
+        }
+        .stg-unit .lead-tag {
+            font-family: var(--mono);
+            font-size: 0.52rem;
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+            color: var(--surface);
+            background: var(--blue);
+            border-radius: 0;
+            padding: 0.06rem 0.32rem;
+        }
+        .stg-unit[data-lead="false"] .lead-tag { visibility: hidden; }
+        .stg-unit .state {
+            font-family: var(--mono);
+            font-size: 0.82rem;
+            font-weight: 600;
+            margin: 0.3rem 0 0.45rem;
+            color: var(--text-dim);
+        }
+        .stg-unit[data-state="run"]   .state { color: var(--accent); }
+        .stg-unit[data-state="fault"] .state { color: var(--red); }
+        .stg-unit .hrs {
+            font-family: var(--mono);
+            font-size: 0.62rem;
+            color: var(--text-dim);
+            margin-bottom: 0.3rem;
+            font-variant-numeric: tabular-nums;
+        }
+        .stg-unit .hrs b { color: var(--text-bright); font-weight: 600; }
+        .stg-unit .bar {
+            height: 6px;
+            background: var(--border-faint);
+            border-radius: 0;
+            overflow: hidden;
+        }
+        .stg-unit .bar > span {
+            display: block;
+            height: 100%;
+            width: 0;
+            background: var(--accent);
+            transition: width 0.35s;
+        }
+        .stg-unit[data-state="fault"] .bar > span { background: var(--red); }
+
+        /* Event log — newest first, capped in JS to bound the DOM. */
+        .stg-log-wrap { margin-top: 0.4rem; }
+        .stg-log {
+            list-style: none;
+            margin: 0.4rem 0 0;
+            padding: 0.5rem 0.75rem;
+            background: var(--well);
+            border: 1px solid var(--border);
+            border-radius: 0;
+            max-height: 12rem;
+            overflow-y: auto;
+            font-family: var(--mono);
+            font-size: 0.72rem;
+            line-height: 1.65;
+        }
+        .stg-log li {
+            display: flex;
+            gap: 0.7rem;
+            padding: 0.12rem 0;
+            border-left: 3px solid transparent;
+            padding-left: 0.5rem;
+        }
+        .stg-log li .t { color: var(--text-dim); flex: 0 0 5.2rem; font-variant-numeric: tabular-nums; }
+        .stg-log li .m { color: var(--text); }
+        .stg-log li[data-kind="up"]    { border-left-color: var(--accent); }
+        .stg-log li[data-kind="down"]  { border-left-color: var(--blue); }
+        .stg-log li[data-kind="rotate"]{ border-left-color: var(--amber); }
+        .stg-log li[data-kind="fault"] { border-left-color: var(--red); }
+        .stg-log li[data-kind="info"]  { border-left-color: var(--border); }
+        .stg-log .empty { color: var(--text-dim); border-left-color: transparent; }
+
+        /* The day-load chart compresses below ~700px; surface the shared
+           orientation note there, same as the PID tuner. */
+        @media (max-width: 700px) {
+            .narrow-width-note { display: block; }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Simulators · Staging Sequencer</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">
+                Equipment Staging Sequencer
+                <span class="tool-tag">Sequencing</span>
+            </h1>
+        </div>
+        <!-- Custom stacked layout on purpose (like the PID tuner / VFD mock):
+             a running plant — config, clock controls, a live demand-vs-capacity
+             chart, per-unit cells, and an event log — doesn't fit the
+             Input / Output / Reference column pattern. Only the "what each knob
+             does" table at the bottom is reference content. -->
+        <div class="tool-body">
+
+            <p class="tool-preamble" style="margin-bottom:1.5rem;">
+                A toy plant, not your plant — identical units on a common header, staged by a simplified sequence to build a feel for the knobs.
+                <strong>New to staging?</strong> <a href="/education/equipment-staging.html">Start with the explainer →</a>
+            </p>
+
+            <!-- ── Plant configuration ─────────────────────────────────── -->
+            <h2 class="subhead">Plant Configuration</h2>
+
+            <div class="form-row">
+                <div class="field" role="group" aria-labelledby="stg-count-lbl">
+                    <span id="stg-count-lbl" class="field-label">Units in plant</span>
+                    <div class="btn-row">
+                        <button type="button" class="copy-btn"        id="stg-count-2" data-count="2">2</button>
+                        <button type="button" class="copy-btn active" id="stg-count-3" data-count="3">3</button>
+                        <button type="button" class="copy-btn"        id="stg-count-4" data-count="4">4</button>
+                    </div>
+                </div>
+                <div class="field">
+                    <label for="stg-type">Unit type</label>
+                    <select id="stg-type">
+                        <option value="pump" selected>Pumps</option>
+                        <option value="boiler">Boilers</option>
+                        <option value="chiller">Chillers</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="field">
+                    <label for="stg-strategy">Lead/lag strategy</label>
+                    <select id="stg-strategy">
+                        <option value="fixed" selected>Fixed lead</option>
+                        <option value="equalized">Runtime-equalized</option>
+                        <option value="scheduled">Scheduled rotation</option>
+                    </select>
+                </div>
+                <div class="field stg-sched-field" id="stg-sched-field" hidden>
+                    <label for="stg-sched-days">Rotate lead every (days)</label>
+                    <input type="number" id="stg-sched-days" min="1" max="30" step="1" value="7">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="field">
+                    <label for="stg-up">Stage up above (% unit load)</label>
+                    <input type="number" id="stg-up" min="50" max="100" step="1" value="85">
+                </div>
+                <div class="field">
+                    <label for="stg-down">Stage down below (% unit load)</label>
+                    <input type="number" id="stg-down" min="5" max="95" step="1" value="45">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="field">
+                    <label for="stg-delay">Stage delay (s)</label>
+                    <input type="number" id="stg-delay" min="0" max="900" step="5" value="120">
+                </div>
+                <div class="field">
+                    <label for="stg-min">Minimum stage time (s)</label>
+                    <input type="number" id="stg-min" min="0" max="3600" step="5" value="300">
+                </div>
+            </div>
+
+            <!-- ── Run controls ────────────────────────────────────────── -->
+            <h2 class="subhead" style="margin-top:1.75rem;">Run</h2>
+
+            <div class="stg-runbar">
+                <div class="btn-row" style="margin-top:0;">
+                    <button type="button" class="copy-btn active" id="stg-play">▶ Play</button>
+                    <button type="button" class="copy-btn" id="stg-pause">⏸ Pause</button>
+                    <button type="button" class="copy-btn" id="stg-reset">↺ Reset</button>
+                </div>
+                <div class="stg-clock"><span class="lbl">Sim clock</span><span id="stg-clock">Day 1 · 00:00</span></div>
+            </div>
+
+            <div class="slider-field" style="margin-bottom:1rem;">
+                <div class="widget-slider-head">
+                    <label for="stg-speed">Clock speed</label>
+                    <span class="v"><span id="stg-speed-val">2</span> <span style="font-size:0.7em;color:var(--text-dim);font-weight:500;">sim-h / s</span></span>
+                </div>
+                <input class="widget-slider" id="stg-speed" type="range" min="0.5" max="12" step="0.5" value="2" aria-label="Clock speed, simulated hours per real second">
+            </div>
+
+            <div class="form-row">
+                <div class="field" role="group" aria-labelledby="stg-mode-lbl">
+                    <span id="stg-mode-lbl" class="field-label">Demand source</span>
+                    <div class="stg-seg" id="stg-mode">
+                        <button type="button" class="on" id="stg-mode-follow" data-mode="follow">Follow day-load</button>
+                        <button type="button" id="stg-mode-manual" data-mode="manual">Manual</button>
+                    </div>
+                </div>
+                <div class="field" role="group" aria-labelledby="stg-fault-lbl">
+                    <span id="stg-fault-lbl" class="field-label">Fault</span>
+                    <div class="btn-row">
+                        <button type="button" class="copy-btn" id="stg-trip">Trip lead</button>
+                        <button type="button" class="copy-btn" id="stg-clear">Clear faults</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="slider-field" style="margin-bottom:1rem;">
+                <div class="widget-slider-head">
+                    <label for="stg-demand">Building demand</label>
+                    <span class="v"><span id="stg-demand-val">12</span> <span style="font-size:0.7em;color:var(--text-dim);font-weight:500;">%</span></span>
+                </div>
+                <input class="widget-slider" id="stg-demand" type="range" min="0" max="100" step="1" value="12" aria-label="Building demand, percent" disabled>
+            </div>
+
+            <div class="stg-status" id="stg-status" data-kind="steady" aria-live="polite"></div>
+
+            <!-- ── Live trend chart ────────────────────────────────────── -->
+            <div class="narrow-width-note">
+                The demand-vs-capacity chart reads best on a wider screen — at phone
+                width the time axis compresses. The plant still runs and the event
+                log still records every move; a laptop just gives the chart room.
+            </div>
+
+            <div class="sim-canvas-wrap">
+                <canvas id="stg-canvas" role="img" aria-label="Plant trend: building demand versus online staged capacity over the simulated clock"></canvas>
+            </div>
+            <div class="sim-legend">
+                <span><span class="swatch stg-demand"></span>Building demand</span>
+                <span><span class="swatch stg-cap"></span>Online capacity</span>
+            </div>
+
+            <!-- ── Per-unit cells (built in JS) ────────────────────────── -->
+            <div class="stg-units" id="stg-units" aria-label="Per-unit state and accumulated runtime"></div>
+
+            <!-- ── Live readouts ───────────────────────────────────────── -->
+            <div class="bit-readouts">
+                <div class="readout">
+                    <div class="readout-label">Units running</div>
+                    <div class="readout-value"><span id="stg-running">1</span> <span style="color:var(--text-dim);font-weight:400;">of <span id="stg-total">3</span></span></div>
+                </div>
+                <div class="readout">
+                    <div class="readout-label">Online capacity</div>
+                    <div class="readout-value"><span id="stg-capacity">33</span>%</div>
+                </div>
+                <div class="readout">
+                    <div class="readout-label">Per-unit load</div>
+                    <div class="readout-value"><span id="stg-load">36</span>%</div>
+                </div>
+                <div class="readout">
+                    <div class="readout-label">Runtime spread</div>
+                    <div class="readout-value"><span id="stg-spread">0</span> h</div>
+                </div>
+            </div>
+
+            <!-- ── Event log ───────────────────────────────────────────── -->
+            <div class="stg-log-wrap">
+                <h2 class="subhead" style="margin-top:1.75rem;">Event log</h2>
+                <ul class="stg-log" id="stg-log" role="log" aria-live="polite" aria-label="Sequence event log">
+                    <li class="empty"><span class="m">Press Play — staging, rotation, and fault events land here.</span></li>
+                </ul>
+            </div>
+
+            <!-- ── Reference (light — the lesson owns the deep treatment) ─ -->
+            <h2 class="ps-section-label" style="margin-top:2.25rem;">What Each Knob Does</h2>
+
+            <p style="margin-bottom:1.1rem;font-size:0.9rem;line-height:1.75;color:var(--text);">
+                The sequence answers two questions continuously: <em>how many</em> units to run, and <em>which ones</em>. The thresholds and timers answer the first; the lead/lag strategy answers the second. The <a href="/education/equipment-staging.html">Equipment Staging</a> explainer walks through the why — this is the quick reference for the controls above.
+            </p>
+
+            <table class="ref-table-dense">
+                <thead>
+                    <tr><th class="use">Knob</th><th>What it does</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td class="use">Stage up / down %</td><td>Per-unit load — demand spread across the running units — that adds or drops a unit. The gap between them is the <em>deadband</em>; it must be a real gap or the plant hunts (cycles a unit on/off at the line).</td></tr>
+                    <tr><td class="use">Stage delay</td><td>Demand must stay across the line this long before the sequence acts, so a brief swing doesn't churn the plant.</td></tr>
+                    <tr><td class="use">Minimum stage time</td><td>Locks out the next stage change for a while after one happens — short-cycling is hard on motors, starters, and the equipment.</td></tr>
+                    <tr><td class="use">Fixed lead</td><td>Unit 1 always leads. One unit logs all the hours while the rest stay cold — watch the runtime spread run away.</td></tr>
+                    <tr><td class="use">Runtime-equalized</td><td>The lowest-hour idle unit comes on next; the highest-hour running unit drops first. The bars converge — the set wears as one.</td></tr>
+                    <tr><td class="use">Scheduled rotation</td><td>The lead role moves to the next unit every interval regardless of hours — the simplest rotation, and what many plants ship with.</td></tr>
+                    <tr><td class="use">Trip lead</td><td>Faults the current lead; the sequence promotes a standby at once. If no healthy unit is free to cover, you get a capacity shortfall — the reason a plant is built N+1.</td></tr>
+                </tbody>
+            </table>
+
+            <p class="pid-note">
+                The clock is sped up for the demonstration — the stage delay and minimum-stage-time you set are <em>simulated</em> seconds, so at a faster clock speed they pass quickly. Real-plant values run on the order of several minutes each. The day-load curve is a single smooth peak (low overnight, a midday/afternoon high); leave it on <em>Follow day-load</em> and the plant stages and rotates hands-free, or switch to <em>Manual</em> to drive the demand slider yourself.
+            </p>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        lessons: [
+            {href: '/education/equipment-staging.html', label: 'Equipment Staging'},
+            {href: '/education/pump-control.html', label: 'Pump Control'}
+        ],
+        simulators: [
+            {href: '/simulators/pid-tuner.html', label: 'PID Tuning Helper'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/simulators/">← All simulators</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // ─────────────────────────────────────────────────────────────────
+    // Equipment Staging Sequencer
+    //
+    // A continuously-running model of a parallel plant of N identical
+    // units (2–4). One simulated clock advances while playing; demand
+    // either follows a 24-hour day-load curve or is driven manually.
+    // The sequence stages units up/down against per-unit-load thresholds
+    // (with a deadband, a stage delay, and a minimum stage time), rotates
+    // the lead by one of three strategies, accrues per-unit runtime in
+    // sim-hours, and logs every move.
+    //
+    // Ported from /education/equipment-staging.html, with two changes:
+    //   1. Timers run on the SIM clock (sim-seconds), not Date.now() —
+    //      the speed slider makes them observable.
+    //   2. Thresholds generalize to any N via per-unit load L = d·N/k:
+    //      add a unit (k<N) when d > U·k/N; drop one (k>1) when
+    //      d < D·(k-1)/N. D < U is enforced, which is the deadband and
+    //      guarantees no immediate re-stage in either direction.
+    // ─────────────────────────────────────────────────────────────────
+    (function () {
+        'use strict';
+
+        const $ = id => document.getElementById(id);
+        const reduceMotion = window.matchMedia &&
+            window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        // ── Tunable config (validated copy; inputs write here on change) ──
+        const cfg = {
+            N: 3,
+            type: 'pump',
+            strategy: 'fixed',
+            schedDays: 7,
+            up: 85,          // per-unit load % to stage up
+            down: 45,        // per-unit load % to stage down (down < up)
+            delaySec: 120,   // sim-seconds demand must hold across the line
+            minSec: 300,     // sim-seconds locked after a change
+            speed: 2,        // sim-hours advanced per real second
+        };
+        const TYPE_NOUN = { pump: 'Pump', boiler: 'Boiler', chiller: 'Chiller' };
+        const MAX_DT_SIM_H = 0.5;     // clamp per-frame sim advance (tab refocus)
+        const SAMPLE_DT_H  = 0.05;    // chart sample cadence in sim-hours
+        const MAX_SAMPLES  = 1000;    // ~50 sim-hours of scrolling window
+        const MAX_LOG      = 50;
+
+        // ── Plant state ──
+        // on:      Set of running unit indices.
+        // runtime: accumulated sim-hours per unit.
+        // healthy: per-unit health (false = faulted / locked out).
+        // pending: a stage change waiting out its delay {dir, readyAt(simSec)}.
+        // lockSec: sim-seconds clock value the min-stage lock clears at.
+        // leadPtr: scheduled-rotation lead pointer.
+        // nextRotSec: sim-seconds at which the next scheduled rotation fires.
+        const plant = {
+            simSec: 0,
+            demand: 12,
+            on: new Set([0]),
+            runtime: [],
+            healthy: [],
+            pending: null,
+            lockSec: 0,
+            leadPtr: 0,
+            nextRotSec: 0,
+            shortfall: false,
+        };
+
+        let unitCells = [];          // {cell, stateEl, leadEl, hrsEl, barEl}
+        let samples = [];            // {t, dem, cap} for the chart
+        let lastSampleT = -1;
+        let playing = false;
+        let rafId = null;
+        let lastWall = 0;
+
+        // ── Day-load curve — one smooth peak: ~12% overnight rising to
+        //    ~92% mid-afternoon (hour-of-day 0–24). ──
+        function dayLoad(hod) {
+            const peak = 14, width = 7, night = 0.12, high = 0.92;
+            const hump = Math.exp(-Math.pow((hod - peak) / width, 2));
+            return Math.round((night + (high - night) * hump) * 100);
+        }
+
+        // ── Helpers ──
+        const runningCount = () => plant.on.size;
+        const healthyIdle = () => {
+            const out = [];
+            for (let i = 0; i < cfg.N; i++) {
+                if (plant.healthy[i] && !plant.on.has(i)) out.push(i);
+            }
+            return out;
+        };
+        // Lead = the running unit whose lead role the strategy assigns.
+        function leadUnit() {
+            const on = [...plant.on];
+            if (!on.length) return -1;
+            if (cfg.strategy === 'equalized') {
+                return on.reduce((lo, i) => plant.runtime[i] < plant.runtime[lo] ? i : lo, on[0]);
+            }
+            if (cfg.strategy === 'scheduled') {
+                // first running unit walking the ring from leadPtr
+                for (let s = 0; s < cfg.N; s++) {
+                    const i = (plant.leadPtr + s) % cfg.N;
+                    if (plant.on.has(i)) return i;
+                }
+            }
+            return Math.min(...on);   // fixed → lowest index
+        }
+        // Which idle healthy unit to START when staging up.
+        function pickAdd() {
+            const idle = healthyIdle();
+            if (!idle.length) return -1;
+            if (cfg.strategy === 'equalized') {
+                return idle.reduce((lo, i) => plant.runtime[i] < plant.runtime[lo] ? i : lo, idle[0]);
+            }
+            if (cfg.strategy === 'scheduled') {
+                for (let s = 0; s < cfg.N; s++) {
+                    const i = (plant.leadPtr + s) % cfg.N;
+                    if (idle.indexOf(i) !== -1) return i;
+                }
+            }
+            return Math.min(...idle);   // fixed → lowest index
+        }
+        // Which running unit to STOP when staging down (never the lead).
+        function pickDrop() {
+            const on = [...plant.on];
+            if (on.length <= 1) return -1;
+            const lead = leadUnit();
+            const cand = on.filter(i => i !== lead);
+            if (!cand.length) return -1;
+            if (cfg.strategy === 'equalized') {
+                return cand.reduce((hi, i) => plant.runtime[i] > plant.runtime[hi] ? i : hi, cand[0]);
+            }
+            return Math.max(...cand);   // fixed / scheduled → highest index
+        }
+
+        // ── Event log ──
+        function clockStr(simSec) {
+            const h = simSec / 3600;
+            const day = Math.floor(h / 24) + 1;
+            const hod = h % 24;
+            const hh = Math.floor(hod);
+            const mm = Math.floor((hod - hh) * 60);
+            return 'D' + day + ' ' + String(hh).padStart(2, '0') + ':' + String(mm).padStart(2, '0');
+        }
+        function clockLong(simSec) {
+            const h = simSec / 3600;
+            const day = Math.floor(h / 24) + 1;
+            const hod = h % 24;
+            const hh = Math.floor(hod);
+            const mm = Math.floor((hod - hh) * 60);
+            return 'Day ' + day + ' · ' + String(hh).padStart(2, '0') + ':' + String(mm).padStart(2, '0');
+        }
+        function log(kind, msg) {
+            const ul = $('stg-log');
+            const empty = ul.querySelector('.empty');
+            if (empty) empty.remove();
+            const li = document.createElement('li');
+            li.setAttribute('data-kind', kind);
+            li.innerHTML = '<span class="t">' + clockStr(plant.simSec) + '</span>' +
+                '<span class="m">' + msg + '</span>';
+            ul.insertBefore(li, ul.firstChild);
+            while (ul.children.length > MAX_LOG) ul.removeChild(ul.lastChild);
+        }
+        const noun = () => TYPE_NOUN[cfg.type];
+        const tag = i => noun().charAt(0) + (i + 1);   // P1, B2, C3 …
+
+        // ── Staging direction wanted right now ──
+        function wantedDirection() {
+            const k = runningCount();
+            const d = plant.demand;
+            if (k < cfg.N && healthyIdle().length && d > cfg.up * k / cfg.N) return 1;
+            if (k > 1 && d < cfg.down * (k - 1) / cfg.N) return -1;
+            return 0;
+        }
+
+        function stageUp() {
+            const add = pickAdd();
+            if (add === -1) return;
+            plant.on.add(add);
+            log('up', 'Stage up → ' + runningCount() + ' units (' + tag(add) + ' on)');
+        }
+        function stageDown() {
+            const drop = pickDrop();
+            if (drop === -1) return;
+            plant.on.delete(drop);
+            log('down', 'Stage down → ' + runningCount() + ' units (' + tag(drop) + ' off)');
+        }
+
+        // Scheduled rotation — advance the lead pointer, then re-seat the
+        // running set onto the new lead-anchored window so the rotation is
+        // visible (and runtime spreads). Logged.
+        function rotateScheduled() {
+            plant.leadPtr = (plant.leadPtr + 1) % cfg.N;
+            const k = runningCount();
+            // desired running set = k healthy units walking from the new lead
+            const want = [];
+            for (let s = 0; s < cfg.N && want.length < k; s++) {
+                const i = (plant.leadPtr + s) % cfg.N;
+                if (plant.healthy[i]) want.push(i);
+            }
+            const before = new Set(plant.on);
+            plant.on = new Set(want);
+            const newLead = leadUnit();
+            // log only if the set actually moved
+            let moved = want.length !== before.size;
+            if (!moved) { for (const i of want) if (!before.has(i)) { moved = true; break; } }
+            if (moved) log('rotate', 'Rotate lead → ' + tag(newLead) + ' (scheduled)');
+        }
+
+        // ── Fault injection ──
+        function tripLead() {
+            const lead = leadUnit();
+            if (lead === -1 || !plant.healthy[lead]) return;
+            const wasRunning = plant.on.size;
+            plant.healthy[lead] = false;
+            plant.on.delete(lead);
+            // promote a standby to hold the running count, if one is free
+            let promoted = -1;
+            while (plant.on.size < wasRunning) {
+                const add = pickAdd();
+                if (add === -1) break;
+                plant.on.add(add);
+                if (promoted === -1) promoted = add;
+            }
+            if (promoted !== -1) {
+                log('fault', tag(lead) + ' FAULT → ' + tag(promoted) + ' promoted');
+            } else {
+                log('fault', tag(lead) + ' FAULT → no standby free — capacity shortfall');
+            }
+            // clear any pending change; faulting resets the deadband timing
+            plant.pending = null;
+            render();
+        }
+        function clearFaults() {
+            let any = false;
+            for (let i = 0; i < cfg.N; i++) {
+                if (!plant.healthy[i]) { plant.healthy[i] = true; any = true; }
+            }
+            if (any) log('info', 'Faults cleared — all units available');
+            render();
+        }
+
+        // ── One step of the model. dtSimSec = simulated seconds elapsed. ──
+        function step(dtSimSec) {
+            plant.simSec += dtSimSec;
+
+            // demand source
+            if (demandMode === 'follow') {
+                plant.demand = dayLoad((plant.simSec / 3600) % 24);
+            } else {
+                plant.demand = parseInt($('stg-demand').value, 10) || 0;
+            }
+
+            // scheduled rotation fires on its interval
+            if (cfg.strategy === 'scheduled') {
+                while (plant.simSec >= plant.nextRotSec) {
+                    rotateScheduled();
+                    plant.nextRotSec += cfg.schedDays * 86400;
+                }
+            }
+
+            // staging evaluate — delay + min-stage lock, all in sim-time
+            const want = wantedDirection();
+            const locked = plant.simSec < plant.lockSec;
+            if (want === 0 || locked) {
+                plant.pending = null;
+            } else {
+                if (!plant.pending || plant.pending.dir !== want) {
+                    plant.pending = { dir: want, readyAt: plant.simSec + cfg.delaySec };
+                }
+                if (plant.simSec >= plant.pending.readyAt) {
+                    if (plant.pending.dir > 0) stageUp(); else stageDown();
+                    plant.lockSec = plant.simSec + cfg.minSec;
+                    plant.pending = null;
+                }
+            }
+
+            // accrue runtime for running units (sim-hours)
+            const dh = dtSimSec / 3600;
+            for (const i of plant.on) plant.runtime[i] += dh;
+
+            // chart sample (throttled to SAMPLE_DT_H)
+            if (plant.simSec / 3600 - lastSampleT >= SAMPLE_DT_H) {
+                lastSampleT = plant.simSec / 3600;
+                samples.push({ t: lastSampleT, dem: plant.demand, cap: runningCount() / cfg.N * 100 });
+                if (samples.length > MAX_SAMPLES) samples.shift();
+            }
+        }
+
+        // ── Render the whole view from state ──
+        function render() {
+            $('stg-clock').textContent = clockLong(plant.simSec);
+            $('stg-demand-val').textContent = plant.demand;
+            if (demandMode === 'follow') $('stg-demand').value = plant.demand;
+
+            const k = runningCount();
+            // Demand wants another unit and there's a physical slot for one,
+            // but every spare is faulted — redundancy exhausted.
+            plant.shortfall = k < cfg.N && plant.demand > cfg.up * k / cfg.N && healthyIdle().length === 0;
+            $('stg-running').textContent = k;
+            $('stg-total').textContent = cfg.N;
+            $('stg-capacity').textContent = Math.round(k / cfg.N * 100);
+            $('stg-load').textContent = k > 0 ? Math.min(999, Math.round(plant.demand * cfg.N / k)) : '—';
+
+            const max = Math.max(...plant.runtime);
+            const min = Math.min(...plant.runtime);
+            $('stg-spread').textContent = Math.round(max - min);
+
+            const lead = leadUnit();
+            for (let i = 0; i < cfg.N; i++) {
+                const c = unitCells[i];
+                const state = !plant.healthy[i] ? 'fault' : (plant.on.has(i) ? 'run' : 'standby');
+                c.cell.setAttribute('data-state', state);
+                c.cell.setAttribute('data-lead', i === lead ? 'true' : 'false');
+                c.stateEl.textContent = state === 'fault' ? 'Fault' : (state === 'run' ? 'Running' : 'Standby');
+                c.hrsEl.innerHTML = '<b>' + Math.round(plant.runtime[i]) + '</b> h';
+                c.barEl.style.width = (max > 0 ? (plant.runtime[i] / max) * 100 : 0) + '%';
+            }
+
+            renderStatus();
+            drawChart();
+        }
+
+        function renderStatus() {
+            const el = $('stg-status');
+            const k = runningCount();
+            const want = wantedDirection();
+            const locked = plant.simSec < plant.lockSec;
+            let kind, msg;
+            const units = noun().toLowerCase() + (k === 1 ? '' : 's');
+
+            if (plant.shortfall) {
+                kind = 'shortfall';
+                msg = 'Capacity shortfall — demand wants another unit but none is healthy and free.';
+            } else if (want !== 0 && locked) {
+                kind = 'held';
+                msg = 'Stage change held — minimum stage time (' +
+                    Math.max(0, Math.ceil(plant.lockSec - plant.simSec)) + ' s)';
+            } else if (plant.pending) {
+                kind = 'pending';
+                msg = (plant.pending.dir > 0 ? 'Adding a unit' : 'Dropping a unit') +
+                    ' — stage delay ' + Math.max(0, Math.ceil(plant.pending.readyAt - plant.simSec)) + ' s';
+            } else {
+                kind = 'steady';
+                msg = k + ' ' + units + ' running — ' +
+                    (plant.demand > Math.round(k / cfg.N * 100) ? 'demand near capacity' : 'load steady');
+            }
+            el.setAttribute('data-kind', kind);
+            el.textContent = msg;
+        }
+
+        // ── Chart — demand (blue) vs online capacity (green) over the
+        //    scrolling sim-time window. Reads theme tokens at draw time. ──
+        function drawChart() {
+            const canvas = $('stg-canvas');
+            const ctx = canvas.getContext('2d');
+            const dpr = window.devicePixelRatio || 1;
+            const cssW = canvas.clientWidth || 600;
+            const cssH = canvas.clientHeight || 260;
+            if (canvas.width !== Math.round(cssW * dpr) || canvas.height !== Math.round(cssH * dpr)) {
+                canvas.width = Math.round(cssW * dpr);
+                canvas.height = Math.round(cssH * dpr);
+            }
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            ctx.clearRect(0, 0, cssW, cssH);
+
+            const css = getComputedStyle(document.documentElement);
+            const cBorder = css.getPropertyValue('--border-faint').trim() || '#2b333d';
+            const cDim    = css.getPropertyValue('--text-dim').trim() || '#828d9b';
+            const cBlue   = css.getPropertyValue('--blue').trim() || '#4aa3dd';
+            const cGreen  = css.getPropertyValue('--accent').trim() || '#6cb23a';
+
+            const padL = 34, padR = 8, padT = 10, padB = 18;
+            const plotW = cssW - padL - padR;
+            const plotH = cssH - padT - padB;
+            const yOf = pct => padT + plotH * (1 - pct / 100);
+
+            // gridlines + y labels (0/25/50/75/100 %)
+            ctx.font = '10px ' + (css.getPropertyValue('--mono').trim() || 'monospace');
+            ctx.textBaseline = 'middle';
+            ctx.textAlign = 'right';
+            ctx.strokeStyle = cBorder;
+            ctx.fillStyle = cDim;
+            ctx.lineWidth = 1;
+            for (let p = 0; p <= 100; p += 25) {
+                const y = Math.round(yOf(p)) + 0.5;
+                ctx.beginPath();
+                ctx.moveTo(padL, y);
+                ctx.lineTo(cssW - padR, y);
+                ctx.stroke();
+                ctx.fillText(p + '%', padL - 5, yOf(p));
+            }
+
+            if (samples.length < 2) return;
+            const t0 = samples[0].t;
+            const t1 = samples[samples.length - 1].t;
+            const span = Math.max(t1 - t0, 0.001);
+            const xOf = t => padL + plotW * (t - t0) / span;
+
+            // online capacity — filled step area (faint) + line
+            ctx.beginPath();
+            ctx.moveTo(xOf(samples[0].t), yOf(0));
+            for (let i = 0; i < samples.length; i++) {
+                const x = xOf(samples[i].t);
+                if (i > 0) ctx.lineTo(x, yOf(samples[i - 1].cap));   // step
+                ctx.lineTo(x, yOf(samples[i].cap));
+            }
+            ctx.lineTo(xOf(t1), yOf(0));
+            ctx.closePath();
+            ctx.globalAlpha = 0.13;
+            ctx.fillStyle = cGreen;
+            ctx.fill();
+            ctx.globalAlpha = 1;
+
+            ctx.beginPath();
+            for (let i = 0; i < samples.length; i++) {
+                const x = xOf(samples[i].t);
+                if (i === 0) ctx.moveTo(x, yOf(samples[i].cap));
+                else { ctx.lineTo(x, yOf(samples[i - 1].cap)); ctx.lineTo(x, yOf(samples[i].cap)); }
+            }
+            ctx.strokeStyle = cGreen;
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            // demand line
+            ctx.beginPath();
+            for (let i = 0; i < samples.length; i++) {
+                const x = xOf(samples[i].t);
+                const y = yOf(samples[i].dem);
+                if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+            }
+            ctx.strokeStyle = cBlue;
+            ctx.lineWidth = 1.75;
+            ctx.stroke();
+        }
+
+        // ── Animation loop ──
+        function frame(now) {
+            if (!playing) return;
+            const dtWall = Math.min((now - lastWall) / 1000, 0.1);   // s, clamp hitches
+            lastWall = now;
+            let dtSimH = dtWall * cfg.speed;
+            if (dtSimH > MAX_DT_SIM_H) dtSimH = MAX_DT_SIM_H;
+            step(dtSimH * 3600);
+            render();
+            rafId = requestAnimationFrame(frame);
+        }
+        function play() {
+            if (playing) return;
+            playing = true;
+            lastWall = performance.now();
+            $('stg-play').classList.add('active');
+            $('stg-pause').classList.remove('active');
+            rafId = requestAnimationFrame(frame);
+        }
+        function pause() {
+            playing = false;
+            if (rafId !== null) { cancelAnimationFrame(rafId); rafId = null; }
+            $('stg-play').classList.remove('active');
+            $('stg-pause').classList.add('active');
+        }
+
+        // ── Build / rebuild the unit cells for the current N ──
+        function buildCells() {
+            const wrap = $('stg-units');
+            wrap.innerHTML = '';
+            unitCells = [];
+            for (let i = 0; i < cfg.N; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'stg-unit';
+                cell.setAttribute('data-state', 'standby');
+                cell.setAttribute('data-lead', 'false');
+                cell.innerHTML =
+                    '<div class="head"><span class="num">' + noun() + ' ' + (i + 1) + '</span>' +
+                    '<span class="lead-tag">Lead</span></div>' +
+                    '<div class="state">Standby</div>' +
+                    '<div class="hrs"><b>0</b> h</div>' +
+                    '<div class="bar"><span></span></div>';
+                wrap.appendChild(cell);
+                unitCells.push({
+                    cell: cell,
+                    stateEl: cell.querySelector('.state'),
+                    hrsEl: cell.querySelector('.hrs'),
+                    barEl: cell.querySelector('.bar > span'),
+                });
+            }
+        }
+
+        // ── Reset the plant (fresh clock, one unit running) ──
+        function resetPlant(quiet) {
+            plant.simSec = 0;
+            plant.on = new Set([0]);
+            plant.runtime = new Array(cfg.N).fill(0);
+            plant.healthy = new Array(cfg.N).fill(true);
+            plant.pending = null;
+            plant.lockSec = 0;
+            plant.leadPtr = 0;
+            plant.nextRotSec = cfg.schedDays * 86400;
+            plant.shortfall = false;
+            samples = [];
+            lastSampleT = -1;
+            plant.demand = demandMode === 'follow' ? dayLoad(0) : (parseInt($('stg-demand').value, 10) || 0);
+            buildCells();
+            if (!quiet) {
+                const ul = $('stg-log');
+                ul.innerHTML = '<li class="empty"><span class="m">Plant reset — ' + cfg.N + ' ' +
+                    noun().toLowerCase() + 's, ' + strategyLabel() + '. Press Play.</span></li>';
+            }
+            render();
+        }
+        function strategyLabel() {
+            return cfg.strategy === 'equalized' ? 'runtime-equalized' :
+                cfg.strategy === 'scheduled' ? 'scheduled rotation' : 'fixed lead';
+        }
+
+        // Seed a static day for reduced-motion users (no animation): step
+        // the model through 24 sim-hours so the chart shows real content.
+        function seedStaticFrame() {
+            const dt = SAMPLE_DT_H * 3600;
+            for (let h = 0; h < 24 / SAMPLE_DT_H; h++) step(dt);
+            render();
+        }
+
+        // ── Config inputs ──
+        let demandMode = 'follow';
+
+        function readThresholds() {
+            const up = parseFloat($('stg-up').value);
+            const down = parseFloat($('stg-down').value);
+            const delay = parseFloat($('stg-delay').value);
+            const min = parseFloat($('stg-min').value);
+            const okUp = isFinite(up), okDown = isFinite(down);
+            // up must sit above down — that gap is the deadband
+            const valid = okUp && okDown && up > down && isFinite(delay) && isFinite(min);
+            $('stg-up').classList.toggle('input-bad', okUp && okDown && up <= down);
+            $('stg-down').classList.toggle('input-bad', okUp && okDown && up <= down);
+            if (valid) {
+                cfg.up = up; cfg.down = down;
+                cfg.delaySec = Math.max(0, delay);
+                cfg.minSec = Math.max(0, min);
+            }
+        }
+
+        function wireConfig() {
+            // unit-count buttons
+            document.querySelectorAll('[data-count]').forEach(btn => {
+                btn.addEventListener('click', e => {
+                    document.querySelectorAll('[data-count]').forEach(b => b.classList.remove('active'));
+                    e.currentTarget.classList.add('active');
+                    cfg.N = parseInt(e.currentTarget.dataset.count, 10);
+                    resetPlant();
+                });
+            });
+            $('stg-type').addEventListener('change', e => {
+                cfg.type = e.target.value;
+                buildCells();
+                render();
+            });
+            $('stg-strategy').addEventListener('change', e => {
+                cfg.strategy = e.target.value;
+                $('stg-sched-field').hidden = cfg.strategy !== 'scheduled';
+                resetPlant();
+            });
+            $('stg-sched-days').addEventListener('change', e => {
+                const v = parseInt(e.target.value, 10);
+                if (isFinite(v) && v >= 1) {
+                    cfg.schedDays = v;
+                    plant.nextRotSec = plant.simSec + cfg.schedDays * 86400;
+                }
+            });
+            ['stg-up', 'stg-down', 'stg-delay', 'stg-min'].forEach(id => {
+                $(id).addEventListener('input', readThresholds);
+            });
+
+            // run controls
+            $('stg-play').addEventListener('click', play);
+            $('stg-pause').addEventListener('click', pause);
+            $('stg-reset').addEventListener('click', () => { pause(); resetPlant(); });
+            $('stg-speed').addEventListener('input', e => {
+                cfg.speed = parseFloat(e.target.value);
+                $('stg-speed-val').textContent = cfg.speed;
+            });
+
+            // demand mode + slider
+            document.querySelectorAll('#stg-mode [data-mode]').forEach(btn => {
+                btn.addEventListener('click', e => {
+                    demandMode = e.currentTarget.dataset.mode;
+                    document.querySelectorAll('#stg-mode [data-mode]').forEach(b =>
+                        b.classList.toggle('on', b === e.currentTarget));
+                    $('stg-demand').disabled = demandMode === 'follow';
+                    render();
+                });
+            });
+            $('stg-demand').addEventListener('input', e => {
+                $('stg-demand-val').textContent = e.target.value;
+                if (demandMode === 'manual') { plant.demand = parseInt(e.target.value, 10) || 0; render(); }
+            });
+
+            // fault
+            $('stg-trip').addEventListener('click', tripLead);
+            $('stg-clear').addEventListener('click', clearFaults);
+
+            // repaint chart on theme flip / resize (it reads tokens at draw time)
+            document.addEventListener('themechange', drawChart);
+            window.addEventListener('resize', drawChart);
+        }
+
+        // ── Init ──
+        wireConfig();
+        resetPlant();
+        if (reduceMotion) {
+            seedStaticFrame();        // static, meaningful frame; stays paused
+            pause();
+        } else {
+            play();                   // auto-run the day
+        }
+    })();
+</script>
+{% endblock %}

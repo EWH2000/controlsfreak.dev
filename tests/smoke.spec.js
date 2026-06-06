@@ -37,6 +37,7 @@ const PAGES = [
     { name: 'pid tuner',              url: '/simulators/pid-tuner.html' },
     { name: 'vfd mock',               url: '/simulators/vfd-mock.html' },
     { name: 'function-block editor',  url: '/simulators/function-block-editor.html' },
+    { name: 'staging sequencer',      url: '/simulators/staging-sequencer.html' },
     { name: 'education hub',          url: '/education/' },
     { name: 'education — pid basics',  url: '/education/pid-basics.html' },
     { name: 'education — hydronic loops', url: '/education/hydronic-loops.html' },
@@ -159,6 +160,21 @@ test('pid tuner — high dead-time process reaches the unstable regime', async (
     await expect(page.locator('#pid-over')).toHaveClass(/warn/);
     await expect(page.locator('#pid-settle')).toContainText('>');   // never settles in window
     expect(errors, 'pid high-dead-time behavioral should log no page / console errors').toEqual([]);
+});
+
+test('staging sequencer — high demand stages units up and logs the event', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('/simulators/staging-sequencer.html');
+    // Drive the plant deterministically: Manual demand pinned high + a
+    // zero stage-delay means the running sequence must add units on the
+    // first evaluate. With 3 units at 100 % demand it climbs to all three.
+    await page.click('#stg-mode-manual');
+    await page.$eval('#stg-delay', el => { el.value = '0'; el.dispatchEvent(new Event('input', { bubbles: true })); });
+    await page.$eval('#stg-demand', el => { el.value = '100'; el.dispatchEvent(new Event('input', { bubbles: true })); });
+    await page.click('#stg-play');   // idempotent if already auto-playing
+    await expect(page.locator('#stg-running')).toHaveText('3');
+    await expect(page.locator('#stg-log')).toContainText('Stage up');
+    expect(errors, 'staging sequencer behavioral should log no page / console errors').toEqual([]);
 });
 
 test('bacnet/ip converter converts a hex string', async ({ page }) => {
