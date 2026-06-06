@@ -35,33 +35,311 @@ nav: home
         ]
     }
     </script>
+    <style>
+        /* SEAM HERO — home-only, so it lives here (not styles.css). The
+           shared frame (.hero / .console-* / .ok-pill), the equipment kit
+           (.device / .lcd / .led / .gauge.eq), and the promoted .tree /
+           .trend carry most of it; this block is just the layout + copy. */
+
+        /* Inner instrument frame — gives the live loop its own labeled
+           container so a newcomer has context, without turning the home
+           page into a lesson. Recessed from the hero surface like a view
+           inside the workstation. */
+        .hseam-frame {
+            margin: 1.25rem 1.5rem 0;
+            background: var(--bg);
+            border: 1px solid var(--border);
+        }
+        .hseam-frame-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.5rem 0.85rem;
+            border-bottom: 1px solid var(--border);
+            background: var(--surface-2);
+            font-family: var(--mono);
+            font-size: 0.64rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-dim);
+        }
+        .hseam-frame-title { color: var(--text-bright); }
+        .hseam-legend {
+            margin: 0;
+            padding: 0.65rem 0.95rem 0.85rem;
+            border-top: 1px solid var(--border-faint);
+            font-size: 0.78rem;
+            line-height: 1.5;
+            color: var(--text-dim);
+            max-width: 780px;
+        }
+
+        /* Three columns: software supervisor | conductor | field device. */
+        .hero-seam-stage {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 116px minmax(0, 1fr);
+            align-items: center;
+            padding: 1.6rem 1.25rem;
+        }
+        .hseam-panel { min-width: 0; }
+        .hseam-cap {
+            font-family: var(--mono);
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.5rem;
+        }
+        .hseam-sw .tree {
+            background: var(--well);
+            border: 1px solid var(--border);
+            padding: 0.35rem;
+        }
+        .hseam-pv {
+            margin-left: auto;
+            color: var(--blue);
+            font-variant-numeric: tabular-nums;
+        }
+        .hseam-trend-wrap { margin-top: 0.75rem; }
+        .hseam-trend { height: 56px; }
+        /* live-updated, so suppress the one-shot draw-in from the shared rule */
+        .hseam-trend .line { stroke-dasharray: none; animation: none; }
+        /* the setpoint line — green dashed (target) against the blue PV */
+        .hseam-trend .sp { stroke: var(--accent); stroke-width: 1.5; stroke-dasharray: 4 3; opacity: 0.85; }
+        .hseam-trend-key {
+            display: flex;
+            gap: 1rem;
+            margin-top: 0.35rem;
+            font-family: var(--mono);
+            font-size: 0.56rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-dim);
+        }
+        .hseam-trend-key span { display: inline-flex; align-items: center; gap: 0.35rem; }
+        .hseam-trend-key span::before { content: ""; width: 14px; border-top: 2px solid var(--blue); }
+        .hseam-trend-key .k-sp::before { border-top: 2px dashed var(--accent); }
+        .hseam-2up { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 0.5rem; }
+        .hseam-dev .gauge.eq { margin-top: 0.6rem; }
+
+        /* The conductor + the value packet that rides it (device → supervisor). */
+        .hseam-link { position: relative; height: 100%; min-height: 64px; }
+        .hseam-wire {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            border-top: 1px dashed var(--blue);
+            opacity: 0.5;
+        }
+        .hseam-flow {
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: calc(50% + 0.5rem);
+            text-align: center;
+            font-family: var(--mono);
+            font-size: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+        }
+        .hseam-packet {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            transform: translate(0, -50%);
+            font-family: var(--mono);
+            font-size: 0.58rem;
+            font-weight: 600;
+            color: var(--blue-bright);
+            background: var(--bg);
+            border: 1px solid var(--blue);
+            padding: 0.08rem 0.3rem;
+            white-space: nowrap;
+            opacity: 0;   /* only visible mid-flight; JS drives it */
+        }
+
+        /* Copy — title spans the full width; the paragraph and an actions
+           panel sit side by side beneath it so the text fills the hero.
+           Scoped under .hero-seam to override the legacy centered .hero h1/p. */
+        .hero-seam .hero-copy {
+            display: grid;
+            grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr);
+            grid-template-areas:
+                "title  title"
+                "body   actions"
+                "latest latest";
+            column-gap: 2.5rem;
+            row-gap: 0.5rem;
+            align-items: start;
+            padding: 1.4rem 2rem 1.6rem;
+        }
+        .hero-seam .hero-copy h1 {
+            grid-area: title;
+            font-family: var(--mono);
+            font-size: clamp(1.4rem, 3vw, 2rem);
+            font-weight: 600;
+            color: var(--text-bright);
+            letter-spacing: -0.01em;
+            line-height: 1.2;
+            margin: 0 0 0.4rem;
+            text-align: left;
+        }
+        .hero-seam .hero-copy p {
+            grid-area: body;
+            font-size: 1rem;
+            font-weight: 300;
+            color: var(--text);
+            line-height: 1.7;
+            margin: 0;
+            text-align: left;
+        }
+        .hero-cta {
+            grid-area: actions;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.7rem;
+        }
+        .hero-btn {
+            font-family: var(--mono);
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            padding: 0.85rem 1.3rem;
+            border: 1px solid var(--border);
+            color: var(--text);
+            background: var(--surface-2);
+            transition: border-color 0.12s, color 0.12s, background 0.12s;
+        }
+        .hero-btn:hover { border-color: var(--accent); color: var(--text-bright); }
+        .hero-btn.primary { border-color: var(--accent-glow); color: var(--accent); background: var(--accent-dim); }
+        .hero-btn.primary:hover { color: var(--accent-bright); border-color: var(--accent); }
+        /* .hero-copy .hero-latest (not just .hero-latest) so it outranks the
+           .hero-copy p body rule, which also matches this <p>. */
+        .hero-seam .hero-copy .hero-latest {
+            grid-area: latest;
+            font-family: var(--mono);
+            font-size: 0.72rem;
+            font-weight: 400;
+            line-height: 1.5;
+            color: var(--text-dim);
+            margin: 0.7rem 0 0;
+            letter-spacing: 0.03em;
+        }
+        .hero-seam .hero-latest a { color: var(--accent); border-bottom: 1px solid transparent; }
+        .hero-seam .hero-latest a:hover { border-bottom-color: var(--accent); }
+
+        /* Stack on narrow screens — the conductor drops out; the two
+           populated panels still tell the software↔equipment story, and
+           the copy collapses to a single column. */
+        @media (max-width: 760px) {
+            .hseam-frame { margin: 1.25rem 1.25rem 0; }
+            .hero-seam-stage {
+                grid-template-columns: 1fr;
+                gap: 1.1rem;
+                padding: 1.25rem;
+            }
+            .hseam-link { display: none; }
+            .hero-seam .hero-copy {
+                grid-template-columns: 1fr;
+                grid-template-areas: "title" "body" "actions" "latest";
+                padding: 1.25rem 1.25rem 1.75rem;
+            }
+        }
+    </style>
 {% endblock %}
 
 {% block content %}
-<section class="hero">
+<section class="hero hero-seam">
     <div class="console-titlebar">
         <span>controlsfreak.dev <span class="titlebar-dots">///</span> FIELD REFERENCE</span>
-        <span class="ok-pill">OK</span>
+        <span class="ok-pill">LIVE</span>
     </div>
-    <div class="hero-body">
-        <div class="hero-eyebrow">BMS Field Reference</div>
-        <h1>Tools for those in controls,<br><em>built for the field.</em></h1>
-        <p>A reference site for building-controls people. Open calculators and lookups for the math you don't want to redo at the panel — BACnet/IP, Modbus registers, signal scaling, psychrometrics, thermistors. Alongside, a growing set of explainers that walk through hydronic loops, load piping, VFDs, and pump control end-to-end. No login, no ads, no tracking — view-source still works, and the same pages run ten years from now.</p>
-        <p class="hero-onramp">New to building controls? <a href="/education/">Start with the explainers →</a></p>
-        <div class="hero-badges">
-            <span class="badge">AI / AO Scaling</span>
-            <span class="badge">Modbus Register Viewer</span>
-            <span class="badge">PID Tuning</span>
-            <span class="badge">BACnet/IP Hex</span>
-            <span class="badge">Psychrometric Chart</span>
-            <span class="badge">Thermistor / RTD Lookup</span>
-            <span class="badge">Latest: Practice — quizzes &amp; drills</span>
+
+    <!-- The seam: the site's whole premise as one live instrument — a
+         software supervisor (left) reading a field controller (right)
+         across the wire between them. It runs a small AHU supply-air loop:
+         the controller holds supply air at setpoint by modulating a cooling
+         valve; the setpoint steps every so often so you watch the loop
+         respond (not a looping animation). Decorative simulation — the copy
+         below carries the accessible content, so the stage is aria-hidden. -->
+    <div class="hseam-frame">
+        <div class="hseam-frame-head">
+            <span class="hseam-frame-title">Live <span class="titlebar-dots">·</span> AHU-1 supply-air temperature loop</span>
+            <span class="ok-pill">RUN</span>
         </div>
+
+        <div class="hero-seam-stage" aria-hidden="true">
+
+            <!-- SOFTWARE register — supervisor: point tree + live PV/SP trend -->
+            <div class="hseam-panel hseam-sw">
+                <div class="hseam-cap">Supervisor <span class="titlebar-dots">·</span> AHU-1</div>
+                <div class="tree">
+                    <div class="row"><span class="ic folder"></span>Station</div>
+                    <div class="row indent"><span class="ic station"></span>AHU-1</div>
+                    <div class="row indent2 sel"><span class="ic point"></span>SA-T<span class="hseam-pv" id="hero-tree-sat">55.1 °F</span></div>
+                    <div class="row indent2"><span class="ic point"></span>SA-SP<span class="hseam-pv" id="hero-tree-sp">55.0 °F</span></div>
+                    <div class="row indent2"><span class="ic point"></span>CLG-V<span class="hseam-pv" id="hero-tree-ao">62 %</span></div>
+                </div>
+                <div class="hseam-trend-wrap">
+                    <svg class="trend hseam-trend" viewBox="0 0 300 54" preserveAspectRatio="none" role="img" aria-label="Supply-air temperature versus setpoint trend">
+                        <defs><linearGradient id="trend-grad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--blue)" stop-opacity="0.3"/><stop offset="1" stop-color="var(--blue)" stop-opacity="0"/></linearGradient></defs>
+                        <line class="grid-l" x1="0" y1="18" x2="300" y2="18"/>
+                        <line class="grid-l" x1="0" y1="36" x2="300" y2="36"/>
+                        <polygon class="area" id="hero-trend-area" points=""/>
+                        <polyline class="line sp" id="hero-trend-sp" points=""/>
+                        <polyline class="line" id="hero-trend-line" points=""/>
+                    </svg>
+                    <div class="hseam-trend-key"><span class="k-pv">SA-T</span><span class="k-sp">setpoint</span></div>
+                </div>
+            </div>
+
+            <!-- SEAM — the conductor; a feedback packet rides it device → supervisor -->
+            <div class="hseam-link">
+                <span class="hseam-wire"></span>
+                <span class="hseam-flow">feedback</span>
+                <span class="hseam-packet" id="hero-packet"><span id="hero-packet-val">55.1 °F</span></span>
+            </div>
+
+            <!-- EQUIPMENT register — the field controller -->
+            <div class="device hseam-dev">
+                <div class="device-inner">
+                    <div class="device-tb"><span class="led led--run" aria-hidden="true"></span><span class="title">Field Controller</span><span class="badge">AHU-1</span></div>
+                    <div class="lcd"><div class="k">Supply Air · AI1</div><div class="v" id="hero-lcd-sat">55.1<small>°F</small></div></div>
+                    <div class="hseam-2up">
+                        <div class="lcd"><div class="k">Setpoint</div><div class="v" style="font-size:1.1rem" id="hero-lcd-sp">55.0<small>°F</small></div></div>
+                        <div class="lcd"><div class="k">Cooling · AO1</div><div class="v" style="font-size:1.1rem" id="hero-lcd-ao">62<small>%</small></div></div>
+                    </div>
+                    <div class="gauge eq"><span class="gauge-label">Valve</span><div class="track"><div class="fill" id="hero-ao-fill" style="--pct:62%"></div></div><span class="pct" id="hero-ao-pct">62%</span></div>
+                    <div class="dev-leds">
+                        <span><span class="led led--run" aria-hidden="true"></span>Run</span>
+                        <span><span class="led led--comm" aria-hidden="true"></span>Comm</span>
+                        <span><span class="led led--off" aria-hidden="true"></span>Fault</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <p class="hseam-legend">The supervisor reads the supply-air sensor; the controller holds it at setpoint by modulating the cooling valve. Watch the loop chase each setpoint change.</p>
     </div>
+
+    <div class="hero-copy">
+        <h1>Tools for those in controls, built for the field.</h1>
+        <p>The math you don't want to redo at the panel — signal scaling, BACnet/IP, Modbus, psychrometrics, thermistors — plus explainers that walk a whole system end-to-end. No login, no ads, no tracking; view-source still works, and these pages will still run ten years from now.</p>
+        <div class="hero-cta">
+            <a class="hero-btn primary" href="/tools/">Browse tools →</a>
+            <a class="hero-btn" href="/education/">Start with the explainers →</a>
+        </div>
+        <p class="hero-latest">Latest <span class="titlebar-dots">·</span> <a href="/practice/">Practice — quizzes &amp; drills →</a></p>
+    </div>
+
     <div class="console-statusline">
-        <span class="ok-pill">OK</span>
-        <span>VERSION <strong>v{{ site.version }}</strong></span>
-        <span>LAST BUILT <strong><time datetime="{{ site.buildDate }}">{{ site.buildDate }}</time></strong></span>
+        <span class="ok-pill">LIVE</span>
+        <span>AHU-1 <span class="titlebar-dots">·</span> holding setpoint</span>
+        <span>v{{ site.version }} <span class="titlebar-dots">·</span> <time datetime="{{ site.buildDate }}">{{ site.buildDate }}</time></span>
     </div>
 </section>
 
@@ -178,4 +456,90 @@ nav: home
 
 {% block scripts %}
 <script src="/scripts/units.js"></script>
+<script>
+    // Seam hero — a small AHU supply-air loop. The SETPOINT steps every so
+    // often; the supply-air temp (PV) chases it and the cooling valve (AO)
+    // drives harder the further off setpoint it is. Tree, device LCDs, valve
+    // gauge, and the PV-vs-SP trend all read the same loop, and a feedback
+    // packet carries the reading device → supervisor each tick. Motion
+    // REPRESENTS the process (the redesign's hard rule) — the setpoint steps
+    // are what make it read as a control loop responding, not a looping
+    // animation. The stage is aria-hidden; the copy below is the accessible
+    // content. Reduced-motion gets one static, already-populated frame.
+    (function () {
+        'use strict';
+        const stage = document.querySelector('.hero-seam-stage');
+        if (!stage) return;
+
+        const byId = (id) => document.getElementById(id);
+        const lcdSat = byId('hero-lcd-sat'), lcdSp = byId('hero-lcd-sp'), lcdAo = byId('hero-lcd-ao');
+        const treeSat = byId('hero-tree-sat'), treeSp = byId('hero-tree-sp'), treeAo = byId('hero-tree-ao');
+        const aoFill = byId('hero-ao-fill'), aoPct = byId('hero-ao-pct');
+        const linePv = byId('hero-trend-line'), lineSp = byId('hero-trend-sp'), area = byId('hero-trend-area');
+        const link = document.querySelector('.hseam-link');
+        const packet = byId('hero-packet'), packetVal = byId('hero-packet-val');
+
+        const N = 22;                                  // trend samples
+        const VMIN = 51.5, VMAX = 58.5;                // trend y-range °F
+        const TOP = 6, BOT = 48;                        // trend y-pixels (viewBox 0..54)
+        const SP_CHOICES = [55.0, 53.0, 57.0, 54.0, 56.0];
+        const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+        const reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        let sp = 55.0, sat = 55.0, ticksToStep = 5;
+        const satHist = [], spHist = [];
+
+        // Colder setpoint needs more cooling; being off setpoint opens it further.
+        const aoFor = (s, p) => clamp((57 - p) * 16 + (s - p) * 26, 4, 100);
+        const yOf = (v) => clamp(BOT - ((v - VMIN) / (VMAX - VMIN)) * (BOT - TOP), 2, 52);
+        const ptsOf = (arr) => arr.map((v, i) => ((i / (arr.length - 1)) * 300).toFixed(1) + ',' + yOf(v).toFixed(1)).join(' ');
+
+        function advance() {
+            if (--ticksToStep <= 0) {                  // step the setpoint, then chase it
+                let next = sp;
+                while (next === sp) next = SP_CHOICES[(Math.random() * SP_CHOICES.length) | 0];
+                sp = next;
+                ticksToStep = 8 + (Math.random() * 6 | 0);
+            }
+            sat += (sp - sat) * 0.28 + (Math.random() - 0.5) * 0.12;   // first-order chase + noise
+            satHist.push(sat); if (satHist.length > N) satHist.shift();
+            spHist.push(sp);   if (spHist.length > N) spHist.shift();
+        }
+
+        function paint() {
+            const ao = Math.round(aoFor(sat, sp));
+            const satS = sat.toFixed(1), spS = sp.toFixed(1);
+            lcdSat.innerHTML = satS + '<small>°F</small>';
+            lcdSp.innerHTML  = spS + '<small>°F</small>';
+            lcdAo.innerHTML  = ao + '<small>%</small>';
+            treeSat.textContent = satS + ' °F';
+            treeSp.textContent  = spS + ' °F';
+            treeAo.textContent  = ao + ' %';
+            aoFill.style.setProperty('--pct', ao + '%');
+            aoPct.textContent = ao + '%';
+            const pv = ptsOf(satHist);
+            linePv.setAttribute('points', pv);
+            lineSp.setAttribute('points', ptsOf(spHist));
+            area.setAttribute('points', pv + ' 300,54 0,54');
+            packetVal.textContent = satS + ' °F';
+        }
+
+        for (let i = 0; i < N + 6; i++) advance();      // prefill a realistic recent trace
+        paint();                                        // static first frame
+        if (reduce) return;
+
+        function hop() {
+            const w = link.clientWidth - packet.offsetWidth;
+            if (w <= 0) return;                          // hidden / stacked (mobile)
+            packet.animate([
+                { transform: 'translate(' + w + 'px, -50%)', opacity: 0 },
+                { transform: 'translate(' + w + 'px, -50%)', opacity: 1, offset: 0.12 },
+                { transform: 'translate(0, -50%)',           opacity: 1, offset: 0.85 },
+                { transform: 'translate(0, -50%)',           opacity: 0 }
+            ], { duration: 1100, easing: 'ease-in-out' });
+        }
+
+        setInterval(function () { advance(); paint(); hop(); }, 1500);
+    })();
+</script>
 {% endblock %}
