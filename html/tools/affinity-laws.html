@@ -1,0 +1,285 @@
+---
+title: Pump & Fan Affinity Laws — controlsfreak.dev
+description: Run the pump and fan affinity laws — flow scales with speed, head with its square, power with its cube — from a known point to a new speed or impeller trim.
+canonical: https://controlsfreak.dev/tools/affinity-laws.html
+nav: tools
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block head %}
+    <style>
+        /* Page-only — the ratio readout sits a touch larger; everything
+           else is shared property-sheet chrome. */
+        .af-ratio .ps-value { font-weight: 600; }
+    </style>
+{% endblock %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Tools · Affinity Laws</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">
+                Pump &amp; Fan Affinity Laws
+                <span class="tool-tag">Pumps &amp; Fans</span>
+            </h1>
+        </div>
+
+        <p class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
+            One operating point and a speed (or impeller) change, scaled by the affinity laws.
+            Flow tracks the ratio, head tracks its square, and power tracks its <em>cube</em> — which is the whole reason a VFD slowing a pump saves so much more energy than it gives up in flow.
+            <em>By speed</em> is the VFD case; <em>By impeller diameter</em> is the trim case, exact for speed and approximate for small trims of the same casing.
+        </p>
+
+        <div class="tabs tabs-flush">
+            <button class="tab-btn active" data-tab="speed">By speed</button>
+            <button class="tab-btn"        data-tab="dia">By impeller diameter</button>
+        </div>
+
+        <!-- ── By speed ── -->
+        <div id="tab-speed" class="tab-pane active">
+            <div class="tool-body-2col">
+
+                <section>
+                    <h2 class="ps-section-label">Input</h2>
+                    <div class="ps-row">
+                        <label class="ps-label" for="af-s-n1">Reference speed N₁</label>
+                        <input class="ps-input" type="number" id="af-s-n1" step="any" min="0" placeholder="60" value="60">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="af-s-n2">New speed N₂</label>
+                        <input class="ps-input" type="number" id="af-s-n2" step="any" min="0" placeholder="50" value="50">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="af-s-q1">Flow Q₁</label>
+                        <input class="ps-input" type="number" id="af-s-q1" step="any" placeholder="100" value="100">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="af-s-h1">Head / pressure H₁</label>
+                        <input class="ps-input" type="number" id="af-s-h1" step="any" placeholder="50" value="50">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="af-s-p1">Power P₁</label>
+                        <input class="ps-input" type="number" id="af-s-p1" step="any" placeholder="10" value="10">
+                    </div>
+                    <p class="ref-note">
+                        Speeds take any consistent unit (RPM, Hz, %). Flow, head, and power pass through unchanged, so the outputs carry whatever units you entered — head (ft) for pumps, static pressure (in. w.c.) for fans, power in bhp or kW.
+                    </p>
+                </section>
+
+                <section>
+                    <h2 class="ps-section-label">Output — at N₂</h2>
+                    <div class="ps-row af-ratio">
+                        <span class="ps-label">Speed ratio N₂/N₁</span>
+                        <span class="ps-value muted" id="af-s-ratio">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">Flow Q₂ &nbsp;(∝ ratio)</span>
+                        <span class="ps-value muted" id="af-s-q2">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">Head / pressure H₂ &nbsp;(∝ ratio²)</span>
+                        <span class="ps-value muted" id="af-s-h2">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">Power P₂ &nbsp;(∝ ratio³)</span>
+                        <span class="ps-value muted" id="af-s-p2">—</span>
+                    </div>
+                    <div class="btn-row">
+                        <button class="copy-btn" id="af-s-copy">Copy results</button>
+                    </div>
+                    <div class="result-formula wrap" id="af-s-formula"></div>
+                    <div class="failure-callout" id="af-s-callout" hidden></div>
+                </section>
+
+            </div>
+
+            <section class="tool-body-row">
+                <h2 class="ps-section-label">Worked example</h2>
+                <p class="ref-note worked-intro">
+                    A VFD slows a pump from 60 Hz to 50 Hz — 83 % speed — at an operating point of 100 GPM, 50 ft head, 10 bhp.
+                </p>
+                <ol class="ref-note worked-list">
+                    <li>Ratio: <code>50 ÷ 60 = 0.833</code>.</li>
+                    <li>Flow: <code>100 × 0.833 = 83.3 GPM</code> (linear).</li>
+                    <li>Head: <code>50 × 0.833² = 34.7 ft</code> (square).</li>
+                    <li>Power: <code>10 × 0.833³ = 5.8 bhp</code> (cube).</li>
+                </ol>
+                <p class="ref-note">
+                    A 17 % speed cut gives back 17 % of flow but nearly <em>halves</em> the power. The cube law is the energy case for variable-speed pumping — and the reason the savings shrink fast once you stop riding the curve down (see Pump Control).
+                </p>
+            </section>
+        </div>
+
+        <!-- ── By impeller diameter ── -->
+        <div id="tab-dia" class="tab-pane">
+            <div class="tool-body-2col">
+
+                <section>
+                    <h2 class="ps-section-label">Input</h2>
+                    <div class="ps-row">
+                        <label class="ps-label" for="af-d-n1">Reference diameter D₁</label>
+                        <input class="ps-input" type="number" id="af-d-n1" step="any" min="0" placeholder="10" value="10">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="af-d-n2">Trimmed diameter D₂</label>
+                        <input class="ps-input" type="number" id="af-d-n2" step="any" min="0" placeholder="9" value="9">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="af-d-q1">Flow Q₁</label>
+                        <input class="ps-input" type="number" id="af-d-q1" step="any" placeholder="100" value="100">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="af-d-h1">Head / pressure H₁</label>
+                        <input class="ps-input" type="number" id="af-d-h1" step="any" placeholder="50" value="50">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="af-d-p1">Power P₁</label>
+                        <input class="ps-input" type="number" id="af-d-p1" step="any" placeholder="10" value="10">
+                    </div>
+                    <p class="ref-note">
+                        Diameters take any consistent unit (in, mm). The diameter laws hold only for modest trims of the <em>same</em> casing — past roughly 10–15 % the efficiency falls off and the simple ratios drift.
+                    </p>
+                </section>
+
+                <section>
+                    <h2 class="ps-section-label">Output — at D₂</h2>
+                    <div class="ps-row af-ratio">
+                        <span class="ps-label">Diameter ratio D₂/D₁</span>
+                        <span class="ps-value muted" id="af-d-ratio">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">Flow Q₂ &nbsp;(∝ ratio)</span>
+                        <span class="ps-value muted" id="af-d-q2">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">Head / pressure H₂ &nbsp;(∝ ratio²)</span>
+                        <span class="ps-value muted" id="af-d-h2">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">Power P₂ &nbsp;(∝ ratio³)</span>
+                        <span class="ps-value muted" id="af-d-p2">—</span>
+                    </div>
+                    <div class="btn-row">
+                        <button class="copy-btn" id="af-d-copy">Copy results</button>
+                    </div>
+                    <div class="result-formula wrap" id="af-d-formula"></div>
+                    <div class="failure-callout" id="af-d-callout" hidden></div>
+                </section>
+
+            </div>
+
+            <section class="tool-body-row">
+                <h2 class="ps-section-label">The laws</h2>
+                <table class="ref-table-dense">
+                    <thead>
+                        <tr><th>Quantity</th><th>By speed (N)</th><th>By diameter (D)</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Flow Q</td><td>∝ N₂/N₁</td><td>∝ D₂/D₁</td></tr>
+                        <tr><td>Head / pressure H</td><td>∝ (N₂/N₁)²</td><td>∝ (D₂/D₁)²</td></tr>
+                        <tr><td>Power P</td><td>∝ (N₂/N₁)³</td><td>∝ (D₂/D₁)³</td></tr>
+                    </tbody>
+                </table>
+                <p class="ref-note">
+                    Speed is the exact, reversible case — slow a pump and speed it back up and it returns to the same point. Impeller trim is permanent metal and only approximate: good for a one-time match of an oversized pump to its duty, not for control.
+                </p>
+            </section>
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        lessons: [
+            {href: '/education/pump-control.html', label: 'Pump Control'},
+            {href: '/education/vfds.html', label: 'VFDs'}
+        ],
+        quizzes: [
+            {href: '/practice/pump-control.html', label: 'Pump Control'},
+            {href: '/practice/vfds.html', label: 'VFDs'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/tools/">← All tools</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="/scripts/ui.js"></script>
+<script>
+    // switchTab(name, btn) and copyReadouts(btn, sep, ...ids) come from
+    // /scripts/ui.js. Affinity laws are pure ratios, so the tool is
+    // unit-agnostic — flow/head/power pass through in whatever units the
+    // visitor enters and units.js isn't loaded. Both tabs share one calc
+    // shape (only the ratio's source field differs: speed vs diameter).
+    (function () {
+        'use strict';
+
+        const tidy = (n, dp) => parseFloat(n.toFixed(dp)).toString();
+
+        // Build a calc for one tab from its id prefix + the ratio's label.
+        function makeCalc(prefix, ratioLabel) {
+            const el = id => document.getElementById(prefix + '-' + id);
+            const ref = el('n1'), nw = el('n2'), q1 = el('q1'), h1 = el('h1'), p1 = el('p1');
+            const ratioEl = el('ratio'), q2 = el('q2'), h2 = el('h2'), p2 = el('p2');
+            const formulaEl = el('formula'), calloutEl = el('callout');
+
+            const setOut = (out, val, dp) => {
+                if (val === null) { out.className = 'ps-value muted'; out.textContent = '—'; }
+                else { out.className = 'ps-value live'; out.textContent = tidy(val, dp); }
+            };
+
+            return function calc() {
+                const r1 = parseFloat(ref.value), r2 = parseFloat(nw.value);
+
+                if (!isFinite(r1) || !isFinite(r2) || r1 <= 0 || r2 < 0) {
+                    [ratioEl, q2, h2, p2].forEach(o => { o.className = 'ps-value muted'; o.textContent = '—'; });
+                    formulaEl.textContent = '';
+                    calloutEl.textContent = `Enter a ${ratioLabel} greater than 0 for the reference and 0 or more for the new value.`;
+                    calloutEl.hidden = false;
+                    return;
+                }
+                calloutEl.hidden = true;
+
+                const ratio = r2 / r1;
+                ratioEl.className = 'ps-value live';
+                ratioEl.textContent = tidy(ratio, 3);
+
+                // Each quantity is optional — only scale the ones provided.
+                const q = parseFloat(q1.value), h = parseFloat(h1.value), p = parseFloat(p1.value);
+                setOut(q2, isFinite(q) ? q * ratio : null, 2);
+                setOut(h2, isFinite(h) ? h * ratio * ratio : null, 2);
+                setOut(p2, isFinite(p) ? p * ratio * ratio * ratio : null, 2);
+
+                formulaEl.textContent =
+                    `ratio = ${tidy(r2, 4)} ÷ ${tidy(r1, 4)} = ${tidy(ratio, 3)}` +
+                    `   ·   Q ∝ ratio   ·   H ∝ ratio²   ·   P ∝ ratio³`;
+            };
+        }
+
+        const calcSpeed = makeCalc('af-s', 'speed');
+        const calcDia   = makeCalc('af-d', 'diameter');
+
+        document.querySelectorAll('[data-tab]').forEach(btn => {
+            btn.addEventListener('click', e => switchTab(e.currentTarget.dataset.tab, e.currentTarget));
+        });
+        ['af-s-n1', 'af-s-n2', 'af-s-q1', 'af-s-h1', 'af-s-p1'].forEach(id => {
+            document.getElementById(id).addEventListener('input', calcSpeed);
+        });
+        ['af-d-n1', 'af-d-n2', 'af-d-q1', 'af-d-h1', 'af-d-p1'].forEach(id => {
+            document.getElementById(id).addEventListener('input', calcDia);
+        });
+        document.getElementById('af-s-copy').addEventListener('click', e => copyReadouts(e.currentTarget, ' · ', 'af-s-q2', 'af-s-h2', 'af-s-p2'));
+        document.getElementById('af-d-copy').addEventListener('click', e => copyReadouts(e.currentTarget, ' · ', 'af-d-q2', 'af-d-h2', 'af-d-p2'));
+
+        calcSpeed();
+        calcDia();
+    })();
+</script>
+{% endblock %}
