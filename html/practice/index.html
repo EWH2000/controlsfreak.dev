@@ -72,7 +72,7 @@ nav: practice
 
     <div class="filter-chips" role="group" aria-label="Filter practice by topic">
         <button type="button" class="filter-chip active" data-category="all" aria-pressed="true">
-            All <span class="filter-chip-count">13</span>
+            All <span class="filter-chip-count">16</span>
         </button>
         <button type="button" class="filter-chip" data-category="modbus" aria-pressed="false">
             Modbus <span class="filter-chip-count">2</span>
@@ -85,6 +85,9 @@ nav: practice
         </button>
         <button type="button" class="filter-chip" data-category="refrigeration" aria-pressed="false">
             Refrigeration <span class="filter-chip-count">3</span>
+        </button>
+        <button type="button" class="filter-chip" data-category="controls" aria-pressed="false">
+            Controls <span class="filter-chip-count">3</span>
         </button>
     </div>
 
@@ -196,6 +199,33 @@ nav: practice
                 desc:       'Drill the TXVs vs. EEVs lesson — the mechanical TXV force balance, the electronic EEV control loop, and what each does to hold a target superheat as load drifts.',
                 pills:      ['10 Questions', 'MCQ · TF · Gotcha', '~ 5 min'],
                 category:   'refrigeration'
+            }) }}
+            {{ navCard({
+                section:    'practice',
+                href:       '/practice/pid-basics.html',
+                titleShort: 'PID Basics',
+                titleFull:  'PID Basics',
+                desc:       'Drill the PID Basics lesson — what proportional, integral, and derivative each do, the droop P leaves and how integral erases it, too-fast reset, and why HVAC runs PI.',
+                pills:      ['10 Questions', 'MCQ · TF · Gotcha · Numeric', '~ 5 min'],
+                category:   'controls'
+            }) }}
+            {{ navCard({
+                section:    'practice',
+                href:       '/practice/vfds.html',
+                titleShort: 'VFDs',
+                titleFull:  'VFDs',
+                desc:       'Drill the VFDs lesson — the rectifier / DC bus / inverter stages, the cube law, the run-command vs. speed-reference trap, run status, and reading fault categories.',
+                pills:      ['10 Questions', 'MCQ · TF · Gotcha · Numeric', '~ 5 min'],
+                category:   'controls'
+            }) }}
+            {{ navCard({
+                section:    'practice',
+                href:       '/practice/function-blocks.html',
+                titleShort: 'Function Blocks',
+                titleFull:  'Function Blocks',
+                desc:       'Drill the Function-Block Basics lesson — blocks and pins, digital vs. analog wires, the block families, how a scan resolves feedback, and a worked economizer sheet.',
+                pills:      ['10 Questions', 'MCQ · TF · Gotcha', '~ 5 min'],
+                category:   'controls'
             }) }}
         </div>
     </section>

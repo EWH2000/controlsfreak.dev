@@ -1,0 +1,75 @@
+---
+title: PID Basics Quiz — controlsfreak.dev
+description: Ten questions on the PID Basics lesson — what proportional, integral, and derivative do, the droop P leaves behind, and why most HVAC loops run PI not PID.
+canonical: https://controlsfreak.dev/practice/pid-basics.html
+nav: practice
+pairedLesson: https://controlsfreak.dev/education/pid-basics.html
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Practice · PID Basics</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">PID Basics Quiz <span class="tool-tag">Controls</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                Read the
+                <a href="/education/pid-basics.html">PID Basics</a> lesson first, then test yourself — ten questions
+                on the three terms and how they trade off: what proportional, integral, and derivative each
+                contribute, the droop P leaves behind and how integral erases it, the symptom of too-fast reset, and
+                why derivative is usually off on a noisy HVAC loop. Each reveal links back to the section it came from.
+            </p>
+
+            <div id="quiz"></div>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        lessons: [
+            {href: '/education/pid-basics.html', label: 'PID Basics'},
+            {href: '/education/function-blocks.html', label: 'Function-Block Basics'}
+        ],
+        simulators: [
+            {href: '/simulators/pid-tuner.html', label: 'PID Tuning Helper'}
+        ],
+        quizzes: [
+            {href: '/practice/vfds.html', label: 'VFDs Quiz'},
+            {href: '/practice/function-blocks.html', label: 'Function Blocks Quiz'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/practice/">← All practice</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="/scripts/quiz-engine.js"></script>
+<script>
+    (function () {
+        'use strict';
+
+        // Question bank lives in html/_data/quizzes/pid-basics.js so the
+        // FAQPage JSON-LD emitted from head.njk can read the same source.
+        const questions = {{ quizzes['pid-basics'] | safeScriptJson | safe }};
+
+        Quiz.mount('#quiz', questions, {
+            slug: 'pid-basics',
+            title: 'PID Basics',
+            defaultCount: 10,
+            defaultOrder: 'sequential'
+        });
+    })();
+</script>
+{% endblock %}

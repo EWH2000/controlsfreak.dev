@@ -3,6 +3,7 @@ title: VFDs — controlsfreak.dev
 description: Variable frequency drives in HVAC — what a VFD does, why drives are everywhere, and the run-command vs. speed-reference parameters every controls tech meets.
 canonical: https://controlsfreak.dev/education/vfds.html
 nav: education
+pairedQuiz: https://controlsfreak.dev/practice/vfds.html
 ---
 {% extends "layouts/page.njk" %}
 {% from "related-links.njk" import relatedLinks %}
@@ -216,7 +217,7 @@ nav: education
             </p>
 
             <!-- ───────────────── 1 · What a VFD Is ───────────────── -->
-            <h2 class="subhead">What a VFD Is</h2>
+            <h2 class="subhead" id="what">What a VFD Is</h2>
 
             <p>
                 A drive takes fixed-frequency AC line power (60 Hz in the U.S., 50 Hz most everywhere else) and converts it to AC at whatever frequency the controller asks for. Lower frequency, slower motor; higher frequency, faster motor. Three stages, in order:
@@ -282,7 +283,7 @@ nav: education
             </p>
 
             <!-- ───────────────── 2 · Why Drives Are Everywhere ───────────────── -->
-            <h2 class="subhead">Why Drives Are Everywhere — The Cube Law</h2>
+            <h2 class="subhead" id="cube-law">Why Drives Are Everywhere — The Cube Law</h2>
 
             <p>
                 Walk through any modern mechanical room and you'll see drives on the pumps, on the fans, sometimes on the compressors. Forty years ago the same equipment ran at one speed and dumped whatever it didn't need through bypass dampers, three-way valves, or vanes. The reason that changed isn't comfort or controllability (those are nice side effects). It's <em>energy</em>, and the math is short.
@@ -309,7 +310,7 @@ nav: education
             </p>
 
             <!-- ───────────────── 3 · Run Command vs. Speed Reference — THE WIDGET ───────────────── -->
-            <h2 class="subhead">Run Command vs. Speed Reference</h2>
+            <h2 class="subhead" id="run-vs-speed">Run Command vs. Speed Reference</h2>
 
             <p>
                 Here's the thing that catches more techs than anything else about drives. To make a VFD run a motor, you're actually giving it <em>two</em> commands, not one — and each command has its own source parameter, configured independently in the drive. The two are:
@@ -441,7 +442,7 @@ nav: education
             </p>
 
             <!-- ───────────────── 4 · Parameter Groups ───────────────── -->
-            <h2 class="subhead">The Parameter Groups Every Drive Has</h2>
+            <h2 class="subhead" id="parameter-groups">The Parameter Groups Every Drive Has</h2>
 
             <p>
                 Every manufacturer organises parameters differently — ABB calls them parameter numbers, Yaskawa calls them Pn-codes, Danfoss uses three-level menus — but the <em>categories</em> the parameters fall into are basically the same across the industry. If you can name the categories, you can find what you need to change on any drive without reading the whole manual cover to cover. Six groups; everything you'll touch lives in one of them.
@@ -475,7 +476,7 @@ nav: education
             </div>
 
             <!-- ───────────────── 5 · Network Integration ───────────────── -->
-            <h2 class="subhead">Network Integration — Where Controls People Meet the Drive</h2>
+            <h2 class="subhead" id="network">Network Integration — Where Controls People Meet the Drive</h2>
 
             <p>
                 The keypad on the front of the drive is for commissioning and panel-front diagnostics; in production the drive lives on a network and talks to the BMS over one of three protocols. Same three you'll meet anywhere else in the building, with the usual physical-layer tradeoffs.
@@ -523,7 +524,7 @@ nav: education
             </p>
 
             <!-- ───────────────── 6 · Fault Codes ───────────────── -->
-            <h2 class="subhead">Fault Codes — The Conceptual Categories</h2>
+            <h2 class="subhead" id="fault-codes">Fault Codes — The Conceptual Categories</h2>
 
             <p>
                 Every manufacturer's fault-code list looks different and is far too long to memorise. What you <em>can</em> hold in your head is the five or six categories the codes fall into — because the root cause of a category is the same across manufacturers even when the code number isn't. A drive's fault history almost always tells you "an overcurrent happened"; what changes between brands is just which integer they call it.
@@ -669,6 +670,9 @@ nav: education
         lessons: [
             {href: '/education/pump-control.html', label: 'Pump Control'},
             {href: '/education/hydronic-loops.html', label: 'Hydronic Loops'}
+        ],
+        quizzes: [
+            {href: '/practice/vfds.html', label: 'VFDs Quiz'}
         ]
     }) }}
 

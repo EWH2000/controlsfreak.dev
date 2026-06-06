@@ -3,6 +3,7 @@ title: Function-Block Basics — controlsfreak.dev
 description: Function-block programming for building-controls techs — what a block and a wiresheet are, why control sequences are built this way, and how a sheet evaluates.
 canonical: https://controlsfreak.dev/education/function-blocks.html
 nav: education
+pairedQuiz: https://controlsfreak.dev/practice/function-blocks.html
 ---
 {% extends "layouts/page.njk" %}
 {% from "related-links.njk" import relatedLinks %}
@@ -54,7 +55,7 @@ nav: education
                 builds sequences this way.
             </p>
 
-            <h2 class="subhead">Blocks and wiresheets</h2>
+            <h2 class="subhead" id="blocks">Blocks and wiresheets</h2>
 
             <p>
                 A <strong>function block</strong> is a small box that does one job. Values come
@@ -104,7 +105,7 @@ nav: education
                 read the real world, through the logic, to the outputs that command equipment.
             </p>
 
-            <h2 class="subhead">Why controls people work this way</h2>
+            <h2 class="subhead" id="why">Why controls people work this way</h2>
 
             <p>
                 Graphical programming isn't the only way to write a sequence — PLCs have
@@ -127,7 +128,7 @@ nav: education
                 sheet on a controller you've never touched.
             </p>
 
-            <h2 class="subhead">The block families</h2>
+            <h2 class="subhead" id="families">The block families</h2>
 
             <p>
                 A controller's block palette can run to dozens of types, but they sort into a
@@ -162,7 +163,7 @@ nav: education
                 </div>
             </div>
 
-            <h2 class="subhead">How a wiresheet runs</h2>
+            <h2 class="subhead" id="scan">How a wiresheet runs</h2>
 
             <p>
                 The controller evaluates the whole sheet over and over on a fixed cycle — a
@@ -184,7 +185,7 @@ nav: education
                 sheet with a loop in it never freezes.
             </p>
 
-            <h2 class="subhead">A worked sheet — economizer enable</h2>
+            <h2 class="subhead" id="worked-sheet">A worked sheet — economizer enable</h2>
 
             <p>
                 Here's a small real sequence. An air handler should use outdoor air for free
@@ -301,6 +302,9 @@ nav: education
         ],
         lessons: [
             {href: '/education/pid-basics.html', label: 'PID Basics'}
+        ],
+        quizzes: [
+            {href: '/practice/function-blocks.html', label: 'Function Blocks Quiz'}
         ]
     }) }}
 
