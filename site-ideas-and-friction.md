@@ -101,13 +101,31 @@ Basics → new `Psychrometrics` chip; Equipment Staging → joined the
 `Hydronics` chip). Each ships the reciprocal FAQPage / `hasPart` /
 `isPartOf` JSON-LD off the paired frontmatter, and added the `<h2>`
 (or P/I/D callout) anchors its `learnMore` deep-links needed. Topic
-chips are now All(18) · Modbus · BACnet · Hydronics(5) ·
+chips are now All(21) · Modbus · BACnet · Hydronics(5) ·
 Refrigeration(3) · Controls(3) · Psychrometrics(1).
 
+**Three specialized field drills shipped 2026-06-05** (PR #178):
+Field Wiring & Sensors, Sequencing Scenarios, and Troubleshooting —
+each a 10-question bank in the field-drill mold (no paired lesson,
+inline explanations, `learnMore` only to pages that exist,
+`category: 'field'` so the cards hide under any topic chip). All chip
+count went 18 → 21; no new topic chips (field drills add none). The
+Field Drills section now holds five cards (First Months, Controller
+Swap, + these three).
+
+> **Friction — the field-card count is hard-coded in the smoke test.**
+> `tests/smoke.spec.js`'s "practice landing — Modbus chip collapses
+> sections" test asserts a literal field-card count (two `toHaveCount`
+> sites, bumped `2 → 5` in PR #178). It's derived from nothing, so the
+> next field drill silently fails that test until the number is bumped
+> again. Cheap to fix when it bites (search the test for the count);
+> noted here so the next drill author expects it. Not worth
+> auto-deriving today — the count rarely changes and the explicit
+> number doubles as a "did you remember to add the card" check.
+
 **Still parked for v3** (full detail in `quiz-section-plan.md`):
-- More specialized field drills (Field Wiring & Sensors, Sequencing
-  Scenarios, Troubleshooting, Commissioning, Tridium / EBO quirks,
-  full Junior + Senior Interview Prep).
+- Remaining field drills (Commissioning, Tridium / EBO quirks, full
+  Junior + Senior Interview Prep).
 - **Cross-page Mix quizzes (All Protocols, All Hydronics) — now
   unblocked:** 2+ protocol banks and 4 hydronics banks exist. Needs
   the shared `_data/quiz-banks/` aggregation at build time. Good
