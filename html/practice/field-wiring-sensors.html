@@ -1,0 +1,72 @@
+---
+title: Field Wiring & Sensors Drill — controlsfreak.dev
+description: A field drill on the wire-and-sensor layer — thermistor and RTD curves, the 4-20 mA live zero, AI vs AO, loop power, shielding, and sourcing vs sinking.
+canonical: https://controlsfreak.dev/practice/field-wiring-sensors.html
+nav: practice
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Practice · Field Wiring &amp; Sensors</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">Field Wiring &amp; Sensors Drill <span class="tool-tag">Field Drill</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                Ten questions on the layer where the signal meets copper — the part that bites before any logic ever
+                runs. Thermistor and RTD curves and why one is non-linear; 2/3/4-wire RTD lead compensation; what an
+                <strong>AI</strong> reads versus what an <strong>AO</strong> drives; loop power and the 4-20 mA
+                <strong>live zero</strong> that turns a broken wire into a fault instead of a plausible-but-wrong
+                reading; shield grounding; and sourcing vs sinking inputs. Reveal panels explain inline; a few link
+                out to the Thermistor and Signal Scaling tools where the math lives.
+            </p>
+
+            <div id="quiz"></div>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/tools/thermistor-calculator.html', label: 'Thermistor / RTD Calculator'},
+            {href: '/tools/signal-scaling.html', label: 'Signal Scaling Calculator'}
+        ],
+        lessons: [
+            {href: '/education/bacnet-basics.html', label: 'BACnet Basics'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/practice/">← All practice</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="/scripts/quiz-engine.js"></script>
+<script>
+    (function () {
+        'use strict';
+
+        // Question bank lives in html/_data/quizzes/field-wiring-sensors.js
+        // so the FAQPage JSON-LD emitted from head.njk can read the same
+        // source.
+        const questions = {{ quizzes['field-wiring-sensors'] | safeScriptJson | safe }};
+
+        Quiz.mount('#quiz', questions, {
+            slug: 'field-wiring-sensors',
+            title: 'Field Wiring & Sensors',
+            defaultCount: 10,
+            defaultOrder: 'sequential'
+        });
+    })();
+</script>
+{% endblock %}

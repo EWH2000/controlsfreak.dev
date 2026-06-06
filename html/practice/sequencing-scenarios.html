@@ -1,0 +1,73 @@
+---
+title: Sequencing Scenarios Drill — controlsfreak.dev
+description: A field drill on sequences of operation — chiller and boiler plant staging, economizer changeover, dehumidification reheat cascades, and lead/lag rotation.
+canonical: https://controlsfreak.dev/practice/sequencing-scenarios.html
+nav: practice
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Practice · Sequencing Scenarios</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">Sequencing Scenarios Drill <span class="tool-tag">Field Drill</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                Ten scenario questions on how real <strong>sequences of operation</strong> behave — the logic that
+                turns equipment into a plant. Chiller and boiler plant staging, the deadband and minimum-stage timers
+                that stop short-cycling, and lead/lag rotation for even wear; AHU economizer changeover and why
+                enthalpy beats dry-bulb in a humid climate; the overcool-and-reheat dehumidification cascade and why
+                dew point is the lever. Reveal panels explain inline; several link out to the Equipment Staging and
+                Psychrometrics lessons and the Economizer Ratio and Psychrometric Chart tools.
+            </p>
+
+            <div id="quiz"></div>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/tools/economizer-ratio.html', label: 'Economizer Ratio Calculator'},
+            {href: '/tools/psychrometric-chart.html', label: 'Psychrometric Chart'}
+        ],
+        lessons: [
+            {href: '/education/equipment-staging.html', label: 'Equipment Staging'},
+            {href: '/education/psychrometrics-basics.html', label: 'Psychrometrics Basics'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/practice/">← All practice</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="/scripts/quiz-engine.js"></script>
+<script>
+    (function () {
+        'use strict';
+
+        // Question bank lives in html/_data/quizzes/sequencing-scenarios.js
+        // so the FAQPage JSON-LD emitted from head.njk can read the same
+        // source.
+        const questions = {{ quizzes['sequencing-scenarios'] | safeScriptJson | safe }};
+
+        Quiz.mount('#quiz', questions, {
+            slug: 'sequencing-scenarios',
+            title: 'Sequencing Scenarios',
+            defaultCount: 10,
+            defaultOrder: 'sequential'
+        });
+    })();
+</script>
+{% endblock %}

@@ -72,7 +72,7 @@ nav: practice
 
     <div class="filter-chips" role="group" aria-label="Filter practice by topic">
         <button type="button" class="filter-chip active" data-category="all" aria-pressed="true">
-            All <span class="filter-chip-count">18</span>
+            All <span class="filter-chip-count">21</span>
         </button>
         <button type="button" class="filter-chip" data-category="modbus" aria-pressed="false">
             Modbus <span class="filter-chip-count">2</span>
@@ -278,6 +278,33 @@ nav: practice
                 titleFull:  'Controller Swap',
                 desc:       'Replacing a DDC controller end to end — documenting and re-landing field wiring, re-using the MS/TP address and device instance, EOL termination, config backup, download, graphics re-bind, and commissioning the sequence.',
                 pills:      ['10 Questions', 'Hardware + Software', '~ 5 min'],
+                category:   'field'
+            }) }}
+            {{ navCard({
+                section:    'practice',
+                href:       '/practice/field-wiring-sensors.html',
+                titleShort: 'Field Wiring',
+                titleFull:  'Field Wiring & Sensors',
+                desc:       'The wire-and-sensor layer that bites before any logic runs — thermistor and RTD curves, 2/3/4-wire lead compensation, AI vs AO, the 4-20 mA live zero, loop power, shield grounding, and sourcing vs sinking inputs.',
+                pills:      ['10 Questions', 'Wiring + Sensors', '~ 5 min'],
+                category:   'field'
+            }) }}
+            {{ navCard({
+                section:    'practice',
+                href:       '/practice/sequencing-scenarios.html',
+                titleShort: 'Sequencing',
+                titleFull:  'Sequencing Scenarios',
+                desc:       'How real sequences of operation behave — chiller and boiler plant staging and deadbands, lead/lag rotation, AHU economizer changeover (dry-bulb vs enthalpy), and the overcool-and-reheat dehumidification cascade.',
+                pills:      ['10 Questions', 'Sequence Scenarios', '~ 5 min'],
+                category:   'field'
+            }) }}
+            {{ navCard({
+                section:    'practice',
+                href:       '/practice/troubleshooting.html',
+                titleShort: 'Troubleshooting',
+                titleFull:  'Troubleshooting',
+                desc:       'Symptom → most-likely-cause reasoning across the trade — a pingable-but-undiscoverable BACnet device, Modbus exceptions and byte order, low-ΔT hydronics, an air-bound coil, superheat vs subcooling, and VFD start trips.',
+                pills:      ['10 Questions', 'Symptom → Cause', '~ 5 min'],
                 category:   'field'
             }) }}
         </div>

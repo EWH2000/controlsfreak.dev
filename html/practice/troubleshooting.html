@@ -1,0 +1,74 @@
+---
+title: Troubleshooting Drill — controlsfreak.dev
+description: A field drill in symptom-to-cause reasoning — BACnet and Modbus comms faults, low-delta-T hydronics, refrigerant superheat and subcooling, and VFD start trips.
+canonical: https://controlsfreak.dev/practice/troubleshooting.html
+nav: practice
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Practice · Troubleshooting</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">Troubleshooting Drill <span class="tool-tag">Field Drill</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                Ten <strong>symptom → most-likely-cause</strong> questions across the trade. The skill being drilled
+                isn't memorizing one fix — it's reading a symptom for what it rules <em>in</em> and <em>out</em>: a
+                pingable-but-undiscoverable BACnet device, a Modbus exception response, a garbled multi-register
+                float, low-ΔT syndrome, an air-bound coil, what low superheat versus high subcooling each point to,
+                and a VFD that "runs" at zero Hz. Reveal panels explain inline; several link out to the BACnet
+                Networking, Balancing, Superheat &amp; Subcooling, and VFD lessons.
+            </p>
+
+            <div id="quiz"></div>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/tools/bacnet-ip-converter.html', label: 'BACnet/IP Hex Converter'},
+            {href: '/tools/modbus-register-viewer.html', label: 'Modbus Register Viewer'}
+        ],
+        lessons: [
+            {href: '/education/bacnet-networking.html', label: 'BACnet Networking'},
+            {href: '/education/balancing.html', label: 'Hydronic Balancing'},
+            {href: '/education/superheat-subcooling.html', label: 'Superheat & Subcooling'},
+            {href: '/education/vfds.html', label: 'VFDs'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/practice/">← All practice</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="/scripts/quiz-engine.js"></script>
+<script>
+    (function () {
+        'use strict';
+
+        // Question bank lives in html/_data/quizzes/troubleshooting.js so the
+        // FAQPage JSON-LD emitted from head.njk can read the same source.
+        const questions = {{ quizzes['troubleshooting'] | safeScriptJson | safe }};
+
+        Quiz.mount('#quiz', questions, {
+            slug: 'troubleshooting',
+            title: 'Troubleshooting',
+            defaultCount: 10,
+            defaultOrder: 'sequential'
+        });
+    })();
+</script>
+{% endblock %}
