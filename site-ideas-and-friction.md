@@ -2736,10 +2736,9 @@ reference `var(--*)` (only two inline-style pages hardcode colours).
 
 **Held back from this phase (Phase 3, per the lock):**
 
-- **Home hero is on hold.** The user decided the living control-loop is
-  probably *not* the right home hero; the merge *intent* (one image that
-  spans software↔equipment) may persist but the vehicle is unresolved.
-  Do NOT ship a final hero until the user picks a direction.
+- **Home hero was on hold** (now SHIPPED — see "Phase 2 — the home hero"
+  below). The living control-loop was set aside; the merge *intent* (one
+  image spanning software↔equipment) survived and became "the seam."
 - **Per-page dark polish** is deferred (logged in `codebase-issues.md`):
   `vfd-mock` adopting the shared `.device`/`.lcd` classes (its LCD still
   reads as a software panel, not the olive equipment look — it themes
@@ -2792,9 +2791,55 @@ default theme.
 Deferred (unused / no-consumer shared rules → `codebase-issues.md`
 #78): consolidating `.bas-breathe` with the psy-chip variant;
 tokenizing the unused `.bas-led.fault`/`.warn`; promoting the
-styleguide-local `.tree`/`.wiresheet`/`.trend` (the function-block
-editor already has its own complete `.fbe-*` wiresheet). **Home hero
-(Phase 2) is still on hold** pending the user's concept decision.
+styleguide-local `.wiresheet` (the function-block editor has its own
+complete `.fbe-*` wiresheet, so no consumer). *(The `.tree`/`.trend`
+half of #78 was resolved by Phase 2 — the hero is their first
+production consumer.)*
+
+### Phase 2 — the home hero, "the seam" *(shipped 2026-06-06)*
+
+The redesign capstone (v3.0.0), and the last phase to land even though
+it carries the lower number — the hero concept stayed open while the
+language + polish shipped first, by design. Three concepts were
+sketched (live operator workbench / interactive controller with
+tooltips / "the seam"); the user picked **the seam**: the site's whole
+premise as one live instrument — a **software supervisor** (Niagara
+point-tree + PV-vs-SP trend, software register) on the left reading a
+**field controller** (olive dot-matrix LCDs + valve gauge + LEDs,
+equipment register) on the right, a dashed conductor with a feedback
+packet crossing between them. It says *this site spans the software AND
+the equipment it controls* in one image — and it's the merge-intent
+that survived the abandoned control-loop hero.
+
+Key decisions (live design dialogue, screenshot-driven):
+- **Runs a real loop, not a looping animation.** A small AHU
+  supply-air loop: the **setpoint steps at randomized intervals** and
+  the supply-air temp chases it while the cooling valve modulates
+  proportionally (colder target → more valve; off-setpoint → drive
+  harder). The trend plots **PV (blue) vs setpoint (green dashed)** so
+  the chase reads as a control loop to an engineer and as cause→effect
+  to a newcomer. Tree, LCDs, gauge, trend, and the packet all read one
+  shared state. Motion = process (the hard rule); reduced-motion gets a
+  static, already-populated frame; the stage is `aria-hidden` and the
+  copy carries the accessible content.
+- **An inner labeled frame** (`LIVE · AHU-1 SUPPLY-AIR TEMPERATURE
+  LOOP` head + a one-line legend) gives a newcomer context without the
+  home page becoming a lesson.
+- **Copy ditches the generic shape** — the old eyebrow → 2-color H1 →
+  centered paragraph → badge row is gone. Now: a single-weight mono H1
+  (still the page's one `<h1>`), the "tight & blunt" paragraph, and a
+  full-width copy grid (title spans; paragraph + CTAs side by side;
+  Latest on its own full-width line below).
+- **Built from the existing kit** — the equipment classes (vfd-mock's
+  register) + the promoted `.tree`/`.trend`; no new framework, vanilla
+  inline IIFE, ~no perf cost. Removed the now-dead legacy hero CSS
+  (`.hero-body`/`-eyebrow`/`-onramp`/`-badges`/`.badge`); that stray
+  `.badge` had also been leaking a box onto the equipment device
+  badges (now correctly borderless).
+
+This closes the four-phase redesign (1a spike → 1b distill → 3 polish →
+2 hero). Authoritative spec: the `project_site_redesign_dark_industrial`
+memory.
 
 ---
 

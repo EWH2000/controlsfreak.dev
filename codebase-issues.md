@@ -3437,14 +3437,16 @@ remain in `## Recently addressed` at their numerical position:
       the light-theme red/heat rgba for their border/glow (0.32 / 0.08
       alphas, no matching token). Tokenize via `color-mix` or new
       red/heat glow tokens when first used on a page.
-    - The styleguide-local `.tree` / `.wiresheet` / `.trend` were NOT
-      promoted to `styles.css`: the only candidate consumer
+    - `.tree` / `.trend` — **RESOLVED 2026-06-06**: the Phase 2 home
+      "seam" hero is their first production consumer, so both were
+      promoted to `styles.css` (SOFTWARE-REGISTER MOTIFS) and the
+      styleguide now reads the shared rules. Only `.wiresheet` stays
+      styleguide-local — its one candidate consumer
       (`function-block-editor`) already has a complete token-driven
-      `.fbe-*` wiresheet, so promoting now is a refactor with no payoff.
-      Promote when a second page wants the Niagara-tree or sparkline
-      motif.
+      `.fbe-*` wiresheet, so promoting it is a refactor with no payoff;
+      promote when a second page wants that grid.
 
-    Trigger: a production page adopting any of these shared motifs.
+    Trigger: a production page adopting any of the remaining motifs.
 
 ---
 
