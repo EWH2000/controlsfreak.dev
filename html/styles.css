@@ -61,6 +61,7 @@
     --blue-dim:     rgba(74,163,221,0.16);
     --blue-glow:    rgba(74,163,221,0.24);
     --red:          #e85d4f;   /* fault / alarm */
+    --red-dim:      rgba(232,93,79,0.14);   /* faint red wash — quiz wrong-answer fill (parallels --accent-dim) */
     --heat:         #e8884a;   /* warm orange — "heating" on the psychrometric chart's process lines; companion to --blue for cooling */
     --teal:         #46b3ac;   /* teal — data/comm traces on the background schematic (BACnet, IP) */
     --teal-dim:     rgba(70,179,172,0.14);
@@ -124,6 +125,7 @@
     --blue-dim:     rgba(21,119,184,0.10);
     --blue-glow:    rgba(21,119,184,0.22);
     --red:          #c4382f;
+    --red-dim:      rgba(196,56,47,0.10);
     --heat:         #c8782a;
     --teal:         #4a8a8a;
     --teal-dim:     rgba(74,138,138,0.10);
@@ -1312,7 +1314,7 @@ input[type="range"]:focus-visible::-moz-range-thumb {
     border-bottom: 1px solid var(--border);
 }
 .ref-table tbody tr:nth-child(even) { background: var(--surface-2); }
-.ref-table tbody tr:hover { background: rgba(21,119,184,0.07); }
+.ref-table tbody tr:hover { background: var(--blue-dim); }
 .ref-table td:first-child { color: var(--text-bright); }
 .ref-table tbody tr:last-child td { border-bottom: none; }
 
@@ -1878,7 +1880,7 @@ p.chip-row-preamble {
 }
 .quiz-choice.wrong {
     border-color: var(--red);
-    background: rgba(196,56,47,0.10);
+    background: var(--red-dim);
     color: var(--text-bright);
     opacity: 1;
 }
@@ -1909,7 +1911,7 @@ p.chip-row-preamble {
     color: var(--text-dim);
 }
 .quiz-numeric.correct .quiz-numeric-input { border-color: var(--accent); background: var(--accent-dim); }
-.quiz-numeric.wrong .quiz-numeric-input { border-color: var(--red); background: rgba(196,56,47,0.10); }
+.quiz-numeric.wrong .quiz-numeric-input { border-color: var(--red); background: var(--red-dim); }
 
 .quiz-actions {
     display: flex;
@@ -2255,7 +2257,7 @@ input.ps-input:focus, select.ps-input:focus, textarea.ps-input:focus {
     font-size: 0.78rem;
     color: var(--text-dim);
 }
-.ref-table-dense tbody tr:nth-child(even) td { background: rgba(0,0,0,0.015); }
+.ref-table-dense tbody tr:nth-child(even) td { background: var(--surface-2); }
 .ref-table-dense tbody tr:last-child td { border-bottom: none; }
 
 /* a short explanatory note under a reference table. */
