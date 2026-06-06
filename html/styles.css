@@ -2532,8 +2532,10 @@ p.ref-note.compact {
  *   .bas-state-flash — one-shot 350ms outer accent-glow ring around
  *     a row/card. JS adds the class on a state transition and
  *     removes it on a setTimeout.
- *   .bas-breathe — slow box-shadow breathing ring; used by the
- *     psychrometric chart's state-point chip.
+ *   .bas-breathe — slow box-shadow breathing accent ring (token-
+ *     driven, reads on both themes). The psychrometric state-point
+ *     chip uses a tighter page-local variant; this shared form is
+ *     kept for reuse.
  *
  * Reduced motion: the global @media (prefers-reduced-motion: reduce)
  * block below already disables all keyframe animations site-wide, so
@@ -2602,8 +2604,8 @@ p.ref-note.compact {
 .bas-state-flash { animation: bas-state-flash 350ms ease-out 1; }
 
 @keyframes bas-breathe {
-    0%, 100% { box-shadow: 0 0 0 6px rgba(67,136,28,0.16); }
-    50%      { box-shadow: 0 0 0 11px rgba(67,136,28,0.05); }
+    0%, 100% { box-shadow: 0 0 0 6px var(--accent-dim); }
+    50%      { box-shadow: 0 0 0 11px var(--accent-soft); }
 }
 .bas-breathe { animation: bas-breathe 1.8s ease-in-out infinite; }
 
