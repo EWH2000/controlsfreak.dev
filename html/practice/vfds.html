@@ -1,0 +1,76 @@
+---
+title: VFDs Quiz — controlsfreak.dev
+description: Ten questions on the VFDs lesson — the rectifier-DC-bus-inverter stages, the cube law, the run-command vs. speed-reference trap, and drive fault categories.
+canonical: https://controlsfreak.dev/practice/vfds.html
+nav: practice
+pairedLesson: https://controlsfreak.dev/education/vfds.html
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Practice · VFDs</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">VFDs Quiz <span class="tool-tag">Controls</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                Read the
+                <a href="/education/vfds.html">VFDs</a> lesson first, then test yourself — ten questions on the drive
+                every controls tech writes to: the three power stages, why the cube law put drives on every pump and
+                fan, the run-command vs. speed-reference trap that strands more techs than anything else, run status
+                as the only feedback you can trust, and reading fault categories. Each reveal links back to the
+                section it came from.
+            </p>
+
+            <div id="quiz"></div>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        lessons: [
+            {href: '/education/vfds.html', label: 'VFDs'},
+            {href: '/education/pump-control.html', label: 'Pump Control'}
+        ],
+        simulators: [
+            {href: '/simulators/vfd-mock.html', label: 'Mock VFD Interface'}
+        ],
+        quizzes: [
+            {href: '/practice/pid-basics.html', label: 'PID Basics Quiz'},
+            {href: '/practice/function-blocks.html', label: 'Function Blocks Quiz'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/practice/">← All practice</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="/scripts/quiz-engine.js"></script>
+<script>
+    (function () {
+        'use strict';
+
+        // Question bank lives in html/_data/quizzes/vfds.js so the
+        // FAQPage JSON-LD emitted from head.njk can read the same source.
+        const questions = {{ quizzes['vfds'] | safeScriptJson | safe }};
+
+        Quiz.mount('#quiz', questions, {
+            slug: 'vfds',
+            title: 'VFDs',
+            defaultCount: 10,
+            defaultOrder: 'sequential'
+        });
+    })();
+</script>
+{% endblock %}

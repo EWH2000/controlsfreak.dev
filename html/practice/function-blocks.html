@@ -1,0 +1,75 @@
+---
+title: Function Blocks Quiz — controlsfreak.dev
+description: Ten questions on the Function-Block lesson — what a block and a wiresheet are, the block families, how a scan resolves feedback, and a worked economizer sheet.
+canonical: https://controlsfreak.dev/practice/function-blocks.html
+nav: practice
+pairedLesson: https://controlsfreak.dev/education/function-blocks.html
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Practice · Function Blocks</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">Function Blocks Quiz <span class="tool-tag">Controls</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                Read the
+                <a href="/education/function-blocks.html">Function-Block Basics</a> lesson first, then test yourself —
+                ten questions on reading a wiresheet: what a block and its pins are, the digital/analog signal split,
+                the block families (comparators, SR latches, timers, PID), how a scan resolves a feedback loop without
+                freezing, and the worked economizer-enable sheet. Each reveal links back to the section it came from.
+            </p>
+
+            <div id="quiz"></div>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        lessons: [
+            {href: '/education/function-blocks.html', label: 'Function-Block Basics'},
+            {href: '/education/pid-basics.html', label: 'PID Basics'}
+        ],
+        simulators: [
+            {href: '/simulators/function-block-editor.html', label: 'Function-Block Editor'}
+        ],
+        quizzes: [
+            {href: '/practice/pid-basics.html', label: 'PID Basics Quiz'},
+            {href: '/practice/vfds.html', label: 'VFDs Quiz'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/practice/">← All practice</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="/scripts/quiz-engine.js"></script>
+<script>
+    (function () {
+        'use strict';
+
+        // Question bank lives in html/_data/quizzes/function-blocks.js so the
+        // FAQPage JSON-LD emitted from head.njk can read the same source.
+        const questions = {{ quizzes['function-blocks'] | safeScriptJson | safe }};
+
+        Quiz.mount('#quiz', questions, {
+            slug: 'function-blocks',
+            title: 'Function Blocks',
+            defaultCount: 10,
+            defaultOrder: 'sequential'
+        });
+    })();
+</script>
+{% endblock %}
