@@ -32,6 +32,7 @@ const PAGES = [
     { name: 'refrigerant p-t',        url: '/tools/refrigerant-pt.html' },
     { name: 'valve cv sizing',        url: '/tools/valve-cv.html' },
     { name: 'affinity laws',          url: '/tools/affinity-laws.html' },
+    { name: 'modbus function codes',  url: '/tools/modbus-functions.html' },
     { name: 'simulators landing',     url: '/simulators/' },
     { name: 'pid tuner',              url: '/simulators/pid-tuner.html' },
     { name: 'vfd mock',               url: '/simulators/vfd-mock.html' },
@@ -646,7 +647,7 @@ test('tools landing — URL hash deep-links to a category on initial load', asyn
 
     // Page boots with Protocols active.
     await expect(page.locator('.filter-chip[data-category="protocols"]')).toHaveClass(/active/);
-    expect(await page.locator('.nav-card:not([hidden])').count()).toBe(3);
+    expect(await page.locator('.nav-card:not([hidden])').count()).toBe(4);
 
     // Unknown hash falls back to [All].
     await page.goto('/tools/#nonsense');
@@ -1350,4 +1351,26 @@ test('styleguide loads + the theme toggle flips, persists, and repaints meta', a
     expect(await page.evaluate(() => localStorage.getItem('cf_theme'))).toBe('dark');
 
     expect(errors, 'styleguide + theme toggle should log no errors').toEqual([]);
+});
+
+test('modbus function codes — CRC-16 hits the canonical check value and verifies a frame', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('/tools/modbus-functions.html');
+
+    // CRC-16/MODBUS of ASCII "123456789" is the canonical 0x4B37 check
+    // value; Modbus appends it low byte first (37 4B).
+    await page.click('[data-tab="crc"]');
+    await page.fill('#mf-crc-in', '31 32 33 34 35 36 37 38 39');
+    await expect(page.locator('#mf-crc-word')).toHaveText('0x4B37');
+    await expect(page.locator('#mf-crc-append')).toHaveText('37 4B');
+
+    // The same bytes with their CRC appended verify as a valid frame.
+    await page.fill('#mf-crc-in', '31 32 33 34 35 36 37 38 39 37 4B');
+    await expect(page.locator('#mf-crc-verify')).toContainText('Valid frame');
+
+    // A wrong trailing CRC is called out, not treated as a valid frame.
+    await page.fill('#mf-crc-in', '31 32 33 34 35 36 37 38 39 00 00');
+    await expect(page.locator('#mf-crc-verify')).toContainText('not the CRC');
+
+    expect(errors, 'modbus CRC behavioral should log no errors').toEqual([]);
 });

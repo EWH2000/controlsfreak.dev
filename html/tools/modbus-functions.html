@@ -1,0 +1,356 @@
+---
+title: Modbus Function Codes & CRC — controlsfreak.dev
+description: Decode Modbus function codes and exception codes by name or number, plus compute or verify the RTU CRC-16 checksum every serial Modbus frame carries.
+canonical: https://controlsfreak.dev/tools/modbus-functions.html
+nav: tools
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block head %}
+    <style>
+        /* Page-only — filter box + mono code column (same idiom as the
+           BACnet reference) and the CRC verify pill. */
+        .mf-controls {
+            padding: 0 1.5rem;
+            margin-top: 1.1rem;
+        }
+        .mf-search-label {
+            display: block;
+            font-family: var(--mono);
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-dim);
+            margin-bottom: 0.35rem;
+        }
+        #mf-search { width: 100%; }
+
+        .mf-count {
+            font-family: var(--mono);
+            font-size: 0.78em;
+            color: var(--text-dim);
+            font-weight: 500;
+        }
+
+        .ref-table-dense .mf-id {
+            font-family: var(--mono);
+            color: var(--blue);
+            white-space: nowrap;
+            text-align: right;
+            font-weight: 600;
+        }
+        .ref-table-dense .mf-hex { color: var(--text-dim); font-weight: 400; }
+
+        .mf-empty td {
+            color: var(--text-dim);
+            font-style: italic;
+            text-align: center;
+        }
+
+        .mf-verify {
+            margin-top: 1rem;
+            padding: 0.5rem 0.75rem;
+            border-radius: 4px;
+            font-family: var(--mono);
+            font-size: 0.82rem;
+            line-height: 1.5;
+            border: 1px solid var(--border);
+            background: var(--surface-2);
+            color: var(--text);
+        }
+        .mf-verify.ok    { border-color: var(--accent); background: var(--accent-dim); }
+        .mf-verify.error { border-color: var(--red);    color: var(--red); }
+    </style>
+{% endblock %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Tools · Modbus Codes</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">
+                Modbus Function Codes &amp; CRC
+                <span class="tool-tag">Modbus</span>
+            </h1>
+        </div>
+
+        <p class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
+            The codes a Modbus exchange is built from, plus the checksum that wraps each serial frame.
+            <em>Function codes</em> is what a request asks for — read coils, write registers, and the dec-vs-hex gotcha (FC 15 = 0x0F, FC 16 = 0x10).
+            <em>Exception codes</em> is what a server sends back when it refuses, riding on the function code with its high bit set.
+            <em>CRC-16</em> builds or checks the two error-check bytes an RTU frame carries.
+        </p>
+
+        <div class="mf-controls">
+            <label class="mf-search-label" for="mf-search">Filter codes by name or number</label>
+            <input class="ps-input" type="search" id="mf-search" placeholder="e.g. 16, write, illegal, 0x10">
+        </div>
+
+        <div class="tabs tabs-flush">
+            <button class="tab-btn active" data-tab="fc">Function codes <span class="mf-count" data-count="fc" aria-hidden="true"></span></button>
+            <button class="tab-btn"        data-tab="exc">Exception codes <span class="mf-count" data-count="exc" aria-hidden="true"></span></button>
+            <button class="tab-btn"        data-tab="crc">CRC-16</button>
+        </div>
+
+        <!-- ── Function codes ── -->
+        <div id="tab-fc" class="tab-pane active">
+            <section class="tool-body-row">
+                <table class="ref-table-dense" id="mf-table-fc">
+                    <thead>
+                        <tr><th>Code</th><th>Name</th><th>What it does</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td class="mf-id">1 <span class="mf-hex">0x01</span></td><td>Read Coils</td><td>Read 1–2000 coils — the read/write discrete output bits.</td></tr>
+                        <tr><td class="mf-id">2 <span class="mf-hex">0x02</span></td><td>Read Discrete Inputs</td><td>Read 1–2000 discrete inputs — read-only bits.</td></tr>
+                        <tr><td class="mf-id">3 <span class="mf-hex">0x03</span></td><td>Read Holding Registers</td><td>Read 1–125 holding registers — the read/write 16-bit words.</td></tr>
+                        <tr><td class="mf-id">4 <span class="mf-hex">0x04</span></td><td>Read Input Registers</td><td>Read 1–125 input registers — read-only 16-bit words.</td></tr>
+                        <tr><td class="mf-id">5 <span class="mf-hex">0x05</span></td><td>Write Single Coil</td><td>Force one coil ON (0xFF00) or OFF (0x0000).</td></tr>
+                        <tr><td class="mf-id">6 <span class="mf-hex">0x06</span></td><td>Write Single Register</td><td>Write one holding register.</td></tr>
+                        <tr><td class="mf-id">7 <span class="mf-hex">0x07</span></td><td>Read Exception Status</td><td>Serial only — read 8 device exception-status bits.</td></tr>
+                        <tr><td class="mf-id">8 <span class="mf-hex">0x08</span></td><td>Diagnostics</td><td>Serial only — line diagnostics and loopback sub-functions.</td></tr>
+                        <tr><td class="mf-id">11 <span class="mf-hex">0x0B</span></td><td>Get Comm Event Counter</td><td>Serial only — status word and event count.</td></tr>
+                        <tr><td class="mf-id">12 <span class="mf-hex">0x0C</span></td><td>Get Comm Event Log</td><td>Serial only — status, counts, and recent event bytes.</td></tr>
+                        <tr><td class="mf-id">15 <span class="mf-hex">0x0F</span></td><td>Write Multiple Coils</td><td>Write a contiguous block of coils in one request.</td></tr>
+                        <tr><td class="mf-id">16 <span class="mf-hex">0x10</span></td><td>Write Multiple Registers</td><td>Write a contiguous block of holding registers.</td></tr>
+                        <tr><td class="mf-id">17 <span class="mf-hex">0x11</span></td><td>Report Server ID</td><td>Serial only — device ID string and run-status byte.</td></tr>
+                        <tr><td class="mf-id">22 <span class="mf-hex">0x16</span></td><td>Mask Write Register</td><td>AND/OR-mask selected bits of one holding register.</td></tr>
+                        <tr><td class="mf-id">23 <span class="mf-hex">0x17</span></td><td>Read/Write Multiple Registers</td><td>Read one block and write another in a single transaction.</td></tr>
+                        <tr><td class="mf-id">43 <span class="mf-hex">0x2B</span></td><td>Encapsulated Interface Transport</td><td>Read Device Identification (MEI type 0x0E) — vendor, model.</td></tr>
+                        <tr class="mf-empty" hidden><td colspan="3">No function codes match that filter.</td></tr>
+                    </tbody>
+                </table>
+                <p class="ref-note">
+                    Codes split across four data tables: coils and discrete inputs are bits; holding and input registers are 16-bit words. Which table an address lives in — and the 5-digit prefix that names it — is the subject of <a href="/education/modbus-decoding.html">Modbus Decoding</a>.
+                </p>
+            </section>
+        </div>
+
+        <!-- ── Exception codes ── -->
+        <div id="tab-exc" class="tab-pane">
+            <section class="tool-body-row">
+                <table class="ref-table-dense" id="mf-table-exc">
+                    <thead>
+                        <tr><th>Code</th><th>Name</th><th>Meaning</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td class="mf-id">1 <span class="mf-hex">0x01</span></td><td>Illegal Function</td><td>The server doesn't support that function code.</td></tr>
+                        <tr><td class="mf-id">2 <span class="mf-hex">0x02</span></td><td>Illegal Data Address</td><td>The address — or the requested range — isn't valid in this device.</td></tr>
+                        <tr><td class="mf-id">3 <span class="mf-hex">0x03</span></td><td>Illegal Data Value</td><td>A value or quantity is out of range for that address.</td></tr>
+                        <tr><td class="mf-id">4 <span class="mf-hex">0x04</span></td><td>Server Device Failure</td><td>An unrecoverable error occurred while carrying out the request.</td></tr>
+                        <tr><td class="mf-id">5 <span class="mf-hex">0x05</span></td><td>Acknowledge</td><td>Request accepted but long-running — poll for completion, don't resend.</td></tr>
+                        <tr><td class="mf-id">6 <span class="mf-hex">0x06</span></td><td>Server Device Busy</td><td>Busy with a long program command; resend the request later.</td></tr>
+                        <tr><td class="mf-id">8 <span class="mf-hex">0x08</span></td><td>Memory Parity Error</td><td>Parity error in the extended file-record memory (FC 20/21).</td></tr>
+                        <tr><td class="mf-id">10 <span class="mf-hex">0x0A</span></td><td>Gateway Path Unavailable</td><td>A gateway is misconfigured or overloaded — no path to the target.</td></tr>
+                        <tr><td class="mf-id">11 <span class="mf-hex">0x0B</span></td><td>Gateway Target Failed to Respond</td><td>No reply from the target device — often the wrong unit ID.</td></tr>
+                        <tr class="mf-empty" hidden><td colspan="3">No exception codes match that filter.</td></tr>
+                    </tbody>
+                </table>
+                <p class="ref-note">
+                    An exception response echoes the original function code with its high bit set — <code>FC + 0x80</code>. A failed Read Holding Registers (FC 3, 0x03) comes back as <code>0x83</code>, and the byte after it is the exception code above.
+                </p>
+            </section>
+        </div>
+
+        <!-- ── CRC-16 ── -->
+        <div id="tab-crc" class="tab-pane">
+            <div class="tool-body-2col">
+
+                <section>
+                    <h2 class="ps-section-label">Input</h2>
+                    <div class="ps-row">
+                        <label class="ps-label" for="mf-crc-in">RTU frame (hex bytes)</label>
+                        <input class="ps-input mf-mono" type="text" id="mf-crc-in" placeholder="01 03 00 00 00 0A" value="01 03 00 00 00 0A">
+                    </div>
+                    <p class="ref-note">
+                        Paste the frame as hex bytes — spaces, commas, and <code>0x</code> are ignored. Modbus RTU uses CRC-16 (polynomial <code>0xA001</code>, initial value <code>0xFFFF</code>); ASCII mode uses an LRC instead, and Modbus TCP drops the checksum entirely for the MBAP header.
+                    </p>
+                </section>
+
+                <section>
+                    <h2 class="ps-section-label">Output</h2>
+                    <div class="ps-row">
+                        <span class="ps-label">CRC-16 of the bytes shown</span>
+                        <span class="ps-value muted" id="mf-crc-word">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">Append as (low byte first)</span>
+                        <span class="ps-value muted mf-mono" id="mf-crc-append">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">Full frame + CRC</span>
+                        <span class="ps-value muted mf-mono" id="mf-crc-frame">—</span>
+                    </div>
+                    <div class="btn-row">
+                        <button class="copy-btn" id="mf-crc-copy">Copy frame</button>
+                    </div>
+                    <div class="failure-callout" id="mf-crc-callout" hidden></div>
+                    <div class="mf-verify" id="mf-crc-verify">Add at least 3 bytes to check an existing CRC.</div>
+                </section>
+
+            </div>
+
+            <section class="tool-body-row">
+                <h2 class="ps-section-label">How the check works</h2>
+                <p class="ref-note">
+                    The CRC is computed over every byte of the frame — unit ID, function code, and data — then appended <em>low byte first</em>. A receiver runs the same calculation over the whole frame including the CRC; a clean frame leaves a remainder of zero. The <em>Append as</em> line above gives the two bytes to add when you're building a frame; the verdict below treats the last two bytes of what you pasted as a CRC and tells you whether a captured frame checks out.
+                </p>
+            </section>
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/tools/modbus-register-viewer.html', label: 'Modbus Register Viewer'}
+        ],
+        lessons: [
+            {href: '/education/modbus-basics.html', label: 'Modbus Basics'},
+            {href: '/education/modbus-decoding.html', label: 'Modbus Decoding'}
+        ],
+        quizzes: [
+            {href: '/practice/modbus-basics.html', label: 'Modbus Basics'},
+            {href: '/practice/modbus-decoding.html', label: 'Modbus Decoding'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/tools/">← All tools</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="/scripts/ui.js"></script>
+<script>
+    // switchTab(name, btn) and copyReadouts(btn, sep, ...ids) come from
+    // /scripts/ui.js. The filter hides non-matching rows across both
+    // code tables and writes a live match count into each tab badge
+    // (the BACnet-reference idiom); it's hidden on the CRC tab, which is
+    // a calculator, not a table. CRC-16/MODBUS: poly 0xA001 reflected,
+    // init 0xFFFF, no final XOR, appended low byte first.
+    (function () {
+        'use strict';
+
+        // ── Filterable code tables ────────────────────────────────────
+        const search = document.getElementById('mf-search');
+        const filterWrap = document.querySelector('.mf-controls');
+        const tables = {
+            fc:  document.getElementById('mf-table-fc'),
+            exc: document.getElementById('mf-table-exc'),
+        };
+        const badges = {};
+        document.querySelectorAll('.mf-count').forEach(b => { badges[b.dataset.count] = b; });
+
+        function applyFilter() {
+            const q = search.value.trim().toLowerCase();
+            Object.keys(tables).forEach(key => {
+                const body = tables[key].tBodies[0];
+                let matches = 0;
+                Array.from(body.rows).forEach(row => {
+                    if (row.classList.contains('mf-empty')) return;
+                    const hit = !q || row.textContent.toLowerCase().includes(q);
+                    row.hidden = !hit;
+                    if (hit) matches++;
+                });
+                const emptyRow = body.querySelector('.mf-empty');
+                if (emptyRow) emptyRow.hidden = !(q && matches === 0);
+                if (badges[key]) badges[key].textContent = q ? '· ' + matches : '';
+            });
+        }
+        search.addEventListener('input', applyFilter);
+
+        // ── Tabs (filter box is irrelevant on the CRC calculator) ─────
+        document.querySelectorAll('[data-tab]').forEach(btn => {
+            btn.addEventListener('click', e => {
+                switchTab(e.currentTarget.dataset.tab, e.currentTarget);
+                filterWrap.hidden = e.currentTarget.dataset.tab === 'crc';
+            });
+        });
+
+        // ── CRC-16 / MODBUS ───────────────────────────────────────────
+        const crcIn      = document.getElementById('mf-crc-in');
+        const wordEl     = document.getElementById('mf-crc-word');
+        const appendEl   = document.getElementById('mf-crc-append');
+        const frameEl    = document.getElementById('mf-crc-frame');
+        const calloutEl  = document.getElementById('mf-crc-callout');
+        const verifyEl   = document.getElementById('mf-crc-verify');
+
+        const hex2 = n => n.toString(16).toUpperCase().padStart(2, '0');
+
+        function crc16(bytes) {
+            let crc = 0xFFFF;
+            for (let i = 0; i < bytes.length; i++) {
+                crc ^= bytes[i];
+                for (let bit = 0; bit < 8; bit++) {
+                    crc = (crc & 1) ? (crc >>> 1) ^ 0xA001 : crc >>> 1;
+                }
+            }
+            return crc & 0xFFFF;
+        }
+
+        function parseHex(str) {
+            const clean = str.replace(/0x/gi, '').replace(/[^0-9a-fA-F]/g, '');
+            if (clean.length === 0) return { empty: true };
+            if (clean.length % 2 !== 0) return { odd: true };
+            const bytes = [];
+            for (let i = 0; i < clean.length; i += 2) bytes.push(parseInt(clean.substr(i, 2), 16));
+            return { bytes: bytes };
+        }
+
+        function setVerify(text, kind) {
+            verifyEl.textContent = text;
+            verifyEl.className = 'mf-verify' + (kind ? ' ' + kind : '');
+        }
+
+        function calcCrc() {
+            const res = parseHex(crcIn.value);
+
+            const mute = (msg) => {
+                [wordEl, appendEl, frameEl].forEach(el => { el.className = 'ps-value muted'; el.textContent = '—'; });
+                calloutEl.textContent = msg;
+                calloutEl.hidden = false;
+                setVerify('Add at least 3 bytes to check an existing CRC.', '');
+            };
+            if (res.empty) { mute('Paste an RTU frame as hex bytes — e.g. 01 03 00 00 00 0A.'); return; }
+            if (res.odd)   { mute('Hex needs an even number of digits — each byte is two.'); return; }
+            calloutEl.hidden = true;
+
+            const bytes = res.bytes;
+            const crc = crc16(bytes);
+            const lo = crc & 0xFF, hi = (crc >>> 8) & 0xFF;
+
+            wordEl.className = 'ps-value live';
+            wordEl.textContent = '0x' + crc.toString(16).toUpperCase().padStart(4, '0');
+            appendEl.className = 'ps-value live mf-mono';
+            appendEl.textContent = hex2(lo) + ' ' + hex2(hi);
+            frameEl.className = 'ps-value live mf-mono';
+            frameEl.textContent = bytes.map(hex2).join(' ') + ' ' + hex2(lo) + ' ' + hex2(hi);
+
+            // Verify: treat the last two bytes of what was pasted as a CRC
+            // over the preceding bytes.
+            if (bytes.length >= 3) {
+                const data = bytes.slice(0, -2);
+                const c = crc16(data);
+                const clo = c & 0xFF, chi = (c >>> 8) & 0xFF;
+                const givenLo = bytes[bytes.length - 2], givenHi = bytes[bytes.length - 1];
+                if (givenLo === clo && givenHi === chi) {
+                    setVerify('Valid frame — the last two bytes match the CRC of everything before them. ✓', 'ok');
+                } else {
+                    setVerify('The last two bytes are not the CRC of the bytes before them. If they are all data, append ' + hex2(lo) + ' ' + hex2(hi) + ' to complete the frame.', '');
+                }
+            } else {
+                setVerify('Add at least 3 bytes to check an existing CRC.', '');
+            }
+        }
+
+        crcIn.addEventListener('input', calcCrc);
+        document.getElementById('mf-crc-copy').addEventListener('click', e => copyReadouts(e.currentTarget, '', 'mf-crc-frame'));
+
+        calcCrc();
+    })();
+</script>
+{% endblock %}

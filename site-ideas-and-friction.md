@@ -848,6 +848,19 @@ field. Tagged "Pumps & Fans" (the tag/category split is already the
 norm — Analog I/O vs signals) while sitting under the Hydronics chip.
 At `/tools/affinity-laws.html`.
 
+### Modbus function codes & CRC *(shipped)*
+Third Protocols tool, completing the protocols side of the v3.x batch
+and reusing the BACnet reference's search + tabbed-table pattern. Three
+tabs: function codes (1–43, with the dec-vs-hex gotcha — FC 15 = 0x0F,
+FC 16 = 0x10 — in plain sight), exception codes (with the FC + 0x80
+high-bit rule), and a CRC-16/MODBUS calculator (poly 0xA001, init
+0xFFFF) that both builds the append bytes (low byte first) and verifies
+a captured frame's trailing two bytes. The shared filter box hides
+itself on the CRC tab, which is a calculator rather than a table.
+Validated in the smoke suite against the canonical 0x4B37 check value
+for "123456789". At `/tools/modbus-functions.html`; cross-linked from
+both Modbus lessons.
+
 ### Thermistor calculator *(both modes shipped + curves verified)*
 Two modes, tabs à la Signal Scaling. Both are shipped and the curves
 are datasheet-verified.
