@@ -21,13 +21,13 @@ nav: tools
 
     <div class="filter-chips" role="group" aria-label="Filter tools by category">
         <button type="button" class="filter-chip active" data-category="all" aria-pressed="true">
-            All <span class="filter-chip-count">12</span>
+            All <span class="filter-chip-count">13</span>
         </button>
         <button type="button" class="filter-chip" data-category="hvac" aria-pressed="false">
             HVAC <span class="filter-chip-count">5</span>
         </button>
         <button type="button" class="filter-chip" data-category="protocols" aria-pressed="false">
-            Protocols <span class="filter-chip-count">3</span>
+            Protocols <span class="filter-chip-count">4</span>
         </button>
         <button type="button" class="filter-chip" data-category="signals" aria-pressed="false">
             Signals <span class="filter-chip-count">2</span>
@@ -63,6 +63,15 @@ nav: tools
             titleFull:  'Modbus Register Viewer',
             desc:       'A 16-bit register laid out as a clickable bit grid, two-way bound to decimal / hex, with dec / hex / binary readouts.',
             pills:      ['Modbus', '16-bit', 'Dec / Hex / Bin'],
+            category:   'protocols'
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/tools/modbus-functions.html',
+            titleShort: 'Modbus FC',
+            titleFull:  'Modbus Function Codes & CRC',
+            desc:       'Function codes and exception codes looked up by name or number, plus an RTU CRC-16 calculator that builds or checks a frame\'s checksum.',
+            pills:      ['Modbus', 'Function Codes', 'Exceptions', 'CRC-16'],
             category:   'protocols'
         }) }}
         {{ navCard({
