@@ -1,0 +1,77 @@
+---
+title: TXVs vs. EEVs Quiz — controlsfreak.dev
+description: Ten questions on the TXVs vs. EEVs lesson — the mechanical TXV force balance, the electronic EEV control loop, and how each holds a target superheat.
+canonical: https://controlsfreak.dev/practice/metering-devices-txv-eev.html
+nav: practice
+pairedLesson: https://controlsfreak.dev/education/metering-devices-txv-eev.html
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Practice · TXVs vs. EEVs</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">TXVs vs. EEVs Quiz <span class="tool-tag">Refrigeration</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                Read the
+                <a href="/education/metering-devices-txv-eev.html">TXVs vs. EEVs</a> lesson first, then test
+                yourself — ten questions on the two metering devices that hold superheat: the TXV's mechanical
+                force balance (bulb, spring, diaphragm, equalizer), the EEV's electronic control loop (transducer,
+                sensor, stepper), and what their behavior tells you when a system drifts. Each reveal links back to
+                the section it came from.
+            </p>
+
+            <div id="quiz"></div>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        lessons: [
+            {href: '/education/metering-devices-txv-eev.html', label: 'TXVs vs. EEVs'},
+            {href: '/education/refrigerant-cycle-basics.html', label: 'Refrigerant Cycle Basics'},
+            {href: '/education/superheat-subcooling.html', label: 'Superheat & Subcooling'}
+        ],
+        tools: [
+            {href: '/tools/refrigerant-pt.html', label: 'Refrigerant P-T & Superheat Calculator'}
+        ],
+        quizzes: [
+            {href: '/practice/refrigerant-cycle-basics.html', label: 'Refrigerant Cycle Basics Quiz'},
+            {href: '/practice/superheat-subcooling.html', label: 'Superheat & Subcooling Quiz'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/practice/">← All practice</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="/scripts/quiz-engine.js"></script>
+<script>
+    (function () {
+        'use strict';
+
+        // Question bank lives in html/_data/quizzes/metering-devices-txv-eev.js
+        // so the FAQPage JSON-LD emitted from head.njk can read the same source.
+        const questions = {{ quizzes['metering-devices-txv-eev'] | safeScriptJson | safe }};
+
+        Quiz.mount('#quiz', questions, {
+            slug: 'metering-devices-txv-eev',
+            title: 'TXVs vs. EEVs',
+            defaultCount: 10,
+            defaultOrder: 'sequential'
+        });
+    })();
+</script>
+{% endblock %}

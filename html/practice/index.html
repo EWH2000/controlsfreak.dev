@@ -72,7 +72,7 @@ nav: practice
 
     <div class="filter-chips" role="group" aria-label="Filter practice by topic">
         <button type="button" class="filter-chip active" data-category="all" aria-pressed="true">
-            All <span class="filter-chip-count">10</span>
+            All <span class="filter-chip-count">13</span>
         </button>
         <button type="button" class="filter-chip" data-category="modbus" aria-pressed="false">
             Modbus <span class="filter-chip-count">2</span>
@@ -82,6 +82,9 @@ nav: practice
         </button>
         <button type="button" class="filter-chip" data-category="hydronics" aria-pressed="false">
             Hydronics <span class="filter-chip-count">4</span>
+        </button>
+        <button type="button" class="filter-chip" data-category="refrigeration" aria-pressed="false">
+            Refrigeration <span class="filter-chip-count">3</span>
         </button>
     </div>
 
@@ -166,6 +169,33 @@ nav: practice
                 desc:       'Drill the Hydronic Balancing lesson — CBVs and the square-root law, ABV compensation range, PICVs and DP reset, and reading the symptoms of an unbalanced loop.',
                 pills:      ['10 Questions', 'MCQ · TF · Gotcha · Numeric', '~ 5 min'],
                 category:   'hydronics'
+            }) }}
+            {{ navCard({
+                section:    'practice',
+                href:       '/practice/refrigerant-cycle-basics.html',
+                titleShort: 'Refrigerant Cycle',
+                titleFull:  'Refrigerant Cycle Basics',
+                desc:       'Drill the Refrigerant Cycle Basics lesson — the four components, high side vs. low side, the pressure-temperature saturation lock, and where blend glide shows up.',
+                pills:      ['10 Questions', 'MCQ · TF · Gotcha · Numeric', '~ 5 min'],
+                category:   'refrigeration'
+            }) }}
+            {{ navCard({
+                section:    'practice',
+                href:       '/practice/superheat-subcooling.html',
+                titleShort: 'Superheat & SC',
+                titleFull:  'Superheat & Subcooling',
+                desc:       'Drill the Superheat & Subcooling lesson — what each measures and on which line, the dew/bubble formulas, and what a high or low reading on either one points toward.',
+                pills:      ['10 Questions', 'MCQ · TF · Gotcha · Numeric', '~ 5 min'],
+                category:   'refrigeration'
+            }) }}
+            {{ navCard({
+                section:    'practice',
+                href:       '/practice/metering-devices-txv-eev.html',
+                titleShort: 'TXV vs EEV',
+                titleFull:  'TXVs vs. EEVs',
+                desc:       'Drill the TXVs vs. EEVs lesson — the mechanical TXV force balance, the electronic EEV control loop, and what each does to hold a target superheat as load drifts.',
+                pills:      ['10 Questions', 'MCQ · TF · Gotcha', '~ 5 min'],
+                category:   'refrigeration'
             }) }}
         </div>
     </section>

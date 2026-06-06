@@ -3,6 +3,7 @@ title: Refrigerant Cycle Basics — controlsfreak.dev
 description: Vapor-compression cycle for controls people — the four components, high vs low side, and the P-T relationship that anchors every sensor reading.
 canonical: https://controlsfreak.dev/education/refrigerant-cycle-basics.html
 nav: education
+pairedQuiz: https://controlsfreak.dev/practice/refrigerant-cycle-basics.html
 ---
 {% extends "layouts/page.njk" %}
 {% from "related-links.njk" import relatedLinks %}
@@ -44,7 +45,7 @@ nav: education
                 The refrigerant side is where most controls people have a fuzzy grasp and few have a clear one. You meet the cycle through sensor readings — a low-suction alarm, a head-pressure trip, a discharge temperature that looks wrong — and have to decide whether the system is fine or whether the sensor is. That decision is much easier once the cycle stops being a black box. It's four components and one load-bearing relationship between pressure and temperature, and once you can see those, the readings on a unit-controller graphic start telling a story instead of just lighting up.
             </p>
 
-            <h2 class="subhead">The four components</h2>
+            <h2 class="subhead" id="components">The four components</h2>
 
             <p>
                 A refrigerant doesn't <em>cool</em> the air the way a heater <em>heats</em> it. The refrigerant moves heat — from inside the building to outside, in cooling mode — by going through a phase change in two different places. Liquid absorbs heat as it boils into vapor; vapor releases heat as it condenses back to liquid. The four components are the choreography that keeps that boil-and-condense routine running.
@@ -66,7 +67,7 @@ nav: education
                 <strong>The evaporator</strong> is the cold coil — the one that does the actual cooling work, even though it lives in the conditioned space and gets called "the cold coil" almost casually. A fan blows return air across it; the cold refrigerant inside is colder than the air, so heat moves from the air into the refrigerant, and along the way the refrigerant boils. By the time it leaves the evaporator outlet, the refrigerant is back to cool, low-pressure vapor — exactly what the compressor wants on its suction line. The loop is closed.
             </p>
 
-            <h2 class="subhead">High side vs. low side</h2>
+            <h2 class="subhead" id="high-low-side">High side vs. low side</h2>
 
             <p>
                 The compressor and the metering device split the loop into two pressure zones. From the compressor discharge, around through the condenser, down to the inlet of the metering device — that's the <strong>high side</strong>, all at the discharge pressure. From the metering device outlet, across the evaporator, back to the compressor suction — that's the <strong>low side</strong>, all at the suction pressure. The compressor jumps refrigerant from low to high; the metering device drops it back from high to low. Everything else in between is just plumbing.
@@ -76,7 +77,7 @@ nav: education
                 That's why a unit controller reads <em>two</em> pressures, not one. Suction pressure (low side) tells you what's happening on the cold half of the system; discharge pressure (high side) tells you what's happening on the hot half. The two are coupled — change one and the other reacts within seconds — but they're separately measurable, and they're separately informative. A high suction pressure with a normal discharge says something very different than a high discharge with a normal suction.
             </p>
 
-            <h2 class="subhead">The pressure-temperature relationship</h2>
+            <h2 class="subhead" id="pt-lock">The pressure-temperature relationship</h2>
 
             <p>
                 Here's the load-bearing concept for the whole rest of this chapter. <strong>When a refrigerant is at saturation — when it's actively boiling or condensing, in either component — pressure and temperature are locked to each other.</strong> Given one, the published P-T chart for that refrigerant tells you the other. R-410A at 118 psig is boiling at 40 °F. Not "around 40 °F" — at 40 °F. If you measured the same refrigerant at the same pressure with no air in the system, you'd read 40 °F every time.
@@ -90,7 +91,7 @@ nav: education
                 Two important footnotes ride along with this. First, the lock only holds <em>at saturation</em>: in the spans of pipe where the refrigerant is pure vapor (the suction and discharge lines) or pure liquid (the liquid line), pressure and temperature drift apart, and the gap between them is what page 2 turns into <em>superheat</em> and <em>subcooling</em> measurements. Second, blends like R-407C have noticeable <em>glide</em> — the saturation temperature isn't one value but a small range between a <em>bubble</em> point and a <em>dew</em> point, with the two sides used for different measurements. Pure refrigerants and near-azeotropic blends like R-410A skip that complication; zeotropic blends don't. The P-T tool always shows bubble and dew so the glide is visible by default.
             </p>
 
-            <h2 class="subhead">The cycle, end to end</h2>
+            <h2 class="subhead" id="cycle">The cycle, end to end</h2>
 
             <p>
                 Putting the four components and the two pressure zones together: refrigerant flows around the loop in one direction, changing state twice (vapor → liquid at the condenser, liquid → vapor at the evaporator), with the compressor and metering device as the pressure boundaries. The diagram below traces that walk and color-codes the two sides. Orange is the high side; muted blue is the low side. Heat enters the evaporator from indoor air (cooling the space) and leaves the condenser to outdoor air (rejecting the heat the system carried out).
@@ -238,7 +239,7 @@ nav: education
                 Those two pressures aren't independent measurements of two different things. They're how the system is trading heat from one place to another — a low side cold enough to pull heat <em>in</em> from indoor air, a high side hot enough to push heat <em>out</em> to outdoor air, and a compressor doing the work of moving refrigerant between the two. Change the outdoor temperature, change the indoor load, change the refrigerant charge — and both pressures will move together in characteristic ways. Recognizing those patterns is a longer story; the foundation is just this: pressure and temperature, locked together at saturation, in two pressure zones separated by the compressor and the metering device.
             </p>
 
-            <h2 class="subhead">What this sets up</h2>
+            <h2 class="subhead" id="what-next">What this sets up</h2>
 
             <p>
                 Two questions fall straight out of everything above. First, if pressure and temperature are locked at saturation, what does it mean when the measured temperature on a line <em>doesn't</em> match the saturation temperature for that line's pressure? That's the <a href="/education/superheat-subcooling.html"><em>superheat</em> and <em>subcooling</em> story</a> — the two field measurements that prove a cycle is actually running right, not just running. They're the next page in this chapter.
@@ -259,6 +260,9 @@ nav: education
         tools: [
             {href: '/tools/refrigerant-pt.html', label: 'Refrigerant P-T & Superheat Calculator'},
             {href: '/tools/coil-sizing.html', label: 'Coil-Sizing Calculator'}
+        ],
+        quizzes: [
+            {href: '/practice/refrigerant-cycle-basics.html', label: 'Refrigerant Cycle Basics Quiz'}
         ]
     }) }}
 

@@ -3,6 +3,7 @@ title: Superheat & Subcooling — controlsfreak.dev
 description: Superheat and subcooling for controls people — what each measures, the BMS-visible sensors that compute them, and what abnormal readings tell you.
 canonical: https://controlsfreak.dev/education/superheat-subcooling.html
 nav: education
+pairedQuiz: https://controlsfreak.dev/practice/superheat-subcooling.html
 ---
 {% extends "layouts/page.njk" %}
 {% from "related-links.njk" import relatedLinks %}
@@ -38,7 +39,7 @@ nav: education
                 <a href="/education/refrigerant-cycle-basics.html">Refrigerant Cycle Basics</a> ended on the saturation lock: when a refrigerant is actively boiling or condensing, pressure and temperature are pinned to each other by the refrigerant's published P-T table. This page picks up at the natural follow-up question — what does it mean when the measured temperature on a line <em>doesn't</em> match the saturation temperature for that line's pressure? The gap is what the field calls <em>superheat</em> on the vapor side and <em>subcooling</em> on the liquid side. They're the two measurements that prove a refrigerant cycle is actually running right, not just running, and they're the ones a unit controller or BMS leans on to know whether a system is healthy.
             </p>
 
-            <h2 class="subhead">Two measurements that prove the cycle is healthy</h2>
+            <h2 class="subhead" id="definitions">Two measurements that prove the cycle is healthy</h2>
 
             <p>
                 <strong>Superheat</strong> is how many degrees warmer the refrigerant <em>vapor</em> is than its saturation temperature. It's measured on the suction line — the cool vapor leaving the evaporator on its way back to the compressor. Take the suction-line pressure, look up the saturation temperature for that pressure (the <em>dew</em> column, because we're talking about vapor), and subtract that from the measured suction-line temperature. The formula is <code>superheat = line T − dew T</code>, in degrees Fahrenheit or Celsius — whichever the gauge and the thermometer agree on.
@@ -52,7 +53,7 @@ nav: education
                 The four readings that produce these two numbers — suction-line pressure, suction-line temperature, liquid-line pressure, liquid-line temperature — are exactly the four points you'll typically find on a packaged unit's controller graphic. The pressures come off pressure transducers tapped into the lines. The temperatures come off clamp-on (or strap-on) thermistors or RTDs on the outside of the copper. The controller does the table lookup and the subtraction; you watch the resulting superheat and subcooling values change as the system runs.
             </p>
 
-            <h2 class="subhead">Where they sit on the saturation curve</h2>
+            <h2 class="subhead" id="curve">Where they sit on the saturation curve</h2>
 
             <p>
                 It helps to see this on the same kind of pressure-temperature plot a P-T chart is drawn on. Pick any pressure (a horizontal line on the plot) and the chart's saturation curve gives you one temperature — the saturation temperature for that pressure. A real refrigerant state on that pressure line either lands on the curve (saturated, still mid-phase-change), lands to the right of the curve at the same pressure (warmer — superheated vapor), or lands to the left of the curve (cooler — subcooled liquid). Superheat and subcooling are the horizontal distance between the state point and the curve.
@@ -151,7 +152,7 @@ nav: education
                 One thing the conceptual diagram smooths over: on a <em>zeotropic</em> blend (R-407C, R-454B, R-32 to some extent), the saturation "curve" is actually two curves close together — the <em>bubble</em> curve on the liquid side and the <em>dew</em> curve on the vapor side, separated by the refrigerant's <em>glide</em>. Superheat references the dew curve, subcooling the bubble curve, which is why both names appear on the formulas above. For a pure refrigerant or a near-azeotropic blend like R-410A or R-404A, the two curves collapse onto each other and the distinction stops mattering. The <a href="/tools/refrigerant-pt.html">P-T tool</a> always shows both, so the gap is visible whenever it's relevant.
             </p>
 
-            <h2 class="subhead">What abnormal readings tell you</h2>
+            <h2 class="subhead" id="abnormal">What abnormal readings tell you</h2>
 
             <p>
                 The reason these two numbers are the field standard is that each direction of deviation points to a different family of problem. A controls person looking at a unit-controller graphic uses superheat and subcooling to triangulate <em>what's wrong</em> without taking the unit apart. None of these are diagnoses on their own — they're <em>directions</em>, and the equipment manufacturer's target numbers (printed on the data plate or in the install manual) always win over a rule of thumb. But the directions are consistent enough across systems that a tech reading them gets a strong first guess.
@@ -177,7 +178,7 @@ nav: education
                 A note on metering devices, since the directions above all reference them. A TXV (thermostatic expansion valve) and an EEV (electronic expansion valve) both <em>actively hold</em> a target superheat by modulating their opening as the cycle moves — they're feedback loops, not fixed orifices. So a chronically high superheat on a TXV system usually means the valve isn't getting the data it needs (bulb loose, lost charge) or isn't able to keep up with the demand. A fixed-orifice or capillary-tube system has no such feedback and runs whatever superheat the operating conditions force on it; the target number depends on outdoor temperature, indoor load, and the design assumptions. <a href="/education/metering-devices-txv-eev.html">Page 3 of this chapter</a> is about exactly that mechanism: how each metering device decides how wide-open to be at any given moment.
             </p>
 
-            <h2 class="subhead">A worked example</h2>
+            <h2 class="subhead" id="worked-example">A worked example</h2>
 
             <p>
                 Pick the same R-410A air conditioner from the previous lesson. Suction-side gauge reads <strong>118 psig</strong>; clamp-on suction-line thermometer reads <strong>50 °F</strong>. The R-410A P-T table gives a dew temperature of about 40 °F at 118 psig. So:
@@ -221,6 +222,9 @@ nav: education
         ],
         lessons: [
             {href: '/education/refrigerant-cycle-basics.html', label: 'Refrigerant Cycle Basics'}
+        ],
+        quizzes: [
+            {href: '/practice/superheat-subcooling.html', label: 'Superheat & Subcooling Quiz'}
         ]
     }) }}
 
