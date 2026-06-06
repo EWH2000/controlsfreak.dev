@@ -28,7 +28,7 @@ findings from the recurring content-accuracy audits.
     `flow-engine.js` + `schematic-bg.js` at end-of-body; exposes
     `head` / `content` / `scripts` blocks. See *Templating*.
   - `head.njk` — `<head>`: meta, OG, favicons, fonts, `/styles.css`,
-    units-bootstrap inline script.
+    units + theme before-paint bootstrap scripts.
   - `nav.njk` — top nav; `.active` driven by `nav` frontmatter.
   - `footer.njk` — tagline + version string (re-exports
     `package.json.version` via `html/_data/site.js`).
@@ -53,9 +53,10 @@ findings from the recurring content-accuracy audits.
   ES modules, no bundler) that expose globals like `Units`,
   `simulatePid`, `FlowEngine`, `Quiz` for page IIFEs to reach by
   name. Each file has a thorough header — **read it for the API**.
-  `flow-engine.js` and `schematic-bg.js` are loaded site-wide from
-  `layouts/page.njk`; the rest load per-page inside `{% block scripts %}`
-  *before* the page's inline `<script>`.
+  `theme.js`, `flow-engine.js`, and `schematic-bg.js` are loaded
+  site-wide from `layouts/page.njk` (the theme toggle + gutter motifs
+  appear on every page); the rest load per-page inside
+  `{% block scripts %}` *before* the page's inline `<script>`.
 - **Worker:** `src/worker.js` — ES-module Worker. Handles
   `POST /api/contact` (validate, honeypot, Turnstile, Resend); falls
   through to `env.ASSETS.fetch(request)`. Secrets: `TURNSTILE_SECRET`,
@@ -249,13 +250,16 @@ resolve.
   `contact.spec.js`. `contact.spec.js`'s "empty submit" route-blocks
   `challenges.cloudflare.com` before navigating so the click is
   deterministic (codebase-issues #55).
-- **`aria-pressed` flicker on units toggle is accepted.** Nav buttons
-  hard-code `aria-pressed="true"` for US at render time; the head
-  units-bootstrap sets `[data-units]` before paint but can't reach
-  the buttons (not parsed yet). `units.js` re-syncs `aria-pressed`
-  at end-of-body. For a few tens of ms a screen reader on a metric
-  device hears "US toggled on" while the page already displays
-  metric. No clean fix.
+- **`aria-pressed` flicker on the units / theme toggles is accepted.**
+  Nav buttons hard-code `aria-pressed="true"` for US / Dark at render
+  time; the head bootstraps set `[data-units]` / `[data-theme]` before
+  paint but can't reach the buttons (not parsed yet). `units.js` /
+  `theme.js` re-sync `aria-pressed` at end-of-body. For a few tens of
+  ms a screen reader on a metric / light device hears "US / Dark
+  toggled on" while the page already displays metric / light. No clean
+  fix. (Theme has one extra wrinkle: the *visual* active state is
+  correct from first paint because `[data-theme]` drives the CSS — only
+  the aria lags.)
 - **Selectors targeting SVG geometry are attribute-only, not
   element-qualified.** Pipe runs mix `<line>` and `<path>`, so
   `path[id^="d1-return"]` silently drops half. Use `[id^="d1-return"]`
@@ -380,20 +384,48 @@ adding or moving pages.
 
 ## Design system
 
-The design system lives in `html/styles.css` — flat "workstation"
-look (white panels on light gray-green chrome, hairline borders,
-green accent) with quiet nods to BAS UIs. Light-only
-(`color-scheme: light`). A new tool/page should be built from this
-vocabulary, not freshly styled. Read `styles.css` for the full
-component catalog — it's terse and well-grouped with section
-headers.
+The design system lives in `html/styles.css` — an "AX-sharp" BAS
+workstation look: square corners (`--rail: 0`), hard 1px seams, flat
+fills, no floating shadows, quiet nods to Niagara/SCADA UIs. It runs
+in **two semantic registers** and **two themes**:
+
+- **Software register = the default chrome** (cool blue-slate in dark /
+  warm white in light) — carries the whole site: nav, tools, lessons,
+  drills, landings. Green = brand/action, blue = data/selection.
+- **Equipment register** — a warm device face + positive-mode
+  dot-matrix character LCD (`.device` / `.lcd` / `.gauge.eq` /
+  `.keypad` / `.led`, in the `EQUIPMENT REGISTER` block of
+  `styles.css`), used ONLY where a page depicts real hardware (VFD/DMM
+  sims, device widgets, the one readout in a software tool that shows a
+  field value). Constant across both themes — a device is a device.
+
+**Dark is the default theme** (`:root`); `[data-theme="light"]` is the
+opt-in override (≈ the older look). A new tool/page should be built
+from this vocabulary, not freshly styled — see `/styleguide.html` (a
+noindex living reference that exercises both registers in both themes)
+and read `styles.css` for the full catalog (terse, well-grouped with
+section headers).
 
 - **CSS custom properties** in `:root` are the theme — change colors
-  there, not by hardcoding. **No `var(--x, #hex)` fallbacks**:
-  `var(--x)` is the canonical form site-wide. If a property is ever
-  removed from `:root` without removing its consumers, `var(--x)`
-  returns empty and the consumer no-ops the color — louder failure
-  mode than a stale fallback hex.
+  there, not by hardcoding. `:root` holds the **dark** values (the
+  default); `:root[data-theme="light"]` overrides them with the light
+  set. Every software-register token carries both; the equipment
+  `--dev-*` / `--lcd-*` tokens and `--rail` are defined once and stay
+  constant across themes. Pages — including their inline
+  `{% block head %}` styles — reference `var(--x)` and theme for free.
+  **No `var(--x, #hex)` fallbacks**: `var(--x)` is
+  the canonical form site-wide. If a property is ever removed from
+  `:root` without removing its consumers, `var(--x)` returns empty and
+  the consumer no-ops the color — louder failure mode than a stale
+  fallback hex.
+- **Theme toggle** mirrors the units toggle: a nav `.theme-btn` pill,
+  `cf_theme` in localStorage, `[data-theme]` on `<html>`. A before-paint
+  bootstrap in `head.njk` sets it from `cf_theme` (else
+  `prefers-color-scheme`, default dark) and flips the `theme-color`
+  meta; `/scripts/theme.js` — loaded **site-wide** from `page.njk`, so
+  it works on every page (unlike `units.js`, which loads only where a
+  page converts) — owns the runtime and persistence. The two pills
+  share one CSS block (`UNITS + THEME TOGGLES`).
 - **Focus indicators (`:focus-visible`)** live in one consolidated
   `FOCUS INDICATORS` block in `styles.css` (the browser default
   outline is suppressed elsewhere). When adding a new custom-styled
@@ -402,7 +434,7 @@ headers.
 - **Touch-target floor** lives in one consolidated `TOUCH-TARGET
   FLOOR` block in `styles.css` (right after `FOCUS INDICATORS`),
   scoped to `@media (hover: none)`. On touch devices the chrome-level
-  controls (`.site-nav-links a`, `.units-btn`, `.tab-btn`,
+  controls (`.site-nav-links a`, `.units-btn`, `.theme-btn`, `.tab-btn`,
   `.quiz-settings-select`, `.quiz-reset-best`) are padded to ≥44px
   (WCAG 2.5.5 / Apple HIG) while desktop pointer density stays
   compact. When adding a new *chrome-level* interactive (nav,

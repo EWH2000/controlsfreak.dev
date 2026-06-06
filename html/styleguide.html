@@ -1,0 +1,352 @@
+---
+title: Design System — controlsfreak.dev
+description: Living reference for the controlsfreak.dev design language — the dual dark and light themes, the software and equipment registers, and the colour tokens.
+noindex: true
+---
+{% extends "layouts/page.njk" %}
+
+{% block head %}
+    <style>
+        /* Styleguide-only layout + the software-register Niagara cues
+           (.tree / .wiresheet) and the .trend sparkline. These three are
+           NOT yet shared production components (the function-block editor
+           has its own wiresheet), so they live page-local here until a
+           real consumer promotes them to styles.css. The two-register
+           DEVICE / LCD / GAUGE.eq vocabulary, by contrast, IS shared —
+           it lives in styles.css and this page just exercises it. */
+
+        .sg-lead { max-width: 70ch; }
+        .sg-lead code { font-family: var(--mono); font-size: 0.9em; color: var(--text-bright); }
+
+        /* section divider — h2 + register tag + hairline */
+        .sg-rule { display: flex; align-items: center; gap: 0.8rem; margin: 2.6rem 0 1.1rem; }
+        .sg-rule-label {
+            font-family: var(--mono);
+            font-size: 0.82rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--blue);
+            white-space: nowrap;
+            margin: 0;
+        }
+        .sg-rule-tag {
+            font-family: var(--mono);
+            font-size: 0.6rem;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            border: 1px solid var(--border);
+            padding: 0.12rem 0.45rem;
+        }
+        .sg-rule .line { flex: 1; height: 1px; background: linear-gradient(90deg, var(--border), transparent); }
+
+        .sg-grid { display: grid; gap: 1rem; grid-template-columns: 1fr 1fr; align-items: start; }
+        @media (max-width: 820px) { .sg-grid { grid-template-columns: 1fr; } }
+
+        /* token swatches — names, not hexes (the values flip per theme) */
+        .sg-swatches {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 0.6rem;
+        }
+        .sg-swatch {
+            border: 1px solid var(--border);
+            background: var(--surface);
+            overflow: hidden;
+        }
+        .sg-swatch .chip { height: 46px; }
+        .sg-swatch .name {
+            font-family: var(--mono);
+            font-size: 0.62rem;
+            color: var(--text-dim);
+            padding: 0.3rem 0.45rem;
+            border-top: 1px solid var(--border);
+            letter-spacing: 0.02em;
+        }
+
+        /* nav-tree — a Niagara cue (software register) */
+        .tree { font-family: var(--mono); font-size: 0.78rem; }
+        .tree .row { display: flex; align-items: center; gap: 0.45rem; padding: 0.28rem 0.4rem; color: var(--text); }
+        .tree .row.sel { background: var(--blue-dim); color: var(--text-bright); box-shadow: inset 2px 0 0 var(--blue); }
+        .tree .ic { width: 11px; height: 11px; flex: none; }
+        .tree .indent { padding-left: 1.2rem; }
+        .tree .indent2 { padding-left: 2rem; }
+        .tree .ic.station { background: var(--blue); }
+        .tree .ic.point { background: var(--accent); }
+        .tree .ic.alarm { background: var(--red); }
+        .tree .ic.folder { background: var(--text-dim); }
+
+        /* wiresheet — the function-block editor's grid (software register) */
+        .wiresheet {
+            position: relative;
+            min-height: 150px;
+            padding: 0.8rem;
+            background:
+                linear-gradient(var(--border-faint) 1px, transparent 1px) 0 0/18px 18px,
+                linear-gradient(90deg, var(--border-faint) 1px, transparent 1px) 0 0/18px 18px,
+                var(--well);
+            border: 1px solid var(--border);
+        }
+        .wblock {
+            position: absolute;
+            min-width: 64px;
+            padding: 0.3rem 0.45rem;
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            font-family: var(--mono);
+            font-size: 0.62rem;
+            color: var(--text-bright);
+        }
+        .wblock .bt {
+            display: block;
+            margin-bottom: 0.15rem;
+            color: var(--blue);
+            font-size: 0.54rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+        .wwire { position: absolute; height: 2px; background: var(--accent); opacity: 0.7; }
+
+        /* trend sparkline — data-driven motion (the line draws itself in) */
+        .trend { width: 100%; height: 54px; display: block; }
+        .trend .grid-l { stroke: var(--border-faint); stroke-width: 1; }
+        .trend .area { fill: url(#sg-tg); opacity: 0.4; }
+        .trend .line {
+            fill: none;
+            stroke: var(--blue);
+            stroke-width: 2;
+            vector-effect: non-scaling-stroke;
+            stroke-dasharray: 600;
+            stroke-dashoffset: 600;
+            animation: sg-draw 2.2s ease-out forwards;
+        }
+        @keyframes sg-draw { to { stroke-dashoffset: 0; } }
+
+        /* small helper rows reused in the demos */
+        .sg-led-row { display: flex; flex-wrap: wrap; gap: 1.1rem; align-items: center; }
+        .sg-led-row span { display: inline-flex; align-items: center; gap: 0.45rem; font-family: var(--mono); font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.06em; }
+        .sg-stack > * + * { margin-top: 0.7rem; }
+        .sg-2up { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+
+        @media (prefers-reduced-motion: reduce) {
+            .trend .line { stroke-dashoffset: 0; }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <h1 class="section-label">Design system</h1>
+    </div>
+
+    <p class="landing-intro sg-lead">
+        The living reference for the controlsfreak.dev visual language. The site speaks in
+        <strong>two registers</strong>: a default <em>software register</em> (cool slate,
+        AX-sharp, square corners) for all the chrome, tools, lessons, and drills; and an
+        <em>equipment register</em> (warm device face, lit dot-matrix LCD) used only where a
+        page depicts real hardware. Both render in a <strong>dark default</strong> theme and a
+        <strong>light</strong> theme — flip <code>Theme</code> in the nav to compare. Every
+        colour below is a CSS custom property, so the palette swaps wholesale per theme.
+    </p>
+
+    <!-- ══ TOKENS ══ -->
+    <div class="sg-rule"><h2 class="sg-rule-label">Tokens</h2><span class="sg-rule-tag">values flip per theme</span><span class="line"></span></div>
+    <div class="sg-swatches">
+        <div class="sg-swatch"><div class="chip" style="background:var(--bg)"></div><div class="name">--bg</div></div>
+        <div class="sg-swatch"><div class="chip" style="background:var(--surface)"></div><div class="name">--surface</div></div>
+        <div class="sg-swatch"><div class="chip" style="background:var(--surface-2)"></div><div class="name">--surface-2</div></div>
+        <div class="sg-swatch"><div class="chip" style="background:var(--surface-3)"></div><div class="name">--surface-3</div></div>
+        <div class="sg-swatch"><div class="chip" style="background:var(--well)"></div><div class="name">--well</div></div>
+        <div class="sg-swatch"><div class="chip" style="background:var(--border)"></div><div class="name">--border</div></div>
+        <div class="sg-swatch"><div class="chip" style="background:var(--accent)"></div><div class="name">--accent</div></div>
+        <div class="sg-swatch"><div class="chip" style="background:var(--blue)"></div><div class="name">--blue</div></div>
+        <div class="sg-swatch"><div class="chip" style="background:var(--red)"></div><div class="name">--red</div></div>
+        <div class="sg-swatch"><div class="chip" style="background:var(--heat)"></div><div class="name">--heat</div></div>
+        <div class="sg-swatch"><div class="chip" style="background:var(--teal)"></div><div class="name">--teal</div></div>
+        <div class="sg-swatch"><div class="chip" style="background:var(--amber)"></div><div class="name">--amber</div></div>
+        <div class="sg-swatch"><div class="chip" style="background:var(--plum)"></div><div class="name">--plum</div></div>
+        <div class="sg-swatch"><div class="chip" style="background:var(--lcd-bg)"></div><div class="name">--lcd-bg (const)</div></div>
+    </div>
+
+    <!-- ══ SOFTWARE REGISTER ══ -->
+    <div class="sg-rule"><h2 class="sg-rule-label">Software register</h2><span class="sg-rule-tag">default · chrome · tools · lessons · drills</span><span class="line"></span></div>
+    <div class="sg-grid">
+
+        <!-- a representative tool card: header + tabs + property sheet + result -->
+        <div class="tool-card">
+            <div class="tool-card-header">
+                <h3 class="tool-card-title"><span class="bas-led active" aria-hidden="true"></span>Signal Scaling <span class="tool-tag">Analog I/O</span></h3>
+            </div>
+            <div class="tabs tabs-flush">
+                <button class="tab-btn active" type="button">Scale</button>
+                <button class="tab-btn" type="button">Solve m·b</button>
+                <button class="tab-btn" type="button">Reference</button>
+            </div>
+            <div class="tool-body-2col">
+                <section>
+                    <h4 class="ps-section-label">Input</h4>
+                    <div class="ps-row"><label class="ps-label" for="sg-a1">Raw signal</label><input class="ps-input" id="sg-a1" value="11.80"></div>
+                    <div class="ps-row"><label class="ps-label" for="sg-a2">Range min</label><input class="ps-input" id="sg-a2" value="4.00"></div>
+                    <div class="ps-row"><label class="ps-label" for="sg-a3">Range max</label><input class="ps-input" id="sg-a3" value="20.00"></div>
+                </section>
+                <section>
+                    <h4 class="ps-section-label">Output</h4>
+                    <div class="ps-row"><span class="ps-label">Eng. value</span><span class="ps-value live">48.75 %</span></div>
+                    <div class="ps-row"><span class="ps-label">% of span</span><span class="ps-value live">48.8 %</span></div>
+                    <div class="gauge" style="margin-top:0.9rem;"><span class="gauge-label">Span</span><div class="track"><div class="fill" style="--pct:48.8%"></div></div><span class="pct">49%</span></div>
+                </section>
+            </div>
+            <div class="tool-body-row">
+                <div class="btn-row">
+                    <a class="cta-button" href="#">Compute →</a>
+                    <button class="copy-btn" type="button">Copy</button>
+                    <span class="filter-chip active">Active chip <span class="filter-chip-count">9</span></span>
+                    <span class="filter-chip">Chip <span class="filter-chip-count">4</span></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- the Niagara cues: nav tree + wiresheet -->
+        <div class="tool-card">
+            <div class="tool-card-header">
+                <h3 class="tool-card-title"><span class="bas-led active" aria-hidden="true"></span>Station <span class="tool-tag">Niagara cue</span></h3>
+            </div>
+            <div class="tool-body" style="display:grid; grid-template-columns:120px 1fr; gap:0.9rem;">
+                <div class="tree">
+                    <div class="row"><span class="ic folder"></span>Drivers</div>
+                    <div class="row indent"><span class="ic station"></span>BACnet</div>
+                    <div class="row sel indent"><span class="ic point"></span>AHU-1</div>
+                    <div class="row indent2"><span class="ic point"></span>SaTemp</div>
+                    <div class="row indent2"><span class="ic alarm"></span>HiStat</div>
+                    <div class="row"><span class="ic folder"></span>Logic</div>
+                </div>
+                <div class="wiresheet">
+                    <div class="wblock" style="top:14px; left:8px;"><span class="bt">AI</span>SaTemp</div>
+                    <div class="wwire" style="top:30px; left:72px; width:34px;"></div>
+                    <div class="wblock" style="top:18px; left:106px;"><span class="bt">PID</span>Loop</div>
+                    <div class="wwire" style="top:34px; left:170px; width:30px;"></div>
+                    <div class="wblock" style="top:22px; left:200px;"><span class="bt">AO</span>Damper</div>
+                    <div class="wblock" style="top:96px; left:8px;"><span class="bt">SP</span>72.0°</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- software data-viz: an animated trend + a callout -->
+    <div class="sg-grid" style="margin-top:1rem;">
+        <div class="tool-card">
+            <div class="tool-card-header">
+                <h3 class="tool-card-title"><span class="bas-led active" aria-hidden="true"></span>Trend · Space Temp <span class="tool-tag">24h</span></h3>
+            </div>
+            <div class="tool-body">
+                <p class="bit-hint">Data-driven motion: the line draws itself in once, then holds. No decorative scroll-reveal.</p>
+                <svg class="trend" viewBox="0 0 300 54" preserveAspectRatio="none" role="img" aria-label="A 24-hour space-temperature trend line">
+                    <defs><linearGradient id="sg-tg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--blue)" stop-opacity="0.3"/><stop offset="1" stop-color="var(--blue)" stop-opacity="0"/></linearGradient></defs>
+                    <line class="grid-l" x1="0" y1="18" x2="300" y2="18"/><line class="grid-l" x1="0" y1="36" x2="300" y2="36"/>
+                    <path class="area" d="M0 40 L25 38 L50 42 L75 30 L100 32 L125 22 L150 26 L175 17 L200 20 L225 13 L250 18 L275 15 L300 20 L300 54 L0 54 Z"/>
+                    <path class="line" d="M0 40 L25 38 L50 42 L75 30 L100 32 L125 22 L150 26 L175 17 L200 20 L225 13 L250 18 L275 15 L300 20"/>
+                </svg>
+            </div>
+        </div>
+        <div class="tool-card">
+            <div class="tool-card-header">
+                <h3 class="tool-card-title">Callouts &amp; tables</h3>
+            </div>
+            <div class="tool-body sg-stack">
+                <div class="callout">
+                    <h3>Worked example <span>· the accent left-rule</span></h3>
+                    <p>Callouts carry a 2px accent left-border. The same shell is reused for PID-term cards, discovery prompts, and reveals.</p>
+                </div>
+                <table class="ref-table-dense">
+                    <thead><tr><th>Signal</th><th>Live zero</th></tr></thead>
+                    <tbody>
+                        <tr><td>4–20 mA</td><td>yes</td></tr>
+                        <tr><td>0–10 V</td><td>no</td></tr>
+                        <tr><td>2–10 V</td><td>yes</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══ EQUIPMENT REGISTER ══ -->
+    <div class="sg-rule"><h2 class="sg-rule-label">Equipment register</h2><span class="sg-rule-tag">device sims · VFD/DMM · hardware widgets</span><span class="line"></span></div>
+    <p class="landing-intro sg-lead">Warm device face + a positive-mode dot-matrix character LCD (lit olive backlight, dark ink, 3px pixel mesh — no scanlines, no glow). These stay constant across both themes: a device is a device.</p>
+    <div class="sg-grid">
+
+        <!-- VFD drive keypad -->
+        <div class="device">
+            <div class="device-inner">
+                <div class="device-tb"><span class="led led--run" aria-hidden="true"></span><span class="title">VFD · Drive Keypad</span><span class="badge">ACS-580</span></div>
+                <div class="lcd"><div class="k">Output Frequency</div><div class="v" data-tick="60.0" data-unit="Hz">60.0<small>Hz</small></div></div>
+                <div class="sg-2up" style="margin-top:0.5rem;">
+                    <div class="lcd"><div class="k">Current</div><div class="v" style="font-size:1.1rem" data-tick="14.2" data-unit="A">14.2<small>A</small></div></div>
+                    <div class="lcd"><div class="k">Speed Ref</div><div class="v" style="font-size:1.1rem">100<small>%</small></div></div>
+                </div>
+                <div class="gauge eq" style="margin-top:0.55rem;"><span class="gauge-label">Load</span><div class="track"><div class="fill" style="--pct:71%"></div></div><span class="pct">71%</span></div>
+                <div class="keypad">
+                    <div class="key">▲</div><div class="key">▼</div><div class="key">MENU</div><div class="key go">RUN</div>
+                </div>
+                <div class="dev-leds">
+                    <span><span class="led led--run" aria-hidden="true"></span>Run</span>
+                    <span><span class="led led--comm" aria-hidden="true"></span>Rem</span>
+                    <span><span class="led led--off" aria-hidden="true"></span>Fault</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- standalone field-device readouts -->
+        <div class="device">
+            <div class="device-inner">
+                <div class="device-tb"><span class="led led--comm" aria-hidden="true"></span><span class="title">Field Devices · Live</span><span class="badge">MS/TP 1·14</span></div>
+                <div class="sg-2up">
+                    <div class="lcd"><div class="k">Space Temp</div><div class="v" style="font-size:1.25rem" data-tick="72.4" data-unit="°F">72.4<small>°F</small></div></div>
+                    <div class="lcd"><div class="k">Supply Air</div><div class="v" style="font-size:1.25rem" data-tick="55.1" data-unit="°F">55.1<small>°F</small></div></div>
+                    <div class="lcd"><div class="k">Loop mA</div><div class="v" style="font-size:1.25rem" data-tick="11.8" data-unit="mA">11.8<small>mA</small></div></div>
+                    <div class="lcd"><div class="k">RH</div><div class="v" style="font-size:1.25rem" data-tick="44.0" data-unit="%">44.0<small>%</small></div></div>
+                </div>
+                <div class="gauge eq" style="margin-top:0.55rem;"><span class="gauge-label">Damper</span><div class="track"><div class="fill" style="--pct:62%"></div></div><span class="pct">62%</span></div>
+                <div class="gauge eq" style="margin-top:0.4rem;"><span class="gauge-label">Valve</span><div class="track"><div class="fill" style="--pct:38%"></div></div><span class="pct">38%</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- status LED family -->
+    <div class="sg-rule"><h2 class="sg-rule-label">Status LEDs</h2><span class="sg-rule-tag">device indicators · glowing</span><span class="line"></span></div>
+    <div class="tool-card"><div class="tool-body">
+        <div class="sg-led-row">
+            <span><span class="led led--run" aria-hidden="true"></span>Run</span>
+            <span><span class="led led--alarm" aria-hidden="true"></span>Alarm</span>
+            <span><span class="led led--comm" aria-hidden="true"></span>Comm</span>
+            <span><span class="led led--warn" aria-hidden="true"></span>Warn</span>
+            <span><span class="led led--off" aria-hidden="true"></span>Off</span>
+        </div>
+    </div></div>
+
+    <a class="back-link" href="/">← Home</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Equipment-register demo: tick the LCD readouts so the "data-driven
+    // motion" lever is visible. Reduced-motion users get static values.
+    (function () {
+        'use strict';
+        if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+        const cells = document.querySelectorAll('.lcd .v[data-tick]');
+        cells.forEach(function (el) {
+            const base = parseFloat(el.dataset.tick);
+            const unit = el.dataset.unit || '';
+            setInterval(function () {
+                const v = (base + (Math.random() - 0.5) * 0.6).toFixed(1);
+                el.innerHTML = v + (unit ? '<small>' + unit + '</small>' : '');
+            }, 1700 + Math.random() * 1300);
+        });
+    })();
+</script>
+{% endblock %}

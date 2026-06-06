@@ -3423,6 +3423,39 @@ remain in `## Recently addressed` at their numerical position:
   re-clicking the source pin); recorded so a future "fix" PR doesn't
   add a `cancelWire()` here. Trigger: an explicit UX decision to
   change the cancel-on-mismatch behavior.
+- **#77. Phase 3 per-page dark-theme polish — deferred from the
+  redesign Phase 1b distillation.** The dual-theme token flip
+  (`feat/redesign-design-language`) carried the whole site, but a
+  handful of per-page items want a later polish pass; scoped OUT of
+  Phase 1b deliberately (distillation only). None are broken on dark —
+  these are fit-and-finish:
+    - `simulators/vfd-mock.html` — adopt the shared `.device` / `.lcd`
+      equipment classes. Its LCD currently themes fine via tokens but
+      reads as a software panel (blue-on-slate), not the olive
+      dot-matrix equipment look. The first real consumer of the new
+      register.
+    - `tools/psychrometric-chart.html` + `simulators/function-block-editor.html`
+      — the only two pages whose inline `{% block head %}` styles
+      hardcode colours (`rgba(67,136,28,…)` accent washes;
+      `rgba(0,0,0,0.03–0.04)` zebra/grid washes). They don't follow the
+      token flip, so they read slightly off / near-invisible on dark.
+      Re-express via tokens.
+    - `styles.css` hardcoded-rgba tints that lose effect on dark:
+      `.ref-table tbody tr:hover` (light-blue tint), `.quiz-choice.wrong`
+      / `.quiz-numeric.wrong` (`rgba(196,56,47,0.10)`),
+      `.ref-table-dense` even-row zebra (`rgba(0,0,0,0.015)`),
+      `.lcd-scanline::after`. Make them theme-aware (token or
+      `color-mix`).
+    - Legacy `.lcd-scanline` / `.lcd-flicker` (one consumer, vfd-mock) —
+      the locked language drops global scanlines in favour of the
+      equipment dot-matrix mesh; remove when vfd-mock adopts `.lcd`.
+    - Promote the styleguide-local `.tree` / `.wiresheet` / `.trend` to
+      `styles.css` once a production page (function-block editor) adopts
+      them as shared components.
+    - Re-screenshot the education SVG diagrams on dark — they carry
+      literal-hex fallbacks authored for light; verify legibility.
+
+    Trigger: a per-section dark-theme polish pass (redesign Phase 3).
 
 ---
 
