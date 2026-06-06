@@ -69,6 +69,9 @@ const PAGES = [
     { name: 'practice — equipment staging', url: '/practice/equipment-staging.html' },
     { name: 'practice — surviving first months', url: '/practice/surviving-first-months.html' },
     { name: 'practice — controller swap', url: '/practice/controller-swap.html' },
+    { name: 'practice — field wiring & sensors', url: '/practice/field-wiring-sensors.html' },
+    { name: 'practice — sequencing scenarios', url: '/practice/sequencing-scenarios.html' },
+    { name: 'practice — troubleshooting', url: '/practice/troubleshooting.html' },
     { name: 'contact',                url: '/contact.html' },
     { name: 'privacy',                url: '/privacy.html' },
 ];
@@ -1180,7 +1183,7 @@ test('practice landing — Modbus chip collapses sections + filters cards', asyn
     // visible under [All].
     await expect(page.locator('.nav-card[data-category="modbus"]:not([hidden])')).toHaveCount(2);
     await expect(page.locator('.nav-card[data-category="bacnet"]:not([hidden])')).toHaveCount(2);
-    await expect(page.locator('.nav-card[data-category="field"]:not([hidden])')).toHaveCount(2);
+    await expect(page.locator('.nav-card[data-category="field"]:not([hidden])')).toHaveCount(5);
 
     // Click Modbus chip → section headings collapse; non-Modbus cards hide;
     // both Modbus cards stay visible; URL hash updates.
@@ -1197,7 +1200,7 @@ test('practice landing — Modbus chip collapses sections + filters cards', asyn
     // Click [All] → restored: cards visible again, sections un-filtered.
     await page.click('.filter-chip[data-category="all"]');
     await expect(page.locator('.practice-section[data-section="content"]')).not.toHaveClass(/filtered/);
-    await expect(page.locator('.nav-card[data-category="field"]:not([hidden])')).toHaveCount(2);
+    await expect(page.locator('.nav-card[data-category="field"]:not([hidden])')).toHaveCount(5);
     expect(new URL(page.url()).hash).toBe('');
 
     expect(errors, 'practice-landing behavioral should log no errors').toEqual([]);
