@@ -413,12 +413,13 @@ html[data-theme="light"]  .theme-btn[data-theme-set="light"] {
     font-weight: 600;
 }
 
-/* ── HERO — "workstation panel" treatment (v2.0.0).
-       The hero is now a bordered surface with a faux BAS title bar above
-       and a live status line below. Existing eyebrow / h1 / p / badges
-       move INSIDE a .hero-body wrapper that carries the old padding. The
-       outer .hero supplies the chrome; .hero-body supplies the content.
-       Sub-pages don't carry a .hero, so this only affects the home page. */
+/* ── HERO — workstation-panel frame (v3.0.0 "seam" hero).
+       A bordered surface: faux BAS title bar above, live status line
+       below, and the live "seam" instrument + copy between (those are
+       laid out in the home page's own inline head styles, since they're
+       home-only). Only the home page carries a .hero; sub-pages don't.
+       The .console-* / .ok-pill chrome here is shared (nav-cards mirror
+       the frame). */
 .hero {
     position: relative;
     z-index: 1;
@@ -432,10 +433,6 @@ html[data-theme="light"]  .theme-btn[data-theme-set="light"] {
     border-radius: 0;
     overflow: hidden;
     animation: fadeUp 0.5s ease both;
-}
-.hero-body {
-    padding: 5rem 2rem 4rem;
-    text-align: center;
 }
 .console-titlebar {
     display: flex;
@@ -509,78 +506,6 @@ html[data-theme="light"]  .theme-btn[data-theme-set="light"] {
     height: 6px;
     border-radius: 50%;
     background: var(--accent);
-}
-
-/* Centered eyebrow: short accent line on each side of the label so the
-   visual weight balances. ::before stays for the original left line;
-   ::after mirrors it on the right. */
-.hero-eyebrow {
-    font-family: var(--mono);
-    font-size: 0.7rem;
-    color: var(--accent);
-    text-transform: uppercase;
-    letter-spacing: 0.16em;
-    margin-bottom: 1.25rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.6rem;
-}
-.hero-eyebrow::before,
-.hero-eyebrow::after {
-    content: '';
-    display: block;
-    width: 22px;
-    height: 1px;
-    background: var(--accent);
-}
-
-.hero h1 {
-    font-family: var(--mono);
-    font-size: clamp(1.8rem, 4.5vw, 3rem);
-    font-weight: 600;
-    color: var(--text-bright);
-    line-height: 1.18;
-    margin-bottom: 1.1rem;
-    letter-spacing: -0.02em;
-}
-.hero h1 em { font-style: normal; color: var(--accent); }
-
-.hero p {
-    font-size: 1.05rem;
-    font-weight: 300;
-    color: var(--text);
-    max-width: 540px;
-    margin: 0 auto 2rem;   /* auto x-margins center the constrained paragraph */
-    line-height: 1.8;
-}
-
-/* Beginner onramp — a single line above the badges pointing newcomers at
-   the Education lane, since the badges/Browse stage presume you already
-   know which tool you need. Element-qualified (p.hero-onramp) so it ties
-   `.hero p` on specificity and wins the cascade, overriding the centered
-   subhead paragraph styling. */
-p.hero-onramp {
-    font-size: 0.9rem;
-    font-weight: 400;
-    color: var(--text-dim);
-    max-width: none;
-    margin: 0 auto 1.4rem;
-    line-height: 1.6;
-}
-p.hero-onramp a { color: var(--accent); white-space: nowrap; border-bottom: 1px solid transparent; }
-p.hero-onramp a:hover { border-bottom-color: var(--accent); }
-
-.hero-badges { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem; }
-.badge {
-    font-family: var(--mono);
-    font-size: 0.68rem;
-    padding: 0.28rem 0.7rem;
-    border: 1px solid var(--border);
-    border-radius: 0;
-    color: var(--text-dim);
-    background: var(--surface);
-    letter-spacing: 0.05em;
 }
 
 /* ── MAIN ── */
@@ -1044,7 +969,6 @@ footer {
     .site-nav        { padding: 0.7rem 1rem; }
     main             { padding-left: 1rem; padding-right: 1rem; }
     .hero            { margin-left: 1rem; margin-right: 1rem; width: auto; }
-    .hero-body       { padding: 3rem 1.25rem 2.5rem; }
     .console-titlebar,
     .console-statusline { padding: 0.5rem 0.75rem; font-size: 0.62rem; }
     footer           { padding: 0.85rem 1rem; flex-direction: column; align-items: flex-start; gap: 0.5rem; }
@@ -1211,6 +1135,7 @@ input[type="range"]::-moz-range-thumb {
 .units-btn:focus-visible,
 .theme-btn:focus-visible,
 .cta-button:focus-visible,
+.hero-btn:focus-visible,
 .back-link:focus-visible,
 .filter-chip:focus-visible,
 .nav-card:focus-visible,
@@ -2590,6 +2515,47 @@ p.ref-note.compact {
     50%      { box-shadow: 0 0 0 11px var(--accent-soft); }
 }
 .bas-breathe { animation: bas-breathe 1.8s ease-in-out infinite; }
+
+/* ──────────────────────────────────────────────────────────────────────
+ * SOFTWARE-REGISTER MOTIFS — Niagara nav-tree + trend sparkline.
+ *
+ * The software counterparts to the equipment kit: a point-tree (the
+ * Niagara/SCADA station cue) and a self-drawing trend line (data-driven
+ * motion). Shared so the home-page seam hero and /styleguide.html read
+ * from one source. The function-block wiresheet is deliberately NOT
+ * promoted here — it has no second consumer yet (codebase-issues#78).
+ * ────────────────────────────────────────────────────────────────────── */
+.tree { font-family: var(--mono); font-size: 0.78rem; }
+.tree .row { display: flex; align-items: center; gap: 0.45rem; padding: 0.28rem 0.4rem; color: var(--text); }
+.tree .row.sel { background: var(--blue-dim); color: var(--text-bright); box-shadow: inset 2px 0 0 var(--blue); }
+.tree .ic { width: 11px; height: 11px; flex: none; }
+.tree .indent { padding-left: 1.2rem; }
+.tree .indent2 { padding-left: 2rem; }
+.tree .ic.station { background: var(--blue); }
+.tree .ic.point { background: var(--accent); }
+.tree .ic.alarm { background: var(--red); }
+.tree .ic.folder { background: var(--text-dim); }
+
+/* trend sparkline — the line draws itself in once (data-driven motion). A
+   consumer that updates the line live (the hero seam) turns the draw-in
+   off via its own override. The gradient id `trend-grad` is defined in
+   each consuming page's SVG <defs>. */
+.trend { width: 100%; height: 54px; display: block; }
+.trend .grid-l { stroke: var(--border-faint); stroke-width: 1; }
+.trend .area { fill: url(#trend-grad); opacity: 0.4; }
+.trend .line {
+    fill: none;
+    stroke: var(--blue);
+    stroke-width: 2;
+    vector-effect: non-scaling-stroke;
+    stroke-dasharray: 600;
+    stroke-dashoffset: 600;
+    animation: trend-draw 2.2s ease-out forwards;
+}
+@keyframes trend-draw { to { stroke-dashoffset: 0; } }
+@media (prefers-reduced-motion: reduce) {
+    .trend .line { stroke-dashoffset: 0; }   /* snap drawn — animation is off */
+}
 
 /* ──────────────────────────────────────────────────────────────────────
  * EQUIPMENT REGISTER — warm device face + positive-mode dot-matrix LCD.

@@ -65,17 +65,9 @@ noindex: true
             letter-spacing: 0.02em;
         }
 
-        /* nav-tree — a Niagara cue (software register) */
-        .tree { font-family: var(--mono); font-size: 0.78rem; }
-        .tree .row { display: flex; align-items: center; gap: 0.45rem; padding: 0.28rem 0.4rem; color: var(--text); }
-        .tree .row.sel { background: var(--blue-dim); color: var(--text-bright); box-shadow: inset 2px 0 0 var(--blue); }
-        .tree .ic { width: 11px; height: 11px; flex: none; }
-        .tree .indent { padding-left: 1.2rem; }
-        .tree .indent2 { padding-left: 2rem; }
-        .tree .ic.station { background: var(--blue); }
-        .tree .ic.point { background: var(--accent); }
-        .tree .ic.alarm { background: var(--red); }
-        .tree .ic.folder { background: var(--text-dim); }
+        /* nav-tree (.tree) + trend sparkline (.trend) now live in
+           styles.css under SOFTWARE-REGISTER MOTIFS — shared with the
+           home seam hero. Only the wiresheet stays local (no 2nd consumer). */
 
         /* wiresheet — the function-block editor's grid (software register) */
         .wiresheet {
@@ -108,30 +100,11 @@ noindex: true
         }
         .wwire { position: absolute; height: 2px; background: var(--accent); opacity: 0.7; }
 
-        /* trend sparkline — data-driven motion (the line draws itself in) */
-        .trend { width: 100%; height: 54px; display: block; }
-        .trend .grid-l { stroke: var(--border-faint); stroke-width: 1; }
-        .trend .area { fill: url(#sg-tg); opacity: 0.4; }
-        .trend .line {
-            fill: none;
-            stroke: var(--blue);
-            stroke-width: 2;
-            vector-effect: non-scaling-stroke;
-            stroke-dasharray: 600;
-            stroke-dashoffset: 600;
-            animation: sg-draw 2.2s ease-out forwards;
-        }
-        @keyframes sg-draw { to { stroke-dashoffset: 0; } }
-
         /* small helper rows reused in the demos */
         .sg-led-row { display: flex; flex-wrap: wrap; gap: 1.1rem; align-items: center; }
         .sg-led-row span { display: inline-flex; align-items: center; gap: 0.45rem; font-family: var(--mono); font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.06em; }
         .sg-stack > * + * { margin-top: 0.7rem; }
         .sg-2up { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
-
-        @media (prefers-reduced-motion: reduce) {
-            .trend .line { stroke-dashoffset: 0; }
-        }
     </style>
 {% endblock %}
 
@@ -244,7 +217,7 @@ noindex: true
             <div class="tool-body">
                 <p class="bit-hint">Data-driven motion: the line draws itself in once, then holds. No decorative scroll-reveal.</p>
                 <svg class="trend" viewBox="0 0 300 54" preserveAspectRatio="none" role="img" aria-label="A 24-hour space-temperature trend line">
-                    <defs><linearGradient id="sg-tg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--blue)" stop-opacity="0.3"/><stop offset="1" stop-color="var(--blue)" stop-opacity="0"/></linearGradient></defs>
+                    <defs><linearGradient id="trend-grad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--blue)" stop-opacity="0.3"/><stop offset="1" stop-color="var(--blue)" stop-opacity="0"/></linearGradient></defs>
                     <line class="grid-l" x1="0" y1="18" x2="300" y2="18"/><line class="grid-l" x1="0" y1="36" x2="300" y2="36"/>
                     <path class="area" d="M0 40 L25 38 L50 42 L75 30 L100 32 L125 22 L150 26 L175 17 L200 20 L225 13 L250 18 L275 15 L300 20 L300 54 L0 54 Z"/>
                     <path class="line" d="M0 40 L25 38 L50 42 L75 30 L100 32 L125 22 L150 26 L175 17 L200 20 L225 13 L250 18 L275 15 L300 20"/>
