@@ -1299,3 +1299,52 @@ test.describe('practice — modbus decoding quiz', () => {
         expect(errors, 'modbus-decoding quiz behavioral should log no errors').toEqual([]);
     });
 });
+
+// The styleguide is a noindex dev page (no canonical → absent from the
+// sitemap + PAGES), so it isn't covered by the loop above. This standalone
+// check loads it (exercising the shared equipment-register .device/.lcd
+// classes) and drives the nav theme toggle end-to-end — the one piece of
+// brand-new site-wide behavior the smoke loop doesn't otherwise touch.
+test('styleguide loads + the theme toggle flips, persists, and repaints meta', async ({ page }) => {
+    const errors = watchErrors(page);
+    // Pin the OS preference to dark so the first-load default is deterministic
+    // (the head bootstrap honors prefers-color-scheme when no cf_theme is set).
+    await page.emulateMedia({ colorScheme: 'dark' });
+    const res = await page.goto('/styleguide.html');
+    expect(res.status(), '/styleguide.html should return 200').toBe(200);
+    await expect(page.locator('nav.site-nav')).toBeVisible();
+    // noindex dev page: robots noindex, no canonical.
+    await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', 'noindex');
+    expect(await page.locator('link[rel="canonical"]').count()).toBe(0);
+    // Shared equipment-register CSS actually renders here.
+    await expect(page.locator('.device .lcd').first()).toBeVisible();
+
+    const html = page.locator('html');
+    const darkBtn = page.locator('.theme-btn[data-theme-set="dark"]');
+    const lightBtn = page.locator('.theme-btn[data-theme-set="light"]');
+
+    // Dark is the default when nothing is stored and the OS doesn't prefer light.
+    await expect(html).toHaveAttribute('data-theme', 'dark');
+    await expect(darkBtn).toHaveAttribute('aria-pressed', 'true');
+
+    // Flip to light: <html data-theme>, aria-pressed, and the theme-color
+    // meta all track the choice, and it persists to localStorage.
+    await lightBtn.click();
+    await expect(html).toHaveAttribute('data-theme', 'light');
+    await expect(lightBtn).toHaveAttribute('aria-pressed', 'true');
+    await expect(darkBtn).toHaveAttribute('aria-pressed', 'false');
+    await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute('content', '#ffffff');
+    expect(await page.evaluate(() => localStorage.getItem('cf_theme'))).toBe('light');
+
+    // Reload: the before-paint bootstrap restores light from storage.
+    await page.reload({ waitUntil: 'load' });
+    await expect(html).toHaveAttribute('data-theme', 'light');
+
+    // Flip back to dark.
+    await darkBtn.click();
+    await expect(html).toHaveAttribute('data-theme', 'dark');
+    await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute('content', '#13161b');
+    expect(await page.evaluate(() => localStorage.getItem('cf_theme'))).toBe('dark');
+
+    expect(errors, 'styleguide + theme toggle should log no errors').toEqual([]);
+});
