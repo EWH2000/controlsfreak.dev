@@ -23,6 +23,7 @@ const PAGES = [
     { name: 'signal scaling',         url: '/tools/signal-scaling.html' },
     { name: 'modbus register viewer', url: '/tools/modbus-register-viewer.html' },
     { name: 'bacnet/ip converter',    url: '/tools/bacnet-ip-converter.html' },
+    { name: 'bacnet object reference', url: '/tools/bacnet-objects.html' },
     { name: 'psychrometric chart',    url: '/tools/psychrometric-chart.html' },
     { name: 'economizer ratio',       url: '/tools/economizer-ratio.html' },
     { name: 'air mixing',             url: '/tools/air-mixing.html' },
@@ -643,7 +644,7 @@ test('tools landing — URL hash deep-links to a category on initial load', asyn
 
     // Page boots with Protocols active.
     await expect(page.locator('.filter-chip[data-category="protocols"]')).toHaveClass(/active/);
-    expect(await page.locator('.nav-card:not([hidden])').count()).toBe(2);
+    expect(await page.locator('.nav-card:not([hidden])').count()).toBe(3);
 
     // Unknown hash falls back to [All].
     await page.goto('/tools/#nonsense');

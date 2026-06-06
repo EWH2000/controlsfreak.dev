@@ -795,7 +795,26 @@ was needed every time. Shipped at `/tools/bacnet-ip-converter.html`:
 converts both directions, paste hex → dotted decimal and vice versa.
 Also handles the optional 2-byte UDP port EBO often appends to the
 hex string (default `BAC0` = 47808). Sits under the BACnet category
-alongside the future BACnet object reference tool.
+alongside the BACnet object reference tool (shipped — see below).
+
+### BACnet object reference *(shipped)*
+The companion the BACnet/IP converter pointed at. A controller, a
+packet capture, or a workstation hands you numbers where you want
+names — object type 1, property 85, units enum 62. Three tabbed
+`.ref-table-dense` tables (the `Object_Type`, `Property_Identifier`,
+and a common slice of the `Units` enumerations) sit behind one filter
+box that hides non-matching rows across **all three at once** and
+writes a live match count into each tab — so a search for `85` from
+the Object Types tab still points you at `Property IDs · 1`. Scope:
+object types 0–30 plus 54/55/56 (lighting + network-port), with a note
+that 31–53 cover access control and the value-object family; the
+property list is the common read/override slice; the units tab is the
+HVAC slice of the ~200-value enumeration. The data carries
+`// user to verify` placeholder markers and a visible caveat, since
+enum codes shift by edition and a device may expose vendor extensions.
+Sits under Protocols at `/tools/bacnet-objects.html`; cross-linked from
+both BACnet lessons. First of the v3.1 tools batch closing the
+protocols/hydronics tooling gap.
 
 ### Thermistor calculator *(both modes shipped + curves verified)*
 Two modes, tabs à la Signal Scaling. Both are shipped and the curves

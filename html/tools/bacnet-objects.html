@@ -1,0 +1,289 @@
+---
+title: BACnet Object Reference — controlsfreak.dev
+description: Look up BACnet object types, property identifiers, and engineering-unit enums by name or number — so object type 1 and property 85 decode at a glance.
+canonical: https://controlsfreak.dev/tools/bacnet-objects.html
+nav: tools
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block head %}
+    <style>
+        /* Page-only — BACnet reference. The shared property-sheet,
+           tab, and .ref-table-dense rules carry the layout; only the
+           filter box, the mono id column, the per-tab match badge, and
+           the empty-state row sit here. */
+        .bo-controls {
+            padding: 0 1.5rem;
+            margin-top: 1.1rem;
+        }
+        .bo-search-label {
+            display: block;
+            font-family: var(--mono);
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-dim);
+            margin-bottom: 0.35rem;
+        }
+        #bo-search { width: 100%; }
+
+        .bo-count {
+            font-family: var(--mono);
+            font-size: 0.78em;
+            color: var(--text-dim);
+            font-weight: 500;
+        }
+
+        /* The numeric enum / property id — the column people search. */
+        .ref-table-dense .bo-id {
+            font-family: var(--mono);
+            color: var(--blue);
+            white-space: nowrap;
+            text-align: right;
+        }
+        .ref-table-dense .bo-name { white-space: nowrap; }
+
+        .bo-empty td {
+            color: var(--text-dim);
+            font-style: italic;
+            text-align: center;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Tools · BACnet Object Reference</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">
+                BACnet Object Reference
+                <span class="tool-tag">BACnet</span>
+            </h1>
+        </div>
+
+        <p class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
+            The numbers a controller, a packet capture, or a workstation hands you instead of names.
+            <em>Object Types</em> is the <code>Object_Type</code> enumeration — what kind of point an object is (type 1 = Analog Output).
+            <em>Property IDs</em> is the <code>Property_Identifier</code> enumeration — which field of an object you are reading (property 85 = Present_Value), and the numbers are the same across every object type.
+            <em>Eng. Units</em> is the common slice of the <code>Units</code> enumeration. Type a name or a number to filter all three.
+        </p>
+
+        <div class="bo-controls">
+            <label class="bo-search-label" for="bo-search">Filter by name or number</label>
+            <input class="ps-input" type="search" id="bo-search" placeholder="e.g. 85, present, multi-state, output, °C">
+        </div>
+
+        <div class="tabs tabs-flush">
+            <button class="tab-btn active" data-tab="objects">Object Types <span class="bo-count" data-count="objects" aria-hidden="true"></span></button>
+            <button class="tab-btn"        data-tab="props">Property IDs <span class="bo-count" data-count="props" aria-hidden="true"></span></button>
+            <button class="tab-btn"        data-tab="units">Eng. Units <span class="bo-count" data-count="units" aria-hidden="true"></span></button>
+        </div>
+
+        <!-- ── Object Types — Object_Type enumeration ── -->
+        <div id="tab-objects" class="tab-pane active">
+            <section class="tool-body-row">
+                <p class="ref-note">
+                    The <code>Object_Type</code> value carried in every object identifier. AI / AO / AV and BI / BO / BV are the day-to-day four-fifths of any device.
+                </p>
+                <!-- // user to verify BACnet Object_Type enumeration against ASHRAE 135 — placeholder data, refine after review -->
+                <table class="ref-table-dense" id="bo-table-objects">
+                    <thead>
+                        <tr><th>Type</th><th>Object</th><th>What it is</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td class="bo-id">0</td><td class="bo-name">Analog Input (AI)</td><td>A sensed analog value coming in — temperature, pressure, humidity.</td></tr>
+                        <tr><td class="bo-id">1</td><td class="bo-name">Analog Output (AO)</td><td>A commandable analog value going out — valve, damper, VFD speed.</td></tr>
+                        <tr><td class="bo-id">2</td><td class="bo-name">Analog Value (AV)</td><td>An analog value living in software — a setpoint or calculated number.</td></tr>
+                        <tr><td class="bo-id">3</td><td class="bo-name">Binary Input (BI)</td><td>A sensed two-state value coming in — a status or switch contact.</td></tr>
+                        <tr><td class="bo-id">4</td><td class="bo-name">Binary Output (BO)</td><td>A commandable two-state output — a relay or start/stop command.</td></tr>
+                        <tr><td class="bo-id">5</td><td class="bo-name">Binary Value (BV)</td><td>A two-state value living in software — a mode flag or enable.</td></tr>
+                        <tr><td class="bo-id">6</td><td class="bo-name">Calendar</td><td>A list of dates and date ranges that schedules reference.</td></tr>
+                        <tr><td class="bo-id">7</td><td class="bo-name">Command</td><td>Writes a set of values to many objects from one write.</td></tr>
+                        <tr><td class="bo-id">8</td><td class="bo-name">Device</td><td>The controller itself — one per device, holding its identity and capabilities.</td></tr>
+                        <tr><td class="bo-id">9</td><td class="bo-name">Event Enrollment</td><td>Defines an alarm/event condition and who gets notified.</td></tr>
+                        <tr><td class="bo-id">10</td><td class="bo-name">File</td><td>A file reachable through BACnet file services.</td></tr>
+                        <tr><td class="bo-id">11</td><td class="bo-name">Group</td><td>A read-back bundle of properties from other objects.</td></tr>
+                        <tr><td class="bo-id">12</td><td class="bo-name">Loop</td><td>A built-in PID control loop.</td></tr>
+                        <tr><td class="bo-id">13</td><td class="bo-name">Multi-state Input (MSI)</td><td>A sensed enumerated state coming in.</td></tr>
+                        <tr><td class="bo-id">14</td><td class="bo-name">Multi-state Output (MSO)</td><td>A commandable enumerated state going out.</td></tr>
+                        <tr><td class="bo-id">15</td><td class="bo-name">Notification Class</td><td>Routes event notifications to recipients with priorities.</td></tr>
+                        <tr><td class="bo-id">16</td><td class="bo-name">Program</td><td>An executing control program inside the device.</td></tr>
+                        <tr><td class="bo-id">17</td><td class="bo-name">Schedule</td><td>A weekly + exception schedule that writes a value on time.</td></tr>
+                        <tr><td class="bo-id">18</td><td class="bo-name">Averaging</td><td>Records the min, max, and average of a sampled property.</td></tr>
+                        <tr><td class="bo-id">19</td><td class="bo-name">Multi-state Value (MSV)</td><td>An enumerated state living in software.</td></tr>
+                        <tr><td class="bo-id">20</td><td class="bo-name">Trend Log</td><td>Records samples of a property over time.</td></tr>
+                        <tr><td class="bo-id">21</td><td class="bo-name">Life Safety Point</td><td>A fire / life-safety point.</td></tr>
+                        <tr><td class="bo-id">22</td><td class="bo-name">Life Safety Zone</td><td>A fire / life-safety zone.</td></tr>
+                        <tr><td class="bo-id">23</td><td class="bo-name">Accumulator</td><td>A pulse / meter accumulator — kWh, gallons, pulses.</td></tr>
+                        <tr><td class="bo-id">24</td><td class="bo-name">Pulse Converter</td><td>Scales accumulator pulses into engineering units.</td></tr>
+                        <tr><td class="bo-id">25</td><td class="bo-name">Event Log</td><td>Records event notifications over time.</td></tr>
+                        <tr><td class="bo-id">26</td><td class="bo-name">Global Group</td><td>A read-back bundle spanning several devices.</td></tr>
+                        <tr><td class="bo-id">27</td><td class="bo-name">Trend Log Multiple</td><td>Logs several properties on one shared timebase.</td></tr>
+                        <tr><td class="bo-id">28</td><td class="bo-name">Load Control</td><td>Sheds electrical load on demand.</td></tr>
+                        <tr><td class="bo-id">29</td><td class="bo-name">Structured View</td><td>A tree node for organizing objects — folders.</td></tr>
+                        <tr><td class="bo-id">30</td><td class="bo-name">Access Door</td><td>A physical access-control door.</td></tr>
+                        <tr><td class="bo-id">54</td><td class="bo-name">Lighting Output</td><td>A dimmable lighting channel.</td></tr>
+                        <tr><td class="bo-id">55</td><td class="bo-name">Binary Lighting Output</td><td>An on/off lighting channel.</td></tr>
+                        <tr><td class="bo-id">56</td><td class="bo-name">Network Port</td><td>A network interface's configuration — IP, MS/TP, BACnet/SC.</td></tr>
+                        <tr class="bo-empty" hidden><td colspan="3">No object types match that filter.</td></tr>
+                    </tbody>
+                </table>
+                <!-- // end placeholder — BACnet Object_Type enumeration -->
+                <p class="ref-note">
+                    Types 31–53 cover access control, scheduling, and the value-object family (integer, character-string, datetime…). See ASHRAE 135 for the full list.
+                </p>
+            </section>
+        </div>
+
+        <!-- ── Property IDs — Property_Identifier enumeration ── -->
+        <div id="tab-props" class="tab-pane">
+            <section class="tool-body-row">
+                <p class="ref-note">
+                    The <code>Property_Identifier</code> numbers are constant across every object type — property 85 is <code>Present_Value</code> whether the object is an AI or a BO.
+                </p>
+                <!-- // user to verify BACnet Property_Identifier enumeration against ASHRAE 135 — placeholder data, refine after review -->
+                <table class="ref-table-dense" id="bo-table-props">
+                    <thead>
+                        <tr><th>ID</th><th>Property</th><th>Meaning</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td class="bo-id">75</td><td class="bo-name">Object_Identifier</td><td>The object's type + instance number — e.g. analog-input, 4.</td></tr>
+                        <tr><td class="bo-id">77</td><td class="bo-name">Object_Name</td><td>A text name, unique within the device.</td></tr>
+                        <tr><td class="bo-id">79</td><td class="bo-name">Object_Type</td><td>The object's enumerated type — see the Object Types tab.</td></tr>
+                        <tr><td class="bo-id">85</td><td class="bo-name">Present_Value</td><td>The live value — the property you read and write most.</td></tr>
+                        <tr><td class="bo-id">28</td><td class="bo-name">Description</td><td>Free-text description of the object.</td></tr>
+                        <tr><td class="bo-id">87</td><td class="bo-name">Priority_Array</td><td>16 command slots; the highest non-null slot wins (commandable objects).</td></tr>
+                        <tr><td class="bo-id">104</td><td class="bo-name">Relinquish_Default</td><td>The value used when every priority slot is null.</td></tr>
+                        <tr><td class="bo-id">81</td><td class="bo-name">Out_Of_Service</td><td>True decouples Present_Value from the physical I/O for testing.</td></tr>
+                        <tr><td class="bo-id">36</td><td class="bo-name">Event_State</td><td>normal / fault / offnormal / high-limit / low-limit.</td></tr>
+                        <tr><td class="bo-id">103</td><td class="bo-name">Reliability</td><td>Why a value is untrustworthy — over-range, open-loop, no-fault.</td></tr>
+                        <tr><td class="bo-id">111</td><td class="bo-name">Status_Flags</td><td>{ in-alarm, fault, overridden, out-of-service }.</td></tr>
+                        <tr><td class="bo-id">117</td><td class="bo-name">Units</td><td>The engineering-units enumeration — see the Eng. Units tab.</td></tr>
+                        <tr><td class="bo-id">84</td><td class="bo-name">Polarity</td><td>normal / reverse for binary objects — physical vs. logical sense.</td></tr>
+                        <tr><td class="bo-id">22</td><td class="bo-name">COV_Increment</td><td>The smallest change that triggers a Change-of-Value notification.</td></tr>
+                        <tr><td class="bo-id">17</td><td class="bo-name">Notification_Class</td><td>Which Notification Class object routes this object's events.</td></tr>
+                        <tr><td class="bo-id">76</td><td class="bo-name">Object_List</td><td>The device's list of all its objects — read during discovery.</td></tr>
+                        <tr><td class="bo-id">70</td><td class="bo-name">Model_Name</td><td>The device's model string.</td></tr>
+                        <tr><td class="bo-id">120</td><td class="bo-name">Vendor_Name</td><td>The manufacturer's name.</td></tr>
+                        <tr><td class="bo-id">121</td><td class="bo-name">Vendor_Identifier</td><td>The manufacturer's assigned BACnet vendor ID number.</td></tr>
+                        <tr class="bo-empty" hidden><td colspan="3">No properties match that filter.</td></tr>
+                    </tbody>
+                </table>
+                <!-- // end placeholder — BACnet Property_Identifier enumeration -->
+                <p class="ref-note">
+                    This is the common slice — the full enumeration runs past 500. The numbers above are the ones you meet reading and overriding points.
+                </p>
+            </section>
+        </div>
+
+        <!-- ── Eng. Units — Units enumeration (common HVAC slice) ── -->
+        <div id="tab-units" class="tab-pane">
+            <section class="tool-body-row">
+                <p class="ref-note">
+                    The value of an object's <code>Units</code> property (117). The full enumeration runs to roughly 200 values; these are the common HVAC ones.
+                </p>
+                <!-- // user to verify BACnet Units enumeration codes against ASHRAE 135 Clause 21 — placeholder data, refine after review -->
+                <table class="ref-table-dense" id="bo-table-units">
+                    <thead>
+                        <tr><th>Enum</th><th>Engineering unit</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td class="bo-id">95</td><td>no-units</td></tr>
+                        <tr><td class="bo-id">98</td><td>percent</td></tr>
+                        <tr><td class="bo-id">62</td><td>degrees-Celsius</td></tr>
+                        <tr><td class="bo-id">64</td><td>degrees-Fahrenheit</td></tr>
+                        <tr><td class="bo-id">63</td><td>degrees-Kelvin</td></tr>
+                        <tr><td class="bo-id">65</td><td>degree-days-Celsius</td></tr>
+                        <tr><td class="bo-id">66</td><td>degree-days-Fahrenheit</td></tr>
+                        <tr><td class="bo-id">2</td><td>milliamperes</td></tr>
+                        <tr><td class="bo-id">3</td><td>amperes</td></tr>
+                        <tr><td class="bo-id">4</td><td>ohms</td></tr>
+                        <tr><td class="bo-id">5</td><td>volts</td></tr>
+                        <tr><td class="bo-id">47</td><td>watts</td></tr>
+                        <tr><td class="bo-id">48</td><td>kilowatts</td></tr>
+                        <tr><td class="bo-id">19</td><td>kilowatt-hours</td></tr>
+                        <tr><td class="bo-id">53</td><td>pascals</td></tr>
+                        <tr><td class="bo-id">54</td><td>kilopascals</td></tr>
+                        <tr><td class="bo-id">58</td><td>inches-of-water</td></tr>
+                        <tr><td class="bo-id">84</td><td>cubic-feet-per-minute</td></tr>
+                        <tr><td class="bo-id">87</td><td>liters-per-second</td></tr>
+                        <tr class="bo-empty" hidden><td colspan="2">No units match that filter.</td></tr>
+                    </tbody>
+                </table>
+                <!-- // end placeholder — BACnet Units enumeration -->
+                <p class="ref-note">
+                    Codes vary by edition and a controller may expose vendor extensions — confirm the exact value against your device or ASHRAE 135 before trusting it.
+                </p>
+            </section>
+        </div>
+
+    </div>
+
+    {{ relatedLinks({
+        lessons: [
+            {href: '/education/bacnet-basics.html', label: 'BACnet Basics'},
+            {href: '/education/bacnet-networking.html', label: 'BACnet Networking'}
+        ],
+        quizzes: [
+            {href: '/practice/bacnet-basics.html', label: 'BACnet Basics'},
+            {href: '/practice/bacnet-networking.html', label: 'BACnet Networking'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/tools/">← All tools</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="/scripts/ui.js"></script>
+<script>
+    // switchTab(name, btn) comes from /scripts/ui.js. The filter box
+    // hides non-matching rows across ALL THREE tables at once (so a
+    // search for "85" finds Present_Value even from the Object Types
+    // tab) and writes a live match count into each tab's badge so the
+    // visitor knows which tab the hits are on.
+    (function () {
+        'use strict';
+
+        document.querySelectorAll('[data-tab]').forEach(btn => {
+            btn.addEventListener('click', e => switchTab(e.currentTarget.dataset.tab, e.currentTarget));
+        });
+
+        const search = document.getElementById('bo-search');
+        const tables = {
+            objects: document.getElementById('bo-table-objects'),
+            props:   document.getElementById('bo-table-props'),
+            units:   document.getElementById('bo-table-units'),
+        };
+        const badges = {};
+        document.querySelectorAll('.bo-count').forEach(b => { badges[b.dataset.count] = b; });
+
+        function applyFilter() {
+            const q = search.value.trim().toLowerCase();
+            Object.keys(tables).forEach(key => {
+                const body = tables[key].tBodies[0];
+                let matches = 0;
+                Array.from(body.rows).forEach(row => {
+                    if (row.classList.contains('bo-empty')) return;
+                    const hit = !q || row.textContent.toLowerCase().includes(q);
+                    row.hidden = !hit;
+                    if (hit) matches++;
+                });
+                const emptyRow = body.querySelector('.bo-empty');
+                if (emptyRow) emptyRow.hidden = !(q && matches === 0);
+                if (badges[key]) badges[key].textContent = q ? '· ' + matches : '';
+            });
+        }
+
+        search.addEventListener('input', applyFilter);
+    })();
+</script>
+{% endblock %}

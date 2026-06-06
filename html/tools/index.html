@@ -21,13 +21,13 @@ nav: tools
 
     <div class="filter-chips" role="group" aria-label="Filter tools by category">
         <button type="button" class="filter-chip active" data-category="all" aria-pressed="true">
-            All <span class="filter-chip-count">9</span>
+            All <span class="filter-chip-count">10</span>
         </button>
         <button type="button" class="filter-chip" data-category="hvac" aria-pressed="false">
             HVAC <span class="filter-chip-count">5</span>
         </button>
         <button type="button" class="filter-chip" data-category="protocols" aria-pressed="false">
-            Protocols <span class="filter-chip-count">2</span>
+            Protocols <span class="filter-chip-count">3</span>
         </button>
         <button type="button" class="filter-chip" data-category="signals" aria-pressed="false">
             Signals <span class="filter-chip-count">2</span>
@@ -69,6 +69,15 @@ nav: tools
             titleFull:  'BACnet/IP Hex Converter',
             desc:       'The hex address strings EBO shows for BACnet/IP devices ↔ dotted-decimal IP and UDP port, both directions.',
             pills:      ['BACnet/IP', 'UDP 47808', 'Hex ↔ Dec'],
+            category:   'protocols'
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/tools/bacnet-objects.html',
+            titleShort: 'BACnet Objects',
+            titleFull:  'BACnet Object Reference',
+            desc:       'Object types, property identifiers, and the engineering-units enumeration, filterable by name or number — decode object type 1 and property 85 without opening the standard.',
+            pills:      ['BACnet', 'Object Types', 'Property IDs', 'Eng. Units'],
             category:   'protocols'
         }) }}
         {{ navCard({
