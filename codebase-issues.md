@@ -3423,43 +3423,58 @@ remain in `## Recently addressed` at their numerical position:
   re-clicking the source pin); recorded so a future "fix" PR doesn't
   add a `cancelWire()` here. Trigger: an explicit UX decision to
   change the cancel-on-mismatch behavior.
-- **#77. Phase 3 per-page dark-theme polish — deferred from the
-  redesign Phase 1b distillation.** The dual-theme token flip
-  (`feat/redesign-design-language`) carried the whole site, but a
-  handful of per-page items want a later polish pass; scoped OUT of
-  Phase 1b deliberately (distillation only). None are broken on dark —
-  these are fit-and-finish:
-    - `simulators/vfd-mock.html` — adopt the shared `.device` / `.lcd`
-      equipment classes. Its LCD currently themes fine via tokens but
-      reads as a software panel (blue-on-slate), not the olive
-      dot-matrix equipment look. The first real consumer of the new
-      register.
-    - `tools/psychrometric-chart.html` + `simulators/function-block-editor.html`
-      — the only two pages whose inline `{% block head %}` styles
-      hardcode colours (`rgba(67,136,28,…)` accent washes;
-      `rgba(0,0,0,0.03–0.04)` zebra/grid washes). They don't follow the
-      token flip, so they read slightly off / near-invisible on dark.
-      Re-express via tokens.
-    - `styles.css` hardcoded-rgba tints that lose effect on dark:
-      `.ref-table tbody tr:hover` (light-blue tint), `.quiz-choice.wrong`
-      / `.quiz-numeric.wrong` (`rgba(196,56,47,0.10)`),
-      `.ref-table-dense` even-row zebra (`rgba(0,0,0,0.015)`),
-      `.lcd-scanline::after`. Make them theme-aware (token or
-      `color-mix`).
-    - Legacy `.lcd-scanline` / `.lcd-flicker` (one consumer, vfd-mock) —
-      the locked language drops global scanlines in favour of the
-      equipment dot-matrix mesh; remove when vfd-mock adopts `.lcd`.
-    - Promote the styleguide-local `.tree` / `.wiresheet` / `.trend` to
-      `styles.css` once a production page (function-block editor) adopts
-      them as shared components.
-    - Re-screenshot the education SVG diagrams on dark — they carry
-      literal-hex fallbacks authored for light; verify legibility.
+- **#78. Unused / no-consumer shared rules — deferred from Phase 3
+  (#77).** A few shared rules render nowhere today, so the Phase 3
+  polish pass left them alone rather than polish blind. Clean up (or
+  tokenize) when a production page first needs each:
+    - `.bas-breathe` (styles.css) is unused — its documented consumer,
+      the psychrometric state-point chip, actually rolls a tighter
+      page-local `psy-chip-breathe` variant. Consolidate to one when a
+      second consumer appears. (Both were tokenized in #77, so neither
+      is wrong on dark — this is just dedup.)
+    - `.bas-led.fault` / `.bas-led.warn` (styles.css) are unused (only
+      `.bas-led.active` has a consumer — vfd-mock) AND still hardcode
+      the light-theme red/heat rgba for their border/glow (0.32 / 0.08
+      alphas, no matching token). Tokenize via `color-mix` or new
+      red/heat glow tokens when first used on a page.
+    - The styleguide-local `.tree` / `.wiresheet` / `.trend` were NOT
+      promoted to `styles.css`: the only candidate consumer
+      (`function-block-editor`) already has a complete token-driven
+      `.fbe-*` wiresheet, so promoting now is a refactor with no payoff.
+      Promote when a second page wants the Niagara-tree or sparkline
+      motif.
 
-    Trigger: a per-section dark-theme polish pass (redesign Phase 3).
+    Trigger: a production page adopting any of these shared motifs.
 
 ---
 
 ## Recently addressed
+
+- **#77. Phase 3 per-page dark-theme polish — shipped 2026-06-06**
+  (branch `issue-77/dark-theme-polish`). Phase 1b's dual-theme token
+  flip carried the whole site; this pass cleaned up the per-page
+  fit-and-finish:
+    - **vfd-mock adopted the equipment register** — its left "Drive
+      Front Panel" column is now a real device face (olive dot-matrix
+      LCD, `.device` bezel, plastic keypad); the right monitoring
+      column stays software register. The page now shows both registers
+      side by side.
+    - **Tokenized the off-palette washes** — `.psy-chip` /
+      `.fbe-block` inline colours and the shared `.bas-breathe` ring
+      (all hardcoded the LIGHT green); plus the styles.css tints
+      (`.ref-table` hover → `--blue-dim`, quiz wrong-answer →
+      new `--red-dim`, `.ref-table-dense` zebra → `--surface-2`).
+    - **Canvases redraw on theme toggle** — `theme.js` already
+      broadcast `themechange`, but nothing subscribed; the
+      psychrometric, pid-tuner, and pid-basics canvases (which read
+      tokens at draw time) now do. Verified: a runtime toggle repaints
+      all three.
+    - **Removed the legacy `.lcd-scanline`** (vfd-mock was its only
+      consumer); kept `.lcd-flicker` (a live value-change refresh cue).
+    - **Education diagrams re-screenshotted on dark** — clean; zero
+      hardcoded hex / `var(--x,#hex)` fallbacks remain site-wide.
+  Two clusters were intentionally deferred (unused/no-consumer shared
+  rules) → logged as **#78**.
 
 The 2026-05-16 audit also caught these, which were fixed in the
 same session this file was created:

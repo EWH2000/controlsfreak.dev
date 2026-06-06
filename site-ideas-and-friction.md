@@ -2752,6 +2752,50 @@ reference `var(--*)` (only two inline-style pages hardcode colours).
 
 Authoritative spec: the `project_site_redesign_dark_industrial` memory.
 
+### Phase 3 — dark polish *(shipped 2026-06-06)*
+
+The per-page fit-and-finish deferred from Phase 1b (`codebase-issues.md`
+#77; branch `issue-77/dark-theme-polish`). Nothing was broken on dark —
+this was the polish pass that made every page *feel* finished on the new
+default theme.
+
+- **vfd-mock is the first production page to adopt the equipment
+  register.** Its left "Drive Front Panel" column is now a real device
+  face — `.device` bezel, positive-mode olive dot-matrix `.vfdm-lcd`
+  (the `--lcd-*` tokens + 3px multiply-blended pixel mesh), embossed
+  plastic keypad (green RUN / red STOP). The right "Motor Response"
+  column stays software register. That left/right split *is* the
+  software↔equipment seam the redesign is built around — the VFD page
+  now demonstrates it in miniature. The equipment face is identical in
+  light and dark (a device is a device).
+- **Off-palette washes tokenized.** Three breathing/lift box-shadows
+  (`.psy-chip`, `.fbe-block`, the shared `.bas-breathe`) hardcoded the
+  *light* green and faint-black; re-expressed via `--accent-*` /
+  `--bevel-lo`. The static tints (`.ref-table` row hover → `--blue-dim`;
+  quiz wrong-answer → the new `--red-dim` token, parallel to
+  `.correct`'s `--accent-dim`; `.ref-table-dense` zebra →
+  `--surface-2`) now flip with the theme.
+- **Canvas pages redraw on theme toggle.** `theme.js` had broadcast a
+  `themechange` event since Phase 1b, but nothing listened — so the
+  three `<canvas>` surfaces (psychrometric, pid-tuner, pid-basics),
+  which read tokens at *draw* time, kept the old palette until a
+  resize/reload. Each now subscribes, mirroring its existing
+  resize→redraw (the unit handlers only refresh text — the engines are
+  canonical — so resize, not `unitschange`, is the right mirror).
+- **Legacy `.lcd-scanline` removed** (vfd-mock was its only consumer;
+  the locked language uses the dot-matrix mesh instead). `.lcd-flicker`
+  kept — it's the live value-change refresh cue (motion = data).
+- **Education diagrams verified on dark** — clean. The "literal-hex
+  fallbacks" the issue worried about were already gone (Phase 1b's
+  `var(--x)` canonicalization removed every `var(--x,#hex)`).
+
+Deferred (unused / no-consumer shared rules → `codebase-issues.md`
+#78): consolidating `.bas-breathe` with the psy-chip variant;
+tokenizing the unused `.bas-led.fault`/`.warn`; promoting the
+styleguide-local `.tree`/`.wiresheet`/`.trend` (the function-block
+editor already has its own complete `.fbe-*` wiresheet). **Home hero
+(Phase 2) is still on hold** pending the user's concept decision.
+
 ---
 
 ## Site structure / organization

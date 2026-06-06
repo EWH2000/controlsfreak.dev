@@ -61,6 +61,7 @@
     --blue-dim:     rgba(74,163,221,0.16);
     --blue-glow:    rgba(74,163,221,0.24);
     --red:          #e85d4f;   /* fault / alarm */
+    --red-dim:      rgba(232,93,79,0.14);   /* faint red wash — quiz wrong-answer fill (parallels --accent-dim) */
     --heat:         #e8884a;   /* warm orange — "heating" on the psychrometric chart's process lines; companion to --blue for cooling */
     --teal:         #46b3ac;   /* teal — data/comm traces on the background schematic (BACnet, IP) */
     --teal-dim:     rgba(70,179,172,0.14);
@@ -124,6 +125,7 @@
     --blue-dim:     rgba(21,119,184,0.10);
     --blue-glow:    rgba(21,119,184,0.22);
     --red:          #c4382f;
+    --red-dim:      rgba(196,56,47,0.10);
     --heat:         #c8782a;
     --teal:         #4a8a8a;
     --teal-dim:     rgba(74,138,138,0.10);
@@ -1312,7 +1314,7 @@ input[type="range"]:focus-visible::-moz-range-thumb {
     border-bottom: 1px solid var(--border);
 }
 .ref-table tbody tr:nth-child(even) { background: var(--surface-2); }
-.ref-table tbody tr:hover { background: rgba(21,119,184,0.07); }
+.ref-table tbody tr:hover { background: var(--blue-dim); }
 .ref-table td:first-child { color: var(--text-bright); }
 .ref-table tbody tr:last-child td { border-bottom: none; }
 
@@ -1878,7 +1880,7 @@ p.chip-row-preamble {
 }
 .quiz-choice.wrong {
     border-color: var(--red);
-    background: rgba(196,56,47,0.10);
+    background: var(--red-dim);
     color: var(--text-bright);
     opacity: 1;
 }
@@ -1909,7 +1911,7 @@ p.chip-row-preamble {
     color: var(--text-dim);
 }
 .quiz-numeric.correct .quiz-numeric-input { border-color: var(--accent); background: var(--accent-dim); }
-.quiz-numeric.wrong .quiz-numeric-input { border-color: var(--red); background: rgba(196,56,47,0.10); }
+.quiz-numeric.wrong .quiz-numeric-input { border-color: var(--red); background: var(--red-dim); }
 
 .quiz-actions {
     display: flex;
@@ -2255,7 +2257,7 @@ input.ps-input:focus, select.ps-input:focus, textarea.ps-input:focus {
     font-size: 0.78rem;
     color: var(--text-dim);
 }
-.ref-table-dense tbody tr:nth-child(even) td { background: rgba(0,0,0,0.015); }
+.ref-table-dense tbody tr:nth-child(even) td { background: var(--surface-2); }
 .ref-table-dense tbody tr:last-child td { border-bottom: none; }
 
 /* a short explanatory note under a reference table. */
@@ -2521,17 +2523,16 @@ p.ref-note.compact {
  *     pulsing ring; .fault swaps to --red and pulses faster. aria-
  *     hidden in pages since the adjacent text-state already conveys
  *     status to screen readers.
- *   .lcd-scanline — overlay class on an LCD-style panel. Adds a
- *     near-invisible horizontal scanline pattern via ::after; pure
- *     visual texture, no motion.
  *   .lcd-flicker — one-shot 150ms opacity dip; JS adds the class
  *     then removes it on a setTimeout to trigger the dip on every
  *     LCD value update.
  *   .bas-state-flash — one-shot 350ms outer accent-glow ring around
  *     a row/card. JS adds the class on a state transition and
  *     removes it on a setTimeout.
- *   .bas-breathe — slow box-shadow breathing ring; used by the
- *     psychrometric chart's state-point chip.
+ *   .bas-breathe — slow box-shadow breathing accent ring (token-
+ *     driven, reads on both themes). The psychrometric state-point
+ *     chip uses a tighter page-local variant; this shared form is
+ *     kept for reuse.
  *
  * Reduced motion: the global @media (prefers-reduced-motion: reduce)
  * block below already disables all keyframe animations site-wide, so
@@ -2571,21 +2572,6 @@ p.ref-note.compact {
     50%      { opacity: 0.55; }
 }
 
-.lcd-scanline { position: relative; }
-.lcd-scanline::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    background: repeating-linear-gradient(
-        0deg,
-        transparent 0,
-        transparent 2px,
-        rgba(29,37,31,0.045) 2px,
-        rgba(29,37,31,0.045) 3px
-    );
-    border-radius: inherit;
-}
 @keyframes lcd-flicker {
     0%   { opacity: 1; }
     45%  { opacity: 0.68; }
@@ -2600,8 +2586,8 @@ p.ref-note.compact {
 .bas-state-flash { animation: bas-state-flash 350ms ease-out 1; }
 
 @keyframes bas-breathe {
-    0%, 100% { box-shadow: 0 0 0 6px rgba(67,136,28,0.16); }
-    50%      { box-shadow: 0 0 0 11px rgba(67,136,28,0.05); }
+    0%, 100% { box-shadow: 0 0 0 6px var(--accent-dim); }
+    50%      { box-shadow: 0 0 0 11px var(--accent-soft); }
 }
 .bas-breathe { animation: bas-breathe 1.8s ease-in-out infinite; }
 

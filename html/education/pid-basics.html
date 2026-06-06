@@ -352,6 +352,11 @@ pairedQuiz: https://controlsfreak.dev/practice/pid-basics.html
         window.addEventListener('resize', () => [1, 2, 3].forEach(n => {
             if (miniLast[n]) drawMini(n, miniLast[n]);
         }));
+        // The mini-canvases read theme tokens at draw time — redraw on a
+        // theme flip (theme.js broadcasts 'themechange'), same as on resize.
+        document.addEventListener('themechange', () => [1, 2, 3].forEach(n => {
+            if (miniLast[n]) drawMini(n, miniLast[n]);
+        }));
         // Re-render the offset readouts when the global units flip. The sim
         // itself doesn't need re-running (the engine is canonical); just refresh
         // the readout strings, which read miniLast for free.

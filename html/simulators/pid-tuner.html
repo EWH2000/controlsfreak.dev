@@ -360,6 +360,9 @@ nav: simulators
         // ── Init ──
         runPidSim();
         window.addEventListener('resize', drawTunerChart);
+        // drawPidChart reads theme tokens at draw time — redraw on a theme
+        // flip (theme.js broadcasts 'themechange'), same as on resize.
+        document.addEventListener('themechange', drawTunerChart);
         // The engine runs in canonical units, so a units flip doesn't require
         // re-simulating — only the steady-state error readout (the one display
         // element that's unit-aware) needs refreshing. Mirrors the mini-sims
