@@ -2700,6 +2700,60 @@ Lower-priority candidates still parked here for completeness:
 
 ---
 
+## Redesign — dark-industrial two-register language
+
+### Phase 1b — design-language distillation *(shipped 2026-06-06)*
+
+The whole-site redesign (agreed 2026-06-05) commits *harder* to the
+operator-console / BAS identity instead of modernizing toward generic
+SaaS. The **language is locked** ("spike v4", iterated live with the
+user): **two registers used semantically.**
+
+- **Software register = the default chrome** — "Niagara AX with a dark
+  mode": cool blue-slate, AX-sharp (square corners via `--rail: 0`, hard
+  1px seams, flat fills, no floating shadows). Green = brand/action,
+  blue = data/selection. Carries the whole site.
+- **Equipment register** — warm device face + positive-mode dot-matrix
+  character LCD (lit olive backlight, dark ink, 3px pixel mesh; no
+  scanlines, no glow). Used ONLY where a page depicts real hardware.
+  Constant across both themes.
+- **Dual theme, dark-default.** `:root` = dark; `[data-theme="light"]`
+  ≈ the old look. Honors `prefers-color-scheme` on first load; a nav
+  toggle mirrors the units pattern (`cf_theme`, before-paint bootstrap,
+  `theme.js` loaded site-wide). Note: the AX-sharp *shape* (square
+  corners) is theme-independent, so the light theme is now also
+  square-cornered — the one deliberate divergence from "light = exactly
+  the old look."
+
+What shipped in Phase 1b (this branch): the dual-theme token system +
+the AX-sharp shape sweep in `styles.css`; the `EQUIPMENT REGISTER`
+component block (`.device` / `.lcd` / `.gauge.eq` / `.keypad` / `.led`);
+the nav theme toggle + `theme.js` + head bootstrap; the token-driven
+body graticule; and `/styleguide.html` — a noindex living reference
+that exercises both registers in both themes. The token flip carried
+essentially the whole site automatically because pages already
+reference `var(--*)` (only two inline-style pages hardcode colours).
+
+**Held back from this phase (Phase 3, per the lock):**
+
+- **Home hero is on hold.** The user decided the living control-loop is
+  probably *not* the right home hero; the merge *intent* (one image that
+  spans software↔equipment) may persist but the vehicle is unresolved.
+  Do NOT ship a final hero until the user picks a direction.
+- **Per-page dark polish** is deferred (logged in `codebase-issues.md`):
+  `vfd-mock` adopting the shared `.device`/`.lcd` classes (its LCD still
+  reads as a software panel, not the olive equipment look — it themes
+  fine via tokens, just isn't the new register yet); the two
+  hardcoded-colour inline-style pages (`psychrometric-chart`,
+  `function-block-editor`); the hardcoded-rgba tints in `styles.css`
+  that lose effect on dark; the legacy `.lcd-scanline` (one consumer);
+  and promoting the styleguide-local `.tree` / `.wiresheet` / `.trend`
+  to shared once a production page adopts them.
+
+Authoritative spec: the `project_site_redesign_dark_industrial` memory.
+
+---
+
 ## Site structure / organization
 ### Where interactive widgets live
 
