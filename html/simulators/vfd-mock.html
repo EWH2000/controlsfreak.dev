@@ -72,22 +72,42 @@ nav: simulators
             .vfdm-grid { grid-template-columns: 1fr; }
         }
 
-        /* LCD — fixed 20-char × 4-line mono panel.
-           Using `ch` units locks the inner width to exactly 20 mono-
-           character widths so a row that the page laid out as 20 chars
-           wide really does fit 20 chars wide on every viewport. */
+        /* The drive face hugs its contents (LCD + keypad) instead of
+           stretching to fill the grid column — reads as a physical unit. */
+        .vfdm-device { display: inline-block; }
+
+        /* LCD — fixed 20-char × 4-line positive-mode olive dot-matrix:
+           the equipment-register look (lit backlight, dark ink, 3px
+           pixel mesh), since this IS a real drive's character LCD. The
+           --lcd-* tokens are theme-constant — a device is a device in
+           either theme. `ch` units lock the inner width to exactly 20
+           mono-character widths so a row laid out as 20 chars wide fits. */
         .vfdm-lcd {
-            background: var(--surface-3);
-            border: 1px solid var(--border);
-            border-radius: 3px;
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(180deg, var(--lcd-bg), var(--lcd-bg-2));
+            border: 1px solid #20240f;
+            border-radius: var(--rail);
             padding: 0.85rem 1rem;
             font-family: var(--mono);
             font-size: 0.95rem;
-            color: var(--text-bright);
+            color: var(--lcd-ink);
             line-height: 1.55;
             margin-bottom: 1.1rem;
             display: inline-block;
             min-width: 0;
+            box-shadow: inset 0 0 0 1px rgba(0,0,0,0.3), inset 0 1px 4px rgba(0,0,0,0.4);
+        }
+        /* dot-matrix pixel mesh, multiply-blended over the ink — the
+           character-LCD tell on BMS / VFD keypads (mirrors .lcd::after). */
+        .vfdm-lcd::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            mix-blend-mode: multiply;
+            background-image: radial-gradient(circle at center, transparent 36%, var(--lcd-grid) 41%);
+            background-size: 3px 3px;
         }
         .vfdm-lcd-inner {
             width: 20ch;
@@ -95,10 +115,11 @@ nav: simulators
             font-variant-numeric: tabular-nums;
         }
         .vfdm-lcd-line { display: block; min-height: 1.55em; }
-        .vfdm-lcd .blue { color: var(--blue); }
-        .vfdm-lcd .dim  { color: var(--text-dim); }
 
-        /* Keypad — 4-key wide grid, mono labels, flat chrome */
+        /* Keypad — embossed plastic keycaps on the device face (the
+           equipment-register .key look: warm gradient cap, inset top
+           highlight, square). RUN is the green "go" key, STOP carries a
+           red legend. Key colours are device constants (plastic, unthemed). */
         .vfdm-keypad {
             display: grid;
             grid-template-columns: repeat(4, minmax(3.4rem, 4.6rem));
@@ -109,41 +130,45 @@ nav: simulators
             font-family: var(--mono);
             font-size: 0.78rem;
             padding: 0.55rem 0.4rem;
-            background: var(--surface);
-            border: 1px solid var(--border);
-            color: var(--text);
+            color: #cfc8ad;
+            background: linear-gradient(180deg, #2a281e, #1b1913);
+            border: 1px solid #000;
+            box-shadow: inset 0 1px 0 var(--dev-hi);
             cursor: pointer;
-            border-radius: 3px;
+            border-radius: var(--rail);
             text-align: center;
             transition: border-color 0.12s, color 0.12s, background 0.12s;
             user-select: none;
         }
-        .vfdm-key:hover { border-color: var(--accent); color: var(--text-bright); }
-        .vfdm-key:active { background: var(--surface-2); }
-        .vfdm-key.run    { color: var(--blue); }
-        .vfdm-key.run:hover { border-color: var(--blue); color: var(--blue); }
-        .vfdm-key.stop   { color: var(--text); }
-        .vfdm-key.stop:hover { border-color: var(--text-bright); color: var(--text-bright); }
+        .vfdm-key:hover { border-color: var(--accent); color: #eef2e0; }
+        .vfdm-key:active { background: #17150f; box-shadow: inset 0 1px 3px #000; }
+        .vfdm-key.run    { color: #0a1305; background: linear-gradient(180deg, var(--accent-bright), var(--accent)); border-color: #3f6e1d; }
+        .vfdm-key.run .sub { color: #0a1305; }
+        .vfdm-key.run:hover { border-color: var(--accent-bright); color: #0a1305; }
+        .vfdm-key.stop   { color: #e9b3ab; }
+        .vfdm-key.stop:hover { border-color: var(--red); color: #f4ccc6; }
         .vfdm-key .glyph { display: block; font-size: 0.95rem; line-height: 1; margin-bottom: 0.15rem; }
-        .vfdm-key .sub   { display: block; font-size: 0.6rem; color: var(--text-dim); letter-spacing: 0.05em; }
+        .vfdm-key .sub   { display: block; font-size: 0.6rem; color: #8a8369; letter-spacing: 0.05em; }
 
+        /* Local/remote indicator — sits on the device face. Device-gray
+           text; the dot is an unlit LED that lights amber in LOCAL mode. */
         .vfdm-localrem {
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
             font-family: var(--mono);
             font-size: 0.72rem;
-            color: var(--text-dim);
+            color: #8a8369;
         }
         .vfdm-localrem .dot {
             display: inline-block;
             width: 8px; height: 8px;
             border-radius: 50%;
-            background: var(--text-dim);
-            transition: background 80ms linear;
+            background: #4a463a;
+            transition: background 80ms linear, box-shadow 80ms linear;
         }
-        .vfdm-localrem.local .dot { background: var(--blue); }
-        .vfdm-localrem.local { color: var(--blue); }
+        .vfdm-localrem.local .dot { background: var(--amber); box-shadow: 0 0 5px 0 var(--amber); }
+        .vfdm-localrem.local { color: var(--amber); }
 
         /* Right column — readouts, gauge, external inputs */
         .vfdm-readouts { margin-bottom: 0.55rem; }
@@ -285,53 +310,62 @@ nav: simulators
             <div class="vfdm-grid">
 
                 <!-- ── LEFT COLUMN: drive front panel ── -->
+                <!-- Equipment register: a real device face. The warm .device
+                     bezel + olive dot-matrix LCD + plastic keypad mark this
+                     as HARDWARE — distinct from the software-register panel
+                     in the right column that monitors it. -->
                 <div>
                     <div class="widget-section-label">Drive Front Panel</div>
 
-                    <!-- LCD: 20-char × 4-line fixed mono grid. Content set by
-                         the render() loop. .blue class on a wrapping span tints
-                         live values; .dim tints hint/footer text. .lcd-scanline
-                         lays a faint horizontal-stripe overlay on top. -->
-                    <div class="vfdm-lcd lcd-scanline">
-                        <div class="vfdm-lcd-inner" id="vfdm-lcd"
-                             role="status" aria-live="polite" aria-label="Drive display">
-                            <span class="vfdm-lcd-line"></span>
-                            <span class="vfdm-lcd-line"></span>
-                            <span class="vfdm-lcd-line"></span>
-                            <span class="vfdm-lcd-line"></span>
+                    <div class="device vfdm-device">
+                        <div class="device-inner">
+
+                            <!-- LCD: 20-char × 4-line fixed mono grid, set by
+                                 the render() loop as plain text (line 4 carries
+                                 the L/R footer / flash). -->
+                            <div class="vfdm-lcd">
+                                <div class="vfdm-lcd-inner" id="vfdm-lcd"
+                                     role="status" aria-live="polite" aria-label="Drive display">
+                                    <span class="vfdm-lcd-line"></span>
+                                    <span class="vfdm-lcd-line"></span>
+                                    <span class="vfdm-lcd-line"></span>
+                                    <span class="vfdm-lcd-line"></span>
+                                </div>
+                            </div>
+
+                            <!-- Keypad: 4 nav buttons (up/down/enter/escape),
+                                 then a second row with RUN/STOP/LOCAL-REMOTE.
+                                 Sub-labels under glyphs follow real-drive
+                                 keypad legends. -->
+                            <div class="vfdm-keypad" role="group" aria-label="Drive keypad">
+                                <button class="vfdm-key" id="vfdm-key-up"    type="button" aria-label="Up">
+                                    <span class="glyph">▲</span><span class="sub">UP</span>
+                                </button>
+                                <button class="vfdm-key" id="vfdm-key-down"  type="button" aria-label="Down">
+                                    <span class="glyph">▼</span><span class="sub">DOWN</span>
+                                </button>
+                                <button class="vfdm-key" id="vfdm-key-enter" type="button" aria-label="Enter">
+                                    <span class="glyph">↵</span><span class="sub">ENT</span>
+                                </button>
+                                <button class="vfdm-key" id="vfdm-key-esc"   type="button" aria-label="Escape">
+                                    <span class="glyph">×</span><span class="sub">ESC</span>
+                                </button>
+                                <button class="vfdm-key run" id="vfdm-key-run"  type="button" aria-label="Run">
+                                    <span class="glyph">▶</span><span class="sub">RUN</span>
+                                </button>
+                                <button class="vfdm-key stop" id="vfdm-key-stop" type="button" aria-label="Stop">
+                                    <span class="glyph">■</span><span class="sub">STOP</span>
+                                </button>
+                                <button class="vfdm-key" id="vfdm-key-local" type="button" aria-label="Local/Remote" style="grid-column: span 2;">
+                                    <span class="glyph">⇄</span><span class="sub">L / R</span>
+                                </button>
+                            </div>
+
+                            <div class="vfdm-localrem" id="vfdm-local-rem-ind">
+                                <span class="dot"></span>
+                                <span id="vfdm-local-rem-txt">REMOTE — drive follows configured sources</span>
+                            </div>
                         </div>
-                    </div>
-
-                    <!-- Keypad: 4 nav buttons (up/down/enter/escape), then a
-                         second row with RUN/STOP/LOCAL-REMOTE. Sub-labels under
-                         glyphs follow real-drive keypad legends. -->
-                    <div class="vfdm-keypad" role="group" aria-label="Drive keypad">
-                        <button class="vfdm-key" id="vfdm-key-up"    type="button" aria-label="Up">
-                            <span class="glyph">▲</span><span class="sub">UP</span>
-                        </button>
-                        <button class="vfdm-key" id="vfdm-key-down"  type="button" aria-label="Down">
-                            <span class="glyph">▼</span><span class="sub">DOWN</span>
-                        </button>
-                        <button class="vfdm-key" id="vfdm-key-enter" type="button" aria-label="Enter">
-                            <span class="glyph">↵</span><span class="sub">ENT</span>
-                        </button>
-                        <button class="vfdm-key" id="vfdm-key-esc"   type="button" aria-label="Escape">
-                            <span class="glyph">×</span><span class="sub">ESC</span>
-                        </button>
-                        <button class="vfdm-key run" id="vfdm-key-run"  type="button" aria-label="Run">
-                            <span class="glyph">▶</span><span class="sub">RUN</span>
-                        </button>
-                        <button class="vfdm-key stop" id="vfdm-key-stop" type="button" aria-label="Stop">
-                            <span class="glyph">■</span><span class="sub">STOP</span>
-                        </button>
-                        <button class="vfdm-key" id="vfdm-key-local" type="button" aria-label="Local/Remote" style="grid-column: span 2;">
-                            <span class="glyph">⇄</span><span class="sub">L / R</span>
-                        </button>
-                    </div>
-
-                    <div class="vfdm-localrem" id="vfdm-local-rem-ind">
-                        <span class="dot"></span>
-                        <span id="vfdm-local-rem-txt">REMOTE — drive follows configured sources</span>
                     </div>
                 </div>
 

@@ -2523,9 +2523,6 @@ p.ref-note.compact {
  *     pulsing ring; .fault swaps to --red and pulses faster. aria-
  *     hidden in pages since the adjacent text-state already conveys
  *     status to screen readers.
- *   .lcd-scanline — overlay class on an LCD-style panel. Adds a
- *     near-invisible horizontal scanline pattern via ::after; pure
- *     visual texture, no motion.
  *   .lcd-flicker — one-shot 150ms opacity dip; JS adds the class
  *     then removes it on a setTimeout to trigger the dip on every
  *     LCD value update.
@@ -2575,21 +2572,6 @@ p.ref-note.compact {
     50%      { opacity: 0.55; }
 }
 
-.lcd-scanline { position: relative; }
-.lcd-scanline::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    background: repeating-linear-gradient(
-        0deg,
-        transparent 0,
-        transparent 2px,
-        rgba(29,37,31,0.045) 2px,
-        rgba(29,37,31,0.045) 3px
-    );
-    border-radius: inherit;
-}
 @keyframes lcd-flicker {
     0%   { opacity: 1; }
     45%  { opacity: 0.68; }
