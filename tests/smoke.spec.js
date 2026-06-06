@@ -30,6 +30,7 @@ const PAGES = [
     { name: 'coil sizing',            url: '/tools/coil-sizing.html' },
     { name: 'thermistor calculator',  url: '/tools/thermistor-calculator.html' },
     { name: 'refrigerant p-t',        url: '/tools/refrigerant-pt.html' },
+    { name: 'valve cv sizing',        url: '/tools/valve-cv.html' },
     { name: 'simulators landing',     url: '/simulators/' },
     { name: 'pid tuner',              url: '/simulators/pid-tuner.html' },
     { name: 'vfd mock',               url: '/simulators/vfd-mock.html' },
