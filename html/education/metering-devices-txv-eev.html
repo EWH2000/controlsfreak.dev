@@ -3,6 +3,7 @@ title: TXVs vs. EEVs — controlsfreak.dev
 description: Metering devices for controls people — the mechanical TXV force balance, the electronic EEV control loop, and how each holds a target superheat as load drifts.
 canonical: https://controlsfreak.dev/education/metering-devices-txv-eev.html
 nav: education
+pairedQuiz: https://controlsfreak.dev/practice/metering-devices-txv-eev.html
 ---
 {% extends "layouts/page.njk" %}
 {% from "related-links.njk" import relatedLinks %}
@@ -43,13 +44,13 @@ nav: education
                 <a href="/education/refrigerant-cycle-basics.html">Page 1</a> named the metering device as one of the four components of the refrigerant cycle and left its insides for later. <a href="/education/superheat-subcooling.html">Page 2</a> showed that the metering device is what a unit controller leans on to <em>hold</em> superheat at a target — it's not a fixed orifice, it's a feedback element. This page opens the box. Two common designs sit behind the same job description: a <strong>thermostatic expansion valve (TXV)</strong> does the work mechanically with a sensing bulb on the suction line, and an <strong>electronic expansion valve (EEV)</strong> does it electronically with a stepper motor and a controller algorithm. Service techs mostly meet TXVs in the field; BMS engineers mostly meet EEVs in the controller. Knowing which one is which — and how each decides how wide-open to be at any moment — is the cleanest way to keep their behavior straight.
             </p>
 
-            <h2 class="subhead">What the metering device does</h2>
+            <h2 class="subhead" id="what-it-does">What the metering device does</h2>
 
             <p>
                 A quick recap. The high-side liquid leaving the condenser is warm and pressurized; the evaporator on the low side needs cold, low-pressure refrigerant to boil and absorb heat. The metering device sits at the boundary and throttles the liquid through a small port, dropping its pressure sharply. Upstream of the port: warm liquid at high pressure. Downstream: a cold, low-pressure mix of liquid and flash vapor heading into the evaporator. So far that's just a restriction in a pipe; a fixed orifice or capillary tube does the same thing. What makes a TXV or an EEV different is that the port isn't fixed. Both kinds of valve <em>modulate</em> how wide-open the port is in response to what's happening downstream, and the target they're modulating against is the evaporator-outlet <em>superheat</em>. Too little feed and the coil starves (SH climbs); too much and liquid escapes the coil (SH falls toward zero, then negative). The valve's job is to keep that number sitting at the target.
             </p>
 
-            <h2 class="subhead">The TXV — a mechanical control loop</h2>
+            <h2 class="subhead" id="txv">The TXV — a mechanical control loop</h2>
 
             <p>
                 A TXV is a control loop made of metal. Three pressures push on a diaphragm inside the valve body; the diaphragm position decides how far open the port is. The sensing bulb, strapped tight to the suction line just downstream of the evaporator, is filled with a charge of refrigerant (often the same one the system uses). The bulb is connected to the top side of the diaphragm by a thin capillary tube. Whatever temperature the suction line is at, the bulb settles to the same temperature within seconds, and the saturation pressure of the bulb charge at that temperature pushes <em>down</em> on the diaphragm. On the bottom side of the diaphragm, two forces push <em>up</em>: a stiff spring (adjustable on most valves, set at install for a target superheat) and the evaporator pressure itself, fed to the bottom chamber through a small external equalizer line tapped into the suction line near the bulb.
@@ -166,7 +167,7 @@ nav: education
                 <p>A sensing bulb strapped to a suction line, fed by a thin tube into a box on the wall, looks an awful lot like a return-air temperature sensor strapped to a duct, fed by a thin lead into a controller. The shape is the same and the install is the same. The cue is the line the bulb is touching — bare copper instead of duct wrap, and a body lower down whose other connections are refrigerant pipes, not low-voltage wires. People who've spent years in BMS land but no time in mechanical rooms sometimes mistake one for the other, and once is enough; from then on the silhouette is unmistakable. The TXV's bulb is one of the iconic shapes in the refrigerant cycle, and worth being able to point at on a unit you'll never service yourself.</p>
             </div>
 
-            <h2 class="subhead">The EEV — an electronic control loop</h2>
+            <h2 class="subhead" id="eev">The EEV — an electronic control loop</h2>
 
             <p>
                 An EEV does the same job — modulate the port to hold superheat — but with a digital control loop replacing the mechanical force balance. The sensing parts are a pressure transducer and a temperature sensor mounted on the suction line, both wired into the unit controller (on a packaged piece of equipment) or sometimes into the BMS itself (on built-up systems and chillers). The controller reads both inputs, looks up the saturation temperature for the measured pressure, subtracts to get superheat, and compares to a target value held in a parameter. Whatever direction the error sits in, the controller commands a stepper motor on top of the valve to rotate the port a few steps wider or a few steps tighter. The stepper holds position when power is off — no power, no movement, last commanded position stays put — and a typical EEV port has somewhere between a few hundred and a few thousand discrete steps from fully closed to fully open. That's the resolution the BMS gets to work with.
@@ -254,13 +255,13 @@ nav: education
                 The same load swing that closed the TXV's port closes the EEV's port too, just by a different route. Cooler air over the coil → less boiling → cooler suction line → suction temperature drops while suction pressure changes only slightly → the controller's computed superheat falls below setpoint → the algorithm decrements the port-position command → the stepper rotates that many steps closed → mass flow into the coil drops → the lingering liquid in the evaporator finishes boiling → SH climbs back to the setpoint. The controller, the bulb, and the diaphragm are all doing the same kind of work; only the medium changes. On a unit-controller trend graphic you can usually watch the loop in motion — valve position changes step by step, superheat hugs the target with a few degrees of ripple, and the relationship between the two should look orderly. If valve position is hard-rail at 0% or 100% with superheat still off-target, the loop has run out of authority — feed isn't the limit anymore (charge is, or the coil load is wrong, or a sensor is lying).
             </p>
 
-            <h2 class="subhead">Same job, two different surfaces</h2>
+            <h2 class="subhead" id="surfaces">Same job, two different surfaces</h2>
 
             <p>
                 If you spend most of your time in the BMS, the EEV is the surface you'll see — valve position as a point, superheat as a point, a setpoint you can change. The TXV doesn't put any of that on a network; from a BMS that's looking at a packaged unit with a TXV, the only refrigerant-side points are usually suction and discharge pressure, and the metering device is implicit in the readings. If you spend most of your time turning wrenches on equipment, the TXV is the surface you'll see — it's the thing in your hand when a system runs the wrong superheat, and the bulb's location on the suction line is one of the first things to check when something's off (loose strap, missing insulation, lost bulb charge, all common). When a controls tech and a mechanical tech compare notes on the same system, the same valve gets described from two angles, and the names don't always line up. Knowing both surfaces lets you bridge that conversation.
             </p>
 
-            <h2 class="subhead">A worked example — holding superheat as load drifts</h2>
+            <h2 class="subhead" id="worked-example">A worked example — holding superheat as load drifts</h2>
 
             <p>
                 Bring the same R-410A split system from <a href="/education/superheat-subcooling.html">page 2</a>. Steady state on a typical operating day: suction-side gauge reads <strong>118 psig</strong>, suction-line thermometer <strong>50 °F</strong>, so superheat sits at <code>50 − 40 = 10 °F</code>. Liquid-side gauge reads <strong>340 psig</strong>, liquid-line thermometer <strong>95 °F</strong>, so subcooling sits at <code>105 − 95 = 10 °F</code>. The metering device — a TXV in one variant, an EEV in the other — is the element holding that 10 °F superheat by feeding the evaporator at whatever rate the coil load demands.
@@ -282,7 +283,7 @@ nav: education
                 The other direction works the same way in reverse. The load picks back up later in the afternoon; the coil boils faster than the current feed can supply; the suction line warms past 50 °F; superheat climbs past 10 °F. The TXV's bulb warms, its charge expands, the diaphragm pushes down, the port opens, more feed, SH returns to target. The EEV's controller sees a higher computed superheat, increments the port command, the stepper rotates open, same recovery. Both valves are doing classic closed-loop control on the same process variable; what's different is what they use as their controller (a spring + a sealed gas charge, vs. a CPU + a trended sensor) and what surface that controller exposes to the people working on the system.
             </p>
 
-            <h2 class="subhead">What this chapter sets up</h2>
+            <h2 class="subhead" id="chapter-next">What this chapter sets up</h2>
 
             <p>
                 That closes the three-page chapter. <a href="/education/refrigerant-cycle-basics.html">Page 1</a> built the cycle and the saturation lock; <a href="/education/superheat-subcooling.html">page 2</a> turned the lock into superheat and subcooling, the two measurements that prove the cycle is running right; this page opened the metering device that holds superheat in place. With those three concepts in hand, the <a href="/tools/refrigerant-pt.html">Refrigerant P-T &amp; Superheat Calculator</a> turns from a black box into a tool whose every input and output is something you can place inside the cycle and read against the saturation curve. Bring a suction pressure, a clamp-on suction-line temperature, and a refrigerant name back to that calculator and you've already done the measurement half of refrigerant troubleshooting; the verdict pill just reads off what your numbers mean.
@@ -299,6 +300,9 @@ nav: education
         lessons: [
             {href: '/education/refrigerant-cycle-basics.html', label: 'Refrigerant Cycle Basics'},
             {href: '/education/superheat-subcooling.html', label: 'Superheat & Subcooling'}
+        ],
+        quizzes: [
+            {href: '/practice/metering-devices-txv-eev.html', label: 'TXVs vs. EEVs Quiz'}
         ]
     }) }}
 

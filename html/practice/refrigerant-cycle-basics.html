@@ -1,0 +1,74 @@
+---
+title: Refrigerant Cycle Basics Quiz — controlsfreak.dev
+description: Ten questions on the Refrigerant Cycle Basics lesson — the four components, high side vs. low side, the pressure-temperature saturation lock, and blend glide.
+canonical: https://controlsfreak.dev/practice/refrigerant-cycle-basics.html
+nav: practice
+pairedLesson: https://controlsfreak.dev/education/refrigerant-cycle-basics.html
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Practice · Refrigerant Cycle Basics</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">Refrigerant Cycle Basics Quiz <span class="tool-tag">Refrigeration</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                Read the
+                <a href="/education/refrigerant-cycle-basics.html">Refrigerant Cycle Basics</a> lesson first, then test
+                yourself — ten questions on the four components and the one load-bearing relationship behind every
+                sensor reading: what the compressor, condenser, metering device, and evaporator each do, how the loop
+                splits into a high side and a low side, and how pressure and temperature lock together at saturation
+                (glide included). Each reveal links back to the section it came from.
+            </p>
+
+            <div id="quiz"></div>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        lessons: [
+            {href: '/education/refrigerant-cycle-basics.html', label: 'Refrigerant Cycle Basics'},
+            {href: '/education/superheat-subcooling.html', label: 'Superheat & Subcooling'},
+            {href: '/education/metering-devices-txv-eev.html', label: 'TXVs vs. EEVs'}
+        ],
+        quizzes: [
+            {href: '/practice/superheat-subcooling.html', label: 'Superheat & Subcooling Quiz'},
+            {href: '/practice/metering-devices-txv-eev.html', label: 'TXVs vs. EEVs Quiz'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/practice/">← All practice</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="/scripts/quiz-engine.js"></script>
+<script>
+    (function () {
+        'use strict';
+
+        // Question bank lives in html/_data/quizzes/refrigerant-cycle-basics.js
+        // so the FAQPage JSON-LD emitted from head.njk can read the same source.
+        const questions = {{ quizzes['refrigerant-cycle-basics'] | safeScriptJson | safe }};
+
+        Quiz.mount('#quiz', questions, {
+            slug: 'refrigerant-cycle-basics',
+            title: 'Refrigerant Cycle Basics',
+            defaultCount: 10,
+            defaultOrder: 'sequential'
+        });
+    })();
+</script>
+{% endblock %}
