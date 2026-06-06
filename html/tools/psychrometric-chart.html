@@ -1570,6 +1570,9 @@ nav: tools
         // ── Init ──
         psyRecompute();
         window.addEventListener('resize', () => drawPsychChart(lastChain));
+        // The canvas reads theme tokens (var(--*)) at draw time, so a theme
+        // flip needs an explicit redraw — theme.js broadcasts 'themechange'.
+        document.addEventListener('themechange', () => drawPsychChart(lastChain));
 
         // Entering / exiting fullscreen reflows the canvas's container
         // synchronously (CSS class toggle), but no window resize fires.
