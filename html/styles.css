@@ -14,36 +14,129 @@
  * preprocessor in the pipeline.
  * ────────────────────────────────────────────────────────────────────── */
 
+/* ── THEME TOKENS — dual, DARK-DEFAULT, two registers ──────────────────
+ * `:root` is the DARK theme (the default); `:root[data-theme="light"]`
+ * below overrides it back to ≈ the pre-redesign look. A before-paint
+ * bootstrap in _includes/head.njk sets data-theme from cf_theme, else
+ * prefers-color-scheme; the nav toggle + /scripts/theme.js flip it at
+ * runtime. See CLAUDE.md "Design system" for the two-register model.
+ *
+ * SOFTWARE REGISTER = the default chrome (carries the whole site):
+ * "Niagara AX with a dark mode" — cool blue-slate, AX-SHARP (square
+ * corners via --rail:0, hard 1px seams, flat fills, no floating
+ * shadows). Green = brand/action; blue = data/selection.
+ *
+ * EQUIPMENT REGISTER = the --dev-* / --lcd-* tokens at the bottom of
+ * this block: a warm device face + positive-mode dot-matrix character
+ * LCD, used ONLY where a page depicts real hardware (VFD/DMM sims,
+ * device widgets, the one readout in a tool that shows a field value).
+ * These stay CONSTANT across themes — a device is a device either way,
+ * so the light override deliberately does NOT touch them (nor --rail).
+ * ──────────────────────────────────────────────────────────────────── */
 :root {
-    color-scheme: light;
-    --bg:           #eef1ec;   /* app chrome — light warm gray-green */
-    --surface:      #ffffff;   /* content panes */
-    --surface-2:    #f2f6f1;   /* panel headers, table heads, insets */
-    --surface-3:    #e8ece4;   /* recessed background for reference / context panels — a notch below --bg */
-    --border:       #ccd7c8;   /* hairlines — panel & section edges */
-    --border-faint: #e3e8df;   /* lighter hairline for inner row dividers (property-sheet rows, dense tables) */
-    --accent:       #43881c;   /* the green — readable on white for text & UI */
-    --accent-dim:   rgba(67,136,28,0.10);
-    --accent-glow:  rgba(67,136,28,0.22);
-    --accent-soft:  rgba(67,136,28,0.06);  /* one notch under --accent-dim — backdrops for status pills, inset washes; never compete with --accent-glow on focus rings */
-    --text:         #38423a;   /* body copy */
-    --text-bright:  #1d251f;   /* headings */
-    --text-dim:     #666e66;   /* labels, secondary text */
-    --blue:         #1577b8;   /* data readouts / highlight — workstation blue; also "supply water" in the hydronic diagrams */
-    --blue-cool:    #5e8aa0;   /* a muted, cooler companion to --blue — "return water" in the hydronic diagrams (paired with a dashed line so it reads without colour too) */
-    --red:          #c4382f;   /* fault / alarm */
-    --heat:         #c8782a;   /* warm orange — "heating" on the psychrometric chart's process lines; companion to --blue for cooling */
-    --teal:         #4a8a8a;   /* desaturated teal — data/comm traces on the background schematic (BACnet, IP) */
-    --teal-dim:     rgba(74,138,138,0.10);
-    --teal-glow:    rgba(74,138,138,0.22);
-    --amber:        #c9a14a;   /* desaturated amber — energized control wiring on the background schematic; section accent for /practice/ */
-    --amber-dim:    rgba(201,161,74,0.10);
-    --amber-glow:   rgba(201,161,74,0.22);
-    --plum:         #8a5e7e;   /* desaturated plum — logic-signal lines on the background schematic */
-    --plum-dim:     rgba(138,94,126,0.10);
-    --plum-glow:    rgba(138,94,126,0.22);
+    color-scheme: dark;
+
+    /* software register — cool blue-slate (the default chrome) */
+    --bg:           #13161b;   /* cool slate, near-black — the page floor */
+    --bg-2:         #181c22;   /* gutter / recessed chassis */
+    --surface:      #1e232b;   /* content panes / software panel face */
+    --surface-2:    #283038;   /* panel headers, raised header strips, insets */
+    --surface-3:    #181c22;   /* recessed reference / context panels (= --bg-2) */
+    --well:         #11141a;   /* deepest recessed field (tree / wiresheet / gauge wells) */
+    --border:       #3c4757;   /* cool gray-blue seam — crisp 1px edges */
+    --border-faint: #2b333d;   /* lighter hairline for inner row dividers */
+    --bevel-hi:     rgba(170,195,230,0.06);  /* 1px inset highlight on raised chrome */
+    --bevel-lo:     rgba(0,0,0,0.45);        /* 1px shade under it */
+    --accent:       #6cb23a;   /* the green — brand / action (refined for dark, not neon) */
+    --accent-bright:#86cf4d;
+    --accent-dim:   rgba(108,178,58,0.14);
+    --accent-glow:  rgba(108,178,58,0.24);
+    --accent-soft:  rgba(108,178,58,0.07);  /* one notch under --accent-dim — status-pill / inset backdrops */
+    --text:         #c5cdd8;   /* cool light-gray body copy */
+    --text-bright:  #eef2f8;   /* headings */
+    --text-dim:     #828d9b;   /* labels, secondary text */
+    --blue:         #4aa3dd;   /* data readouts / selection (Niagara steel-azure); also "supply water" in diagrams */
+    --blue-bright:  #74c2f0;
+    --blue-cool:    #6f97aa;   /* muted companion to --blue — "return water" in diagrams (paired with a dashed line so it reads without colour too) */
+    --blue-dim:     rgba(74,163,221,0.16);
+    --blue-glow:    rgba(74,163,221,0.24);
+    --red:          #e85d4f;   /* fault / alarm */
+    --heat:         #e8884a;   /* warm orange — "heating" on the psychrometric chart's process lines; companion to --blue for cooling */
+    --teal:         #46b3ac;   /* teal — data/comm traces on the background schematic (BACnet, IP) */
+    --teal-dim:     rgba(70,179,172,0.14);
+    --teal-glow:    rgba(70,179,172,0.24);
+    --amber:        #e0a94a;   /* amber — energized control wiring on the background schematic; section accent for /practice/ */
+    --amber-dim:    rgba(224,169,74,0.14);
+    --amber-glow:   rgba(224,169,74,0.26);
+    --plum:         #b783c0;   /* plum — logic-signal lines on the background schematic */
+    --plum-dim:     rgba(183,131,192,0.14);
+    --plum-glow:    rgba(183,131,192,0.26);
+
+    /* blueprint graticule (body background) — dark gets a faint grid +
+       a subtle cool radial wash; light overrides below to the stronger
+       1.5px grid with no wash (preserves today's drafting-paper feel). */
+    --grid-line-c:  var(--border-faint);
+    --grid-line-w:  1px;
+    --grid-wash:    rgba(74,163,221,0.05);
+
+    /* equipment register — warm device face + dot-matrix LCD. CONSTANT
+       across themes (the light override leaves these untouched). */
+    --dev-face:     #16140f;   /* warm near-black instrument face */
+    --dev-bezel:    #0c0b08;
+    --dev-edge:     #2c2a20;   /* warm bezel seam */
+    --dev-hi:       rgba(220,210,170,0.08);
+    --lcd-bg:       #adba4e;   /* lit olive-green backlight — BMS character LCD */
+    --lcd-bg-2:     #9aa840;   /* backlight gradient / vignette */
+    --lcd-ink:      #1b2410;   /* dark pixel text */
+    --lcd-grid:     rgba(18,26,6,0.18);  /* unlit pixel-mesh gaps */
+
     --mono:         'IBM Plex Mono', monospace;
     --sans:         'Overpass', sans-serif;
+    --rail:         0px;       /* AX-sharp: square corners site-wide (both themes) */
+}
+
+/* LIGHT THEME — ≈ the pre-redesign look. Flips the software register
+   back to warm white panels on light gray-green. The equipment
+   --dev-* / --lcd-* tokens and --rail are deliberately NOT overridden. */
+:root[data-theme="light"] {
+    color-scheme: light;
+    --bg:           #eef1ec;
+    --bg-2:         #e8ece4;
+    --surface:      #ffffff;
+    --surface-2:    #f2f6f1;
+    --surface-3:    #e8ece4;
+    --well:         #e8ece4;
+    --border:       #ccd7c8;
+    --border-faint: #e3e8df;
+    --bevel-hi:     rgba(255,255,255,0.8);
+    --bevel-lo:     rgba(0,0,0,0.05);
+    --accent:       #43881c;
+    --accent-bright:#4a9620;
+    --accent-dim:   rgba(67,136,28,0.10);
+    --accent-glow:  rgba(67,136,28,0.22);
+    --accent-soft:  rgba(67,136,28,0.06);
+    --text:         #38423a;
+    --text-bright:  #1d251f;
+    --text-dim:     #666e66;
+    --blue:         #1577b8;
+    --blue-bright:  #1981c6;
+    --blue-cool:    #5e8aa0;
+    --blue-dim:     rgba(21,119,184,0.10);
+    --blue-glow:    rgba(21,119,184,0.22);
+    --red:          #c4382f;
+    --heat:         #c8782a;
+    --teal:         #4a8a8a;
+    --teal-dim:     rgba(74,138,138,0.10);
+    --teal-glow:    rgba(74,138,138,0.22);
+    --amber:        #c9a14a;
+    --amber-dim:    rgba(201,161,74,0.10);
+    --amber-glow:   rgba(201,161,74,0.22);
+    --plum:         #8a5e7e;
+    --plum-dim:     rgba(138,94,126,0.10);
+    --plum-glow:    rgba(138,94,126,0.22);
+    --grid-line-c:  var(--border);
+    --grid-line-w:  1.5px;
+    --grid-wash:    transparent;
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -51,22 +144,19 @@ html { scroll-behavior: smooth; }
 
 body {
     background-color: var(--bg);
-    /* v2.0.1 — blueprint grid behind everything. 1.5px hairlines in
-       --border every 40px. Sits only in the regions of body that
-       AREN'T covered by an opaque content panel — nav (--surface),
-       hero (--surface), tool-cards (--surface), footer (--surface-2)
-       all paint over it, so the grid only reads in the gutters around
-       and below the content. Hidden on print via the @media print
-       block below.
-       Weight tuned on feedback after the first pass: 1px in
-       --border-faint was too quiet to read as drafting paper; 3-4px
-       crosses into graph-paper foreground. 1.5px in --border is the
-       balance — confident in the gutters, never patterning against
-       the panels. */
+    /* Blueprint graticule behind everything — the grid only reads in the
+       gutters around/below content, since nav / hero / cards / footer all
+       paint opaque surfaces over it. Token-driven per theme (the --grid-*
+       tokens in :root): DARK = a faint 1px grid in --border-faint under a
+       subtle cool radial wash; LIGHT = the stronger 1.5px --border grid,
+       no wash (the drafting-paper weight tuned on earlier feedback — 1px /
+       --border-faint was too quiet, 3-4px crossed into graph-paper
+       foreground). Hidden on print via the @media print block below. */
     background-image:
-        linear-gradient(to right,  var(--border) 1.5px, transparent 1.5px),
-        linear-gradient(to bottom, var(--border) 1.5px, transparent 1.5px);
-    background-size: 40px 40px;
+        radial-gradient(130% 80% at 50% -20%, var(--grid-wash), transparent 60%),
+        linear-gradient(to right,  var(--grid-line-c) var(--grid-line-w), transparent var(--grid-line-w)),
+        linear-gradient(to bottom, var(--grid-line-c) var(--grid-line-w), transparent var(--grid-line-w));
+    background-size: auto, 40px 40px, 40px 40px;
     color: var(--text);
     font-family: var(--sans);
     font-size: 18px;
@@ -220,7 +310,7 @@ main { flex: 1; }
     font-family: var(--mono);
     font-size: 0.85rem;
     text-decoration: none;
-    border-radius: 0 0 3px 3px;
+    border-radius: 0;
     transition: top 0.15s;
 }
 .skip-link:focus { top: 0; outline: 2px solid var(--accent-glow); outline-offset: 2px; }
@@ -265,35 +355,39 @@ main { flex: 1; }
 .site-nav-links a:hover { color: var(--text); border-bottom-color: var(--accent); }
 .site-nav-links a.active { color: var(--text-bright); border-bottom-color: var(--accent); }
 
-/* ── UNITS TOGGLE ────────────────────────────────────────────────────
-   Sits inside .site-nav-links (rightmost child) so the existing nav
-   flex layout doesn't need rework. "Units:" label in mono dim text,
-   followed by a two-segment pill. Active button is filled with the
-   accent-dim tint via [data-units] on <html> — a tiny inline head
-   script sets that attribute before first paint to avoid flashing
-   the wrong button to returning metric users. The button's `.active`
-   class is a backstop; the [data-units] selector is the canonical
-   driver. */
-.units-toggle {
+/* ── UNITS + THEME TOGGLES ───────────────────────────────────────────
+   Two sibling pills inside .site-nav-links (rightmost children) — same
+   shape, so they share these rules. Each active button gets the
+   accent-dim tint via an attribute on <html>: [data-units] for the
+   units pill, [data-theme] for the theme pill. A tiny inline head
+   script sets BOTH attributes before first paint to avoid flashing the
+   wrong button. Runtime drivers: /scripts/units.js (per-page) and
+   /scripts/theme.js (site-wide). The button .active class is a backstop;
+   the attribute selectors are the canonical drivers. */
+.units-toggle,
+.theme-toggle {
     display: inline-flex;
     align-items: center;
     gap: 0.55rem;
 }
-.units-label {
+.units-label,
+.theme-label {
     font-family: var(--mono);
     font-size: 0.7rem;
     color: var(--text-dim);
     text-transform: uppercase;
     letter-spacing: 0.08em;
 }
-.units-toggle-pill {
+.units-toggle-pill,
+.theme-toggle-pill {
     display: inline-flex;
     border: 1px solid var(--border);
-    border-radius: 2px;
+    border-radius: 0;
     overflow: hidden;
     background: var(--surface);
 }
-.units-btn {
+.units-btn,
+.theme-btn {
     font-family: var(--mono);
     font-size: 0.7rem;
     padding: 0.22rem 0.6rem;
@@ -304,10 +398,14 @@ main { flex: 1; }
     letter-spacing: 0.03em;
     transition: color 0.18s, background 0.18s;
 }
-.units-btn + .units-btn { border-left: 1px solid var(--border); }
-.units-btn:hover { color: var(--text); }
+.units-btn + .units-btn,
+.theme-btn + .theme-btn { border-left: 1px solid var(--border); }
+.units-btn:hover,
+.theme-btn:hover { color: var(--text); }
 html[data-units="us"]     .units-btn[data-units="us"],
-html[data-units="metric"] .units-btn[data-units="metric"] {
+html[data-units="metric"] .units-btn[data-units="metric"],
+html[data-theme="dark"]   .theme-btn[data-theme-set="dark"],
+html[data-theme="light"]  .theme-btn[data-theme-set="light"] {
     background: var(--accent-dim);
     color: var(--accent);
     font-weight: 600;
@@ -329,7 +427,7 @@ html[data-units="metric"] .units-btn[data-units="metric"] {
     text-align: left;
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: 4px;
+    border-radius: 0;
     overflow: hidden;
     animation: fadeUp 0.5s ease both;
 }
@@ -396,7 +494,7 @@ html[data-units="metric"] .units-btn[data-units="metric"] {
     color: var(--accent);
     border: 1px solid var(--accent-glow);
     padding: 0.1rem 0.5rem;
-    border-radius: 2px;
+    border-radius: 0;
     font-family: var(--mono);
     font-size: 0.62rem;
     letter-spacing: 0.07em;
@@ -477,7 +575,7 @@ p.hero-onramp a:hover { border-bottom-color: var(--accent); }
     font-size: 0.68rem;
     padding: 0.28rem 0.7rem;
     border: 1px solid var(--border);
-    border-radius: 2px;
+    border-radius: 0;
     color: var(--text-dim);
     background: var(--surface);
     letter-spacing: 0.05em;
@@ -552,7 +650,7 @@ h2.section-label[data-stage]::before {
     position: relative;            /* anchor for the .tool-card-fullscreen-btn */
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: 4px;
+    border-radius: 0;
     overflow: hidden;
     margin-bottom: 1.5rem;
 }
@@ -590,7 +688,7 @@ h2.section-label[data-stage]::before {
     background: var(--accent-dim);
     color: var(--accent);
     border: 1px solid var(--accent-glow);
-    border-radius: 2px;
+    border-radius: 0;
     text-transform: uppercase;
     letter-spacing: 0.07em;
 }
@@ -695,7 +793,7 @@ textarea,
 select {
     background: var(--bg);
     border: 1px solid var(--border);
-    border-radius: 3px;
+    border-radius: 0;
     padding: 0.55rem 0.75rem;
     font-family: var(--mono);
     font-size: 0.9rem;
@@ -716,7 +814,7 @@ select option { background: var(--surface); }
 .result-panel {
     background: var(--bg);
     border: 1px solid var(--border);
-    border-radius: 3px;
+    border-radius: 0;
     padding: 1.25rem 1.5rem;
     margin-top: 1rem;
     display: flex;
@@ -776,13 +874,13 @@ select option { background: var(--surface); }
 .range-bar {
     height: 5px;
     background: var(--border);
-    border-radius: 3px;
+    border-radius: 0;
     overflow: hidden;
 }
 .range-bar-fill {
     height: 100%;
     background: linear-gradient(90deg, var(--accent), var(--blue));
-    border-radius: 3px;
+    border-radius: 0;
     transition: width 0.2s ease;
     width: 0%;
 }
@@ -813,7 +911,7 @@ p.bit-hint {
     justify-content: center;
     background: var(--bg);
     border: 1px solid var(--border);
-    border-radius: 2px;
+    border-radius: 0;
     cursor: pointer;
     transition: all 0.12s;
     user-select: none;
@@ -845,7 +943,7 @@ p.bit-hint {
 .readout {
     background: var(--bg);
     border: 1px solid var(--border);
-    border-radius: 3px;
+    border-radius: 0;
     padding: 0.65rem 0.85rem;
 }
 .readout-label {
@@ -963,7 +1061,7 @@ footer {
     padding: 0.2rem 0.55rem;
     background: none;
     border: 1px solid var(--border);
-    border-radius: 2px;
+    border-radius: 0;
     color: var(--text-dim);
     cursor: pointer;
     transition: all 0.15s;
@@ -995,7 +1093,7 @@ footer {
     padding: 0.32rem 0.6rem 0.32rem 0.55rem;
     background: var(--surface);
     border: 1px solid var(--accent);
-    border-radius: 2px;
+    border-radius: 0;
     color: var(--accent);
     cursor: pointer;
     transition: color 0.15s, border-color 0.15s, background 0.15s;
@@ -1078,7 +1176,7 @@ input[type="range"] {
     width: 100%;
     height: 4px;
     background: var(--border);
-    border-radius: 3px;
+    border-radius: 0;
     outline: none;
     cursor: pointer;
 }
@@ -1109,6 +1207,7 @@ input[type="range"]::-moz-range-thumb {
 .copy-btn:focus-visible,
 .tab-btn:focus-visible,
 .units-btn:focus-visible,
+.theme-btn:focus-visible,
 .cta-button:focus-visible,
 .back-link:focus-visible,
 .filter-chip:focus-visible,
@@ -1143,6 +1242,7 @@ input[type="range"]:focus-visible::-moz-range-thumb {
 @media (hover: none) {
     .site-nav-links a,
     .units-btn,
+    .theme-btn,
     .tab-btn,
     .quiz-reset-best {
         display: inline-flex;
@@ -1166,7 +1266,7 @@ input[type="range"]:focus-visible::-moz-range-thumb {
     position: relative;            /* anchor for absolute-positioned overlays (e.g. psychrometric chart's state-point chip) */
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: 3px;
+    border-radius: 0;
     padding: 0.75rem 0.5rem;
     margin-bottom: 0.75rem;
 }
@@ -1223,7 +1323,7 @@ input[type="range"]:focus-visible::-moz-range-thumb {
     background: var(--bg);
     border: 1px solid var(--border);
     border-left: 2px solid var(--accent);
-    border-radius: 3px;
+    border-radius: 0;
     padding: 1rem 1.25rem;
 }
 .callout h3 {
@@ -1247,7 +1347,7 @@ input[type="range"]:focus-visible::-moz-range-thumb {
     color: var(--text-dim);
     background: var(--surface-3);
     border: 1px solid var(--border);
-    border-radius: 3px;
+    border-radius: 0;
     padding: 0.6rem 0.8rem;
     margin: 0.6rem 0;
 }
@@ -1306,7 +1406,7 @@ p.chip-row-preamble {
     color: var(--text);
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: 3px;
+    border-radius: 0;
     padding: 0.35rem 0.75rem;
     cursor: pointer;
     transition: border-color 0.18s, background 0.18s, color 0.18s;
@@ -1345,7 +1445,7 @@ p.chip-row-preamble {
     flex-direction: column;
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: 4px;
+    border-radius: 0;
     padding: 0;
     overflow: hidden;
     text-decoration: none;
@@ -1487,7 +1587,7 @@ p.chip-row-preamble {
     background: var(--bg);
     border: 1px solid var(--border);
     border-left: 3px solid var(--blue);
-    border-radius: 3px;
+    border-radius: 0;
     font-size: 0.92rem;
     line-height: 1.75;
     color: var(--text);
@@ -1529,7 +1629,7 @@ p.chip-row-preamble {
     padding: 1.1rem 1.5rem 1.2rem;
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: 4px;
+    border-radius: 0;
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 1.1rem 2.5rem;
@@ -1612,7 +1712,7 @@ p.chip-row-preamble {
     color: var(--text);
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: 3px;
+    border-radius: 0;
     padding: 0.2rem 0.5rem;
 }
 .quiz-best-readout {
@@ -1630,7 +1730,7 @@ p.chip-row-preamble {
     color: var(--text-dim);
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: 3px;
+    border-radius: 0;
     padding: 0.25rem 0.6rem;
     cursor: pointer;
     transition: border-color 0.18s, color 0.18s;
@@ -1642,7 +1742,7 @@ p.chip-row-preamble {
     padding: 0.55rem 0.85rem;
     background: var(--amber-dim);
     border: 1px solid var(--amber-glow);
-    border-radius: 3px;
+    border-radius: 0;
     font-family: var(--mono);
     font-size: 0.74rem;
     color: var(--text);
@@ -1657,7 +1757,7 @@ p.chip-row-preamble {
     color: var(--amber);
     background: transparent;
     border: 1px solid var(--amber);
-    border-radius: 3px;
+    border-radius: 0;
     padding: 0.2rem 0.55rem;
     cursor: pointer;
     transition: color 0.18s, background 0.18s;
@@ -1687,7 +1787,7 @@ p.chip-row-preamble {
 .quiz-progress-bar {
     height: 4px;
     background: var(--surface-3);
-    border-radius: 2px;
+    border-radius: 0;
     overflow: hidden;
 }
 .quiz-progress-fill {
@@ -1714,7 +1814,7 @@ p.chip-row-preamble {
     font-size: 0.92em;
     background: var(--surface-3);
     padding: 0.05em 0.35em;
-    border-radius: 2px;
+    border-radius: 0;
 }
 
 .quiz-snippet-slot { margin: 0; }
@@ -1725,7 +1825,7 @@ p.chip-row-preamble {
     color: var(--text);
     background: var(--surface-3);
     border: 1px solid var(--border);
-    border-radius: 3px;
+    border-radius: 0;
     padding: 0.85rem 1rem;
     white-space: pre;
     overflow-x: auto;
@@ -1746,7 +1846,7 @@ p.chip-row-preamble {
     color: var(--text);
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: 3px;
+    border-radius: 0;
     padding: 0.7rem 0.95rem;
     cursor: pointer;
     transition: border-color 0.18s, background 0.18s, color 0.18s;
@@ -1756,7 +1856,7 @@ p.chip-row-preamble {
     font-size: 0.9em;
     background: var(--surface-3);
     padding: 0.02em 0.3em;
-    border-radius: 2px;
+    border-radius: 0;
 }
 .quiz-choice:hover { border-color: var(--amber); }
 .quiz-choice[aria-checked="true"],
@@ -1794,7 +1894,7 @@ p.chip-row-preamble {
     color: var(--text);
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: 3px;
+    border-radius: 0;
     padding: 0.5rem 0.75rem;
     width: 9rem;
 }
@@ -1823,7 +1923,7 @@ p.chip-row-preamble {
     font-size: 0.85rem;
     letter-spacing: 0.02em;
     padding: 0.6rem 1.2rem;
-    border-radius: 3px;
+    border-radius: 0;
     cursor: pointer;
     transition: color 0.18s, background 0.18s, border-color 0.18s;
 }
@@ -1886,7 +1986,7 @@ p.chip-row-preamble {
     font-size: 0.9em;
     background: var(--surface-3);
     padding: 0.05em 0.35em;
-    border-radius: 2px;
+    border-radius: 0;
 }
 .quiz-reveal-learn-more {
     font-family: var(--mono);
@@ -1971,7 +2071,7 @@ p.chip-row-preamble {
     padding: 0.7rem 1.4rem;
     background: var(--surface);
     border: 1px solid var(--accent);
-    border-radius: 3px;
+    border-radius: 0;
     color: var(--accent);
     text-decoration: none;
     transition: background 0.18s, color 0.18s;
@@ -2116,7 +2216,7 @@ input.ps-input, select.ps-input, textarea.ps-input {
     font-family: var(--mono);
     font-size: 0.82rem;
     color: var(--text-bright);
-    border-radius: 2px;
+    border-radius: 0;
     -webkit-appearance: none;
 }
 input.ps-input:focus, select.ps-input:focus, textarea.ps-input:focus {
@@ -2289,7 +2389,7 @@ p.ref-note.compact {
     padding: 1.1rem 1.25rem;
     background: var(--surface-3);
     border: 1px solid var(--border);
-    border-radius: 3px;
+    border-radius: 0;
 }
 
 .widget-try {
@@ -2362,7 +2462,7 @@ p.ref-note.compact {
     background: var(--bg);
     border: 1px solid var(--border);
     border-left: 4px solid var(--blue);
-    border-radius: 3px;
+    border-radius: 0;
     padding: 0.75rem 1rem;
     font-size: 0.86rem;
     line-height: 1.7;
@@ -2383,7 +2483,7 @@ p.ref-note.compact {
     background: var(--bg);
     border: 1px solid var(--border);
     border-left: 4px solid var(--heat);
-    border-radius: 3px;
+    border-radius: 0;
     font-size: 0.86rem;
     line-height: 1.7;
     color: var(--text);
@@ -2504,6 +2604,189 @@ p.ref-note.compact {
     50%      { box-shadow: 0 0 0 11px rgba(67,136,28,0.05); }
 }
 .bas-breathe { animation: bas-breathe 1.8s ease-in-out infinite; }
+
+/* ──────────────────────────────────────────────────────────────────────
+ * EQUIPMENT REGISTER — warm device face + positive-mode dot-matrix LCD.
+ *
+ * The second of the two semantic registers (see the :root THEME TOKENS
+ * comment). Used ONLY where a page depicts real hardware: VFD/DMM sims,
+ * sensor/device widgets, and the one readout in a software tool that
+ * shows a physical field value. Warm, dimensional, lit — because it's a
+ * device. These tokens (--dev-* / --lcd-*) and look stay CONSTANT across
+ * light/dark; a device is a device in either theme.
+ *
+ * Distilled from design-spike.html (the locked reference). No production
+ * page consumes these yet — /styleguide.html is the living consumer, and
+ * the VFD mock is the first page slated to adopt them (Phase 3). Keep the
+ * register clearly distinct from the flat slate software .panel/.tool-card
+ * chrome so the texture *means* "this is hardware."
+ * ────────────────────────────────────────────────────────────────────── */
+
+/* Device status LED — glowing, sits on a device face. Distinct from the
+   flat software-widget .bas-led: the colour rides a local --c so each
+   modifier just reassigns it (no var(--x, #hex) fallback). */
+.led {
+    --c: var(--accent);
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex: none;
+    display: inline-block;
+    background: var(--c);
+    box-shadow: 0 0 5px 0 var(--c);
+}
+.led--run   { --c: var(--accent); }
+.led--alarm { --c: var(--red); animation: blink 1.2s steps(1) infinite; }
+.led--comm  { --c: var(--teal); }
+.led--warn  { --c: var(--amber); }
+.led--off   { --c: #2f3640; box-shadow: inset 0 0 2px rgba(0,0,0,0.7); }
+@keyframes blink { 50% { opacity: 0.25; box-shadow: none; } }
+
+/* Device shell — bezel + recessed face. The box-shadow is the physical
+   bezel ring + a 2px bottom edge (an equipment dimensional cue, not a
+   floating software shadow). */
+.device {
+    position: relative;
+    background: var(--dev-face);
+    border: 1px solid var(--dev-edge);
+    border-radius: var(--rail);
+    padding: 4px;
+    box-shadow: 0 0 0 1px var(--dev-bezel), 0 2px 0 rgba(0,0,0,0.5);
+}
+.device-inner {
+    border: 1px solid var(--dev-bezel);
+    border-radius: var(--rail);
+    padding: 0.7rem;
+    background: linear-gradient(180deg, rgba(255,235,180,0.025), transparent 40%), var(--dev-face);
+}
+.device-tb { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.6rem; }
+.device-tb .title {
+    font-family: var(--mono);
+    font-size: 0.66rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: #b8b29a;            /* warm gray, legible on the dark device face */
+}
+.device-tb .badge {
+    font-family: var(--mono);
+    font-size: 0.56rem;
+    color: #6f6a55;
+    margin-left: auto;
+    letter-spacing: 0.08em;
+}
+
+/* The LCD well — lit olive backlight, recessed. The dot-matrix pixel
+   mesh (::after, multiply-blended) is the character-LCD tell on BMS /
+   VFD keypads. Positive-mode: dark ink on lit field. NO scanlines, NO
+   glow — that was the rejected phosphor look. */
+.lcd {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(180deg, var(--lcd-bg), var(--lcd-bg-2));
+    border: 1px solid #20240f;
+    border-radius: var(--rail);
+    padding: 0.5rem 0.65rem;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.3), inset 0 1px 4px rgba(0,0,0,0.4);
+}
+.lcd::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    mix-blend-mode: multiply;
+    background-image: radial-gradient(circle at center, transparent 36%, var(--lcd-grid) 41%);
+    background-size: 3px 3px;
+}
+.lcd .k {
+    font-family: var(--mono);
+    font-size: 0.54rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(27,36,16,0.72);
+}
+.lcd .v {
+    font-family: var(--mono);
+    font-weight: 700;
+    font-size: 1.55rem;
+    line-height: 1.05;
+    color: var(--lcd-ink);
+    margin-top: 0.12rem;
+}
+.lcd .v small { font-size: 0.66rem; color: rgba(27,36,16,0.6); margin-left: 0.12rem; }
+
+/* Physical keypad — embossed keycaps. Warm key colours are equipment
+   constants (the key is plastic, not themed); .go is the run/enter key. */
+.keypad { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-top: 0.6rem; }
+.key {
+    font-family: var(--mono);
+    font-size: 0.64rem;
+    color: #cfc8ad;
+    text-align: center;
+    padding: 0.5rem 0;
+    border-radius: var(--rail);
+    background: linear-gradient(180deg, #2a281e, #1b1913);
+    border: 1px solid #000;
+    box-shadow: inset 0 1px 0 var(--dev-hi);
+    cursor: pointer;
+}
+.key:active { background: #17150f; box-shadow: inset 0 1px 3px #000; }
+.key.go { color: #0a1305; background: linear-gradient(180deg, var(--accent-bright), var(--accent)); border-color: #3f6e1d; }
+
+/* Device LED status row — led + caps label clusters under a device. */
+.dev-leds { display: flex; gap: 0.9rem; margin-top: 0.6rem; }
+.dev-leds span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #8a8369;
+}
+
+/* Bar gauge — used in both registers, tinted per register. Software (.gauge)
+   = blue data fill with a small data-glow; equipment (.gauge.eq) = the lit
+   olive dot-matrix field with a segmented dark-ink fill. */
+.gauge { display: flex; align-items: center; gap: 0.55rem; }
+.gauge-label {
+    flex: none;
+    width: 4em;
+    font-family: var(--mono);
+    font-size: 0.66rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-dim);
+}
+.gauge .track {
+    flex: 1;
+    height: 10px;
+    background: var(--well);
+    border: 1px solid var(--border);
+    border-radius: var(--rail);
+    overflow: hidden;
+}
+.gauge .fill { height: 100%; width: var(--pct, 60%); background: var(--blue); box-shadow: 0 0 6px var(--blue-glow); }
+.gauge .pct { font-family: var(--mono); font-size: 0.72rem; color: var(--text-bright); width: 3.2em; text-align: right; }
+.gauge.eq .gauge-label { color: #8a8369; }
+.gauge.eq .track {
+    position: relative;
+    background: linear-gradient(180deg, var(--lcd-bg), var(--lcd-bg-2));
+    border-color: #20240f;
+}
+.gauge.eq .track::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    mix-blend-mode: multiply;
+    background-image: radial-gradient(circle at center, transparent 36%, var(--lcd-grid) 41%);
+    background-size: 3px 3px;
+}
+.gauge.eq .fill { background: repeating-linear-gradient(90deg, var(--lcd-ink) 0 4px, rgba(27,36,16,0.22) 4px 7px); box-shadow: none; }
+.gauge.eq .pct { color: #c2cf72; }
 
 /* Utility: hide an element that JS toggles into view. display:none
    drops it from layout and the accessibility tree. Placed after the
