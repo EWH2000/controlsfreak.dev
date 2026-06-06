@@ -833,6 +833,21 @@ ratio). Introduces a new **Hydronics** tools chip at
 Future refinement: metric flow/pressure inputs alongside the Kv
 readout, if a metric user asks.
 
+### Pump & fan affinity laws *(shipped)*
+The second Hydronics-chip tool, pairing with Pump Control + VFDs.
+Scales one operating point (Q, H, P — each optional) by a ratio: by
+speed (the VFD case, exact) or by impeller diameter (trim, approximate
+for modest cuts of the same casing). Flow ∝ ratio, head ∝ ratio²,
+power ∝ ratio³ — the cube on power is the headline, the energy case for
+variable-speed pumping. Like valve authority it's pure ratios, so the
+tool is unit-agnostic: speeds/diameters take any consistent unit and
+Q/H/P pass through in whatever the visitor enters (head ft for pumps,
+static pressure in. w.c. for fans, power bhp or kW). One shared calc
+factory drives both tabs; the only difference is the ratio's source
+field. Tagged "Pumps & Fans" (the tag/category split is already the
+norm — Analog I/O vs signals) while sitting under the Hydronics chip.
+At `/tools/affinity-laws.html`.
+
 ### Thermistor calculator *(both modes shipped + curves verified)*
 Two modes, tabs à la Signal Scaling. Both are shipped and the curves
 are datasheet-verified.
