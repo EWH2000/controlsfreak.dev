@@ -23,10 +23,10 @@ nav: education
 
     <div class="filter-chips" role="group" aria-label="Filter lessons by category">
         <button type="button" class="filter-chip active" data-category="all" aria-pressed="true">
-            All <span class="filter-chip-count">16</span>
+            All <span class="filter-chip-count">17</span>
         </button>
         <button type="button" class="filter-chip" data-category="fundamentals" aria-pressed="false">
-            Fundamentals <span class="filter-chip-count">5</span>
+            Fundamentals <span class="filter-chip-count">6</span>
         </button>
         <button type="button" class="filter-chip" data-category="hydronics" aria-pressed="false">
             Hydronics <span class="filter-chip-count">4</span>
@@ -48,6 +48,15 @@ nav: education
             desc:       'What proportional, integral, and derivative actually do on an HVAC loop — with three small sims you can play with one knob at a time.',
             pills:      ['PID', 'P · I · D', '3 Mini Sims'],
             category:   'control'
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/education/controller-wiring.html',
+            titleShort: 'Controller Wiring',
+            titleFull:  'Controller Wiring',
+            desc:       'How a field point lands on a DDC controller — 24 VAC power and the shared common, the input and output types, and the wiring gotchas that bite. Pairs with the Controller Wiring Simulator.',
+            pills:      ['Wiring', '24 VAC + Common', 'UI / BI / AO / BO', 'Field Gotchas'],
+            category:   'wiring'
         }) }}
         {{ navCard({
             section:    'education',
@@ -205,7 +214,7 @@ nav: education
         // categories that only have one card each. The card-level data-category
         // values stay granular (drives / control / hvac / sequencing / logic)
         // so a future split can put chips back without touching every navCard.
-        const FUNDAMENTALS = new Set(['drives', 'control', 'hvac', 'sequencing', 'logic']);
+        const FUNDAMENTALS = new Set(['drives', 'control', 'hvac', 'sequencing', 'logic', 'wiring']);
 
         function apply(slug) {
             chips.forEach(c => {

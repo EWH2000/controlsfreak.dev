@@ -1,0 +1,398 @@
+---
+title: Controller Wiring — controlsfreak.dev
+description: How a field point lands on a DDC controller — 24 VAC power and the shared common, the input and output types, and the wiring gotchas that bite in the field.
+canonical: https://controlsfreak.dev/education/controller-wiring.html
+nav: education
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block head %}
+    <style>
+        /* Page-specific — controller-wiring schematics. Follows the .edu-svg
+           precedent (full-width, screenshot-audited). The wire palette mirrors
+           the Controller Wiring Simulator: red = 24 VAC hot, blue = common /
+           return, dim = signal, amber = energized "current" flow (the
+           data-flow="current" family the flow-engine colours by default).
+           Class prefix cwl-. Terminal dots / device boxes / orthogonal wires
+           match the simulator's look so the lesson and the sim read as one
+           pair. */
+        .cwl-svg text { font-family: var(--mono); }
+        .cwl-svg .wire { fill: none; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+        .cwl-svg .w-hot { stroke: var(--red); }
+        .cwl-svg .w-com { stroke: var(--blue); }
+        .cwl-svg .w-sig { stroke: var(--text-dim); }
+        .cwl-svg .w-cur { stroke: var(--amber); }
+        .cwl-svg .term { fill: var(--surface); stroke: var(--text-dim); stroke-width: 1.5; }
+        .cwl-svg .dev { fill: var(--surface); stroke: var(--border); stroke-width: 1.5; }
+        .cwl-svg .lbl { fill: var(--text-bright); font-size: 12px; }
+        .cwl-svg .lbl-dim { fill: var(--text-dim); font-size: 11px; }
+        .cwl-svg .lbl-term { fill: var(--text-bright); font-size: 11px; font-weight: 600; }
+        .cwl-svg .arrow-cur { fill: var(--amber); }
+        .cwl-svg .arrow-com { fill: var(--blue); }
+        /* Legend swatches for the wire families. */
+        .cwl-leg.edu-legend .sw.hot { border-top: 3px solid var(--red); }
+        .cwl-leg.edu-legend .sw.com { border-top: 3px solid var(--blue); }
+        .cwl-leg.edu-legend .sw.sig { border-top: 3px solid var(--text-dim); }
+        .cwl-leg.edu-legend .sw.cur { border-top: 3px solid var(--amber); }
+    </style>
+{% endblock %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Education · Controller Wiring</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">Controller Wiring <span class="tool-tag">Wiring</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                Before a DDC controller can run a single line of sequence, every point on it has to be <em>landed</em> — power on its terminals, a sensor on each input, an actuator or a contactor on each output. Get the program perfect and one reversed wire still leaves you with a temperature that reads &minus;40 °F or a damper that never moves. This page walks the four things that hang off a generic controller — power, inputs, outputs, and the common that ties them together — and the handful of wiring mistakes that catch everyone at least once. When you want to try the landings hands-on, the <a href="/simulators/controller-wiring.html">Controller Wiring Simulator</a> is the same controller with live feedback and faults you can trip on purpose.
+            </p>
+
+            <h2 class="subhead" id="power">Power and the shared common</h2>
+
+            <p>
+                A typical field controller runs on <strong>24 VAC</strong> from a small control transformer — line voltage (120 or 277 V) on the primary, 24 V on the secondary. The two secondary leads land on the controller's power terminals: the hot leg on <strong>24V~</strong> and the other leg on <strong>24COM</strong>. 24 VAC is alternating current, so neither leg is "positive" — but one of them is the controller's <strong>reference</strong>, the 0 V that every other measurement is taken against, and that leg is COM.
+            </p>
+
+            <p>
+                This is the single most important idea in the whole panel: <strong>COM is the shared reference for everything.</strong> The return side of every sensor, the common of every analog output, the bottom of every input — they all come back to the same common as the controller's own power. An input measures the voltage (or resistance, or current) <em>between its terminal and COM</em>; if the sensor's return never reaches COM, the controller has no reference for it and the reading is meaningless. Most controllers give you a row of COM terminals near the inputs precisely so you have somewhere to land all those returns. They're internally bonded to 24COM — same node, different screws.
+            </p>
+
+            <p>
+                Where this turns into a field gotcha is <strong>sharing a transformer</strong>. Several controllers, or a controller and its powered actuators, often run off one transformer to save space and VA. That's fine — <em>as long as every device references the same secondary leg as its common.</em> Many controllers half-wave rectify their 24 VAC internally, which makes them polarity-sensitive: tie one device's COM to one leg and the next device's COM to the other, and the two commons sit a full 24 V apart. Now any wire that's supposed to be "common" on both — a shared sensor, a shield, a jumper — bridges the two legs and you get roughly 48 V across the gap, a blown fuse, or a fried input. The rule is simple and absolute: <strong>on a shared transformer, every COM lands on the same leg.</strong> Phase them, or fuse and separate them — never cross them.
+            </p>
+
+            <p>
+                A dead short across the secondary (hot tied straight to COM with no load between) blows the transformer's fuse instantly, which is the panel telling you, loudly, that the circuit is wrong. That's by design — the fuse is cheaper than the controller.
+            </p>
+
+            <!-- Power diagram: one transformer, two devices, both COMs on the
+                 same secondary leg (the phasing rule made visual). Static —
+                 the shared-leg story is the whole point, no motion needed. -->
+            <svg class="edu-svg cwl-svg" id="cwl-power" viewBox="0 0 680 250"
+                 role="img" aria-labelledby="cwl-power-title cwl-power-desc">
+                <title id="cwl-power-title">One transformer feeding two controllers on a shared common</title>
+                <desc id="cwl-power-desc">A 24 VAC control transformer on the left has two secondary leads: a hot leg drawn in red and a common leg drawn in blue. The hot leg runs to the 24V~ terminal of two controllers stacked on the right; the common leg runs to the 24COM terminal of both. Both controllers take their common from the same secondary leg — the correct, phased arrangement. A callout notes that crossing the legs between the two controllers would put 48 volts across the gap.</desc>
+
+                <!-- transformer -->
+                <rect class="dev" x="24" y="84" width="96" height="82" rx="3"/>
+                <text class="lbl" x="72" y="118" text-anchor="middle">XFMR</text>
+                <text class="lbl-dim" x="72" y="134" text-anchor="middle">24 VAC</text>
+                <text class="lbl-dim" x="72" y="150" text-anchor="middle">40 VA</text>
+                <circle class="term" cx="120" cy="104" r="5"/>
+                <circle class="term" cx="120" cy="146" r="5"/>
+                <text class="lbl-dim" x="128" y="100">24~</text>
+                <text class="lbl-dim" x="128" y="159">com</text>
+
+                <!-- controller A. Terminal labels are omitted on purpose: the
+                     hot wire (red) lands on the upper terminal, common (blue) on
+                     the lower, and labelling them here would collide with the
+                     incoming wires. The transformer leads carry the labels. -->
+                <rect class="dev" x="470" y="40" width="160" height="64" rx="3"/>
+                <text class="lbl" x="550" y="66" text-anchor="middle">CONTROLLER A</text>
+                <text class="lbl-dim" x="550" y="84" text-anchor="middle">half-wave 24 VAC</text>
+                <circle class="term" cx="470" cy="58" r="5"/>
+                <circle class="term" cx="470" cy="92" r="5"/>
+
+                <!-- controller B -->
+                <rect class="dev" x="470" y="150" width="160" height="64" rx="3"/>
+                <text class="lbl" x="550" y="176" text-anchor="middle">CONTROLLER B</text>
+                <text class="lbl-dim" x="550" y="194" text-anchor="middle">half-wave 24 VAC</text>
+                <circle class="term" cx="470" cy="168" r="5"/>
+                <circle class="term" cx="470" cy="202" r="5"/>
+
+                <!-- hot leg (red): xfmr 24~ up the bus to both upper terminals -->
+                <path class="wire w-hot" d="M 120 104 H 300 V 58 H 470"/>
+                <path class="wire w-hot" d="M 300 104 V 168 H 470"/>
+                <!-- common leg (blue): xfmr com to both lower terminals -->
+                <path class="wire w-com" d="M 120 146 H 340 V 92 H 470"/>
+                <path class="wire w-com" d="M 340 146 V 202 H 470"/>
+
+                <text class="lbl-dim" x="300" y="234" text-anchor="middle">both COMs on the same leg = same 0 V reference</text>
+            </svg>
+            <p class="edu-legend cwl-leg">
+                <span><span class="sw hot"></span>24 VAC hot</span>
+                <span><span class="sw com"></span>common / return</span>
+            </p>
+
+            <h2 class="subhead" id="inputs">Inputs — what the controller reads</h2>
+
+            <p>
+                Most field controllers give you <strong>universal inputs</strong> (UI) that can be configured per point to read a few different electrical quantities, plus dedicated <strong>binary inputs</strong> (BI) for on/off contacts. The wiring is mostly about getting the right two or three conductors to the right terminals — and, every time, getting the return back to COM. What the input <em>reads</em> depends on how you configure it and what kind of device is on the other end.
+            </p>
+
+            <p>
+                <strong>A 10K thermistor</strong> is the simplest: two leads, no polarity, no power. One lands on the UI, the other on COM. The controller, configured for resistance, pushes a tiny known current through it and measures the voltage drop — that's the resistance, and the type curve turns resistance into temperature. Cut one lead (or land the return somewhere that isn't COM) and the controller sees infinite resistance, which the curve reads as full-scale cold. That's why a clean break shows up as a wildly low temperature, not a blank: the input is doing exactly what it's told with the open circuit it's given. (Get the type wrong — Type II curve on a Type III sensor — and it reads, but it reads several degrees off; configuration matters as much as wiring.)
+            </p>
+
+            <p>
+                <strong>A 0&ndash;10 V transmitter</strong> is a three-wire device: it needs power (often 24 V from the same control transformer), it puts out a 0&ndash;10 V signal on a third wire, and its own common ties back to COM. The controller, configured for voltage, reads the signal against COM. No power, no signal — the point reads 0 and sits there looking like a sensor pegged at the bottom of its range.
+            </p>
+
+            <p>
+                <strong>A 4&ndash;20 mA transmitter</strong> is where the loop-power idea trips people up. A two-wire transmitter doesn't have a separate signal wire — it <em>regulates the current flowing through the loop it sits in</em>, between 4 and 20 mA, in proportion to what it measures. That means the loop has to be powered: the 24 V hot leg drives current out to the transmitter's <strong>+</strong>, through the transmitter, back into the controller's input (configured for current) on the <strong>&minus;</strong> side, where a small internal resistor turns the current into a voltage the controller can read, with the bottom of that resistor on COM. Forget to power the loop and there's no current to regulate — the point reads 0 mA, dead. The payoff is that 4 mA at the bottom of the range is a live, non-zero signal, so a broken wire (0 mA) is distinguishable from a real low reading; that's the whole reason the standard starts at 4, not 0.
+            </p>
+
+            <p>
+                <strong>A binary input</strong> watches a dry contact — a relay, a switch, a proof-of-flow paddle. The controller supplies its own low-voltage "wetting" current out the BI terminal; the field contact either completes the circuit back to COM (closed) or doesn't (open). Land one leg on the BI and the other on COM and you're done — but only if the return actually reaches COM. A contact wired to the BI with its other leg floating can never make the circuit, so the input reads OPEN no matter what the equipment does. Some contacts are instead <em>externally powered</em> ("wet"), already carrying a voltage from another panel; those don't want the controller's wetting voltage and have to be landed as the controller's manual calls out, or you back-feed one panel from another. Know which kind you have before you land it.
+            </p>
+
+            <p>
+                One thing this page deliberately skips: <strong>shielding and grounding</strong> of analog cable. The short version is that you land the cable's drain/shield at the panel end <em>only</em>, never both ends, or you create a ground loop that adds noise to the very signals you're trying to read cleanly. The <a href="/practice/field-wiring-sensors.html">Field Wiring &mdash; Sensors drill</a> works through the why.
+            </p>
+
+            <!-- Inputs diagram: power + UI/BI column on the left, four landings on
+                 the right. A red hot bus distributes 24V~ to the powered
+                 transmitters; a blue common bus collects every return back to COM.
+                 Signal wires run straight across. Nothing crosses the body. Static. -->
+            <svg class="edu-svg cwl-svg" id="cwl-inputs" viewBox="0 0 700 400"
+                 role="img" aria-labelledby="cwl-inputs-title cwl-inputs-desc">
+                <title id="cwl-inputs-title">Four input landings on a controller</title>
+                <desc id="cwl-inputs-desc">A controller terminal column on the left lists 24V~, UI1, UI2, UI3, a COM terminal, and BI1. A red hot bus runs down from 24V~ and a blue common bus runs from COM. To the right, four devices land on them: a 10K thermistor on UI1 with its return to the common bus (signal wire dim); a three-wire 0 to 10 volt transmitter on UI2 taking 24 volt power off the hot bus, output to UI2, and common to the common bus; a two-wire 4 to 20 milliamp transmitter whose loop is powered off the hot bus and returns into UI3; and a dry contact on BI1 returning to the common bus. Every return lands on the shared common.</desc>
+
+                <!-- controller terminal column -->
+                <rect class="dev" x="24" y="34" width="126" height="350" rx="3"/>
+                <text class="lbl-dim" x="87" y="26" text-anchor="middle">CONTROLLER</text>
+                <circle class="term" cx="150" cy="64" r="5"/>  <text class="lbl-term" x="124" y="68" text-anchor="end">24V~</text>
+                <circle class="term" cx="150" cy="112" r="5"/> <text class="lbl-term" x="124" y="116" text-anchor="end">UI1</text>
+                <circle class="term" cx="150" cy="180" r="5"/> <text class="lbl-term" x="124" y="184" text-anchor="end">UI2</text>
+                <circle class="term" cx="150" cy="258" r="5"/> <text class="lbl-term" x="124" y="262" text-anchor="end">UI3</text>
+                <circle class="term" cx="150" cy="318" r="5"/> <text class="lbl-term" x="124" y="322" text-anchor="end">COM</text>
+                <circle class="term" cx="150" cy="360" r="5"/> <text class="lbl-term" x="124" y="364" text-anchor="end">BI1</text>
+
+                <!-- distribution buses: hot (red) from 24V~, common (blue) from COM -->
+                <path class="wire w-hot" d="M 150 64 H 192 V 250 H 150"/>
+                <path class="wire w-com" d="M 150 318 H 224 V 112"/>
+                <path class="wire w-com" d="M 224 374 V 318"/>
+
+                <!-- 10K thermistor on UI1 -->
+                <rect class="dev" x="490" y="92" width="160" height="40" rx="3"/>
+                <text class="lbl" x="570" y="110" text-anchor="middle">10K THERMISTOR</text>
+                <text class="lbl-dim" x="570" y="125" text-anchor="middle">resistance · 2-wire</text>
+                <path class="wire w-sig" d="M 150 112 H 490"/>
+                <path class="wire w-com" d="M 490 126 H 224"/>
+
+                <!-- 0-10V transmitter on UI2 (3-wire: pwr / out / com) -->
+                <rect class="dev" x="490" y="152" width="160" height="56" rx="3"/>
+                <text class="lbl" x="570" y="174" text-anchor="middle">0&ndash;10 V XMTR</text>
+                <text class="lbl-dim" x="570" y="189" text-anchor="middle">3-wire · pwr/out/com</text>
+                <path class="wire w-hot" d="M 192 164 H 490"/>
+                <path class="wire w-sig" d="M 150 180 H 490"/>
+                <path class="wire w-com" d="M 490 196 H 224"/>
+
+                <!-- 4-20mA transmitter on UI3 (2-wire loop) -->
+                <rect class="dev" x="490" y="236" width="160" height="48" rx="3"/>
+                <text class="lbl" x="570" y="258" text-anchor="middle">4&ndash;20 mA XMTR</text>
+                <text class="lbl-dim" x="570" y="273" text-anchor="middle">2-wire · loop-powered</text>
+                <path class="wire w-hot" d="M 192 246 H 490"/>
+                <path class="wire w-sig" d="M 490 272 H 320 V 258 H 150"/>
+
+                <!-- dry contact on BI1 -->
+                <rect class="dev" x="490" y="340" width="160" height="40" rx="3"/>
+                <text class="lbl" x="570" y="358" text-anchor="middle">DRY CONTACT</text>
+                <text class="lbl-dim" x="570" y="373" text-anchor="middle">return to COM</text>
+                <path class="wire w-sig" d="M 150 360 H 490"/>
+                <path class="wire w-com" d="M 490 374 H 224"/>
+
+                <text class="lbl-dim" x="370" y="396" text-anchor="middle">hot bus feeds the transmitters · every return lands on COM</text>
+            </svg>
+            <p class="edu-legend cwl-leg">
+                <span><span class="sw hot"></span>24 VAC hot / loop power</span>
+                <span><span class="sw com"></span>common / return</span>
+                <span><span class="sw sig"></span>signal</span>
+            </p>
+
+            <h2 class="subhead" id="outputs">Outputs — what the controller drives</h2>
+
+            <p>
+                Outputs come in the same two flavors as inputs: <strong>analog outputs</strong> (AO) that modulate &mdash; a 0&ndash;10 V or 4&ndash;20 mA signal to a damper or valve actuator &mdash; and <strong>binary outputs</strong> (BO) that switch something on or off. The recurring mistake on the output side is forgetting that <em>the controller's signal is not the load's power.</em>
+            </p>
+
+            <p>
+                <strong>A 0&ndash;10 V actuator</strong> needs three things, and a tech in a hurry lands two of them. It needs its own <strong>power</strong> — 24 VAC to run the motor that swings the damper. It needs the <strong>control signal</strong> from the AO terminal. And it needs its signal common tied back to the controller's COM, so the actuator and the controller measure that 0&ndash;10 V against the same reference. Land the signal and skip the power and the actuator sits dead while the controller cheerfully commands 60% — the AO is an output, not a power source, and 10 V at a few milliamps won't swing a damper. Land the power and signal but float the common and the command has no shared reference and drifts. All three, every time.
+            </p>
+
+            <p>
+                <strong>A binary output</strong> is usually a <strong>dry relay contact</strong> inside the controller — two terminals that the controller closes together on command, switching nothing of its own. To make that relay <em>do</em> something, you pass a circuit through it: bring the 24 VAC hot leg to the relay's common terminal (often labeled BO-C or a per-output source pin), run the switched side out to the load — a fan contactor coil, a small relay, a solenoid — and return the load to 24COM. Close the relay and the load gets its 24 VAC; open it and the load drops out. The classic head-scratcher: everything's wired, the controller commands the BO on, the relay clicks &mdash; and nothing happens, because BO-C was never fed from the hot leg. The relay is switching a leg that has no power on it.
+            </p>
+
+            <p>
+                Some binary outputs are <strong>triacs</strong> instead of relays — solid-state switches that handle 24 VAC only (no dry-contact flexibility, and a small leakage current even when "off" that can hold a sensitive load partly energized), but with no moving contacts to wear out. They're common for driving floating/tristate actuators, where two triac outputs (open and close) inch an actuator in each direction. The wiring intent is the same — switch a 24 VAC leg to a load — but a triac isn't a dry contact: it won't switch a separate voltage, and that leakage means it's the wrong choice for, say, proving a circuit truly de-energized.
+            </p>
+
+            <!-- Outputs diagram: AO 0-10V actuator (power + signal + common) and a
+                 BO relay driving a fan contactor (BO-C fed from the hot leg). All
+                 wiring stays in the gap right of the column. Static. -->
+            <svg class="edu-svg cwl-svg" id="cwl-outputs" viewBox="0 0 700 340"
+                 role="img" aria-labelledby="cwl-outputs-title cwl-outputs-desc">
+                <title id="cwl-outputs-title">An analog and a binary output landing</title>
+                <desc id="cwl-outputs-desc">A 0 to 10 volt actuator takes three connections from the controller: 24 volt power (red) and a signal common back to 24COM (blue) to run its motor, and a control signal from the AO1 terminal (dim). Below it, a binary output drives a fan contactor: a jumper feeds the hot leg to the BO-C source terminal (red), the BO1 contact switches out to the contactor coil, and the coil returns to 24COM (blue). A note reads: feed BO-C from the hot leg, or the relay clicks but nothing runs.</desc>
+
+                <!-- controller -->
+                <rect class="dev" x="24" y="40" width="126" height="270" rx="3"/>
+                <text class="lbl-dim" x="87" y="32" text-anchor="middle">CONTROLLER</text>
+                <circle class="term" cx="150" cy="64" r="5"/>  <text class="lbl-term" x="124" y="68" text-anchor="end">24V~</text>
+                <circle class="term" cx="150" cy="104" r="5"/> <text class="lbl-term" x="124" y="108" text-anchor="end">24COM</text>
+                <circle class="term" cx="150" cy="152" r="5"/> <text class="lbl-term" x="124" y="156" text-anchor="end">AO1</text>
+                <circle class="term" cx="150" cy="262" r="5"/> <text class="lbl-term" x="124" y="266" text-anchor="end">BO-C</text>
+                <circle class="term" cx="150" cy="300" r="5"/> <text class="lbl-term" x="124" y="304" text-anchor="end">BO1</text>
+
+                <!-- 0-10V actuator (pwr + signal + shared common) -->
+                <rect class="dev" x="490" y="108" width="170" height="92" rx="3"/>
+                <text class="lbl" x="575" y="138" text-anchor="middle">0&ndash;10 V ACTUATOR</text>
+                <text class="lbl-dim" x="575" y="156" text-anchor="middle">power + signal</text>
+                <text class="lbl-dim" x="575" y="171" text-anchor="middle">+ shared common</text>
+                <path class="wire w-hot" d="M 150 64 H 224 V 130 H 490"/>
+                <path class="wire w-sig" d="M 150 152 H 490"/>
+                <path class="wire w-com" d="M 490 176 H 264 V 104 H 150"/>
+
+                <!-- BO relay -> fan contactor; BO-C jumpered from the hot leg -->
+                <rect class="dev" x="490" y="250" width="170" height="68" rx="3"/>
+                <text class="lbl" x="575" y="280" text-anchor="middle">FAN CONTACTOR</text>
+                <text class="lbl-dim" x="575" y="298" text-anchor="middle">24 VAC coil</text>
+                <path class="wire w-hot" d="M 150 64 H 188 V 262 H 150"/>
+                <path class="wire w-hot" d="M 150 300 H 490"/>
+                <path class="wire w-com" d="M 490 314 H 340 V 104 H 150"/>
+
+                <text class="lbl-dim" x="330" y="332" text-anchor="middle">feed BO-C from the hot leg, or the relay clicks but nothing runs</text>
+            </svg>
+            <p class="edu-legend cwl-leg">
+                <span><span class="sw hot"></span>24 VAC hot</span>
+                <span><span class="sw com"></span>common / return</span>
+                <span><span class="sw sig"></span>signal</span>
+            </p>
+
+            <h2 class="subhead" id="putting-together">The whole controller, landed</h2>
+
+            <p>
+                Put it together and a single generic controller carries all of it at once: power in from the transformer, a thermistor and a couple of transmitters on the inputs, a dry contact on a BI, an actuator on an AO, and a fan contactor on a BO. The diagram below traces one of each on a <strong>DDC-8</strong> &mdash; the same controller as the simulator. The amber paths are the ones with current actually flowing: the 24 VAC hot bus feeding everything, and the 4&ndash;20 mA loop circulating from the hot leg, through the transmitter, and back into the input. Blue is the common every return shares; dim is the signal wiring; red is hot at rest.
+            </p>
+
+            <!-- Capstone: full DDC-8 with one landing of each type, energized.
+                 data-flow="current" (amber) on the 24V hot bus + the 4-20mA loop
+                 — the two paths where current literally flows. Direction arrows
+                 carry the meaning under prefers-reduced-motion (the engine bails
+                 and injects no particles). Selectors elsewhere stay attribute-
+                 only per the CLAUDE.md SVG gotcha; these paths are uniquely id'd. -->
+            <svg class="edu-svg cwl-svg" id="cwl-cap" viewBox="0 0 760 540"
+                 role="img" aria-labelledby="cwl-cap-title cwl-cap-desc">
+                <title id="cwl-cap-title">A fully landed DDC-8 controller</title>
+                <desc id="cwl-cap-desc">A generic DDC-8 controller terminal strip down the left side, powered from a 24 VAC transformer at top right. The hot leg (amber, energized) feeds the 24V~ terminal and runs down a vertical hot bus that powers the loop transmitter, the actuator, and the BO-C source. The common leg (blue) feeds 24COM and runs down a vertical common bus that every device return lands on. On the right, one device of each kind: a 10K thermistor on UI1; a 4 to 20 milliamp transmitter on UI2 whose loop circulates from the hot bus through the transmitter and back into the input (amber); a dry contact on BI1; a 0 to 10 volt actuator on AO1 taking power, signal, and common; and a fan contactor switched by BO1. Direction arrows mark current flow on the energized amber paths.</desc>
+
+                <!-- controller strip -->
+                <rect class="dev" x="24" y="40" width="126" height="470" rx="3"/>
+                <text class="lbl-dim" x="87" y="32" text-anchor="middle">GENERIC DDC-8</text>
+                <circle class="term" cx="150" cy="70" r="5"/>  <text class="lbl-term" x="124" y="74" text-anchor="end">24V~</text>
+                <circle class="term" cx="150" cy="110" r="5"/> <text class="lbl-term" x="124" y="114" text-anchor="end">24COM</text>
+                <circle class="term" cx="150" cy="160" r="5"/> <text class="lbl-term" x="124" y="164" text-anchor="end">COM</text>
+                <circle class="term" cx="150" cy="210" r="5"/> <text class="lbl-term" x="124" y="214" text-anchor="end">UI1</text>
+                <circle class="term" cx="150" cy="270" r="5"/> <text class="lbl-term" x="124" y="274" text-anchor="end">UI2</text>
+                <circle class="term" cx="150" cy="330" r="5"/> <text class="lbl-term" x="124" y="334" text-anchor="end">BI1</text>
+                <circle class="term" cx="150" cy="390" r="5"/> <text class="lbl-term" x="124" y="394" text-anchor="end">AO1</text>
+                <circle class="term" cx="150" cy="450" r="5"/> <text class="lbl-term" x="124" y="454" text-anchor="end">BO-C</text>
+                <circle class="term" cx="150" cy="482" r="5"/> <text class="lbl-term" x="124" y="486" text-anchor="end">BO1</text>
+
+                <!-- transformer (top right) -->
+                <rect class="dev" x="470" y="26" width="120" height="58" rx="3"/>
+                <text class="lbl" x="530" y="50" text-anchor="middle">XFMR</text>
+                <text class="lbl-dim" x="530" y="66" text-anchor="middle">24 VAC</text>
+                <circle class="term" cx="470" cy="44" r="4.5"/>
+                <circle class="term" cx="470" cy="68" r="4.5"/>
+
+                <!-- POWER feeds + the two distribution buses -->
+                <!-- hot feed (animated): xfmr 24~ -> 24V~ -->
+                <path id="cwl-cap-feed" data-flow="current" class="wire w-cur" d="M 470 44 H 178 V 70 H 150" fill="none"/>
+                <polygon class="arrow-cur" points="300,39 300,49 290,44"/>
+                <!-- hot bus (animated): 24V~ down the spine -->
+                <path id="cwl-cap-hot" data-flow="current" class="wire w-cur" d="M 150 70 H 200 V 460 H 150" fill="none"/>
+                <polygon class="arrow-cur" points="195,300 205,300 200,310"/>
+                <!-- common feed + common bus (blue) -->
+                <path class="wire w-com" d="M 470 68 H 200 V 110 H 150"/>
+                <path class="wire w-com" d="M 150 110 H 232 V 490"/>
+                <path class="wire w-com" d="M 232 160 H 150"/>
+
+                <!-- thermistor on UI1 -->
+                <rect class="dev" x="480" y="190" width="160" height="40" rx="3"/>
+                <text class="lbl" x="560" y="208" text-anchor="middle">10K THERMISTOR</text>
+                <text class="lbl-dim" x="560" y="223" text-anchor="middle">UI1 + COM</text>
+                <path class="wire w-sig" d="M 150 210 H 480"/>
+                <path class="wire w-com" d="M 480 224 H 232"/>
+
+                <!-- 4-20mA loop on UI2: hot bus -> xmtr+ ; xmtr- -> UI2 (animated) -->
+                <rect class="dev" x="480" y="250" width="160" height="44" rx="3"/>
+                <text class="lbl" x="560" y="270" text-anchor="middle">4&ndash;20 mA XMTR</text>
+                <text class="lbl-dim" x="560" y="285" text-anchor="middle">loop-powered</text>
+                <path class="wire w-cur" d="M 200 264 H 480"/>
+                <path id="cwl-cap-loop" data-flow="current" class="wire w-cur" d="M 480 286 H 360 V 270 H 150" fill="none"/>
+                <polygon class="arrow-cur" points="250,265 240,270 250,275"/>
+
+                <!-- dry contact on BI1 -->
+                <rect class="dev" x="480" y="310" width="160" height="40" rx="3"/>
+                <text class="lbl" x="560" y="328" text-anchor="middle">DRY CONTACT</text>
+                <text class="lbl-dim" x="560" y="343" text-anchor="middle">BI1 + COM</text>
+                <path class="wire w-sig" d="M 150 330 H 480"/>
+                <path class="wire w-com" d="M 480 344 H 232"/>
+
+                <!-- 0-10V actuator on AO1: hot tap + signal + common -->
+                <rect class="dev" x="480" y="368" width="160" height="54" rx="3"/>
+                <text class="lbl" x="560" y="390" text-anchor="middle">0&ndash;10 V ACTUATOR</text>
+                <text class="lbl-dim" x="560" y="407" text-anchor="middle">pwr + sig + com</text>
+                <path class="wire w-cur" d="M 200 404 H 480"/>
+                <path class="wire w-sig" d="M 150 390 H 480"/>
+                <path class="wire w-com" d="M 480 418 H 232"/>
+
+                <!-- fan contactor on BO1: BO-C fed from hot bus; BO1 switches it -->
+                <rect class="dev" x="480" y="450" width="160" height="50" rx="3"/>
+                <text class="lbl" x="560" y="472" text-anchor="middle">FAN CONTACTOR</text>
+                <text class="lbl-dim" x="560" y="489" text-anchor="middle">switched by BO1</text>
+                <path class="wire w-cur" d="M 200 450 H 150"/>
+                <path class="wire w-hot" d="M 150 482 H 480"/>
+                <path class="wire w-com" d="M 480 494 H 232"/>
+            </svg>
+            <p class="edu-legend cwl-leg">
+                <span><span class="sw cur"></span>energized (current flows)</span>
+                <span><span class="sw hot"></span>24 VAC hot</span>
+                <span><span class="sw com"></span>common / return</span>
+                <span><span class="sw sig"></span>signal</span>
+            </p>
+
+            <p>
+                That's the whole job: power referenced to a shared common, each input fed the conductors it needs to read, each output given both a signal and the power to act on it. The <a href="/simulators/controller-wiring.html">Controller Wiring Simulator</a> lets you land every one of these yourself and watch what happens when you get one wrong &mdash; an open thermistor, an unpowered loop, a BO-C left off the hot leg.
+            </p>
+
+            <p>
+                One piece sits just outside this page: the <strong>network</strong>. A field controller almost always has an RS-485 / BACnet MS/TP trunk or a BACnet/IP port so the BMS can talk to it — its own small world of daisy-chain topology, &plus;/&minus; polarity, end-of-line termination, and station addressing. That's a wiring story of its own, and a dedicated bus simulator is the right place to walk it; for now the controller's network terminals are the seam where it plugs in. For the protocol side of what rides that trunk, the <a href="/education/bacnet-networking.html">BACnet Networking</a> explainer picks it up.
+            </p>
+
+            {{ relatedLinks({
+                tools: [
+                    {href: '/tools/signal-scaling.html', label: 'Signal Scaling'},
+                    {href: '/tools/thermistor-calculator.html', label: 'Thermistor / RTD Calculator'}
+                ],
+                simulators: [
+                    {href: '/simulators/controller-wiring.html', label: 'Controller Wiring Simulator'}
+                ],
+                lessons: [
+                    {href: '/education/bacnet-networking.html', label: 'BACnet Networking'}
+                ],
+                quizzes: [
+                    {href: '/practice/field-wiring-sensors.html', label: 'Field Wiring — Sensors'},
+                    {href: '/practice/controller-swap.html', label: 'Controller Swap'}
+                ]
+            }) }}
+
+            <a class="back-link" href="/education/">← All explainers</a>
+
+        </div>
+    </div>
+
+</main>
+{% endblock %}
