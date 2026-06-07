@@ -1,0 +1,1088 @@
+---
+title: Controller Wiring Simulator — controlsfreak.dev
+description: Wire a generic DDC controller — 24 VAC power, universal/binary inputs, analog/binary outputs — then watch it read live or fail with sparks and a popped fuse.
+canonical: https://controlsfreak.dev/simulators/controller-wiring.html
+nav: simulators
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block head %}
+    <style>
+        /* Page-specific — the controller wiring simulator. A canvas with a
+           fixed controller terminal strip (equipment register) plus dropped
+           field devices, wired click-to-click on an SVG overlay; a FAULTS
+           panel below. Custom stacked layout, same precedent as the other
+           simulators. Class prefix cw-. The controller face uses the shared
+           .device / .lcd / .led equipment vocabulary — it's real hardware. */
+
+        .cw-bar {
+            font-family: var(--mono);
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            margin: 0.5rem 0;
+            line-height: 1.9;
+        }
+        .cw-bar .lbl { letter-spacing: 0.05em; text-transform: uppercase; margin-right: 0.6rem; }
+        .cw-bar button {
+            font-family: var(--mono);
+            font-size: 0.68rem;
+            color: var(--text-bright);
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            padding: 0.3rem 0.55rem;
+            margin: 0 0.35rem 0.35rem 0;
+            cursor: pointer;
+        }
+        .cw-bar button:hover { border-color: var(--accent); color: var(--accent); }
+        .cw-bar button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+        .cw-bar .cw-preset { color: var(--blue); }
+        .cw-bar .cw-preset:hover { border-color: var(--blue); color: var(--text-bright); }
+
+        /* ── Canvas ── */
+        .cw-canvas {
+            position: relative;
+            background: var(--surface-3);
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            height: 600px;
+            overflow: auto;
+            margin: 0.6rem 0;
+        }
+        .cw-canvas-inner {
+            position: relative;
+            width: 940px;
+            height: 580px;
+        }
+        .cw-wire-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 940px;
+            height: 580px;
+            pointer-events: none;
+        }
+        .cw-wire { fill: none; stroke-width: 2.6; stroke-linecap: round; }
+        .cw-wire-sig { stroke: var(--text-dim); }
+        .cw-wire-hot { stroke: var(--red); }
+        .cw-wire-com { stroke: var(--blue); }
+        .cw-wire-hit { fill: none; stroke: transparent; stroke-width: 15; pointer-events: stroke; cursor: pointer; }
+        .cw-wire-sel { stroke: var(--text-bright) !important; stroke-dasharray: 6 3; }
+
+        /* ── Controller (equipment register) ── */
+        .cw-controller {
+            position: absolute;
+            left: 16px;
+            top: 16px;
+            width: 296px;
+        }
+        .cw-ctrl-tb { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.55rem; }
+        .cw-ctrl-tb .title {
+            font-family: var(--mono);
+            font-size: 0.66rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #b8b29a;
+        }
+        .cw-fuse {
+            margin-left: auto;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            font-family: var(--mono);
+            font-size: 0.56rem;
+            letter-spacing: 0.08em;
+            color: #8a8369;
+        }
+        .cw-fuse .tag { color: var(--accent); }
+        .cw-fuse.cw-fuse--blown .tag { color: var(--red); }
+        .cw-fuse.cw-fuse--blown .led { --c: var(--red); }
+
+        .cw-group-label {
+            font-family: var(--mono);
+            font-size: 0.52rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: rgba(184,178,154,0.7);
+            margin: 0.55rem 0 0.2rem;
+        }
+        .cw-group-label:first-child { margin-top: 0; }
+
+        /* a terminal row: [label] [readout] [led] [control] [pin] */
+        .cw-term {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.12rem 0.55rem 0.12rem 0;
+            min-height: 1.45rem;
+        }
+        .cw-term-label {
+            font-family: var(--mono);
+            font-size: 0.64rem;
+            font-weight: 600;
+            color: #cfc8ad;
+            width: 3.1em;
+            flex: none;
+        }
+        .cw-readout {
+            font-family: var(--mono);
+            font-size: 0.66rem;
+            font-weight: 700;
+            color: var(--lcd-ink);
+            background: linear-gradient(180deg, var(--lcd-bg), var(--lcd-bg-2));
+            border: 1px solid #20240f;
+            border-radius: 2px;
+            padding: 0.05rem 0.3rem;
+            min-width: 4.4em;
+            text-align: right;
+            letter-spacing: 0.02em;
+            white-space: nowrap;
+        }
+        .cw-readout.cw-readout--idle { color: rgba(27,36,16,0.5); font-weight: 400; }
+        .cw-readout.cw-readout--alarm { color: #7a1d12; }
+        .cw-term .led { flex: none; }
+        .cw-mode, .cw-bo-toggle {
+            font-family: var(--mono);
+            font-size: 0.58rem;
+            color: #cfc8ad;
+            background: #1b1913;
+            border: 1px solid #000;
+            border-radius: 2px;
+            padding: 0.1rem 0.2rem;
+            cursor: pointer;
+        }
+        .cw-bo-toggle.cw-on { color: #0a1305; background: linear-gradient(180deg, var(--accent-bright), var(--accent)); border-color: #3f6e1d; }
+        .cw-ao-slider { width: 4.2em; flex: none; }
+        .cw-spacer { flex: 1; }
+
+        /* terminal pin — wire anchor on the right edge of the controller,
+           left edge of a device. A real-ish screw terminal. */
+        .cw-pin {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 15px;
+            height: 15px;
+            padding: 0;
+            border: 0;
+            background: transparent;
+            cursor: crosshair;
+        }
+        .cw-pin--term { right: -7px; }
+        .cw-pin--dev  { left: -7px; }
+        .cw-pin-dot {
+            display: block;
+            width: 11px;
+            height: 11px;
+            margin: 2px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 35% 30%, #d8c48a, #8a7836 60%, #5b4d22);
+            box-shadow: 0 0 0 1px #000, inset 0 1px 1px rgba(255,255,255,0.3);
+        }
+        .cw-pin:hover .cw-pin-dot { box-shadow: 0 0 0 1px var(--accent), 0 0 5px var(--accent); }
+        .cw-pin:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; border-radius: 50%; }
+        .cw-pin.cw-pin--pending .cw-pin-dot { background: radial-gradient(circle at 35% 30%, #bfe39a, var(--accent) 60%, #2c5710); box-shadow: 0 0 0 1px var(--accent), 0 0 7px var(--accent); }
+        .cw-term.cw-term--disabled { opacity: 0.4; }
+        .cw-term--disabled .cw-pin { display: none; }
+
+        /* ── Field device cards ── */
+        .cw-dev {
+            position: absolute;
+            width: 132px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            box-shadow: 0 1px 0 var(--bevel-lo);
+            user-select: none;
+        }
+        .cw-dev.cw-dev--sel { border-color: var(--accent); }
+        .cw-dev-head {
+            font-family: var(--mono);
+            font-size: 0.6rem;
+            font-weight: 600;
+            letter-spacing: 0.03em;
+            color: var(--text-bright);
+            background: var(--surface-2);
+            border-bottom: 1px solid var(--border);
+            padding: 0.22rem 0.45rem;
+            border-radius: 2px 2px 0 0;
+            cursor: move;
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+        .cw-dev--sel .cw-dev-head { background: var(--accent-dim); color: var(--accent); }
+        .cw-dev-body { padding: 0.3rem 0.1rem 0.35rem; }
+        .cw-dev-term {
+            position: relative;
+            display: flex;
+            align-items: center;
+            min-height: 1.35rem;
+            padding-left: 0.7rem;
+        }
+        .cw-dev-term .cw-dt-label {
+            font-family: var(--mono);
+            font-size: 0.62rem;
+            color: var(--text-dim);
+        }
+        .cw-dev-cap {
+            font-family: var(--mono);
+            font-size: 0.55rem;
+            color: var(--text-dim);
+            padding: 0.1rem 0.5rem 0.05rem;
+            line-height: 1.4;
+        }
+        .cw-dev-toggle {
+            font-family: var(--mono);
+            font-size: 0.55rem;
+            color: var(--text-bright);
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: 2px;
+            margin: 0.1rem 0.5rem 0.3rem;
+            padding: 0.12rem 0.3rem;
+            cursor: pointer;
+        }
+        .cw-dev-toggle:hover { border-color: var(--accent); color: var(--accent); }
+        .cw-dev-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+        /* spark — a quick flash at a faulted terminal */
+        .cw-spark {
+            position: absolute;
+            width: 22px;
+            height: 22px;
+            margin: -11px 0 0 -11px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #fff 0%, var(--amber) 35%, var(--red) 65%, transparent 72%);
+            pointer-events: none;
+            opacity: 0;
+            z-index: 6;
+        }
+        .cw-spark.cw-spark--go { animation: cw-spark-fx 0.5s ease-out 1; }
+        @keyframes cw-spark-fx {
+            0%   { opacity: 0; transform: scale(0.4); }
+            25%  { opacity: 1; transform: scale(1.25); }
+            100% { opacity: 0; transform: scale(1.8); }
+        }
+        @keyframes cw-fuse-flash {
+            0%, 100% { box-shadow: 0 0 5px 0 var(--red); }
+            50% { box-shadow: 0 0 12px 3px var(--red); }
+        }
+        .cw-fuse--blown .led.cw-fuse-flash { animation: cw-fuse-flash 0.5s steps(2) 3; }
+
+        /* ── Status + faults ── */
+        .cw-status {
+            font-family: var(--mono);
+            font-size: 0.68rem;
+            color: var(--text-dim);
+            margin: 0.3rem 0 0.5rem;
+            min-height: 1.1rem;
+        }
+        .cw-faults {
+            background: var(--surface-3);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--accent);
+            border-radius: 3px;
+            padding: 0.7rem 0.9rem;
+        }
+        .cw-faults.cw-faults--bad { border-left-color: var(--red); }
+        .cw-faults-head {
+            font-family: var(--mono);
+            font-size: 0.66rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.09em;
+            color: var(--text-dim);
+            margin-bottom: 0.4rem;
+        }
+        .cw-faults ul { list-style: none; margin: 0; padding: 0; }
+        .cw-faults li {
+            font-family: var(--mono);
+            font-size: 0.7rem;
+            line-height: 1.5;
+            color: var(--text);
+            padding: 0.18rem 0 0.18rem 1.1rem;
+            position: relative;
+        }
+        .cw-faults li::before { content: "▸"; position: absolute; left: 0; color: var(--red); }
+        .cw-faults li.cw-sev-short::before { content: "✖"; }
+        .cw-faults li.cw-sev-warn::before { content: "▸"; color: var(--amber); }
+        .cw-faults .cw-ok { color: var(--accent); padding-left: 0; }
+        .cw-faults .cw-ok::before { content: none; }
+
+        .cw-hint {
+            font-family: var(--mono);
+            font-size: 0.62rem;
+            color: var(--text-dim);
+            margin-top: 0.5rem;
+        }
+
+        @media (max-width: 720px) {
+            .cw-canvas { height: 520px; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .cw-spark.cw-spark--go { animation: none; }
+            .cw-fuse--blown .led.cw-fuse-flash { animation: none; }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Simulators · Controller Wiring</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">
+                Controller Wiring Simulator
+                <span class="tool-tag">Wiring</span>
+            </h1>
+        </div>
+        <!-- Custom stacked layout on purpose (like the other simulators): a
+             generic controller terminal strip, a tray of field devices, and a
+             wiring canvas don't fit the Input / Output / Reference columns.
+             Network terminals are greyed "future" — the bus simulator will own
+             RS-485 daisy-chains, termination, and addressing. -->
+        <div class="tool-body">
+
+            <p class="tool-preamble" style="margin-bottom:1rem;">
+                Land a generic DDC controller the way you would in the field — power it from a transformer, drop sensors and outputs, and click terminal-to-terminal to run the wire. Get it right and the points read live; get it wrong and it fails the way real hardware fails — a sensor goes open, an actuator sits dead, the fuse pops. <strong>Desktop tool</strong> — wiring wants a mouse and room.
+            </p>
+
+            <div class="cw-bar">
+                <span class="lbl">Load a panel:</span>
+                <button type="button" class="cw-preset" data-preset="ahu">AHU: sensor · damper · fan</button>
+                <button type="button" class="cw-preset" data-preset="loop">4-20 mA loop + status</button>
+                <button type="button" class="cw-preset" data-preset="broken-fuse">Broken: blown fuse</button>
+                <button type="button" class="cw-preset" data-preset="broken-sensor">Broken: dead sensor</button>
+                <button type="button" data-preset="clear">Clear</button>
+            </div>
+
+            <div class="cw-bar">
+                <span class="lbl">Add a field device:</span>
+                <button type="button" data-device="xfmr">24 VAC Xfmr</button>
+                <button type="button" data-device="therm10k">10K Thermistor</button>
+                <button type="button" data-device="xmtr010">0-10V Xmtr</button>
+                <button type="button" data-device="xmtr420">4-20mA Xmtr</button>
+                <button type="button" data-device="dryContact">Dry Contact</button>
+                <button type="button" data-device="act010">0-10V Actuator</button>
+                <button type="button" data-device="relayFan">Fan Contactor</button>
+            </div>
+
+            <div class="cw-canvas" id="cw-canvas">
+                <div class="cw-canvas-inner" id="cw-inner">
+                    <svg class="cw-wire-layer" id="cw-wires" viewBox="0 0 940 580" preserveAspectRatio="none"></svg>
+                    <!-- controller + devices injected here by the IIFE -->
+                </div>
+            </div>
+
+            <p class="cw-status" id="cw-status" role="status" aria-live="polite"></p>
+
+            <div class="cw-faults" id="cw-faults">
+                <div class="cw-faults-head">Faults</div>
+                <ul id="cw-faults-list"></ul>
+            </div>
+
+            <p class="cw-hint">
+                Click a terminal, then a second terminal, to run a wire between them. Click a wire to select it, then press <strong>Delete</strong> to remove it. <strong>Esc</strong> cancels a half-made wire. Drag a device by its title bar; select it and press Delete to remove it.
+            </p>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/tools/signal-scaling.html', label: 'Signal Scaling'},
+            {href: '/tools/thermistor-calculator.html', label: 'Thermistor Calculator'}
+        ],
+        simulators: [
+            {href: '/simulators/function-block-editor.html', label: 'Function-Block Editor'}
+        ],
+        quizzes: [
+            {href: '/practice/field-wiring-sensors.html', label: 'Field Wiring — Sensors'},
+            {href: '/practice/controller-swap.html', label: 'Controller Swap'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/simulators/">← All simulators</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="/scripts/wiring-engine.js"></script>
+<script>
+    // ─────────────────────────────────────────────────────────────────
+    // Controller Wiring Simulator
+    //
+    // The page owns the canvas, the click-to-wire UI, the controller
+    // faceplate, and the fault/animation rendering. wiring-engine.js owns
+    // the terminal model, the device catalog, and the circuit solver
+    // (window.Wiring). After any wire/device/control change — and on a slow
+    // cosmetic tick — we call Wiring.evaluate(panel, state) and paint the
+    // result: live readouts + LEDs, the FUSE state, the FAULTS list, wire
+    // colours, and the spark / blown-fuse cues on a fresh failure.
+    // ─────────────────────────────────────────────────────────────────
+    (function () {
+        'use strict';
+
+        const W = window.Wiring;
+        const reduceMotion = window.matchMedia &&
+            window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        const inner = document.getElementById('cw-inner');
+        const svg = document.getElementById('cw-wires');
+        const statusEl = document.getElementById('cw-status');
+        const faultsBox = document.getElementById('cw-faults');
+        const faultsList = document.getElementById('cw-faults-list');
+
+        const SVGNS = 'http://www.w3.org/2000/svg';
+        const NUM = { width: 940, height: 580 };
+
+        // ── live model ──────────────────────────────────────────────
+        // panel.devices: { type, id, field, x, y }   panel.wires: { id, a:[node,term], b:[node,term] }
+        let panel = { devices: [], wires: [] };
+        const state = {
+            uiMode: { ui1: 'r', ui2: 'r', ui3: 'r', ui4: 'r' },
+            ao: { ao1: 0, ao2: 0 },
+            bo: { bo1: false, bo2: false },
+        };
+        let pending = null;        // { node, term } half-made wire
+        let selected = null;       // { kind:'wire', id } | { kind:'device', id }
+        let devSeq = 0;
+        let wireSeq = 0;
+        let lastBlown = false;     // edge-detect the fuse for the cue
+
+        // Controller faceplate layout — display order + group headers.
+        const GROUPS = [
+            { label: 'Power', terms: ['24v', '24com'] },
+            { label: 'Signal Common', terms: ['com-a', 'com-b'] },
+            { label: 'Universal Inputs', terms: ['ui1', 'ui2', 'ui3', 'ui4'] },
+            { label: 'Binary Inputs', terms: ['bi1', 'bi2'] },
+            { label: 'Analog Outputs', terms: ['ao1', 'ao2'] },
+            { label: 'Binary Outputs', terms: ['boc', 'bo1', 'bo2'] },
+            { label: 'Network', terms: ['net+', 'net-', 'ref'] },
+        ];
+        const TERM = {};
+        W.CONTROLLER.terminals.forEach((t) => { TERM[t.id] = t; });
+
+        // ── build the controller object (once) ──────────────────────
+        function buildController() {
+            const root = document.createElement('div');
+            root.className = 'cw-controller device';
+            root.dataset.node = 'ctlr';
+
+            const dinner = document.createElement('div');
+            dinner.className = 'device-inner';
+            root.appendChild(dinner);
+
+            const tb = document.createElement('div');
+            tb.className = 'cw-ctrl-tb';
+            tb.innerHTML = '<span class="title">' + W.CONTROLLER.label + '</span>' +
+                '<span class="cw-fuse" id="cw-fuse"><span class="led led--run"></span>' +
+                '<span class="tag">FUSE OK</span></span>';
+            dinner.appendChild(tb);
+
+            GROUPS.forEach((g) => {
+                const gl = document.createElement('div');
+                gl.className = 'cw-group-label';
+                gl.textContent = g.label;
+                dinner.appendChild(gl);
+                g.terms.forEach((tid) => dinner.appendChild(buildTermRow(tid)));
+            });
+
+            inner.appendChild(root);
+        }
+
+        function buildTermRow(tid) {
+            const def = TERM[tid];
+            const row = document.createElement('div');
+            row.className = 'cw-term';
+            if (def.disabled) row.classList.add('cw-term--disabled');
+
+            const lbl = document.createElement('span');
+            lbl.className = 'cw-term-label';
+            lbl.textContent = def.label;
+            row.appendChild(lbl);
+
+            const group = def.group;
+            if (group === 'ui' || group === 'bi' || group === 'ao' || group === 'bo') {
+                const ro = document.createElement('span');
+                ro.className = 'cw-readout cw-readout--idle';
+                ro.dataset.readout = tid;
+                ro.textContent = '—';
+                row.appendChild(ro);
+
+                const led = document.createElement('span');
+                led.className = 'led led--off';
+                led.dataset.led = tid;
+                row.appendChild(led);
+            }
+
+            if (group === 'ui') {
+                const sel = document.createElement('select');
+                sel.className = 'cw-mode';
+                sel.dataset.ui = tid;
+                sel.setAttribute('aria-label', def.label + ' input type');
+                [['r', 'R'], ['v', 'V'], ['ma', 'mA']].forEach((o) => {
+                    const op = document.createElement('option');
+                    op.value = o[0]; op.textContent = o[1];
+                    sel.appendChild(op);
+                });
+                sel.value = state.uiMode[tid];
+                sel.addEventListener('change', () => { state.uiMode[tid] = sel.value; refresh(); });
+                row.appendChild(sel);
+            } else if (group === 'ao') {
+                const sld = document.createElement('input');
+                sld.type = 'range'; sld.min = '0'; sld.max = '100'; sld.value = '0';
+                sld.className = 'cw-ao-slider';
+                sld.dataset.ao = tid;
+                sld.setAttribute('aria-label', def.label + ' command');
+                sld.addEventListener('input', () => { state.ao[tid] = +sld.value; refresh(); });
+                row.appendChild(sld);
+            } else if (group === 'bo') {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'cw-bo-toggle';
+                btn.dataset.bo = tid;
+                btn.textContent = 'OFF';
+                btn.addEventListener('click', () => {
+                    state.bo[tid] = !state.bo[tid];
+                    btn.textContent = state.bo[tid] ? 'ON' : 'OFF';
+                    btn.classList.toggle('cw-on', state.bo[tid]);
+                    refresh();
+                });
+                row.appendChild(btn);
+            } else {
+                row.appendChild(spacer());
+            }
+
+            if (!def.disabled) row.appendChild(makePin('ctlr', tid, 'term'));
+            return row;
+        }
+
+        function spacer() { const s = document.createElement('span'); s.className = 'cw-spacer'; return s; }
+
+        function makePin(node, term, side) {
+            const pin = document.createElement('button');
+            pin.type = 'button';
+            pin.className = 'cw-pin cw-pin--' + side;
+            pin.dataset.node = node;
+            pin.dataset.term = term;
+            pin.setAttribute('aria-label', 'terminal ' + term);
+            const dot = document.createElement('span');
+            dot.className = 'cw-pin-dot';
+            pin.appendChild(dot);
+            pin.addEventListener('click', (e) => { e.stopPropagation(); onPinClick(node, term, pin); });
+            return pin;
+        }
+
+        // ── field devices ───────────────────────────────────────────
+        function renderDevices() {
+            inner.querySelectorAll('.cw-dev').forEach((el) => el.remove());
+            panel.devices.forEach((d) => inner.appendChild(buildDevice(d)));
+        }
+
+        function buildDevice(d) {
+            const def = W.DEVICES[d.type];
+            const el = document.createElement('div');
+            el.className = 'cw-dev';
+            if (selected && selected.kind === 'device' && selected.id === d.id) el.classList.add('cw-dev--sel');
+            el.dataset.node = d.id;
+            el.style.left = d.x + 'px';
+            el.style.top = d.y + 'px';
+
+            const head = document.createElement('div');
+            head.className = 'cw-dev-head';
+            head.textContent = def.label;
+            head.addEventListener('pointerdown', (e) => onDevicePointerDown(e, d));
+            el.appendChild(head);
+
+            const body = document.createElement('div');
+            body.className = 'cw-dev-body';
+            def.terminals.forEach((t) => {
+                const row = document.createElement('div');
+                row.className = 'cw-dev-term';
+                row.appendChild(makePin(d.id, t.id, 'dev'));
+                const lab = document.createElement('span');
+                lab.className = 'cw-dt-label';
+                lab.textContent = t.label;
+                row.appendChild(lab);
+                body.appendChild(row);
+            });
+            el.appendChild(body);
+
+            // device caption + any field control
+            if (d.type === 'therm10k') addCap(el, 'sensing ' + d.field.tempF.toFixed(1) + '°F');
+            else if (d.type === 'xmtr010') addCap(el, '3-wire · ' + d.field.pct + '% of range');
+            else if (d.type === 'xmtr420') addCap(el, '2-wire loop · ' + d.field.pct + '% of range');
+            else if (d.type === 'act010') addCap(el, 'needs 24 VAC + signal');
+            else if (d.type === 'relayFan') addCap(el, 'switched by a BO');
+            else if (d.type === 'xfmr') addCap(el, '40 VA · hot + common');
+            else if (d.type === 'dryContact') {
+                const tgl = document.createElement('button');
+                tgl.type = 'button';
+                tgl.className = 'cw-dev-toggle';
+                tgl.textContent = d.field.closed ? 'contact: CLOSED' : 'contact: OPEN';
+                tgl.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    d.field.closed = !d.field.closed;
+                    tgl.textContent = d.field.closed ? 'contact: CLOSED' : 'contact: OPEN';
+                    refresh();
+                });
+                el.appendChild(tgl);
+            }
+
+            return el;
+        }
+
+        function addCap(el, text) {
+            const cap = document.createElement('div');
+            cap.className = 'cw-dev-cap';
+            cap.textContent = text;
+            el.appendChild(cap);
+        }
+
+        function nextSlot() {
+            // tidy auto-place to the right of the controller
+            const n = devSeq++;
+            const col = n % 3;
+            const rowN = Math.floor(n / 3);
+            return { x: 360 + col * 188, y: 16 + rowN * 150 };
+        }
+
+        function addDevice(type) {
+            const d = W.createDevice(type, 'd' + (++wireSeq) + '-' + type);
+            const slot = nextSlot();
+            d.x = slot.x; d.y = slot.y;
+            panel.devices.push(d);
+            renderDevices();
+            drawWires();
+            refresh();
+            setStatus('Added ' + W.DEVICES[type].label + ' — wire its terminals to the controller.');
+        }
+
+        function onDevicePointerDown(e, d) {
+            if (e.button !== 0) return;
+            select({ kind: 'device', id: d.id });
+            const el = inner.querySelector('.cw-dev[data-node="' + cssEsc(d.id) + '"]');
+            const startX = e.clientX, startY = e.clientY, ox = d.x, oy = d.y;
+            const head = e.currentTarget;
+            head.setPointerCapture(e.pointerId);
+            function move(ev) {
+                d.x = clamp(ox + (ev.clientX - startX), 0, NUM.width - 134);
+                d.y = clamp(oy + (ev.clientY - startY), 0, NUM.height - 40);
+                el.style.left = d.x + 'px';
+                el.style.top = d.y + 'px';
+                drawWires();
+            }
+            function up() {
+                head.removeEventListener('pointermove', move);
+                head.removeEventListener('pointerup', up);
+                head.removeEventListener('pointercancel', up);
+            }
+            head.addEventListener('pointermove', move);
+            head.addEventListener('pointerup', up);
+            head.addEventListener('pointercancel', up);
+        }
+
+        // ── wiring ──────────────────────────────────────────────────
+        function onPinClick(node, term, pinEl) {
+            if (!pending) {
+                pending = { node: node, term: term };
+                clearPendingMarks();
+                pinEl.classList.add('cw-pin--pending');
+                setStatus('Wiring from ' + termName(node, term) + ' — click another terminal to land it.');
+                return;
+            }
+            if (pending.node === node && pending.term === term) { cancelWire(); setStatus('Wire cancelled.'); return; }
+            // de-dupe identical conductor
+            const dup = panel.wires.some((w) =>
+                (sameEnd(w.a, pending) && sameEnd(w.b, { node: node, term: term })) ||
+                (sameEnd(w.b, pending) && sameEnd(w.a, { node: node, term: term })));
+            if (!dup) {
+                panel.wires.push({ id: 'w' + (++wireSeq), a: [pending.node, pending.term], b: [node, term] });
+            }
+            const from = termName(pending.node, pending.term);
+            cancelWire();
+            drawWires();
+            refresh();
+            setStatus(dup ? 'Those terminals are already wired.' : 'Wired ' + from + ' → ' + termName(node, term) + '.');
+        }
+
+        function sameEnd(arr, o) { return arr[0] === o.node && arr[1] === o.term; }
+
+        function cancelWire() { pending = null; clearPendingMarks(); }
+        function clearPendingMarks() {
+            inner.querySelectorAll('.cw-pin--pending').forEach((p) => p.classList.remove('cw-pin--pending'));
+        }
+
+        function termName(node, term) {
+            if (node === 'ctlr') return (TERM[term] ? TERM[term].label : term);
+            const d = panel.devices.find((x) => x.id === node);
+            const def = d && W.DEVICES[d.type];
+            const t = def && def.terminals.find((x) => x.id === term);
+            return (def ? def.label : node) + '·' + (t ? t.label : term);
+        }
+
+        // ── wire rendering ──────────────────────────────────────────
+        function pinCenter(node, term) {
+            const sel = '.cw-pin[data-node="' + cssEsc(node) + '"][data-term="' + cssEsc(term) + '"] .cw-pin-dot';
+            const dot = inner.querySelector(sel);
+            if (!dot) return null;
+            const r = dot.getBoundingClientRect();
+            const base = inner.getBoundingClientRect();
+            return { x: r.left + r.width / 2 - base.left, y: r.top + r.height / 2 - base.top };
+        }
+
+        function wirePath(a, b) {
+            const dx = Math.max(40, Math.abs(b.x - a.x) * 0.4);
+            return 'M ' + a.x + ' ' + a.y + ' C ' + (a.x + dx) + ' ' + a.y + ', ' +
+                   (b.x - dx) + ' ' + b.y + ', ' + b.x + ' ' + b.y;
+        }
+
+        function drawWires() {
+            // rebuild the layer each pass — cheap for this wire count
+            while (svg.firstChild) svg.removeChild(svg.firstChild);
+            panel.wires.forEach((w) => {
+                const a = pinCenter(w.a[0], w.a[1]);
+                const b = pinCenter(w.b[0], w.b[1]);
+                if (!a || !b) return;
+                const d = wirePath(a, b);
+                const hit = document.createElementNS(SVGNS, 'path');
+                hit.setAttribute('class', 'cw-wire-hit');
+                hit.setAttribute('d', d);
+                hit.addEventListener('click', (e) => { e.stopPropagation(); select({ kind: 'wire', id: w.id }); });
+                const vis = document.createElementNS(SVGNS, 'path');
+                let cls = 'cw-wire cw-wire-' + wireRole(w);
+                if (selected && selected.kind === 'wire' && selected.id === w.id) cls += ' cw-wire-sel';
+                vis.setAttribute('class', cls);
+                vis.setAttribute('d', d);
+                svg.appendChild(hit);
+                svg.appendChild(vis);
+            });
+        }
+
+        // Colour a wire by the role of whichever end is most telling.
+        function wireRole(w) {
+            const ends = [w.a, w.b];
+            let hot = false, com = false;
+            ends.forEach((e) => {
+                const r = endRole(e[0], e[1]);
+                if (r === 'hot') hot = true;
+                if (r === 'com') com = true;
+            });
+            if (hot) return 'hot';
+            if (com) return 'com';
+            return 'sig';
+        }
+        function endRole(node, term) {
+            if (node === 'ctlr') {
+                if (term === '24v' || term === 'boc') return 'hot';
+                if (term === '24com' || term === 'com-a' || term === 'com-b') return 'com';
+                return 'sig';
+            }
+            const d = panel.devices.find((x) => x.id === node);
+            if (!d) return 'sig';
+            const t = W.DEVICES[d.type].terminals.find((x) => x.id === term);
+            if (!t) return 'sig';
+            if (t.kind === 'hot' || t.kind === 'pwr' || t.kind === 'loop+') return 'hot';
+            if (t.kind === 'xcom' || t.kind === 'ret' || t.kind === 'pcom') return 'com';
+            return 'sig';
+        }
+
+        // ── selection / delete ──────────────────────────────────────
+        function select(sel) {
+            selected = sel;
+            cancelWire();
+            inner.querySelectorAll('.cw-dev').forEach((el) => {
+                el.classList.toggle('cw-dev--sel',
+                    !!sel && sel.kind === 'device' && sel.id === el.dataset.node);
+            });
+            drawWires();
+        }
+        function clearSelection() { select(null); }
+
+        function deleteSelected() {
+            if (!selected) return;
+            if (selected.kind === 'wire') {
+                panel.wires = panel.wires.filter((w) => w.id !== selected.id);
+            } else if (selected.kind === 'device') {
+                panel.wires = panel.wires.filter((w) => w.a[0] !== selected.id && w.b[0] !== selected.id);
+                panel.devices = panel.devices.filter((d) => d.id !== selected.id);
+                renderDevices();
+            }
+            selected = null;
+            drawWires();
+            refresh();
+            setStatus('Removed.');
+        }
+
+        // ── evaluation + paint ──────────────────────────────────────
+        function refresh() {
+            const res = W.evaluate(panel, state);
+
+            // per-point readouts + LEDs
+            inner.querySelectorAll('[data-readout]').forEach((ro) => {
+                const p = res.points[ro.dataset.readout];
+                ro.classList.remove('cw-readout--idle', 'cw-readout--alarm');
+                if (!p) { ro.textContent = '—'; ro.classList.add('cw-readout--idle'); return; }
+                ro.textContent = p.display;
+                if (p.state === 'idle') ro.classList.add('cw-readout--idle');
+                if (p.led === 'alarm') ro.classList.add('cw-readout--alarm');
+            });
+            inner.querySelectorAll('[data-led]').forEach((led) => {
+                const p = res.points[led.dataset.led];
+                led.className = 'led led--' + (p ? p.led : 'off');
+                led.dataset.led = led.dataset.led;
+            });
+
+            // fuse
+            const fuse = document.getElementById('cw-fuse');
+            const blown = res.power.blownFuse;
+            fuse.classList.toggle('cw-fuse--blown', blown);
+            fuse.querySelector('.tag').textContent = blown ? 'FUSE BLOWN' : 'FUSE OK';
+            fuse.querySelector('.led').className = 'led ' + (blown ? '' : 'led--run');
+
+            // faults
+            paintFaults(res.faults);
+
+            // wire colours (role may shift as power lands)
+            drawWires();
+
+            // cues — fire only on a fresh failure
+            if (blown && !lastBlown) fireBlownFuse(fuse);
+            if (!reduceMotion) (res.cues.spark || []).forEach((term) => fireSpark('ctlr', term));
+            lastBlown = blown;
+        }
+
+        function paintFaults(faults) {
+            faultsList.innerHTML = '';
+            const anyWired = panel.wires.length > 0 || panel.devices.length > 0;
+            faultsBox.classList.toggle('cw-faults--bad', faults.length > 0);
+            if (faults.length === 0) {
+                const li = document.createElement('li');
+                li.className = 'cw-ok';
+                li.textContent = anyWired
+                    ? '✓ All landings check out — nothing faulted.'
+                    : 'Drop a transformer and a sensor, then wire them up. Faults show here.';
+                faultsList.appendChild(li);
+                return;
+            }
+            faults.forEach((f) => {
+                const li = document.createElement('li');
+                li.className = 'cw-sev-' + f.severity;
+                li.textContent = f.text;
+                faultsList.appendChild(li);
+            });
+        }
+
+        // ── cues ────────────────────────────────────────────────────
+        function fireSpark(node, term) {
+            const c = pinCenter(node, term);
+            if (!c) return;
+            const s = document.createElement('div');
+            s.className = 'cw-spark';
+            s.style.left = c.x + 'px';
+            s.style.top = c.y + 'px';
+            inner.appendChild(s);
+            // force reflow so the animation restarts each fire
+            void s.offsetWidth;
+            s.classList.add('cw-spark--go');
+            window.setTimeout(() => s.remove(), 600);
+        }
+
+        function fireBlownFuse(fuse) {
+            if (reduceMotion) return;
+            const led = fuse.querySelector('.led');
+            led.classList.add('cw-fuse-flash');
+            window.setTimeout(() => led.classList.remove('cw-fuse-flash'), 1600);
+        }
+
+        function setStatus(msg) { statusEl.textContent = msg; }
+
+        // ── presets ─────────────────────────────────────────────────
+        function loadPreset(key) {
+            resetState();
+            panel = PRESETS[key] ? clonePanel(PRESETS[key]) : { devices: [], wires: [] };
+            // sync controller config controls from the preset's state
+            if (PRESETS[key] && PRESETS[key].state) Object.assign(state, deepClone(PRESETS[key].state));
+            syncControls();
+            selected = null;
+            renderDevices();
+            drawWires();
+            refresh();
+            const cv = document.getElementById('cw-canvas');
+            cv.scrollLeft = 0; cv.scrollTop = 0;
+            setStatus(key === 'clear' ? 'Cleared.' : 'Loaded: ' + key + '. Trace it — what reads, what fails?');
+        }
+
+        function resetState() {
+            state.uiMode = { ui1: 'r', ui2: 'r', ui3: 'r', ui4: 'r' };
+            state.ao = { ao1: 0, ao2: 0 };
+            state.bo = { bo1: false, bo2: false };
+            lastBlown = false;
+        }
+
+        // mirror state into the on-faceplate controls
+        function syncControls() {
+            inner.querySelectorAll('.cw-mode').forEach((s) => { s.value = state.uiMode[s.dataset.ui]; });
+            inner.querySelectorAll('.cw-ao-slider').forEach((s) => { s.value = state.ao[s.dataset.ao]; });
+            inner.querySelectorAll('.cw-bo-toggle').forEach((b) => {
+                const on = state.bo[b.dataset.bo];
+                b.textContent = on ? 'ON' : 'OFF';
+                b.classList.toggle('cw-on', on);
+            });
+        }
+
+        function clonePanel(p) {
+            devSeq = 0;
+            const devices = p.devices.map((d, i) => {
+                const inst = W.createDevice(d.type, 'p' + i + '-' + d.type);
+                if (d.field) inst.field = deepClone(d.field);
+                inst.x = d.x; inst.y = d.y;
+                return inst;
+            });
+            // remap preset wire device refs (by index "Dn") to real ids
+            const idByIdx = {};
+            p.devices.forEach((d, i) => { idByIdx['D' + i] = devices[i].id; });
+            const wires = p.wires.map((w, i) => ({
+                id: 'w' + i,
+                a: [w.a[0] === 'ctlr' ? 'ctlr' : idByIdx[w.a[0]], w.a[1]],
+                b: [w.b[0] === 'ctlr' ? 'ctlr' : idByIdx[w.b[0]], w.b[1]],
+            }));
+            wireSeq = wires.length;
+            return { devices: devices, wires: wires };
+        }
+        function deepClone(o) { return JSON.parse(JSON.stringify(o)); }
+
+        // Preset panels. Device refs in wires use "Dn" = the nth device.
+        const PRESETS = {
+            ahu: {
+                devices: [
+                    { type: 'xfmr', x: 360, y: 16 },
+                    { type: 'therm10k', x: 360, y: 150 },
+                    { type: 'act010', x: 580, y: 16 },
+                    { type: 'relayFan', x: 580, y: 230 },
+                ],
+                wires: [
+                    { a: ['D0', 'hot'], b: ['ctlr', '24v'] },
+                    { a: ['D0', 'com'], b: ['ctlr', '24com'] },
+                    { a: ['D1', 'l1'], b: ['ctlr', 'ui1'] },
+                    { a: ['D1', 'l2'], b: ['ctlr', 'com-a'] },
+                    { a: ['D2', 'pwr'], b: ['ctlr', '24v'] },
+                    { a: ['D2', 'com'], b: ['ctlr', '24com'] },
+                    { a: ['D2', 'sig'], b: ['ctlr', 'ao1'] },
+                    { a: ['D2', 'scom'], b: ['ctlr', 'com-b'] },
+                    { a: ['ctlr', 'boc'], b: ['ctlr', '24v'] },
+                    { a: ['D3', 'l1'], b: ['ctlr', 'bo1'] },
+                    { a: ['D3', 'l2'], b: ['ctlr', 'com-a'] },
+                ],
+                state: { uiMode: { ui1: 'r', ui2: 'r', ui3: 'r', ui4: 'r' }, ao: { ao1: 55, ao2: 0 }, bo: { bo1: true, bo2: false } },
+            },
+            loop: {
+                devices: [
+                    { type: 'xfmr', x: 360, y: 16 },
+                    { type: 'xmtr420', x: 360, y: 150 },
+                    { type: 'dryContact', x: 580, y: 150 },
+                ],
+                wires: [
+                    { a: ['D0', 'hot'], b: ['ctlr', '24v'] },
+                    { a: ['D0', 'com'], b: ['ctlr', '24com'] },
+                    { a: ['D1', 'plus'], b: ['ctlr', '24v'] },
+                    { a: ['D1', 'minus'], b: ['ctlr', 'ui2'] },
+                    { a: ['D2', 'a'], b: ['ctlr', 'bi1'] },
+                    { a: ['D2', 'b'], b: ['ctlr', 'com-a'] },
+                ],
+                state: { uiMode: { ui1: 'r', ui2: 'ma', ui3: 'r', ui4: 'r' }, ao: { ao1: 0, ao2: 0 }, bo: { bo1: false, bo2: false } },
+            },
+            // a transformer dead-shorted across hot↔com — fuse pops on load.
+            'broken-fuse': {
+                devices: [
+                    { type: 'xfmr', x: 360, y: 16 },
+                    { type: 'therm10k', x: 360, y: 170 },
+                ],
+                wires: [
+                    { a: ['D0', 'hot'], b: ['ctlr', '24v'] },
+                    { a: ['D0', 'com'], b: ['ctlr', '24com'] },
+                    { a: ['D0', 'hot'], b: ['D0', 'com'] },
+                    { a: ['D1', 'l1'], b: ['ctlr', 'ui1'] },
+                    { a: ['D1', 'l2'], b: ['ctlr', 'com-a'] },
+                ],
+                state: { uiMode: { ui1: 'r', ui2: 'r', ui3: 'r', ui4: 'r' }, ao: { ao1: 0, ao2: 0 }, bo: { bo1: false, bo2: false } },
+            },
+            // thermistor return parked on the wrong terminal — reads OPEN.
+            'broken-sensor': {
+                devices: [
+                    { type: 'xfmr', x: 360, y: 16 },
+                    { type: 'therm10k', x: 360, y: 170 },
+                ],
+                wires: [
+                    { a: ['D0', 'hot'], b: ['ctlr', '24v'] },
+                    { a: ['D0', 'com'], b: ['ctlr', '24com'] },
+                    { a: ['D1', 'l1'], b: ['ctlr', 'ui1'] },
+                    { a: ['D1', 'l2'], b: ['ctlr', 'ui4'] },
+                ],
+                state: { uiMode: { ui1: 'r', ui2: 'r', ui3: 'r', ui4: 'r' }, ao: { ao1: 0, ao2: 0 }, bo: { bo1: false, bo2: false } },
+            },
+            clear: { devices: [], wires: [] },
+        };
+
+        // ── page wiring ─────────────────────────────────────────────
+        function cssEsc(s) { return window.CSS && CSS.escape ? CSS.escape(s) : s; }
+        function clamp(x, lo, hi) { return Math.max(lo, Math.min(hi, x)); }
+
+        buildController();
+
+        document.querySelectorAll('[data-device]').forEach((b) =>
+            b.addEventListener('click', () => addDevice(b.dataset.device)));
+        document.querySelectorAll('[data-preset]').forEach((b) =>
+            b.addEventListener('click', () => loadPreset(b.dataset.preset)));
+
+        document.getElementById('cw-canvas').addEventListener('click', (e) => {
+            if (e.target.closest('.cw-pin') || e.target.closest('.cw-wire-hit') ||
+                e.target.closest('.cw-dev') || e.target.closest('.cw-controller')) return;
+            cancelWire();
+            clearSelection();
+            setStatus('');
+        });
+
+        document.addEventListener('keydown', (e) => {
+            const t = e.target;
+            if (t && (t.tagName === 'INPUT' || t.tagName === 'SELECT' || t.tagName === 'TEXTAREA')) return;
+            if (e.key === 'Delete' || e.key === 'Backspace') {
+                if (selected) { e.preventDefault(); deleteSelected(); }
+            } else if (e.key === 'Escape') {
+                const had = !!pending;
+                cancelWire();
+                if (had) { e.stopPropagation(); setStatus('Wire cancelled.'); }
+            }
+        });
+
+        // gentle cosmetic drift so live readings feel alive (not motion).
+        if (!reduceMotion) {
+            window.setInterval(() => {
+                let touched = false;
+                panel.devices.forEach((d) => {
+                    if (d.type === 'therm10k') { d.field.tempF += (Math.random() - 0.5) * 0.2; touched = true; }
+                });
+                if (touched) refresh();
+            }, 2500);
+        }
+
+        // first paint
+        renderDevices();
+        drawWires();
+        refresh();
+        setStatus('Empty panel — add a 24 VAC transformer and land it on 24V~ / 24COM to start.');
+    })();
+</script>
+{% endblock %}
