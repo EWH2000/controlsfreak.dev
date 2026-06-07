@@ -38,6 +38,7 @@ const PAGES = [
     { name: 'vfd mock',               url: '/simulators/vfd-mock.html' },
     { name: 'function-block editor',  url: '/simulators/function-block-editor.html' },
     { name: 'staging sequencer',      url: '/simulators/staging-sequencer.html' },
+    { name: 'controller wiring',      url: '/simulators/controller-wiring.html' },
     { name: 'education hub',          url: '/education/' },
     { name: 'education — pid basics',  url: '/education/pid-basics.html' },
     { name: 'education — hydronic loops', url: '/education/hydronic-loops.html' },
@@ -175,6 +176,23 @@ test('staging sequencer — high demand stages units up and logs the event', asy
     await expect(page.locator('#stg-running')).toHaveText('3');
     await expect(page.locator('#stg-log')).toContainText('Stage up');
     expect(errors, 'staging sequencer behavioral should log no page / console errors').toEqual([]);
+});
+
+test('controller wiring — a correct panel reads live; a short pops the fuse', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('/simulators/controller-wiring.html');
+    // The AHU preset lands every point correctly; the thermistor on UI1
+    // should read a live temperature and the FAULTS panel should clear.
+    await page.click('[data-preset="ahu"]');
+    await expect(page.locator('[data-readout="ui1"]')).toContainText('°F');
+    await expect(page.locator('#cw-faults-list')).toContainText('All landings check out');
+    // The broken-fuse preset dead-shorts the transformer — the fuse pops
+    // and the engine names the short. This is the obvious-failure path.
+    await page.click('[data-preset="broken-fuse"]');
+    await expect(page.locator('#cw-fuse .tag')).toHaveText('FUSE BLOWN');
+    await expect(page.locator('#cw-faults-list')).toContainText('Dead short');
+    await expect(page.locator('[data-readout="ui1"]')).toHaveText('———');
+    expect(errors, 'controller wiring behavioral should log no page / console errors').toEqual([]);
 });
 
 test('bacnet/ip converter converts a hex string', async ({ page }) => {
