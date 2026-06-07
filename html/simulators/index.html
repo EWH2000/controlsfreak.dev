@@ -1,6 +1,6 @@
 ---
 title: Simulators — controlsfreak.dev
-description: Running models for building-controls work — practice PID tuning on a tunable process, drive a mock VFD keypad, and wire up function-block sequences.
+description: Running models for building-controls work — tune a PID loop, drive a mock VFD keypad, wire a generic DDC controller, and stage a parallel plant up and down.
 canonical: https://controlsfreak.dev/simulators/
 nav: simulators
 ---
@@ -51,6 +51,14 @@ nav: simulators
             titleFull:  'Equipment Staging Sequencer',
             desc:       'A live parallel plant — demand rides a day-load curve while a configurable sequence stages units up and down, rotates the lead three ways, injects a fault, and logs every move. Paired with the Equipment Staging explainer.',
             pills:      ['Stage Up / Down', 'Lead Rotation', 'Runtime Equalize', 'Event Log']
+        }) }}
+        {{ navCard({
+            section:    'simulators',
+            href:       '/simulators/controller-wiring.html',
+            titleShort: 'Controller Wiring',
+            titleFull:  'Controller Wiring Simulator',
+            desc:       'Wire a generic DDC controller end to end — power it from a transformer, drop sensors, an actuator, and a fan, and click terminal-to-terminal. Land it right and points read live; land it wrong and it sparks, opens, or pops the fuse.',
+            pills:      ['24 VAC Power', 'UI / BI / AO / BO', 'Live Faults', 'Find the Fault']
         }) }}
     </div>
 
