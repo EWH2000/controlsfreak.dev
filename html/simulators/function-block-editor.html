@@ -85,7 +85,7 @@ nav: simulators
             height: 480px;
             pointer-events: none;
         }
-        .fbe-wire { fill: none; stroke-width: 2.4; }
+        .fbe-wire { fill: none; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
         .fbe-wire-num { stroke: var(--blue); }
         .fbe-wire-bool-on { stroke: var(--accent); }
         .fbe-wire-bool-off { stroke: var(--border); }
@@ -752,11 +752,23 @@ nav: simulators
             return window.CSS && CSS.escape ? CSS.escape(s) : s;
         }
 
+        // Orthogonal (Manhattan) route from an output pin (right edge of its
+        // block) to an input pin (left edge). Forward edges get a single
+        // horizontal-vertical-horizontal step at the midpoint; backward edges
+        // — feedback loops, where the target sits left of the source — exit
+        // right, traverse at the mid height, and re-enter the target from its
+        // left, so the wire never doubles back across its own block.
         function wirePath(a, b) {
-            const dx = Math.max(36, Math.abs(b.x - a.x) * 0.5);
-            return 'M ' + a.x + ' ' + a.y +
-                   ' C ' + (a.x + dx) + ' ' + a.y + ', ' +
-                   (b.x - dx) + ' ' + b.y + ', ' + b.x + ' ' + b.y;
+            const stub = 18;
+            if (b.x >= a.x + 2 * stub) {
+                const mx = (a.x + b.x) / 2;
+                return 'M ' + a.x + ' ' + a.y + ' H ' + mx + ' V ' + b.y + ' H ' + b.x;
+            }
+            const ax2 = a.x + stub;
+            const bx2 = b.x - stub;
+            const my = (a.y + b.y) / 2;
+            return 'M ' + a.x + ' ' + a.y + ' H ' + ax2 + ' V ' + my +
+                   ' H ' + bx2 + ' V ' + b.y + ' H ' + b.x;
         }
 
         function drawWires() {
