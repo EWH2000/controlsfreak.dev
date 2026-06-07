@@ -63,7 +63,7 @@ nav: simulators
             height: 660px;
             pointer-events: none;
         }
-        .cw-wire { fill: none; stroke-width: 2.6; stroke-linecap: round; }
+        .cw-wire { fill: none; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
         .cw-wire-sig { stroke: var(--text-dim); }
         .cw-wire-hot { stroke: var(--red); }
         .cw-wire-com { stroke: var(--blue); }
@@ -157,7 +157,9 @@ nav: simulators
             cursor: pointer;
         }
         .cw-bo-toggle.cw-on { color: #0a1305; background: linear-gradient(180deg, var(--accent-bright), var(--accent)); border-color: #3f6e1d; }
-        .cw-ao-slider { width: 4.2em; flex: none; }
+        /* width selector is element-qualified to outrank the global
+           input[type="range"] { width: 100% } reset in styles.css. */
+        input[type="range"].cw-ao-slider { width: 84px; flex: none; }
         .cw-spacer { flex: 1; }
 
         /* terminal pin — wire anchor on the right edge of the controller,
@@ -748,10 +750,15 @@ nav: simulators
             return { x: r.left + r.width / 2 - base.left, y: r.top + r.height / 2 - base.top };
         }
 
+        // Orthogonal (Manhattan) route: horizontal stub out of pin a, a
+        // vertical run in the gap, horizontal stub into pin b. Both the
+        // controller and device pins sit on vertical edges, so horizontal
+        // stubs at each end land square on the terminal. Same-edge pairs
+        // (e.g. a BO-C → 24V jumper) bow out past the wider pin.
         function wirePath(a, b) {
-            const dx = Math.max(40, Math.abs(b.x - a.x) * 0.4);
-            return 'M ' + a.x + ' ' + a.y + ' C ' + (a.x + dx) + ' ' + a.y + ', ' +
-                   (b.x - dx) + ' ' + b.y + ', ' + b.x + ' ' + b.y;
+            const dx = b.x - a.x;
+            const mx = Math.abs(dx) < 28 ? Math.max(a.x, b.x) + 22 : a.x + dx * 0.5;
+            return 'M ' + a.x + ' ' + a.y + ' H ' + mx + ' V ' + b.y + ' H ' + b.x;
         }
 
         function drawWires() {
