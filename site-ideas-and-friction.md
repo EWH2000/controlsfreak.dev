@@ -906,6 +906,71 @@ Possible future refinement: a standby-exercise timer (run an idle unit
 briefly on a schedule), which the lesson mentions but the sim doesn't
 model yet.
 
+### Controller Wiring Simulator — 5th simulator *(Phase 1 shipped 2026-06-06, PR #187)*
+The hands-on counterpart to the site's already-strong *text* coverage of
+field wiring (the `field-wiring-sensors` and `controller-swap` drills,
+`signal-scaling` and `thermistor-calculator` tools). Nowhere could you
+actually *do* the wiring; this is a **wire-and-validate sandbox** at
+`/simulators/controller-wiring.html`, prefix `cw-`. Designed with the user
+across five questions — the load-bearing decisions:
+
+- **Wire-and-validate, not a quiz.** A generic **GENERIC DDC-8** controller
+  (equipment register `.device` faceplate) plus a tray of field devices on a
+  canvas; click terminal-to-terminal to lay a conductor on a borrowed copy of
+  the FBE's SVG wire layer. Points read live (72.4 °F, 60 %, ON) when landed
+  right.
+- **Failures are emergent and *obvious*** (explicit user ask: "failures must
+  be possible and obvious"). No inject button — you wire it wrong, it fails:
+  reversed power **sparks**, a dead short **blows the fuse** and drops every
+  point dead, an unpowered actuator sits **DEAD**, and a FAULTS panel names
+  each one in plain English. Reduced-motion path snaps straight to the
+  blown/dead state (no spark/flash), same discipline as `schematic-bg`.
+- **Scope = Power (24 VAC) + Inputs (UI/BI) + Outputs (AO/BO).** Network was
+  deliberately cut: the NET terminals render greyed "future" — see
+  `[future: bus simulator]` below.
+- **New engine, different shape from `fbe-engine.js`.** `wiring-engine.js`
+  (`window.Wiring`) is a *circuit* solver: union-find the terminals into nets,
+  classify HOT/COM off the transformer, then walk each device to a reading or
+  fault. Conductors are **undirected** (it's copper — there's no type-gating
+  on the wire; wrongness emerges in `evaluate()`), unlike the FBE's directional
+  dataflow tick. Node-tested across the whole fault catalog.
+- **Four presets**, mirroring the FBE's example chips: a correct AHU panel, a
+  4-20 mA loop + status, and two **"find the fault"** broken panels (blown
+  fuse, dead sensor).
+
+Three review refinements after first ship:
+- **Drag the whole device card,** not just its title bar (the FBE drags by the
+  bar, but these cards have a tall body, so body-drags felt broken). Pointer
+  capture on the card, guarding presses that start on a pin or toggle so
+  click-to-wire and the contact switch still work.
+- **Bigger faceplate text + wider controller** (296→330 px, canvas grown to
+  fit) — the dot-matrix readouts were too small to read.
+- **AO sliders ran off the controller — a CSS specificity gotcha worth
+  remembering:** the global `input[type="range"] { width: 100% }` reset in
+  `styles.css` (specificity 0,1,1) outranks a page-level `.cw-ao-slider`
+  (0,1,0), so the slider stretched to fill the row. **Element-qualify
+  page-level range widths** (`input[type="range"].cw-ao-slider`) to win the
+  cascade. Same fix shape applies to any future tool that sizes a slider.
+- **Orthogonal (Manhattan) wire routing** replaced crossing beziers — a
+  horizontal stub out of each pin, a vertical run in the gap, a horizontal stub
+  in. Reads like a real wiring diagram. The same `wirePath` shape was then
+  ported back to the **Function-Block Editor** (PR #188), which handles
+  feedback/backward edges by exiting right and re-entering the target from its
+  left so a wire never doubles back across its own block.
+
+**Phase 2 — paired Education explainer is still pending.** Built as a clean
+hand-off: `[future: education/controller-wiring.html]` — lesson layout, one
+question ("how a field point lands on a DDC controller — power, inputs,
+outputs"), cross-linked to the sim via `relatedLinks` both ways (no JSON-LD
+key; that's quiz↔lesson only). Networking is the adjacent topic → forward-link
+to the future bus sim as prose, not a 404.
+
+`[future: bus simulator]` — a standalone RS-485 / MS-TP **bus simulator** the
+user floated while scoping this one: a daisy-chain trunk with +/- polarity,
+end-of-line termination at both ends only, biasing, and MAC/device-instance
+addressing. The Controller Wiring sim's greyed NET terminals are the seam it
+plugs into.
+
 ### Thermistor calculator *(both modes shipped + curves verified)*
 Two modes, tabs à la Signal Scaling. Both are shipped and the curves
 are datasheet-verified.
