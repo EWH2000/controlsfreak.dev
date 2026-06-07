@@ -73,8 +73,8 @@ Calculators, converters, and lookups — open one, get an answer.
 
 ### Simulators
 
-Running models you can play with — no install, no sign-in. Each one
-is paired with an Education explainer for the underlying concepts.
+Running models you can play with — no install, no sign-in. Most are
+paired with an Education explainer for the underlying concepts.
 
 - **PID Tuning Helper** — step-response simulator with process-type
   presets and a parameter-style toggle (Niagara gain·reset·rate
@@ -94,6 +94,20 @@ is paired with an Education explainer for the underlying concepts.
   built in (economizer-enable, freeze-stat lockout, dual-thermostat
   staging, heating PID, divide-by-zero edge case). Pairs with the
   Function-Block Basics explainer.
+- **Equipment Staging Sequencer** — a continuously-running parallel
+  plant: demand rides a 24-hour load curve while a configurable
+  sequence stages 2–4 units up and down, rotates the lead three ways
+  (fixed / runtime-equalized / scheduled), injects a fault with
+  standby promotion, and logs every move on a live demand-vs-capacity
+  trend. Pairs with the Equipment Staging explainer.
+- **Controller Wiring Simulator** — wire a generic DDC controller the
+  way you would in the field: power it from a 24 VAC transformer, drop
+  sensors (10K thermistor, 0-10 V / 4-20 mA transmitters, dry contact)
+  and outputs (0-10 V actuator, relay-driven fan), and click
+  terminal-to-terminal. Points read live when landed right; a bad wire
+  fails the way real hardware does — an open sensor, a dead actuator,
+  a spark, a popped fuse — with every fault named in plain English. A
+  paired Controller Wiring explainer is on the way.
 
 ### Education
 
@@ -224,6 +238,12 @@ from now will still run it.
     Helper simulator and the three PID Basics mini-sims.
   - `fbe-engine.js` — function-block catalog + per-tick evaluator
     behind the Function-Block Editor simulator.
+  - `wiring-engine.js` — pure circuit solver behind the Controller
+    Wiring Simulator: union-find the wired terminals into nets,
+    classify them HOT / COM off the transformer, then walk each field
+    device to a live reading or a named fault. Unlike `fbe-engine.js`'s
+    directional dataflow tick, conductors here are undirected and
+    validation is circuit-level.
   - `flow-engine.js` — animation engine for SVG schematics with
     two modes: continuous particle flow on `data-flow` paths
     (hydronic supply / return), and discrete pulses on
