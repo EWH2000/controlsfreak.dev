@@ -413,6 +413,155 @@ html[data-theme="light"]  .theme-btn[data-theme-set="light"] {
     font-weight: 600;
 }
 
+/* ── SITE SEARCH (command palette) ───────────────────────────────────
+   The nav trigger mirrors the units/theme pill vocabulary. The palette is
+   the site's only floating overlay (z-index above the sticky nav, which is
+   100); it lives at end-of-body so it escapes the nav stacking context.
+   Opened by / or Ctrl/⌘-K or .nav-search-btn — see scripts/search.js. */
+.nav-search-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    padding: 0.26rem 0.6rem;
+    background: var(--surface);
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+    border-radius: 0;
+    cursor: pointer;
+    letter-spacing: 0.03em;
+    transition: color 0.18s, border-color 0.18s;
+}
+.nav-search-btn:hover { color: var(--text); border-color: var(--accent); }
+.nav-search-icon { width: 13px; height: 13px; flex: none; }
+.nav-search-kbd {
+    font-family: var(--mono);
+    font-size: 0.66rem;
+    line-height: 1;
+    padding: 0.12rem 0.3rem;
+    color: var(--text-dim);
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+}
+
+.palette {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 12vh 1rem 1rem;
+    background: rgba(0, 0, 0, 0.55);
+}
+.palette[hidden] { display: none; }
+body.palette-open { overflow: hidden; }
+.palette-box {
+    width: 100%;
+    max-width: 560px;
+    max-height: 70vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+    animation: palette-in 0.14s ease-out;
+}
+@keyframes palette-in {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+.palette-field {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 0.7rem 0.85rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-2);
+}
+.palette-icon { width: 16px; height: 16px; flex: none; color: var(--text-dim); }
+.palette-input {
+    flex: 1;
+    min-width: 0;
+    background: transparent;
+    border: none;
+    outline: none;
+    font-family: var(--sans);
+    font-size: 1rem;
+    color: var(--text);
+}
+.palette-input::placeholder { color: var(--text-dim); }
+.palette-hint {
+    font-family: var(--mono);
+    font-size: 0.66rem;
+    color: var(--text-dim);
+    padding: 0.12rem 0.32rem;
+    border: 1px solid var(--border);
+    background: var(--surface);
+}
+.palette-results {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    overflow-y: auto;
+}
+.palette-result {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    grid-template-areas:
+        "tag title"
+        "tag desc";
+    gap: 0 0.7rem;
+    align-items: baseline;
+    padding: 0.6rem 0.85rem;
+    border-bottom: 1px solid var(--border-faint);
+    cursor: pointer;
+}
+.palette-result:last-child { border-bottom: none; }
+.palette-result[aria-selected="true"] { background: var(--accent-dim); }
+.palette-result-tag {
+    grid-area: tag;
+    align-self: center;
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+    color: var(--accent);
+    background: var(--accent-soft);
+    border: 1px solid var(--accent-glow);
+    padding: 0.12rem 0.36rem;
+}
+.palette-result-title {
+    grid-area: title;
+    font-family: var(--sans);
+    font-size: 0.95rem;
+    color: var(--text-bright);
+}
+.palette-result-desc {
+    grid-area: desc;
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+}
+.palette-status {
+    margin: 0;
+    padding: 0.5rem 0.85rem;
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    border-top: 1px solid var(--border);
+    background: var(--surface-2);
+}
+@media (prefers-reduced-motion: reduce) {
+    .palette-box { animation: none; }
+}
+
 /* ── HERO — workstation-panel frame (v3.0.0 "seam" hero).
        A bordered surface: faux BAS title bar above, live status line
        below, and the live "seam" instrument + copy between (those are
@@ -1134,6 +1283,7 @@ input[type="range"]::-moz-range-thumb {
 .tab-btn:focus-visible,
 .units-btn:focus-visible,
 .theme-btn:focus-visible,
+.nav-search-btn:focus-visible,
 .cta-button:focus-visible,
 .hero-btn:focus-visible,
 .back-link:focus-visible,
@@ -1170,6 +1320,7 @@ input[type="range"]:focus-visible::-moz-range-thumb {
     .site-nav-links a,
     .units-btn,
     .theme-btn,
+    .nav-search-btn,
     .tab-btn,
     .quiz-reset-best {
         display: inline-flex;

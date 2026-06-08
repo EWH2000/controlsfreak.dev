@@ -73,6 +73,31 @@ module.exports = function(eleventyConfig) {
             .sort((a, b) => a.data.canonical.localeCompare(b.data.canonical))
     );
 
+    // Page title with the shared " — controlsfreak.dev" suffix stripped.
+    // The JSON-LD filters below, the search index, and the nav dropdowns
+    // all want the bare title — factored out here so the regex lives once.
+    const cleanTitle = (title) =>
+        (title || "").replace(/\s+—\s+controlsfreak\.dev\s*$/, "");
+    eleventyConfig.addFilter("cleanTitle", cleanTitle);
+
+    // A page's `canonical` is a full https://controlsfreak.dev/… URL; the
+    // search index and nav menus need the path only (the site's hrefs are
+    // root-relative with explicit .html extensions). The home canonical
+    // (".../") collapses to "/" rather than the empty string.
+    eleventyConfig.addFilter("canonicalPath", (url) =>
+        (url || "").replace("https://controlsfreak.dev", "") || "/");
+
+    // Pages for the site search index (html/search-index.njk → the static
+    // /search-index.json the command palette fetches). Same membership as
+    // sitemapPages today — every page with a canonical is a real
+    // destination — but kept as its own collection so results can later be
+    // narrowed (e.g. drop utility pages) without touching the sitemap.
+    eleventyConfig.addCollection("searchPages", (collectionApi) =>
+        collectionApi.getAll()
+            .filter((item) => typeof item.data.canonical === "string")
+            .sort((a, b) => a.data.canonical.localeCompare(b.data.canonical))
+    );
+
     // Last-modified date for a source file, from git's last commit that
     // touched it — `git log -1 --format=%cd --date=short -- <path>`.
     // execFileSync (no shell) passes the path as an argv element.
@@ -122,7 +147,6 @@ module.exports = function(eleventyConfig) {
     };
     eleventyConfig.addFilter("breadcrumbJsonLd", (canonical, nav, title) => {
         if (!canonical || canonical === "https://controlsfreak.dev/") return "";
-        const cleanTitle = (title || "").replace(/\s+—\s+controlsfreak\.dev\s*$/, "");
         const items = [{ name: "Home", url: "https://controlsfreak.dev/" }];
         const section = SECTION_MAP[nav];
         if (section) {
@@ -130,13 +154,13 @@ module.exports = function(eleventyConfig) {
                 items.push({ name: section.name, url: canonical });
             } else {
                 items.push(section);
-                items.push({ name: cleanTitle, url: canonical });
+                items.push({ name: cleanTitle(title), url: canonical });
             }
         } else {
             // No recognized section (e.g. /privacy.html) — flat
             // Home → Page breadcrumb. Skipping unknown nav values would
             // leave top-level utility pages without any breadcrumb at all.
-            items.push({ name: cleanTitle, url: canonical });
+            items.push({ name: cleanTitle(title), url: canonical });
         }
         return JSON.stringify({
             "@context": "https://schema.org",
@@ -191,11 +215,10 @@ module.exports = function(eleventyConfig) {
     };
     eleventyConfig.addFilter("faqPageJsonLd", (canonical, questions, title, pairedLesson) => {
         if (!canonical || !Array.isArray(questions) || !questions.length) return "";
-        const cleanTitle = (title || "").replace(/\s+—\s+controlsfreak\.dev\s*$/, "");
         const node = {
             "@context": "https://schema.org",
             "@type": "FAQPage",
-            "name": cleanTitle,
+            "name": cleanTitle(title),
             "url": canonical,
             "mainEntity": questions.map((q) => ({
                 "@type": "Question",
@@ -223,11 +246,10 @@ module.exports = function(eleventyConfig) {
     // when nav: tools AND not on the tools landing itself.
     eleventyConfig.addFilter("softwareApplicationJsonLd", (canonical, title, description) => {
         if (!canonical) return "";
-        const cleanTitle = (title || "").replace(/\s+—\s+controlsfreak\.dev\s*$/, "");
         return JSON.stringify({
             "@context": "https://schema.org",
             "@type": "SoftwareApplication",
-            "name": cleanTitle,
+            "name": cleanTitle(title),
             "description": description,
             "url": canonical,
             "applicationCategory": "UtilityApplication",
@@ -250,11 +272,10 @@ module.exports = function(eleventyConfig) {
     // Emitted from head.njk only when `nav: education`.
     eleventyConfig.addFilter("techArticleJsonLd", (canonical, title, description, datePublished, dateModified, pairedQuiz) => {
         if (!canonical) return "";
-        const cleanTitle = (title || "").replace(/\s+—\s+controlsfreak\.dev\s*$/, "");
         const node = {
             "@context": "https://schema.org",
             "@type": "TechArticle",
-            "headline": cleanTitle,
+            "headline": cleanTitle(title),
             "description": description,
             "url": canonical,
             "mainEntityOfPage": canonical,
