@@ -21,10 +21,10 @@ nav: tools
 
     <div class="filter-chips" role="group" aria-label="Filter tools by category">
         <button type="button" class="filter-chip active" data-category="all" aria-pressed="true">
-            All <span class="filter-chip-count">13</span>
+            All <span class="filter-chip-count">14</span>
         </button>
         <button type="button" class="filter-chip" data-category="hvac" aria-pressed="false">
-            HVAC <span class="filter-chip-count">5</span>
+            HVAC <span class="filter-chip-count">6</span>
         </button>
         <button type="button" class="filter-chip" data-category="protocols" aria-pressed="false">
             Protocols <span class="filter-chip-count">4</span>
@@ -126,6 +126,15 @@ nav: tools
             titleFull:  'Coil-Sizing Calculator',
             desc:       'Total, sensible, and latent capacity for a cooling or heating coil from its entering and leaving air — or run it backwards to solve the leaving-air state from a known load.',
             pills:      ['HVAC', 'Cool / Heat', 'Sensible / Latent', 'Forward & Reverse'],
+            category:   'hvac'
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/tools/dew-point-calculator.html',
+            titleShort: 'Dew Point',
+            titleFull:  'Dew Point Calculator',
+            desc:       'Dry-bulb + RH or wet-bulb to dew point at a glance — wet-bulb, grains, and enthalpy alongside — plus a coil check that flags whether supply air is dropping below the return dew point.',
+            pills:      ['HVAC', 'Dew Point', 'Coil Check', 'US / Metric'],
             category:   'hvac'
         }) }}
         {{ navCard({
