@@ -1476,6 +1476,59 @@ split, hence the two load fields. No other engine surface changed —
   tab is more humid than entering, the status warns — a cooling coil
   removes water, it can't add it.
 
+### Dew-point calculator *(shipped 2026-06-08)*
+
+Ships at `/tools/dew-point-calculator.html` as a single-card
+`.tool-body-2col` tool — no tabs — with a "Field notes"
+`.tool-body-row` beneath. Page-id prefix `dew-`. Born from a real
+over-humidity service call: the user needed the return-air dew point
+fast to judge whether the cooling coil was actually pulling the supply
+air below it, and found the psychrometric chart too slow to drive for
+one number. A thin UI over `Psychro.solveState` — no new engine math.
+
+The build was scoped live in plan mode, one design question at a time:
+
+- *Hero + strip, not a full property pad.* Dew point is the one number
+  you glance at, rendered large (`.dew-hero`); wet-bulb, grains, and
+  enthalpy sit under it as plain `.ps-row` readouts. Specific volume
+  and RH-as-output were dropped — RH is the input in RH mode, so it
+  would be redundant. It earns its own row only in wet-bulb mode.
+- *Coil check, reframed from "surface condensation."* The first sketch
+  was a generic "will it sweat on a cold surface?" margin. The user's
+  actual call was sharper: return DB/RH in, supply dry-bulb in, "is the
+  coil hitting dew point?" So the optional `dew-surface` field compares
+  the leaving / surface temp to the *entering* dew point and the
+  verdict pill speaks coil language — below = dehumidifying, above =
+  sensible-only with humidity riding up. The honest physics (leaving-
+  air DB below the entering dew point guarantees the coil surface is
+  colder still, so condensation is certain; above is a strong but not
+  absolute sign of little latent removal) lives in the Field notes, not
+  the pill.
+- *DB + RH default, one-tap wet-bulb toggle.* RH off the space sensor
+  is the common field read; a visible `.dew-seg` segmented toggle (not
+  a dropdown — one tap under the gun) flips the second input to wet-
+  bulb for a sling psychrometer. In wet-bulb mode RH joins the readout.
+- *Altitude-adjustable* via `pressFromAltitude`, sea level by default —
+  one row the hurried path ignores and the accuracy-minded set.
+
+Reuse mirrors `coil-sizing.html`: `data-us` / `data-metric` label
+swap, the `rewriteInput` unit-flip resync, `U.display.humidityRatio(W
+* 7000)` for grains. `psy-widget.js` wasn't needed — only the `rh` /
+`wb` modes are used, and their second value canonicalizes directly
+(RH unitless, WB a temperature).
+
+**Friction caught in build:**
+- *`[hidden]` loses to `.ps-row`.* The RH output row started with the
+  `hidden` attribute and rendered anyway — `.ps-row` sets a `display`
+  that outranks the UA `[hidden] { display: none }`. Switched to the
+  `.hidden` class, which sits later in `styles.css` source order and
+  wins. Same trap `.nav-card[hidden]` / `.quiz-*[hidden]` re-assert
+  against; worth remembering for any future `.ps-row` toggled hidden.
+- *Version coincidence, not collision.* The branch bumped 3.6.0 → 3.7.0
+  off `main`; the parallel controller-wiring-lesson branch made the
+  identical 3.7.0 bump and merged first, so git auto-merged the same
+  change with no conflict. Net: 3.7.0 covers both features.
+
 ### Economizer-ratio helper *(shipped 2026-05-18)*
 
 Ships at `/tools/economizer-ratio.html` as a two-tab `.tool-body-3col`

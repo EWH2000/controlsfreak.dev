@@ -59,6 +59,14 @@ Calculators, converters, and lookups — open one, get an answer.
   leaving-air state, flagging the apparatus dew point when a latent
   load drives the leaving point onto the saturation curve. Cooling
   or heating coil; sea-level pressure.
+- **Dew Point Calculator** — dry-bulb plus one humidity reading (RH
+  off the space sensor, or wet-bulb off a sling psychrometer) → dew
+  point, with wet-bulb, grains, and enthalpy alongside. The Coil
+  Check field takes a supply / leaving dry-bulb (or any cold surface
+  temp) and flags whether it sits below the entering dew point — the
+  coil is dehumidifying — or above it, where you get sensible cooling
+  only and space humidity rides up. Altitude-adjustable; sea level by
+  default.
 - **Thermistor / RTD Calculator** — table-driven R↔T curve for
   common sensor types (10K Type II/III, JCI 10K+8.7K shunt,
   Schneider/TAC "Type 5" 10K-3+11K shunt, 20K, 3K, 1K Balco,
