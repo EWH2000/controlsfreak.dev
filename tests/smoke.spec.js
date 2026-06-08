@@ -28,6 +28,7 @@ const PAGES = [
     { name: 'economizer ratio',       url: '/tools/economizer-ratio.html' },
     { name: 'air mixing',             url: '/tools/air-mixing.html' },
     { name: 'coil sizing',            url: '/tools/coil-sizing.html' },
+    { name: 'dew point calculator',   url: '/tools/dew-point-calculator.html' },
     { name: 'thermistor calculator',  url: '/tools/thermistor-calculator.html' },
     { name: 'refrigerant p-t',        url: '/tools/refrigerant-pt.html' },
     { name: 'valve cv sizing',        url: '/tools/valve-cv.html' },
@@ -453,6 +454,49 @@ test('coil sizing — capacity and leaving-state tabs compute their cases', asyn
     expect(errors, 'coil-sizing behavioral should log no page / console errors').toEqual([]);
 });
 
+test('dew point calculator — default read, coil verdict, and wet-bulb toggle', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('/tools/dew-point-calculator.html');
+
+    // Defaults: 75 °F / 55 % RH at sea level → dew point ≈ 57.8 °F, with
+    // wet-bulb / grains / enthalpy filled. Parse the number rather than a
+    // brittle substring so it survives cosmetic-rounding tweaks.
+    const dp = parseFloat((await page.locator('#dew-out-dp').textContent()).replace(/[^0-9.]/g, ''));
+    expect(dp, '75 °F / 55 % RH dew point should be ≈ 57–58 °F').toBeGreaterThan(56);
+    expect(dp).toBeLessThan(59);
+    await expect(page.locator('#dew-out-dp')).toContainText('°F');
+    await expect(page.locator('#dew-out-wb')).not.toHaveText('—');
+    await expect(page.locator('#dew-out-gr')).not.toHaveText('—');
+    // RH is the input in RH mode, so its output row stays hidden.
+    await expect(page.locator('#dew-out-rh-row')).toBeHidden();
+
+    // Coil check — supply 55 °F sits below the ~57.8 °F dew point → the
+    // coil is dehumidifying (green verdict).
+    await page.fill('#dew-surface', '55');
+    await expect(page.locator('#dew-verdict')).toBeVisible();
+    await expect(page.locator('#dew-verdict')).toHaveClass(/ok/);
+    await expect(page.locator('#dew-verdict')).toContainText('below dew point');
+    // Supply 62 °F is above it → sensible-only warning.
+    await page.fill('#dew-surface', '62');
+    await expect(page.locator('#dew-verdict')).toHaveClass(/warn/);
+    await expect(page.locator('#dew-verdict')).toContainText('above dew point');
+    // Clearing the field retires the verdict.
+    await page.fill('#dew-surface', '');
+    await expect(page.locator('#dew-verdict')).toBeHidden();
+
+    // Wet-bulb toggle: the second input relabels and the RH output row appears.
+    await page.click('#dew-mode-wb');
+    await expect(page.locator('#dew-second-label')).toContainText('Wet-bulb');
+    await expect(page.locator('#dew-out-rh-row')).toBeVisible();
+    // Wet-bulb above dry-bulb is impossible → muted hero + engine error.
+    await page.fill('#dew-db', '70');
+    await page.fill('#dew-second', '80');
+    await expect(page.locator('#dew-out-dp')).toHaveText('—');
+    await expect(page.locator('#dew-callout')).toBeVisible();
+
+    expect(errors, 'dew-point behavioral should log no page / console errors').toEqual([]);
+});
+
 test.describe('thermistor behavioral', () => {
     // The test below mutates the global units preference (persisted in
     // localStorage as `cf_units`). Without an afterEach, a failed mid-
@@ -663,7 +707,7 @@ test('tools landing — filter chip narrows to one category and All restores', a
     await expect(page.locator('.filter-chip[data-category="hvac"]')).toHaveClass(/active/);
     await expect(page.locator('.filter-chip[data-category="all"]')).not.toHaveClass(/active/);
     const visibleHvac = await page.locator('.nav-card:not([hidden])').count();
-    expect(visibleHvac, 'only HVAC cards should remain visible').toBe(5);
+    expect(visibleHvac, 'only HVAC cards should remain visible').toBe(6);
     // hash updates (replaceState — no scroll, no back-history pollution)
     expect(new URL(page.url()).hash).toBe('#hvac');
 

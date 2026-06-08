@@ -1,0 +1,383 @@
+---
+title: Dew Point Calculator & Coil Check — controlsfreak.dev
+description: Dry-bulb plus RH or wet-bulb to dew point, with wet-bulb, grains, and enthalpy — plus a coil check that flags when supply air stays above the return dew point.
+canonical: https://controlsfreak.dev/tools/dew-point-calculator.html
+nav: tools
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block head %}
+    <style>
+        /* Page-only widget internals (dew- prefix). The shared design system
+           (.tool-body-2col, .ps-row, .ps-value, .failure-callout, .subhead)
+           carries the rest. Two custom pieces: the big dew-point hero readout
+           and the coil-verdict pill (modeled on coil-sizing's .cs-status). */
+
+        /* Hero — the one number a tech glances at mid-call. */
+        .dew-hero-wrap {
+            padding-bottom: 0.85rem;
+            margin-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border-faint);
+        }
+        .dew-hero-label {
+            display: block;
+            font-family: var(--mono);
+            font-size: 0.7rem;
+            letter-spacing: 0.09em;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+        .dew-hero {
+            display: block;
+            font-family: var(--mono);
+            font-size: 2.5rem;
+            line-height: 1.05;
+            font-weight: 600;
+            color: var(--text-bright);
+        }
+        .dew-hero.muted { color: var(--text-dim); }
+
+        /* RH / Wet-bulb segmented toggle. role="group" + aria-pressed; a
+           visible two-button segment beats a dropdown for a one-tap field
+           switch under the gun. Focus ring + 44px tap target live here
+           because this control is page-specific (the consolidated FOCUS /
+           TOUCH-TARGET blocks in styles.css cover chrome-level controls). */
+        .dew-seg {
+            display: inline-flex;
+            border: 1px solid var(--border);
+            border-radius: var(--rail);
+            overflow: hidden;
+        }
+        .dew-seg-btn {
+            appearance: none;
+            border: none;
+            background: var(--surface);
+            color: var(--text-dim);
+            font-family: var(--mono);
+            font-size: 0.82rem;
+            padding: 0.4rem 0.95rem;
+            min-height: 44px;
+            cursor: pointer;
+        }
+        .dew-seg-btn + .dew-seg-btn { border-left: 1px solid var(--border); }
+        .dew-seg-btn[aria-pressed="true"] { background: var(--accent-dim); color: var(--text-bright); }
+        .dew-seg-btn:hover { color: var(--text); }
+        .dew-seg-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+        /* Coil-verdict pill — same chrome as coil-sizing's .cs-status. */
+        .dew-verdict {
+            margin-top: 1rem;
+            padding: 0.55rem 0.8rem;
+            border-radius: var(--rail);
+            font-family: var(--mono);
+            font-size: 0.82rem;
+            line-height: 1.5;
+            border: 1px solid var(--border);
+            background: var(--surface-2);
+            color: var(--text);
+        }
+        .dew-verdict.ok   { border-color: var(--accent); background: var(--accent-dim); color: var(--text-bright); }
+        .dew-verdict.warn { border-color: var(--heat);   color: var(--heat); }
+        .dew-verdict.edge { border-color: var(--amber);  color: var(--amber); }
+    </style>
+{% endblock %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Tools · Dew Point</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">
+                Dew Point Calculator
+                <span class="tool-tag">Coil Check</span>
+            </h1>
+        </div>
+
+        <p class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
+            Dew point at a glance from a dry-bulb and one humidity reading — RH off the
+            space sensor or wet-bulb off a sling psychrometer — with wet-bulb, grains, and
+            enthalpy alongside. The <em>Coil Check</em> field turns that dew point into the
+            answer you actually want on an over-humidity call: drop in the supply / leaving
+            dry-bulb and it says whether the coil is pulling the air below saturation
+            (dehumidifying) or just cooling it sensibly while the space rides up.
+        </p>
+
+        <div class="tool-body-2col">
+
+            <section>
+                <h2 class="ps-section-label">Input</h2>
+                <div class="ps-row">
+                    <label class="ps-label" data-us="Dry-bulb (°F)" data-metric="Dry-bulb (°C)" for="dew-db">Dry-bulb (°F)</label>
+                    <input class="ps-input" type="number" id="dew-db" step="0.5" min="-50" max="200" value="75">
+                </div>
+                <div class="ps-row">
+                    <span class="ps-label" id="dew-mode-label">Second input</span>
+                    <div class="dew-seg" role="group" aria-labelledby="dew-mode-label">
+                        <button type="button" class="dew-seg-btn" id="dew-mode-rh" data-mode="rh" aria-pressed="true">RH</button>
+                        <button type="button" class="dew-seg-btn" id="dew-mode-wb" data-mode="wb" aria-pressed="false">Wet-bulb</button>
+                    </div>
+                </div>
+                <div class="ps-row">
+                    <label class="ps-label" id="dew-second-label" for="dew-second">RH (%)</label>
+                    <input class="ps-input" type="number" id="dew-second" step="1" value="55">
+                </div>
+                <div class="ps-row">
+                    <label class="ps-label" data-us="Altitude (ft)" data-metric="Altitude (m)" for="dew-alt">Altitude (ft)</label>
+                    <input class="ps-input" type="number" id="dew-alt" step="100" min="0" value="0">
+                </div>
+
+                <h3 class="subhead">Coil check — optional</h3>
+                <div class="ps-row">
+                    <label class="ps-label" data-us="Coil leaving / surface (°F)" data-metric="Coil leaving / surface (°C)" for="dew-surface">Coil leaving / surface (°F)</label>
+                    <input class="ps-input" type="number" id="dew-surface" step="0.5" placeholder="e.g. supply 55">
+                </div>
+                <p class="ref-note">
+                    Your supply / leaving-air dry-bulb (or any cold surface temperature),
+                    checked against the dew point. Leave it blank for a plain dew-point read.
+                </p>
+            </section>
+
+            <section>
+                <h2 class="ps-section-label">Output</h2>
+                <div class="dew-hero-wrap">
+                    <span class="dew-hero-label">Dew point</span>
+                    <span class="dew-hero muted" id="dew-out-dp">—</span>
+                </div>
+                <div class="ps-row">
+                    <span class="ps-label" data-us="Wet-bulb (°F)" data-metric="Wet-bulb (°C)">Wet-bulb (°F)</span>
+                    <span class="ps-value muted" id="dew-out-wb">—</span>
+                </div>
+                <div class="ps-row">
+                    <span class="ps-label" data-us="Humidity ratio (gr/lb)" data-metric="Humidity ratio (g/kg)">Humidity ratio (gr/lb)</span>
+                    <span class="ps-value muted" id="dew-out-gr">—</span>
+                </div>
+                <div class="ps-row hidden" id="dew-out-rh-row">
+                    <span class="ps-label">Rel. humidity (%)</span>
+                    <span class="ps-value muted" id="dew-out-rh">—</span>
+                </div>
+                <div class="ps-row">
+                    <span class="ps-label" data-us="Enthalpy (Btu/lb)" data-metric="Enthalpy (kJ/kg)">Enthalpy (Btu/lb)</span>
+                    <span class="ps-value muted" id="dew-out-h">—</span>
+                </div>
+
+                <div class="dew-verdict" id="dew-verdict" hidden></div>
+
+                <div class="btn-row">
+                    <button class="copy-btn" id="dew-copy">Copy dew point</button>
+                </div>
+                <div class="failure-callout" id="dew-callout" hidden></div>
+            </section>
+
+        </div>
+
+        <section class="tool-body-row">
+            <h2 class="ps-section-label">Field notes — the over-humidity call</h2>
+            <p class="ref-note">
+                Read the return-air dry-bulb and RH off the space sensor
+                (<span data-us="75 °F" data-metric="23.9 °C">75 °F</span> / 55 %, say) and the
+                tool gives the return dew point (about <span data-us="57.8 °F" data-metric="14.3 °C">57.8 °F</span>).
+                Now compare your supply / leaving dry-bulb to it. Leaving below that dew point
+                (<span data-us="55 °F" data-metric="12.8 °C">55 °F</span>) means the coil is wringing
+                out moisture; leaving above it means you're cooling sensibly only and space
+                humidity climbs — the failure mode behind most over-humidity complaints.
+            </p>
+            <p class="ref-note">
+                Why leaving-air dry-bulb is a fair yardstick: the coil's fin surface is colder
+                than the air leaving it, so if the leaving air is already below the entering
+                dew point, the surface is well below it and condensation is certain. Above the
+                dew point it's a strong sign of little latent removal — a coil whose surface
+                just dips under the dew point can still shed a trace. Active-dehumidification
+                sequences hold the supply several degrees below the space dew point on purpose.
+                For the full AHU process train and altitude-adjusted coil capacities, step up to
+                the <a href="/tools/psychrometric-chart.html">psychrometric chart</a>.
+            </p>
+        </section>
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/tools/psychrometric-chart.html', label: 'Psychrometric Chart'},
+            {href: '/tools/coil-sizing.html', label: 'Coil-Sizing Calculator'}
+        ],
+        lessons: [
+            {href: '/education/psychrometrics-basics.html', label: 'Psychrometrics Basics'}
+        ],
+        quizzes: [
+            {href: '/practice/psychrometrics-basics.html', label: 'Psychrometrics Basics Quiz'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/tools/">← All tools</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="/scripts/psychro-engine.js"></script>
+<script src="/scripts/units.js"></script>
+<script src="/scripts/ui.js"></script>
+<script>
+    // Psychro.solveState + the flat ASHRAE primitive pressFromAltitude come
+    // from /scripts/psychro-engine.js (canonical units: °F, lb/lb, Btu/lb,
+    // psia). Display/suffix/toCanonical + the units toggle come from
+    // /scripts/units.js. copyReadouts comes from /scripts/ui.js. All math is
+    // the shared engine — this file is just the field-tool UI over it.
+    (function () {
+        'use strict';
+
+        const U = window.Units;
+        const $ = id => document.getElementById(id);
+
+        // 'rh' = dry-bulb + relative humidity (space sensor / hygrometer);
+        // 'wb' = dry-bulb + wet-bulb (sling psychrometer).
+        let mode = 'rh';
+
+        const SECONDARY = ['dew-out-wb', 'dew-out-gr', 'dew-out-rh', 'dew-out-h'];
+
+        function setLive(id, text) {
+            const el = $(id);
+            el.className = 'ps-value live';
+            el.textContent = text;
+        }
+
+        // Second-input label tracks both the mode and (in wet-bulb mode) the
+        // active temperature unit, so it can't ride on data-us/data-metric.
+        function refreshSecondLabel() {
+            if (mode === 'rh') {
+                $('dew-second-label').textContent = 'RH (%)';
+                $('dew-second').step = '1';
+            } else {
+                $('dew-second-label').textContent = 'Wet-bulb (' + U.suffix.temp() + ')';
+                $('dew-second').step = '0.5';
+            }
+        }
+
+        function muteOutputs(msg) {
+            const hero = $('dew-out-dp');
+            hero.className = 'dew-hero muted';
+            hero.textContent = '—';
+            SECONDARY.forEach(id => {
+                const el = $(id);
+                el.className = 'ps-value muted';
+                el.textContent = '—';
+            });
+            $('dew-verdict').hidden = true;
+            const cb = $('dew-callout');
+            if (msg) { cb.textContent = msg; cb.hidden = false; }
+            else { cb.hidden = true; }
+        }
+
+        // Leaving / surface temp vs. the entering-air dew point. Positive
+        // margin = surface below dew point = condensing. See the Field notes
+        // for why leaving-air dry-bulb is a conservative dehumidification cue.
+        function updateVerdict(tdpF) {
+            const v = $('dew-verdict');
+            const surfD = parseFloat($('dew-surface').value);
+            if (!isFinite(surfD)) { v.hidden = true; return; }
+
+            const marginF = tdpF - U.toCanonical.temp(surfD);
+            const margin = Math.abs(U.display.deltaTemp(marginF)).toFixed(1) + ' ' + U.suffix.deltaTemp();
+            v.hidden = false;
+            if (marginF > 0.5) {
+                v.className = 'dew-verdict ok';
+                v.textContent = '✓ Leaving ' + margin + ' below dew point — the coil is pulling air past saturation, so it’s wringing out moisture. (Any surface this cold would sweat.)';
+            } else if (marginF < -0.5) {
+                v.className = 'dew-verdict warn';
+                v.textContent = '⚠ Leaving ' + margin + ' above dew point — the air never reaches saturation, so you’re getting little to no latent removal. Space humidity will ride up.';
+            } else {
+                v.className = 'dew-verdict edge';
+                v.textContent = '≈ Leaving right at the dew point — the onset of condensation; barely any latent removal either way.';
+            }
+        }
+
+        function recompute() {
+            refreshSecondLabel();
+            const dbD  = parseFloat($('dew-db').value);
+            const secD = parseFloat($('dew-second').value);
+            const altD = parseFloat($('dew-alt').value);
+            if (!isFinite(dbD) || !isFinite(secD)) { muteOutputs(''); return; }
+
+            const dbF   = U.toCanonical.temp(dbD);
+            const altFt = isFinite(altD) ? U.toCanonical.altitude(altD) : 0;
+            const P     = pressFromAltitude(altFt);
+            // RH is unitless; wet-bulb is a temperature.
+            const secCanon = mode === 'rh' ? secD : U.toCanonical.temp(secD);
+
+            const state = Psychro.solveState(mode, dbF, secCanon, P);
+            if (!state.ok) { muteOutputs(state.error); return; }
+            $('dew-callout').hidden = true;
+
+            const tU = U.suffix.temp();
+            const hero = $('dew-out-dp');
+            hero.className = 'dew-hero';
+            hero.textContent = U.display.temp(state.tdp).toFixed(1) + ' ' + tU;
+
+            setLive('dew-out-wb', U.display.temp(state.twb).toFixed(1) + ' ' + tU);
+            setLive('dew-out-gr', U.display.humidityRatio(state.W * 7000).toFixed(1) + ' ' + U.suffix.humidityRatio());
+            setLive('dew-out-h',  U.display.enthalpy(state.h).toFixed(1) + ' ' + U.suffix.enthalpy());
+
+            // RH is the input in 'rh' mode (redundant); it earns a row in 'wb'
+            // mode. Toggle the .hidden class, not the [hidden] attribute —
+            // .ps-row sets a display that would override the attribute.
+            $('dew-out-rh-row').classList.toggle('hidden', mode !== 'wb');
+            if (mode === 'wb') setLive('dew-out-rh', state.rh.toFixed(1) + ' %');
+
+            updateVerdict(state.tdp);
+        }
+
+        function setMode(next) {
+            if (next === mode) return;
+            mode = next;
+            document.querySelectorAll('.dew-seg-btn').forEach(b => {
+                b.setAttribute('aria-pressed', b.dataset.mode === mode ? 'true' : 'false');
+            });
+            recompute();
+        }
+
+        // ── Wiring ────────────────────────────────────────────────────
+        ['dew-db', 'dew-second', 'dew-alt', 'dew-surface'].forEach(id => {
+            $(id).addEventListener('input', recompute);
+        });
+        document.querySelectorAll('.dew-seg-btn').forEach(btn => {
+            btn.addEventListener('click', e => setMode(e.currentTarget.dataset.mode));
+        });
+        $('dew-copy').addEventListener('click', e => copyReadouts(e.currentTarget, '', 'dew-out-dp'));
+
+        // ── Unit-flip resync ──────────────────────────────────────────
+        function rewriteInput(id, quantity, fromU, toU) {
+            const el = $(id);
+            const v  = parseFloat(el.value);
+            if (!isFinite(v)) return;
+            el.value = (Math.round(U.convert(v, fromU, toU, quantity) * 100) / 100).toString();
+        }
+
+        U.onChange(function (newUnits) {
+            const oldUnits = newUnits === 'us' ? 'metric' : 'us';
+            rewriteInput('dew-db', 'temp', oldUnits, newUnits);
+            rewriteInput('dew-alt', 'altitude', oldUnits, newUnits);
+            rewriteInput('dew-surface', 'temp', oldUnits, newUnits);
+            if (mode === 'wb') rewriteInput('dew-second', 'temp', oldUnits, newUnits);
+            recompute();
+        });
+
+        // ── Initial paint ─────────────────────────────────────────────
+        // Input values are authored in US; convert once up front for a
+        // returning metric visitor so numbers match the swapped labels
+        // (same fix as coil-sizing / thermistor-calculator).
+        if (U.current() === 'metric') {
+            rewriteInput('dew-db', 'temp', 'us', 'metric');
+            rewriteInput('dew-alt', 'altitude', 'us', 'metric');
+            rewriteInput('dew-surface', 'temp', 'us', 'metric');
+            // dew-second is RH on first paint (unitless) — no rewrite.
+        }
+        recompute();
+    })();
+</script>
+{% endblock %}
