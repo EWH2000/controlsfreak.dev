@@ -14,6 +14,29 @@
 {% block content %}{% endblock %}
 
 {% include "footer.njk" %}
+
+{# Site search palette — static markup so search.js only reveals/populates
+   it (no build-a-DOM flash). role="dialog" + aria-modal; the input is an
+   ARIA combobox driving the listbox of results. Lives at end-of-body so
+   it's outside the sticky nav's stacking context. See scripts/search.js. #}
+<div id="palette" class="palette" role="dialog" aria-modal="true" aria-label="Search the site" hidden>
+    <div class="palette-box">
+        <div class="palette-field">
+            <svg class="palette-icon" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5">
+                <circle cx="7" cy="7" r="4.5"/><line x1="10.6" y1="10.6" x2="14" y2="14"/>
+            </svg>
+            <input id="palette-input" class="palette-input" type="search" role="combobox"
+                   aria-expanded="false" aria-controls="palette-results" aria-activedescendant=""
+                   aria-autocomplete="list" autocomplete="off" autocapitalize="off"
+                   spellcheck="false" placeholder="Search tools, simulators, lessons…"
+                   aria-label="Search the site">
+            <kbd class="palette-hint">esc</kbd>
+        </div>
+        <ul id="palette-results" class="palette-results" role="listbox" aria-label="Search results"></ul>
+        <p id="palette-status" class="palette-status" role="status" aria-live="polite" hidden></p>
+    </div>
+</div>
+
 {# flow-engine.js is loaded site-wide because the gutter schematic
    motifs (schematic-bg.njk) opt in via data-flow / data-pulse on
    every page. Pages with their own diagrams stop including it
@@ -28,6 +51,10 @@
    and persists cf_theme. The before-paint bootstrap in head.njk already
    set [data-theme]; this script owns the runtime. #}
 <script src="/scripts/theme.js"></script>
+{# search.js is loaded site-wide so the command palette (/ or Ctrl/⌘-K, or
+   the .nav-search-btn) works on every page. It reveals the #palette dialog
+   above and fetches /search-index.json on first open. #}
+<script src="/scripts/search.js"></script>
 <script src="/scripts/flow-engine.js"></script>
 <script src="/scripts/schematic-bg.js"></script>
 {# fullscreen-toggle.js is loaded site-wide so any future tool can opt

@@ -7,6 +7,13 @@
         <a href="/education/"{% if nav == "education" %} class="active"{% endif %}>Education</a>
         <a href="/practice/"{% if nav == "practice" %} class="active"{% endif %}>Practice</a>
         <a href="/contact.html"{% if nav == "contact" %} class="active"{% endif %}>Contact</a>
+        <button type="button" class="nav-search-btn" id="nav-search-btn" aria-haspopup="dialog" aria-label="Search (press slash)">
+            <svg class="nav-search-icon" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5">
+                <circle cx="7" cy="7" r="4.5"/><line x1="10.6" y1="10.6" x2="14" y2="14"/>
+            </svg>
+            <span class="nav-search-label">Search</span>
+            <kbd class="nav-search-kbd">/</kbd>
+        </button>
         <span class="units-toggle">
             <span class="units-label">Units:</span>
             <span class="units-toggle-pill">
