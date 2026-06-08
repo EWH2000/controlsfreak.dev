@@ -1,6 +1,6 @@
 <nav class="site-nav">
     <a class="site-nav-brand" href="/">controlsfreak<span>.dev</span></a>
-    <div class="site-nav-links">
+    <div class="site-nav-links" id="site-nav-links">
         <a href="/"{% if nav == "home" %} class="active"{% endif %}>Home</a>
         <span class="nav-item nav-item--has-menu">
             <a href="/tools/"{% if nav == "tools" %} class="active"{% endif %}>Tools</a>
@@ -59,4 +59,17 @@
             </span>
         </span>
     </div>
+    <button type="button" class="nav-search-btn nav-search-btn--mobile" aria-haspopup="dialog" aria-label="Search">
+        <svg class="nav-search-icon" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="7" cy="7" r="4.5"/><line x1="10.6" y1="10.6" x2="14" y2="14"/>
+        </svg>
+    </button>
+    <button type="button" class="nav-hamburger" id="nav-hamburger" aria-expanded="false" aria-controls="site-nav-links" aria-label="Open menu">
+        <svg class="nav-burger-icon" viewBox="0 0 18 18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+            <line x1="2" y1="5" x2="16" y2="5"/><line x1="2" y1="9" x2="16" y2="9"/><line x1="2" y1="13" x2="16" y2="13"/>
+        </svg>
+        <svg class="nav-close-icon" viewBox="0 0 18 18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+            <line x1="4" y1="4" x2="14" y2="14"/><line x1="14" y1="4" x2="4" y2="14"/>
+        </svg>
+    </button>
 </nav>

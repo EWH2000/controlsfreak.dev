@@ -92,17 +92,39 @@
         });
     });
 
-    // A click anywhere outside the menus closes them all. The toggle's own
-    // click is inside .nav-item--has-menu, so it's exempt here and handled
-    // by its dedicated listener above.
+    // ── Mobile hamburger: collapses the whole link bar behind one button
+    // so the header isn't half the screen on a phone. Desktop never shows
+    // the button (CSS), so this is inert there.
+    const nav = document.querySelector('.site-nav');
+    const burger = document.getElementById('nav-hamburger');
+    function setNavOpen(open) {
+        if (!nav || !burger) return;
+        nav.classList.toggle('nav-open', open);
+        burger.setAttribute('aria-expanded', open ? 'true' : 'false');
+        burger.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+        if (!open) closeAll();   // collapsing the bar also closes any sub-menu
+    }
+    if (burger) {
+        burger.addEventListener('click', () =>
+            setNavOpen(!nav.classList.contains('nav-open')));
+    }
+
+    // A click outside a section group closes its sub-menu; a click fully
+    // outside the nav also collapses the mobile hamburger.
     document.addEventListener('click', (e) => {
         if (!e.target.closest('.nav-item--has-menu')) closeAll();
+        if (nav && nav.classList.contains('nav-open') && !e.target.closest('.site-nav')) {
+            setNavOpen(false);
+        }
     });
 
     // Bubble-phase Escape backstop (search.js's capture Escape runs first).
     document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') closeAll();
+        if (e.key === 'Escape') {
+            closeAll();
+            if (nav && nav.classList.contains('nav-open')) setNavOpen(false);
+        }
     });
 
-    window.NavMenu = { closeAll: closeAll };
+    window.NavMenu = { closeAll: closeAll, setNavOpen: setNavOpen };
 }());

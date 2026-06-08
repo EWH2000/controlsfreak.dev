@@ -373,7 +373,11 @@ main { flex: 1; }
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 0.15rem 0.2rem;
+    /* Roomier hit area than the old fiddly 0.15rem caret, but the negative
+       margin cancels the added box in layout so the link bar keeps its
+       compact width (otherwise it wraps below the brand at ~1280px). */
+    padding: 0.45rem 0.5rem;
+    margin: -0.3rem -0.35rem;
     background: transparent;
     border: none;
     color: var(--text-dim);
@@ -381,7 +385,7 @@ main { flex: 1; }
     transition: color 0.18s;
 }
 .nav-menu-toggle:hover { color: var(--text); }
-.nav-caret { width: 10px; height: 6px; transition: transform 0.18s; }
+.nav-caret { width: 11px; height: 7px; transition: transform 0.18s; }
 .nav-menu-toggle[aria-expanded="true"] .nav-caret { transform: rotate(180deg); }
 .nav-menu {
     position: absolute;
@@ -401,7 +405,8 @@ main { flex: 1; }
     font-size: 0.9rem;
     color: var(--text-dim);
     text-decoration: none;
-    padding: 0.5rem 0.85rem;
+    /* Taller rows — easier pointer targets than the old 0.5rem/0.85rem. */
+    padding: 0.6rem 1rem;
     border-bottom: 1px solid var(--border-faint);
     white-space: nowrap;
     transition: color 0.18s, background 0.18s;
@@ -411,6 +416,33 @@ main { flex: 1; }
 @media (prefers-reduced-motion: reduce) {
     .nav-caret { transition: none; }
 }
+
+/* ── MOBILE HAMBURGER ────────────────────────────────────────────────
+   Desktop never shows it (display:none); at the narrow-nav breakpoint it
+   becomes the top-bar control that collapses .site-nav-links. The two
+   icons swap on aria-expanded. See nav-menu.js. */
+.nav-hamburger {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 0.35rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    cursor: pointer;
+    transition: color 0.18s, border-color 0.18s;
+}
+.nav-hamburger:hover { color: var(--accent); border-color: var(--accent); }
+.nav-burger-icon,
+.nav-close-icon { width: 18px; height: 18px; }
+.nav-close-icon { display: none; }
+.nav-hamburger[aria-expanded="true"] .nav-burger-icon { display: none; }
+.nav-hamburger[aria-expanded="true"] .nav-close-icon { display: inline; }
+/* Compact icon-only search for the mobile top bar; the full labelled
+   search stays in the desktop link bar. Compound selector so it beats the
+   base .nav-search-btn { display: inline-flex } regardless of source order.
+   Desktop hides this one; the mobile breakpoint flips it on. */
+.nav-search-btn.nav-search-btn--mobile { display: none; gap: 0; padding: 0.35rem; }
 
 /* ── UNITS + THEME TOGGLES ───────────────────────────────────────────
    Two sibling pills inside .site-nav-links (rightmost children) — same
@@ -1181,9 +1213,26 @@ footer {
        Allow wrapping below the mobile breakpoint — the trailing
        .section-line still sits centered alongside the wrapped label. */
     .section-label   { white-space: normal; }
-    /* The nav flex-wraps with no hamburger here; an absolutely-positioned
-       dropdown would float over the wrapped rows. Give the section a full
-       row and drop its open panel inline (full width) below link+toggle. */
+    /* Collapse the whole link bar behind the hamburger so the header isn't
+       half the screen. Top bar = brand + search + hamburger; the links sheet
+       drops to its own full-width column below, only when .nav-open. */
+    .site-nav-brand { margin-right: auto; }   /* group search + burger at right */
+    .nav-hamburger { display: inline-flex; }
+    .nav-search-btn.nav-search-btn--mobile { display: inline-flex; }
+    /* The full search lives in the sheet on desktop; on mobile the top-bar
+       icon button covers it, so drop the in-sheet copy to avoid two. */
+    #nav-search-btn { display: none; }
+    .site-nav-links {
+        display: none;
+        order: 3;                 /* after the search btn + hamburger */
+        flex-basis: 100%;         /* its own row when shown */
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.15rem;
+        margin-top: 0.5rem;
+    }
+    .site-nav.nav-open .site-nav-links { display: flex; }
+    /* Inside the open sheet each section + its sub-menu stacks full width. */
     .nav-item--has-menu { flex-wrap: wrap; width: 100%; }
     .nav-menu {
         position: static;
@@ -1351,6 +1400,7 @@ input[type="range"]::-moz-range-thumb {
 .units-btn:focus-visible,
 .theme-btn:focus-visible,
 .nav-search-btn:focus-visible,
+.nav-hamburger:focus-visible,
 .nav-menu-toggle:focus-visible,
 .nav-menu-item:focus-visible,
 .cta-button:focus-visible,
@@ -1390,6 +1440,7 @@ input[type="range"]:focus-visible::-moz-range-thumb {
     .units-btn,
     .theme-btn,
     .nav-search-btn,
+    .nav-hamburger,
     .nav-menu-toggle,
     .nav-menu-item,
     .tab-btn,

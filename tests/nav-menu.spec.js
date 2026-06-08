@@ -71,3 +71,39 @@ test('dropdowns work from an inner page — 1-click cross-section nav', async ({
     await expect(page).toHaveURL(/\/education\/pid-basics\.html$/);
     expect(errors, 'cross-section nav should log no errors').toEqual([]);
 });
+
+test('mobile: hamburger collapses the header and toggles the sheet', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.setViewportSize({ width: 412, height: 883 });   // S25-class width
+    await page.goto('/');
+    const links = page.locator('#site-nav-links');
+    const burger = page.locator('#nav-hamburger');
+
+    // Collapsed by default → compact header (was ~52% of the viewport).
+    await expect(burger).toBeVisible();
+    await expect(links).toBeHidden();
+    const navH = await page.locator('nav.site-nav').evaluate((el) => el.getBoundingClientRect().height);
+    expect(navH, 'collapsed mobile nav should be compact, not half the screen').toBeLessThan(100);
+
+    // Open → links show; aria-expanded flips; a sub-dropdown still works.
+    await burger.click();
+    await expect(links).toBeVisible();
+    await expect(burger).toHaveAttribute('aria-expanded', 'true');
+    await page.click('#nav-tools-toggle');
+    await expect(page.locator('#nav-tools-menu')).toBeVisible();
+
+    // Close via the burger.
+    await burger.click();
+    await expect(links).toBeHidden();
+    expect(errors, 'mobile hamburger should log no errors').toEqual([]);
+});
+
+test('mobile: the top-bar search icon opens the palette', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.setViewportSize({ width: 412, height: 883 });
+    await page.goto('/');
+    // The labelled search is hidden on mobile; the compact icon covers it.
+    await page.click('.nav-search-btn--mobile');
+    await expect(page.locator('#palette')).toBeVisible();
+    expect(errors, 'mobile search icon should log no errors').toEqual([]);
+});

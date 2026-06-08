@@ -212,8 +212,10 @@
 
     // ── Wiring ─────────────────────────────────────────────────────────
     function init() {
-        const trigger = byId('nav-search-btn');
-        if (trigger) trigger.addEventListener('click', () => open(trigger));
+        // Two triggers can exist: the full button in the desktop link bar
+        // and a compact icon button in the mobile top bar (wired by class).
+        document.querySelectorAll('.nav-search-btn').forEach((trigger) =>
+            trigger.addEventListener('click', () => open(trigger)));
 
         input.addEventListener('input', onInput);
 
