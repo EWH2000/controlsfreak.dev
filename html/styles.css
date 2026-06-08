@@ -357,6 +357,61 @@ main { flex: 1; }
 .site-nav-links a:hover { color: var(--text); border-bottom-color: var(--accent); }
 .site-nav-links a.active { color: var(--text-bright); border-bottom-color: var(--accent); }
 
+/* ── NAV SECTION DROPDOWNS ───────────────────────────────────────────
+   Tools / Simulators / Education each pair their top-level link with a
+   disclosure toggle that opens a panel of direct links (nav-menu.js).
+   The panel links are <a> inside .site-nav-links, so they'd inherit the
+   nav-link rules above — the .nav-menu-scoped selectors below outrank
+   them on specificity. */
+.nav-item--has-menu {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+.nav-menu-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.15rem 0.2rem;
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: color 0.18s;
+}
+.nav-menu-toggle:hover { color: var(--text); }
+.nav-caret { width: 10px; height: 6px; transition: transform 0.18s; }
+.nav-menu-toggle[aria-expanded="true"] .nav-caret { transform: rotate(180deg); }
+.nav-menu {
+    position: absolute;
+    top: calc(100% + 0.5rem);
+    left: 0;
+    z-index: 120;
+    min-width: 210px;
+    display: flex;
+    flex-direction: column;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+.nav-menu[hidden] { display: none; }
+.nav-menu .nav-menu-item {
+    font-family: var(--sans);
+    font-size: 0.9rem;
+    color: var(--text-dim);
+    text-decoration: none;
+    padding: 0.5rem 0.85rem;
+    border-bottom: 1px solid var(--border-faint);
+    white-space: nowrap;
+    transition: color 0.18s, background 0.18s;
+}
+.nav-menu .nav-menu-item:last-child { border-bottom: none; }
+.nav-menu .nav-menu-item:hover { color: var(--text-bright); background: var(--accent-dim); }
+@media (prefers-reduced-motion: reduce) {
+    .nav-caret { transition: none; }
+}
+
 /* ── UNITS + THEME TOGGLES ───────────────────────────────────────────
    Two sibling pills inside .site-nav-links (rightmost children) — same
    shape, so they share these rules. Each active button gets the
@@ -1126,6 +1181,18 @@ footer {
        Allow wrapping below the mobile breakpoint — the trailing
        .section-line still sits centered alongside the wrapped label. */
     .section-label   { white-space: normal; }
+    /* The nav flex-wraps with no hamburger here; an absolutely-positioned
+       dropdown would float over the wrapped rows. Give the section a full
+       row and drop its open panel inline (full width) below link+toggle. */
+    .nav-item--has-menu { flex-wrap: wrap; width: 100%; }
+    .nav-menu {
+        position: static;
+        z-index: auto;
+        min-width: 0;
+        width: 100%;
+        box-shadow: none;
+        margin-top: 0.3rem;
+    }
 }
 /* ── COPY BUTTON ── */
 .copy-btn {
@@ -1284,6 +1351,8 @@ input[type="range"]::-moz-range-thumb {
 .units-btn:focus-visible,
 .theme-btn:focus-visible,
 .nav-search-btn:focus-visible,
+.nav-menu-toggle:focus-visible,
+.nav-menu-item:focus-visible,
 .cta-button:focus-visible,
 .hero-btn:focus-visible,
 .back-link:focus-visible,
@@ -1321,6 +1390,8 @@ input[type="range"]:focus-visible::-moz-range-thumb {
     .units-btn,
     .theme-btn,
     .nav-search-btn,
+    .nav-menu-toggle,
+    .nav-menu-item,
     .tab-btn,
     .quiz-reset-best {
         display: inline-flex;
@@ -1330,6 +1401,9 @@ input[type="range"]:focus-visible::-moz-range-thumb {
     }
     .site-nav-links a { padding-inline: 0.2rem; }
     .quiz-settings-select { min-height: 44px; }
+    /* Dropdown items are full-width rows, not compact chrome — keep them
+       left-aligned while still clearing the 44px floor above. */
+    .nav-menu .nav-menu-item { justify-content: flex-start; }
 }
 
 /* default top spacing matches the dominant calc/converter shape:
