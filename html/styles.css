@@ -1227,6 +1227,10 @@ footer {
         order: 3;                 /* after the search btn + hamburger */
         flex-basis: 100%;         /* its own row when shown */
         flex-direction: column;
+        /* Override the desktop flex-wrap:wrap — with the capped height a
+           wrapping column breaks into a SECOND column off to the right,
+           which was the sideways-scroll. Keep it one scrolling column. */
+        flex-wrap: nowrap;
         align-items: stretch;
         gap: 0.15rem;
         margin-top: 0.5rem;
@@ -1241,6 +1245,10 @@ footer {
         display: flex;
         max-height: calc(100vh - 5rem);
         max-height: calc(100dvh - 5rem);
+        /* overflow-x must be explicit: setting only overflow-y:auto makes
+           the browser compute overflow-x to auto too, which let the
+           nowrap menu names scroll the sheet sideways. */
+        overflow-x: hidden;
         overflow-y: auto;
         overscroll-behavior: contain;
     }
@@ -1258,6 +1266,9 @@ footer {
         box-shadow: none;
         margin-top: 0.3rem;
     }
+    /* Long tool names wrap in the full-width sheet instead of running off
+       the side (the desktop dropdown keeps them on one line). */
+    .nav-menu .nav-menu-item { white-space: normal; }
 }
 /* ── COPY BUTTON ── */
 .copy-btn {

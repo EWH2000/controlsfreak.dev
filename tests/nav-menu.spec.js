@@ -124,10 +124,16 @@ test('mobile: open sheet locks page scroll and scrolls internally on long lists'
     await page.click('#nav-education-toggle');
     await expect(page.locator('#nav-education-menu')).toBeVisible();
     const m = await page.locator('#site-nav-links').evaluate((el) => ({
-        client: el.clientHeight, scroll: el.scrollHeight, vh: window.innerHeight
+        client: el.clientHeight, scroll: el.scrollHeight, vh: window.innerHeight,
+        clientW: el.clientWidth, scrollW: el.scrollWidth,
+        docW: document.documentElement.scrollWidth, innerW: window.innerWidth
     }));
     expect(m.client, 'sheet is capped under the viewport').toBeLessThan(m.vh);
     expect(m.scroll, 'a long list overflows the cap → internal scroll').toBeGreaterThan(m.client);
+    // No sideways scroll: the capped column must not wrap into a second
+    // column off to the right (regression guard for the flex-wrap bug).
+    expect(m.scrollW, 'sheet must not overflow horizontally').toBeLessThanOrEqual(m.clientW + 1);
+    expect(m.docW, 'document must not widen past the viewport').toBeLessThanOrEqual(m.innerW + 1);
 
     // Closing releases the lock.
     await page.click('#nav-hamburger');
