@@ -1544,6 +1544,44 @@ input[type="range"]:focus-visible::-moz-range-thumb {
     color: var(--text-dim);
 }
 .pid-eq-feedback .pid-eq-fb-line { flex: 1; border-top: 1px dashed var(--blue); }
+
+/* ── PID "loop details" spoiler — native <details> so you can tune the
+   process by feel first, then reveal the loop-speed numbers + cheat sheets
+   to check your read. Summary spans the full width over the body padding. */
+.pid-spoiler {
+    border: 1px solid var(--border);
+    background: var(--surface);
+    margin: 1.75rem 0 0;
+    padding: 0 0.95rem 0.95rem;
+}
+.pid-spoiler > summary {
+    margin: 0 -0.95rem;
+    padding: 0.7rem 0.95rem;
+    cursor: pointer;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-bright);
+}
+.pid-spoiler > summary::-webkit-details-marker { display: none; }
+.pid-spoiler > summary::before { content: "▸"; color: var(--accent); }
+.pid-spoiler[open] > summary::before { content: "▾"; }
+.pid-spoiler[open] > summary { border-bottom: 1px solid var(--border); margin-bottom: 0.4rem; }
+.pid-spoiler > summary:hover { color: var(--accent); }
+.pid-spoiler-tag {
+    margin-left: auto;
+    color: var(--amber);
+    border: 1px solid var(--amber);
+    border-radius: var(--rail);
+    padding: 0.04rem 0.4rem;
+    font-size: 0.58rem;
+    letter-spacing: 0.1em;
+}
 .sim-legend {
     display: flex;
     gap: 1.5rem;
