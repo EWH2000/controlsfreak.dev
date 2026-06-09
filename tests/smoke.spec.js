@@ -423,6 +423,19 @@ test('coil sizing — capacity and leaving-state tabs compute their cases', asyn
     // Worked formula prints the entering-air specific-volume basis (ux #12).
     await expect(page.locator('#cs-cap-formula')).toContainText('v = 13.85 ft³/lb at entering 80.0/67.0 °F');
 
+    // Worked formula is dimensionally coherent per units (#75): US carries
+    // the CFM→per-hour × 60 factor and reads lb dry air/h; metric drops the
+    // × 60 (m³/h is already per-hour) and reads kg dry air/h. Toggle back to
+    // US afterwards so the rest of the test runs against the US defaults.
+    await expect(page.locator('#cs-cap-formula')).toContainText('× 60 ÷ v');
+    await expect(page.locator('#cs-cap-formula')).toContainText('lb dry air/h');
+    await page.click('.units-btn[data-units="metric"]');
+    await expect(page.locator('#cs-cap-formula')).toContainText('kg dry air/h');
+    await expect(page.locator('#cs-cap-formula')).not.toContainText('× 60');
+    await expect(page.locator('#cs-cap-formula')).not.toContainText('lb dry air/h');
+    await page.click('.units-btn[data-units="us"]');
+    await expect(page.locator('#cs-cap-formula')).toContainText('lb dry air/h');
+
     // Switch to a heating coil — the sensible / latent / SHR rows drop
     // out, and a leaving dry-bulb above entering reads as heating.
     await page.selectOption('#cs-coil-type', 'heat');

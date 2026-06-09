@@ -88,6 +88,12 @@
     const inWC_to_Pa = function (p) { return p * 248.84; };
     const Pa_to_inWC = function (p) { return p / 248.84; };
 
+    // Dry-air mass flow. 1 lb = 0.45359237 kg. Display-only (mass flow is a
+    // computed readout — coil sizing derives it from airflow ÷ specific
+    // volume — never a user input), so it appears in suffix + display only,
+    // with no toCanonical / Q entry.
+    const lbPerH_to_kgPerH = function (m) { return m * 0.45359237; };
+
     const isUS = function () { return units === 'us'; };
 
     // ── Suffix labels (drive rebuilds of page labels) ──────────────────
@@ -103,7 +109,8 @@
         waterFlow:      function () { return isUS() ? 'GPM'      : 'L/s'; },
         pumpHead:       function () { return isUS() ? 'ft'       : 'm'; },
         heatCapacity:   function () { return isUS() ? 'MBH'      : 'kW'; },
-        staticPressure: function () { return isUS() ? 'in. w.c.' : 'Pa'; }
+        staticPressure: function () { return isUS() ? 'in. w.c.' : 'Pa'; },
+        massFlow:       function () { return isUS() ? 'lb dry air/h' : 'kg dry air/h'; }
     };
 
     // ── Display conversion (canonical US → display value) ──────────────
@@ -119,7 +126,8 @@
         waterFlow:      function (q)  { return isUS() ? q  : gpm_to_LPerS(q); },
         pumpHead:       function (h)  { return isUS() ? h  : ftHead_to_mHead(h); },
         heatCapacity:   function (q)  { return isUS() ? q  : mbh_to_kW(q); },
-        staticPressure: function (p)  { return isUS() ? p  : inWC_to_Pa(p); }
+        staticPressure: function (p)  { return isUS() ? p  : inWC_to_Pa(p); },
+        massFlow:       function (m)  { return isUS() ? m  : lbPerH_to_kgPerH(m); }
     };
 
     // Per-quantity conversion functions, keyed for the convert() helper below.
