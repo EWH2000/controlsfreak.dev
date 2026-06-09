@@ -1,0 +1,50 @@
+name: indexnow
+
+# Pings the IndexNow consortium (Bing, Yandex, Seznam, Naver, Yep — NOT
+# Google) when pages change, so they recrawl sooner than a scheduled
+# crawl. Additive to the sitemap, never a replacement.
+#
+# On a push to main (a PR merge), .github/scripts/indexnow.mjs diffs the
+# push range (github.event.before..github.sha) and submits just the pages
+# whose canonical URL changed. workflow_dispatch with all=true does a full
+# re-submit of every indexable page — use it once to seed, or after a
+# bulk move. No secrets: the IndexNow key is the public html/<key>.txt
+# token, verified by the engine fetching it from the live site.
+#
+# Independent of the deploy pipeline (Cloudflare Workers Build). The ~60s
+# deploy lag is harmless — IndexNow queues recrawls minutes-to-hours out,
+# by which point the new content is live.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      all:
+        description: "Submit every indexable page (full re-submit), not just changed ones"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  submit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        # Full history so the script can diff github.event.before against
+        # github.sha; a shallow clone wouldn't have the before commit.
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+
+      # Zero dependencies — the script uses only Node builtins + global
+      # fetch, so there's no npm install step.
+      - name: Submit changed URLs to IndexNow
+        run: node .github/scripts/indexnow.mjs ${{ (github.event_name == 'workflow_dispatch' && inputs.all) && '--all' || '' }}
+        env:
+          GITHUB_EVENT_BEFORE: ${{ github.event.before }}
