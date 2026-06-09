@@ -11,6 +11,75 @@ tools.
 
 
 
+### PID tuner — live process visualization + tune-it-blind spoiler *(shipped 2026-06-08)*
+*The interactive home hero sells a live loop, then links to the tuner —
+which by contrast drew a **static** step-response chart and showed none
+of the gear the loop drives. Make the tuner show the process, make the
+process changeable, and turn it into a practice tool for tuning gut-feel.*
+
+**Replay playhead, not a second sim.** Kept the analytic step-response
+chart (and its overshoot/settling/offset metrics) and added a time
+cursor that sweeps it on a ~7 s wall-clock loop, restarting on every
+tuning change. The cursor draws on a **separate overlay `<canvas>`** over
+`#pid-canvas` (a no-padding `.pid-canvas-stack` gives them a shared 0,0
+origin) — redrawing the whole chart each frame would re-run
+`getComputedStyle` + restroke 601 points for a line and a dot. The
+overlay can't recompute `Y()` (the chart's y-range is data-fit), so
+`drawPidChart` now stamps `canvas._pidGeom` and the overlay reads it.
+One rAF for the whole feature (cursor + equipment), cancel-before-
+reschedule so a slider drag can't stack loops; reduced-motion snaps to
+the settled frame and never schedules.
+
+**Engine exposes `u`/`uEff`.** `simulatePid` already computed the
+commanded output and its dead-time-delayed form; now it returns both.
+The actuator tracks `u` (it moves immediately); PV (driven by `uEff`)
+lags by the dead time — so dead time becomes something you *watch* (the
+valve slams, the sensor barely stirs), not just a number. Backward-
+compatible: the pid-basics mini-sims ignore the extra fields.
+
+**Equipment leads; loop speed is a spoiler.** The Process Type selector
+became **Equipment** (`2-way valve · discharge-air temp`, `VAV damper ·
+duct static`, `Radiator · space temp`, `Reheat coil · long duct run`),
+τ/dead numbers stripped out. Those, plus the Loop Speed Reference and the
+Symptom → Move cheat sheet, now sit behind a default-collapsed
+`<details>` "Reveal loop details (spoiler)". The live scene, the chart,
+and the metrics stay outside the gate — they're feedback on *your*
+tuning, not the answer key. So you can pick a radiator, try to tame it by
+feel, then reveal that it's a slow loop and see why aggressive gain rang
+it. Engine keys (fast/med/slow/vhigh) are unchanged, so the relabel
+doesn't touch presets or value-based tests.
+
+**Four scenes, mostly reused art.** Each equipment swaps a bespoke SVG
+scene (controller output gauge → actuator → process → sensor LCD,
+feedback line beneath), reusing the equipment-register device faces
+(`.device` / `.lcd` / `.gauge.eq`) and the existing 5-blade `.widget-fan`,
+bowtie valve, and coil. The **damper** is the one symbol drawn fresh
+(blades rotate 0–90° with `u`). The vhigh "long run" spreads the flow
+particles to dramatize transport delay.
+
+**Decisions worth remembering:**
+- *FlowEngine density tracks `u` in coarse bands, not per frame* —
+  changing density needs `refreshPath`, which restitches the particle
+  pool (a visible flicker); per-frame would churn. Quantized to a few
+  bands; per-frame liveliness lives in the cheap actuator transforms.
+- *Hidden scenes report zero-length SVG paths* — a `display:none` SVG's
+  `getTotalLength()` is 0, so FlowEngine skips it; pools are (re)built
+  lazily after a scene is un-hidden.
+- *Sensor LCD stays in canonical units* (°F / in. w.c.). The unit-aware
+  converters (`formatPidDelta`) are delta-only; the device face is
+  illustrative, so the rigorously unit-toggled value stays the
+  Steady-State Error metric.
+- *Reduced-motion test gotcha* — `test.use({ reducedMotion: 'reduce' })`
+  didn't reach `matchMedia` in this runner; `page.emulateMedia(…)` before
+  `goto` does. (Playwright forces `no-preference` by default, so the
+  motion-on tests need no emulation.)
+
+**Future:** a *mystery / randomize* practice mode (hide the equipment
+too, randomize which dynamics back it, score the tune) would push the
+gut-feel angle further; an `IntersectionObserver` could pause the rAF
+when the strip scrolls out of view (deferred — it's a compact,
+usually-in-view region).
+
 ### Time-to-answer — search, nav dropdowns, interactive hero *(shipped 2026-06-08)*
 *One question: after the v3 "seam" hero redesign, how fast can someone
 actually GET to the tool they came for — and does the home page read as
@@ -837,6 +906,12 @@ Numbers match between the two surfaces — if the table is ever
 retuned, the dropdown labels should follow. Kept the brief
 selector labels short enough that the τ range and one canonical
 HVAC example still fit on a single line at the rendered widths.
+
+**Superseded 2026-06-08** by *PID tuner — live process visualization*
+(top of file): the dropdown is now equipment-led and the τ numbers
+moved behind the loop-details spoiler, so the two surfaces no longer
+both carry them — the spoiler's Loop Speed Reference table is the
+single source, plus a JS-generated per-equipment τ/dead sidenote.
 
 ### BACnet/IP hex ↔ dotted-decimal converter *(shipped)*
 EBO displays BACnet/IP device addresses in hex (e.g. `C0A80164`)

@@ -1441,7 +1441,8 @@ input[type="range"]::-moz-range-thumb {
 .quiz-choice:focus-visible,
 .quiz-action:focus-visible,
 .quiz-reset-best:focus-visible,
-.quiz-restart-now:focus-visible {
+.quiz-restart-now:focus-visible,
+.pid-spoiler > summary:focus-visible {
     outline: 2px solid var(--accent);
     outline-offset: 3px;   /* v2.0.0 — was 2px; lifted so the accent ring no longer kisses the border on .nav-card */
 }
@@ -1481,6 +1482,7 @@ input[type="range"]:focus-visible::-moz-range-thumb {
     }
     .site-nav-links a { padding-inline: 0.2rem; }
     .quiz-settings-select { min-height: 44px; }
+    .pid-spoiler > summary { min-height: 44px; }
     /* Dropdown items are full-width rows, not compact chrome — keep them
        left-aligned while still clearing the 44px floor above. */
     .nav-menu .nav-menu-item { justify-content: flex-start; }
@@ -1503,6 +1505,95 @@ input[type="range"]:focus-visible::-moz-range-thumb {
     margin-bottom: 0.75rem;
 }
 .sim-canvas-wrap canvas { display: block; width: 100%; height: 260px; }
+/* PID playhead — a no-padding relative box so the overlay cursor canvas
+   covers #pid-canvas with a shared (0,0) origin (no border/padding offset
+   math). The overlay is sized to the chart's box; its backing buffer is set
+   in JS to clientWidth*dpr. */
+.pid-canvas-stack { position: relative; }
+.pid-canvas-stack #pid-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+/* ── PID equipment strip — the live process visual above the chart:
+   controller (output gauge) → actuator/process scene → sensor (live PV),
+   with a feedback line beneath. aria-hidden chrome; the chart + metrics
+   carry the accessible story. Responsive stacking is in the breakpoints. */
+.pid-eq-strip {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 0.85rem 0.75rem 0.55rem;
+    margin-bottom: 0.75rem;
+}
+.pid-eq-row { display: flex; align-items: center; gap: 0.85rem; }
+.pid-eq-controller,
+.pid-eq-sensor { flex: none; width: 160px; }
+.pid-eq-scene-host { flex: 1; min-width: 0; }
+.pid-eq-scene { display: block; width: 100%; height: auto; }
+.pid-eq-feedback {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-top: 0.55rem;
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+}
+.pid-eq-feedback .pid-eq-fb-line { flex: 1; border-top: 1px dashed var(--blue); }
+
+/* ── PID "loop details" spoiler — native <details> so you can tune the
+   process by feel first, then reveal the loop-speed numbers + cheat sheets
+   to check your read. Summary spans the full width over the body padding. */
+.pid-spoiler {
+    border: 1px solid var(--border);
+    background: var(--surface);
+    margin: 1.75rem 0 0;
+    padding: 0 0.95rem 0.95rem;
+}
+.pid-spoiler > summary {
+    margin: 0 -0.95rem;
+    padding: 0.7rem 0.95rem;
+    cursor: pointer;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-bright);
+}
+.pid-spoiler > summary::-webkit-details-marker { display: none; }
+.pid-spoiler > summary::before { content: "▸"; color: var(--accent); }
+.pid-spoiler[open] > summary::before { content: "▾"; }
+.pid-spoiler[open] > summary { border-bottom: 1px solid var(--border); margin-bottom: 0.4rem; }
+.pid-spoiler > summary:hover { color: var(--accent); }
+.pid-spoiler-tag {
+    margin-left: auto;
+    color: var(--amber);
+    border: 1px solid var(--amber);
+    border-radius: var(--rail);
+    padding: 0.04rem 0.4rem;
+    font-size: 0.58rem;
+    letter-spacing: 0.1em;
+}
+
+/* Equipment strip — stack the controller → scene → sensor row vertically on
+   phones (the horizontal loop would otherwise crowd or sideways-scroll). The
+   viewBox SVGs scale down with width; the chart's own narrow-width note already
+   covers the canvas below. */
+@media (max-width: 700px) {
+    .pid-eq-row { flex-direction: column; align-items: stretch; gap: 0.6rem; }
+    .pid-eq-controller,
+    .pid-eq-sensor { width: auto; }
+}
 .sim-legend {
     display: flex;
     gap: 1.5rem;
