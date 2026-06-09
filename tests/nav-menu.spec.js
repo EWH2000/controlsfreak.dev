@@ -107,3 +107,30 @@ test('mobile: the top-bar search icon opens the palette', async ({ page }) => {
     await expect(page.locator('#palette')).toBeVisible();
     expect(errors, 'mobile search icon should log no errors').toEqual([]);
 });
+
+test('mobile: open sheet locks page scroll and scrolls internally on long lists', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.setViewportSize({ width: 412, height: 640 });   // short enough to force overflow
+    await page.goto('/');
+    await page.click('#nav-hamburger');
+    await expect(page.locator('#site-nav-links')).toBeVisible();
+
+    // Page scroll is locked while the sheet is open.
+    await expect(page.locator('body')).toHaveClass(/nav-sheet-open/);
+
+    // Open the longest section; the sheet caps under the viewport and gains
+    // its own scroll instead of growing the sticky nav past the screen
+    // (the bug: page scrolled behind a pinned nav → jumpy menu scrolling).
+    await page.click('#nav-education-toggle');
+    await expect(page.locator('#nav-education-menu')).toBeVisible();
+    const m = await page.locator('#site-nav-links').evaluate((el) => ({
+        client: el.clientHeight, scroll: el.scrollHeight, vh: window.innerHeight
+    }));
+    expect(m.client, 'sheet is capped under the viewport').toBeLessThan(m.vh);
+    expect(m.scroll, 'a long list overflows the cap → internal scroll').toBeGreaterThan(m.client);
+
+    // Closing releases the lock.
+    await page.click('#nav-hamburger');
+    await expect(page.locator('body')).not.toHaveClass(/nav-sheet-open/);
+    expect(errors, 'mobile sheet scroll should log no errors').toEqual([]);
+});

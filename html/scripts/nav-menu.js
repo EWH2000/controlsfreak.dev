@@ -100,6 +100,9 @@
     function setNavOpen(open) {
         if (!nav || !burger) return;
         nav.classList.toggle('nav-open', open);
+        // Lock page scroll while the sheet is open so the only thing that
+        // scrolls is the sheet itself (the CSS lock is mobile-scoped).
+        document.body.classList.toggle('nav-sheet-open', open);
         burger.setAttribute('aria-expanded', open ? 'true' : 'false');
         burger.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
         if (!open) closeAll();   // collapsing the bar also closes any sub-menu

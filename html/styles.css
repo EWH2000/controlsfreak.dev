@@ -1231,7 +1231,23 @@ footer {
         gap: 0.15rem;
         margin-top: 0.5rem;
     }
-    .site-nav.nav-open .site-nav-links { display: flex; }
+    /* Cap the open sheet to the space under the top bar and give it its own
+       smooth scroll. Without this the sticky .site-nav grows taller than the
+       viewport on long lists, so the page scrolls behind the pinned bar
+       instead of the menu — the jumpy, unresponsive scrolling. dvh tracks
+       the real mobile viewport (vh is the fallback); overscroll-behavior
+       stops the scroll from chaining to the page at the ends. */
+    .site-nav.nav-open .site-nav-links {
+        display: flex;
+        max-height: calc(100vh - 5rem);
+        max-height: calc(100dvh - 5rem);
+        overflow-y: auto;
+        overscroll-behavior: contain;
+    }
+    /* Belt-and-suspenders: with the sheet open, the page itself doesn't
+       scroll — only the sheet does. Mobile-scoped so a resize past the
+       breakpoint releases the lock. */
+    body.nav-sheet-open { overflow: hidden; }
     /* Inside the open sheet each section + its sub-menu stacks full width. */
     .nav-item--has-menu { flex-wrap: wrap; width: 100%; }
     .nav-menu {
