@@ -371,6 +371,7 @@ nav: tools
         const hU        = ()       => U.suffix.enthalpy();
         const capU      = ()       => U.suffix.heatCapacity();
         const flowU     = ()       => U.suffix.airflow();
+        const massU     = ()       => U.suffix.massFlow();
         const signed    = (n, d)   => (n > 0 ? '+' : '') + n.toFixed(d);
         const getVal    = id       => document.getElementById(id).value;
 
@@ -484,9 +485,15 @@ nav: tools
             }
             setLive('cs-cap-dh', signed(U.display.enthalpy(res.dH), 1) + ' ' + hU());
 
-            const mDot = cfm * 60 / entState.v;
+            const mDot = cfm * 60 / entState.v;          // canonical lb dry air/h
+            // Airflow → per-hour basis differs by unit: CFM is per-minute
+            // (× 60), m³/h is already per-hour (no factor); ÷ v then yields
+            // the dry-air mass flow in the display unit.
+            const airTerm = U.current() === 'us'
+                ? `${cfmD} ${flowU()} × 60 ÷ v`
+                : `${cfmD} ${flowU()} ÷ v`;
             document.getElementById('cs-cap-formula').textContent =
-                `ṁ = ${cfmD} ${flowU()} × 60 ÷ v = ${Math.round(mDot)} lb dry air/h ` +
+                `ṁ = ${airTerm} = ${Math.round(U.display.massFlow(mDot))} ${massU()} ` +
                 `(v = ${dispV(entState.v)} ${vU()} at entering ${dispT(entState.tdb)}/${dispT(entState.twb)} ${tU()}) · ` +
                 `total = ṁ × Δh = ${dispCap(totMbh)} ${capU()}`;
 

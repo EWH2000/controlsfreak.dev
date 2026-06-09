@@ -3299,7 +3299,7 @@ deliberately not in the block. The related Modbus bit-grid tap target
 (`content-audit.md` #23) is a separate page-local widget and stays
 tracked there.
 
-### 75. coil-sizing capacity formula is dimensionally incoherent in metric mode
+### 75. coil-sizing capacity formula is dimensionally incoherent in metric mode *(addressed 2026-06-09)*
 
 Surfaced while implementing ux-audit #12 (printing the entering-air
 specific volume in `#cs-cap-formula`), which drew attention to the rest
@@ -3327,6 +3327,21 @@ and label it as such. (a) is the consistent-with-the-rest-of-the-page
 choice but needs an `airflow`-to-per-hour helper and a mass-flow display
 unit that don't exist yet. Low severity — the headline capacity readouts
 are all correct and unit-aware; this is the explanatory formula line only.
+
+**Resolution (2026-06-09):** took option (a) — the proper metric form. A
+minimal display-only `massFlow` family was added to `html/scripts/units.js`
+(`suffix.massFlow` → `lb dry air/h` / `kg dry air/h`, `display.massFlow`
+applying a `lb → kg` 0.45359237 factor; no `toCanonical`/`Q` entry since
+mass flow is never a user input). `calcCapacity()` now branches the airflow
+term on `U.current()`: US keeps `CFM × 60 ÷ v` (per-minute airflow), metric
+renders `m³/h ÷ v` (already per-hour, no `× 60`), and the result reads in the
+unit-aware `massFlow` suffix instead of a hard-coded `lb dry air/h`. The
+canonical `mDot = cfm * 60 / v` (lb/h) is unchanged — only the display
+string moved. The metric arithmetic now reduces correctly
+(`m³/h ÷ m³/kg = kg/h`, since `1.699011 / 0.062428 = 27.2155 =
+60 × 0.453592`). The existing `coil sizing` behavioral spec gained a
+metric-toggle assertion (US shows `× 60` + `lb dry air/h`; metric shows
+`kg dry air/h` and no `× 60`).
 
 ### 76. Privacy-policy storage section heading reads "no cookies" but the section now also covers localStorage *(addressed 2026-06-09)*
 
