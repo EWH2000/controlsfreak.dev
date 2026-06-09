@@ -24,12 +24,19 @@ findings from the recurring content-accuracy audits.
   no JS transpile or bundle step.
 - **Templates under `html/_includes/`:**
   - `layouts/page.njk` — page shell. Composes `head.njk` /
-    `schematic-bg.njk` / `nav.njk` / `footer.njk`; loads
-    `flow-engine.js` + `schematic-bg.js` at end-of-body; exposes
-    `head` / `content` / `scripts` blocks. See *Templating*.
+    `schematic-bg.njk` / `nav.njk` / `footer.njk`; hosts the
+    command-palette dialog markup and loads the site-wide scripts
+    (`theme` / `search` / `nav-menu` / `flow-engine` / `schematic-bg`
+    / `fullscreen-toggle`) at end-of-body; exposes `head` / `content`
+    / `scripts` blocks. See *Templating*.
   - `head.njk` — `<head>`: meta, OG, favicons, fonts, `/styles.css`,
     units + theme before-paint bootstrap scripts.
   - `nav.njk` — top nav; `.active` driven by `nav` frontmatter.
+    Tools / Simulators / Education carry **dropdown menus** of direct
+    links (disclosure buttons populated from collections — see *Search
+    index & nav menus*); the bar also holds the **command-palette
+    search button** and, below 620px, a **hamburger** that collapses
+    the link bar (`nav-menu.js`).
   - `footer.njk` — tagline + version string (re-exports
     `package.json.version` via `html/_data/site.js`).
   - `schematic-bg.njk` — gutter SVG collage. Hidden below 1240px
@@ -53,8 +60,10 @@ findings from the recurring content-accuracy audits.
   ES modules, no bundler) that expose globals like `Units`,
   `simulatePid`, `FlowEngine`, `Quiz` for page IIFEs to reach by
   name. Each file has a thorough header — **read it for the API**.
-  `theme.js`, `flow-engine.js`, and `schematic-bg.js` are loaded
-  site-wide from `layouts/page.njk` (the theme toggle + gutter motifs
+  `theme.js`, `search.js`, `nav-menu.js`, `flow-engine.js`,
+  `schematic-bg.js`, and `fullscreen-toggle.js` are loaded site-wide
+  from `layouts/page.njk` (theme toggle, command palette, nav
+  dropdowns + mobile hamburger, gutter motifs, and fullscreen all
   appear on every page); the rest load per-page inside
   `{% block scripts %}` *before* the page's inline `<script>`.
 - **Worker:** `src/worker.js` — ES-module Worker. Handles
@@ -124,6 +133,10 @@ Frontmatter:
 - `nav` — one of `home`, `tools`, `simulators`, `education`,
   `practice`, `contact`; drives the `.active` marker. Omit on pages
   that don't fit.
+- `keywords` — optional space- or comma-separated synonyms fed only to
+  the search index (`search-index.njk`), never to `<meta>`. Use for
+  field terms the title/description miss (e.g. signal-scaling →
+  `4-20mA span slope offset`). Unconstrained by the description guard.
 
 Blocks: `head` (optional — inline `<style>` or head-loaded script;
 Turnstile on `contact.html` is the only current head-script example);
@@ -141,6 +154,26 @@ A new page with `canonical` is picked up automatically — but **update
 the `PAGES` array in `tests/smoke.spec.js`** (the drift test checks
 it against the built sitemap). CI uses `fetch-depth: 0` so dates
 resolve.
+
+### Search index & nav menus
+
+`html/search-index.njk` renders `_site/search-index.json` at build
+time (mirrors `sitemap.njk`) from the `searchPages` collection — one
+`{title, description, url, section, keywords}` entry per page. The
+command palette (`scripts/search.js`, `window.Palette`; opens on `/`
+or Ctrl/⌘-K or the nav search button) fetches it once on first open.
+The JSON has no `canonical` and is `eleventyExcludeFromCollections`,
+so it stays out of `sitemapPages` and the `PAGES` drift test — same
+status as `sitemap.xml`.
+
+The nav dropdowns are built from `navTools` / `navSimulators` /
+`navEducation` collections (each `nav: <section>` minus the landing).
+Two shared `.eleventy.js` filters serve both the index and the menus:
+`cleanTitle` (strips the ` — controlsfreak.dev` suffix) and
+`canonicalPath` (full canonical URL → root-relative `.html` href).
+`scripts/nav-menu.js` (`window.NavMenu`) drives the disclosure
+toggles + the mobile hamburger; the open mobile sheet caps its height
+and scrolls internally (see *Gotchas*).
 
 ### Conventions
 
@@ -302,15 +335,32 @@ resolve.
   Pages with no `[data-flow]` / `[data-pulse]` elements can omit
   their own init entirely (it's still called once by
   `schematic-bg.js`).
+- **Mobile nav sheet must `flex-wrap: nowrap` + cap its height.** The
+  hamburger sheet (`.site-nav.nav-open .site-nav-links` ≤620px) is a
+  flex column that inherits the desktop `flex-wrap: wrap`; once it has
+  a `max-height`, a column taller than the cap **wraps into a second
+  column off to the right** → sideways scroll. It also needs explicit
+  `overflow-x: hidden` (setting only `overflow-y: auto` makes the
+  browser compute `overflow-x` to `auto`) and long item names set to
+  `white-space: normal`. The sheet is height-capped (`100dvh − 5rem`)
+  with its own `overflow-y: auto` + `overscroll-behavior: contain`,
+  and the body is scroll-locked while open, because `.site-nav` is
+  `position: sticky` — a sheet taller than the viewport otherwise lets
+  the page scroll behind the pinned bar (jumpy, unresponsive menu).
+- **`input[type="range"]` is `width: 100%` globally** (`styles.css`).
+  A page that wants a narrower slider must out-specify it — e.g. the
+  home hero uses `.hseam-controls .hseam-sp { width: clamp(…) }`, not
+  a bare `.hseam-sp`.
 
 ## Repo structure
 
 - `html/` — source (input to 11ty). Pages, `_includes/` partials,
-  `styles.css`, `scripts/`, `assets/`, `sitemap.njk`, `robots.txt`,
-  `html.11tydata.js`.
+  `styles.css`, `scripts/`, `assets/`, `sitemap.njk`,
+  `search-index.njk`, `robots.txt`, `html.11tydata.js`.
 - `src/worker.js` — the Cloudflare Worker.
 - `tests/` — Playwright specs (`smoke.spec.js`, `contact.spec.js`,
-  `psychro-engine.spec.js`).
+  `psychro-engine.spec.js`, `nav-search.spec.js`, `nav-menu.spec.js`,
+  `home-hero.spec.js`).
 - `_site/` — build output (gitignored).
 - `docs/` — archived audit artifacts and one-shot prompts.
   `docs/audits/<topic>/` collects the triage / decisions /
@@ -329,7 +379,12 @@ adding or moving pages.
 
 - **Shared top nav:** Home / Tools / Simulators / Education /
   Practice / Contact. `nav` frontmatter drives `.active`. Tools /
-  Simulators / Education / Practice link to hub landings.
+  Simulators / Education / Practice link to hub landings; Tools /
+  Simulators / Education also **drop down** to direct links. A
+  command-palette **search** button (`/` or Ctrl/⌘-K) sits in the
+  bar; below 620px the whole link bar collapses behind a
+  **hamburger**, with the search icon kept in the top bar
+  (`nav-menu.js`).
 - **Page archetypes:**
   - *Tools* mostly use the **property-sheet layout** (`.ps-*` +
     `.ref-table-dense`). Two grid flavors:

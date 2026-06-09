@@ -1432,6 +1432,7 @@ input[type="range"]::-moz-range-thumb {
 .nav-menu-item:focus-visible,
 .cta-button:focus-visible,
 .hero-btn:focus-visible,
+.hero-qt:focus-visible,
 .back-link:focus-visible,
 .filter-chip:focus-visible,
 .nav-card:focus-visible,
@@ -1470,6 +1471,7 @@ input[type="range"]:focus-visible::-moz-range-thumb {
     .nav-hamburger,
     .nav-menu-toggle,
     .nav-menu-item,
+    .hero-qt,
     .tab-btn,
     .quiz-reset-best {
         display: inline-flex;
