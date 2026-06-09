@@ -95,12 +95,17 @@ Calculators, converters, and lookups — open one, get an answer.
 Running models you can play with — no install, no sign-in. Most are
 paired with an Education explainer for the underlying concepts.
 
-- **PID Tuning Helper** — step-response simulator with process-type
-  presets and a parameter-style toggle (Niagara gain·reset·rate
-  vs. EBO Ti·Td vs. Distech proportional-band conventions; the
-  controller runs canonical units, the labels follow you). Bottom
-  reference panel has a loop-speed table and a symptom → tuning-move
-  cheat sheet. Cross-links to the PID Basics explainer.
+- **PID Tuning Helper** — step-response simulator with an
+  equipment-led selector (a 2-way valve, a VAV damper, a radiator, a
+  long-run reheat coil) and a parameter-style toggle (Niagara
+  gain·reset·rate vs. EBO Ti·Td vs. Distech proportional-band
+  conventions; the controller runs canonical units, the labels follow
+  you). A live process strip above the chart animates the chosen gear
+  — the actuator tracks the controller output while a playhead sweeps
+  the step response — and the loop-speed numbers + a symptom → tuning-
+  move cheat sheet hide behind a "loop details" spoiler, so you can tune
+  by feel first and reveal to check. Cross-links to the PID Basics
+  explainer.
 - **Mock VFD Interface** — generic drive keypad to practice
   navigating a parameter tree without a live drive in front of you.
   13 parameters in 4 groups, fixed 20×4 mono LCD, linear-ramp motor
