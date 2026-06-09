@@ -23,23 +23,6 @@ nav: tools
         }
         .am-stream-err:empty { display: none; }
 
-        /* Tab-level status pill — mirrors economizer-ratio's .er-feas in
-           role and styling. Shown above the mixed-state readouts. */
-        .am-status {
-            margin-top: 1rem;
-            padding: 0.5rem 0.75rem;
-            border-radius: 4px;
-            font-family: var(--mono);
-            font-size: 0.82rem;
-            line-height: 1.5;
-            border: 1px solid var(--border);
-            background: var(--surface-2);
-            color: var(--text);
-        }
-        .am-status.ok    { border-color: var(--accent); background: var(--accent-dim); }
-        .am-status.warn  { border-color: var(--heat);   color: var(--heat); }
-        .am-status.error { border-color: var(--red);    color: var(--red); }
-
         /* Altitude strip — shared between both tabs, sits above the tabs
            as a thin one-row band. Padded to match section padding so the
            input's left edge aligns with section content. */
@@ -177,7 +160,7 @@ nav: tools
 
                 <section>
                     <h2 class="ps-section-label">Output</h2>
-                    <div class="am-status" id="am-flow-status">Enter values to see the mix.</div>
+                    <div class="status-pill" id="am-flow-status">Enter values to see the mix.</div>
 
                     <h3 class="subhead">Mixed-air state</h3>
                     <div class="ps-row"><span class="ps-label" data-us="Dry-bulb (°F)"          data-metric="Dry-bulb (°C)">Dry-bulb (°F)</span>          <span class="ps-value muted" id="am-flow-ma-tdb">—</span></div>
@@ -315,7 +298,7 @@ nav: tools
 
                 <section>
                     <h2 class="ps-section-label">Output</h2>
-                    <div class="am-status" id="am-frac-status">Enter values to see the mix.</div>
+                    <div class="status-pill" id="am-frac-status">Enter values to see the mix.</div>
 
                     <h3 class="subhead">Mixed-air state</h3>
                     <div class="ps-row"><span class="ps-label" data-us="Dry-bulb (°F)"          data-metric="Dry-bulb (°C)">Dry-bulb (°F)</span>          <span class="ps-value muted" id="am-frac-ma-tdb">—</span></div>
@@ -433,7 +416,7 @@ nav: tools
         function setStatus(tab, text, kind) {
             const el = document.getElementById('am-' + tab + '-status');
             el.textContent = text;
-            el.className = 'am-status' + (kind ? ' ' + kind : '');
+            el.className = 'status-pill' + (kind ? ' ' + kind : '');
         }
 
         function setStreamErr(prefix, msg) {

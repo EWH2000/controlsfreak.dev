@@ -2799,7 +2799,7 @@ p.ref-note.compact {
    the failure mode AND the action). Sibling to .widget-anecdote (same
    shell shape, different domain: tool outputs, not education widgets).
    Warm-orange left rule matches the in-use failure-warning hue on
-   economizer-ratio's .er-feas.warn pill. ── */
+   the .status-pill.warn state below. ── */
 .failure-callout {
     margin-top: 0.6rem;
     padding: 0.75rem 1rem;
@@ -2812,6 +2812,29 @@ p.ref-note.compact {
     color: var(--text);
 }
 .failure-callout strong { color: var(--text-bright); font-weight: 600; }
+
+/* ── STATUS PILL — multi-state verdict chip shown below a tool's result
+   rows (feasibility / coil-direction / saturation-pin checks). Mono,
+   recessed --surface-2 face; the .ok / .warn / .error modifiers tint the
+   border (and the fill, for .ok) per state. Distinct from .failure-callout
+   above — that's a single static warn callout with a left rule; this is a
+   stateful inline pill. Shared by economizer-ratio, air-mixing,
+   coil-sizing, and refrigerant-pt (each formerly carried its own
+   page-local copy — .er-feas / .am-status / .cs-status / .rf-status). ── */
+.status-pill {
+    margin-top: 1rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--rail);
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    line-height: 1.5;
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--text);
+}
+.status-pill.ok    { border-color: var(--accent); background: var(--accent-dim); }
+.status-pill.warn  { border-color: var(--heat);   color: var(--heat); }
+.status-pill.error { border-color: var(--red);    color: var(--red); }
 
 /* 5-blade fan icon — visual handle for "the drive is energising
    something." Used by the run/speed widget on vfds and both

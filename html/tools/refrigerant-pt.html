@@ -9,23 +9,6 @@ nav: tools
 
 {% block head %}
     <style>
-        /* Status pill — one-line verdict below the readouts. Same chrome
-           as coil-sizing's .cs-status and economizer-ratio's .er-feas. */
-        .rf-status {
-            margin-top: 1rem;
-            padding: 0.5rem 0.75rem;
-            border-radius: 4px;
-            font-family: var(--mono);
-            font-size: 0.82rem;
-            line-height: 1.5;
-            border: 1px solid var(--border);
-            background: var(--surface-2);
-            color: var(--text);
-        }
-        .rf-status.ok    { border-color: var(--accent); background: var(--accent-dim); }
-        .rf-status.warn  { border-color: var(--heat);   color: var(--heat); }
-        .rf-status.error { border-color: var(--red);    color: var(--red); }
-
         /* Refrigerant-select strip — shared by both tabs, a thin one-row
            band above the tabs. Mirrors coil-sizing's .cs-type-strip. */
         .rf-type-strip {
@@ -127,7 +110,7 @@ nav: tools
                         <button class="copy-btn" id="rf-pt-copy">Copy temperature</button>
                     </div>
                     <div class="result-formula wrap" id="rf-pt-formula"></div>
-                    <div class="rf-status" id="rf-pt-status">Enter a pressure to read the saturation temperature.</div>
+                    <div class="status-pill" id="rf-pt-status">Enter a pressure to read the saturation temperature.</div>
                 </section>
 
             </div>
@@ -210,7 +193,7 @@ nav: tools
                         <button class="copy-btn" id="rf-sc-copy">Copy superheat</button>
                     </div>
                     <div class="result-formula wrap" id="rf-sc-formula"></div>
-                    <div class="rf-status" id="rf-sc-status">Enter a pressure and a line temperature.</div>
+                    <div class="status-pill" id="rf-sc-status">Enter a pressure and a line temperature.</div>
                 </section>
 
             </div>
@@ -375,7 +358,7 @@ nav: tools
         function setStatus(id, text, kind) {
             const el = document.getElementById(id);
             el.textContent = text;
-            el.className = 'rf-status' + (kind ? ' ' + kind : '');
+            el.className = 'status-pill' + (kind ? ' ' + kind : '');
         }
 
         // ── P-T (saturation) tab ──────────────────────────────────────

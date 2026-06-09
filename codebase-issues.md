@@ -3208,7 +3208,7 @@ The visual change is small: tools / sims leads gain ~100 px of line
 length at wide viewports; education's lead loses ~40 px. Subjectively
 all three now read at the same cadence.
 
-### 73. Page-local failure-pill DRY — four tools each define their own warn/error chrome
+### 73. Page-local failure-pill DRY — four tools each define their own warn/error chrome *(addressed 2026-06-09)*
 
 **Where.** `economizer-ratio.html` (`.er-feas`), `air-mixing.html`
 (`.am-status`), `coil-sizing.html` (`.cs-status`),
@@ -3239,6 +3239,24 @@ source of truth for failure-state visuals across the site.
 **Revisit trigger.** A fifth tool needs failure-state chrome, OR a
 visual refresh of the warn/error palette ships and the duplication
 becomes a real maintenance cost.
+
+**Resolution (2026-06-09):** owner chose to DRY now. The four byte-identical
+blocks were consolidated into one shared `.status-pill` class in
+`styles.css` (base + `.ok` / `.warn` / `.error` modifiers), placed next to
+`.failure-callout`. The four tools dropped their page-local definitions and
+renamed both markup (`class="…"`) and the `setStatus` / `setFeas` className
+literal to `status-pill` (economizer's whole `{% block head %}` went away —
+it held nothing else). The shared rule squares its corners via
+`border-radius: var(--rail)` rather than the pills' former hardcoded `4px`,
+bringing them in line with the documented AX-sharp square-corner principle
+(a small intentional visual change, verified via `npm run screenshots`).
+CLAUDE.md gained a "Tool-output status chrome" bullet documenting the
+`.failure-callout` (static) vs `.status-pill` (stateful) split. A fifth,
+near-identical pill surfaced during the sweep — dew-point-calculator's
+`.dew-verdict` — but it's a deliberate variant (wider pad, brighter `.ok`
+text, an amber `.edge` state in place of `.error`), so it stays page-local;
+its stale `.cs-status` comment references were repointed at `.status-pill`,
+and the base-class overlap is tracked as #80 below.
 
 ### 74. No shared minimum touch-target floor — several interactive families render below 44px on mobile *(addressed 2026-05-29)*
 
@@ -3408,6 +3426,29 @@ fix PR's own `test` workflow run is the verification that checkout /
 setup-node@v5 work; `indexnow.yml` only fires on push to `main`, so its YAML
 was eyeballed (and can be `workflow_dispatch`-ed once post-merge to confirm
 the diff range still resolves).
+
+### 80. `dew-point-calculator`'s `.dew-verdict` overlaps the shared `.status-pill` base
+
+Surfaced during the #73 status-pill consolidation (2026-06-09). With the
+four-tool pill chrome now centralized as `.status-pill`,
+`dew-point-calculator.html`'s page-local `.dew-verdict` pill shares the same
+base (mono, `--surface-2` face, 1px `--border`, square corners) but diverges
+in three deliberate ways: a slightly wider pad (`0.55rem 0.8rem` vs
+`0.5rem 0.75rem`), a brighter `.ok` (adds `color: var(--text-bright)`), and
+an amber `.edge` state in place of `.error`/red (the "you're near the dew
+point" soft caution). It was out of #73's named four-tool scope, so it was
+left page-local in that PR (its stale `.cs-status` comment references were
+repointed at `.status-pill`).
+
+**Why it matters.** ~80 % of `.dew-verdict` duplicates `.status-pill`'s base;
+a future palette retune to the pill face would silently skip dew-point.
+
+**Priority.** LOW (no live bug; small, deliberate variant).
+
+**Recommended action.** If touched, refactor the markup to
+`class="status-pill dew-verdict"` and reduce `.dew-verdict` to just the
+deltas (pad override, `.ok` text-bright, the `.edge` state), so the base
+stays single-sourced. Otherwise leave as a documented variant.
 
 ### Deferred / Won't fix (with revisit trigger)
 
