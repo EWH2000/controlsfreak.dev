@@ -75,6 +75,82 @@ nav: home
             max-width: 780px;
         }
 
+        /* Quick-tools strip — the fast path, first thing in the hero. */
+        .hero-quicktools {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.8rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            background: var(--surface);
+        }
+        .hero-qt-label {
+            font-family: var(--mono);
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-right: 0.15rem;
+        }
+        .hero-qt {
+            font-family: var(--mono);
+            font-size: 0.75rem;
+            padding: 0.5rem 0.75rem;
+            border: 1px solid var(--border);
+            background: var(--surface-2);
+            color: var(--text);
+            text-decoration: none;
+            transition: border-color 0.12s, color 0.12s, background 0.12s;
+        }
+        .hero-qt:hover { border-color: var(--accent); color: var(--text-bright); }
+        .hero-qt--all { border-color: var(--accent-glow); color: var(--accent); background: var(--accent-dim); }
+        .hero-qt--all:hover { color: var(--accent-bright); border-color: var(--accent); }
+
+        /* Interactive control row under the live loop (outside the
+           aria-hidden stage — this is the operable part). */
+        .hseam-controls {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.55rem 0.9rem;
+            padding: 0.85rem 1.25rem;
+            border-top: 1px solid var(--border-faint);
+        }
+        .hseam-sp-label {
+            font-family: var(--mono);
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+        }
+        /* .hseam-controls scope beats the global input[type=range] width:100%. */
+        .hseam-controls .hseam-sp { width: clamp(160px, 40%, 320px); accent-color: var(--accent); }
+        .hseam-sp-out {
+            font-family: var(--mono);
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--blue-bright);
+            font-variant-numeric: tabular-nums;
+            min-width: 4.5ch;
+        }
+        .hseam-readout {
+            font-family: var(--mono);
+            font-size: 0.62rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-dim);
+        }
+        .hseam-tuner-link {
+            margin-left: auto;
+            font-family: var(--mono);
+            font-size: 0.72rem;
+            color: var(--accent);
+            text-decoration: none;
+            border-bottom: 1px solid transparent;
+        }
+        .hseam-tuner-link:hover { border-bottom-color: var(--accent); }
+
         /* Three columns: software supervisor | conductor | field device. */
         .hero-seam-stage {
             display: grid;
@@ -237,6 +313,8 @@ nav: home
            the copy collapses to a single column. */
         @media (max-width: 760px) {
             .hseam-frame { margin: 1.25rem 1.25rem 0; }
+            .hero-quicktools { padding: 0.8rem 1.25rem; }
+            .hseam-controls { padding: 0.85rem 1.25rem; }
             .hero-seam-stage {
                 grid-template-columns: 1fr;
                 gap: 1.1rem;
@@ -259,13 +337,26 @@ nav: home
         <span class="ok-pill">LIVE</span>
     </div>
 
+    <!-- Quick-tools strip — the fast path for the engineer who already
+         knows what they need. First thing in the hero so substance leads,
+         above the live loop. -->
+    <div class="hero-quicktools">
+        <span class="hero-qt-label">Jump to</span>
+        <a class="hero-qt" href="/tools/signal-scaling.html">Signal Scaling</a>
+        <a class="hero-qt" href="/tools/bacnet-ip-converter.html">BACnet/IP Hex</a>
+        <a class="hero-qt" href="/tools/thermistor-calculator.html">Thermistor</a>
+        <a class="hero-qt" href="/tools/psychrometric-chart.html">Psych Chart</a>
+        <a class="hero-qt hero-qt--all" href="/tools/">All tools →</a>
+    </div>
+
     <!-- The seam: the site's whole premise as one live instrument — a
          software supervisor (left) reading a field controller (right)
-         across the wire between them. It runs a small AHU supply-air loop:
-         the controller holds supply air at setpoint by modulating a cooling
-         valve; the setpoint steps every so often so you watch the loop
-         respond (not a looping animation). Decorative simulation — the copy
-         below carries the accessible content, so the stage is aria-hidden. -->
+         across the wire between them. A small AHU supply-air loop: the
+         controller holds supply air at setpoint by modulating a cooling
+         valve. It auto-demos (the setpoint steps on its own) until the
+         visitor grabs the setpoint slider below, then chases their target.
+         The visual stage is aria-hidden eye-candy; the OPERABLE part is the
+         labelled slider in .hseam-controls, which sits outside this stage. -->
     <div class="hseam-frame">
         <div class="hseam-frame-head">
             <span class="hseam-frame-title">Live <span class="titlebar-dots">·</span> AHU-1 supply-air temperature loop</span>
@@ -323,7 +414,18 @@ nav: home
             </div>
         </div>
 
-        <p class="hseam-legend">The supervisor reads the supply-air sensor; the controller holds it at setpoint by modulating the cooling valve. Watch the loop chase each setpoint change.</p>
+        <!-- Interactive control — lives OUTSIDE the aria-hidden stage so the
+             slider is real, operable content. Driving it hands the loop to
+             the visitor (auto-demo stops on first input). -->
+        <div class="hseam-controls">
+            <label class="hseam-sp-label" for="hero-sp">Setpoint</label>
+            <input type="range" class="hseam-sp" id="hero-sp" min="52" max="58" step="0.5" value="55">
+            <output class="hseam-sp-out" id="hero-sp-out" for="hero-sp">55.0 °F</output>
+            <span class="hseam-readout" id="hero-readout">supply air 55.1 °F · valve 62 %</span>
+            <a class="hseam-tuner-link" href="/simulators/pid-tuner.html">Open the full PID Tuner →</a>
+        </div>
+
+        <p class="hseam-legend">The supervisor reads the supply-air sensor; the controller holds it at setpoint by modulating the cooling valve. Drag the setpoint and watch the loop chase it — then open the full PID Tuner to tune one yourself.</p>
     </div>
 
     <div class="hero-copy">
@@ -346,42 +448,42 @@ nav: home
 <main id="main">
 
     <div class="section-header">
-        <h2 class="section-label" data-stage="1">Most-Reached-For Tools</h2>
+        <h2 class="section-label" data-stage="1">Tools by Category</h2>
         <div class="section-line"></div>
     </div>
 
     <div class="card-grid">
         {{ navCard({
             section:    'tools',
-            href:       '/tools/signal-scaling.html',
-            titleShort: 'Signal Scaling',
-            titleFull:  'Signal Scaling Calculator',
-            desc:       'mA / V signal ↔ engineering units, with % of span and a 2-point → slope/offset tab ready to paste into Niagara\'s ProxyExt.',
-            pills:      ['Analog I/O', '4-20 mA', '0-10 V', 'Slope / Offset']
+            href:       '/tools/#hvac',
+            titleShort: 'HVAC',
+            titleFull:  'HVAC tools →',
+            desc:       'Psychrometric chart, economizer ratio, air mixing, coil sizing, dew point, and refrigerant P-T — the airside and refrigerant math on one filtered view.',
+            pills:      ['Psychrometrics', 'Coils', 'Economizer', '6 tools']
         }) }}
         {{ navCard({
             section:    'tools',
-            href:       '/tools/bacnet-ip-converter.html',
-            titleShort: 'BACnet/IP Hex',
-            titleFull:  'BACnet/IP Hex Converter',
-            desc:       'The hex address strings EBO shows for BACnet/IP devices ↔ dotted-decimal IP and UDP port, both directions.',
-            pills:      ['BACnet/IP', 'UDP 47808', 'Hex ↔ Dec']
+            href:       '/tools/#protocols',
+            titleShort: 'Protocols',
+            titleFull:  'Protocol tools →',
+            desc:       'Modbus register decoding and function codes, BACnet/IP hex addressing, and the BACnet object reference — the bus-level conversions you hit mid-integration.',
+            pills:      ['Modbus', 'BACnet', '4 tools']
         }) }}
         {{ navCard({
             section:    'tools',
-            href:       '/tools/thermistor-calculator.html',
-            titleShort: 'Thermistor',
-            titleFull:  'Thermistor / RTD Calculator',
-            desc:       'Temperature ↔ resistance for the common HVAC sensors — 10K Type II / III, Johnson 8.7K, Schneider Type 5, 20K, 3K, 1K Balco, Pt100, Pt1000 — looked up both ways, or identify an unknown sensor from measured readings.',
-            pills:      ['Sensors', 'NTC / RTD', 'T ↔ R', 'ID Unknown']
+            href:       '/tools/#signals',
+            titleShort: 'Signals',
+            titleFull:  'Signal tools →',
+            desc:       'Analog signal scaling (mA / V ↔ engineering units) and thermistor / RTD curves — the field-wiring math for getting a real number off a point.',
+            pills:      ['Analog I/O', 'Sensors', '2 tools']
         }) }}
         {{ navCard({
             section:    'tools',
-            href:       '/tools/psychrometric-chart.html',
-            titleShort: 'Psych Chart',
-            titleFull:  'Psychrometric Chart',
-            desc:       'Walk an AHU through its processes — mix outdoor + return air, then cool, heat, and humidify — on an interactive ASHRAE psychrometric chart that follows the header\'s US / Metric toggle. Drag OA and RA, or type leaving conditions; coil capacities appear when you set the airflow.',
-            pills:      ['HVAC', 'Psychrometrics', 'ASHRAE', 'US / Metric']
+            href:       '/tools/#hydronics',
+            titleShort: 'Hydronics',
+            titleFull:  'Hydronic tools →',
+            desc:       'Valve Cv sizing and pump / fan affinity laws — sizing the wet side and predicting what speed changes do to flow, head, and power.',
+            pills:      ['Valves', 'Pumps', '2 tools']
         }) }}
     </div>
 
@@ -397,15 +499,15 @@ nav: home
             titleShort: 'Tools',
             titleFull:  'Calculators & lookups →',
             desc:       'Calculators and lookups for the parts of the job that come up over and over — psychrometric staging, signal scaling, register and address conversions, thermistor curves. Open one, get an answer, get back to work.',
-            pills:      ['Calculators', 'Lookups', 'Converters', '9 Tools']
+            pills:      ['Calculators', 'Lookups', 'Converters', '14 Tools']
         }) }}
         {{ navCard({
             section:    'home',
             href:       '/simulators/',
             titleShort: 'Simulators',
             titleFull:  'Practice on the model →',
-            desc:       'Running models you can poke at in the browser — a PID step-response loop, a mock drive keypad, a function-block wiresheet. Practice on the controls before you\'re standing in front of the real thing.',
-            pills:      ['Practice', 'Sandboxes', 'Live Models', '3 Simulators']
+            desc:       'Running models you can poke at in the browser — a PID step-response loop, a mock drive keypad, a function-block wiresheet, an equipment-staging plant, and a controller-wiring rig. Practice on the controls before you\'re standing in front of the real thing.',
+            pills:      ['Practice', 'Sandboxes', 'Live Models', '5 Simulators']
         }) }}
         {{ navCard({
             section:    'home',
@@ -413,7 +515,7 @@ nav: home
             titleShort: 'Education',
             titleFull:  'Learn the fundamentals →',
             desc:       'A connected set of explainers, not a glossary. The current arc: PID control → hydronic loops → load piping → VFDs → pump control, each page asking one question and answering it with diagrams, worked examples, and the occasional interactive widget.',
-            pills:      ['Explainers', 'Diagrams', 'Widgets', '13 Lessons']
+            pills:      ['Explainers', 'Diagrams', 'Widgets', '17 Lessons']
         }) }}
     </div>
 
@@ -478,6 +580,7 @@ nav: home
         const linePv = byId('hero-trend-line'), lineSp = byId('hero-trend-sp'), area = byId('hero-trend-area');
         const link = document.querySelector('.hseam-link');
         const packet = byId('hero-packet'), packetVal = byId('hero-packet-val');
+        const spSlider = byId('hero-sp'), spOut = byId('hero-sp-out'), readout = byId('hero-readout');
 
         const N = 22;                                  // trend samples
         const VMIN = 51.5, VMAX = 58.5;                // trend y-range °F
@@ -486,7 +589,9 @@ nav: home
         const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
         const reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-        let sp = 55.0, sat = 55.0, ticksToStep = 5;
+        // userControl flips true on the first slider input: the auto-demo
+        // stops stepping the setpoint and the loop chases the visitor's target.
+        let sp = 55.0, sat = 55.0, ticksToStep = 5, userControl = false;
         const satHist = [], spHist = [];
 
         // Colder setpoint needs more cooling; being off setpoint opens it further.
@@ -495,7 +600,7 @@ nav: home
         const ptsOf = (arr) => arr.map((v, i) => ((i / (arr.length - 1)) * 300).toFixed(1) + ',' + yOf(v).toFixed(1)).join(' ');
 
         function advance() {
-            if (--ticksToStep <= 0) {                  // step the setpoint, then chase it
+            if (!userControl && --ticksToStep <= 0) {  // auto-demo steps until the visitor takes over
                 let next = sp;
                 while (next === sp) next = SP_CHOICES[(Math.random() * SP_CHOICES.length) | 0];
                 sp = next;
@@ -522,10 +627,39 @@ nav: home
             lineSp.setAttribute('points', ptsOf(spHist));
             area.setAttribute('points', pv + ' 300,54 0,54');
             packetVal.textContent = satS + ' °F';
+            // Accessible / visible readout (not aria-live — the slider self-
+            // announces via aria-valuetext, so this stays a quiet display).
+            if (readout) readout.textContent = 'supply air ' + satS + ' °F · valve ' + ao + ' %';
+            // While auto-demoing, let the slider thumb track the stepping
+            // setpoint so it never looks stale; stop once the visitor grabs it.
+            if (!userControl && spSlider) {
+                spSlider.value = spS;
+                spSlider.setAttribute('aria-valuetext', spS + ' °F');
+                if (spOut) spOut.textContent = spS + ' °F';
+            }
         }
 
         for (let i = 0; i < N + 6; i++) advance();      // prefill a realistic recent trace
         paint();                                        // static first frame
+
+        // Wire the slider regardless of reduced-motion — it's the operable
+        // part and must work even when the animation loop doesn't run.
+        if (spSlider) {
+            spSlider.setAttribute('aria-valuetext', sp.toFixed(1) + ' °F');
+            spSlider.addEventListener('input', function () {
+                sp = parseFloat(spSlider.value);
+                userControl = true;
+                if (spOut) spOut.textContent = sp.toFixed(1) + ' °F';
+                spSlider.setAttribute('aria-valuetext', sp.toFixed(1) + ' °F');
+                if (reduce) {                            // no loop running — snap and record one sample
+                    sat = sp;
+                    satHist.push(sat); if (satHist.length > N) satHist.shift();
+                    spHist.push(sp);   if (spHist.length > N) spHist.shift();
+                }
+                paint();                                 // instant feedback; the interval (if any) chases
+            });
+        }
+
         if (reduce) return;
 
         function hop() {
