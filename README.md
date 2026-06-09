@@ -9,6 +9,17 @@ Live at [controlsfreak.dev](https://controlsfreak.dev).
 
 ## What's on the site
 
+### Getting around
+
+Press `/` (or `Ctrl`/`⌘-K`) anywhere for a command-palette **search**
+over every page — or use the search button in the nav. The Tools,
+Simulators, and Education nav items **drop down** to direct links, so
+any page is one click from anywhere; on a phone the nav collapses
+behind a hamburger with the search button kept in reach. The home page
+leads with a quick-tools strip and a live AHU supply-air loop you can
+**drive** — drag the setpoint and watch it chase, then open the full
+PID Tuner to tune one yourself.
+
 ### Tools
 
 Calculators, converters, and lookups — open one, get an answer.
@@ -212,8 +223,9 @@ from now will still run it.
   footer.
 - **Build:** 11ty (`npm run build`) renders each page from its
   frontmatter + the layout, passes through `styles.css`, `scripts/`,
-  `assets/`, `robots.txt`, and `sitemap.xml`, and writes to `_site/`.
-  Build is fast (~0.3s for 30 pages); the only thing the build does
+  `assets/`, `robots.txt`, generates `sitemap.xml` + the
+  `search-index.json` the command palette reads, and writes to
+  `_site/`. Build is fast (~0.3s for ~45 pages); the only thing it does
   is templating, no JS transpile or bundle. Cloudflare Workers Build
   runs `npm install && npm run build` on push to `main` and serves
   `_site/`.
@@ -238,9 +250,11 @@ from now will still run it.
   shared helpers expose globals like `Units`, `simulatePid`, and
   `FlowEngine` that page IIFEs reach for by name). Most pages
   load them per-page with `<script src="/scripts/xxx.js"></script>`
-  before the inline `<script>`; `flow-engine.js` and
-  `schematic-bg.js` are loaded site-wide by the layout so the
-  gutter art animates everywhere.
+  before the inline `<script>`; `theme.js`, `search.js`,
+  `nav-menu.js`, `flow-engine.js`, `schematic-bg.js`, and
+  `fullscreen-toggle.js` are loaded site-wide by the layout (theme
+  toggle, command palette, nav dropdowns + mobile hamburger, gutter
+  art, fullscreen — all on every page).
   - `pid-engine.js` — FOPDT process model + PID controller with
     conditional-integration anti-windup. Drives the PID Tuning
     Helper simulator and the three PID Basics mini-sims.
@@ -263,6 +277,12 @@ from now will still run it.
   - `schematic-bg.js` — scroll-driven reveal for the gutter
     schematic motifs; bootstraps `flow-engine.js` once on
     DOMContentLoaded.
+  - `search.js` — the site-wide command palette (`window.Palette`).
+    Fetches the build-time `/search-index.json` once and ranks it;
+    opens on `/`, `Ctrl`/`⌘-K`, or the nav search button.
+  - `nav-menu.js` — the Tools / Simulators / Education nav dropdowns
+    and the mobile hamburger (`window.NavMenu`); the dropdown link
+    lists are generated at build time from per-section collections.
   - `thermistor-data.js` — sensor R/T curves consumed by the
     Thermistor Lookup tool.
   - `quiz-engine.js` — engine behind the Practice section. Owns
@@ -311,8 +331,10 @@ npm test
 Tests live under `tests/`: `smoke.spec.js` (every page returns
 200, has the expected title and nav, no console errors, plus
 behaviour spot-checks), `contact.spec.js` (the contact form),
-and `psychro-engine.spec.js` (pure-Node engine math). Chromium
-only. The Playwright config has a `webServer` block that builds
+`psychro-engine.spec.js` (pure-Node engine math), `nav-search.spec.js`
+(the command palette + search-index drift), `nav-menu.spec.js` (the
+nav dropdowns + mobile hamburger), and `home-hero.spec.js` (the
+interactive hero loop + category deep-links). Chromium only. The Playwright config has a `webServer` block that builds
 and serves `_site/`, so `npm test` is self-sufficient on a fresh
 checkout — a running `npm run dev` on port 8000 is reused.
 

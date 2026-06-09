@@ -11,6 +11,56 @@ tools.
 
 
 
+### Time-to-answer — search, nav dropdowns, interactive hero *(shipped 2026-06-08)*
+*One question: after the v3 "seam" hero redesign, how fast can someone
+actually GET to the tool they came for — and does the home page read as
+a reliable field tool or as marketing fluff?*
+
+The redesign buried the fast path: the live loop sat above the headline
+and above every tool link (~600px to the first one), and a passive
+animation over the tools risks reading as fluff to a no-nonsense
+engineer. Site-wide, browse-only discovery (nav → landing → grid →
+tool) only gets slower as the catalog grows. Three levers, three PRs:
+
+**1. Command palette (#193).** `/` or Ctrl/⌘-K (or a nav button) opens
+a fuzzy search over every page — one keystroke to anywhere, the durable
+answer as the catalog grows. Index is a build-time
+`/search-index.json` (`search-index.njk` ← `searchPages`), fetched once
+and ranked client-side in `search.js`; no Worker change. Optional
+`keywords` frontmatter feeds field synonyms (`4-20mA`, `NTC`, `CRC`).
+
+**2. Nav dropdowns + mobile hamburger (#194).** Tools / Simulators /
+Education drop to direct links (built from `navTools`/etc collections +
+the `cleanTitle`/`canonicalPath` filters) so any page is one click from
+anywhere — disclosure buttons, **not** CSS-hover, since hover dies on
+keyboard + touch. On mobile the flat flex-wrap nav was **52% of an S25
+screen**; it now collapses behind a hamburger (~8%), with the search
+icon kept in the top bar (the palette is the fast path, so collapsing
+the nav doesn't cost reach). Hard-won mobile fixes, all in *Gotchas*
+now: search-in-top-bar via a second icon button (the labelled one
+wrapped the desktop bar); a height-capped sheet with internal scroll
+(sticky nav taller than the viewport scrolled the *page* behind it);
+`flex-wrap: nowrap` (a capped wrapping column broke into a second
+column → sideways scroll); explicit `overflow-x: hidden`.
+
+**3. Interactive hero (#195).** A quick-tools strip leads the hero
+(top-4 tools, above the fold). The AHU loop now **auto-demos until the
+visitor grabs the setpoint slider, then chases their target** — the
+"I don't have time → huh, fun, bookmark it" conversion for the skeptic,
+with `Open the full PID Tuner →` to the real sim. The slider lives
+outside the `aria-hidden` stage, self-announces via `aria-valuetext`,
+and works under reduced-motion. Stage-1's redundant "Most-Reached-For"
+cards became **Tools by Category** (HVAC / Protocols / Signals /
+Hydronics) that deep-link to `/tools/#<cat>`, reusing the landing's
+hash-driven filter chips.
+
+**The reframe that made it cohere:** solving discovery *globally*
+(search + dropdowns) de-risked the hero — it no longer has to be the
+only fast path, so the loop stays as a premise-seller, just now a
+playable one. Personas: the skeptic and the returning power user both
+want substance-first (served by the strip + search); the curious
+browser wants the premise sold (served by the now-playable loop).
+
 ### Practice section — quizzes + field drills *(v1 shipped 2026-05-25)*
 *One question: how does someone using the site as a self-paced course
 know what they actually absorbed, and how do techs prepping for
