@@ -1441,7 +1441,8 @@ input[type="range"]::-moz-range-thumb {
 .quiz-choice:focus-visible,
 .quiz-action:focus-visible,
 .quiz-reset-best:focus-visible,
-.quiz-restart-now:focus-visible {
+.quiz-restart-now:focus-visible,
+.pid-spoiler > summary:focus-visible {
     outline: 2px solid var(--accent);
     outline-offset: 3px;   /* v2.0.0 — was 2px; lifted so the accent ring no longer kisses the border on .nav-card */
 }
@@ -1481,6 +1482,7 @@ input[type="range"]:focus-visible::-moz-range-thumb {
     }
     .site-nav-links a { padding-inline: 0.2rem; }
     .quiz-settings-select { min-height: 44px; }
+    .pid-spoiler > summary { min-height: 44px; }
     /* Dropdown items are full-width rows, not compact chrome — keep them
        left-aligned while still clearing the 44px floor above. */
     .nav-menu .nav-menu-item { justify-content: flex-start; }
@@ -1581,6 +1583,16 @@ input[type="range"]:focus-visible::-moz-range-thumb {
     padding: 0.04rem 0.4rem;
     font-size: 0.58rem;
     letter-spacing: 0.1em;
+}
+
+/* Equipment strip — stack the controller → scene → sensor row vertically on
+   phones (the horizontal loop would otherwise crowd or sideways-scroll). The
+   viewBox SVGs scale down with width; the chart's own narrow-width note already
+   covers the canvas below. */
+@media (max-width: 700px) {
+    .pid-eq-row { flex-direction: column; align-items: stretch; gap: 0.6rem; }
+    .pid-eq-controller,
+    .pid-eq-sensor { width: auto; }
 }
 .sim-legend {
     display: flex;
