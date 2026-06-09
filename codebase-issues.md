@@ -3078,7 +3078,7 @@ time with the actual `getTotalLength()` value — viable but
 trades CSS-only simplicity for a JS bootstrap pass; would need
 its own trade-off analysis).
 
-### 70. Schematic-bg motif library inlines ~360 SVGs into every page DOM
+### 70. Schematic-bg motif library inlines ~360 SVGs into every page DOM *(deferred 2026-05-23)*
 
 Caught during the schematic-bg doc-audit (2026-05-23). The
 `_includes/schematic-bg.njk` partial emits 60 motifs per side
@@ -3147,7 +3147,7 @@ and the Public API `init()` entry (commit `8e24313`) to describe:
 
 Docs-only, no behavior change.
 
-### 72. Landing-page lead paragraphs each carry their own inline-style copy of the same shape
+### 72. Landing-page lead paragraphs each carry their own inline-style copy of the same shape *(addressed 2026-05-24)*
 
 Caught during the refinement-period content audit, Batch 1 — Landings
 (2026-05-24). The three section-landing pages each open with a single
