@@ -1516,6 +1516,34 @@ input[type="range"]:focus-visible::-moz-range-thumb {
     height: 100%;
     pointer-events: none;
 }
+
+/* ── PID equipment strip — the live process visual above the chart:
+   controller (output gauge) → actuator/process scene → sensor (live PV),
+   with a feedback line beneath. aria-hidden chrome; the chart + metrics
+   carry the accessible story. Responsive stacking is in the breakpoints. */
+.pid-eq-strip {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 0.85rem 0.75rem 0.55rem;
+    margin-bottom: 0.75rem;
+}
+.pid-eq-row { display: flex; align-items: center; gap: 0.85rem; }
+.pid-eq-controller,
+.pid-eq-sensor { flex: none; width: 160px; }
+.pid-eq-scene-host { flex: 1; min-width: 0; }
+.pid-eq-scene { display: block; width: 100%; height: auto; }
+.pid-eq-feedback {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-top: 0.55rem;
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+}
+.pid-eq-feedback .pid-eq-fb-line { flex: 1; border-top: 1px dashed var(--blue); }
 .sim-legend {
     display: flex;
     gap: 1.5rem;

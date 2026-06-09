@@ -17,6 +17,25 @@ nav: simulators
         @media (max-width: 700px) {
             .narrow-width-note { display: block; }
         }
+
+        /* ── Equipment scenes (pid-eq-*) — page-local SVG cosmetics ──
+           Symbol-internal styling for the four process scenes above the
+           chart; the strip layout + responsive rules live in styles.css.
+           Reuses .widget-fan / .device / .lcd / .gauge.eq from the global
+           sheet for the fan + controller/sensor readouts. */
+        .pid-eq-pipe  { fill: none; stroke: var(--text-dim); stroke-width: 5; stroke-linecap: round; }
+        .pid-eq-duct  { fill: none; stroke: var(--border); stroke-width: 2; }
+        .pid-eq-wire  { fill: none; stroke: var(--accent); stroke-width: 1.5; stroke-dasharray: 3 3; }
+        .pid-eq-body  { fill: var(--surface); stroke: var(--text-dim); stroke-width: 2; }
+        .pid-eq-fin   { stroke: var(--text-dim); stroke-width: 1.2; }
+        .pid-eq-valve-bow { fill: var(--surface); stroke: var(--text-dim); stroke-width: 2; }
+        .pid-eq-stem  { stroke: var(--text-dim); stroke-width: 2; }
+        .pid-eq-act-track { fill: var(--well); stroke: var(--border); stroke-width: 1; }
+        .pid-eq-act-fill  { fill: var(--accent); }
+        .pid-eq-damper-blade { stroke: var(--accent); stroke-width: 3; stroke-linecap: round; }
+        .pid-eq-sensor-dot { fill: var(--surface); stroke: var(--accent); stroke-width: 2; }
+        .pid-eq-cap   { font-family: var(--mono); font-size: 8.5px; fill: var(--text-dim); letter-spacing: 0.06em; text-transform: uppercase; }
+        .pid-eq-flow  { fill: none; stroke: none; }   /* invisible particle track for FlowEngine */
     </style>
 {% endblock %}
 
@@ -112,6 +131,133 @@ nav: simulators
                 The step-response chart reads best on a wider screen — at phone width the time
                 axis compresses and the PV / setpoint curves bunch together. The sliders still
                 drive the model, but a laptop gives the chart room to read.
+            </div>
+
+            <!-- ── Live process visualization ──────────────────────────────
+                 A closed loop reading left→right: the controller's output (u%)
+                 drives the actuator (valve / damper+fan) inside the process
+                 scene, whose sensor reports PV back. The active scene swaps with
+                 the Equipment selector; the actuator + sensor animate in lockstep
+                 with the chart playhead below — the actuator tracks the commanded
+                 output instantly while PV lags by the dead time. aria-hidden
+                 chrome: the chart and the metrics row carry the accessible story. -->
+            <div class="pid-eq-strip" aria-hidden="true">
+                <div class="pid-eq-row">
+
+                    <!-- Controller — commanded output u% -->
+                    <div class="pid-eq-controller">
+                        <div class="device"><div class="device-inner">
+                            <div class="device-tb"><span class="led led--run"></span><span class="title">Controller</span><span class="badge">AO</span></div>
+                            <div class="gauge eq">
+                                <span class="gauge-label">Output</span>
+                                <div class="track"><div class="fill" id="pid-eq-out-fill" style="--pct:0%"></div></div>
+                                <span class="pct" id="pid-eq-out-pct">0%</span>
+                            </div>
+                        </div></div>
+                    </div>
+
+                    <!-- Process scenes — only the active one is shown -->
+                    <div class="pid-eq-scene-host">
+
+                        <!-- FAST · VAV damper + supply fan · duct static -->
+                        <svg class="pid-eq-scene hidden" id="pid-eq-scene-fast" viewBox="0 0 360 120" role="presentation">
+                            <rect class="pid-eq-duct" x="6" y="40" width="348" height="40"/>
+                            <path class="pid-eq-flow" data-flow="supply" data-flow-density="0.6" d="M10,60 L350,60"/>
+                            <svg class="widget-fan" x="24" y="34" width="52" height="52" viewBox="0 0 100 100">
+                                <circle cx="50" cy="50" r="46" fill="none" stroke="var(--border)" stroke-width="3"/>
+                                <g class="widget-fan-blades" id="pid-eq-fast-fan">
+                                    <ellipse cx="50" cy="22" rx="7" ry="22"/>
+                                    <ellipse cx="50" cy="22" rx="7" ry="22" transform="rotate(72 50 50)"/>
+                                    <ellipse cx="50" cy="22" rx="7" ry="22" transform="rotate(144 50 50)"/>
+                                    <ellipse cx="50" cy="22" rx="7" ry="22" transform="rotate(216 50 50)"/>
+                                    <ellipse cx="50" cy="22" rx="7" ry="22" transform="rotate(288 50 50)"/>
+                                </g>
+                                <circle cx="50" cy="50" r="5" fill="var(--text-dim)"/>
+                            </svg>
+                            <path class="pid-eq-wire" d="M150,8 L150,40"/>
+                            <line class="pid-eq-damper-blade" data-cx="150" data-cy="48" x1="150" y1="42" x2="150" y2="54"/>
+                            <line class="pid-eq-damper-blade" data-cx="150" data-cy="60" x1="150" y1="54" x2="150" y2="66"/>
+                            <line class="pid-eq-damper-blade" data-cx="150" data-cy="72" x1="150" y1="66" x2="150" y2="78"/>
+                            <circle class="pid-eq-sensor-dot" cx="324" cy="60" r="5"/>
+                            <path class="pid-eq-wire" d="M324,55 L324,40 L348,40"/>
+                            <text class="pid-eq-cap" x="50"  y="100" text-anchor="middle">fan</text>
+                            <text class="pid-eq-cap" x="150" y="100" text-anchor="middle">damper</text>
+                            <text class="pid-eq-cap" x="324" y="100" text-anchor="middle">Δp</text>
+                        </svg>
+
+                        <!-- MED · 2-way valve · discharge-air temp (default) -->
+                        <svg class="pid-eq-scene" id="pid-eq-scene-med" viewBox="0 0 360 120" role="presentation">
+                            <path class="pid-eq-pipe" d="M8,60 L94,60"/>
+                            <path class="pid-eq-pipe" d="M124,60 L182,60"/>
+                            <path class="pid-eq-pipe" d="M248,60 L334,60"/>
+                            <path class="pid-eq-flow" data-flow="supply" data-flow-density="0.6" d="M8,60 L334,60"/>
+                            <path class="pid-eq-wire" d="M0,9 L109,9 L109,16"/>
+                            <rect class="pid-eq-act-track" x="103" y="16" width="12" height="22"/>
+                            <rect class="pid-eq-act-fill" id="pid-eq-med-valve" x="103" y="38" width="12" height="0" data-y="16" data-h="22"/>
+                            <line class="pid-eq-stem" x1="109" y1="38" x2="109" y2="52"/>
+                            <polygon class="pid-eq-valve-bow" points="94,52 94,68 109,60"/>
+                            <polygon class="pid-eq-valve-bow" points="124,52 124,68 109,60"/>
+                            <rect class="pid-eq-body" x="182" y="46" width="66" height="28" rx="2"/>
+                            <path class="pid-eq-fin" d="M194,46 L194,74 M206,46 L206,74 M218,46 L218,74 M230,46 L230,74 M242,46 L242,74"/>
+                            <circle class="pid-eq-sensor-dot" cx="334" cy="60" r="5"/>
+                            <text class="pid-eq-cap" x="109" y="92" text-anchor="middle">valve</text>
+                            <text class="pid-eq-cap" x="215" y="92" text-anchor="middle">coil</text>
+                        </svg>
+
+                        <!-- SLOW · radiator · space temp -->
+                        <svg class="pid-eq-scene hidden" id="pid-eq-scene-slow" viewBox="0 0 360 120" role="presentation">
+                            <path class="pid-eq-pipe" d="M8,60 L94,60"/>
+                            <path class="pid-eq-pipe" d="M124,60 L188,60"/>
+                            <path class="pid-eq-flow" data-flow="supply" data-flow-density="0.5" d="M8,60 L250,60"/>
+                            <path class="pid-eq-wire" d="M0,9 L109,9 L109,16"/>
+                            <rect class="pid-eq-act-track" x="103" y="16" width="12" height="22"/>
+                            <rect class="pid-eq-act-fill" id="pid-eq-slow-valve" x="103" y="38" width="12" height="0" data-y="16" data-h="22"/>
+                            <line class="pid-eq-stem" x1="109" y1="38" x2="109" y2="52"/>
+                            <polygon class="pid-eq-valve-bow" points="94,52 94,68 109,60"/>
+                            <polygon class="pid-eq-valve-bow" points="124,52 124,68 109,60"/>
+                            <rect x="176" y="22" width="168" height="76" rx="2" fill="none" stroke="var(--border)" stroke-width="1" stroke-dasharray="3 3"/>
+                            <rect class="pid-eq-body" x="188" y="34" width="62" height="52" rx="2"/>
+                            <path class="pid-eq-fin" d="M198,34 L198,86 M208,34 L208,86 M218,34 L218,86 M228,34 L228,86 M238,34 L238,86"/>
+                            <circle class="pid-eq-sensor-dot" cx="318" cy="60" r="5"/>
+                            <text class="pid-eq-cap" x="109" y="104" text-anchor="middle">valve</text>
+                            <text class="pid-eq-cap" x="219" y="104" text-anchor="middle">radiator</text>
+                            <text class="pid-eq-cap" x="318" y="104" text-anchor="middle">zone</text>
+                        </svg>
+
+                        <!-- VHIGH · reheat at the end of a long run (dead-time heavy) -->
+                        <svg class="pid-eq-scene hidden" id="pid-eq-scene-vhigh" viewBox="0 0 360 120" role="presentation">
+                            <path class="pid-eq-pipe" d="M8,60 L52,60"/>
+                            <path class="pid-eq-pipe" d="M82,60 L96,60"/>
+                            <path class="pid-eq-duct" d="M120,52 L330,52 M120,68 L330,68"/>
+                            <path class="pid-eq-flow" data-flow="supply" data-flow-density="0.6" d="M8,60 L336,60"/>
+                            <path class="pid-eq-wire" d="M0,9 L67,9 L67,16"/>
+                            <rect class="pid-eq-act-track" x="61" y="16" width="12" height="22"/>
+                            <rect class="pid-eq-act-fill" id="pid-eq-vhigh-valve" x="61" y="38" width="12" height="0" data-y="16" data-h="22"/>
+                            <line class="pid-eq-stem" x1="67" y1="38" x2="67" y2="52"/>
+                            <polygon class="pid-eq-valve-bow" points="52,52 52,68 67,60"/>
+                            <polygon class="pid-eq-valve-bow" points="82,52 82,68 67,60"/>
+                            <rect class="pid-eq-body" x="96" y="50" width="24" height="20" rx="2"/>
+                            <circle class="pid-eq-sensor-dot" cx="330" cy="60" r="5"/>
+                            <text class="pid-eq-cap" x="67"  y="92" text-anchor="middle">reheat</text>
+                            <text class="pid-eq-cap" x="225" y="44" text-anchor="middle">long run · dead time</text>
+                        </svg>
+
+                    </div>
+
+                    <!-- Sensor — live PV -->
+                    <div class="pid-eq-sensor">
+                        <div class="device"><div class="device-inner">
+                            <div class="device-tb"><span class="led led--comm"></span><span class="title" id="pid-eq-sensor-title">Disch. Air</span><span class="badge">AI</span></div>
+                            <div class="lcd"><div class="k" id="pid-eq-sensor-k">Supply Temp</div><div class="v" id="pid-eq-sensor-v">—</div></div>
+                        </div></div>
+                    </div>
+
+                </div>
+
+                <div class="pid-eq-feedback">
+                    <span class="pid-eq-fb-line"></span>
+                    <span>← feedback · PV to controller</span>
+                </div>
             </div>
 
             <div class="sim-canvas-wrap">
@@ -271,6 +417,7 @@ nav: simulators
         // keeping the thumb's position (its fraction of the range), then re-run.
         function pidProcChanged() {
             const key = document.getElementById('pid-proc').value;
+            showScene(key);
             const s = document.getElementById('pid-kd');
             const frac = parseFloat(s.max) > 0 ? parseFloat(s.value) / parseFloat(s.max) : 0;
             s.max = PID_DMAX[key];
@@ -326,7 +473,7 @@ nav: simulators
         const phCtx = phOverlay ? phOverlay.getContext('2d') : null;
         const PH_LOOP_MS = 7000;                            // wall-clock sweep duration
         const phReduced = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
-        let phRAF = null, phStart = null;
+        let phRAF = null, phStart = null, phLastT = null;
         let phAccent = '', phDim = '';                      // cursor colors, cached per run (not per frame)
 
         function phReadTokens() {
@@ -370,11 +517,15 @@ nav: simulators
 
         function phFrame(t) {
             if (phStart === null) phStart = t;
+            if (phLastT === null) phLastT = t;
+            const dt = Math.min(0.1, (t - phLastT) / 1000);   // s, clamped (tab-switch guard)
+            phLastT = t;
             const n = pidLast ? pidLast.t.length : 0;
             if (n) {
                 const frac = ((t - phStart) % PH_LOOP_MS) / PH_LOOP_MS;
                 const idx = Math.min(n - 1, Math.round(frac * (n - 1)));
                 phDraw(idx);
+                updateScene(idx, dt, t);
             }
             phRAF = requestAnimationFrame(phFrame);
         }
@@ -393,9 +544,101 @@ nav: simulators
             if (phRAF) { cancelAnimationFrame(phRAF); phRAF = null; }
             phReadTokens();
             phSizeOverlay();
-            if (phReduced) { phDraw(phFinalIdx()); return; }
+            if (phReduced) { phDraw(phFinalIdx()); updateScene(phFinalIdx(), 0, 0); return; }
             phStart = null;
+            phLastT = null;
             phRAF = requestAnimationFrame(phFrame);
+        }
+
+        // ── Equipment scene ───────────────────────────────────────────
+        // Per frame: the actuator tracks the commanded output u (it moves
+        // immediately); the sensor LCD tracks PV, which lags by the dead time
+        // since pv is driven by the delayed uEff inside the engine — so a fast
+        // loop's valve slams while the sensor barely stirs. The active scene
+        // swaps with the Equipment selector. Geometry updates every frame; the
+        // text readouts + flow density are throttled. PV shows in canonical
+        // units (°F / in. w.c.) — the rigorously unit-toggled value is the
+        // Steady-State Error metric below; this device face is illustrative.
+        const PID_EQ = {
+            fast:  { title: 'Duct Static',  k: 'Static',      unit: 'in.wc', actuator: 'damper' },
+            med:   { title: 'Disch. Air',   k: 'Supply Temp', unit: '°F',    actuator: 'valve' },
+            slow:  { title: 'Space Temp',   k: 'Zone Temp',   unit: '°F',    actuator: 'valve' },
+            vhigh: { title: 'Reheat Disch', k: 'Downstream',  unit: '°F',    actuator: 'valve' },
+        };
+        let phFanAngle = 0, phReadoutLast = 0, phFlowBand = -1;
+        const elText = (id, t) => { const e = document.getElementById(id); if (e) e.textContent = t; };
+
+        // Show the scene for `key`, set the sensor labels, and (re)build the
+        // FlowEngine pools now the SVG has real geometry — a display:none SVG
+        // reports zero-length paths, so a hidden scene's flow never registered.
+        function showScene(key) {
+            const meta = PID_EQ[key];
+            document.querySelectorAll('.pid-eq-scene').forEach(s => s.classList.add('hidden'));
+            const scene = document.getElementById('pid-eq-scene-' + key);
+            if (scene) scene.classList.remove('hidden');
+            if (meta) { elText('pid-eq-sensor-title', meta.title); elText('pid-eq-sensor-k', meta.k); }
+            phFanAngle = 0;
+            phFlowBand = -1;
+            if (scene && window.FlowEngine && FlowEngine.refreshPath) {
+                scene.querySelectorAll('[data-flow]').forEach(p => FlowEngine.refreshPath(p));
+            }
+        }
+
+        function updateScene(idx, dt, now) {
+            if (!pidLast) return;
+            const key = document.getElementById('pid-proc').value;
+            const meta = PID_EQ[key];
+            if (!meta) return;
+            const u = pidLast.u[idx], pv = pidLast.pv[idx];
+            const frac = Math.max(0, Math.min(1, u / 100));
+
+            // actuator — every frame (cheap geometry writes)
+            if (meta.actuator === 'valve') {
+                const fill = document.getElementById('pid-eq-' + key + '-valve');
+                if (fill) {
+                    const y0 = parseFloat(fill.dataset.y), H = parseFloat(fill.dataset.h);
+                    const fh = H * frac;
+                    fill.setAttribute('y', (y0 + H - fh).toFixed(1));
+                    fill.setAttribute('height', fh.toFixed(1));
+                }
+            } else {                                          // damper + supply fan
+                const ang = (frac * 90).toFixed(1);
+                document.querySelectorAll('#pid-eq-scene-fast .pid-eq-damper-blade').forEach(b => {
+                    b.setAttribute('transform', 'rotate(' + ang + ' ' + b.dataset.cx + ' ' + b.dataset.cy + ')');
+                });
+                const fan = document.getElementById('pid-eq-fast-fan');
+                if (fan) {
+                    phFanAngle = (phFanAngle + 6 * (frac * 50) * dt) % 360;   // up to ~50 "Hz" at full output
+                    fan.setAttribute('transform', 'rotate(' + phFanAngle.toFixed(1) + ' 50 50)');
+                    const svg = fan.closest('.widget-fan');
+                    if (svg) svg.classList.toggle('spinning', u > 5);
+                }
+            }
+
+            // controller output gauge fill — every frame (cheap style write)
+            const of = document.getElementById('pid-eq-out-fill');
+            if (of) of.style.setProperty('--pct', Math.round(u) + '%');
+
+            // text readouts + flow density — throttled (~11 fps; now=0 in the
+            // reduced-motion one-shot forces it through)
+            if (!now || now - phReadoutLast > 90) {
+                phReadoutLast = now || 0;
+                elText('pid-eq-out-pct', Math.round(u) + '%');
+                const sv = document.getElementById('pid-eq-sensor-v');
+                if (sv) sv.innerHTML = pv.toFixed(pidLast.dec) + '<small>' + meta.unit + '</small>';
+                if (window.FlowEngine && FlowEngine.refreshPath) {
+                    const band = u < 20 ? 0 : u < 55 ? 1 : 2;       // coarse: refreshing the pool every
+                    if (band !== phFlowBand) {                      // frame would restitch it visibly
+                        phFlowBand = band;
+                        const dens = [0.2, 0.55, 1][band];
+                        const scene = document.getElementById('pid-eq-scene-' + key);
+                        if (scene) scene.querySelectorAll('[data-flow]').forEach(p => {
+                            p.setAttribute('data-flow-density', dens);
+                            FlowEngine.refreshPath(p);
+                        });
+                    }
+                }
+            }
         }
 
         // Relabel the three sliders for the chosen parameter style. The slider
@@ -450,6 +693,7 @@ nav: simulators
         });
 
         // ── Init ──
+        showScene(document.getElementById('pid-proc').value);
         runPidSim();
         // Resize redraws the chart (re-stamping the playhead geometry) and
         // resizes the overlay buffer; the running rAF picks the new geometry up
