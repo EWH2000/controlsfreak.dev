@@ -31,7 +31,7 @@ jobs:
     container:
       image: mcr.microsoft.com/playwright:v1.59.1-noble
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         # Full history — sitemap.njk derives <lastmod> from `git log` per
         # page; the default shallow clone would collapse every date to
         # the build date.
@@ -45,7 +45,7 @@ jobs:
       - name: Trust the workspace for git
         run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: lts/*
           cache: npm

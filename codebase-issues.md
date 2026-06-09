@@ -3353,7 +3353,11 @@ or tracking — just a few on-device settings`. Pure copy edit; check it
 still reads cleanly against the sibling `.subhead` headings and doesn't
 overflow on narrow viewports. Editorial call on exact wording.
 
-### 77. GitHub Actions pinned to `actions/checkout@v4` / `setup-node@v4` run on deprecated Node 20
+### 79. GitHub Actions pinned to `actions/checkout@v4` / `setup-node@v4` run on deprecated Node 20 *(addressed 2026-06-09)*
+
+*(Renumbered from #77 → #79: PR #199 logged this as #77, colliding with the
+already-addressed dark-theme polish #77 and the #78 deferral that references
+it. Highest number in use was #78, so this took the next free number.)*
 
 Both workflows — `.github/workflows/test.yml` and the new
 `.github/workflows/indexnow.yml` — pin `actions/checkout@v4` and
@@ -3372,6 +3376,16 @@ from v4. Verify CI stays green on the test workflow and that
 `indexnow.yml` still resolves its diff range. The stopgap
 `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true` env var opts in without
 bumping, but the pin bump is the durable fix.
+
+**Resolution (2026-06-09):** bumped both pins to the v5 majors —
+`actions/checkout@v4 → @v5` and `actions/setup-node@v4 → @v5` — in
+`test.yml` (lines 34 / 48) and `indexnow.yml` (lines 35 / 41), which ship
+the Node 24 runtime. The inputs in use (`fetch-depth: 0`, `node-version:
+lts/*`, `cache: npm`) are unchanged across v4 → v5, so no other edits. The
+fix PR's own `test` workflow run is the verification that checkout /
+setup-node@v5 work; `indexnow.yml` only fires on push to `main`, so its YAML
+was eyeballed (and can be `workflow_dispatch`-ed once post-merge to confirm
+the diff range still resolves).
 
 ### Deferred / Won't fix (with revisit trigger)
 
