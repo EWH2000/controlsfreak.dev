@@ -357,6 +357,93 @@ main { flex: 1; }
 .site-nav-links a:hover { color: var(--text); border-bottom-color: var(--accent); }
 .site-nav-links a.active { color: var(--text-bright); border-bottom-color: var(--accent); }
 
+/* ── NAV SECTION DROPDOWNS ───────────────────────────────────────────
+   Tools / Simulators / Education each pair their top-level link with a
+   disclosure toggle that opens a panel of direct links (nav-menu.js).
+   The panel links are <a> inside .site-nav-links, so they'd inherit the
+   nav-link rules above — the .nav-menu-scoped selectors below outrank
+   them on specificity. */
+.nav-item--has-menu {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+.nav-menu-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    /* Roomier hit area than the old fiddly 0.15rem caret, but the negative
+       margin cancels the added box in layout so the link bar keeps its
+       compact width (otherwise it wraps below the brand at ~1280px). */
+    padding: 0.45rem 0.5rem;
+    margin: -0.3rem -0.35rem;
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: color 0.18s;
+}
+.nav-menu-toggle:hover { color: var(--text); }
+.nav-caret { width: 11px; height: 7px; transition: transform 0.18s; }
+.nav-menu-toggle[aria-expanded="true"] .nav-caret { transform: rotate(180deg); }
+.nav-menu {
+    position: absolute;
+    top: calc(100% + 0.5rem);
+    left: 0;
+    z-index: 120;
+    min-width: 210px;
+    display: flex;
+    flex-direction: column;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+.nav-menu[hidden] { display: none; }
+.nav-menu .nav-menu-item {
+    font-family: var(--sans);
+    font-size: 0.9rem;
+    color: var(--text-dim);
+    text-decoration: none;
+    /* Taller rows — easier pointer targets than the old 0.5rem/0.85rem. */
+    padding: 0.6rem 1rem;
+    border-bottom: 1px solid var(--border-faint);
+    white-space: nowrap;
+    transition: color 0.18s, background 0.18s;
+}
+.nav-menu .nav-menu-item:last-child { border-bottom: none; }
+.nav-menu .nav-menu-item:hover { color: var(--text-bright); background: var(--accent-dim); }
+@media (prefers-reduced-motion: reduce) {
+    .nav-caret { transition: none; }
+}
+
+/* ── MOBILE HAMBURGER ────────────────────────────────────────────────
+   Desktop never shows it (display:none); at the narrow-nav breakpoint it
+   becomes the top-bar control that collapses .site-nav-links. The two
+   icons swap on aria-expanded. See nav-menu.js. */
+.nav-hamburger {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 0.35rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    cursor: pointer;
+    transition: color 0.18s, border-color 0.18s;
+}
+.nav-hamburger:hover { color: var(--accent); border-color: var(--accent); }
+.nav-burger-icon,
+.nav-close-icon { width: 18px; height: 18px; }
+.nav-close-icon { display: none; }
+.nav-hamburger[aria-expanded="true"] .nav-burger-icon { display: none; }
+.nav-hamburger[aria-expanded="true"] .nav-close-icon { display: inline; }
+/* Compact icon-only search for the mobile top bar; the full labelled
+   search stays in the desktop link bar. Compound selector so it beats the
+   base .nav-search-btn { display: inline-flex } regardless of source order.
+   Desktop hides this one; the mobile breakpoint flips it on. */
+.nav-search-btn.nav-search-btn--mobile { display: none; gap: 0; padding: 0.35rem; }
+
 /* ── UNITS + THEME TOGGLES ───────────────────────────────────────────
    Two sibling pills inside .site-nav-links (rightmost children) — same
    shape, so they share these rules. Each active button gets the
@@ -1126,6 +1213,62 @@ footer {
        Allow wrapping below the mobile breakpoint — the trailing
        .section-line still sits centered alongside the wrapped label. */
     .section-label   { white-space: normal; }
+    /* Collapse the whole link bar behind the hamburger so the header isn't
+       half the screen. Top bar = brand + search + hamburger; the links sheet
+       drops to its own full-width column below, only when .nav-open. */
+    .site-nav-brand { margin-right: auto; }   /* group search + burger at right */
+    .nav-hamburger { display: inline-flex; }
+    .nav-search-btn.nav-search-btn--mobile { display: inline-flex; }
+    /* The full search lives in the sheet on desktop; on mobile the top-bar
+       icon button covers it, so drop the in-sheet copy to avoid two. */
+    #nav-search-btn { display: none; }
+    .site-nav-links {
+        display: none;
+        order: 3;                 /* after the search btn + hamburger */
+        flex-basis: 100%;         /* its own row when shown */
+        flex-direction: column;
+        /* Override the desktop flex-wrap:wrap — with the capped height a
+           wrapping column breaks into a SECOND column off to the right,
+           which was the sideways-scroll. Keep it one scrolling column. */
+        flex-wrap: nowrap;
+        align-items: stretch;
+        gap: 0.15rem;
+        margin-top: 0.5rem;
+    }
+    /* Cap the open sheet to the space under the top bar and give it its own
+       smooth scroll. Without this the sticky .site-nav grows taller than the
+       viewport on long lists, so the page scrolls behind the pinned bar
+       instead of the menu — the jumpy, unresponsive scrolling. dvh tracks
+       the real mobile viewport (vh is the fallback); overscroll-behavior
+       stops the scroll from chaining to the page at the ends. */
+    .site-nav.nav-open .site-nav-links {
+        display: flex;
+        max-height: calc(100vh - 5rem);
+        max-height: calc(100dvh - 5rem);
+        /* overflow-x must be explicit: setting only overflow-y:auto makes
+           the browser compute overflow-x to auto too, which let the
+           nowrap menu names scroll the sheet sideways. */
+        overflow-x: hidden;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+    }
+    /* Belt-and-suspenders: with the sheet open, the page itself doesn't
+       scroll — only the sheet does. Mobile-scoped so a resize past the
+       breakpoint releases the lock. */
+    body.nav-sheet-open { overflow: hidden; }
+    /* Inside the open sheet each section + its sub-menu stacks full width. */
+    .nav-item--has-menu { flex-wrap: wrap; width: 100%; }
+    .nav-menu {
+        position: static;
+        z-index: auto;
+        min-width: 0;
+        width: 100%;
+        box-shadow: none;
+        margin-top: 0.3rem;
+    }
+    /* Long tool names wrap in the full-width sheet instead of running off
+       the side (the desktop dropdown keeps them on one line). */
+    .nav-menu .nav-menu-item { white-space: normal; }
 }
 /* ── COPY BUTTON ── */
 .copy-btn {
@@ -1284,6 +1427,9 @@ input[type="range"]::-moz-range-thumb {
 .units-btn:focus-visible,
 .theme-btn:focus-visible,
 .nav-search-btn:focus-visible,
+.nav-hamburger:focus-visible,
+.nav-menu-toggle:focus-visible,
+.nav-menu-item:focus-visible,
 .cta-button:focus-visible,
 .hero-btn:focus-visible,
 .back-link:focus-visible,
@@ -1321,6 +1467,9 @@ input[type="range"]:focus-visible::-moz-range-thumb {
     .units-btn,
     .theme-btn,
     .nav-search-btn,
+    .nav-hamburger,
+    .nav-menu-toggle,
+    .nav-menu-item,
     .tab-btn,
     .quiz-reset-best {
         display: inline-flex;
@@ -1330,6 +1479,9 @@ input[type="range"]:focus-visible::-moz-range-thumb {
     }
     .site-nav-links a { padding-inline: 0.2rem; }
     .quiz-settings-select { min-height: 44px; }
+    /* Dropdown items are full-width rows, not compact chrome — keep them
+       left-aligned while still clearing the 44px floor above. */
+    .nav-menu .nav-menu-item { justify-content: flex-start; }
 }
 
 /* default top spacing matches the dominant calc/converter shape:

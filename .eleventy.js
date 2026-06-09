@@ -98,6 +98,23 @@ module.exports = function(eleventyConfig) {
             .sort((a, b) => a.data.canonical.localeCompare(b.data.canonical))
     );
 
+    // Per-section page lists for the nav dropdowns (nav.njk). Same shape as
+    // sitemapPages but split by `nav` and with the section landing itself
+    // excluded — the top-level nav link already points there. Sorted by
+    // canonical for a stable, diff-friendly menu order.
+    const navSection = (collectionApi, section, landing) =>
+        collectionApi.getAll()
+            .filter((item) => item.data.nav === section
+                && typeof item.data.canonical === "string"
+                && item.data.canonical !== landing)
+            .sort((a, b) => a.data.canonical.localeCompare(b.data.canonical));
+    eleventyConfig.addCollection("navTools", (api) =>
+        navSection(api, "tools", "https://controlsfreak.dev/tools/"));
+    eleventyConfig.addCollection("navSimulators", (api) =>
+        navSection(api, "simulators", "https://controlsfreak.dev/simulators/"));
+    eleventyConfig.addCollection("navEducation", (api) =>
+        navSection(api, "education", "https://controlsfreak.dev/education/"));
+
     // Last-modified date for a source file, from git's last commit that
     // touched it — `git log -1 --format=%cd --date=short -- <path>`.
     // execFileSync (no shell) passes the path as an argv element.
