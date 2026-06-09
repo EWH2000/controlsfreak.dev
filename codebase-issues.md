@@ -3353,6 +3353,26 @@ or tracking — just a few on-device settings`. Pure copy edit; check it
 still reads cleanly against the sibling `.subhead` headings and doesn't
 overflow on narrow viewports. Editorial call on exact wording.
 
+### 77. GitHub Actions pinned to `actions/checkout@v4` / `setup-node@v4` run on deprecated Node 20
+
+Both workflows — `.github/workflows/test.yml` and the new
+`.github/workflows/indexnow.yml` — pin `actions/checkout@v4` and
+`actions/setup-node@v4`, whose JS-action runtime is Node 20. GitHub is
+retiring Node 20 on the runners: it's **forced to Node 24 on
+2026-06-16** and **removed entirely on 2026-09-16**. Every run already
+emits an annotation warning to that effect (surfaced on the IndexNow
+seed run). Nothing breaks today, but the forced switch could shift
+behavior, and the removal is a hard cliff.
+
+**What it would take to fix.** Bump both pins to the v5 majors
+(`actions/checkout@v5`, `actions/setup-node@v5`), which ship Node 24
+runtimes, in one small `ci:` PR touching the two workflow files. Low
+risk — the inputs we use (`fetch-depth`, `node-version`) are unchanged
+from v4. Verify CI stays green on the test workflow and that
+`indexnow.yml` still resolves its diff range. The stopgap
+`FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true` env var opts in without
+bumping, but the pin bump is the durable fix.
+
 ### Deferred / Won't fix (with revisit trigger)
 
 Items considered during an audit and deliberately not pursued, each
