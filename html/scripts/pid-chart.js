@@ -92,6 +92,13 @@ function drawPidChart(canvas, sim, opts) {
     const X = tt => padL + (tt / win) * w;
     const Y = vv => padT + h - ((vv - yMin) / (yMax - yMin)) * h;
 
+    // Hand the geometry this draw used to anything that needs to map
+    // (t, value) → px identically — the PID tuner's playhead cursor draws on
+    // a separate overlay canvas and can't recompute Y(): the y-range above is
+    // data-fit (depends on the pv trace), so it reads this instead. Stamped on
+    // every draw; the 'mini' variant sets it too (unused there, harmless).
+    canvas._pidGeom = { padL, padT, w, h, win, yMin, yMax };
+
     ctx.lineWidth = 1;
 
     if (isFull) {

@@ -115,7 +115,13 @@ nav: simulators
             </div>
 
             <div class="sim-canvas-wrap">
-                <canvas id="pid-canvas" role="img" aria-label="PID loop step response: process variable versus setpoint over time"></canvas>
+                <div class="pid-canvas-stack">
+                    <canvas id="pid-canvas" role="img" aria-label="PID loop step response: process variable versus setpoint over time"></canvas>
+                    <!-- Playhead cursor — a transparent overlay exactly covering #pid-canvas
+                         (the .pid-canvas-stack is a no-padding relative box so origins align).
+                         Decorative; the chart canvas already carries the aria-label. -->
+                    <canvas id="pid-overlay" aria-hidden="true"></canvas>
+                </div>
             </div>
             <div class="sim-legend">
                 <span><span class="swatch pv"></span>Process Variable</span>
@@ -300,10 +306,96 @@ nav: simulators
             // — keep that distinction; pass +ssErr here.
             errEl.textContent = formatPidDelta(sim.ssErr, sim, document.getElementById('pid-proc').value);
             errEl.classList.toggle('warn', Math.abs(sim.ssErr) > 0.05 * sim.step);
+
+            startPlayhead();   // restart the cursor sweep from t=0 on the fresh sim
         }
 
         function drawTunerChart() {
             if (pidLast) drawPidChart(document.getElementById('pid-canvas'), pidLast, { variant: 'full' });
+        }
+
+        // ── Playhead replay ───────────────────────────────────────────
+        // A cursor sweeps the (otherwise static) step-response chart on a fixed
+        // wall-clock loop, restarting whenever the tuning changes, so the chart
+        // reads like a live trend. One rAF drives it; cancel-before-reschedule
+        // keeps a slider drag (many runPidSim calls) from stacking loops. The
+        // equipment scene hangs its per-frame update off this same loop. Under
+        // reduced-motion we snap to the settled frame and never schedule —
+        // mirrors flow-engine.js bailing out.
+        const phOverlay = document.getElementById('pid-overlay');
+        const phCtx = phOverlay ? phOverlay.getContext('2d') : null;
+        const PH_LOOP_MS = 7000;                            // wall-clock sweep duration
+        const phReduced = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+        let phRAF = null, phStart = null;
+        let phAccent = '', phDim = '';                      // cursor colors, cached per run (not per frame)
+
+        function phReadTokens() {
+            const css = getComputedStyle(document.documentElement);
+            phAccent = css.getPropertyValue('--accent').trim();
+            phDim    = css.getPropertyValue('--text-dim').trim();
+        }
+
+        // Match the overlay's backing buffer to #pid-canvas. The .pid-canvas-stack
+        // has no padding/border, so the two share a 0,0 origin — we only size for DPR.
+        function phSizeOverlay() {
+            if (!phCtx) return;
+            const chart = document.getElementById('pid-canvas');
+            const dpr = window.devicePixelRatio || 1;
+            phOverlay.width  = Math.round(chart.clientWidth  * dpr);
+            phOverlay.height = Math.round(chart.clientHeight * dpr);
+            phCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        }
+
+        // Cursor (vertical line) + dot on the PV trace at sim index idx. Reads the
+        // geometry drawPidChart stamped on the canvas — the y-range is data-fit, so
+        // we must not recompute it here.
+        function phDraw(idx) {
+            if (!phCtx || !pidLast) return;
+            const geom = document.getElementById('pid-canvas')._pidGeom;
+            if (!geom) return;
+            const { padL, padT, w, h, win, yMin, yMax } = geom;
+            const x = padL + (pidLast.t[idx] / win) * w;
+            const y = padT + h - ((pidLast.pv[idx] - yMin) / (yMax - yMin)) * h;
+            phCtx.clearRect(0, 0, phOverlay.clientWidth, phOverlay.clientHeight);
+            phCtx.lineWidth = 1;
+            phCtx.strokeStyle = phDim;
+            phCtx.globalAlpha = 0.55;
+            phCtx.beginPath(); phCtx.moveTo(x, padT); phCtx.lineTo(x, padT + h); phCtx.stroke();
+            phCtx.globalAlpha = 0.22;                       // soft halo behind the dot
+            phCtx.fillStyle = phAccent;
+            phCtx.beginPath(); phCtx.arc(x, y, 6, 0, Math.PI * 2); phCtx.fill();
+            phCtx.globalAlpha = 1;                          // solid dot
+            phCtx.beginPath(); phCtx.arc(x, y, 3.5, 0, Math.PI * 2); phCtx.fill();
+        }
+
+        function phFrame(t) {
+            if (phStart === null) phStart = t;
+            const n = pidLast ? pidLast.t.length : 0;
+            if (n) {
+                const frac = ((t - phStart) % PH_LOOP_MS) / PH_LOOP_MS;
+                const idx = Math.min(n - 1, Math.round(frac * (n - 1)));
+                phDraw(idx);
+            }
+            phRAF = requestAnimationFrame(phFrame);
+        }
+
+        // The frame to park on when motion is off: the settling time, or the
+        // last sample if the loop never settles.
+        function phFinalIdx() {
+            if (!pidLast) return 0;
+            const n = pidLast.t.length;
+            if (pidLast.settled === null) return n - 1;
+            return Math.min(n - 1, Math.round(pidLast.settled / pidLast.win * (n - 1)));
+        }
+
+        function startPlayhead() {
+            if (!phCtx) return;
+            if (phRAF) { cancelAnimationFrame(phRAF); phRAF = null; }
+            phReadTokens();
+            phSizeOverlay();
+            if (phReduced) { phDraw(phFinalIdx()); return; }
+            phStart = null;
+            phRAF = requestAnimationFrame(phFrame);
         }
 
         // Relabel the three sliders for the chosen parameter style. The slider
@@ -359,10 +451,22 @@ nav: simulators
 
         // ── Init ──
         runPidSim();
-        window.addEventListener('resize', drawTunerChart);
+        // Resize redraws the chart (re-stamping the playhead geometry) and
+        // resizes the overlay buffer; the running rAF picks the new geometry up
+        // next frame, so we only redraw the cursor here when motion is off.
+        window.addEventListener('resize', () => {
+            drawTunerChart();
+            phSizeOverlay();
+            if (phReduced) phDraw(phFinalIdx());
+        });
         // drawPidChart reads theme tokens at draw time — redraw on a theme
-        // flip (theme.js broadcasts 'themechange'), same as on resize.
-        document.addEventListener('themechange', drawTunerChart);
+        // flip (theme.js broadcasts 'themechange'), same as on resize. Refresh
+        // the cached cursor colors too.
+        document.addEventListener('themechange', () => {
+            drawTunerChart();
+            phReadTokens();
+            if (phReduced) phDraw(phFinalIdx());
+        });
         // The engine runs in canonical units, so a units flip doesn't require
         // re-simulating — only the steady-state error readout (the one display
         // element that's unit-aware) needs refreshing. Mirrors the mini-sims
