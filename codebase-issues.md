@@ -3328,7 +3328,7 @@ choice but needs an `airflow`-to-per-hour helper and a mass-flow display
 unit that don't exist yet. Low severity — the headline capacity readouts
 are all correct and unit-aware; this is the explanatory formula line only.
 
-### 76. Privacy-policy storage section heading reads "no cookies" but the section now also covers localStorage
+### 76. Privacy-policy storage section heading reads "no cookies" but the section now also covers localStorage *(addressed 2026-06-09)*
 
 Surfaced while bringing the storage disclosure up to date (PR #174):
 the body was corrected to enumerate all three functional `localStorage`
@@ -3352,6 +3352,13 @@ e.g. `No tracking; what the site stores on your device` or `No cookies
 or tracking — just a few on-device settings`. Pure copy edit; check it
 still reads cleanly against the sibling `.subhead` headings and doesn't
 overflow on narrow viewports. Editorial call on exact wording.
+
+**Resolution (2026-06-09):** reworded to `No tracking; what the site stores
+on your device` (owner's pick of the entry's first suggestion). Names both
+ideas — the no-tracking affirmation and the on-device storage the section
+actually documents — and is shorter than the prior heading, so no
+narrow-viewport overflow risk. Reads cleanly against the sibling
+`.subhead`s.
 
 ### 79. GitHub Actions pinned to `actions/checkout@v4` / `setup-node@v4` run on deprecated Node 20 *(addressed 2026-06-09)*
 
