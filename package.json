@@ -7,7 +7,8 @@
     "build": "eleventy",
     "dev": "eleventy --serve --port=8000",
     "test": "playwright test",
-    "screenshots": "node tests/screenshot-diagrams.mjs"
+    "screenshots": "node tests/screenshot-diagrams.mjs",
+    "indexnow": "node .github/scripts/indexnow.mjs"
   },
   "repository": {
     "type": "git",

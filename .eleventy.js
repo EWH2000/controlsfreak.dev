@@ -33,6 +33,13 @@ module.exports = function(eleventyConfig) {
     eleventyConfig.addPassthroughCopy({ "html/styles.css": "styles.css" });
     eleventyConfig.addPassthroughCopy({ "html/assets": "assets" });
     eleventyConfig.addPassthroughCopy({ "html/robots.txt": "robots.txt" });
+    // IndexNow ownership key — a public token (NOT a wrangler secret),
+    // served at the site root so the IndexNow consortium can verify we
+    // control the domain before honoring a URL submission. Same hosting
+    // mechanism as robots.txt; see .github/workflows/indexnow.yml.
+    eleventyConfig.addPassthroughCopy({
+        "html/5ceefff6b33f4eb68bbcad4e54ce30b1.txt": "5ceefff6b33f4eb68bbcad4e54ce30b1.txt"
+    });
     // sitemap.xml is no longer passthrough — html/sitemap.njk renders it
     // from the sitemapPages collection (see below) with git-derived
     // <lastmod> dates. codebase-issues.md #45.

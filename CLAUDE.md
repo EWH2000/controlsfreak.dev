@@ -71,6 +71,13 @@ findings from the recurring content-accuracy audits.
   through to `env.ASSETS.fetch(request)`. Secrets: `TURNSTILE_SECRET`,
   `RESEND_API_KEY` via `wrangler secret put …`. Turnstile *site* key
   lives in `contact.html`.
+- **IndexNow:** `html/<key>.txt` (currently
+  `5ceefff6b33f4eb68bbcad4e54ce30b1.txt`) is a **public ownership
+  token**, NOT a `wrangler secret` — it's passthrough-copied to the
+  site root (like `robots.txt`) so the IndexNow consortium can verify
+  the domain. `.github/scripts/indexnow.mjs` + the `indexnow.yml`
+  workflow ping Bing/Yandex/etc. (not Google) with changed canonical
+  URLs on push to `main`. See *Workflow*.
 - **Hosting:** Cloudflare Workers; auto-deploys ~60s on push to
   `main` (the dashboard runs `npm install && npm run build` and
   serves `_site/`).
@@ -741,7 +748,12 @@ under *Git conventions*). Stage specific file lists, not
   Large sweeps log under `codebase-issues.md` rather than skip.
 
 CI on every PR runs `npm test` (`.github/workflows/test.yml`);
-Cloudflare Workers Build deploys `_site/` ~60s after merge.
+Cloudflare Workers Build deploys `_site/` ~60s after merge. A separate
+`.github/workflows/indexnow.yml` fires on push to `main` and submits the
+merge's changed canonical URLs to IndexNow (no secrets — the key is the
+public `html/<key>.txt`). Run it by hand with `npm run indexnow`
+(changed since last commit) or `npm run indexnow -- --all` (full
+re-submit); add `--dry-run` to print the URL list without POSTing.
 
 ## Local preview & tests
 
