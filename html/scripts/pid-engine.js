@@ -58,9 +58,15 @@ const PID_DMAX = { fast: 0.15, med: 0.5, slow: 2.0, vhigh: 0.5 };
 //   rep  — integral action, repeats per minute (0 = integral off)
 //   rate — derivative time, minutes (0 = derivative off)
 // Returns the time/PV traces plus the derived metrics the UI shows:
-//   { t, pv, sp, bias, win, dec, step, overshoot, ssErr, settled }
+//   { t, pv, sp, bias, win, dec, u, uEff, step, overshoot, ssErr, settled }
 // where `settled` is the ±2 % settling time in seconds, or null if it never
 // settles within the window, and `step` is the setpoint − resting-PV change.
+// `u` is the commanded controller output (0–100 %) at each sample — what an
+// actuator moves to immediately; `uEff` is that same output after the dead-time
+// delay, i.e. what actually reaches the plant (so a process visual can show the
+// valve slam open on `u` while PV, driven by `uEff`, doesn't budge for `dead`
+// seconds). Both arrays are aligned with `t`/`pv`. The chart reads none of
+// these; they exist for the tuner's live process visualization.
 function simulatePid(proc, Kc, rep, rate) {
     const N    = 600;
     const dt   = proc.win / N;
@@ -70,7 +76,7 @@ function simulatePid(proc, Kc, rep, rate) {
 
     let pv = proc.bias, pvPrev = proc.bias, iAcc = 0;
     const deadQ = new Array(deadSteps).fill(0);
-    const T = [], PV = [];
+    const T = [], PV = [], U = [], UEFF = [];
 
     for (let k = 0; k <= N; k++) {
         T.push(k * dt);
@@ -82,6 +88,7 @@ function simulatePid(proc, Kc, rep, rate) {
         const iTerm = Kc * (rep / 60) * iAcc;
         const uRaw  = pTerm + iTerm + dTerm;
         const u     = Math.max(0, Math.min(100, uRaw));
+        U.push(u);                                           // commanded output, this sample
 
         // Conditional integration (anti-windup): pause the integrator (a) at a
         // rail it's only pushing further into, and (b) while derivative action
@@ -96,6 +103,7 @@ function simulatePid(proc, Kc, rep, rate) {
 
         deadQ.push(u);
         const uEff = deadQ.shift();
+        UEFF.push(uEff);                                     // output reaching the plant after dead time
 
         pvPrev = pv;
         pv = pv + dt * (-(pv - proc.bias) + proc.kproc * uEff) / proc.tau;
@@ -114,7 +122,7 @@ function simulatePid(proc, Kc, rep, rate) {
 
     return {
         t: T, pv: PV, sp: SP, bias: proc.bias, win: proc.win, dec: proc.dec,
-        step, overshoot, ssErr, settled,
+        u: U, uEff: UEFF, step, overshoot, ssErr, settled,
     };
 }
 
