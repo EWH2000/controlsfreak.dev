@@ -12,6 +12,11 @@ Thumbs.db
 .vscode/
 .idea/
 
+# Claude Code — per-developer local settings + runtime artifacts
+# (settings.local.json, scheduled_tasks.lock). A shared, committed
+# .claude/settings.json would need an explicit un-ignore.
+.claude/
+
 # Node / npm
 node_modules/
 npm-debug.log*
