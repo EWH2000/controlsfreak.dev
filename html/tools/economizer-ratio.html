@@ -7,30 +7,6 @@ nav: tools
 {% extends "layouts/page.njk" %}
 {% from "related-links.njk" import relatedLinks %}
 
-{% block head %}
-    <style>
-        /* Output-side enthalpy comparison panel — small status pill that
-           lives below the %OA readout in the enthalpy tab. Mirrors the
-           pump-control widget's anecdote pill in spirit (a one-line
-           verdict you can scan) but uses the shared ps-row chrome
-           rather than its own surface. */
-        .er-feas {
-            margin-top: 1rem;
-            padding: 0.5rem 0.75rem;
-            border-radius: 4px;
-            font-family: var(--mono);
-            font-size: 0.82rem;
-            line-height: 1.5;
-            border: 1px solid var(--border);
-            background: var(--surface-2);
-            color: var(--text);
-        }
-        .er-feas.ok    { border-color: var(--accent);    background: var(--accent-dim); }
-        .er-feas.warn  { border-color: var(--heat);      color: var(--heat); }
-        .er-feas.error { border-color: var(--red);       color: var(--red); }
-    </style>
-{% endblock %}
-
 {% block content %}
 <main id="main">
 
@@ -89,7 +65,7 @@ nav: tools
                         <button class="copy-btn" id="er-db-copy">Copy %OA</button>
                     </div>
                     <div class="result-formula wrap" id="er-db-formula"></div>
-                    <div class="er-feas" id="er-db-feas">Enter values to see feasibility.</div>
+                    <div class="status-pill" id="er-db-feas">Enter values to see feasibility.</div>
                 </section>
 
             </div>
@@ -194,7 +170,7 @@ nav: tools
                         <button class="copy-btn" id="er-h-copy">Copy %OA</button>
                     </div>
                     <div class="result-formula wrap" id="er-h-formula"></div>
-                    <div class="er-feas" id="er-h-feas">Enter values to see feasibility.</div>
+                    <div class="status-pill" id="er-h-feas">Enter values to see feasibility.</div>
 
                     <h3 class="subhead">Resulting mixed-air state</h3>
                     <div class="ps-row"><span class="ps-label" data-us="MA dry-bulb (°F)" data-metric="MA dry-bulb (°C)">MA dry-bulb (°F)</span><span class="ps-value muted" id="er-h-ma-db">—</span></div>
@@ -206,7 +182,7 @@ nav: tools
                     <h3 class="subhead">Enthalpy changeover</h3>
                     <div class="ps-row"><span class="ps-label" data-us="OA enthalpy (Btu/lb)" data-metric="OA enthalpy (kJ/kg)">OA enthalpy (Btu/lb)</span><span class="ps-value muted" id="er-h-oa-h">—</span></div>
                     <div class="ps-row"><span class="ps-label" data-us="RA enthalpy (Btu/lb)" data-metric="RA enthalpy (kJ/kg)">RA enthalpy (Btu/lb)</span><span class="ps-value muted" id="er-h-ra-h">—</span></div>
-                    <div class="er-feas" id="er-h-changeover">Enter values to see the changeover verdict.</div>
+                    <div class="status-pill" id="er-h-changeover">Enter values to see the changeover verdict.</div>
                 </section>
 
             </div>
@@ -295,7 +271,7 @@ nav: tools
 
         function setFeas(el, text, kind) {
             el.textContent = text;
-            el.className = 'er-feas' + (kind ? ' ' + kind : '');
+            el.className = 'status-pill' + (kind ? ' ' + kind : '');
         }
 
         function calcDryBulb() {

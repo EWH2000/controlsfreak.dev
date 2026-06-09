@@ -13,7 +13,8 @@ keywords: dewpoint wet bulb RH humidity grains enthalpy condensation coil sweat 
         /* Page-only widget internals (dew- prefix). The shared design system
            (.tool-body-2col, .ps-row, .ps-value, .failure-callout, .subhead)
            carries the rest. Two custom pieces: the big dew-point hero readout
-           and the coil-verdict pill (modeled on coil-sizing's .cs-status). */
+           and the coil-verdict pill (a page-local variant of the shared
+           .status-pill). */
 
         /* Hero — the one number a tech glances at mid-call. */
         .dew-hero-wrap {
@@ -67,7 +68,9 @@ keywords: dewpoint wet bulb RH humidity grains enthalpy condensation coil sweat 
         .dew-seg-btn:hover { color: var(--text); }
         .dew-seg-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 
-        /* Coil-verdict pill — same chrome as coil-sizing's .cs-status. */
+        /* Coil-verdict pill — a variant of the shared .status-pill (wider
+           pad, brighter .ok text, and an amber .edge state in place of
+           .error for the near-the-dew-point caution). */
         .dew-verdict {
             margin-top: 1rem;
             padding: 0.55rem 0.8rem;

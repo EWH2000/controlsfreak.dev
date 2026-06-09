@@ -513,6 +513,15 @@ section headers).
 - **Widget chrome** (`.widget-*`) is shared in `styles.css`; widget
   INTERNALS (LCDs, keypads, pump-curve canvases, valve pills) stay
   in each page's `{% block head %}` since only that page uses them.
+- **Tool-output status chrome** is two shared `styles.css` classes:
+  `.failure-callout` (a single static warn callout with a left rule —
+  one-shot invalid-input message) and `.status-pill` (a stateful
+  `.ok` / `.warn` / `.error` verdict pill, shared by economizer-ratio /
+  air-mixing / coil-sizing / refrigerant-pt). Reach for the pill when a
+  tool reports a multi-state verdict, the callout for a single failure
+  line. A page needing a near-pill variant (e.g. dew-point-calculator's
+  amber `.edge` state) keeps it page-local rather than growing
+  `.status-pill` a tool-specific state.
 - **Prose typography utility classes are element-qualified**
   (`p.bit-hint`, `p.pid-note`, `p.ref-note`, `p.tool-preamble`).
   The `p` is load-bearing — it ties `.tool-body p` on specificity

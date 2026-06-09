@@ -9,23 +9,6 @@ nav: tools
 
 {% block head %}
     <style>
-        /* Status pill — a one-line verdict below the readouts. Same chrome
-           as economizer-ratio's .er-feas and air-mixing's .am-status. */
-        .cs-status {
-            margin-top: 1rem;
-            padding: 0.5rem 0.75rem;
-            border-radius: 4px;
-            font-family: var(--mono);
-            font-size: 0.82rem;
-            line-height: 1.5;
-            border: 1px solid var(--border);
-            background: var(--surface-2);
-            color: var(--text);
-        }
-        .cs-status.ok    { border-color: var(--accent); background: var(--accent-dim); }
-        .cs-status.warn  { border-color: var(--heat);   color: var(--heat); }
-        .cs-status.error { border-color: var(--red);    color: var(--red); }
-
         /* Coil-type strip — shared between both tabs, sits above the tabs
            as a thin one-row band. Mirrors air-mixing's .am-alt-strip. */
         .cs-type-strip {
@@ -170,7 +153,7 @@ nav: tools
                         <button class="copy-btn" id="cs-cap-copy">Copy capacity</button>
                     </div>
                     <div class="result-formula wrap" id="cs-cap-formula"></div>
-                    <div class="cs-status" id="cs-cap-status">Enter values to size the coil.</div>
+                    <div class="status-pill" id="cs-cap-status">Enter values to size the coil.</div>
                 </section>
 
             </div>
@@ -290,7 +273,7 @@ nav: tools
                         <button class="copy-btn" id="cs-lvg-copy">Copy leaving DB</button>
                     </div>
                     <div class="result-formula wrap" id="cs-lvg-formula"></div>
-                    <div class="cs-status" id="cs-lvg-status">Enter values to solve the leaving state.</div>
+                    <div class="status-pill" id="cs-lvg-status">Enter values to solve the leaving state.</div>
                 </section>
 
             </div>
@@ -395,7 +378,7 @@ nav: tools
         function setStatus(id, text, kind) {
             const el = document.getElementById(id);
             el.textContent = text;
-            el.className = 'cs-status' + (kind ? ' ' + kind : '');
+            el.className = 'status-pill' + (kind ? ' ' + kind : '');
         }
 
         function refreshSecondLabel(prefix) {
