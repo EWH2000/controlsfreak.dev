@@ -1445,6 +1445,42 @@ test('styleguide loads + the theme toggle flips, persists, and repaints meta', a
     expect(errors, 'styleguide + theme toggle should log no errors').toEqual([]);
 });
 
+// Regression for audit-2026-06 #2: units.js used to load only on pages
+// that convert, leaving the rendered units pill dead on ~34 pages —
+// clicks did nothing, the choice didn't persist, and the hard-coded
+// aria-pressed="true" on US never re-synced. Now that page.njk loads
+// it site-wide, drive the toggle end-to-end on a lesson page with no
+// data-us spans (the audit's own repro page).
+test('units toggle works on a non-converting page (units.js site-wide)', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('/education/superheat-subcooling.html');
+
+    const html = page.locator('html');
+    const usBtn = page.locator('.units-btn[data-units="us"]');
+    const metricBtn = page.locator('.units-btn[data-units="metric"]');
+
+    expect(await page.evaluate(() => typeof window.Units)).toBe('object');
+    await expect(html).toHaveAttribute('data-units', 'us');
+    await expect(usBtn).toHaveAttribute('aria-pressed', 'true');
+
+    // Flip to metric: attribute, aria, and persistence all track.
+    await metricBtn.click();
+    await expect(html).toHaveAttribute('data-units', 'metric');
+    await expect(metricBtn).toHaveAttribute('aria-pressed', 'true');
+    await expect(usBtn).toHaveAttribute('aria-pressed', 'false');
+    expect(await page.evaluate(() => localStorage.getItem('cf_units'))).toBe('metric');
+
+    // Reload: the before-paint bootstrap restores metric, and the
+    // end-of-body re-sync fixes the hard-coded aria-pressed (the
+    // permanently-wrong half of audit #2).
+    await page.reload({ waitUntil: 'load' });
+    await expect(html).toHaveAttribute('data-units', 'metric');
+    await expect(metricBtn).toHaveAttribute('aria-pressed', 'true');
+    await expect(usBtn).toHaveAttribute('aria-pressed', 'false');
+
+    expect(errors, 'units toggle on lesson page should log no errors').toEqual([]);
+});
+
 test('modbus function codes — CRC-16 hits the canonical check value and verifies a frame', async ({ page }) => {
     const errors = watchErrors(page);
     await page.goto('/tools/modbus-functions.html');
