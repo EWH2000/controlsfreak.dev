@@ -3502,6 +3502,20 @@ one step brighter dark `--text-dim` (or `--text` for TH cells). Visual
 identity is the owner's — awaiting his palette direction before any
 sweep. Full measurements in `audit-2026-06.md` #11–#13.
 
+**Resolution (2026-06-10):** owner picked the one-darker-token-set
+direction. Light values: accent #43881c→#3a7a14 (+bright, dim/glow/
+soft rgba retuned), blue #1577b8→#11679f (+bright, dim/glow), amber
+#c9a14a→#83641f (dim/glow), heat #c8782a→#9c5a14, teal #4a8a8a→
+#377070 (dim/glow); the @media print copy updated in lockstep per its
+keep-in-sync rule. Dark `--text-dim` #828d9b→#919cab (4.81:1 on
+surface-2). No `--on-amber`: white-on-the-darker-amber measures
+5.5:1, so the CTA passes with its existing `color: var(--surface)` —
+adding an unused token would have violated the no-consumer rule
+(#78's lesson). Rendered-page verification of every audited combo:
+quiz CTA 2.42→5.52, GO pill 2.06→4.85, eyebrow 3.86→4.64,
+status-pill warn 3.11→4.95, active tab 4.40→5.28, dark TH
+3.97→4.81.
+
 ### 82. Palette ranking: title-prefix bonus outranks section relevance ("superheat" puts the calculator third)
 
 Cross-filed from `audit-2026-06.md` #16 (2026-06-10). In `search.js`

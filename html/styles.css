@@ -110,7 +110,7 @@
     --accent-soft:  rgba(108,178,58,0.07);  /* one notch under --accent-dim — status-pill / inset backdrops */
     --text:         #c5cdd8;   /* cool light-gray body copy */
     --text-bright:  #eef2f8;   /* headings */
-    --text-dim:     #828d9b;   /* labels, secondary text */
+    --text-dim:     #919cab;   /* labels, secondary text — bumped one step 2026-06-10: #828d9b sat at 3.97:1 on --surface-2 where TH cells and nav-card pills carry real content (codebase-issues #81) */
     --blue:         #4aa3dd;   /* data readouts / selection (Niagara steel-azure); also "supply water" in diagrams */
     --blue-bright:  #74c2f0;
     --blue-cool:    #6f97aa;   /* muted companion to --blue — "return water" in diagrams (paired with a dashed line so it reads without colour too) */
@@ -167,28 +167,28 @@
     --border-faint: #e3e8df;
     --bevel-hi:     rgba(255,255,255,0.8);
     --bevel-lo:     rgba(0,0,0,0.05);
-    --accent:       #43881c;
-    --accent-bright:#4a9620;
-    --accent-dim:   rgba(67,136,28,0.10);
-    --accent-glow:  rgba(67,136,28,0.22);
-    --accent-soft:  rgba(67,136,28,0.06);
+    --accent:       #3a7a14;
+    --accent-bright:#428a16;
+    --accent-dim:   rgba(58,122,20,0.10);
+    --accent-glow:  rgba(58,122,20,0.22);
+    --accent-soft:  rgba(58,122,20,0.06);
     --text:         #38423a;
     --text-bright:  #1d251f;
     --text-dim:     #666e66;
-    --blue:         #1577b8;
-    --blue-bright:  #1981c6;
+    --blue:         #11679f;
+    --blue-bright:  #1573b2;
     --blue-cool:    #5e8aa0;
-    --blue-dim:     rgba(21,119,184,0.10);
-    --blue-glow:    rgba(21,119,184,0.22);
+    --blue-dim:     rgba(17,103,159,0.10);
+    --blue-glow:    rgba(17,103,159,0.22);
     --red:          #c4382f;
     --red-dim:      rgba(196,56,47,0.10);
-    --heat:         #c8782a;
-    --teal:         #4a8a8a;
-    --teal-dim:     rgba(74,138,138,0.10);
-    --teal-glow:    rgba(74,138,138,0.22);
-    --amber:        #c9a14a;
-    --amber-dim:    rgba(201,161,74,0.10);
-    --amber-glow:   rgba(201,161,74,0.22);
+    --heat:         #9c5a14;
+    --teal:         #377070;
+    --teal-dim:     rgba(55,112,112,0.10);
+    --teal-glow:    rgba(55,112,112,0.22);
+    --amber:        #83641f;
+    --amber-dim:    rgba(131,100,31,0.10);
+    --amber-glow:   rgba(131,100,31,0.22);
     --plum:         #8a5e7e;
     --plum-dim:     rgba(138,94,126,0.10);
     --plum-glow:    rgba(138,94,126,0.22);
@@ -218,28 +218,28 @@
         --border-faint: #e3e8df;
         --bevel-hi:     rgba(255,255,255,0.8);
         --bevel-lo:     rgba(0,0,0,0.05);
-        --accent:       #43881c;
-        --accent-bright:#4a9620;
-        --accent-dim:   rgba(67,136,28,0.10);
-        --accent-glow:  rgba(67,136,28,0.22);
-        --accent-soft:  rgba(67,136,28,0.06);
+        --accent:       #3a7a14;
+        --accent-bright:#428a16;
+        --accent-dim:   rgba(58,122,20,0.10);
+        --accent-glow:  rgba(58,122,20,0.22);
+        --accent-soft:  rgba(58,122,20,0.06);
         --text:         #38423a;
         --text-bright:  #1d251f;
         --text-dim:     #666e66;
-        --blue:         #1577b8;
-        --blue-bright:  #1981c6;
+        --blue:         #11679f;
+        --blue-bright:  #1573b2;
         --blue-cool:    #5e8aa0;
-        --blue-dim:     rgba(21,119,184,0.10);
-        --blue-glow:    rgba(21,119,184,0.22);
+        --blue-dim:     rgba(17,103,159,0.10);
+        --blue-glow:    rgba(17,103,159,0.22);
         --red:          #c4382f;
         --red-dim:      rgba(196,56,47,0.10);
-        --heat:         #c8782a;
-        --teal:         #4a8a8a;
-        --teal-dim:     rgba(74,138,138,0.10);
-        --teal-glow:    rgba(74,138,138,0.22);
-        --amber:        #c9a14a;
-        --amber-dim:    rgba(201,161,74,0.10);
-        --amber-glow:   rgba(201,161,74,0.22);
+        --heat:         #9c5a14;
+        --teal:         #377070;
+        --teal-dim:     rgba(55,112,112,0.10);
+        --teal-glow:    rgba(55,112,112,0.22);
+        --amber:        #83641f;
+        --amber-dim:    rgba(131,100,31,0.10);
+        --amber-glow:   rgba(131,100,31,0.22);
         --plum:         #8a5e7e;
         --plum-dim:     rgba(138,94,126,0.10);
         --plum-glow:    rgba(138,94,126,0.22);
