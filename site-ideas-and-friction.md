@@ -42,13 +42,23 @@ the teaching default 43981 is address-shaped but wasn't typed. The
 "40001 30001 offset" keywords had already shipped in the
 keyword sweep (#15).
 
-### BACnet Object_Identifier encoder/decoder *(from the 2026-06 audit)*
+### BACnet Object_Identifier encoder/decoder *(shipped 2026-06-10)*
 
 Cross-filed from `audit-2026-06.md` (lineup gap, 2026-06-10). Two
 lessons teach the 10-bit-type + 22-bit-instance packing in prose;
 nothing on the site decodes one. Natural third tab on the BACnet/IP
 converter, reusing the bacnet-objects type table. Build or just track?
 Owner's call.
+
+**Shipped (2026-06-10):** owner approved the build. Third tab
+("Object ID") on the BACnet/IP converter: raw 32-bit value (dec or
+0x hex) ⇄ type + instance, two-way; type names mirror the
+bacnet-objects reference table (comment in the page marks that table
+canonical — update both together), with reserved (31–127) and
+vendor-proprietary (128–1023) ranges named; instance 4194303 flagged
+as the unassigned/wildcard value; formula line shows the
+type × 2²² + instance arithmetic. Default example decodes
+0x020004D2 → Device, 1234. Home hero "Latest" badge points here.
 
 ### Command palette — recents list *(from the 2026-06 audit)*
 

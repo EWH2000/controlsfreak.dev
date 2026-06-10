@@ -206,6 +206,44 @@ test('bacnet/ip converter converts a hex string', async ({ page }) => {
     expect(errors, 'bacnet behavioral should log no page / console errors').toEqual([]);
 });
 
+// Audit-2026-06 lineup gap: the Object ID tab packs/unpacks the
+// Object_Identifier's 10-bit type + 22-bit instance — the encoding two
+// lessons teach in prose but nothing on the site decoded.
+test('bacnet/ip converter — object ID tab packs and unpacks', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('/tools/bacnet-ip-converter.html');
+    await page.click('.tab-btn[data-tab="objid"]');
+
+    // Default raw 0x020004D2 decodes on load: Device, 1234.
+    await expect(page.locator('#boi-out-type')).toHaveText('8 — Device');
+    await expect(page.locator('#boi-out-instance')).toHaveText('1234');
+    await expect(page.locator('#boi-out-dec')).toHaveText('33555666');
+    await expect(page.locator('#boi-type')).toHaveValue('8');
+    await expect(page.locator('#boi-instance')).toHaveValue('1234');
+
+    // Parts → raw: analog-input, 4 packs to 0x00000004.
+    await page.fill('#boi-type', '0');
+    await page.fill('#boi-instance', '4');
+    await expect(page.locator('#boi-raw')).toHaveValue('0x00000004');
+    await expect(page.locator('#boi-out-type')).toHaveText('0 — Analog Input (AI)');
+
+    // Raw decimal → parts; wildcard instance gets the note.
+    await page.fill('#boi-raw', '37748735');   // 8 × 2^22 + 4194303
+    await expect(page.locator('#boi-out-type')).toHaveText('8 — Device');
+    await expect(page.locator('#boi-out-instance')).toHaveText('4194303');
+    await expect(page.locator('#boi-formula')).toContainText('unassigned/wildcard');
+
+    // Proprietary + garbage handling.
+    await page.fill('#boi-type', '200');
+    await page.fill('#boi-instance', '7');
+    await expect(page.locator('#boi-out-type')).toContainText('vendor-proprietary');
+    await page.fill('#boi-raw', '12ab');
+    await expect(page.locator('#boi-callout')).toBeVisible();
+    await expect(page.locator('#boi-out-dec')).toHaveText('—');
+
+    expect(errors, 'object ID behavioral should log no errors').toEqual([]);
+});
+
 test('modbus register viewer — single + pair tabs decode bits and bytes correctly', async ({ page }) => {
     const errors = watchErrors(page);
     await page.goto('/tools/modbus-register-viewer.html');
