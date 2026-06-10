@@ -733,6 +733,15 @@
             const restartBtn = el('button', { type: 'button', class: 'quiz-action quiz-action-primary quiz-restart-btn' }, ['Restart →']);
             restartBtn.addEventListener('click', function () { startQuiz(); });
             const actions = el('div', { class: 'quiz-actions quiz-results-actions' }, [restartBtn]);
+            // Onward path (owner decision, audit-2026-06 #22): the card
+            // used to offer Restart as its ONLY action. Pages pass
+            // opts.next ({href, label}, built at build time from the
+            // canonical quizOrder data file); field drills pass null —
+            // they're not a curriculum — and get no link.
+            if (opts.next && opts.next.href) {
+                actions.appendChild(el('a', { class: 'quiz-action quiz-next-link', href: opts.next.href },
+                    ['Next quiz: ' + opts.next.label + ' →']));
+            }
             resultsEl.appendChild(actions);
 
             setTimeout(function () { restartBtn.focus(); }, 0);

@@ -63,6 +63,7 @@ nav: practice
         const questions = {{ quizzes['field-wiring-sensors'] | safeScriptJson | safe }};
 
         Quiz.mount('#quiz', questions, {
+            next: {{ page.fileSlug | nextQuiz | safeScriptJson | safe }},
             slug: 'field-wiring-sensors',
             title: 'Field Wiring & Sensors',
             defaultCount: 10,

@@ -63,6 +63,7 @@ nav: practice
         const questions = {{ quizzes['sequencing-scenarios'] | safeScriptJson | safe }};
 
         Quiz.mount('#quiz', questions, {
+            next: {{ page.fileSlug | nextQuiz | safeScriptJson | safe }},
             slug: 'sequencing-scenarios',
             title: 'Sequencing Scenarios',
             defaultCount: 10,
