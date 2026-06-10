@@ -2214,3 +2214,145 @@ then recovers" / "Oscillates / hunts" rows now describe behavior the user
 can actually produce. The pid-note above the cheat-sheet points at the new
 preset as the one to pick to *see* the symptoms. The well-behaved buckets
 are unchanged. Primary fix logged at `ux-audit.md` #6.
+
+## Audit scope — 2026-06 extensive audit spillover (2026-06-10)
+
+The June 2026 extensive audit (master doc: `audit-2026-06.md`, PR #205)
+raised content-accuracy and wording items that need editorial / domain
+decisions rather than mechanical fixes. They're cross-filed here per
+the triage handoff; each cites its full evidence in the master doc, so
+these entries summarize and point. Unambiguous factual corrections from
+the same audit (master #47, #48, #51, #52 + comment-level polish)
+shipped separately in the mechanical-fix sweep and are *not* re-listed.
+
+### 35. Refrigeration content cluster (3 lessons + quizzes) is imperial-only while its paired tool converts fully
+
+**Location:** education/superheat-subcooling, refrigerant-cycle-basics,
+metering-devices-txv-eev (zero `data-metric` spans between them); quiz
+banks superheat-subcooling (numeric answer demands "in °F"),
+sequencing-scenarios, psychrometrics-basics, hydronic-loops.
+**Lens:** metric. **Verification status: verified**
+(`audit-2026-06.md` #3).
+
+The superheat lesson tells the reader to cross-check in the
+refrigerant-pt tool — which in metric shows the same system as
+814 kPag / 4.3 °C, so the numbers don't connect. No doc records
+imperial-only as a decision (`refrigerant-education-plan.md`'s units
+rule is gauge-vs-absolute). Depends on units.js loading site-wide
+(master #2, shipped in the mechanical sweep) — the span convention
+works on these pages now.
+
+**Suggested direction:** dual-state lesson worked examples with the
+existing span convention; for quizzes, at minimum dual-state prompts
+("48 °F (8.9 °C)"). Part of the one-decision metric-content-strategy
+cluster with #36/#37 below.
+
+### 36. Worked-example formula/plug-in steps keep IP-only constants and numbers in metric, contradicting the converted prose around them
+
+**Location:** coil-sizing (`ṁ = CFM × 60 ÷ v` under a dual-stated
+intro), economizer-ratio (US plug-in numbers on the metric page),
+refrigerant-pt SH/SC tab, air-mixing, psychrometric-chart methodology
+note, psychrometrics-basics ("ft³ per pound"). **Lens:** metric.
+**Verification status: verified** (`audit-2026-06.md` #4).
+
+Decision needed: convert whole formula lines (metric cp form
+`1.006 + 1.86·W`, m³/h mass-flow form, converted plug-ins) vs caveat
+the engine-methodology notes as IP-native ("computed in IP units").
+
+**Suggested direction:** sweep worked-example `<li>` steps and
+methodology notes with the same `data-us`/`data-metric` treatment the
+intros already have — coordinated with #37's rounding policy so the
+dual-stating doesn't introduce new mismatches. The affinity-laws page
+is a documented exception (deliberately unit-agnostic/US-framed per
+the friction file) — dual-stating its example prose would be a
+refinement against that entry, not drift.
+
+### 37. Metric worked-example numbers don't reconcile internally — round-then-convert granularity makes the taught arithmetic fail
+
+**Location:** pid-basics in metric (SP 13 / PV 16 / error 2.8 °C — the
+subtraction being taught gives 3, not 2.8); economizer-ratio's default
+metric formula line "(18.3 − 23.9) ÷ (15.6 − 23.9) × 100 = 66.7 %"
+whose own operands reduce to 67.5 %. **Lens:** units correctness.
+**Verification status: verified** (`audit-2026-06.md` #53; the 56-pair
+census referenced there is the sweep list).
+
+**Suggested direction:** a rounding policy so taught arithmetic
+closes — round metric temps in worked examples to one decimal
+(12.8/15.6/2.8 reconciles); where the tool can replicate an example,
+state the result a metric user will actually see. One decision with
+#35/#36.
+
+### 38. The 4–20 mA loop is taught as powered from the 24 VAC hot leg — wrong field practice, contradicted by the site's own quiz
+
+**Location:** education/controller-wiring.html (prose, inputs diagram,
+capstone loop, legend), the wiring sim's `loop` preset and engine
+fault text — vs `field-wiring-sensors.js`, which correctly teaches DC
+loop power. **Lens:** content (new surfaces). **Verification status:
+verified** (`audit-2026-06.md` #46 — rated high there).
+
+Real 2-wire transmitters are DC loop-powered (typically 12–30 VDC);
+the engine header documents the AC-as-DC abstraction but the caveat
+never reaches the lesson or sim UI, so a learner crossing the three
+surfaces gets contradicted.
+
+**Suggested direction:** owner picks (a) a two-sentence reality note
+in the lesson's 4–20 mA paragraph and the sim preamble, or (b) model a
+small 24 VDC supply in the sim and reroute the loop diagrams through
+it. Domain call — held for decision.
+
+### 39. PID fast scene tells a physically wrong story — a "VAV damper" controlling duct static while the fan also tracks the same output
+
+**Location:** simulators/pid-tuner.html — selector option "VAV damper
+· duct static pressure"; `updateScene` drives both the damper blades
+and the fan speed from the one AO. **Lens:** content (PID cluster).
+**Verification status: verified** (`audit-2026-06.md` #50).
+
+Field reality: duct static is controlled by the supply-fan VFD (or a
+reverse-acting bypass damper); a VAV terminal damper controls zone
+flow; no standard config drives two actuators from one AO. The page's
+own Loop Speed table lists duct static and fan VFD as separate
+examples.
+
+**Suggested direction:** owner picks (a) relabel to "Supply fan VFD ·
+duct static" and make the fan the actuator, or (b) keep the damper as
+actuator and relabel to a direct-acting damper loop. Either way one AO
+drives one actuator. Domain call — held for decision.
+
+### 40. The 24 VAC leg-swap consequence is told three incompatible ways across drill, lesson, and sim
+
+**Location:** surviving-first-months.js ("Cross-wiring won't damage
+equipment"), controller-wiring lesson (correctly scoped to shared
+transformers), wiring-engine.js reversed-power fault + spark cue
+(fires on an isolated controller where the act is electrically
+symmetric). **Lens:** content. **Verification status: flagged**
+(scoping/pedagogy, not a wrong number — `audit-2026-06.md` #49).
+
+The sim's spark is a documented deliberate user ask, so the hard
+contradiction is the quiz–sim pair; the fix is scoping copy, not sim
+behavior.
+
+**Suggested direction:** scope each claim ("on a single isolated
+circuit…"); add the why to the sim's fault text. Pedagogy wording —
+held for decision.
+
+### 41. "Not 'around 40 °F' — at 40 °F" overshoots the site's own table
+
+**Location:** refrigeration cluster prose; 118 psig interpolates to
+39.8 °F in the site's own P-T data, and the sibling lesson correctly
+hedges the same lookup. **Lens:** content. **Verification status:
+flagged** (rhetoric vs precision trade-off — `audit-2026-06.md`,
+Phases 2–4 minor polish).
+
+**Suggested direction:** soften the rhetoric or use 118.4 psig so the
+emphatic claim is exactly true. Editorial — held for decision.
+
+### 42. TXV needle motion described in "turns"
+
+**Location:** metering-devices-txv-eev lesson — "turns" belong to the
+adjustment screw (which the lesson states correctly elsewhere); the
+needle's motion is linear. **Lens:** content. **Verification status:
+flagged** (phrasing — `audit-2026-06.md`, Phases 2–4 minor polish).
+
+**Suggested direction:** linear language for the needle ("lifts/
+modulates"), reserving "turns" for the adjustment screw. Editorial —
+held for decision.
