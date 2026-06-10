@@ -539,7 +539,21 @@ keywords: pt chart r22 r410a r134a r407c psig kpag saturation glide superheat su
         document.getElementById('rf-sc-pressure').addEventListener('input', calcSc);
         document.getElementById('rf-sc-temp').addEventListener('input', calcSc);
 
-        document.getElementById('rf-refrigerant').addEventListener('change', () => { calcPt(); calcSc(); });
+        // Remember the refrigerant across visits (owner decision,
+        // codebase-issues #83 — the cf_psy_range pattern: strict-validate
+        // on read, never trust the stored string blindly). An R-22 tech
+        // re-selected the refrigerant every single visit before this.
+        const RF_KEY = 'cf_rf_refrigerant';
+        document.getElementById('rf-refrigerant').addEventListener('change', () => {
+            try { localStorage.setItem(RF_KEY, document.getElementById('rf-refrigerant').value); } catch (e) { /* private mode */ }
+            calcPt(); calcSc();
+        });
+        try {
+            const saved = localStorage.getItem(RF_KEY);
+            if (saved && REFRIGERANT_TYPES[saved]) {
+                document.getElementById('rf-refrigerant').value = saved;
+            }
+        } catch (e) { /* private mode */ }
 
         document.getElementById('rf-pt-copy').addEventListener('click', e => copyText(e.currentTarget, ptCopy));
         document.getElementById('rf-sc-copy').addEventListener('click', e => copyText(e.currentTarget, scCopy));

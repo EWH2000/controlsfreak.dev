@@ -807,7 +807,20 @@ keywords: NTC RTD resistance ohms 10k 20k 3k balco pt100 pt1000 sensor temperatu
             idRecompute();
         });
 
-        document.getElementById('th-type').addEventListener('change', thRecompute);
+        // Remember the sensor type across visits (owner decision,
+        // codebase-issues #83 / audit #29 — cf_psy_range pattern:
+        // strict-validate against THERMISTOR_TYPES on read).
+        const TH_KEY = 'cf_th_type';
+        document.getElementById('th-type').addEventListener('change', () => {
+            try { localStorage.setItem(TH_KEY, document.getElementById('th-type').value); } catch (e) { /* private mode */ }
+            thRecompute();
+        });
+        try {
+            const savedType = localStorage.getItem(TH_KEY);
+            if (savedType && THERMISTOR_TYPES[savedType]) {
+                document.getElementById('th-type').value = savedType;
+            }
+        } catch (e) { /* private mode */ }
         document.getElementById('th-by-temp').addEventListener('click', e => thSetLookup('temp', e.currentTarget));
         document.getElementById('th-by-res').addEventListener('click', e => thSetLookup('res', e.currentTarget));
         document.getElementById('th-temp').addEventListener('input', thRecompute);
@@ -830,6 +843,7 @@ keywords: NTC RTD resistance ohms 10k 20k 3k balco pt100 pt1000 sensor temperatu
             const pick = e.target.closest('.th-id-pick');
             if (!pick) return;
             document.getElementById('th-type').value = pick.dataset.type;
+            try { localStorage.setItem(TH_KEY, pick.dataset.type); } catch (e) { /* private mode */ }
             switchTab('lookup', document.getElementById('th-tab-lookup'));
             thRecompute();   // type changed → re-renders the table, note, and card tag
         });

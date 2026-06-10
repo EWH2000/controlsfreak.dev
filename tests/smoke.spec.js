@@ -1705,3 +1705,27 @@ test('air-mixing — metric first paint shows per-quantity decimals and a conver
     await expect(page.locator('.status-pill').first()).toContainText('101.3 kPa');
     expect(errors, 'air-mixing metric paint should log no errors').toEqual([]);
 });
+
+// codebase-issues #83 (owner decision): preset-class enums persist
+// under cf_* — the cf_psy_range pattern, strict-validated on read.
+test('refrigerant and sensor-type choices survive a reload', async ({ page }) => {
+    const errors = watchErrors(page);
+
+    await page.goto('/tools/refrigerant-pt.html');
+    await page.selectOption('#rf-refrigerant', 'r22');
+    await page.reload({ waitUntil: 'load' });
+    await expect(page.locator('#rf-refrigerant')).toHaveValue('r22');
+    expect(await page.evaluate(() => localStorage.getItem('cf_rf_refrigerant'))).toBe('r22');
+
+    await page.goto('/tools/thermistor-calculator.html');
+    await page.selectOption('#th-type', '20k');
+    await page.reload({ waitUntil: 'load' });
+    await expect(page.locator('#th-type')).toHaveValue('20k');
+
+    // Garbage in storage falls back to the markup default, never throws.
+    await page.evaluate(() => localStorage.setItem('cf_th_type', 'nonsense'));
+    await page.reload({ waitUntil: 'load' });
+    await expect(page.locator('#th-type')).toHaveValue('10k-2');
+
+    expect(errors, 'preset persistence should log no errors').toEqual([]);
+});
