@@ -140,3 +140,24 @@ test('mobile: open sheet locks page scroll and scrolls internally on long lists'
     await expect(page.locator('body')).not.toHaveClass(/nav-sheet-open/);
     expect(errors, 'mobile sheet scroll should log no errors').toEqual([]);
 });
+
+// audit-2026-06 #6: the sheet renders before the burger in DOM order, so
+// forward Tab from the burger used to land in the page BEHIND the
+// scroll-locked sheet — invisible focus the page won't scroll to. The
+// sheet is now entered by moving focus to its first item on open, and
+// focus comes home to the burger on close.
+test('mobile: opening the sheet moves focus into it; closing hands focus back to the burger', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.setViewportSize({ width: 412, height: 883 });
+    await page.goto('/');
+
+    await page.click('#nav-hamburger');
+    const first = page.locator('#site-nav-links a, #site-nav-links button').first();
+    await expect(first).toBeFocused();
+
+    await page.keyboard.press('Escape');
+    await expect(page.locator('.site-nav')).not.toHaveClass(/nav-open/);
+    await expect(page.locator('#nav-hamburger')).toBeFocused();
+
+    expect(errors, 'sheet focus management should log no errors').toEqual([]);
+});
