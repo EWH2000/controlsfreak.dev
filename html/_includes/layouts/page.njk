@@ -45,12 +45,20 @@
    once on DOMContentLoaded; page-level FlowEngine.init() calls
    stay (idempotent — second call refreshes pools, doesn't restart
    the loop). #}
-{# theme.js is loaded site-wide so the nav theme toggle works on EVERY
-   page (units.js, by contrast, loads only on pages that convert). It
-   wires the .theme-btn pill, syncs aria-pressed + the theme-color meta,
-   and persists cf_theme. The before-paint bootstrap in head.njk already
-   set [data-theme]; this script owns the runtime. #}
+{# theme.js and units.js are loaded site-wide so BOTH nav toggle pills
+   work on every page. theme.js wires the .theme-btn pill, syncs
+   aria-pressed + the theme-color meta, and persists cf_theme (the
+   before-paint bootstrap in head.njk already set [data-theme]; the
+   script owns the runtime). units.js wires the .units-btn pill the
+   same way (persists cf_units) and its DOM walker no-ops on pages
+   without data-us/data-metric spans. Before units.js went site-wide
+   the units pill was rendered but dead on every non-converting page —
+   clicks did nothing, the choice didn't persist, and the hard-coded
+   aria-pressed never re-synced (audit-2026-06 #2). Pages must NOT
+   load units.js themselves anymore — a duplicate <script src> would
+   re-run the IIFE and double-wire the toggle listeners. #}
 <script src="/scripts/theme.js"></script>
+<script src="/scripts/units.js"></script>
 {# search.js is loaded site-wide so the command palette (/ or Ctrl/⌘-K, or
    the .nav-search-btn) works on every page. It reveals the #palette dialog
    above and fetches /search-index.json on first open. #}

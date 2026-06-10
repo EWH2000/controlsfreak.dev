@@ -26,9 +26,9 @@ findings from the recurring content-accuracy audits.
   - `layouts/page.njk` — page shell. Composes `head.njk` /
     `schematic-bg.njk` / `nav.njk` / `footer.njk`; hosts the
     command-palette dialog markup and loads the site-wide scripts
-    (`theme` / `search` / `nav-menu` / `flow-engine` / `schematic-bg`
-    / `fullscreen-toggle`) at end-of-body; exposes `head` / `content`
-    / `scripts` blocks. See *Templating*.
+    (`theme` / `units` / `search` / `nav-menu` / `flow-engine` /
+    `schematic-bg` / `fullscreen-toggle`) at end-of-body; exposes
+    `head` / `content` / `scripts` blocks. See *Templating*.
   - `head.njk` — `<head>`: meta, OG, favicons, fonts, `/styles.css`,
     units + theme before-paint bootstrap scripts.
   - `nav.njk` — top nav; `.active` driven by `nav` frontmatter.
@@ -60,11 +60,13 @@ findings from the recurring content-accuracy audits.
   ES modules, no bundler) that expose globals like `Units`,
   `simulatePid`, `FlowEngine`, `Quiz` for page IIFEs to reach by
   name. Each file has a thorough header — **read it for the API**.
-  `theme.js`, `search.js`, `nav-menu.js`, `flow-engine.js`,
-  `schematic-bg.js`, and `fullscreen-toggle.js` are loaded site-wide
-  from `layouts/page.njk` (theme toggle, command palette, nav
-  dropdowns + mobile hamburger, gutter motifs, and fullscreen all
-  appear on every page); the rest load per-page inside
+  `theme.js`, `units.js`, `search.js`, `nav-menu.js`,
+  `flow-engine.js`, `schematic-bg.js`, and `fullscreen-toggle.js` are
+  loaded site-wide from `layouts/page.njk` (theme + units toggles,
+  command palette, nav dropdowns + mobile hamburger, gutter motifs,
+  and fullscreen all appear on every page — units.js's DOM walker
+  no-ops without `data-us` spans, and pages must not load it
+  themselves); the rest load per-page inside
   `{% block scripts %}` *before* the page's inline `<script>`.
 - **Worker:** `src/worker.js` — ES-module Worker. Handles
   `POST /api/contact` (validate, honeypot, Turnstile, Resend); falls
@@ -120,7 +122,6 @@ nav: tools
 {% endblock %}
 
 {% block scripts %}
-<script src="/scripts/units.js"></script>
 <script src="/scripts/pid-engine.js"></script>
 <script>
     // page logic
@@ -484,10 +485,11 @@ section headers).
   `cf_theme` in localStorage, `[data-theme]` on `<html>`. A before-paint
   bootstrap in `head.njk` sets it from `cf_theme` (else
   `prefers-color-scheme`, default dark) and flips the `theme-color`
-  meta; `/scripts/theme.js` — loaded **site-wide** from `page.njk`, so
-  it works on every page (unlike `units.js`, which loads only where a
-  page converts) — owns the runtime and persistence. The two pills
-  share one CSS block (`UNITS + THEME TOGGLES`).
+  meta; `/scripts/theme.js` — loaded **site-wide** from `page.njk` —
+  owns the runtime and persistence. `units.js` is likewise site-wide
+  (since the audit-2026-06 #2 fix; its DOM walker no-ops on pages
+  without `data-us` spans) — pages must not load it themselves. The
+  two pills share one CSS block (`UNITS + THEME TOGGLES`).
 - **Focus indicators (`:focus-visible`)** live in one consolidated
   `FOCUS INDICATORS` block in `styles.css` (the browser default
   outline is suppressed elsewhere). When adding a new custom-styled
