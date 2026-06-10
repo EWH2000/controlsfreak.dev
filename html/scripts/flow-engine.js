@@ -100,6 +100,21 @@
 // SVG-element churn for no visible payoff). Explicit FlowEngine.pulse()
 // calls bypass the gate.
 //
+// Flow visibility (audit-2026-06 #31): flow pools are gated two ways.
+// (1) Pools inside the gutter collage (`.schematic-bg`) aren't built
+// at all while the gutter is display:none (its own CSS hides it below
+// 1240px) — a matchMedia('(min-width: 1240px)') listener tears gutter
+// pools down / rebuilds them as the viewport crosses the breakpoint,
+// so a phone never spends script time moving circles that can't paint.
+// (2) Every pool's element is also watched by the same
+// IntersectionObserver pattern as pulses, and the rAF loop skips
+// ticking pools that aren't currently in the viewport — offscreen
+// particles freeze in place (placeAll painted them once at build) and
+// resume when scrolled back in. Before this gating the engine ticked
+// every particle on every page every frame, ~100% idle main-thread
+// cost at desktop widths and 4.5s script per 10s on phones for
+// invisible circles.
+//
 // Public API:
 //   FlowEngine.init()              — scan the document for [data-flow]
 //                                    and [data-pulse] elements, build
@@ -193,14 +208,42 @@
     const pulsePaths = new Map();   // el -> { length, color, speed, intervalMs, nextFireAt }
     const activePulses = [];        // [{ el, length, speed, headOffset, circles: [...] }]
     const visiblePulseEls = new Set();
+    const visibleFlowEls = new Set();
     let pulseIO = null;
+    let flowIO = null;
+    let gutterMql = null;
     let frameStarted = false;
+
+    // The gutter collage's own CSS hides it below this width — keep in
+    // sync with the .schematic-bg media query in styles.css.
+    const GUTTER_MQ = '(min-width: 1240px)';
+
+    // True while `el` sits inside the gutter collage AND the gutter is
+    // hidden — i.e. building/keeping a pool for it would animate
+    // circles that can never paint.
+    function gutterHidden(el) {
+        if (!gutterMql || gutterMql.matches) return false;
+        return !!(el.closest && el.closest('.schematic-bg'));
+    }
 
     function init() {
         // Reduced-motion fallback is the static SVG, untouched. Bail
         // before injecting anything.
         if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
             return;
+        }
+
+        // Track the gutter's visibility breakpoint: rebuild gutter
+        // pools when the viewport grows past it, tear them down when
+        // it shrinks below. Registered once; init() is idempotent.
+        if (!gutterMql && window.matchMedia) {
+            gutterMql = window.matchMedia(GUTTER_MQ);
+            const onGutterChange = function () {
+                if (gutterMql.matches) init();
+                else teardownGutterPools();
+            };
+            if (gutterMql.addEventListener) gutterMql.addEventListener('change', onGutterChange);
+            else if (gutterMql.addListener) gutterMql.addListener(onGutterChange);
         }
 
         const annotatedFlow  = document.querySelectorAll('[data-flow]');
@@ -230,13 +273,14 @@
             for (let p = pools.length - 1; p >= 0; p--) {
                 const pool = pools[p];
                 if (!pool.el.isConnected) {
-                    for (let i = 0; i < pool.particles.length; i++) {
-                        pool.particles[i].circle.remove();
-                    }
-                    poolsByEl.delete(pool.el);
-                    pools.splice(p, 1);
+                    removePool(pool, p);
                     continue;
                 }
+                // Offscreen pools don't tick — the particles placed at
+                // build time freeze until the path scrolls back into
+                // the viewport (audit #31: ticking everything cost
+                // ~100% of the idle main thread).
+                if (!visibleFlowEls.has(pool.el)) continue;
                 const len = pool.length;
                 for (let i = 0; i < pool.particles.length; i++) {
                     const part = pool.particles[i];
@@ -285,6 +329,11 @@
         // any SVGGeometryElement works. Anything else is silently
         // skipped so the engine is safe to load on any page.
         if (typeof el.getTotalLength !== 'function' || typeof el.getPointAtLength !== 'function') return;
+
+        // Don't build pools the viewer can't see: gutter motifs while
+        // the gutter is display:none (the matchMedia listener rebuilds
+        // them if the viewport grows past the breakpoint).
+        if (gutterHidden(el)) return;
 
         const svg = el.ownerSVGElement;
         if (!svg) return;
@@ -343,6 +392,58 @@
         // paint isn't a flash at the origin (and so a refresh-induced
         // pool swap doesn't show a frame of bunched-up zeros).
         placeAll(pool);
+
+        // Tick only while visible — same IO pattern as the pulse gate.
+        ensureFlowIO();
+        if (flowIO) flowIO.observe(el);
+    }
+
+    // Remove one pool (by reference + its index in `pools`): circles,
+    // lookup entries, IO registration. Shared by the stale-element
+    // splice in the frame loop and the gutter teardown.
+    function removePool(pool, index) {
+        for (let i = 0; i < pool.particles.length; i++) {
+            pool.particles[i].circle.remove();
+        }
+        poolsByEl.delete(pool.el);
+        visibleFlowEls.delete(pool.el);
+        if (flowIO) flowIO.unobserve(pool.el);
+        pools.splice(index, 1);
+    }
+
+    // Tear down every pool inside the (now hidden) gutter collage, and
+    // clear `flow-active` from any SVG left with no pools so its CSS
+    // falls back to the static no-animation state.
+    function teardownGutterPools() {
+        const touchedSvgs = new Set();
+        for (let p = pools.length - 1; p >= 0; p--) {
+            const pool = pools[p];
+            if (!(pool.el.closest && pool.el.closest('.schematic-bg'))) continue;
+            const svg = pool.el.ownerSVGElement;
+            if (svg) touchedSvgs.add(svg);
+            removePool(pool, p);
+        }
+        touchedSvgs.forEach(function (svg) {
+            let stillPooled = false;
+            pools.forEach(function (pool) {
+                if (pool.el.ownerSVGElement === svg) stillPooled = true;
+            });
+            if (!stillPooled) svg.classList.remove('flow-active');
+        });
+    }
+
+    function ensureFlowIO() {
+        if (flowIO || typeof IntersectionObserver !== 'function') return;
+        // Same rootMargin as the pulse gate: particles resume just
+        // before the path scrolls in, so motion is already underway
+        // as it appears.
+        flowIO = new IntersectionObserver(function (entries) {
+            for (let i = 0; i < entries.length; i++) {
+                const e = entries[i];
+                if (e.isIntersecting) visibleFlowEls.add(e.target);
+                else visibleFlowEls.delete(e.target);
+            }
+        }, { rootMargin: '120px 0px' });
     }
 
     // One particle layer per SVG, appended as the last child so painter's-
