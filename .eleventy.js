@@ -118,13 +118,18 @@ module.exports = function(eleventyConfig) {
     // Per-section page lists for the nav dropdowns (nav.njk). Same shape as
     // sitemapPages but split by `nav` and with the section landing itself
     // excluded — the top-level nav link already points there. Sorted by
-    // canonical for a stable, diff-friendly menu order.
+    // VISIBLE title (cleanTitle), not slug: 13 of 14 tool labels happened
+    // to read alphabetically under the old slug sort, which trained an
+    // alphabetical scan that then failed at exactly one entry ("Pump &
+    // Fan Affinity Laws" filed under A for affinity-laws). Title sort is
+    // equally diff-stable; owner-approved 2026-06-10 (codebase-issues
+    // #88).
     const navSection = (collectionApi, section, landing) =>
         collectionApi.getAll()
             .filter((item) => item.data.nav === section
                 && typeof item.data.canonical === "string"
                 && item.data.canonical !== landing)
-            .sort((a, b) => a.data.canonical.localeCompare(b.data.canonical));
+            .sort((a, b) => cleanTitle(a.data.title).localeCompare(cleanTitle(b.data.title)));
     eleventyConfig.addCollection("navTools", (api) =>
         navSection(api, "tools", "https://controlsfreak.dev/tools/"));
     eleventyConfig.addCollection("navSimulators", (api) =>
