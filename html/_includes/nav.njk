@@ -2,39 +2,39 @@
     <a class="site-nav-brand" href="/">controlsfreak<span>.dev</span></a>
     <div class="site-nav-links" id="site-nav-links">
         <a href="/"{% if nav == "home" %} class="active"{% endif %}>Home</a>
-        <span class="nav-item nav-item--has-menu">
+        <div class="nav-item nav-item--has-menu">
             <a href="/tools/"{% if nav == "tools" %} class="active"{% endif %}>Tools</a>
             <button type="button" class="nav-menu-toggle" id="nav-tools-toggle" aria-expanded="false" aria-controls="nav-tools-menu" aria-label="Toggle Tools menu">
                 <svg class="nav-caret" viewBox="0 0 10 6" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M1 1l4 4 4-4"/></svg>
             </button>
-            <div class="nav-menu" id="nav-tools-menu" aria-label="Tools" hidden>
+            <div class="nav-menu" id="nav-tools-menu" hidden>
                 {% for p in collections.navTools %}
                 <a class="nav-menu-item" href="{{ p.data.canonical | canonicalPath }}">{{ p.data.title | cleanTitle }}</a>
                 {% endfor %}
             </div>
-        </span>
-        <span class="nav-item nav-item--has-menu">
+        </div>
+        <div class="nav-item nav-item--has-menu">
             <a href="/simulators/"{% if nav == "simulators" %} class="active"{% endif %}>Simulators</a>
             <button type="button" class="nav-menu-toggle" id="nav-simulators-toggle" aria-expanded="false" aria-controls="nav-simulators-menu" aria-label="Toggle Simulators menu">
                 <svg class="nav-caret" viewBox="0 0 10 6" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M1 1l4 4 4-4"/></svg>
             </button>
-            <div class="nav-menu" id="nav-simulators-menu" aria-label="Simulators" hidden>
+            <div class="nav-menu" id="nav-simulators-menu" hidden>
                 {% for p in collections.navSimulators %}
                 <a class="nav-menu-item" href="{{ p.data.canonical | canonicalPath }}">{{ p.data.title | cleanTitle }}</a>
                 {% endfor %}
             </div>
-        </span>
-        <span class="nav-item nav-item--has-menu">
+        </div>
+        <div class="nav-item nav-item--has-menu">
             <a href="/education/"{% if nav == "education" %} class="active"{% endif %}>Education</a>
             <button type="button" class="nav-menu-toggle" id="nav-education-toggle" aria-expanded="false" aria-controls="nav-education-menu" aria-label="Toggle Education menu">
                 <svg class="nav-caret" viewBox="0 0 10 6" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M1 1l4 4 4-4"/></svg>
             </button>
-            <div class="nav-menu" id="nav-education-menu" aria-label="Education" hidden>
+            <div class="nav-menu" id="nav-education-menu" hidden>
                 {% for p in collections.navEducation %}
                 <a class="nav-menu-item" href="{{ p.data.canonical | canonicalPath }}">{{ p.data.title | cleanTitle }}</a>
                 {% endfor %}
             </div>
-        </span>
+        </div>
         <a href="/practice/"{% if nav == "practice" %} class="active"{% endif %}>Practice</a>
         <a href="/contact.html"{% if nav == "contact" %} class="active"{% endif %}>Contact</a>
         <button type="button" class="nav-search-btn" id="nav-search-btn" aria-haspopup="dialog" aria-label="Search (press slash)">

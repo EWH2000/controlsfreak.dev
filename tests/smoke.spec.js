@@ -252,8 +252,11 @@ test('psychrometric chart computes the AHU chain on load', async ({ page }) => {
     await expect(page.locator('#ro-wb')).toHaveText('76.0');
     // stage table includes the active CC row (cooling coil is on by default)
     await expect(page.locator('#psy-stage-table tbody tr')).toHaveCount(5);  // OA, RA, MA, CC, SA
-    // CC leaving DB = 55 °F at row index 3 (0-based) — col 1 (DB)
-    await expect(page.locator('#psy-stage-table tbody tr').nth(3).locator('td').nth(1)).toHaveText('55.0');
+    // CC leaving DB = 55 °F at row index 3 (0-based). The stage key is
+    // a <th scope="row"> now (the a11y machine-sweep), so DB is the
+    // FIRST td — assert the th carries the key too.
+    await expect(page.locator('#psy-stage-table tbody tr').nth(3).locator('th')).toHaveText('CC');
+    await expect(page.locator('#psy-stage-table tbody tr').nth(3).locator('td').nth(0)).toHaveText('55.0');
     // pick RA so the detail block tracks the selection
     await page.click('.psy-pill[data-step="ra"]');
     await expect(page.locator('#ro-db')).toHaveText('75.0');

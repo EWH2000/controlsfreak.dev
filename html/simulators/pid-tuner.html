@@ -25,13 +25,16 @@ keywords: gain reset rate kc ti td overshoot tuning loop deadtime
            Reuses .widget-fan / .device / .lcd / .gauge.eq from the global
            sheet for the fan + controller/sensor readouts. */
         .pid-eq-pipe  { fill: none; stroke: var(--text-dim); stroke-width: 5; stroke-linecap: round; }
-        .pid-eq-duct  { fill: none; stroke: var(--border); stroke-width: 2; }
+        /* Duct + actuator-track geometry carries meaning — --text-dim per
+           the balancing-diagram stroke convention (audit-2026-06 #14;
+           --border is reserved for 1px panel seams). */
+        .pid-eq-duct  { fill: none; stroke: var(--text-dim); stroke-width: 2; }
         .pid-eq-wire  { fill: none; stroke: var(--accent); stroke-width: 1.5; stroke-dasharray: 3 3; }
         .pid-eq-body  { fill: var(--surface); stroke: var(--text-dim); stroke-width: 2; }
         .pid-eq-fin   { stroke: var(--text-dim); stroke-width: 1.2; }
         .pid-eq-valve-bow { fill: var(--surface); stroke: var(--text-dim); stroke-width: 2; }
         .pid-eq-stem  { stroke: var(--text-dim); stroke-width: 2; }
-        .pid-eq-act-track { fill: var(--well); stroke: var(--border); stroke-width: 1; }
+        .pid-eq-act-track { fill: var(--well); stroke: var(--text-dim); stroke-width: 1; }
         .pid-eq-act-fill  { fill: var(--accent); }
         .pid-eq-damper-blade { stroke: var(--accent); stroke-width: 3; stroke-linecap: round; }
         .pid-eq-sensor-dot { fill: var(--surface); stroke: var(--accent); stroke-width: 2; }

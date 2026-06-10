@@ -331,7 +331,10 @@ nav: home
 {% endblock %}
 
 {% block content %}
-<section class="hero hero-seam">
+<!-- aria-label promotes the hero <section> to a named region landmark —
+     it sits outside <main>, so without a name the live demo + quick-tools
+     strip were invisible to landmark navigation (audit-2026-06 polish). -->
+<section class="hero hero-seam" aria-label="Live demo and quick tools">
     <div class="console-titlebar">
         <span>controlsfreak.dev <span class="titlebar-dots">///</span> FIELD REFERENCE</span>
         <span class="ok-pill">LIVE</span>

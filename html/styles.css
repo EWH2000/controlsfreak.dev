@@ -141,6 +141,58 @@
     --grid-wash:    transparent;
 }
 
+/* Print always uses the LIGHT token set, regardless of the on-screen
+   theme (audit-2026-06 #54: browsers drop background fills by default
+   when printing, so the dark theme's light-on-dark text became
+   near-white text on unprinted white paper — body 1.60:1, headings
+   1.12:1, an effectively blank page). The theme is attribute-driven,
+   so the browser's forced-light print mode can't flip it; this block
+   does. Duplicates the light set above — keep the two in sync when
+   retuning light tokens. */
+@media print {
+    :root, :root[data-theme="dark"] {
+        color-scheme: light;
+        --bg:           #eef1ec;
+        --bg-2:         #e8ece4;
+        --surface:      #ffffff;
+        --surface-2:    #f2f6f1;
+        --surface-3:    #e8ece4;
+        --well:         #e8ece4;
+        --border:       #ccd7c8;
+        --border-faint: #e3e8df;
+        --bevel-hi:     rgba(255,255,255,0.8);
+        --bevel-lo:     rgba(0,0,0,0.05);
+        --accent:       #43881c;
+        --accent-bright:#4a9620;
+        --accent-dim:   rgba(67,136,28,0.10);
+        --accent-glow:  rgba(67,136,28,0.22);
+        --accent-soft:  rgba(67,136,28,0.06);
+        --text:         #38423a;
+        --text-bright:  #1d251f;
+        --text-dim:     #666e66;
+        --blue:         #1577b8;
+        --blue-bright:  #1981c6;
+        --blue-cool:    #5e8aa0;
+        --blue-dim:     rgba(21,119,184,0.10);
+        --blue-glow:    rgba(21,119,184,0.22);
+        --red:          #c4382f;
+        --red-dim:      rgba(196,56,47,0.10);
+        --heat:         #c8782a;
+        --teal:         #4a8a8a;
+        --teal-dim:     rgba(74,138,138,0.10);
+        --teal-glow:    rgba(74,138,138,0.22);
+        --amber:        #c9a14a;
+        --amber-dim:    rgba(201,161,74,0.10);
+        --amber-glow:   rgba(201,161,74,0.22);
+        --plum:         #8a5e7e;
+        --plum-dim:     rgba(138,94,126,0.10);
+        --plum-glow:    rgba(138,94,126,0.22);
+        --grid-line-c:  var(--border);
+        --grid-line-w:  1.5px;
+        --grid-wash:    transparent;
+    }
+}
+
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { scroll-behavior: smooth; }
 
