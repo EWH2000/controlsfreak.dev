@@ -351,9 +351,16 @@ keywords: gain reset rate proportional integral derivative offset loop error
 
         // ── Init: run all three on load; redraw (not re-simulate) on resize. ──
         [1, 2, 3].forEach(n => runMini(n));
-        window.addEventListener('resize', () => [1, 2, 3].forEach(n => {
-            if (miniLast[n]) drawMini(n, miniLast[n]);
-        }));
+        // Coalesced to one redraw of all three canvases per frame
+        // (codebase-issues #90).
+        let resizeRaf = 0;
+        window.addEventListener('resize', () => {
+            if (resizeRaf) return;
+            resizeRaf = requestAnimationFrame(() => {
+                resizeRaf = 0;
+                [1, 2, 3].forEach(n => { if (miniLast[n]) drawMini(n, miniLast[n]); });
+            });
+        });
         // The mini-canvases read theme tokens at draw time — redraw on a
         // theme flip (theme.js broadcasts 'themechange'), same as on resize.
         document.addEventListener('themechange', () => [1, 2, 3].forEach(n => {

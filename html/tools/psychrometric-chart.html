@@ -1632,7 +1632,16 @@ keywords: humidity enthalpy wet bulb dew point dewpoint grains mixing coil AHU O
 
         // ── Init ──
         psyRecompute();
-        window.addEventListener('resize', () => drawPsychChart(lastChain));
+        // Coalesce resize redraws to one per frame — the raw event can fire
+        // dozens of times per second during a drag (codebase-issues #90).
+        let resizeRaf = 0;
+        window.addEventListener('resize', () => {
+            if (resizeRaf) return;
+            resizeRaf = requestAnimationFrame(() => {
+                resizeRaf = 0;
+                drawPsychChart(lastChain);
+            });
+        });
         // The canvas reads theme tokens (var(--*)) at draw time, so a theme
         // flip needs an explicit redraw — theme.js broadcasts 'themechange'.
         document.addEventListener('themechange', () => drawPsychChart(lastChain));
