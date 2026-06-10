@@ -1349,22 +1349,14 @@ test.describe('practice — modbus decoding quiz', () => {
         await expect(page.locator('.quiz-reveal-status')).toHaveText('Not quite.');
         await expect(page.locator('.quiz-reveal-right')).toBeVisible();
 
-        // Q3, Q4, Q5: pick the correct choice each time and advance. The
-        // engine handles MCQ, TF, gotcha, and numeric — branch on the
-        // visible input type so the same loop works across them.
+        // Q3, Q4, Q5: pick the correct choice each time and advance. In
+        // the default sequential order the bank's first five questions
+        // are mcq/tf/gotcha only — the two numeric questions sit at
+        // positions 7–8 and are exercised by the full-run test below.
         for (let i = 3; i <= 5; i++) {
             await page.locator('.quiz-action-primary').click();
             await expect(page.locator('.quiz-progress-text')).toHaveText('Question ' + i + ' of 5');
-            const isNumeric = await page.locator('.quiz-numeric:not([hidden])').count() > 0;
-            if (isNumeric) {
-                // The Modbus quiz's numeric Qs are 52.3 and 202.4 within
-                // ±0.05; just type the actual answer for whichever lands.
-                const promptText = await page.locator('.quiz-prompt').textContent();
-                const value = /523/.test(promptText) ? '52.3' : '202.4';
-                await page.locator('.quiz-numeric-input').fill(value);
-            } else {
-                await page.locator('.quiz-choice[data-correct="true"]').click();
-            }
+            await page.locator('.quiz-choice[data-correct="true"]').click();
             await page.locator('.quiz-action-primary').click();
         }
 
@@ -1393,6 +1385,57 @@ test.describe('practice — modbus decoding quiz', () => {
         expect(await page.evaluate(() => localStorage.getItem('cf_quiz_modbus-decoding_best'))).toBeNull();
 
         expect(errors, 'modbus-decoding quiz behavioral should log no errors').toEqual([]);
+    });
+
+    // Regression for audit-2026-06 #19: reveal() disables the numeric
+    // input and tints it, and showQuestion() must undo both. Pre-fix,
+    // the bank's back-to-back numerics (Q7 → Q8 in sequential order)
+    // left Q8 unanswerable, and a results-card Restart carried the
+    // disabled input into the fresh run. A default 10-question
+    // sequential run reaches both numerics for free.
+    test('numeric input stays answerable across consecutive numerics and a restart', async ({ page }) => {
+        const errors = watchErrors(page);
+        await page.goto('/practice/modbus-decoding.html');
+        await expect(page.locator('.quiz-progress-text')).toHaveText('Question 1 of 10');
+
+        let numericsSeen = 0;
+        for (let i = 1; i <= 10; i++) {
+            if (i > 1) {
+                await page.locator('.quiz-action-primary').click();   // "Next question →"
+            }
+            await expect(page.locator('.quiz-progress-text')).toHaveText('Question ' + i + ' of 10');
+            const isNumeric = await page.locator('.quiz-numeric:not([hidden])').count() > 0;
+            if (isNumeric) {
+                numericsSeen++;
+                // The load-bearing assertion: on arrival the input is
+                // enabled and untinted even right after a submitted
+                // numeric (pre-fix this fails at Q8).
+                await expect(page.locator('.quiz-numeric-input')).toBeEnabled();
+                await expect(page.locator('.quiz-numeric')).not.toHaveClass(/correct|wrong/);
+                // The numeric answers are 52.3 and 202.4 within ±0.05;
+                // type the right one for whichever question this is.
+                const promptText = await page.locator('.quiz-prompt').textContent();
+                const value = /523/.test(promptText) ? '52.3' : '202.4';
+                await page.locator('.quiz-numeric-input').fill(value);
+            } else {
+                await page.locator('.quiz-choice[data-correct="true"]').click();
+            }
+            await page.locator('.quiz-action-primary').click();       // Submit
+            await expect(page.locator('.quiz-reveal')).toHaveClass(/quiz-reveal--correct/);
+        }
+        expect(numericsSeen, 'the sequential run should hit both numeric questions').toBe(2);
+
+        await page.locator('.quiz-action-primary').click();           // "See results →"
+        await expect(page.locator('.quiz-results')).toBeVisible();
+        await expect(page.locator('.quiz-results-headline')).toHaveText('10 / 10 correct');
+
+        // Restart: showQuestion() must hand the fresh run a reset
+        // numeric widget (hidden on Q1, but already re-enabled).
+        await page.locator('.quiz-restart-btn').click();
+        await expect(page.locator('.quiz-progress-text')).toHaveText('Question 1 of 10');
+        await expect(page.locator('.quiz-numeric-input')).toBeEnabled();
+
+        expect(errors, 'numeric-run behavioral should log no errors').toEqual([]);
     });
 });
 

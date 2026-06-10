@@ -22,7 +22,7 @@ module.exports = [
             { id: 'd', text: 'The cable is the wrong category.' }
         ],
         explain: 'Ping working proves IP <em>unicast</em> routing is fine — but BACnet discovery (Who-Is) rides on a <strong>broadcast</strong>, and a router won\'t forward a broadcast off its subnet. So a device can be perfectly reachable by ping yet invisible to discovery across the subnet boundary. The fix is a <strong>BBMD</strong> on each subnet (forwarding broadcasts to its peers) or registering the device as a <strong>Foreign Device</strong> to a BBMD. The "pingable but undiscoverable" signature points almost straight at the broadcast/BBMD layer, not at the device\'s own config.',
-        learnMore: { href: '/education/bacnet-networking.html', label: 'BACnet Networking — BBMDs & Foreign Devices' },
+        learnMore: { href: '/education/bacnet-networking.html#bbmd', label: 'BACnet Networking — BBMDs & Foreign Devices' },
         tags: ['troubleshooting', 'bacnet', 'comms']
     },
 
@@ -54,7 +54,7 @@ module.exports = [
             { id: 'd', text: 'The float register is read-only.' }
         ],
         explain: 'A 16-bit value lives in one register and can\'t have a multi-register ordering problem, so its reading correctly tells you the link, baud, and addressing are fine. A 32-bit float spans <strong>two</strong> registers, and Modbus never standardized how to order them — big-endian, little-endian, and the two "byte-swapped" middle-endian variants all exist in the wild. Assemble the words in the order the device <em>didn\'t</em> use and you get garbage that\'s often plausible-looking magnitude-wise. The tell — multi-register values wrong, single-register values right — points straight at word/byte order, the most common Modbus integration bug.',
-        learnMore: { href: '/education/modbus-decoding.html', label: 'Modbus Decoding — byte order' },
+        learnMore: { href: '/education/modbus-decoding.html#byte-order', label: 'Modbus Decoding — byte order' },
         tags: ['troubleshooting', 'modbus', 'byte-order']
     },
 
@@ -151,7 +151,7 @@ module.exports = [
             { id: 'd', text: 'The proof input is miswired.' }
         ],
         explain: 'A drive takes two independent commands: a <strong>run/enable</strong> (start) and a <strong>speed reference</strong> (how fast). They come from different places — run might be a hardwired contact or a BACnet binary, while the reference is a 0-10 V / 4-20 mA / network analog. A drive can be commanded to run and faithfully run at <em>0 Hz</em> because its speed reference is zero or missing — and a proof-of-run that just watches the run relay will happily report "running." The fix is to check the <em>reference</em> source and value, not the start logic. This run-vs-reference split is the single most common "it says it\'s on but nothing moves" trap on drives.',
-        learnMore: { href: '/education/vfds.html', label: 'VFDs — run command vs speed reference' },
+        learnMore: { href: '/education/vfds.html#run-vs-speed', label: 'VFDs — run command vs speed reference' },
         tags: ['troubleshooting', 'vfd', 'drives']
     },
 
