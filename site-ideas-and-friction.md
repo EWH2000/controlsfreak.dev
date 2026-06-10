@@ -9,7 +9,7 @@ tools.
 
 ## Feature ideas
 
-### Modbus 5-digit address ↔ wire offset converter *(from the 2026-06 audit)*
+### Modbus 5-digit address ↔ wire offset converter *(shipped 2026-06-10)*
 
 Cross-filed from `audit-2026-06.md` (lineup gap + finding #30,
 2026-06-10). Neither Modbus tool converts a device-manual address like
@@ -30,6 +30,17 @@ pitch:
   12 (FC03). See Modbus Decoding.").
 
 Build or just track? Owner's call (Step-3 list, 2026-06 handoff).
+
+**Shipped (2026-06-10):** owner approved the build. Landed as a third
+tab on the Register Viewer ("Address ↔ Offset") rather than a strip —
+two-way sync between 5-digit address and table+offset, FC readout, a
+"why the off-by-one" explainer row, loud failure on the unowned
+20001–29999 / 50000+ ranges. The trap hint fires on typed decimal
+values in 30001–39999 / 40001–49999 (non-blocking, names table /
+offset / FC, links Modbus Decoding); it stays quiet on first paint —
+the teaching default 43981 is address-shaped but wasn't typed. The
+"40001 30001 offset" keywords had already shipped in the
+keyword sweep (#15).
 
 ### BACnet Object_Identifier encoder/decoder *(from the 2026-06 audit)*
 

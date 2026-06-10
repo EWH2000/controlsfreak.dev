@@ -243,6 +243,55 @@ test('modbus register viewer — single + pair tabs decode bits and bytes correc
     expect(errors, 'modbus behavioral should log no page / console errors').toEqual([]);
 });
 
+// Audit-2026-06 lineup gap: the Address ↔ Offset tab converts the
+// 5-digit documentation reference both directions, and the Single
+// Register value field hints when a typed value is address-shaped
+// (the "5-digit register trap" the Modbus Decoding lesson teaches).
+test('modbus register viewer — address/offset converter + trap hint', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('/tools/modbus-register-viewer.html');
+
+    // Trap hint: hidden on first paint (the teaching default 43981 is
+    // address-shaped but wasn't typed), shown for a typed 4xxxx value,
+    // hidden again for a plain value.
+    await expect(page.locator('#mod-trap-hint')).toBeHidden();
+    await page.fill('#mod-dec', '40013');
+    const hint = page.locator('#mod-trap-hint');
+    await expect(hint).toBeVisible();
+    await expect(hint).toContainText('holding-register offset 12');
+    await expect(hint).toContainText('FC03');
+    // Still non-blocking — the register decodes as a plain value.
+    await expect(page.locator('#read-dec')).toHaveText('40013');
+    await page.fill('#mod-dec', '1234');
+    await expect(hint).toBeHidden();
+
+    // Converter tab — default 43021 resolves on load.
+    await page.click('.tab-btn[data-tab="convert"]');
+    await expect(page.locator('#mod-conv-offset')).toHaveText('3020 (0x0BCC)');
+    await expect(page.locator('#mod-conv-fc')).toHaveText('FC03 (Read Holding Registers)');
+    await expect(page.locator('#mod-conv-sentence')).toContainText('Vendor docs 43021');
+
+    // Address → table + offset: 30013 lands in the input-register table.
+    await page.fill('#mod-addr', '30013');
+    await expect(page.locator('#mod-table')).toHaveValue('input');
+    await expect(page.locator('#mod-offset')).toHaveValue('12');
+    await expect(page.locator('#mod-conv-fc')).toHaveText('FC04 (Read Input Registers)');
+
+    // Table + offset → address: holding offset 0 is the canonical 40001.
+    await page.selectOption('#mod-table', 'holding');
+    await page.fill('#mod-offset', '0');
+    await expect(page.locator('#mod-addr')).toHaveValue('40001');
+    await expect(page.locator('#mod-conv-sentence')).toContainText('Vendor docs 40001');
+
+    // No-table address fails loud, not quietly.
+    await page.fill('#mod-addr', '20005');
+    await expect(page.locator('#mod-conv-callout')).toBeVisible();
+    await expect(page.locator('#mod-conv-callout')).toContainText('No table owns that address');
+    await expect(page.locator('#mod-conv-offset')).toHaveText('—');
+
+    expect(errors, 'modbus converter behavioral should log no errors').toEqual([]);
+});
+
 test('psychrometric chart computes the AHU chain on load', async ({ page }) => {
     const errors = watchErrors(page);
     await page.goto('/tools/psychrometric-chart.html');
