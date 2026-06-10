@@ -36,7 +36,6 @@ keywords: gain reset rate kc ti td overshoot tuning loop deadtime
         .pid-eq-stem  { stroke: var(--text-dim); stroke-width: 2; }
         .pid-eq-act-track { fill: var(--well); stroke: var(--text-dim); stroke-width: 1; }
         .pid-eq-act-fill  { fill: var(--accent); }
-        .pid-eq-damper-blade { stroke: var(--accent); stroke-width: 3; stroke-linecap: round; }
         .pid-eq-sensor-dot { fill: var(--surface); stroke: var(--accent); stroke-width: 2; }
         /* 11px in the 360-unit viewBox ≈ 8.2px effective on a 375 phone —
            8.5px scaled to an unreadable ~6.3px there, and the captions are
@@ -80,7 +79,7 @@ keywords: gain reset rate kc ti td overshoot tuning loop deadtime
                 <div class="field">
                     <label for="pid-proc">Equipment</label>
                     <select id="pid-proc">
-                        <option value="fast">VAV damper · duct static pressure</option>
+                        <option value="fast">Supply fan VFD · duct static pressure</option>
                         <option value="med" selected>2-way valve · discharge-air temp</option>
                         <option value="slow">Radiator · space temperature</option>
                         <option value="vhigh">Reheat coil · end of a long duct run</option>
@@ -142,7 +141,7 @@ keywords: gain reset rate kc ti td overshoot tuning loop deadtime
 
             <!-- ── Live process visualization ──────────────────────────────
                  A closed loop reading left→right: the controller's output (u%)
-                 drives the actuator (valve / damper+fan) inside the process
+                 drives the actuator (valve / fan VFD) inside the process
                  scene, whose sensor reports PV back. The active scene swaps with
                  the Equipment selector; the actuator + sensor animate in lockstep
                  with the chart playhead below — the actuator tracks the commanded
@@ -166,10 +165,15 @@ keywords: gain reset rate kc ti td overshoot tuning loop deadtime
                     <!-- Process scenes — only the active one is shown -->
                     <div class="pid-eq-scene-host">
 
-                        <!-- FAST · VAV damper + supply fan · duct static -->
+                        <!-- FAST · supply fan VFD · duct static. One AO, one
+                             actuator: the VFD ramps the fan, the duct-static
+                             sensor reports back. (The old VAV-damper framing
+                             drove a damper AND this fan from the same output —
+                             no real config does that; audit-2026-06 #50.) -->
                         <svg class="pid-eq-scene hidden" id="pid-eq-scene-fast" viewBox="0 0 360 120" role="presentation">
                             <rect class="pid-eq-duct" x="6" y="40" width="348" height="40"/>
                             <path class="pid-eq-flow" data-flow="supply" data-flow-density="0.6" d="M10,60 L350,60"/>
+                            <path class="pid-eq-wire" d="M50,8 L50,34"/>
                             <svg class="widget-fan" x="24" y="34" width="52" height="52" viewBox="0 0 100 100">
                                 <circle cx="50" cy="50" r="46" fill="none" stroke="var(--border)" stroke-width="3"/>
                                 <g class="widget-fan-blades" id="pid-eq-fast-fan">
@@ -181,14 +185,9 @@ keywords: gain reset rate kc ti td overshoot tuning loop deadtime
                                 </g>
                                 <circle cx="50" cy="50" r="5" fill="var(--text-dim)"/>
                             </svg>
-                            <path class="pid-eq-wire" d="M150,8 L150,40"/>
-                            <line class="pid-eq-damper-blade" data-cx="150" data-cy="48" x1="150" y1="42" x2="150" y2="54"/>
-                            <line class="pid-eq-damper-blade" data-cx="150" data-cy="60" x1="150" y1="54" x2="150" y2="66"/>
-                            <line class="pid-eq-damper-blade" data-cx="150" data-cy="72" x1="150" y1="66" x2="150" y2="78"/>
                             <circle class="pid-eq-sensor-dot" cx="324" cy="60" r="5"/>
                             <path class="pid-eq-wire" d="M324,55 L324,40 L348,40"/>
-                            <text class="pid-eq-cap" x="50"  y="100" text-anchor="middle">fan</text>
-                            <text class="pid-eq-cap" x="150" y="100" text-anchor="middle">damper</text>
+                            <text class="pid-eq-cap" x="50"  y="100" text-anchor="middle">fan VFD</text>
                             <text class="pid-eq-cap" x="324" y="100" text-anchor="middle">Δp</text>
                         </svg>
 
@@ -607,7 +606,7 @@ keywords: gain reset rate kc ti td overshoot tuning loop deadtime
         // units (°F / in. w.c.) — the rigorously unit-toggled value is the
         // Steady-State Error metric below; this device face is illustrative.
         const PID_EQ = {
-            fast:  { title: 'Duct Static',  k: 'Static',      unit: 'in.wc', actuator: 'damper' },
+            fast:  { title: 'Duct Static',  k: 'Static',      unit: 'in.wc', actuator: 'fan' },
             med:   { title: 'Disch. Air',   k: 'Supply Temp', unit: '°F',    actuator: 'valve' },
             slow:  { title: 'Space Temp',   k: 'Zone Temp',   unit: '°F',    actuator: 'valve' },
             vhigh: { title: 'Reheat Disch', k: 'Downstream',  unit: '°F',    actuator: 'valve' },
@@ -669,11 +668,7 @@ keywords: gain reset rate kc ti td overshoot tuning loop deadtime
                     fill.setAttribute('y', (y0 + H - fh).toFixed(1));
                     fill.setAttribute('height', fh.toFixed(1));
                 }
-            } else {                                          // damper + supply fan
-                const ang = (frac * 90).toFixed(1);
-                document.querySelectorAll('#pid-eq-scene-fast .pid-eq-damper-blade').forEach(b => {
-                    b.setAttribute('transform', 'rotate(' + ang + ' ' + b.dataset.cx + ' ' + b.dataset.cy + ')');
-                });
+            } else {                                          // supply fan VFD
                 const fan = document.getElementById('pid-eq-fast-fan');
                 if (fan) {
                     phFanAngle = (phFanAngle + 6 * (frac * 50) * dt) % 360;   // up to ~50 "Hz" at full output

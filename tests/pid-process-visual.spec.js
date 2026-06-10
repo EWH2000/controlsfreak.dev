@@ -154,13 +154,13 @@ test('reduced motion — scene paints one static final frame, no animation', asy
     await page.goto(URL);
     expect(await page.evaluate(() => matchMedia('(prefers-reduced-motion: reduce)').matches),
         'page should emulate prefers-reduced-motion').toBe(true);
-    await page.selectOption('#pid-proc', 'fast');     // damper scene
+    await page.selectOption('#pid-proc', 'fast');     // fan-VFD scene
     await page.click('#pid-preset-aggr');
 
-    // The sensor is populated (not the '—' placeholder) and the damper is
-    // parked at a real angle…
+    // The sensor is populated (not the '—' placeholder) and the fan got its
+    // one-shot transform write (parked, not spinning)…
     await expect(page.locator('#pid-eq-sensor-v')).not.toHaveText('—');
-    await expect(page.locator('#pid-eq-scene-fast .pid-eq-damper-blade').first())
+    await expect(page.locator('#pid-eq-fast-fan'))
         .toHaveAttribute('transform', /rotate/);
 
     // …and nothing moves: the output gauge reads the same across a beat (the

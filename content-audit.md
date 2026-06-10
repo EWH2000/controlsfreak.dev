@@ -2300,6 +2300,12 @@ in the lesson's 4–20 mA paragraph and the sim preamble, or (b) model a
 small 24 VDC supply in the sim and reroute the loop diagrams through
 it. Domain call — held for decision.
 
+**Resolved (2026-06-10):** owner picked (a). The lesson's 4–20 mA
+paragraph now closes with the DC-loop-power reality note (12–30 VDC,
+dedicated supply or loop-power terminal) and names the hot-leg framing
+a deliberate one-power-story simplification; the sim preamble carries
+the matching two-sentence caveat. Engine and diagrams unchanged.
+
 ### 39. PID fast scene tells a physically wrong story — a "VAV damper" controlling duct static while the fan also tracks the same output
 
 **Location:** simulators/pid-tuner.html — selector option "VAV damper
@@ -2317,6 +2323,14 @@ examples.
 duct static" and make the fan the actuator, or (b) keep the damper as
 actuator and relabel to a direct-acting damper loop. Either way one AO
 drives one actuator. Domain call — held for decision.
+
+**Resolved (2026-06-10):** owner picked (a). Selector now reads
+"Supply fan VFD · duct static pressure"; the fast scene drops the
+damper entirely (duct + fan + Δp sensor), the command wire lands on
+the fan, and `updateScene`'s fast branch drives fan speed only — one
+AO, one actuator. The Loop Speed table row stands (it lists distinct
+fast-loop examples, not one loop). Visual-contract test updated to
+assert the fan's one-shot transform instead of a damper-blade angle.
 
 ### 40. The 24 VAC leg-swap consequence is told three incompatible ways across drill, lesson, and sim
 
