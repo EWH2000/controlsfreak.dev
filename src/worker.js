@@ -31,6 +31,37 @@ const LEGACY_TOOL_REDIRECTS = {
     "/tools/function-block-editor.html": "/simulators/function-block-editor.html",
 };
 
+// ── Static-asset caching (codebase-issues #84, owner decision
+// 2026-06-10) ──────────────────────────────────────────────────────
+// Workers Assets defaults every file to `max-age=0, must-revalidate`,
+// which cost repeat visitors ~7-8 conditional revalidations per
+// navigation. Long-lived caching instead, with two safety shapes:
+//   /assets/fonts/*   — always immutable. Font files are immutable
+//                       BY NAME (rename on re-subset — the rule lives
+//                       in assets/fonts/LICENSE.txt).
+//   /scripts/*, /styles.css, /assets/* — immutable ONLY when the
+//                       request carries the `?v=` param the templates
+//                       append ({{ site.version }}), so an unversioned
+//                       reference can never get stuck stale: it just
+//                       keeps the revalidate default.
+// HTML keeps the default on purpose — deploys propagate instantly.
+// NOTE: the package.json version bump is load-bearing for busting —
+// a styles/scripts change without a bump leaves returning visitors
+// on the old file for up to a year (owner accepted, no CI guard).
+function assetCacheControl(url) {
+    if (url.pathname.startsWith("/assets/fonts/")) {
+        return "public, max-age=31536000, immutable";
+    }
+    const fingerprintable =
+        url.pathname.startsWith("/scripts/") ||
+        url.pathname.startsWith("/assets/") ||
+        url.pathname === "/styles.css";
+    if (fingerprintable && url.searchParams.has("v")) {
+        return "public, max-age=31536000, immutable";
+    }
+    return null;
+}
+
 function json(data, status = 200, extraHeaders = {}) {
     return new Response(JSON.stringify(data), {
         status,
@@ -218,6 +249,13 @@ export default {
                 { allow: "POST" },
             );
         }
-        return env.ASSETS.fetch(request);
+        const assetRes = await env.ASSETS.fetch(request);
+        const cc = assetCacheControl(url);
+        if (cc && assetRes.ok) {
+            const cached = new Response(assetRes.body, assetRes);
+            cached.headers.set("cache-control", cc);
+            return cached;
+        }
+        return assetRes;
     },
 };

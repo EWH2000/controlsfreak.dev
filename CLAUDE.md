@@ -82,8 +82,17 @@ findings from the recurring content-accuracy audits.
   workflow ping Bing/Yandex/etc. (not Google) with changed canonical
   URLs on push to `main`. See *Workflow*.
 - **Hosting:** Cloudflare Workers; auto-deploys ~60s on push to
-  `main` (the dashboard runs `npm install && npm run build` and
-  serves `_site/`).
+  `main` (the dashboard runs `npm ci`, unshallows the clone, sets
+  `STRICT_GIT_DATES=1`, then `npm run build` and serves `_site/`).
+- **Asset caching:** the Worker serves `/assets/fonts/*` as immutable
+  always (font files are immutable BY NAME — rename on change), and
+  `/scripts/*` / `/styles.css` / `/assets/*` as immutable when the
+  request carries the `?v={{ site.version }}` param the templates
+  append. **The version bump is therefore load-bearing for cache
+  busting**: shipping a styles.css or shared-script change without a
+  bump leaves returning visitors on the old file (owner accepted, no
+  CI guard — codebase-issues #84). Per-page `{% block scripts %}`
+  references stay unversioned and keep the revalidate default.
 - **Config:** `wrangler.jsonc` — `name`, `main`, `assets.directory`
   (`./_site`), `assets.binding` (`ASSETS`), `assets.html_handling`
   (`auto-trailing-slash`), and `compatibility_date` are all
