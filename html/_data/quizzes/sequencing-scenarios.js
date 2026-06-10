@@ -73,14 +73,14 @@ module.exports = [
     {
         type: 'mcq',
         id: 'economizer-enthalpy-vs-drybulb',
-        prompt: 'In a hot-humid climate, a dry-bulb economizer changeover (e.g. "economize below 65°F OA") sometimes still drags the coil into a losing fight. Why does enthalpy changeover do better?',
+        prompt: 'In a hot-humid climate, a dry-bulb economizer changeover (e.g. "economize below 65°F (18.3 °C) OA") sometimes still drags the coil into a losing fight. Why does enthalpy changeover do better?',
         choices: [
             { id: 'a', text: 'Enthalpy sensors are simply more accurate thermometers.' },
-            { id: 'b', text: 'Dry-bulb ignores moisture: 64°F but very humid outdoor air carries more total heat (enthalpy) than cooler-feeling return air. Enthalpy changeover compares total heat content, so it rejects warm-but-humid air dry-bulb would have admitted.', correct: true },
+            { id: 'b', text: 'Dry-bulb ignores moisture: 64°F (17.8 °C) but very humid outdoor air carries more total heat (enthalpy) than cooler-feeling return air. Enthalpy changeover compares total heat content, so it rejects warm-but-humid air dry-bulb would have admitted.', correct: true },
             { id: 'c', text: 'Enthalpy changeover opens the dampers faster.' },
             { id: 'd', text: 'Dry-bulb only works in winter.' }
         ],
-        explain: 'A dry-bulb decision looks only at temperature, but the cooling coil has to remove <em>total</em> heat — sensible plus latent. Outdoor air at 64°F and 90% RH holds a lot of moisture, so its enthalpy can exceed that of warmer-but-drier return air; admit it and the coil now has to wring out all that water (latent load) on top of cooling, which can cost more than just recirculating. <strong>Enthalpy</strong> (or differential-enthalpy) changeover compares total heat content of outdoor vs. return air and only economizes when outdoor air is genuinely the lower-enthalpy source. The cost is humidity sensors, which drift and need care — the classic reason a "smart" enthalpy economizer underperforms a simple dry-bulb one.',
+        explain: 'A dry-bulb decision looks only at temperature, but the cooling coil has to remove <em>total</em> heat — sensible plus latent. Outdoor air at 64°F (17.8 °C) and 90% RH holds a lot of moisture, so its enthalpy can exceed that of warmer-but-drier return air; admit it and the coil now has to wring out all that water (latent load) on top of cooling, which can cost more than just recirculating. <strong>Enthalpy</strong> (or differential-enthalpy) changeover compares total heat content of outdoor vs. return air and only economizes when outdoor air is genuinely the lower-enthalpy source. The cost is humidity sensors, which drift and need care — the classic reason a "smart" enthalpy economizer underperforms a simple dry-bulb one.',
         learnMore: { href: '/tools/psychrometric-chart.html', label: 'Psychrometric Chart' },
         tags: ['sequencing-scenarios', 'economizer', 'enthalpy']
     },
@@ -89,8 +89,8 @@ module.exports = [
     {
         type: 'gotcha',
         id: 'economizer-low-limit',
-        prompt: 'On a 20°F morning the economizer is commanding the outdoor-air dampers wide open chasing a cool supply-air setpoint, and the mixed-air temperature is dropping toward freezing. What\'s missing from the sequence?',
-        snippet: '<pre class="quiz-snippet">OA temp:        20°F\nOA damper:      100% open (economizing)\nmixed-air temp: 38°F and falling →\nlow-limit / mixed-air lockout:  ?</pre>',
+        prompt: 'On a 20°F (−6.7 °C) morning the economizer is commanding the outdoor-air dampers wide open chasing a cool supply-air setpoint, and the mixed-air temperature is dropping toward freezing. What\'s missing from the sequence?',
+        snippet: '<pre class="quiz-snippet">OA temp:        20°F / −6.7 °C\nOA damper:      100% open (economizing)\nmixed-air temp: 38°F / 3.3 °C and falling →\nlow-limit / mixed-air lockout:  ?</pre>',
         choices: [
             { id: 'a', text: 'Nothing — colder outdoor air just means more free cooling.' },
             { id: 'b', text: 'A low-limit / mixed-air-temperature override (and an OA-temp lockout): below a setpoint the dampers must drive back toward minimum to protect the coil from freezing, regardless of the cooling demand.', correct: true },
@@ -105,7 +105,7 @@ module.exports = [
     {
         type: 'mcq',
         id: 'dehum-reheat-cascade',
-        prompt: 'A space holds 74°F but humidity creeps up. The dehumidification sequence over-cools the supply air, then reheats it. Why deliberately cool past setpoint only to heat back up?',
+        prompt: 'A space holds 74°F (23.3 °C) but humidity creeps up. The dehumidification sequence over-cools the supply air, then reheats it. Why deliberately cool past setpoint only to heat back up?',
         choices: [
             { id: 'a', text: 'It\'s a control error — you should never cool and heat at once.' },
             { id: 'b', text: 'Dropping the coil below the air\'s dew point condenses moisture out (latent removal); the air leaves cold and dry, and reheat brings the dry air back to a comfortable temperature without re-adding water.', correct: true },
@@ -135,7 +135,7 @@ module.exports = [
         prompt: 'A condensing boiler plant runs an outdoor-air-reset hot-water schedule: colder outside ⇒ higher supply temp. Why also keep return-water temperature as LOW as the load allows?',
         choices: [
             { id: 'a', text: 'Low return water prevents the pumps from overheating.' },
-            { id: 'b', text: 'A condensing boiler only reaches its high efficiency when return water is cool enough (roughly below ~130°F) to condense flue-gas water vapor and reclaim its latent heat; high return water keeps it out of the condensing region.', correct: true },
+            { id: 'b', text: 'A condensing boiler only reaches its high efficiency when return water is cool enough (roughly below ~130°F / ~54 °C) to condense flue-gas water vapor and reclaim its latent heat; high return water keeps it out of the condensing region.', correct: true },
             { id: 'c', text: 'Low return water is required to satisfy the freeze-stat.' },
             { id: 'd', text: 'It has no effect — efficiency depends only on supply temp.' }
         ],

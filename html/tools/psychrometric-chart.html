@@ -464,7 +464,8 @@ keywords: humidity enthalpy wet bulb dew point dewpoint grains mixing coil AHU O
         <div style="padding:1.25rem 1.5rem;border-top:1px solid var(--border);">
             <p class="pid-note" style="margin-top:0;">
                 Properties are per pound of dry air, computed internally from the ASHRAE Fundamentals (Chapter 1) IP equations
-                and converted to your selected display units. RH is taken as the partial-pressure ratio (the usual approximation).
+                and converted to your selected display units — the formula forms quoted here (0.240, 0.444, CFM·60/v) are
+                that IP formulation; metric readouts are exact conversions of the same math. RH is taken as the partial-pressure ratio (the usual approximation).
                 Mixing is a mass-weighted enthalpy / humidity-ratio combination. Adiabatic humidification holds wet-bulb constant.
                 Coil capacities use AHU airflow and inlet specific volume:
                 Q = ṁ·Δh with ṁ = CFM·60/v<sub>in</sub>; Q<sub>sens</sub> = ṁ·(0.240 + 0.444·W<sub>in</sub>)·ΔT. For building feel

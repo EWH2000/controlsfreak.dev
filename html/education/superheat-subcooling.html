@@ -160,7 +160,7 @@ keywords: psig saturation suction liquid line charge txv evaporator condenser
             </p>
 
             <p>
-                <strong>Superheat low or negative.</strong> Too little vapor warmth above saturation, or worse, liquid making it past the evaporator. Liquid refrigerant reaching the compressor is called <em>floodback</em> and it kills compressors — they're pumps for vapor, not liquid. The cause is usually a metering device feeding too much refrigerant, or the evaporator load dropping faster than the metering device can throttle back. A negative superheat reading on a running system is an emergency direction; even a chronically low reading (under 5 °F on most equipment) is asking for trouble.
+                <strong>Superheat low or negative.</strong> Too little vapor warmth above saturation, or worse, liquid making it past the evaporator. Liquid refrigerant reaching the compressor is called <em>floodback</em> and it kills compressors — they're pumps for vapor, not liquid. The cause is usually a metering device feeding too much refrigerant, or the evaporator load dropping faster than the metering device can throttle back. A negative superheat reading on a running system is an emergency direction; even a chronically low reading (under <span data-us="5 °F" data-metric="2.8 °C">5 °F</span> on most equipment) is asking for trouble.
             </p>
 
             <p>
@@ -182,35 +182,35 @@ keywords: psig saturation suction liquid line charge txv evaporator condenser
             <h2 class="subhead" id="worked-example">A worked example</h2>
 
             <p>
-                Pick the same R-410A air conditioner from the previous lesson. Suction-side gauge reads <strong>118 psig</strong>; clamp-on suction-line thermometer reads <strong>50 °F</strong>. The R-410A P-T table gives a dew temperature of about 40 °F at 118 psig. So:
+                Pick the same R-410A air conditioner from the previous lesson. Suction-side gauge reads <strong><span data-us="118 psig" data-metric="814 kPag">118 psig</span></strong>; clamp-on suction-line thermometer reads <strong><span data-us="50 °F" data-metric="10.0 °C">50 °F</span></strong>. The R-410A P-T table gives a dew temperature of about <span data-us="40 °F" data-metric="4.4 °C">40 °F</span> at <span data-us="118 psig" data-metric="814 kPag">118 psig</span>. So:
             </p>
 
             <p>
-                <code>superheat = 50 °F − 40 °F = 10 °F</code>
+                <code><span data-us="superheat = 50 °F − 40 °F = 10 °F" data-metric="superheat = 10.0 °C − 4.4 °C = 5.6 °C">superheat = 50 °F − 40 °F = 10 °F</span></code>
             </p>
 
             <p>
-                Liquid-side gauge reads <strong>340 psig</strong>; clamp-on liquid-line thermometer reads <strong>95 °F</strong>. The R-410A P-T table gives a bubble temperature of about 105 °F at 340 psig. So:
+                Liquid-side gauge reads <strong><span data-us="340 psig" data-metric="2344 kPag">340 psig</span></strong>; clamp-on liquid-line thermometer reads <strong><span data-us="95 °F" data-metric="35.0 °C">95 °F</span></strong>. The R-410A P-T table gives a bubble temperature of about <span data-us="105 °F" data-metric="40.6 °C">105 °F</span> at <span data-us="340 psig" data-metric="2344 kPag">340 psig</span>. So:
             </p>
 
             <p>
-                <code>subcooling = 105 °F − 95 °F = 10 °F</code>
+                <code><span data-us="subcooling = 105 °F − 95 °F = 10 °F" data-metric="subcooling = 40.6 °C − 35.0 °C = 5.6 °C">subcooling = 105 °F − 95 °F = 10 °F</span></code>
             </p>
 
             <p style="margin-top:1.25rem;">
-                Both numbers in the normal range for a residential or light-commercial split system on a typical operating day. Punch either pair into the <a href="/tools/refrigerant-pt.html">P-T tool</a>'s Superheat / Subcooling tab with R-410A selected, switch the Line toggle between Suction and Liquid, and you'll read the same 10 °F back, with the tool's verdict pill describing the result as in-range.
+                Both numbers in the normal range for a residential or light-commercial split system on a typical operating day. Punch either pair into the <a href="/tools/refrigerant-pt.html">P-T tool</a>'s Superheat / Subcooling tab with R-410A selected, switch the Line toggle between Suction and Liquid, and you'll read the same <span data-us="10 °F" data-metric="5.6 °C">10 °F</span> back, with the tool's verdict pill describing the result as in-range.
             </p>
 
             <p style="margin-top:1.25rem;">
-                Now an abnormal scenario, same refrigerant. Suction-side gauge reads <strong>118 psig</strong> still — saturation temperature still 40 °F. But the clamp-on suction-line thermometer reads <strong>90 °F</strong>. So:
+                Now an abnormal scenario, same refrigerant. Suction-side gauge reads <strong><span data-us="118 psig" data-metric="814 kPag">118 psig</span></strong> still — saturation temperature still <span data-us="40 °F" data-metric="4.4 °C">40 °F</span>. But the clamp-on suction-line thermometer reads <strong><span data-us="90 °F" data-metric="32.2 °C">90 °F</span></strong>. So:
             </p>
 
             <p>
-                <code>superheat = 90 °F − 40 °F = 50 °F</code>
+                <code><span data-us="superheat = 90 °F − 40 °F = 50 °F" data-metric="superheat = 32.2 °C − 4.4 °C = 27.8 °C">superheat = 90 °F − 40 °F = 50 °F</span></code>
             </p>
 
             <p style="margin-top:1.25rem;">
-                50 °F is well outside any normal target — even a fixed-orifice system on a hot afternoon at light load isn't supposed to run that high. The direction it points: <em>starved evaporator</em>. Likely candidates are undercharge, a metering device under-feeding, or a liquid-line restriction. None of those are confirmed by the superheat reading alone — you'd check subcooling and the discharge pressure next, and if subcooling were also low, you'd lean toward undercharge; if subcooling were high with high discharge pressure, the liquid-line restriction story would fit. The P-T tool's verdict pill on the Superheat / Subcooling tab uses this same direction-of-fault language; the goal of this page is that you arrive at the tool already knowing what its words mean.
+                <span data-us="50 °F" data-metric="27.8 °C">50 °F</span> is well outside any normal target — even a fixed-orifice system on a hot afternoon at light load isn't supposed to run that high. The direction it points: <em>starved evaporator</em>. Likely candidates are undercharge, a metering device under-feeding, or a liquid-line restriction. None of those are confirmed by the superheat reading alone — you'd check subcooling and the discharge pressure next, and if subcooling were also low, you'd lean toward undercharge; if subcooling were high with high discharge pressure, the liquid-line restriction story would fit. The P-T tool's verdict pill on the Superheat / Subcooling tab uses this same direction-of-fault language; the goal of this page is that you arrive at the tool already knowing what its words mean.
             </p>
 
         </div>

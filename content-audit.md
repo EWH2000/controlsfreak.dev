@@ -2247,6 +2247,17 @@ existing span convention; for quizzes, at minimum dual-state prompts
 ("48 °F (8.9 °C)"). Part of the one-decision metric-content-strategy
 cluster with #36/#37 below.
 
+**Resolved (2026-06-10):** owner approved dual-stating. All three
+refrigeration lessons now carry `data-us`/`data-metric` spans on every
+pressure, temperature, and worked-example code line (118 psig →
+814 kPag, 40 °F → 4.4 °C, superheat 10 °F → 5.6 °C…), matched to the
+P-T tool's own metric values so the cross-check connects. Quiz
+prompts in superheat-subcooling, refrigerant-cycle-basics,
+sequencing-scenarios, psychrometrics-basics, and hydronic-loops are
+dual-stated with static parentheticals (the quiz DOM paints after the
+units walker runs); numeric answers stay in their stated unit. The
+rounding policy (#37) governs every converted pair.
+
 ### 36. Worked-example formula/plug-in steps keep IP-only constants and numbers in metric, contradicting the converted prose around them
 
 **Location:** coil-sizing (`ṁ = CFM × 60 ÷ v` under a dual-stated
@@ -2267,6 +2278,17 @@ is a documented exception (deliberately unit-agnostic/US-framed per
 the friction file) — dual-stating its example prose would be a
 refinement against that entry, not drift.
 
+**Resolved (2026-06-10):** owner picked the caveat route for
+IP-native formula lines: coil-sizing (both tabs), air-mixing, and the
+psychrometric-chart methodology note now state that the quoted
+formula forms (0.240, 0.444, CFM·60/v) are the engine's native
+ASHRAE IP formulation with metric converting at the display boundary.
+Unit-agnostic plug-ins converted instead: economizer-ratio's two
+worked-example plug-in lines are dual-stated (the ratio formula has
+no IP constants), refrigerant-pt's SH/SC walkthrough and glide rules
+of thumb are dual-stated, and psychrometrics-basics names m³/kg and
+g/kg alongside the IP forms. The affinity-laws exception stands.
+
 ### 37. Metric worked-example numbers don't reconcile internally — round-then-convert granularity makes the taught arithmetic fail
 
 **Location:** pid-basics in metric (SP 13 / PV 16 / error 2.8 °C — the
@@ -2281,6 +2303,16 @@ closes — round metric temps in worked examples to one decimal
 (12.8/15.6/2.8 reconciles); where the tool can replicate an example,
 state the result a metric user will actually see. One decision with
 #35/#36.
+
+**Resolved (2026-06-10):** policy adopted and recorded as a CLAUDE.md
+convention. pid-basics' metric worked example now reads 12.8 / 15.6 /
+11.1 / 2.8 (closes); economizer-ratio's live formula line recomputes
+its trailing result from the displayed rounded operands (metric
+default shows 67.5 %, matching what typing those numbers yields) and
+the static worked example states 67.5 % in metric; every pair added
+under #35/#36 follows the policy (deltas are differences of displayed
+operands — e.g. subcooling 40.6 − 35.0 = 5.6). Census multi-pair
+lines audited; the two cited failures were the only ones.
 
 ### 38. The 4–20 mA loop is taught as powered from the 24 VAC hot leg — wrong field practice, contradicted by the site's own quiz
 

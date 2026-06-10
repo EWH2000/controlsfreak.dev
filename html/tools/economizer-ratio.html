@@ -83,7 +83,7 @@ keywords: oa oat percent outdoor air free cooling changeover mixed air damper
                     <li>Setpoint sits between OA and RA → feasible.</li>
                     <li>The damper has to bring in enough OA to drag the mix down to setpoint:<br>
                         <code>% OA = (MA − RA) ÷ (OA − RA) × 100</code></li>
-                    <li>Plug in: <code>(65 − 75) ÷ (60 − 75) × 100 = 66.7 %</code>.</li>
+                    <li>Plug in: <code><span data-us="(65 − 75) ÷ (60 − 75) × 100 = 66.7 %" data-metric="(18.3 − 23.9) ÷ (15.6 − 23.9) × 100 = 67.5 %">(65 − 75) ÷ (60 − 75) × 100 = 66.7 %</span></code>.</li>
                     <li>Two-thirds outdoor air, one-third return — that's the
                         damper command.</li>
                 </ol>
@@ -198,7 +198,7 @@ keywords: oa oat percent outdoor air free cooling changeover mixed air damper
                 </p>
                 <ol class="ref-note worked-list">
                     <li>Dry-bulb is what the damper modulates to.
-                        <code>% OA = (65 − 75) ÷ (78 − 75) × 100</code> = a
+                        <code><span data-us="% OA = (65 − 75) ÷ (78 − 75) × 100" data-metric="% OA = (18.3 − 23.9) ÷ (25.6 − 23.9) × 100">% OA = (65 − 75) ÷ (78 − 75) × 100</span></code> = a
                         negative number — OA is hotter than RA, so even on
                         dry-bulb alone the economizer can't help. Minimum-OA
                         position.</li>
@@ -208,7 +208,7 @@ keywords: oa oat percent outdoor air free cooling changeover mixed air damper
                     <li>The enthalpy comparison is the real reason a high-end
                         BAS is more conservative: an OA that's two degrees
                         cooler than RA but soaked with moisture carries more
-                        heat per pound than RA does. Free cooling on dry-bulb
+                        heat per <span data-us="pound" data-metric="kilogram">pound</span> than RA does. Free cooling on dry-bulb
                         alone, latent penalty on the coil.</li>
                 </ol>
                 <p class="ref-note">
@@ -316,14 +316,22 @@ keywords: oa oat percent outdoor air free cooling changeover mixed air damper
 
             // Display the formula in the user's current units, but the math
             // ran in canonical IP — display them coherently by formatting
-            // each input through the display helper before showing.
+            // each input through the display helper before showing. The
+            // formula's trailing result is recomputed FROM the displayed
+            // (rounded) operands rather than copied from the canonical pct,
+            // so the arithmetic the line teaches closes by construction even
+            // if display rounding ever diverges from the inputs again
+            // (audit-2026-06 #53 — the original mismatch: metric operands
+            // 18.3/23.9/15.6 shown with a canonical 66.7 % tail).
             const oaD = U.display.temp(oa).toFixed(1);
             const raD = U.display.temp(ra).toFixed(1);
             const maD = U.display.temp(ma).toFixed(1);
+            const pctShown = (parseFloat(maD) - parseFloat(raD)) /
+                             (parseFloat(oaD) - parseFloat(raD)) * 100;
             formulaEl.textContent =
                 `% OA = (MA − RA) ÷ (OA − RA) × 100 ` +
                 `= (${maD} − ${raD}) ÷ (${oaD} − ${raD}) × 100 ` +
-                `= ${pct.toFixed(1)} %`;
+                `= ${pctShown.toFixed(1)} %`;
 
             // Three feasibility regimes (within computed above).
             if (within) {

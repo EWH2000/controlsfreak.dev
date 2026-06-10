@@ -89,22 +89,22 @@ module.exports = [
             { id: 'c', text: 'Temperature leads pressure by a few seconds.' },
             { id: 'd', text: 'The relationship is the same for every refrigerant.' }
         ],
-        explain: 'At saturation, pressure and temperature are pinned to each other by that refrigerant\'s published P-T table. R-410A at 118 psig is boiling at 40 °F — not "about 40," at 40. That\'s what makes a suction-pressure reading meaningful: it tells you the saturation temperature inside the evaporator without measuring temperature directly. The lock is per-refrigerant, though — each one has its own table.',
+        explain: 'At saturation, pressure and temperature are pinned to each other by that refrigerant\'s published P-T table. R-410A at 118 psig (814 kPag) is boiling at 40 °F — not "about 40," at 40. That\'s what makes a suction-pressure reading meaningful: it tells you the saturation temperature inside the evaporator without measuring temperature directly. The lock is per-refrigerant, though — each one has its own table.',
         learnMore: { href: '/education/refrigerant-cycle-basics.html#pt-lock', label: 'Refrigerant Cycle Basics — The pressure-temperature relationship' },
         tags: ['refrigeration', 'pt-relationship']
     },
     {
         type: 'gotcha',
         id: 'sat-temp-not-line-temp',
-        prompt: 'A tech reads 118 psig on the suction gauge of an R-410A unit, looks up the saturation temperature (40 °F), and concludes the suction LINE is at 40 °F. What\'s wrong with that?',
-        snippet: '<pre class="quiz-snippet">refrigerant:  R-410A\nsuction P:    118 psig  →  sat T = 40 °F\nconclusion:   "the suction line is at 40 °F"</pre>',
+        prompt: 'A tech reads 118 psig (814 kPag) on the suction gauge of an R-410A unit, looks up the saturation temperature (40 °F / 4.4 °C), and concludes the suction LINE is at 40 °F. What\'s wrong with that?',
+        snippet: '<pre class="quiz-snippet">refrigerant:  R-410A\nsuction P:    118 psig / 814 kPag  →  sat T = 40 °F / 4.4 °C\nconclusion:   "the suction line is at 40 °F"</pre>',
         choices: [
-            { id: 'a', text: 'Nothing — at 118 psig the suction line is exactly 40 °F.' },
+            { id: 'a', text: 'Nothing — at 118 psig (814 kPag) the suction line is exactly 40 °F (4.4 °C).' },
             { id: 'b', text: 'The saturation lock only holds where the refrigerant is mid-phase-change. The suction line carries pure (superheated) vapor, so its temperature is warmer than the 40 °F saturation value.', correct: true },
             { id: 'c', text: 'The gauge should read absolute pressure, so the temperature is really lower.' },
             { id: 'd', text: 'R-410A doesn\'t have a saturation temperature at that pressure.' }
         ],
-        explain: '40 °F is the saturation temperature — the temperature of refrigerant boiling inside the evaporator at 118 psig. But by the time the refrigerant reaches the suction line it\'s pure vapor, past saturation, and pressure and temperature have drifted apart. The gap between the measured line temperature and the 40 °F saturation value is exactly what the next page turns into superheat. Mixing up "saturation temperature" with "line temperature" is the classic beginner trap.',
+        explain: '40 °F (4.4 °C) is the saturation temperature — the temperature of refrigerant boiling inside the evaporator at 118 psig (814 kPag). But by the time the refrigerant reaches the suction line it\'s pure vapor, past saturation, and pressure and temperature have drifted apart. The gap between the measured line temperature and the 40 °F saturation value is exactly what the next page turns into superheat. Mixing up "saturation temperature" with "line temperature" is the classic beginner trap.',
         learnMore: { href: '/education/refrigerant-cycle-basics.html#pt-lock', label: 'Refrigerant Cycle Basics — The pressure-temperature relationship' },
         tags: ['refrigeration', 'pt-relationship', 'superheat']
     },
@@ -127,7 +127,7 @@ module.exports = [
     {
         type: 'numeric',
         id: 'compressor-lift',
-        prompt: 'An R-410A unit reads 340 psig on the discharge gauge and 118 psig on the suction gauge. The compressor has to lift the refrigerant across that pressure difference. How big is the difference, in psi?',
+        prompt: 'An R-410A unit reads 340 psig (2344 kPag) on the discharge gauge and 118 psig (814 kPag) on the suction gauge. The compressor has to lift the refrigerant across that pressure difference. How big is the difference, in psi?',
         answer: 222,
         tolerance: 1,
         unit: 'psi',

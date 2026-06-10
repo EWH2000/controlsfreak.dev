@@ -182,8 +182,12 @@ keywords: cfm gpm delta t mbh btu tons sensible latent shr capacity
                         out water — a low SHR is a coil fighting a humid space.</li>
                 </ol>
                 <p class="ref-note">
-                    Atmospheric pressure is fixed at sea level. For an
-                    altitude-adjusted answer, the
+                    The formula steps above are written in the engine's
+                    native IP units (CFM, lb, Btu — the ASHRAE IP
+                    formulation); in metric the tool converts at the display
+                    boundary, so the inputs and results you see are exact
+                    equivalents of the same IP math. Atmospheric pressure is
+                    fixed at sea level. For an altitude-adjusted answer, the
                     <a href="/tools/psychrometric-chart.html">psychrometric chart</a>
                     carries an altitude input.
                 </p>
@@ -304,7 +308,8 @@ keywords: cfm gpm delta t mbh btu tons sensible latent shr capacity
                 <p class="ref-note">
                     This is the inverse of the Capacity tab — feed a leaving
                     state from here into that tab and the capacities come back
-                    out.
+                    out. As on that tab, the formula steps are IP-native; metric
+                    values convert at the display boundary.
                 </p>
             </section>
         </div>

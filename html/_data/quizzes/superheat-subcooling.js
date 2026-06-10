@@ -43,11 +43,11 @@ module.exports = [
     {
         type: 'numeric',
         id: 'superheat-calc',
-        prompt: 'A suction-line thermometer reads 48 °F. The refrigerant\'s P-T table gives a dew temperature of 40 °F at the measured suction pressure. What\'s the superheat, in °F?',
+        prompt: 'A suction-line thermometer reads 48 °F (8.9 °C). The refrigerant\'s P-T table gives a dew temperature of 40 °F (4.4 °C) at the measured suction pressure. What\'s the superheat, in °F, in °F?',
         answer: 8,
         tolerance: 0.5,
         unit: '°F',
-        explain: 'superheat = line T − dew T = 48 − 40 = 8 °F. The suction-line vapor is 8 degrees warmer than the saturation temperature — a healthy, modest superheat for a typical system. Both the gauge and the thermometer have to agree on units (°F here) for the subtraction to mean anything.',
+        explain: 'superheat = line T − dew T = 48 − 40 = 8 °F (in SI: 8.9 − 4.4 = 4.5 °C). The suction-line vapor is 8 degrees warmer than the saturation temperature — a healthy, modest superheat for a typical system. Both the gauge and the thermometer have to agree on units (°F here) for the subtraction to mean anything.',
         learnMore: { href: '/education/superheat-subcooling.html#definitions', label: 'Superheat & Subcooling — Two measurements' },
         tags: ['refrigeration', 'superheat']
     },
@@ -79,13 +79,13 @@ module.exports = [
     {
         type: 'gotcha',
         id: 'high-superheat-starved',
-        prompt: 'A running unit shows a superheat of 50 °F — far above any normal target. The subcooling is also low. Which direction does this point?',
-        snippet: '<pre class="quiz-snippet">superheat:   50 °F   (target ~ 10 °F)\nsubcooling:  low\nsymptom:     unit underperforming</pre>',
+        prompt: 'A running unit shows a superheat of 50 °F (27.8 °C) — far above any normal target. The subcooling is also low. Which direction does this point?',
+        snippet: '<pre class="quiz-snippet">superheat:   50 °F / 27.8 °C   (target ~ 10 °F / 5.6 °C)\nsubcooling:  low\nsymptom:     unit underperforming</pre>',
         choices: [
             { id: 'a', text: 'Overcharge — too much refrigerant in the system.' },
             { id: 'b', text: 'A starved evaporator — not enough refrigerant reaching the coil. With low subcooling too, undercharge is the leading suspect.', correct: true },
             { id: 'c', text: 'Floodback — liquid reaching the compressor.' },
-            { id: 'd', text: 'Nothing — 50 °F superheat is normal at light load.' }
+            { id: 'd', text: 'Nothing — 50 °F (27.8 °C) superheat is normal at light load.' }
         ],
         explain: 'High superheat means the coil is starved: too little refrigerant boiling in the evaporator, so most of the coil carries superheated vapor instead of boiling liquid. Causes are undercharge, a restricted liquid line (clogged filter-drier), or a metering device underfeeding. Low subcooling alongside it tilts the read toward undercharge — you\'d confirm with discharge pressure before adding refrigerant.',
         learnMore: { href: '/education/superheat-subcooling.html#abnormal', label: 'Superheat & Subcooling — What abnormal readings tell you' },
