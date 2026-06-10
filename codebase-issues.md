@@ -3446,7 +3446,7 @@ setup-node@v5 work; `indexnow.yml` only fires on push to `main`, so its YAML
 was eyeballed (and can be `workflow_dispatch`-ed once post-merge to confirm
 the diff range still resolves).
 
-### 80. `dew-point-calculator`'s `.dew-verdict` overlaps the shared `.status-pill` base
+### 80. `dew-point-calculator`'s `.dew-verdict` overlaps the shared `.status-pill` base *(addressed 2026-06-10)*
 
 Surfaced during the #73 status-pill consolidation (2026-06-09). With the
 four-tool pill chrome now centralized as `.status-pill`,
@@ -3468,6 +3468,13 @@ a future palette retune to the pill face would silently skip dew-point.
 `class="status-pill dew-verdict"` and reduce `.dew-verdict` to just the
 deltas (pad override, `.ok` text-bright, the `.edge` state), so the base
 stays single-sourced. Otherwise leave as a documented variant.
+
+**Resolution (2026-06-10).** Refactored exactly per the recipe:
+markup and the three JS className writes carry
+`status-pill dew-verdict <state>`, and the page-local block is down to
+three delta rules (pad, `.ok` text-bright, `.edge`); `.warn` now comes
+from the base. The styles.css block comment and the CLAUDE.md
+status-pill bullet name dew-point as the ride-the-base variant.
 
 ### 81. Light-theme accent tokens fail AA as foreground text across practice, chrome, and status pills
 

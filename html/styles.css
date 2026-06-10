@@ -3017,7 +3017,9 @@ p.ref-note.compact {
    above — that's a single static warn callout with a left rule; this is a
    stateful inline pill. Shared by economizer-ratio, air-mixing,
    coil-sizing, and refrigerant-pt (each formerly carried its own
-   page-local copy — .er-feas / .am-status / .cs-status / .rf-status). ── */
+   page-local copy — .er-feas / .am-status / .cs-status / .rf-status);
+   dew-point-calculator rides the base with page-local deltas
+   (.dew-verdict — pad, .ok brightness, amber .edge state). ── */
 .status-pill {
     margin-top: 1rem;
     padding: 0.5rem 0.75rem;
