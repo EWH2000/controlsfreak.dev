@@ -68,23 +68,14 @@ keywords: dewpoint wet bulb wbt RH humidity grains enthalpy condensation coil sw
         .dew-seg-btn:hover { color: var(--text); }
         .dew-seg-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 
-        /* Coil-verdict pill — a variant of the shared .status-pill (wider
-           pad, brighter .ok text, and an amber .edge state in place of
-           .error for the near-the-dew-point caution). */
-        .dew-verdict {
-            margin-top: 1rem;
-            padding: 0.55rem 0.8rem;
-            border-radius: var(--rail);
-            font-family: var(--mono);
-            font-size: 0.82rem;
-            line-height: 1.5;
-            border: 1px solid var(--border);
-            background: var(--surface-2);
-            color: var(--text);
-        }
-        .dew-verdict.ok   { border-color: var(--accent); background: var(--accent-dim); color: var(--text-bright); }
-        .dew-verdict.warn { border-color: var(--heat);   color: var(--heat); }
-        .dew-verdict.edge { border-color: var(--amber);  color: var(--amber); }
+        /* Coil-verdict pill — rides the shared .status-pill base; only the
+           deltas live here (wider pad, brighter .ok text, and an amber
+           .edge state in place of .error for the near-the-dew-point
+           caution). .warn comes from the base unchanged.
+           (codebase-issues #80) */
+        .dew-verdict      { padding: 0.55rem 0.8rem; }
+        .dew-verdict.ok   { color: var(--text-bright); }
+        .dew-verdict.edge { border-color: var(--amber); color: var(--amber); }
     </style>
 {% endblock %}
 
@@ -171,7 +162,7 @@ keywords: dewpoint wet bulb wbt RH humidity grains enthalpy condensation coil sw
                     <span class="ps-value muted" id="dew-out-h">—</span>
                 </div>
 
-                <div class="dew-verdict" id="dew-verdict" hidden></div>
+                <div class="status-pill dew-verdict" id="dew-verdict" hidden></div>
 
                 <div class="btn-row">
                     <button class="copy-btn" id="dew-copy">Copy dew point</button>
@@ -289,13 +280,13 @@ keywords: dewpoint wet bulb wbt RH humidity grains enthalpy condensation coil sw
             const margin = Math.abs(U.display.deltaTemp(marginF)).toFixed(1) + ' ' + U.suffix.deltaTemp();
             v.hidden = false;
             if (marginF > 0.5) {
-                v.className = 'dew-verdict ok';
+                v.className = 'status-pill dew-verdict ok';
                 v.textContent = '✓ Leaving ' + margin + ' below dew point — the coil is pulling the air below the entering dew point, so it’s wringing out moisture. (Any surface this cold would sweat.)';
             } else if (marginF < -0.5) {
-                v.className = 'dew-verdict warn';
+                v.className = 'status-pill dew-verdict warn';
                 v.textContent = '⚠ Leaving ' + margin + ' above dew point — the air never reaches saturation, so you’re getting little to no latent removal. Space humidity will ride up.';
             } else {
-                v.className = 'dew-verdict edge';
+                v.className = 'status-pill dew-verdict edge';
                 v.textContent = '≈ Leaving right at the dew point — the onset of condensation; barely any latent removal either way.';
             }
         }

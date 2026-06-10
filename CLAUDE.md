@@ -554,8 +554,9 @@ section headers).
   air-mixing / coil-sizing / refrigerant-pt). Reach for the pill when a
   tool reports a multi-state verdict, the callout for a single failure
   line. A page needing a near-pill variant (e.g. dew-point-calculator's
-  amber `.edge` state) keeps it page-local rather than growing
-  `.status-pill` a tool-specific state.
+  amber `.edge` state) stacks page-local deltas on the shared base
+  (`class="status-pill dew-verdict"`) rather than growing
+  `.status-pill` a tool-specific state or forking the base.
 - **Prose typography utility classes are element-qualified**
   (`p.bit-hint`, `p.pid-note`, `p.ref-note`, `p.tool-preamble`).
   The `p` is load-bearing — it ties `.tool-body p` on specificity
