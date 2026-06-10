@@ -591,6 +591,15 @@ nav: home
         const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
         const reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+        // The model runs canonical °F; EVERY display string converts at
+        // paint time — owner decision 2026-06-10 (audit-2026-06 #5):
+        // the whole hero follows the units toggle, device LCDs included
+        // (this hero deliberately opts out of the equipment-register
+        // stays-canonical convention the pid-tuner uses).
+        const U = window.Units;
+        const tF = (f) => U.display.temp(f).toFixed(1);
+        const tU = () => U.suffix.temp();
+
         // userControl flips true on the first slider input: the auto-demo
         // stops stepping the setpoint and the loop chases the visitor's target.
         let sp = 55.0, sat = 55.0, ticksToStep = 5, userControl = false;
@@ -615,12 +624,12 @@ nav: home
 
         function paint() {
             const ao = Math.round(aoFor(sat, sp));
-            const satS = sat.toFixed(1), spS = sp.toFixed(1);
-            lcdSat.innerHTML = satS + '<small>°F</small>';
-            lcdSp.innerHTML  = spS + '<small>°F</small>';
+            const satS = tF(sat), spS = tF(sp);
+            lcdSat.innerHTML = satS + '<small>' + tU() + '</small>';
+            lcdSp.innerHTML  = spS + '<small>' + tU() + '</small>';
             lcdAo.innerHTML  = ao + '<small>%</small>';
-            treeSat.textContent = satS + ' °F';
-            treeSp.textContent  = spS + ' °F';
+            treeSat.textContent = satS + ' ' + tU();
+            treeSp.textContent  = spS + ' ' + tU();
             treeAo.textContent  = ao + ' %';
             aoFill.style.setProperty('--pct', ao + '%');
             aoPct.textContent = ao + '%';
@@ -628,31 +637,41 @@ nav: home
             linePv.setAttribute('points', pv);
             lineSp.setAttribute('points', ptsOf(spHist));
             area.setAttribute('points', pv + ' 300,54 0,54');
-            packetVal.textContent = satS + ' °F';
+            packetVal.textContent = satS + ' ' + tU();
             // Accessible / visible readout (not aria-live — the slider self-
             // announces via aria-valuetext, so this stays a quiet display).
-            if (readout) readout.textContent = 'supply air ' + satS + ' °F · valve ' + ao + ' %';
+            if (readout) readout.textContent = 'supply air ' + satS + ' ' + tU() + ' · valve ' + ao + ' %';
             // While auto-demoing, let the slider thumb track the stepping
-            // setpoint so it never looks stale; stop once the visitor grabs it.
+            // setpoint so it never looks stale; stop once the visitor grabs
+            // it. The slider VALUE stays canonical °F (its min/max/step are
+            // markup); only the spoken/visible strings convert.
             if (!userControl && spSlider) {
-                spSlider.value = spS;
-                spSlider.setAttribute('aria-valuetext', spS + ' °F');
-                if (spOut) spOut.textContent = spS + ' °F';
+                spSlider.value = sp.toFixed(1);
+                spSlider.setAttribute('aria-valuetext', spS + ' ' + tU());
+                if (spOut) spOut.textContent = spS + ' ' + tU();
             }
         }
 
         for (let i = 0; i < N + 6; i++) advance();      // prefill a realistic recent trace
         paint();                                        // static first frame
 
+        // Units flip mid-visit: repaint every string (and the slider's
+        // spoken value) in the new system — the model itself never moves.
+        U.onChange(function () {
+            if (spSlider) spSlider.setAttribute('aria-valuetext', tF(sp) + ' ' + tU());
+            if (spOut && userControl) spOut.textContent = tF(sp) + ' ' + tU();
+            paint();
+        });
+
         // Wire the slider regardless of reduced-motion — it's the operable
         // part and must work even when the animation loop doesn't run.
         if (spSlider) {
-            spSlider.setAttribute('aria-valuetext', sp.toFixed(1) + ' °F');
+            spSlider.setAttribute('aria-valuetext', tF(sp) + ' ' + tU());
             spSlider.addEventListener('input', function () {
                 sp = parseFloat(spSlider.value);
                 userControl = true;
-                if (spOut) spOut.textContent = sp.toFixed(1) + ' °F';
-                spSlider.setAttribute('aria-valuetext', sp.toFixed(1) + ' °F');
+                if (spOut) spOut.textContent = tF(sp) + ' ' + tU();
+                spSlider.setAttribute('aria-valuetext', tF(sp) + ' ' + tU());
                 if (reduce) {                            // no loop running — snap and record one sample
                     sat = sp;
                     satHist.push(sat); if (satHist.length > N) satHist.shift();

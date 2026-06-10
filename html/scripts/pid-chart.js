@@ -105,7 +105,21 @@ function drawPidChart(canvas, sim, opts) {
     ctx.lineWidth = 1;
 
     if (isFull) {
-        // gridlines + axis labels
+        // gridlines + axis labels. The y values are CANONICAL (°F /
+        // in. w.c.); when the page passes opts.procKey and the units
+        // toggle is metric, tick labels convert at draw time and the
+        // axis carries a unit tag — pre-fix the same physical value
+        // read "0.78" on the chart and "194 Pa" in the metrics row
+        // with nothing tying them together (codebase-issues #91).
+        const quantity = opts.procKey === 'fast' ? 'staticPressure' : 'temp';
+        const haveUnits = typeof Units !== 'undefined' && opts.procKey;
+        const tickVal = (v) => {
+            if (!haveUnits) return v.toFixed(dec);
+            const dv = Units.display[quantity](v);
+            const ddec = Units.current() === 'us' ? dec
+                : (quantity === 'staticPressure' ? 0 : 1);
+            return dv.toFixed(ddec);
+        };
         ctx.font = "10px 'IBM Plex Mono', monospace";
         ctx.strokeStyle = cBorder;
         ctx.fillStyle = cDim;
@@ -114,7 +128,13 @@ function drawPidChart(canvas, sim, opts) {
             const yy = Y(v);
             ctx.beginPath(); ctx.moveTo(padL, yy); ctx.lineTo(padL + w, yy); ctx.stroke();
             ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
-            ctx.fillText(v.toFixed(dec), padL - 6, yy);
+            ctx.fillText(tickVal(v), padL - 6, yy);
+        }
+        if (haveUnits) {
+            // Unit tag inside the plot's top-left, mirroring the SP tag
+            // at top-right.
+            ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+            ctx.fillText(Units.suffix[quantity](), padL + 4, padT + 2);
         }
         for (let i = 0; i <= 4; i++) {
             const tt = (i / 4) * win;
