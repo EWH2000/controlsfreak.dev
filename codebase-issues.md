@@ -3097,11 +3097,27 @@ shadow trees reliably in Chromium (some paths return length 0,
 others throw). Without engine-driven motion the gutter art
 becomes static decoration — which kills half the value.
 
-**Why it matters:** for now, the IntersectionObserver-gated
+**Why it matters:** ~~for now, the IntersectionObserver-gated
 per-frame work in `flow-engine.js` (only motifs in the viewport
-churn pulses) keeps the CPU cost negligible. The DOM weight
-itself is the only measurable cost — and even that gzips well
-since the repeated markup compresses heavily.
+churn pulses) keeps the CPU cost negligible~~ — *correction
+(2026-06-10, audit-2026-06 #31): that gating applied to pulses
+only. Flow-particle pools ticked every frame regardless of
+visibility or the gutter's `display:none`, and the measured idle
+cost was ~100 % of the main thread at desktop widths (552
+particles on a chrome-only page) and 4.5 s of script per 10 s on a
+phone moving circles that never painted. Fixed in the #31 PR: flow
+pools are now matchMedia-gated (no pools built while the gutter is
+hidden) and IntersectionObserver-gated (offscreen pools don't
+tick).* The DOM weight itself gzips well since the repeated markup
+compresses heavily.
+
+**Measured baseline (2026-06-09 audit, first numbers for the
+revisit trigger):** heaviest page 27.5 KB gzipped — nowhere near
+the 100 KB line, so the deferral stands. 80.7 % of
+signal-scaling's raw HTML is schematic-bg markup; stripping it
+saved +268 ms FCP / +654 ms DCL at 4× CPU throttle. The real cost
+of the motif library was #31's runtime animation (now gated), not
+bytes.
 
 **Decision (2026-05-23):** defer / accept. The standard fix is
 blocked by a Chromium-specific limitation that's outside our
