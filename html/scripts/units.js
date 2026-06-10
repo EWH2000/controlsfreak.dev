@@ -54,8 +54,17 @@
     const grPerLb_to_gPerKg = function (w) { return w * (1000 / 7000); };
     const gPerKg_to_grPerLb = function (w) { return w * 7; };
 
-    const btuPerLb_to_kJPerKg = function (h) { return h * 2.326; };
-    const kJPerKg_to_btuPerLb = function (h) { return h / 2.326; };
+    // Moist-air specific enthalpy. The scale is 2.326 kJ/kg per Btu/lb,
+    // but the two systems zero at different states: IP enthalpy is 0 for
+    // dry air at 0 °F, SI for dry air at 0 °C — a constant 0.240·32 ≈
+    // 7.686 Btu/lb (17.88 kJ/kg) apart (ASHRAE SI convention). State
+    // enthalpies must shift datums; differences (Δh) must NOT — the
+    // offset cancels — so Δh gets its own pure-scale pair below, same
+    // split as temp vs deltaTemp.
+    const btuPerLb_to_kJPerKg = function (h) { return (h - 7.686) * 2.326; };
+    const kJPerKg_to_btuPerLb = function (h) { return h / 2.326 + 7.686; };
+    const dBtu_to_dkJ = function (dh) { return dh * 2.326; };
+    const dkJ_to_dBtu = function (dh) { return dh / 2.326; };
 
     const ft3PerLb_to_m3PerKg = function (v) { return v * 0.0624280; };
     const m3PerKg_to_ft3PerLb = function (v) { return v / 0.0624280; };
@@ -67,7 +76,7 @@
     const m_to_ft = function (x) { return x / 0.3048; };
 
     // Airflow — user picked m³/h over L/s (closer to European AHU specs).
-    // 1 CFM = 0.471948 L/s = 1.699011 m³/h.
+    // 1 CFM = 0.471947 L/s = 1.699011 m³/h.
     const cfm_to_m3PerH = function (q) { return q * 1.699010796; };
     const m3PerH_to_cfm = function (q) { return q / 1.699010796; };
 
@@ -102,6 +111,7 @@
         deltaTemp:      function () { return isUS() ? '°F'   : '°C'; },
         humidityRatio:  function () { return isUS() ? 'gr/lb'    : 'g/kg'; },
         enthalpy:       function () { return isUS() ? 'Btu/lb'   : 'kJ/kg'; },
+        deltaEnthalpy:  function () { return isUS() ? 'Btu/lb'   : 'kJ/kg'; },
         specificVolume: function () { return isUS() ? 'ft³/lb' : 'm³/kg'; },
         pressure:       function () { return isUS() ? 'psia'     : 'kPa'; },
         altitude:       function () { return isUS() ? 'ft'       : 'm'; },
@@ -119,6 +129,7 @@
         deltaTemp:      function (df) { return isUS() ? df : dF2dC(df); },
         humidityRatio:  function (w)  { return isUS() ? w  : grPerLb_to_gPerKg(w); },
         enthalpy:       function (h)  { return isUS() ? h  : btuPerLb_to_kJPerKg(h); },
+        deltaEnthalpy:  function (dh) { return isUS() ? dh : dBtu_to_dkJ(dh); },
         specificVolume: function (v)  { return isUS() ? v  : ft3PerLb_to_m3PerKg(v); },
         pressure:       function (p)  { return isUS() ? p  : psia_to_kPa(p); },
         altitude:       function (a)  { return isUS() ? a  : ft_to_m(a); },
@@ -137,6 +148,7 @@
         deltaTemp:      { toCanonical: dC2dF,                   fromCanonical: dF2dC },
         humidityRatio:  { toCanonical: gPerKg_to_grPerLb,       fromCanonical: grPerLb_to_gPerKg },
         enthalpy:       { toCanonical: kJPerKg_to_btuPerLb,     fromCanonical: btuPerLb_to_kJPerKg },
+        deltaEnthalpy:  { toCanonical: dkJ_to_dBtu,             fromCanonical: dBtu_to_dkJ },
         specificVolume: { toCanonical: m3PerKg_to_ft3PerLb,     fromCanonical: ft3PerLb_to_m3PerKg },
         pressure:       { toCanonical: kPa_to_psia,             fromCanonical: psia_to_kPa },
         altitude:       { toCanonical: m_to_ft,                 fromCanonical: ft_to_m },
@@ -164,6 +176,7 @@
         deltaTemp:      function (x) { return isUS() ? x : dC2dF(x); },
         humidityRatio:  function (x) { return isUS() ? x : gPerKg_to_grPerLb(x); },
         enthalpy:       function (x) { return isUS() ? x : kJPerKg_to_btuPerLb(x); },
+        deltaEnthalpy:  function (x) { return isUS() ? x : dkJ_to_dBtu(x); },
         specificVolume: function (x) { return isUS() ? x : m3PerKg_to_ft3PerLb(x); },
         pressure:       function (x) { return isUS() ? x : kPa_to_psia(x); },
         altitude:       function (x) { return isUS() ? x : m_to_ft(x); },
