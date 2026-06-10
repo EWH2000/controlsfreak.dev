@@ -3612,6 +3612,10 @@ decision, not a bug fix.
 `og:url` to the clean URL form site-wide (one sweep + sitemap/PAGES
 fallout), or record in CLAUDE.md that the 307-through is accepted.
 
+**Resolution (2026-06-10):** owner accepted the 307-through; recorded
+in CLAUDE.md's `.html`-extension convention bullet with the revisit
+trigger (a Search Console canonical-confusion signal).
+
 ### 87. smoke.spec.js serializes ~154 s of the suite's ~196 test-seconds into one worker
 
 Cross-filed from `audit-2026-06.md` (tests polish, 2026-06-10).

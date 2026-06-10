@@ -193,7 +193,12 @@ and scrolls internally (see *Gotchas*).
   Worker (which redirects to the clean form). Asset references
   (`/styles.css`, `/scripts/…`) are absolute. The `html.11tydata.js`
   permalink override is what keeps this working — 11ty's pretty-URL
-  default would break it.
+  default would break it. **`canonical`/`og:url` deliberately carry
+  the `.html` form too**, so the declared URLs go through the Worker's
+  307 to the clean form — accepted 2026-06-10 (codebase-issues #86):
+  engines consolidate through the redirect fine, and aligning would
+  mean sweeping the metadata plumbing everything keys off. Revisit
+  only on a Search Console canonical-confusion signal.
 - **Indentation: 4 spaces** everywhere — HTML, CSS, JS, Nunjucks
   template syntax.
 - **ID naming: kebab-case site-wide.** Every `id="…"` is lowercase
