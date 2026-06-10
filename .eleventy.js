@@ -186,7 +186,7 @@ module.exports = function(eleventyConfig) {
             // leave top-level utility pages without any breadcrumb at all.
             items.push({ name: cleanTitle(title), url: canonical });
         }
-        return JSON.stringify({
+        return scriptSafeStringify({
             "@context": "https://schema.org",
             "@type": "BreadcrumbList",
             "itemListElement": items.map((item, i) => ({
@@ -204,11 +204,16 @@ module.exports = function(eleventyConfig) {
     // round-tripped value is byte-identical to the unescaped form once the
     // browser parses the JSON literal; this only affects the embedded HTML
     // representation. Used for the quiz pages' inline `const questions = …`
-    // injection (the same data is also emitted as FAQPage JSON-LD via
-    // faqPageJsonLd below — same safety story applies there too).
-    eleventyConfig.addFilter("safeScriptJson", (value) =>
-        JSON.stringify(value).replace(/</g, "\\u003c")
-    );
+    // injection AND by every JSON-LD filter in this file (breadcrumb,
+    // FAQPage, SoftwareApplication, TechArticle) — they all land inside
+    // inline <script> tags, so they all need the same escape
+    // (audit-2026-06 polish: three of the four previously used plain
+    // JSON.stringify while this comment claimed parity; the data is
+    // repo-committed frontmatter, so the exposure was author-self-XSS,
+    // but the invariant should hold by construction).
+    const scriptSafeStringify = (value) =>
+        JSON.stringify(value).replace(/</g, "\\u003c");
+    eleventyConfig.addFilter("safeScriptJson", scriptSafeStringify);
 
     // FAQPage JSON-LD for quiz pages. Each question in the bank becomes a
     // Question entity with an Answer that combines the correct choice (or
@@ -256,7 +261,7 @@ module.exports = function(eleventyConfig) {
         if (pairedLesson) {
             node.isPartOf = { "@type": "TechArticle", "@id": pairedLesson };
         }
-        return JSON.stringify(node);
+        return scriptSafeStringify(node);
     });
 
     // SoftwareApplication JSON-LD for tool pages — declares the per-tool
@@ -270,7 +275,7 @@ module.exports = function(eleventyConfig) {
     // when nav: tools AND not on the tools landing itself.
     eleventyConfig.addFilter("softwareApplicationJsonLd", (canonical, title, description) => {
         if (!canonical) return "";
-        return JSON.stringify({
+        return scriptSafeStringify({
             "@context": "https://schema.org",
             "@type": "SoftwareApplication",
             "name": cleanTitle(title),
@@ -311,7 +316,7 @@ module.exports = function(eleventyConfig) {
         if (pairedQuiz) {
             node.hasPart = { "@type": "FAQPage", "@id": pairedQuiz };
         }
-        return JSON.stringify(node);
+        return scriptSafeStringify(node);
     });
 
     return {
