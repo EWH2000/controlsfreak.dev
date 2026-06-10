@@ -267,12 +267,11 @@ test('psychrometric chart computes the AHU chain on load', async ({ page }) => {
 });
 
 test.describe('psychrometric chart — Cold range preset', () => {
-    // The preset persists in localStorage; clean up so other tests
-    // (including the on-load chart test above) see the default Standard.
-    test.afterEach(async ({ page }) => {
-        await page.goto('/tools/psychrometric-chart.html');
-        await page.evaluate(() => localStorage.removeItem('cf_psy_range'));
-    });
+    // No cleanup hook on purpose: Playwright gives every test its own
+    // browser context, so localStorage writes (cf_psy_range here) can't
+    // bleed between tests — the audit-2026-06 isolation probe verified
+    // this empirically, and the afterEach this comment used to justify
+    // was dead code teaching a wrong invariant.
 
     test('toggle switches active button + persists to localStorage', async ({ page }) => {
         const errors = watchErrors(page);
@@ -512,15 +511,10 @@ test('dew point calculator — default read, coil verdict, and wet-bulb toggle',
 });
 
 test.describe('thermistor behavioral', () => {
-    // The test below mutates the global units preference (persisted in
-    // localStorage as `cf_units`). Without an afterEach, a failed mid-
-    // test assertion would leave the worker in metric mode and bleed
-    // into every subsequent page test. Clear the key directly so the
-    // cleanup runs regardless of test outcome.
-    test.afterEach(async ({ page }) => {
-        await page.goto('/tools/thermistor-calculator.html');
-        await page.evaluate(() => localStorage.removeItem('cf_units'));
-    });
+    // The units flip below can't bleed into other tests: contexts are
+    // per-test, so each test starts with empty localStorage (verified
+    // empirically by the audit-2026-06 isolation probe — the afterEach
+    // that used to live here was dead code with an inverted rationale).
 
     test('thermistor calculator looks up a known reference value', async ({ page }) => {
         const errors = watchErrors(page);
@@ -549,7 +543,6 @@ test.describe('thermistor behavioral', () => {
         await page.click('.units-btn[data-units="metric"]');
         await expect(page.locator('#th-temp-lbl')).toHaveText('Temperature (°C)');
         expect(parseFloat(await page.locator('#th-temp').inputValue())).toBeCloseTo(10, 0);   // 50 °F ≈ 10 °C
-        // Units restore handled by the afterEach above — no manual click needed.
         expect(errors, 'thermistor behavioral should log no page / console errors').toEqual([]);
     });
 
@@ -1303,16 +1296,10 @@ test('practice landing — Modbus chip collapses sections + filters cards', asyn
 });
 
 test.describe('practice — modbus decoding quiz', () => {
-    // Quiz state lives in localStorage under cf_quiz_modbus-decoding_*.
-    // Clear after every test so subsequent runs (and the page-load smoke
-    // assertion above) start from a clean "Best: —" baseline.
-    test.afterEach(async ({ page }) => {
-        await page.goto('/practice/modbus-decoding.html');
-        await page.evaluate(() => {
-            ['best', 'best_total', 'best_time_ms', 'attempts', 'last_iso']
-                .forEach(k => localStorage.removeItem('cf_quiz_modbus-decoding_' + k));
-        });
-    });
+    // Quiz state lives in localStorage under cf_quiz_modbus-decoding_*,
+    // but no cleanup is needed: contexts are per-test, so every test
+    // (and the page-load smoke assertion above) starts from a clean
+    // "Best: —" baseline regardless (audit-2026-06 isolation probe).
 
     test('answers one correct + one wrong, completes 5 questions, persists best to localStorage', async ({ page }) => {
         const errors = watchErrors(page);
@@ -1465,4 +1452,75 @@ test('modbus function codes — CRC-16 hits the canonical check value and verifi
     await expect(page.locator('#mf-crc-verify')).toContainText('not the CRC');
 
     expect(errors, 'modbus CRC behavioral should log no errors').toEqual([]);
+});
+
+// ── audit-2026-06 #44: the only calculation tools with zero math
+// assertions — signal-scaling (the site's canonical tab-wiring
+// reference, i.e. the page most likely to be touched in a sweep),
+// valve-cv, and affinity-laws. All known values audit-verified.
+
+test('signal-scaling — known value, equal-bounds mute, 2-point solver', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('/tools/signal-scaling.html');
+
+    // 12 mA on a 4–20 mA / 0–100 span is exactly half scale.
+    await page.fill('#sig-val', '12');
+    await page.fill('#eu-min', '0');
+    await page.fill('#eu-max', '100');
+    await expect(page.locator('#scaling-out')).toContainText('50');
+
+    // Equal engineering bounds → 1/(max−min) is Infinity — the exact
+    // case the CLAUDE.md validate-and-mute bullet warns about.
+    await page.fill('#eu-max', '0');
+    await expect(page.locator('#scaling-out')).toHaveText('—');
+    await expect(page.locator('#ss-scaling-callout')).toBeVisible();
+
+    // 2-point solver: (4,0) and (20,100) → y = 6.25x − 25.
+    await page.click('[data-tab="slopeoffset"]');
+    await page.fill('#so-x1', '4');
+    await page.fill('#so-y1', '0');
+    await page.fill('#so-x2', '20');
+    await page.fill('#so-y2', '100');
+    await expect(page.locator('#so-slope')).toContainText('6.25');
+    await expect(page.locator('#so-offset')).toContainText('-25');
+
+    expect(errors, 'signal-scaling behavioral should log no errors').toEqual([]);
+});
+
+test('valve-cv — known Cv and the mute path', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('/tools/valve-cv.html');
+
+    // 10 GPM across 4 psi at SG 1: Cv = 10·√(1/4) = 5.0 (Kv ≈ 4.33).
+    await page.fill('#cv-flow', '10');
+    await page.fill('#cv-dp', '4');
+    await page.fill('#cv-sg', '1');
+    await expect(page.locator('#cv-out')).toContainText('5');
+    await expect(page.locator('#cv-kv')).toContainText('4.3');
+
+    // ΔP of zero can't size a valve — mute + callout.
+    await page.fill('#cv-dp', '0');
+    await expect(page.locator('#cv-out')).toHaveText('—');
+    await expect(page.locator('#cv-callout')).toBeVisible();
+
+    expect(errors, 'valve-cv behavioral should log no errors').toEqual([]);
+});
+
+test('affinity-laws — half speed gives 50/25/12.5%', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('/tools/affinity-laws.html');
+
+    // N₂/N₁ = 0.5: flow scales linearly (50), head with the square
+    // (12.5 from 50), power with the cube (1.25 from 10).
+    await page.fill('#af-s-n1', '60');
+    await page.fill('#af-s-n2', '30');
+    await page.fill('#af-s-q1', '100');
+    await page.fill('#af-s-h1', '50');
+    await page.fill('#af-s-p1', '10');
+    await expect(page.locator('#af-s-ratio')).toContainText('0.5');
+    await expect(page.locator('#af-s-q2')).toContainText('50');
+    await expect(page.locator('#af-s-h2')).toContainText('12.5');
+    await expect(page.locator('#af-s-p2')).toContainText('1.25');
+
+    expect(errors, 'affinity-laws behavioral should log no errors').toEqual([]);
 });

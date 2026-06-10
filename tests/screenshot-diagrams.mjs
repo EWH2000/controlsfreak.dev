@@ -28,6 +28,11 @@ const DIAGRAM_SELECTOR = [
     'svg.mb-svg',
     'svg.vfd-svg',
     'svg.lp-w-schematic',
+    // pid-tuner equipment scenes (audit-2026-06 #59). Three of the four
+    // carry class "hidden" at load — the capture loop un-hides each
+    // before shooting (a naive selector addition makes the run FAIL
+    // loudly: locator.screenshot times out on hidden elements).
+    'svg.pid-eq-scene',
 ].join(', ');
 
 async function fetchSitemapUrls() {
@@ -71,7 +76,23 @@ async function main() {
         for (let i = 0; i < svgs.length; i++) {
             const id = (await svgs[i].getAttribute('id')) || `idx${i}`;
             const out = join(OUT_DIR, `audit-${pageSlug}-${id}.png`);
-            await svgs[i].screenshot({ path: out });
+            // Scene-swapped diagrams (pid-eq-*) hide all but the active
+            // scene — un-hide for the shot, restore after, so every
+            // family member gets audited, not just the default scene.
+            const wasHidden = await svgs[i].evaluate((el) => {
+                const hidden = el.classList.contains('hidden');
+                if (hidden) el.classList.remove('hidden');
+                return hidden;
+            });
+            // animations: 'disabled' pins CSS entrance animations to
+            // their end state — the .tool-card fadeUp could otherwise
+            // pass the stability check at opacity ~0 and save a ghost
+            // frame (1 of 39 captures in the audit run; that's the
+            // verified mechanism, so no settle-wait).
+            await svgs[i].screenshot({ path: out, animations: 'disabled' });
+            if (wasHidden) {
+                await svgs[i].evaluate((el) => el.classList.add('hidden'));
+            }
             console.log(out);
             saved++;
         }
