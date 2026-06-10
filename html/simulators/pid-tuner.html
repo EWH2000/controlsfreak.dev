@@ -34,7 +34,10 @@ nav: simulators
         .pid-eq-act-fill  { fill: var(--accent); }
         .pid-eq-damper-blade { stroke: var(--accent); stroke-width: 3; stroke-linecap: round; }
         .pid-eq-sensor-dot { fill: var(--surface); stroke: var(--accent); stroke-width: 2; }
-        .pid-eq-cap   { font-family: var(--mono); font-size: 8.5px; fill: var(--text-dim); letter-spacing: 0.06em; text-transform: uppercase; }
+        /* 11px in the 360-unit viewBox ≈ 8.2px effective on a 375 phone —
+           8.5px scaled to an unreadable ~6.3px there, and the captions are
+           what tie each scene to real equipment (audit-2026-06 polish). */
+        .pid-eq-cap   { font-family: var(--mono); font-size: 11px; fill: var(--text-dim); letter-spacing: 0.06em; text-transform: uppercase; }
         .pid-eq-flow  { fill: none; stroke: none; }   /* invisible particle track for FlowEngine */
     </style>
 {% endblock %}
@@ -256,7 +259,11 @@ nav: simulators
 
                 <div class="pid-eq-feedback">
                     <span class="pid-eq-fb-line"></span>
-                    <span>← feedback · PV to controller</span>
+                    <!-- The arrow glyph is CSS content so the ≤700px
+                         stacked layout can point it up instead of left
+                         (audit-2026-06 polish: the strip stacks
+                         top-to-bottom there, so "←" mapped to nothing). -->
+                    <span><span class="pid-eq-fb-arrow" aria-hidden="true"></span>feedback · PV to controller</span>
                 </div>
             </div>
 
