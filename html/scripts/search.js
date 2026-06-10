@@ -77,6 +77,15 @@
         return s in SECTION_ORDER ? SECTION_ORDER[s] : 4;
     }
 
+    // Score-level section boost (owner decision, codebase-issues #82):
+    // the palette's stated job is one keystroke to any TOOL, so tools
+    // and simulators get a flat bonus instead of the old tie-break-only
+    // ordering — "superheat" now puts the calculator above the
+    // lesson/quiz pair (97+35 vs 125). Sized to about one title-token's
+    // worth: a strong lesson title match still beats a weak tool
+    // keyword match.
+    const SECTION_BONUS = { tools: 35, simulators: 20 };
+
     // Short tokens (≤3 chars) must match at a word START — a bare
     // substring match on "fla" surfaced cloudFLAre and similar mid-word
     // noise while the pages that actually cover FLA were unreachable
@@ -117,7 +126,7 @@
                 if (ts === 0) { ok = false; break; }
                 score += ts;
             }
-            if (ok) scored.push({ it: it, score: score });
+            if (ok) scored.push({ it: it, score: score + (SECTION_BONUS[it.section] || 0) });
         }
         scored.sort((a, b) =>
             b.score - a.score ||

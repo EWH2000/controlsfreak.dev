@@ -135,3 +135,27 @@ test('field-vocabulary queries resolve, short tokens skip mid-word noise', async
 
     expect(errors, 'search vocabulary should log no errors').toEqual([]);
 });
+
+// codebase-issues #82: tools carry a score-level section bonus, so a
+// tool-shaped query puts the tool first — "superheat" used to rank the
+// calculator third, under the lesson and quiz.
+test('tool-shaped queries rank the tool first; lesson-only queries unaffected', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('/');
+    await page.keyboard.press('/');
+
+    const first = async (q) => {
+        await page.fill('#palette-input', q);
+        await expect(page.locator('#palette-status')).not.toHaveText('No matches');
+        return page.locator('.palette-result').first().locator('.palette-result-title').textContent();
+    };
+
+    expect(await first('superheat')).toContain('Calculator');
+    expect(await first('psychrometric')).toContain('Chart');
+    // No tool covers hydronics directly — the lesson still leads.
+    expect(await first('hydronic')).toContain('Hydronic');
+    const tag = await page.locator('.palette-result').first().locator('.palette-result-tag').textContent();
+    expect(tag).toBe('Lesson');
+
+    expect(errors, 'section-bonus ranking should log no errors').toEqual([]);
+});
