@@ -3521,6 +3521,14 @@ tied terms is an editorial ranking decision.
 itself (e.g. a flat tools/simulators bonus) instead of tie-break-only.
 The #17 word-boundary fix (shipped separately) is independent of this.
 
+**Resolution (2026-06-10):** owner said yes — SECTION_BONUS
+{tools: 35, simulators: 20} folds into the score (sized to one
+title-token's worth so a strong lesson title match still beats a weak
+tool keyword match). Verified across seven representative queries:
+"superheat"/"psychrometric"/"modbus"/"staging" now lead with the
+tool/simulator; "hydronic"/"balancing" (no tool) still lead with the
+lesson. Pinned in nav-search.spec.js.
+
 ### 83. No tool state survives a reload — preset-class selects could persist under the existing `cf_` convention
 
 Cross-filed from `audit-2026-06.md` #18 (2026-06-10, verifier:
