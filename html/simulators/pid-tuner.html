@@ -306,6 +306,7 @@ nav: simulators
                     "Fast loop / slow loop" is loose shorthand for the dominant time constant — roughly how long the process takes to get most of the way to a new value after the output changes. Loops with longer time constants and more dead time need gentler tuning and benefit more from integral; fast loops can take more aggressive gain. The Equipment selector picks one of these buckets:
                 </p>
 
+                <div class="table-scroll">
                 <table class="ref-table">
                     <thead>
                         <tr><th>Speed</th><th>Time constant (τ)</th><th>Dead time</th><th>Typical HVAC examples</th></tr>
@@ -331,6 +332,7 @@ nav: simulators
                         </tr>
                     </tbody>
                 </table>
+                </div>
 
                 <p class="pid-note">
                     The ratio that matters most for controllability is dead&nbsp;time&nbsp;÷&nbsp;τ. Below ~0.2 the loop is well-behaved; up around 0.5 you need to be careful (slower gain, longer reset); past 1.0 you're usually fighting transport delay, and a Smith predictor or feedforward starts to look attractive. The first three buckets above all sit comfortably under 0.2, which is most HVAC — though toward the slow end of a bucket's range the ratio climbs. The fourth, <strong>reheat at the end of a long run</strong> (dead&nbsp;÷&nbsp;τ&nbsp;≈&nbsp;0.5), is the one to pick when you want to <em>see</em> the symptoms in the next table: crank the gain on it and the loop overshoots, then rings, then won't settle — the "too much P" failure the well-behaved buckets never quite reach.

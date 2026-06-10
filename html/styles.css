@@ -1192,16 +1192,17 @@ footer {
     50%      { opacity: 0.55; }
 }
 
-/* ── RESPONSIVE ── */
+/* ── RESPONSIVE ──
+   Source order is load-bearing: an override in here only wins against
+   base rules defined ABOVE this block (equal specificity — last wins).
+   Components defined later in the file keep their narrow-width
+   overrides in a per-component @media block next to their base rules
+   (.pid-controls, .sim-canvas-wrap, .sim-legend, .ref-table); do the
+   same for any new late-defined component instead of adding it here. */
 @media (max-width: 620px) {
     .form-row        { grid-template-columns: 1fr; }
     .bit-grid        { grid-template-columns: repeat(8, 1fr); }
     .bit-readouts    { grid-template-columns: 1fr 1fr; }
-    .pid-controls    { grid-template-columns: 1fr; }
-    .ref-table       { font-size: 0.76rem; }
-    .ref-table th, .ref-table td { padding: 0.5rem 0.5rem; }
-    .sim-canvas-wrap canvas { height: 200px; }
-    .sim-legend      { gap: 1rem; }
     .site-nav        { padding: 0.7rem 1rem; }
     main             { padding-left: 1rem; padding-right: 1rem; }
     .hero            { margin-left: 1rem; margin-right: 1rem; width: auto; }
@@ -1372,6 +1373,12 @@ body.has-fullscreen-tool main { z-index: 400; }
     gap: 1.25rem 1.5rem;
     margin-bottom: 1.25rem;
 }
+/* Phone: one full-width column so the three tuning sliders get real
+   track length + hit height. Lives here, not in the RESPONSIVE block —
+   that block sits earlier in the file and would lose on source order. */
+@media (max-width: 620px) {
+    .pid-controls { grid-template-columns: 1fr; }
+}
 .slider-field { display: flex; flex-direction: column; gap: 0.45rem; }
 .slider-head {
     display: flex;
@@ -1505,6 +1512,9 @@ input[type="range"]:focus-visible::-moz-range-thumb {
     margin-bottom: 0.75rem;
 }
 .sim-canvas-wrap canvas { display: block; width: 100%; height: 260px; }
+@media (max-width: 620px) {
+    .sim-canvas-wrap canvas { height: 200px; }
+}
 /* PID playhead — a no-padding relative box so the overlay cursor canvas
    covers #pid-canvas with a shared (0,0) origin (no border/padding offset
    math). The overlay is sized to the chart's box; its backing buffer is set
@@ -1612,6 +1622,9 @@ input[type="range"]:focus-visible::-moz-range-thumb {
 }
 .sim-legend .swatch.pv { border-top: 2px solid var(--accent); }
 .sim-legend .swatch.sp { border-top: 2px dashed var(--text-dim); }
+@media (max-width: 620px) {
+    .sim-legend { gap: 1rem; }
+}
 
 .readout-value.warn { color: var(--red); }
 
@@ -1638,6 +1651,15 @@ input[type="range"]:focus-visible::-moz-range-thumb {
 .ref-table tbody tr:hover { background: var(--blue-dim); }
 .ref-table td:first-child { color: var(--text-bright); }
 .ref-table tbody tr:last-child td { border-bottom: none; }
+@media (max-width: 620px) {
+    .ref-table       { font-size: 0.76rem; }
+    .ref-table th, .ref-table td { padding: 0.5rem 0.5rem; }
+}
+/* Scroll guard for tables whose min-content width can exceed a narrow
+   card (e.g. the pid-tuner spoiler's 4-column reference at <375px
+   viewports): the wrapper scrolls instead of the table slicing through
+   the card border. Inert (no scrollbar) wherever the table fits. */
+.table-scroll { overflow-x: auto; }
 
 /* ── CALLOUT CARDS (PID-term cards, worked-example asides, discovery
    prompts, Easter-egg reveals — same visual treatment everywhere) ── */
