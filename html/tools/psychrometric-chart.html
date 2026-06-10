@@ -497,7 +497,7 @@ keywords: humidity enthalpy wet bulb dew point dewpoint grains mixing coil AHU O
         const dispW  = lbPerLb   => U.display.humidityRatio(lbPerLb * GR_PER_LB).toFixed(1);
         const dispdW = lbPerLb   => U.display.humidityRatio(lbPerLb * GR_PER_LB).toFixed(1);
         const dispH  = btuPerLb  => U.display.enthalpy(btuPerLb).toFixed(U.current() === 'us' ? 2 : 1);
-        const dispdH = btuPerLb  => U.display.enthalpy(btuPerLb).toFixed(U.current() === 'us' ? 2 : 1);
+        const dispdH = btuPerLb  => U.display.deltaEnthalpy(btuPerLb).toFixed(U.current() === 'us' ? 2 : 1);
         const dispV  = ft3PerLb  => U.display.specificVolume(ft3PerLb).toFixed(U.current() === 'us' ? 3 : 4);
         const dispP  = psia      => U.display.pressure(psia).toFixed(U.current() === 'us' ? 3 : 2);
         const dispAlt = ft       => Math.round(U.display.altitude(ft)).toLocaleString();

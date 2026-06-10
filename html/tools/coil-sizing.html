@@ -466,7 +466,7 @@ nav: tools
             } else {
                 mute('cs-cap-dw');
             }
-            setLive('cs-cap-dh', signed(U.display.enthalpy(res.dH), 1) + ' ' + hU());
+            setLive('cs-cap-dh', signed(U.display.deltaEnthalpy(res.dH), 1) + ' ' + hU());
 
             const mDot = cfm * 60 / entState.v;          // canonical lb dry air/h
             // Airflow → per-hour basis differs by unit: CFM is per-minute
