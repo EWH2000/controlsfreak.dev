@@ -1078,6 +1078,10 @@ p.bit-hint {
     cursor: pointer;
     transition: all 0.12s;
     user-select: none;
+    /* The cells are real <button>s now (keyboard/AT access) — undo the
+       UA button box so the grid metrics don't shift. */
+    padding: 0;
+    font: inherit;
 }
 .bit:hover { border-color: var(--text-dim); }
 .bit.on { background: var(--accent-dim); border-color: var(--accent); }
@@ -1424,6 +1428,23 @@ input[type="range"]::-moz-range-thumb {
     box-shadow: 0 0 0 1px var(--accent);
 }
 
+/* ── SCREEN-READER-ONLY UTILITY ──
+   Text for assistive tech that must not paint — the standard
+   clip-rect recipe (display:none / visibility:hidden would silence
+   the screen reader too). First consumer: the pid-tuner's throttled
+   live region for its three metrics readouts. */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
 /* ── FOCUS INDICATORS ──
    Every custom-styled interactive with a :hover needs a paired
    :focus-visible — the browser default outline is suppressed by the
@@ -1449,6 +1470,10 @@ input[type="range"]::-moz-range-thumb {
 .quiz-action:focus-visible,
 .quiz-reset-best:focus-visible,
 .quiz-restart-now:focus-visible,
+.bit:focus-visible,
+.psy-pill:focus-visible,
+#th-rt-scroll:focus-visible,
+#fbe-canvas:focus-visible,
 .pid-spoiler > summary:focus-visible {
     outline: 2px solid var(--accent);
     outline-offset: 3px;   /* v2.0.0 — was 2px; lifted so the accent ring no longer kisses the border on .nav-card */

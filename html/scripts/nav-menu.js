@@ -99,6 +99,7 @@
     const burger = document.getElementById('nav-hamburger');
     function setNavOpen(open) {
         if (!nav || !burger) return;
+        const wasOpen = nav.classList.contains('nav-open');
         nav.classList.toggle('nav-open', open);
         // Lock page scroll while the sheet is open so the only thing that
         // scrolls is the sheet itself (the CSS lock is mobile-scoped).
@@ -106,6 +107,22 @@
         burger.setAttribute('aria-expanded', open ? 'true' : 'false');
         burger.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
         if (!open) closeAll();   // collapsing the bar also closes any sub-menu
+
+        // Focus management (audit-2026-06 #6): the sheet renders BEFORE
+        // the burger in DOM order, so forward Tab from the burger lands
+        // in the page *behind* the scroll-locked sheet — focus becomes
+        // invisible and the page won't scroll to it. Move focus to the
+        // first sheet item on open; on close, hand it back to the burger
+        // if it was inside the (now display:none) sheet or already lost.
+        if (open && !wasOpen) {
+            const first = document.querySelector('#site-nav-links a, #site-nav-links button');
+            if (first) first.focus();
+        } else if (!open && wasOpen) {
+            const a = document.activeElement;
+            if (!a || a === document.body || a.closest('#site-nav-links')) {
+                burger.focus();
+            }
+        }
     }
     if (burger) {
         burger.addEventListener('click', () =>

@@ -288,6 +288,11 @@ nav: simulators
                     <div class="readout-value" id="pid-err">—</div>
                 </div>
             </div>
+            <!-- Throttled live region: the visible readouts above change on
+                 every slider input event, far too chatty to announce raw.
+                 The IIFE composes one summary sentence here, debounced until
+                 the tuning has been at rest for a beat (audit-2026-06 #7). -->
+            <p class="sr-only" id="pid-sr-status" aria-live="polite"></p>
 
             <!-- ── Loop details (spoiler) — gated so you can tune the process
                  above by feel first, then reveal the loop-speed numbers + the
@@ -463,7 +468,24 @@ nav: simulators
             errEl.textContent = formatPidDelta(sim.ssErr, sim, document.getElementById('pid-proc').value);
             errEl.classList.toggle('warn', Math.abs(sim.ssErr) > 0.05 * sim.step);
 
+            announceMetrics();
+
             startPlayhead();   // restart the cursor sweep from t=0 on the fresh sim
+        }
+
+        // Debounced screen-reader announcement of the three metrics — a
+        // slider drag fires runPidSim per input event, so announce only
+        // once the tuning has been at rest for a beat (audit-2026-06 #7).
+        let srTimer = null;
+        function announceMetrics() {
+            clearTimeout(srTimer);
+            srTimer = setTimeout(function () {
+                const sr = document.getElementById('pid-sr-status');
+                if (!sr) return;
+                sr.textContent = 'Overshoot ' + document.getElementById('pid-over').textContent
+                    + ', settling time ' + document.getElementById('pid-settle').textContent
+                    + ', steady-state error ' + document.getElementById('pid-err').textContent + '.';
+            }, 800);
         }
 
         function drawTunerChart() {

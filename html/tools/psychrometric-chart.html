@@ -238,14 +238,23 @@ keywords: humidity enthalpy wet bulb dew point dewpoint grains mixing coil AHU O
                     <input class="ps-input" type="number" id="psy-cfm" step="100" min="0" placeholder="optional">
                 </div>
 
-                <div class="psy-pills" role="tablist">
-                    <button class="psy-pill active" data-step="oa">OA</button>
-                    <button class="psy-pill"        data-step="ra">RA</button>
-                    <button class="psy-pill"        data-step="ma">MA</button>
-                    <button class="psy-pill"        data-step="cc">CC</button>
-                    <button class="psy-pill off"    data-step="hc">HC</button>
-                    <button class="psy-pill off"    data-step="hum">HUM</button>
-                    <button class="psy-pill"        data-step="sa">SA</button>
+                <!-- Stage selector. NOT a tablist: there are no per-stage
+                     panels — every pill re-renders the one shared detail
+                     region — and an off stage's pill stays operable (it
+                     selects the stage to inspect its pass-through state).
+                     aria-pressed carries selection; the accessible names
+                     carry the full stage name + off state, kept in sync
+                     by selectStep() / updatePillsOff() (audit-2026-06
+                     #10: the half-applied tablist announced "tab list"
+                     then seven stateless buttons). -->
+                <div class="psy-pills" role="group" aria-label="State point to edit">
+                    <button class="psy-pill active" data-step="oa"  aria-pressed="true"  aria-label="OA — Outdoor air">OA</button>
+                    <button class="psy-pill"        data-step="ra"  aria-pressed="false" aria-label="RA — Return air">RA</button>
+                    <button class="psy-pill"        data-step="ma"  aria-pressed="false" aria-label="MA — Mixed air">MA</button>
+                    <button class="psy-pill"        data-step="cc"  aria-pressed="false" aria-label="CC — After cooling coil">CC</button>
+                    <button class="psy-pill off"    data-step="hc"  aria-pressed="false" aria-label="HC — After heating coil (stage off)">HC</button>
+                    <button class="psy-pill off"    data-step="hum" aria-pressed="false" aria-label="HUM — After humidifier (stage off)">HUM</button>
+                    <button class="psy-pill"        data-step="sa"  aria-pressed="false" aria-label="SA — Supply air">SA</button>
                 </div>
 
                 <!-- OA editor -->
@@ -743,7 +752,11 @@ keywords: humidity enthalpy wet bulb dew point dewpoint grains mixing coil AHU O
         function selectStep(key) {
             if (!STEPS.includes(key)) return;
             selectedStep = key;
-            document.querySelectorAll('.psy-pill').forEach(p => p.classList.toggle('active', p.dataset.step === key));
+            document.querySelectorAll('.psy-pill').forEach(p => {
+                const active = p.dataset.step === key;
+                p.classList.toggle('active', active);
+                p.setAttribute('aria-pressed', active ? 'true' : 'false');
+            });
             document.querySelectorAll('.psy-editor').forEach(ed => ed.classList.toggle('shown', ed.dataset.step === key));
             document.getElementById('psy-copy-state').textContent = `Copy ${STEP_SHORT[key]} properties`;
             psyRecompute();
@@ -791,9 +804,16 @@ keywords: humidity enthalpy wet bulb dew point dewpoint grains mixing coil AHU O
         }
 
         function updatePillsOff() {
-            document.querySelector('.psy-pill[data-step="cc"]').classList.toggle('off',  !document.getElementById('cc-on').checked);
-            document.querySelector('.psy-pill[data-step="hc"]').classList.toggle('off',  !document.getElementById('hc-on').checked);
-            document.querySelector('.psy-pill[data-step="hum"]').classList.toggle('off', !document.getElementById('hum-on').checked);
+            // The visual dim (.off) is opacity-only — mirror it into the
+            // accessible name so AT users hear which stages are out of
+            // the chain. Not aria-disabled: an off pill stays operable
+            // (selecting it shows the pass-through state).
+            for (const key of ['cc', 'hc', 'hum']) {
+                const off = !document.getElementById(key + '-on').checked;
+                const pill = document.querySelector(`.psy-pill[data-step="${key}"]`);
+                pill.classList.toggle('off', off);
+                pill.setAttribute('aria-label', STEP_LABEL[key] + (off ? ' (stage off)' : ''));
+            }
         }
 
         function renderStageTable(chain) {

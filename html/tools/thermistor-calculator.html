@@ -162,7 +162,7 @@ keywords: NTC RTD resistance ohms 10k 20k 3k balco pt100 pt1000 sensor temperatu
                     </div>
                 </section>
 
-                <section>
+                <section role="status" aria-atomic="false">
                     <h2 class="ps-section-label">Output</h2>
 
                     <div class="ps-row">
@@ -194,7 +194,12 @@ keywords: NTC RTD resistance ohms 10k 20k 3k balco pt100 pt1000 sensor temperatu
 
                 <section>
                     <h2 class="ps-section-label" id="th-rt-title">R / T Table</h2>
-                    <div id="th-rt-scroll">
+                    <!-- Keyboard-reachable scroll region: the table holds
+                         ~85% of the page's reference payload behind a
+                         248px scroller with zero focusable descendants
+                         (audit-2026-06 #58). The FOCUS INDICATORS block
+                         supplies :focus-visible for free. -->
+                    <div id="th-rt-scroll" tabindex="0" role="region" aria-labelledby="th-rt-title">
                         <table class="ref-table-dense">
                             <thead>
                                 <tr id="th-rt-head"><th>Temperature</th><th>Resistance (Ω)</th></tr>
