@@ -9,7 +9,105 @@ tools.
 
 ## Feature ideas
 
+### Modbus 5-digit address ↔ wire offset converter *(from the 2026-06 audit)*
 
+Cross-filed from `audit-2026-06.md` (lineup gap + finding #30,
+2026-06-10). Neither Modbus tool converts a device-manual address like
+43021 into the FC03 offset actually polled — the weekly commissioning
+task the Modbus Decoding lesson teaches statically. Two halves, one
+pitch:
+
+- **The converter:** a three-field mini-converter (5-digit address ↔
+  table ↔ wire offset), most naturally a strip on the Register Viewer,
+  with "40001 30001 offset" keywords so the palette dead-end (#30's
+  first leg) closes too.
+- **The inline trap detection (#30):** the Register Viewer happily
+  decodes 40013 typed into its decimal *value* field as 0x9C4D with no
+  hint, even though 4xxxx-shaped entries are the exact "5-digit
+  register trap" the site teaches. Detect table-prefixed 5-digit
+  values (30001–39999 / 40001–49999) and show a one-line non-blocking
+  hint ("Looks like a register address — 40013 is holding-table offset
+  12 (FC03). See Modbus Decoding.").
+
+Build or just track? Owner's call (Step-3 list, 2026-06 handoff).
+
+### BACnet Object_Identifier encoder/decoder *(from the 2026-06 audit)*
+
+Cross-filed from `audit-2026-06.md` (lineup gap, 2026-06-10). Two
+lessons teach the 10-bit-type + 22-bit-instance packing in prose;
+nothing on the site decodes one. Natural third tab on the BACnet/IP
+converter, reusing the bacnet-objects type table. Build or just track?
+Owner's call.
+
+### Command palette — recents list *(from the 2026-06 audit)*
+
+Cross-filed from `audit-2026-06.md` (power-user polish, 2026-06-10).
+The palette opens empty for a returning user, so every weekly lookup
+is retyped. A `cf_palette_recent` last-5 list rendered on open +
+Enter-on-empty-goes-to-top would make repeat lookups one keystroke.
+(Any new `cf_*` key also gets a privacy.html line.)
+
+### URL state / deep links — should tools be bookmarkable? *(from the 2026-06 audit)*
+
+Cross-filed from `audit-2026-06.md` #18 (2026-06-10). Zero URL params
+site-wide (the `/tools/#cat` chip filter is the lone hash consumer) —
+no tool state survives a bookmark or a shared link. Three distinct
+layers, only the last is this entry:
+
+1. *Last-entered values* in localStorage — already parked (see the
+   controller-commissioner entry's persistence question).
+2. *Preset-class enums* (refrigerant, lookup-by mode) under `cf_*` —
+   precedent exists (`cf_psy_range`); tracked as codebase-issues #83.
+3. *URL-state deep-linking* (`?r=r22`) — genuinely untracked anywhere;
+   would make "send a colleague this exact chart" work. This is the
+   open design question: which tools, which params, and does the URL
+   win over localStorage when both exist?
+
+### Home hero units — which surfaces convert? *(from the 2026-06 audit)*
+
+Cross-filed from `audit-2026-06.md` #5 (2026-06-10). The hero's
+"LIVE AHU-1 supply-air loop" is hard-coded °F everywhere (tree,
+readout, slider output, LCD, packet, `aria-valuetext`) — the first
+interactive a metric visitor sees ignores their preference. The
+right-hand device LCDs could claim the equipment-register/canonical
+convention by analogy with the pid-tuner decision, but the
+software-register side has no such cover. Decision: route the
+software-register strings through `Units.display` (the sim runs on a
+canonical °F model — display-boundary change), or extend the canonical
+convention to the whole hero and document it. Related: the pid-tuner
+chart y-axis question is codebase-issues #91 — settle the
+canonical-vs-converted line once, in one place.
+
+### Practice path continuity — landing order, results-card next step, best-score badges *(from the 2026-06 audit)*
+
+Cross-filed from `audit-2026-06.md` #21 + #22 (2026-06-10, verifier:
+low-medium both). Three connected curriculum/UX calls:
+
+- **Landing order (#21):** /practice/ orders the 16 content-quiz
+  topics by ship-wave history while /education/ uses the documented
+  curriculum sequence (PID 1st vs 13th) — a student's "next card down"
+  means different things on each. Suggested: mirror the Education
+  order — one canonical sequence.
+- **Results-card onward path (#22):** `renderResults()` builds exactly
+  one action (Restart); a "Next quiz: <topic> →" link (landing order)
+  would close the loop.
+- **Best-score badges (#22):** the landing shows no completed/best
+  state despite `cf_quiz_<slug>_best` sitting in localStorage; a small
+  badge painted at load would let a student grinding 21 quizzes see
+  where they stand. (`quiz-section-plan.md`'s hard-nos — accounts,
+  leaderboards, server scoring — don't cover this.) Coordinate with
+  the best-score semantics question (codebase-issues #89).
+
+### Thermistor calculator — default to Type II? *(from the 2026-06 audit)*
+
+Cross-filed from `audit-2026-06.md` #29 (2026-06-10, verifier:
+low-medium, default choice partly editorial). The type select defaults
+to 10K Type III while the tool's own note calls Type 2 "the most
+widespread BAS thermistor curve"; the common cold task ("10k Type II
+reads 14.2 kΩ") requires changing two controls, and missing the type
+select silently gives 61.9 °F instead of 63.1 °F. Decision: default to
+10K Type II (matching the note), and/or persist last-used
+type+direction (pairs with codebase-issues #83's preset persistence).
 
 ### PID tuner — live process visualization + tune-it-blind spoiler *(shipped 2026-06-08)*
 *The interactive home hero sells a live loop, then links to the tuner —
