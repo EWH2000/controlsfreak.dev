@@ -98,3 +98,40 @@ test('"/" inside a tool input types normally and does NOT open the palette', asy
 
     expect(errors, 'slash-in-field guard should log no errors').toEqual([]);
 });
+
+// audit-2026-06 #17 + #15: short tokens used to match mid-word
+// substrings ("fla" → cloudFLAre noise only) while the pages that
+// actually cover FLA had no keywords and were unreachable, and core
+// field vocabulary ("40001", "pt chart", "ms/tp") returned nothing.
+test('field-vocabulary queries resolve, short tokens skip mid-word noise', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('/');
+    await page.keyboard.press('/');
+
+    const titles = async (q) => {
+        await page.fill('#palette-input', q);
+        await expect(page.locator('#palette-status')).not.toHaveText('No matches');
+        return page.evaluate(() =>
+            [...document.querySelectorAll('.palette-result-title')].map((e) => e.textContent));
+    };
+
+    // "fla": the two genuine FLA pages lead; the privacy page
+    // (cloudFLAre — a mid-word hit) no longer appears at all.
+    const fla = await titles('fla');
+    expect(fla[0]).toContain('VFD');
+    expect(fla.join('|')).toContain('VFDs');
+    expect(fla.join('|')).not.toContain('Privacy');
+
+    // The audit's dead field-vocabulary queries now land on the right
+    // pages via the keywords sweep.
+    expect((await titles('40001'))[0]).toContain('Modbus Register Viewer');
+    expect((await titles('pt chart'))[0]).toContain('Refrigerant P-T');
+    expect((await titles('ms/tp'))[0]).toContain('BACnet Networking');
+    expect((await titles('endian'))[0]).toContain('Modbus');
+
+    // Word-START boundary (not whole-word) keeps incremental typing
+    // alive — three typed chars of "signal" still find the tool.
+    expect((await titles('sig')).join('|')).toContain('Signal Scaling');
+
+    expect(errors, 'search vocabulary should log no errors').toEqual([]);
+});
