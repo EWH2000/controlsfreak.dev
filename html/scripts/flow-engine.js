@@ -412,18 +412,19 @@
     }
 
     // Tear down every pool inside the (now hidden) gutter collage, and
-    // clear `flow-active` from any SVG left with no pools so its CSS
-    // falls back to the static no-animation state.
+    // clear `flow-active` from any gutter SVG left with no pools so its
+    // CSS falls back to the static no-animation state. The class sweep
+    // covers EVERY .schematic-bg svg, not just the ones that had flow
+    // pools: ensureParticleLayer also flags svgs when a PULSE fires, so
+    // a pulse-only motif could otherwise keep flow-active forever after
+    // the gutter hides (caught as a parallel-suite flake, 2026-06-10).
     function teardownGutterPools() {
-        const touchedSvgs = new Set();
         for (let p = pools.length - 1; p >= 0; p--) {
             const pool = pools[p];
             if (!(pool.el.closest && pool.el.closest('.schematic-bg'))) continue;
-            const svg = pool.el.ownerSVGElement;
-            if (svg) touchedSvgs.add(svg);
             removePool(pool, p);
         }
-        touchedSvgs.forEach(function (svg) {
+        document.querySelectorAll('.schematic-bg svg.flow-active').forEach(function (svg) {
             let stillPooled = false;
             pools.forEach(function (pool) {
                 if (pool.el.ownerSVGElement === svg) stillPooled = true;

@@ -3624,6 +3624,17 @@ don't restructure test scaffolding without being asked, so this asks.
 smoke.spec.js into per-area specs (better failure locality). Either
 way update the CLAUDE.md test-list text.
 
+**Resolution (2026-06-10):** owner picked `fullyParallel: true` —
+suite wall time dropped 2.8m → 1.7m. Enabling it surfaced a real bug
+behind one of the two known full-suite flakes: flow-engine's gutter
+teardown only cleared `flow-active` from svgs it removed *flow pools*
+from, so a gutter *pulse* firing during a wide-viewport moment left a
+pulse-only motif flagged forever (ensureParticleLayer flags on pulse
+too) — fixed in the same PR. The other intermittent (modbus quiz
+reset-best under full-suite load, ~4 sightings pre-parallelism) has
+not reproduced under the new scheduling across 2 full runs + 12
+repeats; watch, and root-cause if it returns.
+
 ### 88. Tools nav dropdown sorts by slug while 13 of 14 labels read alphabetically
 
 Cross-filed from `audit-2026-06.md` (power-user polish, 2026-06-10).
