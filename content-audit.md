@@ -2335,6 +2335,13 @@ behavior.
 circuit…"); add the why to the sim's fault text. Pedagogy wording —
 held for decision.
 
+**Resolved (2026-06-10):** owner approved the scoping fix. The drill's
+explain now scopes the no-damage claim to a single controller on its
+own transformer and names the shared-transformer dead-short
+consequence; the engine's reversed-power fault text gains the why
+("alone … this can even run — the danger is sharing"). Sim behavior
+(spark cue) unchanged, as documented. The lesson was already correct.
+
 ### 41. "Not 'around 40 °F' — at 40 °F" overshoots the site's own table
 
 **Location:** refrigeration cluster prose; 118 psig interpolates to
@@ -2346,6 +2353,13 @@ Phases 2–4 minor polish).
 **Suggested direction:** soften the rhetoric or use 118.4 psig so the
 emphatic claim is exactly true. Editorial — held for decision.
 
+**Resolved (2026-06-10):** owner picked 118.4 psig — the emphatic
+sentence in refrigerant-cycle-basics now uses the exact dew value
+from the site's own R-410A table ([40, 118.8, 118.4]), so "not
+'around 40 °F' — at 40 °F" is literally true. The hedged "about
+118 psig" worked-example references elsewhere in the cluster stand —
+they were already correctly hedged.
+
 ### 42. TXV needle motion described in "turns"
 
 **Location:** metering-devices-txv-eev lesson — "turns" belong to the
@@ -2356,3 +2370,8 @@ flagged** (phrasing — `audit-2026-06.md`, Phases 2–4 minor polish).
 **Suggested direction:** linear language for the needle ("lifts/
 modulates"), reserving "turns" for the adjustment screw. Editorial —
 held for decision.
+
+**Resolved (2026-06-10):** owner approved linear language. The TXV
+walkthrough now reads "a sliver of lift out of the needle's total
+travel" with a parenthetical reserving "turns" for the adjustment
+screw; the screw paragraph's turn language stands (correct usage).
