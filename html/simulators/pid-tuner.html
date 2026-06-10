@@ -761,10 +761,18 @@ keywords: gain reset rate kc ti td overshoot tuning loop deadtime
         // Resize redraws the chart (re-stamping the playhead geometry) and
         // resizes the overlay buffer; the running rAF picks the new geometry up
         // next frame, so we only redraw the cursor here when motion is off.
+        // The redraw itself is coalesced to one per frame — the playhead loop
+        // already rode rAF, but the chart redraw ran synchronously per event
+        // (codebase-issues #90).
+        let resizeRaf = 0;
         window.addEventListener('resize', () => {
-            drawTunerChart();
-            phSizeOverlay();
-            if (phReduced) phDraw(phFinalIdx());
+            if (resizeRaf) return;
+            resizeRaf = requestAnimationFrame(() => {
+                resizeRaf = 0;
+                drawTunerChart();
+                phSizeOverlay();
+                if (phReduced) phDraw(phFinalIdx());
+            });
         });
         // drawPidChart reads theme tokens at draw time — redraw on a theme
         // flip (theme.js broadcasts 'themechange'), same as on resize. Refresh

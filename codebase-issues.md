@@ -3743,7 +3743,7 @@ better ratio — or the same ratio at a longer total (10/10 upgrades
 regardless of length; the already-persisted best_total carries the
 comparison. Pinned by a smoke test (perfect 5-run vs seeded 10/10).
 
-### 90. Canvas resize handlers redraw synchronously per resize event
+### 90. Canvas resize handlers redraw synchronously per resize event *(addressed 2026-06-10)*
 
 Cross-filed from `docs/audits/2026-06-extensive/findings.md` (performance polish, 2026-06-10).
 psychrometric-chart, staging-sequencer, and pid-basics (×3 canvases)
@@ -3760,6 +3760,15 @@ and one page already models it.
 handlers in a small `perf:` sweep; finish pid-tuner's half-applied
 one. No design input needed — parked here only because the audit
 sweep batches were already full.
+
+**Resolution (2026-06-10).** The four resize listeners
+(psychrometric-chart; pid-basics' one listener covering its three
+mini-canvases; staging-sequencer; pid-tuner) now coalesce through a
+page-local `resizeRaf` guard — at most one redraw per frame, the
+trailing event always wins. pid-tuner's half-applied case finished:
+the playhead already rode rAF; now the chart redraw + overlay resize
+do too. themechange listeners left synchronous (a discrete click, not
+an event storm).
 
 ### 91. PID tuner chart y-axis is unconverted and unlabeled in metric
 

@@ -1050,9 +1050,18 @@ keywords: lead lag rotation runtime stage up down chiller boiler pump
             $('stg-trip').addEventListener('click', tripLead);
             $('stg-clear').addEventListener('click', clearFaults);
 
-            // repaint chart on theme flip / resize (it reads tokens at draw time)
+            // repaint chart on theme flip / resize (it reads tokens at draw
+            // time); resize coalesced to one redraw per frame
+            // (codebase-issues #90)
             document.addEventListener('themechange', drawChart);
-            window.addEventListener('resize', drawChart);
+            let resizeRaf = 0;
+            window.addEventListener('resize', () => {
+                if (resizeRaf) return;
+                resizeRaf = requestAnimationFrame(() => {
+                    resizeRaf = 0;
+                    drawChart();
+                });
+            });
         }
 
         // ── Init ──
