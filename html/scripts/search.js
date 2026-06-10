@@ -83,7 +83,12 @@
     // ordering — "superheat" now puts the calculator above the
     // lesson/quiz pair (97+35 vs 125). Sized to about one title-token's
     // worth: a strong lesson title match still beats a weak tool
-    // keyword match.
+    // keyword match. The bonus applies ONLY when the entry matched in
+    // its title or keywords — a description-only hit is the weakest
+    // signal (often an incidental word like dew-point's "...flags..."
+    // for the query "fla"), and boosting it promoted noise above the
+    // pages that genuinely cover the term (caught by CI on the #217
+    // regression test the first cut of this bonus broke).
     const SECTION_BONUS = { tools: 35, simulators: 20 };
 
     // Short tokens (≤3 chars) must match at a word START — a bare
@@ -118,15 +123,18 @@
             if (title.startsWith(query)) score += 100;
             else if (title.includes(query)) score += 60;
             let ok = true;
+            let substantive = title.startsWith(query) || title.includes(query);
             for (const t of tokens) {
                 let ts = 0;
-                if (hasToken(title, t)) ts += 20;
-                if (hasToken(kw, t)) ts += 12;
+                if (hasToken(title, t)) { ts += 20; substantive = true; }
+                if (hasToken(kw, t)) { ts += 12; substantive = true; }
                 if (hasToken(desc, t)) ts += 5;
                 if (ts === 0) { ok = false; break; }
                 score += ts;
             }
-            if (ok) scored.push({ it: it, score: score + (SECTION_BONUS[it.section] || 0) });
+            if (ok) {
+                scored.push({ it: it, score: score + (substantive ? (SECTION_BONUS[it.section] || 0) : 0) });
+            }
         }
         scored.sort((a, b) =>
             b.score - a.score ||
