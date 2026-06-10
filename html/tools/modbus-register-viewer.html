@@ -54,6 +54,7 @@ keywords: 40001 30001 offset endian byte swap word order decode hex signed scali
         <div class="tabs tabs-flush">
             <button class="tab-btn active" data-tab="single">Single Register</button>
             <button class="tab-btn"        data-tab="pair">32-bit Pair</button>
+            <button class="tab-btn"        data-tab="convert">Address ↔ Offset</button>
         </div>
 
         <!-- ── Single Register ── -->
@@ -70,6 +71,7 @@ keywords: 40001 30001 offset endian byte swap word order decode hex signed scali
                         <label class="ps-label" for="mod-hex">Hex (0x0000–0xFFFF)</label>
                         <input class="ps-input" type="text" id="mod-hex" placeholder="0xABCD">
                     </div>
+                    <p class="bit-hint" id="mod-trap-hint" hidden></p>
                     <p class="bit-hint" style="margin-top:0.85rem;">Bit 15 = MSB (top-left) · Bit 0 = LSB (bottom-right) · click to toggle</p>
                     <div class="narrow-width-note">
                         On narrow screens the grid becomes 4×4 — the high-byte / low-byte boundary moves between rows 2 and 3.
@@ -178,7 +180,67 @@ keywords: 40001 30001 offset endian byte swap word order decode hex signed scali
             </div>
         </div>
 
-        <!-- ── Shared reference row: visible across both tabs ── -->
+        <!-- ── Address ↔ Offset ── -->
+        <div id="tab-convert" class="tab-pane">
+            <div class="tool-body-2col">
+
+                <section>
+                    <h2 class="ps-section-label">Input</h2>
+                    <div class="ps-row">
+                        <label class="ps-label" for="mod-addr">5-digit address (vendor docs)</label>
+                        <input class="ps-input" type="number" id="mod-addr" min="1" max="49999" step="1" placeholder="43021" value="43021">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="mod-table">Table</label>
+                        <select class="ps-input" id="mod-table">
+                            <option value="coil">Coils (0xxxx)</option>
+                            <option value="discrete">Discrete inputs (1xxxx)</option>
+                            <option value="input">Input registers (3xxxx)</option>
+                            <option value="holding" selected>Holding registers (4xxxx)</option>
+                        </select>
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="mod-offset">Wire offset (0-based)</label>
+                        <input class="ps-input" type="number" id="mod-offset" min="0" max="9998" step="1" placeholder="3020">
+                    </div>
+                    <p class="bit-hint" style="margin-top:0.85rem;">Two-way: type the address from the points list, or pick a table and type the offset off the wire.</p>
+                </section>
+
+                <section role="status" aria-atomic="false">
+                    <h2 class="ps-section-label">Output</h2>
+                    <div class="ps-row">
+                        <span class="ps-label">Wire offset</span>
+                        <span class="ps-value muted" id="mod-conv-offset">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">Read with</span>
+                        <span class="ps-value muted" id="mod-conv-fc">—</span>
+                    </div>
+                    <div class="result-formula wrap" id="mod-conv-sentence"></div>
+                    <div class="failure-callout" id="mod-conv-callout" hidden></div>
+                </section>
+
+            </div>
+
+            <section class="tool-body-row">
+                <h2 class="ps-section-label">Why the off-by-one</h2>
+                <p class="ref-note" style="margin-top:0;">
+                    The 5-digit number in a points list is a documentation
+                    convention: the first digit names the table, the rest
+                    count from <strong>1</strong>. The request that goes out
+                    on the wire carries a 16-bit offset that counts from
+                    <strong>0</strong> — so "40001" is holding-table offset
+                    0, and vendor address 43021 is polled as offset 3020
+                    with FC03. Both shifts bite: forget the table prefix and
+                    you poll the wrong kind of point; forget the −1 and
+                    every value is one register off.
+                    <a href="/education/modbus-decoding.html">Modbus
+                    Decoding</a> walks the trap with worked frames.
+                </p>
+            </section>
+        </div>
+
+        <!-- ── Shared reference row: visible across all tabs ── -->
         <section class="tool-body-row">
             <h2 class="ps-section-label">Modbus essentials</h2>
             <p class="ref-note" style="margin-top:0;">
@@ -347,10 +409,32 @@ keywords: 40001 30001 offset endian byte swap word order decode hex signed scali
                 return;
             }
             singleCallout.hidden = true;
+            updateTrapHint(val);
             for (let i = 0; i < 16; i++) bits[i] = (val >> i) & 1;
             document.getElementById('mod-hex').value = '0x' + val.toString(16).toUpperCase().padStart(4, '0');
             updateReadouts(val);
             renderBits();
+        }
+
+        // ── 5-digit register-address trap hint (audit-2026-06 #30) ──
+        // A value shaped like a table-prefixed 5-digit reference
+        // (30001–39999 / 40001–49999) is, more often than not, an address
+        // pasted into the value field — the exact trap Modbus Decoding
+        // teaches. Non-blocking: the register still decodes below; the
+        // hint just names what the number means as an address.
+        const trapHint = document.getElementById('mod-trap-hint');
+
+        function updateTrapHint(val) {
+            const t = classifyAddress(val);
+            if (!t || (t.key !== 'input' && t.key !== 'holding')) {
+                trapHint.hidden = true;
+                return;
+            }
+            trapHint.innerHTML = 'Looks like a register <em>address</em>, not a value — ' +
+                'in vendor docs ' + val + ' is ' + t.name + ' offset ' + t.offset +
+                ', polled with ' + t.fc.slice(0, 4) + '. Decoding it as a plain 16-bit value below; ' +
+                'the <a href="/education/modbus-decoding.html">Modbus Decoding</a> lesson covers the trap.';
+            trapHint.hidden = false;
         }
 
         function fromHex() {
@@ -362,6 +446,7 @@ keywords: 40001 30001 offset endian byte swap word order decode hex signed scali
                 return;
             }
             singleCallout.hidden = true;
+            trapHint.hidden = true;
             for (let i = 0; i < 16; i++) bits[i] = (val >> i) & 1;
             document.getElementById('mod-dec').value = val;
             updateReadouts(val);
@@ -456,6 +541,88 @@ keywords: 40001 30001 offset endian byte swap word order decode hex signed scali
         document.getElementById('pair-r2-hex').addEventListener('input', () => pairFromHex(2));
 
         // ── Tab wiring ──
+        // ── Address ↔ Offset converter ──
+        // The 5-digit reference convention: first digit names the table,
+        // the rest count from 1; the wire offset counts from 0. So
+        // address = table base + offset + 1, offsets 0–9998. The 20001+
+        // and 50000+ ranges have no table — fail loud, not quietly.
+        const ADDR_TABLES = {
+            coil:     { key: 'coil',     name: 'coil',                base: 0,     fc: 'FC01 (Read Coils)' },
+            discrete: { key: 'discrete', name: 'discrete input',      base: 10000, fc: 'FC02 (Read Discrete Inputs)' },
+            input:    { key: 'input',    name: 'input-register',      base: 30000, fc: 'FC04 (Read Input Registers)' },
+            holding:  { key: 'holding',  name: 'holding-register',    base: 40000, fc: 'FC03 (Read Holding Registers)' },
+        };
+
+        function classifyAddress(a) {
+            if (!isFinite(a) || a !== Math.floor(a)) return null;
+            let t = null;
+            if (a >= 1 && a <= 9999) t = ADDR_TABLES.coil;
+            else if (a >= 10001 && a <= 19999) t = ADDR_TABLES.discrete;
+            else if (a >= 30001 && a <= 39999) t = ADDR_TABLES.input;
+            else if (a >= 40001 && a <= 49999) t = ADDR_TABLES.holding;
+            if (!t) return null;
+            return { key: t.key, name: t.name, fc: t.fc, offset: a - t.base - 1 };
+        }
+
+        const convOffsetEl   = document.getElementById('mod-conv-offset');
+        const convFcEl       = document.getElementById('mod-conv-fc');
+        const convSentenceEl = document.getElementById('mod-conv-sentence');
+        const convCallout    = document.getElementById('mod-conv-callout');
+        const addrInput      = document.getElementById('mod-addr');
+        const tableSelect    = document.getElementById('mod-table');
+        const offsetInput    = document.getElementById('mod-offset');
+
+        function convMute(msg) {
+            convOffsetEl.className = 'ps-value muted';
+            convOffsetEl.textContent = '—';
+            convFcEl.className = 'ps-value muted';
+            convFcEl.textContent = '—';
+            convSentenceEl.textContent = '';
+            if (msg) { convCallout.textContent = msg; convCallout.hidden = false; }
+            else convCallout.hidden = true;
+        }
+
+        function convShow(addr, t) {
+            convCallout.hidden = true;
+            convOffsetEl.className = 'ps-value live';
+            convOffsetEl.textContent = String(t.offset) + ' (0x' + t.offset.toString(16).toUpperCase().padStart(4, '0') + ')';
+            convFcEl.className = 'ps-value live';
+            convFcEl.textContent = t.fc;
+            convSentenceEl.textContent =
+                'Vendor docs ' + addr + ' → ' + t.name + ' table, wire offset ' +
+                t.offset + ' — poll with ' + t.fc + '.';
+        }
+
+        function fromAddr() {
+            const a = parseFloat(addrInput.value);
+            if (!isFinite(a)) { convMute(null); return; }
+            const t = classifyAddress(a);
+            if (!t) {
+                convMute('No table owns that address. 5-digit references live in 1–9999 (coils), 10001–19999 (discrete inputs), 30001–39999 (input registers), or 40001–49999 (holding registers).');
+                return;
+            }
+            tableSelect.value = t.key;
+            offsetInput.value = t.offset;
+            convShow(a, t);
+        }
+
+        function fromTableOffset() {
+            const off = parseFloat(offsetInput.value);
+            if (!isFinite(off) || off !== Math.floor(off) || off < 0 || off > 9998) {
+                convMute('Enter a whole wire offset from 0 to 9998 (the 5-digit convention tops out at x9999).');
+                return;
+            }
+            const t = ADDR_TABLES[tableSelect.value];
+            const addr = t.base + off + 1;
+            addrInput.value = addr;
+            convShow(addr, classifyAddress(addr));
+        }
+
+        addrInput.addEventListener('input', fromAddr);
+        offsetInput.addEventListener('input', fromTableOffset);
+        tableSelect.addEventListener('change', fromTableOffset);
+        fromAddr();   // default 43021 → holding offset 3020, FC03
+
         document.querySelectorAll('[data-tab]').forEach(btn => {
             btn.addEventListener('click', e => switchTab(e.currentTarget.dataset.tab, e.currentTarget));
         });
@@ -466,6 +633,9 @@ keywords: 40001 30001 offset endian byte swap word order decode hex signed scali
         //   mod-dec, then renders the grid and updates the readouts.
         fromDec();
         calcPair();
+        // The teaching default 43981 (0xABCD) is address-shaped; the trap
+        // hint is for values the USER types, so clear it after first paint.
+        trapHint.hidden = true;
     })();
 </script>
 {% endblock %}
