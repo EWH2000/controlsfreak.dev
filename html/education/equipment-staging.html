@@ -4,6 +4,7 @@ description: Several identical pumps in parallel and one staging sequence — ho
 canonical: https://controlsfreak.dev/education/equipment-staging.html
 nav: education
 pairedQuiz: https://controlsfreak.dev/practice/equipment-staging.html
+keywords: lead lag stage up down rotation runtime hysteresis
 ---
 {% extends "layouts/page.njk" %}
 {% from "related-links.njk" import relatedLinks %}
@@ -453,7 +454,6 @@ pairedQuiz: https://controlsfreak.dev/practice/equipment-staging.html
 {% endblock %}
 
 {% block scripts %}
-<script src="/scripts/units.js"></script>
 <script>
     // ── Widget 1 — staging simulator ──────────────────────────────────
     // Three identical parallel pumps. Demand 0-100% of full-plant

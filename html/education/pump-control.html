@@ -4,6 +4,7 @@ description: How a BMS controls a hydronic pump — pump curves and the operatin
 canonical: https://controlsfreak.dev/education/pump-control.html
 nav: education
 pairedQuiz: https://controlsfreak.dev/practice/pump-control.html
+keywords: vfd delta p dp gpm head curve staging trim impeller
 ---
 {% extends "layouts/page.njk" %}
 {% from "related-links.njk" import relatedLinks %}
@@ -650,7 +651,6 @@ pairedQuiz: https://controlsfreak.dev/practice/pump-control.html
 {% endblock %}
 
 {% block scripts %}
-<script src="/scripts/units.js"></script>
 <script>
     // ── Widget 1 — operating-point chart ──────────────────────────────
     // Two sliders (pump speed, valves-open %) → recompute pump curve,

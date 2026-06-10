@@ -3,6 +3,7 @@ title: Coil-Sizing Calculator — controlsfreak.dev
 description: Size a cooling or heating coil — total, sensible, and latent capacity from entering and leaving air, or solve the leaving-air state back from a known load.
 canonical: https://controlsfreak.dev/tools/coil-sizing.html
 nav: tools
+keywords: cfm gpm delta t mbh btu tons sensible latent shr capacity
 ---
 {% extends "layouts/page.njk" %}
 {% from "related-links.njk" import relatedLinks %}
@@ -116,7 +117,7 @@ nav: tools
                     </div>
                 </section>
 
-                <section>
+                <section role="status" aria-atomic="false">
                     <h2 class="ps-section-label">Output</h2>
                     <div class="ps-row">
                         <span class="ps-label" data-us="Total capacity (MBH)" data-metric="Total capacity (kW)">Total capacity (MBH)</span>
@@ -241,7 +242,7 @@ nav: tools
                     </p>
                 </section>
 
-                <section>
+                <section role="status" aria-atomic="false">
                     <h2 class="ps-section-label">Output</h2>
                     <h3 class="subhead">Leaving air</h3>
                     <div class="ps-row">
@@ -325,7 +326,6 @@ nav: tools
 {% endblock %}
 
 {% block scripts %}
-<script src="/scripts/units.js"></script>
 <script src="/scripts/ui.js"></script>
 <script src="/scripts/psychro-engine.js"></script>
 <script src="/scripts/psy-widget.js"></script>
@@ -347,7 +347,10 @@ nav: tools
         const dispW     = wLbLb    => U.display.humidityRatio(wLbLb * 7000).toFixed(1);
         const dispH     = btuPerLb => U.display.enthalpy(btuPerLb).toFixed(1);
         const dispCap   = mbh      => U.display.heatCapacity(mbh).toFixed(1);
-        const dispV     = ft3PerLb => U.display.specificVolume(ft3PerLb).toFixed(2);
+        // 3 decimals in metric: m³/kg values are ~0.8x, so 2 decimals made
+        // the printed worked-formula reduce 0.5% off the shown answer
+        // (3398.02 ÷ 0.86 = 3951 ≠ 3930 — audit-2026-06 polish).
+        const dispV     = ft3PerLb => U.display.specificVolume(ft3PerLb).toFixed(U.current() === 'us' ? 2 : 3);
         const tU        = ()       => U.suffix.temp();
         const vU        = ()       => U.suffix.specificVolume();
         const wU        = ()       => U.suffix.humidityRatio();
@@ -466,7 +469,7 @@ nav: tools
             } else {
                 mute('cs-cap-dw');
             }
-            setLive('cs-cap-dh', signed(U.display.enthalpy(res.dH), 1) + ' ' + hU());
+            setLive('cs-cap-dh', signed(U.display.deltaEnthalpy(res.dH), 1) + ' ' + hU());
 
             const mDot = cfm * 60 / entState.v;          // canonical lb dry air/h
             // Airflow → per-hour basis differs by unit: CFM is per-minute
@@ -588,12 +591,37 @@ nav: tools
         document.getElementById('cs-lvg-copy').addEventListener('click', e => copyReadouts(e.currentTarget, '', 'cs-lvg-out-db'));
 
         // ── Unit-flip resync ──────────────────────────────────────────
+        // Per-quantity display decimals for input rewrites (psy-chart's
+        // per-mode defaults are the precedent — no more 3398.02 m³/h
+        // false precision, audit-2026-06 #60b).
+        const REWRITE_DEC = { temp: 1, deltaTemp: 1, airflow: 0, altitude: 0,
+                              humidityRatio: 1, enthalpy: 1, pressure: 1,
+                              heatCapacity: 1 };
         function rewriteInput(id, quantity, fromU, toU) {
             const el = document.getElementById(id);
             const v  = parseFloat(el.value);
             if (!isFinite(v)) return;
-            const next = U.convert(v, fromU, toU, quantity);
-            el.value = (Math.round(next * 100) / 100).toString();
+            // Reformat from a retained canonical value, not the rounded
+            // display string — flipping units away and back must hand
+            // back exactly what was typed (audit-2026-06 #60a). The
+            // stored canonical is trusted only while the field still
+            // shows the exact text this function last wrote for the same
+            // quantity; a user edit or mode switch rebuilds it.
+            let canon = parseFloat(el.dataset.canonUs);
+            if (!(isFinite(canon) && el.dataset.canonQ === quantity && el.dataset.canonDisp === el.value)) {
+                canon = U.convert(v, fromU, 'us', quantity);
+                el.dataset.canonUs = String(canon);
+                el.dataset.canonQ = quantity;
+                el.dataset.typedText = el.value;
+                el.dataset.typedUnits = fromU;
+            }
+            if (toU === el.dataset.typedUnits) {
+                el.value = el.dataset.typedText;
+            } else {
+                const dec = REWRITE_DEC[quantity] !== undefined ? REWRITE_DEC[quantity] : 2;
+                el.value = (+U.convert(canon, 'us', toU, quantity).toFixed(dec)).toString();
+            }
+            el.dataset.canonDisp = el.value;
         }
         function quantityForMode(mode) {
             switch (mode) {

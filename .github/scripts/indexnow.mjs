@@ -59,10 +59,15 @@ function allHtmlFiles(dir) {
 }
 
 // Files changed between two refs, scoped to html/. Throws on a bad ref.
+// --no-renames decomposes a rename into delete+add: rename detection
+// (on by default) reports only the NEW path, and the old URL — the one
+// engines must recrawl-and-drop — would never surface (audit-2026-06
+// #37; verified against the real /tools→/simulators move, which git
+// otherwise collapses to three renames).
 function changedHtmlFiles(before, after) {
     const out = execFileSync(
         'git',
-        ['diff', '--name-only', before, after, '--', 'html'],
+        ['diff', '--name-only', '--no-renames', before, after, '--', 'html'],
         { cwd: ROOT, encoding: 'utf8' }
     ).trim();
     if (!out) return [];
@@ -72,15 +77,36 @@ function changedHtmlFiles(before, after) {
 }
 
 // The page's canonical URL, or null if it has none (noindex / non-page).
-function canonicalOf(file) {
-    if (!existsSync(file)) return null; // deleted in this diff — skip
-    const m = readFileSync(file, 'utf8').match(/^canonical:\s*(\S+)/m);
+// A file deleted (or renamed away — git reports a rename as delete+add)
+// no longer exists on disk, but IndexNow explicitly supports submitting
+// removed URLs so engines recrawl-and-drop them — read the old
+// frontmatter from the diff base instead of silently skipping it
+// (audit-2026-06 #37; this repo demonstrably renames pages — see
+// LEGACY_TOOL_REDIRECTS).
+function canonicalOf(file, beforeRef) {
+    let src;
+    if (existsSync(file)) {
+        src = readFileSync(file, 'utf8');
+    } else if (beforeRef) {
+        try {
+            src = execFileSync(
+                'git', ['show', `${beforeRef}:${path.relative(ROOT, file)}`],
+                { cwd: ROOT, encoding: 'utf8' }
+            );
+        } catch {
+            return null;   // not in the diff base either — nothing to tell engines
+        }
+    } else {
+        return null;
+    }
+    const m = src.match(/^canonical:\s*(\S+)/m);
     return m ? m[1] : null;
 }
 
 // Resolve the file set for changed-mode, falling back to a full submit
 // when there's no usable diff base (first push, force-push, shallow
 // clone, or running outside a git range).
+let diffBase = null;   // set in changed-mode; canonicalOf reads deleted files from it
 function resolveChangedFiles() {
     const before = process.env.GITHUB_EVENT_BEFORE || 'HEAD~1';
     const after = process.env.GITHUB_SHA || 'HEAD';
@@ -90,7 +116,9 @@ function resolveChangedFiles() {
         return null;
     }
     try {
-        return changedHtmlFiles(before, after);
+        const changed = changedHtmlFiles(before, after);
+        diffBase = before;
+        return changed;
     } catch {
         console.log(`Could not diff ${before}..${after} — falling back to a full submit.`);
         submitAll = true;
@@ -106,7 +134,7 @@ if (submitAll || files === null) {
     files = allHtmlFiles(HTML_DIR);
 }
 
-const urlList = [...new Set(files.map(canonicalOf).filter(Boolean))].sort();
+const urlList = [...new Set(files.map((f) => canonicalOf(f, diffBase)).filter(Boolean))].sort();
 
 console.log(`Mode: ${submitAll ? 'all' : 'changed'}${dryRun ? ' (dry-run)' : ''}`);
 console.log(`${urlList.length} indexable URL(s):`);

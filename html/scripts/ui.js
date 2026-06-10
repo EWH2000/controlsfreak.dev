@@ -39,10 +39,48 @@
             return;
         }
         card.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
-        card.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        card.querySelectorAll('.tab-btn').forEach(b => {
+            b.classList.remove('active');
+            b.setAttribute('aria-selected', 'false');
+        });
         pane.classList.add('active');
         btn.classList.add('active');
+        btn.setAttribute('aria-selected', 'true');
     }
+
+    // Upgrade every .tabs strip to the ARIA tab pattern once at load —
+    // role=tablist/tab/tabpanel + aria-selected + the
+    // aria-controls/aria-labelledby pairing (audit-2026-06 #8: the
+    // class-only active state announced as three identical plain
+    // buttons). Applied from JS rather than a 12-page markup sweep:
+    // the tabs only function with JS anyway, and a future tabbed tool
+    // gets the semantics for free. switchTab() keeps aria-selected in
+    // sync from then on.
+    function initTabAria() {
+        document.querySelectorAll('.tabs').forEach(strip => {
+            const btns = strip.querySelectorAll('.tab-btn');
+            if (!btns.length) return;
+            strip.setAttribute('role', 'tablist');
+            btns.forEach(b => {
+                const name = b.dataset.tab;
+                b.setAttribute('role', 'tab');
+                b.setAttribute('aria-selected', b.classList.contains('active') ? 'true' : 'false');
+                if (!name) return;
+                if (!b.id) b.id = 'tab-btn-' + name;
+                const pane = document.getElementById('tab-' + name);
+                if (pane) {
+                    b.setAttribute('aria-controls', 'tab-' + name);
+                    pane.setAttribute('role', 'tabpanel');
+                    pane.setAttribute('aria-labelledby', b.id);
+                }
+            });
+        });
+    }
+    // ui.js loads at end-of-body (before the page's inline script), so
+    // the markup above is already parsed; DOMContentLoaded is the
+    // safety net if it ever moves into <head>.
+    if (document.body) initTabAria();
+    else document.addEventListener('DOMContentLoaded', initTabAria);
 
     // Copy `text` to the clipboard and flash a "copied!" state on `btn`
     // for ~1.8 s. No-op if there's nothing to copy or the button is

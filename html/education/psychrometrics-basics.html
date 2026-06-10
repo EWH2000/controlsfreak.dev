@@ -4,6 +4,7 @@ description: The seven properties on a psychrometric chart, why two of them lock
 canonical: https://controlsfreak.dev/education/psychrometrics-basics.html
 nav: education
 pairedQuiz: https://controlsfreak.dev/practice/psychrometrics-basics.html
+keywords: wb wbt db rh dew point grains enthalpy wet bulb humidity
 ---
 {% extends "layouts/page.njk" %}
 {% from "related-links.njk" import relatedLinks %}
@@ -313,7 +314,6 @@ pairedQuiz: https://controlsfreak.dev/practice/psychrometrics-basics.html
 {% endblock %}
 
 {% block scripts %}
-<script src="/scripts/units.js"></script>
 <!-- Shared moist-air math: ASHRAE primitives at top level (humRatioFromRH,
      vapPressFromHumRatio, dewPointFromVapPress, enthalpy, GR_PER_LB, P_STD)
      plus the namespaced Psychro.* solver. Same engine that powers the

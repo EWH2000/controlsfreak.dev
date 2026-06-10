@@ -1033,7 +1033,10 @@ procKey)` helper would naturally cover both surfaces).
 landed as `formatPidDelta(canonicalValue, sim, procKey)` in
 `html/scripts/pid-chart.js`, alongside `pidUnit(procKey)` and
 `pidConvertDelta(value, procKey)`. The tuner's `runPidSim` now
-calls it with `+sim.ssErr` (PV-above-SP sign convention preserved),
+calls it with `+sim.ssErr` (the engine's SP − PV convention — positive
+= PV settled below SP — preserved; *corrected 2026-06-10: this line
+originally said "PV-above-SP", the inversion audit-2026-06 traced
+through three code comments*),
 plus an `unitschange` listener that refreshes the readout without
 re-running the simulation (engine is canonical, so a units flip is
 display-only). `pid-basics.html` migrated to the same helper called
@@ -3097,11 +3100,27 @@ shadow trees reliably in Chromium (some paths return length 0,
 others throw). Without engine-driven motion the gutter art
 becomes static decoration — which kills half the value.
 
-**Why it matters:** for now, the IntersectionObserver-gated
+**Why it matters:** ~~for now, the IntersectionObserver-gated
 per-frame work in `flow-engine.js` (only motifs in the viewport
-churn pulses) keeps the CPU cost negligible. The DOM weight
-itself is the only measurable cost — and even that gzips well
-since the repeated markup compresses heavily.
+churn pulses) keeps the CPU cost negligible~~ — *correction
+(2026-06-10, audit-2026-06 #31): that gating applied to pulses
+only. Flow-particle pools ticked every frame regardless of
+visibility or the gutter's `display:none`, and the measured idle
+cost was ~100 % of the main thread at desktop widths (552
+particles on a chrome-only page) and 4.5 s of script per 10 s on a
+phone moving circles that never painted. Fixed in the #31 PR: flow
+pools are now matchMedia-gated (no pools built while the gutter is
+hidden) and IntersectionObserver-gated (offscreen pools don't
+tick).* The DOM weight itself gzips well since the repeated markup
+compresses heavily.
+
+**Measured baseline (2026-06-09 audit, first numbers for the
+revisit trigger):** heaviest page 27.5 KB gzipped — nowhere near
+the 100 KB line, so the deferral stands. 80.7 % of
+signal-scaling's raw HTML is schematic-bg markup; stripping it
+saved +268 ms FCP / +654 ms DCL at 4× CPU throttle. The real cost
+of the motif library was #31's runtime animation (now gated), not
+bytes.
 
 **Decision (2026-05-23):** defer / accept. The standard fix is
 blocked by a Chromium-specific limitation that's outside our
@@ -3449,6 +3468,237 @@ a future palette retune to the pill face would silently skip dew-point.
 `class="status-pill dew-verdict"` and reduce `.dew-verdict` to just the
 deltas (pad override, `.ok` text-bright, the `.edge` state), so the base
 stays single-sourced. Otherwise leave as a documented variant.
+
+### 81. Light-theme accent tokens fail AA as foreground text across practice, chrome, and status pills
+
+Cross-filed from `audit-2026-06.md` #11 / #12 / #13 (2026-06-10), plus
+the dark-theme `--text-dim` polish item from the same audit. Three
+verified clusters, one root cause — the light accent tokens were tuned
+as border/fill tints, not text inks:
+
+- **#11 (high):** light `--amber` as foreground — quiz primary CTA
+  2.42:1, practice-landing GO pills 2.06:1 (worst text contrast on the
+  site), quiz "Restart now →" 2.25:1, pid-tuner SPOILER tag 2.42:1.
+- **#12 (medium):** light `--accent`/`--teal`/`--blue` small chrome
+  text at 3.3–3.9:1 site-wide (eyebrows, back-links, chips, pills,
+  toggles, hero readouts); a couple of dark equivalents are themselves
+  marginal (ok-pill 4.08, RUN 4.17).
+- **#13 (medium):** `.status-pill.warn` light `--heat` 3.11:1 on the
+  four status-pill tools — the diagnostic verdict text itself.
+- **Polish:** dark `--text-dim` on raised cards sits at 3.97:1 (footer,
+  `.ref-table-dense` TH cells, nav-card pills on `--surface-2`).
+
+**Why it matters.** The quiz's primary CTA fails AA by nearly 2× for
+any daylight user, and the failures span every accent family — this is
+a token-set problem, not per-component slips.
+
+**Priority.** HIGH (the #11 cluster), but held for an owner decision.
+
+**Recommended action.** One coordinated token pass: darken light
+`--amber`/`--accent`/`--teal`/`--heat` for foreground use (and/or a
+dedicated `--on-amber` ink for filled CTAs), vs splitting text-grade
+tokens (`--accent-text`) so the brighter hues stay for borders/fills;
+one step brighter dark `--text-dim` (or `--text` for TH cells). Visual
+identity is the owner's — awaiting his palette direction before any
+sweep. Full measurements in `audit-2026-06.md` #11–#13.
+
+### 82. Palette ranking: title-prefix bonus outranks section relevance ("superheat" puts the calculator third)
+
+Cross-filed from `audit-2026-06.md` #16 (2026-06-10). In `search.js`
+`rank()`, `title.startsWith(query)` (+100) dominates and
+`SECTION_ORDER` applies only as an exact-score tie-break, so lesson and
+quiz both outscore the Superheat calculator (125 vs 85) for the query
+"superheat".
+
+**Why it matters.** search.js's own stated purpose is "one keystroke
+from any page to any tool" — for tool-shaped queries the tool should
+plausibly win. But whether tools *should* outrank lessons/quizzes for
+tied terms is an editorial ranking decision.
+
+**Priority.** MEDIUM, held for an owner decision.
+
+**Recommended action.** If yes: fold `sectionRank` into the score
+itself (e.g. a flat tools/simulators bonus) instead of tie-break-only.
+The #17 word-boundary fix (shipped separately) is independent of this.
+
+### 83. No tool state survives a reload — preset-class selects could persist under the existing `cf_` convention
+
+Cross-filed from `audit-2026-06.md` #18 (2026-06-10, verifier:
+low-medium). refrigerant-pt forgets the selected refrigerant on every
+visit while the psychrometric chart already persists its range preset
+(`cf_psy_range`) — so *preset-class enums* (refrigerant, lookup-by
+mode, thermistor type) have an established persistence precedent.
+Distinct from the parked last-entered-*values* persistence decision
+(friction file, controller-commissioner entry) and from URL-state
+deep-linking (logged separately in the friction file).
+
+**Why it matters.** A tech who uses refrigerant-pt for R-22 work
+re-selects the refrigerant every single visit; the site already knows
+how to remember this class of choice.
+
+**Priority.** LOW-MEDIUM, held for an owner decision (Step-3 list).
+
+**Recommended action.** Persist preset-class selects under `cf_*` keys
+(`cf_rf_refrigerant`, …) mirroring the `cf_psy_range` pattern; any new
+key also gets a privacy.html line (see the privacy sweep rule from
+audit #52). Optionally honor a `?r=r22`-style query param — that half
+is the friction-file question.
+
+### 84. Static assets ship `max-age=0, must-revalidate` and nothing is version-busted
+
+Cross-filed from `audit-2026-06.md` #32 (2026-06-10). Production
+serves `/styles.css`, all `/scripts/*`, and `/assets/*` with the
+Workers Assets default `Cache-Control: max-age=0, must-revalidate` —
+repeat visitors pay ~7–8 conditional revalidations per navigation
+(~1 extra RTT on high-latency links, stacking with the documented
+`.html`→clean 307 hop).
+
+**Why it matters.** The site's own persona is a tech on flaky
+mech-room LTE; revalidation chatter is exactly what hurts there.
+
+**Priority.** MEDIUM, held for an owner decision — fully specified but
+it changes production delivery behavior.
+
+**Recommended action.** In `src/worker.js`, set
+`max-age=31536000, immutable` on `/scripts/*`, `/styles.css`,
+`/assets/*` after `env.ASSETS.fetch()`, busted with
+`?v={{ site.version }}` in `head.njk`/`page.njk` (the version token
+already exists in `html/_data/site.js`). HTML keeps the revalidate
+default. ~15 lines.
+
+### 85. First paint is render-blocked by third-party Google Fonts CSS
+
+Cross-filed from `audit-2026-06.md` #33 (2026-06-10). The
+render-blocking fonts.googleapis.com stylesheet delays FCP one-for-one
+when slow (measured 624 ms → 3,352 ms with a 3 s delay), and the fonts
+are the only non-essential third-party origin site-wide (visitor
+IP+UA to Google on every page).
+
+**Why it matters.** Performance *and* privacy posture in one change;
+both families are OFL-licensed so self-hosting is clean.
+
+**Priority.** MEDIUM, held for an owner decision.
+
+**Recommended action.** Self-host the latin woff2 subset under
+`/assets/fonts/` with `@font-face` + `font-display: swap`; Turnstile
+on contact.html becomes the sole external origin. Decide whether to
+drop the Overpass 300 weight — it's used by exactly two rules (home
+hero + `.landing-intro`), both restyleable.
+
+### 86. `canonical`/`og:url` point through the `.html`→clean 307
+
+Cross-filed from `audit-2026-06.md` (redirected item, 2026-06-10).
+The `.html`-extension convention *including* the Worker redirect is
+documented and deliberate (CLAUDE.md); the new sliver is that
+`canonical` and `og:url` carry the `.html` form, so consumers of those
+URLs land on a 307 hop to the clean form.
+
+**Why it matters.** Cheap SEO/share hygiene — but the `.html` canonical
+form is itself a documented convention, so aligning canonicals with
+the clean form (or accepting and documenting the hop) is a convention
+decision, not a bug fix.
+
+**Priority.** LOW, held for an owner decision.
+
+**Recommended action.** Either switch `canonical` frontmatter +
+`og:url` to the clean URL form site-wide (one sweep + sitemap/PAGES
+fallout), or record in CLAUDE.md that the 307-through is accepted.
+
+### 87. smoke.spec.js serializes ~154 s of the suite's ~196 test-seconds into one worker
+
+Cross-filed from `audit-2026-06.md` (tests polish, 2026-06-10).
+Playwright parallelizes across files by default; the monolithic
+smoke spec caps suite wall time. The audit's empirical isolation probe
+verified contexts are per-test, so `fullyParallel: true` (or splitting
+the behavioral tests into their own spec) is safe and would roughly
+halve CI wall time.
+
+**Why it matters.** Every PR pays the serialized wall time; the
+isolation worry that justified the shape is disproven.
+
+**Priority.** LOW-MEDIUM, held for an owner decision — CLAUDE.md says
+don't restructure test scaffolding without being asked, so this asks.
+
+**Recommended action.** Owner picks: `fullyParallel: true` in
+`playwright.config.js` (one line, no file moves) vs splitting
+smoke.spec.js into per-area specs (better failure locality). Either
+way update the CLAUDE.md test-list text.
+
+### 88. Tools nav dropdown sorts by slug while 13 of 14 labels read alphabetically
+
+Cross-filed from `audit-2026-06.md` (power-user polish, 2026-06-10).
+The dropdown order comes from the deliberate-for-diff-stability
+canonical-URL sort in `.eleventy.js` `navSection`; "Pump & Fan
+Affinity Laws" (slug `affinity-laws`) sits first, training an
+alphabetical scan that then fails at P. Sorting by `cleanTitle` would
+be equally diff-stable.
+
+**Why it matters.** Minor scan-friction in the highest-traffic menu;
+zero-risk fix, but the current sort is documented deliberate, so the
+swap is a decision, not drift.
+
+**Priority.** LOW, held for an owner decision.
+
+**Recommended action.** If approved: sort the three nav collections by
+`cleanTitle` in `.eleventy.js` and note the convention change where
+the slug-sort was recorded.
+
+### 89. A fast 5/5 short quiz run silently overwrites a 10/10 full-run best
+
+Cross-filed from `audit-2026-06.md` (student polish, 2026-06-10).
+`quiz-engine.js` `finish()` compares score ratio then elapsed time
+with no regard for question-count, so a shorter run can replace a
+longer run's best and celebrate "new best".
+
+**Why it matters.** The best-score record is the engine's only
+progress artifact; letting a 5-question run displace a 10-question
+best makes it untrustworthy.
+
+**Priority.** LOW, held for an owner decision (semantics choice).
+
+**Recommended action.** Owner picks: track best per question-count
+(`cf_quiz_<slug>_best_<n>`), or keep one key but never let a shorter
+total replace a longer one (ties allowed). Coordinate with the
+results-card/badge ideas in the friction file's practice-continuity
+entry.
+
+### 90. Canvas resize handlers redraw synchronously per resize event
+
+Cross-filed from `audit-2026-06.md` (performance polish, 2026-06-10).
+psychrometric-chart, staging-sequencer, and pid-basics (×3 canvases)
+redraw full canvases synchronously in raw `resize` handlers; pid-tuner
+has the rAF-coalesce pattern half-applied.
+
+**Why it matters.** Continuous-resize jank on desktop and orientation
+changes on mobile; the fix is a known ~4-line rAF coalescer per page,
+and one page already models it.
+
+**Priority.** LOW (no user report; measured cost is resize-time only).
+
+**Recommended action.** Apply the rAF coalescer pattern to the five
+handlers in a small `perf:` sweep; finish pid-tuner's half-applied
+one. No design input needed — parked here only because the audit
+sweep batches were already full.
+
+### 91. PID tuner chart y-axis is unconverted and unlabeled in metric
+
+Cross-filed from `audit-2026-06.md` (metric polish, 2026-06-10;
+downgraded from medium in audit verification). The LCD-stays-canonical
+decision is documented deliberate, but the chart's y-axis was never
+covered by it: in metric the same physical value renders as `0.78` on
+the chart and `137 Pa` in the metrics row with nothing tying them
+together.
+
+**Why it matters.** A metric user cross-reading chart and metrics row
+sees two unrelated-looking numbers for one value.
+
+**Priority.** LOW-MEDIUM. Mechanically fixable via the existing
+`Units.display` helpers, but coordinate with the broader
+which-surfaces-convert decision (friction file, home-hero-units entry)
+so the canonical-vs-converted line lands in one place.
+
+**Recommended action.** Convert/label the y-axis via `Units.display`
+once the owner settles the hero/canonical-surfaces question.
 
 ### Deferred / Won't fix (with revisit trigger)
 

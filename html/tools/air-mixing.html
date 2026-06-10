@@ -3,6 +3,7 @@ title: Air-Mixing Calculator — controlsfreak.dev
 description: Mix three air streams by mass flow or mass fraction and read out the resulting dry-bulb, humidity, enthalpy, and dew point of the blend. ASHRAE psychrometrics.
 canonical: https://controlsfreak.dev/tools/air-mixing.html
 nav: tools
+keywords: cfm mixed air oa oat ra return outdoor plenum blend
 ---
 {% extends "layouts/page.njk" %}
 {% from "related-links.njk" import relatedLinks %}
@@ -158,7 +159,7 @@ nav: tools
                     </p>
                 </section>
 
-                <section>
+                <section role="status" aria-atomic="false">
                     <h2 class="ps-section-label">Output</h2>
                     <div class="status-pill" id="am-flow-status">Enter values to see the mix.</div>
 
@@ -296,7 +297,7 @@ nav: tools
                     </p>
                 </section>
 
-                <section>
+                <section role="status" aria-atomic="false">
                     <h2 class="ps-section-label">Output</h2>
                     <div class="status-pill" id="am-frac-status">Enter values to see the mix.</div>
 
@@ -353,7 +354,6 @@ nav: tools
 {% endblock %}
 
 {% block scripts %}
-<script src="/scripts/units.js"></script>
 <script src="/scripts/ui.js"></script>
 <script src="/scripts/psychro-engine.js"></script>
 <script src="/scripts/psy-widget.js"></script>
@@ -512,7 +512,9 @@ nav: tools
                 return;
             }
 
-            setStatus(tab, 'Mixed state computed at ' + (P).toFixed(2) + ' psia.', 'ok');
+            setStatus(tab, 'Mixed state computed at '
+                + U.display.pressure(P).toFixed(U.current() === 'us' ? 2 : 1)
+                + ' ' + U.suffix.pressure() + '.', 'ok');
             setLive('am-' + tab + '-ma-tdb', dispT(maState.tdb) + ' ' + tU());
             setLive('am-' + tab + '-ma-wb',  isFinite(maState.twb) ? dispT(maState.twb) + ' ' + tU() : '—');
             setLive('am-' + tab + '-ma-dp',  isFinite(maState.tdp) ? dispT(maState.tdp) + ' ' + tU() : '—');
@@ -553,12 +555,36 @@ nav: tools
         }
 
         // ── Unit-flip resync ──────────────────────────────────────────
+        // Per-quantity display decimals for input rewrites (psy-chart's
+        // per-mode defaults are the precedent) — no more 6-significant-
+        // figure conversions like 1699.01 m³/h (audit-2026-06 #60b).
+        const REWRITE_DEC = { temp: 1, deltaTemp: 1, airflow: 0, altitude: 0,
+                              humidityRatio: 1, enthalpy: 1, pressure: 1 };
         function rewriteInput(id, quantity, fromU, toU) {
             const el = document.getElementById(id);
             const v  = parseFloat(el.value);
             if (!isFinite(v)) return;
-            const next = U.convert(v, fromU, toU, quantity);
-            el.value = (Math.round(next * 100) / 100).toString();
+            // Reformat from a retained canonical value, not the rounded
+            // display string — flipping units away and back must hand
+            // back exactly what was typed (audit-2026-06 #60a). The
+            // stored canonical is trusted only while the field still
+            // shows the exact text this function last wrote for the same
+            // quantity; a user edit or mode switch rebuilds it.
+            let canon = parseFloat(el.dataset.canonUs);
+            if (!(isFinite(canon) && el.dataset.canonQ === quantity && el.dataset.canonDisp === el.value)) {
+                canon = U.convert(v, fromU, 'us', quantity);
+                el.dataset.canonUs = String(canon);
+                el.dataset.canonQ = quantity;
+                el.dataset.typedText = el.value;
+                el.dataset.typedUnits = fromU;
+            }
+            if (toU === el.dataset.typedUnits) {
+                el.value = el.dataset.typedText;
+            } else {
+                const dec = REWRITE_DEC[quantity] !== undefined ? REWRITE_DEC[quantity] : 2;
+                el.value = (+U.convert(canon, 'us', toU, quantity).toFixed(dec)).toString();
+            }
+            el.dataset.canonDisp = el.value;
         }
 
         U.onChange(function (newUnits) {

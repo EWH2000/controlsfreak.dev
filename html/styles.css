@@ -1078,6 +1078,10 @@ p.bit-hint {
     cursor: pointer;
     transition: all 0.12s;
     user-select: none;
+    /* The cells are real <button>s now (keyboard/AT access) — undo the
+       UA button box so the grid metrics don't shift. */
+    padding: 0;
+    font: inherit;
 }
 .bit:hover { border-color: var(--text-dim); }
 .bit.on { background: var(--accent-dim); border-color: var(--accent); }
@@ -1192,16 +1196,17 @@ footer {
     50%      { opacity: 0.55; }
 }
 
-/* ── RESPONSIVE ── */
+/* ── RESPONSIVE ──
+   Source order is load-bearing: an override in here only wins against
+   base rules defined ABOVE this block (equal specificity — last wins).
+   Components defined later in the file keep their narrow-width
+   overrides in a per-component @media block next to their base rules
+   (.pid-controls, .sim-canvas-wrap, .sim-legend, .ref-table); do the
+   same for any new late-defined component instead of adding it here. */
 @media (max-width: 620px) {
     .form-row        { grid-template-columns: 1fr; }
     .bit-grid        { grid-template-columns: repeat(8, 1fr); }
     .bit-readouts    { grid-template-columns: 1fr 1fr; }
-    .pid-controls    { grid-template-columns: 1fr; }
-    .ref-table       { font-size: 0.76rem; }
-    .ref-table th, .ref-table td { padding: 0.5rem 0.5rem; }
-    .sim-canvas-wrap canvas { height: 200px; }
-    .sim-legend      { gap: 1rem; }
     .site-nav        { padding: 0.7rem 1rem; }
     main             { padding-left: 1rem; padding-right: 1rem; }
     .hero            { margin-left: 1rem; margin-right: 1rem; width: auto; }
@@ -1372,6 +1377,12 @@ body.has-fullscreen-tool main { z-index: 400; }
     gap: 1.25rem 1.5rem;
     margin-bottom: 1.25rem;
 }
+/* Phone: one full-width column so the three tuning sliders get real
+   track length + hit height. Lives here, not in the RESPONSIVE block —
+   that block sits earlier in the file and would lose on source order. */
+@media (max-width: 620px) {
+    .pid-controls { grid-template-columns: 1fr; }
+}
 .slider-field { display: flex; flex-direction: column; gap: 0.45rem; }
 .slider-head {
     display: flex;
@@ -1417,6 +1428,23 @@ input[type="range"]::-moz-range-thumb {
     box-shadow: 0 0 0 1px var(--accent);
 }
 
+/* ── SCREEN-READER-ONLY UTILITY ──
+   Text for assistive tech that must not paint — the standard
+   clip-rect recipe (display:none / visibility:hidden would silence
+   the screen reader too). First consumer: the pid-tuner's throttled
+   live region for its three metrics readouts. */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
 /* ── FOCUS INDICATORS ──
    Every custom-styled interactive with a :hover needs a paired
    :focus-visible — the browser default outline is suppressed by the
@@ -1442,6 +1470,10 @@ input[type="range"]::-moz-range-thumb {
 .quiz-action:focus-visible,
 .quiz-reset-best:focus-visible,
 .quiz-restart-now:focus-visible,
+.bit:focus-visible,
+.psy-pill:focus-visible,
+#th-rt-scroll:focus-visible,
+#fbe-canvas:focus-visible,
 .pid-spoiler > summary:focus-visible {
     outline: 2px solid var(--accent);
     outline-offset: 3px;   /* v2.0.0 — was 2px; lifted so the accent ring no longer kisses the border on .nav-card */
@@ -1454,35 +1486,58 @@ input[type="range"]:focus-visible::-moz-range-thumb {
 }
 
 /* ── TOUCH-TARGET FLOOR ──
-   On touch devices (coarse pointer, no hover), the chrome-level
-   controls — top-nav links, units toggle, tool tabs, quiz settings —
-   are padded to a >=44px hit area (WCAG 2.5.5 / Apple HIG). Scoped to
-   (hover: none) so pointer users keep the compact desktop workstation
-   density; the answer-level controls (.quiz-choice, .quiz-action,
-   .ps-input, copy/submit buttons) already clear 44px and aren't
-   repeated here. Like FOCUS INDICATORS above, this is the single
-   consolidated home for the floor — add new chrome-level interactives
+   On touch devices (coarse pointer, no hover), the interactive
+   controls are padded to a >=44px hit area (WCAG 2.5.5 / Apple HIG).
+   Scoped to (hover: none) so pointer users keep the compact desktop
+   workstation density. The .ps-input fields and .quiz-choice answers
+   clear 44px natively; everything else measured under the floor lives
+   here — including .copy-btn (22px natively — the audit-2026-06 #24
+   measurement disproved this block's old "copy/submit buttons already
+   clear 44px" claim), .filter-chip (28px), .quiz-action (39px), and
+   the fullscreen button (26px). Like FOCUS INDICATORS above, this is
+   the single consolidated home for the floor — add new interactives
    here rather than scattering per-component min-heights.
-   See codebase-issues #74 / ux-audit #3 / #8 / #9 for the why. */
+   See codebase-issues #74 / ux-audit #3 / #8 / #9 + audit-2026-06
+   #24 / #25 for the why. */
 @media (hover: none) {
     .site-nav-links a,
     .units-btn,
     .theme-btn,
     .nav-search-btn,
-    .nav-hamburger,
     .nav-menu-toggle,
     .nav-menu-item,
     .hero-qt,
     .tab-btn,
+    .copy-btn,
+    .filter-chip,
+    .tool-card-fullscreen-btn,
+    .quiz-action,
     .quiz-reset-best {
         display: inline-flex;
         align-items: center;
         justify-content: center;
         min-height: 44px;
     }
+    /* The burger gets min-height ONLY — sharing the display
+       declaration above overrode its base display:none at ALL widths
+       under hover:none, rendering a stray non-functional hamburger
+       beside the full link bar on touch tablets (audit-2026-06 #25).
+       The ≤620px media block is what reveals it. */
+    .nav-hamburger { min-height: 44px; }
     .site-nav-links a { padding-inline: 0.2rem; }
     .quiz-settings-select { min-height: 44px; }
     .pid-spoiler > summary { min-height: 44px; }
+    /* Range sliders: the input element IS the painted 4px track (its
+       background is the track color), so bare padding would paint a
+       fat gray bar. border-box height 44 − 2×20 padding leaves a 4px
+       content row; background-clip keeps the paint there while the
+       whole 44px box takes the touch (audit #24 measured 4px-tall hit
+       boxes on the PID tuning sliders). */
+    input[type="range"] {
+        height: 44px;
+        padding-block: 20px;
+        background-clip: content-box;
+    }
     /* Dropdown items are full-width rows, not compact chrome — keep them
        left-aligned while still clearing the 44px floor above. */
     .nav-menu .nav-menu-item { justify-content: flex-start; }
@@ -1505,6 +1560,9 @@ input[type="range"]:focus-visible::-moz-range-thumb {
     margin-bottom: 0.75rem;
 }
 .sim-canvas-wrap canvas { display: block; width: 100%; height: 260px; }
+@media (max-width: 620px) {
+    .sim-canvas-wrap canvas { height: 200px; }
+}
 /* PID playhead — a no-padding relative box so the overlay cursor canvas
    covers #pid-canvas with a shared (0,0) origin (no border/padding offset
    math). The overlay is sized to the chart's box; its backing buffer is set
@@ -1546,6 +1604,13 @@ input[type="range"]:focus-visible::-moz-range-thumb {
     color: var(--text-dim);
 }
 .pid-eq-feedback .pid-eq-fb-line { flex: 1; border-top: 1px dashed var(--blue); }
+/* The arrow points back along the strip: left while the loop lays out
+   horizontally, up once the ≤700px breakpoint stacks it vertically
+   (controller on top, sensor at the bottom). */
+.pid-eq-fb-arrow::before { content: "← "; }
+@media (max-width: 700px) {
+    .pid-eq-fb-arrow::before { content: "↑ "; }
+}
 
 /* ── PID "loop details" spoiler — native <details> so you can tune the
    process by feel first, then reveal the loop-speed numbers + cheat sheets
@@ -1612,6 +1677,9 @@ input[type="range"]:focus-visible::-moz-range-thumb {
 }
 .sim-legend .swatch.pv { border-top: 2px solid var(--accent); }
 .sim-legend .swatch.sp { border-top: 2px dashed var(--text-dim); }
+@media (max-width: 620px) {
+    .sim-legend { gap: 1rem; }
+}
 
 .readout-value.warn { color: var(--red); }
 
@@ -1638,6 +1706,15 @@ input[type="range"]:focus-visible::-moz-range-thumb {
 .ref-table tbody tr:hover { background: var(--blue-dim); }
 .ref-table td:first-child { color: var(--text-bright); }
 .ref-table tbody tr:last-child td { border-bottom: none; }
+@media (max-width: 620px) {
+    .ref-table       { font-size: 0.76rem; }
+    .ref-table th, .ref-table td { padding: 0.5rem 0.5rem; }
+}
+/* Scroll guard for tables whose min-content width can exceed a narrow
+   card (e.g. the pid-tuner spoiler's 4-column reference at <375px
+   viewports): the wrapper scrolls instead of the table slicing through
+   the card border. Inert (no scrollbar) wherever the table fits. */
+.table-scroll { overflow-x: auto; }
 
 /* ── CALLOUT CARDS (PID-term cards, worked-example asides, discovery
    prompts, Easter-egg reveals — same visual treatment everywhere) ── */

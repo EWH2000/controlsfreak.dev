@@ -77,6 +77,22 @@
         return s in SECTION_ORDER ? SECTION_ORDER[s] : 4;
     }
 
+    // Short tokens (≤3 chars) must match at a word START — a bare
+    // substring match on "fla" surfaced cloudFLAre and similar mid-word
+    // noise while the pages that actually cover FLA were unreachable
+    // (audit-2026-06 #17). Word-start (rather than whole-word) keeps
+    // incremental typing alive: "sig" still finds Signal Scaling.
+    // Longer tokens keep plain substring matching.
+    function hasToken(hay, t) {
+        if (t.length > 3) return hay.includes(t);
+        let i = hay.indexOf(t);
+        while (i !== -1) {
+            if (i === 0 || !/[a-z0-9]/.test(hay[i - 1])) return true;
+            i = hay.indexOf(t, i + 1);
+        }
+        return false;
+    }
+
     // Weighted substring/token score. Every query token must match the
     // title, keywords, or description somewhere, or the entry is dropped —
     // keeps multi-word queries precise on a small index.
@@ -95,9 +111,9 @@
             let ok = true;
             for (const t of tokens) {
                 let ts = 0;
-                if (title.includes(t)) ts += 20;
-                if (kw.includes(t)) ts += 12;
-                if (desc.includes(t)) ts += 5;
+                if (hasToken(title, t)) ts += 20;
+                if (hasToken(kw, t)) ts += 12;
+                if (hasToken(desc, t)) ts += 5;
                 if (ts === 0) { ok = false; break; }
                 score += ts;
             }

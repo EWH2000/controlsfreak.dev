@@ -4,6 +4,7 @@ description: Getting design flow to every load in a hydronic system — calibrat
 canonical: https://controlsfreak.dev/education/balancing.html
 nav: education
 pairedQuiz: https://controlsfreak.dev/practice/balancing.html
+keywords: gpm delta p flow circuit setter proportional balance valve tab
 ---
 {% extends "layouts/page.njk" %}
 {% from "related-links.njk" import relatedLinks %}
@@ -688,7 +689,6 @@ pairedQuiz: https://controlsfreak.dev/practice/balancing.html
 {% endblock %}
 
 {% block scripts %}
-<script src="/scripts/units.js"></script>
 <!-- Particle-flow animation over the riser diagram. Classic script,
      loaded site-wide from layouts/page.njk (gutter schematic motifs);
      the inline page script's FlowEngine.init() below is a no-op refresh.

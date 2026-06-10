@@ -61,10 +61,19 @@ module.exports = function(eleventyConfig) {
                 return len < MIN || len > MAX;
             })
             .map((item) => `  ${item.inputPath} — ${item.data.description.length} chars`);
-        if (offenders.length) {
+        // A *missing* description used to pass silently (the typeof
+        // filter skipped it) — any page real enough to carry a canonical
+        // must also carry a description (audit-2026-06 polish; the
+        // noindex 404 has neither and stays exempt).
+        const missing = collectionApi.getAll()
+            .filter((item) => typeof item.data.canonical === "string"
+                && typeof item.data.description !== "string")
+            .map((item) => `  ${item.inputPath} — canonical but no description`);
+        const all = offenders.concat(missing);
+        if (all.length) {
             throw new Error(
                 `description frontmatter must be ${MIN}–${MAX} chars ` +
-                `(CLAUDE.md "Templating"):\n${offenders.join("\n")}`
+                `(CLAUDE.md "Templating"):\n${all.join("\n")}`
             );
         }
         return [];
@@ -129,6 +138,43 @@ module.exports = function(eleventyConfig) {
     // Falls back to today's date if git has no record (an uncommitted
     // file, or a build environment without full history). Used by
     // sitemap.njk for <lastmod>. codebase-issues.md #45.
+    //
+    // STRICT_GIT_DATES (audit-2026-06 #35): the silent fallback is what
+    // let production ship every <lastmod> and every TechArticle
+    // datePublished as the deploy date — Cloudflare Workers Build clones
+    // shallow, both filters fell back on all 64 pages, and nothing
+    // failed. With STRICT_GIT_DATES set (intended for the deploy build
+    // command, alongside a `git fetch --unshallow`), an empty git answer
+    // throws instead of falling back, so a history-less production
+    // build fails loudly. Local/CI builds without the env keep the
+    // forgiving behavior for uncommitted files.
+    const strictGitDates = !!process.env.STRICT_GIT_DATES;
+    if (strictGitDates) {
+        // A shallow clone isn't caught by the empty-output guards below —
+        // `git log` still answers with the lone fetched commit, which is
+        // exactly the every-date-collapses-to-deploy-date failure. Detect
+        // it head-on and fail the build before a single page renders.
+        const shallow = execFileSync(
+            "git", ["rev-parse", "--is-shallow-repository"],
+            { encoding: "utf8" }
+        ).trim();
+        if (shallow === "true") {
+            throw new Error(
+                "STRICT_GIT_DATES: this is a shallow clone — every <lastmod> " +
+                "and datePublished would collapse to the deploy date. " +
+                "Run `git fetch --unshallow` before the build."
+            );
+        }
+    }
+    const gitDateFallback = (inputPath, what) => {
+        if (strictGitDates) {
+            throw new Error(
+                `STRICT_GIT_DATES: git has no ${what} for ${inputPath} — ` +
+                "shallow clone? Run `git fetch --unshallow` before the build."
+            );
+        }
+        return new Date().toISOString().slice(0, 10);
+    };
     eleventyConfig.addFilter("gitLastmod", (inputPath) => {
         try {
             const out = execFileSync(
@@ -136,16 +182,20 @@ module.exports = function(eleventyConfig) {
                 ["log", "-1", "--format=%cd", "--date=short", "--", inputPath],
                 { encoding: "utf8" }
             ).trim();
-            return out || new Date().toISOString().slice(0, 10);
+            return out || gitDateFallback(inputPath, "last-modified date");
         } catch (err) {
-            return new Date().toISOString().slice(0, 10);
+            if (strictGitDates) throw err;
+            return gitDateFallback(inputPath, "last-modified date");
         }
     });
 
     // First-modified (created) date for a source file — the date of the
     // earliest commit touching the path. Used by head.njk for the
     // `datePublished` field of TechArticle JSON-LD on education pages
-    // (`dateModified` reuses gitLastmod). Same fallback shape.
+    // (`dateModified` reuses gitLastmod). Same fallback shape — and the
+    // same STRICT_GIT_DATES guard: a shallow production clone walked
+    // datePublished forward on every deploy, an anti-freshness signal
+    // for the E-E-A-T JSON-LD it was built for.
     eleventyConfig.addFilter("gitFirstmod", (inputPath) => {
         try {
             const out = execFileSync(
@@ -153,9 +203,10 @@ module.exports = function(eleventyConfig) {
                 ["log", "--format=%cd", "--date=short", "--reverse", "--", inputPath],
                 { encoding: "utf8" }
             ).trim().split("\n")[0];
-            return out || new Date().toISOString().slice(0, 10);
+            return out || gitDateFallback(inputPath, "first-commit date");
         } catch (err) {
-            return new Date().toISOString().slice(0, 10);
+            if (strictGitDates) throw err;
+            return gitDateFallback(inputPath, "first-commit date");
         }
     });
 
@@ -164,10 +215,16 @@ module.exports = function(eleventyConfig) {
     // inside <script type="application/ld+json">, or an empty string when
     // a breadcrumb doesn't apply (home page, pages without `nav`).
     // Google still surfaces breadcrumbs as a rich result under the snippet.
+    // One entry per nav section that has a landing to breadcrumb
+    // through. audit-2026-06 #36: practice was missing (the map predates
+    // the practice landing by a day), so all 21 practice pages emitted a
+    // flat Home→Page trail — a new nav section needs an entry here
+    // (convention→consumers sweep).
     const SECTION_MAP = {
         tools:      { name: "Tools",      url: "https://controlsfreak.dev/tools/" },
         simulators: { name: "Simulators", url: "https://controlsfreak.dev/simulators/" },
         education:  { name: "Education",  url: "https://controlsfreak.dev/education/" },
+        practice:   { name: "Practice",   url: "https://controlsfreak.dev/practice/" },
         contact:    { name: "Contact",    url: "https://controlsfreak.dev/contact.html" }
     };
     eleventyConfig.addFilter("breadcrumbJsonLd", (canonical, nav, title) => {
@@ -187,7 +244,7 @@ module.exports = function(eleventyConfig) {
             // leave top-level utility pages without any breadcrumb at all.
             items.push({ name: cleanTitle(title), url: canonical });
         }
-        return JSON.stringify({
+        return scriptSafeStringify({
             "@context": "https://schema.org",
             "@type": "BreadcrumbList",
             "itemListElement": items.map((item, i) => ({
@@ -205,11 +262,16 @@ module.exports = function(eleventyConfig) {
     // round-tripped value is byte-identical to the unescaped form once the
     // browser parses the JSON literal; this only affects the embedded HTML
     // representation. Used for the quiz pages' inline `const questions = …`
-    // injection (the same data is also emitted as FAQPage JSON-LD via
-    // faqPageJsonLd below — same safety story applies there too).
-    eleventyConfig.addFilter("safeScriptJson", (value) =>
-        JSON.stringify(value).replace(/</g, "\\u003c")
-    );
+    // injection AND by every JSON-LD filter in this file (breadcrumb,
+    // FAQPage, SoftwareApplication, TechArticle) — they all land inside
+    // inline <script> tags, so they all need the same escape
+    // (audit-2026-06 polish: three of the four previously used plain
+    // JSON.stringify while this comment claimed parity; the data is
+    // repo-committed frontmatter, so the exposure was author-self-XSS,
+    // but the invariant should hold by construction).
+    const scriptSafeStringify = (value) =>
+        JSON.stringify(value).replace(/</g, "\\u003c");
+    eleventyConfig.addFilter("safeScriptJson", scriptSafeStringify);
 
     // FAQPage JSON-LD for quiz pages. Each question in the bank becomes a
     // Question entity with an Answer that combines the correct choice (or
@@ -257,7 +319,7 @@ module.exports = function(eleventyConfig) {
         if (pairedLesson) {
             node.isPartOf = { "@type": "TechArticle", "@id": pairedLesson };
         }
-        return JSON.stringify(node);
+        return scriptSafeStringify(node);
     });
 
     // SoftwareApplication JSON-LD for tool pages — declares the per-tool
@@ -272,7 +334,7 @@ module.exports = function(eleventyConfig) {
     // when nav: tools AND not on the tools landing itself.
     eleventyConfig.addFilter("softwareApplicationJsonLd", (canonical, title, description) => {
         if (!canonical) return "";
-        return JSON.stringify({
+        return scriptSafeStringify({
             "@context": "https://schema.org",
             "@type": "SoftwareApplication",
             "name": cleanTitle(title),
@@ -313,7 +375,7 @@ module.exports = function(eleventyConfig) {
         if (pairedQuiz) {
             node.hasPart = { "@type": "FAQPage", "@id": pairedQuiz };
         }
-        return JSON.stringify(node);
+        return scriptSafeStringify(node);
     });
 
     return {

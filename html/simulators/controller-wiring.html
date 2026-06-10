@@ -3,6 +3,7 @@ title: Controller Wiring Simulator — controlsfreak.dev
 description: Wire a generic DDC controller — 24 VAC power, universal/binary inputs, analog/binary outputs — then watch it read live or fail with sparks and a popped fuse.
 canonical: https://controlsfreak.dev/simulators/controller-wiring.html
 nav: simulators
+keywords: 24vac com transformer 4-20ma loop ui ai ao bo terminals fuse
 ---
 {% extends "layouts/page.njk" %}
 {% from "related-links.njk" import relatedLinks %}
@@ -937,7 +938,11 @@ nav: simulators
             refresh();
             const cv = document.getElementById('cw-canvas');
             cv.scrollLeft = 0; cv.scrollTop = 0;
-            setStatus(key === 'clear' ? 'Cleared.' : 'Loaded: ' + key + '. Trace it — what reads, what fails?');
+            // Echo the preset button's visible label, not the internal
+            // slug ("Loaded: broken-fuse." — audit-2026-06 polish).
+            const btn = document.querySelector('[data-preset="' + key + '"]');
+            const name = btn ? btn.textContent.trim() : key;
+            setStatus(key === 'clear' ? 'Cleared.' : 'Loaded: ' + name + '. Trace it — what reads, what fails?');
         }
 
         function resetState() {

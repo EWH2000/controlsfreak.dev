@@ -90,7 +90,7 @@ module.exports = [
             { id: 'd', text: 'They\'re interchangeable — any analog terminal can do either.' }
         ],
         explain: 'AI = <strong>Analog Input</strong>: a varying signal arriving from the field (a 10K thermistor, a 4-20 mA transmitter, a 0-10 V humidity sensor) that the controller <em>measures</em>. AO = <strong>Analog Output</strong>: a varying signal the controller <em>generates</em> to position something — a 0-10 V damper actuator, a 4-20 mA valve, a VFD speed reference. The terminals are physically different circuits (one senses, one sources), so you can\'t land an actuator on an input. Their digital cousins are BI/BO (binary in/out) for two-state points.',
-        learnMore: { href: '/education/bacnet-basics.html', label: 'BACnet Basics — the object model' },
+        learnMore: { href: '/education/bacnet-basics.html#objects', label: 'BACnet Basics — the object model' },
         tags: ['field-wiring-sensors', 'io', 'ai-ao']
     },
 

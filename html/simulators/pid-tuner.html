@@ -3,6 +3,7 @@ title: PID Tuning Helper — controlsfreak.dev
 description: Interactive PID loop simulator with adjustable process speed and tuning parameters, plus a tuning cheat sheet and a loop-speed reference for controls work.
 canonical: https://controlsfreak.dev/simulators/pid-tuner.html
 nav: simulators
+keywords: gain reset rate kc ti td overshoot tuning loop deadtime
 ---
 {% extends "layouts/page.njk" %}
 {% from "related-links.njk" import relatedLinks %}
@@ -34,7 +35,10 @@ nav: simulators
         .pid-eq-act-fill  { fill: var(--accent); }
         .pid-eq-damper-blade { stroke: var(--accent); stroke-width: 3; stroke-linecap: round; }
         .pid-eq-sensor-dot { fill: var(--surface); stroke: var(--accent); stroke-width: 2; }
-        .pid-eq-cap   { font-family: var(--mono); font-size: 8.5px; fill: var(--text-dim); letter-spacing: 0.06em; text-transform: uppercase; }
+        /* 11px in the 360-unit viewBox ≈ 8.2px effective on a 375 phone —
+           8.5px scaled to an unreadable ~6.3px there, and the captions are
+           what tie each scene to real equipment (audit-2026-06 polish). */
+        .pid-eq-cap   { font-family: var(--mono); font-size: 11px; fill: var(--text-dim); letter-spacing: 0.06em; text-transform: uppercase; }
         .pid-eq-flow  { fill: none; stroke: none; }   /* invisible particle track for FlowEngine */
     </style>
 {% endblock %}
@@ -256,7 +260,11 @@ nav: simulators
 
                 <div class="pid-eq-feedback">
                     <span class="pid-eq-fb-line"></span>
-                    <span>← feedback · PV to controller</span>
+                    <!-- The arrow glyph is CSS content so the ≤700px
+                         stacked layout can point it up instead of left
+                         (audit-2026-06 polish: the strip stacks
+                         top-to-bottom there, so "←" mapped to nothing). -->
+                    <span><span class="pid-eq-fb-arrow" aria-hidden="true"></span>feedback · PV to controller</span>
                 </div>
             </div>
 
@@ -288,6 +296,11 @@ nav: simulators
                     <div class="readout-value" id="pid-err">—</div>
                 </div>
             </div>
+            <!-- Throttled live region: the visible readouts above change on
+                 every slider input event, far too chatty to announce raw.
+                 The IIFE composes one summary sentence here, debounced until
+                 the tuning has been at rest for a beat (audit-2026-06 #7). -->
+            <p class="sr-only" id="pid-sr-status" aria-live="polite"></p>
 
             <!-- ── Loop details (spoiler) — gated so you can tune the process
                  above by feel first, then reveal the loop-speed numbers + the
@@ -306,6 +319,7 @@ nav: simulators
                     "Fast loop / slow loop" is loose shorthand for the dominant time constant — roughly how long the process takes to get most of the way to a new value after the output changes. Loops with longer time constants and more dead time need gentler tuning and benefit more from integral; fast loops can take more aggressive gain. The Equipment selector picks one of these buckets:
                 </p>
 
+                <div class="table-scroll">
                 <table class="ref-table">
                     <thead>
                         <tr><th>Speed</th><th>Time constant (τ)</th><th>Dead time</th><th>Typical HVAC examples</th></tr>
@@ -331,6 +345,7 @@ nav: simulators
                         </tr>
                     </tbody>
                 </table>
+                </div>
 
                 <p class="pid-note">
                     The ratio that matters most for controllability is dead&nbsp;time&nbsp;÷&nbsp;τ. Below ~0.2 the loop is well-behaved; up around 0.5 you need to be careful (slower gain, longer reset); past 1.0 you're usually fighting transport delay, and a Smith predictor or feedforward starts to look attractive. The first three buckets above all sit comfortably under 0.2, which is most HVAC — though toward the slow end of a bucket's range the ratio climbs. The fourth, <strong>reheat at the end of a long run</strong> (dead&nbsp;÷&nbsp;τ&nbsp;≈&nbsp;0.5), is the one to pick when you want to <em>see</em> the symptoms in the next table: crank the gain on it and the loop overshoots, then rings, then won't settle — the "too much P" failure the well-behaved buckets never quite reach.
@@ -385,7 +400,6 @@ nav: simulators
 {% endblock %}
 
 {% block scripts %}
-<script src="/scripts/units.js"></script>
 <!-- Shared simulation core — the FOPDT process model + discrete-time stepping
      (PID_PROC, PID_DMAX, simulatePid, fmtDur) plus the canvas drawer and
      unit-aware delta formatter (drawPidChart, formatPidDelta). Defined as
@@ -456,13 +470,30 @@ nav: simulators
             setEl.textContent = sim.settled === null ? '> ' + fmtDur(sim.win) : fmtDur(sim.settled);
             setEl.classList.toggle('warn', sim.settled === null);
 
-            // Positive ssErr = PV above SP (standard PID convention). The mini-sims
-            // on /education/pid-basics.html flip the sign to read as "offset below SP"
-            // — keep that distinction; pass +ssErr here.
+            // The engine's ssErr is SP − PV: positive = PV settled BELOW SP.
+            // The mini-sims on /education/pid-basics.html flip the sign to show
+            // the offset as PV − SP — keep that distinction; pass +ssErr here.
             errEl.textContent = formatPidDelta(sim.ssErr, sim, document.getElementById('pid-proc').value);
             errEl.classList.toggle('warn', Math.abs(sim.ssErr) > 0.05 * sim.step);
 
+            announceMetrics();
+
             startPlayhead();   // restart the cursor sweep from t=0 on the fresh sim
+        }
+
+        // Debounced screen-reader announcement of the three metrics — a
+        // slider drag fires runPidSim per input event, so announce only
+        // once the tuning has been at rest for a beat (audit-2026-06 #7).
+        let srTimer = null;
+        function announceMetrics() {
+            clearTimeout(srTimer);
+            srTimer = setTimeout(function () {
+                const sr = document.getElementById('pid-sr-status');
+                if (!sr) return;
+                sr.textContent = 'Overshoot ' + document.getElementById('pid-over').textContent
+                    + ', settling time ' + document.getElementById('pid-settle').textContent
+                    + ', steady-state error ' + document.getElementById('pid-err').textContent + '.';
+            }, 800);
         }
 
         function drawTunerChart() {
@@ -596,9 +627,15 @@ nav: simulators
                 elText('pid-loop-detail',
                     'This loop — ' + PID_SPEED[key] + ': τ ≈ ' + fmtDur(proc.tau) +
                     ', dead time ≈ ' + fmtDur(proc.dead) + ', dead ÷ τ ≈ ' + ratio.toFixed(2) + '. ' +
+                    // Buckets match the spoiler note's regimes: under ~0.2
+                    // well-behaved, around 0.5 "be careful", past 1.0
+                    // dead-time dominated. The vhigh preset (0.50) gets the
+                    // be-careful message, not the past-1.0 one — the detail
+                    // line used to contradict the note three paragraphs
+                    // down (audit-2026-06 polish).
                     (ratio < 0.2 ? 'Easy to control — dead time is a small fraction of the lag.'
-                     : ratio < 0.5 ? 'Watch it — dead time is a real fraction of the lag; ease off gain, lean on reset.'
-                     : 'Dead-time dominated — back gain way off and lean on reset, or it rings then runs away.'));
+                     : ratio < 1.0 ? 'Be careful — dead time is a real fraction of the lag; slower gain, longer reset.'
+                     : 'Dead-time dominated — you are fighting transport delay; back gain way off and lean on reset, or it rings then runs away.'));
             }
             phFanAngle = 0;
             phFlowBand = -1;

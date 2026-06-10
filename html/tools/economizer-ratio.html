@@ -3,6 +3,7 @@ title: Economizer Ratio Helper — controlsfreak.dev
 description: Find the percent outdoor air needed to mix OA and return air to a target mixed-air dry-bulb setpoint, plus an enthalpy-changeover sanity check.
 canonical: https://controlsfreak.dev/tools/economizer-ratio.html
 nav: tools
+keywords: oa oat percent outdoor air free cooling changeover mixed air damper
 ---
 {% extends "layouts/page.njk" %}
 {% from "related-links.njk" import relatedLinks %}
@@ -55,7 +56,7 @@ nav: tools
                     </div>
                 </section>
 
-                <section>
+                <section role="status" aria-atomic="false">
                     <h2 class="ps-section-label">Output</h2>
                     <div class="ps-row">
                         <span class="ps-label">Required outdoor air</span>
@@ -160,7 +161,7 @@ nav: tools
                     </p>
                 </section>
 
-                <section>
+                <section role="status" aria-atomic="false">
                     <h2 class="ps-section-label">Output</h2>
                     <div class="ps-row">
                         <span class="ps-label">Required outdoor air</span>
@@ -237,7 +238,6 @@ nav: tools
 {% endblock %}
 
 {% block scripts %}
-<script src="/scripts/units.js"></script>
 <script src="/scripts/ui.js"></script>
 <script src="/scripts/psychro-engine.js"></script>
 <script src="/scripts/psy-widget.js"></script>
@@ -517,13 +517,35 @@ nav: tools
         // On unit toggle: convert every number input from old display units
         // to new display units, rebuild the second-prop catalog, refresh
         // labels, and recompute both tabs.
+        // Per-quantity display decimals for input rewrites (psy-chart's
+        // per-mode defaults are the precedent — audit-2026-06 #60b).
+        const REWRITE_DEC = { temp: 1, deltaTemp: 1, airflow: 0, altitude: 0,
+                              humidityRatio: 1, enthalpy: 1, pressure: 1 };
         function rewriteInput(id, quantity, fromU, toU) {
             const el = document.getElementById(id);
             const v  = parseFloat(el.value);
             if (!isFinite(v)) return;
-            const next = U.convert(v, fromU, toU, quantity);
-            // Tidy display — temps to 1 decimal, others to engine-friendly precision.
-            el.value = (Math.round(next * 100) / 100).toString();
+            // Reformat from a retained canonical value, not the rounded
+            // display string — flipping units away and back must hand
+            // back exactly what was typed (audit-2026-06 #60a). The
+            // stored canonical is trusted only while the field still
+            // shows the exact text this function last wrote for the same
+            // quantity; a user edit or mode switch rebuilds it.
+            let canon = parseFloat(el.dataset.canonUs);
+            if (!(isFinite(canon) && el.dataset.canonQ === quantity && el.dataset.canonDisp === el.value)) {
+                canon = U.convert(v, fromU, 'us', quantity);
+                el.dataset.canonUs = String(canon);
+                el.dataset.canonQ = quantity;
+                el.dataset.typedText = el.value;
+                el.dataset.typedUnits = fromU;
+            }
+            if (toU === el.dataset.typedUnits) {
+                el.value = el.dataset.typedText;
+            } else {
+                const dec = REWRITE_DEC[quantity] !== undefined ? REWRITE_DEC[quantity] : 2;
+                el.value = (+U.convert(canon, 'us', toU, quantity).toFixed(dec)).toString();
+            }
+            el.dataset.canonDisp = el.value;
         }
 
         // The "second" input's quantity depends on the active Define-by mode

@@ -3,6 +3,7 @@ title: Function-Block Editor — controlsfreak.dev
 description: A graphical function-block sandbox — wire logic, math, timer, and PID blocks into a control sequence on a wiresheet and watch the simulation run live.
 canonical: https://controlsfreak.dev/simulators/function-block-editor.html
 nav: simulators
+keywords: wiresheet logic block and or pid wire program sequence
 ---
 {% extends "layouts/page.njk" %}
 {% from "related-links.njk" import relatedLinks %}
@@ -395,8 +396,11 @@ nav: simulators
                 <div class="fbe-palette" id="fbe-palette" aria-label="Block palette"></div>
 
                 <!-- Canvas — blocks are absolutely-positioned divs; wires
-                     are an SVG overlay rebuilt by the page. -->
-                <div class="fbe-canvas" id="fbe-canvas">
+                     are an SVG overlay rebuilt by the page. The editor is
+                     signposted as a mouse tool, but the canvas is also a
+                     scroll container — tabindex/role/label make at least
+                     the scrolling keyboard-reachable (audit-2026-06 #58). -->
+                <div class="fbe-canvas" id="fbe-canvas" tabindex="0" role="region" aria-label="Wiresheet canvas">
                     <div class="fbe-canvas-inner" id="fbe-inner"></div>
                 </div>
             </div>

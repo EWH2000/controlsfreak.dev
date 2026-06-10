@@ -3,6 +3,7 @@ title: Modbus Register Viewer — controlsfreak.dev
 description: Interactive 16-bit Modbus register viewer with decimal, hex, and binary readouts, a signed/unsigned toggle, and a 32-bit pair viewer for all four byte orders.
 canonical: https://controlsfreak.dev/tools/modbus-register-viewer.html
 nav: tools
+keywords: 40001 30001 offset endian byte swap word order decode hex signed scaling
 ---
 {% extends "layouts/page.njk" %}
 {% from "related-links.njk" import relatedLinks %}
@@ -80,7 +81,7 @@ nav: tools
                     <div class="bit-grid" id="bit-grid"></div>
                 </section>
 
-                <section>
+                <section role="status" aria-atomic="false">
                     <h2 class="ps-section-label">Output</h2>
                     <div class="ps-row">
                         <label class="ps-label" for="mod-signed">Decimal as</label>
@@ -284,10 +285,26 @@ nav: tools
             const grid = document.getElementById('bit-grid');
             grid.innerHTML = '';
             for (let i = 15; i >= 0; i--) {
-                const cell = document.createElement('div');
+                // Real <button>s, not divs: keyboard-reachable, and each
+                // cell announces "Bit N, value X" with aria-pressed so a
+                // non-mouse user can flip a bit instead of doing the
+                // binary arithmetic by hand (audit-2026-06 #9).
+                const cell = document.createElement('button');
+                cell.type = 'button';
                 cell.className = 'bit' + (bits[i] ? ' on' : '');
+                cell.setAttribute('aria-pressed', bits[i] ? 'true' : 'false');
+                cell.setAttribute('aria-label', 'Bit ' + i + ', value ' + bits[i]);
                 cell.innerHTML = `<span class="bit-val">${bits[i]}</span><span class="bit-idx">${i}</span>`;
-                cell.addEventListener('click', () => { bits[i] ^= 1; syncFromBits(); });
+                cell.dataset.idx = i;
+                cell.addEventListener('click', () => {
+                    bits[i] ^= 1;
+                    syncFromBits();
+                    // syncFromBits → renderBits rebuilds the grid; put
+                    // focus back on this bit so a keyboard user can keep
+                    // toggling without re-Tabbing from the top.
+                    const fresh = grid.querySelector('button[data-idx="' + i + '"]');
+                    if (fresh) fresh.focus();
+                });
                 grid.appendChild(cell);
             }
         }

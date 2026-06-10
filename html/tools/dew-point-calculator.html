@@ -3,7 +3,7 @@ title: Dew Point Calculator & Coil Check — controlsfreak.dev
 description: Dry-bulb plus RH or wet-bulb to dew point, with wet-bulb, grains, and enthalpy — plus a coil check that flags when supply air stays above the return dew point.
 canonical: https://controlsfreak.dev/tools/dew-point-calculator.html
 nav: tools
-keywords: dewpoint wet bulb RH humidity grains enthalpy condensation coil sweat sweating
+keywords: dewpoint wet bulb wbt RH humidity grains enthalpy condensation coil sweat sweating
 ---
 {% extends "layouts/page.njk" %}
 {% from "related-links.njk" import relatedLinks %}
@@ -109,7 +109,7 @@ keywords: dewpoint wet bulb RH humidity grains enthalpy condensation coil sweat 
             space sensor or wet-bulb off a sling psychrometer — with wet-bulb, grains, and
             enthalpy alongside. The <em>Coil Check</em> field turns that dew point into the
             answer you actually want on an over-humidity call: drop in the supply / leaving
-            dry-bulb and it says whether the coil is pulling the air below saturation
+            dry-bulb and it says whether the coil is pulling the air below the entering dew point
             (dehumidifying) or just cooling it sensibly while the space rides up.
         </p>
 
@@ -148,7 +148,7 @@ keywords: dewpoint wet bulb RH humidity grains enthalpy condensation coil sweat 
                 </p>
             </section>
 
-            <section>
+            <section role="status" aria-atomic="false">
                 <h2 class="ps-section-label">Output</h2>
                 <div class="dew-hero-wrap">
                     <span class="dew-hero-label">Dew point</span>
@@ -225,7 +225,6 @@ keywords: dewpoint wet bulb RH humidity grains enthalpy condensation coil sweat 
 
 {% block scripts %}
 <script src="/scripts/psychro-engine.js"></script>
-<script src="/scripts/units.js"></script>
 <script src="/scripts/ui.js"></script>
 <script>
     // Psychro.solveState + the flat ASHRAE primitive pressFromAltitude come
@@ -291,7 +290,7 @@ keywords: dewpoint wet bulb RH humidity grains enthalpy condensation coil sweat 
             v.hidden = false;
             if (marginF > 0.5) {
                 v.className = 'dew-verdict ok';
-                v.textContent = '✓ Leaving ' + margin + ' below dew point — the coil is pulling air past saturation, so it’s wringing out moisture. (Any surface this cold would sweat.)';
+                v.textContent = '✓ Leaving ' + margin + ' below dew point — the coil is pulling the air below the entering dew point, so it’s wringing out moisture. (Any surface this cold would sweat.)';
             } else if (marginF < -0.5) {
                 v.className = 'dew-verdict warn';
                 v.textContent = '⚠ Leaving ' + margin + ' above dew point — the air never reaches saturation, so you’re getting little to no latent removal. Space humidity will ride up.';
@@ -314,8 +313,22 @@ keywords: dewpoint wet bulb RH humidity grains enthalpy condensation coil sweat 
             // RH is unitless; wet-bulb is a temperature.
             const secCanon = mode === 'rh' ? secD : U.toCanonical.temp(secD);
 
+            // Dry air has no dew point: RH 0 (one keystroke from a real
+            // entry) used to print a literal "-Infinity °F" hero value.
+            // Catch it as an input case with an honest message, and keep
+            // a finiteness guard on the solved state for any other path
+            // that drives W to zero (audit-2026-06 #27).
+            if (mode === 'rh' && secD <= 0) {
+                muteOutputs('0 % RH — dry air has no dew point.');
+                return;
+            }
+
             const state = Psychro.solveState(mode, dbF, secCanon, P);
             if (!state.ok) { muteOutputs(state.error); return; }
+            if (!isFinite(state.tdp)) {
+                muteOutputs('No moisture in this air — there is no dew point to find.');
+                return;
+            }
             $('dew-callout').hidden = true;
 
             const tU = U.suffix.temp();
@@ -355,11 +368,34 @@ keywords: dewpoint wet bulb RH humidity grains enthalpy condensation coil sweat 
         $('dew-copy').addEventListener('click', e => copyReadouts(e.currentTarget, '', 'dew-out-dp'));
 
         // ── Unit-flip resync ──────────────────────────────────────────
+        // Per-quantity display decimals for input rewrites (psy-chart's
+        // per-mode defaults are the precedent — audit-2026-06 #60b).
+        const REWRITE_DEC = { temp: 1, deltaTemp: 1, altitude: 0 };
         function rewriteInput(id, quantity, fromU, toU) {
             const el = $(id);
             const v  = parseFloat(el.value);
             if (!isFinite(v)) return;
-            el.value = (Math.round(U.convert(v, fromU, toU, quantity) * 100) / 100).toString();
+            // Reformat from a retained canonical value, not the rounded
+            // display string — flipping units away and back must hand
+            // back exactly what was typed (audit-2026-06 #60a). The
+            // stored canonical is trusted only while the field still
+            // shows the exact text this function last wrote for the same
+            // quantity; a user edit or mode switch rebuilds it.
+            let canon = parseFloat(el.dataset.canonUs);
+            if (!(isFinite(canon) && el.dataset.canonQ === quantity && el.dataset.canonDisp === el.value)) {
+                canon = U.convert(v, fromU, 'us', quantity);
+                el.dataset.canonUs = String(canon);
+                el.dataset.canonQ = quantity;
+                el.dataset.typedText = el.value;
+                el.dataset.typedUnits = fromU;
+            }
+            if (toU === el.dataset.typedUnits) {
+                el.value = el.dataset.typedText;
+            } else {
+                const dec = REWRITE_DEC[quantity] !== undefined ? REWRITE_DEC[quantity] : 2;
+                el.value = (+U.convert(canon, 'us', toU, quantity).toFixed(dec)).toString();
+            }
+            el.dataset.canonDisp = el.value;
         }
 
         U.onChange(function (newUnits) {

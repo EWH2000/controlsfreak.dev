@@ -1336,22 +1336,14 @@ test.describe('practice — modbus decoding quiz', () => {
         await expect(page.locator('.quiz-reveal-status')).toHaveText('Not quite.');
         await expect(page.locator('.quiz-reveal-right')).toBeVisible();
 
-        // Q3, Q4, Q5: pick the correct choice each time and advance. The
-        // engine handles MCQ, TF, gotcha, and numeric — branch on the
-        // visible input type so the same loop works across them.
+        // Q3, Q4, Q5: pick the correct choice each time and advance. In
+        // the default sequential order the bank's first five questions
+        // are mcq/tf/gotcha only — the two numeric questions sit at
+        // positions 7–8 and are exercised by the full-run test below.
         for (let i = 3; i <= 5; i++) {
             await page.locator('.quiz-action-primary').click();
             await expect(page.locator('.quiz-progress-text')).toHaveText('Question ' + i + ' of 5');
-            const isNumeric = await page.locator('.quiz-numeric:not([hidden])').count() > 0;
-            if (isNumeric) {
-                // The Modbus quiz's numeric Qs are 52.3 and 202.4 within
-                // ±0.05; just type the actual answer for whichever lands.
-                const promptText = await page.locator('.quiz-prompt').textContent();
-                const value = /523/.test(promptText) ? '52.3' : '202.4';
-                await page.locator('.quiz-numeric-input').fill(value);
-            } else {
-                await page.locator('.quiz-choice[data-correct="true"]').click();
-            }
+            await page.locator('.quiz-choice[data-correct="true"]').click();
             await page.locator('.quiz-action-primary').click();
         }
 
@@ -1380,6 +1372,57 @@ test.describe('practice — modbus decoding quiz', () => {
         expect(await page.evaluate(() => localStorage.getItem('cf_quiz_modbus-decoding_best'))).toBeNull();
 
         expect(errors, 'modbus-decoding quiz behavioral should log no errors').toEqual([]);
+    });
+
+    // Regression for audit-2026-06 #19: reveal() disables the numeric
+    // input and tints it, and showQuestion() must undo both. Pre-fix,
+    // the bank's back-to-back numerics (Q7 → Q8 in sequential order)
+    // left Q8 unanswerable, and a results-card Restart carried the
+    // disabled input into the fresh run. A default 10-question
+    // sequential run reaches both numerics for free.
+    test('numeric input stays answerable across consecutive numerics and a restart', async ({ page }) => {
+        const errors = watchErrors(page);
+        await page.goto('/practice/modbus-decoding.html');
+        await expect(page.locator('.quiz-progress-text')).toHaveText('Question 1 of 10');
+
+        let numericsSeen = 0;
+        for (let i = 1; i <= 10; i++) {
+            if (i > 1) {
+                await page.locator('.quiz-action-primary').click();   // "Next question →"
+            }
+            await expect(page.locator('.quiz-progress-text')).toHaveText('Question ' + i + ' of 10');
+            const isNumeric = await page.locator('.quiz-numeric:not([hidden])').count() > 0;
+            if (isNumeric) {
+                numericsSeen++;
+                // The load-bearing assertion: on arrival the input is
+                // enabled and untinted even right after a submitted
+                // numeric (pre-fix this fails at Q8).
+                await expect(page.locator('.quiz-numeric-input')).toBeEnabled();
+                await expect(page.locator('.quiz-numeric')).not.toHaveClass(/correct|wrong/);
+                // The numeric answers are 52.3 and 202.4 within ±0.05;
+                // type the right one for whichever question this is.
+                const promptText = await page.locator('.quiz-prompt').textContent();
+                const value = /523/.test(promptText) ? '52.3' : '202.4';
+                await page.locator('.quiz-numeric-input').fill(value);
+            } else {
+                await page.locator('.quiz-choice[data-correct="true"]').click();
+            }
+            await page.locator('.quiz-action-primary').click();       // Submit
+            await expect(page.locator('.quiz-reveal')).toHaveClass(/quiz-reveal--correct/);
+        }
+        expect(numericsSeen, 'the sequential run should hit both numeric questions').toBe(2);
+
+        await page.locator('.quiz-action-primary').click();           // "See results →"
+        await expect(page.locator('.quiz-results')).toBeVisible();
+        await expect(page.locator('.quiz-results-headline')).toHaveText('10 / 10 correct');
+
+        // Restart: showQuestion() must hand the fresh run a reset
+        // numeric widget (hidden on Q1, but already re-enabled).
+        await page.locator('.quiz-restart-btn').click();
+        await expect(page.locator('.quiz-progress-text')).toHaveText('Question 1 of 10');
+        await expect(page.locator('.quiz-numeric-input')).toBeEnabled();
+
+        expect(errors, 'numeric-run behavioral should log no errors').toEqual([]);
     });
 });
 
@@ -1430,6 +1473,42 @@ test('styleguide loads + the theme toggle flips, persists, and repaints meta', a
     expect(await page.evaluate(() => localStorage.getItem('cf_theme'))).toBe('dark');
 
     expect(errors, 'styleguide + theme toggle should log no errors').toEqual([]);
+});
+
+// Regression for audit-2026-06 #2: units.js used to load only on pages
+// that convert, leaving the rendered units pill dead on ~34 pages —
+// clicks did nothing, the choice didn't persist, and the hard-coded
+// aria-pressed="true" on US never re-synced. Now that page.njk loads
+// it site-wide, drive the toggle end-to-end on a lesson page with no
+// data-us spans (the audit's own repro page).
+test('units toggle works on a non-converting page (units.js site-wide)', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('/education/superheat-subcooling.html');
+
+    const html = page.locator('html');
+    const usBtn = page.locator('.units-btn[data-units="us"]');
+    const metricBtn = page.locator('.units-btn[data-units="metric"]');
+
+    expect(await page.evaluate(() => typeof window.Units)).toBe('object');
+    await expect(html).toHaveAttribute('data-units', 'us');
+    await expect(usBtn).toHaveAttribute('aria-pressed', 'true');
+
+    // Flip to metric: attribute, aria, and persistence all track.
+    await metricBtn.click();
+    await expect(html).toHaveAttribute('data-units', 'metric');
+    await expect(metricBtn).toHaveAttribute('aria-pressed', 'true');
+    await expect(usBtn).toHaveAttribute('aria-pressed', 'false');
+    expect(await page.evaluate(() => localStorage.getItem('cf_units'))).toBe('metric');
+
+    // Reload: the before-paint bootstrap restores metric, and the
+    // end-of-body re-sync fixes the hard-coded aria-pressed (the
+    // permanently-wrong half of audit #2).
+    await page.reload({ waitUntil: 'load' });
+    await expect(html).toHaveAttribute('data-units', 'metric');
+    await expect(metricBtn).toHaveAttribute('aria-pressed', 'true');
+    await expect(usBtn).toHaveAttribute('aria-pressed', 'false');
+
+    expect(errors, 'units toggle on lesson page should log no errors').toEqual([]);
 });
 
 test('modbus function codes — CRC-16 hits the canonical check value and verifies a frame', async ({ page }) => {
@@ -1523,4 +1602,71 @@ test('affinity-laws — half speed gives 50/25/12.5%', async ({ page }) => {
     await expect(page.locator('#af-s-p2')).toContainText('1.25');
 
     expect(errors, 'affinity-laws behavioral should log no errors').toEqual([]);
+});
+
+// ── audit-2026-06 Batch G: tool edge cases ─────────────────────────────
+
+// #27: RH 0 used to print a literal "-Infinity °F" hero value with the
+// other readouts shown as valid and no callout.
+test('dew-point — RH 0 mutes with an honest callout instead of -Infinity', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('/tools/dew-point-calculator.html');
+    await page.fill('#dew-second', '0');
+    await expect(page.locator('#dew-callout')).toBeVisible();
+    await expect(page.locator('#dew-callout')).toContainText('dry air has no dew point');
+    await expect(page.locator('#dew-out-dp')).toHaveText('—');
+    expect(errors, 'dew-point RH 0 should log no errors').toEqual([]);
+});
+
+// #28: the by-temperature out-of-range message used to print the chart
+// bounds in raw canonical °F while the user is in metric.
+test('refrigerant-pt — metric by-temp out-of-range message converts the bounds', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.addInitScript(() => localStorage.setItem('cf_units', 'metric'));
+    await page.goto('/tools/refrigerant-pt.html');
+    await page.selectOption('#rf-refrigerant', 'r22');
+    await page.click('#rf-pt-by-t');
+    await page.fill('#rf-pt-temp', '90');                  // °C, beyond R-22's 73.3 °C max
+    const status = page.locator('#rf-pt-status');
+    await expect(status).toContainText('Out of range');
+    await expect(status).toContainText('°C');
+    await expect(status).not.toContainText('°F');
+    expect(errors, 'refrigerant-pt metric bounds should log no errors').toEqual([]);
+});
+
+// #60a: the unitschange rewrite used to re-convert the rounded display
+// string, permanently mutating typed values (92 → 91.9, 80 → 80.01).
+// #60b: metric-first defaults carried 6-significant-figure conversions
+// (1699.01 m³/h) next to prose that says 1700.
+test('units flip round-trips hand back exactly what was typed (#60a) and metric defaults drop the false precision (#60b)', async ({ page }) => {
+    const errors = watchErrors(page);
+
+    // Round-trip on the two tools the audit measured.
+    await page.goto('/tools/psychrometric-chart.html');
+    await page.fill('#oa-tdb', '92');
+    await page.click('.units-btn[data-units="metric"]');
+    await expect(page.locator('#oa-tdb')).toHaveValue('33.3');
+    await page.click('.units-btn[data-units="us"]');
+    await expect(page.locator('#oa-tdb')).toHaveValue('92');
+
+    await page.goto('/tools/coil-sizing.html');
+    await page.fill('#cs-cap-ent-tdb', '80');
+    await page.click('.units-btn[data-units="metric"]');
+    await expect(page.locator('#cs-cap-ent-tdb')).toHaveValue('26.7');
+    await page.click('.units-btn[data-units="us"]');
+    await expect(page.locator('#cs-cap-ent-tdb')).toHaveValue('80');
+
+    expect(errors, 'round-trip pages should log no errors').toEqual([]);
+});
+
+test('air-mixing — metric first paint shows per-quantity decimals and a converted status line', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.addInitScript(() => localStorage.setItem('cf_units', 'metric'));
+    await page.goto('/tools/air-mixing.html');
+    // Airflow defaults rewrite at 0 decimals (1699, not 1699.01)…
+    await expect(page.locator('#am-flow-s1-w')).toHaveValue('1699');
+    await expect(page.locator('#am-flow-s2-w')).toHaveValue('5097');
+    // …and the status line speaks the display pressure unit, not psia.
+    await expect(page.locator('.status-pill').first()).toContainText('101.3 kPa');
+    expect(errors, 'air-mixing metric paint should log no errors').toEqual([]);
 });

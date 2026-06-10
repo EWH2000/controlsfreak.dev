@@ -366,11 +366,15 @@
                 snippetSlot.hidden = true;
             }
 
-            // Choices vs numeric
+            // Choices vs numeric. The numeric widget is reused across
+            // questions (and across restarts), so undo everything
+            // reveal() did to it — not just the value.
             choicesEl.innerHTML = '';
             choicesEl.hidden = true;
             numericEl.hidden = true;
             numericInput.value = '';
+            numericInput.disabled = false;
+            numericEl.classList.remove('correct', 'wrong');
 
             if (q.type === 'mcq' || q.type === 'gotcha') {
                 renderChoices(q.choices.map(function (c) {

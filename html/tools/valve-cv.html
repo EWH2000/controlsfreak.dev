@@ -3,6 +3,7 @@ title: Valve Cv Sizing — controlsfreak.dev
 description: Size a control valve from its flow coefficient — Cv = Q√(SG/ΔP), solved for Cv, flow, or pressure drop — with a valve-authority check and a Kv equivalent.
 canonical: https://controlsfreak.dev/tools/valve-cv.html
 nav: tools
+keywords: gpm psi kv flow coefficient valve authority delta p sizing
 ---
 {% extends "layouts/page.njk" %}
 {% from "related-links.njk" import relatedLinks %}
@@ -88,7 +89,7 @@ nav: tools
                     </div>
                 </section>
 
-                <section>
+                <section role="status" aria-atomic="false">
                     <h2 class="ps-section-label">Output</h2>
                     <div class="ps-row">
                         <span class="ps-label" id="cv-out-label">Required Cv</span>
@@ -142,7 +143,7 @@ nav: tools
                     </p>
                 </section>
 
-                <section>
+                <section role="status" aria-atomic="false">
                     <h2 class="ps-section-label">Output</h2>
                     <div class="ps-row">
                         <span class="ps-label">Valve authority β</span>
@@ -236,6 +237,12 @@ nav: tools
             document.getElementById('cv-row-cv').classList.toggle('hidden', solve === 'cv');
             document.getElementById('cv-row-flow').classList.toggle('hidden', solve === 'flow');
             document.getElementById('cv-row-dp').classList.toggle('hidden', solve === 'dp');
+
+            // Set the output label up front so the mute path can't strand
+            // the previous solve-for's label next to the em-dash (e.g.
+            // "Flow —" while solving for ΔP — audit-2026-06 polish).
+            outLabelEl.textContent =
+                solve === 'cv' ? 'Required Cv' : solve === 'flow' ? 'Flow' : 'Pressure drop ΔP';
 
             const sg   = parseFloat(sgEl.value);
             const cv   = parseFloat(cvEl.value);

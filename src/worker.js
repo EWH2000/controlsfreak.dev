@@ -65,10 +65,17 @@ async function handleContact(request, env) {
     }
 
     // ── Body size pre-check ───────────────────────────────────
-    // Cloudflare caps bodies at 100 MB; we want < 20 KB. Trust the
-    // Content-Length header: a spoofed header still falls back to formData()
-    // which has its own ceiling.
-    const contentLength = parseInt(request.headers.get("content-length") || "0", 10);
+    // Cloudflare caps bodies at 100 MB; we want < 20 KB. The header is
+    // the only cheap pre-parse signal, so absent or non-numeric
+    // Content-Length (a chunked/hand-crafted POST — the site's own form
+    // always sends it) is rejected outright: formData() has NO
+    // documented ceiling below the platform cap, so letting headerless
+    // bodies through skipped the size check entirely (audit-2026-06
+    // polish; the previous comment claimed otherwise).
+    const contentLength = parseInt(request.headers.get("content-length") || "", 10);
+    if (!Number.isFinite(contentLength)) {
+        return json({ ok: false, error: "Missing request length." }, 411);
+    }
     if (contentLength > MAX_BODY) {
         return json({ ok: false, error: "Request body too large." }, 413);
     }
@@ -139,7 +146,13 @@ async function handleContact(request, env) {
     } catch (err) {
         verify = { success: false };
     }
-    if (!verify || verify.success !== true) {
+    // Hostname check: tokens are minted against whatever hostnames the
+    // widget config allows (commonly localhost during testing) — without
+    // this, a token minted on an attacker's own machine with the public
+    // sitekey verifies fine and Turnstile stops being a per-message
+    // human cost (audit-2026-06 #34; defense-in-depth alongside the
+    // dashboard's allowed-hostnames list).
+    if (!verify || verify.success !== true || verify.hostname !== "controlsfreak.dev") {
         return json({ ok: false, error: "Verification failed." }, 400);
     }
 
