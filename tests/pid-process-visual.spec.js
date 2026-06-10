@@ -84,6 +84,67 @@ test('playhead drives the live sensor readout over time', async ({ page }) => {
     expect(errors, 'playhead should log no errors').toEqual([]);
 });
 
+// audit-2026-06 #41: the feature's core contract — "the actuator tracks
+// the commanded output" — was asserted nowhere. Reduced motion gives a
+// deterministic one-shot frame (the rAF playhead never schedules and
+// now=0 forces the throttled text readout through), so the gauge text,
+// the gauge fill, and the actuator geometry can be compared exactly.
+// (Deliberately NO units-flip assertion on the sensor LCD — it is
+// documented as staying canonical.)
+test('output gauge text matches the fill, and the actuator opens with the output', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto(URL);
+
+    // med (default) = chilled/hot-water valve scene. The settled frame
+    // carries a real nonzero output for the default tune.
+    const pct = parseInt(await page.locator('#pid-eq-out-pct').textContent(), 10);
+    expect(Number.isInteger(pct)).toBe(true);
+    expect(pct).toBeGreaterThanOrEqual(0);
+    expect(pct).toBeLessThanOrEqual(100);
+    expect(pct).toBeGreaterThan(0);
+
+    // Gauge fill --pct and the text readout are the same number.
+    const fillPct = await page.locator('#pid-eq-out-fill')
+        .evaluate(el => el.style.getPropertyValue('--pct'));
+    expect(fillPct).toBe(pct + '%');
+
+    // Valve actuator: fill height is proportional to output — open
+    // (height > 0) while output > 0, and never taller than its track.
+    const valve = page.locator('#pid-eq-med-valve');
+    const h = parseFloat(await valve.getAttribute('height'));
+    const H = parseFloat(await valve.evaluate(el => el.dataset.h));
+    expect(h).toBeGreaterThan(0);
+    expect(h).toBeLessThanOrEqual(H);
+    expect(h / H).toBeCloseTo(pct / 100, 1);
+
+    expect(errors, 'gauge/actuator contract should log no errors').toEqual([]);
+});
+
+test('animated output percent stays within 0–100 across the sweep', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto(URL);
+    await page.click('#pid-preset-aggr');
+    for (let i = 0; i < 8; i++) {
+        const pct = parseInt(await page.locator('#pid-eq-out-pct').textContent(), 10);
+        expect(pct).toBeGreaterThanOrEqual(0);
+        expect(pct).toBeLessThanOrEqual(100);
+        await page.waitForTimeout(150);
+    }
+    expect(errors, 'animated sweep should log no errors').toEqual([]);
+});
+
+test('every equipment option shows exactly one visible scene', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto(URL);
+    for (const key of ['fast', 'med', 'slow', 'vhigh']) {
+        await page.selectOption('#pid-proc', key);
+        await expect(page.locator('#pid-eq-scene-' + key)).toBeVisible();
+        await expect(page.locator('.pid-eq-scene:visible')).toHaveCount(1);
+    }
+    expect(errors, 'scene loop should log no errors').toEqual([]);
+});
+
 test('reduced motion — scene paints one static final frame, no animation', async ({ page }) => {
     const errors = watchErrors(page);
     // Emulate the OS preference directly (Playwright forces 'no-preference' by
