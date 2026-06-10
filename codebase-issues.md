@@ -3677,6 +3677,13 @@ total replace a longer one (ties allowed). Coordinate with the
 results-card/badge ideas in the friction file's practice-continuity
 entry.
 
+**Resolution (2026-06-10):** owner picked shorter-can't-replace-longer.
+finish() now takes the record only from an equal-or-longer run with a
+better ratio — or the same ratio at a longer total (10/10 upgrades
+5/5), or same ratio + total but faster. A worse ratio never wins
+regardless of length; the already-persisted best_total carries the
+comparison. Pinned by a smoke test (perfect 5-run vs seeded 10/10).
+
 ### 90. Canvas resize handlers redraw synchronously per resize event
 
 Cross-filed from `audit-2026-06.md` (performance polish, 2026-06-10).

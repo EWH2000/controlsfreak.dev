@@ -1427,6 +1427,38 @@ test.describe('practice — modbus decoding quiz', () => {
 
         expect(errors, 'numeric-run behavioral should log no errors').toEqual([]);
     });
+
+    // codebase-issues #89: a perfect short run must NOT displace a
+    // longer best — pre-fix, a 5/5 overwrote a 10/10 and celebrated
+    // "new best".
+    test('a perfect 5-question run cannot replace a 10-question best', async ({ page }) => {
+        const errors = watchErrors(page);
+        await page.addInitScript(() => {
+            localStorage.setItem('cf_quiz_modbus-decoding_best', '10');
+            localStorage.setItem('cf_quiz_modbus-decoding_best_total', '10');
+            localStorage.setItem('cf_quiz_modbus-decoding_best_time_ms', '90000');
+        });
+        await page.goto('/practice/modbus-decoding.html');
+        await expect(page.locator('.quiz-best-readout')).toContainText('Best: 10 / 10');
+
+        await page.selectOption('#quiz-modbus-decoding-count', '5');
+        await page.locator('.quiz-restart-now').click();
+        for (let i = 1; i <= 5; i++) {
+            await expect(page.locator('.quiz-progress-text')).toHaveText('Question ' + i + ' of 5');
+            await page.locator('.quiz-choice[data-correct="true"]').click();
+            await page.locator('.quiz-action-primary').click();      // Submit
+            await page.locator('.quiz-action-primary').click();      // Next / See results
+        }
+        await expect(page.locator('.quiz-results')).toBeVisible();
+        await expect(page.locator('.quiz-results-headline')).toHaveText('5 / 5 correct');
+        // No "new best" celebration, record untouched.
+        await expect(page.locator('.quiz-results-newbest')).toHaveCount(0);
+        expect(await page.evaluate(() => localStorage.getItem('cf_quiz_modbus-decoding_best'))).toBe('10');
+        expect(await page.evaluate(() => localStorage.getItem('cf_quiz_modbus-decoding_best_total'))).toBe('10');
+        await expect(page.locator('.quiz-best-readout')).toContainText('Best: 10 / 10');
+
+        expect(errors, 'short-run guard should log no errors').toEqual([]);
+    });
 });
 
 // The styleguide is a noindex dev page (no canonical → absent from the

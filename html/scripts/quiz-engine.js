@@ -642,9 +642,19 @@
             const prevBestRatio = (isFinite(prevBest) && isFinite(prevBestTotal) && prevBestTotal > 0)
                 ? (prevBest / prevBestTotal) : -1;
             const curRatio = total > 0 ? (score / total) : 0;
-            const isNewBest =
+            // A shorter run can never replace a longer best: a quick 5/5
+            // used to silently overwrite a 10/10 and celebrate "new
+            // best" (audit-2026-06 polish; owner decision codebase-issues
+            // #89). The record falls only to an equal-or-longer run with
+            // a better ratio — or the same ratio at a longer total
+            // (10/10 upgrades 5/5), or the same ratio and total but
+            // faster. A worse ratio never wins, no matter the length.
+            const longEnough = !isFinite(prevBestTotal) || total >= prevBestTotal;
+            const isNewBest = longEnough && (
                 curRatio > prevBestRatio ||
-                (curRatio === prevBestRatio && (!isFinite(prevTime) || elapsed < prevTime));
+                (curRatio === prevBestRatio && total > prevBestTotal) ||
+                (curRatio === prevBestRatio && total === prevBestTotal &&
+                    (!isFinite(prevTime) || elapsed < prevTime)));
             if (isNewBest) {
                 storeSet(storeKeys.best, String(score));
                 storeSet(storeKeys.bestTotal, String(total));
