@@ -47,6 +47,11 @@ nav: practice
             display: none;
         }
         .practice-section.filtered { margin-bottom: 0; }
+        /* Best-score badge — painted by JS from cf_quiz_*_best; rides the
+           shared .nav-card-pill chrome with a quiet accent tint, brighter
+           when the best is a perfect run. */
+        .quiz-best-pill { color: var(--accent); border-color: var(--accent-glow); }
+        .quiz-best-pill.perfect { background: var(--accent-dim); color: var(--text-bright); }
     </style>
 {% endblock %}
 
@@ -95,6 +100,9 @@ nav: practice
     </div>
 
     <section class="practice-section" data-section="content">
+    {# Card order mirrors the Education landing's curriculum sequence —
+       canonical list in html/_data/quizOrder.js (owner decision
+       2026-06-10, audit #21). Re-order both together. #}
         <h2 class="practice-section-heading">
             Content Quizzes
             <span class="practice-section-tag">covered by the site</span>
@@ -104,6 +112,114 @@ nav: practice
             themselves; reviewers can drill the gotchas without re-reading the whole thing.
         </p>
         <div class="card-grid">
+            {{ navCard({
+                section:    'practice',
+                href:       '/practice/pid-basics.html',
+                titleShort: 'PID Basics',
+                titleFull:  'PID Basics',
+                desc:       'Drill the PID Basics lesson — what proportional, integral, and derivative each do, the droop P leaves and how integral erases it, too-fast reset, and why HVAC runs PI.',
+                pills:      ['10 Questions', 'MCQ · TF · Gotcha · Numeric', '~ 5 min'],
+                category:   'controls'
+            }) }}
+            {{ navCard({
+                section:    'practice',
+                href:       '/practice/hydronic-loops.html',
+                titleShort: 'Hydronic Loops',
+                titleFull:  'Hydronic Loops',
+                desc:       'Drill the Hydronic Loops lesson — why direct return self-unbalances and reverse return self-balances, plus the primary-secondary twin-T and its closely-spaced tees.',
+                pills:      ['10 Questions', 'MCQ · TF · Gotcha · Numeric', '~ 5 min'],
+                category:   'hydronics'
+            }) }}
+            {{ navCard({
+                section:    'practice',
+                href:       '/practice/load-piping.html',
+                titleShort: 'Load Piping',
+                titleFull:  'Load Piping',
+                desc:       'Drill the Load Piping lesson — two-way vs three-way valves, variable vs constant system flow, mixing vs diverting, pump pairing, and the minimum-flow bypass.',
+                pills:      ['10 Questions', 'MCQ · TF · Gotcha', '~ 5 min'],
+                category:   'hydronics'
+            }) }}
+            {{ navCard({
+                section:    'practice',
+                href:       '/practice/vfds.html',
+                titleShort: 'VFDs',
+                titleFull:  'VFDs',
+                desc:       'Drill the VFDs lesson — the rectifier / DC bus / inverter stages, the cube law, the run-command vs. speed-reference trap, run status, and reading fault categories.',
+                pills:      ['10 Questions', 'MCQ · TF · Gotcha · Numeric', '~ 5 min'],
+                category:   'controls'
+            }) }}
+            {{ navCard({
+                section:    'practice',
+                href:       '/practice/pump-control.html',
+                titleShort: 'Pump Control',
+                titleFull:  'Pump Control',
+                desc:       'Drill the Pump Control lesson — the operating point where pump and system curves cross, the affinity laws and cube law, remote vs local DP sensing, and DP setpoint reset.',
+                pills:      ['10 Questions', 'MCQ · TF · Gotcha · Numeric', '~ 5 min'],
+                category:   'hydronics'
+            }) }}
+            {{ navCard({
+                section:    'practice',
+                href:       '/practice/equipment-staging.html',
+                titleShort: 'Equipment Staging',
+                titleFull:  'Equipment Staging',
+                desc:       'Drill the Equipment Staging lesson — why plants run parallel units, the stage-up/stage-down deadband, the stage delay and minimum stage time, and lead rotation for even wear.',
+                pills:      ['10 Questions', 'MCQ · TF · Gotcha · Numeric', '~ 5 min'],
+                category:   'hydronics'
+            }) }}
+            {{ navCard({
+                section:    'practice',
+                href:       '/practice/balancing.html',
+                titleShort: 'Hydronic Balancing',
+                titleFull:  'Hydronic Balancing',
+                desc:       'Drill the Hydronic Balancing lesson — CBVs and the square-root law, ABV compensation range, PICVs and DP reset, and reading the symptoms of an unbalanced loop.',
+                pills:      ['10 Questions', 'MCQ · TF · Gotcha · Numeric', '~ 5 min'],
+                category:   'hydronics'
+            }) }}
+            {{ navCard({
+                section:    'practice',
+                href:       '/practice/refrigerant-cycle-basics.html',
+                titleShort: 'Refrigerant Cycle',
+                titleFull:  'Refrigerant Cycle Basics',
+                desc:       'Drill the Refrigerant Cycle Basics lesson — the four components, high side vs. low side, the pressure-temperature saturation lock, and where blend glide shows up.',
+                pills:      ['10 Questions', 'MCQ · TF · Gotcha · Numeric', '~ 5 min'],
+                category:   'refrigeration'
+            }) }}
+            {{ navCard({
+                section:    'practice',
+                href:       '/practice/superheat-subcooling.html',
+                titleShort: 'Superheat & SC',
+                titleFull:  'Superheat & Subcooling',
+                desc:       'Drill the Superheat & Subcooling lesson — what each measures and on which line, the dew/bubble formulas, and what a high or low reading on either one points toward.',
+                pills:      ['10 Questions', 'MCQ · TF · Gotcha · Numeric', '~ 5 min'],
+                category:   'refrigeration'
+            }) }}
+            {{ navCard({
+                section:    'practice',
+                href:       '/practice/metering-devices-txv-eev.html',
+                titleShort: 'TXV vs EEV',
+                titleFull:  'TXVs vs. EEVs',
+                desc:       'Drill the TXVs vs. EEVs lesson — the mechanical TXV force balance, the electronic EEV control loop, and what each does to hold a target superheat as load drifts.',
+                pills:      ['10 Questions', 'MCQ · TF · Gotcha', '~ 5 min'],
+                category:   'refrigeration'
+            }) }}
+            {{ navCard({
+                section:    'practice',
+                href:       '/practice/psychrometrics-basics.html',
+                titleShort: 'Psychrometrics',
+                titleFull:  'Psychrometrics Basics',
+                desc:       'Drill the Psychrometrics Basics lesson — the seven properties, why any two lock the rest, the four chart process families, and the RH / dew-point / enthalpy gotchas.',
+                pills:      ['10 Questions', 'MCQ · TF · Gotcha · Numeric', '~ 5 min'],
+                category:   'psychrometrics'
+            }) }}
+            {{ navCard({
+                section:    'practice',
+                href:       '/practice/function-blocks.html',
+                titleShort: 'Function Blocks',
+                titleFull:  'Function Blocks',
+                desc:       'Drill the Function-Block Basics lesson — blocks and pins, digital vs. analog wires, the block families, how a scan resolves feedback, and a worked economizer sheet.',
+                pills:      ['10 Questions', 'MCQ · TF · Gotcha', '~ 5 min'],
+                category:   'controls'
+            }) }}
             {{ navCard({
                 section:    'practice',
                 href:       '/practice/modbus-basics.html',
@@ -139,114 +255,6 @@ nav: practice
                 desc:       'Drill the addressing and broadcast story from the BACnet Networking lesson — the three identifier layers, BBMDs and the asymmetric-BDT trap, Foreign Device TTLs, and EBO hex decoding.',
                 pills:      ['10 Questions', 'MCQ · TF · Gotcha · Numeric', '~ 5 min'],
                 category:   'bacnet'
-            }) }}
-            {{ navCard({
-                section:    'practice',
-                href:       '/practice/pump-control.html',
-                titleShort: 'Pump Control',
-                titleFull:  'Pump Control',
-                desc:       'Drill the Pump Control lesson — the operating point where pump and system curves cross, the affinity laws and cube law, remote vs local DP sensing, and DP setpoint reset.',
-                pills:      ['10 Questions', 'MCQ · TF · Gotcha · Numeric', '~ 5 min'],
-                category:   'hydronics'
-            }) }}
-            {{ navCard({
-                section:    'practice',
-                href:       '/practice/hydronic-loops.html',
-                titleShort: 'Hydronic Loops',
-                titleFull:  'Hydronic Loops',
-                desc:       'Drill the Hydronic Loops lesson — why direct return self-unbalances and reverse return self-balances, plus the primary-secondary twin-T and its closely-spaced tees.',
-                pills:      ['10 Questions', 'MCQ · TF · Gotcha · Numeric', '~ 5 min'],
-                category:   'hydronics'
-            }) }}
-            {{ navCard({
-                section:    'practice',
-                href:       '/practice/load-piping.html',
-                titleShort: 'Load Piping',
-                titleFull:  'Load Piping',
-                desc:       'Drill the Load Piping lesson — two-way vs three-way valves, variable vs constant system flow, mixing vs diverting, pump pairing, and the minimum-flow bypass.',
-                pills:      ['10 Questions', 'MCQ · TF · Gotcha', '~ 5 min'],
-                category:   'hydronics'
-            }) }}
-            {{ navCard({
-                section:    'practice',
-                href:       '/practice/balancing.html',
-                titleShort: 'Hydronic Balancing',
-                titleFull:  'Hydronic Balancing',
-                desc:       'Drill the Hydronic Balancing lesson — CBVs and the square-root law, ABV compensation range, PICVs and DP reset, and reading the symptoms of an unbalanced loop.',
-                pills:      ['10 Questions', 'MCQ · TF · Gotcha · Numeric', '~ 5 min'],
-                category:   'hydronics'
-            }) }}
-            {{ navCard({
-                section:    'practice',
-                href:       '/practice/equipment-staging.html',
-                titleShort: 'Equipment Staging',
-                titleFull:  'Equipment Staging',
-                desc:       'Drill the Equipment Staging lesson — why plants run parallel units, the stage-up/stage-down deadband, the stage delay and minimum stage time, and lead rotation for even wear.',
-                pills:      ['10 Questions', 'MCQ · TF · Gotcha · Numeric', '~ 5 min'],
-                category:   'hydronics'
-            }) }}
-            {{ navCard({
-                section:    'practice',
-                href:       '/practice/refrigerant-cycle-basics.html',
-                titleShort: 'Refrigerant Cycle',
-                titleFull:  'Refrigerant Cycle Basics',
-                desc:       'Drill the Refrigerant Cycle Basics lesson — the four components, high side vs. low side, the pressure-temperature saturation lock, and where blend glide shows up.',
-                pills:      ['10 Questions', 'MCQ · TF · Gotcha · Numeric', '~ 5 min'],
-                category:   'refrigeration'
-            }) }}
-            {{ navCard({
-                section:    'practice',
-                href:       '/practice/superheat-subcooling.html',
-                titleShort: 'Superheat & SC',
-                titleFull:  'Superheat & Subcooling',
-                desc:       'Drill the Superheat & Subcooling lesson — what each measures and on which line, the dew/bubble formulas, and what a high or low reading on either one points toward.',
-                pills:      ['10 Questions', 'MCQ · TF · Gotcha · Numeric', '~ 5 min'],
-                category:   'refrigeration'
-            }) }}
-            {{ navCard({
-                section:    'practice',
-                href:       '/practice/metering-devices-txv-eev.html',
-                titleShort: 'TXV vs EEV',
-                titleFull:  'TXVs vs. EEVs',
-                desc:       'Drill the TXVs vs. EEVs lesson — the mechanical TXV force balance, the electronic EEV control loop, and what each does to hold a target superheat as load drifts.',
-                pills:      ['10 Questions', 'MCQ · TF · Gotcha', '~ 5 min'],
-                category:   'refrigeration'
-            }) }}
-            {{ navCard({
-                section:    'practice',
-                href:       '/practice/pid-basics.html',
-                titleShort: 'PID Basics',
-                titleFull:  'PID Basics',
-                desc:       'Drill the PID Basics lesson — what proportional, integral, and derivative each do, the droop P leaves and how integral erases it, too-fast reset, and why HVAC runs PI.',
-                pills:      ['10 Questions', 'MCQ · TF · Gotcha · Numeric', '~ 5 min'],
-                category:   'controls'
-            }) }}
-            {{ navCard({
-                section:    'practice',
-                href:       '/practice/vfds.html',
-                titleShort: 'VFDs',
-                titleFull:  'VFDs',
-                desc:       'Drill the VFDs lesson — the rectifier / DC bus / inverter stages, the cube law, the run-command vs. speed-reference trap, run status, and reading fault categories.',
-                pills:      ['10 Questions', 'MCQ · TF · Gotcha · Numeric', '~ 5 min'],
-                category:   'controls'
-            }) }}
-            {{ navCard({
-                section:    'practice',
-                href:       '/practice/function-blocks.html',
-                titleShort: 'Function Blocks',
-                titleFull:  'Function Blocks',
-                desc:       'Drill the Function-Block Basics lesson — blocks and pins, digital vs. analog wires, the block families, how a scan resolves feedback, and a worked economizer sheet.',
-                pills:      ['10 Questions', 'MCQ · TF · Gotcha', '~ 5 min'],
-                category:   'controls'
-            }) }}
-            {{ navCard({
-                section:    'practice',
-                href:       '/practice/psychrometrics-basics.html',
-                titleShort: 'Psychrometrics',
-                titleFull:  'Psychrometrics Basics',
-                desc:       'Drill the Psychrometrics Basics lesson — the seven properties, why any two lock the rest, the four chart process families, and the RH / dew-point / enthalpy gotchas.',
-                pills:      ['10 Questions', 'MCQ · TF · Gotcha · Numeric', '~ 5 min'],
-                category:   'psychrometrics'
             }) }}
         </div>
     </section>
@@ -357,6 +365,30 @@ nav: practice
 
         window.addEventListener('hashchange', () => apply(slugFromHash()));
         apply(slugFromHash());
+
+        // ── Best-score badges (owner decision, audit-2026-06 #22) ──
+        // The quiz engine has been writing cf_quiz_<slug>_best(_total)
+        // all along; the landing never read them — a student grinding
+        // 21 quizzes couldn't see where they stood without opening each
+        // page. Paint a small badge on every card with a recorded best.
+        // All client-side, no accounts — inside quiz-section-plan's
+        // hard-no lines.
+        document.querySelectorAll('.nav-card[href^="/practice/"]').forEach(card => {
+            const slug = (card.getAttribute('href').match(/\/practice\/([a-z-]+)\.html/) || [])[1];
+            if (!slug) return;
+            let best, total;
+            try {
+                best = parseInt(localStorage.getItem('cf_quiz_' + slug + '_best') || '', 10);
+                total = parseInt(localStorage.getItem('cf_quiz_' + slug + '_best_total') || '', 10);
+            } catch (e) { return; }
+            if (!isFinite(best) || !isFinite(total) || total <= 0) return;
+            const line = card.querySelector('.nav-card-statusline');
+            if (!line) return;
+            const badge = document.createElement('span');
+            badge.className = 'nav-card-pill quiz-best-pill' + (best === total ? ' perfect' : '');
+            badge.textContent = 'Best ' + best + '/' + total;
+            line.appendChild(badge);
+        });
     })();
 </script>
 {% endblock %}

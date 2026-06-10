@@ -61,6 +61,7 @@ pairedLesson: https://controlsfreak.dev/education/modbus-basics.html
         const questions = {{ quizzes['modbus-basics'] | safeScriptJson | safe }};
 
         Quiz.mount('#quiz', questions, {
+            next: {{ page.fileSlug | nextQuiz | safeScriptJson | safe }},
             slug: 'modbus-basics',
             title: 'Modbus Basics',
             defaultCount: 10,

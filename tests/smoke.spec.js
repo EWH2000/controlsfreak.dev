@@ -1298,6 +1298,48 @@ test('practice landing — Modbus chip collapses sections + filters cards', asyn
     expect(errors, 'practice-landing behavioral should log no errors').toEqual([]);
 });
 
+// Drift guard for audit-2026-06 #21: the Content Quizzes grid is
+// hand-ordered in practice/index.html but the canonical curriculum
+// sequence lives in html/_data/quizOrder.js (which also drives every
+// results-card next-link at build time). If someone adds a quiz card
+// without re-ordering — or reorders one source but not the other —
+// this catches it.
+test('practice landing — Content Quizzes grid matches quizOrder.js', async ({ page }) => {
+    const quizOrder = require('../html/_data/quizOrder.js');
+    await page.goto('/practice/');
+    const hrefs = await page
+        .locator('.practice-section[data-section="content"] .nav-card')
+        .evaluateAll(cards => cards.map(c => c.getAttribute('href')));
+    expect(hrefs).toEqual(quizOrder.map(e => '/practice/' + e.slug + '.html'));
+});
+
+// Audit-2026-06 #22: the landing paints a best-score badge on each
+// card whose quiz has a recorded best in localStorage. Seed two slugs
+// before load — one partial, one perfect — and check the paint.
+test('practice landing — best-score badges paint from localStorage', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.addInitScript(() => {
+        localStorage.setItem('cf_quiz_pid-basics_best', '8');
+        localStorage.setItem('cf_quiz_pid-basics_best_total', '10');
+        localStorage.setItem('cf_quiz_vfds_best', '5');
+        localStorage.setItem('cf_quiz_vfds_best_total', '5');
+        // Garbage values must not paint.
+        localStorage.setItem('cf_quiz_balancing_best', 'NaN');
+    });
+    await page.goto('/practice/');
+
+    const pidBadge = page.locator('.nav-card[href="/practice/pid-basics.html"] .quiz-best-pill');
+    await expect(pidBadge).toHaveText('Best 8/10');
+    await expect(pidBadge).not.toHaveClass(/perfect/);
+
+    const vfdBadge = page.locator('.nav-card[href="/practice/vfds.html"] .quiz-best-pill');
+    await expect(vfdBadge).toHaveText('Best 5/5');
+    await expect(vfdBadge).toHaveClass(/perfect/);
+
+    await expect(page.locator('.nav-card[href="/practice/balancing.html"] .quiz-best-pill')).toHaveCount(0);
+    expect(errors, 'badge paint should log no errors').toEqual([]);
+});
+
 test.describe('practice — modbus decoding quiz', () => {
     // Quiz state lives in localStorage under cf_quiz_modbus-decoding_*,
     // but no cleanup is needed: contexts are per-test, so every test
@@ -1356,6 +1398,12 @@ test.describe('practice — modbus decoding quiz', () => {
         await expect(page.locator('.quiz-results')).toBeVisible();
         await expect(page.locator('.quiz-results-headline')).toHaveText('4 / 5 correct');
         await expect(page.locator('.quiz-results-newbest')).toBeVisible();
+
+        // The results card offers the onward path — the next quiz in
+        // curriculum order (quizOrder.js: modbus-decoding → BACnet Basics).
+        const nextLink = page.locator('.quiz-next-link');
+        await expect(nextLink).toHaveText('Next quiz: BACnet Basics →');
+        await expect(nextLink).toHaveAttribute('href', '/practice/bacnet-basics.html');
 
         // localStorage carries the run.
         const best = await page.evaluate(() => localStorage.getItem('cf_quiz_modbus-decoding_best'));

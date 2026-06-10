@@ -90,6 +90,19 @@ module.exports = function(eleventyConfig) {
             .sort((a, b) => a.data.canonical.localeCompare(b.data.canonical))
     );
 
+    // "Next quiz →" target for a content quiz's results card — wraps at
+    // the end so the grind loop continues (owner decision 2026-06-10,
+    // audit #22). Returns null for slugs outside the canonical order
+    // (the field drills aren't a curriculum). Titles come from the
+    // quiz pages' own frontmatter at build time via the collection.
+    eleventyConfig.addFilter("nextQuiz", function (slug) {
+        const order = require("./html/_data/quizOrder.js");
+        const i = order.findIndex((e) => e.slug === slug);
+        if (i === -1) return null;
+        const next = order[(i + 1) % order.length];
+        return { href: "/practice/" + next.slug + ".html", label: next.label };
+    });
+
     // Page title with the shared " — controlsfreak.dev" suffix stripped.
     // The JSON-LD filters below, the search index, and the nav dropdowns
     // all want the bare title — factored out here so the regex lives once.

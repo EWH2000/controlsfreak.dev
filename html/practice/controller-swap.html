@@ -63,6 +63,7 @@ nav: practice
         const questions = {{ quizzes['controller-swap'] | safeScriptJson | safe }};
 
         Quiz.mount('#quiz', questions, {
+            next: {{ page.fileSlug | nextQuiz | safeScriptJson | safe }},
             slug: 'controller-swap',
             title: 'Controller Swap',
             defaultCount: 10,

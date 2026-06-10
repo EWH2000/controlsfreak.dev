@@ -78,7 +78,7 @@ convention to the whole hero and document it. Related: the pid-tuner
 chart y-axis question is codebase-issues #91 — settle the
 canonical-vs-converted line once, in one place.
 
-### Practice path continuity — landing order, results-card next step, best-score badges *(from the 2026-06 audit)*
+### Practice path continuity — landing order, results-card next step, best-score badges *(shipped 2026-06-10)*
 
 Cross-filed from `audit-2026-06.md` #21 + #22 (2026-06-10, verifier:
 low-medium both). Three connected curriculum/UX calls:
@@ -97,6 +97,20 @@ low-medium both). Three connected curriculum/UX calls:
   where they stand. (`quiz-section-plan.md`'s hard-nos — accounts,
   leaderboards, server scoring — don't cover this.) Coordinate with
   the best-score semantics question (codebase-issues #89).
+
+**Shipped (2026-06-10):** owner approved all three (results-card link
+AND badges, not either/or). One canonical sequence now lives in
+`html/_data/quizOrder.js`; the `nextQuiz` filter in `.eleventy.js`
+injects each page's `next:` opt into `Quiz.mount` at build time, so
+the 21 practice pages can't drift from the data file. The landing's
+Content Quizzes grid was hand-reordered to match (comment in
+`practice/index.html` points back at quizOrder.js — re-order both
+together). The next-link wraps from the last quiz back to the first;
+field drills carry no next-link (they sit outside the curriculum).
+Badges are painted client-side on the landing from
+`cf_quiz_<slug>_best(_total)` — `Best N/M`, brighter when perfect —
+honoring the #89 equal-or-longer best-score rule already in the
+engine.
 
 ### Thermistor calculator — default to Type II? *(decided 2026-06-10: yes — Type II is the default)*
 

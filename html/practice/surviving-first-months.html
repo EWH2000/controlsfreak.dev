@@ -61,6 +61,7 @@ nav: practice
         const questions = {{ quizzes['surviving-first-months'] | safeScriptJson | safe }};
 
         Quiz.mount('#quiz', questions, {
+            next: {{ page.fileSlug | nextQuiz | safeScriptJson | safe }},
             slug: 'surviving-first-months',
             title: 'Surviving Your First Months',
             defaultCount: 10,

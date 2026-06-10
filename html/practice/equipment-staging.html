@@ -64,6 +64,7 @@ pairedLesson: https://controlsfreak.dev/education/equipment-staging.html
         const questions = {{ quizzes['equipment-staging'] | safeScriptJson | safe }};
 
         Quiz.mount('#quiz', questions, {
+            next: {{ page.fileSlug | nextQuiz | safeScriptJson | safe }},
             slug: 'equipment-staging',
             title: 'Equipment Staging',
             defaultCount: 10,

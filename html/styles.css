@@ -1578,6 +1578,7 @@ input[type="range"]::-moz-range-thumb {
 .quiz-action:focus-visible,
 .quiz-reset-best:focus-visible,
 .quiz-restart-now:focus-visible,
+.quiz-next-link:focus-visible,
 .bit:focus-visible,
 .psy-pill:focus-visible,
 #th-rt-scroll:focus-visible,
@@ -2445,6 +2446,17 @@ p.chip-row-preamble {
     cursor: not-allowed;
     opacity: 0.45;
 }
+/* Results-card "Next quiz →" link — an <a> wearing the action chrome
+   (secondary flavor), so anchor defaults need resetting. */
+.quiz-next-link {
+    display: inline-flex;
+    align-items: center;
+    text-decoration: none;
+    color: var(--accent);
+    background: var(--surface);
+    border: 1px solid var(--accent);
+}
+.quiz-next-link:hover { background: var(--accent-dim); color: var(--text-bright); }
 .quiz-action-secondary {
     color: var(--text-dim);
     background: var(--surface);
