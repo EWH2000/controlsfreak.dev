@@ -16,6 +16,7 @@ module.exports = [
         prompt: 'Before de-terminating a failed controller, the first move is to photograph and label every wire and terminal — even when you\'re sure you\'ll remember the landings.',
         answer: true,
         explain: 'Always. A controller swap is mostly a re-landing job, and the field wiring is the part nobody documented well. Photos plus tape flags on each conductor turn "which wire went to UI-3?" from an afternoon of buzzing-out into a two-minute reference. Memory is the thing that fails an hour later when half the bundle is out of the panel and they all look the same.',
+        learnMore: { href: '/education/controller-wiring.html#putting-together', label: 'Controller Wiring — the whole controller, landed' },
         tags: ['controller-swap', 'hardware', 'field-practice']
     },
     {
@@ -29,6 +30,7 @@ module.exports = [
             { id: 'd', text: 'They must be matched to the new controller\'s firmware version.' }
         ],
         explain: 'Field sensors carry no configuration — a thermistor is a resistor, a 4-20 mA transmitter just pushes current. The intelligence is in the controller\'s input: it has to know "UI-3 is a 10K type-2 thermistor" or "AI-5 is 4-20 mA, 0-250 °F" to turn the raw signal into a value. Land the wire, set the input type/range, confirm loop power and scaling — the sensor itself needs nothing.',
+        learnMore: { href: '/education/controller-wiring.html#inputs', label: 'Controller Wiring — inputs & loop power' },
         tags: ['controller-swap', 'hardware', 'sensors']
     },
     {
