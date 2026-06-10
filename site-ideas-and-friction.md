@@ -98,7 +98,7 @@ low-medium both). Three connected curriculum/UX calls:
   leaderboards, server scoring — don't cover this.) Coordinate with
   the best-score semantics question (codebase-issues #89).
 
-### Thermistor calculator — default to Type II? *(from the 2026-06 audit)*
+### Thermistor calculator — default to Type II? *(decided 2026-06-10: yes — Type II is the default)*
 
 Cross-filed from `audit-2026-06.md` #29 (2026-06-10, verifier:
 low-medium, default choice partly editorial). The type select defaults
@@ -108,6 +108,10 @@ reads 14.2 kΩ") requires changing two controls, and missing the type
 select silently gives 61.9 °F instead of 63.1 °F. Decision: default to
 10K Type II (matching the note), and/or persist last-used
 type+direction (pairs with codebase-issues #83's preset persistence).
+
+**Decided (2026-06-10):** owner picked Type II as the default (one
+attribute swap, shipped); last-used persistence also approved and
+lands with the #83 preset-persistence batch.
 
 ### PID tuner — live process visualization + tune-it-blind spoiler *(shipped 2026-06-08)*
 *The interactive home hero sells a live loop, then links to the tuner —

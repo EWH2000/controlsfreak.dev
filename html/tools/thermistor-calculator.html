@@ -128,8 +128,13 @@ keywords: NTC RTD resistance ohms 10k 20k 3k balco pt100 pt1000 sensor temperatu
                              that type's `notes`, shown under the R/T table -->
                         <select class="ps-input" id="th-type">
                             <optgroup label="NTC Thermistors">
-                                <option value="10k-2">10K Type II</option>
-                                <option value="10k-3" selected>10K Type III</option>
+                                <!-- Type II is the default on purpose: the page's
+                                     own note calls it the most widespread BAS
+                                     curve, and defaulting to III invited a silent
+                                     wrong-curve answer on the most common field
+                                     task (audit-2026-06 #29, owner decision). -->
+                                <option value="10k-2" selected>10K Type II</option>
+                                <option value="10k-3">10K Type III</option>
                                 <option value="10k-jci">10K + 8.7K (JCI)</option>
                                 <option value="10k-5-tac">10K Type 5 (TAC)</option>
                                 <option value="20k">20K NTC</option>
