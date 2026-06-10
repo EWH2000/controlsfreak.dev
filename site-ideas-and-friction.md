@@ -11,7 +11,7 @@ tools.
 
 ### Modbus 5-digit address ↔ wire offset converter *(shipped 2026-06-10)*
 
-Cross-filed from `audit-2026-06.md` (lineup gap + finding #30,
+Cross-filed from `docs/audits/2026-06-extensive/findings.md` (lineup gap + finding #30,
 2026-06-10). Neither Modbus tool converts a device-manual address like
 43021 into the FC03 offset actually polled — the weekly commissioning
 task the Modbus Decoding lesson teaches statically. Two halves, one
@@ -44,7 +44,7 @@ keyword sweep (#15).
 
 ### BACnet Object_Identifier encoder/decoder *(shipped 2026-06-10)*
 
-Cross-filed from `audit-2026-06.md` (lineup gap, 2026-06-10). Two
+Cross-filed from `docs/audits/2026-06-extensive/findings.md` (lineup gap, 2026-06-10). Two
 lessons teach the 10-bit-type + 22-bit-instance packing in prose;
 nothing on the site decodes one. Natural third tab on the BACnet/IP
 converter, reusing the bacnet-objects type table. Build or just track?
@@ -62,7 +62,7 @@ type × 2²² + instance arithmetic. Default example decodes
 
 ### Command palette — recents list *(from the 2026-06 audit)*
 
-Cross-filed from `audit-2026-06.md` (power-user polish, 2026-06-10).
+Cross-filed from `docs/audits/2026-06-extensive/findings.md` (power-user polish, 2026-06-10).
 The palette opens empty for a returning user, so every weekly lookup
 is retyped. A `cf_palette_recent` last-5 list rendered on open +
 Enter-on-empty-goes-to-top would make repeat lookups one keystroke.
@@ -70,7 +70,7 @@ Enter-on-empty-goes-to-top would make repeat lookups one keystroke.
 
 ### URL state / deep links — should tools be bookmarkable? *(from the 2026-06 audit)*
 
-Cross-filed from `audit-2026-06.md` #18 (2026-06-10). Zero URL params
+Cross-filed from `docs/audits/2026-06-extensive/findings.md` #18 (2026-06-10). Zero URL params
 site-wide (the `/tools/#cat` chip filter is the lone hash consumer) —
 no tool state survives a bookmark or a shared link. Three distinct
 layers, only the last is this entry:
@@ -86,7 +86,7 @@ layers, only the last is this entry:
 
 ### Home hero units — which surfaces convert? *(decided 2026-06-10: everything converts, LCDs included)*
 
-Cross-filed from `audit-2026-06.md` #5 (2026-06-10). The hero's
+Cross-filed from `docs/audits/2026-06-extensive/findings.md` #5 (2026-06-10). The hero's
 "LIVE AHU-1 supply-air loop" is hard-coded °F everywhere (tree,
 readout, slider output, LCD, packet, `aria-valuetext`) — the first
 interactive a metric visitor sees ignores their preference. The
@@ -101,7 +101,7 @@ canonical-vs-converted line once, in one place.
 
 ### Practice path continuity — landing order, results-card next step, best-score badges *(shipped 2026-06-10)*
 
-Cross-filed from `audit-2026-06.md` #21 + #22 (2026-06-10, verifier:
+Cross-filed from `docs/audits/2026-06-extensive/findings.md` #21 + #22 (2026-06-10, verifier:
 low-medium both). Three connected curriculum/UX calls:
 
 - **Landing order (#21):** /practice/ orders the 16 content-quiz
@@ -135,7 +135,7 @@ engine.
 
 ### Thermistor calculator — default to Type II? *(decided 2026-06-10: yes — Type II is the default)*
 
-Cross-filed from `audit-2026-06.md` #29 (2026-06-10, verifier:
+Cross-filed from `docs/audits/2026-06-extensive/findings.md` #29 (2026-06-10, verifier:
 low-medium, default choice partly editorial). The type select defaults
 to 10K Type III while the tool's own note calls Type 2 "the most
 widespread BAS thermistor curve"; the common cold task ("10k Type II

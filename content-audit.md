@@ -2217,7 +2217,7 @@ are unchanged. Primary fix logged at `ux-audit.md` #6.
 
 ## Audit scope — 2026-06 extensive audit spillover (2026-06-10)
 
-The June 2026 extensive audit (master doc: `audit-2026-06.md`, PR #205)
+The June 2026 extensive audit (master doc: `docs/audits/2026-06-extensive/findings.md`, PR #205)
 raised content-accuracy and wording items that need editorial / domain
 decisions rather than mechanical fixes. They're cross-filed here per
 the triage handoff; each cites its full evidence in the master doc, so
@@ -2232,7 +2232,7 @@ metering-devices-txv-eev (zero `data-metric` spans between them); quiz
 banks superheat-subcooling (numeric answer demands "in °F"),
 sequencing-scenarios, psychrometrics-basics, hydronic-loops.
 **Lens:** metric. **Verification status: verified**
-(`audit-2026-06.md` #3).
+(`docs/audits/2026-06-extensive/findings.md` #3).
 
 The superheat lesson tells the reader to cross-check in the
 refrigerant-pt tool — which in metric shows the same system as
@@ -2264,7 +2264,7 @@ rounding policy (#37) governs every converted pair.
 intro), economizer-ratio (US plug-in numbers on the metric page),
 refrigerant-pt SH/SC tab, air-mixing, psychrometric-chart methodology
 note, psychrometrics-basics ("ft³ per pound"). **Lens:** metric.
-**Verification status: verified** (`audit-2026-06.md` #4).
+**Verification status: verified** (`docs/audits/2026-06-extensive/findings.md` #4).
 
 Decision needed: convert whole formula lines (metric cp form
 `1.006 + 1.86·W`, m³/h mass-flow form, converted plug-ins) vs caveat
@@ -2295,7 +2295,7 @@ g/kg alongside the IP forms. The affinity-laws exception stands.
 subtraction being taught gives 3, not 2.8); economizer-ratio's default
 metric formula line "(18.3 − 23.9) ÷ (15.6 − 23.9) × 100 = 66.7 %"
 whose own operands reduce to 67.5 %. **Lens:** units correctness.
-**Verification status: verified** (`audit-2026-06.md` #53; the 56-pair
+**Verification status: verified** (`docs/audits/2026-06-extensive/findings.md` #53; the 56-pair
 census referenced there is the sweep list).
 
 **Suggested direction:** a rounding policy so taught arithmetic
@@ -2320,7 +2320,7 @@ lines audited; the two cited failures were the only ones.
 capstone loop, legend), the wiring sim's `loop` preset and engine
 fault text — vs `field-wiring-sensors.js`, which correctly teaches DC
 loop power. **Lens:** content (new surfaces). **Verification status:
-verified** (`audit-2026-06.md` #46 — rated high there).
+verified** (`docs/audits/2026-06-extensive/findings.md` #46 — rated high there).
 
 Real 2-wire transmitters are DC loop-powered (typically 12–30 VDC);
 the engine header documents the AC-as-DC abstraction but the caveat
@@ -2343,7 +2343,7 @@ the matching two-sentence caveat. Engine and diagrams unchanged.
 **Location:** simulators/pid-tuner.html — selector option "VAV damper
 · duct static pressure"; `updateScene` drives both the damper blades
 and the fan speed from the one AO. **Lens:** content (PID cluster).
-**Verification status: verified** (`audit-2026-06.md` #50).
+**Verification status: verified** (`docs/audits/2026-06-extensive/findings.md` #50).
 
 Field reality: duct static is controlled by the supply-fan VFD (or a
 reverse-acting bypass damper); a VAV terminal damper controls zone
@@ -2371,7 +2371,7 @@ equipment"), controller-wiring lesson (correctly scoped to shared
 transformers), wiring-engine.js reversed-power fault + spark cue
 (fires on an isolated controller where the act is electrically
 symmetric). **Lens:** content. **Verification status: flagged**
-(scoping/pedagogy, not a wrong number — `audit-2026-06.md` #49).
+(scoping/pedagogy, not a wrong number — `docs/audits/2026-06-extensive/findings.md` #49).
 
 The sim's spark is a documented deliberate user ask, so the hard
 contradiction is the quiz–sim pair; the fix is scoping copy, not sim
@@ -2393,7 +2393,7 @@ consequence; the engine's reversed-power fault text gains the why
 **Location:** refrigeration cluster prose; 118 psig interpolates to
 39.8 °F in the site's own P-T data, and the sibling lesson correctly
 hedges the same lookup. **Lens:** content. **Verification status:
-flagged** (rhetoric vs precision trade-off — `audit-2026-06.md`,
+flagged** (rhetoric vs precision trade-off — `docs/audits/2026-06-extensive/findings.md`,
 Phases 2–4 minor polish).
 
 **Suggested direction:** soften the rhetoric or use 118.4 psig so the
@@ -2411,7 +2411,7 @@ they were already correctly hedged.
 **Location:** metering-devices-txv-eev lesson — "turns" belong to the
 adjustment screw (which the lesson states correctly elsewhere); the
 needle's motion is linear. **Lens:** content. **Verification status:
-flagged** (phrasing — `audit-2026-06.md`, Phases 2–4 minor polish).
+flagged** (phrasing — `docs/audits/2026-06-extensive/findings.md`, Phases 2–4 minor polish).
 
 **Suggested direction:** linear language for the needle ("lifts/
 modulates"), reserving "turns" for the adjustment screw. Editorial —

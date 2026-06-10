@@ -1,4 +1,12 @@
-# audit-2026-06.md
+# June 2026 extensive audit — master findings
+
+> **Archived 2026-06-10.** The cycle is complete: every finding below
+> carries a disposition marker — *(fixed …, PR #NN)* for the
+> mechanical batches (PRs #206–#222), *(cross-filed → doc #NN)* for
+> the items that went through the owner's 16 design decisions
+> (implemented as PRs #223–#243; resolutions live in the target
+> docs). Both out-of-band dashboard items are confirmed done. This
+> file is the durable record; nothing here is still actionable.
 
 Master findings document for the **June 2026 extensive site audit** —
 a multi-phase pass combining fresh-lens persona walkthroughs, a
@@ -15,7 +23,7 @@ consolidation, and touch-target floor all shipped.
 - This is the **master doc**: everything lands here first. After the
   owner triages, confirmed items get cross-filed into
   `codebase-issues.md` / `content-audit.md` / `site-ideas-and-friction.md`
-  per their conventions — nothing is cross-filed yet.
+  per their conventions — cross-filing completed 2026-06-10.
 - **Severity**: **high** = blocks or actively misleads the persona;
   **medium** = real friction or trust damage, task still completes;
   **low** = polish. Where the verification pass argued a different
@@ -971,7 +979,9 @@ demonstrated bypass.
 **Suggested direction:** add
 `&& verify.hostname === 'controlsfreak.dev'` at worker.js:142
 (optionally pass `remoteip`); confirm the dashboard's allowed
-hostnames list is production-only.
+hostnames list is production-only. *(Out-of-band half done
+2026-06-10: owner confirmed the Turnstile dashboard's
+allowed-hostnames list is production-only.)*
 
 ### Build, SEO & CI
 
@@ -1411,6 +1421,8 @@ psy-chart's SECOND_PROP `def` field does.
 - **Production deploy runs `npm install`, not `npm ci`** — on
   package.json/lock drift the deploy silently re-resolves while CI
   uses the lockfile. One out-of-band dashboard flip. *(security)*
+  *(done 2026-06-10 — owner flipped the Workers Build command to
+  `npm ci` alongside the unshallow + STRICT_GIT_DATES=1 change.)*
 - **#70 revisit-trigger check: NOT met** (heaviest page 27.5 KB gz vs
   the 100 KB line) — defer stands; but append the first measured
   baseline to the entry (80.7 % of signal-scaling's raw HTML is
