@@ -1,6 +1,6 @@
 ---
 title: Privacy — controlsfreak.dev
-description: What controlsfreak.dev does with your data — what the contact form collects, who else processes request data (Cloudflare, Google Fonts), and your rights.
+description: What controlsfreak.dev does with your data — what the contact form collects, what Cloudflare processes to serve the page, and the rights you have.
 canonical: https://controlsfreak.dev/privacy.html
 ---
 {% extends "layouts/page.njk" %}
@@ -84,19 +84,6 @@ canonical: https://controlsfreak.dev/privacy.html
             </section>
 
             <section>
-                <h2 class="subhead">Google Fonts</h2>
-                <p>
-                    The page loads typography from
-                    <code>fonts.googleapis.com</code> and
-                    <code>fonts.gstatic.com</code>. As a side effect
-                    of those font requests, Google sees the IP address
-                    that requested them. See
-                    <a href="https://policies.google.com/privacy" rel="noopener">Google's privacy policy</a>
-                    for what they do with it.
-                </p>
-            </section>
-
-            <section>
                 <h2 class="subhead">No tracking; what the site stores on your device</h2>
                 <p>
                     There is no analytics platform on this site, no
@@ -148,11 +135,12 @@ canonical: https://controlsfreak.dev/privacy.html
                     means within 24 to 48 hours.
                 </p>
                 <p>
-                    Request data that Cloudflare and Google see as
-                    part of delivering the page is handled under
-                    their own policies; if you want to exercise
-                    rights against them, you would need to contact
-                    them directly.
+                    Request data that Cloudflare sees as part of
+                    delivering the page is handled under its own
+                    policy; if you want to exercise rights against
+                    Cloudflare, you would need to contact them
+                    directly. (Fonts are served from this site's own
+                    domain — no font request leaves it.)
                 </p>
             </section>
 
