@@ -3654,6 +3654,10 @@ swap is a decision, not drift.
 `cleanTitle` in `.eleventy.js` and note the convention change where
 the slug-sort was recorded.
 
+**Resolution (2026-06-10):** owner approved — `navSection` sorts by
+`cleanTitle` (equally diff-stable), the comment records the why, and a
+nav-menu.spec test pins the title order so it can't regress.
+
 ### 89. A fast 5/5 short quiz run silently overwrites a 10/10 full-run best
 
 Cross-filed from `audit-2026-06.md` (student polish, 2026-06-10).

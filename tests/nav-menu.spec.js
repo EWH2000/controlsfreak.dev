@@ -161,3 +161,17 @@ test('mobile: opening the sheet moves focus into it; closing hands focus back to
 
     expect(errors, 'sheet focus management should log no errors').toEqual([]);
 });
+
+// The dropdowns sort by visible title (codebase-issues #88) — the old
+// slug sort filed "Pump & Fan Affinity Laws" first, breaking the
+// alphabetical scan the other 13 labels invite.
+test('Tools dropdown lists entries in title order', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('/');
+    await page.click('#nav-tools-toggle');
+    const labels = await page.locator('#nav-tools-menu .nav-menu-item').allTextContents();
+    const sorted = [...labels].sort((a, b) => a.localeCompare(b));
+    expect(labels).toEqual(sorted);
+    expect(labels[0]).not.toContain('Affinity');
+    expect(errors, 'title-order check should log no errors').toEqual([]);
+});
