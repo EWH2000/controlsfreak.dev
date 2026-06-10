@@ -18,7 +18,13 @@ module.exports = defineConfig({
     },
     webServer: {
         command: 'npm run build && python3 -m http.server 8000 --directory _site',
-        url: 'http://localhost:8000',
+        // Readiness probes /sitemap.xml, not "/": any unrelated server
+        // already squatting on :8000 (the documented pantryapp trap)
+        // answers "/" with a 200 and the whole suite then fails 108
+        // opaque ways — a 404 on the sitemap keeps Playwright waiting
+        // and surfaces an explicit port-bind error instead
+        // (audit-2026-06 polish, verified mechanism).
+        url: 'http://localhost:8000/sitemap.xml',
         reuseExistingServer: !process.env.CI,
     },
 });
