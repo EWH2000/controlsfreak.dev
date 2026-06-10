@@ -9,6 +9,13 @@ const { defineConfig } = require('@playwright/test');
 
 module.exports = defineConfig({
     testDir: './tests',
+    // Parallelize WITHIN files too — smoke.spec.js alone held ~154s of
+    // the suite's ~196 test-seconds in one worker. Safe because
+    // Playwright contexts are per-test (verified empirically by the
+    // audit-2026-06 isolation probe; the dead cleanup hooks that a
+    // wrong isolation model justified are already gone). Owner-approved
+    // 2026-06-10 (codebase-issues #87).
+    fullyParallel: true,
     reporter: 'list',
     // Retry in CI only — absorbs a genuine flake without masking a
     // local failure (process.env.CI is set by GitHub Actions).
