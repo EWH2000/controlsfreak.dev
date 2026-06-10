@@ -118,7 +118,10 @@
             opts[n].setAttribute('aria-selected', on ? 'true' : 'false');
             if (on) opts[n].scrollIntoView({ block: 'nearest' });
         }
-        input.setAttribute('aria-activedescendant', i >= 0 ? 'palette-opt-' + i : '');
+        // Remove rather than set '' — an empty aria-activedescendant is
+        // an invalid ID reference (audit-2026-06 #56).
+        if (i >= 0) input.setAttribute('aria-activedescendant', 'palette-opt-' + i);
+        else input.removeAttribute('aria-activedescendant');
     }
 
     function move(delta) {
@@ -204,6 +207,10 @@
         input.value = '';
         results = [];
         list.textContent = '';
+        // The option elements are gone — a lingering activedescendant
+        // would be a dangling ID reference (audit-2026-06 #56).
+        active = -1;
+        input.removeAttribute('aria-activedescendant');
         status.hidden = true;
         if (invoker && typeof invoker.focus === 'function') invoker.focus();
         invoker = null;

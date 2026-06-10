@@ -25,8 +25,14 @@
             <svg class="palette-icon" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5">
                 <circle cx="7" cy="7" r="4.5"/><line x1="10.6" y1="10.6" x2="14" y2="14"/>
             </svg>
-            <input id="palette-input" class="palette-input" type="search" role="combobox"
-                   aria-expanded="false" aria-controls="palette-results" aria-activedescendant=""
+            {# type="text", not "search": ARIA-in-HTML forbids a role
+               override on input[type=search] (audit-2026-06 #56).
+               inputmode/enterkeyhint keep the mobile search keyboard.
+               aria-activedescendant is set/removed by search.js — an
+               empty-string value is invalid ARIA. #}
+            <input id="palette-input" class="palette-input" type="text" role="combobox"
+                   inputmode="search" enterkeyhint="search"
+                   aria-expanded="false" aria-controls="palette-results"
                    aria-autocomplete="list" autocomplete="off" autocapitalize="off"
                    spellcheck="false" placeholder="Search tools, simulators, lessons…"
                    aria-label="Search the site">

@@ -88,7 +88,10 @@ nav: simulators
         .fbe-wire { fill: none; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
         .fbe-wire-num { stroke: var(--blue); }
         .fbe-wire-bool-on { stroke: var(--accent); }
-        .fbe-wire-bool-off { stroke: var(--border); }
+        /* Off wires must still be traceable — --border was 1.24:1 in light
+           (you could not see where the wire ran). --text-dim follows the
+           balancing-diagram stroke convention (audit-2026-06 #14). */
+        .fbe-wire-bool-off { stroke: var(--text-dim); }
         .fbe-wire-hit { fill: none; stroke: transparent; stroke-width: 14; pointer-events: stroke; cursor: pointer; }
         .fbe-wire-sel { stroke: var(--text-bright); stroke-dasharray: 5 3; }
 
@@ -643,6 +646,9 @@ nav: simulators
             svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
             svg.setAttribute('class', 'fbe-wire-layer');
             svg.setAttribute('viewBox', '0 0 ' + INNER_W + ' ' + INNER_H);
+            // Redundant to the block-value readouts; an unnamed dynamic
+            // SVG is noise for AT (audit-2026-06 polish).
+            svg.setAttribute('aria-hidden', 'true');
             inner.appendChild(svg);
 
             graph.blocks.forEach(renderBlock);

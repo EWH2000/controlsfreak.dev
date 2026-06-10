@@ -383,7 +383,10 @@ nav: simulators
 
             <div class="cw-canvas" id="cw-canvas">
                 <div class="cw-canvas-inner" id="cw-inner">
-                    <svg class="cw-wire-layer" id="cw-wires" viewBox="0 0 940 660" preserveAspectRatio="none"></svg>
+                    <!-- aria-hidden: the wire layer is informationally
+                         redundant to the live status line; an unnamed
+                         dynamic SVG is noise for AT (audit-2026-06 polish). -->
+                    <svg class="cw-wire-layer" id="cw-wires" viewBox="0 0 940 660" preserveAspectRatio="none" aria-hidden="true"></svg>
                     <!-- controller + devices injected here by the IIFE -->
                 </div>
             </div>

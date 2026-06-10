@@ -361,7 +361,10 @@ nav: simulators
             </div>
 
             <!-- ── Per-unit cells (built in JS) ────────────────────────── -->
-            <div class="stg-units" id="stg-units" aria-label="Per-unit state and accumulated runtime"></div>
+            <!-- role="group" so the aria-label is actually exposed —
+                 aria-label on a role-less div is ignored by AT
+                 (audit-2026-06 #55). -->
+            <div class="stg-units" id="stg-units" role="group" aria-label="Per-unit state and accumulated runtime"></div>
 
             <!-- ── Live readouts ───────────────────────────────────────── -->
             <div class="bit-readouts">
@@ -383,10 +386,14 @@ nav: simulators
                 </div>
             </div>
 
-            <!-- ── Event log ───────────────────────────────────────────── -->
-            <div class="stg-log-wrap">
+            <!-- ── Event log ──
+                 role="log" lives on the wrapper, NOT the <ul>: overriding
+                 the list role orphans every <li> (no required parent), so
+                 screen readers lose list semantics and item count
+                 (audit-2026-06 #57). -->
+            <div class="stg-log-wrap" role="log" aria-live="polite" aria-label="Sequence event log">
                 <h2 class="subhead" style="margin-top:1.75rem;">Event log</h2>
-                <ul class="stg-log" id="stg-log" role="log" aria-live="polite" aria-label="Sequence event log">
+                <ul class="stg-log" id="stg-log">
                     <li class="empty"><span class="m">Press Play — staging, rotation, and fault events land here.</span></li>
                 </ul>
             </div>

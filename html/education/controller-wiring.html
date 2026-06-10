@@ -24,7 +24,11 @@ nav: education
         .cwl-svg .w-sig { stroke: var(--text-dim); }
         .cwl-svg .w-cur { stroke: var(--amber); }
         .cwl-svg .term { fill: var(--surface); stroke: var(--text-dim); stroke-width: 1.5; }
-        .cwl-svg .dev { fill: var(--surface); stroke: var(--border); stroke-width: 1.5; }
+        /* Meaning-carrying geometry strokes use --text-dim, not --border —
+           the balancing-diagram convention. --border nearly vanishes as a
+           device outline (1.49:1 light / 1.68 dark vs the 3:1 graphics
+           floor — audit-2026-06 #14). */
+        .cwl-svg .dev { fill: var(--surface); stroke: var(--text-dim); stroke-width: 1.5; }
         .cwl-svg .lbl { fill: var(--text-bright); font-size: 12px; }
         .cwl-svg .lbl-dim { fill: var(--text-dim); font-size: 11px; }
         .cwl-svg .lbl-term { fill: var(--text-bright); font-size: 11px; font-weight: 600; }
