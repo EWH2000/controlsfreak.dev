@@ -139,7 +139,7 @@ const THERMISTOR_TYPES = (function () {
             family: 'thermistor', group: 'NTC Thermistors',
             ref:    '≈ 4.65 kΩ at 77 °F',
             notes:  'Johnson Controls convention — a 10K NTC element with an 8.7 kΩ resistor in parallel, which flattens the curve over the occupied range. Reads much lower than a bare 10K (≈ 4.6 kΩ at room temperature). Treat as nominal — see header.',
-            // source: modeled as a 10K Type 2 element (β ≈ 3976, matching the verified Type 2 curve) in parallel with 8.7 kΩ. JCI's element type and shunt value are folklore-confirmed but the canonical TE-6300 Product Bulletin (LIT-216320) URL redirects to docs.johnsoncontrols.com — no public R/T table found for the 8.7K-shunted variant. A field-measured table from a known-good JCI sensor would supersede this.
+            // source: modeled as a 10K Type 2 element (β ≈ 3976 — the Type 2 curve's effective β₂₅/₈₅; note the Type 2 LOOKUP entry above deliberately uses β=3900, its RMS-best single β, so the two numbers describe the same verified curve differently) in parallel with 8.7 kΩ. JCI's element type and shunt value are folklore-confirmed but the canonical TE-6300 Product Bulletin (LIT-216320) URL redirects to docs.johnsoncontrols.com — no public R/T table found for the 8.7K-shunted variant. A field-measured table from a known-good JCI sensor would supersede this.
             curve:  { kind: 'ntc-shunt', r25: 10000, beta: 3976, shunt: 8700 },
         },
         '10k-5-tac': {
@@ -155,7 +155,7 @@ const THERMISTOR_TYPES = (function () {
             family: 'thermistor', group: 'NTC Thermistors',
             ref:    '20,000 Ω at 77 °F (25 °C)',
             notes:  'A less common 20K curve, found on Honeywell T7460/T7470 wall sensors and various OEM duct/immersion probes. Steeper than the 10K curves — β₂₅/₈₅ ≈ 4260 from the canonical table. 20K elements from other vendors may use a different β; confirm against the original device documentation.',
-            // source: verified against Vector Controls Tn20 + Sontay 20K6A1 (the two published tables agree exactly: R(-40°C)=814 kΩ, R(0°C)=70,200 Ω, R(25°C)=20,000 Ω, R(50°C)=6,719 Ω). Canonical β₂₅/₈₅ ≈ 4260 — but the curve's effective β varies sharply across temperature. β=3976 fits Vector at -40 °C exactly and within ~3% at 0 °C, prioritizing the OAT range where 20K sensors actually operate; the hot end drifts (about +15% at 85 °C) but 20K thermistors are rarely used above room temperature.
+            // source: verified against Vector Controls Tn20 + Sontay 20K6A1 (the two published tables agree exactly: R(-40°C)=814 kΩ, R(0°C)=70,200 Ω, R(25°C)=20,000 Ω, R(50°C)=6,719 Ω). Canonical β₂₅/₈₅ ≈ 4260 — but the curve's effective β varies sharply across temperature. β=3976 fits Vector at -40 °C within ~1.2% and within ~3.5% at 0 °C (audit-2026-06 recomputed — the earlier "exactly / ~3%" claim overstated the fit), prioritizing the OAT range where 20K sensors actually operate; the hot end drifts (about +15% at 85 °C) but 20K thermistors are rarely used above room temperature.
             curve:  { kind: 'ntc', r25: 20000, beta: 3976 },
         },
         '3k': {

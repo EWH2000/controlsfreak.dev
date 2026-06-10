@@ -479,9 +479,12 @@ keywords: vfd delta p dp gpm head curve staging trim impeller
                     <!-- sensor body -->
                     <rect x="645" y="195" width="50" height="30" rx="2" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
                     <text x="670" y="215" text-anchor="middle" font-size="12" font-weight="700" fill="var(--text-bright)">ΔP</text>
-                    <!-- "to BMS" wire breaking off to the right -->
+                    <!-- "to BMS" wire breaking off to the right. Label sits
+                         below-left of the sensor box: at its old spot
+                         (x=708/y=222, anchor end) it rendered INSIDE the ΔP
+                         box (audit-2026-06 diagram polish). -->
                     <line x1="695" y1="210" x2="710" y2="210" stroke="var(--text-dim)" stroke-width="1" stroke-dasharray="3 3"/>
-                    <text x="708" y="222" text-anchor="end" font-size="9" font-style="italic" fill="var(--text-dim)">to BMS</text>
+                    <text x="666" y="240" text-anchor="end" font-size="9" font-style="italic" fill="var(--text-dim)">to BMS</text>
                 </g>
 
                 <!-- flow arrows (static state encoding, kept so direction reads under reduced

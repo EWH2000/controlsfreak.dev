@@ -106,6 +106,7 @@ module.exports = [
             { id: 'd', text: 'It doesn\'t need power — it\'s passive like a thermistor.' }
         ],
         explain: 'A 2-wire (loop-powered) transmitter is clever: it sits in series in the current loop and regulates how much current flows — 4 mA minimum, up to 20 mA — and that same current is what runs its electronics. The minimum is 4 mA partly because the device needs <em>some</em> current just to stay alive, which is another reason the zero is "live." But it only works if the loop actually has a DC supply in it; if the controller\'s input is passive (no loop power) you must add an external 24 VDC supply, or nothing reads. A <strong>3-wire</strong> transmitter takes separate power and signal conductors instead.',
+        learnMore: { href: '/education/controller-wiring.html#inputs', label: 'Controller Wiring — inputs & loop power' },
         tags: ['field-wiring-sensors', 'wiring', 'loop-power']
     },
 
@@ -122,6 +123,7 @@ module.exports = [
             { id: 'd', text: 'The drain wire is too small to carry ground current.' }
         ],
         explain: 'A shield works by giving interference a path to ground, but it should be grounded at <strong>one end only</strong> — conventionally the panel/controller end. Ground both ends and, if those two ground points sit at even slightly different potentials (they usually do across a building), a current flows along the shield itself. That ground-loop current is exactly the noise source the shield was supposed to block, now coupled straight onto your signal pair. Land the drain at the panel, tape back the shield at the device, and the loop is broken.',
+        learnMore: { href: '/education/controller-wiring.html#power', label: 'Controller Wiring — power & the shared common' },
         tags: ['field-wiring-sensors', 'wiring', 'shielding', 'noise']
     },
 
@@ -137,6 +139,7 @@ module.exports = [
             { id: 'd', text: 'The input needs a 4-20 mA transmitter to function.' }
         ],
         explain: 'A digital input detects a circuit being completed, but it matters <em>which way the current is meant to flow</em>. A <strong>sinking</strong> input expects the field device to pull the terminal toward the common/0 V rail; a <strong>sourcing</strong> input expects it pulled toward the supply. Wire a dry contact against the input\'s expected polarity — or land the input\'s common on the wrong rail — and the contact closes but the input never sees the transition it\'s looking for. Check the controller\'s input-wiring diagram for which side the shared common belongs on; many inputs are jumper- or config-selectable.',
+        learnMore: { href: '/education/controller-wiring.html#inputs', label: 'Controller Wiring — inputs' },
         tags: ['field-wiring-sensors', 'wiring', 'binary-input']
     },
 

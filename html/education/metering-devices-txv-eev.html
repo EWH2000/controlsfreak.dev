@@ -88,7 +88,12 @@ keywords: txv eev orifice piston superheat bulb metering expansion valve
                     <!-- two strap legs going up over the pipe -->
                     <line x1="456" y1="80" x2="456" y2="98" stroke="var(--text-dim)" stroke-width="1.2"/>
                     <line x1="504" y1="80" x2="504" y2="98" stroke="var(--text-dim)" stroke-width="1.2"/>
-                    <text x="525" y="107" font-size="10" fill="var(--text)">sensing bulb (feels suction T)</text>
+                    <!-- Label rides ABOVE the suction line: at its old y=107
+                         the external-equalizer dashed drop (x=570) threaded
+                         straight through the words (audit-2026-06 diagram
+                         polish); the equalizer tap starts at y=80, so above
+                         the pipe is the one clear lane on this side. -->
+                    <text x="525" y="64" font-size="10" fill="var(--text)">sensing bulb (feels suction T)</text>
                 </g>
 
                 <!-- ── CAPILLARY TUBE from bulb down to top of valve body.
@@ -215,8 +220,12 @@ keywords: txv eev orifice piston superheat bulb metering expansion valve
                 <path d="M 488 82 V 145 H 400 V 165" fill="none"
                       stroke="var(--text-dim)" stroke-width="1.4"/>
 
-                <!-- ── CONTROLLER BOX ── -->
-                <rect x="240" y="165" width="280" height="70" rx="3"
+                <!-- ── CONTROLLER BOX ──
+                     Width 296: the long "computes SH …" caption measured
+                     ~281 units, so the old 280-wide box had the text
+                     touching both side strokes (audit-2026-06 diagram
+                     polish — getBBox-measured). -->
+                <rect x="232" y="165" width="296" height="70" rx="3"
                       fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
                 <text x="380" y="188" text-anchor="middle" font-size="12" font-weight="600" fill="var(--text-bright)">UNIT CONTROLLER / BMS</text>
                 <text x="380" y="208" text-anchor="middle" font-size="10" fill="var(--text-dim)">computes SH = T − T_sat(P), compares to setpoint,</text>

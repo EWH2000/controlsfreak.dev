@@ -80,9 +80,10 @@ module.exports = function(eleventyConfig) {
     });
 
     // Pages for sitemap.njk: every template that carries a `canonical`
-    // frontmatter (all 20 real pages — the sitemap template itself has
-    // none, so it self-excludes). Sorted by canonical URL for a stable,
-    // diff-friendly output order.
+    // frontmatter — i.e. every real page; the sitemap template itself
+    // has none, so it self-excludes. (Counts drift: a hardcoded "all 20
+    // real pages" here survived to a 64-page site — audit-2026-06.)
+    // Sorted by canonical URL for a stable, diff-friendly output order.
     eleventyConfig.addCollection("sitemapPages", (collectionApi) =>
         collectionApi.getAll()
             .filter((item) => typeof item.data.canonical === "string")
@@ -323,8 +324,9 @@ module.exports = function(eleventyConfig) {
 
     // SoftwareApplication JSON-LD for tool pages — declares the per-tool
     // calculator as a free, web-only utility app for Google's
-    // SoftwareApplication rich-result eligibility. Uniform shape across all
-    // 9 tools (applicationCategory + operatingSystem don't vary
+    // SoftwareApplication rich-result eligibility. Uniform shape across
+    // every tool page (another drifted count: "all 9 tools" survived to a
+    // 14-tool site — audit-2026-06; applicationCategory + operatingSystem don't vary
     // meaningfully); per-page data comes from the existing `title`,
     // `description`, and `canonical` frontmatter. `offers` with price=0
     // satisfies Google's "free app" validation (alternative would be

@@ -230,8 +230,8 @@ from now will still run it.
   frontmatter + the layout, passes through `styles.css`, `scripts/`,
   `assets/`, `robots.txt`, generates `sitemap.xml` + the
   `search-index.json` the command palette reads, and writes to
-  `_site/`. Build is fast (~0.3s for ~45 pages); the only thing it does
-  is templating, no JS transpile or bundle. Cloudflare Workers Build
+  `_site/`. Build is a few seconds for the whole site; the only thing it
+  does is templating, no JS transpile or bundle. Cloudflare Workers Build
   runs `npm install && npm run build` on push to `main` and serves
   `_site/`.
 - **Shared design system** — `html/styles.css`. Flat
