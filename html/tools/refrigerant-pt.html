@@ -141,7 +141,7 @@ nav: tools
                         and every superheat reading is off by ~5 °F.</li>
                 </ol>
                 <p class="ref-note">
-                    Pressures are gauge (psig), as read at the manifold.
+                    Pressures are gauge (psig / kPag), as read at the manifold.
                     Switch the Superheat / Subcooling tab to turn a line
                     temperature into an actual superheat or subcooling value.
                 </p>
@@ -411,7 +411,11 @@ nav: tools
                 const bub = pAtTemp(R.bubble, t);
                 const dew = pAtTemp(R.dew, t);
                 if (!bub.ok || !dew.ok) {
-                    clearPt(`Out of range — the ${R.name} chart covers ${Math.round(bub.lo)} to ${Math.round(bub.hi)} °F.`, 'error');
+                    // Mirror the by-pressure branch: bounds in the user's
+                    // display units, not raw canonical °F — a metric user
+                    // told "covers -41 to 164 °F" against their °C entry
+                    // reads the opposite of the truth (audit-2026-06 #28).
+                    clearPt(`Out of range — the ${R.name} chart covers ${dispT(bub.lo)} to ${dispT(bub.hi)} ${tU()}.`, 'error');
                     return;
                 }
                 setLive('rf-pt-bubble', dispP(bub.value) + ' ' + pU());
@@ -540,12 +544,34 @@ nav: tools
         document.getElementById('rf-sc-copy').addEventListener('click', e => copyText(e.currentTarget, scCopy));
 
         // ── Unit-flip resync ──────────────────────────────────────────
+        // Per-quantity display decimals for input rewrites (psy-chart's
+        // per-mode defaults are the precedent — audit-2026-06 #60b).
+        const REWRITE_DEC = { temp: 1, deltaTemp: 1, pressure: 1 };
         function rewriteInput(id, quantity, fromU, toU) {
             const el = document.getElementById(id);
             const v  = parseFloat(el.value);
             if (!isFinite(v)) return;
-            const next = U.convert(v, fromU, toU, quantity);
-            el.value = (Math.round(next * 10) / 10).toString();
+            // Reformat from a retained canonical value, not the rounded
+            // display string — flipping units away and back must hand
+            // back exactly what was typed (audit-2026-06 #60a). The
+            // stored canonical is trusted only while the field still
+            // shows the exact text this function last wrote for the same
+            // quantity; a user edit or mode switch rebuilds it.
+            let canon = parseFloat(el.dataset.canonUs);
+            if (!(isFinite(canon) && el.dataset.canonQ === quantity && el.dataset.canonDisp === el.value)) {
+                canon = U.convert(v, fromU, 'us', quantity);
+                el.dataset.canonUs = String(canon);
+                el.dataset.canonQ = quantity;
+                el.dataset.typedText = el.value;
+                el.dataset.typedUnits = fromU;
+            }
+            if (toU === el.dataset.typedUnits) {
+                el.value = el.dataset.typedText;
+            } else {
+                const dec = REWRITE_DEC[quantity] !== undefined ? REWRITE_DEC[quantity] : 1;
+                el.value = (+U.convert(canon, 'us', toU, quantity).toFixed(dec)).toString();
+            }
+            el.dataset.canonDisp = el.value;
         }
 
         U.onChange(function (newUnits) {

@@ -152,7 +152,20 @@ const Psychro = (function () {
         }
         W = Math.max(0, W);
         const Wsat = satHumRatio(tdb, P);
-        if (W > Wsat + 1e-6) return { ok: false, error: 'That point is past saturation (RH over 100%) — impossible.' };
+        // Cause-honest over-saturation message: only the rh mode can
+        // truthfully blame RH. In the other modes the entered RH may be
+        // a perfectly valid 50% while a low dry-bulb / altitude typo is
+        // what pushed W past saturation — blaming RH there asserts
+        // something false about the user's entry (audit-2026-06 polish).
+        if (W > Wsat + 1e-6) {
+            const prop = { wb: 'wet-bulb', dp: 'dew point', w: 'humidity ratio', h: 'enthalpy' }[mode];
+            return {
+                ok: false,
+                error: mode === 'rh'
+                    ? 'That point is past saturation (RH over 100%) — impossible.'
+                    : 'That ' + prop + ' is past saturation — more moisture than air can hold at this dry-bulb and pressure.',
+            };
+        }
         W = Math.min(W, Wsat);
         return buildState(tdb, W, P);
     }

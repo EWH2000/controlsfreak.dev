@@ -1545,3 +1545,70 @@ test('modbus function codes — CRC-16 hits the canonical check value and verifi
 
     expect(errors, 'modbus CRC behavioral should log no errors').toEqual([]);
 });
+
+// ── audit-2026-06 Batch G: tool edge cases ─────────────────────────────
+
+// #27: RH 0 used to print a literal "-Infinity °F" hero value with the
+// other readouts shown as valid and no callout.
+test('dew-point — RH 0 mutes with an honest callout instead of -Infinity', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('/tools/dew-point-calculator.html');
+    await page.fill('#dew-second', '0');
+    await expect(page.locator('#dew-callout')).toBeVisible();
+    await expect(page.locator('#dew-callout')).toContainText('dry air has no dew point');
+    await expect(page.locator('#dew-out-dp')).toHaveText('—');
+    expect(errors, 'dew-point RH 0 should log no errors').toEqual([]);
+});
+
+// #28: the by-temperature out-of-range message used to print the chart
+// bounds in raw canonical °F while the user is in metric.
+test('refrigerant-pt — metric by-temp out-of-range message converts the bounds', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.addInitScript(() => localStorage.setItem('cf_units', 'metric'));
+    await page.goto('/tools/refrigerant-pt.html');
+    await page.selectOption('#rf-refrigerant', 'r22');
+    await page.click('#rf-pt-by-t');
+    await page.fill('#rf-pt-temp', '90');                  // °C, beyond R-22's 73.3 °C max
+    const status = page.locator('#rf-pt-status');
+    await expect(status).toContainText('Out of range');
+    await expect(status).toContainText('°C');
+    await expect(status).not.toContainText('°F');
+    expect(errors, 'refrigerant-pt metric bounds should log no errors').toEqual([]);
+});
+
+// #60a: the unitschange rewrite used to re-convert the rounded display
+// string, permanently mutating typed values (92 → 91.9, 80 → 80.01).
+// #60b: metric-first defaults carried 6-significant-figure conversions
+// (1699.01 m³/h) next to prose that says 1700.
+test('units flip round-trips hand back exactly what was typed (#60a) and metric defaults drop the false precision (#60b)', async ({ page }) => {
+    const errors = watchErrors(page);
+
+    // Round-trip on the two tools the audit measured.
+    await page.goto('/tools/psychrometric-chart.html');
+    await page.fill('#oa-tdb', '92');
+    await page.click('.units-btn[data-units="metric"]');
+    await expect(page.locator('#oa-tdb')).toHaveValue('33.3');
+    await page.click('.units-btn[data-units="us"]');
+    await expect(page.locator('#oa-tdb')).toHaveValue('92');
+
+    await page.goto('/tools/coil-sizing.html');
+    await page.fill('#cs-cap-ent-tdb', '80');
+    await page.click('.units-btn[data-units="metric"]');
+    await expect(page.locator('#cs-cap-ent-tdb')).toHaveValue('26.7');
+    await page.click('.units-btn[data-units="us"]');
+    await expect(page.locator('#cs-cap-ent-tdb')).toHaveValue('80');
+
+    expect(errors, 'round-trip pages should log no errors').toEqual([]);
+});
+
+test('air-mixing — metric first paint shows per-quantity decimals and a converted status line', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.addInitScript(() => localStorage.setItem('cf_units', 'metric'));
+    await page.goto('/tools/air-mixing.html');
+    // Airflow defaults rewrite at 0 decimals (1699, not 1699.01)…
+    await expect(page.locator('#am-flow-s1-w')).toHaveValue('1699');
+    await expect(page.locator('#am-flow-s2-w')).toHaveValue('5097');
+    // …and the status line speaks the display pressure unit, not psia.
+    await expect(page.locator('.status-pill').first()).toContainText('101.3 kPa');
+    expect(errors, 'air-mixing metric paint should log no errors').toEqual([]);
+});

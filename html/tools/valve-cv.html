@@ -237,6 +237,12 @@ nav: tools
             document.getElementById('cv-row-flow').classList.toggle('hidden', solve === 'flow');
             document.getElementById('cv-row-dp').classList.toggle('hidden', solve === 'dp');
 
+            // Set the output label up front so the mute path can't strand
+            // the previous solve-for's label next to the em-dash (e.g.
+            // "Flow —" while solving for ΔP — audit-2026-06 polish).
+            outLabelEl.textContent =
+                solve === 'cv' ? 'Required Cv' : solve === 'flow' ? 'Flow' : 'Pressure drop ΔP';
+
             const sg   = parseFloat(sgEl.value);
             const cv   = parseFloat(cvEl.value);
             const flow = parseFloat(flowEl.value);
