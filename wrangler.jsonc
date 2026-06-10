@@ -22,9 +22,13 @@
     "not_found_handling": "404-page",
     // Asset requests are normally served BEFORE the Worker runs, so the
     // worker.js cache-control logic (codebase-issues #84) never executed
-    // for real files — caught by verifying live headers after the deploy.
-    // These globs force worker-first ONLY for the fingerprintable paths;
-    // HTML and everything else keep the zero-invocation direct path.
-    "run_worker_first": ["/scripts/*", "/styles.css", "/assets/*"]
+    // for real files. `true`, NOT a glob list: the glob form was tried
+    // first and silently changed miss-path semantics — non-matching
+    // paths stopped reaching the Worker at all, 404ing /api/contact and
+    // the legacy redirects (caught live within minutes). With `true`
+    // every request runs the Worker, which serves files via
+    // env.ASSETS.fetch (html_handling + not_found_handling still apply)
+    // and adds the immutable header only on the fingerprinted paths.
+    "run_worker_first": true
   }
 }
