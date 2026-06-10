@@ -3566,6 +3566,14 @@ key also gets a privacy.html line (see the privacy sweep rule from
 audit #52). Optionally honor a `?r=r22`-style query param — that half
 is the friction-file question.
 
+**Resolution (2026-06-10):** owner approved the persistence half;
+URL deep-links stay parked in the friction file. `cf_rf_refrigerant`
+(refrigerant-pt) and `cf_th_type` (thermistor — both the select and
+identify-mode's pick-a-candidate path) ship with the cf_psy_range
+strict-validate-on-read shape; garbage in storage falls back to the
+markup default. privacy.html lists the new keys per the #52 rule.
+Smoke test pins reload-persistence + the garbage fallback.
+
 ### 84. Static assets ship `max-age=0, must-revalidate` and nothing is version-busted
 
 Cross-filed from `audit-2026-06.md` #32 (2026-06-10). Production
