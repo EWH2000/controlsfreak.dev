@@ -274,7 +274,9 @@ const Wiring = (function () {
 
         if (reversed) {
             addFault('reversed', '24v', 'fault',
-                'Power reversed — 24V~ and 24COM are swapped. The controller common rides the hot leg.');
+                'Power reversed — 24V~ and 24COM are swapped. The controller common rides the hot leg. ' +
+                'Alone on its own transformer this can even run — the danger is sharing: any common wire ' +
+                'to a correctly-phased device now bridges the two secondary legs, a dead short.');
             cues.spark.push('24v');
         } else if (ctlrHotOn24v && ctlrComOn24com && !shorted) {
             powered = true;
