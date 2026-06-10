@@ -89,7 +89,7 @@ module.exports = [
             { id: 'c', text: 'Temperature leads pressure by a few seconds.' },
             { id: 'd', text: 'The relationship is the same for every refrigerant.' }
         ],
-        explain: 'At saturation, pressure and temperature are pinned to each other by that refrigerant\'s published P-T table. R-410A at 118 psig (814 kPag) is boiling at 40 °F — not "about 40," at 40. That\'s what makes a suction-pressure reading meaningful: it tells you the saturation temperature inside the evaporator without measuring temperature directly. The lock is per-refrigerant, though — each one has its own table.',
+        explain: 'At saturation, pressure and temperature are pinned to each other by that refrigerant\'s published P-T table. R-410A at 118.4 psig (816 kPag) is boiling at 40 °F (4.4 °C) — not "about 40," at 40. That\'s what makes a suction-pressure reading meaningful: it tells you the saturation temperature inside the evaporator without measuring temperature directly. The lock is per-refrigerant, though — each one has its own table.',
         learnMore: { href: '/education/refrigerant-cycle-basics.html#pt-lock', label: 'Refrigerant Cycle Basics — The pressure-temperature relationship' },
         tags: ['refrigeration', 'pt-relationship']
     },
