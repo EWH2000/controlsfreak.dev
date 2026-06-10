@@ -3471,7 +3471,7 @@ stays single-sourced. Otherwise leave as a documented variant.
 
 ### 81. Light-theme accent tokens fail AA as foreground text across practice, chrome, and status pills
 
-Cross-filed from `audit-2026-06.md` #11 / #12 / #13 (2026-06-10), plus
+Cross-filed from `docs/audits/2026-06-extensive/findings.md` #11 / #12 / #13 (2026-06-10), plus
 the dark-theme `--text-dim` polish item from the same audit. Three
 verified clusters, one root cause — the light accent tokens were tuned
 as border/fill tints, not text inks:
@@ -3500,7 +3500,7 @@ dedicated `--on-amber` ink for filled CTAs), vs splitting text-grade
 tokens (`--accent-text`) so the brighter hues stay for borders/fills;
 one step brighter dark `--text-dim` (or `--text` for TH cells). Visual
 identity is the owner's — awaiting his palette direction before any
-sweep. Full measurements in `audit-2026-06.md` #11–#13.
+sweep. Full measurements in `docs/audits/2026-06-extensive/findings.md` #11–#13.
 
 **Resolution (2026-06-10):** owner picked the one-darker-token-set
 direction. Light values: accent #43881c→#3a7a14 (+bright, dim/glow/
@@ -3518,7 +3518,7 @@ status-pill warn 3.11→4.95, active tab 4.40→5.28, dark TH
 
 ### 82. Palette ranking: title-prefix bonus outranks section relevance ("superheat" puts the calculator third)
 
-Cross-filed from `audit-2026-06.md` #16 (2026-06-10). In `search.js`
+Cross-filed from `docs/audits/2026-06-extensive/findings.md` #16 (2026-06-10). In `search.js`
 `rank()`, `title.startsWith(query)` (+100) dominates and
 `SECTION_ORDER` applies only as an exact-score tie-break, so lesson and
 quiz both outscore the Superheat calculator (125 vs 85) for the query
@@ -3545,7 +3545,7 @@ lesson. Pinned in nav-search.spec.js.
 
 ### 83. No tool state survives a reload — preset-class selects could persist under the existing `cf_` convention
 
-Cross-filed from `audit-2026-06.md` #18 (2026-06-10, verifier:
+Cross-filed from `docs/audits/2026-06-extensive/findings.md` #18 (2026-06-10, verifier:
 low-medium). refrigerant-pt forgets the selected refrigerant on every
 visit while the psychrometric chart already persists its range preset
 (`cf_psy_range`) — so *preset-class enums* (refrigerant, lookup-by
@@ -3576,7 +3576,7 @@ Smoke test pins reload-persistence + the garbage fallback.
 
 ### 84. Static assets ship `max-age=0, must-revalidate` and nothing is version-busted
 
-Cross-filed from `audit-2026-06.md` #32 (2026-06-10). Production
+Cross-filed from `docs/audits/2026-06-extensive/findings.md` #32 (2026-06-10). Production
 serves `/styles.css`, all `/scripts/*`, and `/assets/*` with the
 Workers Assets default `Cache-Control: max-age=0, must-revalidate` —
 repeat visitors pay ~7–8 conditional revalidations per navigation
@@ -3614,7 +3614,7 @@ ordering.
 
 ### 85. First paint is render-blocked by third-party Google Fonts CSS
 
-Cross-filed from `audit-2026-06.md` #33 (2026-06-10). The
+Cross-filed from `docs/audits/2026-06-extensive/findings.md` #33 (2026-06-10). The
 render-blocking fonts.googleapis.com stylesheet delays FCP one-for-one
 when slow (measured 624 ms → 3,352 ms with a 3 s delay), and the fonts
 are the only non-essential third-party origin site-wide (visitor
@@ -3642,7 +3642,7 @@ the files; they're immutable-by-name for the #84 caching rule.
 
 ### 86. `canonical`/`og:url` point through the `.html`→clean 307
 
-Cross-filed from `audit-2026-06.md` (redirected item, 2026-06-10).
+Cross-filed from `docs/audits/2026-06-extensive/findings.md` (redirected item, 2026-06-10).
 The `.html`-extension convention *including* the Worker redirect is
 documented and deliberate (CLAUDE.md); the new sliver is that
 `canonical` and `og:url` carry the `.html` form, so consumers of those
@@ -3665,7 +3665,7 @@ trigger (a Search Console canonical-confusion signal).
 
 ### 87. smoke.spec.js serializes ~154 s of the suite's ~196 test-seconds into one worker
 
-Cross-filed from `audit-2026-06.md` (tests polish, 2026-06-10).
+Cross-filed from `docs/audits/2026-06-extensive/findings.md` (tests polish, 2026-06-10).
 Playwright parallelizes across files by default; the monolithic
 smoke spec caps suite wall time. The audit's empirical isolation probe
 verified contexts are per-test, so `fullyParallel: true` (or splitting
@@ -3696,7 +3696,7 @@ repeats; watch, and root-cause if it returns.
 
 ### 88. Tools nav dropdown sorts by slug while 13 of 14 labels read alphabetically
 
-Cross-filed from `audit-2026-06.md` (power-user polish, 2026-06-10).
+Cross-filed from `docs/audits/2026-06-extensive/findings.md` (power-user polish, 2026-06-10).
 The dropdown order comes from the deliberate-for-diff-stability
 canonical-URL sort in `.eleventy.js` `navSection`; "Pump & Fan
 Affinity Laws" (slug `affinity-laws`) sits first, training an
@@ -3719,7 +3719,7 @@ nav-menu.spec test pins the title order so it can't regress.
 
 ### 89. A fast 5/5 short quiz run silently overwrites a 10/10 full-run best
 
-Cross-filed from `audit-2026-06.md` (student polish, 2026-06-10).
+Cross-filed from `docs/audits/2026-06-extensive/findings.md` (student polish, 2026-06-10).
 `quiz-engine.js` `finish()` compares score ratio then elapsed time
 with no regard for question-count, so a shorter run can replace a
 longer run's best and celebrate "new best".
@@ -3745,7 +3745,7 @@ comparison. Pinned by a smoke test (perfect 5-run vs seeded 10/10).
 
 ### 90. Canvas resize handlers redraw synchronously per resize event
 
-Cross-filed from `audit-2026-06.md` (performance polish, 2026-06-10).
+Cross-filed from `docs/audits/2026-06-extensive/findings.md` (performance polish, 2026-06-10).
 psychrometric-chart, staging-sequencer, and pid-basics (×3 canvases)
 redraw full canvases synchronously in raw `resize` handlers; pid-tuner
 has the rAF-coalesce pattern half-applied.
@@ -3763,7 +3763,7 @@ sweep batches were already full.
 
 ### 91. PID tuner chart y-axis is unconverted and unlabeled in metric
 
-Cross-filed from `audit-2026-06.md` (metric polish, 2026-06-10;
+Cross-filed from `docs/audits/2026-06-extensive/findings.md` (metric polish, 2026-06-10;
 downgraded from medium in audit verification). The LCD-stays-canonical
 decision is documented deliberate, but the chart's y-axis was never
 covered by it: in metric the same physical value renders as `0.78` on
