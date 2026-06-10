@@ -115,11 +115,11 @@ module.exports = [
     {
         type: 'numeric',
         id: 'twin-t-primary-recirc',
-        prompt: 'A boiler pump holds 100 GPM through the boiler. The injection pump is pulling 40 GPM from the primary into the system loop. How many GPM stay in the primary and go straight back to the boiler to be reheated?',
+        prompt: 'A boiler pump holds 100 GPM (6.3 L/s) through the boiler. The injection pump is pulling 40 GPM (2.5 L/s) from the primary into the system loop. How many GPM stay in the primary and go straight back to the boiler to be reheated?',
         answer: 60,
         tolerance: 0,
         unit: 'GPM',
-        explain: '100 GPM circulates the boiler; the injection pump diverts 40 GPM into the system, so 100 − 40 = 60 GPM stays in the primary and returns directly to the boiler. The system loop, meanwhile, moves its own (larger) flow through the loads — most of which never touches the boiler.',
+        explain: '100 GPM circulates the boiler; the injection pump diverts 40 GPM into the system, so 100 − 40 = 60 GPM stays in the primary (in SI: 6.3 − 2.5 = 3.8 L/s) and returns directly to the boiler. The system loop, meanwhile, moves its own (larger) flow through the loads — most of which never touches the boiler.',
         learnMore: { href: '/education/hydronic-loops.html#d3', label: 'Hydronic Loops — Primary-secondary twin-T' },
         tags: ['hydronics', 'primary-secondary']
     },

@@ -409,6 +409,44 @@ test('economizer ratio — dry-bulb and enthalpy tabs compute their cases', asyn
     expect(errors, 'economizer behavioral should log no page / console errors').toEqual([]);
 });
 
+// Regression for audit-2026-06 #53: in metric the default inputs render
+// as 18.3 / 23.9 / 15.6 °C, and everything downstream must reconcile
+// with THOSE numbers — headline and formula tail both 67.5 % (the
+// arithmetic of the displayed operands), never the 66.7 % the unrounded
+// US defaults produce. The formula tail is additionally computed from
+// the displayed operand strings so the taught line closes by
+// construction.
+test('economizer ratio — metric formula line closes arithmetically', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.addInitScript(() => localStorage.setItem('cf_units', 'metric'));
+    await page.goto('/tools/economizer-ratio.html');
+
+    await expect(page.locator('#er-db-pct')).toHaveText('67.5 %');
+    const formula = page.locator('#er-db-formula');
+    await expect(formula).toContainText('(18.3 − 23.9) ÷ (15.6 − 23.9)');
+    await expect(formula).toContainText('= 67.5 %');
+
+    expect(errors, 'metric economizer formula should log no errors').toEqual([]);
+});
+
+// Audit-2026-06 #3: the refrigeration lessons are dual-stated with the
+// data-us/data-metric span convention. Spot-check the superheat lesson's
+// worked example in metric — the converted subtraction must close
+// (10.0 − 4.4 = 5.6, the rounding policy) and match what the P-T tool
+// shows a metric user for the same system.
+test('superheat lesson — metric worked example swaps and closes', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.addInitScript(() => localStorage.setItem('cf_units', 'metric'));
+    await page.goto('/education/superheat-subcooling.html');
+
+    const sh = page.locator('span[data-metric="superheat = 10.0 °C − 4.4 °C = 5.6 °C"]');
+    await expect(sh).toHaveText('superheat = 10.0 °C − 4.4 °C = 5.6 °C');
+    const sc = page.locator('span[data-metric="subcooling = 40.6 °C − 35.0 °C = 5.6 °C"]');
+    await expect(sc).toHaveText('subcooling = 40.6 °C − 35.0 °C = 5.6 °C');
+
+    expect(errors, 'metric superheat lesson should log no errors').toEqual([]);
+});
+
 test('coil sizing — capacity and leaving-state tabs compute their cases', async ({ page }) => {
     const errors = watchErrors(page);
     await page.goto('/tools/coil-sizing.html');

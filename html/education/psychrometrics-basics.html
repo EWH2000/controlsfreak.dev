@@ -113,7 +113,7 @@ keywords: wb wbt db rh dew point grains enthalpy wet bulb humidity
                     <p>The temperature you have to cool the air to before water vapor starts condensing. Pour ice water into a glass: the surface chills near <span data-us="32&nbsp;°F" data-metric="0&nbsp;°C">32&nbsp;°F</span>, the air against it cools to its dew point, water condenses, the glass sweats. Any space surface below dew point sweats — windows, ducts in unconditioned ceiling cavities, cold-floor lobbies, pool glazing. This is the property the natatorium (indoor-pool) spec is really defending, even when it is written as RH.</p>
                 </div>
                 <div class="callout">
-                    <h3>W — Humidity ratio <span>· grains per pound of dry air</span></h3>
+                    <h3>W — Humidity ratio <span>· grains per pound (g/kg) of dry air</span></h3>
                     <p>Mass of water vapor per unit mass of dry air. Stated as gr/lb (US) or g/kg (metric). The mass-balance quantity: when a coil dehumidifies, this is what drops; when a humidifier adds moisture, this is what climbs. Unlike RH it does not depend on temperature, so it is the right number to compare two airstreams at different temperatures or to balance moisture loads across a system.</p>
                 </div>
                 <div class="callout">
@@ -125,8 +125,8 @@ keywords: wb wbt db rh dew point grains enthalpy wet bulb humidity
                     <p>Sensible (DB-driven) plus latent (moisture-driven) heat, rolled together in one number. Btu per pound of dry air (or kJ/kg). The right basis for "how much heat is the coil moving" — multiply Δh by mass flow through the coil and you get total Btu/h, sensible and latent together. An enthalpy economizer compares OA vs RA on this number, not DB alone, because hot-but-dry OA can carry less total heat than cool-but-wet RA.</p>
                 </div>
                 <div class="callout">
-                    <h3>v — Specific volume <span>· ft³ per pound of dry air</span></h3>
-                    <p>The volume one pound of dry air occupies at its current state. The translator between volumetric airflow (CFM — what the fan delivers) and mass flow (lb/h — what every load calc runs on). Warm humid air has a larger specific volume than cool dry air, so the same CFM moves <em>less</em> mass through the coil on a hot day. One reason coil performance drops off in design conditions, and one reason engineers can’t skip this number.</p>
+                    <h3>v — Specific volume <span>· ft³ per pound (m³/kg) of dry air</span></h3>
+                    <p>The volume one pound (kilogram) of dry air occupies at its current state — ft³/lb in US units, m³/kg in metric. The translator between volumetric airflow (CFM or m³/h — what the fan delivers) and mass flow (lb/h or kg/h — what every load calc runs on). Warm humid air has a larger specific volume than cool dry air, so the same CFM moves <em>less</em> mass through the coil on a hot day. One reason coil performance drops off in design conditions, and one reason engineers can’t skip this number.</p>
                 </div>
             </div>
 

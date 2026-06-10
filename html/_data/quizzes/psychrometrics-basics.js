@@ -98,11 +98,11 @@ module.exports = [
     {
         type: 'numeric',
         id: 'psy-mixing-fraction',
-        prompt: 'An AHU mixing box blends 25 % outdoor air at 95 °F dry-bulb with 75 % return air at 75 °F dry-bulb. The mixed point lands on the straight line between the two, mass-weighted. What\'s the mixed dry-bulb, in °F?',
+        prompt: 'An AHU mixing box blends 25 % outdoor air at 95 °F (35.0 °C) dry-bulb with 75 % return air at 75 °F (23.9 °C) dry-bulb. The mixed point lands on the straight line between the two, mass-weighted. What\'s the mixed dry-bulb, in °F?',
         answer: 80,
         tolerance: 0.5,
         unit: '°F',
-        explain: 'Mixed DB = 0.25 × 95 + 0.75 × 75 = 23.75 + 56.25 = 80 °F. The mixed state lands on the straight line between the two source points, at the mass-weighted fraction — 25 % of the way from RA toward OA. The chart tool\'s MA node does exactly this, for every property at once, not just dry-bulb.',
+        explain: 'Mixed DB = 0.25 × 95 + 0.75 × 75 = 23.75 + 56.25 = 80 °F (in SI: 0.25 × 35.0 + 0.75 × 23.9 = 26.7 °C). The mixed state lands on the straight line between the two source points, at the mass-weighted fraction — 25 % of the way from RA toward OA. The chart tool\'s MA node does exactly this, for every property at once, not just dry-bulb.',
         learnMore: { href: '/education/psychrometrics-basics.html#processes', label: 'Psychrometrics Basics — Process Families' },
         tags: ['psychrometrics', 'processes', 'mixing']
     },

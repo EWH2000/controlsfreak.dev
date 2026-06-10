@@ -278,6 +278,18 @@ and scrolls internally (see *Gotchas*).
   PR.** The policy's on-device-storage paragraph reads as exhaustive,
   so it must be: the theme toggle's `cf_theme` shipped five days after
   the list was written and silently drifted (audit-2026-06 #52).
+- **Metric worked-example rounding policy** (audit-2026-06 #53):
+  metric temperatures in worked examples round to **one decimal**, and
+  any stated delta/result is the arithmetic of the **displayed**
+  operands — never the unrounded canonical value — so the taught math
+  closes for a metric reader (12.8 / 15.6 / 2.8 reconciles; 13 / 16 /
+  2.8 doesn't). Where a tool can replicate the example, state the
+  result a metric user actually sees. Lesson prose dual-states with
+  `data-us`/`data-metric` spans; quiz prompts (painted post-load, the
+  walker doesn't reach them) use static parentheticals —
+  `48 °F (8.9 °C)`. Engine-methodology formula lines with IP constants
+  (0.240, CFM·60/v) stay IP-native with a "computes in IP, converts at
+  the display boundary" caveat rather than a converted twin.
 - **Placeholder-content markers:** unverified data in a shipped page
   carries an HTML comment
   `<!-- // user to verify <thing> — placeholder data, refine after review -->`,
