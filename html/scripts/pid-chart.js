@@ -21,9 +21,12 @@
 //   formatPidDelta(canonicalValue, sim, procKey)
 //       Format a delta in canonical units (°F for med/slow, in. w.c. for
 //       fast) as a display-ready string with unit, respecting the global
-//       US/metric toggle. Sign is preserved — pages that show
-//       "PV above SP" pass +sim.ssErr; pages that show "offset below SP"
-//       pass -sim.ssErr.
+//       US/metric toggle. Sign is preserved. The engine's ssErr is
+//       SP − PV (positive = PV settled BELOW SP): the tuner shows that
+//       directly and passes +sim.ssErr; the pid-basics mini-sims show
+//       the offset as PV − SP (negative = below) and pass -sim.ssErr.
+//       (audit-2026-06 polish: these comments used to state the
+//       convention backwards — the displays were always right.)
 //
 // Loaded as a *classic* script (no type="module") for the same reason as
 // pid-engine.js: each page's logic lives in an IIFE-wrapped inline script,

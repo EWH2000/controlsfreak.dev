@@ -282,7 +282,12 @@ nav: simulators
                     <input type="number" id="stg-up" min="50" max="100" step="1" value="85">
                 </div>
                 <div class="field">
-                    <label for="stg-down">Stage down below (% unit load)</label>
+                    <!-- "post-drop": the sequence drops a unit when the load
+                         the REMAINING units would carry stays below this line
+                         — not when the current per-unit readout crosses it.
+                         The math is the documented hunting-proof design; the
+                         label carries the semantics (audit-2026-06 #48). -->
+                    <label for="stg-down">Stage down below (% post-drop unit load)</label>
                     <input type="number" id="stg-down" min="5" max="95" step="1" value="45">
                 </div>
             </div>
@@ -403,7 +408,7 @@ nav: simulators
                     <tr><th class="use">Knob</th><th>What it does</th></tr>
                 </thead>
                 <tbody>
-                    <tr><td class="use">Stage up / down %</td><td>Per-unit load — demand spread across the running units — that adds or drops a unit. The gap between them is the <em>deadband</em>; it must be a real gap or the plant hunts (cycles a unit on/off at the line).</td></tr>
+                    <tr><td class="use">Stage up / down %</td><td>Stage up adds a unit when per-unit load — demand spread across the running units — crosses the line. Stage down judges the <em>after</em> state: it drops a unit only when the load the remaining units would each carry stays below the line (with N running, that's a displayed per-unit load of about down&nbsp;×&nbsp;(N−1)/N). Checking the post-drop number is what stops the plant re-staging straight back up. The gap between the two lines is the <em>deadband</em>; it must be a real gap or the plant hunts (cycles a unit on/off at the line).</td></tr>
                     <tr><td class="use">Stage delay</td><td>Demand must stay across the line this long before the sequence acts, so a brief swing doesn't churn the plant.</td></tr>
                     <tr><td class="use">Minimum stage time</td><td>Locks out the next stage change for a while after one happens — short-cycling is hard on motors, starters, and the equipment.</td></tr>
                     <tr><td class="use">Fixed lead</td><td>Unit 1 always leads. One unit logs all the hours while the rest stay cold — watch the runtime spread run away.</td></tr>

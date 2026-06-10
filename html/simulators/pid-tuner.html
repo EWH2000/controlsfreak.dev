@@ -456,9 +456,9 @@ nav: simulators
             setEl.textContent = sim.settled === null ? '> ' + fmtDur(sim.win) : fmtDur(sim.settled);
             setEl.classList.toggle('warn', sim.settled === null);
 
-            // Positive ssErr = PV above SP (standard PID convention). The mini-sims
-            // on /education/pid-basics.html flip the sign to read as "offset below SP"
-            // — keep that distinction; pass +ssErr here.
+            // The engine's ssErr is SP − PV: positive = PV settled BELOW SP.
+            // The mini-sims on /education/pid-basics.html flip the sign to show
+            // the offset as PV − SP — keep that distinction; pass +ssErr here.
             errEl.textContent = formatPidDelta(sim.ssErr, sim, document.getElementById('pid-proc').value);
             errEl.classList.toggle('warn', Math.abs(sim.ssErr) > 0.05 * sim.step);
 
@@ -596,9 +596,15 @@ nav: simulators
                 elText('pid-loop-detail',
                     'This loop — ' + PID_SPEED[key] + ': τ ≈ ' + fmtDur(proc.tau) +
                     ', dead time ≈ ' + fmtDur(proc.dead) + ', dead ÷ τ ≈ ' + ratio.toFixed(2) + '. ' +
+                    // Buckets match the spoiler note's regimes: under ~0.2
+                    // well-behaved, around 0.5 "be careful", past 1.0
+                    // dead-time dominated. The vhigh preset (0.50) gets the
+                    // be-careful message, not the past-1.0 one — the detail
+                    // line used to contradict the note three paragraphs
+                    // down (audit-2026-06 polish).
                     (ratio < 0.2 ? 'Easy to control — dead time is a small fraction of the lag.'
-                     : ratio < 0.5 ? 'Watch it — dead time is a real fraction of the lag; ease off gain, lean on reset.'
-                     : 'Dead-time dominated — back gain way off and lean on reset, or it rings then runs away.'));
+                     : ratio < 1.0 ? 'Be careful — dead time is a real fraction of the lag; slower gain, longer reset.'
+                     : 'Dead-time dominated — you are fighting transport delay; back gain way off and lean on reset, or it rings then runs away.'));
             }
             phFanAngle = 0;
             phFlowBand = -1;

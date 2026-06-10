@@ -1033,7 +1033,10 @@ procKey)` helper would naturally cover both surfaces).
 landed as `formatPidDelta(canonicalValue, sim, procKey)` in
 `html/scripts/pid-chart.js`, alongside `pidUnit(procKey)` and
 `pidConvertDelta(value, procKey)`. The tuner's `runPidSim` now
-calls it with `+sim.ssErr` (PV-above-SP sign convention preserved),
+calls it with `+sim.ssErr` (the engine's SP − PV convention — positive
+= PV settled below SP — preserved; *corrected 2026-06-10: this line
+originally said "PV-above-SP", the inversion audit-2026-06 traced
+through three code comments*),
 plus an `unitschange` listener that refreshes the readout without
 re-running the simulation (engine is canonical, so a units flip is
 display-only). `pid-basics.html` migrated to the same helper called
