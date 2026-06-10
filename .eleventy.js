@@ -262,8 +262,9 @@ module.exports = function(eleventyConfig) {
 
     // SoftwareApplication JSON-LD for tool pages — declares the per-tool
     // calculator as a free, web-only utility app for Google's
-    // SoftwareApplication rich-result eligibility. Uniform shape across all
-    // 9 tools (applicationCategory + operatingSystem don't vary
+    // SoftwareApplication rich-result eligibility. Uniform shape across
+    // every tool page (another drifted count: "all 9 tools" survived to a
+    // 14-tool site — audit-2026-06; applicationCategory + operatingSystem don't vary
     // meaningfully); per-page data comes from the existing `title`,
     // `description`, and `canonical` frontmatter. `offers` with price=0
     // satisfies Google's "free app" validation (alternative would be
