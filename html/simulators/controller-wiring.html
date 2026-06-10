@@ -937,7 +937,11 @@ nav: simulators
             refresh();
             const cv = document.getElementById('cw-canvas');
             cv.scrollLeft = 0; cv.scrollTop = 0;
-            setStatus(key === 'clear' ? 'Cleared.' : 'Loaded: ' + key + '. Trace it — what reads, what fails?');
+            // Echo the preset button's visible label, not the internal
+            // slug ("Loaded: broken-fuse." — audit-2026-06 polish).
+            const btn = document.querySelector('[data-preset="' + key + '"]');
+            const name = btn ? btn.textContent.trim() : key;
+            setStatus(key === 'clear' ? 'Cleared.' : 'Loaded: ' + name + '. Trace it — what reads, what fails?');
         }
 
         function resetState() {
