@@ -71,9 +71,10 @@ module.exports = function(eleventyConfig) {
     });
 
     // Pages for sitemap.njk: every template that carries a `canonical`
-    // frontmatter (all 20 real pages — the sitemap template itself has
-    // none, so it self-excludes). Sorted by canonical URL for a stable,
-    // diff-friendly output order.
+    // frontmatter — i.e. every real page; the sitemap template itself
+    // has none, so it self-excludes. (Counts drift: a hardcoded "all 20
+    // real pages" here survived to a 64-page site — audit-2026-06.)
+    // Sorted by canonical URL for a stable, diff-friendly output order.
     eleventyConfig.addCollection("sitemapPages", (collectionApi) =>
         collectionApi.getAll()
             .filter((item) => typeof item.data.canonical === "string")

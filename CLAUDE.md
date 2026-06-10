@@ -20,8 +20,9 @@ findings from the recurring content-accuracy audits.
   `.html` under `html/` through Nunjucks and writes to `_site/`. YAML
   frontmatter + shared layout (see *Templating*). Static assets
   (`scripts/`, `styles.css`, `assets/`, `robots.txt`) passthrough;
-  `sitemap.xml` generated (see *Sitemap*). Build ~0.3s for ~45 pages;
-  no JS transpile or bundle step.
+  `sitemap.xml` generated (see *Sitemap*). Build is a few seconds for
+  the whole site (the git-date filters dominate); no JS transpile or
+  bundle step.
 - **Templates under `html/_includes/`:**
   - `layouts/page.njk` — page shell. Composes `head.njk` /
     `schematic-bg.njk` / `nav.njk` / `footer.njk`; hosts the
@@ -258,6 +259,10 @@ and scrolls internally (see *Gotchas*).
   today; if it's still a future page, write the topic as plain prose
   so a visitor doesn't click into a 404. Either way, the friction file
   tracks the topic as `[future: <page>]`.
+- **New `cf_*` localStorage keys update `privacy.html` in the same
+  PR.** The policy's on-device-storage paragraph reads as exhaustive,
+  so it must be: the theme toggle's `cf_theme` shipped five days after
+  the list was written and silently drifted (audit-2026-06 #52).
 - **Placeholder-content markers:** unverified data in a shipped page
   carries an HTML comment
   `<!-- // user to verify <thing> — placeholder data, refine after review -->`,
@@ -365,9 +370,10 @@ and scrolls internally (see *Gotchas*).
   `styles.css`, `scripts/`, `assets/`, `sitemap.njk`,
   `search-index.njk`, `robots.txt`, `html.11tydata.js`.
 - `src/worker.js` — the Cloudflare Worker.
-- `tests/` — Playwright specs (`smoke.spec.js`, `contact.spec.js`,
-  `psychro-engine.spec.js`, `nav-search.spec.js`, `nav-menu.spec.js`,
-  `home-hero.spec.js`).
+- `tests/` — Playwright specs: `smoke.spec.js` plus per-surface
+  behavioral and engine-direct specs. The directory is the source of
+  truth — enumerating them here drifted twice (audit-2026-06 docs
+  sweep), so don't.
 - `_site/` — build output (gitignored).
 - `docs/` — archived audit artifacts and one-shot prompts.
   `docs/audits/<topic>/` collects the triage / decisions /
@@ -575,10 +581,15 @@ section headers).
 4. Add the page's URL to the `PAGES` array in `tests/smoke.spec.js`
    (the sitemap is automatic — see *Sitemap* — but the drift test
    fails until `PAGES` is updated).
-5. Consider bumping the home-page hero's `Latest: <name>` badge
+5. Retire the page's `[future: …]` markers: grep
+   `site-ideas-and-friction.md` for the new page's filename and
+   annotate each hit `*(shipped YYYY-MM-DD)*` — nine markers went
+   stale between audits because shipping skipped this step
+   (audit-2026-06 docs sweep).
+6. Consider bumping the home-page hero's `Latest: <name>` badge
    to point at the new tool — `html/index.html`, the last entry
    in `.hero-badges`. Editorial pick; skip on small revisions.
-6. Bump `package.json.version` when shipping something notable; the
+7. Bump `package.json.version` when shipping something notable; the
    footer reads it via `html/_data/site.js`. A new tool is a minor
    bump (`1.X.0`); a bug fix is a patch bump (`1.X.Y`).
 
@@ -772,9 +783,12 @@ re-submit); add `--dry-run` to print the URL list without POSTing.
   a `webServer` block that builds and serves `_site/`, so a fresh
   checkout needs no second terminal; a running `npm run dev` on
   port 8000 is reused. Specs in `tests/`: `smoke.spec.js` (every
-  page: 200, title, nav, no console errors, behavior spot-checks),
-  `contact.spec.js`, `psychro-engine.spec.js` (pure-Node engine
-  math). Don't restructure scaffolding without being asked.
+  page: 200, title, nav, no console errors, behavior spot-checks)
+  plus per-surface specs — engine-direct ones run pure-Node inside
+  the Playwright workers (the `psychro-engine.spec.js` vm pattern),
+  the rest drive the built site. The directory is the source of
+  truth for the list. Don't restructure scaffolding without being
+  asked.
 - **CI:** `.github/workflows/test.yml` runs the same `npm test` on
   every PR to `main`. Deploy stays with Cloudflare Workers Build —
   CI gates the PR, it doesn't deploy.

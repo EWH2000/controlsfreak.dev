@@ -307,8 +307,8 @@ In scope (sections shipped):
 Out of scope (forward links, not content):
 - Pump staging / lead-lag rotation / end-of-curve protection /
   bumpless transitions — [future: sequencing.html]
-- Hydronic balancing — [future: balancing.html] (reachable from
-  load-piping)
+- Hydronic balancing — [future: balancing.html] *(shipped 2026-05-16)*
+  (reachable from load-piping)
 - Open-loop systems with static head (cooling towers, sumps) —
   brief mention only; full treatment belongs to a different page
 - Specific pump-controller manufacturer parameter trees — keeps the
@@ -408,7 +408,7 @@ drawing.
   the rest of the broader sequence layer — setpoint reset against
   outside-air temperature, mode transitions, morning warm-up —
   stays plain-prose forward-link for future pages.
-- `[future: balancing.html]` — not directly forward-linked from
+- `[future: balancing.html]` *(shipped 2026-05-16)* — not directly forward-linked from
   pump-control (the load-piping page already carries the link),
   but worth noting that pump-control's "DP setpoint reset assumes
   uniform demand" caveat would tie back to the balancing page if
@@ -549,7 +549,7 @@ Out of scope (forward links, not content):
 - The keypad-and-parameter-tree story — own tool, see Mock VFD
   interface entry below
 - Pump-control / DP-setpoint reset / pump curves — [future:
-  pump-control.html]
+  pump-control.html] *(shipped 2026-05-15)*
 - Specific manufacturer parameter numbers / keypad menu trees — the
   site's angle is the cross-manufacturer pattern; the friction file
   resists this as scope creep
@@ -625,10 +625,9 @@ just the next page with diagrams. Recorded so the rule reads
 correctly when someone next reaches for it.
 
 **Forward-link debts this page incurred:**
-- `[future: pump-control.html]` — referenced in the closing tie-
-  back as the natural follow-up for "how the BMS decides what speed
-  reference to send." The pump-control page, when it ships, should
-  tie back to VFDs for the parameter-surface context.
+- `[future: pump-control.html]` *(shipped 2026-05-15 — and it does
+  tie back)* — referenced in the closing tie-back as the natural
+  follow-up for "how the BMS decides what speed reference to send."
 - `/simulators/vfd-mock.html` — explicit CTA at the end of the page,
   paid off by the Mock VFD interface entry below.
 
@@ -1084,7 +1083,8 @@ Three review refinements after first ship:
   left so a wire never doubles back across its own block.
 
 **Phase 2 — paired Education explainer is still pending.** Built as a clean
-hand-off: `[future: education/controller-wiring.html]` — lesson layout, one
+hand-off: `[future: education/controller-wiring.html]` *(shipped
+2026-06-07)* — lesson layout, one
 question ("how a field point lands on a DDC controller — power, inputs,
 outputs"), cross-linked to the sim via `relatedLinks` both ways (no JSON-LD
 key; that's quiz↔lesson only). Networking is the adjacent topic → forward-link
@@ -2147,9 +2147,9 @@ callout — which valve type the secondary loop is built around
 determines whether secondary flow varies or stays constant.
 
 Out of scope (forward links, not content):
-- VFD pumping — [future: vfds.html]
+- VFD pumping — [future: vfds.html] *(shipped 2026-05-14)*
 - Hydronic balancing, circuit setters, PICVs — [future:
-  balancing.html]
+  balancing.html] *(shipped 2026-05-16)*
 - Heat-pump loops, geothermal loops, condenser water/cooling
   towers — these are different *systems*, each its own future
   page
@@ -2168,7 +2168,7 @@ placeholder.
 friction-file entry had originally floated balancing as a
 possible in-page section if it stayed tight. During drafting it
 was pulled out and replaced with a one-sentence forward link to
-`[future: balancing.html]` instead. Reason: the page's one
+`[future: balancing.html]` *(shipped 2026-05-16)* instead. Reason: the page's one
 question is about *valve choice at the connection point*;
 balancing is a different function (making each load see its
 design flow) on the same system, and a 3-paragraph treatment
@@ -2180,13 +2180,13 @@ preserves the option without committing to the treatment.
 
 **Forward-link debts this page incurred** (so the next pages
 know what they're inheriting):
-- `[future: vfds.html]` — referenced in the two-way section as
-  the natural pairing for variable-flow systems. The VFDs page,
-  when it ships, should tie back to load piping with the
+- `[future: vfds.html]` *(shipped 2026-05-14)* — referenced in the
+  two-way section as the natural pairing for variable-flow systems.
+  The VFDs page should tie back to load piping with the
   inverse framing ("here's the pump side of the variable-flow
   picture we set up there").
-- `[future: balancing.html]` — referenced once in the three-way
-  section, as a closing aside on why "constant flow" only means
+- `[future: balancing.html]` *(shipped 2026-05-16)* — referenced once
+  in the three-way section, as a closing aside on why "constant flow" only means
   each load sees its design flow if the loop is balanced. The
   balancing page should tie back to load piping for the
   two-way/three-way context, since the balancing strategy
@@ -2675,7 +2675,7 @@ Out of scope (forward links):
   to the Modbus Register Viewer tool as the practitioner cheat
   sheet).
 - BACnet's object-property model as the *anti*-Modbus design choice
-  — `[future: bacnet-basics.html]`, contrasted only by a single
+  — `[future: bacnet-basics.html]` *(shipped 2026-05-23)*, contrasted only by a single
   parenthetical ("A BACnet object knows its own type, units, scale,
   and name; a Modbus register is just sixteen bits") rather than a
   scoped section.
