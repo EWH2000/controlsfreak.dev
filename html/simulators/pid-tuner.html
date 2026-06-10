@@ -500,7 +500,12 @@ keywords: gain reset rate kc ti td overshoot tuning loop deadtime
         }
 
         function drawTunerChart() {
-            if (pidLast) drawPidChart(document.getElementById('pid-canvas'), pidLast, { variant: 'full' });
+            // procKey lets the chart convert its y-axis tick labels + unit
+            // tag when the toggle is metric (codebase-issues #91).
+            if (pidLast) drawPidChart(document.getElementById('pid-canvas'), pidLast, {
+                variant: 'full',
+                procKey: document.getElementById('pid-proc').value,
+            });
         }
 
         // ── Playhead replay ───────────────────────────────────────────
@@ -782,6 +787,7 @@ keywords: gain reset rate kc ti td overshoot tuning loop deadtime
             if (!pidLast) return;
             const errEl = document.getElementById('pid-err');
             errEl.textContent = formatPidDelta(pidLast.ssErr, pidLast, document.getElementById('pid-proc').value);
+            drawTunerChart();      // y-axis labels are unit-aware now (#91)
         });
     })();
 </script>

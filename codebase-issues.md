@@ -3595,6 +3595,14 @@ an unversioned reference can never get stuck stale, it just keeps the
 revalidate default. The version bump is now load-bearing for busting
 (owner accepted, no CI guard; documented in CLAUDE.md). Worker tests
 pin the three header shapes; live headers verified post-deploy.
+*Deploy addendum:* the headers only took effect after TWO wrangler
+follow-ups — assets are served before the Worker by default, so
+`run_worker_first` was required; and the glob-list form of it silently
+stopped non-matching paths (including `/api/contact` and the legacy
+redirects) from reaching the Worker at all — caught live within
+minutes and fixed with `run_worker_first: true`. If those globs ever
+look tempting again: they change miss-path semantics, not just
+ordering.
 
 ### 85. First paint is render-blocked by third-party Google Fonts CSS
 
@@ -3764,6 +3772,13 @@ so the canonical-vs-converted line lands in one place.
 
 **Recommended action.** Convert/label the y-axis via `Units.display`
 once the owner settles the hero/canonical-surfaces question.
+
+**Resolution (2026-06-10):** owner settled it maximally — the hero
+converts everything (including its device LCDs), and the chart axis
+follows: drawPidChart takes opts.procKey, converts tick labels via
+Units.display (temp or staticPressure) and draws a unit tag inside
+the plot's top-left (mirroring the SP tag); the tuner redraws on
+unitschange. Verified by metric screenshots of both axis flavors.
 
 ### Deferred / Won't fix (with revisit trigger)
 

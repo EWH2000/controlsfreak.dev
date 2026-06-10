@@ -63,7 +63,7 @@ layers, only the last is this entry:
    open design question: which tools, which params, and does the URL
    win over localStorage when both exist?
 
-### Home hero units — which surfaces convert? *(from the 2026-06 audit)*
+### Home hero units — which surfaces convert? *(decided 2026-06-10: everything converts, LCDs included)*
 
 Cross-filed from `audit-2026-06.md` #5 (2026-06-10). The hero's
 "LIVE AHU-1 supply-air loop" is hard-coded °F everywhere (tree,

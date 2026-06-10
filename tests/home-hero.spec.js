@@ -64,3 +64,23 @@ test('Tools-by-category card deep-links into the pre-filtered Tools page', async
     await expect(page.locator('.nav-card:not([hidden])')).toHaveCount(6);
     expect(errors, 'category deep-link should log no errors').toEqual([]);
 });
+
+// audit-2026-06 #5 (owner decision): the WHOLE hero follows the units
+// toggle — tree, readout, slider output, aria-valuetext, packet, and
+// the device LCDs (this hero deliberately opts out of the pid-tuner's
+// LCD-stays-canonical convention).
+test('hero converts every surface for a metric visitor', async ({ page }) => {
+    await page.addInitScript(() => localStorage.setItem('cf_units', 'metric'));
+    await page.goto('/');
+    for (const id of ['hero-tree-sat', 'hero-tree-sp', 'hero-sp-out', 'hero-readout', 'hero-packet-val']) {
+        await expect(page.locator('#' + id)).toContainText('°C');
+        await expect(page.locator('#' + id)).not.toContainText('°F');
+    }
+    await expect(page.locator('#hero-lcd-sat')).toContainText('°C');
+    await expect(page.locator('#hero-sp')).toHaveAttribute('aria-valuetext', /°C/);
+
+    // Mid-visit flip back to US repaints everything.
+    await page.click('.units-btn[data-units="us"]');
+    await expect(page.locator('#hero-tree-sat')).toContainText('°F');
+    await expect(page.locator('#hero-sp')).toHaveAttribute('aria-valuetext', /°F/);
+});
