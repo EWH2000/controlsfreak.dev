@@ -33,6 +33,62 @@
  * These stay CONSTANT across themes — a device is a device either way,
  * so the light override deliberately does NOT touch them (nor --rail).
  * ──────────────────────────────────────────────────────────────────── */
+/* ── SELF-HOSTED FONTS ──
+   Latin woff2 subsets, served from our origin (audit-2026-06 #33,
+   owner decision 2026-06-10): the render-blocking Google Fonts CSS
+   made FCP hostage to fonts.googleapis.com (measured 624ms → 3.4s
+   with a slow fonts origin), and it was the only non-essential
+   third-party origin on the site. Both families are OFL-licensed
+   (see assets/fonts/LICENSE.txt). Glyph coverage is identical to what
+   Google served this site before: no greek/math subset existed, so
+   Δ / ≈ / → always came from system fallbacks and still do. The
+   unicode-range is Google's latin subset range, kept so fallback
+   behavior matches exactly. Overpass ships as one variable file
+   covering weights 300–700; IBM Plex Mono as four static instances.
+   FONT FILES ARE IMMUTABLE BY NAME — if a font is ever re-subset,
+   rename the file (the Worker serves /assets/fonts/* with
+   max-age=31536000, immutable). */
+@font-face {
+    font-family: 'Overpass';
+    font-style: normal;
+    font-weight: 300 700;
+    font-display: swap;
+    src: url(/assets/fonts/overpass-latin-var.woff2) format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+    font-family: 'IBM Plex Mono';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url(/assets/fonts/ibm-plex-mono-latin-400.woff2) format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+    font-family: 'IBM Plex Mono';
+    font-style: italic;
+    font-weight: 400;
+    font-display: swap;
+    src: url(/assets/fonts/ibm-plex-mono-latin-400-italic.woff2) format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+    font-family: 'IBM Plex Mono';
+    font-style: normal;
+    font-weight: 500;
+    font-display: swap;
+    src: url(/assets/fonts/ibm-plex-mono-latin-500.woff2) format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+    font-family: 'IBM Plex Mono';
+    font-style: normal;
+    font-weight: 600;
+    font-display: swap;
+    src: url(/assets/fonts/ibm-plex-mono-latin-600.woff2) format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
 :root {
     color-scheme: dark;
 

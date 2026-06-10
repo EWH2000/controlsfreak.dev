@@ -3593,6 +3593,15 @@ on contact.html becomes the sole external origin. Decide whether to
 drop the Overpass 300 weight — it's used by exactly two rules (home
 hero + `.landing-intro`), both restyleable.
 
+**Resolution (2026-06-10):** owner approved self-hosting with the 300
+weight KEPT. Five latin woff2 files (~101 KB) under /assets/fonts/ —
+Overpass ships as one variable file covering 300–700, IBM Plex Mono
+as four static instances; Google's latin unicode-range kept so glyph
+fallback (Δ/≈/→ were never in any served subset) is pixel-identical.
+The Google links left head.njk; the privacy policy's Google Fonts
+section is gone per the owner's instruction. LICENSE.txt accompanies
+the files; they're immutable-by-name for the #84 caching rule.
+
 ### 86. `canonical`/`og:url` point through the `.html`→clean 307
 
 Cross-filed from `audit-2026-06.md` (redirected item, 2026-06-10).

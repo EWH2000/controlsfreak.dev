@@ -1,0 +1,18 @@
+Font licensing for the files in this directory
+==============================================
+
+Both families are licensed under the SIL Open Font License 1.1.
+Full license text: https://openfontlicense.org/open-font-license-official-text/
+
+- IBM Plex Mono (ibm-plex-mono-latin-*.woff2)
+  Copyright IBM Corp. 2017. "Plex" is a trademark of IBM.
+  Source: https://github.com/IBM/plex
+
+- Overpass (overpass-latin-var.woff2, variable weight 300-700)
+  Copyright 2016 The Overpass Project Authors (Red Hat / Delve Fonts).
+  Source: https://github.com/RedHatOfficial/Overpass
+
+Files are the latin woff2 subsets as served by Google Fonts
+(fonts.gstatic.com) on 2026-06-10, renamed for stable self-hosting.
+If a file is ever re-subset or updated, RENAME it — the Cloudflare
+Worker serves /assets/fonts/* as immutable.
