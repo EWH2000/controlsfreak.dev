@@ -319,9 +319,11 @@ keywords: gain reset rate proportional integral derivative offset loop error
         }
 
         // ── Key-metric callouts under each chart ──
-        // The mini-sims express the steady-state error as an *offset* (how far
-        // below SP the PV settled), so flip the sign: -sim.ssErr. The full tuner
-        // on /simulators/pid-tuner.html uses the standard +sim.ssErr (PV above SP).
+        // The engine's ssErr is SP − PV (positive = PV settled BELOW SP).
+        // The mini-sims express the metric as an offset relative to SP
+        // (PV − SP, reading negative when the PV hangs below), so flip the
+        // sign: -sim.ssErr. The full tuner on /simulators/pid-tuner.html
+        // shows SP − PV directly with +sim.ssErr.
         function showMiniMetrics(n, sim, procKey) {
             const set = (id, t) => { const el = document.getElementById(id); if (el) el.textContent = t; };
             const fmtPct = v => v < 0.05 ? 'none' : v.toFixed(1) + ' %';

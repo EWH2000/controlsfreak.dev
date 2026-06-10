@@ -109,7 +109,7 @@ keywords: dewpoint wet bulb wbt RH humidity grains enthalpy condensation coil sw
             space sensor or wet-bulb off a sling psychrometer — with wet-bulb, grains, and
             enthalpy alongside. The <em>Coil Check</em> field turns that dew point into the
             answer you actually want on an over-humidity call: drop in the supply / leaving
-            dry-bulb and it says whether the coil is pulling the air below saturation
+            dry-bulb and it says whether the coil is pulling the air below the entering dew point
             (dehumidifying) or just cooling it sensibly while the space rides up.
         </p>
 
@@ -290,7 +290,7 @@ keywords: dewpoint wet bulb wbt RH humidity grains enthalpy condensation coil sw
             v.hidden = false;
             if (marginF > 0.5) {
                 v.className = 'dew-verdict ok';
-                v.textContent = '✓ Leaving ' + margin + ' below dew point — the coil is pulling air past saturation, so it’s wringing out moisture. (Any surface this cold would sweat.)';
+                v.textContent = '✓ Leaving ' + margin + ' below dew point — the coil is pulling the air below the entering dew point, so it’s wringing out moisture. (Any surface this cold would sweat.)';
             } else if (marginF < -0.5) {
                 v.className = 'dew-verdict warn';
                 v.textContent = '⚠ Leaving ' + margin + ' above dew point — the air never reaches saturation, so you’re getting little to no latent removal. Space humidity will ride up.';

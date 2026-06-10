@@ -347,7 +347,10 @@ keywords: cfm gpm delta t mbh btu tons sensible latent shr capacity
         const dispW     = wLbLb    => U.display.humidityRatio(wLbLb * 7000).toFixed(1);
         const dispH     = btuPerLb => U.display.enthalpy(btuPerLb).toFixed(1);
         const dispCap   = mbh      => U.display.heatCapacity(mbh).toFixed(1);
-        const dispV     = ft3PerLb => U.display.specificVolume(ft3PerLb).toFixed(2);
+        // 3 decimals in metric: m³/kg values are ~0.8x, so 2 decimals made
+        // the printed worked-formula reduce 0.5% off the shown answer
+        // (3398.02 ÷ 0.86 = 3951 ≠ 3930 — audit-2026-06 polish).
+        const dispV     = ft3PerLb => U.display.specificVolume(ft3PerLb).toFixed(U.current() === 'us' ? 2 : 3);
         const tU        = ()       => U.suffix.temp();
         const vU        = ()       => U.suffix.specificVolume();
         const wU        = ()       => U.suffix.humidityRatio();
