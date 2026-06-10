@@ -3574,6 +3574,14 @@ it changes production delivery behavior.
 already exists in `html/_data/site.js`). HTML keeps the revalidate
 default. ~15 lines.
 
+**Resolution (2026-06-10):** shipped with one safety refinement over
+the sketch: immutable applies only when the request actually carries
+`?v=` (plus always for /assets/fonts/, which are immutable by name) —
+an unversioned reference can never get stuck stale, it just keeps the
+revalidate default. The version bump is now load-bearing for busting
+(owner accepted, no CI guard; documented in CLAUDE.md). Worker tests
+pin the three header shapes; live headers verified post-deploy.
+
 ### 85. First paint is render-blocked by third-party Google Fonts CSS
 
 Cross-filed from `audit-2026-06.md` #33 (2026-06-10). The

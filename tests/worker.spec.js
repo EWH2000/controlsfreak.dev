@@ -113,3 +113,21 @@ test('absent Content-Length is rejected (MAX_BODY hardening)', async () => {
         }), stubEnv());
     expect(res.status).toBe(411);
 });
+
+// codebase-issues #84: long-lived asset caching. Fonts are immutable
+// by name; everything else is immutable only when the request carries
+// the ?v= the templates append — unversioned stays on the safe
+// revalidate default, and HTML is never touched.
+test('asset cache-control: fonts always, ?v= opt-in, HTML never', async () => {
+    const worker = await loadWorker();
+    const get = async (path) => {
+        const res = await worker.fetch(new Request(ORIGIN + path), stubEnv());
+        return res.headers.get('cache-control');
+    };
+    expect(await get('/assets/fonts/overpass-latin-var.woff2')).toContain('immutable');
+    expect(await get('/scripts/units.js?v=3.11.1')).toContain('immutable');
+    expect(await get('/styles.css?v=3.11.1')).toContain('immutable');
+    expect(await get('/scripts/units.js')).toBeNull();         // stub sets none; worker must not add
+    expect(await get('/tools/signal-scaling.html?v=1')).toBeNull(); // html never fingerprinted
+    expect(await get('/')).toBeNull();
+});

@@ -63,23 +63,23 @@
    aria-pressed never re-synced (audit-2026-06 #2). Pages must NOT
    load units.js themselves anymore — a duplicate <script src> would
    re-run the IIFE and double-wire the toggle listeners. #}
-<script src="/scripts/theme.js"></script>
-<script src="/scripts/units.js"></script>
+<script src="/scripts/theme.js?v={{ site.version }}"></script>
+<script src="/scripts/units.js?v={{ site.version }}"></script>
 {# search.js is loaded site-wide so the command palette (/ or Ctrl/⌘-K, or
    the .nav-search-btn) works on every page. It reveals the #palette dialog
    above and fetches /search-index.json on first open. #}
-<script src="/scripts/search.js"></script>
+<script src="/scripts/search.js?v={{ site.version }}"></script>
 {# nav-menu.js is loaded site-wide so the Tools/Simulators/Education
    dropdowns work on every page (disclosure buttons, keyboard + touch). #}
-<script src="/scripts/nav-menu.js"></script>
-<script src="/scripts/flow-engine.js"></script>
-<script src="/scripts/schematic-bg.js"></script>
+<script src="/scripts/nav-menu.js?v={{ site.version }}"></script>
+<script src="/scripts/flow-engine.js?v={{ site.version }}"></script>
+<script src="/scripts/schematic-bg.js?v={{ site.version }}"></script>
 {# fullscreen-toggle.js is loaded site-wide so any future tool can opt
    into fullscreen with a single button. Pages without a
    [data-fullscreen-target] button cost nothing. Loaded before
    {% block scripts %} so its keydown listener registers before any
    page-level keydown handler. #}
-<script src="/scripts/fullscreen-toggle.js"></script>
+<script src="/scripts/fullscreen-toggle.js?v={{ site.version }}"></script>
 {% block scripts %}{% endblock %}
 </body>
 </html>
