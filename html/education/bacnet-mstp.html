@@ -1,0 +1,262 @@
+---
+title: BACnet MS/TP — controlsfreak.dev
+description: Why devices fall off an MS/TP trunk — the token ring and Max_Master, MAC addressing against device instance, and the two-wire layer underneath.
+canonical: https://controlsfreak.dev/education/bacnet-mstp.html
+nav: education
+keywords: mstp ms/tp token ring max master max info frames baud termination eol biasing polarity rs-485 trunk
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Education · BACnet MS/TP</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">BACnet MS/TP <span class="tool-tag">BACnet</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                The complaint is always some flavor of the same thing: points going stale, controllers flickering offline and back, a trunk that worked all morning and falls apart at two in the afternoon — or the new device that&rsquo;s wired, addressed, powered, and simply never shows up.
+                <a href="/education/bacnet-basics.html">BACnet Basics</a> and
+                <a href="/education/bacnet-networking.html">BACnet Networking</a> both deferred this story, and this page pays it: <strong>why devices fall off an MS/TP trunk — and what the token ring, the addressing, and the two wires each need to stay healthy.</strong>
+                Those are the three layers, and each one fails differently. Knowing which layer you&rsquo;re looking at is most of the diagnosis.
+            </p>
+
+            <h2 class="subhead">The token ring — whose turn it is to talk</h2>
+
+            <p>
+                MS/TP runs on an RS-485 pair, and RS-485 has no referee: if two devices transmit at once, both messages die. BACnet&rsquo;s answer is a <strong>token</strong>. The masters on the trunk organize themselves into a logical ring by MAC address, and only the device holding the token may initiate a message. When it&rsquo;s done — or after it has sent its allowance — it passes the token to the next master up the ring, the highest address wraps back to the lowest, and around it goes, hundreds of times a minute on a healthy trunk.
+            </p>
+
+            <p>
+                Two device properties tune the ring, and both are routine commissioning entries. <code>Max_Info_Frames</code> is the talking allowance — how many messages a device may send per token visit. Field controllers are fine at 1; the supervisor or router that funnels the whole trunk&rsquo;s traffic wants more (10–20 is common), or it spends most of the day waiting for its next turn. <code>Max_Master</code> is the search ceiling: a token holder periodically sends a <em>Poll-For-Master</em> to addresses between itself and the next known master, inviting newcomers into the ring — but it never polls above its own <code>Max_Master</code>.
+            </p>
+
+            <p>
+                That ceiling is the classic silent failure. Set the trunk&rsquo;s devices to <code>Max_Master = 40</code> — a sensible tightening on a 25-device trunk — and the controller someone later addresses as MAC&nbsp;45 is wired correctly, configured correctly, and <strong>never polled</strong>. It can&rsquo;t be invited into a ring that stops searching below its address. Nothing is broken, so nothing fixes it: not a power cycle, not a new transceiver, not reterminating the same two wires a third time.
+            </p>
+
+            <svg class="bac-svg wide" viewBox="0 0 760 250" role="img"
+                 aria-labelledby="bm-token-title bm-token-desc">
+                <title id="bm-token-title">The MS/TP token ring, capped by Max_Master</title>
+                <desc id="bm-token-desc">Five controllers sit on one MS/TP trunk with MAC addresses 1, 4, 9, and 23 passing a token in a loop — arrows hop from each to the next and wrap from 23 back to 1. A dashed vertical boundary labeled Max_Master = 40 stands between them and a fifth, grayed-out controller at MAC 45, annotated "never polled". Devices above the Max_Master ceiling are never invited into the ring.</desc>
+
+                <!-- Trunk -->
+                <line x1="40" y1="196" x2="720" y2="196" stroke="var(--text-dim)" stroke-width="2"/>
+                <text x="40" y="216" font-family="var(--mono)" font-size="10" fill="var(--text-dim)">MS/TP trunk (RS-485 pair)</text>
+
+                <g font-family="var(--mono)" font-size="12" text-anchor="middle">
+                    <!-- Devices in the ring -->
+                    <rect id="bm-token-d1" x="58"  y="118" width="96" height="50" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.6"/>
+                    <text x="106" y="148" fill="var(--text-bright)">MAC 1</text>
+                    <line x1="106" y1="168" x2="106" y2="196" stroke="var(--text-dim)" stroke-width="1.4"/>
+
+                    <rect id="bm-token-d4" x="206" y="118" width="96" height="50" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.6"/>
+                    <text x="254" y="148" fill="var(--text-bright)">MAC 4</text>
+                    <line x1="254" y1="168" x2="254" y2="196" stroke="var(--text-dim)" stroke-width="1.4"/>
+
+                    <rect id="bm-token-d9" x="354" y="118" width="96" height="50" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.6"/>
+                    <text x="402" y="148" fill="var(--text-bright)">MAC 9</text>
+                    <line x1="402" y1="168" x2="402" y2="196" stroke="var(--text-dim)" stroke-width="1.4"/>
+
+                    <rect id="bm-token-d23" x="502" y="118" width="96" height="50" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.6"/>
+                    <text x="550" y="148" fill="var(--text-bright)">MAC 23</text>
+                    <line x1="550" y1="168" x2="550" y2="196" stroke="var(--text-dim)" stroke-width="1.4"/>
+
+                    <!-- Outside the ceiling -->
+                    <g id="bm-token-d45" opacity="0.45">
+                        <rect x="640" y="118" width="96" height="50" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.6"/>
+                        <text x="688" y="148" fill="var(--text-bright)">MAC 45</text>
+                        <line x1="688" y1="168" x2="688" y2="196" stroke="var(--text-dim)" stroke-width="1.4"/>
+                    </g>
+                    <text x="688" y="240" font-size="10.5" font-style="italic" fill="var(--text-dim)">never polled</text>
+                </g>
+
+                <!-- Token hops -->
+                <g id="bm-token-hops" fill="none" stroke="var(--accent)" stroke-width="1.8">
+                    <path d="M 116 112 Q 180 70 244 112" marker-end="url(#bm-token-arrow)"/>
+                    <path d="M 264 112 Q 328 70 392 112" marker-end="url(#bm-token-arrow)"/>
+                    <path d="M 412 112 Q 476 70 540 112" marker-end="url(#bm-token-arrow)"/>
+                    <!-- wrap: highest known master back to lowest -->
+                    <path d="M 540 100 Q 328 18 116 100" stroke-dasharray="5 4" marker-end="url(#bm-token-arrow)"/>
+                </g>
+                <text x="328" y="34" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--accent)">token wraps back to the lowest MAC</text>
+                <defs>
+                    <marker id="bm-token-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+                        <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--accent)"/>
+                    </marker>
+                </defs>
+
+                <!-- The ceiling -->
+                <line x1="622" y1="60" x2="622" y2="230" stroke="var(--red)" stroke-width="1.6" stroke-dasharray="6 5"/>
+                <text x="622" y="50" text-anchor="middle" font-family="var(--mono)" font-size="11" font-weight="600" fill="var(--red)">Max_Master = 40</text>
+            </svg>
+
+            <p>
+                The opposite mistake costs speed instead of silence. Leave every device at the factory <code>Max_Master = 127</code> on an 8-device trunk, and the token holder dutifully Poll-For-Masters its way through a hundred-odd empty addresses, over and over, forever. The trunk works — it&rsquo;s just spending a chunk of every rotation talking to nobody. The healthy pattern: compact MACs starting low, and <code>Max_Master</code> set the same on every device, a little above the highest MAC in use so there&rsquo;s room to add a controller without touching the whole trunk.
+            </p>
+
+            <h2 class="subhead">Two addresses, and why the wrong one gets blamed</h2>
+
+            <p>
+                <a href="/education/bacnet-networking.html">BACnet Networking</a> laid out the three-address picture; on an MS/TP trunk the two that matter are easy to conflate and completely independent. The <strong>MAC address</strong> (0–127 for masters) is the one-byte station address on this physical trunk — the token ring runs on it, it&rsquo;s set with DIP switches or a vendor-tool field, and it only has to be unique <em>on this segment</em>. The <strong>device instance</strong> (up to 4,194,302) is the application-layer identity the BMS programs against, and it must be unique across the whole site. MAC&nbsp;5 can be device&nbsp;100503 — the pairing is arbitrary, and assuming one from the other is how the wrong controller gets reprogrammed.
+            </p>
+
+            <p>
+                A <strong>duplicate MAC</strong> is the addressing failure with the strangest symptom. Two devices both believe it&rsquo;s their turn when the token reaches the shared address; both transmit; the frames collide and corrupt. Depending on timing, one device wins for a while and the other looks dead, then they trade — so the front end shows two controllers <em>taking turns</em> flickering offline, often miles apart in the device list because their instances are nothing alike. Trunk-wide retries and CRC errors climb too: a duplicate MAC degrades everyone, not just the twins. It&rsquo;s a favorite gift of the controller swap — the replacement arrives with a factory default of MAC&nbsp;0 or 1, which is usually the router.
+            </p>
+
+            <h2 class="subhead">The two wires — what the electrical layer needs</h2>
+
+            <p>
+                Everything above assumes the bits arrive. RS-485 makes that conditional on physical discipline, and every clause of it shows up in a service call eventually. The trunk is a <strong>shielded twisted pair</strong>, <strong>daisy-chained</strong> from device to device — one cable in, one cable out, no star taps, no tee splices, stubs as close to zero as the terminal block allows. A branch line looks harmless and works on the bench; electrically it&rsquo;s an unterminated reflection generator that corrupts frames in proportion to its length and the baud rate.
+            </p>
+
+            <p>
+                The pair is <strong>polarity-sensitive</strong>: + lands on + and − on − at every single device, the full length of the trunk. One swapped device can drag the whole segment down, not just itself — its transceiver actively drives the pair inverted. (Vendors label the conductors +/− or A/B; the cruel joke is that A and B aren&rsquo;t defined the same way by every manufacturer. Trust the + and −, or the wire colors of a consistent install, over the letters.) <strong>Termination</strong> is a 120&nbsp;Ω resistor across the pair at each physical <em>end</em> of the trunk — exactly two, at the ends, nowhere else. Most controllers have an EOL switch or jumper so the resistor is already onboard; the failure mode is three or four of them flipped on by habit, or none. And one point on the trunk — conventionally the supervisor or router — provides <strong>fail-safe bias</strong>, weak pull-aparts that hold the pair at a defined idle state between transmissions so receivers don&rsquo;t chatter on noise. The shield lands on ground at <em>one</em> end only, the same rule as <a href="/education/controller-wiring.html">sensor wiring</a>.
+            </p>
+
+            <svg class="bac-svg wide" viewBox="0 0 760 240" role="img"
+                 aria-labelledby="bm-term-title bm-term-desc">
+                <title id="bm-term-title">MS/TP trunk wiring — daisy chain, termination at both ends, no star taps</title>
+                <desc id="bm-term-desc">Four controllers daisy-chained along a two-conductor trunk, plus and minus labeled at the left. A highlighted 120-ohm EOL resistor bridges the pair at each physical end, and the left-end device is marked as the bias point. Below the middle of the trunk, a branch line drops to a fifth device and carries a red X with the label "no star taps" — branches reflect and corrupt frames.</desc>
+
+                <!-- The pair -->
+                <g stroke="var(--text-dim)" stroke-width="2">
+                    <line x1="70" y1="120" x2="690" y2="120"/>
+                    <line x1="70" y1="134" x2="690" y2="134"/>
+                </g>
+                <text x="58" y="124" text-anchor="end" font-family="var(--mono)" font-size="11" fill="var(--text-bright)">+</text>
+                <text x="58" y="139" text-anchor="end" font-family="var(--mono)" font-size="11" fill="var(--text-bright)">−</text>
+
+                <!-- EOL terminations, both physical ends -->
+                <g font-family="var(--mono)" font-size="10" text-anchor="middle">
+                    <rect id="bm-term-eol-left" x="64" y="118" width="12" height="18" fill="var(--accent-dim)" stroke="var(--accent)" stroke-width="1.6"/>
+                    <text x="70" y="160" fill="var(--accent)">120 Ω</text>
+                    <text x="70" y="172" fill="var(--accent)">EOL</text>
+                    <rect id="bm-term-eol-right" x="684" y="118" width="12" height="18" fill="var(--accent-dim)" stroke="var(--accent)" stroke-width="1.6"/>
+                    <text x="690" y="160" fill="var(--accent)">120 Ω</text>
+                    <text x="690" y="172" fill="var(--accent)">EOL</text>
+                </g>
+
+                <g font-family="var(--mono)" font-size="11.5" text-anchor="middle">
+                    <!-- Daisy-chained devices -->
+                    <rect id="bm-term-d1" x="92"  y="40" width="104" height="48" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.6"/>
+                    <text x="144" y="61" fill="var(--text-bright)">Router</text>
+                    <text x="144" y="77" font-size="9.5" font-style="italic" fill="var(--text-dim)">bias point</text>
+                    <line x1="138" y1="88" x2="138" y2="120" stroke="var(--text-dim)" stroke-width="1.4"/>
+                    <line x1="150" y1="88" x2="150" y2="134" stroke="var(--text-dim)" stroke-width="1.4"/>
+
+                    <rect id="bm-term-d2" x="252" y="40" width="104" height="48" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.6"/>
+                    <text x="304" y="68" fill="var(--text-bright)">VAV-1</text>
+                    <line x1="298" y1="88" x2="298" y2="120" stroke="var(--text-dim)" stroke-width="1.4"/>
+                    <line x1="310" y1="88" x2="310" y2="134" stroke="var(--text-dim)" stroke-width="1.4"/>
+
+                    <rect id="bm-term-d3" x="412" y="40" width="104" height="48" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.6"/>
+                    <text x="464" y="68" fill="var(--text-bright)">VAV-2</text>
+                    <line x1="458" y1="88" x2="458" y2="120" stroke="var(--text-dim)" stroke-width="1.4"/>
+                    <line x1="470" y1="88" x2="470" y2="134" stroke="var(--text-dim)" stroke-width="1.4"/>
+
+                    <rect id="bm-term-d4" x="572" y="40" width="104" height="48" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.6"/>
+                    <text x="624" y="68" fill="var(--text-bright)">AHU-1</text>
+                    <line x1="618" y1="88" x2="618" y2="120" stroke="var(--text-dim)" stroke-width="1.4"/>
+                    <line x1="630" y1="88" x2="630" y2="134" stroke="var(--text-dim)" stroke-width="1.4"/>
+
+                    <!-- The forbidden star tap -->
+                    <g id="bm-term-startap" opacity="0.8">
+                        <line x1="384" y1="134" x2="384" y2="186" stroke="var(--red)" stroke-width="1.6" stroke-dasharray="4 3"/>
+                        <rect x="332" y="186" width="104" height="40" fill="var(--surface)" stroke="var(--red)" stroke-width="1.4" stroke-dasharray="4 3"/>
+                        <text x="384" y="210" fill="var(--red)">VAV-3</text>
+                        <line x1="372" y1="152" x2="396" y2="170" stroke="var(--red)" stroke-width="2.6"/>
+                        <line x1="396" y1="152" x2="372" y2="170" stroke="var(--red)" stroke-width="2.6"/>
+                    </g>
+                    <text x="452" y="210" text-anchor="start" font-size="10.5" fill="var(--red)">no star taps — branches reflect</text>
+                </g>
+            </svg>
+
+            <p>
+                The remaining limits are budgets.
+                <!-- // user to verify MS/TP segment limits table — placeholder data, refine after review -->
+                ASHRAE&nbsp;135 rates a segment for <strong>up to 4000&nbsp;ft (1200&nbsp;m)</strong> of proper cable — shielded twisted pair, 100–130&nbsp;Ω impedance, low capacitance — independent of baud, and <strong>32 full unit loads</strong> of transceivers (modern ⅛-load parts stretch the device count; many vendors still draw the line near 32 devices per segment without a repeater). Several vendor field guides derate length at the higher baud rates; when the vendor doc and the standard disagree on <em>their</em> hardware, the vendor doc wins the job. Every device on the segment runs the <strong>same baud</strong> — 9600, 19200, 38400, or 76800 are the standard set, 38400 and 76800 the common field picks — and a device on the wrong baud is simply mute, with its share of Poll-For-Master traffic turning to garbage on everyone else&rsquo;s scope.
+                <!-- // user to verify MS/TP segment limits table — placeholder data, refine after review -->
+            </p>
+
+            <h2 class="subhead">Reading the symptom — which layer is failing</h2>
+
+            <p>
+                The payoff of the three-layer picture is that the complaint usually names its layer before the meter comes out:
+            </p>
+
+            <table class="ref-table-dense">
+                <thead>
+                    <tr><th>Symptom</th><th>Layer</th><th>Usual suspects</th></tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>One device never appears, everything else fine</td>
+                        <td>Ring / addressing</td>
+                        <td>MAC above the trunk&rsquo;s <code>Max_Master</code>; wrong baud on that device; +/− swapped at its terminals; its EOL switch flipped on mid-trunk.</td>
+                    </tr>
+                    <tr>
+                        <td>Two devices take turns flickering offline</td>
+                        <td>Addressing</td>
+                        <td>Duplicate MAC — classic after a controller swap lands at the factory default.</td>
+                    </tr>
+                    <tr>
+                        <td>Random devices drop, worse at certain hours</td>
+                        <td>Electrical</td>
+                        <td>Marginal termination or bias drifting with temperature; EMI from a VFD sharing conduit; a star tap added on the last retrofit doing its reflection work under load.</td>
+                    </tr>
+                    <tr>
+                        <td>Whole trunk online but sluggish</td>
+                        <td>Ring tuning</td>
+                        <td><code>Max_Master</code> left at 127 on a small trunk (empty-address polling); <code>Max_Info_Frames = 1</code> on the router carrying everyone&rsquo;s traffic.</td>
+                    </tr>
+                    <tr>
+                        <td>Whole trunk dead or garbage</td>
+                        <td>Electrical</td>
+                        <td>Polarity swap introduced mid-trunk; no termination at all, or three of them; a dead short from a pinched jacket; missing bias leaving the pair floating.</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <p>
+                And the one that pays the page&rsquo;s opening debt: the trunk an electrician just extended with four new controllers that drop devices intermittently is carrying <em>several</em> of these at once more often than not — the old end&rsquo;s EOL is now mid-trunk, the new devices shipped at default MACs and 9600 baud, and the new run may be a different cable. Extensions re-open every layer; walk all three.
+            </p>
+
+            <h2 class="subhead">What this page didn't cover</h2>
+
+            <p>
+                Seeing these failures happen — laying out a virtual trunk, flipping a terminator, doubling a MAC, capping <code>Max_Master</code>, and watching the ring degrade live — is a hands-on <strong>bus simulator&rsquo;s</strong> job, and one is on the roadmap as this page&rsquo;s practice pair; the <a href="/simulators/controller-wiring.html">Controller Wiring Simulator</a>&rsquo;s greyed-out NET terminals are the seam it will plug into. Also out of scope here: the transmission-line physics behind the no-stub rule (reflections, impedance, why the budgets are what they are), and <strong>BACnet/SC</strong>, the TLS-secured transport that will eventually inherit much of this work. The protocol that rides the trunk — objects, services, the priority array — is <a href="/education/bacnet-basics.html">BACnet Basics</a>; what happens when the conversation has to cross a router is <a href="/education/bacnet-networking.html">BACnet Networking</a>.
+            </p>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/tools/bacnet-objects.html', label: 'BACnet Objects & Properties'},
+            {href: '/tools/bacnet-ip-converter.html', label: 'BACnet/IP Hex Converter'}
+        ],
+        lessons: [
+            {href: '/education/bacnet-basics.html', label: 'BACnet Basics'},
+            {href: '/education/bacnet-networking.html', label: 'BACnet Networking'},
+            {href: '/education/controller-wiring.html', label: 'Controller Wiring'},
+            {href: '/education/modbus-basics.html', label: 'Modbus Basics'}
+        ],
+        quizzes: [
+            {href: '/practice/bacnet-networking.html', label: 'BACnet Networking'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/education/">← All lessons</a>
+
+</main>
+{% endblock %}
