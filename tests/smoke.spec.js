@@ -35,6 +35,8 @@ const PAGES = [
     { name: 'affinity laws',          url: '/tools/affinity-laws.html' },
     { name: 'waterside load',         url: '/tools/waterside-load.html' },
     { name: 'airflow',                url: '/tools/airflow.html' },
+    { name: 'transformer va budget',  url: '/tools/transformer-sizing.html' },
+    { name: 'wire run voltage drop',  url: '/tools/voltage-drop.html' },
     { name: 'modbus function codes',  url: '/tools/modbus-functions.html' },
     { name: 'simulators landing',     url: '/simulators/' },
     { name: 'pid tuner',              url: '/simulators/pid-tuner.html' },
@@ -1874,6 +1876,52 @@ test('airflow — K-factor both directions and the duct-velocity chain', async (
     await expect(page.locator('#vp-d-area')).toContainText('1.4 ft²');
 
     expect(errors, 'airflow behavioral should log no errors').toEqual([]);
+});
+
+test('transformer-sizing — seeded panel totals, fuse ladder, overload pill', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('/tools/transformer-sizing.html');
+
+    // Seeded panel: 14 + 7 + 7 + 10 + 2 = 40 VA on a 75 VA → 53 %, 4 A fuse.
+    await expect(page.locator('#xf-total')).toContainText('40 VA');
+    await expect(page.locator('#xf-pct')).toContainText('53');
+    await expect(page.locator('#xf-fuse')).toContainText('4 A');
+    await expect(page.locator('#xf-status')).toHaveClass(/ok/);
+
+    // Pile on a 45 VA load → 85 VA on 75 → overloaded.
+    await page.fill('#xf-va-6', '45');
+    await expect(page.locator('#xf-status')).toHaveClass(/error/);
+
+    // Custom rating reveals its row and recomputes.
+    await page.selectOption('#xf-size', 'custom');
+    await page.fill('#xf-size-custom', '100');
+    await expect(page.locator('#xf-pct')).toContainText('85');
+
+    expect(errors, 'transformer-sizing behavioral should log no errors').toEqual([]);
+});
+
+test('voltage-drop — loop margin, 0-10V teaching verdict, sensor asymmetry', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('/tools/voltage-drop.html');
+
+    // Defaults: 18 AWG, 500 ft → 6.4 Ω; 24 − 0.020×(6.4+250) = 18.9 V, OK.
+    await expect(page.locator('#vd-rwire')).toContainText('6.4');
+    await expect(page.locator('#vd-vxmtr')).toContainText('18.9 V');
+    await expect(page.locator('#vd-status')).toHaveClass(/ok/);
+
+    // 0-10 V mode: the verdict teaches "not wire resistance".
+    await page.selectOption('#vd-type', 'volt');
+    await expect(page.locator('#vd-status')).toContainText('ground offset');
+
+    // Sensor mode: same copper, wildly different errors — Pt100 row is
+    // degrees while 10K reads under a tenth (slopes pulled live from
+    // THERMISTOR_TYPES, so this also guards the data-file coupling).
+    await page.selectOption('#vd-type', 'therm');
+    await expect(page.locator('#vd-terr-10k')).toContainText('< 0.1');
+    await expect(page.locator('#vd-terr-pt100')).toContainText('°F reads cold');
+    await expect(page.locator('#vd-status')).toContainText('Pt100');
+
+    expect(errors, 'voltage-drop behavioral should log no errors').toEqual([]);
 });
 
 // ── audit-2026-06 Batch G: tool edge cases ─────────────────────────────

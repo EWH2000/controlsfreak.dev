@@ -36,7 +36,7 @@ the 2026-06 build queue:
 3. **Control-power electrical tools** (transformer VA budget + fuse
    sizing; wire-run voltage drop with per-signal-type verdicts — the
    quantitative layer the controller-wiring content lacks; new
-   `electrical` chip).
+   `electrical` chip) — *(shipped 2026-06-10, see entry below)*.
 4. **MS/TP lesson** (`bacnet-mstp.html`) — both BACnet lessons
    explicitly defer to it and it doesn't exist; lesson first, the
    parked `[future: bus simulator]` stays its eventual hands-on pair.
@@ -68,6 +68,45 @@ renderer), plus a data-file schema for scenarios. Build **after** the
 2026-06 four-PR queue above. Scope discipline when it starts: one
 engine, one scenario, the existing practice-landing card shape; no
 scoring leaderboards (the quiz plan's hard-nos carry over).
+
+### Control-power electrical tools — Transformer VA Budget + Wire Run / Voltage Drop *(shipped 2026-06-10)*
+
+PR 3 of the mock-call build queue: the panel-retrofit audit scenario
+found the wiring *concepts* covered well (phasing rule, commons,
+loop power) and the *numbers* absent — "does my 40 VA transformer
+have headroom for this actuator?" had no tool anywhere. Two pages,
+one PR, new `Electrical` chip at count 2 (All 16→18). Two tools
+rather than one tabbed page: each needs its own reference table and
+verdict surface, and a combined page would have been the cramped
+layout codebase-issues #29 warns about.
+
+**Transformer VA Budget** (`/tools/transformer-sizing.html`, `xf-`):
+- **8 fixed device rows** (air-mixing's fixed-rows precedent — no
+  dynamic add/remove), name + VA per row, blank rows skipped as
+  spares, rows 1–5 seeded with the worked example. Transformer
+  select 40/75/96/100/custom.
+- Status pill: ok ≤ 80 % / warn 80–100 % ("works today, no margin —
+  inrush eats the gap") / error > 100 %.
+- Fuse suggestion sized off the **transformer rating**, not the
+  connected load (`rating ÷ 24 × 1.25`, rounded up the standard
+  ladder) — the rule and the typical-VA sanity table both ship
+  behind `// user to verify` placeholder markers for owner review.
+
+**Wire Run / Voltage Drop** (`/tools/voltage-drop.html`, `vd-`):
+- One signal-type select drives conditional rows (coil-sizing's
+  show/hide idiom) instead of three tabs duplicating gauge+length.
+- AWG Ω/1000 ft from NEC Ch. 9 Table 8; US-native.
+  `[future: metric mm² / Ω-per-km option on voltage-drop.html]`.
+- Per-signal verdicts that TEACH: 4-20 mA computes transmitter
+  supply margin + max run ("copper costs headroom, not accuracy");
+  0-10 V computes the IR drop to show it's millivolts — "suspect
+  ground offset or noise, not wire"; sensor mode computes the °F
+  lead error for 10K Type II / 1K Balco / Pt100 side by side —
+  **slopes finite-differenced live from `THERMISTOR_TYPES` tables**
+  (thermistor-data.js loaded as a second consumer), so the tool
+  can't drift from the thermistor calculator and the
+  same-copper-different-lie asymmetry (~0.02 °F vs ~30 °F) is
+  computed, not asserted.
 
 ### Airflow & Velocity Pressure tool *(shipped 2026-06-10)*
 
