@@ -31,7 +31,8 @@ the 2026-06 build queue:
    see entry below)*.
 2. **Airflow / K-factor tool** (CFM = K·√VP both directions, duct
    velocity V = 4005·√VP — opens the missing airside-flow category;
-   new `airflow` landing chip approved at count 1).
+   new `airflow` landing chip approved at count 1) — *(shipped
+   2026-06-10, see entry below)*.
 3. **Control-power electrical tools** (transformer VA budget + fuse
    sizing; wire-run voltage drop with per-signal-type verdicts — the
    quantitative layer the controller-wiring content lacks; new
@@ -67,6 +68,44 @@ renderer), plus a data-file schema for scenarios. Build **after** the
 2026-06 four-PR queue above. Scope discipline when it starts: one
 engine, one scenario, the existing practice-landing card shape; no
 scoring leaderboards (the quiz plan's hard-nos carry over).
+
+### Airflow & Velocity Pressure tool *(shipped 2026-06-10)*
+
+PR 2 of the mock-call build queue, and the **airside-flow category
+opener** — the site had air *state* (psychrometrics) thoroughly and
+nothing about air *moving*. Ships at `/tools/airflow.html` as a
+two-tab `.tool-body-2col` tool, prefix `vp-` (`af-` was already
+taken by affinity-laws), new `Airflow` landing chip at count 1
+(All 15→16; owner approved the one-entry chip as the declared
+category opener — pitot/traverse/fan siblings are natural future
+fills).
+
+- **Tab 1 — K-factor flow**, both directions a commissioning tech
+  needs: `CFM = K × √VP` forward, and `K = CFM ÷ √VP` back-solved
+  from a balancer's hood reading — the calibration move that works
+  regardless of whose K convention the paperwork used.
+- **Tab 2 — Duct velocity**: `V = 4005 × √VP` (standard air),
+  rect/round duct area, CFM. Chained readouts (CFM = displayed V ×
+  displayed A) close on displayed values, the metric-rounding-policy
+  habit applied to chained rows. A traverse note keeps the one-point
+  reading honest.
+- **US-native** (valve-cv posture): US K-factors are CFM at
+  1.0 in. w.c. — a metric K is a different number on a different
+  label — and 4005 is an IP constant. An m/s equivalent row rides
+  along (the Kv idiom).
+  `[future: metric VP tab on airflow.html — L/s, Pa, V = 1.291·√Pa,
+  metric K]` if a metric user asks.
+- **Standard-air caveat, not a density row**: an altitude-only
+  correction without temperature is half a correction with false
+  confidence, and balancing instruments mostly correct internally.
+  The shared reference row states the assumption and the error
+  direction.
+  `[future: density-correction row on airflow.html]` — needs the
+  temperature+altitude pair done properly, probably via
+  psychro-engine.
+- **Teaching mutes**: negative VP mutes with "sensing lines swapped"
+  — the actual field meaning of a negative reading — rather than a
+  generic validation message.
 
 ### Waterside Load calculator *(shipped 2026-06-10)*
 

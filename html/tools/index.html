@@ -21,7 +21,7 @@ nav: tools
 
     <div class="filter-chips" role="group" aria-label="Filter tools by category">
         <button type="button" class="filter-chip active" data-category="all" aria-pressed="true">
-            All <span class="filter-chip-count">15</span>
+            All <span class="filter-chip-count">16</span>
         </button>
         <button type="button" class="filter-chip" data-category="hvac" aria-pressed="false">
             HVAC <span class="filter-chip-count">6</span>
@@ -31,6 +31,9 @@ nav: tools
         </button>
         <button type="button" class="filter-chip" data-category="signals" aria-pressed="false">
             Signals <span class="filter-chip-count">2</span>
+        </button>
+        <button type="button" class="filter-chip" data-category="airflow" aria-pressed="false">
+            Airflow <span class="filter-chip-count">1</span>
         </button>
         <button type="button" class="filter-chip" data-category="hydronics" aria-pressed="false">
             Hydronics <span class="filter-chip-count">3</span>
@@ -145,6 +148,15 @@ nav: tools
             desc:       'Saturation pressure ↔ temperature for R-410A, R-22, R-134a, R-407C, R-404A and R-454B — bubble and dew both, so blend glide is in plain sight — plus a superheat / subcooling check off a measured line temperature.',
             pills:      ['HVAC', '6 Refrigerants', 'Bubble / Dew', 'Superheat / Subcool'],
             category:   'hvac'
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/tools/airflow.html',
+            titleShort: 'Airflow',
+            titleFull:  'Airflow & Velocity Pressure',
+            desc:       'The field airflow square-root, both halves — a VAV box\'s CFM = K × √VP solved forward or back-solved for K against a hood reading, and pitot velocity V = 4005 × √VP with duct area to CFM.',
+            pills:      ['Airflow', 'K-Factor', 'V = 4005·√VP', 'Duct CFM'],
+            category:   'airflow'
         }) }}
         {{ navCard({
             section:    'tools',

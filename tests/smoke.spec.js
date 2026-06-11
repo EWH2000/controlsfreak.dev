@@ -34,6 +34,7 @@ const PAGES = [
     { name: 'valve cv sizing',        url: '/tools/valve-cv.html' },
     { name: 'affinity laws',          url: '/tools/affinity-laws.html' },
     { name: 'waterside load',         url: '/tools/waterside-load.html' },
+    { name: 'airflow',                url: '/tools/airflow.html' },
     { name: 'modbus function codes',  url: '/tools/modbus-functions.html' },
     { name: 'simulators landing',     url: '/simulators/' },
     { name: 'pid tuner',              url: '/simulators/pid-tuner.html' },
@@ -1844,6 +1845,35 @@ test('waterside-load — metric solve uses the 4.187 constant on displayed opera
     await expect(page.locator('#wl-tons')).toContainText('10');
 
     expect(errors, 'waterside-load metric behavioral should log no errors').toEqual([]);
+});
+
+test('airflow — K-factor both directions and the duct-velocity chain', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('/tools/airflow.html');
+
+    // Defaults: K 1000 at VP 0.36 → 1000 × 0.6 = 600 CFM.
+    await expect(page.locator('#vp-k-out')).toContainText('600 CFM');
+
+    // Back-solve: hood 800 CFM at VP 0.64 → K = 800 ÷ 0.8 = 1000.
+    await page.selectOption('#vp-k-solve', 'k');
+    await page.fill('#vp-k-vp', '0.64');
+    await expect(page.locator('#vp-k-out')).toHaveText('1000');
+
+    // Negative VP is a swapped-lines teaching mute, not a NaN.
+    await page.fill('#vp-k-vp', '-0.1');
+    await expect(page.locator('#vp-k-out')).toHaveText('—');
+    await expect(page.locator('#vp-k-callout')).toContainText('swapped');
+
+    // Duct tab: VP 0.0625 → 1001 FPM; 24×12 → 2 ft² → 2002 CFM.
+    await page.click('[data-tab="velocity"]');
+    await expect(page.locator('#vp-d-vel')).toContainText('1001 FPM');
+    await expect(page.locator('#vp-d-cfm')).toContainText('2002 CFM');
+
+    // Round duct: 16 in. dia → π × (16/24)² ≈ 1.40 ft².
+    await page.selectOption('#vp-d-shape', 'round');
+    await expect(page.locator('#vp-d-area')).toContainText('1.4 ft²');
+
+    expect(errors, 'airflow behavioral should log no errors').toEqual([]);
 });
 
 // ── audit-2026-06 Batch G: tool edge cases ─────────────────────────────

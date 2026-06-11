@@ -1,0 +1,358 @@
+---
+title: Airflow & Velocity Pressure — controlsfreak.dev
+description: Airflow from velocity pressure — CFM = K × √VP solved both ways for VAV K-factors, plus duct velocity V = 4005 × √VP with rectangular or round ducts.
+canonical: https://controlsfreak.dev/tools/airflow.html
+nav: tools
+keywords: cfm k factor velocity pressure vp 4005 fpm duct traverse pitot flow hood vav
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Tools · Airflow</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">
+                Airflow &amp; Velocity Pressure
+                <span class="tool-tag">Airflow</span>
+            </h1>
+        </div>
+
+        <p class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
+            Both halves of the field airflow square-root: <em>K-factor flow</em> runs a VAV box&rsquo;s <code>CFM = K × √VP</code> in either direction — flow from the pickup&rsquo;s velocity pressure, or the K a hood reading implies.
+            <em>Duct velocity</em> turns a pitot reading into FPM with <code>V = 4005 × √VP</code> and a duct area into CFM.
+        </p>
+
+        <div class="tabs tabs-flush">
+            <button class="tab-btn active" data-tab="kfactor">K-factor flow</button>
+            <button class="tab-btn"        data-tab="velocity">Duct velocity</button>
+        </div>
+
+        <!-- ── K-factor flow ── -->
+        <div id="tab-kfactor" class="tab-pane active">
+            <div class="tool-body-2col">
+
+                <section>
+                    <h2 class="ps-section-label">Input</h2>
+                    <div class="ps-row">
+                        <label class="ps-label" for="vp-k-solve">Solve for</label>
+                        <select class="ps-input" id="vp-k-solve">
+                            <option value="flow">Flow from K + VP</option>
+                            <option value="k">K from measured flow + VP</option>
+                        </select>
+                    </div>
+                    <div class="ps-row" id="vp-k-row-k">
+                        <label class="ps-label" for="vp-k-k">K factor (CFM at 1.0 in. w.c.)</label>
+                        <input class="ps-input" type="number" id="vp-k-k" step="any" min="0" placeholder="1000" value="1000">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="vp-k-vp">Velocity pressure VP (in. w.c.)</label>
+                        <input class="ps-input" type="number" id="vp-k-vp" step="any" placeholder="0.36" value="0.36">
+                    </div>
+                    <div class="ps-row" id="vp-k-row-cfm">
+                        <label class="ps-label" for="vp-k-cfm">Measured flow (CFM)</label>
+                        <input class="ps-input" type="number" id="vp-k-cfm" step="any" min="0" placeholder="800" value="800">
+                    </div>
+                    <p class="ref-note">
+                        K is the manufacturer&rsquo;s flow coefficient for the box&rsquo;s velocity-pressure pickup — the CFM it reads at exactly 1.0&nbsp;in.&nbsp;w.c. Conventions vary across vendors and controllers, which is why the second mode exists: back-solve K from a balancer&rsquo;s hood reading and the VP the controller sees, and you&rsquo;ve calibrated the box no matter whose convention the paperwork used.
+                    </p>
+                </section>
+
+                <section role="status" aria-atomic="false">
+                    <h2 class="ps-section-label">Output</h2>
+                    <div class="ps-row">
+                        <span class="ps-label" id="vp-k-out-label">Flow</span>
+                        <span class="ps-value muted" id="vp-k-out">—</span>
+                    </div>
+                    <div class="btn-row">
+                        <button class="copy-btn" id="vp-k-copy">Copy value</button>
+                    </div>
+                    <div class="result-formula wrap" id="vp-k-formula"></div>
+                    <div class="failure-callout" id="vp-k-callout" hidden></div>
+                </section>
+
+            </div>
+
+            <section class="tool-body-row">
+                <h2 class="ps-section-label">Worked example</h2>
+                <p class="ref-note worked-intro">
+                    A VAV box with K&nbsp;=&nbsp;1000 reports a velocity pressure of 0.36&nbsp;in.&nbsp;w.c. at its flow pickup.
+                </p>
+                <ol class="ref-note worked-list">
+                    <li>The flow equation: <code>CFM = K × √VP</code>.</li>
+                    <li>Plug in: <code>CFM = 1000 × √0.36 = 1000 × 0.6 = 600 CFM</code>.</li>
+                    <li>Now the calibration direction: the balancer&rsquo;s hood says this box actually passes <code>800 CFM</code> while the pickup reads <code>VP = 0.64</code>. Back-solve: <code>K = 800 ÷ √0.64 = 800 ÷ 0.8 = 1000</code> — the configured K checks out, so the earlier mismatch was somewhere else.</li>
+                </ol>
+                <p class="ref-note">
+                    A box that reads wrong against the hood usually has a wrong K, a kinked sensing line, or a pickup mounted too close to the inlet elbow. The back-solve separates the first cause from the other two in one reading.
+                </p>
+            </section>
+        </div>
+
+        <!-- ── Duct velocity ── -->
+        <div id="tab-velocity" class="tab-pane">
+            <div class="tool-body-2col">
+
+                <section>
+                    <h2 class="ps-section-label">Input</h2>
+                    <div class="ps-row">
+                        <label class="ps-label" for="vp-d-vp">Velocity pressure VP (in. w.c.)</label>
+                        <input class="ps-input" type="number" id="vp-d-vp" step="any" placeholder="0.0625" value="0.0625">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="vp-d-shape">Duct shape</label>
+                        <select class="ps-input" id="vp-d-shape">
+                            <option value="rect">Rectangular</option>
+                            <option value="round">Round</option>
+                        </select>
+                    </div>
+                    <div class="ps-row vp-rect-only">
+                        <label class="ps-label" for="vp-d-w">Duct width (in.)</label>
+                        <input class="ps-input" type="number" id="vp-d-w" step="any" min="0" placeholder="24" value="24">
+                    </div>
+                    <div class="ps-row vp-rect-only">
+                        <label class="ps-label" for="vp-d-h">Duct height (in.)</label>
+                        <input class="ps-input" type="number" id="vp-d-h" step="any" min="0" placeholder="12" value="12">
+                    </div>
+                    <div class="ps-row vp-round-only hidden">
+                        <label class="ps-label" for="vp-d-dia">Duct diameter (in.)</label>
+                        <input class="ps-input" type="number" id="vp-d-dia" step="any" min="0" placeholder="16" value="16">
+                    </div>
+                    <p class="ref-note">
+                        One pitot reading is a point velocity, and duct velocity isn&rsquo;t uniform — it peaks at the center and dies at the walls. For a number you&rsquo;d sign, traverse the duct (multiple points on an equal-area grid) and average the velocities; this tab does the per-point math.
+                    </p>
+                </section>
+
+                <section role="status" aria-atomic="false">
+                    <h2 class="ps-section-label">Output</h2>
+                    <div class="ps-row">
+                        <span class="ps-label">Velocity (FPM)</span>
+                        <span class="ps-value muted" id="vp-d-vel">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">Velocity (m/s equivalent)</span>
+                        <span class="ps-value muted" id="vp-d-ms">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">Duct area (ft²)</span>
+                        <span class="ps-value muted" id="vp-d-area">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">Airflow (CFM)</span>
+                        <span class="ps-value muted" id="vp-d-cfm">—</span>
+                    </div>
+                    <div class="btn-row">
+                        <button class="copy-btn" id="vp-d-copy">Copy CFM</button>
+                    </div>
+                    <div class="result-formula wrap" id="vp-d-formula"></div>
+                    <div class="failure-callout" id="vp-d-callout" hidden></div>
+                </section>
+
+            </div>
+
+            <section class="tool-body-row">
+                <h2 class="ps-section-label">Worked example</h2>
+                <p class="ref-note worked-intro">
+                    A pitot traverse point in a 24&nbsp;×&nbsp;12&nbsp;in. supply duct reads VP&nbsp;=&nbsp;0.0625&nbsp;in.&nbsp;w.c.
+                </p>
+                <ol class="ref-note worked-list">
+                    <li>Velocity from VP: <code>V = 4005 × √0.0625 = 4005 × 0.25 = 1001 FPM</code>.</li>
+                    <li>Duct area: <code>A = (24 ÷ 12) × (12 ÷ 12) = 2.0 ft²</code>.</li>
+                    <li>Airflow: <code>Q = 1001 × 2.0 = 2002 CFM</code>.</li>
+                </ol>
+            </section>
+        </div>
+
+        <section class="tool-body-row">
+            <h2 class="ps-section-label">Standard air, and where 4005 comes from</h2>
+            <p class="ref-note">
+                Both tabs assume <strong>standard air</strong> — 0.075&nbsp;lb/ft³, sea level, ~70&nbsp;°F. The 4005 folds that density into <code>V&nbsp;=&nbsp;√(2&nbsp;·&nbsp;ΔP&nbsp;/&nbsp;ρ)</code>; at altitude the air is thinner, the same VP means a higher true velocity, and this math under-reads by a few percent per few-thousand feet. Most balancing instruments correct for density internally — when yours does, trust it over this page. For altitude-corrected psychrometric work, the <a href="/tools/psychrometric-chart.html">psych chart</a> carries a proper altitude input.
+            </p>
+            <p class="ref-note">
+                This tool is US-native (CFM, in.&nbsp;w.c., FPM) — that&rsquo;s the frame K-factors and pitot charts are published in on this side of the ocean. The m/s readout rides along; a metric VP mode (L/s, Pa, <code>V&nbsp;=&nbsp;1.291&nbsp;×&nbsp;√Pa</code>) is a tracked follow-up.
+            </p>
+        </section>
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/tools/air-mixing.html', label: 'Air-Mixing Calculator'},
+            {href: '/tools/coil-sizing.html', label: 'Coil-Sizing Calculator'},
+            {href: '/tools/waterside-load.html', label: 'Waterside Load Calculator'}
+        ],
+        lessons: [
+            {href: '/education/psychrometrics-basics.html', label: 'Psychrometrics Basics'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/tools/">← All tools</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="/scripts/ui.js"></script>
+<script>
+    // switchTab(name, btn) and copyReadouts(btn, sep, ...ids) come from
+    // /scripts/ui.js. This tool is US-native (CFM, in. w.c., FPM) — US
+    // K-factors are published as CFM at 1.0 in. w.c. (a metric K in
+    // L/s·√Pa is a different number on a different label, so converting
+    // would mislead) and 4005 is an IP constant; the m/s readout rides
+    // along instead, valve-cv's Kv posture. V = 4005 × √VP folds
+    // standard-air density (0.075 lb/ft³) into V = √(2·ΔP/ρ).
+    (function () {
+        'use strict';
+
+        const FPM_TO_MS = 0.00508;   // 1 ft/min = 0.00508 m/s exactly
+
+        const tidy = (n, dp) => parseFloat(n.toFixed(dp)).toString();
+
+        // ── K-factor flow ─────────────────────────────────────────────
+        const kSolveEl   = document.getElementById('vp-k-solve');
+        const kKEl       = document.getElementById('vp-k-k');
+        const kVpEl      = document.getElementById('vp-k-vp');
+        const kCfmEl     = document.getElementById('vp-k-cfm');
+        const kOutEl     = document.getElementById('vp-k-out');
+        const kOutLabelEl = document.getElementById('vp-k-out-label');
+        const kFormulaEl = document.getElementById('vp-k-formula');
+        const kCalloutEl = document.getElementById('vp-k-callout');
+        const kCopyBtn   = document.getElementById('vp-k-copy');
+
+        function muteK(msg) {
+            kOutEl.className = 'ps-value muted';
+            kOutEl.textContent = '—';
+            kFormulaEl.textContent = '';
+            kCalloutEl.textContent = msg;
+            kCalloutEl.hidden = false;
+        }
+
+        function calcK() {
+            const solve = kSolveEl.value;
+            document.getElementById('vp-k-row-k').classList.toggle('hidden', solve === 'k');
+            document.getElementById('vp-k-row-cfm').classList.toggle('hidden', solve === 'flow');
+            kOutLabelEl.textContent = solve === 'flow' ? 'Flow' : 'K factor';
+
+            const k   = parseFloat(kKEl.value);
+            const vp  = parseFloat(kVpEl.value);
+            const cfm = parseFloat(kCfmEl.value);
+
+            if (!isFinite(vp)) { muteK('Enter the velocity pressure.'); return; }
+            if (vp < 0) { muteK('Negative velocity pressure usually means the sensing lines are swapped — high and low ports reversed at the pickup or the transducer.'); return; }
+
+            let result, formula, unit;
+            if (solve === 'flow') {
+                if (!isFinite(k)) { muteK('Enter the K factor to find the flow.'); return; }
+                if (k < 0) { muteK('K can’t be negative.'); return; }
+                result = k * Math.sqrt(vp);
+                formula = `CFM = ${tidy(k, 4)} × √${tidy(vp, 4)} = ${tidy(k, 4)} × ${tidy(Math.sqrt(vp), 4)} = ${tidy(result, 0)} CFM`;
+                unit = ' CFM';
+            } else {
+                if (!isFinite(cfm)) { muteK('Enter the measured flow to back-solve K.'); return; }
+                if (cfm < 0) { muteK('Flow can’t be negative.'); return; }
+                if (vp === 0) { muteK('VP of zero can’t back-solve K — no velocity pressure, no flow signal to calibrate against.'); return; }
+                result = cfm / Math.sqrt(vp);
+                formula = `K = ${tidy(cfm, 4)} ÷ √${tidy(vp, 4)} = ${tidy(cfm, 4)} ÷ ${tidy(Math.sqrt(vp), 4)} = ${tidy(result, 0)}`;
+                unit = '';
+            }
+
+            kCalloutEl.hidden = true;
+            kOutEl.className = 'ps-value live';
+            kOutEl.textContent = tidy(result, 0) + unit;
+            kFormulaEl.textContent = formula;
+            kCopyBtn.textContent = 'Copy ' + (solve === 'flow' ? 'CFM' : 'K');
+        }
+
+        // ── Duct velocity ─────────────────────────────────────────────
+        const dVpEl    = document.getElementById('vp-d-vp');
+        const dShapeEl = document.getElementById('vp-d-shape');
+        const dWEl     = document.getElementById('vp-d-w');
+        const dHEl     = document.getElementById('vp-d-h');
+        const dDiaEl   = document.getElementById('vp-d-dia');
+        const dVelEl   = document.getElementById('vp-d-vel');
+        const dMsEl    = document.getElementById('vp-d-ms');
+        const dAreaEl  = document.getElementById('vp-d-area');
+        const dCfmEl   = document.getElementById('vp-d-cfm');
+        const dFormulaEl = document.getElementById('vp-d-formula');
+        const dCalloutEl = document.getElementById('vp-d-callout');
+        const dCopyBtn  = document.getElementById('vp-d-copy');
+
+        function muteD(msg) {
+            for (const el of [dVelEl, dMsEl, dAreaEl, dCfmEl]) {
+                el.className = 'ps-value muted';
+                el.textContent = '—';
+            }
+            dFormulaEl.textContent = '';
+            dCalloutEl.textContent = msg;
+            dCalloutEl.hidden = false;
+        }
+
+        function calcD() {
+            const round = dShapeEl.value === 'round';
+            document.querySelectorAll('.vp-rect-only').forEach(el => el.classList.toggle('hidden', round));
+            document.querySelectorAll('.vp-round-only').forEach(el => el.classList.toggle('hidden', !round));
+
+            const vp = parseFloat(dVpEl.value);
+            if (!isFinite(vp)) { muteD('Enter the velocity pressure.'); return; }
+            if (vp < 0) { muteD('Negative velocity pressure usually means the pitot ports are swapped — total and static reversed at the gauge.'); return; }
+
+            let area, areaFormula;
+            if (round) {
+                const dia = parseFloat(dDiaEl.value);
+                if (!isFinite(dia)) { muteD('Enter the duct diameter.'); return; }
+                if (dia <= 0) { muteD('Diameter must be greater than 0.'); return; }
+                area = Math.PI * Math.pow(dia / 24, 2);   // (dia/12)/2 squared × π, in ft²
+                areaFormula = `A = π × (${tidy(dia, 4)} ÷ 24)² = ${tidy(area, 2)} ft²`;
+            } else {
+                const w = parseFloat(dWEl.value);
+                const h = parseFloat(dHEl.value);
+                if (!isFinite(w) || !isFinite(h)) { muteD('Enter the duct width and height.'); return; }
+                if (w <= 0 || h <= 0) { muteD('Duct dimensions must be greater than 0.'); return; }
+                area = (w / 12) * (h / 12);
+                areaFormula = `A = (${tidy(w, 4)} ÷ 12) × (${tidy(h, 4)} ÷ 12) = ${tidy(area, 2)} ft²`;
+            }
+
+            const vel = 4005 * Math.sqrt(vp);
+            // CFM from the DISPLAYED velocity and area so a reader's own
+            // arithmetic reproduces the row (the metric-rounding-policy
+            // habit, applied to chained readouts generally).
+            const velShown  = parseFloat(tidy(vel, 0));
+            const areaShown = parseFloat(tidy(area, 2));
+            const cfm = velShown * areaShown;
+
+            dCalloutEl.hidden = true;
+            dVelEl.className = 'ps-value live';
+            dVelEl.textContent = tidy(velShown, 0) + ' FPM';
+            dMsEl.className = 'ps-value live';
+            dMsEl.textContent = tidy(velShown * FPM_TO_MS, 2) + ' m/s';
+            dAreaEl.className = 'ps-value live';
+            dAreaEl.textContent = tidy(areaShown, 2) + ' ft²';
+            dCfmEl.className = 'ps-value live';
+            dCfmEl.textContent = tidy(cfm, 0) + ' CFM';
+            dFormulaEl.textContent =
+                `V = 4005 × √${tidy(vp, 4)} = ${tidy(velShown, 0)} FPM · ` +
+                `${areaFormula} · ` +
+                `Q = ${tidy(velShown, 0)} × ${tidy(areaShown, 2)} = ${tidy(cfm, 0)} CFM`;
+        }
+
+        // ── Wiring ────────────────────────────────────────────────────
+        document.querySelectorAll('[data-tab]').forEach(btn => {
+            btn.addEventListener('click', e => switchTab(e.currentTarget.dataset.tab, e.currentTarget));
+        });
+        kSolveEl.addEventListener('change', calcK);
+        [kKEl, kVpEl, kCfmEl].forEach(el => el.addEventListener('input', calcK));
+        dShapeEl.addEventListener('change', calcD);
+        [dVpEl, dWEl, dHEl, dDiaEl].forEach(el => el.addEventListener('input', calcD));
+        kCopyBtn.addEventListener('click', e => copyReadouts(e.currentTarget, '', 'vp-k-out'));
+        dCopyBtn.addEventListener('click', e => copyReadouts(e.currentTarget, '', 'vp-d-cfm'));
+
+        calcK();
+        calcD();
+    })();
+</script>
+{% endblock %}
