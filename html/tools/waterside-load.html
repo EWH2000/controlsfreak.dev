@@ -1,0 +1,297 @@
+---
+title: Waterside Load Calculator — controlsfreak.dev
+description: Waterside load math for hydronic coils — q = 500 × GPM × ΔT solved for load, flow, or ΔT, with tons alongside, following the US / Metric toggle.
+canonical: https://controlsfreak.dev/tools/waterside-load.html
+nav: tools
+keywords: gpm delta t mbh tons btuh water flow 500 chilled hot water coil
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Tools · Waterside Load</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">
+                Waterside Load Calculator
+                <span class="tool-tag">Hydronics</span>
+            </h1>
+        </div>
+
+        <p class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
+            The waterside workhorse: <code><span data-us="q = 500 × GPM × ΔT" data-metric="q = 4.187 × L/s × ΔT">q = 500 × GPM × ΔT</span></code> ties a coil&rsquo;s water flow, the temperature difference across it, and the load it&rsquo;s moving.
+            Solve in any direction — the load a measured flow and ΔT imply, the flow a scheduled load needs, or the ΔT a healthy loop should be showing.
+        </p>
+
+        <div class="tool-body-2col">
+
+            <section>
+                <h2 class="ps-section-label">Input</h2>
+                <div class="ps-row">
+                    <label class="ps-label" for="wl-solve">Solve for</label>
+                    <select class="ps-input" id="wl-solve">
+                        <option value="load">Load</option>
+                        <option value="flow">Flow</option>
+                        <option value="dt">ΔT</option>
+                    </select>
+                </div>
+                <div class="ps-row" id="wl-row-flow">
+                    <label class="ps-label" data-us="Flow (GPM)" data-metric="Flow (L/s)" for="wl-flow">Flow (GPM)</label>
+                    <input class="ps-input" type="number" id="wl-flow" step="any" min="0" placeholder="20" value="20">
+                </div>
+                <div class="ps-row" id="wl-row-dt">
+                    <label class="ps-label" data-us="ΔT across coil (°F)" data-metric="ΔT across coil (°C)" for="wl-dt">ΔT across coil (°F)</label>
+                    <input class="ps-input" type="number" id="wl-dt" step="any" min="0" placeholder="12" value="12">
+                </div>
+                <div class="ps-row" id="wl-row-load">
+                    <label class="ps-label" data-us="Load (MBH)" data-metric="Load (kW)" for="wl-load">Load (MBH)</label>
+                    <input class="ps-input" type="number" id="wl-load" step="any" min="0" placeholder="120" value="120">
+                </div>
+                <p class="ref-note">
+                    Enter ΔT as a positive difference — supply-to-return on a cooling coil, return-to-supply on heating; the math is the same either direction.
+                </p>
+                <p class="ref-note">
+                    <strong>Water only.</strong> The constant bakes in water&rsquo;s density and specific heat. A glycol mix lowers both — a 30&nbsp;% propylene-glycol loop carries meaningfully less heat per gallon than this shortcut reports. A glycol correction row is a planned follow-up.
+                </p>
+            </section>
+
+            <section role="status" aria-atomic="false">
+                <h2 class="ps-section-label">Output</h2>
+                <div class="ps-row">
+                    <span class="ps-label" id="wl-out-label">Load (MBH)</span>
+                    <span class="ps-value muted" id="wl-out">—</span>
+                </div>
+                <div class="ps-row" id="wl-row-tons">
+                    <span class="ps-label">Tons refrigeration</span>
+                    <span class="ps-value muted" id="wl-tons">—</span>
+                </div>
+                <div class="btn-row">
+                    <button class="copy-btn" id="wl-copy">Copy value</button>
+                </div>
+                <div class="result-formula wrap" id="wl-formula"></div>
+                <div class="failure-callout" id="wl-callout" hidden></div>
+            </section>
+
+        </div>
+
+        <section class="tool-body-row">
+            <h2 class="ps-section-label">Worked example</h2>
+            <p class="ref-note worked-intro">
+                A chilled-water coil takes <span data-us="20 GPM" data-metric="1.26 L/s">20 GPM</span>, and the return pipe runs <span data-us="12 °F" data-metric="6.7 °C">12 °F</span> warmer than the supply.
+            </p>
+            <ol class="ref-note worked-list">
+                <li>The waterside equation: <code><span data-us="q = 500 × GPM × ΔT°F, in Btu/h" data-metric="q = 4.187 × L/s × ΔT°C, in kW">q = 500 × GPM × ΔT°F, in Btu/h</span></code>.</li>
+                <li>Plug in: <code><span data-us="q = 500 × 20 × 12 = 120,000 Btu/h = 120 MBH" data-metric="q = 4.187 × 1.26 × 6.7 = 35.3 kW">q = 500 × 20 × 12 = 120,000 Btu/h = 120 MBH</span></code>.</li>
+                <li>In chiller language: <code><span data-us="120 ÷ 12 = 10 tons" data-metric="35.3 ÷ 3.517 ≈ 10 tons">120 ÷ 12 = 10 tons</span></code> moving through that one coil.</li>
+            </ol>
+            <p class="ref-note">
+                Flip <em>Solve for</em> to run it the other way: the flow a scheduled load needs at design ΔT, or the ΔT a known flow should produce — the on-the-spot check behind every low-ΔT diagnosis. A coil passing design flow at half the design ΔT is moving half the load it should; the <a href="/education/balancing.html">balancing lesson</a> walks where that goes next.
+            </p>
+            <p class="ref-note">
+                Where the <span data-us="500" data-metric="4.187">500</span> comes from: <span data-us="8.33 lb/gal × 60 min/h × 1.0 Btu/lb·°F — water&rsquo;s density and specific heat folded into one constant." data-metric="water&rsquo;s specific heat, 4.187 kJ/kg·K, at roughly 1 kg per liter — density and specific heat folded into one constant.">8.33 lb/gal × 60 min/h × 1.0 Btu/lb·°F — water&rsquo;s density and specific heat folded into one constant.</span>
+            </p>
+        </section>
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/tools/valve-cv.html', label: 'Valve Cv Sizing'},
+            {href: '/tools/coil-sizing.html', label: 'Coil-Sizing Calculator'}
+        ],
+        lessons: [
+            {href: '/education/balancing.html', label: 'Hydronic Balancing'},
+            {href: '/education/pump-control.html', label: 'Pump Control'},
+            {href: '/education/hydronic-loops.html', label: 'Hydronic Loops'}
+        ],
+        quizzes: [
+            {href: '/practice/balancing.html', label: 'Hydronic Balancing'},
+            {href: '/practice/pump-control.html', label: 'Pump Control'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/tools/">← All tools</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="/scripts/ui.js"></script>
+<script>
+    // copyReadouts(btn, sep, ...ids) comes from /scripts/ui.js.
+    //
+    // q = 500 × GPM × ΔT°F (Btu/h). 500 = 8.33 lb/gal × 60 min/h × cp
+    // 1.0 Btu/lb·°F — water. Metric twin: q[kW] = 4.187 × L/s × ΔT°C
+    // (cp 4.187 kJ/kg·K at ~1 kg/L).
+    //
+    // The solve runs in the ACTIVE unit system with that system's own
+    // constant — deliberately NOT the canonical-IP engine pattern. The
+    // metric rounding policy (audit-2026-06 #53) requires the formula
+    // line to close on the displayed operands, and the metric constant
+    // is first-class; routing through IP would print a formula whose
+    // arithmetic doesn't reproduce the shown result. The two constants
+    // differ ~0.14 % by construction; each system is internally
+    // consistent. Unit flips rewrite the inputs from retained canonical
+    // values (coil-sizing's rewriteInput), so the state survives.
+    (function () {
+        'use strict';
+
+        const U = window.Units;
+        const KW_PER_TON = 3.517;   // 1 ton refrigeration = 12 MBH = 3.517 kW
+
+        // Trim trailing zeros so 120.00 reads 120 but 120.01 stays put.
+        const tidy = (n, dp) => parseFloat(n.toFixed(dp)).toString();
+
+        const solveEl   = document.getElementById('wl-solve');
+        const flowEl    = document.getElementById('wl-flow');
+        const dtEl      = document.getElementById('wl-dt');
+        const loadEl    = document.getElementById('wl-load');
+        const outEl     = document.getElementById('wl-out');
+        const outLabelEl = document.getElementById('wl-out-label');
+        const tonsRowEl = document.getElementById('wl-row-tons');
+        const tonsEl    = document.getElementById('wl-tons');
+        const formulaEl = document.getElementById('wl-formula');
+        const calloutEl = document.getElementById('wl-callout');
+        const copyBtn   = document.getElementById('wl-copy');
+
+        function mute(msg) {
+            outEl.className = 'ps-value muted';
+            outEl.textContent = '—';
+            tonsEl.className = 'ps-value muted';
+            tonsEl.textContent = '—';
+            formulaEl.textContent = '';
+            calloutEl.textContent = msg;
+            calloutEl.hidden = false;
+        }
+
+        function calc() {
+            const solve = solveEl.value;
+            const us = U.current() === 'us';
+            const K = us ? 500 : 4.187;
+
+            // Hide whichever quantity is the output; tons ride along
+            // only when the load is the answer.
+            document.getElementById('wl-row-flow').classList.toggle('hidden', solve === 'flow');
+            document.getElementById('wl-row-dt').classList.toggle('hidden', solve === 'dt');
+            document.getElementById('wl-row-load').classList.toggle('hidden', solve === 'load');
+            tonsRowEl.classList.toggle('hidden', solve !== 'load');
+
+            // Label up front so the mute path can't strand a stale one.
+            outLabelEl.textContent =
+                solve === 'load' ? `Load (${U.suffix.heatCapacity()})` :
+                solve === 'flow' ? `Flow (${U.suffix.waterFlow()})` :
+                `ΔT (${U.suffix.deltaTemp()})`;
+
+            const flow = parseFloat(flowEl.value);
+            const dt   = parseFloat(dtEl.value);
+            const load = parseFloat(loadEl.value);   // MBH or kW per active system
+
+            let result, formula, unit, dec;
+            if (solve === 'load') {
+                if (!isFinite(flow) || !isFinite(dt)) { mute('Enter flow and ΔT to find the load.'); return; }
+                if (flow < 0 || dt < 0) { mute('Flow and ΔT can’t be negative — enter ΔT as a positive difference.'); return; }
+                if (us) {
+                    const btuh = K * flow * dt;
+                    result = btuh / 1000;   // MBH
+                    formula = `q = 500 × ${tidy(flow, 4)} × ${tidy(dt, 4)} = ${Math.round(btuh).toLocaleString('en-US')} Btu/h = ${tidy(result, 1)} MBH`;
+                } else {
+                    result = K * flow * dt;   // kW
+                    formula = `q = 4.187 × ${tidy(flow, 4)} × ${tidy(dt, 4)} = ${tidy(result, 1)} kW`;
+                }
+                unit = ' ' + U.suffix.heatCapacity(); dec = 1;
+                // Tons derive from the DISPLAYED load, not the unrounded
+                // value, so a reader's own arithmetic reproduces the row
+                // (metric rounding policy, audit-2026-06 #53).
+                const shown = parseFloat(tidy(result, 1));
+                const tons = us ? shown / 12 : shown / KW_PER_TON;
+                tonsEl.className = 'ps-value live';
+                tonsEl.textContent = tidy(tons, 1);
+            } else if (solve === 'flow') {
+                if (!isFinite(load) || !isFinite(dt)) { mute('Enter load and ΔT to find the flow.'); return; }
+                if (load < 0) { mute('Load can’t be negative.'); return; }
+                if (dt <= 0) { mute('ΔT must be greater than 0 to solve for flow — at ΔT = 0 no flow moves any load.'); return; }
+                if (us) {
+                    result = (load * 1000) / (K * dt);
+                    formula = `Q = (${tidy(load, 4)} × 1000) ÷ (500 × ${tidy(dt, 4)}) = ${tidy(result, 1)} GPM`;
+                } else {
+                    result = load / (K * dt);
+                    formula = `Q = ${tidy(load, 4)} ÷ (4.187 × ${tidy(dt, 4)}) = ${tidy(result, 2)} L/s`;
+                }
+                unit = ' ' + U.suffix.waterFlow(); dec = us ? 1 : 2;
+            } else {
+                if (!isFinite(load) || !isFinite(flow)) { mute('Enter load and flow to find the ΔT.'); return; }
+                if (load < 0) { mute('Load can’t be negative.'); return; }
+                if (flow <= 0) { mute('Flow must be greater than 0 to solve for ΔT — still water has no ΔT to give.'); return; }
+                if (us) {
+                    result = (load * 1000) / (K * flow);
+                    formula = `ΔT = (${tidy(load, 4)} × 1000) ÷ (500 × ${tidy(flow, 4)}) = ${tidy(result, 1)} °F`;
+                } else {
+                    result = load / (K * flow);
+                    formula = `ΔT = ${tidy(load, 4)} ÷ (4.187 × ${tidy(flow, 4)}) = ${tidy(result, 1)} °C`;
+                }
+                unit = ' ' + U.suffix.deltaTemp(); dec = 1;
+            }
+
+            calloutEl.hidden = true;
+            outEl.className = 'ps-value live';
+            outEl.textContent = tidy(result, dec) + unit;
+            formulaEl.textContent = formula;
+        }
+
+        // ── Unit-flip resync ──────────────────────────────────────────
+        // coil-sizing's rewriteInput, verbatim shape: reformat from a
+        // retained canonical value so flipping away and back hands back
+        // exactly what was typed (audit-2026-06 #60a/#60b).
+        const REWRITE_DEC = { waterFlow: 2, deltaTemp: 1, heatCapacity: 1 };
+        function rewriteInput(id, quantity, fromU, toU) {
+            const el = document.getElementById(id);
+            const v  = parseFloat(el.value);
+            if (!isFinite(v)) return;
+            let canon = parseFloat(el.dataset.canonUs);
+            if (!(isFinite(canon) && el.dataset.canonQ === quantity && el.dataset.canonDisp === el.value)) {
+                canon = U.convert(v, fromU, 'us', quantity);
+                el.dataset.canonUs = String(canon);
+                el.dataset.canonQ = quantity;
+                el.dataset.typedText = el.value;
+                el.dataset.typedUnits = fromU;
+            }
+            if (toU === el.dataset.typedUnits) {
+                el.value = el.dataset.typedText;
+            } else {
+                const dec = REWRITE_DEC[quantity] !== undefined ? REWRITE_DEC[quantity] : 2;
+                el.value = (+U.convert(canon, 'us', toU, quantity).toFixed(dec)).toString();
+            }
+            el.dataset.canonDisp = el.value;
+        }
+
+        U.onChange(function (newUnits) {
+            const oldUnits = newUnits === 'us' ? 'metric' : 'us';
+            rewriteInput('wl-flow', 'waterFlow', oldUnits, newUnits);
+            rewriteInput('wl-dt', 'deltaTemp', oldUnits, newUnits);
+            rewriteInput('wl-load', 'heatCapacity', oldUnits, newUnits);
+            calc();
+        });
+
+        // ── Wiring ────────────────────────────────────────────────────
+        solveEl.addEventListener('change', calc);
+        [flowEl, dtEl, loadEl].forEach(el => el.addEventListener('input', calc));
+        copyBtn.addEventListener('click', e => copyReadouts(e.currentTarget, '', 'wl-out'));
+
+        // ── Initial paint ─────────────────────────────────────────────
+        // Input values are authored in US units; convert once up front
+        // for a returning metric visitor so the numbers match the labels
+        // units.js has already swapped (coil-sizing's fix).
+        if (U.current() === 'metric') {
+            rewriteInput('wl-flow', 'waterFlow', 'us', 'metric');
+            rewriteInput('wl-dt', 'deltaTemp', 'us', 'metric');
+            rewriteInput('wl-load', 'heatCapacity', 'us', 'metric');
+        }
+        calc();
+    })();
+</script>
+{% endblock %}
