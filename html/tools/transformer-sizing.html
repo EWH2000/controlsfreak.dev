@@ -1,0 +1,273 @@
+---
+title: Transformer VA Budget — controlsfreak.dev
+description: Add up 24 VAC device loads against a control transformer — total VA, percent loaded, headroom on the standard sizes, and a secondary fuse suggestion.
+canonical: https://controlsfreak.dev/tools/transformer-sizing.html
+nav: tools
+keywords: 24vac va transformer sizing class 2 fuse secondary control power budget
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Tools · Transformer VA</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">
+                Transformer VA Budget
+                <span class="tool-tag">Electrical</span>
+            </h1>
+        </div>
+
+        <p class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
+            &ldquo;Does this transformer have room for one more actuator?&rdquo; — the most-retrofits question with the least paperwork.
+            List what&rsquo;s hanging on the 24&nbsp;VAC secondary, pick the transformer, and read the percent loaded, the headroom, and a secondary fuse suggestion.
+        </p>
+
+        <div class="tool-body-2col">
+
+            <section>
+                <h2 class="ps-section-label">Devices on the secondary</h2>
+                <div class="ps-row">
+                    <input class="ps-input" type="text" id="xf-name-1" aria-label="Device 1 name" placeholder="Device" value="Controller">
+                    <input class="ps-input" type="number" id="xf-va-1" aria-label="Device 1 VA" step="any" min="0" placeholder="VA" value="14">
+                </div>
+                <div class="ps-row">
+                    <input class="ps-input" type="text" id="xf-name-2" aria-label="Device 2 name" placeholder="Device" value="Damper actuator">
+                    <input class="ps-input" type="number" id="xf-va-2" aria-label="Device 2 VA" step="any" min="0" placeholder="VA" value="7">
+                </div>
+                <div class="ps-row">
+                    <input class="ps-input" type="text" id="xf-name-3" aria-label="Device 3 name" placeholder="Device" value="Damper actuator">
+                    <input class="ps-input" type="number" id="xf-va-3" aria-label="Device 3 VA" step="any" min="0" placeholder="VA" value="7">
+                </div>
+                <div class="ps-row">
+                    <input class="ps-input" type="text" id="xf-name-4" aria-label="Device 4 name" placeholder="Device" value="Valve actuator">
+                    <input class="ps-input" type="number" id="xf-va-4" aria-label="Device 4 VA" step="any" min="0" placeholder="VA" value="10">
+                </div>
+                <div class="ps-row">
+                    <input class="ps-input" type="text" id="xf-name-5" aria-label="Device 5 name" placeholder="Device" value="Relay">
+                    <input class="ps-input" type="number" id="xf-va-5" aria-label="Device 5 VA" step="any" min="0" placeholder="VA" value="2">
+                </div>
+                <div class="ps-row">
+                    <input class="ps-input" type="text" id="xf-name-6" aria-label="Device 6 name" placeholder="Device">
+                    <input class="ps-input" type="number" id="xf-va-6" aria-label="Device 6 VA" step="any" min="0" placeholder="VA">
+                </div>
+                <div class="ps-row">
+                    <input class="ps-input" type="text" id="xf-name-7" aria-label="Device 7 name" placeholder="Device">
+                    <input class="ps-input" type="number" id="xf-va-7" aria-label="Device 7 VA" step="any" min="0" placeholder="VA">
+                </div>
+                <div class="ps-row">
+                    <input class="ps-input" type="text" id="xf-name-8" aria-label="Device 8 name" placeholder="Device">
+                    <input class="ps-input" type="number" id="xf-va-8" aria-label="Device 8 VA" step="any" min="0" placeholder="VA">
+                </div>
+                <div class="ps-row">
+                    <label class="ps-label" for="xf-size">Transformer</label>
+                    <select class="ps-input" id="xf-size">
+                        <option value="40">40 VA</option>
+                        <option value="75" selected>75 VA</option>
+                        <option value="96">96 VA</option>
+                        <option value="100">100 VA</option>
+                        <option value="custom">Custom…</option>
+                    </select>
+                </div>
+                <div class="ps-row hidden" id="xf-row-custom">
+                    <label class="ps-label" for="xf-size-custom">Custom rating (VA)</label>
+                    <input class="ps-input" type="number" id="xf-size-custom" step="any" min="0" placeholder="50">
+                </div>
+                <p class="ref-note">
+                    Rows with no VA are skipped — leave the spares blank. Get the VA from the device label or datasheet, not from memory; the reference table below is for sanity-checking, not for filling in.
+                </p>
+            </section>
+
+            <section role="status" aria-atomic="false">
+                <h2 class="ps-section-label">Output</h2>
+                <div class="ps-row">
+                    <span class="ps-label">Total connected load</span>
+                    <span class="ps-value muted" id="xf-total">—</span>
+                </div>
+                <div class="ps-row">
+                    <span class="ps-label">Percent loaded</span>
+                    <span class="ps-value muted" id="xf-pct">—</span>
+                </div>
+                <div class="ps-row">
+                    <span class="ps-label">Headroom</span>
+                    <span class="ps-value muted" id="xf-headroom">—</span>
+                </div>
+                <div class="ps-row">
+                    <span class="ps-label">Suggested secondary fuse</span>
+                    <span class="ps-value muted" id="xf-fuse">—</span>
+                </div>
+                <div class="btn-row">
+                    <button class="copy-btn" id="xf-copy">Copy total</button>
+                </div>
+                <div class="result-formula wrap" id="xf-formula"></div>
+                <div class="status-pill" id="xf-status">Enter device loads to see the verdict.</div>
+            </section>
+
+        </div>
+
+        <section class="tool-body-row">
+            <h2 class="ps-section-label">Worked example</h2>
+            <p class="ref-note worked-intro">
+                The seeded panel: a controller (14&nbsp;VA), two damper actuators (7&nbsp;VA each), a valve actuator (10&nbsp;VA), and an interposing relay (2&nbsp;VA) on a 75&nbsp;VA transformer.
+            </p>
+            <ol class="ref-note worked-list">
+                <li>Total: <code>14 + 7 + 7 + 10 + 2 = 40 VA</code>.</li>
+                <li>Loading: <code>40 ÷ 75 = 53 %</code> — 35&nbsp;VA of headroom, comfortably under the 80&nbsp;% planning line.</li>
+                <li>Fuse: rated secondary current is <code>75 ÷ 24 = 3.1 A</code>; <code>3.1 × 1.25 = 3.9 → 4 A</code> standard size.</li>
+            </ol>
+            <p class="ref-note">
+                The fuse is sized off the <strong>transformer rating</strong>, not the connected load — it protects the transformer and the wiring, and it shouldn&rsquo;t need touching when you add a device later.
+            </p>
+        </section>
+
+        <section class="tool-body-row">
+            <h2 class="ps-section-label">Typical 24 VAC loads — sanity-check table</h2>
+            <!-- // user to verify typical-VA table values — placeholder data, refine after review -->
+            <table class="ref-table-dense">
+                <thead>
+                    <tr><th>Device</th><th>Typical VA</th><th>Notes</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>DDC controller</td><td>4 – 14</td><td>Grows with onboard I/O count.</td></tr>
+                    <tr><td>Damper actuator, non-spring</td><td>2 – 5</td><td>Holding; more while driving.</td></tr>
+                    <tr><td>Damper actuator, spring-return</td><td>5 – 10</td><td>Holds against the spring continuously.</td></tr>
+                    <tr><td>Valve actuator</td><td>3 – 10</td><td>Size class matters more than type.</td></tr>
+                    <tr><td>Interposing relay coil</td><td>1 – 2</td><td>Inrush ~5–10× for tens of ms.</td></tr>
+                    <tr><td>Thermostat / sensor with display</td><td>1 – 3</td><td>Loop-powered transmitters draw from DC, not this budget.</td></tr>
+                </tbody>
+            </table>
+            <p class="ref-note">
+                Spring-return actuators and relay coils draw more while moving or pulling in than at rest — that&rsquo;s why the 80&nbsp;% planning line exists. A transformer that lives at 95&nbsp;% steady-state has nothing left for the morning when everything drives at once.
+            </p>
+            <!-- // user to verify typical-VA table values — placeholder data, refine after review -->
+        </section>
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/tools/voltage-drop.html', label: 'Wire Run & Voltage Drop'},
+            {href: '/tools/signal-scaling.html', label: 'Signal Scaling'}
+        ],
+        simulators: [
+            {href: '/simulators/controller-wiring.html', label: 'Controller Wiring Simulator'}
+        ],
+        lessons: [
+            {href: '/education/controller-wiring.html', label: 'Controller Wiring'}
+        ],
+        quizzes: [
+            {href: '/practice/field-wiring-sensors.html', label: 'Field Wiring & Sensors'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/tools/">← All tools</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="/scripts/ui.js"></script>
+<script>
+    // copyReadouts(btn, sep, ...ids) comes from /scripts/ui.js. VA, volts,
+    // and amps are unit-system-agnostic, so this tool doesn't touch the
+    // global US/Metric toggle (no data-us spans anywhere on the page).
+    (function () {
+        'use strict';
+
+        const ROWS = 8;
+        const SECONDARY_V = 24;
+        // // user to verify secondary-fuse sizing rule + standard ladder —
+        // placeholder data, refine after review. Rule implemented: fuse ≈
+        // 125 % of rated secondary current, rounded UP to the next standard
+        // size; verify against the job spec / AHJ.
+        const FUSE_LADDER = [1, 1.5, 2, 2.5, 3, 4, 5, 6, 7, 8, 10];
+
+        const tidy = (n, dp) => parseFloat(n.toFixed(dp)).toString();
+
+        const sizeEl    = document.getElementById('xf-size');
+        const customRowEl = document.getElementById('xf-row-custom');
+        const customEl  = document.getElementById('xf-size-custom');
+        const totalEl   = document.getElementById('xf-total');
+        const pctEl     = document.getElementById('xf-pct');
+        const headroomEl = document.getElementById('xf-headroom');
+        const fuseEl    = document.getElementById('xf-fuse');
+        const formulaEl = document.getElementById('xf-formula');
+        const statusEl  = document.getElementById('xf-status');
+        const copyBtn   = document.getElementById('xf-copy');
+
+        const vaEls = [];
+        for (let i = 1; i <= ROWS; i++) vaEls.push(document.getElementById('xf-va-' + i));
+
+        function setStatus(text, kind) {
+            statusEl.textContent = text;
+            statusEl.className = 'status-pill' + (kind ? ' ' + kind : '');
+        }
+
+        function muteAll(msg) {
+            for (const el of [totalEl, pctEl, headroomEl, fuseEl]) {
+                el.className = 'ps-value muted';
+                el.textContent = '—';
+            }
+            formulaEl.textContent = '';
+            setStatus(msg, '');
+        }
+
+        function calc() {
+            customRowEl.classList.toggle('hidden', sizeEl.value !== 'custom');
+
+            // Blank / non-finite rows are spares, not errors — skip them.
+            const loads = [];
+            for (const el of vaEls) {
+                const v = parseFloat(el.value);
+                if (isFinite(v) && v > 0) loads.push(v);
+            }
+            if (!loads.length) { muteAll('Enter at least one device load.'); return; }
+
+            const size = sizeEl.value === 'custom' ? parseFloat(customEl.value) : parseFloat(sizeEl.value);
+            if (!isFinite(size) || size <= 0) { muteAll('Enter the transformer rating.'); return; }
+
+            const total = loads.reduce((a, b) => a + b, 0);
+            const pct = (total / size) * 100;
+            const headroom = size - total;
+
+            const fla = size / SECONDARY_V;
+            const fuseTarget = fla * 1.25;
+            const fuse = FUSE_LADDER.find(f => f >= fuseTarget);
+
+            totalEl.className = 'ps-value live';
+            totalEl.textContent = tidy(total, 1) + ' VA';
+            pctEl.className = 'ps-value live';
+            pctEl.textContent = tidy(pct, 0) + ' %';
+            headroomEl.className = 'ps-value live';
+            headroomEl.textContent = tidy(headroom, 1) + ' VA';
+            fuseEl.className = 'ps-value live';
+            fuseEl.textContent = fuse ? fuse + ' A' : '> 10 A — check the rule';
+            formulaEl.textContent =
+                `Σ = ${loads.map(v => tidy(v, 1)).join(' + ')} = ${tidy(total, 1)} VA · ` +
+                `${tidy(total, 1)} ÷ ${tidy(size, 0)} = ${tidy(pct, 0)} % · ` +
+                `fuse: ${tidy(size, 0)} ÷ 24 = ${tidy(fla, 1)} A × 1.25 = ${tidy(fuseTarget, 1)} → ${fuse ? fuse + ' A' : '—'}`;
+
+            if (pct > 100) {
+                setStatus(`Overloaded — ${tidy(total, 1)} VA on a ${tidy(size, 0)} VA transformer (${tidy(pct, 0)} %). It will run hot and brown out under inrush; move loads to another transformer or upsize.`, 'error');
+            } else if (pct > 80) {
+                setStatus(`Works today, no margin — ${tidy(pct, 0)} % loaded. Inrush from spring-return actuators and relay pull-in eats the gap, and the next add-on device has nowhere to go. Plan the upsize now.`, 'warn');
+            } else {
+                setStatus(`OK — ${tidy(pct, 0)} % loaded, ${tidy(headroom, 1)} VA of headroom under the ${tidy(size, 0)} VA rating.`, 'ok');
+            }
+        }
+
+        // ── Wiring ────────────────────────────────────────────────────
+        sizeEl.addEventListener('change', calc);
+        customEl.addEventListener('input', calc);
+        vaEls.forEach(el => el.addEventListener('input', calc));
+        copyBtn.addEventListener('click', e => copyReadouts(e.currentTarget, '', 'xf-total'));
+
+        calc();
+    })();
+</script>
+{% endblock %}
