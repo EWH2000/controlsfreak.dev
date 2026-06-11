@@ -506,6 +506,12 @@ main { flex: 1; }
     background: var(--surface);
     border: 1px solid var(--border);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    /* The Tools dropdown crossed a short viewport's height at 18 entries
+       (2026-06): cap and scroll internally so the last items stay
+       reachable. The mobile sheet overrides this — it already scrolls. */
+    max-height: calc(100dvh - 7rem);
+    overflow-y: auto;
+    overscroll-behavior: contain;
 }
 .nav-menu[hidden] { display: none; }
 .nav-menu .nav-menu-item {
@@ -1378,6 +1384,9 @@ footer {
         width: 100%;
         box-shadow: none;
         margin-top: 0.3rem;
+        /* The sheet itself scrolls — an inner cap here would double-scroll. */
+        max-height: none;
+        overflow-y: visible;
     }
     /* Long tool names wrap in the full-width sheet instead of running off
        the side (the desktop dropdown keeps them on one line). */
