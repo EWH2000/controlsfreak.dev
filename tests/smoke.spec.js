@@ -37,6 +37,7 @@ const PAGES = [
     { name: 'airflow',                url: '/tools/airflow.html' },
     { name: 'transformer va budget',  url: '/tools/transformer-sizing.html' },
     { name: 'wire run voltage drop',  url: '/tools/voltage-drop.html' },
+    { name: 'bacnet mstp lesson',     url: '/education/bacnet-mstp.html' },
     { name: 'modbus function codes',  url: '/tools/modbus-functions.html' },
     { name: 'simulators landing',     url: '/simulators/' },
     { name: 'pid tuner',              url: '/simulators/pid-tuner.html' },

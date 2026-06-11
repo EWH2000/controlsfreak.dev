@@ -39,7 +39,8 @@ the 2026-06 build queue:
    `electrical` chip) — *(shipped 2026-06-10, see entry below)*.
 4. **MS/TP lesson** (`bacnet-mstp.html`) — both BACnet lessons
    explicitly defer to it and it doesn't exist; lesson first, the
-   parked `[future: bus simulator]` stays its eventual hands-on pair.
+   parked `[future: bus simulator]` stays its eventual hands-on pair
+   — *(shipped 2026-06-10, see entry below)*.
 
 Also decided in the same review: **Controller commissioner stays
 parked** (annotated on its entry), **cross-page Mix quizzes deferred**
@@ -68,6 +69,64 @@ renderer), plus a data-file schema for scenarios. Build **after** the
 2026-06 four-PR queue above. Scope discipline when it starts: one
 engine, one scenario, the existing practice-landing card shape; no
 scoring leaderboards (the quiz plan's hard-nos carry over).
+
+### BACnet MS/TP — Education page *(shipped 2026-06-10)*
+*One question: why do devices fall off an MS/TP trunk — and what do
+the token ring, the addressing, and the two wires each need to stay
+healthy?*
+
+PR 4 of the mock-call build queue, and the most-validated gap: the
+MS/TP audit scenario found both BACnet lessons explicitly deferring
+to a page that didn't exist — a tech following those links from the
+field found nothing. Ships at `html/education/bacnet-mstp.html`,
+prefix `bm-`, Protocols chip (Education All 17→18, Protocols 4→5).
+
+In scope (sections shipped):
+- *The token ring* — token passing, Poll-For-Master,
+  `Max_Info_Frames` (router wants 10–20, field devices 1), and the
+  **`Max_Master` capped-ring silent failure** as the centerpiece.
+  SVG #1 (`bm-token-*`): token-walk with MAC 45 greyed outside a
+  `Max_Master = 40` boundary, "never polled."
+- *Two addresses* — MAC (0–127, per-segment) vs device instance
+  (site-wide), the arbitrary pairing, and the duplicate-MAC
+  taking-turns-offline symptom (classic after a controller swap
+  lands at factory default).
+- *The two wires* — daisy-chain only / no star taps, 120 Ω EOL at
+  both physical ends only, single-point bias, polarity (and the
+  A/B-labels-disagree trap), shield at one end, segment budgets.
+  SVG #2 (`bm-term-*`): correct chain with EOLs highlighted, a
+  red-crossed star tap. The length/device/baud budget paragraph
+  ships **behind placeholder markers** — drafted as ASHRAE 135's
+  4000 ft headline + vendor-derating note, owner rewording at
+  review per the planning decision.
+- *Symptom → layer table* — five rows mapping the field complaint
+  to ring / addressing / electrical before the meter comes out;
+  closes by paying the audit scenario's own case (the extended
+  trunk usually breaks several layers at once).
+
+Out of scope (named in closing): the **bus simulator** (still
+`[future: bus simulator]` — this page is the lesson half of that
+eventual pairing; the wiring sim's NET terminals remain the seam),
+transmission-line physics, BACnet/SC.
+
+Build notes:
+- **`.bac-svg` consolidation trigger fired** (third BACnet-family
+  page): `.bac-svg`/`.mb-svg` moved to a shared
+  `BLOCK-AND-BYTE DIAGRAMS` block in `styles.css`; the four per-page
+  copies (which had drifted to a 740/760 mix on `.wide`) deleted,
+  `.wide` unified at 760. `screenshot-diagrams.mjs` already
+  enumerated `svg.bac-svg`.
+- Deferral payoffs landed on `bacnet-basics` (two passages),
+  `bacnet-networking` (out-of-scope bullet), and
+  `controller-wiring` (network paragraph now anchors the lesson
+  while keeping the bus-sim deferral as prose); reciprocal
+  relatedLinks on both BACnet lessons.
+- **Paired practice quiz parked**: `[future:
+  practice/bacnet-mstp.html]` — the 1:1 lesson↔quiz matrix is
+  re-opened by this page until a bacnet-mstp quiz ships (banked
+  question material: Max_Master capping, duplicate MAC, EOL
+  placement, A/B polarity trap, symptom→layer rows). Until then the
+  page's "Test yourself" group borrows the BACnet Networking quiz.
 
 ### Control-power electrical tools — Transformer VA Budget + Wire Run / Voltage Drop *(shipped 2026-06-10)*
 
@@ -3172,7 +3231,7 @@ In scope (sections shipped):
   short H2 acknowledging both data links. RS-485 token ring vs
   UDP/47808 (0xBAC0). Defers token-rotation / `Max_Master` /
   `Max_Info_Frames` / baud / cable limits to
-  `[future: bacnet-mstp.html]`. Static SVG of the two framing
+  `[future: bacnet-mstp.html]` *(shipped 2026-06-10)*. Static SVG of the two framing
   stacks side-by-side, with the shared NPDU+APDU payload below a
   bracket marking the data-link wrapper.
 
@@ -3183,7 +3242,7 @@ Out of scope (forward links):
   blob — `bacnet-networking.html`, the second page of this pair
   (forward-linked from the closing "what this page didn't cover"
   section and from the MS/TP-vs-IP section as a live anchor).
-- MS/TP deep mechanics — `[future: bacnet-mstp.html]`. Token
+- MS/TP deep mechanics — `[future: bacnet-mstp.html]` *(shipped 2026-06-10)*. Token
   rotation, master polling, baud rates, segment limits. Named in
   both the MS/TP-vs-IP section and the closing.
 - Priority-array deeper mechanics (writeable `Relinquish_Default`,
@@ -3213,8 +3272,9 @@ trigger.
 - `bacnet-networking.html` — **paid 2026-05-23.** The closing
   section's forward-link to the companion page is an active anchor;
   see the next entry.
-- `bacnet-mstp.html` — named in §6 (MS/TP vs IP) and in the closing.
-  The page doesn't exist yet; topic parked entirely in this entry.
+- `bacnet-mstp.html` — **paid 2026-06-10.** Both the §6 (MS/TP vs IP)
+  deferral and the closing's out-of-scope mention are live anchors to
+  the shipped page.
 - `bacnet-priority.html` — named in the closing as the eventual
   destination for deeper priority-array mechanics.
 
@@ -3298,7 +3358,7 @@ In scope (sections shipped):
 
 Out of scope (forward links):
 
-- MS/TP on the wire — `[future: bacnet-mstp.html]`. Token rotation,
+- MS/TP on the wire — `[future: bacnet-mstp.html]` *(shipped 2026-06-10)*. Token rotation,
   `Max_Master`, `Max_Info_Frames`, baud rates, cable / device-count
   limits. Named in the closing.
 - Segmentation of long messages — `[future: bacnet-segmentation.html]`
@@ -3335,8 +3395,8 @@ either family — at that point both classes likely move to
 `styles.css` together as one block-and-byte-diagram block.
 
 **Forward-link debts this page incurred:**
-- `bacnet-mstp.html` — sketched in the closing section. Carries the
-  MS/TP wire story.
+- `bacnet-mstp.html` — **paid 2026-06-10.** The "MS/TP on the wire"
+  out-of-scope bullet is a live anchor to the shipped page.
 - `bacnet-segmentation.html` — named in the discovery-fails list
   and in the closing. Segmentation deserves its own treatment.
 - `bacnet-sc.html` — named in the closing. The transport is rare

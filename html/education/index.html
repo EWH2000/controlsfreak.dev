@@ -23,7 +23,7 @@ nav: education
 
     <div class="filter-chips" role="group" aria-label="Filter lessons by category">
         <button type="button" class="filter-chip active" data-category="all" aria-pressed="true">
-            All <span class="filter-chip-count">17</span>
+            All <span class="filter-chip-count">18</span>
         </button>
         <button type="button" class="filter-chip" data-category="fundamentals" aria-pressed="false">
             Fundamentals <span class="filter-chip-count">6</span>
@@ -35,7 +35,7 @@ nav: education
             Refrigerant <span class="filter-chip-count">3</span>
         </button>
         <button type="button" class="filter-chip" data-category="protocols" aria-pressed="false">
-            Protocols <span class="filter-chip-count">4</span>
+            Protocols <span class="filter-chip-count">5</span>
         </button>
     </div>
 
@@ -191,6 +191,15 @@ nav: education
             titleFull:  'BACnet Networking',
             desc:       'BACnet networking — the three layers of addressing, the BVLL/NPDU/APDU frame, BBMDs and Foreign Device Registration, and reading the EBO hex blob.',
             pills:      ['BACnet', '3 Addr Layers', 'BVLL / NPDU / APDU', 'BBMD / FDR'],
+            category:   'protocols'
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/education/bacnet-mstp.html',
+            titleShort: 'BACnet MS/TP',
+            titleFull:  'BACnet MS/TP',
+            desc:       'Why devices fall off an MS/TP trunk — the token ring and Max_Master, MAC address vs device instance, termination / biasing / polarity, and a symptom-to-layer table.',
+            pills:      ['BACnet', 'Token Ring', 'Max_Master', 'Termination'],
             category:   'protocols'
         }) }}
     </div>
