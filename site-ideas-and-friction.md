@@ -96,9 +96,11 @@ In scope (sections shipped):
   A/B-labels-disagree trap), shield at one end, segment budgets.
   SVG #2 (`bm-term-*`): correct chain with EOLs highlighted, a
   red-crossed star tap. The length/device/baud budget paragraph
-  ships **behind placeholder markers** — drafted as ASHRAE 135's
-  4000 ft headline + vendor-derating note, owner rewording at
-  review per the planning decision.
+  shipped behind placeholder markers; **owner review landed
+  2026-06-10** — markers retired, paragraph rewritten to the owner's
+  two-tier framing: past the *vendor's* derated figure it *could be*
+  a problem, past the *standard's* 4000 ft / 32-unit-load figure it
+  *is* a problem (repeater or second segment).
 - *Symptom → layer table* — five rows mapping the field complaint
   to ring / addressing / electrical before the meter comes out;
   closes by paying the audit scenario's own case (the extended
@@ -144,12 +146,15 @@ layout codebase-issues #29 warns about.
   dynamic add/remove), name + VA per row, blank rows skipped as
   spares, rows 1–5 seeded with the worked example. Transformer
   select 40/75/96/100/custom.
-- Status pill: ok ≤ 80 % / warn 80–100 % ("works today, no margin —
-  inrush eats the gap") / error > 100 %.
+- Status pill: ok ≤ 80 % / warn 80–100 % / error > 100 %. **Owner
+  review landed 2026-06-10**: pill and table-note wording moved to
+  the owner's two-tier framing — above 80 % it *could be* a problem,
+  above 100 % it *is* a problem.
 - Fuse suggestion sized off the **transformer rating**, not the
   connected load (`rating ÷ 24 × 1.25`, rounded up the standard
-  ladder) — the rule and the typical-VA sanity table both ship
-  behind `// user to verify` placeholder markers for owner review.
+  ladder) — the rule and the typical-VA sanity table shipped behind
+  `// user to verify` placeholder markers; retired 2026-06-10 with
+  the owner's review pass.
 
 **Wire Run / Voltage Drop** (`/tools/voltage-drop.html`, `vd-`):
 - One signal-type select drives conditional rows (coil-sizing's
