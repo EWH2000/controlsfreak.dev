@@ -1,0 +1,348 @@
+---
+title: Wire Run & Voltage Drop — controlsfreak.dev
+description: Will the signal survive the wire run? Loop resistance and supply margin for 4-20 mA, drop into a 0-10 V input, and lead error on temperature sensors.
+canonical: https://controlsfreak.dev/tools/voltage-drop.html
+nav: tools
+keywords: awg wire gauge ohms voltage drop 4-20ma loop 0-10v thermistor lead resistance run length
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Tools · Voltage Drop</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">
+                Wire Run &amp; Voltage Drop
+                <span class="tool-tag">Electrical</span>
+            </h1>
+        </div>
+
+        <p class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
+            A long home run costs copper resistance, and what that resistance does depends entirely on the signal riding it.
+            Pick the signal type, the gauge, and the one-way length — the verdict speaks that signal&rsquo;s language: loop supply margin for 4-20&nbsp;mA, real-versus-imagined error on 0-10&nbsp;V, and degrees of lie on a temperature sensor.
+        </p>
+
+        <div class="tool-body-2col">
+
+            <section>
+                <h2 class="ps-section-label">Input</h2>
+                <div class="ps-row">
+                    <label class="ps-label" for="vd-type">Signal type</label>
+                    <select class="ps-input" id="vd-type">
+                        <option value="loop">4-20 mA loop (2-wire)</option>
+                        <option value="volt">0-10 V</option>
+                        <option value="therm">Temperature sensor (resistance)</option>
+                    </select>
+                </div>
+                <div class="ps-row">
+                    <label class="ps-label" for="vd-awg">Wire gauge (AWG)</label>
+                    <select class="ps-input" id="vd-awg">
+                        <option value="14">14 AWG</option>
+                        <option value="16">16 AWG</option>
+                        <option value="18" selected>18 AWG</option>
+                        <option value="20">20 AWG</option>
+                        <option value="22">22 AWG</option>
+                    </select>
+                </div>
+                <div class="ps-row">
+                    <label class="ps-label" for="vd-len">One-way run length (ft)</label>
+                    <input class="ps-input" type="number" id="vd-len" step="any" min="0" placeholder="500" value="500">
+                </div>
+                <div class="ps-row vd-loop-only">
+                    <label class="ps-label" for="vd-supply">Loop supply (VDC)</label>
+                    <input class="ps-input" type="number" id="vd-supply" step="any" min="0" placeholder="24" value="24">
+                </div>
+                <div class="ps-row vd-loop-only">
+                    <label class="ps-label" for="vd-vmin">Transmitter minimum (VDC)</label>
+                    <input class="ps-input" type="number" id="vd-vmin" step="any" min="0" placeholder="12" value="12">
+                </div>
+                <div class="ps-row vd-loop-only">
+                    <label class="ps-label" for="vd-rsense">Receiver sense resistance (Ω)</label>
+                    <input class="ps-input" type="number" id="vd-rsense" step="any" min="0" placeholder="250" value="250">
+                </div>
+                <div class="ps-row vd-volt-only hidden">
+                    <label class="ps-label" for="vd-rin">AI input impedance (Ω)</label>
+                    <input class="ps-input" type="number" id="vd-rin" step="any" min="0" placeholder="100000" value="100000">
+                </div>
+                <p class="ref-note vd-loop-only">
+                    The transmitter minimum is on its datasheet — 12&nbsp;V is a common floor for 2-wire transmitters. The sense resistance is what the AI burns to read the current; 250&nbsp;Ω (1–5&nbsp;V) is typical, some inputs use 100&nbsp;Ω.
+                </p>
+                <p class="ref-note vd-th-only hidden">
+                    Lead resistance adds straight onto what the controller measures, and an NTC reads added ohms as <em>colder</em>. The same copper means wildly different errors across sensor families — that&rsquo;s the lesson of the three rows.
+                </p>
+            </section>
+
+            <section role="status" aria-atomic="false">
+                <h2 class="ps-section-label">Output</h2>
+                <div class="ps-row">
+                    <span class="ps-label">Round-trip wire resistance</span>
+                    <span class="ps-value muted" id="vd-rwire">—</span>
+                </div>
+                <div class="ps-row vd-loop-only">
+                    <span class="ps-label">Voltage at transmitter, 20 mA worst case</span>
+                    <span class="ps-value muted" id="vd-vxmtr">—</span>
+                </div>
+                <div class="ps-row vd-loop-only">
+                    <span class="ps-label">Max one-way run at this gauge</span>
+                    <span class="ps-value muted" id="vd-maxlen">—</span>
+                </div>
+                <div class="ps-row vd-volt-only hidden">
+                    <span class="ps-label">Worst-case reading error</span>
+                    <span class="ps-value muted" id="vd-verr">—</span>
+                </div>
+                <div class="ps-row vd-th-only hidden">
+                    <span class="ps-label">10K Type II thermistor error</span>
+                    <span class="ps-value muted" id="vd-terr-10k">—</span>
+                </div>
+                <div class="ps-row vd-th-only hidden">
+                    <span class="ps-label">1K Balco error</span>
+                    <span class="ps-value muted" id="vd-terr-balco">—</span>
+                </div>
+                <div class="ps-row vd-th-only hidden">
+                    <span class="ps-label">Pt100 RTD error</span>
+                    <span class="ps-value muted" id="vd-terr-pt100">—</span>
+                </div>
+                <div class="btn-row">
+                    <button class="copy-btn" id="vd-copy">Copy resistance</button>
+                </div>
+                <div class="result-formula wrap" id="vd-formula"></div>
+                <div class="status-pill" id="vd-status">Enter the run to see the verdict.</div>
+            </section>
+
+        </div>
+
+        <section class="tool-body-row">
+            <h2 class="ps-section-label">Worked example — the 4-20 mA case for long runs</h2>
+            <p class="ref-note worked-intro">
+                A loop-powered pressure transducer sits 500&nbsp;ft from the panel on 18&nbsp;AWG, fed from 24&nbsp;VDC through a 250&nbsp;Ω sense resistor.
+            </p>
+            <ol class="ref-note worked-list">
+                <li>Round-trip copper: <code>R = 2 × 500 × 6.385 ÷ 1000 = 6.4 Ω</code>.</li>
+                <li>Worst case is full-scale, 20&nbsp;mA: <code>drop = 0.020 × (6.4 + 250) = 5.1 V</code>.</li>
+                <li>At the transmitter: <code>24 − 5.1 = 18.9 V</code> — comfortably above the 12&nbsp;V floor.</li>
+            </ol>
+            <p class="ref-note">
+                That margin is <em>why</em> 4-20&nbsp;mA owns long runs: current is the signal, so copper resistance costs supply headroom instead of accuracy, and there&rsquo;s thousands of feet of headroom to spend.
+            </p>
+        </section>
+
+        <section class="tool-body-row">
+            <h2 class="ps-section-label">Copper resistance reference</h2>
+            <table class="ref-table-dense">
+                <thead>
+                    <tr><th>AWG</th><th>Ω per 1000 ft (one conductor)</th><th>Ω per 100 ft round trip</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>14</td><td>2.525</td><td>0.51</td></tr>
+                    <tr><td>16</td><td>4.016</td><td>0.80</td></tr>
+                    <tr><td>18</td><td>6.385</td><td>1.28</td></tr>
+                    <tr><td>20</td><td>10.15</td><td>2.03</td></tr>
+                    <tr><td>22</td><td>16.14</td><td>3.23</td></tr>
+                </tbody>
+            </table>
+            <p class="ref-note">
+                Solid copper at 25&nbsp;°C, per NEC Chapter&nbsp;9 Table&nbsp;8. This tool is US-native (AWG, Ω/1000&nbsp;ft) — a metric mm²&nbsp;/&nbsp;Ω-per-km option is a tracked follow-up. Copper runs ~0.4&nbsp;%/°C hotter-is-more, so a ceiling-plenum run in summer reads a touch higher than the table.
+            </p>
+        </section>
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/tools/signal-scaling.html', label: 'Signal Scaling'},
+            {href: '/tools/thermistor-calculator.html', label: 'Thermistor Calculator'},
+            {href: '/tools/transformer-sizing.html', label: 'Transformer VA Budget'}
+        ],
+        simulators: [
+            {href: '/simulators/controller-wiring.html', label: 'Controller Wiring Simulator'}
+        ],
+        lessons: [
+            {href: '/education/controller-wiring.html', label: 'Controller Wiring'}
+        ],
+        quizzes: [
+            {href: '/practice/field-wiring-sensors.html', label: 'Field Wiring & Sensors'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/tools/">← All tools</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="/scripts/ui.js"></script>
+<script src="/scripts/thermistor-data.js"></script>
+<script>
+    // copyReadouts comes from /scripts/ui.js; THERMISTOR_TYPES from
+    // /scripts/thermistor-data.js (the sensor-error rows differentiate
+    // off the same curves the thermistor calculator displays, instead of
+    // hardcoding slopes). US-native (AWG, Ω/1000 ft is the US trade
+    // frame; a metric tech works in mm² and Ω/km — different table);
+    // metric option parked in the friction file.
+    (function () {
+        'use strict';
+
+        // Solid copper, 25 °C, Ω per 1000 ft — NEC Ch. 9 Table 8.
+        const OHMS_PER_KFT = { 14: 2.525, 16: 4.016, 18: 6.385, 20: 10.15, 22: 16.14 };
+        const SENSOR_EVAL_F = 72;   // evaluate sensor-curve slopes near room temp
+
+        const tidy = (n, dp) => parseFloat(n.toFixed(dp)).toString();
+
+        const typeEl   = document.getElementById('vd-type');
+        const awgEl    = document.getElementById('vd-awg');
+        const lenEl    = document.getElementById('vd-len');
+        const supplyEl = document.getElementById('vd-supply');
+        const vminEl   = document.getElementById('vd-vmin');
+        const rsenseEl = document.getElementById('vd-rsense');
+        const rinEl    = document.getElementById('vd-rin');
+        const rwireEl  = document.getElementById('vd-rwire');
+        const vxmtrEl  = document.getElementById('vd-vxmtr');
+        const maxlenEl = document.getElementById('vd-maxlen');
+        const verrEl   = document.getElementById('vd-verr');
+        const terr10kEl   = document.getElementById('vd-terr-10k');
+        const terrBalcoEl = document.getElementById('vd-terr-balco');
+        const terrPtEl    = document.getElementById('vd-terr-pt100');
+        const formulaEl = document.getElementById('vd-formula');
+        const statusEl  = document.getElementById('vd-status');
+        const copyBtn   = document.getElementById('vd-copy');
+
+        // |dR/dT| in Ω/°F near tempF, finite-differenced from the type's
+        // displayed R/T table so this tool can't drift from the
+        // thermistor calculator.
+        function slopeAt(typeId, tempF) {
+            // typeof guard, not window.* — thermistor-data.js declares a
+            // top-level const, which is reachable by name in the global
+            // scope chain but is NOT a window property.
+            const type = typeof THERMISTOR_TYPES !== 'undefined' && THERMISTOR_TYPES[typeId];
+            if (!type || !type.table) return null;
+            const t = type.table;
+            for (let i = 0; i < t.length - 1; i++) {
+                if (t[i][0] <= tempF && tempF < t[i + 1][0]) {
+                    return Math.abs((t[i + 1][2] - t[i][2]) / (t[i + 1][0] - t[i][0]));
+                }
+            }
+            return null;
+        }
+
+        function setStatus(text, kind) {
+            statusEl.textContent = text;
+            statusEl.className = 'status-pill' + (kind ? ' ' + kind : '');
+        }
+
+        function muteAll(msg) {
+            for (const el of [rwireEl, vxmtrEl, maxlenEl, verrEl, terr10kEl, terrBalcoEl, terrPtEl]) {
+                el.className = 'ps-value muted';
+                el.textContent = '—';
+            }
+            formulaEl.textContent = '';
+            setStatus(msg, '');
+        }
+
+        function setLive(el, text) {
+            el.className = 'ps-value live';
+            el.textContent = text;
+        }
+
+        function calc() {
+            const mode = typeEl.value;
+            document.querySelectorAll('.vd-loop-only').forEach(el => el.classList.toggle('hidden', mode !== 'loop'));
+            document.querySelectorAll('.vd-volt-only').forEach(el => el.classList.toggle('hidden', mode !== 'volt'));
+            document.querySelectorAll('.vd-th-only').forEach(el => el.classList.toggle('hidden', mode !== 'therm'));
+
+            const ohmsKft = OHMS_PER_KFT[awgEl.value];
+            const len = parseFloat(lenEl.value);
+            if (!isFinite(len)) { muteAll('Enter the one-way run length.'); return; }
+            if (len < 0) { muteAll('Run length can’t be negative.'); return; }
+
+            const rwireExact = 2 * len * ohmsKft / 1000;
+            const rwire = parseFloat(tidy(rwireExact, 1));   // chain off the displayed value
+            setLive(rwireEl, tidy(rwire, 1) + ' Ω');
+
+            if (mode === 'loop') {
+                const supply = parseFloat(supplyEl.value);
+                const vmin   = parseFloat(vminEl.value);
+                const rsense = parseFloat(rsenseEl.value);
+                if (!isFinite(supply) || !isFinite(vmin) || !isFinite(rsense)) { muteAll('Enter supply, transmitter minimum, and sense resistance.'); return; }
+                if (supply < 0 || vmin < 0 || rsense < 0) { muteAll('Loop values can’t be negative.'); return; }
+                setLive(rwireEl, tidy(rwire, 1) + ' Ω');
+
+                const drop = parseFloat(tidy(0.020 * (rwire + rsense), 1));
+                const vxmtr = parseFloat(tidy(supply - drop, 1));
+                setLive(vxmtrEl, tidy(vxmtr, 1) + ' V');
+
+                const maxWireR = (supply - vmin) / 0.020 - rsense;
+                const maxLen = maxWireR * 1000 / (2 * ohmsKft);
+                setLive(maxlenEl, maxLen > 0 ? Math.floor(maxLen).toLocaleString('en-US') + ' ft' : 'none at this supply');
+
+                formulaEl.textContent =
+                    `R = 2 × ${tidy(len, 1)} × ${ohmsKft} ÷ 1000 = ${tidy(rwire, 1)} Ω · ` +
+                    `drop = 0.020 × (${tidy(rwire, 1)} + ${tidy(rsense, 1)}) = ${tidy(drop, 1)} V · ` +
+                    `V_xmtr = ${tidy(supply, 1)} − ${tidy(drop, 1)} = ${tidy(vxmtr, 1)} V`;
+
+                if (vxmtr < vmin) {
+                    setStatus(`Under the floor — ${tidy(vxmtr, 1)} V at the transmitter against a ${tidy(vmin, 1)} V minimum. The loop will clip below full scale and the reading saturates. Raise the supply, drop the sense resistance, or upsize the wire.`, 'error');
+                } else if (vxmtr < vmin + 1) {
+                    setStatus(`Marginal — ${tidy(vxmtr, 1)} V at the transmitter, within 1 V of its ${tidy(vmin, 1)} V floor. A warm supply sag or an extra junction takes it under.`, 'warn');
+                } else {
+                    setStatus(`OK — ${tidy(vxmtr, 1)} V at the transmitter against a ${tidy(vmin, 1)} V floor. Current is the signal; the copper costs supply headroom, not accuracy.`, 'ok');
+                }
+            } else if (mode === 'volt') {
+                const rin = parseFloat(rinEl.value);
+                if (!isFinite(rin)) { muteAll('Enter the AI input impedance.'); return; }
+                if (rin <= 0) { muteAll('Input impedance must be greater than 0.'); return; }
+                setLive(rwireEl, tidy(rwire, 1) + ' Ω');
+
+                const verrV = 10 * rwire / (rwire + rin);
+                const verrPct = verrV / 10 * 100;
+                setLive(verrEl, tidy(verrV * 1000, 2) + ' mV (' + tidy(verrPct, 3) + ' % of span)');
+                formulaEl.textContent =
+                    `R = 2 × ${tidy(len, 1)} × ${ohmsKft} ÷ 1000 = ${tidy(rwire, 1)} Ω · ` +
+                    `err = 10 × ${tidy(rwire, 1)} ÷ (${tidy(rwire, 1)} + ${rin.toLocaleString('en-US')}) = ${tidy(verrV * 1000, 2)} mV`;
+
+                setStatus(`Into a high-impedance AI the IR drop is ${tidy(verrV * 1000, 2)} mV — noise, not error. If a 0-10 V reading is wrong at the panel, suspect a ground offset between panels or induced noise on the run, not wire resistance.`, 'ok');
+            } else {
+                const rows = [
+                    ['10k-2', terr10kEl],
+                    ['balco-1k', terrBalcoEl],
+                    ['pt100', terrPtEl],
+                ];
+                let err10k = null, errPt = null;
+                for (const [id, el] of rows) {
+                    const slope = slopeAt(id, SENSOR_EVAL_F);
+                    if (!slope) { el.className = 'ps-value muted'; el.textContent = '—'; continue; }
+                    const errF = rwire / slope;
+                    if (id === '10k-2') err10k = errF;
+                    if (id === 'pt100') errPt = errF;
+                    setLive(el, (errF < 0.05 ? '< 0.1' : tidy(errF, 1)) + ' °F reads cold');
+                }
+                formulaEl.textContent =
+                    `R = 2 × ${tidy(len, 1)} × ${ohmsKft} ÷ 1000 = ${tidy(rwire, 1)} Ω · ` +
+                    `error = R_wire ÷ |dR/dT| near ${SENSOR_EVAL_F} °F, per sensor curve`;
+
+                if (err10k !== null && errPt !== null) {
+                    if (err10k < 0.5) {
+                        setStatus(`On a 10K NTC this run is noise (${err10k < 0.05 ? 'under 0.1' : tidy(err10k, 1)} °F) — the curve is hundreds of ohms per degree. The same copper on a bare Pt100 lies by ${tidy(errPt, 1)} °F: never home-run a Pt100 two-wire; use Pt1000, 3-wire, or a transmitter.`, 'ok');
+                    } else {
+                        setStatus(`Even the 10K NTC sees ${tidy(err10k, 1)} °F on this run — that's an extreme length or gauge. Check the numbers, or move to a transmitter at the sensor.`, 'warn');
+                    }
+                } else {
+                    setStatus('Sensor curve data unavailable — resistance result above still stands.', '');
+                }
+            }
+        }
+
+        // ── Wiring ────────────────────────────────────────────────────
+        [typeEl, awgEl].forEach(el => el.addEventListener('change', calc));
+        [lenEl, supplyEl, vminEl, rsenseEl, rinEl].forEach(el => el.addEventListener('input', calc));
+        copyBtn.addEventListener('click', e => copyReadouts(e.currentTarget, '', 'vd-rwire'));
+
+        calc();
+    })();
+</script>
+{% endblock %}
