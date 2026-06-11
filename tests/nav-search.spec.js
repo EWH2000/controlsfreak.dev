@@ -126,7 +126,9 @@ test('field-vocabulary queries resolve, short tokens skip mid-word noise', async
     // pages via the keywords sweep.
     expect((await titles('40001'))[0]).toContain('Modbus Register Viewer');
     expect((await titles('pt chart'))[0]).toContain('Refrigerant P-T');
-    expect((await titles('ms/tp'))[0]).toContain('BACnet Networking');
+    // 'ms/tp' top-ranked BACnet Networking until the dedicated lesson
+    // shipped (2026-06-10); the more specific page winning is the point.
+    expect((await titles('ms/tp'))[0]).toContain('BACnet MS/TP');
     expect((await titles('endian'))[0]).toContain('Modbus');
 
     // Word-START boundary (not whole-word) keeps incremental typing

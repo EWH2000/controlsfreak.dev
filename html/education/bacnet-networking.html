@@ -9,23 +9,6 @@ keywords: ms/tp mstp baud bbmd foreign device router subnet broadcast who-is
 {% extends "layouts/page.njk" %}
 {% from "related-links.njk" import relatedLinks %}
 
-{% block head %}
-    <style>
-        /* Page-specific — static block-and-byte diagrams. .bac-svg
-           follows the .mb-svg / .fb-svg precedent (labeled-box
-           schematics, not pipe-flow), shared with bacnet-basics.html
-           but defined per-page since this is its second consumer;
-           promote to styles.css when a third page lands. */
-        .bac-svg {
-            display: block;
-            width: 100%;
-            height: auto;
-            max-width: 620px;
-            margin: 1.4rem auto 0.6rem;
-        }
-        .bac-svg.wide { max-width: 760px; }
-    </style>
-{% endblock %}
 
 {% block content %}
 <main id="main">
@@ -625,8 +608,9 @@ keywords: ms/tp mstp baud bbmd foreign device router subnet broadcast who-is
                     master-token-passing mechanic,
                     <code>Max_Master</code> and
                     <code>Max_Info_Frames</code>, baud rates, the cable-
-                    length and device-count limits per segment. Its own
-                    future page when MS/TP commissioning content earns one.</li>
+                    length and device-count limits per segment. Now its own
+                    page: <a href="/education/bacnet-mstp.html">BACnet
+                    MS/TP</a>.</li>
                 <li><strong>Segmentation of long messages.</strong> When an
                     APDU is too big for one frame, how segmentation breaks
                     it up and how the receiver reassembles. Hinted at in
@@ -667,7 +651,8 @@ keywords: ms/tp mstp baud bbmd foreign device router subnet broadcast who-is
             {href: '/tools/bacnet-objects.html', label: 'BACnet Object Reference'}
         ],
         lessons: [
-            {href: '/education/bacnet-basics.html', label: 'BACnet Basics'}
+            {href: '/education/bacnet-basics.html', label: 'BACnet Basics'},
+            {href: '/education/bacnet-mstp.html', label: 'BACnet MS/TP'}
         ],
         quizzes: [
             {href: '/practice/bacnet-networking.html', label: 'BACnet Networking'}

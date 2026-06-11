@@ -11,22 +11,10 @@ keywords: 40001 30001 offset endian byte order word swap float scaling exception
 
 {% block head %}
     <style>
-        /* Page-specific — static decoding diagrams. .mb-svg follows the
-           .fb-svg / .vfd-svg precedent (labeled-box schematics, not
-           pipe-flow), shared with modbus-basics.html but defined per-
-           page since this is its second consumer; promote to styles.css
-           when a third page lands. */
-        .mb-svg {
-            display: block;
-            width: 100%;
-            height: auto;
-            max-width: 620px;
-            margin: 1.4rem auto 0.6rem;
-        }
-        .mb-svg.wide { max-width: 760px; }
-
-        /* Reuse the function-blocks-page idiom for grouped category
-           cards. Same definition as modbus-basics.html. */
+        /* .mb-svg moved to styles.css (BLOCK-AND-BYTE DIAGRAMS) when the
+           third page in the block-and-byte families landed. Reuse the
+           function-blocks-page idiom for grouped category cards — same
+           definition as modbus-basics.html. */
         .callout-grid.loose { margin-top: 1.25rem; }
     </style>
 {% endblock %}
