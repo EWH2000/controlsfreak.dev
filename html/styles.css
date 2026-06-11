@@ -2894,6 +2894,29 @@ p.ref-note.compact {
 }
 
 /* ──────────────────────────────────────────────────────────────────────
+   BLOCK-AND-BYTE DIAGRAMS — static labeled-box schematics on the
+   protocol Education pages (.mb-svg: Modbus Basics / Decoding;
+   .bac-svg: BACnet Basics / Networking / MS/TP). Consolidated from
+   per-page {% block head %} copies when the third BACnet-family page
+   landed (the trigger both families recorded). Distinct from the
+   pipe-flow .edu-svg family (no data-flow, no animation) and from
+   the page-local .fb-svg / .vfd-svg structural diagrams (single
+   consumers). The four per-page copies had drifted to a mix of 740px
+   and 760px on .wide — unified here at 760 (the variance was copy
+   drift, not intent; a 20px max-width delta is invisible in practice).
+   ────────────────────────────────────────────────────────────────────── */
+.bac-svg,
+.mb-svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-width: 620px;
+    margin: 1.4rem auto 0.6rem;
+}
+.bac-svg.wide,
+.mb-svg.wide { max-width: 760px; }
+
+/* ──────────────────────────────────────────────────────────────────────
    WIDGET CHROME — shared "interactive panel" vocabulary used by the
    five widget pages: pump-control (×2 widgets), balancing, vfds,
    vfd-mock, hydronic-loops (d3 twin-T injection-pump widget).

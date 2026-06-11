@@ -11,22 +11,10 @@ keywords: object instance device av bv ai ao discovery who-is cov priority
 
 {% block head %}
     <style>
-        /* Page-specific — static block-and-byte diagrams. .bac-svg follows
-           the .mb-svg / .fb-svg precedent (labeled-box schematics, not
-           pipe-flow), separate from the .edu-svg family. Shared with
-           bacnet-networking.html but defined per-page since each is its
-           own consumer; promote to styles.css when a third page lands. */
-        .bac-svg {
-            display: block;
-            width: 100%;
-            height: auto;
-            max-width: 620px;
-            margin: 1.4rem auto 0.6rem;
-        }
-        .bac-svg.wide { max-width: 740px; }
-
-        /* Reuse the function-blocks-page idiom for grouped category
-           cards. Same definition as the Modbus pages. */
+        /* .bac-svg moved to styles.css (BLOCK-AND-BYTE DIAGRAMS) when the
+           third BACnet-family page landed. Reuse the function-blocks-page
+           idiom for grouped category cards — same definition as the
+           Modbus pages. */
         .callout-grid.loose { margin-top: 1.25rem; }
     </style>
 {% endblock %}
@@ -651,9 +639,10 @@ keywords: object instance device av bv ai ao discovery who-is cov priority
                 The deeper MS/TP story — token rotation, the master/slave token-
                 passing mechanic, <code>Max_Master</code> and
                 <code>Max_Info_Frames</code>, the per-segment device-count and
-                cable-length limits — belongs on its own future page, since
-                most BMS techs touch it only at commissioning and bus-fault
-                troubleshooting.
+                cable-length limits — has its own page:
+                <a href="/education/bacnet-mstp.html">BACnet MS/TP</a>, built
+                around the moments most BMS techs actually touch it —
+                commissioning and bus-fault troubleshooting.
             </p>
 
             <h2 class="subhead">What this page didn't cover</h2>
@@ -674,12 +663,13 @@ keywords: object instance device av bv ai ao discovery who-is cov priority
             <p>
                 Out of scope here, by design: the deep MS/TP token mechanics
                 (token rotation, <code>Max_Master</code>,
-                <code>Max_Info_Frames</code>, baud rates and cable-length budgets),
-                segmentation of long messages, alarms and event notifications,
-                schedules and calendars as their own object types, trend logs,
-                and the file / group / loop / notification-class objects. Each is
-                its own future page; this one stays on the object model, the
-                services, and the priority array.
+                <code>Max_Info_Frames</code>, baud rates and cable-length budgets
+                — now covered by <a href="/education/bacnet-mstp.html">BACnet
+                MS/TP</a>), segmentation of long messages, alarms and event
+                notifications, schedules and calendars as their own object types,
+                trend logs, and the file / group / loop / notification-class
+                objects. The rest are their own future pages; this one stays on
+                the object model, the services, and the priority array.
             </p>
 
         </div>
@@ -691,7 +681,8 @@ keywords: object instance device av bv ai ao discovery who-is cov priority
             {href: '/tools/bacnet-objects.html', label: 'BACnet Object Reference'}
         ],
         lessons: [
-            {href: '/education/bacnet-networking.html', label: 'BACnet Networking'}
+            {href: '/education/bacnet-networking.html', label: 'BACnet Networking'},
+            {href: '/education/bacnet-mstp.html', label: 'BACnet MS/TP'}
         ],
         quizzes: [
             {href: '/practice/bacnet-basics.html', label: 'BACnet Basics'}
