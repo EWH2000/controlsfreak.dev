@@ -21,7 +21,7 @@ nav: tools
 
     <div class="filter-chips" role="group" aria-label="Filter tools by category">
         <button type="button" class="filter-chip active" data-category="all" aria-pressed="true">
-            All <span class="filter-chip-count">14</span>
+            All <span class="filter-chip-count">15</span>
         </button>
         <button type="button" class="filter-chip" data-category="hvac" aria-pressed="false">
             HVAC <span class="filter-chip-count">6</span>
@@ -33,7 +33,7 @@ nav: tools
             Signals <span class="filter-chip-count">2</span>
         </button>
         <button type="button" class="filter-chip" data-category="hydronics" aria-pressed="false">
-            Hydronics <span class="filter-chip-count">2</span>
+            Hydronics <span class="filter-chip-count">3</span>
         </button>
     </div>
 
@@ -162,6 +162,15 @@ nav: tools
             titleFull:  'Pump & Fan Affinity Laws',
             desc:       'Scale a known operating point to a new speed or trimmed impeller — flow with the ratio, head with its square, power with its cube. The energy case for VFDs.',
             pills:      ['Pumps & Fans', 'Affinity Laws', 'VFD Speed', 'Impeller Trim'],
+            category:   'hydronics'
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/tools/waterside-load.html',
+            titleShort: 'Waterside Load',
+            titleFull:  'Waterside Load Calculator',
+            desc:       'The hydronic workhorse q = 500 × GPM × ΔT, solved in any direction — the load a measured flow and ΔT imply, the flow a load needs, or the ΔT a healthy loop should show. Tons ride along.',
+            pills:      ['Hydronics', 'q = 500·GPM·ΔT', 'MBH / Tons', 'US / Metric'],
             category:   'hydronics'
         }) }}
     </div>

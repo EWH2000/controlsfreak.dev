@@ -33,6 +33,7 @@ const PAGES = [
     { name: 'refrigerant p-t',        url: '/tools/refrigerant-pt.html' },
     { name: 'valve cv sizing',        url: '/tools/valve-cv.html' },
     { name: 'affinity laws',          url: '/tools/affinity-laws.html' },
+    { name: 'waterside load',         url: '/tools/waterside-load.html' },
     { name: 'modbus function codes',  url: '/tools/modbus-functions.html' },
     { name: 'simulators landing',     url: '/simulators/' },
     { name: 'pid tuner',              url: '/simulators/pid-tuner.html' },
@@ -1810,6 +1811,39 @@ test('affinity-laws — half speed gives 50/25/12.5%', async ({ page }) => {
     await expect(page.locator('#af-s-p2')).toContainText('1.25');
 
     expect(errors, 'affinity-laws behavioral should log no errors').toEqual([]);
+});
+
+test('waterside-load — defaults solve 120 MBH / 10 tons, metric closes on displayed operands', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('/tools/waterside-load.html');
+
+    // Defaults: 20 GPM at ΔT 12 °F → 500 × 20 × 12 = 120,000 Btu/h.
+    await expect(page.locator('#wl-out')).toContainText('120 MBH');
+    await expect(page.locator('#wl-tons')).toContainText('10');
+
+    // Solve for flow: 120 MBH at ΔT 12 → 20 GPM; ΔT 0 is a divisor → mute.
+    await page.selectOption('#wl-solve', 'flow');
+    await expect(page.locator('#wl-out')).toContainText('20 GPM');
+    await page.fill('#wl-dt', '0');
+    await expect(page.locator('#wl-out')).toHaveText('—');
+    await expect(page.locator('#wl-callout')).toBeVisible();
+
+    expect(errors, 'waterside-load behavioral should log no errors').toEqual([]);
+});
+
+test('waterside-load — metric solve uses the 4.187 constant on displayed operands', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.addInitScript(() => localStorage.setItem('cf_units', 'metric'));
+    await page.goto('/tools/waterside-load.html');
+
+    // Inputs rewrite to 1.26 L/s at 6.7 °C; 4.187 × 1.26 × 6.7 = 35.3 kW —
+    // the formula line must reproduce the shown result from the shown
+    // operands (metric rounding policy, audit-2026-06 #53).
+    await expect(page.locator('#wl-out')).toContainText('35.3 kW');
+    await expect(page.locator('#wl-formula')).toContainText('4.187 × 1.26 × 6.7');
+    await expect(page.locator('#wl-tons')).toContainText('10');
+
+    expect(errors, 'waterside-load metric behavioral should log no errors').toEqual([]);
 });
 
 // ── audit-2026-06 Batch G: tool edge cases ─────────────────────────────

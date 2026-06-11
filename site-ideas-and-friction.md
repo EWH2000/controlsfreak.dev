@@ -9,6 +9,91 @@ tools.
 
 ## Feature ideas
 
+### Mock-service-call lineup audit — method + 2026-06 findings *(reviewed 2026-06-10)*
+
+A repeatable way to stress-test the tool lineup: put agents into
+realistic field scenarios as roleplayed techs (with the full page
+inventory), have them walk the call minute-by-minute, note every
+reach-for moment, and report covered-vs-gap. Run five in 2026-06:
+RTU economizer complaint, VAV commissioning day, MS/TP trunk dropping
+devices, panel retrofit (transformer/wire-run math), and a
+chiller-plant low-ΔT / short-cycling call — the last deliberately in
+the site's strongest territory as a *control*. The control held (the
+hydronics/sequencing coverage was reached for and delivered), so the
+gaps are signal, not invented work.
+
+**The convergent finding: concepts are taught; the quantitative field
+math beside them is missing.** Four clusters, all owner-approved as
+the 2026-06 build queue:
+
+1. **Waterside load solver** (q = 500·GPM·ΔT — daily-use; the hole
+   dead-center in the hydronics strength) — *(shipped 2026-06-10,
+   see entry below)*.
+2. **Airflow / K-factor tool** (CFM = K·√VP both directions, duct
+   velocity V = 4005·√VP — opens the missing airside-flow category;
+   new `airflow` landing chip approved at count 1).
+3. **Control-power electrical tools** (transformer VA budget + fuse
+   sizing; wire-run voltage drop with per-signal-type verdicts — the
+   quantitative layer the controller-wiring content lacks; new
+   `electrical` chip).
+4. **MS/TP lesson** (`bacnet-mstp.html`) — both BACnet lessons
+   explicitly defer to it and it doesn't exist; lesson first, the
+   parked `[future: bus simulator]` stays its eventual hands-on pair.
+
+Also decided in the same review: **Controller commissioner stays
+parked** (annotated on its entry), **cross-page Mix quizzes deferred**
+(annotated in the Practice entry), and the scenario-drill arc below
+was opened. Re-run the audit method when the lineup shifts enough
+that the 2026-06 verdicts go stale.
+
+### Branching diagnostic scenario drills — "mock service call" as a feature *(future arc, opened 2026-06-10)*
+
+The chiller-plant audit agent independently asked for a "capstone
+case study: given trends + symptoms, reason backward to the root
+cause" — which is the mock-service-call idea turned into a product
+feature. A choose-your-path diagnostic drill: "It's 6 AM, the kitchen
+calls — walk-in too warm. What do you check first?" Each choice costs
+sim-time and reveals readings; wrong paths are survivable but slower;
+the debrief names the optimal route and links the lessons/tools it
+leaned on. No other free site has this; it plays to the war-story
+credibility the Education anecdotes already trade on, and the owner's
+real calls become scenario seeds (the dew-point/coil call is an
+obvious first candidate).
+
+Real cost, stated up front: this is a **new engine format**, not a
+quiz-bank entry — a `scenario-engine.js` sibling to `quiz-engine.js`
+(branching state graph, time ledger, readings reveal, debrief
+renderer), plus a data-file schema for scenarios. Build **after** the
+2026-06 four-PR queue above. Scope discipline when it starts: one
+engine, one scenario, the existing practice-landing card shape; no
+scoring leaderboards (the quiz plan's hard-nos carry over).
+
+### Waterside Load calculator *(shipped 2026-06-10)*
+
+PR 1 of the mock-call build queue. Ships at
+`/tools/waterside-load.html` as a single-pane `.tool-body-2col` +
+worked-example row (valve-cv's shell minus tabs), prefix `wl-`,
+Hydronics chip (All 14→15, Hydronics 2→3). Solve-for select covers
+load / flow / ΔT; tons ride along when load is the answer.
+
+Decisions worth remembering:
+- **Computes in the active unit system with that system's own
+  constant** (500 IP, 4.187 metric) — deliberately *not* the
+  canonical-IP engine pattern, because the metric rounding policy
+  (audit-2026-06 #53) requires the formula line to close on displayed
+  operands, and the metric constant is first-class. The two constants
+  differ ~0.14 % by construction; each system is internally
+  consistent. Unit flips still resync inputs from retained canonical
+  values via coil-sizing's `rewriteInput`.
+- **Tons derive from the displayed load**, not the unrounded value,
+  same policy — a reader's own arithmetic reproduces the row.
+- **Water only in v1**, said in visible prose (the refrigerant-pt
+  "more correct than the pocket card" posture): the constant bakes in
+  water's density and cp, and glycol moves both.
+  `[future: glycol correction row in waterside-load.html]` — a fluid
+  select (water / 30% PG / 50% PG…) whose factors need
+  datasheet-grade verification before shipping.
+
 ### Modbus 5-digit address ↔ wire offset converter *(shipped 2026-06-10)*
 
 Cross-filed from `docs/audits/2026-06-extensive/findings.md` (lineup gap + finding #30,
@@ -383,9 +468,11 @@ Swap, + these three).
 - Remaining field drills (Commissioning, Tridium / EBO quirks, full
   Junior + Senior Interview Prep).
 - **Cross-page Mix quizzes (All Protocols, All Hydronics) — now
-  unblocked:** 2+ protocol banks and 4 hydronics banks exist. Needs
-  the shared `_data/quiz-banks/` aggregation at build time. Good
-  next increment.
+  unblocked, but deferred 2026-06-10:** 2+ protocol banks and 4
+  hydronics banks exist, so the aggregation is buildable — but the
+  per-topic quizzes already cover the material and nobody has asked
+  for a shuffle mode; the build-time `_data/quiz-banks/` machinery
+  isn't worth it on spec. Revisit when a real user asks.
 - A **Commissioning education lesson** would give the Controller
   Swap drill (and a future Commissioning drill) a proper parent to
   pair against — today the drill is self-contained by necessity.
@@ -2038,7 +2125,17 @@ related future page (`pid-basics.html`) already exists, so the
 lesson cross-links to it for PID internals without a `[future:]`
 marker.
 
-### Controller commissioner *(larger build — may span multiple sessions)*
+### Controller commissioner *(larger build — reviewed 2026-06-10: stays parked)*
+
+**Reviewed 2026-06-10 (mock-call audit, owner concurred): stays
+parked.** It's the opposite of the site's proven pattern — the wins
+(dew-point, address↔offset) are fast, stateless, single-number tools
+born from specific struggles; this is stateful, multi-session, and a
+CMMS-creep magnet, and none of the five audit scenarios reached for
+it. The on-pattern alternative for the commissioning itch is the
+**commissioning Education lesson** (already owed by three
+forward-link debts). Revisit only if a real job makes the owner want
+it again. Original sketch preserved below.
 A point-by-point commissioning workbench. User defines the controller's
 IO list (AI / AO / BI / BO, with name, type, range/units, expected
 behavior), then walks through each point on a job site, marking it
