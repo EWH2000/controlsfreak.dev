@@ -21,7 +21,7 @@ nav: tools
 
     <div class="filter-chips" role="group" aria-label="Filter tools by category">
         <button type="button" class="filter-chip active" data-category="all" aria-pressed="true">
-            All <span class="filter-chip-count">16</span>
+            All <span class="filter-chip-count">18</span>
         </button>
         <button type="button" class="filter-chip" data-category="hvac" aria-pressed="false">
             HVAC <span class="filter-chip-count">6</span>
@@ -34,6 +34,9 @@ nav: tools
         </button>
         <button type="button" class="filter-chip" data-category="airflow" aria-pressed="false">
             Airflow <span class="filter-chip-count">1</span>
+        </button>
+        <button type="button" class="filter-chip" data-category="electrical" aria-pressed="false">
+            Electrical <span class="filter-chip-count">2</span>
         </button>
         <button type="button" class="filter-chip" data-category="hydronics" aria-pressed="false">
             Hydronics <span class="filter-chip-count">3</span>
@@ -175,6 +178,24 @@ nav: tools
             desc:       'Scale a known operating point to a new speed or trimmed impeller — flow with the ratio, head with its square, power with its cube. The energy case for VFDs.',
             pills:      ['Pumps & Fans', 'Affinity Laws', 'VFD Speed', 'Impeller Trim'],
             category:   'hydronics'
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/tools/transformer-sizing.html',
+            titleShort: 'Transformer VA',
+            titleFull:  'Transformer VA Budget',
+            desc:       'List what hangs on the 24 VAC secondary, pick the transformer, read the percent loaded and headroom — plus a secondary fuse suggestion sized off the transformer rating.',
+            pills:      ['Electrical', '24 VAC', 'VA Budget', 'Fuse Sizing'],
+            category:   'electrical'
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/tools/voltage-drop.html',
+            titleShort: 'Voltage Drop',
+            titleFull:  'Wire Run & Voltage Drop',
+            desc:       'Copper resistance for the run, then a verdict in the signal\'s own language — loop supply margin for 4-20 mA, real-vs-imagined error on 0-10 V, degrees of lie on a temperature sensor.',
+            pills:      ['Electrical', 'AWG', '4-20 mA Loop', 'Lead Error'],
+            category:   'electrical'
         }) }}
         {{ navCard({
             section:    'tools',
