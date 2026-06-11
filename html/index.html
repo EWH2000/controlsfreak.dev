@@ -46,7 +46,10 @@ nav: home
            page into a lesson. Recessed from the hero surface like a view
            inside the workstation. */
         .hseam-frame {
-            margin: 1.25rem 1.5rem 0;
+            /* Sits at the bottom of the hero (after .hero-copy, which
+               carries its own bottom padding) — so light on top, real
+               margin below against the statusline. */
+            margin: 0.25rem 1.5rem 1.5rem;
             background: var(--bg);
             border: 1px solid var(--border);
         }
@@ -312,7 +315,7 @@ nav: home
            populated panels still tell the software↔equipment story, and
            the copy collapses to a single column. */
         @media (max-width: 760px) {
-            .hseam-frame { margin: 1.25rem 1.25rem 0; }
+            .hseam-frame { margin: 0.25rem 1.25rem 1.25rem; }
             .hero-quicktools { padding: 0.8rem 1.25rem; }
             .hseam-controls { padding: 0.85rem 1.25rem; }
             .hero-seam-stage {
@@ -352,6 +355,16 @@ nav: home
         <a class="hero-qt hero-qt--all" href="/tools/">All tools →</a>
     </div>
 
+    <div class="hero-copy">
+        <h1>Tools for those in controls, built by someone in controls.</h1>
+        <p>The math you don't want to redo at the panel — signal scaling, BACnet/IP, Modbus, psychrometrics, thermistors — plus explainers that walk a whole system end-to-end. No login, no ads, no tracking; view-source still works, and these pages will still run ten years from now.</p>
+        <div class="hero-cta">
+            <a class="hero-btn primary" href="/tools/">Browse tools →</a>
+            <a class="hero-btn" href="/education/">Start with the explainers →</a>
+        </div>
+        <p class="hero-latest">Latest <span class="titlebar-dots">·</span> <a href="/education/bacnet-mstp.html">BACnet MS/TP explainer →</a></p>
+    </div>
+
     <!-- The seam: the site's whole premise as one live instrument — a
          software supervisor (left) reading a field controller (right)
          across the wire between them. A small AHU supply-air loop: the
@@ -359,7 +372,10 @@ nav: home
          valve. It auto-demos (the setpoint steps on its own) until the
          visitor grabs the setpoint slider below, then chases their target.
          The visual stage is aria-hidden eye-candy; the OPERABLE part is the
-         labelled slider in .hseam-controls, which sits outside this stage. -->
+         labelled slider in .hseam-controls, which sits outside this stage.
+         Closes the hero (below the copy, 2026-06-10 rearrange): substance
+         — quick tools, then the pitch — leads; the live loop is the
+         payoff at the bottom. -->
     <div class="hseam-frame">
         <div class="hseam-frame-head">
             <span class="hseam-frame-title">Live <span class="titlebar-dots">·</span> AHU-1 supply-air temperature loop</span>
@@ -429,16 +445,6 @@ nav: home
         </div>
 
         <p class="hseam-legend">The supervisor reads the supply-air sensor; the controller holds it at setpoint by modulating the cooling valve. Drag the setpoint and watch the loop chase it — then open the full PID Tuner to tune one yourself.</p>
-    </div>
-
-    <div class="hero-copy">
-        <h1>Tools for those in controls, built for the field.</h1>
-        <p>The math you don't want to redo at the panel — signal scaling, BACnet/IP, Modbus, psychrometrics, thermistors — plus explainers that walk a whole system end-to-end. No login, no ads, no tracking; view-source still works, and these pages will still run ten years from now.</p>
-        <div class="hero-cta">
-            <a class="hero-btn primary" href="/tools/">Browse tools →</a>
-            <a class="hero-btn" href="/education/">Start with the explainers →</a>
-        </div>
-        <p class="hero-latest">Latest <span class="titlebar-dots">·</span> <a href="/education/bacnet-mstp.html">BACnet MS/TP explainer →</a></p>
     </div>
 
     <div class="console-statusline">

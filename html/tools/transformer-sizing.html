@@ -128,7 +128,6 @@ keywords: 24vac va transformer sizing class 2 fuse secondary control power budge
 
         <section class="tool-body-row">
             <h2 class="ps-section-label">Typical 24 VAC loads — sanity-check table</h2>
-            <!-- // user to verify typical-VA table values — placeholder data, refine after review -->
             <table class="ref-table-dense">
                 <thead>
                     <tr><th>Device</th><th>Typical VA</th><th>Notes</th></tr>
@@ -143,9 +142,8 @@ keywords: 24vac va transformer sizing class 2 fuse secondary control power budge
                 </tbody>
             </table>
             <p class="ref-note">
-                Spring-return actuators and relay coils draw more while moving or pulling in than at rest — that&rsquo;s why the 80&nbsp;% planning line exists. A transformer that lives at 95&nbsp;% steady-state has nothing left for the morning when everything drives at once.
+                Read the budget in two tiers. <strong>Above 80&nbsp;% loaded, it could be a problem</strong> — fine on the bench, but spring-return actuators holding against their springs and relay pull-in draw more than the label&rsquo;s resting number, and the next add-on device has nowhere to go. <strong>Above 100&nbsp;%, it is a problem</strong> — the transformer runs hot, sags under inrush, and the panel reboots on the worst mornings.
             </p>
-            <!-- // user to verify typical-VA table values — placeholder data, refine after review -->
         </section>
     </div>
 
@@ -181,10 +179,9 @@ keywords: 24vac va transformer sizing class 2 fuse secondary control power budge
 
         const ROWS = 8;
         const SECONDARY_V = 24;
-        // // user to verify secondary-fuse sizing rule + standard ladder —
-        // placeholder data, refine after review. Rule implemented: fuse ≈
-        // 125 % of rated secondary current, rounded UP to the next standard
-        // size; verify against the job spec / AHJ.
+        // Fuse rule (owner-reviewed 2026-06-10): ≈ 125 % of rated secondary
+        // current, rounded UP to the next standard size. The job spec /
+        // AHJ wins over the suggestion where they differ.
         const FUSE_LADDER = [1, 1.5, 2, 2.5, 3, 4, 5, 6, 7, 8, 10];
 
         const tidy = (n, dp) => parseFloat(n.toFixed(dp)).toString();
@@ -253,9 +250,9 @@ keywords: 24vac va transformer sizing class 2 fuse secondary control power budge
                 `fuse: ${tidy(size, 0)} ÷ 24 = ${tidy(fla, 1)} A × 1.25 = ${tidy(fuseTarget, 1)} → ${fuse ? fuse + ' A' : '—'}`;
 
             if (pct > 100) {
-                setStatus(`Overloaded — ${tidy(total, 1)} VA on a ${tidy(size, 0)} VA transformer (${tidy(pct, 0)} %). It will run hot and brown out under inrush; move loads to another transformer or upsize.`, 'error');
+                setStatus(`Above 100 % — this IS a problem. ${tidy(total, 1)} VA on a ${tidy(size, 0)} VA transformer (${tidy(pct, 0)} %): it runs hot and sags under inrush. Move loads to another transformer or upsize.`, 'error');
             } else if (pct > 80) {
-                setStatus(`Works today, no margin — ${tidy(pct, 0)} % loaded. Inrush from spring-return actuators and relay pull-in eats the gap, and the next add-on device has nowhere to go. Plan the upsize now.`, 'warn');
+                setStatus(`Above the 80 % line — could be a problem. ${tidy(pct, 0)} % loaded works today, but inrush from spring-return actuators and relay pull-in eats the gap, and the next add-on has nowhere to go. Plan the upsize now.`, 'warn');
             } else {
                 setStatus(`OK — ${tidy(pct, 0)} % loaded, ${tidy(headroom, 1)} VA of headroom under the ${tidy(size, 0)} VA rating.`, 'ok');
             }
