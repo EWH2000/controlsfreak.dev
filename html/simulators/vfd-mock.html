@@ -13,11 +13,12 @@ keywords: fla amps hz drive keypad fault overload accel speed reference
         /* Page-specific — the keypad simulator. Two-column on desktop
            (keypad+display on left, motor response + external inputs on
            right); stacks to one column at narrow widths. The display is
-           a "hybrid LCD" — light recessed panel with a fixed 20-char × 4-
-           line mono grid, which constrains content the way a real drive's
-           LCD does. Keypad buttons are flat site-style chrome (the
-           "feels like a drive keypad" goal lives in the layout and the
-           grid; we don't need to also mimic dark plastic). */
+           a fixed 20-char × 4-line mono grid, which constrains content
+           the way a real drive's LCD does. The face is dressed from the
+           shared equipment register (.device-tb / .led / .dev-leds in
+           styles.css); the LCD is the width-setter and the keypad grid
+           stretches flush to it, so the face reads symmetric like a
+           real drive front panel. */
 
         /* Page-specific main cap: the LCD + keypad in the .vfdm-grid's left
            column are fixed-character / fixed-key widths that don't stretch;
@@ -28,41 +29,6 @@ keywords: fla amps hz drive keypad fault overload accel speed reference
            psychrometric-chart's custom cap. */
         main, footer { max-width: 880px; }
 
-        /* Dial-arc — circular tachometer mirror of the linear .vfdm-gauge.
-           Same value (% of S04 max freq), shown as a 270° arc fill so the
-           Motor Response panel reads as a small workstation gauge cluster
-           instead of just a flat bar. Path = 270° arc, length ≈ 70.7,
-           stroke-dashoffset shrinks from 70.7 (empty) to 0 (full) as JS
-           updates it. */
-        .vfdm-dial-row {
-            display: flex;
-            align-items: center;
-            gap: 0.85rem;
-            margin: 0.45rem 0 0.55rem;
-        }
-        .vfdm-dial { flex-shrink: 0; }
-        .vfdm-dial-track { stroke: var(--border); }
-        .vfdm-dial-fill {
-            stroke: var(--blue);
-            transition: stroke-dashoffset 80ms linear;
-        }
-        .vfdm-dial-label {
-            font-family: var(--mono);
-            font-size: 0.65rem;
-            color: var(--text-dim);
-            letter-spacing: 0.07em;
-            text-transform: uppercase;
-        }
-        .vfdm-dial-label .pct {
-            display: block;
-            font-size: 0.95rem;
-            font-weight: 600;
-            color: var(--blue);
-            font-variant-numeric: tabular-nums;
-            letter-spacing: 0;
-            text-transform: none;
-        }
-        .vfdm-dial-label .pct.stopped { color: var(--text-dim); }
         .vfdm-grid {
             display: grid;
             grid-template-columns: minmax(320px, 1fr) minmax(280px, 1fr);
@@ -91,11 +57,12 @@ keywords: fla amps hz drive keypad fault overload accel speed reference
             border-radius: var(--rail);
             padding: 0.85rem 1rem;
             font-family: var(--mono);
-            font-size: 0.95rem;
+            font-size: 1.2rem;
             color: var(--lcd-ink);
             line-height: 1.55;
             margin-bottom: 1.1rem;
             display: inline-block;
+            vertical-align: top;
             min-width: 0;
             box-shadow: inset 0 0 0 1px rgba(0,0,0,0.3), inset 0 1px 4px rgba(0,0,0,0.4);
         }
@@ -110,22 +77,28 @@ keywords: fla amps hz drive keypad fault overload accel speed reference
             background-image: radial-gradient(circle at center, transparent 36%, var(--lcd-grid) 41%);
             background-size: 3px 3px;
         }
+        /* white-space: pre lives on the LINE spans, not the inner div —
+           on the container it would also preserve the markup's newline
+           text nodes between the spans and render them as phantom blank
+           lines (the display doubles in height). The spans still need
+           pre because pad20() emits significant interior space runs. */
         .vfdm-lcd-inner {
             width: 20ch;
-            white-space: pre;
             font-variant-numeric: tabular-nums;
         }
-        .vfdm-lcd-line { display: block; min-height: 1.55em; }
+        .vfdm-lcd-line { display: block; min-height: 1.55em; white-space: pre; }
 
         /* Keypad — embossed plastic keycaps on the device face (the
            equipment-register .key look: warm gradient cap, inset top
            highlight, square). RUN is the green "go" key, STOP carries a
            red legend. Key colours are device constants (plastic, unthemed). */
+        /* 1fr tracks resolve below the LCD's max-content width in the
+           shrink-wrapped device, so the keypad block stretches flush to
+           the LCD — display and keys share one width like a real face. */
         .vfdm-keypad {
             display: grid;
-            grid-template-columns: repeat(4, minmax(3.4rem, 4.6rem));
+            grid-template-columns: repeat(4, 1fr);
             gap: 0.55rem;
-            margin-bottom: 0.85rem;
         }
         .vfdm-key {
             font-family: var(--mono);
@@ -151,25 +124,18 @@ keywords: fla amps hz drive keypad fault overload accel speed reference
         .vfdm-key .glyph { display: block; font-size: 0.95rem; line-height: 1; margin-bottom: 0.15rem; }
         .vfdm-key .sub   { display: block; font-size: 0.6rem; color: #8a8369; letter-spacing: 0.05em; }
 
-        /* Local/remote indicator — sits on the device face. Device-gray
-           text; the dot is an unlit LED that lights amber in LOCAL mode. */
-        .vfdm-localrem {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
+        /* Mode note — software-register caption below the bezel. The LOC
+           LED in .dev-leds carries the on-device indication; this sentence
+           explains what the mode means. It must stay OUTSIDE the device —
+           its max-content width is wider than the LCD and would silently
+           become the shrink-wrapped face's width-setter. */
+        p.vfdm-mode-note {
+            margin: 0.55rem 0 0;
             font-family: var(--mono);
             font-size: 0.72rem;
-            color: #8a8369;
+            color: var(--text-dim);
         }
-        .vfdm-localrem .dot {
-            display: inline-block;
-            width: 8px; height: 8px;
-            border-radius: 50%;
-            background: #4a463a;
-            transition: background 80ms linear, box-shadow 80ms linear;
-        }
-        .vfdm-localrem.local .dot { background: var(--amber); box-shadow: 0 0 5px 0 var(--amber); }
-        .vfdm-localrem.local { color: var(--amber); }
+        p.vfdm-mode-note.local { color: var(--amber); }
 
         /* Right column — readouts, gauge, external inputs */
         .vfdm-readouts { margin-bottom: 0.55rem; }
@@ -321,6 +287,15 @@ keywords: fla amps hz drive keypad fault overload accel speed reference
                     <div class="device vfdm-device">
                         <div class="device-inner">
 
+                            <!-- Titlebar: powered/online comm LED + generic
+                                 model badge (manufacturer-neutral, like the
+                                 rest of the page). -->
+                            <div class="device-tb">
+                                <span class="led led--comm" aria-hidden="true"></span>
+                                <span class="title">Drive Keypad</span>
+                                <span class="badge">CF-MOCK 100</span>
+                            </div>
+
                             <!-- LCD: 20-char × 4-line fixed mono grid, set by
                                  the render() loop as plain text (line 4 carries
                                  the L/R footer / flash). -->
@@ -362,12 +337,24 @@ keywords: fla amps hz drive keypad fault overload accel speed reference
                                 </button>
                             </div>
 
-                            <div class="vfdm-localrem" id="vfdm-local-rem-ind">
-                                <span class="dot"></span>
-                                <span id="vfdm-local-rem-txt">REMOTE — drive follows configured sources</span>
+                            <!-- Status LEDs on the face: RUN lights green
+                                 while running, LOC lights amber in LOCAL,
+                                 FAULT stays off (no fault model in v1 —
+                                 it's here for face realism). -->
+                            <div class="dev-leds">
+                                <span><span class="led led--off" id="vfdm-led-run" aria-hidden="true"></span>Run</span>
+                                <span><span class="led led--off" id="vfdm-led-loc" aria-hidden="true"></span>Loc</span>
+                                <span><span class="led led--off" aria-hidden="true"></span>Fault</span>
                             </div>
                         </div>
                     </div>
+
+                    <!-- The plain-English mode explanation lives outside the
+                         bezel (a device face has LEDs, not sentences); same
+                         ids as before so the JS wiring is unchanged. -->
+                    <p class="vfdm-mode-note" id="vfdm-local-rem-ind">
+                        <span id="vfdm-local-rem-txt">REMOTE — drive follows configured sources</span>
+                    </p>
                 </div>
 
                 <!-- ── RIGHT COLUMN: motor response + external inputs ── -->
@@ -384,24 +371,6 @@ keywords: fla amps hz drive keypad fault overload accel speed reference
                         </div>
                         <div class="vfdm-gauge" aria-hidden="true">
                             <div class="vfdm-gauge-fill" id="vfdm-gauge-fill"></div>
-                        </div>
-                        <!-- Dial-arc: a circular companion to the gauge bar. Same
-                             percentage as .vfdm-gauge-fill, drawn as a 270° arc.
-                             Pure visual flare; the gauge bar above remains the
-                             primary readout. -->
-                        <div class="vfdm-dial-row" aria-hidden="true">
-                            <svg class="vfdm-dial" viewBox="0 0 40 40" width="48" height="48">
-                                <path class="vfdm-dial-track" d="M 7,27.5 A 15,15 0 1 1 33,27.5"
-                                      fill="none" stroke-width="3" stroke-linecap="round"/>
-                                <path id="vfdm-dial-fill" class="vfdm-dial-fill"
-                                      d="M 7,27.5 A 15,15 0 1 1 33,27.5"
-                                      fill="none" stroke-width="3" stroke-linecap="round"
-                                      stroke-dasharray="70.7" stroke-dashoffset="70.7"/>
-                            </svg>
-                            <div class="vfdm-dial-label">
-                                Of max
-                                <span class="pct stopped" id="vfdm-dial-pct">0%</span>
-                            </div>
                         </div>
                         <div class="vfdm-readout">
                             <span>State</span>
@@ -572,17 +541,10 @@ keywords: fla amps hz drive keypad fault overload accel speed reference
         const stateTxt = document.getElementById('vfdm-state-text');
         const stateLed = document.getElementById('vfdm-state-led');
         const gaugeFill= document.getElementById('vfdm-gauge-fill');
-        const dialFill = document.getElementById('vfdm-dial-fill');
-        const dialPct  = document.getElementById('vfdm-dial-pct');
         const localInd = document.getElementById('vfdm-local-rem-ind');
         const localTxt = document.getElementById('vfdm-local-rem-txt');
-
-        // Use the path's measured length for dial-fill math — robust against
-        // the path string getting tweaked later. dasharray = full path, so
-        // strokeDashoffset = pathLen shows nothing and 0 shows everything.
-        const dialPathLen = dialFill.getTotalLength();
-        dialFill.style.strokeDasharray = dialPathLen.toFixed(2);
-        dialFill.style.strokeDashoffset = dialPathLen.toFixed(2);
+        const ledRun   = document.getElementById('vfdm-led-run');
+        const ledLoc   = document.getElementById('vfdm-led-loc');
         const diOpen   = document.getElementById('vfdm-di-open');
         const diClosed = document.getElementById('vfdm-di-closed');
         const extSpd   = document.getElementById('vfdm-ext-spd');
@@ -747,12 +709,6 @@ keywords: fla amps hz drive keypad fault overload accel speed reference
             const pct = max > 0 ? Math.max(0, Math.min(100, (state.actualHz / max) * 100)) : 0;
             gaugeFill.style.width = pct + '%';
 
-            // Dial-arc mirrors the gauge fill. Offset shrinks from
-            // dialPathLen (empty) to 0 (full).
-            dialFill.style.strokeDashoffset = (dialPathLen * (1 - pct / 100)).toFixed(2);
-            dialPct.textContent = Math.round(pct) + '%';
-            dialPct.classList.toggle('stopped', !running && state.actualHz < 0.05);
-
             // State LED — pulses when the drive is actively running.
             stateLed.classList.toggle('active', running);
 
@@ -765,7 +721,13 @@ keywords: fla amps hz drive keypad fault overload accel speed reference
             else                                                  stateLabel = 'STOPPED';
             stateTxt.textContent = stateLabel;
 
-            // Local/Remote indicator
+            // Device-face LEDs: RUN lit while running, LOC amber in LOCAL.
+            ledRun.classList.toggle('led--run', running);
+            ledRun.classList.toggle('led--off', !running);
+            ledLoc.classList.toggle('led--warn', state.localMode);
+            ledLoc.classList.toggle('led--off', !state.localMode);
+
+            // Local/Remote mode note below the bezel
             localInd.classList.toggle('local', state.localMode);
             localTxt.textContent = state.localMode
                 ? 'LOCAL — keypad overrides source parameters'

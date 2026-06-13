@@ -1133,6 +1133,32 @@ engines staying standalone keeps that door open. If it happens,
 the integration point is `setExternalSpeedHz()` on the VFD mock
 and a new "external write" sink on the PID tuner.
 
+**Face-symmetry fix + full equipment dress-up *(2026-06-12)*.**
+The user flagged the device face as asymmetrical — the keypad
+(321px) jutted out past the LCD (214px), both left-aligned, and a
+latent bug made the "20×4" LCD render as a portrait slab:
+`white-space: pre` sat on `.vfdm-lcd-inner`, so the markup's
+newline text nodes between the four line spans rendered as
+phantom blank lines (359px tall instead of ~148px). Fixes, all in
+the page: `pre` moved to the line spans (whitespace-only inline
+content between block boxes drops out); the LCD became the
+device's width-setter with the keypad on `repeat(4, 1fr)` so it
+stretches flush (display and keys share one width, like a real
+face); LCD font bumped to 1.2rem for presence. The dress-up
+adopted the rest of the equipment register: `.device-tb` titlebar
+(comm LED + generic `CF-MOCK 100` badge) and a `.dev-leds` row
+(RUN green / LOC amber / FAULT off — no fault model yet) replacing
+the hand-rolled `.vfdm-localrem` dot. The pedagogically
+load-bearing mode sentence ("REMOTE — drive follows configured
+sources") moved outside the bezel as `p.vfdm-mode-note` (a device
+face has LEDs, not sentences) — and it MUST stay outside: its
+max-content width exceeds the LCD's and would silently become the
+shrink-wrapped face's width-setter. The dial-arc ("pure visual
+flare" twin of the gauge bar) was removed with the user's sign-off
+to rebalance the columns. This supersedes the "hybrid LCD /
+flat site-style keypad" decisions above — the face is now fully
+equipment-register.
+
 
 ### Refrigerant cycle — Education section, possibly with calculator *(parked 2026-05-29 — revisit when the topic is next picked up)*
 
