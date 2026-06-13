@@ -1422,6 +1422,21 @@ Possible future refinement: a standby-exercise timer (run an idle unit
 briefly on a schedule), which the lesson mentions but the sim doesn't
 model yet.
 
+**Unit cards became equipment-register devices *(2026-06-12)*.** Part
+of a "sims are where fun-and-flashy lives" visual pass (alongside the
+VFD-mock face fix and the FBE live-wire animation). The flat software
+panels (text state + plain runtime bar) are now mini device faces
+built entirely from shared classes — `.device` shell, status `.led`
+(green run / off standby / blinking red `.led--alarm` fault), a
+compact one-row `.lcd` hour meter, and a `.gauge.eq` dot-matrix
+runtime bar. Pumps/boilers/chillers are hardware, so this is the
+register's intended use; the cards now read like a row of starter
+panels. Page CSS only lays out internals; face/LED/LCD/gauge texture
+all come from `styles.css`. The `unitCells` cached-element render
+pattern is unchanged (an LED element joins the cache). Fault keeps
+the red card border; the runtime bar no longer turns red on fault —
+the blinking LED, state text, and border carry it.
+
 ### Controller Wiring Simulator — 5th simulator *(Phase 1 shipped 2026-06-06, PR #187)*
 The hands-on counterpart to the site's already-strong *text* coverage of
 field wiring (the `field-wiring-sensors` and `controller-swap` drills,
