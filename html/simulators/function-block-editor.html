@@ -96,6 +96,37 @@ keywords: wiresheet logic block and or pid wire program sequence
         .fbe-wire-hit { fill: none; stroke: transparent; stroke-width: 14; pointer-events: stroke; cursor: pointer; }
         .fbe-wire-sel { stroke: var(--text-bright); stroke-dasharray: 5 3; }
 
+        /* Live-signal flow — while the sim runs (.fbe-running on the
+           canvas, toggled by setRunning), energized wires march from
+           source to sink: wire paths are drawn output → input, so a
+           negative dashoffset walks the dashes in true signal direction.
+           Digital TRUE pulses briskly; analog crawls with a long dash so
+           the line stays traceable as a line. FALSE wires stay still — a
+           dead wire doesn't pulse. Both dash periods are 12 so they share
+           one keyframe (offset −12 = exactly one cycle, seamless loop).
+           Gated on no-preference rather than relying on the global
+           reduce block: that block only freezes animation, and frozen
+           dashes would read as the selection dash pattern — reduced
+           motion should keep fully SOLID wires. Selected wires opt out
+           (selection owns the dash pattern). */
+        @media (prefers-reduced-motion: no-preference) {
+            .fbe-canvas.fbe-running .fbe-wire-bool-on {
+                stroke-dasharray: 7 5;
+                animation: fbe-signal-flow 0.45s linear infinite;
+            }
+            .fbe-canvas.fbe-running .fbe-wire-num {
+                stroke-dasharray: 9 3;
+                animation: fbe-signal-flow 1.1s linear infinite;
+            }
+            .fbe-canvas.fbe-running .fbe-wire-sel {
+                animation: none;
+                stroke-dasharray: 5 3;
+            }
+        }
+        @keyframes fbe-signal-flow {
+            to { stroke-dashoffset: -12; }
+        }
+
         /* ── Blocks ── */
         .fbe-block {
             position: absolute;
@@ -483,6 +514,7 @@ keywords: wiresheet logic block and or pid wire program sequence
         let INNER_W = 900, INNER_H = 480;      // canvas content bounds
         const BLOCK_W = 136;                   // matches .fbe-block width
 
+        const canvasEl  = document.getElementById('fbe-canvas');
         const inner     = document.getElementById('fbe-inner');
         const palette   = document.getElementById('fbe-palette');
         const inspector = document.getElementById('fbe-inspector');
@@ -1092,6 +1124,9 @@ keywords: wiresheet logic block and or pid wire program sequence
             running = on;
             runBtn.textContent = on ? 'Pause' : 'Run';
             setStatus(on ? 'Running' : 'Paused');
+            // Live-signal wire animation only plays while the sim runs —
+            // a paused sheet is static (the CSS keys off this class).
+            canvasEl.classList.toggle('fbe-running', on);
             if (on) startLoop(); else stopLoop();
         }
 

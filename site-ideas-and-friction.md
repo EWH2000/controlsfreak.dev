@@ -2251,6 +2251,26 @@ Wiresheet scrolling is the expected behaviour for this kind of tool
 - *Multi-pass settling beyond one tick.* One-tick-delay is
   sufficient for v1 and matches how real controllers behave.
 
+**Live-signal wire animation *(2026-06-12)*.** Part of the sims
+fun-and-flashy pass (with the VFD-mock face fix and the staging
+sequencer's device cards). While the sim runs (`.fbe-running` on the
+canvas, toggled in `setRunning`), energized wires march from source
+to sink: digital TRUE pulses briskly (dash 7 5, 0.45 s), analog
+crawls with a long dash (9 3, 1.1 s) so the line stays traceable.
+FALSE wires stay still — a dead wire doesn't pulse; a paused sheet
+is fully static, which makes run/pause legible at a glance. Both
+dash periods are 12, so one keyframe (`offset −12` = exactly one
+cycle) serves both speeds seamlessly. Wire paths are drawn
+output → input, so the negative dashoffset walks in true signal
+direction. Works because the wire `<path>` elements persist across
+ticks (`refreshValues` only rewrites class attributes; `renderAll`
+rebuilds only on structural edits) — CSS animations never restart
+mid-run. Gated on `prefers-reduced-motion: no-preference` rather
+than relying on the global reduce block: that block only freezes
+animations, and frozen dashes would read as the selection dash
+pattern — reduced motion keeps fully solid wires. Selected wires
+opt out (selection owns the dash pattern).
+
 ### Function-block programming — paired Education page *(shipped 2026-05-22)*
 
 **One question:** *what is function-block programming, and why do
