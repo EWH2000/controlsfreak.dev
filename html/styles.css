@@ -1416,7 +1416,8 @@ footer {
    .is-fullscreen. Wired by /scripts/fullscreen-toggle.js — pages opt in by
    adding a [data-fullscreen-target] button anywhere in the card. ESC exits.
    Add the .fs-desktop-only modifier on tools that don't make sense below
-   the 1000px breakpoint (e.g. drag-wiring editors). */
+   the 1000px breakpoint OR on a touch-primary device (e.g. drag-wiring
+   editors — same gate those pages use to swap the sim for a tips panel). */
 .tool-card-fullscreen-btn {
     position: absolute;
     top: 0.55rem;
@@ -1446,7 +1447,7 @@ footer {
 .tool-card.is-fullscreen .tool-card-fullscreen-btn .fs-label-enter { display: none; }
 .tool-card.is-fullscreen .tool-card-fullscreen-btn .fs-icon-exit  { display: block; }
 .tool-card.is-fullscreen .tool-card-fullscreen-btn .fs-label-exit { display: inline; }
-@media (max-width: 999px) {
+@media (max-width: 999px), (hover: none) and (pointer: coarse) {
     .tool-card-fullscreen-btn.fs-desktop-only { display: none; }
 }
 
@@ -1858,7 +1859,7 @@ input[type="range"]:focus-visible::-moz-range-thumb {
 /* ── NARROW-WIDTH ORIENTATION NOTE — hidden by default; pages flip to
    display:block inside their own @media at whatever breakpoint their
    layout shifts. Frames a layout change as mental-model orientation,
-   NOT as apology. Voice reference: function-block-editor.html. ── */
+   NOT as apology. Voice reference: pid-tuner.html. ── */
 .narrow-width-note {
     display: none;
     font-size: 0.8rem;
@@ -1869,6 +1870,57 @@ input[type="range"]:focus-visible::-moz-range-thumb {
     padding: 0.6rem 0.8rem;
     margin: 0.6rem 0;
 }
+
+/* ── DESKTOP-ONLY SIM FALLBACK — shown in place of a drag-wiring editor
+   (controller-wiring, function-block-editor) on a screen that can't run
+   it: below the 1000px / .fs-desktop-only line, OR any touch-primary
+   device (a finger can't both drag a block and pan the canvas, so these
+   are pointer-only by design). The page hides its live workspace and
+   flips this panel visible in the SAME media query — the gate lives on
+   the page, this is just the shared shell. Carries a "come back on a
+   desktop" line plus a few field tips so the visit still teaches. Hidden
+   by default; pages opt in per the .narrow-width-note pattern. Voice:
+   orientation, not apology. ── */
+.desktop-only-sim {
+    display: none;
+    background: var(--surface-3);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 0;
+    padding: 0.95rem 1.15rem 1.05rem;
+    margin: 1rem 0 1.25rem;
+}
+.desktop-only-sim .dos-label {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--accent);
+    margin: 0 0 0.5rem;
+}
+.desktop-only-sim p {
+    font-size: 0.9rem;
+    line-height: 1.65;
+    color: var(--text);
+    margin: 0 0 0.75rem;
+}
+.desktop-only-sim ul { list-style: none; margin: 0; padding: 0; }
+.desktop-only-sim li {
+    position: relative;
+    font-size: 0.88rem;
+    line-height: 1.6;
+    color: var(--text);
+    padding: 0.25rem 0 0.25rem 1.1rem;
+}
+.desktop-only-sim li::before {
+    content: "▸";
+    position: absolute;
+    left: 0;
+    color: var(--accent);
+}
+.desktop-only-sim strong { color: var(--text-bright); }
+.desktop-only-sim .dos-more { margin: 0.85rem 0 0; font-size: 0.86rem; }
 
 p.pid-note {
     font-family: var(--mono);

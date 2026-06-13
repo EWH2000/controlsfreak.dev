@@ -326,8 +326,14 @@ keywords: 24vac com transformer 4-20ma loop ui ai ao bo terminals fuse
             margin-top: 0.5rem;
         }
 
-        @media (max-width: 720px) {
-            .cw-canvas { height: 520px; }
+        /* Desktop-only by design: wiring is click-to-wire + drag-to-place,
+           and on touch a finger can't both drag a device and pan the canvas.
+           Below 1000px OR on a touch-primary device the live bench is hidden
+           and the shared .desktop-only-sim tips panel takes its place — same
+           gate the function-block editor uses. */
+        @media (max-width: 999px), (hover: none) and (pointer: coarse) {
+            .cw-live { display: none; }
+            .desktop-only-sim { display: block; }
         }
         @media (prefers-reduced-motion: reduce) {
             .cw-spark.cw-spark--go { animation: none; }
@@ -362,46 +368,65 @@ keywords: 24vac com transformer 4-20ma loop ui ai ao bo terminals fuse
                 Land a generic DDC controller the way you would in the field — power it from a transformer, drop sensors and outputs, and click terminal-to-terminal to run the wire. Get it right and the points read live; get it wrong and it fails the way real hardware fails — a sensor goes open, an actuator sits dead, the fuse pops. One simplification: the 4–20 mA loop here runs off the 24 V hot leg, while a real two-wire transmitter is DC loop-powered (typically 12–30 VDC from a dedicated supply or the controller's loop-power terminal). The wiring shape and the failure modes are the same either way. <strong>Desktop tool</strong> — wiring wants a mouse and room. <strong>New to landing a controller?</strong> <a href="/education/controller-wiring.html">Start with the explainer →</a>
             </p>
 
-            <div class="cw-bar">
-                <span class="lbl">Load a panel:</span>
-                <button type="button" class="cw-preset" data-preset="ahu">AHU: sensor · damper · fan</button>
-                <button type="button" class="cw-preset" data-preset="loop">4-20 mA loop + status</button>
-                <button type="button" class="cw-preset" data-preset="broken-fuse">Broken: blown fuse</button>
-                <button type="button" class="cw-preset" data-preset="broken-sensor">Broken: dead sensor</button>
-                <button type="button" data-preset="clear">Clear</button>
+            <div class="desktop-only-sim">
+                <h2 class="dos-label">Desktop tool</h2>
+                <p>
+                    The wiring bench needs a mouse and room to drag — open this page on a laptop or desktop to land a controller, drop field devices, and run wires terminal-to-terminal. A finger can't both drag a device and pan the canvas, so it's pointer-only by design. Here's what it teaches, so the trip back pays off:
+                </p>
+                <ul>
+                    <li><strong>Power first.</strong> Land the transformer's hot leg on <strong>24V~</strong> and its common on <strong>24COM</strong> before anything else — every powered device and output references that common.</li>
+                    <li><strong>Sensors are two wires to a UI.</strong> A 10K thermistor lands on a universal input plus the signal common; set the input type (<strong>R / V / mA</strong>) to match the device, or the reading is garbage.</li>
+                    <li><strong>Know your transmitter.</strong> A 2-wire 4–20 mA transmitter is loop-powered and sits in series with the loop; a 3-wire 0–10 V transmitter needs its own power, common, and signal.</li>
+                    <li><strong>Outputs split two ways.</strong> An analog output drives a separately-powered actuator — signal and signal-common carry the command. A binary output is just a dry contact that switches an external load, like a fan contactor fed from the hot leg.</li>
+                    <li><strong>Wrong landings fail like real hardware.</strong> A dead short across hot and common pops the fuse; a sensor returned to the wrong terminal reads open; an unpowered actuator sits dead.</li>
+                </ul>
+                <p class="dos-more">
+                    On a phone right now? The <a href="/education/controller-wiring.html">Controller Wiring explainer</a> walks the same ground and reads fine on mobile.
+                </p>
             </div>
 
-            <div class="cw-bar">
-                <span class="lbl">Add a field device:</span>
-                <button type="button" data-device="xfmr">24 VAC Xfmr</button>
-                <button type="button" data-device="therm10k">10K Thermistor</button>
-                <button type="button" data-device="xmtr010">0-10V Xmtr</button>
-                <button type="button" data-device="xmtr420">4-20mA Xmtr</button>
-                <button type="button" data-device="dryContact">Dry Contact</button>
-                <button type="button" data-device="act010">0-10V Actuator</button>
-                <button type="button" data-device="relayFan">Fan Contactor</button>
-            </div>
-
-            <div class="cw-canvas" id="cw-canvas">
-                <div class="cw-canvas-inner" id="cw-inner">
-                    <!-- aria-hidden: the wire layer is informationally
-                         redundant to the live status line; an unnamed
-                         dynamic SVG is noise for AT (audit-2026-06 polish). -->
-                    <svg class="cw-wire-layer" id="cw-wires" viewBox="0 0 940 660" preserveAspectRatio="none" aria-hidden="true"></svg>
-                    <!-- controller + devices injected here by the IIFE -->
+            <div class="cw-live">
+                <div class="cw-bar">
+                    <span class="lbl">Load a panel:</span>
+                    <button type="button" class="cw-preset" data-preset="ahu">AHU: sensor · damper · fan</button>
+                    <button type="button" class="cw-preset" data-preset="loop">4-20 mA loop + status</button>
+                    <button type="button" class="cw-preset" data-preset="broken-fuse">Broken: blown fuse</button>
+                    <button type="button" class="cw-preset" data-preset="broken-sensor">Broken: dead sensor</button>
+                    <button type="button" data-preset="clear">Clear</button>
                 </div>
-            </div>
 
-            <p class="cw-status" id="cw-status" role="status" aria-live="polite"></p>
+                <div class="cw-bar">
+                    <span class="lbl">Add a field device:</span>
+                    <button type="button" data-device="xfmr">24 VAC Xfmr</button>
+                    <button type="button" data-device="therm10k">10K Thermistor</button>
+                    <button type="button" data-device="xmtr010">0-10V Xmtr</button>
+                    <button type="button" data-device="xmtr420">4-20mA Xmtr</button>
+                    <button type="button" data-device="dryContact">Dry Contact</button>
+                    <button type="button" data-device="act010">0-10V Actuator</button>
+                    <button type="button" data-device="relayFan">Fan Contactor</button>
+                </div>
 
-            <div class="cw-faults" id="cw-faults">
-                <div class="cw-faults-head">Faults</div>
-                <ul id="cw-faults-list"></ul>
-            </div>
+                <div class="cw-canvas" id="cw-canvas">
+                    <div class="cw-canvas-inner" id="cw-inner">
+                        <!-- aria-hidden: the wire layer is informationally
+                             redundant to the live status line; an unnamed
+                             dynamic SVG is noise for AT (audit-2026-06 polish). -->
+                        <svg class="cw-wire-layer" id="cw-wires" viewBox="0 0 940 660" preserveAspectRatio="none" aria-hidden="true"></svg>
+                        <!-- controller + devices injected here by the IIFE -->
+                    </div>
+                </div>
 
-            <p class="cw-hint">
-                Click a terminal, then a second terminal, to run a wire between them. Click a wire to select it, then press <strong>Delete</strong> to remove it. <strong>Esc</strong> cancels a half-made wire. Drag a device by its title bar; select it and press Delete to remove it.
-            </p>
+                <p class="cw-status" id="cw-status" role="status" aria-live="polite"></p>
+
+                <div class="cw-faults" id="cw-faults">
+                    <div class="cw-faults-head">Faults</div>
+                    <ul id="cw-faults-list"></ul>
+                </div>
+
+                <p class="cw-hint">
+                    Click a terminal, then a second terminal, to run a wire between them. Click a wire to select it, then press <strong>Delete</strong> to remove it. <strong>Esc</strong> cancels a half-made wire. Drag a device by its title bar; select it and press Delete to remove it.
+                </p>
+            </div><!-- .cw-live -->
 
         </div>
     </div>

@@ -1503,7 +1503,17 @@ end-of-line termination at both ends only, biasing, and MAC/device-instance
 addressing. The Controller Wiring sim's greyed NET terminals are the seam it
 plugs into.
 
-### Thermistor calculator *(both modes shipped + curves verified)*
+**Desktop-only on mobile/touch *(2026-06-13)*.** Click-to-wire +
+drag-to-place has the same touch flaw as the Function-Block Editor — a
+finger can't both drag a device and pan the canvas. So the same gate
+applies: `@media (max-width: 999px), (hover: none) and (pointer:
+coarse)` hides the `.cw-live` bench and shows the shared
+`.desktop-only-sim` tips panel (power-first / sensor-wiring /
+transmitter / output / failure-mode bullets that stand alone without
+the canvas, plus a link to the mobile-friendly explainer). No JS gate
+needed here — the cosmetic drift interval no-ops on an empty panel,
+which is all a mobile visitor ever sees. See the Function-Block Editor
+section for the full rationale (shipped together in one PR).
 Two modes, tabs à la Signal Scaling. Both are shipped and the curves
 are datasheet-verified.
 
@@ -2237,6 +2247,25 @@ screens is screen real estate. Canvas inner is 900×480 with
 horizontal scroll; examples lay out left-to-right within it.
 Wiresheet scrolling is the expected behaviour for this kind of tool
 — every real wiresheet scrolls.
+
+**Update *(2026-06-13)* — desktop-only made hard, not soft.** The
+"tool still functions on touch" claim above was wrong: dragging a
+block and panning the canvas are the *same* finger gesture (nothing
+sets `touch-action: none`), so the drag never lands. Fixing that
+means a separate pan affordance + drag-handles — real work, pointless
+for a tool that's desktop-only anyway. So the soft narrow-note was
+replaced by a hard gate: `@media (max-width: 999px), (hover: none)
+and (pointer: coarse)` hides the whole `.fbe-live` workspace and flips
+the shared `.desktop-only-sim` tips panel visible in its place (a
+short "open on a desktop" line + five mental-model bullets that teach
+the wiresheet without the canvas). Same gate now hides the
+`.fs-desktop-only` fullscreen button and, via a `matchMedia('(min-width:
+1000px)')` guard, parks the 10 Hz scan below the width so a hidden
+sheet doesn't burn ticks. The 999 px line matches the long-standing
+`.fs-desktop-only` threshold; the touch clause catches landscape
+tablets ≥1000 px that a finger still can't drive. The same treatment
+shipped on the **Controller Wiring Simulator** in the same PR — see
+its section.
 
 **Out of scope (deliberate, parked):**
 - *Persistence / save / load / JSON export.* Session-only — same as

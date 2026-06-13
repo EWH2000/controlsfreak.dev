@@ -301,10 +301,11 @@ keywords: wiresheet logic block and or pid wire program sequence
            chips and wants a smaller gap than the global rule's default. */
         p.tool-preamble.tight { margin-bottom: 0.85rem; }
 
-        /* Desktop-only interaction by design (drag-wiring wants room and
-           a pointer). Below the breakpoint the regions stack and the
-           shared .narrow-width-note flips visible — nothing is hidden,
-           the tool still works. */
+        /* Desktop-only interaction by design — drag-wiring wants room and a
+           pointer, and on touch a finger can't both drag a block and pan the
+           sheet. Below 1000px OR on a touch-primary device the whole live
+           workspace is hidden and the shared .desktop-only-sim tips panel
+           takes its place (the @media gate is at the end of this block). */
         /* Fullscreen overrides — let the workspace use the bigger viewport. The
            grid flips from [palette | canvas] to a single column with the canvas
            on top filling the freed-up horizontal space and the palette wrapped
@@ -352,10 +353,9 @@ keywords: wiresheet logic block and or pid wire program sequence
             padding: 0.3rem 0.55rem;
         }
 
-        @media (max-width: 860px) {
-            .fbe-workspace { grid-template-columns: 1fr; }
-            .fbe-palette { max-height: 12rem; }
-            .narrow-width-note { display: block; }
+        @media (max-width: 999px), (hover: none) and (pointer: coarse) {
+            .fbe-live { display: none; }
+            .desktop-only-sim { display: block; }
         }
     </style>
 {% endblock %}
@@ -401,78 +401,90 @@ keywords: wiresheet logic block and or pid wire program sequence
                 <a href="/education/function-blocks.html">Start with Function-Block Basics →</a>
             </p>
 
-            <div class="widget-try" id="fbe-examples">
-                <span class="lbl">Try this:</span>
-                <a data-example="freeze">freeze-stat shutdown</a>
-                <a data-example="econ">economizer enable</a>
-                <a data-example="tstat-cool">cooling thermostat</a>
-                <a data-example="tstat-heat">heating thermostat</a>
-                <a data-example="pid">heating PID</a>
+            <div class="desktop-only-sim">
+                <h2 class="dos-label">Desktop tool</h2>
+                <p>
+                    Wiring blocks on a wiresheet is drag work that wants a pointer and a wide canvas — open this page on a laptop or desktop to build and run a sequence. A finger can't both drag a block and pan the sheet, so it's pointer-only by design. Here's the mental model it teaches:
+                </p>
+                <ul>
+                    <li><strong>Sheets flow left to right.</strong> Sources (sensors, constants) on the left, logic and math in the middle, outputs on the right — read a wiresheet as a signal's journey.</li>
+                    <li><strong>Wire output → input, like to like.</strong> An output pin on a block's right edge feeds an input pin on another's left edge; analog only connects to analog, digital only to digital.</li>
+                    <li><strong>Comparators turn analog into digital.</strong> A greater-than or less-than block compares two numbers and emits TRUE or FALSE — the bridge from a measured value to an on/off decision.</li>
+                    <li><strong>Latches hold; loops settle.</strong> An SR latch remembers its last set or reset. A feedback wire carries the previous scan's value, so a loop settles each tick instead of hanging.</li>
+                    <li><strong>It runs as a scan, about ten times a second.</strong> Change a source and the whole sheet re-evaluates — the way a real controller cycles its program.</li>
+                </ul>
+                <p class="dos-more">
+                    New to wiresheets? <a href="/education/function-blocks.html">Function-Block Basics</a> covers the same ideas and reads fine on a phone.
+                </p>
             </div>
 
-            <div class="narrow-width-note">
-                This editor is built for a wider screen and a pointer — wiring blocks on a
-                phone is cramped. The regions stack below, and it still works, but a laptop
-                gives it room to breathe. Wiring is drag work, too: a mouse or trackpad beats
-                a finger here, so even on a roomy tablet it goes smoother with a pointer.
-            </div>
-
-            <div class="fbe-simbar">
-                <button type="button" class="copy-btn" id="fbe-run" data-action="run">Pause</button>
-                <button type="button" class="copy-btn" id="fbe-step" data-action="step">Step</button>
-                <button type="button" class="copy-btn" id="fbe-reset" data-action="reset">Reset</button>
-                <button type="button" class="copy-btn" id="fbe-clear" data-action="clear">Clear</button>
-                <span class="fbe-status" id="fbe-status" role="status" aria-live="polite">Running</span>
-            </div>
-
-            <div class="fbe-workspace">
-                <!-- Palette — filled from FBE.CATEGORIES / FBE.BLOCKS. -->
-                <div class="fbe-palette" id="fbe-palette" aria-label="Block palette"></div>
-
-                <!-- Canvas — blocks are absolutely-positioned divs; wires
-                     are an SVG overlay rebuilt by the page. The editor is
-                     signposted as a mouse tool, but the canvas is also a
-                     scroll container — tabindex/role/label make at least
-                     the scrolling keyboard-reachable (audit-2026-06 #58). -->
-                <div class="fbe-canvas" id="fbe-canvas" tabindex="0" role="region" aria-label="Wiresheet canvas">
-                    <div class="fbe-canvas-inner" id="fbe-inner"></div>
+            <div class="fbe-live">
+                <div class="widget-try" id="fbe-examples">
+                    <span class="lbl">Try this:</span>
+                    <a data-example="freeze">freeze-stat shutdown</a>
+                    <a data-example="econ">economizer enable</a>
+                    <a data-example="tstat-cool">cooling thermostat</a>
+                    <a data-example="tstat-heat">heating thermostat</a>
+                    <a data-example="pid">heating PID</a>
                 </div>
-            </div>
 
-            <!-- Inspector — selected block's editable parameters. -->
-            <div class="fbe-inspector" id="fbe-inspector"></div>
+                <div class="fbe-simbar">
+                    <button type="button" class="copy-btn" id="fbe-run" data-action="run">Pause</button>
+                    <button type="button" class="copy-btn" id="fbe-step" data-action="step">Step</button>
+                    <button type="button" class="copy-btn" id="fbe-reset" data-action="reset">Reset</button>
+                    <button type="button" class="copy-btn" id="fbe-clear" data-action="clear">Clear</button>
+                    <span class="fbe-status" id="fbe-status" role="status" aria-live="polite">Running</span>
+                </div>
 
-            <div class="fbe-legend">
-                <span><span class="fbe-swatch fbe-sw-num"></span> analog (number)</span>
-                <span><span class="fbe-swatch fbe-sw-on"></span> digital TRUE</span>
-                <span><span class="fbe-swatch fbe-sw-off"></span> digital FALSE</span>
-            </div>
+                <div class="fbe-workspace">
+                    <!-- Palette — filled from FBE.CATEGORIES / FBE.BLOCKS. -->
+                    <div class="fbe-palette" id="fbe-palette" aria-label="Block palette"></div>
 
-            <h2 class="subhead">How it works</h2>
-            <p>
-                Click a palette block to drop it on the sheet; drag it by its title bar to
-                reposition. To wire, click an <strong>output</strong> pin (right edge) then a
-                compatible <strong>input</strong> pin (left edge) — pins only connect
-                like-to-like, analog to analog and digital to digital. Click a block or a
-                wire to select it; press <code>Delete</code> to remove the selection, or
-                <code>Escape</code> to cancel a wire-in-progress. The inspector below the
-                canvas edits the selected block's parameters live. Placing and wiring
-                blocks needs a mouse or touch; the inspector and the sim-bar buttons
-                take keyboard too.
-            </p>
-            <p>
-                The sequence evaluates ten times a second. Pure logic settles in a single
-                pass; a feedback loop (an output wired back to its own chain) carries the
-                previous tick's value, so a latch holds and a loop never hangs. Source and
-                output blocks show their value; a digital wire turns green when it carries
-                TRUE. Nothing is saved — reload, or pick a <em>Try this</em> example, to
-                start fresh.
-            </p>
-            <p class="ref-note">
-                <strong>DIVIDE</strong> outputs <code>0</code> when its divisor is
-                <code>0</code> — a guard, so a downstream comparator stays sane
-                instead of reading <code>Infinity</code> or <code>NaN</code>.
-            </p>
+                    <!-- Canvas — blocks are absolutely-positioned divs; wires
+                         are an SVG overlay rebuilt by the page. The editor is
+                         signposted as a mouse tool, but the canvas is also a
+                         scroll container — tabindex/role/label make at least
+                         the scrolling keyboard-reachable (audit-2026-06 #58). -->
+                    <div class="fbe-canvas" id="fbe-canvas" tabindex="0" role="region" aria-label="Wiresheet canvas">
+                        <div class="fbe-canvas-inner" id="fbe-inner"></div>
+                    </div>
+                </div>
+
+                <!-- Inspector — selected block's editable parameters. -->
+                <div class="fbe-inspector" id="fbe-inspector"></div>
+
+                <div class="fbe-legend">
+                    <span><span class="fbe-swatch fbe-sw-num"></span> analog (number)</span>
+                    <span><span class="fbe-swatch fbe-sw-on"></span> digital TRUE</span>
+                    <span><span class="fbe-swatch fbe-sw-off"></span> digital FALSE</span>
+                </div>
+
+                <h2 class="subhead">How it works</h2>
+                <p>
+                    Click a palette block to drop it on the sheet; drag it by its title bar to
+                    reposition. To wire, click an <strong>output</strong> pin (right edge) then a
+                    compatible <strong>input</strong> pin (left edge) — pins only connect
+                    like-to-like, analog to analog and digital to digital. Click a block or a
+                    wire to select it; press <code>Delete</code> to remove the selection, or
+                    <code>Escape</code> to cancel a wire-in-progress. The inspector below the
+                    canvas edits the selected block's parameters live. Placing and wiring
+                    blocks needs a mouse or trackpad; the inspector and the sim-bar buttons
+                    take keyboard too.
+                </p>
+                <p>
+                    The sequence evaluates ten times a second. Pure logic settles in a single
+                    pass; a feedback loop (an output wired back to its own chain) carries the
+                    previous tick's value, so a latch holds and a loop never hangs. Source and
+                    output blocks show their value; a digital wire turns green when it carries
+                    TRUE. Nothing is saved — reload, or pick a <em>Try this</em> example, to
+                    start fresh.
+                </p>
+                <p class="ref-note">
+                    <strong>DIVIDE</strong> outputs <code>0</code> when its divisor is
+                    <code>0</code> — a guard, so a downstream comparator stays sane
+                    instead of reading <code>Infinity</code> or <code>NaN</code>.
+                </p>
+            </div><!-- .fbe-live -->
 
         </div>
     </div>
@@ -1110,8 +1122,15 @@ keywords: wiresheet logic block and or pid wire program sequence
             refreshValues();
         }
 
+        // The sheet is hidden below the desktop width (see the CSS gate), so
+        // there's no point spinning the 10 Hz scan there — gate the loop on
+        // viewport width. A touch tablet ≥1000px keeps ticking, but its canvas
+        // is hidden too, so the only cost is a few idle ticks no one sees.
+        const desktopMQ = window.matchMedia('(min-width: 1000px)');
+
         function startLoop() {
             if (tickHandle !== null) return;
+            if (!desktopMQ.matches) return;
             tickHandle = window.setInterval(stepOnce, DT * 1000);
         }
         function stopLoop() {
@@ -1235,6 +1254,14 @@ keywords: wiresheet logic block and or pid wire program sequence
         document.addEventListener('visibilitychange', () => {
             if (document.hidden) stopLoop();
             else if (running) startLoop();
+        });
+
+        // Start/stop the scan as the window crosses the desktop width: resized
+        // wider than 1000px the sheet reappears and should come alive; narrower
+        // it's hidden, so stop the loop.
+        desktopMQ.addEventListener('change', () => {
+            if (desktopMQ.matches) { if (running) startLoop(); }
+            else stopLoop();
         });
 
         // First paint — load the economizer-enable example as a compact,
