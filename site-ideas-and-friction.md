@@ -618,6 +618,23 @@ dropdown rows read left-aligned — and tidied the sheet into a separated
 list with the caret pushed to each row's right edge. Bumped the
 `machine-sweep` dropdown-count assertion 3 → 4.
 
+**Cascading category dropdowns 2026-06-14** (follow-up PR): the flat
+dropdowns (Tools 18 / Education 18 / Practice 21) became *expandable
+categories* — each section's menu now shows its category rows (HVAC,
+Protocols, …) that click-expand their pages inline, collapsing the long
+scan. Chosen over hover fly-outs (clumsy on touch, against nav-menu.js's
+no-hover stance) and flat grouped-headings (doesn't shorten the list).
+Mechanics: a `category` frontmatter on every tools/education/practice
+page (the bucket), `NAV_CATEGORIES` order+labels + a `navGroups` filter +
+a `navCategoryGuard` build check in `.eleventy.js`, a `nav-dropdown.njk`
+macro (grouped vs. flat), and a second disclosure level in nav-menu.js
+(one category open at a time; Escape steps category → section). The
+four hand-written dropdown blocks collapsed into the one macro.
+Simulators (5 items, no categories) stays flat. *Friction:* category
+lives in **two** places — page frontmatter (nav) and the landing's
+`navCard()` call (chips) — with no build tie; logged in
+`codebase-issues.md`.
+
 **Still parked for v3** (full detail in `quiz-section-plan.md`):
 - Remaining field drills (Commissioning, Tridium / EBO quirks, full
   Junior + Senior Interview Prep).

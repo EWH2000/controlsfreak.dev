@@ -155,6 +155,12 @@ Frontmatter:
   the search index (`search-index.njk`), never to `<meta>`. Use for
   field terms the title/description miss (e.g. signal-scaling →
   `4-20mA span slope offset`). Unconstrained by the description guard.
+- `category` — **required on tools / education / practice pages**
+  (not simulators); the cascading nav dropdown's category bucket. Must
+  be a key in that section's `NAV_CATEGORIES` (`.eleventy.js`) — the
+  `navCategoryGuard` collection fails the build otherwise. Keep it equal
+  to the page's `navCard()` `category` on the section landing. See
+  *Search index & nav menus → Cascading category dropdowns*.
 
 Blocks: `head` (optional — inline `<style>` or head-loaded script;
 Turnstile on `contact.html` is the only current head-script example);
@@ -193,6 +199,22 @@ Two shared `.eleventy.js` filters serve both the index and the menus:
 `scripts/nav-menu.js` (`window.NavMenu`) drives the disclosure
 toggles + the mobile hamburger; the open mobile sheet caps its height
 and scrolls internally (see *Gotchas*).
+
+**Cascading category dropdowns.** Tools / Education / Practice render
+**two-level** dropdowns: their pages sit under expandable category rows
+(`_includes/nav-dropdown.njk` macro). The per-section category order +
+labels live in the `NAV_CATEGORIES` const in `.eleventy.js`; the
+`navGroups(collection, section)` filter buckets a nav collection into
+`[{key, label, pages}]` in that order (empties dropped); each page
+declares its bucket via a **`category` frontmatter** key. A
+`navCategoryGuard` collection fails the build if any tools/education/
+practice page lacks a `category` or carries one not in its section's
+config. Simulators has no `NAV_CATEGORIES` entry, so it renders flat.
+`nav-menu.js` layers a second disclosure level (`.nav-group-toggle` /
+`.nav-submenu`, one category open at a time, Escape steps category →
+section). **Category keys mirror the landing pages' `navCard()`
+`category` values but are an independent source — keep the two in sync
+(codebase-issues, two-source category drift).**
 
 ### Conventions
 
@@ -603,12 +625,17 @@ section headers).
 
 1. Create `html/tools/<tool-name>.html` from the *Templating*
    skeleton. Pick a kebab-case page-id prefix that matches its
-   widget-CSS prefix in `styles.css`.
+   widget-CSS prefix in `styles.css`. Give it a `category` frontmatter
+   in the section's `NAV_CATEGORIES` set (`.eleventy.js`) — the build
+   fails without it (`navCategoryGuard`). A genuinely new category means
+   adding a `[key, label]` entry to `NAV_CATEGORIES.tools`.
 2. Wrap page logic in an IIFE + `addEventListener` (see *JS patterns*);
    apply validate-and-mute on numeric inputs.
-3. Add a `.nav-card` to the `.card-grid` on `tools/index.html`.
-   Bump the All chip count and add a per-category chip if the new
-   tool opens a category not already represented.
+3. Add a `.nav-card` to the `.card-grid` on `tools/index.html` with the
+   **same `category`** as the frontmatter (the two are independent
+   sources — keep them equal). Bump the All chip count and add a
+   per-category chip if the new tool opens a category not already
+   represented.
 4. Add the page's URL to the `PAGES` array in `tests/smoke.spec.js`
    (the sitemap is automatic — see *Sitemap* — but the drift test
    fails until `PAGES` is updated).
@@ -632,7 +659,9 @@ frontmatter and the new `.nav-card` added to
 **Adding a new quiz / drill** follows a similar shape under
 `html/practice/`:
 
-1. Create `html/practice/<slug>.html`. Frontmatter `nav: practice`;
+1. Create `html/practice/<slug>.html`. Frontmatter `nav: practice` +
+   a `category` in `NAV_CATEGORIES.practice` (`field` for a drill with
+   no topic; the build fails without one — `navCategoryGuard`);
    `.tool-card` with the page's `<h1 class="tool-card-title">` +
    a short `.page-intro` + an empty `<div id="quiz"></div>`. See
    `practice/modbus-decoding.html` for canonical wiring.

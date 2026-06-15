@@ -4240,6 +4240,26 @@ empty-state branch was changed — the wire-selected and block-
 selected branches already expose a "Delete block" / "Delete wire"
 button that documents the affordance.
 
+### 69. Nav `category` lives in two unlinked sources *(open — 2026-06-14)*
+
+The cascading nav dropdowns group pages by a `category` frontmatter key
+(read by the `navGroups` filter into `NAV_CATEGORIES`). The section
+landing pages independently tag the same pages via the `navCard()`
+`category` argument (for the filter chips). The two are **separate
+sources of truth** with no build-time tie: recategorizing a tool on the
+landing without updating its frontmatter (or vice-versa) silently drifts
+the chip and the nav into disagreement. The `navCategoryGuard` only
+checks the frontmatter against `NAV_CATEGORIES`, not against the
+landing. Unifying would mean data-driving the hand-written landing
+`navCard()` calls (read `category` from the page collection instead of
+hardcoding) — a bigger refactor than the cascading feature warranted,
+so deferred. Cheapest interim guard if it bites: a build collection that
+parses each landing's `navCard()` calls and asserts each `category`
+equals the target page's frontmatter. Note: education is the one place
+they legitimately differ — the landing uses granular keys (drives,
+control, …) under the `fundamentals` chip, while the nav frontmatter
+uses the chip-level `fundamentals`.
+
 ### Post-audit re-evaluation sweep (2026-05-16)
 
 A second pass over the codebase after Block C closed caught two
