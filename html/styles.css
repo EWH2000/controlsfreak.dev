@@ -1351,7 +1351,7 @@ footer {
            which was the sideways-scroll. Keep it one scrolling column. */
         flex-wrap: nowrap;
         align-items: stretch;
-        gap: 0.15rem;
+        gap: 0;                   /* rows carry their own separators + padding */
         margin-top: 0.5rem;
     }
     /* Cap the open sheet to the space under the top bar and give it its own
@@ -1391,6 +1391,24 @@ footer {
     /* Long tool names wrap in the full-width sheet instead of running off
        the side (the desktop dropdown keeps them on one line). */
     .nav-menu .nav-menu-item { white-space: normal; }
+    /* Sheet reads as a tidy list, not floating text. Every top-level row is
+       full-width with a hairline separator; dropdown rows push their caret
+       to the right edge and make the label a full-width tap target (tap
+       label → landing, tap caret → expand); open sub-menus indent under
+       their parent. The .site-nav.nav-open prefix out-ranks the touch-floor
+       block, so these hold whether or not the device reports hover:none. */
+    .site-nav.nav-open .site-nav-links > a,
+    .site-nav.nav-open .site-nav-links > .nav-item--has-menu {
+        border-bottom: 1px solid var(--border-faint);
+    }
+    .site-nav.nav-open .site-nav-links > a { padding: 0.6rem 0.25rem; }
+    .site-nav.nav-open .nav-item--has-menu { justify-content: space-between; }
+    .site-nav.nav-open .nav-item--has-menu > a { flex: 1 1 auto; padding: 0.6rem 0.25rem; }
+    .site-nav.nav-open .nav-item--has-menu > .nav-menu-toggle { margin: 0; padding: 0.6rem 0.6rem; }
+    .site-nav.nav-open .nav-menu { margin-top: 0; }
+    .site-nav.nav-open .nav-menu .nav-menu-item { padding-left: 1.25rem; }
+    .site-nav.nav-open .units-toggle,
+    .site-nav.nav-open .theme-toggle { padding: 0.5rem 0.25rem; }
 }
 /* ── COPY BUTTON ── */
 .copy-btn {
@@ -1643,7 +1661,11 @@ input[type="range"]:focus-visible::-moz-range-thumb {
        beside the full link bar on touch tablets (audit-2026-06 #25).
        The ≤620px media block is what reveals it. */
     .nav-hamburger { min-height: 44px; }
-    .site-nav-links a { padding-inline: 0.2rem; }
+    /* flex-start (not the group's center above): on the desktop bar the
+       links are content-width so this is moot, but in the full-width mobile
+       sheet the stretched links would otherwise center. Left-align them to
+       match the dropdown rows. */
+    .site-nav-links a { padding-inline: 0.2rem; justify-content: flex-start; }
     .quiz-settings-select { min-height: 44px; }
     .pid-spoiler > summary { min-height: 44px; }
     /* Range sliders: the input element IS the painted 4px track (its
