@@ -33,8 +33,8 @@ findings from the recurring content-accuracy audits.
   - `head.njk` — `<head>`: meta, OG, favicons, fonts, `/styles.css`,
     units + theme before-paint bootstrap scripts.
   - `nav.njk` — top nav; `.active` driven by `nav` frontmatter.
-    Tools / Simulators / Education carry **dropdown menus** of direct
-    links (disclosure buttons populated from collections — see *Search
+    Tools / Simulators / Education / Practice carry **dropdown menus**
+    of direct links (disclosure buttons populated from collections — see *Search
     index & nav menus*); the bar also holds the **command-palette
     search button** and, below 620px, a **hamburger** that collapses
     the link bar (`nav-menu.js`).
@@ -185,7 +185,8 @@ so it stays out of `sitemapPages` and the `PAGES` drift test — same
 status as `sitemap.xml`.
 
 The nav dropdowns are built from `navTools` / `navSimulators` /
-`navEducation` collections (each `nav: <section>` minus the landing).
+`navEducation` / `navPractice` collections (each `nav: <section>` minus
+the landing).
 Two shared `.eleventy.js` filters serve both the index and the menus:
 `cleanTitle` (strips the ` — controlsfreak.dev` suffix) and
 `canonicalPath` (full canonical URL → root-relative `.html` href).
@@ -420,7 +421,8 @@ adding or moving pages.
 - **Shared top nav:** Home / Tools / Simulators / Education /
   Practice / Contact. `nav` frontmatter drives `.active`. Tools /
   Simulators / Education / Practice link to hub landings; Tools /
-  Simulators / Education also **drop down** to direct links. A
+  Simulators / Education / Practice also **drop down** to direct
+  links. A
   command-palette **search** button (`/` or Ctrl/⌘-K) sits in the
   bar; below 620px the whole link bar collapses behind a
   **hamburger**, with the search icon kept in the top bar
