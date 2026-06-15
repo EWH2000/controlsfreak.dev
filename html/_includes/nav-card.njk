@@ -30,6 +30,11 @@
                   mono-uppercase, separated by bullets
       category    optional — sets data-category for the filter
                   chips on /tools/, /education/, and /practice/
+      desktopOnly optional bool — prepends a distinct "Desktop only"
+                  marker to the statusline. Use on cards whose page
+                  gates its canvas on touch (the .desktop-canvas rule
+                  in styles.css) so mobile visitors are warned before
+                  they tap in.
 
     The macro derives the section prefix word (TOOL/LESSON/SIM/QUIZ/SECTION)
     and the status pill word (LIVE/READ/RUN/GO/OK) from `section` so the
@@ -60,9 +65,10 @@
         <div class="nav-card-name">{{ opts.titleFull }}</div>
         <div class="nav-card-desc">{{ opts.desc }}</div>
     </div>
-    {%- if opts.pills and opts.pills.length %}
+    {%- if (opts.pills and opts.pills.length) or opts.desktopOnly %}
     <div class="nav-card-statusline">
-        {%- for p in opts.pills %}<span class="nav-card-pill">{{ p }}</span>{% endfor %}
+        {%- if opts.desktopOnly %}<span class="nav-card-pill nav-card-pill--desktop">Desktop only</span>{% endif %}
+        {%- for p in (opts.pills or []) %}<span class="nav-card-pill">{{ p }}</span>{% endfor %}
     </div>
     {%- endif %}
 </a>

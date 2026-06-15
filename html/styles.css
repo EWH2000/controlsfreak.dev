@@ -2122,6 +2122,10 @@ p.chip-row-preamble {
     margin: 0 0.35rem;
     color: var(--border);
 }
+/* Platform marker (navCard desktopOnly) — amber + bold so it reads as a
+   constraint, not another feature pill. The page gates its canvas on
+   touch (the .desktop-only-sim swap); this warns before the tap-in. */
+.nav-card-pill--desktop { color: var(--amber); font-weight: 600; }
 
 .nav-card-name {
     font-family: var(--mono);

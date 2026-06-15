@@ -1526,6 +1526,17 @@ the canvas, plus a link to the mobile-friendly explainer). No JS gate
 needed here — the cosmetic drift interval no-ops on an empty panel,
 which is all a mobile visitor ever sees. See the Function-Block Editor
 section for the full rationale (shipped together in one PR).
+
+**Landing-card "Desktop only" marker *(2026-06-14)*.** Follow-up to the
+gate above: both drag-wiring sim cards on `/simulators/` now carry a
+`desktopOnly` flag on the `navCard()` macro, which prepends an amber
+`.nav-card-pill--desktop` marker ("Desktop only") to the statusline.
+The gate itself is honest — a mobile visitor still lands on the tips
+panel, not a dead canvas — but the badge warns *before* the tap, so the
+constraint reads at browse time instead of after a wasted navigation.
+Amber + bold (not the neutral feature-pill grey) so it parses as a
+constraint, not another capability. Macro-level, so any future
+desktop-only page opts in with one flag.
 Two modes, tabs à la Signal Scaling. Both are shipped and the curves
 are datasheet-verified.
 
