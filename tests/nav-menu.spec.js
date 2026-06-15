@@ -25,7 +25,11 @@ test('Tools dropdown lists every tool and stays in sync with the index', async (
     await toggle.click();
     await expect(menu).toBeVisible();
     await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    // Every link renders in the DOM (inside its collapsed category
+    // submenu), so the count still oracles against the index.
     await expect(menu.locator('.nav-menu-item')).toHaveCount(expected);
+    // To SEE one, expand its category first (signal-scaling → Signals).
+    await page.click('#nav-tools-signals-toggle');
     await expect(menu.locator('a[href="/tools/signal-scaling.html"]')).toBeVisible();
 
     expect(errors, 'tools dropdown should log no errors').toEqual([]);
@@ -57,6 +61,7 @@ test('clicking a dropdown item navigates to the tool', async ({ page }) => {
     const errors = watchErrors(page);
     await page.goto('/');
     await page.click('#nav-tools-toggle');
+    await page.click('#nav-tools-hydronics-toggle');   // valve-cv → Hydronics
     await page.click('#nav-tools-menu a[href="/tools/valve-cv.html"]');
     await expect(page).toHaveURL(/\/tools\/valve-cv\.html$/);
     expect(errors, 'dropdown navigate should log no errors').toEqual([]);
@@ -67,6 +72,7 @@ test('dropdowns work from an inner page — 1-click cross-section nav', async ({
     await page.goto('/tools/signal-scaling.html');
     await page.click('#nav-education-toggle');
     await expect(page.locator('#nav-education-menu')).toBeVisible();
+    await page.click('#nav-education-fundamentals-toggle');   // pid-basics → Fundamentals
     await page.click('#nav-education-menu a[href="/education/pid-basics.html"]');
     await expect(page).toHaveURL(/\/education\/pid-basics\.html$/);
     expect(errors, 'cross-section nav should log no errors').toEqual([]);
@@ -118,11 +124,15 @@ test('mobile: open sheet locks page scroll and scrolls internally on long lists'
     // Page scroll is locked while the sheet is open.
     await expect(page.locator('body')).toHaveClass(/nav-sheet-open/);
 
-    // Open the longest section; the sheet caps under the viewport and gains
-    // its own scroll instead of growing the sticky nav past the screen
-    // (the bug: page scrolled behind a pinned nav → jumpy menu scrolling).
-    await page.click('#nav-education-toggle');
-    await expect(page.locator('#nav-education-menu')).toBeVisible();
+    // Open the longest section and expand a populated category so the
+    // content overflows the cap; the sheet caps under the viewport and
+    // gains its own scroll instead of growing the sticky nav past the
+    // screen (the bug: page scrolled behind a pinned nav → jumpy menu
+    // scrolling). Cascading menus are short collapsed, so we expand one.
+    await page.click('#nav-practice-toggle');
+    await expect(page.locator('#nav-practice-menu')).toBeVisible();
+    await page.click('#nav-practice-hydronics-toggle');
+    await expect(page.locator('#nav-practice-hydronics-sub')).toBeVisible();
     const m = await page.locator('#site-nav-links').evaluate((el) => ({
         client: el.clientHeight, scroll: el.scrollHeight, vh: window.innerHeight,
         clientW: el.clientWidth, scrollW: el.scrollWidth,
@@ -164,14 +174,73 @@ test('mobile: opening the sheet moves focus into it; closing hands focus back to
 
 // The dropdowns sort by visible title (codebase-issues #88) — the old
 // slug sort filed "Pump & Fan Affinity Laws" first, breaking the
-// alphabetical scan the other 13 labels invite.
-test('Tools dropdown lists entries in title order', async ({ page }) => {
+// alphabetical scan the other labels invite. With cascading categories
+// the sort is now WITHIN each category, not across the whole menu.
+test('Tools dropdown sorts entries by title within each category', async ({ page }) => {
     const errors = watchErrors(page);
     await page.goto('/');
     await page.click('#nav-tools-toggle');
-    const labels = await page.locator('#nav-tools-menu .nav-menu-item').allTextContents();
-    const sorted = [...labels].sort((a, b) => a.localeCompare(b));
-    expect(labels).toEqual(sorted);
-    expect(labels[0]).not.toContain('Affinity');
+    const groups = page.locator('#nav-tools-menu .nav-menu-group');
+    const n = await groups.count();
+    expect(n, 'tools has several categories').toBeGreaterThan(2);
+    for (let i = 0; i < n; i++) {
+        const labels = await groups.nth(i).locator('.nav-menu-item').allTextContents();
+        const sorted = [...labels].sort((a, b) => a.localeCompare(b));
+        expect(labels, `category ${i} should be title-sorted`).toEqual(sorted);
+    }
     expect(errors, 'title-order check should log no errors').toEqual([]);
+});
+
+// ── Cascading (level-2) category disclosure ──────────────────────────
+test('a category expands its pages, one category open at a time', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('/');
+    await page.click('#nav-tools-toggle');
+    const hvac = page.locator('#nav-tools-hvac-sub');
+    const proto = page.locator('#nav-tools-protocols-sub');
+    await expect(hvac).toBeHidden();
+
+    await page.click('#nav-tools-hvac-toggle');
+    await expect(hvac).toBeVisible();
+    await expect(page.locator('#nav-tools-hvac-toggle')).toHaveAttribute('aria-expanded', 'true');
+
+    // Opening a second category collapses the first.
+    await page.click('#nav-tools-protocols-toggle');
+    await expect(proto).toBeVisible();
+    await expect(hvac).toBeHidden();
+    await expect(page.locator('#nav-tools-hvac-toggle')).toHaveAttribute('aria-expanded', 'false');
+    expect(errors, 'category disclosure should log no errors').toEqual([]);
+});
+
+test('Escape collapses an open category before closing the section', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('/');
+    await page.click('#nav-tools-toggle');
+    await page.click('#nav-tools-hvac-toggle');
+    await expect(page.locator('#nav-tools-hvac-sub')).toBeVisible();
+
+    // Focus inside the open category; first Escape collapses just it.
+    await page.focus('#nav-tools-hvac-sub .nav-menu-item');
+    await page.keyboard.press('Escape');
+    await expect(page.locator('#nav-tools-hvac-sub')).toBeHidden();
+    await expect(page.locator('#nav-tools-menu')).toBeVisible();
+    await expect(page.locator('#nav-tools-hvac-toggle')).toBeFocused();
+
+    // Second Escape (focus on the category toggle) closes the section.
+    await page.keyboard.press('Escape');
+    await expect(page.locator('#nav-tools-menu')).toBeHidden();
+    await expect(page.locator('#nav-tools-toggle')).toBeFocused();
+    expect(errors, 'escape cascade should log no errors').toEqual([]);
+});
+
+test('Simulators stays a flat menu (no category groups)', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('/');
+    await page.click('#nav-simulators-toggle');
+    const menu = page.locator('#nav-simulators-menu');
+    await expect(menu).toBeVisible();
+    await expect(menu.locator('.nav-menu-group')).toHaveCount(0);
+    // Its links are directly visible — no category to expand first.
+    await expect(menu.locator('a[href="/simulators/pid-tuner.html"]')).toBeVisible();
+    expect(errors, 'flat simulators menu should log no errors').toEqual([]);
 });

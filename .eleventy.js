@@ -44,6 +44,21 @@ module.exports = function(eleventyConfig) {
     // from the sitemapPages collection (see below) with git-derived
     // <lastmod> dates. codebase-issues.md #45.
 
+    // ── Nav dropdown categories ──────────────────────────────────────
+    // Per-section sub-category order + labels for the cascading nav
+    // dropdowns (rendered by nav-dropdown.njk via the `navGroups`
+    // filter, expanded by scripts/nav-menu.js). The KEY matches each
+    // page's `category` frontmatter; the LABEL is the category-row text;
+    // array order is display order. Simulators has no entry — it stays a
+    // flat dropdown. These keys mirror the landing pages' navCard()
+    // `category` values; the two are independent sources today and must
+    // be kept in sync by hand (codebase-issues — two-source category).
+    const NAV_CATEGORIES = {
+        tools: [["hvac", "HVAC"], ["protocols", "Protocols"], ["signals", "Signals"], ["airflow", "Airflow"], ["electrical", "Electrical"], ["hydronics", "Hydronics"]],
+        education: [["fundamentals", "Fundamentals"], ["hydronics", "Hydronics"], ["refrigerant", "Refrigerant"], ["protocols", "Protocols"]],
+        practice: [["modbus", "Modbus"], ["bacnet", "BACnet"], ["hydronics", "Hydronics"], ["refrigeration", "Refrigeration"], ["controls", "Controls"], ["psychrometrics", "Psychrometrics"], ["field", "Field Drills"]],
+    };
+
     // Build-time guard for the 140–160 char `description` frontmatter
     // target documented in CLAUDE.md "Templating". The convention had
     // no measurable check, so it drifted across eleven pages between
@@ -74,6 +89,35 @@ module.exports = function(eleventyConfig) {
             throw new Error(
                 `description frontmatter must be ${MIN}–${MAX} chars ` +
                 `(CLAUDE.md "Templating"):\n${all.join("\n")}`
+            );
+        }
+        return [];
+    });
+
+    // Build-time guard: every page in a categorized section
+    // (tools/education/practice) must carry a `category` frontmatter
+    // whose value exists in NAV_CATEGORIES — otherwise the page silently
+    // vanishes from its cascading nav dropdown (navGroups drops it). The
+    // section landings are exempt (they aren't dropdown children).
+    // Mirrors descriptionLengthGuard: a side-effecting named collection.
+    eleventyConfig.addCollection("navCategoryGuard", (collectionApi) => {
+        const offenders = [];
+        Object.keys(NAV_CATEGORIES).forEach((section) => {
+            const valid = new Set(NAV_CATEGORIES[section].map(([key]) => key));
+            const landing = `https://controlsfreak.dev/${section}/`;
+            collectionApi.getAll()
+                .filter((item) => item.data.nav === section
+                    && typeof item.data.canonical === "string"
+                    && item.data.canonical !== landing)
+                .forEach((item) => {
+                    const c = item.data.category;
+                    if (!c) offenders.push(`  ${item.inputPath} — nav:${section} but no \`category\``);
+                    else if (!valid.has(c)) offenders.push(`  ${item.inputPath} — category "${c}" not in ${section} config`);
+                });
+        });
+        if (offenders.length) {
+            throw new Error(
+                `nav \`category\` frontmatter (CLAUDE.md "Search index & nav menus"):\n${offenders.join("\n")}`
             );
         }
         return [];
@@ -151,6 +195,21 @@ module.exports = function(eleventyConfig) {
         navSection(api, "education", "https://controlsfreak.dev/education/"));
     eleventyConfig.addCollection("navPractice", (api) =>
         navSection(api, "practice", "https://controlsfreak.dev/practice/"));
+
+    // Group a nav collection (navTools/navEducation/navPractice) by its
+    // pages' `category` for the cascading dropdowns. Returns
+    // [{ key, label, pages }] in NAV_CATEGORIES display order, each
+    // `pages` list inheriting the collection's title sort; empty
+    // categories are dropped. Simulators has no NAV_CATEGORIES entry, so
+    // it never calls this — it renders flat.
+    eleventyConfig.addFilter("navGroups", (pages, section) =>
+        (NAV_CATEGORIES[section] || [])
+            .map(([key, label]) => ({
+                key,
+                label,
+                pages: (pages || []).filter((p) => p.data.category === key),
+            }))
+            .filter((g) => g.pages.length));
 
     // Last-modified date for a source file, from git's last commit that
     // touched it — `git log -1 --format=%cd --date=short -- <path>`.
