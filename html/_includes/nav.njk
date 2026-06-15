@@ -35,7 +35,17 @@
                 {% endfor %}
             </div>
         </div>
-        <a href="/practice/"{% if nav == "practice" %} class="active"{% endif %}>Practice</a>
+        <div class="nav-item nav-item--has-menu">
+            <a href="/practice/"{% if nav == "practice" %} class="active"{% endif %}>Practice</a>
+            <button type="button" class="nav-menu-toggle" id="nav-practice-toggle" aria-expanded="false" aria-controls="nav-practice-menu" aria-label="Toggle Practice menu">
+                <svg class="nav-caret" viewBox="0 0 10 6" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M1 1l4 4 4-4"/></svg>
+            </button>
+            <div class="nav-menu" id="nav-practice-menu" hidden>
+                {% for p in collections.navPractice %}
+                <a class="nav-menu-item" href="{{ p.data.canonical | canonicalPath }}">{{ p.data.title | cleanTitle }}</a>
+                {% endfor %}
+            </div>
+        </div>
         <a href="/contact.html"{% if nav == "contact" %} class="active"{% endif %}>Contact</a>
         <button type="button" class="nav-search-btn" id="nav-search-btn" aria-haspopup="dialog" aria-label="Search (press slash)">
             <svg class="nav-search-icon" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5">

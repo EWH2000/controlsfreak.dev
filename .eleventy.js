@@ -149,6 +149,8 @@ module.exports = function(eleventyConfig) {
         navSection(api, "simulators", "https://controlsfreak.dev/simulators/"));
     eleventyConfig.addCollection("navEducation", (api) =>
         navSection(api, "education", "https://controlsfreak.dev/education/"));
+    eleventyConfig.addCollection("navPractice", (api) =>
+        navSection(api, "practice", "https://controlsfreak.dev/practice/"));
 
     // Last-modified date for a source file, from git's last commit that
     // touched it — `git log -1 --format=%cd --date=short -- <path>`.

@@ -606,6 +606,18 @@ Swap, + these three).
 > auto-deriving today — the count rarely changes and the explicit
 > number doubles as a "did you remember to add the card" check.
 
+**Practice gained a nav dropdown 2026-06-14** (mobile-nav polish PR):
+Practice was the one hub lane left as a bare nav link while Tools /
+Simulators / Education dropped down to their child pages. It's now a
+`.nav-item--has-menu` fed by a new `navPractice` collection (the shared
+`navSection` helper), so all four hub lanes behave the same; Contact
+stays a plain link (single page). The same PR fixed the mobile
+hamburger sheet — the touch-floor `justify-content: center` was
+centering the full-width Home / Practice / Contact links while the
+dropdown rows read left-aligned — and tidied the sheet into a separated
+list with the caret pushed to each row's right edge. Bumped the
+`machine-sweep` dropdown-count assertion 3 → 4.
+
 **Still parked for v3** (full detail in `quiz-section-plan.md`):
 - Remaining field drills (Commissioning, Tridium / EBO quirks, full
   Junior + Senior Interview Prep).

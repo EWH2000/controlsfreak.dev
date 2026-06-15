@@ -31,9 +31,10 @@ test('printing from the dark theme uses the light token set (#54)', async ({ pag
 test('nav chrome markup: div wrappers, no redundant menu labels (#55)', async ({ page }) => {
     const errors = watchErrors(page);
     await page.goto('/');
-    // The three section wrappers are flow-content divs now — a div
-    // nested in a span was a conformance error on all 66 pages.
-    await expect(page.locator('div.nav-item--has-menu')).toHaveCount(3);
+    // The four section wrappers (Tools / Simulators / Education /
+    // Practice) are flow-content divs now — a div nested in a span was a
+    // conformance error on all 66 pages.
+    await expect(page.locator('div.nav-item--has-menu')).toHaveCount(4);
     await expect(page.locator('span.nav-item--has-menu')).toHaveCount(0);
     // The role-less menu containers dropped their ignored aria-labels
     // (the toggle buttons carry the accessible names).
