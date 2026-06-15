@@ -1,0 +1,39 @@
+{# Cascading top-nav dropdown (used by nav.njk). A categorized section
+   (Tools / Education / Practice) passes `groups` — the output of
+   `collections.navX | navGroups('X')` — and renders category rows that
+   expand to their pages; a flat section (Simulators) passes `flat` (the
+   raw collection) and renders a plain link list. IDs follow
+   nav-<section>-toggle / -menu and, per category,
+   nav-<section>-<key>-toggle / -sub. scripts/nav-menu.js wires the
+   two-level disclosure off the .nav-menu-toggle / .nav-group-toggle /
+   .nav-submenu classes. All data is passed as args, so the macro needs
+   no `with context`. #}
+{% macro navDropdown(section, label, landing, active, groups, flat) %}
+        <div class="nav-item nav-item--has-menu">
+            <a href="{{ landing }}"{% if active %} class="active"{% endif %}>{{ label }}</a>
+            <button type="button" class="nav-menu-toggle" id="nav-{{ section }}-toggle" aria-expanded="false" aria-controls="nav-{{ section }}-menu" aria-label="Toggle {{ label }} menu">
+                <svg class="nav-caret" viewBox="0 0 10 6" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M1 1l4 4 4-4"/></svg>
+            </button>
+            <div class="nav-menu" id="nav-{{ section }}-menu" hidden>
+                {% if groups %}
+                {% for g in groups %}
+                <div class="nav-menu-group">
+                    <button type="button" class="nav-group-toggle" id="nav-{{ section }}-{{ g.key }}-toggle" aria-expanded="false" aria-controls="nav-{{ section }}-{{ g.key }}-sub">
+                        <span class="nav-group-label">{{ g.label }}</span>
+                        <svg class="nav-caret" viewBox="0 0 10 6" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M1 1l4 4 4-4"/></svg>
+                    </button>
+                    <div class="nav-submenu" id="nav-{{ section }}-{{ g.key }}-sub" hidden>
+                        {% for p in g.pages %}
+                        <a class="nav-menu-item" href="{{ p.data.canonical | canonicalPath }}">{{ p.data.title | cleanTitle }}</a>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+                {% else %}
+                {% for p in flat %}
+                <a class="nav-menu-item" href="{{ p.data.canonical | canonicalPath }}">{{ p.data.title | cleanTitle }}</a>
+                {% endfor %}
+                {% endif %}
+            </div>
+        </div>
+{% endmacro %}

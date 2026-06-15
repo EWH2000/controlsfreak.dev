@@ -527,6 +527,44 @@ main { flex: 1; }
 }
 .nav-menu .nav-menu-item:last-child { border-bottom: none; }
 .nav-menu .nav-menu-item:hover { color: var(--text-bright); background: var(--accent-dim); }
+
+/* ── NAV CATEGORY GROUPS (level-2 disclosure) ────────────────────────
+   Inside a categorized section's .nav-menu (Tools / Education /
+   Practice), pages sit under .nav-group-toggle category rows that expand
+   their .nav-submenu (scripts/nav-menu.js). The toggle reads as a quiet
+   category header (mono eyebrow, caret right); submenu links indent on a
+   faintly inset fill so the nesting is legible. Simulators has no groups
+   and is unaffected. */
+.nav-menu-group { border-bottom: 1px solid var(--border-faint); }
+.nav-menu-group:last-child { border-bottom: none; }
+.nav-group-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    width: 100%;
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-dim);
+    padding: 0.6rem 1rem;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: color 0.18s, background 0.18s;
+}
+.nav-group-toggle:hover { color: var(--text); background: var(--accent-dim); }
+.nav-group-toggle[aria-expanded="true"] { color: var(--text-bright); }
+.nav-group-toggle .nav-caret { flex: none; transition: transform 0.18s; }
+.nav-group-toggle[aria-expanded="true"] .nav-caret { transform: rotate(180deg); }
+.nav-submenu { display: flex; flex-direction: column; }
+.nav-submenu[hidden] { display: none; }
+.nav-submenu .nav-menu-item {
+    padding-left: 1.75rem;
+    border-bottom: none;
+    background: var(--surface-2);
+}
 @media (prefers-reduced-motion: reduce) {
     .nav-caret { transition: none; }
 }
@@ -1407,6 +1445,11 @@ footer {
     .site-nav.nav-open .nav-item--has-menu > .nav-menu-toggle { margin: 0; padding: 0.6rem 0.6rem; }
     .site-nav.nav-open .nav-menu { margin-top: 0; }
     .site-nav.nav-open .nav-menu .nav-menu-item { padding-left: 1.25rem; }
+    /* Level-2 in the sheet: category rows are full-width with the caret at
+       the right edge (a tap target the width of the row); their pages
+       indent a second step so the hierarchy reads. */
+    .site-nav.nav-open .nav-group-toggle { padding: 0.6rem 0.25rem; }
+    .site-nav.nav-open .nav-submenu .nav-menu-item { padding-left: 2.25rem; }
     .site-nav.nav-open .units-toggle,
     .site-nav.nav-open .theme-toggle { padding: 0.5rem 0.25rem; }
 }
@@ -1593,6 +1636,7 @@ input[type="range"]::-moz-range-thumb {
 .nav-search-btn:focus-visible,
 .nav-hamburger:focus-visible,
 .nav-menu-toggle:focus-visible,
+.nav-group-toggle:focus-visible,
 .nav-menu-item:focus-visible,
 .cta-button:focus-visible,
 .hero-btn:focus-visible,
@@ -1661,6 +1705,10 @@ input[type="range"]:focus-visible::-moz-range-thumb {
        beside the full link bar on touch tablets (audit-2026-06 #25).
        The ≤620px media block is what reveals it. */
     .nav-hamburger { min-height: 44px; }
+    /* Category toggles get min-height ONLY — they're already
+       display:flex with the label left + caret right (the shared center
+       declaration above would override that justify-content). */
+    .nav-group-toggle { min-height: 44px; }
     /* flex-start (not the group's center above): on the desktop bar the
        links are content-width so this is moot, but in the full-width mobile
        sheet the stretched links would otherwise center. Left-align them to
