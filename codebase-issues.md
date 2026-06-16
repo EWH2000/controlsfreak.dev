@@ -3860,7 +3860,7 @@ The spec exercises the redirect-drift guard, 301, 405+Allow, cross-origin 403, h
 
 **Resolution (2026-06-16):** added 13 tests to `tests/worker.spec.js` covering every previously-untested branch. A `fetchStub({verify,verifyStatus,verifyThrows,resendStatus,resendThrows})` helper routes by upstream URL; `postContact()` swaps `globalThis.fetch` for the duration of one request and restores it in `finally`. Cases: happy path (valid verify + Resend ok → 200); Turnstile fails closed on `{}`/`{success:null}`/`{success:"true"}`/`{success:false}`/non-2xx/network-failure → 400; hostname pin rejects `hostname:"localhost"` → 400 (#34); Resend non-2xx and network-failure → 502; malformed email → 400 and oversize body → 413, each with a spy proving no upstream was contacted. All 19 worker tests pass locally (the worker's own `console.error` on its 502 paths is expected logging, not a failure).
 
-### 95. wiring-engine.js has no engine-direct spec — most fault-classification branches are untested *(open — 2026-06-15)*
+### 95. wiring-engine.js has no engine-direct spec — most fault-classification branches are untested *(addressed 2026-06-16)*
 
 *Severity: medium · Category: test-gap · Confidence: high* — `tests/ (no wiring-engine.spec.js); html/scripts/wiring-engine.js:198 (Wiring.evaluate), :186 (makeUF), fault branches ~245-490`
 
@@ -3871,6 +3871,8 @@ wiring-engine.js is a 542-line pure module exposing Wiring.evaluate(panel, state
 **Suggested fix.** Add tests/wiring-engine.spec.js mirroring fbe-engine.spec.js (vm.runInNewContext(src + '\n; Wiring', {})): build minimal panels and assert power flags + fault ids per class — clean landing, dead short, reversed 24V/COM, open common, VA-budget overload — plus a union-find case where two terminals must (or must not) share a net.
 
 *Merged from: wiring-engine + tests surfaces (same missing spec; the per-fault-mode list and the union-find/engine-API framing combine into one entry)*
+
+**Resolution (2026-06-16):** added `tests/wiring-engine.spec.js` (13 tests, vm-direct, mirrors `fbe-engine.spec.js`). Covers: createDevice deep-copy + unknown-type null; catalog/controller shape; clean landing (powered, sensor ok, zero faults); dead short; reversed polarity (spark cue); open common; no-transformer warning; **union-find** transitivity (a thermistor return reaching COM only through a multi-hop wire chain reads `ok`, and removing the last hop flips it to `open` — proving the merge and its absence); thermistor wrong-mode and both-leads-short faults; and a **VA-budget threshold pair** (a fully-loaded panel at 32 VA runs clean, the same panel at 42 VA on a 40 VA transformer trips `overload` + blows the fuse). All 13 pass. New test file only — no `html/scripts/*` change, no version bump.
 
 ### 96. Crossing the 1240px gutter breakpoint re-inits the whole engine, rebuilding in-content flow pools and dropping setPathColor recolors *(open — 2026-06-15)*
 
