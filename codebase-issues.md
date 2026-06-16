@@ -4300,13 +4300,17 @@ Mobile sheet focusout closes its menu mid-tap when focus briefly lands on body (
 
 **Resolution (2026-06-15):** fixed on `feat/nav-cascading-categories` alongside #122 — the focusout handler now guards relatedTarget (`if (e.relatedTarget && !m.item.contains(e.relatedTarget)) close(m)`), so a blur-to-null no longer tears the open section down; a genuine click outside still closes via the document click listener. Regression test added (fails without the fix).
 
-### 132. Worker: immutable cache-control header dropped on 304 revalidation responses *(open — watch / low-confidence — 2026-06-15)*
+### 132. Worker: immutable cache-control header dropped on 304 revalidation responses *(addressed 2026-06-16)*
 
 Worker: immutable cache-control header dropped on 304 revalidation responses (src/worker.js:252-259) — MEDIUM CONFIDENCE / theoretical. The fallthrough re-wraps the long-lived cache-control only when assetRes.ok is true; a 304 from env.ASSETS.fetch (reachable under run_worker_first:true on conditional requests for fingerprinted assets) has .ok===false and is returned with the binding's default max-age=0,must-revalidate instead of immutable. Impact is genuinely bounded (a conforming client that already received immutable won't revalidate; only intermediary caches, immutable-ignoring clients, and pre-immutable holders re-revalidate) and the whole long-cache mechanism is the owner-accepted #84 with no CI guard. Worth a one-line gate change (`assetRes.ok || assetRes.status === 304`) but low blast radius and partly speculative about which clients are affected.
 
-### 133. Worker: legacy redirect discards query string and fragment *(open — watch / low-confidence — 2026-06-15)*
+**Resolution (2026-06-16):** verified reachable — `wrangler.jsonc` sets `run_worker_first: true`, so `env.ASSETS.fetch` runs on every request and can answer a conditional request for a fingerprinted asset with a 304. Applied the one-line gate (`assetRes.ok || assetRes.status === 304`); a 304 is a null-body status, so re-wrapping its (null) body to set the header is valid. Regression test in `tests/worker.spec.js` (a stubbed 304 from ASSETS on a `?v=` path keeps `immutable`; an unversioned 304 stays on the revalidate default). Blast radius stays bounded as the audit noted; the fix is cheap and correct. No version bump (src/worker.js, not html/scripts/).
+
+### 133. Worker: legacy redirect discards query string and fragment *(addressed 2026-06-16)*
 
 Worker: legacy redirect discards query string and fragment (src/worker.js:238-241) — confirmed real but explicitly harmless today. Response.redirect(new URL(legacyTarget, url.origin), 301) drops any inbound ?query on the three moved simulator pages; fragments are moot (never sent to server). The three pages don't read query params (grep confirmed zero url.search/searchParams usage), the site has no analytics consumer (no tracking by policy), so the only real-today impact is third-party attribution loss on inbound legacy links; the deep-link-state risk is hypothetical. A one-line fix (`target.search = url.search`) is cheap, but this is a latent correctness gap, not a live bug — keep on the watch list until a moved page actually reads query state.
+
+**Resolution (2026-06-16):** applied the one-liner — `const target = new URL(legacyTarget, url.origin); target.search = url.search;` — so an inbound `?utm_*`/query on a moved simulator URL now rides through the 301 (fragments are never sent to the server, so there's nothing to carry there). Regression test in `tests/worker.spec.js` (`/tools/pid-tuner.html?utm_source=nl&x=1` → `/simulators/pid-tuner.html?utm_source=nl&x=1`). Harmless-today gap closed pre-emptively (the cost is one line + a test, and it's strictly more correct). No version bump.
 
 
 ### Deferred / Won't fix (with revisit trigger)
