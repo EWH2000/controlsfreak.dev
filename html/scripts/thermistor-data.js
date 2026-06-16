@@ -148,6 +148,7 @@ const THERMISTOR_TYPES = (function () {
             ref:    '≈ 5.24 kΩ at 77 °F',
             notes:  'Older Schneider Electric / TAC Vista / Andover Continuum convention — a 10K Type 3 element with an 11 kΩ parallel resistor, "linearized" for the HVAC range. Sometimes labeled "Type V" or "10K-3 (linearized)". Reads roughly half a bare 10K at room temperature.',
             // source: verified against BAPI "10K-3 (11K) Thermistor Output Table" (BAPI part H10). Modeled as a 10K Type 3 element (β=3693, matching the verified 10K Type 3 curve) in parallel with 11 kΩ. Schneider community KB confirms the 11 kΩ ±0.1% 1/8 W shunt is the I/A Series MNL/MNB convention. Generated table fits BAPI within ~1.5 % across the full -40 to 121 °C range.
+            // NOTE (codebase-issues #130): the 11 kΩ shunt flattens the parallel resistance near the cold asymptote, so after roundR()'s 100 Ω granularity the generated -40 °F and -35 °F rows BOTH land on 10,600 Ω — the only adjacent duplicate-resistance pair across all curves. The page's reverse lookup (thLerpByRes) is safe: its exact-match short-circuit returns -40 °F for 10,600 Ω and never divides by zero. Consequences: 10,600 Ω resolves only to -40 °F (the -35 °F row is unreachable by reverse lookup), and a future transcribed-table swap or any naive segment-interpolator over this table must tolerate that flat segment (an exact-match guard, as thLerpByRes has, avoids a /0).
             curve:  { kind: 'ntc-shunt', r25: 10000, beta: 3693, shunt: 11000 },
         },
         '20k': {
