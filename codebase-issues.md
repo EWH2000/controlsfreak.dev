@@ -4128,7 +4128,7 @@ The dialog declares aria-modal="true" but the rest of the page is left fully int
 
 **Suggested fix.** On open(), add inert (or aria-hidden="true") to the page's main wrapper / nav / footer (everything except #palette) and remove it on close(). inert also removes those nodes from the tab order, so the Tab-preventDefault hack could then be dropped.
 
-### 122. nav-menu: Escape on the section toggle collapses category and section in one press, contradicting the documented step-back *(open — 2026-06-15)*
+### 122. nav-menu: Escape on the section toggle collapses category and section in one press, contradicting the documented step-back *(addressed 2026-06-15)*
 
 *Severity: low · Category: bug · Confidence: medium* — `html/scripts/nav-menu.js:132-136 (toggle keydown) vs 144-165 (menu keydown step-back)`
 
@@ -4137,6 +4137,8 @@ The module header and the menu-level keydown handler implement 'Escape collapses
 **Impact.** Inconsistent Escape behavior depending on whether focus is on the toggle vs in the menu — a keyboard user gets a single-step or double-step collapse with no visible reason. A state-machine inconsistency that violates a documented invariant.
 
 **Suggested fix.** In the toggle's Escape branch, mirror the step-back: if any group in groupsOf(m) is open, closeGroups(m) only and keep the section open; else close(m). Or route the toggle's Escape through the same step-back helper the menu handler uses.
+
+**Resolution (2026-06-15):** fixed on `feat/nav-cascading-categories` — the section toggle's Escape now mirrors the menu-level step-back (`if (groupsOf(m).some(isGroupOpen)) closeGroups(m); else close(m)`), so one press collapses the open category and a second closes the section. Regression test added in `tests/nav-menu.spec.js` (fails without the fix).
 
 ### 123. fbe-engine.spec.js: DIVIDE /0 guard, NaN/Infinity propagation, and most catalog blocks are untested *(open — 2026-06-15)*
 
@@ -4218,9 +4220,11 @@ For the '10k-5-tac' type (ntc-shunt, 10K Type-3 with an 11 kΩ parallel shunt), 
 
 **Suggested fix.** Acceptable to leave given the page guards it and the header tolerates extreme-range degradation — but add a one-line note in the type's inline source comment that the cold-end rows collapse to one resistance after rounding, so a future transcribed-table swap or alternate consumer doesn't trip over it. Alternatively, the data module could assert (in dev) that no two adjacent rows share a resistance.
 
-### 131. Mobile sheet focusout closes its menu mid-tap when focus briefly lands on body *(open — watch / low-confidence — 2026-06-15)*
+### 131. Mobile sheet focusout closes its menu mid-tap when focus briefly lands on body *(addressed 2026-06-15)*
 
 Mobile sheet focusout closes its menu mid-tap when focus briefly lands on body (nav-menu.js:168-170) — LOW CONFIDENCE. The missing relatedTarget null-guard is real (`if (!m.item.contains(e.relatedTarget)) close(m)` with no null check, so focusout with relatedTarget===null closes the section), and is the genuine in-scope kernel worth a one-line fix. But the headline 'menu collapses as I tap a category' reproduction is largely refuted by the DOM: the category toggle is a <button> inside m.item, so a tap that focuses it keeps focus in-item and does NOT close; triggering the bug needs focus already inside the item plus an engine-dependent blur-to-null, which the reporter flags as non-deterministic. Treat as a defensive null-guard (add it alongside the nav-menu Escape fix), not a confirmed flake.
+
+**Resolution (2026-06-15):** fixed on `feat/nav-cascading-categories` alongside #122 — the focusout handler now guards relatedTarget (`if (e.relatedTarget && !m.item.contains(e.relatedTarget)) close(m)`), so a blur-to-null no longer tears the open section down; a genuine click outside still closes via the document click listener. Regression test added (fails without the fix).
 
 ### 132. Worker: immutable cache-control header dropped on 304 revalidation responses *(open — watch / low-confidence — 2026-06-15)*
 
