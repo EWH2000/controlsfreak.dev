@@ -235,11 +235,17 @@
 
         // Track the gutter's visibility breakpoint: rebuild gutter
         // pools when the viewport grows past it, tear them down when
-        // it shrinks below. Registered once; init() is idempotent.
+        // it shrinks below. Registered once. The grow path is scoped to
+        // gutter elements (buildGutterPools), NOT a full init() —
+        // re-running buildPoolForEl over every in-content [data-flow]
+        // would tear down those pools too, resetting particle offsets
+        // and wiping any setPathColor() a page applied (e.g.
+        // refrigerant-cycle-basics recolors to --heat once on load and
+        // never again). audit-2026-06 #96.
         if (!gutterMql && window.matchMedia) {
             gutterMql = window.matchMedia(GUTTER_MQ);
             const onGutterChange = function () {
-                if (gutterMql.matches) init();
+                if (gutterMql.matches) buildGutterPools();
                 else teardownGutterPools();
             };
             if (gutterMql.addEventListener) gutterMql.addEventListener('change', onGutterChange);
@@ -431,6 +437,19 @@
             });
             if (!stillPooled) svg.classList.remove('flow-active');
         });
+    }
+
+    // Rebuild ONLY the gutter-collage pools when the viewport grows back
+    // past the breakpoint — the mirror of teardownGutterPools' scoping.
+    // buildPoolForEl / buildPulsePathFor rebuild in place via poolsByEl /
+    // pulsePaths, so this is idempotent; the gutterHidden guard inside
+    // buildPoolForEl is now satisfied (gutter visible). Critically, this
+    // does NOT touch in-content [data-flow]/[data-pulse] pools, so their
+    // particle offsets and any setPathColor() recolor survive a resize
+    // across the breakpoint (audit-2026-06 #96).
+    function buildGutterPools() {
+        document.querySelectorAll('.schematic-bg [data-flow]').forEach(buildPoolForEl);
+        document.querySelectorAll('.schematic-bg [data-pulse]').forEach(buildPulsePathFor);
     }
 
     function ensureFlowIO() {
