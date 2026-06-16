@@ -106,6 +106,20 @@
                 if (!Array.isArray(q.choices) || q.choices.length < 2) {
                     return 'question ' + q.id + ' needs at least 2 choices';
                 }
+                // Each choice needs a truthy id + text, and ids must be
+                // unique within the question: reveal()/submit() match the
+                // picked choice by data-choice-id, so a duplicate id would
+                // mark two choices wrong on a miss and a missing text would
+                // render the literal 'undefined' (codebase-issues #117).
+                for (let ci = 0; ci < q.choices.length; ci++) {
+                    const c = q.choices[ci];
+                    if (!c || !c.id) return 'question ' + q.id + ' has a choice with no id';
+                    if (!c.text) return 'question ' + q.id + ' choice "' + c.id + '" has no text';
+                }
+                const choiceIds = new Set(q.choices.map(function (c) { return c.id; }));
+                if (choiceIds.size !== q.choices.length) {
+                    return 'question ' + q.id + ' has duplicate choice ids';
+                }
                 const correct = q.choices.filter(function (c) { return c && c.correct; });
                 if (correct.length !== 1) {
                     return 'question ' + q.id + ' needs exactly one correct choice (found ' + correct.length + ')';
@@ -389,7 +403,11 @@
                 choicesEl.hidden = false;
             } else if (q.type === 'numeric') {
                 numericUnit.textContent = q.unit || '';
-                if (q.inputmode) numericInput.setAttribute('inputmode', q.inputmode);
+                // Set deterministically, not only when present — the shared
+                // input is reused across questions, so a stale inputmode from
+                // an earlier numeric:'numeric' question would otherwise stick
+                // on a later default-decimal one (codebase-issues #116).
+                numericInput.setAttribute('inputmode', q.inputmode || 'decimal');
                 numericEl.hidden = false;
             }
 
@@ -642,19 +660,32 @@
             const prevBestRatio = (isFinite(prevBest) && isFinite(prevBestTotal) && prevBestTotal > 0)
                 ? (prevBest / prevBestTotal) : -1;
             const curRatio = total > 0 ? (score / total) : 0;
-            // A shorter run can never replace a longer best: a quick 5/5
-            // used to silently overwrite a 10/10 and celebrate "new
-            // best" (audit-2026-06 polish; owner decision codebase-issues
-            // #89). The record falls only to an equal-or-longer run with
-            // a better ratio — or the same ratio at a longer total
-            // (10/10 upgrades 5/5), or the same ratio and total but
-            // faster. A worse ratio never wins, no matter the length.
-            const longEnough = !isFinite(prevBestTotal) || total >= prevBestTotal;
-            const isNewBest = longEnough && (
+            const hasPrior = prevBestRatio >= 0;          // a valid stored record exists
+            // #89: a shorter run can never replace a longer best — a quick
+            // 5/5 used to silently overwrite a 10/10. The record falls only
+            // to an equal-or-longer run with a better ratio, the same ratio
+            // at a longer total (10/10 upgrades 5/5), or the same ratio and
+            // total but faster. A worse ratio never wins, regardless of
+            // length.
+            const longEnough = total >= prevBestTotal;
+            const beatsRecord =
                 curRatio > prevBestRatio ||
                 (curRatio === prevBestRatio && total > prevBestTotal) ||
                 (curRatio === prevBestRatio && total === prevBestTotal &&
-                    (!isFinite(prevTime) || elapsed < prevTime)));
+                    (!isFinite(prevTime) || elapsed < prevTime));
+            // #115: a stored best_total larger than the WHOLE current bank is
+            // stale — the bank was edited down, so `total` can never reach it
+            // again and the #89 longer-run guard would lock the record
+            // forever. Let a full-bank run repair it.
+            const fullBank = total === questions.length;
+            const staleRecord = hasPrior && fullBank && prevBestTotal > questions.length;
+            // #114: the very first run (no prior record) counts as a "best"
+            // only with a non-zero score — a 0/N baseline isn't an
+            // achievement to celebrate or persist. Same for repairing a
+            // stale record.
+            const isNewBest = (!hasPrior || staleRecord)
+                ? (score > 0)
+                : (longEnough && beatsRecord);
             if (isNewBest) {
                 storeSet(storeKeys.best, String(score));
                 storeSet(storeKeys.bestTotal, String(total));
@@ -691,10 +722,10 @@
             resultsEl.appendChild(headline);
             resultsEl.appendChild(sub);
 
-            // Miss list — only show wrong/skipped.
-            const misses = state.answers
-                .map(function (a, i) { return { a: a, i: i }; })
-                .filter(function (pair) { return !pair.a.correct; });
+            // Miss list — only show wrong/skipped. (The old `.map` wrapped
+            // each answer with its index, but only the answer was ever read;
+            // the index was dead — codebase-issues #118.)
+            const misses = state.answers.filter(function (a) { return !a.correct; });
 
             if (misses.length) {
                 const heading = el('h3', { class: 'quiz-results-misses-heading' }, ['Review']);
@@ -708,8 +739,8 @@
                     ])
                 ]);
                 const tbody = el('tbody');
-                misses.forEach(function (pair) {
-                    const q = questions[pair.a.qi];
+                misses.forEach(function (a) {
+                    const q = questions[a.qi];
                     const promptCell = el('td');
                     // Plain-text prompt: strip HTML for the miss-list view.
                     const tmp = document.createElement('div');
