@@ -4192,7 +4192,7 @@ search.js registers its Escape keydown in capture phase and stopPropagation()s w
 
 **Suggested fix.** Add a spec: open a nav section menu, open the palette (Ctrl+K), press Escape, assert the palette is hidden AND the nav menu is still in its prior state — proving capture-phase Escape stopped propagation before the nav backstop.
 
-### 128. .wrangler/ is not in .gitignore *(open — 2026-06-15)*
+### 128. .wrangler/ is not in .gitignore *(addressed 2026-06-16)*
 
 *Severity: low · Category: build-config · Confidence: high* — `/home/ehill/controlsfreak.dev/.gitignore:24-28 (wrangler secrets block; add a .wrangler/ line here)`
 
@@ -4202,7 +4202,9 @@ The .gitignore has no entry for the wrangler local-state directory — the only 
 
 **Suggested fix.** Add a one-line `.wrangler/` entry under a `# Wrangler` header near the .dev.vars block.
 
-### 129. package-lock.json root version stale (3.11.1) vs package.json (3.18.0) *(open — 2026-06-15)*
+**Resolution (2026-06-16):** added a `# Wrangler local state` block with a `.wrangler/` entry to `.gitignore`, right after the `.dev.vars` secrets block. Verified: `git check-ignore .wrangler/` now matches, and a stray `.wrangler/tmp/*` file is invisible to `git status`.
+
+### 129. package-lock.json root version stale (3.11.1) vs package.json (3.18.0) *(addressed 2026-06-16)*
 
 *Severity: low · Category: build-config · Confidence: high* — `/home/ehill/controlsfreak.dev/package-lock.json:3,9 (vs package.json:3)`
 
@@ -4211,6 +4213,8 @@ package.json declares version 3.18.0 but package-lock.json records 3.11.1 in bot
 **Impact.** The lockfile — the canonical machine-readable record of the project version — disagrees with package.json. No build break today, but it is a misleading source-of-truth and confirms the version-bump step (CLAUDE.md 'Adding a new tool' step 7) isn't keeping the lock in sync.
 
 **Suggested fix.** Run `npm install` once to rewrite the lock root version to 3.18.0 and commit it; thereafter bump via `npm version <patch|minor>` (updates both files atomically) or run npm install after editing package.json's version.
+
+**Resolution (2026-06-16):** ran `npm install` once — it rewrote both `package-lock.json` root version fields (root + `packages[""]`) from 3.11.1 to 3.18.1 (package.json had since moved to 3.18.1) and touched nothing else (the diff is exactly the two version lines — no dependency-tree churn). Going forward, shared-script PRs in this audit pass bump with `npm version patch --no-git-tag-version`, which keeps both files in sync atomically.
 
 ### 130. thermistor-data: 10k-5-tac curve generates two adjacent rows with identical resistance at the cold extreme *(open — 2026-06-15)*
 
