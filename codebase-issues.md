@@ -4272,7 +4272,7 @@ package.json declares version 3.18.0 but package-lock.json records 3.11.1 in bot
 
 **Resolution (2026-06-16):** ran `npm install` once — it rewrote both `package-lock.json` root version fields (root + `packages[""]`) from 3.11.1 to 3.18.1 (package.json had since moved to 3.18.1) and touched nothing else (the diff is exactly the two version lines — no dependency-tree churn). Going forward, shared-script PRs in this audit pass bump with `npm version patch --no-git-tag-version`, which keeps both files in sync atomically.
 
-### 130. thermistor-data: 10k-5-tac curve generates two adjacent rows with identical resistance at the cold extreme *(open — 2026-06-15)*
+### 130. thermistor-data: 10k-5-tac curve generates two adjacent rows with identical resistance at the cold extreme *(addressed 2026-06-16)*
 
 *Severity: low · Category: correctness · Confidence: medium* — `html/scripts/thermistor-data.js:145-152 (generated table; rows at -40 °F and -35 °F); reverse lookup at html/tools/thermistor-calculator.html:442-455`
 
@@ -4281,6 +4281,8 @@ For the '10k-5-tac' type (ntc-shunt, 10K Type-3 with an 11 kΩ parallel shunt), 
 **Impact.** Cosmetic/edge-case today: at the -40…-35 °F cold extreme of one shunted curve (a region the header documents as 'nominal' with tolerated degradation), reverse-lookup resolution is slightly lossy. The latent risk: the table is documented as 'the source of truth' for interpolation yet contains a flat segment unsafe for a generic interpolator without an exact-match short-circuit.
 
 **Suggested fix.** Acceptable to leave given the page guards it and the header tolerates extreme-range degradation — but add a one-line note in the type's inline source comment that the cold-end rows collapse to one resistance after rounding, so a future transcribed-table swap or alternate consumer doesn't trip over it. Alternatively, the data module could assert (in dev) that no two adjacent rows share a resistance.
+
+**Resolution (2026-06-16):** added the source comment on the `10k-5-tac` entry in `thermistor-data.js` — documents that the 11 kΩ shunt + roundR()'s 100 Ω granularity collapse the -40/-35 °F rows onto 10,600 Ω (the only adjacent dup), that thLerpByRes's exact-match guard keeps the page safe (returns -40 °F, no /0), and that a future table-swap or naive interpolator must tolerate the flat segment. Chose the comment over the dev-assert option — a "no adjacent duplicate resistance" assert would fire on this very (correct, accepted) curve. **No version bump:** comment-only, zero behavior/output change, so the `?v=` cache-bust's purpose doesn't apply (busting site-wide for an invisible comment would be disproportionate). Shipped on `docs/thermistor-dup-row-note`.
 
 ### 131. Mobile sheet focusout closes its menu mid-tap when focus briefly lands on body *(addressed 2026-06-15)*
 
