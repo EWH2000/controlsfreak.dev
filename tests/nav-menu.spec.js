@@ -233,6 +233,53 @@ test('Escape collapses an open category before closing the section', async ({ pa
     expect(errors, 'escape cascade should log no errors').toEqual([]);
 });
 
+// Escape on the SECTION toggle must step back one level too, not blow the
+// whole section away — Shift+Tab from a category toggle can park focus on
+// the section toggle with a category still open. The menu-level handler
+// already steps back; this guards the toggle's own keydown path.
+test('Escape on the section toggle steps back one level (category, then section)', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('/');
+    await page.click('#nav-tools-toggle');
+    await page.click('#nav-tools-hvac-toggle');
+    await expect(page.locator('#nav-tools-hvac-sub')).toBeVisible();
+
+    // Park focus back on the section toggle with the category still open.
+    await page.focus('#nav-tools-toggle');
+    await expect(page.locator('#nav-tools-toggle')).toBeFocused();
+    await expect(page.locator('#nav-tools-hvac-sub')).toBeVisible();
+    await expect(page.locator('#nav-tools-menu')).toBeVisible();
+
+    // First Escape collapses only the open category; the section stays open.
+    await page.keyboard.press('Escape');
+    await expect(page.locator('#nav-tools-hvac-sub')).toBeHidden();
+    await expect(page.locator('#nav-tools-menu')).toBeVisible();
+    await expect(page.locator('#nav-tools-hvac-toggle')).toHaveAttribute('aria-expanded', 'false');
+
+    // Second Escape (no category open now) closes the section.
+    await page.keyboard.press('Escape');
+    await expect(page.locator('#nav-tools-menu')).toBeHidden();
+    await expect(page.locator('#nav-tools-toggle')).toBeFocused();
+    expect(errors, 'section-toggle escape step-back should log no errors').toEqual([]);
+});
+
+// A blur to nothing (focusout with relatedTarget === null — a tap that
+// dismisses focus, or a browser that blurs to no element) must NOT tear the
+// open section down: m.item.contains(null) is false, so the guard is what
+// keeps the menu alive mid-interaction. A real click outside still closes it
+// via the document click listener.
+test('a blur to nothing (relatedTarget null) leaves an open dropdown open', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('/');
+    await page.click('#nav-tools-toggle');
+    await page.focus('#nav-tools-hvac-toggle');
+    await expect(page.locator('#nav-tools-menu')).toBeVisible();
+
+    await page.evaluate(() => document.activeElement.blur());
+    await expect(page.locator('#nav-tools-menu')).toBeVisible();
+    expect(errors, 'blur-to-null should log no errors').toEqual([]);
+});
+
 test('Simulators stays a flat menu (no category groups)', async ({ page }) => {
     const errors = watchErrors(page);
     await page.goto('/');
