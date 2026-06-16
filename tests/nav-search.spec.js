@@ -189,6 +189,35 @@ test('a failed index load shows a real status and retries on reopen (#119)', asy
     await expect(page.locator('.palette-result').first()).toContainText('Signal Scaling');
 });
 
+// codebase-issues #127: the palette's Escape is a capture-phase handler
+// that stopPropagation()s; nav-menu.js has a bubble-phase Escape backstop.
+// The two can't actually conflict because opening the palette grabs focus
+// (closing any open nav dropdown via its focusout handler) AND inerts the
+// background (#121) — so they're never simultaneously open. This pins that
+// structural invariant plus the capture-phase Escape closing ONLY the
+// palette, which is what makes the ordering safe.
+test('opening the palette closes an open nav dropdown; Escape closes only the palette (#127)', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('/');
+
+    await page.click('#nav-tools-toggle');
+    await expect(page.locator('#nav-tools-menu')).toBeVisible();
+
+    // Open the palette over it — the dropdown closes (focus moved to the
+    // palette input + the background is inert), so the two never coexist.
+    await page.keyboard.press('Control+k');
+    await expect(page.locator('#palette')).toBeVisible();
+    await expect(page.locator('#nav-tools-menu')).toBeHidden();
+
+    // Capture-phase Escape closes the palette and stops propagation, so the
+    // nav-menu bubble backstop never fires and nothing reopens.
+    await page.keyboard.press('Escape');
+    await expect(page.locator('#palette')).toBeHidden();
+    await expect(page.locator('#nav-tools-menu')).toBeHidden();
+
+    expect(errors, 'palette/nav Escape coexistence should log no errors').toEqual([]);
+});
+
 // codebase-issues #82: tools carry a score-level section bonus, so a
 // tool-shaped query puts the tool first — "superheat" used to rank the
 // calculator third, under the lesson and quiz.

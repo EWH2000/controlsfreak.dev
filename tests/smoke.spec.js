@@ -185,6 +185,33 @@ test('staging sequencer — high demand stages units up and logs the event', asy
     expect(errors, 'staging sequencer behavioral should log no page / console errors').toEqual([]);
 });
 
+test('staging sequencer — Fixed leads unit 1; tripping the lead hands it off (#126)', async ({ page }) => {
+    // The only prior staging test pins stage-up COUNT, which is insensitive
+    // to WHICH unit leads. This pins the lead-selection + handoff: Fixed
+    // keeps the lead on unit 1, and a Trip moves it off the faulted unit.
+    // (The runtime-equalized convergence and scheduled-interval rotation are
+    // time-based and not deterministically reproducible in this harness.)
+    const errors = watchErrors(page);
+    await page.goto('/simulators/staging-sequencer.html');
+    await page.click('#stg-mode-manual');
+    await page.$eval('#stg-delay',  el => { el.value = '0';   el.dispatchEvent(new Event('input', { bubbles: true })); });
+    await page.$eval('#stg-demand', el => { el.value = '100'; el.dispatchEvent(new Event('input', { bubbles: true })); });
+    await page.click('#stg-play');
+    await expect(page.locator('#stg-running')).toHaveText('3');
+
+    // Fixed strategy (default) → unit 1 (the first cell) always leads.
+    const units = page.locator('#stg-units .stg-unit');
+    await expect(units.first()).toHaveAttribute('data-lead', 'true');
+
+    // Trip the lead: unit 1 faults and the lead role moves off it.
+    await page.click('#stg-trip');
+    await expect(page.locator('#stg-log')).toContainText('FAULT');
+    await expect(units.first()).toHaveAttribute('data-state', 'fault');
+    await expect(units.first()).toHaveAttribute('data-lead', 'false');
+
+    expect(errors, 'staging lead/trip handoff should log no errors').toEqual([]);
+});
+
 test('controller wiring — a correct panel reads live; a short pops the fuse', async ({ page }) => {
     const errors = watchErrors(page);
     await page.goto('/simulators/controller-wiring.html');
@@ -1636,6 +1663,104 @@ test.describe('practice — modbus decoding quiz', () => {
         await expect(page.locator('.quiz-best-readout')).toContainText('Best: 10 / 10');
 
         expect(errors, 'short-run guard should log no errors').toEqual([]);
+    });
+
+    test('a first all-skipped run is not celebrated or stored as a best (#114)', async ({ page }) => {
+        const errors = watchErrors(page);
+        await page.goto('/practice/modbus-decoding.html');
+        await expect(page.locator('.quiz-best-readout')).toHaveText('Best: —');
+        await page.selectOption('#quiz-modbus-decoding-count', '5');
+        await page.locator('.quiz-restart-now').click();
+        for (let i = 1; i <= 5; i++) {
+            await expect(page.locator('.quiz-progress-text')).toHaveText('Question ' + i + ' of 5');
+            await page.locator('.quiz-action-secondary').click();    // Skip → scores incorrect
+            await page.locator('.quiz-action-primary').click();      // Next / See results
+        }
+        await expect(page.locator('.quiz-results-headline')).toHaveText('0 / 5 correct');
+        // The 0-score first run must NOT be announced or persisted as a best.
+        await expect(page.locator('.quiz-results-newbest')).toHaveCount(0);
+        expect(await page.evaluate(() => localStorage.getItem('cf_quiz_modbus-decoding_best'))).toBeNull();
+        expect(errors, 'first-zero run should log no errors').toEqual([]);
+    });
+
+    test('Skip reveals "Skipped." and the question lands in the miss-list (#124)', async ({ page }) => {
+        const errors = watchErrors(page);
+        await page.goto('/practice/modbus-decoding.html');
+        await page.selectOption('#quiz-modbus-decoding-count', '5');
+        await page.locator('.quiz-restart-now').click();
+        // Skip Q1 → "Skipped." reveal.
+        await page.locator('.quiz-action-secondary').click();
+        await expect(page.locator('.quiz-reveal-status')).toHaveText('Skipped.');
+        await page.locator('.quiz-action-primary').click();
+        // Answer Q2–Q5 correctly.
+        for (let i = 2; i <= 5; i++) {
+            await expect(page.locator('.quiz-progress-text')).toHaveText('Question ' + i + ' of 5');
+            await page.locator('.quiz-choice[data-correct="true"]').click();
+            await page.locator('.quiz-action-primary').click();      // Submit
+            await page.locator('.quiz-action-primary').click();      // Next / See results
+        }
+        await expect(page.locator('.quiz-results-headline')).toHaveText('4 / 5 correct');
+        // The skipped Q1 scored incorrect, so it shows in the Review (miss) list.
+        await expect(page.locator('.quiz-results-misses tbody tr')).toHaveCount(1);
+        expect(errors, 'skip flow should log no errors').toEqual([]);
+    });
+
+    test('Random order runs to a results card (#124)', async ({ page }) => {
+        const errors = watchErrors(page);
+        await page.goto('/practice/modbus-decoding.html');
+        await page.selectOption('#quiz-modbus-decoding-order', 'random');
+        await page.selectOption('#quiz-modbus-decoding-count', '5');
+        await page.locator('.quiz-restart-now').click();            // applies the new order + count
+        await expect(page.locator('.quiz-progress-text')).toHaveText('Question 1 of 5');
+        for (let i = 1; i <= 5; i++) {
+            await page.locator('.quiz-action-secondary').click();    // Skip to advance fast
+            await page.locator('.quiz-action-primary').click();
+        }
+        await expect(page.locator('.quiz-results-headline')).toContainText('/ 5 correct');
+        expect(errors, 'random order should log no errors').toEqual([]);
+    });
+
+    test('a gotcha question shows its snippet; non-gotcha questions do not (#124)', async ({ page }) => {
+        await page.goto('/practice/modbus-decoding.html');
+        await page.selectOption('#quiz-modbus-decoding-count', '5');
+        await page.locator('.quiz-restart-now').click();
+        // Sequential first-five types are mcq,mcq,tf,mcq,gotcha — only Q5 has a snippet.
+        let sawSnippet = false, sawNoSnippet = false;
+        for (let i = 1; i <= 5; i++) {
+            await expect(page.locator('.quiz-progress-text')).toHaveText('Question ' + i + ' of 5');
+            if (await page.locator('.quiz-snippet-slot .quiz-snippet').count() > 0) sawSnippet = true;
+            else sawNoSnippet = true;
+            await page.locator('.quiz-action-secondary').click();    // Skip to advance
+            await page.locator('.quiz-action-primary').click();
+        }
+        expect(sawSnippet, 'the gotcha rendered its snippet').toBe(true);
+        expect(sawNoSnippet, 'non-gotcha questions show no snippet').toBe(true);
+    });
+
+    test('a full-bank run repairs a stale best whose total exceeds the bank (#115)', async ({ page }) => {
+        // Seed a best recorded at a length LONGER than the current bank (as
+        // if the bank was edited down) — the #89 longer-run guard would
+        // otherwise lock it forever. A full-bank run must repair it.
+        await page.addInitScript(() => {
+            localStorage.setItem('cf_quiz_modbus-decoding_best', '99');
+            localStorage.setItem('cf_quiz_modbus-decoding_best_total', '999');
+        });
+        await page.goto('/practice/modbus-decoding.html');
+        await page.selectOption('#quiz-modbus-decoding-count', 'all');
+        await page.locator('.quiz-restart-now').click();
+        await expect(page.locator('.quiz-progress-text')).toHaveText('Question 1 of 10');
+        // Q1 correct, skip the rest → a non-zero FULL-bank run (total = 10).
+        await page.locator('.quiz-choice[data-correct="true"]').click();
+        await page.locator('.quiz-action-primary').click();          // Submit
+        await page.locator('.quiz-action-primary').click();          // Next
+        for (let i = 2; i <= 10; i++) {
+            await page.locator('.quiz-action-secondary').click();    // Skip
+            await page.locator('.quiz-action-primary').click();
+        }
+        await expect(page.locator('.quiz-results')).toBeVisible();
+        // The stale 99/999 record is replaced by this full-bank result.
+        expect(await page.evaluate(() => localStorage.getItem('cf_quiz_modbus-decoding_best_total'))).toBe('10');
+        expect(await page.evaluate(() => localStorage.getItem('cf_quiz_modbus-decoding_best'))).toBe('1');
     });
 });
 

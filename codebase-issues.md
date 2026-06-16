@@ -4210,7 +4210,7 @@ The engine-direct spec covers add/ai/const/gt/not/pid/sr/tof/ton and feedback ri
 
 **Resolution (2026-06-16):** the div-by-zero guard, asNum coercion, and dt=0 derivative are covered by the `#97`/`#98` finite-output guard tests added earlier (`fbe-engine: finite-output guards`). This pass adds a `fbe-engine: catalog coverage (#123)` describe block: DIVIDE /0 → 0 (explicit), sub/mul/min/max, every comparator family (gt/lt/ge/le/eq/ne), and/or/xor, SELECT routing by SEL, LIMIT clamping, and an asNum-coercion test (an unwired number input defaults to 0, not NaN). Shipped on `test/engine-test-gaps` with #125. Test-only — no version bump.
 
-### 124. quiz-engine: no behavioral test coverage for the Skip action, random order, or gotcha snippet rendering *(open — 2026-06-15)*
+### 124. quiz-engine: no behavioral test coverage for the Skip action, random order, or gotcha snippet rendering *(addressed 2026-06-16)*
 
 *Severity: low · Category: test-gap · Confidence: high* — `tests/smoke.spec.js:1473-1640 (engine surface); branches at html/scripts/quiz-engine.js:503-506,329,360-367,575,614`
 
@@ -4219,6 +4219,8 @@ The browser-driven quiz tests exercise mcq/tf correct+incorrect, numeric submit,
 **Impact.** A future edit to the skip/random/gotcha branches can break without a failing test. Skip in particular toggles skipBtn.disabled and pushes a correct:false answer — a regression there silently mis-scores.
 
 **Suggested fix.** Add a behavioral spot-check (modbus-decoding has a gotcha in the bank) that clicks Skip on one question and asserts the reveal shows 'Skipped.' + the question appears in the miss-list; one that selects Random order, restarts, and asserts the run completes to a results card with the right total; and a gotcha-snippet visibility assertion riding the existing sequential run.
+
+**Resolution (2026-06-16):** added five browser tests to the `practice — modbus decoding quiz` describe in `tests/smoke.spec.js`: Skip → 'Skipped.' reveal + the question in the Review/miss-list; Random order completes to a results card; a gotcha (sequential Q5) shows its snippet while non-gotcha questions don't; **plus the deferred quiz-code tests** — a first all-skipped run is not celebrated or stored as a best (#114), and a full-bank run repairs a stale best whose total exceeds the bank (#115, via a seeded 99/999 record). All pass. (#116 — inputmode reset — stays inspection-only: no shipped bank sets `inputmode`, so there's no reachable behavioral path.) Shipped on `test/browser-test-gaps`.
 
 ### 125. psychro-engine.spec.js: computeProcess / invertProcess have no engine-direct test despite a documented round-trip contract *(addressed 2026-06-16)*
 
@@ -4232,7 +4234,7 @@ psychro-engine.spec.js exercises only the ASHRAE reference points and the 5-mode
 
 **Resolution (2026-06-16):** added a `psychro-engine: computeProcess / invertProcess (#125)` describe block: compute→invert recovers the leaving tdb/W to 6–8 decimals for a cooling stage and a sensible-heating stage (feeding back `|qSens|`/`|qLat|` since computeProcess returns signed loads and invertProcess takes magnitudes); SHR between 0 and 1 for a mixed cool and ≈1 for a pure-sensible cool; invertProcess rejects cfm≤0, negative qSens, negative qLat, and a bone-dry (Wout<0) latent overload; and the `saturated` flag fires when cooling hard with no dehumidification drops the leaving point onto the curve. Part of `test/engine-test-gaps`.
 
-### 126. staging-sequencer rotation / runtime-equalization logic has only one UI stage-up path tested *(open — 2026-06-15)*
+### 126. staging-sequencer rotation / runtime-equalization logic has only one UI stage-up path tested *(addressed 2026-06-16)*
 
 *Severity: low · Category: test-gap · Confidence: high* — `tests/smoke.spec.js:173-186 (only behavioral test); html/simulators/staging-sequencer.html (inline logic, lead-selection :530-571, options :257-259)`
 
@@ -4242,7 +4244,9 @@ The staging sequencer ships three lead-lag strategies — Fixed lead, Runtime-eq
 
 **Suggested fix.** Add a behavioral spec that selects each rotation mode, runs several evaluate cycles, and asserts the lead tag moves (scheduled) / the lowest-hour unit comes on next and the runtime spread shrinks (equalized) / unit 1 always leads and the spread grows (fixed). Pin via the per-unit runtime readouts in #stg-units and the lead tag.
 
-### 127. nav-menu/nav-search: tests don't cover the capture-vs-bubble Escape coexistence between palette and nav menu *(open — 2026-06-15)*
+**Resolution (2026-06-16):** added a behavioral test in `tests/smoke.spec.js` pinning the lead-selection + handoff (the part the prior stage-up-count test was blind to): under Fixed strategy the first `#stg-units .stg-unit` carries `data-lead="true"`, and tripping the lead faults unit 1 and moves the lead role off it (`data-state="fault"`, `data-lead="false"`, a FAULT log line). The runtime-equalized convergence and scheduled-interval rotation are driven by sim-time accumulation on the Play loop — not deterministically reproducible in this harness without a time hook — so they're left to manual/inspection; the lead identity + handoff are the deterministic core. Shipped on `test/browser-test-gaps`.
+
+### 127. nav-menu/nav-search: tests don't cover the capture-vs-bubble Escape coexistence between palette and nav menu *(addressed 2026-06-16)*
 
 *Severity: low · Category: test-gap · Confidence: medium* — `tests/nav-menu.spec.js + tests/nav-search.spec.js (the Escape-coexistence gap spans both); guarded code at html/scripts/nav-menu.js:40,179,220-225 and html/scripts/search.js:292-307`
 
@@ -4251,6 +4255,8 @@ search.js registers its Escape keydown in capture phase and stopPropagation()s w
 **Impact.** The Escape-ordering contract between search.js (capture) and nav-menu.js (bubble) is the kind of thing a future refactor breaks silently; no test guards it. Low because the behavior is currently correct.
 
 **Suggested fix.** Add a spec: open a nav section menu, open the palette (Ctrl+K), press Escape, assert the palette is hidden AND the nav menu is still in its prior state — proving capture-phase Escape stopped propagation before the nav backstop.
+
+**Resolution (2026-06-16):** added a test to `tests/nav-search.spec.js`. Empirically, the two CAN'T be simultaneously open — opening the palette moves focus to its input (closing the dropdown via nav-menu's focusout handler) and inerts the background (#121). So the capture-vs-bubble Escape conflict is structurally prevented, not merely "currently correct." The test pins that invariant: open the Tools dropdown, Ctrl+K (dropdown closes), Escape → the palette closes (capture-phase, stopPropagation) and nothing reopens. A regression that broke either the focus-grab/inert or the capture-Escape ordering would surface here. (The nav-menu.js items-empty / setNavOpen null-guards the finding also names are unreachable on the templated live site — left uncovered.)
 
 ### 128. .wrangler/ is not in .gitignore *(addressed 2026-06-16)*
 
