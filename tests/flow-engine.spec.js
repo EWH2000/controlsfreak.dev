@@ -118,3 +118,23 @@ test('growing past 1240px preserves in-content setPathColor recolors (#96)', asy
     // The in-content recolor survives the crossing (a full re-init wiped it).
     await expect(page.locator(heat)).toHaveCount(before);
 });
+
+test('the rAF loop starts on a visible diagram and animates particles (#113)', async ({ page }) => {
+    // The loop now only runs while there's visible work (it suspends when
+    // idle and resumes via the IO 'intersecting' callback / firePulse). The
+    // load-bearing risk is that the IO-gated startLoop never fires — so pin
+    // that a visible diagram's particle actually MOVES over a short window.
+    await page.goto('/education/hydronic-loops.html');
+    await expect(page.locator('main g.flow-particles circle').first()).toBeAttached();
+
+    const posAt = () => page.evaluate(() => {
+        const c = document.querySelector('main g.flow-particles circle');
+        return c ? [parseFloat(c.getAttribute('cx')), parseFloat(c.getAttribute('cy'))] : null;
+    });
+    const a = await posAt();
+    await page.waitForTimeout(350);              // 30 px/s → ~10 px of travel
+    const b = await posAt();
+    expect(a, 'a particle exists on a visible diagram').not.toBeNull();
+    const moved = Math.hypot(b[0] - a[0], b[1] - a[1]);
+    expect(moved, 'the particle moved → the loop is running').toBeGreaterThan(0.5);
+});
