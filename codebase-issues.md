@@ -3834,7 +3834,7 @@ The 4 mediums: #93 (educationSequence drift), #94 (worker security test gap),
 #95 (wiring-engine no engine spec), #96 (flow-engine 1240px re-init).
 -->
 
-### 93. educationSequence.js drifted from the visible 18-card education grid — controller-wiring and bacnet-mstp omitted from the rel=prev/next chain *(open — 2026-06-15)*
+### 93. educationSequence.js drifted from the visible 18-card education grid — controller-wiring and bacnet-mstp omitted from the rel=prev/next chain *(addressed 2026-06-16)*
 
 *Severity: medium · Category: cross-ref · Confidence: high* — `html/_data/educationSequence.js:17-34 (order array); consumed at html/_includes/head.njk:30-32`
 
@@ -3845,6 +3845,8 @@ The order array lists 16 lessons but the education/index.html card grid renders 
 **Suggested fix.** Insert '/education/controller-wiring.html' after pid-basics and '/education/bacnet-mstp.html' after bacnet-networking in the order array so it matches the 18-card landing exactly. If either omission is deliberate, document it in the header and reconcile the landing order. Longer term, derive the sequence from the navEducation collection or add a build-time guard (mirroring navCategoryGuard) that fails when any nav: education page is absent from the sequence, so it can't drift again.
 
 *Merged from: data-modules + cross-page-sweep surfaces (same defect, identical root cause)*
+
+**Resolution (2026-06-16):** inserted `/education/controller-wiring.html` (after pid-basics) and `/education/bacnet-mstp.html` (last) into the `order` array in `html/_data/educationSequence.js`, so all 18 lessons now carry rel=prev/next and the chain matches the grid click-through order (verified in built `_site/`: controller-wiring and bacnet-mstp both emit the links; pid-basics→controller-wiring and bacnet-networking→bacnet-mstp now chain through). Added an `educationSequenceGuard` collection to `.eleventy.js` (mirrors `navCategoryGuard`) that fails the build if any `nav: education` page is absent from `order` or `order` lists an unclaimed URL — negative-tested (dropping a lesson fails the build with the offending path). Membership only; lockstep grid ORDER stays a by-hand discipline.
 
 ### 94. Worker tests cover none of the security-critical contact paths (Turnstile fail-closed, hostname pin, validation, Resend) *(open — 2026-06-15)*
 
