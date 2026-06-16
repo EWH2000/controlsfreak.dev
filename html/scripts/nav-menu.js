@@ -132,7 +132,16 @@
         m.toggle.addEventListener('keydown', (e) => {
             if (e.key === 'ArrowDown') { e.preventDefault(); open(m); focusAt(focusables(m), 0); }
             else if (e.key === 'ArrowUp') { e.preventDefault(); open(m); focusAt(focusables(m), -1); }
-            else if (e.key === 'Escape' && isOpen(m)) { e.preventDefault(); e.stopPropagation(); close(m); }
+            else if (e.key === 'Escape' && isOpen(m)) {
+                e.preventDefault();
+                e.stopPropagation();
+                // Step back one level per press, matching the menu-level
+                // handler. Shift+Tab can park focus back on the toggle with a
+                // category still open, so collapse an open category first and
+                // only collapse the whole section once none is open.
+                if (groupsOf(m).some(isGroupOpen)) closeGroups(m);
+                else close(m);
+            }
         });
 
         // Category toggles: Enter/Space (native button click) expand them;
@@ -165,8 +174,14 @@
         });
 
         // Tab (or any focus move) out of this nav item closes its menu.
+        // Guard relatedTarget: it is null when focus moves to nothing (a tap
+        // that dismisses focus, or a browser that blurs to no element), and
+        // m.item.contains(null) is false — so without this guard an
+        // incidental blur-to-null would tear the open section down
+        // mid-interaction. A genuine click outside is still handled by the
+        // document click listener below.
         m.item.addEventListener('focusout', (e) => {
-            if (!m.item.contains(e.relatedTarget)) close(m);
+            if (e.relatedTarget && !m.item.contains(e.relatedTarget)) close(m);
         });
     });
 
