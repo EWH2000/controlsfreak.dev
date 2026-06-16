@@ -4198,7 +4198,7 @@ The module header and the menu-level keydown handler implement 'Escape collapses
 
 **Resolution (2026-06-15):** fixed on `feat/nav-cascading-categories` — the section toggle's Escape now mirrors the menu-level step-back (`if (groupsOf(m).some(isGroupOpen)) closeGroups(m); else close(m)`), so one press collapses the open category and a second closes the section. Regression test added in `tests/nav-menu.spec.js` (fails without the fix).
 
-### 123. fbe-engine.spec.js: DIVIDE /0 guard, NaN/Infinity propagation, and most catalog blocks are untested *(open — 2026-06-15)*
+### 123. fbe-engine.spec.js: DIVIDE /0 guard, NaN/Infinity propagation, and most catalog blocks are untested *(addressed 2026-06-16)*
 
 *Severity: low · Category: test-gap · Confidence: high* — `tests/fbe-engine.spec.js (whole file); load-bearing miss is the div-by-zero guard at html/scripts/fbe-engine.js:171`
 
@@ -4207,6 +4207,8 @@ The engine-direct spec covers add/ai/const/gt/not/pid/sr/tof/ton and feedback ri
 **Impact.** A regression to the div-guard or asNum coercion would ship green. The behaviors the page advertises in prose are not pinned by tests.
 
 **Suggested fix.** Add a div-by-zero test (const A / const 0 → O===0), an asNum-coercion test, and a dt=0 derivative test; spot-check select/limit and at least one of each comparator family. A few lines each given the existing run() helper.
+
+**Resolution (2026-06-16):** the div-by-zero guard, asNum coercion, and dt=0 derivative are covered by the `#97`/`#98` finite-output guard tests added earlier (`fbe-engine: finite-output guards`). This pass adds a `fbe-engine: catalog coverage (#123)` describe block: DIVIDE /0 → 0 (explicit), sub/mul/min/max, every comparator family (gt/lt/ge/le/eq/ne), and/or/xor, SELECT routing by SEL, LIMIT clamping, and an asNum-coercion test (an unwired number input defaults to 0, not NaN). Shipped on `test/engine-test-gaps` with #125. Test-only — no version bump.
 
 ### 124. quiz-engine: no behavioral test coverage for the Skip action, random order, or gotcha snippet rendering *(open — 2026-06-15)*
 
@@ -4218,7 +4220,7 @@ The browser-driven quiz tests exercise mcq/tf correct+incorrect, numeric submit,
 
 **Suggested fix.** Add a behavioral spot-check (modbus-decoding has a gotcha in the bank) that clicks Skip on one question and asserts the reveal shows 'Skipped.' + the question appears in the miss-list; one that selects Random order, restarts, and asserts the run completes to a results card with the right total; and a gotcha-snippet visibility assertion riding the existing sequential run.
 
-### 125. psychro-engine.spec.js: computeProcess / invertProcess have no engine-direct test despite a documented round-trip contract *(open — 2026-06-15)*
+### 125. psychro-engine.spec.js: computeProcess / invertProcess have no engine-direct test despite a documented round-trip contract *(addressed 2026-06-16)*
 
 *Severity: low · Category: test-gap · Confidence: high* — `tests/psychro-engine.spec.js (only solveState/buildState tests); engine functions at html/scripts/psychro-engine.js:191-247`
 
@@ -4227,6 +4229,8 @@ psychro-engine.spec.js exercises only the ASHRAE reference points and the 5-mode
 **Impact.** The coil-sizing tool's heat-flow and inverse-load math can silently regress on the round-trip invariant (the strongest available) and the rejection branches with no engine-direct test catching it. The most-likely-to-break formula plumbing (cool/heat sign, cpIn weighting, qLat = qTotal − qSens) is unpinned engine-side.
 
 **Suggested fix.** Add engine-direct tests to psychro-engine.spec.js (the vm pattern already loaded): a computeProcess↔invertProcess round-trip asserting recovered tdb/W to ~1e-6 across a cool and a heat stage; SHR sanity (0<shr<1, ≈1 for pure-sensible); the saturated flag firing when latent load drives the leaving point onto the curve; and the negative-load / negative-Wout branches returning ok:false.
+
+**Resolution (2026-06-16):** added a `psychro-engine: computeProcess / invertProcess (#125)` describe block: compute→invert recovers the leaving tdb/W to 6–8 decimals for a cooling stage and a sensible-heating stage (feeding back `|qSens|`/`|qLat|` since computeProcess returns signed loads and invertProcess takes magnitudes); SHR between 0 and 1 for a mixed cool and ≈1 for a pure-sensible cool; invertProcess rejects cfm≤0, negative qSens, negative qLat, and a bone-dry (Wout<0) latent overload; and the `saturated` flag fires when cooling hard with no dehumidification drops the leaving point onto the curve. Part of `test/engine-test-gaps`.
 
 ### 126. staging-sequencer rotation / runtime-equalization logic has only one UI stage-up path tested *(open — 2026-06-15)*
 

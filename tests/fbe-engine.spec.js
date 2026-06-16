@@ -395,3 +395,124 @@ test.describe('fbe-engine: finite-output guards', () => {
         expect(c.out.OUT).toBeGreaterThan(0);    // a real reverse-acting response, not NaN→0
     });
 });
+
+test.describe('fbe-engine: catalog coverage (#123)', () => {
+
+    // const(a) op const(b) → read the op block's output pin.
+    function math(FBE, type, a, b, outPin) {
+        const def = {
+            blocks: [
+                { id: 'a', type: 'const', x: 0, y: 0, params: { value: a } },
+                { id: 'b', type: 'const', x: 0, y: 0, params: { value: b } },
+                { id: 'c', type: type,    x: 0, y: 0 },
+            ],
+            wires: [
+                { from: ['a', 'O'], to: ['c', 'A'] },
+                { from: ['b', 'O'], to: ['c', 'B'] },
+            ],
+        };
+        return run(FBE, def, 0.1, 1).by.c.out[outPin || 'O'];
+    }
+    // bi(a) op bi(b) → Q.
+    function logic(FBE, type, a, b) {
+        const def = {
+            blocks: [
+                { id: 'a', type: 'bi', x: 0, y: 0, params: { state: a } },
+                { id: 'b', type: 'bi', x: 0, y: 0, params: { state: b } },
+                { id: 'c', type: type, x: 0, y: 0 },
+            ],
+            wires: [
+                { from: ['a', 'O'], to: ['c', 'A'] },
+                { from: ['b', 'O'], to: ['c', 'B'] },
+            ],
+        };
+        return run(FBE, def, 0.1, 1).by.c.out.Q;
+    }
+
+    test('DIVIDE guards /0 — the load-bearing, user-advertised behavior', () => {
+        const FBE = loadEngine();
+        expect(math(FBE, 'div', 12, 4)).toBe(3);
+        expect(math(FBE, 'div', 10, 0)).toBe(0);   // /0 → 0, not Infinity/NaN
+        expect(math(FBE, 'div', -6, 0)).toBe(0);
+    });
+
+    test('math blocks: sub / mul / min / max', () => {
+        const FBE = loadEngine();
+        expect(math(FBE, 'sub', 10, 3)).toBe(7);
+        expect(math(FBE, 'mul', 6, 7)).toBe(42);
+        expect(math(FBE, 'min', 10, 3)).toBe(3);
+        expect(math(FBE, 'max', 10, 3)).toBe(10);
+    });
+
+    test('every comparator family resolves', () => {
+        const FBE = loadEngine();
+        expect(math(FBE, 'gt', 5, 4, 'Q')).toBe(true);
+        expect(math(FBE, 'lt', 1, 2, 'Q')).toBe(true);
+        expect(math(FBE, 'ge', 5, 5, 'Q')).toBe(true);
+        expect(math(FBE, 'le', 6, 5, 'Q')).toBe(false);
+        expect(math(FBE, 'eq', 5, 5, 'Q')).toBe(true);
+        expect(math(FBE, 'eq', 5, 6, 'Q')).toBe(false);
+        expect(math(FBE, 'ne', 5, 6, 'Q')).toBe(true);
+        expect(math(FBE, 'ne', 5, 5, 'Q')).toBe(false);
+    });
+
+    test('boolean blocks: and / or / xor', () => {
+        const FBE = loadEngine();
+        expect(logic(FBE, 'and', true, false)).toBe(false);
+        expect(logic(FBE, 'and', true, true)).toBe(true);
+        expect(logic(FBE, 'or',  true, false)).toBe(true);
+        expect(logic(FBE, 'or',  false, false)).toBe(false);
+        expect(logic(FBE, 'xor', true, false)).toBe(true);
+        expect(logic(FBE, 'xor', true, true)).toBe(false);
+    });
+
+    test('SELECT routes IN0/IN1 by SEL', () => {
+        const FBE = loadEngine();
+        const def = (sel) => ({
+            blocks: [
+                { id: 's',  type: 'bi',    x: 0, y: 0, params: { state: sel } },
+                { id: 'a',  type: 'const', x: 0, y: 0, params: { value: 10 } },
+                { id: 'b',  type: 'const', x: 0, y: 0, params: { value: 20 } },
+                { id: 'sl', type: 'select', x: 0, y: 0 },
+            ],
+            wires: [
+                { from: ['s', 'O'], to: ['sl', 'SEL'] },
+                { from: ['a', 'O'], to: ['sl', 'IN0'] },
+                { from: ['b', 'O'], to: ['sl', 'IN1'] },
+            ],
+        });
+        expect(run(FBE, def(false), 0.1, 1).by.sl.out.O).toBe(10);
+        expect(run(FBE, def(true),  0.1, 1).by.sl.out.O).toBe(20);
+    });
+
+    test('LIMIT clamps to [lo, hi]', () => {
+        const FBE = loadEngine();
+        const lim = (v) => {
+            const def = {
+                blocks: [
+                    { id: 'a', type: 'const', x: 0, y: 0, params: { value: v } },
+                    { id: 'l', type: 'limit', x: 0, y: 0, params: { lo: 0, hi: 100 } },
+                ],
+                wires: [{ from: ['a', 'O'], to: ['l', 'IN'] }],
+            };
+            return run(FBE, def, 0.1, 1).by.l.out.O;
+        };
+        expect(lim(150)).toBe(100);
+        expect(lim(-5)).toBe(0);
+        expect(lim(42)).toBe(42);
+    });
+
+    test('asNum coerces an unwired/missing number input to 0', () => {
+        // const(5) → add, with B left unwired: the missing input defaults to
+        // 0 (asNum's contract), so the sum is 5 — not NaN.
+        const FBE = loadEngine();
+        const def = {
+            blocks: [
+                { id: 'a', type: 'const', x: 0, y: 0, params: { value: 5 } },
+                { id: 's', type: 'add',   x: 0, y: 0 },
+            ],
+            wires: [{ from: ['a', 'O'], to: ['s', 'A'] }],   // B unwired
+        };
+        expect(run(FBE, def, 0.1, 1).by.s.out.O).toBe(5);
+    });
+});

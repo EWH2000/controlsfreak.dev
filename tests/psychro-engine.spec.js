@@ -101,3 +101,71 @@ test.describe('psychro-engine: pure-math invariants', () => {
     });
 
 });
+
+test.describe('psychro-engine: computeProcess / invertProcess (#125)', () => {
+
+    // computeProcess returns SIGNED loads (qSens = mDot·cpIn·ΔTdb, negative
+    // for cooling); invertProcess takes positive magnitudes. So the
+    // round-trip feeds back |qSens| / |qLat|.
+    test('compute → invert recovers the leaving state (cooling)', () => {
+        const { Psychro, P_STD } = loadEngine();
+        const cfm = 400;
+        const inlet  = Psychro.solveState('rh', 80, 50, P_STD);   // warm, humid
+        const outlet = Psychro.solveState('rh', 55, 90, P_STD);   // cooled + dehumidified
+        const cp = Psychro.computeProcess({ inlet, outlet, type: 'cool' }, cfm);
+        const inv = Psychro.invertProcess(inlet, {
+            type: 'cool', cfm, qSens: -cp.qSens, qLat: -cp.qLat,
+        });
+        expect(inv.ok).toBe(true);
+        expect(inv.tdb).toBeCloseTo(outlet.tdb, 6);
+        expect(inv.W).toBeCloseTo(outlet.W, 8);
+    });
+
+    test('compute → invert recovers the leaving state (sensible heating)', () => {
+        const { Psychro, P_STD } = loadEngine();
+        const cfm = 600;
+        const inlet  = Psychro.solveState('rh', 60, 40, P_STD);
+        const outlet = Psychro.buildState(95, inlet.W, P_STD);    // heated, W unchanged
+        const cp = Psychro.computeProcess({ inlet, outlet, type: 'heat' }, cfm);
+        const inv = Psychro.invertProcess(inlet, { type: 'heat', cfm, qSens: cp.qSens });
+        expect(inv.ok).toBe(true);
+        expect(inv.tdb).toBeCloseTo(outlet.tdb, 6);
+        expect(inv.W).toBeCloseTo(inlet.W, 8);
+    });
+
+    test('SHR: between 0 and 1 for a mixed cool, ≈1 for pure-sensible cool', () => {
+        const { Psychro, P_STD } = loadEngine();
+        const inlet = Psychro.solveState('rh', 80, 50, P_STD);
+        // Mixed (sensible + latent) cooling.
+        const wet = Psychro.computeProcess(
+            { inlet, outlet: Psychro.solveState('rh', 55, 90, P_STD), type: 'cool' }, 400);
+        expect(wet.shr).toBeGreaterThan(0);
+        expect(wet.shr).toBeLessThan(1);
+        // Pure-sensible cooling (W held) → SHR ≈ 1.
+        const dry = Psychro.computeProcess(
+            { inlet, outlet: Psychro.buildState(65, inlet.W, P_STD), type: 'cool' }, 400);
+        expect(dry.shr).toBeCloseTo(1, 6);
+    });
+
+    test('invertProcess rejects bad inputs', () => {
+        const { Psychro, P_STD } = loadEngine();
+        const inlet = Psychro.solveState('rh', 80, 50, P_STD);
+        expect(Psychro.invertProcess(inlet, { type: 'cool', cfm: 0,   qSens: 100 }).ok).toBe(false);
+        expect(Psychro.invertProcess(inlet, { type: 'cool', cfm: 400, qSens: -1 }).ok).toBe(false);
+        expect(Psychro.invertProcess(inlet, { type: 'cool', cfm: 400, qSens: 100, qLat: -1 }).ok).toBe(false);
+        // A huge latent removal drives the leaving point past bone-dry.
+        expect(Psychro.invertProcess(inlet, { type: 'cool', cfm: 400, qSens: 100, qLat: 5e6 }).ok).toBe(false);
+    });
+
+    test('the saturated flag fires when the leaving point lands on the curve', () => {
+        const { Psychro, P_STD } = loadEngine();
+        const inlet = Psychro.solveState('rh', 80, 50, P_STD);
+        // Cool hard (high sensible) with no dehumidification: tdb drops below
+        // the entering dew point, so the held W now exceeds saturation at the
+        // colder leaving tdb — buildState clamps it and flags saturated.
+        const inv = Psychro.invertProcess(inlet, { type: 'cool', cfm: 400, qSens: 200000, qLat: 0 });
+        expect(inv.ok).toBe(true);
+        expect(inv.saturated).toBe(true);
+    });
+
+});
