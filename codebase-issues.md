@@ -4006,7 +4006,7 @@ targetFor() resolves the fullscreen target from the button's data-fullscreen-tar
 
 **Resolution (2026-06-16):** exitActive() now does `document.querySelectorAll('.is-fullscreen').forEach((t) => setState(t, false))` — it exits whatever is actually fullscreen regardless of tag/class, so a future non-.tool-card target stays reachable by ESC. Identical to the old behavior for current .tool-card opt-ins. Regression test in `tests/fullscreen-toggle.spec.js`: enter fullscreen on a synthetic `<section>` via `window.Fullscreen.toggle`, press Escape → it exits and `body.has-fullscreen-tool` clears (the old fixed selector left it stuck). Shipped on `fix/fullscreen-esc-exit` (version bump 3.18.7 → 3.18.8). NOTE the CSS still styles `.tool-card.is-fullscreen` only, so a non-.tool-card opt-in would need its own fullscreen CSS — but ESC exit is no longer broken.
 
-### 107. controller-wiring: spark cue re-fires on every refresh() — no edge-detection, unlike the blown-fuse cue *(open — 2026-06-15)*
+### 107. controller-wiring: spark cue re-fires on every refresh() — no edge-detection, unlike the blown-fuse cue *(addressed 2026-06-16)*
 
 *Severity: low · Category: bug · Confidence: high* — `html/simulators/controller-wiring.html:905-908`
 
@@ -4016,7 +4016,9 @@ The comment reads 'cues — fire only on a fresh failure', but only the blown-fu
 
 **Suggested fix.** Edge-detect the spark cue like the fuse: track the previous spark set (a serialized key of res.cues.spark) and only fireSpark for terminals newly in the set this evaluation, or only fire sparks on user-initiated refreshes, not the cosmetic tick.
 
-### 108. controller-wiring: device drag y-clamp reserves a fixed 40px height for variable-height device cards *(open — 2026-06-15)*
+**Resolution (2026-06-16):** added a `lastSpark` array (reset in resetState alongside `lastBlown`) and fire only for terminals NEWLY in `res.cues.spark` — `sparkNow.forEach(t => { if (lastSpark.indexOf(t) === -1) fireSpark('ctlr', t); })` — so a persistently reversed-power panel no longer re-sparks on every refresh()/2.5s drift tick. Page-level inline script (no version bump). Behavioral animation-firing isn't covered by a dedicated test (the smoke test confirms the page + engine presets still load clean); verified by inspection. Shipped on `fix/controller-wiring-defects` with #108/#109.
+
+### 108. controller-wiring: device drag y-clamp reserves a fixed 40px height for variable-height device cards *(addressed 2026-06-16)*
 
 *Severity: low · Category: bug · Confidence: medium* — `html/simulators/controller-wiring.html:719-720`
 
@@ -4026,7 +4028,9 @@ The drag move handler clamps with `d.y = clamp(oy + dy, 0, NUM.height - 40)` and
 
 **Suggested fix.** Measure the card height once (el.offsetHeight) at drag start and clamp y to NUM.height - height, mirroring the width clamp; or reserve a realistic per-type height.
 
-### 109. controller-wiring: cosmetic-drift setInterval not gated to desktop and never pauses on tab-hide (backgrounded-tab idle work) *(open — 2026-06-15)*
+**Resolution (2026-06-16):** measure `el.offsetHeight` once at drag start and clamp `d.y` to `NUM.height - ch`, so a tall card (e.g. the 0-10V actuator, ~136px) can no longer be dragged most of the way off the canvas. The x-clamp's existing `NUM.width - 146` already reserved the real width. Part of `fix/controller-wiring-defects`.
+
+### 109. controller-wiring: cosmetic-drift setInterval not gated to desktop and never pauses on tab-hide (backgrounded-tab idle work) *(addressed 2026-06-16)*
 
 *Severity: low · Category: perf · Confidence: high* — `html/simulators/controller-wiring.html:1118-1127`
 
@@ -4035,6 +4039,8 @@ The cosmetic-drift window.setInterval(...,2500) is gated only by !reduceMotion, 
 **Impact.** On a desktop tab with a thermistor present, backgrounding the tab keeps a full evaluate()/drawWires() pass running every 2.5s — wasted wakeups, worse on battery. Low absolute cost; an asymmetry the companion commit deliberately avoided on the FBE sibling.
 
 **Suggested fix.** Pause the drift interval on document.visibilitychange when document.hidden (mirroring the FBE posture). Store the handle so it can be cleared and re-armed on un-hide. The mobile path is acceptable as-is per the documented rationale.
+
+**Resolution (2026-06-16):** stored the interval handle and added a `visibilitychange` listener — `document.hidden` clears it, visible re-arms it; it also doesn't start while initially hidden (a background-tab open), matching the FBE sibling's posture. A backgrounded desktop tab with a thermistor placed no longer runs a full evaluate()+drawWires() every 2.5s. Mobile path unchanged (documented non-issue). Part of `fix/controller-wiring-defects`.
 
 ### 110. function-block-editor: sim loop runs in a backgrounded tab on initial load (visibilitychange only fires on change) *(open — 2026-06-15)*
 

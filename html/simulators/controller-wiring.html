@@ -496,6 +496,7 @@ keywords: 24vac com transformer 4-20ma loop ui ai ao bo terminals fuse
         let devSeq = 0;
         let wireSeq = 0;
         let lastBlown = false;     // edge-detect the fuse for the cue
+        let lastSpark = [];        // edge-detect the spark cue too (#107)
 
         // Controller faceplate layout — display order + group headers.
         const GROUPS = [
@@ -714,10 +715,15 @@ keywords: 24vac com transformer 4-20ma loop ui ai ao bo terminals fuse
             if (e.target.closest('.cw-pin') || e.target.closest('.cw-dev-toggle')) return;
             select({ kind: 'device', id: d.id });
             const startX = e.clientX, startY = e.clientY, ox = d.x, oy = d.y;
+            // Measure the card's real height once at drag start: cards grow
+            // with terminal count + caption (a 0-10V actuator is ~136px), so
+            // the old fixed 40px reservation let a tall card be dragged until
+            // only its top edge stayed on the canvas (codebase-issues #108).
+            const ch = el.offsetHeight;
             el.setPointerCapture(e.pointerId);
             function move(ev) {
                 d.x = clamp(ox + (ev.clientX - startX), 0, NUM.width - 146);
-                d.y = clamp(oy + (ev.clientY - startY), 0, NUM.height - 40);
+                d.y = clamp(oy + (ev.clientY - startY), 0, NUM.height - ch);
                 el.style.left = d.x + 'px';
                 el.style.top = d.y + 'px';
                 drawWires();
@@ -902,9 +908,19 @@ keywords: 24vac com transformer 4-20ma loop ui ai ao bo terminals fuse
             // wire colours (role may shift as power lands)
             drawWires();
 
-            // cues — fire only on a fresh failure
+            // cues — fire only on a fresh failure. The spark is edge-detected
+            // like the fuse: a persistently reversed-power panel that also
+            // holds a thermistor used to re-spark every refresh() — including
+            // the 2.5s cosmetic-drift tick — so only terminals NEWLY in the
+            // spark set fire (codebase-issues #107).
             if (blown && !lastBlown) fireBlownFuse(fuse);
-            if (!reduceMotion) (res.cues.spark || []).forEach((term) => fireSpark('ctlr', term));
+            const sparkNow = res.cues.spark || [];
+            if (!reduceMotion) {
+                sparkNow.forEach((term) => {
+                    if (lastSpark.indexOf(term) === -1) fireSpark('ctlr', term);
+                });
+            }
+            lastSpark = sparkNow;
             lastBlown = blown;
         }
 
@@ -978,6 +994,7 @@ keywords: 24vac com transformer 4-20ma loop ui ai ao bo terminals fuse
             state.ao = { ao1: 0, ao2: 0 };
             state.bo = { bo1: false, bo2: false };
             lastBlown = false;
+            lastSpark = [];
         }
 
         // mirror state into the on-faceplate controls
@@ -1116,14 +1133,28 @@ keywords: 24vac com transformer 4-20ma loop ui ai ao bo terminals fuse
         });
 
         // gentle cosmetic drift so live readings feel alive (not motion).
+        // Pause while the tab is hidden — a backgrounded DESKTOP tab with a
+        // thermistor placed otherwise keeps running a full evaluate() +
+        // drawWires() every 2.5s for no visible payoff (codebase-issues
+        // #109). Mirrors the function-block-editor's visibilitychange
+        // posture; the mobile case is a documented non-issue (bench hidden,
+        // no devices). Don't start while initially hidden (background-tab
+        // open) — the first visibilitychange to visible arms it.
         if (!reduceMotion) {
-            window.setInterval(() => {
+            let driftTimer = null;
+            const driftTick = () => {
                 let touched = false;
                 panel.devices.forEach((d) => {
                     if (d.type === 'therm10k') { d.field.tempF += (Math.random() - 0.5) * 0.2; touched = true; }
                 });
                 if (touched) refresh();
-            }, 2500);
+            };
+            const startDrift = () => { if (driftTimer == null) driftTimer = window.setInterval(driftTick, 2500); };
+            const stopDrift = () => { if (driftTimer != null) { window.clearInterval(driftTimer); driftTimer = null; } };
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden) stopDrift(); else startDrift();
+            });
+            if (!document.hidden) startDrift();
         }
 
         // first paint
