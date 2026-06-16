@@ -237,7 +237,13 @@ export default {
         const url = new URL(request.url);
         const legacyTarget = LEGACY_TOOL_REDIRECTS[url.pathname];
         if (legacyTarget) {
-            return Response.redirect(new URL(legacyTarget, url.origin), 301);
+            // Preserve any query string through the 301 (codebase-issues #133):
+            // Response.redirect(new URL(target, origin)) dropped ?utm_*/etc., so
+            // inbound campaign attribution on a moved page was lost. Fragments
+            // are never sent to the server, so there's nothing to carry there.
+            const target = new URL(legacyTarget, url.origin);
+            target.search = url.search;
+            return Response.redirect(target, 301);
         }
         if (url.pathname === "/api/contact") {
             if (request.method === "POST") {
@@ -251,7 +257,13 @@ export default {
         }
         const assetRes = await env.ASSETS.fetch(request);
         const cc = assetCacheControl(url);
-        if (cc && assetRes.ok) {
+        // Re-apply the long-lived header on a 304 too (codebase-issues #133's
+        // sibling #132): with run_worker_first:true, env.ASSETS.fetch answers
+        // a conditional request for a fingerprinted asset with a 304, whose
+        // .ok is false — so it used to fall through with the binding's default
+        // max-age=0,must-revalidate instead of immutable. A 304 is a
+        // null-body status, so re-wrapping its (null) body is valid.
+        if (cc && (assetRes.ok || assetRes.status === 304)) {
             const cached = new Response(assetRes.body, assetRes);
             cached.headers.set("cache-control", cc);
             return cached;

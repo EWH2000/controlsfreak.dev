@@ -49,6 +49,31 @@ test('legacy tool URLs 301 to their simulator homes', async () => {
     expect(res.headers.get('location')).toBe(ORIGIN + '/simulators/pid-tuner.html');
 });
 
+test('legacy redirect preserves the query string (#133)', async () => {
+    const worker = await loadWorker();
+    const res = await worker.fetch(
+        new Request(ORIGIN + '/tools/pid-tuner.html?utm_source=nl&x=1'), stubEnv());
+    expect(res.status).toBe(301);
+    expect(res.headers.get('location'))
+        .toBe(ORIGIN + '/simulators/pid-tuner.html?utm_source=nl&x=1');
+});
+
+test('a 304 from ASSETS keeps the immutable header on a fingerprinted path (#132)', async () => {
+    const worker = await loadWorker();
+    // run_worker_first:true means env.ASSETS.fetch answers a conditional
+    // request for a fingerprinted asset with a 304 (Not Modified), whose
+    // .ok is false — the worker must still re-apply the long-lived header.
+    const env = { ...stubEnv(), ASSETS: { fetch: () => new Response(null, { status: 304 }) } };
+    const res = await worker.fetch(new Request(ORIGIN + '/scripts/units.js?v=9.9.9'), env);
+    expect(res.status).toBe(304);
+    expect(res.headers.get('cache-control')).toContain('immutable');
+    // A 304 on an UNversioned path stays on the revalidate default (no header
+    // the worker adds) — the ?v= opt-in still gates it.
+    const res2 = await worker.fetch(new Request(ORIGIN + '/scripts/units.js'), env);
+    expect(res2.status).toBe(304);
+    expect(res2.headers.get('cache-control')).toBeNull();
+});
+
 test('non-POST /api/contact is 405 with Allow', async () => {
     const worker = await loadWorker();
     const res = await worker.fetch(
