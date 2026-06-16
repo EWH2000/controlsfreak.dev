@@ -3982,7 +3982,7 @@ massFlow is intentionally display-only (suffix + display) per the inline comment
 
 **Resolution (2026-06-16):** took the console.warn path (the cheaper option that doesn't trip `units-engine.spec.js`'s "massFlow is the one display-only quantity" assertion the way adding a Q entry would). `convert()`'s unknown-quantity branch now warns before returning the value unconverted. Regression test in `tests/units-engine.spec.js` (loadUnits extended to inject a `console` spy): converting a `massFlow` value returns it unchanged AND emits a warning naming the quantity. The warn never fires today — massFlow is suffix/display-only. Part of the `fix/engine-finite-guards` cluster.
 
-### 105. copyText double-click race can leave the copy button stuck on 'copied!' *(open — 2026-06-15)*
+### 105. copyText double-click race can leave the copy button stuck on 'copied!' *(addressed 2026-06-16)*
 
 *Severity: low · Category: robustness · Confidence: high* — `html/scripts/ui.js:92-103`
 
@@ -3991,6 +3991,8 @@ The only re-entrancy guard is `if (!text || btn.classList.contains('copied')) re
 **Impact.** On a fast double-click of any copy button (Copy IP, Copy readouts), the label can get stuck on 'copied!' and never revert. Cosmetic but sticky; recovery needs another successful copy after the class clears. Low — needs a rapid double-click.
 
 **Suggested fix.** Add the `copied` class and capture `orig` synchronously right after the guard, restore only inside the timeout (so the entry guard sees `copied` immediately and the second click is a clean no-op), and revert the class in a .catch() so a clipboard rejection doesn't latch the button.
+
+**Resolution (2026-06-16):** capture `orig` and add the `copied` class SYNCHRONOUSLY (before the async writeText), so a fast second click sees `copied` at the entry guard and no-ops — no second writeText, no callback capturing orig='copied!'. The `.catch()` removes the class (unlatch on a blocked clipboard). Refined slightly from the literal suggestion: the 'copied!' TEXT flips on success only, so a blocked clipboard doesn't show a false 'copied!' flash. Deterministic regression test in `tests/copy-button.spec.js` (drives `window.copyText` with a stubbed pending writeText, double-clicks → exactly one write fires, button reverts) — negative-tested: the old code fires two writes and sticks. Shipped on `fix/copy-button-race` (version bump 3.18.6 → 3.18.7).
 
 ### 106. fullscreen-toggle: ESC-exit hardcodes '.tool-card.is-fullscreen' while the opt-in target selector is configurable *(open — 2026-06-15)*
 

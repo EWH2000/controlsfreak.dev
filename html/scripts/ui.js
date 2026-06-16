@@ -91,15 +91,24 @@
     // rejection that the smoke tests treat as a console-error failure.
     function copyText(btn, text) {
         if (!text || btn.classList.contains('copied')) return;
+        // Latch synchronously — capture orig and add `copied` BEFORE the
+        // async writeText — so a fast second click sees `copied` at the
+        // entry guard and is a clean no-op. The old code added the class and
+        // captured orig inside .then(), after a microtask boundary: a second
+        // click landing before the first promise resolved passed the guard,
+        // queued a second writeText, and its callback captured
+        // orig='copied!', leaving the button stuck on 'copied!' (#105). The
+        // 'copied!' text still flips on success only (no false flash on a
+        // blocked clipboard); the .catch() unlatches the class.
+        const orig = btn.textContent;
+        btn.classList.add('copied');
         navigator.clipboard.writeText(text).then(() => {
-            const orig = btn.textContent;
             btn.textContent = 'copied!';
-            btn.classList.add('copied');
             setTimeout(() => {
                 btn.textContent = orig;
                 btn.classList.remove('copied');
             }, 1800);
-        }).catch(() => { /* clipboard blocked — silent */ });
+        }).catch(() => { btn.classList.remove('copied'); /* clipboard blocked — unlatch, stay silent */ });
     }
 
     // Copy one or more readout-element textContents to the clipboard,
