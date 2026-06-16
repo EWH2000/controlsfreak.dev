@@ -3874,7 +3874,7 @@ wiring-engine.js is a 542-line pure module exposing Wiring.evaluate(panel, state
 
 **Resolution (2026-06-16):** added `tests/wiring-engine.spec.js` (13 tests, vm-direct, mirrors `fbe-engine.spec.js`). Covers: createDevice deep-copy + unknown-type null; catalog/controller shape; clean landing (powered, sensor ok, zero faults); dead short; reversed polarity (spark cue); open common; no-transformer warning; **union-find** transitivity (a thermistor return reaching COM only through a multi-hop wire chain reads `ok`, and removing the last hop flips it to `open` — proving the merge and its absence); thermistor wrong-mode and both-leads-short faults; and a **VA-budget threshold pair** (a fully-loaded panel at 32 VA runs clean, the same panel at 42 VA on a 40 VA transformer trips `overload` + blows the fuse). All 13 pass. New test file only — no `html/scripts/*` change, no version bump.
 
-### 96. Crossing the 1240px gutter breakpoint re-inits the whole engine, rebuilding in-content flow pools and dropping setPathColor recolors *(open — 2026-06-15)*
+### 96. Crossing the 1240px gutter breakpoint re-inits the whole engine, rebuilding in-content flow pools and dropping setPathColor recolors *(addressed 2026-06-16)*
 
 *Severity: medium · Category: bug · Confidence: high* — `html/scripts/flow-engine.js:241-247 (onGutterChange → init) feeding 249-252 (rebuilds ALL [data-flow], not just gutter)`
 
@@ -3883,6 +3883,8 @@ The gutterMql change handler calls full init() when the viewport grows past 1240
 **Impact.** Visible regression on a resize crossing 1240px: recolored particle streams (refrigerant-cycle-basics, any future setPathColor user) revert to default colors and all in-content flow animations snap to their seed positions.
 
 **Suggested fix.** Scope the gutter-grow rebuild to gutter elements only — have onGutterChange call a buildGutterPools() that runs buildPoolForEl/buildPulsePathFor only on .schematic-bg [data-flow]/[data-pulse] elements, mirroring teardownGutterPools' scoping, so in-content pools and their setPathColor state survive the breakpoint.
+
+**Resolution (2026-06-16):** added `buildGutterPools()` to `flow-engine.js` (the scoped mirror of `teardownGutterPools` — it calls `buildPoolForEl`/`buildPulsePathFor` only on `.schematic-bg [data-flow]`/`[data-pulse]`), and pointed `onGutterChange`'s grow path at it instead of full `init()`. In-content pools and their `setPathColor()` recolors + particle offsets now survive a resize across 1240px. Added a browser-driven regression test to `tests/flow-engine.spec.js` (refrigerant-cycle-basics' `var(--heat)` recolor must survive a 1000→1400px crossing) — **negative-tested**: it fails (received 0) against the old `init()` path and passes against the fix. Shared-script change → `package.json` patch-bumped 3.18.1 → 3.18.2 (and the lock with it via `npm version`).
 
 ### 97. fbe-engine: Infinity produced by a block is coerced to 0 at the next block's input, flipping downstream comparator verdicts *(open — 2026-06-15)*
 

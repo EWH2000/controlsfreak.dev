@@ -97,3 +97,24 @@ test('hidden gutter builds no pools; crossing 1240px tears down / rebuilds (#31)
     await expect(page.locator('.schematic-bg g.flow-particles circle')).toHaveCount(0);
     await expect(page.locator('.schematic-bg svg.flow-active')).toHaveCount(0);
 });
+
+test('growing past 1240px preserves in-content setPathColor recolors (#96)', async ({ page }) => {
+    // refrigerant-cycle-basics recolors its hot-side pipes (rc-discharge +
+    // rc-liquid, both data-flow="supply") from the engine default to
+    // var(--heat) once on load. Crossing UP through the gutter breakpoint
+    // must rebuild ONLY gutter pools — a full init() would tear down and
+    // recolor-reset every in-content pool too, wiping the recolor (the
+    // page's own script comment warns a re-init does exactly that).
+    await page.setViewportSize({ width: 1000, height: 900 });   // < 1240: gutter hidden
+    await page.goto('/education/refrigerant-cycle-basics.html');
+
+    const heat = 'main g.flow-particles circle[fill="var(--heat)"]';
+    const before = await page.locator(heat).count();
+    expect(before, 'page recolors some in-content particles on load').toBeGreaterThan(0);
+
+    // Cross up past 1240px — the gutter rebuild fires.
+    await page.setViewportSize({ width: 1400, height: 900 });
+    await expect(page.locator('.schematic-bg g.flow-particles circle').first()).toBeAttached();
+    // The in-content recolor survives the crossing (a full re-init wiped it).
+    await expect(page.locator(heat)).toHaveCount(before);
+});
