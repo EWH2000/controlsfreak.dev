@@ -131,3 +131,154 @@ test('asset cache-control: fonts always, ?v= opt-in, HTML never', async () => {
     expect(await get('/tools/signal-scaling.html?v=1')).toBeNull(); // html never fingerprinted
     expect(await get('/')).toBeNull();
 });
+
+// ── handleContact security paths (#94) ──────────────────────────────
+// The honeypot test above is the only one that reaches into the POST
+// body, and it short-circuits at worker.js's honeypot return — BEFORE
+// the Turnstile gate, the hostname pin, and Resend. Those are the
+// worker's only real attack surface, and a fail-OPEN regression there
+// (relaxing the gate to `!== false`, dropping the hostname pin) ships
+// green because the worker fails soft with no console error. The worker
+// calls bare fetch() for both upstreams (= globalThis.fetch, resolved
+// at call time), so we drive every branch by swapping globalThis.fetch.
+
+// A well-formed submission that clears every pre-Turnstile gate: no
+// honeypot, valid email/message, a token. Per-test tweaks via overrides.
+function validBody(overrides = {}) {
+    return new URLSearchParams({
+        email: 'tech@example.com',
+        message: 'A genuine question about BACnet MS/TP wiring.',
+        name: 'A. Tech',
+        'cf-turnstile-response': 'turnstile-token',
+        ...overrides,
+    }).toString();
+}
+
+// Stubbed fetch that routes by upstream URL. `verify` is the parsed
+// siteverify JSON (status defaults 200); `verifyStatus` forces a non-2xx
+// siteverify; the *Throws flags simulate a network failure / timeout.
+function fetchStub({ verify, verifyStatus = 200, verifyThrows = false,
+                    resendStatus = 200, resendThrows = false } = {}) {
+    return async (url) => {
+        const u = String(url);
+        if (u.includes('siteverify')) {
+            if (verifyThrows) throw new Error('siteverify unreachable');
+            return new Response(JSON.stringify(verify ?? {}), { status: verifyStatus });
+        }
+        if (u.includes('api.resend.com')) {
+            if (resendThrows) throw new Error('resend unreachable');
+            return new Response('{"id":"stub"}', { status: resendStatus });
+        }
+        throw new Error('unexpected upstream fetch: ' + u);
+    };
+}
+
+// POST a contact form with globalThis.fetch swapped for `stub`, restored
+// in finally so one test's stub can't leak into the next.
+async function postContact(worker, { body = validBody(), stub, headers = {} } = {}) {
+    const realFetch = globalThis.fetch;
+    if (stub) globalThis.fetch = stub;
+    try {
+        return await worker.fetch(new Request(ORIGIN + '/api/contact', {
+            method: 'POST',
+            headers: {
+                origin: ORIGIN,
+                'content-type': 'application/x-www-form-urlencoded',
+                'content-length': String(Buffer.byteLength(body)),
+                ...headers,
+            },
+            body,
+        }), stubEnv());
+    } finally {
+        globalThis.fetch = realFetch;
+    }
+}
+
+const GOOD_VERIFY = { success: true, hostname: 'controlsfreak.dev' };
+
+test('valid submission: passing Turnstile + Resend ok → 200', async () => {
+    const worker = await loadWorker();
+    const res = await postContact(worker, { stub: fetchStub({ verify: GOOD_VERIFY }) });
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ ok: true });
+});
+
+// Turnstile must fail CLOSED — the gate is success === true, not "not
+// false". A degraded siteverify body that merely lacks a real success
+// must reject (the exact mistake the worker comment warns against).
+for (const [label, verify] of [
+    ['empty object',          {}],
+    ['success: null',         { success: null }],
+    ['success: "true" string', { success: 'true' }],
+    ['success: false',        { success: false }],
+]) {
+    test(`Turnstile fails closed on degraded verify (${label}) → 400`, async () => {
+        const worker = await loadWorker();
+        // hostname present so ONLY the success check can reject here.
+        const res = await postContact(worker, {
+            stub: fetchStub({ verify: { hostname: 'controlsfreak.dev', ...verify } }),
+        });
+        expect(res.status).toBe(400);
+    });
+}
+
+test('Turnstile non-2xx siteverify fails closed → 400', async () => {
+    const worker = await loadWorker();
+    const res = await postContact(worker, {
+        stub: fetchStub({ verify: GOOD_VERIFY, verifyStatus: 502 }),
+    });
+    expect(res.status).toBe(400);
+});
+
+test('Turnstile siteverify network failure fails closed → 400', async () => {
+    const worker = await loadWorker();
+    const res = await postContact(worker, { stub: fetchStub({ verifyThrows: true }) });
+    expect(res.status).toBe(400);
+});
+
+test('hostname pin rejects a token minted on another host → 400 (#34)', async () => {
+    const worker = await loadWorker();
+    const res = await postContact(worker, {
+        stub: fetchStub({ verify: { success: true, hostname: 'localhost' } }),
+    });
+    expect(res.status).toBe(400);
+});
+
+test('Resend non-2xx → 502', async () => {
+    const worker = await loadWorker();
+    const res = await postContact(worker, {
+        stub: fetchStub({ verify: GOOD_VERIFY, resendStatus: 500 }),
+    });
+    expect(res.status).toBe(502);
+});
+
+test('Resend network failure → 502', async () => {
+    const worker = await loadWorker();
+    const res = await postContact(worker, {
+        stub: fetchStub({ verify: GOOD_VERIFY, resendThrows: true }),
+    });
+    expect(res.status).toBe(502);
+});
+
+test('malformed email is rejected before any upstream → 400', async () => {
+    const worker = await loadWorker();
+    // The spy records + throws if reached, so the assertion that calls
+    // stayed empty proves the 400 is EMAIL_RE (pre-Turnstile), not a
+    // Turnstile failure.
+    const calls = [];
+    const spy = async (url) => { calls.push(String(url)); throw new Error('should not reach ' + url); };
+    const res = await postContact(worker, { body: validBody({ email: 'user@.example.com' }), stub: spy });
+    expect(res.status).toBe(400);
+    expect(calls).toHaveLength(0);
+});
+
+test('oversize body is rejected before parsing → 413', async () => {
+    const worker = await loadWorker();
+    const calls = [];
+    const spy = async (url) => { calls.push(String(url)); throw new Error('should not reach ' + url); };
+    // Content-Length > MAX_BODY (20 KB) short-circuits before formData()
+    // and before any upstream.
+    const res = await postContact(worker, { body: validBody({ message: 'x'.repeat(21 * 1024) }), stub: spy });
+    expect(res.status).toBe(413);
+    expect(calls).toHaveLength(0);
+});

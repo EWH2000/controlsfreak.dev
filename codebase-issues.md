@@ -3848,7 +3848,7 @@ The order array lists 16 lessons but the education/index.html card grid renders 
 
 **Resolution (2026-06-16):** inserted `/education/controller-wiring.html` (after pid-basics) and `/education/bacnet-mstp.html` (last) into the `order` array in `html/_data/educationSequence.js`, so all 18 lessons now carry rel=prev/next and the chain matches the grid click-through order (verified in built `_site/`: controller-wiring and bacnet-mstp both emit the links; pid-basics→controller-wiring and bacnet-networking→bacnet-mstp now chain through). Added an `educationSequenceGuard` collection to `.eleventy.js` (mirrors `navCategoryGuard`) that fails the build if any `nav: education` page is absent from `order` or `order` lists an unclaimed URL — negative-tested (dropping a lesson fails the build with the offending path). Membership only; lockstep grid ORDER stays a by-hand discipline.
 
-### 94. Worker tests cover none of the security-critical contact paths (Turnstile fail-closed, hostname pin, validation, Resend) *(open — 2026-06-15)*
+### 94. Worker tests cover none of the security-critical contact paths (Turnstile fail-closed, hostname pin, validation, Resend) *(addressed 2026-06-16)*
 
 *Severity: medium · Category: test-gap · Confidence: high* — `tests/worker.spec.js (whole file); untested branches in src/worker.js handleContact (Turnstile verify ~176/186, hostname pin, fetchWithTimeout catch, EMAIL_RE/413, Resend 502)`
 
@@ -3857,6 +3857,8 @@ The spec exercises the redirect-drift guard, 301, 405+Allow, cross-origin 403, h
 **Impact.** The Worker's anti-abuse and validation logic — its only real attack surface — has zero automated coverage. A fail-open regression (e.g. relaxing the Turnstile gate to !== false, the exact mistake the code comment warns against, or dropping the hostname pin) would ship green.
 
 **Suggested fix.** Stub globalThis.fetch to return controlled siteverify/Resend responses: assert fail-closed for {}/{success:null}/{success:"true"}/non-2xx and for hostname:"localhost"; assert a valid {success:true,hostname:"controlsfreak.dev"} + ok Resend yields 200; assert Resend non-2xx and a thrown fetch each give 502; add a 400 for a bad EMAIL_RE input and a 413 for an oversized Content-Length.
+
+**Resolution (2026-06-16):** added 13 tests to `tests/worker.spec.js` covering every previously-untested branch. A `fetchStub({verify,verifyStatus,verifyThrows,resendStatus,resendThrows})` helper routes by upstream URL; `postContact()` swaps `globalThis.fetch` for the duration of one request and restores it in `finally`. Cases: happy path (valid verify + Resend ok → 200); Turnstile fails closed on `{}`/`{success:null}`/`{success:"true"}`/`{success:false}`/non-2xx/network-failure → 400; hostname pin rejects `hostname:"localhost"` → 400 (#34); Resend non-2xx and network-failure → 502; malformed email → 400 and oversize body → 413, each with a spy proving no upstream was contacted. All 19 worker tests pass locally (the worker's own `console.error` on its 502 paths is expected logging, not a failure).
 
 ### 95. wiring-engine.js has no engine-direct spec — most fault-classification branches are untested *(open — 2026-06-15)*
 
