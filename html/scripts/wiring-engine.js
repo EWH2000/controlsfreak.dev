@@ -198,7 +198,14 @@ const Wiring = (function () {
     function evaluate(panel, state) {
         panel = panel || { devices: [], wires: [] };
         state = state || {};
-        const devices = panel.devices || [];
+        // Drop any device whose type isn't in the catalog before the
+        // passes run — deviceOn() dereferences DEVICES[d.type].terminals
+        // with no guard, so an unknown type (a corrupted persisted panel
+        // or a future API consumer) would otherwise crash the whole public
+        // evaluate(). createDevice() already returns null for unknown
+        // types; this gives evaluate() the same graceful-skip contract.
+        // (codebase-issues #99)
+        const devices = (panel.devices || []).filter((d) => DEVICES[d.type]);
         const wires = panel.wires || [];
         const uiMode = state.uiMode || {};
         const ao = state.ao || {};
@@ -519,7 +526,14 @@ const Wiring = (function () {
     }
 
     // ── small formatters ────────────────────────────────────────────
-    const clampPct = (x) => Math.max(0, Math.min(100, Math.round(typeof x === 'number' ? x : 0)));
+    // isFinite, not a typeof check: typeof NaN === 'number' is true, so the
+    // old `typeof x === 'number' ? x : 0` let NaN through and an AO point
+    // rendered 'NaN%'. CLAUDE.md's JS-patterns calls for !isFinite over a
+    // NaN-prone type check on numeric inputs. (codebase-issues #100)
+    const clampPct = (x) => {
+        const n = Math.round(x);
+        return isFinite(n) ? Math.max(0, Math.min(100, n)) : 0;
+    };
     function fmtTemp(f) { return (Math.round(f * 10) / 10).toFixed(1) + '°F'; }
     // 0-10V transmitter: % of range maps to volts.
     function fmtVolt(pct) { return (pct / 10).toFixed(1) + ' V'; }

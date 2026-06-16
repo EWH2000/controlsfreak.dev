@@ -264,3 +264,44 @@ test.describe('wiring-engine: VA budget', () => {
         expect(r.cues.blownFuse).toBe(true);
     });
 });
+
+test.describe('wiring-engine: malformed-input guards', () => {
+
+    test('an unknown device type is skipped, not crashed on (#99)', () => {
+        // deviceOn() dereferences DEVICES[d.type].terminals; an unknown type
+        // would throw and abort the whole public evaluate(). The top-of-
+        // evaluate filter drops it, mirroring createDevice's null contract.
+        const Wiring = loadEngine();
+        const panel = {
+            devices: [
+                Wiring.createDevice('xfmr', 'x1'),
+                { type: 'gremlin', id: 'g1' },        // not in the catalog
+            ],
+            wires: [
+                W(['x1', 'hot'], ['ctlr', '24v']),
+                W(['x1', 'com'], ['ctlr', '24com']),
+            ],
+        };
+        expect(() => Wiring.evaluate(panel, {})).not.toThrow();
+        expect(Wiring.evaluate(panel, {}).power.powered).toBe(true);  // the valid xfmr still powers it
+    });
+
+    test('a NaN AO command clamps to 0%, not "NaN%" (#100)', () => {
+        // clampPct now uses isFinite: typeof NaN === 'number' let NaN slip
+        // through the old type check and an AO point rendered 'NaN%'.
+        const Wiring = loadEngine();
+        const panel = {
+            devices: [Wiring.createDevice('xfmr', 'x1'), Wiring.createDevice('act010', 'a1')],
+            wires: [
+                W(['x1', 'hot'],  ['ctlr', '24v']),
+                W(['x1', 'com'],  ['ctlr', '24com']),
+                W(['a1', 'pwr'],  ['ctlr', '24v']),
+                W(['a1', 'com'],  ['ctlr', '24com']),
+                W(['a1', 'sig'],  ['ctlr', 'ao1']),
+                W(['a1', 'scom'], ['ctlr', '24com']),
+            ],
+        };
+        const r = Wiring.evaluate(panel, { ao: { ao1: NaN } });
+        expect(r.points.ao1.display).toBe('0%');
+    });
+});
