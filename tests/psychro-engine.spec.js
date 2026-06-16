@@ -88,4 +88,16 @@ test.describe('psychro-engine: pure-math invariants', () => {
         }
     });
 
+    test('dewPointFromVapPress signals out-of-range above the saturation ceiling (#103)', () => {
+        const { dewPointFromVapPress, satPress } = loadEngine();
+        // A normal sea-level vapor pressure resolves to a finite dew point.
+        expect(isFinite(dewPointFromVapPress(0.5))).toBe(true);
+        // Above satPress(250) the bisection can't converge — it returns
+        // Infinity (mirroring the pw<=0 → -Infinity low end) so a caller's
+        // isFinite guard catches it instead of a clamped ~250 that looks real.
+        const ceiling = satPress(250);
+        expect(dewPointFromVapPress(ceiling + 5)).toBe(Infinity);
+        expect(dewPointFromVapPress(-1)).toBe(-Infinity);   // low-end convention, unchanged
+    });
+
 });

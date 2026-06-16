@@ -57,6 +57,7 @@ function drawPidChart(canvas, sim, opts) {
     canvas.width  = Math.round(cssW * dpr);
     canvas.height = Math.round(cssH * dpr);
     const ctx = canvas.getContext('2d');
+    if (!ctx) return;   // null under OOM / a non-2d context already acquired — matches the early-return guards above
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, cssW, cssH);
 
@@ -218,6 +219,12 @@ function formatPidDelta(canonicalValue, sim, procKey) {
     const display = pidConvertDelta(canonicalValue, procKey);
     const isMetric = !!(window.Units && window.Units.current() === 'metric');
     const dec = (procKey === 'fast' && isMetric) ? 0 : sim.dec;
-    const sign = display > 0 ? '+' : '';
-    return `${sign}${display.toFixed(dec)} ${pidUnit(procKey)}`;
+    // Round to the display precision FIRST, then pick the sign — otherwise a
+    // small-negative delta (e.g. ssErr ≈ -0.0003) keeps its minus through
+    // toFixed and prints a contradictory '-0.0'. `+x.toFixed(dec)` collapses
+    // such a value to -0, and Number(-0).toFixed() renders '0.0' unsigned.
+    // (codebase-issues #101)
+    const rounded = +display.toFixed(dec);
+    const sign = rounded > 0 ? '+' : '';
+    return `${sign}${rounded.toFixed(dec)} ${pidUnit(procKey)}`;
 }

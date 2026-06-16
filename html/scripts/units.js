@@ -165,7 +165,19 @@
     function convert(value, fromUnits, toUnits, quantity) {
         if (!isFinite(value) || fromUnits === toUnits) return value;
         const q = Q[quantity];
-        if (!q) return value;
+        if (!q) {
+            // A display-only quantity (massFlow) — or a typo — has no Q
+            // entry, so we'd return the value UNCONVERTED on a units toggle:
+            // a silent wrong-number bug if a future page ever wires such a
+            // field through convert(). Surface it (matching ui.js's
+            // warn-on-missing idiom) instead of failing silent. The warn
+            // never fires today — massFlow is suffix/display-only.
+            // (codebase-issues #104)
+            if (typeof console !== 'undefined' && console.warn) {
+                console.warn('Units.convert: no conversion for quantity "' + quantity + '" — value returned unconverted');
+            }
+            return value;
+        }
         const canonical = (fromUnits === 'us') ? value : q.toCanonical(value);
         return (toUnits === 'us') ? canonical : q.fromCanonical(canonical);
     }

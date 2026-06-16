@@ -99,6 +99,14 @@ function humRatioFromWetBulb(twb, tdb, P) {
 // Dew point: temperature where satPress(tdp) = pw. Bisection.
 function dewPointFromVapPress(pw) {
     if (pw <= 0) return -Infinity;
+    // Above the bracket's saturation ceiling (pw > satPress(250) ≈ 29.85
+    // psia) the bisection can't converge — hi never moves down, the loop
+    // pins at ~250, and it would return a plausible-looking but wrong dew
+    // point. Signal out-of-range (mirroring the pw<=0 → -Infinity low end)
+    // so a caller's isFinite guard catches it. Unreachable at/below sea
+    // level (pw can't exceed P_STD = 14.696), but the function is a flat
+    // primitive the header advertises for reuse. (codebase-issues #103)
+    if (pw > satPress(250)) return Infinity;
     let lo = -148, hi = 250;
     for (let i = 0; i < 80; i++) {
         const mid = (lo + hi) / 2;

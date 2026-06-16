@@ -3886,7 +3886,7 @@ The gutterMql change handler calls full init() when the viewport grows past 1240
 
 **Resolution (2026-06-16):** added `buildGutterPools()` to `flow-engine.js` (the scoped mirror of `teardownGutterPools` — it calls `buildPoolForEl`/`buildPulsePathFor` only on `.schematic-bg [data-flow]`/`[data-pulse]`), and pointed `onGutterChange`'s grow path at it instead of full `init()`. In-content pools and their `setPathColor()` recolors + particle offsets now survive a resize across 1240px. Added a browser-driven regression test to `tests/flow-engine.spec.js` (refrigerant-cycle-basics' `var(--heat)` recolor must survive a 1000→1400px crossing) — **negative-tested**: it fails (received 0) against the old `init()` path and passes against the fix. Shared-script change → `package.json` patch-bumped 3.18.1 → 3.18.2 (and the lock with it via `npm version`).
 
-### 97. fbe-engine: Infinity produced by a block is coerced to 0 at the next block's input, flipping downstream comparator verdicts *(open — 2026-06-15)*
+### 97. fbe-engine: Infinity produced by a block is coerced to 0 at the next block's input, flipping downstream comparator verdicts *(addressed 2026-06-16)*
 
 *Severity: low · Category: correctness · Confidence: high* — `html/scripts/fbe-engine.js:60 (asNum), :161 (mul), :169-172 (div guards only b===0), :448-449 (tick stores raw res.out); ref-note/fmt in html/simulators/function-block-editor.html:482-486 and :886`
 
@@ -3896,7 +3896,9 @@ asNum() rejects non-finite values and returns 0, but it is applied only to a blo
 
 **Suggested fix.** Apply finite-coercion at the output boundary too: in tick() after `b.out = res.out || {}`, sanitize numeric outputs so a stored Infinity/NaN becomes 0, matching the asNum input contract and the ref-note's claim.
 
-### 98. fbe-engine: PID derivative divides by dt with no guard — dt=0 yields NaN through the output *(open — 2026-06-15)*
+**Resolution (2026-06-16):** added a `sanitizeOut(out)` helper (mirrors `asNum`) and applied it at the tick output boundary — `b.out = sanitizeOut(res.out || {})` — so a stored Infinity/NaN becomes a finite 0. The source block's display and a downstream comparator now agree (both read 0) instead of the '—' / silent-0 split. Regression test in `tests/fbe-engine.spec.js`: const(1e300)→mul(self) stores `O === 0`, not a raw non-finite. Shipped with #98–#104 on `fix/engine-finite-guards` (one version bump, 3.18.2 → 3.18.3).
+
+### 98. fbe-engine: PID derivative divides by dt with no guard — dt=0 yields NaN through the output *(addressed 2026-06-16)*
 
 *Severity: low · Category: robustness · Confidence: high* — `html/scripts/fbe-engine.js:316 (`const dPv = s.init ? (pv - s.prevPv) / dt : 0;`)`
 
@@ -3906,7 +3908,9 @@ The PID block computes the derivative as (pv - s.prevPv) / dt with no zero/finit
 
 **Suggested fix.** Guard the divide: `const dPv = (s.init && dt > 0) ? (pv - s.prevPv) / dt : 0;` — matching the div block's own /0 defense.
 
-### 99. wiring-engine: engine dereferences DEVICES[d.type].terminals with no guard — a malformed panel crashes the public Wiring.evaluate API *(open — 2026-06-15)*
+**Resolution (2026-06-16):** applied exactly that guard (`s.init && dt > 0`). Regression test in `tests/fbe-engine.spec.js`: a PID ticked with dt=0 after establishing state keeps a finite, positive (reverse-acting) OUT rather than a NaN that #97's sanitizer would flatten to 0. Part of the `fix/engine-finite-guards` cluster.
+
+### 99. wiring-engine: engine dereferences DEVICES[d.type].terminals with no guard — a malformed panel crashes the public Wiring.evaluate API *(addressed 2026-06-16)*
 
 *Severity: low · Category: robustness · Confidence: medium* — `html/scripts/wiring-engine.js:316-317 (deviceOn)`
 
@@ -3916,7 +3920,9 @@ deviceOn() does `const def = DEVICES[d.type]; def.terminals.forEach(...)` with n
 
 **Suggested fix.** Filter devices to known types at the top of evaluate() (`const devices = (panel.devices||[]).filter(d => DEVICES[d.type])`) or guard each deref with `if (!def) return;` — cheap defense-in-depth consistent with createDevice()'s own null return.
 
-### 100. wiring-engine: clampPct lets NaN through — typeof check passes for NaN where isFinite would not *(open — 2026-06-15)*
+**Resolution (2026-06-16):** filtered at the top of evaluate() — `const devices = (panel.devices || []).filter((d) => DEVICES[d.type])` — so an unknown-type device is dropped before any deref, matching createDevice()'s null contract. Regression test in `tests/wiring-engine.spec.js`: a panel with a `gremlin` device + a valid transformer no longer throws and still powers the controller. Part of the `fix/engine-finite-guards` cluster.
+
+### 100. wiring-engine: clampPct lets NaN through — typeof check passes for NaN where isFinite would not *(addressed 2026-06-16)*
 
 *Severity: low · Category: correctness · Confidence: medium* — `html/scripts/wiring-engine.js:522`
 
@@ -3926,7 +3932,9 @@ deviceOn() does `const def = DEVICES[d.type]; def.terminals.forEach(...)` with n
 
 **Suggested fix.** Use isFinite: `const clampPct = (x) => { const n = Math.round(x); return isFinite(n) ? Math.max(0, Math.min(100, n)) : 0; };`.
 
-### 101. pid-chart: formatPidDelta emits a misleading '-0.0' for small-negative deltas that round to zero *(open — 2026-06-15)*
+**Resolution (2026-06-16):** replaced the typeof check with the isFinite form above. Regression test in `tests/wiring-engine.spec.js`: a powered actuator panel evaluated with `state.ao.ao1 = NaN` now reports the AO point as `'0%'`, not `'NaN%'`. Part of the `fix/engine-finite-guards` cluster.
+
+### 101. pid-chart: formatPidDelta emits a misleading '-0.0' for small-negative deltas that round to zero *(addressed 2026-06-16)*
 
 *Severity: low · Category: bug · Confidence: high* — `html/scripts/pid-chart.js:217-223 (formatPidDelta, sign at line 221)`
 
@@ -3936,7 +3944,9 @@ formatPidDelta computes `const sign = display > 0 ? '+' : ''` then `${sign}${dis
 
 **Suggested fix.** Normalize negative zero before formatting: round to display precision first, then choose the sign treating a rounded 0 as unsigned — `const rounded = +display.toFixed(dec); const sign = rounded > 0 ? '+' : ''; return `${sign}${rounded.toFixed(dec)} ${pidUnit(procKey)}`;`.
 
-### 102. pid-chart: drawPidChart dereferences getContext('2d') without a null guard while guarding everything else *(open — 2026-06-15)*
+**Resolution (2026-06-16):** applied the round-then-sign fix (`+display.toFixed(dec)` collapses a small-negative to -0, which `Number.toFixed` renders unsigned as '0.0'). New `tests/pid-chart.spec.js` (vm-direct, `window`-stub for the US display path): `formatPidDelta(-0.0003, {dec:1}, 'med') === '0.0 °F'`, and genuine signed deltas keep their sign. Part of the `fix/engine-finite-guards` cluster.
+
+### 102. pid-chart: drawPidChart dereferences getContext('2d') without a null guard while guarding everything else *(addressed 2026-06-16)*
 
 *Severity: low · Category: robustness · Confidence: high* — `html/scripts/pid-chart.js:59-60`
 
@@ -3946,7 +3956,9 @@ drawPidChart guards !canvas || !sim, zero-size canvas, and degenerate plot area,
 
 **Suggested fix.** Add `if (!ctx) return;` immediately after `const ctx = canvas.getContext('2d');`, matching the file's existing early-return guard style.
 
-### 103. psychro-engine: dewPointFromVapPress silently caps at 250 °F for vapor pressures above satPress(250) *(open — 2026-06-15)*
+**Resolution (2026-06-16):** added `if (!ctx) return;` right after the `getContext('2d')` call, matching the routine's other early-return guards. No automated test (a null 2D context isn't reproducible in the node/vm harness) — verified by inspection; it's a one-line defensive early return. Part of the `fix/engine-finite-guards` cluster.
+
+### 103. psychro-engine: dewPointFromVapPress silently caps at 250 °F for vapor pressures above satPress(250) *(addressed 2026-06-16)*
 
 *Severity: low · Category: robustness · Confidence: medium* — `html/scripts/psychro-engine.js:100-108`
 
@@ -3956,7 +3968,9 @@ dewPointFromVapPress bisects on the fixed bracket [-148, 250]. For any pw > satP
 
 **Suggested fix.** Widen the upper bound to cover the documented pressure range, or detect the saturated bracket: after the loop, if satPress(hi) < pw return Infinity (mirroring the pw<=0 → -Infinity convention) so callers' existing isFinite guards catch it.
 
-### 104. units.js: Units.convert / toCanonical silently no-op for massFlow (no Q entry, no toCanonical entry) *(open — 2026-06-15)*
+**Resolution (2026-06-16):** added an explicit upper-ceiling guard *before* the bisection — `if (pw > satPress(250)) return Infinity;` — rather than a post-loop `satPress(hi) < pw` check, which a converged bracket could trip by a float epsilon on a valid pw. Mirrors the pw<=0 → -Infinity low end. Regression test in `tests/psychro-engine.spec.js`: a pw above `satPress(250)` returns Infinity, a normal pw stays finite, pw<=0 still returns -Infinity. Part of the `fix/engine-finite-guards` cluster.
+
+### 104. units.js: Units.convert / toCanonical silently no-op for massFlow (no Q entry, no toCanonical entry) *(addressed 2026-06-16)*
 
 *Severity: low · Category: robustness · Confidence: medium* — `html/scripts/units.js:146-160 (Q table) and 174-188 (toCanonical) vs 100-104,123,141 (massFlow defined for suffix/display only)`
 
@@ -3965,6 +3979,8 @@ massFlow is intentionally display-only (suffix + display) per the inline comment
 **Impact.** No current bug (massFlow is only used via suffix/display in coil-sizing). Latent silent-wrong-result risk if mass flow ever becomes a convertible input and the author follows the existing convert() rewrite pattern.
 
 **Suggested fix.** Either add Q.massFlow + toCanonical.massFlow for symmetry, or make convert()'s unknown-quantity branch `console.warn('Units.convert: no conversion for "'+quantity+'"')` so a missing quantity surfaces instead of returning the raw value. The warn is the cheaper guard and matches ui.js's warn-on-missing patterns.
+
+**Resolution (2026-06-16):** took the console.warn path (the cheaper option that doesn't trip `units-engine.spec.js`'s "massFlow is the one display-only quantity" assertion the way adding a Q entry would). `convert()`'s unknown-quantity branch now warns before returning the value unconverted. Regression test in `tests/units-engine.spec.js` (loadUnits extended to inject a `console` spy): converting a `massFlow` value returns it unchanged AND emits a warning naming the quantity. The warn never fires today — massFlow is suffix/display-only. Part of the `fix/engine-finite-guards` cluster.
 
 ### 105. copyText double-click race can leave the copy button stuck on 'copied!' *(open — 2026-06-15)*
 
