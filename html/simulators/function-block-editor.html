@@ -838,6 +838,15 @@ keywords: wiresheet logic block and or pid wire program sequence
 
         // ── live values ─────────────────────────────────────────────
         function refreshValues() {
+            // #111: build the id→block lookup once per tick instead of a
+            // graph.blocks.find() per wire (and again inside the kind
+            // lookup), and write a wire's class only when it actually
+            // changes. refreshValues runs at 10 Hz, so the old per-tick cost
+            // was O(wires × blocks) plus a setAttribute on every wire even
+            // when nothing moved. Negligible on shipped graphs (≤9 blocks);
+            // matters only on a large user-built sheet.
+            const byId = {};
+            graph.blocks.forEach((b) => { byId[b.id] = b; });
             graph.blocks.forEach((b) => {
                 const el = els[b.id];
                 if (!el) return;
@@ -868,8 +877,12 @@ keywords: wiresheet logic block and or pid wire program sequence
             });
             // wire colours
             graph.wires.forEach((w) => {
-                const src = graph.blocks.find((x) => x.id === w.from[0]);
-                const kind = pinKind(w.from[0], w.from[1], 'out');
+                const src = byId[w.from[0]];
+                // Kind of the source OUT pin (was a separate pinKind() that
+                // did its own graph.blocks.find — folded in here via byId).
+                const outs = src ? FBE.BLOCKS[src.type].outputs : [];
+                const pin = outs.find((p) => p.name === w.from[1]);
+                const kind = pin ? pin.kind : 'number';
                 let cls = 'fbe-wire fbe-wire-num';
                 if (kind === 'bool') {
                     const on = src && src.out && src.out[w.from[1]] === true;
@@ -878,7 +891,10 @@ keywords: wiresheet logic block and or pid wire program sequence
                 if (selected && selected.kind === 'wire' && selected.id === w.id) {
                     cls += ' fbe-wire-sel';
                 }
-                w._vis.setAttribute('class', cls);
+                if (w._lastCls !== cls) {
+                    w._vis.setAttribute('class', cls);
+                    w._lastCls = cls;
+                }
             });
         }
 
@@ -887,14 +903,6 @@ keywords: wiresheet logic block and or pid wire program sequence
             return Math.abs(v) >= 100 || v === Math.round(v)
                 ? String(Math.round(v))
                 : v.toFixed(1);
-        }
-
-        function pinKind(blockId, pinName, dir) {
-            const b = graph.blocks.find((x) => x.id === blockId);
-            if (!b) return 'number';
-            const list = dir === 'out' ? FBE.BLOCKS[b.type].outputs : FBE.BLOCKS[b.type].inputs;
-            const p = list.find((x) => x.name === pinName);
-            return p ? p.kind : 'number';
         }
 
         // ── selection ───────────────────────────────────────────────
@@ -1131,6 +1139,12 @@ keywords: wiresheet logic block and or pid wire program sequence
         function startLoop() {
             if (tickHandle !== null) return;
             if (!desktopMQ.matches) return;
+            // Don't spin the 10 Hz loop in a tab opened directly into the
+            // background (Ctrl/middle-click) — visibilitychange only fires on
+            // a TRANSITION, so without this the loop ran from loadExample()
+            // until first focus. The visibilitychange handler restarts it on
+            // un-hide via `else if (running) startLoop()` (codebase-issues #110).
+            if (document.hidden) return;
             tickHandle = window.setInterval(stepOnce, DT * 1000);
         }
         function stopLoop() {

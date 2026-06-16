@@ -4042,7 +4042,7 @@ The cosmetic-drift window.setInterval(...,2500) is gated only by !reduceMotion, 
 
 **Resolution (2026-06-16):** stored the interval handle and added a `visibilitychange` listener — `document.hidden` clears it, visible re-arms it; it also doesn't start while initially hidden (a background-tab open), matching the FBE sibling's posture. A backgrounded desktop tab with a thermistor placed no longer runs a full evaluate()+drawWires() every 2.5s. Mobile path unchanged (documented non-issue). Part of `fix/controller-wiring-defects`.
 
-### 110. function-block-editor: sim loop runs in a backgrounded tab on initial load (visibilitychange only fires on change) *(open — 2026-06-15)*
+### 110. function-block-editor: sim loop runs in a backgrounded tab on initial load (visibilitychange only fires on change) *(addressed 2026-06-16)*
 
 *Severity: low · Category: bug · Confidence: high* — `html/simulators/function-block-editor.html:1131-1135 (startLoop), :1254-1257 (visibilitychange), :1269 loadExample → :1166 setRunning(true)`
 
@@ -4052,7 +4052,9 @@ startLoop() guards on tickHandle and desktopMQ.matches but never checks document
 
 **Suggested fix.** Bail when hidden: add `if (document.hidden) return;` at the top of startLoop (alongside the desktopMQ guard). The visibilitychange handler already restarts the loop on un-hide via `else if (running) startLoop()`, so this makes the hidden-tab case correct on both initial load and transitions.
 
-### 111. function-block-editor: refreshValues reassigns class on every wire and pin every tick (10 Hz) even when unchanged *(open — 2026-06-15)*
+**Resolution (2026-06-16):** added `if (document.hidden) return;` to startLoop (after the desktopMQ guard). A page opened directly into a background tab no longer spins the 10 Hz loop from loadExample() until first focus; the visibilitychange handler's `else if (running) startLoop()` arms it on un-hide. Page-level inline script (no version bump). Shipped on `fix/fbe-page-lifecycle` with #111.
+
+### 111. function-block-editor: refreshValues reassigns class on every wire and pin every tick (10 Hz) even when unchanged *(addressed 2026-06-16)*
 
 *Severity: low · Category: perf · Confidence: medium* — `html/simulators/function-block-editor.html:840-883 (refreshValues), :881 setAttribute('class'), :853 classList.toggle`
 
@@ -4061,6 +4063,8 @@ refreshValues() runs on every tick (10 Hz). It walks every block's pins (classLi
 **Impact.** Negligible on the shipped graphs (≤9 blocks, ≤11 wires); the only per-tick O(n²) in the hot path. Would matter only on a large user-built sheet.
 
 **Suggested fix.** Build a byId map once in refreshValues instead of graph.blocks.find() per wire/pinKind, and skip setAttribute when the computed class string equals the current one (cache the last class on the wire object).
+
+**Resolution (2026-06-16):** refreshValues now builds a `byId` lookup once per tick (used for the wire's source block), folds the kind lookup inline off `byId` (the old `pinKind()` did its own `graph.blocks.find` — removed, it had no other caller), and writes a wire's class only when it changed (`w._lastCls` cache) — so a steady graph stops re-setting an identical class string on every wire at 10 Hz. Verified by the fbe behavioral smoke test (value strips + wire colors still update). Part of `fix/fbe-page-lifecycle`.
 
 ### 112. flow-engine: in-flight pulses and pulsePaths registrations on gutter motifs survive teardownGutterPools *(addressed 2026-06-16)*
 
