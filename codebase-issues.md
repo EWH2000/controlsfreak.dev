@@ -4132,7 +4132,7 @@ renderResults() builds the miss list with `.map(function (a, i) { return { a: a,
 
 **Resolution (2026-06-16):** dropped the wrapper — `const misses = state.answers.filter(a => !a.correct)` and the forEach now takes the answer directly. Pure cleanup, no behavior change. Part of `fix/quiz-engine-guards`.
 
-### 119. search.js: index-fetch failure is silent and never retried — palette permanently empty after one bad response *(open — 2026-06-15)*
+### 119. search.js: index-fetch failure is silent and never retried — palette permanently empty after one bad response *(addressed 2026-06-16)*
 
 *Severity: low · Category: robustness · Confidence: high* — `html/scripts/search.js:66-74 (load) and 67 (the `if (entries) return` short-circuit)`
 
@@ -4142,7 +4142,9 @@ load() sets entries to [] on both failure modes (non-200 → r.ok false → []; 
 
 **Suggested fix.** Distinguish 'loaded empty' from 'failed to load': on failure leave entries null (reset loading=null in .catch) so the next open() retries, and/or surface a one-line status ('Search index unavailable — retry') instead of the generic 'No matches'.
 
-### 120. search.js: mousemove over results calls scrollIntoView on every hover, fighting the cursor *(open — 2026-06-15)*
+**Resolution (2026-06-16):** load()'s catch now leaves `entries = null` and clears `loading = null` so the next open() re-fetches, and sets a `loadFailed` flag so render() shows 'Search index unavailable — reopen to retry' instead of the misleading 'No matches'. A successful load clears the flag. Regression test in `tests/nav-search.spec.js` (route-abort the first index fetch → 'unavailable' status; reopen → results load). Shipped on `fix/search-palette-guards` with #120/#121 (one version bump, 3.18.4 → 3.18.5).
+
+### 120. search.js: mousemove over results calls scrollIntoView on every hover, fighting the cursor *(addressed 2026-06-16)*
 
 *Severity: low · Category: perf · Confidence: high* — `html/scripts/search.js:280-283 (mousemove) → 146-153 (setActive)`
 
@@ -4152,7 +4154,9 @@ The list 'mousemove' listener calls setActive(index) on every mouse-move event o
 
 **Suggested fix.** Have mousemove set the active index without scrolling — split setActive into a core that updates aria-selected/aria-activedescendant and an opt-in scroll, and call the no-scroll variant from mousemove (keyboard nav keeps scrollIntoView). Or guard the scroll behind a 'source' flag so only keyboard navigation scrolls.
 
-### 121. search.js: palette dialog does not inert/hide background content while open (aria-modal asserted but no real containment) *(open — 2026-06-15)*
+**Resolution (2026-06-16):** `setActive(i, scroll)` gained an opt-in `scroll` arg — keyboard nav (move/Home/End) passes `true`; the mousemove handler and the initial render call it without scrolling, so hover no longer fires a layout-forcing scrollIntoView per mouse-move. Verified by inspection (the cursor-fighting only manifests on an overflowing, zoomed viewport). Part of `fix/search-palette-guards`.
+
+### 121. search.js: palette dialog does not inert/hide background content while open (aria-modal asserted but no real containment) *(addressed 2026-06-16)*
 
 *Severity: low · Category: a11y-mechanical · Confidence: medium* — `html/scripts/search.js:223-234 (open); html/_includes/layouts/page.njk:22 (aria-modal="true")`
 
@@ -4161,6 +4165,8 @@ The dialog declares aria-modal="true" but the rest of the page is left fully int
 **Impact.** AT browse-mode users can navigate the obscured page while the modal claims to be modal — confusing reading order and defeating the 'modal' semantics the markup promises. Non-destructive search overlay, so impact is reading-order confusion, not broken function.
 
 **Suggested fix.** On open(), add inert (or aria-hidden="true") to the page's main wrapper / nav / footer (everything except #palette) and remove it on close(). inert also removes those nodes from the tab order, so the Tab-preventDefault hack could then be dropped.
+
+**Resolution (2026-06-16):** open()/close() now call `setBackgroundInert(on)`, which sets/removes the `inert` attribute on every direct `<body>` child except the palette (and script tags) — so the obscured nav/main/footer drop out of the AT browse-mode reading order and the tab order, honoring the asserted `aria-modal`. Kept the Tab-preventDefault as defensive belt-and-suspenders. Regression test in `tests/nav-search.spec.js`: `main` gains `inert` on open and loses it on close, while `#palette` never does. Part of `fix/search-palette-guards`.
 
 ### 122. nav-menu: Escape on the section toggle collapses category and section in one press, contradicting the documented step-back *(addressed 2026-06-15)*
 
