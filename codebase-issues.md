@@ -3994,7 +3994,7 @@ The only re-entrancy guard is `if (!text || btn.classList.contains('copied')) re
 
 **Resolution (2026-06-16):** capture `orig` and add the `copied` class SYNCHRONOUSLY (before the async writeText), so a fast second click sees `copied` at the entry guard and no-ops — no second writeText, no callback capturing orig='copied!'. The `.catch()` removes the class (unlatch on a blocked clipboard). Refined slightly from the literal suggestion: the 'copied!' TEXT flips on success only, so a blocked clipboard doesn't show a false 'copied!' flash. Deterministic regression test in `tests/copy-button.spec.js` (drives `window.copyText` with a stubbed pending writeText, double-clicks → exactly one write fires, button reverts) — negative-tested: the old code fires two writes and sticks. Shipped on `fix/copy-button-race` (version bump 3.18.6 → 3.18.7).
 
-### 106. fullscreen-toggle: ESC-exit hardcodes '.tool-card.is-fullscreen' while the opt-in target selector is configurable *(open — 2026-06-15)*
+### 106. fullscreen-toggle: ESC-exit hardcodes '.tool-card.is-fullscreen' while the opt-in target selector is configurable *(addressed 2026-06-16)*
 
 *Severity: low · Category: robustness · Confidence: medium* — `html/scripts/fullscreen-toggle.js:62-65 (exitActive) vs 36-39 (targetFor)`
 
@@ -4003,6 +4003,8 @@ targetFor() resolves the fullscreen target from the button's data-fullscreen-tar
 **Impact.** Latent. No live page affected. Becomes a real ESC-doesn't-work / stuck-fullscreen bug only if someone adds a non-tool-card fullscreen target.
 
 **Suggested fix.** Make exitActive() exit whatever is actually fullscreen — `document.querySelectorAll('.is-fullscreen').forEach(t => setState(t, false));` — or track the active target in a module variable set by setState. Alternatively assert/document that data-fullscreen-target must be .tool-card.
+
+**Resolution (2026-06-16):** exitActive() now does `document.querySelectorAll('.is-fullscreen').forEach((t) => setState(t, false))` — it exits whatever is actually fullscreen regardless of tag/class, so a future non-.tool-card target stays reachable by ESC. Identical to the old behavior for current .tool-card opt-ins. Regression test in `tests/fullscreen-toggle.spec.js`: enter fullscreen on a synthetic `<section>` via `window.Fullscreen.toggle`, press Escape → it exits and `body.has-fullscreen-tool` clears (the old fixed selector left it stuck). Shipped on `fix/fullscreen-esc-exit` (version bump 3.18.7 → 3.18.8). NOTE the CSS still styles `.tool-card.is-fullscreen` only, so a non-.tool-card opt-in would need its own fullscreen CSS — but ESC exit is no longer broken.
 
 ### 107. controller-wiring: spark cue re-fires on every refresh() — no edge-detection, unlike the blown-fuse cue *(open — 2026-06-15)*
 

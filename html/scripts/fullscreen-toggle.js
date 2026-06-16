@@ -60,8 +60,13 @@
     }
 
     function exitActive() {
-        const t = document.querySelector('.tool-card.is-fullscreen');
-        if (t) setState(t, false);
+        // Exit whatever is ACTUALLY fullscreen, not a hardcoded .tool-card.
+        // targetFor() resolves any data-fullscreen-target selector and
+        // setState toggles is-fullscreen on that arbitrary element, so a
+        // non-.tool-card opt-in would otherwise be unreachable by ESC —
+        // is-fullscreen + body.has-fullscreen-tool would stay stuck on with
+        // no keyboard way out (codebase-issues #106). Normally there's one.
+        document.querySelectorAll('.is-fullscreen').forEach((t) => setState(t, false));
     }
 
     function init() {
