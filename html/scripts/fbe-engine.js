@@ -59,6 +59,23 @@ const FBE = (function () {
     const asBool = (v) => v === true;
     const asNum  = (v) => (typeof v === 'number' && isFinite(v) ? v : 0);
 
+    // Coerce any non-finite numeric output to 0 at the boundary — the
+    // mirror of asNum's input contract. A block that overflows to Infinity
+    // (e.g. 1e300 * 1e300) or yields NaN must not store a raw non-finite
+    // value: a downstream consumer reads it through asNum, which silently
+    // turns it into 0 while the SOURCE block's value strip shows '—' (fmt
+    // guards isFinite) — a display/logic split, and a comparator could
+    // then report the mathematical opposite. Sanitizing here keeps the
+    // ref-note's "a downstream comparator stays sane" promise on every
+    // overflow path, not just an exact-zero divisor. Booleans/other types
+    // pass through untouched. (codebase-issues #97)
+    const sanitizeOut = (out) => {
+        for (const k in out) {
+            if (typeof out[k] === 'number' && !isFinite(out[k])) out[k] = 0;
+        }
+        return out;
+    };
+
     // ── block catalog ───────────────────────────────────────────────
     // Each evaluate() returns { out: { pinName: value } }. Stateful
     // blocks read and mutate `state` (an object, {} on first tick).
@@ -312,8 +329,11 @@ const FBE = (function () {
                 const err = p.action === 'direct' ? pv - sp : sp - pv;
                 // Derivative on PV: a rising PV adds to a direct-acting
                 // controller's output, subtracts from a reverse-acting
-                // one. Equivalent to d(err)/dt when SP is constant.
-                const dPv = s.init ? (pv - s.prevPv) / dt : 0;
+                // one. Equivalent to d(err)/dt when SP is constant. Guard
+                // dt>0 — a tick with dt=0 (a paused/single-frame caller)
+                // would divide by zero and push NaN through OUT; the div
+                // block guards /0 the same way. (codebase-issues #98)
+                const dPv = (s.init && dt > 0) ? (pv - s.prevPv) / dt : 0;
                 const deriv = p.action === 'direct' ? dPv : -dPv;
                 const integral = s.integral || 0;
                 const iTry = integral + err * dt;
@@ -446,7 +466,7 @@ const FBE = (function () {
                 ins[pin.name] = v;
             });
             const res = def.evaluate(ins, b.params || {}, b.state, dt) || {};
-            b.out = res.out || {};
+            b.out = sanitizeOut(res.out || {});
             b.in = ins;
             evaluated.add(id);
         });

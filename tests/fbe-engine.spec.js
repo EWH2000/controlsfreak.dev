@@ -346,3 +346,52 @@ test.describe('fbe-engine: evaluation', () => {
         expect(c.out.Q).toBe(true);
     });
 });
+
+test.describe('fbe-engine: finite-output guards', () => {
+
+    test('an overflow to Infinity is sanitized to 0 at the output boundary (#97)', () => {
+        // const(1e300) → mul(self) overflows to Infinity. Stored raw, a
+        // downstream consumer reads it through asNum (silently → 0) while
+        // the source strip shows '—' — a display/logic split. The boundary
+        // sanitizer coerces the stored output to a finite 0 so both agree.
+        const FBE = loadEngine();
+        const def = {
+            blocks: [
+                { id: 'big', type: 'const', x: 0, y: 0, params: { value: 1e300 } },
+                { id: 'sq',  type: 'mul',   x: 0, y: 0 },
+            ],
+            wires: [
+                { from: ['big', 'O'], to: ['sq', 'A'] },
+                { from: ['big', 'O'], to: ['sq', 'B'] },
+            ],
+        };
+        const { by } = run(FBE, def, 0.1, 1);
+        expect(isFinite(by.sq.out.O)).toBe(true);
+        expect(by.sq.out.O).toBe(0);             // Infinity → 0, not a raw non-finite
+    });
+
+    test('a PID ticked with dt=0 keeps a finite, sensible OUT (#98)', () => {
+        // The derivative is (pv - prevPv)/dt; a second tick with dt=0 would
+        // divide by zero → NaN through OUT. Reverse-acting with PV below SP
+        // must still drive a positive output, not collapse to a sanitized 0.
+        const FBE = loadEngine();
+        const def = {
+            blocks: [
+                { id: 'sp', type: 'const', x: 0, y: 0, params: { value: 75 } },
+                { id: 'pv', type: 'const', x: 0, y: 0, params: { value: 70 } },
+                { id: 'c',  type: 'pid',   x: 0, y: 0,
+                  params: { kc: 4, ti: 30, td: 1, action: 'reverse' } },
+            ],
+            wires: [
+                { from: ['sp', 'O'], to: ['c', 'SP'] },
+                { from: ['pv', 'O'], to: ['c', 'PV'] },
+            ],
+        };
+        const g = FBE.makeGraph(def);
+        const c = g.blocks.find((b) => b.id === 'c');
+        FBE.tick(g, 0.1);                        // establish state (prevPv, init)
+        FBE.tick(g, 0);                          // dt=0 — must not push NaN through
+        expect(isFinite(c.out.OUT)).toBe(true);
+        expect(c.out.OUT).toBeGreaterThan(0);    // a real reverse-acting response, not NaN→0
+    });
+});
