@@ -42,6 +42,7 @@
 
     let entries = null;          // cached index (null until first fetch)
     let loading = null;          // in-flight fetch promise (de-dupes opens)
+    let loadFailed = false;      // last load threw — show a real status, allow retry (#119)
     let results = [];            // current ranked results
     let active = -1;             // highlighted index into results
     let invoker = null;          // element to restore focus to on close
@@ -67,9 +68,27 @@
         if (entries) return Promise.resolve(entries);
         if (loading) return loading;
         loading = fetch(INDEX_URL)
-            .then((r) => (r.ok ? r.json() : []))
-            .then((data) => { entries = Array.isArray(data) ? data : []; return entries; })
-            .catch(() => { entries = []; return entries; });
+            .then((r) => {
+                if (!r.ok) throw new Error('search index HTTP ' + r.status);
+                return r.json();
+            })
+            .then((data) => {
+                entries = Array.isArray(data) ? data : [];
+                loadFailed = false;
+                return entries;
+            })
+            .catch(() => {
+                // Leave entries null and clear the in-flight guard so the
+                // NEXT open() re-fetches, instead of caching an empty index
+                // for the page lifetime after one transient failure (CF
+                // cold-start, flaky radio, a deploy mid-flight). Flag it so
+                // render() shows a real "unavailable" status rather than a
+                // misleading "No matches" (codebase-issues #119).
+                entries = null;
+                loading = null;
+                loadFailed = true;
+                return [];
+            });
         return loading;
     }
 
@@ -143,13 +162,16 @@
         return scored.slice(0, MAX_RESULTS).map((s) => s.it);
     }
 
-    function setActive(i) {
+    // `scroll` is opt-in: keyboard nav scrolls the new row into view, but
+    // hover (mousemove) must NOT — a per-mousemove scrollIntoView shifts a
+    // clipped edge row under the cursor and fights the pointer (#120).
+    function setActive(i, scroll) {
         active = i;
         const opts = list.children;
         for (let n = 0; n < opts.length; n++) {
             const on = n === i;
             opts[n].setAttribute('aria-selected', on ? 'true' : 'false');
-            if (on) opts[n].scrollIntoView({ block: 'nearest' });
+            if (on && scroll) opts[n].scrollIntoView({ block: 'nearest' });
         }
         // Remove rather than set '' — an empty aria-activedescendant is
         // an invalid ID reference (audit-2026-06 #56).
@@ -162,7 +184,7 @@
         let i = active + delta;
         if (i < 0) i = results.length - 1;
         if (i >= results.length) i = 0;
-        setActive(i);
+        setActive(i, true);
     }
 
     function render() {
@@ -201,7 +223,7 @@
             status.hidden = false;
             status.textContent = results.length
                 ? results.length + (results.length === 1 ? ' result' : ' results')
-                : 'No matches';
+                : (loadFailed ? 'Search index unavailable — reopen to retry' : 'No matches');
             input.setAttribute('aria-expanded', results.length ? 'true' : 'false');
             setActive(results.length ? 0 : -1);
         }
@@ -220,10 +242,27 @@
         return !palette.hidden;
     }
 
+    // Make every body child except the palette itself `inert` while the
+    // modal is open, so a screen-reader user in browse/virtual mode can't
+    // arrow into the obscured background — honoring the aria-modal="true"
+    // the markup asserts (the scroll-lock class alone left the page
+    // perceivable). inert also drops those nodes from the tab order
+    // (codebase-issues #121).
+    function setBackgroundInert(on) {
+        const kids = document.body.children;
+        for (let i = 0; i < kids.length; i++) {
+            const el = kids[i];
+            if (el === palette || el.tagName === 'SCRIPT') continue;
+            if (on) el.setAttribute('inert', '');
+            else el.removeAttribute('inert');
+        }
+    }
+
     function open(fromEl) {
         if (isOpen()) return;
         invoker = fromEl || document.activeElement;
         palette.hidden = false;
+        setBackgroundInert(true);
         document.body.classList.add('palette-open');
         input.value = '';
         results = [];
@@ -236,6 +275,7 @@
     function close() {
         if (!isOpen()) return;
         palette.hidden = true;
+        setBackgroundInert(false);
         document.body.classList.remove('palette-open');
         input.value = '';
         results = [];
@@ -262,8 +302,8 @@
         input.addEventListener('keydown', (e) => {
             if (e.key === 'ArrowDown') { e.preventDefault(); move(1); }
             else if (e.key === 'ArrowUp') { e.preventDefault(); move(-1); }
-            else if (e.key === 'Home' && results.length) { e.preventDefault(); setActive(0); }
-            else if (e.key === 'End' && results.length) { e.preventDefault(); setActive(results.length - 1); }
+            else if (e.key === 'Home' && results.length) { e.preventDefault(); setActive(0, true); }
+            else if (e.key === 'End' && results.length) { e.preventDefault(); setActive(results.length - 1, true); }
             else if (e.key === 'Enter') {
                 e.preventDefault();
                 if (active >= 0 && results[active]) go(results[active].url);

@@ -138,6 +138,57 @@ test('field-vocabulary queries resolve, short tokens skip mid-word noise', async
     expect(errors, 'search vocabulary should log no errors').toEqual([]);
 });
 
+// codebase-issues #121: the modal palette must inert the rest of the page
+// while open — aria-modal="true" was asserted but the background stayed
+// perceivable/navigable to AT browse-mode users.
+test('opening the palette inerts the background; closing restores it (#121)', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('/');
+
+    const main = page.locator('main#main');
+    await expect(main).not.toHaveAttribute('inert', /.*/);   // not inert when closed
+
+    await page.keyboard.press('/');
+    await expect(page.locator('#palette')).toBeVisible();
+    // The background is inert; the palette dialog itself is not.
+    await expect(main).toHaveAttribute('inert', '');
+    await expect(page.locator('#palette')).not.toHaveAttribute('inert', /.*/);
+
+    await page.keyboard.press('Escape');
+    await expect(page.locator('#palette')).toBeHidden();
+    await expect(main).not.toHaveAttribute('inert', /.*/);   // restored on close
+
+    expect(errors, 'inert toggle should log no errors').toEqual([]);
+});
+
+// codebase-issues #119: a transient index-fetch failure used to cache an
+// empty index for the page lifetime (entries=[] is truthy → never retried)
+// and surface a misleading "No matches". Now it shows a real status and
+// retries on the next open. (No watchErrors — the deliberate abort logs
+// expected network noise.)
+test('a failed index load shows a real status and retries on reopen (#119)', async ({ page }) => {
+    let failNext = true;
+    await page.route('**/search-index.json', (route) => {
+        if (failNext) { failNext = false; return route.abort(); }
+        return route.continue();
+    });
+    await page.goto('/');
+
+    await page.keyboard.press('/');
+    await page.fill('#palette-input', 'signal');
+    // First open: the fetch was aborted — a real "unavailable" status, not
+    // a misleading "No matches".
+    await expect(page.locator('#palette-status')).toContainText('unavailable');
+
+    // Reopen (Ctrl+K — opens regardless of where focus landed on close):
+    // load() retries (entries was left null), the second fetch succeeds,
+    // and real results appear.
+    await page.keyboard.press('Escape');
+    await page.keyboard.press('Control+k');
+    await page.fill('#palette-input', 'signal');
+    await expect(page.locator('.palette-result').first()).toContainText('Signal Scaling');
+});
+
 // codebase-issues #82: tools carry a score-level section bonus, so a
 // tool-shaped query puts the tool first — "superheat" used to rank the
 // calculator third, under the lesson and quiz.
