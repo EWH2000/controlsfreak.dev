@@ -14,7 +14,7 @@ rest live here until someone decides what to do about them.
   deleted if the resolution turned out to be "not worth doing."
 - Considered-and-skipped entries get a *(deferred YYYY-MM-DD)* marker
   and live under the `### Deferred / Won't fix (with revisit trigger)`
-  subsection at the end of `## Open`. The body carries an explicit
+  subsection at the end of `## Issues`. The body carries an explicit
   trigger condition that would change the call.
 - New entries land here as code issues surface (same running-list
   spirit as `site-ideas-and-friction.md`, but scoped to code quality
@@ -22,7 +22,7 @@ rest live here until someone decides what to do about them.
 
 ---
 
-## Open
+## Issues (status inline)
 
 ### 1. Perpetual `setInterval` timers in widgets that don't always need them *(addressed 2026-05-16)*
 
@@ -3804,6 +3804,433 @@ Units.display (temp or staticPressure) and draws a unit tag inside
 the plot's top-left (mirroring the SP tag); the tuner redraws on
 unitschange. Verified by metric screenshots of both axis flavors.
 
+### 92. Nav `category` lives in two unlinked sources *(open — 2026-06-14)*
+
+The cascading nav dropdowns group pages by a `category` frontmatter key
+(read by the `navGroups` filter into `NAV_CATEGORIES`). The section
+landing pages independently tag the same pages via the `navCard()`
+`category` argument (for the filter chips). The two are **separate
+sources of truth** with no build-time tie: recategorizing a tool on the
+landing without updating its frontmatter (or vice-versa) silently drifts
+the chip and the nav into disagreement. The `navCategoryGuard` only
+checks the frontmatter against `NAV_CATEGORIES`, not against the
+landing. Unifying would mean data-driving the hand-written landing
+`navCard()` calls (read `category` from the page collection instead of
+hardcoding) — a bigger refactor than the cascading feature warranted,
+so deferred. Cheapest interim guard if it bites: a build collection that
+parses each landing's `navCard()` calls and asserts each `category`
+equals the target page's frontmatter. Note: education is the one place
+they legitimately differ — the landing uses granular keys (drives,
+control, …) under the `fundamentals` chip, while the nav frontmatter
+uses the chip-level `fundamentals`.
+
+<!--
+2026-06-15 backend/mechanical codebase audit — multi-agent fan-out across 13 code
+surfaces (find → adversarial-verify each finding → synthesize), deduped against the
+existing log. 38 confirmed findings (#93–#130) + 3 low-confidence watch items
+(#131–#133). Severity: 0 high / 4 medium / 34 low. Report-only — triage before
+acting; mark each *(addressed YYYY-MM-DD)* in place per "How this file is used".
+The 4 mediums: #93 (educationSequence drift), #94 (worker security test gap),
+#95 (wiring-engine no engine spec), #96 (flow-engine 1240px re-init).
+-->
+
+### 93. educationSequence.js drifted from the visible 18-card education grid — controller-wiring and bacnet-mstp omitted from the rel=prev/next chain *(open — 2026-06-15)*
+
+*Severity: medium · Category: cross-ref · Confidence: high* — `html/_data/educationSequence.js:17-34 (order array); consumed at html/_includes/head.njk:30-32`
+
+The order array lists 16 lessons but the education/index.html card grid renders 18, in an order where controller-wiring is card #2 (between pid-basics and hydronic-loops) and bacnet-mstp is card #18/last (after bacnet-networking). Both omitted pages are real, full lessons with nav: education (controller-wiring 406 lines, bacnet-mstp 260 lines). head.njk is the sole consumer: educationSequence[page.url] is undefined for the two omitted pages, so they emit zero rel=prev/rel=next links; and the surviving chain skips them (pid-basics' rel=next points to hydronic-loops, bacnet-networking's rel=next is null as if it were the last lesson). The file's own header declares grid order == sequence order as a hard invariant that 'can't drift silently' — this is exactly that drift, and no build guard catches it (navCategoryGuard validates category frontmatter, not sequence membership). Verified against built _site/ output.
+
+**Impact.** Two lessons ship with no rel=prev/next (degraded crawler series-understanding + assistive-tech link-relation nav, the feature's stated purpose), and the machine-readable lesson order a crawler follows diverges from the order a sighted user clicks through on the index grid.
+
+**Suggested fix.** Insert '/education/controller-wiring.html' after pid-basics and '/education/bacnet-mstp.html' after bacnet-networking in the order array so it matches the 18-card landing exactly. If either omission is deliberate, document it in the header and reconcile the landing order. Longer term, derive the sequence from the navEducation collection or add a build-time guard (mirroring navCategoryGuard) that fails when any nav: education page is absent from the sequence, so it can't drift again.
+
+*Merged from: data-modules + cross-page-sweep surfaces (same defect, identical root cause)*
+
+### 94. Worker tests cover none of the security-critical contact paths (Turnstile fail-closed, hostname pin, validation, Resend) *(open — 2026-06-15)*
+
+*Severity: medium · Category: test-gap · Confidence: high* — `tests/worker.spec.js (whole file); untested branches in src/worker.js handleContact (Turnstile verify ~176/186, hostname pin, fetchWithTimeout catch, EMAIL_RE/413, Resend 502)`
+
+The spec exercises the redirect-drift guard, 301, 405+Allow, cross-origin 403, honeypot 200, absent-Content-Length 411, and the asset cache matrix — but every security-load-bearing branch of handleContact is untested: the Turnstile fail-closed logic (verify.success !== true for {}, {success:null}, {success:"true"}, non-2xx), the hostname pin verify.hostname !== "controlsfreak.dev" (audit-2026-06 #34, the anti-token-replay defense), the fetchWithTimeout timeout/catch paths, EMAIL_RE/length-cap 400s, the 413 oversize path, and the Resend non-ok/catch 502s. The honeypot test short-circuits before those upstreams precisely because the env stub never stubs Turnstile/Resend (reaching them would throw). worker.spec.js already imports the ES-module worker node-side, and the worker calls bare fetch() (=globalThis.fetch), so the upstreams are stubbable.
+
+**Impact.** The Worker's anti-abuse and validation logic — its only real attack surface — has zero automated coverage. A fail-open regression (e.g. relaxing the Turnstile gate to !== false, the exact mistake the code comment warns against, or dropping the hostname pin) would ship green.
+
+**Suggested fix.** Stub globalThis.fetch to return controlled siteverify/Resend responses: assert fail-closed for {}/{success:null}/{success:"true"}/non-2xx and for hostname:"localhost"; assert a valid {success:true,hostname:"controlsfreak.dev"} + ok Resend yields 200; assert Resend non-2xx and a thrown fetch each give 502; add a 400 for a bad EMAIL_RE input and a 413 for an oversized Content-Length.
+
+### 95. wiring-engine.js has no engine-direct spec — most fault-classification branches are untested *(open — 2026-06-15)*
+
+*Severity: medium · Category: test-gap · Confidence: high* — `tests/ (no wiring-engine.spec.js); html/scripts/wiring-engine.js:198 (Wiring.evaluate), :186 (makeUF), fault branches ~245-490`
+
+wiring-engine.js is a 542-line pure module exposing Wiring.evaluate(panel, state) -> {power, points, faults, cues} with a union-find net solver and a large fault tree: dead short, transformer phase-fight, reversed polarity, open common, no-hot/no-power, VA-budget overload, thermistor short/open + wrong-mode, unpowered 0-10V transmitter, dead 4-20mA loop, BI open, unpowered/floating actuator, BO no-return/no-power. It has module.exports = Wiring and is the exact vm-loadable shape already covered engine-direct for fbe/pid/psychro/units engines — but has NO dedicated spec. Its only coverage is two UI preset paths in smoke.spec.js:188-203 (ahu clean, broken-fuse dead short). The reversed/open-common/overload branches and the union-find merge logic are reachable nowhere in the suite, and the engine fails soft (no console error), so a logic regression produces no signal.
+
+**Impact.** The site's most complex untested engine. A controls-fault logic regression (wrong net merge, fault-class mislabel, fuse/overload threshold drift) would not be caught by CI — the engine fails soft and the only smoke checks (short + clean) stay green.
+
+**Suggested fix.** Add tests/wiring-engine.spec.js mirroring fbe-engine.spec.js (vm.runInNewContext(src + '\n; Wiring', {})): build minimal panels and assert power flags + fault ids per class — clean landing, dead short, reversed 24V/COM, open common, VA-budget overload — plus a union-find case where two terminals must (or must not) share a net.
+
+*Merged from: wiring-engine + tests surfaces (same missing spec; the per-fault-mode list and the union-find/engine-API framing combine into one entry)*
+
+### 96. Crossing the 1240px gutter breakpoint re-inits the whole engine, rebuilding in-content flow pools and dropping setPathColor recolors *(open — 2026-06-15)*
+
+*Severity: medium · Category: bug · Confidence: high* — `html/scripts/flow-engine.js:241-247 (onGutterChange → init) feeding 249-252 (rebuilds ALL [data-flow], not just gutter)`
+
+The gutterMql change handler calls full init() when the viewport grows past 1240px. init() re-runs buildPoolForEl on EVERY [data-flow] element document-wide, not just gutter ones. For an already-pooled in-content diagram, buildPoolForEl tears down its circles and recreates them with the engine DEFAULT fill (SUPPLY_FILL/RETURN_FILL/CURRENT_FILL). Any setPathColor() a page applied is wiped on a resize across the breakpoint and never re-applied (the page recolor runs once on DOMContentLoaded — see education/refrigerant-cycle-basics.html, which recolors rc-discharge/rc-liquid to var(--heat)). The rebuild also reseeds all particle offsets to i*step, so every in-content animated diagram visibly jumps. The header/docs sell init() as an idempotent no-op refresh; here it's a destructive full rebuild triggered by a passive resize.
+
+**Impact.** Visible regression on a resize crossing 1240px: recolored particle streams (refrigerant-cycle-basics, any future setPathColor user) revert to default colors and all in-content flow animations snap to their seed positions.
+
+**Suggested fix.** Scope the gutter-grow rebuild to gutter elements only — have onGutterChange call a buildGutterPools() that runs buildPoolForEl/buildPulsePathFor only on .schematic-bg [data-flow]/[data-pulse] elements, mirroring teardownGutterPools' scoping, so in-content pools and their setPathColor state survive the breakpoint.
+
+### 97. fbe-engine: Infinity produced by a block is coerced to 0 at the next block's input, flipping downstream comparator verdicts *(open — 2026-06-15)*
+
+*Severity: low · Category: correctness · Confidence: high* — `html/scripts/fbe-engine.js:60 (asNum), :161 (mul), :169-172 (div guards only b===0), :448-449 (tick stores raw res.out); ref-note/fmt in html/simulators/function-block-editor.html:482-486 and :886`
+
+asNum() rejects non-finite values and returns 0, but it is applied only to a block's inputs — evaluate() can still store a non-finite output. mul of two large constants (1e300*1e300), or div with a tiny non-zero divisor (the b===0 guard does not catch tiny-but-nonzero b), yields Infinity in b.out. Downstream that Infinity is read as the consumer's input and asNum silently turns it into 0. Verified: const(1e300)→mul(self)→gt vs const(5) gives gt=false (0>5), the mathematical opposite of true. This contradicts the DIVIDE comment and the page ref-note ('a downstream comparator stays sane instead of reading Infinity or NaN') — the guarantee holds only for an exact-zero divisor, not any overflow path. The source block's value strip shows '—' (fmt guards isFinite) while the comparator silently reads 0 — a display/logic split.
+
+**Impact.** A graph that overflows to Infinity (reachable: the inspector accepts any finite number via parseFloat, so a user can set a constant to 1e300) makes a downstream comparator report the wrong boolean while the source shows '—'. Astronomically unlikely values, but a genuine logic inconsistency against a documented promise.
+
+**Suggested fix.** Apply finite-coercion at the output boundary too: in tick() after `b.out = res.out || {}`, sanitize numeric outputs so a stored Infinity/NaN becomes 0, matching the asNum input contract and the ref-note's claim.
+
+### 98. fbe-engine: PID derivative divides by dt with no guard — dt=0 yields NaN through the output *(open — 2026-06-15)*
+
+*Severity: low · Category: robustness · Confidence: high* — `html/scripts/fbe-engine.js:316 (`const dPv = s.init ? (pv - s.prevPv) / dt : 0;`)`
+
+The PID block computes the derivative as (pv - s.prevPv) / dt with no zero/finite guard on dt. A second tick with dt=0 produces OUT=NaN (NaN survives clamp(NaN,0,100)). The live page hard-codes DT=0.1 so this is dormant in the tool, but fbe-engine.js is documented as a reusable pure API (FBE.tick(graph, dt)) consumed like pid-engine/psychro-engine, and the project's own convention is to guard every numeric path with isFinite. A NaN OUT then propagates as 0 into any consuming block (via asNum) while the readout shows '—' — a silent inconsistency, and the div block already guards /0 with the same intent.
+
+**Impact.** Any future caller (paused/single-frame integrator, unit test, Capacitor wrapper) that ticks with dt=0 gets NaN out of every PID block. Low because the only shipped caller hard-codes 0.1.
+
+**Suggested fix.** Guard the divide: `const dPv = (s.init && dt > 0) ? (pv - s.prevPv) / dt : 0;` — matching the div block's own /0 defense.
+
+### 99. wiring-engine: engine dereferences DEVICES[d.type].terminals with no guard — a malformed panel crashes the public Wiring.evaluate API *(open — 2026-06-15)*
+
+*Severity: low · Category: robustness · Confidence: medium* — `html/scripts/wiring-engine.js:316-317 (deviceOn)`
+
+deviceOn() does `const def = DEVICES[d.type]; def.terminals.forEach(...)` with no check that def exists, and is called unconditionally from the BI/AO/BO passes in evaluate(). wiring-engine.js documents itself as a pure public solver exposed as window.Wiring.evaluate accepting an arbitrary {devices, wires} panel. A device whose type is not a DEVICES key throws TypeError: Cannot read properties of undefined (reading 'terminals'), aborting the whole evaluation (reproduced in Node). createDevice() correctly returns null for an unknown type, so the guard exists in one entry point and not the other.
+
+**Impact.** Not reachable from controller-wiring.html today (the page only pushes createDevice() results and validated presets). But the engine is a documented standalone API; any future consumer or a corrupted persisted panel (were tool-state persistence added per #83) that passes an unknown device type gets a hard crash instead of a graceful skip.
+
+**Suggested fix.** Filter devices to known types at the top of evaluate() (`const devices = (panel.devices||[]).filter(d => DEVICES[d.type])`) or guard each deref with `if (!def) return;` — cheap defense-in-depth consistent with createDevice()'s own null return.
+
+### 100. wiring-engine: clampPct lets NaN through — typeof check passes for NaN where isFinite would not *(open — 2026-06-15)*
+
+*Severity: low · Category: correctness · Confidence: medium* — `html/scripts/wiring-engine.js:522`
+
+`const clampPct = (x) => Math.max(0, Math.min(100, Math.round(typeof x === 'number' ? x : 0)));` rejects non-numbers but not NaN: typeof NaN === 'number' is true, so clampPct(NaN) returns NaN, which an AO point renders as 'NaN%'. CLAUDE.md's JS-patterns section explicitly calls for !isFinite(x) over a type/NaN-prone check on numeric inputs. The page only feeds AO from +sld.value of a range input (always finite), so this is unreachable from the current UI, but evaluate() is a public API and the helper's intent is clearly to coerce bad input to 0.
+
+**Impact.** No live failure from the page, but a malformed state.ao passed to public Wiring.evaluate would surface as a literal 'NaN%' readout instead of muting to 0%, against the site's validate-and-mute convention.
+
+**Suggested fix.** Use isFinite: `const clampPct = (x) => { const n = Math.round(x); return isFinite(n) ? Math.max(0, Math.min(100, n)) : 0; };`.
+
+### 101. pid-chart: formatPidDelta emits a misleading '-0.0' for small-negative deltas that round to zero *(open — 2026-06-15)*
+
+*Severity: low · Category: bug · Confidence: high* — `html/scripts/pid-chart.js:217-223 (formatPidDelta, sign at line 221)`
+
+formatPidDelta computes `const sign = display > 0 ? '+' : ''` then `${sign}${display.toFixed(dec)}`. When the canonical delta is a small negative that rounds to zero at the formatter's precision, display < 0 so no '+' is prepended but display.toFixed(1) still renders '-0.0'. Reproduced end-to-end: simulatePid(PID_PROC.med, 1, 2, 0) yields ssErr≈-0.0003, and an ordinary Kc/rep slider grid on the med loop lands ssErr in (-0.05, 0) in 35/96 cells, each printing '-0.0 °F'. pid-basics flips the sign (-sim.ssErr) and hits the same case from the other side. Both PID surfaces (simulators/pid-tuner.html and education/pid-basics.html) are affected; the metric path too, since the delta is a scalar conversion.
+
+**Impact.** Both PID surfaces can display a negative-zero steady-state error ('-0.0 °F' / '-0.0 in. w.c.'), which reads as a real signed offset and is internally contradictory (a leading minus on a zero magnitude). Reachable with normal slider positions.
+
+**Suggested fix.** Normalize negative zero before formatting: round to display precision first, then choose the sign treating a rounded 0 as unsigned — `const rounded = +display.toFixed(dec); const sign = rounded > 0 ? '+' : ''; return `${sign}${rounded.toFixed(dec)} ${pidUnit(procKey)}`;`.
+
+### 102. pid-chart: drawPidChart dereferences getContext('2d') without a null guard while guarding everything else *(open — 2026-06-15)*
+
+*Severity: low · Category: robustness · Confidence: high* — `html/scripts/pid-chart.js:59-60`
+
+drawPidChart guards !canvas || !sim, zero-size canvas, and degenerate plot area, but line 59 does `const ctx = canvas.getContext('2d');` and line 60 immediately calls ctx.setTransform(...) with no null check. getContext('2d') returns null if a different context type was already acquired or under OOM/disabled-canvas conditions, which would throw mid-draw and abort the calling page IIFE. The same unguarded getContext('2d')+setTransform pattern exists in staging-sequencer.html and psychrometric-chart.html — it's effectively the site-wide convention for these canvases — so this is the one unguarded deref in an otherwise defensive routine, low impact in practice (2d-only freshly-created canvases).
+
+**Impact.** Low — these canvases are 2d-only and fresh — but a throw here propagates out of runPidSim/runMini and breaks the page's slider wiring for the rest of the session.
+
+**Suggested fix.** Add `if (!ctx) return;` immediately after `const ctx = canvas.getContext('2d');`, matching the file's existing early-return guard style.
+
+### 103. psychro-engine: dewPointFromVapPress silently caps at 250 °F for vapor pressures above satPress(250) *(open — 2026-06-15)*
+
+*Severity: low · Category: robustness · Confidence: medium* — `html/scripts/psychro-engine.js:100-108`
+
+dewPointFromVapPress bisects on the fixed bracket [-148, 250]. For any pw > satPress(250) ≈ 29.85 psia the loop never moves hi down and returns ~250 with no out-of-range signal (verified dewPointFromVapPress(40) === 250). The function guards the low end (pw<=0 → -Infinity) but not the saturated upper end. At/below standard sea-level pressure this is unreachable (pw can't exceed P_STD = 14.696, dewPoint(14.696) = 211.95 < 250) and pressFromAltitude only lowers P, so the psych tools are safe today. But the function is a flat top-level primitive the header advertises for direct reuse (coil sizing, economizer), which could pass a higher-pressure pw.
+
+**Impact.** Defensive only for current consumers. The risk is a future high-pressure caller getting a silently-clamped 250 °F dew point that looks plausible rather than an out-of-range signal.
+
+**Suggested fix.** Widen the upper bound to cover the documented pressure range, or detect the saturated bracket: after the loop, if satPress(hi) < pw return Infinity (mirroring the pw<=0 → -Infinity convention) so callers' existing isFinite guards catch it.
+
+### 104. units.js: Units.convert / toCanonical silently no-op for massFlow (no Q entry, no toCanonical entry) *(open — 2026-06-15)*
+
+*Severity: low · Category: robustness · Confidence: medium* — `html/scripts/units.js:146-160 (Q table) and 174-188 (toCanonical) vs 100-104,123,141 (massFlow defined for suffix/display only)`
+
+massFlow is intentionally display-only (suffix + display) per the inline comment — coil-sizing derives it as a readout — so there is no Q.massFlow and no toCanonical.massFlow. The trap is the failure mode: convert(value, from, to, 'massFlow') hits `if (!q) return value;` and returns the value unchanged with no warning, and toCanonical.massFlow is undefined (calling it would throw). A future page that wires a mass-flow field through convert() (the standard input-rewrite pattern) would silently leave the value unconverted on a units toggle — a wrong-number bug with no console signal. ui.js warns on missing targets elsewhere, so convert()'s silent no-op is inconsistent with the codebase idiom. Note: units-engine.spec.js asserts massFlow is the one display-only quantity, so a naive future addition would trip the test.
+
+**Impact.** No current bug (massFlow is only used via suffix/display in coil-sizing). Latent silent-wrong-result risk if mass flow ever becomes a convertible input and the author follows the existing convert() rewrite pattern.
+
+**Suggested fix.** Either add Q.massFlow + toCanonical.massFlow for symmetry, or make convert()'s unknown-quantity branch `console.warn('Units.convert: no conversion for "'+quantity+'"')` so a missing quantity surfaces instead of returning the raw value. The warn is the cheaper guard and matches ui.js's warn-on-missing patterns.
+
+### 105. copyText double-click race can leave the copy button stuck on 'copied!' *(open — 2026-06-15)*
+
+*Severity: low · Category: robustness · Confidence: high* — `html/scripts/ui.js:92-103`
+
+The only re-entrancy guard is `if (!text || btn.classList.contains('copied')) return;` checked synchronously at entry, but the `copied` class addition and `orig = btn.textContent` capture happen inside the navigator.clipboard.writeText(...).then(...) callback (after a microtask boundary). A second click landing after click 1 but before its promise resolves passes the guard and queues a second writeText. When the two .then() callbacks run in order, the second captures orig='copied!' (set by the first); its ~1800ms timeout then reverts textContent to 'copied!', leaving the button permanently labeled 'copied!' until the next click. All copy buttons site-wide route through this single function.
+
+**Impact.** On a fast double-click of any copy button (Copy IP, Copy readouts), the label can get stuck on 'copied!' and never revert. Cosmetic but sticky; recovery needs another successful copy after the class clears. Low — needs a rapid double-click.
+
+**Suggested fix.** Add the `copied` class and capture `orig` synchronously right after the guard, restore only inside the timeout (so the entry guard sees `copied` immediately and the second click is a clean no-op), and revert the class in a .catch() so a clipboard rejection doesn't latch the button.
+
+### 106. fullscreen-toggle: ESC-exit hardcodes '.tool-card.is-fullscreen' while the opt-in target selector is configurable *(open — 2026-06-15)*
+
+*Severity: low · Category: robustness · Confidence: medium* — `html/scripts/fullscreen-toggle.js:62-65 (exitActive) vs 36-39 (targetFor)`
+
+targetFor() resolves the fullscreen target from the button's data-fullscreen-target selector (any selector) and setState toggles has-fullscreen-tool on <body> based on that arbitrary target, but exitActive() — the ESC exit path — queries the fixed selector .tool-card.is-fullscreen. If a future page opts in with a non-.tool-card target (which targetFor supports and the header frames as selector-driven), ESC finds nothing to exit: is-fullscreen stays on the element and has-fullscreen-tool stays on <body>, locking the page in fullscreen with no keyboard exit. Both current opt-ins (psychrometric-chart, function-block-editor) use .tool-card, so it is latent. Note the CSS also hard-codes .tool-card.is-fullscreen, so the JS targetFor() over-promises flexibility the CSS doesn't honor.
+
+**Impact.** Latent. No live page affected. Becomes a real ESC-doesn't-work / stuck-fullscreen bug only if someone adds a non-tool-card fullscreen target.
+
+**Suggested fix.** Make exitActive() exit whatever is actually fullscreen — `document.querySelectorAll('.is-fullscreen').forEach(t => setState(t, false));` — or track the active target in a module variable set by setState. Alternatively assert/document that data-fullscreen-target must be .tool-card.
+
+### 107. controller-wiring: spark cue re-fires on every refresh() — no edge-detection, unlike the blown-fuse cue *(open — 2026-06-15)*
+
+*Severity: low · Category: bug · Confidence: high* — `html/simulators/controller-wiring.html:905-908`
+
+The comment reads 'cues — fire only on a fresh failure', but only the blown-fuse cue is edge-detected (if (blown && !lastBlown) fireBlownFuse). The spark cue fires on EVERY refresh() with no lastSpark analog. In the engine cues.spark is populated only in the reversed power branch (wiring-engine.js:280). refresh() runs on every control change AND on the 2.5s cosmetic-drift interval (when a therm10k drifts). So a panel left in a reversed-power state that also contains a thermistor re-sparks at the 24V~ terminal every 2.5s indefinitely — a flashing artifact on a static circuit. reduceMotion suppresses it.
+
+**Impact.** A reversed-power panel that happens to include a thermistor produces an endless repeating spark animation with no user action — visually noisy and contradicts the stated 'fire only on a fresh failure' intent. Minor; needs the reversed state to persist with a thermistor present.
+
+**Suggested fix.** Edge-detect the spark cue like the fuse: track the previous spark set (a serialized key of res.cues.spark) and only fireSpark for terminals newly in the set this evaluation, or only fire sparks on user-initiated refreshes, not the cosmetic tick.
+
+### 108. controller-wiring: device drag y-clamp reserves a fixed 40px height for variable-height device cards *(open — 2026-06-15)*
+
+*Severity: low · Category: bug · Confidence: medium* — `html/simulators/controller-wiring.html:719-720`
+
+The drag move handler clamps with `d.y = clamp(oy + dy, 0, NUM.height - 40)` and `d.x = clamp(..., 0, NUM.width - 146)`. The 146 reasonably reserves the 144px card width, but the 40 is a fixed reservation that doesn't match real card heights — a card grows with its terminal count + caption (the 0-10V actuator has 4 terminal rows + caption, rendering ~136px). So a tall card can be dragged until only its top edge is at y=620, leaving most of it below the 660px canvas-inner. The x-axis is clamped to actual card width; the y-axis is not.
+
+**Impact.** Cosmetic only — .cw-canvas has overflow:auto so an overhanging card is reachable by scrolling and the wire layer follows. But the clamp is asymmetric (width-aware, height-blind), so tall devices can be dragged largely out of the visible inner area in a way short ones cannot.
+
+**Suggested fix.** Measure the card height once (el.offsetHeight) at drag start and clamp y to NUM.height - height, mirroring the width clamp; or reserve a realistic per-type height.
+
+### 109. controller-wiring: cosmetic-drift setInterval not gated to desktop and never pauses on tab-hide (backgrounded-tab idle work) *(open — 2026-06-15)*
+
+*Severity: low · Category: perf · Confidence: high* — `html/simulators/controller-wiring.html:1118-1127`
+
+The cosmetic-drift window.setInterval(...,2500) is gated only by !reduceMotion, with no clearInterval, no visibilitychange pause, and no matchMedia('(min-width:1000px)') JS gate. Its function-block-editor sibling — gated by the same commit — does all three (desktopMQ gate, visibilitychange stop, MQ-change re-arm). The mobile case is a documented non-issue (the bench is hidden, panel.devices stays empty, so refresh() never runs — accepted in site-ideas-and-friction.md). The genuinely-unhandled, in-scope case is the BACKGROUNDED DESKTOP tab: with a therm10k placed (bench visible), backgrounding the tab keeps a full evaluate()+drawWires() pass running every 2.5s — the idle work the FBE avoids via its visibilitychange handler.
+
+**Impact.** On a desktop tab with a thermistor present, backgrounding the tab keeps a full evaluate()/drawWires() pass running every 2.5s — wasted wakeups, worse on battery. Low absolute cost; an asymmetry the companion commit deliberately avoided on the FBE sibling.
+
+**Suggested fix.** Pause the drift interval on document.visibilitychange when document.hidden (mirroring the FBE posture). Store the handle so it can be cleared and re-armed on un-hide. The mobile path is acceptable as-is per the documented rationale.
+
+### 110. function-block-editor: sim loop runs in a backgrounded tab on initial load (visibilitychange only fires on change) *(open — 2026-06-15)*
+
+*Severity: low · Category: bug · Confidence: high* — `html/simulators/function-block-editor.html:1131-1135 (startLoop), :1254-1257 (visibilitychange), :1269 loadExample → :1166 setRunning(true)`
+
+startLoop() guards on tickHandle and desktopMQ.matches but never checks document.hidden. The documented 'pause in a backgrounded tab' posture is implemented only via the visibilitychange handler, which fires on a transition, not on initial load. When the page is opened directly into a background tab (Ctrl/middle-click), loadExample('econ') runs at IIFE end → setRunning(true) → startLoop(), starting a 10 Hz setInterval immediately in a hidden tab. It won't pause until the first visibility transition. The intent (zero idle work while hidden) is defeated for the entire pre-focus lifetime.
+
+**Impact.** A page opened in a background tab spins FBE.tick + refreshValues at 10 Hz (DOM class churn over every block pin and wire) until first focus. Browsers throttle background timers so the practical cost is modest, but it contradicts the stated design.
+
+**Suggested fix.** Bail when hidden: add `if (document.hidden) return;` at the top of startLoop (alongside the desktopMQ guard). The visibilitychange handler already restarts the loop on un-hide via `else if (running) startLoop()`, so this makes the hidden-tab case correct on both initial load and transitions.
+
+### 111. function-block-editor: refreshValues reassigns class on every wire and pin every tick (10 Hz) even when unchanged *(open — 2026-06-15)*
+
+*Severity: low · Category: perf · Confidence: medium* — `html/simulators/function-block-editor.html:840-883 (refreshValues), :881 setAttribute('class'), :853 classList.toggle`
+
+refreshValues() runs on every tick (10 Hz). It walks every block's pins (classList.toggle) and rebuilds + reassigns the full class string on every wire's visible <path>, plus does a graph.blocks.find() per wire and a pinKind() lookup that does another graph.blocks.find() — so the per-tick cost is O(wires × blocks). For a number wire the class is invariant yet re-set 10×/s. Reassigning an identical class does not restart the CSS animation (which keys off .fbe-running on the canvas ancestor), so correctness is fine — this is purely avoidable work.
+
+**Impact.** Negligible on the shipped graphs (≤9 blocks, ≤11 wires); the only per-tick O(n²) in the hot path. Would matter only on a large user-built sheet.
+
+**Suggested fix.** Build a byId map once in refreshValues instead of graph.blocks.find() per wire/pinKind, and skip setAttribute when the computed class string equals the current one (cache the last class on the wire object).
+
+### 112. flow-engine: in-flight pulses and pulsePaths registrations on gutter motifs survive teardownGutterPools *(open — 2026-06-15)*
+
+*Severity: low · Category: bug · Confidence: medium* — `html/scripts/flow-engine.js:421-434 (teardownGutterPools handles flow pools only); pulse-path defs at html/_includes/schematic-bg.njk`
+
+teardownGutterPools tears down flow POOLS for .schematic-bg elements but never touches pulse state. When the viewport shrinks below 1240px: (1) any activePulses whose el is inside .schematic-bg keep ticking in tickPulses (pulse.el.isConnected is still true under display:none), so getPointAtLength/setAttribute keep running on a hidden SVG until each pulse self-retires (~1-2s); (2) the pulsePaths Map entries and their pulseIO.observe registrations for gutter elements are never removed, persisting for the page lifetime. Auto-fire is correctly suppressed afterward (a display:none el isn't in visiblePulseEls), so this is churn-on-teardown + a bounded registration leak (buildPulsePathFor re-registers via Map.set on re-entry, so it doesn't grow per cycle) — an asymmetry with the carefully-scoped flow-pool teardown the same audit motivated. Contributing cause: buildPulsePathFor lacks the gutterHidden guard buildPoolForEl carries.
+
+**Impact.** Brief wasted main-thread work (circle position writes on a display:none gutter) for ~1-2s after the viewport crosses below 1240px, plus stale pulseIO observations retained for the page lifetime. Minor; bounded.
+
+**Suggested fix.** In teardownGutterPools, also retire in-flight gutter pulses (iterate activePulses backwards; if pulse.el.closest('.schematic-bg'), remove its circles and splice) and drop gutter pulsePaths entries with pulseIO.unobserve(el)+pulsePaths.delete(el). buildPulsePathFor re-registers them on the next gutter-grow init().
+
+### 113. flow-engine: rAF loop runs forever and never self-suspends even with zero animatable work *(open — 2026-06-15)*
+
+*Severity: low · Category: perf · Confidence: medium* — `html/scripts/flow-engine.js:259-297 (frame always re-schedules at line 295)`
+
+Once frameStarted is set, frame() unconditionally calls requestAnimationFrame(frame) every frame for the page lifetime; frameStarted is never reset and cancelAnimationFrame is never used. When all pools have scrolled offscreen (visibleFlowEls empty), all pulse paths are offscreen, and activePulses is empty, the loop still wakes every frame to iterate pools checking isConnected/visibility and run tickPulses' pulsePaths.forEach. On a long page scrolled past all diagrams, or after teardownGutterPools leaves pools.length==0, the engine still costs one rAF callback per frame. The audit gating skips per-particle work but not the loop itself.
+
+**Impact.** A small constant per-frame cost (Map/array iteration, visibility checks) that never drops to zero even when nothing can animate. Negligible per frame but continuous; rAF auto-pauses in backgrounded tabs, so the residual is bounded.
+
+**Suggested fix.** Pause the loop when there's no work: if pools.length==0 && activePulses.length==0 && no visible pulsePaths after a tick, stop re-scheduling and reset a frameStarted-style flag so the next IO 'intersecting' callback or firePulse/init restarts it. Lower priority than the breakpoint-rebuild bug; document as a known hot-path note if not fixed.
+
+### 114. quiz-engine: a first quiz run celebrates 'new best' and stores a record even at a score of 0 *(open — 2026-06-15)*
+
+*Severity: low · Category: correctness · Confidence: high* — `html/scripts/quiz-engine.js:642-662`
+
+On the very first finish there is no stored best, so prevBestTotal is NaN and prevBestRatio is set to -1. longEnough becomes true (!isFinite(prevBestTotal)) and curRatio (>= 0) is always > -1, so isNewBest is true for ANY first run — including 0/10. The engine writes best=0 / best_total=10 and renderResults() shows the '· new best' tag for a zero-correct run; paintBest renders 'Best: 0 / 10'. Subsequent runs correctly compare against that 0/N record (a later run with curRatio>0 supersedes it via the #89 ratio comparison), but the first-run experience celebrates a failing score as a 'new best'.
+
+**Impact.** Minor UX/correctness oddity: the first attempt at any quiz, even all-wrong, is announced as a personal best and persisted. Not data-corrupting, but the celebration semantics are wrong for a 0-score baseline.
+
+**Suggested fix.** Gate the new-best on a non-trivial score — only treat a first run as a best when score > 0 (or compare curRatio > prevBestRatio only when prevBestRatio >= 0, treating the no-prior case as 'store silently, don't celebrate'). Distinct from the closed #89 (short-vs-longer overwrite); #89's !isFinite short-circuit is in fact what makes the first run unconditionally longEnough.
+
+### 115. quiz-engine: stored best can become permanently unbeatable if a bank shrinks below the recorded best_total *(open — 2026-06-15)*
+
+*Severity: low · Category: robustness · Confidence: medium* — `html/scripts/quiz-engine.js:652-657`
+
+The #89 longer-run guard is `longEnough = !isFinite(prevBestTotal) || total >= prevBestTotal`. If a user records best 10/10 and the bank is later edited down to 8 questions, then 'All' runs cap at total=8 < prevBestTotal=10, so longEnough is always false and no run can ever beat or repair the record. The Best readout shows '10 / 10' indefinitely against a quiz that now maxes at 8; the only escape is Reset best (which storeDel's bestTotal and re-enables the !isFinite branch). This is the converse failure mode that the #89 fix newly introduces, mentioned nowhere in #89, the engine header, or the trackers.
+
+**Impact.** Edge case tied to an editorial bank-shrink (rare), but it leaves a stale, unbeatable best that misrepresents the current quiz length until the user manually resets. Self-inflicted only by a bank size reduction.
+
+**Suggested fix.** When the current run's total is below the stored best_total AND equals the full bank length (state.count === 'all' && total === questions.length), treat the stored best as stale — clamp/repair the record or allow the full-bank run to set a new best. At minimum document the bank-shrink hazard in the engine header next to the #89 note.
+
+### 116. quiz-engine: numericInput inputmode attribute is never reset between questions *(open — 2026-06-15)*
+
+*Severity: low · Category: robustness · Confidence: high* — `html/scripts/quiz-engine.js:252-258,391-393`
+
+The shared numericInput is created once with inputmode='decimal' and reused across all questions/restarts. showQuestion() only sets inputmode when the current question declares one (`if (q.inputmode) numericInput.setAttribute('inputmode', q.inputmode)`) — it never clears it, and the per-question reset block undoes value/disabled/classes but not the attribute. So once a question with inputmode:'numeric' is shown, every subsequent numeric question that omits inputmode keeps the stale 'numeric'. The header schema documents 'default decimal', which the code breaks. No current bank sets inputmode, so it is latent — the same state-leak class as the audit-2026-06 #19 fix targeted for disabled/tint.
+
+**Impact.** Latent: the moment a bank ships an inputmode:'numeric' question alongside a default-decimal one, mobile keyboards for later questions inherit the wrong mode. Not user-visible today.
+
+**Suggested fix.** Always set the attribute deterministically in showQuestion()'s numeric branch: `numericInput.setAttribute('inputmode', q.inputmode || 'decimal');`.
+
+### 117. quiz-engine: choice id uniqueness within a question is never validated; reveal() marks by data-choice-id *(open — 2026-06-15)*
+
+*Severity: low · Category: robustness · Confidence: medium* — `html/scripts/quiz-engine.js:106-117,540-541,562-563`
+
+validateQuestion() checks choices.length >= 2 and exactly-one-correct but never that choice ids are unique within the question, nor that each choice has an id/text. submit() records given = sel.getAttribute('data-choice-id') and reveal()'s wrong-highlight matches by attribute equality, so two choices sharing an id would both highlight 'wrong' on a miss and make the miss ambiguous; a choice missing text renders the literal string 'undefined'. Selection itself is identity-based (b === btn) so it still works. All current banks use unique a/b/c/d ids with text (verified across 21 banks / 151 choices — zero violations), and quiz-banks.spec.js doesn't cover it either.
+
+**Impact.** Latent content-defect class: a malformed choice (duplicate id, missing text/id) ships without a build or test failure and renders/scoring-highlights incorrectly. Affects only the reveal highlight and miss-list.
+
+**Suggested fix.** Add per-choice id/text presence + within-question id-uniqueness checks to validateQuestion(), and mirror them into quiz-banks.spec.js so a bad bank fails the build/test rather than just at mount. Cheap: build a Set of choice ids and assert size === choices.length and every choice has truthy id and text.
+
+### 118. quiz-engine: dead/unused mapped index in the results miss-list *(open — 2026-06-15)*
+
+*Severity: low · Category: dead-code · Confidence: high* — `html/scripts/quiz-engine.js:695-697,711`
+
+renderResults() builds the miss list with `.map(function (a, i) { return { a: a, i: i }; })` capturing the original index as pair.i, but the subsequent forEach only ever reads pair.a (and pair.a.qi) — pair.i appears nowhere else and is never used. The map wrapper is vestigial; the same result comes from `state.answers.filter(a => !a.correct)`. (Note pair.i is the position in possibly-shuffled state.answers, so it wouldn't cleanly map to a stable 'Question N' anyway.)
+
+**Impact.** None functional — purely dead scaffolding. Minor maintenance noise.
+
+**Suggested fix.** Drop the wrapper (`const misses = state.answers.filter(a => !a.correct);` and adjust the forEach to take the answer directly), or actually surface a numbered miss row. Pick one rather than carrying the unused field.
+
+### 119. search.js: index-fetch failure is silent and never retried — palette permanently empty after one bad response *(open — 2026-06-15)*
+
+*Severity: low · Category: robustness · Confidence: high* — `html/scripts/search.js:66-74 (load) and 67 (the `if (entries) return` short-circuit)`
+
+load() sets entries to [] on both failure modes (non-200 → r.ok false → []; network error → .catch → []). Because [] is truthy, the next open() hits `if (entries) return Promise.resolve(entries)` and never re-fetches — the failed fetch is cached for the page lifetime. rank() over [] returns nothing, so render() shows the generic 'No matches' with no error signal. A transient failure (CF cold-start, flaky mobile radio, a deploy mid-flight) silently disables search for the rest of the session until a full reload.
+
+**Impact.** A single transient failure on first open silently disables search for the rest of the page session — the user gets 'No matches' for real queries with no signal that the index didn't load, which reads as the site simply having nothing.
+
+**Suggested fix.** Distinguish 'loaded empty' from 'failed to load': on failure leave entries null (reset loading=null in .catch) so the next open() retries, and/or surface a one-line status ('Search index unavailable — retry') instead of the generic 'No matches'.
+
+### 120. search.js: mousemove over results calls scrollIntoView on every hover, fighting the cursor *(open — 2026-06-15)*
+
+*Severity: low · Category: perf · Confidence: high* — `html/scripts/search.js:280-283 (mousemove) → 146-153 (setActive)`
+
+The list 'mousemove' listener calls setActive(index) on every mouse-move event over the results. setActive unconditionally runs opts[n].scrollIntoView({ block: 'nearest' }) for the newly-active row with no i===active early-return guard. On a result list tall enough to scroll (.palette-box max-height: 70vh, .palette-results overflow-y: auto), moving toward a partially-clipped edge row triggers a programmatic scroll that shifts that row under the cursor, which can fire another mousemove and another scroll. scrollIntoView is a layout-forcing call run per mousemove. MAX_RESULTS=8 makes overflow rare except on small/zoomed viewports.
+
+**Impact.** Pointer users on long result lists (rare given the 8-result cap, possible on small/zoomed viewports) get janky hover where rows hop under the cursor. Repeated synchronous layout on a per-mousemove handler is needless hot-path cost.
+
+**Suggested fix.** Have mousemove set the active index without scrolling — split setActive into a core that updates aria-selected/aria-activedescendant and an opt-in scroll, and call the no-scroll variant from mousemove (keyboard nav keeps scrollIntoView). Or guard the scroll behind a 'source' flag so only keyboard navigation scrolls.
+
+### 121. search.js: palette dialog does not inert/hide background content while open (aria-modal asserted but no real containment) *(open — 2026-06-15)*
+
+*Severity: low · Category: a11y-mechanical · Confidence: medium* — `html/scripts/search.js:223-234 (open); html/_includes/layouts/page.njk:22 (aria-modal="true")`
+
+The dialog declares aria-modal="true" but the rest of the page is left fully interactive/perceivable: background is not set inert and not aria-hidden (body.palette-open only does overflow:hidden scroll-lock). Focus 'containment' is achieved only by preventDefault on Tab in the input keydown — which holds for sighted keyboard users (the palette has one focusable element; results are driven by aria-activedescendant), but a screen-reader user in browse/virtual mode can still arrow into the background document, contradicting the aria-modal contract. A mechanical mismatch between the asserted ARIA state and the DOM.
+
+**Impact.** AT browse-mode users can navigate the obscured page while the modal claims to be modal — confusing reading order and defeating the 'modal' semantics the markup promises. Non-destructive search overlay, so impact is reading-order confusion, not broken function.
+
+**Suggested fix.** On open(), add inert (or aria-hidden="true") to the page's main wrapper / nav / footer (everything except #palette) and remove it on close(). inert also removes those nodes from the tab order, so the Tab-preventDefault hack could then be dropped.
+
+### 122. nav-menu: Escape on the section toggle collapses category and section in one press, contradicting the documented step-back *(open — 2026-06-15)*
+
+*Severity: low · Category: bug · Confidence: medium* — `html/scripts/nav-menu.js:132-136 (toggle keydown) vs 144-165 (menu keydown step-back)`
+
+The module header and the menu-level keydown handler implement 'Escape collapses the open category first, then the section.' That stepping lives only on the m.menu keydown listener (fires when focus is inside the menu). But the .nav-menu-toggle has its own keydown handler whose Escape branch calls close(m) → closeGroups(m), tearing down the open category AND the section together. The scenario is reachable: the toggle and menu are siblings inside .nav-item, so Shift+Tab from a category toggle back up to the section toggle keeps focus in the item (the focusout handler doesn't close), with a category still expanded and focus on the toggle. So category-open + focus-on-toggle collapses both levels in one press while category-open + focus-in-menu collapses only the category. This is freshly-rewritten cascade code where the one-level-per-press invariant is explicitly claimed.
+
+**Impact.** Inconsistent Escape behavior depending on whether focus is on the toggle vs in the menu — a keyboard user gets a single-step or double-step collapse with no visible reason. A state-machine inconsistency that violates a documented invariant.
+
+**Suggested fix.** In the toggle's Escape branch, mirror the step-back: if any group in groupsOf(m) is open, closeGroups(m) only and keep the section open; else close(m). Or route the toggle's Escape through the same step-back helper the menu handler uses.
+
+### 123. fbe-engine.spec.js: DIVIDE /0 guard, NaN/Infinity propagation, and most catalog blocks are untested *(open — 2026-06-15)*
+
+*Severity: low · Category: test-gap · Confidence: high* — `tests/fbe-engine.spec.js (whole file); load-bearing miss is the div-by-zero guard at html/scripts/fbe-engine.js:171`
+
+The engine-direct spec covers add/ai/const/gt/not/pid/sr/tof/ton and feedback rings, but leaves real behavior unexercised: (1) the DIVIDE-by-zero guard (fbe-engine.js:171) — the single most-documented safety behavior, advertised as load-bearing in user-facing copy at function-block-editor.html:483-485 — has no test asserting div by 0 returns 0; (2) no test that a non-finite input is coerced to 0 by asNum, nor the Infinity-propagation inconsistency above; (3) the dt=0 derivative NaN above; (4) block types div, eq, ne, ge, le, lt, sub, mul, min, max, select, limit, xor, and, or, ao, bo, readout have no evaluation test. The documented div-guard is exactly the kind a refactor could silently break, so it's the highest-value missing assertion.
+
+**Impact.** A regression to the div-guard or asNum coercion would ship green. The behaviors the page advertises in prose are not pinned by tests.
+
+**Suggested fix.** Add a div-by-zero test (const A / const 0 → O===0), an asNum-coercion test, and a dt=0 derivative test; spot-check select/limit and at least one of each comparator family. A few lines each given the existing run() helper.
+
+### 124. quiz-engine: no behavioral test coverage for the Skip action, random order, or gotcha snippet rendering *(open — 2026-06-15)*
+
+*Severity: low · Category: test-gap · Confidence: high* — `tests/smoke.spec.js:1473-1640 (engine surface); branches at html/scripts/quiz-engine.js:503-506,329,360-367,575,614`
+
+The browser-driven quiz tests exercise mcq/tf correct+incorrect, numeric submit, restart, best persistence, and the #89 short-vs-full guard — but three branches have zero behavioral coverage: (1) the Skip button path submit(true) ('Skipped.' status + skip-disabled-on-reveal + a pushed correct:false answer landing in the miss-list); (2) the 'random' order mode / shuffleInPlace (only sequential is ever selected); (3) the gotcha snippet-slot render/hide path. quiz-banks.spec.js validates the data shape but never mounts the engine. A regression in skip scoring (a skipped question must score as incorrect) or in snippet visibility would ship green.
+
+**Impact.** A future edit to the skip/random/gotcha branches can break without a failing test. Skip in particular toggles skipBtn.disabled and pushes a correct:false answer — a regression there silently mis-scores.
+
+**Suggested fix.** Add a behavioral spot-check (modbus-decoding has a gotcha in the bank) that clicks Skip on one question and asserts the reveal shows 'Skipped.' + the question appears in the miss-list; one that selects Random order, restarts, and asserts the run completes to a results card with the right total; and a gotcha-snippet visibility assertion riding the existing sequential run.
+
+### 125. psychro-engine.spec.js: computeProcess / invertProcess have no engine-direct test despite a documented round-trip contract *(open — 2026-06-15)*
+
+*Severity: low · Category: test-gap · Confidence: high* — `tests/psychro-engine.spec.js (only solveState/buildState tests); engine functions at html/scripts/psychro-engine.js:191-247`
+
+psychro-engine.spec.js exercises only the ASHRAE reference points and the 5-mode solveState round-trip. Psychro.computeProcess (process deltas, mDot, qTotal/qSens/qLat, SHR) and Psychro.invertProcess (inverse q-formula solve for the leaving-air state + the saturated flag) — which power tools/coil-sizing.html — are pinned by no engine-direct test. The header promises a forward/inverse round-trip; verified holding today (recovers tdb/W to ~1e-6) so this is a missing regression guard on correct-but-untested math. The Wout<0 bone-dry and the qSens<0/qLat<0 rejection branches are likewise uncovered. Note: an active smoke.spec.js coil-sizing behavioral test does pin the headline numbers, so this is the narrower engine-direct + round-trip-invariant gap, not zero coverage.
+
+**Impact.** The coil-sizing tool's heat-flow and inverse-load math can silently regress on the round-trip invariant (the strongest available) and the rejection branches with no engine-direct test catching it. The most-likely-to-break formula plumbing (cool/heat sign, cpIn weighting, qLat = qTotal − qSens) is unpinned engine-side.
+
+**Suggested fix.** Add engine-direct tests to psychro-engine.spec.js (the vm pattern already loaded): a computeProcess↔invertProcess round-trip asserting recovered tdb/W to ~1e-6 across a cool and a heat stage; SHR sanity (0<shr<1, ≈1 for pure-sensible); the saturated flag firing when latent load drives the leaving point onto the curve; and the negative-load / negative-Wout branches returning ok:false.
+
+### 126. staging-sequencer rotation / runtime-equalization logic has only one UI stage-up path tested *(open — 2026-06-15)*
+
+*Severity: low · Category: test-gap · Confidence: high* — `tests/smoke.spec.js:173-186 (only behavioral test); html/simulators/staging-sequencer.html (inline logic, lead-selection :530-571, options :257-259)`
+
+The staging sequencer ships three lead-lag strategies — Fixed lead, Runtime-equalized, Scheduled rotation — and a per-unit runtime accumulator driving equalization. The only behavioral test runs the default Fixed strategy with Manual demand + zero delay and asserts only stage-up count and a 'Stage up' log line, neither sensitive to which unit is chosen. None of the rotation modes, the runtime-equalization convergence, or the lead-tag handoff is asserted. The logic is inline (no extractable shared engine), so it can only be pinned behaviorally. (The education equipment-staging widget has a separate, simpler inline implementation that shares no code and gives the simulator zero regression coverage.)
+
+**Impact.** A regression in lead selection or runtime equalization (equalized mode picking the highest-hour idle unit instead of the lowest, or rotation never advancing) would pass CI — the stage-up count and log line under test are unaffected by which unit is chosen.
+
+**Suggested fix.** Add a behavioral spec that selects each rotation mode, runs several evaluate cycles, and asserts the lead tag moves (scheduled) / the lowest-hour unit comes on next and the runtime spread shrinks (equalized) / unit 1 always leads and the spread grows (fixed). Pin via the per-unit runtime readouts in #stg-units and the lead tag.
+
+### 127. nav-menu/nav-search: tests don't cover the capture-vs-bubble Escape coexistence between palette and nav menu *(open — 2026-06-15)*
+
+*Severity: low · Category: test-gap · Confidence: medium* — `tests/nav-menu.spec.js + tests/nav-search.spec.js (the Escape-coexistence gap spans both); guarded code at html/scripts/nav-menu.js:40,179,220-225 and html/scripts/search.js:292-307`
+
+search.js registers its Escape keydown in capture phase and stopPropagation()s when the palette is open; nav-menu.js has a bubble-phase document Escape backstop. No spec opens a nav section menu AND the palette together then presses Escape to assert the palette closes while the nav menu state is untouched — that load-bearing coexistence is asserted only in prose. Also the items-empty early return (nav-menu.js:40) and the setNavOpen null-guard (:179) are never exercised, though they're unreachable on the live site (chrome is templated into every page) so that sub-part is low-value.
+
+**Impact.** The Escape-ordering contract between search.js (capture) and nav-menu.js (bubble) is the kind of thing a future refactor breaks silently; no test guards it. Low because the behavior is currently correct.
+
+**Suggested fix.** Add a spec: open a nav section menu, open the palette (Ctrl+K), press Escape, assert the palette is hidden AND the nav menu is still in its prior state — proving capture-phase Escape stopped propagation before the nav backstop.
+
+### 128. .wrangler/ is not in .gitignore *(open — 2026-06-15)*
+
+*Severity: low · Category: build-config · Confidence: high* — `/home/ehill/controlsfreak.dev/.gitignore:24-28 (wrangler secrets block; add a .wrangler/ line here)`
+
+The .gitignore has no entry for the wrangler local-state directory — the only wrangler-related lines cover .env/.dev.vars secrets. `git check-ignore .wrangler/` returns NOT IGNORED, and /home/ehill/controlsfreak.dev/.wrangler/tmp already exists on disk from a prior wrangler invocation. Wrangler dev/deploy/tail write deploy state, caches, and tmp bundles here; none of it is ignored. git status is clean only because the dir is currently empty, masking the gap until the next wrangler run. No secret exposure (secrets already covered).
+
+**Impact.** Any local wrangler dev/deploy/tail run drops untracked files under .wrangler/ that git surfaces and can be accidentally git add-ed (including local deploy bundles/state that shouldn't be in history). It also clutters git status for a contributor running the Worker locally.
+
+**Suggested fix.** Add a one-line `.wrangler/` entry under a `# Wrangler` header near the .dev.vars block.
+
+### 129. package-lock.json root version stale (3.11.1) vs package.json (3.18.0) *(open — 2026-06-15)*
+
+*Severity: low · Category: build-config · Confidence: high* — `/home/ehill/controlsfreak.dev/package-lock.json:3,9 (vs package.json:3)`
+
+package.json declares version 3.18.0 but package-lock.json records 3.11.1 in both the root and the packages[""] self-entry — seven minor versions behind. `npm ci` validates only the dependency tree, not the root project version, so the drift is invisible to CI and never self-heals (only a fresh `npm install` rewrites the lock root). Version bumps are load-bearing here (footer reads it via _data/site.js; the ?v= cache-bust keys off site.version per #84). Git history shows this is recurring — prior dedicated 'sync package-lock root version' commits, and the latest bump 3.17.0→3.18.0 again touched only package.json — confirming the version-bump step isn't running npm install.
+
+**Impact.** The lockfile — the canonical machine-readable record of the project version — disagrees with package.json. No build break today, but it is a misleading source-of-truth and confirms the version-bump step (CLAUDE.md 'Adding a new tool' step 7) isn't keeping the lock in sync.
+
+**Suggested fix.** Run `npm install` once to rewrite the lock root version to 3.18.0 and commit it; thereafter bump via `npm version <patch|minor>` (updates both files atomically) or run npm install after editing package.json's version.
+
+### 130. thermistor-data: 10k-5-tac curve generates two adjacent rows with identical resistance at the cold extreme *(open — 2026-06-15)*
+
+*Severity: low · Category: correctness · Confidence: medium* — `html/scripts/thermistor-data.js:145-152 (generated table; rows at -40 °F and -35 °F); reverse lookup at html/tools/thermistor-calculator.html:442-455`
+
+For the '10k-5-tac' type (ntc-shunt, 10K Type-3 with an 11 kΩ parallel shunt), buildTable()+roundR() produce two consecutive rows with the SAME rounded resistance ([-40,...,10600] and [-35,...,10600]) — the shunt flattens the parallel resistance near the cold asymptote and roundR's 100 Ω granularity collapses the two distinct element resistances onto 10600 Ω. No other type produces a duplicate-resistance row (verified across all 9). thLerpByRes checks Math.abs(r - a[2]) < 1e-6 and returns a[0] before computing f, so entering 10600 Ω returns -40 °F with no divide-by-zero — the page is safe. But (a) 10600 Ω silently resolves only to -40 °F, making the -35 °F row unreachable by reverse lookup, and (b) any future consumer doing naive segment interpolation over this table without the exact-match guard would divide by zero on that flat segment.
+
+**Impact.** Cosmetic/edge-case today: at the -40…-35 °F cold extreme of one shunted curve (a region the header documents as 'nominal' with tolerated degradation), reverse-lookup resolution is slightly lossy. The latent risk: the table is documented as 'the source of truth' for interpolation yet contains a flat segment unsafe for a generic interpolator without an exact-match short-circuit.
+
+**Suggested fix.** Acceptable to leave given the page guards it and the header tolerates extreme-range degradation — but add a one-line note in the type's inline source comment that the cold-end rows collapse to one resistance after rounding, so a future transcribed-table swap or alternate consumer doesn't trip over it. Alternatively, the data module could assert (in dev) that no two adjacent rows share a resistance.
+
+### 131. Mobile sheet focusout closes its menu mid-tap when focus briefly lands on body *(open — watch / low-confidence — 2026-06-15)*
+
+Mobile sheet focusout closes its menu mid-tap when focus briefly lands on body (nav-menu.js:168-170) — LOW CONFIDENCE. The missing relatedTarget null-guard is real (`if (!m.item.contains(e.relatedTarget)) close(m)` with no null check, so focusout with relatedTarget===null closes the section), and is the genuine in-scope kernel worth a one-line fix. But the headline 'menu collapses as I tap a category' reproduction is largely refuted by the DOM: the category toggle is a <button> inside m.item, so a tap that focuses it keeps focus in-item and does NOT close; triggering the bug needs focus already inside the item plus an engine-dependent blur-to-null, which the reporter flags as non-deterministic. Treat as a defensive null-guard (add it alongside the nav-menu Escape fix), not a confirmed flake.
+
+### 132. Worker: immutable cache-control header dropped on 304 revalidation responses *(open — watch / low-confidence — 2026-06-15)*
+
+Worker: immutable cache-control header dropped on 304 revalidation responses (src/worker.js:252-259) — MEDIUM CONFIDENCE / theoretical. The fallthrough re-wraps the long-lived cache-control only when assetRes.ok is true; a 304 from env.ASSETS.fetch (reachable under run_worker_first:true on conditional requests for fingerprinted assets) has .ok===false and is returned with the binding's default max-age=0,must-revalidate instead of immutable. Impact is genuinely bounded (a conforming client that already received immutable won't revalidate; only intermediary caches, immutable-ignoring clients, and pre-immutable holders re-revalidate) and the whole long-cache mechanism is the owner-accepted #84 with no CI guard. Worth a one-line gate change (`assetRes.ok || assetRes.status === 304`) but low blast radius and partly speculative about which clients are affected.
+
+### 133. Worker: legacy redirect discards query string and fragment *(open — watch / low-confidence — 2026-06-15)*
+
+Worker: legacy redirect discards query string and fragment (src/worker.js:238-241) — confirmed real but explicitly harmless today. Response.redirect(new URL(legacyTarget, url.origin), 301) drops any inbound ?query on the three moved simulator pages; fragments are moot (never sent to server). The three pages don't read query params (grep confirmed zero url.search/searchParams usage), the site has no analytics consumer (no tracking by policy), so the only real-today impact is third-party attribution loss on inbound legacy links; the deep-link-state risk is hypothetical. A one-line fix (`target.search = url.search`) is cheap, but this is a latent correctness gap, not a live bug — keep on the watch list until a moved page actually reads query state.
+
+
 ### Deferred / Won't fix (with revisit trigger)
 
 Items considered during an audit and deliberately not pursued, each
@@ -3874,60 +4301,63 @@ remain in `## Recently addressed` at their numerical position:
   re-clicking the source pin); recorded so a future "fix" PR doesn't
   add a `cancelWire()` here. Trigger: an explicit UX decision to
   change the cancel-on-mismatch behavior.
-- **#78. Unused / no-consumer shared rules — deferred from Phase 3
-  (#77).** A few shared rules render nowhere today, so the Phase 3
-  polish pass left them alone rather than polish blind. Clean up (or
-  tokenize) when a production page first needs each:
-    - `.bas-breathe` (styles.css) is unused — its documented consumer,
-      the psychrometric state-point chip, actually rolls a tighter
-      page-local `psy-chip-breathe` variant. Consolidate to one when a
-      second consumer appears. (Both were tokenized in #77, so neither
-      is wrong on dark — this is just dedup.)
-    - `.bas-led.fault` / `.bas-led.warn` (styles.css) are unused (only
-      `.bas-led.active` has a consumer — vfd-mock) AND still hardcode
-      the light-theme red/heat rgba for their border/glow (0.32 / 0.08
-      alphas, no matching token). Tokenize via `color-mix` or new
-      red/heat glow tokens when first used on a page.
-    - `.tree` / `.trend` — **RESOLVED 2026-06-06**: the Phase 2 home
-      "seam" hero is their first production consumer, so both were
-      promoted to `styles.css` (SOFTWARE-REGISTER MOTIFS) and the
-      styleguide now reads the shared rules. Only `.wiresheet` stays
-      styleguide-local — its one candidate consumer
-      (`function-block-editor`) already has a complete token-driven
-      `.fbe-*` wiresheet, so promoting it is a refactor with no payoff;
-      promote when a second page wants that grid.
-
-    Trigger: a production page adopting any of the remaining motifs.
 
 ---
 
 ## Recently addressed
 
-- **#77. Phase 3 per-page dark-theme polish — shipped 2026-06-06**
-  (branch `issue-77/dark-theme-polish`). Phase 1b's dual-theme token
-  flip carried the whole site; this pass cleaned up the per-page
-  fit-and-finish:
-    - **vfd-mock adopted the equipment register** — its left "Drive
-      Front Panel" column is now a real device face (olive dot-matrix
-      LCD, `.device` bezel, plastic keypad); the right monitoring
-      column stays software register. The page now shows both registers
-      side by side.
-    - **Tokenized the off-palette washes** — `.psy-chip` /
-      `.fbe-block` inline colours and the shared `.bas-breathe` ring
-      (all hardcoded the LIGHT green); plus the styles.css tints
-      (`.ref-table` hover → `--blue-dim`, quiz wrong-answer →
-      new `--red-dim`, `.ref-table-dense` zebra → `--surface-2`).
-    - **Canvases redraw on theme toggle** — `theme.js` already
-      broadcast `themechange`, but nothing subscribed; the
-      psychrometric, pid-tuner, and pid-basics canvases (which read
-      tokens at draw time) now do. Verified: a runtime toggle repaints
-      all three.
-    - **Removed the legacy `.lcd-scanline`** (vfd-mock was its only
-      consumer); kept `.lcd-flicker` (a live value-change refresh cue).
-    - **Education diagrams re-screenshotted on dark** — clean; zero
-      hardcoded hex / `var(--x,#hex)` fallbacks remain site-wide.
-  Two clusters were intentionally deferred (unused/no-consumer shared
-  rules) → logged as **#78**.
+### 77. Phase 3 per-page dark-theme polish *(addressed 2026-06-06)*
+
+(branch `issue-77/dark-theme-polish`). Phase 1b's dual-theme token
+flip carried the whole site; this pass cleaned up the per-page
+fit-and-finish:
+  - **vfd-mock adopted the equipment register** — its left "Drive
+    Front Panel" column is now a real device face (olive dot-matrix
+    LCD, `.device` bezel, plastic keypad); the right monitoring
+    column stays software register. The page now shows both registers
+    side by side.
+  - **Tokenized the off-palette washes** — `.psy-chip` /
+    `.fbe-block` inline colours and the shared `.bas-breathe` ring
+    (all hardcoded the LIGHT green); plus the styles.css tints
+    (`.ref-table` hover → `--blue-dim`, quiz wrong-answer →
+    new `--red-dim`, `.ref-table-dense` zebra → `--surface-2`).
+  - **Canvases redraw on theme toggle** — `theme.js` already
+    broadcast `themechange`, but nothing subscribed; the
+    psychrometric, pid-tuner, and pid-basics canvases (which read
+    tokens at draw time) now do. Verified: a runtime toggle repaints
+    all three.
+  - **Removed the legacy `.lcd-scanline`** (vfd-mock was its only
+    consumer); kept `.lcd-flicker` (a live value-change refresh cue).
+  - **Education diagrams re-screenshotted on dark** — clean; zero
+    hardcoded hex / `var(--x,#hex)` fallbacks remain site-wide.
+Two clusters were intentionally deferred (unused/no-consumer shared
+rules) → logged as **#78**.
+
+### 78. Unused / no-consumer shared rules *(deferred from Phase 3, 2026-06-06)*
+
+Deferred from #77. A few shared rules render nowhere today, so the Phase 3
+polish pass left them alone rather than polish blind. Clean up (or
+tokenize) when a production page first needs each:
+  - `.bas-breathe` (styles.css) is unused — its documented consumer,
+    the psychrometric state-point chip, actually rolls a tighter
+    page-local `psy-chip-breathe` variant. Consolidate to one when a
+    second consumer appears. (Both were tokenized in #77, so neither
+    is wrong on dark — this is just dedup.)
+  - `.bas-led.fault` / `.bas-led.warn` (styles.css) are unused (only
+    `.bas-led.active` has a consumer — vfd-mock) AND still hardcode
+    the light-theme red/heat rgba for their border/glow (0.32 / 0.08
+    alphas, no matching token). Tokenize via `color-mix` or new
+    red/heat glow tokens when first used on a page.
+  - `.tree` / `.trend` — **RESOLVED 2026-06-06**: the Phase 2 home
+    "seam" hero is their first production consumer, so both were
+    promoted to `styles.css` (SOFTWARE-REGISTER MOTIFS) and the
+    styleguide now reads the shared rules. Only `.wiresheet` stays
+    styleguide-local — its one candidate consumer
+    (`function-block-editor`) already has a complete token-driven
+    `.fbe-*` wiresheet, so promoting it is a refactor with no payoff;
+    promote when a second page wants that grid.
+
+  Trigger: a production page adopting any of the remaining motifs.
 
 The 2026-05-16 audit also caught these, which were fixed in the
 same session this file was created:
@@ -4239,26 +4669,6 @@ than competing with the primary empty-state prose. Only the
 empty-state branch was changed — the wire-selected and block-
 selected branches already expose a "Delete block" / "Delete wire"
 button that documents the affordance.
-
-### 69. Nav `category` lives in two unlinked sources *(open — 2026-06-14)*
-
-The cascading nav dropdowns group pages by a `category` frontmatter key
-(read by the `navGroups` filter into `NAV_CATEGORIES`). The section
-landing pages independently tag the same pages via the `navCard()`
-`category` argument (for the filter chips). The two are **separate
-sources of truth** with no build-time tie: recategorizing a tool on the
-landing without updating its frontmatter (or vice-versa) silently drifts
-the chip and the nav into disagreement. The `navCategoryGuard` only
-checks the frontmatter against `NAV_CATEGORIES`, not against the
-landing. Unifying would mean data-driving the hand-written landing
-`navCard()` calls (read `category` from the page collection instead of
-hardcoding) — a bigger refactor than the cascading feature warranted,
-so deferred. Cheapest interim guard if it bites: a build collection that
-parses each landing's `navCard()` calls and asserts each `category`
-equals the target page's frontmatter. Note: education is the one place
-they legitimately differ — the landing uses granular keys (drives,
-control, …) under the `fundamentals` chip, while the nav frontmatter
-uses the chip-level `fundamentals`.
 
 ### Post-audit re-evaluation sweep (2026-05-16)
 
