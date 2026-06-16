@@ -14,9 +14,11 @@
 > v2 ship and the re-scoped v3 list). The **v3 content-quiz arm shipped
 > 2026-06-05** across three more PRs (Refrigeration, Controls & Logic,
 > Air & Pumps) — all 16 Education lessons now have a 1:1 paired quiz.
-> What remains of v3 is the cross-page **Mix quizzes** and the
-> **specialized field drills** (plus a Commissioning lesson to parent
-> the Controller Swap drill). File stays at root until those land, at
+> The specialized field drills have since shipped (Field Wiring &
+> Sensors, Sequencing Scenarios). What remains of v3 is the cross-page
+> **Mix quizzes** (plus an optional Junior Interview Prep drill and a
+> Commissioning lesson to parent the Controller Swap drill). File stays
+> at root until the Mix quizzes land, at
 > which point it moves to `docs/audits/quiz/` per the original
 > self-direction below.
 
@@ -420,11 +422,12 @@ Three increments — each ships independently, no big-bang.
    Pumps (Psychrometrics Basics, Equipment Staging) — completing the
    1:1 lesson↔quiz matrix (all 16 lessons paired) and adding the
    `Refrigeration`, `Controls`, and `Psychrometrics` topic chips
-   (Equipment Staging filed under `Hydronics`). **Still open:** more
-   specialized field drills (Field Wiring & Sensors, Sequencing
-   Scenarios, Junior Interview Prep), then the **now-unblocked**
-   All-Protocols and All-Hydronics Mix quizzes (cross-page reuse via a
-   shared `_data/quiz-banks/` data file — enough banks now exist).
+   (Equipment Staging filed under `Hydronics`). Two specialized field
+   drills then shipped (**Field Wiring & Sensors**, **Sequencing
+   Scenarios**). **Still open:** the **now-unblocked** All-Protocols
+   and All-Hydronics Mix quizzes (cross-page reuse via a shared
+   `_data/quiz-banks/` data file — enough banks now exist), plus an
+   optional Junior Interview Prep drill.
    Defer order-the-steps and identify-on-diagram formats unless one
    becomes clearly necessary. Surviving Your First Months may be
    retired here if the specialized drills cover the same ground better.
@@ -434,7 +437,7 @@ get a real check before propagating.
 
 ---
 
-*Last updated 2026-06-05 — v1 shipped in PR #141, v2 in PRs
+*Last updated 2026-06-15 — v1 shipped in PR #141, v2 in PRs
 #157 / #158 / #159; v3 content-quiz arm shipped 2026-06-05 (all 16
-lessons now paired). Mix quizzes + specialized field drills still
-open.*
+lessons now paired); specialized field drills (Field Wiring & Sensors,
+Sequencing Scenarios) shipped. Mix quizzes still open.*

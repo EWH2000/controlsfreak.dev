@@ -425,10 +425,11 @@ section). **Category keys mirror the landing pages' `navCard()`
   truth — enumerating them here drifted twice (audit-2026-06 docs
   sweep), so don't.
 - `_site/` — build output (gitignored).
-- `docs/` — archived audit artifacts and one-shot prompts.
-  `docs/audits/<topic>/` collects the triage / decisions /
-  implementation docs from each completed audit cycle in one
-  place; `docs/prompts/` collects one-shot creative briefs.
+- `docs/` — archived audit artifacts. `docs/audits/<topic>/`
+  collects the triage / decisions / implementation / findings docs
+  from each completed audit cycle in one place (the durable record;
+  each carries a disposition header). Spent one-shot prompt briefs
+  are deleted once their deliverable ships — git history retains them.
 - Root: `CLAUDE.md`, `README.md`, `site-ideas-and-friction.md`,
   `codebase-issues.md`, `content-audit.md`, `.eleventy.js`,
   `wrangler.jsonc`, `package.json`.

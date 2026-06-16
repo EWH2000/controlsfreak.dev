@@ -1,5 +1,11 @@
 # ux-audit.md
 
+> **Archived 2026-06-15.** Fully closed — all 12 findings carry inline
+> *Addressed* markers, and the pass was superseded in spirit by
+> `docs/audits/2026-06-extensive/findings.md`. Moved from repo root
+> into `docs/audits/` so it stops reading as a live running log; kept
+> as the durable record of the three-persona UX walkthrough.
+
 Running log of **usability / experience** findings — where the site
 trips, confuses, slows, or under-delivers for a real visitor — found
 by walking the whole site three times, once in each of three personas
