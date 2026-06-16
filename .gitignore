@@ -27,6 +27,11 @@ npm-debug.log*
 .env.*
 .dev.vars
 
+# Wrangler local state — dev/deploy/tail write caches, deploy state, and
+# tmp bundles here (.wrangler/tmp already appears after any wrangler run).
+# None of it belongs in history; no secrets (those are covered above).
+.wrangler/
+
 # Playwright
 test-results/
 playwright-report/
