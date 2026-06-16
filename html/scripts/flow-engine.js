@@ -212,7 +212,9 @@
     let pulseIO = null;
     let flowIO = null;
     let gutterMql = null;
-    let frameStarted = false;
+    let frameStarted = false;   // engine initialized (reduced-motion gate); set once
+    let looping = false;        // rAF loop currently scheduled (#113 — suspends when idle)
+    let lastFrameT = null;      // last rAF timestamp; reset whenever the loop suspends
 
     // The gutter collage's own CSS hides it below this width — keep in
     // sync with the .schematic-bg media query in styles.css.
@@ -258,48 +260,77 @@
         annotatedPulse.forEach(buildPulsePathFor);
 
         if (!pools.length && !pulsePaths.size) return;
-        if (frameStarted) return;
         frameStarted = true;
+        startLoop();
+    }
 
-        let lastT = null;
-        function frame(t) {
-            if (lastT == null) lastT = t;
-            // Clamp dt — if the tab was backgrounded, requestAnimationFrame
-            // can fire with a huge gap; we don't want a single frame's
-            // worth of catch-up to teleport particles past each other.
-            const dt = Math.min(0.1, (t - lastT) / 1000);
-            lastT = t;
-            const delta = VELOCITY * dt;
-
-            // Iterate backwards so an in-flight splice of a stale pool
-            // (its annotated element was removed from the DOM) doesn't
-            // skip the next pool. No current page mutates SVG geometry
-            // like this — recording the guard so a future animated
-            // widget can't leak a detached-element reference here.
-            for (let p = pools.length - 1; p >= 0; p--) {
-                const pool = pools[p];
-                if (!pool.el.isConnected) {
-                    removePool(pool, p);
-                    continue;
-                }
-                // Offscreen pools don't tick — the particles placed at
-                // build time freeze until the path scrolls back into
-                // the viewport (audit #31: ticking everything cost
-                // ~100% of the idle main thread).
-                if (!visibleFlowEls.has(pool.el)) continue;
-                const len = pool.length;
-                for (let i = 0; i < pool.particles.length; i++) {
-                    const part = pool.particles[i];
-                    part.offset += delta;
-                    if (part.offset >= len) part.offset -= len;
-                    setPos(pool, part);
-                }
-            }
-
-            tickPulses(dt);
-
-            requestAnimationFrame(frame);
+    // #113: only run the rAF loop while there's something to animate. The
+    // audit-#31 gating already skipped per-particle work for offscreen
+    // pools, but the loop itself still woke every frame to iterate pools
+    // and pulsePaths checking visibility. Now the loop SUSPENDS when no
+    // visible flow pool, no in-flight pulse, and no visible auto-firing
+    // pulse path remains; a resume path (IO 'intersecting', firePulse, or
+    // init/buildGutterPools) restarts it. `frameStarted` stays the
+    // initialized-once gate firePulse/refreshPath/setPathColor check;
+    // `looping` separately tracks whether the rAF loop is scheduled.
+    function hasWork() {
+        if (activePulses.length) return true;
+        for (let p = 0; p < pools.length; p++) {
+            if (pools[p].particles.length && visibleFlowEls.has(pools[p].el)) return true;
         }
+        let work = false;
+        pulsePaths.forEach(function (cfg, el) {
+            if (cfg.intervalMs > 0 && visiblePulseEls.has(el)) work = true;
+        });
+        return work;
+    }
+
+    function startLoop() {
+        if (looping || !frameStarted) return;
+        if (!hasWork()) return;
+        looping = true;
+        lastFrameT = null;
+        requestAnimationFrame(frame);
+    }
+
+    function frame(t) {
+        if (lastFrameT == null) lastFrameT = t;
+        // Clamp dt — if the tab was backgrounded, requestAnimationFrame
+        // can fire with a huge gap; we don't want a single frame's worth
+        // of catch-up to teleport particles past each other.
+        const dt = Math.min(0.1, (t - lastFrameT) / 1000);
+        lastFrameT = t;
+        const delta = VELOCITY * dt;
+
+        // Iterate backwards so an in-flight splice of a stale pool (its
+        // annotated element was removed from the DOM) doesn't skip the
+        // next pool. No current page mutates SVG geometry like this —
+        // recording the guard so a future animated widget can't leak a
+        // detached-element reference here.
+        for (let p = pools.length - 1; p >= 0; p--) {
+            const pool = pools[p];
+            if (!pool.el.isConnected) {
+                removePool(pool, p);
+                continue;
+            }
+            // Offscreen pools don't tick — the particles placed at build
+            // time freeze until the path scrolls back into the viewport
+            // (audit #31: ticking everything cost ~100% of the idle main
+            // thread).
+            if (!visibleFlowEls.has(pool.el)) continue;
+            const len = pool.length;
+            for (let i = 0; i < pool.particles.length; i++) {
+                const part = pool.particles[i];
+                part.offset += delta;
+                if (part.offset >= len) part.offset -= len;
+                setPos(pool, part);
+            }
+        }
+
+        tickPulses(dt);
+
+        // Suspend when nothing can animate; a resume path restarts us.
+        if (!hasWork()) { looping = false; lastFrameT = null; return; }
         requestAnimationFrame(frame);
     }
 
@@ -430,6 +461,25 @@
             if (!(pool.el.closest && pool.el.closest('.schematic-bg'))) continue;
             removePool(pool, p);
         }
+        // #112: also retire in-flight pulses on gutter motifs and drop their
+        // pulsePaths + pulseIO registrations. Teardown previously handled
+        // flow pools only, so a gutter pulse kept ticking on the now
+        // display:none SVG until it self-retired (~1-2s of position writes),
+        // and its pulseIO observation leaked for the page lifetime
+        // (buildPulsePathFor re-registers it on the next gutter-grow).
+        const isGutter = (node) => !!(node.closest && node.closest('.schematic-bg'));
+        for (let p = activePulses.length - 1; p >= 0; p--) {
+            const pulse = activePulses[p];
+            if (!isGutter(pulse.el)) continue;
+            for (let i = 0; i < pulse.circles.length; i++) pulse.circles[i].remove();
+            activePulses.splice(p, 1);
+        }
+        pulsePaths.forEach(function (cfg, el) {
+            if (!isGutter(el)) return;
+            if (pulseIO) pulseIO.unobserve(el);
+            visiblePulseEls.delete(el);
+            pulsePaths.delete(el);
+        });
         document.querySelectorAll('.schematic-bg svg.flow-active').forEach(function (svg) {
             let stillPooled = false;
             pools.forEach(function (pool) {
@@ -450,6 +500,7 @@
     function buildGutterPools() {
         document.querySelectorAll('.schematic-bg [data-flow]').forEach(buildPoolForEl);
         document.querySelectorAll('.schematic-bg [data-pulse]').forEach(buildPulsePathFor);
+        startLoop();   // #113: rebuilt gutter pools may be visible — resume if suspended
     }
 
     function ensureFlowIO() {
@@ -458,11 +509,13 @@
         // before the path scrolls in, so motion is already underway
         // as it appears.
         flowIO = new IntersectionObserver(function (entries) {
+            let appeared = false;
             for (let i = 0; i < entries.length; i++) {
                 const e = entries[i];
-                if (e.isIntersecting) visibleFlowEls.add(e.target);
+                if (e.isIntersecting) { visibleFlowEls.add(e.target); appeared = true; }
                 else visibleFlowEls.delete(e.target);
             }
+            if (appeared) startLoop();   // #113: resume the loop if it had suspended
         }, { rootMargin: '120px 0px' });
     }
 
@@ -505,6 +558,10 @@
     // externally via FlowEngine.pulse(el).
     function buildPulsePathFor(el) {
         if (typeof el.getTotalLength !== 'function' || typeof el.getPointAtLength !== 'function') return;
+        // Mirror buildPoolForEl: don't register a pulse path on a gutter
+        // motif while the gutter is hidden (#112) — buildGutterPools
+        // re-registers it on the next grow past the breakpoint.
+        if (gutterHidden(el)) return;
         const length = el.getTotalLength();
         if (!isFinite(length) || length < 1) return;
 
@@ -541,11 +598,13 @@
         // appears, which reads better than a dead path that suddenly
         // wakes up.
         pulseIO = new IntersectionObserver(function (entries) {
+            let appeared = false;
             for (let i = 0; i < entries.length; i++) {
                 const e = entries[i];
-                if (e.isIntersecting) visiblePulseEls.add(e.target);
+                if (e.isIntersecting) { visiblePulseEls.add(e.target); appeared = true; }
                 else visiblePulseEls.delete(e.target);
             }
+            if (appeared) startLoop();   // #113: resume the loop if it had suspended
         }, { rootMargin: '120px 0px' });
     }
 
@@ -572,6 +631,7 @@
         }
 
         activePulses.push({ el: el, length: cfg.length, speed: cfg.speed, headOffset: 0, circles: circles });
+        startLoop();   // #113: an explicit pulse is work — resume if suspended
     }
 
     // Advance every in-flight pulse and fire newly-due auto-pulses.

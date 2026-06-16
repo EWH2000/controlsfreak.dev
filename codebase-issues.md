@@ -4052,7 +4052,7 @@ refreshValues() runs on every tick (10 Hz). It walks every block's pins (classLi
 
 **Suggested fix.** Build a byId map once in refreshValues instead of graph.blocks.find() per wire/pinKind, and skip setAttribute when the computed class string equals the current one (cache the last class on the wire object).
 
-### 112. flow-engine: in-flight pulses and pulsePaths registrations on gutter motifs survive teardownGutterPools *(open — 2026-06-15)*
+### 112. flow-engine: in-flight pulses and pulsePaths registrations on gutter motifs survive teardownGutterPools *(addressed 2026-06-16)*
 
 *Severity: low · Category: bug · Confidence: medium* — `html/scripts/flow-engine.js:421-434 (teardownGutterPools handles flow pools only); pulse-path defs at html/_includes/schematic-bg.njk`
 
@@ -4062,7 +4062,9 @@ teardownGutterPools tears down flow POOLS for .schematic-bg elements but never t
 
 **Suggested fix.** In teardownGutterPools, also retire in-flight gutter pulses (iterate activePulses backwards; if pulse.el.closest('.schematic-bg'), remove its circles and splice) and drop gutter pulsePaths entries with pulseIO.unobserve(el)+pulsePaths.delete(el). buildPulsePathFor re-registers them on the next gutter-grow init().
 
-### 113. flow-engine: rAF loop runs forever and never self-suspends even with zero animatable work *(open — 2026-06-15)*
+**Resolution (2026-06-16):** teardownGutterPools now also retires in-flight pulses on `.schematic-bg` motifs (remove circles + splice from activePulses) and drops their pulsePaths entries (`pulseIO.unobserve` + `visiblePulseEls.delete` + `pulsePaths.delete`). Added the missing `gutterHidden(el)` guard to buildPulsePathFor (the contributing cause), mirroring buildPoolForEl; buildGutterPools re-registers gutter pulses on the next grow. Shipped on `fix/flow-engine-lifecycle` with #113 (one version bump, 3.18.5 → 3.18.6).
+
+### 113. flow-engine: rAF loop runs forever and never self-suspends even with zero animatable work *(addressed 2026-06-16)*
 
 *Severity: low · Category: perf · Confidence: medium* — `html/scripts/flow-engine.js:259-297 (frame always re-schedules at line 295)`
 
@@ -4071,6 +4073,8 @@ Once frameStarted is set, frame() unconditionally calls requestAnimationFrame(fr
 **Impact.** A small constant per-frame cost (Map/array iteration, visibility checks) that never drops to zero even when nothing can animate. Negligible per frame but continuous; rAF auto-pauses in backgrounded tabs, so the residual is bounded.
 
 **Suggested fix.** Pause the loop when there's no work: if pools.length==0 && activePulses.length==0 && no visible pulsePaths after a tick, stop re-scheduling and reset a frameStarted-style flag so the next IO 'intersecting' callback or firePulse/init restarts it. Lower priority than the breakpoint-rebuild bug; document as a known hot-path note if not fixed.
+
+**Resolution (2026-06-16):** implemented the suspend rather than just documenting it. Split the dual-use `frameStarted` into `frameStarted` (the init-once / reduced-motion gate firePulse et al. check — unchanged) and a new `looping` flag. A `hasWork()` predicate (any in-flight pulse, any visible flow pool with particles, or any visible auto-firing pulse path) gates the loop: `frame()` stops re-scheduling when `!hasWork()`, and `startLoop()` restarts it from every resume path — the flow/pulse IO 'intersecting' callbacks, `firePulse()`, `init()`, and `buildGutterPools()`. Regression test in `tests/flow-engine.spec.js` pins the load-bearing risk (the IO-gated startLoop never firing): a visible diagram's particle measurably moves over 350 ms. Part of `fix/flow-engine-lifecycle`.
 
 ### 114. quiz-engine: a first quiz run celebrates 'new best' and stores a record even at a score of 0 *(addressed 2026-06-16)*
 
