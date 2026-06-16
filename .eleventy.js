@@ -123,6 +123,45 @@ module.exports = function(eleventyConfig) {
         return [];
     });
 
+    // Build-time guard: every `nav: education` lesson must appear in the
+    // educationSequence order array, and every URL in that array must be
+    // claimed by a real education page. Without this, a new lesson silently
+    // emits no rel=prev/next and the prev/next chain skips it — exactly how
+    // controller-wiring and bacnet-mstp drifted out of a 16-entry list while
+    // the grid grew to 18 (codebase-issues #93). Membership only: the array's
+    // ORDER must still be kept in lockstep with the index.html grid by hand
+    // (the grid order isn't machine-readable here). Mirrors navCategoryGuard.
+    eleventyConfig.addCollection("educationSequenceGuard", (collectionApi) => {
+        const sequence = require("./html/_data/educationSequence.js");
+        const sequenced = new Set(Object.keys(sequence));
+        const landing = "https://controlsfreak.dev/education/";
+        const pagePaths = new Set();
+        const offenders = [];
+        collectionApi.getAll()
+            .filter((item) => item.data.nav === "education"
+                && typeof item.data.canonical === "string"
+                && item.data.canonical !== landing)
+            .forEach((item) => {
+                const path = item.data.canonical.replace("https://controlsfreak.dev", "");
+                pagePaths.add(path);
+                if (!sequenced.has(path)) {
+                    offenders.push(`  ${item.inputPath} — nav:education page absent from educationSequence order`);
+                }
+            });
+        sequenced.forEach((url) => {
+            if (!pagePaths.has(url)) {
+                offenders.push(`  educationSequence lists ${url} but no nav:education page claims that canonical`);
+            }
+        });
+        if (offenders.length) {
+            throw new Error(
+                `educationSequence must list every nav:education lesson ` +
+                `(html/_data/educationSequence.js header invariant):\n${offenders.join("\n")}`
+            );
+        }
+        return [];
+    });
+
     // Pages for sitemap.njk: every template that carries a `canonical`
     // frontmatter — i.e. every real page; the sitemap template itself
     // has none, so it self-excludes. (Counts drift: a hardcoded "all 20

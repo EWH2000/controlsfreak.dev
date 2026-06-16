@@ -13,9 +13,20 @@
 // reads `educationSequence[page.url]` — no filtering needed in
 // Nunjucks. URLs match the `.html`-extension convention enforced by
 // html.11tydata.js.
+//
+// MEMBERSHIP is now guarded at build time: `educationSequenceGuard`
+// in .eleventy.js fails the build if any `nav: education` page is
+// absent from `order` (or `order` lists a URL no education page
+// claims). That guard caught the original drift — controller-wiring
+// and bacnet-mstp shipped as full lessons but were never added here,
+// so both emitted zero rel=prev/next and the chain skipped them
+// (codebase-issues #93). The guard checks set membership, not order;
+// keeping `order` in lockstep with the index.html grid order is still
+// a by-hand discipline (the grid order isn't machine-readable here).
 
 const order = [
     "/education/pid-basics.html",
+    "/education/controller-wiring.html",
     "/education/hydronic-loops.html",
     "/education/load-piping.html",
     "/education/vfds.html",
@@ -31,6 +42,7 @@ const order = [
     "/education/modbus-decoding.html",
     "/education/bacnet-basics.html",
     "/education/bacnet-networking.html",
+    "/education/bacnet-mstp.html",
 ];
 
 const sequence = {};
