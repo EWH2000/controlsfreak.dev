@@ -44,6 +44,18 @@ for (const file of bankFiles) {
                 expect(q.choices.length, `${file}/${q.id}: ≥2 choices`).toBeGreaterThanOrEqual(2);
                 const correct = q.choices.filter(c => c && c.correct === true);
                 expect(correct.length, `${file}/${q.id}: exactly one correct choice`).toBe(1);
+                // #117: every choice needs a truthy id + text, unique within
+                // the question — reveal()/submit() match by data-choice-id,
+                // so a duplicate id mis-marks the miss and a missing text
+                // renders the literal 'undefined'. Mirrors the runtime
+                // validateQuestion() check added in the same pass.
+                const choiceIds = new Set();
+                for (const c of q.choices) {
+                    expect(Boolean(c && c.id), `${file}/${q.id}: every choice has an id`).toBe(true);
+                    expect(Boolean(c && c.text), `${file}/${q.id}: choice ${c && c.id} has text`).toBe(true);
+                    expect(choiceIds.has(c.id), `${file}/${q.id}: duplicate choice id ${c.id}`).toBe(false);
+                    choiceIds.add(c.id);
+                }
                 if (q.type === 'gotcha') {
                     expect(typeof q.snippet, `${file}/${q.id}: gotcha snippet`).toBe('string');
                 }

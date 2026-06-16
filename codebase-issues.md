@@ -4072,7 +4072,7 @@ Once frameStarted is set, frame() unconditionally calls requestAnimationFrame(fr
 
 **Suggested fix.** Pause the loop when there's no work: if pools.length==0 && activePulses.length==0 && no visible pulsePaths after a tick, stop re-scheduling and reset a frameStarted-style flag so the next IO 'intersecting' callback or firePulse/init restarts it. Lower priority than the breakpoint-rebuild bug; document as a known hot-path note if not fixed.
 
-### 114. quiz-engine: a first quiz run celebrates 'new best' and stores a record even at a score of 0 *(open — 2026-06-15)*
+### 114. quiz-engine: a first quiz run celebrates 'new best' and stores a record even at a score of 0 *(addressed 2026-06-16)*
 
 *Severity: low · Category: correctness · Confidence: high* — `html/scripts/quiz-engine.js:642-662`
 
@@ -4082,7 +4082,9 @@ On the very first finish there is no stored best, so prevBestTotal is NaN and pr
 
 **Suggested fix.** Gate the new-best on a non-trivial score — only treat a first run as a best when score > 0 (or compare curRatio > prevBestRatio only when prevBestRatio >= 0, treating the no-prior case as 'store silently, don't celebrate'). Distinct from the closed #89 (short-vs-longer overwrite); #89's !isFinite short-circuit is in fact what makes the first run unconditionally longEnough.
 
-### 115. quiz-engine: stored best can become permanently unbeatable if a bank shrinks below the recorded best_total *(open — 2026-06-15)*
+**Resolution (2026-06-16):** restructured the best-record check around `hasPrior = prevBestRatio >= 0`. With no prior record the run is a "best" only when `score > 0` — a 0/N baseline is no longer celebrated or persisted. The #89 longer-run/ratio comparison (`longEnough && beatsRecord`) is unchanged for the has-prior path. Shipped on `fix/quiz-engine-guards` with #115–#118 (one version bump, 3.18.3 → 3.18.4). Behavioral regression test (first all-wrong run → no `· new best`, no stored record) lands with the quiz test-gap pass (#124).
+
+### 115. quiz-engine: stored best can become permanently unbeatable if a bank shrinks below the recorded best_total *(addressed 2026-06-16)*
 
 *Severity: low · Category: robustness · Confidence: medium* — `html/scripts/quiz-engine.js:652-657`
 
@@ -4092,7 +4094,9 @@ The #89 longer-run guard is `longEnough = !isFinite(prevBestTotal) || total >= p
 
 **Suggested fix.** When the current run's total is below the stored best_total AND equals the full bank length (state.count === 'all' && total === questions.length), treat the stored best as stale — clamp/repair the record or allow the full-bank run to set a new best. At minimum document the bank-shrink hazard in the engine header next to the #89 note.
 
-### 116. quiz-engine: numericInput inputmode attribute is never reset between questions *(open — 2026-06-15)*
+**Resolution (2026-06-16):** added `staleRecord = hasPrior && total === questions.length && prevBestTotal > questions.length` — a stored best_total larger than the whole current bank can never be matched again, so a full-bank run with a non-zero score repairs it (escapes the #89 longer-run lock) instead of leaving the record permanently unbeatable. Part of `fix/quiz-engine-guards`.
+
+### 116. quiz-engine: numericInput inputmode attribute is never reset between questions *(addressed 2026-06-16)*
 
 *Severity: low · Category: robustness · Confidence: high* — `html/scripts/quiz-engine.js:252-258,391-393`
 
@@ -4102,7 +4106,9 @@ The shared numericInput is created once with inputmode='decimal' and reused acro
 
 **Suggested fix.** Always set the attribute deterministically in showQuestion()'s numeric branch: `numericInput.setAttribute('inputmode', q.inputmode || 'decimal');`.
 
-### 117. quiz-engine: choice id uniqueness within a question is never validated; reveal() marks by data-choice-id *(open — 2026-06-15)*
+**Resolution (2026-06-16):** applied exactly that — `numericInput.setAttribute('inputmode', q.inputmode || 'decimal')` runs every numeric question, so a stale `'numeric'` from an earlier question can't stick on a later default-decimal one. Latent today (no bank sets inputmode). Part of `fix/quiz-engine-guards`.
+
+### 117. quiz-engine: choice id uniqueness within a question is never validated; reveal() marks by data-choice-id *(addressed 2026-06-16)*
 
 *Severity: low · Category: robustness · Confidence: medium* — `html/scripts/quiz-engine.js:106-117,540-541,562-563`
 
@@ -4112,7 +4118,9 @@ validateQuestion() checks choices.length >= 2 and exactly-one-correct but never 
 
 **Suggested fix.** Add per-choice id/text presence + within-question id-uniqueness checks to validateQuestion(), and mirror them into quiz-banks.spec.js so a bad bank fails the build/test rather than just at mount. Cheap: build a Set of choice ids and assert size === choices.length and every choice has truthy id and text.
 
-### 118. quiz-engine: dead/unused mapped index in the results miss-list *(open — 2026-06-15)*
+**Resolution (2026-06-16):** added the per-choice id/text presence + within-question id-uniqueness checks to `validateQuestion()` (mcq/gotcha case) AND mirrored them into `tests/quiz-banks.spec.js`, so a malformed choice now fails node-side across every bank rather than only at mount on the questions a run happens to draw. All current banks pass. Part of `fix/quiz-engine-guards`.
+
+### 118. quiz-engine: dead/unused mapped index in the results miss-list *(addressed 2026-06-16)*
 
 *Severity: low · Category: dead-code · Confidence: high* — `html/scripts/quiz-engine.js:695-697,711`
 
@@ -4121,6 +4129,8 @@ renderResults() builds the miss list with `.map(function (a, i) { return { a: a,
 **Impact.** None functional — purely dead scaffolding. Minor maintenance noise.
 
 **Suggested fix.** Drop the wrapper (`const misses = state.answers.filter(a => !a.correct);` and adjust the forEach to take the answer directly), or actually surface a numbered miss row. Pick one rather than carrying the unused field.
+
+**Resolution (2026-06-16):** dropped the wrapper — `const misses = state.answers.filter(a => !a.correct)` and the forEach now takes the answer directly. Pure cleanup, no behavior change. Part of `fix/quiz-engine-guards`.
 
 ### 119. search.js: index-fetch failure is silent and never retried — palette permanently empty after one bad response *(open — 2026-06-15)*
 
