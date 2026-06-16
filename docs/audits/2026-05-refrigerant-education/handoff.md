@@ -1,5 +1,14 @@
 # Refrigerant cycle — Education chapter
 
+> **Archived 2026-06-15.** The chapter shipped — all three pages are
+> live (`education/refrigerant-cycle-basics.html`,
+> `superheat-subcooling.html`, `metering-devices-txv-eev.html`) and
+> cross-linked across the site. The optional **page 4 (refrigerants +
+> pressures)** was the only deferred item; it now lives on the
+> `site-ideas-and-friction.md` wishlist. Moved from repo root into
+> `docs/audits/` per this file's own graduation note. The "Resume
+> here" block below is historical — do not act on it.
+
 A self-contained handoff prompt for the refrigerant cycle Education
 work. Paste this (or its key sections) as the first message of a
 fresh conversation when picking up the chapter.
