@@ -14,7 +14,7 @@ const path = require('node:path');
 const vm   = require('node:vm');
 const { test, expect } = require('@playwright/test');
 
-function loadUnits() {
+function loadUnits(extra) {
     const src = fs.readFileSync(
         path.join(__dirname, '..', 'html', 'scripts', 'units.js'),
         'utf8',
@@ -29,6 +29,7 @@ function loadUnits() {
             body: null,
         },
         CustomEvent: function CustomEvent() {},
+        ...(extra || {}),
     };
     ctx.window = ctx;
     vm.runInNewContext(src, ctx);
@@ -47,6 +48,17 @@ test('API shape parity: massFlow is the one display-only quantity', () => {
     // readout (coil sizing derives it from airflow ÷ specific volume),
     // never a user input, so the asymmetry is deliberate.
     expect(canonKeys).toEqual(displayKeys.filter(k => k !== 'massFlow'));
+});
+
+test('convert() warns (not silently no-ops) for a display-only quantity (#104)', () => {
+    // massFlow has no Q entry, so convert() can't convert it and returns the
+    // value unchanged — but it must SURFACE that instead of silently leaving
+    // a wrong (unconverted) number if a future page ever wires it through.
+    const warnings = [];
+    const Uw = loadUnits({ console: { warn: (m) => warnings.push(String(m)) } });
+    const out = Uw.convert(5, 'us', 'metric', 'massFlow');
+    expect(out).toBe(5);                                        // unchanged — no conversion exists
+    expect(warnings.some((w) => w.includes('massFlow'))).toBe(true);
 });
 
 test('round-trip: us → metric → us is identity for every convertible quantity', () => {
