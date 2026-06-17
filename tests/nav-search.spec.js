@@ -234,10 +234,15 @@ test('tool-shaped queries rank the tool first; lesson-only queries unaffected', 
 
     expect(await first('superheat')).toContain('Calculator');
     expect(await first('psychrometric')).toContain('Chart');
-    // No tool covers hydronics directly — the lesson still leads.
-    expect(await first('hydronic')).toContain('Hydronic');
-    const tag = await page.locator('.palette-result').first().locator('.palette-result-tag').textContent();
-    expect(tag).toBe('Lesson');
+    // The Hydronic Loop Builder simulator is a direct title match and now leads
+    // "hydronic" (before it shipped, the Hydronic Loops lesson did) — the most
+    // relevant Hydronic page wins, not a tangentially-related tool.
+    expect(await first('hydronic')).toContain('Hydronic Loop Builder');
+    expect(await page.locator('.palette-result').first().locator('.palette-result-tag').textContent()).toBe('Simulator');
+    // A lesson-led topic still leads with its lesson — the builder's keyword hit
+    // on "balancing" doesn't hijack a non-tool-shaped query.
+    expect(await first('balancing')).toContain('Balancing');
+    expect(await page.locator('.palette-result').first().locator('.palette-result-tag').textContent()).toBe('Lesson');
 
     expect(errors, 'section-bonus ranking should log no errors').toEqual([]);
 });
