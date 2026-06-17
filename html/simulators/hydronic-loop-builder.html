@@ -1,0 +1,1084 @@
+---
+title: Hydronic Loop Builder — controlsfreak.dev
+description: Build a hot- or chilled-water loop on an elevation — drop a plant, pump, coils, and valves, pipe them, and watch flow and water temperature solve live.
+canonical: https://controlsfreak.dev/simulators/hydronic-loop-builder.html
+nav: simulators
+keywords: hydronic loop pump coil valve cv balancing delta-t static head primary secondary chilled water flow head operating point
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block head %}
+    <style>
+        /* Page-specific — the Hydronic Loop Builder. A three-region
+           workspace (palette rail · elevation canvas · inspector), the same
+           custom-simulator precedent as the Function-Block Editor, swapped
+           from a signal wiresheet to a piping elevation: components are
+           equipment (nodes), pipes are the edges, gravity points down, and a
+           pipe drawn vertically is a real height delta. Class prefix hlb-.
+           The .widget-* shell isn't used — this is a full custom tool — but
+           the example chip row reuses the shared .widget-try idiom and the
+           live readouts use the shared equipment register (.device / .lcd). */
+
+        .hlb-workspace {
+            display: grid;
+            grid-template-columns: 9.5rem 1fr;
+            gap: 0.9rem;
+            margin: 1rem 0 0.9rem;
+        }
+
+        /* ── Palette rail ── */
+        .hlb-palette {
+            background: var(--surface-3);
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            padding: 0.55rem 0.5rem;
+            overflow-y: auto;
+            max-height: 32rem;
+        }
+        .hlb-palette-label {
+            font-family: var(--mono);
+            font-size: 0.6rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.09em;
+            color: var(--text-dim);
+            margin: 0.7rem 0 0.3rem;
+        }
+        .hlb-palette-label:first-child { margin-top: 0.1rem; }
+        .hlb-palette-btn {
+            display: block;
+            width: 100%;
+            text-align: left;
+            font-family: var(--mono);
+            font-size: 0.68rem;
+            color: var(--text-bright);
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            padding: 0.28rem 0.45rem;
+            margin-bottom: 0.25rem;
+            cursor: pointer;
+        }
+        .hlb-palette-btn:hover { border-color: var(--accent); color: var(--accent); }
+        .hlb-palette-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+        /* ── Elevation canvas ── */
+        .hlb-canvas {
+            position: relative;
+            background:
+                repeating-linear-gradient(0deg, transparent 0, transparent 33px, var(--border-faint) 33px, var(--border-faint) 34px),
+                var(--surface-3);
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            height: 32rem;
+            overflow: auto;
+        }
+        .hlb-canvas-inner { position: relative; width: 900px; height: 520px; }
+        /* a faint "grade" line at the canvas floor, so "up" reads as elevation */
+        .hlb-grade {
+            position: absolute; left: 0; right: 0; bottom: 0; height: 0;
+            border-top: 1px dashed var(--border); pointer-events: none;
+        }
+        .hlb-pipe-layer { position: absolute; top: 0; left: 0; width: 900px; height: 520px; pointer-events: none; }
+        .hlb-pipe { fill: none; stroke: var(--blue-cool); stroke-width: 3.2; stroke-linecap: round; stroke-linejoin: round; }
+        .hlb-pipe-hit { fill: none; stroke: transparent; stroke-width: 16; pointer-events: stroke; cursor: pointer; }
+        .hlb-pipe-sel { stroke-dasharray: 6 4; }
+        .hlb-pipe-pending { stroke: var(--accent); stroke-width: 2.4; stroke-dasharray: 4 4; fill: none; opacity: 0.8; }
+
+        /* ── Components (equipment boxes) ── */
+        .hlb-comp {
+            position: absolute;
+            width: 6rem;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            user-select: none;
+            box-shadow: 0 1px 0 var(--bevel-lo);
+            z-index: 2;
+        }
+        .hlb-comp-sel { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+        .hlb-comp-head {
+            font-family: var(--mono);
+            font-size: 0.6rem;
+            font-weight: 600;
+            letter-spacing: 0.03em;
+            color: var(--text-bright);
+            background: var(--surface-2);
+            border-bottom: 1px solid var(--border);
+            padding: 0.2rem 0.4rem;
+            border-radius: 2px 2px 0 0;
+            cursor: move;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 0.3rem;
+        }
+        .hlb-comp-sel .hlb-comp-head { background: var(--accent-dim); color: var(--accent); }
+        .hlb-comp-glyph { color: var(--text-dim); font-size: 0.62rem; }
+        .hlb-comp-body {
+            font-family: var(--mono);
+            font-size: 0.6rem;
+            color: var(--blue);
+            text-align: center;
+            padding: 0.28rem 0.3rem;
+            min-height: 1.1rem;
+        }
+        .hlb-comp-body .sub { color: var(--text-dim); }
+
+        /* ports sit on the box edges; class carries the edge it's pinned to */
+        .hlb-port {
+            position: absolute;
+            width: 0.7rem; height: 0.7rem;
+            border-radius: 50%;
+            border: 1.5px solid var(--blue);
+            background: var(--surface);
+            cursor: crosshair;
+            z-index: 3;
+        }
+        .hlb-port:hover { box-shadow: 0 0 0 3px var(--blue-glow); }
+        .hlb-port-target { box-shadow: 0 0 0 3px var(--accent-glow); border-color: var(--accent); }
+        .hlb-port-pending { background: var(--accent); border-color: var(--accent); }
+
+        /* ── Inspector ── */
+        .hlb-inspector {
+            background: var(--surface-3);
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            padding: 0.5rem 0.7rem;
+            margin-bottom: 1rem;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-end;
+            gap: 0.4rem 1.1rem;
+            min-height: 3.4rem;
+        }
+        .hlb-insp-title { font-family: var(--mono); font-size: 0.7rem; font-weight: 600; color: var(--text-bright); align-self: center; }
+        .hlb-insp-empty { font-size: 0.78rem; color: var(--text-dim); align-self: center; }
+        .hlb-insp-keys { font-family: var(--mono); font-size: 0.62rem; color: var(--text-dim); align-self: center; opacity: 0.85; }
+        .hlb-insp-row { display: flex; flex-direction: column; }
+        .hlb-insp-row label {
+            font-family: var(--mono); font-size: 0.6rem; text-transform: uppercase;
+            letter-spacing: 0.05em; color: var(--text-dim); margin-bottom: 0.15rem;
+        }
+        .hlb-insp-row input[type="number"], .hlb-insp-row select {
+            width: 7rem; font-family: var(--mono); font-size: 0.74rem;
+            padding: 0.25rem 0.35rem; border: 1px solid var(--border);
+            border-radius: 3px; background: var(--surface); color: var(--text-bright);
+        }
+        .hlb-insp-check { flex-direction: row; align-items: center; gap: 0.4rem; align-self: center; }
+        .hlb-insp-check input { width: 0.95rem; height: 0.95rem; }
+        .hlb-insp-check label {
+            margin: 0; text-transform: none; letter-spacing: normal;
+            font-size: 0.74rem; font-family: var(--sans); color: var(--text);
+        }
+        .hlb-insp-del { margin-left: auto; align-self: center; }
+
+        /* ── Sim bar + status + readouts ── */
+        .hlb-simbar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; margin-bottom: 0.2rem; }
+        .hlb-status { font-family: var(--mono); font-size: 0.66rem; color: var(--text-dim); margin-left: 0.3rem; }
+
+        .hlb-readouts { display: flex; flex-wrap: wrap; gap: 0.7rem; margin: 0.2rem 0 0.9rem; }
+        .hlb-readouts .device { flex: 1 1 13rem; min-width: 12rem; }
+
+        .hlb-legend {
+            display: flex; flex-wrap: wrap; gap: 1rem;
+            font-family: var(--mono); font-size: 0.62rem; color: var(--text-dim); margin-top: 0.4rem;
+        }
+        .hlb-legend span { display: inline-flex; align-items: center; gap: 0.35rem; }
+        .hlb-swatch { width: 1.4rem; height: 0; border-top-width: 3px; border-top-style: solid; }
+        .hlb-sw-supply { border-color: var(--heat); }
+        .hlb-sw-return { border-color: var(--blue); }
+
+        p.tool-preamble.tight { margin-bottom: 0.85rem; }
+
+        /* ── Fullscreen overrides — same approach as the FB editor: flip the
+              grid to a single column with the canvas filling the freed width
+              and the palette wrapped horizontally below; the IIFE lifts
+              INNER_W / INNER_H and updates the pipe-layer viewBox on the
+              'fullscreenchange' event. ── */
+        .tool-card.is-fullscreen .hlb-workspace {
+            grid-template-areas: "canvas" "palette";
+            grid-template-columns: 1fr;
+            grid-template-rows: 1fr auto;
+            height: calc(100vh - 24rem);
+            min-height: 30rem;
+            gap: 0.55rem;
+        }
+        .tool-card.is-fullscreen .hlb-canvas { grid-area: canvas; height: auto; min-height: 0; }
+        .tool-card.is-fullscreen .hlb-canvas-inner { width: 100%; height: 100%; }
+        .tool-card.is-fullscreen .hlb-pipe-layer { width: 100%; height: 100%; }
+        .tool-card.is-fullscreen .hlb-palette {
+            grid-area: palette; max-height: none; overflow: visible;
+            display: flex; flex-wrap: wrap; align-items: center;
+            gap: 0.35rem 0.4rem; padding: 0.5rem 0.6rem;
+        }
+        .tool-card.is-fullscreen .hlb-palette-label {
+            margin: 0; padding: 0 0.5rem 0 0.55rem; border-left: 1px solid var(--border);
+            align-self: stretch; display: flex; align-items: center;
+        }
+        .tool-card.is-fullscreen .hlb-palette-label:first-child { border-left: 0; padding-left: 0; }
+        .tool-card.is-fullscreen .hlb-palette-btn { display: inline-block; width: auto; margin: 0; padding: 0.3rem 0.55rem; }
+
+        @media (max-width: 999px), (hover: none) and (pointer: coarse) {
+            .hlb-live { display: none; }
+            .desktop-only-sim { display: block; }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Simulators · Hydronic Loop Builder</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <button type="button" class="tool-card-fullscreen-btn fs-desktop-only"
+                data-fullscreen-target=".tool-card"
+                aria-pressed="false" aria-label="Enter fullscreen"
+                title="Toggle fullscreen — Esc to exit">
+            <svg class="fs-icon-enter" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="15 3 21 3 21 9"/>
+                <polyline points="9 21 3 21 3 15"/>
+                <line x1="21" y1="3" x2="14" y2="10"/>
+                <line x1="3" y1="21" x2="10" y2="14"/>
+            </svg>
+            <svg class="fs-icon-exit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="4 14 10 14 10 20"/>
+                <polyline points="20 10 14 10 14 4"/>
+                <line x1="14" y1="10" x2="21" y2="3"/>
+                <line x1="3" y1="21" x2="10" y2="14"/>
+            </svg>
+            <span class="fs-label-enter">Fullscreen</span>
+            <span class="fs-label-exit">Exit</span>
+        </button>
+
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">Hydronic Loop Builder</h1>
+            <span class="tool-tag">Hydronic</span>
+        </div>
+
+        <div class="tool-body">
+            <p class="tool-preamble tight">
+                Drop equipment on an elevation, click port-to-port to lay pipe, and
+                hit run — the loop solves a real steady-state hydraulic and thermal
+                balance every tick, so flow finds its operating point and water
+                temperature propagates around the circuit. New to the ideas? Start
+                with <a href="/education/hydronic-loops.html">Hydronic Loops</a>,
+                <a href="/education/load-piping.html">Load Piping</a>, and
+                <a href="/education/balancing.html">Hydronic Balancing</a>.
+            </p>
+
+            <div class="desktop-only-sim">
+                <h2 class="dos-label">Desktop tool</h2>
+                <p>
+                    Dragging equipment around an elevation and clicking port-to-port to
+                    run pipe wants a pointer and a wide canvas — open this on a laptop or
+                    desktop to build and run a loop. A finger can't both drag a component
+                    and pan the sheet, so it's pointer-only by design. The mental model
+                    it teaches:
+                </p>
+                <ul>
+                    <li><strong>A loop finds one operating point.</strong> The pump curve and the system's resistance meet at a single flow — open a valve and the whole loop's flow shifts, not just one branch.</li>
+                    <li><strong>Two-way valves throttle; three-way valves divert.</strong> A two-way valve changes total loop flow; a three-way holds pump flow roughly constant and sends the rest down a bypass.</li>
+                    <li><strong>Parallel branches need balancing.</strong> The low-resistance branch hogs the flow; a balance valve adds resistance to even the split.</li>
+                    <li><strong>Heat rides the water.</strong> q = 500 · GPM · ΔT — drop the flow and ΔT climbs. Watch a cold loop warm up over a few seconds as the plant's heat transports around.</li>
+                    <li><strong>Up is elevation.</strong> A pipe drawn vertically is a real height — static head, ready for open-system work.</li>
+                </ul>
+                <p class="dos-more">
+                    New to hydronics? <a href="/education/hydronic-loops.html">Hydronic Loops</a> covers the same ideas and reads fine on a phone.
+                </p>
+            </div>
+
+            <div class="hlb-live">
+                <div class="widget-try" id="hlb-examples">
+                    <span class="lbl">Try this:</span>
+                    <a data-example="single">single loop</a>
+                    <a data-example="parallel">parallel coils + balance</a>
+                    <a data-example="threeway">3-way bypass</a>
+                </div>
+
+                <div class="hlb-simbar">
+                    <button class="copy-btn" id="hlb-run"   data-action="run">Pause</button>
+                    <button class="copy-btn" id="hlb-step"  data-action="step">Step</button>
+                    <button class="copy-btn" id="hlb-reset" data-action="reset">Reset</button>
+                    <button class="copy-btn" id="hlb-clear" data-action="clear">Clear</button>
+                    <span class="hlb-status" id="hlb-status" role="status" aria-live="polite">Running</span>
+                </div>
+
+                <div class="hlb-readouts" id="hlb-readouts" aria-label="Live equipment readouts"></div>
+
+                <div class="hlb-workspace">
+                    <div class="hlb-palette" id="hlb-palette" aria-label="Component palette"></div>
+                    <div class="hlb-canvas" id="hlb-canvas" tabindex="0" role="region" aria-label="Elevation canvas">
+                        <div class="hlb-canvas-inner" id="hlb-inner"></div>
+                    </div>
+                </div>
+
+                <div class="hlb-inspector" id="hlb-inspector"></div>
+
+                <div class="hlb-legend">
+                    <span><span class="hlb-swatch hlb-sw-supply"></span> warmer water</span>
+                    <span><span class="hlb-swatch hlb-sw-return"></span> cooler water</span>
+                    <span>particles show flow direction &amp; rate</span>
+                </div>
+
+                <h2 class="subhead">How it works</h2>
+                <p>
+                    Every tick the builder flattens your layout into a network — pipes
+                    and equipment become flow branches between pressure nodes — and
+                    solves a linearized nodal balance: mass is conserved at every
+                    junction, head drops across each resistance as k·Q², and the pump
+                    adds head on its curve H = (H₀ − a·Q²)·(speed/100)². Flow settles to
+                    the operating point in a few iterations.
+                </p>
+                <p>
+                    Then a thermal sweep transports temperature on those flows —
+                    q = 500 · GPM · ΔT at each coil, flow-weighted mixing at each tee.
+                    A loop reads its upstream temperature from the previous tick, so a
+                    cold loop warms up over a couple of seconds the way a real one does.
+                </p>
+                <p class="ref-note">
+                    A teaching model, not a design tool: it solves a steady-state balance
+                    each tick in canonical US units (GPM, ft of head, °F) and rounds at
+                    the display. Pipe friction is a small nominal value; closed valves
+                    are a large finite resistance, never infinite — so the math always
+                    stays finite.
+                </p>
+            </div>
+            <!-- /.hlb-live -->
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        simulators: [
+            {href: '/simulators/pid-tuner.html', label: 'PID Tuning Helper'},
+            {href: '/simulators/vfd-mock.html', label: 'Mock VFD Interface'}
+        ],
+        lessons: [
+            {href: '/education/hydronic-loops.html', label: 'Hydronic Loops'},
+            {href: '/education/load-piping.html', label: 'Load Piping'},
+            {href: '/education/balancing.html', label: 'Hydronic Balancing'},
+            {href: '/education/pump-control.html', label: 'Pump Control'}
+        ],
+        tools: [
+            {href: '/tools/valve-cv.html', label: 'Valve Cv Sizing'},
+            {href: '/tools/waterside-load.html', label: 'Waterside Load Calculator'},
+            {href: '/tools/affinity-laws.html', label: 'Pump & Fan Affinity Laws'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/simulators/">← All simulators</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="/scripts/hydronic-engine.js"></script>
+<script>
+    // Hydronic Loop Builder — the page owns all DOM, drag/pipe interaction, the
+    // 10 Hz tick loop, the inspector, and the flow visualization. The physics
+    // lives in /scripts/hydronic-engine.js (window.HYDRO). Same loop discipline
+    // as the Function-Block Editor: gate on a desktop media query, pause on a
+    // hidden tab, pump every result through a render pass.
+    (function () {
+        'use strict';
+        if (!window.HYDRO) return;
+
+        const DT = 0.1;                 // tick step, seconds (10 Hz)
+        const PX = 34;                  // pixels per foot — screen ↔ elevation
+        const PAD = 30;                 // canvas-inner padding, px
+        const COMP_W = 96, COMP_H = 52; // component box, px
+        let INNER_W = 900, INNER_H = 520;
+
+        const byId = (id) => document.getElementById(id);
+        const canvasEl  = byId('hlb-canvas');
+        const inner     = byId('hlb-inner');
+        const palette   = byId('hlb-palette');
+        const inspector = byId('hlb-inspector');
+        const statusEl  = byId('hlb-status');
+        const runBtn    = byId('hlb-run');
+        const readoutsEl = byId('hlb-readouts');
+
+        const HC = window.HYDRO;
+        let system   = HC.makeSystem({ components: [], pipes: [] });
+        let selected = null;            // { kind:'comp'|'pipe', id }
+        let pending  = null;            // { comp, port } mid-pipe
+        let running  = true;
+        let tickHandle = null;
+        let compSeq = 0, pipeSeq = 0;
+        const els = {};                 // compId → component DOM node
+        let svg = null;                 // current pipe layer
+        const flowCache = {};           // pipeId → { bucket, rev } (refreshPath throttle)
+
+        const clamp = (x, lo, hi) => Math.max(lo, Math.min(hi, x));
+
+        // ── elevation ↔ screen transforms (gravity down: +z is up-screen) ──
+        const sx = (xFt) => PAD + xFt * PX;
+        const sy = (zFt) => INNER_H - PAD - zFt * PX;
+        const fx = (px)  => (px - PAD) / PX;
+        const fz = (py)  => (INNER_H - PAD - py) / PX;
+
+        // ── temperature → colour (cold blue → hot orange), tokens at runtime ──
+        let COLD = [74, 163, 221], HOT = [232, 136, 74], colorTheme = null;
+        function parseColor(v) {
+            if (!v) return null;
+            v = v.trim();
+            let m = v.match(/^#([0-9a-f]{6})$/i);
+            if (m) return [parseInt(m[1].slice(0, 2), 16), parseInt(m[1].slice(2, 4), 16), parseInt(m[1].slice(4, 6), 16)];
+            m = v.match(/^#([0-9a-f]{3})$/i);
+            if (m) return [parseInt(m[1][0] + m[1][0], 16), parseInt(m[1][1] + m[1][1], 16), parseInt(m[1][2] + m[1][2], 16)];
+            m = v.match(/rgba?\(([^)]+)\)/i);
+            if (m) { const p = m[1].split(',').map((s) => parseInt(s, 10)); if (p.length >= 3) return [p[0], p[1], p[2]]; }
+            return null;
+        }
+        function syncTokens() {
+            const theme = document.documentElement.dataset.theme || 'dark';
+            if (theme === colorTheme) return;
+            colorTheme = theme;
+            const cs = getComputedStyle(document.documentElement);
+            COLD = parseColor(cs.getPropertyValue('--blue')) || COLD;
+            HOT  = parseColor(cs.getPropertyValue('--heat')) || HOT;
+        }
+        function tempColor(t) {
+            const f = clamp((t - 50) / (190 - 50), 0, 1);
+            const r = Math.round(COLD[0] + (HOT[0] - COLD[0]) * f);
+            const g = Math.round(COLD[1] + (HOT[1] - COLD[1]) * f);
+            const b = Math.round(COLD[2] + (HOT[2] - COLD[2]) * f);
+            return 'rgb(' + r + ',' + g + ',' + b + ')';
+        }
+
+        // ── example systems (HYDRO.makeSystem deep-clones; literals stay pristine) ──
+        const EXAMPLES = {
+            single: {
+                components: [
+                    { id: 'pl', type: 'plant', pos: { x: 2,  y: 0, z: 1.5 }, params: { mode: 'heat', lwt: 180, qmax: 600, k: 0.006 } },
+                    { id: 'p1', type: 'pump',  pos: { x: 6,  y: 0, z: 1.5 }, params: { h0: 40, a: 0.012, speed: 100, on: true } },
+                    { id: 'c1', type: 'coil',  pos: { x: 17, y: 0, z: 9   }, params: { k: 0.02, qdesign: 120, tspace: 70 } },
+                    { id: 't1', type: 'tee',   pos: { x: 17, y: 0, z: 1.5 } },
+                ],
+                pipes: [
+                    { id: 'q1', from: ['pl', 'out'], to: ['p1', 'in'] },
+                    { id: 'q2', from: ['p1', 'out'], to: ['c1', 'in'] },
+                    { id: 'q3', from: ['c1', 'out'], to: ['t1', 'b'] },
+                    { id: 'q4', from: ['t1', 'a'],   to: ['pl', 'in'] },
+                ],
+            },
+            parallel: {
+                components: [
+                    { id: 'pl', type: 'plant', pos: { x: 2,  y: 0, z: 1.5 }, params: { mode: 'heat', lwt: 180, qmax: 600, k: 0.006 } },
+                    { id: 'p1', type: 'pump',  pos: { x: 6,  y: 0, z: 1.5 }, params: { h0: 40, a: 0.012, speed: 100, on: true } },
+                    { id: 'ts', type: 'tee',   pos: { x: 10, y: 0, z: 1.5 } },
+                    { id: 'bv', type: 'balanceValve', pos: { x: 14, y: 0, z: 8 }, params: { cv: 30, setting: 100 } },
+                    { id: 'ca', type: 'coil',  pos: { x: 18, y: 0, z: 8   }, params: { k: 0.03, qdesign: 60, tspace: 70 } },
+                    { id: 'cb', type: 'coil',  pos: { x: 18, y: 0, z: 4   }, params: { k: 0.06, qdesign: 60, tspace: 70 } },
+                    { id: 'tr', type: 'tee',   pos: { x: 22, y: 0, z: 1.5 } },
+                ],
+                pipes: [
+                    { id: 'q1', from: ['pl', 'out'], to: ['p1', 'in'] },
+                    { id: 'q2', from: ['p1', 'out'], to: ['ts', 'a'] },
+                    { id: 'q3', from: ['ts', 'c'],   to: ['bv', 'in'] },
+                    { id: 'q4', from: ['bv', 'out'], to: ['ca', 'in'] },
+                    { id: 'q5', from: ['ca', 'out'], to: ['tr', 'c'] },
+                    { id: 'q6', from: ['ts', 'b'],   to: ['cb', 'in'] },
+                    { id: 'q7', from: ['cb', 'out'], to: ['tr', 'b'] },
+                    { id: 'q8', from: ['tr', 'a'],   to: ['pl', 'in'] },
+                ],
+            },
+            threeway: {
+                components: [
+                    { id: 'pl', type: 'plant',  pos: { x: 2,  y: 0, z: 1.5 }, params: { mode: 'heat', lwt: 180, qmax: 600, k: 0.006 } },
+                    { id: 'p1', type: 'pump',   pos: { x: 6,  y: 0, z: 1.5 }, params: { h0: 40, a: 0.012, speed: 100, on: true } },
+                    { id: 'v3', type: 'valve3', pos: { x: 11, y: 0, z: 1.5 }, params: { cv: 12, pos: 100 } },
+                    { id: 'c1', type: 'coil',   pos: { x: 17, y: 0, z: 8   }, params: { k: 0.04, qdesign: 120, tspace: 70 } },
+                    { id: 'bp', type: 'balanceValve', pos: { x: 11, y: 0, z: 7 }, params: { cv: 8, setting: 95 } },
+                    { id: 'tr', type: 'tee',    pos: { x: 21, y: 0, z: 1.5 } },
+                ],
+                pipes: [
+                    { id: 'q1', from: ['pl', 'out'], to: ['p1', 'in'] },
+                    { id: 'q2', from: ['p1', 'out'], to: ['v3', 'a'] },
+                    { id: 'q3', from: ['v3', 'b'],   to: ['c1', 'in'] },
+                    { id: 'q4', from: ['c1', 'out'], to: ['tr', 'b'] },
+                    { id: 'q5', from: ['v3', 'c'],   to: ['bp', 'in'] },
+                    { id: 'q6', from: ['bp', 'out'], to: ['tr', 'c'] },
+                    { id: 'q7', from: ['tr', 'a'],   to: ['pl', 'in'] },
+                ],
+            },
+        };
+
+        // ── status helper ──
+        function setStatus(text) { statusEl.textContent = text; }
+
+        // ── palette (grouped by category) ──
+        function renderPalette() {
+            palette.innerHTML = '';
+            HC.CATEGORIES.forEach((cat) => {
+                const types = Object.keys(HC.COMPONENTS).filter((t) => HC.COMPONENTS[t].category === cat);
+                if (!types.length) return;
+                const lbl = document.createElement('div');
+                lbl.className = 'hlb-palette-label';
+                lbl.textContent = cat;
+                palette.appendChild(lbl);
+                types.forEach((t) => {
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'hlb-palette-btn';
+                    btn.textContent = HC.COMPONENTS[t].label;
+                    btn.addEventListener('click', () => addComponent(t));
+                    palette.appendChild(btn);
+                });
+            });
+        }
+
+        function addComponent(type) {
+            const id = 'h' + (++compSeq);
+            const n = system.components.length;
+            const x = 3 + (n % 5) * 3.4;
+            const z = 6 - Math.floor((n % 15) / 5) * 2.2;
+            const c = HC.createComponent(type, id, x, z);
+            if (!c) return;
+            system.components.push(c);
+            renderAll();
+            select({ kind: 'comp', id: id });
+        }
+
+        // ── port geometry: where a port pins on its component box ──
+        function portEdge(portDef) {
+            // horizontal port (|dx| ≥ |dz|) → left/right; else top/bottom (dz>0 up)
+            if (Math.abs(portDef.dx) >= Math.abs(portDef.dz)) {
+                return portDef.dx < 0 ? 'left' : 'right';
+            }
+            return portDef.dz > 0 ? 'top' : 'bottom';
+        }
+        function portOffset(edge) {            // px offset of the port centre inside the box
+            switch (edge) {
+                case 'left':   return { x: 0,          y: COMP_H * 0.62 };
+                case 'right':  return { x: COMP_W,     y: COMP_H * 0.62 };
+                case 'top':    return { x: COMP_W / 2, y: 0 };
+                default:       return { x: COMP_W / 2, y: COMP_H };       // bottom
+            }
+        }
+        function boxTopLeft(comp) {            // px of the box top-left (centre anchor on pos)
+            return { x: sx(comp.pos.x) - COMP_W / 2, y: sy(comp.pos.z) - COMP_H / 2 };
+        }
+        function portPos(comp, portName) {     // absolute canvas-inner px of a port centre
+            const def = HC.COMPONENTS[comp.type];
+            const pd = def.ports.find((p) => p.name === portName);
+            const tl = boxTopLeft(comp);
+            const off = portOffset(portEdge(pd));
+            return { x: tl.x + off.x, y: tl.y + off.y, edge: portEdge(pd) };
+        }
+        const compById = (id) => system.components.find((c) => c.id === id);
+
+        // ── render everything ──
+        function renderAll() {
+            // wipe and rebuild the inner surface
+            inner.innerHTML = '';
+            Object.keys(els).forEach((k) => delete els[k]);
+
+            const grade = document.createElement('div');
+            grade.className = 'hlb-grade';
+            inner.appendChild(grade);
+
+            // pipe layer (SVG) under the component boxes
+            svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            svg.setAttribute('class', 'hlb-pipe-layer');
+            svg.setAttribute('viewBox', '0 0 ' + INNER_W + ' ' + INNER_H);
+            svg.style.width = INNER_W + 'px';
+            svg.style.height = INNER_H + 'px';
+            inner.appendChild(svg);
+
+            system.components.forEach(renderComponent);
+            drawPipes();
+            renderInspector();
+            refreshViz();
+        }
+
+        function renderComponent(comp) {
+            const def = HC.COMPONENTS[comp.type];
+            const tl = boxTopLeft(comp);
+            const el = document.createElement('div');
+            el.className = 'hlb-comp' + (selected && selected.kind === 'comp' && selected.id === comp.id ? ' hlb-comp-sel' : '');
+            el.style.left = tl.x + 'px';
+            el.style.top = tl.y + 'px';
+
+            const head = document.createElement('div');
+            head.className = 'hlb-comp-head';
+            const name = document.createElement('span');
+            name.textContent = def.label;
+            const glyph = document.createElement('span');
+            glyph.className = 'hlb-comp-glyph';
+            glyph.textContent = comp.id;
+            head.appendChild(name);
+            head.appendChild(glyph);
+            el.appendChild(head);
+
+            const body = document.createElement('div');
+            body.className = 'hlb-comp-body';
+            body.id = 'hlb-body-' + comp.id;
+            body.textContent = '—';
+            el.appendChild(body);
+
+            // ports
+            def.ports.forEach((pd) => {
+                const edge = portEdge(pd);
+                const off = portOffset(edge);
+                const dot = document.createElement('div');
+                dot.className = 'hlb-port';
+                dot.style.left = (off.x - 5.5) + 'px';
+                dot.style.top = (off.y - 5.5) + 'px';
+                dot.title = comp.id + '.' + pd.name;
+                dot.dataset.port = pd.name;
+                if (pending && pending.comp === comp.id && pending.port === pd.name) dot.classList.add('hlb-port-pending');
+                dot.addEventListener('click', (e) => { e.stopPropagation(); onPortClick(comp, pd); });
+                el.appendChild(dot);
+            });
+
+            el.addEventListener('pointerdown', (e) => onCompPointerDown(e, comp));
+            inner.appendChild(el);
+            els[comp.id] = el;
+        }
+
+        // ── drag a component by its titlebar ──
+        function onCompPointerDown(e, comp) {
+            if (e.target.closest('.hlb-port')) return;
+            const el = els[comp.id];
+            const startX = e.clientX, startY = e.clientY;
+            const origX = comp.pos.x, origZ = comp.pos.z;
+            let moved = false;
+            el.setPointerCapture(e.pointerId);
+
+            function move(ev) {
+                const dxPx = ev.clientX - startX, dyPx = ev.clientY - startY;
+                if (Math.abs(dxPx) > 3 || Math.abs(dyPx) > 3) moved = true;
+                // clamp the CENTRE anchor so the whole box (centre-anchored) stays
+                // inside the canvas-inner — no edge clip on the right/top.
+                comp.pos.x = clamp(origX + dxPx / PX, (COMP_W / 2 - PAD) / PX, (INNER_W - PAD - COMP_W / 2) / PX);
+                comp.pos.z = clamp(origZ - dyPx / PX, (COMP_H / 2 - PAD) / PX, (INNER_H - PAD - COMP_H / 2) / PX);
+                const tl = boxTopLeft(comp);
+                el.style.left = tl.x + 'px';
+                el.style.top = tl.y + 'px';
+                drawPipes();
+            }
+            function up() {
+                el.removeEventListener('pointermove', move);
+                el.removeEventListener('pointerup', up);
+                el.removeEventListener('pointercancel', up);
+                if (!moved) { select({ kind: 'comp', id: comp.id }); }
+                else { drawPipes(); refreshFlowGeometry(); }
+            }
+            el.addEventListener('pointermove', move);
+            el.addEventListener('pointerup', up);
+            el.addEventListener('pointercancel', up);
+        }
+
+        // ── lay a pipe port-to-port ──
+        function onPortClick(comp, portDef) {
+            if (!pending) {
+                pending = { comp: comp.id, port: portDef.name };
+                renderAll();
+                setStatus('Piping from ' + comp.id + '.' + portDef.name + ' — click another port.');
+                return;
+            }
+            if (pending.comp === comp.id) {
+                setStatus('Pick a port on a different component.');
+                return;
+            }
+            // one pipe per port — drop any existing pipe touching either endpoint
+            const a = pending, b = { comp: comp.id, port: portDef.name };
+            const touches = (p, end) => p.from[0] === end.comp && p.from[1] === end.port ||
+                                        p.to[0] === end.comp && p.to[1] === end.port;
+            system.pipes = system.pipes.filter((p) => !touches(p, a) && !touches(p, b));
+            addPipe([a.comp, a.port], [b.comp, b.port]);
+            cancelPipe();
+            renderAll();
+            refreshFlowGeometry();
+            setStatus(running ? 'Running' : 'Paused');
+        }
+
+        function addPipe(from, to) {
+            system.pipes.push({
+                id: 'w' + (++pipeSeq), from: from, to: to,
+                k_pipe: HC.SETTINGS.K_PIPE, Q: 0, dir: 0, T: HC.SETTINGS.T_NEUTRAL,
+            });
+        }
+        function cancelPipe() {
+            if (!pending) return;
+            pending = null;
+        }
+
+        // ── draw / redraw the pipe SVG paths ──
+        function pipePathD(a, b) {
+            // exit each port in its edge's direction with a short stub, then
+            // route orthogonally to the other port.
+            const ah = a.edge === 'left' || a.edge === 'right';
+            if (ah) {
+                const mx = (a.x + b.x) / 2;
+                return 'M' + a.x + ',' + a.y + ' L' + mx + ',' + a.y + ' L' + mx + ',' + b.y + ' L' + b.x + ',' + b.y;
+            }
+            const my = (a.y + b.y) / 2;
+            return 'M' + a.x + ',' + a.y + ' L' + a.x + ',' + my + ' L' + b.x + ',' + my + ' L' + b.x + ',' + b.y;
+        }
+
+        function drawPipes() {
+            if (!svg) return;
+            svg.innerHTML = '';
+            system.pipes.forEach((p) => {
+                const cf = compById(p.from[0]), ct = compById(p.to[0]);
+                if (!cf || !ct) return;
+                const a = portPos(cf, p.from[1]), b = portPos(ct, p.to[1]);
+                const d = pipePathD(a, b);
+                // fat invisible hit target for selection
+                const hit = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                hit.setAttribute('class', 'hlb-pipe-hit');
+                hit.setAttribute('d', d);
+                hit.addEventListener('click', (e) => { e.stopPropagation(); select({ kind: 'pipe', id: p.id }); });
+                svg.appendChild(hit);
+                // visible pipe — flow particles attach here via data-flow
+                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                path.setAttribute('class', 'hlb-pipe' + (selected && selected.kind === 'pipe' && selected.id === p.id ? ' hlb-pipe-sel' : ''));
+                path.setAttribute('d', d);
+                path.setAttribute('data-flow', 'supply');
+                path.setAttribute('data-flow-density', '0.6');
+                path.id = 'hlb-pipe-' + p.id;
+                svg.appendChild(path);
+            });
+            // pending pipe rubber-band stub (from the chosen port to nowhere yet)
+        }
+
+        // Map flow magnitude to a sparse→dense bucket (throttles FlowEngine
+        // rebuilds). Floor ABOVE zero: a literal 0 here is re-read by FlowEngine
+        // as "invalid" and snapped to FULL density, so a shut/starved pipe would
+        // wrongly animate densest. 0.06 keeps near-zero flow at the sparsest real
+        // density (a short pipe then carries ~no particles — what we want).
+        function densityBucket(q) {
+            const d = clamp(q / 40, 0.06, 1);
+            return Math.max(0.06, Math.round(d * 5) / 5);
+        }
+
+        // rebuild flow pools when geometry changed (drag / add / delete pipe)
+        function refreshFlowGeometry() {
+            if (!window.FlowEngine) return;
+            Object.keys(flowCache).forEach((k) => delete flowCache[k]);
+            window.FlowEngine.init();
+        }
+
+        // ── per-tick visual refresh (cheap recolour every tick; rebuild only on change) ──
+        function refreshViz() {
+            syncTokens();
+            const FE = window.FlowEngine;
+            system.pipes.forEach((p) => {
+                const el = byId('hlb-pipe-' + p.id);
+                if (!el) return;
+                const color = tempColor(p.T);
+                el.style.stroke = color;
+                const bucket = densityBucket(p.Q);
+                const rev = p.dir < 0;
+                const cached = flowCache[p.id];
+                el.setAttribute('data-flow', p.T >= 120 ? 'supply' : 'return');
+                if (!cached || cached.bucket !== bucket || cached.rev !== rev) {
+                    el.setAttribute('data-flow-density', String(bucket));
+                    el.setAttribute('data-flow-reverse', rev ? 'true' : 'false');
+                    flowCache[p.id] = { bucket: bucket, rev: rev };
+                    if (FE) FE.refreshPath(el);
+                }
+                if (FE) FE.setPathColor(el, color);
+            });
+            refreshComponentBodies();
+            refreshReadouts();
+            refreshInspectorValues();
+        }
+
+        const U = window.Units;
+        const fmt = (v, d) => (isFinite(v) ? v.toFixed(d === undefined ? 1 : d) : '—');
+        function dispFlow(gpm)  { return U ? fmt(U.display.waterFlow(gpm), 1) + ' ' + U.suffix.waterFlow() : fmt(gpm) + ' GPM'; }
+        function dispHead(ft)   { return U ? fmt(U.display.pumpHead(ft), 1) + ' ' + U.suffix.pumpHead() : fmt(ft) + ' ft'; }
+        function dispTemp(f)    { return U ? fmt(U.display.temp(f), 1) + ' ' + U.suffix.temp() : fmt(f) + ' °F'; }
+        function dispLoad(btuh) { const mbh = btuh / 1000; return U ? fmt(U.display.heatCapacity(mbh), 1) + ' ' + U.suffix.heatCapacity() : fmt(mbh, 0) + ' MBH'; }
+
+        function refreshComponentBodies() {
+            system.components.forEach((c) => {
+                const body = byId('hlb-body-' + c.id);
+                if (!body) return;
+                const o = c.out || {};
+                let txt = '—';
+                switch (c.type) {
+                    case 'pump':   txt = dispFlow(o.Q) + (o.on ? '' : ' · off'); break;
+                    case 'plant':  txt = dispTemp(o.lwt); break;
+                    case 'coil':   txt = 'ΔT ' + fmt(o.dT, 1) + '°'; break;
+                    case 'valve2': txt = fmt(o.posPct, 0) + '%'; break;
+                    case 'valve3': txt = fmt(o.posPct, 0) + '%'; break;
+                    case 'balanceValve': txt = fmt(o.setting, 0) + '%'; break;
+                    case 'tee':    txt = dispTemp(o.T); break;
+                    default: break;
+                }
+                body.textContent = txt;
+            });
+        }
+
+        // ── live equipment-register readouts (first pump + first plant) ──
+        function readoutCard(title, badge, rows, led) {
+            return '<div class="device"><div class="device-inner">' +
+                '<div class="device-tb"><span class="title">' + title + '</span>' +
+                '<span class="led ' + led + '"></span></div>' +
+                '<div class="lcd">' + rows.map((r) =>
+                    '<div class="k">' + r[0] + '</div><div class="v">' + r[1] + '</div>').join('') +
+                '</div></div></div>';
+        }
+        function refreshReadouts() {
+            const pump = system.components.find((c) => c.type === 'pump');
+            const plant = system.components.find((c) => c.type === 'plant');
+            let html = '';
+            if (pump) {
+                const o = pump.out || {};
+                html += readoutCard('PUMP ' + pump.id, '', [
+                    ['Flow', dispFlow(o.Q || 0)],
+                    ['Head', dispHead(o.head || 0)],
+                    ['Speed', fmt(o.speed, 0) + ' %'],
+                ], (o.on && (o.Q || 0) > 0.1) ? 'led--run' : 'led--off');
+            }
+            if (plant) {
+                const o = plant.out || {};
+                html += readoutCard('PLANT ' + plant.id, '', [
+                    ['Leaving', dispTemp(o.lwt || 70)],
+                    ['Entering', dispTemp(o.ewt || 70)],
+                    ['Load', dispLoad(o.Qheat || 0)],
+                ], (o.Q || 0) > 0.1 ? (plant.params.mode === 'cool' ? 'led--comm' : 'led--run') : 'led--off');
+            }
+            if (!html) html = '<span class="hlb-insp-empty">Add a pump and a plant to see live readouts.</span>';
+            readoutsEl.innerHTML = html;
+        }
+
+        // ── inspector (selected component's params) ──
+        function renderInspector() {
+            inspector.innerHTML = '';
+            if (!selected) {
+                const keys = document.createElement('span');
+                keys.className = 'hlb-insp-keys';
+                keys.textContent = 'Click a component to edit it · click two ports to lay pipe · Delete removes · Esc cancels';
+                inspector.appendChild(keys);
+                return;
+            }
+            if (selected.kind === 'pipe') {
+                const title = document.createElement('span');
+                title.className = 'hlb-insp-title';
+                title.textContent = 'Pipe ' + selected.id;
+                inspector.appendChild(title);
+                const del = document.createElement('button');
+                del.type = 'button';
+                del.className = 'copy-btn hlb-insp-del';
+                del.textContent = 'Delete pipe';
+                del.addEventListener('click', deleteSelected);
+                inspector.appendChild(del);
+                return;
+            }
+            const comp = compById(selected.id);
+            if (!comp) { selected = null; renderInspector(); return; }
+            const def = HC.COMPONENTS[comp.type];
+            const title = document.createElement('span');
+            title.className = 'hlb-insp-title';
+            title.textContent = def.label + ' · ' + comp.id;
+            inspector.appendChild(title);
+
+            (def.params || []).forEach((p) => {
+                const inputId = 'hlb-p-' + p.name;
+                const row = document.createElement('div');
+                row.className = 'hlb-insp-row';
+                let field;
+                if (p.kind === 'bool') {
+                    row.classList.add('hlb-insp-check');
+                    field = document.createElement('input');
+                    field.type = 'checkbox';
+                    field.checked = comp.params[p.name] === true;
+                    field.addEventListener('change', () => { comp.params[p.name] = field.checked; afterParamEdit(); });
+                } else if (p.kind === 'enum') {
+                    field = document.createElement('select');
+                    (p.options || []).forEach((opt) => {
+                        const o = document.createElement('option');
+                        o.value = opt; o.textContent = opt;
+                        if (comp.params[p.name] === opt) o.selected = true;
+                        field.appendChild(o);
+                    });
+                    field.addEventListener('change', () => { comp.params[p.name] = field.value; afterParamEdit(); });
+                } else {
+                    field = document.createElement('input');
+                    field.type = 'number';
+                    field.value = comp.params[p.name];
+                    field.addEventListener('input', () => {
+                        const n = parseFloat(field.value);
+                        comp.params[p.name] = isFinite(n) ? n : 0;
+                        afterParamEdit();
+                    });
+                }
+                field.id = inputId;
+                const label = document.createElement('label');
+                label.setAttribute('for', inputId);
+                label.textContent = p.label;
+                if (p.kind === 'bool') { row.appendChild(field); row.appendChild(label); }
+                else { row.appendChild(label); row.appendChild(field); }
+                inspector.appendChild(row);
+            });
+
+            const del = document.createElement('button');
+            del.type = 'button';
+            del.className = 'copy-btn hlb-insp-del';
+            del.textContent = 'Delete';
+            del.addEventListener('click', deleteSelected);
+            inspector.appendChild(del);
+        }
+
+        // lightweight value refresh that doesn't rebuild inputs the user may be editing
+        function refreshInspectorValues() { /* params drive readouts; no live writeback needed */ }
+
+        function afterParamEdit() {
+            if (!running) stepOnce();    // show the change immediately while paused
+            refreshComponentBodies();
+            refreshReadouts();
+        }
+
+        // ── selection / deletion ──
+        function select(sel) {
+            selected = sel;
+            cancelPipe();
+            renderAll();
+        }
+        function clearSelection() { selected = null; renderAll(); }
+        function deleteSelected() {
+            if (!selected) return;
+            cancelPipe();   // a pending pipe may dangle off the component being deleted
+            if (selected.kind === 'comp') {
+                system.components = system.components.filter((c) => c.id !== selected.id);
+                system.pipes = system.pipes.filter((p) => p.from[0] !== selected.id && p.to[0] !== selected.id);
+            } else if (selected.kind === 'pipe') {
+                system.pipes = system.pipes.filter((p) => p.id !== selected.id);
+            }
+            selected = null;
+            renderAll();
+            refreshFlowGeometry();
+        }
+
+        // ── tick loop ──
+        function stepOnce() {
+            HC.tick(system, DT);
+            refreshViz();
+        }
+        const desktopMQ = window.matchMedia('(min-width: 1000px)');
+        function startLoop() {
+            if (tickHandle !== null) return;
+            if (!desktopMQ.matches) return;
+            if (document.hidden) return;
+            tickHandle = window.setInterval(stepOnce, DT * 1000);
+        }
+        function stopLoop() {
+            if (tickHandle === null) return;
+            window.clearInterval(tickHandle);
+            tickHandle = null;
+        }
+        function setRunning(on) {
+            running = on;
+            runBtn.textContent = on ? 'Pause' : 'Run';
+            setStatus(on ? 'Running' : 'Paused');
+            if (on) startLoop(); else stopLoop();
+        }
+        function resetSim() {
+            system.components.forEach((c) => { c.out = {}; c.state = {}; });
+            system._warm = {}; system._temp = {};
+            Object.keys(flowCache).forEach((k) => delete flowCache[k]);
+            stepOnce();
+        }
+        function clearCanvas() {
+            system = HC.makeSystem({ components: [], pipes: [] });
+            selected = null; cancelPipe();
+            renderAll();
+            refreshFlowGeometry();
+        }
+
+        function loadExample(key) {
+            if (!EXAMPLES[key]) return;
+            system = HC.makeSystem(EXAMPLES[key]);
+            selected = null; cancelPipe();
+            // bump the sequence counters past any ids the example used
+            renderAll();
+            resetSim();
+            refreshFlowGeometry();
+            setRunning(true);
+            canvasEl.scrollLeft = 0; canvasEl.scrollTop = 0;
+        }
+
+        // ── controls ──
+        document.querySelectorAll('.hlb-simbar [data-action]').forEach((btn) => {
+            btn.addEventListener('click', () => {
+                switch (btn.dataset.action) {
+                    case 'run':   setRunning(!running); break;
+                    case 'step':  if (running) setRunning(false); stepOnce(); break;
+                    case 'reset': resetSim(); break;
+                    case 'clear': clearCanvas(); break;
+                }
+            });
+        });
+        byId('hlb-examples').querySelectorAll('[data-example]').forEach((a) => {
+            a.addEventListener('click', () => loadExample(a.dataset.example));
+        });
+
+        // background tab + desktop-width gates
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) stopLoop();
+            else if (running) startLoop();
+        });
+        desktopMQ.addEventListener('change', () => {
+            if (desktopMQ.matches) { if (running) startLoop(); }
+            else stopLoop();
+        });
+
+        // keyboard: Delete removes selection; Esc cancels a pending pipe
+        document.addEventListener('keydown', (e) => {
+            const t = e.target;
+            if (t && (t.tagName === 'INPUT' || t.tagName === 'SELECT')) return;
+            if (e.key === 'Delete' || e.key === 'Backspace') {
+                if (selected) { e.preventDefault(); deleteSelected(); }
+            } else if (e.key === 'Escape') {
+                const had = !!pending;
+                if (had) { cancelPipe(); renderAll(); setStatus(running ? 'Running' : 'Paused'); e.stopPropagation(); }
+            }
+        });
+
+        // click empty canvas clears selection / pending pipe
+        canvasEl.addEventListener('click', (e) => {
+            if (e.target.closest('.hlb-comp')) return;
+            if (e.target.closest('.hlb-pipe-hit')) return;
+            cancelPipe();
+            clearSelection();
+            setStatus(running ? 'Running' : 'Paused');
+        });
+
+        // recolour readouts on a units toggle
+        if (U) U.onChange(() => { refreshComponentBodies(); refreshReadouts(); });
+
+        // ── fullscreen reflow (mirrors the FB editor) ──
+        const card = document.querySelector('.tool-card');
+        if (card) {
+            card.addEventListener('fullscreenchange', (e) => {
+                const isFs = e.detail && e.detail.fullscreen;
+                if (isFs) {
+                    inner.style.width = ''; inner.style.height = '';
+                    const r = inner.getBoundingClientRect();
+                    INNER_W = Math.max(INNER_W, Math.round(r.width));
+                    INNER_H = Math.max(INNER_H, Math.round(r.height));
+                } else {
+                    inner.style.width = INNER_W + 'px';
+                    inner.style.height = INNER_H + 'px';
+                }
+                renderAll();
+                refreshFlowGeometry();
+            });
+        }
+
+        // ── boot ──
+        renderPalette();
+        loadExample('single');
+    })();
+</script>
+{% endblock %}

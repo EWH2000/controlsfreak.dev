@@ -1554,6 +1554,105 @@ constraint reads at browse time instead of after a wasted navigation.
 Amber + bold (not the neutral feature-pill grey) so it parses as a
 constraint, not another capability. Macro-level, so any future
 desktop-only page opts in with one flag.
+
+### Hydronic Loop Builder — 6th simulator *(shipped 2026-06-16)*
+The running capstone for the hydronic teaching set (`hydronic-loops`,
+`load-piping`, `balancing`, `pump-control` lessons; `valve-cv`,
+`affinity-laws`, `waterside-load`, `coil-sizing` tools): an FBE-style
+editor, but for the **piping of a building** instead of control logic.
+Drop a plant, pump, coils, and valves on an **elevation canvas**, click
+port-to-port to lay pipe, hit run, and a **real steady-state hydraulic +
+thermal balance** solves every tick — flow finds its operating point and
+water temperature propagates around the loop. `/simulators/hydronic-loop-builder.html`,
+prefix `hlb-`. Mirrors the proven FBE two-layer split.
+
+- **New engine, a third solver shape.** `hydronic-engine.js`
+  (`window.HYDRO`) is neither the FBE's directional dataflow tick nor the
+  wiring sim's undirected net classification — it's a **nonlinear nodal
+  network solve**: union-find merges junctions (a tee) into pressure
+  nodes, every flow path (component branch *and* pipe) is a signed branch,
+  and a linearized system `G·P = I` is assembled (secant conductance
+  `g = 1/(k|Q|)`, pump head + elevation as Norton current injections),
+  Gaussian-solved with one **per-island reference node** pinned, and
+  under-relaxed to the operating point. Site-canonical constants reused so
+  numbers agree with the tools: `q = 500·GPM·ΔT`, valve `ΔP = (Q/Cv)²`,
+  pump `H = (H₀−a·Q²)·(speed/100)²`.
+- **Tests from day one** (explicit user ask: "build `.js` tests from
+  day 1 to make sure things are accurate"). `tests/hydronic-engine.spec.js`
+  — 29 engine-direct vm tests (the `wiring-engine.spec.js` loader trick):
+  closed-form operating point, mass conservation (KCL) at every node, the
+  signed branch law on every branch, parallel split sums, elevation
+  cancels around a closed loop, valve throttling, 3-way constant-flow,
+  balance-valve rebalancing, `ΔT = q/500·GPM`, warm-up + chilled mode, and
+  every must-never-NaN edge (shut valve, dead pump, disconnected islands,
+  empty system).
+- **Hardened by an adversarial review pass before merge** — a multi-agent
+  review (solver numerics / conservation / NaN-hunt / thermal / page) found
+  11 real issues, each fixed with a regression test: a **setpoint plant now
+  respects heat/cool mode** (a boiler could otherwise *cool* a loop whose
+  return ran above setpoint — the default-reachable physics inversion);
+  **adaptive under-relaxation + a secant-conductance floor** so two pumps in
+  series (or a steep curve) converge instead of limit-cycling; a saturated
+  `Q_CAP` clamp now reports `converged:false` instead of masquerading as
+  solved; deleting a component mid-pipe no longer leaves a dangling pipe that
+  threw every tick; the FlowEngine density bucket no longer collapses
+  near-zero flow to "0" (which the engine re-read as *full* density, so shut
+  pipes animated densest); plus `makeSystem` fail-soft coercion (non-array /
+  null / duplicate-id literals), a self-loop-branch guard, and a raw-literal
+  `solve()` guard.
+- **Three corrections kept from the design review** (in code comments so
+  they don't get "simplified" away): secant `g = 1/(k|Q|)` with 0.5
+  relaxation (not the tangent `1/2k|Q|`); a shut valve is a **large finite**
+  `K_CLOSED = 1e9`, never `Infinity` (Infinity → `g = 0` would manufacture
+  NaN); the pump enters as a **current injection**, not a fixed-pressure
+  node (which would over-constrain a closed loop). Elevation **cancels
+  around any closed loop** — correct physics, only nets out in an open
+  system (deferred).
+- **One deliberate divergence from the handoff brief: pipes are tiny-
+  resistance *branches*, not pure node-merges.** A pure merge leaves pipes
+  flowless (and ambiguous at a tee); making each pipe a branch gives it a
+  first-class solver-computed flow + direction for the visualization, keeps
+  the matrix well-conditioned, and is more physical. The small `K_PIPE` is
+  negligible head (≈0.6 ft at 35 GPM) and is exactly the field phase 2
+  promotes to length/size-dependent for a pipe-sizing lesson.
+- **Cold-start needed a guard the brief didn't call out.** A `Q = 0`
+  cold start makes the secant conductance astronomically large and the
+  first iteration overshoots wildly; a per-iteration physical flow clamp
+  (`Q_CAP = 1000 GPM`, far above any real loop) tames it — cold converges
+  in ~12 iters, warm-started ticks in 1–3.
+- **Thermal reuses the FBE one-tick-delay.** A loop reads its upstream
+  temperature from last tick, so a cold loop visibly **warms up over a few
+  seconds** (transport lag, pedagogically the point); unconditionally
+  stable (every node a bounded flow-weighted average). Coil sign is
+  physics-derived (water moves toward the space temp), so no plant↔coil
+  coupling is needed. Bridged valve ΔP (psi) ↔ head (ft) with
+  **2.31 ft/psi** — no existing tool set this precedent, so it's introduced
+  and documented here.
+- **Three worked loops** as example chips (FBE pattern): single loop
+  (operating point + warm-up + ΔT), parallel coils + balance valve, and a
+  3-way diverting bypass. Live **equipment-register readouts** (`.device` /
+  `.lcd` pump + plant faceplates) per "sims are the fun-and-flashy zone,"
+  and **FlowEngine** particles drive the flow on each pipe (density from
+  `|Q|`, direction from `sign(Q)`, a hot→cold colour lerp from `--blue` →
+  `--heat` pushed via `setPathColor`; `refreshPath` throttled to bucket /
+  direction changes so it doesn't rebuild pools every tick).
+- **Desktop-only on touch**, same gate + `desktopOnly` landing badge as
+  the FBE / Controller Wiring sims — drag-to-place + click-to-pipe is the
+  same finger-can't-both-drag-and-pan flaw.
+
+`[future: hydronic-loop-builder phase 2]` — the data model is already 3D-
+ready (`pos.{x,y,z}`, every depth on a centre plane): the **X↔Y orthogonal-
+view toggle** (north + east elevations sharing the vertical Z) and
+**drag-in-both-views depth editing** are pure page changes, zero model
+change. Also deferred: promoting `k_pipe` to length/size-dependent (a pipe-
+sizing lesson), a UA-based coil, and the open-system fill-pressure /
+expansion-tank reference node — the one place elevation **stops** cancelling.
+
+`[future: hydronic-loop-builder education explainer]` — unlike the
+Controller Wiring sim, this one ships without a single new paired lesson:
+it's the capstone for **four** existing hydronic lessons, all cross-linked
+both ways via `relatedLinks`. A dedicated "how a loop finds its operating
+point" explainer could still be worth writing.
 Two modes, tabs à la Signal Scaling. Both are shipped and the curves
 are datasheet-verified.
 

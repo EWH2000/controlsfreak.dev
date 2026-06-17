@@ -45,6 +45,7 @@ const PAGES = [
     { name: 'function-block editor',  url: '/simulators/function-block-editor.html' },
     { name: 'staging sequencer',      url: '/simulators/staging-sequencer.html' },
     { name: 'controller wiring',      url: '/simulators/controller-wiring.html' },
+    { name: 'hydronic loop builder',  url: '/simulators/hydronic-loop-builder.html' },
     { name: 'education hub',          url: '/education/' },
     { name: 'education — pid basics',  url: '/education/pid-basics.html' },
     { name: 'education — controller wiring', url: '/education/controller-wiring.html' },
@@ -227,6 +228,21 @@ test('controller wiring — a correct panel reads live; a short pops the fuse', 
     await expect(page.locator('#cw-faults-list')).toContainText('Dead short');
     await expect(page.locator('[data-readout="ui1"]')).toHaveText('———');
     expect(errors, 'controller wiring behavioral should log no page / console errors').toEqual([]);
+});
+
+test('hydronic loop builder — an example loads and the loop solves to live flow', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('/simulators/hydronic-loop-builder.html');
+    // The single-loop example auto-loads and runs at 10 Hz. The pump should
+    // find its operating point — a nonzero flow — and its readout LED light.
+    const pumpLed = page.locator('#hlb-readouts .device').first().locator('.led');
+    await expect(pumpLed).toHaveClass(/led--run/);
+    await expect(page.locator('#hlb-readouts')).toContainText('GPM');
+    // Loading another example rebuilds a fresh, running loop.
+    await page.click('[data-example="parallel"]');
+    await expect(page.locator('.hlb-comp')).toHaveCount(7);   // parallel: plant, pump, 2 tees, balance, 2 coils
+    await expect(page.locator('#hlb-readouts .device').first().locator('.led')).toHaveClass(/led--run/);
+    expect(errors, 'hydronic loop builder behavioral should log no page / console errors').toEqual([]);
 });
 
 test('bacnet/ip converter converts a hex string', async ({ page }) => {
