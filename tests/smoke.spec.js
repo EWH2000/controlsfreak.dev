@@ -37,6 +37,7 @@ const PAGES = [
     { name: 'airflow',                url: '/tools/airflow.html' },
     { name: 'transformer va budget',  url: '/tools/transformer-sizing.html' },
     { name: 'wire run voltage drop',  url: '/tools/voltage-drop.html' },
+    { name: 'field electrical quick calc', url: '/tools/electrical-quick-calc.html' },
     { name: 'bacnet mstp lesson',     url: '/education/bacnet-mstp.html' },
     { name: 'modbus function codes',  url: '/tools/modbus-functions.html' },
     { name: 'simulators landing',     url: '/simulators/' },
@@ -2071,6 +2072,48 @@ test('voltage-drop — loop margin, 0-10V teaching verdict, sensor asymmetry', a
     await expect(page.locator('#vd-status')).toContainText('Pt100');
 
     expect(errors, 'voltage-drop behavioral should log no errors').toEqual([]);
+});
+
+test('electrical-quick-calc — four tabs solve and mute correctly', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('/tools/electrical-quick-calc.html');
+
+    // Tab 1 (Ohm's law), seeded V=12, I=3 → R=4 Ω, P=36 W (solved, blue).
+    await expect(page.locator('#eq-ohm-out-r')).toContainText('4 Ω');
+    await expect(page.locator('#eq-ohm-out-p')).toContainText('36 W');
+    await expect(page.locator('#eq-ohm-out-r')).toHaveClass(/live/);
+    await expect(page.locator('#eq-ohm-lbl-r')).toContainText('solved');
+    // A third value over-determines the wheel → mute with a callout.
+    await page.fill('#eq-ohm-r', '4');
+    await expect(page.locator('#eq-ohm-callout')).toBeVisible();
+    await expect(page.locator('#eq-ohm-out-p')).toHaveText('—');
+
+    // Tab 2 (AC power), seeded 460 V 3φ, 30 A, PF 0.85.
+    await page.click('[data-tab="ac"]');
+    await expect(page.locator('#eq-ac-kva')).toContainText('23.90');
+    await expect(page.locator('#eq-ac-kw')).toContainText('20.32');
+    await expect(page.locator('#eq-ac-kvar')).toContainText('12.59');
+    // PF out of [0,1] mutes (NaN from acos / √ of a negative) with a callout.
+    await page.fill('#eq-ac-pf', '1.5');
+    await expect(page.locator('#eq-ac-callout')).toContainText('between 0 and 1');
+    await expect(page.locator('#eq-ac-kva')).toHaveText('—');
+
+    // Tab 3 (motor), seeded 10 HP, 460 V, 3φ, PF 0.88, η 0.90 → ~11.8 A.
+    await page.click('[data-tab="motor"]');
+    await expect(page.locator('#eq-motor-fla')).toContainText('11.8 A');
+    await expect(page.locator('#eq-motor-twin')).toContainText('7.46 kW');
+    // The NEC "estimate only" disclaimer is always present, not a pill.
+    await expect(page.locator('#tab-motor .failure-callout', { hasText: 'not a code value' })).toBeVisible();
+    // A measured reading near the estimate drives the verdict pill to OK.
+    await page.fill('#eq-motor-meas', '12');
+    await expect(page.locator('#eq-motor-status')).toHaveClass(/ok/);
+
+    // Tab 4 (NEMA imbalance), seeded 460/455/450 → 1.10 %, derate (warn).
+    await page.click('[data-tab="imbalance"]');
+    await expect(page.locator('#eq-imb-pct')).toContainText('1.10');
+    await expect(page.locator('#eq-imb-status')).toHaveClass(/warn/);
+
+    expect(errors, 'electrical-quick-calc behavioral should log no errors').toEqual([]);
 });
 
 // ── audit-2026-06 Batch G: tool edge cases ─────────────────────────────

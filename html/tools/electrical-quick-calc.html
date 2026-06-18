@@ -1,0 +1,718 @@
+---
+title: Field Electrical Quick Calc — controlsfreak.dev
+description: Ohm's law and DC power, single- and three-phase AC power, a motor HP-to-kW and full-load-amp estimate, and a NEMA three-phase voltage-imbalance check.
+canonical: https://controlsfreak.dev/tools/electrical-quick-calc.html
+nav: tools
+category: electrical
+keywords: ohms law watts volts amps three phase kva kvar power factor motor fla hp kw voltage imbalance nema nec 430
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Tools · Electrical Quick Calc</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">
+                Field Electrical Quick Calc
+                <span class="tool-tag">Electrical</span>
+            </h1>
+        </div>
+
+        <p class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
+            The bread-and-butter electrical math you double-check on a service call, in one place.
+            <em>Ohm&rsquo;s Law &amp; Power</em> is the wheel — type any two of V / I / R / P and it solves the other two.
+            <em>AC Power</em> ties line voltage, amps, kW, kVA, kVAR, and power factor together for single- and three-phase.
+            <em>Motor HP / kW / FLA</em> converts horsepower to kilowatts and estimates full-load amps.
+            <em>Voltage Imbalance</em> runs the NEMA check on three line-to-line readings.
+        </p>
+
+        <div class="tabs tabs-flush">
+            <button class="tab-btn active" data-tab="ohms">Ohm&rsquo;s Law &amp; Power</button>
+            <button class="tab-btn"        data-tab="ac">AC Power</button>
+            <button class="tab-btn"        data-tab="motor">Motor HP / kW / FLA</button>
+            <button class="tab-btn"        data-tab="imbalance">Voltage Imbalance</button>
+        </div>
+
+        <!-- ── Ohm's Law & Power ── -->
+        <div id="tab-ohms" class="tab-pane active">
+            <div class="tool-body-2col">
+
+                <section>
+                    <h2 class="ps-section-label">Input — any two of V, I, R, P</h2>
+                    <div class="ps-row">
+                        <label class="ps-label" for="eq-ohm-v">Voltage (V)</label>
+                        <input class="ps-input" type="number" id="eq-ohm-v" step="any" min="0" placeholder="volts" value="12">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="eq-ohm-i">Current (A)</label>
+                        <input class="ps-input" type="number" id="eq-ohm-i" step="any" min="0" placeholder="amps" value="3">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="eq-ohm-r">Resistance (Ω)</label>
+                        <input class="ps-input" type="number" id="eq-ohm-r" step="any" min="0" placeholder="ohms">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="eq-ohm-p">Power (W)</label>
+                        <input class="ps-input" type="number" id="eq-ohm-p" step="any" min="0" placeholder="watts">
+                    </div>
+                    <p class="ref-note">
+                        Enter exactly <strong>two</strong> — the other two are solved and shown in blue. DC or resistive loads (PF&nbsp;=&nbsp;1); for motors and reactive loads use the AC Power tab.
+                    </p>
+                </section>
+
+                <section role="status" aria-atomic="false">
+                    <h2 class="ps-section-label">Output</h2>
+                    <div class="ps-row">
+                        <span class="ps-label" id="eq-ohm-lbl-v">Voltage (V)</span>
+                        <span class="ps-value muted" id="eq-ohm-out-v">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label" id="eq-ohm-lbl-i">Current (I)</span>
+                        <span class="ps-value muted" id="eq-ohm-out-i">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label" id="eq-ohm-lbl-r">Resistance (R)</span>
+                        <span class="ps-value muted" id="eq-ohm-out-r">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label" id="eq-ohm-lbl-p">Power (P)</span>
+                        <span class="ps-value muted" id="eq-ohm-out-p">—</span>
+                    </div>
+                    <div class="btn-row">
+                        <button class="copy-btn" id="eq-copy-ohm">Copy all four</button>
+                    </div>
+                    <div class="result-formula wrap" id="eq-ohm-formula"></div>
+                    <div class="failure-callout" id="eq-ohm-callout" hidden></div>
+                </section>
+
+            </div>
+
+            <section class="tool-body-row">
+                <h2 class="ps-section-label">The Ohm&rsquo;s-law wheel</h2>
+                <table class="ref-table-dense">
+                    <thead>
+                        <tr><th>Solve for</th><th>From the other two</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>V (volts)</td><td><code>I·R</code> &nbsp;·&nbsp; <code>P/I</code> &nbsp;·&nbsp; <code>√(P·R)</code></td></tr>
+                        <tr><td>I (amps)</td><td><code>V/R</code> &nbsp;·&nbsp; <code>P/V</code> &nbsp;·&nbsp; <code>√(P/R)</code></td></tr>
+                        <tr><td>R (ohms)</td><td><code>V/I</code> &nbsp;·&nbsp; <code>V²/P</code> &nbsp;·&nbsp; <code>P/I²</code></td></tr>
+                        <tr><td>P (watts)</td><td><code>V·I</code> &nbsp;·&nbsp; <code>I²·R</code> &nbsp;·&nbsp; <code>V²/R</code></td></tr>
+                    </tbody>
+                </table>
+                <p class="ref-note worked-intro">
+                    <strong>Worked example:</strong> a relay coil measures <strong>R&nbsp;=&nbsp;4&nbsp;Ω</strong> and the panel feeds it <strong>V&nbsp;=&nbsp;12&nbsp;V</strong>.
+                </p>
+                <ol class="ref-note worked-list">
+                    <li><code>I = V/R = 12 ÷ 4 = 3 A</code></li>
+                    <li><code>P = V²/R = 144 ÷ 4 = 36 W</code></li>
+                </ol>
+                <p class="ref-note">
+                    So the coil draws 3&nbsp;A and burns 36&nbsp;W — sanity-check that against the coil&rsquo;s wattage rating before you trust the circuit.
+                </p>
+            </section>
+        </div>
+
+        <!-- ── AC Power ── -->
+        <div id="tab-ac" class="tab-pane">
+            <div class="tool-body-2col">
+
+                <section>
+                    <h2 class="ps-section-label">Input</h2>
+                    <div class="ps-row">
+                        <label class="ps-label" for="eq-ac-phase">Phase</label>
+                        <select class="ps-input" id="eq-ac-phase">
+                            <option value="3" selected>Three-phase (3φ)</option>
+                            <option value="1">Single-phase (1φ)</option>
+                        </select>
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="eq-ac-vl">Line voltage Vₗ (L-L)</label>
+                        <input class="ps-input" type="number" id="eq-ac-vl" step="any" min="0" placeholder="480" value="460">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="eq-ac-pf">Power factor</label>
+                        <input class="ps-input" type="number" id="eq-ac-pf" step="0.01" min="0" max="1" placeholder="0.85" value="0.85">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="eq-ac-driver">Solve from</label>
+                        <select class="ps-input" id="eq-ac-driver">
+                            <option value="amps" selected>Line current (A)</option>
+                            <option value="kw">Real power (kW)</option>
+                            <option value="kva">Apparent power (kVA)</option>
+                        </select>
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" id="eq-ac-driver-val-label" for="eq-ac-driver-val">Line current (A)</label>
+                        <input class="ps-input" type="number" id="eq-ac-driver-val" step="any" min="0" placeholder="30" value="30">
+                    </div>
+                    <p class="ref-note">
+                        Line voltage is <strong>line-to-line</strong> — 208 / 240 / 480, not 120 / 277. Three-phase carries the √3 factor; pick 1φ for a line-to-neutral branch.
+                    </p>
+                </section>
+
+                <section role="status" aria-atomic="false">
+                    <h2 class="ps-section-label">Output</h2>
+                    <div class="ps-row">
+                        <span class="ps-label">Line current Iₗ</span>
+                        <span class="ps-value muted" id="eq-ac-i">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">Real power</span>
+                        <span class="ps-value muted" id="eq-ac-kw">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">Apparent power</span>
+                        <span class="ps-value muted" id="eq-ac-kva">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">Reactive power</span>
+                        <span class="ps-value muted" id="eq-ac-kvar">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">Phase angle θ</span>
+                        <span class="ps-value muted" id="eq-ac-angle">—</span>
+                    </div>
+                    <div class="btn-row">
+                        <button class="copy-btn" id="eq-copy-ac">Copy kW / kVA</button>
+                    </div>
+                    <div class="result-formula wrap" id="eq-ac-formula"></div>
+                    <div class="failure-callout" id="eq-ac-callout" hidden></div>
+                    <p class="ref-note">
+                        Q is a magnitude; lagging (inductive) is assumed. Size conductors and breakers on <strong>amps</strong> (kVA-derived), not on kW.
+                    </p>
+                </section>
+
+            </div>
+
+            <section class="tool-body-row">
+                <h2 class="ps-section-label">Power factor → phase angle</h2>
+                <table class="ref-table-dense">
+                    <thead>
+                        <tr><th>PF</th><th>Angle θ</th><th>kW / kVA</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>1.00</td><td>0.0°</td><td>1.00</td></tr>
+                        <tr><td>0.95</td><td>18.2°</td><td>0.95</td></tr>
+                        <tr><td>0.90</td><td>25.8°</td><td>0.90</td></tr>
+                        <tr><td>0.85</td><td>31.8°</td><td>0.85</td></tr>
+                        <tr><td>0.80</td><td>36.9°</td><td>0.80</td></tr>
+                    </tbody>
+                </table>
+                <p class="ref-note worked-intro">
+                    <strong>Worked example (3φ):</strong> a 460&nbsp;V supply fan pulls <strong>30&nbsp;A</strong> at <strong>PF&nbsp;0.85</strong>, three-phase.
+                </p>
+                <ol class="ref-note worked-list">
+                    <li><code>S = √3 × 460 × 30 = 23.90 kVA</code> (apparent)</li>
+                    <li><code>P = S × 0.85 = 20.32 kW</code> (real)</li>
+                    <li><code>Q = √(S² − P²) = 12.59 kVAR</code> (reactive), θ = acos&nbsp;0.85 = 31.8°</li>
+                </ol>
+                <p class="ref-note">
+                    Line-to-line and line-to-neutral differ by √3 (V<sub>LL</sub>&nbsp;=&nbsp;√3&nbsp;×&nbsp;V<sub>LN</sub>) — a 480&nbsp;V system reads 277&nbsp;V to neutral. Enter the L-L value here.
+                </p>
+            </section>
+        </div>
+
+        <!-- ── Motor HP / kW / FLA ── -->
+        <div id="tab-motor" class="tab-pane">
+            <div class="tool-body-2col">
+
+                <section>
+                    <h2 class="ps-section-label">Input — nameplate</h2>
+                    <div class="ps-row">
+                        <label class="ps-label" for="eq-motor-pmode">Power as</label>
+                        <select class="ps-input" id="eq-motor-pmode">
+                            <option value="hp" selected>Horsepower (HP)</option>
+                            <option value="kw">Kilowatts (kW)</option>
+                        </select>
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" id="eq-motor-pval-label" for="eq-motor-pval">Nameplate power (HP)</label>
+                        <input class="ps-input" type="number" id="eq-motor-pval" step="any" min="0" placeholder="10" value="10">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="eq-motor-phase">Phase</label>
+                        <select class="ps-input" id="eq-motor-phase">
+                            <option value="3" selected>Three-phase (3φ)</option>
+                            <option value="1">Single-phase (1φ)</option>
+                        </select>
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="eq-motor-vl">Line voltage Vₗ (L-L)</label>
+                        <input class="ps-input" type="number" id="eq-motor-vl" step="any" min="0" placeholder="460" value="460">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="eq-motor-pf">Power factor</label>
+                        <input class="ps-input" type="number" id="eq-motor-pf" step="0.01" min="0" max="1" placeholder="0.88" value="0.88">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="eq-motor-eff">Efficiency η</label>
+                        <input class="ps-input" type="number" id="eq-motor-eff" step="any" min="0" placeholder="0.90" value="0.90">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="eq-motor-meas">Measured amps (optional)</label>
+                        <input class="ps-input" type="number" id="eq-motor-meas" step="any" min="0" placeholder="clamp reading">
+                    </div>
+                    <p class="ref-note">
+                        PF and η are <strong>your assumptions</strong> — edit them to the nameplate when you have it. Efficiency takes 0.90 or 90.
+                    </p>
+                </section>
+
+                <section role="status" aria-atomic="false">
+                    <h2 class="ps-section-label">Output — estimate</h2>
+                    <div class="ps-row">
+                        <span class="ps-label">HP ↔ kW</span>
+                        <span class="ps-value muted" id="eq-motor-twin">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">Estimated full-load amps</span>
+                        <span class="ps-value muted" id="eq-motor-fla">—</span>
+                    </div>
+                    <div class="btn-row">
+                        <button class="copy-btn" id="eq-copy-motor">Copy FLA</button>
+                    </div>
+                    <div class="result-formula wrap" id="eq-motor-formula"></div>
+                    <div class="failure-callout" id="eq-motor-callout" hidden></div>
+                    <div class="failure-callout">
+                        <strong>Estimate only — not a code value.</strong> Computed from your stated PF and efficiency, this reads roughly 10–25&nbsp;% low versus the NEC tables (the gap widens below 5&nbsp;HP). Size motor <strong>conductors, branch-circuit protection, and disconnects</strong> off the table FLC — NEC&nbsp;<strong>430.250</strong> (3φ)&nbsp;/&nbsp;<strong>430.248</strong> (1φ) — never this number. Overload protection (430.32) uses the nameplate FLA.
+                    </div>
+                    <div class="status-pill" id="eq-motor-status">Enter a measured clamp reading to compare against the estimate.</div>
+                </section>
+
+            </div>
+
+            <section class="tool-body-row">
+                <h2 class="ps-section-label">Common motor full-load current (NEC)</h2>
+                <!-- // user to verify motor FLC values against NEC Table 430.250 (3φ) / 430.248 (1φ) — placeholder data, refine after review -->
+                <table class="ref-table-dense">
+                    <thead>
+                        <tr><th>Motor HP</th><th>3φ @ 460 V (A)</th><th>1φ @ 230 V (A)</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>1</td><td>2.1</td><td>8</td></tr>
+                        <tr><td>2</td><td>3.4</td><td>12</td></tr>
+                        <tr><td>3</td><td>4.8</td><td>17</td></tr>
+                        <tr><td>5</td><td>7.6</td><td>28</td></tr>
+                        <tr><td>7.5</td><td>11</td><td>40</td></tr>
+                        <tr><td>10</td><td>14</td><td>50</td></tr>
+                        <tr><td>15</td><td>21</td><td>—</td></tr>
+                        <tr><td>20</td><td>27</td><td>—</td></tr>
+                        <tr><td>25</td><td>34</td><td>—</td></tr>
+                        <tr><td>30</td><td>40</td><td>—</td></tr>
+                        <tr><td>50</td><td>65</td><td>—</td></tr>
+                    </tbody>
+                </table>
+                <!-- // end placeholder NEC FLC table -->
+                <p class="ref-note worked-intro">
+                    <strong>Worked example:</strong> a 10&nbsp;HP, 460&nbsp;V, three-phase motor at PF&nbsp;0.88 and η&nbsp;0.90.
+                </p>
+                <ol class="ref-note worked-list">
+                    <li><code>FLA = (10 × 746) / (√3 × 460 × 0.88 × 0.90) = 7460 ÷ 631 = 11.8 A</code> — the estimate.</li>
+                    <li>NEC&nbsp;430.250 lists <strong>14&nbsp;A</strong> for this motor — about 16&nbsp;% higher.</li>
+                </ol>
+                <p class="ref-note">
+                    That gap is the whole point: the table builds in a representative low PF and efficiency, so it always runs higher than your stated-PF estimate. <strong>Size off the 14&nbsp;A table value, never the 11.8&nbsp;A estimate.</strong>
+                </p>
+            </section>
+        </div>
+
+        <!-- ── Voltage Imbalance ── -->
+        <div id="tab-imbalance" class="tab-pane">
+            <div class="tool-body-2col">
+
+                <section>
+                    <h2 class="ps-section-label">Input — three line-to-line readings</h2>
+                    <div class="ps-row">
+                        <label class="ps-label" for="eq-imb-vab">V<sub>A-B</sub> (V)</label>
+                        <input class="ps-input" type="number" id="eq-imb-vab" step="any" min="0" placeholder="460" value="460">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="eq-imb-vbc">V<sub>B-C</sub> (V)</label>
+                        <input class="ps-input" type="number" id="eq-imb-vbc" step="any" min="0" placeholder="455" value="455">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="eq-imb-vca">V<sub>C-A</sub> (V)</label>
+                        <input class="ps-input" type="number" id="eq-imb-vca" step="any" min="0" placeholder="450" value="450">
+                    </div>
+                    <p class="ref-note">
+                        Measure all three phase-to-phase legs at the motor terminals with the load running. NEMA defines unbalance as the largest deviation from the average, over the average.
+                    </p>
+                </section>
+
+                <section role="status" aria-atomic="false">
+                    <h2 class="ps-section-label">Output</h2>
+                    <div class="ps-row">
+                        <span class="ps-label">Average voltage</span>
+                        <span class="ps-value muted" id="eq-imb-avg">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">Max deviation</span>
+                        <span class="ps-value muted" id="eq-imb-dev">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">Voltage unbalance</span>
+                        <span class="ps-value muted" id="eq-imb-pct">—</span>
+                    </div>
+                    <div class="btn-row">
+                        <button class="copy-btn" id="eq-copy-imb">Copy unbalance</button>
+                    </div>
+                    <div class="result-formula wrap" id="eq-imb-formula"></div>
+                    <div class="failure-callout" id="eq-imb-callout" hidden></div>
+                    <div class="status-pill" id="eq-imb-status">Enter the three readings to see the verdict.</div>
+                </section>
+
+            </div>
+
+            <section class="tool-body-row">
+                <h2 class="ps-section-label">NEMA MG-1 voltage-unbalance limits</h2>
+                <table class="ref-table-dense">
+                    <thead>
+                        <tr><th>Unbalance</th><th>What it means</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>≤ 1 %</td><td>Acceptable — no derate.</td></tr>
+                        <tr><td>1 – 5 %</td><td>Derate the motor per the NEMA curve; find and fix the cause.</td></tr>
+                        <tr><td>&gt; 5 %</td><td>Do not operate — correct the supply first.</td></tr>
+                    </tbody>
+                </table>
+                <p class="ref-note worked-intro">
+                    <strong>Worked example:</strong> a motor reads <strong>460 / 455 / 450&nbsp;V</strong> across its three legs.
+                </p>
+                <ol class="ref-note worked-list">
+                    <li><code>avg = (460 + 455 + 450) ÷ 3 = 455 V</code></li>
+                    <li><code>max deviation = |460 − 455| = 5 V</code></li>
+                    <li><code>unbalance = 5 ÷ 455 × 100 = 1.10 %</code> — just into derate territory.</li>
+                </ol>
+                <p class="ref-note">
+                    Voltage unbalance is brutal at the motor: the <strong>current</strong> unbalance runs roughly 6–10× the voltage unbalance, and the extra current is pure heat in the windings. Chase a 1&nbsp;% reading to a loose lug, an unbalanced single-phase load on the feeder, or the utility.
+                </p>
+            </section>
+        </div>
+
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/tools/transformer-sizing.html', label: 'Transformer VA Budget'},
+            {href: '/tools/voltage-drop.html', label: 'Wire Run & Voltage Drop'},
+            {href: '/tools/signal-scaling.html', label: 'Signal Scaling'}
+        ],
+        simulators: [
+            {href: '/simulators/controller-wiring.html', label: 'Controller Wiring Simulator'}
+        ],
+        lessons: [
+            {href: '/education/vfds.html', label: 'VFDs'},
+            {href: '/education/controller-wiring.html', label: 'Controller Wiring'}
+        ],
+        quizzes: [
+            {href: '/practice/vfds.html', label: 'VFDs'},
+            {href: '/practice/field-wiring-sensors.html', label: 'Field Wiring & Sensors'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/tools/">← All tools</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="/scripts/ui.js"></script>
+<script>
+    // switchTab(name, btn) and copyReadouts(btn, sep, ...ids) come from
+    // /scripts/ui.js. Four independent calculators share one IIFE:
+    //   • Ohms — the V/I/R/P wheel; solves the two not entered.
+    //   • AC   — 1φ/3φ power triangle, line quantities.
+    //   • Motor— HP↔kW + an FLA *estimate* (NEC tables govern sizing).
+    //   • Imb  — NEMA MG-1 three-phase voltage unbalance.
+    // V/A/W/VA/VAR are unit-agnostic, so there is no global US/Metric
+    // coupling here (matching transformer-sizing / voltage-drop); the one
+    // US↔metric axis, HP↔kW, is an in-tab field on the Motor tab.
+    (function () {
+        'use strict';
+
+        const RT3 = Math.sqrt(3);                 // 1.7320508… — never 1.73
+
+        const el   = (id) => document.getElementById(id);
+        const num  = (id) => parseFloat(el(id).value);
+        const tidy = (n, dp) => parseFloat(n.toFixed(dp)).toString();
+
+        const live = (id, text) => { const e = el(id); e.className = 'ps-value live'; e.textContent = text; };
+        const dim  = (id) => { const e = el(id); e.className = 'ps-value muted'; e.textContent = '—'; };
+        const callout = (id, msg) => { const e = el(id); e.textContent = msg; e.hidden = false; };
+        const hideCallout = (id) => { el(id).hidden = true; };
+        const setPill = (id, msg, kind) => { const e = el(id); e.textContent = msg; e.className = 'status-pill' + (kind ? ' ' + kind : ''); };
+
+        // ─────────────────────────────────────────────
+        // Tab 1 — Ohm's Law & Power
+        // ─────────────────────────────────────────────
+        const OHM_FIELDS = ['v', 'i', 'r', 'p'];
+        const OHM_LABEL  = { v: 'Voltage (V)', i: 'Current (I)', r: 'Resistance (R)', p: 'Power (P)' };
+        const OHM_UNIT   = { v: ' V', i: ' A', r: ' Ω', p: ' W' };
+
+        function muteOhm(msg) {
+            OHM_FIELDS.forEach((f) => {
+                dim('eq-ohm-out-' + f);
+                el('eq-ohm-lbl-' + f).textContent = OHM_LABEL[f];
+            });
+            el('eq-ohm-formula').textContent = '';
+            callout('eq-ohm-callout', msg);
+        }
+
+        function calcOhms() {
+            const raw = {};
+            OHM_FIELDS.forEach((f) => { raw[f] = num('eq-ohm-' + f); });
+            const given = OHM_FIELDS.filter((f) => isFinite(raw[f]));
+
+            if (given.some((f) => raw[f] < 0)) {
+                muteOhm('V, I, R, P are magnitudes — enter non-negative values.');
+                return;
+            }
+            if (given.length < 2) {
+                muteOhm('Enter any two of V, I, R, P — the other two are solved.');
+                return;
+            }
+            if (given.length > 2) {
+                muteOhm('Enter exactly two — clear ' + (given.length - 2) + ' value' + (given.length - 2 > 1 ? 's' : '') + ' so the wheel has a single solution.');
+                return;
+            }
+
+            const key = given.slice().sort().join('');   // canonical: iv, rv, pv, ir, ip, pr
+            const r = { v: raw.v, i: raw.i, r: raw.r, p: raw.p };
+            let formula;
+
+            switch (key) {
+                case 'iv':   // V, I
+                    if (raw.i === 0) { muteOhm('Current of 0 A with a voltage present is an open circuit — resistance is infinite.'); return; }
+                    r.r = raw.v / raw.i; r.p = raw.v * raw.i;
+                    formula = 'R = V ÷ I = ' + tidy(raw.v, 4) + ' ÷ ' + tidy(raw.i, 4) + ' = ' + tidy(r.r, 4) + ' Ω   ·   P = V × I = ' + tidy(raw.v, 4) + ' × ' + tidy(raw.i, 4) + ' = ' + tidy(r.p, 4) + ' W';
+                    break;
+                case 'rv':   // V, R
+                    if (raw.r === 0) { muteOhm('Resistance of 0 Ω is a dead short — current would be infinite.'); return; }
+                    r.i = raw.v / raw.r; r.p = (raw.v * raw.v) / raw.r;
+                    formula = 'I = V ÷ R = ' + tidy(raw.v, 4) + ' ÷ ' + tidy(raw.r, 4) + ' = ' + tidy(r.i, 4) + ' A   ·   P = V² ÷ R = ' + tidy(raw.v, 4) + '² ÷ ' + tidy(raw.r, 4) + ' = ' + tidy(r.p, 4) + ' W';
+                    break;
+                case 'pv':   // V, P
+                    if (raw.v === 0) { muteOhm('Voltage of 0 V with power present is undefined — there must be a voltage to push the current.'); return; }
+                    if (raw.p === 0) { muteOhm('Power of 0 W with a voltage present implies no current — resistance is infinite.'); return; }
+                    r.i = raw.p / raw.v; r.r = (raw.v * raw.v) / raw.p;
+                    formula = 'I = P ÷ V = ' + tidy(raw.p, 4) + ' ÷ ' + tidy(raw.v, 4) + ' = ' + tidy(r.i, 4) + ' A   ·   R = V² ÷ P = ' + tidy(raw.v, 4) + '² ÷ ' + tidy(raw.p, 4) + ' = ' + tidy(r.r, 4) + ' Ω';
+                    break;
+                case 'ir':   // I, R
+                    r.v = raw.i * raw.r; r.p = raw.i * raw.i * raw.r;
+                    formula = 'V = I × R = ' + tidy(raw.i, 4) + ' × ' + tidy(raw.r, 4) + ' = ' + tidy(r.v, 4) + ' V   ·   P = I² × R = ' + tidy(raw.i, 4) + '² × ' + tidy(raw.r, 4) + ' = ' + tidy(r.p, 4) + ' W';
+                    break;
+                case 'ip':   // I, P
+                    if (raw.i === 0) { muteOhm('Current of 0 A with power present is undefined — power needs current to flow.'); return; }
+                    r.v = raw.p / raw.i; r.r = raw.p / (raw.i * raw.i);
+                    formula = 'V = P ÷ I = ' + tidy(raw.p, 4) + ' ÷ ' + tidy(raw.i, 4) + ' = ' + tidy(r.v, 4) + ' V   ·   R = P ÷ I² = ' + tidy(raw.p, 4) + ' ÷ ' + tidy(raw.i, 4) + '² = ' + tidy(r.r, 4) + ' Ω';
+                    break;
+                case 'pr':   // P, R
+                    if (raw.r === 0) { muteOhm('Resistance of 0 Ω is a dead short — current would be infinite.'); return; }
+                    r.v = Math.sqrt(raw.p * raw.r); r.i = Math.sqrt(raw.p / raw.r);
+                    formula = 'V = √(P × R) = √(' + tidy(raw.p, 4) + ' × ' + tidy(raw.r, 4) + ') = ' + tidy(r.v, 4) + ' V   ·   I = √(P ÷ R) = √(' + tidy(raw.p, 4) + ' ÷ ' + tidy(raw.r, 4) + ') = ' + tidy(r.i, 4) + ' A';
+                    break;
+            }
+
+            if (!OHM_FIELDS.every((f) => isFinite(r[f]))) {
+                muteOhm('That pair has no finite solution — check the inputs.');
+                return;
+            }
+
+            const solved = new Set(OHM_FIELDS.filter((f) => given.indexOf(f) === -1));
+            OHM_FIELDS.forEach((f) => {
+                const cell = el('eq-ohm-out-' + f);
+                cell.textContent = tidy(r[f], 4) + OHM_UNIT[f];
+                cell.className = solved.has(f) ? 'ps-value live' : 'ps-value';
+                el('eq-ohm-lbl-' + f).textContent = OHM_LABEL[f] + (solved.has(f) ? ' · solved' : '');
+            });
+            el('eq-ohm-formula').textContent = formula;
+            hideCallout('eq-ohm-callout');
+        }
+
+        // ─────────────────────────────────────────────
+        // Tab 2 — AC Power (1φ / 3φ, line quantities)
+        // ─────────────────────────────────────────────
+        function muteAc(msg) {
+            ['eq-ac-i', 'eq-ac-kw', 'eq-ac-kva', 'eq-ac-kvar', 'eq-ac-angle'].forEach(dim);
+            el('eq-ac-formula').textContent = '';
+            callout('eq-ac-callout', msg);
+        }
+
+        function calcAc() {
+            const phase  = el('eq-ac-phase').value;        // '1' | '3'
+            const vl     = num('eq-ac-vl');
+            const pf     = num('eq-ac-pf');
+            const driver = el('eq-ac-driver').value;       // amps | kw | kva
+            const dval   = num('eq-ac-driver-val');
+
+            el('eq-ac-driver-val-label').textContent =
+                driver === 'amps' ? 'Line current (A)' :
+                driver === 'kw'   ? 'Real power (kW)' : 'Apparent power (kVA)';
+
+            if (!isFinite(vl) || !isFinite(pf) || !isFinite(dval)) { muteAc('Enter line voltage, power factor, and the driver value.'); return; }
+            if (vl <= 0) { muteAc('Line voltage must be greater than 0.'); return; }
+            if (pf <= 0 || pf > 1) { muteAc('Power factor must be between 0 and 1.'); return; }
+            if (dval < 0) { muteAc('Enter a non-negative value.'); return; }
+
+            const rt = phase === '3' ? RT3 : 1;
+            const rtLabel = phase === '3' ? '√3 × ' : '';
+            let amps;
+            if (driver === 'amps') amps = dval;
+            else if (driver === 'kw') amps = (dval * 1000) / (rt * vl * pf);
+            else amps = (dval * 1000) / (rt * vl);          // kVA — PF-independent
+
+            if (!isFinite(amps)) { muteAc('That combination is indeterminate — check the inputs.'); return; }
+
+            const s = rt * vl * amps;                        // VA
+            const p = s * pf;                                // W
+            const q = Math.sqrt(Math.max(0, s * s - p * p)); // VAR (clamp float noise)
+            const ang = Math.acos(pf) * 180 / Math.PI;
+
+            live('eq-ac-i', tidy(amps, 1) + ' A');
+            live('eq-ac-kw', (p / 1000).toFixed(2) + ' kW');
+            live('eq-ac-kva', (s / 1000).toFixed(2) + ' kVA');
+            live('eq-ac-kvar', (q / 1000).toFixed(2) + ' kVAR');
+            live('eq-ac-angle', ang.toFixed(1) + '° (PF ' + tidy(pf, 2) + ')');
+
+            el('eq-ac-formula').textContent =
+                'S = ' + rtLabel + tidy(vl, 1) + ' × ' + tidy(amps, 1) + ' = ' + (s / 1000).toFixed(2) + ' kVA   ·   ' +
+                'P = S × ' + tidy(pf, 2) + ' = ' + (p / 1000).toFixed(2) + ' kW   ·   ' +
+                'Q = √(S² − P²) = ' + (q / 1000).toFixed(2) + ' kVAR';
+            hideCallout('eq-ac-callout');
+        }
+
+        // ─────────────────────────────────────────────
+        // Tab 3 — Motor HP / kW / FLA
+        // ─────────────────────────────────────────────
+        function muteMotorFla(msg) {
+            dim('eq-motor-fla');
+            el('eq-motor-formula').textContent = '';
+            callout('eq-motor-callout', msg);
+            setPill('eq-motor-status', 'Enter a measured clamp reading to compare against the estimate.', '');
+        }
+
+        function calcMotor() {
+            const pmode = el('eq-motor-pmode').value;        // hp | kw
+            const pval  = num('eq-motor-pval');
+            const phase = el('eq-motor-phase').value;
+            const vl    = num('eq-motor-vl');
+            const pf    = num('eq-motor-pf');
+            const effRaw = num('eq-motor-eff');
+            const meas  = num('eq-motor-meas');
+
+            el('eq-motor-pval-label').textContent = pmode === 'hp' ? 'Nameplate power (HP)' : 'Nameplate power (kW)';
+
+            // HP ↔ kW twin needs only the power value — show it independently.
+            let hp = NaN;
+            if (isFinite(pval) && pval >= 0) {
+                hp = pmode === 'hp' ? pval : pval / 0.746;
+                const kw = pmode === 'hp' ? pval * 0.746 : pval;
+                live('eq-motor-twin', pmode === 'hp' ? kw.toFixed(2) + ' kW' : hp.toFixed(2) + ' HP');
+            } else {
+                dim('eq-motor-twin');
+            }
+
+            // efficiency: accept 0–1 or a percent (e.g. 90 → 0.90).
+            const eff = isFinite(effRaw) ? (effRaw > 1.5 ? effRaw / 100 : effRaw) : NaN;
+
+            if (!isFinite(pval) || pval < 0) { muteMotorFla('Enter the nameplate power (HP or kW).'); return; }
+            if (!isFinite(vl) || vl <= 0) { muteMotorFla('Line voltage must be greater than 0.'); return; }
+            if (!isFinite(pf) || pf <= 0 || pf > 1) { muteMotorFla('Power factor must be between 0 and 1.'); return; }
+            if (!isFinite(eff) || eff <= 0 || eff > 1) { muteMotorFla('Efficiency must be between 0 and 1 (or a percent, e.g. 90).'); return; }
+
+            const rt = phase === '3' ? RT3 : 1;
+            const rtLabel = phase === '3' ? '√3 × ' : '';
+            const fla = (hp * 746) / (rt * vl * pf * eff);
+            if (!isFinite(fla)) { muteMotorFla('That combination is indeterminate — check the inputs.'); return; }
+
+            live('eq-motor-fla', tidy(fla, 1) + ' A');
+            el('eq-motor-formula').textContent =
+                'FLA = (' + tidy(hp, 3) + ' HP × 746) ÷ (' + rtLabel + tidy(vl, 1) + ' × ' + tidy(pf, 2) + ' × ' + tidy(eff, 2) + ') = ' + tidy(fla, 1) + ' A (estimate)';
+            hideCallout('eq-motor-callout');
+
+            if (isFinite(meas) && meas >= 0) {
+                const ratio = meas / fla;
+                const pctOf = ratio * 100;
+                const head  = 'Measured ' + tidy(meas, 1) + ' A is ' + tidy(pctOf, 0) + '% of the ' + tidy(fla, 1) + ' A estimate';
+                if (ratio >= 0.9 && ratio <= 1.1) {
+                    setPill('eq-motor-status', head + ' — consistent with the nameplate.', 'ok');
+                } else if (ratio > 1.1 && ratio <= 1.25) {
+                    setPill('eq-motor-status', head + ' — running above estimate. Check loading, supply voltage, or a mechanical bind.', 'warn');
+                } else if (ratio < 0.9 && ratio >= 0.5) {
+                    setPill('eq-motor-status', head + ' — running below estimate. Light load, or re-check the PF / efficiency assumptions.', 'warn');
+                } else {
+                    setPill('eq-motor-status', head + ' — far from estimate. Re-check phase, voltage, PF / η, or the clamp (CT range, or it is around more than one conductor).', 'error');
+                }
+            } else {
+                setPill('eq-motor-status', 'Enter a measured clamp reading to compare against the estimate.', '');
+            }
+        }
+
+        // ─────────────────────────────────────────────
+        // Tab 4 — NEMA voltage imbalance
+        // ─────────────────────────────────────────────
+        function muteImb(msg) {
+            ['eq-imb-avg', 'eq-imb-dev', 'eq-imb-pct'].forEach(dim);
+            el('eq-imb-formula').textContent = '';
+            callout('eq-imb-callout', msg);
+            setPill('eq-imb-status', 'Enter the three readings to see the verdict.', '');
+        }
+
+        function calcImbalance() {
+            const a = num('eq-imb-vab'), b = num('eq-imb-vbc'), c = num('eq-imb-vca');
+            if (![a, b, c].every(isFinite)) { muteImb('Enter all three line-to-line readings.'); return; }
+            if (a <= 0 || b <= 0 || c <= 0) { muteImb('Voltage readings must be greater than 0.'); return; }
+
+            const avg = (a + b + c) / 3;
+            const maxDev = Math.max(Math.abs(a - avg), Math.abs(b - avg), Math.abs(c - avg));
+            const pct = maxDev / avg * 100;
+
+            live('eq-imb-avg', tidy(avg, 1) + ' V');
+            live('eq-imb-dev', tidy(maxDev, 1) + ' V');
+            live('eq-imb-pct', pct.toFixed(2) + ' %');
+            el('eq-imb-formula').textContent =
+                'avg = (' + tidy(a, 1) + ' + ' + tidy(b, 1) + ' + ' + tidy(c, 1) + ') ÷ 3 = ' + tidy(avg, 1) + ' V   ·   ' +
+                'max deviation = ' + tidy(maxDev, 1) + ' V   ·   unbalance = ' + tidy(maxDev, 1) + ' ÷ ' + tidy(avg, 1) + ' × 100 = ' + pct.toFixed(2) + ' %';
+            hideCallout('eq-imb-callout');
+
+            if (pct <= 1) {
+                setPill('eq-imb-status', pct.toFixed(2) + '% — within NEMA MG-1 (≤ 1%). No derate required.', 'ok');
+            } else if (pct <= 5) {
+                setPill('eq-imb-status', pct.toFixed(2) + '% — above 1%. NEMA recommends derating the motor; current unbalance runs ~6–10× this, driving extra winding heat. Find the cause: a loose lug, unbalanced single-phase loads, or the utility.', 'warn');
+            } else {
+                setPill('eq-imb-status', pct.toFixed(2) + '% — NEMA MG-1 advises against operating above 5%. Correct the supply before running the motor.', 'error');
+            }
+        }
+
+        // ── Wiring ──────────────────────────────────────────────────
+        document.querySelectorAll('[data-tab]').forEach((btn) => {
+            btn.addEventListener('click', (e) => switchTab(e.currentTarget.dataset.tab, e.currentTarget));
+        });
+
+        ['eq-ohm-v', 'eq-ohm-i', 'eq-ohm-r', 'eq-ohm-p'].forEach((id) => el(id).addEventListener('input', calcOhms));
+        ['eq-ac-vl', 'eq-ac-pf', 'eq-ac-driver-val'].forEach((id) => el(id).addEventListener('input', calcAc));
+        ['eq-ac-phase', 'eq-ac-driver'].forEach((id) => el(id).addEventListener('change', calcAc));
+        ['eq-motor-pval', 'eq-motor-vl', 'eq-motor-pf', 'eq-motor-eff', 'eq-motor-meas'].forEach((id) => el(id).addEventListener('input', calcMotor));
+        ['eq-motor-pmode', 'eq-motor-phase'].forEach((id) => el(id).addEventListener('change', calcMotor));
+        ['eq-imb-vab', 'eq-imb-vbc', 'eq-imb-vca'].forEach((id) => el(id).addEventListener('input', calcImbalance));
+
+        el('eq-copy-ohm').addEventListener('click', (e) => copyReadouts(e.currentTarget, ' · ', 'eq-ohm-out-v', 'eq-ohm-out-i', 'eq-ohm-out-r', 'eq-ohm-out-p'));
+        el('eq-copy-ac').addEventListener('click', (e) => copyReadouts(e.currentTarget, ' · ', 'eq-ac-kw', 'eq-ac-kva'));
+        el('eq-copy-motor').addEventListener('click', (e) => copyReadouts(e.currentTarget, '', 'eq-motor-fla'));
+        el('eq-copy-imb').addEventListener('click', (e) => copyReadouts(e.currentTarget, '', 'eq-imb-pct'));
+
+        // First paint — every tab computes from its seeded defaults.
+        calcOhms();
+        calcAc();
+        calcMotor();
+        calcImbalance();
+    })();
+</script>
+{% endblock %}

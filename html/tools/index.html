@@ -21,7 +21,7 @@ nav: tools
 
     <div class="filter-chips" role="group" aria-label="Filter tools by category">
         <button type="button" class="filter-chip active" data-category="all" aria-pressed="true">
-            All <span class="filter-chip-count">18</span>
+            All <span class="filter-chip-count">19</span>
         </button>
         <button type="button" class="filter-chip" data-category="hvac" aria-pressed="false">
             HVAC <span class="filter-chip-count">6</span>
@@ -36,7 +36,7 @@ nav: tools
             Airflow <span class="filter-chip-count">1</span>
         </button>
         <button type="button" class="filter-chip" data-category="electrical" aria-pressed="false">
-            Electrical <span class="filter-chip-count">2</span>
+            Electrical <span class="filter-chip-count">3</span>
         </button>
         <button type="button" class="filter-chip" data-category="hydronics" aria-pressed="false">
             Hydronics <span class="filter-chip-count">3</span>
@@ -195,6 +195,15 @@ nav: tools
             titleFull:  'Wire Run & Voltage Drop',
             desc:       'Copper resistance for the run, then a verdict in the signal\'s own language — loop supply margin for 4-20 mA, real-vs-imagined error on 0-10 V, degrees of lie on a temperature sensor.',
             pills:      ['Electrical', 'AWG', '4-20 mA Loop', 'Lead Error'],
+            category:   'electrical'
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/tools/electrical-quick-calc.html',
+            titleShort: 'Electrical Calc',
+            titleFull:  'Field Electrical Quick Calc',
+            desc:       'Four field calcs in one: the Ohm\'s-law wheel (any two of V/I/R/P), single- and three-phase AC power (kW, kVA, kVAR, PF), a motor HP↔kW and full-load-amp estimate, and the NEMA voltage-imbalance check.',
+            pills:      ['Electrical', "Ohm's Law", '3φ Power', 'Motor FLA'],
             category:   'electrical'
         }) }}
         {{ navCard({
