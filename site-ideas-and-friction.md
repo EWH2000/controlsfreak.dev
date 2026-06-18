@@ -1639,6 +1639,15 @@ prefix `hlb-`. Mirrors the proven FBE two-layer split.
 - **Desktop-only on touch**, same gate + `desktopOnly` landing badge as
   the FBE / Controller Wiring sims — drag-to-place + click-to-pipe is the
   same finger-can't-both-drag-and-pan flaw.
+- **Canvas-builder simulators are pointer-only by design** (recorded once
+  here so it isn't re-litigated per page). The clickable port dots and pipe
+  paths are `<div>` / `<path>` with pointer handlers, not focusable buttons,
+  so there's no keyboard path to place/pipe/drag — matching the proven FBE.
+  This is a known WCAG 2.1.1 gap accepted for the canvas interaction (the
+  page is already gated + badged desktop-only, and the lessons carry the
+  same concepts keyboard-accessibly). If the bar is ever raised, scope a
+  focusable-port / arrow-nudge model against the FB editor at the same time
+  so the two stay consistent — don't add a keyboard path to one sim alone.
 
 `[future: hydronic-loop-builder phase 2]` — the data model is already 3D-
 ready (`pos.{x,y,z}`, every depth on a centre plane): the **X↔Y orthogonal-
@@ -1653,6 +1662,7 @@ Controller Wiring sim, this one ships without a single new paired lesson:
 it's the capstone for **four** existing hydronic lessons, all cross-linked
 both ways via `relatedLinks`. A dedicated "how a loop finds its operating
 point" explainer could still be worth writing.
+
 Two modes, tabs à la Signal Scaling. Both are shipped and the curves
 are datasheet-verified.
 
