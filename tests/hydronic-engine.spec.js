@@ -606,4 +606,88 @@ test.describe('hydronic-engine: review regressions', () => {
             ],
         })).not.toThrow();
     });
+
+    // Convergence is now measured on the TRUE secant residual (not the under-
+    // relaxed step), and the relaxation floor drops far enough (0.005) that a
+    // genuinely stiff loop settles instead of limit-cycling at the cap. Before the
+    // fix this triple-pump series loop reported converged:false at MAX_ITERS.
+    test('a stiff multi-pump series loop converges to its closed-form operating point', () => {
+        const HYDRO = loadEngine();
+        const S = HYDRO.SETTINGS;
+        const sys = HYDRO.makeSystem({
+            components: [
+                { id: 'p1', type: 'pump', pos: { x: 0, y: 0, z: 0 }, params: { h0: 40, a: 0.032, speed: 100, on: true } },
+                { id: 'p2', type: 'pump', pos: { x: 2, y: 0, z: 0 }, params: { h0: 40, a: 0.032, speed: 100, on: true } },
+                { id: 'p3', type: 'pump', pos: { x: 4, y: 0, z: 0 }, params: { h0: 40, a: 0.032, speed: 100, on: true } },
+                { id: 'c1', type: 'coil', pos: { x: 6, y: 0, z: 0 }, params: { k: 1e-5 } },
+            ],
+            pipes: [
+                { id: 'a', from: ['p1', 'out'], to: ['p2', 'in'] },
+                { id: 'b', from: ['p2', 'out'], to: ['p3', 'in'] },
+                { id: 'c', from: ['p3', 'out'], to: ['c1', 'in'] },
+                { id: 'd', from: ['c1', 'out'], to: ['p1', 'in'] },
+            ],
+        });
+        const m = HYDRO.solve(sys);
+        expect(m.converged).toBe(true);
+        expect(m.iters).toBeLessThanOrEqual(S.MAX_ITERS);
+        // 3·(h0 − a·Q²) = (3 pump casings + 4 pipes + coil)·Q²
+        const kTotal = 3 * S.K_PUMP_CASE + 4 * S.K_PIPE + 1e-5;
+        const qExpected = Math.sqrt(3 * 40 / (3 * 0.032 + kTotal));
+        expect(Math.abs(qOf(m, 'p1') - qExpected)).toBeLessThan(0.1);
+    });
+
+    // The converged flag must be honest: the OLD metric tested the relaxed step
+    // |qNew−Q| = relax·|qSolved−Q|, so once damping cut relax it could report
+    // converged while the branch law was still off by up to residual/relax. With
+    // the residual-based metric, converged:true implies the law holds to ~TOL.
+    test('the converged flag is honest — a converged stiff solve satisfies the branch law', () => {
+        const HYDRO = loadEngine();
+        const sys = HYDRO.makeSystem({
+            components: [
+                { id: 'p1', type: 'pump', pos: { x: 0, y: 0, z: 0 }, params: { h0: 40, a: 0.032, speed: 100, on: true } },
+                { id: 'p2', type: 'pump', pos: { x: 2, y: 0, z: 0 }, params: { h0: 40, a: 0.032, speed: 100, on: true } },
+                { id: 'c1', type: 'coil', pos: { x: 4, y: 0, z: 0 }, params: { k: 1e-4 } },
+            ],
+            pipes: [
+                { id: 'a', from: ['p1', 'out'], to: ['p2', 'in'] },
+                { id: 'b', from: ['p2', 'out'], to: ['c1', 'in'] },
+                { id: 'c', from: ['c1', 'out'], to: ['p1', 'in'] },
+            ],
+        });
+        const m = HYDRO.solve(sys);
+        if (m.converged) {
+            m.branches.forEach((b) => {
+                const lhs = m.nodes[b.nodeFrom].P - m.nodes[b.nodeTo].P;
+                const rhs = b.k * b.Q * Math.abs(b.Q) - b.hsrc + (b.Zto - b.Zfrom);
+                expect(Math.abs(lhs - rhs), 'branch ' + b.id + ' law residual').toBeLessThan(1e-2);
+            });
+        }
+    });
+
+    // pos coercion — makeSystem and the public solve()/tick() honor the documented
+    // "never thrown on a corrupted/raw literal" contract for pos too (a truthy
+    // non-object pos would otherwise throw on `c.pos.y = …` under 'use strict').
+    test('makeSystem coerces a truthy non-object pos instead of throwing', () => {
+        const HYDRO = loadEngine();
+        expect(() => HYDRO.makeSystem({
+            components: [{ id: 'p1', type: 'pump', pos: 5 }], pipes: [],
+        })).not.toThrow();
+        const sys = HYDRO.makeSystem({ components: [{ id: 'p1', type: 'pump', pos: 5 }], pipes: [] });
+        expect(sys.components[0].pos).toEqual({ x: 0, y: 0, z: 0 });
+    });
+
+    test('solve() tolerates a raw literal whose component omits pos entirely', () => {
+        const HYDRO = loadEngine();
+        expect(() => HYDRO.solve({
+            components: [
+                { id: 'p1', type: 'pump', params: { h0: 40, a: 0.012, speed: 100, on: true } },
+                { id: 'c1', type: 'coil', params: { k: 0.02 } },
+            ],
+            pipes: [
+                { id: 'a', from: ['p1', 'out'], to: ['c1', 'in'] },
+                { id: 'b', from: ['c1', 'out'], to: ['p1', 'in'] },
+            ],
+        })).not.toThrow();
+    });
 });
