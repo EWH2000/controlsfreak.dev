@@ -242,6 +242,13 @@ test('hydronic loop builder — an example loads and the loop solves to live flo
     await page.click('[data-example="parallel"]');
     await expect(page.locator('.hlb-comp')).toHaveCount(7);   // parallel: plant, pump, 2 tees, balance, 2 coils
     await expect(page.locator('#hlb-readouts .device').first().locator('.led')).toHaveClass(/led--run/);
+    // The loop animates flow particles, and adding a component must NOT kill them
+    // (regression: addComponent skipped refreshFlowGeometry so the new pipe paths
+    // got no FlowEngine pools and a steady loop's particles vanished).
+    await expect.poll(() => page.locator('main g.flow-particles circle').count()).toBeGreaterThan(0);
+    await page.locator('.hlb-palette-btn', { hasText: 'Coil' }).first().click();
+    await expect(page.locator('.hlb-comp')).toHaveCount(8);
+    await expect.poll(() => page.locator('main g.flow-particles circle').count()).toBeGreaterThan(0);
     expect(errors, 'hydronic loop builder behavioral should log no page / console errors').toEqual([]);
 });
 

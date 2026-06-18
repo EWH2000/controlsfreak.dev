@@ -84,7 +84,6 @@ keywords: hydronic loop pump coil valve cv balancing delta-t static head primary
         .hlb-pipe { fill: none; stroke: var(--blue-cool); stroke-width: 3.2; stroke-linecap: round; stroke-linejoin: round; }
         .hlb-pipe-hit { fill: none; stroke: transparent; stroke-width: 16; pointer-events: stroke; cursor: pointer; }
         .hlb-pipe-sel { stroke-dasharray: 6 4; }
-        .hlb-pipe-pending { stroke: var(--accent); stroke-width: 2.4; stroke-dasharray: 4 4; fill: none; opacity: 0.8; }
 
         /* ── Components (equipment boxes) ── */
         .hlb-comp {
@@ -177,6 +176,7 @@ keywords: hydronic loop pump coil valve cv balancing delta-t static head primary
         /* ── Sim bar + status + readouts ── */
         .hlb-simbar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; margin-bottom: 0.2rem; }
         .hlb-status { font-family: var(--mono); font-size: 0.66rem; color: var(--text-dim); margin-left: 0.3rem; }
+        .hlb-converge-warn { margin: 0.1rem 0 0.7rem; font-size: 0.78rem; }
 
         .hlb-readouts { display: flex; flex-wrap: wrap; gap: 0.7rem; margin: 0.2rem 0 0.9rem; }
         .hlb-readouts .device { flex: 1 1 13rem; min-width: 12rem; }
@@ -310,6 +310,8 @@ keywords: hydronic loop pump coil valve cv balancing delta-t static head primary
                 </div>
 
                 <div class="hlb-readouts" id="hlb-readouts" aria-label="Live equipment readouts"></div>
+
+                <p class="status-pill warn hlb-converge-warn" id="hlb-converge" role="status" aria-live="polite" hidden>Solver didn't settle — the flow shown may be unphysical. Ease the pump curve (lower the head or Curve&nbsp;a) or open a valve.</p>
 
                 <div class="hlb-workspace">
                     <div class="hlb-palette" id="hlb-palette" aria-label="Component palette"></div>
@@ -541,8 +543,8 @@ keywords: hydronic loop pump coil valve cv balancing delta-t static head primary
             const c = HC.createComponent(type, id, x, z);
             if (!c) return;
             system.components.push(c);
-            renderAll();
-            select({ kind: 'comp', id: id });
+            select({ kind: 'comp', id: id });   // select() does the single renderAll()
+            refreshFlowGeometry();              // build FlowEngine pools for the new path elements
         }
 
         // ── port geometry: where a port pins on its component box ──
@@ -746,7 +748,6 @@ keywords: hydronic loop pump coil valve cv balancing delta-t static head primary
                 path.id = 'hlb-pipe-' + p.id;
                 svg.appendChild(path);
             });
-            // pending pipe rubber-band stub (from the chosen port to nowhere yet)
         }
 
         // Map flow magnitude to a sparse→dense bucket (throttles FlowEngine
@@ -759,7 +760,11 @@ keywords: hydronic loop pump coil valve cv balancing delta-t static head primary
             return Math.max(0.06, Math.round(d * 5) / 5);
         }
 
-        // rebuild flow pools when geometry changed (drag / add / delete pipe)
+        // Register the current pipe paths with FlowEngine after a renderAll().
+        // renderAll() did inner.innerHTML='' so the prior paths are detached and
+        // their pools are now orphaned — FlowEngine reaps those lazily in its frame
+        // loop (the !isConnected splice); init() does NOT proactively remove them.
+        // Call on every geometry change (drag-end / add / delete / clear / example).
         function refreshFlowGeometry() {
             if (!window.FlowEngine) return;
             Object.keys(flowCache).forEach((k) => delete flowCache[k]);
@@ -778,7 +783,6 @@ keywords: hydronic loop pump coil valve cv balancing delta-t static head primary
                 const bucket = densityBucket(p.Q);
                 const rev = p.dir < 0;
                 const cached = flowCache[p.id];
-                el.setAttribute('data-flow', p.T >= 120 ? 'supply' : 'return');
                 if (!cached || cached.bucket !== bucket || cached.rev !== rev) {
                     el.setAttribute('data-flow-density', String(bucket));
                     el.setAttribute('data-flow-reverse', rev ? 'true' : 'false');
@@ -790,6 +794,16 @@ keywords: hydronic loop pump coil valve cv balancing delta-t static head primary
             refreshComponentBodies();
             refreshReadouts();
             refreshInspectorValues();
+            updateConvergeWarn();
+        }
+
+        // Surface the engine's convergence flag: a loop the solver could not settle
+        // (a too-steep pump curve, a supra-Q_CAP circuit) would otherwise show a
+        // plausible-but-wrong flow with no warning. _lastConverged is set by HC.tick.
+        function updateConvergeWarn() {
+            const el = byId('hlb-converge');
+            if (!el) return;
+            el.hidden = !(system._lastConverged === false && system.components.length > 0);
         }
 
         const U = window.Units;
@@ -820,7 +834,7 @@ keywords: hydronic loop pump coil valve cv balancing delta-t static head primary
         }
 
         // ── live equipment-register readouts (first pump + first plant) ──
-        function readoutCard(title, badge, rows, led) {
+        function readoutCard(title, rows, led) {
             return '<div class="device"><div class="device-inner">' +
                 '<div class="device-tb"><span class="title">' + title + '</span>' +
                 '<span class="led ' + led + '"></span></div>' +
@@ -834,7 +848,7 @@ keywords: hydronic loop pump coil valve cv balancing delta-t static head primary
             let html = '';
             if (pump) {
                 const o = pump.out || {};
-                html += readoutCard('PUMP ' + pump.id, '', [
+                html += readoutCard('PUMP ' + pump.id, [
                     ['Flow', dispFlow(o.Q || 0)],
                     ['Head', dispHead(o.head || 0)],
                     ['Speed', fmt(o.speed, 0) + ' %'],
@@ -842,7 +856,7 @@ keywords: hydronic loop pump coil valve cv balancing delta-t static head primary
             }
             if (plant) {
                 const o = plant.out || {};
-                html += readoutCard('PLANT ' + plant.id, '', [
+                html += readoutCard('PLANT ' + plant.id, [
                     ['Leaving', dispTemp(o.lwt || 70)],
                     ['Entering', dispTemp(o.ewt || 70)],
                     ['Load', dispLoad(o.Qheat || 0)],
@@ -907,7 +921,13 @@ keywords: hydronic loop pump coil valve cv balancing delta-t static head primary
                     field = document.createElement('input');
                     field.type = 'number';
                     field.value = comp.params[p.name];
+                    if (p.min !== undefined) field.min = p.min;
+                    if (p.max !== undefined) field.max = p.max;
+                    field.step = (p.step !== undefined) ? p.step : 'any';
                     field.addEventListener('input', () => {
+                        // A momentarily-empty box (clearing to retype) keeps the prior
+                        // value instead of transiently zeroing the model mid-edit.
+                        if (field.value === '') return;
                         const n = parseFloat(field.value);
                         comp.params[p.name] = isFinite(n) ? n : 0;
                         afterParamEdit();
@@ -1000,7 +1020,6 @@ keywords: hydronic loop pump coil valve cv balancing delta-t static head primary
             if (!EXAMPLES[key]) return;
             system = HC.makeSystem(EXAMPLES[key]);
             selected = null; cancelPipe();
-            // bump the sequence counters past any ids the example used
             renderAll();
             resetSim();
             refreshFlowGeometry();
@@ -1056,6 +1075,13 @@ keywords: hydronic loop pump coil valve cv balancing delta-t static head primary
 
         // recolour readouts on a units toggle
         if (U) U.onChange(() => { refreshComponentBodies(); refreshReadouts(); });
+
+        // recolour pipes + particles on a theme toggle. Pipe stroke (inline RGB)
+        // and particle fill (FE.setPathColor) are theme-derived but NOT CSS vars,
+        // so the cascade can't repaint them; theme.js fires 'themechange' after
+        // flipping [data-theme], and refreshViz() re-reads --blue/--heat via
+        // syncTokens(). Matches pid-tuner / staging-sequencer / psychrometric-chart.
+        document.addEventListener('themechange', refreshViz);
 
         // ── fullscreen reflow (mirrors the FB editor) ──
         const card = document.querySelector('.tool-card');

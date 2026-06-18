@@ -4313,6 +4313,76 @@ Worker: legacy redirect discards query string and fragment (src/worker.js:238-24
 **Resolution (2026-06-16):** applied the one-liner — `const target = new URL(legacyTarget, url.origin); target.search = url.search;` — so an inbound `?utm_*`/query on a moved simulator URL now rides through the 301 (fragments are never sent to the server, so there's nothing to carry there). Regression test in `tests/worker.spec.js` (`/tools/pid-tuner.html?utm_source=nl&x=1` → `/simulators/pid-tuner.html?utm_source=nl&x=1`). Harmless-today gap closed pre-emptively (the cost is one line + a test, and it's strictly more correct). No version bump.
 
 
+### 134. Hydronic engine: steep pump curves / series pumps need a true Newton step *(open — 2026-06-17)*
+
+From the Hydronic Loop Builder review (PR #277 follow-up). `solveHydraulics`
+linearizes only the friction term into the secant conductance `g = 1/(k|Q|)`
+and treats pump head `hsrc = (h0−a·Q²)·spd²` as a constant current injection;
+the curve slope `dHsrc/dQ = −2a·Q·spd²` is never fed back, so a steep curve
+overshoots. The obvious "fold the slope into `g`" patch is **wrong** here and
+was proven so during review: `g` is simultaneously the linearization AND the
+literal `Q = g·residual` flow map (step 5), so changing the denominator moves
+the fixed point — the patch converged the default loop to 26.3 GPM instead of
+the closed-form 34.3 and violated the branch law by 16–79 ft of head.
+**Largely mitigated** in the follow-up: lowering the relaxation floor to 0.005
+(#3) made most reachable cases converge to the closed form (e.g. h0=120/a=0.1
+→ 34.13 GPM exact), the inspector now bounds `Curve a` ≤ 0.2 (#14), and the
+page surfaces a "solver didn't settle" warning (#7/#11) so a non-converged
+flow is never shown as trusted. **Remaining gap:** extreme typed curves (a=0.5)
+still report `converged:false` with a wrong flow. The proper fix is a real
+Newton step on the full residual `r(Q) = k·Q·|Q| − hsrc(Q) − ΔP` with Jacobian
+`dr/dQ = 2k|Q| + 2a·Q·spd²`, restructured so the flow-from-pressure map is
+consistent with the linearization (not bolted onto `g`), validated against the
+closed form for every steep case. Revisit trigger: a user report of unstable
+numbers on a realistic loop, or before any pipe-sizing phase-2 work that makes
+`k_pipe` length-dependent (which raises stiffness).
+
+### 135. Hydronic engine: valve2 `out.authority` is dead + mislabeled *(open — 2026-06-17)*
+
+`writeback`'s valve2 case computes `out.authority = vHead / pumpHead` and
+`out.dP`, and balanceValve computes `out.dP` — none are rendered on the page
+or asserted in any test (dead code). Worse, "authority" collides with the
+valve-cv tool's reserved meaning: valve authority β is the wide-open valve drop
+over the total branch drop, evaluated at full stroke; this quantity uses the
+*current-position* valve drop over *full pump head*, so it climbs toward 1 as
+the valve shuts and understates the share on a multi-branch loop. Fix: either
+delete the three dead `out` fields, or — if a teaching readout is wanted later
+— rename (e.g. `out.headShare`), fix the denominator to the valve's own
+controlled-branch node-to-node drop, and compute the wide-open β once so it
+matches valve-cv. Not urgent: it cannot mis-display anything today.
+
+### 136. Hydronic page: component drag wipes the particle layer every pointermove *(open — 2026-06-17)*
+
+During a component drag, `drawPipes()` does `svg.innerHTML = ''` and recreates
+every pipe `<path>` each `pointermove`, so FlowEngine's pools (keyed by the old
+path elements) are orphaned and particles flicker/vanish for the duration of
+the drag, returning on `pointerup` (which calls `refreshFlowGeometry`). Benign
+(cosmetic, drag-only) but the principled fix is to update each path's `d`
+attribute in place when the pipe set is unchanged (the common drag case), so
+pool `el` references stay valid — this also lets `renderAll()` stop orphaning
+every pool on every render (folds in #13's lazy-reap note). Larger refactor;
+not blocking.
+
+### 137. Hydronic engine: `makeSystem` dedupes pipe ids but not component ids *(open — 2026-06-17)*
+
+`makeSystem` rewrites null/duplicate **pipe** ids to fresh unique ones (so the
+warm-start `_warm` / writeback caches can't alias), and the test suite enshrines
+that contract — but there is no component-id analogue. Two components sharing an
+id (or a null id) would alias their branch keys (`<id>#<bi>`) in the same caches
+and mirror one component's flow onto another. Not reachable through the shipped
+UI (`addComponent` uses a monotonic `h`+seq id), so not urgent; matters once a
+persistence/import path or the Android wrapper feeds external JSON. Fix: mirror
+the pipe-id pass (a `seenCompIds` Set rewriting collisions), rebuild the `ids`
+set before the pipe filter, and add a spec case.
+
+### 138. Number-input idiom: function-block-editor could take the same min/max/step *(open — 2026-06-17)*
+
+The Hydronic Loop Builder inspector now applies catalog `min/max/step` to its
+number inputs and skips zeroing the model on a momentarily-empty box (#14).
+`function-block-editor.html` shares the identical number-input builder idiom
+and could get the same treatment in a future sweep for consistency. Low
+priority; cosmetic/UX parity only.
+
 ### Deferred / Won't fix (with revisit trigger)
 
 Items considered during an audit and deliberately not pursued, each

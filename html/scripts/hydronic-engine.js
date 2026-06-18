@@ -82,11 +82,15 @@ const HYDRO = (function () {
     const Q_MIN       = 1e-3;       // GPM — divide-by-zero floor (thermal ΔT, mixing)
     const Q_COND_FLOOR = 0.05;      // GPM — floor on |Q| in the secant conductance
                                     // 1/(k|Q|). A hair above zero so g can't blow
-                                    // up at near-zero flow and overshoot; negligible
-                                    // vs any real flow, so it never shifts the
-                                    // operating point (the floor doesn't bind once
-                                    // |Q| > 0.05). Tames the cold-start + stiff-loop
-                                    // (series-pump) iteration.
+                                    // up at near-zero flow and overshoot. Negligible
+                                    // vs any real loop flow (tens of GPM) and the
+                                    // floor stops binding once |Q| > 0.05. It DOES
+                                    // bias the operating point of a loop whose true
+                                    // flow is below 0.05 GPM — but such a flow rounds
+                                    // to 0.0 at the display, and the residual-based
+                                    // convergence test (solveHydraulics) reports that
+                                    // case as not-settled anyway. Tames the cold-start
+                                    // + stiff-loop (series-pump) iteration.
     const Q_CAP       = 1000;       // GPM — per-iteration clamp; far above any
                                     // real loop, only ever catches a cold-start
                                     // secant overshoot before it blows up. Hitting
@@ -131,7 +135,10 @@ const HYDRO = (function () {
     //   ports[]    { name, role:'inlet'|'outlet'|'bi', dx, dz }  local ft offset
     //   branches[] { from, to, kind, thermal }   internal flow paths
     //   junction[] (optional) port names merged into ONE pressure node (a tee)
-    //   params[]   { name, label, kind, default, options?, min?, max? }
+    //   params[]   { name, label, kind, default, options?, min?, max?, step? }
+    //              min/max/step are UI hints the inspector applies to number
+    //              inputs; the engine's own branchK/branch* clamps stay the real
+    //              backstop (a typed out-of-range value still solves safely).
     // `kind` on a branch selects the resistance + head model in branchK/branchHsrc;
     // `thermal` selects the temperature law in branchThermal.
     const COMPONENTS = {
@@ -148,9 +155,9 @@ const HYDRO = (function () {
             params: [
                 { name: 'mode',    label: 'Mode',           kind: 'enum',
                   options: ['heat', 'cool'], default: 'heat' },
-                { name: 'lwt',     label: 'Leaving °F',     kind: 'number', default: 180 },
-                { name: 'qmax',    label: 'Capacity (MBH)', kind: 'number', default: 400 },
-                { name: 'k',       label: 'Resistance k',   kind: 'number', default: 0.01 },
+                { name: 'lwt',     label: 'Leaving °F',     kind: 'number', default: 180, min: 32, max: 250, step: 1 },
+                { name: 'qmax',    label: 'Capacity (MBH)', kind: 'number', default: 400, min: 0, step: 10 },
+                { name: 'k',       label: 'Resistance k',   kind: 'number', default: 0.01, min: 0, step: 0.001 },
                 { name: 'srcmode', label: 'Source mode',    kind: 'enum',
                   options: ['setpoint', 'capacity'], default: 'setpoint' },
             ],
@@ -166,9 +173,9 @@ const HYDRO = (function () {
             ],
             branches: [{ from: 'in', to: 'out', kind: 'pump', thermal: 'adiabatic' }],
             params: [
-                { name: 'h0',    label: 'Shutoff head (ft)', kind: 'number', default: 40 },
-                { name: 'a',     label: 'Curve a',           kind: 'number', default: 0.012 },
-                { name: 'speed', label: 'Speed (%)',         kind: 'number', default: 100 },
+                { name: 'h0',    label: 'Shutoff head (ft)', kind: 'number', default: 40, min: 0, max: 200, step: 1 },
+                { name: 'a',     label: 'Curve a',           kind: 'number', default: 0.012, min: 0, max: 0.2, step: 0.001 },
+                { name: 'speed', label: 'Speed (%)',         kind: 'number', default: 100, min: 0, max: 100, step: 1 },
                 { name: 'on',    label: 'Enabled',           kind: 'bool',   default: true },
             ],
         },
@@ -184,9 +191,9 @@ const HYDRO = (function () {
             ],
             branches: [{ from: 'in', to: 'out', kind: 'resistor', thermal: 'load' }],
             params: [
-                { name: 'k',       label: 'Resistance k',  kind: 'number', default: 0.02 },
-                { name: 'qdesign', label: 'Load (MBH)',    kind: 'number', default: 120 },
-                { name: 'tspace',  label: 'Space °F',      kind: 'number', default: 70 },
+                { name: 'k',       label: 'Resistance k',  kind: 'number', default: 0.02, min: 0, step: 0.001 },
+                { name: 'qdesign', label: 'Load (MBH)',    kind: 'number', default: 120, min: 0, step: 10 },
+                { name: 'tspace',  label: 'Space °F',      kind: 'number', default: 70, min: 32, max: 120, step: 1 },
             ],
         },
 
@@ -199,10 +206,10 @@ const HYDRO = (function () {
             ],
             branches: [{ from: 'in', to: 'out', kind: 'valve2', thermal: 'adiabatic' }],
             params: [
-                { name: 'cv',    label: 'Cv (full)',    kind: 'number', default: 8 },
-                { name: 'pos',   label: 'Position (%)',  kind: 'number', default: 100 },
+                { name: 'cv',    label: 'Cv (full)',    kind: 'number', default: 8, min: 0, step: 0.5 },
+                { name: 'pos',   label: 'Position (%)',  kind: 'number', default: 100, min: 0, max: 100, step: 1 },
                 { name: 'eqpct', label: 'Equal-percent', kind: 'bool',   default: false },
-                { name: 'rangeability', label: 'Rangeability R', kind: 'number', default: 50 },
+                { name: 'rangeability', label: 'Rangeability R', kind: 'number', default: 50, min: 2, max: 100, step: 1 },
             ],
         },
 
@@ -221,8 +228,8 @@ const HYDRO = (function () {
                 { from: 'a', to: 'c', kind: 'valve3c', thermal: 'adiabatic' },
             ],
             params: [
-                { name: 'cv',  label: 'Cv (full)',   kind: 'number', default: 8 },
-                { name: 'pos', label: 'Position (%)', kind: 'number', default: 100 },
+                { name: 'cv',  label: 'Cv (full)',   kind: 'number', default: 8, min: 0, step: 0.5 },
+                { name: 'pos', label: 'Position (%)', kind: 'number', default: 100, min: 0, max: 100, step: 1 },
             ],
         },
 
@@ -236,8 +243,8 @@ const HYDRO = (function () {
             ],
             branches: [{ from: 'in', to: 'out', kind: 'balance', thermal: 'adiabatic' }],
             params: [
-                { name: 'cv',      label: 'Cv (full)',  kind: 'number', default: 8 },
-                { name: 'setting', label: 'Setting (%)', kind: 'number', default: 50 },
+                { name: 'cv',      label: 'Cv (full)',  kind: 'number', default: 8, min: 0, step: 0.5 },
+                { name: 'setting', label: 'Setting (%)', kind: 'number', default: 50, min: 0, max: 100, step: 1 },
             ],
         },
 
@@ -294,8 +301,13 @@ const HYDRO = (function () {
         const components = rawComps.filter((c) => c && COMPONENTS[c.type]);
         components.forEach((c) => {
             const cdef = COMPONENTS[c.type];
-            c.pos = c.pos || { x: 0, y: Y_CENTER, z: 0 };
+            // Coerce a missing OR truthy-non-object pos (a hand-authored `pos: 5`
+            // would otherwise throw on c.pos.y = … under 'use strict'). Normalize
+            // every axis so the flatten pass never reads a non-finite coordinate.
+            if (!c.pos || typeof c.pos !== 'object') c.pos = { x: 0, y: Y_CENTER, z: 0 };
+            if (!isFin(c.pos.x)) c.pos.x = 0;
             if (!isFin(c.pos.y)) c.pos.y = Y_CENTER;
+            if (!isFin(c.pos.z)) c.pos.z = 0;
             c.params = c.params || {};
             (cdef.params || []).forEach((p) => {
                 if (!(p.name in c.params)) c.params[p.name] = p.default;
@@ -417,7 +429,9 @@ const HYDRO = (function () {
         const worldZ = (c, portName) => {
             if (!c || !COMPONENTS[c.type]) return Y_CENTER;
             const pd = COMPONENTS[c.type].ports.find((p) => p.name === portName);
-            return asNum(c.pos.z) + (pd ? asNum(pd.dz) : 0);
+            // A raw literal fed straight to solve()/tick() may have no pos — honor
+            // the documented raw-literal tolerance instead of throwing on c.pos.z.
+            return (c.pos ? asNum(c.pos.z) : Y_CENTER) + (pd ? asNum(pd.dz) : 0);
         };
 
         // Branches: component internal branches, then pipes.
@@ -594,6 +608,14 @@ const HYDRO = (function () {
                 b.k = branchK(b);
                 b.hsrc = branchHsrc(b);
                 const aq = Math.max(Math.abs(b.Q), Q_COND_FLOOR);
+                // Secant (chord) conductance g = 1/(k|Q|) — the chord through the
+                // origin, NOT the friction tangent 1/(2k|Q|). g is simultaneously
+                // the linearization AND the literal Q = g·residual flow map (step 5),
+                // so it must be the chord for the fixed point to land on the true
+                // operating point. The pump-head slope (−2a·Q·spd²) is deliberately
+                // NOT folded into g for the same reason — doing so moves the fixed
+                // point and yields branch-law-violating flows (see codebase-issues:
+                // steep pump curves don't converge; a true Newton step is the fix).
                 b.g = 1 / (b.k * aq);
                 if (!isFin(b.g)) b.g = 0;
             }
@@ -620,26 +642,38 @@ const HYDRO = (function () {
             // 4. solve for node pressures
             const P = gaussianSolve(G, I);
             for (let i = 0; i < n; i++) nodes[i].P = P[i];
-            // 5. recompute flows, under-relax, clamp, track convergence
+            // 5. recompute flows, under-relax, clamp, track convergence.
+            //    Convergence is measured on the TRUE secant residual |qSolved − Q|
+            //    (pre-relaxation), NOT on the under-relaxed step |qNew − Q|. The
+            //    latter is the residual scaled by `relax`, so once adaptive damping
+            //    cuts relax toward its floor the loop would report converged while
+            //    the branch law is still off by up to residual/relax. The relaxed
+            //    qNew is still what we APPLY — only the stop metric changes.
             maxDQ = 0;
             for (let i = 0; i < branches.length; i++) {
                 const b = branches[i];
                 if (b.nodeFrom === b.nodeTo) continue;
                 let qSolved = b.g * ((P[b.nodeFrom] - P[b.nodeTo]) + b.hsrc - (b.Zto - b.Zfrom));
                 if (!isFin(qSolved)) qSolved = 0;
+                const dqTrue = Math.abs(qSolved - b.Q);     // pre-relaxation residual
                 let qNew = b.Q + relax * (qSolved - b.Q);
                 qNew = clamp(qNew, -Q_CAP, Q_CAP);          // catch cold-start overshoot
                 if (!isFin(qNew)) qNew = 0;
-                const dq = Math.abs(qNew - b.Q);
-                if (dq > maxDQ) maxDQ = dq;
+                if (dqTrue > maxDQ) maxDQ = dqTrue;
                 b.Q = qNew;
             }
             if (maxDQ < TOL) { iters++; converged = true; break; }
             // Adaptive damping: a residual that GREW means the secant update is
             // oscillating (stiff loops — a steep pump curve, pumps in series); cut
-            // the relaxation so it settles instead of limit-cycling. A normal loop
-            // decreases monotonically, keeps RELAX, and converges in 1–3 warm ticks.
-            if (maxDQ > prevMaxDQ) relax = Math.max(relax * 0.5, 0.05);
+            // the relaxation so it settles instead of limit-cycling. The 0.005 floor
+            // (down from 0.05) is what lets a genuinely stiff loop — several high-
+            // head pumps in series on a near-frictionless circuit — ratchet down far
+            // enough to settle within MAX_ITERS instead of limit-cycling at the cap.
+            // Relax is monotone-decreasing within a solve (it does NOT recover): on
+            // a stiff loop a recovery step just re-amplifies the oscillation it was
+            // damping. relax resets to RELAX at the top of each solve, so a warm
+            // steady-state tick still starts undamped and converges in 1–3 iters.
+            if (maxDQ > prevMaxDQ) relax = Math.max(relax * 0.5, 0.005);
             prevMaxDQ = maxDQ;
         }
         // final sanitize — never hand a non-finite flow back
