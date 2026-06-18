@@ -115,10 +115,12 @@ test('field-vocabulary queries resolve, short tokens skip mid-word noise', async
             [...document.querySelectorAll('.palette-result-title')].map((e) => e.textContent));
     };
 
-    // "fla": the two genuine FLA pages lead; the privacy page
+    // "fla": the genuine FLA pages lead — the multifunction electrical
+    // calc (a Motor FLA tab) and the VFD pages; the privacy page
     // (cloudFLAre — a mid-word hit) no longer appears at all.
     const fla = await titles('fla');
-    expect(fla[0]).toContain('VFD');
+    expect(fla[0]).toMatch(/Electrical|VFD/);
+    expect(fla.join('|')).toContain('Field Electrical Quick Calc');
     expect(fla.join('|')).toContain('VFDs');
     expect(fla.join('|')).not.toContain('Privacy');
 

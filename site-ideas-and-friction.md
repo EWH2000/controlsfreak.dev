@@ -172,6 +172,41 @@ layout codebase-issues #29 warns about.
   same-copper-different-lie asymmetry (~0.02 °F vs ~30 °F) is
   computed, not asserted.
 
+### Field Electrical Quick Calc *(shipped 2026-06-17)*
+
+The third `electrical` tool (`/tools/electrical-quick-calc.html`,
+`eq-`, `Electrical` chip 2→3, All 18→19) and the first *multifunction*
+one — the bread-and-butter math a controls tech double-checks on a
+call, which the two single-purpose electrical tools (VA budget, voltage
+drop) deliberately don't touch. One tabbed page (signal-scaling idiom)
+rather than four tools: each tab is a few rows, none earns its own
+reference surface, and they share the "did I get this right?" framing.
+Four tabs, scoped by three independent design lenses converging on the
+same set (Ohm's law / AC power / motor; voltage imbalance added by
+owner pick), every formula numerically verified before build:
+
+- **Ohm's Law & Power** — the 12-form wheel; enter exactly two of
+  V/I/R/P, the other two solve and paint blue + a `· solved` label
+  suffix (color-independent cue). Strict two-input rule (over-determined
+  mutes) — the recompute-from-last-two-edited UX was considered and
+  deferred. DC/resistive scope note points reactive loads to the AC tab.
+- **AC Power** — 1φ/3φ line-quantity power triangle; line voltage + PF +
+  one of {amps, kW, kVA} → the rest. √3 carried full-precision; voltage
+  inputs labeled line-to-line with the 208/240/480 hint (the field's #1
+  √3 mistake). No pill — deterministic algebra.
+- **Motor HP / kW / FLA** — HP↔kW + an FLA *estimate*; the
+  always-visible "estimate only — size off NEC 430.250/430.248, not this
+  number" disclaimer is the load-bearing content. Optional measured-amps
+  field drives the only verdict pill on the tab (meas ÷ estimate). PF/η
+  shown as editable assumptions; η accepts 0–1 or a percent.
+- **Voltage Imbalance** — NEMA MG-1: % unbalance from three L-L readings,
+  multi-state pill (≤1% ok / 1–5% derate / >5% don't operate). The
+  current-unbalance ~6–10× rule of thumb in the reference.
+- No global Units toggle / no `data-us` spans / no `cf_*` keys (matches
+  the sibling electrical tools; privacy.html untouched). NEC FLC table
+  behind `// user to verify` markers. `[future: voltage imbalance derate
+  curve as numeric factors; PF-correction / capacitor-bank sizing tab]`.
+
 ### Airflow & Velocity Pressure tool *(shipped 2026-06-10)*
 
 PR 2 of the mock-call build queue, and the **airside-flow category
