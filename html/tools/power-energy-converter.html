@@ -1,0 +1,870 @@
+---
+title: Power & Energy Converter — controlsfreak.dev
+description: Convert power and energy — W, kW, BTU/hr, MBH, tons, hp, joules, kWh, therms, MMBtu — bridge them through time, and check boiler input vs burner turndown.
+canonical: https://controlsfreak.dev/tools/power-energy-converter.html
+nav: tools
+category: hvac
+keywords: power energy unit converter watt kilowatt btu mbh mbtu mmbtu therm joule kwh megajoule horsepower boiler hp ton refrigeration turndown burner riello firing rate kcal
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block head %}
+    <style>
+        /* Power & Energy converter — page-local widget internals. The
+           shared property-sheet / table / status-pill vocabulary lives in
+           styles.css; only the value+unit input pairing and the
+           equivalents-table column treatment are page-specific. */
+
+        /* A value field + its unit picker sharing one .ps-row value cell. */
+        .pe-vu {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+        .pe-vu input.ps-input {
+            flex: 1 1 auto;
+            min-width: 0;                       /* let the input shrink inside the grid cell */
+        }
+        .pe-vu select.ps-input {
+            flex: 0 0 auto;
+            width: auto;
+        }
+
+        /* The disabled "this one is computed" field in the time bridge. */
+        input.ps-input.pe-solved {
+            border-color: var(--accent);
+            color: var(--text-dim);
+            background: var(--surface-2);
+        }
+
+        /* Equivalents table — Unit | Value, value right-aligned and live. */
+        .pe-eq th.pe-eq-valh,
+        .pe-eq td.pe-eq-val {
+            text-align: right;
+            white-space: nowrap;
+        }
+        .pe-eq td.pe-eq-val {
+            color: var(--blue);
+            font-weight: 600;
+        }
+        .pe-eq .pe-eq-sym {
+            color: var(--text-bright);
+        }
+        .pe-eq .pe-eq-name {
+            color: var(--text-dim);
+            font-family: var(--sans);
+            font-size: 0.72rem;
+        }
+        .pe-eq tr.pe-eq-self td {
+            background: var(--accent-dim);
+        }
+
+        /* Verdict pill stack on the boiler tab. */
+        .pe-pills { margin-top: 1rem; }
+        .pe-pills .status-pill { margin-top: 0; }
+        .pe-pills .status-pill + .status-pill { margin-top: 0.5rem; }
+    </style>
+{% endblock %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Tools · Power &amp; Energy</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">
+                Power &amp; Energy Converter
+                <span class="tool-tag">Power · Energy</span>
+            </h1>
+        </div>
+        <p class="tool-preamble">
+            Power, energy, and the time that links them — convert any unit to every other,
+            bridge power and energy through a duration, and size a boiler against its burner.
+        </p>
+
+        <div class="tabs tabs-flush">
+            <button class="tab-btn active" data-tab="convert">Convert</button>
+            <button class="tab-btn"        data-tab="bridge">Power × Time = Energy</button>
+            <button class="tab-btn"        data-tab="boiler">Boiler / Burner</button>
+        </div>
+
+        <!-- ───────────────────────── TAB 1 — CONVERT ───────────────────────── -->
+        <div id="tab-convert" class="tab-pane active">
+            <div class="tool-body-2col">
+
+                <section>
+                    <h2 class="ps-section-label">Input</h2>
+                    <div class="ps-row">
+                        <label class="ps-label" for="pe-conv-val">Value</label>
+                        <input class="ps-input" type="number" id="pe-conv-val" step="any" placeholder="100" value="100">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="pe-conv-unit">Unit</label>
+                        <select class="ps-input" id="pe-conv-unit">
+                            <optgroup label="Power (a rate)">
+                                <option value="w">W — watt</option>
+                                <option value="kw" selected>kW — kilowatt</option>
+                                <option value="mw">MW — megawatt</option>
+                                <option value="btuh">BTU/hr — BTU per hour</option>
+                                <option value="mbh">MBH — thousand BTU/hr</option>
+                                <option value="mmbtuh">MMBtu/hr — million BTU/hr</option>
+                                <option value="ton">ton — refrigeration</option>
+                                <option value="hp">hp — horsepower</option>
+                                <option value="bhp">boiler hp — 33,475 BTU/hr</option>
+                                <option value="kcalh">kcal/hr — kilocalorie/hr</option>
+                            </optgroup>
+                            <optgroup label="Energy (a quantity)">
+                                <option value="j">J — joule</option>
+                                <option value="kj">kJ — kilojoule</option>
+                                <option value="mj">MJ — megajoule</option>
+                                <option value="gj">GJ — gigajoule</option>
+                                <option value="wh">Wh — watt-hour</option>
+                                <option value="kwh">kWh — kilowatt-hour</option>
+                                <option value="mwh">MWh — megawatt-hour</option>
+                                <option value="btu">BTU — British thermal unit</option>
+                                <option value="kbtu">kBtu — thousand BTU</option>
+                                <option value="mmbtu">MMBtu — million BTU</option>
+                                <option value="therm">therm — 100,000 BTU</option>
+                                <option value="kcal">kcal — kilocalorie</option>
+                            </optgroup>
+                        </select>
+                    </div>
+                    <p class="bit-hint">
+                        Pick any power or energy unit — every equivalent in that dimension
+                        updates live. To turn power into energy (or back), use the
+                        <strong>Power × Time = Energy</strong> tab.
+                    </p>
+                </section>
+
+                <section role="status" aria-atomic="false">
+                    <h2 class="ps-section-label">Equivalents</h2>
+                    <p class="bit-hint" id="pe-conv-dim">—</p>
+                    <table class="ref-table-dense pe-eq">
+                        <thead>
+                            <tr><th>Unit</th><th class="pe-eq-valh">Value</th></tr>
+                        </thead>
+                        <tbody id="pe-conv-body">
+                            <tr data-dim="power"><td><span class="pe-eq-sym">W</span> <span class="pe-eq-name">watt</span></td><td class="pe-eq-val" id="pe-conv-w">—</td></tr>
+                            <tr data-dim="power"><td><span class="pe-eq-sym">kW</span> <span class="pe-eq-name">kilowatt</span></td><td class="pe-eq-val" id="pe-conv-kw">—</td></tr>
+                            <tr data-dim="power"><td><span class="pe-eq-sym">MW</span> <span class="pe-eq-name">megawatt</span></td><td class="pe-eq-val" id="pe-conv-mw">—</td></tr>
+                            <tr data-dim="power"><td><span class="pe-eq-sym">BTU/hr</span> <span class="pe-eq-name">BTU per hour</span></td><td class="pe-eq-val" id="pe-conv-btuh">—</td></tr>
+                            <tr data-dim="power"><td><span class="pe-eq-sym">MBH</span> <span class="pe-eq-name">thousand BTU/hr</span></td><td class="pe-eq-val" id="pe-conv-mbh">—</td></tr>
+                            <tr data-dim="power"><td><span class="pe-eq-sym">MMBtu/hr</span> <span class="pe-eq-name">million BTU/hr</span></td><td class="pe-eq-val" id="pe-conv-mmbtuh">—</td></tr>
+                            <tr data-dim="power"><td><span class="pe-eq-sym">ton</span> <span class="pe-eq-name">refrigeration</span></td><td class="pe-eq-val" id="pe-conv-ton">—</td></tr>
+                            <tr data-dim="power"><td><span class="pe-eq-sym">hp</span> <span class="pe-eq-name">horsepower</span></td><td class="pe-eq-val" id="pe-conv-hp">—</td></tr>
+                            <tr data-dim="power"><td><span class="pe-eq-sym">boiler hp</span> <span class="pe-eq-name">boiler horsepower</span></td><td class="pe-eq-val" id="pe-conv-bhp">—</td></tr>
+                            <tr data-dim="power"><td><span class="pe-eq-sym">kcal/hr</span> <span class="pe-eq-name">kilocalorie/hr</span></td><td class="pe-eq-val" id="pe-conv-kcalh">—</td></tr>
+                            <tr data-dim="energy"><td><span class="pe-eq-sym">J</span> <span class="pe-eq-name">joule</span></td><td class="pe-eq-val" id="pe-conv-j">—</td></tr>
+                            <tr data-dim="energy"><td><span class="pe-eq-sym">kJ</span> <span class="pe-eq-name">kilojoule</span></td><td class="pe-eq-val" id="pe-conv-kj">—</td></tr>
+                            <tr data-dim="energy"><td><span class="pe-eq-sym">MJ</span> <span class="pe-eq-name">megajoule</span></td><td class="pe-eq-val" id="pe-conv-mj">—</td></tr>
+                            <tr data-dim="energy"><td><span class="pe-eq-sym">GJ</span> <span class="pe-eq-name">gigajoule</span></td><td class="pe-eq-val" id="pe-conv-gj">—</td></tr>
+                            <tr data-dim="energy"><td><span class="pe-eq-sym">Wh</span> <span class="pe-eq-name">watt-hour</span></td><td class="pe-eq-val" id="pe-conv-wh">—</td></tr>
+                            <tr data-dim="energy"><td><span class="pe-eq-sym">kWh</span> <span class="pe-eq-name">kilowatt-hour</span></td><td class="pe-eq-val" id="pe-conv-kwh">—</td></tr>
+                            <tr data-dim="energy"><td><span class="pe-eq-sym">MWh</span> <span class="pe-eq-name">megawatt-hour</span></td><td class="pe-eq-val" id="pe-conv-mwh">—</td></tr>
+                            <tr data-dim="energy"><td><span class="pe-eq-sym">BTU</span> <span class="pe-eq-name">British thermal unit</span></td><td class="pe-eq-val" id="pe-conv-btu">—</td></tr>
+                            <tr data-dim="energy"><td><span class="pe-eq-sym">kBtu</span> <span class="pe-eq-name">thousand BTU</span></td><td class="pe-eq-val" id="pe-conv-kbtu">—</td></tr>
+                            <tr data-dim="energy"><td><span class="pe-eq-sym">MMBtu</span> <span class="pe-eq-name">million BTU</span></td><td class="pe-eq-val" id="pe-conv-mmbtu">—</td></tr>
+                            <tr data-dim="energy"><td><span class="pe-eq-sym">therm</span> <span class="pe-eq-name">100,000 BTU</span></td><td class="pe-eq-val" id="pe-conv-therm">—</td></tr>
+                            <tr data-dim="energy"><td><span class="pe-eq-sym">kcal</span> <span class="pe-eq-name">kilocalorie</span></td><td class="pe-eq-val" id="pe-conv-kcal">—</td></tr>
+                        </tbody>
+                    </table>
+                    <div class="btn-row">
+                        <button class="copy-btn" id="pe-conv-copy">Copy all</button>
+                    </div>
+                    <div class="failure-callout" id="pe-conv-callout" hidden></div>
+                </section>
+
+            </div>
+        </div>
+
+        <!-- ──────────────────── TAB 2 — POWER × TIME = ENERGY ──────────────────── -->
+        <div id="tab-bridge" class="tab-pane">
+            <div class="tool-body-2col">
+
+                <section>
+                    <h2 class="ps-section-label">Input</h2>
+                    <div class="ps-row">
+                        <label class="ps-label" for="pe-br-solve">Solve for</label>
+                        <select class="ps-input" id="pe-br-solve">
+                            <option value="energy" selected>Energy  (= power × time)</option>
+                            <option value="power">Power  (= energy ÷ time)</option>
+                            <option value="time">Time  (= energy ÷ power)</option>
+                        </select>
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="pe-br-power-val">Power</label>
+                        <div class="pe-vu">
+                            <input class="ps-input" type="number" id="pe-br-power-val" step="any" placeholder="100" value="100">
+                            <select class="ps-input" id="pe-br-power-unit" aria-label="Power unit">
+                                <option value="w">W</option>
+                                <option value="kw" selected>kW</option>
+                                <option value="mw">MW</option>
+                                <option value="btuh">BTU/hr</option>
+                                <option value="mbh">MBH</option>
+                                <option value="mmbtuh">MMBtu/hr</option>
+                                <option value="ton">ton</option>
+                                <option value="hp">hp</option>
+                                <option value="bhp">boiler hp</option>
+                                <option value="kcalh">kcal/hr</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="pe-br-time-val">Time</label>
+                        <div class="pe-vu">
+                            <input class="ps-input" type="number" id="pe-br-time-val" step="any" placeholder="24" value="24">
+                            <select class="ps-input" id="pe-br-time-unit" aria-label="Time unit">
+                                <option value="s">s</option>
+                                <option value="min">min</option>
+                                <option value="hr" selected>hr</option>
+                                <option value="day">day</option>
+                                <option value="yr">yr</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="pe-br-energy-val">Energy</label>
+                        <div class="pe-vu">
+                            <input class="ps-input" type="number" id="pe-br-energy-val" step="any" placeholder="—">
+                            <select class="ps-input" id="pe-br-energy-unit" aria-label="Energy unit">
+                                <option value="j">J</option>
+                                <option value="kj">kJ</option>
+                                <option value="mj">MJ</option>
+                                <option value="gj">GJ</option>
+                                <option value="wh">Wh</option>
+                                <option value="kwh" selected>kWh</option>
+                                <option value="mwh">MWh</option>
+                                <option value="btu">BTU</option>
+                                <option value="kbtu">kBtu</option>
+                                <option value="mmbtu">MMBtu</option>
+                                <option value="therm">therm</option>
+                                <option value="kcal">kcal</option>
+                            </select>
+                        </div>
+                    </div>
+                </section>
+
+                <section role="status" aria-atomic="false">
+                    <h2 class="ps-section-label">Result</h2>
+                    <div class="ps-row">
+                        <span class="ps-label" id="pe-br-out-label">Energy</span>
+                        <span class="ps-value muted" id="pe-br-out" aria-labelledby="pe-br-out-label">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">Also</span>
+                        <span class="ps-value muted" id="pe-br-equiv">—</span>
+                    </div>
+                    <div class="btn-row">
+                        <button class="copy-btn" id="pe-br-copy">Copy result</button>
+                    </div>
+                    <div class="result-formula wrap" id="pe-br-formula"></div>
+                    <div class="failure-callout" id="pe-br-callout" hidden></div>
+                </section>
+
+            </div>
+        </div>
+
+        <!-- ───────────────────────── TAB 3 — BOILER / BURNER ───────────────────────── -->
+        <div id="tab-boiler" class="tab-pane">
+            <div class="tool-body-2col">
+
+                <section>
+                    <h2 class="ps-section-label">Input</h2>
+                    <div class="ps-row">
+                        <label class="ps-label" for="pe-boil-input-val">Boiler input (per boiler)</label>
+                        <div class="pe-vu">
+                            <input class="ps-input" type="number" id="pe-boil-input-val" step="any" placeholder="835" value="835">
+                            <select class="ps-input" id="pe-boil-input-unit" aria-label="Boiler input unit">
+                                <option value="w">W</option>
+                                <option value="kw">kW</option>
+                                <option value="mw">MW</option>
+                                <option value="btuh">BTU/hr</option>
+                                <option value="mbh" selected>MBH</option>
+                                <option value="mmbtuh">MMBtu/hr</option>
+                                <option value="bhp">boiler hp</option>
+                                <option value="kcalh">kcal/hr</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="pe-boil-qty">Quantity (boilers)</label>
+                        <input class="ps-input" type="number" id="pe-boil-qty" step="1" min="1" placeholder="1" value="2">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="pe-boil-min-val">Burner min fire</label>
+                        <div class="pe-vu">
+                            <input class="ps-input" type="number" id="pe-boil-min-val" step="any" placeholder="570" value="570">
+                            <select class="ps-input" id="pe-boil-min-unit" aria-label="Burner min fire unit">
+                                <option value="w">W</option>
+                                <option value="kw">kW</option>
+                                <option value="mw">MW</option>
+                                <option value="btuh">BTU/hr</option>
+                                <option value="mbh" selected>MBH</option>
+                                <option value="mmbtuh">MMBtu/hr</option>
+                                <option value="bhp">boiler hp</option>
+                                <option value="kcalh">kcal/hr</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="pe-boil-hi-val">High-fire low end (opt.)</label>
+                        <div class="pe-vu">
+                            <input class="ps-input" type="number" id="pe-boil-hi-val" step="any" placeholder="—">
+                            <select class="ps-input" id="pe-boil-hi-unit" aria-label="High-fire low-end unit">
+                                <option value="w">W</option>
+                                <option value="kw">kW</option>
+                                <option value="mw">MW</option>
+                                <option value="btuh">BTU/hr</option>
+                                <option value="mbh" selected>MBH</option>
+                                <option value="mmbtuh">MMBtu/hr</option>
+                                <option value="bhp">boiler hp</option>
+                                <option value="kcalh">kcal/hr</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="pe-boil-riello">Riello firing string (opt.)</label>
+                        <input class="ps-input" type="text" id="pe-boil-riello" placeholder="150/350 ÷ 860 kW">
+                    </div>
+                    <p class="bit-hint">
+                        Riello notation is <strong>min / high-low ÷ high-high</strong> (the ÷ is
+                        European &ldquo;to&rdquo;). Pasting it fills the burner fields above and decodes
+                        the adjustable high-fire band — the firing diagram and the commissioned
+                        high-fire setting are authoritative.
+                    </p>
+                </section>
+
+                <section role="status" aria-atomic="false">
+                    <h2 class="ps-section-label">Sizing &amp; turndown</h2>
+                    <div class="ps-row">
+                        <span class="ps-label">Effective turndown</span>
+                        <span class="ps-value muted" id="pe-boil-turndown">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">Min fire % of input</span>
+                        <span class="ps-value muted" id="pe-boil-pct">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">Plant input (total)</span>
+                        <span class="ps-value muted" id="pe-boil-plant">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">Burner turndown</span>
+                        <span class="ps-value muted" id="pe-boil-bturndown">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">Decoded firing</span>
+                        <span class="ps-value muted" id="pe-boil-decode">—</span>
+                    </div>
+                    <div class="btn-row">
+                        <button class="copy-btn" id="pe-boil-copy">Copy summary</button>
+                    </div>
+                    <div class="result-formula wrap" id="pe-boil-formula"></div>
+                    <div class="pe-pills">
+                        <div class="status-pill" id="pe-boil-pill-grade" hidden></div>
+                        <div class="status-pill" id="pe-boil-pill-incompat" hidden></div>
+                        <div class="status-pill" id="pe-boil-pill-oversize" hidden></div>
+                    </div>
+                    <div class="failure-callout" id="pe-boil-callout" hidden></div>
+                </section>
+
+            </div>
+        </div>
+
+        <!-- ───────────────── Shared reference (persists across tabs) ───────────────── -->
+        <section class="tool-body-row">
+            <h2 class="ps-section-label">Quick reference &amp; the MBH / MMBtu trap</h2>
+            <p class="ref-note worked-intro">
+                <strong>M is the Roman thousand, not mega.</strong> In HVAC,
+                <strong>MBH = MBtu/hr = MBtuh</strong> all mean <em>thousand</em> BTU/hr,
+                while <strong>MMBtu</strong> means <em>million</em> BTU. Reading an
+                &ldquo;MBtu&rdquo; as a million (or an &ldquo;MMBtu&rdquo; as a thousand)
+                is a 1000× error — this tool labels both explicitly and parses
+                MBH / MBtu/hr as the same unit.
+            </p>
+            <table class="ref-table-dense">
+                <thead>
+                    <tr><th>1 of…</th><th>equals</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>kW</td><td>3.412 MBH = 0.2843 ton = 1.341 hp</td></tr>
+                    <tr><td>ton (refrig.)</td><td>12 MBH = 3.517 kW = 4.72 hp</td></tr>
+                    <tr><td>hp</td><td>0.7457 kW = 2.544 MBH</td></tr>
+                    <tr><td>boiler hp</td><td>33.47 MBH = 9.81 kW = 0.0335 MMBtu/hr</td></tr>
+                    <tr><td>MMBtu/hr</td><td>1,000 MBH = 293.1 kW</td></tr>
+                    <tr><td>therm</td><td>100,000 BTU = 29.31 kWh = 0.1 MMBtu</td></tr>
+                    <tr><td>kWh</td><td>3,412 BTU = 3.6 MJ</td></tr>
+                    <tr><td>MMBtu</td><td>293.1 kWh = 1,055 MJ = 10 therms</td></tr>
+                </tbody>
+            </table>
+            <p class="ref-note">
+                <strong>Worked example (the service call that prompted this tool):</strong>
+                a 167 kW boiler is 570 MBH; an 835 MBH-input boiler fired down to a
+                570 MBH burner minimum gives 835 ÷ 570 ≈ <strong>1.46:1</strong> turndown
+                — poor, and a predictor of short-cycling. Match the burner output to the
+                boiler <em>input</em> (fuel fired), not its gross output, and multiply
+                per-boiler ratings by quantity for plant totals.
+            </p>
+        </section>
+
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/tools/waterside-load.html', label: 'Waterside Load Calculator'},
+            {href: '/tools/coil-sizing.html', label: 'Coil-Sizing Calculator'},
+            {href: '/tools/electrical-quick-calc.html', label: 'Field Electrical Quick Calc'},
+            {href: '/tools/transformer-sizing.html', label: 'Transformer VA Budget'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/tools/">← All tools</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="/scripts/ui.js"></script>
+<script>
+    (function () {
+        'use strict';
+
+        // ── Conversion factors. One canonical base per dimension (W, J, s);
+        //    everything derives from 1 BTU(IT) = 1055.05585262 J so the
+        //    BTU-family numbers (BTU/hr, MBH, ton, boiler hp) stay mutually
+        //    consistent rather than drifting from independently-rounded
+        //    literals. ──
+        const BTU_J  = 1055.05585262;          // 1 BTU (IT) in joules
+        const BTUH_W = BTU_J / 3600;           // 1 BTU/hr in watts ≈ 0.29307107
+        const HP_W   = 745.69987158227;        // mechanical horsepower
+        const KCAL_J = 4186.8;                 // 1 kcal (IT) in joules
+
+        // Power — watts per unit.
+        const POWER = {
+            w:      { label: 'W',         w: 1 },
+            kw:     { label: 'kW',        w: 1e3 },
+            mw:     { label: 'MW',        w: 1e6 },
+            btuh:   { label: 'BTU/hr',    w: BTUH_W },
+            mbh:    { label: 'MBH',       w: 1e3 * BTUH_W },
+            mmbtuh: { label: 'MMBtu/hr',  w: 1e6 * BTUH_W },
+            ton:    { label: 'ton',       w: 12e3 * BTUH_W },
+            hp:     { label: 'hp',        w: HP_W },
+            bhp:    { label: 'boiler hp', w: 33475 * BTUH_W },
+            kcalh:  { label: 'kcal/hr',   w: KCAL_J / 3600 },
+        };
+        const POWER_ORDER = ['w', 'kw', 'mw', 'btuh', 'mbh', 'mmbtuh', 'ton', 'hp', 'bhp', 'kcalh'];
+
+        // Energy — joules per unit.
+        const ENERGY = {
+            j:     { label: 'J',     j: 1 },
+            kj:    { label: 'kJ',    j: 1e3 },
+            mj:    { label: 'MJ',    j: 1e6 },
+            gj:    { label: 'GJ',    j: 1e9 },
+            wh:    { label: 'Wh',    j: 3600 },
+            kwh:   { label: 'kWh',   j: 3.6e6 },
+            mwh:   { label: 'MWh',   j: 3.6e9 },
+            btu:   { label: 'BTU',   j: BTU_J },
+            kbtu:  { label: 'kBtu',  j: 1e3 * BTU_J },
+            mmbtu: { label: 'MMBtu', j: 1e6 * BTU_J },
+            therm: { label: 'therm', j: 1e5 * BTU_J },
+            kcal:  { label: 'kcal',  j: KCAL_J },
+        };
+        const ENERGY_ORDER = ['j', 'kj', 'mj', 'gj', 'wh', 'kwh', 'mwh', 'btu', 'kbtu', 'mmbtu', 'therm', 'kcal'];
+
+        // Time — seconds per unit.
+        const TIME = {
+            s:   { label: 's',   s: 1 },
+            min: { label: 'min', s: 60 },
+            hr:  { label: 'hr',  s: 3600 },
+            day: { label: 'day', s: 86400 },
+            yr:  { label: 'yr',  s: 31536000 },     // 365 d
+        };
+
+        const $ = (id) => document.getElementById(id);
+
+        // Format a number to ~6 significant figures with thousands grouping,
+        // dropping to exponential at the extremes so a W↔MW or J↔GJ spread
+        // stays readable. NaN/∞ render as the muted em-dash.
+        function fmt(x) {
+            if (!isFinite(x)) return '—';
+            if (x === 0) return '0';
+            const abs = Math.abs(x);
+            if (abs < 1e-4 || abs >= 1e13) return x.toExponential(3);
+            const rounded = parseFloat(x.toPrecision(6));
+            return rounded.toLocaleString('en-US', { maximumFractionDigits: 12 });
+        }
+
+        // A turndown / ratio like 1.46:1 or 4:1 — trim trailing zeros.
+        function ratioStr(r) {
+            return String(parseFloat(r.toFixed(2))) + ':1';
+        }
+
+        // ────────────────────────── TAB 1 — CONVERT ──────────────────────────
+        const convVal    = $('pe-conv-val');
+        const convUnit   = $('pe-conv-unit');
+        const convDim    = $('pe-conv-dim');
+        const convCallout = $('pe-conv-callout');
+
+        function calcConvert() {
+            const key = convUnit.value;
+            const isPower = Object.prototype.hasOwnProperty.call(POWER, key);
+            const set   = isPower ? POWER : ENERGY;
+            const order = isPower ? POWER_ORDER : ENERGY_ORDER;
+            const dim   = isPower ? 'power' : 'energy';
+            const baseProp = isPower ? 'w' : 'j';
+
+            // Show only the active dimension's rows; clear any prior self-row mark.
+            document.querySelectorAll('#pe-conv-body tr').forEach(tr => {
+                tr.hidden = tr.dataset.dim !== dim;
+                tr.classList.remove('pe-eq-self');
+            });
+
+            const val = parseFloat(convVal.value);
+            if (!isFinite(val)) {
+                order.forEach(k => { $('pe-conv-' + k).textContent = '—'; });
+                convDim.textContent = 'Enter a value to see every equivalent.';
+                convCallout.textContent = 'Enter a number to convert.';
+                convCallout.hidden = false;
+                return;
+            }
+            convCallout.hidden = true;
+
+            const base = val * set[key][baseProp];
+            order.forEach(k => { $('pe-conv-' + k).textContent = fmt(base / set[k][baseProp]); });
+            $('pe-conv-' + key).closest('tr').classList.add('pe-eq-self');
+            convDim.textContent = fmt(val) + ' ' + set[key].label + ' is a '
+                + (isPower ? 'power — a rate (energy per unit time).' : 'energy — a quantity.');
+        }
+
+        function copyConvert(btn) {
+            const isPower = Object.prototype.hasOwnProperty.call(POWER, convUnit.value);
+            const set   = isPower ? POWER : ENERGY;
+            const order = isPower ? POWER_ORDER : ENERGY_ORDER;
+            const lines = order
+                .map(k => $('pe-conv-' + k).textContent + ' ' + set[k].label)
+                .filter(s => s.indexOf('—') === -1);
+            copyText(btn, lines.join('\n'));
+        }
+
+        // ─────────────────── TAB 2 — POWER × TIME = ENERGY ───────────────────
+        const brSolve   = $('pe-br-solve');
+        const brPowerV  = $('pe-br-power-val');
+        const brPowerU  = $('pe-br-power-unit');
+        const brTimeV   = $('pe-br-time-val');
+        const brTimeU   = $('pe-br-time-unit');
+        const brEnergyV = $('pe-br-energy-val');
+        const brEnergyU = $('pe-br-energy-unit');
+        const brOut     = $('pe-br-out');
+        const brOutLbl  = $('pe-br-out-label');
+        const brEquiv   = $('pe-br-equiv');
+        const brFormula = $('pe-br-formula');
+        const brCallout = $('pe-br-callout');
+
+        // Two or three sibling units to echo under the headline answer.
+        const EQUIV_PICKS = {
+            power:  ['kw', 'mbh', 'ton', 'hp'],
+            energy: ['kwh', 'mmbtu', 'mj', 'therm'],
+            time:   ['hr', 'day', 'min'],
+        };
+
+        function muteBridge(msg) {
+            brOut.className = 'ps-value muted';
+            brOut.textContent = '—';
+            brEquiv.className = 'ps-value muted';
+            brEquiv.textContent = '—';
+            brFormula.textContent = '';
+            brCallout.textContent = msg;
+            brCallout.hidden = false;
+            // Clear whichever field is the (disabled) answer.
+            if (brSolve.value === 'energy') brEnergyV.value = '';
+            else if (brSolve.value === 'power') brPowerV.value = '';
+            else brTimeV.value = '';
+        }
+
+        function equivLine(set, base, baseProp, outKey, picks) {
+            return picks
+                .filter(k => k !== outKey)
+                .slice(0, 3)
+                .map(k => fmt(base / set[k][baseProp]) + ' ' + set[k].label)
+                .join('  ·  ');
+        }
+
+        function calcBridge() {
+            const mode = brSolve.value;
+            const pW = parseFloat(brPowerV.value)  * POWER[brPowerU.value].w;
+            const tS = parseFloat(brTimeV.value)   * TIME[brTimeU.value].s;
+            const eJ = parseFloat(brEnergyV.value) * ENERGY[brEnergyU.value].j;
+            brCallout.hidden = true;
+
+            if (mode === 'energy') {
+                if (!isFinite(pW) || !isFinite(tS)) { muteBridge('Enter a power and a time to compute energy.'); return; }
+                const base = pW * tS;                       // joules
+                const outKey = brEnergyU.value, set = ENERGY;
+                const out = base / set[outKey].j;
+                brOut.textContent = fmt(out) + ' ' + set[outKey].label;
+                brEquiv.textContent = equivLine(set, base, 'j', outKey, EQUIV_PICKS.energy);
+                brEnergyV.value = String(parseFloat(out.toPrecision(6)));
+                brFormula.textContent = fmt(parseFloat(brPowerV.value)) + ' ' + POWER[brPowerU.value].label
+                    + ' × ' + fmt(parseFloat(brTimeV.value)) + ' ' + TIME[brTimeU.value].label
+                    + ' = ' + fmt(out) + ' ' + set[outKey].label;
+            } else if (mode === 'power') {
+                if (!isFinite(eJ) || !isFinite(tS)) { muteBridge('Enter an energy and a time to compute power.'); return; }
+                if (tS === 0) { muteBridge('Time must be greater than zero to compute power.'); return; }
+                const base = eJ / tS;                       // watts
+                const outKey = brPowerU.value, set = POWER;
+                const out = base / set[outKey].w;
+                brOut.textContent = fmt(out) + ' ' + set[outKey].label;
+                brEquiv.textContent = equivLine(set, base, 'w', outKey, EQUIV_PICKS.power);
+                brPowerV.value = String(parseFloat(out.toPrecision(6)));
+                brFormula.textContent = fmt(parseFloat(brEnergyV.value)) + ' ' + ENERGY[brEnergyU.value].label
+                    + ' ÷ ' + fmt(parseFloat(brTimeV.value)) + ' ' + TIME[brTimeU.value].label
+                    + ' = ' + fmt(out) + ' ' + set[outKey].label;
+            } else {                                        // time
+                if (!isFinite(eJ) || !isFinite(pW)) { muteBridge('Enter an energy and a power to compute time.'); return; }
+                if (pW === 0) { muteBridge('Power must be greater than zero to compute time.'); return; }
+                const base = eJ / pW;                        // seconds
+                const outKey = brTimeU.value, set = TIME;
+                const out = base / set[outKey].s;
+                brOut.textContent = fmt(out) + ' ' + set[outKey].label;
+                brEquiv.textContent = equivLine(set, base, 's', outKey, EQUIV_PICKS.time);
+                brTimeV.value = String(parseFloat(out.toPrecision(6)));
+                brFormula.textContent = fmt(parseFloat(brEnergyV.value)) + ' ' + ENERGY[brEnergyU.value].label
+                    + ' ÷ ' + fmt(parseFloat(brPowerV.value)) + ' ' + POWER[brPowerU.value].label
+                    + ' = ' + fmt(out) + ' ' + set[outKey].label;
+            }
+            brOut.className = 'ps-value live';
+            brEquiv.className = 'ps-value';
+        }
+
+        function setSolveMode() {
+            const mode = brSolve.value;
+            brPowerV.disabled  = mode === 'power';
+            brTimeV.disabled   = mode === 'time';
+            brEnergyV.disabled = mode === 'energy';
+            [brPowerV, brTimeV, brEnergyV].forEach(el => el.classList.toggle('pe-solved', el.disabled));
+            brOutLbl.textContent = mode.charAt(0).toUpperCase() + mode.slice(1);
+            calcBridge();
+        }
+
+        // ────────────────────────── TAB 3 — BOILER ──────────────────────────
+        const boInputV = $('pe-boil-input-val');
+        const boInputU = $('pe-boil-input-unit');
+        const boQty    = $('pe-boil-qty');
+        const boMinV   = $('pe-boil-min-val');
+        const boMinU   = $('pe-boil-min-unit');
+        const boHiV    = $('pe-boil-hi-val');
+        const boHiU    = $('pe-boil-hi-unit');
+        const boRiello = $('pe-boil-riello');
+        const boTurn   = $('pe-boil-turndown');
+        const boPct    = $('pe-boil-pct');
+        const boPlant  = $('pe-boil-plant');
+        const boBTurn  = $('pe-boil-bturndown');
+        const boDecode = $('pe-boil-decode');
+        const boFormula = $('pe-boil-formula');
+        const boPillGrade    = $('pe-boil-pill-grade');
+        const boPillIncompat = $('pe-boil-pill-incompat');
+        const boPillOversize = $('pe-boil-pill-oversize');
+        const boCallout = $('pe-boil-callout');
+
+        // Map a free-typed power-unit token (from a Riello string) to a key.
+        // Preserves the M(thousand) / MM(million) distinction deliberately.
+        function normalizePowerToken(tok) {
+            const t = (tok || '').trim().toLowerCase().replace(/\s+/g, '');
+            const map = {
+                'w': 'w', 'kw': 'kw', 'mw': 'mw',
+                'btu/hr': 'btuh', 'btuh': 'btuh', 'btu/h': 'btuh', 'btuhr': 'btuh', 'btu': 'btuh',
+                'mbh': 'mbh', 'mbtu/hr': 'mbh', 'mbtuh': 'mbh', 'mbtu/h': 'mbh', 'mbtu': 'mbh', 'kbtu/hr': 'mbh',
+                'mmbtu/hr': 'mmbtuh', 'mmbtuh': 'mmbtuh', 'mmbtu/h': 'mmbtuh', 'mmbtu': 'mmbtuh',
+                'ton': 'ton', 'tons': 'ton', 'tr': 'ton',
+                'hp': 'hp', 'bhp': 'bhp', 'boilerhp': 'bhp',
+                'kcal/hr': 'kcalh', 'kcalh': 'kcalh', 'kcal/h': 'kcalh',
+            };
+            return map[t] || null;
+        }
+
+        // "150/350 ÷ 860 kW" → { min, hiLow, hiHigh, unitKey }. The band
+        // separator accepts the European ÷ plus the common dash / to / colon.
+        function parseRiello(str) {
+            const s = (str || '').trim();
+            if (!s) return null;
+            const m = s.match(/^([\d.,]+)\s*\/\s*([\d.,]+)\s*(?:÷|–|—|-|:|to)\s*([\d.,]+)\s*([a-zA-Z][a-zA-Z/]*)?$/i);
+            if (!m) return null;
+            const min    = parseFloat(m[1].replace(/,/g, ''));
+            const hiLow  = parseFloat(m[2].replace(/,/g, ''));
+            const hiHigh = parseFloat(m[3].replace(/,/g, ''));
+            if (!isFinite(min) || !isFinite(hiLow) || !isFinite(hiHigh)) return null;
+            return { min: min, hiLow: hiLow, hiHigh: hiHigh, unitKey: normalizePowerToken(m[4]) };
+        }
+
+        // The Riello field is a convenience: a successful parse FILLS the
+        // burner fields and stashes the high-high in base watts for the
+        // burner-turndown readout. Manual edits to the filled fields then win
+        // (calcBoiler never re-parses), so the two sources can't fight.
+        function applyRiello() {
+            if (!boRiello.value.trim()) {
+                boDecode.textContent = '—';
+                boDecode.className = 'ps-value muted';
+                delete boRiello.dataset.hihighW;
+                calcBoiler();
+                return;
+            }
+            const p = parseRiello(boRiello.value);
+            if (!p) {
+                boDecode.textContent = 'Unread — expected  min / low ÷ high  unit';
+                boDecode.className = 'ps-value muted';
+                delete boRiello.dataset.hihighW;
+                calcBoiler();
+                return;
+            }
+            const uk = (p.unitKey && POWER[p.unitKey]) ? p.unitKey : boMinU.value;
+            const lbl = POWER[uk].label;
+            boMinV.value = p.min;   boMinU.value = uk;
+            boHiV.value  = p.hiLow; boHiU.value  = uk;
+            boRiello.dataset.hihighW = String(p.hiHigh * POWER[uk].w);
+            boDecode.className = 'ps-value live';
+            boDecode.textContent = 'min ' + fmt(p.min) + ' ' + lbl
+                + ' · high-fire ' + fmt(p.hiLow) + '–' + fmt(p.hiHigh) + ' ' + lbl;
+            calcBoiler();
+        }
+
+        // A hand-edited burner field supersedes a pasted Riello string: the
+        // decoded-firing line and the burner's own turndown were derived from
+        // that string and no longer describe the current fields, so retire
+        // them. (applyRiello's programmatic .value writes don't fire input,
+        // so this only runs on a real user edit — no self-clear loop.)
+        function onBurnerEdit() {
+            if ('hihighW' in boRiello.dataset) {
+                delete boRiello.dataset.hihighW;
+                boDecode.textContent = '—';
+                boDecode.className = 'ps-value muted';
+            }
+            calcBoiler();
+        }
+
+        function muteBoiler(msg) {
+            [boTurn, boPct, boPlant, boBTurn].forEach(el => { el.textContent = '—'; el.className = 'ps-value muted'; });
+            boFormula.textContent = '';
+            [boPillGrade, boPillIncompat, boPillOversize].forEach(p => { p.hidden = true; });
+            boCallout.textContent = msg;
+            boCallout.hidden = false;
+        }
+
+        function calcBoiler() {
+            const inputW = parseFloat(boInputV.value) * POWER[boInputU.value].w;
+            let qty = parseInt(boQty.value, 10);
+            if (!isFinite(qty) || qty < 1) qty = 1;
+            const minW   = parseFloat(boMinV.value) * POWER[boMinU.value].w;
+            const hiLowW = parseFloat(boHiV.value)  * POWER[boHiU.value].w;     // NaN if blank
+            const hiHighW = parseFloat(boRiello.dataset.hihighW);               // NaN if no Riello
+
+            [boPillGrade, boPillIncompat, boPillOversize].forEach(p => { p.hidden = true; });
+
+            if (!isFinite(inputW) || inputW <= 0) {
+                muteBoiler('Enter the boiler input rating (fuel fired).');
+                return;
+            }
+            boCallout.hidden = true;
+
+            // Plant total — meaningful as soon as input + quantity are known.
+            const plantW = inputW * qty;
+            const altKey = boInputU.value === 'kw' ? 'mbh' : 'kw';
+            boPlant.className = 'ps-value live';
+            boPlant.textContent = fmt(plantW / POWER[boInputU.value].w) + ' ' + POWER[boInputU.value].label
+                + ' (' + fmt(plantW / POWER[altKey].w) + ' ' + POWER[altKey].label + ')';
+
+            // Oversize check is independent of the burner minimum.
+            if (isFinite(hiLowW) && hiLowW > inputW) {
+                boPillOversize.hidden = false;
+                boPillOversize.className = 'status-pill error';
+                boPillOversize.textContent = 'Oversized — the lowest settable high fire ('
+                    + fmt(hiLowW / POWER[boHiU.value].w) + ' ' + POWER[boHiU.value].label
+                    + ') exceeds the boiler input; you cannot commission a matched high fire.';
+            }
+
+            // Turndown needs the burner minimum.
+            if (!isFinite(minW) || minW <= 0) {
+                [boTurn, boPct, boBTurn].forEach(el => { el.textContent = '—'; el.className = 'ps-value muted'; });
+                boFormula.textContent = '';
+                return;
+            }
+
+            const turndown = inputW / minW;
+            const minPct = minW / inputW * 100;
+            boTurn.className = 'ps-value live'; boTurn.textContent = ratioStr(turndown);
+            boPct.className  = 'ps-value live'; boPct.textContent  = minPct.toFixed(0) + ' %';
+
+            if (isFinite(hiHighW) && hiHighW > minW) {
+                boBTurn.className = 'ps-value live';
+                boBTurn.textContent = ratioStr(hiHighW / minW);
+            } else {
+                boBTurn.className = 'ps-value muted';
+                boBTurn.textContent = '—';
+            }
+
+            if (minW >= inputW) {
+                boPillIncompat.hidden = false;
+                boPillIncompat.className = 'status-pill error';
+                boPillIncompat.textContent = 'Incompatible — burner minimum fire ('
+                    + fmt(minW / POWER[boMinU.value].w) + ' ' + POWER[boMinU.value].label
+                    + ') is at or above the boiler input; the burner cannot fire low enough to match this boiler.';
+            } else {
+                boPillGrade.hidden = false;
+                if (turndown >= 4) {
+                    boPillGrade.className = 'status-pill ok';
+                    boPillGrade.textContent = 'Healthy turndown (' + ratioStr(turndown) + ') — good part-load control, low cycling.';
+                } else if (minPct <= 60) {
+                    boPillGrade.className = 'status-pill warn';
+                    boPillGrade.textContent = 'Moderate turndown (' + ratioStr(turndown) + ') — workable, but watch low-load cycling.';
+                } else {
+                    boPillGrade.className = 'status-pill warn';
+                    boPillGrade.textContent = 'Poor turndown (' + ratioStr(turndown) + ') — min fire is '
+                        + minPct.toFixed(0) + ' % of input; short-cycling likely.';
+                }
+            }
+
+            boFormula.textContent = 'Turndown = ' + fmt(inputW / POWER[boInputU.value].w) + ' ' + POWER[boInputU.value].label
+                + ' input ÷ ' + fmt(minW / POWER[boMinU.value].w) + ' ' + POWER[boMinU.value].label
+                + ' min fire = ' + ratioStr(turndown);
+        }
+
+        // ────────────────────────────── WIRING ──────────────────────────────
+        document.querySelectorAll('[data-tab]').forEach(btn => {
+            btn.addEventListener('click', e => switchTab(e.currentTarget.dataset.tab, e.currentTarget));
+        });
+
+        ['pe-conv-val', 'pe-conv-unit'].forEach(id => {
+            const el = $(id);
+            el.addEventListener(el.tagName === 'SELECT' ? 'change' : 'input', calcConvert);
+        });
+        $('pe-conv-copy').addEventListener('click', e => copyConvert(e.currentTarget));
+
+        brSolve.addEventListener('change', setSolveMode);
+        ['pe-br-power-val', 'pe-br-power-unit', 'pe-br-time-val', 'pe-br-time-unit', 'pe-br-energy-val', 'pe-br-energy-unit'].forEach(id => {
+            const el = $(id);
+            el.addEventListener(el.tagName === 'SELECT' ? 'change' : 'input', calcBridge);
+        });
+        $('pe-br-copy').addEventListener('click', e => copyReadouts(e.currentTarget, '', 'pe-br-out'));
+
+        boRiello.addEventListener('input', applyRiello);
+        ['pe-boil-input-val', 'pe-boil-input-unit', 'pe-boil-qty'].forEach(id => {
+            const el = $(id);
+            el.addEventListener(el.tagName === 'SELECT' ? 'change' : 'input', calcBoiler);
+        });
+        ['pe-boil-min-val', 'pe-boil-min-unit', 'pe-boil-hi-val', 'pe-boil-hi-unit'].forEach(id => {
+            const el = $(id);
+            el.addEventListener(el.tagName === 'SELECT' ? 'change' : 'input', onBurnerEdit);
+        });
+        $('pe-boil-copy').addEventListener('click', e => copyReadouts(e.currentTarget, ' · ', 'pe-boil-turndown', 'pe-boil-plant'));
+
+        // First paint.
+        calcConvert();
+        setSolveMode();
+        calcBoiler();
+    })();
+</script>
+{% endblock %}
