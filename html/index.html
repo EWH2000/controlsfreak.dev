@@ -249,6 +249,7 @@ nav: home
             grid-template-areas:
                 "title  title"
                 "body   actions"
+                "onramp onramp"
                 "latest latest";
             column-gap: 2.5rem;
             row-gap: 0.5rem;
@@ -310,6 +311,20 @@ nav: home
         }
         .hero-seam .hero-latest a { color: var(--accent); border-bottom: 1px solid transparent; }
         .hero-seam .hero-latest a:hover { border-bottom-color: var(--accent); }
+        /* Audience-inclusive on-ramp line — names the newcomer the
+           experienced-first hero otherwise skips, and points at Education
+           (G-003). Full-width row above the Latest badge. */
+        .hero-seam .hero-copy .hero-onramp {
+            grid-area: onramp;
+            font-size: 0.9rem;
+            font-weight: 300;
+            color: var(--text-dim);
+            line-height: 1.6;
+            margin: 0.5rem 0 0;
+            text-align: left;
+        }
+        .hero-seam .hero-onramp a { color: var(--accent); border-bottom: 1px solid transparent; }
+        .hero-seam .hero-onramp a:hover { border-bottom-color: var(--accent); }
 
         /* Stack on narrow screens — the conductor drops out; the two
            populated panels still tell the software↔equipment story, and
@@ -362,6 +377,7 @@ nav: home
             <a class="hero-btn primary" href="/tools/">Browse tools →</a>
             <a class="hero-btn" href="/education/">Start with the explainers →</a>
         </div>
+        <p class="hero-onramp">Three weeks in or thirty years in — the <a href="/education/">explainers</a> start from the ground up.</p>
         <p class="hero-latest">Latest <span class="titlebar-dots">·</span> <a href="/simulators/hydronic-loop-builder.html">Hydronic Loop Builder →</a></p>
     </div>
 
