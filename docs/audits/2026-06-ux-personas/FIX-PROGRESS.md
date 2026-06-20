@@ -17,7 +17,7 @@ live disposition tracker.** Update it as findings land.
 - The audit was "built at v3.21.0" (= the phase-2 tip), but every fix so
   far applies cleanly on `origin/main` (3.20.0).
 
-## Status: ~26 of 86 resolved (incl. T-009/T-010 full) · 17 commits · tree clean
+## Status: ~32 of 86 resolved (expert cluster COMPLETE) · 20 commits · tree clean
 
 All commits built clean and passed the full Playwright suite (361 pass /
 1 skip). Honesty paths, hero on-ramp, palette zero-state, nav affordance,
@@ -56,6 +56,10 @@ which is fixed (8382120); two other raised findings were correctly rejected.
   verdict-pill-on-top, `details.tool-preamble` collapsible, signal-scaling
   formula precision). See the Expert-output-UX section for the per-tool
   detail + the editorial primary calls flagged for owner review.
+- `tools: finish expert-output-UX polish` (`9dfb163`) — **T-005, T-006, T-008,
+  T-016, T-025, T-027** (copy affordances, full-precision copy, modbus high-bit
+  nudge, direction echoes + refrigerant decoy removal, dew-point labels+max,
+  hidden-qualifier notes). Closes the expert-output-UX cluster.
 
 ## Owner decisions already made (do NOT re-ask)
 - Branch off `origin/main`; run the whole quick-wins batch; tackle all
@@ -98,7 +102,7 @@ which is fixed (8382120); two other raised findings were correctly rejected.
   hydronics ΔT/Cv). Prefer a parenthetical for newcomer-critical first-use
   (mobile has no hover); `<abbr>` carries the incidental load.
 
-### Expert output UX & copy (T-009/T-010 ✅ DONE — rest of cluster queued below)
+### Expert output UX & copy — ✅ CLUSTER COMPLETE (T-005/006/008/009/010/016/025/027)
 **Owner design decisions (2026-06-20, do NOT re-ask):**
 - **T-009 result hierarchy → option C (primary + lift).** `.ps-value.live`
   lifted 0.92→1.1rem globally; `.ps-row.primary .ps-value.live` → 1.4rem for
@@ -130,12 +134,23 @@ sizing: primary 22.4px > lifted 17.6px > label 13.1px.
     economizer's 2nd per-section changeover pill left beside its rows (not
     hoisted). air-mixing primary = mixed dry-bulb (a 7-readout panel; judged
     the dominant). All easy to adjust if the owner disagrees.
-- **T-008** echo direction/reference into the output (signal-scaling reverse
-  tab; refrigerant "Look up by" + hide the disabled-but-populated field).
-- **T-006** modbus high-bit nudge; **T-016** dew-point entering/return
-  labels + `max=100`; **T-005** copy-button gaps (signal-scaling "m, b";
-  bacnet-ip decoded type/instance; modbus offset+FC; CRC bytes); **T-025**
-  precision-on-copy; **T-027** hidden-qualifier outputs.
+✅ **DONE (`9dfb163`) — whole expert cluster closed.** Applied via a workflow
+(per-tool agent + adversarial verify), full suite 361/1, every new interaction
+browser-verified (clipboard reads included):
+- **T-005** copy affordances: signal-scaling "Copy m, b"; modbus-register-viewer
+  offset/FC copy; modbus-functions CRC-bytes copy; bacnet-ip-converter
+  type,instance copy; bacnet-objects click-to-copy code cells (keyboard-able).
+- **T-025** precision-on-copy: signal-scaling copies FULL precision while the
+  readout stays 6-dp (verified display 3.333333 / clipboard 3.3333…35); modbus
+  f32 column rounds to 7 sig figs.
+- **T-006** modbus high-bit nudge (signed reading shown when high-bit+unsigned).
+- **T-008** signal-scaling reverse-direction note; refrigerant-pt HIDES the
+  inactive lookup field (decoy gone) + active toggle reads selected.
+- **T-016** dew-point "Entering-air …" labels + RH max=100/min=0 (cleared for WB).
+- **T-027** affinity unit note; coil-sizing "Process change (signed: − = cooling)";
+  voltage-drop near-room-temp caveat — the workflow's first voltage-drop note had
+  a BACKWARDS NTC physics claim (caught by the adversarial verifier: error =
+  R_wire/|dR/dT|, steeper cold curve → smaller error); rewrote it non-directional.
 
 ### Practice & contact (partly done)
 - **G-002** Practice discoverability — add a Practice card to the home
