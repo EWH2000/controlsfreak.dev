@@ -44,6 +44,7 @@ module.exports = [
             { id: 'd', text: 'Nowhere — RS-485 doesn\'t use termination.' }
         ],
         explain: 'RS-485 wants exactly two terminations: one at each physical end of the daisy-chain, matched to the cable impedance to kill reflections. A device in the middle of the run is not terminated. If the controller you removed happened to be an end-of-line device, the new one needs its EOL jumper/resistor set the same way — and if you\'ve mid-spanned a device that used to be the end, you\'ve now got the wrong count and a flaky bus.',
+        learnMore: { href: '/education/bacnet-mstp.html', label: 'BACnet MS/TP — termination & trunk wiring' },
         tags: ['controller-swap', 'hardware', 'mstp', 'rs485']
     },
 

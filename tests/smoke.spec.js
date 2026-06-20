@@ -1598,8 +1598,15 @@ test.describe('practice — modbus decoding quiz', () => {
         await page.reload({ waitUntil: 'load' });
         await expect(page.locator('.quiz-best-readout')).toContainText('Best: 4 / 5');
 
-        // Reset best clears the keys + repaints to "Best: —".
-        await page.locator('.quiz-reset-best').click();
+        // Reset best is a two-step confirm (P-007): the first click only arms
+        // the button — it must NOT wipe the record — and the second commits.
+        const resetBtn = page.locator('.quiz-reset-best');
+        await resetBtn.click();
+        await expect(resetBtn).toHaveText('Confirm reset?');
+        await expect(page.locator('.quiz-best-readout')).toContainText('Best: 4 / 5');
+        expect(await page.evaluate(() => localStorage.getItem('cf_quiz_modbus-decoding_best'))).toBe('4');
+        // Second click commits: keys cleared + readout repaints to "Best: —".
+        await resetBtn.click();
         await expect(page.locator('.quiz-best-readout')).toHaveText('Best: —');
         expect(await page.evaluate(() => localStorage.getItem('cf_quiz_modbus-decoding_best'))).toBeNull();
 
