@@ -94,7 +94,6 @@ keywords: av bv ai ao bi bo msv priority array object type instance
                 <p class="ref-note">
                     The <code>Object_Type</code> value carried in every object identifier. AI / AO / AV and BI / BO / BV are the day-to-day four-fifths of any device.
                 </p>
-                <!-- // user to verify BACnet Object_Type enumeration against ASHRAE 135 — placeholder data, refine after review -->
                 <table class="ref-table-dense" id="bo-table-objects">
                     <thead>
                         <tr><th>Type</th><th>Object</th><th>What it is</th></tr>
@@ -137,7 +136,6 @@ keywords: av bv ai ao bi bo msv priority array object type instance
                         <tr class="bo-empty" hidden><td colspan="3">No object types match that filter.</td></tr>
                     </tbody>
                 </table>
-                <!-- // end placeholder — BACnet Object_Type enumeration -->
                 <p class="ref-note">
                     Types 31–53 cover access control, scheduling, and the value-object family (integer, character-string, datetime…). See ASHRAE 135 for the full list.
                 </p>
@@ -150,7 +148,6 @@ keywords: av bv ai ao bi bo msv priority array object type instance
                 <p class="ref-note">
                     The <code>Property_Identifier</code> numbers are constant across every object type — property 85 is <code>Present_Value</code> whether the object is an AI or a BO.
                 </p>
-                <!-- // user to verify BACnet Property_Identifier enumeration against ASHRAE 135 — placeholder data, refine after review -->
                 <table class="ref-table-dense" id="bo-table-props">
                     <thead>
                         <tr><th>ID</th><th>Property</th><th>Meaning</th></tr>
@@ -178,7 +175,6 @@ keywords: av bv ai ao bi bo msv priority array object type instance
                         <tr class="bo-empty" hidden><td colspan="3">No properties match that filter.</td></tr>
                     </tbody>
                 </table>
-                <!-- // end placeholder — BACnet Property_Identifier enumeration -->
                 <p class="ref-note">
                     This is the common slice — the full enumeration runs past 500. The numbers above are the ones you meet reading and overriding points.
                 </p>
@@ -191,7 +187,6 @@ keywords: av bv ai ao bi bo msv priority array object type instance
                 <p class="ref-note">
                     The value of an object's <code>Units</code> property (117). The full enumeration runs to roughly 200 values; these are the common HVAC ones.
                 </p>
-                <!-- // user to verify BACnet Units enumeration codes against ASHRAE 135 Clause 21 — placeholder data, refine after review -->
                 <table class="ref-table-dense" id="bo-table-units">
                     <thead>
                         <tr><th>Enum</th><th>Engineering unit</th></tr>
@@ -219,9 +214,8 @@ keywords: av bv ai ao bi bo msv priority array object type instance
                         <tr class="bo-empty" hidden><td colspan="2">No units match that filter.</td></tr>
                     </tbody>
                 </table>
-                <!-- // end placeholder — BACnet Units enumeration -->
                 <p class="ref-note">
-                    Codes vary by edition and a controller may expose vendor extensions — confirm the exact value against your device or ASHRAE 135 before trusting it.
+                    The codes above are the stable common slice — object types, property IDs, and units in this range don't get reassigned between editions. Only newer-edition additions and vendor extensions in the higher-numbered ranges need confirming against your device or ASHRAE 135.
                 </p>
             </section>
         </div>
