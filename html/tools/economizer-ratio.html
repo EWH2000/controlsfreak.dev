@@ -230,6 +230,9 @@ keywords: oa oat percent outdoor air free cooling changeover mixed air damper
         ],
         lessons: [
             {href: '/education/psychrometrics-basics.html', label: 'Psychrometrics Basics'}
+        ],
+        quizzes: [
+            {href: '/practice/psychrometrics-basics.html', label: 'Psychrometrics Basics Quiz'}
         ]
     }) }}
 
@@ -329,10 +332,15 @@ keywords: oa oat percent outdoor air free cooling changeover mixed air damper
             const maD = U.display.temp(ma).toFixed(1);
             const pctShown = (parseFloat(maD) - parseFloat(raD)) /
                              (parseFloat(oaD) - parseFloat(raD)) * 100;
+            // Out of range, the headline mutes to — because a >100 %/<0 %
+            // fraction can't be physically read; the formula must not then
+            // assert that exact impossible result one line down (T-014). Show
+            // the substituted operands and stop at × 100; the feasibility
+            // callout carries the why.
             formulaEl.textContent =
                 `% OA = (MA − RA) ÷ (OA − RA) × 100 ` +
-                `= (${maD} − ${raD}) ÷ (${oaD} − ${raD}) × 100 ` +
-                `= ${pctShown.toFixed(1)} %`;
+                `= (${maD} − ${raD}) ÷ (${oaD} − ${raD}) × 100` +
+                (within ? ` = ${pctShown.toFixed(1)} %` : '');
 
             // Three feasibility regimes (within computed above).
             if (within) {
@@ -465,10 +473,12 @@ keywords: oa oat percent outdoor air free cooling changeover mixed air damper
             const oaD = U.display.temp(oa.tdb).toFixed(1);
             const raD = U.display.temp(ra.tdb).toFixed(1);
             const maDD = U.display.temp(maTarget).toFixed(1);
+            // See the dry-bulb tab: suppress the trailing result out of range
+            // so the formula can't contradict the muted headline (T-014).
             formulaEl.textContent =
                 `% OA = (MA − RA) ÷ (OA − RA) × 100 ` +
-                `= (${maDD} − ${raD}) ÷ (${oaD} − ${raD}) × 100 ` +
-                `= ${pct.toFixed(1)} %`;
+                `= (${maDD} − ${raD}) ÷ (${oaD} − ${raD}) × 100` +
+                (within ? ` = ${pct.toFixed(1)} %` : '');
 
             // Feasibility — same regimes as the dry-bulb tab (within above).
             if (within) {

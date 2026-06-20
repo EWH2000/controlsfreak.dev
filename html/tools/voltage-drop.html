@@ -276,7 +276,14 @@ keywords: awg wire gauge ohms voltage drop 4-20ma loop 0-10v thermistor lead res
 
                 const drop = parseFloat(tidy(0.020 * (rwire + rsense), 1));
                 const vxmtr = parseFloat(tidy(supply - drop, 1));
-                setLive(vxmtrEl, tidy(vxmtr, 1) + ' V');
+                // The transmitter voltage can't physically go negative — the loop
+                // just opens / saturates at 0. Floor the displayed value (readout
+                // + verdict pill) so an over-long run can't print an impossible
+                // −236 V; the raw vxmtr still drives the under-floor comparison
+                // below, and the formula receipt keeps the literal supply − drop
+                // arithmetic that shows why the loop can't carry 20 mA. (T-015)
+                const vxmtrShown = Math.max(0, vxmtr);
+                setLive(vxmtrEl, tidy(vxmtrShown, 1) + ' V');
 
                 const maxWireR = (supply - vmin) / 0.020 - rsense;
                 const maxLen = maxWireR * 1000 / (2 * ohmsKft);
@@ -288,7 +295,7 @@ keywords: awg wire gauge ohms voltage drop 4-20ma loop 0-10v thermistor lead res
                     `V_xmtr = ${tidy(supply, 1)} − ${tidy(drop, 1)} = ${tidy(vxmtr, 1)} V`;
 
                 if (vxmtr < vmin) {
-                    setStatus(`Under the floor — ${tidy(vxmtr, 1)} V at the transmitter against a ${tidy(vmin, 1)} V minimum. The loop will clip below full scale and the reading saturates. Raise the supply, drop the sense resistance, or upsize the wire.`, 'error');
+                    setStatus(`Under the floor — ${tidy(vxmtrShown, 1)} V at the transmitter against a ${tidy(vmin, 1)} V minimum. The loop will clip below full scale and the reading saturates. Raise the supply, drop the sense resistance, or upsize the wire.`, 'error');
                 } else if (vxmtr < vmin + 1) {
                     setStatus(`Marginal — ${tidy(vxmtr, 1)} V at the transmitter, within 1 V of its ${tidy(vmin, 1)} V floor. A warm supply sag or an extra junction takes it under.`, 'warn');
                 } else {
