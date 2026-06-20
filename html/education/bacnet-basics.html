@@ -68,8 +68,8 @@ keywords: object instance device av bv ai ao discovery who-is cov priority
                 dumb — a register is just sixteen bits, and the only thing that knows
                 whether those bits are a temperature in tenths of a degree or a packed
                 status word is the vendor's manual. BACnet flips this. A BACnet
-                Analog Input object <em>knows</em> its `Object_Name`, its `Units`,
-                its `Description`, its current `Present_Value`, its high and low
+                Analog Input object <em>knows</em> its <code>Object_Name</code>, its <code>Units</code>,
+                its <code>Description</code>, its current <code>Present_Value</code>, its high and low
                 limits, and a couple dozen other properties — none of which need to
                 live in a separate document. The protocol carries the labels and the
                 values together.
