@@ -90,6 +90,13 @@ nav: contact
                 <div class="result-label">Status</div>
                 <div class="result-value" id="contact-result-value">—</div>
             </div>
+            <!-- Persistent aria-live region: the visible panel above stays
+                 hidden until submit, so a screen reader would otherwise hear
+                 nothing at the most important moment in the flow. Mirror each
+                 status here — always in the DOM, monitored from load, so
+                 Sending / sent / error announce on content change, not on
+                 insertion (matches the quiz-reveal convention). (G-015) -->
+            <div class="sr-only" role="status" aria-live="polite" aria-atomic="true" id="contact-result-sr"></div>
 
         </div>
     </div>
@@ -114,11 +121,19 @@ nav: contact
             e.preventDefault();
             const result = document.getElementById("contact-result");
             const resultValue = document.getElementById("contact-result-value");
+            const srStatus = document.getElementById("contact-result-sr");
+            // Write the visible readout and mirror it into the persistent
+            // sr-only aria-live region in one step, so a screen reader hears
+            // every state transition (G-015).
+            const setStatus = (text, cls) => {
+                resultValue.className = cls;
+                resultValue.textContent = text;
+                srStatus.textContent = text;
+            };
 
             // Show pending state
             result.classList.remove("hidden");
-            resultValue.className = "result-value muted";
-            resultValue.textContent = "Sending…";
+            setStatus("Sending…", "result-value muted");
             submitBtn.disabled = true;
 
             try {
@@ -129,18 +144,15 @@ nav: contact
                 });
                 const data = await res.json();
                 if (data.ok) {
-                    resultValue.className = "result-value";
-                    resultValue.textContent = "Message sent. Thanks!";
+                    setStatus("Message sent. Thanks!", "result-value");
                     form.reset();
                     // Reset Turnstile so a second submission gets a fresh token
                     if (window.turnstile) window.turnstile.reset();
                 } else {
-                    resultValue.className = "result-value error";
-                    resultValue.textContent = data.error || "Something went wrong.";
+                    setStatus(data.error || "Something went wrong.", "result-value error");
                 }
             } catch (err) {
-                resultValue.className = "result-value error";
-                resultValue.textContent = "Network error. Please try again.";
+                setStatus("Network error. Please try again.", "result-value error");
             } finally {
                 submitBtn.disabled = false;
             }
