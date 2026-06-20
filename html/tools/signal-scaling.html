@@ -160,6 +160,7 @@ keywords: 4-20mA milliamp voltage 0-10V span slope offset y=mx+b proxy ext linea
                         <span class="ps-label">% of span</span>
                         <span class="ps-value muted" id="reverse-pct">—</span>
                     </div>
+                    <p class="ref-note" id="reverse-direction-note">Reverse: drive this output to land on the entered eng. value.</p>
                     <div class="btn-row">
                         <button class="copy-btn" id="ss-copy-reverse">Copy signal</button>
                     </div>
@@ -207,6 +208,7 @@ keywords: 4-20mA milliamp voltage 0-10V span slope offset y=mx+b proxy ext linea
                     <div class="btn-row">
                         <button class="copy-btn" id="ss-copy-slope">Copy m</button>
                         <button class="copy-btn" id="ss-copy-offset">Copy b</button>
+                        <button class="copy-btn" id="ss-copy-mb">Copy m, b</button>
                     </div>
                 </section>
 
@@ -402,11 +404,23 @@ keywords: 4-20mA milliamp voltage 0-10V span slope offset y=mx+b proxy ext linea
 
             // Dynamic copy-button label — names the signal's natural unit (mA / V).
             document.getElementById('ss-copy-reverse').textContent = `Copy ${sUnit}`;
+
+            // Echo the direction so a skimmer can't read the readout backwards —
+            // names the signal's actual unit (mA / V).
+            document.getElementById('reverse-direction-note').textContent =
+                `Reverse: drive this ${sUnit} output to land on the entered eng. value.`;
         }
 
         // ─────────────────────────────────────────────
         // 2-Point → Slope / Offset
         // ─────────────────────────────────────────────
+        // Latest full-precision results — the display rounds to 6 dp
+        // (parseFloat(m.toFixed(6))), but the copy buttons paste the exact
+        // m / b so a calibrator config gets the unrounded values (T-025).
+        // null while the inputs are muted, so a copy click is a clean no-op.
+        let lastSlope  = null;
+        let lastOffset = null;
+
         function calcSlopeOffset() {
             const x1 = parseFloat(document.getElementById('so-x1').value);
             const y1 = parseFloat(document.getElementById('so-y1').value);
@@ -419,6 +433,8 @@ keywords: 4-20mA milliamp voltage 0-10V span slope offset y=mx+b proxy ext linea
             const calloutEl = document.getElementById('ss-slopeoffset-callout');
 
             const muteOutputs = (msg) => {
+                lastSlope  = null;
+                lastOffset = null;
                 slopeEl.className  = 'ps-value muted';
                 offsetEl.className = 'ps-value muted';
                 slopeEl.textContent  = '—';
@@ -439,6 +455,8 @@ keywords: 4-20mA milliamp voltage 0-10V span slope offset y=mx+b proxy ext linea
 
             const m = (y2 - y1) / (x2 - x1);
             const b = y1 - m * x1;
+            lastSlope  = m;
+            lastOffset = b;
 
             slopeEl.className  = 'ps-value live';
             offsetEl.className = 'ps-value live';
@@ -468,8 +486,22 @@ keywords: 4-20mA milliamp voltage 0-10V span slope offset y=mx+b proxy ext linea
         });
         document.getElementById('ss-copy-scaling').addEventListener('click', e => copyReadouts(e.currentTarget, '', 'scaling-out'));
         document.getElementById('ss-copy-reverse').addEventListener('click', e => copyReadouts(e.currentTarget, '', 'reverse-out'));
-        document.getElementById('ss-copy-slope').addEventListener('click', e => copyReadouts(e.currentTarget, '', 'so-slope'));
-        document.getElementById('ss-copy-offset').addEventListener('click', e => copyReadouts(e.currentTarget, '', 'so-offset'));
+        // Slope/offset copies paste FULL-PRECISION m / b (the display is rounded
+        // to 6 dp; copyReadouts would paste that rounded string) — T-025. Guarded
+        // by the null sentinels so a copy click while muted is a clean no-op.
+        document.getElementById('ss-copy-slope').addEventListener('click', e => {
+            if (lastSlope !== null) copyText(e.currentTarget, lastSlope.toString());
+        });
+        document.getElementById('ss-copy-offset').addEventListener('click', e => {
+            if (lastOffset !== null) copyText(e.currentTarget, lastOffset.toString());
+        });
+        // Copy both at once — full precision, mirroring the formula's "m = … b = …"
+        // shape (T-005). No-op until both results are live.
+        document.getElementById('ss-copy-mb').addEventListener('click', e => {
+            if (lastSlope !== null && lastOffset !== null) {
+                copyText(e.currentTarget, `m = ${lastSlope}, b = ${lastOffset}`);
+            }
+        });
 
         // First-paint defaults — every tab computes on load so a visitor sees the tool working.
         calcScaling();

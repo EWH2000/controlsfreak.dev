@@ -44,6 +44,15 @@ keywords: av bv ai ao bi bo msv priority array object type instance
             white-space: nowrap;
             text-align: right;
         }
+        /* Click-to-copy affordance on the code cell — JS adds the
+           role/tabindex/title at init, so the cell only reads as
+           interactive when the copy handler is live. copyText() flips
+           the cell text to "copied!" and restores it (shared idiom). */
+        .ref-table-dense .bo-id.bo-copyable {
+            cursor: pointer;
+        }
+        .ref-table-dense .bo-id.bo-copyable:hover { color: var(--accent); }
+        .ref-table-dense .bo-id.copied { color: var(--blue); }
         .ref-table-dense .bo-name { white-space: nowrap; }
 
         .bo-empty td {
@@ -243,11 +252,14 @@ keywords: av bv ai ao bi bo msv priority array object type instance
 {% block scripts %}
 <script src="/scripts/ui.js"></script>
 <script>
-    // switchTab(name, btn) comes from /scripts/ui.js. The filter box
-    // hides non-matching rows across ALL THREE tables at once (so a
-    // search for "85" finds Present_Value even from the Object Types
-    // tab) and writes a live match count into each tab's badge so the
-    // visitor knows which tab the hits are on.
+    // switchTab(name, btn) / copyText(btn, text) come from /scripts/ui.js.
+    // The filter box hides non-matching rows across ALL THREE tables at
+    // once (so a search for "85" finds Present_Value even from the
+    // Object Types tab) and writes a live match count into each tab's
+    // badge so the visitor knows which tab the hits are on. Every numeric
+    // code cell (.bo-id) is click-to-copy via one delegated listener per
+    // table — copyText() flashes the shared "copied!" feedback on the
+    // cell itself, reusing the site-wide copy idiom.
     (function () {
         'use strict';
 
@@ -261,6 +273,38 @@ keywords: av bv ai ao bi bo msv priority array object type instance
             props:   document.getElementById('bo-table-props'),
             units:   document.getElementById('bo-table-units'),
         };
+
+        // Click-to-copy on the code cells. Mark each .bo-id cell as an
+        // interactive copy target (the affordance only appears with JS
+        // live, since clipboard needs JS anyway), stashing its number in
+        // data-code so copyText()'s "copied!" text-swap can't lose it.
+        // One delegated click + keydown listener per table copies the
+        // cell's data-code, reusing copyText()'s shared feedback.
+        function copyCell(cell) {
+            copyText(cell, cell.dataset.code);
+        }
+        Object.keys(tables).forEach(key => {
+            const table = tables[key];
+            if (!table) return;
+            table.querySelectorAll('td.bo-id').forEach(cell => {
+                cell.dataset.code = cell.textContent.trim();
+                cell.classList.add('bo-copyable');
+                cell.setAttribute('role', 'button');
+                cell.setAttribute('tabindex', '0');
+                cell.setAttribute('title', 'Copy ' + cell.dataset.code);
+            });
+            table.addEventListener('click', e => {
+                const cell = e.target.closest('td.bo-id');
+                if (cell) copyCell(cell);
+            });
+            table.addEventListener('keydown', e => {
+                if (e.key !== 'Enter' && e.key !== ' ') return;
+                const cell = e.target.closest('td.bo-id');
+                if (!cell) return;
+                e.preventDefault();
+                copyCell(cell);
+            });
+        });
         const badges = {};
         document.querySelectorAll('.bo-count').forEach(b => { badges[b.dataset.count] = b; });
 

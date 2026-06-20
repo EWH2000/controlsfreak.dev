@@ -113,7 +113,7 @@ keywords: dewpoint wet bulb wbt RH humidity grains enthalpy condensation coil sw
             <section>
                 <h2 class="ps-section-label">Input</h2>
                 <div class="ps-row">
-                    <label class="ps-label" data-us="Dry-bulb (°F)" data-metric="Dry-bulb (°C)" for="dew-db">Dry-bulb (°F)</label>
+                    <label class="ps-label" data-us="Entering-air dry-bulb (°F)" data-metric="Entering-air dry-bulb (°C)" for="dew-db">Entering-air dry-bulb (°F)</label>
                     <input class="ps-input" type="number" id="dew-db" step="0.5" min="-50" max="200" value="75">
                 </div>
                 <div class="ps-row">
@@ -247,12 +247,17 @@ keywords: dewpoint wet bulb wbt RH humidity grains enthalpy condensation coil sw
         // Second-input label tracks both the mode and (in wet-bulb mode) the
         // active temperature unit, so it can't ride on data-us/data-metric.
         function refreshSecondLabel() {
+            const sec = $('dew-second');
             if (mode === 'rh') {
                 $('dew-second-label').textContent = 'RH (%)';
-                $('dew-second').step = '1';
+                sec.step = '1';
+                sec.min = '0';
+                sec.max = '100';
             } else {
                 $('dew-second-label').textContent = 'Wet-bulb (' + U.suffix.temp() + ')';
-                $('dew-second').step = '0.5';
+                sec.step = '0.5';
+                sec.removeAttribute('min');
+                sec.removeAttribute('max');
             }
         }
 

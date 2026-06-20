@@ -191,6 +191,7 @@ keywords: function code exception CRC CRC-16 RTU checksum register coil holding 
                         <span class="ps-value muted mf-mono" id="mf-crc-frame">—</span>
                     </div>
                     <div class="btn-row">
+                        <button class="copy-btn" id="mf-crc-copy-append">Copy CRC bytes</button>
                         <button class="copy-btn" id="mf-crc-copy">Copy frame</button>
                     </div>
                     <div class="failure-callout" id="mf-crc-callout" hidden></div>
@@ -352,6 +353,7 @@ keywords: function code exception CRC CRC-16 RTU checksum register coil holding 
         }
 
         crcIn.addEventListener('input', calcCrc);
+        document.getElementById('mf-crc-copy-append').addEventListener('click', e => copyReadouts(e.currentTarget, '', 'mf-crc-append'));
         document.getElementById('mf-crc-copy').addEventListener('click', e => copyReadouts(e.currentTarget, '', 'mf-crc-frame'));
 
         calcCrc();
