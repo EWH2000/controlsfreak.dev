@@ -4337,6 +4337,16 @@ closed form for every steep case. Revisit trigger: a user report of unstable
 numbers on a realistic loop, or before any pipe-sizing phase-2 work that makes
 `k_pipe` length-dependent (which raises stiffness).
 
+**Phase-2 update (2026-06-20):** developed-length pipe friction shipped, but
+*deliberately bounded to stay out of this stiff regime*. `k_pipe` is now
+`max(K_PIPE, K_PER_FT·L)` — it never drops **below** the old flat `K_PIPE`
+floor, and a longer run only **grows** `k`, which *improves* conditioning (the
+stiff case is small-`k`, near-frictionless circuits). So the length-dependence
+did not trip this gate. The full revisit trigger still stands for the *next*
+step — a user-selectable pipe **diameter** (a large bore drives `k` small) plus
+the pipe-sizing lesson — which is the part that would actually raise stiffness
+and wants the Newton step first.
+
 ### 135. Hydronic engine: valve2 `out.authority` is dead + mislabeled *(open — 2026-06-17)*
 
 `writeback`'s valve2 case computes `out.authority = vHead / pumpHead` and
@@ -4351,17 +4361,24 @@ delete the three dead `out` fields, or — if a teaching readout is wanted later
 controlled-branch node-to-node drop, and compute the wide-open β once so it
 matches valve-cv. Not urgent: it cannot mis-display anything today.
 
-### 136. Hydronic page: component drag wipes the particle layer every pointermove *(open — 2026-06-17)*
+### 136. Hydronic page: component drag wipes the particle layer every pointermove *(RESOLVED 2026-06-20 — phase 2)*
 
-During a component drag, `drawPipes()` does `svg.innerHTML = ''` and recreates
+During a component drag, `drawPipes()` did `svg.innerHTML = ''` and recreated
 every pipe `<path>` each `pointermove`, so FlowEngine's pools (keyed by the old
-path elements) are orphaned and particles flicker/vanish for the duration of
+path elements) were orphaned and particles flicker/vanished for the duration of
 the drag, returning on `pointerup` (which calls `refreshFlowGeometry`). Benign
 (cosmetic, drag-only) but the principled fix is to update each path's `d`
 attribute in place when the pipe set is unchanged (the common drag case), so
-pool `el` references stay valid — this also lets `renderAll()` stop orphaning
-every pool on every render (folds in #13's lazy-reap note). Larger refactor;
-not blocking.
+pool `el` references stay valid.
+
+**Resolved** in the phase-2 dual-view rewrite: a drag's `move()` now calls
+`updatePipesInPlace(view, comp)` — it sets the `d` attribute on the *existing*
+hit/visible `<path>` elements (looked up from each view's `pipeEls` map) for the
+pipes touching the dragged component, with no `svg.innerHTML` teardown, so the
+FlowEngine pools survive the whole drag. `pointerup` then calls
+`FlowEngine.refreshPath()` on just those pipes' elements to re-read the final
+geometry. (`renderAll()` still does a full rebuild on add/delete/example/select
+— but that's not the per-pointermove path, so no churn there.)
 
 ### 137. Hydronic engine: `makeSystem` dedupes pipe ids but not component ids *(open — 2026-06-17)*
 
