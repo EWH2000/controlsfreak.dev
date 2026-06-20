@@ -82,12 +82,14 @@ keywords: function code exception CRC CRC-16 RTU checksum register coil holding 
             </h1>
         </div>
 
-        <p class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
-            The codes a Modbus exchange is built from, plus the checksum that wraps each serial frame.
-            <em>Function codes</em> is what a request asks for — read coils, write registers, and the dec-vs-hex gotcha (FC 15 = 0x0F, FC 16 = 0x10).
-            <em>Exception codes</em> is what a server sends back when it refuses, riding on the function code with its high bit set.
-            <em>CRC-16</em> builds or checks the two error-check bytes an RTU frame carries.
-        </p>
+        <details class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
+            <summary>The codes a Modbus exchange is built from, plus the checksum that wraps each serial frame.</summary>
+            <div class="preamble-rest">
+                <em>Function codes</em> is what a request asks for — read coils, write registers, and the dec-vs-hex gotcha (FC 15 = 0x0F, FC 16 = 0x10).
+                <em>Exception codes</em> is what a server sends back when it refuses, riding on the function code with its high bit set.
+                <em>CRC-16</em> builds or checks the two error-check bytes an RTU frame carries.
+            </div>
+        </details>
 
         <div class="mf-controls">
             <label class="mf-search-label" for="mf-search">Filter codes by name or number</label>
@@ -176,7 +178,7 @@ keywords: function code exception CRC CRC-16 RTU checksum register coil holding 
 
                 <section role="status" aria-atomic="false">
                     <h2 class="ps-section-label">Output</h2>
-                    <div class="ps-row">
+                    <div class="ps-row primary">
                         <span class="ps-label">CRC-16 of the bytes shown</span>
                         <span class="ps-value muted" id="mf-crc-word">—</span>
                     </div>

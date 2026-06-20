@@ -25,10 +25,12 @@ keywords: awg wire gauge ohms voltage drop 4-20ma loop 0-10v thermistor lead res
             </h1>
         </div>
 
-        <p class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
-            A long home run costs copper resistance, and what that resistance does depends entirely on the signal riding it.
-            Pick the signal type, the gauge, and the one-way length — the verdict speaks that signal&rsquo;s language: loop supply margin for 4-20&nbsp;mA, real-versus-imagined error on 0-10&nbsp;V, and degrees of lie on a temperature sensor.
-        </p>
+        <details class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
+            <summary>A long home run costs copper resistance, and what that resistance does depends entirely on the signal riding it.</summary>
+            <div class="preamble-rest">
+                Pick the signal type, the gauge, and the one-way length — the verdict speaks that signal&rsquo;s language: loop supply margin for 4-20&nbsp;mA, real-versus-imagined error on 0-10&nbsp;V, and degrees of lie on a temperature sensor.
+            </div>
+        </details>
 
         <div class="tool-body-2col">
 
@@ -82,7 +84,8 @@ keywords: awg wire gauge ohms voltage drop 4-20ma loop 0-10v thermistor lead res
 
             <section role="status" aria-atomic="false">
                 <h2 class="ps-section-label">Output</h2>
-                <div class="ps-row">
+                <div class="status-pill" id="vd-status">Enter the run to see the verdict.</div>
+                <div class="ps-row primary">
                     <span class="ps-label">Round-trip wire resistance</span>
                     <span class="ps-value muted" id="vd-rwire">—</span>
                 </div>
@@ -114,7 +117,6 @@ keywords: awg wire gauge ohms voltage drop 4-20ma loop 0-10v thermistor lead res
                     <button class="copy-btn" id="vd-copy">Copy resistance</button>
                 </div>
                 <div class="result-formula wrap" id="vd-formula"></div>
-                <div class="status-pill" id="vd-status">Enter the run to see the verdict.</div>
             </section>
 
         </div>

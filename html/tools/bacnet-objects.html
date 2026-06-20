@@ -70,12 +70,14 @@ keywords: av bv ai ao bi bo msv priority array object type instance
             </h1>
         </div>
 
-        <p class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
-            The numbers a controller, a packet capture, or a workstation hands you instead of names.
-            <em>Object Types</em> is the <code>Object_Type</code> enumeration — what kind of point an object is (type 1 = Analog Output).
-            <em>Property IDs</em> is the <code>Property_Identifier</code> enumeration — which field of an object you are reading (property 85 = Present_Value), and the numbers are the same across every object type.
-            <em>Eng. Units</em> is the common slice of the <code>Units</code> enumeration. Type a name or a number to filter all three.
-        </p>
+        <details class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
+            <summary>The numbers a controller, a packet capture, or a workstation hands you instead of names.</summary>
+            <div class="preamble-rest">
+                <em>Object Types</em> is the <code>Object_Type</code> enumeration — what kind of point an object is (type 1 = Analog Output).
+                <em>Property IDs</em> is the <code>Property_Identifier</code> enumeration — which field of an object you are reading (property 85 = Present_Value), and the numbers are the same across every object type.
+                <em>Eng. Units</em> is the common slice of the <code>Units</code> enumeration. Type a name or a number to filter all three.
+            </div>
+        </details>
 
         <div class="bo-controls">
             <label class="bo-search-label" for="bo-search">Filter by name or number</label>

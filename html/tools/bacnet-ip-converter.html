@@ -25,15 +25,16 @@ keywords: hex dotted decimal address network number MAC APDU UDP port 47808 BAC0
             </h1>
         </div>
 
-        <p class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
-            The hex blob EBO and other BACnet tools show for a BACnet/IP device ↔ a dotted-decimal
-            IP and UDP port, both directions.
-            <em>Hex → IP</em> decodes an 8-character (IP only) or 12-character (IP + port) hex string.
-            <em>IP → Hex</em> builds the string from a dotted-decimal IP and an optional port — the default
-            is 47808 (0xBAC0).
-            <em>Object ID</em> unpacks the other 32-bit blob BACnet tools show — the
-            Object_Identifier's 10-bit type and 22-bit instance — and packs one back up.
-        </p>
+        <details class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
+            <summary>The hex blob EBO and other BACnet tools show for a BACnet/IP device ↔ a dotted-decimal IP and UDP port, both directions.</summary>
+            <div class="preamble-rest">
+                <em>Hex → IP</em> decodes an 8-character (IP only) or 12-character (IP + port) hex string.
+                <em>IP → Hex</em> builds the string from a dotted-decimal IP and an optional port — the default
+                is 47808 (0xBAC0).
+                <em>Object ID</em> unpacks the other 32-bit blob BACnet tools show — the
+                Object_Identifier's 10-bit type and 22-bit instance — and packs one back up.
+            </div>
+        </details>
 
         <div class="tabs tabs-flush">
             <button class="tab-btn active" data-tab="hex2ip">Hex → IP</button>

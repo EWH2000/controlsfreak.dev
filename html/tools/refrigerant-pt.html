@@ -39,15 +39,17 @@ keywords: pt chart r22 r410a r134a r407c psig kpag saturation glide superheat su
             </h1>
         </div>
 
-        <p class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
-            Saturation pressure-temperature lookup and a superheat / subcooling
-            check. P-T tab: pick a refrigerant, enter a gauge pressure, read the
-            saturation temperature — bubble and dew both, so blend glide is in
-            plain sight. Superheat / Subcooling tab: enter the pressure and the
-            measured line temperature, get the result and a sanity check. Built
-            to be more correct than the pocket card — the glide blends are
-            handled, not averaged.
-        </p>
+        <details class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
+            <summary>Saturation pressure-temperature lookup and a superheat / subcooling check.</summary>
+            <div class="preamble-rest">
+                P-T tab: pick a refrigerant, enter a gauge pressure, read the
+                saturation temperature — bubble and dew both, so blend glide is in
+                plain sight. Superheat / Subcooling tab: enter the pressure and the
+                measured line temperature, get the result and a sanity check. Built
+                to be more correct than the pocket card — the glide blends are
+                handled, not averaged.
+            </div>
+        </details>
 
         <section class="rf-type-strip">
             <div class="ps-row">
@@ -95,6 +97,7 @@ keywords: pt chart r22 r410a r134a r407c psig kpag saturation glide superheat su
 
                 <section role="status" aria-atomic="false">
                     <h2 class="ps-section-label">Output</h2>
+                    <div class="status-pill" id="rf-pt-status">Enter a pressure to read the saturation temperature.</div>
                     <div class="ps-row">
                         <span class="ps-label" id="rf-pt-bubble-lbl">Bubble point (sat. liquid)</span>
                         <span class="ps-value muted" id="rf-pt-bubble">—</span>
@@ -112,7 +115,6 @@ keywords: pt chart r22 r410a r134a r407c psig kpag saturation glide superheat su
                         <button class="copy-btn" id="rf-pt-copy">Copy temperature</button>
                     </div>
                     <div class="result-formula wrap" id="rf-pt-formula"></div>
-                    <div class="status-pill" id="rf-pt-status">Enter a pressure to read the saturation temperature.</div>
                 </section>
 
             </div>
@@ -182,11 +184,12 @@ keywords: pt chart r22 r410a r134a r407c psig kpag saturation glide superheat su
 
                 <section role="status" aria-atomic="false">
                     <h2 class="ps-section-label">Output</h2>
+                    <div class="status-pill" id="rf-sc-status">Enter a pressure and a line temperature.</div>
                     <div class="ps-row">
                         <span class="ps-label" id="rf-sc-satref-lbl">Dew point at this pressure</span>
                         <span class="ps-value muted" id="rf-sc-satref">—</span>
                     </div>
-                    <div class="ps-row">
+                    <div class="ps-row primary">
                         <span class="ps-label" id="rf-sc-result-lbl">Superheat</span>
                         <span class="ps-value muted" id="rf-sc-result">—</span>
                     </div>
@@ -195,7 +198,6 @@ keywords: pt chart r22 r410a r134a r407c psig kpag saturation glide superheat su
                         <button class="copy-btn" id="rf-sc-copy">Copy superheat</button>
                     </div>
                     <div class="result-formula wrap" id="rf-sc-formula"></div>
-                    <div class="status-pill" id="rf-sc-status">Enter a pressure and a line temperature.</div>
                 </section>
 
             </div>

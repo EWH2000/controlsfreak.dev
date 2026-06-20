@@ -25,13 +25,14 @@ keywords: 4-20mA milliamp voltage 0-10V span slope offset y=mx+b proxy ext linea
             </h1>
         </div>
 
-        <p class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
-            An analog signal from a sensor (mA / V) ↔ engineering units, both directions,
-            plus a calibrator-style 2-point → slope/offset solver for paste-into-Niagara setup.
-            <em>Signal → Eng. Units</em> takes a raw reading and scales it to the published range.
-            <em>Eng. Units → Signal</em> runs it backwards — what mA should an output drive to land on a setpoint?
-            <em>2-Point → Slope / Offset</em> takes two known (raw, eng.) pairs and solves m and b directly.
-        </p>
+        <details class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
+            <summary>An analog signal from a sensor (mA / V) ↔ engineering units, both directions, plus a calibrator-style 2-point → slope/offset solver for paste-into-Niagara setup.</summary>
+            <div class="preamble-rest">
+                <em>Signal → Eng. Units</em> takes a raw reading and scales it to the published range.
+                <em>Eng. Units → Signal</em> runs it backwards — what mA should an output drive to land on a setpoint?
+                <em>2-Point → Slope / Offset</em> takes two known (raw, eng.) pairs and solves m and b directly.
+            </div>
+        </details>
 
         <div class="tabs tabs-flush">
             <button class="tab-btn active" data-tab="scaling">Signal → Eng. Units</button>
@@ -91,7 +92,7 @@ keywords: 4-20mA milliamp voltage 0-10V span slope offset y=mx+b proxy ext linea
 
                 <section role="status" aria-atomic="false">
                     <h2 class="ps-section-label">Output</h2>
-                    <div class="ps-row">
+                    <div class="ps-row primary">
                         <span class="ps-label">Eng. value</span>
                         <span class="ps-value muted" id="scaling-out">—</span>
                     </div>
@@ -151,7 +152,7 @@ keywords: 4-20mA milliamp voltage 0-10V span slope offset y=mx+b proxy ext linea
 
                 <section role="status" aria-atomic="false">
                     <h2 class="ps-section-label">Output</h2>
-                    <div class="ps-row">
+                    <div class="ps-row primary">
                         <span class="ps-label">Signal output</span>
                         <span class="ps-value muted" id="reverse-out">—</span>
                     </div>
@@ -348,7 +349,7 @@ keywords: 4-20mA milliamp voltage 0-10V span slope offset y=mx+b proxy ext linea
             pctEl.textContent = pctNum.toFixed(1) + '%' + (outOfRange ? ' ⚠' : '');
 
             document.getElementById('scaling-formula').textContent =
-                `Eng. value = ${euMin} + ((${sig} − ${sMin}) ÷ (${sMax} − ${sMin})) × (${euMax} − ${euMin}) = ${eu.toFixed(4)}${euUnit ? ' ' + euUnit : ''}`;
+                `Eng. value = ${euMin} + ((${sig} − ${sMin}) ÷ (${sMax} − ${sMin})) × (${euMax} − ${euMin}) = ${eu.toFixed(2)}${euUnit ? ' ' + euUnit : ''}`;
 
             // Dynamic copy-button label — names the unit the user is copying.
             document.getElementById('ss-copy-scaling').textContent = euUnit ? `Copy ${euUnit}` : 'Copy value';
@@ -397,7 +398,7 @@ keywords: 4-20mA milliamp voltage 0-10V span slope offset y=mx+b proxy ext linea
             pctEl.textContent = (ratio * 100).toFixed(1) + '%' + (outOfRange ? ' ⚠' : '');
 
             document.getElementById('reverse-formula').textContent =
-                `Signal = ${sMin} + ((${eu} − ${euMin}) ÷ (${euMax} − ${euMin})) × (${sMax} − ${sMin}) = ${sig.toFixed(4)} ${sUnit}`;
+                `Signal = ${sMin} + ((${eu} − ${euMin}) ÷ (${euMax} − ${euMin})) × (${sMax} − ${sMin}) = ${sig.toFixed(3)} ${sUnit}`;
 
             // Dynamic copy-button label — names the signal's natural unit (mA / V).
             document.getElementById('ss-copy-reverse').textContent = `Copy ${sUnit}`;

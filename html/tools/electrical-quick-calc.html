@@ -25,13 +25,15 @@ keywords: ohms law watts volts amps three phase kva kvar power factor motor fla 
             </h1>
         </div>
 
-        <p class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
-            The bread-and-butter electrical math you double-check on a service call, in one place.
-            <em>Ohm&rsquo;s Law &amp; Power</em> is the wheel — type any two of V / I / R / P and it solves the other two.
-            <em>AC Power</em> ties line voltage, amps, kW, kVA, kVAR, and power factor together for single- and three-phase.
-            <em>Motor HP / kW / FLA</em> converts horsepower to kilowatts and estimates full-load amps.
-            <em>Voltage Imbalance</em> runs the NEMA check on three line-to-line readings.
-        </p>
+        <details class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
+            <summary>The bread-and-butter electrical math you double-check on a service call, in one place.</summary>
+            <div class="preamble-rest">
+                <em>Ohm&rsquo;s Law &amp; Power</em> is the wheel — type any two of V / I / R / P and it solves the other two.
+                <em>AC Power</em> ties line voltage, amps, kW, kVA, kVAR, and power factor together for single- and three-phase.
+                <em>Motor HP / kW / FLA</em> converts horsepower to kilowatts and estimates full-load amps.
+                <em>Voltage Imbalance</em> runs the NEMA check on three line-to-line readings.
+            </div>
+        </details>
 
         <div class="tabs tabs-flush">
             <button class="tab-btn active" data-tab="ohms">Ohm&rsquo;s Law &amp; Power</button>
@@ -267,11 +269,12 @@ keywords: ohms law watts volts amps three phase kva kvar power factor motor fla 
 
                 <section role="status" aria-atomic="false">
                     <h2 class="ps-section-label">Output — estimate</h2>
+                    <div class="status-pill" id="eq-motor-status">Enter a measured clamp reading to compare against the estimate.</div>
                     <div class="ps-row">
                         <span class="ps-label">HP ↔ kW</span>
                         <span class="ps-value muted" id="eq-motor-twin">—</span>
                     </div>
-                    <div class="ps-row">
+                    <div class="ps-row primary">
                         <span class="ps-label">Estimated full-load amps</span>
                         <span class="ps-value muted" id="eq-motor-fla">—</span>
                     </div>
@@ -283,7 +286,6 @@ keywords: ohms law watts volts amps three phase kva kvar power factor motor fla 
                     <div class="failure-callout">
                         <strong>Estimate only — not a code value.</strong> Computed from your stated PF and efficiency, this reads roughly 10–25&nbsp;% low versus the NEC tables (the gap widens below 5&nbsp;HP). Size motor <strong>conductors, branch-circuit protection, and disconnects</strong> off the table FLC — NEC&nbsp;<strong>430.250</strong> (3φ)&nbsp;/&nbsp;<strong>430.248</strong> (1φ) — never this number. Overload protection (430.32) uses the nameplate FLA.
                     </div>
-                    <div class="status-pill" id="eq-motor-status">Enter a measured clamp reading to compare against the estimate.</div>
                 </section>
 
             </div>
@@ -346,6 +348,7 @@ keywords: ohms law watts volts amps three phase kva kvar power factor motor fla 
 
                 <section role="status" aria-atomic="false">
                     <h2 class="ps-section-label">Output</h2>
+                    <div class="status-pill" id="eq-imb-status">Enter the three readings to see the verdict.</div>
                     <div class="ps-row">
                         <span class="ps-label">Average voltage</span>
                         <span class="ps-value muted" id="eq-imb-avg">—</span>
@@ -354,7 +357,7 @@ keywords: ohms law watts volts amps three phase kva kvar power factor motor fla 
                         <span class="ps-label">Max deviation</span>
                         <span class="ps-value muted" id="eq-imb-dev">—</span>
                     </div>
-                    <div class="ps-row">
+                    <div class="ps-row primary">
                         <span class="ps-label">Voltage unbalance</span>
                         <span class="ps-value muted" id="eq-imb-pct">—</span>
                     </div>
@@ -363,7 +366,6 @@ keywords: ohms law watts volts amps three phase kva kvar power factor motor fla 
                     </div>
                     <div class="result-formula wrap" id="eq-imb-formula"></div>
                     <div class="failure-callout" id="eq-imb-callout" hidden></div>
-                    <div class="status-pill" id="eq-imb-status">Enter the three readings to see the verdict.</div>
                 </section>
 
             </div>
