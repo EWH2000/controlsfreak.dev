@@ -1037,6 +1037,18 @@ p.tool-preamble {
     line-height: 1.7;
 }
 
+/* First-use acronym gloss (G-008). A quiet dotted underline cues "there's
+   a definition here"; the title shows the expansion on desktop hover. The
+   hover is a BONUS, not load-bearing — touch devices have no hover, so a
+   genuinely newcomer-critical term gets a parenthetical in the prose
+   instead; <abbr> carries the broader incidental acronym load. Theme-aware
+   (the underline tracks --text-dim). cursor:help signals the hover. */
+abbr[title] {
+    text-decoration: underline dotted var(--text-dim);
+    text-underline-offset: 0.18em;
+    cursor: help;
+}
+
 /* Lead paragraph on Education pages — the opening prose paragraph that
    sets up the lesson. Slightly larger / wider line-height than the body
    .tool-body p shape. Spans the full .tool-body width so the intro
