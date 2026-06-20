@@ -17,7 +17,7 @@ live disposition tracker.** Update it as findings land.
 - The audit was "built at v3.21.0" (= the phase-2 tip), but every fix so
   far applies cleanly on `origin/main` (3.20.0).
 
-## Status: ~24 of 86 resolved (+ T-009/T-010 foundation) · 14 commits · tree clean
+## Status: ~26 of 86 resolved (incl. T-009/T-010 full) · 17 commits · tree clean
 
 All commits built clean and passed the full Playwright suite (361 pass /
 1 skip). Honesty paths, hero on-ramp, palette zero-state, nav affordance,
@@ -50,6 +50,12 @@ which is fixed (8382120); two other raised findings were correctly rejected.
   `bacnet: EBO is a supervisor, not a field controller` — **G-008** (first
   increment: new `abbr[title]` convention + JACE/EBO/MS/TP first-use on
   bacnet-basics; review-fix to the EBO category error).
+- `tools: 3-tier result scale + collapsible preamble` (`a4e34cf`) +
+  `tools: roll output-UX pattern across the remaining 18 tools` (`1d5e4e0`) —
+  **T-009, T-010** complete (3-tier `.ps-value` scale + `.ps-row.primary`,
+  verdict-pill-on-top, `details.tool-preamble` collapsible, signal-scaling
+  formula precision). See the Expert-output-UX section for the per-tool
+  detail + the editorial primary calls flagged for owner review.
 
 ## Owner decisions already made (do NOT re-ask)
 - Branch off `origin/main`; run the whole quick-wins batch; tackle all
@@ -92,7 +98,7 @@ which is fixed (8382120); two other raised findings were correctly rejected.
   hydronics ΔT/Cv). Prefer a parenthetical for newcomer-critical first-use
   (mobile has no hover); `<abbr>` carries the incidental load.
 
-### Expert output UX & copy (IN PROGRESS — owner design decisions made)
+### Expert output UX & copy (T-009/T-010 ✅ DONE — rest of cluster queued below)
 **Owner design decisions (2026-06-20, do NOT re-ask):**
 - **T-009 result hierarchy → option C (primary + lift).** `.ps-value.live`
   lifted 0.92→1.1rem globally; `.ps-row.primary .ps-value.live` → 1.4rem for
@@ -105,31 +111,25 @@ which is fixed (8382120); two other raised findings were correctly rejected.
 - **Formula-receipt precision (T-009 sub-c):** align to the readout — just a
   correctness fix per tool, no decision needed.
 
-✅ **FOUNDATION + REFERENCE DONE** (commit `a4e34cf`): shared CSS (all of the
-above) + **coil-sizing** fully converted (collapsible preamble, `primary` on
-each tab's headline row, verdict pill moved to top of both Output columns).
-The 1.1rem lift already applies to EVERY tool via the global rule (verified it
-improves dense panels like psych-chart, not just single-answer tools). Full
-suite 361/1, browser-verified (primary 22.4px > lifted 17.6px > label 13.1px).
-
-⏭ **REMAINING SWEEP (next):** roll the per-tool pieces to the other ~18 tools:
-  1. **Collapsible preamble** on each (`<p class="tool-preamble">` →
-     `<details class="tool-preamble"><summary>{one orienting sentence}</summary>
-     <div class="preamble-rest">{rest}</div></details>`, preserve inline
-     padding). Editorial: pick a crisp one-liner per tool.
-  2. **`primary`** on each single-answer tool's headline row (signal-scaling
-     output, valve-cv Cv, voltage-drop Vdrop, transformer VA, economizer ratio,
-     dew-point, air-mixing mixed-T, transformer, etc.). SKIP on uniform
-     multi-readout panels (psych-chart, bacnet-ip-converter, electrical V/I/R/P,
-     refrigerant bubble/dew/glide, modbus-register decoded, thermistor both-ways)
-     — they get the uniform lift only. Editorial call per tool.
-  3. **Verdict pill → top** on the other stateful-pill tools: economizer-ratio,
-     air-mixing, refrigerant-pt, dew-point-calculator. (Move ONLY the stateful
-     `.status-pill`; leave one-shot `.failure-callout` blocks where they are.)
-  4. **Formula-receipt precision**: fix where the receipt shows more decimals
-     than the readout (signal-scaling 50.0000 vs 50.00 is the cited case).
-  Template = the coil-sizing reference diff (`a4e34cf`). No JS changes (pills +
-  values are addressed by id). Then full suite + adversarial review + commit.
+✅ **DONE — T-009 + T-010 fully resolved.** Foundation/reference (`a4e34cf`,
+coil-sizing) + the 18-tool sweep (`1d5e4e0`). Driven by a workflow (one agent
+per tool + adversarial per-tool verify); full suite 361/1, build clean, all 18
+diffs reviewed, coil-sizing + economizer visually confirmed. Browser-verified
+sizing: primary 22.4px > lifted 17.6px > label 13.1px.
+  - **Collapsible preamble:** all 19 tools (`details.tool-preamble`).
+  - **`primary` headline:** 13 single-answer tools; SKIPPED on 6 uniform
+    multi-readout panels (psych-chart, bacnet-ip-converter, bacnet-objects,
+    modbus-register-viewer, thermistor, dew-point — its headline is the custom
+    `.dew-hero`, not a `.ps-row`).
+  - **Verdict pill → top:** economizer-ratio, air-mixing, refrigerant-pt,
+    dew-point, transformer-sizing, voltage-drop, electrical-quick-calc.
+  - **Formula precision:** signal-scaling receipt toFixed(4)→(2)/(3).
+  - **Editorial calls flagged to owner:** affinity-laws reverted to NO primary
+    (the N₂/N₁ ratio is an input echo; Q2/H2/P2 co-equal). voltage-drop primary
+    = round-trip resistance (always-visible, copied) — defensible, revisitable.
+    economizer's 2nd per-section changeover pill left beside its rows (not
+    hoisted). air-mixing primary = mixed dry-bulb (a 7-readout panel; judged
+    the dominant). All easy to adjust if the owner disagrees.
 - **T-008** echo direction/reference into the output (signal-scaling reverse
   tab; refrigerant "Look up by" + hide the disabled-but-populated field).
 - **T-006** modbus high-bit nudge; **T-016** dew-point entering/return
