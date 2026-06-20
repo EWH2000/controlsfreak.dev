@@ -17,7 +17,7 @@ live disposition tracker.** Update it as findings land.
 - The audit was "built at v3.21.0" (= the phase-2 tip), but every fix so
   far applies cleanly on `origin/main` (3.20.0).
 
-## Status: ~24 of 86 findings resolved · 13 commits · working tree clean
+## Status: ~24 of 86 resolved (+ T-009/T-010 foundation) · 14 commits · tree clean
 
 All commits built clean and passed the full Playwright suite (361 pass /
 1 skip). Honesty paths, hero on-ramp, palette zero-state, nav affordance,
@@ -92,12 +92,44 @@ which is fixed (8382120); two other raised findings were correctly rejected.
   hydronics ΔT/Cv). Prefer a parenthetical for newcomer-critical first-use
   (mobile has no hover); `<abbr>` carries the incidental load.
 
-### Expert output UX & copy (not started — bring design options)
-- **T-009** result-size hierarchy (primary headline size; promote verdict
-  pill; align formula-receipt precision to the readout). **Design call —
-  show options.**
-- **T-010** collapsible preamble (one orienting sentence + collapsible
-  "what this does"; reconciles expert-vs-newcomer with T-012). **Design call.**
+### Expert output UX & copy (IN PROGRESS — owner design decisions made)
+**Owner design decisions (2026-06-20, do NOT re-ask):**
+- **T-009 result hierarchy → option C (primary + lift).** `.ps-value.live`
+  lifted 0.92→1.1rem globally; `.ps-row.primary .ps-value.live` → 1.4rem for
+  the single headline (marker on the static row — JS rewrites the value's
+  className). About-status pinned to 0.92rem (opts out).
+- **T-009 verdict pill → promote under the Output header** (triage-first).
+- **T-010 preamble → hybrid collapsible:** one orienting sentence as the
+  always-visible `<summary>`, the rest behind `▸ more` (native `<details>`,
+  `details.tool-preamble`, focus + 44px touch wired).
+- **Formula-receipt precision (T-009 sub-c):** align to the readout — just a
+  correctness fix per tool, no decision needed.
+
+✅ **FOUNDATION + REFERENCE DONE** (commit `a4e34cf`): shared CSS (all of the
+above) + **coil-sizing** fully converted (collapsible preamble, `primary` on
+each tab's headline row, verdict pill moved to top of both Output columns).
+The 1.1rem lift already applies to EVERY tool via the global rule (verified it
+improves dense panels like psych-chart, not just single-answer tools). Full
+suite 361/1, browser-verified (primary 22.4px > lifted 17.6px > label 13.1px).
+
+⏭ **REMAINING SWEEP (next):** roll the per-tool pieces to the other ~18 tools:
+  1. **Collapsible preamble** on each (`<p class="tool-preamble">` →
+     `<details class="tool-preamble"><summary>{one orienting sentence}</summary>
+     <div class="preamble-rest">{rest}</div></details>`, preserve inline
+     padding). Editorial: pick a crisp one-liner per tool.
+  2. **`primary`** on each single-answer tool's headline row (signal-scaling
+     output, valve-cv Cv, voltage-drop Vdrop, transformer VA, economizer ratio,
+     dew-point, air-mixing mixed-T, transformer, etc.). SKIP on uniform
+     multi-readout panels (psych-chart, bacnet-ip-converter, electrical V/I/R/P,
+     refrigerant bubble/dew/glide, modbus-register decoded, thermistor both-ways)
+     — they get the uniform lift only. Editorial call per tool.
+  3. **Verdict pill → top** on the other stateful-pill tools: economizer-ratio,
+     air-mixing, refrigerant-pt, dew-point-calculator. (Move ONLY the stateful
+     `.status-pill`; leave one-shot `.failure-callout` blocks where they are.)
+  4. **Formula-receipt precision**: fix where the receipt shows more decimals
+     than the readout (signal-scaling 50.0000 vs 50.00 is the cited case).
+  Template = the coil-sizing reference diff (`a4e34cf`). No JS changes (pills +
+  values are addressed by id). Then full suite + adversarial review + commit.
 - **T-008** echo direction/reference into the output (signal-scaling reverse
   tab; refrigerant "Look up by" + hide the disabled-but-populated field).
 - **T-006** modbus high-bit nudge; **T-016** dew-point entering/return
