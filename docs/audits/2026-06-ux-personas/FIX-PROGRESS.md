@@ -17,10 +17,15 @@ live disposition tracker.** Update it as findings land.
 - The audit was "built at v3.21.0" (= the phase-2 tip), but every fix so
   far applies cleanly on `origin/main` (3.20.0).
 
-## Status: ~21 of 86 findings resolved · 9 commits · working tree clean
+## Status: ~24 of 86 findings resolved · 13 commits · working tree clean
 
 All commits built clean and passed the full Playwright suite (361 pass /
-1 skip). Honesty paths + hero on-ramp also verified by direct browser drive.
+1 skip). Honesty paths, hero on-ramp, palette zero-state, nav affordance,
+and the abbr gloss also verified by direct browser drive. The newcomer
+cluster (G-006/G-007/G-008) was put through an adversarial review workflow
+(4 dimensions → refute-by-default verify): it confirmed one real issue —
+EBO miscategorized as a "field controller" in the bacnet-basics opener —
+which is fixed (8382120); two other raised findings were correctly rejected.
 
 ### Resolved (commit → findings)
 - `docs: add … findings` — the audit record.
@@ -38,15 +43,24 @@ All commits built clean and passed the full Playwright suite (361 pass /
   (the bug).
 - `tools: clear verified reference-data markers; narrow BACnet caveat` —
   **T-002, T-003** (complete).
+- `nav: palette browse zero-state + "Start here" affordance` — **G-006**
+  (nav "Start here →" affordance, no reorder), **G-007** (palette browse
+  zero-state + no-match Education fallback). Version bumped 3.20.0 → 3.20.1.
+- `content: gloss BACnet field acronyms via <abbr> first-use` +
+  `bacnet: EBO is a supervisor, not a field controller` — **G-008** (first
+  increment: new `abbr[title]` convention + JACE/EBO/MS/TP first-use on
+  bacnet-basics; review-fix to the EBO category error).
 
 ## Owner decisions already made (do NOT re-ask)
 - Branch off `origin/main`; run the whole quick-wins batch; tackle all
   four clusters (sequence flexible).
 - **G-003 headline:** keep the H1 slogan, add one inclusive on-ramp line. ✅ done
-- **G-006 nav:** add a "Start here" affordance — **do NOT reorder** the nav.
+- **G-006 nav:** add a "Start here" affordance — **do NOT reorder** the nav. ✅ done
+  (accent "Start here →" link after Home → /education/; a700d84).
 - **G-008 glossary:** **incremental `<abbr title>` tooltips** — NOT a glossary page.
+  ✅ first increment done (abbr[title] convention + JACE/EBO/MS/TP on bacnet-basics).
 - **Cheap accommodations approved:** Tools intro (done), palette zero-state
-  (queued G-007), gloss BACnet vendors (done). **E-001 psychro-intro
+  (✅ done G-007), gloss BACnet vendors (done). **E-001 psychro-intro
   rewrite was NOT selected** — leave it (defer).
 - **T-002/T-003 markers:** clear + narrow the BACnet caveat. ✅ done
 - Verify-data research (NEC FLC + BACnet enums) ran and is the basis for
@@ -55,19 +69,28 @@ All commits built clean and passed the full Playwright suite (361 pass /
 
 ## Queued — the four chosen clusters
 
-### Newcomer on-ramp (approved — build next, in this order)
-- **G-007 palette zero-state** — `html/scripts/search.js`. On empty open,
-  render a short browse list (sampling across sections / newest pages); on
-  "No matches", offer a "browse Education" fallback link. *search.js is a
-  site-wide VERSIONED script → triggers the version bump (see Housekeeping).*
-- **G-006 nav "Start here" affordance** — `_includes/nav.njk` + a small
-  `styles.css` rule. A distinct newcomer entry point in the chrome →
-  `/education/`. Keep the section order unchanged.
-- **G-008 incremental `<abbr title>`** — first-use tooltips on the acronym
-  load (AI/AO/BI/BO, MS/TP, AHU, VAV, RTU, FLA, JACE, EBO, Cv/Kv, ΔT, PB).
-  Start with newcomer-facing pages (BACnet Basics, Education landing, hero).
-  Note: for newcomer-inline gloss prefer a parenthetical over `<abbr>`
-  (mobile has no hover) — `<abbr>` is for the broader incidental load.
+### Newcomer on-ramp — ✅ DONE (G-006, G-007, G-008 first increment)
+- **G-007 palette zero-state** — ✅ `html/scripts/search.js`. Empty open
+  renders a curated browse list (newcomer on-ramp → home quick-tools picks →
+  a sim, resolved against the live index); no-match offers a "Browse all
+  lessons → /education/" row. Implemented as a `mode` state machine
+  (browse|results|nomatch|fail|loading). Chose CURATED (not a recents list)
+  → no new `cf_*` key → no privacy.html change.
+- **G-006 nav "Start here" affordance** — ✅ accent "Start here →" link after
+  Home → `/education/` (color+weight, no box, so it inherits the desktop-row
+  AND mobile-sheet layout cleanly). Section order unchanged.
+- **G-008 incremental `<abbr title>`** — ✅ FIRST INCREMENT: new `abbr[title]`
+  CSS convention (dotted underline + cursor:help) + JACE/EBO/MS/TP first-use
+  on bacnet-basics. **Scope finding:** the other two named pages need no prose
+  gloss — the home hero's acronyms are the deliberate AHU loop (G-009,
+  intentional), and the home Browse + Education landing cards carry acronyms
+  in `navCard` desc/pills, which the macro **autoescapes**. NEXT INCREMENT
+  (open, owner call): (a) decide whether to extend the navCard macro to allow
+  `<abbr>` in descriptions (escaping/design call) so card-level acronyms can
+  be glossed; (b) roll the `<abbr>` convention to other newcomer lessons with
+  bare prose acronyms (controller-wiring UI/BI/AO/BO, pid-basics PB, vfds FLA,
+  hydronics ΔT/Cv). Prefer a parenthetical for newcomer-critical first-use
+  (mobile has no hover); `<abbr>` carries the incidental load.
 
 ### Expert output UX & copy (not started — bring design options)
 - **T-009** result-size hierarchy (primary headline size; promote verdict
@@ -104,11 +127,10 @@ G-005/09/11/12/13, P-002/06/09). Protect-notes (no action): E-017, G-010,
 G-014.
 
 ## Housekeeping (fold in near the end)
-- **Version bump → `3.20.1`** in `package.json` (footer reads
-  `site.version`). Needed once a shared/versioned asset changes
-  (`search.js`, `styles.css`). **Use 3.20.1, not 3.21.0** — the phase-2
-  branch already claimed 3.21.0; 3.20.1 avoids a collision regardless of
-  merge order.
+- **Version bump → `3.20.1`** ✅ DONE (a700d84) — `search.js` + `styles.css`
+  changed, so the cache-bust param had to move. Used 3.20.1 (not 3.21.0,
+  which the phase-2 branch claimed). Further versioned-asset changes this
+  PR are already covered by 3.20.1 (one bump per PR).
 - Cross-file confirmed dispositions into `codebase-issues.md` /
   `site-ideas-and-friction.md` per the CLAUDE.md convention.
 - Open the PR (commit-subject-style title + Summary/Changes/Test-plan
