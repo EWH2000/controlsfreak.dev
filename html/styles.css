@@ -464,6 +464,15 @@ main { flex: 1; }
 }
 .site-nav-links a:hover { color: var(--text); border-bottom-color: var(--accent); }
 .site-nav-links a.active { color: var(--text-bright); border-bottom-color: var(--accent); }
+/* "Start here" newcomer affordance (G-006). A distinct accent-colored entry
+   point placed early in the bar so a left-to-right newcomer scan finds the
+   on-ramp before the jargon-heavy Tools/Simulators — WITHOUT reordering the
+   sections (the experienced-first order is a deliberate v3 decision). Styled
+   with color (accent = brand/action) + weight, not a box, so it reads as
+   distinct yet inherits the desktop-row and mobile-sheet link layout cleanly.
+   Specificity (0,2,1) out-ranks the base .site-nav-links a (0,1,1). */
+.site-nav-links a.nav-start-here { color: var(--accent); font-weight: 600; }
+.site-nav-links a.nav-start-here:hover { color: var(--accent); border-bottom-color: var(--accent); }
 
 /* ── NAV SECTION DROPDOWNS ───────────────────────────────────────────
    Tools / Simulators / Education each pair their top-level link with a
@@ -1634,6 +1643,7 @@ input[type="range"]::-moz-range-thumb {
 .units-btn:focus-visible,
 .theme-btn:focus-visible,
 .nav-search-btn:focus-visible,
+.nav-start-here:focus-visible,
 .nav-hamburger:focus-visible,
 .nav-menu-toggle:focus-visible,
 .nav-group-toggle:focus-visible,

@@ -40,12 +40,43 @@
         practice: 'Practice'
     };
 
+    // Zero-state browse list (G-007). An empty palette used to be a blank box
+    // — useless to a wanderer opening it "to see what exists" and to a
+    // newcomer who can't yet name the thing they want. These curated URLs
+    // (the newcomer on-ramp first, then the home .hero-quicktools strip's
+    // popular picks, then a representative simulator) are RESOLVED against the
+    // live index at render time, so titles/descriptions stay single-sourced
+    // and a renamed/removed page silently drops out instead of 404-ing. Keep
+    // roughly in sync with index.html's quick-tools strip.
+    const STARTER_URLS = [
+        '/practice/surviving-first-months.html',
+        '/education/bacnet-basics.html',
+        '/tools/signal-scaling.html',
+        '/tools/bacnet-ip-converter.html',
+        '/tools/thermistor-calculator.html',
+        '/tools/psychrometric-chart.html',
+        '/simulators/pid-tuner.html'
+    ];
+
+    // No-match escape hatch (G-007). A newcomer's plain-language query ("how
+    // do I read a temperature sensor") misses the field-term keywords, so a
+    // bare "No matches" pushes them to leave. Offer one browse row into the
+    // lessons instead. Synthetic (not an index row) so the copy can address
+    // the newcomer directly.
+    const EDU_FALLBACK = {
+        url: '/education/',
+        title: 'Browse all lessons',
+        section: 'education',
+        description: 'New to controls? Start with the plain-English explainers.'
+    };
+
     let entries = null;          // cached index (null until first fetch)
     let loading = null;          // in-flight fetch promise (de-dupes opens)
     let loadFailed = false;      // last load threw — show a real status, allow retry (#119)
     let results = [];            // current ranked results
     let active = -1;             // highlighted index into results
     let invoker = null;          // element to restore focus to on close
+    let mode = 'browse';         // browse | results | nomatch | fail | loading
 
     const byId = (id) => document.getElementById(id);
     const palette = byId('palette');
@@ -187,6 +218,16 @@
         setActive(i, true);
     }
 
+    // Resolve the curated STARTER_URLS against the loaded index. A missing
+    // URL just drops out (no metadata duplication, graceful on a rename).
+    function starterResults() {
+        if (!entries) return [];
+        return STARTER_URLS
+            .map((u) => entries.find((e) => e.url === u))
+            .filter(Boolean)
+            .slice(0, MAX_RESULTS);
+    }
+
     function render() {
         list.textContent = '';
         results.forEach((it, i) => {
@@ -215,22 +256,49 @@
             list.appendChild(li);
         });
 
-        if (!input.value.trim()) {
+        if (mode === 'browse') {
+            // Empty query: a neutral browse list. Nothing is preselected, so
+            // it doesn't read as a search that already ran.
+            status.hidden = false;
+            status.textContent = 'Popular pages — or type to search';
+            input.setAttribute('aria-expanded', results.length ? 'true' : 'false');
+            setActive(-1);
+        } else if (mode === 'results') {
+            status.hidden = false;
+            status.textContent = results.length + (results.length === 1 ? ' result' : ' results');
+            input.setAttribute('aria-expanded', 'true');
+            setActive(0);
+        } else if (mode === 'nomatch') {
+            // results holds the single EDU_FALLBACK browse row; don't preselect
+            // it, so a stray Enter doesn't navigate away from a typo'd query.
+            status.hidden = false;
+            status.textContent = 'No matches — or browse:';
+            input.setAttribute('aria-expanded', 'true');
+            setActive(-1);
+        } else if (mode === 'fail') {
+            status.hidden = false;
+            status.textContent = 'Search index unavailable — reopen to retry';
+            input.setAttribute('aria-expanded', 'false');
+            setActive(-1);
+        } else {   // 'loading' — index not back yet; stay quiet
             status.hidden = true;
             input.setAttribute('aria-expanded', 'false');
             setActive(-1);
-        } else {
-            status.hidden = false;
-            status.textContent = results.length
-                ? results.length + (results.length === 1 ? ' result' : ' results')
-                : (loadFailed ? 'Search index unavailable — reopen to retry' : 'No matches');
-            input.setAttribute('aria-expanded', results.length ? 'true' : 'false');
-            setActive(results.length ? 0 : -1);
         }
     }
 
     function onInput() {
-        results = rank(input.value);
+        const q = input.value;
+        if (!q.trim()) {
+            results = starterResults();
+            mode = entries ? 'browse' : 'loading';
+        } else {
+            const ranked = rank(q);
+            if (ranked.length) { results = ranked; mode = 'results'; }
+            else if (loadFailed) { results = []; mode = 'fail'; }
+            else if (!entries) { results = []; mode = 'loading'; }
+            else { results = [EDU_FALLBACK]; mode = 'nomatch'; }
+        }
         render();
     }
 
@@ -266,6 +334,7 @@
         document.body.classList.add('palette-open');
         input.value = '';
         results = [];
+        mode = 'loading';
         render();
         input.focus();
         load().then(() => { if (isOpen()) onInput(); });
