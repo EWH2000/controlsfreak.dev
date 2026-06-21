@@ -15,7 +15,35 @@ live disposition tracker.** Update it as findings land.
   (3 commits on top of `origin/main`). The audit fixes are a **parallel**
   branch off `origin/main` and touch disjoint files — no conflict.
 - The audit was "built at v3.21.0" (= the phase-2 tip), but every fix so
-  far applies cleanly on `origin/main` (3.20.0).
+  far applies cleanly on `origin/main` (3.20.0). Version is now **3.20.1**
+  (bumped this PR; one bump covers all the shared-asset changes so far).
+
+## Next session — START HERE
+
+State at end of session 2 (2026-06-20): **20 commits, tree clean, branch
+NOT pushed (no PR yet — owner merges on GitHub).** Two whole clusters done
+this session and adversarially reviewed: **newcomer on-ramp** (G-006/007/008)
+and the **full expert-output-UX cluster** (T-005/006/008/009/010/016/025/027).
+
+1. **Two things still want the owner's eyes** (don't silently change — ask or
+   leave as-is):
+   - **Editorial primary-headline calls** (T-009): affinity-laws reverted to
+     no-primary; voltage-drop primary = round-trip resistance; air-mixing
+     primary = mixed dry-bulb. All one-line reversible — see the Expert section.
+   - A handful of small **minor uncertainties** logged in the commit bodies of
+     `9dfb163` / `1d5e4e0` (e.g. signal-scaling "m = …, b = …" copy separator;
+     the modbus high-bit hint showing on the teaching default; bacnet-objects
+     per-cell tab-stops). All accepted-as-shipped; flip if the owner dislikes.
+2. **Next cluster to build: Practice & contact** (concrete, no design gates) —
+   see "### Practice & contact" below: G-002, G-016–G-020, P-001, P-008,
+   P-010, P-011.
+3. Then the **long tail** — methodology/pedagogy/misc polish (see "### Remaining
+   beyond the four clusters").
+4. **Local test recipe** is unchanged — see "## How to resume (this box)" at the
+   bottom. Throwaway pw config on port 18473, full suite 361 pass / 1 skip.
+   **NOTE the box gotcha:** `pkill -f "http.server 18473"` self-kills the
+   harness's own task shells (their argv contains that string → exit 144); kill
+   the server by PID (`SRV=$!; … kill $SRV`) or `fuser -k 18473/tcp` instead.
 
 ## Status: ~32 of 86 resolved (expert cluster COMPLETE) · 20 commits · tree clean
 
