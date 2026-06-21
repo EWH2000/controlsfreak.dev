@@ -43,7 +43,7 @@ module.exports = [
     {
         type: 'numeric',
         id: 'superheat-calc',
-        prompt: 'A suction-line thermometer reads 48 °F (8.9 °C). The refrigerant\'s P-T table gives a dew temperature of 40 °F (4.4 °C) at the measured suction pressure. What\'s the superheat, in °F?',
+        prompt: 'A suction-line thermometer reads 48 °F (8.9 °C). The refrigerant\'s P-T table gives a dew temperature of 40 °F (4.4 °C) at the measured suction pressure. What\'s the superheat? Enter the answer in °F.',
         answer: 8,
         tolerance: 0.5,
         unit: '°F',
