@@ -7,10 +7,11 @@ live disposition tracker.** Update it as findings land.
 ## Branch / base — READ FIRST
 
 - **Working branch:** `fix/ux-audit-2026-06`
-- **Base:** `origin/main` (`6f4834e`, Merge #279 electrical-quick-calc).
-  **Local `main` is STALE** (`30f9a6c`, #277) — it predates the
-  electrical tool and the hydronic review fixes. Do **not** branch off
-  local `main`; use `origin/main`.
+- **Base:** branched off `origin/main` at `6f4834e` (#279 electrical-quick-calc).
+  **`origin/main` has since advanced to `8a78813` (#280 Power & Energy
+  Converter)** — merged into this branch in session 3 (`4df59e4`), so the
+  branch is now current with main. (Local `main` may still be stale; the merge
+  used `origin/main`, not local.)
 - The unmerged hydronic phase-2 work lives on `feat/hlb-phase2-3d-view`
   (3 commits on top of `origin/main`). The audit fixes are a **parallel**
   branch off `origin/main` and touch disjoint files — no conflict.
@@ -20,9 +21,18 @@ live disposition tracker.** Update it as findings land.
 
 ## Next session — START HERE
 
-State at end of session 2 (2026-06-20): **20 commits, tree clean, branch
-NOT pushed (no PR yet — owner merges on GitHub).** Two whole clusters done
-this session and adversarially reviewed: **newcomer on-ramp** (G-006/007/008)
+State at end of session 3 (2026-06-20): **Practice & contact cluster done +
+reviewed; branch merged up to `origin/main` (#280 Power & Energy Converter)
+and PUSHED with a PR open for the owner's Cloudflare-preview review.** Version
+is now **3.21.1** (patch over #280's 3.21.0 — busts this branch's styles.css /
+search.js). The PR covers the whole audit-fix branch (~40 of 86 findings).
+
+**Next: the long tail** — methodology/pedagogy/misc polish (see "### Remaining
+beyond the four clusters"). Two owner-call items are flagged in the PR, not yet
+decided: **P-010** (drill format pill) and **P-011** (Field Drills topic chip).
+
+Prior state (end of session 2): **20 commits, tree clean, branch NOT pushed.**
+Two clusters done + adversarially reviewed: **newcomer on-ramp** (G-006/007/008)
 and the **full expert-output-UX cluster** (T-005/006/008/009/010/016/025/027).
 
 1. **Two things still want the owner's eyes** (don't silently change — ask or
@@ -45,7 +55,7 @@ and the **full expert-output-UX cluster** (T-005/006/008/009/010/016/025/027).
    harness's own task shells (their argv contains that string → exit 144); kill
    the server by PID (`SRV=$!; … kill $SRV`) or `fuser -k 18473/tcp` instead.
 
-## Status: ~32 of 86 resolved (expert cluster COMPLETE) · 20 commits · tree clean
+## Status: ~40 of 86 resolved (Practice & contact COMPLETE) · merged #280 · v3.21.1
 
 All commits built clean and passed the full Playwright suite (361 pass /
 1 skip). Honesty paths, hero on-ramp, palette zero-state, nav affordance,
@@ -180,19 +190,36 @@ browser-verified (clipboard reads included):
   a BACKWARDS NTC physics claim (caught by the adversarial verifier: error =
   R_wire/|dR/dT|, steeper cold curve → smaller error); rewrote it non-directional.
 
-### Practice & contact (partly done)
-- **G-002** Practice discoverability — add a Practice card to the home
-  Browse row + a Practice bullet to `404.html`; reword the Simulators card
-  away from "Practice on the model"; surface "new? start here → Surviving
-  First Months".
-- **P-001** field-drill onward step (sibling-quizzes group / cycle).
-- **G-016** mailto fallback (`contact@controlsfreak.dev` already exists in
-  `src/worker.js`, never shown to the visitor); **G-017** privacy link +
-  near-form reassurance; **G-018** success message persists after reset;
-  **G-019** reconcile contact vs privacy reply-time (24-48h); **G-020**
-  contact error strings + `EMAIL_RE`-vs-browser mismatch.
-- **P-008** metric numeric grading echo; **P-010** drill card format pill;
-  **P-011** field-drill topic chip (INTENTIONAL — owner call).
+### Practice & contact — ✅ CLUSTER COMPLETE (session 3, 2026-06-20)
+Driven straight + put through an adversarial 3-dimension review workflow
+(correctness / completeness-vs-findings / conventions) with a refute-by-default
+verify pass: **2 candidate issues raised, 0 confirmed** (both self-refuting
+non-findings — email pattern parity + name-casing — independently verified
+clean). Full suite 363/1 after the #280 merge; email `pattern` browser-verified.
+- **G-002** ✅ Practice card added to the home Browse row (now a 2×2);
+  Simulators card reworded "Practice on the model" → "Run the models" (+ pill
+  "Practice" → "Hands-on") so the word stops colliding; Practice bullet +
+  description added to `404.html`; the "new? → Surviving Your First Months"
+  on-ramp pointer now rides the home Practice card. (`221f8c8`)
+- **G-016–G-020** ✅ contact flow (`b87ad5a`, `contact.html` + `worker.js`):
+  mailto fallback (`contact@controlsfreak.dev`), near-form privacy link +
+  reassurance, one-shot `clearStale` listener for the stale success banner,
+  reply-time reconciled to privacy's "day or two", `Verification failed —`
+  recovery hint, and a client `pattern` mirroring `EMAIL_RE` (dot-edge
+  addresses caught inline; verified in Chromium, full client/server parity).
+- **P-001** ✅ five field drills cross-linked into a connected graph via a
+  sibling `quizzes:` group (`8996c5e`); engine/quizOrder untouched (the
+  curriculum exclusion is documented intent).
+- **P-008** ✅ the two genuinely metric-trapped numerics get an explicit
+  "Enter the answer in °F." (`b474ab3`) — `superheat-calc` **and**
+  `psy-mixing-fraction` (the audit missed the latter; its
+  balancing/pump/staging picks were GPM/%/% with no trap).
+- **P-010 / P-011 — OWNER-CALL, left as-is (flag, don't gate):** P-010 (drill
+  format pill) — kept the deliberate scope label (`Field Sampler` / `Symptom →
+  Cause` etc.); the finding itself allows "accept as deliberate." P-011 (Field
+  Drills topic chip) — left no-chip per the documented CLAUDE.md intent
+  ("drills hide under any topic-specific chip"). Both are one-line reversible
+  if the owner wants the pill/chip — surface in the PR for the preview review.
 
 ### Remaining beyond the four clusters (open, not yet triaged with owner)
 Methodology one-liners (T-018/19/20/21/22/23/29, S-003/04/05/07,
