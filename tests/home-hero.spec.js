@@ -61,7 +61,7 @@ test('Tools-by-category card deep-links into the pre-filtered Tools page', async
     await expect(page).toHaveURL(/\/tools\/#hvac$/);
     // The Tools landing reads the hash and applies the filter on load.
     await expect(page.locator('.filter-chip[data-category="hvac"]')).toHaveAttribute('aria-pressed', 'true');
-    await expect(page.locator('.nav-card:not([hidden])')).toHaveCount(6);
+    await expect(page.locator('.nav-card:not([hidden])')).toHaveCount(7);
     expect(errors, 'category deep-link should log no errors').toEqual([]);
 });
 

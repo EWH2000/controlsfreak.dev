@@ -28,6 +28,7 @@ const PAGES = [
     { name: 'economizer ratio',       url: '/tools/economizer-ratio.html' },
     { name: 'air mixing',             url: '/tools/air-mixing.html' },
     { name: 'coil sizing',            url: '/tools/coil-sizing.html' },
+    { name: 'power & energy converter', url: '/tools/power-energy-converter.html' },
     { name: 'dew point calculator',   url: '/tools/dew-point-calculator.html' },
     { name: 'thermistor calculator',  url: '/tools/thermistor-calculator.html' },
     { name: 'refrigerant p-t',        url: '/tools/refrigerant-pt.html' },
@@ -651,6 +652,55 @@ test('coil sizing — capacity and leaving-state tabs compute their cases', asyn
     expect(errors, 'coil-sizing behavioral should log no page / console errors').toEqual([]);
 });
 
+test('power & energy converter — convert, time bridge, and boiler turndown', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('/tools/power-energy-converter.html');
+
+    // Convert tab — 100 kW fans out to every power unit via the BTU-family
+    // chain (1 kW = 3.412 MBH): 341.2 MBH, 28.4 tons.
+    await expect(page.locator('#pe-conv-mbh')).toContainText('341.2');
+    await expect(page.locator('#pe-conv-ton')).toContainText('28.4');
+    // Clearing the value mutes the readouts and surfaces the callout.
+    await page.fill('#pe-conv-val', '');
+    await expect(page.locator('#pe-conv-mbh')).toHaveText('—');
+    await expect(page.locator('#pe-conv-callout')).toBeVisible();
+    // Choosing an energy unit swaps the table to the energy dimension.
+    await page.fill('#pe-conv-val', '100');
+    await page.selectOption('#pe-conv-unit', 'kwh');
+    await expect(page.locator('#pe-conv-mj')).toContainText('360');      // 100 kWh = 360 MJ
+
+    // Time bridge — defaults solve Energy: 100 kW × 24 hr = 2,400 kWh.
+    await page.click('[data-tab="bridge"]');
+    await expect(page.locator('#pe-br-out')).toContainText('2,400 kWh');
+    // Flip to solve Power from that energy + 24 hr → back to 100 kW.
+    await page.selectOption('#pe-br-solve', 'power');
+    await expect(page.locator('#pe-br-out')).toContainText('100 kW');
+
+    // Boiler tab — 835 MBH input fired to a 570 MBH minimum = 1.46:1, the
+    // poor-turndown warning from the worked example.
+    await page.click('[data-tab="boiler"]');
+    await expect(page.locator('#pe-boil-turndown')).toHaveText('1.46:1');
+    await expect(page.locator('#pe-boil-plant')).toContainText('1,670 MBH');
+    await expect(page.locator('#pe-boil-pill-grade')).toBeVisible();
+    await expect(page.locator('#pe-boil-pill-grade')).toHaveClass(/warn/);
+    await expect(page.locator('#pe-boil-pill-grade')).toContainText('Poor turndown');
+    // Pasting a Riello firing string fills the burner fields, decodes the
+    // band, and reads the burner's own turndown (860 ÷ 150 = 5.73:1).
+    await page.fill('#pe-boil-riello', '150/350 ÷ 860 kW');
+    await expect(page.locator('#pe-boil-min-val')).toHaveValue('150');
+    await expect(page.locator('#pe-boil-decode')).toContainText('high-fire 350–860 kW');
+    await expect(page.locator('#pe-boil-bturndown')).toHaveText('5.73:1');
+    // 350 kW lowest high fire on a 244.7 kW (835 MBH) boiler is oversized.
+    await expect(page.locator('#pe-boil-pill-oversize')).toBeVisible();
+    // Hand-editing a burner field supersedes the pasted string: the decoded
+    // firing line and the burner's own turndown retire so they can't go stale.
+    await page.fill('#pe-boil-min-val', '200');
+    await expect(page.locator('#pe-boil-decode')).toHaveText('—');
+    await expect(page.locator('#pe-boil-bturndown')).toHaveText('—');
+
+    expect(errors, 'power-energy behavioral should log no page / console errors').toEqual([]);
+});
+
 test('dew point calculator — default read, coil verdict, and wet-bulb toggle', async ({ page }) => {
     const errors = watchErrors(page);
     await page.goto('/tools/dew-point-calculator.html');
@@ -898,7 +948,7 @@ test('tools landing — filter chip narrows to one category and All restores', a
     await expect(page.locator('.filter-chip[data-category="hvac"]')).toHaveClass(/active/);
     await expect(page.locator('.filter-chip[data-category="all"]')).not.toHaveClass(/active/);
     const visibleHvac = await page.locator('.nav-card:not([hidden])').count();
-    expect(visibleHvac, 'only HVAC cards should remain visible').toBe(6);
+    expect(visibleHvac, 'only HVAC cards should remain visible').toBe(7);
     // hash updates (replaceState — no scroll, no back-history pollution)
     expect(new URL(page.url()).hash).toBe('#hvac');
 

@@ -21,10 +21,10 @@ nav: tools
 
     <div class="filter-chips" role="group" aria-label="Filter tools by category">
         <button type="button" class="filter-chip active" data-category="all" aria-pressed="true">
-            All <span class="filter-chip-count">19</span>
+            All <span class="filter-chip-count">20</span>
         </button>
         <button type="button" class="filter-chip" data-category="hvac" aria-pressed="false">
-            HVAC <span class="filter-chip-count">6</span>
+            HVAC <span class="filter-chip-count">7</span>
         </button>
         <button type="button" class="filter-chip" data-category="protocols" aria-pressed="false">
             Protocols <span class="filter-chip-count">4</span>
@@ -150,6 +150,15 @@ nav: tools
             titleFull:  'Refrigerant P-T & Superheat Calculator',
             desc:       'Saturation pressure ↔ temperature for R-410A, R-22, R-134a, R-407C, R-404A and R-454B — bubble and dew both, so blend glide is in plain sight — plus a superheat / subcooling check off a measured line temperature.',
             pills:      ['HVAC', '6 Refrigerants', 'Bubble / Dew', 'Superheat / Subcool'],
+            category:   'hvac'
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/tools/power-energy-converter.html',
+            titleShort: 'Power & Energy',
+            titleFull:  'Power & Energy Converter',
+            desc:       'Convert any power or energy unit to all the others — W, kW, BTU/hr, MBH, tons, hp, boiler hp, joules, kWh, therms, MMBtu — bridge power and energy through time, and check a boiler input against its burner turndown.',
+            pills:      ['HVAC', 'BTU / kW / hp', 'Power × Time', 'Boiler Turndown'],
             category:   'hvac'
         }) }}
         {{ navCard({
