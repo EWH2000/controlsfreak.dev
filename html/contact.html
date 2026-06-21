@@ -21,6 +21,13 @@ nav: contact
             margin-bottom: 1.5rem;
         }
         #contact-result-value { font-size: 1.15rem; line-height: 1.5; }
+        .contact-fallback {
+            font-size: 0.9rem;
+            line-height: 1.7;
+            color: var(--text-dim);
+            max-width: 560px;
+            margin: 1.5rem 0 0;
+        }
     </style>
 {% endblock %}
 
@@ -42,7 +49,7 @@ nav: contact
         <div class="tool-body">
 
             <p class="contact-intro">
-                If a tool gave you a wrong number, a page has a typo, you'd like a tool that isn't built yet, or you just want to say hi — send a note. It comes straight to my inbox; I read everything and try to reply to most of it.
+                If a tool gave you a wrong number, a page has a typo, you'd like a tool that isn't built yet, or you just want to say hi — send a note. It comes straight to my inbox; I read everything, and I do my best to reply — usually within a day or two.
             </p>
 
             <form id="contact-form">
@@ -53,7 +60,17 @@ nav: contact
                     </div>
                     <div class="field">
                         <label for="contact-email">Email (required)</label>
-                        <input type="email" id="contact-email" name="email" required maxlength="200" autocomplete="email">
+                        <!-- pattern mirrors the Worker's EMAIL_RE (src/worker.js):
+                             type=email alone accepts user.@x.com / a@b.com. ,
+                             which the server then rejects with a 400 — a
+                             "browser said fine / server says no" mismatch
+                             (G-020). The pattern bars a dot at the start or end
+                             of the local part or the domain, so the bounce
+                             happens inline (title = the recovery hint) instead.
+                             Keep the two in sync if either changes. -->
+                        <input type="email" id="contact-email" name="email" required maxlength="200" autocomplete="email"
+                               pattern="[^\s@.](?:[^\s@]*[^\s@.])?@[^\s@.](?:[^\s@]*[^\s@.])?\.[^\s@.](?:[^\s@]*[^\s@.])?"
+                               title="Enter a standard email address — no dot directly before or after the @, or at the very start or end.">
                     </div>
                 </div>
                 <div class="form-row">
@@ -97,6 +114,19 @@ nav: contact
                  Sending / sent / error announce on content change, not on
                  insertion (matches the quiz-reveal convention). (G-015) -->
             <div class="sr-only" role="status" aria-live="polite" aria-atomic="true" id="contact-result-sr"></div>
+
+            <!-- Non-form fallback (G-016/G-017). The form needs JS + Turnstile
+                 (challenges.cloudflare.com), which a locked-down plant / OT
+                 network often blocks — leaving the address the Worker already
+                 uses (contact@controlsfreak.dev) the only way through. Surface
+                 it as a plain mailto, and link the privacy policy so the
+                 "what happens to my email" answer is one click from the form
+                 instead of buried in the footer. -->
+            <p class="contact-fallback">
+                Form not working — blocked on a locked-down network, or JavaScript off?
+                Email me directly at <a href="mailto:contact@controlsfreak.dev">contact@controlsfreak.dev</a>.
+                Your email is only ever used to reply; see the <a href="/privacy.html">privacy policy</a>.
+            </p>
 
         </div>
     </div>
@@ -148,6 +178,19 @@ nav: contact
                     form.reset();
                     // Reset Turnstile so a second submission gets a fresh token
                     if (window.turnstile) window.turnstile.reset();
+                    // G-018: a green "Message sent" banner sitting over the
+                    // now-empty form is ambiguous ("did it send what I just
+                    // typed, or is that stale?"). Clear it the instant the
+                    // visitor starts a fresh message, so the confirmation can't
+                    // linger over a blank form. One-shot — removes itself.
+                    const clearStale = () => {
+                        result.classList.add("hidden");
+                        resultValue.className = "result-value muted";
+                        resultValue.textContent = "—";
+                        srStatus.textContent = "";
+                        form.removeEventListener("input", clearStale);
+                    };
+                    form.addEventListener("input", clearStale);
                 } else {
                     setStatus(data.error || "Something went wrong.", "result-value error");
                 }
