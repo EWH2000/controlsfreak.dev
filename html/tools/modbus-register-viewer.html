@@ -42,15 +42,18 @@ keywords: 40001 30001 offset endian byte swap word order decode hex signed scali
             </h1>
         </div>
 
-        <p class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
-            Decode a Modbus register the way the device sees it — decimal, hex, binary,
-            signed/unsigned, and individual bits, all synced as you change any one.
-            <em>Single Register</em> lets you toggle bits directly or type a decimal or hex value.
-            <em>32-bit Pair</em> takes two consecutive registers and shows the int32 / uint32 / float reading
-            under all four byte orderings vendors use — the one whose float reads plausibly is yours.
-            New to Modbus? Read <a href="/education/modbus-basics.html">Modbus Basics</a> for the protocol shape,
-            then <a href="/education/modbus-decoding.html">Modbus Decoding</a> for the gotchas behind these tabs.
-        </p>
+        <details class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
+            <summary>Decode a Modbus register the way the device sees it.</summary>
+            <div class="preamble-rest">
+                Decimal, hex, binary, signed/unsigned, and individual bits, all synced
+                as you change any one.
+                <em>Single Register</em> lets you toggle bits directly or type a decimal or hex value.
+                <em>32-bit Pair</em> takes two consecutive registers and shows the int32 / uint32 / float reading
+                under all four byte orderings vendors use — the one whose float reads plausibly is yours.
+                New to Modbus? Read <a href="/education/modbus-basics.html">Modbus Basics</a> for the protocol shape,
+                then <a href="/education/modbus-decoding.html">Modbus Decoding</a> for the gotchas behind these tabs.
+            </div>
+        </details>
 
         <div class="tabs tabs-flush">
             <button class="tab-btn active" data-tab="single">Single Register</button>
@@ -97,6 +100,7 @@ keywords: 40001 30001 offset endian byte swap word order decode hex signed scali
                         <span class="ps-label">Decimal</span>
                         <span class="ps-value muted" id="read-dec">—</span>
                     </div>
+                    <p class="bit-hint" id="mod-highbit-hint" hidden></p>
                     <div class="ps-row">
                         <span class="ps-label">Hex</span>
                         <span class="ps-value muted" id="read-hex">—</span>
@@ -216,6 +220,16 @@ keywords: 40001 30001 offset endian byte swap word order decode hex signed scali
                     <div class="ps-row">
                         <span class="ps-label">Read with</span>
                         <span class="ps-value muted" id="mod-conv-fc">—</span>
+                    </div>
+                    <!-- Clean copy values (decimal offset / FC short code) held
+                         off-screen so the copy buttons reuse the shared
+                         copyReadouts(textContent) path without copying the
+                         readouts' hex / parenthetical decoration. -->
+                    <span class="sr-only" id="mod-conv-offset-copy">—</span>
+                    <span class="sr-only" id="mod-conv-fc-copy">—</span>
+                    <div class="btn-row">
+                        <button class="copy-btn" id="mod-conv-copy-offset">Copy offset</button>
+                        <button class="copy-btn" id="mod-conv-copy-fc">Copy FC</button>
                     </div>
                     <div class="result-formula wrap" id="mod-conv-sentence"></div>
                     <div class="failure-callout" id="mod-conv-callout" hidden></div>
@@ -380,12 +394,27 @@ keywords: 40001 30001 offset endian byte swap word order decode hex signed scali
             renderBits();
         }
 
+        // High-bit hint (T-006): when the value's MSB is set and the reader is
+        // still on 'unsigned', the same bits also have a signed reading — surface
+        // it quietly. Hidden when signed is selected or the high bit is clear.
+        const highBitHint = document.getElementById('mod-highbit-hint');
+
+        function updateHighBitHint(val) {
+            if (signedMode === 'unsigned' && val >= 0x8000) {
+                highBitHint.textContent = 'high bit set — signed reading is ' + (val - 0x10000) + '.';
+                highBitHint.hidden = false;
+            } else {
+                highBitHint.hidden = true;
+            }
+        }
+
         function updateReadouts(val) {
             const decEl = document.getElementById('read-dec');
             const hexEl = document.getElementById('read-hex');
             const binEl = document.getElementById('read-bin');
             const decShown = signedMode === 'signed' && val > 0x7FFF ? val - 0x10000 : val;
             decEl.className = 'ps-value live'; decEl.textContent = decShown;
+            updateHighBitHint(val);
             hexEl.className = 'ps-value live'; hexEl.textContent = '0x' + val.toString(16).toUpperCase().padStart(4, '0');
             const bin = val.toString(2).padStart(16, '0');
             binEl.className = 'ps-value live';
@@ -492,13 +521,23 @@ keywords: 40001 30001 offset endian byte swap word order decode hex signed scali
             }
         }
 
+        // A float32 carries ~7 significant decimal digits; getFloat32 widens it
+        // to a float64, so f32.toString() prints float64 noise (3.14 → 3.140000104904175).
+        // Round the DISPLAYED value to 7 sig figs — the precision the bits actually
+        // hold — without fabricating any. Number() collapses trailing zeros; NaN /
+        // ±Infinity round-trip through toPrecision unchanged.
+        function fmtFloat32(f) {
+            if (!isFinite(f)) return f.toString();   // NaN, ±Infinity
+            return Number(f.toPrecision(7)).toString();
+        }
+
         function decodeOrdering(b0, b1, b2, b3, order) {
             const u32 = (((b0 << 24) >>> 0) | (b1 << 16) | (b2 << 8) | b3) >>> 0;
             const i32 = u32 > 0x7FFFFFFF ? u32 - 0x100000000 : u32;
             const f32 = decodeFloat(b0, b1, b2, b3);
             setPairCell(`pair-${order}-i32`, i32.toString());
             setPairCell(`pair-${order}-u32`, u32.toString());
-            setPairCell(`pair-${order}-f32`, f32.toString());
+            setPairCell(`pair-${order}-f32`, fmtFloat32(f32));
         }
 
         const pairCallout = document.getElementById('mod-pair-callout');
@@ -567,6 +606,8 @@ keywords: 40001 30001 offset endian byte swap word order decode hex signed scali
 
         const convOffsetEl   = document.getElementById('mod-conv-offset');
         const convFcEl       = document.getElementById('mod-conv-fc');
+        const convOffsetCopy = document.getElementById('mod-conv-offset-copy');
+        const convFcCopy     = document.getElementById('mod-conv-fc-copy');
         const convSentenceEl = document.getElementById('mod-conv-sentence');
         const convCallout    = document.getElementById('mod-conv-callout');
         const addrInput      = document.getElementById('mod-addr');
@@ -578,6 +619,8 @@ keywords: 40001 30001 offset endian byte swap word order decode hex signed scali
             convOffsetEl.textContent = '—';
             convFcEl.className = 'ps-value muted';
             convFcEl.textContent = '—';
+            convOffsetCopy.textContent = '—';
+            convFcCopy.textContent = '—';
             convSentenceEl.textContent = '';
             if (msg) { convCallout.textContent = msg; convCallout.hidden = false; }
             else convCallout.hidden = true;
@@ -589,6 +632,9 @@ keywords: 40001 30001 offset endian byte swap word order decode hex signed scali
             convOffsetEl.textContent = String(t.offset) + ' (0x' + t.offset.toString(16).toUpperCase().padStart(4, '0') + ')';
             convFcEl.className = 'ps-value live';
             convFcEl.textContent = t.fc;
+            // Clean copy payloads: decimal offset, FC short code (e.g. "FC03").
+            convOffsetCopy.textContent = String(t.offset);
+            convFcCopy.textContent = t.fc.slice(0, 4);
             convSentenceEl.textContent =
                 'Vendor docs ' + addr + ' → ' + t.name + ' table, wire offset ' +
                 t.offset + ' — poll with ' + t.fc + '.';
@@ -622,6 +668,8 @@ keywords: 40001 30001 offset endian byte swap word order decode hex signed scali
         addrInput.addEventListener('input', fromAddr);
         offsetInput.addEventListener('input', fromTableOffset);
         tableSelect.addEventListener('change', fromTableOffset);
+        document.getElementById('mod-conv-copy-offset').addEventListener('click', e => copyReadouts(e.currentTarget, '', 'mod-conv-offset-copy'));
+        document.getElementById('mod-conv-copy-fc').addEventListener('click', e => copyReadouts(e.currentTarget, '', 'mod-conv-fc-copy'));
         fromAddr();   // default 43021 → holding offset 3020, FC03
 
         document.querySelectorAll('[data-tab]').forEach(btn => {

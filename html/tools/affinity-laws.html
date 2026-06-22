@@ -33,11 +33,13 @@ keywords: cfm gpm rpm hz speed pressure bhp horsepower cube law trim
             </h1>
         </div>
 
-        <p class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
-            One operating point and a speed (or impeller) change, scaled by the affinity laws.
-            Flow tracks the ratio, head tracks its square, and power tracks its <em>cube</em> — which is the whole reason a VFD slowing a pump saves so much more energy than it gives up in flow.
-            <em>By speed</em> is the VFD case; <em>By impeller diameter</em> is the trim case, exact for speed and approximate for small trims of the same casing.
-        </p>
+        <details class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
+            <summary>One operating point and a speed (or impeller) change, scaled by the affinity laws.</summary>
+            <div class="preamble-rest">
+                Flow tracks the ratio, head tracks its square, and power tracks its <em>cube</em> — which is the whole reason a VFD slowing a pump saves so much more energy than it gives up in flow.
+                <em>By speed</em> is the VFD case; <em>By impeller diameter</em> is the trim case, exact for speed and approximate for small trims of the same casing.
+            </div>
+        </details>
 
         <div class="tabs tabs-flush">
             <button class="tab-btn active" data-tab="speed">By speed</button>
@@ -60,15 +62,15 @@ keywords: cfm gpm rpm hz speed pressure bhp horsepower cube law trim
                     </div>
                     <div class="ps-row">
                         <label class="ps-label" for="af-s-q1">Flow Q₁</label>
-                        <input class="ps-input" type="number" id="af-s-q1" step="any" placeholder="100" value="100">
+                        <input class="ps-input" type="number" id="af-s-q1" step="any" min="0" placeholder="100" value="100">
                     </div>
                     <div class="ps-row">
                         <label class="ps-label" for="af-s-h1">Head / pressure H₁</label>
-                        <input class="ps-input" type="number" id="af-s-h1" step="any" placeholder="50" value="50">
+                        <input class="ps-input" type="number" id="af-s-h1" step="any" min="0" placeholder="50" value="50">
                     </div>
                     <div class="ps-row">
                         <label class="ps-label" for="af-s-p1">Power P₁</label>
-                        <input class="ps-input" type="number" id="af-s-p1" step="any" placeholder="10" value="10">
+                        <input class="ps-input" type="number" id="af-s-p1" step="any" min="0" placeholder="10" value="10">
                     </div>
                     <p class="ref-note">
                         Speeds take any consistent unit (RPM, Hz, %). Flow, head, and power pass through unchanged, so the outputs carry whatever units you entered — head (ft) for pumps, static pressure (in. w.c.) for fans, power in bhp or kW.
@@ -93,6 +95,9 @@ keywords: cfm gpm rpm hz speed pressure bhp horsepower cube law trim
                         <span class="ps-label">Power P₂ &nbsp;(∝ ratio³)</span>
                         <span class="ps-value muted" id="af-s-p2">—</span>
                     </div>
+                    <p class="ref-note">
+                        Q₂ / H₂ / P₂ carry the same units you entered above — this tool just scales the magnitudes.
+                    </p>
                     <div class="btn-row">
                         <button class="copy-btn" id="af-s-copy">Copy results</button>
                     </div>
@@ -114,7 +119,7 @@ keywords: cfm gpm rpm hz speed pressure bhp horsepower cube law trim
                     <li>Power: <code>10 × 0.833³ = 5.8 bhp</code> (cube).</li>
                 </ol>
                 <p class="ref-note">
-                    A 17 % speed cut gives back 17 % of flow but nearly <em>halves</em> the power. The cube law is the energy case for variable-speed pumping — and the reason the savings shrink fast once you stop riding the curve down (see Pump Control).
+                    A 17 % speed cut costs about 17 % of flow but nearly <em>halves</em> the power. The cube law is the energy case for variable-speed pumping — and the reason the savings shrink fast once you stop riding the curve down (see Pump Control).
                 </p>
             </section>
         </div>
@@ -135,15 +140,15 @@ keywords: cfm gpm rpm hz speed pressure bhp horsepower cube law trim
                     </div>
                     <div class="ps-row">
                         <label class="ps-label" for="af-d-q1">Flow Q₁</label>
-                        <input class="ps-input" type="number" id="af-d-q1" step="any" placeholder="100" value="100">
+                        <input class="ps-input" type="number" id="af-d-q1" step="any" min="0" placeholder="100" value="100">
                     </div>
                     <div class="ps-row">
                         <label class="ps-label" for="af-d-h1">Head / pressure H₁</label>
-                        <input class="ps-input" type="number" id="af-d-h1" step="any" placeholder="50" value="50">
+                        <input class="ps-input" type="number" id="af-d-h1" step="any" min="0" placeholder="50" value="50">
                     </div>
                     <div class="ps-row">
                         <label class="ps-label" for="af-d-p1">Power P₁</label>
-                        <input class="ps-input" type="number" id="af-d-p1" step="any" placeholder="10" value="10">
+                        <input class="ps-input" type="number" id="af-d-p1" step="any" min="0" placeholder="10" value="10">
                     </div>
                     <p class="ref-note">
                         Diameters take any consistent unit (in, mm). The diameter laws hold only for modest trims of the <em>same</em> casing — past roughly 10–15 % the efficiency falls off and the simple ratios drift.
@@ -168,6 +173,9 @@ keywords: cfm gpm rpm hz speed pressure bhp horsepower cube law trim
                         <span class="ps-label">Power P₂ &nbsp;(∝ ratio³)</span>
                         <span class="ps-value muted" id="af-d-p2">—</span>
                     </div>
+                    <p class="ref-note">
+                        Q₂ / H₂ / P₂ carry the same units you entered above — this tool just scales the magnitudes.
+                    </p>
                     <div class="btn-row">
                         <button class="copy-btn" id="af-d-copy">Copy results</button>
                     </div>
@@ -254,10 +262,21 @@ keywords: cfm gpm rpm hz speed pressure bhp horsepower cube law trim
                 ratioEl.textContent = tidy(ratio, 3);
 
                 // Each quantity is optional — only scale the ones provided.
+                // Flow/head/power are magnitudes: a negative pass-through value
+                // is physically meaningless, so mute that output rather than
+                // hand back a confident negative (the fail-loud-or-mute contract).
                 const q = parseFloat(q1.value), h = parseFloat(h1.value), p = parseFloat(p1.value);
-                setOut(q2, isFinite(q) ? q * ratio : null, 2);
-                setOut(h2, isFinite(h) ? h * ratio * ratio : null, 2);
-                setOut(p2, isFinite(p) ? p * ratio * ratio * ratio : null, 2);
+                const ok = v => isFinite(v) && v >= 0;
+                setOut(q2, ok(q) ? q * ratio : null, 2);
+                setOut(h2, ok(h) ? h * ratio * ratio : null, 2);
+                setOut(p2, ok(p) ? p * ratio * ratio * ratio : null, 2);
+
+                // A negative magnitude was entered (vs simply left blank) — say
+                // why the output muted, mirroring the ratio-field callout above.
+                if ([q, h, p].some(v => isFinite(v) && v < 0)) {
+                    calloutEl.textContent = 'Flow, head, and power are magnitudes — enter 0 or more.';
+                    calloutEl.hidden = false;
+                }
 
                 formulaEl.textContent =
                     `ratio = ${tidy(r2, 4)} ÷ ${tidy(r1, 4)} = ${tidy(ratio, 3)}` +

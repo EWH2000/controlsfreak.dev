@@ -36,9 +36,11 @@ keywords: object instance device av bv ai ao discovery who-is cov priority
 
             <p class="page-intro">
                 BACnet is the protocol most modern building automation runs on. If you
-                touch a chiller plant control panel, a VAV controller, a JACE, an EBO
-                field controller, a Distech actuator, or a Honeywell rooftop, you're
-                almost certainly talking to BACnet. The history, for background: ASHRAE
+                touch a chiller plant control panel, a VAV (variable-air-volume) box
+                controller, a <abbr title="Java Application Control Engine (Tridium Niagara controller)">JACE</abbr>
+                or <abbr title="EcoStruxure Building Operation (Schneider Electric)">EBO</abbr> supervisor
+                (the gateways and servers that supervise a building's controllers), a Distech actuator, or a Honeywell rooftop
+                unit, you're almost certainly talking to BACnet. The history, for background: ASHRAE
                 started work on it in 1987 to give building controls one common language
                 that didn't belong to any single vendor, and ASHRAE 135 — the standard
                 that defines it — has been a moving target ever since, picking up new
@@ -68,8 +70,8 @@ keywords: object instance device av bv ai ao discovery who-is cov priority
                 dumb — a register is just sixteen bits, and the only thing that knows
                 whether those bits are a temperature in tenths of a degree or a packed
                 status word is the vendor's manual. BACnet flips this. A BACnet
-                Analog Input object <em>knows</em> its `Object_Name`, its `Units`,
-                its `Description`, its current `Present_Value`, its high and low
+                Analog Input object <em>knows</em> its <code>Object_Name</code>, its <code>Units</code>,
+                its <code>Description</code>, its current <code>Present_Value</code>, its high and low
                 limits, and a couple dozen other properties — none of which need to
                 live in a separate document. The protocol carries the labels and the
                 values together.
@@ -81,7 +83,7 @@ keywords: object instance device av bv ai ao discovery who-is cov priority
                 and then defines several <em>data-link options</em> for carrying that
                 logic over different physical media. The two you'll meet in the field
                 are <strong>BACnet/IP</strong> (the protocol over UDP datagrams on a
-                normal Ethernet/IP network) and <strong>BACnet MS/TP</strong> (the
+                normal Ethernet/IP network) and <strong>BACnet <abbr title="Master-Slave/Token-Passing">MS/TP</abbr></strong> (the
                 protocol over RS-485 twisted-pair, with a token-passing master ring).
                 Newer options like <strong>BACnet/SC</strong> (Secure Connect, over
                 TLS WebSockets) and the older <strong>BACnet/Ethernet</strong> exist

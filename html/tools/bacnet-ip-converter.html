@@ -25,15 +25,16 @@ keywords: hex dotted decimal address network number MAC APDU UDP port 47808 BAC0
             </h1>
         </div>
 
-        <p class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
-            The hex blob EBO and other BACnet tools show for a BACnet/IP device ↔ a dotted-decimal
-            IP and UDP port, both directions.
-            <em>Hex → IP</em> decodes an 8-character (IP only) or 12-character (IP + port) hex string.
-            <em>IP → Hex</em> builds the string from a dotted-decimal IP and an optional port — the default
-            is 47808 (0xBAC0).
-            <em>Object ID</em> unpacks the other 32-bit blob BACnet tools show — the
-            Object_Identifier's 10-bit type and 22-bit instance — and packs one back up.
-        </p>
+        <details class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
+            <summary>The hex blob EBO and other BACnet tools show for a BACnet/IP device ↔ a dotted-decimal IP and UDP port, both directions.</summary>
+            <div class="preamble-rest">
+                <em>Hex → IP</em> decodes an 8-character (IP only) or 12-character (IP + port) hex string.
+                <em>IP → Hex</em> builds the string from a dotted-decimal IP and an optional port — the default
+                is 47808 (0xBAC0).
+                <em>Object ID</em> unpacks the other 32-bit blob BACnet tools show — the
+                Object_Identifier's 10-bit type and 22-bit instance — and packs one back up.
+            </div>
+        </details>
 
         <div class="tabs tabs-flush">
             <button class="tab-btn active" data-tab="hex2ip">Hex → IP</button>
@@ -162,6 +163,10 @@ keywords: hex dotted decimal address network number MAC APDU UDP port 47808 BAC0
                         <span class="ps-value muted" id="boi-out-instance">—</span>
                     </div>
                     <div class="ps-row">
+                        <span class="ps-label">Reads as</span>
+                        <span class="ps-value muted" id="boi-out-ref">—</span>
+                    </div>
+                    <div class="ps-row">
                         <span class="ps-label">Raw (decimal)</span>
                         <span class="ps-value muted" id="boi-out-dec">—</span>
                     </div>
@@ -170,6 +175,7 @@ keywords: hex dotted decimal address network number MAC APDU UDP port 47808 BAC0
                         <span class="ps-value muted" id="boi-out-hex">—</span>
                     </div>
                     <div class="btn-row">
+                        <button class="copy-btn" id="boi-copy-ref">Copy type, instance</button>
                         <button class="copy-btn" id="boi-copy-dec">Copy decimal</button>
                         <button class="copy-btn" id="boi-copy-hex">Copy hex</button>
                     </div>
@@ -378,13 +384,14 @@ keywords: hex dotted decimal address network number MAC APDU UDP port 47808 BAC0
         const boiInstance = document.getElementById('boi-instance');
         const boiOutType  = document.getElementById('boi-out-type');
         const boiOutInst  = document.getElementById('boi-out-instance');
+        const boiOutRef   = document.getElementById('boi-out-ref');
         const boiOutDec   = document.getElementById('boi-out-dec');
         const boiOutHex   = document.getElementById('boi-out-hex');
         const boiFormula  = document.getElementById('boi-formula');
         const boiCallout  = document.getElementById('boi-callout');
 
         function boiMute(msg) {
-            [boiOutType, boiOutInst, boiOutDec, boiOutHex].forEach(el => {
+            [boiOutType, boiOutInst, boiOutRef, boiOutDec, boiOutHex].forEach(el => {
                 el.className = 'ps-value muted';
                 el.textContent = '—';
             });
@@ -400,6 +407,8 @@ keywords: hex dotted decimal address network number MAC APDU UDP port 47808 BAC0
             boiOutType.textContent = type + ' — ' + objTypeName(type);
             boiOutInst.className = 'ps-value live';
             boiOutInst.textContent = String(instance);
+            boiOutRef.className = 'ps-value live';
+            boiOutRef.textContent = objTypeName(type) + ', ' + instance;
             boiOutDec.className = 'ps-value live';
             boiOutDec.textContent = String(raw);
             boiOutHex.className = 'ps-value live';
@@ -446,6 +455,7 @@ keywords: hex dotted decimal address network number MAC APDU UDP port 47808 BAC0
         boiRaw.addEventListener('input', boiFromRaw);
         boiType.addEventListener('input', boiFromParts);
         boiInstance.addEventListener('input', boiFromParts);
+        document.getElementById('boi-copy-ref').addEventListener('click', e => copyReadouts(e.currentTarget, '', 'boi-out-ref'));
         document.getElementById('boi-copy-dec').addEventListener('click', e => copyReadouts(e.currentTarget, '', 'boi-out-dec'));
         document.getElementById('boi-copy-hex').addEventListener('click', e => copyReadouts(e.currentTarget, '', 'boi-out-hex'));
 

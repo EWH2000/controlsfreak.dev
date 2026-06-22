@@ -25,12 +25,14 @@ keywords: oa oat percent outdoor air free cooling changeover mixed air damper
             </h1>
         </div>
 
-        <p class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
-            How far do I open the outdoor-air damper to hit a mixed-air setpoint at these conditions?
-            Dry-bulb tab is the calc a tech runs at the panel. Enthalpy tab adds the full mixed state
-            and the OA-vs-RA enthalpy-changeover verdict a high-end BAS economizer uses to decide
-            whether free cooling is worth running in the first place.
-        </p>
+        <details class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
+            <summary>How far do I open the outdoor-air damper to hit a mixed-air setpoint at these conditions?</summary>
+            <div class="preamble-rest">
+                Dry-bulb tab is the calc a tech runs at the panel. Enthalpy tab adds the full mixed state
+                and the OA-vs-RA enthalpy-changeover verdict a high-end BAS economizer uses to decide
+                whether free cooling is worth running in the first place.
+            </div>
+        </details>
 
         <div class="tabs tabs-flush">
             <button class="tab-btn active" data-tab="db">Dry-bulb</button>
@@ -59,7 +61,8 @@ keywords: oa oat percent outdoor air free cooling changeover mixed air damper
 
                 <section role="status" aria-atomic="false">
                     <h2 class="ps-section-label">Output</h2>
-                    <div class="ps-row">
+                    <div class="status-pill" id="er-db-feas">Enter values to see feasibility.</div>
+                    <div class="ps-row primary">
                         <span class="ps-label">Required outdoor air</span>
                         <span class="ps-value muted" id="er-db-pct">—</span>
                     </div>
@@ -67,7 +70,6 @@ keywords: oa oat percent outdoor air free cooling changeover mixed air damper
                         <button class="copy-btn" id="er-db-copy">Copy %OA</button>
                     </div>
                     <div class="result-formula wrap" id="er-db-formula"></div>
-                    <div class="status-pill" id="er-db-feas">Enter values to see feasibility.</div>
                 </section>
 
             </div>
@@ -164,7 +166,8 @@ keywords: oa oat percent outdoor air free cooling changeover mixed air damper
 
                 <section role="status" aria-atomic="false">
                     <h2 class="ps-section-label">Output</h2>
-                    <div class="ps-row">
+                    <div class="status-pill" id="er-h-feas">Enter values to see feasibility.</div>
+                    <div class="ps-row primary">
                         <span class="ps-label">Required outdoor air</span>
                         <span class="ps-value muted" id="er-h-pct">—</span>
                     </div>
@@ -172,7 +175,6 @@ keywords: oa oat percent outdoor air free cooling changeover mixed air damper
                         <button class="copy-btn" id="er-h-copy">Copy %OA</button>
                     </div>
                     <div class="result-formula wrap" id="er-h-formula"></div>
-                    <div class="status-pill" id="er-h-feas">Enter values to see feasibility.</div>
 
                     <h3 class="subhead">Resulting mixed-air state</h3>
                     <div class="ps-row"><span class="ps-label" data-us="MA dry-bulb (°F)" data-metric="MA dry-bulb (°C)">MA dry-bulb (°F)</span><span class="ps-value muted" id="er-h-ma-db">—</span></div>
@@ -230,6 +232,9 @@ keywords: oa oat percent outdoor air free cooling changeover mixed air damper
         ],
         lessons: [
             {href: '/education/psychrometrics-basics.html', label: 'Psychrometrics Basics'}
+        ],
+        quizzes: [
+            {href: '/practice/psychrometrics-basics.html', label: 'Psychrometrics Basics Quiz'}
         ]
     }) }}
 
@@ -329,10 +334,15 @@ keywords: oa oat percent outdoor air free cooling changeover mixed air damper
             const maD = U.display.temp(ma).toFixed(1);
             const pctShown = (parseFloat(maD) - parseFloat(raD)) /
                              (parseFloat(oaD) - parseFloat(raD)) * 100;
+            // Out of range, the headline mutes to — because a >100 %/<0 %
+            // fraction can't be physically read; the formula must not then
+            // assert that exact impossible result one line down (T-014). Show
+            // the substituted operands and stop at × 100; the feasibility
+            // callout carries the why.
             formulaEl.textContent =
                 `% OA = (MA − RA) ÷ (OA − RA) × 100 ` +
-                `= (${maD} − ${raD}) ÷ (${oaD} − ${raD}) × 100 ` +
-                `= ${pctShown.toFixed(1)} %`;
+                `= (${maD} − ${raD}) ÷ (${oaD} − ${raD}) × 100` +
+                (within ? ` = ${pctShown.toFixed(1)} %` : '');
 
             // Three feasibility regimes (within computed above).
             if (within) {
@@ -465,10 +475,12 @@ keywords: oa oat percent outdoor air free cooling changeover mixed air damper
             const oaD = U.display.temp(oa.tdb).toFixed(1);
             const raD = U.display.temp(ra.tdb).toFixed(1);
             const maDD = U.display.temp(maTarget).toFixed(1);
+            // See the dry-bulb tab: suppress the trailing result out of range
+            // so the formula can't contradict the muted headline (T-014).
             formulaEl.textContent =
                 `% OA = (MA − RA) ÷ (OA − RA) × 100 ` +
-                `= (${maDD} − ${raD}) ÷ (${oaD} − ${raD}) × 100 ` +
-                `= ${pct.toFixed(1)} %`;
+                `= (${maDD} − ${raD}) ÷ (${oaD} − ${raD}) × 100` +
+                (within ? ` = ${pct.toFixed(1)} %` : '');
 
             // Feasibility — same regimes as the dry-bulb tab (within above).
             if (within) {

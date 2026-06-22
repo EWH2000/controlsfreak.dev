@@ -44,6 +44,15 @@ keywords: av bv ai ao bi bo msv priority array object type instance
             white-space: nowrap;
             text-align: right;
         }
+        /* Click-to-copy affordance on the code cell — JS adds the
+           role/tabindex/title at init, so the cell only reads as
+           interactive when the copy handler is live. copyText() flips
+           the cell text to "copied!" and restores it (shared idiom). */
+        .ref-table-dense .bo-id.bo-copyable {
+            cursor: pointer;
+        }
+        .ref-table-dense .bo-id.bo-copyable:hover { color: var(--accent); }
+        .ref-table-dense .bo-id.copied { color: var(--blue); }
         .ref-table-dense .bo-name { white-space: nowrap; }
 
         .bo-empty td {
@@ -70,12 +79,14 @@ keywords: av bv ai ao bi bo msv priority array object type instance
             </h1>
         </div>
 
-        <p class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
-            The numbers a controller, a packet capture, or a workstation hands you instead of names.
-            <em>Object Types</em> is the <code>Object_Type</code> enumeration — what kind of point an object is (type 1 = Analog Output).
-            <em>Property IDs</em> is the <code>Property_Identifier</code> enumeration — which field of an object you are reading (property 85 = Present_Value), and the numbers are the same across every object type.
-            <em>Eng. Units</em> is the common slice of the <code>Units</code> enumeration. Type a name or a number to filter all three.
-        </p>
+        <details class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
+            <summary>The numbers a controller, a packet capture, or a workstation hands you instead of names.</summary>
+            <div class="preamble-rest">
+                <em>Object Types</em> is the <code>Object_Type</code> enumeration — what kind of point an object is (type 1 = Analog Output).
+                <em>Property IDs</em> is the <code>Property_Identifier</code> enumeration — which field of an object you are reading (property 85 = Present_Value), and the numbers are the same across every object type.
+                <em>Eng. Units</em> is the common slice of the <code>Units</code> enumeration. Type a name or a number to filter all three.
+            </div>
+        </details>
 
         <div class="bo-controls">
             <label class="bo-search-label" for="bo-search">Filter by name or number</label>
@@ -94,7 +105,6 @@ keywords: av bv ai ao bi bo msv priority array object type instance
                 <p class="ref-note">
                     The <code>Object_Type</code> value carried in every object identifier. AI / AO / AV and BI / BO / BV are the day-to-day four-fifths of any device.
                 </p>
-                <!-- // user to verify BACnet Object_Type enumeration against ASHRAE 135 — placeholder data, refine after review -->
                 <table class="ref-table-dense" id="bo-table-objects">
                     <thead>
                         <tr><th>Type</th><th>Object</th><th>What it is</th></tr>
@@ -137,7 +147,6 @@ keywords: av bv ai ao bi bo msv priority array object type instance
                         <tr class="bo-empty" hidden><td colspan="3">No object types match that filter.</td></tr>
                     </tbody>
                 </table>
-                <!-- // end placeholder — BACnet Object_Type enumeration -->
                 <p class="ref-note">
                     Types 31–53 cover access control, scheduling, and the value-object family (integer, character-string, datetime…). See ASHRAE 135 for the full list.
                 </p>
@@ -150,7 +159,6 @@ keywords: av bv ai ao bi bo msv priority array object type instance
                 <p class="ref-note">
                     The <code>Property_Identifier</code> numbers are constant across every object type — property 85 is <code>Present_Value</code> whether the object is an AI or a BO.
                 </p>
-                <!-- // user to verify BACnet Property_Identifier enumeration against ASHRAE 135 — placeholder data, refine after review -->
                 <table class="ref-table-dense" id="bo-table-props">
                     <thead>
                         <tr><th>ID</th><th>Property</th><th>Meaning</th></tr>
@@ -173,12 +181,11 @@ keywords: av bv ai ao bi bo msv priority array object type instance
                         <tr><td class="bo-id">17</td><td class="bo-name">Notification_Class</td><td>Which Notification Class object routes this object's events.</td></tr>
                         <tr><td class="bo-id">76</td><td class="bo-name">Object_List</td><td>The device's list of all its objects — read during discovery.</td></tr>
                         <tr><td class="bo-id">70</td><td class="bo-name">Model_Name</td><td>The device's model string.</td></tr>
-                        <tr><td class="bo-id">120</td><td class="bo-name">Vendor_Name</td><td>The manufacturer's name.</td></tr>
-                        <tr><td class="bo-id">121</td><td class="bo-name">Vendor_Identifier</td><td>The manufacturer's assigned BACnet vendor ID number.</td></tr>
+                        <tr><td class="bo-id">120</td><td class="bo-name">Vendor_Identifier</td><td>The manufacturer's assigned BACnet vendor ID number.</td></tr>
+                        <tr><td class="bo-id">121</td><td class="bo-name">Vendor_Name</td><td>The manufacturer's name.</td></tr>
                         <tr class="bo-empty" hidden><td colspan="3">No properties match that filter.</td></tr>
                     </tbody>
                 </table>
-                <!-- // end placeholder — BACnet Property_Identifier enumeration -->
                 <p class="ref-note">
                     This is the common slice — the full enumeration runs past 500. The numbers above are the ones you meet reading and overriding points.
                 </p>
@@ -191,7 +198,6 @@ keywords: av bv ai ao bi bo msv priority array object type instance
                 <p class="ref-note">
                     The value of an object's <code>Units</code> property (117). The full enumeration runs to roughly 200 values; these are the common HVAC ones.
                 </p>
-                <!-- // user to verify BACnet Units enumeration codes against ASHRAE 135 Clause 21 — placeholder data, refine after review -->
                 <table class="ref-table-dense" id="bo-table-units">
                     <thead>
                         <tr><th>Enum</th><th>Engineering unit</th></tr>
@@ -219,9 +225,8 @@ keywords: av bv ai ao bi bo msv priority array object type instance
                         <tr class="bo-empty" hidden><td colspan="2">No units match that filter.</td></tr>
                     </tbody>
                 </table>
-                <!-- // end placeholder — BACnet Units enumeration -->
                 <p class="ref-note">
-                    Codes vary by edition and a controller may expose vendor extensions — confirm the exact value against your device or ASHRAE 135 before trusting it.
+                    The codes above are the stable common slice — object types, property IDs, and units in this range don't get reassigned between editions. Only newer-edition additions and vendor extensions in the higher-numbered ranges need confirming against your device or ASHRAE 135.
                 </p>
             </section>
         </div>
@@ -247,11 +252,14 @@ keywords: av bv ai ao bi bo msv priority array object type instance
 {% block scripts %}
 <script src="/scripts/ui.js"></script>
 <script>
-    // switchTab(name, btn) comes from /scripts/ui.js. The filter box
-    // hides non-matching rows across ALL THREE tables at once (so a
-    // search for "85" finds Present_Value even from the Object Types
-    // tab) and writes a live match count into each tab's badge so the
-    // visitor knows which tab the hits are on.
+    // switchTab(name, btn) / copyText(btn, text) come from /scripts/ui.js.
+    // The filter box hides non-matching rows across ALL THREE tables at
+    // once (so a search for "85" finds Present_Value even from the
+    // Object Types tab) and writes a live match count into each tab's
+    // badge so the visitor knows which tab the hits are on. Every numeric
+    // code cell (.bo-id) is click-to-copy via one delegated listener per
+    // table — copyText() flashes the shared "copied!" feedback on the
+    // cell itself, reusing the site-wide copy idiom.
     (function () {
         'use strict';
 
@@ -265,6 +273,38 @@ keywords: av bv ai ao bi bo msv priority array object type instance
             props:   document.getElementById('bo-table-props'),
             units:   document.getElementById('bo-table-units'),
         };
+
+        // Click-to-copy on the code cells. Mark each .bo-id cell as an
+        // interactive copy target (the affordance only appears with JS
+        // live, since clipboard needs JS anyway), stashing its number in
+        // data-code so copyText()'s "copied!" text-swap can't lose it.
+        // One delegated click + keydown listener per table copies the
+        // cell's data-code, reusing copyText()'s shared feedback.
+        function copyCell(cell) {
+            copyText(cell, cell.dataset.code);
+        }
+        Object.keys(tables).forEach(key => {
+            const table = tables[key];
+            if (!table) return;
+            table.querySelectorAll('td.bo-id').forEach(cell => {
+                cell.dataset.code = cell.textContent.trim();
+                cell.classList.add('bo-copyable');
+                cell.setAttribute('role', 'button');
+                cell.setAttribute('tabindex', '0');
+                cell.setAttribute('title', 'Copy ' + cell.dataset.code);
+            });
+            table.addEventListener('click', e => {
+                const cell = e.target.closest('td.bo-id');
+                if (cell) copyCell(cell);
+            });
+            table.addEventListener('keydown', e => {
+                if (e.key !== 'Enter' && e.key !== ' ') return;
+                const cell = e.target.closest('td.bo-id');
+                if (!cell) return;
+                e.preventDefault();
+                copyCell(cell);
+            });
+        });
         const badges = {};
         document.querySelectorAll('.bo-count').forEach(b => { badges[b.dataset.count] = b; });
 

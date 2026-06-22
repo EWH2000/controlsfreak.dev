@@ -25,10 +25,12 @@ keywords: awg wire gauge ohms voltage drop 4-20ma loop 0-10v thermistor lead res
             </h1>
         </div>
 
-        <p class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
-            A long home run costs copper resistance, and what that resistance does depends entirely on the signal riding it.
-            Pick the signal type, the gauge, and the one-way length — the verdict speaks that signal&rsquo;s language: loop supply margin for 4-20&nbsp;mA, real-versus-imagined error on 0-10&nbsp;V, and degrees of lie on a temperature sensor.
-        </p>
+        <details class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
+            <summary>A long home run costs copper resistance, and what that resistance does depends entirely on the signal riding it.</summary>
+            <div class="preamble-rest">
+                Pick the signal type, the gauge, and the one-way length — the verdict speaks that signal&rsquo;s language: loop supply margin for 4-20&nbsp;mA, real-versus-imagined error on 0-10&nbsp;V, and degrees of lie on a temperature sensor.
+            </div>
+        </details>
 
         <div class="tool-body-2col">
 
@@ -82,7 +84,8 @@ keywords: awg wire gauge ohms voltage drop 4-20ma loop 0-10v thermistor lead res
 
             <section role="status" aria-atomic="false">
                 <h2 class="ps-section-label">Output</h2>
-                <div class="ps-row">
+                <div class="status-pill" id="vd-status">Enter the run to see the verdict.</div>
+                <div class="ps-row primary">
                     <span class="ps-label">Round-trip wire resistance</span>
                     <span class="ps-value muted" id="vd-rwire">—</span>
                 </div>
@@ -110,11 +113,13 @@ keywords: awg wire gauge ohms voltage drop 4-20ma loop 0-10v thermistor lead res
                     <span class="ps-label">Pt100 RTD error</span>
                     <span class="ps-value muted" id="vd-terr-pt100">—</span>
                 </div>
+                <p class="ref-note vd-th-only hidden">
+                    Evaluated near room temp (~72&nbsp;°F); the lead error shifts with each sensor&rsquo;s curve slope at other temperatures, so treat it as a near-room-temp figure rather than a fixed offset.
+                </p>
                 <div class="btn-row">
                     <button class="copy-btn" id="vd-copy">Copy resistance</button>
                 </div>
                 <div class="result-formula wrap" id="vd-formula"></div>
-                <div class="status-pill" id="vd-status">Enter the run to see the verdict.</div>
             </section>
 
         </div>
@@ -276,7 +281,14 @@ keywords: awg wire gauge ohms voltage drop 4-20ma loop 0-10v thermistor lead res
 
                 const drop = parseFloat(tidy(0.020 * (rwire + rsense), 1));
                 const vxmtr = parseFloat(tidy(supply - drop, 1));
-                setLive(vxmtrEl, tidy(vxmtr, 1) + ' V');
+                // The transmitter voltage can't physically go negative — the loop
+                // just opens / saturates at 0. Floor the displayed value (readout
+                // + verdict pill) so an over-long run can't print an impossible
+                // −236 V; the raw vxmtr still drives the under-floor comparison
+                // below, and the formula receipt keeps the literal supply − drop
+                // arithmetic that shows why the loop can't carry 20 mA. (T-015)
+                const vxmtrShown = Math.max(0, vxmtr);
+                setLive(vxmtrEl, tidy(vxmtrShown, 1) + ' V');
 
                 const maxWireR = (supply - vmin) / 0.020 - rsense;
                 const maxLen = maxWireR * 1000 / (2 * ohmsKft);
@@ -288,7 +300,7 @@ keywords: awg wire gauge ohms voltage drop 4-20ma loop 0-10v thermistor lead res
                     `V_xmtr = ${tidy(supply, 1)} − ${tidy(drop, 1)} = ${tidy(vxmtr, 1)} V`;
 
                 if (vxmtr < vmin) {
-                    setStatus(`Under the floor — ${tidy(vxmtr, 1)} V at the transmitter against a ${tidy(vmin, 1)} V minimum. The loop will clip below full scale and the reading saturates. Raise the supply, drop the sense resistance, or upsize the wire.`, 'error');
+                    setStatus(`Under the floor — ${tidy(vxmtrShown, 1)} V at the transmitter against a ${tidy(vmin, 1)} V minimum. The loop will clip below full scale and the reading saturates. Raise the supply, drop the sense resistance, or upsize the wire.`, 'error');
                 } else if (vxmtr < vmin + 1) {
                     setStatus(`Marginal — ${tidy(vxmtr, 1)} V at the transmitter, within 1 V of its ${tidy(vmin, 1)} V floor. A warm supply sag or an extra junction takes it under.`, 'warn');
                 } else {

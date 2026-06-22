@@ -30,6 +30,7 @@ module.exports = [
             { id: 'd', text: 'The controller\'s analog input is configured for 0-10V.' }
         ],
         explain: '4-20 mA uses a <em>live zero</em>. A sensor reading 0% of its calibrated range produces <code>4 mA</code>, not <code>0 mA</code>. A wire break, lost loop power, or an open terminal produces <code>0 mA</code> — and the controller can tell the difference. That\'s the whole reason 4-20 mA beats 0-10 V on a field run: a broken wire reads as a fault, not as a plausible-but-wrong measurement.',
+        learnMore: { href: '/education/controller-wiring.html#inputs', label: 'Controller Wiring — inputs & loop power' },
         tags: ['sensors', '4-20mA']
     },
 
@@ -55,6 +56,7 @@ module.exports = [
         prompt: 'On a 24VAC control circuit, the <code>R</code> and <code>C</code> terminals on the transformer must be wired with <code>R</code> as positive and <code>C</code> as negative.',
         answer: false,
         explain: '24V<em>AC</em> alternates — the voltage reverses 60 times a second, so there\'s no fixed positive or negative. <code>R</code> (red, hot) and <code>C</code> (black/blue, common) are <em>panel conventions</em>, not polarity. Common is the leg bonded to ground at the transformer; hot is the switched leg. On a single controller with its own transformer, cross-wiring won\'t damage anything — the swap is electrically symmetric — but it breaks the convention every other tech expects and makes future troubleshooting a nightmare. Scope matters, though: the moment that controller shares a transformer or a common wire with a device referenced the other way, the crossed commons bridge the two secondary legs — a dead short. Respect the convention. (24V<em>DC</em> equipment, by contrast, <em>is</em> polarity-sensitive — and there the labels matter literally.)',
+        learnMore: { href: '/education/controller-wiring.html#power', label: 'Controller Wiring — power & the shared common' },
         tags: ['electrical', '24vac']
     },
 
@@ -70,6 +72,7 @@ module.exports = [
             { id: 'd', text: '12VDC from a wall-wart adapter.' }
         ],
         explain: 'The dominant pattern: a dedicated 120V circuit (often labeled "BMS" or "controls" on the panel schedule) feeds the BAS panel, and a small VA-class transformer inside the panel steps that down to 24VAC for the field side. You\'ll occasionally see direct 480V → 24V transformers on packaged equipment, and 277V → 24V on some commercial setups — but a 120V primary is by far the most common in BAS work.',
+        learnMore: { href: '/education/controller-wiring.html#power', label: 'Controller Wiring — power & the shared common' },
         tags: ['panel', 'electrical']
     },
 

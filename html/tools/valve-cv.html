@@ -47,11 +47,13 @@ keywords: gpm psi kv flow coefficient valve authority delta p sizing
             </h1>
         </div>
 
-        <p class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
-            A control valve is rated by its flow coefficient <em>Cv</em> — the GPM of water it passes at 1 psi drop.
-            <em>Cv / flow / ΔP</em> solves the sizing equation in any direction: the Cv you need for a flow at a drop, the flow a known valve passes, or the drop it imposes.
-            <em>Valve authority</em> checks the other half of the job — whether the valve takes enough of the circuit's pressure drop to actually control flow.
-        </p>
+        <details class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
+            <summary>A control valve is rated by its flow coefficient <em>Cv</em> — the GPM of water it passes at 1 psi drop.</summary>
+            <div class="preamble-rest">
+                <em>Cv / flow / ΔP</em> solves the sizing equation in any direction: the Cv you need for a flow at a drop, the flow a known valve passes, or the drop it imposes.
+                <em>Valve authority</em> checks the other half of the job — whether the valve takes enough of the circuit's pressure drop to actually control flow.
+            </div>
+        </details>
 
         <div class="tabs tabs-flush">
             <button class="tab-btn active" data-tab="size">Cv / flow / ΔP</button>
@@ -92,7 +94,7 @@ keywords: gpm psi kv flow coefficient valve authority delta p sizing
 
                 <section role="status" aria-atomic="false">
                     <h2 class="ps-section-label">Output</h2>
-                    <div class="ps-row">
+                    <div class="ps-row primary">
                         <span class="ps-label" id="cv-out-label">Required Cv</span>
                         <span class="ps-value muted" id="cv-out">—</span>
                     </div>
@@ -146,7 +148,7 @@ keywords: gpm psi kv flow coefficient valve authority delta p sizing
 
                 <section role="status" aria-atomic="false">
                     <h2 class="ps-section-label">Output</h2>
-                    <div class="ps-row">
+                    <div class="ps-row primary">
                         <span class="ps-label">Valve authority β</span>
                         <span class="ps-value muted" id="cv-auth-beta">—</span>
                     </div>

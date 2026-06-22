@@ -25,10 +25,13 @@ keywords: cfm k factor velocity pressure vp 4005 fpm duct traverse pitot flow ho
             </h1>
         </div>
 
-        <p class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
-            Both halves of the field airflow square-root: <em>K-factor flow</em> runs a VAV box&rsquo;s <code>CFM = K × √VP</code> in either direction — flow from the pickup&rsquo;s velocity pressure, or the K a hood reading implies.
-            <em>Duct velocity</em> turns a pitot reading into FPM with <code>V = 4005 × √VP</code> and a duct area into CFM.
-        </p>
+        <details class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
+            <summary>Both halves of the field airflow square-root.</summary>
+            <div class="preamble-rest">
+                <em>K-factor flow</em> runs a VAV box&rsquo;s <code>CFM = K × √VP</code> in either direction — flow from the pickup&rsquo;s velocity pressure, or the K a hood reading implies.
+                <em>Duct velocity</em> turns a pitot reading into FPM with <code>V = 4005 × √VP</code> and a duct area into CFM.
+            </div>
+        </details>
 
         <div class="tabs tabs-flush">
             <button class="tab-btn active" data-tab="kfactor">K-factor flow</button>
@@ -67,7 +70,7 @@ keywords: cfm k factor velocity pressure vp 4005 fpm duct traverse pitot flow ho
 
                 <section role="status" aria-atomic="false">
                     <h2 class="ps-section-label">Output</h2>
-                    <div class="ps-row">
+                    <div class="ps-row primary">
                         <span class="ps-label" id="vp-k-out-label">Flow</span>
                         <span class="ps-value muted" id="vp-k-out">—</span>
                     </div>
@@ -144,7 +147,7 @@ keywords: cfm k factor velocity pressure vp 4005 fpm duct traverse pitot flow ho
                         <span class="ps-label">Duct area (ft²)</span>
                         <span class="ps-value muted" id="vp-d-area">—</span>
                     </div>
-                    <div class="ps-row">
+                    <div class="ps-row primary">
                         <span class="ps-label">Airflow (CFM)</span>
                         <span class="ps-value muted" id="vp-d-cfm">—</span>
                     </div>
@@ -189,6 +192,9 @@ keywords: cfm k factor velocity pressure vp 4005 fpm duct traverse pitot flow ho
         ],
         lessons: [
             {href: '/education/psychrometrics-basics.html', label: 'Psychrometrics Basics'}
+        ],
+        quizzes: [
+            {href: '/practice/psychrometrics-basics.html', label: 'Psychrometrics Basics Quiz'}
         ]
     }) }}
 

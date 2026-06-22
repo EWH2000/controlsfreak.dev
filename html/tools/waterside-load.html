@@ -25,10 +25,13 @@ keywords: gpm delta t mbh tons btuh water flow 500 chilled hot water coil
             </h1>
         </div>
 
-        <p class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
-            The waterside workhorse: <code><span data-us="q = 500 × GPM × ΔT" data-metric="q = 4.187 × L/s × ΔT">q = 500 × GPM × ΔT</span></code> ties a coil&rsquo;s water flow, the temperature difference across it, and the load it&rsquo;s moving.
-            Solve in any direction — the load a measured flow and ΔT imply, the flow a scheduled load needs, or the ΔT a healthy loop should be showing.
-        </p>
+        <details class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
+            <summary>The waterside workhorse, solved in any direction.</summary>
+            <div class="preamble-rest">
+                The waterside workhorse: <code><span data-us="q = 500 × GPM × ΔT" data-metric="q = 4.187 × L/s × ΔT">q = 500 × GPM × ΔT</span></code> ties a coil&rsquo;s water flow, the temperature difference across it, and the load it&rsquo;s moving.
+                Solve in any direction — the load a measured flow and ΔT imply, the flow a scheduled load needs, or the ΔT a healthy loop should be showing.
+            </div>
+        </details>
 
         <div class="tool-body-2col">
 
@@ -64,7 +67,7 @@ keywords: gpm delta t mbh tons btuh water flow 500 chilled hot water coil
 
             <section role="status" aria-atomic="false">
                 <h2 class="ps-section-label">Output</h2>
-                <div class="ps-row">
+                <div class="ps-row primary">
                     <span class="ps-label" id="wl-out-label">Load (MBH)</span>
                     <span class="ps-value muted" id="wl-out">—</span>
                 </div>

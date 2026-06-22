@@ -37,13 +37,16 @@ keywords: cfm gpm delta t mbh btu tons sensible latent shr capacity
             </h1>
         </div>
 
-        <p class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
-            One coil, in isolation. Capacity tab: enter the air going in and the air coming out,
-            get total / sensible / latent capacity and the sensible heat ratio. Leaving-state tab
-            runs it backwards — entering air plus the load the coil has to carry, solve for the
-            leaving-air state. Same math the psychrometric chart runs on its coil stages, surfaced
-            on its own so a quick capacity check doesn't need a whole AHU chain.
-        </p>
+        <details class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
+            <summary>One coil, in isolation.</summary>
+            <div class="preamble-rest">
+                Capacity tab: enter the air going in and the air coming out,
+                get total / sensible / latent capacity and the sensible heat ratio. Leaving-state tab
+                runs it backwards — entering air plus the load the coil has to carry, solve for the
+                leaving-air state. Same math the psychrometric chart runs on its coil stages, surfaced
+                on its own so a quick capacity check doesn't need a whole AHU chain.
+            </div>
+        </details>
 
         <section class="cs-type-strip">
             <div class="ps-row">
@@ -120,7 +123,8 @@ keywords: cfm gpm delta t mbh btu tons sensible latent shr capacity
 
                 <section role="status" aria-atomic="false">
                     <h2 class="ps-section-label">Output</h2>
-                    <div class="ps-row">
+                    <div class="status-pill" id="cs-cap-status">Enter values to size the coil.</div>
+                    <div class="ps-row primary">
                         <span class="ps-label" data-us="Total capacity (MBH)" data-metric="Total capacity (kW)">Total capacity (MBH)</span>
                         <span class="ps-value muted" id="cs-cap-q-total">—</span>
                     </div>
@@ -137,7 +141,7 @@ keywords: cfm gpm delta t mbh btu tons sensible latent shr capacity
                         <span class="ps-value muted" id="cs-cap-shr">—</span>
                     </div>
 
-                    <h3 class="subhead">Process change</h3>
+                    <h3 class="subhead">Process change (signed: − = cooling)</h3>
                     <div class="ps-row">
                         <span class="ps-label" data-us="Δ Dry-bulb (°F)" data-metric="Δ Dry-bulb (°C)">Δ Dry-bulb (°F)</span>
                         <span class="ps-value muted" id="cs-cap-ddb">—</span>
@@ -155,7 +159,6 @@ keywords: cfm gpm delta t mbh btu tons sensible latent shr capacity
                         <button class="copy-btn" id="cs-cap-copy">Copy capacity</button>
                     </div>
                     <div class="result-formula wrap" id="cs-cap-formula"></div>
-                    <div class="status-pill" id="cs-cap-status">Enter values to size the coil.</div>
                 </section>
 
             </div>
@@ -249,8 +252,9 @@ keywords: cfm gpm delta t mbh btu tons sensible latent shr capacity
 
                 <section role="status" aria-atomic="false">
                     <h2 class="ps-section-label">Output</h2>
+                    <div class="status-pill" id="cs-lvg-status">Enter values to solve the leaving state.</div>
                     <h3 class="subhead">Leaving air</h3>
-                    <div class="ps-row">
+                    <div class="ps-row primary">
                         <span class="ps-label" data-us="Dry-bulb (°F)" data-metric="Dry-bulb (°C)">Dry-bulb (°F)</span>
                         <span class="ps-value muted" id="cs-lvg-out-db">—</span>
                     </div>
@@ -279,7 +283,6 @@ keywords: cfm gpm delta t mbh btu tons sensible latent shr capacity
                         <button class="copy-btn" id="cs-lvg-copy">Copy leaving DB</button>
                     </div>
                     <div class="result-formula wrap" id="cs-lvg-formula"></div>
-                    <div class="status-pill" id="cs-lvg-status">Enter values to solve the leaving state.</div>
                 </section>
 
             </div>
@@ -324,6 +327,9 @@ keywords: cfm gpm delta t mbh btu tons sensible latent shr capacity
         ],
         lessons: [
             {href: '/education/psychrometrics-basics.html', label: 'Psychrometrics Basics'}
+        ],
+        quizzes: [
+            {href: '/practice/psychrometrics-basics.html', label: 'Psychrometrics Basics Quiz'}
         ]
     }) }}
 

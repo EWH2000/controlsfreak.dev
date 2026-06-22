@@ -464,6 +464,15 @@ main { flex: 1; }
 }
 .site-nav-links a:hover { color: var(--text); border-bottom-color: var(--accent); }
 .site-nav-links a.active { color: var(--text-bright); border-bottom-color: var(--accent); }
+/* "Start here" newcomer affordance (G-006). A distinct accent-colored entry
+   point placed early in the bar so a left-to-right newcomer scan finds the
+   on-ramp before the jargon-heavy Tools/Simulators — WITHOUT reordering the
+   sections (the experienced-first order is a deliberate v3 decision). Styled
+   with color (accent = brand/action) + weight, not a box, so it reads as
+   distinct yet inherits the desktop-row and mobile-sheet link layout cleanly.
+   Specificity (0,2,1) out-ranks the base .site-nav-links a (0,1,1). */
+.site-nav-links a.nav-start-here { color: var(--accent); font-weight: 600; }
+.site-nav-links a.nav-start-here:hover { color: var(--accent); border-bottom-color: var(--accent); }
 
 /* ── NAV SECTION DROPDOWNS ───────────────────────────────────────────
    Tools / Simulators / Education each pair their top-level link with a
@@ -1026,6 +1035,51 @@ p.tool-preamble {
     font-size: 0.7rem;
     color: var(--text-dim);
     line-height: 1.7;
+}
+
+/* T-010 collapsible "what this does": the one orienting sentence is the
+   always-visible <summary> (so a newcomer is never left without context); the
+   rest expands behind "▸ more", keeping the Input/Output grid near the top of
+   the card for the repeat expert. Native <details>, mirroring the .pid-spoiler
+   ▸/▾ idiom; shares p.tool-preamble's small mono-dim type. Per-tool inline
+   padding stays on the <details> (varies by inside/outside .tool-body). */
+details.tool-preamble > summary {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    line-height: 1.7;
+    cursor: pointer;
+    list-style: none;
+}
+details.tool-preamble > summary::-webkit-details-marker { display: none; }
+details.tool-preamble > summary::after {
+    content: "▸ more";
+    color: var(--accent);
+    margin-left: 0.5rem;
+    white-space: nowrap;
+    font-size: 0.66rem;
+    letter-spacing: 0.04em;
+}
+details.tool-preamble[open] > summary::after { content: "▾ less"; }
+details.tool-preamble > summary:hover { color: var(--text); }
+details.tool-preamble > .preamble-rest {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    line-height: 1.7;
+    margin-top: 0.5rem;
+}
+
+/* First-use acronym gloss (G-008). A quiet dotted underline cues "there's
+   a definition here"; the title shows the expansion on desktop hover. The
+   hover is a BONUS, not load-bearing — touch devices have no hover, so a
+   genuinely newcomer-critical term gets a parenthetical in the prose
+   instead; <abbr> carries the broader incidental acronym load. Theme-aware
+   (the underline tracks --text-dim). cursor:help signals the hover. */
+abbr[title] {
+    text-decoration: underline dotted var(--text-dim);
+    text-underline-offset: 0.18em;
+    cursor: help;
 }
 
 /* Lead paragraph on Education pages — the opening prose paragraph that
@@ -1634,6 +1688,7 @@ input[type="range"]::-moz-range-thumb {
 .units-btn:focus-visible,
 .theme-btn:focus-visible,
 .nav-search-btn:focus-visible,
+.nav-start-here:focus-visible,
 .nav-hamburger:focus-visible,
 .nav-menu-toggle:focus-visible,
 .nav-group-toggle:focus-visible,
@@ -1655,6 +1710,7 @@ input[type="range"]::-moz-range-thumb {
 .psy-pill:focus-visible,
 #th-rt-scroll:focus-visible,
 #fbe-canvas:focus-visible,
+details.tool-preamble > summary:focus-visible,
 .pid-spoiler > summary:focus-visible {
     outline: 2px solid var(--accent);
     outline-offset: 3px;   /* v2.0.0 — was 2px; lifted so the accent ring no longer kisses the border on .nav-card */
@@ -1715,7 +1771,10 @@ input[type="range"]:focus-visible::-moz-range-thumb {
        match the dropdown rows. */
     .site-nav-links a { padding-inline: 0.2rem; justify-content: flex-start; }
     .quiz-settings-select { min-height: 44px; }
-    .pid-spoiler > summary { min-height: 44px; }
+    /* Disclosure summaries get min-height ONLY — they're left-aligned text
+       lines, so the group's center declaration would mis-align them. */
+    .pid-spoiler > summary,
+    details.tool-preamble > summary { min-height: 44px; }
     /* Range sliders: the input element IS the painted 4px track (its
        background is the track color), so bare padding would paint a
        fat gray bar. border-box height 44 − 2×20 padding leaves a 4px
@@ -2213,6 +2272,7 @@ p.chip-row-preamble {
 .about-rebuild .ps-value.live {
     color: var(--accent);
     font-weight: 600;
+    font-size: 0.92rem;   /* pin: this is a decorative "Active" status, not a tool result — opt out of the T-009 .ps-value.live size lift */
 }
 .about-rebuild .ps-value.live::before {
     content: "";
@@ -2849,9 +2909,15 @@ p.chip-row-preamble {
 .ps-value.live {
     color: var(--blue);
     font-weight: 600;
-    font-size: 0.92rem;
+    font-size: 1.1rem;       /* T-009: lifted from 0.92rem so the answer outweighs the 0.82rem label — size, not just colour, now carries the hierarchy */
     overflow-wrap: anywhere;
 }
+/* T-009 primary headline: the single solved-for value a tool exists to produce
+   (signal-scaling output, coil total capacity, valve Cv …). The marker sits on
+   the STATIC .ps-row — setLive() rewrites the value element's className
+   wholesale (`el.className = 'ps-value live'`), so a modifier on the value would
+   be wiped; the row is never touched by the result JS. */
+.ps-row.primary .ps-value.live { font-size: 1.4rem; }
 .ps-value.error { color: var(--red); }  /* out-of-range output (placed after .live so it wins the colour) */
 .ps-value.muted {                       /* a note, an absent value, a placeholder */
     color: var(--text-dim);

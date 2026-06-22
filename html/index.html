@@ -249,6 +249,7 @@ nav: home
             grid-template-areas:
                 "title  title"
                 "body   actions"
+                "onramp onramp"
                 "latest latest";
             column-gap: 2.5rem;
             row-gap: 0.5rem;
@@ -310,6 +311,20 @@ nav: home
         }
         .hero-seam .hero-latest a { color: var(--accent); border-bottom: 1px solid transparent; }
         .hero-seam .hero-latest a:hover { border-bottom-color: var(--accent); }
+        /* Audience-inclusive on-ramp line — names the newcomer the
+           experienced-first hero otherwise skips, and points at Education
+           (G-003). Full-width row above the Latest badge. */
+        .hero-seam .hero-copy .hero-onramp {
+            grid-area: onramp;
+            font-size: 0.9rem;
+            font-weight: 300;
+            color: var(--text-dim);
+            line-height: 1.6;
+            margin: 0.5rem 0 0;
+            text-align: left;
+        }
+        .hero-seam .hero-onramp a { color: var(--accent); border-bottom: 1px solid transparent; }
+        .hero-seam .hero-onramp a:hover { border-bottom-color: var(--accent); }
 
         /* Stack on narrow screens — the conductor drops out; the two
            populated panels still tell the software↔equipment story, and
@@ -326,7 +341,7 @@ nav: home
             .hseam-link { display: none; }
             .hero-seam .hero-copy {
                 grid-template-columns: 1fr;
-                grid-template-areas: "title" "body" "actions" "latest";
+                grid-template-areas: "title" "body" "actions" "onramp" "latest";
                 padding: 1.25rem 1.25rem 1.75rem;
             }
         }
@@ -362,6 +377,7 @@ nav: home
             <a class="hero-btn primary" href="/tools/">Browse tools →</a>
             <a class="hero-btn" href="/education/">Start with the explainers →</a>
         </div>
+        <p class="hero-onramp">Three weeks in or thirty years in — the <a href="/education/">explainers</a> start from the ground up.</p>
         <p class="hero-latest">Latest <span class="titlebar-dots">·</span> <a href="/tools/power-energy-converter.html">Power &amp; Energy Converter →</a></p>
     </div>
 
@@ -467,8 +483,8 @@ nav: home
             href:       '/tools/#hvac',
             titleShort: 'HVAC',
             titleFull:  'HVAC tools →',
-            desc:       'Psychrometric chart, economizer ratio, air mixing, coil sizing, dew point, and refrigerant P-T — the airside and refrigerant math on one filtered view.',
-            pills:      ['Psychrometrics', 'Coils', 'Economizer', '6 tools']
+            desc:       'Psychrometric chart, economizer ratio, air mixing, coil sizing, dew point, refrigerant P-T, and power / energy conversion — the airside, refrigerant, and unit-conversion math on one filtered view.',
+            pills:      ['Psychrometrics', 'Coils', 'Economizer', '7 tools']
         }) }}
         {{ navCard({
             section:    'tools',
@@ -508,15 +524,15 @@ nav: home
             titleShort: 'Tools',
             titleFull:  'Calculators & lookups →',
             desc:       'Calculators and lookups for the parts of the job that come up over and over — psychrometric staging, signal scaling, register and address conversions, thermistor curves. Open one, get an answer, get back to work.',
-            pills:      ['Calculators', 'Lookups', 'Converters', '14 Tools']
+            pills:      ['Calculators', 'Lookups', 'Converters', '20 Tools']
         }) }}
         {{ navCard({
             section:    'home',
             href:       '/simulators/',
             titleShort: 'Simulators',
-            titleFull:  'Practice on the model →',
-            desc:       'Running models you can poke at in the browser — a PID step-response loop, a mock drive keypad, a function-block wiresheet, an equipment-staging plant, and a controller-wiring rig. Practice on the controls before you\'re standing in front of the real thing.',
-            pills:      ['Practice', 'Sandboxes', 'Live Models', '5 Simulators']
+            titleFull:  'Run the models →',
+            desc:       'Running models you can poke at in the browser — a PID step-response loop, a mock drive keypad, a function-block wiresheet, an equipment-staging plant, and a controller-wiring rig. Get a feel for the controls before you\'re standing in front of the real thing.',
+            pills:      ['Hands-on', 'Sandboxes', 'Live Models', '6 Simulators']
         }) }}
         {{ navCard({
             section:    'home',
@@ -524,7 +540,15 @@ nav: home
             titleShort: 'Education',
             titleFull:  'Learn the fundamentals →',
             desc:       'A connected set of explainers, not a glossary. The current arc: PID control → hydronic loops → load piping → VFDs → pump control, each page asking one question and answering it with diagrams, worked examples, and the occasional interactive widget.',
-            pills:      ['Explainers', 'Diagrams', 'Widgets', '17 Lessons']
+            pills:      ['Explainers', 'Diagrams', 'Widgets', '18 Lessons']
+        }) }}
+        {{ navCard({
+            section:    'home',
+            href:       '/practice/',
+            titleShort: 'Practice',
+            titleFull:  'Quiz yourself →',
+            desc:       'Active-recall quizzes that pair with the lessons, plus broader field drills — interview-and-cert-style scenarios, protocol quirks, and troubleshooting. New to the field? Surviving Your First Months is the gentlest place to start.',
+            pills:      ['Quizzes', 'Field Drills', 'Active Recall', '21 Total']
         }) }}
     </div>
 

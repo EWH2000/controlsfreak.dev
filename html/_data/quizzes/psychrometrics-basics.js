@@ -98,7 +98,7 @@ module.exports = [
     {
         type: 'numeric',
         id: 'psy-mixing-fraction',
-        prompt: 'An AHU mixing box blends 25 % outdoor air at 95 °F (35.0 °C) dry-bulb with 75 % return air at 75 °F (23.9 °C) dry-bulb. The mixed point lands on the straight line between the two, mass-weighted. What\'s the mixed dry-bulb, in °F?',
+        prompt: 'An AHU mixing box blends 25 % outdoor air at 95 °F (35.0 °C) dry-bulb with 75 % return air at 75 °F (23.9 °C) dry-bulb. The mixed point lands on the straight line between the two, mass-weighted. What\'s the mixed dry-bulb? Enter the answer in °F.',
         answer: 80,
         tolerance: 0.5,
         unit: '°F',

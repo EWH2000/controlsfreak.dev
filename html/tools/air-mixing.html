@@ -52,13 +52,16 @@ keywords: cfm mixed air oa oat ra return outdoor plenum blend
             </h1>
         </div>
 
-        <p class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
-            Mix three air streams — pick the weight shape your data is in. By mass flow when you
-            have CFMs at the panel (outdoor + return + ERV exhaust, economizer + return + makeup).
-            By mass fraction when you have percentages off a schematic. The math is the same
-            mass-weighted blend either way; the tab just picks how you tell the tool what the
-            weights are.
-        </p>
+        <details class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
+            <summary>Mix three air streams — pick the weight shape your data is in.</summary>
+            <div class="preamble-rest">
+                By mass flow when you
+                have CFMs at the panel (outdoor + return + ERV exhaust, economizer + return + makeup).
+                By mass fraction when you have percentages off a schematic. The math is the same
+                mass-weighted blend either way; the tab just picks how you tell the tool what the
+                weights are.
+            </div>
+        </details>
 
         <section class="am-alt-strip">
             <div class="ps-row">
@@ -165,7 +168,7 @@ keywords: cfm mixed air oa oat ra return outdoor plenum blend
                     <div class="status-pill" id="am-flow-status">Enter values to see the mix.</div>
 
                     <h3 class="subhead">Mixed-air state</h3>
-                    <div class="ps-row"><span class="ps-label" data-us="Dry-bulb (°F)"          data-metric="Dry-bulb (°C)">Dry-bulb (°F)</span>          <span class="ps-value muted" id="am-flow-ma-tdb">—</span></div>
+                    <div class="ps-row primary"><span class="ps-label" data-us="Dry-bulb (°F)"          data-metric="Dry-bulb (°C)">Dry-bulb (°F)</span>          <span class="ps-value muted" id="am-flow-ma-tdb">—</span></div>
                     <div class="ps-row"><span class="ps-label" data-us="Wet-bulb (°F)"          data-metric="Wet-bulb (°C)">Wet-bulb (°F)</span>          <span class="ps-value muted" id="am-flow-ma-wb">—</span></div>
                     <div class="ps-row"><span class="ps-label" data-us="Dew point (°F)"         data-metric="Dew point (°C)">Dew point (°F)</span>         <span class="ps-value muted" id="am-flow-ma-dp">—</span></div>
                     <div class="ps-row"><span class="ps-label" data-us="Humidity ratio (gr/lb)" data-metric="Humidity ratio (g/kg)">Humidity ratio (gr/lb)</span> <span class="ps-value muted" id="am-flow-ma-w">—</span></div>
@@ -306,7 +309,7 @@ keywords: cfm mixed air oa oat ra return outdoor plenum blend
                     <div class="status-pill" id="am-frac-status">Enter values to see the mix.</div>
 
                     <h3 class="subhead">Mixed-air state</h3>
-                    <div class="ps-row"><span class="ps-label" data-us="Dry-bulb (°F)"          data-metric="Dry-bulb (°C)">Dry-bulb (°F)</span>          <span class="ps-value muted" id="am-frac-ma-tdb">—</span></div>
+                    <div class="ps-row primary"><span class="ps-label" data-us="Dry-bulb (°F)"          data-metric="Dry-bulb (°C)">Dry-bulb (°F)</span>          <span class="ps-value muted" id="am-frac-ma-tdb">—</span></div>
                     <div class="ps-row"><span class="ps-label" data-us="Wet-bulb (°F)"          data-metric="Wet-bulb (°C)">Wet-bulb (°F)</span>          <span class="ps-value muted" id="am-frac-ma-wb">—</span></div>
                     <div class="ps-row"><span class="ps-label" data-us="Dew point (°F)"         data-metric="Dew point (°C)">Dew point (°F)</span>         <span class="ps-value muted" id="am-frac-ma-dp">—</span></div>
                     <div class="ps-row"><span class="ps-label" data-us="Humidity ratio (gr/lb)" data-metric="Humidity ratio (g/kg)">Humidity ratio (gr/lb)</span> <span class="ps-value muted" id="am-frac-ma-w">—</span></div>
@@ -349,6 +352,9 @@ keywords: cfm mixed air oa oat ra return outdoor plenum blend
         ],
         lessons: [
             {href: '/education/psychrometrics-basics.html', label: 'Psychrometrics Basics'}
+        ],
+        quizzes: [
+            {href: '/practice/psychrometrics-basics.html', label: 'Psychrometrics Basics Quiz'}
         ]
     }) }}
 

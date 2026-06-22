@@ -19,7 +19,12 @@ keywords: pt chart r22 r410a r134a r407c psig kpag saturation glide superheat su
         }
         .rf-type-strip .ps-row { margin-bottom: 0; }
 
-        input.ps-input:disabled { opacity: 0.55; cursor: not-allowed; }
+        /* Look-up-by toggle: the active choice reads as clearly selected —
+           a faint accent fill stacked on the shared .copy-btn.active accent
+           border/text, so the chosen mode isn't just a hover-weight outline
+           (T-008). Scoped to this group so other copy buttons are untouched. */
+        #rf-pt-by-p.active,
+        #rf-pt-by-t.active { background: var(--accent-dim); }
     </style>
 {% endblock %}
 
@@ -39,15 +44,17 @@ keywords: pt chart r22 r410a r134a r407c psig kpag saturation glide superheat su
             </h1>
         </div>
 
-        <p class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
-            Saturation pressure-temperature lookup and a superheat / subcooling
-            check. P-T tab: pick a refrigerant, enter a gauge pressure, read the
-            saturation temperature — bubble and dew both, so blend glide is in
-            plain sight. Superheat / Subcooling tab: enter the pressure and the
-            measured line temperature, get the result and a sanity check. Built
-            to be more correct than the pocket card — the glide blends are
-            handled, not averaged.
-        </p>
+        <details class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
+            <summary>Saturation pressure-temperature lookup and a superheat / subcooling check.</summary>
+            <div class="preamble-rest">
+                P-T tab: pick a refrigerant, enter a gauge pressure, read the
+                saturation temperature — bubble and dew both, so blend glide is in
+                plain sight. Superheat / Subcooling tab: enter the pressure and the
+                measured line temperature, get the result and a sanity check. Built
+                to be more correct than the pocket card — the glide blends are
+                handled, not averaged.
+            </div>
+        </details>
 
         <section class="rf-type-strip">
             <div class="ps-row">
@@ -83,18 +90,19 @@ keywords: pt chart r22 r410a r134a r407c psig kpag saturation glide superheat su
                         </div>
                     </div>
 
-                    <div class="ps-row">
+                    <div class="ps-row" id="rf-pt-pressure-row">
                         <label class="ps-label" data-us="Gauge pressure (psig)" data-metric="Gauge pressure (kPag)" for="rf-pt-pressure">Gauge pressure (psig)</label>
                         <input class="ps-input" type="number" id="rf-pt-pressure" step="1" value="118">
                     </div>
-                    <div class="ps-row">
+                    <div class="ps-row hidden" id="rf-pt-temp-row">
                         <label class="ps-label" data-us="Temperature (°F)" data-metric="Temperature (°C)" for="rf-pt-temp">Temperature (°F)</label>
-                        <input class="ps-input" type="number" id="rf-pt-temp" step="0.5" value="40" disabled>
+                        <input class="ps-input" type="number" id="rf-pt-temp" step="0.5" value="40">
                     </div>
                 </section>
 
                 <section role="status" aria-atomic="false">
                     <h2 class="ps-section-label">Output</h2>
+                    <div class="status-pill" id="rf-pt-status">Enter a pressure to read the saturation temperature.</div>
                     <div class="ps-row">
                         <span class="ps-label" id="rf-pt-bubble-lbl">Bubble point (sat. liquid)</span>
                         <span class="ps-value muted" id="rf-pt-bubble">—</span>
@@ -112,7 +120,6 @@ keywords: pt chart r22 r410a r134a r407c psig kpag saturation glide superheat su
                         <button class="copy-btn" id="rf-pt-copy">Copy temperature</button>
                     </div>
                     <div class="result-formula wrap" id="rf-pt-formula"></div>
-                    <div class="status-pill" id="rf-pt-status">Enter a pressure to read the saturation temperature.</div>
                 </section>
 
             </div>
@@ -182,11 +189,12 @@ keywords: pt chart r22 r410a r134a r407c psig kpag saturation glide superheat su
 
                 <section role="status" aria-atomic="false">
                     <h2 class="ps-section-label">Output</h2>
+                    <div class="status-pill" id="rf-sc-status">Enter a pressure and a line temperature.</div>
                     <div class="ps-row">
                         <span class="ps-label" id="rf-sc-satref-lbl">Dew point at this pressure</span>
                         <span class="ps-value muted" id="rf-sc-satref">—</span>
                     </div>
-                    <div class="ps-row">
+                    <div class="ps-row primary">
                         <span class="ps-label" id="rf-sc-result-lbl">Superheat</span>
                         <span class="ps-value muted" id="rf-sc-result">—</span>
                     </div>
@@ -195,7 +203,6 @@ keywords: pt chart r22 r410a r134a r407c psig kpag saturation glide superheat su
                         <button class="copy-btn" id="rf-sc-copy">Copy superheat</button>
                     </div>
                     <div class="result-formula wrap" id="rf-sc-formula"></div>
-                    <div class="status-pill" id="rf-sc-status">Enter a pressure and a line temperature.</div>
                 </section>
 
             </div>
@@ -511,8 +518,11 @@ keywords: pt chart r22 r410a r134a r407c psig kpag saturation glide superheat su
         function setPtBy(mode, btn) {
             ptBy = mode;
             btn.closest('.btn-row').querySelectorAll('.copy-btn').forEach(b => b.classList.toggle('active', b === btn));
-            document.getElementById('rf-pt-pressure').disabled = (mode !== 'pressure');
-            document.getElementById('rf-pt-temp').disabled     = (mode !== 'temp');
+            // Hide the inactive lookup input entirely (label + field) rather
+            // than disabling it with a stale value showing — a greyed input
+            // still reading "40" in pressure mode read as a decoy (T-008).
+            document.getElementById('rf-pt-pressure-row').classList.toggle('hidden', mode !== 'pressure');
+            document.getElementById('rf-pt-temp-row').classList.toggle('hidden', mode !== 'temp');
             // Dynamic copy label — the result is whichever direction we're solving toward.
             document.getElementById('rf-pt-copy').textContent = mode === 'pressure' ? 'Copy temperature' : 'Copy pressure';
             calcPt();

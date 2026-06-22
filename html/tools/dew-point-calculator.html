@@ -96,21 +96,24 @@ keywords: dewpoint wet bulb wbt RH humidity grains enthalpy condensation coil sw
             </h1>
         </div>
 
-        <p class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
-            Dew point at a glance from a dry-bulb and one humidity reading — RH off the
-            space sensor or wet-bulb off a sling psychrometer — with wet-bulb, grains, and
-            enthalpy alongside. The <em>Coil Check</em> field turns that dew point into the
-            answer you actually want on an over-humidity call: drop in the supply / leaving
-            dry-bulb and it says whether the coil is pulling the air below the entering dew point
-            (dehumidifying) or just cooling it sensibly while the space rides up.
-        </p>
+        <details class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
+            <summary>Dew point at a glance, plus a coil check.</summary>
+            <div class="preamble-rest">
+                Dew point at a glance from a dry-bulb and one humidity reading — RH off the
+                space sensor or wet-bulb off a sling psychrometer — with wet-bulb, grains, and
+                enthalpy alongside. The <em>Coil Check</em> field turns that dew point into the
+                answer you actually want on an over-humidity call: drop in the supply / leaving
+                dry-bulb and it says whether the coil is pulling the air below the entering dew point
+                (dehumidifying) or just cooling it sensibly while the space rides up.
+            </div>
+        </details>
 
         <div class="tool-body-2col">
 
             <section>
                 <h2 class="ps-section-label">Input</h2>
                 <div class="ps-row">
-                    <label class="ps-label" data-us="Dry-bulb (°F)" data-metric="Dry-bulb (°C)" for="dew-db">Dry-bulb (°F)</label>
+                    <label class="ps-label" data-us="Entering-air dry-bulb (°F)" data-metric="Entering-air dry-bulb (°C)" for="dew-db">Entering-air dry-bulb (°F)</label>
                     <input class="ps-input" type="number" id="dew-db" step="0.5" min="-50" max="200" value="75">
                 </div>
                 <div class="ps-row">
@@ -142,6 +145,7 @@ keywords: dewpoint wet bulb wbt RH humidity grains enthalpy condensation coil sw
 
             <section role="status" aria-atomic="false">
                 <h2 class="ps-section-label">Output</h2>
+                <div class="status-pill dew-verdict" id="dew-verdict" hidden></div>
                 <div class="dew-hero-wrap">
                     <span class="dew-hero-label">Dew point</span>
                     <span class="dew-hero muted" id="dew-out-dp">—</span>
@@ -162,8 +166,6 @@ keywords: dewpoint wet bulb wbt RH humidity grains enthalpy condensation coil sw
                     <span class="ps-label" data-us="Enthalpy (Btu/lb)" data-metric="Enthalpy (kJ/kg)">Enthalpy (Btu/lb)</span>
                     <span class="ps-value muted" id="dew-out-h">—</span>
                 </div>
-
-                <div class="status-pill dew-verdict" id="dew-verdict" hidden></div>
 
                 <div class="btn-row">
                     <button class="copy-btn" id="dew-copy">Copy dew point</button>
@@ -245,12 +247,17 @@ keywords: dewpoint wet bulb wbt RH humidity grains enthalpy condensation coil sw
         // Second-input label tracks both the mode and (in wet-bulb mode) the
         // active temperature unit, so it can't ride on data-us/data-metric.
         function refreshSecondLabel() {
+            const sec = $('dew-second');
             if (mode === 'rh') {
                 $('dew-second-label').textContent = 'RH (%)';
-                $('dew-second').step = '1';
+                sec.step = '1';
+                sec.min = '0';
+                sec.max = '100';
             } else {
                 $('dew-second-label').textContent = 'Wet-bulb (' + U.suffix.temp() + ')';
-                $('dew-second').step = '0.5';
+                sec.step = '0.5';
+                sec.removeAttribute('min');
+                sec.removeAttribute('max');
             }
         }
 

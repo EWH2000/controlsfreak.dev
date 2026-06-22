@@ -534,7 +534,26 @@
         dirtyNotice.querySelector('.quiz-restart-now').addEventListener('click', function () {
             startQuiz();
         });
+        // Reset best is destructive with no undo — the accumulated best
+        // scores ARE the learner's progress record (the landing even badges
+        // them). Two-step confirm so a stray click in the settings row can't
+        // wipe a hard-won 10/10 silently (P-007): first click arms the button,
+        // a second within the window commits, otherwise it reverts on its own.
+        let resetArmed = false;
+        let resetTimer = null;
+        const disarmReset = () => {
+            resetArmed = false;
+            if (resetTimer) { clearTimeout(resetTimer); resetTimer = null; }
+            resetBestBtn.textContent = 'Reset best';
+        };
         resetBestBtn.addEventListener('click', function () {
+            if (!resetArmed) {
+                resetArmed = true;
+                resetBestBtn.textContent = 'Confirm reset?';
+                resetTimer = setTimeout(disarmReset, 4000);
+                return;
+            }
+            disarmReset();
             storeDel(storeKeys.best);
             storeDel(storeKeys.bestTotal);
             storeDel(storeKeys.bestTime);

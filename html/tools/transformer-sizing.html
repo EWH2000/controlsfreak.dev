@@ -25,10 +25,13 @@ keywords: 24vac va transformer sizing class 2 fuse secondary control power budge
             </h1>
         </div>
 
-        <p class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
-            &ldquo;Does this transformer have room for one more actuator?&rdquo; — the most-retrofits question with the least paperwork.
-            List what&rsquo;s hanging on the 24&nbsp;VAC secondary, pick the transformer, and read the percent loaded, the headroom, and a secondary fuse suggestion.
-        </p>
+        <details class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
+            <summary>&ldquo;Does this transformer have room for one more actuator?&rdquo;</summary>
+            <div class="preamble-rest">
+                The most-retrofits question with the least paperwork.
+                List what&rsquo;s hanging on the 24&nbsp;VAC secondary, pick the transformer, and read the percent loaded, the headroom, and a secondary fuse suggestion.
+            </div>
+        </details>
 
         <div class="tool-body-2col">
 
@@ -87,11 +90,12 @@ keywords: 24vac va transformer sizing class 2 fuse secondary control power budge
 
             <section role="status" aria-atomic="false">
                 <h2 class="ps-section-label">Output</h2>
+                <div class="status-pill" id="xf-status">Enter device loads to see the verdict.</div>
                 <div class="ps-row">
                     <span class="ps-label">Total connected load</span>
                     <span class="ps-value muted" id="xf-total">—</span>
                 </div>
-                <div class="ps-row">
+                <div class="ps-row primary">
                     <span class="ps-label">Percent loaded</span>
                     <span class="ps-value muted" id="xf-pct">—</span>
                 </div>
@@ -107,7 +111,6 @@ keywords: 24vac va transformer sizing class 2 fuse secondary control power budge
                     <button class="copy-btn" id="xf-copy">Copy total</button>
                 </div>
                 <div class="result-formula wrap" id="xf-formula"></div>
-                <div class="status-pill" id="xf-status">Enter device loads to see the verdict.</div>
             </section>
 
         </div>

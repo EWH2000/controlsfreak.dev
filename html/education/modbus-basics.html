@@ -156,7 +156,7 @@ keywords: rtu tcp baud rs485 master slave function code holding register poll
                 one to write it. Read function codes can return up to a few hundred items in
                 one request — the protocol caps coils at 2000 per read and registers at 125,
                 but most devices set tighter limits in their docs. Writes come in two flavors,
-                <em>single</em> and <em>multiple</em>, so a one-byte setpoint update doesn't
+                <em>single</em> and <em>multiple</em>, so a single-register setpoint update doesn't
                 drag a whole block along with it.
             </p>
 

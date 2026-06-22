@@ -15,6 +15,10 @@
 // "valid email" here instead of Resend's generic 502. Internal and
 // consecutive dots are still tolerated — only the pathological-dot
 // positions are in scope.
+// MIRRORED CLIENT-SIDE: contact.html's email input carries the same body as
+// a `pattern=` attribute so these dot rejections happen inline before submit
+// (G-020) instead of as a server 400 the browser's looser type=email allowed.
+// Keep the two in sync if this changes.
 const EMAIL_RE = /^[^\s@.](?:[^\s@]*[^\s@.])?@[^\s@.](?:[^\s@]*[^\s@.])?\.[^\s@.](?:[^\s@]*[^\s@.])?$/;
 const CONTACT_ADDRESS = "contact@controlsfreak.dev";
 const ORIGIN_ALLOWED = "https://controlsfreak.dev";
@@ -152,7 +156,7 @@ async function handleContact(request, env) {
         return json({ ok: false, error: "That name is too long." }, 400);
     }
     if (!token) {
-        return json({ ok: false, error: "Verification failed." }, 400);
+        return json({ ok: false, error: "Verification failed — please refresh the page and try again." }, 400);
     }
 
     // ── Turnstile ─────────────────────────────────────────────
@@ -184,7 +188,11 @@ async function handleContact(request, env) {
     // human cost (audit-2026-06 #34; defense-in-depth alongside the
     // dashboard's allowed-hostnames list).
     if (!verify || verify.success !== true || verify.hostname !== "controlsfreak.dev") {
-        return json({ ok: false, error: "Verification failed." }, 400);
+        // The honest-visitor case here is a token that expired between page
+        // load and submit; the recovery hint (refresh → fresh token) is for
+        // them. A spoofed/wrong-host token also lands here and gets the same
+        // terse line — no info leaked, and that path is for abuse, not help.
+        return json({ ok: false, error: "Verification failed — please refresh the page and try again." }, 400);
     }
 
     // ── Send via Resend ───────────────────────────────────────
