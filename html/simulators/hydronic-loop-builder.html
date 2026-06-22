@@ -1,9 +1,9 @@
 ---
 title: Hydronic Loop Builder — controlsfreak.dev
-description: Build a hot- or chilled-water loop on an elevation — drop a plant, pump, coils, and valves, pipe them, and watch flow and water temperature solve live.
+description: Build a hot- or chilled-water loop on two elevations — drop a plant, pump, coils, and valves, pipe them in 3D, and watch flow and water temperature solve live.
 canonical: https://controlsfreak.dev/simulators/hydronic-loop-builder.html
 nav: simulators
-keywords: hydronic loop pump coil valve cv balancing delta-t static head primary secondary chilled water flow head operating point
+keywords: hydronic loop pump coil valve cv balancing delta-t static head primary secondary chilled water flow head operating point developed length pipe friction UA elevation depth
 ---
 {% extends "layouts/page.njk" %}
 {% from "related-links.njk" import relatedLinks %}
@@ -11,14 +11,17 @@ keywords: hydronic loop pump coil valve cv balancing delta-t static head primary
 {% block head %}
     <style>
         /* Page-specific — the Hydronic Loop Builder. A three-region
-           workspace (palette rail · elevation canvas · inspector), the same
-           custom-simulator precedent as the Function-Block Editor, swapped
-           from a signal wiresheet to a piping elevation: components are
-           equipment (nodes), pipes are the edges, gravity points down, and a
-           pipe drawn vertically is a real height delta. Class prefix hlb-.
-           The .widget-* shell isn't used — this is a full custom tool — but
-           the example chip row reuses the shared .widget-try idiom and the
-           live readouts use the shared equipment register (.device / .lcd). */
+           workspace (palette rail · dual elevation canvases · inspector),
+           the same custom-simulator precedent as the Function-Block Editor,
+           swapped from a signal wiresheet to a piping elevation: components
+           are equipment (nodes), pipes are the edges, gravity points down,
+           and a pipe drawn vertically is a real height delta. Phase 2 adds a
+           second elevation — north (width × height, X–Z) and east (depth ×
+           height, Y–Z) sharing the vertical Z — so a loop is laid out in 3D;
+           each pane has a maximize button. Class prefix hlb-. The .widget-*
+           shell isn't used — this is a full custom tool — but the example
+           chip row reuses the shared .widget-try idiom and the live readouts
+           use the shared equipment register (.device / .lcd). */
 
         .hlb-workspace {
             display: grid;
@@ -34,7 +37,7 @@ keywords: hydronic loop pump coil valve cv balancing delta-t static head primary
             border-radius: 3px;
             padding: 0.55rem 0.5rem;
             overflow-y: auto;
-            max-height: 32rem;
+            max-height: 33rem;
         }
         .hlb-palette-label {
             font-family: var(--mono);
@@ -63,7 +66,32 @@ keywords: hydronic loop pump coil valve cv balancing delta-t static head primary
         .hlb-palette-btn:hover { border-color: var(--accent); color: var(--accent); }
         .hlb-palette-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 
-        /* ── Elevation canvas ── */
+        /* ── Dual elevation canvases ── */
+        .hlb-canvases { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; min-width: 0; }
+        .hlb-canvases.is-max-n, .hlb-canvases.is-max-e { grid-template-columns: 1fr; }
+        .hlb-canvases.is-max-n #hlb-view-e,
+        .hlb-canvases.is-max-e #hlb-view-n { display: none; }
+        .hlb-view { display: flex; flex-direction: column; min-width: 0; }
+        .hlb-view-bar {
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 0.4rem; padding: 0 0.15rem 0.3rem;
+        }
+        .hlb-view-label {
+            font-family: var(--mono); font-size: 0.64rem; font-weight: 600;
+            letter-spacing: 0.04em; color: var(--text-bright); text-transform: uppercase;
+        }
+        .hlb-view-axis { color: var(--text-dim); font-weight: 400; text-transform: none; letter-spacing: normal; }
+        .hlb-view-max {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 1.5rem; height: 1.5rem; padding: 0;
+            background: var(--surface); border: 1px solid var(--border); border-radius: 3px;
+            color: var(--text-dim); cursor: pointer;
+        }
+        .hlb-view-max svg { width: 0.8rem; height: 0.8rem; }
+        .hlb-view-max:hover { border-color: var(--accent); color: var(--accent); }
+        .hlb-view-max:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+        .hlb-view-max[aria-pressed="true"] { color: var(--accent); border-color: var(--accent); background: var(--accent-dim); }
+
         .hlb-canvas {
             position: relative;
             background:
@@ -71,7 +99,7 @@ keywords: hydronic loop pump coil valve cv balancing delta-t static head primary
                 var(--surface-3);
             border: 1px solid var(--border);
             border-radius: 3px;
-            height: 32rem;
+            height: 30rem;
             overflow: auto;
         }
         .hlb-canvas-inner { position: relative; width: 900px; height: 520px; }
@@ -171,6 +199,13 @@ keywords: hydronic loop pump coil valve cv balancing delta-t static head primary
             margin: 0; text-transform: none; letter-spacing: normal;
             font-size: 0.74rem; font-family: var(--sans); color: var(--text);
         }
+        /* read-only stat (pipe length / head loss) — caption over a mono value */
+        .hlb-insp-stat { display: flex; flex-direction: column; }
+        .hlb-insp-stat .cap {
+            font-family: var(--mono); font-size: 0.6rem; text-transform: uppercase;
+            letter-spacing: 0.05em; color: var(--text-dim); margin-bottom: 0.15rem;
+        }
+        .hlb-insp-stat .val { font-family: var(--mono); font-size: 0.78rem; color: var(--blue); }
         .hlb-insp-del { margin-left: auto; align-self: center; }
 
         /* ── Sim bar + status + readouts ── */
@@ -179,7 +214,7 @@ keywords: hydronic loop pump coil valve cv balancing delta-t static head primary
         .hlb-converge-warn { margin: 0.1rem 0 0.7rem; font-size: 0.78rem; }
 
         .hlb-readouts { display: flex; flex-wrap: wrap; gap: 0.7rem; margin: 0.2rem 0 0.9rem; }
-        .hlb-readouts .device { flex: 1 1 13rem; min-width: 12rem; }
+        .hlb-readouts .device { flex: 1 1 12rem; min-width: 11rem; }
 
         .hlb-legend {
             display: flex; flex-wrap: wrap; gap: 1rem;
@@ -193,19 +228,21 @@ keywords: hydronic loop pump coil valve cv balancing delta-t static head primary
         p.tool-preamble.tight { margin-bottom: 0.85rem; }
 
         /* ── Fullscreen overrides — same approach as the FB editor: flip the
-              grid to a single column with the canvas filling the freed width
-              and the palette wrapped horizontally below; the IIFE lifts
-              INNER_W / INNER_H and updates the pipe-layer viewBox on the
-              'fullscreenchange' event. ── */
+              grid to a single column with the canvases filling the freed
+              width and the palette wrapped horizontally below; the IIFE lifts
+              each view's INNER_W / INNER_H and updates the pipe-layer viewBox
+              on the 'fullscreenchange' event. ── */
         .tool-card.is-fullscreen .hlb-workspace {
             grid-template-areas: "canvas" "palette";
             grid-template-columns: 1fr;
             grid-template-rows: 1fr auto;
-            height: calc(100vh - 24rem);
+            height: calc(100vh - 22rem);
             min-height: 30rem;
             gap: 0.55rem;
         }
-        .tool-card.is-fullscreen .hlb-canvas { grid-area: canvas; height: auto; min-height: 0; }
+        .tool-card.is-fullscreen .hlb-canvases { grid-area: canvas; height: 100%; }
+        .tool-card.is-fullscreen .hlb-view { height: 100%; min-height: 0; }
+        .tool-card.is-fullscreen .hlb-canvas { height: auto; min-height: 0; flex: 1; }
         .tool-card.is-fullscreen .hlb-canvas-inner { width: 100%; height: 100%; }
         .tool-card.is-fullscreen .hlb-pipe-layer { width: 100%; height: 100%; }
         .tool-card.is-fullscreen .hlb-palette {
@@ -263,11 +300,13 @@ keywords: hydronic loop pump coil valve cv balancing delta-t static head primary
 
         <div class="tool-body">
             <p class="tool-preamble tight">
-                Drop equipment on an elevation, click port-to-port to lay pipe, and
+                Drop equipment on the elevations, click port-to-port to lay pipe, and
                 hit run — the loop solves a real steady-state hydraulic and thermal
                 balance every tick, so flow finds its operating point and water
-                temperature propagates around the circuit. New to the ideas? Start
-                with <a href="/education/hydronic-loops.html">Hydronic Loops</a>,
+                temperature propagates around the circuit. Two synced views (north and
+                east) let you route the loop in 3D, and pipe friction now tracks the
+                developed run. New to the ideas? Start with
+                <a href="/education/hydronic-loops.html">Hydronic Loops</a>,
                 <a href="/education/load-piping.html">Load Piping</a>, and
                 <a href="/education/balancing.html">Hydronic Balancing</a>.
             </p>
@@ -286,7 +325,7 @@ keywords: hydronic loop pump coil valve cv balancing delta-t static head primary
                     <li><strong>Two-way valves throttle; three-way valves divert.</strong> A two-way valve changes total loop flow; a three-way holds pump flow roughly constant and sends the rest down a bypass.</li>
                     <li><strong>Parallel branches need balancing.</strong> The low-resistance branch hogs the flow; a balance valve adds resistance to even the split.</li>
                     <li><strong>Heat rides the water.</strong> q = 500 · GPM · ΔT — drop the flow and ΔT climbs. Watch a cold loop warm up over a few seconds as the plant's heat transports around.</li>
-                    <li><strong>Up is elevation.</strong> A pipe drawn vertically is a real height — static head, ready for open-system work.</li>
+                    <li><strong>Length is head.</strong> Two elevations (width × height and depth × height) route the loop in 3D; the longer the developed pipe run, the more pump head it costs. Static lift, though, cancels around a closed loop — the expansion tank holds it.</li>
                 </ul>
                 <p class="dos-more">
                     New to hydronics? <a href="/education/hydronic-loops.html">Hydronic Loops</a> covers the same ideas and reads fine on a phone.
@@ -315,8 +354,35 @@ keywords: hydronic loop pump coil valve cv balancing delta-t static head primary
 
                 <div class="hlb-workspace">
                     <div class="hlb-palette" id="hlb-palette" aria-label="Component palette"></div>
-                    <div class="hlb-canvas" id="hlb-canvas" tabindex="0" role="region" aria-label="Elevation canvas">
-                        <div class="hlb-canvas-inner" id="hlb-inner"></div>
+                    <div class="hlb-canvases" id="hlb-canvases">
+                        <div class="hlb-view" id="hlb-view-n">
+                            <div class="hlb-view-bar">
+                                <span class="hlb-view-label">North <span class="hlb-view-axis">· width × height (X–Z)</span></span>
+                                <button type="button" class="hlb-view-max" id="hlb-max-n" data-max="n" aria-pressed="false" aria-label="Maximize north view" title="Maximize this view">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/>
+                                        <line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="hlb-canvas" id="hlb-canvas-n" tabindex="0" role="region" aria-label="North elevation, width by height">
+                                <div class="hlb-canvas-inner" id="hlb-inner-n"></div>
+                            </div>
+                        </div>
+                        <div class="hlb-view" id="hlb-view-e">
+                            <div class="hlb-view-bar">
+                                <span class="hlb-view-label">East <span class="hlb-view-axis">· depth × height (Y–Z)</span></span>
+                                <button type="button" class="hlb-view-max" id="hlb-max-e" data-max="e" aria-pressed="false" aria-label="Maximize east view" title="Maximize this view">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/>
+                                        <line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="hlb-canvas" id="hlb-canvas-e" tabindex="0" role="region" aria-label="East elevation, depth by height">
+                                <div class="hlb-canvas-inner" id="hlb-inner-e"></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -326,6 +392,7 @@ keywords: hydronic loop pump coil valve cv balancing delta-t static head primary
                     <span><span class="hlb-swatch hlb-sw-supply"></span> warmer water</span>
                     <span><span class="hlb-swatch hlb-sw-return"></span> cooler water</span>
                     <span>particles show flow direction &amp; rate</span>
+                    <span>north = width · east = depth · up = height</span>
                 </div>
 
                 <h2 class="subhead">How it works</h2>
@@ -338,17 +405,25 @@ keywords: hydronic loop pump coil valve cv balancing delta-t static head primary
                     the operating point in a few iterations.
                 </p>
                 <p>
-                    Then a thermal sweep transports temperature on those flows —
-                    q = 500 · GPM · ΔT at each coil, flow-weighted mixing at each tee.
-                    A loop reads its upstream temperature from the previous tick, so a
-                    cold loop warms up over a couple of seconds the way a real one does.
+                    The two elevations share the vertical (height) axis: the north view
+                    plots width across, the east view plots depth across, so dragging a
+                    component in either pane positions it in 3D. Each pipe's resistance
+                    scales with its developed 3D run, so a longer or taller route is more
+                    pump head — while the <em>static</em> lift of a riser cancels on the
+                    way back down (a closed loop's column is balanced by the expansion
+                    tank). Then a thermal sweep transports temperature on those flows —
+                    q = 500 · GPM · ΔT at each coil, flow-weighted mixing at each tee. A
+                    loop reads its upstream temperature from the previous tick, so a cold
+                    loop warms up over a couple of seconds the way a real one does.
                 </p>
                 <p class="ref-note">
                     A teaching model, not a design tool: it solves a steady-state balance
                     each tick in canonical US units (GPM, ft of head, °F) and rounds at
-                    the display. Pipe friction is a small nominal value; closed valves
-                    are a large finite resistance, never infinite — so the math always
-                    stays finite.
+                    the display. Pipe friction uses a fixed nominal diameter scaled by
+                    developed length (no pipe-sizing yet); a coil can run a fixed design
+                    load or a UA model whose duty tracks the approach; closed valves are
+                    a large finite resistance, never infinite — so the math always stays
+                    finite.
                 </p>
             </div>
             <!-- /.hlb-live -->
@@ -386,6 +461,14 @@ keywords: hydronic loop pump coil valve cv balancing delta-t static head primary
     // lives in /scripts/hydronic-engine.js (window.HYDRO). Same loop discipline
     // as the Function-Block Editor: gate on a desktop media query, pause on a
     // hidden tab, pump every result through a render pass.
+    //
+    // Phase 2 — TWO elevation views (north = X–Z, east = Y–Z) share the vertical
+    // Z axis + the selection/pending state. Each view owns its inner surface,
+    // SVG pipe layer, component-node map, pipe-element map, and flow cache; a
+    // component drag writes the dragged view's horizontal axis (x or y) plus the
+    // shared z, and reflows BOTH views' geometry in place (no SVG teardown, so
+    // FlowEngine pools survive the drag — the old per-pointermove drawPipes()
+    // rebuild orphaned them every frame).
     (function () {
         'use strict';
         if (!window.HYDRO) return;
@@ -394,16 +477,15 @@ keywords: hydronic loop pump coil valve cv balancing delta-t static head primary
         const PX = 34;                  // pixels per foot — screen ↔ elevation
         const PAD = 30;                 // canvas-inner padding, px
         const COMP_W = 96, COMP_H = 52; // component box, px
-        let INNER_W = 900, INNER_H = 520;
+        const DEFAULT_W = 900, DEFAULT_H = 520;
 
         const byId = (id) => document.getElementById(id);
-        const canvasEl  = byId('hlb-canvas');
-        const inner     = byId('hlb-inner');
-        const palette   = byId('hlb-palette');
         const inspector = byId('hlb-inspector');
         const statusEl  = byId('hlb-status');
         const runBtn    = byId('hlb-run');
         const readoutsEl = byId('hlb-readouts');
+        const canvasesEl = byId('hlb-canvases');
+        const card = document.querySelector('.tool-card');
 
         const HC = window.HYDRO;
         let system   = HC.makeSystem({ components: [], pipes: [] });
@@ -412,17 +494,36 @@ keywords: hydronic loop pump coil valve cv balancing delta-t static head primary
         let running  = true;
         let tickHandle = null;
         let compSeq = 0, pipeSeq = 0;
-        const els = {};                 // compId → component DOM node
-        let svg = null;                 // current pipe layer
-        const flowCache = {};           // pipeId → { bucket, rev } (refreshPath throttle)
+        let maximized = null;           // null | 'n' | 'e' — which pane is maximized
 
         const clamp = (x, lo, hi) => Math.max(lo, Math.min(hi, x));
 
+        // ── views: north (width × height) + east (depth × height) ──
+        // axis = which pos axis maps to screen-horizontal. hOff = a horizontal
+        // origin offset (ft) so the east view's front plane (y=0) isn't glued to
+        // the left edge. Each view carries its own DOM + caches.
+        const VIEWS = [
+            { id: 'n', axis: 'x', hOff: 0,   INNER_W: DEFAULT_W, INNER_H: DEFAULT_H,
+              els: {}, pipeEls: {}, flowCache: {}, svg: null, innerEl: null, canvasEl: null },
+            { id: 'e', axis: 'y', hOff: 1.5, INNER_W: DEFAULT_W, INNER_H: DEFAULT_H,
+              els: {}, pipeEls: {}, flowCache: {}, svg: null, innerEl: null, canvasEl: null },
+        ];
+        VIEWS.forEach((v) => {
+            v.innerEl  = byId('hlb-inner-' + v.id);
+            v.canvasEl = byId('hlb-canvas-' + v.id);
+        });
+        const viewVisible = (v) => !(maximized && maximized !== v.id);
+
         // ── elevation ↔ screen transforms (gravity down: +z is up-screen) ──
-        const sx = (xFt) => PAD + xFt * PX;
-        const sy = (zFt) => INNER_H - PAD - zFt * PX;
-        const fx = (px)  => (px - PAD) / PX;
-        const fz = (py)  => (INNER_H - PAD - py) / PX;
+        const sxV = (v, hFt) => PAD + (hFt + v.hOff) * PX;   // horizontal axis (x or y)
+        const syV = (v, zFt) => v.INNER_H - PAD - zFt * PX;  // shared vertical (z)
+        function hRange(v) {   // drag clamp for the horizontal axis (depth can't go negative)
+            const lo = (v.axis === 'y') ? 0 : (COMP_W / 2 - PAD) / PX;
+            return [lo, (v.INNER_W - PAD - COMP_W / 2) / PX - v.hOff];
+        }
+        function zRange(v) {
+            return [(COMP_H / 2 - PAD) / PX, (v.INNER_H - PAD - COMP_H / 2) / PX];
+        }
 
         // ── temperature → colour (cold blue → hot orange), tokens at runtime ──
         let COLD = [74, 163, 221], HOT = [232, 136, 74], colorTheme = null;
@@ -454,6 +555,10 @@ keywords: hydronic loop pump coil valve cv balancing delta-t static head primary
         }
 
         // ── example systems (HYDRO.makeSystem deep-clones; literals stay pristine) ──
+        // Components carry pos.{x,y,z}; the examples sit on one depth plane (y=0)
+        // so the east view starts as a clean front elevation — drag depth in to
+        // spread zones apart. (Uniform y means equal depth, so pipe lengths and
+        // the flow are identical to the phase-1 layout.)
         const EXAMPLES = {
             single: {
                 components: [
@@ -516,6 +621,7 @@ keywords: hydronic loop pump coil valve cv balancing delta-t static head primary
 
         // ── palette (grouped by category) ──
         function renderPalette() {
+            const palette = byId('hlb-palette');
             palette.innerHTML = '';
             HC.CATEGORIES.forEach((cat) => {
                 const types = Object.keys(HC.COMPONENTS).filter((t) => HC.COMPONENTS[t].category === cat);
@@ -540,14 +646,16 @@ keywords: hydronic loop pump coil valve cv balancing delta-t static head primary
             const n = system.components.length;
             const x = 3 + (n % 5) * 3.4;
             const z = 6 - Math.floor((n % 15) / 5) * 2.2;
-            const c = HC.createComponent(type, id, x, z);
+            const c = HC.createComponent(type, id, x, z);   // y defaults to the front plane
             if (!c) return;
             system.components.push(c);
-            select({ kind: 'comp', id: id });   // select() does the single renderAll()
-            refreshFlowGeometry();              // build FlowEngine pools for the new path elements
+            select({ kind: 'comp', id: id });               // select() does the single renderAll()
         }
 
         // ── port geometry: where a port pins on its component box ──
+        // Ports snap to box EDGES by role (a schematic symbol, not a scale
+        // drawing), so a component reads the same in both views — only the box's
+        // position differs (horizontal = x in north, y in east).
         function portEdge(portDef) {
             // horizontal port (|dx| ≥ |dz|) → left/right; else top/bottom (dz>0 up)
             if (Math.abs(portDef.dx) >= Math.abs(portDef.dz)) {
@@ -563,45 +671,49 @@ keywords: hydronic loop pump coil valve cv balancing delta-t static head primary
                 default:       return { x: COMP_W / 2, y: COMP_H };       // bottom
             }
         }
-        function boxTopLeft(comp) {            // px of the box top-left (centre anchor on pos)
-            return { x: sx(comp.pos.x) - COMP_W / 2, y: sy(comp.pos.z) - COMP_H / 2 };
+        function boxTopLeft(v, comp) {         // px of the box top-left (centre anchor on pos)
+            return { x: sxV(v, comp.pos[v.axis]) - COMP_W / 2, y: syV(v, comp.pos.z) - COMP_H / 2 };
         }
-        function portPos(comp, portName) {     // absolute canvas-inner px of a port centre
+        function portPos(v, comp, portName) {  // absolute canvas-inner px of a port centre
             const def = HC.COMPONENTS[comp.type];
             const pd = def.ports.find((p) => p.name === portName);
-            const tl = boxTopLeft(comp);
+            const tl = boxTopLeft(v, comp);
             const off = portOffset(portEdge(pd));
             return { x: tl.x + off.x, y: tl.y + off.y, edge: portEdge(pd) };
         }
         const compById = (id) => system.components.find((c) => c.id === id);
 
-        // ── render everything ──
+        // ── render everything (both views) ──
         function renderAll() {
-            // wipe and rebuild the inner surface
-            inner.innerHTML = '';
-            Object.keys(els).forEach((k) => delete els[k]);
+            VIEWS.forEach(renderView);
+            renderInspector();
+            refreshFlowGeometry();   // FlowEngine.init() discovers the freshly-built paths
+            refreshViz();            // colour + density on the now-existing pools
+        }
+
+        function renderView(v) {
+            v.innerEl.innerHTML = '';
+            Object.keys(v.els).forEach((k) => delete v.els[k]);
+            Object.keys(v.pipeEls).forEach((k) => delete v.pipeEls[k]);
 
             const grade = document.createElement('div');
             grade.className = 'hlb-grade';
-            inner.appendChild(grade);
+            v.innerEl.appendChild(grade);
 
-            // pipe layer (SVG) under the component boxes
-            svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-            svg.setAttribute('class', 'hlb-pipe-layer');
-            svg.setAttribute('viewBox', '0 0 ' + INNER_W + ' ' + INNER_H);
-            svg.style.width = INNER_W + 'px';
-            svg.style.height = INNER_H + 'px';
-            inner.appendChild(svg);
+            v.svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            v.svg.setAttribute('class', 'hlb-pipe-layer');
+            v.svg.setAttribute('viewBox', '0 0 ' + v.INNER_W + ' ' + v.INNER_H);
+            v.svg.style.width = v.INNER_W + 'px';
+            v.svg.style.height = v.INNER_H + 'px';
+            v.innerEl.appendChild(v.svg);
 
-            system.components.forEach(renderComponent);
-            drawPipes();
-            renderInspector();
-            refreshViz();
+            system.components.forEach((c) => renderComponent(v, c));
+            drawPipes(v);
         }
 
-        function renderComponent(comp) {
+        function renderComponent(v, comp) {
             const def = HC.COMPONENTS[comp.type];
-            const tl = boxTopLeft(comp);
+            const tl = boxTopLeft(v, comp);
             const el = document.createElement('div');
             el.className = 'hlb-comp' + (selected && selected.kind === 'comp' && selected.id === comp.id ? ' hlb-comp-sel' : '');
             el.style.left = tl.x + 'px';
@@ -620,7 +732,7 @@ keywords: hydronic loop pump coil valve cv balancing delta-t static head primary
 
             const body = document.createElement('div');
             body.className = 'hlb-comp-body';
-            body.id = 'hlb-body-' + comp.id;
+            body.id = 'hlb-body-' + v.id + '-' + comp.id;
             body.textContent = '—';
             el.appendChild(body);
 
@@ -639,38 +751,51 @@ keywords: hydronic loop pump coil valve cv balancing delta-t static head primary
                 el.appendChild(dot);
             });
 
-            el.addEventListener('pointerdown', (e) => onCompPointerDown(e, comp));
-            inner.appendChild(el);
-            els[comp.id] = el;
+            el.addEventListener('pointerdown', (e) => onCompPointerDown(e, v, comp));
+            v.innerEl.appendChild(el);
+            v.els[comp.id] = el;
         }
 
-        // ── drag a component by its titlebar ──
-        function onCompPointerDown(e, comp) {
+        // ── drag a component by its titlebar (writes this view's horizontal
+        //    axis + the shared z; reflows BOTH views in place) ──
+        function onCompPointerDown(e, v, comp) {
             if (e.target.closest('.hlb-port')) return;
-            const el = els[comp.id];
+            const el = v.els[comp.id];
             const startX = e.clientX, startY = e.clientY;
-            const origX = comp.pos.x, origZ = comp.pos.z;
+            const origH = comp.pos[v.axis], origZ = comp.pos.z;
+            const [hLo, hHi] = hRange(v), [zLo, zHi] = zRange(v);
             let moved = false;
             el.setPointerCapture(e.pointerId);
 
             function move(ev) {
                 const dxPx = ev.clientX - startX, dyPx = ev.clientY - startY;
                 if (Math.abs(dxPx) > 3 || Math.abs(dyPx) > 3) moved = true;
-                // clamp the CENTRE anchor so the whole box (centre-anchored) stays
-                // inside the canvas-inner — no edge clip on the right/top.
-                comp.pos.x = clamp(origX + dxPx / PX, (COMP_W / 2 - PAD) / PX, (INNER_W - PAD - COMP_W / 2) / PX);
-                comp.pos.z = clamp(origZ - dyPx / PX, (COMP_H / 2 - PAD) / PX, (INNER_H - PAD - COMP_H / 2) / PX);
-                const tl = boxTopLeft(comp);
-                el.style.left = tl.x + 'px';
-                el.style.top = tl.y + 'px';
-                drawPipes();
+                comp.pos[v.axis] = clamp(origH + dxPx / PX, hLo, hHi);
+                comp.pos.z = clamp(origZ - dyPx / PX, zLo, zHi);
+                // both views move: z is shared, and the box anchor depends on z
+                VIEWS.forEach((w) => {
+                    const wel = w.els[comp.id];
+                    if (wel) { const tl = boxTopLeft(w, comp); wel.style.left = tl.x + 'px'; wel.style.top = tl.y + 'px'; }
+                    updatePipesInPlace(w, comp);   // #136: in-place d-update, no SVG teardown
+                });
             }
             function up() {
                 el.removeEventListener('pointermove', move);
                 el.removeEventListener('pointerup', up);
                 el.removeEventListener('pointercancel', up);
-                if (!moved) { select({ kind: 'comp', id: comp.id }); }
-                else { drawPipes(); refreshFlowGeometry(); }
+                if (!moved) { select({ kind: 'comp', id: comp.id }); return; }
+                // geometry changed for the moved component's pipes — let FlowEngine
+                // re-read those paths (pools were never torn down, just re-pathed).
+                const FE = window.FlowEngine;
+                if (FE) {
+                    VIEWS.forEach((w) => {
+                        system.pipes.forEach((p) => {
+                            if (p.from[0] !== comp.id && p.to[0] !== comp.id) return;
+                            const refs = w.pipeEls[p.id];
+                            if (refs) FE.refreshPath(refs.vis);
+                        });
+                    });
+                }
             }
             el.addEventListener('pointermove', move);
             el.addEventListener('pointerup', up);
@@ -697,14 +822,15 @@ keywords: hydronic loop pump coil valve cv balancing delta-t static head primary
             addPipe([a.comp, a.port], [b.comp, b.port]);
             cancelPipe();
             renderAll();
-            refreshFlowGeometry();
             setStatus(running ? 'Running' : 'Paused');
         }
 
         function addPipe(from, to) {
+            // No k_pipe: the engine derives each pipe's resistance from its 3D
+            // developed length every solve (a pinned k_pipe would freeze it).
             system.pipes.push({
                 id: 'w' + (++pipeSeq), from: from, to: to,
-                k_pipe: HC.SETTINGS.K_PIPE, Q: 0, dir: 0, T: HC.SETTINGS.T_NEUTRAL,
+                Q: 0, dir: 0, T: HC.SETTINGS.T_NEUTRAL,
             });
         }
         function cancelPipe() {
@@ -712,7 +838,7 @@ keywords: hydronic loop pump coil valve cv balancing delta-t static head primary
             pending = null;
         }
 
-        // ── draw / redraw the pipe SVG paths ──
+        // ── draw / redraw the pipe SVG paths for one view ──
         function pipePathD(a, b) {
             // exit each port in its edge's direction with a short stub, then
             // route orthogonally to the other port.
@@ -725,28 +851,47 @@ keywords: hydronic loop pump coil valve cv balancing delta-t static head primary
             return 'M' + a.x + ',' + a.y + ' L' + a.x + ',' + my + ' L' + b.x + ',' + my + ' L' + b.x + ',' + b.y;
         }
 
-        function drawPipes() {
-            if (!svg) return;
-            svg.innerHTML = '';
+        function drawPipes(v) {
+            if (!v.svg) return;
+            v.svg.innerHTML = '';
+            Object.keys(v.pipeEls).forEach((k) => delete v.pipeEls[k]);
             system.pipes.forEach((p) => {
                 const cf = compById(p.from[0]), ct = compById(p.to[0]);
                 if (!cf || !ct) return;
-                const a = portPos(cf, p.from[1]), b = portPos(ct, p.to[1]);
+                const a = portPos(v, cf, p.from[1]), b = portPos(v, ct, p.to[1]);
                 const d = pipePathD(a, b);
                 // fat invisible hit target for selection
                 const hit = document.createElementNS('http://www.w3.org/2000/svg', 'path');
                 hit.setAttribute('class', 'hlb-pipe-hit');
                 hit.setAttribute('d', d);
                 hit.addEventListener('click', (e) => { e.stopPropagation(); select({ kind: 'pipe', id: p.id }); });
-                svg.appendChild(hit);
-                // visible pipe — flow particles attach here via data-flow
+                v.svg.appendChild(hit);
+                // visible pipe — flow particles attach here via data-flow. The id
+                // is per-view so the two panes' paths don't collide.
                 const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
                 path.setAttribute('class', 'hlb-pipe' + (selected && selected.kind === 'pipe' && selected.id === p.id ? ' hlb-pipe-sel' : ''));
                 path.setAttribute('d', d);
                 path.setAttribute('data-flow', 'supply');
                 path.setAttribute('data-flow-density', '0.6');
-                path.id = 'hlb-pipe-' + p.id;
-                svg.appendChild(path);
+                path.id = 'hlb-pipe-' + v.id + '-' + p.id;
+                v.svg.appendChild(path);
+                v.pipeEls[p.id] = { hit: hit, vis: path };
+            });
+        }
+
+        // In-place geometry update for a drag: re-path only the pipes touching the
+        // dragged component (no DOM teardown, so FlowEngine pools survive — #136).
+        function updatePipesInPlace(v, comp) {
+            system.pipes.forEach((p) => {
+                if (comp && p.from[0] !== comp.id && p.to[0] !== comp.id) return;
+                const refs = v.pipeEls[p.id];
+                if (!refs) return;
+                const cf = compById(p.from[0]), ct = compById(p.to[0]);
+                if (!cf || !ct) return;
+                const a = portPos(v, cf, p.from[1]), b = portPos(v, ct, p.to[1]);
+                const d = pipePathD(a, b);
+                refs.hit.setAttribute('d', d);
+                refs.vis.setAttribute('d', d);
             });
         }
 
@@ -760,14 +905,13 @@ keywords: hydronic loop pump coil valve cv balancing delta-t static head primary
             return Math.max(0.06, Math.round(d * 5) / 5);
         }
 
-        // Register the current pipe paths with FlowEngine after a renderAll().
-        // renderAll() did inner.innerHTML='' so the prior paths are detached and
-        // their pools are now orphaned — FlowEngine reaps those lazily in its frame
-        // loop (the !isConnected splice); init() does NOT proactively remove them.
-        // Call on every geometry change (drag-end / add / delete / clear / example).
+        // Register the current pipe paths (both views) with FlowEngine after a
+        // renderAll(). renderView did innerHTML='' so the prior paths are detached
+        // and their pools orphaned — FlowEngine reaps those lazily in its frame
+        // loop (the !isConnected splice); init() re-discovers the new paths.
         function refreshFlowGeometry() {
             if (!window.FlowEngine) return;
-            Object.keys(flowCache).forEach((k) => delete flowCache[k]);
+            VIEWS.forEach((v) => { Object.keys(v.flowCache).forEach((k) => delete v.flowCache[k]); });
             window.FlowEngine.init();
         }
 
@@ -775,21 +919,25 @@ keywords: hydronic loop pump coil valve cv balancing delta-t static head primary
         function refreshViz() {
             syncTokens();
             const FE = window.FlowEngine;
-            system.pipes.forEach((p) => {
-                const el = byId('hlb-pipe-' + p.id);
-                if (!el) return;
-                const color = tempColor(p.T);
-                el.style.stroke = color;
-                const bucket = densityBucket(p.Q);
-                const rev = p.dir < 0;
-                const cached = flowCache[p.id];
-                if (!cached || cached.bucket !== bucket || cached.rev !== rev) {
-                    el.setAttribute('data-flow-density', String(bucket));
-                    el.setAttribute('data-flow-reverse', rev ? 'true' : 'false');
-                    flowCache[p.id] = { bucket: bucket, rev: rev };
-                    if (FE) FE.refreshPath(el);
-                }
-                if (FE) FE.setPathColor(el, color);
+            VIEWS.forEach((v) => {
+                if (!viewVisible(v)) return;            // skip a maximized-away pane
+                system.pipes.forEach((p) => {
+                    const refs = v.pipeEls[p.id];
+                    if (!refs) return;
+                    const el = refs.vis;
+                    const color = tempColor(p.T);
+                    el.style.stroke = color;
+                    const bucket = densityBucket(p.Q);
+                    const rev = p.dir < 0;
+                    const cached = v.flowCache[p.id];
+                    if (!cached || cached.bucket !== bucket || cached.rev !== rev) {
+                        el.setAttribute('data-flow-density', String(bucket));
+                        el.setAttribute('data-flow-reverse', rev ? 'true' : 'false');
+                        v.flowCache[p.id] = { bucket: bucket, rev: rev };
+                        if (FE) FE.refreshPath(el);
+                    }
+                    if (FE) FE.setPathColor(el, color);
+                });
             });
             refreshComponentBodies();
             refreshReadouts();
@@ -810,13 +958,14 @@ keywords: hydronic loop pump coil valve cv balancing delta-t static head primary
         const fmt = (v, d) => (isFinite(v) ? v.toFixed(d === undefined ? 1 : d) : '—');
         function dispFlow(gpm)  { return U ? fmt(U.display.waterFlow(gpm), 1) + ' ' + U.suffix.waterFlow() : fmt(gpm) + ' GPM'; }
         function dispHead(ft)   { return U ? fmt(U.display.pumpHead(ft), 1) + ' ' + U.suffix.pumpHead() : fmt(ft) + ' ft'; }
+        // pipe length is feet → metres, the same ft↔m conversion + ft/m suffix as
+        // pump head; reuse it rather than add a one-off length converter to units.js.
+        function dispLen(ft)    { return U ? fmt(U.display.pumpHead(ft), 1) + ' ' + U.suffix.pumpHead() : fmt(ft) + ' ft'; }
         function dispTemp(f)    { return U ? fmt(U.display.temp(f), 1) + ' ' + U.suffix.temp() : fmt(f) + ' °F'; }
         function dispLoad(btuh) { const mbh = btuh / 1000; return U ? fmt(U.display.heatCapacity(mbh), 1) + ' ' + U.suffix.heatCapacity() : fmt(mbh, 0) + ' MBH'; }
 
         function refreshComponentBodies() {
             system.components.forEach((c) => {
-                const body = byId('hlb-body-' + c.id);
-                if (!body) return;
                 const o = c.out || {};
                 let txt = '—';
                 switch (c.type) {
@@ -829,11 +978,14 @@ keywords: hydronic loop pump coil valve cv balancing delta-t static head primary
                     case 'tee':    txt = dispTemp(o.T); break;
                     default: break;
                 }
-                body.textContent = txt;
+                VIEWS.forEach((v) => {
+                    const body = byId('hlb-body-' + v.id + '-' + c.id);
+                    if (body) body.textContent = txt;
+                });
             });
         }
 
-        // ── live equipment-register readouts (first pump + first plant) ──
+        // ── live equipment-register readouts (first pump + first plant + loop) ──
         function readoutCard(title, rows, led) {
             return '<div class="device"><div class="device-inner">' +
                 '<div class="device-tb"><span class="title">' + title + '</span>' +
@@ -862,17 +1014,25 @@ keywords: hydronic loop pump coil valve cv balancing delta-t static head primary
                     ['Load', dispLoad(o.Qheat || 0)],
                 ], (o.Q || 0) > 0.1 ? (plant.params.mode === 'cool' ? 'led--comm' : 'led--run') : 'led--off');
             }
+            if (system.pipes.length) {
+                let totLen = 0;
+                system.pipes.forEach((p) => { totLen += (p.length || 0); });
+                html += readoutCard('LOOP', [
+                    ['Pipe run', dispLen(totLen)],
+                    ['Segments', String(system.pipes.length)],
+                ], totLen > 0 ? 'led--run' : 'led--off');
+            }
             if (!html) html = '<span class="hlb-insp-empty">Add a pump and a plant to see live readouts.</span>';
             readoutsEl.innerHTML = html;
         }
 
-        // ── inspector (selected component's params) ──
+        // ── inspector (selected component's params, or a pipe's read-outs) ──
         function renderInspector() {
             inspector.innerHTML = '';
             if (!selected) {
                 const keys = document.createElement('span');
                 keys.className = 'hlb-insp-keys';
-                keys.textContent = 'Click a component to edit it · click two ports to lay pipe · Delete removes · Esc cancels';
+                keys.textContent = 'Click a component to edit it · click two ports to lay pipe · drag in the east view to set depth · Delete removes · Esc cancels';
                 inspector.appendChild(keys);
                 return;
             }
@@ -881,12 +1041,15 @@ keywords: hydronic loop pump coil valve cv balancing delta-t static head primary
                 title.className = 'hlb-insp-title';
                 title.textContent = 'Pipe ' + selected.id;
                 inspector.appendChild(title);
+                inspector.appendChild(statRow('Developed length', 'hlb-pipe-len'));
+                inspector.appendChild(statRow('Friction head loss', 'hlb-pipe-dh'));
                 const del = document.createElement('button');
                 del.type = 'button';
                 del.className = 'copy-btn hlb-insp-del';
                 del.textContent = 'Delete pipe';
                 del.addEventListener('click', deleteSelected);
                 inspector.appendChild(del);
+                refreshInspectorValues();
                 return;
             }
             const comp = compById(selected.id);
@@ -950,8 +1113,32 @@ keywords: hydronic loop pump coil valve cv balancing delta-t static head primary
             inspector.appendChild(del);
         }
 
-        // lightweight value refresh that doesn't rebuild inputs the user may be editing
-        function refreshInspectorValues() { /* params drive readouts; no live writeback needed */ }
+        // a read-only caption-over-value stat (pipe length / head loss)
+        function statRow(caption, valueId) {
+            const row = document.createElement('div');
+            row.className = 'hlb-insp-stat';
+            const cap = document.createElement('span');
+            cap.className = 'cap';
+            cap.textContent = caption;
+            const val = document.createElement('span');
+            val.className = 'val';
+            val.id = valueId;
+            val.textContent = '—';
+            row.appendChild(cap);
+            row.appendChild(val);
+            return row;
+        }
+
+        // live value refresh — only the selected pipe's read-outs change per tick;
+        // component param inputs the user may be editing are left untouched.
+        function refreshInspectorValues() {
+            if (!selected || selected.kind !== 'pipe') return;
+            const p = system.pipes.find((x) => x.id === selected.id);
+            if (!p) return;
+            const lenEl = byId('hlb-pipe-len'), dhEl = byId('hlb-pipe-dh');
+            if (lenEl) lenEl.textContent = dispLen(p.length || 0);
+            if (dhEl) dhEl.textContent = dispHead(p.dH || 0);
+        }
 
         function afterParamEdit() {
             if (!running) stepOnce();    // show the change immediately while paused
@@ -977,7 +1164,6 @@ keywords: hydronic loop pump coil valve cv balancing delta-t static head primary
             }
             selected = null;
             renderAll();
-            refreshFlowGeometry();
         }
 
         // ── tick loop ──
@@ -1006,14 +1192,13 @@ keywords: hydronic loop pump coil valve cv balancing delta-t static head primary
         function resetSim() {
             system.components.forEach((c) => { c.out = {}; c.state = {}; });
             system._warm = {}; system._temp = {};
-            Object.keys(flowCache).forEach((k) => delete flowCache[k]);
+            VIEWS.forEach((v) => { Object.keys(v.flowCache).forEach((k) => delete v.flowCache[k]); });
             stepOnce();
         }
         function clearCanvas() {
             system = HC.makeSystem({ components: [], pipes: [] });
             selected = null; cancelPipe();
             renderAll();
-            refreshFlowGeometry();
         }
 
         function loadExample(key) {
@@ -1022,9 +1207,50 @@ keywords: hydronic loop pump coil valve cv balancing delta-t static head primary
             selected = null; cancelPipe();
             renderAll();
             resetSim();
-            refreshFlowGeometry();
             setRunning(true);
-            canvasEl.scrollLeft = 0; canvasEl.scrollTop = 0;
+            VIEWS.forEach((v) => { v.canvasEl.scrollLeft = 0; v.canvasEl.scrollTop = 0; });
+        }
+
+        // ── pane sizing ──
+        // Normally each inner surface is a fixed DEFAULT_W×DEFAULT_H. In
+        // fullscreen the visible pane is measured so the canvas fills the freed
+        // space and the SVG matches the pane width (no 900 floor — that made a
+        // half-width fullscreen pane overflow with a scrollbar). Re-run on
+        // fullscreen enter/exit AND on maximize, since maximizing changes a
+        // fullscreen pane's width. A maximized-away pane (display:none) just
+        // keeps the default; restoring it re-measures.
+        function isFullscreen() { return !!(card && card.classList.contains('is-fullscreen')); }
+        function reflowFullscreen() {
+            VIEWS.forEach((v) => {
+                if (isFullscreen() && viewVisible(v)) {
+                    v.innerEl.style.width = ''; v.innerEl.style.height = '';
+                    const r = v.innerEl.getBoundingClientRect();
+                    v.INNER_W = Math.max(320, Math.round(r.width));
+                    v.INNER_H = Math.max(240, Math.round(r.height));
+                } else {
+                    v.INNER_W = DEFAULT_W; v.INNER_H = DEFAULT_H;
+                    v.innerEl.style.width = DEFAULT_W + 'px';
+                    v.innerEl.style.height = DEFAULT_H + 'px';
+                }
+            });
+        }
+
+        // ── per-pane maximize ──
+        function setMaximized(id) {
+            maximized = (maximized === id) ? null : id;
+            canvasesEl.classList.toggle('is-max-n', maximized === 'n');
+            canvasesEl.classList.toggle('is-max-e', maximized === 'e');
+            VIEWS.forEach((v) => {
+                const btn = byId('hlb-max-' + v.id);
+                if (btn) {
+                    const on = maximized === v.id;
+                    btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+                    btn.setAttribute('title', on ? 'Restore split view' : 'Maximize this view');
+                    btn.setAttribute('aria-label', (on ? 'Restore' : 'Maximize') + ' ' + (v.id === 'n' ? 'north' : 'east') + ' view');
+                }
+            });
+            reflowFullscreen();   // a fullscreen pane changes width when maximized
+            renderAll();          // rebuilds both panes' SVGs + re-seeds particles
         }
 
         // ── controls ──
@@ -1037,6 +1263,11 @@ keywords: hydronic loop pump coil valve cv balancing delta-t static head primary
                     case 'clear': clearCanvas(); break;
                 }
             });
+        });
+        document.querySelectorAll('.hlb-view-max').forEach((btn) => {
+            // stopPropagation so the click doesn't bubble to the canvasesEl
+            // clear-selection handler and wipe the current selection / pending pipe.
+            btn.addEventListener('click', (e) => { e.stopPropagation(); setMaximized(btn.dataset.max); });
         });
         byId('hlb-examples').querySelectorAll('[data-example]').forEach((a) => {
             a.addEventListener('click', () => loadExample(a.dataset.example));
@@ -1064,8 +1295,8 @@ keywords: hydronic loop pump coil valve cv balancing delta-t static head primary
             }
         });
 
-        // click empty canvas clears selection / pending pipe
-        canvasEl.addEventListener('click', (e) => {
+        // click empty canvas clears selection / pending pipe (both panes)
+        canvasesEl.addEventListener('click', (e) => {
             if (e.target.closest('.hlb-comp')) return;
             if (e.target.closest('.hlb-pipe-hit')) return;
             cancelPipe();
@@ -1074,7 +1305,7 @@ keywords: hydronic loop pump coil valve cv balancing delta-t static head primary
         });
 
         // recolour readouts on a units toggle
-        if (U) U.onChange(() => { refreshComponentBodies(); refreshReadouts(); });
+        if (U) U.onChange(() => { refreshComponentBodies(); refreshReadouts(); refreshInspectorValues(); });
 
         // recolour pipes + particles on a theme toggle. Pipe stroke (inline RGB)
         // and particle fill (FE.setPathColor) are theme-derived but NOT CSS vars,
@@ -1083,22 +1314,11 @@ keywords: hydronic loop pump coil valve cv balancing delta-t static head primary
         // syncTokens(). Matches pid-tuner / staging-sequencer / psychrometric-chart.
         document.addEventListener('themechange', refreshViz);
 
-        // ── fullscreen reflow (mirrors the FB editor) ──
-        const card = document.querySelector('.tool-card');
+        // ── fullscreen reflow (mirrors the FB editor, per view) ──
         if (card) {
-            card.addEventListener('fullscreenchange', (e) => {
-                const isFs = e.detail && e.detail.fullscreen;
-                if (isFs) {
-                    inner.style.width = ''; inner.style.height = '';
-                    const r = inner.getBoundingClientRect();
-                    INNER_W = Math.max(INNER_W, Math.round(r.width));
-                    INNER_H = Math.max(INNER_H, Math.round(r.height));
-                } else {
-                    inner.style.width = INNER_W + 'px';
-                    inner.style.height = INNER_H + 'px';
-                }
+            card.addEventListener('fullscreenchange', () => {
+                reflowFullscreen();
                 renderAll();
-                refreshFlowGeometry();
             });
         }
 

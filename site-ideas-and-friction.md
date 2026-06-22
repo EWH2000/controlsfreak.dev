@@ -1684,13 +1684,60 @@ prefix `hlb-`. Mirrors the proven FBE two-layer split.
   focusable-port / arrow-nudge model against the FB editor at the same time
   so the two stay consistent — don't add a keyboard path to one sim alone.
 
-`[future: hydronic-loop-builder phase 2]` — the data model is already 3D-
-ready (`pos.{x,y,z}`, every depth on a centre plane): the **X↔Y orthogonal-
-view toggle** (north + east elevations sharing the vertical Z) and
-**drag-in-both-views depth editing** are pure page changes, zero model
-change. Also deferred: promoting `k_pipe` to length/size-dependent (a pipe-
-sizing lesson), a UA-based coil, and the open-system fill-pressure /
-expansion-tank reference node — the one place elevation **stops** cancelling.
+### Hydronic Loop Builder — phase 2: 3D dual-elevation + developed-length friction + UA coil *(shipped 2026-06-20)*
+Phase 2 turned the single X–Z elevation into a **3D builder** and made the
+geometry hydraulically real, plus a second coil model. The forks were resolved
+with the user up front: dual synced panes (chosen over a single swap-toggle),
+and depth made to *matter* via friction rather than left cosmetic — "without
+that an engineer would pick it apart."
+
+- **Dual synced elevations, not a toggle.** Two panes — **north** (width × height,
+  X–Z) and **east** (depth × height, Y–Z) — share the vertical Z axis and the
+  selection / pending-pipe state; each `VIEW` owns its own inner surface, SVG
+  pipe layer, `els` / `pipeEls` maps, `flowCache`, and `INNER_W/H`. A drag writes
+  the dragged pane's horizontal axis (`pos.x` in north, `pos.y` in east) plus the
+  shared `pos.z` and reflows **both** panes in place. `pos.y` was dead in phase 1
+  (the engine read only `x`/`z`); it's now live for the east view + 3D length.
+  Per-pane **maximize** buttons (page-level, distinct from the whole-card
+  fullscreen) — the user asked for "both, with buttons to blow up either one."
+- **Developed-length pipe friction — the credibility fix.** The engine derives
+  each pipe's resistance from its true 3D run: `k = max(K_PIPE, K_PER_FT·L)`,
+  `K_PER_FT = 2.4e-5 ft/GPM²/ft` (≈2" pipe, ~3 ft/100 ft at 35 GPM), **floored at
+  the old flat `K_PIPE`** so it never enters codebase-issues #134's stiff
+  (small-k) regime — a longer run only *adds* friction. Pump head now tracks the
+  layout (raise a coil onto a 30 ft riser → flow shaves 34.3 → 34.1 GPM), while
+  the **static** lift still cancels around the closed loop (the expansion tank
+  holds it). The static-cancellation invariant test was re-based as a
+  *whole-system lift* (identical flow); a sibling test proves the longer riser
+  adds friction. This is a deliberately **bounded** subset of the old "length/
+  size-dependent `k_pipe`" item: **no diameter UI, no pipe-sizing lesson** (those
+  stay deferred — a user-selectable diameter is the part that would raise solver
+  stiffness, so it wants the #134 Newton step first).
+- **UA-based coil, opt-in.** A coil gains a `coilmode` enum (`load` default | `ua`)
+  + a `ua` param. In `ua` mode `q = UA·|Tin − tspace|`, so duty tracks the
+  approach (falls as the water nears the space, climbs with a bigger approach);
+  default `load` preserves every prior example/test exactly. The plant's
+  dual-mode `srcmode` was the precedent.
+- **Readouts + #135/#136.** New surfaces: a **LOOP** readout card (total developed
+  pipe run + segment count) and a per-pipe **inspector** (developed length +
+  friction head loss). #136 (drag wiped the particle layer every `pointermove`)
+  was **fixed** in passing via the in-place pipe-`d` update. #135 (valve
+  `out.authority` dead/mislabeled) was deliberately **not** reused by any new
+  readout — it stays open.
+- **Hardened by the same adversarial review** as phase 1: a 4-dimension
+  multi-agent pass (engine numerics / dual-view page / integration-UX /
+  tests-docs), each finding independently refuted-or-confirmed, surfaced 6 real
+  items (0 false positives) — a fullscreen half-pane SVG overflow (a `max(900,…)`
+  floor), the maximize button bubbling to clear-selection, a stale iter-count
+  comment, a cosmetic self-loop length readout — all fixed before merge.
+
+`[future: hydronic-loop-builder phase 2]` *(largely shipped 2026-06-20 — see the
+phase-2 section above)* — the **X↔Y dual-elevation view** + **drag-in-both-views
+depth editing**, a bounded **developed-length pipe friction**, and a **UA-based
+coil** shipped. Still deferred: a user-selectable pipe **diameter** + the
+dedicated pipe-sizing lesson (the part that raises solver stiffness —
+codebase-issues #134), and the open-system fill-pressure / **expansion-tank
+reference node** — the one place elevation **stops** cancelling.
 
 `[future: hydronic-loop-builder education explainer]` — unlike the
 Controller Wiring sim, this one ships without a single new paired lesson:

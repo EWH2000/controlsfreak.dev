@@ -33,8 +33,13 @@
 //
 // A system is { components:[...], pipes:[...], meta:{...} }:
 //   component = { id, type, pos:{x,y,z}, rot, params, out, state }
-//   pipe      = { id, from:[compId,port], to:[compId,port], size, k_pipe,
-//                 Q, dir, T }            // Q/dir/T mutated per tick for render
+//   pipe      = { id, from:[compId,port], to:[compId,port], k_pipe?,
+//                 Q, dir, T, length, dH }
+//     // Q/dir/T/length/dH are mutated per tick for the render. k_pipe is an
+//     // OPTIONAL manual resistance override; absent (the normal case), pipe
+//     // resistance is derived each solve from the 3D developed length (below).
+//     // pos.y (depth) is live now — it sets the east-elevation view and the
+//     // 3D pipe length; phase 1 only used x and z.
 //
 // ── Physics, in one breath ──────────────────────────────────────────────
 // Everything computes in canonical US units (GPM, ft-of-head, °F, Btu/h);
@@ -59,8 +64,12 @@
 //   P_from − P_to = k·Q·|Q| − hsrc(Q) + (Z_to − Z_from)
 // k·Q·|Q| is friction (always opposes flow), hsrc is pump head added on the
 // from→to path, and the elevation term makes static head fall out of pipe
-// geometry. Elevation CANCELS around any closed loop — correct physics, not a
-// bug; it only nets out in an open system (deferred, phase 2).
+// geometry. Elevation (the STATIC term) CANCELS around any closed loop —
+// correct physics, not a bug; it only nets out in an open system (the
+// expansion-tank reference node, still deferred). FRICTION does NOT cancel:
+// each pipe's k now scales with its 3D developed length (k = max(K_PIPE,
+// K_PER_FT·L)), so a taller riser or a longer run is real head loss even as
+// its static lift cancels on the return — the layout's footage matters.
 // ──────────────────────────────────────────────────────────────────────
 
 'use strict';
@@ -100,18 +109,37 @@ const HYDRO = (function () {
                                     // never Infinity (Infinity → g=1/(∞·|Q|)=0
                                     // would manufacture NaN downstream).
     const K_FLOOR     = 1e-6;       // min branch resistance (keeps g finite).
-    const K_PIPE      = 5e-4;       // small nominal pipe resistance (ft per
-                                    // GPM²). Pipes are real branches, not pure
-                                    // node-merges (see flatten note), so each
-                                    // carries a definite flow for the render;
-                                    // this value is negligible head (≈0.6 ft at
-                                    // 35 GPM) but keeps the matrix well-
-                                    // conditioned. Phase 2 makes it length/size
-                                    // dependent for a pipe-sizing lesson.
+    const K_PIPE      = 5e-4;       // FLOOR on pipe resistance (ft per GPM²).
+                                    // Pipes are real branches, not pure node-
+                                    // merges (see flatten note), so each carries
+                                    // a definite flow for the render. Phase 2:
+                                    // pipe k is now developed-length dependent —
+                                    // k = max(K_PIPE, K_PER_FT·L) — but never
+                                    // DROPS below this floor, so the matrix is
+                                    // never worse-conditioned than phase 1 (a
+                                    // short jumper still floors at ≈0.6 ft head
+                                    // at 35 GPM; long runs only ADD friction,
+                                    // which improves conditioning). codebase-
+                                    // issues #134's stiff regime is small-k —
+                                    // length-dependence only grows k, so we
+                                    // never enter it.
+    const K_PER_FT    = 2.4e-5;     // pipe resistance per foot of 3D developed
+                                    // run (ft per GPM², per ft). Calibrated to a
+                                    // fixed ~2" nominal pipe: ≈3 ft of head per
+                                    // 100 ft at 35 GPM (k·Q² = K_PER_FT·100·35²
+                                    // ≈ 2.9 ft). No per-pipe diameter UI — that,
+                                    // plus a dedicated pipe-sizing lesson, stays
+                                    // deferred. Below the ~20 ft crossover
+                                    // (K_PER_FT·L < K_PIPE) a short run just
+                                    // floors at K_PIPE: physically honest, a
+                                    // 5 ft jumper's friction IS negligible.
     const K_PUMP_CASE = 1e-3;       // pump casing resistance — keeps the pump
                                     // branch a finite-conductance edge, not a
                                     // pure source.
-    const MAX_ITERS   = 50;         // cold start converges in ~12, warm in 1–3.
+    const MAX_ITERS   = 50;         // cold start ~20–30 iters (developed-length
+                                    // friction shifts the operating point a touch
+                                    // vs the old flat K_PIPE), warm in 1–3 — both
+                                    // comfortably under the cap.
     const TOL         = 1e-4;       // GPM — max per-branch flow change to stop.
     const RELAX       = 0.5;        // under-relaxation on the secant update.
     const PIVOT_EPS   = 1e-12;      // |pivot| below this → unknown set to 0.
@@ -121,14 +149,17 @@ const HYDRO = (function () {
 
     const SETTINGS = {
         K_BTU: K_BTU, FT_PER_PSI: FT_PER_PSI, Q_MIN: Q_MIN, Q_COND_FLOOR: Q_COND_FLOOR,
-        Q_CAP: Q_CAP, K_CLOSED: K_CLOSED, K_PIPE: K_PIPE, K_PUMP_CASE: K_PUMP_CASE,
-        MAX_ITERS: MAX_ITERS, TOL: TOL, RELAX: RELAX,
+        Q_CAP: Q_CAP, K_CLOSED: K_CLOSED, K_PIPE: K_PIPE, K_PER_FT: K_PER_FT,
+        K_PUMP_CASE: K_PUMP_CASE, MAX_ITERS: MAX_ITERS, TOL: TOL, RELAX: RELAX,
         TEMP_MIN: TEMP_MIN, TEMP_MAX: TEMP_MAX, T_NEUTRAL: T_NEUTRAL,
     };
 
-    const Y_CENTER = 0;             // phase-1 depth plane; all components sit on
-                                    // it. The model is 3D-ready (pos.{x,y,z});
-                                    // phase 1 only renders/uses x and z.
+    const Y_CENTER = 0;             // default depth plane for a component created
+                                    // without a y (createComponent / a coerced
+                                    // literal). pos.y (depth) is live now — the
+                                    // page's east-elevation view edits it and 3D
+                                    // pipe length reads it; this is just the
+                                    // front-plane default.
 
     // ── component catalog ───────────────────────────────────────────
     // Each component declares:
@@ -182,18 +213,23 @@ const HYDRO = (function () {
 
         coil: {
             label: 'Coil', category: 'Terminals',
-            // A terminal heat-exchanger with the building. Fixed-load mode moves
-            // the water temperature toward the space by a fixed Btu/h; the
-            // resistance is k·Q².
+            // A terminal heat-exchanger with the building; resistance is k·Q².
+            // Two duty models (the `coilmode` param): 'load' (default) moves the
+            // water toward the space by a FIXED design Btu/h; 'ua' makes the duty
+            // track the approach — q = UA·|Tin−tspace| — so it falls as the water
+            // nears the space and climbs with a bigger approach, like a real coil.
             ports: [
                 { name: 'in',  role: 'inlet',  dx: -0.7, dz: 0 },
                 { name: 'out', role: 'outlet', dx:  0.7, dz: 0 },
             ],
             branches: [{ from: 'in', to: 'out', kind: 'resistor', thermal: 'load' }],
             params: [
-                { name: 'k',       label: 'Resistance k',  kind: 'number', default: 0.02, min: 0, step: 0.001 },
-                { name: 'qdesign', label: 'Load (MBH)',    kind: 'number', default: 120, min: 0, step: 10 },
-                { name: 'tspace',  label: 'Space °F',      kind: 'number', default: 70, min: 32, max: 120, step: 1 },
+                { name: 'coilmode', label: 'Heat model',     kind: 'enum',
+                  options: ['load', 'ua'], default: 'load' },
+                { name: 'k',        label: 'Resistance k',   kind: 'number', default: 0.02, min: 0, step: 0.001 },
+                { name: 'qdesign',  label: 'Load (MBH)',     kind: 'number', default: 120, min: 0, step: 10 },
+                { name: 'ua',       label: 'UA (Btu/h·°F)',  kind: 'number', default: 1000, min: 0, step: 50 },
+                { name: 'tspace',   label: 'Space °F',       kind: 'number', default: 70, min: 32, max: 120, step: 1 },
             ],
         },
 
@@ -339,7 +375,12 @@ const HYDRO = (function () {
             }
             p.id = id;
             seenIds.add(id);
-            p.k_pipe = isFin(p.k_pipe) ? p.k_pipe : K_PIPE;
+            // k_pipe is derived each solve from the pipe's 3D developed length
+            // (flatten). A literal MAY still pin a finite k_pipe as a manual
+            // override; otherwise drop it so the geometry drives the resistance
+            // and a stale value can't freeze (the field is also a per-tick
+            // display output, so it must not double as a frozen input).
+            if (!isFin(p.k_pipe)) delete p.k_pipe;
             p.Q = 0; p.dir = 0; p.T = T_NEUTRAL;
         });
         return {
@@ -426,13 +467,22 @@ const HYDRO = (function () {
             nd.T = isFin(t) ? t : T_NEUTRAL;
         });
 
-        const worldZ = (c, portName) => {
-            if (!c || !COMPONENTS[c.type]) return Y_CENTER;
-            const pd = COMPONENTS[c.type].ports.find((p) => p.name === portName);
-            // A raw literal fed straight to solve()/tick() may have no pos — honor
-            // the documented raw-literal tolerance instead of throwing on c.pos.z.
-            return (c.pos ? asNum(c.pos.z) : Y_CENTER) + (pd ? asNum(pd.dz) : 0);
+        // World position of a port, in feet: component pos + the port's local
+        // offset. Ports carry dx/dz (a box-face offset) but no dy, so a port
+        // sits at its component's depth (one plane per component). A raw literal
+        // fed straight to solve()/tick() may have no pos — honor the documented
+        // raw-literal tolerance instead of throwing on c.pos.*.
+        const worldPos = (c, portName) => {
+            const def = c && COMPONENTS[c.type];
+            const pd = def ? def.ports.find((p) => p.name === portName) : null;
+            const base = (c && c.pos) ? c.pos : null;
+            return {
+                x: (base ? asNum(base.x) : 0)        + (pd ? asNum(pd.dx) : 0),
+                y: (base ? asNum(base.y) : Y_CENTER),
+                z: (base ? asNum(base.z) : Y_CENTER) + (pd ? asNum(pd.dz) : 0),
+            };
         };
+        const worldZ = (c, portName) => worldPos(c, portName).z;
 
         // Branches: component internal branches, then pipes.
         const branches = [];
@@ -460,6 +510,13 @@ const HYDRO = (function () {
             if (!cf || !ct) return;   // a pipe to a since-deleted component — skip it
             const bid = 'pipe#' + p.id;
             const wq = system._warm[bid];
+            const wpf = worldPos(cf, p.from[1]);
+            const wpt = worldPos(ct, p.to[1]);
+            // 3D developed length, ft. Resistance scales with it (floored at
+            // K_PIPE) unless the literal pins an explicit k_pipe override.
+            const dx = wpt.x - wpf.x, dy = wpt.y - wpf.y, dz = wpt.z - wpf.z;
+            const length = Math.sqrt(dx * dx + dy * dy + dz * dz);
+            const kPipe = isFin(p.k_pipe) ? p.k_pipe : Math.max(K_PIPE, K_PER_FT * length);
             branches.push({
                 id: bid,
                 comp: null, pipe: p,
@@ -467,8 +524,10 @@ const HYDRO = (function () {
                 thermal: 'adiabatic',
                 nodeFrom: nodeIndexForPort(p.from[0], p.from[1]),
                 nodeTo: nodeIndexForPort(p.to[0], p.to[1]),
-                Zfrom: worldZ(cf, p.from[1]),
-                Zto: worldZ(ct, p.to[1]),
+                Zfrom: wpf.z,
+                Zto: wpt.z,
+                length: length,
+                kPipe: kPipe,
                 Q: isFin(wq) ? wq : 0,
                 k: K_FLOOR, hsrc: 0, g: 0,
                 Tin: T_NEUTRAL, Tout: T_NEUTRAL, up: 0, dn: 0,
@@ -496,7 +555,7 @@ const HYDRO = (function () {
         const p = b.comp ? b.comp.params : null;
         let k;
         switch (b.kind) {
-            case 'pipe':    k = (b.pipe && isFin(b.pipe.k_pipe)) ? b.pipe.k_pipe : K_PIPE; break;
+            case 'pipe':    k = isFin(b.kPipe) ? b.kPipe : K_PIPE; break;   // length-derived (flatten), floored at K_PIPE
             case 'pump':    k = K_PUMP_CASE; break;
             case 'plant':   k = asNum(p.k, 0.01); break;
             case 'resistor':k = asNum(p.k, 0.02); break;
@@ -696,10 +755,17 @@ const HYDRO = (function () {
         const aq = Math.max(Math.abs(b.Q), Q_MIN);
         if (b.thermal === 'adiabatic') return Tin;
 
-        if (b.thermal === 'load') {            // coil — fixed-load exchanger with the space
+        if (b.thermal === 'load') {            // coil — terminal exchanger with the space
             const p = b.comp.params;
             const tspace = asNum(p.tspace, 70);
-            const q = Math.abs(asNum(p.qdesign, 120)) * 1000;   // MBH → Btu/h
+            // Duty (Btu/h). 'ua' mode: q = UA·|Tin−tspace|, so the duty tracks
+            // the approach (falls as the water nears the space, climbs with a
+            // bigger approach) the way a real coil does. 'load' (default): a
+            // fixed design Btu/h, independent of approach. Both then split the
+            // duty across the flow as a temperature drop: ΔT = q/(500·GPM).
+            const q = (p.coilmode === 'ua')
+                ? Math.max(asNum(p.ua, 1000), 0) * Math.abs(Tin - tspace)
+                : Math.abs(asNum(p.qdesign, 120)) * 1000;       // MBH → Btu/h
             const dT = q / (K_BTU * aq);
             // Water moves TOWARD the space temperature (physics-derived sign:
             // hot water cools at a heating coil, chilled water warms at a cooling
@@ -781,13 +847,19 @@ const HYDRO = (function () {
         system._warm = warm;
         system._temp = temp;
 
-        // pipes: flow magnitude/sign + water temperature (its upstream temp)
+        // pipes: flow magnitude/sign + water temperature (its upstream temp),
+        // plus the 3D developed length and its friction head loss for the
+        // readouts (length/dH are display outputs, NOT the k_pipe override input).
         system.pipes.forEach((p) => {
             const b = branchById['pipe#' + p.id];
-            if (!b) { p.Q = 0; p.dir = 0; p.T = T_NEUTRAL; return; }
+            if (!b) { p.Q = 0; p.dir = 0; p.T = T_NEUTRAL; p.length = 0; p.dH = 0; return; }
             p.Q = Math.abs(b.Q);
             p.dir = b.Q > Q_MIN ? 1 : (b.Q < -Q_MIN ? -1 : 0);
             p.T = b.Tin;
+            // a self-loop pipe (both ends on one merged node) carries no flow —
+            // report 0 length too so the readout shows no phantom run for it.
+            p.length = (b.nodeFrom === b.nodeTo || !isFin(b.length)) ? 0 : b.length;   // developed run, ft
+            p.dH = b.k * p.Q * p.Q;                              // friction head loss, ft
         });
 
         // components: a per-type `out` object the page reads onto its readouts.

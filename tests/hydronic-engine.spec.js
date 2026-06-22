@@ -237,15 +237,95 @@ test.describe('hydronic-engine: hydraulic solver', () => {
         expect(total).toBeGreaterThan(0.5);
     });
 
-    test('elevation cancels around a closed loop (riser is a no-op)', () => {
+    test('static head cancels around a closed loop under a whole-system lift', () => {
         const HYDRO = loadEngine();
         const flat = HYDRO.solve(seriesLoop(HYDRO));
-        // Same loop but the coil sits 30 ft up: a riser on the way up, a drop
-        // on the way back. Net elevation around the loop is zero → same flow.
+        // Lift the WHOLE loop 50 ft. Every pipe's developed length AND every
+        // elevation difference is unchanged, so the static head cancels and the
+        // friction is identical → exactly the same flow. This isolates the
+        // static-head cancellation from the developed-length friction below
+        // (the old single test conflated the two by raising only the coil).
+        const lifted = seriesLoop(HYDRO);
+        lifted.components.forEach((c) => { c.pos.z += 50; });
+        const model = HYDRO.solve(lifted);
+        expect(Math.abs(qOf(model, 'p1') - qOf(flat, 'p1'))).toBeLessThan(1e-3);
+    });
+
+    test('a longer riser adds pipe friction and shaves flow (static still cancels)', () => {
+        const HYDRO = loadEngine();
+        const S = HYDRO.SETTINGS;
+        const flat = HYDRO.solve(seriesLoop(HYDRO));
+        // Raise ONLY the coil onto a 30 ft riser: the static lift up still
+        // cancels on the drop back (closed loop), but the supply + return pipes
+        // are now ~30 ft longer, so their friction (k = K_PER_FT·L, above the
+        // K_PIPE floor) is real head loss → flow drops. The layout's footage
+        // matters now; it didn't in phase 1 (flat K_PIPE).
         const tall = seriesLoop(HYDRO);
         tall.components.find((c) => c.id === 'c1').pos.z = 30;
         const model = HYDRO.solve(tall);
-        expect(Math.abs(qOf(model, 'p1') - qOf(flat, 'p1'))).toBeLessThan(0.05);
+        const riser = model.branches.find((b) => b.id === 'pipe#sa');
+        expect(riser.length).toBeGreaterThan(28);              // the supply riser grew
+        expect(riser.k).toBeGreaterThan(S.K_PIPE);             // above the floor now
+        expect(qOf(model, 'p1')).toBeLessThan(qOf(flat, 'p1'));        // friction shaved flow
+        expect(qOf(model, 'p1')).toBeGreaterThan(qOf(flat, 'p1') - 1); // but only a hair
+    });
+
+    test('pipe resistance scales with 3D developed length, floored at K_PIPE', () => {
+        const HYDRO = loadEngine();
+        const S = HYDRO.SETTINGS;
+        // A short loop: both pipes are under the ~20 ft crossover, so each
+        // floors at K_PIPE (phase-1 behavior is preserved for short runs — this
+        // is why the closed-form operating-point tests above still hold).
+        const m = HYDRO.solve(seriesLoop(HYDRO));
+        m.branches.filter((b) => b.kind === 'pipe').forEach((b) => {
+            expect(b.length).toBeLessThan(20);
+            expect(b.k).toBeCloseTo(S.K_PIPE, 9);              // floored
+        });
+        // A deliberately long run: k = K_PER_FT · length, comfortably above floor.
+        const longSys = HYDRO.makeSystem({
+            components: [
+                { id: 'p1', type: 'pump', pos: { x: 0,  y: 0, z: 0 }, params: { h0: 40, a: 0.012, speed: 100, on: true } },
+                { id: 'c1', type: 'coil', pos: { x: 90, y: 0, z: 0 }, params: { k: 0.02 } },
+            ],
+            pipes: [
+                { id: 'go',  from: ['p1', 'out'], to: ['c1', 'in'] },
+                { id: 'ret', from: ['c1', 'out'], to: ['p1', 'in'] },
+            ],
+        });
+        const go = HYDRO.solve(longSys).branches.find((b) => b.id === 'pipe#go');
+        expect(go.length).toBeGreaterThan(85);
+        expect(go.k).toBeCloseTo(S.K_PER_FT * go.length, 9);
+        expect(go.k).toBeGreaterThan(S.K_PIPE);
+    });
+
+    test('an explicit k_pipe literal overrides the length derivation', () => {
+        const HYDRO = loadEngine();
+        // A pinned k_pipe is a manual override — makeSystem preserves it and
+        // flatten skips the length derivation for that pipe.
+        const sys = HYDRO.makeSystem({
+            components: [
+                { id: 'p1', type: 'pump', pos: { x: 0,  y: 0, z: 0 }, params: { h0: 40, a: 0.012, speed: 100, on: true } },
+                { id: 'c1', type: 'coil', pos: { x: 90, y: 0, z: 0 }, params: { k: 0.02 } },
+            ],
+            pipes: [
+                { id: 'go',  from: ['p1', 'out'], to: ['c1', 'in'], k_pipe: 0.003 },   // pinned
+                { id: 'ret', from: ['c1', 'out'], to: ['p1', 'in'] },
+            ],
+        });
+        const m = HYDRO.solve(sys);
+        expect(m.branches.find((b) => b.id === 'pipe#go').k).toBeCloseTo(0.003, 9);
+    });
+
+    test('writeback exposes each pipe developed length and friction head loss', () => {
+        const HYDRO = loadEngine();
+        const sys = seriesLoop(HYDRO);
+        HYDRO.tick(sys, 0.1);
+        sys.pipes.forEach((p) => {
+            expect(isFinite(p.length)).toBe(true);
+            expect(p.length).toBeGreaterThan(0);
+            expect(isFinite(p.dH)).toBe(true);
+            expect(p.dH).toBeGreaterThanOrEqual(0);
+        });
     });
 
     test('a fresh solve converges within MAX_ITERS; a warm re-solve in a few', () => {
@@ -373,6 +453,33 @@ test.describe('hydronic-engine: thermal transport', () => {
         expect(late).toBeGreaterThan(early - 1);     // monotone-ish warm-up
         expect(late).toBeGreaterThan(150);           // approaches the 180 °F setpoint
         expect(late).toBeLessThanOrEqual(180.001);   // never overshoots the setpoint
+    });
+
+    test('a UA coil duty tracks the approach: q ≈ UA · (Tin − tspace)', () => {
+        const HYDRO = loadEngine();
+        const sys = heatedLoop(HYDRO, { coil: { coilmode: 'ua', ua: 1000, tspace: 70 } });
+        for (let i = 0; i < 100; i++) HYDRO.tick(sys, 0.1);   // warm to steady
+        const coil = sys.components.find((c) => c.id === 'c1').out;
+        expect(coil.Q).toBeGreaterThan(1);
+        // At steady state ΔT = q/(500·GPM) so Qheat = 500·GPM·ΔT = q itself —
+        // and q = UA·approach. (The cap-at-tspace band is far off: 70 vs ~180.)
+        const expected = 1000 * Math.abs(coil.Tin - 70);
+        expect(Math.abs(coil.Qheat - expected)).toBeLessThan(Math.max(50, expected * 0.01));
+        // ΔT still closes with the site constant q = 500 · GPM · ΔT
+        expect(coil.Qheat).toBeCloseTo(500 * coil.Q * coil.dT, -1);
+    });
+
+    test('a UA coil delivers less as the approach shrinks (space warms toward supply)', () => {
+        const HYDRO = loadEngine();
+        const warm = (tspace) => {
+            const sys = heatedLoop(HYDRO, { coil: { coilmode: 'ua', ua: 1000, tspace: tspace } });
+            for (let i = 0; i < 100; i++) HYDRO.tick(sys, 0.1);
+            return sys.components.find((c) => c.id === 'c1').out;
+        };
+        const big   = warm(70);    // ~110 °F approach to a 180 °F supply
+        const small = warm(150);   // ~30 °F approach
+        expect(small.Qheat).toBeLessThan(big.Qheat * 0.6);   // duty tracks the approach
+        expect(small.dT).toBeLessThan(big.dT);               // smaller drop per pass
     });
 
     test('a chilled plant drives the loop the other way (water warms at the coil)', () => {
@@ -567,6 +674,13 @@ test.describe('hydronic-engine: review regressions', () => {
         expect(pipeQ(m, 'self')).toBeLessThan(1e-3);      // no phantom flow
         // the real loop flow is unchanged by the dead-end self-loop
         expect(Math.abs(qOf(m, 'p1') - qOf(ref, 'p1'))).toBeLessThan(0.02);
+        // …and the readout reports no developed length for the flowless self-loop
+        const sys = HYDRO.makeSystem({
+            components: comps,
+            pipes: realPipes.concat([{ id: 'self', from: ['t1', 'a'], to: ['t1', 'c'] }]),
+        });
+        HYDRO.tick(sys, 0.1);
+        expect(sys.pipes.find((p) => p.id === 'self').length).toBe(0);
     });
 
     // makeSystem's contract is fail-soft: a corrupted / hand-authored literal
