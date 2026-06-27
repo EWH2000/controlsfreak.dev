@@ -124,6 +124,9 @@ keywords: gpm psi kv flow coefficient valve authority delta p sizing
                 <p class="ref-note">
                     Flip <em>Solve for</em> to read the other way — how much flow a known-Cv valve passes at a given drop, or what drop a valve imposes at a target flow. The metric coefficient rides along: <code>Kv ≈ 0.865 × Cv</code> (Kv is m³/h at 1 bar).
                 </p>
+                <p class="ref-note">
+                    Two edges bound this number. The <code>√</code> form assumes turbulent, <strong>non-flashing</strong> liquid — push a large ΔP and the liquid can flash and cavitate, where a choked-flow (F<sub>L</sub>) correction takes over and the square-root relation breaks down. And the Cv solved here is the <strong>wide-open rating</strong>: the valve&rsquo;s inherent characteristic, not this figure, sets how flow tracks across the stroke. Size for it, then confirm it claims enough of the circuit&rsquo;s drop to actually control (next tab).
+                </p>
             </section>
         </div>
 

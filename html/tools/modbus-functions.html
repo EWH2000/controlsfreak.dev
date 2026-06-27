@@ -121,7 +121,7 @@ keywords: function code exception CRC CRC-16 RTU checksum register coil holding 
                         <tr><td class="mf-id">11 <span class="mf-hex">0x0B</span></td><td>Get Comm Event Counter</td><td>Serial only — status word and event count.</td></tr>
                         <tr><td class="mf-id">12 <span class="mf-hex">0x0C</span></td><td>Get Comm Event Log</td><td>Serial only — status, counts, and recent event bytes.</td></tr>
                         <tr><td class="mf-id">15 <span class="mf-hex">0x0F</span></td><td>Write Multiple Coils</td><td>Write a contiguous block of coils in one request.</td></tr>
-                        <tr><td class="mf-id">16 <span class="mf-hex">0x10</span></td><td>Write Multiple Registers</td><td>Write a contiguous block of holding registers.</td></tr>
+                        <tr><td class="mf-id">16 <span class="mf-hex">0x10</span></td><td>Write Multiple Registers</td><td>Write a contiguous block of holding registers. Decimal&nbsp;16 is hex&nbsp;<strong>0x10</strong> — don't grab it as a hex&nbsp;16, which is the Mask Write row below.</td></tr>
                         <tr><td class="mf-id">17 <span class="mf-hex">0x11</span></td><td>Report Server ID</td><td>Serial only — device ID string and run-status byte.</td></tr>
                         <tr><td class="mf-id">22 <span class="mf-hex">0x16</span></td><td>Mask Write Register</td><td>AND/OR-mask selected bits of one holding register.</td></tr>
                         <tr><td class="mf-id">23 <span class="mf-hex">0x17</span></td><td>Read/Write Multiple Registers</td><td>Read one block and write another in a single transaction.</td></tr>
