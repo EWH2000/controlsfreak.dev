@@ -29,14 +29,20 @@ on 2026-06-22**, then the audit branch was retired (see *Branch / base* above).
 **PR #282 (hydronic phase-2) merged afterward**, taking `main` to **v3.22.0**.
 
 **The long tail** — methodology/pedagogy/misc polish (see "### Remaining beyond
-the four clusters"). The first batch — **methodology one-liners**
-(T-018–023/029, S-003/04/05/07, E-005/07/09/10) — **shipped 2026-06-27** on
-`fix/ux-audit-methodology` (3 commits, adversarially accuracy-verified, full
-suite 369 pass / 1 skip; PR pending owner review, do not merge). **Next:** the
-still-open long-tail items — education pedagogy, sim features, E-001 psychro
-intro, and the G-/T-/P- misc set. Two owner-call items remain flagged from the
-#281 batch, not yet decided: **P-010** (drill format pill) and **P-011** (Field
-Drills topic chip).
+the four clusters"). Two batches shipped so far: **methodology one-liners**
+(T-018–023/029, S-003/04/05/07, E-005/07/09/10) **merged as PR #283**
+(2026-06-27), and the **education teachability batch** (E-006/011/012) on
+`fix/ux-audit-education-pedagogy` (2026-06-27, PR pending owner review, do not
+merge). **Next:** the still-open items — **sim features** (S-001/02/06/08/09)
+and the **G-/T-/P- misc set** are the next clean content batch. Four education
+items are intentionally NOT in the teachability batch — each needs an owner call
+or its own PR: **E-001** (psychro intro tone, owner previously deferred),
+**E-004** (paired-quiz gap, deferred — real fix is shipping the banked MS/TP
+quiz), **E-015** (map family names → exact Niagara/EBO palette entries — needs
+owner platform knowledge), **E-016** (visible "Next lesson →" affordance — a
+feature touching shared templates + styles.css, so its own PR + version bump).
+Two more owner-call items still flagged from #281: **P-010** (drill format pill)
+and **P-011** (Field Drills topic chip).
 
 Prior state (end of session 2): **20 commits, tree clean, branch NOT pushed.**
 Two clusters done + adversarially reviewed: **newcomer on-ramp** (G-006/007/008)
@@ -62,7 +68,7 @@ and the **full expert-output-UX cluster** (T-005/006/008/009/010/016/025/027).
    harness's own task shells (their argv contains that string → exit 144); kill
    the server by PID (`SRV=$!; … kill $SRV`) or `fuser -k 18473/tcp` instead.
 
-## Status: ~55 of 86 resolved (4 clusters #281 + methodology batch) · main v3.22.0
+## Status: ~58 of 86 resolved (4 clusters #281 + methodology + education teachability) · main v3.22.0
 
 All commits built clean and passed the full Playwright suite (361 pass /
 1 skip). Honesty paths, hero on-ramp, palette zero-state, nav affordance,
@@ -238,10 +244,38 @@ S-003/04/05/07, E-005/07/09/10. Fifteen honest-caveat / assumption notes on
 and a sea-level overclaim (T-021). Prose-only, no versioned-asset change; full
 suite 369 pass / 1 skip, build clean.
 
-**Still open (not yet triaged with owner):** education pedagogy
-(E-004/06/11/12/15/16), sim features (S-001/02/06/08/09), E-001 psychro intro,
-misc (T-004/11/24/26/28, G-005/09/11/12/13, P-002/06/09). Protect-notes (no
-action): E-017, G-010, G-014.
+**Education teachability batch — ✅ DONE (2026-06-27)** — E-006/011/012 on
+`fix/ux-audit-education-pedagogy` (content `22162c1`). Three lesson seams where
+the prose teaches a concept the adjacent example/widget/diagram undercut or
+never showed: the superheat 10/10 "not a universal target" caution placed
+adjacent to the worked result (E-006); the equipment-staging rotation widget's
+single-pump-per-week (light-load) simplification made explicit and tied back to
+the staging widget's "how many" question (E-011); a pointer from the
+function-blocks one-scan paragraph to the editor's freeze-stat SR latch, where
+the feedback memory the prose teaches is actually visible (E-012). Each put
+through an adversarial refute-by-default accuracy pass — caught + fixed a
+low/high-side mis-pairing in the E-006 caveat (a condenser has no "design
+superheat"). Prose-only, no versioned-asset change, no bump; full suite 369 pass
+/ 1 skip, build clean.
+
+**Still open:**
+- **Education — each needs an owner call or its own PR (NOT in the teachability
+  batch, by design):**
+  - **E-001** psychro-intro tone rewrite — owner previously DEFERRED ("not
+    selected"); revisit only if the owner wants it (E-017 is the voice template).
+  - **E-004** paired-quiz gap (bacnet-mstp + controller-wiring) — DEFERRED. The
+    real fix is shipping the banked MS/TP quiz as a feature; the `relatedLinks`
+    macro has no per-item "adjacent topic" slot, so there's no clean interim.
+  - **E-015** map generic block-family names → exact Niagara kitControl / EBO
+    palette entries — HELD for owner platform knowledge (a wrong proprietary
+    block name is worse than none; would undercut the E-017 credibility asset).
+  - **E-016** visible "Next lesson →" affordance driven by the existing
+    `educationSequence.js` — a FEATURE (touches shared templates + styles.css →
+    its own PR + version bump), not a prose-polish item.
+- **Sim features:** S-001/02/06/08/09 — next clean batch candidate.
+- **Misc:** T-004/11/24/26/28, G-005/09/11/12/13, P-002/06/09 — next clean batch
+  candidate.
+- **Protect-notes (no action):** E-017, G-010, G-014.
 
 ## Housekeeping (fold in near the end)
 - **Version bump → `3.20.1`** ✅ DONE (a700d84) — `search.js` + `styles.css`
