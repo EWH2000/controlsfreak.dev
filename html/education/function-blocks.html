@@ -187,6 +187,15 @@ keywords: wiresheet logic and or not pid block wire program
                 sheet with a loop in it never freezes.
             </p>
 
+            <p>
+                The economizer sheet below is a pure feed-forward chain, so there's no loop in
+                it to show this off. To actually watch the one-scan memory hold tick to tick,
+                open the <a href="/simulators/function-block-editor.html">Function-Block
+                Editor</a> and load its freeze-stat example: an <code>SR latch</code> trips the
+                unit on a freeze and keeps it tripped on its own previous-scan value until a
+                reset clears it — the feedback behavior running, not just described.
+            </p>
+
             <h2 class="subhead" id="worked-sheet">A worked sheet — economizer enable</h2>
 
             <p>
