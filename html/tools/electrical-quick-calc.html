@@ -633,7 +633,7 @@ keywords: ohms law watts volts amps three phase kva kvar power factor motor fla 
             const fla = (hp * 746) / (rt * vl * pf * eff);
             if (!isFinite(fla)) { muteMotorFla('That combination is indeterminate — check the inputs.'); return; }
 
-            live('eq-motor-fla', tidy(fla, 1) + ' A');
+            live('eq-motor-fla', '~' + tidy(fla, 1) + ' A');
             el('eq-motor-formula').textContent =
                 'FLA = (' + tidy(hp, 3) + ' HP × 746) ÷ (' + rtLabel + tidy(vl, 1) + ' × ' + tidy(pf, 2) + ' × ' + tidy(eff, 2) + ') = ' + tidy(fla, 1) + ' A (estimate)';
             hideCallout('eq-motor-callout');
