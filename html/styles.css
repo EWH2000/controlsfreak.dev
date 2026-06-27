@@ -1700,6 +1700,7 @@ input[type="range"]::-moz-range-thumb {
 .filter-chip:focus-visible,
 .nav-card:focus-visible,
 .related-links a:focus-visible,
+.lesson-seq-link:focus-visible,
 .tool-card-fullscreen-btn:focus-visible,
 .quiz-choice:focus-visible,
 .quiz-action:focus-visible,
@@ -2320,6 +2321,57 @@ p.chip-row-preamble {
     transition: color 0.18s;
 }
 .back-link:hover { color: var(--text-bright); }
+
+/* ──────────────────────────────────────────────────────────────────────
+ * LESSON SEQUENCE PAGER (E-016) — visible prev/next on curriculum lessons.
+ * Rendered in layouts/page.njk from educationSequence.js (the same source
+ * head.njk uses for rel=prev/next). Sits below the page's back-link as a
+ * continue-the-series bar; width + horizontal padding match `main`.
+ * ────────────────────────────────────────────────────────────────────── */
+.lesson-seq {
+    max-width: 1120px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 0 2rem 3.5rem;
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+}
+.lesson-seq-col { display: flex; flex: 1 1 0; min-width: 0; }
+.lesson-seq-col--next { justify-content: flex-end; }
+.lesson-seq-link {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    width: 100%;
+    min-width: 0;
+    padding: 0.7rem 1rem;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    text-decoration: none;
+    transition: border-color 0.12s;
+}
+.lesson-seq-link:hover { border-color: var(--accent); }
+.lesson-seq-next { align-items: flex-end; text-align: right; }
+.lesson-seq-dir {
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-dim);
+}
+.lesson-seq-title {
+    font-size: 0.9rem;
+    color: var(--accent);
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+@media (max-width: 620px) {
+    .lesson-seq { flex-direction: column; padding-left: 1rem; padding-right: 1rem; }
+    .lesson-seq-next { align-items: flex-start; text-align: left; }
+}
 
 /* ──────────────────────────────────────────────────────────────────────
  * RELATED LINKS — end-of-page cross-links to topically related tools,
