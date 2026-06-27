@@ -423,7 +423,10 @@ keywords: hydronic loop pump coil valve cv balancing delta-t static head primary
                     developed length (no pipe-sizing yet); a coil can run a fixed design
                     load or a UA model whose duty tracks the approach; closed valves are
                     a large finite resistance, never infinite — so the math always stays
-                    finite.
+                    finite. It also assumes a <strong>closed loop</strong> with the expansion
+                    tank as the pressure reference, so static lift cancels and the head
+                    readouts are friction + pump, not absolute system pressure — open-system
+                    fill-pressure behavior isn't modeled yet.
                 </p>
             </div>
             <!-- /.hlb-live -->

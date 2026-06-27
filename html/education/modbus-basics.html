@@ -291,9 +291,10 @@ keywords: rtu tcp baud rs485 master slave function code holding register poll
 
             <ul>
                 <li><strong><code>0x01</code> Illegal Function.</strong> The server doesn't
-                    implement this function code. Often the client tried FC03 on registers
-                    that only exist in the input-register table — the server has FC04 but
-                    not the requested holding-register map.</li>
+                    implement this function code at all. A read-only sensor slave with no write
+                    support, hit with FC06 (Write Single Register), returns this — the function
+                    itself isn't in its table. Contrast <code>0x02</code> below, where the
+                    function is supported and only the address is wrong.</li>
                 <li><strong><code>0x02</code> Illegal Data Address.</strong> The function
                     code is fine; the address is outside the device's documented range. A
                     vendor manual that documents holding registers 0–127 and a client asking

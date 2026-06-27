@@ -6,30 +6,37 @@ live disposition tracker.** Update it as findings land.
 
 ## Branch / base — READ FIRST
 
-- **Working branch:** `fix/ux-audit-2026-06`
-- **Base:** branched off `origin/main` at `6f4834e` (#279 electrical-quick-calc).
-  **`origin/main` has since advanced to `8a78813` (#280 Power & Energy
-  Converter)** — merged into this branch in session 3 (`4df59e4`), so the
-  branch is now current with main. (Local `main` may still be stale; the merge
-  used `origin/main`, not local.)
-- The unmerged hydronic phase-2 work lives on `feat/hlb-phase2-3d-view`
-  (3 commits on top of `origin/main`). The audit fixes are a **parallel**
-  branch off `origin/main` and touch disjoint files — no conflict.
-- The audit was "built at v3.21.0" (= the phase-2 tip), but every fix so
-  far applies cleanly on `origin/main` (3.20.0). Version is now **3.20.1**
-  (bumped this PR; one bump covers all the shared-asset changes so far).
+- **The original audit branch `fix/ux-audit-2026-06` is RETIRED.** Its work
+  (the four clusters, ~40/86) merged to `main` as **PR #281 (2026-06-22)** and
+  the remote branch was auto-deleted on merge. Don't reuse it — it's fully
+  merged and was behind the live `main`.
+- **`main` is now at v3.22.0.** **PR #282 (hydronic phase-2)** landed *after*
+  #281 (dual-elevation 3D builder, depth editing; it also resolved
+  codebase-issue #136). Because #282 substantially rewrote
+  `simulators/hydronic-loop-builder.html`, any later audit batch that touches
+  it (e.g. **S-005**) **must** branch off current `main`, not the old audit
+  branch — editing the pre-phase-2 file would conflict/regress.
+- **Each subsequent batch branches fresh off current `origin/main`** under its
+  own `fix/ux-audit-<slug>` name with its own PR (the audit is no longer one
+  long-lived branch). Current batch: **`fix/ux-audit-methodology`** (the
+  methodology one-liners). Bump the version per PR only if a versioned asset
+  (`styles.css` / a site-wide script) actually changes.
 
 ## Next session — START HERE
 
-State at end of session 3 (2026-06-20): **Practice & contact cluster done +
-reviewed; branch merged up to `origin/main` (#280 Power & Energy Converter)
-and PUSHED with a PR open for the owner's Cloudflare-preview review.** Version
-is now **3.21.1** (patch over #280's 3.21.0 — busts this branch's styles.css /
-search.js). The PR covers the whole audit-fix branch (~40 of 86 findings).
+State after session 3: the four-cluster batch (~40 of 86) **merged as PR #281
+on 2026-06-22**, then the audit branch was retired (see *Branch / base* above).
+**PR #282 (hydronic phase-2) merged afterward**, taking `main` to **v3.22.0**.
 
-**Next: the long tail** — methodology/pedagogy/misc polish (see "### Remaining
-beyond the four clusters"). Two owner-call items are flagged in the PR, not yet
-decided: **P-010** (drill format pill) and **P-011** (Field Drills topic chip).
+**The long tail** — methodology/pedagogy/misc polish (see "### Remaining beyond
+the four clusters"). The first batch — **methodology one-liners**
+(T-018–023/029, S-003/04/05/07, E-005/07/09/10) — **shipped 2026-06-27** on
+`fix/ux-audit-methodology` (3 commits, adversarially accuracy-verified, full
+suite 369 pass / 1 skip; PR pending owner review, do not merge). **Next:** the
+still-open long-tail items — education pedagogy, sim features, E-001 psychro
+intro, and the G-/T-/P- misc set. Two owner-call items remain flagged from the
+#281 batch, not yet decided: **P-010** (drill format pill) and **P-011** (Field
+Drills topic chip).
 
 Prior state (end of session 2): **20 commits, tree clean, branch NOT pushed.**
 Two clusters done + adversarially reviewed: **newcomer on-ramp** (G-006/007/008)
@@ -55,7 +62,7 @@ and the **full expert-output-UX cluster** (T-005/006/008/009/010/016/025/027).
    harness's own task shells (their argv contains that string → exit 144); kill
    the server by PID (`SRV=$!; … kill $SRV`) or `fuser -k 18473/tcp` instead.
 
-## Status: ~40 of 86 resolved (Practice & contact COMPLETE) · merged #280 · v3.21.1
+## Status: ~55 of 86 resolved (4 clusters #281 + methodology batch) · main v3.22.0
 
 All commits built clean and passed the full Playwright suite (361 pass /
 1 skip). Honesty paths, hero on-ramp, palette zero-state, nav affordance,
@@ -221,12 +228,20 @@ clean). Full suite 363/1 after the #280 merge; email `pattern` browser-verified.
   ("drills hide under any topic-specific chip"). Both are one-line reversible
   if the owner wants the pill/chip — surface in the PR for the preview review.
 
-### Remaining beyond the four clusters (open, not yet triaged with owner)
-Methodology one-liners (T-018/19/20/21/22/23/29, S-003/04/05/07,
-E-005/07/09/10), education pedagogy (E-004/06/11/12/15/16), sim features
-(S-001/02/06/08/09), E-001 psychro intro, misc (T-004/11/24/26/28,
-G-005/09/11/12/13, P-002/06/09). Protect-notes (no action): E-017, G-010,
-G-014.
+### Remaining beyond the four clusters
+
+**Methodology one-liners — ✅ DONE (2026-06-27)** — T-018/19/20/21/22/23/29,
+S-003/04/05/07, E-005/07/09/10. Fifteen honest-caveat / assumption notes on
+`fix/ux-audit-methodology` (tools `09e27a8`, sims `cc19747`, education
+`40bf87c`). Each put through an adversarial per-finding accuracy pass
+(refute-by-default) that caught + fixed a closed-loop static-head error (T-020)
+and a sea-level overclaim (T-021). Prose-only, no versioned-asset change; full
+suite 369 pass / 1 skip, build clean.
+
+**Still open (not yet triaged with owner):** education pedagogy
+(E-004/06/11/12/15/16), sim features (S-001/02/06/08/09), E-001 psychro intro,
+misc (T-004/11/24/26/28, G-005/09/11/12/13, P-002/06/09). Protect-notes (no
+action): E-017, G-010, G-014.
 
 ## Housekeeping (fold in near the end)
 - **Version bump → `3.20.1`** ✅ DONE (a700d84) — `search.js` + `styles.css`
