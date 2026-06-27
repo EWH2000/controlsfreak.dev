@@ -4400,6 +4400,27 @@ number inputs and skips zeroing the model on a momentarily-empty box (#14).
 and could get the same treatment in a future sweep for consistency. Low
 priority; cosmetic/UX parity only.
 
+### 139. Engine-missing degradation is non-uniform across tool pages *(open — 2026-06-27)*
+
+Tools load their shared engine via a plain `<script src>` (dew-point →
+psychro-engine.js, voltage-drop → thermistor-data.js, etc.). If that request
+hangs or fails on a flaky connection, the inline IIFE references an undefined
+global and can throw or silently no-op on first input rather than showing a
+clear message. `voltage-drop.html` is the model — its `slopeAt` guards
+`typeof THERMISTOR_TYPES` and falls back to "Sensor curve data unavailable —
+resistance result above still stands." A spot-check (2026-06-27) found that
+guard pattern on voltage-drop only; dew-point, coil-sizing, refrigerant-pt,
+thermistor, air-mixing, psychrometric-chart, and economizer-ratio reference an
+engine global with no `typeof` guard.
+
+From the **G-013** UX-audit finding (pressured-edge-case persona, one bar of
+signal). The site is static and light so this is mostly theoretical; the
+finding itself recommends "a tracked note rather than a blocking fix," so it is
+logged here rather than swept inline — propagate voltage-drop's `typeof` guard
+to the engine-dependent pages in a future defensive-degradation sweep. The
+palette half of the same finding (search-index fetch failure) is already
+handled (#119). Low priority.
+
 ### Deferred / Won't fix (with revisit trigger)
 
 Items considered during an audit and deliberately not pursued, each
