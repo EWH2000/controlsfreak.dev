@@ -412,6 +412,7 @@ keywords: wiresheet logic block and or pid wire program sequence
                     <li><strong>Comparators turn analog into digital.</strong> A greater-than or less-than block compares two numbers and emits TRUE or FALSE — the bridge from a measured value to an on/off decision.</li>
                     <li><strong>Latches hold; loops settle.</strong> An SR latch remembers its last set or reset. A feedback wire carries the previous scan's value, so a loop settles each tick instead of hanging.</li>
                     <li><strong>It runs as a scan, about ten times a second.</strong> Change a source and the whole sheet re-evaluates — the way a real controller cycles its program.</li>
+                    <li><strong>Blocks carry real units.</strong> The PID block's <em>Ti</em> and <em>Td</em> are in seconds — so if you tuned in the <a href="/simulators/pid-tuner.html">PID tuner</a>'s default reset (repeats/min), bridge it with <em>Ti (s) = 60 ÷ reset</em> before you transcribe the numbers.</li>
                 </ul>
                 <p class="dos-more">
                     New to wiresheets? <a href="/education/function-blocks.html">Function-Block Basics</a> covers the same ideas and reads fine on a phone.

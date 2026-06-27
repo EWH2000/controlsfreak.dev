@@ -263,7 +263,10 @@ keywords: fla amps hz drive keypad fault overload accel speed reference
                 A generic drive keypad — not modelled on any specific manufacturer's product.
                 The goal is to practice navigating a parameter tree, and to feel how the
                 source parameters gate every command, before you're standing in front of a
-                live drive. New to drives? <a href="/education/vfds.html">Start with VFD Basics →</a>
+                live drive. The motor response itself is a plain linear accel/decel ramp to the
+                commanded speed — no V/Hz curve, current, torque, or fault model (the FAULT LED
+                is there for face realism) — so the lesson is the source-parameter gating, not the
+                motor electrically. New to drives? <a href="/education/vfds.html">Start with VFD Basics →</a>
             </p>
 
             <div class="widget-try" id="vfdm-try">
