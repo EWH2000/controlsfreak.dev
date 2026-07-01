@@ -1037,6 +1037,20 @@ p.tool-preamble {
     line-height: 1.7;
 }
 
+/* T-011 seeded-demo cue: every calculator ships pre-seeded with a worked
+   example that computes a live answer before you touch anything, and the
+   seeded inputs ARE the worked example. This one line, between the preamble
+   and the inputs, marks the values as demo data so a fast reader doesn't
+   mistake the seeded answer for one computed from their own numbers. Mono-dim
+   like the preamble; padded to align with the card content inset. */
+.ps-seed-note {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    padding: 0.6rem 1.5rem 0.2rem;
+    margin: 0;
+}
+
 /* T-010 collapsible "what this does": the one orienting sentence is the
    always-visible <summary> (so a newcomer is never left without context); the
    rest expands behind "▸ more", keeping the Input/Output grid near the top of
@@ -2790,6 +2804,15 @@ p.chip-row-preamble {
 }
 .quiz-results-newbest {
     color: var(--amber);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.74rem;
+}
+/* A perfect run that didn't beat a longer stored best still gets a green
+   'flawless' nod (P-006). Distinct hue from the amber new-best so the two
+   acknowledgements read as different things. */
+.quiz-results-flawless {
+    color: var(--accent);
     text-transform: uppercase;
     letter-spacing: 0.08em;
     font-size: 0.74rem;

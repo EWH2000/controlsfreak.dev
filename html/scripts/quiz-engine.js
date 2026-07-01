@@ -737,6 +737,14 @@
             if (isNewBest) {
                 const tag = el('span', { class: 'quiz-results-newbest' }, [' · new best']);
                 sub.appendChild(tag);
+            } else if (score === total && total > 0) {
+                // P-006: a perfect run that can't dethrone a longer stored best
+                // (the #89 longest-run rule) still earns a run-length-independent
+                // 'flawless' acknowledgement, so a focused 5/5 re-run after a 10/10
+                // isn't met with silence. Its own class (not new-best) keeps the
+                // two signals distinct: green 'flawless' vs amber 'new best'.
+                const tag = el('span', { class: 'quiz-results-flawless' }, [' · flawless']);
+                sub.appendChild(tag);
             }
             resultsEl.appendChild(headline);
             resultsEl.appendChild(sub);

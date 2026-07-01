@@ -55,6 +55,7 @@ keywords: pt chart r22 r410a r134a r407c psig kpag saturation glide superheat su
                 handled, not averaged.
             </div>
         </details>
+        <p class="ps-seed-note">Inputs are seeded with an example — edit them to your numbers.</p>
 
         <section class="rf-type-strip">
             <div class="ps-row">
@@ -184,6 +185,12 @@ keywords: pt chart r22 r410a r134a r407c psig kpag saturation glide superheat su
                         Suction line: read the pressure and a clamp-on temperature
                         at the evaporator outlet. The tool references the dew
                         point.
+                    </p>
+                    <p class="ref-note">
+                        The reference flips with the line: superheat is
+                        <code>line − dew</code> (vapor side); subcooling is
+                        <code>bubble − line</code> (liquid side). Same gauge, the
+                        subtraction reverses.
                     </p>
                 </section>
 
