@@ -13,6 +13,33 @@
 
 {% block content %}{% endblock %}
 
+{# E-016 — visible "Next lesson →" / "← Previous lesson" pager on curriculum
+   lessons. Driven by educationSequence.js (the SAME source head.njk reads for
+   rel=prev/next), so it auto-applies to every page with a sequence entry and
+   can't drift from the rel-tags. Titles come from the navEducation collection.
+   Non-curriculum pages (no sequence entry) render nothing. #}
+{% set lessonSeq = educationSequence[page.url] %}
+{% if lessonSeq and (lessonSeq.prev or lessonSeq.next) %}
+<nav class="lesson-seq" aria-label="Lesson sequence">
+    <div class="lesson-seq-col">
+        {% if lessonSeq.prev %}{% for p in collections.navEducation %}{% if p.url == lessonSeq.prev %}
+        <a class="lesson-seq-link lesson-seq-prev" href="{{ p.url }}">
+            <span class="lesson-seq-dir">← Previous lesson</span>
+            <span class="lesson-seq-title">{{ p.data.title | cleanTitle }}</span>
+        </a>
+        {% endif %}{% endfor %}{% endif %}
+    </div>
+    <div class="lesson-seq-col lesson-seq-col--next">
+        {% if lessonSeq.next %}{% for p in collections.navEducation %}{% if p.url == lessonSeq.next %}
+        <a class="lesson-seq-link lesson-seq-next" href="{{ p.url }}">
+            <span class="lesson-seq-dir">Next lesson →</span>
+            <span class="lesson-seq-title">{{ p.data.title | cleanTitle }}</span>
+        </a>
+        {% endif %}{% endfor %}{% endif %}
+    </div>
+</nav>
+{% endif %}
+
 {% include "footer.njk" %}
 
 {# Site search palette — static markup so search.js only reveals/populates

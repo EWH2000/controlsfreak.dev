@@ -42,11 +42,11 @@ module.exports = [
     {
         type: 'numeric',
         id: 'es-online-capacity',
-        prompt: 'Three identical pumps share the plant duty equally. The sequence has two of them running. What\'s the online capacity, as a percent of the full plant?',
+        prompt: 'Three identical pumps share the plant duty equally. The sequence has two of them running. What\'s the online capacity, as a percent of the three-pump nameplate?',
         answer: 67,
         tolerance: 1.5,
         unit: '%',
-        explain: 'With N of 3 equal pumps online, capacity is N/3 of the plant: 2/3 ≈ 67 %. That fraction is what the staging logic compares demand against — when two pumps near their limit can\'t keep up, the third stages on to bring online capacity to 100 %.',
+        explain: 'With N of 3 equal pumps online, nameplate capacity is N/3: 2/3 ≈ 67 %. That fraction is what the staging logic compares demand against — when two pumps near their limit can\'t keep up, the third stages on to bring online capacity to 100 %. (Delivered flow is a separate story: two of three pumps in parallel against a fixed system curve actually push more than two-thirds of the design flow, because the curve steepens as flow rises — but the staging math reasons in nameplate fractions.)',
         learnMore: { href: '/education/equipment-staging.html#staging', label: 'Equipment Staging — Staging up and down' },
         tags: ['staging', 'capacity']
     },

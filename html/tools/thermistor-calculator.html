@@ -102,6 +102,7 @@ keywords: NTC RTD resistance ohms 10k 20k 3k balco pt100 pt1000 sensor temperatu
                 every type by curve fit.
             </div>
         </details>
+        <p class="ps-seed-note">Inputs are seeded with an example — edit them to your numbers.</p>
 
         <!-- Two modes, à la Signal Scaling. LOOKUP: pick a known type, enter a
              temperature OR a resistance, get the other plus the full R/T table.
@@ -177,6 +178,10 @@ keywords: NTC RTD resistance ohms 10k 20k 3k balco pt100 pt1000 sensor temperatu
                     <div class="ps-row">
                         <span class="ps-label">Defining point</span>
                         <span class="ps-value muted" id="th-ref-point">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">Curve</span>
+                        <span class="ps-value muted" id="th-curve">—</span>
                     </div>
                     <div class="ps-row">
                         <span class="ps-label">Looking up</span>
@@ -489,8 +494,13 @@ keywords: NTC RTD resistance ohms 10k 20k 3k balco pt100 pt1000 sensor temperatu
             const workedEl = document.getElementById('th-worked');
             const tempEl   = document.getElementById('th-temp');
             const resEl    = document.getElementById('th-res');
+            const curveEl  = document.getElementById('th-curve');
 
             dirEl.textContent = thLookupBy === 'temp' ? 'resistance from temperature' : 'temperature from resistance';
+            // Persistent reminder of the assumed sensor curve (T-026): Type II and
+            // Type III both read 10 kΩ at 77 °F and only diverge away from it, so the
+            // selected curve stays in view next to the answer, not only in the dropdown.
+            curveEl.textContent = document.getElementById('th-type').selectedOptions[0].textContent + ' — confirm your sensor';
 
             const mute = (status, statusClass) => {
                 resultEl.className = 'ps-value muted'; resultEl.textContent = '—';

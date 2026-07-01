@@ -149,7 +149,7 @@ keywords: wiresheet logic and or not pid block wire program
                 </div>
                 <div class="callout">
                     <h3>Comparators <span>· number → true / false</span></h3>
-                    <p>Greater-than, less-than, equal. A comparator is the bridge from the analog world to the digital one: it watches a number against a threshold and outputs a true/false the logic blocks can use.</p>
+                    <p>Greater-than, less-than, equal. A comparator is the bridge from the analog world to the digital one: it watches a number against a threshold and outputs a true/false the logic blocks can use. Most production palettes also bundle a <em>deadband</em> (hysteresis) comparator — one block with a gap between its on and off thresholds — so you get chatter-free on/off without wiring two comparators into a latch by hand.</p>
                 </div>
                 <div class="callout">
                     <h3>Math <span>· compute a value</span></h3>
@@ -185,6 +185,15 @@ keywords: wiresheet logic and or not pid block wire program
                 last scan, decides where it is now, and the loop resolves cleanly instead of
                 chasing itself. That one-scan memory is why a latch can hold a state and why a
                 sheet with a loop in it never freezes.
+            </p>
+
+            <p>
+                The economizer sheet below is a pure feed-forward chain, so there's no loop in
+                it to show this off. To actually watch the one-scan memory hold tick to tick,
+                open the <a href="/simulators/function-block-editor.html">Function-Block
+                Editor</a> and load its freeze-stat example: an <code>SR latch</code> trips the
+                unit on a freeze and keeps it tripped on its own previous-scan value until a
+                reset clears it — the feedback behavior running, not just described.
             </p>
 
             <h2 class="subhead" id="worked-sheet">A worked sheet — economizer enable</h2>
