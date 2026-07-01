@@ -1,9 +1,9 @@
 ---
 title: PID Tuning Helper — controlsfreak.dev
-description: Interactive PID loop simulator with adjustable process speed and tuning parameters, plus a tuning cheat sheet and a loop-speed reference for controls work.
+description: Interactive PID loop simulator with a tuning cheat sheet, loop-speed reference, and a bump-test path to conservative SIMC starting gains for real loops.
 canonical: https://controlsfreak.dev/simulators/pid-tuner.html
 nav: simulators
-keywords: gain reset rate kc ti td overshoot tuning loop deadtime
+keywords: gain reset rate kc ti td overshoot tuning loop deadtime simc lambda bump test starting gains time constant tau
 ---
 {% extends "layouts/page.njk" %}
 {% from "related-links.njk" import relatedLinks %}
@@ -42,6 +42,16 @@ keywords: gain reset rate kc ti td overshoot tuning loop deadtime
            what tie each scene to real equipment (audit-2026-06 polish). */
         .pid-eq-cap   { font-family: var(--mono); font-size: 11px; fill: var(--text-dim); letter-spacing: 0.06em; text-transform: uppercase; }
         .pid-eq-flow  { fill: none; stroke: none; }   /* invisible particle track for FlowEngine */
+
+        /* Bump-test labels: keep Greek letters out of the label uppercase
+           transform — capitalized τ reads as a Latin T and θ as a zero. */
+        .pid-sg-greek { text-transform: none; }
+
+        /* .ps-seed-note self-pads to the card inset for its usual home
+           directly inside the unpadded .tool-card; here it sits inside the
+           padded .tool-body, so zero the horizontal padding to keep a
+           single inset. */
+        .tool-body .ps-seed-note { padding-left: 0; padding-right: 0; }
     </style>
 {% endblock %}
 
@@ -387,6 +397,89 @@ keywords: gain reset rate kc ti td overshoot tuning loop deadtime
                 Rule of thumb on this tool: most HVAC loops are PI, not full PID. Start with reset off, raise the gain until the loop just begins to cycle, back it off, then add only as much reset as you need. Vendors differ on the knobs — Niagara LoopPoint exposes bare proportional / integral / derivative constants (closest to the gain · reset · rate view), EBO uses gain with integral and derivative times in seconds (Ti / Td), and a proportional-band style swaps the gain for a proportional band while keeping the same time-in-seconds Ti / Td; flip the <em>Parameter Style</em> selector above to read the loop in whichever terms you use. Same idea, different clothes — the numbers here show the relationships between the knobs, not drop-in values for any one platform.
             </p>
 
+            <h2 class="subhead" style="margin-top:2.75rem;">Starting Gains from a Bump Test</h2>
+
+            <p style="margin-bottom:1.1rem;font-size:0.9rem;line-height:1.75;color:var(--text);">
+                The toy loop above builds the feel; this turns a short test on <em>your</em> loop into a
+                defensible place to start. With the loop in manual and the process steady, step the output
+                5–10&nbsp;% and trend the PV. Read two times off the trend: <strong>dead time (θ)</strong> —
+                how long before the PV clearly starts to move — and <strong>time constant (τ)</strong> — from
+                that first movement to about 63&nbsp;% of the total change (let the PV settle fully so the
+                total is real). Enter the PV change as a percentage of the loop's span:
+                <span data-us="an 8 °F rise on a 0–100 °F span" data-metric="a 4 °C rise on a 0–50 °C span">an
+                8&nbsp;°F rise on a 0–100&nbsp;°F span</span> is 8&nbsp;%. Signs follow the trend — a downward
+                output step or a falling PV go in as negatives. Every real loop has some dead time — if the
+                trend shows none, use the controller's sample interval.
+            </p>
+
+            <p class="ps-seed-note">Inputs are seeded with an example — edit them to your numbers.</p>
+
+            <div class="form-row">
+                <div class="field">
+                    <label for="pid-sg-dco">Output step (ΔCO, %)</label>
+                    <input type="number" id="pid-sg-dco" value="10" step="any" inputmode="decimal">
+                </div>
+                <div class="field">
+                    <!-- No inputmode override here: mobile decimal keypads often
+                         drop the minus key, and ΔPV is the entry that carries
+                         sign (a falling PV enters as a negative). -->
+                    <label for="pid-sg-dpv">PV change (ΔPV, % of span)</label>
+                    <input type="number" id="pid-sg-dpv" value="10" step="any">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="field">
+                    <!-- .sg-greek escapes the label uppercase transform: Τ/Θ read
+                         as Latin T / a zero once capitalized. -->
+                    <label for="pid-sg-tau">Time constant (<span class="pid-sg-greek">τ</span>, <span id="pid-sg-tau-unit">s</span>)</label>
+                    <input type="number" id="pid-sg-tau" value="120" step="any" inputmode="decimal">
+                </div>
+                <div class="field">
+                    <label for="pid-sg-dead">Dead time (<span class="pid-sg-greek">θ</span>, <span id="pid-sg-dead-unit">s</span>)</label>
+                    <input type="number" id="pid-sg-dead" value="15" step="any" inputmode="decimal">
+                </div>
+            </div>
+            <div class="field" role="group" aria-labelledby="pid-sg-tunit-lbl" style="margin-bottom:1.25rem;">
+                <span id="pid-sg-tunit-lbl" class="field-label">Bump-Test Times In</span>
+                <div class="btn-row">
+                    <button class="copy-btn active" id="pid-sg-unit-s"   data-sg-unit="s"   aria-pressed="true">Seconds</button>
+                    <button class="copy-btn"        id="pid-sg-unit-min" data-sg-unit="min" aria-pressed="false">Minutes</button>
+                </div>
+            </div>
+
+            <div class="bit-readouts">
+                <div class="readout">
+                    <div class="readout-label" id="pid-sg-kc-lbl">Gain (Kc)</div>
+                    <div class="readout-value" id="pid-sg-kc">—</div>
+                </div>
+                <div class="readout">
+                    <div class="readout-label" id="pid-sg-ti-lbl">Reset (rep/min)</div>
+                    <div class="readout-value" id="pid-sg-ti">—</div>
+                </div>
+                <div class="readout">
+                    <div class="readout-label">Rate (Td)</div>
+                    <div class="readout-value">0 · start PI</div>
+                </div>
+            </div>
+
+            <p class="pid-note" id="pid-sg-note" style="margin-top:0.75rem;"></p>
+            <!-- Debounced live region for the computed gains — mirrors the
+                 metrics announcer above (audit-2026-06 #7): per-keystroke
+                 recomputes are far too chatty to announce raw. -->
+            <p class="sr-only" id="pid-sg-sr" aria-live="polite"></p>
+
+            <p class="pid-note" style="margin-top:1rem;">
+                Method: SIMC PI rule (Skogestad 2003) with the closed-loop time set conservative, λ&nbsp;=&nbsp;3θ —
+                K&nbsp;=&nbsp;ΔPV&nbsp;%&nbsp;÷&nbsp;ΔCO&nbsp;%, Kc&nbsp;=&nbsp;(1/K)&nbsp;·&nbsp;τ&nbsp;÷&nbsp;(θ&nbsp;+&nbsp;λ),
+                Ti&nbsp;=&nbsp;min(τ,&nbsp;4(θ&nbsp;+&nbsp;λ)). These are starting gains to commission from, not a
+                finished tuning: make the first setpoint change watching the trend, and expect to trim. The result
+                reads in whichever Parameter Style is selected above. Kc here is dimensionless (%&nbsp;of&nbsp;span
+                per&nbsp;%&nbsp;of&nbsp;output), the same convention as the sliders — if your platform takes a
+                proportional band in engineering units instead, PB&nbsp;in&nbsp;EU&nbsp;=&nbsp;PB&nbsp;%&nbsp;×&nbsp;span&nbsp;÷&nbsp;100.
+                The seeded example (τ&nbsp;120&nbsp;s, θ&nbsp;15&nbsp;s, K&nbsp;=&nbsp;1) computes to Kc&nbsp;2.0,
+                reset&nbsp;0.50&nbsp;rep/min — the same numbers as the Decent&nbsp;PI preset above.
+            </p>
+
         </div>
     </div>
 
@@ -435,7 +528,9 @@ keywords: gain reset rate kc ti td overshoot tuning loop deadtime
             document.getElementById('pid-kc').value = p.kc;
             document.getElementById('pid-ki').value = p.ki;
             document.getElementById('pid-kd').value = p.kd;
-            document.querySelectorAll('.tool-card .btn-row .copy-btn').forEach(b => b.classList.remove('active'));
+            // Scope to the preset chips only — the bump-test unit toggle below
+            // shares the .btn-row/.copy-btn chrome and keeps its own active state.
+            document.querySelectorAll('[data-preset]').forEach(b => b.classList.remove('active'));
             if (btn) btn.classList.add('active');
             runPidSim();
         }
@@ -749,18 +844,133 @@ keywords: gain reset rate kc ti td overshoot tuning loop deadtime
             set('pid-kd-sub', `Td ${tdMin} min  ·  ${tdSec} s`);
         }
 
+        // ── Starting gains from a bump test (S-001) ──────────────────
+        // SIMC PI rule (Skogestad 2003) with λ = 3θ. Math runs in the page's
+        // canonical units (dimensionless K, minutes) and converts at the
+        // display boundary through the same Parameter Style mapping the
+        // sliders use. Rate stays 0 — the starting point is PI.
+        let sgUnit = 's';
+
+        function sgRegime(ratio) {
+            return ratio < 0.2 ? 'well-behaved'
+                 : ratio < 1.0 ? 'dead time is a real fraction of the lag — commission gently'
+                 : 'dead-time dominated — back the gain off further if it rings, and lean on reset';
+        }
+
+        function runStartCalc() {
+            const kcEl = document.getElementById('pid-sg-kc');
+            const tiEl = document.getElementById('pid-sg-ti');
+            const note = document.getElementById('pid-sg-note');
+            const conv = document.getElementById('pid-conv').value;
+
+            // Labels track the Parameter Style even while the values are muted.
+            document.getElementById('pid-sg-kc-lbl').textContent =
+                conv === 'pbSec' ? 'Prop. band (PB %)' : 'Gain (Kc)';
+            document.getElementById('pid-sg-ti-lbl').textContent =
+                conv === 'field'   ? 'Reset (rep/min)'
+              : conv === 'timeMin' ? 'Integral time (Ti, min)'
+              :                      'Integral time (Ti, s)';
+
+            const dco = parseFloat(document.getElementById('pid-sg-dco').value);
+            const dpv = parseFloat(document.getElementById('pid-sg-dpv').value);
+            const f   = sgUnit === 's' ? 1 / 60 : 1;                    // entered times → minutes
+            const tau  = parseFloat(document.getElementById('pid-sg-tau').value)  * f;
+            const dead = parseFloat(document.getElementById('pid-sg-dead').value) * f;
+
+            // Signed changes are welcome — a downward bump is a legitimate
+            // test; only zero entries and non-positive times are invalid.
+            if (!isFinite(dco) || !isFinite(dpv) || !isFinite(tau) || !isFinite(dead)
+                || dco === 0 || dpv === 0 || tau <= 0 || dead <= 0) {
+                kcEl.textContent = '—';
+                tiEl.textContent = '—';
+                // The one predictable trip-up gets a pointer instead of
+                // silence: the intro warns that θ = 0 means "use the
+                // controller's sample interval," so say it again here.
+                note.textContent = (isFinite(dead) && dead <= 0 && isFinite(tau) && tau > 0)
+                    ? 'Dead time must be above zero — if the trend shows none, enter the controller\'s sample interval.'
+                    : '';
+                announceStartGains(false);
+                return;
+            }
+
+            const gain = dpv / dco;                                     // signed process gain
+            const K    = Math.abs(gain);
+            const lam  = 3 * dead;
+            const kc   = (1 / K) * tau / (dead + lam);
+            const ti   = Math.min(tau, 4 * (dead + lam));               // minutes
+            const rep  = 1 / ti;
+            const pb   = 100 / kc;
+
+            kcEl.textContent = conv === 'pbSec'
+                ? (pb >= 10 ? String(Math.round(pb)) : pb.toFixed(1))
+                : (kc >= 10 ? kc.toFixed(1) : kc.toFixed(2));
+            tiEl.textContent = conv === 'field'   ? rep.toFixed(2)
+                             : conv === 'timeMin' ? fmtTiMin(rep)
+                             :                      fmtSec(ti * 60);
+
+            // Acting direction follows the SIGN OF THE RATIO, not ΔPV alone —
+            // a downward bump entered as trended (both negative) is still a
+            // positive-gain loop. Negative gain (PV against the output) is
+            // the cooling-style case: direct-acting, output rises as PV
+            // climbs above setpoint. (fbe-engine.js states the convention.)
+            const ratio = dead / tau;
+            note.textContent = 'Process gain K ≈ ' + K.toFixed(2)
+                + ' · dead ÷ τ ≈ ' + ratio.toFixed(2) + ' — ' + sgRegime(ratio) + '.'
+                + (gain < 0 ? ' PV moved against the output — negative process gain (cooling-style): set the loop direct-acting. The gains here use the magnitude.' : '')
+                + (kc >= 50 ? ' Unusually high gain for an HVAC loop — check that ΔPV is a percent of span (not engineering units) and that τ and θ match the unit toggle.' : '');
+            announceStartGains(true);
+        }
+
+        // Debounced screen-reader echo of the computed starting gains —
+        // mirrors the metrics announcer above (audit-2026-06 #7): a keystroke
+        // fires runStartCalc per input event, far too chatty to announce raw.
+        let sgSrTimer = null;
+        function announceStartGains(valid) {
+            clearTimeout(sgSrTimer);
+            sgSrTimer = setTimeout(function () {
+                const sr = document.getElementById('pid-sg-sr');
+                if (!sr) return;
+                sr.textContent = valid
+                    ? 'Starting gains: ' + document.getElementById('pid-sg-kc-lbl').textContent + ' '
+                        + document.getElementById('pid-sg-kc').textContent + ', '
+                        + document.getElementById('pid-sg-ti-lbl').textContent + ' '
+                        + document.getElementById('pid-sg-ti').textContent + '.'
+                    : 'Starting gains cleared — waiting on valid bump-test inputs.';
+            }, 800);
+        }
+
+        function sgUnitChanged(unit, btn) {
+            sgUnit = unit;
+            const u = unit === 's' ? 's' : 'min';
+            document.getElementById('pid-sg-tau-unit').textContent  = u;
+            document.getElementById('pid-sg-dead-unit').textContent = u;
+            document.querySelectorAll('[data-sg-unit]').forEach(b => {
+                b.classList.toggle('active', b === btn);
+                b.setAttribute('aria-pressed', b === btn ? 'true' : 'false');
+            });
+            runStartCalc();
+        }
+
         document.getElementById('pid-proc').addEventListener('change', pidProcChanged);
         document.getElementById('pid-conv').addEventListener('change', runPidSim);
+        document.getElementById('pid-conv').addEventListener('change', runStartCalc);
         document.getElementById('pid-kc').addEventListener('input', runPidSim);
         document.getElementById('pid-ki').addEventListener('input', runPidSim);
         document.getElementById('pid-kd').addEventListener('input', runPidSim);
         document.querySelectorAll('[data-preset]').forEach(btn => {
             btn.addEventListener('click', e => pidPreset(e.currentTarget.dataset.preset, e.currentTarget));
         });
+        ['pid-sg-dco', 'pid-sg-dpv', 'pid-sg-tau', 'pid-sg-dead'].forEach(id => {
+            document.getElementById(id).addEventListener('input', runStartCalc);
+        });
+        document.querySelectorAll('[data-sg-unit]').forEach(btn => {
+            btn.addEventListener('click', e => sgUnitChanged(e.currentTarget.dataset.sgUnit, e.currentTarget));
+        });
 
         // ── Init ──
         showScene(document.getElementById('pid-proc').value);
         runPidSim();
+        runStartCalc();
         // Resize redraws the chart (re-stamping the playhead geometry) and
         // resizes the overlay buffer; the running rAF picks the new geometry up
         // next frame, so we only redraw the cursor here when motion is off.
