@@ -110,6 +110,13 @@ keywords: cfm gpm delta t mbh btu tons sensible latent shr capacity
                         <label class="ps-label" id="cs-cap-lvg-second-lbl" for="cs-cap-lvg-second">Wet-bulb (°F)</label>
                         <input class="ps-input" type="number" id="cs-cap-lvg-second" step="0.5" value="54">
                     </div>
+                    <p class="ref-note cs-cool-only">
+                        The seeded leaving state (<span data-us="55 °F" data-metric="12.8 °C">55 °F</span> DB /
+                        <span data-us="54 °F" data-metric="12.2 °C">54 °F</span> WB) is an intentionally
+                        aggressive, near-saturation dehumidifying coil (~95&nbsp;% RH off the coil),
+                        so it drives a deliberately low sensible-heat ratio. Real leaving air often
+                        runs a touch drier — edit it to your design condition.
+                    </p>
                     <p class="ref-note cs-heat-only">
                         A heating coil rides humidity ratio through unchanged —
                         leaving air carries the entering air's moisture, so only

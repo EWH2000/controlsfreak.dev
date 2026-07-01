@@ -1738,8 +1738,10 @@ test.describe('practice — modbus decoding quiz', () => {
         }
         await expect(page.locator('.quiz-results')).toBeVisible();
         await expect(page.locator('.quiz-results-headline')).toHaveText('5 / 5 correct');
-        // No "new best" celebration, record untouched.
+        // No "new best" celebration and the record is untouched — but a perfect
+        // short run still earns the run-length-independent 'flawless' nod (P-006).
         await expect(page.locator('.quiz-results-newbest')).toHaveCount(0);
+        await expect(page.locator('.quiz-results-flawless')).toContainText('flawless');
         expect(await page.evaluate(() => localStorage.getItem('cf_quiz_modbus-decoding_best'))).toBe('10');
         expect(await page.evaluate(() => localStorage.getItem('cf_quiz_modbus-decoding_best_total'))).toBe('10');
         await expect(page.locator('.quiz-best-readout')).toContainText('Best: 10 / 10');
