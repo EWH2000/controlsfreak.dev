@@ -204,8 +204,40 @@ owner pick), every formula numerically verified before build:
   current-unbalance ~6–10× rule of thumb in the reference.
 - No global Units toggle / no `data-us` spans / no `cf_*` keys (matches
   the sibling electrical tools; privacy.html untouched). NEC FLC table
-  behind `// user to verify` markers. `[future: voltage imbalance derate
+  verified all-correct by the UX-audit data-research pass and its
+  `// user to verify` markers cleared (`9626f8b`, 2026-06-27).
+  `[future: voltage imbalance derate
   curve as numeric factors; PF-correction / capacitor-bank sizing tab]`.
+
+### Power & Energy Converter *(shipped 2026-06-19, PR #280)*
+
+Born from a boiler service call: the site's first **general unit
+converter**, at `/tools/power-energy-converter.html` (prefix `pe-`,
+category `hvac`). Three tabs:
+
+- *Convert* — any power **or** energy unit → every equivalent in its
+  dimension, live, input row highlighted, copy-all. Units: W·kW·MW,
+  BTU/hr, MBH, MMBtu/hr, ton, hp, boiler hp, kcal/hr; J·kJ·MJ·GJ,
+  Wh·kWh·MWh, BTU, kBtu, MMBtu, therm, kcal.
+- *Power × Time = Energy* — solve-for triangle (E = P·t and both
+  rearrangements) with a worked-formula line.
+- *Boiler / Burner* — the applied layer that motivated the tool:
+  effective turndown (input ÷ min fire), min-fire %, per-boiler ×
+  quantity plant total, a Riello `a/b ÷ c` firing-string parser, and
+  graded verdict pills (healthy / moderate / poor, plus *incompatible*
+  and *oversized* errors).
+
+Design decisions worth remembering: every factor derives from **one
+constant** (1 BTU = 1055.05585262 J) so the table can't drift
+internally; the **MBH (thousand) vs MMBtu (million)** trap is defused
+at the labels and in the parser; and the page is deliberately
+**unit-explicit** — it does *not* route through the site-wide Units
+toggle (a converter that self-converts would double-convert), so no
+`data-us` spans and no `privacy.html` change. Cross-linked both ways
+with electrical-quick-calc (the hp↔kW tie), coil-sizing,
+waterside-load, transformer-sizing. Adversarial review before ship
+caught five fixes (stale readout on hand-edit, descending-band guard,
+reference rounding, parser hardening, bridge-result `aria-labelledby`).
 
 ### Airflow & Velocity Pressure tool *(shipped 2026-06-10)*
 
@@ -409,6 +441,45 @@ type+direction (pairs with codebase-issues #83's preset persistence).
 **Decided (2026-06-10):** owner picked Type II as the default (one
 attribute swap, shipped); last-used persistence also approved and
 lands with the #83 preset-persistence batch.
+
+### PID tuner — bump-test → SIMC starting gains *(shipped 2026-07-01, PR #291 — closes UX-audit S-001)*
+
+The audit's last build item: the tuner taught the feel of the knobs and
+read them in every platform's parameter style, then explicitly declined
+the one thing a working programmer most wants — a defensible starting
+point for a real loop. Now a "Starting Gains from a Bump Test" section
+below the closing note turns a short manual test (step the output
+5–10 %, read dead time θ and time constant τ off the trend) into
+conservative PI starting gains, rendered through the existing Parameter
+Style selector.
+
+**Owner engineering calls (2026-07-01, do not re-litigate):**
+
+- **Rule: SIMC** (Skogestad 2003) over IMC/lambda and Cohen-Coon —
+  the `Ti = min(τ, 4(θ+λ))` cap keeps lag-dominant HVAC loops (zone
+  temp, DAT) from the uselessly long integral times plain IMC gives;
+  Cohen-Coon is too aggressive for a commission-from-here number.
+- **Conservativeness: fixed λ = 3θ** — one defensible default, no
+  extra UI, forgiving of rough field-measured τ/θ.
+- **Process-gain input: bump-test % form** — ΔCO % and ΔPV as % of
+  loop span (K = ΔPV%/ΔCO%), the field-natural shape; the prose
+  teaches the span normalization with a dual-stated worked example.
+
+Design details: **rate stays 0** (starting point is PI); the seeded
+example (ΔCO 10 %, ΔPV 10 %, τ 120 s, θ 15 s) is arranged to land
+exactly on the sim's **Decent PI preset** (Kc 2.0 / reset 0.50), tying
+the calculator to the toy loop above it; **signed ΔCO/ΔPV** are both
+accepted and the acting-direction note keys on the sign of the *ratio*
+— negative process gain (PV against the output) flags **direct-acting**
+per the fbe-engine convention. The adversarial review pass earned its
+keep here: the first draft said *reverse*-acting for that case
+(positive-feedback advice — the exact "PV runs away" failure the page's
+own cheat sheet names) and the reviewer caught it against the site's
+own docs before ship. θ ≤ 0 mutes with a use-the-sample-interval
+pointer instead of silence; gains echo to a debounced sr-only live
+region (the metrics-announcer precedent). `[future: a "load these into
+the sliders" affordance was considered and skipped — user gains on the
+toy process would misread as a simulation of their loop]`
 
 ### PID tuner — live process visualization + tune-it-blind spoiler *(shipped 2026-06-08)*
 *The interactive home hero sells a live loop, then links to the tuner —
@@ -973,7 +1044,7 @@ In scope (sections delivered):
 - *Tying It Back to Load Piping* — closing payoff section paying
   off the forward-link from `load-piping.html#two-way`; introduces
   the natural follow-up on pump-control as `[future:
-  pump-control.html]`
+  pump-control.html]` *(shipped 2026-05-15)*
 
 Out of scope (forward links, not content):
 - The keypad-and-parameter-tree story — own tool, see Mock VFD
@@ -1553,8 +1624,8 @@ Three review refinements after first ship:
   feedback/backward edges by exiting right and re-entering the target from its
   left so a wire never doubles back across its own block.
 
-**Phase 2 — paired Education explainer is still pending.** Built as a clean
-hand-off: `[future: education/controller-wiring.html]` *(shipped
+**Phase 2 — paired Education explainer — ✅ shipped 2026-06-07.** Was built as
+a clean hand-off: `[future: education/controller-wiring.html]` *(shipped
 2026-06-07)* — lesson layout, one
 question ("how a field point lands on a DDC controller — power, inputs,
 outputs"), cross-linked to the sim via `relatedLinks` both ways (no JSON-LD
