@@ -13,8 +13,8 @@ Live at [controlsfreak.dev](https://controlsfreak.dev).
 
 Press `/` (or `Ctrl`/`⌘-K`) anywhere for a command-palette **search**
 over every page — or use the search button in the nav. The Tools,
-Simulators, and Education nav items **drop down** to direct links, so
-any page is one click from anywhere; on a phone the nav collapses
+Simulators, Education, and Practice nav items **drop down** to direct
+links, so any page is one click from anywhere; on a phone the nav collapses
 behind a hamburger with the search button kept in reach. The home page
 leads with a quick-tools strip and a live AHU supply-air loop you can
 **drive** — drag the setpoint and watch it chase, then open the full
@@ -37,9 +37,29 @@ Calculators, converters, and lookups — open one, get an answer.
   covers addressing offsets, signed/unsigned, byte order, function
   codes, and exception responses; FC01–16 reference table sits
   there too.
+- **Modbus Function Codes & CRC** — filterable function-code and
+  exception-code tables plus a CRC-16/MODBUS calculator, one filter
+  box searching both tables by name or number. The FC table keeps
+  the dec-vs-hex trap in plain sight (FC 15 = 0x0F, FC 16 = 0x10 —
+  grab a hex 16 and you've got Mask Write instead); the exception
+  table carries the FC + 0x80 high-bit rule, so a 0x83 reply reads
+  as a failed FC 3 rather than a mystery code. The CRC tab (poly
+  0xA001, init 0xFFFF) builds the two append bytes low byte first
+  and also treats the last two bytes of a pasted capture as a CRC,
+  with a checks-out verdict.
 - **BACnet/IP Hex Converter** — paste a hex device address (with
   or without an appended UDP port), get dotted-decimal back, and
   vice versa.
+- **BACnet Object Reference** — the numbers a controller, a packet
+  capture, or a workstation hands you instead of names: object type 1
+  is an Analog Output, property 85 is Present_Value, units enum 62 is
+  degrees-Celsius. Three tabbed tables (Object_Type,
+  Property_Identifier, and the HVAC slice of the Units enumeration)
+  share one filter box that searches all three at once and badges
+  each tab with its live match count — hunting "85" from the Object
+  Types tab still points you at Property IDs. Every code cell is
+  click-to-copy. Deliberately the common day-to-day slice, not the
+  full enumerations (properties alone run past 500).
 - **Psychrometric Chart** — walk an air handler through its
   psychrometric processes on an altitude-adjustable ASHRAE IP-unit
   chart: mix outdoor and return air, then cool, heat, and humidify.
@@ -89,6 +109,95 @@ Calculators, converters, and lookups — open one, get an answer.
   header for per-type confidence and the page's "About these
   tables" card for the methodology. JCI 8.7K-shunt curve is the
   one type still nominal (no public R/T table).
+- **Refrigerant P-T & Superheat Calculator** — gauge-pressure
+  (psig / kPag) saturation lookup plus a superheat / subcooling
+  check for R-410A, R-22, R-134a, R-407C, R-404A, and R-454B, from
+  tables transcribed off published manufacturer P-T charts. Bubble
+  and dew always shown with the glide between them — superheat
+  references dew, subcooling bubble; a single-column pocket card
+  averages the two and reads ~5 °F wrong on R-407C. The verdict pill
+  names the fault direction (floodback, starved evaporator,
+  undercharge) but treats targets as system-specific — a direction,
+  not a setpoint. Pairs with the Superheat & Subcooling explainer.
+- **Valve Cv Sizing** — the sizing equation `Cv = Q√(SG/ΔP)`
+  solved in any direction (required Cv, flow through a known valve,
+  or the drop it imposes), with a Kv equivalent riding along
+  (`Kv ≈ 0.865 × Cv` — the tool stays US-native since Cv is defined
+  in GPM/psi). Second tab computes valve authority β from the
+  wide-open valve drop vs. the rest of the controlled branch, with
+  a good / marginal / poor verdict — the check that catches the
+  quiet oversizing trap, where a valve far bigger than the duty
+  barely cracks open and the loop hunts.
+- **Waterside Load Calculator** — the hydronic workhorse
+  `q = 500 × GPM × ΔT` solved in any direction: the load a measured
+  flow and ΔT imply, the flow a scheduled load needs, or the ΔT a
+  healthy loop should show — the on-the-spot check behind a low-ΔT
+  diagnosis. Tons ride along when load is the answer. Computes in
+  whichever unit system is active with that system's own constant
+  (500 IP, 4.187 metric), so the printed formula reproduces the shown
+  result from the displayed numbers. Water only, and says so up
+  front — glycol lowers density and specific heat, so this shortcut
+  over-reports on a glycol loop.
+- **Pump & Fan Affinity Laws** — scales one operating point (flow,
+  head, power — each optional) to a new speed or an impeller trim:
+  flow tracks the ratio, head its square, power its *cube* — the
+  energy case for variable-speed pumping. Pure ratios, so it's
+  unit-agnostic: speed in RPM, Hz, or %, and Q/H/P pass through in
+  whatever units you enter. Flags the field catches too — the
+  cube-law payoff assumes a mostly-friction system curve (real
+  static head flattens the savings), and the diameter laws drift
+  past ~10–15 % trims of the same casing. Pairs with the Pump
+  Control and VFDs explainers.
+- **Airflow & Velocity Pressure** — both halves of the field airflow
+  square-root. K-factor tab: a VAV box's `CFM = K × √VP` in either
+  direction — flow from the pickup's VP, or K back-solved from a
+  balancer's hood reading, the calibration move that works no matter
+  whose K convention the paperwork used. Duct-velocity tab: pitot VP
+  → FPM (`V = 4005 × √VP`) and rect/round duct area → CFM, with a
+  traverse note keeping the one-point reading honest. US-native (a
+  metric K is a different number on a different label); states its
+  standard-air assumption and under-read at altitude; a negative VP
+  mutes as "sensing lines swapped," not a generic error.
+- **Transformer VA Budget** — "does this transformer have room for
+  one more actuator?" List the loads on the 24 VAC secondary (blank
+  rows are spares), pick the transformer, and read total VA, percent
+  loaded, headroom, and a secondary fuse suggestion — sized off the
+  transformer rating, not the connected load, so it doesn't need
+  touching when a device is added later. Two-tier verdict pill:
+  above 80 % it could be a problem, above 100 % it is one. A
+  typical-VA sanity table plus a note on the trap the steady-state
+  sum can't catch — the panel that only reboots on cold mornings is
+  failing on coincident inrush, not this number.
+- **Wire Run & Voltage Drop** — pick the signal type, gauge, and
+  one-way length; the verdict speaks that signal's language. 4-20 mA
+  gets worst-case transmitter voltage at 20 mA and the max run at
+  that gauge (copper costs supply headroom, not accuracy); 0-10 V
+  gets the IR drop into the AI's impedance — millivolts, so suspect
+  ground offsets or noise, not wire; sensor mode shows the lead
+  error for 10K Type II, 1K Balco, and Pt100 side by side, slopes
+  read live from the Thermistor Calculator's own R/T curves so the
+  same-copper-different-lie asymmetry is computed, not asserted.
+  Copper per NEC Ch. 9 Table 8; US-native (AWG, Ω/1000 ft).
+- **Field Electrical Quick Calc** — the bread-and-butter electrical
+  math you double-check on a service call, four tabs in one: an
+  Ohm's-law wheel (enter any two of V / I / R / P, the other two
+  solve), a 1φ / 3φ AC power triangle (line-to-line voltage + PF +
+  one of amps / kW / kVA → the rest), motor HP ↔ kW with a
+  full-load-amp estimate, and the NEMA MG-1 voltage-imbalance check
+  (≤1 % OK / 1–5 % derate / >5 % don't operate). The FLA is
+  deliberately an estimate — it runs 10–25 % low of the NEC tables,
+  and the callout says so and points sizing at 430.250 / 430.248;
+  an optional clamp reading gets a measured-vs-estimate verdict pill.
+- **Power & Energy Converter** — any power or energy unit (W, kW,
+  BTU/hr, MBH, MMBtu/hr, tons, hp, boiler hp; J, kWh, therms, MMBtu…)
+  to every equivalent in its dimension, plus a Power × Time = Energy
+  bridge that solves for any leg. Every factor derives from one
+  constant (1 BTU = 1055.05585262 J) so the table can't drift, and
+  the labels defuse the MBH-vs-MMBtu trap (M is the Roman thousand,
+  MM the million — a 1000× misread). The Boiler / Burner tab is the
+  service call that prompted the tool: effective turndown (input ÷
+  burner min fire) graded through "poor — short-cycling likely",
+  plant totals by quantity, and a Riello firing-string parser.
 
 ### Simulators
 
@@ -96,15 +205,18 @@ Running models you can play with — no install, no sign-in. Most are
 paired with an Education explainer for the underlying concepts.
 
 - **PID Tuning Helper** — step-response simulator with an
-  equipment-led selector (a 2-way valve, a VAV damper, a radiator, a
-  long-run reheat coil) and a parameter-style toggle (Niagara
-  gain·reset·rate vs. EBO Ti·Td vs. Distech proportional-band
-  conventions; the controller runs canonical units, the labels follow
-  you). A live process strip above the chart animates the chosen gear
-  — the actuator tracks the controller output while a playhead sweeps
-  the step response — and the loop-speed numbers + a symptom → tuning-
-  move cheat sheet hide behind a "loop details" spoiler, so you can tune
-  by feel first and reveal to check. Cross-links to the PID Basics
+  equipment-led selector (a supply-fan/duct-static loop, a 2-way
+  valve, a radiator, a long-run reheat coil) and a parameter-style
+  toggle (gain·reset·rate vs. Ti·Td in minutes or seconds vs.
+  proportional-band conventions; the controller runs canonical units,
+  the labels follow you). A live process strip above the chart
+  animates the chosen gear — the actuator tracks the controller
+  output while a playhead sweeps the step response — and the
+  loop-speed numbers + a symptom → tuning-move cheat sheet hide
+  behind a "loop details" spoiler, so you can tune by feel first and
+  reveal to check. A bump-test path turns a real loop's measured
+  ΔCO/ΔPV/τ/dead-time into conservative SIMC PI starting gains, read
+  out in the selected parameter style. Cross-links to the PID Basics
   explainer.
 - **Mock VFD Interface** — generic drive keypad to practice
   navigating a parameter tree without a live drive in front of you.
@@ -130,8 +242,20 @@ paired with an Education explainer for the underlying concepts.
   and outputs (0-10 V actuator, relay-driven fan), and click
   terminal-to-terminal. Points read live when landed right; a bad wire
   fails the way real hardware does — an open sensor, a dead actuator,
-  a spark, a popped fuse — with every fault named in plain English. A
-  paired Controller Wiring explainer is on the way.
+  a spark, a popped fuse — with every fault named in plain English.
+  Pairs with the Controller Wiring explainer.
+- **Hydronic Loop Builder** — a 3D piping sandbox with a real solver:
+  drop a plant, pump, coils, and valves onto two synced elevation views
+  (north and east share the height axis, so the loop routes in true 3D),
+  pipe them port-to-port, and hit run. Each tick solves a steady-state
+  hydraulic and thermal balance: flow finds the pump curve's operating
+  point, and a cold loop visibly warms up as heat (q = 500 · GPM · ΔT)
+  rides the water. Pipe friction tracks the developed 3D run while static
+  lift cancels around the closed loop (the expansion tank holds it);
+  shut valves stay finite, and a solve that doesn't settle warns you
+  rather than masquerading as solved. Three worked loops to start from;
+  desktop-only by design. A teaching model, not a design tool — the
+  capstone for the four hydronic lessons.
 
 ### Education
 
@@ -141,6 +265,16 @@ techs new to the industry and anyone wanting a refresh.
 - **PID Basics** — what proportional, integral, and derivative
   actually *do* on an HVAC loop, with three cumulative mini-sims
   (P only → P+I → P+I+D) so you can move one knob at a time.
+- **Controller Wiring** — how a field point lands on a DDC
+  controller: 24 VAC power, the four input landings (10K thermistor,
+  0-10 V and loop-powered 4-20 mA transmitters, dry contact), and the
+  outputs, where the recurring trap is that the controller's signal
+  is not the load's power. Built on one idea — every return comes
+  back to the shared COM, and on a shared transformer every COM lands
+  on the same leg or the first shared wire dead-shorts the secondary.
+  The capstone diagram lands one of each on the same generic
+  controller the simulator uses. Pairs with the Controller Wiring
+  Simulator.
 - **Hydronic Loops** — 2-pipe direct return, reverse return, and
   the primary-secondary "twin-T" boiler-injection configuration.
   Animated schematics, plus an interactive injection-pump widget
@@ -163,6 +297,16 @@ techs new to the industry and anyone wanting a refresh.
   sensor, and DP setpoint reset for the bottom of the cube-law
   savings. Two widgets, deadhead-anecdote reveal at zero demand.
   Closes out the variable-flow story with Load Piping and VFDs.
+- **Equipment Staging** — several identical pumps in parallel and
+  the sequence that runs them: how many to run, when to add or drop
+  one, and which pump takes the lead. A live widget shows why
+  stage-up and stage-down are different numbers (the deadband that
+  stops the plant hunting) and why timers hold each change (stage
+  delay + minimum stage time — no short-cycling). A second widget
+  steps weeks of runtime to set fixed-lead against runtime-equalized
+  rotation: one pump logging every hour while the "redundant"
+  standby ages sitting still. Same logic stages boilers, chillers,
+  and cooling-tower cells. Pairs with the Equipment Staging quiz.
 - **Hydronic Balancing** — getting design flow to every load on a
   loop. Calibrated balancing valves, automatic balancing valves,
   and pressure-independent control valves (PICVs) — what each one
@@ -170,6 +314,104 @@ techs new to the industry and anyone wanting a refresh.
   comparing all three branches under varying system Δp, with a
   burst-coil anecdote at the low-pressure extreme. Pays off forward
   links from Hydronic Loops, Load Piping, and Pump Control.
+- **Refrigerant Cycle Basics** — the vapor-compression cycle for
+  controls people, who meet it through sensor readings (a low-suction
+  alarm, a head-pressure trip) and have to decide whether the system
+  is wrong or the sensor is. Four components, high side vs. low side,
+  and the load-bearing concept: pressure and temperature locked
+  together at saturation — with real R-410A numbers that reproduce in
+  the Refrigerant P-T tool, a glide footnote for zeotropic blends, and
+  an animated color-coded cycle diagram. Page 1 of the refrigerant
+  chapter; pairs with the Refrigerant Cycle Basics quiz.
+- **Superheat & Subcooling** — the two measurements that prove a
+  refrigerant cycle is running right, not just running, computed
+  from the four points a packaged unit's controller already shows
+  (suction/liquid pressures + clamp-on line temps, against the dew
+  or bubble column — the split that matters on blends with glide).
+  Each deviation direction gets its fault family — low superheat →
+  floodback, high → starved evaporator; low subcooling → undercharge
+  or flash gas, high → overcharge or a restricted liquid line — with
+  the caveat that the data plate's targets beat any rule of thumb.
+  Worked R-410A example replays in the P-T tool; paired quiz.
+- **TXVs vs. EEVs** — opens the box on the metering device that
+  holds superheat: the TXV's mechanical force balance (bulb pressure
+  opens, spring + evaporator pressure close — cutaway diagram) and
+  the EEV's stepper loop (P + T sensors → controller computes SH →
+  steps the port). Same job, two surfaces: the BMS sees the EEV as a
+  point list; the wrench side holds the TXV. A field note defuses the
+  bulb's look-alike trap (it reads as a strapped-on temp sensor to
+  BMS eyes), and the hard-railed-valve tell — 0 or 100 % with SH
+  off target means the loop is out of authority. Closes the
+  refrigerant chapter; pairs with the TXVs vs. EEVs quiz.
+- **Psychrometrics Basics** — the seven properties of moist air,
+  which instrument gives you each, and why any two lock the other
+  five (the reason the chart tool's Define-by dropdown exists).
+  Gotcha grid on the traps: RH alone tells you nothing; dew point
+  is the property that condenses. Capstone widget replays a real
+  pool job — slide space dry-bulb, RH, and coldest-surface
+  temperature, and a three-state panel calls it ("glass stays
+  dry" / "watch the glass" / "condensation on glass") off the
+  surface-minus-dew-point margin, on the same moist-air engine as
+  the interactive chart. Pairs with the Psychrometrics Basics quiz.
+- **Function-Block Basics** — what a block and a wiresheet are, why
+  the industry builds sequences this way (the diagram is the program,
+  you can watch it run live, the block vocabulary travels across
+  platforms), and the six families almost any palette sorts into.
+  Explains how a sheet actually evaluates — the scan, dependency
+  order, and the one-scan memory that lets a feedback loop (an SR
+  latch) hold state instead of chasing itself — then walks a real
+  economizer-enable sheet. Pairs with the Function-Block Editor
+  sandbox and a Function Blocks quiz.
+- **Modbus Basics** — what Modbus is on the wire: the four data
+  tables (coils, discrete inputs, input and holding registers),
+  the function codes that read and write them, and what an
+  exception response means — the high-bit echo (0x03 comes back
+  as 0x83) plus the four exception codes that show up in BMS work.
+  RTU vs. TCP changes the envelope, not the language. Two field
+  stances carry it: Modbus is dumb on purpose — a register is just
+  sixteen bits, the meaning lives only in the vendor manual — and
+  servers never speak first, so the client polls or it misses.
+  Continues in Modbus Decoding for what the returned bits mean.
+- **Modbus Decoding** — why a Modbus value comes back wrong even
+  after the read succeeded: the four interpretation choices the
+  protocol leaves to you. The 5-digit numbering trap (40001 is wire
+  address 0), signed vs unsigned (the same 16 bits are 65523 or
+  −13), the four 32-bit byte orders (ABCD / CDAB / BADC / DCBA —
+  none of them "the standard"), and vendor scaling to engineering
+  units — closing on the combined trap where a signed, 0.1-scaled
+  register read unsigned logs a plausible 6553.5 instead of −0.1.
+  Companion to the Modbus Basics explainer; the interactive form of
+  each gotcha lives on the Modbus Register Viewer tool.
+- **BACnet Basics** — BACnet on the wire: the self-describing object
+  model (an object knows its own name and units, where a Modbus
+  register is just sixteen bits), the handful of services that do
+  almost all the everyday work, and Who-Is / I-Am discovery. The
+  priority array gets its own worked example — sixteen slots, lowest
+  non-null wins — plus the field trap it defuses: a "broken" sequence
+  is often a forgotten slot-8 override, and writing null releases it
+  rather than overwriting. MS/TP vs BACnet/IP is same protocol,
+  different wrapper; cross-router discovery and BBMDs defer to the
+  BACnet Networking companion. Pairs with a practice quiz.
+- **BACnet Networking** — the other half of BACnet Basics: how
+  devices on different networks find each other, and why discovery
+  fails with no error when they don't. Three addresses for one
+  device (only the instance number survives a re-IP), the
+  BVLL/NPDU/APDU frame, BBMDs with the asymmetric-BDT and
+  two-BBMDs-on-one-subnet traps, Foreign Device Registration and
+  its silently expiring TTL, and decoding the hex-blob device
+  address some workstations show (the context behind the BACnet/IP
+  Hex Converter tool). Closes with a field-ordered checklist for
+  "I can't see a device I expect to see."
+- **BACnet MS/TP** — why devices fall off an MS/TP trunk, as three
+  layers that each fail differently: the token ring (`Max_Master`'s
+  capped-ring silent failure — the correctly wired controller at
+  MAC 45 that's simply never polled), addressing (MAC vs device
+  instance, and the duplicate-MAC devices-take-turns-offline
+  symptom), and the two wires (daisy-chain only, exactly two 120 Ω
+  EOLs, single-point bias, and the A/B polarity-label trap — trust
+  the + and −). Ends with a symptom → layer table and a two-tier
+  budget rule: past the vendor's figure it *could* be a problem,
+  past the standard's 4000 ft / 32-unit-load figure it *is*.
 
 ### Practice
 
@@ -185,8 +427,8 @@ flavors share the same engine:
   When a topic recurs in feedback, it becomes a candidate for a
   new education page.
 
-Shipped so far — eight content quizzes (each 10 questions, paired
-1:1 with its lesson and deep-linking the gotchas) plus two field
+Shipped so far — sixteen content quizzes (each 10 questions, paired
+1:1 with its lesson and deep-linking the gotchas) plus five field
 drills:
 
 - **Content quizzes — protocols:** Modbus Basics, Modbus Decoding,
@@ -195,9 +437,25 @@ drills:
   the self-describing object model and priority array, and the
   three-layer addressing with BBMDs and Foreign Device Registration.
 - **Content quizzes — hydronics:** Pump Control, Hydronic Loops,
-  Load Piping, Hydronic Balancing. The operating point and affinity
-  laws, direct/reverse return and the primary-secondary twin-T,
-  two-way vs three-way flow, and the CBV / ABV / PICV families.
+  Load Piping, Hydronic Balancing, Equipment Staging. The operating
+  point and affinity laws, direct/reverse return and the
+  primary-secondary twin-T, two-way vs three-way flow, the
+  CBV / ABV / PICV families, and the stage-up/stage-down deadband
+  with lead rotation for even wear.
+- **Content quizzes — controls:** PID Basics, VFDs, Function Blocks.
+  The droop P leaves and how integral erases it, the rectifier /
+  DC-bus / inverter power stages and the run-command vs.
+  speed-reference trap, and blocks, pins, wire types, and how a
+  scan resolves feedback.
+- **Content quizzes — refrigeration:** Refrigerant Cycle Basics,
+  Superheat & Subcooling, TXVs vs. EEVs. The four components and
+  the pressure-temperature saturation lock, which line each
+  measurement lives on and what a high or low reading points
+  toward, and the mechanical TXV force balance vs. the electronic
+  EEV control loop.
+- **Content quizzes — psychrometrics:** Psychrometrics Basics.
+  Seven properties, why any two lock the rest, the four chart
+  process families, and the RH / dew-point / enthalpy gotchas.
 - **Surviving Your First Months** *(field drill)* — a broad sampler
   for techs in their first few months: LOTO and verify-on-known-live,
   the 4-20 mA live-zero wire-break signature, DMM continuity mode,
@@ -207,6 +465,25 @@ drills:
   MS/TP address and BACnet device instance, EOL termination, config
   backup, application download, graphics re-bind, and commissioning
   the sequence (not just confirming the points read).
+- **Field Wiring & Sensors** *(field drill)* — the layer where the
+  signal meets copper, which bites before any logic runs: thermistor
+  vs. RTD curves and 3-wire lead compensation, what an AI reads vs.
+  what an AO drives, loop-powered 2-wire transmitters, the mA →
+  engineering-units scaling math, shield bonded at one end only,
+  and which way an open thermistor drives the displayed temperature.
+- **Sequencing Scenarios** *(field drill)* — how real sequences of
+  operation behave: chiller and boiler plant staging and why the
+  stage-up/stage-down deadband is wide, lead/lag rotation, dry-bulb
+  vs. enthalpy economizer changeover (and the mixed-air low limit
+  missing on a freezing morning), the overcool-and-reheat
+  dehumidification cascade, and condensing-boiler return-water
+  logic.
+- **Troubleshooting** *(field drill)* — symptom → most-likely-cause
+  reasoning across the trade; the skill drilled is reading what a
+  symptom rules in and out: a pingable-but-undiscoverable BACnet
+  device, Modbus exceptions vs. a byte-order-garbled float, low-ΔT
+  syndrome, an air-bound top-floor coil, low superheat vs. high
+  subcooling, and a VFD that trips on start.
 
 ## How it's built
 
@@ -255,14 +532,25 @@ from now will still run it.
   shared helpers expose globals like `Units`, `simulatePid`, and
   `FlowEngine` that page IIFEs reach for by name). Most pages
   load them per-page with `<script src="/scripts/xxx.js"></script>`
-  before the inline `<script>`; `theme.js`, `search.js`,
+  before the inline `<script>`; `theme.js`, `units.js`, `search.js`,
   `nav-menu.js`, `flow-engine.js`, `schematic-bg.js`, and
-  `fullscreen-toggle.js` are loaded site-wide by the layout (theme
-  toggle, command palette, nav dropdowns + mobile hamburger, gutter
-  art, fullscreen — all on every page).
+  `fullscreen-toggle.js` are loaded site-wide by the layout (theme +
+  units toggles, command palette, nav dropdowns + mobile hamburger,
+  gutter art, fullscreen — all on every page).
   - `pid-engine.js` — FOPDT process model + PID controller with
     conditional-integration anti-windup. Drives the PID Tuning
     Helper simulator and the three PID Basics mini-sims.
+  - `pid-chart.js` — the shared step-response canvas drawer + the
+    unit-aware delta formatter both PID surfaces use.
+  - `psychro-engine.js` — the psychrometric property core (dry-bulb /
+    wet-bulb / RH / dew point / enthalpy at altitude) behind the
+    chart tool, air-mixing, coil-sizing, dew-point,
+    economizer-ratio, and the psychrometrics lesson's widgets
+    (`psy-widget.js` wraps the lesson-side rendering).
+  - `hydronic-engine.js` — steady-state hydraulic + thermal solver
+    behind the Hydronic Loop Builder: pump curves, pipe / valve /
+    coil resistances, and the operating-point solve on the
+    assembled loop.
   - `fbe-engine.js` — function-block catalog + per-tick evaluator
     behind the Function-Block Editor simulator.
   - `wiring-engine.js` — pure circuit solver behind the Controller
@@ -285,11 +573,17 @@ from now will still run it.
   - `search.js` — the site-wide command palette (`window.Palette`).
     Fetches the build-time `/search-index.json` once and ranks it;
     opens on `/`, `Ctrl`/`⌘-K`, or the nav search button.
-  - `nav-menu.js` — the Tools / Simulators / Education nav dropdowns
-    and the mobile hamburger (`window.NavMenu`); the dropdown link
-    lists are generated at build time from per-section collections.
-  - `thermistor-data.js` — sensor R/T curves consumed by the
-    Thermistor Lookup tool.
+  - `nav-menu.js` — the Tools / Simulators / Education / Practice
+    nav dropdowns (two-level category rows on Tools, Education, and
+    Practice) and the mobile hamburger (`window.NavMenu`); the
+    dropdown link lists are generated at build time from per-section
+    collections.
+  - `units.js` + `ui.js` — the site-wide US/metric display toggle
+    (`data-us`/`data-metric` spans + `Units.display` helpers) and
+    the small shared UI helpers (tab switching, copy buttons).
+  - `thermistor-data.js` / `refrigerant-data.js` — sensor R/T curves
+    and refrigerant P-T saturation tables, the data files behind the
+    Thermistor Calculator and Refrigerant P-T tools.
   - `quiz-engine.js` — engine behind the Practice section. Owns
     DOM construction (settings row, progress, prompt panel,
     choices / numeric input, reveal panel, results card) inside a
