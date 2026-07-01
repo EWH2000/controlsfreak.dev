@@ -8,13 +8,14 @@
    two-level disclosure off the .nav-menu-toggle / .nav-group-toggle /
    .nav-submenu classes. All data is passed as args, so the macro needs
    no `with context`. #}
-{% macro navDropdown(section, label, landing, active, groups, flat) %}
+{% macro navDropdown(section, label, landing, active, groups, flat, blurb) %}
         <div class="nav-item nav-item--has-menu">
             <a href="{{ landing }}"{% if active %} class="active"{% endif %}>{{ label }}</a>
             <button type="button" class="nav-menu-toggle" id="nav-{{ section }}-toggle" aria-expanded="false" aria-controls="nav-{{ section }}-menu" aria-label="Toggle {{ label }} menu">
                 <svg class="nav-caret" viewBox="0 0 10 6" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M1 1l4 4 4-4"/></svg>
             </button>
             <div class="nav-menu" id="nav-{{ section }}-menu" hidden>
+                {% if blurb %}<p class="nav-menu-blurb">{{ blurb }}</p>{% endif %}
                 {% if groups %}
                 {% for g in groups %}
                 <div class="nav-menu-group">

@@ -536,6 +536,21 @@ main { flex: 1; }
 }
 .nav-menu .nav-menu-item:last-child { border-bottom: none; }
 .nav-menu .nav-menu-item:hover { color: var(--text-bright); background: var(--accent-dim); }
+/* G-011: a one-line "what's in here" blurb at the top of each dropdown so a
+   newcomer can tell from the nav that Simulators/Practice are approachable,
+   not advanced — before clicking through to the landing intro. */
+.nav-menu-blurb {
+    margin: 0;
+    padding: 0.55rem 1rem;
+    border-bottom: 1px solid var(--border-faint);
+    font-family: var(--mono);
+    font-size: 0.66rem;
+    line-height: 1.45;
+    letter-spacing: 0.02em;
+    color: var(--text-dim);
+    white-space: normal;
+    max-width: 240px;
+}
 
 /* ── NAV CATEGORY GROUPS (level-2 disclosure) ────────────────────────
    Inside a categorized section's .nav-menu (Tools / Education /
