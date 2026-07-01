@@ -645,6 +645,11 @@ section headers).
    annotate each hit `*(shipped YYYY-MM-DD)*` — nine markers went
    stale between audits because shipping skipped this step
    (audit-2026-06 docs sweep).
+5b. Add the page's bullet to `README.md`'s tour (Tools / Simulators /
+   Education list, or the Practice groups + counts). The tour reads
+   as exhaustive, and this step wasn't in the checklist — which is
+   how the README drifted 24 page bullets (plus the Practice counts:
+   8 quizzes and 3 drills unlisted) behind by 2026-07-01.
 6. Consider bumping the home-page hero's `Latest: <name>` badge
    to point at the new tool — `html/index.html`, the last entry
    in `.hero-badges`. Editorial pick; skip on small revisions.
@@ -699,7 +704,10 @@ frontmatter and the new `.nav-card` added to
 6. Add the new URL to `PAGES` in `tests/smoke.spec.js`; consider
    a behavioral spot-check for any new format the engine hasn't
    exercised yet.
-7. Same `Latest:` badge + `package.json.version` rules as tools.
+7. Add the quiz/drill to `README.md`'s Practice groups and bump its
+   count sentence (same reason as tools step 5b — the tour is
+   exhaustive).
+8. Same `Latest:` badge + `package.json.version` rules as tools.
 
 ## Git conventions
 

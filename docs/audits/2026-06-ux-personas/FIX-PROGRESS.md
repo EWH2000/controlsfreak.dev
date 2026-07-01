@@ -4,6 +4,40 @@ Tracks the implementation of `findings.md` (the 2026-06 ten-persona UX
 audit). **`findings.md` is the master finding list; this file is the
 live disposition tracker.** Update it as findings land.
 
+## DISPOSITION — CAMPAIGN CLOSED (2026-07-01)
+
+**All 86 findings are dispositioned: shipped or formally closed. There is
+no open UX-audit work to resume.** Final merge state (`main` at v3.23.0):
+
+- **Merged:** #281 (four clusters), #282 (hydronic phase-2), #283
+  (methodology one-liners), then the long-tail batches all merged
+  2026-07-01 — **#284** education teachability (E-006/011/012), **#285**
+  tool qualifiers (T-004/024/026/028), **#286** practice polish
+  (P-002/006/009/**010** — the drill format pill was implemented after
+  all), **#287** seeded-demo cue (T-011), **#288** S-008/S-009 lighter
+  halves + G-005 (and found **G-008**'s next increment already satisfied —
+  the named lessons gloss their acronyms inline; closed, no navCard
+  `<abbr>` extension needed), **#289** Next/Previous lesson pager
+  (E-016), **#290** nav dropdown blurbs (G-011) + G-013 logged as
+  codebase-issues #139, and **#291** the bump-test SIMC starting-gains
+  path (**S-001** — the last build item).
+- **Closed without code (owner-dispositioned):** E-001 (psychro intro
+  tone — deferred, not selected), E-004 (paired MS/TP quiz — deferred
+  until that quiz ships as a feature), E-015 (exact vendor palette names —
+  won't-do, platform-agnostic content stance), S-002/S-006 (FBE export /
+  PID block pins — deferred features), the heavier halves of S-008/S-009
+  (FBE hysteresis block, staging copyable summary — deferred), G-009
+  (hero acronyms — deliberate), G-012 (silent copy-fail — kept by
+  design), P-011 (Field Drills topic chip — documented intent).
+- **Tracked elsewhere:** G-013's remaining half (uniform engine-missing
+  degradation) → `codebase-issues.md` #139.
+- **Protect-notes (no action by design):** E-017, G-010, G-014.
+
+Current full-suite baseline: **375 pass / 1 skip** (373 after #289's
+pager tests + 2 from #291's starting-gains tests). Everything below this
+line is the historical session log, kept as the durable record — counts
+and "next" pointers in it are point-in-time and superseded by this block.
+
 ## Branch / base — READ FIRST
 
 - **The original audit branch `fix/ux-audit-2026-06` is RETIRED.** Its work
@@ -18,9 +52,11 @@ live disposition tracker.** Update it as findings land.
   branch — editing the pre-phase-2 file would conflict/regress.
 - **Each subsequent batch branches fresh off current `origin/main`** under its
   own `fix/ux-audit-<slug>` name with its own PR (the audit is no longer one
-  long-lived branch). Current batch: **`fix/ux-audit-methodology`** (the
-  methodology one-liners). Bump the version per PR only if a versioned asset
-  (`styles.css` / a site-wide script) actually changes.
+  long-lived branch). ~~Current batch: **`fix/ux-audit-methodology`** (the
+  methodology one-liners).~~ *(merged as #283; every later batch also merged —
+  see DISPOSITION above; all batch branches deleted)* Bump the version per PR
+  only if a versioned asset (`styles.css` / a site-wide script) actually
+  changes.
 
 ## Next session — START HERE
 
@@ -32,8 +68,8 @@ on 2026-06-22**, then the audit branch was retired (see *Branch / base* above).
 the four clusters"). Two batches shipped so far: **methodology one-liners**
 (T-018–023/029, S-003/04/05/07, E-005/07/09/10) **merged as PR #283**
 (2026-06-27), and the **education teachability batch** (E-006/011/012) on
-`fix/ux-audit-education-pedagogy` (2026-06-27, PR pending owner review, do not
-merge). **Next:** the still-open items — **sim features** (S-001/02/06/08/09)
+`fix/ux-audit-education-pedagogy` (2026-06-27; ~~PR pending owner review, do
+not merge~~ *merged as #284 on 2026-07-01*). **Next:** the still-open items — **sim features** (S-001/02/06/08/09)
 and the **G-/T-/P- misc set** are the next clean content batch. Four education
 items are intentionally NOT in the teachability batch — each needs an owner call
 or its own PR: **E-001** (psychro intro tone, owner previously deferred),
@@ -68,7 +104,7 @@ and the **full expert-output-UX cluster** (T-005/006/008/009/010/016/025/027).
    harness's own task shells (their argv contains that string → exit 144); kill
    the server by PID (`SRV=$!; … kill $SRV`) or `fuser -k 18473/tcp` instead.
 
-## Status: ~58 of 86 resolved (4 clusters #281 + methodology + education teachability) · main v3.22.0
+## Status: ~~~58 of 86 resolved · main v3.22.0~~ FINAL: 86/86 dispositioned (see DISPOSITION above) · main v3.23.0
 
 All commits built clean and passed the full Playwright suite (361 pass /
 1 skip). Honesty paths, hero on-ramp, palette zero-state, nav affordance,

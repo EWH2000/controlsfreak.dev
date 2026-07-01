@@ -3476,7 +3476,7 @@ three delta rules (pad, `.ok` text-bright, `.edge`); `.warn` now comes
 from the base. The styles.css block comment and the CLAUDE.md
 status-pill bullet name dew-point as the ride-the-base variant.
 
-### 81. Light-theme accent tokens fail AA as foreground text across practice, chrome, and status pills
+### 81. Light-theme accent tokens fail AA as foreground text across practice, chrome, and status pills *(addressed 2026-06-10)*
 
 Cross-filed from `docs/audits/2026-06-extensive/findings.md` #11 / #12 / #13 (2026-06-10), plus
 the dark-theme `--text-dim` polish item from the same audit. Three
@@ -3523,7 +3523,7 @@ quiz CTA 2.42→5.52, GO pill 2.06→4.85, eyebrow 3.86→4.64,
 status-pill warn 3.11→4.95, active tab 4.40→5.28, dark TH
 3.97→4.81.
 
-### 82. Palette ranking: title-prefix bonus outranks section relevance ("superheat" puts the calculator third)
+### 82. Palette ranking: title-prefix bonus outranks section relevance ("superheat" puts the calculator third) *(addressed 2026-06-10)*
 
 Cross-filed from `docs/audits/2026-06-extensive/findings.md` #16 (2026-06-10). In `search.js`
 `rank()`, `title.startsWith(query)` (+100) dominates and
@@ -3550,7 +3550,7 @@ tool keyword match). Verified across seven representative queries:
 tool/simulator; "hydronic"/"balancing" (no tool) still lead with the
 lesson. Pinned in nav-search.spec.js.
 
-### 83. No tool state survives a reload — preset-class selects could persist under the existing `cf_` convention
+### 83. No tool state survives a reload — preset-class selects could persist under the existing `cf_` convention *(addressed 2026-06-10)*
 
 Cross-filed from `docs/audits/2026-06-extensive/findings.md` #18 (2026-06-10, verifier:
 low-medium). refrigerant-pt forgets the selected refrigerant on every
@@ -3581,7 +3581,7 @@ strict-validate-on-read shape; garbage in storage falls back to the
 markup default. privacy.html lists the new keys per the #52 rule.
 Smoke test pins reload-persistence + the garbage fallback.
 
-### 84. Static assets ship `max-age=0, must-revalidate` and nothing is version-busted
+### 84. Static assets ship `max-age=0, must-revalidate` and nothing is version-busted *(addressed 2026-06-10)*
 
 Cross-filed from `docs/audits/2026-06-extensive/findings.md` #32 (2026-06-10). Production
 serves `/styles.css`, all `/scripts/*`, and `/assets/*` with the
@@ -3619,7 +3619,7 @@ minutes and fixed with `run_worker_first: true`. If those globs ever
 look tempting again: they change miss-path semantics, not just
 ordering.
 
-### 85. First paint is render-blocked by third-party Google Fonts CSS
+### 85. First paint is render-blocked by third-party Google Fonts CSS *(addressed 2026-06-10)*
 
 Cross-filed from `docs/audits/2026-06-extensive/findings.md` #33 (2026-06-10). The
 render-blocking fonts.googleapis.com stylesheet delays FCP one-for-one
@@ -3647,7 +3647,7 @@ The Google links left head.njk; the privacy policy's Google Fonts
 section is gone per the owner's instruction. LICENSE.txt accompanies
 the files; they're immutable-by-name for the #84 caching rule.
 
-### 86. `canonical`/`og:url` point through the `.html`→clean 307
+### 86. `canonical`/`og:url` point through the `.html`→clean 307 *(addressed 2026-06-10)*
 
 Cross-filed from `docs/audits/2026-06-extensive/findings.md` (redirected item, 2026-06-10).
 The `.html`-extension convention *including* the Worker redirect is
@@ -3670,7 +3670,7 @@ fallout), or record in CLAUDE.md that the 307-through is accepted.
 in CLAUDE.md's `.html`-extension convention bullet with the revisit
 trigger (a Search Console canonical-confusion signal).
 
-### 87. smoke.spec.js serializes ~154 s of the suite's ~196 test-seconds into one worker
+### 87. smoke.spec.js serializes ~154 s of the suite's ~196 test-seconds into one worker *(addressed 2026-06-10)*
 
 Cross-filed from `docs/audits/2026-06-extensive/findings.md` (tests polish, 2026-06-10).
 Playwright parallelizes across files by default; the monolithic
@@ -3701,7 +3701,7 @@ reset-best under full-suite load, ~4 sightings pre-parallelism) has
 not reproduced under the new scheduling across 2 full runs + 12
 repeats; watch, and root-cause if it returns.
 
-### 88. Tools nav dropdown sorts by slug while 13 of 14 labels read alphabetically
+### 88. Tools nav dropdown sorts by slug while 13 of 14 labels read alphabetically *(addressed 2026-06-10)*
 
 Cross-filed from `docs/audits/2026-06-extensive/findings.md` (power-user polish, 2026-06-10).
 The dropdown order comes from the deliberate-for-diff-stability
@@ -3724,7 +3724,7 @@ the slug-sort was recorded.
 `cleanTitle` (equally diff-stable), the comment records the why, and a
 nav-menu.spec test pins the title order so it can't regress.
 
-### 89. A fast 5/5 short quiz run silently overwrites a 10/10 full-run best
+### 89. A fast 5/5 short quiz run silently overwrites a 10/10 full-run best *(addressed 2026-06-10)*
 
 Cross-filed from `docs/audits/2026-06-extensive/findings.md` (student polish, 2026-06-10).
 `quiz-engine.js` `finish()` compares score ratio then elapsed time
@@ -3777,7 +3777,7 @@ the playhead already rode rAF; now the chart redraw + overlay resize
 do too. themechange listeners left synchronous (a discrete click, not
 an event storm).
 
-### 91. PID tuner chart y-axis is unconverted and unlabeled in metric
+### 91. PID tuner chart y-axis is unconverted and unlabeled in metric *(addressed 2026-06-10)*
 
 Cross-filed from `docs/audits/2026-06-extensive/findings.md` (metric polish, 2026-06-10;
 downgraded from medium in audit verification). The LCD-stays-canonical
@@ -3804,7 +3804,7 @@ Units.display (temp or staticPressure) and draws a unit tag inside
 the plot's top-left (mirroring the SP tag); the tuner redraws on
 unitschange. Verified by metric screenshots of both axis flavors.
 
-### 92. Nav `category` lives in two unlinked sources *(open — 2026-06-14)*
+### 92. Nav `category` lives in two unlinked sources *(deferred 2026-06-14)*
 
 The cascading nav dropdowns group pages by a `category` frontmatter key
 (read by the `navGroups` filter into `NAV_CATEGORIES`). The section
@@ -4420,6 +4420,62 @@ logged here rather than swept inline — propagate voltage-drop's `typeof` guard
 to the engine-dependent pages in a future defensive-degradation sweep. The
 palette half of the same finding (search-index fetch failure) is already
 handled (#119). Low priority.
+
+### 140. `.nav-menu-blurb` bottom rule is narrower than an expanded dropdown panel *(open — 2026-07-01)*
+
+The section-dropdown blurbs (G-011, PR #290) cap at `max-width: 240px`,
+and the `border-bottom` that separates the blurb from the category rows
+spans only those 240px. When a level-2 category expands and widens the
+panel past ~300px, the rule can read as a "short rule" against the wider
+rows below. In practice the adjacent category row's top edge masks it —
+the post-merge spot-check (2026-07-01) had to zoom 2× to see it — so
+this is cosmetic only. Fix shape: move the border to a full-width
+wrapper (or the menu's `::before`) and keep the `max-width` on an inner
+text span. Log-don't-sweep; pick up if anyone notices it in the field.
+
+### 141. Education SVG captions are inline-styled — `.edu-caption` promotion candidate *(open — 2026-07-01)*
+
+From the 2026-05 content-audit refinement pass ("Code items split to
+codebase-issues.md," batch 4 — flagged "worth an entry once the
+editorial direction is picked," then never logged; this entry pays that
+debt). The in-SVG `<text>` labels on the education flow diagrams
+("supply main →", "← return main") are styled via per-element
+presentation attributes with similar-but-not-identical shapes across
+hydronic-loops, load-piping, and pump-control. If the label pattern is
+canonized, promote a shared `.edu-caption` class to `styles.css` and
+sweep the three pages. (The sibling candidate from the batch-2 sweep,
+`.narrow-width-note`, was since promoted — `styles.css` ~line 2022,
+four consumer pages — so this is the remaining education half.)
+
+### 142. Preset/example chip rows: two per-page stragglers off the shared `.widget-try` *(open — 2026-07-01)*
+
+The other never-logged candidate, from the content-audit Batch 3
+(Simulators) "Code items split" section. Since it was flagged, most of
+the consolidation actually happened: five of the six simulators carry
+an examples/preset chip row, and three of those (vfd-mock `#vfdm-try`,
+function-block-editor `#fbe-examples`, hydronic-loop-builder
+`#hlb-examples`) already share the `.widget-try` class in `styles.css`
+(WIDGET CHROME, ~line 3229). The stragglers are pid-tuner's preset row
+(`.copy-btn` chips in a `.btn-row`) and controller-wiring's
+`.cw-preset`; tool-side mode-toggle chip rows (e.g. refrigerant-pt's
+Pressure/Temperature and Suction/Liquid toggles, also
+`.copy-btn`-in-`.btn-row`) are a related but semantically different
+shape — toggles, not presets. Candidate action: migrate the two preset
+stragglers onto `.widget-try`, and decide whether toggle rows deserve
+their own shared class. Pairs naturally with #143 — an a11y sweep of
+the same rows would ride the same PR.
+
+### 143. Chip-row toggles convey selection visually only — no `aria-pressed` *(open — 2026-07-01)*
+
+PR #291 (S-001) shipped the PID tuner's new Seconds/Minutes unit
+toggle with `aria-pressed`, but the sibling preset chips on the same
+page (Sluggish / Decent PI / Aggressive / Too Hot) — and chip-row
+selections elsewhere — still flip only the `.active` class, so the
+current selection is invisible to assistive tech while the visual state
+is load-bearing. Decide the pattern (per-chip `aria-pressed` like the
+nav units/theme pills, vs `role="radiogroup"` semantics for
+mutually-exclusive rows) and sweep chip rows site-wide. Rides naturally
+with #142's consolidation.
 
 ### Deferred / Won't fix (with revisit trigger)
 
