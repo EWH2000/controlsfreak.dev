@@ -38,9 +38,10 @@ test('spoiler gate hides the cheat sheets while metrics + chart stay visible', a
     await expect(page.locator('.pid-spoiler .ref-table')).toBeHidden();
     await expect(page.locator('.pid-spoiler .ref-table-dense')).toBeHidden();
     // …but the chart and the metrics — feedback on your own tuning, not the
-    // answer key — stay visible regardless.
+    // answer key — stay visible regardless. Scope to the metrics row: the
+    // bump-test starting-gains calculator adds a second .bit-readouts.
     await expect(page.locator('#pid-canvas')).toBeVisible();
-    await expect(page.locator('.bit-readouts')).toBeVisible();
+    await expect(page.locator('.bit-readouts', { has: page.locator('#pid-over') })).toBeVisible();
 
     // Reveal opens the cheat sheets.
     await page.locator('.pid-spoiler summary').click();

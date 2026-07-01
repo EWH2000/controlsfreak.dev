@@ -173,6 +173,57 @@ test('pid tuner — high dead-time process reaches the unstable regime', async (
     expect(errors, 'pid high-dead-time behavioral should log no page / console errors').toEqual([]);
 });
 
+test('pid tuner — bump-test starting gains compute, restyle, and mute', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('/simulators/pid-tuner.html');
+    // Seeded example (ΔCO 10 %, ΔPV 10 %, τ 120 s, θ 15 s) is arranged to land
+    // on the Decent PI preset: SIMC with λ = 3θ → Kc 2.00, Ti 2 min = reset 0.50.
+    await expect(page.locator('#pid-sg-kc')).toHaveText('2.00');
+    await expect(page.locator('#pid-sg-ti')).toHaveText('0.50');
+    // Parameter Style flip re-reads the same result in EBO seconds.
+    await page.selectOption('#pid-conv', 'timeSec');
+    await expect(page.locator('#pid-sg-ti-lbl')).toHaveText('Integral time (Ti, s)');
+    await expect(page.locator('#pid-sg-ti')).toHaveText('120');
+    // Minutes toggle rescales the entered times: same Kc (ratio is unit-free),
+    // Ti now min(120 min, 240 min) = 120 min = 7200 s.
+    await page.click('#pid-sg-unit-min');
+    await expect(page.locator('#pid-sg-tau-unit')).toHaveText('min');
+    await expect(page.locator('#pid-sg-kc')).toHaveText('2.00');
+    await expect(page.locator('#pid-sg-ti')).toHaveText('7200');
+    // Validate-and-mute: a blank τ empties both readouts and the note.
+    await page.fill('#pid-sg-tau', '');
+    await expect(page.locator('#pid-sg-kc')).toHaveText('—');
+    await expect(page.locator('#pid-sg-ti')).toHaveText('—');
+    // PV against an upward output step = negative process gain (cooling-style):
+    // magnitudes drive the math, and the note flags DIRECT-acting.
+    await page.fill('#pid-sg-tau', '120');
+    await page.fill('#pid-sg-dpv', '-10');
+    await expect(page.locator('#pid-sg-note')).toContainText('direct-acting');
+    await expect(page.locator('#pid-sg-kc')).toHaveText('2.00');
+    // A downward bump entered as trended (ΔCO and ΔPV both negative) is a
+    // positive-gain loop: same magnitudes, no acting-direction flag.
+    await page.fill('#pid-sg-dco', '-10');
+    await expect(page.locator('#pid-sg-kc')).toHaveText('2.00');
+    await expect(page.locator('#pid-sg-note')).not.toContainText('direct-acting');
+    // θ = 0 is the predictable field entry — muted readouts plus a pointer.
+    await page.fill('#pid-sg-dead', '0');
+    await expect(page.locator('#pid-sg-kc')).toHaveText('—');
+    await expect(page.locator('#pid-sg-note')).toContainText('sample interval');
+    expect(errors, 'pid starting-gains behavioral should log no page / console errors').toEqual([]);
+});
+
+test('pid tuner — preset chips leave the bump-test unit toggle alone', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('/simulators/pid-tuner.html');
+    // The preset handler clears .active by [data-preset] scope; the unit
+    // toggle shares the chip chrome and must keep its own selection.
+    await page.click('#pid-sg-unit-min');
+    await page.click('#pid-preset-aggr');
+    await expect(page.locator('#pid-sg-unit-min')).toHaveClass(/active/);
+    await expect(page.locator('#pid-preset-aggr')).toHaveClass(/active/);
+    expect(errors, 'pid preset/unit-toggle isolation should log no page / console errors').toEqual([]);
+});
+
 test('staging sequencer — high demand stages units up and logs the event', async ({ page }) => {
     const errors = watchErrors(page);
     await page.goto('/simulators/staging-sequencer.html');
