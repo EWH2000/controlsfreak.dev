@@ -2742,6 +2742,15 @@ p.chip-row-preamble {
     letter-spacing: 0.08em;
     font-size: 0.74rem;
 }
+/* A perfect run that didn't beat a longer stored best still gets a green
+   'flawless' nod (P-006). Distinct hue from the amber new-best so the two
+   acknowledgements read as different things. */
+.quiz-results-flawless {
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.74rem;
+}
 .quiz-results-misses-heading {
     font-family: var(--mono);
     font-size: 0.78rem;
