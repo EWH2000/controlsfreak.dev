@@ -2266,3 +2266,36 @@ test('refrigerant and sensor-type choices survive a reload', async ({ page }) =>
 
     expect(errors, 'preset persistence should log no errors').toEqual([]);
 });
+
+// E-016: the visible lesson pager, driven by educationSequence.js (the same
+// data head.njk uses for rel=prev/next). First lesson has next only, last has
+// prev only, a mid lesson has both; tool pages get no pager.
+test.describe('lesson sequence pager (E-016)', () => {
+    test('first lesson shows only Next', async ({ page }) => {
+        await page.goto('/education/pid-basics.html');
+        await expect(page.locator('.lesson-seq-prev')).toHaveCount(0);
+        const next = page.locator('.lesson-seq-next');
+        await expect(next).toHaveAttribute('href', '/education/controller-wiring.html');
+        await expect(next).toContainText('Next lesson');
+    });
+
+    test('a mid lesson shows both Prev and Next in order', async ({ page }) => {
+        await page.goto('/education/hydronic-loops.html');
+        await expect(page.locator('.lesson-seq-prev'))
+            .toHaveAttribute('href', '/education/controller-wiring.html');
+        await expect(page.locator('.lesson-seq-next'))
+            .toHaveAttribute('href', '/education/load-piping.html');
+    });
+
+    test('last lesson shows only Prev', async ({ page }) => {
+        await page.goto('/education/bacnet-mstp.html');
+        await expect(page.locator('.lesson-seq-next')).toHaveCount(0);
+        await expect(page.locator('.lesson-seq-prev'))
+            .toHaveAttribute('href', '/education/bacnet-networking.html');
+    });
+
+    test('non-curriculum pages get no pager', async ({ page }) => {
+        await page.goto('/tools/signal-scaling.html');
+        await expect(page.locator('.lesson-seq')).toHaveCount(0);
+    });
+});
