@@ -4438,30 +4438,37 @@ text span. Log-don't-sweep; pick up if anyone notices it in the field.
 From the 2026-05 content-audit refinement pass ("Code items split to
 codebase-issues.md," batch 4 — flagged "worth an entry once the
 editorial direction is picked," then never logged; this entry pays that
-debt). Captions under the education flow diagrams ("← supply main,
-return main →") are inline-styled with similar-but-not-identical shapes
-across hydronic-loops, load-piping, and pump-control. If the caption
-pattern is canonized, promote a shared `.edu-caption` class to
-`styles.css` and sweep the three pages. (The sibling candidate from the
-same sweep, `.narrow-width-note`, was since promoted — `styles.css`
-~line 2022, four consumer pages — so this is the remaining education
-half.)
+debt). The in-SVG `<text>` labels on the education flow diagrams
+("supply main →", "← return main") are styled via per-element
+presentation attributes with similar-but-not-identical shapes across
+hydronic-loops, load-piping, and pump-control. If the label pattern is
+canonized, promote a shared `.edu-caption` class to `styles.css` and
+sweep the three pages. (The sibling candidate from the batch-2 sweep,
+`.narrow-width-note`, was since promoted — `styles.css` ~line 2022,
+four consumer pages — so this is the remaining education half.)
 
-### 142. Preset/try-chip rows are per-page shapes — consolidation candidate *(open — 2026-07-01)*
+### 142. Preset/example chip rows: two per-page stragglers off the shared `.widget-try` *(open — 2026-07-01)*
 
-The other never-logged candidate from the same content-audit pass: the
-"Try a …" preset-chip row recurs across the three simulators,
-refrigerant-pt, and several tools as per-page variants (`.try-chip`
-shapes, pid-tuner's `.copy-btn`-in-`.btn-row`). A shared `styles.css`
-chip class would consolidate them, but needs the convention pick first:
-which shape is canonical, and whether the chip is a link, a button, or
-a toggle in each home. Pairs naturally with #143 — an a11y sweep of the
-same rows would ride the same PR.
+The other never-logged candidate, from the content-audit Batch 3
+(Simulators) "Code items split" section. Since it was flagged, most of
+the consolidation actually happened: five of the six simulators carry
+an examples/preset chip row, and three of those (vfd-mock `#vfdm-try`,
+function-block-editor `#fbe-examples`, hydronic-loop-builder
+`#hlb-examples`) already share the `.widget-try` class in `styles.css`
+(WIDGET CHROME, ~line 3229). The stragglers are pid-tuner's preset row
+(`.copy-btn` chips in a `.btn-row`) and controller-wiring's
+`.cw-preset`; tool-side mode-toggle chip rows (e.g. refrigerant-pt's
+Pressure/Temperature and Suction/Liquid toggles, also
+`.copy-btn`-in-`.btn-row`) are a related but semantically different
+shape — toggles, not presets. Candidate action: migrate the two preset
+stragglers onto `.widget-try`, and decide whether toggle rows deserve
+their own shared class. Pairs naturally with #143 — an a11y sweep of
+the same rows would ride the same PR.
 
 ### 143. Chip-row toggles convey selection visually only — no `aria-pressed` *(open — 2026-07-01)*
 
-The S-001 review (PR #291) added `aria-pressed` to the PID tuner's new
-Seconds/Minutes unit toggle, but the sibling preset chips on the same
+PR #291 (S-001) shipped the PID tuner's new Seconds/Minutes unit
+toggle with `aria-pressed`, but the sibling preset chips on the same
 page (Sluggish / Decent PI / Aggressive / Too Hot) — and chip-row
 selections elsewhere — still flip only the `.active` class, so the
 current selection is invisible to assistive tech while the visual state

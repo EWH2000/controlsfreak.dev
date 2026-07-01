@@ -330,7 +330,8 @@ techs new to the industry and anyone wanting a refresh.
   or bubble column — the split that matters on blends with glide).
   Each deviation direction gets its fault family — low superheat →
   floodback, high → starved evaporator; low subcooling → undercharge
-  or flash gas, high → overcharge or a restricted liquid line — with
+  (low enough and flash gas reaches the liquid line), high →
+  overcharge or a restricted liquid line — with
   the caveat that the data plate's targets beat any rule of thumb.
   Worked R-410A example replays in the P-T tool; paired quiz.
 - **TXVs vs. EEVs** — opens the box on the metering device that
@@ -546,7 +547,9 @@ from now will still run it.
     wet-bulb / RH / dew point / enthalpy at altitude) behind the
     chart tool, air-mixing, coil-sizing, dew-point,
     economizer-ratio, and the psychrometrics lesson's widgets
-    (`psy-widget.js` wraps the lesson-side rendering).
+    (`psy-widget.js` wraps the tools' shared "Define by"
+    second-property widget; the lesson's widgets sit directly on
+    the engine).
   - `hydronic-engine.js` — steady-state hydraulic + thermal solver
     behind the Hydronic Loop Builder: pump curves, pipe / valve /
     coil resistances, and the operating-point solve on the
@@ -583,7 +586,8 @@ from now will still run it.
     the small shared UI helpers (tab switching, copy buttons).
   - `thermistor-data.js` / `refrigerant-data.js` — sensor R/T curves
     and refrigerant P-T saturation tables, the data files behind the
-    Thermistor Calculator and Refrigerant P-T tools.
+    Thermistor Calculator and Refrigerant P-T tools (the voltage-drop
+    tool reads the same R/T curves for its sensor-lead error).
   - `quiz-engine.js` — engine behind the Practice section. Owns
     DOM construction (settings row, progress, prompt panel,
     choices / numeric input, reveal panel, results card) inside a

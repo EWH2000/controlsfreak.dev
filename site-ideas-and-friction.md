@@ -205,7 +205,8 @@ owner pick), every formula numerically verified before build:
 - No global Units toggle / no `data-us` spans / no `cf_*` keys (matches
   the sibling electrical tools; privacy.html untouched). NEC FLC table
   verified all-correct by the UX-audit data-research pass and its
-  `// user to verify` markers cleared (`9626f8b`, 2026-06-27).
+  `// user to verify` markers cleared (`9626f8b`, 2026-06-20,
+  merged to main via #281 on 2026-06-22).
   `[future: voltage imbalance derate
   curve as numeric factors; PF-correction / capacitor-bank sizing tab]`.
 
@@ -227,9 +228,11 @@ category `hvac`). Three tabs:
   graded verdict pills (healthy / moderate / poor, plus *incompatible*
   and *oversized* errors).
 
-Design decisions worth remembering: every factor derives from **one
-constant** (1 BTU = 1055.05585262 J) so the table can't drift
-internally; the **MBH (thousand) vs MMBtu (million)** trap is defused
+Design decisions worth remembering: the **BTU-family factors**
+(BTU/hr, MBH, ton, boiler hp) all derive from **one constant**
+(1 BTU = 1055.05585262 J) so that family can't drift internally —
+hp and kcal carry their own defining constants (745.699…, 4186.8);
+the **MBH (thousand) vs MMBtu (million)** trap is defused
 at the labels and in the parser; and the page is deliberately
 **unit-explicit** — it does *not* route through the site-wide Units
 toggle (a converter that self-converts would double-convert), so no
