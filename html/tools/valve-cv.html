@@ -1,13 +1,23 @@
 ---
-title: Valve Cv Sizing — controlsfreak.dev
-description: Size a control valve from its flow coefficient — Cv = Q√(SG/ΔP), solved for Cv, flow, or pressure drop — with a valve-authority check and a Kv equivalent.
+title: Control Valve Cv Calculator — controlsfreak.dev
+description: Control-valve Cv calculator — size from the flow coefficient Cv = Q√(SG/ΔP), solved for Cv, flow, or drop, with a valve-authority check and Kv/Kvs equivalent.
 canonical: https://controlsfreak.dev/tools/valve-cv.html
 nav: tools
 category: hydronics
-keywords: gpm psi kv flow coefficient valve authority delta p sizing
+keywords: gpm psi kv kvs flow coefficient valve authority delta p sizing calculator
+faqs:
+    - q: What is valve Cv?
+      a: Cv, the flow coefficient, is the GPM of 60 °F water a valve passes wide open at 1 psi pressure drop. It's the valve's capacity rating — a higher Cv passes more flow at the same drop.
+    - q: How do you calculate valve Cv?
+      a: Cv = Q × √(SG ÷ ΔP), where Q is flow in GPM, SG is specific gravity (1.0 for water), and ΔP is the pressure drop across the valve in psi. The same equation solves in reverse for flow or drop.
+    - q: How do you convert Kv or Kvs to Cv?
+      a: Cv ≈ 1.156 × Kv and Kv ≈ 0.865 × Cv. Kv (and Kvs, the rated Kv of the fully-open valve) is the metric coefficient — m³/h of water at 1 bar drop; Cv is the US coefficient — GPM at 1 psi.
+    - q: What Cv should I pick for a control valve?
+      a: Choose the cataloged valve whose rated Cv sits at or just above the required Cv for the design duty. Slightly under is fine; significantly oversized costs you valve authority, so check authority after sizing.
 ---
 {% extends "layouts/page.njk" %}
 {% from "related-links.njk" import relatedLinks %}
+{% from "faq.njk" import faqBlock %}
 
 {% block head %}
     <style>
@@ -42,7 +52,7 @@ keywords: gpm psi kv flow coefficient valve authority delta p sizing
     <div class="tool-card">
         <div class="tool-card-header">
             <h1 class="tool-card-title">
-                Valve Cv Sizing
+                Control Valve Cv Calculator
                 <span class="tool-tag">Hydronics</span>
             </h1>
         </div>
@@ -184,8 +194,11 @@ keywords: gpm psi kv flow coefficient valve authority delta p sizing
         </div>
     </div>
 
+    {{ faqBlock(faqs, "Valve Cv FAQ") }}
+
     {{ relatedLinks({
         tools: [
+            {href: '/tools/valve-authority.html', label: 'Valve Authority Calculator'},
             {href: '/tools/waterside-load.html', label: 'Waterside Load Calculator'}
         ],
         lessons: [

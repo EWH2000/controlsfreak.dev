@@ -1,13 +1,21 @@
 ---
-title: Pump & Fan Affinity Laws — controlsfreak.dev
-description: Run the pump and fan affinity laws — flow scales with speed, head with its square, power with its cube — from a known point to a new speed or impeller trim.
+title: Pump & Fan Affinity Law Calculator — controlsfreak.dev
+description: Pump and fan affinity law calculator — flow scales with speed, head with its square, power with its cube — from a known point to a new speed or impeller trim.
 canonical: https://controlsfreak.dev/tools/affinity-laws.html
 nav: tools
 category: hydronics
-keywords: cfm gpm rpm hz speed pressure bhp horsepower cube law trim
+keywords: cfm gpm rpm hz speed pressure bhp horsepower cube law trim calculator vfd energy
+faqs:
+    - q: What are the pump and fan affinity laws?
+      a: They scale a known operating point to a new speed (or impeller / sheave diameter) — flow varies with the ratio, head or pressure with its square, and power with its cube. Q₂ = Q₁·(N₂/N₁), H₂ = H₁·(N₂/N₁)², P₂ = P₁·(N₂/N₁)³.
+    - q: Why does a VFD save so much energy?
+      a: Because power follows the cube of speed. Slowing a pump or fan to 80% speed drops flow to 80% but power to 0.8³ ≈ 51% — roughly half the energy for 80% of the flow. That cube is the whole energy case for variable-speed drives.
+    - q: Do the affinity laws hold with static head?
+      a: Only the friction-head portion follows the cube. On a system with real static head (open loops, vertical lift), the operating point rides a flatter system curve, so actual power savings fall short of the ideal cube — model the static head separately.
 ---
 {% extends "layouts/page.njk" %}
 {% from "related-links.njk" import relatedLinks %}
+{% from "faq.njk" import faqBlock %}
 
 {% block head %}
     <style>
@@ -28,7 +36,7 @@ keywords: cfm gpm rpm hz speed pressure bhp horsepower cube law trim
     <div class="tool-card">
         <div class="tool-card-header">
             <h1 class="tool-card-title">
-                Pump &amp; Fan Affinity Laws
+                Pump &amp; Fan Affinity Law Calculator
                 <span class="tool-tag">Pumps &amp; Fans</span>
             </h1>
         </div>
@@ -207,6 +215,8 @@ keywords: cfm gpm rpm hz speed pressure bhp horsepower cube law trim
             </section>
         </div>
     </div>
+
+    {{ faqBlock(faqs, "Affinity law FAQ") }}
 
     {{ relatedLinks({
         lessons: [
