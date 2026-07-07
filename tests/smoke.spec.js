@@ -33,6 +33,7 @@ const PAGES = [
     { name: 'thermistor calculator',  url: '/tools/thermistor-calculator.html' },
     { name: 'refrigerant p-t',        url: '/tools/refrigerant-pt.html' },
     { name: 'valve cv sizing',        url: '/tools/valve-cv.html' },
+    { name: 'valve authority',        url: '/tools/valve-authority.html' },
     { name: 'affinity laws',          url: '/tools/affinity-laws.html' },
     { name: 'waterside load',         url: '/tools/waterside-load.html' },
     { name: 'airflow',                url: '/tools/airflow.html' },

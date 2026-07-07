@@ -12,8 +12,8 @@
        ---
        {% from "faq.njk" import faqBlock %}
        ...
-       {{ faqBlock(faqs) }}          {# default heading #}
-       {{ faqBlock(faqs, "Cv FAQ") }} {# custom heading #}
+       {{ faqBlock(faqs) }}            (default "Common questions" heading)
+       {{ faqBlock(faqs, "Cv FAQ") }}  (a custom heading)
 
    Questions render as <h3> (deliberate: the searched phrase lands in a
    heading — the on-page ranking lever); answers may carry inline HTML.

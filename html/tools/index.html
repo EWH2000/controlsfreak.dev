@@ -21,7 +21,7 @@ nav: tools
 
     <div class="filter-chips" role="group" aria-label="Filter tools by category">
         <button type="button" class="filter-chip active" data-category="all" aria-pressed="true">
-            All <span class="filter-chip-count">20</span>
+            All <span class="filter-chip-count">21</span>
         </button>
         <button type="button" class="filter-chip" data-category="hvac" aria-pressed="false">
             HVAC <span class="filter-chip-count">7</span>
@@ -39,7 +39,7 @@ nav: tools
             Electrical <span class="filter-chip-count">3</span>
         </button>
         <button type="button" class="filter-chip" data-category="hydronics" aria-pressed="false">
-            Hydronics <span class="filter-chip-count">3</span>
+            Hydronics <span class="filter-chip-count">4</span>
         </button>
     </div>
 
@@ -177,6 +177,15 @@ nav: tools
             titleFull:  'Valve Cv Sizing',
             desc:       'Size a control valve from its flow coefficient — Cv = Q√(SG/ΔP) solved any direction — plus a valve-authority check and a Kv equivalent for metric work.',
             pills:      ['Hydronics', 'Cv / Kv', 'Authority', 'Flow / ΔP'],
+            category:   'hydronics'
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/tools/valve-authority.html',
+            titleShort: 'Valve Authority',
+            titleFull:  'Valve Authority Calculator',
+            desc:       'Authority β from the wide-open valve drop and the rest of the branch, with a good / marginal / poor verdict and a live plot of how the installed characteristic distorts as β falls.',
+            pills:      ['Hydronics', 'Authority β', 'Installed Curve', 'Verdict'],
             category:   'hydronics'
         }) }}
         {{ navCard({

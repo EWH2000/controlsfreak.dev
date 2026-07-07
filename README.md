@@ -128,6 +128,12 @@ Calculators, converters, and lookups — open one, get an answer.
   a good / marginal / poor verdict — the check that catches the
   quiet oversizing trap, where a valve far bigger than the duty
   barely cracks open and the loop hunts.
+- **Valve Authority Calculator** — the same `β = ΔP_valve ÷ (ΔP_valve
+  + ΔP_rest)` check on its own page (the term is a common search on its
+  own), with the differentiator no free HVAC page shows: a live plot of
+  the installed characteristic — watch the equal-% curve pull off the
+  linear diagonal and front-load as authority drops below ~0.25. Good /
+  marginal / poor verdict, an FAQ, and cross-links to the Cv tool.
 - **Waterside Load Calculator** — the hydronic workhorse
   `q = 500 × GPM × ΔT` solved in any direction: the load a measured
   flow and ΔT imply, the flow a scheduled load needs, or the ΔT a
