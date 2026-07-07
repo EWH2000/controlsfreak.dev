@@ -26,7 +26,7 @@
     {% if breadcrumbJson %}
     <script type="application/ld+json">{{ breadcrumbJson | safe }}</script>
     {% endif %}
-    {% if nav == "education" %}
+    {% if nav == "education" and page.url != "/education/" %}
     <script type="application/ld+json">{{ canonicalUrl | techArticleJsonLd(title, description, page.inputPath | gitFirstmod, page.inputPath | gitLastmod, pairedQuiz | cleanCanonical) | safe }}</script>
     {% set eduRels = educationSequence[page.url] %}
     {% if eduRels.prev %}<link rel="prev" href="{{ eduRels.prev }}">{% endif %}
@@ -35,7 +35,10 @@
     {% if nav == "practice" and quizzes[page.fileSlug] %}
     <script type="application/ld+json">{{ canonicalUrl | faqPageJsonLd(quizzes[page.fileSlug], title, pairedLesson | cleanCanonical) | safe }}</script>
     {% endif %}
-    {% if nav == "tools" and page.url != "/tools/" %}
+    {% if faqs %}
+    <script type="application/ld+json">{{ canonicalUrl | faqJsonLd(faqs, title) | safe }}</script>
+    {% endif %}
+    {% if (nav == "tools" and page.url != "/tools/") or (nav == "simulators" and page.url != "/simulators/") %}
     <script type="application/ld+json">{{ canonicalUrl | softwareApplicationJsonLd(title, description) | safe }}</script>
     {% endif %}
     <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">

@@ -1,0 +1,33 @@
+{# Visible FAQ block for tool pages. Renders from the page's `faqs:`
+   frontmatter — an array of { q, a } pairs — which is the SAME source
+   head.njk feeds to the faqJsonLd filter for the FAQPage structured data,
+   so the on-page copy and the schema can't drift (the site's
+   one-source-two-consumers pattern, as with quiz banks).
+
+       ---
+       faqs:
+           - q: What is valve authority?
+             a: The share of a circuit's pressure drop the valve takes when
+                wide open. Below ~0.25 the valve barely controls flow.
+       ---
+       {% from "faq.njk" import faqBlock %}
+       ...
+       {{ faqBlock(faqs) }}          {# default heading #}
+       {{ faqBlock(faqs, "Cv FAQ") }} {# custom heading #}
+
+   Questions render as <h3> (deliberate: the searched phrase lands in a
+   heading — the on-page ranking lever); answers may carry inline HTML.
+   Placement: inside <main>, near the end, above relatedLinks / .back-link.
+   Styling in html/styles.css under "FAQ BLOCK". #}
+
+{% macro faqBlock(faqs, heading) %}
+    {% if faqs and faqs.length %}
+    <section class="faq-block" aria-labelledby="faq-heading">
+        <h2 class="ps-section-label" id="faq-heading">{{ heading or "Common questions" }}</h2>
+        {% for item in faqs %}
+        <h3 class="faq-q">{{ item.q }}</h3>
+        <div class="faq-a">{{ item.a | safe }}</div>
+        {% endfor %}
+    </section>
+    {% endif %}
+{% endmacro %}
