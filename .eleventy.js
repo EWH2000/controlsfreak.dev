@@ -200,6 +200,22 @@ module.exports = function(eleventyConfig) {
     eleventyConfig.addFilter("canonicalPath", (url) =>
         (url || "").replace("https://controlsfreak.dev", "") || "/");
 
+    // The crawl-facing URL form. `canonical` frontmatter carries the `.html`
+    // extension (the site's documented anchor convention — CLAUDE.md), but
+    // Cloudflare Assets `html_handling` 307-redirects `/foo.html` → `/foo`.
+    // A canonical/og:url/sitemap <loc> that points at the *redirecting*
+    // `.html` URL — while the clean 200 URL disclaims itself — made Google
+    // index both forms as separate results (codebase-issues #86, revisit
+    // trigger fired by the 2026-07 Search Console data). So every crawl
+    // signal renders the clean, self-referential form via this filter;
+    // frontmatter stays `.html` as the single source of truth, and internal
+    // `.html` anchors are unchanged (they 307 fine within the site). Applied
+    // to canonical, og:url, the sitemap <loc>, and every JSON-LD url/@id so
+    // the structured-data graph stays internally consistent (paired
+    // hasPart/isPartOf @ids must byte-match their target's url).
+    eleventyConfig.addFilter("cleanCanonical", (url) =>
+        (url || "").replace(/\.html$/, ""));
+
     // Pages for the site search index (html/search-index.njk → the static
     // /search-index.json the command palette fetches). Same membership as
     // sitemapPages today — every page with a canonical is a real

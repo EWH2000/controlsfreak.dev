@@ -6,14 +6,15 @@
     {% if noindex %}
     <meta name="robots" content="noindex">
     {% endif %}
+    {% set canonicalUrl = canonical | cleanCanonical %}
     {% if canonical %}
-    <link rel="canonical" href="{{ canonical }}">
+    <link rel="canonical" href="{{ canonicalUrl }}">
     {% endif %}
     <meta property="og:title" content="{{ title }}">
     <meta property="og:description" content="{{ description }}">
     <meta property="og:type" content="website">
     {% if canonical %}
-    <meta property="og:url" content="{{ canonical }}">
+    <meta property="og:url" content="{{ canonicalUrl }}">
     {% endif %}
     <meta property="og:image" content="https://controlsfreak.dev/assets/og-image.png">
     <meta property="og:site_name" content="controlsfreak.dev">
@@ -21,21 +22,21 @@
     <meta name="twitter:title" content="{{ title }}">
     <meta name="twitter:description" content="{{ description }}">
     <meta name="twitter:image" content="https://controlsfreak.dev/assets/og-image.png">
-    {% set breadcrumbJson = canonical | breadcrumbJsonLd(nav, title) %}
+    {% set breadcrumbJson = canonicalUrl | breadcrumbJsonLd(nav, title) %}
     {% if breadcrumbJson %}
     <script type="application/ld+json">{{ breadcrumbJson | safe }}</script>
     {% endif %}
     {% if nav == "education" %}
-    <script type="application/ld+json">{{ canonical | techArticleJsonLd(title, description, page.inputPath | gitFirstmod, page.inputPath | gitLastmod, pairedQuiz) | safe }}</script>
+    <script type="application/ld+json">{{ canonicalUrl | techArticleJsonLd(title, description, page.inputPath | gitFirstmod, page.inputPath | gitLastmod, pairedQuiz | cleanCanonical) | safe }}</script>
     {% set eduRels = educationSequence[page.url] %}
     {% if eduRels.prev %}<link rel="prev" href="{{ eduRels.prev }}">{% endif %}
     {% if eduRels.next %}<link rel="next" href="{{ eduRels.next }}">{% endif %}
     {% endif %}
     {% if nav == "practice" and quizzes[page.fileSlug] %}
-    <script type="application/ld+json">{{ canonical | faqPageJsonLd(quizzes[page.fileSlug], title, pairedLesson) | safe }}</script>
+    <script type="application/ld+json">{{ canonicalUrl | faqPageJsonLd(quizzes[page.fileSlug], title, pairedLesson | cleanCanonical) | safe }}</script>
     {% endif %}
     {% if nav == "tools" and page.url != "/tools/" %}
-    <script type="application/ld+json">{{ canonical | softwareApplicationJsonLd(title, description) | safe }}</script>
+    <script type="application/ld+json">{{ canonicalUrl | softwareApplicationJsonLd(title, description) | safe }}</script>
     {% endif %}
     <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
     <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png">

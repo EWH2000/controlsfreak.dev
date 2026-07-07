@@ -56,6 +56,13 @@ function slugFor(pathname) {
         || 'index';
 }
 
+// The sitemap <loc> now renders the clean (extensionless) canonical form, but
+// this script hits the local `python -m http.server` (BASE) which serves real
+// files — so re-add .html for page paths (root/directory paths stay clean).
+function localPath(pathname) {
+    return pathname === '/' || pathname.endsWith('/') ? pathname : pathname + '.html';
+}
+
 async function main() {
     await mkdir(OUT_DIR, { recursive: true });
     const paths = await fetchSitemapUrls();
@@ -66,7 +73,7 @@ async function main() {
     let saved = 0;
     let skipped = 0;
     for (const pathname of paths) {
-        await page.goto(BASE + pathname, { waitUntil: 'domcontentloaded' });
+        await page.goto(BASE + localPath(pathname), { waitUntil: 'domcontentloaded' });
         const svgs = await page.locator(DIAGRAM_SELECTOR).all();
         if (svgs.length === 0) {
             skipped++;

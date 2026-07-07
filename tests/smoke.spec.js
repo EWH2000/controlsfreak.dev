@@ -98,11 +98,17 @@ test('PAGES array stays in sync with the generated sitemap', () => {
     // webServer in playwright.config.js builds _site/ before the run.
     const fs = require('fs');
     const sitemap = fs.readFileSync('_site/sitemap.xml', 'utf8');
+    // The sitemap <loc> renders the clean canonical form (no .html — the
+    // cleanCanonical filter, codebase-issues #86), while PAGES navigates the
+    // local python -m http.server which needs the real .html file paths. So
+    // compare membership on the extension-stripped path — a drift in the set
+    // of pages still fails, but the deliberate .html-vs-clean form gap doesn't.
+    const norm = (u) => u.replace(/^https?:\/\/[^/]+/, '').replace(/\.html$/, '');
     const sitemapPaths = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)]
-        .map(m => m[1].replace(/^https?:\/\/[^/]+/, ''))
+        .map(m => norm(m[1]))
         .sort();
     const pagesPaths = PAGES
-        .map(p => p.url.replace(/^https?:\/\/[^/]+/, ''))
+        .map(p => norm(p.url))
         .sort();
     expect(pagesPaths, 'every sitemap entry should appear in PAGES and vice versa').toEqual(sitemapPaths);
 });
