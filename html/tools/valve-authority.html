@@ -1,0 +1,296 @@
+---
+title: Valve Authority Calculator — controlsfreak.dev
+description: Control-valve authority β from the open-valve drop and the rest of the branch — a good, marginal, or poor verdict plus a plotted installed characteristic.
+canonical: https://controlsfreak.dev/tools/valve-authority.html
+nav: tools
+category: hydronics
+keywords: beta ratio control valve installed characteristic equal percentage oversizing hunting delta p authority
+faqs:
+    - q: What is valve authority?
+      a: Valve authority (β) is the share of a controlled circuit's pressure drop that the wide-open control valve takes — β = ΔP valve, open ÷ (ΔP valve, open + ΔP rest). It measures how much real control the valve has over flow across its stroke.
+    - q: What is a good valve authority?
+      a: Aim for β ≥ 0.5. Between 0.25 and 0.5 control is marginal and the installed characteristic is distorted; below 0.25 the valve barely controls flow and the loop tends to hunt.
+    - q: How do you calculate valve authority?
+      a: Divide the pressure drop across the wide-open valve at design flow by the total drop across the parts of the branch that change as the valve strokes — the valve plus the coil, balancing valve, and fittings on that circuit — β = ΔP valve ÷ (ΔP valve + ΔP rest). It is a ratio, so any consistent pressure unit works.
+    - q: Why does low valve authority cause hunting?
+      a: With low authority most of the flow change happens in the first sliver of valve stroke, so a small movement swings flow a lot. The valve effectively acts on/off, the loop overshoots, and it oscillates around setpoint.
+    - q: How does oversizing a valve affect authority?
+      a: An oversized valve — Cv far larger than the duty — barely cracks open at design flow, so it takes very little of the circuit's pressure drop and authority collapses. Size the Cv to the actual duty first, then confirm authority.
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+{% from "faq.njk" import faqBlock %}
+
+{% block head %}
+    <style>
+        /* Installed-characteristic plot — page-only. Flow vs. valve travel:
+           the dashed diagonal is ideal linear control, the blue curve the
+           valve's inherent equal-% shape, the green curve how it actually
+           behaves at the computed authority. The green path is redrawn by
+           the IIFE on every β change. */
+        .va-chart {
+            width: 100%;
+            max-width: 430px;
+            height: auto;
+            display: block;
+            margin: 0.4rem auto 0.2rem;
+        }
+        .va-axis { stroke: var(--border); stroke-width: 1; fill: none; }
+        .va-grid { stroke: var(--border); stroke-width: 0.5; opacity: 0.55; }
+        .va-tick {
+            fill: var(--text-dim);
+            font-family: var(--mono);
+            font-size: 9px;
+        }
+        .va-axis-title {
+            fill: var(--text-dim);
+            font-family: var(--mono);
+            font-size: 9px;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+        .va-linear   { fill: none; stroke: var(--text-dim); stroke-width: 1; stroke-dasharray: 4 3; opacity: 0.8; }
+        .va-inherent { fill: none; stroke: var(--blue); stroke-width: 1.4; opacity: 0.6; }
+        .va-installed { fill: none; stroke: var(--accent); stroke-width: 2.4; stroke-linejoin: round; }
+        .va-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.35rem 1.1rem;
+            justify-content: center;
+            margin: 0.2rem 0 0;
+            font-family: var(--mono);
+            font-size: 0.68rem;
+            color: var(--text-dim);
+        }
+        .va-legend-item { display: inline-flex; align-items: center; gap: 0.4rem; }
+        .va-swatch { width: 1.1rem; height: 0; border-top-width: 2px; border-top-style: solid; }
+        .va-swatch.linear   { border-top-color: var(--text-dim); border-top-style: dashed; }
+        .va-swatch.inherent { border-top-color: var(--blue); }
+        .va-swatch.installed { border-top-color: var(--accent); }
+    </style>
+{% endblock %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Tools · Valve Authority</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">
+                Valve Authority Calculator
+                <span class="tool-tag">Hydronics</span>
+            </h1>
+        </div>
+
+        <details class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
+            <summary>A control valve only controls flow if it claims a healthy share of the circuit's pressure drop — that share is its <em>authority</em>.</summary>
+            <div class="preamble-rest">
+                Authority <code>β = ΔP<sub>valve, open</sub> ÷ (ΔP<sub>valve, open</sub> + ΔP<sub>rest</sub>)</code> compares the drop across the wide-open valve at design flow to the total drop across the part of the branch that varies as the valve strokes. High authority keeps control across the whole stroke; low authority front-loads it into the first crack of travel, and the loop hunts. Size the valve's <a href="/tools/valve-cv.html">Cv</a> first, then check authority here.
+            </div>
+        </details>
+        <p class="ps-seed-note">Inputs are seeded with an example — edit them to your numbers.</p>
+
+        <div class="tool-body-2col">
+
+            <section>
+                <h2 class="ps-section-label">Input</h2>
+                <div class="ps-row">
+                    <label class="ps-label" for="va-valve">ΔP across valve, wide open at design flow</label>
+                    <input class="ps-input" type="number" id="va-valve" step="any" min="0" placeholder="7" value="7">
+                </div>
+                <div class="ps-row">
+                    <label class="ps-label" for="va-rest">ΔP across the rest of the controlled branch</label>
+                    <input class="ps-input" type="number" id="va-rest" step="any" min="0" placeholder="3" value="3">
+                </div>
+                <p class="ref-note">
+                    Use any consistent pressure unit — authority is a ratio, so the units cancel. The "rest of the branch" is everything whose drop changes as the valve strokes: the coil, the balancing valve, the fittings on that controlled circuit.
+                </p>
+            </section>
+
+            <section role="status" aria-atomic="false">
+                <h2 class="ps-section-label">Output</h2>
+                <div class="ps-row primary">
+                    <span class="ps-label">Valve authority β</span>
+                    <span class="ps-value muted" id="va-beta">—</span>
+                </div>
+                <div class="result-formula wrap" id="va-formula"></div>
+                <div class="status-pill" id="va-verdict">Enter both pressure drops to see the verdict.</div>
+            </section>
+
+        </div>
+
+        <section class="tool-body-row">
+            <h2 class="ps-section-label">Installed characteristic</h2>
+            <p class="ref-note worked-intro">
+                An equal-percentage valve is chosen so that, fighting the circuit's rising resistance, its <em>installed</em> behaviour lands near the linear diagonal. That only works when authority is high. Watch the green curve pull away from the diagonal as β drops — below ~0.25 it bows up hard and the valve does all its work in the first quarter of travel.
+            </p>
+            <svg class="va-chart" viewBox="0 0 340 250" role="img" aria-labelledby="va-chart-title va-chart-desc">
+                <title id="va-chart-title">Installed characteristic at the computed authority</title>
+                <desc id="va-chart-desc">Flow versus valve travel. The dashed diagonal is ideal linear control; the blue curve is the valve's inherent equal-percentage characteristic; the green curve is how the valve actually behaves at the calculated authority β.</desc>
+                <!-- gridlines at the 50% marks -->
+                <line class="va-grid" x1="186" y1="16" x2="186" y2="216"></line>
+                <line class="va-grid" x1="44" y1="116" x2="328" y2="116"></line>
+                <!-- axes -->
+                <line class="va-axis" x1="44" y1="16" x2="44" y2="216"></line>
+                <line class="va-axis" x1="44" y1="216" x2="328" y2="216"></line>
+                <!-- curves (points set by the IIFE) -->
+                <polyline class="va-linear" id="va-linear-path" points=""></polyline>
+                <polyline class="va-inherent" id="va-inherent-path" points=""></polyline>
+                <polyline class="va-installed" id="va-installed-path" points=""></polyline>
+                <!-- ticks + titles -->
+                <text class="va-tick" x="40" y="219" text-anchor="end">0</text>
+                <text class="va-tick" x="40" y="20" text-anchor="end">100</text>
+                <text class="va-tick" x="44" y="232" text-anchor="middle">0</text>
+                <text class="va-tick" x="328" y="232" text-anchor="middle">100</text>
+                <text class="va-axis-title" x="186" y="246" text-anchor="middle">Valve travel %</text>
+                <text class="va-axis-title" x="14" y="116" text-anchor="middle" transform="rotate(-90 14 116)">Flow %</text>
+            </svg>
+            <div class="va-legend" aria-hidden="true">
+                <span class="va-legend-item"><span class="va-swatch linear"></span>Linear (ideal)</span>
+                <span class="va-legend-item"><span class="va-swatch inherent"></span>Inherent equal-%</span>
+                <span class="va-legend-item"><span class="va-swatch installed"></span>Installed at β</span>
+            </div>
+        </section>
+
+        <section class="tool-body-row">
+            <h2 class="ps-section-label">What the number means</h2>
+            <table class="ref-table-dense">
+                <thead>
+                    <tr><th>β</th><th>Control quality</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>≥ 0.5</td><td>Good — installed characteristic stays close to linear.</td></tr>
+                    <tr><td>0.25 – 0.5</td><td>Marginal — distorted, front-loaded stroke.</td></tr>
+                    <tr><td>&lt; 0.25</td><td>Poor — little real control, prone to hunting.</td></tr>
+                </tbody>
+            </table>
+            <p class="ref-note">
+                Low authority means the valve does almost all of its throttling in the first sliver of stroke — the loop hunts and the rest of the travel does nothing. Oversizing on Cv is the quiet killer: a valve far bigger than the duty barely cracks open, so it takes almost none of the circuit's drop and authority collapses. Size for the duty, then confirm the valve claims enough of the branch to actually control.
+            </p>
+        </section>
+    </div>
+
+    {{ faqBlock(faqs, "Valve authority FAQ") }}
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/tools/valve-cv.html', label: 'Valve Cv Calculator'},
+            {href: '/tools/waterside-load.html', label: 'Waterside Load Calculator'}
+        ],
+        lessons: [
+            {href: '/education/balancing.html', label: 'Hydronic Balancing'},
+            {href: '/education/load-piping.html', label: 'Load Piping'}
+        ],
+        quizzes: [
+            {href: '/practice/balancing.html', label: 'Hydronic Balancing'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/tools/">← All tools</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Valve authority β = ΔP_valve,open / (ΔP_valve,open + ΔP_rest), plus the
+    // installed characteristic it produces. This tool is dimensionless (β is
+    // a ratio) so it does not load units.js. The installed-characteristic
+    // model, for an equal-% inherent curve φ(h)=R^(h-1) and authority β:
+    //     q(h) = φ / √(β + (1−β)·φ²)
+    // derived from a fixed downstream resistance holding the total ΔP while
+    // the valve's share varies with flow. At β=1 the installed curve equals
+    // the inherent equal-% curve; as β→0 it front-loads toward on/off.
+    (function () {
+        'use strict';
+
+        const R = 50;                       // typical equal-% rangeability
+        const inherent = (h) => Math.pow(R, h - 1);
+        const installed = (h, beta) => {
+            const f = inherent(h);
+            return f / Math.sqrt(beta + (1 - beta) * f * f);
+        };
+
+        // Plot area inside the 340×250 viewBox.
+        const PX0 = 44, PX1 = 328, PY0 = 216, PY1 = 16;
+        const px = (h) => (PX0 + h * (PX1 - PX0)).toFixed(1);
+        const py = (q) => (PY0 + q * (PY1 - PY0)).toFixed(1);
+        const curve = (fn) => {
+            const pts = [];
+            for (let i = 0; i <= 50; i++) {
+                const h = i / 50;
+                pts.push(px(h) + ',' + py(Math.min(1, fn(h))));
+            }
+            return pts.join(' ');
+        };
+
+        const valveEl   = document.getElementById('va-valve');
+        const restEl    = document.getElementById('va-rest');
+        const betaEl     = document.getElementById('va-beta');
+        const formulaEl  = document.getElementById('va-formula');
+        const verdictEl  = document.getElementById('va-verdict');
+        const installedPath = document.getElementById('va-installed-path');
+
+        // Static reference curves: linear diagonal + inherent equal-%.
+        document.getElementById('va-linear-path').setAttribute('points', px(0) + ',' + py(0) + ' ' + px(1) + ',' + py(1));
+        document.getElementById('va-inherent-path').setAttribute('points', curve(inherent));
+
+        // Trim trailing zeros so 7.00 reads 7 but 7.01 stays put.
+        const tidy = (n, dp) => parseFloat(n.toFixed(dp)).toString();
+
+        function setVerdict(text, kind) {
+            verdictEl.textContent = text;
+            verdictEl.className = 'status-pill' + (kind ? ' ' + kind : '');
+        }
+
+        function muteBeta(msg, kind) {
+            betaEl.className = 'ps-value muted' + (kind ? ' ' + kind : '');
+            betaEl.textContent = '—';
+            formulaEl.textContent = '';
+            installedPath.setAttribute('points', '');
+            setVerdict(msg, kind);
+        }
+
+        function calc() {
+            const valve = parseFloat(valveEl.value);
+            const rest  = parseFloat(restEl.value);
+
+            if (!isFinite(valve) || !isFinite(rest)) {
+                muteBeta('Enter both pressure drops to see the verdict.', '');
+                return;
+            }
+            if (valve < 0 || rest < 0) {
+                muteBeta('Pressure drops can’t be negative.', 'error');
+                return;
+            }
+            const total = valve + rest;
+            if (total === 0) {
+                muteBeta('Total drop is zero — there’s no circuit to take authority over.', 'error');
+                return;
+            }
+
+            const beta = valve / total;
+            betaEl.className = 'ps-value live';
+            betaEl.textContent = beta.toFixed(2);
+            formulaEl.textContent =
+                `β = ${tidy(valve, 4)} ÷ (${tidy(valve, 4)} + ${tidy(rest, 4)}) = ${beta.toFixed(2)}`;
+            installedPath.setAttribute('points', curve((h) => installed(h, beta)));
+
+            if (beta >= 0.5) {
+                setVerdict(`Good authority (β = ${beta.toFixed(2)}). The valve keeps real control over flow across its stroke; 0.5 is the common design floor.`, 'ok');
+            } else if (beta >= 0.25) {
+                setVerdict(`Marginal authority (β = ${beta.toFixed(2)}). Control turns nonlinear — most of the throttling happens early in the stroke. Aim for more drop across the valve.`, 'warn');
+            } else {
+                setVerdict(`Poor authority (β = ${beta.toFixed(2)}). The valve barely controls flow and the loop will hunt. Resize for a larger share of the circuit drop, or check for oversizing.`, 'error');
+            }
+        }
+
+        [valveEl, restEl].forEach((el) => el.addEventListener('input', calc));
+        calc();
+    })();
+</script>
+{% endblock %}

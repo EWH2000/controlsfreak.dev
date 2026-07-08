@@ -1,13 +1,21 @@
 ---
-title: Air-Mixing Calculator — controlsfreak.dev
-description: Mix three air streams by mass flow or mass fraction and read out the resulting dry-bulb, humidity, enthalpy, and dew point of the blend. ASHRAE psychrometrics.
+title: Mixed Air Temperature Calculator — controlsfreak.dev
+description: Mixed air temperature calculator — blend up to three air streams by mass flow or fraction and read the mixed dry-bulb, humidity, enthalpy, and dew point.
 canonical: https://controlsfreak.dev/tools/air-mixing.html
 nav: tools
 category: hvac
-keywords: cfm mixed air oa oat ra return outdoor plenum blend
+keywords: cfm mixed air temperature oa oat ra return outdoor plenum blend calculator formula
+faqs:
+    - q: What is the mixed air temperature formula?
+      a: Weight each stream's temperature by its mass flow — MAT = Σ(ṁ·T) ÷ Σṁ. Near equal, sea-level density that's close to the airflow-weighted average, MAT ≈ (CFM_oa·T_oa + CFM_ra·T_ra) ÷ (CFM_oa + CFM_ra).
+    - q: How do you calculate mixed air temperature from percent outdoor air?
+      a: MAT = %OA × T_oa + (1 − %OA) × T_ra. With 30% outdoor air at 40 °F and 70% return air at 72 °F, MAT = 0.30 × 40 + 0.70 × 72 = 62.4 °F.
+    - q: Why weight by mass flow instead of CFM?
+      a: Air density changes with temperature and altitude, so two equal CFM streams don't carry equal mass. Weighting by mass flow (or density-corrected CFM) is exact; the plain CFM average is a good approximation only near equal densities.
 ---
 {% extends "layouts/page.njk" %}
 {% from "related-links.njk" import relatedLinks %}
+{% from "faq.njk" import faqBlock %}
 
 {% block head %}
     <style>
@@ -40,14 +48,14 @@ keywords: cfm mixed air oa oat ra return outdoor plenum blend
 <main id="main">
 
     <div class="section-header">
-        <span class="section-label">Tools · Air Mixing</span>
+        <span class="section-label">Tools · Mixed Air Temperature</span>
         <div class="section-line"></div>
     </div>
 
     <div class="tool-card">
         <div class="tool-card-header">
             <h1 class="tool-card-title">
-                Air-Mixing Calculator
+                Mixed Air Temperature Calculator
                 <span class="tool-tag">HVAC</span>
             </h1>
         </div>
@@ -345,6 +353,8 @@ keywords: cfm mixed air oa oat ra return outdoor plenum blend
             </section>
         </div>
     </div>
+
+    {{ faqBlock(faqs, "Mixed air temperature FAQ") }}
 
     {{ relatedLinks({
         tools: [

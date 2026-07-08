@@ -1487,6 +1487,25 @@ ratio). Introduces a new **Hydronics** tools chip at
 Future refinement: metric flow/pressure inputs alongside the Kv
 readout, if a metric user asks.
 
+### Valve authority — split to its own page *(shipped 2026-07-07)*
+SEO-driven. The 2026-07 Search Console data showed "valve authority"
+is the single highest-impression query on the whole site (40 impr) yet
+stuck at position 56–69 — because the concept was buried as tab 2 of a
+page *titled* "Valve Cv Sizing," so nothing indexable said "valve
+authority." The term has no Wikipedia page and no strong free
+interactive competitor, so a dedicated `/tools/valve-authority.html`
+with an authority-first title / H1 / slug is a near-free rescue.
+The page mirrors the β calculator + verdict pill out of valve-cv and
+adds the differentiator: a **live installed-characteristic plot** —
+inherent equal-% vs. linear ideal vs. the installed curve at the
+computed β, drawn from `q(h) = φ / √(β + (1−β)·φ²)` and redrawn on
+input, so the curve visibly front-loads as authority drops. First
+consumer of the new `faqs:` frontmatter → FAQPage mechanism. valve-cv
+keeps its authority quick-check tab and links out to the full page
+(Cv page canonical for sizing, authority page for authority — no
+cannibalization). Anti-drift note: the β math is duplicated across the
+two pages; if it grows, extract to a shared script.
+
 ### Pump & fan affinity laws *(shipped)*
 The second Hydronics-chip tool, pairing with Pump Control + VFDs.
 Scales one operating point (Q, H, P — each optional) by a ratio: by

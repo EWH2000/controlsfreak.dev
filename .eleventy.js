@@ -200,6 +200,22 @@ module.exports = function(eleventyConfig) {
     eleventyConfig.addFilter("canonicalPath", (url) =>
         (url || "").replace("https://controlsfreak.dev", "") || "/");
 
+    // The crawl-facing URL form. `canonical` frontmatter carries the `.html`
+    // extension (the site's documented anchor convention — CLAUDE.md), but
+    // Cloudflare Assets `html_handling` 307-redirects `/foo.html` → `/foo`.
+    // A canonical/og:url/sitemap <loc> that points at the *redirecting*
+    // `.html` URL — while the clean 200 URL disclaims itself — made Google
+    // index both forms as separate results (codebase-issues #86, revisit
+    // trigger fired by the 2026-07 Search Console data). So every crawl
+    // signal renders the clean, self-referential form via this filter;
+    // frontmatter stays `.html` as the single source of truth, and internal
+    // `.html` anchors are unchanged (they 307 fine within the site). Applied
+    // to canonical, og:url, the sitemap <loc>, and every JSON-LD url/@id so
+    // the structured-data graph stays internally consistent (paired
+    // hasPart/isPartOf @ids must byte-match their target's url).
+    eleventyConfig.addFilter("cleanCanonical", (url) =>
+        (url || "").replace(/\.html$/, ""));
+
     // Pages for the site search index (html/search-index.njk → the static
     // /search-index.json the command palette fetches). Same membership as
     // sitemapPages today — every page with a canonical is a real
@@ -438,6 +454,33 @@ module.exports = function(eleventyConfig) {
             node.isPartOf = { "@type": "TechArticle", "@id": pairedLesson };
         }
         return scriptSafeStringify(node);
+    });
+
+    // FAQPage JSON-LD for non-quiz pages — any page that sets a `faqs:`
+    // frontmatter array of `{ q, a }` pairs (tool pages, mainly). Distinct
+    // from the quiz faqPageJsonLd above (which derives Q&A from the quiz
+    // bank's schema); this takes hand-written entries — the SAME source the
+    // page's visible FAQ block renders from (the faqBlock macro in
+    // _includes/faq.njk), so the structured data can't drift from on-page
+    // copy. Answers may carry inline HTML for display; it's stripped for the
+    // schema text. Emitted from head.njk whenever `faqs` is set; keep it off
+    // practice pages so a page never emits two FAQPage nodes.
+    eleventyConfig.addFilter("faqJsonLd", (canonical, faqs, title) => {
+        if (!canonical || !Array.isArray(faqs) || !faqs.length) return "";
+        return scriptSafeStringify({
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            "name": cleanTitle(title),
+            "url": canonical,
+            "mainEntity": faqs.map((item) => ({
+                "@type": "Question",
+                "name": stripHtml(item.q),
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": stripHtml(item.a),
+                },
+            })),
+        });
     });
 
     // SoftwareApplication JSON-LD for tool pages — declares the per-tool

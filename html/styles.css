@@ -1729,6 +1729,7 @@ input[type="range"]::-moz-range-thumb {
 .filter-chip:focus-visible,
 .nav-card:focus-visible,
 .related-links a:focus-visible,
+.faq-a a:focus-visible,
 .lesson-seq-link:focus-visible,
 .tool-card-fullscreen-btn:focus-visible,
 .quiz-choice:focus-visible,
@@ -2453,6 +2454,44 @@ p.chip-row-preamble {
 }
 .related-links a:hover {
     color: var(--accent);
+    border-color: var(--accent);
+}
+
+/* ──────────────────────────────────────────────────────────────────────
+ * FAQ BLOCK — end-of-page hand-written Q&A on tool pages. Rendered by
+ * html/_includes/faq.njk from the page's `faqs:` frontmatter, which also
+ * feeds the FAQPage JSON-LD (faqJsonLd filter) — one source, so the
+ * on-page copy and the structured data can't drift. Questions are <h3>
+ * so the searched phrase lands in a heading (an on-page ranking lever).
+ * Sits inside <main> near the end, above relatedLinks / .back-link.
+ * ────────────────────────────────────────────────────────────────────── */
+.faq-block {
+    margin-top: 2rem;
+}
+.faq-q {
+    font-family: var(--sans);
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-bright);
+    line-height: 1.4;
+    margin: 1.3rem 0 0.35rem;
+}
+.faq-q:first-of-type {
+    margin-top: 0.9rem;
+}
+.faq-a {
+    font-family: var(--sans);
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    line-height: 1.6;
+    margin: 0;
+}
+.faq-a a {
+    color: var(--accent);
+    text-decoration: none;
+    border-bottom: 1px dotted var(--border);
+}
+.faq-a a:hover {
     border-color: var(--accent);
 }
 

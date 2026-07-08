@@ -6,7 +6,7 @@ eleventyExcludeFromCollections: true
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 {% for page in collections.sitemapPages %}
     <url>
-        <loc>{{ page.data.canonical }}</loc>
+        <loc>{{ page.data.canonical | cleanCanonical }}</loc>
         <lastmod>{{ page.inputPath | gitLastmod }}</lastmod>
     </url>
 {% endfor %}

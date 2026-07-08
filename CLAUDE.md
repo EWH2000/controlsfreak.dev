@@ -225,12 +225,19 @@ section). **Category keys mirror the landing pages' `navCard()`
   Worker (which redirects to the clean form). Asset references
   (`/styles.css`, `/scripts/…`) are absolute. The `html.11tydata.js`
   permalink override is what keeps this working — 11ty's pretty-URL
-  default would break it. **`canonical`/`og:url` deliberately carry
-  the `.html` form too**, so the declared URLs go through the Worker's
-  307 to the clean form — accepted 2026-06-10 (codebase-issues #86):
-  engines consolidate through the redirect fine, and aligning would
-  mean sweeping the metadata plumbing everything keys off. Revisit
-  only on a Search Console canonical-confusion signal.
+  default would break it. **Crawl-facing URLs render the clean,
+  extensionless form**: `head.njk` passes `canonical`/`og:url` and every
+  JSON-LD `url`/`@id` through the `cleanCanonical` filter (strips the
+  trailing `.html`), and `sitemap.njk`'s `<loc>` does the same. The
+  `canonical` frontmatter stays `.html` as the single source of truth;
+  only the *rendered* crawl signals are clean. This reverses the
+  2026-06-10 acceptance of the 307-through (codebase-issues #86): the
+  2026-07 Search Console data showed Google indexing both the `.html` and
+  clean form of every page — the documented revisit trigger — because a
+  canonical pointing at a redirecting URL, while the clean 200 disclaimed
+  itself, is self-contradictory. Internal anchors keep the `.html` form
+  (they 307 fine within the site); the on-site search index keeps `.html`
+  too (client-side navigation, not a crawl signal).
 - **Indentation: 4 spaces** everywhere — HTML, CSS, JS, Nunjucks
   template syntax.
 - **ID naming: kebab-case site-wide.** Every `id="…"` is lowercase

@@ -1,26 +1,34 @@
 ---
-title: Transformer VA Budget — controlsfreak.dev
-description: Add up 24 VAC device loads against a control transformer — total VA, percent loaded, headroom on the standard sizes, and a secondary fuse suggestion.
+title: Control Transformer Sizing Calculator — controlsfreak.dev
+description: Control transformer sizing calculator — total the 24 VAC device loads for VA used, percent loaded, headroom on standard sizes, and a secondary fuse suggestion.
 canonical: https://controlsfreak.dev/tools/transformer-sizing.html
 nav: tools
 category: electrical
-keywords: 24vac va transformer sizing class 2 fuse secondary control power budget
+keywords: 24vac va transformer sizing class 2 fuse secondary control power budget calculator actuator inrush
+faqs:
+    - q: How do you size a 24 VAC control transformer?
+      a: Add up the sealed (holding) VA of every device on the secondary, then pick a standard transformer — 40, 75, 100 VA and up — whose rating leaves headroom, aiming to load it to no more than about 80%. Class 2 transformers are inherently current-limited.
+    - q: How many actuators can one 24 V transformer power?
+      a: Divide the transformer's VA by each actuator's holding VA and keep ~20% headroom — a 40 VA transformer running 3 VA holding actuators handles roughly 40 × 0.8 ÷ 3 ≈ 10. Check inrush too, since spring-return actuators pull far more VA while driving than holding.
+    - q: What is inrush versus holding VA?
+      a: Inrush is the momentary high draw when an actuator, relay, or contactor first energizes; holding (sealed) VA is the steady draw once it's positioned. Size the continuous load on holding VA, but confirm the transformer and secondary fuse tolerate the combined inrush.
 ---
 {% extends "layouts/page.njk" %}
 {% from "related-links.njk" import relatedLinks %}
+{% from "faq.njk" import faqBlock %}
 
 {% block content %}
 <main id="main">
 
     <div class="section-header">
-        <span class="section-label">Tools · Transformer VA</span>
+        <span class="section-label">Tools · Transformer Sizing</span>
         <div class="section-line"></div>
     </div>
 
     <div class="tool-card">
         <div class="tool-card-header">
             <h1 class="tool-card-title">
-                Transformer VA Budget
+                Control Transformer Sizing Calculator
                 <span class="tool-tag">Electrical</span>
             </h1>
         </div>
@@ -154,6 +162,8 @@ keywords: 24vac va transformer sizing class 2 fuse secondary control power budge
             </p>
         </section>
     </div>
+
+    {{ faqBlock(faqs, "Transformer sizing FAQ") }}
 
     {{ relatedLinks({
         tools: [

@@ -3670,6 +3670,26 @@ fallout), or record in CLAUDE.md that the 307-through is accepted.
 in CLAUDE.md's `.html`-extension convention bullet with the revisit
 trigger (a Search Console canonical-confusion signal).
 
+**Reopened + fixed (2026-07-07):** the revisit trigger fired. The
+2026-07-06/07 Google Search Console export showed Google indexing *both*
+the `.html` and the clean URL of the same page as separate results —
+often ranking the clean (200) form better than the `.html` canonical
+(e.g. `/tools/thermistor-calculator` pos 16.8 vs the `.html` pos 55.7;
+`/tools/coil-sizing` pos 21 vs 64). Mechanism: canonical/`og:url`/sitemap
+`<loc>` all carried the `.html` form, which Cloudflare Assets
+`html_handling` 307-redirects to clean — so the declared canonical points
+at a *redirecting* URL while the clean 200 URL disclaims itself, a
+contradictory loop Google resolves by indexing both. Fix (Option A from
+the recommended action): a `cleanCanonical` filter (`.eleventy.js`) strips
+the trailing `.html`; `head.njk` applies it to canonical, `og:url`, and
+every JSON-LD `url`/`@id` (paired `hasPart`/`isPartOf` ids included, so the
+graph stays byte-consistent), and `sitemap.njk`'s `<loc>` renders clean.
+Frontmatter `canonical` stays `.html` (single source of truth); internal
+anchors + the client-side search index keep `.html`. The `PAGES` drift
+test in `tests/smoke.spec.js` and `tests/screenshot-diagrams.mjs` were
+updated to reconcile the clean sitemap against the local `.html` file
+server. CLAUDE.md's convention bullet rewritten to match.
+
 ### 87. smoke.spec.js serializes ~154 s of the suite's ~196 test-seconds into one worker *(addressed 2026-06-10)*
 
 Cross-filed from `docs/audits/2026-06-extensive/findings.md` (tests polish, 2026-06-10).

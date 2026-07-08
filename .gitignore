@@ -39,3 +39,8 @@ playwright-report/
 
 # 11ty build output
 _site/
+
+# SEO data exports (Google Search Console / Bing performance dumps dropped
+# in for analysis — working data, not site source). Kept out of history.
+controlsfreak.dev-Performance-on-Search-*.zip
+controlsfreak.dev_SearchPerformanceOverview_*.csv
