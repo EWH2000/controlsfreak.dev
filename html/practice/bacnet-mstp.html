@@ -1,0 +1,76 @@
+---
+title: BACnet MS/TP Quiz — controlsfreak.dev
+description: Ten questions on the MS/TP failure layers — the Max_Master ceiling, duplicate MACs, wrong baud, EOL placement, polarity, bias, and the symptom-to-layer table.
+canonical: https://controlsfreak.dev/practice/bacnet-mstp.html
+nav: practice
+category: bacnet
+pairedLesson: https://controlsfreak.dev/education/bacnet-mstp.html
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Practice · BACnet MS/TP</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">BACnet MS/TP Quiz <span class="tool-tag">BACnet</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                Read the
+                <a href="/education/bacnet-mstp.html">BACnet MS/TP</a> lesson first, then test yourself — ten questions on the three layers a trunk fails at: the token ring (the <code>Max_Master</code> ceiling and <code>Max_Info_Frames</code>), addressing (the duplicate-MAC flicker), and the two wires (termination, polarity, bias, baud, and the segment budget). Each reveal links back to the section it came from.
+            </p>
+
+            <div id="quiz"></div>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/tools/bacnet-ip-converter.html', label: 'BACnet/IP Hex Converter'},
+            {href: '/tools/bacnet-objects.html', label: 'BACnet Object Reference'}
+        ],
+        lessons: [
+            {href: '/education/bacnet-mstp.html', label: 'BACnet MS/TP'},
+            {href: '/education/bacnet-networking.html', label: 'BACnet Networking'},
+            {href: '/education/bacnet-basics.html', label: 'BACnet Basics'}
+        ],
+        quizzes: [
+            {href: '/practice/bacnet-networking.html', label: 'BACnet Networking'},
+            {href: '/practice/bacnet-basics.html', label: 'BACnet Basics'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/practice/">← All practice</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="/scripts/quiz-engine.js"></script>
+<script>
+    (function () {
+        'use strict';
+
+        // Question bank lives in html/_data/quizzes/bacnet-mstp.js so the
+        // FAQPage JSON-LD emitted from head.njk can read the same source.
+        const questions = {{ quizzes['bacnet-mstp'] | safeScriptJson | safe }};
+
+        Quiz.mount('#quiz', questions, {
+            next: {{ page.fileSlug | nextQuiz | safeScriptJson | safe }},
+            slug: 'bacnet-mstp',
+            title: 'BACnet MS/TP',
+            defaultCount: 10,
+            defaultOrder: 'sequential'
+        });
+    })();
+</script>
+{% endblock %}

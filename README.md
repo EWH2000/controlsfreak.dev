@@ -420,7 +420,8 @@ techs new to the industry and anyone wanting a refresh.
   EOLs, single-point bias, and the A/B polarity-label trap — trust
   the + and −). Ends with a symptom → layer table and a two-tier
   budget rule: past the vendor's figure it *could* be a problem,
-  past the standard's 4000 ft / 32-unit-load figure it *is*.
+  past the standard's 4000 ft / 32-unit-load figure it *is*. Pairs
+  with a practice quiz.
 
 ### Practice
 
@@ -436,15 +437,16 @@ flavors share the same engine:
   When a topic recurs in feedback, it becomes a candidate for a
   new education page.
 
-Shipped so far — sixteen content quizzes (each 10 questions, paired
+Shipped so far — seventeen content quizzes (each 10 questions, paired
 1:1 with its lesson and deep-linking the gotchas) plus five field
 drills:
 
 - **Content quizzes — protocols:** Modbus Basics, Modbus Decoding,
-  BACnet Basics, BACnet Networking. The data tables and function
-  codes, the 5-digit / signed / byte-order / scaling decoding traps,
-  the self-describing object model and priority array, and the
-  three-layer addressing with BBMDs and Foreign Device Registration.
+  BACnet Basics, BACnet Networking, BACnet MS/TP. The data tables and
+  function codes, the 5-digit / signed / byte-order / scaling decoding
+  traps, the self-describing object model and priority array, the
+  three-layer addressing with BBMDs and Foreign Device Registration,
+  and the MS/TP token ring with its Max_Master and termination traps.
 - **Content quizzes — hydronics:** Pump Control, Hydronic Loops,
   Load Piping, Hydronic Balancing, Equipment Staging. The operating
   point and affinity laws, direct/reverse return and the

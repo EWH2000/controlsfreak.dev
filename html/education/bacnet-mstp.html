@@ -4,6 +4,7 @@ description: Why devices fall off an MS/TP trunk — the token ring and Max_Mast
 canonical: https://controlsfreak.dev/education/bacnet-mstp.html
 nav: education
 category: protocols
+pairedQuiz: https://controlsfreak.dev/practice/bacnet-mstp.html
 keywords: mstp ms/tp token ring max master max info frames baud termination eol biasing polarity rs-485 trunk
 ---
 {% extends "layouts/page.njk" %}
@@ -30,7 +31,7 @@ keywords: mstp ms/tp token ring max master max info frames baud termination eol 
                 Those are the three layers, and each one fails differently. Knowing which layer you&rsquo;re looking at is most of the diagnosis.
             </p>
 
-            <h2 class="subhead">The token ring — whose turn it is to talk</h2>
+            <h2 class="subhead" id="token-ring">The token ring — whose turn it is to talk</h2>
 
             <p>
                 MS/TP runs on an RS-485 pair, and RS-485 has no referee: if two devices transmit at once, both messages die. BACnet&rsquo;s answer is a <strong>token</strong>. The masters on the trunk organize themselves into a logical ring by MAC address, and only the device holding the token may initiate a message. When it&rsquo;s done — or after it has sent its allowance — it passes the token to the next master up the ring, the highest address wraps back to the lowest, and around it goes, hundreds of times a minute on a healthy trunk.
@@ -104,7 +105,7 @@ keywords: mstp ms/tp token ring max master max info frames baud termination eol 
                 The opposite mistake costs speed instead of silence. Leave every device at the factory <code>Max_Master = 127</code> on an 8-device trunk, and the token holder dutifully Poll-For-Masters its way through a hundred-odd empty addresses, over and over, forever. The trunk works — it&rsquo;s just spending a chunk of every rotation talking to nobody. The healthy pattern: compact MACs starting low, and <code>Max_Master</code> set the same on every device, a little above the highest MAC in use so there&rsquo;s room to add a controller without touching the whole trunk.
             </p>
 
-            <h2 class="subhead">Two addresses, and why the wrong one gets blamed</h2>
+            <h2 class="subhead" id="two-addresses">Two addresses, and why the wrong one gets blamed</h2>
 
             <p>
                 <a href="/education/bacnet-networking.html">BACnet Networking</a> laid out the three-address picture; on an MS/TP trunk the two that matter are easy to conflate and completely independent. The <strong>MAC address</strong> (0–127 for masters) is the one-byte station address on this physical trunk — the token ring runs on it, it&rsquo;s set with DIP switches or a vendor-tool field, and it only has to be unique <em>on this segment</em>. The <strong>device instance</strong> (up to 4,194,302) is the application-layer identity the BMS programs against, and it must be unique across the whole site. MAC&nbsp;5 can be device&nbsp;100503 — the pairing is arbitrary, and assuming one from the other is how the wrong controller gets reprogrammed.
@@ -114,7 +115,7 @@ keywords: mstp ms/tp token ring max master max info frames baud termination eol 
                 A <strong>duplicate MAC</strong> is the addressing failure with the strangest symptom. Two devices both believe it&rsquo;s their turn when the token reaches the shared address; both transmit; the frames collide and corrupt. Depending on timing, one device wins for a while and the other looks dead, then they trade — so the front end shows two controllers <em>taking turns</em> flickering offline, often miles apart in the device list because their instances are nothing alike. Trunk-wide retries and CRC errors climb too: a duplicate MAC degrades everyone, not just the twins. It&rsquo;s a favorite gift of the controller swap — the replacement arrives with a factory default of MAC&nbsp;0 or 1, which is usually the router.
             </p>
 
-            <h2 class="subhead">The two wires — what the electrical layer needs</h2>
+            <h2 class="subhead" id="two-wires">The two wires — what the electrical layer needs</h2>
 
             <p>
                 Everything above assumes the bits arrive. RS-485 makes that conditional on physical discipline, and every clause of it shows up in a service call eventually. The trunk is a <strong>shielded twisted pair</strong>, <strong>daisy-chained</strong> from device to device — one cable in, one cable out, no star taps, no tee splices, stubs as close to zero as the terminal block allows. A branch line looks harmless and works on the bench; electrically it&rsquo;s an unterminated reflection generator that corrupts frames in proportion to its length and the baud rate.
@@ -186,7 +187,7 @@ keywords: mstp ms/tp token ring max master max info frames baud termination eol 
                 The remaining limits are budgets, and they read in two tiers. The ceiling is the standard: ASHRAE&nbsp;135 rates a segment for <strong>up to 4000&nbsp;ft (1200&nbsp;m)</strong> of proper cable — shielded twisted pair, 100–130&nbsp;Ω impedance, low capacitance — and <strong>32 full unit loads</strong> of transceivers (modern ⅛-load parts stretch the device count; many vendors still draw the line near 32 devices per segment without a repeater). The working line is the vendor&rsquo;s: field guides often quote shorter runs at the higher baud rates and stricter counts for their own hardware. <strong>Past the vendor&rsquo;s figure, it could be a problem</strong> — marginal territory where cable quality, temperature, and that one forgotten stub decide whether the trunk holds. <strong>Past the standard&rsquo;s figure, it is a problem</strong> — outside what the transceivers are specified to drive, and no amount of reterminating buys it back; that&rsquo;s a repeater or a second segment. Every device on the segment runs the <strong>same baud</strong> — 9600, 19200, 38400, or 76800 are the standard set, 38400 and 76800 the common field picks — and a device on the wrong baud is simply mute, with its share of Poll-For-Master traffic turning to garbage on everyone else&rsquo;s scope.
             </p>
 
-            <h2 class="subhead">Reading the symptom — which layer is failing</h2>
+            <h2 class="subhead" id="symptom-layer">Reading the symptom — which layer is failing</h2>
 
             <p>
                 The payoff of the three-layer picture is that the complaint usually names its layer before the meter comes out:
@@ -240,7 +241,7 @@ keywords: mstp ms/tp token ring max master max info frames baud termination eol 
 
     {{ relatedLinks({
         tools: [
-            {href: '/tools/bacnet-objects.html', label: 'BACnet Objects & Properties'},
+            {href: '/tools/bacnet-objects.html', label: 'BACnet Object Reference'},
             {href: '/tools/bacnet-ip-converter.html', label: 'BACnet/IP Hex Converter'}
         ],
         lessons: [
@@ -250,7 +251,7 @@ keywords: mstp ms/tp token ring max master max info frames baud termination eol 
             {href: '/education/modbus-basics.html', label: 'Modbus Basics'}
         ],
         quizzes: [
-            {href: '/practice/bacnet-networking.html', label: 'BACnet Networking'}
+            {href: '/practice/bacnet-mstp.html', label: 'BACnet MS/TP'}
         ]
     }) }}
 
