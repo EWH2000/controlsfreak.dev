@@ -136,3 +136,61 @@ test('thermistor/RTD tables are monotonic in the right direction', () => {
         else expect(first, `${id} overall RTD direction`).toBeLessThan(last);
     }
 });
+
+// ── BACnet enumeration tables ───────────────────────────────────────
+// bacnetEnums.js is hand-TRANSCRIBED from ASHRAE 135 (the 2026-07
+// expansion cross-checked against the bacnet-stack reference enums,
+// pending owner review — see the module's `user to verify` markers).
+// Uniqueness + identity pins catch a transposed id; the
+// objectTypeNames 1:1 check pins the derived map the converter page
+// injects at build time. Plain require — it's a CommonJS _data
+// module, not a classic script, so no vm loader needed.
+
+const bacnetEnums = require(
+    path.join(__dirname, '..', 'html', '_data', 'bacnetEnums.js'));
+
+test('bacnet enum tables — populated, unique ids, sane shapes', () => {
+    for (const key of ['objectTypes', 'propertyIds', 'engineeringUnits']) {
+        const rows = bacnetEnums[key];
+        expect(rows.length, `${key} populated`).toBeGreaterThan(18);
+        const ids = rows.map(r => r.id);
+        expect(new Set(ids).size, `${key} ids unique`).toBe(ids.length);
+        for (const r of rows) {
+            expect(Number.isInteger(r.id) && r.id >= 0,
+                `${key} id ${r.id} is a non-negative integer`).toBe(true);
+            expect(typeof r.name === 'string' && r.name.length > 0,
+                `${key} ${r.id} has a name`).toBe(true);
+        }
+    }
+    // Every unit carries a group — the table's Domain column renders it
+    // unconditionally.
+    for (const u of bacnetEnums.engineeringUnits) {
+        expect(typeof u.group === 'string' && u.group.length > 0,
+            `unit ${u.id} has a group`).toBe(true);
+    }
+});
+
+test('bacnet enum tables hit their identity checkpoints', () => {
+    const byId = (rows) => Object.fromEntries(rows.map(r => [r.id, r.name]));
+    const types = byId(bacnetEnums.objectTypes);
+    // The browser-side smoke tests pin the same strings through the
+    // converter UI ('8 — Device', '0 — Analog Input (AI)') — these are
+    // the load-bearing names.
+    expect(types[0]).toBe('Analog Input (AI)');
+    expect(types[8]).toBe('Device');
+    expect(types[19]).toBe('Multi-state Value (MSV)');
+    const props = byId(bacnetEnums.propertyIds);
+    expect(props[85]).toBe('Present_Value');
+    expect(props[87]).toBe('Priority_Array');
+    expect(props[117]).toBe('Units');
+    const units = byId(bacnetEnums.engineeringUnits);
+    expect(units[62]).toBe('degrees-Celsius');
+    expect(units[98]).toBe('percent');
+    expect(units[84]).toBe('cubic-feet-per-minute');
+    // The derived converter map mirrors objectTypes 1:1.
+    expect(Object.keys(bacnetEnums.objectTypeNames).length)
+        .toBe(bacnetEnums.objectTypes.length);
+    for (const t of bacnetEnums.objectTypes) {
+        expect(bacnetEnums.objectTypeNames[t.id]).toBe(t.name);
+    }
+});

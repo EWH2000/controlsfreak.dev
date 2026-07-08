@@ -360,6 +360,52 @@ test('bacnet/ip converter — object ID tab packs and unpacks', async ({ page })
     expect(errors, 'object ID behavioral should log no errors').toEqual([]);
 });
 
+test('bacnet object reference — filter drives rows, badges, and empty rows', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('/tools/bacnet-objects.html');
+
+    // One query filters all three tables at once; each tab badge shows
+    // its own live match count. Invariant (badge ≡ visible rows), not a
+    // pinned number — the enum data is expected to grow.
+    await page.fill('#bo-search', 'present');
+    const visibleProps = await page
+        .locator('#bo-table-props tbody tr:not(.bo-empty):not([hidden])').count();
+    expect(visibleProps).toBeGreaterThan(0);
+    await expect(page.locator('.bo-count[data-count="props"]'))
+        .toHaveText('· ' + visibleProps);
+
+    // Symbol search — the units rows carry field symbols like (°C).
+    await page.fill('#bo-search', '°C');
+    expect(await page
+        .locator('#bo-table-units tbody tr:not(.bo-empty):not([hidden])').count())
+        .toBeGreaterThan(0);
+
+    // Garbage query — rows hide, the empty-state row shows on the
+    // active tab, badges read zero.
+    await page.fill('#bo-search', 'zzzzz');
+    await expect(page.locator('#bo-table-objects tbody tr:not(.bo-empty):not([hidden])'))
+        .toHaveCount(0);
+    await expect(page.locator('#bo-table-objects .bo-empty')).toBeVisible();
+    await expect(page.locator('.bo-count[data-count="objects"]')).toHaveText('· 0');
+
+    expect(errors, 'bacnet reference behavioral should log no errors').toEqual([]);
+});
+
+test('bacnet object reference emits DefinedTermSet JSON-LD after the breadcrumb', async ({ page }) => {
+    await page.goto('/tools/bacnet-objects.html');
+    const blocks = await page.locator('script[type="application/ld+json"]').allTextContents();
+    // BreadcrumbList stays the FIRST block (the per-page smoke check
+    // above pins the same invariant site-wide) — the term sets follow.
+    expect(blocks[0]).toContain('BreadcrumbList');
+    const termSets = blocks.filter(b => b.includes('"DefinedTermSet"'));
+    expect(termSets).toHaveLength(3);
+    const joined = termSets.join('');
+    expect(joined).toContain('"termCode":"85"');
+    expect(joined).toContain('Present_Value');
+    // Every block must parse — the safeScriptJson serialization contract.
+    for (const b of blocks) JSON.parse(b);
+});
+
 test('modbus register viewer — single + pair tabs decode bits and bytes correctly', async ({ page }) => {
     const errors = watchErrors(page);
     await page.goto('/tools/modbus-register-viewer.html');

@@ -70,6 +70,61 @@ renderer), plus a data-file schema for scenarios. Build **after** the
 engine, one scenario, the existing practice-landing card shape; no
 scoring leaderboards (the quiz plan's hard-nos carry over).
 
+### BACnet buildout — the flagship subsection *(opened 2026-07-07, in progress)*
+
+The topic-cluster play from the `seo-growth-plan-2026-07` analysis,
+ported here from a since-deleted GitHub issue (#294 — the repo's
+Issues tab was disabled 2026-07-07 after attachment spam; this entry
+is now the canonical checklist). **Why:** BACnet is the one cluster
+where the young domain already ranks page 1–2 and earns essentially
+all search clicks (Jul-2026 GSC: ip-converter ~pos 5 with 6–9% CTR,
+bacnet-networking ~6.7, bacnet-objects ~pos 20, "47808 in hex" at 7).
+The decoder/reference long-tail is a *soft* SERP — winnable now —
+while the reference head terms ("bacnet object types") sit with
+Chipkin/bacnet.org authority and come only with domain age. Goal: a
+tightly interlinked tools ⇄ lessons ⇄ quizzes cluster, not scattered
+pages.
+
+Shipped so far:
+
+- **Deepen what ranks** — bacnet-objects h2s + DefinedTermSet schema +
+  enum expansion + FAQ + retitle; ip-converter per-tab topic h2s +
+  FAQ; tool ⇄ tool cross-links; `html/_data/bacnetEnums.js` single
+  source *(shipped 2026-07-07, PR 1 — addenda on both tool entries
+  below)*.
+- **MS/TP practice quiz** de-orphaning the bacnet-mstp lesson + full
+  cluster relatedLinks reciprocity *(PR 2 of the same session — the
+  MS/TP lesson entry's parked quiz marker retires when it merges)*.
+
+Remaining (each a soft-SERP reference tool or informational parent,
+one PR each; new tools follow the CLAUDE.md checklist, category
+`protocols`):
+
+- **BACnet Vendor ID lookup** — searchable vendor-ID ⇄ manufacturer
+  table (property 120 `Vendor_Identifier`; the ASHRAE registry is the
+  public source — import, don't hand-transcribe). `[future:
+  tools/bacnet-vendor-ids.html]`
+- **BACnet Engineering Units decoder** — standalone, filterable
+  reverse-lookup deeper than the reference's ~80-row slice (full
+  0–255 + vendor ranges; copy-oriented). `[future:
+  tools/bacnet-units.html]`
+- **BACnet error / reject / abort code decoder** — error-class +
+  error-code pairs and reject/abort reasons; mirrors the
+  ip-converter / objects pattern. `[future:
+  tools/bacnet-error-codes.html]`
+- **Priority Array explainer** — the 16 slots, lowest-non-null wins,
+  write-null-releases, `Relinquish_Default`. Already parked as
+  `[future: bacnet-priority.html]` on the BACnet Basics entry — this
+  buildout is its demand signal.
+- **Services / BIBBs reference** — ReadProperty / WriteProperty / COV /
+  Who-Is · I-Am as a reference table (prose-only in bacnet-basics
+  today). `[future: education/bacnet-services.html]`
+- *(stretch)* **BACnet vs Modbus** explainer — classic "difference"
+  query funneling into both protocol clusters. `[future:
+  education/bacnet-vs-modbus.html]`
+- **Mini-hub / "start here" decision** once 2–3 of the above land —
+  revisit whether the cluster needs its own nav grouping.
+
 ### BACnet MS/TP — Education page *(shipped 2026-06-10)*
 *One question: why do devices fall off an MS/TP trunk — and what do
 the token ring, the addressing, and the two wires each need to stay
@@ -1451,6 +1506,16 @@ Also handles the optional 2-byte UDP port EBO often appends to the
 hex string (default `BAC0` = 47808). Sits under the BACnet category
 alongside the BACnet object reference tool (shipped — see below).
 
+**2026-07-07 addendum (BACnet buildout, PR 1).** Each tab gained a
+trailing topic `<h2>` + ref-note ("How a BACnet/IP address packs into
+hex", "BACnet Object Identifier decoder — 10-bit type, 22-bit
+instance"…) to broaden the query surface without touching the
+inputs/outputs of a page ranking ~pos 5; the port-reference card's h2
+now carries "UDP 47808 (0xBAC0)". The Object ID tab's type-name map
+now injects from `html/_data/bacnetEnums.js` at build time — the old
+"update both together" comment contract with bacnet-objects is dead.
+A `faqs:` block covers the port / Object-ID / wildcard questions.
+
 ### BACnet object reference *(shipped)*
 The companion the BACnet/IP converter pointed at. A controller, a
 packet capture, or a workstation hands you numbers where you want
@@ -1469,6 +1534,21 @@ enum codes shift by edition and a device may expose vendor extensions.
 Sits under Protocols at `/tools/bacnet-objects.html`; cross-linked from
 both BACnet lessons. First of the v3.1 tools batch closing the
 protocols/hydronics tooling gap.
+
+**2026-07-07 addendum — deepened for SEO (BACnet buildout, PR 1).**
+The scope sentence above is stale: coverage is now the **full 0–64
+object-type range**, a ~60-property slice, and ~80 units grouped by
+domain with field symbols (°C, kW, CFM…). The enum data moved out of
+the page into `html/_data/bacnetEnums.js` — one source feeding the
+three tables, the converter's Object ID type names, and the new
+DefinedTermSet JSON-LD (`termSets:` frontmatter → `definedTermSetJsonLd`
+filter). The three tab topics became real `<h2>`s (the searched
+phrases previously appeared in no heading), a `faqs:` block landed,
+and the `<title>` became "BACnet Object Types & Property IDs
+Reference" (h1/nav-card unchanged). The original verify markers were
+resolved 2026-05-17; the expansion rows carry **fresh**
+`// user to verify` markers in the data module — numbers cross-checked
+against the bacnet-stack reference enums, pending owner review.
 
 ### Valve Cv sizing *(shipped)*
 Hydronics had five education pages and zero tools — the worst

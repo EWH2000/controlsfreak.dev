@@ -38,6 +38,11 @@
     {% if faqs %}
     <script type="application/ld+json">{{ canonicalUrl | faqJsonLd(faqs, title) | safe }}</script>
     {% endif %}
+    {% if termSets %}
+    {%- for ts in termSets %}
+    <script type="application/ld+json">{{ canonicalUrl | definedTermSetJsonLd(bacnetEnums[ts.key], ts.name, ts.fragment, ts.description) | safe }}</script>
+    {%- endfor %}
+    {% endif %}
     {% if (nav == "tools" and page.url != "/tools/") or (nav == "simulators" and page.url != "/simulators/") %}
     <script type="application/ld+json">{{ canonicalUrl | softwareApplicationJsonLd(title, description) | safe }}</script>
     {% endif %}

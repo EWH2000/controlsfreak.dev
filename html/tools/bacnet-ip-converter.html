@@ -4,10 +4,20 @@ description: Convert BACnet/IP addresses between hex and dotted-decimal form, pl
 canonical: https://controlsfreak.dev/tools/bacnet-ip-converter.html
 nav: tools
 category: protocols
-keywords: hex dotted decimal address network number MAC APDU UDP port 47808 BAC0 EBO object identifier instance 4194303 device id
+keywords: hex dotted decimal address network number MAC APDU UDP port 47808 BAC0 EBO object identifier instance 4194303 device id 0xBAC0 47809 wildcard decoder
+faqs:
+    - q: What port does BACnet/IP use?
+      a: UDP 47808 — 0xBAC0 in hex. It is the IANA-registered BACnet port and the default everywhere. Additional logical BACnet/IP networks on one host conventionally take 47809 (0xBAC1) and up, but those are not IANA-registered.
+    - q: How is a BACnet Object Identifier encoded?
+      a: As one 32-bit value — the top 10 bits are the object type (0–1023), the bottom 22 the instance (0–4194303). Raw = type × 4194304 + instance, so Device 1234 packs to 0x020004D2.
+    - q: What does instance 4194303 mean?
+      a: It is the all-ones 22-bit value, reserved as the unassigned/wildcard instance — no real object can use it. You'll meet it in discovery traffic and in tools that use it to mean "any instance."
+    - q: Why does my workstation show a BACnet/IP address as hex?
+      a: BACnet/IP identifies a device by six bytes — four for the IPv4 address, two for the UDP port — and some front ends display those bytes raw. C0A80164BAC0 is 192.168.1.100 on port 47808.
 ---
 {% extends "layouts/page.njk" %}
 {% from "related-links.njk" import relatedLinks %}
+{% from "faq.njk" import faqBlock %}
 
 {% block content %}
 <main id="main">
@@ -86,6 +96,12 @@ keywords: hex dotted decimal address network number MAC APDU UDP port 47808 BAC0
             </div>
             <div class="result-formula flush" id="b2i-formula"></div>
             <div class="failure-callout" id="b2i-callout" hidden></div>
+            <section class="tool-body-row">
+                <h2 class="ps-section-label" id="hex-address">How a BACnet/IP address packs into hex</h2>
+                <p class="ref-note" style="margin-top:0;">
+                    BACnet/IP identifies a device by six bytes — four for the IPv4 address, two for the UDP port — and some front ends display those bytes raw as one hex string. <code>C0A8 0164 BAC0</code> reads as 192.168.1.100 on port 47808; an 8-character string is the address alone.
+                </p>
+            </section>
         </div>
 
         <!-- ── IP → Hex ── -->
@@ -130,6 +146,12 @@ keywords: hex dotted decimal address network number MAC APDU UDP port 47808 BAC0
             </div>
             <div class="result-formula flush" id="i2h-formula"></div>
             <div class="failure-callout" id="i2h-callout" hidden></div>
+            <section class="tool-body-row">
+                <h2 class="ps-section-label" id="hex-encode">BACnet/IP device address → 8- or 12-character hex string</h2>
+                <p class="ref-note" style="margin-top:0;">
+                    Each octet of the dotted-decimal address becomes one hex byte pair, and the UDP port appends as two more — the default BACnet/IP port encodes as <code>BAC0</code>. The 12-character result is the same six-byte address field a BBMD's Broadcast Distribution Table entries carry (each entry pairs it with a four-byte broadcast-distribution mask).
+                </p>
+            </section>
         </div>
 
         <!-- ── Object ID ── -->
@@ -185,12 +207,18 @@ keywords: hex dotted decimal address network number MAC APDU UDP port 47808 BAC0
             </div>
             <div class="result-formula flush" id="boi-formula"></div>
             <div class="failure-callout" id="boi-callout" hidden></div>
+            <section class="tool-body-row">
+                <h2 class="ps-section-label" id="object-identifier">BACnet Object Identifier decoder — 10-bit type, 22-bit instance</h2>
+                <p class="ref-note" style="margin-top:0;">
+                    The 32-bit <code>Object_Identifier</code> packs the object type into its top 10 bits and the instance into the bottom 22 — raw = type × 4194304 + instance, so <code>0x020004D2</code> reads as Device, 1234. The full <code>Object_Type</code> table lives on the <a href="/tools/bacnet-objects.html">BACnet Object Reference</a>; instance 4194303 is the unassigned/wildcard value.
+                </p>
+            </section>
         </div>
     </div>
 
     <div class="tool-card">
         <div class="tool-card-header">
-            <h2 class="tool-card-title">BACnet/IP Port Reference</h2>
+            <h2 class="tool-card-title">BACnet/IP Port Reference — UDP 47808 (0xBAC0)</h2>
         </div>
         <div class="tool-body">
             <table class="ref-table-dense">
@@ -215,8 +243,11 @@ keywords: hex dotted decimal address network number MAC APDU UDP port 47808 BAC0
         </div>
     </div>
 
+    {{ faqBlock(faqs, "BACnet/IP addressing FAQ") }}
+
     {{ relatedLinks({
         tools: [
+            {href: '/tools/bacnet-objects.html', label: 'BACnet Object Reference'},
             {href: '/tools/modbus-register-viewer.html', label: 'Modbus Register Viewer'}
         ],
         lessons: [
@@ -357,23 +388,12 @@ keywords: hex dotted decimal address network number MAC APDU UDP port 47808 BAC0
         // the object type (0–1023), the bottom 22 the instance
         // (0–4194303). 4194303 (all ones) is the unassigned/wildcard
         // instance — legal to decode, flagged in the formula line.
-        // Type names 0–30 + 54–56 mirror the reference table on
-        // /tools/bacnet-objects.html (the canonical naming source —
-        // update both together); 31–127 are reserved to ASHRAE,
+        // Type names come from html/_data/bacnetEnums.js — the single
+        // source this page shares with the reference table on
+        // /tools/bacnet-objects.html (both render from it at build
+        // time). Unassigned numbers below 128 are reserved to ASHRAE,
         // 128–1023 vendor-proprietary.
-        const BACNET_OBJECT_TYPES = {
-            0: 'Analog Input (AI)', 1: 'Analog Output (AO)', 2: 'Analog Value (AV)',
-            3: 'Binary Input (BI)', 4: 'Binary Output (BO)', 5: 'Binary Value (BV)',
-            6: 'Calendar', 7: 'Command', 8: 'Device', 9: 'Event Enrollment',
-            10: 'File', 11: 'Group', 12: 'Loop', 13: 'Multi-state Input (MSI)',
-            14: 'Multi-state Output (MSO)', 15: 'Notification Class', 16: 'Program',
-            17: 'Schedule', 18: 'Averaging', 19: 'Multi-state Value (MSV)',
-            20: 'Trend Log', 21: 'Life Safety Point', 22: 'Life Safety Zone',
-            23: 'Accumulator', 24: 'Pulse Converter', 25: 'Event Log',
-            26: 'Global Group', 27: 'Trend Log Multiple', 28: 'Load Control',
-            29: 'Structured View', 30: 'Access Door',
-            54: 'Lighting Output', 55: 'Binary Lighting Output', 56: 'Network Port',
-        };
+        const BACNET_OBJECT_TYPES = {{ bacnetEnums.objectTypeNames | safeScriptJson | safe }};
 
         function objTypeName(t) {
             if (BACNET_OBJECT_TYPES[t]) return BACNET_OBJECT_TYPES[t];
