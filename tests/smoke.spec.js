@@ -72,6 +72,7 @@ const PAGES = [
     { name: 'practice — modbus decoding', url: '/practice/modbus-decoding.html' },
     { name: 'practice — bacnet basics', url: '/practice/bacnet-basics.html' },
     { name: 'practice — bacnet networking', url: '/practice/bacnet-networking.html' },
+    { name: 'practice — bacnet mstp', url: '/practice/bacnet-mstp.html' },
     { name: 'practice — pump control', url: '/practice/pump-control.html' },
     { name: 'practice — hydronic loops', url: '/practice/hydronic-loops.html' },
     { name: 'practice — load piping', url: '/practice/load-piping.html' },
@@ -1607,10 +1608,10 @@ test('practice landing — Modbus chip collapses sections + filters cards', asyn
     await expect(page.locator('.filter-chip[data-category="all"]')).toHaveClass(/active/);
     await expect(page.locator('.practice-section[data-section="content"] .practice-section-heading')).toBeVisible();
     await expect(page.locator('.practice-section[data-section="field"]   .practice-section-heading')).toBeVisible();
-    // Content-quiz cards (two Modbus, two BACnet) and the field drills all
+    // Content-quiz cards (two Modbus, three BACnet) and the field drills all
     // visible under [All].
     await expect(page.locator('.nav-card[data-category="modbus"]:not([hidden])')).toHaveCount(2);
-    await expect(page.locator('.nav-card[data-category="bacnet"]:not([hidden])')).toHaveCount(2);
+    await expect(page.locator('.nav-card[data-category="bacnet"]:not([hidden])')).toHaveCount(3);
     await expect(page.locator('.nav-card[data-category="field"]:not([hidden])')).toHaveCount(5);
 
     // Click Modbus chip → section headings collapse; non-Modbus cards hide;

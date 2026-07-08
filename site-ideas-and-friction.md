@@ -93,8 +93,7 @@ Shipped so far:
   source *(shipped 2026-07-07, PR 1 — addenda on both tool entries
   below)*.
 - **MS/TP practice quiz** de-orphaning the bacnet-mstp lesson + full
-  cluster relatedLinks reciprocity *(PR 2 of the same session — the
-  MS/TP lesson entry's parked quiz marker retires when it merges)*.
+  cluster relatedLinks reciprocity *(shipped 2026-07-07, PR 2)*.
 
 Remaining (each a soft-SERP reference tool or informational parent,
 one PR each; new tools follow the CLAUDE.md checklist, category
@@ -179,11 +178,12 @@ Build notes:
   while keeping the bus-sim deferral as prose); reciprocal
   relatedLinks on both BACnet lessons.
 - **Paired practice quiz parked**: `[future:
-  practice/bacnet-mstp.html]` — the 1:1 lesson↔quiz matrix is
-  re-opened by this page until a bacnet-mstp quiz ships (banked
-  question material: Max_Master capping, duplicate MAC, EOL
-  placement, A/B polarity trap, symptom→layer rows). Until then the
-  page's "Test yourself" group borrows the BACnet Networking quiz.
+  practice/bacnet-mstp.html]` *(shipped 2026-07-07)* — parking this
+  re-opened the 1:1 lesson↔quiz matrix and the page's "Test yourself"
+  group borrowed the BACnet Networking quiz in the interim. The banked
+  question material (Max_Master capping, duplicate MAC, EOL placement,
+  A/B polarity trap, symptom→layer rows) became the shipped bank, and
+  the quizzes group now points at the page's own quiz.
 
 ### Control-power electrical tools — Transformer VA Budget + Wire Run / Voltage Drop *(shipped 2026-06-10)*
 

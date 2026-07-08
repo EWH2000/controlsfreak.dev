@@ -77,13 +77,13 @@ nav: practice
 
     <div class="filter-chips" role="group" aria-label="Filter practice by topic">
         <button type="button" class="filter-chip active" data-category="all" aria-pressed="true">
-            All <span class="filter-chip-count">21</span>
+            All <span class="filter-chip-count">22</span>
         </button>
         <button type="button" class="filter-chip" data-category="modbus" aria-pressed="false">
             Modbus <span class="filter-chip-count">2</span>
         </button>
         <button type="button" class="filter-chip" data-category="bacnet" aria-pressed="false">
-            BACnet <span class="filter-chip-count">2</span>
+            BACnet <span class="filter-chip-count">3</span>
         </button>
         <button type="button" class="filter-chip" data-category="hydronics" aria-pressed="false">
             Hydronics <span class="filter-chip-count">5</span>
@@ -253,6 +253,15 @@ nav: practice
                 titleShort: 'BACnet Networking',
                 titleFull:  'BACnet Networking',
                 desc:       'Trace the addressing and broadcast story — the three identifier layers, BBMDs and the asymmetric-BDT trap, Foreign Device TTLs, and EBO hex decoding.',
+                pills:      ['10 Questions', 'MCQ · TF · Gotcha · Numeric', '~ 5 min'],
+                category:   'bacnet'
+            }) }}
+            {{ navCard({
+                section:    'practice',
+                href:       '/practice/bacnet-mstp.html',
+                titleShort: 'BACnet MS/TP',
+                titleFull:  'BACnet MS/TP',
+                desc:       'Which layer is the trunk failing at — the token ring and its Max_Master ceiling, the duplicate-MAC flicker, or the two wires: termination, polarity, bias.',
                 pills:      ['10 Questions', 'MCQ · TF · Gotcha · Numeric', '~ 5 min'],
                 category:   'bacnet'
             }) }}

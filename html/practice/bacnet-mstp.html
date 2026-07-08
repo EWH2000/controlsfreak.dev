@@ -1,10 +1,10 @@
 ---
-title: BACnet Basics Quiz — controlsfreak.dev
-description: Ten questions on the BACnet Basics gotchas — the self-describing object model, device instances, the services, and the priority array's lowest-non-null rule.
-canonical: https://controlsfreak.dev/practice/bacnet-basics.html
+title: BACnet MS/TP Quiz — controlsfreak.dev
+description: Ten questions on the MS/TP failure layers — the Max_Master ceiling, duplicate MACs, wrong baud, EOL placement, polarity, bias, and the symptom-to-layer table.
+canonical: https://controlsfreak.dev/practice/bacnet-mstp.html
 nav: practice
 category: bacnet
-pairedLesson: https://controlsfreak.dev/education/bacnet-basics.html
+pairedLesson: https://controlsfreak.dev/education/bacnet-mstp.html
 ---
 {% extends "layouts/page.njk" %}
 {% from "related-links.njk" import relatedLinks %}
@@ -13,22 +13,19 @@ pairedLesson: https://controlsfreak.dev/education/bacnet-basics.html
 <main id="main">
 
     <div class="section-header">
-        <span class="section-label">Practice · BACnet Basics</span>
+        <span class="section-label">Practice · BACnet MS/TP</span>
         <div class="section-line"></div>
     </div>
 
     <div class="tool-card">
         <div class="tool-card-header">
-            <h1 class="tool-card-title">BACnet Basics Quiz <span class="tool-tag">BACnet</span></h1>
+            <h1 class="tool-card-title">BACnet MS/TP Quiz <span class="tool-tag">BACnet</span></h1>
         </div>
         <div class="tool-body">
 
             <p class="page-intro">
                 Read the
-                <a href="/education/bacnet-basics.html">BACnet Basics</a> lesson first, then test yourself — ten questions on the fundamentals: the self-describing
-                device / object / property model, the analog / binary / multi-state families, the everyday
-                services, and the priority array's lowest-non-null-slot rule (plus how writing null releases
-                an override). Each reveal links back to the section of the lesson it came from.
+                <a href="/education/bacnet-mstp.html">BACnet MS/TP</a> lesson first, then test yourself — ten questions on the three layers a trunk fails at: the token ring (the <code>Max_Master</code> ceiling and <code>Max_Info_Frames</code>), addressing (the duplicate-MAC flicker), and the two wires (termination, polarity, bias, baud, and the segment budget). Each reveal links back to the section it came from.
             </p>
 
             <div id="quiz"></div>
@@ -42,13 +39,13 @@ pairedLesson: https://controlsfreak.dev/education/bacnet-basics.html
             {href: '/tools/bacnet-objects.html', label: 'BACnet Object Reference'}
         ],
         lessons: [
-            {href: '/education/bacnet-basics.html', label: 'BACnet Basics'},
+            {href: '/education/bacnet-mstp.html', label: 'BACnet MS/TP'},
             {href: '/education/bacnet-networking.html', label: 'BACnet Networking'},
-            {href: '/education/bacnet-mstp.html', label: 'BACnet MS/TP'}
+            {href: '/education/bacnet-basics.html', label: 'BACnet Basics'}
         ],
         quizzes: [
             {href: '/practice/bacnet-networking.html', label: 'BACnet Networking'},
-            {href: '/practice/bacnet-mstp.html', label: 'BACnet MS/TP'}
+            {href: '/practice/bacnet-basics.html', label: 'BACnet Basics'}
         ]
     }) }}
 
@@ -63,14 +60,14 @@ pairedLesson: https://controlsfreak.dev/education/bacnet-basics.html
     (function () {
         'use strict';
 
-        // Question bank lives in html/_data/quizzes/bacnet-basics.js so the
+        // Question bank lives in html/_data/quizzes/bacnet-mstp.js so the
         // FAQPage JSON-LD emitted from head.njk can read the same source.
-        const questions = {{ quizzes['bacnet-basics'] | safeScriptJson | safe }};
+        const questions = {{ quizzes['bacnet-mstp'] | safeScriptJson | safe }};
 
         Quiz.mount('#quiz', questions, {
             next: {{ page.fileSlug | nextQuiz | safeScriptJson | safe }},
-            slug: 'bacnet-basics',
-            title: 'BACnet Basics',
+            slug: 'bacnet-mstp',
+            title: 'BACnet MS/TP',
             defaultCount: 10,
             defaultOrder: 'sequential'
         });

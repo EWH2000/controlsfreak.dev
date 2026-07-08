@@ -23,4 +23,5 @@ module.exports = [
     { slug: 'modbus-decoding',          label: 'Modbus Decoding' },
     { slug: 'bacnet-basics',            label: 'BACnet Basics' },
     { slug: 'bacnet-networking',        label: 'BACnet Networking' },
+    { slug: 'bacnet-mstp',              label: 'BACnet MS/TP' },
 ];

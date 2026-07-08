@@ -4497,6 +4497,17 @@ nav units/theme pills, vs `role="radiogroup"` semantics for
 mutually-exclusive rows) and sweep chip rows site-wide. Rides naturally
 with #142's consolidation.
 
+### 144. controller-wiring ↔ bacnet-mstp related-links edge is one-way *(open — 2026-07-07)*
+
+The BACnet MS/TP lesson's relatedLinks lists Controller Wiring (the
+two-wires layer is shared ground), but controller-wiring's own
+relatedLinks lists only BACnet Networking — the reciprocal BACnet
+MS/TP entry is missing, so the link equity flows one direction.
+Caught during the BACnet buildout PR 2 cluster-wiring sweep; fixing
+it there was outside the BACnet-cluster scope, so it logs here. One-
+line fix in html/education/controller-wiring.html's relatedLinks
+lessons group.
+
 ### Deferred / Won't fix (with revisit trigger)
 
 Items considered during an audit and deliberately not pursued, each
