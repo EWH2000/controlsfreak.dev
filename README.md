@@ -53,13 +53,15 @@ Calculators, converters, and lookups — open one, get an answer.
 - **BACnet Object Reference** — the numbers a controller, a packet
   capture, or a workstation hands you instead of names: object type 1
   is an Analog Output, property 85 is Present_Value, units enum 62 is
-  degrees-Celsius. Three tabbed tables (Object_Type,
-  Property_Identifier, and the HVAC slice of the Units enumeration)
-  share one filter box that searches all three at once and badges
-  each tab with its live match count — hunting "85" from the Object
-  Types tab still points you at Property IDs. Every code cell is
-  click-to-copy. Deliberately the common day-to-day slice, not the
-  full enumerations (properties alone run past 500).
+  degrees-Celsius. Three tabbed tables (the full 0–64 Object_Type
+  list, the field-relevant Property_Identifier slice, and the Units
+  enumeration grouped by domain with field symbols) share one filter
+  box that searches all three at once and badges each tab with its
+  live match count — hunting "85" from the Object Types tab still
+  points you at Property IDs. Every code cell is click-to-copy.
+  Properties stay a curated slice of an enumeration that runs past
+  500; object types are complete through ASHRAE 135-2020 and its
+  addenda.
 - **Psychrometric Chart** — walk an air handler through its
   psychrometric processes on an altitude-adjustable ASHRAE IP-unit
   chart: mix outdoor and return air, then cool, heat, and humidify.
