@@ -483,6 +483,42 @@ module.exports = function(eleventyConfig) {
         });
     });
 
+    // DefinedTermSet JSON-LD for enum-reference pages — one set per
+    // `termSets:` frontmatter entry ({ key, fragment, name, description }),
+    // with the term arrays coming from the bacnetEnums data module (the
+    // SAME source the visible tables render from, so schema and table
+    // can't drift — the quiz-bank pattern). Each term maps to a
+    // DefinedTerm with termCode = the enum number and name = the
+    // identifier; desc is optional (the units array has none).
+    // `inDefinedTermSet` per term is omitted — implied by nesting, and
+    // it would bloat ~130 terms. The @id anchors to a real on-page h2
+    // fragment so the node is a resolvable URL. head.njk hardcodes the
+    // bacnetEnums lookup today (precedent: quizzes[page.fileSlug]); a
+    // second enum domain wanting this is the trigger to promote the
+    // lookup to a generic _data/termSets.js wrapper.
+    eleventyConfig.addFilter("definedTermSetJsonLd", (canonical, terms, name, fragment, description) => {
+        if (!canonical || !Array.isArray(terms) || !terms.length) return "";
+        const setId = canonical + "#" + fragment;
+        const node = {
+            "@context": "https://schema.org",
+            "@type": "DefinedTermSet",
+            "@id": setId,
+            "name": name,
+            "url": setId,
+        };
+        if (description) node.description = description;
+        node.hasDefinedTerm = terms.map((t) => {
+            const term = {
+                "@type": "DefinedTerm",
+                "termCode": String(t.id),
+                "name": t.name,
+            };
+            if (t.desc) term.description = stripHtml(t.desc);
+            return term;
+        });
+        return scriptSafeStringify(node);
+    });
+
     // SoftwareApplication JSON-LD for tool pages — declares the per-tool
     // calculator as a free, web-only utility app for Google's
     // SoftwareApplication rich-result eligibility. Uniform shape across
