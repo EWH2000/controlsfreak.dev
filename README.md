@@ -62,6 +62,14 @@ Calculators, converters, and lookups — open one, get an answer.
   Properties stay a curated slice of an enumeration that runs past
   500; object types are complete through ASHRAE 135-2020 and its
   addenda.
+- **BACnet Vendor ID Lookup** — the full ASHRAE-assigned
+  `Vendor_Identifier` registry (1,600+ entries) as one searchable
+  table. Type the number a device reports in its I-Am and get the
+  manufacturer — with reserved, unassigned, and newer-than-snapshot
+  states called out — or filter the table by ID or company name;
+  every ID is click-to-copy. Imported from the official registry by
+  script (only the ID and organization are republished), snapshot
+  date under the table.
 - **Psychrometric Chart** — walk an air handler through its
   psychrometric processes on an altitude-adjustable ASHRAE IP-unit
   chart: mix outdoor and return air, then cool, heat, and humidify.

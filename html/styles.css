@@ -1741,6 +1741,8 @@ input[type="range"]::-moz-range-thumb {
 .psy-pill:focus-visible,
 #th-rt-scroll:focus-visible,
 #fbe-canvas:focus-visible,
+.bo-id.bo-copyable:focus-visible,
+.bvid-copyable:focus-visible,
 details.tool-preamble > summary:focus-visible,
 .pid-spoiler > summary:focus-visible {
     outline: 2px solid var(--accent);

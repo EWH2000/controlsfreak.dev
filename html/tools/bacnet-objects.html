@@ -143,7 +143,7 @@ faqs:
                 </table>
                 <!-- // user to verify expanded enum coverage (types 31–53, 57–64) — placeholder data, refine after review -->
                 <p class="ref-note">
-                    The full 0–64 range through ASHRAE 135-2020 and its addenda. Unassigned numbers below 128 are reserved to ASHRAE for future editions; 128–1023 are vendor-proprietary. Decode a packed Object Identifier with the <a href="/tools/bacnet-ip-converter.html">BACnet/IP Hex Converter</a>'s Object ID tab.
+                    The full 0–64 range through ASHRAE 135-2020 and its addenda. Unassigned numbers below 128 are reserved to ASHRAE for future editions; 128–1023 are vendor-proprietary — whose extension it is, the device's <a href="/tools/bacnet-vendor-ids.html">vendor ID</a> says. Decode a packed Object Identifier with the <a href="/tools/bacnet-ip-converter.html">BACnet/IP Hex Converter</a>'s Object ID tab.
                 </p>
             </section>
         </div>
@@ -207,6 +207,7 @@ faqs:
     {{ relatedLinks({
         tools: [
             {href: '/tools/bacnet-ip-converter.html', label: 'BACnet/IP Hex Converter'},
+            {href: '/tools/bacnet-vendor-ids.html', label: 'BACnet Vendor IDs'},
             {href: '/tools/modbus-register-viewer.html', label: 'Modbus Register Viewer'}
         ],
         lessons: [

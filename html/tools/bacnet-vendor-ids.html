@@ -1,0 +1,364 @@
+---
+title: BACnet Vendor ID Lookup — controlsfreak.dev
+description: The full ASHRAE-assigned BACnet vendor ID registry, searchable by number or name — decode the Vendor_Identifier (property 120) a device reports in its I-Am.
+canonical: https://controlsfreak.dev/tools/bacnet-vendor-ids.html
+nav: tools
+category: protocols
+keywords: vendor identifier property 120 who-is i-am manufacturer ashrae registry proprietary device object wireshark discovery
+faqs:
+    - q: How do I find the vendor ID of a BACnet device?
+      a: Read property 120 (Vendor_Identifier) of the Device object — every workstation exposes it on the device property sheet. Devices also announce it in the I-Am they send during Who-Is discovery, so a discovery log or a packet capture shows it without touching the device. <a href="/education/bacnet-basics.html">BACnet Basics</a> covers how discovery works.
+    - q: Who assigns BACnet vendor IDs?
+      a: ASHRAE, through the BACnet committee. Registration is free, normally one number per organization, and IDs are never reassigned — the number stays tied to its original registration even when the company is renamed or acquired, which is why the table shows a few "formerly" names. The official registry lives at bacnet.org.
+    - q: What is vendor ID 0 in BACnet?
+      a: ASHRAE itself — the standards body took the first entry in its own registry. Vendor ID 1 is NIST, which organized and hosted the earliest BACnet interoperability testing.
+    - q: Can two devices have the same BACnet vendor ID?
+      a: Yes — every device from the same manufacturer reports the same vendor ID. It identifies the maker, not the unit; the device instance number is what must be unique across the internetwork.
+    - q: Which BACnet vendor IDs are reserved?
+      a: 555, 666, 777, 888, 911, 999, and 1111 are set aside by ASHRAE and never assigned. If a capture or a device config shows one of these, you are looking at a placeholder or a misconfigured stack, not a real manufacturer.
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+{% from "faq.njk" import faqBlock %}
+
+{% block head %}
+    <style>
+        /* Page-only — vendor-ID lookup. The shared property-sheet and
+           .ref-table-dense rules carry the layout; only the filter box,
+           the mono id column, the match badge, the reserved-row muting,
+           and the empty-state row sit here. The id column is styled by
+           position (td:first-child), not a per-cell class — at 1,600+
+           rows a class per cell is ~30 KB of nothing. */
+        .bvid-controls {
+            margin-bottom: 0.9rem;
+        }
+        .bvid-search-label {
+            display: block;
+            font-family: var(--mono);
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-dim);
+            margin-bottom: 0.35rem;
+        }
+        #bvid-search { width: 100%; }
+
+        .bvid-count {
+            font-family: var(--mono);
+            font-size: 0.78em;
+            color: var(--text-dim);
+            font-weight: 500;
+            text-transform: none;
+            letter-spacing: normal;
+        }
+
+        /* The numeric id — the column people search. Copy affordance is
+           added by JS at init (clipboard needs JS anyway). */
+        #bvid-table td:first-child {
+            font-family: var(--mono);
+            color: var(--blue);
+            white-space: nowrap;
+            text-align: right;
+        }
+        #bvid-table td:first-child.bvid-copyable { cursor: pointer; }
+        #bvid-table td:first-child.bvid-copyable:hover { color: var(--accent); }
+        #bvid-table td:first-child.copied { color: var(--blue); }
+
+        /* ASHRAE's seven held IDs — real rows, muted so they read as
+           placeholders, not manufacturers. */
+        .bvid-res td:last-child {
+            color: var(--text-dim);
+            font-style: italic;
+        }
+
+        .bvid-empty td {
+            color: var(--text-dim);
+            font-style: italic;
+            text-align: center;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Tools · BACnet Vendor ID Lookup</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">
+                BACnet Vendor ID Lookup
+                <span class="tool-tag">BACnet</span>
+            </h1>
+        </div>
+
+        <details class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
+            <summary>Every vendor ID ASHRAE has assigned, in one filterable table — paste the number a device reports and get the manufacturer.</summary>
+            <div class="preamble-rest">
+                The <em>Vendor ID</em> is the <code>Vendor_Identifier</code> (property 120) every BACnet device carries in its Device object and announces in its I-Am — a 16-bit number ASHRAE assigns once per manufacturer, forever.
+                Type a number in the decode box, or filter the full registry table by ID or company name.
+                Only the ID and organization are republished here; the snapshot date is under the table.
+            </div>
+        </details>
+        <p class="ps-seed-note">The input is seeded with an example — edit it to your number.</p>
+
+        <div class="tool-body-2col">
+
+            <section>
+                <h2 class="ps-section-label">Input</h2>
+                <div class="ps-row">
+                    <label class="ps-label" for="bvid-id">Vendor ID (0–65535)</label>
+                    <input class="ps-input" type="number" id="bvid-id" min="0" max="65535" step="1" placeholder="260" value="260">
+                </div>
+                <p class="bit-hint" style="margin-top:0.85rem;">The number a discovery log, a property sheet, or a Wireshark I-Am decode shows as Vendor_Identifier.</p>
+            </section>
+
+            <section role="status" aria-atomic="false">
+                <h2 class="ps-section-label">Output</h2>
+                <div class="ps-row">
+                    <span class="ps-label">Organization</span>
+                    <span class="ps-value muted" id="bvid-out-org">—</span>
+                </div>
+                <div class="status-pill" id="bvid-status">Enter a vendor ID to look it up.</div>
+                <div class="btn-row">
+                    <button class="copy-btn" id="bvid-copy-org">Copy organization</button>
+                </div>
+            </section>
+
+        </div>
+        <div class="result-formula flush" id="bvid-formula"></div>
+        <div class="failure-callout" id="bvid-callout" hidden></div>
+
+        <section class="tool-body-row">
+            <h2 class="ps-section-label" id="vendor-id-list">The full BACnet vendor ID list (ASHRAE registry)</h2>
+            <p class="ref-note" style="margin-top:0;">
+                Every assignment through ID {{ bacnetVendorIds.maxId }} — the same registry a workstation resolves the number against. Click an ID to copy it.
+            </p>
+            <div class="bvid-controls">
+                <label class="bvid-search-label" for="bvid-search">Filter by ID or manufacturer <span class="bvid-count" id="bvid-count" aria-hidden="true"></span></label>
+                <input class="ps-input" type="search" id="bvid-search" placeholder="e.g. 260, 47, trane, siemens, reliable">
+            </div>
+            <table class="ref-table-dense" id="bvid-table" data-max-id="{{ bacnetVendorIds.maxId }}" data-retrieved="{{ bacnetVendorIds.retrieved }}">
+                <thead>
+                    <tr><th>ID</th><th>Organization</th></tr>
+                </thead>
+                <tbody>
+                    {% for v in bacnetVendorIds.vendors %}
+                    <tr{% if v.reserved %} class="bvid-res"{% endif %}><td>{{ v.id }}</td><td>{{ v.org }}</td></tr>
+                    {% endfor %}
+                    <tr class="bvid-empty" hidden><td colspan="2">No vendor IDs match that filter.</td></tr>
+                </tbody>
+            </table>
+            <p class="ref-note">
+                Imported from the official ASHRAE registry — <a href="https://bacnet.org/assigned-vendor-ids/">bacnet.org, assigned vendor IDs</a> — retrieved {{ bacnetVendorIds.retrieved }}: {{ bacnetVendorIds.vendors | length }} assignments through ID {{ bacnetVendorIds.maxId }}. IDs are assigned once and never reassigned, so a number here always identifies the same registrant — though the registry edits organization names after rebrands and acquisitions, so a name can lag this snapshot. Numbers missing from the sequence were either withdrawn or never issued, and a device reporting an ID above {{ bacnetVendorIds.maxId }} is newer than this snapshot. Only the ID and organization are republished — the registry's contact columns are deliberately dropped.
+            </p>
+        </section>
+
+        <section class="tool-body-row">
+            <h2 class="ps-section-label" id="what-a-vendor-id-is">What a BACnet vendor ID is</h2>
+            <p class="ref-note" style="margin-top:0;">
+                A 16-bit number ASHRAE assigns to a manufacturer once and never reassigns, exposed as the Device object's <code>Vendor_Identifier</code> (property 120). Every device a company ships reports the same number — it identifies the maker, not the unit. Registration is free, which is why the list is long and full of names that never turn up on a job site.
+            </p>
+            <p class="ref-note">
+                The registry's first two rows are its origin story: ID 0 is ASHRAE itself, and ID 1 is NIST, which organized and hosted the earliest BACnet interoperability testing. Everything after that is the industry arriving roughly in the order it adopted BACnet.
+            </p>
+        </section>
+
+        <section class="tool-body-row">
+            <h2 class="ps-section-label" id="vendor-ids-in-the-field">Where you see vendor IDs in the field</h2>
+            <p class="ref-note" style="margin-top:0;">
+                Three places, usually: the I-Am a device answers during Who-Is discovery (a workstation's discovery log lists it next to the device instance), the Device object's property sheet when you pull up property 120, and the decoded I-Am APDU in a Wireshark capture. In all three it's the same bare number — which is exactly when you want this table.
+            </p>
+            <p class="ref-note">
+                It also namespaces the proprietary parts of the protocol. Object types 128–1023 and the high property numbers are vendor-specific — see the ranges on the <a href="/tools/bacnet-objects.html">BACnet Object Reference</a> — so "whose device is this" is the first question when a capture shows an object type the standard doesn't define. The vendor ID answers it.
+            </p>
+        </section>
+
+        <section class="tool-body-row">
+            <h2 class="ps-section-label" id="reserved-vendor-ids">Reserved and never-assigned vendor IDs</h2>
+            <p class="ref-note" style="margin-top:0;">
+                Seven numbers — 555, 666, 777, 888, 911, 999, and 1111 — are held by ASHRAE and will never be assigned to a vendor. A device or a capture reporting one of them is running a placeholder, a test stack, or a misconfiguration, not a product from a real manufacturer.
+            </p>
+            <p class="ref-note">
+                Other holes in the sequence are registrations that were withdrawn or numbers that were never issued; because IDs are never reassigned, they stay empty forever. And since ASHRAE issues new IDs continually, a number above this snapshot's ceiling usually just means the device is newer than the table — not that it's bogus.
+            </p>
+        </section>
+
+    </div>
+
+    {{ faqBlock(faqs, "BACnet vendor ID FAQ") }}
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/tools/bacnet-objects.html', label: 'BACnet Object Reference'},
+            {href: '/tools/bacnet-ip-converter.html', label: 'BACnet/IP Hex Converter'}
+        ],
+        lessons: [
+            {href: '/education/bacnet-basics.html', label: 'BACnet Basics'},
+            {href: '/education/bacnet-networking.html', label: 'BACnet Networking'},
+            {href: '/education/bacnet-mstp.html', label: 'BACnet MS/TP'}
+        ],
+        quizzes: [
+            {href: '/practice/bacnet-basics.html', label: 'BACnet Basics'},
+            {href: '/practice/bacnet-networking.html', label: 'BACnet Networking'},
+            {href: '/practice/bacnet-mstp.html', label: 'BACnet MS/TP'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/tools/">← All tools</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="/scripts/ui.js"></script>
+<script>
+    // copyText(el, text) / copyReadouts(btn, sep, ...ids) come from
+    // /scripts/ui.js — see that file for documentation.
+    //
+    // The build-time-rendered table IS the dataset: the decode box reads
+    // its id → organization map straight from the rendered rows at init,
+    // so the page ships the registry exactly once (no safeScriptJson
+    // twin of a 1,600-row array). Reserved rows carry .bvid-res; the
+    // snapshot ceiling and date ride on the table's data- attributes.
+    (function () {
+        'use strict';
+
+        const table    = document.getElementById('bvid-table');
+        const maxId    = parseInt(table.dataset.maxId, 10);
+        const retrieved = table.dataset.retrieved;
+
+        const vendors = new Map();
+        Array.from(table.tBodies[0].rows).forEach(row => {
+            if (row.classList.contains('bvid-empty')) return;
+            vendors.set(Number(row.cells[0].textContent), {
+                org: row.cells[1].textContent.trim(),
+                reserved: row.classList.contains('bvid-res'),
+            });
+        });
+
+        // ── decode box ──
+        const idEl      = document.getElementById('bvid-id');
+        const orgEl     = document.getElementById('bvid-out-org');
+        const statusEl  = document.getElementById('bvid-status');
+        const formulaEl = document.getElementById('bvid-formula');
+        const calloutEl = document.getElementById('bvid-callout');
+
+        function setStatus(kind, text) {
+            statusEl.className = 'status-pill' + (kind ? ' ' + kind : '');
+            statusEl.textContent = text;
+        }
+
+        function mute(msg) {
+            orgEl.className = 'ps-value muted';
+            orgEl.textContent = '—';
+            formulaEl.textContent = '';
+            setStatus('', 'Enter a vendor ID to look it up.');
+            if (msg) { calloutEl.textContent = msg; calloutEl.hidden = false; }
+            else calloutEl.hidden = true;
+        }
+
+        function decode() {
+            const raw = idEl.value.trim();
+            if (raw === '') { mute(null); return; }
+            const id = parseFloat(raw);
+            if (!isFinite(id) || id !== Math.floor(id) || id < 0 || id > 65535) {
+                mute('Vendor ID is a whole number 0–65535 — the Unsigned16 range of the Vendor_Identifier property.');
+                return;
+            }
+            calloutEl.hidden = true;
+            const hit = vendors.get(id);
+            if (hit && !hit.reserved) {
+                orgEl.className = 'ps-value live';
+                orgEl.textContent = hit.org;
+                setStatus('ok', 'Registered vendor ID');
+                formulaEl.textContent = id + ' → ' + hit.org;
+            } else if (hit) {
+                orgEl.className = 'ps-value live';
+                orgEl.textContent = hit.org;
+                setStatus('warn', 'Reserved for ASHRAE — never assigned');
+                formulaEl.textContent = id + ' → reserved for ASHRAE, never assigned to a vendor';
+            } else if (id <= maxId) {
+                orgEl.className = 'ps-value muted';
+                orgEl.textContent = '—';
+                setStatus('warn', 'Unassigned — withdrawn or never issued');
+                formulaEl.textContent = id + ' → no registration (IDs are never reassigned, so the number stays empty)';
+            } else {
+                orgEl.className = 'ps-value muted';
+                orgEl.textContent = '—';
+                setStatus('warn', 'Unassigned in this snapshot — registry ran through ' + maxId + ' on ' + retrieved);
+                formulaEl.textContent = id + ' → beyond this snapshot (0–' + maxId + ') — a newer device, or check the live registry';
+            }
+        }
+
+        idEl.addEventListener('input', decode);
+        document.getElementById('bvid-copy-org').addEventListener('click', e => copyReadouts(e.currentTarget, '', 'bvid-out-org'));
+
+        // ── table filter ──
+        const search = document.getElementById('bvid-search');
+        const badge  = document.getElementById('bvid-count');
+
+        function applyFilter() {
+            const q = search.value.trim().toLowerCase();
+            const body = table.tBodies[0];
+            let matches = 0;
+            Array.from(body.rows).forEach(row => {
+                if (row.classList.contains('bvid-empty')) return;
+                // Match against data-code + the org cell, NOT
+                // row.textContent — copyText() swaps the clicked id
+                // cell's text to "copied!" for ~2s, and a filter during
+                // the flash would judge the mutated text and keep the
+                // wrong verdict after it restores (the filter only
+                // recomputes on input). The space keeps id and org from
+                // concatenating into accidental cross-cell matches.
+                const hay = (row.cells[0].dataset.code + ' ' + row.cells[1].textContent).toLowerCase();
+                const hit = !q || hay.includes(q);
+                row.hidden = !hit;
+                if (hit) matches++;
+            });
+            const emptyRow = body.querySelector('.bvid-empty');
+            emptyRow.hidden = !(q && matches === 0);
+            badge.textContent = q ? '· ' + matches : '';
+        }
+
+        search.addEventListener('input', applyFilter);
+
+        // ── click-to-copy on the id cells ──
+        // Mark each id cell as an interactive copy target (the affordance
+        // only appears with JS live, since clipboard needs JS anyway),
+        // stashing the number in data-code so copyText()'s "copied!"
+        // text-swap can't lose it. One delegated click + keydown listener
+        // on the table handles all 1,600+ cells.
+        Array.from(table.tBodies[0].rows).forEach(row => {
+            if (row.classList.contains('bvid-empty')) return;
+            const cell = row.cells[0];
+            cell.dataset.code = cell.textContent.trim();
+            cell.classList.add('bvid-copyable');
+            cell.setAttribute('role', 'button');
+            cell.setAttribute('tabindex', '0');
+            cell.setAttribute('title', 'Copy ' + cell.dataset.code);
+        });
+        function copyCell(cell) {
+            copyText(cell, cell.dataset.code);
+        }
+        table.addEventListener('click', e => {
+            const cell = e.target.closest('td.bvid-copyable');
+            if (cell) copyCell(cell);
+        });
+        table.addEventListener('keydown', e => {
+            if (e.key !== 'Enter' && e.key !== ' ') return;
+            const cell = e.target.closest('td.bvid-copyable');
+            if (!cell) return;
+            e.preventDefault();
+            copyCell(cell);
+        });
+
+        // First-paint decode of the seeded example — addEventListener
+        // only fires on user input, so without this the page lands muted.
+        decode();   // 260 → BACnet Stack at SourceForge
+    })();
+</script>
+{% endblock %}
