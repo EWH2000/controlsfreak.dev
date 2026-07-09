@@ -24,6 +24,7 @@ const PAGES = [
     { name: 'modbus register viewer', url: '/tools/modbus-register-viewer.html' },
     { name: 'bacnet/ip converter',    url: '/tools/bacnet-ip-converter.html' },
     { name: 'bacnet object reference', url: '/tools/bacnet-objects.html' },
+    { name: 'bacnet vendor ids',      url: '/tools/bacnet-vendor-ids.html' },
     { name: 'psychrometric chart',    url: '/tools/psychrometric-chart.html' },
     { name: 'economizer ratio',       url: '/tools/economizer-ratio.html' },
     { name: 'air mixing',             url: '/tools/air-mixing.html' },
@@ -404,6 +405,84 @@ test('bacnet object reference emits DefinedTermSet JSON-LD after the breadcrumb'
     expect(joined).toContain('"termCode":"85"');
     expect(joined).toContain('Present_Value');
     // Every block must parse — the safeScriptJson serialization contract.
+    for (const b of blocks) JSON.parse(b);
+});
+
+test('bacnet vendor ids — decode box walks the registered / reserved / unassigned states', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('/tools/bacnet-vendor-ids.html');
+
+    // Seeded 260 decodes on first paint — a registered ID, ok pill.
+    await expect(page.locator('#bvid-out-org')).toHaveText('BACnet Stack at SourceForge');
+    await expect(page.locator('#bvid-status')).toHaveClass(/ok/);
+
+    // 555 is one of ASHRAE's seven held IDs — warn pill, org shows the
+    // registry's literal "Reserved for ASHRAE" row text.
+    await page.fill('#bvid-id', '555');
+    await expect(page.locator('#bvid-out-org')).toHaveText('Reserved for ASHRAE');
+    await expect(page.locator('#bvid-status')).toHaveClass(/warn/);
+
+    // 65000 is in Unsigned16 range but far beyond the snapshot ceiling —
+    // muted org, warn pill naming the unassigned state. (65000, not a
+    // today-gap like 1395: decades of headroom vs. registry churn.)
+    await page.fill('#bvid-id', '65000');
+    await expect(page.locator('#bvid-out-org')).toHaveText('—');
+    await expect(page.locator('#bvid-status')).toHaveText(/unassigned/i);
+    await expect(page.locator('#bvid-status')).toHaveClass(/warn/);
+
+    // 70000 is past the Unsigned16 range — validate-and-mute plus the
+    // failure callout.
+    await page.fill('#bvid-id', '70000');
+    await expect(page.locator('#bvid-out-org')).toHaveText('—');
+    await expect(page.locator('#bvid-callout')).toBeVisible();
+
+    // Recover — a low registered ID decodes again and the callout clears.
+    await page.fill('#bvid-id', '0');
+    await expect(page.locator('#bvid-out-org')).toHaveText('ASHRAE');
+    await expect(page.locator('#bvid-callout')).toBeHidden();
+
+    expect(errors, 'vendor-id decode behavioral should log no errors').toEqual([]);
+});
+
+test('bacnet vendor ids — filter narrows the registry table and badge tracks it', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('/tools/bacnet-vendor-ids.html');
+
+    // Name search — invariant (badge ≡ visible rows), not a pinned
+    // number: the registry grows on every re-import.
+    await page.fill('#bvid-search', 'trane');
+    const visible = await page
+        .locator('#bvid-table tbody tr:not(.bvid-empty):not([hidden])').count();
+    expect(visible).toBeGreaterThan(0);
+    await expect(page.locator('#bvid-count')).toHaveText('· ' + visible);
+
+    // Garbage query — rows hide, the empty-state row shows, badge zero.
+    await page.fill('#bvid-search', 'zzzzz');
+    await expect(page.locator('#bvid-table tbody tr:not(.bvid-empty):not([hidden])'))
+        .toHaveCount(0);
+    await expect(page.locator('#bvid-table .bvid-empty')).toBeVisible();
+    await expect(page.locator('#bvid-count')).toHaveText('· 0');
+
+    // Clearing restores every row and empties the badge.
+    await page.fill('#bvid-search', '');
+    expect(await page
+        .locator('#bvid-table tbody tr:not(.bvid-empty):not([hidden])').count())
+        .toBeGreaterThan(1600);
+    await expect(page.locator('#bvid-count')).toHaveText('');
+
+    expect(errors, 'vendor-id filter behavioral should log no errors').toEqual([]);
+});
+
+test('bacnet vendor ids — FAQPage JSON-LD emits and every block parses', async ({ page }) => {
+    await page.goto('/tools/bacnet-vendor-ids.html');
+    const blocks = await page.locator('script[type="application/ld+json"]').allTextContents();
+    expect(blocks[0]).toContain('BreadcrumbList');
+    const faq = blocks.filter(b => b.includes('"FAQPage"'));
+    expect(faq).toHaveLength(1);
+    expect(faq[0]).toContain('Vendor_Identifier');
+    // No 1,600-term DefinedTermSet on this page — deliberate (head weight).
+    expect(blocks.filter(b => b.includes('"DefinedTermSet"'))).toHaveLength(0);
+    // Every block must parse — the serialization contract.
     for (const b of blocks) JSON.parse(b);
 });
 
@@ -1072,7 +1151,7 @@ test('tools landing — URL hash deep-links to a category on initial load', asyn
 
     // Page boots with Protocols active.
     await expect(page.locator('.filter-chip[data-category="protocols"]')).toHaveClass(/active/);
-    expect(await page.locator('.nav-card:not([hidden])').count()).toBe(4);
+    expect(await page.locator('.nav-card:not([hidden])').count()).toBe(5);
 
     // Unknown hash falls back to [All].
     await page.goto('/tools/#nonsense');
