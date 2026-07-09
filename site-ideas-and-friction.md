@@ -124,6 +124,282 @@ one PR each; new tools follow the CLAUDE.md checklist, category
 - **Mini-hub / "start here" decision** once 2–3 of the above land —
   revisit whether the cluster needs its own nav grouping.
 
+### Forced-air buildout — the air-side chapter *(opened 2026-07-09, in progress)*
+
+The site's biggest taught-around hole, opened as a six-page Education
+chapter with paired quizzes, one PR per page. **Why:** the air side
+is a tool cluster without a hub — psychrometric-chart (a full AHU
+process chain), air-mixing, economizer-ratio, coil-sizing, airflow,
+and dew-point all pointed their lessons-links at
+psychrometrics-basics, which teaches air *state*, not air *systems*;
+affinity-laws is fan-capable but files under hydronics and links only
+pump lessons. The mock-service-call audit put two of its five
+scenarios on exactly this ground (RTU economizer complaint, VAV
+commissioning day) — demand signal, not invented work. And it's the
+owner's own learning list: power exhaust, damper positions ↔ building
+pressure, and naming the unit you're standing in front of are the
+personal pain points that pick the depth spots. New education
+category `forced-air` (label "Forced Air Systems"), matching practice
+category for the quizzes — rollout notes below.
+
+Reading order (educationSequence + both landing grids; the block
+inserts after psychrometrics-basics and before function-blocks — air
+state precedes air systems, protocols stay last; reorder the grid,
+educationSequence.js, and quizOrder.js together, same PR):
+air-handlers → economizers → building-pressure →
+air-unit-identification → vav-systems → duct-static-control. The
+VAV → duct-static close mirrors the hydronic arc's load-piping →
+pump-control ("loads throttle, mover responds") on purpose — the
+pages should say so. Ship order may deviate to 1 → 4 → 2 → 3 → 5 → 6
+to give the identification sidestep a live link sooner; keep 2 → 3
+adjacent either way (the damper ↔ pressure debt pays next-PR).
+
+Shipped so far:
+
+- **Air Handlers** *(shipped 2026-07-09, buildout PR 1)* —
+  `education/air-handlers.html` + paired quiz + the `forced-air`
+  category rollout (education + practice) + the `data-flow="air"`
+  engine type. Chapter opener/hub: the air path from return grille
+  to supply duct, generic draw-through AHU with a budgeted RTU
+  callout, sensor-strip widget (owner's RTU MA-T-placement story),
+  and the prose sidestep toward unit identification. Declared
+  question + scope contract below.
+
+Remaining (one lesson + paired quiz per PR, category `forced-air`;
+declared questions for all six locked below):
+
+- **Economizers** — dampers as one assembly, dry-bulb vs enthalpy
+  changeover, first-stage-of-cooling sequencing, field failures.
+  Pays function-blocks' worked sheet and economizer-ratio's orphan
+  tool. `[future: education/economizers.html]`
+- **Building pressure & exhaust** — the air ledger, barometric
+  relief / power exhaust / return-fan tracking, damper positions ↔
+  building pressure, sensor placement. The owner-pain centerpiece.
+  `[future: education/building-pressure.html]`
+- **Unit identification** — what is this box: RTU / AHU / MAU-DOAS /
+  heat pump / split, nameplate + schedule-tag literacy; closes by
+  walking back to the opener's air path. `[future:
+  education/air-unit-identification.html]`
+- **VAV systems** — one AHU, many boxes; box anatomy and K-factor
+  flow (pays the airflow tool), reheat at minimum, the
+  every-box-closes cliff-hanger. `[future:
+  education/vav-systems.html]`
+- **Duct static control** — why the fan holds static, sensor
+  placement + the loop, static reset, safeties; the pump-control
+  mirror and the chapter closer. Pays affinity-laws' fan-side
+  orphanhood and the pid-tuner's supply-fan · duct-static scene.
+  `[future: education/duct-static-control.html]`
+
+**The identification sidestep.** Linear order stands, but the opener
+plants an early callout toward naming the unit ("not sure what to
+call the box you're standing in front of? that's its own question")
+— plain prose + the `[future: education/air-unit-identification.html]`
+marker until the ID page ships, never a dead link. Upgrading that
+prose to a real link is a tracked forward-link debt the ID page pays
+in its own PR, alongside its closing section sending readers back to
+the opener's air path ("whatever the nameplate says, it's the same
+stations"). Same discipline as the twin-T → load-piping payoff: the
+marker is the record, and the ID page doesn't ship without paying it.
+
+**Quiz plan.** Every page ships its paired quiz in the same PR —
+bank in `html/_data/quizzes/<slug>.js` (never inline; head.njk's
+FAQPage reads the same source), 10 questions banked from the page's
+own sections, `pairedQuiz`/`pairedLesson` frontmatter both ways,
+quizOrder.js + the practice landing grid inserted at the curriculum
+position (after psychrometrics-basics, before function-blocks; the
+nextQuiz chain re-routes at build). The bacnet-mstp lesson-first
+parking re-opened the 1:1 lesson↔quiz matrix and borrowed a sibling
+quiz for a month — don't repeat it.
+
+**Category rollout (landed with PR 1).** `.eleventy.js`
+NAV_CATEGORIES: education gained `["forced-air", "Forced Air
+Systems"]` between refrigerant and protocols; practice gained the
+same pair between psychrometrics and field. Education landing chip
+"Forced Air Systems" at count 1 (All 18→19 — airflow-chip precedent:
+a one-entry chip is fine as a declared category opener); practice
+chip at count 1 (All 22→23). Card-level `category: 'forced-air'` on
+both landings (NOT added to the education filter's FUNDAMENTALS
+catch-all set); frontmatter `category: forced-air` (navCategoryGuard
+fails the build without it). The 18-char label is safe in the nav
+dropdown and the wrapping chip rows, but NOT beside an h1 — per-page
+`.tool-tag` uses the short display form **"Air Systems"** (tags
+already diverge from category labels: "HVAC" on fundamentals pages,
+"Field Drill" on field), and long h1s stay short ("Building
+Pressure", not "Building Pressure & Exhaust") so the 320-width sweep
+stays green. Key stays `forced-air` everywhere; labels are
+display-only.
+
+Per-PR mechanics, same every time: educationSequence.js +
+education/index.html grid (reorder together), quizOrder.js +
+practice/index.html grid (ditto), chip counts on both landings,
+tests/pages.js (the 375 sweep + sitemap-drift test), README tour,
+description 140–160 chars (build-enforced), retire the page's
+`[future:]` markers with *(shipped YYYY-MM-DD)* annotations,
+relatedLinks reciprocity on the tools each page adopts, minor
+version bump.
+
+Parked, NOT committed pages (terminal-unit follow-ons — markers only,
+they earn pages when demand shows): `[future:
+education/fan-powered-boxes.html]` (series vs parallel), `[future:
+education/vvt.html]` (looks like VAV, isn't), `[future:
+education/fan-coil-units.html]`, `[future: DOAS / ERV page]` (already
+parked on the psychrometrics entry — stays parked).
+
+**Mini-hub / "start here" decision deferred** until 3–4 pages land —
+revisit whether Forced Air needs its own nav grouping / hub page, and
+whether affinity-laws' hydronics-only filing needs more than the
+relatedLinks fix page 6 gives it.
+
+**Declared questions — all six, locked before drafting (one-question
+rule).** Each page's shipped entry will open with the same question
+and record what actually landed; these are the scope contracts.
+
+**1 · Air handlers** (`air-handlers.html`) *(shipped 2026-07-09)*
+*One question: what path does air walk through an air handler — from
+return grille to supply duct — and what job does each station on
+that path do?*
+In scope: the air-path walk (RA → mixing box → filter → coils →
+supply fan → SA, generic draw-through AHU); each station's controls
+surface (what moves it, what sensor watches it — MA-T/DA-T, filter
+ΔP, damper + valve actuators); the packaged-RTU callout (same
+anatomy folded into a rooftop box, DX coil instead of chilled water
+— hard budget set before drafting: one callout, ≤4 sentences, no
+diagram; growth pulls it into the ID page — budget held). Closing
+names the downstream questions — this page is deliberately the
+chapter hub.
+Out of scope: economizer logic `[future: education/economizers.html]`;
+relief/exhaust path `[future: education/building-pressure.html]`;
+naming the box `[future: education/air-unit-identification.html]`
+(the sidestep callout); the terminal side `[future:
+education/vav-systems.html]` and the fan's speed `[future:
+education/duct-static-control.html]`; air-state math — existing
+links, not markers (psychrometrics-basics §Processes, air-mixing,
+coil-sizing, psychrometric-chart).
+Debts: incurred the five chapter markers above. Paid: first lesson
+hub for the psychrometric-chart / air-mixing / coil-sizing
+lessons-links (reciprocity landed same PR, plus back-edges from
+psychrometrics-basics, load-piping, vfds, refrigerant-cycle-basics).
+
+**2 · Economizers** (`economizers.html`)
+*One question: when should an air handler cool with outside air
+instead of running the coil — and how do the dampers, the changeover
+check, and the minimum-OA floor make that decision safely?*
+In scope: the damper set as one modulating assembly (linked OA/RA/EA
+action, minimum-OA position vs free-cooling modulation, MAT as the
+controlled variable); changeover (dry-bulb vs enthalpy, high-limit
+lockout, why enthalpy wins humid climates); the cooling sequence
+(economizer as first stage, integrated with DX/CHW staging, the
+enable logic); field failure modes (stuck/hunting dampers,
+freeze-stat, the RTU-economizer audit scenario as the worked
+diagnosis).
+Out of scope: where the air goes at 100 % OA `[future:
+education/building-pressure.html]` *(next page — plant the callout)*;
+demand-controlled ventilation / CO₂ resets `[future: DCV]`; 90.1
+climate-zone high-limit tables `[future: changeover-limit reference
+on economizer-ratio.html]`; mixing math (links to
+psychrometrics-basics / air-mixing, not markers).
+Debts: pays function-blocks' economizer-enable worked sheet (the
+sheet finally gets a "what the enabled device actually does" link),
+economizer-ratio's lessons-link orphanhood, sequencing-scenarios'
+economizer-changeover reveals, and page 1's economizer marker.
+Incurs the building-pressure callout (the damper ↔ pressure tie) and
+the DCV marker.
+
+**3 · Building pressure & exhaust** (`building-pressure.html`)
+*One question: why does a building go positive or negative, and how
+do relief, return, and power-exhaust fans keep it near neutral while
+the dampers move?*
+In scope: the air ledger (OA in vs exhaust/relief/exfiltration out —
+pressure is the residual; setpoints ~+0.02–0.05 in. w.c.; door and
+elevator symptoms); the relief lineup (barometric relief, power
+exhaust staged/modulating — the owner's named pain, deepest
+treatment on the page — return/relief fan with tracking; when each
+shows up, how each is controlled); damper positions ↔ building
+pressure (100 % OA with no relief path, minimum-OA against a big
+exhaust load — pays page 2's callout); measuring it (indoor probe
+away from doors/elevators, outdoor reference away from wind/stack,
+why the signal is slow and noisy).
+Out of scope: duct static — a different pressure with a different
+sensor and loop; name the classic conflation and defer `[future:
+education/duct-static-control.html]`; kitchen / lab / dedicated
+exhaust `[future: kitchen & lab exhaust]`; stairwell pressurization
+and smoke control `[future: smoke control]`; VAV-minimum ventilation
+interactions `[future: section in education/vav-systems.html]`.
+Debts: pays page 2's callout and page 1's relief-path marker. Incurs
+the duct-static distinction (paid page 6) plus the uncommitted
+exhaust/smoke markers.
+
+**4 · Unit identification** (`air-unit-identification.html`)
+*One question: you're standing in front of an air-side unit you've
+never seen — how do you work out what it is, what it does, and what
+to call it on the radio?*
+In scope: the three field questions (where does it sit, what's in
+the cabinet — coils, compressors, just fans — where does its air
+come from and go) as a walkable decision path; the lineup (packaged
+RTU incl. heat-pump variants, built-up/indoor AHU, MAU/DOAS 100 %
+OA, splits, and the CV-vs-VAV tell — is there a drive, are there
+boxes); nameplate + drawings literacy (schedule tags AHU-1 / RTU-3 /
+EF-2, model-number tonnage digits, matching unit to mechanical
+schedule); closing tie-back — whatever the box is called, walk the
+same stations (pays the sidestep).
+Out of scope: terminal-unit identification `[future:
+education/vav-systems.html]`; FCUs `[future:
+education/fan-coil-units.html]`; VVT `[future: education/vvt.html]`;
+DOAS/ERV psychrometrics `[future: DOAS / ERV page]` (parked since
+the psychrometrics entry); what the unit should *do* once named —
+the rest of the chapter.
+Debts: pays THE sidestep — upgrades the opener's prose callout to a
+live link and sends readers back to the opener's air path. Incurs
+the parked terminal-unit markers.
+
+**5 · VAV systems** (`vav-systems.html`)
+*One question: how does one air handler serve thirty zones that all
+want different things — what is a VAV box actually doing when its
+zone calls?*
+In scope: the system shape (constant-ish cold supply, boxes throttle
+volume not temperature — the load-throttles half of the hydronic
+mirror); box anatomy (damper, flow ring + velocity sensor, CFM =
+K·√VP — pays the airflow tool's K-factor tab — controller,
+pressure-independent operation, min/max CFM and where commissioning
+gets them); reheat at minimum (ventilation floor + comfort, the
+DAT/flow cascade); the cliff-hanger — every box closes at once:
+where does the pressure go? `[future:
+education/duct-static-control.html]` (discovery-prompt callout the
+next page pays).
+Out of scope: duct static / fan response `[future:
+education/duct-static-control.html]`; fan-powered boxes `[future:
+education/fan-powered-boxes.html]`; VVT `[future: education/vvt.html]`;
+TAB procedure (the airflow tool's traverse note carries the math;
+no lesson promised).
+Debts: pays vfds.html's naked "VAV systems" prose in the cube-law
+section (gains its link), the airflow tool's lessons-link
+orphanhood, and the VAV-commissioning audit scenario. Incurs the
+duct-static cliff-hanger and the parked terminal markers.
+
+**6 · Duct static control** (`duct-static-control.html`)
+*One question: how does the supply fan know how much air the
+building wants — and why does it hold duct static pressure rather
+than flow?*
+In scope: why static is the signal (boxes throttle → static rises →
+fan slows; the explicit pump-control mirror — the chapter's
+hydronic-arc payoff, said out loud); the loop (sensor ~2/3 down the
+duct, setpoint, PID on the VFD — hands-on pair is the pid-tuner's
+supply-fan VFD · duct static scene); static-pressure reset (trim &
+respond off box positions; a fixed setpoint wastes the cube-law
+savings — affinity-laws carries the math); safeties + field
+failures (high-static cutout, blown duct, plugged/frozen sensing
+tube).
+Out of scope: return-fan / relief tracking — building-pressure.html
+backlink (exists by then — link, not marker); fan arrays /
+redundancy `[future: fan arrays]`; lab/critical pressure cascades
+`[future: critical environments]`; affinity derivations — the tool.
+Debts: pays page 5's cliff-hanger, page 3's duct-static ≠
+building-static marker, page 1's fan marker, affinity-laws' fan-side
+orphanhood (tool lessons-links gain this page), and vfds' air-side
+cube-law story. Closes the chapter — the closing section walks the
+full air path once more (refrigerant-chapter page-1/closing-framing
+precedent).
+
 ### BACnet Vendor ID lookup — tool *(shipped 2026-07-08, buildout PR 3)*
 *One question: whose device is this — the number a discovery log, a
 property sheet, or a Wireshark I-Am decode shows as
@@ -3014,6 +3290,19 @@ page invents its own variant.
   an element to the engine. Picks particle color (`SUPPLY_FILL` /
   `RETURN_FILL`) and is the selector future CSS hooks key off
   (see the screen-only dashed-return override above).
+- `data-flow="air"` *(added 2026-07-09, forced-air buildout PR 1)* —
+  air ducts. Particle fill follows the element's `stroke` attribute
+  (the same rule as the pulse-color default), so ONE type serves
+  every air stream: OA `--teal`, RA `--blue-cool`, SA `--blue`, EA
+  `--text-dim` live in the markup, and a pool rebuild reproduces
+  them by construction (structurally immune to the #96 recolor-wipe
+  class — no `setPathColor` needed for static stream colors; a page
+  that recolors air ducts dynamically, e.g. the economizers page's
+  modulating diagram, layers `setPathColor` on top and owns the
+  rebuild caveat). Falls back to `SUPPLY_FILL` with no stroke.
+  Dashed exhaust/relief ducts drop their dashes while animated
+  exactly like the water return — the shared rule in styles.css
+  targets `[data-flow="air"][stroke-dasharray]`.
 - `data-flow-reverse="true"` — optional, default false. Walks the
   path end-to-start instead of start-to-end. Use when a path is
   drawn against flow direction and rewriting the `d` /

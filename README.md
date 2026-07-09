@@ -370,6 +370,18 @@ techs new to the industry and anyone wanting a refresh.
   dry" / "watch the glass" / "condensation on glass") off the
   surface-minus-dew-point margin, on the same moist-air engine as
   the interactive chart. Pairs with the Psychrometrics Basics quiz.
+- **Air Handlers** — what happens to air as it passes through an air
+  handler: the path from return grille to supply duct, station by
+  station — return and relief, the mixing box held at minimum
+  outside air (with the worked mixed-air arithmetic), filter before
+  coils and the dirty-filter ΔP, the drain pan under the cooling
+  coil, and the draw-through supply fan with its degree of fan heat.
+  Four animated air-path schematics plus a sensor-strip widget that
+  walks RA-T / OA-T / MA-T / DA-T like a BMS graphic — its
+  damper-failure preset replays a real RTU hunt traced to an MA-T
+  sensor mounted too close to the DX coil. A budgeted callout maps
+  the same drawing onto a packaged RTU. Page 1 of the forced-air
+  chapter; pairs with the Air Handlers quiz.
 - **Function-Block Basics** — what a block and a wiresheet are, why
   the industry builds sequences this way (the diagram is the program,
   you can watch it run live, the block vocabulary travels across
@@ -445,7 +457,7 @@ flavors share the same engine:
   When a topic recurs in feedback, it becomes a candidate for a
   new education page.
 
-Shipped so far — seventeen content quizzes (each 10 questions, paired
+Shipped so far — eighteen content quizzes (each 10 questions, paired
 1:1 with its lesson and deep-linking the gotchas) plus five field
 drills:
 
@@ -475,6 +487,10 @@ drills:
 - **Content quizzes — psychrometrics:** Psychrometrics Basics.
   Seven properties, why any two lock the rest, the four chart
   process families, and the RH / dew-point / enthalpy gotchas.
+- **Content quizzes — forced air:** Air Handlers. The station order
+  down the air path, minimum outside air and where the relief goes,
+  the mixed-air arithmetic and its stuck-damper gotcha readout,
+  filter ΔP, coil condensate, and fan heat.
 - **Surviving Your First Months** *(field drill)* — a broad sampler
   for techs in their first few months: LOTO and verify-on-known-live,
   the 4-20 mA live-zero wire-break signature, DMM continuity mode,
