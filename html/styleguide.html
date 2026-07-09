@@ -105,6 +105,14 @@ noindex: true
         .sg-led-row span { display: inline-flex; align-items: center; gap: 0.45rem; font-family: var(--mono); font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.06em; }
         .sg-stack > * + * { margin-top: 0.7rem; }
         .sg-2up { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+
+        /* Station demo body: tree | wiresheet side by side; single column
+           at phone widths so the absolutely-positioned wiresheet blocks
+           keep their ~270px extent without clipping in the card. */
+        .sg-station-body { display: grid; grid-template-columns: 120px 1fr; gap: 0.9rem; }
+        @media (max-width: 620px) {
+            .sg-station-body { grid-template-columns: 1fr; }
+        }
     </style>
 {% endblock %}
 
@@ -187,7 +195,7 @@ noindex: true
             <div class="tool-card-header">
                 <h3 class="tool-card-title"><span class="bas-led active" aria-hidden="true"></span>Station <span class="tool-tag">Niagara cue</span></h3>
             </div>
-            <div class="tool-body" style="display:grid; grid-template-columns:120px 1fr; gap:0.9rem;">
+            <div class="tool-body sg-station-body">
                 <div class="tree">
                     <div class="row"><span class="ic folder"></span>Drivers</div>
                     <div class="row indent"><span class="ic station"></span>BACnet</div>
@@ -233,14 +241,19 @@ noindex: true
                     <h3>Worked example <span>· the accent left-rule</span></h3>
                     <p>Callouts carry a 2px accent left-border. The same shell is reused for PID-term cards, discovery prompts, and reveals.</p>
                 </div>
-                <table class="ref-table-dense">
-                    <thead><tr><th>Signal</th><th>Live zero</th></tr></thead>
-                    <tbody>
-                        <tr><td>4–20 mA</td><td>yes</td></tr>
-                        <tr><td>0–10 V</td><td>no</td></tr>
-                        <tr><td>2–10 V</td><td>yes</td></tr>
-                    </tbody>
-                </table>
+                <!-- .rt-stack: below 620px each row stacks — leading cells
+                     on a header line, the prose cell full-width beneath.
+                     .table-scroll stays as the inert safety net. -->
+                <div class="table-scroll">
+                    <table class="ref-table-dense rt-stack">
+                        <thead><tr><th>Signal</th><th>Live zero</th><th>Why it matters</th></tr></thead>
+                        <tbody>
+                            <tr><td>4–20 mA</td><td>yes</td><td>A broken wire reads 0 mA — distinguishable from a true 4 mA zero.</td></tr>
+                            <tr><td>0–10 V</td><td>no</td><td>A dead input and a genuine 0 V command look identical.</td></tr>
+                            <tr><td>2–10 V</td><td>yes</td><td>The 2 V live zero maps 1:1 onto 4–20 mA across a 500 Ω resistor.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
