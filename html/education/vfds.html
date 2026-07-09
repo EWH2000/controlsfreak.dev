@@ -484,31 +484,33 @@ keywords: fla amps hz drive inverter speed torque carrier motor run
                 The keypad on the front of the drive is for commissioning and panel-front diagnostics; in production the drive lives on a network and talks to the BMS over one of three protocols. Same three you'll meet anywhere else in the building, with the usual physical-layer tradeoffs.
             </p>
 
-            <table class="ref-table" style="margin-top:1.25rem;">
-                <thead>
-                    <tr><th>Protocol</th><th>Physical</th><th>Speed</th><th>Typical use</th></tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>Modbus RTU</td>
-                        <td>RS-485, twisted pair, daisy-chained</td>
-                        <td>9600 – 115200 baud</td>
-                        <td>Older drives, retrofits, plant equipment with no BACnet option. Simple, well-supported.</td>
-                    </tr>
-                    <tr>
-                        <td>BACnet MS/TP</td>
-                        <td>RS-485, twisted pair, daisy-chained</td>
-                        <td>9600 – 76800 baud</td>
-                        <td>Drives on a dedicated MS/TP trunk under a BMS field controller. Same wire as Modbus RTU; different protocol.</td>
-                    </tr>
-                    <tr>
-                        <td>BACnet/IP</td>
-                        <td>Ethernet, twisted pair or fibre</td>
-                        <td>10 / 100 / 1000 Mbps</td>
-                        <td>Drives with a built-in or add-on Ethernet card; routed alongside the rest of the BMS. Modern default on new gear.</td>
-                    </tr>
-                </tbody>
-            </table>
+            <div class="table-scroll" style="margin-top:1.25rem;">
+                <table class="ref-table rt-stack">
+                    <thead>
+                        <tr><th>Protocol</th><th>Physical</th><th>Speed</th><th>Typical use</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Modbus RTU</td>
+                            <td>RS-485, twisted pair, daisy-chained</td>
+                            <td>9600 – 115200 baud</td>
+                            <td>Older drives, retrofits, plant equipment with no BACnet option. Simple, well-supported.</td>
+                        </tr>
+                        <tr>
+                            <td>BACnet MS/TP</td>
+                            <td>RS-485, twisted pair, daisy-chained</td>
+                            <td>9600 – 76800 baud</td>
+                            <td>Drives on a dedicated MS/TP trunk under a BMS field controller. Same wire as Modbus RTU; different protocol.</td>
+                        </tr>
+                        <tr>
+                            <td>BACnet/IP</td>
+                            <td>Ethernet, twisted pair or fibre</td>
+                            <td>10 / 100 / 1000 Mbps</td>
+                            <td>Drives with a built-in or add-on Ethernet card; routed alongside the rest of the BMS. Modern default on new gear.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
 
             <p style="margin-top:1.25rem;">
                 What the BMS actually reads and writes is consistent across protocols, even when the addressing isn't. The four points worth knowing about on every drive:
@@ -532,43 +534,45 @@ keywords: fla amps hz drive inverter speed torque carrier motor run
                 Every manufacturer's fault-code list looks different and is far too long to memorise. What you <em>can</em> hold in your head is the five or six categories the codes fall into — because the root cause of a category is the same across manufacturers even when the code number isn't. A drive's fault history almost always tells you "an overcurrent happened"; what changes between brands is just which integer they call it.
             </p>
 
-            <table class="ref-table" style="margin-top:1.25rem;">
-                <thead>
-                    <tr><th>Category</th><th>What's happening</th><th>Usual cause</th></tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>Overcurrent</td>
-                        <td>Drive output current exceeded the limit, fast</td>
-                        <td>Short circuit, ground fault, locked rotor, accel ramp too steep, motor data wrong</td>
-                    </tr>
-                    <tr>
-                        <td>Overvoltage (DC bus)</td>
-                        <td>DC-bus voltage climbed above the trip threshold</td>
-                        <td>Decel ramp too steep (motor regenerating into the bus), incoming line voltage too high, brake resistor missing on a regenerative load</td>
-                    </tr>
-                    <tr>
-                        <td>Undervoltage (DC bus)</td>
-                        <td>DC-bus voltage sagged below the trip threshold</td>
-                        <td>Incoming line voltage low or dropped out, brownout, loose power connection, building voltage sag on a big motor start</td>
-                    </tr>
-                    <tr>
-                        <td>Ground fault</td>
-                        <td>Drive detected current leaking to ground</td>
-                        <td>Damaged motor cable, motor insulation breakdown, water in the conduit, wrong cable type on a long run</td>
-                    </tr>
-                    <tr>
-                        <td>Motor overload</td>
-                        <td>Drive's internal thermal model says the motor would overheat at this current, sustained</td>
-                        <td>Mechanical bind, undersized motor for the actual load</td>
-                    </tr>
-                    <tr>
-                        <td>Drive overtemp</td>
-                        <td>Heatsink or interior temperature exceeded threshold</td>
-                        <td>Cooling fan failed, filter blocked, enclosure airflow obstructed, ambient too hot</td>
-                    </tr>
-                </tbody>
-            </table>
+            <div class="table-scroll" style="margin-top:1.25rem;">
+                <table class="ref-table">
+                    <thead>
+                        <tr><th>Category</th><th>What's happening</th><th>Usual cause</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Overcurrent</td>
+                            <td>Drive output current exceeded the limit, fast</td>
+                            <td>Short circuit, ground fault, locked rotor, accel ramp too steep, motor data wrong</td>
+                        </tr>
+                        <tr>
+                            <td>Overvoltage (DC bus)</td>
+                            <td>DC-bus voltage climbed above the trip threshold</td>
+                            <td>Decel ramp too steep (motor regenerating into the bus), incoming line voltage too high, brake resistor missing on a regenerative load</td>
+                        </tr>
+                        <tr>
+                            <td>Undervoltage (DC bus)</td>
+                            <td>DC-bus voltage sagged below the trip threshold</td>
+                            <td>Incoming line voltage low or dropped out, brownout, loose power connection, building voltage sag on a big motor start</td>
+                        </tr>
+                        <tr>
+                            <td>Ground fault</td>
+                            <td>Drive detected current leaking to ground</td>
+                            <td>Damaged motor cable, motor insulation breakdown, water in the conduit, wrong cable type on a long run</td>
+                        </tr>
+                        <tr>
+                            <td>Motor overload</td>
+                            <td>Drive's internal thermal model says the motor would overheat at this current, sustained</td>
+                            <td>Mechanical bind, undersized motor for the actual load</td>
+                        </tr>
+                        <tr>
+                            <td>Drive overtemp</td>
+                            <td>Heatsink or interior temperature exceeded threshold</td>
+                            <td>Cooling fan failed, filter blocked, enclosure airflow obstructed, ambient too hot</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
 
             <p style="margin-top:1.25rem;">
                 A drive that auto-resets through a fault every five minutes <em>is telling you something is still wrong</em>. Reading the fault category — not just clearing the alarm — is the difference between fixing the problem and burning the motor.

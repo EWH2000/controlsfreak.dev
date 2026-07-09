@@ -18,88 +18,10 @@ function watchErrors(page) {
     return errors;
 }
 
-// In production the Worker serves clean URLs (/, /tools/, /tools/signal-scaling,
-// /education/pid-basics, /contact) via html_handling. The local
-// `python -m http.server` only knows real file paths, so the tests below hit
-// the .html files directly — a directory like /tools/ still resolves to its
-// index.html, so that one stays clean.
-const PAGES = [
-    { name: 'home',                   url: '/' },
-    { name: 'tools landing',          url: '/tools/' },
-    { name: 'signal scaling',         url: '/tools/signal-scaling.html' },
-    { name: 'modbus register viewer', url: '/tools/modbus-register-viewer.html' },
-    { name: 'bacnet/ip converter',    url: '/tools/bacnet-ip-converter.html' },
-    { name: 'bacnet object reference', url: '/tools/bacnet-objects.html' },
-    { name: 'bacnet vendor ids',      url: '/tools/bacnet-vendor-ids.html' },
-    { name: 'psychrometric chart',    url: '/tools/psychrometric-chart.html' },
-    { name: 'economizer ratio',       url: '/tools/economizer-ratio.html' },
-    { name: 'air mixing',             url: '/tools/air-mixing.html' },
-    { name: 'coil sizing',            url: '/tools/coil-sizing.html' },
-    { name: 'power & energy converter', url: '/tools/power-energy-converter.html' },
-    { name: 'dew point calculator',   url: '/tools/dew-point-calculator.html' },
-    { name: 'thermistor calculator',  url: '/tools/thermistor-calculator.html' },
-    { name: 'refrigerant p-t',        url: '/tools/refrigerant-pt.html' },
-    { name: 'valve cv sizing',        url: '/tools/valve-cv.html' },
-    { name: 'valve authority',        url: '/tools/valve-authority.html' },
-    { name: 'affinity laws',          url: '/tools/affinity-laws.html' },
-    { name: 'waterside load',         url: '/tools/waterside-load.html' },
-    { name: 'airflow',                url: '/tools/airflow.html' },
-    { name: 'transformer va budget',  url: '/tools/transformer-sizing.html' },
-    { name: 'wire run voltage drop',  url: '/tools/voltage-drop.html' },
-    { name: 'field electrical quick calc', url: '/tools/electrical-quick-calc.html' },
-    { name: 'bacnet mstp lesson',     url: '/education/bacnet-mstp.html' },
-    { name: 'modbus function codes',  url: '/tools/modbus-functions.html' },
-    { name: 'simulators landing',     url: '/simulators/' },
-    { name: 'pid tuner',              url: '/simulators/pid-tuner.html' },
-    { name: 'vfd mock',               url: '/simulators/vfd-mock.html' },
-    { name: 'function-block editor',  url: '/simulators/function-block-editor.html' },
-    { name: 'staging sequencer',      url: '/simulators/staging-sequencer.html' },
-    { name: 'controller wiring',      url: '/simulators/controller-wiring.html' },
-    { name: 'hydronic loop builder',  url: '/simulators/hydronic-loop-builder.html' },
-    { name: 'education hub',          url: '/education/' },
-    { name: 'education — pid basics',  url: '/education/pid-basics.html' },
-    { name: 'education — controller wiring', url: '/education/controller-wiring.html' },
-    { name: 'education — hydronic loops', url: '/education/hydronic-loops.html' },
-    { name: 'education — load piping', url: '/education/load-piping.html' },
-    { name: 'education — vfds',       url: '/education/vfds.html' },
-    { name: 'education — pump control', url: '/education/pump-control.html' },
-    { name: 'education — equipment staging', url: '/education/equipment-staging.html' },
-    { name: 'education — balancing',   url: '/education/balancing.html' },
-    { name: 'education — refrigerant cycle basics', url: '/education/refrigerant-cycle-basics.html' },
-    { name: 'education — superheat & subcooling', url: '/education/superheat-subcooling.html' },
-    { name: 'education — txv vs eev', url: '/education/metering-devices-txv-eev.html' },
-    { name: 'education — psychrometrics basics', url: '/education/psychrometrics-basics.html' },
-    { name: 'education — function blocks', url: '/education/function-blocks.html' },
-    { name: 'education — modbus basics', url: '/education/modbus-basics.html' },
-    { name: 'education — modbus decoding', url: '/education/modbus-decoding.html' },
-    { name: 'education — bacnet basics', url: '/education/bacnet-basics.html' },
-    { name: 'education — bacnet networking', url: '/education/bacnet-networking.html' },
-    { name: 'practice landing',       url: '/practice/' },
-    { name: 'practice — modbus basics', url: '/practice/modbus-basics.html' },
-    { name: 'practice — modbus decoding', url: '/practice/modbus-decoding.html' },
-    { name: 'practice — bacnet basics', url: '/practice/bacnet-basics.html' },
-    { name: 'practice — bacnet networking', url: '/practice/bacnet-networking.html' },
-    { name: 'practice — bacnet mstp', url: '/practice/bacnet-mstp.html' },
-    { name: 'practice — pump control', url: '/practice/pump-control.html' },
-    { name: 'practice — hydronic loops', url: '/practice/hydronic-loops.html' },
-    { name: 'practice — load piping', url: '/practice/load-piping.html' },
-    { name: 'practice — balancing', url: '/practice/balancing.html' },
-    { name: 'practice — refrigerant cycle basics', url: '/practice/refrigerant-cycle-basics.html' },
-    { name: 'practice — superheat & subcooling', url: '/practice/superheat-subcooling.html' },
-    { name: 'practice — metering devices txv/eev', url: '/practice/metering-devices-txv-eev.html' },
-    { name: 'practice — pid basics', url: '/practice/pid-basics.html' },
-    { name: 'practice — vfds', url: '/practice/vfds.html' },
-    { name: 'practice — function blocks', url: '/practice/function-blocks.html' },
-    { name: 'practice — psychrometrics basics', url: '/practice/psychrometrics-basics.html' },
-    { name: 'practice — equipment staging', url: '/practice/equipment-staging.html' },
-    { name: 'practice — surviving first months', url: '/practice/surviving-first-months.html' },
-    { name: 'practice — controller swap', url: '/practice/controller-swap.html' },
-    { name: 'practice — field wiring & sensors', url: '/practice/field-wiring-sensors.html' },
-    { name: 'practice — sequencing scenarios', url: '/practice/sequencing-scenarios.html' },
-    { name: 'practice — troubleshooting', url: '/practice/troubleshooting.html' },
-    { name: 'contact',                url: '/contact.html' },
-    { name: 'privacy',                url: '/privacy.html' },
-];
+// The page manifest lives in tests/pages.js (shared with
+// responsive.spec.js's phone-width sweep); the sitemap-drift test
+// below keeps it honest. See pages.js for the .html-vs-clean-URL note.
+const PAGES = require('./pages.js');
 
 test('PAGES array stays in sync with the generated sitemap', () => {
     // sitemap.xml is built from html/sitemap.njk (the sitemapPages
@@ -830,9 +752,13 @@ test('superheat lesson — metric worked example swaps and closes', async ({ pag
     await page.addInitScript(() => localStorage.setItem('cf_units', 'metric'));
     await page.goto('/education/superheat-subcooling.html');
 
-    const sh = page.locator('span[data-metric="superheat = 10.0 °C − 4.4 °C = 5.6 °C"]');
+    // The attribute values carry   between number and unit (the
+    // phone-width polish keeps "5.6 °C" from wrapping mid-token), so the
+    // attribute selectors must match them exactly; toHaveText normalizes
+    // nbsp to space, so the expected texts stay plain.
+    const sh = page.locator('span[data-metric="superheat = 10.0 °C − 4.4 °C = 5.6 °C"]');
     await expect(sh).toHaveText('superheat = 10.0 °C − 4.4 °C = 5.6 °C');
-    const sc = page.locator('span[data-metric="subcooling = 40.6 °C − 35.0 °C = 5.6 °C"]');
+    const sc = page.locator('span[data-metric="subcooling = 40.6 °C − 35.0 °C = 5.6 °C"]');
     await expect(sc).toHaveText('subcooling = 40.6 °C − 35.0 °C = 5.6 °C');
 
     expect(errors, 'metric superheat lesson should log no errors').toEqual([]);

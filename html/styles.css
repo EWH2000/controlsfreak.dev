@@ -888,6 +888,9 @@ body.palette-open { overflow: hidden; }
 .console-statusline > :first-child  { justify-self: start; }
 .console-statusline > :nth-child(2) { justify-self: center; }
 .console-statusline > :last-child   { justify-self: end; }
+/* The ISO build date would otherwise soft-wrap at its internal
+   hyphens at phone widths ("2026-07-" / "08"). */
+.console-statusline time { white-space: nowrap; }
 .console-statusline > span strong {
     color: var(--text);
     font-weight: 600;
@@ -1142,8 +1145,14 @@ abbr[title] {
 .landing-intro a { color: var(--accent); }
 
 /* ── TABS ── */
+/* flex-wrap + nowrap buttons: at phone widths whole buttons wrap onto a
+   second row instead of the row clipping inside the overflow-hidden
+   .tool-card (4 tabs on electrical-quick-calc) or the labels soft-
+   wrapping into 2–3-line buttons ("HEX →" / "IP"). Inert wherever the
+   row fits. */
 .tabs {
     display: flex;
+    flex-wrap: wrap;
     border-bottom: 1px solid var(--border);
     margin-bottom: 1.5rem;
 }
@@ -1152,6 +1161,7 @@ abbr[title] {
     font-size: 0.7rem;
     text-transform: uppercase;
     letter-spacing: 0.09em;
+    white-space: nowrap;
     padding: 0.55rem 1.1rem;
     border: none;
     background: none;
@@ -2255,7 +2265,10 @@ p.chip-row-preamble {
     font-variant-numeric: tabular-nums;
 }
 .nav-card-pill {
-    display: inline;
+    /* inline-block: each pill is an atomic inline, so the statusline
+       wraps between pills instead of mid-pill ("… · 6" / "SIMULATORS",
+       a stranded "~" from "~ 5 MIN"). */
+    display: inline-block;
 }
 .nav-card-pill:not(:last-child)::after {
     content: '•';
@@ -3110,6 +3123,52 @@ input.ps-input:focus, select.ps-input:focus, textarea.ps-input:focus {
 .ref-table-dense tbody tr:nth-child(even) td { background: var(--surface-2); }
 .ref-table-dense tbody tr:last-child td { border-bottom: none; }
 
+/* stacked-row opt-in (.rt-stack) for lookup tables whose last column is
+   prose: below 620px each row stacks — the leading cells (id, name)
+   share a header line and the prose cell drops to a full-width line
+   beneath — so nothing clips inside the overflow-hidden .tool-card and
+   nothing needs a sideways scroll. Works on .ref-table and
+   .ref-table-dense alike; pair with a .table-scroll wrapper as an
+   inert safety net. Mechanics that are load-bearing here:
+   - tr[hidden] must be restated — the author display:flex beats the UA
+     [hidden] rule, else the bacnet-objects filter stops hiding rows;
+   - the cell rules ride the two-class tbody-tr-td shape (0,2,3) to
+     out-rank page-local column classes (.bo-name's nowrap is (0,2,0));
+   - zebra moves from the cells to the row (the dense base paints td
+     backgrounds — killed by the later background:none at equal
+     specificity). */
+@media (max-width: 620px) {
+    .rt-stack thead { display: none; }
+    .rt-stack tbody tr {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        gap: 0 0.6rem;
+        padding: 0.5rem 0.5rem;
+        border-bottom: 1px solid var(--border-faint);
+    }
+    .rt-stack tbody tr[hidden] { display: none; }
+    .rt-stack tbody tr:last-child { border-bottom: none; }
+    .ref-table.rt-stack tbody tr td,
+    .ref-table-dense.rt-stack tbody tr td {
+        display: block;
+        padding: 0;
+        border-bottom: none;
+        background: none;
+        white-space: normal;
+    }
+    .ref-table.rt-stack tbody tr td:last-child,
+    .ref-table-dense.rt-stack tbody tr td:last-child {
+        flex-basis: 100%;
+        font-family: var(--sans);
+        font-size: 0.78rem;
+        line-height: 1.5;
+        color: var(--text-dim);
+        margin-top: 0.2rem;
+    }
+    .rt-stack tbody tr:nth-child(even) { background: var(--surface-2); }
+}
+
 /* a short explanatory note under a reference table. */
 p.ref-note {
     font-family: var(--sans);
@@ -3147,12 +3206,17 @@ p.ref-note.compact {
    // mobile-first treatment of this tool is a future task — see site-ideas-and-friction.md */
 @media (max-width: 1000px) {
     .tool-body-3col { grid-template-columns: 1fr; }
-    .tool-body-3col > section { border-right: none; border-bottom: 1px solid var(--border); }
+    /* min-width: 0 kills the grid item's automatic minimum — without it
+       a 1fr track can't shrink below the section's min-content, so a
+       wide table's width punches through its .table-scroll wrapper and
+       the card clips it (the wrapper only scrolls when the section is
+       allowed to be narrower than the table). */
+    .tool-body-3col > section { border-right: none; border-bottom: 1px solid var(--border); min-width: 0; }
     .tool-body-3col > section:last-child { border-bottom: none; }
 }
 @media (max-width: 900px) {
     .tool-body-2col { grid-template-columns: 1fr; }
-    .tool-body-2col > section { border-right: none; border-bottom: 1px solid var(--border); }
+    .tool-body-2col > section { border-right: none; border-bottom: 1px solid var(--border); min-width: 0; }
     .tool-body-2col > section:last-child { border-bottom: none; }
 }
 

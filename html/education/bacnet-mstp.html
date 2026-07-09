@@ -193,38 +193,40 @@ keywords: mstp ms/tp token ring max master max info frames baud termination eol 
                 The payoff of the three-layer picture is that the complaint usually names its layer before the meter comes out:
             </p>
 
-            <table class="ref-table-dense">
-                <thead>
-                    <tr><th>Symptom</th><th>Layer</th><th>Usual suspects</th></tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>One device never appears, everything else fine</td>
-                        <td>Ring / addressing</td>
-                        <td>MAC above the trunk&rsquo;s <code>Max_Master</code>; wrong baud on that device; +/− swapped at its terminals; its EOL switch flipped on mid-trunk.</td>
-                    </tr>
-                    <tr>
-                        <td>Two devices take turns flickering offline</td>
-                        <td>Addressing</td>
-                        <td>Duplicate MAC — classic after a controller swap lands at the factory default.</td>
-                    </tr>
-                    <tr>
-                        <td>Random devices drop, worse at certain hours</td>
-                        <td>Electrical</td>
-                        <td>Marginal termination or bias drifting with temperature; EMI from a VFD sharing conduit; a star tap added on the last retrofit doing its reflection work under load.</td>
-                    </tr>
-                    <tr>
-                        <td>Whole trunk online but sluggish</td>
-                        <td>Ring tuning</td>
-                        <td><code>Max_Master</code> left at 127 on a small trunk (empty-address polling); <code>Max_Info_Frames = 1</code> on the router carrying everyone&rsquo;s traffic.</td>
-                    </tr>
-                    <tr>
-                        <td>Whole trunk dead or garbage</td>
-                        <td>Electrical</td>
-                        <td>Polarity swap introduced mid-trunk; no termination at all, or three of them; a dead short from a pinched jacket; missing bias leaving the pair floating.</td>
-                    </tr>
-                </tbody>
-            </table>
+            <div class="table-scroll">
+                <table class="ref-table-dense rt-stack">
+                    <thead>
+                        <tr><th>Symptom</th><th>Layer</th><th>Usual suspects</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>One device never appears, everything else fine</td>
+                            <td>Ring / addressing</td>
+                            <td>MAC above the trunk&rsquo;s <code>Max_Master</code>; wrong baud on that device; +/− swapped at its terminals; its EOL switch flipped on mid-trunk.</td>
+                        </tr>
+                        <tr>
+                            <td>Two devices take turns flickering offline</td>
+                            <td>Addressing</td>
+                            <td>Duplicate MAC — classic after a controller swap lands at the factory default.</td>
+                        </tr>
+                        <tr>
+                            <td>Random devices drop, worse at certain hours</td>
+                            <td>Electrical</td>
+                            <td>Marginal termination or bias drifting with temperature; EMI from a VFD sharing conduit; a star tap added on the last retrofit doing its reflection work under load.</td>
+                        </tr>
+                        <tr>
+                            <td>Whole trunk online but sluggish</td>
+                            <td>Ring tuning</td>
+                            <td><code>Max_Master</code> left at 127 on a small trunk (empty-address polling); <code>Max_Info_Frames = 1</code> on the router carrying everyone&rsquo;s traffic.</td>
+                        </tr>
+                        <tr>
+                            <td>Whole trunk dead or garbage</td>
+                            <td>Electrical</td>
+                            <td>Polarity swap introduced mid-trunk; no termination at all, or three of them; a dead short from a pinched jacket; missing bias leaving the pair floating.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
 
             <p>
                 And the one that pays the page&rsquo;s opening debt: the trunk an electrician just extended with four new controllers that drop devices intermittently is carrying <em>several</em> of these at once more often than not — the old end&rsquo;s EOL is now mid-trunk, the new devices shipped at default MACs and 9600 baud, and the new run may be a different cable. Extensions re-open every layer; walk all three.

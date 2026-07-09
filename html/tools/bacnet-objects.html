@@ -130,17 +130,19 @@ faqs:
                     The <code>Object_Type</code> value carried in every object identifier. AI / AO / AV and BI / BO / BV are the day-to-day four-fifths of any device.
                 </p>
                 <!-- // user to verify expanded enum coverage (types 31–53, 57–64) — placeholder data, refine after review -->
-                <table class="ref-table-dense" id="bo-table-objects">
-                    <thead>
-                        <tr><th>Type</th><th>Object</th><th>What it is</th></tr>
-                    </thead>
-                    <tbody>
-                        {% for t in bacnetEnums.objectTypes %}
-                        <tr><td class="bo-id">{{ t.id }}</td><td class="bo-name">{{ t.name | safe }}</td><td>{{ t.desc | safe }}</td></tr>
-                        {% endfor %}
-                        <tr class="bo-empty" hidden><td colspan="3">No object types match that filter.</td></tr>
-                    </tbody>
-                </table>
+                <div class="table-scroll">
+                    <table class="ref-table-dense rt-stack" id="bo-table-objects">
+                        <thead>
+                            <tr><th>Type</th><th>Object</th><th>What it is</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for t in bacnetEnums.objectTypes %}
+                            <tr><td class="bo-id">{{ t.id }}</td><td class="bo-name">{{ t.name | safe }}</td><td>{{ t.desc | safe }}</td></tr>
+                            {% endfor %}
+                            <tr class="bo-empty" hidden><td colspan="3">No object types match that filter.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
                 <!-- // user to verify expanded enum coverage (types 31–53, 57–64) — placeholder data, refine after review -->
                 <p class="ref-note">
                     The full 0–64 range through ASHRAE 135-2020 and its addenda. Unassigned numbers below 128 are reserved to ASHRAE for future editions; 128–1023 are vendor-proprietary — whose extension it is, the device's <a href="/tools/bacnet-vendor-ids.html">vendor ID</a> says. Decode a packed Object Identifier with the <a href="/tools/bacnet-ip-converter.html">BACnet/IP Hex Converter</a>'s Object ID tab.
@@ -156,17 +158,19 @@ faqs:
                     The <code>Property_Identifier</code> numbers are constant across every object type — property 85 is <code>Present_Value</code> whether the object is an AI or a BO.
                 </p>
                 <!-- // user to verify expanded property-id coverage — placeholder data, refine after review -->
-                <table class="ref-table-dense" id="bo-table-props">
-                    <thead>
-                        <tr><th>ID</th><th>Property</th><th>Meaning</th></tr>
-                    </thead>
-                    <tbody>
-                        {% for p in bacnetEnums.propertyIds %}
-                        <tr><td class="bo-id">{{ p.id }}</td><td class="bo-name">{{ p.name | safe }}</td><td>{{ p.desc | safe }}</td></tr>
-                        {% endfor %}
-                        <tr class="bo-empty" hidden><td colspan="3">No properties match that filter.</td></tr>
-                    </tbody>
-                </table>
+                <div class="table-scroll">
+                    <table class="ref-table-dense rt-stack" id="bo-table-props">
+                        <thead>
+                            <tr><th>ID</th><th>Property</th><th>Meaning</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for p in bacnetEnums.propertyIds %}
+                            <tr><td class="bo-id">{{ p.id }}</td><td class="bo-name">{{ p.name | safe }}</td><td>{{ p.desc | safe }}</td></tr>
+                            {% endfor %}
+                            <tr class="bo-empty" hidden><td colspan="3">No properties match that filter.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
                 <!-- // user to verify expanded property-id coverage — placeholder data, refine after review -->
                 <p class="ref-note">
                     The field-relevant slice, in numeric order — the full enumeration runs past 500 and newer editions keep adding to it. The numbers above are the ones you meet reading, overriding, and commissioning points; 85, 87, and 104 are the daily three.
@@ -182,17 +186,19 @@ faqs:
                 <p class="ref-note" style="margin-top:0;">
                     The value of an object's <code>Units</code> property (117), grouped by domain. The full enumeration runs past 250 values; these are the ones building systems actually use.
                 </p>
-                <table class="ref-table-dense" id="bo-table-units">
-                    <thead>
-                        <tr><th>Enum</th><th>Engineering unit</th><th>Domain</th></tr>
-                    </thead>
-                    <tbody>
-                        {% for u in bacnetEnums.engineeringUnits %}
-                        <tr><td class="bo-id">{{ u.id }}</td><td>{{ u.name | safe }}{% if u.symbol %} ({{ u.symbol }}){% endif %}</td><td>{{ u.group }}</td></tr>
-                        {% endfor %}
-                        <tr class="bo-empty" hidden><td colspan="3">No units match that filter.</td></tr>
-                    </tbody>
-                </table>
+                <div class="table-scroll">
+                    <table class="ref-table-dense rt-stack" id="bo-table-units">
+                        <thead>
+                            <tr><th>Enum</th><th>Engineering unit</th><th>Domain</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for u in bacnetEnums.engineeringUnits %}
+                            <tr><td class="bo-id">{{ u.id }}</td><td>{{ u.name | safe }}{% if u.symbol %} ({{ u.symbol }}){% endif %}</td><td>{{ u.group }}</td></tr>
+                            {% endfor %}
+                            <tr class="bo-empty" hidden><td colspan="3">No units match that filter.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
                 <!-- // user to verify expanded units coverage — placeholder data, refine after review -->
                 <p class="ref-note">
                     The codes above are the stable common slice — object types, property IDs, and units in this range don't get reassigned between editions. Only newer-edition additions and vendor extensions in the higher-numbered ranges need confirming against your device or ASHRAE 135.

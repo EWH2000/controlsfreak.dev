@@ -8,7 +8,88 @@
 
 const { test, expect } = require('@playwright/test');
 
+const PAGES = require('./pages.js');
+
 const PHONE = { width: 375, height: 667 };
+const PHONE_SE = { width: 320, height: 568 };
+
+// styleguide.html is noindex (not in the sitemap, so not in PAGES) but
+// is the living design-system reference — sweep it explicitly.
+const SWEEP_PAGES = [...PAGES, { name: 'styleguide', url: '/styleguide.html' }];
+
+// The phone-overflow-sweep fix set (2026-07): pages that clipped at
+// 320-class widths get pinned there too. Contact stays 375-only — its
+// Turnstile widget's fixed ~300px width clips a few px of widget
+// chrome at 320, accepted (codebase-issues #146).
+const PHONE_SE_PAGES = [
+    '/tools/bacnet-objects.html',
+    '/tools/modbus-functions.html',
+    '/tools/modbus-register-viewer.html',
+    '/tools/electrical-quick-calc.html',
+    '/education/bacnet-mstp.html',
+    '/education/vfds.html',
+    '/education/balancing.html',
+    '/education/equipment-staging.html',
+    '/simulators/vfd-mock.html',
+    '/styleguide.html',
+];
+
+// Overflow that is by design and must not fail the sweep:
+// - input/textarea/select scroll their value natively;
+// - .sr-only is the clip-rect screen-reader utility;
+// - .hp-field is the contact form's off-screen honeypot;
+// - .cf-turnstile is the fixed-width Cloudflare widget (see #146);
+// - anything inside a .table-scroll wrapper scrolls on purpose.
+const INTENTIONAL = 'input, textarea, select, .sr-only, .hp-field, .cf-turnstile';
+
+// Report every element whose content is genuinely cut off: wider
+// content than box, overflow-x hidden/clip, not on the intentional
+// list. Non-default tab panes and closed <details> are forced open
+// first — the worst historical offender (the BACnet Property IDs
+// table) lived in a non-default tab.
+async function clippedOffenders(page) {
+    return page.evaluate((intentional) => {
+        document.querySelectorAll('.tab-pane').forEach(p => p.classList.add('active'));
+        document.querySelectorAll('details').forEach(d => { d.open = true; });
+        const out = [];
+        const doc = document.documentElement;
+        if (doc.scrollWidth > window.innerWidth + 1) {
+            out.push(`document scrolls sideways (${doc.scrollWidth} > ${window.innerWidth})`);
+        }
+        for (const el of document.querySelectorAll('body *')) {
+            if (el.clientWidth === 0 || el.scrollWidth <= el.clientWidth + 2) continue;
+            if (el.matches(intentional) || el.closest('.table-scroll')) continue;
+            const ox = getComputedStyle(el).overflowX;
+            if (ox !== 'hidden' && ox !== 'clip') continue;
+            let name = el.tagName.toLowerCase();
+            if (el.id) name += '#' + el.id;
+            else if (el.classList.length) name += '.' + [...el.classList].slice(0, 3).join('.');
+            out.push(`${name} clips ${el.scrollWidth}px into ${el.clientWidth}px`);
+        }
+        return out;
+    }, INTENTIONAL);
+}
+
+test.describe('no clipped sideways overflow at 375 (every page)', () => {
+    test.use({ viewport: PHONE });
+    for (const { name, url } of SWEEP_PAGES) {
+        test(`${name} fits at 375`, async ({ page }) => {
+            await page.goto(url, url === '/contact.html'
+                ? { waitUntil: 'domcontentloaded' } : undefined);
+            expect(await clippedOffenders(page), `${url} clips content at 375px`).toEqual([]);
+        });
+    }
+});
+
+test.describe('no clipped sideways overflow at 320 (fixed cluster)', () => {
+    test.use({ viewport: PHONE_SE });
+    for (const url of PHONE_SE_PAGES) {
+        test(`${url} fits at 320`, async ({ page }) => {
+            await page.goto(url);
+            expect(await clippedOffenders(page), `${url} clips content at 320px`).toEqual([]);
+        });
+    }
+});
 
 // gridTemplateColumns computes to a space-separated track list
 // ("293px" collapsed, "82.6px 82.6px 82.6px" not) — count the tracks.

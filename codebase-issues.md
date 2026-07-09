@@ -4525,6 +4525,44 @@ banner like the other archived cycles carry. Caught during the
 2026-07-08 open-items sweep; off-topic for the vendor-ID branch, so
 it logs here.
 
+### 146. contact.html Turnstile clips ~14px at 320-class viewports *(accepted 2026-07-09)*
+
+The Cloudflare Turnstile widget renders a fixed ~300px-wide iframe;
+at a 320px viewport the tool-card interior is ~286px, so the widget's
+right edge — Cloudflare branding and the Privacy/Help links — clips
+inside the `overflow: hidden` card. The checkbox stays reachable and
+the form stays solvable; 375px is clean. Found by the 2026-07
+phone-overflow sweep (its 320px regression list in
+`tests/responsive.spec.js` deliberately excludes contact).
+
+**Decision (2026-07-09):** accept. The alternative,
+`data-size="compact"`, shrinks the widget to 150×140 at *every* width
+to fix cosmetic clipping that only exists on 320-class devices.
+Revisit trigger: Turnstile ships a flexible-width mode, or the form
+gains any other reason for a phone-specific variant.
+
+### 147. Fixed-geometry SVG label collisions in three education diagrams *(open — 2026-07-09)*
+
+Flagged by the 2026-07 phone-viewport vision audit but present at
+every width (the SVGs scale uniformly, so these are authoring
+overlaps, not responsive bugs):
+
+- `education/bacnet-basics.html` priority-array diagram — the
+  "lowest non-null wins" label (centered x=340, ~114 user units wide)
+  overruns both the slot-8 row's right stroke and the Present_Value
+  box's left stroke by a couple of units.
+- `education/bacnet-basics.html` Who-Is/I-Am diagram — the third
+  dashed I-Am reply line passes through the "(one each)" portion of
+  its label (~lines 493–501), striking it through.
+- `education/balancing.html` PICV diagram — a leader line crosses its
+  "internal balancing cartridge" label.
+
+Each is a small coordinate nudge in the SVG source. Cosmetic; batch
+into the next education-diagram pass (see the friction file's mobile
+diagram-legibility item) rather than a standalone PR. In passing:
+`styleguide.html`'s `.gauge-label` measures ~8px of harmless
+`overflow: visible` spill at 375 — cosmetic, dev-only page.
+
 ### Deferred / Won't fix (with revisit trigger)
 
 Items considered during an audit and deliberately not pursued, each

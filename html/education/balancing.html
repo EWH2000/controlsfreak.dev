@@ -599,43 +599,45 @@ keywords: gpm delta p flow circuit setter proportional balance valve tab
                 Below is the short version. None of these are conclusive on their own; treat them as a starting point for what to look at next. The actual confirmation almost always involves a manometer at a balance valve's P/T ports, an external flow meter on a branch, or a temperature differential measurement across a coil that should be doing more work than it's doing.
             </p>
 
-            <table class="ref-table">
-                <thead>
-                    <tr><th>Symptom</th><th>What it usually means</th><th>How to confirm</th></tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>Near loads run hot/cold-call satisfied easily; far loads can't keep up</td>
-                        <td>Classic unbalanced loop — near loads hogging flow, far loads starved</td>
-                        <td>Manometer reads at the far branch's balance valve; flow is well below design while near branches read above</td>
-                    </tr>
-                    <tr>
-                        <td>Coil ΔT collapses on a load — supply hot, return almost as hot</td>
-                        <td>Coil is over-pumped (too much flow, water passes through faster than it can give up heat) — typically a near load that's getting more than design</td>
-                        <td>Flow measurement at that branch; compare to design</td>
-                    </tr>
-                    <tr>
-                        <td>Coil ΔT runs wide — supply hot, return cold — but the space still under-performs</td>
-                        <td>Coil is under-pumped (too little flow, water gives up all its heat then sits there) — typically a far load that's starved</td>
-                        <td>Same: flow measurement at that branch, compared to design</td>
-                    </tr>
-                    <tr>
-                        <td>System pump running flat-out, hitting its high-speed limit, while the building reads OK in some zones and bad in others</td>
-                        <td>The pump can't deliver the design Δp everywhere because flow distribution is wrong — fixing the pump won't fix it</td>
-                        <td>Pump Hz at maximum, system Δp at the index circuit still below setpoint; the answer is balancing, not bigger pumps</td>
-                    </tr>
-                    <tr>
-                        <td>Sudden change in zone behavior after maintenance (boiler swap, pump rebuild, system refill, added load)</td>
-                        <td>The system curve moved; the old balance is invalid even though no balance valve was touched</td>
-                        <td>Re-walk the loop with a manometer; compare to commissioning records if they exist (they usually don't)</td>
-                    </tr>
-                    <tr>
-                        <td>Strainer pressure drop unusually high at one branch</td>
-                        <td>Strainer is plugging — restricting flow at that branch even though the balance valve is correct</td>
-                        <td>Clean or replace the strainer; re-check flow</td>
-                    </tr>
-                </tbody>
-            </table>
+            <div class="table-scroll">
+                <table class="ref-table">
+                    <thead>
+                        <tr><th>Symptom</th><th>What it usually means</th><th>How to confirm</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Near loads run hot/cold-call satisfied easily; far loads can't keep up</td>
+                            <td>Classic unbalanced loop — near loads hogging flow, far loads starved</td>
+                            <td>Manometer reads at the far branch's balance valve; flow is well below design while near branches read above</td>
+                        </tr>
+                        <tr>
+                            <td>Coil ΔT collapses on a load — supply hot, return almost as hot</td>
+                            <td>Coil is over-pumped (too much flow, water passes through faster than it can give up heat) — typically a near load that's getting more than design</td>
+                            <td>Flow measurement at that branch; compare to design</td>
+                        </tr>
+                        <tr>
+                            <td>Coil ΔT runs wide — supply hot, return cold — but the space still under-performs</td>
+                            <td>Coil is under-pumped (too little flow, water gives up all its heat then sits there) — typically a far load that's starved</td>
+                            <td>Same: flow measurement at that branch, compared to design</td>
+                        </tr>
+                        <tr>
+                            <td>System pump running flat-out, hitting its high-speed limit, while the building reads OK in some zones and bad in others</td>
+                            <td>The pump can't deliver the design Δp everywhere because flow distribution is wrong — fixing the pump won't fix it</td>
+                            <td>Pump Hz at maximum, system Δp at the index circuit still below setpoint; the answer is balancing, not bigger pumps</td>
+                        </tr>
+                        <tr>
+                            <td>Sudden change in zone behavior after maintenance (boiler swap, pump rebuild, system refill, added load)</td>
+                            <td>The system curve moved; the old balance is invalid even though no balance valve was touched</td>
+                            <td>Re-walk the loop with a manometer; compare to commissioning records if they exist (they usually don't)</td>
+                        </tr>
+                        <tr>
+                            <td>Strainer pressure drop unusually high at one branch</td>
+                            <td>Strainer is plugging — restricting flow at that branch even though the balance valve is correct</td>
+                            <td>Clean or replace the strainer; re-check flow</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
 
             <p style="margin-top:1.25rem;">
                 Here's a worked-through version, because the table compresses a lot. Picture a small office building, four floors, balanced at commissioning with CBVs at every branch. Two years in, the boiler's tube bundle gets descaled and the system gets refilled. Nobody re-balances. The new system curve isn't quite the old one — friction is slightly different, the pump operates at a marginally different point. Floor 1 still feels fine; its balance valve was set generously at commissioning because Floor 1 is nearest the pump and would have hogged otherwise. Floor 4's valve is set near-closed for the same reason in reverse — to keep Floor 1 from winning. Now the available Δp at Floor 4 is a bit lower than it was, and Floor 4's already-tight CBV can't compensate by opening further. Tenants on 4 start calling about cold complaints in winter mornings. The BMS reads happy at the plant; supply temp is right, the pump is running normally, no faults. The diagnostic finally lands when somebody walks the riser with a manometer and reads Δp at the floor-1 vs. floor-4 valves — floor 1 is exactly where it should be, floor 4 is well short. The fix is the proportional balancing procedure all over again, this time updated to the post-descale system.

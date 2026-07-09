@@ -453,6 +453,30 @@ as the unassigned/wildcard value; formula line shows the
 type × 2²² + instance arithmetic. Default example decodes
 0x020004D2 → Device, 1234. Home hero "Latest" badge points here.
 
+### Education-diagram legibility at phone width — per-diagram pass *(opened 2026-07-09, from the phone-overflow sweep)*
+
+The 2026-07 phone-viewport vision audit's one big systemic finding
+that the overflow-fix PR deliberately did NOT touch: education-page
+SVG diagrams are desktop-proportioned (wide viewBoxes, 9–11-unit
+label text), so at 375px they scale uniformly and their annotations
+render at ~6–8px equivalent — pinch-zoom territory. Flagged on 12+
+pages: bacnet-networking (all schematics), bacnet-mstp (trunk
+diagram), metering-devices-txv-eev (TXV/EEV cutaways),
+hydronic-loops, load-piping (twin-T comparison), pump-control,
+refrigerant-cycle-basics, superheat-subcooling (P-T curve), vfds
+(power-stage), controller-wiring, balancing (riser), modbus-decoding
+(byte-order), bacnet-basics (device/properties + priority-array). No
+information is lost — the audit confirmed the adjacent prose carries
+the same facts — so this is a polish arc, not a bug.
+
+A real fix is per-diagram design work, not a CSS sweep: bump SVG
+font sizes toward a floor that survives the scale-down, split wide
+diagrams into taller phone-friendly variants, or drop secondary
+annotations under a media-gated `<text>` class. Do it topic-by-topic
+as pages get touched, or as its own audit cycle. Batch codebase-issues
+#147 (three fixed-geometry label collisions, same files) into
+whichever pass goes first.
+
 ### Command palette — recents list *(from the 2026-06 audit)*
 
 Cross-filed from `docs/audits/2026-06-extensive/findings.md` (power-user polish, 2026-06-10).
