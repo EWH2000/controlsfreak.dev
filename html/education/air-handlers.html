@@ -245,7 +245,7 @@ keywords: ahu mixing box mixed air return relief outside air supply fan filter c
                 <!-- labels -->
                 <text x="300" y="128" text-anchor="middle" font-size="15" fill="var(--text)">← return air</text>
                 <text x="115" y="44" text-anchor="middle" font-size="13" fill="var(--text)">exhaust / relief</text>
-                <text x="10" y="218" text-anchor="start" font-size="14" fill="var(--text)">outside air</text>
+                <text x="6" y="218" text-anchor="start" font-size="13" fill="var(--text)">outside air</text>
                 <text x="455" y="333" text-anchor="middle" font-size="14" fill="var(--text)">supply air</text>
                 <text x="85" y="378" text-anchor="middle" font-size="13" fill="var(--text)">MIXING</text>
                 <text x="155" y="378" text-anchor="middle" font-size="13" fill="var(--text)">FILTER</text>
@@ -331,8 +331,8 @@ keywords: ahu mixing box mixed air return relief outside air supply fan filter c
                 <text x="300" y="30" text-anchor="start" font-size="13" fill="var(--text)">exhaust / relief ↑</text>
                 <text x="300" y="62" text-anchor="start" font-size="12" fill="var(--text-dim)">cracked open</text>
                 <text x="260" y="190" text-anchor="middle" font-size="16" font-weight="600" fill="var(--text-bright)">MIXING BOX</text>
-                <text x="260" y="218" text-anchor="middle" font-size="12" fill="var(--text-dim)">the three dampers are linked —</text>
-                <text x="260" y="234" text-anchor="middle" font-size="12" fill="var(--text-dim)">held at minimum position here</text>
+                <text x="260" y="246" text-anchor="middle" font-size="12" fill="var(--text-dim)">the three dampers are linked —</text>
+                <text x="260" y="262" text-anchor="middle" font-size="12" fill="var(--text-dim)">held at minimum position here</text>
                 <text x="330" y="345" text-anchor="start" font-size="14" fill="var(--text)">mixed air ↓</text>
             </svg>
             <div class="edu-legend">
@@ -343,7 +343,7 @@ keywords: ahu mixing box mixed air return relief outside air supply fan filter c
 
             <div class="callout" style="margin-top:1.5rem;">
                 <h3>Worked example <span>· mixed-air temperature</span></h3>
-                <p>The blend obeys a straight weighted average. Say the return air comes back at <span data-us="75&nbsp;°F" data-metric="23.9&nbsp;°C">75&nbsp;°F</span>, it's a <span data-us="35&nbsp;°F" data-metric="1.7&nbsp;°C">35&nbsp;°F</span> morning outside, and the dampers are at a 20&nbsp;% minimum. Then 80&nbsp;% of the mix is return and 20&nbsp;% is outdoor: in&nbsp;°F, 0.8&nbsp;×&nbsp;75&nbsp;+&nbsp;0.2&nbsp;×&nbsp;35 = 60&nbsp;+&nbsp;7 = <span data-us="67&nbsp;°F" data-metric="19.5&nbsp;°C">67&nbsp;°F</span> mixed air (in&nbsp;°C: 0.8&nbsp;×&nbsp;23.9&nbsp;+&nbsp;0.2&nbsp;×&nbsp;1.7&nbsp;≈&nbsp;19.5). That's the number the <em>MA-T sensor</em> should read — and when it doesn't, the mismatch is telling you where the dampers actually are, whatever the BMS command says. The temperature half of mixing is that simple; the moisture half is where it gets interesting, and <a href="/education/psychrometrics-basics.html#processes">Psychrometrics Basics</a> covers it — or blend real streams in the <a href="/tools/air-mixing.html">Air-Mixing Calculator</a>.</p>
+                <p>The blend obeys a straight weighted average. Say the return air comes back at <span data-us="75&nbsp;°F" data-metric="23.9&nbsp;°C">75&nbsp;°F</span>, it's a <span data-us="35&nbsp;°F" data-metric="1.7&nbsp;°C">35&nbsp;°F</span> morning outside, and the dampers are at a 20&nbsp;% minimum. Then 80&nbsp;% of the mix is return and 20&nbsp;% is outdoor: in&nbsp;°F, 0.8&nbsp;×&nbsp;75&nbsp;+&nbsp;0.2&nbsp;×&nbsp;35 = 60&nbsp;+&nbsp;7 = 67&nbsp;°F mixed air (in&nbsp;°C: 0.8&nbsp;×&nbsp;23.9&nbsp;+&nbsp;0.2&nbsp;×&nbsp;1.7&nbsp;≈&nbsp;19.5). That's the number the <em>MA-T sensor</em> should read — and when it doesn't, the mismatch is telling you where the dampers actually are, whatever the BMS command says. The temperature half of mixing is that simple; the moisture half is where it gets interesting, and <a href="/education/psychrometrics-basics.html#processes">Psychrometrics Basics</a> covers it — or blend real streams in the <a href="/tools/air-mixing.html">Air-Mixing Calculator</a>.</p>
             </div>
 
             <!-- ───────────────── 3 · Filter, then coils ───────────────── -->
@@ -423,7 +423,8 @@ keywords: ahu mixing box mixed air return relief outside air supply fan filter c
                 </g>
 
                 <!-- labels -->
-                <text x="55" y="192" text-anchor="start" font-size="14" fill="var(--text)">mixed air →</text>
+                <text x="50" y="176" text-anchor="start" font-size="14" fill="var(--text)">mixed</text>
+                <text x="50" y="194" text-anchor="start" font-size="14" fill="var(--text)">air →</text>
                 <text x="390" y="192" text-anchor="start" font-size="14" fill="var(--text)">supply air →</text>
                 <text x="317" y="108" text-anchor="middle" font-size="12" fill="var(--text-dim)">the air crosses its dew point here</text>
                 <text x="117" y="134" text-anchor="middle" font-size="13" fill="var(--text)">FILTER</text>
@@ -435,8 +436,6 @@ keywords: ahu mixing box mixed air return relief outside air supply fan filter c
             <div class="edu-legend">
                 <span><span class="sw ra"></span>mixed air</span>
                 <span><span class="sw sa"></span>supply air</span>
-                <span><span class="sw supply"></span>coil water supply</span>
-                <span><span class="sw return"></span>coil water return</span>
             </div>
 
             <!-- ───────────────── 4 · The supply fan ───────────────── -->
@@ -483,7 +482,8 @@ keywords: ahu mixing box mixed air return relief outside air supply fan filter c
 
                 <!-- labels -->
                 <text x="250" y="92" text-anchor="middle" font-size="12" fill="var(--text-dim)">draw-through — the fan pulls across the coils</text>
-                <text x="12" y="176" text-anchor="start" font-size="12" fill="var(--text-dim)">← from the coils</text>
+                <text x="50" y="166" text-anchor="start" font-size="12" fill="var(--text-dim)">← from</text>
+                <text x="50" y="181" text-anchor="start" font-size="12" fill="var(--text-dim)">the coils</text>
                 <text x="360" y="214" text-anchor="start" font-size="13" fill="var(--text)">to the duct →</text>
                 <text x="170" y="296" text-anchor="middle" font-size="15" fill="var(--text)">SUPPLY FAN</text>
             </svg>
@@ -528,7 +528,7 @@ keywords: ahu mixing box mixed air return relief outside air supply fan filter c
 
                 <div class="widget-slider-head">
                     <label for="ah-w-oat-slider">Outdoor air temperature</label>
-                    <span id="ah-w-oat-value">95.0 °F</span>
+                    <span class="v" id="ah-w-oat-value">95.0 °F</span>
                 </div>
                 <input class="widget-slider" id="ah-w-oat-slider" type="range" min="-10" max="110" step="1" value="95"/>
 
@@ -563,7 +563,7 @@ keywords: ahu mixing box mixed air return relief outside air supply fan filter c
                     </div>
                 </div>
 
-                <div class="ah-w-status" id="ah-w-status">Cooling — coil holding the discharge setpoint</div>
+                <div class="ah-w-status" id="ah-w-status">Cooling — coil holding its leaving-air target</div>
                 <div class="ah-w-alert" id="ah-w-alert"></div>
             </div>
 
@@ -736,13 +736,13 @@ keywords: ahu mixing box mixed air return relief outside air supply fan filter c
             } else if (state.mode === 'cool') {
                 statusClass = '';
                 statusText  = maT > SP_COOL
-                    ? 'Cooling — coil holding the discharge setpoint'
-                    : 'Cooling coil idle — the mix is already below setpoint';
+                    ? 'Cooling — coil holding its leaving-air target'
+                    : 'Cooling coil idle — the mix is already below its target';
             } else if (state.mode === 'heat') {
                 statusClass = '';
                 statusText  = maT < SP_HEAT
-                    ? 'Heating — coil holding the discharge setpoint'
-                    : 'Heating coil idle — the mix is already above setpoint';
+                    ? 'Heating — coil holding its leaving-air target'
+                    : 'Heating coil idle — the mix is already above its target';
             } else {
                 statusClass = '';
                 statusText  = 'Fan only — supply is the mix plus fan heat';
