@@ -119,7 +119,7 @@
     --red:          #e85d4f;   /* fault / alarm */
     --red-dim:      rgba(232,93,79,0.14);   /* faint red wash — quiz wrong-answer fill (parallels --accent-dim) */
     --heat:         #e8884a;   /* warm orange — "heating" on the psychrometric chart's process lines; companion to --blue for cooling */
-    --teal:         #46b3ac;   /* teal — data/comm traces on the background schematic (BACnet, IP) */
+    --teal:         #46b3ac;   /* teal — data/comm traces on the background schematic (BACnet, IP); also outside-air ducts in the education air diagrams */
     --teal-dim:     rgba(70,179,172,0.14);
     --teal-glow:    rgba(70,179,172,0.24);
     --amber:        #e0a94a;   /* amber — energized control wiring on the background schematic; section accent for /practice/ */
@@ -1753,6 +1753,8 @@ input[type="range"]::-moz-range-thumb {
 #fbe-canvas:focus-visible,
 .bo-id.bo-copyable:focus-visible,
 .bvid-copyable:focus-visible,
+.widget-try button:focus-visible,
+.ah-w-mode-btn:focus-visible,
 details.tool-preamble > summary:focus-visible,
 .pid-spoiler > summary:focus-visible {
     outline: 2px solid var(--accent);
@@ -3249,6 +3251,15 @@ p.ref-note.compact {
  * with what that visitor actually sees. Page-specific structural
  * diagrams without supply/return (e.g. the VFDs block diagram) stay
  * separate from this family — see vfds.html for the .vfd-svg precedent.
+ *
+ * Air ducts (education/air-handlers.html onward) ride the same family
+ * with data-flow="air": particle fill follows each duct's stroke
+ * attribute (OA --teal, RA --blue-cool, SA --blue, EA --text-dim), so
+ * there is no per-stream engine type. Exhaust/relief ducts are dashed
+ * — the non-color encoding, mirroring the water return — and drop
+ * their dashes while animated exactly like return piping. The .sw.oa /
+ * .sw.ra / .sw.sa / .sw.ea legend swatches below follow the same
+ * solid-while-animated / dashed-when-static agreement as .sw.return.
  * ────────────────────────────────────────────────────────────────────── */
 .edu-svg {
     display: block;
@@ -3269,15 +3280,21 @@ p.ref-note.compact {
 .edu-legend .sw { display: inline-block; width: 26px; height: 0; vertical-align: middle; margin-right: 0.4rem; }
 .edu-legend .sw.supply { border-top: 3px solid var(--blue); }
 .edu-legend .sw.return { border-top: 3px solid var(--blue-cool); }
+.edu-legend .sw.oa { border-top: 3px solid var(--teal); }
+.edu-legend .sw.ra { border-top: 3px solid var(--blue-cool); }
+.edu-legend .sw.sa { border-top: 3px solid var(--blue); }
+.edu-legend .sw.ea { border-top: 3px solid var(--text-dim); }
 
 @media screen {
-    svg.flow-active [data-flow="return"] {
+    svg.flow-active [data-flow="return"],
+    svg.flow-active [data-flow="air"][stroke-dasharray] {
         stroke-dasharray: none;
     }
 }
 
 @media print, (prefers-reduced-motion: reduce) {
     .edu-legend .sw.return { border-top-style: dashed; }
+    .edu-legend .sw.ea { border-top-style: dashed; }
 }
 
 /* ──────────────────────────────────────────────────────────────────────
@@ -3347,6 +3364,20 @@ p.ref-note.compact {
     border-bottom: 1px dashed var(--accent-dim);
 }
 .widget-try a:hover { color: var(--text-bright); border-bottom-color: var(--accent); }
+/* Button twin of the anchor row — same look, real <button> semantics
+   for keyboard/AT reach (the anchors above predate the #142/#143
+   audit finding; new try-rows should use buttons). */
+.widget-try button {
+    font: inherit;
+    color: var(--accent);
+    background: none;
+    border: none;
+    border-bottom: 1px dashed var(--accent-dim);
+    padding: 0;
+    margin-right: 0.85rem;
+    cursor: pointer;
+}
+.widget-try button:hover { color: var(--text-bright); border-bottom-color: var(--accent); }
 
 .widget-section-label {
     font-family: var(--mono);

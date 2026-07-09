@@ -37,6 +37,7 @@ const order = [
     "/education/superheat-subcooling.html",
     "/education/metering-devices-txv-eev.html",
     "/education/psychrometrics-basics.html",
+    "/education/air-handlers.html",
     "/education/function-blocks.html",
     "/education/modbus-basics.html",
     "/education/modbus-decoding.html",
