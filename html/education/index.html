@@ -23,7 +23,7 @@ nav: education
 
     <div class="filter-chips" role="group" aria-label="Filter lessons by category">
         <button type="button" class="filter-chip active" data-category="all" aria-pressed="true">
-            All <span class="filter-chip-count">18</span>
+            All <span class="filter-chip-count">19</span>
         </button>
         <button type="button" class="filter-chip" data-category="fundamentals" aria-pressed="false">
             Fundamentals <span class="filter-chip-count">6</span>
@@ -33,6 +33,9 @@ nav: education
         </button>
         <button type="button" class="filter-chip" data-category="refrigerant" aria-pressed="false">
             Refrigerant <span class="filter-chip-count">3</span>
+        </button>
+        <button type="button" class="filter-chip" data-category="forced-air" aria-pressed="false">
+            Forced Air Systems <span class="filter-chip-count">1</span>
         </button>
         <button type="button" class="filter-chip" data-category="protocols" aria-pressed="false">
             Protocols <span class="filter-chip-count">5</span>
@@ -147,6 +150,15 @@ nav: education
             desc:       'The seven properties on a psychrometric chart, what each one tells a controls engineer, and the gotchas that bite — with a pool-room widget that shows why dew point is the number to watch.',
             pills:      ['HVAC', '7 Properties', 'Pool-Room Widget', 'Dew Point'],
             category:   'hvac'
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/education/air-handlers.html',
+            titleShort: 'AHUs',
+            titleFull:  'Air Handlers',
+            desc:       'Follow one parcel of air through an air handler — return and relief, the mixing box at minimum outside air, filter, coils, and the supply fan — with a sensor-strip widget that walks the unit like a BMS graphic.',
+            pills:      ['Air Systems', 'Mixing Box', 'Coils · Fan', 'Sensor Strip'],
+            category:   'forced-air'
         }) }}
         {{ navCard({
             section:    'education',

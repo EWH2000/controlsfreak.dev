@@ -1,0 +1,804 @@
+---
+title: Air Handlers — controlsfreak.dev
+description: What happens to air inside an air handler — return and relief, minimum outside air and the mixing box, filter, heating and cooling coils, and the supply fan.
+canonical: https://controlsfreak.dev/education/air-handlers.html
+nav: education
+category: forced-air
+pairedQuiz: https://controlsfreak.dev/practice/air-handlers.html
+keywords: ahu mixing box mixed air return relief outside air supply fan filter coil discharge mat dat rtu damper
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block head %}
+    <style>
+        /* Diagram + legend + flow-active rules live in styles.css as
+           .edu-svg / .edu-legend (incl. the air-stream swatches added
+           with the data-flow="air" engine type). Only the sensor-strip
+           widget internals are page-specific. */
+
+        /* Widget shell (.widget / .widget-try / .widget-slider* /
+           .widget-anecdote*) lives in styles.css under "WIDGET CHROME".
+           ah-w-* internals below. */
+
+        /* Top row: OA-fraction readout + the coil-mode button group,
+           side by side, wrapping on narrow columns. */
+        .ah-w-top {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem 2.5rem;
+            align-items: flex-start;
+            margin-bottom: 0.85rem;
+        }
+
+        /* Coil-mode selector — three stateful buttons. aria-pressed
+           drives the visual (the units/theme-pill pattern); the group
+           caption is a .widget-readout-label so it sits with its type
+           peers. Focus ring lives in the shared FOCUS INDICATORS block
+           (.ah-w-mode-btn entry). */
+        .ah-w-modes { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+        .ah-w-mode-btn {
+            font-family: var(--mono);
+            font-size: 0.72rem;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 2px;
+            padding: 0.32rem 0.7rem;
+            cursor: pointer;
+        }
+        .ah-w-mode-btn:hover { color: var(--text-bright); border-color: var(--text-dim); }
+        .ah-w-mode-btn[aria-pressed="true"] {
+            color: var(--text-bright);
+            background: var(--surface);
+            border-color: var(--accent);
+        }
+
+        /* OA slider head: label left, live value right (the
+           .widget-slider-head chrome handles layout). */
+        #ah-widget .widget-slider { margin: 0.15rem 0 1rem; }
+
+        /* Sensor strip — the four stations in air-path order. Each
+           station: swatch (temperature-lerped), point name, value.
+           Grid keeps the four aligned as they wrap 4 → 2 → 1 across
+           column widths. */
+        .ah-w-strip {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 0.8rem 1.25rem;
+            margin-bottom: 0.85rem;
+        }
+        .ah-w-station-name {
+            font-family: var(--mono);
+            font-size: 0.68rem;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+        .ah-w-station-row {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .ah-w-swatch {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border-radius: 3px;
+            border: 1px solid var(--border);
+            background: var(--blue);
+            transition: background 200ms linear;
+            flex: none;
+        }
+        .ah-w-station-value {
+            font-family: var(--mono);
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-bright);
+            white-space: nowrap;
+        }
+
+        /* Status line — same left-stripe idiom as the hydronic-loops
+           widget (normal / warn / fault). */
+        .ah-w-status {
+            font-family: var(--mono);
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            padding: 0.45rem 0.7rem;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--accent);
+            border-radius: 2px;
+            color: var(--text-bright);
+            margin-bottom: 0.5rem;
+            transition: border-left-color 200ms linear;
+        }
+        .ah-w-status.warn  { border-left-color: var(--heat); }
+        .ah-w-status.fault { border-left-color: var(--red); }
+
+        /* Reveal area below the status line. Space reserved so the
+           anecdote doesn't reflow the page when it appears. */
+        .ah-w-alert {
+            min-height: 4.0rem;
+            margin-top: 0.25rem;
+        }
+
+        /* D4 fan blade — spun by a rAF loop in the inline script
+           (same integrated-angle pattern as the hydronic-loops pump
+           impellers; CSS keyframes snap on speed change, and rotation
+           must freeze cleanly under reduced motion). */
+        .ah-fan-blade {
+            transform-box: fill-box;
+            transform-origin: center;
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .ah-fan-blade { transform: none !important; }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Education · Air Handlers</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">Air Handlers <span class="tool-tag">Air Systems</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                Every forced-air system in a commercial building — whatever the nameplate says — is built around the same move: pull air out of the space, refresh a slice of it with outdoor air, clean it, heat or cool it, and push it back. The box that does all of that is the <em>air handler</em>. This page follows one parcel of air through that box, station by station, because once you can walk the path, every AHU graphic, every mixed-air alarm, and every "why is my supply temp weird" call gets easier. One question, start to finish: <em>what happens to air as it passes through an air handler?</em>
+            </p>
+
+            <div class="callout">
+                <p style="font-size:0.86rem;line-height:1.7;">
+                    Standing in front of a unit and not sure what to call it — AHU, RTU, makeup-air unit, fan coil? Telling the family apart is its own question, and it's getting its own page. Everything below is the anatomy they all share, drawn as a generic built-up air handler — learn the path here and you'll recognize it inside every one of them.
+                </p>
+            </div>
+
+            <!-- ───────────────── 1 · The air path, end to end ───────────────── -->
+            <h2 class="subhead" id="air-path">The Air Path, End to End</h2>
+
+            <p>
+                Here's the whole answer in one picture. Air leaves the space through return grilles and rides the <em>return duct</em> back to the unit. Just before the unit, some of it is thrown away — pushed out the <em>exhaust / relief</em> opening — and the rest drops into the <em>mixing box</em>, where fresh <em>outside air</em> joins it. The blend — <em>mixed air</em> — passes through the <em>filter</em>, then across the <em>heating coil</em> and <em>cooling coil</em> where its temperature (and on a wet cooling coil, its moisture) is changed, and the <em>supply fan</em> pushes the finished product — <em>supply air</em> — back out to the space. Then it does it again, all day, every day.
+            </p>
+
+            <svg class="edu-svg" viewBox="0 0 540 420" role="img" aria-labelledby="ah-d1-title ah-d1-desc"
+                 font-family="var(--mono)">
+                <title id="ah-d1-title">The air path through an air handler</title>
+                <desc id="ah-d1-desc">Air leaves the space through a return duct that runs above the air handler. Before the mixing box, an exhaust and relief branch carries part of the return air out of the building. The rest drops into the mixing box, where outside air enters through an intake. The mixed air passes through a filter, a heating coil, and a cooling coil, and the supply fan pushes it back out through the supply duct to the space.</desc>
+
+                <!-- ducts. data-flow="air" hooks flow-engine.js; particle color
+                     follows each duct's stroke. Density 0.5 on the OA and EA
+                     branches is the minimum-outside-air encoding — those ducts
+                     carry a fraction of the return-side flow. -->
+                <path id="ah-d1-ra" data-flow="air" d="M470 170 V140 H100 V260" fill="none" stroke="var(--blue-cool)" stroke-width="3"/>
+                <path id="ah-d1-ea" data-flow="air" data-flow-density="0.5" d="M170 140 V55 H60" fill="none" stroke="var(--text-dim)" stroke-width="3" stroke-dasharray="9 5"/>
+                <path id="ah-d1-oa" data-flow="air" data-flow-density="0.5" d="M5 230 V310 H40" fill="none" stroke="var(--teal)" stroke-width="3"/>
+                <path id="ah-d1-ma" data-flow="air" d="M130 310 H265" fill="none" stroke="var(--blue-cool)" stroke-width="3"/>
+                <path id="ah-d1-sa" data-flow="air" d="M305 310 H470 V250" fill="none" stroke="var(--blue)" stroke-width="3"/>
+
+                <!-- flow arrows (static — carry direction for reduced-motion / print) -->
+                <g id="ah-d1-flow-arrows">
+                    <polygon points="395,135 386,140 395,145" fill="var(--blue-cool)"/>
+                    <polygon points="250,135 241,140 250,145" fill="var(--blue-cool)"/>
+                    <polygon points="95,195 105,195 100,206" fill="var(--blue-cool)"/>
+                    <polygon points="165,100 175,100 170,89" fill="var(--text-dim)"/>
+                    <polygon points="115,50 106,55 115,60" fill="var(--text-dim)"/>
+                    <polygon points="0,265 10,265 5,276" fill="var(--teal)"/>
+                    <polygon points="20,305 29,310 20,315" fill="var(--teal)"/>
+                    <polygon points="176,305 185,310 176,315" fill="var(--blue-cool)"/>
+                    <polygon points="324,305 333,310 324,315" fill="var(--blue)"/>
+                    <polygon points="465,285 475,285 470,274" fill="var(--blue)"/>
+                </g>
+
+                <!-- casing + section dividers -->
+                <rect x="40" y="260" width="360" height="100" fill="none" stroke="var(--text-dim)" stroke-width="2"/>
+                <line x1="130" y1="260" x2="130" y2="360" stroke="var(--border)" stroke-width="1"/>
+                <line x1="180" y1="260" x2="180" y2="360" stroke="var(--border)" stroke-width="1"/>
+                <line x1="250" y1="260" x2="250" y2="360" stroke="var(--border)" stroke-width="1"/>
+                <line x1="320" y1="260" x2="320" y2="360" stroke="var(--border)" stroke-width="1"/>
+
+                <!-- equipment glyphs -->
+                <g id="ah-d1-filter">
+                    <rect x="140" y="275" width="30" height="70" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <line x1="143" y1="342" x2="167" y2="278" stroke="var(--border)" stroke-width="1"/>
+                    <line x1="143" y1="322" x2="167" y2="298" stroke="var(--border)" stroke-width="1"/>
+                </g>
+                <g id="ah-d1-htg">
+                    <rect x="195" y="275" width="40" height="70" fill="var(--surface)" stroke="var(--heat)" stroke-width="2"/>
+                    <line x1="199" y1="341" x2="231" y2="279" stroke="var(--heat)" stroke-width="1"/>
+                    <line x1="199" y1="311" x2="225" y2="279" stroke="var(--heat)" stroke-width="1"/>
+                </g>
+                <g id="ah-d1-clg">
+                    <rect x="265" y="275" width="40" height="70" fill="var(--surface)" stroke="var(--blue)" stroke-width="2"/>
+                    <line x1="269" y1="341" x2="301" y2="279" stroke="var(--blue)" stroke-width="1"/>
+                    <line x1="269" y1="311" x2="295" y2="279" stroke="var(--blue)" stroke-width="1"/>
+                </g>
+                <g id="ah-d1-fan">
+                    <circle cx="360" cy="310" r="17" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <polygon points="354,303 369,310 354,317" fill="var(--text-dim)"/>
+                </g>
+
+                <!-- mixing-box convergence arrows -->
+                <g id="ah-d1-mix-arrows">
+                    <polygon points="95,282 105,282 100,293" fill="var(--blue-cool)"/>
+                    <polygon points="52,305 61,310 52,315" fill="var(--teal)"/>
+                </g>
+
+                <!-- the space -->
+                <g id="ah-d1-space">
+                    <rect x="430" y="170" width="80" height="80" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <text x="470" y="207" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text-bright)">THE</text>
+                    <text x="470" y="222" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text-bright)">SPACE</text>
+                </g>
+
+                <!-- labels -->
+                <text x="300" y="128" text-anchor="middle" font-size="15" fill="var(--text)">← return air</text>
+                <text x="115" y="44" text-anchor="middle" font-size="13" fill="var(--text)">exhaust / relief</text>
+                <text x="10" y="218" text-anchor="start" font-size="14" fill="var(--text)">outside air</text>
+                <text x="455" y="333" text-anchor="middle" font-size="14" fill="var(--text)">supply air</text>
+                <text x="85" y="378" text-anchor="middle" font-size="13" fill="var(--text)">MIXING</text>
+                <text x="155" y="378" text-anchor="middle" font-size="13" fill="var(--text)">FILTER</text>
+                <text x="215" y="378" text-anchor="middle" font-size="13" fill="var(--text)">HTG COIL</text>
+                <text x="285" y="378" text-anchor="middle" font-size="13" fill="var(--text)">CLG COIL</text>
+                <text x="360" y="378" text-anchor="middle" font-size="13" fill="var(--text)">SUPPLY FAN</text>
+            </svg>
+            <div class="edu-legend">
+                <span><span class="sw oa"></span>outside air</span>
+                <span><span class="sw ra"></span>return / mixed air</span>
+                <span><span class="sw sa"></span>supply air</span>
+                <span><span class="sw ea"></span>exhaust / relief</span>
+            </div>
+
+            <div class="callout" style="margin-top:1.5rem;">
+                <h3>Seen a rooftop unit? <span>· same drawing</span></h3>
+                <p>A packaged RTU is this exact diagram folded into a weatherproof box on the roof. The stations are all there — mixing dampers behind the intake hood, filter rack, coils, supply fan — just smaller and pre-assembled at the factory. The one real difference: instead of hot- and chilled-water coils fed by a plant, an RTU usually carries a gas heat exchanger and a DX cooling coil — the evaporator of its own onboard <a href="/education/refrigerant-cycle-basics.html">refrigerant cycle</a>, with the compressor and condenser sitting in the same cabinet. Walk an RTU and a built-up AHU in the same afternoon and you'll find them in the same order.</p>
+            </div>
+
+            <!-- ───────────────── 2 · The mixing box ───────────────── -->
+            <h2 class="subhead" id="mixing-box">Where Three Ducts Meet: the Mixing Box</h2>
+
+            <p>
+                The first station is the one that confuses people, because it's the only one where air is <em>traded</em> rather than treated. Three dampers live here: the <em>return-air damper</em> (how much of the building's air gets reused), the <em>outside-air damper</em> (how much fresh air comes in), and the <em>exhaust / relief damper</em> (how much leaves the building to make room for it). Why bring outside air in at all? Not for temperature — for <em>people</em>. Occupied buildings need a steady dose of fresh air for ventilation, and codes set the minimum. And what comes in must go back out: if the unit pulls in outside air but nothing leaves, the building inflates like a slow balloon — doors whistle, lobby doors stand open on their own. Where that relief air goes, and what happens when the accounting is wrong, is a page of its own coming in this chapter; for now, know the trade happens here.
+            </p>
+            <p style="margin-top:1.25rem;">
+                On a plain unit at minimum ventilation, the arrangement is simple: the OA damper is held at its <em>minimum position</em> — enough opening for code ventilation, no more — the RA damper is mostly open, and the relief damper is cracked to match. The three are linked and move together. Modulating them past minimum to cool the building with free outdoor air is the <em>economizer</em> sequence — a genuinely separate decision with its own logic and its own failure modes, and it gets its own page next in this chapter. Everything on this page holds the dampers at minimum.
+            </p>
+
+            <svg class="edu-svg" viewBox="0 0 520 400" role="img" aria-labelledby="ah-d2-title ah-d2-desc"
+                 font-family="var(--mono)">
+                <title id="ah-d2-title">Mixing box detail at minimum outside air</title>
+                <desc id="ah-d2-desc">A mixing box chamber with three damper sets. Return air enters from the right through a mostly-open damper. Outside air enters from the left through a damper held at its minimum position. An exhaust and relief damper at the top is cracked open to let the matching amount of air leave. The three streams blend in the chamber and the mixed air leaves through the bottom toward the filter.</desc>
+
+                <!-- ducts -->
+                <path id="ah-d2-ra" data-flow="air" d="M490 150 H370" fill="none" stroke="var(--blue-cool)" stroke-width="3"/>
+                <path id="ah-d2-oa" data-flow="air" data-flow-density="0.5" d="M10 225 H150" fill="none" stroke="var(--teal)" stroke-width="3"/>
+                <path id="ah-d2-ea" data-flow="air" data-flow-density="0.5" d="M260 100 V15" fill="none" stroke="var(--text-dim)" stroke-width="3" stroke-dasharray="9 5"/>
+                <path id="ah-d2-ma" data-flow="air" d="M260 300 V385" fill="none" stroke="var(--blue-cool)" stroke-width="3"/>
+
+                <!-- flow arrows -->
+                <g id="ah-d2-flow-arrows">
+                    <polygon points="475,145 466,150 475,155" fill="var(--blue-cool)"/>
+                    <polygon points="35,220 44,225 35,230" fill="var(--teal)"/>
+                    <polygon points="255,90 265,90 260,79" fill="var(--text-dim)"/>
+                    <polygon points="255,335 265,335 260,346" fill="var(--blue-cool)"/>
+                    <!-- convergence inside the chamber -->
+                    <polygon points="335,145 326,150 335,155" fill="var(--blue-cool)"/>
+                    <polygon points="171,220 180,225 171,230" fill="var(--teal)"/>
+                    <polygon points="255,270 265,270 260,281" fill="var(--blue-cool)"/>
+                </g>
+
+                <!-- chamber -->
+                <rect x="150" y="100" width="220" height="200" fill="none" stroke="var(--text-dim)" stroke-width="2"/>
+
+                <!-- dampers: frame + parallel blades. Blade angle carries the
+                     position — near-parallel to flow = open, near-perpendicular
+                     = throttled to minimum. -->
+                <g id="ah-d2-ra-damper">
+                    <rect x="410" y="132" width="30" height="36" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <line x1="413" y1="139" x2="437" y2="143" stroke="var(--text-bright)" stroke-width="1.5"/>
+                    <line x1="413" y1="148" x2="437" y2="152" stroke="var(--text-bright)" stroke-width="1.5"/>
+                    <line x1="413" y1="157" x2="437" y2="161" stroke="var(--text-bright)" stroke-width="1.5"/>
+                </g>
+                <g id="ah-d2-oa-damper">
+                    <rect x="70" y="207" width="30" height="36" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <line x1="79" y1="212" x2="73" y2="238" stroke="var(--text-bright)" stroke-width="1.5"/>
+                    <line x1="89" y1="212" x2="83" y2="238" stroke="var(--text-bright)" stroke-width="1.5"/>
+                    <line x1="99" y1="212" x2="93" y2="238" stroke="var(--text-bright)" stroke-width="1.5"/>
+                </g>
+                <g id="ah-d2-ea-damper">
+                    <rect x="242" y="40" width="36" height="30" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <line x1="246" y1="48" x2="274" y2="45" stroke="var(--text-bright)" stroke-width="1.5"/>
+                    <line x1="246" y1="57" x2="274" y2="54" stroke="var(--text-bright)" stroke-width="1.5"/>
+                    <line x1="246" y1="66" x2="274" y2="63" stroke="var(--text-bright)" stroke-width="1.5"/>
+                </g>
+
+                <!-- labels -->
+                <text x="430" y="122" text-anchor="middle" font-size="15" fill="var(--text)">← return air</text>
+                <text x="425" y="186" text-anchor="middle" font-size="12" fill="var(--text-dim)">mostly open</text>
+                <text x="80" y="196" text-anchor="middle" font-size="15" fill="var(--text)">outside air →</text>
+                <text x="85" y="260" text-anchor="middle" font-size="12" fill="var(--text-dim)">at minimum</text>
+                <text x="300" y="30" text-anchor="start" font-size="13" fill="var(--text)">exhaust / relief ↑</text>
+                <text x="300" y="62" text-anchor="start" font-size="12" fill="var(--text-dim)">cracked open</text>
+                <text x="260" y="190" text-anchor="middle" font-size="16" font-weight="600" fill="var(--text-bright)">MIXING BOX</text>
+                <text x="260" y="218" text-anchor="middle" font-size="12" fill="var(--text-dim)">the three dampers are linked —</text>
+                <text x="260" y="234" text-anchor="middle" font-size="12" fill="var(--text-dim)">held at minimum position here</text>
+                <text x="330" y="345" text-anchor="start" font-size="14" fill="var(--text)">mixed air ↓</text>
+            </svg>
+            <div class="edu-legend">
+                <span><span class="sw oa"></span>outside air</span>
+                <span><span class="sw ra"></span>return / mixed air</span>
+                <span><span class="sw ea"></span>exhaust / relief</span>
+            </div>
+
+            <div class="callout" style="margin-top:1.5rem;">
+                <h3>Worked example <span>· mixed-air temperature</span></h3>
+                <p>The blend obeys a straight weighted average. Say the return air comes back at <span data-us="75&nbsp;°F" data-metric="23.9&nbsp;°C">75&nbsp;°F</span>, it's a <span data-us="35&nbsp;°F" data-metric="1.7&nbsp;°C">35&nbsp;°F</span> morning outside, and the dampers are at a 20&nbsp;% minimum. Then 80&nbsp;% of the mix is return and 20&nbsp;% is outdoor: in&nbsp;°F, 0.8&nbsp;×&nbsp;75&nbsp;+&nbsp;0.2&nbsp;×&nbsp;35 = 60&nbsp;+&nbsp;7 = <span data-us="67&nbsp;°F" data-metric="19.5&nbsp;°C">67&nbsp;°F</span> mixed air (in&nbsp;°C: 0.8&nbsp;×&nbsp;23.9&nbsp;+&nbsp;0.2&nbsp;×&nbsp;1.7&nbsp;≈&nbsp;19.5). That's the number the <em>MA-T sensor</em> should read — and when it doesn't, the mismatch is telling you where the dampers actually are, whatever the BMS command says. The temperature half of mixing is that simple; the moisture half is where it gets interesting, and <a href="/education/psychrometrics-basics.html#processes">Psychrometrics Basics</a> covers it — or blend real streams in the <a href="/tools/air-mixing.html">Air-Mixing Calculator</a>.</p>
+            </div>
+
+            <!-- ───────────────── 3 · Filter, then coils ───────────────── -->
+            <h2 class="subhead" id="filter-coils">Filter, Then Coils</h2>
+
+            <p>
+                Out of the mixing box, the blend hits the <em>filter</em> first — always first, because everything downstream is expensive. A coil is a dense stack of thin fins spaced tight; load it with dust and its heat transfer collapses while its pressure drop climbs. The filter takes that hit instead, and it announces its own condition while doing it: as the media loads up, the <em>pressure drop across the filter rises</em>. That's why there's a ΔP switch or sensor straddling the rack — it's the BMS point behind every "filter alarm," and it's a number worth trusting more than the calendar.
+            </p>
+            <p style="margin-top:1.25rem;">
+                Then the coils — the stations that actually change the air. The <em>heating coil</em> raises the temperature and does nothing else; the moisture in the air rides through untouched. The <em>cooling coil</em> is the two-job station: it drops the temperature, and when the fin surface runs colder than the air's dew point, water condenses out of the airstream onto the fins — that's why there's a <em>drain pan and condensate line</em> under it, and why a plugged one shows up as a ceiling stain two floors down. A common design target off the cooling coil is around <span data-us="55&nbsp;°F" data-metric="12.8&nbsp;°C">55&nbsp;°F</span>. And here's the tie back to the water side: on a built-up unit these coils are <em>hydronic loads</em> — the same two-way valve, same supply and return piping you met in <a href="/education/load-piping.html">Load Piping</a>, just wrapped around air instead of sitting in a mechanical room. Size one against a real load in the <a href="/tools/coil-sizing.html">Coil-Sizing Calculator</a>.
+            </p>
+
+            <svg class="edu-svg" viewBox="0 0 520 400" role="img" aria-labelledby="ah-d3-title ah-d3-desc"
+                 font-family="var(--mono)">
+                <title id="ah-d3-title">Filter and coil sections</title>
+                <desc id="ah-d3-desc">A slice of the air-handler casing. Mixed air enters from the left and passes through a filter rack with a differential-pressure sensor tapped across it, then a heating coil, then a cooling coil with a drain pan and condensate line underneath. Each coil has water supply and return piping stubs below the casing. The air leaves the slice as supply air on the right.</desc>
+
+                <!-- air path: mixed air up to the cooling coil, supply air after it -->
+                <path id="ah-d3-ma" data-flow="air" d="M10 210 H295" fill="none" stroke="var(--blue-cool)" stroke-width="3"/>
+                <path id="ah-d3-sa" data-flow="air" d="M375 210 H510" fill="none" stroke="var(--blue)" stroke-width="3"/>
+
+                <!-- coil water stubs — the water register inside an air diagram:
+                     the coil is a hydronic load (load-piping.html). -->
+                <path id="ah-d3-hws" data-flow="supply" d="M202 355 V280" fill="none" stroke="var(--blue)" stroke-width="2.5"/>
+                <path id="ah-d3-hwr" data-flow="return" d="M222 280 V355" fill="none" stroke="var(--blue-cool)" stroke-width="2.5" stroke-dasharray="7 4"/>
+                <path id="ah-d3-chws" data-flow="supply" d="M307 355 V280" fill="none" stroke="var(--blue)" stroke-width="2.5"/>
+                <path id="ah-d3-chwr" data-flow="return" d="M327 280 V355" fill="none" stroke="var(--blue-cool)" stroke-width="2.5" stroke-dasharray="7 4"/>
+
+                <!-- flow arrows -->
+                <g id="ah-d3-flow-arrows">
+                    <polygon points="55,205 64,210 55,215" fill="var(--blue-cool)"/>
+                    <polygon points="160,205 169,210 160,215" fill="var(--blue-cool)"/>
+                    <polygon points="255,205 264,210 255,215" fill="var(--blue-cool)"/>
+                    <polygon points="440,205 449,210 440,215" fill="var(--blue)"/>
+                    <polygon points="197,310 207,310 202,299" fill="var(--blue)"/>
+                    <polygon points="217,330 227,330 222,341" fill="var(--blue-cool)"/>
+                    <polygon points="302,310 312,310 307,299" fill="var(--blue)"/>
+                    <polygon points="322,330 332,330 327,341" fill="var(--blue-cool)"/>
+                </g>
+
+                <!-- casing slice -->
+                <rect x="40" y="120" width="440" height="180" fill="none" stroke="var(--text-dim)" stroke-width="2"/>
+
+                <!-- filter + ΔP taps -->
+                <g id="ah-d3-filter">
+                    <rect x="100" y="140" width="34" height="140" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <line x1="104" y1="272" x2="130" y2="148" stroke="var(--border)" stroke-width="1"/>
+                    <line x1="104" y1="230" x2="130" y2="190" stroke="var(--border)" stroke-width="1"/>
+                </g>
+                <g id="ah-d3-dp">
+                    <line x1="85" y1="160" x2="85" y2="95" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <line x1="150" y1="160" x2="150" y2="95" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <line x1="85" y1="95" x2="104" y2="86" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <line x1="150" y1="95" x2="130" y2="86" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <circle cx="117" cy="82" r="13" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="117" y="86" text-anchor="middle" font-size="12" fill="var(--text-bright)">ΔP</text>
+                    <text x="117" y="55" text-anchor="middle" font-size="12" fill="var(--text-dim)">dirty-filter ΔP</text>
+                </g>
+
+                <!-- heating coil -->
+                <g id="ah-d3-htg">
+                    <rect x="190" y="140" width="44" height="140" fill="var(--surface)" stroke="var(--heat)" stroke-width="2"/>
+                    <line x1="194" y1="274" x2="230" y2="146" stroke="var(--heat)" stroke-width="1"/>
+                    <line x1="194" y1="214" x2="226" y2="146" stroke="var(--heat)" stroke-width="1"/>
+                </g>
+
+                <!-- cooling coil + drain pan + condensate -->
+                <g id="ah-d3-clg">
+                    <rect x="295" y="140" width="44" height="140" fill="var(--surface)" stroke="var(--blue)" stroke-width="2"/>
+                    <line x1="299" y1="274" x2="335" y2="146" stroke="var(--blue)" stroke-width="1"/>
+                    <line x1="299" y1="214" x2="331" y2="146" stroke="var(--blue)" stroke-width="1"/>
+                </g>
+                <g id="ah-d3-pan">
+                    <path d="M290 282 V290 H348 V282" fill="none" stroke="var(--text-dim)" stroke-width="2"/>
+                    <path d="M344 290 V325 H370" fill="none" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="378" y="329" text-anchor="start" font-size="12" fill="var(--text-dim)">condensate drain</text>
+                </g>
+
+                <!-- labels -->
+                <text x="55" y="192" text-anchor="start" font-size="14" fill="var(--text)">mixed air →</text>
+                <text x="390" y="192" text-anchor="start" font-size="14" fill="var(--text)">supply air →</text>
+                <text x="317" y="108" text-anchor="middle" font-size="12" fill="var(--text-dim)">the air crosses its dew point here</text>
+                <text x="117" y="134" text-anchor="middle" font-size="13" fill="var(--text)">FILTER</text>
+                <text x="212" y="134" text-anchor="middle" font-size="13" fill="var(--text)">HTG COIL</text>
+                <text x="212" y="372" text-anchor="middle" font-size="12" fill="var(--text-dim)">HWS / HWR</text>
+                <text x="317" y="134" text-anchor="middle" font-size="13" fill="var(--text)">CLG COIL</text>
+                <text x="317" y="372" text-anchor="middle" font-size="12" fill="var(--text-dim)">CHWS / CHWR</text>
+            </svg>
+            <div class="edu-legend">
+                <span><span class="sw ra"></span>mixed air</span>
+                <span><span class="sw sa"></span>supply air</span>
+                <span><span class="sw supply"></span>coil water supply</span>
+                <span><span class="sw return"></span>coil water return</span>
+            </div>
+
+            <!-- ───────────────── 4 · The supply fan ───────────────── -->
+            <h2 class="subhead" id="supply-fan">The Supply Fan: What Actually Moves the Air</h2>
+
+            <p>
+                Everything upstream <em>conditions</em> the air; none of it <em>moves</em> the air. The supply fan is the only mover in the box, and in the arrangement drawn here — <em>draw-through</em>, the most common — it sits downstream of the coils, pulling air across them and pushing it into the supply duct. Two things worth filing away. First, the fan adds a little heat of its own: the motor's work ends up in the airstream, so discharge air runs about <span data-us="1&nbsp;°F" data-metric="0.6&nbsp;°C">1&nbsp;°F</span> warmer than the air leaving the coil — which is why the <em>DA-T</em> (discharge-air temperature) sensor never quite agrees with the coil math. Second, on any modern unit that fan rides a <a href="/education/vfds.html">VFD</a>, so its speed can follow the building's needs. How the unit decides <em>how fast</em> to run — the duct-static-pressure loop — is its own control story, and it closes this chapter as its own page.
+            </p>
+
+            <svg class="edu-svg" viewBox="0 0 500 340" role="img" aria-labelledby="ah-d4-title ah-d4-desc"
+                 font-family="var(--mono)">
+                <title id="ah-d4-title">The supply fan and discharge</title>
+                <desc id="ah-d4-desc">A slice of the air-handler casing containing the supply fan. Conditioned air arrives from the coils on the left; the fan pulls it through and pushes it out to the supply duct on the right. A VFD above the casing drives the fan motor over a control wire.</desc>
+
+                <!-- air path in / out of the fan -->
+                <path id="ah-d4-in" data-flow="air" d="M10 190 H132" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <path id="ah-d4-out" data-flow="air" d="M208 190 H460" fill="none" stroke="var(--blue)" stroke-width="3"/>
+
+                <!-- VFD control wire — electrical register; discrete signal pulse -->
+                <path id="ah-d4-sig" data-pulse="signal" data-pulse-interval="6000" d="M88 74 V132 H170 V152" fill="none" stroke="var(--amber)" stroke-width="2"/>
+
+                <!-- flow arrows -->
+                <g id="ah-d4-flow-arrows">
+                    <polygon points="55,185 64,190 55,195" fill="var(--blue)"/>
+                    <polygon points="250,185 259,190 250,195" fill="var(--blue)"/>
+                    <polygon points="415,185 424,190 415,195" fill="var(--blue)"/>
+                </g>
+
+                <!-- casing slice -->
+                <rect x="40" y="110" width="280" height="160" fill="none" stroke="var(--text-dim)" stroke-width="2"/>
+
+                <!-- fan -->
+                <g id="ah-d4-fan">
+                    <circle cx="170" cy="190" r="36" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <rect class="ah-fan-blade" id="ah-d4-blade" x="140" y="188" width="60" height="4" rx="2" fill="var(--text-dim)"/>
+                    <circle cx="170" cy="190" r="3" fill="var(--text-bright)"/>
+                </g>
+
+                <!-- VFD -->
+                <g id="ah-d4-vfd">
+                    <rect x="60" y="40" width="56" height="34" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <text x="88" y="62" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text-bright)">VFD</text>
+                </g>
+
+                <!-- labels -->
+                <text x="250" y="92" text-anchor="middle" font-size="12" fill="var(--text-dim)">draw-through — the fan pulls across the coils</text>
+                <text x="12" y="176" text-anchor="start" font-size="12" fill="var(--text-dim)">← from the coils</text>
+                <text x="360" y="214" text-anchor="start" font-size="13" fill="var(--text)">to the duct →</text>
+                <text x="170" y="296" text-anchor="middle" font-size="15" fill="var(--text)">SUPPLY FAN</text>
+            </svg>
+            <div class="edu-legend">
+                <span><span class="sw sa"></span>supply air</span>
+            </div>
+
+            <p style="margin-top:1.25rem;">
+                That's the whole walk: return in, some traded for fresh at the mixing box, filtered, heated or cooled (and maybe dried) at the coils, pushed back out by the fan. Every question the rest of this chapter answers hangs off one of these stations — when the dampers should open past minimum (economizers), where the relief air goes (building pressure), what the boxes at the far end of the supply duct do (VAV systems), and how the fan knows how fast to run (duct static). This page is the map; the rest are the territories.
+            </p>
+
+            <!-- ───────────────── 5 · Sensor-strip widget ───────────────── -->
+            <h2 class="subhead" id="sensor-strip">Walk the Unit with a Probe</h2>
+
+            <p>
+                Those stations aren't just anatomy — they're literally the points on the BMS graphic: <em>RA-T</em>, <em>OA-T</em>, <em>MA-T</em>, <em>DA-T</em>, in air-path order. Reading them left to right IS walking the unit. Try it below: set the outdoor temperature, pick what the coils are doing, and watch each station transform the air. The dampers stay pinned at a 20&nbsp;% minimum, like the mixing-box section above — and notice you can't make the mixed air dangerously cold that way, no matter how brutal the morning. Then try the last preset.
+            </p>
+
+            <div class="widget" id="ah-widget">
+                <div class="widget-try">
+                    <span class="lbl">Try this:</span>
+                    <button type="button" data-ah-preset="design">design cooling day (<span data-us="95&nbsp;°F" data-metric="35&nbsp;°C">95&nbsp;°F</span>)</button>
+                    <button type="button" data-ah-preset="mild">mild spring morning (<span data-us="55&nbsp;°F" data-metric="12.8&nbsp;°C">55&nbsp;°F</span>)</button>
+                    <button type="button" data-ah-preset="winter">winter morning (<span data-us="10&nbsp;°F" data-metric="-12.2&nbsp;°C">10&nbsp;°F</span>)</button>
+                    <button type="button" data-ah-preset="fail">damper linkage failure</button>
+                </div>
+
+                <div class="ah-w-top">
+                    <div>
+                        <div class="widget-readout-label">Outside-air fraction</div>
+                        <div class="widget-readout-value" id="ah-w-frac">20<span class="unit"> %</span> <span class="unit">— fixed minimum</span></div>
+                    </div>
+                    <div>
+                        <div class="widget-readout-label" id="ah-w-mode-lbl">Coil mode</div>
+                        <div class="ah-w-modes" role="group" aria-labelledby="ah-w-mode-lbl">
+                            <button type="button" class="ah-w-mode-btn" data-ah-mode="cool" aria-pressed="true">Cooling</button>
+                            <button type="button" class="ah-w-mode-btn" data-ah-mode="heat" aria-pressed="false">Heating</button>
+                            <button type="button" class="ah-w-mode-btn" data-ah-mode="off" aria-pressed="false">Coils off</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="widget-slider-head">
+                    <label for="ah-w-oat-slider">Outdoor air temperature</label>
+                    <span id="ah-w-oat-value">95.0 °F</span>
+                </div>
+                <input class="widget-slider" id="ah-w-oat-slider" type="range" min="-10" max="110" step="1" value="95"/>
+
+                <div class="ah-w-strip">
+                    <div class="ah-w-station">
+                        <div class="ah-w-station-name">RA-T · return</div>
+                        <div class="ah-w-station-row">
+                            <span class="ah-w-swatch" id="ah-w-ra-swatch"></span>
+                            <span class="ah-w-station-value" id="ah-w-ra-value">75.0 °F</span>
+                        </div>
+                    </div>
+                    <div class="ah-w-station">
+                        <div class="ah-w-station-name">OA-T · outdoor</div>
+                        <div class="ah-w-station-row">
+                            <span class="ah-w-swatch" id="ah-w-oa-swatch"></span>
+                            <span class="ah-w-station-value" id="ah-w-oa-value">95.0 °F</span>
+                        </div>
+                    </div>
+                    <div class="ah-w-station">
+                        <div class="ah-w-station-name">MA-T · mixed</div>
+                        <div class="ah-w-station-row">
+                            <span class="ah-w-swatch" id="ah-w-ma-swatch"></span>
+                            <span class="ah-w-station-value" id="ah-w-ma-value">79.0 °F</span>
+                        </div>
+                    </div>
+                    <div class="ah-w-station">
+                        <div class="ah-w-station-name">DA-T · discharge</div>
+                        <div class="ah-w-station-row">
+                            <span class="ah-w-swatch" id="ah-w-da-swatch"></span>
+                            <span class="ah-w-station-value" id="ah-w-da-value">56.0 °F</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="ah-w-status" id="ah-w-status">Cooling — coil holding the discharge setpoint</div>
+                <div class="ah-w-alert" id="ah-w-alert"></div>
+            </div>
+
+            <p class="ref-note">
+                Why is the fraction pinned at 20&nbsp;%? Because deciding when to open the dampers <em>past</em> minimum — cooling the building with free outdoor air — is the economizer's job, and the economizer gets its own page. Here the point is what minimum position buys you: with 80&nbsp;% of the mix being <span data-us="75&nbsp;°F" data-metric="23.9&nbsp;°C">75&nbsp;°F</span> return air, the mixed air stays comfortably warm even on the coldest morning on the slider — the minimum position is winter-safe <em>by arithmetic</em>. The failure preset is what it looks like when that arithmetic is taken away. (Temperatures only here — the moisture half of mixing lives in <a href="/education/psychrometrics-basics.html#processes">Psychrometrics Basics</a>.)
+            </p>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/tools/psychrometric-chart.html', label: 'Psychrometric Chart'},
+            {href: '/tools/air-mixing.html', label: 'Air-Mixing Calculator'},
+            {href: '/tools/coil-sizing.html', label: 'Coil-Sizing Calculator'}
+        ],
+        lessons: [
+            {href: '/education/psychrometrics-basics.html', label: 'Psychrometrics Basics'},
+            {href: '/education/load-piping.html', label: 'Load Piping'},
+            {href: '/education/vfds.html', label: 'VFDs'},
+            {href: '/education/refrigerant-cycle-basics.html', label: 'Refrigerant Cycle Basics'}
+        ],
+        quizzes: [
+            {href: '/practice/air-handlers.html', label: 'Air Handlers'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/education/">← Back to Education</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<!-- flow-engine.js is loaded site-wide from layouts/page.njk; the init()
+     below is an idempotent refresh so the page reads standalone. All four
+     diagrams are annotated with data-flow="air" (particle color follows
+     each duct's stroke) plus the D3 water stubs and the D4 VFD signal
+     pulse. The sensor-strip widget below is pure page math — it never
+     touches the diagrams. -->
+<script>
+    FlowEngine.init();
+
+    // ── D4 fan-blade spin ─────────────────────────────────────────────
+    // Constant-speed rotation via an integrated-angle rAF loop — same
+    // pattern (and same reasoning) as the hydronic-loops pump impellers.
+    // Skipped entirely under reduced motion; the CSS also pins the blade.
+    (function () {
+        'use strict';
+        const blade = document.getElementById('ah-d4-blade');
+        if (!blade) return;
+        const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (reduceMotion) return;
+        const SPEED = 360 / 0.8;    // deg/sec — one rev per 0.8 s
+        let angle = 0;
+        let lastT = null;
+        const frame = function (t) {
+            if (lastT === null) lastT = t;
+            const dt = Math.min(0.1, (t - lastT) / 1000);
+            lastT = t;
+            angle = (angle + SPEED * dt) % 360;
+            blade.style.transform = 'rotate(' + angle.toFixed(2) + 'deg)';
+            requestAnimationFrame(frame);
+        };
+        requestAnimationFrame(frame);
+    })();
+
+    // ── Sensor-strip widget ───────────────────────────────────────────
+    // Model: a sensible-only walk down the air path at fixed minimum OA.
+    //   MA = frac·OA + (1 − frac)·RA        (frac = 0.20, or 1.0 failed)
+    //   coil: cooling holds min(MA, 55); heating holds max(MA, 90);
+    //         off passes MA through.
+    //   DA = coil leaving temp + 1 °F fan heat (draw-through, taught in
+    //        the supply-fan section).
+    // Internal model is IP (°F); converted at the display boundary.
+    // Dry-bulb only by design — the humidity half of mixing belongs to
+    // psychrometrics-basics / the psych chart, and re-teaching it here
+    // would bloat the widget past its one job.
+    (function () {
+        'use strict';
+
+        const RA_T      = 75;     // °F — return air is whatever the space is
+        const MIN_OA    = 0.20;   // fixed minimum outside-air fraction
+        const SP_COOL   = 55;     // °F discharge setpoint, cooling
+        const SP_HEAT   = 90;     // °F discharge setpoint, heating
+        const FAN_HEAT  = 1;      // °F picked up across the fan
+        const FREEZE_AT = 38;     // °F MA-T — freeze-stat territory
+
+        // Swatch color lerp anchors — keep in sync with --blue / --heat
+        // in styles.css (dark set; the d3 widget precedent accepts the
+        // slight light-theme mismatch for these small swatches).
+        const C_BLUE = [0x4a, 0xa3, 0xdd];
+        const C_HEAT = [0xe8, 0x88, 0x4a];
+
+        const slider   = document.getElementById('ah-w-oat-slider');
+        const oatValEl = document.getElementById('ah-w-oat-value');
+        const fracEl   = document.getElementById('ah-w-frac');
+        const statusEl = document.getElementById('ah-w-status');
+        const alertEl  = document.getElementById('ah-w-alert');
+        const modeBtns = document.querySelectorAll('[data-ah-mode]');
+        const stations = {
+            ra: { swatch: document.getElementById('ah-w-ra-swatch'), value: document.getElementById('ah-w-ra-value') },
+            oa: { swatch: document.getElementById('ah-w-oa-swatch'), value: document.getElementById('ah-w-oa-value') },
+            ma: { swatch: document.getElementById('ah-w-ma-swatch'), value: document.getElementById('ah-w-ma-value') },
+            da: { swatch: document.getElementById('ah-w-da-swatch'), value: document.getElementById('ah-w-da-value') },
+        };
+
+        const state = {
+            mode: 'cool',           // 'cool' | 'heat' | 'off'
+            damperFailed: false,    // the last preset: OA damper failed wide open
+            anecdoteShown: false,   // once revealed, keep it pinned this session
+        };
+
+        function lerpRgb(a, b, k) {
+            const t = Math.max(0, Math.min(1, k));
+            return 'rgb(' + Math.round(a[0] + (b[0] - a[0]) * t) + ','
+                          + Math.round(a[1] + (b[1] - a[1]) * t) + ','
+                          + Math.round(a[2] + (b[2] - a[2]) * t) + ')';
+        }
+
+        // Blue at ≤55 °F, warm orange at ≥95 °F — the same span the
+        // stations actually swing across.
+        function tempColor(t) {
+            return lerpRgb(C_BLUE, C_HEAT, (t - 55) / 40);
+        }
+
+        function fmtTemp(f) {
+            const U = window.Units;
+            const v = U.current() === 'us' ? f : U.display.temp(f);
+            return v.toFixed(1) + ' ' + U.suffix.temp();
+        }
+
+        function setStation(key, t) {
+            stations[key].value.textContent = fmtTemp(t);
+            stations[key].swatch.style.background = tempColor(t);
+        }
+
+        function update() {
+            const oaT  = parseInt(slider.value, 10);
+            const frac = state.damperFailed ? 1.0 : MIN_OA;
+
+            const maT = frac * oaT + (1 - frac) * RA_T;
+            let coilOut;
+            if (state.mode === 'cool')      coilOut = Math.min(maT, SP_COOL);
+            else if (state.mode === 'heat') coilOut = Math.max(maT, SP_HEAT);
+            else                            coilOut = maT;
+            const daT = coilOut + FAN_HEAT;
+
+            oatValEl.textContent = fmtTemp(oaT);
+            setStation('ra', RA_T);
+            setStation('oa', oaT);
+            setStation('ma', maT);
+            setStation('da', daT);
+
+            // OA-fraction readout. Fixed structure → safe innerHTML for
+            // the unit spans.
+            fracEl.innerHTML = state.damperFailed
+                ? '100<span class="unit"> %</span> <span class="unit">— damper failed open</span>'
+                : '20<span class="unit"> %</span> <span class="unit">— fixed minimum</span>';
+
+            // Status line. Failure states outrank mode states; the
+            // freeze fault keys off the calculated MA-T so the text
+            // agrees with the strip.
+            let statusClass, statusText;
+            if (state.damperFailed && maT < FREEZE_AT) {
+                statusClass = 'fault';
+                statusText  = 'Mixed air near freezing — freeze-stat territory';
+            } else if (state.damperFailed) {
+                statusClass = 'warn';
+                statusText  = 'OA damper failed open — mixed air is tracking outdoors';
+            } else if (state.mode === 'cool') {
+                statusClass = '';
+                statusText  = maT > SP_COOL
+                    ? 'Cooling — coil holding the discharge setpoint'
+                    : 'Cooling coil idle — the mix is already below setpoint';
+            } else if (state.mode === 'heat') {
+                statusClass = '';
+                statusText  = maT < SP_HEAT
+                    ? 'Heating — coil holding the discharge setpoint'
+                    : 'Heating coil idle — the mix is already above setpoint';
+            } else {
+                statusClass = '';
+                statusText  = 'Fan only — supply is the mix plus fan heat';
+            }
+            statusEl.className = 'ah-w-status' + (statusClass ? ' ' + statusClass : '');
+            statusEl.textContent = statusText;
+
+            // Anecdote: revealed by reaching freeze territory the only
+            // way the model allows — the failed-open damper. Pinned for
+            // the session once seen (vfds precedent).
+            if (state.damperFailed && maT < FREEZE_AT) state.anecdoteShown = true;
+            if (state.anecdoteShown) {
+                alertEl.innerHTML = '<div class="widget-anecdote warn">The MA-T is the tell here — and it can lie, too. I once chased an RTU that hunted all through a sunny spring morning: economizer dampers swinging, compressor short-cycling, each \'correcting\' the other. The trends gave it away — MA-T sawtoothing in lockstep with the compressor stage — because the mixed-air sensor sat too close to the DX coil, reading the coil instead of the mix every time a stage kicked on. An averaging element across the mixing plenum ended it. Mixing happens where it happens; the sensor only reports where it sits.</div>';
+            } else {
+                alertEl.innerHTML = '';
+            }
+        }
+
+        function setMode(mode) {
+            state.mode = mode;
+            modeBtns.forEach(function (b) {
+                b.setAttribute('aria-pressed', b.getAttribute('data-ah-mode') === mode ? 'true' : 'false');
+            });
+            update();
+        }
+
+        modeBtns.forEach(function (btn) {
+            btn.addEventListener('click', function (e) {
+                setMode(e.currentTarget.getAttribute('data-ah-mode'));
+            });
+        });
+
+        // Presets. The three weather presets clear a standing damper
+        // failure; the failure preset forces the winter case that makes
+        // it dangerous.
+        const PRESETS = {
+            design: { oa: 95, mode: 'cool', fail: false },
+            mild:   { oa: 55, mode: 'off',  fail: false },
+            winter: { oa: 10, mode: 'heat', fail: false },
+            fail:   { oa: 10, mode: 'heat', fail: true  },
+        };
+        document.querySelectorAll('[data-ah-preset]').forEach(function (btn) {
+            btn.addEventListener('click', function (e) {
+                const p = PRESETS[e.currentTarget.getAttribute('data-ah-preset')];
+                if (!p) return;
+                slider.value = String(p.oa);
+                state.damperFailed = p.fail;
+                setMode(p.mode);    // setMode calls update()
+            });
+        });
+
+        slider.addEventListener('input', update);
+        // Re-render every temperature when the global unit toggle flips.
+        document.addEventListener('unitschange', update);
+        // Initial paint matching the default slider / mode state.
+        update();
+    })();
+</script>
+{% endblock %}

@@ -1545,6 +1545,50 @@ test('psychrometrics basics — pool widget sweeps surface temp through dry / wa
     expect(errors, 'psychrometrics-basics behavioral should log no page / console errors').toEqual([]);
 });
 
+test('air handlers — sensor strip walks the path and the failure preset reveals the anecdote', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('/education/air-handlers.html');
+
+    // Structure: four annotated diagrams with accessible titles, the
+    // section anchors the quiz learnMore links target, and the legend.
+    await expect(page.locator('main svg.edu-svg')).toHaveCount(4);
+    await expect(page.locator('main svg.edu-svg > title')).toHaveCount(4);
+    for (const anchor of ['#air-path', '#mixing-box', '#filter-coils', '#supply-fan', '#sensor-strip']) {
+        await expect(page.locator(`h2${anchor}`)).toBeVisible();
+    }
+
+    // Default state: design cooling day — MA = 0.2·95 + 0.8·75 = 79,
+    // coil holds 55, fan adds 1 → DA 56.
+    await expect(page.locator('#ah-w-ma-value')).toHaveText('79.0 °F');
+    await expect(page.locator('#ah-w-da-value')).toHaveText('56.0 °F');
+    await expect(page.locator('#ah-w-status')).toHaveText(/Cooling — coil holding/);
+    await expect(page.locator('#ah-w-alert .widget-anecdote')).toHaveCount(0);
+
+    // Winter morning at fixed minimum OA: MA = 0.2·10 + 0.8·75 = 62 —
+    // the winter-safe-by-arithmetic point; no warning state.
+    await page.locator('[data-ah-preset="winter"]').click();
+    await expect(page.locator('#ah-w-ma-value')).toHaveText('62.0 °F');
+    await expect(page.locator('#ah-w-status')).not.toHaveClass(/warn|fault/);
+
+    // Damper failure preset: 100% OA at 10 °F → MA 10, freeze fault,
+    // anecdote reveals and stays pinned after leaving the state.
+    await page.locator('[data-ah-preset="fail"]').click();
+    await expect(page.locator('#ah-w-ma-value')).toHaveText('10.0 °F');
+    await expect(page.locator('#ah-w-frac')).toContainText('100');
+    await expect(page.locator('#ah-w-status')).toHaveClass(/fault/);
+    await expect(page.locator('#ah-w-alert .widget-anecdote')).toHaveCount(1);
+    await page.locator('[data-ah-preset="design"]').click();
+    await expect(page.locator('#ah-w-alert .widget-anecdote')).toHaveCount(1);
+
+    // Coil-mode group keeps aria-pressed in sync.
+    await page.locator('[data-ah-mode="off"]').click();
+    await expect(page.locator('[data-ah-mode="off"]')).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('[data-ah-mode="cool"]')).toHaveAttribute('aria-pressed', 'false');
+    await expect(page.locator('#ah-w-status')).toHaveText(/Fan only/);
+
+    expect(errors, 'air-handlers behavioral should log no page / console errors').toEqual([]);
+});
+
 test.describe('function-block editor — interactions', () => {
     test('Delete key removes a selected block', async ({ page }) => {
         const errors = watchErrors(page);

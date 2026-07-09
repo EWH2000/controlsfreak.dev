@@ -1753,6 +1753,8 @@ input[type="range"]::-moz-range-thumb {
 #fbe-canvas:focus-visible,
 .bo-id.bo-copyable:focus-visible,
 .bvid-copyable:focus-visible,
+.widget-try button:focus-visible,
+.ah-w-mode-btn:focus-visible,
 details.tool-preamble > summary:focus-visible,
 .pid-spoiler > summary:focus-visible {
     outline: 2px solid var(--accent);
@@ -3362,6 +3364,20 @@ p.ref-note.compact {
     border-bottom: 1px dashed var(--accent-dim);
 }
 .widget-try a:hover { color: var(--text-bright); border-bottom-color: var(--accent); }
+/* Button twin of the anchor row — same look, real <button> semantics
+   for keyboard/AT reach (the anchors above predate the #142/#143
+   audit finding; new try-rows should use buttons). */
+.widget-try button {
+    font: inherit;
+    color: var(--accent);
+    background: none;
+    border: none;
+    border-bottom: 1px dashed var(--accent-dim);
+    padding: 0;
+    margin-right: 0.85rem;
+    cursor: pointer;
+}
+.widget-try button:hover { color: var(--text-bright); border-bottom-color: var(--accent); }
 
 .widget-section-label {
     font-family: var(--mono);
