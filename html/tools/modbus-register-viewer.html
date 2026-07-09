@@ -159,17 +159,22 @@ keywords: 40001 30001 offset endian byte swap word order decode hex signed scali
 
                 <section>
                     <h2 class="ps-section-label">Output — all four byte orderings</h2>
-                    <table class="ref-table-dense">
-                        <thead>
-                            <tr><th>Order</th><th>int32</th><th>uint32</th><th>float (IEEE-754)</th></tr>
-                        </thead>
-                        <tbody>
-                            <tr><td>ABCD</td><td id="pair-abcd-i32">—</td><td id="pair-abcd-u32">—</td><td id="pair-abcd-f32">—</td></tr>
-                            <tr><td>CDAB</td><td id="pair-cdab-i32">—</td><td id="pair-cdab-u32">—</td><td id="pair-cdab-f32">—</td></tr>
-                            <tr><td>BADC</td><td id="pair-badc-i32">—</td><td id="pair-badc-u32">—</td><td id="pair-badc-f32">—</td></tr>
-                            <tr><td>DCBA</td><td id="pair-dcba-i32">—</td><td id="pair-dcba-u32">—</td><td id="pair-dcba-f32">—</td></tr>
-                        </tbody>
-                    </table>
+                    <!-- .table-scroll, not .rt-stack: the whole point of this
+                         matrix is comparing a value across the four orderings,
+                         so at phone width it side-scrolls intact. -->
+                    <div class="table-scroll">
+                        <table class="ref-table-dense">
+                            <thead>
+                                <tr><th>Order</th><th>int32</th><th>uint32</th><th>float (IEEE-754)</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>ABCD</td><td id="pair-abcd-i32">—</td><td id="pair-abcd-u32">—</td><td id="pair-abcd-f32">—</td></tr>
+                                <tr><td>CDAB</td><td id="pair-cdab-i32">—</td><td id="pair-cdab-u32">—</td><td id="pair-cdab-f32">—</td></tr>
+                                <tr><td>BADC</td><td id="pair-badc-i32">—</td><td id="pair-badc-u32">—</td><td id="pair-badc-f32">—</td></tr>
+                                <tr><td>DCBA</td><td id="pair-dcba-i32">—</td><td id="pair-dcba-u32">—</td><td id="pair-dcba-f32">—</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
                     <p class="ref-note">
                         <strong>ABCD</strong> is big-endian word + big-endian byte
                         — the Modbus standard's stated ordering.

@@ -105,30 +105,32 @@ keywords: function code exception CRC CRC-16 RTU checksum register coil holding 
         <!-- ── Function codes ── -->
         <div id="tab-fc" class="tab-pane active">
             <section class="tool-body-row">
-                <table class="ref-table-dense" id="mf-table-fc">
-                    <thead>
-                        <tr><th>Code</th><th>Name</th><th>What it does</th></tr>
-                    </thead>
-                    <tbody>
-                        <tr><td class="mf-id">1 <span class="mf-hex">0x01</span></td><td>Read Coils</td><td>Read 1–2000 coils — the read/write discrete output bits.</td></tr>
-                        <tr><td class="mf-id">2 <span class="mf-hex">0x02</span></td><td>Read Discrete Inputs</td><td>Read 1–2000 discrete inputs — read-only bits.</td></tr>
-                        <tr><td class="mf-id">3 <span class="mf-hex">0x03</span></td><td>Read Holding Registers</td><td>Read 1–125 holding registers — the read/write 16-bit words.</td></tr>
-                        <tr><td class="mf-id">4 <span class="mf-hex">0x04</span></td><td>Read Input Registers</td><td>Read 1–125 input registers — read-only 16-bit words.</td></tr>
-                        <tr><td class="mf-id">5 <span class="mf-hex">0x05</span></td><td>Write Single Coil</td><td>Force one coil ON (0xFF00) or OFF (0x0000).</td></tr>
-                        <tr><td class="mf-id">6 <span class="mf-hex">0x06</span></td><td>Write Single Register</td><td>Write one holding register.</td></tr>
-                        <tr><td class="mf-id">7 <span class="mf-hex">0x07</span></td><td>Read Exception Status</td><td>Serial only — read 8 device exception-status bits.</td></tr>
-                        <tr><td class="mf-id">8 <span class="mf-hex">0x08</span></td><td>Diagnostics</td><td>Serial only — line diagnostics and loopback sub-functions.</td></tr>
-                        <tr><td class="mf-id">11 <span class="mf-hex">0x0B</span></td><td>Get Comm Event Counter</td><td>Serial only — status word and event count.</td></tr>
-                        <tr><td class="mf-id">12 <span class="mf-hex">0x0C</span></td><td>Get Comm Event Log</td><td>Serial only — status, counts, and recent event bytes.</td></tr>
-                        <tr><td class="mf-id">15 <span class="mf-hex">0x0F</span></td><td>Write Multiple Coils</td><td>Write a contiguous block of coils in one request.</td></tr>
-                        <tr><td class="mf-id">16 <span class="mf-hex">0x10</span></td><td>Write Multiple Registers</td><td>Write a contiguous block of holding registers. Decimal&nbsp;16 is hex&nbsp;<strong>0x10</strong> — don't grab it as a hex&nbsp;16, which is the Mask Write row below.</td></tr>
-                        <tr><td class="mf-id">17 <span class="mf-hex">0x11</span></td><td>Report Server ID</td><td>Serial only — device ID string and run-status byte.</td></tr>
-                        <tr><td class="mf-id">22 <span class="mf-hex">0x16</span></td><td>Mask Write Register</td><td>AND/OR-mask selected bits of one holding register.</td></tr>
-                        <tr><td class="mf-id">23 <span class="mf-hex">0x17</span></td><td>Read/Write Multiple Registers</td><td>Read one block and write another in a single transaction.</td></tr>
-                        <tr><td class="mf-id">43 <span class="mf-hex">0x2B</span></td><td>Encapsulated Interface Transport</td><td>Read Device Identification (MEI type 0x0E) — vendor, model.</td></tr>
-                        <tr class="mf-empty" hidden><td colspan="3">No function codes match that filter.</td></tr>
-                    </tbody>
-                </table>
+                <div class="table-scroll">
+                    <table class="ref-table-dense rt-stack" id="mf-table-fc">
+                        <thead>
+                            <tr><th>Code</th><th>Name</th><th>What it does</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td class="mf-id">1 <span class="mf-hex">0x01</span></td><td>Read Coils</td><td>Read 1–2000 coils — the read/write discrete output bits.</td></tr>
+                            <tr><td class="mf-id">2 <span class="mf-hex">0x02</span></td><td>Read Discrete Inputs</td><td>Read 1–2000 discrete inputs — read-only bits.</td></tr>
+                            <tr><td class="mf-id">3 <span class="mf-hex">0x03</span></td><td>Read Holding Registers</td><td>Read 1–125 holding registers — the read/write 16-bit words.</td></tr>
+                            <tr><td class="mf-id">4 <span class="mf-hex">0x04</span></td><td>Read Input Registers</td><td>Read 1–125 input registers — read-only 16-bit words.</td></tr>
+                            <tr><td class="mf-id">5 <span class="mf-hex">0x05</span></td><td>Write Single Coil</td><td>Force one coil ON (0xFF00) or OFF (0x0000).</td></tr>
+                            <tr><td class="mf-id">6 <span class="mf-hex">0x06</span></td><td>Write Single Register</td><td>Write one holding register.</td></tr>
+                            <tr><td class="mf-id">7 <span class="mf-hex">0x07</span></td><td>Read Exception Status</td><td>Serial only — read 8 device exception-status bits.</td></tr>
+                            <tr><td class="mf-id">8 <span class="mf-hex">0x08</span></td><td>Diagnostics</td><td>Serial only — line diagnostics and loopback sub-functions.</td></tr>
+                            <tr><td class="mf-id">11 <span class="mf-hex">0x0B</span></td><td>Get Comm Event Counter</td><td>Serial only — status word and event count.</td></tr>
+                            <tr><td class="mf-id">12 <span class="mf-hex">0x0C</span></td><td>Get Comm Event Log</td><td>Serial only — status, counts, and recent event bytes.</td></tr>
+                            <tr><td class="mf-id">15 <span class="mf-hex">0x0F</span></td><td>Write Multiple Coils</td><td>Write a contiguous block of coils in one request.</td></tr>
+                            <tr><td class="mf-id">16 <span class="mf-hex">0x10</span></td><td>Write Multiple Registers</td><td>Write a contiguous block of holding registers. Decimal&nbsp;16 is hex&nbsp;<strong>0x10</strong> — don't grab it as a hex&nbsp;16, which is the Mask Write row below.</td></tr>
+                            <tr><td class="mf-id">17 <span class="mf-hex">0x11</span></td><td>Report Server ID</td><td>Serial only — device ID string and run-status byte.</td></tr>
+                            <tr><td class="mf-id">22 <span class="mf-hex">0x16</span></td><td>Mask Write Register</td><td>AND/OR-mask selected bits of one holding register.</td></tr>
+                            <tr><td class="mf-id">23 <span class="mf-hex">0x17</span></td><td>Read/Write Multiple Registers</td><td>Read one block and write another in a single transaction.</td></tr>
+                            <tr><td class="mf-id">43 <span class="mf-hex">0x2B</span></td><td>Encapsulated Interface Transport</td><td>Read Device Identification (MEI type 0x0E) — vendor, model.</td></tr>
+                            <tr class="mf-empty" hidden><td colspan="3">No function codes match that filter.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
                 <p class="ref-note">
                     Codes split across four data tables: coils and discrete inputs are bits; holding and input registers are 16-bit words. Which table an address lives in — and the 5-digit prefix that names it — is the subject of <a href="/education/modbus-decoding.html">Modbus Decoding</a>.
                 </p>
@@ -138,23 +140,25 @@ keywords: function code exception CRC CRC-16 RTU checksum register coil holding 
         <!-- ── Exception codes ── -->
         <div id="tab-exc" class="tab-pane">
             <section class="tool-body-row">
-                <table class="ref-table-dense" id="mf-table-exc">
-                    <thead>
-                        <tr><th>Code</th><th>Name</th><th>Meaning</th></tr>
-                    </thead>
-                    <tbody>
-                        <tr><td class="mf-id">1 <span class="mf-hex">0x01</span></td><td>Illegal Function</td><td>The server doesn't support that function code.</td></tr>
-                        <tr><td class="mf-id">2 <span class="mf-hex">0x02</span></td><td>Illegal Data Address</td><td>The address — or the requested range — isn't valid in this device.</td></tr>
-                        <tr><td class="mf-id">3 <span class="mf-hex">0x03</span></td><td>Illegal Data Value</td><td>A value or quantity is out of range for that address.</td></tr>
-                        <tr><td class="mf-id">4 <span class="mf-hex">0x04</span></td><td>Server Device Failure</td><td>An unrecoverable error occurred while carrying out the request.</td></tr>
-                        <tr><td class="mf-id">5 <span class="mf-hex">0x05</span></td><td>Acknowledge</td><td>Request accepted but long-running — poll for completion, don't resend.</td></tr>
-                        <tr><td class="mf-id">6 <span class="mf-hex">0x06</span></td><td>Server Device Busy</td><td>Busy with a long program command; resend the request later.</td></tr>
-                        <tr><td class="mf-id">8 <span class="mf-hex">0x08</span></td><td>Memory Parity Error</td><td>Parity error in the extended file-record memory (FC 20/21).</td></tr>
-                        <tr><td class="mf-id">10 <span class="mf-hex">0x0A</span></td><td>Gateway Path Unavailable</td><td>A gateway is misconfigured or overloaded — no path to the target.</td></tr>
-                        <tr><td class="mf-id">11 <span class="mf-hex">0x0B</span></td><td>Gateway Target Failed to Respond</td><td>No reply from the target device — often the wrong unit ID.</td></tr>
-                        <tr class="mf-empty" hidden><td colspan="3">No exception codes match that filter.</td></tr>
-                    </tbody>
-                </table>
+                <div class="table-scroll">
+                    <table class="ref-table-dense rt-stack" id="mf-table-exc">
+                        <thead>
+                            <tr><th>Code</th><th>Name</th><th>Meaning</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td class="mf-id">1 <span class="mf-hex">0x01</span></td><td>Illegal Function</td><td>The server doesn't support that function code.</td></tr>
+                            <tr><td class="mf-id">2 <span class="mf-hex">0x02</span></td><td>Illegal Data Address</td><td>The address — or the requested range — isn't valid in this device.</td></tr>
+                            <tr><td class="mf-id">3 <span class="mf-hex">0x03</span></td><td>Illegal Data Value</td><td>A value or quantity is out of range for that address.</td></tr>
+                            <tr><td class="mf-id">4 <span class="mf-hex">0x04</span></td><td>Server Device Failure</td><td>An unrecoverable error occurred while carrying out the request.</td></tr>
+                            <tr><td class="mf-id">5 <span class="mf-hex">0x05</span></td><td>Acknowledge</td><td>Request accepted but long-running — poll for completion, don't resend.</td></tr>
+                            <tr><td class="mf-id">6 <span class="mf-hex">0x06</span></td><td>Server Device Busy</td><td>Busy with a long program command; resend the request later.</td></tr>
+                            <tr><td class="mf-id">8 <span class="mf-hex">0x08</span></td><td>Memory Parity Error</td><td>Parity error in the extended file-record memory (FC 20/21).</td></tr>
+                            <tr><td class="mf-id">10 <span class="mf-hex">0x0A</span></td><td>Gateway Path Unavailable</td><td>A gateway is misconfigured or overloaded — no path to the target.</td></tr>
+                            <tr><td class="mf-id">11 <span class="mf-hex">0x0B</span></td><td>Gateway Target Failed to Respond</td><td>No reply from the target device — often the wrong unit ID.</td></tr>
+                            <tr class="mf-empty" hidden><td colspan="3">No exception codes match that filter.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
                 <p class="ref-note">
                     An exception response echoes the original function code with its high bit set — <code>FC + 0x80</code>. A failed Read Holding Registers (FC 3, 0x03) comes back as <code>0x83</code>, and the byte after it is the exception code above.
                 </p>
