@@ -56,7 +56,7 @@ module.exports = function(eleventyConfig) {
     const NAV_CATEGORIES = {
         tools: [["hvac", "HVAC"], ["protocols", "Protocols"], ["signals", "Signals"], ["airflow", "Airflow"], ["electrical", "Electrical"], ["hydronics", "Hydronics"]],
         education: [["fundamentals", "Fundamentals"], ["hydronics", "Hydronics"], ["refrigerant", "Refrigerant"], ["forced-air", "Forced Air Systems"], ["protocols", "Protocols"]],
-        practice: [["modbus", "Modbus"], ["bacnet", "BACnet"], ["hydronics", "Hydronics"], ["refrigeration", "Refrigeration"], ["controls", "Controls"], ["psychrometrics", "Psychrometrics"], ["field", "Field Drills"]],
+        practice: [["modbus", "Modbus"], ["bacnet", "BACnet"], ["hydronics", "Hydronics"], ["refrigeration", "Refrigeration"], ["controls", "Controls"], ["psychrometrics", "Psychrometrics"], ["forced-air", "Forced Air Systems"], ["field", "Field Drills"]],
     };
 
     // Build-time guard for the 140–160 char `description` frontmatter

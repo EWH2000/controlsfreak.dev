@@ -18,6 +18,7 @@ module.exports = [
     { slug: 'superheat-subcooling',     label: 'Superheat & Subcooling' },
     { slug: 'metering-devices-txv-eev', label: 'Metering Devices — TXV & EEV' },
     { slug: 'psychrometrics-basics',    label: 'Psychrometrics Basics' },
+    { slug: 'air-handlers',             label: 'Air Handlers' },
     { slug: 'function-blocks',          label: 'Function Blocks' },
     { slug: 'modbus-basics',            label: 'Modbus Basics' },
     { slug: 'modbus-decoding',          label: 'Modbus Decoding' },

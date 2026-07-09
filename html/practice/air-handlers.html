@@ -1,0 +1,74 @@
+---
+title: Air Handlers Quiz — controlsfreak.dev
+description: Ten questions on the Air Handlers lesson — the air path in order, mixing at minimum outside air, filter and coils, and what the supply fan actually does.
+canonical: https://controlsfreak.dev/practice/air-handlers.html
+nav: practice
+category: forced-air
+pairedLesson: https://controlsfreak.dev/education/air-handlers.html
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Practice · Air Handlers</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">Air Handlers Quiz <span class="tool-tag">Air Systems</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                Read the <a href="/education/air-handlers.html">Air Handlers</a> lesson first, then walk the unit from memory — ten questions
+                down the air path: the station order, why minimum outside air exists and where the relief
+                air goes, the mixed-air arithmetic and the BMS readout that gives a stuck damper away,
+                filter-before-coils and the ΔP signal, what the fan adds, and the RTU tie-in. Each reveal
+                links back to the section of the lesson it came from.
+            </p>
+
+            <div id="quiz"></div>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/tools/air-mixing.html', label: 'Air-Mixing Calculator'},
+            {href: '/tools/psychrometric-chart.html', label: 'Psychrometric Chart'}
+        ],
+        lessons: [
+            {href: '/education/air-handlers.html', label: 'Air Handlers'},
+            {href: '/education/psychrometrics-basics.html', label: 'Psychrometrics Basics'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/practice/">← All practice</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="/scripts/quiz-engine.js"></script>
+<script>
+    (function () {
+        'use strict';
+
+        // Question bank lives in html/_data/quizzes/air-handlers.js so the
+        // FAQPage JSON-LD emitted from head.njk can read the same source.
+        const questions = {{ quizzes['air-handlers'] | safeScriptJson | safe }};
+
+        Quiz.mount('#quiz', questions, {
+            next: {{ page.fileSlug | nextQuiz | safeScriptJson | safe }},
+            slug: 'air-handlers',
+            title: 'Air Handlers',
+            defaultCount: 10,
+            defaultOrder: 'sequential'
+        });
+    })();
+</script>
+{% endblock %}

@@ -79,6 +79,7 @@ const PAGES = [
     { name: 'practice — vfds', url: '/practice/vfds.html' },
     { name: 'practice — function blocks', url: '/practice/function-blocks.html' },
     { name: 'practice — psychrometrics basics', url: '/practice/psychrometrics-basics.html' },
+    { name: 'practice — air handlers', url: '/practice/air-handlers.html' },
     { name: 'practice — equipment staging', url: '/practice/equipment-staging.html' },
     { name: 'practice — surviving first months', url: '/practice/surviving-first-months.html' },
     { name: 'practice — controller swap', url: '/practice/controller-swap.html' },
