@@ -222,8 +222,11 @@ test('bacnet vendor-id snapshot — populated, ascending, decoded, flagged', () 
     // Entity-leak guard — pins the import script's decode step.
     for (const v of vendors) {
         expect(v.org.length, `id ${v.id} has an organization`).toBeGreaterThan(0);
+        // [a-z0-9]: digit-bearing named entities (&frac12; &sup2;) must
+        // not slip the guard — the import script's decoder throws on
+        // unknown names, and this pin has to stay at least as strict.
         expect(v.org, `id ${v.id} org has no undecoded entity or tag`)
-            .not.toMatch(/&#|&amp|&[a-z]+;|</i);
+            .not.toMatch(/&#|&amp|&[a-z0-9]+;|</i);
     }
     // The seven ASHRAE holds — flagged in the rows AND listed in the
     // module's reserved export, in agreement.

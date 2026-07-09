@@ -1,5 +1,11 @@
 const { test, expect } = require('@playwright/test');
 
+// The vendor-ID tests derive their expectations from the generated
+// registry snapshot instead of pinning org strings — upstream renames
+// and re-imports must not cascade test edits (the id-0/reserved pins
+// live in data-integrity.spec.js, which owns the snapshot contract).
+const bacnetVendorIds = require('../html/_data/bacnetVendorIds.js');
+
 // Attach pageerror + console.error listeners and return the captured-
 // errors array. The smoke loop and every behavioral test calls this at
 // the top of its body and asserts the array is empty at the end, so a
@@ -412,8 +418,11 @@ test('bacnet vendor ids — decode box walks the registered / reserved / unassig
     const errors = watchErrors(page);
     await page.goto('/tools/bacnet-vendor-ids.html');
 
-    // Seeded 260 decodes on first paint — a registered ID, ok pill.
-    await expect(page.locator('#bvid-out-org')).toHaveText('BACnet Stack at SourceForge');
+    // Seeded 260 decodes on first paint — a registered ID, ok pill. The
+    // expected org comes from the data module, not a string pin, so an
+    // upstream rename survives a re-import.
+    const seeded = bacnetVendorIds.vendors.find(v => v.id === 260);
+    await expect(page.locator('#bvid-out-org')).toHaveText(seeded.org);
     await expect(page.locator('#bvid-status')).toHaveClass(/ok/);
 
     // 555 is one of ASHRAE's seven held IDs — warn pill, org shows the
@@ -422,12 +431,29 @@ test('bacnet vendor ids — decode box walks the registered / reserved / unassig
     await expect(page.locator('#bvid-out-org')).toHaveText('Reserved for ASHRAE');
     await expect(page.locator('#bvid-status')).toHaveClass(/warn/);
 
+    // A withdrawn/never-issued gap below the ceiling is its own warn
+    // state, distinct from beyond-snapshot. Derive the gap from the data
+    // module (currently 1395) so a future re-import that fills it moves
+    // the test instead of breaking it.
+    const present = new Set(bacnetVendorIds.vendors.map(v => v.id));
+    let gapId = null;
+    for (let i = 0; i <= bacnetVendorIds.maxId; i++) {
+        if (!present.has(i)) { gapId = i; break; }
+    }
+    if (gapId !== null) {
+        await page.fill('#bvid-id', String(gapId));
+        await expect(page.locator('#bvid-out-org')).toHaveText('—');
+        await expect(page.locator('#bvid-status')).toHaveText(/withdrawn or never issued/i);
+        await expect(page.locator('#bvid-status')).toHaveClass(/warn/);
+    }
+
     // 65000 is in Unsigned16 range but far beyond the snapshot ceiling —
-    // muted org, warn pill naming the unassigned state. (65000, not a
-    // today-gap like 1395: decades of headroom vs. registry churn.)
+    // muted org, warn pill naming the beyond-snapshot state specifically
+    // (not the withdrawn-gap wording). 65000, not a today-gap: decades of
+    // headroom vs. registry churn.
     await page.fill('#bvid-id', '65000');
     await expect(page.locator('#bvid-out-org')).toHaveText('—');
-    await expect(page.locator('#bvid-status')).toHaveText(/unassigned/i);
+    await expect(page.locator('#bvid-status')).toHaveText(/unassigned in this snapshot/i);
     await expect(page.locator('#bvid-status')).toHaveClass(/warn/);
 
     // 70000 is past the Unsigned16 range — validate-and-mute plus the
@@ -471,6 +497,42 @@ test('bacnet vendor ids — filter narrows the registry table and badge tracks i
     await expect(page.locator('#bvid-count')).toHaveText('');
 
     expect(errors, 'vendor-id filter behavioral should log no errors').toEqual([]);
+});
+
+test('bacnet vendor ids — id cells copy their code, and a copy flash cannot corrupt the filter', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('/tools/bacnet-vendor-ids.html');
+
+    // Stub the clipboard (no permission needed) and record writes.
+    await page.evaluate(() => {
+        window.copiedCalls = [];
+        navigator.clipboard.writeText = (t) => {
+            window.copiedCalls.push(t);
+            return Promise.resolve();
+        };
+    });
+
+    // Click path: the first id cell copies its data-code (0), not its
+    // visible text — which copyText swaps to "copied!" for the flash.
+    const firstCell = page.locator('#bvid-table td.bvid-copyable').first();
+    await firstCell.click();
+    expect(await page.evaluate(() => window.copiedCalls)).toEqual(['0']);
+    await expect(firstCell).toHaveText('copied!');
+
+    // Filter DURING the flash — the haystack reads data-code, so the
+    // mutated cell text must not hide the row (regression: filtering by
+    // a just-copied ID used to drop exactly that row).
+    await page.fill('#bvid-search', '0');
+    await expect(page.locator('#bvid-table tbody tr').first()).toBeVisible();
+
+    // Keyboard path: Enter on a focused cell copies too.
+    await page.fill('#bvid-search', '');
+    const secondCell = page.locator('#bvid-table td.bvid-copyable').nth(1);
+    await secondCell.focus();
+    await page.keyboard.press('Enter');
+    expect(await page.evaluate(() => window.copiedCalls)).toEqual(['0', '1']);
+
+    expect(errors, 'vendor-id copy behavioral should log no errors').toEqual([]);
 });
 
 test('bacnet vendor ids — FAQPage JSON-LD emits and every block parses', async ({ page }) => {
