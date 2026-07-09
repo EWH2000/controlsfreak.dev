@@ -3206,12 +3206,17 @@ p.ref-note.compact {
    // mobile-first treatment of this tool is a future task — see site-ideas-and-friction.md */
 @media (max-width: 1000px) {
     .tool-body-3col { grid-template-columns: 1fr; }
-    .tool-body-3col > section { border-right: none; border-bottom: 1px solid var(--border); }
+    /* min-width: 0 kills the grid item's automatic minimum — without it
+       a 1fr track can't shrink below the section's min-content, so a
+       wide table's width punches through its .table-scroll wrapper and
+       the card clips it (the wrapper only scrolls when the section is
+       allowed to be narrower than the table). */
+    .tool-body-3col > section { border-right: none; border-bottom: 1px solid var(--border); min-width: 0; }
     .tool-body-3col > section:last-child { border-bottom: none; }
 }
 @media (max-width: 900px) {
     .tool-body-2col { grid-template-columns: 1fr; }
-    .tool-body-2col > section { border-right: none; border-bottom: 1px solid var(--border); }
+    .tool-body-2col > section { border-right: none; border-bottom: 1px solid var(--border); min-width: 0; }
     .tool-body-2col > section:last-child { border-bottom: none; }
 }
 

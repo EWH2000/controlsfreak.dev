@@ -196,8 +196,15 @@ keywords: fla amps hz drive keypad fault overload accel speed reference
         }
         .vfdm-ext-row.inactive { opacity: 0.35; }
         .vfdm-ext-lbl { color: var(--text-dim); }
-        .vfdm-ext-val { color: var(--blue); font-weight: 600; font-variant-numeric: tabular-nums; }
+        .vfdm-ext-val { color: var(--blue); font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
         .vfdm-ext-row input[type=range] { width: 100%; margin: 0; }
+        /* 320-class: the fixed 10rem label track plus the DI toggle's
+           min-content lands at ~293px — the rows stack instead. Sits
+           AFTER the base rule: equal specificity, so source order is
+           what makes the override win (the audit #23 trap). */
+        @media (max-width: 380px) {
+            .vfdm-ext-row { grid-template-columns: 1fr; }
+        }
 
         .vfdm-di-toggle {
             display: inline-flex;

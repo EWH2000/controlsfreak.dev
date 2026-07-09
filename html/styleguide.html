@@ -69,9 +69,13 @@ noindex: true
            styles.css under SOFTWARE-REGISTER MOTIFS — shared with the
            home seam hero. Only the wiresheet stays local (no 2nd consumer). */
 
-        /* wiresheet — the function-block editor's grid (software register) */
+        /* wiresheet — the function-block editor's grid (software register).
+           overflow-x: auto — the absolutely-placed demo blocks extend to a
+           fixed ~264px, so on the narrowest phones the sheet pans (like a
+           real wiresheet) instead of clipping at the card edge. */
         .wiresheet {
             position: relative;
+            overflow-x: auto;
             min-height: 150px;
             padding: 0.8rem;
             background:
