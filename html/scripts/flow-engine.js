@@ -5,13 +5,22 @@
 //
 // Two motion modes, both reading the document for opted-in elements:
 //
-//   data-flow="supply|return|current"
+//   data-flow="supply|return|current|air"
 //                              — continuous particle stream along the
 //                                path. "supply"/"return" for hydronic
 //                                pipes (blue / blue-cool). "current"
 //                                for electrical loops (amber) — same
 //                                visual treatment, just colored to
 //                                match the analog-signal family.
+//                                "air" for ductwork: particle fill
+//                                follows the element's `stroke`
+//                                attribute (same rule as the pulse
+//                                default), so one type serves every
+//                                air stream — OA / RA / SA / EA duct
+//                                colors come from the markup, and a
+//                                pool rebuild reproduces them by
+//                                construction. Fallback when no
+//                                stroke attribute: the supply blue.
 //   data-pulse="signal"        — discrete pulse that launches along the
 //                                path, travels at speed, and retires.
 //                                EBO-style "wire just updated" cue;
@@ -382,6 +391,7 @@
         const reverse = el.getAttribute('data-flow-reverse') === 'true';
         const fill = flow === 'return'  ? RETURN_FILL
                    : flow === 'current' ? CURRENT_FILL
+                   : flow === 'air'     ? (el.getAttribute('stroke') || SUPPLY_FILL)
                    : SUPPLY_FILL;
 
         // Per-path density: clamp to (0, 1.0] at the engine. The page
