@@ -23,12 +23,17 @@ keywords: lead lag stage up down rotation runtime hysteresis
            /scripts/flow-engine.js — no page-local diagram styling. */
 
         /* Three-cell row shared by both widgets — pump-state cells in
-           Widget 1, runtime bars in Widget 2. */
+           Widget 1, runtime bars in Widget 2. Stacks at phone widths:
+           three cells' min-content (~261px) outruns the card interior
+           there and would clip inside the overflow-hidden .tool-card. */
         .es-cells {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 0.5rem;
             margin: 0.85rem 0 1rem;
+        }
+        @media (max-width: 480px) {
+            .es-cells { grid-template-columns: 1fr; }
         }
 
         /* Widget 1 — pump-state cells (running / standby). */

@@ -87,6 +87,14 @@ keywords: fla amps hz drive keypad fault overload accel speed reference
             font-variant-numeric: tabular-nums;
         }
         .vfdm-lcd-line { display: block; min-height: 1.55em; white-space: pre; }
+        /* At 320-class viewports the 20ch face at 1.2rem is wider than
+           the card interior (measured 293px vs 238 available) and clips.
+           Shrinking the font shrinks the ch-locked face with it, and the
+           keypad's 1fr tracks follow the LCD flush — the drive face just
+           becomes a smaller device. */
+        @media (max-width: 380px) {
+            .vfdm-lcd { font-size: 0.9rem; }
+        }
 
         /* Keypad — embossed plastic keycaps on the device face (the
            equipment-register .key look: warm gradient cap, inset top
