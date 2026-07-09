@@ -94,15 +94,15 @@ Shipped so far:
   below)*.
 - **MS/TP practice quiz** de-orphaning the bacnet-mstp lesson + full
   cluster relatedLinks reciprocity *(shipped 2026-07-07, PR 2)*.
+- **BACnet Vendor ID lookup** — searchable vendor-ID ⇄ manufacturer
+  table (property 120 `Vendor_Identifier`), imported from the public
+  ASHRAE registry by script, not hand-transcribed *(shipped
+  2026-07-08, PR 3 — entry below)*.
 
 Remaining (each a soft-SERP reference tool or informational parent,
 one PR each; new tools follow the CLAUDE.md checklist, category
 `protocols`):
 
-- **BACnet Vendor ID lookup** — searchable vendor-ID ⇄ manufacturer
-  table (property 120 `Vendor_Identifier`; the ASHRAE registry is the
-  public source — import, don't hand-transcribe). `[future:
-  tools/bacnet-vendor-ids.html]`
 - **BACnet Engineering Units decoder** — standalone, filterable
   reverse-lookup deeper than the reference's ~80-row slice (full
   0–255 + vendor ranges; copy-oriented). `[future:
@@ -123,6 +123,47 @@ one PR each; new tools follow the CLAUDE.md checklist, category
   education/bacnet-vs-modbus.html]`
 - **Mini-hub / "start here" decision** once 2–3 of the above land —
   revisit whether the cluster needs its own nav grouping.
+
+### BACnet Vendor ID lookup — tool *(shipped 2026-07-08, buildout PR 3)*
+*One question: whose device is this — the number a discovery log, a
+property sheet, or a Wireshark I-Am decode shows as
+`Vendor_Identifier` (property 120), resolved to a manufacturer.*
+
+`/tools/bacnet-vendor-ids.html` — decode box (seeded 260) over the
+full ASHRAE registry rendered as one filterable `.ref-table-dense` at
+build time. Decisions worth remembering:
+
+- **Scripted import, never hand-transcribed.** `npm run
+  import-vendor-ids` (`.github/scripts/import-bacnet-vendor-ids.mjs`)
+  fetches bacnet.org, validates (ascending unique ids, id 0 = ASHRAE,
+  count floor, the seven reserved holds), and regenerates
+  `html/_data/bacnetVendorIds.js`. The build never fetches; the
+  checked-in snapshot + its `retrieved` date are the freshness
+  contract. Re-running the import IS the maintenance story — the
+  provenance ref-note under the table and the beyond-snapshot decode
+  state both template from the module, so a refresh updates
+  everything at once. The registry markup has a missing `</tr>` in
+  the wild (row 1500), so the parser splits on `<tr>` openings.
+- **Privacy call:** the registry lists a contact person + mailing
+  address per vendor; only id + organization are republished.
+- **Escaping contract:** imported org strings are stored
+  entity-decoded and render Nunjucks-autoescaped (no `| safe`) — the
+  opposite of the site-authored `bacnetEnums.js`. External data never
+  gets `| safe`.
+- **No DefinedTermSet** — a 1,600-term JSON-LD node is head bloat with
+  no rich-result payoff; the page carries FAQPage +
+  SoftwareApplication + BreadcrumbList instead. The SEO surface is the
+  build-time-rendered rows themselves (~35 KB gzipped, the accepted
+  cost of full crawlability).
+- **Decode box + filter are separate inputs** — exact-ID decode gives
+  status semantics a substring filter can't ("260" as a filter also
+  matches 1260), and the four pill states (registered / reserved /
+  unassigned-gap / beyond-snapshot) each say something a hidden row
+  can't.
+- If the registry ever triples, revisit chunked `<tbody>` wrappers;
+  `content-visibility` on `<tr>` is a spec no-op (size containment
+  doesn't apply to internal table boxes), so lean row markup is the
+  only mitigation applied.
 
 ### BACnet MS/TP — Education page *(shipped 2026-06-10)*
 *One question: why do devices fall off an MS/TP trunk — and what do

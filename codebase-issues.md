@@ -4508,6 +4508,19 @@ it there was outside the BACnet-cluster scope, so it logs here. One-
 line fix in html/education/controller-wiring.html's relatedLinks
 lessons group.
 
+### 145. Stale "awaiting triage" header on the closed ux-personas findings doc *(open — 2026-07-08)*
+
+`docs/audits/2026-06-ux-personas/findings.md` still opens with
+"Master findings document — awaiting triage" and a pending-looking
+tally block, but the campaign closed 2026-07-01 — the sibling
+`FIX-PROGRESS.md` DISPOSITION block is the durable record (86/86
+dispositioned, PRs #281–#291). Anyone opening the findings doc first
+reads live work where there is none. One-line fix: swap the header
+for an "Archived — superseded by FIX-PROGRESS.md's DISPOSITION block"
+banner like the other archived cycles carry. Caught during the
+2026-07-08 open-items sweep; off-topic for the vendor-ID branch, so
+it logs here.
+
 ### Deferred / Won't fix (with revisit trigger)
 
 Items considered during an audit and deliberately not pursued, each
