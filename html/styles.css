@@ -888,6 +888,9 @@ body.palette-open { overflow: hidden; }
 .console-statusline > :first-child  { justify-self: start; }
 .console-statusline > :nth-child(2) { justify-self: center; }
 .console-statusline > :last-child   { justify-self: end; }
+/* The ISO build date would otherwise soft-wrap at its internal
+   hyphens at phone widths ("2026-07-" / "08"). */
+.console-statusline time { white-space: nowrap; }
 .console-statusline > span strong {
     color: var(--text);
     font-weight: 600;
@@ -2262,7 +2265,10 @@ p.chip-row-preamble {
     font-variant-numeric: tabular-nums;
 }
 .nav-card-pill {
-    display: inline;
+    /* inline-block: each pill is an atomic inline, so the statusline
+       wraps between pills instead of mid-pill ("… · 6" / "SIMULATORS",
+       a stranded "~" from "~ 5 MIN"). */
+    display: inline-block;
 }
 .nav-card-pill:not(:last-child)::after {
     content: '•';

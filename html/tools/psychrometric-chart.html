@@ -189,7 +189,11 @@ keywords: humidity enthalpy wet bulb dew point dewpoint grains mixing coil AHU O
     </div>
 
     <div class="tool-card">
-        <button type="button" class="tool-card-fullscreen-btn"
+        <!-- .fs-desktop-only: at phone widths the absolute-positioned
+             button paints over the title's HVAC tag, and the page
+             already steers narrow-viewport users to the Input column
+             rather than the compressed chart. -->
+        <button type="button" class="tool-card-fullscreen-btn fs-desktop-only"
                 data-fullscreen-target=".tool-card"
                 aria-pressed="false" aria-label="Enter fullscreen"
                 title="Toggle fullscreen — Esc to exit">
