@@ -65,7 +65,7 @@ Calculators, converters, and lookups — open one, get an answer.
 - **BACnet Vendor ID Lookup** — the full ASHRAE-assigned
   `Vendor_Identifier` registry (1,600+ entries) as one searchable
   table. Type the number a device reports in its I-Am and get the
-  manufacturer — with reserved, withdrawn, and newer-than-snapshot
+  manufacturer — with reserved, unassigned, and newer-than-snapshot
   states called out — or filter the table by ID or company name;
   every ID is click-to-copy. Imported from the official registry by
   script (only the ID and organization are republished), snapshot

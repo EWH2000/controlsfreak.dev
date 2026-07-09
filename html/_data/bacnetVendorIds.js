@@ -8,8 +8,8 @@
 // Republishes ONLY id + organization. The registry also lists a contact
 // person and mailing address per vendor — deliberately dropped at import.
 // IDs are assigned once and never reassigned; numbers missing from the
-// sequence are withdrawn registrations, and IDs above 1631 postdate
-// this snapshot.
+// sequence were either withdrawn or never issued, and IDs above 1631
+// postdate this snapshot.
 //
 // Org strings are entity-DECODED plain text; the lookup page renders them
 // with Nunjucks autoescaping (no `| safe`) — the opposite of the

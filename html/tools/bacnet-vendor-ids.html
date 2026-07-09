@@ -9,9 +9,9 @@ faqs:
     - q: How do I find the vendor ID of a BACnet device?
       a: Read property 120 (Vendor_Identifier) of the Device object — every workstation exposes it on the device property sheet. Devices also announce it in the I-Am they send during Who-Is discovery, so a discovery log or a packet capture shows it without touching the device. <a href="/education/bacnet-basics.html">BACnet Basics</a> covers how discovery works.
     - q: Who assigns BACnet vendor IDs?
-      a: ASHRAE, through the BACnet committee. Registration is free, each organization gets one number, and IDs are never reassigned — once issued, a number identifies that manufacturer forever. The official registry lives at bacnet.org.
+      a: ASHRAE, through the BACnet committee. Registration is free, normally one number per organization, and IDs are never reassigned — the number stays tied to its original registration even when the company is renamed or acquired, which is why the table shows a few "formerly" names. The official registry lives at bacnet.org.
     - q: What is vendor ID 0 in BACnet?
-      a: ASHRAE itself — the standards body took the first entry in its own registry. Vendor ID 1 is NIST, which built the reference implementation the earliest interoperability testing ran against.
+      a: ASHRAE itself — the standards body took the first entry in its own registry. Vendor ID 1 is NIST, which organized and hosted the earliest BACnet interoperability testing.
     - q: Can two devices have the same BACnet vendor ID?
       a: Yes — every device from the same manufacturer reports the same vendor ID. It identifies the maker, not the unit; the device instance number is what must be unique across the internetwork.
     - q: Which BACnet vendor IDs are reserved?
@@ -153,7 +153,7 @@ faqs:
                 </tbody>
             </table>
             <p class="ref-note">
-                Imported from the official ASHRAE registry — <a href="https://bacnet.org/assigned-vendor-ids/">bacnet.org, assigned vendor IDs</a> — retrieved {{ bacnetVendorIds.retrieved }}: {{ bacnetVendorIds.vendors | length }} assignments through ID {{ bacnetVendorIds.maxId }}. IDs are assigned once and never reassigned, so every row here stays correct; numbers missing from the sequence are withdrawn registrations, and a device reporting an ID above {{ bacnetVendorIds.maxId }} is newer than this snapshot. Only the ID and organization are republished — the registry's contact columns are deliberately dropped.
+                Imported from the official ASHRAE registry — <a href="https://bacnet.org/assigned-vendor-ids/">bacnet.org, assigned vendor IDs</a> — retrieved {{ bacnetVendorIds.retrieved }}: {{ bacnetVendorIds.vendors | length }} assignments through ID {{ bacnetVendorIds.maxId }}. IDs are assigned once and never reassigned, so a number here always identifies the same registrant — though the registry edits organization names after rebrands and acquisitions, so a name can lag this snapshot. Numbers missing from the sequence were either withdrawn or never issued, and a device reporting an ID above {{ bacnetVendorIds.maxId }} is newer than this snapshot. Only the ID and organization are republished — the registry's contact columns are deliberately dropped.
             </p>
         </section>
 
@@ -163,7 +163,7 @@ faqs:
                 A 16-bit number ASHRAE assigns to a manufacturer once and never reassigns, exposed as the Device object's <code>Vendor_Identifier</code> (property 120). Every device a company ships reports the same number — it identifies the maker, not the unit. Registration is free, which is why the list is long and full of names that never turn up on a job site.
             </p>
             <p class="ref-note">
-                The registry's first two rows are its origin story: ID 0 is ASHRAE itself, and ID 1 is NIST, which built the reference implementation the earliest interoperability testing ran against. Everything after that is the industry arriving roughly in the order it adopted BACnet.
+                The registry's first two rows are its origin story: ID 0 is ASHRAE itself, and ID 1 is NIST, which organized and hosted the earliest BACnet interoperability testing. Everything after that is the industry arriving roughly in the order it adopted BACnet.
             </p>
         </section>
 
@@ -183,7 +183,7 @@ faqs:
                 Seven numbers — 555, 666, 777, 888, 911, 999, and 1111 — are held by ASHRAE and will never be assigned to a vendor. A device or a capture reporting one of them is running a placeholder, a test stack, or a misconfiguration, not a product from a real manufacturer.
             </p>
             <p class="ref-note">
-                Other holes in the sequence are withdrawn registrations; because IDs are never reassigned, the numbers stay empty forever. And since ASHRAE issues new IDs continually, a number above this snapshot's ceiling usually just means the device is newer than the table — not that it's bogus.
+                Other holes in the sequence are registrations that were withdrawn or numbers that were never issued; because IDs are never reassigned, they stay empty forever. And since ASHRAE issues new IDs continually, a number above this snapshot's ceiling usually just means the device is newer than the table — not that it's bogus.
             </p>
         </section>
 
@@ -307,7 +307,15 @@ faqs:
             let matches = 0;
             Array.from(body.rows).forEach(row => {
                 if (row.classList.contains('bvid-empty')) return;
-                const hit = !q || row.textContent.toLowerCase().includes(q);
+                // Match against data-code + the org cell, NOT
+                // row.textContent — copyText() swaps the clicked id
+                // cell's text to "copied!" for ~2s, and a filter during
+                // the flash would judge the mutated text and keep the
+                // wrong verdict after it restores (the filter only
+                // recomputes on input). The space keeps id and org from
+                // concatenating into accidental cross-cell matches.
+                const hay = (row.cells[0].dataset.code + ' ' + row.cells[1].textContent).toLowerCase();
+                const hit = !q || hay.includes(q);
                 row.hidden = !hit;
                 if (hit) matches++;
             });

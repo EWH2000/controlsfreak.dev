@@ -56,7 +56,7 @@ function cleanCell(raw) {
     let s = raw.replace(/<[^>]*>/g, ' ');
     s = s.replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => String.fromCodePoint(parseInt(hex, 16)));
     s = s.replace(/&#(\d+);/g, (_, dec) => String.fromCodePoint(parseInt(dec, 10)));
-    s = s.replace(/&([a-zA-Z]+);/g, (m, name) => {
+    s = s.replace(/&([a-zA-Z][a-zA-Z0-9]*);/g, (m, name) => {
         if (!(name in NAMED_ENTITIES)) throw new Error(`Unknown HTML entity ${m} in: ${raw.slice(0, 120)}`);
         return NAMED_ENTITIES[name];
     });
@@ -170,8 +170,8 @@ const out = `// BACnet vendor IDs — GENERATED FILE, do not hand-edit.
 // Republishes ONLY id + organization. The registry also lists a contact
 // person and mailing address per vendor — deliberately dropped at import.
 // IDs are assigned once and never reassigned; numbers missing from the
-// sequence are withdrawn registrations, and IDs above ${maxId} postdate
-// this snapshot.
+// sequence were either withdrawn or never issued, and IDs above ${maxId}
+// postdate this snapshot.
 //
 // Org strings are entity-DECODED plain text; the lookup page renders them
 // with Nunjucks autoescaping (no \`| safe\`) — the opposite of the
