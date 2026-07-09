@@ -4497,7 +4497,7 @@ nav units/theme pills, vs `role="radiogroup"` semantics for
 mutually-exclusive rows) and sweep chip rows site-wide. Rides naturally
 with #142's consolidation.
 
-### 144. controller-wiring ↔ bacnet-mstp related-links edge is one-way *(open — 2026-07-07)*
+### 144. controller-wiring ↔ bacnet-mstp related-links edge is one-way *(addressed 2026-07-08)*
 
 The BACnet MS/TP lesson's relatedLinks lists Controller Wiring (the
 two-wires layer is shared ground), but controller-wiring's own
@@ -4507,6 +4507,10 @@ Caught during the BACnet buildout PR 2 cluster-wiring sweep; fixing
 it there was outside the BACnet-cluster scope, so it logs here. One-
 line fix in html/education/controller-wiring.html's relatedLinks
 lessons group.
+
+**Addressed 2026-07-08** on the vendor-ID branch (buildout PR 3 —
+cluster wiring was already that PR's topic): BACnet MS/TP added to
+controller-wiring's relatedLinks lessons group, closing the loop.
 
 ### 145. Stale "awaiting triage" header on the closed ux-personas findings doc *(open — 2026-07-08)*
 
