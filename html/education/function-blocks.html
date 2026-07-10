@@ -214,7 +214,11 @@ keywords: wiresheet logic and or not pid block wire program
                 signal (a digital input) feeds the other. Only when both are TRUE does the
                 <code>AND</code> output go true and enable the economizer. Outdoor air at 55 is
                 below the 60 changeover point and the unit is calling for cooling, so both
-                inputs are satisfied and the economizer is enabled.
+                inputs are satisfied and the economizer is enabled. (That less-than block is a
+                <em>dry-bulb changeover</em> — the simplest version of a decision with real
+                subtlety in it. What the enabled economizer actually does, and when a
+                temperature-only comparison gets it badly wrong, is the
+                <a href="/education/economizers.html">Economizers</a> lesson.)
             </p>
 
             <svg class="fb-svg wide" viewBox="0 0 740 290" role="img"
@@ -312,7 +316,8 @@ keywords: wiresheet logic and or not pid block wire program
             {href: '/simulators/pid-tuner.html', label: 'PID Tuning Helper'}
         ],
         lessons: [
-            {href: '/education/pid-basics.html', label: 'PID Basics'}
+            {href: '/education/pid-basics.html', label: 'PID Basics'},
+            {href: '/education/economizers.html', label: 'Economizers'}
         ],
         quizzes: [
             {href: '/practice/function-blocks.html', label: 'Function Blocks Quiz'}

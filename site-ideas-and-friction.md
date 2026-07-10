@@ -164,14 +164,26 @@ Shipped so far:
   callout, sensor-strip widget (owner's RTU MA-T-placement story),
   and the prose sidestep toward unit identification. Declared
   question + scope contract below.
+- **Economizers** *(shipped 2026-07-09, buildout PR 2)* —
+  `education/economizers.html` + paired quiz. The free-cooling
+  decision end to end: the modulating damper assembly (D1 reuses
+  the page-1 damper glyphs at free-cooling positions, MA-T sensor +
+  amber econ-loop signal wire), the deceptive-wedge psych sketch
+  (equal-enthalpy line vs same-dry-bulb line through the return
+  state, worst-case limit at the saturation intersection), a
+  changeover-explorer widget judging one OA state by dry-bulb and
+  enthalpy side by side — first psychro-engine use on an education
+  page; derives the worst-case dry-bulb limit for humidity-blind
+  buildings; owner's all-dry-bulb-building story (occupants were
+  the only humidity sensor; fix was the worst-case calc) in the
+  reveal — the integrated-staging band chart, and field failures
+  with the muggy-morning worked diagnosis. Modulating diagram
+  stayed static; densities carry the recipe, no `setPathColor`.
+  Declared question + scope contract below.
 
 Remaining (one lesson + paired quiz per PR, category `forced-air`;
 declared questions for all six locked below):
 
-- **Economizers** — dampers as one assembly, dry-bulb vs enthalpy
-  changeover, first-stage-of-cooling sequencing, field failures.
-  Pays function-blocks' worked sheet and economizer-ratio's orphan
-  tool. `[future: education/economizers.html]`
 - **Building pressure & exhaust** — the air ledger, barometric
   relief / power exhaust / return-fan tracking, damper positions ↔
   building pressure, sensor placement. The owner-pain centerpiece.
@@ -267,7 +279,8 @@ anatomy folded into a rooftop box, DX coil instead of chilled water
 diagram; growth pulls it into the ID page — budget held). Closing
 names the downstream questions — this page is deliberately the
 chapter hub.
-Out of scope: economizer logic `[future: education/economizers.html]`;
+Out of scope: economizer logic `[future: education/economizers.html]`
+*(shipped 2026-07-09 — prose upgraded to live links)*;
 relief/exhaust path `[future: education/building-pressure.html]`;
 naming the box `[future: education/air-unit-identification.html]`
 (the sidestep callout); the terminal side `[future:
@@ -280,7 +293,7 @@ hub for the psychrometric-chart / air-mixing / coil-sizing
 lessons-links (reciprocity landed same PR, plus back-edges from
 psychrometrics-basics, load-piping, vfds, refrigerant-cycle-basics).
 
-**2 · Economizers** (`economizers.html`)
+**2 · Economizers** (`economizers.html`) *(shipped 2026-07-09)*
 *One question: when should an air handler cool with outside air
 instead of running the coil — and how do the dampers, the changeover
 check, and the minimum-OA floor make that decision safely?*
@@ -298,12 +311,17 @@ demand-controlled ventilation / CO₂ resets `[future: DCV]`; 90.1
 climate-zone high-limit tables `[future: changeover-limit reference
 on economizer-ratio.html]`; mixing math (links to
 psychrometrics-basics / air-mixing, not markers).
-Debts: pays function-blocks' economizer-enable worked sheet (the
-sheet finally gets a "what the enabled device actually does" link),
-economizer-ratio's lessons-link orphanhood, sequencing-scenarios'
-economizer-changeover reveals, and page 1's economizer marker.
-Incurs the building-pressure callout (the damper ↔ pressure tie) and
-the DCV marker.
+Debts: paid function-blocks' economizer-enable worked sheet (in-prose
+"what the enabled device actually does" link + relatedLinks entry),
+economizer-ratio's lessons-link orphanhood (lessons + quizzes groups),
+sequencing-scenarios' three economizer reveals (learnMore now
+deep-links the lesson's anchors; the low-limit gotcha finally has
+one), and page 1's economizer marker (three prose upgrades +
+relatedLinks). Incurred the building-pressure callout (the damper ↔
+pressure tie, planted in §damper-assembly and the closing) and the
+DCV marker. The worked diagnosis landed as the generalized
+muggy-morning complaint rather than RTU-specific — the owner's
+source story was built-up AHUs.
 
 **3 · Building pressure & exhaust** (`building-pressure.html`)
 *One question: why does a building go positive or negative, and how
@@ -3297,9 +3315,11 @@ page invents its own variant.
   `--text-dim` live in the markup, and a pool rebuild reproduces
   them by construction (structurally immune to the #96 recolor-wipe
   class — no `setPathColor` needed for static stream colors; a page
-  that recolors air ducts dynamically, e.g. the economizers page's
-  modulating diagram, layers `setPathColor` on top and owns the
-  rebuild caveat). Falls back to `SUPPLY_FILL` with no stroke.
+  that recolors air ducts dynamically layers `setPathColor` on top
+  and owns the rebuild caveat — none does yet: the economizers page
+  (buildout PR 2) kept its modulating diagram static and let
+  `data-flow-density` carry the recipe instead). Falls back to
+  `SUPPLY_FILL` with no stroke.
   Dashed exhaust/relief ducts drop their dashes while animated
   exactly like the water return — the shared rule in styles.css
   targets `[data-flow="air"][stroke-dasharray]`.

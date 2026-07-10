@@ -272,7 +272,7 @@ keywords: ahu mixing box mixed air return relief outside air supply fan filter c
                 The first station is the one that confuses people, because it's the only one where air is <em>traded</em> rather than treated. Three dampers live here: the <em>return-air damper</em> (how much of the building's air gets reused), the <em>outside-air damper</em> (how much fresh air comes in), and the <em>exhaust / relief damper</em> (how much leaves the building to make room for it). Why bring outside air in at all? Not for temperature — for <em>people</em>. Occupied buildings need a steady dose of fresh air for ventilation, and codes set the minimum. And what comes in must go back out: if the unit pulls in outside air but nothing leaves, the building inflates like a slow balloon — doors whistle, lobby doors stand open on their own. Where that relief air goes, and what happens when the accounting is wrong, is a page of its own coming in this chapter; for now, know the trade happens here.
             </p>
             <p style="margin-top:1.25rem;">
-                On a plain unit at minimum ventilation, the arrangement is simple: the OA damper is held at its <em>minimum position</em> — enough opening for code ventilation, no more — the RA damper is mostly open, and the relief damper is cracked to match. The three are linked and move together. Modulating them past minimum to cool the building with free outdoor air is the <em>economizer</em> sequence — a genuinely separate decision with its own logic and its own failure modes, and it gets its own page next in this chapter. Everything on this page holds the dampers at minimum.
+                On a plain unit at minimum ventilation, the arrangement is simple: the OA damper is held at its <em>minimum position</em> — enough opening for code ventilation, no more — the RA damper is mostly open, and the relief damper is cracked to match. The three are linked and move together. Modulating them past minimum to cool the building with free outdoor air is the <em>economizer</em> sequence — a genuinely separate decision with its own logic and its own failure modes, and it has <a href="/education/economizers.html">its own page, next in this chapter</a>. Everything on this page holds the dampers at minimum.
             </p>
 
             <svg class="edu-svg" viewBox="0 0 520 400" role="img" aria-labelledby="ah-d2-title ah-d2-desc"
@@ -492,7 +492,7 @@ keywords: ahu mixing box mixed air return relief outside air supply fan filter c
             </div>
 
             <p style="margin-top:1.25rem;">
-                That's the whole walk: return in, some traded for fresh at the mixing box, filtered, heated or cooled (and maybe dried) at the coils, pushed back out by the fan. Every question the rest of this chapter answers hangs off one of these stations — when the dampers should open past minimum (economizers), where the relief air goes (building pressure), what the boxes at the far end of the supply duct do (VAV systems), and how the fan knows how fast to run (duct static). This page is the map; the rest are the territories.
+                That's the whole walk: return in, some traded for fresh at the mixing box, filtered, heated or cooled (and maybe dried) at the coils, pushed back out by the fan. Every question the rest of this chapter answers hangs off one of these stations — when the dampers should open past minimum (<a href="/education/economizers.html">economizers</a>), where the relief air goes (building pressure), what the boxes at the far end of the supply duct do (VAV systems), and how the fan knows how fast to run (duct static). This page is the map; the rest are the territories.
             </p>
 
             <!-- ───────────────── 5 · Sensor-strip widget ───────────────── -->
@@ -568,7 +568,7 @@ keywords: ahu mixing box mixed air return relief outside air supply fan filter c
             </div>
 
             <p class="ref-note">
-                Why is the fraction pinned at 20&nbsp;%? Because deciding when to open the dampers <em>past</em> minimum — cooling the building with free outdoor air — is the economizer's job, and the economizer gets its own page. Here the point is what minimum position buys you: with 80&nbsp;% of the mix being <span data-us="75&nbsp;°F" data-metric="23.9&nbsp;°C">75&nbsp;°F</span> return air, the mixed air stays comfortably warm even on the coldest morning on the slider — the minimum position is winter-safe <em>by arithmetic</em>. The failure preset is what it looks like when that arithmetic is taken away. (Temperatures only here — the moisture half of mixing lives in <a href="/education/psychrometrics-basics.html#processes">Psychrometrics Basics</a>.)
+                Why is the fraction pinned at 20&nbsp;%? Because deciding when to open the dampers <em>past</em> minimum — cooling the building with free outdoor air — is the economizer's job, and the economizer has <a href="/education/economizers.html">its own page</a>. Here the point is what minimum position buys you: with 80&nbsp;% of the mix being <span data-us="75&nbsp;°F" data-metric="23.9&nbsp;°C">75&nbsp;°F</span> return air, the mixed air stays comfortably warm even on the coldest morning on the slider — the minimum position is winter-safe <em>by arithmetic</em>. The failure preset is what it looks like when that arithmetic is taken away. (Temperatures only here — the moisture half of mixing lives in <a href="/education/psychrometrics-basics.html#processes">Psychrometrics Basics</a>.)
             </p>
 
         </div>
@@ -581,6 +581,7 @@ keywords: ahu mixing box mixed air return relief outside air supply fan filter c
             {href: '/tools/coil-sizing.html', label: 'Coil-Sizing Calculator'}
         ],
         lessons: [
+            {href: '/education/economizers.html', label: 'Economizers'},
             {href: '/education/psychrometrics-basics.html', label: 'Psychrometrics Basics'},
             {href: '/education/load-piping.html', label: 'Load Piping'},
             {href: '/education/vfds.html', label: 'VFDs'},

@@ -382,6 +382,19 @@ techs new to the industry and anyone wanting a refresh.
   sensor mounted too close to the DX coil. A budgeted callout maps
   the same drawing onto a packaged RTU. Page 1 of the forced-air
   chapter; pairs with the Air Handlers quiz.
+- **Economizers** — when an air handler should cool with outside air
+  instead of running the coil: the three dampers as one modulating
+  assembly holding mixed-air temperature, the changeover decision
+  and the deceptive wedge where dry-bulb admits humid air carrying
+  more total heat than the return, integrated first-stage staging,
+  and the field failure modes with their MA-T trend tells. A
+  changeover-explorer widget judges one outdoor-air state by
+  dry-bulb and by enthalpy side by side on the shared ASHRAE
+  moist-air engine and derives the worst-case dry-bulb limit for
+  buildings with no humidity sensor — its deceptive wedge replays a
+  real all-dry-bulb building where the occupants were the only
+  humidity sensor. Page 2 of the forced-air chapter; pairs with the
+  Economizers quiz.
 - **Function-Block Basics** — what a block and a wiresheet are, why
   the industry builds sequences this way (the diagram is the program,
   you can watch it run live, the block vocabulary travels across
@@ -457,7 +470,7 @@ flavors share the same engine:
   When a topic recurs in feedback, it becomes a candidate for a
   new education page.
 
-Shipped so far — eighteen content quizzes (each 10 questions, paired
+Shipped so far — nineteen content quizzes (each 10 questions, paired
 1:1 with its lesson and deep-linking the gotchas) plus five field
 drills:
 
@@ -487,10 +500,13 @@ drills:
 - **Content quizzes — psychrometrics:** Psychrometrics Basics.
   Seven properties, why any two lock the rest, the four chart
   process families, and the RH / dew-point / enthalpy gotchas.
-- **Content quizzes — forced air:** Air Handlers. The station order
-  down the air path, minimum outside air and where the relief goes,
-  the mixed-air arithmetic and its stuck-damper gotcha readout,
-  filter ΔP, coil condensate, and fan heat.
+- **Content quizzes — forced air:** Air Handlers, Economizers. The
+  station order down the air path, minimum outside air and where the
+  relief goes, the mixed-air arithmetic and its stuck-damper gotcha
+  readout, filter ΔP, coil condensate, and fan heat; then free
+  cooling end to end — the linked damper set, the mixing math run
+  backwards, the deceptive air a dry-bulb changeover admits, the
+  no-humidity-sensor fallback, and integrated staging.
 - **Surviving Your First Months** *(field drill)* — a broad sampler
   for techs in their first few months: LOTO and verify-on-known-live,
   the 4-20 mA live-zero wire-break signature, DMM continuity mode,
