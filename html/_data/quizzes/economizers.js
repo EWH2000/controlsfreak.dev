@@ -74,14 +74,14 @@ module.exports = [
         type: 'gotcha',
         id: 'eco-deceptive-air',
         prompt: 'A humid summer morning after overnight rain. The space is warm and sticky, and the occupants are complaining. The BMS shows the readings below. What\'s the story?',
-        snippet: '<pre class="quiz-snippet">OA-T           68.2 °F  (20.1 °C)\nRA-T           74.9 °F  (23.8 °C)\nOA DAMPER CMD   100 %  — economizing\nCLG COIL VALVE  100 %\nSPACE          75.8 °F  (24.3 °C) and rising</pre>',
+        snippet: '<pre class="quiz-snippet">OA-T           68.2 °F  (20.1 °C)\nRA-T           74.9 °F  (23.8 °C)\nMA-T           68.5 °F  (20.3 °C)\nOA DAMPER CMD   100 %  — economizing\nCLG COIL VALVE  100 %\nSA-T           58.9 °F  (14.9 °C)\nSPACE          75.8 °F  (24.3 °C) and rising</pre>',
         choices: [
             { id: 'a', text: 'The cooling coil valve has failed closed — that\'s why the space is rising.' },
             { id: 'b', text: 'Normal operation — the economizer just needs more time to pull the space down.' },
             { id: 'c', text: 'The dry-bulb changeover is admitting humid air that\'s cooler on the thermometer but carries more total heat than the return — the economizer is importing load.', correct: true },
             { id: 'd', text: 'The OA-T sensor is reading low and should be replaced.' }
         ],
-        explain: 'Every reading is consistent: the damper really is open (the changeover approved it — 68.2 is below 74.9), and the coil really is working flat out. The problem is the decision itself. Near-saturated air at 68.2 °F (20.1 °C) carries more total heat than 74.9 °F (23.8 °C) return air at indoor humidity — a dry-bulb sensor can\'t see the moisture, so the unit hauls in latent load all morning and pays the coil to remove it. The fix is the changeover, not the coil: an enthalpy high limit, or a worst-case dry-bulb limit if the building has no humidity sensor.',
+        explain: 'Every reading is consistent — and this time the witnesses prove it, not just the commands: MA-T sitting on top of OA-T shows the damper really is open, and an SA-T of 58.9 °F (14.9 °C) — a valve at 100 % still missing a 55 °F (12.8 °C)-class leaving-air target — shows the coil genuinely working and genuinely losing. The problem is the decision itself. Near-saturated air at 68.2 °F (20.1 °C) carries more total heat than 74.9 °F (23.8 °C) return air at indoor humidity — a dry-bulb sensor can\'t see the moisture, so the unit hauls in latent load all morning and pays the coil to remove it. The fix is the changeover, not the coil: an enthalpy high limit, or a worst-case dry-bulb limit if the building has no humidity sensor.',
         learnMore: { href: '/education/economizers.html#changeover', label: 'Economizers — The Changeover Decision' },
         tags: ['forced-air', 'economizer', 'enthalpy']
     },
@@ -109,7 +109,7 @@ module.exports = [
             { id: 'c', text: 'Set the limit at the worst case: the dry-bulb where even saturated outside air carries less total heat than the return.', correct: true },
             { id: 'd', text: 'Set it as high as possible to maximize free-cooling hours.' }
         ],
-        explain: 'Do the psychrometrics once, on paper: find the dry-bulb temperature where even 100 %-RH outside air matches the return\'s total heat — near 62 °F (16.9 °C) for a 75 °F (23.9 °C) / 50 % return — and set the changeover there. Below that line, no amount of humidity can make outside air a bad deal. You give up some warm-but-dry free-cooling hours, but the economizer can never be tricked into importing load it claims to be removing.',
+        explain: 'Do the psychrometrics once, on paper: find the dry-bulb temperature where even 100 %-RH outside air matches the return\'s total heat — 62.4 °F (16.9 °C) for a 75 °F (23.9 °C) / 50 % return — and set the changeover there. Below that line, no amount of humidity can make outside air a bad deal. You give up some warm-but-dry free-cooling hours, but the economizer can never be tricked into importing load it claims to be removing.',
         learnMore: { href: '/education/economizers.html#changeover', label: 'Economizers — The Changeover Decision' },
         tags: ['forced-air', 'economizer', 'enthalpy']
     },
