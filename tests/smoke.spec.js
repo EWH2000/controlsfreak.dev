@@ -1639,6 +1639,65 @@ test('economizers — changeover explorer splits the verdicts and reveals the an
     expect(errors, 'economizers behavioral should log no page / console errors').toEqual([]);
 });
 
+test('building pressure — the ledger widget balances, pegs, and reveals the interlock anecdote', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('/education/building-pressure.html');
+
+    // Structure: three annotated diagrams with accessible titles, two
+    // flow-animated (D1 ledger + D2 lineup; D3 staging chart is static),
+    // and the section anchors the quiz learnMore links target.
+    await expect(page.locator('main svg.edu-svg')).toHaveCount(3);
+    await expect(page.locator('main svg.edu-svg > title')).toHaveCount(3);
+    await expect(page.locator('main svg.flow-active')).toHaveCount(2);
+    for (const anchor of ['#air-ledger', '#relief-lineup', '#power-exhaust', '#dampers-pressure', '#pressure-ledger', '#measuring-it']) {
+        await expect(page.locator(`h2${anchor}`)).toBeVisible();
+    }
+
+    // Default state: minimum OA, restrooms only, staged power exhaust —
+    // 2,000 CFM in, 800 out, 1,200 through the envelope, slightly
+    // positive, no stages running.
+    await expect(page.locator('#bp-w-in')).toHaveText('2,000 CFM');
+    await expect(page.locator('#bp-w-ef')).toHaveText('800 CFM');
+    await expect(page.locator('#bp-w-leak')).toHaveText('1,200 CFM out');
+    await expect(page.locator('#bp-w-dp')).toContainText(/\+0\.02\d/);
+    await expect(page.locator('#bp-w-status')).toHaveText(/Slightly positive/);
+    await expect(page.locator('#bp-w-status')).toHaveText(/0 of 4 stages/);
+    await expect(page.locator('#bp-w-stages .bp-w-stage.on')).toHaveCount(0);
+    await expect(page.locator('#bp-w-alert .widget-anecdote')).toHaveCount(0);
+
+    // Economizing with no relief path: the gauge pegs positive.
+    await page.locator('[data-bp-preset="econ-open"]').click();
+    await expect(page.locator('#bp-w-dp')).toContainText(/> \+0\.250/);
+    await expect(page.locator('#bp-w-status')).toHaveClass(/fault/);
+    await expect(page.locator('#bp-w-status')).toHaveText(/Strongly positive/);
+    await expect(page.locator('#bp-w-stages')).toBeHidden();
+
+    // Big hood at minimum OA on barometric relief: negative building,
+    // blades shut — passive relief can't help.
+    await page.locator('[data-bp-preset="hood"]').click();
+    await expect(page.locator('#bp-w-status')).toHaveClass(/fault/);
+    await expect(page.locator('#bp-w-status')).toHaveText(/Strongly negative/);
+    await expect(page.locator('#bp-w-status')).toHaveText(/only relieve outward/);
+    await expect(page.locator('#bp-w-alert .widget-anecdote')).toHaveCount(0);
+
+    // The interlock mistake: all four stages follow the supply fan at
+    // minimum OA, the building pegs negative, the anecdote reveals.
+    await page.locator('[data-bp-preset="interlock"]').click();
+    await expect(page.locator('#bp-w-dp')).toContainText(/< -0\.250/);
+    await expect(page.locator('#bp-w-status')).toHaveClass(/fault/);
+    await expect(page.locator('#bp-w-status')).toHaveText(/that’s the mistake/);
+    await expect(page.locator('#bp-w-stages .bp-w-stage.on')).toHaveCount(4);
+    await expect(page.locator('#bp-w-stages-lbl')).toHaveText(/interlocked to the supply fan/);
+    await expect(page.locator('#bp-w-alert .widget-anecdote')).toHaveCount(1);
+
+    // Back to the baseline: the anecdote stays pinned, the ledger heals.
+    await page.locator('[data-bp-preset="baseline"]').click();
+    await expect(page.locator('#bp-w-status')).toHaveText(/Slightly positive/);
+    await expect(page.locator('#bp-w-alert .widget-anecdote')).toHaveCount(1);
+
+    expect(errors, 'building-pressure behavioral should log no page / console errors').toEqual([]);
+});
+
 test.describe('function-block editor — interactions', () => {
     test('Delete key removes a selected block', async ({ page }) => {
         const errors = watchErrors(page);
