@@ -23,7 +23,7 @@ nav: education
 
     <div class="filter-chips" role="group" aria-label="Filter lessons by category">
         <button type="button" class="filter-chip active" data-category="all" aria-pressed="true">
-            All <span class="filter-chip-count">20</span>
+            All <span class="filter-chip-count">21</span>
         </button>
         <button type="button" class="filter-chip" data-category="fundamentals" aria-pressed="false">
             Fundamentals <span class="filter-chip-count">6</span>
@@ -35,7 +35,7 @@ nav: education
             Refrigerant <span class="filter-chip-count">3</span>
         </button>
         <button type="button" class="filter-chip" data-category="forced-air" aria-pressed="false">
-            Forced Air Systems <span class="filter-chip-count">2</span>
+            Forced Air Systems <span class="filter-chip-count">3</span>
         </button>
         <button type="button" class="filter-chip" data-category="protocols" aria-pressed="false">
             Protocols <span class="filter-chip-count">5</span>
@@ -167,6 +167,15 @@ nav: education
             titleFull:  'Economizers',
             desc:       'When an air handler should cool with outside air instead of the coil — the linked damper assembly, dry-bulb vs enthalpy changeover with a live explorer widget, integrated staging, and the field failure modes.',
             pills:      ['Air Systems', 'Free Cooling', 'Changeover', 'Explorer Widget'],
+            category:   'forced-air'
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/education/building-pressure.html',
+            titleShort: 'Building Pressure',
+            titleFull:  'Building Pressure',
+            desc:       'Why a building goes positive or negative — the air ledger, barometric relief vs power exhaust vs return-fan tracking, and a live ledger widget where you balance the building yourself.',
+            pills:      ['Air Systems', 'Air Ledger', 'Power Exhaust', 'Ledger Widget'],
             category:   'forced-air'
         }) }}
         {{ navCard({

@@ -1755,6 +1755,7 @@ input[type="range"]::-moz-range-thumb {
 .bvid-copyable:focus-visible,
 .widget-try button:focus-visible,
 .ah-w-mode-btn:focus-visible,
+.bp-w-mode-btn:focus-visible,
 details.tool-preamble > summary:focus-visible,
 .pid-spoiler > summary:focus-visible {
     outline: 2px solid var(--accent);

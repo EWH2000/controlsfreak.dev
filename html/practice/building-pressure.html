@@ -1,0 +1,76 @@
+---
+title: Building Pressure Quiz — controlsfreak.dev
+description: Ten questions on the Building Pressure lesson — the air ledger, barometric relief vs power exhaust vs return fans, staging, and the door-symptom diagnosis.
+canonical: https://controlsfreak.dev/practice/building-pressure.html
+nav: practice
+category: forced-air
+pairedLesson: https://controlsfreak.dev/education/building-pressure.html
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Practice · Building Pressure</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">Building Pressure Quiz <span class="tool-tag">Air Systems</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                Read the <a href="/education/building-pressure.html">Building Pressure</a> lesson first, then keep the
+                ledger from memory — ten questions down the lesson walk: what actually sets a building's pressure,
+                why the setpoint sits slightly positive, sizing the OA minimum against the exhaust it must cover,
+                what barometric relief can and can't do, the power-exhaust-vs-return-fan distinction, and the
+                heavy-door diagnosis that convicts a wrong interlock. Each reveal links back to the section it
+                came from.
+            </p>
+
+            <div id="quiz"></div>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/tools/economizer-ratio.html', label: 'Economizer Ratio Helper'},
+            {href: '/tools/airflow.html', label: 'Airflow Calculator'}
+        ],
+        lessons: [
+            {href: '/education/building-pressure.html', label: 'Building Pressure'},
+            {href: '/education/air-handlers.html', label: 'Air Handlers'},
+            {href: '/education/economizers.html', label: 'Economizers'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/practice/">← All practice</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="/scripts/quiz-engine.js"></script>
+<script>
+    (function () {
+        'use strict';
+
+        // Question bank lives in html/_data/quizzes/building-pressure.js so
+        // the FAQPage JSON-LD emitted from head.njk can read the same source.
+        const questions = {{ quizzes['building-pressure'] | safeScriptJson | safe }};
+
+        Quiz.mount('#quiz', questions, {
+            next: {{ page.fileSlug | nextQuiz | safeScriptJson | safe }},
+            slug: 'building-pressure',
+            title: 'Building Pressure',
+            defaultCount: 10,
+            defaultOrder: 'sequential'
+        });
+    })();
+</script>
+{% endblock %}

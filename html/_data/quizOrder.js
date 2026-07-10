@@ -20,6 +20,7 @@ module.exports = [
     { slug: 'psychrometrics-basics',    label: 'Psychrometrics Basics' },
     { slug: 'air-handlers',             label: 'Air Handlers' },
     { slug: 'economizers',              label: 'Economizers' },
+    { slug: 'building-pressure',        label: 'Building Pressure' },
     { slug: 'function-blocks',          label: 'Function Blocks' },
     { slug: 'modbus-basics',            label: 'Modbus Basics' },
     { slug: 'modbus-decoding',          label: 'Modbus Decoding' },

@@ -395,6 +395,18 @@ techs new to the industry and anyone wanting a refresh.
   real all-dry-bulb building where the occupants were the only
   humidity sensor. Page 2 of the forced-air chapter; pairs with the
   Economizers quiz.
+- **Building Pressure** — why a building goes positive or negative:
+  the air ledger (outside air in vs exhaust, relief, and
+  exfiltration out — pressure is the residual), the slightly-positive
+  setpoint and the door symptoms in both directions, sizing the OA
+  minimum over the exhaust that never returns, and the relief lineup
+  — barometric's positive-only physics, power exhaust staged off
+  damper position (emphatically not a return fan), and return-fan
+  tracking. A pressure-ledger widget solves the building live against
+  four relief strategies — its interlock-mistake preset replays the
+  author's own program that ran power exhaust with the supply fan and
+  dragged a building negative all winter. Page 3 of the forced-air
+  chapter; pairs with the Building Pressure quiz.
 - **Function-Block Basics** — what a block and a wiresheet are, why
   the industry builds sequences this way (the diagram is the program,
   you can watch it run live, the block vocabulary travels across
@@ -470,7 +482,7 @@ flavors share the same engine:
   When a topic recurs in feedback, it becomes a candidate for a
   new education page.
 
-Shipped so far — nineteen content quizzes (each 10 questions, paired
+Shipped so far — twenty content quizzes (each 10 questions, paired
 1:1 with its lesson and deep-linking the gotchas) plus five field
 drills:
 
@@ -500,13 +512,15 @@ drills:
 - **Content quizzes — psychrometrics:** Psychrometrics Basics.
   Seven properties, why any two lock the rest, the four chart
   process families, and the RH / dew-point / enthalpy gotchas.
-- **Content quizzes — forced air:** Air Handlers, Economizers. The
-  station order down the air path, minimum outside air and where the
-  relief goes, the mixed-air arithmetic and its stuck-damper gotcha
-  readout, filter ΔP, coil condensate, and fan heat; then free
-  cooling end to end — the linked damper set, the mixing math run
-  backwards, the deceptive air a dry-bulb changeover admits, the
-  no-humidity-sensor fallback, and integrated staging.
+- **Content quizzes — forced air:** Air Handlers, Economizers,
+  Building Pressure. The station order down the air path, minimum
+  outside air and where the relief goes, the mixed-air arithmetic and
+  its stuck-damper gotcha readout, filter ΔP, coil condensate, and
+  fan heat; then free cooling end to end — the linked damper set, the
+  mixing math run backwards, the deceptive air a dry-bulb changeover
+  admits, the no-humidity-sensor fallback, and integrated staging;
+  then the air ledger — OA-minimum sizing, barometric vs power
+  exhaust vs tracking, and the heavy-door interlock diagnosis.
 - **Surviving Your First Months** *(field drill)* — a broad sampler
   for techs in their first few months: LOTO and verify-on-known-live,
   the 4-20 mA live-zero wire-break signature, DMM continuity mode,
