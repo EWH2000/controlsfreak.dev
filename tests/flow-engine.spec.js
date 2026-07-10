@@ -119,6 +119,42 @@ test('growing past 1240px preserves in-content setPathColor recolors (#96)', asy
     await expect(page.locator(heat)).toHaveCount(before);
 });
 
+test('air-handlers: air-type pools inherit each duct\'s stroke', async ({ page }) => {
+    // data-flow="air" has no fixed fill constant — the particle color is
+    // read from the element's stroke attribute at pool build (one type
+    // serves OA/RA/SA/EA). Pin (1) every diagram on the page pools up,
+    // (2) the stroke-derived fills actually land on particles (teal OA,
+    // text-dim EA — colors no water/current type produces), and (3) the
+    // engine's count formula holds across the mixed-density air paths of
+    // the main air-path diagram.
+    await page.goto('/education/air-handlers.html');
+    await expect(page.locator('main svg.flow-active')).toHaveCount(4);
+
+    const oa = await page.locator('main g.flow-particles circle[fill="var(--teal)"]').count();
+    const ea = await page.locator('main g.flow-particles circle[fill="var(--text-dim)"]').count();
+    expect(oa, 'OA duct particles carry the teal stroke').toBeGreaterThan(0);
+    expect(ea, 'EA duct particles carry the text-dim stroke').toBeGreaterThan(0);
+
+    const d1 = await page.evaluate((SPACING) => {
+        const probe = document.querySelector('main [id^="ah-d1"]');
+        if (!probe) return { found: false };
+        const svg = probe.ownerSVGElement;
+        let expected = 0;
+        svg.querySelectorAll('[data-flow]').forEach((el) => {
+            let density = parseFloat(el.getAttribute('data-flow-density'));
+            if (!isFinite(density) || density <= 0 || density > 1) density = 1;
+            expected += Math.floor(el.getTotalLength() / (SPACING / density));
+        });
+        return {
+            found: true,
+            expected,
+            circles: svg.querySelectorAll('g.flow-particles circle').length,
+        };
+    }, SPACING);
+    expect(d1.found, 'the air-path diagram ids exist').toBe(true);
+    expect(d1.circles).toBe(d1.expected);
+});
+
 test('the rAF loop starts on a visible diagram and animates particles (#113)', async ({ page }) => {
     // The loop now only runs while there's visible work (it suspends when
     // idle and resumes via the IO 'intersecting' callback / firePulse). The
