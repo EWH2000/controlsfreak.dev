@@ -1,0 +1,823 @@
+---
+title: Building Pressure — controlsfreak.dev
+description: Why a building goes positive or negative — the air ledger, barometric relief, power exhaust, and return-fan tracking that hold pressure near neutral.
+canonical: https://controlsfreak.dev/education/building-pressure.html
+nav: education
+category: forced-air
+pairedQuiz: https://controlsfreak.dev/practice/building-pressure.html
+keywords: building pressure static relief exhaust fan power exhaust barometric damper positive negative infiltration exfiltration doors makeup air
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block head %}
+    <style>
+        /* Diagram + legend + flow-active rules live in styles.css as
+           .edu-svg / .edu-legend. Only the pressure-ledger widget
+           internals are page-specific (bp-w-*). */
+
+        /* Top row: relief-strategy group + exhaust-load group, side by
+           side, wrapping on narrow columns (the ah-w-top pattern). */
+        .bp-w-top {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem 2.5rem;
+            align-items: flex-start;
+            margin-bottom: 0.85rem;
+        }
+
+        /* Stateful selector buttons — aria-pressed drives the visual
+           (the air-handlers coil-mode pattern). Focus ring lives in
+           the shared FOCUS INDICATORS block (.bp-w-mode-btn entry). */
+        .bp-w-modes { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+        .bp-w-mode-btn {
+            font-family: var(--mono);
+            font-size: 0.72rem;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 2px;
+            padding: 0.32rem 0.7rem;
+            cursor: pointer;
+        }
+        .bp-w-mode-btn:hover { color: var(--text-bright); border-color: var(--text-dim); }
+        .bp-w-mode-btn[aria-pressed="true"] {
+            color: var(--text-bright);
+            background: var(--surface);
+            border-color: var(--accent);
+        }
+
+        #bp-widget .widget-slider { margin: 0.15rem 0 1rem; }
+        #bp-widget .widget-slider-head .v { white-space: nowrap; }
+
+        /* The ledger strip — four lines of the air ledger, aligned as
+           they wrap 4 → 2 → 1 across column widths. */
+        .bp-w-strip {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 0.8rem 1.25rem;
+            margin-bottom: 0.85rem;
+        }
+        .bp-w-line-name {
+            font-family: var(--mono);
+            font-size: 0.68rem;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+        .bp-w-line-value {
+            font-family: var(--mono);
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-bright);
+            white-space: nowrap;
+        }
+
+        /* Power-exhaust stage chips. Shown only while the power-exhaust
+           strategy is selected. */
+        .bp-w-stages {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-bottom: 0.85rem;
+        }
+        .bp-w-stage {
+            font-family: var(--mono);
+            font-size: 0.72rem;
+            letter-spacing: 0.04em;
+            color: var(--text-dim);
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 2px;
+            padding: 0.2rem 0.55rem;
+        }
+        .bp-w-stage.on {
+            color: var(--text-bright);
+            background: var(--surface);
+            border-color: var(--accent);
+        }
+
+        /* Pressure gauge — a linear scale with a center zero and the
+           slightly-positive target band. Decorative twin of the numeric
+           readout (aria-hidden; the readout carries the value). */
+        .bp-w-gauge {
+            width: 100%;
+            max-width: 560px;
+            display: block;
+            margin: 0.4rem 0 0.85rem;
+        }
+
+        /* Status line — same left-stripe idiom as the air-handlers
+           widget (normal / warn / fault). */
+        .bp-w-status {
+            font-family: var(--mono);
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            padding: 0.45rem 0.7rem;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--accent);
+            border-radius: 2px;
+            color: var(--text-bright);
+            margin-bottom: 0.5rem;
+            transition: border-left-color 200ms linear;
+        }
+        .bp-w-status.warn  { border-left-color: var(--heat); }
+        .bp-w-status.fault { border-left-color: var(--red); }
+
+        /* Reveal area below the status line. Space reserved so the
+           anecdote doesn't reflow the page when it appears. */
+        .bp-w-alert {
+            min-height: 4.0rem;
+            margin-top: 0.25rem;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Education · Building Pressure</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">Building Pressure <span class="tool-tag">Air Systems</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                Two pages of this chapter have now made the same promise: the air the dampers bring in has to leave the building somewhere. This page is where it leaves. Building pressure is the quietest point in the whole system — a signal so small most gauges can't see it — and it announces its failures at the front door, literally: doors that stand open on their own, doors that pull like they're sprung, a whistle at the weatherstripping. One question, start to finish: <em>why does a building go positive or negative, and how do relief, return, and power-exhaust fans keep it near neutral while the dampers move?</em>
+            </p>
+
+            <div class="callout">
+                <p style="font-size:0.86rem;line-height:1.7;">
+                    This page leans on the mixing box from <a href="/education/air-handlers.html#mixing-box">Air Handlers</a> and the modulating damper assembly from <a href="/education/economizers.html#damper-assembly">Economizers</a>. If "the relief damper opens in step with the OA damper" doesn't ring a bell, read those first — this page is where that promise gets kept.
+                </p>
+            </div>
+
+            <!-- ───────────────── 1 · The air ledger ───────────────── -->
+            <h2 class="subhead" id="air-ledger">The Air Ledger</h2>
+
+            <p>
+                A building is a slightly leaky box with fans pushing air across its envelope in both directions, and its pressure is nothing more mysterious than the bookkeeping. Write it as a ledger. <em>Deposits:</em> outside air brought in by the air handlers — on most buildings, the only deliberate entry. <em>Withdrawals:</em> relief air leaving back through the unit, the dedicated exhaust fans (restrooms, kitchen hoods, janitor closets) that run whether or not the AHU cares, and <em>exfiltration</em> — air pushed out through every crack, joint, and door gap the envelope owns. Supply and return air never appear on the ledger at all: they circulate <em>inside</em> the envelope, moving air from one room to another without ever crossing it. The building's pressure is simply the residual — whatever imbalance is left after the fans have done their pushing, expressed as the tiny pressure it takes to force that leftover air through the envelope's leaks.
+            </p>
+            <p style="margin-top:1.25rem;">
+                And the target isn't zero. Designers hold buildings <em>slightly positive</em> — a setpoint around <span data-us="+0.02 to +0.05&nbsp;in. w.c." data-metric="+5 to +12&nbsp;Pa">+0.02 to +0.05&nbsp;in. w.c.</span> relative to outdoors — so the leakage always flows outward: conditioned air seeping out through the cracks, instead of unfiltered, unconditioned, humid air seeping in. Get it wrong in either direction and the building tells you at the doors. Too positive, and exterior doors drift open against their closers and push back when you pull them shut. Too negative, and doors go heavy, slam behind people, and whistle at the gaps — and in humid weather the infiltrating air drags moisture into wall cavities where nobody wants it. Elevator lobbies and stair doors act up for the same reason: a shaft is just a very tall duct connecting floors that disagree about pressure.
+            </p>
+            <p style="margin-top:1.25rem;">
+                One asymmetry worth naming before the picture, because it bites hardest on large units: <strong>the return duct never brings back everything the supply duct delivered.</strong> An air handler serving whole floors loses a steady bite of its supply air to the dedicated exhausts drawing from the same spaces — gang restroom fans are the classic — air that leaves the loop mid-lap and exits the roof without ever seeing the mixing box again. That stolen share isn't optional ventilation; it's a standing withdrawal the unit must cover. Size the outside-air minimum below it and the ledger opens every morning already negative, with the dampers sitting innocently at their commanded position. The working rule: <em>minimum outside air ≥ everything the exhaust fans take from the unit's territory, plus the surplus that holds the building positive.</em>
+            </p>
+
+            <svg class="edu-svg" viewBox="0 0 540 420" role="img" aria-labelledby="bp-d1-title bp-d1-desc"
+                 font-family="var(--mono)">
+                <title id="bp-d1-title">The building as an air ledger</title>
+                <desc id="bp-d1-desc">A building drawn as a box with an air handler on its left wall. Outside air enters the air handler — the only deliberate deposit. Three withdrawals leave the building: relief air back out through the unit, exhaust fans on the roof, and exfiltration through the gaps around a door on the right wall. Supply and return ducts circulate inside the building without crossing the envelope. A gauge in the middle marks the building pressure as the residual of the ledger.</desc>
+
+                <!-- ledger flows. data-flow="air" hooks flow-engine.js; particle
+                     color follows each duct's stroke. Densities: OA carries the
+                     deliberate deposit, relief / exhaust carry fractions. -->
+                <path id="bp-d1-oa" data-flow="air" d="M5 240 H80" fill="none" stroke="var(--teal)" stroke-width="3"/>
+                <path id="bp-d1-rel" data-flow="air" data-flow-density="0.5" d="M80 150 V68 H20" fill="none" stroke="var(--text-dim)" stroke-width="3" stroke-dasharray="9 5"/>
+                <path id="bp-d1-ef" data-flow="air" data-flow-density="0.5" d="M350 100 V52" fill="none" stroke="var(--text-dim)" stroke-width="3" stroke-dasharray="9 5"/>
+
+                <!-- interior circulation: supply / return — inside the envelope -->
+                <path id="bp-d1-sa" data-flow="air" d="M150 240 H230" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <path id="bp-d1-ra" data-flow="air" d="M230 180 H150" fill="none" stroke="var(--blue-cool)" stroke-width="3"/>
+
+                <!-- flow arrows (static — carry direction for reduced-motion / print) -->
+                <g id="bp-d1-flow-arrows">
+                    <polygon points="28,235 37,240 28,245" fill="var(--teal)"/>
+                    <polygon points="75,110 85,110 80,99" fill="var(--text-dim)"/>
+                    <polygon points="34,63 43,68 34,73" fill="var(--text-dim)" transform="rotate(180 38.5 68)"/>
+                    <polygon points="345,72 355,72 350,61" fill="var(--text-dim)"/>
+                    <polygon points="196,235 205,240 196,245" fill="var(--blue)"/>
+                    <polygon points="196,175 187,180 196,185" fill="var(--blue-cool)"/>
+                </g>
+
+                <!-- the building envelope -->
+                <rect x="150" y="100" width="300" height="240" fill="none" stroke="var(--text-dim)" stroke-width="2"/>
+
+                <!-- the AHU on the left wall -->
+                <g id="bp-d1-ahu">
+                    <rect x="80" y="150" width="70" height="120" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <text x="115" y="216" text-anchor="middle" font-size="14" font-weight="600" fill="var(--text-bright)">AHU</text>
+                </g>
+
+                <!-- roof exhaust fan -->
+                <g id="bp-d1-ef-fan">
+                    <circle cx="350" cy="78" r="12" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <polygon points="345,73 356,78 345,83" fill="var(--text-dim)"/>
+                </g>
+
+                <!-- the door + exfiltration on the right wall -->
+                <g id="bp-d1-door">
+                    <rect x="446" y="255" width="8" height="65" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <line x1="452" y1="250" x2="490" y2="250" stroke="var(--text-dim)" stroke-width="1.5" stroke-dasharray="2 3"/>
+                    <polygon points="488,246 496,250 488,254" fill="var(--text-dim)"/>
+                    <line x1="452" y1="325" x2="490" y2="325" stroke="var(--text-dim)" stroke-width="1.5" stroke-dasharray="2 3"/>
+                    <polygon points="488,321 496,325 488,329" fill="var(--text-dim)"/>
+                </g>
+
+                <!-- pressure gauge — the residual -->
+                <g id="bp-d1-gauge">
+                    <circle cx="350" cy="222" r="20" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <line x1="350" y1="222" x2="361" y2="209" stroke="var(--text-bright)" stroke-width="2"/>
+                    <circle cx="350" cy="222" r="2.5" fill="var(--text-bright)"/>
+                </g>
+
+                <!-- labels -->
+                <text x="5" y="222" text-anchor="start" font-size="13" fill="var(--text)">outside air</text>
+                <text x="92" y="42" text-anchor="start" font-size="13" fill="var(--text)">relief air</text>
+                <text x="92" y="57" text-anchor="start" font-size="12" fill="var(--text-dim)">through the unit</text>
+                <text x="350" y="25" text-anchor="middle" font-size="12" fill="var(--text)">exhaust fans — restrooms, hoods</text>
+                <text x="236" y="184" text-anchor="start" font-size="12" fill="var(--text-dim)">return air</text>
+                <text x="236" y="244" text-anchor="start" font-size="12" fill="var(--text-dim)">supply air</text>
+                <text x="300" y="135" text-anchor="middle" font-size="16" font-weight="600" fill="var(--text-bright)">THE BUILDING</text>
+                <text x="300" y="265" text-anchor="middle" font-size="13" fill="var(--text)">pressure = what's left over</text>
+                <text x="300" y="295" text-anchor="middle" font-size="12" fill="var(--text-dim)">supply &amp; return circulate inside —</text>
+                <text x="300" y="311" text-anchor="middle" font-size="12" fill="var(--text-dim)">they never cross the envelope</text>
+                <text x="498" y="352" text-anchor="end" font-size="12" fill="var(--text-dim)">exfiltration —</text>
+                <text x="498" y="368" text-anchor="end" font-size="12" fill="var(--text-dim)">every crack is a ledger line</text>
+            </svg>
+            <div class="edu-legend">
+                <span><span class="sw oa"></span>outside air</span>
+                <span><span class="sw ra"></span>return air</span>
+                <span><span class="sw sa"></span>supply air</span>
+                <span><span class="sw ea"></span>relief / exhaust</span>
+            </div>
+
+            <div class="callout" style="margin-top:1.5rem;">
+                <h3>Worked example <span>· one line of arithmetic</span></h3>
+                <!-- Metric supply is stated as 17,000 m³/h (exact: 16,990) so
+                     the 20 % worked chain closes on displayed operands
+                     (17,000 × 0.20 = 3,400); the widget's nearest-10 rounding
+                     shows 16,990 at 100 % OA. Accepted daylight — closure of
+                     the taught math outranks matching that one widget state. -->
+                <p>A constant-volume unit supplies <span data-us="10,000&nbsp;CFM" data-metric="17,000&nbsp;m³/h">10,000&nbsp;CFM</span> with its dampers at a minimum admitting 20&nbsp;% outside air, so it deposits <span data-us="2,000&nbsp;CFM" data-metric="3,400&nbsp;m³/h">2,000&nbsp;CFM</span>. (Damper <em>position</em> and flow <em>fraction</em> aren't actually the same thing in a real mixing box — position-to-flow is nonlinear and drifts — but this page treats them as equal to keep the ledger arithmetic readable.) The restroom exhaust fans withdraw <span data-us="800&nbsp;CFM" data-metric="1,360&nbsp;m³/h">800&nbsp;CFM</span>. The remaining <span data-us="1,200&nbsp;CFM" data-metric="2,040&nbsp;m³/h">1,200&nbsp;CFM</span> has nowhere to go but out through the envelope — and the modest pressure it takes to push that surplus through the cracks, <span data-us="a few hundredths of an inch" data-metric="a few pascals">a few hundredths of an inch</span>, <em>is</em> the building pressure. Every scenario on this page is this same subtraction with different numbers. (Dedicated kitchen and lab exhaust, and life-safety smoke control, play this same ledger with stricter rules — both are their own topics.)</p>
+            </div>
+
+            <!-- ───────────────── 2 · The relief lineup ───────────────── -->
+            <h2 class="subhead" id="relief-lineup">The Relief Lineup</h2>
+
+            <p>
+                The relief damper you met in the mixing box is an opening, not a mover — and that distinction is the whole story of this section. At minimum outside air there's so little surplus that a passive opening handles it fine. But open the dampers up for economizing and the arithmetic turns brutal: at 100&nbsp;% outside air, <em>everything</em> the supply fan moves has to leave the building, and a passive opening asked to pass that much air needs a pressure difference to push it — which is exactly the pressure you're trying not to build. So buildings grow a lineup of relief devices, from dumbest to smartest, and knowing which one you're looking at tells you how it should be controlled.
+            </p>
+            <p style="margin-top:1.25rem;">
+                <strong>Barometric relief</strong> is the dumbest and the most honest: hinged blades with adjustable weights, no motor, no wires, no point on the BMS. When inside pressure wins against the weights, the blades swing open and air leaves; when it stops winning, gravity swings them shut. Two things follow from the physics. It needs the building <em>already positive</em> before it does anything — the pressure error is its actuator — so it rides high at big airflows. And it is strictly a one-way valve: it can bleed off a positive building, but against a negative building the blades just seal harder. Barometric relief can never fix a negative building. <strong>Power exhaust</strong> is what you install when barometric can't keep up: a fan in the relief opening that <em>pushes</em> air out instead of waiting for pressure to build. It gets the next section to itself, because it's the one the field gets wrong. <strong>The return / relief fan</strong> is the built-up-unit answer: a second fan in the return duct itself, sized near the supply fan, helping air home from the space and giving the relief opening real pressure behind it. Its control is <em>tracking</em> — run at an offset below the supply fan, in <em>measured flow</em>, so the difference between the two is the ledger's balance, continuously, no stages, no waiting for an error to develop. (Flow, not speed: a fixed speed offset holds no particular CFM difference — the two fans ride different curves against independently drifting resistances, and speed-offset tracking is the classic way this scheme gets botched.) And that offset is not a fudge factor: it's the ledger again — the exhaust the building's dedicated fans steal from the unit's territory, plus the surplus that keeps the building positive. Commission it lazily and the tracking fan balances a ledger that was never written down.
+            </p>
+
+            <svg class="edu-svg" viewBox="0 0 540 460" role="img" aria-labelledby="bp-d2-title bp-d2-desc"
+                 font-family="var(--mono)">
+                <title id="bp-d2-title">The relief lineup: barometric, power exhaust, return fan</title>
+                <desc id="bp-d2-desc">Three relief devices in a stack. Top: barometric relief — weighted hinged blades in a wall opening that swing open only when inside pressure pushes them. Middle: power exhaust — a fan mounted in the same kind of relief opening, pushing air out; it is staged with the outside-air damper. Bottom: a return and relief fan sitting in the return duct itself, running whenever the unit runs, with a relief branch teeing off after it.</desc>
+
+                <!-- ── row 1 · barometric ── -->
+                <line x1="360" y1="30" x2="360" y2="70" stroke="var(--text-dim)" stroke-width="3"/>
+                <line x1="360" y1="110" x2="360" y2="150" stroke="var(--text-dim)" stroke-width="3"/>
+                <path id="bp-d2-baro-flow" data-flow="air" data-flow-density="0.4" d="M300 90 H420" fill="none" stroke="var(--text-dim)" stroke-width="3" stroke-dasharray="9 5"/>
+                <polygon points="410,85 419,90 410,95" fill="var(--text-dim)"/>
+                <g id="bp-d2-baro-blades">
+                    <circle cx="358" cy="72" r="2" fill="var(--text-bright)"/>
+                    <line x1="358" y1="72" x2="374" y2="82" stroke="var(--text-bright)" stroke-width="1.5"/>
+                    <circle cx="358" cy="88" r="2" fill="var(--text-bright)"/>
+                    <line x1="358" y1="88" x2="374" y2="98" stroke="var(--text-bright)" stroke-width="1.5"/>
+                    <circle cx="358" cy="104" r="2" fill="var(--text-bright)"/>
+                    <line x1="358" y1="104" x2="374" y2="114" stroke="var(--text-bright)" stroke-width="1.5"/>
+                </g>
+                <text x="316" y="44" text-anchor="middle" font-size="11" fill="var(--text-dim)">inside</text>
+                <text x="404" y="44" text-anchor="middle" font-size="11" fill="var(--text-dim)">outside</text>
+                <text x="20" y="62" text-anchor="start" font-size="14" font-weight="600" fill="var(--text-bright)">BAROMETRIC RELIEF</text>
+                <text x="20" y="84" text-anchor="start" font-size="12" fill="var(--text-dim)">weighted blades — no motor, no wires</text>
+                <text x="20" y="100" text-anchor="start" font-size="12" fill="var(--text-dim)">opens only when inside pressure wins;</text>
+                <text x="20" y="116" text-anchor="start" font-size="12" fill="var(--text-dim)">can never help a negative building</text>
+
+                <line x1="20" y1="162" x2="520" y2="162" stroke="var(--border)" stroke-width="1"/>
+
+                <!-- ── row 2 · power exhaust ── -->
+                <line x1="360" y1="180" x2="360" y2="220" stroke="var(--text-dim)" stroke-width="3"/>
+                <line x1="360" y1="260" x2="360" y2="300" stroke="var(--text-dim)" stroke-width="3"/>
+                <path id="bp-d2-pe-flow" data-flow="air" data-flow-density="0.6" d="M300 240 H420" fill="none" stroke="var(--text-dim)" stroke-width="3" stroke-dasharray="9 5"/>
+                <polygon points="410,235 419,240 410,245" fill="var(--text-dim)"/>
+                <g id="bp-d2-pe-fan">
+                    <circle cx="360" cy="240" r="16" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <polygon points="354,233 369,240 354,247" fill="var(--text-dim)"/>
+                </g>
+                <text x="20" y="212" text-anchor="start" font-size="14" font-weight="600" fill="var(--text-bright)">POWER EXHAUST</text>
+                <text x="20" y="234" text-anchor="start" font-size="12" fill="var(--text-dim)">a fan in the relief opening —</text>
+                <text x="20" y="250" text-anchor="start" font-size="12" fill="var(--text-dim)">pushes air out instead of waiting</text>
+                <text x="20" y="266" text-anchor="start" font-size="12" fill="var(--text-dim)">staged with the OA damper</text>
+
+                <line x1="20" y1="312" x2="520" y2="312" stroke="var(--border)" stroke-width="1"/>
+
+                <!-- ── row 3 · return / relief fan ── -->
+                <path id="bp-d2-rf-duct" data-flow="air" d="M40 400 H500" fill="none" stroke="var(--blue-cool)" stroke-width="3"/>
+                <path id="bp-d2-rf-branch" data-flow="air" data-flow-density="0.4" d="M300 400 V352 H430" fill="none" stroke="var(--text-dim)" stroke-width="3" stroke-dasharray="9 5"/>
+                <g id="bp-d2-rf-arrows">
+                    <polygon points="100,395 109,400 100,405" fill="var(--blue-cool)"/>
+                    <polygon points="450,395 459,400 450,405" fill="var(--blue-cool)"/>
+                    <polygon points="420,347 429,352 420,357" fill="var(--text-dim)"/>
+                </g>
+                <g id="bp-d2-rf-fan">
+                    <circle cx="200" cy="400" r="16" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <polygon points="194,393 209,400 194,407" fill="var(--text-dim)"/>
+                </g>
+                <text x="20" y="338" text-anchor="start" font-size="14" font-weight="600" fill="var(--text-bright)">RETURN / RELIEF FAN</text>
+                <text x="20" y="360" text-anchor="start" font-size="12" fill="var(--text-dim)">lives in the return airstream —</text>
+                <text x="20" y="376" text-anchor="start" font-size="12" fill="var(--text-dim)">runs whenever the unit runs</text>
+                <text x="436" y="345" text-anchor="start" font-size="12" fill="var(--text-dim)">relief out</text>
+                <text x="40" y="428" text-anchor="start" font-size="12" fill="var(--text-dim)">from the space</text>
+                <text x="500" y="428" text-anchor="end" font-size="12" fill="var(--text-dim)">to the mixing box →</text>
+            </svg>
+            <div class="edu-legend">
+                <span><span class="sw ra"></span>return air</span>
+                <span><span class="sw ea"></span>relief / exhaust</span>
+            </div>
+
+            <!-- ───────────────── 3 · Power exhaust ───────────────── -->
+            <h2 class="subhead" id="power-exhaust">Power Exhaust: the Fan That Follows the Damper</h2>
+
+            <p>
+                Here's the sentence this section exists for: <strong>power exhaust is not a return fan.</strong> They can look alike on a drawing — a fan somewhere near the return side of the unit — and they obey opposite rules. A return fan lives <em>in the airstream</em>: every cubic foot going back to the mixing box passes through it, so it runs whenever the supply fan runs, full stop. Power exhaust lives <em>in the relief opening</em>, a side door off the return path — and it only has a job when there's surplus air to throw away. At minimum outside air there is almost no surplus; a power exhaust fan running there isn't relieving the building, it's <em>evacuating</em> it, pulling the pressure negative against dampers that were never asked for more air. The two fans share a neighborhood and nothing else.
+            </p>
+            <p style="margin-top:1.25rem;">
+                Which raises the control question: what should turn a power exhaust fan on? Not the supply fan — that's the return-fan rule. The classic scheme stages it off <em>outside-air damper position</em>: as the economizer drives the dampers open past a threshold, stage one starts; further open, stage two joins; and back down the same ladder as the dampers close. It's open-loop — the fan never actually measures the building pressure, it <em>infers</em> the surplus from where the dampers are — and it's coarse, stepping in chunks while the damper sweeps smoothly, so the pressure sawtooths gently between stages. Smarter systems close the loop: a building static-pressure sensor drives a VFD on the exhaust fan (a <a href="/education/vfds.html">drive</a>, same as any other) and modulates it to hold setpoint directly. Either way, the enable logic answers to the <em>dampers</em> — or to the pressure they create — never to the supply fan's status point as the trigger. (As a run-<em>permissive</em> the fan status is fine, even wise — relief hardware shouldn't run on a dead unit; it just must never be the <em>reason</em> the exhaust starts.)
+            </p>
+
+            <svg class="edu-svg" viewBox="0 0 540 320" role="img" aria-labelledby="bp-d3-title bp-d3-desc"
+                 font-family="var(--mono)">
+                <title id="bp-d3-title">Power-exhaust staging against damper position</title>
+                <desc id="bp-d3-desc">A staging chart with outside-air damper position increasing to the right, from closed to fully open. The passive relief damper opens from minimum position onward. Power-exhaust stage one cuts in as the damper passes the first threshold, then stages two, three, and four at successively wider damper positions. Each stage stays on as the next joins. An annotation notes that the enable signal is the damper, not the supply fan.</desc>
+
+                <!-- thesis line -->
+                <text x="315" y="30" text-anchor="middle" font-size="13" fill="var(--text-bright)">the enable signal is the DAMPER, not the supply fan</text>
+
+                <!-- minimum-position marker (drawn before the bands so band
+                     fills and labels paint over the dotted line) -->
+                <line x1="204" y1="58" x2="204" y2="290" stroke="var(--text-dim)" stroke-width="1" stroke-dasharray="2 4"/>
+                <text x="204" y="50" text-anchor="middle" font-size="12" fill="var(--text-dim)">minimum position</text>
+
+                <!-- stage bands -->
+                <rect x="204" y="70" width="296" height="26" fill="var(--teal)" fill-opacity="0.22" stroke="var(--teal)" stroke-width="1.5"/>
+                <rect x="222" y="115" width="278" height="26" fill="var(--blue)" fill-opacity="0.22" stroke="var(--blue)" stroke-width="1.5"/>
+                <rect x="296" y="160" width="204" height="26" fill="var(--blue)" fill-opacity="0.22" stroke="var(--blue)" stroke-width="1.5"/>
+                <rect x="370" y="205" width="130" height="26" fill="var(--blue)" fill-opacity="0.22" stroke="var(--blue)" stroke-width="1.5"/>
+                <rect x="444" y="250" width="56" height="26" fill="var(--blue)" fill-opacity="0.22" stroke="var(--blue)" stroke-width="1.5"/>
+
+                <!-- row labels -->
+                <text x="122" y="87" text-anchor="end" font-size="12" fill="var(--text-dim)">relief damper</text>
+                <text x="122" y="132" text-anchor="end" font-size="12" fill="var(--text-dim)">PE stage 1</text>
+                <text x="122" y="177" text-anchor="end" font-size="12" fill="var(--text-dim)">stage 2</text>
+                <text x="122" y="222" text-anchor="end" font-size="12" fill="var(--text-dim)">stage 3</text>
+                <text x="122" y="267" text-anchor="end" font-size="12" fill="var(--text-dim)">stage 4</text>
+
+                <!-- damper-position axis -->
+                <line x1="120" y1="290" x2="510" y2="290" stroke="var(--text-dim)" stroke-width="1.5"/>
+                <polygon points="504,285 513,290 504,295" fill="var(--text-dim)"/>
+                <line x1="222" y1="284" x2="222" y2="296" stroke="var(--text-dim)" stroke-width="1"/>
+                <line x1="296" y1="284" x2="296" y2="296" stroke="var(--text-dim)" stroke-width="1"/>
+                <line x1="370" y1="284" x2="370" y2="296" stroke="var(--text-dim)" stroke-width="1"/>
+                <line x1="444" y1="284" x2="444" y2="296" stroke="var(--text-dim)" stroke-width="1"/>
+                <text x="130" y="312" text-anchor="start" font-size="12" fill="var(--text-dim)">closed</text>
+                <text x="508" y="312" text-anchor="end" font-size="13" fill="var(--text)">OA damper position →</text>
+            </svg>
+
+            <p style="margin-top:1.25rem;">
+                The chart is the whole discipline in one picture: more damper, more relief; less damper, less relief; and at minimum position, <em>no power exhaust at all</em> — the passive relief path handles the trickle. Notice the family resemblance to the <a href="/education/economizers.html#first-stage">economizer staging chart</a> one page back. That's not a coincidence, it's a rhyme: the economizer stages cooling against load, and the power exhaust stages relief against the economizer. When the sequences are married correctly the whole thing breathes — dampers open, relief follows, pressure holds — and nobody in the building ever thinks about it. The widget below lets you break that marriage the way it actually gets broken.
+            </p>
+
+            <!-- ───────────────── 4 · Dampers and pressure ───────────────── -->
+            <h2 class="subhead" id="dampers-pressure">When the Dampers Move, the Building Feels It</h2>
+
+            <p>
+                Now pay off the promise the <a href="/education/economizers.html#damper-assembly">Economizers page</a> filed: every extra cubic foot the OA damper admits has to leave the building somewhere. There are two classic ways that accounting fails, and they bracket everything you'll see in the field. <strong>Full economizing with no working relief path:</strong> the dampers drive to 100&nbsp;%, the unit force-feeds the building its entire supply airflow as outside air, and the relief device — seized damper, dead exhaust fan, undersized barometric blades — can't pass it. The building inflates until its own leakage carries the flow: exterior doors stand open against their closers, ceiling tiles lift, and the lobby whooshes at everyone who walks in. <strong>A big exhaust load against minimum outside air:</strong> the kitchen hood starts at full draw while the dampers sit at their ventilation floor, and the ledger goes negative — the hood pulls its makeup air backwards through every crack in the envelope, doors go heavy, and pilot flames and elevator doors start misbehaving. Note the asymmetry: relief devices can only take air <em>out</em>. A negative building needs more air <em>in</em> — a higher OA minimum, a dedicated makeup-air unit — and no amount of relief hardware can supply it.
+            </p>
+            <p style="margin-top:1.25rem;">
+                One wrinkle worth filing for later: on a VAV system the supply fan itself speeds up and slows down, so the ledger's deposit column moves with fan speed as well as damper position — that interaction belongs to the VAV pages of this chapter. The scenarios below hold the supply fan constant so the dampers and the relief lineup stay the whole story.
+            </p>
+
+            <!-- ───────────────── 5 · Pressure-ledger widget ───────────────── -->
+            <h2 class="subhead" id="pressure-ledger">Balance the Ledger Yourself</h2>
+
+            <p>
+                One building, live bookkeeping. The unit supplies a constant <span data-us="10,000&nbsp;CFM" data-metric="17,000&nbsp;m³/h">10,000&nbsp;CFM</span>; you set the outside-air fraction, choose what's exhausting, and pick which relief device the building owns. The gauge shows where the ledger settles. Sweep the damper slowly with power exhaust selected and watch the sawtooth — then try the last preset, which reproduces a mistake this page's author has personally made.
+            </p>
+
+            <div class="widget" id="bp-widget">
+                <div class="widget-try">
+                    <span class="lbl">Try this:</span>
+                    <button type="button" data-bp-preset="baseline">minimum OA, quiet day</button>
+                    <button type="button" data-bp-preset="econ-open">economizing, no relief path</button>
+                    <button type="button" data-bp-preset="hood">big hood at minimum OA</button>
+                    <button type="button" data-bp-preset="interlock">the interlock mistake</button>
+                </div>
+
+                <div class="bp-w-top">
+                    <div>
+                        <div class="widget-readout-label" id="bp-w-relief-lbl">Relief device</div>
+                        <div class="bp-w-modes" role="group" aria-labelledby="bp-w-relief-lbl">
+                            <button type="button" class="bp-w-mode-btn" data-bp-relief="none" aria-pressed="false">None</button>
+                            <button type="button" class="bp-w-mode-btn" data-bp-relief="baro" aria-pressed="false">Barometric</button>
+                            <button type="button" class="bp-w-mode-btn" data-bp-relief="pe" aria-pressed="true">Power exhaust</button>
+                            <button type="button" class="bp-w-mode-btn" data-bp-relief="track" aria-pressed="false">Return-fan tracking</button>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="widget-readout-label" id="bp-w-ef-lbl">Exhaust loads</div>
+                        <div class="bp-w-modes" role="group" aria-labelledby="bp-w-ef-lbl">
+                            <button type="button" class="bp-w-mode-btn" data-bp-ef="rr" aria-pressed="true">Restrooms · <span data-us="800&nbsp;CFM" data-metric="1,360&nbsp;m³/h">800&nbsp;CFM</span></button>
+                            <button type="button" class="bp-w-mode-btn" data-bp-ef="hood" aria-pressed="false">Kitchen hood · <span data-us="3,600&nbsp;CFM" data-metric="6,120&nbsp;m³/h">3,600&nbsp;CFM</span></button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="widget-slider-head">
+                    <label for="bp-w-oa-slider">Outside-air fraction</label>
+                    <span class="v" id="bp-w-oa-value">20 % · minimum</span>
+                </div>
+                <input class="widget-slider" id="bp-w-oa-slider" type="range" min="20" max="100" step="1" value="20"/>
+
+                <div class="bp-w-strip">
+                    <div class="bp-w-line">
+                        <div class="bp-w-line-name">Air in · outside air</div>
+                        <div class="bp-w-line-value" id="bp-w-in">2,000 CFM</div>
+                    </div>
+                    <div class="bp-w-line">
+                        <div class="bp-w-line-name">Air out · exhaust fans</div>
+                        <div class="bp-w-line-value" id="bp-w-ef">800 CFM</div>
+                    </div>
+                    <div class="bp-w-line">
+                        <div class="bp-w-line-name">Air out · relief device</div>
+                        <div class="bp-w-line-value" id="bp-w-relief">0 CFM</div>
+                    </div>
+                    <div class="bp-w-line">
+                        <div class="bp-w-line-name">The residual · envelope</div>
+                        <div class="bp-w-line-value" id="bp-w-leak">1,200 CFM out</div>
+                    </div>
+                </div>
+
+                <div class="bp-w-stages" id="bp-w-stages">
+                    <span class="widget-readout-label" id="bp-w-stages-lbl">Power-exhaust stages</span>
+                    <span class="bp-w-stage" id="bp-w-st1">1</span>
+                    <span class="bp-w-stage" id="bp-w-st2">2</span>
+                    <span class="bp-w-stage" id="bp-w-st3">3</span>
+                    <span class="bp-w-stage" id="bp-w-st4">4</span>
+                </div>
+
+                <div>
+                    <div class="widget-readout-label">Building pressure</div>
+                    <div class="widget-readout-value" id="bp-w-dp">+0.022<span class="unit"> in. w.c.</span></div>
+                </div>
+
+                <svg class="bp-w-gauge" viewBox="0 0 540 84" aria-hidden="true" font-family="var(--mono)">
+                    <rect x="288" y="34" width="28" height="24" fill="var(--accent)" fill-opacity="0.25" stroke="var(--accent)" stroke-width="1"/>
+                    <line x1="40" y1="46" x2="500" y2="46" stroke="var(--border)" stroke-width="2"/>
+                    <line x1="270" y1="34" x2="270" y2="58" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <polygon id="bp-w-needle" points="270,34 265,22 275,22" fill="var(--text-bright)"/>
+                    <text x="40" y="76" text-anchor="start" font-size="12" fill="var(--text-dim)">negative</text>
+                    <text x="302" y="76" text-anchor="middle" font-size="12" fill="var(--text-dim)">target</text>
+                    <text x="500" y="76" text-anchor="end" font-size="12" fill="var(--text-dim)">positive</text>
+                </svg>
+
+                <div class="bp-w-status" id="bp-w-status" aria-live="polite">Slightly positive — where you want it</div>
+                <div class="bp-w-alert" id="bp-w-alert"></div>
+            </div>
+
+            <p class="ref-note">
+                What the widget holds still: wind and stack effect (zero here, never zero in the field), a single envelope leakage curve, and a constant-volume supply fan. The relief openings get no passive capacity of their own — a real linked relief damper bleeds some air even without a fan behind it — so the "none" case runs a little more dramatic than life. The relief fans are also pressure-independent here — a real exhaust fan's CFM droops as the building fights it. The directions and the moral hold: relief can only subtract, staging is coarse but honest when it follows the damper, and tracking balances exactly the ledger it was commissioned for — flip the kitchen hood on under return-fan tracking and watch a stale offset meet a ledger that moved.
+            </p>
+
+            <!-- ───────────────── 6 · Measuring it ───────────────── -->
+            <h2 class="subhead" id="measuring-it">Measuring a Whisper</h2>
+
+            <p>
+                Everything above assumed you can actually see the building pressure, and that deserves its own paragraph, because the signal is a whisper. A setpoint of <span data-us="+0.03&nbsp;in. w.c." data-metric="+7.5&nbsp;Pa">+0.03&nbsp;in. w.c.</span> is fifty times smaller than the <span data-us="1.5&nbsp;in. w.c." data-metric="375&nbsp;Pa">1.5&nbsp;in. w.c.</span> a supply duct might run — a breath of wind on the wrong wall face is bigger than the whole setpoint. So placement is most of the craft. The <em>indoor probe</em> goes in a large, representative space — a corridor or open office mid-building — away from exterior doors, elevator lobbies, and anything that swings or gusts; every door transit is a pressure spike the loop must not chase. The <em>outdoor reference</em> is harder: a bare tube on a windward wall reads wind, not pressure, so it wants a static-averaging tip, shielded, ideally sampling more than one face — and even then, wind and winter stack effect ride the signal as noise you filter, not information you act on. Control accordingly: heavy filtering, a wide deadband, slow loop action, and patient alarms. A building-pressure point that updates crisply and swings confidently is usually telling you about its own placement, not the building.
+            </p>
+
+            <div class="callout" style="margin-top:1.5rem;">
+                <h3>Not the same pressure <span>· building static ≠ duct static</span></h3>
+                <p>The classic conflation, worth killing on sight: <em>duct static pressure</em> is the supply fan's control variable, measured inside the ductwork at <span data-us="whole inches of water column" data-metric="hundreds of pascals">whole inches of water column</span>; <em>building static pressure</em> is the envelope's residual, measured space-to-outdoors at <span data-us="a few hundredths" data-metric="a few pascals">a few hundredths</span>. Different magnitude, different sensor, different loop, different failure symptoms — a healthy duct static says nothing about the ledger, and a neutral building says nothing about the fan. How the supply fan holds its duct static — and why that loop closes this chapter — is a page of its own, still to come.</p>
+            </div>
+
+            <p style="margin-top:1.25rem;">
+                That's the ledger, kept: outside air is the deposit, exhaust and relief and leakage are the withdrawals, and pressure is the residual the envelope feels. Barometric relief bleeds a positive building, power exhaust follows the dampers — never the supply fan — and a return fan tracks continuously. The doors testify when any of it goes wrong. Next in this chapter: standing in front of a unit you've never met and working out what it actually is — <em>naming the box</em> — before the chapter turns to VAV systems and the fan's own speed.
+            </p>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/tools/economizer-ratio.html', label: 'Economizer Ratio Helper'},
+            {href: '/tools/airflow.html', label: 'Airflow Calculator'}
+        ],
+        lessons: [
+            {href: '/education/air-handlers.html', label: 'Air Handlers'},
+            {href: '/education/economizers.html', label: 'Economizers'},
+            {href: '/education/vfds.html', label: 'VFDs'}
+        ],
+        quizzes: [
+            {href: '/practice/building-pressure.html', label: 'Building Pressure'},
+            {href: '/practice/air-handlers.html', label: 'Air Handlers'},
+            {href: '/practice/economizers.html', label: 'Economizers'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/education/">← Back to Education</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<!-- flow-engine.js is loaded site-wide from layouts/page.njk; the init()
+     below is an idempotent refresh so the page reads standalone. D1 and
+     D2 carry data-flow="air" ducts (particle color follows each duct's
+     stroke). The pressure-ledger widget below is pure page math — it
+     never touches the diagrams. -->
+<script>
+    FlowEngine.init();
+
+    // ── Pressure-ledger widget ────────────────────────────────────────
+    // Model: a solvable air ledger for one constant-volume unit.
+    //   in  = OA fraction × supply CFM
+    //   out = exhaust fans + relief device + envelope leakage
+    // Envelope leakage follows an orifice curve, Q = C_LEAK·√|ΔP| signed
+    // with the pressure, so the building pressure is the ΔP where the
+    // ledger balances — found by bisection (f(ΔP) is strictly
+    // decreasing). Relief devices:
+    //   none:  0
+    //   baro:  passive, positive-only — C_BARO·√(ΔP − crack) above the
+    //          crack setting, hard 0 below it and against negative ΔP
+    //   pe:    4 × 2,000 CFM stages keyed to OA damper position
+    //          (25 / 45 / 65 / 85 %) — open-loop, coarse on purpose.
+    //          The interlock preset forces all stages on regardless of
+    //          damper position: the return-fan rule applied to the
+    //          wrong fan.
+    //   track: return/relief fan tracking — relieve supply minus a FIXED
+    //          commissioned offset (design exhaust 800 + surplus 1,200 =
+    //          2,000 CFM), clamped at zero (relief only subtracts). The
+    //          offset is deliberately a constant, not live arithmetic:
+    //          toggle the kitchen hood and the ledger moves while the
+    //          offset doesn't — the lazy-commissioning failure the prose
+    //          warns about, drivable.
+    // Internal model is IP (CFM, in. w.c.); converted at the display
+    // boundary via window.Units. Magnitudes are illustrative — a real
+    // envelope's leakage constant is anyone's guess — but the
+    // directions and the staging behavior are the lesson.
+    (function () {
+        'use strict';
+
+        const SUPPLY     = 10000;   // CFM — constant-volume supply fan
+        const EF_RR      = 800;     // CFM — restroom exhaust
+        const EF_HOOD    = 3600;    // CFM — kitchen hood
+        const C_LEAK     = 8000;    // CFM per √(in. w.c.) — envelope orifice constant
+        const C_BARO     = 16000;   // CFM per √(in. w.c.) — barometric capacity curve
+        const BARO_CRACK = 0.05;    // in. w.c. — weight setting the blades crack at
+        const PE_STAGE   = 2000;    // CFM per power-exhaust stage
+        const PE_STEPS   = [25, 45, 65, 85];   // % OA damper — stage thresholds
+        const TRACK_OFF  = 2000;    // CFM — commissioned tracking offset (design exhaust + surplus)
+        const GAUGE_MAX  = 0.25;    // in. w.c. — display peg either side of zero
+
+        const slider    = document.getElementById('bp-w-oa-slider');
+        const oaValEl   = document.getElementById('bp-w-oa-value');
+        const inEl      = document.getElementById('bp-w-in');
+        const efEl      = document.getElementById('bp-w-ef');
+        const reliefEl  = document.getElementById('bp-w-relief');
+        const leakEl    = document.getElementById('bp-w-leak');
+        const dpEl      = document.getElementById('bp-w-dp');
+        const needleEl  = document.getElementById('bp-w-needle');
+        const stagesRow = document.getElementById('bp-w-stages');
+        const stagesLbl = document.getElementById('bp-w-stages-lbl');
+        const stageEls  = [1, 2, 3, 4].map(function (n) { return document.getElementById('bp-w-st' + n); });
+        const statusEl  = document.getElementById('bp-w-status');
+        const alertEl   = document.getElementById('bp-w-alert');
+        const reliefBtns = document.querySelectorAll('[data-bp-relief]');
+        const efBtns     = document.querySelectorAll('[data-bp-ef]');
+
+        const state = {
+            relief: 'pe',           // 'none' | 'baro' | 'pe' | 'track'
+            interlocked: false,     // the mistake: PE follows the supply fan
+            rr: true,               // restroom exhaust running
+            hood: false,            // kitchen hood running
+            anecdoteShown: false,   // once revealed, keep it pinned this session
+        };
+
+        function peStagesOn(oaPct) {
+            if (state.interlocked) return PE_STEPS.length;
+            return PE_STEPS.filter(function (t) { return oaPct >= t; }).length;
+        }
+
+        // Relief flow for a candidate building pressure. Only barometric
+        // actually depends on ΔP; the others are constants per state.
+        function reliefFlow(dp, oaPct) {
+            if (state.relief === 'baro') {
+                return dp > BARO_CRACK ? C_BARO * Math.sqrt(dp - BARO_CRACK) : 0;
+            }
+            if (state.relief === 'pe') {
+                return peStagesOn(oaPct) * PE_STAGE;
+            }
+            if (state.relief === 'track') {
+                const oaIn = oaPct / 100 * SUPPLY;
+                return Math.max(0, oaIn - TRACK_OFF);
+            }
+            return 0;
+        }
+
+        function efTotal() {
+            return (state.rr ? EF_RR : 0) + (state.hood ? EF_HOOD : 0);
+        }
+
+        function leakFlow(dp) {
+            return (dp >= 0 ? 1 : -1) * C_LEAK * Math.sqrt(Math.abs(dp));
+        }
+
+        // Solve the ledger: the ΔP where in − out = 0. f is strictly
+        // decreasing in ΔP (leakage and barometric relief both grow
+        // with it), so plain bisection converges.
+        function solveDp(oaPct) {
+            const oaIn = oaPct / 100 * SUPPLY;
+            const f = function (dp) {
+                return oaIn - efTotal() - reliefFlow(dp, oaPct) - leakFlow(dp);
+            };
+            let lo = -1.5, hi = 1.5;
+            for (let i = 0; i < 60; i++) {
+                const mid = (lo + hi) / 2;
+                if (f(mid) > 0) lo = mid; else hi = mid;
+            }
+            return (lo + hi) / 2;
+        }
+
+        function fmtFlow(cfm) {
+            const U = window.Units;
+            if (U.current() === 'us') {
+                return Math.round(cfm).toLocaleString('en-US') + ' ' + U.suffix.airflow();
+            }
+            const v = Math.round(U.display.airflow(cfm) / 10) * 10;
+            return v.toLocaleString('en-US') + ' ' + U.suffix.airflow();
+        }
+
+        function fmtDp(dp) {
+            const U = window.Units;
+            const str = U.current() === 'us'
+                ? dp.toFixed(3)
+                : U.display.staticPressure(dp).toFixed(0);
+            // Sign off the ROUNDED string: a root of −0.0002 otherwise
+            // renders "-0.000" / "-0 Pa", and an exact zero would claim
+            // a sign it doesn't have.
+            if (parseFloat(str) === 0) return str.replace('-', '');
+            return (dp > 0 ? '+' : '') + str;
+        }
+
+        function update() {
+            const oaPct = parseInt(slider.value, 10);
+            const dp    = solveDp(oaPct);
+            const oaIn  = oaPct / 100 * SUPPLY;
+            const ef    = efTotal();
+            const rel   = reliefFlow(dp, oaPct);
+            const leak  = oaIn - ef - rel;   // by construction = leakFlow(dp)
+            const U     = window.Units;
+
+            oaValEl.textContent = oaPct + ' %' + (oaPct === 20 ? ' · minimum' : '');
+            inEl.textContent     = fmtFlow(oaIn);
+            efEl.textContent     = fmtFlow(ef);
+            reliefEl.textContent = fmtFlow(rel);
+            leakEl.textContent   = fmtFlow(Math.abs(leak)) + (leak >= 0 ? ' out' : ' in');
+
+            // Pressure readout + gauge needle (pegged at ±GAUGE_MAX).
+            const pegged = Math.abs(dp) > GAUGE_MAX;
+            const shown  = Math.max(-GAUGE_MAX, Math.min(GAUGE_MAX, dp));
+            dpEl.innerHTML = (pegged ? (dp > 0 ? '&gt; ' : '&lt; ') : '')
+                + fmtDp(pegged ? (dp > 0 ? GAUGE_MAX : -GAUGE_MAX) : dp)
+                + '<span class="unit"> ' + U.suffix.staticPressure() + '</span>';
+            needleEl.setAttribute('transform', 'translate(' + (shown * 920).toFixed(1) + ',0)');
+
+            // Stage chips — only meaningful for power exhaust.
+            const isPe = state.relief === 'pe';
+            stagesRow.style.display = isPe ? 'flex' : 'none';
+            if (isPe) {
+                const on = peStagesOn(oaPct);
+                stageEls.forEach(function (el, i) {
+                    el.className = 'bp-w-stage' + (i < on ? ' on' : '');
+                });
+                stagesLbl.textContent = state.interlocked
+                    ? 'Power-exhaust stages — interlocked to the supply fan'
+                    : 'Power-exhaust stages — following the damper';
+            }
+
+            // Status line: the pressure verdict, plus what the relief
+            // device has to say for itself.
+            let statusClass, statusText;
+            if (dp > GAUGE_MAX) {
+                statusClass = 'fault';
+                statusText  = 'Strongly positive — doors standing open; the building found its own relief';
+            } else if (dp > 0.06) {
+                statusClass = 'warn';
+                statusText  = 'Positive — doors drifting open, conditioned air pushing out';
+            } else if (dp >= 0.01) {
+                statusClass = '';
+                statusText  = 'Slightly positive — where you want it';
+            } else if (dp > -0.005) {
+                statusClass = '';
+                statusText  = 'Near neutral — acceptable, but no margin against wind and stack';
+            } else if (dp >= -0.06) {
+                statusClass = 'warn';
+                statusText  = 'Negative — outside air pulling in at every crack';
+            } else {
+                statusClass = 'fault';
+                statusText  = 'Strongly negative — doors heavy, whistling at the weatherstripping';
+            }
+            if (state.relief === 'baro') {
+                statusText += dp <= BARO_CRACK
+                    ? ' · barometric blades shut' + (dp < -0.005 ? ' — they only relieve outward' : ' — below the crack setting')
+                    : ' · barometric relieving — passive, riding a pressure error';
+            } else if (isPe) {
+                statusText += state.interlocked
+                    ? ' · stages following the supply fan, not the damper — that’s the mistake'
+                    : ' · ' + peStagesOn(oaPct) + ' of 4 stages running';
+            } else if (state.relief === 'track') {
+                statusText += state.hood
+                    ? ' · tracking a commissioned offset that never included the hood — the ledger moved, the offset didn’t'
+                    : ' · relief fan tracking supply at its commissioned offset';
+            }
+            statusEl.className = 'bp-w-status' + (statusClass ? ' ' + statusClass : '');
+            statusEl.textContent = statusText;
+
+            // Anecdote: revealed by running the interlock mistake into
+            // real negative territory. Pinned once seen (the
+            // air-handlers / economizers precedent).
+            if (state.interlocked && dp < -0.06) state.anecdoteShown = true;
+            if (state.anecdoteShown) {
+                alertEl.innerHTML = '<div class="widget-anecdote warn">This preset is autobiographical. Early on, I treated power exhaust like a return fan, because nobody had told me they were different animals — a fan on the return side is a fan on the return side, right? So my program ran it the way you’d run a return fan: interlocked with the supply fan, on whenever the unit was on. All winter, at minimum outside air, that exhaust fan dutifully threw away air the dampers weren’t bringing in. The building told on me before any trend did — entrance doors that pulled like they were sprung, a whistle at the weatherstripping you could hear across the vestibule. The fix was one line of logic: call the fan with the <em>damper</em>, not with the unit. A return fan lives in the airstream and runs whenever the unit runs; power exhaust is a relief device, and it only has a job when the dampers open past minimum. Same neighborhood, opposite rules.</div>';
+            } else {
+                alertEl.innerHTML = '';
+            }
+        }
+
+        function setRelief(mode) {
+            state.relief = mode;
+            state.interlocked = false;   // any explicit choice clears the mistake
+            reliefBtns.forEach(function (b) {
+                b.setAttribute('aria-pressed', b.getAttribute('data-bp-relief') === mode ? 'true' : 'false');
+            });
+            update();
+        }
+
+        reliefBtns.forEach(function (btn) {
+            btn.addEventListener('click', function (e) {
+                setRelief(e.currentTarget.getAttribute('data-bp-relief'));
+            });
+        });
+
+        efBtns.forEach(function (btn) {
+            btn.addEventListener('click', function (e) {
+                const key = e.currentTarget.getAttribute('data-bp-ef');
+                if (key === 'rr') state.rr = !state.rr;
+                else state.hood = !state.hood;
+                e.currentTarget.setAttribute('aria-pressed',
+                    (key === 'rr' ? state.rr : state.hood) ? 'true' : 'false');
+                update();
+            });
+        });
+
+        // Presets — the happy baseline plus the three ways the ledger
+        // goes wrong (including the author's own way).
+        const PRESETS = {
+            'baseline':  { oa: 20,  rr: true, hood: false, relief: 'pe',   interlocked: false },
+            'econ-open': { oa: 100, rr: true, hood: false, relief: 'none', interlocked: false },
+            'hood':      { oa: 20,  rr: true, hood: true,  relief: 'baro', interlocked: false },
+            'interlock': { oa: 20,  rr: true, hood: false, relief: 'pe',   interlocked: true  },
+        };
+        document.querySelectorAll('[data-bp-preset]').forEach(function (btn) {
+            btn.addEventListener('click', function (e) {
+                const p = PRESETS[e.currentTarget.getAttribute('data-bp-preset')];
+                if (!p) return;
+                slider.value = String(p.oa);
+                state.rr = p.rr;
+                state.hood = p.hood;
+                efBtns.forEach(function (b) {
+                    const key = b.getAttribute('data-bp-ef');
+                    b.setAttribute('aria-pressed', (key === 'rr' ? state.rr : state.hood) ? 'true' : 'false');
+                });
+                setRelief(p.relief);         // clears interlock, calls update()
+                if (p.interlocked) {         // re-apply after the clear
+                    state.interlocked = true;
+                    update();
+                }
+            });
+        });
+
+        slider.addEventListener('input', update);
+        // Re-render every flow / pressure when the unit toggle flips.
+        document.addEventListener('unitschange', update);
+        // Initial paint matching the default control state.
+        update();
+    })();
+</script>
+{% endblock %}

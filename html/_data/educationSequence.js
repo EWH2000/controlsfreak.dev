@@ -39,6 +39,7 @@ const order = [
     "/education/psychrometrics-basics.html",
     "/education/air-handlers.html",
     "/education/economizers.html",
+    "/education/building-pressure.html",
     "/education/function-blocks.html",
     "/education/modbus-basics.html",
     "/education/modbus-decoding.html",
