@@ -23,7 +23,7 @@ nav: education
 
     <div class="filter-chips" role="group" aria-label="Filter lessons by category">
         <button type="button" class="filter-chip active" data-category="all" aria-pressed="true">
-            All <span class="filter-chip-count">19</span>
+            All <span class="filter-chip-count">20</span>
         </button>
         <button type="button" class="filter-chip" data-category="fundamentals" aria-pressed="false">
             Fundamentals <span class="filter-chip-count">6</span>
@@ -35,7 +35,7 @@ nav: education
             Refrigerant <span class="filter-chip-count">3</span>
         </button>
         <button type="button" class="filter-chip" data-category="forced-air" aria-pressed="false">
-            Forced Air Systems <span class="filter-chip-count">1</span>
+            Forced Air Systems <span class="filter-chip-count">2</span>
         </button>
         <button type="button" class="filter-chip" data-category="protocols" aria-pressed="false">
             Protocols <span class="filter-chip-count">5</span>
@@ -158,6 +158,15 @@ nav: education
             titleFull:  'Air Handlers',
             desc:       'Follow one parcel of air through an air handler — return and relief, the mixing box at minimum outside air, filter, coils, and the supply fan — with a sensor-strip widget that walks the unit like a BMS graphic.',
             pills:      ['Air Systems', 'Mixing Box', 'Coils · Fan', 'Sensor Strip'],
+            category:   'forced-air'
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/education/economizers.html',
+            titleShort: 'Economizers',
+            titleFull:  'Economizers',
+            desc:       'When an air handler should cool with outside air instead of the coil — the linked damper assembly, dry-bulb vs enthalpy changeover with a live explorer widget, integrated staging, and the field failure modes.',
+            pills:      ['Air Systems', 'Free Cooling', 'Changeover', 'Explorer Widget'],
             category:   'forced-air'
         }) }}
         {{ navCard({

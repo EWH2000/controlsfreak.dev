@@ -1589,6 +1589,56 @@ test('air handlers — sensor strip walks the path and the failure preset reveal
     expect(errors, 'air-handlers behavioral should log no page / console errors').toEqual([]);
 });
 
+test('economizers — changeover explorer splits the verdicts and reveals the anecdote in the wedge', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('/education/economizers.html');
+
+    // Structure: three annotated diagrams with accessible titles, one
+    // flow-animated (D1 — the modulating damper assembly), and the
+    // section anchors the quiz learnMore links target.
+    await expect(page.locator('main svg.edu-svg')).toHaveCount(3);
+    await expect(page.locator('main svg.edu-svg > title')).toHaveCount(3);
+    await expect(page.locator('main svg.flow-active')).toHaveCount(1);
+    for (const anchor of ['#damper-assembly', '#changeover', '#changeover-explorer', '#first-stage', '#field-failures']) {
+        await expect(page.locator(`h2${anchor}`)).toBeVisible();
+    }
+
+    // Default state: dry spring morning (55 °F / 40 %) — both verdicts
+    // agree on free cooling; return air pins near 28.1 Btu/lb and the
+    // derived worst-case limit sits in the low 60s °F.
+    await expect(page.locator('#eco-w-ra-h')).toContainText(/^28\.[0-2]/);
+    await expect(page.locator('#eco-w-db-pill')).toHaveClass(/ok/);
+    await expect(page.locator('#eco-w-h-pill')).toHaveClass(/ok/);
+    await expect(page.locator('#eco-w-status')).toHaveText(/genuine free cooling/i);
+    await expect(page.locator('#eco-w-limit-v')).toHaveText(/6[12]\.\d °F/);
+    await expect(page.locator('#eco-w-alert .widget-anecdote')).toHaveCount(0);
+
+    // Muggy morning (68 °F / 85 %): the deceptive wedge — dry-bulb says
+    // economize, enthalpy says lock out, the anecdote reveals.
+    await page.locator('[data-eco-preset="muggy"]').click();
+    await expect(page.locator('#eco-w-db-pill')).toHaveClass(/ok/);
+    await expect(page.locator('#eco-w-h-pill')).toHaveClass(/error/);
+    await expect(page.locator('#eco-w-status')).toHaveClass(/warn/);
+    await expect(page.locator('#eco-w-status')).toHaveText(/Deceptive air/);
+    await expect(page.locator('#eco-w-alert .widget-anecdote')).toHaveCount(1);
+
+    // High-desert evening (78 °F / 15 %): the mirror miss — dry-bulb
+    // refuses, enthalpy approves; the anecdote stays pinned.
+    await page.locator('[data-eco-preset="desert"]').click();
+    await expect(page.locator('#eco-w-db-pill')).toHaveClass(/error/);
+    await expect(page.locator('#eco-w-h-pill')).toHaveClass(/ok/);
+    await expect(page.locator('#eco-w-status')).toHaveText(/Free cooling missed/);
+    await expect(page.locator('#eco-w-alert .widget-anecdote')).toHaveCount(1);
+
+    // Hot afternoon (88 °F / 40 %): both verdicts refuse.
+    await page.locator('[data-eco-preset="hot"]').click();
+    await expect(page.locator('#eco-w-db-pill')).toHaveClass(/error/);
+    await expect(page.locator('#eco-w-h-pill')).toHaveClass(/error/);
+    await expect(page.locator('#eco-w-status')).toHaveText(/mechanical cooling/i);
+
+    expect(errors, 'economizers behavioral should log no page / console errors').toEqual([]);
+});
+
 test.describe('function-block editor — interactions', () => {
     test('Delete key removes a selected block', async ({ page }) => {
         const errors = watchErrors(page);

@@ -6,8 +6,9 @@
 // behave — chiller / boiler plant staging and deadbands, AHU economizer
 // changeover, dehumidification + reheat cascades, and lead/lag rotation.
 // Explanations are inline; learnMore points only at the lessons/tools that
-// genuinely cover the concept (Equipment Staging + Psychrometrics lessons,
-// Economizer Ratio + Psychrometric Chart tools all exist).
+// genuinely cover the concept (Equipment Staging + Psychrometrics +
+// Economizers lessons, Economizer Ratio + Psychrometric Chart tools all
+// exist; the three economizer questions deep-link the Economizers lesson).
 
 module.exports = [
     // ── Plant staging: why stage at all ───────────────────
@@ -65,7 +66,7 @@ module.exports = [
             { id: 'd', text: 'Reversing the supply and return fans.' }
         ],
         explain: 'When outdoor air is cool (and, for an enthalpy economizer, dry) enough, the economizer brings in more outdoor air and lets it carry the cooling load instead of the compressor — "free cooling." The outdoor and return dampers modulate together (more OA, less return) while mechanical cooling is held back or staged off. The whole sequence hinges on the <strong>changeover decision</strong>: is outdoor air actually a better source than recirculated return air right now? Get that decision wrong and you either miss free cooling or drag in hot, humid air and pay to recondition it.',
-        learnMore: { href: '/tools/economizer-ratio.html', label: 'Economizer Ratio Calculator' },
+        learnMore: { href: '/education/economizers.html#damper-assembly', label: 'Economizers — One Signal, Three Dampers' },
         tags: ['sequencing-scenarios', 'economizer', 'ahu']
     },
 
@@ -81,7 +82,7 @@ module.exports = [
             { id: 'd', text: 'Dry-bulb only works in winter.' }
         ],
         explain: 'A dry-bulb decision looks only at temperature, but the cooling coil has to remove <em>total</em> heat — sensible plus latent. Outdoor air at 64°F (17.8 °C) and 90% RH holds a lot of moisture, so its enthalpy can exceed that of warmer-but-drier return air; admit it and the coil now has to wring out all that water (latent load) on top of cooling, which can cost more than just recirculating. <strong>Enthalpy</strong> (or differential-enthalpy) changeover compares total heat content of outdoor vs. return air and only economizes when outdoor air is genuinely the lower-enthalpy source. The cost is humidity sensors, which drift and need care — the classic reason a "smart" enthalpy economizer underperforms a simple dry-bulb one.',
-        learnMore: { href: '/tools/psychrometric-chart.html', label: 'Psychrometric Chart' },
+        learnMore: { href: '/education/economizers.html#changeover', label: 'Economizers — The Changeover Decision' },
         tags: ['sequencing-scenarios', 'economizer', 'enthalpy']
     },
 
@@ -98,6 +99,7 @@ module.exports = [
             { id: 'd', text: 'The return dampers should also open fully.' }
         ],
         explain: 'Free cooling has a floor. A correct economizer sequence carries a <strong>low-limit</strong>: a mixed-air (or discharge) temperature override that forces the outdoor dampers back toward minimum position when mixed-air drops too low, plus a freeze-stat as the hard backstop, plus an outdoor-air-temperature lockout that disables economizing below a setpoint. Without them, the loop happily drives the dampers wide chasing a cold supply target on a frigid morning and freezes a hydronic coil. The economizer\'s job is "use cool air <em>when safe</em>," and the low-limit is the "when safe" half.',
+        learnMore: { href: '/education/economizers.html#field-failures', label: 'Economizers — Where Economizers Fail in the Field' },
         tags: ['sequencing-scenarios', 'economizer', 'freeze-protection']
     },
 
