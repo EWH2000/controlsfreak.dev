@@ -51,11 +51,11 @@ module.exports = [
         prompt: 'If an air handler pulls in outside air but the building has no working relief or exhaust path, what happens?',
         choices: [
             { id: 'a', text: 'Nothing — the return duct absorbs the difference.' },
-            { id: 'b', text: 'The building pressurizes — doors whistle and stand open, because more air is coming in than leaving.', correct: true },
+            { id: 'b', text: 'The building pressurizes — doors stand open and push back against their closers, because more air is coming in than leaving.', correct: true },
             { id: 'c', text: 'The supply fan speeds up to compensate.' },
             { id: 'd', text: 'The outside-air damper closes automatically.' }
         ],
-        explain: 'Air is a mass balance: what comes in must go out, through relief dampers, exhaust fans, or — when those fail — door cracks and elevator shafts. A building with intake and no relief inflates until leakage balances it, and the doors tell you first. How buildings manage that ledger gets its own page in this chapter.',
+        explain: 'Air is a mass balance: what comes in must go out, through relief dampers, exhaust fans, or — when those fail — door cracks and elevator shafts. A building with intake and no relief inflates until leakage balances it, and the doors tell you first. How buildings manage that ledger is the Building Pressure page of this chapter.',
         learnMore: { href: '/education/air-handlers.html#mixing-box', label: 'Air Handlers — The Mixing Box' },
         tags: ['forced-air', 'building-pressure']
     },

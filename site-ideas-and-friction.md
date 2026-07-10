@@ -180,14 +180,26 @@ Shipped so far:
   with the muggy-morning worked diagnosis. Modulating diagram
   stayed static; densities carry the recipe, no `setPathColor`.
   Declared question + scope contract below.
+- **Building Pressure** *(shipped 2026-07-10, buildout PR 3)* —
+  `education/building-pressure.html` + paired quiz. The air ledger
+  (pressure as the residual; supply/return never cross the envelope;
+  the large-AHU asymmetry — OA minimum sized over the exhaust that
+  never returns, owner-requested), the relief lineup (barometric's
+  positive-only physics, power exhaust as the deep treatment —
+  "not a return fan" — return-fan tracking with the ledger-derived
+  offset), the two damper↔pressure failure corners paying page 2's
+  callout, and probe placement / the duct-static distinction. A
+  pressure-ledger widget solves the building by bisection against
+  an envelope orifice curve under four relief strategies; its
+  interlock-mistake preset replays the owner's own program (power
+  exhaust interlocked to the supply fan like a return fan → negative
+  building, heavy doors, whistling — fix: call the fan with the
+  damper). Both prior pages' promises upgraded to live links.
+  Declared question + scope contract below.
 
 Remaining (one lesson + paired quiz per PR, category `forced-air`;
 declared questions for all six locked below):
 
-- **Building pressure & exhaust** — the air ledger, barometric
-  relief / power exhaust / return-fan tracking, damper positions ↔
-  building pressure, sensor placement. The owner-pain centerpiece.
-  `[future: education/building-pressure.html]`
 - **Unit identification** — what is this box: RTU / AHU / MAU-DOAS /
   heat pump / split, nameplate + schedule-tag literacy; closes by
   walking back to the opener's air path. `[future:
@@ -281,7 +293,8 @@ names the downstream questions — this page is deliberately the
 chapter hub.
 Out of scope: economizer logic `[future: education/economizers.html]`
 *(shipped 2026-07-09 — prose upgraded to live links)*;
-relief/exhaust path `[future: education/building-pressure.html]`;
+relief/exhaust path `[future: education/building-pressure.html]`
+*(shipped 2026-07-10 — prose upgraded to live links)*;
 naming the box `[future: education/air-unit-identification.html]`
 (the sidestep callout); the terminal side `[future:
 education/vav-systems.html]` and the fan's speed `[future:
@@ -306,7 +319,8 @@ enable logic); field failure modes (stuck/hunting dampers,
 freeze-stat, the RTU-economizer audit scenario as the worked
 diagnosis).
 Out of scope: where the air goes at 100 % OA `[future:
-education/building-pressure.html]` *(next page — plant the callout)*;
+education/building-pressure.html]` *(shipped 2026-07-10 — both
+planted callouts upgraded to live links)*;
 demand-controlled ventilation / CO₂ resets `[future: DCV]`; 90.1
 climate-zone high-limit tables `[future: changeover-limit reference
 on economizer-ratio.html]`; mixing math (links to
@@ -324,28 +338,38 @@ muggy-morning complaint rather than RTU-specific — the owner's
 source story was built-up AHUs.
 
 **3 · Building pressure & exhaust** (`building-pressure.html`)
+*(shipped 2026-07-10)*
 *One question: why does a building go positive or negative, and how
 do relief, return, and power-exhaust fans keep it near neutral while
 the dampers move?*
-In scope: the air ledger (OA in vs exhaust/relief/exfiltration out —
-pressure is the residual; setpoints ~+0.02–0.05 in. w.c.; door and
-elevator symptoms); the relief lineup (barometric relief, power
-exhaust staged/modulating — the owner's named pain, deepest
-treatment on the page — return/relief fan with tracking; when each
-shows up, how each is controlled); damper positions ↔ building
-pressure (100 % OA with no relief path, minimum-OA against a big
-exhaust load — pays page 2's callout); measuring it (indoor probe
-away from doors/elevators, outdoor reference away from wind/stack,
-why the signal is slow and noisy).
+In scope (all landed): the air ledger (OA in vs
+exhaust/relief/exfiltration out — pressure is the residual;
+setpoints ~+0.02–0.05 in. w.c.; door and elevator symptoms; plus an
+owner-requested addition — the large-AHU asymmetry, where gang
+restroom exhausts steal supply CFM that never returns, so the OA
+minimum must cover exhaust + surplus); the relief lineup (barometric
+relief, power exhaust staged off damper position — the owner's named
+pain, deepest treatment, its own `#power-exhaust` section anchored
+on "not a return fan" — return/relief fan with the ledger-derived
+tracking offset); damper positions ↔ building pressure (100 % OA
+with no relief path, minimum-OA against a big exhaust load — paid
+page 2's callout); measuring it (probe away from doors/elevators,
+shielded outdoor reference, slow noisy signal). The widget is a
+solvable ledger (bisection against an envelope orifice curve) with
+four relief strategies and the interlock-mistake preset carrying the
+owner's anecdote.
 Out of scope: duct static — a different pressure with a different
-sensor and loop; name the classic conflation and defer `[future:
-education/duct-static-control.html]`; kitchen / lab / dedicated
-exhaust `[future: kitchen & lab exhaust]`; stairwell pressurization
-and smoke control `[future: smoke control]`; VAV-minimum ventilation
-interactions `[future: section in education/vav-systems.html]`.
-Debts: pays page 2's callout and page 1's relief-path marker. Incurs
-the duct-static distinction (paid page 6) plus the uncommitted
-exhaust/smoke markers.
+sensor and loop; the conflation named in a callout and deferred
+`[future: education/duct-static-control.html]`; kitchen / lab /
+dedicated exhaust `[future: kitchen & lab exhaust]` (named in the
+worked-example callout); stairwell pressurization and smoke control
+`[future: smoke control]` (same sentence); VAV-minimum ventilation
+interactions `[future: section in education/vav-systems.html]`
+(named in §dampers-pressure as "belongs to the VAV pages").
+Debts: paid page 2's callout (both plants now live links) and
+page 1's relief-path marker (mixing-box prose + closing chapter map
++ relatedLinks). Incurred the duct-static distinction (paid page 6)
+plus the uncommitted exhaust/smoke markers.
 
 **4 · Unit identification** (`air-unit-identification.html`)
 *One question: you're standing in front of an air-side unit you've
