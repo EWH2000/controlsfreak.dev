@@ -77,7 +77,7 @@ nav: practice
 
     <div class="filter-chips" role="group" aria-label="Filter practice by topic">
         <button type="button" class="filter-chip active" data-category="all" aria-pressed="true">
-            All <span class="filter-chip-count">23</span>
+            All <span class="filter-chip-count">24</span>
         </button>
         <button type="button" class="filter-chip" data-category="modbus" aria-pressed="false">
             Modbus <span class="filter-chip-count">2</span>
@@ -98,7 +98,7 @@ nav: practice
             Psychrometrics <span class="filter-chip-count">1</span>
         </button>
         <button type="button" class="filter-chip" data-category="forced-air" aria-pressed="false">
-            Forced Air Systems <span class="filter-chip-count">1</span>
+            Forced Air Systems <span class="filter-chip-count">2</span>
         </button>
     </div>
 
@@ -220,6 +220,15 @@ nav: practice
                 titleShort: 'AHUs',
                 titleFull:  'Air Handlers',
                 desc:       'Walk the unit from memory — station order, minimum outside air and relief, the mixed-air arithmetic that exposes a stuck damper, filter ΔP, and fan heat.',
+                pills:      ['10 Questions', 'MCQ · TF · Gotcha · Numeric', '~ 5 min'],
+                category:   'forced-air'
+            }) }}
+            {{ navCard({
+                section:    'practice',
+                href:       '/practice/economizers.html',
+                titleShort: 'Economizers',
+                titleFull:  'Economizers',
+                desc:       'Free cooling from memory — the linked damper set, the mixing math backwards, dry-bulb vs enthalpy changeover, integrated staging, and the stuck-damper tells.',
                 pills:      ['10 Questions', 'MCQ · TF · Gotcha · Numeric', '~ 5 min'],
                 category:   'forced-air'
             }) }}

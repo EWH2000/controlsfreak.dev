@@ -1,0 +1,74 @@
+---
+title: Economizers Quiz — controlsfreak.dev
+description: Ten questions on the Economizers lesson — the linked damper assembly, mixing math run backwards, dry-bulb vs enthalpy changeover, staging, and failures.
+canonical: https://controlsfreak.dev/practice/economizers.html
+nav: practice
+category: forced-air
+pairedLesson: https://controlsfreak.dev/education/economizers.html
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Practice · Economizers</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">Economizers Quiz <span class="tool-tag">Air Systems</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                Read the <a href="/education/economizers.html">Economizers</a> lesson first, then make the free-cooling
+                decision from memory — ten questions down the lesson walk: what economizing actually is, why the
+                three dampers move as one set, the mixing math run backwards, the deceptive air a dry-bulb
+                changeover admits, the no-humidity-sensor fallback, integrated staging, and the trend evidence
+                that convicts a stuck damper. Each reveal links back to the section it came from.
+            </p>
+
+            <div id="quiz"></div>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/tools/economizer-ratio.html', label: 'Economizer Ratio Helper'},
+            {href: '/tools/psychrometric-chart.html', label: 'Psychrometric Chart'}
+        ],
+        lessons: [
+            {href: '/education/economizers.html', label: 'Economizers'},
+            {href: '/education/psychrometrics-basics.html', label: 'Psychrometrics Basics'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/practice/">← All practice</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="/scripts/quiz-engine.js"></script>
+<script>
+    (function () {
+        'use strict';
+
+        // Question bank lives in html/_data/quizzes/economizers.js so the
+        // FAQPage JSON-LD emitted from head.njk can read the same source.
+        const questions = {{ quizzes['economizers'] | safeScriptJson | safe }};
+
+        Quiz.mount('#quiz', questions, {
+            next: {{ page.fileSlug | nextQuiz | safeScriptJson | safe }},
+            slug: 'economizers',
+            title: 'Economizers',
+            defaultCount: 10,
+            defaultOrder: 'sequential'
+        });
+    })();
+</script>
+{% endblock %}
