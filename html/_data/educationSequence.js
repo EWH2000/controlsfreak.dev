@@ -40,6 +40,7 @@ const order = [
     "/education/air-handlers.html",
     "/education/economizers.html",
     "/education/building-pressure.html",
+    "/education/air-unit-identification.html",
     "/education/function-blocks.html",
     "/education/modbus-basics.html",
     "/education/modbus-decoding.html",

@@ -1,0 +1,758 @@
+---
+title: Unit Identification — controlsfreak.dev
+description: Naming an unfamiliar air-side unit — three field questions, the RTU / AHU / MAU / split lineup, nameplate and schedule literacy, and when the paper lies.
+canonical: https://controlsfreak.dev/education/air-unit-identification.html
+nav: education
+category: forced-air
+pairedQuiz: https://controlsfreak.dev/practice/air-unit-identification.html
+keywords: rtu ahu mau doas makeup air unit heat pump split system fan coil nameplate mechanical schedule tag tonnage model number identify what is this unit
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block head %}
+    <style>
+        /* Diagram + legend + flow-active rules live in styles.css as
+           .edu-svg / .edu-legend. Only the lineup-walker widget
+           internals are page-specific (aid-w-*). */
+
+        /* Three question groups side by side, wrapping on narrow
+           columns (the bp-w-top pattern). */
+        .aid-w-top {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem 2rem;
+            align-items: flex-start;
+            margin-bottom: 0.85rem;
+        }
+
+        /* Stateful answer buttons — aria-pressed drives the visual
+           (the air-handlers / building-pressure pattern). Focus ring
+           lives in the shared FOCUS INDICATORS block (.aid-w-mode-btn
+           entry). */
+        .aid-w-modes { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+        .aid-w-mode-btn {
+            font-family: var(--mono);
+            font-size: 0.72rem;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 2px;
+            padding: 0.32rem 0.7rem;
+            cursor: pointer;
+        }
+        .aid-w-mode-btn:hover { color: var(--text-bright); border-color: var(--text-dim); }
+        .aid-w-mode-btn[aria-pressed="true"] {
+            color: var(--text-bright);
+            background: var(--surface);
+            border-color: var(--accent);
+        }
+
+        /* Mystery scene cards — the field notes the reader answers
+           from. Static markup (so the units walker reaches the
+           data-us spans); JS only toggles [hidden]. */
+        .aid-w-scene {
+            font-size: 0.86rem;
+            line-height: 1.7;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--blue);
+            padding: 0.55rem 0.85rem;
+            margin-bottom: 0.85rem;
+        }
+
+        /* Lineup cards — alive / eliminated / identified (the
+           bp-w-stage chip vocabulary, plus an .out state). */
+        .aid-w-lineup {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            align-items: center;
+            margin-bottom: 0.85rem;
+        }
+        .aid-w-card {
+            font-family: var(--mono);
+            font-size: 0.72rem;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: var(--text);
+            background: var(--bg);
+            border: 1px solid var(--text-dim);
+            border-radius: 2px;
+            padding: 0.2rem 0.55rem;
+            transition: opacity 200ms linear;
+        }
+        .aid-w-card.out {
+            color: var(--text-dim);
+            border-color: var(--border);
+            border-style: dashed;
+            opacity: 0.35;
+        }
+        .aid-w-card.hit {
+            color: var(--text-bright);
+            background: var(--surface);
+            border-color: var(--accent);
+            opacity: 1;
+        }
+
+        /* The radio call is a phrase, not a number — size down from
+           the readout-value default so it stays on one line longer. */
+        #aid-widget .widget-readout-value { font-size: 1rem; }
+
+        /* Status line — same left-stripe idiom as the air-handlers /
+           building-pressure widgets (normal / warn). */
+        .aid-w-status {
+            font-family: var(--mono);
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            padding: 0.45rem 0.7rem;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--accent);
+            border-radius: 2px;
+            color: var(--text-bright);
+            margin-bottom: 0.5rem;
+            transition: border-left-color 200ms linear;
+        }
+        .aid-w-status.warn { border-left-color: var(--heat); }
+
+        /* Reveal area below the status line. Space reserved so the
+           anecdote doesn't reflow the page when it appears. */
+        .aid-w-alert {
+            min-height: 4.0rem;
+            margin-top: 0.25rem;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Education · Unit Identification</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">Unit Identification <span class="tool-tag">Air Systems</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                The last three pages taught what air handlers do. This one starts earlier: on the roof, in front of a box you've never met, with the radio asking what you're looking at. Every air-side unit in a commercial building is the same air path wearing a different cabinet — but the cabinet is what dispatch, the drawings, and the BMS all call it by, so naming it correctly is the first move of every job that follows. One question, start to finish: <em>you're standing in front of an air-side unit you've never seen — how do you work out what it is, what it does, and what to call it on the radio?</em>
+            </p>
+
+            <div class="callout">
+                <p style="font-size:0.86rem;line-height:1.7;">
+                    The chapter opener made a promise: telling the family apart — AHU, RTU, makeup-air unit, fan coil — is its own question, and it would get its own page. This is that page, and it leans hard on <a href="/education/air-handlers.html">Air Handlers</a>: every family below is that page's air path in a different box. If "walk the stations" doesn't ring a bell, read the opener first — the lineup makes far more sense when you already know what every cabinet must contain.
+                </p>
+            </div>
+
+            <!-- ───────────────── 1 · Three questions ───────────────── -->
+            <h2 class="subhead" id="three-questions">Three Questions Before the Nameplate</h2>
+
+            <p>
+                Resist the urge to start with the nameplate. It's the most authoritative label on the unit and also the hardest to reach — behind an access panel, painted over, sun-bleached, ten feet up — and, as the rest of this page will show, paperwork of every kind has a way of lying. Start instead with three questions you can answer from ten feet away with your hands in your pockets. <em>Where does it sit?</em> <em>What's in the cabinet?</em> <em>Where does its air come from — and where does it go?</em> Between them they corner almost everything on a commercial roof or in a mechanical room.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                Each question reads a different layer. Siting is the cheap first cut: a curb on the roof, a footprint in a mechanical room, a small box in or above the occupied space, or two separate pieces with something running between them. The cabinet is the deep tell: compressors and a gas burner mean the unit brought its own plant along; bare coils with pipe pairs disappearing toward a boiler room or a chiller mean it borrows someone else's; a lone fan with a small coil means it's a terminal device, not an air handler at all. And the connections are the fingerprint: a return duct plus an outside-air hood means it recirculates and mixes; an intake hood with no return duct means it's a 100% outside-air machine; a pair of grilles to the room means the room <em>is</em> the ductwork.
+            </p>
+
+            <svg class="edu-svg" viewBox="0 0 540 326" role="img" aria-labelledby="aid-d1-title aid-d1-desc" font-family="var(--mono)">
+                <title id="aid-d1-title">The three field questions, asked of one generic unit</title>
+                <desc id="aid-d1-desc">A generic air unit drawn as a cabinet with a question mark inside, sitting on a curb. Three numbered questions point at its three readable layers: where does it sit points at the curb, what is in the cabinet points at the box itself, and where does its air come from and go points at the return, outside-air, and supply duct connections.</desc>
+
+                <!-- ground + curb + cabinet -->
+                <line x1="30" y1="252" x2="510" y2="252" stroke="var(--border)" stroke-width="2"/>
+                <rect x="215" y="232" width="120" height="20" fill="none" stroke="var(--text-dim)" stroke-width="1.5"/>
+                <rect x="200" y="118" width="150" height="114" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+                <text x="275" y="192" text-anchor="middle" font-size="40" font-weight="bold" fill="var(--text-dim)">?</text>
+
+                <!-- duct connections -->
+                <path id="aid-d1-oa" data-flow="air" d="M245 66 V118" fill="none" stroke="var(--teal)" stroke-width="3"/>
+                <polygon points="240,106 250,106 245,116" fill="var(--teal)"/>
+                <text x="245" y="54" text-anchor="middle" font-size="13" fill="var(--text)">outside air</text>
+
+                <path id="aid-d1-ra" data-flow="air" d="M64 200 H200" fill="none" stroke="var(--blue-cool)" stroke-width="3"/>
+                <polygon points="188,195 188,205 198,200" fill="var(--blue-cool)"/>
+                <text x="64" y="186" font-size="13" fill="var(--text)">return air</text>
+
+                <path id="aid-d1-sa" data-flow="air" d="M350 200 H486" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <polygon points="476,195 476,205 486,200" fill="var(--blue)"/>
+                <text x="486" y="186" text-anchor="end" font-size="13" fill="var(--text)">supply air</text>
+
+                <!-- the three questions -->
+                <text x="30" y="292" font-size="14" fill="var(--text-bright)">1 · where does it sit?</text>
+                <line x1="182" y1="286" x2="216" y2="250" stroke="var(--text-dim)" stroke-width="1" stroke-dasharray="3 3"/>
+
+                <text x="30" y="94" font-size="14" fill="var(--text-bright)">2 · what's in the cabinet?</text>
+                <line x1="150" y1="102" x2="200" y2="134" stroke="var(--text-dim)" stroke-width="1" stroke-dasharray="3 3"/>
+
+                <text x="510" y="286" text-anchor="end" font-size="14" fill="var(--text-bright)">3 · where does its air</text>
+                <text x="510" y="304" text-anchor="end" font-size="14" fill="var(--text-bright)">come from — and go?</text>
+                <line x1="460" y1="270" x2="460" y2="210" stroke="var(--text-dim)" stroke-width="1" stroke-dasharray="3 3"/>
+            </svg>
+
+            <div class="edu-legend">
+                <span><span class="sw oa"></span>outside air</span>
+                <span><span class="sw ra"></span>return air</span>
+                <span><span class="sw sa"></span>supply air</span>
+            </div>
+
+            <!-- ───────────────── 2 · The lineup ───────────────── -->
+            <h2 class="subhead" id="the-lineup">The Lineup: Five Families, Five Fingerprints</h2>
+
+            <p>
+                Read the lineup with those questions in hand. The <em>packaged rooftop unit</em> answers all three loudly: it sits on a curb; its cabinet contains everything — a filter rack behind the intake hood, a DX cooling coil with its own compressors and condenser fans, usually a gas heat exchanger with a flue; and both duct connections drop through the curb, return coming up from the building and supply going back down. It's everything the <a href="/education/air-handlers.html">chapter opener</a> drew, factory-folded into one weatherproof box, and the condenser-fan section spinning at one end is the giveaway that the refrigerant plant lives onboard.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                One variant hides in plain sight: the <em>heat-pump RTU</em>. Same curb, same hood, same cabinet — but its refrigerant circuit can run in reverse and heat the building with the same coil that cooled it (a reversing valve does the switching; it's the <a href="/education/refrigerant-cycle-basics.html#components">refrigerant cycle</a> run both directions). From the curb in July you cannot tell it from a straight-cooling unit, and that's worth saying plainly: <strong>the heat-pump tell is paper, not sheet metal</strong> — a model code one letter different from its cooling-only sibling, a nameplate whose heating section names the compressor instead of a burner. It's the first hint of where this page goes next: some questions only the nameplate can answer.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                The <em>built-up air handler</em> answers the cabinet question the opposite way: nothing in the box but air-side equipment. It sits in a mechanical room (a penthouse counts), often assembled on site in sections big enough to walk past — or through — and its coils are piped from a plant: insulated pipe pairs heading off toward a chiller or a boiler, valves and actuators at the coil connections, and no compressor anywhere. Find pipe pairs and the unit is a borrower; the plant lives elsewhere. That distinction survives even when the address doesn't cooperate — a built-up unit on a roof is still an air handler, because <strong>the pipes outrank the address</strong>.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                The <em>makeup-air unit</em> is named by what's missing. Walk around it twice: intake hood, supply duct dropping into the building, often a burner section — and no return duct at all. It conditions 100% outside air, because its job isn't to recirculate the building's air but to replace what something else is throwing away: kitchen hoods, big process exhaust, a floor of lab fans. It's the "<a href="/education/building-pressure.html#dampers-pressure">more air in</a>" machine from the last page, made into its own box. Its polished cousin the <em>DOAS</em> (dedicated outdoor-air system) does the same 100%-OA job for ventilation, usually with energy recovery — recognizing one is enough here; what it does to the air psychrometrically is its own future topic.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                The <em>split system</em> answers the siting question with "two pieces": a condensing unit outdoors — compressor, condenser coil, fan, on a pad or a flat roof — and an air mover indoors, connected not by ducts but by a <em>refrigerant lineset</em>: two copper lines, the fatter one insulated, running between the halves. Follow the lineset and you've identified both ends at once. The indoor half ranges from a closet air handler to a wall cassette; the outdoor half is the one with the nameplate that matters.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                And the little one, included so you can rule it out: the <em>fan coil</em>. A box a couple of feet across, in or above the space it serves, holding exactly what the name says — a fan and a piped coil — with barely any ductwork and usually no outside-air connection of its own. It's a terminal device, a hydronic load with a fan on it, not an air handler; this chapter owes it recognition only, and the family gets its own page someday. What matters today is not mistaking one for the air handler its graphic might claim it is. Hold that thought.
+            </p>
+
+            <svg class="edu-svg" viewBox="0 0 540 592" role="img" aria-labelledby="aid-d2-title aid-d2-desc" font-family="var(--mono)">
+                <title id="aid-d2-title">Five families, five connection fingerprints</title>
+                <desc id="aid-d2-desc">Five rows, one per family. The packaged RTU takes return and outside air in and supplies air out, with DX and a burner onboard. The built-up AHU has the same three ducts but only coils inside, with a pipe pair from the plant. The makeup-air unit takes outside air only — its missing return duct is drawn as a dashed ghost. The split system is two boxes joined by a refrigerant lineset. The fan coil hangs above the ceiling with a small pipe pair and a grille below.</desc>
+
+                <!-- row 1 · packaged RTU -->
+                <text x="10" y="36" font-size="15" fill="var(--text-bright)">PACKAGED RTU</text>
+                <text x="10" y="56" font-size="12" fill="var(--text-dim)">everything onboard —</text>
+                <text x="10" y="72" font-size="12" fill="var(--text-dim)">compressors, burner</text>
+                <rect x="300" y="92" width="140" height="12" fill="none" stroke="var(--text-dim)" stroke-width="1.5"/>
+                <line x1="190" y1="104" x2="530" y2="104" stroke="var(--border)" stroke-width="2"/>
+                <rect x="290" y="36" width="160" height="56" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+                <text x="352" y="68" text-anchor="middle" font-size="12" fill="var(--text-dim)">DX + BURNER</text>
+                <circle cx="426" cy="64" r="12" fill="none" stroke="var(--text-dim)" stroke-width="1.5"/>
+                <line x1="426" y1="54" x2="426" y2="74" stroke="var(--text-dim)" stroke-width="1"/>
+                <line x1="416" y1="64" x2="436" y2="64" stroke="var(--text-dim)" stroke-width="1"/>
+                <path id="aid-d2-rtu-oa" data-flow="air" d="M200 50 H290" fill="none" stroke="var(--teal)" stroke-width="3"/>
+                <polygon points="280,45 280,55 290,50 " fill="var(--teal)"/>
+                <path id="aid-d2-rtu-ra" data-flow="air" d="M200 78 H290" fill="none" stroke="var(--blue-cool)" stroke-width="3"/>
+                <polygon points="280,73 280,83 290,78" fill="var(--blue-cool)"/>
+                <path id="aid-d2-rtu-sa" data-flow="air" d="M450 64 H530" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <polygon points="520,59 520,69 530,64" fill="var(--blue)"/>
+
+                <!-- row 2 · built-up AHU -->
+                <text x="10" y="150" font-size="15" fill="var(--text-bright)">BUILT-UP AHU</text>
+                <text x="10" y="170" font-size="12" fill="var(--text-dim)">bare coils — pipe</text>
+                <text x="10" y="186" font-size="12" fill="var(--text-dim)">pairs from a plant</text>
+                <rect x="290" y="150" width="160" height="56" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+                <text x="370" y="182" text-anchor="middle" font-size="12" fill="var(--text-dim)">COILS ONLY</text>
+                <path id="aid-d2-ahu-oa" data-flow="air" d="M200 164 H290" fill="none" stroke="var(--teal)" stroke-width="3"/>
+                <polygon points="280,159 280,169 290,164" fill="var(--teal)"/>
+                <path id="aid-d2-ahu-ra" data-flow="air" d="M200 192 H290" fill="none" stroke="var(--blue-cool)" stroke-width="3"/>
+                <polygon points="280,187 280,197 290,192" fill="var(--blue-cool)"/>
+                <path id="aid-d2-ahu-sa" data-flow="air" d="M450 178 H530" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <polygon points="520,173 520,183 530,178" fill="var(--blue)"/>
+                <path id="aid-d2-ahu-hws" data-flow="supply" d="M330 232 V206" fill="none" stroke="var(--blue)" stroke-width="2.5"/>
+                <path id="aid-d2-ahu-hwr" data-flow="return" d="M348 206 V232" fill="none" stroke="var(--blue-cool)" stroke-width="2.5" stroke-dasharray="7 4"/>
+                <text x="364" y="228" font-size="12" fill="var(--text-dim)">from the plant</text>
+
+                <!-- row 3 · MAU / DOAS -->
+                <text x="10" y="270" font-size="15" fill="var(--text-bright)">MAU / DOAS</text>
+                <text x="10" y="290" font-size="12" fill="var(--text-dim)">nothing comes back —</text>
+                <text x="10" y="306" font-size="12" fill="var(--text-dim)">100% outside air</text>
+                <rect x="290" y="268" width="160" height="56" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+                <text x="370" y="300" text-anchor="middle" font-size="12" fill="var(--text-dim)">100% OA</text>
+                <path id="aid-d2-mau-oa" data-flow="air" d="M200 282 H290" fill="none" stroke="var(--teal)" stroke-width="3"/>
+                <polygon points="280,277 280,287 290,282" fill="var(--teal)"/>
+                <path d="M200 312 H290" fill="none" stroke="var(--text-dim)" stroke-width="2" stroke-dasharray="4 7" opacity="0.55"/>
+                <text x="200" y="342" font-size="12" fill="var(--text-dim)">no return duct — that's the tell</text>
+                <path id="aid-d2-mau-sa" data-flow="air" d="M450 296 H530" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <polygon points="520,291 520,301 530,296" fill="var(--blue)"/>
+
+                <!-- row 4 · split system -->
+                <text x="10" y="390" font-size="15" fill="var(--text-bright)">SPLIT SYSTEM</text>
+                <text x="10" y="410" font-size="12" fill="var(--text-dim)">two pieces —</text>
+                <text x="10" y="426" font-size="12" fill="var(--text-dim)">a lineset between</text>
+                <rect x="200" y="386" width="104" height="56" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+                <text x="252" y="418" text-anchor="middle" font-size="12" fill="var(--text-dim)">COMPRESSOR</text>
+                <rect x="384" y="386" width="104" height="56" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+                <text x="436" y="418" text-anchor="middle" font-size="12" fill="var(--text-dim)">FAN + COIL</text>
+                <line x1="304" y1="404" x2="384" y2="404" stroke="var(--text-dim)" stroke-width="2.5"/>
+                <line x1="304" y1="424" x2="384" y2="424" stroke="var(--text-dim)" stroke-width="1.5" stroke-dasharray="2 3"/>
+                <text x="344" y="396" text-anchor="middle" font-size="12" fill="var(--text-dim)">lineset</text>
+                <text x="252" y="460" text-anchor="middle" font-size="12" fill="var(--text-dim)">outdoors</text>
+                <text x="436" y="460" text-anchor="middle" font-size="12" fill="var(--text-dim)">indoors</text>
+
+                <!-- row 5 · fan coil -->
+                <text x="10" y="504" font-size="15" fill="var(--text-bright)">FAN COIL</text>
+                <text x="10" y="524" font-size="12" fill="var(--text-dim)">in the space — a fan</text>
+                <text x="10" y="540" font-size="12" fill="var(--text-dim)">and a piped coil</text>
+                <line x1="190" y1="496" x2="530" y2="496" stroke="var(--border)" stroke-width="2" stroke-dasharray="8 5"/>
+                <text x="530" y="488" text-anchor="end" font-size="12" fill="var(--text-dim)">ceiling</text>
+                <rect x="320" y="506" width="100" height="44" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+                <text x="370" y="532" text-anchor="middle" font-size="12" fill="var(--text-dim)">FAN + COIL</text>
+                <path id="aid-d2-fcu-hws" data-flow="supply" d="M244 516 H320" fill="none" stroke="var(--blue)" stroke-width="2.5"/>
+                <path id="aid-d2-fcu-hwr" data-flow="return" d="M320 534 H244" fill="none" stroke="var(--blue-cool)" stroke-width="2.5" stroke-dasharray="7 4"/>
+                <text x="240" y="566" font-size="12" fill="var(--text-dim)">from the plant</text>
+                <path id="aid-d2-fcu-ra" data-flow="air" d="M356 578 V550" fill="none" stroke="var(--blue-cool)" stroke-width="3"/>
+                <polygon points="351,560 361,560 356,550" fill="var(--blue-cool)"/>
+                <path id="aid-d2-fcu-sa" data-flow="air" d="M394 550 V578" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <polygon points="389,568 399,568 394,578" fill="var(--blue)"/>
+                <text x="430" y="572" font-size="12" fill="var(--text-dim)">grille below</text>
+            </svg>
+
+            <div class="edu-legend">
+                <span><span class="sw oa"></span>outside air</span>
+                <span><span class="sw ra"></span>return air</span>
+                <span><span class="sw sa"></span>supply air</span>
+                <span><span class="sw supply"></span>water · supply</span>
+                <span><span class="sw return"></span>water · return</span>
+            </div>
+
+            <div class="callout" style="margin-top:1.5rem;">
+                <h3>CV or VAV? <span>· a personality, not a family</span></h3>
+                <p>Any of the ducted units can be either. Constant-volume moves a fixed airflow whenever it runs; variable-air-volume changes airflow to follow the load. The VAV signature is a conjunction, not a single part: a drive on the supply fan, <em>and</em> terminal boxes with actuators out along the supply duct, <em>and</em> a duct-static setpoint the fan serves. A drive alone proves nothing — modern constant-volume units carry <a href="/education/vfds.html#cube-law">VFDs</a> for balancing and soft starts too. So follow the supply duct: boxes with damper actuators say VAV; diffusers straight off the trunk usually say constant volume — with one modern exception. Newer single-zone packaged units vary fan speed to the zone's own load with no boxes and no static setpoint (single-zone VAV, an energy-code requirement on larger units since the early 2010s) — on a bare trunk, watch whether the drive holds one speed or tracks the load. What terminal boxes are actually doing is the next page of this chapter, and a look-alike that isn't VAV at all — VVT, zone dampers riding a constant-volume unit — is parked for a page of its own.</p>
+            </div>
+
+            <!-- ───────────────── 3 · The paper trail ───────────────── -->
+            <h2 class="subhead" id="paper-trail">The Paper Trail: Tags, Schedules, Nameplates</h2>
+
+            <p>
+                Now the paper. Every unit on the mechanical drawings carries a <em>schedule tag</em> — AHU-1, RTU-3, MAU-1, EF-2 — a short family code, a hyphen, a number. The tag is the thread that ties everything together: it's stenciled or stickered on the cabinet (check the disconnect too), it names the unit's row in the <em>mechanical schedule</em>, and it labels the unit's symbol on the plan views. The schedule itself is a table on the M-series drawings, one row per unit: design airflow, external static, coil capacities, electrical data, and — the two columns worth reading first — <em>location</em> and <em>serves</em>. One disambiguation before anyone gets hurt: the mechanical schedule is a table on a drawing. It is not a <a href="/education/bacnet-basics.html">BACnet Schedule object</a>, and it is not the time-of-day occupancy schedule. Three unrelated things share the word, and "check the schedule" means a different afternoon depending on which one your caller meant.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                The <em>nameplate</em> is the unit's own testimony — the factory's word, not the designer's. Manufacturer, model, serial; electrical ratings (voltage and phase, minimum circuit ampacity, maximum overcurrent protection — the numbers the wire and breaker were sized from); refrigerant type and factory charge on packaged DX equipment. Model strings reward a closer look — see the worked example below. And when nameplate and schedule disagree — a model number the schedule never heard of — you've just learned the most valuable thing paper can teach: someone replaced this unit, and the drawings don't know yet.
+            </p>
+
+            <svg class="edu-svg" viewBox="0 0 540 350" role="img" aria-labelledby="aid-d3-title aid-d3-desc" font-family="var(--mono)">
+                <title id="aid-d3-title">One tag, three places: cabinet, schedule, plan</title>
+                <desc id="aid-d3-desc">A triangle of paper trail nodes joined by dashed leaders. The unit cabinet carries the stenciled tag RTU-3; the mechanical schedule table has one row per unit with the RTU-3 row highlighted and its value cells drawn as blanks; the roof plan shows the same tag in a bubble at the unit's location. The tag is the thread that ties all three together.</desc>
+
+                <!-- the cabinet -->
+                <rect x="40" y="40" width="130" height="54" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+                <text x="105" y="72" text-anchor="middle" font-size="16" font-weight="bold" fill="var(--text-bright)">RTU-3</text>
+                <text x="105" y="116" text-anchor="middle" font-size="12" fill="var(--text-dim)">on the cabinet</text>
+
+                <!-- the schedule -->
+                <text x="420" y="22" text-anchor="middle" font-size="12" fill="var(--text-dim)">the mechanical schedule</text>
+                <rect x="330" y="30" width="180" height="120" fill="none" stroke="var(--border)" stroke-width="1.5"/>
+                <line x1="330" y1="54" x2="510" y2="54" stroke="var(--border)" stroke-width="1"/>
+                <line x1="392" y1="30" x2="392" y2="150" stroke="var(--border)" stroke-width="1"/>
+                <line x1="452" y1="30" x2="452" y2="150" stroke="var(--border)" stroke-width="1"/>
+                <text x="361" y="47" text-anchor="middle" font-size="12" fill="var(--text-dim)">TAG</text>
+                <text x="422" y="47" text-anchor="middle" font-size="12" fill="var(--text-dim)">CFM</text>
+                <text x="481" y="47" text-anchor="middle" font-size="12" fill="var(--text-dim)">SERVES</text>
+                <rect x="331" y="102" width="178" height="24" fill="var(--accent)" fill-opacity="0.15" stroke="var(--accent)" stroke-width="1"/>
+                <text x="361" y="71" text-anchor="middle" font-size="12" fill="var(--text)">RTU-1</text>
+                <text x="361" y="95" text-anchor="middle" font-size="12" fill="var(--text)">RTU-2</text>
+                <text x="361" y="119" text-anchor="middle" font-size="12" fill="var(--text-bright)">RTU-3</text>
+                <text x="361" y="143" text-anchor="middle" font-size="12" fill="var(--text)">RTU-4</text>
+                <line x1="404" y1="67" x2="440" y2="67" stroke="var(--text-dim)" stroke-width="1"/>
+                <line x1="404" y1="91" x2="440" y2="91" stroke="var(--text-dim)" stroke-width="1"/>
+                <line x1="404" y1="115" x2="440" y2="115" stroke="var(--text-dim)" stroke-width="1"/>
+                <line x1="404" y1="139" x2="440" y2="139" stroke="var(--text-dim)" stroke-width="1"/>
+                <line x1="462" y1="67" x2="500" y2="67" stroke="var(--text-dim)" stroke-width="1"/>
+                <line x1="462" y1="91" x2="500" y2="91" stroke="var(--text-dim)" stroke-width="1"/>
+                <line x1="462" y1="115" x2="500" y2="115" stroke="var(--text-dim)" stroke-width="1"/>
+                <line x1="462" y1="139" x2="500" y2="139" stroke="var(--text-dim)" stroke-width="1"/>
+
+                <!-- the plan -->
+                <rect x="120" y="230" width="180" height="90" fill="none" stroke="var(--border)" stroke-width="1.5"/>
+                <line x1="120" y1="275" x2="220" y2="275" stroke="var(--border)" stroke-width="1"/>
+                <line x1="220" y1="230" x2="220" y2="320" stroke="var(--border)" stroke-width="1"/>
+                <ellipse cx="260" cy="256" rx="27" ry="14" fill="none" stroke="var(--text-dim)" stroke-width="1.5"/>
+                <text x="260" y="260" text-anchor="middle" font-size="12" fill="var(--text)">RTU-3</text>
+                <text x="210" y="340" text-anchor="middle" font-size="12" fill="var(--text-dim)">the roof plan</text>
+
+                <!-- the thread -->
+                <line x1="172" y1="66" x2="328" y2="90" stroke="var(--text-dim)" stroke-width="1" stroke-dasharray="4 4"/>
+                <line x1="390" y1="152" x2="292" y2="240" stroke="var(--text-dim)" stroke-width="1" stroke-dasharray="4 4"/>
+                <line x1="118" y1="238" x2="82" y2="98" stroke="var(--text-dim)" stroke-width="1" stroke-dasharray="4 4"/>
+                <text x="196" y="180" font-size="13" fill="var(--text)">one tag, three places</text>
+            </svg>
+
+            <div class="callout" style="margin-top:1.5rem;">
+                <h3>Worked example <span>· tons out of a model number</span></h3>
+                <p>Somewhere in most packaged-unit model numbers is the nominal cooling capacity in thousands of BTU/h — nameplates speak IP; the parentheses here are for scale. A unit with <strong>036</strong> in the string is 36,000&nbsp;BTU/h; divide by 12,000&nbsp;BTU/h per ton and it's a 3-ton box (about 10.6&nbsp;kW). A <strong>048</strong> is 4 tons (14.1&nbsp;kW); a <strong>060</strong> is 5 tons (17.6&nbsp;kW). It's a convention, not a law — placements differ by manufacturer, and some strings encode airflow instead — so treat the digits as a hypothesis and the mechanical schedule as the arbiter. Heat pumps often betray themselves in the same string: a family letter that differs from the straight-cooling version of the same cabinet.</p>
+            </div>
+
+            <!-- ───────────────── 4 · When the paper lies ───────────────── -->
+            <h2 class="subhead" id="paper-lies">When the Paper Lies</h2>
+
+            <p>
+                Everything in the last section assumed the paper is telling the truth. Sometimes none of it is. Buildings outlive their documentation: units get replaced and the schedule never hears about it; graphics get built by someone who never walked the roof, so equipment lands in the software under the wrong family entirely; tags fall off, get painted over, or were never applied. And the people on site — who are supposed to be the living documentation — inherit the same confusion, because they learned the names from the same wrong graphics. When the BAS name, the prints, and the person walking you around all disagree, you're not identifying a unit anymore; you're auditing three unreliable witnesses.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                There's a clean way out, and it comes from the controls side: make the system announce itself, and <strong>command the season that's asleep</strong>. Pick the unidentified equipment in software and command a specific output that can't matter right now — a heating valve in July, a chilled-water valve in January. When the plant behind that output is truly de-energized — the boiler cold, the chiller down — the command moves a signal, not the building. Then stand at the cabinet you suspect and watch for the announcement: most controllers carry an output LED per point, and where there's no light to watch, put a meter on the output terminals and look for the volts (or the milliamps) to move. Point commanded, cabinet answered — one line of the map recovered. Write it down before you touch the next one.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                Guardrails, because an override is still an override. First, confirm the season really is asleep: plenty of buildings run hot water all summer for reheat and dehumidification, so check that the plant is off and the loop cold before trusting a heating command to be harmless. Command a specific output, not a demand — on a packaged unit a first-stage "cooling call" isn't one output, it's a sequence, and an integrated economizer answers it by opening the outside-air damper. Keep it brief and keep it boring — a valve stroke held for seconds, not an experiment left running over lunch. Stay away from anything that can't tolerate even a harmless-looking nudge: life-safety systems, lab and pressure-critical spaces, and any freeze-risk path — an outside-air damper in January is not a diagnostic tool, and it will happily volunteer for the job if you command "cooling" instead of a valve. Tell the operator what you're doing before you do it. And release everything you touched, then watch it actually return to auto — <strong>an override left behind is a lie you added to the pile</strong>, and the next tech will be auditing you.
+            </p>
+
+            <!-- ───────────────── 5 · Lineup-walker widget ───────────────── -->
+            <h2 class="subhead" id="name-the-box">Name the Box Yourself</h2>
+
+            <p>
+                The lineup, live. Answer the three questions in any order — every answer knocks families out until one is left standing, and the widget tells you what to call it on the radio. Better: make it a game. Each "Try this" button deals a scene — field clues in field prose, including what the paperwork claims. Read the clues, answer the questions yourself, and see whether the widget agrees with you. Then try the last mystery, which reproduces a building this page's author has personally had to untangle.
+            </p>
+
+            <div class="widget" id="aid-widget">
+                <div class="widget-try">
+                    <span class="lbl">Try this:</span>
+                    <button type="button" data-aid-mystery="fresh">free walk — no clues</button>
+                    <button type="button" data-aid-mystery="curb">the box on the curb</button>
+                    <button type="button" data-aid-mystery="basement">the basement giant</button>
+                    <button type="button" data-aid-mystery="no-return">the machine with no return duct</button>
+                    <button type="button" data-aid-mystery="liar">the building where nothing matched</button>
+                </div>
+
+                <div class="aid-w-scenes">
+                    <div class="aid-w-scene" id="aid-w-scene-curb" hidden>
+                        <strong>The box on the curb.</strong> Roof, on a curb, one cabinet. Condenser fans spin behind a grille at one end; a small flue pokes out of an access panel; behind the intake hood there's a filter rack. Two duct connections drop through the curb into the building — one coming up from the space, one going back down. The disconnect is stenciled <em>RTU-4</em>, which for once agrees with everything else.
+                    </div>
+                    <div class="aid-w-scene" id="aid-w-scene-basement" hidden>
+                        <strong>The basement giant.</strong> A sheet-metal box the size of a small room, assembled in sections, humming in a basement mechanical gallery. Return and outside-air ducts meet at a louvered mixing section; two insulated pipe pairs enter the casing near the coils, valves and actuators at the connections; you can open a door and walk past the filter bank. No compressor, no flue, anywhere.
+                    </div>
+                    <div class="aid-w-scene" id="aid-w-scene-no-return" hidden>
+                        <strong>The machine with no return duct.</strong> Roof again, above the kitchen. Intake hood, burner section, supply duct heading down into the building — and that's it. You walk around it twice looking for the return connection; there isn't one. Fifty feet away, a grease-hooded exhaust fan is throwing a gale.
+                    </div>
+                    <div class="aid-w-scene" id="aid-w-scene-liar" hidden>
+                        <strong>The building where nothing matched.</strong> The graphic calls it AHU-2. The mechanical schedule says AHU-2 is a <span data-us="30,000&nbsp;CFM" data-metric="51,000&nbsp;m³/h">30,000&nbsp;CFM</span> built-up unit in the penthouse. You are not in the penthouse — you're on a ladder in a ceiling bay, nose to nose with a box <span data-us="two feet" data-metric="0.6&nbsp;m">two feet</span> across: a small fan, a piped coil on a pair of skinny lines, a condensate pan, a grille in the tile below it. Believe the box.
+                    </div>
+                </div>
+
+                <div class="aid-w-top">
+                    <div>
+                        <div class="widget-readout-label" id="aid-w-sit-lbl">1 · Where does it sit?</div>
+                        <div class="aid-w-modes" role="group" aria-labelledby="aid-w-sit-lbl">
+                            <button type="button" class="aid-w-mode-btn" data-aid-sit="roof" aria-pressed="false">Roof curb</button>
+                            <button type="button" class="aid-w-mode-btn" data-aid-sit="mech" aria-pressed="false">Mech room</button>
+                            <button type="button" class="aid-w-mode-btn" data-aid-sit="space" aria-pressed="false">In the space</button>
+                            <button type="button" class="aid-w-mode-btn" data-aid-sit="two" aria-pressed="false">Two pieces</button>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="widget-readout-label" id="aid-w-cab-lbl">2 · What's in the cabinet?</div>
+                        <div class="aid-w-modes" role="group" aria-labelledby="aid-w-cab-lbl">
+                            <button type="button" class="aid-w-mode-btn" data-aid-cab="all" aria-pressed="false">Compressors + burner</button>
+                            <button type="button" class="aid-w-mode-btn" data-aid-cab="piped" aria-pressed="false">Coils piped from a plant</button>
+                            <button type="button" class="aid-w-mode-btn" data-aid-cab="fan" aria-pressed="false">A fan and a small coil</button>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="widget-readout-label" id="aid-w-air-lbl">3 · Where does its air come from?</div>
+                        <div class="aid-w-modes" role="group" aria-labelledby="aid-w-air-lbl">
+                            <button type="button" class="aid-w-mode-btn" data-aid-air="mix" aria-pressed="false">Return duct + OA hood</button>
+                            <button type="button" class="aid-w-mode-btn" data-aid-air="oa" aria-pressed="false">Outside only — no return</button>
+                            <button type="button" class="aid-w-mode-btn" data-aid-air="room" aria-pressed="false">The room itself</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="aid-w-lineup" id="aid-w-lineup">
+                    <span class="widget-readout-label" id="aid-w-lineup-lbl">The lineup</span>
+                    <span class="aid-w-card" id="aid-w-card-rtu">Packaged RTU</span>
+                    <span class="aid-w-card" id="aid-w-card-ahu">Built-up AHU</span>
+                    <span class="aid-w-card" id="aid-w-card-mau">MAU / DOAS</span>
+                    <span class="aid-w-card" id="aid-w-card-split">Split system</span>
+                    <span class="aid-w-card" id="aid-w-card-fcu">Fan coil</span>
+                </div>
+
+                <div>
+                    <div class="widget-readout-label">What to call it</div>
+                    <div class="widget-readout-value" id="aid-w-call">—</div>
+                </div>
+
+                <div class="aid-w-status" id="aid-w-status" aria-live="polite">Five families standing. Answer any question, in any order.</div>
+                <div class="aid-w-alert" id="aid-w-alert"></div>
+            </div>
+
+            <p class="ref-note">
+                What the widget holds still: the lineup is the common cases, and real buildings blur it — rooftop air handlers with plant coils (the widget lets you find one), packaged units indoors, ducted splits, water-source heat pumps hiding above ceilings. The three questions still work on every one of them, because they read the connections and the cabinet, not the label. When an answer combination matches nothing, that isn't the widget failing — that's the field telling you to look again.
+            </p>
+
+            <!-- ───────────────── 6 · Same stations ───────────────── -->
+            <h2 class="subhead" id="same-stations">Whatever It's Called, Walk the Stations</h2>
+
+            <p>
+                Here is the payoff the chapter opener promised. Once the box has a name, everything you already know applies unchanged, because <strong>whatever the nameplate says, it's the same stations</strong> — return or intake, mix, filter, coils, fan — in the same order, whether they're spread across a mechanical room or folded into a curb-mounted cabinet. <a href="/education/air-handlers.html#air-path">Walk the air path</a> and any box in the lineup will confess what it does, even one with no name at all. That's identification, done in the field's order: three questions you can answer with your hands in your pockets, five fingerprints to match them against, the paper trail when it's honest, and a way to make the system announce itself when it isn't. Next in this chapter: the boxes at the far end of the supply duct — VAV systems — and after them, how the fan knows how fast to run.
+            </p>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/tools/refrigerant-pt.html', label: 'Refrigerant P-T & Superheat Calculator'},
+            {href: '/tools/air-mixing.html', label: 'Air-Mixing Calculator'}
+        ],
+        lessons: [
+            {href: '/education/air-handlers.html', label: 'Air Handlers'},
+            {href: '/education/building-pressure.html', label: 'Building Pressure'},
+            {href: '/education/economizers.html', label: 'Economizers'},
+            {href: '/education/vfds.html', label: 'VFDs'},
+            {href: '/education/refrigerant-cycle-basics.html', label: 'Refrigerant Cycle Basics'}
+        ],
+        quizzes: [
+            {href: '/practice/air-unit-identification.html', label: 'Unit Identification'},
+            {href: '/practice/air-handlers.html', label: 'Air Handlers'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/education/">← Back to Education</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<!-- flow-engine.js is loaded site-wide from layouts/page.njk; the init()
+     below is an idempotent refresh so the page reads standalone. D1 and
+     D2 carry data-flow="air" ducts (particle color follows each duct's
+     stroke) plus D2's plant pipe stubs as data-flow="supply|return".
+     The lineup-walker widget below is pure page logic — it never
+     touches the diagrams. -->
+<script>
+    FlowEngine.init();
+
+    // ── Lineup-walker widget ──────────────────────────────────────────
+    // Model: each family carries the answer sets it accepts for the
+    // three field questions; a family survives while every ANSWERED
+    // question's value is in its set. Multi-value sets are deliberate
+    // teaching: the AHU accepts roof siting (pipes outrank the
+    // address) and the MAU accepts either cabinet (100% OA outranks
+    // everything). Exactly one survivor = identified. Zero survivors =
+    // the field telling you to look again.
+    // Mysteries hand the reader a scene (static markup above, so the
+    // units walker reaches the data-us spans) plus a truth triple;
+    // grading requires BOTH the identified family to match the
+    // mystery's answer AND every given answer to match the truth
+    // triple (the multi-value accept sets can reach the right family
+    // through a scene-contradicting answer), and the last mystery
+    // reveals the anecdote when solved. No numeric
+    // readouts, so there is nothing to re-render on unitschange —
+    // the scenes' data-us spans are the units walker's problem.
+    (function () {
+        'use strict';
+
+        const FAMILIES = {
+            rtu: {
+                name: 'Packaged RTU',
+                sit: ['roof'], cab: ['all'], air: ['mix'],
+                call: 'RTU — packaged rooftop',
+                note: 'Everything onboard — the plant came with the box. Heat pump or straight cooling? That&#39;s a nameplate question.'
+            },
+            ahu: {
+                name: 'Built-up AHU',
+                sit: ['mech', 'roof'], cab: ['piped'], air: ['mix'],
+                call: 'AHU — built-up air handler',
+                note: 'Bare coils and pipe pairs — it borrows a plant that lives elsewhere.'
+            },
+            mau: {
+                name: 'MAU / DOAS',
+                sit: ['roof', 'mech'], cab: ['all', 'piped'], air: ['oa'],
+                call: 'MAU — makeup-air unit',
+                note: 'No return duct — a 100% outside-air machine. It replaces what something else throws away.'
+            },
+            split: {
+                name: 'Split system',
+                sit: ['two'], cab: ['fan'], air: ['room'],
+                call: 'Split — CU outside, air mover inside',
+                note: 'Follow the lineset — identifying one half identifies both.'
+            },
+            fcu: {
+                name: 'Fan coil',
+                sit: ['space'], cab: ['fan'], air: ['room'],
+                call: 'FCU — fan coil',
+                note: 'A terminal device, not an air handler. Recognition is all this page owes it.'
+            },
+        };
+
+        const MYSTERIES = {
+            curb: {
+                answer: 'rtu',
+                truth: { sit: 'roof', cab: 'all', air: 'mix' },
+                confirm: 'Roof + everything onboard + both ducts = packaged rooftop. The condenser fans were the first giveaway.'
+            },
+            basement: {
+                answer: 'ahu',
+                truth: { sit: 'mech', cab: 'piped', air: 'mix' },
+                confirm: 'Pipe pairs and no compressors — a borrower. The plant lives down the hall.'
+            },
+            'no-return': {
+                answer: 'mau',
+                truth: { sit: 'roof', cab: 'all', air: 'oa' },
+                confirm: 'The missing return duct is the whole identification. It feeds the kitchen&#39;s hungry hood.'
+            },
+            liar: {
+                answer: 'fcu',
+                truth: { sit: 'space', cab: 'fan', air: 'room' },
+                confirm: 'The graphic said AHU, the schedule agreed with the graphic, and both were wrong. The cabinet was telling the truth the whole time.'
+            },
+        };
+
+        const QUESTIONS = ['sit', 'cab', 'air'];
+        const HINTS = {
+            sit: 'where does it sit?',
+            cab: 'what&#39;s in the cabinet?',
+            air: 'where does its air come from?',
+        };
+
+        const callEl   = document.getElementById('aid-w-call');
+        const statusEl = document.getElementById('aid-w-status');
+        const alertEl  = document.getElementById('aid-w-alert');
+        const cardEls  = {};
+        Object.keys(FAMILIES).forEach(function (k) {
+            cardEls[k] = document.getElementById('aid-w-card-' + k);
+        });
+        const sceneEls = {};
+        Object.keys(MYSTERIES).forEach(function (k) {
+            sceneEls[k] = document.getElementById('aid-w-scene-' + k);
+        });
+
+        const state = {
+            sit: null,              // 'roof' | 'mech' | 'space' | 'two' | null
+            cab: null,              // 'all' | 'piped' | 'fan' | null
+            air: null,              // 'mix' | 'oa' | 'room' | null
+            mystery: null,          // 'curb' | 'basement' | 'no-return' | 'liar' | null
+            anecdoteShown: false,   // once revealed, keep it pinned this session
+        };
+
+        function survivors() {
+            return Object.keys(FAMILIES).filter(function (k) {
+                return QUESTIONS.every(function (q) {
+                    return !state[q] || FAMILIES[k][q].indexOf(state[q]) !== -1;
+                });
+            });
+        }
+
+        function answeredCount() {
+            return QUESTIONS.filter(function (q) { return state[q]; }).length;
+        }
+
+        // The first answered question whose value contradicts the
+        // active mystery's truth — what a wrong ID should re-check.
+        function firstMismatch(truth) {
+            for (let i = 0; i < QUESTIONS.length; i++) {
+                const q = QUESTIONS[i];
+                if (state[q] && state[q] !== truth[q]) return q;
+            }
+            return null;
+        }
+
+        function nudge() {
+            if (!state.air) return ' The connections usually settle it fastest.';
+            if (!state.cab) return ' The cabinet is the deep tell.';
+            if (!state.sit) return ' Ask where it sits.';
+            return '';
+        }
+
+        function update() {
+            QUESTIONS.forEach(function (q) {
+                document.querySelectorAll('[data-aid-' + q + ']').forEach(function (b) {
+                    b.setAttribute('aria-pressed', b.getAttribute('data-aid-' + q) === state[q] ? 'true' : 'false');
+                });
+            });
+
+            Object.keys(sceneEls).forEach(function (k) {
+                sceneEls[k].hidden = state.mystery !== k;
+            });
+
+            const alive = survivors();
+            const identified = (alive.length === 1 && answeredCount() >= 1) ? alive[0] : null;
+
+            Object.keys(cardEls).forEach(function (k) {
+                cardEls[k].classList.toggle('out', alive.indexOf(k) === -1);
+                cardEls[k].classList.toggle('hit', k === identified);
+            });
+
+            callEl.textContent = identified ? FAMILIES[identified].call : '—';
+
+            let text;
+            let warn = false;
+            if (alive.length === 0) {
+                warn = true;
+                text = 'Nothing matches that combination. In the field, that means look again — the connections and the cabinet outrank the label. Here, one of the answers is off.';
+            } else if (identified) {
+                let note = FAMILIES[identified].note;
+                if (identified === 'ahu' && state.sit === 'roof') {
+                    note += ' And yes, even on a roof: the pipes outrank the address.';
+                }
+                if (state.mystery) {
+                    const m = MYSTERIES[state.mystery];
+                    const q = firstMismatch(m.truth);
+                    if (identified === m.answer && q === null) {
+                        text = 'Confirmed — ' + FAMILIES[identified].name + '. ' + m.confirm;
+                        if (state.mystery === 'liar') state.anecdoteShown = true;
+                    } else if (identified === m.answer) {
+                        // Right family reached through an answer the scene
+                        // contradicts (the multi-value accept sets make this
+                        // possible) — a lucky guess still gets re-checked.
+                        warn = true;
+                        text = 'Right family — but that&#39;s not what the scene says. Re-read it: ' + HINTS[q];
+                    } else {
+                        warn = true;
+                        text = 'The widget agrees with your answers — but the clues don&#39;t. Re-read the scene: ' + (q ? HINTS[q] : 'one answer is off.');
+                    }
+                } else {
+                    text = 'One left standing: ' + FAMILIES[identified].name + '. ' + note;
+                }
+            } else if (answeredCount() === 0) {
+                text = state.mystery
+                    ? 'Read the scene, then answer the three questions from the clues.'
+                    : 'Five families standing. Answer any question, in any order.';
+            } else {
+                text = alive.length + ' families still standing.' + nudge();
+            }
+            statusEl.innerHTML = text;
+            statusEl.classList.toggle('warn', warn);
+
+            // Anecdote: revealed by solving the last mystery — the
+            // reader has out-identified the paperwork. Pinned once
+            // seen (the chapter precedent).
+            if (state.anecdoteShown) {
+                alertEl.innerHTML = '<div class="widget-anecdote warn">This mystery is a real building. It had fan coils, air handlers, and rooftop units all serving the same floors — and nobody on site could tell me which was which; they were as turned around as I was. The software was worse: units filed under the wrong family entirely. And the prints that existed didn&#39;t match the tags. So I made the equipment introduce itself: in summer, command a <em>heating</em> valve and watch the controller&#39;s output light — in winter, a cooling command did the same job, on equipment the season had already de-energized. The command moved a signal, not the building. No light to watch? Put a meter on the output terminals. One point, one box, one name at a time, I rebuilt the map the paper had lost. I&#39;ve had to identify units this way more than once. The paper can lie; the cabinet can&#39;t.</div>';
+            } else {
+                alertEl.innerHTML = '';
+            }
+        }
+
+        QUESTIONS.forEach(function (q) {
+            document.querySelectorAll('[data-aid-' + q + ']').forEach(function (btn) {
+                btn.addEventListener('click', function (e) {
+                    state[q] = e.currentTarget.getAttribute('data-aid-' + q);
+                    update();
+                });
+            });
+        });
+
+        document.querySelectorAll('[data-aid-mystery]').forEach(function (btn) {
+            btn.addEventListener('click', function (e) {
+                const m = e.currentTarget.getAttribute('data-aid-mystery');
+                state.mystery = (m === 'fresh') ? null : m;
+                state.sit = null;
+                state.cab = null;
+                state.air = null;
+                update();
+            });
+        });
+
+        update();
+    })();
+</script>
+{% endblock %}
