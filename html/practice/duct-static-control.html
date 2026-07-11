@@ -1,0 +1,75 @@
+---
+title: Duct Static Control Quiz — controlsfreak.dev
+description: Ten questions on the duct-static loop — the sign of the signal, sensor placement, setpoint reset, railed transducers, and who really decides total flow.
+canonical: https://controlsfreak.dev/practice/duct-static-control.html
+nav: practice
+category: forced-air
+pairedLesson: https://controlsfreak.dev/education/duct-static-control.html
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Practice · Duct Static Control</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">Duct Static Control Quiz <span class="tool-tag">Air Systems</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                Read the <a href="/education/duct-static-control.html">Duct Static Control</a> lesson first, then close
+                the chapter from memory — ten questions down the lesson walk: why the fan holds static instead of flow,
+                which way the signal moves when boxes close, where the sensor lives, what trim &amp; respond actually
+                does, the trend that hides a restriction, the fan that couldn't make flow, and the cutout that has to
+                live outside the loop. Each reveal links back to the section it came from.
+            </p>
+
+            <div id="quiz"></div>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/tools/affinity-laws.html', label: 'Affinity Laws'},
+            {href: '/tools/signal-scaling.html', label: 'Signal Scaling'}
+        ],
+        lessons: [
+            {href: '/education/duct-static-control.html', label: 'Duct Static Control'},
+            {href: '/education/vav-systems.html', label: 'VAV Systems'},
+            {href: '/education/pump-control.html', label: 'Pump Control'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/practice/">← All practice</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="/scripts/quiz-engine.js"></script>
+<script>
+    (function () {
+        'use strict';
+
+        // Question bank lives in html/_data/quizzes/duct-static-control.js
+        // so the FAQPage JSON-LD emitted from head.njk can read the same source.
+        const questions = {{ quizzes['duct-static-control'] | safeScriptJson | safe }};
+
+        Quiz.mount('#quiz', questions, {
+            next: {{ page.fileSlug | nextQuiz | safeScriptJson | safe }},
+            slug: 'duct-static-control',
+            title: 'Duct Static Control',
+            defaultCount: 10,
+            defaultOrder: 'sequential'
+        });
+    })();
+</script>
+{% endblock %}

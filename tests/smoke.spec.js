@@ -1848,6 +1848,77 @@ test('vav systems — the box walker holds flow, the interlock protects the coil
     expect(errors, 'vav-systems behavioral should log no page / console errors').toEqual([]);
 });
 
+test('duct static control — the loop holds static while flow moves, the iced coil hides in plain sight, the old fix rails the sensor', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('/education/duct-static-control.html');
+
+    // Structure: three annotated diagrams with accessible titles, two
+    // flow-animated (D1 loop + D3 rivers; D2 profile is static), and
+    // the section anchors the quiz learnMore links target.
+    await expect(page.locator('main svg.edu-svg')).toHaveCount(3);
+    await expect(page.locator('main svg.edu-svg > title')).toHaveCount(3);
+    await expect(page.locator('main svg.flow-active')).toHaveCount(2);
+    for (const anchor of ['#the-signal', '#the-loop', '#reset', '#static-is-not-flow', '#safeties', '#drive-the-loop', '#the-whole-path']) {
+        await expect(page.locator(`h2${anchor}`)).toBeVisible();
+    }
+
+    // Default state: 12 of 30 calling, fixed setpoint, clean coil,
+    // the loop in charge — static on setpoint, no anecdote.
+    await expect(page.locator('#ds-w-static')).toHaveText('1.50 in. w.c.');
+    await expect(page.locator('#ds-w-sp')).toHaveText('1.50 in. w.c.');
+    await expect(page.locator('#ds-w-hz')).toHaveText('42.2 Hz');
+    await expect(page.locator('#ds-w-flow')).toHaveText('16,560 CFM');
+    await expect(page.locator('#ds-w-status')).toHaveText(/thirty demands/i);
+    await expect(page.locator('#ds-w-alert .widget-anecdote')).toHaveCount(0);
+
+    // The mirror invariant: flip the setpoint to reset — static and
+    // fan speed move, flow doesn't (the boxes own it) — and the
+    // answer group keeps aria-pressed in sync.
+    await page.locator('[data-ds-sp="reset"]').click();
+    await expect(page.locator('[data-ds-sp="reset"]')).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('[data-ds-sp="fixed"]')).toHaveAttribute('aria-pressed', 'false');
+    await expect(page.locator('#ds-w-static')).toHaveText('0.60 in. w.c.');
+    await expect(page.locator('#ds-w-flow')).toHaveText('16,560 CFM');
+    await expect(page.locator('#ds-w-status')).toHaveText(/cube law/i);
+
+    // Six o'clock: the last page's cliff-hanger, answered — the
+    // building empties and the fan backs off while static holds.
+    await page.locator('[data-ds-preset="six-oclock"]').click();
+    await expect(page.locator('#ds-w-static')).toHaveText('1.50 in. w.c.');
+    await expect(page.locator('#ds-w-hz')).toHaveText('33.9 Hz');
+    await expect(page.locator('#ds-w-flow')).toHaveText('7,600 CFM');
+
+    // The hidden restriction: iced coil, same flow, same static, more
+    // speed — warn, with the honest Hz-at-flow number in the strip.
+    await page.locator('[data-ds-preset="restriction"]').click();
+    await expect(page.locator('#ds-w-static')).toHaveText('1.50 in. w.c.');
+    await expect(page.locator('#ds-w-hz')).toHaveText('57.9 Hz');
+    await expect(page.locator('#ds-w-clean')).toHaveText('43.9 Hz');
+    await expect(page.locator('#ds-w-status')).toHaveClass(/warn/);
+    await expect(page.locator('#ds-w-status')).toHaveText(/hiding a restriction/i);
+
+    // The old fix: fan pinned against pressure-independent boxes —
+    // flow doesn't move, the sensor rails at full scale, fault, and
+    // the anecdote reveals.
+    await page.locator('[data-ds-preset="old-fix"]').click();
+    await expect(page.locator('#ds-w-static')).toHaveText('2.50 in. w.c. — railed');
+    await expect(page.locator('#ds-w-sp')).toHaveText('overridden');
+    await expect(page.locator('#ds-w-hz')).toHaveText('60.0 Hz');
+    await expect(page.locator('#ds-w-flow')).toHaveText('7,600 CFM');
+    await expect(page.locator('#ds-w-status')).toHaveClass(/fault/);
+    await expect(page.locator('#ds-w-status')).toHaveText(/railed/i);
+    await expect(page.locator('#ds-w-alert .widget-anecdote')).toHaveCount(1);
+
+    // Back to a healthy preset: the fault clears, the anecdote stays
+    // pinned.
+    await page.locator('[data-ds-preset="design"]').click();
+    await expect(page.locator('#ds-w-hz')).toHaveText('60.0 Hz');
+    await expect(page.locator('#ds-w-status')).not.toHaveClass(/fault/);
+    await expect(page.locator('#ds-w-alert .widget-anecdote')).toHaveCount(1);
+
+    expect(errors, 'duct-static-control behavioral should log no page / console errors').toEqual([]);
+});
+
 test.describe('function-block editor — interactions', () => {
     test('Delete key removes a selected block', async ({ page }) => {
         const errors = watchErrors(page);
