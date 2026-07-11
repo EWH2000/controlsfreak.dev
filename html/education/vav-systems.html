@@ -1,0 +1,864 @@
+---
+title: VAV Systems — controlsfreak.dev
+description: One air handler, thirty zones — what a VAV box does when its zone calls. Damper and flow ring, pressure independence, reheat at minimum, and the coil floor.
+canonical: https://controlsfreak.dev/education/vav-systems.html
+nav: education
+category: forced-air
+pairedQuiz: https://controlsfreak.dev/practice/vav-systems.html
+keywords: vav box terminal box variable air volume damper flow ring flow cross velocity pressure k factor pressure independent minimum maximum cfm reheat bypass dump zone
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block head %}
+    <style>
+        /* Diagram + legend + flow-active rules live in styles.css as
+           .edu-svg / .edu-legend. Only the box-walker widget internals
+           are page-specific (vav-w-*). */
+
+        /* Answer-button groups side by side, wrapping on narrow
+           columns (the bp-w-top pattern). */
+        .vav-w-top {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem 2rem;
+            align-items: flex-start;
+            margin-bottom: 0.85rem;
+        }
+
+        /* Stateful buttons — aria-pressed drives the visual (the
+           air-handlers / building-pressure pattern). Focus ring lives
+           in the shared FOCUS INDICATORS block (.vav-w-mode-btn
+           entry). */
+        .vav-w-modes { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+        .vav-w-mode-btn {
+            font-family: var(--mono);
+            font-size: 0.72rem;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 2px;
+            padding: 0.32rem 0.7rem;
+            cursor: pointer;
+        }
+        .vav-w-mode-btn:hover { color: var(--text-bright); border-color: var(--text-dim); }
+        .vav-w-mode-btn[aria-pressed="true"] {
+            color: var(--text-bright);
+            background: var(--surface);
+            border-color: var(--accent);
+        }
+
+        #vav-widget .widget-slider { margin: 0.15rem 0 1rem; }
+        #vav-widget .widget-slider-head .v { white-space: nowrap; }
+
+        /* Readout strips — one for this box, one for the system.
+           Aligned as they wrap 4 → 2 → 1 across column widths (the
+           bp-w-strip pattern). */
+        .vav-w-strip {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 0.8rem 1.25rem;
+            margin-bottom: 0.85rem;
+        }
+        .vav-w-line-name {
+            font-family: var(--mono);
+            font-size: 0.68rem;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+        .vav-w-line-value {
+            font-family: var(--mono);
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-bright);
+            white-space: nowrap;
+        }
+
+        /* The seam between the box strip and the system strip — the
+           widget's "meanwhile, the other twenty-nine" divider. */
+        .vav-w-seam {
+            font-family: var(--mono);
+            font-size: 0.68rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            border-top: 1px solid var(--border);
+            padding-top: 0.7rem;
+            margin: 0.2rem 0 0.6rem;
+        }
+
+        /* Status line — same left-stripe idiom as the other chapter
+           widgets (normal / warn / fault). */
+        .vav-w-status {
+            font-family: var(--mono);
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            padding: 0.45rem 0.7rem;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--accent);
+            border-radius: 2px;
+            color: var(--text-bright);
+            margin-bottom: 0.5rem;
+            transition: border-left-color 200ms linear;
+        }
+        .vav-w-status.warn { border-left-color: var(--heat); }
+        .vav-w-status.fault { border-left-color: var(--red); }
+
+        /* Reveal area below the status line. Space reserved so the
+           anecdote doesn't reflow the page when it appears. */
+        .vav-w-alert {
+            min-height: 4.0rem;
+            margin-top: 0.25rem;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Education · VAV Systems</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">VAV Systems <span class="tool-tag">Air Systems</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                The <a href="/education/air-unit-identification.html">last page</a> ended on a promise: follow the supply
+                duct away from the unit and you find boxes with actuators — and what those boxes are actually doing is a
+                page of its own. This is that page. One question, start to finish: <em>how does one air handler serve
+                thirty zones that all want different things — what is a VAV box actually doing when its zone calls?</em>
+            </p>
+
+            <div class="callout">
+                <p style="font-size:0.86rem;line-height:1.7;">
+                    This page assumes the air handler itself — return, mix, filter, coils, fan — reads like home ground;
+                    that walk is the <a href="/education/air-handlers.html#air-path">chapter opener</a>. And whether the
+                    unit feeding your duct is VAV at all is a three-part test — a drive, terminal boxes, <em>and</em> a
+                    duct-static setpoint — made in the
+                    <a href="/education/air-unit-identification.html#the-lineup">CV-or-VAV callout</a> one page back. If
+                    either wobbles, start there.
+                </p>
+            </div>
+
+            <!-- ───────────────── 1 · The shape ───────────────── -->
+
+            <h2 class="subhead" id="one-to-thirty">One Trunk, Thirty Claims</h2>
+
+            <p>
+                Start with the problem. One unit, one supply temperature — and thirty zones that have never once agreed
+                on anything: a corner office roasting in afternoon sun, a packed conference room two doors down, a north
+                wall that hasn't felt sunlight since the building topped out. A constant-volume system settles that
+                argument by ignoring it: airflow to each zone is fixed at balancing, and the thermostat war is won by
+                whoever sits closest to the sensor. Variable air volume settles it differently — it gives every zone its
+                own throttle.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                The trick is what stays constant. The air handler keeps its supply air cold and steady — around
+                <span data-us="55&nbsp;°F" data-metric="12.8&nbsp;°C">55&nbsp;°F</span>, all day, for everyone — and each
+                zone's box decides how <em>much</em> of that air the zone receives. More load, more cold air; less load,
+                less. The box never changes what the air is, only how much of it there is:
+                <strong>a VAV box throttles volume, not temperature</strong>. Thirty different loads, one supply
+                temperature, thirty different airflows.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                If that sentence rings familiar, it should — it's the
+                <a href="/education/load-piping.html">load-piping</a> story with the fluid swapped. There, every coil got
+                a two-way valve and throttled water; the plant's job was to respond. Here, every zone gets a box and
+                throttles air. Loads throttle, and something upstream has to answer for it — the answering half of the
+                mirror is the last page of this chapter, the same way
+                <a href="/education/pump-control.html">pump control</a> answered for the valves.
+            </p>
+
+            <svg class="edu-svg" viewBox="0 0 540 350" role="img" aria-labelledby="vav-d1-title vav-d1-desc" font-family="var(--mono)">
+                <title id="vav-d1-title">One air handler serving many VAV boxes</title>
+                <desc id="vav-d1-desc">An air handler on the left sends one cold supply trunk across the drawing.
+                    Three branches drop from the trunk, each through a small VAV box, down into its own zone; an
+                    ellipsis marks the twenty-seven boxes not drawn. A return path collects air from the zones along
+                    the bottom and carries it back to the unit. Supply air is drawn solid blue, return air a cooler
+                    blue.</desc>
+
+                <text x="20" y="26" font-size="16" font-weight="600" fill="var(--text-bright)">One unit, thirty claims</text>
+
+                <!-- Air handler -->
+                <rect x="16" y="118" width="110" height="66" fill="var(--surface)" stroke="var(--border)"/>
+                <text x="71" y="146" font-size="14" fill="var(--text-bright)" text-anchor="middle">AHU</text>
+                <text x="71" y="164" font-size="11" fill="var(--text-dim)" text-anchor="middle">coils + fan</text>
+
+                <!-- Supply trunk (animated, full density) -->
+                <path id="vav-d1-trunk" data-flow="air" d="M126 150 H520" fill="none" stroke="var(--blue)" stroke-width="4"/>
+                <text x="240" y="140" font-size="13" fill="var(--text)">one cold trunk</text>
+                <polygon points="500,145 500,155 510,150" fill="var(--blue)"/>
+
+                <!-- Branch 1 -->
+                <path id="vav-d1-br1" data-flow="air" data-flow-density="0.35" d="M200 150 V196" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <rect x="182" y="196" width="36" height="20" fill="var(--surface)" stroke="var(--text)"/>
+                <line x1="192" y1="212" x2="208" y2="200" stroke="var(--text)" stroke-width="2"/>
+                <path id="vav-d1-dr1" data-flow="air" data-flow-density="0.35" d="M200 216 V256" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <rect x="165" y="256" width="70" height="36" fill="none" stroke="var(--border)"/>
+                <text x="200" y="278" font-size="12" fill="var(--text)" text-anchor="middle">zone</text>
+                <text x="172" y="209" font-size="12" fill="var(--text)" text-anchor="end">VAV box</text>
+
+                <!-- Branch 2 -->
+                <path id="vav-d1-br2" data-flow="air" data-flow-density="0.35" d="M320 150 V196" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <rect x="302" y="196" width="36" height="20" fill="var(--surface)" stroke="var(--text)"/>
+                <line x1="312" y1="212" x2="328" y2="200" stroke="var(--text)" stroke-width="2"/>
+                <path id="vav-d1-dr2" data-flow="air" data-flow-density="0.35" d="M320 216 V256" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <rect x="285" y="256" width="70" height="36" fill="none" stroke="var(--border)"/>
+                <text x="320" y="278" font-size="12" fill="var(--text)" text-anchor="middle">zone</text>
+
+                <!-- Branch 3 -->
+                <path id="vav-d1-br3" data-flow="air" data-flow-density="0.35" d="M440 150 V196" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <rect x="422" y="196" width="36" height="20" fill="var(--surface)" stroke="var(--text)"/>
+                <line x1="432" y1="212" x2="448" y2="200" stroke="var(--text)" stroke-width="2"/>
+                <path id="vav-d1-dr3" data-flow="air" data-flow-density="0.35" d="M440 216 V256" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <rect x="405" y="256" width="70" height="36" fill="none" stroke="var(--border)"/>
+                <text x="440" y="278" font-size="12" fill="var(--text)" text-anchor="middle">zone</text>
+                <text x="497" y="210" font-size="13" fill="var(--text-dim)">… ×30</text>
+
+                <!-- Return path (animated, lighter) -->
+                <path id="vav-d1-ret" data-flow="air" data-flow-density="0.6" d="M460 316 H71 V184" fill="none" stroke="var(--blue-cool)" stroke-width="3"/>
+                <line x1="200" y1="292" x2="200" y2="316" stroke="var(--blue-cool)" stroke-width="2"/>
+                <line x1="320" y1="292" x2="320" y2="316" stroke="var(--blue-cool)" stroke-width="2"/>
+                <line x1="440" y1="292" x2="440" y2="316" stroke="var(--blue-cool)" stroke-width="2"/>
+                <text x="250" y="334" font-size="11" fill="var(--text-dim)">return — back for another lap</text>
+                <polygon points="110,311 110,321 100,316" fill="var(--blue-cool)"/>
+            </svg>
+            <div class="edu-legend">
+                <span><span class="sw sa"></span>supply air</span>
+                <span><span class="sw ra"></span>return air</span>
+            </div>
+
+            <p style="margin-top:1.25rem;">
+                Watch what the trunk feels while the zones do this. Total supply flow is just the sum of what thirty
+                boxes are taking, and that sum swings all day — morning pull-down runs everything near wide open, a mild
+                afternoon leaves most boxes idling near their minimums. The supply fan rides a
+                <a href="/education/vfds.html#cube-law">VFD</a> and slows with the building, which is where VAV earns its
+                keep: cube law pays the fan's part-load bill. How the fan <em>knows</em> how much to slow down is the
+                chapter's last page. This page stays at the boxes — because everything the fan will have to answer for
+                starts with what the boxes do.
+            </p>
+
+            <!-- ───────────────── 2 · Box anatomy ───────────────── -->
+
+            <h2 class="subhead" id="box-anatomy">Inside the Box</h2>
+
+            <p>
+                For all the load it carries in a mechanical plan, a VAV box is almost disappointingly simple sheet metal:
+                a round inlet collar, a rectangular body, a discharge to the zone's diffusers. Three parts do all the
+                work. A <em>damper</em> — one blade on a shaft, swung by an actuator. A <em>flow sensor</em> across the
+                inlet — a ring or cross of averaging ports, one set facing into the airstream, one away, with two small
+                tubes running to a pressure transducer. And a <em>controller</em> — a small BAS device, usually the most
+                numerous controller family in the whole building, which is why every networking example you've ever seen
+                names a device VAV-101.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                The flow sensor is the part worth slowing down for, because it means
+                <strong>the box measures its own airflow</strong>. The pressure difference between the upstream and
+                downstream ports — the <em>velocity pressure</em> — rises with the square of the air's speed, so flow
+                follows a square root: <code>CFM&nbsp;=&nbsp;K&nbsp;×&nbsp;√VP</code>, where K is the manufacturer's
+                coefficient for that pickup — literally the CFM it reads at exactly 1.0&nbsp;in.&nbsp;w.c. A box with
+                K&nbsp;=&nbsp;1000 reading 0.36&nbsp;in.&nbsp;w.c. is passing 600&nbsp;CFM. The
+                <a href="/tools/airflow.html">airflow tool</a> runs that math in both directions — flow from K and VP, or
+                K back-solved from a balancer's hood reading — and carries the fine print (K conventions vary by vendor,
+                and the whole frame is US-native; the K printed on a metric box is a different number on a different
+                label).
+            </p>
+
+            <svg class="edu-svg" viewBox="0 0 540 300" role="img" aria-labelledby="vav-d2-title vav-d2-desc" font-family="var(--mono)">
+                <title id="vav-d2-title">Inside a VAV terminal box</title>
+                <desc id="vav-d2-desc">A cutaway of one VAV box. Air enters a round inlet on the left, passes a
+                    flow ring whose two sensing lines run up to the box controller, then a damper blade driven by an
+                    actuator, then an optional hot-water reheat coil with supply and return pipe stubs, and leaves
+                    right toward the zone. A discharge-air sensor sits in the outlet; a dashed line connects the
+                    controller down to the zone temperature sensor on the wall.</desc>
+
+                <text x="20" y="26" font-size="16" font-weight="600" fill="var(--text-bright)">The box, opened up</text>
+
+                <!-- Controller -->
+                <rect x="150" y="44" width="140" height="34" fill="var(--surface)" stroke="var(--border)"/>
+                <text x="220" y="66" font-size="13" fill="var(--text-bright)" text-anchor="middle">box controller</text>
+
+                <!-- Air path through the box (animated) -->
+                <path id="vav-d2-air" data-flow="air" d="M20 180 H520" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <polygon points="30,175 30,185 40,180" fill="var(--blue)"/>
+                <polygon points="495,175 495,185 505,180" fill="var(--blue)"/>
+
+                <!-- Box casing -->
+                <rect x="130" y="146" width="270" height="68" fill="none" stroke="var(--text)" stroke-width="1.5"/>
+
+                <!-- Flow ring + sensing lines -->
+                <line x1="160" y1="156" x2="160" y2="204" stroke="var(--teal)" stroke-width="2.5"/>
+                <path d="M160 156 V96 H178" fill="none" stroke="var(--text-dim)" stroke-width="1"/>
+                <path d="M168 180 V104 H178" fill="none" stroke="var(--text-dim)" stroke-width="1"/>
+                <text x="152" y="238" font-size="12" fill="var(--text)">flow ring</text>
+                <text x="150" y="112" font-size="11" fill="var(--text-dim)" text-anchor="end">sensing lines</text>
+
+                <!-- Damper + actuator -->
+                <line x1="226" y1="208" x2="254" y2="152" stroke="var(--text-bright)" stroke-width="2.5"/>
+                <circle cx="240" cy="180" r="3" fill="var(--text-bright)"/>
+                <rect x="226" y="118" width="28" height="18" fill="var(--surface)" stroke="var(--border)"/>
+                <line x1="240" y1="136" x2="240" y2="146" stroke="var(--text-dim)" stroke-width="1"/>
+                <path d="M240 118 V78 H236" fill="none" stroke="var(--text-dim)" stroke-width="1"/>
+                <text x="248" y="110" font-size="12" fill="var(--text)">actuator</text>
+                <text x="252" y="226" font-size="12" fill="var(--text)">damper</text>
+
+                <!-- Reheat coil + water stubs -->
+                <rect x="316" y="152" width="40" height="56" fill="none" stroke="var(--heat)"/>
+                <line x1="322" y1="152" x2="336" y2="208" stroke="var(--heat)" stroke-width="1"/>
+                <line x1="334" y1="152" x2="348" y2="208" stroke="var(--heat)" stroke-width="1"/>
+                <path id="vav-d2-hws" data-flow="supply" d="M326 214 V252" fill="none" stroke="var(--blue)" stroke-width="2.5"/>
+                <path id="vav-d2-hwr" data-flow="return" d="M346 252 V214" fill="none" stroke="var(--blue-cool)" stroke-width="2.5" stroke-dasharray="7 4"/>
+                <text x="336" y="270" font-size="11" fill="var(--text-dim)" text-anchor="middle">hot water</text>
+                <text x="336" y="140" font-size="12" fill="var(--text)" text-anchor="middle">reheat coil</text>
+
+                <!-- Discharge sensor -->
+                <circle cx="440" cy="180" r="4" fill="none" stroke="var(--teal)" stroke-width="2"/>
+                <path d="M440 176 V88 H290" fill="none" stroke="var(--text-dim)" stroke-width="1"/>
+                <text x="452" y="164" font-size="11" fill="var(--text-dim)">DAT</text>
+
+                <!-- Zone sensor -->
+                <rect x="472" y="238" width="34" height="26" fill="var(--surface)" stroke="var(--border)"/>
+                <text x="489" y="255" font-size="11" fill="var(--text-dim)" text-anchor="middle">stat</text>
+                <path d="M472 251 H220 V78" fill="none" stroke="var(--text-dim)" stroke-width="1" stroke-dasharray="3 4"/>
+                <text x="382" y="242" font-size="11" fill="var(--text-dim)">zone sensor</text>
+
+                <text x="20" y="168" font-size="12" fill="var(--text)">inlet</text>
+                <text x="518" y="204" font-size="12" fill="var(--text)" text-anchor="end">to zone</text>
+            </svg>
+            <div class="edu-legend">
+                <span><span class="sw sa"></span>supply air</span>
+                <span><span class="sw supply"></span>hw supply</span>
+                <span><span class="sw return"></span>hw return</span>
+            </div>
+
+            <p style="margin-top:1.25rem;">
+                Two more parts appear on boxes that can heat: a <em>reheat coil</em> at the discharge — hot water on a
+                small valve, or electric elements in stages — and a <em>discharge-air sensor</em> (DAT) just downstream
+                of it, so the controller can see what it's actually sending to the zone. What they're for is a few
+                sections down; first, the question that makes the flow ring earn its place: why does the box measure
+                flow at all, instead of just holding a damper position?
+            </p>
+
+            <!-- ───────────────── 3 · Pressure independence ───────────────── -->
+
+            <h2 class="subhead" id="pressure-independence">Why the Box Chases Flow, Not Position</h2>
+
+            <p>
+                Try the naive version. Command the damper to 50&nbsp;% open and walk away. How much air is the zone
+                getting? You don't know — and worse, the answer won't hold still. A damper position only fixes a
+                geometry; the flow through that geometry depends on the pressure behind it, and the pressure behind it
+                depends on what every <em>other</em> box on the trunk is doing and how hard the fan is pushing. Let the
+                neighbors throttle back and the pressure at your inlet rises, and your 50-percent-open damper quietly
+                delivers more air than it did an hour ago, to a zone whose load never changed.
+                <strong>Damper position is nobody's setpoint.</strong>
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                So the box runs a cascade of two loops instead. The first watches the zone: temperature against
+                setpoint, and its output is not a damper command but a <em>flow setpoint</em> — some CFM between the
+                box's minimum and maximum, more when the zone is hot, less as it cools. The second loop watches the flow
+                ring: measured CFM against that setpoint, driving the damper to whatever position closes the gap —
+                30&nbsp;% today, 55&nbsp;% tonight, nobody cares. When the trunk pressure wiggles, the flow reading
+                wiggles, and the second loop absorbs the disturbance before the zone ever feels it. That's what
+                <em>pressure independent</em> means: the zone gets the airflow it asked for regardless of what the rest
+                of the building is doing to the duct. The hydronic side pulls the same trick with a
+                <a href="/education/balancing.html#picv">PICV</a> — a valve that meters flow, not position — and for the
+                same reason.
+            </p>
+
+            <svg class="edu-svg" viewBox="0 0 540 230" role="img" aria-labelledby="vav-d3-title vav-d3-desc" font-family="var(--mono)">
+                <title id="vav-d3-title">The VAV box control cascade</title>
+                <desc id="vav-d3-desc">A block diagram of two chained control loops. The zone loop compares zone
+                    temperature to setpoint and outputs a flow setpoint between the box minimum and maximum. The flow
+                    loop compares that setpoint against the flow ring's measured airflow and commands the damper.
+                    A disturbance arrow labeled inlet pressure enters at the damper, and a feedback arrow returns the
+                    measured flow from the damper back to the flow loop.</desc>
+
+                <text x="20" y="26" font-size="16" font-weight="600" fill="var(--text-bright)">Two loops, one damper</text>
+
+                <!-- Blocks -->
+                <rect x="20" y="78" width="140" height="52" fill="var(--surface)" stroke="var(--border)"/>
+                <text x="90" y="100" font-size="13" fill="var(--text-bright)" text-anchor="middle">zone loop</text>
+                <text x="90" y="118" font-size="11" fill="var(--text-dim)" text-anchor="middle">temp vs setpoint</text>
+
+                <rect x="220" y="78" width="140" height="52" fill="var(--surface)" stroke="var(--border)"/>
+                <text x="290" y="100" font-size="13" fill="var(--text-bright)" text-anchor="middle">flow loop</text>
+                <text x="290" y="118" font-size="11" fill="var(--text-dim)" text-anchor="middle">ring vs setpoint</text>
+
+                <rect x="420" y="78" width="100" height="52" fill="var(--surface)" stroke="var(--border)"/>
+                <text x="470" y="108" font-size="13" fill="var(--text-bright)" text-anchor="middle">damper</text>
+
+                <!-- Forward arrows -->
+                <line x1="160" y1="104" x2="212" y2="104" stroke="var(--text)" stroke-width="1.5"/>
+                <polygon points="212,99 212,109 220,104" fill="var(--text)"/>
+                <text x="186" y="66" font-size="11" fill="var(--text-dim)" text-anchor="middle">flow setpoint</text>
+                <text x="186" y="94" font-size="11" fill="var(--text-dim)" text-anchor="middle">min … max</text>
+
+                <line x1="360" y1="104" x2="412" y2="104" stroke="var(--text)" stroke-width="1.5"/>
+                <polygon points="412,99 412,109 420,104" fill="var(--text)"/>
+                <text x="386" y="94" font-size="11" fill="var(--text-dim)" text-anchor="middle">command</text>
+
+                <!-- Disturbance -->
+                <line x1="470" y1="52" x2="470" y2="70" stroke="var(--heat)" stroke-width="1.5"/>
+                <polygon points="465,70 475,70 470,78" fill="var(--heat)"/>
+                <text x="462" y="46" font-size="11" fill="var(--text-dim)" text-anchor="end">inlet pressure — the other 29 boxes</text>
+
+                <!-- Feedback -->
+                <path d="M470 130 V178 H290 V138" fill="none" stroke="var(--teal)" stroke-width="1.5"/>
+                <polygon points="285,138 295,138 290,130" fill="var(--teal)"/>
+                <text x="380" y="196" font-size="11" fill="var(--text-dim)" text-anchor="middle">measured flow — the ring reports</text>
+            </svg>
+
+            <div class="callout">
+                <h3>Where min and max come from <span>· paper, then a hood</span></h3>
+                <p>
+                    Every box's minimum and maximum CFM start life as two columns on the mechanical schedule — the
+                    designer's numbers for the zone's ventilation share and its design cooling load. Commissioning is
+                    where they become real: a balancer puts a flow hood on the diffusers, compares what the box
+                    <em>says</em> it's passing against what it actually passes, and calibrates — usually by back-solving
+                    K from the hood reading and the velocity pressure the controller sees (the
+                    <a href="/tools/airflow.html">airflow tool's</a> second mode, and its worked example). A box that
+                    was never commissioned obeys its flow loop perfectly — around a number no one ever verified.
+                </p>
+            </div>
+
+            <p style="margin-top:1.25rem;">
+                One boundary worth drawing before moving on: the box's damper serves the <em>zone's</em> flow, and only
+                that. It doesn't hold duct pressure, doesn't help its neighbors, doesn't coordinate. Thirty boxes each
+                minding their own loop is the whole choreography — and everything the system does well or badly emerges
+                from that.
+            </p>
+
+            <!-- ───────────────── 4 · Minimums + reheat ───────────────── -->
+
+            <h2 class="subhead" id="minimums">The Floors: Ventilation, Then Reheat</h2>
+
+            <p>
+                Follow a zone as it cools off and the flow setpoint rides down — and notice where it stops. Not zero.
+                Every box carries a minimum, and the first reason is the one this chapter keeps returning to: occupied
+                zones need their share of the code-required fresh-air dose, and that share arrives riding the supply
+                air. Close a box entirely and the temperature might be fine while the ventilation quietly isn't — the
+                <a href="/education/economizers.html">ventilation floor is not negotiable while the building is
+                occupied</a>, and at the box scale the minimum CFM <em>is</em> that floor.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                But the minimum creates its own problem. Minimum flow is still
+                <span data-us="55&nbsp;°F" data-metric="12.8&nbsp;°C">55&nbsp;°F</span> air, arriving whether the zone
+                wants cooling or not — and a small interior room at minimum flow will drift cold by mid-morning. That's
+                what the reheat coil is for: the box holds flow at minimum and warms the air on its way out. The better
+                sequences run it as another cascade — the zone loop asks for a discharge temperature, the DAT sensor
+                closes that loop on the reheat valve, capped somewhere around
+                <span data-us="90&nbsp;°F" data-metric="32.2&nbsp;°C">90&nbsp;°F</span> so the warm air still mixes down
+                into the room instead of stratifying at the ceiling. Yes, it's the plant heating air the plant just paid
+                to cool — which is why reheat is metered carefully, and why the minimum it runs at is worth getting
+                right rather than getting generous.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                And one floor lives at the unit, not the box. The
+                <a href="/education/building-pressure.html#dampers-pressure">building-pressure page filed this
+                wrinkle</a>: on a VAV unit the supply fan slows as the boxes throttle, and a fixed outside-air damper
+                position passes <em>less actual outside air</em> at lower fan speed. A minimum-OA setting that was honest
+                at design flow is a fiction at half flow — which is why serious VAV units measure their outside air or
+                actively control to it, rather than trusting a damper angle set one afternoon at full speed.
+            </p>
+
+            <!-- ───────────────── 5 · The coil floor ───────────────── -->
+
+            <h2 class="subhead" id="the-coil-floor">The Machine Has a Minimum Too</h2>
+
+            <p>
+                Every floor so far protected the zone — its fresh air, its comfort. The last one protects the machine,
+                and it's the one this page's author has the scars for. The unit's cooling coil was sized for design
+                airflow, and on a chilled-water coil, part flow is graceful: less air means less heat picked up, the
+                valve throttles back, the water side shrugs — that's the hydronic story again. A <em>DX</em> coil doesn't
+                shrug. It's the evaporator of a refrigerant circuit, and a running compressor moves refrigerant whether
+                or not there's warm air to boil it. The field rule of thumb is somewhere near 400&nbsp;CFM of air per ton
+                of active cooling (an IP-native number, like the K-factor — it's the frame the trade speaks). Starve a
+                running stage much below that and suction pressure dives, the coil surface drops below freezing, and the
+                condensate that should be dripping off the fins freezes onto them instead. Ice chokes airflow further,
+                which starves the coil further — a runaway with a ratchet. Left alone it ends with a coil iced solid and,
+                eventually, compressors slugging liquid and short-cycling toward the scrap bin.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                Now connect that to what the boxes do. On a mild afternoon most zones satisfy, thirty flow setpoints
+                ride down to their minimums, and total airflow across that coil collapses — while a handful of zones
+                still calling keep a compressor stage running. Nothing about the box side is malfunctioning;
+                <em>every box minding its own loop</em> is exactly what starves the coil. So a DX-VAV system has to be
+                designed with somewhere for the mismatch to go, and the lineup looks like this: box minimums summed
+                generously enough that the coil's floor is never violated; staging <em>interlocked to proven
+                airflow</em>, so a stage locks out rather than run starved — the interlock chooses the compressor over
+                the complaint; a bypass damper from supply to return, so the coil sees constant volume while the zones
+                see variable (an older answer, with its own problems); or a dump zone — a box into a lobby or corridor
+                that opens when flow collapses. A properly designed unit has at least one of these. When none of them
+                exist, the system runs fine on the design day, and eats itself on the mild ones — the widget's last
+                preset is that building.
+            </p>
+
+            <!-- ───────────────── 6 · Widget ───────────────── -->
+
+            <h2 class="subhead" id="drive-the-box">Drive a Box, Watch the Coil</h2>
+
+            <p>
+                One box under your hand, twenty-nine siblings and a two-stage DX unit behind it. The slider is the
+                zone; the box answers with a flow setpoint between its minimum
+                (<span data-us="200&nbsp;CFM" data-metric="340&nbsp;m³/h">200&nbsp;CFM</span>) and maximum
+                (<span data-us="1,000&nbsp;CFM" data-metric="1,700&nbsp;m³/h">1,000&nbsp;CFM</span>), the flow ring
+                reads its velocity pressure (K&nbsp;=&nbsp;1000 — at max flow the pickup reads exactly
+                1.0&nbsp;in.&nbsp;w.c.), and the damper lands wherever the flow loop needs it. Change what the
+                siblings are doing and watch the damper move <em>while the flow doesn't</em> — that's pressure
+                independence earning its name. Below the seam, the system strip keeps the coil's books. Then try the
+                last preset, which reproduces a pair of air handlers this page's author is still babysitting.
+            </p>
+
+            <div class="widget" id="vav-widget">
+                <div class="widget-try">
+                    <span class="lbl">Try this:</span>
+                    <button type="button" data-vav-preset="design">design afternoon</button>
+                    <button type="button" data-vav-preset="typical">typical day</button>
+                    <button type="button" data-vav-preset="meeting">overcooled meeting room</button>
+                    <button type="button" data-vav-preset="starved">the starved coil</button>
+                </div>
+
+                <div class="widget-slider-head">
+                    <label for="vav-w-zone-slider">Zone temperature</label>
+                    <span class="v" id="vav-w-zone-value">75.0 °F</span>
+                </div>
+                <input class="widget-slider" id="vav-w-zone-slider" type="range" min="66" max="80" step="0.5" value="75"/>
+
+                <div class="vav-w-top">
+                    <div>
+                        <div class="widget-readout-label" id="vav-w-sib-lbl">The other 29 boxes</div>
+                        <div class="vav-w-modes" role="group" aria-labelledby="vav-w-sib-lbl">
+                            <button type="button" class="vav-w-mode-btn" data-vav-sib="calling" aria-pressed="false">All calling</button>
+                            <button type="button" class="vav-w-mode-btn" data-vav-sib="mixed" aria-pressed="true">A mixed bag</button>
+                            <button type="button" class="vav-w-mode-btn" data-vav-sib="satisfied" aria-pressed="false">Nearly all satisfied</button>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="widget-readout-label" id="vav-w-il-lbl">Airflow interlock on the DX stages</div>
+                        <div class="vav-w-modes" role="group" aria-labelledby="vav-w-il-lbl">
+                            <button type="button" class="vav-w-mode-btn" data-vav-il="on" aria-pressed="true">Interlocked</button>
+                            <button type="button" class="vav-w-mode-btn" data-vav-il="none" aria-pressed="false">None</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="vav-w-strip">
+                    <div class="vav-w-line">
+                        <div class="vav-w-line-name">This box · flow</div>
+                        <div class="vav-w-line-value" id="vav-w-flow">—</div>
+                    </div>
+                    <div class="vav-w-line">
+                        <div class="vav-w-line-name">Flow ring · VP</div>
+                        <div class="vav-w-line-value" id="vav-w-vp">—</div>
+                    </div>
+                    <div class="vav-w-line">
+                        <div class="vav-w-line-name">Damper</div>
+                        <div class="vav-w-line-value" id="vav-w-damper">—</div>
+                    </div>
+                    <div class="vav-w-line">
+                        <div class="vav-w-line-name">Reheat valve</div>
+                        <div class="vav-w-line-value" id="vav-w-reheat">—</div>
+                    </div>
+                </div>
+
+                <div class="vav-w-seam">Meanwhile, at the unit</div>
+
+                <div class="vav-w-strip">
+                    <div class="vav-w-line">
+                        <div class="vav-w-line-name">Total flow · 30 boxes</div>
+                        <div class="vav-w-line-value" id="vav-w-total">—</div>
+                    </div>
+                    <div class="vav-w-line">
+                        <div class="vav-w-line-name">DX stages running</div>
+                        <div class="vav-w-line-value" id="vav-w-stages">—</div>
+                    </div>
+                    <div class="vav-w-line">
+                        <div class="vav-w-line-name">Coil airflow</div>
+                        <div class="vav-w-line-value" id="vav-w-coil">—</div>
+                    </div>
+                </div>
+
+                <div class="vav-w-status" id="vav-w-status" aria-live="polite">Box tracking its zone — the coil breathes easy.</div>
+                <div class="vav-w-alert" id="vav-w-alert"></div>
+            </div>
+
+            <p class="ref-note">
+                What the widget holds still: the duct-static loop (the fan is assumed to keep up — that story is the
+                next page), humidity and latent load, and real staging logic (two clean stages stand in for whatever
+                the nameplate actually does). The other twenty-nine boxes come in three coarse moods rather than
+                twenty-nine sliders. Velocity pressure and CFM-per-ton stay in their IP field frames — the same
+                US-native posture as the <a href="/tools/airflow.html">airflow tool</a> — while flows and temperatures
+                follow the units toggle.
+            </p>
+
+            <!-- ───────────────── 7 · Closing ───────────────── -->
+
+            <h2 class="subhead" id="loads-throttle">Loads Throttle; the Mover Responds</h2>
+
+            <p>
+                That's a VAV system from the box's side of it: one cold trunk and thirty throttles; a box that measures
+                its own flow and chases CFM, not damper position; floors under everything — ventilation at the box,
+                reheat to keep the minimum livable, outside air measured at the unit, and airflow for the coil so the
+                machine survives its own part-load days. It's the air-side half of a mirror this site has drawn once
+                before: <a href="/education/load-piping.html">loads throttle</a>,
+                <a href="/education/pump-control.html">the mover responds</a>. This page was the throttling half.
+            </p>
+
+            <div class="callout">
+                <h3>One loose thread <span>· where does the pressure go?</span></h3>
+                <p>
+                    It's six o'clock. The building empties, thirty zone loops satisfy within the same half hour, and
+                    thirty dampers glide toward minimum together. The fan is still pushing — into a duct that is
+                    closing like a fist. Every box is doing its job, and the trunk pressure is climbing toward
+                    somewhere it shouldn't go. Deciding what gives, how the fan finds out, and how gracefully it backs
+                    off is <em>duct static control</em> — the next page of this chapter, and the answering half of the
+                    mirror.
+                </p>
+            </div>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/tools/airflow.html', label: 'Airflow Calculator'},
+            {href: '/tools/coil-sizing.html', label: 'Coil-Sizing Calculator'}
+        ],
+        lessons: [
+            {href: '/education/air-handlers.html', label: 'Air Handlers'},
+            {href: '/education/air-unit-identification.html', label: 'Unit Identification'},
+            {href: '/education/building-pressure.html', label: 'Building Pressure'},
+            {href: '/education/load-piping.html', label: 'Load Piping'},
+            {href: '/education/vfds.html', label: 'VFDs'},
+            {href: '/education/balancing.html', label: 'Balancing'}
+        ],
+        quizzes: [
+            {href: '/practice/vav-systems.html', label: 'VAV Systems'},
+            {href: '/practice/air-unit-identification.html', label: 'Unit Identification'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/education/">← Back to Education</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<!-- flow-engine.js is loaded site-wide from layouts/page.njk; the init()
+     below is an idempotent refresh so the page reads standalone. D1 and
+     D2 carry data-flow="air" ducts (particle color follows each duct's
+     stroke) plus D2's hot-water stubs; D3 is a static block diagram.
+     The box-walker widget below is pure page math — it never touches
+     the diagrams. -->
+<script>
+    FlowEngine.init();
+
+    // ── Box-walker widget ─────────────────────────────────────────────
+    // Model: one pressure-independent VAV box plus a coarse system
+    // strip. Internal model is IP (°F, CFM, in. w.c.); converted at the
+    // display boundary via window.Units. VP and CFM-per-ton stay
+    // IP-native (the airflow tool's US-native posture).
+    //
+    //   Box: min 200 / max 1000 CFM, K = 1000 (VP = (CFM/K)², so max
+    //   flow reads exactly 1.0 in. w.c.). Zone loop: cooling demand
+    //   ramps 0→1 over 74→78 °F, heating (reheat) 0→1 over 70→66 °F,
+    //   deadband between. Flow setpoint = min + cool·(max−min); the
+    //   flow loop is assumed to track it perfectly (pressure
+    //   independence is the point, not loop dynamics).
+    //
+    //   Damper position is qualitative: opening needed for the same
+    //   flow shrinks as inlet pressure rises (siblings closing), via a
+    //   per-mood pressure factor — same flow, different position.
+    //
+    //   System: siblings sum by mood (29,000 / 15,900 / 7,400 CFM);
+    //   two 37.5-ton DX stages want ≥ FLOOR1/FLOOR2 total CFM
+    //   (≈ 300 CFM/ton each). Interlocked, a stage sheds rather than
+    //   run starved; with no interlock, stages run on demand and the
+    //   coil status follows CFM/ton (OK ≥ 350, thin ≥ 300, starving
+    //   below). The starved preset reproduces the author's building —
+    //   the anecdote pins once revealed (state.anecdoteShown).
+    (function () {
+        'use strict';
+
+        const BOX = { min: 200, max: 1000, k: 1000 };
+        const SIBLINGS = { calling: 29000, mixed: 15900, satisfied: 7400 };
+        const PRESSURE_FACTOR = { calling: 1.0, mixed: 1.3, satisfied: 1.9 };
+        const STAGES_WANTED = { calling: 2, mixed: 1, satisfied: 1 };
+        const FLOOR1 = 11000;                     // one stage's airflow floor, CFM
+        const FLOOR2 = 22000;                     // both stages' floor, CFM
+        const TONS_PER_STAGE = 37.5;
+
+        const PRESETS = {
+            'design':  { t: 78, sib: 'calling',   il: true  },
+            'typical': { t: 75, sib: 'mixed',     il: true  },
+            'meeting': { t: 67, sib: 'mixed',     il: true  },
+            'starved': { t: 72, sib: 'satisfied', il: false }
+        };
+
+        const slider = document.getElementById('vav-w-zone-slider');
+        const zoneValEl = document.getElementById('vav-w-zone-value');
+        const flowEl = document.getElementById('vav-w-flow');
+        const vpEl = document.getElementById('vav-w-vp');
+        const damperEl = document.getElementById('vav-w-damper');
+        const reheatEl = document.getElementById('vav-w-reheat');
+        const totalEl = document.getElementById('vav-w-total');
+        const stagesEl = document.getElementById('vav-w-stages');
+        const coilEl = document.getElementById('vav-w-coil');
+        const statusEl = document.getElementById('vav-w-status');
+        const alertEl = document.getElementById('vav-w-alert');
+        const sibBtns = Array.prototype.slice.call(document.querySelectorAll('[data-vav-sib]'));
+        const ilBtns = Array.prototype.slice.call(document.querySelectorAll('[data-vav-il]'));
+
+        const state = {
+            sib: 'mixed',            // 'calling' | 'mixed' | 'satisfied'
+            interlock: true,         // airflow interlock on the DX stages
+            anecdoteShown: false     // one-way latch
+        };
+
+        function fmtTemp(f) {
+            const U = window.Units;
+            const v = U.current() === 'us' ? f : U.display.temp(f);
+            return v.toFixed(1) + ' ' + U.suffix.temp();
+        }
+
+        function fmtFlow(cfm) {
+            const U = window.Units;
+            if (U.current() === 'us') {
+                return Math.round(cfm).toLocaleString('en-US') + ' ' + U.suffix.airflow();
+            }
+            const v = Math.round(U.display.airflow(cfm) / 10) * 10;
+            return v.toLocaleString('en-US') + ' ' + U.suffix.airflow();
+        }
+
+        function update() {
+            const t = parseFloat(slider.value);
+
+            // Zone loop: demands from the two proportional bands.
+            const cool = Math.min(1, Math.max(0, (t - 74) / 4));
+            const heat = Math.min(1, Math.max(0, (70 - t) / 4));
+
+            // This box.
+            const cfm = Math.round(BOX.min + cool * (BOX.max - BOX.min));
+            const vp = Math.pow(cfm / BOX.k, 2);
+            const pf = PRESSURE_FACTOR[state.sib];
+            const damper = Math.min(100, Math.max(8, Math.round(92 * (cfm / BOX.max) / Math.sqrt(pf))));
+            const reheat = Math.round(heat * 100);
+
+            // The system.
+            const total = SIBLINGS[state.sib] + cfm;
+            const wanted = STAGES_WANTED[state.sib];
+            let stagesOn = wanted;
+            if (state.interlock) {
+                if (stagesOn === 2 && total < FLOOR2) stagesOn = 1;
+                if (stagesOn === 1 && total < FLOOR1) stagesOn = 0;
+            }
+            const cfmPerTon = stagesOn > 0 ? total / (stagesOn * TONS_PER_STAGE) : 0;
+            const held = state.interlock && stagesOn < wanted;
+            const starving = !state.interlock && stagesOn > 0 && cfmPerTon < 300;
+
+            // Paint the box strip.
+            zoneValEl.textContent = fmtTemp(t);
+            flowEl.textContent = fmtFlow(cfm);
+            vpEl.textContent = vp.toFixed(2) + ' in. w.c.';
+            damperEl.innerHTML = damper + '<span class="unit"> %</span>';
+            reheatEl.innerHTML = reheat > 0 ? reheat + '<span class="unit"> % open</span>' : 'off';
+
+            // Paint the system strip.
+            totalEl.textContent = fmtFlow(total);
+            stagesEl.textContent = stagesOn + ' of 2' + (held ? ' — held' : '');
+            if (stagesOn === 0) {
+                coilEl.textContent = held ? 'protected' : 'idle';
+            } else {
+                coilEl.textContent = Math.round(cfmPerTon) + ' CFM/ton' +
+                    (cfmPerTon >= 350 ? ' · OK' : (cfmPerTon >= 300 ? ' · thin' : ' · starving'));
+            }
+
+            // Status line + anecdote latch.
+            statusEl.classList.remove('warn', 'fault');
+            if (starving) {
+                statusEl.classList.add('fault');
+                statusEl.textContent = 'Stage running on ' + Math.round(cfmPerTon) +
+                    ' CFM/ton — suction diving, coil icing. Nothing in this design says stop.';
+                state.anecdoteShown = true;
+            } else if (held) {
+                statusEl.classList.add('warn');
+                statusEl.textContent = 'Airflow below the stage floor — interlock holds the compressor off. Zones wait; the coil survives.';
+            } else if (reheat > 0) {
+                statusEl.textContent = 'Overcooled zone — flow held at minimum, reheat carrying the room.';
+            } else if (cool === 0) {
+                statusEl.textContent = 'Zone satisfied — box riding its minimum for ventilation.';
+            } else {
+                statusEl.textContent = 'Box tracking its zone — the coil breathes easy.';
+            }
+
+            // The anecdote pins once revealed.
+            if (state.anecdoteShown) {
+                if (!alertEl.firstChild) {
+                    alertEl.innerHTML = '<div class="widget-anecdote warn">This preset is a pair of air handlers I&#39;m still babysitting. Two big VAV units whose plant was improvised before my time — a retired chiller carved into two field-built DX circuits — serving a building of boxes with no bypass, no dump zone, no airflow interlock, and no low-pressure cutout anywhere: not a physical switch, not a line of logic, even though suction pressure was sitting right there on the controller. On mild days the zones satisfied, the boxes rode down, and the coil ran out of air to breathe. The mechanical crew found it iced solid; the controller&#39;s own trend showed suction diving every afternoon; the stages hunted and short-cycled, and the building had been losing compressors to it. The logic was in bad enough shape that I rewrote it — and until the sheet-metal fix arrives, the band-aid is mine: every box pinned to max flow (VAV in name, constant volume in software), stages held off return temperature, and the boilers running in July so the overcooled zones can reheat their way back. Horribly inefficient, and I know it. It also keeps compressors alive and people comfortable, which is the job until the real fix shows up.</div>';
+                }
+            }
+        }
+
+        slider.addEventListener('input', update);
+
+        sibBtns.forEach(function (b) {
+            b.addEventListener('click', function (e) {
+                state.sib = e.currentTarget.getAttribute('data-vav-sib');
+                sibBtns.forEach(function (x) {
+                    x.setAttribute('aria-pressed', x.getAttribute('data-vav-sib') === state.sib ? 'true' : 'false');
+                });
+                update();
+            });
+        });
+
+        ilBtns.forEach(function (b) {
+            b.addEventListener('click', function (e) {
+                state.interlock = e.currentTarget.getAttribute('data-vav-il') === 'on';
+                ilBtns.forEach(function (x) {
+                    x.setAttribute('aria-pressed', (x.getAttribute('data-vav-il') === 'on') === state.interlock ? 'true' : 'false');
+                });
+                update();
+            });
+        });
+
+        document.querySelectorAll('[data-vav-preset]').forEach(function (btn) {
+            btn.addEventListener('click', function (e) {
+                const p = PRESETS[e.currentTarget.getAttribute('data-vav-preset')];
+                if (!p) return;
+                slider.value = String(p.t);
+                state.sib = p.sib;
+                state.interlock = p.il;
+                sibBtns.forEach(function (x) {
+                    x.setAttribute('aria-pressed', x.getAttribute('data-vav-sib') === state.sib ? 'true' : 'false');
+                });
+                ilBtns.forEach(function (x) {
+                    x.setAttribute('aria-pressed', (x.getAttribute('data-vav-il') === 'on') === state.interlock ? 'true' : 'false');
+                });
+                update();
+            });
+        });
+
+        // Re-render every temperature and flow when the unit toggle flips.
+        document.addEventListener('unitschange', update);
+        update();
+    })();
+</script>
+{% endblock %}

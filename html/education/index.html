@@ -23,7 +23,7 @@ nav: education
 
     <div class="filter-chips" role="group" aria-label="Filter lessons by category">
         <button type="button" class="filter-chip active" data-category="all" aria-pressed="true">
-            All <span class="filter-chip-count">22</span>
+            All <span class="filter-chip-count">23</span>
         </button>
         <button type="button" class="filter-chip" data-category="fundamentals" aria-pressed="false">
             Fundamentals <span class="filter-chip-count">6</span>
@@ -35,7 +35,7 @@ nav: education
             Refrigerant <span class="filter-chip-count">3</span>
         </button>
         <button type="button" class="filter-chip" data-category="forced-air" aria-pressed="false">
-            Forced Air Systems <span class="filter-chip-count">4</span>
+            Forced Air Systems <span class="filter-chip-count">5</span>
         </button>
         <button type="button" class="filter-chip" data-category="protocols" aria-pressed="false">
             Protocols <span class="filter-chip-count">5</span>
@@ -185,6 +185,16 @@ nav: education
             titleFull:  'Unit Identification',
             desc:       'Standing in front of an unfamiliar air-side unit — three field questions, the RTU / AHU / MAU / split lineup, nameplate and schedule literacy, and a lineup-walker widget with mysteries to solve.',
             pills:      ['Air Systems', 'RTU · AHU · MAU', 'Nameplates', 'Lineup Walker'],
+            category:   'forced-air'
+        }) }}
+
+        {{ navCard({
+            section:    'education',
+            href:       '/education/vav-systems.html',
+            titleShort: 'VAV Systems',
+            titleFull:  'VAV Systems',
+            desc:       'One cold trunk, thirty throttles — the flow ring and CFM = K·√VP, pressure independence, minimums and reheat, and a widget that starves a DX coil.',
+            pills:      ['Air Systems', 'Boxes · Reheat', 'Flow Rings', 'Box Walker'],
             category:   'forced-air'
         }) }}
         {{ navCard({
