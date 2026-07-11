@@ -219,14 +219,35 @@ Shipped so far:
   closing hand-off both upgraded to live links; the closing walks
   back to the opener's air path. Declared question + scope contract
   below.
+- **VAV Systems** *(shipped 2026-07-10, buildout PR 5)* —
+  `education/vav-systems.html` + paired quiz. One trunk, thirty
+  claims: boxes throttle volume, not temperature — the load-piping
+  mirror named out loud, pump-control cited as the answering half;
+  box anatomy (damper, flow ring, controller; CFM = K·√VP deferred
+  to the airflow tool's math and echoing its K = 1000 example); the
+  two-loop cascade and pressure independence ("damper position is
+  nobody's setpoint"), with min/max CFM traced schedule → balancer's
+  hood → back-solved K; the floors — ventilation at the box, reheat
+  riding the minimum (DAT cascade, ~90 °F cap), and measured OA at
+  the unit (pays page 3's §dampers-pressure wrinkle); a coil-floor
+  section the contract didn't promise (DX minimum airflow, ~400
+  CFM/ton, and the relief lineup: generous minimums / airflow
+  interlock / bypass / dump zone) — the owner's war story picked the
+  depth spot, same as power exhaust on page 3. Box-walker widget
+  with a system strip: zone-temp slider drives the flow cascade, the
+  sibling mood moves the damper while flow holds (pressure
+  independence live), and the starved-coil preset replays the
+  owner's building — a retired chiller hacked into two field-built
+  DX circuits, no bypass / dump zone / interlock / low-pressure
+  cutout, iced coils and lost compressors, band-aided with boxes
+  pinned to max, return-temp staging, and summer boilers until the
+  mechanical fix lands. Closes on the chapter cliff-hanger: every
+  box shuts at once — where does the pressure go? Declared question
+  + scope contract below.
 
 Remaining (one lesson + paired quiz per PR, category `forced-air`;
 declared questions for all six locked below):
 
-- **VAV systems** — one AHU, many boxes; box anatomy and K-factor
-  flow (pays the airflow tool), reheat at minimum, the
-  every-box-closes cliff-hanger. `[future:
-  education/vav-systems.html]`
 - **Duct static control** — why the fan holds static, sensor
   placement + the loop, static reset, safeties; the pump-control
   mirror and the chapter closer. Pays affinity-laws' fan-side
@@ -321,7 +342,8 @@ relief/exhaust path `[future: education/building-pressure.html]`
 naming the box `[future: education/air-unit-identification.html]`
 *(shipped 2026-07-10 — sidestep callout upgraded to a live link)*;
 the terminal side `[future:
-education/vav-systems.html]` and the fan's speed `[future:
+education/vav-systems.html]` *(shipped 2026-07-10 — chapter-map
+clause upgraded to a live link)* and the fan's speed `[future:
 education/duct-static-control.html]`; air-state math — existing
 links, not markers (psychrometrics-basics §Processes, air-mixing,
 coil-sizing, psychrometric-chart).
@@ -389,7 +411,9 @@ dedicated exhaust `[future: kitchen & lab exhaust]` (named in the
 worked-example callout); stairwell pressurization and smoke control
 `[future: smoke control]` (same sentence); VAV-minimum ventilation
 interactions `[future: section in education/vav-systems.html]`
-(named in §dampers-pressure as "belongs to the VAV pages").
+(named in §dampers-pressure as "belongs to the VAV pages")
+*(shipped 2026-07-10 — §minimums carries the unit-level OA wrinkle;
+the §dampers-pressure prose upgraded to a live link)*.
 Debts: paid page 2's callout (both plants now live links) and
 page 1's relief-path marker (mixing-box prose + closing chapter map
 + relatedLinks). Incurred the duct-static distinction (paid page 6)
@@ -421,7 +445,9 @@ method: the off-season override ("command the season that's
 asleep"), formalized with guardrails at the owner's direction —
 it's the anecdote's technique.
 Out of scope: terminal-unit identification `[future:
-education/vav-systems.html]`; FCUs beyond recognition `[future:
+education/vav-systems.html]` *(shipped 2026-07-10 — CV-or-VAV
+callout + closing hand-off upgraded to live links)*; FCUs beyond
+recognition `[future:
 education/fan-coil-units.html]`; VVT `[future: education/vvt.html]`
 (named in prose in the CV-vs-VAV callout); DOAS/ERV psychrometrics
 `[future: DOAS / ERV page]` (parked since the psychrometrics entry;
@@ -433,7 +459,7 @@ unledgered second plant the grep sweep surfaced: page 3's closing
 "naming the box" hand-off, also upgraded. Incurs the parked
 terminal-unit markers.
 
-**5 · VAV systems** (`vav-systems.html`)
+**5 · VAV systems** (`vav-systems.html`) *(shipped 2026-07-10)*
 *One question: how does one air handler serve thirty zones that all
 want different things — what is a VAV box actually doing when its
 zone calls?*
@@ -456,6 +482,14 @@ Debts: pays vfds.html's naked "VAV systems" prose in the cube-law
 section (gains its link), the airflow tool's lessons-link
 orphanhood, and the VAV-commissioning audit scenario. Incurs the
 duct-static cliff-hanger and the parked terminal markers.
+As shipped: grew a coil-floor section beyond the contract (`#the-
+coil-floor` — DX minimum airflow and the bypass / dump-zone /
+interlock relief lineup; the owner's starved-coil story needed a
+taught basis, and the topic is squarely inside the page's one
+question since it's what happens when the boxes throttle). Also
+paid page 3's VAV-minimum ventilation marker in §minimums. VVT,
+fan-powered boxes, and single-zone VAV stay parked — named nowhere
+on the page beyond the CV-or-VAV callout it inherits by link.
 
 **6 · Duct static control** (`duct-static-control.html`)
 *One question: how does the supply fan know how much air the

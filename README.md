@@ -420,6 +420,18 @@ techs new to the industry and anyone wanting a refresh.
   the last one replaying the author's own building where the
   graphics, the prints, and the people all disagreed. Page 4 of
   the forced-air chapter; pairs with the Unit Identification quiz.
+- **VAV Systems** — one air handler, thirty zones that never agree:
+  the cold trunk and the boxes that throttle volume, not temperature
+  (the load-piping mirror, said out loud); inside the box — damper,
+  flow ring, CFM = K·√VP and the airflow tool that runs it; why the
+  box chases flow instead of damper position (pressure independence,
+  and where min/max CFM come from); the floors — ventilation at the
+  box, reheat riding the minimum, measured outside air at the unit,
+  and the DX coil's own airflow floor; a box-walker widget with a
+  system strip that starves a coil the way the author's real building
+  did. Closes on the chapter cliff-hanger: every box shuts at once —
+  where does the pressure go? Page 5 of the forced-air chapter;
+  pairs with the VAV Systems quiz.
 - **Function-Block Basics** — what a block and a wiresheet are, why
   the industry builds sequences this way (the diagram is the program,
   you can watch it run live, the block vocabulary travels across
@@ -495,7 +507,7 @@ flavors share the same engine:
   When a topic recurs in feedback, it becomes a candidate for a
   new education page.
 
-Shipped so far — twenty-one content quizzes (each 10 questions, paired
+Shipped so far — twenty-two content quizzes (each 10 questions, paired
 1:1 with its lesson and deep-linking the gotchas) plus five field
 drills:
 
@@ -526,8 +538,9 @@ drills:
   Seven properties, why any two lock the rest, the four chart
   process families, and the RH / dew-point / enthalpy gotchas.
 - **Content quizzes — forced air:** Air Handlers, Economizers,
-  Building Pressure, Unit Identification. The station order down the
-  air path, minimum outside air and where the relief goes, the
+  Building Pressure, Unit Identification, VAV Systems. The station
+  order down the air path, minimum outside air and where the relief
+  goes, the
   mixed-air arithmetic and its stuck-damper gotcha readout, filter
   ΔP, coil condensate, and fan heat; then free cooling end to end —
   the linked damper set, the mixing math run backwards, the deceptive
@@ -536,7 +549,9 @@ drills:
   barometric vs power exhaust vs tracking, and the heavy-door
   interlock diagnosis; then naming the box — the three field
   questions, the family tells, tonnage from a model number, and the
-  mislabeled-fan-coil gotcha.
+  mislabeled-fan-coil gotcha; then the boxes — volume not
+  temperature, K-factor flow, the damper nobody sets, reheat at
+  minimum, and the starved-coil trend.
 - **Surviving Your First Months** *(field drill)* — a broad sampler
   for techs in their first few months: LOTO and verify-on-known-live,
   the 4-20 mA live-zero wire-break signature, DMM continuity mode,
