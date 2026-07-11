@@ -596,14 +596,9 @@ this order (field utility first, verification-gated items last):
    2026-07-11 — see its Shipped entry below)*.
 2. **Duct Traverse** — `/tools/duct-traverse.html` *(shipped
    2026-07-11 — see its Shipped entry below)*.
-3. **Equipment Airflow Check** — `/tools/equipment-airflow.html`,
-   prefix `ea-`, airflow. DX tab: CFM per *active* ton with
-   icing/carryover bands (staging is the correctness crux); gas-HX
-   tab: nameplate rise window → allowable CFM band, measured rise ⇒
-   implied CFM + verdict. "Static equivalent" descoped honestly: a
-   fixed-speed TSP↔CFM mapping IS the blower curve (vendor data) —
-   v1 teaches the method and links affinity-laws. Owner blesses band
-   edges (350/400/450/500) and staging input shape at build time.
+3. **Equipment Airflow Check** — `/tools/equipment-airflow.html`
+   *(shipped 2026-07-11 — see its Shipped entry below; owner
+   blessed bands 350/400/500 and the stages-or-% mode select)*.
 4. **Coil Freeze Risk** — `/tools/coil-freeze-risk.html`, prefix
    `cfr-`, hvac. Margin + risk-factor verdict, NOT a physics predictor
    (tube-wall freeze needs geometry the field never has): worst-case
@@ -848,6 +843,67 @@ waterside-load, transformer-sizing. Adversarial review before ship
 caught five fixes (stale readout on hand-edit, descending-band guard,
 reference rounding, parser hardening, bridge-result `aria-labelledby`).
 
+### Equipment Airflow Check *(shipped 2026-07-11)*
+
+Queue fill #3 of the **Airflow tools buildout** (Feature ideas
+above) and the Airflow chip's fourth entry. Ships at
+`/tools/equipment-airflow.html`, prefix `ea-` (All 24→25, Airflow
+3→4): two verdict tabs — DX **CFM per active ton** and gas-HX
+**temperature-rise window → allowable CFM band** — the site's first
+tool whose whole product is a judgment (`.status-pill`) rather than
+a number. IP-native like duct-traverse (CFM/ton and °F rise are the
+trade's frames); metric only as prose ride-alongs (400 CFM/ton ≈
+54 L/s per kW).
+
+Decisions worth remembering:
+- **Owner-blessed edges + staging shape (2026-07-11, recorded
+  gate):** bands error <350 / warn 350–400 / ok 400–500 (≈450
+  nominal in prose) / warn >500; staging entry is a **mode select**
+  — Stages (N of M, equal split assumed) or Capacity running (%) —
+  the % mode is also where fractional-stage entries get redirected
+  ("stages come in whole numbers" teaching mute).
+- **Active-ton denominator is the page's crux**: the seed (10-ton,
+  stage 1 of 2, 2,400 CFM) deliberately makes the naive read a
+  panic (240) and the honest read healthy (480); a "per nameplate
+  ton (ignores staging)" contrast row appears only when staging
+  discounts capacity, and hides when everything runs.
+- **Verdicts band on the DISPLAYED value** (the tidied CFM/ton), so
+  pill and readout can never disagree at an edge — the
+  displayed-operand policy applied to a verdict, not just a formula.
+- **The gas tab's rise window is taught as an airflow band in
+  disguise** (max rise → *minimum* CFM; the inversion is stated
+  everywhere it appears), and a measured rise doubles as a
+  poor-man's flow measurement (two thermometers, no traverse) —
+  worked example closes 100 MBH × 80 % → 1,235–2,469 CFM, 44 °F →
+  1,684 CFM. Verdict severity is asymmetric on purpose: rise above
+  window = limit-trip **error** (immediate safety device), below =
+  flue-condensation **warn** (seasons-scale corrosion).
+- **The static check is descoped honestly**: a fixed-speed TSP↔CFM
+  mapping IS the vendor blower curve; the shared row teaches the
+  blower-table field method and links affinity-laws instead of
+  faking a tab. `[future: user-entered two-point blower-curve
+  interpolation]` if demand shows.
+- **Inputs snap to formula-line display precision at parse**
+  (capacity 2 dp, CFM 0 dp, percents/rises 1 dp) — the adversarial
+  review's confirmed finding set: computing from raw values while
+  printing tidied ones let formula rows fail to reproduce
+  (50 tons × 33.34 % printed "× 33.3 … = 16.67"), let the gas
+  verdict contradict its own printed numbers at a window edge
+  (rise 60.04 → red pill saying "60 °F is above the 30–60 window"),
+  and let a divisor tidy to 0 and paint "Infinity CFM" inside a
+  live pill. One rule fixes all three: snap first, compute only
+  from what the reader can see, and mute a zero-snapped divisor.
+  The band-edge CFM parentheticals say "against the floor/ceiling"
+  rather than strict over/under, because a tiny furnace can round
+  the implied flow onto the band edge itself.
+- Debts paid: airside-load's `[future: CFM/ton verdict row]` marker
+  (its Total-tab prose now links here) and vav-systems' coil-floor
+  prose (the 400-CFM/ton mention now links here; the lesson's
+  interactive keeps its own scenario thresholds). Reciprocal
+  relatedLinks: airside-load, duct-traverse, vav-systems (lesson +
+  quiz), equipment-staging (lesson + quiz — the lesson's first
+  tools group).
+
 ### Duct Traverse calculator *(shipped 2026-07-11)*
 
 Queue fill #2 of the **Airflow tools buildout** (Feature ideas
@@ -951,7 +1007,8 @@ Decisions worth remembering:
   at 2000 ÷ 4.7 ≈ 425 CFM/ton and points at the VAV lesson's coil
   floor; the computed verdict row belongs to the queued
   equipment-checks tool. `[future: CFM/ton verdict row —
-  equipment-checks tool]`.
+  equipment-checks tool]` *(shipped 2026-07-11 —
+  equipment-airflow.html; the Total-tab prose now links it)*.
 - Worked examples run one coil narrative across the three tabs,
   closing with the **waterside handshake** (43.2 MBH at a 12 °F
   water ΔT = 7.2 GPM — the two sides of one coil have to agree) and
