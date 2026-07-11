@@ -1777,6 +1777,77 @@ test('unit identification — the lineup walker narrows, grades mysteries, and r
     expect(errors, 'unit-identification behavioral should log no page / console errors').toEqual([]);
 });
 
+test('vav systems — the box walker holds flow, the interlock protects the coil, the starved preset reveals the anecdote', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('/education/vav-systems.html');
+
+    // Structure: three annotated diagrams with accessible titles, two
+    // flow-animated (D1 system + D2 box cutaway; D3 cascade is static),
+    // and the section anchors the quiz learnMore links target.
+    await expect(page.locator('main svg.edu-svg')).toHaveCount(3);
+    await expect(page.locator('main svg.edu-svg > title')).toHaveCount(3);
+    await expect(page.locator('main svg.flow-active')).toHaveCount(2);
+    for (const anchor of ['#one-to-thirty', '#box-anatomy', '#pressure-independence', '#minimums', '#the-coil-floor', '#drive-the-box', '#loads-throttle']) {
+        await expect(page.locator(`h2${anchor}`)).toBeVisible();
+    }
+
+    // Default state: mild zone on a mixed day, interlock on — box
+    // tracking, one stage running, coil fine, no anecdote.
+    await expect(page.locator('#vav-w-flow')).toHaveText('400 CFM');
+    await expect(page.locator('#vav-w-vp')).toHaveText('0.16 in. w.c.');
+    await expect(page.locator('#vav-w-stages')).toHaveText('1 of 2');
+    await expect(page.locator('#vav-w-coil')).toHaveText(/OK/);
+    await expect(page.locator('#vav-w-status')).toHaveText(/tracking its zone/);
+    await expect(page.locator('#vav-w-alert .widget-anecdote')).toHaveCount(0);
+
+    // Pressure independence: the siblings change, the damper moves,
+    // the flow doesn't — and the answer group keeps aria-pressed in
+    // sync. With the building nearly satisfied, total flow drops below
+    // the stage floor and the interlock sheds the stage.
+    const damperBefore = await page.locator('#vav-w-damper').textContent();
+    await page.locator('[data-vav-sib="satisfied"]').click();
+    await expect(page.locator('[data-vav-sib="satisfied"]')).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('[data-vav-sib="mixed"]')).toHaveAttribute('aria-pressed', 'false');
+    await expect(page.locator('#vav-w-flow')).toHaveText('400 CFM');
+    await expect(page.locator('#vav-w-damper')).not.toHaveText(damperBefore);
+    await expect(page.locator('#vav-w-stages')).toHaveText('0 of 2 — held');
+    await expect(page.locator('#vav-w-coil')).toHaveText('protected');
+    await expect(page.locator('#vav-w-status')).toHaveClass(/warn/);
+    await expect(page.locator('#vav-w-status')).toHaveText(/interlock holds/i);
+
+    // An overcooled zone rides its minimum and reheats (back on the
+    // mixed day, so the interlock hold doesn't outrank the story).
+    await page.locator('[data-vav-sib="mixed"]').click();
+    await page.locator('#vav-w-zone-slider').fill('66');
+    await expect(page.locator('#vav-w-flow')).toHaveText('200 CFM');
+    await expect(page.locator('#vav-w-reheat')).toHaveText(/100 % open/);
+    await expect(page.locator('#vav-w-status')).toHaveText(/reheat carrying the room/i);
+
+    // Design afternoon: everything wide open, both stages, coil happy.
+    await page.locator('[data-vav-preset="design"]').click();
+    await expect(page.locator('#vav-w-flow')).toHaveText('1,000 CFM');
+    await expect(page.locator('#vav-w-total')).toHaveText('30,000 CFM');
+    await expect(page.locator('#vav-w-stages')).toHaveText('2 of 2');
+    await expect(page.locator('#vav-w-coil')).toHaveText(/OK/);
+
+    // The starved coil: boxes at minimum, no interlock, a stage still
+    // running — fault state, and the anecdote reveals.
+    await page.locator('[data-vav-preset="starved"]').click();
+    await expect(page.locator('#vav-w-stages')).toHaveText('1 of 2');
+    await expect(page.locator('#vav-w-coil')).toHaveText(/starving/);
+    await expect(page.locator('#vav-w-status')).toHaveClass(/fault/);
+    await expect(page.locator('#vav-w-status')).toHaveText(/coil icing/);
+    await expect(page.locator('#vav-w-alert .widget-anecdote')).toHaveCount(1);
+
+    // Back to a healthy preset: the fault clears, the anecdote stays
+    // pinned.
+    await page.locator('[data-vav-preset="design"]').click();
+    await expect(page.locator('#vav-w-status')).not.toHaveClass(/fault/);
+    await expect(page.locator('#vav-w-alert .widget-anecdote')).toHaveCount(1);
+
+    expect(errors, 'vav-systems behavioral should log no page / console errors').toEqual([]);
+});
+
 test.describe('function-block editor — interactions', () => {
     test('Delete key removes a selected block', async ({ page }) => {
         const errors = watchErrors(page);

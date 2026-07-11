@@ -1,0 +1,75 @@
+---
+title: VAV Systems Quiz — controlsfreak.dev
+description: Ten questions on the VAV Systems lesson — throttling volume not temperature, K-factor flow, pressure independence, reheat at minimum, and a starved DX coil.
+canonical: https://controlsfreak.dev/practice/vav-systems.html
+nav: practice
+category: forced-air
+pairedLesson: https://controlsfreak.dev/education/vav-systems.html
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Practice · VAV Systems</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">VAV Systems Quiz <span class="tool-tag">Air Systems</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                Read the <a href="/education/vav-systems.html">VAV Systems</a> lesson first, then work the boxes from
+                memory — ten questions down the lesson walk: what the box actually varies, the flow ring and
+                CFM = K × √VP, why the damper position is nobody's setpoint, the ventilation floor and reheat riding on
+                top of it, the starved-coil trend, and where the pressure goes when every box closes at once. Each
+                reveal links back to the section it came from.
+            </p>
+
+            <div id="quiz"></div>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/tools/airflow.html', label: 'Airflow Calculator'},
+            {href: '/tools/coil-sizing.html', label: 'Coil-Sizing Calculator'}
+        ],
+        lessons: [
+            {href: '/education/vav-systems.html', label: 'VAV Systems'},
+            {href: '/education/air-handlers.html', label: 'Air Handlers'},
+            {href: '/education/air-unit-identification.html', label: 'Unit Identification'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/practice/">← All practice</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="/scripts/quiz-engine.js"></script>
+<script>
+    (function () {
+        'use strict';
+
+        // Question bank lives in html/_data/quizzes/vav-systems.js
+        // so the FAQPage JSON-LD emitted from head.njk can read the same source.
+        const questions = {{ quizzes['vav-systems'] | safeScriptJson | safe }};
+
+        Quiz.mount('#quiz', questions, {
+            next: {{ page.fileSlug | nextQuiz | safeScriptJson | safe }},
+            slug: 'vav-systems',
+            title: 'VAV Systems',
+            defaultCount: 10,
+            defaultOrder: 'sequential'
+        });
+    })();
+</script>
+{% endblock %}
