@@ -1,0 +1,475 @@
+---
+title: Duct Traverse Calculator — controlsfreak.dev
+description: Average a pitot traverse the right way — root each velocity pressure, then average. V = 4005 × mean(√VP) with duct area to CFM, plus diffuser Ak-factor flow.
+canonical: https://controlsfreak.dev/tools/duct-traverse.html
+nav: tools
+category: airflow
+keywords: pitot traverse tab air balancing equal area grid log tchebycheff ak factor diffuser hood velocity pressure points 4005
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block head %}
+    <style>
+        /* Readings textarea gets its own single-column .ps-row variant —
+           a 5-across grid line wants the full column width, not the
+           38 % label / 62 % input split. */
+        .tr-stack { grid-template-columns: 1fr; align-items: start; }
+        .tr-stack textarea.ps-input {
+            font-family: var(--mono);
+            font-size: 0.85rem;
+            min-height: 7.75rem;
+        }
+        p.tr-count {
+            margin: 0.4rem 0 0;
+            font-family: var(--mono);
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Tools · Duct Traverse</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">
+                Duct Traverse Calculator
+                <span class="tool-tag">Airflow</span>
+            </h1>
+        </div>
+
+        <details class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
+            <summary>The whole traverse, not one point — and the root goes before the average.</summary>
+            <div class="preamble-rest">
+                <em>Traverse average</em> takes the full grid of pitot readings, roots each one, and averages the roots — <code>V̄ = 4005 × mean(√VP)</code> — then multiplies by duct area for CFM. Averaging the pressures first and rooting once reads high, every time.
+                <em>Ak-factor flow</em> converts a diffuser face reading through the catalog&rsquo;s effective area, <code>Q = Ak × V</code>, forward or back-solved against a hood.
+            </div>
+        </details>
+        <p class="ps-seed-note">Inputs are seeded with an example — edit them to your numbers.</p>
+
+        <div class="tabs tabs-flush">
+            <button class="tab-btn active" data-tab="traverse">Traverse average</button>
+            <button class="tab-btn"        data-tab="ak">Ak-factor flow</button>
+        </div>
+
+        <!-- ── Traverse average ── -->
+        <div id="tab-traverse" class="tab-pane active">
+            <div class="tool-body-2col">
+
+                <section>
+                    <h2 class="ps-section-label">Input</h2>
+                    <div class="ps-row">
+                        <label class="ps-label" for="tr-t-type">Reading type</label>
+                        <select class="ps-input" id="tr-t-type">
+                            <option value="vp">Velocity pressure (in. w.c.)</option>
+                            <option value="vel">Velocity (FPM)</option>
+                        </select>
+                    </div>
+                    <div class="ps-row tr-stack">
+                        <label class="ps-label" id="tr-t-readings-label" for="tr-t-readings">Readings — VP (in. w.c.), one per point</label>
+                        <div>
+                            <textarea class="ps-input" id="tr-t-readings" rows="6" spellcheck="false" autocomplete="off">0.0196 0.0400 0.0484 0.0400 0.0196
+0.0400 0.0625 0.0729 0.0625 0.0400
+0.0484 0.0729 0.0841 0.0729 0.0484
+0.0400 0.0625 0.0729 0.0625 0.0400
+0.0196 0.0400 0.0484 0.0400 0.0196</textarea>
+                            <p class="ref-note tr-count" id="tr-t-count">25 readings</p>
+                        </div>
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="tr-t-shape">Duct shape</label>
+                        <select class="ps-input" id="tr-t-shape">
+                            <option value="rect">Rectangular</option>
+                            <option value="round">Round</option>
+                        </select>
+                    </div>
+                    <div class="ps-row tr-rect-only">
+                        <label class="ps-label" for="tr-t-w">Duct width (in.)</label>
+                        <input class="ps-input" type="number" id="tr-t-w" step="any" min="0" placeholder="24" value="24">
+                    </div>
+                    <div class="ps-row tr-rect-only">
+                        <label class="ps-label" for="tr-t-h">Duct height (in.)</label>
+                        <input class="ps-input" type="number" id="tr-t-h" step="any" min="0" placeholder="12" value="12">
+                    </div>
+                    <div class="ps-row tr-round-only hidden">
+                        <label class="ps-label" for="tr-t-dia">Duct diameter (in.)</label>
+                        <input class="ps-input" type="number" id="tr-t-dia" step="any" min="0" placeholder="16" value="16">
+                    </div>
+                    <p class="ref-note">
+                        Paste the readings straight off your log — spaces, commas, or line breaks all separate points, so one textarea line per duct row keeps the grid readable. If your instrument already converts to FPM (hot-wire, rotating vane), switch the reading type and paste velocities; the average is then taken directly, no roots involved.
+                    </p>
+                </section>
+
+                <section role="status" aria-atomic="false">
+                    <h2 class="ps-section-label">Output</h2>
+                    <div class="ps-row">
+                        <span class="ps-label">Mean velocity (FPM)</span>
+                        <span class="ps-value muted" id="tr-t-vel">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">Velocity (m/s equivalent)</span>
+                        <span class="ps-value muted" id="tr-t-ms">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">Duct area (ft²)</span>
+                        <span class="ps-value muted" id="tr-t-area">—</span>
+                    </div>
+                    <div class="ps-row primary">
+                        <span class="ps-label">Airflow (CFM)</span>
+                        <span class="ps-value muted" id="tr-t-cfm">—</span>
+                    </div>
+                    <div class="btn-row">
+                        <button class="copy-btn" id="tr-t-copy">Copy CFM</button>
+                    </div>
+                    <div class="result-formula wrap" id="tr-t-formula"></div>
+                    <p class="ref-note" id="tr-t-jensen" hidden></p>
+                    <div class="failure-callout" id="tr-t-callout" hidden></div>
+                </section>
+
+            </div>
+
+            <section class="tool-body-row">
+                <h2 class="ps-section-label">Worked example</h2>
+                <p class="ref-note worked-intro">
+                    A 24&nbsp;×&nbsp;12&nbsp;in. supply duct, traversed on a 5&nbsp;×&nbsp;5 grid — the 25 seeded readings, laid out one textarea line per duct row, just as you&rsquo;d log them.
+                </p>
+                <ol class="ref-note worked-list">
+                    <li>Root each reading <em>first</em>: <code>√0.0196 = 0.14</code>, <code>√0.0625 = 0.25</code>, <code>√0.0841 = 0.29</code> … 25 roots in all.</li>
+                    <li>Average the roots: they sum to 5.41, so <code>mean(√VP) = 5.41 ÷ 25 = 0.2164</code>.</li>
+                    <li>Mean velocity: <code>V̄ = 4005 × 0.2164 = 867 FPM</code>.</li>
+                    <li>Area and flow: <code>A = (24 ÷ 12) × (12 ÷ 12) = 2.0 ft²</code>, so <code>Q = 867 × 2.0 = 1734 CFM</code>.</li>
+                </ol>
+                <p class="ref-note">
+                    Now the wrong order, for comparison: average the pressures first — <code>mean(VP) = 1.2177 ÷ 25 = 0.0487</code> — and root once: <code>4005 × √0.0487 = 4005 × 0.2207 = 884 FPM</code>, which is <strong>2&nbsp;% high</strong>, or 34&nbsp;CFM of phantom air on this one duct. The square root bends down, so the root of an average always sits at or above the average of the roots: the wrong order can only ever read <em>high</em>, and the gap widens the more uneven the profile. On the honest side of the comparison, the two agree only when every reading is identical — which a real duct never is.
+                </p>
+            </section>
+        </div>
+
+        <!-- ── Ak-factor flow ── -->
+        <div id="tab-ak" class="tab-pane">
+            <div class="tool-body-2col">
+
+                <section>
+                    <h2 class="ps-section-label">Input</h2>
+                    <div class="ps-row">
+                        <label class="ps-label" for="tr-a-solve">Solve for</label>
+                        <select class="ps-input" id="tr-a-solve">
+                            <option value="flow">Flow from Ak + velocity</option>
+                            <option value="ak">Ak from hood flow + velocity</option>
+                        </select>
+                    </div>
+                    <div class="ps-row" id="tr-a-row-ak">
+                        <label class="ps-label" for="tr-a-ak">Ak factor (ft²)</label>
+                        <input class="ps-input" type="number" id="tr-a-ak" step="any" min="0" placeholder="0.65" value="0.65">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="tr-a-vel">Face velocity (FPM)</label>
+                        <input class="ps-input" type="number" id="tr-a-vel" step="any" placeholder="400" value="400">
+                    </div>
+                    <div class="ps-row" id="tr-a-row-cfm">
+                        <label class="ps-label" for="tr-a-cfm">Hood flow (CFM)</label>
+                        <input class="ps-input" type="number" id="tr-a-cfm" step="any" min="0" placeholder="260" value="260">
+                    </div>
+                    <p class="ref-note">
+                        Ak is the manufacturer&rsquo;s <em>effective</em> flow area for that diffuser with a stated instrument held in a stated position — not the neck&rsquo;s <code>πr²</code>, not the face dimensions. Conventions differ by instrument, which is why the second mode exists: hood one diffuser, back-solve the Ak your anemometer actually sees, and carry it to the rest of the identical units.
+                    </p>
+                </section>
+
+                <section role="status" aria-atomic="false">
+                    <h2 class="ps-section-label">Output</h2>
+                    <div class="ps-row primary">
+                        <span class="ps-label" id="tr-a-out-label">Flow</span>
+                        <span class="ps-value muted" id="tr-a-out">—</span>
+                    </div>
+                    <div class="btn-row">
+                        <button class="copy-btn" id="tr-a-copy">Copy CFM</button>
+                    </div>
+                    <div class="result-formula wrap" id="tr-a-formula"></div>
+                    <div class="failure-callout" id="tr-a-callout" hidden></div>
+                </section>
+
+            </div>
+
+            <section class="tool-body-row">
+                <h2 class="ps-section-label">Worked example</h2>
+                <p class="ref-note worked-intro">
+                    A job has twenty identical louvered-face diffusers. The catalog lists Ak&nbsp;=&nbsp;0.65&nbsp;ft² for a rotating-vane anemometer at the face.
+                </p>
+                <ol class="ref-note worked-list">
+                    <li>The flow equation: <code>Q = Ak × V = 0.65 × 400 = 260 CFM</code> at the measured 400&nbsp;FPM face velocity.</li>
+                    <li>Now the calibration direction: hood the first diffuser — it reads <code>273 CFM</code> while the anemometer averages <code>420 FPM</code>. Back-solve: <code>Ak = 273 ÷ 420 = 0.65</code> — the catalog value checks out for your instrument, so the remaining nineteen convert with one multiply each.</li>
+                </ol>
+                <p class="ref-note">
+                    The trap this tab exists to flag: Ak is not a geometric area. The same diffuser carries a different Ak for a hot-wire probe at the neck than for a vane at the face, and the neck&rsquo;s <code>πr²</code> (0.79&nbsp;ft² for a 12&nbsp;in. neck) is a third number entirely — multiply by that instead of the 0.65 and this example reads roughly 20&nbsp;% high. Use the catalog value for your model <em>and</em> your instrument, or back-solve your own.
+                </p>
+            </section>
+        </div>
+
+        <section class="tool-body-row">
+            <h2 class="ps-section-label">Grids, plane location, and standard air</h2>
+            <p class="ref-note">
+                <strong>How many points:</strong> for rectangular duct, divide the cross-section into a grid of equal cells and read the center of each — at least 25 points (5 per side), going to 6 per side when a side passes 30&nbsp;in. and 7 when it passes 36&nbsp;in. For round duct, traverse two perpendicular diameters through ports 90° apart, 6 to 10 points per diameter. Either shape: the standards-grade spacing (log-Tchebycheff for rectangular, log-linear for round) crowds the points toward the walls to catch the boundary layer — the position tables live in ASHRAE&nbsp;111 and your instrument manual, and matter more as the duct gets smaller.
+            </p>
+            <p class="ref-note">
+                <strong>Where the plane goes:</strong> the grid can&rsquo;t rescue a bad plane. Aim for at least 7.5&nbsp;straight duct diameters downstream of the last elbow, damper, or takeoff and 3 upstream of the next one. When the run doesn&rsquo;t exist — usually — add points, expect scatter, and treat a reading that goes <em>negative</em> as the duct telling you the flow is reversing or tumbling at that spot: relocate the plane rather than averaging it in.
+            </p>
+            <p class="ref-note">
+                <strong>Standard air:</strong> the 4005 folds standard-air density (0.075&nbsp;lb/ft³ — sea level, ~70&nbsp;°F) into <code>V&nbsp;=&nbsp;√(2&nbsp;·&nbsp;ΔP&nbsp;/&nbsp;ρ)</code>, the same constant as the <a href="/tools/airflow.html">airflow tool</a>. At altitude the air is thinner, the same VP means a higher true velocity, and this math under-reads by a few percent per few-thousand feet; most balancing instruments correct for density internally — when yours does, trust it over this page. Velocity-type readings inherit whatever density handling the instrument that produced them applied. This tool is US-native (in.&nbsp;w.c., FPM, CFM) — the frame pitot charts and Ak catalogs are published in — and the m/s readout rides along.
+            </p>
+        </section>
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/tools/airflow.html', label: 'Airflow & Velocity Pressure'},
+            {href: '/tools/airside-load.html', label: 'Airside Load Calculator'},
+            {href: '/tools/economizer-ratio.html', label: 'Economizer Ratio Helper'}
+        ],
+        lessons: [
+            {href: '/education/vav-systems.html', label: 'VAV Systems'},
+            {href: '/education/duct-static-control.html', label: 'Duct Static Control'},
+            {href: '/education/building-pressure.html', label: 'Building Pressure'}
+        ],
+        quizzes: [
+            {href: '/practice/vav-systems.html', label: 'VAV Systems Quiz'},
+            {href: '/practice/duct-static-control.html', label: 'Duct Static Control Quiz'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/tools/">← All tools</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="/scripts/ui.js"></script>
+<script>
+    // switchTab(name, btn) and copyReadouts(btn, sep, ...ids) come from
+    // /scripts/ui.js. US-native (in. w.c., FPM, CFM) with an m/s
+    // ride-along — same posture and same IP 4005 as airflow.html.
+    // The one rule this page exists to teach: root each VP reading,
+    // THEN average. mean(√VP) ≤ √(mean VP) whenever the readings
+    // differ (the root is concave), so the wrong order always reads
+    // high; the live order-check line quantifies it per traverse.
+    (function () {
+        'use strict';
+
+        const FPM_TO_MS = 0.00508;   // 1 ft/min = 0.00508 m/s exactly
+
+        const tidy = (n, dp) => parseFloat(n.toFixed(dp)).toString();
+
+        // ── Traverse average ──────────────────────────────────────────
+        const tTypeEl     = document.getElementById('tr-t-type');
+        const tReadingsEl = document.getElementById('tr-t-readings');
+        const tReadingsLabelEl = document.getElementById('tr-t-readings-label');
+        const tCountEl    = document.getElementById('tr-t-count');
+        const tShapeEl    = document.getElementById('tr-t-shape');
+        const tWEl        = document.getElementById('tr-t-w');
+        const tHEl        = document.getElementById('tr-t-h');
+        const tDiaEl      = document.getElementById('tr-t-dia');
+        const tVelEl      = document.getElementById('tr-t-vel');
+        const tMsEl       = document.getElementById('tr-t-ms');
+        const tAreaEl     = document.getElementById('tr-t-area');
+        const tCfmEl      = document.getElementById('tr-t-cfm');
+        const tFormulaEl  = document.getElementById('tr-t-formula');
+        const tJensenEl   = document.getElementById('tr-t-jensen');
+        const tCalloutEl  = document.getElementById('tr-t-callout');
+        const tCopyBtn    = document.getElementById('tr-t-copy');
+
+        // Number(), not parseFloat(): parseFloat('0.o484') happily
+        // returns 0 off the leading digit, silently swallowing a typo
+        // in the middle of a 25-point log. Number() rejects the whole
+        // token, which is what the per-point mute needs.
+        function parseReadings(raw) {
+            const tokens = raw.trim().split(/[\s,;]+/).filter(t => t.length > 0);
+            const values = [];
+            for (let i = 0; i < tokens.length; i++) {
+                const v = Number(tokens[i]);
+                if (!isFinite(v)) {
+                    return { error: `Reading ${i + 1} isn’t a number (got “${tokens[i]}”) — fix or delete it and the average recomputes.`, count: tokens.length };
+                }
+                values.push(v);
+            }
+            return { values, count: tokens.length };
+        }
+
+        function muteT(msg) {
+            for (const el of [tVelEl, tMsEl, tAreaEl, tCfmEl]) {
+                el.className = 'ps-value muted';
+                el.textContent = '—';
+            }
+            tFormulaEl.textContent = '';
+            tJensenEl.hidden = true;
+            tCalloutEl.textContent = msg;
+            tCalloutEl.hidden = false;
+        }
+
+        function calcT() {
+            const isVp = tTypeEl.value === 'vp';
+            tReadingsLabelEl.textContent = isVp
+                ? 'Readings — VP (in. w.c.), one per point'
+                : 'Readings — velocity (FPM), one per point';
+
+            const round = tShapeEl.value === 'round';
+            document.querySelectorAll('.tr-rect-only').forEach(el => el.classList.toggle('hidden', round));
+            document.querySelectorAll('.tr-round-only').forEach(el => el.classList.toggle('hidden', !round));
+
+            const parsed = parseReadings(tReadingsEl.value);
+            tCountEl.textContent = parsed.count === 1 ? '1 reading' : `${parsed.count} readings`;
+            if (parsed.count === 0) { muteT('Paste the traverse readings — one number per point, separated by spaces, commas, or line breaks.'); return; }
+            if (parsed.error) { muteT(parsed.error); return; }
+
+            const values = parsed.values;
+            const negIdx = values.findIndex(v => v < 0);
+            if (negIdx !== -1) {
+                muteT(isVp
+                    ? `Reading ${negIdx + 1} is negative — a below-zero VP at a traverse point usually means the flow is reversing or tumbling off an upstream fitting. Don’t average it in; relocate the plane (aim for ~7.5 straight duct diameters).`
+                    : `Reading ${negIdx + 1} is negative — a velocity can’t be. If the instrument really showed reversed flow at that point, relocate the plane (~7.5 straight duct diameters) rather than averaging it in.`);
+                return;
+            }
+
+            let area, areaFormula;
+            if (round) {
+                const dia = parseFloat(tDiaEl.value);
+                if (!isFinite(dia)) { muteT('Enter the duct diameter.'); return; }
+                if (dia <= 0) { muteT('Diameter must be greater than 0.'); return; }
+                area = Math.PI * Math.pow(dia / 24, 2);   // (dia/12)/2 squared × π, in ft²
+                areaFormula = `A = π × (${tidy(dia, 4)} ÷ 24)² = ${tidy(area, 2)} ft²`;
+            } else {
+                const w = parseFloat(tWEl.value);
+                const h = parseFloat(tHEl.value);
+                if (!isFinite(w) || !isFinite(h)) { muteT('Enter the duct width and height.'); return; }
+                if (w <= 0 || h <= 0) { muteT('Duct dimensions must be greater than 0.'); return; }
+                area = (w / 12) * (h / 12);
+                areaFormula = `A = (${tidy(w, 4)} ÷ 12) × (${tidy(h, 4)} ÷ 12) = ${tidy(area, 2)} ft²`;
+            }
+
+            const n = values.length;
+            // Chain the readouts off DISPLAYED values so a reader's own
+            // arithmetic reproduces every step (airflow.html's calcD
+            // policy, inherited).
+            let velShown, velFormula;
+            if (isVp) {
+                const meanRoot = values.reduce((s, v) => s + Math.sqrt(v), 0) / n;
+                const meanRootShown = parseFloat(tidy(meanRoot, 4));
+                velShown = parseFloat(tidy(4005 * meanRootShown, 0));
+                velFormula = `mean(√VP), ${n} pts = ${tidy(meanRootShown, 4)} · V̄ = 4005 × ${tidy(meanRootShown, 4)} = ${tidy(velShown, 0)} FPM`;
+            } else {
+                const meanVel = values.reduce((s, v) => s + v, 0) / n;
+                velShown = parseFloat(tidy(meanVel, 0));
+                velFormula = `V̄, mean of ${n} readings = ${tidy(velShown, 0)} FPM`;
+            }
+            const areaShown = parseFloat(tidy(area, 2));
+            const cfm = velShown * areaShown;
+
+            tCalloutEl.hidden = true;
+            tVelEl.className = 'ps-value live';
+            tVelEl.textContent = tidy(velShown, 0) + ' FPM';
+            tMsEl.className = 'ps-value live';
+            tMsEl.textContent = tidy(velShown * FPM_TO_MS, 2) + ' m/s';
+            tAreaEl.className = 'ps-value live';
+            tAreaEl.textContent = tidy(areaShown, 2) + ' ft²';
+            tCfmEl.className = 'ps-value live';
+            tCfmEl.textContent = tidy(cfm, 0) + ' CFM';
+            tFormulaEl.textContent =
+                `${velFormula} · ${areaFormula} · Q = ${tidy(velShown, 0)} × ${tidy(areaShown, 2)} = ${tidy(cfm, 0)} CFM`;
+
+            // The order-check line — the page's teaching hook, computed
+            // live against this traverse. Only meaningful for VP input
+            // with a nonzero average and 2+ points.
+            if (isVp && n >= 2 && velShown > 0) {
+                const meanVpShown = parseFloat(tidy(values.reduce((s, v) => s + v, 0) / n, 4));
+                const rootShown = parseFloat(tidy(Math.sqrt(meanVpShown), 4));
+                const naive = parseFloat(tidy(4005 * rootShown, 0));
+                const pct = (naive - velShown) / velShown * 100;
+                // On a near-uniform profile the true wrong-order gap is
+                // smaller than the display rounding in the two chains, so
+                // the rounded comparison can tie or even invert — never
+                // print a negative or zero "% high" under a sentence that
+                // says that can't happen.
+                tJensenEl.textContent = naive > velShown && tidy(pct, 1) !== '0'
+                    ? `Order check: averaging the pressures first — mean VP = ${tidy(meanVpShown, 4)}, one root = ${tidy(rootShown, 4)} — would give ${tidy(naive, 0)} FPM, reading ${tidy(pct, 1)} % high. The wrong order can only read high, and the gap grows with profile spread.`
+                    : 'Order check: this profile is uniform enough that the two orders agree to display precision — the wrong-order penalty (always high, growing with profile spread) is smaller than the rounding in these digits.';
+                tJensenEl.hidden = false;
+            } else {
+                tJensenEl.hidden = true;
+            }
+        }
+
+        // ── Ak-factor flow ────────────────────────────────────────────
+        const aSolveEl    = document.getElementById('tr-a-solve');
+        const aAkEl       = document.getElementById('tr-a-ak');
+        const aVelEl      = document.getElementById('tr-a-vel');
+        const aCfmEl      = document.getElementById('tr-a-cfm');
+        const aOutEl      = document.getElementById('tr-a-out');
+        const aOutLabelEl = document.getElementById('tr-a-out-label');
+        const aFormulaEl  = document.getElementById('tr-a-formula');
+        const aCalloutEl  = document.getElementById('tr-a-callout');
+        const aCopyBtn    = document.getElementById('tr-a-copy');
+
+        function muteA(msg) {
+            aOutEl.className = 'ps-value muted';
+            aOutEl.textContent = '—';
+            aFormulaEl.textContent = '';
+            aCalloutEl.textContent = msg;
+            aCalloutEl.hidden = false;
+        }
+
+        function calcA() {
+            const solve = aSolveEl.value;
+            document.getElementById('tr-a-row-ak').classList.toggle('hidden', solve === 'ak');
+            document.getElementById('tr-a-row-cfm').classList.toggle('hidden', solve === 'flow');
+            aOutLabelEl.textContent = solve === 'flow' ? 'Flow' : 'Ak factor';
+
+            const ak  = parseFloat(aAkEl.value);
+            const vel = parseFloat(aVelEl.value);
+            const cfm = parseFloat(aCfmEl.value);
+
+            if (!isFinite(vel)) { muteA('Enter the face velocity.'); return; }
+            if (vel < 0) { muteA('Velocity can’t be negative — turn the anemometer around, or check which way the air is actually moving.'); return; }
+
+            let result, formula;
+            if (solve === 'flow') {
+                if (!isFinite(ak)) { muteA('Enter the Ak factor to find the flow.'); return; }
+                if (ak <= 0) { muteA('Ak must be greater than 0 — it’s an effective flow area.'); return; }
+                result = ak * vel;
+                formula = `Q = ${tidy(ak, 4)} × ${tidy(vel, 4)} = ${tidy(result, 0)} CFM`;
+                aOutEl.textContent = tidy(result, 0) + ' CFM';
+            } else {
+                if (!isFinite(cfm)) { muteA('Enter the hood flow to back-solve Ak.'); return; }
+                if (cfm < 0) { muteA('Flow can’t be negative.'); return; }
+                if (vel === 0) { muteA('Face velocity of zero can’t back-solve Ak — no air moving, nothing to calibrate against.'); return; }
+                result = cfm / vel;
+                formula = `Ak = ${tidy(cfm, 4)} ÷ ${tidy(vel, 4)} = ${tidy(result, 2)} ft²`;
+                aOutEl.textContent = tidy(result, 2) + ' ft²';
+            }
+
+            aCalloutEl.hidden = true;
+            aOutEl.className = 'ps-value live';
+            aFormulaEl.textContent = formula;
+            aCopyBtn.textContent = 'Copy ' + (solve === 'flow' ? 'CFM' : 'Ak');
+        }
+
+        // ── Wiring ────────────────────────────────────────────────────
+        document.querySelectorAll('[data-tab]').forEach(btn => {
+            btn.addEventListener('click', e => switchTab(e.currentTarget.dataset.tab, e.currentTarget));
+        });
+        tTypeEl.addEventListener('change', calcT);
+        tShapeEl.addEventListener('change', calcT);
+        tReadingsEl.addEventListener('input', calcT);
+        [tWEl, tHEl, tDiaEl].forEach(el => el.addEventListener('input', calcT));
+        aSolveEl.addEventListener('change', calcA);
+        [aAkEl, aVelEl, aCfmEl].forEach(el => el.addEventListener('input', calcA));
+        tCopyBtn.addEventListener('click', e => copyReadouts(e.currentTarget, '', 'tr-t-cfm'));
+        aCopyBtn.addEventListener('click', e => copyReadouts(e.currentTarget, '', 'tr-a-out'));
+
+        calcT();
+        calcA();
+    })();
+</script>
+{% endblock %}

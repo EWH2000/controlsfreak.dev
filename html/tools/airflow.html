@@ -130,7 +130,7 @@ keywords: cfm k factor velocity pressure vp 4005 fpm duct traverse pitot flow ho
                         <input class="ps-input" type="number" id="vp-d-dia" step="any" min="0" placeholder="16" value="16">
                     </div>
                     <p class="ref-note">
-                        One pitot reading is a point velocity, and duct velocity isn&rsquo;t uniform — it peaks at the center and dies at the walls. For a number you&rsquo;d sign, traverse the duct (multiple points on an equal-area grid) and average the velocities; this tab does the per-point math.
+                        One pitot reading is a point velocity, and duct velocity isn&rsquo;t uniform — it peaks at the center and dies at the walls. For a number you&rsquo;d sign, traverse the duct (multiple points on an equal-area grid) and average the velocities — the <a href="/tools/duct-traverse.html">duct-traverse calculator</a> averages the whole grid; this tab does the per-point math.
                     </p>
                 </section>
 
@@ -187,6 +187,7 @@ keywords: cfm k factor velocity pressure vp 4005 fpm duct traverse pitot flow ho
 
     {{ relatedLinks({
         tools: [
+            {href: '/tools/duct-traverse.html', label: 'Duct Traverse Calculator'},
             {href: '/tools/airside-load.html', label: 'Airside Load Calculator'},
             {href: '/tools/air-mixing.html', label: 'Air-Mixing Calculator'},
             {href: '/tools/coil-sizing.html', label: 'Coil-Sizing Calculator'},

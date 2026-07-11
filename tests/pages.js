@@ -32,6 +32,7 @@ const PAGES = [
     { name: 'waterside load',         url: '/tools/waterside-load.html' },
     { name: 'airflow',                url: '/tools/airflow.html' },
     { name: 'airside load',           url: '/tools/airside-load.html' },
+    { name: 'duct traverse',          url: '/tools/duct-traverse.html' },
     { name: 'transformer va budget',  url: '/tools/transformer-sizing.html' },
     { name: 'wire run voltage drop',  url: '/tools/voltage-drop.html' },
     { name: 'field electrical quick calc', url: '/tools/electrical-quick-calc.html' },

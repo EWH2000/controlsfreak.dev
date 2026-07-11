@@ -594,12 +594,8 @@ this order (field utility first, verification-gated items last):
 
 1. **Airside Load** — `/tools/airside-load.html` *(shipped
    2026-07-11 — see its Shipped entry below)*.
-2. **Duct Traverse** — `/tools/duct-traverse.html`, prefix `tr-`,
-   airflow. Multi-reading VP/velocity textarea → V̄ = 4005 ×
-   mean(√VPᵢ) → CFM (average the roots, never √(mean VP) — the
-   teaching hook), rect/round area, Ak-factor tab, point-count rules
-   row (no copyrighted log-T table). Pays airflow.html's
-   traverse-note forward-link and vav-systems' parked TAB marker.
+2. **Duct Traverse** — `/tools/duct-traverse.html` *(shipped
+   2026-07-11 — see its Shipped entry below)*.
 3. **Equipment Airflow Check** — `/tools/equipment-airflow.html`,
    prefix `ea-`, airflow. DX tab: CFM per *active* ton with
    icing/carryover bands (staging is the correctness crux); gas-HX
@@ -851,6 +847,65 @@ with electrical-quick-calc (the hp↔kW tie), coil-sizing,
 waterside-load, transformer-sizing. Adversarial review before ship
 caught five fixes (stale readout on hand-edit, descending-band guard,
 reference rounding, parser hardening, bridge-result `aria-labelledby`).
+
+### Duct Traverse calculator *(shipped 2026-07-11)*
+
+Queue fill #2 of the **Airflow tools buildout** (Feature ideas
+above) and the Airflow chip's third entry. Ships at
+`/tools/duct-traverse.html`, prefix `tr-` (All 23→24, Airflow 2→3):
+two tabs — full-grid traverse average and diffuser Ak-factor flow —
+built around the one rule the page exists to teach: **root each VP
+reading, then average**. mean(√VP) ≤ √(mean VP) whenever the
+readings differ (the root is concave), so the wrong order always
+reads high.
+
+Decisions worth remembering:
+- **Textarea, not N inputs**: a traverse is 25+ points logged in the
+  field; paste beats form-filling. Splits on whitespace / commas /
+  semicolons so one textarea line per duct row preserves the log's
+  shape; a live "N readings" counter sits under it. Page-local
+  `.tr-stack` single-column `.ps-row` variant gives the textarea the
+  full column (the 38 % label split was built for one-line inputs).
+- **`Number()`, not `parseFloat()`, per token** —
+  `parseFloat('0.o484')` returns 0 off the leading digit and
+  silently swallows a mid-log typo; `Number()` rejects the whole
+  token so the per-point mute ("Reading 7 isn't a number") can name
+  it. The single-input convention elsewhere stays parseFloat.
+- **The order-check line is computed live** against the user's own
+  traverse (naive √(mean VP) velocity + % high, chained off
+  displayed operands), not just asserted in prose. The seeded 5 × 5
+  grid uses perfect-square VPs so the mean root is 0.2164 *exactly*:
+  867 FPM honest vs 884 FPM wrong-order — 2 % high, 34 CFM of
+  phantom air on one duct. Guarded for near-uniform profiles (the
+  pre-ship review's one confirmed finding): the two display-rounded
+  chains can tie or invert when the true gap is below rounding, so
+  the line switches to an "agree to display precision" phrasing
+  rather than printing a negative "% high" under a
+  can-only-read-high sentence.
+- **A negative reading mutes as plane advice** (flow reversing or
+  tumbling — relocate, ~7.5 straight diameters), not a generic
+  error. Velocity-type readings (hot-wire / vane) average directly
+  and hide the order check — no roots involved, nothing to get
+  backwards.
+- **Point counts in rules form, no reproduced table**: ≥25 points
+  rectangular (5 / 6 / 7 per side at <30 / 30–36 / >36 in.), two
+  perpendicular diameters × 6–10 points round; the log-Tchebycheff /
+  log-linear position tables stay in ASHRAE 111 and the instrument
+  manual (copyright + false-precision risk).
+- **Ak back-solve is first-class** (airflow.html's K-calibration
+  precedent): hood one diffuser, derive the Ak your instrument
+  actually sees, carry it to the identical rest. The worked example
+  names the trap — Ak ≠ neck πr² (0.65 vs 0.79 ft², ~20 % high).
+- US-native + m/s ride-along, same 4005 and same altitude wording as
+  airflow.html (velocity scales 1/√ρ, so "a few percent per
+  few-thousand feet" is correct here — unlike the heat constants'
+  ~3 %/1,000 ft on airside-load). Debts paid: airflow.html's
+  traverse note upgraded to a live link, and the vav-systems entry's
+  out-of-scope TAB note finally has a tool to point at. Reciprocal
+  relatedLinks landed in the same PR: airflow, airside-load,
+  economizer-ratio, the vav-systems / duct-static-control /
+  building-pressure lessons, and the vav-systems +
+  duct-static-control quizzes.
 
 ### Airside Load calculator *(shipped 2026-07-11)*
 
