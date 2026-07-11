@@ -1757,6 +1757,7 @@ input[type="range"]::-moz-range-thumb {
 .ah-w-mode-btn:focus-visible,
 .aid-w-mode-btn:focus-visible,
 .bp-w-mode-btn:focus-visible,
+.ds-w-mode-btn:focus-visible,
 .vav-w-mode-btn:focus-visible,
 details.tool-preamble > summary:focus-visible,
 .pid-spoiler > summary:focus-visible {

@@ -23,7 +23,7 @@ nav: education
 
     <div class="filter-chips" role="group" aria-label="Filter lessons by category">
         <button type="button" class="filter-chip active" data-category="all" aria-pressed="true">
-            All <span class="filter-chip-count">23</span>
+            All <span class="filter-chip-count">24</span>
         </button>
         <button type="button" class="filter-chip" data-category="fundamentals" aria-pressed="false">
             Fundamentals <span class="filter-chip-count">6</span>
@@ -35,7 +35,7 @@ nav: education
             Refrigerant <span class="filter-chip-count">3</span>
         </button>
         <button type="button" class="filter-chip" data-category="forced-air" aria-pressed="false">
-            Forced Air Systems <span class="filter-chip-count">5</span>
+            Forced Air Systems <span class="filter-chip-count">6</span>
         </button>
         <button type="button" class="filter-chip" data-category="protocols" aria-pressed="false">
             Protocols <span class="filter-chip-count">5</span>
@@ -195,6 +195,15 @@ nav: education
             titleFull:  'VAV Systems',
             desc:       'One cold trunk, thirty throttles — the flow ring and CFM = K·√VP, pressure independence, minimums and reheat, and a widget that starves a DX coil.',
             pills:      ['Air Systems', 'Boxes · Reheat', 'Flow Rings', 'Box Walker'],
+            category:   'forced-air'
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/education/duct-static-control.html',
+            titleShort: 'Duct Static',
+            titleFull:  'Duct Static Control',
+            desc:       'How the supply fan finds its speed — one sensor two-thirds down the trunk, setpoint reset, the safeties, and why a healthy static can hide a collapsed airflow.',
+            pills:      ['Air Systems', 'Fan · VFD', 'Setpoint Reset', 'Loop Driver'],
             category:   'forced-air'
         }) }}
         {{ navCard({
