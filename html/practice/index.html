@@ -77,7 +77,7 @@ nav: practice
 
     <div class="filter-chips" role="group" aria-label="Filter practice by topic">
         <button type="button" class="filter-chip active" data-category="all" aria-pressed="true">
-            All <span class="filter-chip-count">26</span>
+            All <span class="filter-chip-count">27</span>
         </button>
         <button type="button" class="filter-chip" data-category="modbus" aria-pressed="false">
             Modbus <span class="filter-chip-count">2</span>
@@ -98,7 +98,7 @@ nav: practice
             Psychrometrics <span class="filter-chip-count">1</span>
         </button>
         <button type="button" class="filter-chip" data-category="forced-air" aria-pressed="false">
-            Forced Air Systems <span class="filter-chip-count">4</span>
+            Forced Air Systems <span class="filter-chip-count">5</span>
         </button>
     </div>
 
@@ -247,6 +247,16 @@ nav: practice
                 titleShort: 'Unit Identification',
                 titleFull:  'Unit Identification',
                 desc:       'Name the boxes from memory — the three field questions, packaged vs built-up vs makeup air, the lineset, tonnage from a model number, and when the paper lies.',
+                pills:      ['10 Questions', 'MCQ · TF · Gotcha · Numeric', '~ 5 min'],
+                category:   'forced-air'
+            }) }}
+
+            {{ navCard({
+                section:    'practice',
+                href:       '/practice/vav-systems.html',
+                titleShort: 'VAV Systems',
+                titleFull:  'VAV Systems',
+                desc:       'Volume not temperature, flow from K and velocity pressure, the damper nobody sets, reheat at minimum, and the starved-coil gotcha — from memory.',
                 pills:      ['10 Questions', 'MCQ · TF · Gotcha · Numeric', '~ 5 min'],
                 category:   'forced-air'
             }) }}

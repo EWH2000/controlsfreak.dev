@@ -22,6 +22,7 @@ module.exports = [
     { slug: 'economizers',              label: 'Economizers' },
     { slug: 'building-pressure',        label: 'Building Pressure' },
     { slug: 'air-unit-identification',  label: 'Unit Identification' },
+    { slug: 'vav-systems',              label: 'VAV Systems' },
     { slug: 'function-blocks',          label: 'Function Blocks' },
     { slug: 'modbus-basics',            label: 'Modbus Basics' },
     { slug: 'modbus-decoding',          label: 'Modbus Decoding' },
