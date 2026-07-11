@@ -99,7 +99,7 @@ module.exports = [
         type: 'gotcha',
         id: 'ds-masked-restriction',
         prompt: 'A packaged VAV unit, ordinary weather, no complaints. You pull the month\'s trend anyway — what is it telling you?',
-        snippet: '<pre class="quiz-snippet">SUPPLY STATIC    1.50 in. w.c. · ON SETPOINT ALL MONTH\nSUPPLY FAN       58 Hz today · 44 Hz same load last month\nTOTAL SUPPLY     18,000 CFM (30,600 m³/h) · normal for the weather\nZONES            quiet · no calls</pre>',
+        snippet: '<pre class="quiz-snippet">SUPPLY STATIC    1.50 in. w.c. (375 Pa) · ON SETPOINT ALL MONTH\nSUPPLY FAN       58 Hz today · 44 Hz same load last month\nTOTAL SUPPLY     18,000 CFM (30,600 m³/h) · normal for the weather\nZONES            quiet · no calls</pre>',
         choices: [
             { id: 'a', text: 'A restriction is growing upstream — loading filters, a fouling or icing coil — and the static loop is hiding it by spending fan speed to hold the same number.', correct: true },
             { id: 'b', text: 'The static sensor is drifting low, making the fan work harder than it needs to.' },

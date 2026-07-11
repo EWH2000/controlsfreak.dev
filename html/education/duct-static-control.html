@@ -187,7 +187,7 @@ keywords: duct static pressure supply fan vfd speed control static sensor placem
                 up. What gives is the fan — gracefully, if this page's loop is doing its job.
             </p>
 
-            <svg class="edu-svg" viewBox="0 84 540 216" role="img" aria-labelledby="ds-d1-title ds-d1-desc" font-family="var(--mono)">
+            <svg class="edu-svg" viewBox="0 76 540 156" role="img" aria-labelledby="ds-d1-title ds-d1-desc" font-family="var(--mono)">
                 <title id="ds-d1-title">The duct-static loop closed around the supply trunk</title>
                 <desc id="ds-d1-desc">An air handler on the left, labeled supply fan and VFD, sends a supply trunk
                     across the drawing past three VAV-box branches, with an ellipsis marking the boxes not drawn. A
@@ -211,8 +211,8 @@ keywords: duct static pressure supply fan vfd speed control static sensor placem
                 <rect x="276" y="190" width="28" height="16" fill="var(--surface)" stroke="var(--text)"/>
                 <path id="ds-d1-br3" data-flow="air" data-flow-density="0.35" d="M450 150 V190" fill="none" stroke="var(--blue)" stroke-width="3"/>
                 <rect x="436" y="190" width="28" height="16" fill="var(--surface)" stroke="var(--text)"/>
-                <text x="240" y="212" font-size="12" fill="var(--text)">VAV boxes</text>
-                <text x="480" y="212" font-size="13" fill="var(--text-dim)">… ×30</text>
+                <text x="240" y="224" font-size="12" fill="var(--text)">VAV boxes</text>
+                <text x="480" y="224" font-size="13" fill="var(--text-dim)">… ×30</text>
 
                 <!-- Static sensor, two-thirds out -->
                 <line x1="382" y1="148" x2="382" y2="134" stroke="var(--teal)" stroke-width="2"/>
@@ -223,7 +223,7 @@ keywords: duct static pressure supply fan vfd speed control static sensor placem
                 <!-- Signal wire back to the VFD (dashed = wire, not duct) -->
                 <path d="M382 118 V96 H71 V114" fill="none" stroke="var(--text-dim)" stroke-width="1.5" stroke-dasharray="5 4"/>
                 <polygon points="66,110 76,110 71,118" fill="var(--text-dim)"/>
-                <text x="170" y="110" font-size="11" fill="var(--text-dim)">speed reference — the loop, closed</text>
+                <text x="140" y="90" font-size="11" fill="var(--text-dim)">speed reference — the loop, closed</text>
             </svg>
             <div class="edu-legend">
                 <span><span class="sw sa"></span>supply air</span>
@@ -267,7 +267,7 @@ keywords: duct static pressure supply fan vfd speed control static sensor placem
                 cheaper.
             </p>
 
-            <svg class="edu-svg" viewBox="0 60 540 220" role="img" aria-labelledby="ds-d2-title ds-d2-desc" font-family="var(--mono)">
+            <svg class="edu-svg" viewBox="0 60 540 196" role="img" aria-labelledby="ds-d2-title ds-d2-desc" font-family="var(--mono)">
                 <title id="ds-d2-title">Static pressure along the trunk, on two different days</title>
                 <desc id="ds-d2-desc">A supply duct drawn along the bottom, fan at the left, far end at the right,
                     with a static sensor marked about two-thirds of the way out. Above the duct, two pressure profiles:
@@ -290,7 +290,7 @@ keywords: duct static pressure supply fan vfd speed control static sensor placem
                 <!-- The pivot: the sensor's held point -->
                 <circle cx="353" cy="120" r="6" fill="var(--bg)" stroke="var(--teal)" stroke-width="2.5"/>
                 <line x1="353" y1="128" x2="353" y2="224" stroke="var(--text-dim)" stroke-width="1" stroke-dasharray="4 4"/>
-                <text x="362" y="106" font-size="12" fill="var(--text-bright)">held at setpoint — both days</text>
+                <text x="344" y="156" font-size="12" fill="var(--text-bright)" text-anchor="end">held at setpoint — both days</text>
 
                 <!-- The duct along the bottom -->
                 <line x1="60" y1="230" x2="500" y2="230" stroke="var(--border)" stroke-width="5"/>
@@ -342,7 +342,7 @@ keywords: duct static pressure supply fan vfd speed control static sensor placem
                 the <a href="/tools/affinity-laws.html">affinity-laws tool</a> computes. A VAV system with a fixed
                 setpoint captures some of the cube-law money; a VAV system with reset goes back for the rest of it. In
                 the widget below, the reset toggle is the difference between the fan idling through a mild evening at
-                a third of design power and idling at a twentieth.
+                nearly a fifth of design power and idling at a twentieth.
             </p>
 
             <!-- ───────────────── 4 · The war story ───────────────── -->
@@ -380,7 +380,7 @@ keywords: duct static pressure supply fan vfd speed control static sensor placem
                 Same flow. Same static. More speed. The loop actively hides the failure, and the mask is deepest at
                 low flow, where friction is cheap and the extra effort rounds to nothing — exactly the hours when the
                 coil is most at risk. You will not find this failure on the static trend, because the static trend is
-                the thing the loop is defending. You find it where that building's tech found it: on <a
+                the thing the loop is defending. You find it where that building's own trend finally showed it: on <a
                 href="/education/vav-systems.html#the-coil-floor">suction pressure</a>, or on fan speed —
                 <strong>Hz at a given flow is the honest number</strong>, and Hz creeping week over week at the same
                 load is a restriction growing somewhere the sensor can't see.
@@ -404,7 +404,7 @@ keywords: duct static pressure supply fan vfd speed control static sensor placem
                 changes what the zones asked for.
             </p>
 
-            <svg class="edu-svg" viewBox="0 40 540 210" role="img" aria-labelledby="ds-d3-title ds-d3-desc" font-family="var(--mono)">
+            <svg class="edu-svg" viewBox="0 64 540 166" role="img" aria-labelledby="ds-d3-title ds-d3-desc" font-family="var(--mono)">
                 <title id="ds-d3-title">Same static reading, very different airflows</title>
                 <desc id="ds-d3-desc">Two supply ducts drawn one above the other, each tapped by an identical
                     pressure gauge whose needle points to the same reading. The top duct carries a dense stream of
@@ -454,7 +454,9 @@ keywords: duct static pressure supply fan vfd speed control static sensor placem
                 collars, access doors bow. The answer is a <strong>separate mechanical pressure switch</strong>, set
                 well above setpoint — up at the
                 <span data-us="4&nbsp;in.&nbsp;w.c." data-metric="1,000&nbsp;Pa">4&nbsp;in.&nbsp;w.c.</span> class of
-                number on a system holding 1.5 — hard-wired to stop the fan, usually with a manual reset so a human
+                number on a system holding
+                <span data-us="1.5&nbsp;in.&nbsp;w.c." data-metric="375&nbsp;Pa">1.5&nbsp;in.&nbsp;w.c.</span> —
+                hard-wired to stop the fan, usually with a manual reset so a human
                 has to come find out why. Separate is the load-bearing word. It cannot be logic on the transducer,
                 because the moments it exists for are exactly the moments the transducer's number is a lie: a railed
                 sensor, a plugged tube, a crashed controller. The building in the story above ran with no cutout at
@@ -626,8 +628,8 @@ keywords: duct static pressure supply fan vfd speed control static sensor placem
             {href: '/tools/airflow.html', label: 'Airflow Calculator'}
         ],
         simulators: [
-            {href: '/simulators/pid-tuner.html', label: 'PID Tuner'},
-            {href: '/simulators/vfd-mock.html', label: 'VFD Mock Interface'}
+            {href: '/simulators/pid-tuner.html', label: 'PID Tuning Helper'},
+            {href: '/simulators/vfd-mock.html', label: 'Mock VFD Interface'}
         ],
         lessons: [
             {href: '/education/vav-systems.html', label: 'VAV Systems'},
@@ -734,7 +736,12 @@ keywords: duct static pressure supply fan vfd speed control static sensor placem
             if (U.current() === 'us') {
                 return inwc.toFixed(2) + ' ' + U.suffix.staticPressure();
             }
-            return Math.round(U.display.staticPressure(inwc)) + ' ' + U.suffix.staticPressure();
+            // Nearest 25 Pa, so every painted value coincides with the
+            // prose twins' hand-rounds (1.5 → 375, 2.5 → 625, not the
+            // exact 373 / 622) — the page must not contradict itself
+            // when the toggle flips.
+            const v = Math.round(U.display.staticPressure(inwc) / 25) * 25;
+            return v.toLocaleString('en-US') + ' ' + U.suffix.staticPressure();
         }
 
         function fmtFlow(cfm) {
@@ -742,7 +749,10 @@ keywords: duct static pressure supply fan vfd speed control static sensor placem
             if (U.current() === 'us') {
                 return Math.round(cfm).toLocaleString('en-US') + ' ' + U.suffix.airflow();
             }
-            const v = Math.round(U.display.airflow(cfm) / 10) * 10;
+            // Nearest 100 m³/h (coarser than the chapter's usual 10):
+            // matches the prose twins for 30,000 → 51,000 and
+            // 7,600 → 12,900 at these flow magnitudes.
+            const v = Math.round(U.display.airflow(cfm) / 100) * 100;
             return v.toLocaleString('en-US') + ' ' + U.suffix.airflow();
         }
 
@@ -804,9 +814,12 @@ keywords: duct static pressure supply fan vfd speed control static sensor placem
             const cleanHz = 60 * Math.sqrt(cleanR2);
             const maskHz = Math.round(hz - cleanHz);
 
-            // Paint the loop strip.
+            // Paint the loop strip. A railed sensor shows the pegged-
+            // prefix idiom ('> 2.50 in. w.c.') — the full verdict lives
+            // in the fault status line; the long '— railed' suffix
+            // overflows the 150px strip column.
             demandValEl.textContent = n + ' of 30';
-            staticEl.textContent = fmtStatic(shown) + (railed ? ' — railed' : '');
+            staticEl.textContent = (railed ? '> ' : '') + fmtStatic(shown);
             spEl.textContent = state.fan === 'pinned' ? 'overridden' : fmtStatic(spActive);
             hzEl.textContent = hz.toFixed(1) + ' Hz';
             powerEl.innerHTML = Math.round(r * r * r * 100) + '<span class="unit"> %</span>';
@@ -823,7 +836,10 @@ keywords: duct static pressure supply fan vfd speed control static sensor placem
                 statusEl.textContent = 'Sensor railed at ' + fmtStatic(SENSOR_MAX) +
                     ' — full scale. The duct is really near ' + fmtStatic(sensed) +
                     ', and nothing here says stop.';
-                state.anecdoteShown = true;
+                // The anecdote is the iced-coil building's story — only
+                // its scenario reveals it (manual clean-coil railing
+                // keeps the fault, not the story).
+                if (state.coil === 'iced') state.anecdoteShown = true;
             } else if (saturated) {
                 statusEl.classList.add('fault');
                 statusEl.textContent = 'Fan pegged at 60 Hz, static below setpoint — boxes wide open, flow collapsing. The ratchet from the last page, seen from the fan.';

@@ -1901,7 +1901,7 @@ test('duct static control — the loop holds static while flow moves, the iced c
     // flow doesn't move, the sensor rails at full scale, fault, and
     // the anecdote reveals.
     await page.locator('[data-ds-preset="old-fix"]').click();
-    await expect(page.locator('#ds-w-static')).toHaveText('2.50 in. w.c. — railed');
+    await expect(page.locator('#ds-w-static')).toHaveText('> 2.50 in. w.c.');
     await expect(page.locator('#ds-w-sp')).toHaveText('overridden');
     await expect(page.locator('#ds-w-hz')).toHaveText('60.0 Hz');
     await expect(page.locator('#ds-w-flow')).toHaveText('7,600 CFM');
