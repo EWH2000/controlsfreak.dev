@@ -21,7 +21,7 @@ nav: tools
 
     <div class="filter-chips" role="group" aria-label="Filter tools by category">
         <button type="button" class="filter-chip active" data-category="all" aria-pressed="true">
-            All <span class="filter-chip-count">24</span>
+            All <span class="filter-chip-count">25</span>
         </button>
         <button type="button" class="filter-chip" data-category="hvac" aria-pressed="false">
             HVAC <span class="filter-chip-count">7</span>
@@ -33,7 +33,7 @@ nav: tools
             Signals <span class="filter-chip-count">2</span>
         </button>
         <button type="button" class="filter-chip" data-category="airflow" aria-pressed="false">
-            Airflow <span class="filter-chip-count">3</span>
+            Airflow <span class="filter-chip-count">4</span>
         </button>
         <button type="button" class="filter-chip" data-category="electrical" aria-pressed="false">
             Electrical <span class="filter-chip-count">3</span>
@@ -195,6 +195,15 @@ nav: tools
             titleFull:  'Duct Traverse Calculator',
             desc:       'Average a full pitot traverse the way the math demands — root each reading, then average, V̄ = 4005 × mean(√VP) — with duct area to CFM, plus diffuser Ak-factor flow solved forward or back against a hood.',
             pills:      ['Airflow', 'mean(√VP)', 'Pitot / TAB', 'Ak Factor'],
+            category:   'airflow'
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/tools/equipment-airflow.html',
+            titleShort: 'Airflow Check',
+            titleFull:  'Equipment Airflow Check',
+            desc:       'Judge a measured airflow against equipment limits — CFM per active ton of DX cooling with staging-aware icing / carryover verdicts, and the gas-furnace rise window turned into an allowable CFM band.',
+            pills:      ['Airflow', 'CFM / Active Ton', 'Rise Window', 'Verdicts'],
             category:   'airflow'
         }) }}
         {{ navCard({

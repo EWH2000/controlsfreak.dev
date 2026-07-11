@@ -195,6 +195,17 @@ Calculators, converters, and lookups — open one, get an answer.
   diffuser Ak-factor flow forward or back-solved against a hood, with
   the Ak-is-not-the-neck's-πr² trap called out; point-count and
   plane-location rules ride along in prose.
+- **Equipment Airflow Check** — is that airflow inside what the
+  machine can live with? DX tab computes CFM per *active* ton —
+  capacity discounted by staging (N of M stages or capacity %),
+  because a 10-ton at stage 1 of 2 moving 2,400 CFM is a healthy 480
+  per active ton, not a panicked 240 — with icing / thin / healthy /
+  carryover verdicts banded at 350 / 400 / 500. Gas tab turns the
+  furnace nameplate's rise window into an allowable CFM band via
+  `CFM = q ÷ (1.08 × ΔT)`, and a measured rise into an implied
+  airflow with a limit-trip / flue-condensation verdict. The blower
+  table method (the static check no generic tool can do) is taught
+  in prose instead of faked.
 - **Transformer VA Budget** — "does this transformer have room for
   one more actuator?" List the loads on the 24 VAC secondary (blank
   rows are spares), pick the transformer, and read total VA, percent

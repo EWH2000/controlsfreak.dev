@@ -1,0 +1,566 @@
+---
+title: Equipment Airflow Check — controlsfreak.dev
+description: "Check measured airflow against the machine: CFM per active ton for DX cooling with icing and carryover verdicts, and the gas-furnace rise window as a CFM band."
+canonical: https://controlsfreak.dev/tools/equipment-airflow.html
+nav: tools
+category: airflow
+keywords: cfm per ton 400 450 dx icing carryover coil freeze temperature rise window gas furnace heat exchanger high limit staging active stages blower table
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Tools · Equipment Airflow</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">
+                Equipment Airflow Check
+                <span class="tool-tag">Airflow</span>
+            </h1>
+        </div>
+
+        <details class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
+            <summary>Is that airflow inside what the machine can live with?</summary>
+            <div class="preamble-rest">
+                A DX coil wants roughly 400&ndash;500&nbsp;CFM per ton of <em>running</em> compressor; a gas heat
+                exchanger wants its nameplate temperature rise. Both are pass/fail checks on a number you already
+                measured &mdash; this page runs them. The free-form heat arithmetic (any q / CFM / &Delta;T, any
+                direction) lives on the <a href="/tools/airside-load.html">Airside Load Calculator</a>; this page only
+                judges the result against equipment limits. Both tabs are IP-native, like the K-factor &mdash; CFM per
+                ton and &deg;F rise are the frames the trade speaks.
+            </div>
+        </details>
+        <p class="ps-seed-note">Inputs are seeded with an example — edit them to your numbers.</p>
+
+        <div class="tabs tabs-flush">
+            <button class="tab-btn active" data-tab="dx">DX cooling (CFM/ton)</button>
+            <button class="tab-btn"        data-tab="gx">Gas heat (temp rise)</button>
+        </div>
+
+        <!-- ── DX cooling ── -->
+        <div id="tab-dx" class="tab-pane active">
+            <div class="tool-body-2col">
+
+                <section>
+                    <h2 class="ps-section-label">Input</h2>
+                    <div class="ps-row">
+                        <label class="ps-label" for="ea-dx-cap-units">Capacity entered as</label>
+                        <select class="ps-input" id="ea-dx-cap-units">
+                            <option value="tons">Tons</option>
+                            <option value="mbh">MBH</option>
+                        </select>
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" id="ea-dx-cap-lbl" for="ea-dx-cap">Total cooling capacity (tons)</label>
+                        <input class="ps-input" type="number" id="ea-dx-cap" step="any" min="0" placeholder="10" value="10">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="ea-dx-stage-mode">Staging entered as</label>
+                        <select class="ps-input" id="ea-dx-stage-mode">
+                            <option value="stages">Stages (N of M)</option>
+                            <option value="pct">Capacity running (%)</option>
+                        </select>
+                    </div>
+                    <div class="ps-row" id="ea-dx-row-stg-on">
+                        <label class="ps-label" for="ea-dx-stg-on">Stages active</label>
+                        <input class="ps-input" type="number" id="ea-dx-stg-on" step="1" min="0" placeholder="1" value="1">
+                    </div>
+                    <div class="ps-row" id="ea-dx-row-stg-total">
+                        <label class="ps-label" for="ea-dx-stg-total">Stages total</label>
+                        <input class="ps-input" type="number" id="ea-dx-stg-total" step="1" min="1" placeholder="2" value="2">
+                    </div>
+                    <div class="ps-row hidden" id="ea-dx-row-pct">
+                        <label class="ps-label" for="ea-dx-pct">Capacity running (%)</label>
+                        <input class="ps-input" type="number" id="ea-dx-pct" step="any" min="0" max="100" placeholder="50" value="50">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="ea-dx-flow">Measured airflow (CFM)</label>
+                        <input class="ps-input" type="number" id="ea-dx-flow" step="any" min="0" placeholder="2400" value="2400">
+                    </div>
+                    <p class="ref-note">
+                        Capacity is the nameplate <em>cooling</em> rating. Equal stages are assumed in N-of-M mode;
+                        for unequal stages, a digital scroll, or an unloader, flip the staging entry to capacity&nbsp;%.
+                    </p>
+                    <p class="ref-note">
+                        The airflow should be a measured number — a <a href="/tools/duct-traverse.html">traverse</a> or
+                        the blower table — not the design drawing. The check is only as honest as its worst input.
+                    </p>
+                </section>
+
+                <section role="status" aria-atomic="false">
+                    <h2 class="ps-section-label">Output</h2>
+                    <div class="status-pill" id="ea-dx-pill">Enter values to run the check.</div>
+                    <div class="ps-row primary">
+                        <span class="ps-label">CFM per active ton</span>
+                        <span class="ps-value muted" id="ea-dx-cpt">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">Active capacity (tons)</span>
+                        <span class="ps-value muted" id="ea-dx-active">—</span>
+                    </div>
+                    <div class="ps-row" id="ea-dx-row-nameplate">
+                        <span class="ps-label">Per nameplate ton (ignores staging)</span>
+                        <span class="ps-value muted" id="ea-dx-nameplate">—</span>
+                    </div>
+                    <div class="btn-row">
+                        <button class="copy-btn" id="ea-dx-copy">Copy CFM/ton</button>
+                    </div>
+                    <div class="result-formula wrap" id="ea-dx-formula"></div>
+                    <div class="failure-callout" id="ea-dx-callout" hidden></div>
+                </section>
+
+            </div>
+
+            <section class="tool-body-row">
+                <h2 class="ps-section-label">Worked example</h2>
+                <p class="ref-note worked-intro">
+                    A 10-ton rooftop on a mild afternoon: one of its two stages is running, and a traverse reads
+                    2,400&nbsp;CFM.
+                </p>
+                <ol class="ref-note worked-list">
+                    <li>The panic number first: <code>2400 &divide; 10 = 240 CFM per ton</code> — read against the
+                        nameplate, that looks like an icing emergency.</li>
+                    <li>But only half the machine is on. Active capacity:
+                        <code>10 &times; 1 &divide; 2 = 5 tons</code>.</li>
+                    <li>Per <em>active</em> ton: <code>2400 &divide; 5 = 480 CFM</code> — inside the 400&ndash;500
+                        window. The unit is healthy; the panic came from dividing by the wrong denominator.</li>
+                    <li>The direction that matters: if the supply fan turns down further while that stage holds on,
+                        480 falls toward 350 — the <a href="/education/vav-systems.html#the-coil-floor">coil
+                        floor</a>, and past it the icing runaway.</li>
+                </ol>
+            </section>
+        </div>
+
+        <!-- ── Gas heat ── -->
+        <div id="tab-gx" class="tab-pane">
+            <div class="tool-body-2col">
+
+                <section>
+                    <h2 class="ps-section-label">Input</h2>
+                    <div class="ps-row">
+                        <label class="ps-label" for="ea-gx-mode">Heat output from</label>
+                        <select class="ps-input" id="ea-gx-mode">
+                            <option value="input">Input × efficiency</option>
+                            <option value="direct">Output rating directly</option>
+                        </select>
+                    </div>
+                    <div class="ps-row" id="ea-gx-row-in">
+                        <label class="ps-label" for="ea-gx-in">Input rating (MBH)</label>
+                        <input class="ps-input" type="number" id="ea-gx-in" step="any" min="0" placeholder="100" value="100">
+                    </div>
+                    <div class="ps-row" id="ea-gx-row-eff">
+                        <label class="ps-label" for="ea-gx-eff">Efficiency (%)</label>
+                        <input class="ps-input" type="number" id="ea-gx-eff" step="any" min="0" max="100" placeholder="80" value="80">
+                    </div>
+                    <div class="ps-row hidden" id="ea-gx-row-out">
+                        <label class="ps-label" for="ea-gx-out">Output rating (MBH)</label>
+                        <input class="ps-input" type="number" id="ea-gx-out" step="any" min="0" placeholder="80" value="80">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="ea-gx-rise-min">Rise window min (°F)</label>
+                        <input class="ps-input" type="number" id="ea-gx-rise-min" step="1" min="0" placeholder="30" value="30">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="ea-gx-rise-max">Rise window max (°F)</label>
+                        <input class="ps-input" type="number" id="ea-gx-rise-max" step="1" min="0" placeholder="60" value="60">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="ea-gx-rise">Measured rise (°F, optional)</label>
+                        <input class="ps-input" type="number" id="ea-gx-rise" step="0.5" placeholder="44" value="44">
+                    </div>
+                    <p class="ref-note">
+                        The rise window is printed on the furnace rating plate (a typical plate reads
+                        &ldquo;RISE 30&ndash;60&rdquo;). Measured rise is supply minus return air temperature, both
+                        probes out of the heat exchanger&rsquo;s line of sight — radiant heat on the supply probe
+                        reads high.
+                    </p>
+                </section>
+
+                <section role="status" aria-atomic="false">
+                    <h2 class="ps-section-label">Output</h2>
+                    <div class="status-pill" id="ea-gx-pill">Enter values to run the check.</div>
+                    <div class="ps-row primary">
+                        <span class="ps-label">Allowable airflow band (CFM)</span>
+                        <span class="ps-value muted" id="ea-gx-band">—</span>
+                    </div>
+                    <div class="ps-row" id="ea-gx-row-q">
+                        <span class="ps-label">Heat output (MBH)</span>
+                        <span class="ps-value muted" id="ea-gx-q">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">Implied airflow at measured rise</span>
+                        <span class="ps-value muted" id="ea-gx-implied">—</span>
+                    </div>
+                    <div class="btn-row">
+                        <button class="copy-btn" id="ea-gx-copy">Copy band</button>
+                    </div>
+                    <div class="result-formula wrap" id="ea-gx-formula"></div>
+                    <div class="failure-callout" id="ea-gx-callout" hidden></div>
+                </section>
+
+            </div>
+
+            <section class="tool-body-row">
+                <h2 class="ps-section-label">Worked example</h2>
+                <p class="ref-note worked-intro">
+                    An 80&nbsp;% furnace rated 100&nbsp;MBH input, nameplate rise 30&ndash;60&nbsp;&deg;F. Supply minus
+                    return measures 44&nbsp;&deg;F.
+                </p>
+                <ol class="ref-note worked-list">
+                    <li>Output is what reaches the air: <code>q = 100 &times; 80 % = 80 MBH = 80,000 Btu/h</code>.
+                        The other 20&nbsp;% went up the flue.</li>
+                    <li>The rise window is an airflow band in disguise — <code>CFM = q &divide; (1.08 &times;
+                        &Delta;T)</code>. At the 60&nbsp;&deg;F max: <code>80,000 &divide; 64.8 = 1,235 CFM</code>; at
+                        the 30&nbsp;&deg;F min: <code>80,000 &divide; 32.4 = 2,469 CFM</code>. Note the inversion —
+                        the <em>max</em> rise sets the <em>minimum</em> airflow.</li>
+                    <li>The measured 44&nbsp;&deg;F turns the same equation into a flow measurement:
+                        <code>80,000 &divide; 47.52 = 1,684 CFM</code> — inside the band, and you just measured
+                        airflow with two thermometers and no traverse.</li>
+                </ol>
+            </section>
+        </div>
+
+        <section class="tool-body-row">
+            <h2 class="ps-section-label">Where the limits come from — and the check this page can&rsquo;t do</h2>
+            <p class="ref-note">
+                <strong>The CFM/ton window is a design convention, not physics with a derivation.</strong> DX coils
+                are engineered around roughly 450&nbsp;CFM per ton of running compressor; the trade&rsquo;s floor
+                sits near 400. Starve a running stage much below ~350 and suction pressure dives, the coil surface
+                drops below freezing, and condensate freezes on instead of dripping off — ice chokes airflow further,
+                which starves the coil further. High-latent designs run 350&ndash;400 deliberately (slower air wrings
+                out more moisture); past ~500 the coil runs warm, dehumidification fades, and face velocity starts
+                blowing condensate off the fins into the supply duct — carryover. Metric aside: 400&nbsp;CFM/ton is
+                roughly 54&nbsp;L/s per kW of cooling.
+            </p>
+            <p class="ref-note">
+                <strong>The rise window protects the heat exchanger from both directions.</strong> Too little air
+                (rise above the window) and the exchanger overheats — the high-limit switch trips and short-cycles
+                the burner, and repeated overheating is how heat exchangers crack. Too much air (rise below the
+                window) holds the exchanger surfaces cold enough that flue moisture condenses inside it — on a
+                non-condensing furnace that condensate is mildly acidic and eats the exchanger over seasons, not
+                minutes. The window on the plate is the manufacturer&rsquo;s statement of where neither failure is in
+                play. Both tabs compute in IP; at altitude the same CFM carries less air mass, so a real rise runs
+                hotter than the sea-level math predicts and the band&rsquo;s CFM numbers read low by roughly
+                3&nbsp;% per thousand feet.
+            </p>
+            <p class="ref-note">
+                <strong>The third check — static pressure vs. airflow — is deliberately not a tab here.</strong> For a
+                fixed-speed blower, the mapping from total external static to CFM <em>is</em> the blower curve, and
+                that is per-model vendor data no generic tool can reconstruct — the
+                <a href="/tools/affinity-laws.html">affinity laws</a> rescale a known point between speeds, but they
+                can&rsquo;t conjure the curve from nothing. The field method: measure total external static (supply
+                static plus return static across the unit), open the blower table in the installation manual at the
+                running fan tap, and read the CFM. That number is a legitimate input to both tabs above.
+            </p>
+        </section>
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/tools/airside-load.html', label: 'Airside Load Calculator'},
+            {href: '/tools/duct-traverse.html', label: 'Duct Traverse Calculator'},
+            {href: '/tools/airflow.html', label: 'Airflow & Velocity Pressure'},
+            {href: '/tools/affinity-laws.html', label: 'Pump & Fan Affinity Laws'}
+        ],
+        lessons: [
+            {href: '/education/vav-systems.html', label: 'VAV Systems'},
+            {href: '/education/equipment-staging.html', label: 'Equipment Staging'},
+            {href: '/education/air-handlers.html', label: 'Air Handlers'}
+        ],
+        quizzes: [
+            {href: '/practice/vav-systems.html', label: 'VAV Systems Quiz'},
+            {href: '/practice/equipment-staging.html', label: 'Equipment Staging Quiz'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/tools/">← All tools</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="/scripts/ui.js"></script>
+<script>
+    // switchTab(name, btn) and copyReadouts(btn, sep, ...ids) come from
+    // /scripts/ui.js.
+    //
+    // Both tabs judge a measured airflow against equipment limits:
+    //   DX:  CFM per ACTIVE ton — capacity × (active fraction), then
+    //        flow ÷ active tons, banded error <350 / warn 350–400 /
+    //        ok 400–500 / warn >500 (owner-blessed edges, 2026-07-11).
+    //   Gas: rise window → allowable CFM band via CFM = q ÷ (1.08 × ΔT);
+    //        a measured rise turns the same equation into a flow
+    //        measurement and earns a verdict against the window.
+    //
+    // IP-native throughout (CFM/ton and °F rise are trade frames, like
+    // the K-factor) — no units.js participation, matching duct-traverse.
+    // Every chained readout computes from the tidied DISPLAYED value of
+    // the step before it, so a reader's own arithmetic reproduces every
+    // row (metric rounding policy, audit-2026-06 #53, applied IP-side).
+    // That includes the INPUTS: each is snapped to the precision the
+    // formula line prints it at (capacity 2 dp, CFM 0 dp, percents and
+    // rises 1 dp) before any math runs — computing from digits the
+    // reader can't see is how formula rows stop reproducing, and it let
+    // the verdict contradict its own printed numbers at a window edge
+    // (review findings, 2026-07-11). A divisor that snaps to zero mutes
+    // instead of painting Infinity.
+    (function () {
+        'use strict';
+
+        // Trim trailing zeros so 5.00 reads 5 but 3.33 stays put.
+        const tidy = (n, dp) => parseFloat(n.toFixed(dp)).toString();
+
+        const el = {};
+        for (const id of ['ea-dx-cap-units', 'ea-dx-cap', 'ea-dx-cap-lbl', 'ea-dx-stage-mode',
+                          'ea-dx-stg-on', 'ea-dx-stg-total', 'ea-dx-pct', 'ea-dx-flow',
+                          'ea-dx-row-stg-on', 'ea-dx-row-stg-total', 'ea-dx-row-pct',
+                          'ea-dx-pill', 'ea-dx-cpt', 'ea-dx-active', 'ea-dx-nameplate',
+                          'ea-dx-row-nameplate', 'ea-dx-formula', 'ea-dx-callout', 'ea-dx-copy',
+                          'ea-gx-mode', 'ea-gx-in', 'ea-gx-eff', 'ea-gx-out',
+                          'ea-gx-row-in', 'ea-gx-row-eff', 'ea-gx-row-out',
+                          'ea-gx-rise-min', 'ea-gx-rise-max', 'ea-gx-rise',
+                          'ea-gx-pill', 'ea-gx-band', 'ea-gx-q', 'ea-gx-row-q', 'ea-gx-implied',
+                          'ea-gx-formula', 'ea-gx-callout', 'ea-gx-copy']) {
+            el[id.slice(3).replace(/-/g, '_')] = document.getElementById(id);
+        }
+
+        function setPill(pillEl, text, kind) {
+            pillEl.textContent = text;
+            pillEl.className = 'status-pill' + (kind ? ' ' + kind : '');
+        }
+
+        function setValue(outEl, text, live) {
+            outEl.className = 'ps-value ' + (live ? 'live' : 'muted');
+            outEl.textContent = live ? text : '—';
+        }
+
+        // ── DX tab ────────────────────────────────────────────────────
+        function muteDx(msg) {
+            setValue(el.dx_cpt); setValue(el.dx_active); setValue(el.dx_nameplate);
+            el.dx_formula.textContent = '';
+            el.dx_callout.textContent = msg;
+            el.dx_callout.hidden = false;
+            setPill(el.dx_pill, 'Enter valid inputs for a verdict.', '');
+        }
+
+        function calcDx() {
+            const stageMode = el.dx_stage_mode.value;
+            el.dx_row_stg_on.classList.toggle('hidden', stageMode !== 'stages');
+            el.dx_row_stg_total.classList.toggle('hidden', stageMode !== 'stages');
+            el.dx_row_pct.classList.toggle('hidden', stageMode !== 'pct');
+
+            const capUnits = el.dx_cap_units.value;
+            el.dx_cap_lbl.textContent = `Total cooling capacity (${capUnits === 'tons' ? 'tons' : 'MBH'})`;
+
+            const capRaw  = parseFloat(el.dx_cap.value);
+            const flowRaw = parseFloat(el.dx_flow.value);
+            if (!isFinite(capRaw) || !isFinite(flowRaw)) { muteDx('Enter capacity, staging, and measured airflow to run the check.'); return; }
+            // Snap to formula-line display precision before any math.
+            const cap  = parseFloat(tidy(capRaw, 2));
+            const flow = parseFloat(tidy(flowRaw, 0));
+            if (cap <= 0)  { muteDx('Capacity must be greater than 0.'); return; }
+            if (flow < 0)  { muteDx('Airflow can’t be negative.'); return; }
+
+            // Nameplate tons from the DISPLAYED conversion when entered as MBH.
+            const tons = capUnits === 'tons' ? cap : parseFloat(tidy(cap / 12, 2));
+
+            let active, fracPart;
+            if (stageMode === 'stages') {
+                const on    = parseFloat(el.dx_stg_on.value);
+                const total = parseFloat(el.dx_stg_total.value);
+                if (!isFinite(on) || !isFinite(total)) { muteDx('Enter capacity, staging, and measured airflow to run the check.'); return; }
+                if (!Number.isInteger(on) || !Number.isInteger(total)) {
+                    muteDx('Stages come in whole numbers — for a digital scroll, an unloader, or unequal stages, flip the staging entry to capacity %.'); return;
+                }
+                if (total < 1)  { muteDx('The unit needs at least one stage.'); return; }
+                if (on < 0)     { muteDx('Stages active can’t be negative.'); return; }
+                if (on > total) { muteDx('More stages active than the unit has — check the two counts.'); return; }
+                if (on === 0)   { muteDx('Nothing is running — with no active compressor there’s no coil to starve. The check applies to a running stage.'); return; }
+                active = parseFloat(tidy(tons * on / total, 2));
+                fracPart = `× ${on} ÷ ${total}`;
+            } else {
+                const pctRaw = parseFloat(el.dx_pct.value);
+                if (!isFinite(pctRaw)) { muteDx('Enter capacity, staging, and measured airflow to run the check.'); return; }
+                const pct = parseFloat(tidy(pctRaw, 1));
+                if (pct < 0)   { muteDx('Capacity running can’t be negative.'); return; }
+                if (pct > 100) { muteDx('More than 100 % of capacity — check the number.'); return; }
+                if (pct === 0) { muteDx('Nothing is running — with no active compressor there’s no coil to starve. The check applies to a running stage.'); return; }
+                active = parseFloat(tidy(tons * pct / 100, 2));
+                fracPart = `× ${tidy(pct, 1)} ÷ 100`;
+            }
+            if (active <= 0) { muteDx('Active capacity rounds to zero — effectively nothing is running, so there’s no coil to starve.'); return; }
+
+            el.dx_callout.hidden = true;
+
+            // Chain from displayed values: cpt divides by the tidied active tons.
+            const cpt = parseFloat(tidy(flow / active, 0));
+            setValue(el.dx_cpt, `${tidy(cpt, 0)} CFM/ton`, true);
+            setValue(el.dx_active, tidy(active, 2), true);
+
+            // The naive contrast only exists when staging discounts capacity.
+            const partLoad = active < tons;
+            el.dx_row_nameplate.classList.toggle('hidden', !partLoad);
+            if (partLoad) setValue(el.dx_nameplate, `${tidy(flow / tons, 0)} CFM/ton`, true);
+
+            // MBH entry shows its tons conversion as its own closing step.
+            const tonsIntro = capUnits === 'tons' ? '' : `tons = ${tidy(cap, 2)} ÷ 12 = ${tidy(tons, 2)} · `;
+            el.dx_formula.textContent = tonsIntro +
+                `active = ${tidy(tons, 2)} ${fracPart} = ${tidy(active, 2)} tons · ` +
+                `${tidy(flow, 0)} ÷ ${tidy(active, 2)} = ${tidy(cpt, 0)} CFM per active ton`;
+
+            // Verdict bands off the displayed number, so pill and readout
+            // can never disagree at an edge (owner-blessed 350/400/500).
+            if (cpt < 350) {
+                setPill(el.dx_pill,
+                    `${tidy(cpt, 0)} CFM per active ton — icing territory. Below ~350 a running stage pulls the coil surface below freezing and condensate freezes on instead of dripping off; ice chokes airflow, which starves the coil further. Verify the airflow measurement, then look at filters, fan speed, and whether staging is interlocked to proven airflow.`,
+                    'error');
+            } else if (cpt < 400) {
+                setPill(el.dx_pill,
+                    `${tidy(cpt, 0)} CFM per active ton — thin. High-latent designs run 350–400 deliberately for dehumidification, but everything below is icing margin. Confirm it’s the design intent and not a loaded filter or a fan turned down.`,
+                    'warn');
+            } else if (cpt <= 500) {
+                setPill(el.dx_pill,
+                    `${tidy(cpt, 0)} CFM per active ton — in the 400–500 window (≈450 is the common nominal). Healthy airflow for the stages that are running.`,
+                    'ok');
+            } else {
+                setPill(el.dx_pill,
+                    `${tidy(cpt, 0)} CFM per active ton — high. The coil runs warm and wrings out little moisture, and past ~500 the face velocity starts carrying condensate off the fins into the supply duct. Common when stages are locked out but the fan is still at full song.`,
+                    'warn');
+            }
+        }
+
+        // ── Gas tab ───────────────────────────────────────────────────
+        function muteGx(msg) {
+            setValue(el.gx_band); setValue(el.gx_q); setValue(el.gx_implied);
+            el.gx_formula.textContent = '';
+            el.gx_callout.textContent = msg;
+            el.gx_callout.hidden = false;
+            setPill(el.gx_pill, 'Enter valid inputs for a verdict.', '');
+        }
+
+        function calcGx() {
+            const mode = el.gx_mode.value;
+            el.gx_row_in.classList.toggle('hidden', mode !== 'input');
+            el.gx_row_eff.classList.toggle('hidden', mode !== 'input');
+            el.gx_row_out.classList.toggle('hidden', mode !== 'direct');
+            el.gx_row_q.classList.toggle('hidden', mode !== 'input');
+
+            let qMbh, qPart;
+            if (mode === 'input') {
+                const inpRaw = parseFloat(el.gx_in.value);
+                const effRaw = parseFloat(el.gx_eff.value);
+                if (!isFinite(inpRaw) || !isFinite(effRaw)) { muteGx('Enter the input rating, efficiency, and rise window to build the band.'); return; }
+                // Snap to formula-line display precision before any math.
+                const inp = parseFloat(tidy(inpRaw, 1));
+                const eff = parseFloat(tidy(effRaw, 1));
+                if (inp <= 0) { muteGx('Input rating must be greater than 0.'); return; }
+                if (eff <= 0 || eff > 100) { muteGx('Efficiency is a percent between 0 and 100 — 80 is typical of a mid-efficiency furnace.'); return; }
+                qMbh = parseFloat(tidy(inp * eff / 100, 1));
+                if (qMbh <= 0) { muteGx('Heat output rounds to zero — check the input rating and efficiency.'); return; }
+                qPart = `q = ${tidy(inp, 1)} × ${tidy(eff, 1)} % = ${tidy(qMbh, 1)} MBH · `;
+            } else {
+                const outRaw = parseFloat(el.gx_out.value);
+                if (!isFinite(outRaw)) { muteGx('Enter the output rating and rise window to build the band.'); return; }
+                qMbh = parseFloat(tidy(outRaw, 1));
+                if (qMbh <= 0) { muteGx('Output rating must be greater than 0.'); return; }
+                qPart = '';
+            }
+
+            const minRaw = parseFloat(el.gx_rise_min.value);
+            const maxRaw = parseFloat(el.gx_rise_max.value);
+            if (!isFinite(minRaw) || !isFinite(maxRaw)) { muteGx('Enter both edges of the nameplate rise window.'); return; }
+            // Snapped window edges drive the math, the pill, AND the
+            // verdict comparison, so none of the three can disagree.
+            const riseMin = parseFloat(tidy(minRaw, 1));
+            const riseMax = parseFloat(tidy(maxRaw, 1));
+            if (riseMin <= 0 || riseMax <= 0) { muteGx('Rise window values must be greater than 0.'); return; }
+            if (riseMin >= riseMax) { muteGx('The rise window is inverted — the min must be below the max (a plate reading “RISE 30–60” means min 30, max 60).'); return; }
+
+            el.gx_callout.hidden = true;
+
+            // Band chains from the displayed q and displayed denominators:
+            // max rise → MINIMUM airflow, min rise → maximum (the inversion).
+            const qBtu = qMbh * 1000;
+            const denMax = parseFloat(tidy(1.08 * riseMax, 2));
+            const denMin = parseFloat(tidy(1.08 * riseMin, 2));
+            const cfmMin = parseFloat(tidy(qBtu / denMax, 0));
+            const cfmMax = parseFloat(tidy(qBtu / denMin, 0));
+
+            if (mode === 'input') setValue(el.gx_q, tidy(qMbh, 1), true);
+            setValue(el.gx_band, `${tidy(cfmMin, 0)} – ${tidy(cfmMax, 0)} CFM`, true);
+
+            let formula = qPart +
+                `CFM = ${Math.round(qBtu).toLocaleString('en-US')} ÷ (1.08 × ΔT) → ` +
+                `÷ ${tidy(denMax, 2)} = ${tidy(cfmMin, 0)} CFM at ${tidy(riseMax, 1)} °F · ` +
+                `÷ ${tidy(denMin, 2)} = ${tidy(cfmMax, 0)} CFM at ${tidy(riseMin, 1)} °F`;
+
+            // Measured rise is optional: blank → band only, neutral pill.
+            const riseRaw = el.gx_rise.value.trim();
+            if (riseRaw === '') {
+                setValue(el.gx_implied);
+                setPill(el.gx_pill, 'Enter a measured rise (supply minus return, °F) for a verdict — the band above stands on its own.', '');
+                el.gx_formula.textContent = formula;
+                return;
+            }
+            // The snapped rise drives math, formula, pill, and verdict alike.
+            const rise = parseFloat(tidy(parseFloat(riseRaw), 1));
+            if (!isFinite(rise) || rise <= 0) {
+                setValue(el.gx_implied);
+                setPill(el.gx_pill, 'A zero or negative rise means the burner isn’t firing or the probes are swapped — no verdict on that number.', '');
+                el.gx_formula.textContent = formula;
+                return;
+            }
+
+            const denMeas = parseFloat(tidy(1.08 * rise, 2));
+            const implied = parseFloat(tidy(qBtu / denMeas, 0));
+            setValue(el.gx_implied, `${tidy(implied, 0)} CFM`, true);
+            formula += ` · measured ${tidy(rise, 1)} °F: ${Math.round(qBtu).toLocaleString('en-US')} ÷ ${tidy(denMeas, 2)} = ${tidy(implied, 0)} CFM`;
+            el.gx_formula.textContent = formula;
+
+            // Verdict compares the snapped rise to the snapped window — the
+            // field-native comparison, on exactly the numbers the pill
+            // prints. The CFM parentheticals say "against", not a strict
+            // over/under, because a tiny furnace can round the implied
+            // flow onto the band edge itself.
+            if (rise > riseMax) {
+                setPill(el.gx_pill,
+                    `Measured rise ${tidy(rise, 1)} °F is above the ${tidy(riseMin, 1)}–${tidy(riseMax, 1)} °F window — airflow is low (≈${tidy(implied, 0)} CFM against the ${tidy(cfmMin, 0)} CFM floor). Limit-trip territory: the exchanger runs hot, the high-limit short-cycles the burner, and repeated overheating cracks heat exchangers. Check filters, blower speed tap, and duct restrictions.`,
+                    'error');
+            } else if (rise < riseMin) {
+                setPill(el.gx_pill,
+                    `Measured rise ${tidy(rise, 1)} °F is below the ${tidy(riseMin, 1)}–${tidy(riseMax, 1)} °F window — airflow is high (≈${tidy(implied, 0)} CFM against the ${tidy(cfmMax, 0)} CFM ceiling). Flue-condensation territory: the exchanger runs cold enough for combustion moisture to condense inside it and corrode it over seasons. Drop the blower a tap, or confirm the firing rate.`,
+                    'warn');
+            } else {
+                setPill(el.gx_pill,
+                    `Measured rise ${tidy(rise, 1)} °F sits inside the ${tidy(riseMin, 1)}–${tidy(riseMax, 1)} °F window — implied airflow ≈${tidy(implied, 0)} CFM, inside the ${tidy(cfmMin, 0)}–${tidy(cfmMax, 0)} CFM band. The exchanger is neither overheating nor condensing.`,
+                    'ok');
+            }
+        }
+
+        // ── Wiring ────────────────────────────────────────────────────
+        document.querySelectorAll('[data-tab]').forEach(btn => {
+            btn.addEventListener('click', e => switchTab(e.currentTarget.dataset.tab, e.currentTarget));
+        });
+
+        [el.dx_cap_units, el.dx_stage_mode].forEach(s => s.addEventListener('change', calcDx));
+        [el.dx_cap, el.dx_stg_on, el.dx_stg_total, el.dx_pct, el.dx_flow]
+            .forEach(i => i.addEventListener('input', calcDx));
+        el.dx_copy.addEventListener('click', e => copyReadouts(e.currentTarget, '', 'ea-dx-cpt'));
+
+        el.gx_mode.addEventListener('change', calcGx);
+        [el.gx_in, el.gx_eff, el.gx_out, el.gx_rise_min, el.gx_rise_max, el.gx_rise]
+            .forEach(i => i.addEventListener('input', calcGx));
+        el.gx_copy.addEventListener('click', e => copyReadouts(e.currentTarget, '', 'ea-gx-band'));
+
+        // ── Initial paint ─────────────────────────────────────────────
+        calcDx();
+        calcGx();
+    })();
+</script>
+{% endblock %}

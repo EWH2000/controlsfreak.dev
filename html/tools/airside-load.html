@@ -226,7 +226,7 @@ keywords: cfm delta t sensible latent total heat grains enthalpy btuh mbh tons 1
                     <span data-us="Cross-check against the other tabs: sensible 43.2 + latent 13.6 = 56.8 MBH against 56.7 here — the missing 0.1 is the rounded Δh (the chart really read closer to 6.31)." data-metric="Cross-check against the other tabs: sensible 12.8 + latent 3.9 = 16.7 kW against 16.5 here — rounded operands plus independently rounded constants.">Cross-check against the other tabs: sensible 43.2 + latent 13.6 = 56.8 MBH against 56.7 here — the missing 0.1 is the rounded Δh (the chart really read closer to 6.31).</span> Sensible + latent = total is the cross-check worth keeping — when the split misses by more than rounding, one of the three readings is lying.
                 </p>
                 <p class="ref-note">
-                    Divide the airflow by the tons and you&rsquo;ve got the DX sanity number — <span data-us="2000 ÷ 4.7 ≈ 425 CFM per ton here" data-metric="≈ 425 CFM per ton here (an IP-native rule, like the K-factor)">2000 ÷ 4.7 ≈ 425 CFM per ton here</span>. The trade&rsquo;s floor sits near 400; the <a href="/education/vav-systems.html">VAV Systems lesson</a> walks the icing runaway below it.
+                    Divide the airflow by the tons and you&rsquo;ve got the DX sanity number — <span data-us="2000 ÷ 4.7 ≈ 425 CFM per ton here" data-metric="≈ 425 CFM per ton here (an IP-native rule, like the K-factor)">2000 ÷ 4.7 ≈ 425 CFM per ton here</span>. The trade&rsquo;s floor sits near 400; the <a href="/tools/equipment-airflow.html">Equipment Airflow Check</a> turns this number into a staging-aware verdict, and the <a href="/education/vav-systems.html">VAV Systems lesson</a> walks the icing runaway below the floor.
                 </p>
             </section>
         </div>
@@ -249,6 +249,7 @@ keywords: cfm delta t sensible latent total heat grains enthalpy btuh mbh tons 1
         tools: [
             {href: '/tools/airflow.html', label: 'Airflow & Velocity Pressure'},
             {href: '/tools/duct-traverse.html', label: 'Duct Traverse Calculator'},
+            {href: '/tools/equipment-airflow.html', label: 'Equipment Airflow Check'},
             {href: '/tools/coil-sizing.html', label: 'Coil-Sizing Calculator'},
             {href: '/tools/psychrometric-chart.html', label: 'Psychrometric Chart'},
             {href: '/tools/waterside-load.html', label: 'Waterside Load Calculator'}

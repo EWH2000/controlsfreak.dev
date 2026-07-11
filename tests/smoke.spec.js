@@ -2745,6 +2745,92 @@ test('duct-traverse — Ak tab solves both ways and refuses a zero-velocity back
     expect(errors, 'duct-traverse Ak behavioral should log no errors').toEqual([]);
 });
 
+test('equipment-airflow — DX verdict divides by ACTIVE tons, staging modes agree, teaching mutes', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('/tools/equipment-airflow.html');
+
+    // Seed: 10 tons, stage 1 of 2, 2,400 CFM → active 5 tons →
+    // 480 CFM/active ton (ok band), with the naive 240 shown as contrast.
+    await expect(page.locator('#ea-dx-cpt')).toContainText('480 CFM/ton');
+    await expect(page.locator('#ea-dx-active')).toHaveText('5');
+    await expect(page.locator('#ea-dx-nameplate')).toContainText('240 CFM/ton');
+    await expect(page.locator('#ea-dx-pill')).toHaveClass(/\bok\b/);
+    await expect(page.locator('#ea-dx-pill')).toContainText('400–500 window');
+    await expect(page.locator('#ea-dx-formula')).toContainText('2400 ÷ 5 = 480');
+
+    // Capacity-% mode is the same machine state said differently — 50 %
+    // must reproduce the stages answer exactly.
+    await page.selectOption('#ea-dx-stage-mode', 'pct');
+    await expect(page.locator('#ea-dx-cpt')).toContainText('480 CFM/ton');
+
+    // Everything running: 2,400 CFM across all 10 tons → 240 → icing
+    // error, and the naive-contrast row disappears (no discount left).
+    await page.fill('#ea-dx-pct', '100');
+    await expect(page.locator('#ea-dx-cpt')).toContainText('240 CFM/ton');
+    await expect(page.locator('#ea-dx-pill')).toHaveClass(/\berror\b/);
+    await expect(page.locator('#ea-dx-pill')).toContainText('icing');
+    await expect(page.locator('#ea-dx-row-nameplate')).toBeHidden();
+
+    // Teaching mutes: >100 %, fractional stages, more active than exist,
+    // and nothing running.
+    await page.fill('#ea-dx-pct', '150');
+    await expect(page.locator('#ea-dx-callout')).toContainText('More than 100 %');
+    await page.selectOption('#ea-dx-stage-mode', 'stages');
+    await page.fill('#ea-dx-stg-on', '1.5');
+    await expect(page.locator('#ea-dx-callout')).toContainText('whole numbers');
+    await page.fill('#ea-dx-stg-on', '3');
+    await expect(page.locator('#ea-dx-callout')).toContainText('More stages active');
+    await page.fill('#ea-dx-stg-on', '0');
+    await expect(page.locator('#ea-dx-cpt')).toHaveText('—');
+    await expect(page.locator('#ea-dx-callout')).toContainText('Nothing is running');
+
+    expect(errors, 'equipment-airflow DX behavioral should log no errors').toEqual([]);
+});
+
+test('equipment-airflow — gas rise window becomes a CFM band, measured rise earns a verdict', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('/tools/equipment-airflow.html');
+    await page.click('[data-tab="gx"]');
+
+    // Seed: 100 MBH in × 80 % = 80 MBH out; 30–60 °F window →
+    // 1235–2469 CFM (max rise sets the MINIMUM airflow); measured 44 °F
+    // → 80,000 ÷ 47.52 = 1684 CFM, inside the band.
+    await expect(page.locator('#ea-gx-q')).toHaveText('80');
+    await expect(page.locator('#ea-gx-band')).toContainText('1235 – 2469 CFM');
+    await expect(page.locator('#ea-gx-implied')).toContainText('1684 CFM');
+    await expect(page.locator('#ea-gx-pill')).toHaveClass(/\bok\b/);
+    await expect(page.locator('#ea-gx-pill')).toContainText('inside the 30–60 °F window');
+    await expect(page.locator('#ea-gx-formula')).toContainText('80,000 ÷ 47.52 = 1684');
+
+    // Rise above the window = low airflow = limit-trip territory (error);
+    // below = high airflow = flue-condensation territory (warn).
+    await page.fill('#ea-gx-rise', '65');
+    await expect(page.locator('#ea-gx-pill')).toHaveClass(/\berror\b/);
+    await expect(page.locator('#ea-gx-pill')).toContainText('Limit-trip');
+    await page.fill('#ea-gx-rise', '25');
+    await expect(page.locator('#ea-gx-pill')).toHaveClass(/\bwarn\b/);
+    await expect(page.locator('#ea-gx-pill')).toContainText('condensation');
+
+    // Measured rise is optional — blank keeps the band and goes neutral.
+    await page.fill('#ea-gx-rise', '');
+    await expect(page.locator('#ea-gx-implied')).toHaveText('—');
+    await expect(page.locator('#ea-gx-band')).toContainText('1235 – 2469 CFM');
+    await expect(page.locator('#ea-gx-pill')).toContainText('stands on its own');
+
+    // Direct-output mode reproduces the band (80 MBH seeded) and hides
+    // the redundant computed-q row.
+    await page.selectOption('#ea-gx-mode', 'direct');
+    await expect(page.locator('#ea-gx-band')).toContainText('1235 – 2469 CFM');
+    await expect(page.locator('#ea-gx-row-q')).toBeHidden();
+
+    // An inverted window mutes with the plate-reading hint.
+    await page.fill('#ea-gx-rise-min', '70');
+    await expect(page.locator('#ea-gx-band')).toHaveText('—');
+    await expect(page.locator('#ea-gx-callout')).toContainText('inverted');
+
+    expect(errors, 'equipment-airflow gas behavioral should log no errors').toEqual([]);
+});
+
 test('transformer-sizing — seeded panel totals, fuse ladder, overload pill', async ({ page }) => {
     const errors = watchErrors(page);
     await page.goto('/tools/transformer-sizing.html');
