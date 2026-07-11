@@ -33,6 +33,12 @@ const DIAGRAM_SELECTOR = [
     // before shooting (a naive selector addition makes the run FAIL
     // loudly: locator.screenshot times out on hidden elements).
     'svg.pid-eq-scene',
+    // Blind spots surfaced by the 2026-07 label-collision audit — two of
+    // that audit's real findings were in SVGs this selector missed.
+    'svg.bal-fig',      // balancing CBV/ABV/PICV valve figures
+    'svg.pc-w1-chart',  // pump-control worked-example chart
+    'svg.bp-w-gauge',   // building-pressure worked-example gauge
+    'svg.va-chart',     // valve-authority curve chart
 ].join(', ');
 
 async function fetchSitemapUrls() {

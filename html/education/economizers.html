@@ -129,8 +129,8 @@ keywords: economizer free cooling changeover dry bulb enthalpy high limit lockou
                 <path id="eco-d1-ma" data-flow="air" d="M260 300 V385" fill="none" stroke="var(--blue-cool)" stroke-width="3"/>
 
                 <!-- econ loop signal wire: MA-T sensor → the damper actuators -->
-                <path id="eco-d1-sig" data-pulse="signal" data-pulse-interval="6000" d="M312 340 H455 V212" fill="none" stroke="var(--amber)" stroke-width="2"/>
-                <polygon points="450,218 460,218 455,207" fill="var(--amber)"/>
+                <path id="eco-d1-sig" data-pulse="signal" data-pulse-interval="6000" d="M312 340 H470 V212" fill="none" stroke="var(--amber)" stroke-width="2"/>
+                <polygon points="465,218 475,218 470,207" fill="var(--amber)"/>
 
                 <!-- flow arrows (static — carry direction for reduced-motion / print) -->
                 <g id="eco-d1-flow-arrows">
@@ -185,11 +185,11 @@ keywords: economizer free cooling changeover dry bulb enthalpy high limit lockou
                 <text x="300" y="30" text-anchor="start" font-size="13" fill="var(--text)">exhaust / relief ↑</text>
                 <text x="300" y="62" text-anchor="start" font-size="12" fill="var(--text-dim)">opening to match</text>
                 <text x="260" y="190" text-anchor="middle" font-size="16" font-weight="600" fill="var(--text-bright)">MIXING BOX</text>
-                <text x="260" y="246" text-anchor="middle" font-size="12" fill="var(--text-dim)">the linked set is modulating —</text>
-                <text x="260" y="262" text-anchor="middle" font-size="12" fill="var(--text-dim)">free cooling in progress</text>
+                <text x="260" y="246" text-anchor="middle" font-size="11" fill="var(--text-dim)">the linked set is modulating —</text>
+                <text x="260" y="262" text-anchor="middle" font-size="11" fill="var(--text-dim)">free cooling in progress</text>
                 <text x="245" y="345" text-anchor="end" font-size="14" fill="var(--text)">mixed air ↓</text>
-                <text x="448" y="308" text-anchor="end" font-size="12" fill="var(--text-dim)">econ loop —</text>
-                <text x="448" y="324" text-anchor="end" font-size="12" fill="var(--text-dim)">one signal, all three</text>
+                <text x="462" y="308" text-anchor="end" font-size="12" fill="var(--text-dim)">econ loop —</text>
+                <text x="462" y="324" text-anchor="end" font-size="12" fill="var(--text-dim)">one signal, all three</text>
             </svg>
             <div class="edu-legend">
                 <span><span class="sw oa"></span>outside air</span>
@@ -241,7 +241,7 @@ keywords: economizer free cooling changeover dry bulb enthalpy high limit lockou
                      hard left edge carries the same-dry-bulb boundary -->
                 <line x1="340" y1="96" x2="340" y2="234" stroke="var(--text-dim)" stroke-width="1.5" stroke-dasharray="2 4"/>
                 <text x="348" y="110" text-anchor="start" font-size="12" fill="var(--text-dim)">same dry-bulb as return</text>
-                <line x1="245" y1="178" x2="450" y2="300" stroke="var(--text-dim)" stroke-width="1.5" stroke-dasharray="6 4"/>
+                <line x1="245" y1="178" x2="435" y2="291" stroke="var(--text-dim)" stroke-width="1.5" stroke-dasharray="6 4"/>
                 <text x="238" y="163" text-anchor="end" font-size="12" fill="var(--text-dim)">equal total heat</text>
 
                 <!-- worst-case-limit drop line -->
@@ -346,8 +346,12 @@ keywords: economizer free cooling changeover dry bulb enthalpy high limit lockou
                 <text x="78" y="30" text-anchor="start" font-size="12" fill="var(--text-dim)">changeover says yes</text>
 
                 <!-- stage ticks — drawn before the bands so the band fills
-                     and labels paint over the dotted lines -->
-                <line x1="250" y1="45" x2="250" y2="240" stroke="var(--text-dim)" stroke-width="1" stroke-dasharray="2 4"/>
+                     paint over the dotted lines. The full-open tick is split
+                     around the ECONOMIZER label's text row: the 0.22-opacity
+                     band fill can't hide the tick and text can't paint over
+                     a line, so the gap is drawn into the tick itself. -->
+                <line x1="250" y1="45" x2="250" y2="60" stroke="var(--text-dim)" stroke-width="1" stroke-dasharray="2 4"/>
+                <line x1="250" y1="79" x2="250" y2="240" stroke="var(--text-dim)" stroke-width="1" stroke-dasharray="2 4"/>
                 <line x1="360" y1="145" x2="360" y2="240" stroke="var(--text-dim)" stroke-width="1" stroke-dasharray="2 4"/>
                 <text x="256" y="50" text-anchor="start" font-size="12" fill="var(--text-dim)">dampers reach full open</text>
 
