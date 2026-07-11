@@ -432,6 +432,20 @@ techs new to the industry and anyone wanting a refresh.
   did. Closes on the chapter cliff-hanger: every box shuts at once —
   where does the pressure go? Page 5 of the forced-air chapter;
   pairs with the VAV Systems quiz.
+- **Duct Static Control** — the chapter closer, answering page 5's
+  cliff-hanger: why the supply fan holds one static pressure instead
+  of chasing flow (the pump-control mirror, drawn on air); the loop —
+  a sensor two-thirds down the trunk, a setpoint in whole inches, a
+  fast PID on the VFD; trim & respond reset and the cube-law money it
+  recovers; then the hard lesson — static is not flow, told three
+  ways through the author's real building: identical readings at a
+  quarter of design flow, an iced coil the loop masks with fan speed,
+  and the old fix that railed a 0–2.5 in. w.c. transducer at 10 V
+  because pressure-independent boxes give a cranked fan nothing but
+  pressure back. Safeties (the independent high-static cutout, the
+  lying sensing tube), a drivable static-loop widget, and a closing
+  walk of all six pages. Page 6 of the forced-air chapter; pairs
+  with the Duct Static Control quiz.
 - **Function-Block Basics** — what a block and a wiresheet are, why
   the industry builds sequences this way (the diagram is the program,
   you can watch it run live, the block vocabulary travels across
@@ -507,7 +521,7 @@ flavors share the same engine:
   When a topic recurs in feedback, it becomes a candidate for a
   new education page.
 
-Shipped so far — twenty-two content quizzes (each 10 questions, paired
+Shipped so far — twenty-three content quizzes (each 10 questions, paired
 1:1 with its lesson and deep-linking the gotchas) plus five field
 drills:
 
@@ -538,20 +552,22 @@ drills:
   Seven properties, why any two lock the rest, the four chart
   process families, and the RH / dew-point / enthalpy gotchas.
 - **Content quizzes — forced air:** Air Handlers, Economizers,
-  Building Pressure, Unit Identification, VAV Systems. The station
-  order down the air path, minimum outside air and where the relief
-  goes, the
-  mixed-air arithmetic and its stuck-damper gotcha readout, filter
-  ΔP, coil condensate, and fan heat; then free cooling end to end —
-  the linked damper set, the mixing math run backwards, the deceptive
-  air a dry-bulb changeover admits, the no-humidity-sensor fallback,
-  and integrated staging; then the air ledger — OA-minimum sizing,
-  barometric vs power exhaust vs tracking, and the heavy-door
-  interlock diagnosis; then naming the box — the three field
-  questions, the family tells, tonnage from a model number, and the
-  mislabeled-fan-coil gotcha; then the boxes — volume not
-  temperature, K-factor flow, the damper nobody sets, reheat at
-  minimum, and the starved-coil trend.
+  Building Pressure, Unit Identification, VAV Systems, Duct Static
+  Control. The station order down the air path, minimum outside air
+  and where the relief goes, the mixed-air arithmetic and its
+  stuck-damper gotcha readout, filter ΔP, coil condensate, and fan
+  heat; then free cooling end to end — the linked damper set, the
+  mixing math run backwards, the deceptive air a dry-bulb changeover
+  admits, the no-humidity-sensor fallback, and integrated staging;
+  then the air ledger — OA-minimum sizing, barometric vs power
+  exhaust vs tracking, and the heavy-door interlock diagnosis; then
+  naming the box — the three field questions, the family tells,
+  tonnage from a model number, and the mislabeled-fan-coil gotcha;
+  then the boxes — volume not temperature, K-factor flow, the damper
+  nobody sets, reheat at minimum, and the starved-coil trend; and
+  finally the fan's answer — static as the signal, the sensor
+  two-thirds out, trim & respond, the railed transducer, and who
+  really decides total flow.
 - **Surviving Your First Months** *(field drill)* — a broad sampler
   for techs in their first few months: LOTO and verify-on-known-live,
   the 4-20 mA live-zero wire-break signature, DMM continuity mode,
