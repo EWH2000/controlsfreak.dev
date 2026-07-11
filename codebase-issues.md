@@ -4563,6 +4563,21 @@ diagram-legibility item) rather than a standalone PR. In passing:
 `styleguide.html`'s `.gauge-label` measures ~8px of harmless
 `overflow: visible` spill at 375 — cosmetic, dev-only page.
 
+### 148. Home Browse-card pill counts are a fourth hand-maintained count surface with no guard *(open — 2026-07-10)*
+
+The home page's Browse nav-cards carry hardcoded totals in their
+pills (`html/index.html` ~lines 528/544/552: `'N Tools'`,
+`'N Lessons'`, `'N Total'` for practice). Nothing in the
+adding-a-tool/quiz checklists mentions them and no test asserts
+them, so they drift: found 4-off (18 vs 22 lessons), 5-off (21 vs 26
+practice), and 2-off (20 vs 22 tools) during the unit-identification
+PR, which trued them up in passing. That makes four hand-maintained
+count surfaces (tools-landing chips, practice-landing chips, README
+count sentences, home pills). Options: add the home pills to the
+CLAUDE.md checklists, or extend the existing card-count test cluster
+(smoke + home-hero duplicate assertions) with a home-pill assertion
+derived from the landing card counts so drift fails CI.
+
 ### Deferred / Won't fix (with revisit trigger)
 
 Items considered during an audit and deliberately not pursued, each
