@@ -1,0 +1,932 @@
+---
+title: Duct Static Control — controlsfreak.dev
+description: How the supply fan finds its speed — the duct-static loop, the sensor two-thirds out, setpoint reset, and why a healthy static can hide a collapsed airflow.
+canonical: https://controlsfreak.dev/education/duct-static-control.html
+nav: education
+category: forced-air
+pairedQuiz: https://controlsfreak.dev/practice/duct-static-control.html
+keywords: duct static pressure supply fan vfd speed control static sensor placement two-thirds setpoint reset trim and respond high static cutout sensing tube transducer railed full scale
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block head %}
+    <style>
+        /* Diagram + legend + flow-active rules live in styles.css as
+           .edu-svg / .edu-legend. Only the static-loop widget internals
+           are page-specific (ds-w-*). */
+
+        /* Answer-button groups side by side, wrapping on narrow
+           columns (the bp-w-top pattern). */
+        .ds-w-top {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem 2rem;
+            align-items: flex-start;
+            margin-bottom: 0.85rem;
+        }
+
+        /* Stateful buttons — aria-pressed drives the visual (the
+           air-handlers / building-pressure pattern). Focus ring lives
+           in the shared FOCUS INDICATORS block (.ds-w-mode-btn
+           entry). */
+        .ds-w-modes { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+        .ds-w-mode-btn {
+            font-family: var(--mono);
+            font-size: 0.72rem;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 2px;
+            padding: 0.32rem 0.7rem;
+            cursor: pointer;
+        }
+        .ds-w-mode-btn:hover { color: var(--text-bright); border-color: var(--text-dim); }
+        .ds-w-mode-btn[aria-pressed="true"] {
+            color: var(--text-bright);
+            background: var(--surface);
+            border-color: var(--accent);
+        }
+
+        #ds-widget .widget-slider { margin: 0.15rem 0 1rem; }
+        #ds-widget .widget-slider-head .v { white-space: nowrap; }
+
+        /* Readout strips — one for the loop, one for the duct.
+           Aligned as they wrap 4 → 2 → 1 across column widths (the
+           bp-w-strip pattern). */
+        .ds-w-strip {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 0.8rem 1.25rem;
+            margin-bottom: 0.85rem;
+        }
+        .ds-w-line-name {
+            font-family: var(--mono);
+            font-size: 0.68rem;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+        .ds-w-line-value {
+            font-family: var(--mono);
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-bright);
+            white-space: nowrap;
+        }
+
+        /* The seam between what the loop knows and what the duct is
+           actually doing — this page's whole argument in one border. */
+        .ds-w-seam {
+            font-family: var(--mono);
+            font-size: 0.68rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            border-top: 1px solid var(--border);
+            padding-top: 0.7rem;
+            margin: 0.2rem 0 0.6rem;
+        }
+
+        /* Status line — same left-stripe idiom as the other chapter
+           widgets (normal / warn / fault). */
+        .ds-w-status {
+            font-family: var(--mono);
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            padding: 0.45rem 0.7rem;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--accent);
+            border-radius: 2px;
+            color: var(--text-bright);
+            margin-bottom: 0.5rem;
+            transition: border-left-color 200ms linear;
+        }
+        .ds-w-status.warn { border-left-color: var(--heat); }
+        .ds-w-status.fault { border-left-color: var(--red); }
+
+        /* Reveal area below the status line. Space reserved so the
+           anecdote doesn't reflow the page when it appears. */
+        .ds-w-alert {
+            min-height: 4.0rem;
+            margin-top: 0.25rem;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Education · Duct Static Control</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">Duct Static Control <span class="tool-tag">Air Systems</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                Pick up exactly where the <a href="/education/vav-systems.html#loads-throttle">last page</a> left you:
+                it's six o'clock, thirty zone loops have satisfied within the same half hour, and thirty dampers are
+                gliding toward minimum together. The fan is still pushing — into a duct that is closing like a fist.
+                Something has to give, and this page is about the thing that gives. One question, start to finish:
+                <em>how does the supply fan know how much air the building wants — and why does it hold duct static
+                pressure rather than flow?</em>
+            </p>
+
+            <div class="callout">
+                <p style="font-size:0.86rem;line-height:1.7;">
+                    This page assumes the boxes read like home ground — flow rings, pressure independence, minimums —
+                    which is <a href="/education/vav-systems.html">one page back</a>; and that the fan itself, last
+                    station on the <a href="/education/air-handlers.html#air-path">chapter opener's air path</a>, rides
+                    a <a href="/education/vfds.html">VFD</a>. And if you've read
+                    <a href="/education/pump-control.html">pump control</a> on the water side, you already know this
+                    page's shape: it is the same page with the fluid swapped, and it will say so more than once.
+                </p>
+            </div>
+
+            <!-- ───────────────── 1 · The signal ───────────────── -->
+
+            <h2 class="subhead" id="the-signal">The Duct Answers for the Boxes</h2>
+
+            <p>
+                Start with what the fan cannot do. It cannot ask the zones what they need — thirty flow rings belong to
+                thirty box controllers, each minding its own loop, and <a
+                href="/education/vav-systems.html#pressure-independence">nobody at the box level is minding the
+                trunk</a>. And it shouldn't chase total flow even if it could sum it, because total flow isn't the
+                fan's promise to keep. The zones decide how much air moves — that was the whole point of the last page.
+                What the boxes need from the fan is simpler and humbler: <strong>enough pressure at the trunk that any
+                box can take what it wants</strong>. The fan makes pressure available; the boxes decide flow.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                And pressure turns out to be a wonderfully honest messenger, because the duct does the arithmetic for
+                free. Thirty boxes all pull from one trunk. When they throttle back, the fan is suddenly pushing the
+                same effort into less opening, and trunk pressure rises. When they open up, the trunk bleeds down.
+                <strong>Boxes close, static rises, the fan slows; boxes open, static sags, the fan speeds up.</strong>
+                One pressure sensor summarizes thirty demands — no polling, no totalizing, no arithmetic that can go
+                stale. The fan answers to the building, not to a clock.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                If that four-beat sentence rings familiar, it's because <a
+                href="/education/pump-control.html">pump control</a> taught it first with water in it: valves close, DP
+                rises, the pump slows. Same sign, same logic, same cube-law payday. The hydronic arc drew this mirror
+                across two pages — <a href="/education/load-piping.html">loads throttle</a>, the mover responds — and
+                the forced-air chapter has now drawn both halves of its own: the last page was the throttling, this
+                page is the response. Six o'clock stops being a cliff-hanger and becomes a sequence: the dampers glide
+                closed, the trunk pressure climbs, the loop sees it climb, and the fan backs down the same way it came
+                up. What gives is the fan — gracefully, if this page's loop is doing its job.
+            </p>
+
+            <svg class="edu-svg" viewBox="0 76 540 156" role="img" aria-labelledby="ds-d1-title ds-d1-desc" font-family="var(--mono)">
+                <title id="ds-d1-title">The duct-static loop closed around the supply trunk</title>
+                <desc id="ds-d1-desc">An air handler on the left, labeled supply fan and VFD, sends a supply trunk
+                    across the drawing past three VAV-box branches, with an ellipsis marking the boxes not drawn. A
+                    static-pressure sensor taps the trunk about two-thirds of the way out; a dashed signal wire runs
+                    from the sensor back to the unit's VFD, labeled speed reference. Supply air is drawn solid
+                    blue.</desc>
+
+                <!-- Air handler -->
+                <rect x="16" y="118" width="110" height="66" fill="var(--surface)" stroke="var(--border)"/>
+                <text x="71" y="146" font-size="14" fill="var(--text-bright)" text-anchor="middle">AHU</text>
+                <text x="71" y="164" font-size="11" fill="var(--text-dim)" text-anchor="middle">supply fan · VFD</text>
+
+                <!-- Supply trunk (animated, full density) -->
+                <path id="ds-d1-trunk" data-flow="air" d="M126 150 H510" fill="none" stroke="var(--blue)" stroke-width="4"/>
+                <polygon points="490,145 490,155 500,150" fill="var(--blue)"/>
+
+                <!-- Three box branches -->
+                <path id="ds-d1-br1" data-flow="air" data-flow-density="0.35" d="M190 150 V190" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <rect x="176" y="190" width="28" height="16" fill="var(--surface)" stroke="var(--text)"/>
+                <path id="ds-d1-br2" data-flow="air" data-flow-density="0.35" d="M290 150 V190" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <rect x="276" y="190" width="28" height="16" fill="var(--surface)" stroke="var(--text)"/>
+                <path id="ds-d1-br3" data-flow="air" data-flow-density="0.35" d="M450 150 V190" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <rect x="436" y="190" width="28" height="16" fill="var(--surface)" stroke="var(--text)"/>
+                <text x="240" y="224" font-size="12" fill="var(--text)">VAV boxes</text>
+                <text x="480" y="224" font-size="13" fill="var(--text-dim)">… ×30</text>
+
+                <!-- Static sensor, two-thirds out -->
+                <line x1="382" y1="148" x2="382" y2="134" stroke="var(--teal)" stroke-width="2"/>
+                <circle cx="382" cy="126" r="8" fill="none" stroke="var(--teal)" stroke-width="2"/>
+                <text x="368" y="118" font-size="12" fill="var(--text)" text-anchor="end">static sensor</text>
+                <text x="368" y="132" font-size="11" fill="var(--text-dim)" text-anchor="end">two-thirds down the trunk</text>
+
+                <!-- Signal wire back to the VFD (dashed = wire, not duct) -->
+                <path d="M382 118 V96 H71 V114" fill="none" stroke="var(--text-dim)" stroke-width="1.5" stroke-dasharray="5 4"/>
+                <polygon points="66,110 76,110 71,118" fill="var(--text-dim)"/>
+                <text x="140" y="90" font-size="11" fill="var(--text-dim)">speed reference — the loop, closed</text>
+            </svg>
+            <div class="edu-legend">
+                <span><span class="sw sa"></span>supply air</span>
+            </div>
+
+            <!-- ───────────────── 2 · The loop ───────────────── -->
+
+            <h2 class="subhead" id="the-loop">One Sensor, Two-Thirds Down the Duct</h2>
+
+            <p>
+                The loop itself is three parts, and none of them is exotic. A <em>pressure transducer</em> out in the
+                supply trunk — a small box with a plastic sensing tube poked through the duct wall, reading duct
+                pressure against the space around it and reporting back as an analog signal. A <em>setpoint</em>,
+                somewhere around <span data-us="1.5&nbsp;in.&nbsp;w.c." data-metric="375&nbsp;Pa">1.5&nbsp;in.&nbsp;w.c.</span>
+                on a typical mid-size system — the same "whole inches" magnitude that <a
+                href="/education/building-pressure.html#measuring-it">building pressure</a> measured its envelope
+                against and found fifty times smaller. And a <em>PID loop</em> whose output is the speed reference to
+                the supply fan's VFD. That's the entire machine: one AI, one AO, one fast loop between them.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                <em>Fast</em> is worth pausing on. The zone loops you met last page think in minutes — a room warms
+                slowly, a damper strokes, the world catches up. Duct pressure answers the fan in <em>seconds</em>: touch
+                the speed reference and the sensor feels it almost immediately. Loops that quick are tuned gently or
+                they hunt, and this exact loop — supply fan VFD, duct static — is one of the scenes in the <a
+                href="/simulators/pid-tuner.html">PID tuner</a>. Drive it there and feel how little gain it wants;
+                that's the hands-on pair for this page.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                Where the sensor lives is the design decision. Mount it at the fan discharge and the loop holds
+                pressure where nobody uses it — on a design afternoon the far end of the trunk has spent most of that
+                pressure on duct friction before the last boxes ever see it, so you're forced to hold a high number all
+                day to protect a worst case the sensor can't even see. That's the same mistake <a
+                href="/education/pump-control.html#dp-control">pump control</a> named on the water side: local DP at
+                the pump tells you nothing about what the far end of the loop is feeling. Water's answer is to move the
+                sensor to the most-remote load. Air practice settles for a compromise with the same logic in it:
+                <strong>about two-thirds of the way down the trunk</strong> — far enough out that the reading resembles
+                what the boxes actually feel, close enough in that one sensor still speaks for several branches. Hold a
+                modest number where it matters instead of a big number where it doesn't, and every hour of the day gets
+                cheaper.
+            </p>
+
+            <svg class="edu-svg" viewBox="0 60 540 196" role="img" aria-labelledby="ds-d2-title ds-d2-desc" font-family="var(--mono)">
+                <title id="ds-d2-title">Static pressure along the trunk, on two different days</title>
+                <desc id="ds-d2-desc">A supply duct drawn along the bottom, fan at the left, far end at the right,
+                    with a static sensor marked about two-thirds of the way out. Above the duct, two pressure profiles:
+                    a design-day line starting high at the fan and falling steeply along the duct, and a mild-day line
+                    running nearly flat. Both lines cross at the sensor's position — the held setpoint — no matter
+                    which day it is.</desc>
+
+                <!-- Pressure axis hint -->
+                <polygon points="24,72 32,72 28,62" fill="var(--text-dim)"/>
+                <text x="38" y="74" font-size="11" fill="var(--text-dim)">static</text>
+
+                <!-- Design-day profile -->
+                <path d="M60 90 L353 120 L500 138" fill="none" stroke="var(--blue)" stroke-width="2.5"/>
+                <text x="88" y="84" font-size="13" fill="var(--text)">design day — steep, spent on friction</text>
+
+                <!-- Mild-day profile -->
+                <path d="M60 118 L353 120 L500 121" fill="none" stroke="var(--blue-cool)" stroke-width="2.5"/>
+                <text x="88" y="140" font-size="13" fill="var(--text)">mild day — almost nothing to spend</text>
+
+                <!-- The pivot: the sensor's held point -->
+                <circle cx="353" cy="120" r="6" fill="var(--bg)" stroke="var(--teal)" stroke-width="2.5"/>
+                <line x1="353" y1="128" x2="353" y2="224" stroke="var(--text-dim)" stroke-width="1" stroke-dasharray="4 4"/>
+                <text x="344" y="156" font-size="12" fill="var(--text-bright)" text-anchor="end">held at setpoint — both days</text>
+
+                <!-- The duct along the bottom -->
+                <line x1="60" y1="230" x2="500" y2="230" stroke="var(--border)" stroke-width="5"/>
+                <rect x="20" y="216" width="40" height="28" fill="var(--surface)" stroke="var(--border)"/>
+                <text x="40" y="234" font-size="11" fill="var(--text-dim)" text-anchor="middle">fan</text>
+                <line x1="353" y1="224" x2="353" y2="236" stroke="var(--teal)" stroke-width="3"/>
+                <text x="345" y="252" font-size="11" fill="var(--text-dim)">sensor</text>
+                <text x="500" y="252" font-size="11" fill="var(--text-dim)" text-anchor="end">far end</text>
+            </svg>
+
+            <p style="margin-top:1.25rem;">
+                The profile picture is worth keeping. On a design afternoon the trunk is a steep hill — high at the fan,
+                spent along the run. On a mild evening it's nearly flat. The one point that never moves is the
+                sensor's: the loop pivots the whole profile around the number it holds. Everything upstream of that
+                point is the fan's business; everything downstream is the boxes'. Keep that split in mind — it's about
+                to matter.
+            </p>
+
+            <!-- ───────────────── 3 · Reset ───────────────── -->
+
+            <h2 class="subhead" id="reset">Setpoint Reset: Cube Law One More Time</h2>
+
+            <p>
+                A fixed setpoint has the same quiet flaw on air that it had on water: it's sized for the worst case,
+                and the worst case almost never shows up. That
+                <span data-us="1.5&nbsp;in.&nbsp;w.c." data-metric="375&nbsp;Pa">1.5&nbsp;in.&nbsp;w.c.</span> was
+                chosen so the farthest box can still make design flow on the hottest afternoon of the year. On the
+                three hundred other days, the boxes are half closed, the trunk needs far less — and the loop dutifully
+                holds the design number anyway, with every box pinching off the difference across its own damper.
+                Pressure the fan paid cube-law money to make, throttled away at thirty dampers, on purpose, all day.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                The fix is the same one <a href="/education/pump-control.html#dp-reset">pump control</a> reached for:
+                reset the setpoint down when nobody needs it. The air-side recipe is usually called <em>trim &amp;
+                respond</em> — the BMS polls the box dampers, and as long as no box is near wide open, it trims the
+                static setpoint down a small step at a time; the moment some box drives toward its stops asking for
+                more than the trunk offers, it responds back up. The steady state is elegant: the setpoint settles
+                wherever the <strong>most-open damper in the building sits nearly wide open</strong> — meaning that box
+                is doing essentially no throttling, and the fan is making only the pressure someone is actually using.
+                There's a floor under the walk-down (hold too little static and the far boxes can't make even their
+                ventilation minimums), but between floor and design the setpoint follows the building.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                Why bother? Because the fan is the biggest motor on the unit, and power follows the <em>cube</em> of
+                speed — half speed costs an eighth (≈13%) of the power. Every tenth of an inch the setpoint walks down
+                lets the fan run that much slower for the same delivered air, and the savings compound exactly the way
+                the <a href="/tools/affinity-laws.html">affinity-laws tool</a> computes. A VAV system with a fixed
+                setpoint captures some of the cube-law money; a VAV system with reset goes back for the rest of it. In
+                the widget below, the reset toggle is the difference between the fan idling through a mild evening at
+                nearly a fifth of design power and idling at a twentieth.
+            </p>
+
+            <!-- ───────────────── 4 · The war story ───────────────── -->
+
+            <h2 class="subhead" id="static-is-not-flow">Static Is Not Flow</h2>
+
+            <p>
+                Now the hard lesson, and it's the reason this page exists. Everything above says the fan <em>infers</em>
+                what the building wants from one pressure reading. An inference is only as honest as the assumptions
+                under it — and the load-bearing assumption is that the path between the fan and the boxes is the path
+                the designer drew. Break that assumption and the loop keeps working perfectly while the number it
+                serves stops meaning anything. <strong>Duct static is a pressure promise, not a flow promise.</strong>
+                Three ways that bites, in escalating order:
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                <em>First — by design.</em>
+                <span data-us="1.5&nbsp;in.&nbsp;w.c." data-metric="375&nbsp;Pa">1.5&nbsp;in.&nbsp;w.c.</span> at
+                <span data-us="30,000&nbsp;CFM" data-metric="51,000&nbsp;m³/h">30,000&nbsp;CFM</span> and
+                <span data-us="1.5&nbsp;in.&nbsp;w.c." data-metric="375&nbsp;Pa">1.5&nbsp;in.&nbsp;w.c.</span> at
+                <span data-us="7,600&nbsp;CFM" data-metric="12,900&nbsp;m³/h">7,600&nbsp;CFM</span> are
+                <em>indistinguishable at the sensor</em>. That's not a failure — it's the whole design. The loop holds
+                pressure precisely so that flow is free to collapse when the zones stop asking. But it means a healthy
+                static reading tells you nothing about airflow, which is why the <a
+                href="/education/vav-systems.html#the-coil-floor">last page's DX interlock</a> had to be proven on
+                <em>airflow</em>, never on static. The building from that page starved its coil all afternoon with the
+                static trend sitting flat on setpoint, green as grass.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                <em>Second — under restriction.</em> Now ice the coil, the way that building iced it. The coil sits
+                upstream of the fan, and ice is a restriction: dragging the same air through a choking coil costs more
+                fan than it used to. But the loop doesn't know about coils — it knows the sensor is reading low-of-
+                setpoint by a hair, and it does its job: <em>speeds the fan up until static is back on the line</em>.
+                Same flow. Same static. More speed. The loop actively hides the failure, and the mask is deepest at
+                low flow, where friction is cheap and the extra effort rounds to nothing — exactly the hours when the
+                coil is most at risk. You will not find this failure on the static trend, because the static trend is
+                the thing the loop is defending. You find it where that building's own trend finally showed it: on <a
+                href="/education/vav-systems.html#the-coil-floor">suction pressure</a>, or on fan speed —
+                <strong>Hz at a given flow is the honest number</strong>, and Hz creeping week over week at the same
+                load is a restriction growing somewhere the sensor can't see.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                <em>Third — the old fix.</em> Same building, earlier chapter of its story. The coil is starving for
+                air, so someone reaches for the obvious lever: make more air — crank the fan. Except the boxes are
+                pressure-independent, and you know what that means now: every box is holding a flow setpoint, and when
+                trunk pressure rises they <em>pinch</em>. The flow barely moves — the zones already set it — and all
+                that extra fan becomes pressure with nowhere to go. On the trend, duct static climbs, then flatlines at
+                exactly <span data-us="2.5&nbsp;in.&nbsp;w.c." data-metric="625&nbsp;Pa">2.5&nbsp;in.&nbsp;w.c.</span>
+                and sits there, hour after hour, suspiciously smooth. A flatline at a round number near the top of a
+                sensor's range isn't a measurement — <strong>it's the sensor railed at full scale</strong>, a 0–2.5
+                in. w.c. transducer wired 0–10&nbsp;V, pegged at 10&nbsp;V, reporting only that the truth is somewhere
+                above it. (That volts-to-inches arithmetic is exactly what the <a
+                href="/tools/signal-scaling.html">signal-scaling tool</a> does; it's worth being fast at, because a
+                railed signal is invisible unless you know where the range ends.) The real static was well past the
+                reading, past where a high-static cutout should have tripped — and there wasn't one. More fan never
+                was the answer: <strong>the fan makes pressure, the boxes make flow</strong>, and no amount of pressure
+                changes what the zones asked for.
+            </p>
+
+            <svg class="edu-svg" viewBox="0 64 540 166" role="img" aria-labelledby="ds-d3-title ds-d3-desc" font-family="var(--mono)">
+                <title id="ds-d3-title">Same static reading, very different airflows</title>
+                <desc id="ds-d3-desc">Two supply ducts drawn one above the other, each tapped by an identical
+                    pressure gauge whose needle points to the same reading. The top duct carries a dense stream of
+                    supply air — a design afternoon. The bottom duct carries a sparse trickle — a mild evening at
+                    minimum flow. The gauges cannot tell the two apart.</desc>
+
+                <!-- Design afternoon: the river -->
+                <path id="ds-d3-full" data-flow="air" d="M40 100 H420" fill="none" stroke="var(--blue)" stroke-width="5"/>
+                <polygon points="402,94 402,106 414,100" fill="var(--blue)"/>
+                <text x="40" y="82" font-size="13" fill="var(--text)">design afternoon — the river</text>
+
+                <!-- Mild evening: the trickle -->
+                <path id="ds-d3-min" data-flow="air" data-flow-density="0.15" d="M40 200 H420" fill="none" stroke="var(--blue)" stroke-width="5"/>
+                <polygon points="402,194 402,206 414,200" fill="var(--blue)"/>
+                <text x="40" y="182" font-size="13" fill="var(--text)">mild evening — the trickle</text>
+
+                <!-- Two identical gauges, same needle -->
+                <line x1="452" y1="100" x2="470" y2="100" stroke="var(--teal)" stroke-width="2"/>
+                <circle cx="492" cy="100" r="22" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+                <line x1="492" y1="100" x2="480" y2="84" stroke="var(--text-bright)" stroke-width="2"/>
+                <circle cx="492" cy="100" r="2.5" fill="var(--text-bright)"/>
+
+                <line x1="452" y1="200" x2="470" y2="200" stroke="var(--teal)" stroke-width="2"/>
+                <circle cx="492" cy="200" r="22" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+                <line x1="492" y1="200" x2="480" y2="184" stroke="var(--text-bright)" stroke-width="2"/>
+                <circle cx="492" cy="200" r="2.5" fill="var(--text-bright)"/>
+
+                <text x="492" y="146" font-size="12" fill="var(--text-dim)" text-anchor="middle">same needle</text>
+            </svg>
+            <div class="edu-legend">
+                <span><span class="sw sa"></span>supply air</span>
+            </div>
+
+            <!-- ───────────────── 5 · Safeties ───────────────── -->
+
+            <h2 class="subhead" id="safeties">When the Loop Can't Save You</h2>
+
+            <p>
+                Everything above trusts one small pressure signal absolutely, which is why the failures worth knowing
+                are all versions of that signal going wrong — and why the protections worth having are the ones that
+                don't depend on it.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                <em>The high-static cutout.</em> The six-o'clock scene with no working loop — a fan at speed, a duct
+                closing like a fist — ends with pressure the ductwork wasn't built for: seams boom, flex pops off its
+                collars, access doors bow. The answer is a <strong>separate mechanical pressure switch</strong>, set
+                well above setpoint — up at the
+                <span data-us="4&nbsp;in.&nbsp;w.c." data-metric="1,000&nbsp;Pa">4&nbsp;in.&nbsp;w.c.</span> class of
+                number on a system holding
+                <span data-us="1.5&nbsp;in.&nbsp;w.c." data-metric="375&nbsp;Pa">1.5&nbsp;in.&nbsp;w.c.</span> —
+                hard-wired to stop the fan, usually with a manual reset so a human
+                has to come find out why. Separate is the load-bearing word. It cannot be logic on the transducer,
+                because the moments it exists for are exactly the moments the transducer's number is a lie: a railed
+                sensor, a plugged tube, a crashed controller. The building in the story above ran with no cutout at
+                all — the same uninsured posture as its missing low-pressure cutout, one story earlier. Hardware
+                answers when software's number is gone.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                <em>The sensing tube.</em> The transducer is only as good as the plastic tube feeding it. Tubes get
+                pinched by a panel, plugged by dust, kinked at a fitting, and — on tubes run through cold spots —
+                blocked by frozen condensation. A tube stuck reading <em>low</em> is the dangerous direction: the loop
+                sees a starving duct, drives the fan toward 100%, and the real static runs away high while the sensor
+                swears it's low — that's the day the cutout earns its keep. Stuck <em>high</em> is the quiet twin: the
+                fan idles, the far zones starve, and the complaint calls start at the end of the longest run. Pump
+                control's <a href="/education/pump-control.html#dp-control">drifted-transducer warning</a> is this
+                same paragraph with pipe in it — one small sensor, absolute trust, calibrate it and protect it.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                <em>The duct itself.</em> A blown flex connection or an access door left open upstream of the sensor
+                is a hole the loop cannot tell from demand: static can't build, so the fan pegs at 100% and stays
+                there, conditioning a ceiling plenum. The tell is the same honest number as before — fan speed that no
+                longer matches the load — plus zones downstream of the breach going quiet all at once. The loop has no
+                opinion; it's holding a setpoint it can no longer reach, forever.
+            </p>
+
+            <!-- ───────────────── 6 · Widget ───────────────── -->
+
+            <h2 class="subhead" id="drive-the-loop">Drive the Fan, Watch the Duct</h2>
+
+            <p>
+                The whole page under one slider. Drag how many of the thirty boxes are calling and watch the loop
+                answer: static held, fan speed following the building down. Flip the setpoint to reset and watch the
+                same evening get cheaper. Then break it the two ways the story broke: ice the coil and watch the loop
+                <em>hide</em> it — same flow, same static, more speed, with the honest number sitting in the second
+                strip — and finally try the last preset, which replays an earlier fix attempt on a pair of air handlers
+                you've already met.
+            </p>
+
+            <div class="widget" id="ds-widget">
+                <div class="widget-try">
+                    <span class="lbl">Try this:</span>
+                    <button type="button" data-ds-preset="design">design afternoon</button>
+                    <button type="button" data-ds-preset="six-oclock">six o'clock</button>
+                    <button type="button" data-ds-preset="reset">reset on</button>
+                    <button type="button" data-ds-preset="restriction">the hidden restriction</button>
+                    <button type="button" data-ds-preset="old-fix">the old fix</button>
+                </div>
+
+                <div class="widget-slider-head">
+                    <label for="ds-w-demand-slider">Boxes calling for cooling</label>
+                    <span class="v" id="ds-w-demand-value">12 of 30</span>
+                </div>
+                <input class="widget-slider" id="ds-w-demand-slider" type="range" min="0" max="30" step="1" value="12"/>
+
+                <div class="ds-w-top">
+                    <div>
+                        <div class="widget-readout-label" id="ds-w-sp-lbl">Static setpoint</div>
+                        <div class="ds-w-modes" role="group" aria-labelledby="ds-w-sp-lbl">
+                            <button type="button" class="ds-w-mode-btn" data-ds-sp="fixed" aria-pressed="true">Fixed</button>
+                            <button type="button" class="ds-w-mode-btn" data-ds-sp="reset" aria-pressed="false">Trim &amp; respond</button>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="widget-readout-label" id="ds-w-coil-lbl">The coil upstream</div>
+                        <div class="ds-w-modes" role="group" aria-labelledby="ds-w-coil-lbl">
+                            <button type="button" class="ds-w-mode-btn" data-ds-coil="clean" aria-pressed="true">Clean</button>
+                            <button type="button" class="ds-w-mode-btn" data-ds-coil="iced" aria-pressed="false">Iced</button>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="widget-readout-label" id="ds-w-fan-lbl">Fan control</div>
+                        <div class="ds-w-modes" role="group" aria-labelledby="ds-w-fan-lbl">
+                            <button type="button" class="ds-w-mode-btn" data-ds-fan="auto" aria-pressed="true">The loop</button>
+                            <button type="button" class="ds-w-mode-btn" data-ds-fan="pinned" aria-pressed="false">Pinned at 60 Hz</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="ds-w-strip">
+                    <div class="ds-w-line">
+                        <div class="ds-w-line-name">Duct static · sensor</div>
+                        <div class="ds-w-line-value" id="ds-w-static">1.50 in. w.c.</div>
+                    </div>
+                    <div class="ds-w-line">
+                        <div class="ds-w-line-name">Setpoint · active</div>
+                        <div class="ds-w-line-value" id="ds-w-sp">1.50 in. w.c.</div>
+                    </div>
+                    <div class="ds-w-line">
+                        <div class="ds-w-line-name">Fan speed</div>
+                        <div class="ds-w-line-value" id="ds-w-hz">42.2 Hz</div>
+                    </div>
+                    <div class="ds-w-line">
+                        <div class="ds-w-line-name">Fan power · vs design</div>
+                        <div class="ds-w-line-value" id="ds-w-power">35<span class="unit"> %</span></div>
+                    </div>
+                </div>
+
+                <div class="ds-w-seam">Meanwhile, out in the duct</div>
+
+                <div class="ds-w-strip">
+                    <div class="ds-w-line">
+                        <div class="ds-w-line-name">Total flow · 30 boxes</div>
+                        <div class="ds-w-line-value" id="ds-w-flow">16,560 CFM</div>
+                    </div>
+                    <div class="ds-w-line">
+                        <div class="ds-w-line-name">Flow vs design</div>
+                        <div class="ds-w-line-value" id="ds-w-pct">55<span class="unit"> %</span></div>
+                    </div>
+                    <div class="ds-w-line">
+                        <div class="ds-w-line-name">Clean unit · same flow</div>
+                        <div class="ds-w-line-value" id="ds-w-clean">42.2 Hz</div>
+                    </div>
+                </div>
+
+                <div class="ds-w-status" id="ds-w-status" aria-live="polite">Static on setpoint — one number standing in for thirty demands.</div>
+                <div class="ds-w-alert" id="ds-w-alert"></div>
+            </div>
+
+            <p class="ref-note">
+                What the widget holds still: loop dynamics (speeds land instantly — the
+                <a href="/simulators/pid-tuner.html">PID tuner</a> has the hunting and the tuning), trim &amp; respond's
+                slow walk (reset shows where the setpoint lands, not the minutes of trimming), and the box side (thirty
+                boxes compressed into one demand slider — their own story is the
+                <a href="/education/vav-systems.html">last page</a>). The high-static cutout isn't modeled either;
+                the last preset is what its absence looks like. Statics follow the units toggle — the
+                <a href="/education/building-pressure.html">building-pressure</a> posture — while the transducer's
+                0–2.5 in. w.c. range and the fan's Hz stay in their IP field frames.
+            </p>
+
+            <!-- ───────────────── 7 · Chapter closer ───────────────── -->
+
+            <h2 class="subhead" id="the-whole-path">The Whole Path, One More Time</h2>
+
+            <p>
+                That closes the six-page chapter. Walk it once more, end to end, the way the air does. <a
+                href="/education/air-handlers.html">Page one</a> built the path — return grille, mixing box, filter,
+                coils, fan — and called itself the map. <a href="/education/economizers.html">Page two</a> gave the
+                mixing box its one good trick: when the outside air is better than the return, open the dampers and
+                cool for free. <a href="/education/building-pressure.html">Page three</a> followed the air you threw
+                away and made the envelope balance its ledger. <a
+                href="/education/air-unit-identification.html">Page four</a> taught you to name the box you're standing
+                in front of, whatever the nameplate mumbles. <a href="/education/vav-systems.html">Page five</a> went
+                to the far end of the supply duct and found thirty throttles, each answering its own room and nobody
+                minding the trunk. And this page put the answer at the head of the duct: a fan that holds one pressure,
+                two-thirds of the way out, and by holding it lets thirty boxes take whatever they need. Loads throttle;
+                the mover responds — drawn on water once, and now drawn on air.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                With the chapter in hand, a handful of tools stop being black boxes. The <a
+                href="/tools/airflow.html">airflow calculator</a> is a flow ring with the sheet metal off. The <a
+                href="/tools/affinity-laws.html">affinity-laws tool</a> is this page's savings argument with real
+                numbers in it. The <a href="/simulators/pid-tuner.html">PID tuner's</a> supply-fan scene is the loop
+                you just drove, hunting and all. So here's the field move this chapter has been building toward: next
+                time you stand in front of an air handler, read it the way these six pages did — walk the stations,
+                name the unit, find the dampers' minimum, ask where the relief goes, follow the trunk to a box, and
+                put your cursor on two numbers before you believe anything anyone tells you: fan speed, and what the
+                flow actually is. Static will be sitting on setpoint. It usually is.
+            </p>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/tools/affinity-laws.html', label: 'Affinity Laws'},
+            {href: '/tools/signal-scaling.html', label: 'Signal Scaling'},
+            {href: '/tools/airflow.html', label: 'Airflow Calculator'}
+        ],
+        simulators: [
+            {href: '/simulators/pid-tuner.html', label: 'PID Tuning Helper'},
+            {href: '/simulators/vfd-mock.html', label: 'Mock VFD Interface'}
+        ],
+        lessons: [
+            {href: '/education/vav-systems.html', label: 'VAV Systems'},
+            {href: '/education/air-handlers.html', label: 'Air Handlers'},
+            {href: '/education/building-pressure.html', label: 'Building Pressure'},
+            {href: '/education/pump-control.html', label: 'Pump Control'},
+            {href: '/education/vfds.html', label: 'VFDs'}
+        ],
+        quizzes: [
+            {href: '/practice/duct-static-control.html', label: 'Duct Static Control'},
+            {href: '/practice/vav-systems.html', label: 'VAV Systems'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/education/">← Back to Education</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<!-- flow-engine.js is loaded site-wide from layouts/page.njk; the init()
+     below is an idempotent refresh so the page reads standalone. D1 and
+     D3 carry data-flow="air" ducts (particle color follows each duct's
+     stroke); D2 is a static profile drawing. The static-loop widget
+     below is pure page math — it never touches the diagrams. -->
+<script>
+    FlowEngine.init();
+
+    // ── Static-loop widget ────────────────────────────────────────────
+    // Model: the pump-control DP-reset widget with air poured into it.
+    // Internal model is IP (CFM, in. w.c., Hz); statics convert at the
+    // display boundary via window.Units (the building-pressure posture);
+    // Hz and the transducer range are IP-native field frames.
+    //
+    //   Demand: the slider is n boxes calling (of 30). Total demand
+    //   flow = 7,600 CFM (everything at minimum — the last page's mild
+    //   afternoon) up to 30,000 CFM at n = 30 (design). The boxes are
+    //   pressure-independent: delivered flow equals demand as long as
+    //   the trunk holds enough static.
+    //
+    //   Fan curve (60 Hz): P = 5.5 − K_FAN·Q², with K_FAN scaled so the
+    //   design point closes exactly: 30,000 CFM at 4.0 in. w.c. total —
+    //   2.0 across coil + filters (upstream of the fan), 0.5 in trunk
+    //   friction fan→sensor, 1.5 held at the sensor. At reduced speed
+    //   the curve scales by r² (affinity); power readout is r³.
+    //
+    //   The loop solves r so static at the sensor lands on the active
+    //   setpoint: P_fan = SP + (R_COIL·ice + R_TRUNK)·Q². Reset walks
+    //   SP linearly with demand down to a 0.5 floor. Icing multiplies
+    //   the coil's resistance ×4 — the loop hides it (same flow, same
+    //   static, more Hz) until the fan saturates at 60 Hz, where static
+    //   sags and delivered flow collapses against wide-open boxes.
+    //   Pinned mode drives 60 Hz regardless: the boxes pinch, flow
+    //   holds at demand, and the excess becomes pressure — past the
+    //   transducer's 2.5 in. w.c. full scale (0–10 V), where the sensor
+    //   rails. The old-fix preset reproduces the author's building —
+    //   the anecdote pins once revealed (state.anecdoteShown).
+    (function () {
+        'use strict';
+
+        const DESIGN = 30000;                       // CFM at design
+        const FLOOR = 7600;                         // CFM, every box at minimum
+        const SHUTOFF = 5.5;                        // in. w.c., fan total at 60 Hz, zero flow
+        const K_FAN = 1.5 / (DESIGN * DESIGN);      // fan-curve droop
+        const R_COIL = 2.0 / (DESIGN * DESIGN);     // coil + filters, upstream of the fan
+        const R_TRUNK = 0.5 / (DESIGN * DESIGN);    // trunk friction, fan → sensor
+        const SP_DESIGN = 1.5;                      // in. w.c.
+        const SP_FLOOR = 0.5;                       // reset floor
+        const ICE = 4;                              // iced coil: resistance multiplier
+        const SENSOR_MAX = 2.5;                     // transducer full scale (10 V)
+
+        const PRESETS = {
+            'design':      { n: 30, sp: 'fixed', coil: 'clean', fan: 'auto' },
+            'six-oclock':  { n: 0,  sp: 'fixed', coil: 'clean', fan: 'auto' },
+            'reset':       { n: 0,  sp: 'reset', coil: 'clean', fan: 'auto' },
+            'restriction': { n: 14, sp: 'fixed', coil: 'iced',  fan: 'auto' },
+            'old-fix':     { n: 0,  sp: 'fixed', coil: 'iced',  fan: 'pinned' }
+        };
+
+        const slider = document.getElementById('ds-w-demand-slider');
+        const demandValEl = document.getElementById('ds-w-demand-value');
+        const staticEl = document.getElementById('ds-w-static');
+        const spEl = document.getElementById('ds-w-sp');
+        const hzEl = document.getElementById('ds-w-hz');
+        const powerEl = document.getElementById('ds-w-power');
+        const flowEl = document.getElementById('ds-w-flow');
+        const pctEl = document.getElementById('ds-w-pct');
+        const cleanEl = document.getElementById('ds-w-clean');
+        const statusEl = document.getElementById('ds-w-status');
+        const alertEl = document.getElementById('ds-w-alert');
+        const spBtns = Array.prototype.slice.call(document.querySelectorAll('[data-ds-sp]'));
+        const coilBtns = Array.prototype.slice.call(document.querySelectorAll('[data-ds-coil]'));
+        const fanBtns = Array.prototype.slice.call(document.querySelectorAll('[data-ds-fan]'));
+
+        const state = {
+            sp: 'fixed',             // 'fixed' | 'reset'
+            coil: 'clean',           // 'clean' | 'iced'
+            fan: 'auto',             // 'auto' | 'pinned'
+            anecdoteShown: false     // one-way latch
+        };
+
+        function fmtStatic(inwc) {
+            const U = window.Units;
+            if (U.current() === 'us') {
+                return inwc.toFixed(2) + ' ' + U.suffix.staticPressure();
+            }
+            // Nearest 25 Pa, so every painted value coincides with the
+            // prose twins' hand-rounds (1.5 → 375, 2.5 → 625, not the
+            // exact 373 / 622) — the page must not contradict itself
+            // when the toggle flips.
+            const v = Math.round(U.display.staticPressure(inwc) / 25) * 25;
+            return v.toLocaleString('en-US') + ' ' + U.suffix.staticPressure();
+        }
+
+        function fmtFlow(cfm) {
+            const U = window.Units;
+            if (U.current() === 'us') {
+                return Math.round(cfm).toLocaleString('en-US') + ' ' + U.suffix.airflow();
+            }
+            // Nearest 100 m³/h (coarser than the chapter's usual 10):
+            // matches the prose twins for 30,000 → 51,000 and
+            // 7,600 → 12,900 at these flow magnitudes.
+            const v = Math.round(U.display.airflow(cfm) / 100) * 100;
+            return v.toLocaleString('en-US') + ' ' + U.suffix.airflow();
+        }
+
+        // Speed ratio the loop needs for setpoint sp at flow q with
+        // upstream resistance rUp; > 1 means the fan can't.
+        function loopR2(q, sp, rUp) {
+            return (sp + (rUp + K_FAN) * q * q) / SHUTOFF;
+        }
+
+        function update() {
+            const n = parseInt(slider.value, 10);
+            const qDemand = FLOOR + n * ((DESIGN - FLOOR) / 30);
+            const iceMul = state.coil === 'iced' ? ICE : 1;
+            const rUp = R_COIL * iceMul + R_TRUNK;
+            const spActive = state.sp === 'fixed'
+                ? SP_DESIGN
+                : Math.max(SP_FLOOR, SP_DESIGN * (n / 30));
+
+            let q = qDemand;         // delivered flow
+            let r;                   // speed ratio (Hz / 60)
+            let sensed = spActive;   // static at the sensor
+            let saturated = false;
+
+            if (state.fan === 'auto') {
+                const r2 = loopR2(qDemand, spActive, rUp);
+                if (r2 <= 1) {
+                    r = Math.sqrt(r2);
+                } else {
+                    saturated = true;
+                    r = 1;
+                }
+            } else {
+                r = 1;
+                const avail = SHUTOFF - (K_FAN + rUp) * qDemand * qDemand;
+                if (avail >= spActive) {
+                    sensed = avail;
+                } else {
+                    saturated = true;
+                }
+            }
+
+            if (saturated) {
+                // Fan pegged and still short: boxes go wide open (they
+                // pass demand flow at setpoint static when fully open)
+                // and delivered flow settles where the curves cross.
+                const rBoxes = spActive / (qDemand * qDemand);
+                q = Math.sqrt(SHUTOFF / (K_FAN + rUp + rBoxes));
+                sensed = rBoxes * q * q;
+                r = 1;
+            }
+
+            const hz = 60 * r;
+            const railed = sensed > SENSOR_MAX;
+            const shown = railed ? SENSOR_MAX : sensed;
+
+            // What a clean coil under loop control would cost at this
+            // delivered flow — the honest Hz-at-flow comparison.
+            const cleanR2 = Math.min(1, loopR2(q, spActive, R_COIL + R_TRUNK));
+            const cleanHz = 60 * Math.sqrt(cleanR2);
+            const maskHz = Math.round(hz - cleanHz);
+
+            // Paint the loop strip. A railed sensor shows the pegged-
+            // prefix idiom ('> 2.50 in. w.c.') — the full verdict lives
+            // in the fault status line; the long '— railed' suffix
+            // overflows the 150px strip column.
+            demandValEl.textContent = n + ' of 30';
+            staticEl.textContent = (railed ? '> ' : '') + fmtStatic(shown);
+            spEl.textContent = state.fan === 'pinned' ? 'overridden' : fmtStatic(spActive);
+            hzEl.textContent = hz.toFixed(1) + ' Hz';
+            powerEl.innerHTML = Math.round(r * r * r * 100) + '<span class="unit"> %</span>';
+
+            // Paint the duct strip.
+            flowEl.textContent = fmtFlow(q);
+            pctEl.innerHTML = Math.round(100 * q / DESIGN) + '<span class="unit"> %</span>';
+            cleanEl.textContent = cleanHz.toFixed(1) + ' Hz';
+
+            // Status line + anecdote latch.
+            statusEl.classList.remove('warn', 'fault');
+            if (railed) {
+                statusEl.classList.add('fault');
+                statusEl.textContent = 'Sensor railed at ' + fmtStatic(SENSOR_MAX) +
+                    ' — full scale. The duct is really near ' + fmtStatic(sensed) +
+                    ', and nothing here says stop.';
+                // The anecdote is the iced-coil building's story — only
+                // its scenario reveals it (manual clean-coil railing
+                // keeps the fault, not the story).
+                if (state.coil === 'iced') state.anecdoteShown = true;
+            } else if (saturated) {
+                statusEl.classList.add('fault');
+                statusEl.textContent = 'Fan pegged at 60 Hz, static below setpoint — boxes wide open, flow collapsing. The ratchet from the last page, seen from the fan.';
+            } else if (state.fan === 'pinned') {
+                if (sensed > spActive + 0.15) {
+                    statusEl.classList.add('warn');
+                    statusEl.textContent = 'Fan pinned — the boxes pinch it back. Flow holds at what the zones asked; the extra speed just becomes pressure.';
+                } else {
+                    statusEl.textContent = 'Pinned at 60 Hz and landing on setpoint — at design flow the override is invisible. Every other hour it will not be.';
+                }
+            } else if (state.coil === 'iced') {
+                statusEl.classList.add('warn');
+                if (maskHz >= 5) {
+                    statusEl.textContent = 'Static on setpoint, flow unchanged — the fan is paying ' + maskHz + ' Hz over a clean unit. The loop is hiding a restriction.';
+                } else {
+                    statusEl.textContent = 'Static on setpoint and the ice costs only ' + maskHz + ' Hz at this flow — the mask is deepest exactly when the coil is most at risk.';
+                }
+            } else if (state.sp === 'reset' && spActive < SP_DESIGN) {
+                statusEl.textContent = 'Setpoint walked down to ' + fmtStatic(spActive) + ' — the fan makes only the pressure someone is using. Cube law, one more time.';
+            } else {
+                statusEl.textContent = 'Static on setpoint — one number standing in for thirty demands.';
+            }
+
+            // The anecdote pins once revealed.
+            if (state.anecdoteShown) {
+                if (!alertEl.firstChild) {
+                    alertEl.innerHTML = '<div class="widget-anecdote warn">This preset is the same pair of air handlers from the last page — the starved-DX building — seen from the fan&#39;s side. Before the diagnosis, there was an earlier fix attempt, and it reached for the obvious lever: the coil is starving for air, so make more air — crank the fan. The boxes answered the way pressure-independent boxes always answer: they pinched, held their setpoints, and the flow barely moved. All that extra fan became pressure instead, and the duct-static trend climbed until it flatlined at exactly 2.5 in. w.c. and sat there, hour after hour, suspiciously smooth. That flatline wasn&#39;t a measurement — it was the top of one: a 0&ndash;2.5 in. w.c. transducer wired 0&ndash;10 V, railed at 10 V, reporting only that the truth was somewhere above it. No high-static cutout anywhere on the unit to catch what the sensor couldn&#39;t say — the same uninsured posture as the missing low-pressure cutout, one story earlier. The real fix went the other direction entirely: the fan was never the problem, because the fan makes pressure and the boxes make flow, and the coil&#39;s cure was more <em>flow</em> — which is how that building ended up with every box pinned to max while it waits for its sheet metal.</div>';
+                }
+            }
+        }
+
+        slider.addEventListener('input', update);
+
+        spBtns.forEach(function (b) {
+            b.addEventListener('click', function (e) {
+                state.sp = e.currentTarget.getAttribute('data-ds-sp');
+                spBtns.forEach(function (x) {
+                    x.setAttribute('aria-pressed', x.getAttribute('data-ds-sp') === state.sp ? 'true' : 'false');
+                });
+                update();
+            });
+        });
+
+        coilBtns.forEach(function (b) {
+            b.addEventListener('click', function (e) {
+                state.coil = e.currentTarget.getAttribute('data-ds-coil');
+                coilBtns.forEach(function (x) {
+                    x.setAttribute('aria-pressed', x.getAttribute('data-ds-coil') === state.coil ? 'true' : 'false');
+                });
+                update();
+            });
+        });
+
+        fanBtns.forEach(function (b) {
+            b.addEventListener('click', function (e) {
+                state.fan = e.currentTarget.getAttribute('data-ds-fan');
+                fanBtns.forEach(function (x) {
+                    x.setAttribute('aria-pressed', x.getAttribute('data-ds-fan') === state.fan ? 'true' : 'false');
+                });
+                update();
+            });
+        });
+
+        document.querySelectorAll('[data-ds-preset]').forEach(function (btn) {
+            btn.addEventListener('click', function (e) {
+                const p = PRESETS[e.currentTarget.getAttribute('data-ds-preset')];
+                if (!p) return;
+                slider.value = String(p.n);
+                state.sp = p.sp;
+                state.coil = p.coil;
+                state.fan = p.fan;
+                spBtns.forEach(function (x) {
+                    x.setAttribute('aria-pressed', x.getAttribute('data-ds-sp') === state.sp ? 'true' : 'false');
+                });
+                coilBtns.forEach(function (x) {
+                    x.setAttribute('aria-pressed', x.getAttribute('data-ds-coil') === state.coil ? 'true' : 'false');
+                });
+                fanBtns.forEach(function (x) {
+                    x.setAttribute('aria-pressed', x.getAttribute('data-ds-fan') === state.fan ? 'true' : 'false');
+                });
+                update();
+            });
+        });
+
+        // Re-render every static and flow when the unit toggle flips.
+        document.addEventListener('unitschange', update);
+        update();
+    })();
+</script>
+{% endblock %}

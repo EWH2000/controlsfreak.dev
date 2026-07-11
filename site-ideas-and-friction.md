@@ -244,15 +244,56 @@ Shipped so far:
   mechanical fix lands. Closes on the chapter cliff-hanger: every
   box shuts at once — where does the pressure go? Declared question
   + scope contract below.
+- **Duct static control** *(shipped 2026-07-11, buildout PR 6 — THE
+  CHAPTER CLOSER)* — `education/duct-static-control.html` + paired
+  quiz. Catches page 5's six-o'clock cliff-hanger mid-scene and
+  answers it: static is the signal because the duct does the
+  arithmetic (boxes close → static rises → fan slows — the
+  pump-control mirror said out loud, same sign, both fluids); the
+  loop (transducer + 1.5 in. w.c. setpoint + fast PID on the VFD,
+  pid-tuner's supply-fan scene linked as the hands-on pair); sensor
+  placement taught as air's compromise on pump-control's local-vs-
+  remote logic (~two-thirds out — no prior page stated the rule, so
+  this page introduces it); trim & respond reset to the most-open
+  damper with a ventilation-floor rationale (vs hydronic deadhead);
+  then the page's soul, "Static Is Not Flow" — the starved-DX
+  building re-read from the fan's side in three escalating beats:
+  static ≠ flow by design (1.5 at 30,000 and at 7,600 CFM identical
+  at the sensor — why page 5's interlock is airflow-proven), the
+  loop masking an iced coil (same flow, same static, +14 Hz;
+  Hz-at-flow is the honest number), and the owner's earlier fix
+  attempt — cranking the fan against pressure-independent boxes,
+  which moved no flow and railed the 0–2.5 in. w.c. / 0–10 V
+  transducer at full scale ("the fan makes pressure, the boxes make
+  flow"; signal-scaling tool linked for the railed-reading
+  literacy). Safeties: the high-static cutout as an independent
+  mechanical switch (the owner's building had none — the
+  LP-cutout's twin), sensing-tube failures both directions, blown
+  duct. Static-loop widget = pump-control's DP-reset model with air
+  in it (fan curve 5.5·r² − K·Q², design 30,000 CFM at 4.0 total /
+  1.5 held; demand slider, fixed/reset, clean/iced, loop/pinned);
+  the old-fix preset rails the sensor and pins the anecdote. Closes
+  with the refrigerant-precedent walk of all six pages. Pays:
+  page 5's cliff-hanger callout + opener plant + ref-note + the
+  vav-every-box learnMore (retargeted), page 3's ≠-callout + "the
+  fan's own speed", page 1's fan fence + the chapter map's last
+  unlinked clause, page 4's closing plant, vfds' water-only
+  hand-off (air-side twin sentence added), affinity-laws' fan-side
+  orphanhood (lessons + quizzes), pid-tuner's back-edge, and
+  pump-control's mirror back-edge. Declared question + scope
+  contract below.
 
-Remaining (one lesson + paired quiz per PR, category `forced-air`;
-declared questions for all six locked below):
-
-- **Duct static control** — why the fan holds static, sensor
-  placement + the loop, static reset, safeties; the pump-control
-  mirror and the chapter closer. Pays affinity-laws' fan-side
-  orphanhood and the pid-tuner's supply-fan · duct-static scene.
-  `[future: education/duct-static-control.html]`
+Remaining: **none — the six-page chapter is complete** (reading
+order air-handlers → economizers → building-pressure →
+air-unit-identification → vav-systems → duct-static-control, all
+shipped with paired quizzes). Still open from the rollout notes:
+the deferred mini-hub / "start here" decision below, and the parked
+terminal-unit pages (markers only, demand-driven). New idea noted
+while shipping page 6 (owner request 2026-07-11): an **analog
+sensing / transmitters lesson** — ranges and scaling, live-zero,
+railed signals as ceilings not measurements — seeded by the
+railed-transducer beat; natural home for the signal-scaling tool's
+lessons-link. `[future: education/analog-sensing.html]`
 
 **The identification sidestep.** Linear order stands, but the opener
 plants an early callout toward naming the unit ("not sure what to
@@ -316,7 +357,12 @@ bare-trunk exception; surfaced by the PR-4 review).
 **Mini-hub / "start here" decision deferred** until 3–4 pages land —
 revisit whether Forced Air needs its own nav grouping / hub page, and
 whether affinity-laws' hydronics-only filing needs more than the
-relatedLinks fix page 6 gives it.
+relatedLinks fix page 6 gives it. *(Status 2026-07-11: the chapter is
+complete at six pages, so this decision is now due — an owner call.
+The relatedLinks half is done: affinity-laws links both pump-control
+and duct-static-control, so its fan side has a lesson home; whether
+its landing-card category should say more than "hydronics" is part
+of the same call.)*
 
 **Declared questions — all six, locked before drafting (one-question
 rule).** Each page's shipped entry will open with the same question
@@ -344,7 +390,9 @@ naming the box `[future: education/air-unit-identification.html]`
 the terminal side `[future:
 education/vav-systems.html]` *(shipped 2026-07-10 — chapter-map
 clause upgraded to a live link)* and the fan's speed `[future:
-education/duct-static-control.html]`; air-state math — existing
+education/duct-static-control.html]` *(shipped 2026-07-11 — fan
+fence and chapter-map clause both upgraded to live links)*;
+air-state math — existing
 links, not markers (psychrometrics-basics §Processes, air-mixing,
 coil-sizing, psychrometric-chart).
 Debts: incurred the five chapter markers above. Paid: first lesson
@@ -406,7 +454,9 @@ four relief strategies and the interlock-mistake preset carrying the
 owner's anecdote.
 Out of scope: duct static — a different pressure with a different
 sensor and loop; the conflation named in a callout and deferred
-`[future: education/duct-static-control.html]`; kitchen / lab /
+`[future: education/duct-static-control.html]` *(shipped 2026-07-11
+— ≠-callout and the closing's "fan's own speed" both upgraded to
+live links)*; kitchen / lab /
 dedicated exhaust `[future: kitchen & lab exhaust]` (named in the
 worked-example callout); stairwell pressurization and smoke control
 `[future: smoke control]` (same sentence); VAV-minimum ventilation
@@ -472,9 +522,13 @@ gets them); reheat at minimum (ventilation floor + comfort, the
 DAT/flow cascade); the cliff-hanger — every box closes at once:
 where does the pressure go? `[future:
 education/duct-static-control.html]` (discovery-prompt callout the
-next page pays).
+next page pays) *(shipped 2026-07-11 — callout, opener plant,
+cube-law paragraph, and widget ref-note all upgraded to live links;
+the vav-every-box learnMore retargeted at the page that answers
+it)*.
 Out of scope: duct static / fan response `[future:
-education/duct-static-control.html]`; fan-powered boxes `[future:
+education/duct-static-control.html]` *(shipped 2026-07-11)*;
+fan-powered boxes `[future:
 education/fan-powered-boxes.html]`; VVT `[future: education/vvt.html]`;
 TAB procedure (the airflow tool's traverse note carries the math;
 no lesson promised).
@@ -492,6 +546,7 @@ fan-powered boxes, and single-zone VAV stay parked — named nowhere
 on the page beyond the CV-or-VAV callout it inherits by link.
 
 **6 · Duct static control** (`duct-static-control.html`)
+*(shipped 2026-07-11 — see the Shipped entry above)*
 *One question: how does the supply fan know how much air the
 building wants — and why does it hold duct static pressure rather
 than flow?*
@@ -514,6 +569,18 @@ orphanhood (tool lessons-links gain this page), and vfds' air-side
 cube-law story. Closes the chapter — the closing section walks the
 full air path once more (refrigerant-chapter page-1/closing-framing
 precedent).
+As shipped: contract held, with one owner-driven addition — the
+war-story section grew a third beat (the earlier fix attempt that
+cranked the fan and railed the 0–2.5 in. w.c. / 0–10 V transducer at
+full scale; supplied in the design round 2026-07-11), which brought
+the signal-scaling tie-in and seeded the analog-sensing lesson idea
+noted in the Shipped section. The ~2/3 sensor-placement rule entered
+the site on this page (pump-control teaches local-vs-remote, not a
+fraction — the page frames air's rule as that logic's compromise).
+Extra debts paid beyond the contract line: page 4's closing plant,
+vfds' water-only hand-off (air-side twin sentence), pid-tuner's
+lessons back-edge, and pump-control's mirror back-edge (precedent:
+load-piping → vav-systems).
 
 ### BACnet Vendor ID lookup — tool *(shipped 2026-07-08, buildout PR 3)*
 *One question: whose device is this — the number a discovery log, a

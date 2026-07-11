@@ -6,9 +6,11 @@
 // Schema lives in html/scripts/quiz-engine.js's header. `id`s are
 // kebab-case and stable across edits — they namespace the
 // cf_quiz_vav-systems_* localStorage keys. Pairs with the VAV Systems
-// lesson; learnMore hrefs deep-link its <h2> anchors. Sequential order
-// is the lesson walk: the shape → box anatomy → pressure independence
-// → the floors → the coil floor → the cliff-hanger.
+// lesson; learnMore hrefs deep-link its <h2> anchors (the final,
+// cliff-hanger question hands off to the Duct Static Control lesson
+// that answers it). Sequential order is the lesson walk: the shape →
+// box anatomy → pressure independence → the floors → the coil floor
+// → the cliff-hanger.
 //
 // Quiz prose is painted post-load (the units walker doesn't reach it),
 // so unit values carry static metric parentheticals per the
@@ -153,7 +155,7 @@ module.exports = [
             { id: 'd', text: 'The return duct pressurizes instead.' }
         ],
         explain: 'Thirty throttles closing against a fan still pushing means trunk pressure rises — the loads throttled, and now the mover has to respond. How the fan finds out, and how gracefully it backs off, is duct static control — the next page of this chapter. The boxes are no help: each one holds its own zone\'s <em>flow</em>, and nobody at the box level is minding the trunk.',
-        learnMore: { href: '/education/vav-systems.html#loads-throttle', label: 'VAV Systems — Loads Throttle; the Mover Responds' },
+        learnMore: { href: '/education/duct-static-control.html#the-signal', label: 'Duct Static Control — The Duct Answers for the Boxes' },
         tags: ['forced-air', 'vav']
     },
 ];
