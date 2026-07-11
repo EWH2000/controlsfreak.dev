@@ -182,15 +182,13 @@ keywords: vav box terminal box variable air volume damper flow ring flow cross v
                 <a href="/education/pump-control.html">pump control</a> answered for the valves.
             </p>
 
-            <svg class="edu-svg" viewBox="0 0 540 350" role="img" aria-labelledby="vav-d1-title vav-d1-desc" font-family="var(--mono)">
+            <svg class="edu-svg" viewBox="0 110 540 240" role="img" aria-labelledby="vav-d1-title vav-d1-desc" font-family="var(--mono)">
                 <title id="vav-d1-title">One air handler serving many VAV boxes</title>
                 <desc id="vav-d1-desc">An air handler on the left sends one cold supply trunk across the drawing.
                     Three branches drop from the trunk, each through a small VAV box, down into its own zone; an
                     ellipsis marks the twenty-seven boxes not drawn. A return path collects air from the zones along
                     the bottom and carries it back to the unit. Supply air is drawn solid blue, return air a cooler
                     blue.</desc>
-
-                <text x="20" y="26" font-size="16" font-weight="600" fill="var(--text-bright)">One unit, thirty claims</text>
 
                 <!-- Air handler -->
                 <rect x="16" y="118" width="110" height="66" fill="var(--surface)" stroke="var(--border)"/>
@@ -278,15 +276,13 @@ keywords: vav box terminal box variable air volume damper flow ring flow cross v
                 label).
             </p>
 
-            <svg class="edu-svg" viewBox="0 0 540 300" role="img" aria-labelledby="vav-d2-title vav-d2-desc" font-family="var(--mono)">
+            <svg class="edu-svg" viewBox="0 34 540 266" role="img" aria-labelledby="vav-d2-title vav-d2-desc" font-family="var(--mono)">
                 <title id="vav-d2-title">Inside a VAV terminal box</title>
                 <desc id="vav-d2-desc">A cutaway of one VAV box. Air enters a round inlet on the left, passes a
                     flow ring whose two sensing lines run up to the box controller, then a damper blade driven by an
                     actuator, then an optional hot-water reheat coil with supply and return pipe stubs, and leaves
                     right toward the zone. A discharge-air sensor sits in the outlet; a dashed line connects the
                     controller down to the zone temperature sensor on the wall.</desc>
-
-                <text x="20" y="26" font-size="16" font-weight="600" fill="var(--text-bright)">The box, opened up</text>
 
                 <!-- Controller -->
                 <rect x="150" y="44" width="140" height="34" fill="var(--surface)" stroke="var(--border)"/>
@@ -320,8 +316,8 @@ keywords: vav box terminal box variable air volume damper flow ring flow cross v
                 <rect x="316" y="152" width="40" height="56" fill="none" stroke="var(--heat)"/>
                 <line x1="322" y1="152" x2="336" y2="208" stroke="var(--heat)" stroke-width="1"/>
                 <line x1="334" y1="152" x2="348" y2="208" stroke="var(--heat)" stroke-width="1"/>
-                <path id="vav-d2-hws" data-flow="supply" d="M326 214 V252" fill="none" stroke="var(--blue)" stroke-width="2.5"/>
-                <path id="vav-d2-hwr" data-flow="return" d="M346 252 V214" fill="none" stroke="var(--blue-cool)" stroke-width="2.5" stroke-dasharray="7 4"/>
+                <path id="vav-d2-hws" data-flow="supply" d="M326 252 V214" fill="none" stroke="var(--blue)" stroke-width="2.5"/>
+                <path id="vav-d2-hwr" data-flow="return" d="M346 214 V252" fill="none" stroke="var(--blue-cool)" stroke-width="2.5" stroke-dasharray="7 4"/>
                 <text x="336" y="270" font-size="11" fill="var(--text-dim)" text-anchor="middle">hot water</text>
                 <text x="336" y="140" font-size="12" fill="var(--text)" text-anchor="middle">reheat coil</text>
 
@@ -380,15 +376,13 @@ keywords: vav box terminal box variable air volume damper flow ring flow cross v
                 same reason.
             </p>
 
-            <svg class="edu-svg" viewBox="0 0 540 230" role="img" aria-labelledby="vav-d3-title vav-d3-desc" font-family="var(--mono)">
+            <svg class="edu-svg" viewBox="0 28 540 202" role="img" aria-labelledby="vav-d3-title vav-d3-desc" font-family="var(--mono)">
                 <title id="vav-d3-title">The VAV box control cascade</title>
                 <desc id="vav-d3-desc">A block diagram of two chained control loops. The zone loop compares zone
                     temperature to setpoint and outputs a flow setpoint between the box minimum and maximum. The flow
                     loop compares that setpoint against the flow ring's measured airflow and commands the damper.
                     A disturbance arrow labeled inlet pressure enters at the damper, and a feedback arrow returns the
                     measured flow from the damper back to the flow loop.</desc>
-
-                <text x="20" y="26" font-size="16" font-weight="600" fill="var(--text-bright)">Two loops, one damper</text>
 
                 <!-- Blocks -->
                 <rect x="20" y="78" width="140" height="52" fill="var(--surface)" stroke="var(--border)"/>
@@ -563,19 +557,19 @@ keywords: vav box terminal box variable air volume damper flow ring flow cross v
                 <div class="vav-w-strip">
                     <div class="vav-w-line">
                         <div class="vav-w-line-name">This box · flow</div>
-                        <div class="vav-w-line-value" id="vav-w-flow">—</div>
+                        <div class="vav-w-line-value" id="vav-w-flow">400 CFM</div>
                     </div>
                     <div class="vav-w-line">
                         <div class="vav-w-line-name">Flow ring · VP</div>
-                        <div class="vav-w-line-value" id="vav-w-vp">—</div>
+                        <div class="vav-w-line-value" id="vav-w-vp">0.16 in. w.c.</div>
                     </div>
                     <div class="vav-w-line">
                         <div class="vav-w-line-name">Damper</div>
-                        <div class="vav-w-line-value" id="vav-w-damper">—</div>
+                        <div class="vav-w-line-value" id="vav-w-damper">32<span class="unit"> %</span></div>
                     </div>
                     <div class="vav-w-line">
                         <div class="vav-w-line-name">Reheat valve</div>
-                        <div class="vav-w-line-value" id="vav-w-reheat">—</div>
+                        <div class="vav-w-line-value" id="vav-w-reheat">off</div>
                     </div>
                 </div>
 
@@ -584,15 +578,15 @@ keywords: vav box terminal box variable air volume damper flow ring flow cross v
                 <div class="vav-w-strip">
                     <div class="vav-w-line">
                         <div class="vav-w-line-name">Total flow · 30 boxes</div>
-                        <div class="vav-w-line-value" id="vav-w-total">—</div>
+                        <div class="vav-w-line-value" id="vav-w-total">16,300 CFM</div>
                     </div>
                     <div class="vav-w-line">
                         <div class="vav-w-line-name">DX stages running</div>
-                        <div class="vav-w-line-value" id="vav-w-stages">—</div>
+                        <div class="vav-w-line-value" id="vav-w-stages">1 of 2</div>
                     </div>
                     <div class="vav-w-line">
                         <div class="vav-w-line-name">Coil airflow</div>
-                        <div class="vav-w-line-value" id="vav-w-coil">—</div>
+                        <div class="vav-w-line-value" id="vav-w-coil">435 CFM/ton · OK</div>
                     </div>
                 </div>
 
@@ -690,7 +684,7 @@ keywords: vav box terminal box variable air volume damper flow ring flow cross v
     //
     //   System: siblings sum by mood (29,000 / 15,900 / 7,400 CFM);
     //   two 37.5-ton DX stages want ≥ FLOOR1/FLOOR2 total CFM
-    //   (≈ 300 CFM/ton each). Interlocked, a stage sheds rather than
+    //   (300 CFM/ton each). Interlocked, a stage sheds rather than
     //   run starved; with no interlock, stages run on demand and the
     //   coil status follows CFM/ton (OK ≥ 350, thin ≥ 300, starving
     //   below). The starved preset reproduces the author's building —
@@ -702,8 +696,8 @@ keywords: vav box terminal box variable air volume damper flow ring flow cross v
         const SIBLINGS = { calling: 29000, mixed: 15900, satisfied: 7400 };
         const PRESSURE_FACTOR = { calling: 1.0, mixed: 1.3, satisfied: 1.9 };
         const STAGES_WANTED = { calling: 2, mixed: 1, satisfied: 1 };
-        const FLOOR1 = 11000;                     // one stage's airflow floor, CFM
-        const FLOOR2 = 22000;                     // both stages' floor, CFM
+        const FLOOR1 = 11250;                     // one stage's airflow floor, CFM
+        const FLOOR2 = 22500;                     // both stages' floor, CFM
         const TONS_PER_STAGE = 37.5;
 
         const PRESETS = {

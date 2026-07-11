@@ -119,7 +119,7 @@ module.exports = [
             { id: 'c', text: 'Raise the flow setpoint so the zone gets more supply air.' },
             { id: 'd', text: 'Ask the air handler to raise its supply temperature.' }
         ],
-        explain: 'Flow stays on the ventilation floor; heat rides on top of it. The better sequences run it as a cascade — the zone loop asks for a discharge temperature and the DAT sensor closes that loop on the valve — with the cap keeping warm air mixing down into the room instead of pooling at the ceiling. Closing below minimum trades a comfort complaint for a ventilation violation; more 55-degree air makes a cold room colder; and the trunk serves twenty-nine other zones that didn\'t ask for warmer supply.',
+        explain: 'Flow stays on the ventilation floor; heat rides on top of it. The better sequences run it as a cascade — the zone loop asks for a discharge temperature and the DAT sensor closes that loop on the valve — with the cap keeping warm air mixing down into the room instead of pooling at the ceiling. Closing below minimum trades a comfort complaint for a ventilation violation; more 55 °F (12.8 °C) air makes a cold room colder; and the trunk serves twenty-nine other zones that didn\'t ask for warmer supply.',
         learnMore: { href: '/education/vav-systems.html#minimums', label: 'VAV Systems — The Floors' },
         tags: ['forced-air', 'vav', 'reheat']
     },
