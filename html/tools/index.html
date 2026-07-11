@@ -21,7 +21,7 @@ nav: tools
 
     <div class="filter-chips" role="group" aria-label="Filter tools by category">
         <button type="button" class="filter-chip active" data-category="all" aria-pressed="true">
-            All <span class="filter-chip-count">22</span>
+            All <span class="filter-chip-count">23</span>
         </button>
         <button type="button" class="filter-chip" data-category="hvac" aria-pressed="false">
             HVAC <span class="filter-chip-count">7</span>
@@ -33,7 +33,7 @@ nav: tools
             Signals <span class="filter-chip-count">2</span>
         </button>
         <button type="button" class="filter-chip" data-category="airflow" aria-pressed="false">
-            Airflow <span class="filter-chip-count">1</span>
+            Airflow <span class="filter-chip-count">2</span>
         </button>
         <button type="button" class="filter-chip" data-category="electrical" aria-pressed="false">
             Electrical <span class="filter-chip-count">3</span>
@@ -177,6 +177,15 @@ nav: tools
             titleFull:  'Airflow & Velocity Pressure',
             desc:       'The field airflow square-root, both halves — a VAV box\'s CFM = K × √VP solved forward or back-solved for K against a hood reading, and pitot velocity V = 4005 × √VP with duct area to CFM.',
             pills:      ['Airflow', 'K-Factor', 'V = 4005·√VP', 'Duct CFM'],
+            category:   'airflow'
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/tools/airside-load.html',
+            titleShort: 'Airside Load',
+            titleFull:  'Airside Load Calculator',
+            desc:       'The airside workhorse trio solved in any direction — sensible q = 1.08 × CFM × ΔT, latent 0.68 × CFM × Δgrains, total 4.5 × CFM × Δh with tons — following the US / Metric toggle.',
+            pills:      ['Airflow', '1.08 / 0.68 / 4.5', 'Sensible / Latent / Total', 'US / Metric'],
             category:   'airflow'
         }) }}
         {{ navCard({

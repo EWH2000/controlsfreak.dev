@@ -2634,6 +2634,53 @@ test('airflow — K-factor both directions and the duct-velocity chain', async (
     expect(errors, 'airflow behavioral should log no errors').toEqual([]);
 });
 
+test('airside-load — three tabs solve on the field constants; tons ride the total tab', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('/tools/airside-load.html');
+
+    // Sensible defaults: 1.08 × 2000 × 20 = 43,200 Btu/h = 43.2 MBH.
+    await expect(page.locator('#asl-s-out')).toContainText('43.2 MBH');
+
+    // Solve for airflow: 43.2 MBH at ΔT 20 → 2000 CFM; ΔT 0 is a divisor → mute.
+    await page.selectOption('#asl-s-solve', 'flow');
+    await expect(page.locator('#asl-s-out')).toContainText('2000 CFM');
+    await page.fill('#asl-s-delta', '0');
+    await expect(page.locator('#asl-s-out')).toHaveText('—');
+    await expect(page.locator('#asl-s-callout')).toBeVisible();
+
+    // Latent: 0.68 × 2000 × 10 = 13,600 Btu/h = 13.6 MBH.
+    await page.click('[data-tab="latent"]');
+    await expect(page.locator('#asl-l-out')).toContainText('13.6 MBH');
+
+    // Total: 4.5 × 2000 × 6.3 = 56,700 Btu/h = 56.7 MBH → 56.7 ÷ 12 = 4.7 tons.
+    await page.click('[data-tab="total"]');
+    await expect(page.locator('#asl-t-out')).toContainText('56.7 MBH');
+    await expect(page.locator('#asl-t-tons')).toContainText('4.7');
+
+    expect(errors, 'airside-load behavioral should log no errors').toEqual([]);
+});
+
+test('airside-load — metric constants close on displayed operands', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.addInitScript(() => localStorage.setItem('cf_units', 'metric'));
+    await page.goto('/tools/airside-load.html');
+
+    // Inputs rewrite to 3398 m³/h at 11.1 °C; 0.34 × 3398 × 11.1 = 12,824 W
+    // = 12.8 kW — the formula line must reproduce the shown result from the
+    // shown operands (metric rounding policy, audit-2026-06 #53).
+    await expect(page.locator('#asl-s-out')).toContainText('12.8 kW');
+    await expect(page.locator('#asl-s-formula')).toContainText('0.34 × 3398 × 11.1');
+
+    // Total tab: 0.33 × 3398 × 14.7 = 16,484 W = 16.5 kW → 16.5 ÷ 3.517 = 4.7
+    // tons — the US and metric tons rows must agree.
+    await page.click('[data-tab="total"]');
+    await expect(page.locator('#asl-t-out')).toContainText('16.5 kW');
+    await expect(page.locator('#asl-t-formula')).toContainText('0.33 × 3398 × 14.7');
+    await expect(page.locator('#asl-t-tons')).toContainText('4.7');
+
+    expect(errors, 'airside-load metric behavioral should log no errors').toEqual([]);
+});
+
 test('transformer-sizing — seeded panel totals, fuse ladder, overload pill', async ({ page }) => {
     const errors = watchErrors(page);
     await page.goto('/tools/transformer-sizing.html');

@@ -4556,6 +4556,35 @@ CLAUDE.md checklists, or extend the existing card-count test cluster
 (smoke + home-hero duplicate assertions) with a home-pill assertion
 derived from the landing card counts so drift fails CI.
 
+### 149. CLAUDE.md still points the PAGES manifest at tests/smoke.spec.js *(open — 2026-07-11)*
+
+CLAUDE.md's *Sitemap* section and both "Adding a new tool / quiz"
+checklists say to add new pages to "the `PAGES` array in
+`tests/smoke.spec.js`". The manifest actually lives in
+`tests/pages.js`, shared by `smoke.spec.js` and `responsive.spec.js`
+(`smoke.spec.js:24` requires it). Anyone following the doc greps the
+wrong file first — caught during the airside-load ship, which added
+its entry to `tests/pages.js` per the code, not the doc. Same-family
+drift caught in the same review: "Adding a new tool" step 6 points
+the Latest badge at `.hero-badges`, a class that no longer exists —
+the badge lives in the `.hero-latest` paragraph (`html/index.html`
+~L382). One-line doc fix at each mention; bundle into the next
+CLAUDE.md-touching PR.
+
+### 150. Home "Tools by Category" per-category pills are a fifth unguarded count surface — two already stale *(open — 2026-07-11)*
+
+The home page's Tools-by-Category grid (`html/index.html` ~L481–514)
+carries per-category tool counts in its pills: Protocols says
+"4 tools" (really 5 since the vendor-ID tool), Hydronics "2 tools"
+(really 4 since waterside-load and valve-authority); HVAC "7 tools"
+and Signals "2 tools" are currently correct. Issue #148 enumerates
+four hand-maintained count surfaces and misses this one. The card
+descs also enumerate tools by name (same drift risk, prose form),
+and the grid shows only four of the six categories (no Airflow or
+Electrical card) — possibly a deliberate curation, possibly more
+drift; decide which when truing it up. Caught (pre-existing, not
+introduced) during the airside-load ship's count-surface sweep.
+
 ### Deferred / Won't fix (with revisit trigger)
 
 Items considered during an audit and deliberately not pursued, each

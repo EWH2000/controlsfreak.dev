@@ -582,6 +582,62 @@ vfds' water-only hand-off (air-side twin sentence), pid-tuner's
 lessons back-edge, and pump-control's mirror back-edge (precedent:
 load-piping → vav-systems).
 
+### Airflow tools buildout — the airside-tools queue *(opened 2026-07-11, in progress)*
+
+The tools-side sequel to the Forced-air buildout: that chapter shipped
+six lessons and deliberately zero new tools, leaving the Airflow chip
+at one entry and several documented gaps (`qs = 1.08 × CFM × ΔT`
+appeared nowhere on the site; the 400 CFM/ton DX floor was
+prose-only). Owner picked the full slate 2026-07-11 — four proposed
+tools plus two owner ideas — shipping **one tool per branch/PR**, in
+this order (field utility first, verification-gated items last):
+
+1. **Airside Load** — `/tools/airside-load.html` *(shipped
+   2026-07-11 — see its Shipped entry below)*.
+2. **Duct Traverse** — `/tools/duct-traverse.html`, prefix `tr-`,
+   airflow. Multi-reading VP/velocity textarea → V̄ = 4005 ×
+   mean(√VPᵢ) → CFM (average the roots, never √(mean VP) — the
+   teaching hook), rect/round area, Ak-factor tab, point-count rules
+   row (no copyrighted log-T table). Pays airflow.html's
+   traverse-note forward-link and vav-systems' parked TAB marker.
+3. **Equipment Airflow Check** — `/tools/equipment-airflow.html`,
+   prefix `ea-`, airflow. DX tab: CFM per *active* ton with
+   icing/carryover bands (staging is the correctness crux); gas-HX
+   tab: nameplate rise window → allowable CFM band, measured rise ⇒
+   implied CFM + verdict. "Static equivalent" descoped honestly: a
+   fixed-speed TSP↔CFM mapping IS the blower curve (vendor data) —
+   v1 teaches the method and links affinity-laws. Owner blesses band
+   edges (350/400/450/500) and staging input shape at build time.
+4. **Coil Freeze Risk** — `/tools/coil-freeze-risk.html`, prefix
+   `cfr-`, hvac. Margin + risk-factor verdict, NOT a physics predictor
+   (tube-wall freeze needs geometry the field never has): worst-case
+   MAT, glycol freeze + burst points (verify once, use twice — same
+   table waterside-load's glycol row needs), categorical flow state,
+   steam path as rules-verdict + taught mechanism (throttled valve →
+   sub-atmospheric coil → condensate held in tubes). Ship by early
+   fall for freeze-stat season. `[future:
+   education/coil-freeze-protection.html]`.
+5. **Minimum Outdoor Air (62.1)** — `/tools/minimum-outdoor-air.html`,
+   prefix `vo-`, airflow. Vbz = Rp·Pz + Ra·Az → Voz = Vbz/Ez → %OA
+   pill; splits per-person (DCV-resettable) from per-area (floor).
+   ~8–10 common Rp/Ra presets (editable, free-entry first-class,
+   edition-stamped, placeholder-verify comments — **owner sign-off
+   gate before merge**); "About these values" disclaimer card on the
+   refrigerant-pt model. Single-zone only; `[future: multi-zone Ev]`.
+6. **Duct Sizer** — `/tools/duct-sizer.html`, prefix `dz-` (`ds-`
+   taken), airflow. Field-first framing (diagnose high static, not
+   design ductwork): Altshul-Tsal friction (ε = 0.0003 ft galvanized),
+   four solve modes via bisection, Huebscher rect↔round with the
+   "equal friction ≠ equal velocity" gotcha. Biggest SEO term
+   ("ductulator"), weakest audience fit — last. `[future: SI
+   ductulator mode]`.
+
+Deferred with the queue: airflow.html's tracked metric-VP-tab and
+density-correction-row markers stay parked (owner call 2026-07-11).
+Full scoping detail (inputs, math, risks, per-tool cross-link plans)
+lives in the 2026-07-11 planning round; each tool gets a brief
+re-plan at build time.
+
 ### BACnet Vendor ID lookup — tool *(shipped 2026-07-08, buildout PR 3)*
 *One question: whose device is this — the number a discovery log, a
 property sheet, or a Wireshark I-Am decode shows as
@@ -795,6 +851,59 @@ with electrical-quick-calc (the hp↔kW tie), coil-sizing,
 waterside-load, transformer-sizing. Adversarial review before ship
 caught five fixes (stale readout on hand-edit, descending-band guard,
 reference rounding, parser hardening, bridge-result `aria-labelledby`).
+
+### Airside Load calculator *(shipped 2026-07-11)*
+
+First fill of the **Airflow tools buildout** queue (see its Feature
+ideas section above, opened 2026-07-11) and the Airflow chip's second
+entry — the "natural future fills" the airflow-tool entry below
+predicted. Ships at
+`/tools/airside-load.html` as a three-tab `.tool-body-2col` tool,
+prefix `asl-` (All 22→23, Airflow 1→2): the airside twin of
+waterside-load, running the pocket-card trio `qs = 1.08 × CFM × ΔT`
+/ `ql = 0.68 × CFM × Δgr` / `qt = 4.5 × CFM × Δh`, each solved for
+load / airflow / delta. Notably, `1.08` appeared *nowhere* on the
+site before this page — no tool, not even prose.
+
+Decisions worth remembering:
+- **Tabs, not a mode select**: three sibling equations each get
+  waterside-load's proven single-equation pane (solve-for select,
+  hidden solved-variable row, per-tab worked example); a Mode select
+  stacked over a Solve-for select would be two levels of hidden
+  state in one pane, and the tab bar itself teaches the trio. The
+  constants/standard-air row is a shared sibling of the panes
+  (airflow.html's "where 4005 comes from" pattern). One `MODES`
+  config + one `calc(mode)` — not three copies of waterside's calc.
+- **Active-unit-system solve with per-system first-class constants**
+  (waterside's pattern): US 1.08 / 0.68 / 4.5; metric 0.34 / 0.83 /
+  0.33 in W per m³/h·unit — 0.34 is the entrenched European
+  ventilation constant, 0.83 and 0.33 are derivation-clean at
+  ρ = 1.2 kg/m³, h_fg = 2,500 kJ/kg. Owner call 2026-07-11: the
+  trade-rounded set over exact-twin 0.335 / 0.821 / 0.334. The pairs
+  disagree ~1–1.5 % by construction; the derivation row says so in
+  visible prose.
+- **Tons ride the Total tab only** — a ton is 12 MBH of *total*
+  heat, and tons on the sensible tab would invite exactly the
+  sensible-vs-total confusion the 400 CFM/ton rule exists to fix.
+  The sensible tab carries a pointer note instead. Deliberate
+  departure from waterside's tons-whenever-load.
+- **Δh and Δgr are direct inputs; no psychro-engine** — computing
+  air states from DB/RH is coil-sizing's whole job. The boundary is
+  stated in the preamble and the shared row ("pocket-card arithmetic
+  for when you already hold the deltas"), and staying engine-free
+  also skips the #139 engine-guard obligation.
+- **425 CFM/ton stays prose**: the Total tab's worked example lands
+  at 2000 ÷ 4.7 ≈ 425 CFM/ton and points at the VAV lesson's coil
+  floor; the computed verdict row belongs to the queued
+  equipment-checks tool. `[future: CFM/ton verdict row —
+  equipment-checks tool]`.
+- Worked examples run one coil narrative across the three tabs,
+  closing with the **waterside handshake** (43.2 MBH at a 12 °F
+  water ΔT = 7.2 GPM — the two sides of one coil have to agree) and
+  the sensible + latent = total cross-check, rounding reconciliation
+  stated. Reciprocal relatedLinks edges landed in the same PR:
+  air-handlers + vav-systems lessons, waterside-load, airflow,
+  coil-sizing, dew-point-calculator.
 
 ### Airflow & Velocity Pressure tool *(shipped 2026-06-10)*
 
