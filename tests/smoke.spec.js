@@ -2681,6 +2681,70 @@ test('airside-load — metric constants close on displayed operands', async ({ p
     expect(errors, 'airside-load metric behavioral should log no errors').toEqual([]);
 });
 
+test('duct-traverse — roots before averaging, order-check line, per-point mutes', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('/tools/duct-traverse.html');
+
+    // Seeded 25-point grid: mean(√VP) = 5.41 ÷ 25 = 0.2164 → 4005 × 0.2164
+    // = 867 FPM; 24 × 12 in. → 2 ft² → 1734 CFM.
+    await expect(page.locator('#tr-t-count')).toHaveText('25 readings');
+    await expect(page.locator('#tr-t-vel')).toContainText('867 FPM');
+    await expect(page.locator('#tr-t-cfm')).toContainText('1734 CFM');
+
+    // The teaching hook: averaging the pressures first would read 884 FPM
+    // — 2 % high — and the order-check line must say so from displayed
+    // operands (mean VP 0.0487 → root 0.2207 → × 4005).
+    await expect(page.locator('#tr-t-jensen')).toBeVisible();
+    await expect(page.locator('#tr-t-jensen')).toContainText('884 FPM');
+    await expect(page.locator('#tr-t-jensen')).toContainText('2 % high');
+
+    // A uniform paste ties at display precision — the line must switch to
+    // the agrees-here phrasing, never print a negative/zero "% high" under
+    // a can-only-read-high sentence (review finding, 2026-07-11).
+    await page.fill('#tr-t-readings', '0.0625 0.0625 0.0625 0.0625');
+    await expect(page.locator('#tr-t-jensen')).toContainText('agree to display precision');
+
+    // A typo mid-log mutes with the point called out (Number(), not
+    // parseFloat — '0.o5' must not silently parse as 0).
+    await page.fill('#tr-t-readings', '0.04 0.o5 0.06');
+    await expect(page.locator('#tr-t-cfm')).toHaveText('—');
+    await expect(page.locator('#tr-t-callout')).toBeVisible();
+    await expect(page.locator('#tr-t-callout')).toContainText('Reading 2');
+
+    // A negative point teaches plane relocation, not a generic error.
+    await page.fill('#tr-t-readings', '0.04 -0.02 0.06');
+    await expect(page.locator('#tr-t-callout')).toContainText('Reading 2 is negative');
+
+    // Velocity-type readings average directly — 800/900/1000 → 900 FPM ×
+    // 2 ft² = 1800 CFM — and the order-check line goes away (no roots).
+    await page.selectOption('#tr-t-type', 'vel');
+    await page.fill('#tr-t-readings', '800 900 1000');
+    await expect(page.locator('#tr-t-vel')).toContainText('900 FPM');
+    await expect(page.locator('#tr-t-cfm')).toContainText('1800 CFM');
+    await expect(page.locator('#tr-t-jensen')).toBeHidden();
+
+    expect(errors, 'duct-traverse behavioral should log no errors').toEqual([]);
+});
+
+test('duct-traverse — Ak tab solves both ways and refuses a zero-velocity back-solve', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('/tools/duct-traverse.html');
+    await page.click('[data-tab="ak"]');
+
+    // Seeds: Q = 0.65 × 400 = 260 CFM; the flip back-solves the same
+    // triple — Ak = 260 ÷ 400 = 0.65 ft².
+    await expect(page.locator('#tr-a-out')).toContainText('260 CFM');
+    await page.selectOption('#tr-a-solve', 'ak');
+    await expect(page.locator('#tr-a-out')).toContainText('0.65 ft²');
+
+    // Zero face velocity can't back-solve an Ak — teaching mute.
+    await page.fill('#tr-a-vel', '0');
+    await expect(page.locator('#tr-a-out')).toHaveText('—');
+    await expect(page.locator('#tr-a-callout')).toBeVisible();
+
+    expect(errors, 'duct-traverse Ak behavioral should log no errors').toEqual([]);
+});
+
 test('transformer-sizing — seeded panel totals, fuse ladder, overload pill', async ({ page }) => {
     const errors = watchErrors(page);
     await page.goto('/tools/transformer-sizing.html');

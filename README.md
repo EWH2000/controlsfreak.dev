@@ -184,6 +184,17 @@ Calculators, converters, and lookups — open one, get an answer.
   Takes the deltas directly and hands full air-state work to
   Coil-Sizing; the worked example closes the loop against the
   waterside — the two sides of one coil have to agree.
+- **Duct Traverse** — the full-grid companion to the airflow tool's
+  one-point tab. Paste an entire pitot traverse (spaces, commas, or
+  one line per duct row) and it roots every reading *before*
+  averaging — `V̄ = 4005 × mean(√VP)` — then rect/round duct area →
+  CFM. A live order-check line shows what averaging the pressures
+  first would have read (always high; the page's teaching hook), a
+  bad token mutes as "reading 7 isn't a number," and a negative point
+  mutes as "relocate the plane," not a generic error. Second tab runs
+  diffuser Ak-factor flow forward or back-solved against a hood, with
+  the Ak-is-not-the-neck's-πr² trap called out; point-count and
+  plane-location rules ride along in prose.
 - **Transformer VA Budget** — "does this transformer have room for
   one more actuator?" List the loads on the 24 VAC secondary (blank
   rows are spares), pick the transformer, and read total VA, percent
