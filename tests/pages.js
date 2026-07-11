@@ -31,6 +31,7 @@ const PAGES = [
     { name: 'affinity laws',          url: '/tools/affinity-laws.html' },
     { name: 'waterside load',         url: '/tools/waterside-load.html' },
     { name: 'airflow',                url: '/tools/airflow.html' },
+    { name: 'airside load',           url: '/tools/airside-load.html' },
     { name: 'transformer va budget',  url: '/tools/transformer-sizing.html' },
     { name: 'wire run voltage drop',  url: '/tools/voltage-drop.html' },
     { name: 'field electrical quick calc', url: '/tools/electrical-quick-calc.html' },

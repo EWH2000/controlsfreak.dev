@@ -174,6 +174,16 @@ Calculators, converters, and lookups — open one, get an answer.
   metric K is a different number on a different label); states its
   standard-air assumption and under-read at altitude; a negative VP
   mutes as "sensing lines swapped," not a generic error.
+- **Airside Load** — the airside twin of Waterside Load: the
+  pocket-card trio `qs = 1.08 × CFM × ΔT` (sensible), `0.68 × CFM ×
+  Δgrains` (latent), and `4.5 × CFM × Δh` (total, with tons), each
+  solved for load, airflow, or the delta. Follows the US / Metric
+  toggle with each system's own first-class constants (0.34 / 0.83 /
+  0.33), so the formula line always closes on the displayed operands.
+  Tons ride the Total tab only — a ton is 12 MBH of *total* heat.
+  Takes the deltas directly and hands full air-state work to
+  Coil-Sizing; the worked example closes the loop against the
+  waterside — the two sides of one coil have to agree.
 - **Transformer VA Budget** — "does this transformer have room for
   one more actuator?" List the loads on the 24 VAC secondary (blank
   rows are spares), pick the transformer, and read total VA, percent

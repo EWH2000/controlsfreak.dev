@@ -1,0 +1,477 @@
+---
+title: Airside Load Calculator — controlsfreak.dev
+description: Airside heat-rate math solved any direction — sensible q = 1.08 × CFM × ΔT, latent 0.68 × CFM × Δgrains, total 4.5 × CFM × Δh — with the US / Metric toggle.
+canonical: https://controlsfreak.dev/tools/airside-load.html
+nav: tools
+category: airflow
+keywords: cfm delta t sensible latent total heat grains enthalpy btuh mbh tons 1.08 0.68 4.5 reheat
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Tools · Airside Load</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">
+                Airside Load Calculator
+                <span class="tool-tag">Airflow</span>
+            </h1>
+        </div>
+
+        <details class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
+            <summary>The airside workhorse trio, solved in any direction.</summary>
+            <div class="preamble-rest">
+                <code><span data-us="qs = 1.08 × CFM × ΔT" data-metric="qs = 0.34 × m³/h × ΔT">qs = 1.08 × CFM × ΔT</span></code> and its latent and total siblings tie the air a fan moves to the heat a coil transfers.
+                Solve in any direction — the load a measured airflow and ΔT imply, the airflow a reheat schedule needs, or the ΔT a healthy coil should be showing.
+                This is the airside twin of the <a href="/tools/waterside-load.html">waterside-load tool</a>: same coil, other side.
+            </div>
+        </details>
+        <p class="ps-seed-note">Inputs are seeded with an example — edit them to your numbers.</p>
+
+        <div class="tabs tabs-flush">
+            <button class="tab-btn active" data-tab="sensible">Sensible (ΔT)</button>
+            <button class="tab-btn"        data-tab="latent">Latent (Δ grains)</button>
+            <button class="tab-btn"        data-tab="total">Total (Δh)</button>
+        </div>
+
+        <!-- ── Sensible ── -->
+        <div id="tab-sensible" class="tab-pane active">
+            <div class="tool-body-2col">
+
+                <section>
+                    <h2 class="ps-section-label">Input</h2>
+                    <div class="ps-row">
+                        <label class="ps-label" for="asl-s-solve">Solve for</label>
+                        <select class="ps-input" id="asl-s-solve">
+                            <option value="load">Load</option>
+                            <option value="flow">Airflow</option>
+                            <option value="delta">ΔT</option>
+                        </select>
+                    </div>
+                    <div class="ps-row" id="asl-s-row-flow">
+                        <label class="ps-label" data-us="Airflow (CFM)" data-metric="Airflow (m³/h)" for="asl-s-flow">Airflow (CFM)</label>
+                        <input class="ps-input" type="number" id="asl-s-flow" step="any" min="0" placeholder="2000" value="2000">
+                    </div>
+                    <div class="ps-row" id="asl-s-row-delta">
+                        <label class="ps-label" data-us="ΔT across coil (°F)" data-metric="ΔT across coil (°C)" for="asl-s-delta">ΔT across coil (°F)</label>
+                        <input class="ps-input" type="number" id="asl-s-delta" step="any" min="0" placeholder="20" value="20">
+                    </div>
+                    <div class="ps-row" id="asl-s-row-load">
+                        <label class="ps-label" data-us="Load (MBH)" data-metric="Load (kW)" for="asl-s-load">Load (MBH)</label>
+                        <input class="ps-input" type="number" id="asl-s-load" step="any" min="0" placeholder="43.2" value="43.2">
+                    </div>
+                    <p class="ref-note">
+                        Enter ΔT as a positive difference — entering-to-leaving on a heating coil, leaving-to-entering on cooling; the math is the same either direction.
+                    </p>
+                    <p class="ref-note">
+                        <strong>Sensible only</strong> — temperature change alone. A wet cooling coil is also moving latent heat; that&rsquo;s the other two tabs. Tons live on the Total tab, because a ton is <span data-us="12 MBH" data-metric="3.517 kW">12 MBH</span> of <em>total</em> heat.
+                    </p>
+                </section>
+
+                <section role="status" aria-atomic="false">
+                    <h2 class="ps-section-label">Output</h2>
+                    <div class="ps-row primary">
+                        <span class="ps-label" id="asl-s-out-label">Load (MBH)</span>
+                        <span class="ps-value muted" id="asl-s-out">—</span>
+                    </div>
+                    <div class="btn-row">
+                        <button class="copy-btn" id="asl-s-copy">Copy value</button>
+                    </div>
+                    <div class="result-formula wrap" id="asl-s-formula"></div>
+                    <div class="failure-callout" id="asl-s-callout" hidden></div>
+                </section>
+
+            </div>
+
+            <section class="tool-body-row">
+                <h2 class="ps-section-label">Worked example</h2>
+                <p class="ref-note worked-intro">
+                    A hot-water coil takes <span data-us="2,000 CFM" data-metric="3398 m³/h">2,000 CFM</span> of supply air and leaves it <span data-us="20 °F" data-metric="11.1 °C">20 °F</span> warmer.
+                </p>
+                <ol class="ref-note worked-list">
+                    <li>The sensible equation: <code><span data-us="qs = 1.08 × CFM × ΔT°F, in Btu/h" data-metric="qs = 0.34 × m³/h × ΔT°C, in W">qs = 1.08 × CFM × ΔT°F, in Btu/h</span></code>.</li>
+                    <li>Plug in: <code><span data-us="qs = 1.08 × 2000 × 20 = 43,200 Btu/h = 43.2 MBH" data-metric="qs = 0.34 × 3398 × 11.1 = 12,824 W = 12.8 kW">qs = 1.08 × 2000 × 20 = 43,200 Btu/h = 43.2 MBH</span></code>.</li>
+                    <li>The same heat left the water. At a <span data-us="12 °F" data-metric="6.7 °C">12 °F</span> water ΔT that&rsquo;s <code><span data-us="Q = 43,200 ÷ (500 × 12) = 7.2 GPM" data-metric="Q = 12.8 ÷ (4.187 × 6.7) = 0.46 L/s">Q = 43,200 ÷ (500 × 12) = 7.2 GPM</span></code> — run it on the <a href="/tools/waterside-load.html">Waterside Load Calculator</a>. The two sides of one coil have to agree; when they don&rsquo;t, one of the readings is lying.</li>
+                </ol>
+            </section>
+        </div>
+
+        <!-- ── Latent ── -->
+        <div id="tab-latent" class="tab-pane">
+            <div class="tool-body-2col">
+
+                <section>
+                    <h2 class="ps-section-label">Input</h2>
+                    <div class="ps-row">
+                        <label class="ps-label" for="asl-l-solve">Solve for</label>
+                        <select class="ps-input" id="asl-l-solve">
+                            <option value="load">Load</option>
+                            <option value="flow">Airflow</option>
+                            <option value="delta">Moisture Δ</option>
+                        </select>
+                    </div>
+                    <div class="ps-row" id="asl-l-row-flow">
+                        <label class="ps-label" data-us="Airflow (CFM)" data-metric="Airflow (m³/h)" for="asl-l-flow">Airflow (CFM)</label>
+                        <input class="ps-input" type="number" id="asl-l-flow" step="any" min="0" placeholder="2000" value="2000">
+                    </div>
+                    <div class="ps-row" id="asl-l-row-delta">
+                        <label class="ps-label" data-us="Moisture removed (gr/lb)" data-metric="Moisture removed (g/kg)" for="asl-l-delta">Moisture removed (gr/lb)</label>
+                        <input class="ps-input" type="number" id="asl-l-delta" step="any" min="0" placeholder="10" value="10">
+                    </div>
+                    <div class="ps-row" id="asl-l-row-load">
+                        <label class="ps-label" data-us="Load (MBH)" data-metric="Load (kW)" for="asl-l-load">Load (MBH)</label>
+                        <input class="ps-input" type="number" id="asl-l-load" step="any" min="0" placeholder="13.6" value="13.6">
+                    </div>
+                    <p class="ref-note">
+                        Δ is entering minus leaving humidity ratio — <span data-us="grains of moisture per pound of dry air; 7,000 grains make a pound" data-metric="grams of moisture per kilogram of dry air">grains of moisture per pound of dry air; 7,000 grains make a pound</span>. Read both states off the <a href="/tools/psychrometric-chart.html">psych chart</a> or the <a href="/tools/dew-point-calculator.html">dew-point calculator</a>.
+                    </p>
+                </section>
+
+                <section role="status" aria-atomic="false">
+                    <h2 class="ps-section-label">Output</h2>
+                    <div class="ps-row primary">
+                        <span class="ps-label" id="asl-l-out-label">Load (MBH)</span>
+                        <span class="ps-value muted" id="asl-l-out">—</span>
+                    </div>
+                    <div class="btn-row">
+                        <button class="copy-btn" id="asl-l-copy">Copy value</button>
+                    </div>
+                    <div class="result-formula wrap" id="asl-l-formula"></div>
+                    <div class="failure-callout" id="asl-l-callout" hidden></div>
+                </section>
+
+            </div>
+
+            <section class="tool-body-row">
+                <h2 class="ps-section-label">Worked example</h2>
+                <p class="ref-note worked-intro">
+                    A cooling coil wrings <span data-us="10 gr/lb" data-metric="1.4 g/kg">10 gr/lb</span> of moisture out of the same <span data-us="2,000 CFM" data-metric="3398 m³/h">2,000 CFM</span>.
+                </p>
+                <ol class="ref-note worked-list">
+                    <li>The latent equation: <code><span data-us="ql = 0.68 × CFM × Δgr/lb, in Btu/h" data-metric="ql = 0.83 × m³/h × Δg/kg, in W">ql = 0.68 × CFM × Δgr/lb, in Btu/h</span></code>.</li>
+                    <li>Plug in: <code><span data-us="ql = 0.68 × 2000 × 10 = 13,600 Btu/h = 13.6 MBH" data-metric="ql = 0.83 × 3398 × 1.4 = 3,948 W = 3.9 kW">ql = 0.68 × 2000 × 10 = 13,600 Btu/h = 13.6 MBH</span></code>.</li>
+                    <li>Every <span data-us="grain" data-metric="gram">grain</span> the coil removes is water condensing on the fins and giving up its latent heat — heat the compressor has to move even though no thermometer in the airstream sees it.</li>
+                </ol>
+            </section>
+        </div>
+
+        <!-- ── Total ── -->
+        <div id="tab-total" class="tab-pane">
+            <div class="tool-body-2col">
+
+                <section>
+                    <h2 class="ps-section-label">Input</h2>
+                    <div class="ps-row">
+                        <label class="ps-label" for="asl-t-solve">Solve for</label>
+                        <select class="ps-input" id="asl-t-solve">
+                            <option value="load">Load</option>
+                            <option value="flow">Airflow</option>
+                            <option value="delta">Δh</option>
+                        </select>
+                    </div>
+                    <div class="ps-row" id="asl-t-row-flow">
+                        <label class="ps-label" data-us="Airflow (CFM)" data-metric="Airflow (m³/h)" for="asl-t-flow">Airflow (CFM)</label>
+                        <input class="ps-input" type="number" id="asl-t-flow" step="any" min="0" placeholder="2000" value="2000">
+                    </div>
+                    <div class="ps-row" id="asl-t-row-delta">
+                        <label class="ps-label" data-us="Δh across coil (Btu/lb)" data-metric="Δh across coil (kJ/kg)" for="asl-t-delta">Δh across coil (Btu/lb)</label>
+                        <input class="ps-input" type="number" id="asl-t-delta" step="any" min="0" placeholder="6.3" value="6.3">
+                    </div>
+                    <div class="ps-row" id="asl-t-row-load">
+                        <label class="ps-label" data-us="Load (MBH)" data-metric="Load (kW)" for="asl-t-load">Load (MBH)</label>
+                        <input class="ps-input" type="number" id="asl-t-load" step="any" min="0" placeholder="56.7" value="56.7">
+                    </div>
+                    <p class="ref-note">
+                        Δh is entering minus leaving enthalpy. Starting from temperatures and humidity instead? The <a href="/tools/coil-sizing.html">coil-sizing calculator</a> computes the air states and splits the load into sensible + latent for you.
+                    </p>
+                </section>
+
+                <section role="status" aria-atomic="false">
+                    <h2 class="ps-section-label">Output</h2>
+                    <div class="ps-row primary">
+                        <span class="ps-label" id="asl-t-out-label">Load (MBH)</span>
+                        <span class="ps-value muted" id="asl-t-out">—</span>
+                    </div>
+                    <div class="ps-row" id="asl-t-row-tons">
+                        <span class="ps-label">Tons refrigeration</span>
+                        <span class="ps-value muted" id="asl-t-tons">—</span>
+                    </div>
+                    <div class="btn-row">
+                        <button class="copy-btn" id="asl-t-copy">Copy value</button>
+                    </div>
+                    <div class="result-formula wrap" id="asl-t-formula"></div>
+                    <div class="failure-callout" id="asl-t-callout" hidden></div>
+                </section>
+
+            </div>
+
+            <section class="tool-body-row">
+                <h2 class="ps-section-label">Worked example</h2>
+                <p class="ref-note worked-intro">
+                    Same coil, all in: the entering and leaving air read <span data-us="6.3 Btu/lb" data-metric="14.7 kJ/kg">6.3 Btu/lb</span> apart in enthalpy.
+                </p>
+                <ol class="ref-note worked-list">
+                    <li>The total equation: <code><span data-us="qt = 4.5 × CFM × Δh, in Btu/h" data-metric="qt = 0.33 × m³/h × Δh, in W">qt = 4.5 × CFM × Δh, in Btu/h</span></code>.</li>
+                    <li>Plug in: <code><span data-us="qt = 4.5 × 2000 × 6.3 = 56,700 Btu/h = 56.7 MBH" data-metric="qt = 0.33 × 3398 × 14.7 = 16,484 W = 16.5 kW">qt = 4.5 × 2000 × 6.3 = 56,700 Btu/h = 56.7 MBH</span></code>.</li>
+                    <li>In chiller language: <code><span data-us="56.7 ÷ 12 = 4.7 tons" data-metric="16.5 ÷ 3.517 = 4.7 tons">56.7 ÷ 12 = 4.7 tons</span></code> moving through that one coil.</li>
+                </ol>
+                <p class="ref-note">
+                    <span data-us="Cross-check against the other tabs: sensible 43.2 + latent 13.6 = 56.8 MBH against 56.7 here — the missing 0.1 is the rounded Δh (the chart really read closer to 6.31)." data-metric="Cross-check against the other tabs: sensible 12.8 + latent 3.9 = 16.7 kW against 16.5 here — rounded operands plus independently rounded constants.">Cross-check against the other tabs: sensible 43.2 + latent 13.6 = 56.8 MBH against 56.7 here — the missing 0.1 is the rounded Δh (the chart really read closer to 6.31).</span> Sensible + latent = total is the cross-check worth keeping — when the split misses by more than rounding, one of the three readings is lying.
+                </p>
+                <p class="ref-note">
+                    Divide the airflow by the tons and you&rsquo;ve got the DX sanity number — <span data-us="2000 ÷ 4.7 ≈ 425 CFM per ton here" data-metric="≈ 425 CFM per ton here (an IP-native rule, like the K-factor)">2000 ÷ 4.7 ≈ 425 CFM per ton here</span>. The trade&rsquo;s floor sits near 400; the <a href="/education/vav-systems.html">VAV Systems lesson</a> walks the icing runaway below it.
+                </p>
+            </section>
+        </div>
+
+        <section class="tool-body-row">
+            <h2 class="ps-section-label">Standard air, and where <span data-us="1.08, 0.68, and 4.5" data-metric="0.34, 0.83, and 0.33">1.08, 0.68, and 4.5</span> come from</h2>
+            <p class="ref-note">
+                All three constants are <strong>standard air</strong> — <span data-us="0.075 lb/ft³, sea level, ~70 °F" data-metric="1.2 kg/m³, sea level, ~20 °C">0.075&nbsp;lb/ft³, sea level, ~70&nbsp;°F</span> — folded into pocket-card form. <span data-us="1.08 = 0.075 lb/ft³ × 60 min/h × 0.240 Btu/lb·°F (density × time × specific heat). 4.5 = 0.075 × 60 — it just turns CFM into pounds of dry air per hour. 0.68 = 4.5 × 1,060 Btu/lb of latent heat ÷ 7,000 grains per pound." data-metric="0.34 = 1.2 kg/m³ × 1.005 kJ/kg·K ÷ 3.6 — density × specific heat, with the ÷ 3.6 turning m³/h into grams of dry air per second — which computes to 0.335 and rounds up to the trade's 0.34, the standard European ventilation constant. 0.33 = 1.2 ÷ 3.6 — it just turns m³/h into grams of dry air per second. 0.83 = 1.2 × 2,500 kJ/kg of latent heat ÷ 3,600.">1.08 = 0.075 lb/ft³ × 60 min/h × 0.240 Btu/lb·°F (density × time × specific heat). 4.5 = 0.075 × 60 — it just turns CFM into pounds of dry air per hour. 0.68 = 4.5 × 1,060 Btu/lb of latent heat ÷ 7,000 grains per pound.</span>
+            </p>
+            <p class="ref-note">
+                The US and metric constants are independently rounded trade conventions, not conversions of each other — the exact metric twin of 1.08 is 0.335, not 0.34 — so the two systems disagree by roughly a percent by construction. Each system is internally consistent, and the formula line always closes on the numbers shown. At altitude the air is thinner, each <span data-us="CFM" data-metric="m³/h">CFM</span> carries less heat, and every constant on this page over-reads the load by roughly 3&nbsp;% per thousand feet of elevation — call it 14&nbsp;% in Denver; the <a href="/tools/psychrometric-chart.html">psych chart</a> carries a proper altitude input.
+            </p>
+            <p class="ref-note">
+                This page is the pocket-card arithmetic for when you already hold the deltas. Starting from full air states — dry-bulb and humidity in, dry-bulb and humidity out — the <a href="/tools/coil-sizing.html">coil-sizing calculator</a> does the psychrometrics properly and hands back total, sensible, latent, and SHR in one pass.
+            </p>
+        </section>
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/tools/airflow.html', label: 'Airflow & Velocity Pressure'},
+            {href: '/tools/coil-sizing.html', label: 'Coil-Sizing Calculator'},
+            {href: '/tools/psychrometric-chart.html', label: 'Psychrometric Chart'},
+            {href: '/tools/waterside-load.html', label: 'Waterside Load Calculator'}
+        ],
+        lessons: [
+            {href: '/education/air-handlers.html', label: 'Air Handlers'},
+            {href: '/education/vav-systems.html', label: 'VAV Systems'},
+            {href: '/education/psychrometrics-basics.html', label: 'Psychrometrics Basics'}
+        ],
+        quizzes: [
+            {href: '/practice/air-handlers.html', label: 'Air Handlers Quiz'},
+            {href: '/practice/vav-systems.html', label: 'VAV Systems Quiz'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/tools/">← All tools</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="/scripts/ui.js"></script>
+<script>
+    // switchTab(name, btn) and copyReadouts(btn, sep, ...ids) come from
+    // /scripts/ui.js.
+    //
+    // The airside pocket-card trio at standard air (0.075 lb/ft³):
+    //   sensible q = 1.08 × CFM × ΔT°F     metric q[W] = 0.34 × m³/h × ΔT°C
+    //   latent   q = 0.68 × CFM × Δgr/lb   metric q[W] = 0.83 × m³/h × Δg/kg
+    //   total    q = 4.5  × CFM × Δh       metric q[W] = 0.33 × m³/h × ΔkJ/kg
+    //
+    // The solve runs in the ACTIVE unit system with that system's own
+    // constant — waterside-load's pattern, deliberately NOT the
+    // canonical-IP engine posture. The metric rounding policy
+    // (audit-2026-06 #53) requires the formula line to close on the
+    // displayed operands, and the metric constants are first-class trade
+    // conventions (0.34 is the standard European ventilation constant),
+    // not conversions — the pairs disagree ~1 % by construction; each
+    // system is internally consistent. Unit flips rewrite the inputs
+    // from retained canonical values (rewriteInput), so state survives.
+    (function () {
+        'use strict';
+
+        const U = window.Units;
+        const KW_PER_TON = 3.517;   // 1 ton refrigeration = 12 MBH = 3.517 kW
+
+        // Trim trailing zeros so 43.20 reads 43.2 but 43.21 stays put.
+        const tidy = (n, dp) => parseFloat(n.toFixed(dp)).toString();
+
+        // One entry per tab; calc(m) reads everything it needs from here
+        // so the three solves share a single code path.
+        const MODES = [
+            {
+                id: 's', sym: 'qs',
+                K: { us: 1.08, metric: 0.34 },
+                deltaQ: 'deltaTemp', deltaSym: 'ΔT',
+                deltaName: 'ΔT',
+                msgs: {
+                    negDelta: 'A negative ΔT usually means the two temperatures got subtracted in the wrong order — enter it as a positive difference; heating or cooling, the equation doesn’t care which way the heat moves.',
+                    zeroDelta: 'ΔT must be greater than 0 to solve for airflow — air that leaves at the same temperature is carrying no sensible load.'
+                }
+            },
+            {
+                id: 'l', sym: 'ql',
+                K: { us: 0.68, metric: 0.83 },
+                deltaQ: 'humidityRatio', deltaSym: 'Δw',
+                deltaName: 'moisture Δ',
+                msgs: {
+                    negDelta: 'A negative moisture Δ just means the coil is adding moisture instead of removing it — humidification is the same math; enter the difference as positive.',
+                    zeroDelta: 'Moisture Δ must be greater than 0 to solve for airflow — air that leaves at the same humidity is carrying no latent load.'
+                }
+            },
+            {
+                id: 't', sym: 'qt',
+                K: { us: 4.5, metric: 0.33 },
+                deltaQ: 'deltaEnthalpy', deltaSym: 'Δh',
+                deltaName: 'Δh',
+                tons: true,
+                msgs: {
+                    negDelta: 'A negative Δh usually means the two enthalpies got subtracted in the wrong order — enter it as a positive difference; heating or cooling, the equation doesn’t care which way the heat moves.',
+                    zeroDelta: 'Δh must be greater than 0 to solve for airflow — no enthalpy change, no load.'
+                }
+            }
+        ];
+
+        const deltaSuffix = m => U.suffix[m.deltaQ]();
+
+        for (const m of MODES) {
+            m.el = {};
+            for (const f of ['solve', 'flow', 'delta', 'load', 'out', 'out-label', 'copy', 'formula', 'callout']) {
+                m.el[f] = document.getElementById(`asl-${m.id}-${f}`);
+            }
+            if (m.tons) m.el.tons = document.getElementById('asl-t-tons');
+        }
+
+        function mute(m, msg) {
+            m.el.out.className = 'ps-value muted';
+            m.el.out.textContent = '—';
+            if (m.tons) {
+                m.el.tons.className = 'ps-value muted';
+                m.el.tons.textContent = '—';
+            }
+            m.el.formula.textContent = '';
+            m.el.callout.textContent = msg;
+            m.el.callout.hidden = false;
+        }
+
+        function calc(m) {
+            const solve = m.el.solve.value;
+            const us = U.current() === 'us';
+            const K = us ? m.K.us : m.K.metric;
+
+            // Hide whichever quantity is the output; tons ride along only
+            // on the total tab when the load is the answer.
+            document.getElementById(`asl-${m.id}-row-flow`).classList.toggle('hidden', solve === 'flow');
+            document.getElementById(`asl-${m.id}-row-delta`).classList.toggle('hidden', solve === 'delta');
+            document.getElementById(`asl-${m.id}-row-load`).classList.toggle('hidden', solve === 'load');
+            if (m.tons) document.getElementById('asl-t-row-tons').classList.toggle('hidden', solve !== 'load');
+
+            // Label up front so the mute path can't strand a stale one.
+            m.el['out-label'].textContent =
+                solve === 'load' ? `Load (${U.suffix.heatCapacity()})` :
+                solve === 'flow' ? `Airflow (${U.suffix.airflow()})` :
+                `${m.deltaName.charAt(0).toUpperCase() + m.deltaName.slice(1)} (${deltaSuffix(m)})`;
+
+            const flow  = parseFloat(m.el.flow.value);
+            const delta = parseFloat(m.el.delta.value);
+            const load  = parseFloat(m.el.load.value);   // MBH or kW per active system
+
+            let result, formula, unit, dec;
+            if (solve === 'load') {
+                if (!isFinite(flow) || !isFinite(delta)) { mute(m, `Enter airflow and ${m.deltaName} to find the load.`); return; }
+                if (flow < 0) { mute(m, 'Airflow can’t be negative.'); return; }
+                if (delta < 0) { mute(m, m.msgs.negDelta); return; }
+                const q = K * flow * delta;   // Btu/h or W
+                result = q / 1000;            // MBH or kW
+                formula = `${m.sym} = ${K} × ${tidy(flow, 4)} × ${tidy(delta, 4)} = ` +
+                    `${Math.round(q).toLocaleString('en-US')} ${us ? 'Btu/h' : 'W'} = ${tidy(result, 1)} ${U.suffix.heatCapacity()}`;
+                unit = ' ' + U.suffix.heatCapacity(); dec = 1;
+                if (m.tons) {
+                    // Tons derive from the DISPLAYED load, not the unrounded
+                    // value, so a reader's own arithmetic reproduces the row
+                    // (metric rounding policy, audit-2026-06 #53).
+                    const shown = parseFloat(tidy(result, 1));
+                    const tons = us ? shown / 12 : shown / KW_PER_TON;
+                    m.el.tons.className = 'ps-value live';
+                    m.el.tons.textContent = tidy(tons, 1);
+                }
+            } else if (solve === 'flow') {
+                if (!isFinite(load) || !isFinite(delta)) { mute(m, `Enter load and ${m.deltaName} to find the airflow.`); return; }
+                if (load < 0) { mute(m, 'Load can’t be negative.'); return; }
+                if (delta <= 0) { mute(m, m.msgs.zeroDelta); return; }
+                result = (load * 1000) / (K * delta);   // CFM or m³/h
+                formula = `Q = (${tidy(load, 4)} × 1000) ÷ (${K} × ${tidy(delta, 4)}) = ${tidy(result, 0)} ${U.suffix.airflow()}`;
+                unit = ' ' + U.suffix.airflow(); dec = 0;
+            } else {
+                if (!isFinite(load) || !isFinite(flow)) { mute(m, `Enter load and airflow to find the ${m.deltaName}.`); return; }
+                if (load < 0) { mute(m, 'Load can’t be negative.'); return; }
+                if (flow <= 0) { mute(m, 'Airflow must be greater than 0 to solve for the Δ — still air moves no load.'); return; }
+                result = (load * 1000) / (K * flow);
+                formula = `${m.deltaSym} = (${tidy(load, 4)} × 1000) ÷ (${K} × ${tidy(flow, 4)}) = ${tidy(result, 1)} ${deltaSuffix(m)}`;
+                unit = ' ' + deltaSuffix(m); dec = 1;
+            }
+
+            m.el.callout.hidden = true;
+            m.el.out.className = 'ps-value live';
+            m.el.out.textContent = tidy(result, dec) + unit;
+            m.el.formula.textContent = formula;
+        }
+
+        // ── Unit-flip resync ──────────────────────────────────────────
+        // coil-sizing's rewriteInput, verbatim shape: reformat from a
+        // retained canonical value so flipping away and back hands back
+        // exactly what was typed (audit-2026-06 #60a/#60b).
+        const REWRITE_DEC = { airflow: 0, deltaTemp: 1, humidityRatio: 1, deltaEnthalpy: 1, heatCapacity: 1 };
+        function rewriteInput(el, quantity, fromU, toU) {
+            const v = parseFloat(el.value);
+            if (!isFinite(v)) return;
+            let canon = parseFloat(el.dataset.canonUs);
+            if (!(isFinite(canon) && el.dataset.canonQ === quantity && el.dataset.canonDisp === el.value)) {
+                canon = U.convert(v, fromU, 'us', quantity);
+                el.dataset.canonUs = String(canon);
+                el.dataset.canonQ = quantity;
+                el.dataset.typedText = el.value;
+                el.dataset.typedUnits = fromU;
+            }
+            if (toU === el.dataset.typedUnits) {
+                el.value = el.dataset.typedText;
+            } else {
+                const dec = REWRITE_DEC[quantity] !== undefined ? REWRITE_DEC[quantity] : 2;
+                el.value = (+U.convert(canon, 'us', toU, quantity).toFixed(dec)).toString();
+            }
+            el.dataset.canonDisp = el.value;
+        }
+
+        function rewriteAll(fromU, toU) {
+            for (const m of MODES) {
+                rewriteInput(m.el.flow, 'airflow', fromU, toU);
+                rewriteInput(m.el.delta, m.deltaQ, fromU, toU);
+                rewriteInput(m.el.load, 'heatCapacity', fromU, toU);
+            }
+        }
+
+        U.onChange(function (newUnits) {
+            rewriteAll(newUnits === 'us' ? 'metric' : 'us', newUnits);
+            MODES.forEach(calc);
+        });
+
+        // ── Wiring ────────────────────────────────────────────────────
+        document.querySelectorAll('[data-tab]').forEach(btn => {
+            btn.addEventListener('click', e => switchTab(e.currentTarget.dataset.tab, e.currentTarget));
+        });
+        for (const m of MODES) {
+            m.el.solve.addEventListener('change', () => calc(m));
+            [m.el.flow, m.el.delta, m.el.load].forEach(el => el.addEventListener('input', () => calc(m)));
+            m.el.copy.addEventListener('click', e => copyReadouts(e.currentTarget, '', `asl-${m.id}-out`));
+        }
+
+        // ── Initial paint ─────────────────────────────────────────────
+        // Input values are authored in US units; convert once up front
+        // for a returning metric visitor so the numbers match the labels
+        // units.js has already swapped (coil-sizing's fix).
+        if (U.current() === 'metric') rewriteAll('us', 'metric');
+        MODES.forEach(calc);
+    })();
+</script>
+{% endblock %}
