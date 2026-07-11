@@ -1698,6 +1698,85 @@ test('building pressure — the ledger widget balances, pegs, and reveals the in
     expect(errors, 'building-pressure behavioral should log no page / console errors').toEqual([]);
 });
 
+test('unit identification — the lineup walker narrows, grades mysteries, and reveals the anecdote', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('/education/air-unit-identification.html');
+
+    // Structure: three annotated diagrams with accessible titles, two
+    // flow-animated (D1 three-questions + D2 fingerprints; D3 paper
+    // trail is static), and the section anchors the quiz learnMore
+    // links target.
+    await expect(page.locator('main svg.edu-svg')).toHaveCount(3);
+    await expect(page.locator('main svg.edu-svg > title')).toHaveCount(3);
+    await expect(page.locator('main svg.flow-active')).toHaveCount(2);
+    for (const anchor of ['#three-questions', '#the-lineup', '#paper-trail', '#paper-lies', '#name-the-box', '#same-stations']) {
+        await expect(page.locator(`h2${anchor}`)).toBeVisible();
+    }
+
+    // Default state: nothing answered, five families alive, no call,
+    // no scene, no anecdote.
+    await expect(page.locator('.aid-w-card')).toHaveCount(5);
+    await expect(page.locator('.aid-w-card.out')).toHaveCount(0);
+    await expect(page.locator('#aid-w-call')).toHaveText('—');
+    await expect(page.locator('#aid-w-status')).toHaveText(/Five families standing/);
+    await expect(page.locator('#aid-w-scene-liar')).toBeHidden();
+    await expect(page.locator('#aid-w-alert .widget-anecdote')).toHaveCount(0);
+
+    // The strongest single answer: 100% OA identifies the MAU alone,
+    // and the answer group keeps aria-pressed in sync.
+    await page.locator('[data-aid-air="oa"]').click();
+    await expect(page.locator('[data-aid-air="oa"]')).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('[data-aid-air="mix"]')).toHaveAttribute('aria-pressed', 'false');
+    await expect(page.locator('.aid-w-card.out')).toHaveCount(4);
+    await expect(page.locator('#aid-w-card-mau')).toHaveClass(/hit/);
+    await expect(page.locator('#aid-w-call')).toHaveText(/MAU/);
+
+    // A combination nothing matches: the field says look again.
+    await page.locator('[data-aid-sit="space"]').click();
+    await expect(page.locator('.aid-w-card.out')).toHaveCount(5);
+    await expect(page.locator('#aid-w-status')).toHaveClass(/warn/);
+    await expect(page.locator('#aid-w-status')).toHaveText(/Nothing matches/);
+
+    // A mystery clears the answers, shows its scene, and confirms a
+    // correct walk from the clues.
+    await page.locator('[data-aid-mystery="curb"]').click();
+    await expect(page.locator('#aid-w-scene-curb')).toBeVisible();
+    await expect(page.locator('.aid-w-card.out')).toHaveCount(0);
+    await page.locator('[data-aid-sit="roof"]').click();
+    await page.locator('[data-aid-cab="all"]').click();
+    await page.locator('[data-aid-air="mix"]').click();
+    await expect(page.locator('#aid-w-call')).toHaveText(/RTU/);
+    await expect(page.locator('#aid-w-status')).toHaveText(/Confirmed/);
+    await expect(page.locator('#aid-w-alert .widget-anecdote')).toHaveCount(0);
+
+    // A wrong walk gets pointed back at the clues, at the question
+    // that contradicts them.
+    await page.locator('[data-aid-cab="piped"]').click();
+    await expect(page.locator('#aid-w-call')).toHaveText(/AHU/);
+    await expect(page.locator('#aid-w-status')).toHaveClass(/warn/);
+    await expect(page.locator('#aid-w-status')).toHaveText(/Re-read the scene/);
+
+    // The last mystery: the paperwork lies, the cabinet doesn't —
+    // solving it reveals the anecdote.
+    await page.locator('[data-aid-mystery="liar"]').click();
+    await expect(page.locator('#aid-w-scene-liar')).toBeVisible();
+    await expect(page.locator('#aid-w-scene-curb')).toBeHidden();
+    await page.locator('[data-aid-sit="space"]').click();
+    await page.locator('[data-aid-cab="fan"]').click();
+    await page.locator('[data-aid-air="room"]').click();
+    await expect(page.locator('#aid-w-call')).toHaveText(/FCU/);
+    await expect(page.locator('#aid-w-status')).toHaveText(/Confirmed/);
+    await expect(page.locator('#aid-w-alert .widget-anecdote')).toHaveCount(1);
+
+    // Fresh walk: answers clear, the anecdote stays pinned.
+    await page.locator('[data-aid-mystery="fresh"]').click();
+    await expect(page.locator('.aid-w-card.out')).toHaveCount(0);
+    await expect(page.locator('#aid-w-status')).toHaveText(/Five families standing/);
+    await expect(page.locator('#aid-w-alert .widget-anecdote')).toHaveCount(1);
+
+    expect(errors, 'unit-identification behavioral should log no page / console errors').toEqual([]);
+});
+
 test.describe('function-block editor — interactions', () => {
     test('Delete key removes a selected block', async ({ page }) => {
         const errors = watchErrors(page);

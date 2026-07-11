@@ -1,0 +1,75 @@
+---
+title: Unit Identification Quiz — controlsfreak.dev
+description: Ten questions on the Unit Identification lesson — the three field questions, the lineup and its tells, tonnage from a model number, and when the paper lies.
+canonical: https://controlsfreak.dev/practice/air-unit-identification.html
+nav: practice
+category: forced-air
+pairedLesson: https://controlsfreak.dev/education/air-unit-identification.html
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Practice · Unit Identification</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">Unit Identification Quiz <span class="tool-tag">Air Systems</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                Read the <a href="/education/air-unit-identification.html">Unit Identification</a> lesson first, then name the
+                boxes from memory — ten questions down the lesson walk: the three field questions, the tells that separate
+                packaged from built-up from makeup air, the split system's lineset, the VAV conjunction, tonnage out of a
+                model number, which "schedule" your caller actually meant, and the off-season override that makes an
+                unlabeled system announce itself. Each reveal links back to the section it came from.
+            </p>
+
+            <div id="quiz"></div>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/tools/refrigerant-pt.html', label: 'Refrigerant P-T & Superheat Calculator'},
+            {href: '/tools/air-mixing.html', label: 'Air-Mixing Calculator'}
+        ],
+        lessons: [
+            {href: '/education/air-unit-identification.html', label: 'Unit Identification'},
+            {href: '/education/air-handlers.html', label: 'Air Handlers'},
+            {href: '/education/building-pressure.html', label: 'Building Pressure'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/practice/">← All practice</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="/scripts/quiz-engine.js"></script>
+<script>
+    (function () {
+        'use strict';
+
+        // Question bank lives in html/_data/quizzes/air-unit-identification.js
+        // so the FAQPage JSON-LD emitted from head.njk can read the same source.
+        const questions = {{ quizzes['air-unit-identification'] | safeScriptJson | safe }};
+
+        Quiz.mount('#quiz', questions, {
+            next: {{ page.fileSlug | nextQuiz | safeScriptJson | safe }},
+            slug: 'air-unit-identification',
+            title: 'Unit Identification',
+            defaultCount: 10,
+            defaultOrder: 'sequential'
+        });
+    })();
+</script>
+{% endblock %}

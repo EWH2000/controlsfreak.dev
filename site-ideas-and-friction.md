@@ -196,14 +196,33 @@ Shipped so far:
   building, heavy doors, whistling — fix: call the fan with the
   damper). Both prior pages' promises upgraded to live links.
   Declared question + scope contract below.
+- **Unit Identification** *(shipped 2026-07-10, buildout PR 4)* —
+  `education/air-unit-identification.html` + paired quiz. The three
+  field questions (siting / cabinet / connections) as the method;
+  the five-family lineup with its connection fingerprints — packaged
+  RTU plus the heat-pump variant whose tell is paper, built-up AHU
+  ("the pipes outrank the address"), MAU/DOAS named by the missing
+  return duct, splits by the lineset, fan coils at recognition depth
+  only — and the CV-vs-VAV conjunction callout (drive + boxes +
+  duct-static setpoint; a drive alone proves nothing, per page 1's
+  every-modern-fan-rides-a-VFD claim); schedule-tag / mechanical-
+  schedule / nameplate literacy (tonnage-digits worked example, the
+  three "schedules" disambiguated); and the taught off-season
+  override — "command the season that's asleep" — with guardrails.
+  A lineup-walker widget narrows five family cards as the reader
+  answers the three questions; four mysteries deal field scenes the
+  reader walks from the clues (the widget grades the ID), the last
+  replaying the owner's real building — FCUs/AHUs/RTUs under
+  wrong-family graphics and stale prints, identified one point at a
+  time by off-season commands, metering outputs where no LEDs
+  existed. THE sidestep debt paid: the opener's callout and page 3's
+  closing hand-off both upgraded to live links; the closing walks
+  back to the opener's air path. Declared question + scope contract
+  below.
 
 Remaining (one lesson + paired quiz per PR, category `forced-air`;
 declared questions for all six locked below):
 
-- **Unit identification** — what is this box: RTU / AHU / MAU-DOAS /
-  heat pump / split, nameplate + schedule-tag literacy; closes by
-  walking back to the opener's air path. `[future:
-  education/air-unit-identification.html]`
 - **VAV systems** — one AHU, many boxes; box anatomy and K-factor
   flow (pays the airflow tool), reheat at minimum, the
   every-box-closes cliff-hanger. `[future:
@@ -218,7 +237,8 @@ declared questions for all six locked below):
 plants an early callout toward naming the unit ("not sure what to
 call the box you're standing in front of? that's its own question")
 — plain prose + the `[future: education/air-unit-identification.html]`
-marker until the ID page ships, never a dead link. Upgrading that
+marker until the ID page ships, never a dead link *(shipped
+2026-07-10 — prose upgraded to a live link)*. Upgrading that
 prose to a real link is a tracked forward-link debt the ID page pays
 in its own PR, alongside its closing section sending readers back to
 the opener's air path ("whatever the nameplate says, it's the same
@@ -267,7 +287,10 @@ they earn pages when demand shows): `[future:
 education/fan-powered-boxes.html]` (series vs parallel), `[future:
 education/vvt.html]` (looks like VAV, isn't), `[future:
 education/fan-coil-units.html]`, `[future: DOAS / ERV page]` (already
-parked on the psychrometrics entry — stays parked).
+parked on the psychrometrics entry — stays parked), `[future:
+single-zone VAV]` (drive tracks the zone's own load, no boxes, no
+static setpoint — the ID page's CV-vs-VAV callout names it as the
+bare-trunk exception; surfaced by the PR-4 review).
 
 **Mini-hub / "start here" decision deferred** until 3–4 pages land —
 revisit whether Forced Air needs its own nav grouping / hub page, and
@@ -296,7 +319,8 @@ Out of scope: economizer logic `[future: education/economizers.html]`
 relief/exhaust path `[future: education/building-pressure.html]`
 *(shipped 2026-07-10 — prose upgraded to live links)*;
 naming the box `[future: education/air-unit-identification.html]`
-(the sidestep callout); the terminal side `[future:
+*(shipped 2026-07-10 — sidestep callout upgraded to a live link)*;
+the terminal side `[future:
 education/vav-systems.html]` and the fan's speed `[future:
 education/duct-static-control.html]`; air-state math — existing
 links, not markers (psychrometrics-basics §Processes, air-mixing,
@@ -372,27 +396,42 @@ page 1's relief-path marker (mixing-box prose + closing chapter map
 plus the uncommitted exhaust/smoke markers.
 
 **4 · Unit identification** (`air-unit-identification.html`)
+*(shipped 2026-07-10)*
 *One question: you're standing in front of an air-side unit you've
 never seen — how do you work out what it is, what it does, and what
 to call it on the radio?*
-In scope: the three field questions (where does it sit, what's in
-the cabinet — coils, compressors, just fans — where does its air
-come from and go) as a walkable decision path; the lineup (packaged
-RTU incl. heat-pump variants, built-up/indoor AHU, MAU/DOAS 100 %
-OA, splits, and the CV-vs-VAV tell — is there a drive, are there
-boxes); nameplate + drawings literacy (schedule tags AHU-1 / RTU-3 /
-EF-2, model-number tonnage digits, matching unit to mechanical
-schedule); closing tie-back — whatever the box is called, walk the
-same stations (pays the sidestep).
+In scope (all landed): the three field questions (where does it sit,
+what's in the cabinet — coils, compressors, just fans — where does
+its air come from and go) as a walkable decision path — the widget
+IS the path, plus a static three-questions diagram; the lineup
+(packaged RTU incl. the heat-pump variant whose tell is paper,
+built-up/indoor AHU, MAU/DOAS 100 % OA, splits, and the CV-vs-VAV
+tell — deliberately a three-leg conjunction, drive + boxes +
+duct-static setpoint, to stay consistent with page 1's
+every-modern-fan-rides-a-VFD claim); nameplate + drawings literacy
+(schedule tags AHU-1 / RTU-3 / EF-2, model-number tonnage digits,
+matching unit to mechanical schedule, the three "schedules"
+disambiguated); closing tie-back — whatever the box is called, walk
+the same stations (pays the sidestep). One deliberate scope call:
+fan coils appear in the lineup at RECOGNITION depth (the walker
+needs an exit for "not an air handler at all," and the owner's
+anecdote building was full of them) — anatomy and sequences stay
+with the future FCU page. Grew beyond the contract by one taught
+method: the off-season override ("command the season that's
+asleep"), formalized with guardrails at the owner's direction —
+it's the anecdote's technique.
 Out of scope: terminal-unit identification `[future:
-education/vav-systems.html]`; FCUs `[future:
-education/fan-coil-units.html]`; VVT `[future: education/vvt.html]`;
-DOAS/ERV psychrometrics `[future: DOAS / ERV page]` (parked since
-the psychrometrics entry); what the unit should *do* once named —
-the rest of the chapter.
-Debts: pays THE sidestep — upgrades the opener's prose callout to a
-live link and sends readers back to the opener's air path. Incurs
-the parked terminal-unit markers.
+education/vav-systems.html]`; FCUs beyond recognition `[future:
+education/fan-coil-units.html]`; VVT `[future: education/vvt.html]`
+(named in prose in the CV-vs-VAV callout); DOAS/ERV psychrometrics
+`[future: DOAS / ERV page]` (parked since the psychrometrics entry;
+DOAS named in prose at identification level); what the unit should
+*do* once named — the rest of the chapter.
+Debts: paid THE sidestep — the opener's prose callout upgraded to a
+live link, closing walks back to the opener's air path — plus an
+unledgered second plant the grep sweep surfaced: page 3's closing
+"naming the box" hand-off, also upgraded. Incurs the parked
+terminal-unit markers.
 
 **5 · VAV systems** (`vav-systems.html`)
 *One question: how does one air handler serve thirty zones that all

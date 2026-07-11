@@ -407,6 +407,19 @@ techs new to the industry and anyone wanting a refresh.
   author's own program that ran power exhaust with the supply fan and
   dragged a building negative all winter. Page 3 of the forced-air
   chapter; pairs with the Building Pressure quiz.
+- **Unit Identification** — standing in front of an air-side unit
+  you've never met: the three field questions (where does it sit,
+  what's in the cabinet, where does its air come from and go), the
+  lineup and its fingerprints — packaged RTU (and the heat-pump
+  variant only paper can confirm), built-up AHU, MAU/DOAS, splits,
+  fan coils at recognition depth, and the CV-vs-VAV conjunction —
+  then schedule tags, the mechanical schedule, nameplate literacy
+  (tonnage out of a model number), and what to do when the paper
+  lies: the off-season override that makes an unlabeled system
+  announce itself. A lineup-walker widget deals field mysteries,
+  the last one replaying the author's own building where the
+  graphics, the prints, and the people all disagreed. Page 4 of
+  the forced-air chapter; pairs with the Unit Identification quiz.
 - **Function-Block Basics** — what a block and a wiresheet are, why
   the industry builds sequences this way (the diagram is the program,
   you can watch it run live, the block vocabulary travels across
@@ -482,7 +495,7 @@ flavors share the same engine:
   When a topic recurs in feedback, it becomes a candidate for a
   new education page.
 
-Shipped so far — twenty content quizzes (each 10 questions, paired
+Shipped so far — twenty-one content quizzes (each 10 questions, paired
 1:1 with its lesson and deep-linking the gotchas) plus five field
 drills:
 
@@ -513,14 +526,17 @@ drills:
   Seven properties, why any two lock the rest, the four chart
   process families, and the RH / dew-point / enthalpy gotchas.
 - **Content quizzes — forced air:** Air Handlers, Economizers,
-  Building Pressure. The station order down the air path, minimum
-  outside air and where the relief goes, the mixed-air arithmetic and
-  its stuck-damper gotcha readout, filter ΔP, coil condensate, and
-  fan heat; then free cooling end to end — the linked damper set, the
-  mixing math run backwards, the deceptive air a dry-bulb changeover
-  admits, the no-humidity-sensor fallback, and integrated staging;
-  then the air ledger — OA-minimum sizing, barometric vs power
-  exhaust vs tracking, and the heavy-door interlock diagnosis.
+  Building Pressure, Unit Identification. The station order down the
+  air path, minimum outside air and where the relief goes, the
+  mixed-air arithmetic and its stuck-damper gotcha readout, filter
+  ΔP, coil condensate, and fan heat; then free cooling end to end —
+  the linked damper set, the mixing math run backwards, the deceptive
+  air a dry-bulb changeover admits, the no-humidity-sensor fallback,
+  and integrated staging; then the air ledger — OA-minimum sizing,
+  barometric vs power exhaust vs tracking, and the heavy-door
+  interlock diagnosis; then naming the box — the three field
+  questions, the family tells, tonnage from a model number, and the
+  mislabeled-fan-coil gotcha.
 - **Surviving Your First Months** *(field drill)* — a broad sampler
   for techs in their first few months: LOTO and verify-on-known-live,
   the 4-20 mA live-zero wire-break signature, DMM continuity mode,
