@@ -931,9 +931,11 @@ A real fix is per-diagram design work, not a CSS sweep: bump SVG
 font sizes toward a floor that survives the scale-down, split wide
 diagrams into taller phone-friendly variants, or drop secondary
 annotations under a media-gated `<text>` class. Do it topic-by-topic
-as pages get touched, or as its own audit cycle. Batch codebase-issues
-#147 (three fixed-geometry label collisions, same files) into
-whichever pass goes first.
+as pages get touched, or as its own audit cycle. *(Codebase-issues
+#147 — the fixed-geometry label collisions originally batched into
+this arc — went first on its own: closed 2026-07-11 by the site-wide
+label-collision pass, 26 fixes across 13 files. The font-size arc
+remains open.)*
 
 ### Command palette — recents list *(from the 2026-06 audit)*
 

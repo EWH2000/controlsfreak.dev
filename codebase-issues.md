@@ -4541,28 +4541,6 @@ to fix cosmetic clipping that only exists on 320-class devices.
 Revisit trigger: Turnstile ships a flexible-width mode, or the form
 gains any other reason for a phone-specific variant.
 
-### 147. Fixed-geometry SVG label collisions in three education diagrams *(open — 2026-07-09)*
-
-Flagged by the 2026-07 phone-viewport vision audit but present at
-every width (the SVGs scale uniformly, so these are authoring
-overlaps, not responsive bugs):
-
-- `education/bacnet-basics.html` priority-array diagram — the
-  "lowest non-null wins" label (centered x=340, ~114 user units wide)
-  overruns both the slot-8 row's right stroke and the Present_Value
-  box's left stroke by a couple of units.
-- `education/bacnet-basics.html` Who-Is/I-Am diagram — the third
-  dashed I-Am reply line passes through the "(one each)" portion of
-  its label (~lines 493–501), striking it through.
-- `education/balancing.html` PICV diagram — a leader line crosses its
-  "internal balancing cartridge" label.
-
-Each is a small coordinate nudge in the SVG source. Cosmetic; batch
-into the next education-diagram pass (see the friction file's mobile
-diagram-legibility item) rather than a standalone PR. In passing:
-`styleguide.html`'s `.gauge-label` measures ~8px of harmless
-`overflow: visible` spill at 375 — cosmetic, dev-only page.
-
 ### 148. Home Browse-card pill counts are a fourth hand-maintained count surface with no guard *(open — 2026-07-10)*
 
 The home page's Browse nav-cards carry hardcoded totals in their
@@ -4652,6 +4630,33 @@ remain in `## Recently addressed` at their numerical position:
 ---
 
 ## Recently addressed
+
+### 147. Fixed-geometry SVG label collisions in three education diagrams *(addressed 2026-07-11)*
+
+(branch `fix/diagram-label-collisions`). The three flagged collisions
+(bacnet-basics priority-array "lowest non-null wins", bacnet-basics
+Who-Is "(one each)" strike-through, balancing PICV "balancing
+cartridge" pipe strike) were batched into a site-wide label-collision
+audit rather than fixed alone. The audit rendered all 71 diagram SVGs
+(including the screenshot script's blind spots) and ran two
+independent detection passes — a per-image vision sweep and a
+browser-side geometry detector (rendered text bboxes vs sampled
+stroke points) — then eyeballed every candidate. Result: **26 fixes
+across 13 files** — 19 line/border strikes and 7 border kisses, all
+resolved by coordinate nudges / two-line stacks / re-anchors per the
+established precedent (no halo/paint-order pattern introduced). Two
+line-through cases were fixed by gapping the *line* around the text
+row instead (economizers staging tick, TXV push-rod) — a new but
+minimal variant of the same idea. `tests/screenshot-diagrams.mjs`
+gained the four missing selector entries (`bal-fig` — a new class on
+balancing's three valve figures — plus `pc-w1-chart`, `bp-w-gauge`,
+`va-chart`), closing the capture blind spots that hid two of the
+findings. Verified: post-fix geometry pass shows zero glyph-level
+collisions site-wide; remaining detector hits are documented
+false-positive classes (intentional two-line stacks, table-row
+internals). In passing, unchanged from the original entry:
+`styleguide.html`'s `.gauge-label` ~8px overflow at 375 stays
+accepted (cosmetic, dev-only page).
 
 ### 77. Phase 3 per-page dark-theme polish *(addressed 2026-06-06)*
 
