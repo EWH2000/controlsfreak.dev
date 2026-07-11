@@ -33,6 +33,7 @@ const PAGES = [
     { name: 'airflow',                url: '/tools/airflow.html' },
     { name: 'airside load',           url: '/tools/airside-load.html' },
     { name: 'duct traverse',          url: '/tools/duct-traverse.html' },
+    { name: 'equipment airflow',      url: '/tools/equipment-airflow.html' },
     { name: 'transformer va budget',  url: '/tools/transformer-sizing.html' },
     { name: 'wire run voltage drop',  url: '/tools/voltage-drop.html' },
     { name: 'field electrical quick calc', url: '/tools/electrical-quick-calc.html' },
