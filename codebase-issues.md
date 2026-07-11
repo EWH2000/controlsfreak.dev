@@ -4585,6 +4585,26 @@ Electrical card) — possibly a deliberate curation, possibly more
 drift; decide which when truing it up. Caught (pre-existing, not
 introduced) during the airside-load ship's count-surface sweep.
 
+### 151. worker.spec.js's `loadWorker()` races itself across parallel Playwright workers *(open — 2026-07-11)*
+
+`loadWorker()` (tests/worker.spec.js ~L29) copies `src/worker.js` to
+a **fixed** temp path — `path.join(os.tmpdir(), 'cf-worker-under-test.mjs')`
+— then dynamic-imports it. Every parallel Playwright worker process
+runs the same copy-then-import against the same file, and
+`fs.writeFileSync` isn't atomic: one process can `import()` while
+another is mid-write, yielding a half-parsed module whose `.default`
+is `undefined`. Observed live during the duct-traverse ship
+(2026-07-11): full-suite run failed exactly one test with
+`TypeError: Cannot read properties of undefined (reading 'fetch')`
+at `worker.fetch(...)`; the spec passed 21/21 in isolation. This is
+(at least one concrete mechanism behind) the known
+"one random full-suite failure per run" local flake — it can hit CI
+too, not just a loaded host. Fix is one line: make the temp name
+per-process (`cf-worker-under-test-${process.pid}.mjs`); the
+dynamic-import cache still de-dupes within each process, so repeat
+`loadWorker()` calls stay cheap. Caught in passing (pre-existing,
+not introduced) while triaging the duct-traverse suite run.
+
 ### Deferred / Won't fix (with revisit trigger)
 
 Items considered during an audit and deliberately not pursued, each
