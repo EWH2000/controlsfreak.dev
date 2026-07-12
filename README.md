@@ -90,6 +90,16 @@ Calculators, converters, and lookups — open one, get an answer.
   reasons) share one filter; every value is click-to-copy. Enums are
   imported by script; the field-common descriptions are hand-authored
   and were adversarially cross-checked for accuracy.
+- **BACnet Priority Array** — the command stack behind every
+  commandable point, made interactive: type a value into any of the 16
+  priority slots, or press **×** to write NULL and release one, and
+  watch `Present_Value` resolve to the lowest-numbered non-null slot —
+  or `Relinquish_Default` when the array is empty. The winning slot
+  highlights and the panel shows what takes over if you release it (the
+  forgotten-override failure mode, live). Ships the full 16-slot
+  reservation table — manual/auto life-safety, critical-equipment,
+  minimum on/off, manual operator — cross-checked against ASHRAE 135
+  command-prioritization references.
 - **Psychrometric Chart** — walk an air handler through its
   psychrometric processes on an altitude-adjustable ASHRAE IP-unit
   chart: mix outdoor and return air, then cool, heat, and humidify.

@@ -284,7 +284,7 @@ keywords: object instance device av bv ai ao discovery who-is cov priority
                 Slot 1 is the highest priority and slot 16 is the lowest. The
                 convention across the industry is that low slot numbers are
                 reserved for high-stakes commands (slot 1 is manual life-safety;
-                slots 6 and 7 are critical-equipment / minimum-on-off), slot 8 is
+                slots 5 and 6 are critical-equipment / minimum-on-off), slot 8 is
                 the operator's manual override, and slot 16 is the slot the BMS's
                 normal sequence writes from. Slots 9–15 are largely available for
                 application-specific use. The full reservation table is in ASHRAE
@@ -342,18 +342,18 @@ keywords: object instance device av bv ai ao discovery who-is cov priority
                     <!-- slot 5 -->
                     <rect x="20"  y="108" width="260" height="18" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="0.8"/>
                     <text x="32"  y="121" fill="var(--text-dim)">5</text>
+                    <text x="55"  y="121" fill="var(--text-dim)">critical equipment</text>
                     <text x="268" y="121" text-anchor="end" fill="var(--text-dim)">null</text>
 
                     <!-- slot 6 -->
                     <rect x="20"  y="126" width="260" height="18" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="0.8"/>
                     <text x="32"  y="139" fill="var(--text-dim)">6</text>
-                    <text x="55"  y="139" fill="var(--text-dim)">critical equipment</text>
+                    <text x="55"  y="139" fill="var(--text-dim)">min on/off</text>
                     <text x="268" y="139" text-anchor="end" fill="var(--text-dim)">null</text>
 
                     <!-- slot 7 -->
                     <rect x="20"  y="144" width="260" height="18" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="0.8"/>
                     <text x="32"  y="157" fill="var(--text-dim)">7</text>
-                    <text x="55"  y="157" fill="var(--text-dim)">min on/off</text>
                     <text x="268" y="157" text-anchor="end" fill="var(--text-dim)">null</text>
 
                     <!-- slot 8: manual override — populated, highlighted -->
@@ -429,6 +429,15 @@ keywords: object instance device av bv ai ao discovery who-is cov priority
                 releases</em>; it doesn't overwrite. Forgetting to release an
                 override is the most common way priority-array logic goes
                 wrong in the field.
+            </p>
+
+            <p>
+                To work the resolution rule yourself — type into slots, press
+                <strong>×</strong> to release one, and watch
+                <code>Present_Value</code> jump to the next winner — the
+                <a href="/tools/bacnet-priority.html">Priority Array resolver</a>
+                is the interactive companion to this section, with the full
+                16-slot reservation table alongside it.
             </p>
 
             <h2 class="subhead">Who-Is / I-Am — how devices announce themselves</h2>
@@ -681,9 +690,9 @@ keywords: object instance device av bv ai ao discovery who-is cov priority
 
     {{ relatedLinks({
         tools: [
-            {href: '/tools/bacnet-ip-converter.html', label: 'BACnet/IP Hex Converter'},
+            {href: '/tools/bacnet-priority.html', label: 'BACnet Priority Array'},
             {href: '/tools/bacnet-objects.html', label: 'BACnet Object Reference'},
-            {href: '/tools/bacnet-vendor-ids.html', label: 'BACnet Vendor IDs'}
+            {href: '/tools/bacnet-ip-converter.html', label: 'BACnet/IP Hex Converter'}
         ],
         lessons: [
             {href: '/education/bacnet-networking.html', label: 'BACnet Networking'},

@@ -21,13 +21,13 @@ nav: tools
 
     <div class="filter-chips" role="group" aria-label="Filter tools by category">
         <button type="button" class="filter-chip active" data-category="all" aria-pressed="true">
-            All <span class="filter-chip-count">30</span>
+            All <span class="filter-chip-count">31</span>
         </button>
         <button type="button" class="filter-chip" data-category="hvac" aria-pressed="false">
             HVAC <span class="filter-chip-count">8</span>
         </button>
         <button type="button" class="filter-chip" data-category="protocols" aria-pressed="false">
-            Protocols <span class="filter-chip-count">7</span>
+            Protocols <span class="filter-chip-count">8</span>
         </button>
         <button type="button" class="filter-chip" data-category="signals" aria-pressed="false">
             Signals <span class="filter-chip-count">2</span>
@@ -123,6 +123,15 @@ nav: tools
             titleFull:  'BACnet Error Code Decoder',
             desc:       'Decode the class + code a device returns when it refuses a request, plus reject and abort reasons — what unknown-property, write-access-denied, or an APDU-too-long abort actually means, all searchable.',
             pills:      ['BACnet', 'Error / Reject / Abort', 'Class + Code', 'Decode'],
+            category:   'protocols'
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/tools/bacnet-priority.html',
+            titleShort: 'BACnet Priority',
+            titleFull:  'BACnet Priority Array',
+            desc:       'Set a value or NULL in any of the 16 command slots and watch Present_Value resolve to the lowest non-null slot — the priority stack, Relinquish_Default, and why writing NULL releases an override.',
+            pills:      ['BACnet', 'Priority_Array', 'Present_Value', 'Override'],
             category:   'protocols'
         }) }}
         {{ navCard({
