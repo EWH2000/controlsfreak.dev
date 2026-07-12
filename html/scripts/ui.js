@@ -11,7 +11,8 @@
 //       // page logic, can call switchTab() / copyReadouts() / copyText()
 //     </script>
 //
-// What lives here: tiny UI primitives that more than one page needs.
+// What lives here: tiny UI primitives that more than one page needs
+// (tab switching, clipboard buttons, the units-toggle input resync).
 // What does NOT live here: anything page-specific, anything that does
 // real computation, anything that owns visual styling. The CSS rules
 // the helpers depend on (.tool-card / .tab-pane / .tab-btn / .copied)
@@ -130,7 +131,51 @@
         copyText(btn, parts.join(sep));
     }
 
+    // Unit-flip input resync. When the units toggle flips, a numeric
+    // <input> the user typed into must be re-expressed in the new units
+    // WITHOUT the round-trip drift a naive convert-the-display would
+    // introduce (audit-2026-06 #60a/#60b). Two guarantees:
+    //   • #60a — flipping units away and back hands back exactly the text
+    //     the user typed. The canonical (US) value + the verbatim typed
+    //     text are stashed on the element's dataset; they're trusted only
+    //     while the field still shows the exact string this helper last
+    //     wrote for the same quantity (a user edit or mode switch rebuilds
+    //     them, since the dataset.canonDisp guard then fails).
+    //   • #60b — a fresh conversion rounds to per-quantity display decimals
+    //     (the caller's `decMap`, e.g. {airflow: 0, temp: 1}), not
+    //     6-significant-figure noise like 1699.01 m³/h.
+    // `target` is an element OR an id string; `decMap[quantity]` gives the
+    // decimals, falling back to `fallback` (default 2 — refrigerant-pt
+    // passes 1 to match its all-1-decimal map). Pages keep only their
+    // REWRITE_DEC map + a thin wrapper that binds it; extracted from eight
+    // byte-identical page copies (#152).
+    function rewriteInput(target, quantity, fromU, toU, decMap, fallback) {
+        const el = typeof target === 'string' ? document.getElementById(target) : target;
+        if (!el) return;
+        const U = window.Units;
+        const v = parseFloat(el.value);
+        if (!isFinite(v)) return;
+        let canon = parseFloat(el.dataset.canonUs);
+        if (!(isFinite(canon) && el.dataset.canonQ === quantity && el.dataset.canonDisp === el.value)) {
+            canon = U.convert(v, fromU, 'us', quantity);
+            el.dataset.canonUs = String(canon);
+            el.dataset.canonQ = quantity;
+            el.dataset.typedText = el.value;
+            el.dataset.typedUnits = fromU;
+        }
+        if (toU === el.dataset.typedUnits) {
+            el.value = el.dataset.typedText;
+        } else {
+            const dec = (decMap && decMap[quantity] !== undefined)
+                ? decMap[quantity]
+                : (fallback === undefined ? 2 : fallback);
+            el.value = (+U.convert(canon, 'us', toU, quantity).toFixed(dec)).toString();
+        }
+        el.dataset.canonDisp = el.value;
+    }
+
     window.switchTab    = switchTab;
     window.copyText     = copyText;
     window.copyReadouts = copyReadouts;
+    window.rewriteInput = rewriteInput;
 })();
