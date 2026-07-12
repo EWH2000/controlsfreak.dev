@@ -4601,7 +4601,7 @@ Electrical card) — possibly a deliberate curation, possibly more
 drift; decide which when truing it up. Caught (pre-existing, not
 introduced) during the airside-load ship's count-surface sweep.
 
-### 151. worker.spec.js's `loadWorker()` races itself across parallel Playwright workers *(open — 2026-07-11)*
+### 151. worker.spec.js's `loadWorker()` races itself across parallel Playwright workers *(addressed 2026-07-12)*
 
 `loadWorker()` (tests/worker.spec.js ~L29) copies `src/worker.js` to
 a **fixed** temp path — `path.join(os.tmpdir(), 'cf-worker-under-test.mjs')`
@@ -4620,6 +4620,12 @@ per-process (`cf-worker-under-test-${process.pid}.mjs`); the
 dynamic-import cache still de-dupes within each process, so repeat
 `loadWorker()` calls stay cheap. Caught in passing (pre-existing,
 not introduced) while triaging the duct-traverse suite run.
+
+**Addressed 2026-07-12** (PR C): the temp filename is now
+`` `cf-worker-under-test-${process.pid}.mjs` `` so each parallel worker
+process writes and imports its own copy; the in-process dynamic-import
+cache still de-dupes repeat calls. A comment on the `tmp` line records
+why the per-process name is load-bearing.
 
 ### 152. `rewriteInput` + `REWRITE_DEC` is duplicated inline across eight tool pages *(open — 2026-07-11)*
 
