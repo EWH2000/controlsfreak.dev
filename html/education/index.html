@@ -23,7 +23,7 @@ nav: education
 
     <div class="filter-chips" role="group" aria-label="Filter lessons by category">
         <button type="button" class="filter-chip active" data-category="all" aria-pressed="true">
-            All <span class="filter-chip-count">25</span>
+            All <span class="filter-chip-count">26</span>
         </button>
         <button type="button" class="filter-chip" data-category="fundamentals" aria-pressed="false">
             Fundamentals <span class="filter-chip-count">6</span>
@@ -38,7 +38,7 @@ nav: education
             Forced Air Systems <span class="filter-chip-count">6</span>
         </button>
         <button type="button" class="filter-chip" data-category="protocols" aria-pressed="false">
-            Protocols <span class="filter-chip-count">6</span>
+            Protocols <span class="filter-chip-count">7</span>
         </button>
     </div>
 
@@ -231,6 +231,15 @@ nav: education
             titleFull:  'Modbus Decoding',
             desc:       'Why a Modbus value comes back wrong even when the read succeeded — the 5-digit register trap, signed vs unsigned, the four byte orders, and scaling.',
             pills:      ['Modbus', '5-Digit Trap', 'Signed / Unsigned', 'Byte Order'],
+            category:   'protocols'
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/education/bacnet-vs-modbus.html',
+            titleShort: 'BACnet vs Modbus',
+            titleFull:  'BACnet vs Modbus',
+            desc:       'Two protocols side by side — self-describing objects versus raw registers, discovery, COV versus polling, priority versus last-write, and where a gateway bridges them.',
+            pills:      ['Objects vs Registers', 'Discovery', 'COV vs Poll', 'Gateways'],
             category:   'protocols'
         }) }}
         {{ navCard({

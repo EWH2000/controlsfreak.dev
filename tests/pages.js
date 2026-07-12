@@ -74,6 +74,7 @@ const PAGES = [
     { name: 'education — function blocks', url: '/education/function-blocks.html' },
     { name: 'education — modbus basics', url: '/education/modbus-basics.html' },
     { name: 'education — modbus decoding', url: '/education/modbus-decoding.html' },
+    { name: 'education — bacnet vs modbus', url: '/education/bacnet-vs-modbus.html' },
     { name: 'education — bacnet basics', url: '/education/bacnet-basics.html' },
     { name: 'education — bacnet services', url: '/education/bacnet-services.html' },
     { name: 'education — bacnet networking', url: '/education/bacnet-networking.html' },

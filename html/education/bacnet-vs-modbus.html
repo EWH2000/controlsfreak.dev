@@ -1,0 +1,208 @@
+---
+title: BACnet vs Modbus — controlsfreak.dev
+description: BACnet vs Modbus — self-describing objects versus raw registers, and how discovery, change-of-value, command priority, and conformance differ across the two.
+canonical: https://controlsfreak.dev/education/bacnet-vs-modbus.html
+nav: education
+category: protocols
+keywords: bacnet vs modbus comparison difference register object self-describing who-is i-am cov polling priority array last write pics bibbs vendor map gateway rs485 tcp mstp bacnet/ip interoperability which is better
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Education · BACnet vs Modbus</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">BACnet vs Modbus <span class="tool-tag">BACnet</span> <span class="tool-tag">Modbus</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                These are the two protocols an integrator meets most, and they solve the same problem — move values between devices over a wire — from opposite directions. <a href="/education/modbus-basics.html">Modbus</a> came out of the factory floor in 1979: small, dumb, and universal. <a href="/education/bacnet-basics.html">BACnet</a> was written for buildings in 1995 and is bigger, opinionated, and self-describing. You rarely <em>choose</em> between them — the equipment on the job already picked — but knowing exactly how they differ tells you what an integration will cost before you wire it. <strong>The single deepest difference: a Modbus register is anonymous, and a BACnet object describes itself.</strong>
+            </p>
+
+            <h2 class="subhead" id="two-philosophies">Two philosophies: registers vs objects</h2>
+
+            <p>
+                Modbus exposes <strong>four flat tables of numbered slots</strong> — coils and discrete inputs (single bits), input and holding registers (16-bit words). That is the entire model. Holding register 40012 is sixteen bits and nothing more; the protocol carries no name, no units, no hint of scale. To turn <code>552</code> into "55.2 °F" you need the vendor's register map, off the wire, in a PDF. Read a Modbus device you have never seen and you get a grid of numbers with no legend.
+            </p>
+
+            <p>
+                BACnet exposes <strong>typed objects with named properties</strong>. A temperature is an Analog Input object whose <code>Present_Value</code> is a real number, whose <code>Units</code> property literally says <code>degrees-fahrenheit</code>, and whose <code>Object_Name</code> and <code>Description</code> spell out what it is. The description travels <em>with the data</em>. Browse a BACnet device cold and it tells you what each point is — because the self-description is part of the protocol, not a separate document. That one design choice cascades into almost every other difference on this page.
+            </p>
+
+            <svg class="bac-svg wide" viewBox="0 0 760 350" role="img"
+                 aria-labelledby="bvm-point-title bvm-point-desc">
+                <title id="bvm-point-title">One physical point, seen two ways</title>
+                <desc id="bvm-point-desc">A single supply-air temperature sensor reading 55.2 degrees Fahrenheit sits at the top and feeds two panels. The left Modbus panel shows holding register 40012 holding the value 552, with a note that you must be told separately it means degrees Fahrenheit times ten, signed. The right BACnet panel shows an Analog Input object whose properties are Present Value 55.2, Units degrees-fahrenheit, Object Name SA-T, and Description Supply Air Temp — the object describes itself.</desc>
+
+                <!-- shared physical point -->
+                <rect x="270" y="12" width="220" height="52" fill="var(--surface-2)" stroke="var(--text-dim)" stroke-width="1.6"/>
+                <text x="380" y="34" text-anchor="middle" font-family="var(--mono)" font-size="12" fill="var(--text-bright)">the same physical point</text>
+                <text x="380" y="52" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--text-dim)">supply-air temp = 55.2 °F</text>
+
+                <line x1="330" y1="64" x2="200" y2="112" stroke="var(--blue)" stroke-width="1.6" marker-end="url(#bvm-arrow-blue)"/>
+                <line x1="430" y1="64" x2="560" y2="112" stroke="var(--accent)" stroke-width="1.6" marker-end="url(#bvm-arrow-acc)"/>
+
+                <!-- MODBUS panel -->
+                <rect x="24" y="114" width="336" height="222" fill="none" stroke="var(--blue)" stroke-width="1.4"/>
+                <text x="40" y="140" font-family="var(--mono)" font-size="13" font-weight="700" fill="var(--blue)">MODBUS</text>
+                <text x="40" y="158" font-family="var(--mono)" font-size="10.5" fill="var(--text-dim)">holding register 40012</text>
+
+                <rect x="40" y="172" width="304" height="46" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.4"/>
+                <text x="192" y="194" text-anchor="middle" font-family="var(--mono)" font-size="15" fill="var(--text-bright)">0x0228</text>
+                <text x="192" y="210" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--text-dim)">= 552  (16 bits, unlabeled)</text>
+
+                <text x="40" y="246" font-family="var(--mono)" font-size="10.5" fill="var(--text)">You must be told, off the wire:</text>
+                <text x="40" y="266" font-family="var(--mono)" font-size="10.5" fill="var(--text-dim)">• it is a temperature</text>
+                <text x="40" y="284" font-family="var(--mono)" font-size="10.5" fill="var(--text-dim)">• the scale is °F × 10</text>
+                <text x="40" y="302" font-family="var(--mono)" font-size="10.5" fill="var(--text-dim)">• the value is signed</text>
+                <text x="40" y="324" font-family="var(--mono)" font-size="10.5" fill="var(--heat)">Wrong map → wrong number.</text>
+
+                <!-- BACNET panel -->
+                <rect x="400" y="114" width="336" height="222" fill="none" stroke="var(--accent)" stroke-width="1.4"/>
+                <text x="416" y="140" font-family="var(--mono)" font-size="13" font-weight="700" fill="var(--accent)">BACNET</text>
+                <text x="416" y="158" font-family="var(--mono)" font-size="10.5" fill="var(--text-dim)">Analog Input, instance 2</text>
+
+                <rect x="416" y="172" width="304" height="128" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.4"/>
+                <text x="428" y="192" font-family="var(--mono)" font-size="10.5" fill="var(--text-dim)">Present_Value</text>
+                <text x="708" y="192" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--text-bright)">55.2</text>
+                <text x="428" y="214" font-family="var(--mono)" font-size="10.5" fill="var(--text-dim)">Units</text>
+                <text x="708" y="214" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--text-bright)">degrees-fahrenheit</text>
+                <text x="428" y="236" font-family="var(--mono)" font-size="10.5" fill="var(--text-dim)">Object_Name</text>
+                <text x="708" y="236" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--text-bright)">SA-T</text>
+                <text x="428" y="258" font-family="var(--mono)" font-size="10.5" fill="var(--text-dim)">Description</text>
+                <text x="708" y="258" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--text-bright)">Supply Air Temp</text>
+                <text x="428" y="286" font-family="var(--mono)" font-size="10.5" fill="var(--text-dim)">Status_Flags / Reliability travel too</text>
+
+                <text x="416" y="324" font-family="var(--mono)" font-size="10.5" fill="var(--accent)">The object describes itself.</text>
+
+                <defs>
+                    <marker id="bvm-arrow-blue" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="var(--blue)"/></marker>
+                    <marker id="bvm-arrow-acc" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="var(--accent)"/></marker>
+                </defs>
+            </svg>
+
+            <h2 class="subhead" id="comparison">The comparison, dimension by dimension</h2>
+
+            <p>
+                Same job, different tool for it. The table is the field-relevant read; the sections after it unpack the rows that actually change how a day goes.
+            </p>
+
+            <div class="table-scroll">
+                <table class="ref-table-dense rt-stack">
+                    <thead><tr><th>Dimension</th><th>Modbus</th><th>BACnet</th></tr></thead>
+                    <tbody>
+                        <tr><td>Origin</td><td>Modicon, 1979 — industrial PLCs</td><td>ASHRAE, 1995 (now ISO 16484-5) — building automation</td></tr>
+                        <tr><td>Data model</td><td>Four flat tables of numbered registers &amp; bits</td><td>Typed objects with named properties</td></tr>
+                        <tr><td>Self-description</td><td>None — meaning lives in a vendor register map</td><td>Built in — <code>Object_Name</code>, <code>Units</code>, <code>Description</code> ride with the value</td></tr>
+                        <tr><td>Data types</td><td>Raw 16-bit words &amp; bits; you interpret them</td><td>Typed — real, unsigned, boolean, enumerated, string</td></tr>
+                        <tr><td>Discovery</td><td>None — you must be handed the addresses</td><td><code>Who-Is</code> / <code>I-Am</code> dynamic binding</td></tr>
+                        <tr><td>Addressing</td><td>Unit / slave ID + register number</td><td>Device instance + object identifier (+ network number)</td></tr>
+                        <tr><td>Change of value</td><td>None — the client polls, over and over</td><td>COV — subscribe and the device pushes changes</td></tr>
+                        <tr><td>Command arbitration</td><td>Last write wins; one value per register</td><td>16-level priority array + <code>Relinquish_Default</code></td></tr>
+                        <tr><td>Alarming</td><td>Not in the protocol — build it in the head end</td><td>Intrinsic / algorithmic events + notification classes</td></tr>
+                        <tr><td>Scheduling &amp; trends</td><td>Not in the protocol</td><td>Standard Schedule, Calendar, and Trend Log objects</td></tr>
+                        <tr><td>Transports</td><td>RTU / ASCII (RS-485 serial), TCP (Ethernet)</td><td>MS/TP (RS-485), BACnet/IP, Ethernet, BACnet/SC</td></tr>
+                        <tr><td>Conformance</td><td>De-facto — the vendor's register map is the contract</td><td>Formal — <a href="/education/bacnet-services.html">BIBBs</a>, device profiles, a published PICS</td></tr>
+                        <tr><td>Typical gear</td><td>Meters, VFDs, BTU meters, gateways, specialty kit</td><td>HVAC controllers, VAV boxes, plant controllers, the BMS</td></tr>
+                        <tr><td>Byte-order gotcha</td><td>Notorious — undefined word order (and byte-swap) across the register pair on 32-bit values</td><td>Typed values carry their encoding; no swap guessing</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h2 class="subhead" id="discovery-cov">Discovery and change-of-value: the two you feel daily</h2>
+
+            <p>
+                Two rows above bite on every job. The first is <strong>discovery</strong>. Point a tool at a BACnet network and send a <code>Who-Is</code>; every device answers <code>I-Am</code> with its device instance, and you have an inventory in seconds. Modbus has no such thing — there is no "who is out there." You commission a Modbus device by being <em>told</em> its unit ID and its register map, and if the meter's DIP switches say slave 7 and the drawing says slave 3, nothing on the wire will correct you. The <a href="/education/modbus-decoding.html">5-digit register trap</a> and byte-order guessing are downstream of the same fact: without self-description, every number is an act of faith in a document.
+            </p>
+
+            <p>
+                The second is <strong>polling vs. push</strong>. Modbus is strictly poll-and-answer: the client asks for register 40012, the server replies, and to see a change the client asks again — a hundred times a second across a graphic if it wants to look live. BACnet keeps polling too, but it also offers <strong>COV</strong> — change-of-value. Subscribe to a point — renewing the subscription before its lifetime runs out — and the device notifies you when an analog value moves past its <code>COV_Increment</code>; binary and multistate points notify on any change of state. On a busy trunk that is the difference between constant chatter and quiet-until-something-happens. It is also not guaranteed: a device only pushes COV if its <a href="/education/bacnet-services.html">BIBBs</a> include the server half, so you check before you count on it.
+            </p>
+
+            <h2 class="subhead" id="command-conformance">Commanding a point, and knowing what a device can do</h2>
+
+            <p>
+                Writing exposes another split. In Modbus you write a value to a register and it sticks until someone writes again — <strong>last write wins</strong>, with no memory of who wrote or why. If two masters fight over a coil, the register just holds whatever landed last. BACnet wraps a commandable output in a <a href="/tools/bacnet-priority.html">16-level priority array</a>: life-safety near the top, automatic control in the middle, the operator override above that, and a <code>Relinquish_Default</code> at the bottom for when every level releases. Nothing is "just overwritten" — the winning command is the highest active priority, and releasing one lets the next-lower one take back over. It is more machinery, and it exists because a building has more than one thing that legitimately wants to command the same damper.
+            </p>
+
+            <p>
+                Finally, <strong>knowing what a box can do</strong>. With Modbus that knowledge is a vendor PDF: the register map <em>is</em> the interface contract, and there is no PICS-style capability statement or device profile to read — so two "Modbus" devices share only the framing. (The Modbus Organization does run a conformance-certification program, but it tests TCP server behavior, not a per-device capability declaration.) BACnet formalizes exactly that — a device publishes a <strong>PICS</strong> (Protocol Implementation Conformance Statement) listing its device profile, its exact <a href="/education/bacnet-services.html">BIBBs</a>, and the object types it supports, so you can tell before wiring whether the integration is even possible. Neither approach frees you from reading the docs; BACnet just standardizes what the docs must say.
+            </p>
+
+            <h2 class="subhead" id="which-and-when">Which is better, and when you meet each</h2>
+
+            <p>
+                Neither is better; they are optimized for different jobs. Modbus wins on <em>reach</em> — it is small enough that almost anything with a processor can speak it, which is exactly why meters, drives, and one-off specialty gear ship with it. BACnet wins on <em>buildings</em> — discovery, typed points, priority commanding, alarms, schedules, and trends are in the protocol because a BMS needs all of them. Asking which is "better" is like asking whether a wrench beats a screwdriver.
+            </p>
+
+            <p>
+                In the field you meet <strong>Modbus at the edges</strong> — the power meter, the VFD, the BTU meter, the packaged unit with its own onboard controller — and <strong>BACnet in the middle</strong>, tying the HVAC controllers and the head end together. The seam between them is a <strong>gateway</strong>: it polls the Modbus device's registers on one side and re-presents them as BACnet objects on the other, so the register map is entered <em>once</em>, in the gateway's config, and the rest of the building sees clean self-describing points.
+            </p>
+
+            <svg class="bac-svg wide" viewBox="0 0 720 160" role="img"
+                 aria-labelledby="bvm-gw-title bvm-gw-desc">
+                <title id="bvm-gw-title">A gateway bridges Modbus to BACnet</title>
+                <desc id="bvm-gw-desc">A power meter speaking Modbus RTU on the left connects to a protocol gateway in the middle, which connects to the building management system speaking BACnet/IP on the right. A caption notes the gateway holds the register map once and re-presents the meter's registers as BACnet objects.</desc>
+
+                <rect x="20" y="40" width="180" height="60" fill="var(--surface)" stroke="var(--blue)" stroke-width="1.6"/>
+                <text x="110" y="66" text-anchor="middle" font-family="var(--mono)" font-size="12" fill="var(--text-bright)">kW meter</text>
+                <text x="110" y="84" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="var(--blue)">Modbus RTU</text>
+
+                <line x1="200" y1="70" x2="266" y2="70" stroke="var(--text-dim)" stroke-width="1.6" marker-end="url(#bvm-gw-arrow)"/>
+                <text x="233" y="60" text-anchor="middle" font-family="var(--mono)" font-size="9" fill="var(--text-dim)">poll</text>
+
+                <rect x="270" y="34" width="180" height="72" fill="var(--surface-2)" stroke="var(--text-dim)" stroke-width="1.6"/>
+                <text x="360" y="60" text-anchor="middle" font-family="var(--mono)" font-size="12" fill="var(--text-bright)">gateway</text>
+                <text x="360" y="78" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="var(--text-dim)">register map</text>
+                <text x="360" y="92" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="var(--text-dim)">lives here, once</text>
+
+                <line x1="450" y1="70" x2="516" y2="70" stroke="var(--text-dim)" stroke-width="1.6" marker-end="url(#bvm-gw-arrow)"/>
+                <text x="483" y="60" text-anchor="middle" font-family="var(--mono)" font-size="9" fill="var(--text-dim)">objects</text>
+
+                <rect x="520" y="40" width="180" height="60" fill="var(--surface)" stroke="var(--accent)" stroke-width="1.6"/>
+                <text x="610" y="66" text-anchor="middle" font-family="var(--mono)" font-size="12" fill="var(--text-bright)">BMS</text>
+                <text x="610" y="84" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="var(--accent)">BACnet/IP</text>
+
+                <text x="360" y="138" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--text-dim)">Registers in, self-describing objects out — the map is entered once, in the gateway.</text>
+
+                <defs>
+                    <marker id="bvm-gw-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="var(--text-dim)"/></marker>
+                </defs>
+            </svg>
+
+            <p>
+                So the practical takeaway is not "pick one." It is: recognize which one is in front of you, know that a Modbus point needs a map and a BACnet point carries its own, and expect a gateway wherever the two meet. The <a href="/education/modbus-basics.html">Modbus</a> and <a href="/education/bacnet-basics.html">BACnet</a> basics pages each go deep on one side; this page is the bridge between them.
+            </p>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/tools/modbus-register-viewer.html', label: 'Modbus Register Viewer'},
+            {href: '/tools/bacnet-objects.html', label: 'BACnet Object Reference'},
+            {href: '/tools/bacnet-priority.html', label: 'BACnet Priority Array'}
+        ],
+        lessons: [
+            {href: '/education/modbus-basics.html', label: 'Modbus Basics'},
+            {href: '/education/bacnet-basics.html', label: 'BACnet Basics'},
+            {href: '/education/bacnet-services.html', label: 'BACnet Services'}
+        ],
+        quizzes: [
+            {href: '/practice/modbus-basics.html', label: 'Modbus Basics'},
+            {href: '/practice/bacnet-basics.html', label: 'BACnet Basics'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/education/">← Back to Education</a>
+
+</main>
+{% endblock %}
