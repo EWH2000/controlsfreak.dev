@@ -124,7 +124,7 @@ one PR each; new tools follow the CLAUDE.md checklist, category
 - **Mini-hub / "start here" decision** once 2–3 of the above land —
   revisit whether the cluster needs its own nav grouping.
 
-### Forced-air buildout — the air-side chapter *(opened 2026-07-09, in progress)*
+### Forced-air buildout — the air-side chapter *(opened 2026-07-09, completed 2026-07-11 — all six shipped)*
 
 The site's biggest taught-around hole, opened as a six-page Education
 chapter with paired quizzes, one PR per page. **Why:** the air side
@@ -1485,7 +1485,14 @@ layers, only the last is this entry:
    open design question: which tools, which params, and does the URL
    win over localStorage when both exist?
 
-### Home hero units — which surfaces convert? *(decided 2026-06-10: everything converts, LCDs included)*
+### Home hero units — which surfaces convert? *(shipped 2026-06-10, PR #235 — everything converts, LCDs included)*
+
+**Shipped 2026-06-10** (PR #235, `units/hero-converts`): the decision
+below shipped as written — the whole hero (software-register strings
+*and* the device LCDs) now follows the units toggle, and
+`home-hero.spec.js`'s "hero converts every surface for a metric visitor"
+guards it. The pid-tuner chart y-axis half (codebase-issues #91) landed
+in the same PR. The original finding is preserved below as the record.
 
 Cross-filed from `docs/audits/2026-06-extensive/findings.md` #5 (2026-06-10). The hero's
 "LIVE AHU-1 supply-air loop" is hard-coded °F everywhere (tree,
