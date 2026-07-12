@@ -112,10 +112,10 @@ keywords: gain reset rate kc ti td overshoot tuning loop deadtime simc lambda bu
             <div class="field" role="group" aria-labelledby="pid-preset-lbl" style="margin-bottom:1.25rem;">
                 <span id="pid-preset-lbl" class="field-label">Try a Tuning</span>
                 <div class="btn-row">
-                    <button class="copy-btn"        id="pid-preset-sluggish" data-preset="sluggish">Sluggish</button>
-                    <button class="copy-btn active" id="pid-preset-decent"   data-preset="decent">Decent PI</button>
-                    <button class="copy-btn"        id="pid-preset-aggr"     data-preset="aggr">Aggressive</button>
-                    <button class="copy-btn"        id="pid-preset-hot"      data-preset="hot">Too Hot</button>
+                    <button class="copy-btn"        id="pid-preset-sluggish" data-preset="sluggish" aria-pressed="false">Sluggish</button>
+                    <button class="copy-btn active" id="pid-preset-decent"   data-preset="decent" aria-pressed="true">Decent PI</button>
+                    <button class="copy-btn"        id="pid-preset-aggr"     data-preset="aggr" aria-pressed="false">Aggressive</button>
+                    <button class="copy-btn"        id="pid-preset-hot"      data-preset="hot" aria-pressed="false">Too Hot</button>
                 </div>
             </div>
 
@@ -531,8 +531,14 @@ keywords: gain reset rate kc ti td overshoot tuning loop deadtime simc lambda bu
             document.getElementById('pid-kd').value = p.kd;
             // Scope to the preset chips only — the bump-test unit toggle below
             // shares the .btn-row/.copy-btn chrome and keeps its own active state.
-            document.querySelectorAll('[data-preset]').forEach(b => b.classList.remove('active'));
-            if (btn) btn.classList.add('active');
+            document.querySelectorAll('[data-preset]').forEach(b => {
+                b.classList.remove('active');
+                b.setAttribute('aria-pressed', 'false');
+            });
+            if (btn) {
+                btn.classList.add('active');
+                btn.setAttribute('aria-pressed', 'true');
+            }
             runPidSim();
         }
 

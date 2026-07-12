@@ -126,3 +126,35 @@ test('reference-table scroller and FBE canvas are keyboard-reachable regions (#5
 
     expect(errors, 'scroll regions should log no errors').toEqual([]);
 });
+
+test('mutually-exclusive chip rows keep aria-pressed in sync (#143)', async ({ page }) => {
+    const errors = watchErrors(page);
+
+    // pid-tuner "Try a Tuning" presets: one pressed at a time, synced on click.
+    await page.goto('/simulators/pid-tuner.html');
+    await expect(page.locator('#pid-preset-decent')).toHaveAttribute('aria-pressed', 'true');
+    await page.click('#pid-preset-aggr');
+    await expect(page.locator('#pid-preset-aggr')).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('#pid-preset-decent')).toHaveAttribute('aria-pressed', 'false');
+    await expect(page.locator('[data-preset][aria-pressed="true"]')).toHaveCount(1);
+
+    // refrigerant-pt lookup-by toggle syncs the same way.
+    await page.goto('/tools/refrigerant-pt.html');
+    await expect(page.locator('#rf-pt-by-p')).toHaveAttribute('aria-pressed', 'true');
+    await page.click('#rf-pt-by-t');
+    await expect(page.locator('#rf-pt-by-t')).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('#rf-pt-by-p')).toHaveAttribute('aria-pressed', 'false');
+
+    expect(errors, 'chip-row aria sync should log no errors').toEqual([]);
+});
+
+test('controller-wiring presets are momentary actions, not aria-pressed toggles (#142)', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('/simulators/controller-wiring.html');
+    // These "Load a panel" buttons have no persistent selection, so they
+    // deliberately carry no aria-pressed (the #142 miscategorization call).
+    await expect(page.locator('.cw-preset[aria-pressed]')).toHaveCount(0);
+    await page.click('.cw-preset[data-preset="ahu"]');
+    await expect(page.locator('.cw-preset[aria-pressed]')).toHaveCount(0);
+    expect(errors, 'cw presets should log no errors').toEqual([]);
+});

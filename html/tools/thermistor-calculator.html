@@ -156,8 +156,8 @@ keywords: NTC RTD resistance ohms 10k 20k 3k balco pt100 pt1000 sensor temperatu
                     <div class="ps-row" role="group" aria-labelledby="th-by-label">
                         <span class="ps-label" id="th-by-label">Look up by</span>
                         <div class="btn-row">
-                            <button class="copy-btn active" id="th-by-temp">Temperature</button>
-                            <button class="copy-btn" id="th-by-res">Resistance</button>
+                            <button class="copy-btn active" id="th-by-temp" aria-pressed="true">Temperature</button>
+                            <button class="copy-btn" id="th-by-res" aria-pressed="false">Resistance</button>
                         </div>
                     </div>
 
@@ -391,7 +391,11 @@ keywords: NTC RTD resistance ohms 10k 20k 3k balco pt100 pt1000 sensor temperatu
         // ── Toggle which field is the active input ──
         function thSetLookup(mode, btn) {
             thLookupBy = mode;
-            btn.closest('.btn-row').querySelectorAll('.copy-btn').forEach(b => b.classList.toggle('active', b === btn));
+            btn.closest('.btn-row').querySelectorAll('.copy-btn').forEach(b => {
+                const on = b === btn;
+                b.classList.toggle('active', on);
+                b.setAttribute('aria-pressed', on ? 'true' : 'false');
+            });
             document.getElementById('th-temp').disabled = (mode !== 'temp');
             document.getElementById('th-res').disabled  = (mode !== 'res');
             // Dynamic copy label — the single-value button copies whichever side is the result.

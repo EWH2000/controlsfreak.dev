@@ -4412,13 +4412,22 @@ persistence/import path or the Android wrapper feeds external JSON. Fix: mirror
 the pipe-id pass (a `seenCompIds` Set rewriting collisions), rebuild the `ids`
 set before the pipe filter, and add a spec case.
 
-### 138. Number-input idiom: function-block-editor could take the same min/max/step *(open — 2026-06-17)*
+### 138. Number-input idiom: function-block-editor could take the same min/max/step *(guard addressed 2026-07-12; catalog parity deferred)*
 
 The Hydronic Loop Builder inspector now applies catalog `min/max/step` to its
 number inputs and skips zeroing the model on a momentarily-empty box (#14).
 `function-block-editor.html` shares the identical number-input builder idiom
 and could get the same treatment in a future sweep for consistency. Low
 priority; cosmetic/UX parity only.
+
+**Addressed in part 2026-07-12** (PR E): shipped the **correctness**
+half — the empty-box guard (`if (field.value === '') return;`) in
+function-block-editor's number-input listener, so an input cleared
+mid-edit no longer zeroes the model to 0 (it repaints on the next real
+value, matching HLB). The **catalog `min/max/step` parity** half stays
+deferred (pure UX polish, and fbe's `fbe-engine.js` param defs carry no
+`min/max/step` today — a two-file change). Revisit trigger: a general
+min/max/step sweep, or adding validation-worthy ranges to fbe blocks.
 
 ### 139. Engine-missing degradation is non-uniform across tool pages *(open — 2026-06-27)*
 
@@ -4467,7 +4476,7 @@ sweep the three pages. (The sibling candidate from the batch-2 sweep,
 `.narrow-width-note`, was since promoted — `styles.css` ~line 2022,
 four consumer pages — so this is the remaining education half.)
 
-### 142. Preset/example chip rows: two per-page stragglers off the shared `.widget-try` *(open — 2026-07-01)*
+### 142. Preset/example chip rows: two per-page stragglers off the shared `.widget-try` *(declined 2026-07-12 — miscategorization)*
 
 The other never-logged candidate, from the content-audit Batch 3
 (Simulators) "Code items split" section. Since it was flagged, most of
@@ -4485,7 +4494,22 @@ stragglers onto `.widget-try`, and decide whether toggle rows deserve
 their own shared class. Pairs naturally with #143 — an a11y sweep of
 the same rows would ride the same PR.
 
-### 143. Chip-row toggles convey selection visually only — no `aria-pressed` *(open — 2026-07-01)*
+**Declined 2026-07-12** (PR E; owner-confirmed). The premise doesn't
+hold on a close read: `.widget-try` is a *momentary inline-dashed-link*
+style with no persistent-selected state, and neither "straggler" is a
+"Try: a · b · c" example row. pid-tuner's presets carry a load-bearing
+*persistent selection* (which chip shows the active tuning) — moving
+them to `.widget-try` would destroy that affordance, the opposite of
+what #143 wanted. controller-wiring's `.cw-preset` is a deliberate
+"Load a panel:" *action bar* with its own `.cw-bar button` chrome, not
+an example row. So both are legitimately distinct control types, not
+`.widget-try` candidates. The a11y that actually mattered here shipped
+under #143 (pid-tuner presets got `aria-pressed`); the toggle-row
+"deserve their own shared class" question is deferred — no new class is
+warranted until a third genuine consumer appears. Revisit trigger: a
+new persistent-selection chip row that would share such a class.
+
+### 143. Chip-row toggles convey selection visually only — no `aria-pressed` *(addressed 2026-07-12)*
 
 PR #291 (S-001) shipped the PID tuner's new Seconds/Minutes unit
 toggle with `aria-pressed`, but the sibling preset chips on the same
@@ -4496,6 +4520,20 @@ is load-bearing. Decide the pattern (per-chip `aria-pressed` like the
 nav units/theme pills, vs `role="radiogroup"` semantics for
 mutually-exclusive rows) and sweep chip rows site-wide. Rides naturally
 with #142's consolidation.
+
+**Addressed 2026-07-12** (PR E). Chose **per-chip `aria-pressed`** (the
+site's established toggle idiom via the units/theme pills + dew-point's
+mode toggle) over `role="radiogroup"` — every one of these rows already
+sits in a `role="group"` with an `aria-labelledby` caption, so the
+group semantics were already present and only the pressed state was
+missing. Swept all six mutually-exclusive rows: pid-tuner presets,
+refrigerant-pt lookup-by + suction/liquid, thermistor-calculator
+by-temp/res, staging-sequencer unit-count, and psychrometric-chart
+chart-range. Additive — kept each row's `.active` visual and synced
+`aria-pressed` in the same toggle line, so no CSS or visual change.
+controller-wiring's `.cw-preset` deliberately did **not** gain
+`aria-pressed`: those are momentary "load a panel" actions with no
+persistent selection (see #142).
 
 ### 144. controller-wiring ↔ bacnet-mstp related-links edge is one-way *(addressed 2026-07-08)*
 
