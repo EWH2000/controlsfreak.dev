@@ -1,6 +1,6 @@
 {
   "name": "controlsfreak.dev",
-  "version": "3.39.4",
+  "version": "3.40.0",
   "private": true,
   "description": "Open calculators and reference tools for building-controls engineers — BACnet, Modbus, HVAC, and building automation work. No login, no ads, just tools that are actually useful on a job site.",
   "scripts": {
@@ -9,7 +9,8 @@
     "test": "playwright test",
     "screenshots": "node tests/screenshot-diagrams.mjs",
     "indexnow": "node .github/scripts/indexnow.mjs",
-    "import-vendor-ids": "node .github/scripts/import-bacnet-vendor-ids.mjs"
+    "import-vendor-ids": "node .github/scripts/import-bacnet-vendor-ids.mjs",
+    "import-bacnet-units": "node .github/scripts/import-bacnet-units.mjs"
   },
   "repository": {
     "type": "git",

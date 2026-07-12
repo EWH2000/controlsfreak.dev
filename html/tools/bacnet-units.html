@@ -1,0 +1,381 @@
+---
+title: BACnet Engineering Units Decoder — controlsfreak.dev
+description: Decode BACnet Units enumeration values — the full 0–254 standard set of property 117, searchable by number, name, or symbol. 62 is degrees-Celsius, 84 is CFM.
+canonical: https://controlsfreak.dev/tools/bacnet-units.html
+nav: tools
+category: protocols
+keywords: units enumeration property 117 present value degrees celsius fahrenheit cfm engineering units enum decode reverse lookup ashrae 135 no-units percent kilopascals
+faqs:
+    - q: What is the BACnet Units property?
+      a: Property 117 (<code>Units</code>) carries the engineering units of an object's <code>Present_Value</code> — degrees-Celsius, cubic-feet-per-minute, percent, and so on. It is an enumeration — the wire carries an integer, and the workstation maps the number to a unit name. This page is that map. See the <a href="/tools/bacnet-objects.html">BACnet Object Reference</a> for the property list it belongs to.
+    - q: What unit is BACnet enum 62?
+      a: 62 is degrees-Celsius; 64 is degrees-Fahrenheit; 63 is kelvin. Temperature sits in the low 60s of the enumeration, which is why those three are the numbers you memorize first. Paste any value into the decode box to confirm.
+    - q: What is the range of BACnet unit numbers?
+      a: 0–255 is the ASHRAE-standard range, and bacnet-stack assigns every value 0–254 (255 is the reserved ceiling). 256–65535 is the proprietary range — a vendor may define its own unit there, so a number in that range has no standard name and you check the device's documentation.
+    - q: Why does my device show a unit number instead of a name?
+      a: The BACnet wire only ever carries the enumeration integer; turning it into "degrees-Celsius" is the client's job. A workstation with an old or foreign object database — or a capture tool that has not loaded the current enumeration — shows the bare number. That is exactly when you paste it here.
+    - q: What is BACnet unit 95?
+      a: 95 is no-units — the value the Units property takes for a dimensionless point like a ratio, a count, or a raw setpoint with no engineering unit. 98 is percent, the other value you see constantly on damper and valve commands.
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+{% from "faq.njk" import faqBlock %}
+
+{% block head %}
+    <style>
+        /* Page-only — engineering-units decoder. The shared property-sheet
+           and .ref-table-dense rules carry the layout; only the filter box,
+           the mono value column, the symbol parenthetical, and the
+           empty-state row sit here. The value column is styled by position
+           (td:first-child), matching the vendor-ID lookup. */
+        .bunit-controls {
+            margin-bottom: 0.9rem;
+        }
+        .bunit-search-label {
+            display: block;
+            font-family: var(--mono);
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-dim);
+            margin-bottom: 0.35rem;
+        }
+        #bunit-search { width: 100%; }
+
+        .bunit-count {
+            font-family: var(--mono);
+            font-size: 0.78em;
+            color: var(--text-dim);
+            font-weight: 500;
+            text-transform: none;
+            letter-spacing: normal;
+        }
+
+        /* The numeric value — the column people search. Copy affordance is
+           added by JS at init (clipboard needs JS anyway). */
+        #bunit-table td:first-child {
+            font-family: var(--mono);
+            color: var(--blue);
+            white-space: nowrap;
+            text-align: right;
+        }
+        #bunit-table td:first-child.bunit-copyable { cursor: pointer; }
+        #bunit-table td:first-child.bunit-copyable:hover { color: var(--accent); }
+
+        .bunit-sym {
+            color: var(--text-dim);
+            font-family: var(--mono);
+            font-size: 0.92em;
+        }
+
+        .bunit-empty td {
+            color: var(--text-dim);
+            font-style: italic;
+            text-align: center;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Tools · BACnet Engineering Units Decoder</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">
+                BACnet Engineering Units Decoder
+                <span class="tool-tag">BACnet</span>
+            </h1>
+        </div>
+
+        <details class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
+            <summary>The whole BACnet Units enumeration in one filterable table — paste the number a point reports for its units and get the name.</summary>
+            <div class="preamble-rest">
+                An object's <em>Units</em> is the <code>Units</code> property (117), an enumeration: the wire carries a number and the workstation maps it to a unit like <code>degrees-Celsius</code> or <code>cubic-feet-per-minute</code>.
+                When a tool shows the bare number — an old database, a foreign device, a raw capture — this decodes it.
+                Type a value in the decode box, or filter the full 0–{{ bacnetUnits.maxStd }} standard enumeration by number, name, or symbol.
+            </div>
+        </details>
+        <p class="ps-seed-note">The input is seeded with an example — edit it to your number.</p>
+
+        <div class="tool-body-2col">
+
+            <section>
+                <h2 class="ps-section-label">Input</h2>
+                <div class="ps-row">
+                    <label class="ps-label" for="bunit-id">Units value <span style="white-space:nowrap;">(0–65535)</span></label>
+                    <input class="ps-input" type="number" id="bunit-id" min="0" max="65535" step="1" placeholder="62" value="62">
+                </div>
+                <p class="bit-hint" style="margin-top:0.85rem;">The number a property sheet, a trend export, or a Wireshark decode shows for the point's <code>Units</code> property.</p>
+            </section>
+
+            <section role="status" aria-atomic="false">
+                <h2 class="ps-section-label">Output</h2>
+                <div class="ps-row">
+                    <span class="ps-label">Engineering unit</span>
+                    <span class="ps-value muted" id="bunit-out-name">—</span>
+                </div>
+                <div class="ps-row">
+                    <span class="ps-label">Domain</span>
+                    <span class="ps-value muted" id="bunit-out-group">—</span>
+                </div>
+                <div class="status-pill" id="bunit-status">Enter a units value to look it up.</div>
+                <div class="btn-row">
+                    <button class="copy-btn" id="bunit-copy-name">Copy unit name</button>
+                </div>
+            </section>
+
+        </div>
+        <div class="result-formula flush" id="bunit-formula"></div>
+        <div class="failure-callout" id="bunit-callout" hidden></div>
+
+        <section class="tool-body-row">
+            <h2 class="ps-section-label" id="units-list">The full BACnet Units enumeration (0–{{ bacnetUnits.maxStd }})</h2>
+            <p class="ref-note" style="margin-top:0;">
+                Every standard value of the <code>Units</code> property, ascending by number. Click a value to copy it. Symbols in parentheses are searchable too.
+            </p>
+            <!-- // user to verify long-tail unit names — the 0–254 enum is imported from bacnet-stack's bacenum.h; the ~80 field-common rows are the canonical curated names, the rest are bacnet-stack spellings, refine against ASHRAE 135 after review -->
+            <div class="bunit-controls">
+                <label class="bunit-search-label" for="bunit-search">Filter by number, name, or symbol <span class="bunit-count" id="bunit-count" aria-hidden="true"></span></label>
+                <input class="ps-input" type="search" id="bunit-search" placeholder="e.g. 62, celsius, kPa, flow, %">
+            </div>
+            <div class="table-scroll">
+                <table class="ref-table-dense rt-stack" id="bunit-table" data-max-std="{{ bacnetUnits.maxStd }}" data-proprietary-min="{{ bacnetUnits.proprietaryMin }}">
+                    <thead>
+                        <tr><th>Value</th><th>Engineering unit</th><th>Domain</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for u in bacnetUnits.units %}
+                        <tr><td>{{ u.id }}</td><td data-name="{{ u.name }}">{{ u.name | safe }}{% if u.symbol %} <span class="bunit-sym">({{ u.symbol }})</span>{% endif %}</td><td>{{ u.group }}</td></tr>
+                        {% endfor %}
+                        <tr class="bunit-empty" hidden><td colspan="3">No units match that filter.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <!-- // user to verify long-tail unit names — end of table -->
+            <p class="ref-note">
+                Imported from <a href="https://github.com/bacnet-stack/bacnet-stack">bacnet-stack</a>'s <code>BACnetEngineeringUnits</code> enum (the de-facto machine-readable form of the ASHRAE 135 <code>Units</code> enumeration, which is paywalled) — retrieved {{ bacnetUnits.retrieved }}: {{ bacnetUnits.count }} standard values, 0–{{ bacnetUnits.maxStd }}. The field-common rows carry the curated names and symbols shared with the <a href="/tools/bacnet-objects.html">Object Reference</a>; the long-tail rows use bacnet-stack's spelling and should be confirmed against the standard for exact wording. Values {{ bacnetUnits.proprietaryMin }} and up are the proprietary/vendor range — no assigned name here.
+            </p>
+        </section>
+
+        <section class="tool-body-row">
+            <h2 class="ps-section-label" id="what-the-units-property-is">What the Units property is</h2>
+            <p class="ref-note" style="margin-top:0;">
+                Every analog object carries a <code>Units</code> property (117) that says what its <code>Present_Value</code> means — a number without a unit is just a number. BACnet stores it as an <em>enumeration</em>: rather than send the string "degrees-Celsius" on the wire, the device sends the integer 62, and the reading client looks the name up. That keeps messages small and language-neutral, at the cost of one indirection — which is exactly the indirection this page removes.
+            </p>
+            <p class="ref-note">
+                The enumeration is grouped loosely by domain — temperature in the low 60s, pressure in the 50s, flow in the 80s, electrical near the start — but the numbers are assigned in historical order within each edition, so there is no arithmetic to it. You either know it or you look it up.
+            </p>
+        </section>
+
+        <section class="tool-body-row">
+            <h2 class="ps-section-label" id="standard-and-proprietary-ranges">Standard and proprietary ranges</h2>
+            <p class="ref-note" style="margin-top:0;">
+                Values 0–255 are ASHRAE's to assign, and the current standard defines names through {{ bacnetUnits.maxStd }} (255 is a reserved ceiling). A device reporting a units value in that range but showing no name usually means the client's database predates the value — not that the number is wrong.
+            </p>
+            <p class="ref-note">
+                {{ bacnetUnits.proprietaryMin }}–65535 is the proprietary/vendor range, the same idea as the vendor-specific object types on the <a href="/tools/bacnet-objects.html">Object Reference</a>: a manufacturer may define a unit its own equipment understands. A number there has no standard meaning, so the answer lives in the vendor's documentation — and the <a href="/tools/bacnet-vendor-ids.html">Vendor ID lookup</a> tells you whose documentation to open.
+            </p>
+        </section>
+
+        <section class="tool-body-row">
+            <h2 class="ps-section-label" id="where-you-see-units-values">Where you see raw units values</h2>
+            <p class="ref-note" style="margin-top:0;">
+                Three places, usually: a property sheet that lists <code>Units</code> as a number instead of resolving it, a trend or point export whose columns carry the enum rather than the label, and a decoded packet in Wireshark where the <code>Units</code> tag shows the bare Unsigned integer. In all three it is the same number — paste it above.
+            </p>
+        </section>
+
+    </div>
+
+    {{ faqBlock(faqs, "BACnet engineering units FAQ") }}
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/tools/bacnet-objects.html', label: 'BACnet Object Reference'},
+            {href: '/tools/bacnet-ip-converter.html', label: 'BACnet/IP Hex Converter'},
+            {href: '/tools/bacnet-vendor-ids.html', label: 'BACnet Vendor IDs'}
+        ],
+        lessons: [
+            {href: '/education/bacnet-basics.html', label: 'BACnet Basics'},
+            {href: '/education/bacnet-networking.html', label: 'BACnet Networking'},
+            {href: '/education/bacnet-mstp.html', label: 'BACnet MS/TP'}
+        ],
+        quizzes: [
+            {href: '/practice/bacnet-basics.html', label: 'BACnet Basics'},
+            {href: '/practice/bacnet-networking.html', label: 'BACnet Networking'},
+            {href: '/practice/bacnet-mstp.html', label: 'BACnet MS/TP'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/tools/">← All tools</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="/scripts/ui.js"></script>
+<script>
+    // copyText(el, text) / copyReadouts(btn, sep, ...ids) come from
+    // /scripts/ui.js — see that file for documentation.
+    //
+    // The build-time-rendered table IS the dataset: the decode box reads
+    // its value → { name, group } map straight from the rendered rows at
+    // init, so the page ships the enumeration exactly once (no
+    // safeScriptJson twin of the 255-row array). The unit cell displays
+    // "name (symbol)" but stashes the clean name in data-name so the copy
+    // button and the formula use the canonical spelling. The standard
+    // ceiling and the proprietary floor ride on the table's data- attrs.
+    (function () {
+        'use strict';
+
+        const table = document.getElementById('bunit-table');
+        const maxStd = parseInt(table.dataset.maxStd, 10);
+        const propMin = parseInt(table.dataset.proprietaryMin, 10);
+
+        const units = new Map();
+        Array.from(table.tBodies[0].rows).forEach(row => {
+            if (row.classList.contains('bunit-empty')) return;
+            units.set(Number(row.cells[0].textContent), {
+                name: row.cells[1].dataset.name,
+                display: row.cells[1].textContent.trim(),
+                group: row.cells[2].textContent.trim(),
+            });
+        });
+
+        // ── decode box ──
+        const idEl      = document.getElementById('bunit-id');
+        const nameEl    = document.getElementById('bunit-out-name');
+        const groupEl   = document.getElementById('bunit-out-group');
+        const statusEl  = document.getElementById('bunit-status');
+        const formulaEl = document.getElementById('bunit-formula');
+        const calloutEl = document.getElementById('bunit-callout');
+
+        function setStatus(kind, text) {
+            statusEl.className = 'status-pill' + (kind ? ' ' + kind : '');
+            statusEl.textContent = text;
+        }
+
+        function mute(msg) {
+            nameEl.className = 'ps-value muted';
+            nameEl.textContent = '—';
+            groupEl.className = 'ps-value muted';
+            groupEl.textContent = '—';
+            formulaEl.textContent = '';
+            setStatus('', 'Enter a units value to look it up.');
+            if (msg) { calloutEl.textContent = msg; calloutEl.hidden = false; }
+            else calloutEl.hidden = true;
+        }
+
+        function decode() {
+            const raw = idEl.value.trim();
+            if (raw === '') { mute(null); return; }
+            const id = parseFloat(raw);
+            if (!isFinite(id) || id !== Math.floor(id) || id < 0 || id > 65535) {
+                mute('The Units value is a whole number 0–65535 — the Unsigned range the enumeration lives in.');
+                return;
+            }
+            calloutEl.hidden = true;
+            const hit = units.get(id);
+            if (hit) {
+                nameEl.className = 'ps-value live';
+                nameEl.textContent = hit.display;
+                groupEl.className = hit.group ? 'ps-value live' : 'ps-value muted';
+                groupEl.textContent = hit.group || '—';
+                setStatus('ok', 'Standard engineering unit');
+                formulaEl.textContent = id + ' → ' + hit.name;
+            } else if (id <= maxStd) {
+                nameEl.className = 'ps-value muted';
+                nameEl.textContent = '—';
+                groupEl.className = 'ps-value muted';
+                groupEl.textContent = '—';
+                setStatus('warn', 'Standard range, no name in this snapshot');
+                formulaEl.textContent = id + ' → within 0–' + maxStd + ' but unnamed here — a newer-edition value, check ASHRAE 135';
+            } else if (id < propMin) {
+                nameEl.className = 'ps-value muted';
+                nameEl.textContent = '—';
+                groupEl.className = 'ps-value muted';
+                groupEl.textContent = '—';
+                setStatus('warn', 'Reserved ceiling — not an assigned unit');
+                formulaEl.textContent = id + ' → reserved boundary of the standard range (0–' + maxStd + '), not a unit';
+            } else {
+                nameEl.className = 'ps-value muted';
+                nameEl.textContent = '—';
+                groupEl.className = 'ps-value muted';
+                groupEl.textContent = '—';
+                setStatus('warn', 'Proprietary/vendor range — no standard name');
+                formulaEl.textContent = id + ' → ' + propMin + '+ is vendor-specific; the meaning is in the manufacturer’s docs';
+            }
+        }
+
+        idEl.addEventListener('input', decode);
+        document.getElementById('bunit-copy-name').addEventListener('click', e => {
+            const hit = units.get(parseInt(idEl.value, 10));
+            copyText(e.currentTarget, hit ? hit.name : '');
+        });
+
+        // ── table filter ──
+        const search = document.getElementById('bunit-search');
+        const badge  = document.getElementById('bunit-count');
+
+        function applyFilter() {
+            const q = search.value.trim().toLowerCase();
+            const body = table.tBodies[0];
+            let matches = 0;
+            Array.from(body.rows).forEach(row => {
+                if (row.classList.contains('bunit-empty')) return;
+                // Match value + unit text (name + symbol) + domain. Read the
+                // value from data-code, not the live cell text — copyText()
+                // swaps the clicked cell to "copied!" for ~2s and a filter
+                // during that flash would judge the mutated text.
+                const hay = (row.cells[0].dataset.code + ' ' + row.cells[1].textContent + ' ' + row.cells[2].textContent).toLowerCase();
+                const hit = !q || hay.includes(q);
+                row.hidden = !hit;
+                if (hit) matches++;
+            });
+            const emptyRow = body.querySelector('.bunit-empty');
+            emptyRow.hidden = !(q && matches === 0);
+            badge.textContent = q ? '· ' + matches : '';
+        }
+
+        search.addEventListener('input', applyFilter);
+
+        // ── click-to-copy on the value cells ──
+        // Mark each value cell as an interactive copy target (the affordance
+        // only appears with JS live, since clipboard needs JS anyway),
+        // stashing the number in data-code so copyText()'s "copied!" text
+        // swap can't lose it. One delegated click + keydown listener handles
+        // every cell.
+        Array.from(table.tBodies[0].rows).forEach(row => {
+            if (row.classList.contains('bunit-empty')) return;
+            const cell = row.cells[0];
+            cell.dataset.code = cell.textContent.trim();
+            cell.classList.add('bunit-copyable');
+            cell.setAttribute('role', 'button');
+            cell.setAttribute('tabindex', '0');
+            cell.setAttribute('title', 'Copy ' + cell.dataset.code);
+        });
+        function copyCell(cell) {
+            copyText(cell, cell.dataset.code);
+        }
+        table.addEventListener('click', e => {
+            const cell = e.target.closest('td.bunit-copyable');
+            if (cell) copyCell(cell);
+        });
+        table.addEventListener('keydown', e => {
+            if (e.key !== 'Enter' && e.key !== ' ') return;
+            const cell = e.target.closest('td.bunit-copyable');
+            if (!cell) return;
+            e.preventDefault();
+            copyCell(cell);
+        });
+
+        // First-paint decode of the seeded example — addEventListener only
+        // fires on user input, so without this the page lands muted.
+        decode();   // 62 → degrees-Celsius
+    })();
+</script>
+{% endblock %}

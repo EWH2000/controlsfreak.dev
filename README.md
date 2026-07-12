@@ -70,6 +70,16 @@ Calculators, converters, and lookups — open one, get an answer.
   every ID is click-to-copy. Imported from the official registry by
   script (only the ID and organization are republished), snapshot
   date under the table.
+- **BACnet Engineering Units Decoder** — the full standard `Units`
+  enumeration (property 117), values 0–254, as one filterable table
+  with a reverse-decode box: paste the number a point reports for its
+  units and get the name — 62 is degrees-Celsius, 84 is CFM, 95 is
+  no-units — with the reserved ceiling and the proprietary/vendor
+  range (256+) called out. Filter by number, name, or symbol; every
+  value is click-to-copy. Deeper than the Object Reference's
+  field-common slice: imported by script from bacnet-stack's enum and
+  overlaid with the site's curated names/symbols so the two can't
+  drift.
 - **Psychrometric Chart** — walk an air handler through its
   psychrometric processes on an altitude-adjustable ASHRAE IP-unit
   chart: mix outdoor and return air, then cool, heat, and humidify.

@@ -98,15 +98,22 @@ Shipped so far:
   table (property 120 `Vendor_Identifier`), imported from the public
   ASHRAE registry by script, not hand-transcribed *(shipped
   2026-07-08, PR 3 — entry below)*.
+- **BACnet Engineering Units decoder** — `tools/bacnet-units.html`,
+  the full 0–254 standard `Units` enumeration (property 117) as a
+  filterable/copy table + reverse-decode box, deeper than the
+  Object-Reference tab's ~80-row slice. Data is a **generated** file
+  (`html/_data/bacnetUnits.js`, `npm run import-bacnet-units`) parsed
+  from bacnet-stack's `bacenum.h` and overlaid with `bacnetEnums.js`'s
+  curated names/symbols/groups by id (curated-wins, so it can't drift
+  from the Object Reference). Long-tail rows carry bacnet-stack
+  spellings + a page provenance note to verify against ASHRAE 135.
+  *(shipped 2026-07-12, PR 4 — mirrors the vendor-ID tool + importer
+  pattern)*.
 
 Remaining (each a soft-SERP reference tool or informational parent,
 one PR each; new tools follow the CLAUDE.md checklist, category
 `protocols`):
 
-- **BACnet Engineering Units decoder** — standalone, filterable
-  reverse-lookup deeper than the reference's ~80-row slice (full
-  0–255 + vendor ranges; copy-oriented). `[future:
-  tools/bacnet-units.html]`
 - **BACnet error / reject / abort code decoder** — error-class +
   error-code pairs and reject/abort reasons; mirrors the
   ip-converter / objects pattern. `[future:
