@@ -4649,7 +4649,7 @@ process writes and imports its own copy; the in-process dynamic-import
 cache still de-dupes repeat calls. A comment on the `tmp` line records
 why the per-process name is load-bearing.
 
-### 152. `rewriteInput` + `REWRITE_DEC` is duplicated inline across eight tool pages *(open — 2026-07-11)*
+### 152. `rewriteInput` + `REWRITE_DEC` is duplicated inline across eight tool pages *(addressed 2026-07-12)*
 
 The unit-flip input-resync helper (`rewriteInput()` + its
 `REWRITE_DEC` decimals map — the audit-2026-06 #60a/#60b mechanism:
@@ -4669,6 +4669,24 @@ coil-freeze ship (scope rule); the copy count is now high enough that
 the next units-toggle tool should trigger the extraction rather than
 land copy #9. Caught while building coil-freeze-risk from the
 waterside-load template.
+
+**Addressed 2026-07-12** (PR D): extracted to `window.rewriteInput` in
+`/scripts/ui.js` — a parameterized helper taking `(target, quantity,
+fromU, toU, decMap, fallback)`. `target` is an id *or* an element (so
+airside-load's element-based call sites work unchanged), and the
+decimals map + fallback are parameters (refrigerant-pt keeps its
+fallback `1`; everyone else defaults to `2`). Each page now keeps only
+its `REWRITE_DEC` map plus a two-line hoisted wrapper that binds it, so
+all call sites are untouched. **The extraction turned up a *ninth*
+copy the `rewriteInput` grep had missed**: `psychrometric-chart.html`'s
+`convertInputsBetween` inlined the identical canonical-retain logic in a
+loop (no named function), with an inline `if/else` digits chain that
+maps cleanly to `{altitude:0, airflow:0, humidityRatio:1, enthalpy:1}` +
+fallback 1 — migrated too. Verified behavior-preserving with a
+unit-flip round-trip spec across id-based / element-based / fallback-1 /
+migrated-loop surfaces (exact typed-text restore + rounded metric).
+Version bumped for the `ui.js` cache-bust (load-bearing: old `ui.js` +
+new page HTML would break the toggle).
 
 ### 153. CLAUDE.md's `Latest:` badge pointer says `.hero-badges`; the badge lives in `p.hero-latest` *(addressed 2026-07-12)*
 
