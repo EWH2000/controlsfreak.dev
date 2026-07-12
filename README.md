@@ -571,6 +571,14 @@ techs new to the industry and anyone wanting a refresh.
   register read unsigned logs a plausible 6553.5 instead of −0.1.
   Companion to the Modbus Basics explainer; the interactive form of
   each gotcha lives on the Modbus Register Viewer tool.
+- **BACnet vs Modbus** — the bridge between the two protocol clusters:
+  the same physical point seen as an anonymous Modbus register versus
+  a self-describing BACnet object, then a dimension-by-dimension table
+  (discovery, COV vs polling, priority array vs last-write, PICS/BIBBs
+  vs vendor register map, transports, typical gear) and the two rows
+  that bite daily. Closes on the field reality — Modbus at the edges,
+  BACnet in the middle, a gateway at the seam — and why "which is
+  better" is the wrong question.
 - **BACnet Basics** — BACnet on the wire: the self-describing object
   model (an object knows its own name and units, where a Modbus
   register is just sixteen bits), the handful of services that do

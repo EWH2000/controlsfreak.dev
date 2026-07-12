@@ -150,16 +150,34 @@ Shipped so far:
   → networking moves them across routers); reciprocal relatedLinks +
   a live forward-link added to both neighbours. *(shipped 2026-07-12,
   PR 7 — lesson page, `.bac-svg` already consolidated so no page CSS)*.
+- **BACnet vs Modbus** explainer — `education/bacnet-vs-modbus.html`,
+  the classic "difference" query and the bridge between the two
+  protocol clusters. Opens on the deepest split — a Modbus register is
+  anonymous, a BACnet object describes itself — with a "same physical
+  point, two protocols" diagram (register 40012 = 552 vs. an Analog
+  Input whose `Units`/`Object_Name`/`Description` ride with the value).
+  Then the SEO payload: a dimension-by-dimension comparison table
+  (origin, data model, self-description, discovery, COV vs polling,
+  command arbitration, alarming, scheduling, transports, conformance,
+  typical gear, byte-order), sections unpacking discovery + COV +
+  priority-vs-last-write + PICS/BIBBs-vs-vendor-map, and a
+  gateway-at-the-seam diagram for "when you meet each." Facts (origin
+  years, four Modbus tables, transports, conformance mechanisms)
+  cross-checked against the existing Modbus/BACnet lessons + protocol
+  references. Inserted into `educationSequence.js` **between
+  modbus-decoding and bacnet-basics** (the modbus→bacnet seam, test-safe
+  — last lesson stays bacnet-mstp); heavy reciprocal relatedLinks into
+  both clusters (modbus-basics, modbus-decoding, bacnet-basics all now
+  forward-link it). *(shipped 2026-07-12, PR 8 — lesson page, `.bac-svg`
+  reused, no page CSS)*.
 
-Remaining (each a soft-SERP reference tool or informational parent,
-one PR each; new tools follow the CLAUDE.md checklist, category
-`protocols`):
+Remaining:
 
-- *(stretch)* **BACnet vs Modbus** explainer — classic "difference"
-  query funneling into both protocol clusters. `[future:
-  education/bacnet-vs-modbus.html]`
-- **Mini-hub / "start here" decision** once 2–3 of the above land —
-  revisit whether the cluster needs its own nav grouping.
+- **Mini-hub / "start here" decision** — the buildout capstone, now
+  that all five content pages have landed (cluster = 6 tools + 4
+  lessons + this comparison). Revisit whether the cluster needs its own
+  nav grouping, a `/bacnet/` start-here landing, or just curated
+  cross-links.
 
 ### Forced-air buildout — the air-side chapter *(opened 2026-07-09, completed 2026-07-11 — all six shipped)*
 
