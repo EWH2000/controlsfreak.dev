@@ -4626,6 +4626,16 @@ the next units-toggle tool should trigger the extraction rather than
 land copy #9. Caught while building coil-freeze-risk from the
 waterside-load template.
 
+### 153. CLAUDE.md's `Latest:` badge pointer says `.hero-badges`; the badge lives in `p.hero-latest` *(open — 2026-07-11)*
+
+*Adding a new tool* step 6 says the hero's `Latest: <name>` badge is
+"the last entry in `.hero-badges`" — but `html/index.html` renders it
+as a standalone `<p class="hero-latest">` (line ~382). Harmless until
+someone greps `.hero-badges` to find the badge and edits the wrong
+element. One-line CLAUDE.md fix; batch with the next docs sweep.
+Caught by the disclaimer-sweep recon while mapping home-page count
+surfaces.
+
 ### Deferred / Won't fix (with revisit trigger)
 
 Items considered during an audit and deliberately not pursued, each

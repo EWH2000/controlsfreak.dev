@@ -838,6 +838,50 @@ waterside-load, transformer-sizing. Adversarial review before ship
 caught five fixes (stale readout on hand-edit, descending-band guard,
 reference rounding, parser hardening, bridge-result `aria-labelledby`).
 
+### Damage-stakes scope notes — the cross-tool disclaimer convention *(shipped 2026-07-11)*
+
+Owner call right after coil-freeze-risk merged: any tool that risks
+equipment damage if improperly implemented should say plainly what it
+is — good for checking whether a theory is logical, as a learning
+tool, and as a secondary verification method — and what it isn't
+(the protection). Owner picked per-tool notes as a recorded
+convention over a universal line on the tools landing (both were
+offered): search deep-links skip the landing, so a landing-only line
+is invisible to most visitors, and a note on all 26 tools would
+dilute it on pages with no damage stakes.
+
+A full-tool-list sweep put the set at eight pages, tiered:
+
+- **Tier 1 — the page's whole point is a damage-protection verdict:**
+  coil-freeze-risk (burst coils), equipment-airflow (iced coil /
+  cracked heat exchanger), refrigerant-pt (mischarge → slugged
+  compressor).
+- **Tier 2 — the output directly feeds a damage-relevant action:**
+  air-mixing and economizer-ratio (both feed freeze decisions),
+  affinity-laws (cube-law power on a speed *increase* → overloaded
+  motor — its tail taught the slow-down energy case and never
+  mentioned that 10 % over asks for 33 % more power),
+  transformer-sizing (the suggested-fuse row).
+- **Already compliant:** electrical-quick-calc — its permanent
+  "Estimate only — not a code value… never this number"
+  failure-callout plus the worked example's "size off the table
+  value" close are stronger than the convention's note; a third
+  repetition would be noise.
+- **Judged out of scope** (measurement math; the damage chain runs
+  through other tools that carry the note): airflow, duct-traverse,
+  dew-point-calculator.
+
+Shape: a final `p.ref-note` with a `<strong>` lead-in as the last
+content in the page's last `.tool-card` — the established caveat
+register, zero new CSS, and the class's `border-top` gives the
+footnote seam for free. On tabbed pages (air-mixing,
+economizer-ratio, affinity-laws) it's a `.tool-body-row` *sibling*
+of the panes so both tabs show it. Wording is page-tailored around a
+recognizable spine (theory check / learning aid / second opinion;
+the hardware and the manufacturer's data govern) — never copy-pasted
+boilerplate. Convention recorded in CLAUDE.md (*Conventions* bullet +
+*Adding a new tool* step 2b).
+
 ### Coil Freeze Risk Checker *(shipped 2026-07-11)*
 
 Tool #4 of the airflow buildout (`/tools/coil-freeze-risk.html`,

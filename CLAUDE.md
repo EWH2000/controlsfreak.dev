@@ -326,6 +326,20 @@ section). **Category keys mirror the landing pages' `navCard()`
   ideally above and below the block. The `//` prefix is the
   site-wide marker; pair with `TODO` / `FIXME` / `XXX` when grepping
   in sweeps.
+- **Damage-stakes scope note** (owner decision, 2026-07-11): any tool
+  whose output, acted on directly, can damage equipment (burst coil,
+  cracked heat exchanger, slugged compressor, burned motor, cooked
+  transformer) ends its last `.tool-card` with a `p.ref-note` scope
+  disclaimer. The recurring spine: the tool is a theory check, a
+  learning aid, and a second opinion — the physical protections and
+  the manufacturer's data govern. Wording is page-tailored, never
+  boilerplate. On tabbed tools the note sits in a `.tool-body-row`
+  *sibling* of the panes so every tab shows it. An existing stronger
+  note satisfies the convention (electrical-quick-calc's permanent
+  failure-callout). Current set: coil-freeze-risk, equipment-airflow,
+  refrigerant-pt, air-mixing, economizer-ratio, affinity-laws,
+  transformer-sizing, electrical-quick-calc. Rationale + tiering in
+  the friction file under "Damage-stakes scope notes."
 
 ### Gotchas
 
@@ -639,6 +653,9 @@ section headers).
    adding a `[key, label]` entry to `NAV_CATEGORIES.tools`.
 2. Wrap page logic in an IIFE + `addEventListener` (see *JS patterns*);
    apply validate-and-mute on numeric inputs.
+2b. If the tool's output, acted on directly, can damage equipment,
+   end the last `.tool-card` with the damage-stakes scope note
+   (see *Conventions*).
 3. Add a `.nav-card` to the `.card-grid` on `tools/index.html` with the
    **same `category`** as the frontmatter (the two are independent
    sources — keep them equal). Bump the All chip count and add a
