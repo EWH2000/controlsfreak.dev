@@ -338,9 +338,9 @@ section). **Category keys mirror the landing pages' `navCard()`
   note satisfies the convention (electrical-quick-calc's permanent
   failure-callout). Current set: coil-freeze-risk, equipment-airflow,
   refrigerant-pt, air-mixing, economizer-ratio, affinity-laws,
-  transformer-sizing, electrical-quick-calc, minimum-outdoor-air.
-  Rationale + tiering in the friction file under "Damage-stakes scope
-  notes."
+  transformer-sizing, electrical-quick-calc, minimum-outdoor-air,
+  duct-sizer. Rationale + tiering in the friction file under
+  "Damage-stakes scope notes."
 
 ### Gotchas
 

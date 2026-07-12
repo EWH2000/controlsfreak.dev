@@ -1,0 +1,493 @@
+---
+title: Duct Sizer — controlsfreak.dev
+description: Ductulator math for the field — friction rate and velocity from CFM and diameter, solve any of the four, plus rectangular-to-round equivalents done honestly.
+canonical: https://controlsfreak.dev/tools/duct-sizer.html
+nav: tools
+category: airflow
+keywords: ductulator duct sizer friction rate friction loss in wg per 100 ft round duct velocity fpm equivalent diameter huebscher rectangular to round altshul tsal high static undersized duct
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Tools · Duct Sizer</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">
+                Duct Sizer
+                <span class="tool-tag">Airflow</span>
+            </h1>
+        </div>
+
+        <details class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
+            <summary>The ductulator, solved four ways — built for diagnosing the duct you already have.</summary>
+            <div class="preamble-rest">
+                <em>Round duct friction</em> is the cardboard-wheel math as a solver: from any workable pair of airflow, diameter, friction rate, and velocity, it finds the rest — including the diagnostic direction the wheel is clumsy at: <em>here&rsquo;s the duct, here&rsquo;s the measured CFM — how hard is it working?</em> <em>Rectangular ↔ round</em> converts through the equivalent diameter the sizing tables actually use — equal <em>friction</em>, which is deliberately not equal area and not equal velocity.
+            </div>
+        </details>
+        <p class="ps-seed-note">Inputs are seeded with an example — edit them to your numbers.</p>
+
+        <div class="tabs tabs-flush">
+            <button class="tab-btn active" data-tab="round">Round duct friction</button>
+            <button class="tab-btn"        data-tab="rect">Rectangular ↔ round</button>
+        </div>
+
+        <!-- ── Round duct friction ── -->
+        <div id="tab-round" class="tab-pane active">
+            <div class="tool-body-2col">
+
+                <section>
+                    <h2 class="ps-section-label">Input</h2>
+                    <div class="ps-row">
+                        <label class="ps-label" for="dz-solve">Solve for</label>
+                        <select class="ps-input" id="dz-solve">
+                            <option value="friction">Friction &amp; velocity — from CFM + diameter</option>
+                            <option value="dia">Diameter — from CFM + target friction</option>
+                            <option value="cfm">Airflow — from diameter + target friction</option>
+                            <option value="dia-vel">Diameter — from CFM + target velocity</option>
+                        </select>
+                    </div>
+                    <div class="ps-row" id="dz-row-cfm">
+                        <label class="ps-label" for="dz-cfm">Airflow (CFM)</label>
+                        <input class="ps-input" type="number" id="dz-cfm" step="any" min="0" placeholder="1200" value="1200">
+                    </div>
+                    <div class="ps-row" id="dz-row-dia">
+                        <label class="ps-label" for="dz-dia">Round diameter (in.)</label>
+                        <input class="ps-input" type="number" id="dz-dia" step="any" min="0" placeholder="12" value="12">
+                    </div>
+                    <div class="ps-row hidden" id="dz-row-fr">
+                        <label class="ps-label" for="dz-fr">Target friction (in. w.c. / 100 ft)</label>
+                        <input class="ps-input" type="number" id="dz-fr" step="any" min="0" placeholder="0.08" value="0.08">
+                    </div>
+                    <div class="ps-row hidden" id="dz-row-vel">
+                        <label class="ps-label" for="dz-vel">Target velocity (FPM)</label>
+                        <input class="ps-input" type="number" id="dz-vel" step="any" min="0" placeholder="900" value="900">
+                    </div>
+                    <p class="ref-note">
+                        The default direction is the diagnostic one: the duct already exists, a <a href="/tools/duct-traverse.html">traverse</a> or a BAS trend says what it&rsquo;s moving, and the question is how hard it&rsquo;s working. The other three are the classic ductulator spins — size to a friction rate, size to a velocity, or read off what a size you&rsquo;re stuck with can honestly carry.
+                    </p>
+                </section>
+
+                <section role="status" aria-atomic="false">
+                    <h2 class="ps-section-label">Output</h2>
+                    <div class="ps-row hidden" id="dz-row-out-dia">
+                        <span class="ps-label">Round diameter (in.)</span>
+                        <span class="ps-value muted" id="dz-out-dia">—</span>
+                    </div>
+                    <div class="ps-row hidden" id="dz-row-out-cfm">
+                        <span class="ps-label">Airflow (CFM)</span>
+                        <span class="ps-value muted" id="dz-out-cfm">—</span>
+                    </div>
+                    <div class="ps-row" id="dz-row-out-vel">
+                        <span class="ps-label">Velocity (FPM)</span>
+                        <span class="ps-value muted" id="dz-out-vel">—</span>
+                    </div>
+                    <div class="ps-row" id="dz-row-out-ms">
+                        <span class="ps-label">Velocity (m/s equivalent)</span>
+                        <span class="ps-value muted" id="dz-out-ms">—</span>
+                    </div>
+                    <div class="ps-row primary" id="dz-row-out-fr">
+                        <span class="ps-label">Friction rate (in. w.c. / 100 ft)</span>
+                        <span class="ps-value muted" id="dz-out-fr">—</span>
+                    </div>
+                    <div class="btn-row">
+                        <button class="copy-btn" id="dz-copy">Copy results</button>
+                    </div>
+                    <div class="result-formula wrap" id="dz-formula"></div>
+                    <div class="failure-callout" id="dz-callout" hidden></div>
+                </section>
+
+            </div>
+
+            <section class="tool-body-row">
+                <h2 class="ps-section-label">Worked example — the 12-inch that outgrew its job</h2>
+                <p class="ref-note worked-intro">
+                    A renovated floor keeps starving its VAV boxes. The main serving it is 12&nbsp;in. round, and a traverse says it&rsquo;s moving 1,200&nbsp;CFM — the seeded inputs are that duct.
+                </p>
+                <ol class="ref-note worked-list">
+                    <li>Velocity first: <code>A = π × (12 ÷ 24)² = 0.785 ft²</code>, so <code>V = 1200 ÷ 0.785 = 1529 FPM</code> — top of the mains band, loud but livable. Velocity alone doesn&rsquo;t flag the problem.</li>
+                    <li>Friction does: <code>0.26 in. w.c. per 100 ft</code> — about three times the 0.08 the duct was likely sized to. Over this 80-ft run that&rsquo;s <code>0.26 × 0.8 = 0.21 in. w.c.</code> spent on straight duct alone, before the first elbow or takeoff.</li>
+                    <li>Flip the solve to <em>Diameter</em>: at 0.08&nbsp;in/100&nbsp;ft, 1,200&nbsp;CFM wants a <strong>15.3&nbsp;in.</strong> round. Flip it to <em>Airflow</em>: a 12&nbsp;in. at 0.08 was only ever good for about <strong>626&nbsp;CFM</strong>. The renovation roughly doubled the load on a duct nobody resized.</li>
+                    <li>Nobody&rsquo;s re-ducting a finished ceiling — but the &ldquo;why is the static so high / why won&rsquo;t the boxes make flow&rdquo; argument now has a number in it, and the honest options (a parallel run at the next reno, resetting expectations on the <a href="/education/duct-static-control.html">static setpoint</a>, rebalancing to what the run can actually deliver) all start from that number instead of from blame.</li>
+                </ol>
+            </section>
+        </div>
+
+        <!-- ── Rectangular ↔ round ── -->
+        <div id="tab-rect" class="tab-pane">
+            <div class="tool-body-2col">
+
+                <section>
+                    <h2 class="ps-section-label">Input</h2>
+                    <div class="ps-row">
+                        <label class="ps-label" for="dz-r-solve">Solve for</label>
+                        <select class="ps-input" id="dz-r-solve">
+                            <option value="de">Equivalent round — from a rectangular size</option>
+                            <option value="side">Missing rectangular side — from round size + known side</option>
+                        </select>
+                    </div>
+                    <div class="ps-row" id="dz-r-row-w">
+                        <label class="ps-label" for="dz-r-w">Rectangular width (in.)</label>
+                        <input class="ps-input" type="number" id="dz-r-w" step="any" min="0" placeholder="20" value="20">
+                    </div>
+                    <div class="ps-row" id="dz-r-row-h">
+                        <label class="ps-label" for="dz-r-h">Rectangular height (in.)</label>
+                        <input class="ps-input" type="number" id="dz-r-h" step="any" min="0" placeholder="10" value="10">
+                    </div>
+                    <div class="ps-row hidden" id="dz-r-row-de">
+                        <label class="ps-label" for="dz-r-de-in">Round diameter to match (in.)</label>
+                        <input class="ps-input" type="number" id="dz-r-de-in" step="any" min="0" placeholder="15.3" value="15.3">
+                    </div>
+                    <div class="ps-row hidden" id="dz-r-row-known">
+                        <label class="ps-label" for="dz-r-known">The side you know (in.)</label>
+                        <input class="ps-input" type="number" id="dz-r-known" step="any" min="0" placeholder="10" value="10">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="dz-r-cfm">Airflow (CFM) — optional</label>
+                        <input class="ps-input" type="number" id="dz-r-cfm" step="any" min="0" placeholder="for the velocity comparison" value="1200">
+                    </div>
+                    <p class="ref-note">
+                        The conversion is Huebscher&rsquo;s equivalent diameter — the same <em>friction per foot</em> at the same airflow, which is what a friction chart needs. It is deliberately <em>not</em> an area match: corners rub, so the rectangle carries more cross-section than the round it stands in for. Add the airflow and the output shows what that does to velocity.
+                    </p>
+                </section>
+
+                <section role="status" aria-atomic="false">
+                    <h2 class="ps-section-label">Output</h2>
+                    <div class="ps-row primary" id="dz-r-row-out-de">
+                        <span class="ps-label">Equivalent round De (in.)</span>
+                        <span class="ps-value muted" id="dz-r-de">—</span>
+                    </div>
+                    <div class="ps-row primary hidden" id="dz-r-row-out-side">
+                        <span class="ps-label">Other side (in.)</span>
+                        <span class="ps-value muted" id="dz-r-side">—</span>
+                    </div>
+                    <div class="ps-row" id="dz-r-row-rect-v">
+                        <span class="ps-label">Velocity in the rectangular (FPM)</span>
+                        <span class="ps-value muted" id="dz-r-rect-v">—</span>
+                    </div>
+                    <div class="ps-row" id="dz-r-row-round-v">
+                        <span class="ps-label">Velocity in the equivalent round (FPM)</span>
+                        <span class="ps-value muted" id="dz-r-round-v">—</span>
+                    </div>
+                    <div class="btn-row">
+                        <button class="copy-btn" id="dz-r-copy">Copy De</button>
+                    </div>
+                    <div class="result-formula wrap" id="dz-r-formula"></div>
+                    <div class="failure-callout" id="dz-r-callout" hidden></div>
+                </section>
+
+            </div>
+
+            <section class="tool-body-row">
+                <h2 class="ps-section-label">Worked example — same friction, ten inches of ceiling</h2>
+                <p class="ref-note worked-intro">
+                    The friction tab said the starved run really wants a 15.3&nbsp;in. round. Above this ceiling there are 10&nbsp;inches of clear depth — fifteen inches of pipe is not happening. The seeds carry the story on.
+                </p>
+                <ol class="ref-note worked-list">
+                    <li>Flip the solve to <em>Missing rectangular side</em>: to match De&nbsp;=&nbsp;15.3&nbsp;in. with one side pinned at 10&nbsp;in., the Huebscher formula wants the other side at <strong>20.2&nbsp;in.</strong> The sheet-metal answer is 20&nbsp;×&nbsp;10 — flip back to <em>Equivalent round</em> and check it: <code>De = 1.30 × (20 × 10)^0.625 ÷ (20 + 10)^0.25 = 1.30 × 27.42 ÷ 2.34 = 15.2 in.</code> — close enough at chart precision.</li>
+                    <li>Now the gotcha the formula is built around. Equal <em>friction</em> is not equal <em>area</em>: the 20&nbsp;×&nbsp;10 gives <code>200 ÷ 144 = 1.39 ft²</code>, while a 15.2&nbsp;in. round is only <code>1.26 ft²</code> — the rectangle needs about 10&nbsp;% more cross-section for the same friction, because its corners contribute rubbing wall without contributing much flow.</li>
+                    <li>So at the same 1,200&nbsp;CFM the two run at different speeds: <code>1200 ÷ 1.39 = 863 FPM</code> in the rectangle against <code>1200 ÷ 1.26 = 952 FPM</code> in the round. Same pressure gradient per foot, slower air.</li>
+                    <li>The field consequence: never pick a rectangular size by matching <em>area</em> to the round you wanted — an area-match comes out undersized on friction. And anything read from velocity — pitot VP on a <a href="/tools/duct-traverse.html">traverse</a>, noise expectations at a takeoff — shifts when a run changes shape, even though the friction chart calls the two sizes &ldquo;equivalent.&rdquo;</li>
+                </ol>
+            </section>
+        </div>
+
+        <section class="tool-body-row">
+            <h2 class="ps-section-label">Where these numbers come from — and where they stop</h2>
+            <p class="ref-note">
+                <strong>The friction math:</strong> Altshul-Tsal — the closed-form friction-factor fit ASHRAE Fundamentals offers in place of the Colebrook equation its duct friction chart is computed from — at galvanized-duct roughness (ε&nbsp;=&nbsp;0.0003&nbsp;ft) and standard air (0.075&nbsp;lb/ft³ — sea level, ~70&nbsp;°F): <code>f′ = 0.11 × (12ε/D + 68/Re)^0.25</code>, corrected to <code>f = 0.85f′ + 0.0028</code> below 0.018, with <code>Re ≈ 8.50 × D × V</code> and <code>Δp = (12 × f × 100 ÷ D) × 0.075 × (V ÷ 1097)²</code> per 100&nbsp;ft. Sanity anchor: 12&nbsp;in. at 1,000&nbsp;FPM computes 0.12&nbsp;in. w.c./100&nbsp;ft — the point every published chart agrees on. This tool is US-native (in. w.c./100&nbsp;ft, FPM, CFM, inches) — the units every ductulator and friction chart is printed in — and the m/s readout rides along.
+            </p>
+            <p class="ref-note">
+                <strong>The sizing conventions, loosely held:</strong> low-pressure design practice clusters around 0.08–0.10&nbsp;in. w.c. per 100&nbsp;ft for supply duct, with mains landing near 1,000–1,500&nbsp;FPM and branches near 600–900&nbsp;FPM, return runs slower still. Those are noise-and-economics conventions, not physics and not code — a mechanical-room main can run harder, duct over a conference room can&rsquo;t run close — so treat them as the band where nobody argues, not as limits.
+            </p>
+            <p class="ref-note">
+                <strong>Straight galvanized duct only.</strong> This page prices the straight runs; in a real system the fittings — elbows, tees, transitions, balancing dampers — usually cost more static than the duct between them, which is why a run can compute at 0.3&nbsp;in. w.c. and measure at 1. Flex duct is worse than either: its listed friction assumes it&rsquo;s pulled fully tight, and real-world compressed flex runs several times higher — treat hard-pipe numbers as the floor for flex, never the answer.
+            </p>
+            <p class="ref-note">
+                <strong>And a sizing answer is a theory, not a command.</strong> This page is a learning aid and a second opinion — a way to check whether a duct explanation is even plausible before anyone cuts metal or moves a setpoint. Acting on it has stakes in both directions: an undersized run drives static toward the duct high-limit&rsquo;s territory, and an <em>oversized</em> one on a forward-curved fan lets the wheel ride out its curve into airflow — and amps — the motor may not have (the <a href="/tools/affinity-laws.html">affinity-laws page</a> tells that story from the speed side). The fan curve, the motor nameplate, and the high-limit do the governing.
+            </p>
+        </section>
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/tools/airflow.html', label: 'Airflow & Velocity Pressure'},
+            {href: '/tools/duct-traverse.html', label: 'Duct Traverse Calculator'},
+            {href: '/tools/airside-load.html', label: 'Airside Load Calculator'},
+            {href: '/tools/equipment-airflow.html', label: 'Equipment Airflow Check'}
+        ],
+        lessons: [
+            {href: '/education/duct-static-control.html', label: 'Duct Static Control'},
+            {href: '/education/vav-systems.html', label: 'VAV Systems'}
+        ],
+        quizzes: [
+            {href: '/practice/duct-static-control.html', label: 'Duct Static Control Quiz'},
+            {href: '/practice/vav-systems.html', label: 'VAV Systems Quiz'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/tools/">← All tools</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="/scripts/ui.js"></script>
+<script src="/scripts/duct-engine.js"></script>
+<script>
+    // switchTab(name, btn) and copyReadouts(btn, sep, ...ids) come from
+    // /scripts/ui.js; the friction and equivalence math (ductArea,
+    // ductFriction, ductDiaForFriction, ductVelForFriction,
+    // huebscherSide, plus DUCT_DIA_MIN / DUCT_DIA_MAX) comes from
+    // /scripts/duct-engine.js — classic scripts, loaded above so this
+    // IIFE reaches the globals by name. (The De direction chains
+    // displayed intermediates on the page, so huebscherDe itself is
+    // only exercised by the engine spec.) US-native (in. w.c./100 ft, FPM,
+    // CFM, inches) with an m/s ride-along — the duct-traverse posture,
+    // no units-toggle participation.
+    //
+    // Solve runs from inputs snapped to their formula-line display
+    // precision (CFM 0 dp, diameter and sides 1 dp, friction 2 dp,
+    // velocity 0 dp) and every later readout chains off displayed
+    // values — computing from digits the reader can't see is how
+    // formula rows stop reproducing.
+    (function () {
+        'use strict';
+
+        const FPM_TO_MS = 0.00508;   // 1 ft/min = 0.00508 m/s exactly
+
+        const tidy = (n, dp) => parseFloat(n.toFixed(dp)).toString();
+        const snap = (n, dp) => parseFloat(tidy(n, dp));
+
+        const el = {};
+        for (const id of ['dz-solve', 'dz-cfm', 'dz-dia', 'dz-fr', 'dz-vel',
+                          'dz-row-cfm', 'dz-row-dia', 'dz-row-fr', 'dz-row-vel',
+                          'dz-row-out-dia', 'dz-row-out-cfm', 'dz-row-out-vel',
+                          'dz-row-out-ms', 'dz-row-out-fr',
+                          'dz-out-dia', 'dz-out-cfm', 'dz-out-vel', 'dz-out-ms',
+                          'dz-out-fr', 'dz-copy', 'dz-formula', 'dz-callout',
+                          'dz-r-solve', 'dz-r-w', 'dz-r-h', 'dz-r-de-in',
+                          'dz-r-known', 'dz-r-cfm',
+                          'dz-r-row-w', 'dz-r-row-h', 'dz-r-row-de', 'dz-r-row-known',
+                          'dz-r-row-out-de', 'dz-r-row-out-side',
+                          'dz-r-row-rect-v', 'dz-r-row-round-v',
+                          'dz-r-de', 'dz-r-side', 'dz-r-rect-v', 'dz-r-round-v',
+                          'dz-r-copy', 'dz-r-formula', 'dz-r-callout']) {
+            el[id.slice(3).replace(/-/g, '_')] = document.getElementById(id);
+        }
+
+        function setValue(outEl, text, live) {
+            outEl.className = 'ps-value ' + (live ? 'live' : 'muted');
+            outEl.textContent = live ? text : '—';
+        }
+
+        // Below 0.005 the 2-dp friction display would read "0.00" —
+        // say what it means instead.
+        const frText = fr => fr < 0.005 ? '< 0.01' : tidy(fr, 2);
+
+        // ── Round duct friction ───────────────────────────────────────
+        let copyIds = ['dz-out-vel', 'dz-out-fr'];
+
+        function muteRound(msg) {
+            for (const out of [el.out_dia, el.out_cfm, el.out_vel, el.out_ms, el.out_fr]) {
+                setValue(out, '', false);
+            }
+            el.formula.textContent = '';
+            el.callout.textContent = msg;
+            el.callout.hidden = false;
+        }
+
+        function calcRound() {
+            const mode = el.solve.value;
+            el.row_cfm.classList.toggle('hidden', mode === 'cfm');
+            el.row_dia.classList.toggle('hidden', mode === 'dia' || mode === 'dia-vel');
+            el.row_fr.classList.toggle('hidden', mode === 'friction' || mode === 'dia-vel');
+            el.row_vel.classList.toggle('hidden', mode !== 'dia-vel');
+            el.row_out_dia.classList.toggle('hidden', mode === 'friction' || mode === 'cfm');
+            el.row_out_cfm.classList.toggle('hidden', mode !== 'cfm');
+            el.row_out_vel.classList.toggle('hidden', mode === 'dia-vel');
+            el.row_out_ms.classList.toggle('hidden', mode === 'dia-vel');
+            el.row_out_fr.classList.toggle('hidden', mode === 'dia' || mode === 'cfm');
+            el.row_out_fr.classList.toggle('primary', mode === 'friction');
+            el.row_out_dia.classList.toggle('primary', mode === 'dia' || mode === 'dia-vel');
+            el.row_out_cfm.classList.toggle('primary', mode === 'cfm');
+
+            const cfm = snap(parseFloat(el.cfm.value), 0);
+            const dia = snap(parseFloat(el.dia.value), 1);
+            const fr  = snap(parseFloat(el.fr.value), 2);
+            const vel = snap(parseFloat(el.vel.value), 0);
+
+            if (mode === 'friction') {
+                el.copy.textContent = 'Copy results';
+                copyIds = ['dz-out-vel', 'dz-out-fr'];
+                if (!isFinite(cfm) || !isFinite(dia)) { muteRound('This direction needs the airflow and the diameter.'); return; }
+                if (cfm <= 0) { muteRound('No airflow, no friction — enter the CFM the duct is actually moving (a traverse or a BAS trend is the usual source).'); return; }
+                if (dia < DUCT_DIA_MIN || dia > DUCT_DIA_MAX) { muteRound('Diameter is outside the 3–120 in. range this chart math is built for.'); return; }
+                const area = snap(ductArea(dia), 3);
+                const v = snap(cfm / area, 0);
+                const r = ductFriction(dia, v);
+                if (r.re < 4000) { muteRound('Re ≈ ' + tidy(r.re, 0) + ' — laminar/transitional territory, not real duct flow. The chart math assumes turbulent flow; check the CFM and the diameter.'); return; }
+                setValue(el.out_vel, tidy(v, 0) + ' FPM', true);
+                setValue(el.out_ms, tidy(v * FPM_TO_MS, 2) + ' m/s', true);
+                setValue(el.out_fr, frText(r.dp100) + ' in/100 ft', true);
+                el.formula.textContent = 'A = π × (' + tidy(dia, 1) + ' ÷ 24)² = ' + tidy(area, 3) + ' ft² · V = ' + tidy(cfm, 0) + ' ÷ ' + tidy(area, 3) + ' = ' + tidy(v, 0) + ' FPM · friction = ' + frText(r.dp100) + ' in. w.c. per 100 ft (f = ' + tidy(r.f, 3) + ')';
+            } else if (mode === 'dia') {
+                el.copy.textContent = 'Copy diameter';
+                copyIds = ['dz-out-dia'];
+                if (!isFinite(cfm) || !isFinite(fr)) { muteRound('This direction needs the airflow and a target friction rate.'); return; }
+                if (cfm <= 0) { muteRound('No airflow, nothing to size — enter the design CFM.'); return; }
+                if (fr <= 0) { muteRound('Target friction has to be positive — 0.08 in. w.c. per 100 ft is the classic starting point.'); return; }
+                const dRaw = ductDiaForFriction(cfm, fr);
+                if (!isFinite(dRaw)) { muteRound('No round duct in the 3–120 in. range lands on ' + tidy(fr, 2) + ' in/100 ft at ' + tidy(cfm, 0) + ' CFM — check both numbers.'); return; }
+                const d = snap(dRaw, 1);
+                const area = snap(ductArea(d), 3);
+                const v = snap(cfm / area, 0);
+                if (ductFriction(d, v).re < 4000) { muteRound('The solve lands in laminar/transitional territory (Re below 4000) — not real duct flow. Check the CFM and the target.'); return; }
+                setValue(el.out_dia, tidy(d, 1) + ' in.', true);
+                setValue(el.out_vel, tidy(v, 0) + ' FPM', true);
+                setValue(el.out_ms, tidy(v * FPM_TO_MS, 2) + ' m/s', true);
+                el.formula.textContent = 'D = ' + tidy(d, 1) + ' in. (bisected so ' + tidy(cfm, 0) + ' CFM lands on ' + tidy(fr, 2) + ' in/100 ft) · V = ' + tidy(cfm, 0) + ' ÷ ' + tidy(area, 3) + ' = ' + tidy(v, 0) + ' FPM';
+            } else if (mode === 'cfm') {
+                el.copy.textContent = 'Copy CFM';
+                copyIds = ['dz-out-cfm'];
+                if (!isFinite(dia) || !isFinite(fr)) { muteRound('This direction needs the diameter and a target friction rate.'); return; }
+                if (dia < DUCT_DIA_MIN || dia > DUCT_DIA_MAX) { muteRound('Diameter is outside the 3–120 in. range this chart math is built for.'); return; }
+                if (fr <= 0) { muteRound('Target friction has to be positive — 0.08 in. w.c. per 100 ft is the classic starting point.'); return; }
+                const vRaw = ductVelForFriction(dia, fr);
+                if (!isFinite(vRaw)) { muteRound('No velocity in range gets a ' + tidy(dia, 1) + ' in. duct to ' + tidy(fr, 2) + ' in/100 ft — check both numbers.'); return; }
+                const v = snap(vRaw, 0);
+                if (ductFriction(dia, v).re < 4000) { muteRound('The solve lands in laminar/transitional territory (Re below 4000) — not real duct flow. Check the diameter and the target.'); return; }
+                const area = snap(ductArea(dia), 3);
+                const q = snap(v * area, 0);
+                setValue(el.out_cfm, tidy(q, 0) + ' CFM', true);
+                setValue(el.out_vel, tidy(v, 0) + ' FPM', true);
+                setValue(el.out_ms, tidy(v * FPM_TO_MS, 2) + ' m/s', true);
+                el.formula.textContent = 'V = ' + tidy(v, 0) + ' FPM (bisected so a ' + tidy(dia, 1) + ' in. duct lands on ' + tidy(fr, 2) + ' in/100 ft) · Q = ' + tidy(v, 0) + ' × ' + tidy(area, 3) + ' = ' + tidy(q, 0) + ' CFM';
+            } else {
+                el.copy.textContent = 'Copy diameter';
+                copyIds = ['dz-out-dia'];
+                if (!isFinite(cfm) || !isFinite(vel)) { muteRound('This direction needs the airflow and a target velocity.'); return; }
+                if (cfm <= 0) { muteRound('No airflow, nothing to size — enter the design CFM.'); return; }
+                if (vel <= 0) { muteRound('Target velocity has to be positive — mains are conventionally sized near 1,000–1,500 FPM, branches near 600–900.'); return; }
+                const area = snap(cfm / vel, 3);
+                const d = snap(24 * Math.sqrt(area / Math.PI), 1);
+                if (d < DUCT_DIA_MIN || d > DUCT_DIA_MAX) { muteRound('That pairing wants a ' + tidy(d, 1) + ' in. duct — outside the 3–120 in. range this chart math is built for.'); return; }
+                const r = ductFriction(d, vel);
+                if (r.re < 4000) { muteRound('Re ≈ ' + tidy(r.re, 0) + ' — laminar/transitional territory, not real duct flow. Check the CFM and the target velocity.'); return; }
+                setValue(el.out_dia, tidy(d, 1) + ' in.', true);
+                setValue(el.out_fr, frText(r.dp100) + ' in/100 ft', true);
+                el.formula.textContent = 'A = ' + tidy(cfm, 0) + ' ÷ ' + tidy(vel, 0) + ' = ' + tidy(area, 3) + ' ft² · D = 24 × √(' + tidy(area, 3) + ' ÷ π) = ' + tidy(d, 1) + ' in. · friction = ' + frText(r.dp100) + ' in. w.c. per 100 ft';
+            }
+            el.callout.hidden = true;
+        }
+
+        // ── Rectangular ↔ round ───────────────────────────────────────
+        let rCopyId = 'dz-r-de';
+
+        function muteRect(msg) {
+            for (const out of [el.r_de, el.r_side, el.r_rect_v, el.r_round_v]) {
+                setValue(out, '', false);
+            }
+            el.r_formula.textContent = '';
+            el.r_callout.textContent = msg;
+            el.r_callout.hidden = false;
+        }
+
+        function calcRect() {
+            const mode = el.r_solve.value;
+            el.r_row_w.classList.toggle('hidden', mode === 'side');
+            el.r_row_h.classList.toggle('hidden', mode === 'side');
+            el.r_row_de.classList.toggle('hidden', mode === 'de');
+            el.r_row_known.classList.toggle('hidden', mode === 'de');
+            el.r_row_out_de.classList.toggle('hidden', mode === 'side');
+            el.r_row_out_side.classList.toggle('hidden', mode === 'de');
+            el.r_copy.textContent = mode === 'de' ? 'Copy De' : 'Copy side';
+            rCopyId = mode === 'de' ? 'dz-r-de' : 'dz-r-side';
+
+            const w = snap(parseFloat(el.r_w.value), 1);
+            const h = snap(parseFloat(el.r_h.value), 1);
+            const deIn = snap(parseFloat(el.r_de_in.value), 1);
+            const known = snap(parseFloat(el.r_known.value), 1);
+            const cfmRaw = el.r_cfm.value.trim();
+            const cfm = cfmRaw === '' ? null : snap(parseFloat(cfmRaw), 0);
+
+            let de, rectA, rectB, formula;
+            if (mode === 'de') {
+                if (!isFinite(w) || !isFinite(h)) { muteRect('Enter the rectangular width and height.'); return; }
+                if (w <= 0 || h <= 0) { muteRect('Duct sides must be greater than 0.'); return; }
+                // Chain De off displayed intermediates so the formula
+                // row reproduces by hand.
+                const p1 = snap(Math.pow(w * h, 0.625), 2);
+                const p2 = snap(Math.pow(w + h, 0.25), 2);
+                de = snap(1.30 * p1 / p2, 1);
+                rectA = w; rectB = h;
+                setValue(el.r_de, tidy(de, 1) + ' in.', true);
+                formula = 'De = 1.30 × (' + tidy(w, 1) + ' × ' + tidy(h, 1) + ')^0.625 ÷ (' + tidy(w, 1) + ' + ' + tidy(h, 1) + ')^0.25 = 1.30 × ' + tidy(p1, 2) + ' ÷ ' + tidy(p2, 2) + ' = ' + tidy(de, 1) + ' in.';
+            } else {
+                if (!isFinite(deIn) || !isFinite(known)) { muteRect('Enter the round diameter to match and the side you know.'); return; }
+                if (deIn <= 0 || known <= 0) { muteRect('Sizes must be greater than 0.'); return; }
+                const bRaw = huebscherSide(deIn, known);
+                if (!isFinite(bRaw)) { muteRect('No second side between 1 and 300 in. pairs with a ' + tidy(known, 1) + ' in. side to make De = ' + tidy(deIn, 1) + ' in. — the known side is either far too small for that round, or already past it.'); return; }
+                const b = snap(bRaw, 1);
+                const p1 = snap(Math.pow(known * b, 0.625), 2);
+                const p2 = snap(Math.pow(known + b, 0.25), 2);
+                de = snap(1.30 * p1 / p2, 1);
+                rectA = known; rectB = b;
+                setValue(el.r_side, tidy(b, 1) + ' in.', true);
+                formula = 'other side = ' + tidy(b, 1) + ' in. (bisected on the Huebscher formula) · check: De(' + tidy(known, 1) + ' × ' + tidy(b, 1) + ') = ' + tidy(de, 1) + ' in.';
+            }
+
+            let showCompare = false;
+            if (cfm !== null && isFinite(cfm) && cfm > 0) {
+                const ra = snap(rectA * rectB / 144, 2);
+                const ca = snap(ductArea(de), 2);
+                const rv = snap(cfm / ra, 0);
+                const cv = snap(cfm / ca, 0);
+                // A sub-inch duct snaps its area to 0.00 ft² and the
+                // division goes non-finite — skip the comparison rather
+                // than display a fake number (validate-and-mute).
+                if (isFinite(rv) && isFinite(cv)) {
+                    setValue(el.r_rect_v, tidy(rv, 0) + ' FPM', true);
+                    setValue(el.r_round_v, tidy(cv, 0) + ' FPM', true);
+                    formula += ' · A rect = ' + tidy(ra, 2) + ' ft² vs A round = ' + tidy(ca, 2) + ' ft² · V = ' + tidy(cfm, 0) + ' ÷ ' + tidy(ra, 2) + ' = ' + tidy(rv, 0) + ' vs ' + tidy(cfm, 0) + ' ÷ ' + tidy(ca, 2) + ' = ' + tidy(cv, 0) + ' FPM';
+                    showCompare = true;
+                }
+            }
+            if (!showCompare) {
+                setValue(el.r_rect_v, '', false);
+                setValue(el.r_round_v, '', false);
+            }
+            el.r_row_rect_v.classList.toggle('hidden', !showCompare);
+            el.r_row_round_v.classList.toggle('hidden', !showCompare);
+            el.r_formula.textContent = formula;
+
+            if (cfm !== null && !(isFinite(cfm) && cfm > 0)) {
+                el.r_callout.textContent = 'The velocity comparison needs a positive CFM — or leave it blank to skip it.';
+                el.r_callout.hidden = false;
+            } else {
+                el.r_callout.hidden = true;
+            }
+        }
+
+        // ── Wiring ────────────────────────────────────────────────────
+        document.querySelectorAll('[data-tab]').forEach(btn => {
+            btn.addEventListener('click', e => switchTab(e.currentTarget.dataset.tab, e.currentTarget));
+        });
+        el.solve.addEventListener('change', calcRound);
+        [el.cfm, el.dia, el.fr, el.vel].forEach(input => input.addEventListener('input', calcRound));
+        el.r_solve.addEventListener('change', calcRect);
+        [el.r_w, el.r_h, el.r_de_in, el.r_known, el.r_cfm].forEach(input => input.addEventListener('input', calcRect));
+        el.copy.addEventListener('click', e => copyReadouts(e.currentTarget, ' · ', ...copyIds));
+        el.r_copy.addEventListener('click', e => copyReadouts(e.currentTarget, '', rCopyId));
+
+        calcRound();
+        calcRect();
+    })();
+</script>
+{% endblock %}
