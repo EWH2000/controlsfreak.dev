@@ -1139,7 +1139,7 @@ test('tools landing — URL hash deep-links to a category on initial load', asyn
 
     // Page boots with Protocols active.
     await expect(page.locator('.filter-chip[data-category="protocols"]')).toHaveClass(/active/);
-    expect(await page.locator('.nav-card:not([hidden])').count()).toBe(6);
+    expect(await page.locator('.nav-card:not([hidden])').count()).toBe(7);
 
     // Unknown hash falls back to [All].
     await page.goto('/tools/#nonsense');

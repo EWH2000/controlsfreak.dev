@@ -80,6 +80,16 @@ Calculators, converters, and lookups — open one, get an answer.
   field-common slice: imported by script from bacnet-stack's enum and
   overlaid with the site's curated names/symbols so the two can't
   drift.
+- **BACnet Error Code Decoder** — the numbers a device sends back when
+  it refuses a request, turned into what went wrong. A mode switch
+  handles all three failure PDUs: an **Error** (error class 0–7 paired
+  with the code — unknown-property, write-access-denied), a **Reject**
+  (a malformed-request reason), or an **Abort** (a torn-down
+  transaction — segmentation, TSM timeout, APDU-too-long). Four
+  reference tables (8 classes, 225 codes, 11 reject and 12 abort
+  reasons) share one filter; every value is click-to-copy. Enums are
+  imported by script; the field-common descriptions are hand-authored
+  and were adversarially cross-checked for accuracy.
 - **Psychrometric Chart** — walk an air handler through its
   psychrometric processes on an altitude-adjustable ASHRAE IP-unit
   chart: mix outdoor and return air, then cool, heat, and humidify.
