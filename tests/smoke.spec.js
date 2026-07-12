@@ -3172,6 +3172,14 @@ test('electrical-quick-calc — four tabs solve and mute correctly', async ({ pa
     await page.fill('#eq-ohm-r', '4');
     await expect(page.locator('#eq-ohm-callout')).toBeVisible();
     await expect(page.locator('#eq-ohm-out-p')).toHaveText('—');
+    // 0/0 is distinct from an open circuit: V present + I=0 → "resistance infinite";
+    // V=0 AND I=0 → the indeterminate message, not a false "voltage present" (audit #68).
+    await page.fill('#eq-ohm-r', '');              // back to exactly two given
+    await page.fill('#eq-ohm-v', '12');
+    await page.fill('#eq-ohm-i', '0');
+    await expect(page.locator('#eq-ohm-callout')).toContainText('resistance is infinite');
+    await page.fill('#eq-ohm-v', '0');
+    await expect(page.locator('#eq-ohm-callout')).toContainText('0 V and 0 A');
 
     // Tab 2 (AC power), seeded 460 V 3φ, 30 A, PF 0.85.
     await page.click('[data-tab="ac"]');
@@ -3182,6 +3190,21 @@ test('electrical-quick-calc — four tabs solve and mute correctly', async ({ pa
     await page.fill('#eq-ac-pf', '1.5');
     await expect(page.locator('#eq-ac-callout')).toContainText('between 0 and 1');
     await expect(page.locator('#eq-ac-kva')).toHaveText('—');
+    // Fill-in-what-you-know: clear current, supply kW → line current is COMPUTED.
+    await page.fill('#eq-ac-pf', '0.85');          // restore a valid PF
+    await page.fill('#eq-ac-i-in', '');            // leave line current blank
+    await page.fill('#eq-ac-kw-in', '20.32');      // 20.32 kW ÷ (√3·460·0.85) ≈ 30 A
+    await expect(page.locator('#eq-ac-i')).toContainText('30');    // line current is COMPUTED
+    await expect(page.locator('#eq-ac-kw')).toContainText('20.32'); // entered kW echoes through (S = P/PF)
+    // Over-determined: a second magnitude → mute with a "clear the others" callout.
+    await page.fill('#eq-ac-i-in', '30');
+    await expect(page.locator('#eq-ac-callout')).toContainText('clear the others');
+    await expect(page.locator('#eq-ac-kva')).toHaveText('—');
+    // Voltage label tracks the phase: 1φ is line-to-neutral, 3φ line-to-line (audit #69).
+    await page.selectOption('#eq-ac-phase', '1');
+    await expect(page.locator('#eq-ac-vl-label')).toContainText('(L-N)');
+    await page.selectOption('#eq-ac-phase', '3');
+    await expect(page.locator('#eq-ac-vl-label')).toContainText('(L-L)');
 
     // Tab 3 (motor), seeded 10 HP, 460 V, 3φ, PF 0.88, η 0.90 → ~11.8 A.
     await page.click('[data-tab="motor"]');
@@ -3192,6 +3215,11 @@ test('electrical-quick-calc — four tabs solve and mute correctly', async ({ pa
     // A measured reading near the estimate drives the verdict pill to OK.
     await page.fill('#eq-motor-meas', '12');
     await expect(page.locator('#eq-motor-status')).toHaveClass(/ok/);
+    // Zero nameplate power mutes the FLA estimate — no 0-A estimate, no Infinity% divide.
+    await page.fill('#eq-motor-pval', '0');
+    await expect(page.locator('#eq-motor-callout')).toContainText('nameplate power');
+    await expect(page.locator('#eq-motor-fla')).toHaveText('—');
+    await expect(page.locator('#eq-motor-status')).not.toContainText('Infinity');
 
     // Tab 4 (NEMA imbalance), seeded 460/455/450 → 1.10 %, derate (warn).
     await page.click('[data-tab="imbalance"]');

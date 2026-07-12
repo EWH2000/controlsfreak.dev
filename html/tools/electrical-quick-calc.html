@@ -128,7 +128,7 @@ keywords: ohms law watts volts amps three phase kva kvar power factor motor fla 
             <div class="tool-body-2col">
 
                 <section>
-                    <h2 class="ps-section-label">Input</h2>
+                    <h2 class="ps-section-label">Input — V, PF + one of I / kW / kVA</h2>
                     <div class="ps-row">
                         <label class="ps-label" for="eq-ac-phase">Phase</label>
                         <select class="ps-input" id="eq-ac-phase">
@@ -137,7 +137,7 @@ keywords: ohms law watts volts amps three phase kva kvar power factor motor fla 
                         </select>
                     </div>
                     <div class="ps-row">
-                        <label class="ps-label" for="eq-ac-vl">Line voltage Vₗ (L-L)</label>
+                        <label class="ps-label" id="eq-ac-vl-label" for="eq-ac-vl">Line voltage Vₗ (L-L)</label>
                         <input class="ps-input" type="number" id="eq-ac-vl" step="any" min="0" placeholder="480" value="460">
                     </div>
                     <div class="ps-row">
@@ -145,19 +145,19 @@ keywords: ohms law watts volts amps three phase kva kvar power factor motor fla 
                         <input class="ps-input" type="number" id="eq-ac-pf" step="0.01" min="0" max="1" placeholder="0.85" value="0.85">
                     </div>
                     <div class="ps-row">
-                        <label class="ps-label" for="eq-ac-driver">Solve from</label>
-                        <select class="ps-input" id="eq-ac-driver">
-                            <option value="amps" selected>Line current (A)</option>
-                            <option value="kw">Real power (kW)</option>
-                            <option value="kva">Apparent power (kVA)</option>
-                        </select>
+                        <label class="ps-label" for="eq-ac-i-in">Line current Iₗ (A)</label>
+                        <input class="ps-input" type="number" id="eq-ac-i-in" step="any" min="0" placeholder="30" value="30">
                     </div>
                     <div class="ps-row">
-                        <label class="ps-label" id="eq-ac-driver-val-label" for="eq-ac-driver-val">Line current (A)</label>
-                        <input class="ps-input" type="number" id="eq-ac-driver-val" step="any" min="0" placeholder="30" value="30">
+                        <label class="ps-label" for="eq-ac-kw-in">Real power (kW)</label>
+                        <input class="ps-input" type="number" id="eq-ac-kw-in" step="any" min="0" placeholder="e.g. 20">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="eq-ac-kva-in">Apparent power (kVA)</label>
+                        <input class="ps-input" type="number" id="eq-ac-kva-in" step="any" min="0" placeholder="e.g. 24">
                     </div>
                     <p class="ref-note">
-                        Line voltage is <strong>line-to-line</strong> — 208 / 240 / 480, not 120 / 277. Three-phase carries the √3 factor; pick 1φ for a line-to-neutral branch.
+                        Enter line voltage, power factor, and <strong>exactly one</strong> of line current / kW / kVA — the tool solves the rest. Line voltage is <strong>line-to-line</strong> — 208 / 240 / 480, not 120 / 277. Three-phase carries the √3 factor; pick 1φ for a line-to-neutral branch.
                     </p>
                 </section>
 
@@ -217,6 +217,9 @@ keywords: ohms law watts volts amps three phase kva kvar power factor motor fla 
                     <li><code>P = S × 0.85 = 20.32 kW</code> (real)</li>
                     <li><code>Q = √(S² − P²) = 12.59 kVAR</code> (reactive), θ = acos&nbsp;0.85 = 31.8°</li>
                 </ol>
+                <p class="ref-note">
+                    It runs both ways: leave line current blank and enter <strong>20.32&nbsp;kW</strong> (or <strong>23.90&nbsp;kVA</strong>) to solve back to 30&nbsp;A. Enter exactly one magnitude — fill a second and the tab asks you to clear it.
+                </p>
                 <p class="ref-note">
                     Line-to-line and line-to-neutral differ by √3 (V<sub>LL</sub>&nbsp;=&nbsp;√3&nbsp;×&nbsp;V<sub>LN</sub>) — a 480&nbsp;V system reads 277&nbsp;V to neutral. Enter the L-L value here.
                 </p>
@@ -491,7 +494,12 @@ keywords: ohms law watts volts amps three phase kva kvar power factor motor fla 
 
             switch (key) {
                 case 'iv':   // V, I
-                    if (raw.i === 0) { muteOhm('Current of 0 A with a voltage present is an open circuit — resistance is infinite.'); return; }
+                    if (raw.i === 0) {
+                        muteOhm(raw.v === 0
+                            ? '0 V and 0 A together don\'t define a resistance or power — enter a non-zero value for at least one.'
+                            : 'Current of 0 A with a voltage present is an open circuit — resistance is infinite.');
+                        return;
+                    }
                     r.r = raw.v / raw.i; r.p = raw.v * raw.i;
                     formula = 'R = V ÷ I = ' + tidy(raw.v, 4) + ' ÷ ' + tidy(raw.i, 4) + ' = ' + tidy(r.r, 4) + ' Ω   ·   P = V × I = ' + tidy(raw.v, 4) + ' × ' + tidy(raw.i, 4) + ' = ' + tidy(r.p, 4) + ' W';
                     break;
@@ -548,27 +556,39 @@ keywords: ohms law watts volts amps three phase kva kvar power factor motor fla 
         }
 
         function calcAc() {
-            const phase  = el('eq-ac-phase').value;        // '1' | '3'
-            const vl     = num('eq-ac-vl');
-            const pf     = num('eq-ac-pf');
-            const driver = el('eq-ac-driver').value;       // amps | kw | kva
-            const dval   = num('eq-ac-driver-val');
+            const phase = el('eq-ac-phase').value;         // '1' | '3'
+            const vl    = num('eq-ac-vl');
+            const pf    = num('eq-ac-pf');
+            const iIn   = num('eq-ac-i-in');
+            const kwIn  = num('eq-ac-kw-in');
+            const kvaIn = num('eq-ac-kva-in');
 
-            el('eq-ac-driver-val-label').textContent =
-                driver === 'amps' ? 'Line current (A)' :
-                driver === 'kw'   ? 'Real power (kW)' : 'Apparent power (kVA)';
+            // 3φ voltage is line-to-line; a 1φ branch is line-to-neutral.
+            el('eq-ac-vl-label').textContent = phase === '3' ? 'Line voltage Vₗ (L-L)' : 'Line voltage Vₗ (L-N)';
 
-            if (!isFinite(vl) || !isFinite(pf) || !isFinite(dval)) { muteAc('Enter line voltage, power factor, and the driver value.'); return; }
+            if (!isFinite(vl) || !isFinite(pf)) { muteAc('Enter line voltage and power factor.'); return; }
             if (vl <= 0) { muteAc('Line voltage must be greater than 0.'); return; }
             if (pf <= 0 || pf > 1) { muteAc('Power factor must be between 0 and 1.'); return; }
-            if (dval < 0) { muteAc('Enter a non-negative value.'); return; }
+
+            // Fill-in-what-you-know: V + PF + exactly one of {amps, kW, kVA}.
+            const given = [
+                { k: 'i',   v: iIn },
+                { k: 'kw',  v: kwIn },
+                { k: 'kva', v: kvaIn },
+            ].filter((m) => isFinite(m.v));
+
+            if (given.length === 0) { muteAc('Enter one of line current, real power (kW), or apparent power (kVA).'); return; }
+            if (given.length > 1)   { muteAc('Enter just one of line current, kW, or kVA — clear the others.'); return; }
+
+            const { k, v } = given[0];
+            if (v < 0) { muteAc('Enter a non-negative value.'); return; }
 
             const rt = phase === '3' ? RT3 : 1;
             const rtLabel = phase === '3' ? '√3 × ' : '';
             let amps;
-            if (driver === 'amps') amps = dval;
-            else if (driver === 'kw') amps = (dval * 1000) / (rt * vl * pf);
-            else amps = (dval * 1000) / (rt * vl);          // kVA — PF-independent
+            if (k === 'i')       amps = v;
+            else if (k === 'kw') amps = (v * 1000) / (rt * vl * pf);   // pf > 0 guaranteed above
+            else                 amps = (v * 1000) / (rt * vl);        // kVA — PF-independent
 
             if (!isFinite(amps)) { muteAc('That combination is indeterminate — check the inputs.'); return; }
 
@@ -624,7 +644,7 @@ keywords: ohms law watts volts amps three phase kva kvar power factor motor fla 
             // efficiency: accept 0–1 or a percent (e.g. 90 → 0.90).
             const eff = isFinite(effRaw) ? (effRaw > 1.5 ? effRaw / 100 : effRaw) : NaN;
 
-            if (!isFinite(pval) || pval < 0) { muteMotorFla('Enter the nameplate power (HP or kW).'); return; }
+            if (!isFinite(pval) || pval <= 0) { muteMotorFla('Enter the nameplate power (HP or kW).'); return; }
             if (!isFinite(vl) || vl <= 0) { muteMotorFla('Line voltage must be greater than 0.'); return; }
             if (!isFinite(pf) || pf <= 0 || pf > 1) { muteMotorFla('Power factor must be between 0 and 1.'); return; }
             if (!isFinite(eff) || eff <= 0 || eff > 1) { muteMotorFla('Efficiency must be between 0 and 1 (or a percent, e.g. 90).'); return; }
@@ -699,8 +719,8 @@ keywords: ohms law watts volts amps three phase kva kvar power factor motor fla 
         });
 
         ['eq-ohm-v', 'eq-ohm-i', 'eq-ohm-r', 'eq-ohm-p'].forEach((id) => el(id).addEventListener('input', calcOhms));
-        ['eq-ac-vl', 'eq-ac-pf', 'eq-ac-driver-val'].forEach((id) => el(id).addEventListener('input', calcAc));
-        ['eq-ac-phase', 'eq-ac-driver'].forEach((id) => el(id).addEventListener('change', calcAc));
+        ['eq-ac-vl', 'eq-ac-pf', 'eq-ac-i-in', 'eq-ac-kw-in', 'eq-ac-kva-in'].forEach((id) => el(id).addEventListener('input', calcAc));
+        el('eq-ac-phase').addEventListener('change', calcAc);
         ['eq-motor-pval', 'eq-motor-vl', 'eq-motor-pf', 'eq-motor-eff', 'eq-motor-meas'].forEach((id) => el(id).addEventListener('input', calcMotor));
         ['eq-motor-pmode', 'eq-motor-phase'].forEach((id) => el(id).addEventListener('change', calcMotor));
         ['eq-imb-vab', 'eq-imb-vbc', 'eq-imb-vca'].forEach((id) => el(id).addEventListener('input', calcImbalance));

@@ -782,7 +782,23 @@ owner pick), every formula numerically verified before build:
 - **AC Power** — 1φ/3φ line-quantity power triangle; line voltage + PF +
   one of {amps, kW, kVA} → the rest. √3 carried full-precision; voltage
   inputs labeled line-to-line with the 208/240/480 hint (the field's #1
-  √3 mistake). No pill — deterministic algebra.
+  √3 mistake). No pill — deterministic algebra. *(fix 2026-07-11)* The
+  original UI implemented "one of {amps, kW, kVA}" as a **"Solve from"**
+  selector feeding a single shared input, defaulting to line current —
+  which read as "solve *for* line current" and, because that made current
+  a required-then-echoed input, muted every output until a current was
+  typed (so "calculate line current" appeared broken). Replaced with
+  three optional magnitude inputs (`eq-ac-i-in` / `eq-ac-kw-in` /
+  `eq-ac-kva-in`) and an exactly-one gate, mirroring the Ohm's-Law tab's
+  fill-in-what-you-know pattern — leave current blank, enter kW/kVA, and
+  it solves back to amps. The documented design ("one of the three → the
+  rest") was always the intent; only the selector implementation forced
+  the misread. Same PR folded in two cosmetic audit findings: the AC
+  voltage label is now phase-aware (`Vₗ (L-L)` for 3φ, `Vₗ (L-N)` for
+  1φ, via `eq-ac-vl-label`), and the Ohm's-Law `iv` guard distinguishes
+  a true 0/0 entry ("0 V and 0 A … don't define a resistance") from an
+  open circuit (V present, I = 0) rather than always claiming a voltage
+  is present.
 - **Motor HP / kW / FLA** — HP↔kW + an FLA *estimate*; the
   always-visible "estimate only — size off NEC 430.250/430.248, not this
   number" disclaimer is the load-bearing content. Optional measured-amps
