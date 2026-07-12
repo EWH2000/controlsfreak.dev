@@ -175,8 +175,9 @@ references symbols the shared scripts export).
 frontmatter). `<lastmod>` comes from the `gitLastmod` filter
 (`git log -1 --format=%cd --date=short`), falls back to build date.
 A new page with `canonical` is picked up automatically — but **update
-the `PAGES` array in `tests/smoke.spec.js`** (the drift test checks
-it against the built sitemap). CI uses `fetch-depth: 0` so dates
+the `PAGES` array in `tests/pages.js`** (the shared page manifest that
+`smoke.spec.js` and `responsive.spec.js` both `require`; the drift test
+checks it against the built sitemap). CI uses `fetch-depth: 0` so dates
 resolve.
 
 ### Search index & nav menus
@@ -669,9 +670,10 @@ section headers).
    The `home count pills stay in sync with the landings (drift guard)`
    test in `home-hero.spec.js` fails CI if any home pill falls out of
    sync with the `/tools/` chips or the section-landing card counts.
-4. Add the page's URL to the `PAGES` array in `tests/smoke.spec.js`
-   (the sitemap is automatic — see *Sitemap* — but the drift test
-   fails until `PAGES` is updated).
+4. Add the page's URL to the `PAGES` array in `tests/pages.js` (the
+   shared manifest `smoke.spec.js` + `responsive.spec.js` require; the
+   sitemap is automatic — see *Sitemap* — but the drift test fails
+   until `PAGES` is updated).
 5. Retire the page's `[future: …]` markers: grep
    `site-ideas-and-friction.md` for the new page's filename and
    annotate each hit `*(shipped YYYY-MM-DD)*` — nine markers went
@@ -683,8 +685,9 @@ section headers).
    how the README drifted 24 page bullets (plus the Practice counts:
    8 quizzes and 3 drills unlisted) behind by 2026-07-01.
 6. Consider bumping the home-page hero's `Latest: <name>` badge
-   to point at the new tool — `html/index.html`, the last entry
-   in `.hero-badges`. Editorial pick; skip on small revisions.
+   to point at the new tool — `html/index.html`, the
+   `<p class="hero-latest">` paragraph (~L382). Editorial pick; skip
+   on small revisions.
 7. Bump `package.json.version` when shipping something notable; the
    footer reads it via `html/_data/site.js`. A new tool is a minor
    bump (`1.X.0`); a bug fix is a patch bump (`1.X.Y`).
@@ -733,8 +736,9 @@ frontmatter and the new `.nav-card` added to
    quiz's frontmatter — the head template emits reciprocal `hasPart`
    / `isPartOf` JSON-LD off those keys. Field drills with broader
    scope (multiple paired lessons) omit both — no single parent.
-6. Add the new URL to `PAGES` in `tests/smoke.spec.js`; consider
-   a behavioral spot-check for any new format the engine hasn't
+6. Add the new URL to `PAGES` in `tests/pages.js` (the shared manifest
+   `smoke.spec.js` + `responsive.spec.js` require); consider a
+   behavioral spot-check for any new format the engine hasn't
    exercised yet.
 7. Add the quiz/drill to `README.md`'s Practice groups and bump its
    count sentence (same reason as tools step 5b — the tour is
