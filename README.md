@@ -20,6 +20,12 @@ leads with a quick-tools strip and a live AHU supply-air loop you can
 **drive** — drag the setpoint and watch it chase, then open the full
 PID Tuner to tune one yourself.
 
+The **BACnet reference hub** at `/bacnet/` is a topic pillar — one page
+that gathers the whole BACnet cluster (the five lessons in a start-here
+reading order, plus the six decoders and reference tools) so the deepest
+BACnet content is reachable from a single entry point. Every BACnet page
+links back to it via the "Part of" slot in the related-links block.
+
 ### Tools
 
 Calculators, converters, and lookups — open one, get an answer.

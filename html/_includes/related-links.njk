@@ -4,9 +4,10 @@
    pooling at the section landings. Pure SEO + UX, no behavior.
 
    Accepts an `opts` object with up to four optional arrays of
-   {href, label} pairs:
+   {href, label} pairs, plus an optional single `hub` {href, label}:
 
        {{ relatedLinks({
+           hub:        {href: '/bacnet/', label: 'The BACnet reference hub'},
            tools:      [{href: '/tools/foo.html',      label: 'Foo'}],
            simulators: [{href: '/simulators/bar.html', label: 'Bar'}],
            lessons:    [{href: '/education/baz.html',  label: 'Baz'}],
@@ -15,6 +16,9 @@
 
    Rendering rules:
    - Each non-empty group becomes a labelled column.
+   - `hub` (a single link, not an array) renders first as a "Part of"
+     column — the spoke-to-pillar link for a topic cluster (e.g. every
+     BACnet page points back at /bacnet/). Reusable for future clusters.
    - The whole block renders nothing if every group is empty.
    - Only anchor pages that actually exist today (per the CLAUDE.md
      "Forward-link convention") — don't add href entries to pages that
@@ -24,12 +28,21 @@
    in html/styles.css under "RELATED LINKS". #}
 
 {% macro relatedLinks(opts) %}
+    {% set hasHub = opts.hub and opts.hub.href %}
     {% set hasTools = opts.tools and opts.tools.length %}
     {% set hasSims = opts.simulators and opts.simulators.length %}
     {% set hasLessons = opts.lessons and opts.lessons.length %}
     {% set hasQuizzes = opts.quizzes and opts.quizzes.length %}
-    {% if hasTools or hasSims or hasLessons or hasQuizzes %}
+    {% if hasHub or hasTools or hasSims or hasLessons or hasQuizzes %}
     <aside class="related-links" aria-label="Related">
+        {% if hasHub %}
+        <div class="related-group related-group-hub">
+            <h2 class="related-label">Part of</h2>
+            <ul>
+                <li><a href="{{ opts.hub.href }}" rel="related">{{ opts.hub.label }}</a></li>
+            </ul>
+        </div>
+        {% endif %}
         {% if hasTools %}
         <div class="related-group">
             <h2 class="related-label">Related tools</h2>

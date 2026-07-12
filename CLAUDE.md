@@ -49,8 +49,11 @@ findings from the recurring content-accuracy audits.
     `desc`, `pills[]`, optional `category`.
   - `related-links.njk` — `relatedLinks()` macro for end-of-page
     cross-links. Takes up to four optional groups: `tools`,
-    `simulators`, `lessons`, `quizzes` — each `[{href, label}]`.
-    Per the forward-link convention, only link pages that exist.
+    `simulators`, `lessons`, `quizzes` — each `[{href, label}]` —
+    plus an optional single `hub` `{href, label}` that renders first
+    as a "Part of" column (the spoke→pillar link for a topic cluster;
+    every BACnet page points back at `/bacnet/` this way). Per the
+    forward-link convention, only link pages that exist.
 - **Directory data:** `html/html.11tydata.js` overrides 11ty's
   pretty-URL permalink so `signal-scaling.html` lands at
   `_site/tools/signal-scaling.html`. Load-bearing for the

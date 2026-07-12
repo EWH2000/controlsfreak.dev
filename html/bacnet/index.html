@@ -1,0 +1,192 @@
+---
+title: BACnet — Field Reference, Tools & Lessons — controlsfreak.dev
+description: BACnet field reference — lessons on the object model, services, networking, and MS/TP, plus tools that decode the units, errors, and objects a device reports.
+canonical: https://controlsfreak.dev/bacnet/
+keywords: bacnet reference hub tools lessons object model services bibbs mstp networking priority array units error codes vendor id ashrae 135 iso 16484-5 who-is i-am
+---
+{% extends "layouts/page.njk" %}
+{% from "nav-card.njk" import navCard %}
+
+{% block head %}
+    <style>
+        /* /bacnet/ topic-hub landing. Reuses .landing-intro + .card-grid +
+           navCard chrome; only the group / sub-group headings and the
+           reading-path line are page-local. Heading scale mirrors
+           practice/index.html's .practice-section-heading. */
+        .bhub-group {
+            font-family: var(--mono);
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-bright);
+            margin: 2.4rem 0 0.35rem;
+        }
+        .bhub-group-intro {
+            font-size: 0.94rem;
+            line-height: 1.7;
+            color: var(--text-dim);
+            margin: 0 0 1.1rem;
+            max-width: 56rem;
+        }
+        .bhub-sub {
+            font-family: var(--mono);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+            color: var(--accent);
+            margin: 1.5rem 0 0.65rem;
+        }
+        .bhub-path {
+            font-family: var(--mono);
+            font-size: 0.9rem;
+            line-height: 1.95;
+            margin: 0 0 1.4rem;
+        }
+        .bhub-path a { color: var(--accent); text-decoration: none; }
+        .bhub-path a:hover { color: var(--text-bright); }
+        .bhub-path .bhub-step { color: var(--text-dim); }
+        .bhub-path .bhub-arrow { color: var(--text-dim); margin: 0 0.35rem; }
+    </style>
+{% endblock %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <h1 class="section-label">BACnet</h1>
+        <div class="section-line"></div>
+    </div>
+
+    <p class="landing-intro">
+        BACnet — Building Automation and Control Networks — is the open protocol most of the building-controls world speaks. Standardized as ASHRAE 135 (and, internationally, ISO 16484-5), it models every sensor, setpoint, and command as a <strong>self-describing object</strong>: a point carries its own name, units, and value, so a workstation can browse a controller it has never seen and read what each point is. That object model, the services that act on it, and the networks that carry them are what these pages cover.
+    </p>
+
+    <p class="landing-intro">
+        New to it? Work through the five lessons in order — they build from the object model up to the wire and out across the network. Already have a device on the bench? Jump to the tools: paste the number a controller reported and get its meaning. Everything here is open, needs no login, and tracks nothing.
+    </p>
+
+    <h2 class="bhub-group">Start here — the lessons, in order</h2>
+    <p class="bhub-path">
+        <span class="bhub-step">1</span> <a href="/education/bacnet-basics.html">Basics</a>
+        <span class="bhub-arrow">→</span>
+        <span class="bhub-step">2</span> <a href="/education/bacnet-services.html">Services</a>
+        <span class="bhub-arrow">→</span>
+        <span class="bhub-step">3</span> <a href="/education/bacnet-networking.html">Networking</a>
+        <span class="bhub-arrow">→</span>
+        <span class="bhub-step">4</span> <a href="/education/bacnet-mstp.html">MS/TP</a>
+        <span class="bhub-arrow">→</span>
+        <span class="bhub-step">5</span> <a href="/education/bacnet-vs-modbus.html">vs Modbus</a>
+    </p>
+
+    <div class="card-grid">
+        {{ navCard({
+            section:    'education',
+            href:       '/education/bacnet-basics.html',
+            titleShort: 'BACnet Basics',
+            titleFull:  'BACnet Basics',
+            desc:       'BACnet on the wire — the self-describing object model, the services that read and write properties, the priority array, and Who-Is / I-Am discovery.',
+            pills:      ['Step 1', 'Object Model', 'Priority Array', 'Who-Is / I-Am']
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/education/bacnet-services.html',
+            titleShort: 'BACnet Services',
+            titleFull:  'BACnet Services',
+            desc:       'The verbs of BACnet — confirmed vs unconfirmed, the service families, and BIBBs and device profiles that say which services a device actually supports.',
+            pills:      ['Step 2', 'Services', 'BIBBs', 'Device Profiles']
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/education/bacnet-networking.html',
+            titleShort: 'BACnet Networking',
+            titleFull:  'BACnet Networking',
+            desc:       'Networking — the three layers of addressing, the BVLL/NPDU/APDU frame, BBMDs and Foreign Device Registration, and reading the EBO hex-blob device address.',
+            pills:      ['Step 3', '3 Addr Layers', 'BVLL / NPDU / APDU', 'BBMD / FDR']
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/education/bacnet-mstp.html',
+            titleShort: 'BACnet MS/TP',
+            titleFull:  'BACnet MS/TP',
+            desc:       'Why devices fall off an MS/TP trunk — the token ring and Max_Master, MAC address vs device instance, termination / biasing / polarity, and a symptom-to-layer table.',
+            pills:      ['Step 4', 'Token Ring', 'Max_Master', 'Termination']
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/education/bacnet-vs-modbus.html',
+            titleShort: 'BACnet vs Modbus',
+            titleFull:  'BACnet vs Modbus',
+            desc:       'Two protocols side by side — self-describing objects versus raw registers, discovery, COV versus polling, priority versus last-write, and where a gateway bridges them.',
+            pills:      ['Step 5', 'Objects vs Registers', 'Discovery', 'Gateways']
+        }) }}
+    </div>
+
+    <h2 class="bhub-group">The tools</h2>
+    <p class="bhub-group-intro">
+        Six field utilities — each one a table or resolver that turns a number a device reported into something you can read. No login, nothing to install.
+    </p>
+
+    <h3 class="bhub-sub">Decoders — a device reported a number; what is it?</h3>
+    <div class="card-grid">
+        {{ navCard({
+            section:    'tools',
+            href:       '/tools/bacnet-units.html',
+            titleShort: 'BACnet Units',
+            titleFull:  'BACnet Engineering Units Decoder',
+            desc:       'The full BACnet Units enumeration (property 117) as one filterable table — paste the number a point reports for its units and get the name, or filter all 255 standard values by number, name, or symbol.',
+            pills:      ['Property 117', 'Units Enum', 'Decode']
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/tools/bacnet-error-codes.html',
+            titleShort: 'BACnet Errors',
+            titleFull:  'BACnet Error Code Decoder',
+            desc:       'Decode the class + code a device returns when it refuses a request, plus reject and abort reasons — what unknown-property, write-access-denied, or an APDU-too-long abort actually means, all searchable.',
+            pills:      ['Error / Reject / Abort', 'Class + Code', 'Decode']
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/tools/bacnet-vendor-ids.html',
+            titleShort: 'BACnet Vendor IDs',
+            titleFull:  'BACnet Vendor ID Lookup',
+            desc:       'The full ASHRAE-assigned vendor ID registry as one searchable table — decode the Vendor_Identifier a device reports in its I-Am, or filter 1,600+ manufacturers by name.',
+            pills:      ['Vendor_Identifier', 'Property 120', 'Registry']
+        }) }}
+    </div>
+
+    <h3 class="bhub-sub">Addresses &amp; commands</h3>
+    <div class="card-grid">
+        {{ navCard({
+            section:    'tools',
+            href:       '/tools/bacnet-ip-converter.html',
+            titleShort: 'BACnet/IP Hex',
+            titleFull:  'BACnet/IP Hex Converter',
+            desc:       'The hex address strings EBO shows for BACnet/IP devices ↔ dotted-decimal IP and UDP port, both directions, plus an Object ID tab that packs and unpacks the 10-bit type and 22-bit instance.',
+            pills:      ['BACnet/IP', 'UDP 47808', 'Hex ↔ Dec']
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/tools/bacnet-priority.html',
+            titleShort: 'BACnet Priority',
+            titleFull:  'BACnet Priority Array',
+            desc:       'Set a value or NULL in any of the 16 command slots and watch Present_Value resolve to the lowest non-null slot — the priority stack, Relinquish_Default, and why writing NULL releases an override.',
+            pills:      ['Priority_Array', 'Present_Value', 'Override']
+        }) }}
+    </div>
+
+    <h3 class="bhub-sub">Reference — the object model</h3>
+    <div class="card-grid">
+        {{ navCard({
+            section:    'tools',
+            href:       '/tools/bacnet-objects.html',
+            titleShort: 'BACnet Objects',
+            titleFull:  'BACnet Object Reference',
+            desc:       'Object types, property identifiers, and the engineering-units enumeration, filterable by name or number — decode object type 1 and property 85 without opening the standard.',
+            pills:      ['Object Types', 'Property IDs', 'Eng. Units']
+        }) }}
+    </div>
+
+    <a class="back-link" href="/education/">← Back to Education</a>
+
+</main>
+{% endblock %}

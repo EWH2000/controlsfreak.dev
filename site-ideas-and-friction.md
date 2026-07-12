@@ -70,7 +70,7 @@ renderer), plus a data-file schema for scenarios. Build **after** the
 engine, one scenario, the existing practice-landing card shape; no
 scoring leaderboards (the quiz plan's hard-nos carry over).
 
-### BACnet buildout — the flagship subsection *(opened 2026-07-07, in progress)*
+### BACnet buildout — the flagship subsection *(opened 2026-07-07, completed 2026-07-12 — all five pages + the pillar shipped)*
 
 The topic-cluster play from the `seo-growth-plan-2026-07` analysis,
 ported here from a since-deleted GitHub issue (#294 — the repo's
@@ -171,13 +171,32 @@ Shipped so far:
   forward-link it). *(shipped 2026-07-12, PR 8 — lesson page, `.bac-svg`
   reused, no page CSS)*.
 
-Remaining:
+- **Mini-hub / "start here" pillar** — `html/bacnet/index.html`, served
+  at `/bacnet/`, the buildout capstone. Owner picked the pillar-page
+  form (over a nav sub-grouping or cross-link-only) 2026-07-12. A
+  topic-cluster hub-and-spoke landing: a "what BACnet is" lead (ASHRAE
+  135 / self-describing object model), a numbered **start-here reading
+  path** through the five lessons (Basics → Services → Networking →
+  MS/TP → vs Modbus, each a `navCard` with a Step-N pill), and the six
+  tools grouped by job (Decoders / Addresses &amp; commands / Reference).
+  New page archetype — a cross-section landing with **no `nav`
+  frontmatter** (so it sits in no nav dropdown and lights no `.active`;
+  routes via the same `html.11tydata.js` permalink as `/tools/`, and the
+  breadcrumb JSON-LD falls back to a flat Home → title). **Spokes link
+  back:** a new optional `hub:` slot on the `relatedLinks` macro renders
+  a "Part of" column, added to all 11 BACnet pages — the pillar's
+  inbound-link structure. Home entry via the (unguarded) `hero-latest`
+  badge, repointed from bacnet-priority to `/bacnet/`. *(shipped
+  2026-07-12, PR 9 — closes the BACnet buildout)*.
 
-- **Mini-hub / "start here" decision** — the buildout capstone, now
-  that all five content pages have landed (cluster = 6 tools + 4
-  lessons + this comparison). Revisit whether the cluster needs its own
-  nav grouping, a `/bacnet/` start-here landing, or just curated
-  cross-links.
+**BACnet buildout — COMPLETE (2026-07-12).** All five content pages +
+the pillar shipped across PRs 5–9 (units decoder, error decoder,
+priority-array resolver, Services/BIBBs lesson, BACnet vs Modbus, and
+the `/bacnet/` hub). Cluster now 11 pages — 6 tools + 5 lessons — under
+one pillar, every page cross-linked and every spoke pointing back. Next
+BACnet work (BACnet/SC, deeper alarm/event, segmentation) is fresh
+scope, not part of this arc; re-pull GSC mid-Aug 2026 (per
+`seo-growth-plan-2026-07`) to see what the cluster earned.
 
 ### Forced-air buildout — the air-side chapter *(opened 2026-07-09, completed 2026-07-11 — all six shipped)*
 
