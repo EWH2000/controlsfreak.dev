@@ -4549,7 +4549,7 @@ to fix cosmetic clipping that only exists on 320-class devices.
 Revisit trigger: Turnstile ships a flexible-width mode, or the form
 gains any other reason for a phone-specific variant.
 
-### 148. Home Browse-card pill counts are a fourth hand-maintained count surface with no guard *(open — 2026-07-10)*
+### 148. Home Browse-card pill counts are a fourth hand-maintained count surface with no guard *(addressed 2026-07-12)*
 
 The home page's Browse nav-cards carry hardcoded totals in their
 pills (`html/index.html` ~lines 528/544/552: `'N Tools'`,
@@ -4563,6 +4563,16 @@ count sentences, home pills). Options: add the home pills to the
 CLAUDE.md checklists, or extend the existing card-count test cluster
 (smoke + home-hero duplicate assertions) with a home-pill assertion
 derived from the landing card counts so drift fails CI.
+
+**Addressed 2026-07-12** (PR B, with #150): did **both** options. The
+`home count pills stay in sync with the landings (drift guard)` test in
+`home-hero.spec.js` derives the authoritative counts at runtime — the
+`/tools/` filter chips (each cross-checked against the cards it filters
+to) for per-category totals and each landing's `.nav-card` count for the
+Browse totals — and asserts every home pill matches, so drift now fails
+CI. CLAUDE.md "Adding a new tool" gained step 3b pointing at the home
+count surfaces + this guard. The Browse pills were already accurate; the
+guard locks them.
 
 ### 149. CLAUDE.md still points the PAGES manifest at tests/smoke.spec.js *(addressed 2026-07-12)*
 
@@ -4587,7 +4597,7 @@ Closes the badge half of this entry jointly with #153 (the standalone
 `.hero-badges` version). (The other `PAGES` mention — the search-index
 section — names no file, so it needed no change.)
 
-### 150. Home "Tools by Category" per-category pills are a fifth unguarded count surface — two already stale *(open — 2026-07-11)*
+### 150. Home "Tools by Category" per-category pills are a fifth unguarded count surface — two already stale *(addressed 2026-07-12)*
 
 The home page's Tools-by-Category grid (`html/index.html` ~L481–514)
 carries per-category tool counts in its pills: Protocols says
@@ -4600,6 +4610,18 @@ and the grid shows only four of the six categories (no Airflow or
 Electrical card) — possibly a deliberate curation, possibly more
 drift; decide which when truing it up. Caught (pre-existing, not
 introduced) during the airside-load ship's count-surface sweep.
+
+**Addressed 2026-07-12** (PR B, with #148). Owner decision: **show all
+six categories**. Trued up the three stale pills (HVAC 7→8 — the "7
+correct" claim above had itself gone stale once coil-freeze-risk
+shipped; Protocols 4→5; Hydronics 2→4) and their name-listing `desc`s
+(added coil freeze risk / BACnet vendor ID / valve authority + waterside
+load), then added **Airflow (6)** and **Electrical (3)** category cards
+so the home grid mirrors the `/tools/` chip order (HVAC · Protocols ·
+Signals · Airflow · Electrical · Hydronics). The drift guard added for
+#148 covers these per-category pills too — it asserts each home category
+pill equals its `/tools/` chip count and that every `/tools/` category
+has a home card.
 
 ### 151. worker.spec.js's `loadWorker()` races itself across parallel Playwright workers *(addressed 2026-07-12)*
 

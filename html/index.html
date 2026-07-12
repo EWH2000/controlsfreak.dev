@@ -484,16 +484,16 @@ nav: home
             href:       '/tools/#hvac',
             titleShort: 'HVAC',
             titleFull:  'HVAC tools →',
-            desc:       'Psychrometric chart, economizer ratio, air mixing, coil sizing, dew point, refrigerant P-T, and power / energy conversion — the airside, refrigerant, and unit-conversion math on one filtered view.',
-            pills:      ['Psychrometrics', 'Coils', 'Economizer', '7 tools']
+            desc:       'Psychrometric chart, economizer ratio, air mixing, coil sizing, coil freeze risk, dew point, refrigerant P-T, and power / energy conversion — the airside, refrigerant, and unit-conversion math on one filtered view.',
+            pills:      ['Psychrometrics', 'Coils', 'Economizer', '8 tools']
         }) }}
         {{ navCard({
             section:    'tools',
             href:       '/tools/#protocols',
             titleShort: 'Protocols',
             titleFull:  'Protocol tools →',
-            desc:       'Modbus register decoding and function codes, BACnet/IP hex addressing, and the BACnet object reference — the bus-level conversions you hit mid-integration.',
-            pills:      ['Modbus', 'BACnet', '4 tools']
+            desc:       'Modbus register decoding and function codes, BACnet/IP hex addressing, the BACnet object reference, and vendor-ID lookup — the bus-level conversions you hit mid-integration.',
+            pills:      ['Modbus', 'BACnet', '5 tools']
         }) }}
         {{ navCard({
             section:    'tools',
@@ -505,11 +505,27 @@ nav: home
         }) }}
         {{ navCard({
             section:    'tools',
+            href:       '/tools/#airflow',
+            titleShort: 'Airflow',
+            titleFull:  'Airflow tools →',
+            desc:       'Velocity pressure, duct traverse, airside load, equipment airflow check, minimum outdoor air, and duct sizing — measuring, checking, and sizing the air an air handler actually moves.',
+            pills:      ['Velocity Pressure', 'Ductwork', '6 tools']
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/tools/#electrical',
+            titleShort: 'Electrical',
+            titleFull:  'Electrical tools →',
+            desc:       'Control-transformer VA sizing, wire-run voltage drop, and a field quick-calc for Ohm\'s-law and power checks — the control-power and wiring math for panel work.',
+            pills:      ['Transformers', 'Voltage Drop', '3 tools']
+        }) }}
+        {{ navCard({
+            section:    'tools',
             href:       '/tools/#hydronics',
             titleShort: 'Hydronics',
             titleFull:  'Hydronic tools →',
-            desc:       'Valve Cv sizing and pump / fan affinity laws — sizing the wet side and predicting what speed changes do to flow, head, and power.',
-            pills:      ['Valves', 'Pumps', '2 tools']
+            desc:       'Valve Cv sizing, valve authority, waterside load, and pump / fan affinity laws — sizing the wet side and predicting what speed changes do to flow, head, and power.',
+            pills:      ['Valves', 'Pumps', '4 tools']
         }) }}
     </div>
 
