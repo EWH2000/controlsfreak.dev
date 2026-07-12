@@ -662,6 +662,13 @@ section headers).
    sources — keep them equal). Bump the All chip count and add a
    per-category chip if the new tool opens a category not already
    represented.
+3b. True up the **home page count surfaces** (`html/index.html`): the
+   Browse-card `N Tools` pill, and — under *Tools by Category* — that
+   category card's `N tools` pill + its name-listing `desc` (add a new
+   category card if the tool is the first in a category not yet shown).
+   The `home count pills stay in sync with the landings (drift guard)`
+   test in `home-hero.spec.js` fails CI if any home pill falls out of
+   sync with the `/tools/` chips or the section-landing card counts.
 4. Add the page's URL to the `PAGES` array in `tests/smoke.spec.js`
    (the sitemap is automatic — see *Sitemap* — but the drift test
    fails until `PAGES` is updated).
