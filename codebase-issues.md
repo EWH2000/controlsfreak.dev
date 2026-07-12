@@ -4512,7 +4512,7 @@ lessons group.
 cluster wiring was already that PR's topic): BACnet MS/TP added to
 controller-wiring's relatedLinks lessons group, closing the loop.
 
-### 145. Stale "awaiting triage" header on the closed ux-personas findings doc *(open — 2026-07-08)*
+### 145. Stale "awaiting triage" header on the closed ux-personas findings doc *(addressed 2026-07-12)*
 
 `docs/audits/2026-06-ux-personas/findings.md` still opens with
 "Master findings document — awaiting triage" and a pending-looking
@@ -4524,6 +4524,14 @@ for an "Archived — superseded by FIX-PROGRESS.md's DISPOSITION block"
 banner like the other archived cycles carry. Caught during the
 2026-07-08 open-items sweep; off-topic for the vendor-ID branch, so
 it logs here.
+
+**Addressed 2026-07-12** (PR A of the backlog burn-down): the header
+blockquote now reads "Archived 2026-07-12 … the sibling
+`FIX-PROGRESS.md` DISPOSITION block is the durable record (86/86
+dispositioned, campaign closed 2026-07-01, `main` at v3.23.0)",
+mirroring the `docs/audits/2026-05-ux/findings.md` archived banner. The
+Method / Personas context is kept as the durable record; only the
+triage-queue framing was swapped.
 
 ### 146. contact.html Turnstile clips ~14px at 320-class viewports *(accepted 2026-07-09)*
 
@@ -4556,7 +4564,7 @@ CLAUDE.md checklists, or extend the existing card-count test cluster
 (smoke + home-hero duplicate assertions) with a home-pill assertion
 derived from the landing card counts so drift fails CI.
 
-### 149. CLAUDE.md still points the PAGES manifest at tests/smoke.spec.js *(open — 2026-07-11)*
+### 149. CLAUDE.md still points the PAGES manifest at tests/smoke.spec.js *(addressed 2026-07-12)*
 
 CLAUDE.md's *Sitemap* section and both "Adding a new tool / quiz"
 checklists say to add new pages to "the `PAGES` array in
@@ -4570,6 +4578,14 @@ the Latest badge at `.hero-badges`, a class that no longer exists —
 the badge lives in the `.hero-latest` paragraph (`html/index.html`
 ~L382). One-line doc fix at each mention; bundle into the next
 CLAUDE.md-touching PR.
+
+**Addressed 2026-07-12** (PR A): the three PAGES pointers (CLAUDE.md
+*Sitemap* + both checklists) now say `tests/pages.js` and note it is
+shared by `smoke.spec.js` + `responsive.spec.js`. The step-6 hero
+pointer now reads "the `<p class="hero-latest">` paragraph (~L382)".
+Closes the badge half of this entry jointly with #153 (the standalone
+`.hero-badges` version). (The other `PAGES` mention — the search-index
+section — names no file, so it needed no change.)
 
 ### 150. Home "Tools by Category" per-category pills are a fifth unguarded count surface — two already stale *(open — 2026-07-11)*
 
@@ -4626,7 +4642,7 @@ the next units-toggle tool should trigger the extraction rather than
 land copy #9. Caught while building coil-freeze-risk from the
 waterside-load template.
 
-### 153. CLAUDE.md's `Latest:` badge pointer says `.hero-badges`; the badge lives in `p.hero-latest` *(open — 2026-07-11)*
+### 153. CLAUDE.md's `Latest:` badge pointer says `.hero-badges`; the badge lives in `p.hero-latest` *(addressed 2026-07-12)*
 
 *Adding a new tool* step 6 says the hero's `Latest: <name>` badge is
 "the last entry in `.hero-badges`" — but `html/index.html` renders it
@@ -4635,6 +4651,10 @@ someone greps `.hero-badges` to find the badge and edits the wrong
 element. One-line CLAUDE.md fix; batch with the next docs sweep.
 Caught by the disclaimer-sweep recon while mapping home-page count
 surfaces.
+
+**Addressed 2026-07-12** (PR A): fixed jointly with #149 — CLAUDE.md
+step 6 now points at the `<p class="hero-latest">` paragraph (~L382)
+instead of `.hero-badges`.
 
 ### Deferred / Won't fix (with revisit trigger)
 
