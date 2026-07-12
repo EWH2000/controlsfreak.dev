@@ -86,8 +86,8 @@ keywords: pt chart r22 r410a r134a r407c psig kpag saturation glide superheat su
                     <div class="ps-row" role="group" aria-labelledby="rf-pt-by-label">
                         <span class="ps-label" id="rf-pt-by-label">Look up by</span>
                         <div class="btn-row">
-                            <button class="copy-btn active" id="rf-pt-by-p" type="button">Pressure</button>
-                            <button class="copy-btn"        id="rf-pt-by-t" type="button">Temperature</button>
+                            <button class="copy-btn active" id="rf-pt-by-p" type="button" aria-pressed="true">Pressure</button>
+                            <button class="copy-btn"        id="rf-pt-by-t" type="button" aria-pressed="false">Temperature</button>
                         </div>
                     </div>
 
@@ -168,8 +168,8 @@ keywords: pt chart r22 r410a r134a r407c psig kpag saturation glide superheat su
                     <div class="ps-row" role="group" aria-labelledby="rf-sc-line-label">
                         <span class="ps-label" id="rf-sc-line-label">Line</span>
                         <div class="btn-row">
-                            <button class="copy-btn active" id="rf-sc-suction" type="button">Suction</button>
-                            <button class="copy-btn"        id="rf-sc-liquid"  type="button">Liquid</button>
+                            <button class="copy-btn active" id="rf-sc-suction" type="button" aria-pressed="true">Suction</button>
+                            <button class="copy-btn"        id="rf-sc-liquid"  type="button" aria-pressed="false">Liquid</button>
                         </div>
                     </div>
 
@@ -533,7 +533,11 @@ keywords: pt chart r22 r410a r134a r407c psig kpag saturation glide superheat su
         // ── Toggles ───────────────────────────────────────────────────
         function setPtBy(mode, btn) {
             ptBy = mode;
-            btn.closest('.btn-row').querySelectorAll('.copy-btn').forEach(b => b.classList.toggle('active', b === btn));
+            btn.closest('.btn-row').querySelectorAll('.copy-btn').forEach(b => {
+                const on = b === btn;
+                b.classList.toggle('active', on);
+                b.setAttribute('aria-pressed', on ? 'true' : 'false');
+            });
             // Hide the inactive lookup input entirely (label + field) rather
             // than disabling it with a stale value showing — a greyed input
             // still reading "40" in pressure mode read as a decoy (T-008).
@@ -545,7 +549,11 @@ keywords: pt chart r22 r410a r134a r407c psig kpag saturation glide superheat su
         }
         function setScLine(line, btn) {
             scLine = line;
-            btn.closest('.btn-row').querySelectorAll('.copy-btn').forEach(b => b.classList.toggle('active', b === btn));
+            btn.closest('.btn-row').querySelectorAll('.copy-btn').forEach(b => {
+                const on = b === btn;
+                b.classList.toggle('active', on);
+                b.setAttribute('aria-pressed', on ? 'true' : 'false');
+            });
             // Dynamic copy label — suction line gives superheat, liquid line gives subcooling.
             document.getElementById('rf-sc-copy').textContent = line === 'suction' ? 'Copy superheat' : 'Copy subcooling';
             calcSc();

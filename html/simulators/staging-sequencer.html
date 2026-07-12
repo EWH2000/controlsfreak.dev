@@ -235,9 +235,9 @@ keywords: lead lag rotation runtime stage up down chiller boiler pump
                 <div class="field" role="group" aria-labelledby="stg-count-lbl">
                     <span id="stg-count-lbl" class="field-label">Units in plant</span>
                     <div class="btn-row">
-                        <button type="button" class="copy-btn"        id="stg-count-2" data-count="2">2</button>
-                        <button type="button" class="copy-btn active" id="stg-count-3" data-count="3">3</button>
-                        <button type="button" class="copy-btn"        id="stg-count-4" data-count="4">4</button>
+                        <button type="button" class="copy-btn"        id="stg-count-2" data-count="2" aria-pressed="false">2</button>
+                        <button type="button" class="copy-btn active" id="stg-count-3" data-count="3" aria-pressed="true">3</button>
+                        <button type="button" class="copy-btn"        id="stg-count-4" data-count="4" aria-pressed="false">4</button>
                     </div>
                 </div>
                 <div class="field">
@@ -991,8 +991,12 @@ keywords: lead lag rotation runtime stage up down chiller boiler pump
             // unit-count buttons
             document.querySelectorAll('[data-count]').forEach(btn => {
                 btn.addEventListener('click', e => {
-                    document.querySelectorAll('[data-count]').forEach(b => b.classList.remove('active'));
+                    document.querySelectorAll('[data-count]').forEach(b => {
+                        b.classList.remove('active');
+                        b.setAttribute('aria-pressed', 'false');
+                    });
                     e.currentTarget.classList.add('active');
+                    e.currentTarget.setAttribute('aria-pressed', 'true');
                     cfg.N = parseInt(e.currentTarget.dataset.count, 10);
                     resetPlant();
                 });

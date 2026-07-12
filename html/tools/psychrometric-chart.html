@@ -250,8 +250,8 @@ keywords: humidity enthalpy wet bulb dew point dewpoint grains mixing coil AHU O
                 <div class="ps-row" role="group" aria-labelledby="psy-range-label">
                     <span class="ps-label" id="psy-range-label">Chart range</span>
                     <div class="btn-row">
-                        <button class="copy-btn active" id="psy-range-standard" data-range="standard">Standard</button>
-                        <button class="copy-btn"        id="psy-range-cold"     data-range="cold">Cold</button>
+                        <button class="copy-btn active" id="psy-range-standard" data-range="standard" aria-pressed="true">Standard</button>
+                        <button class="copy-btn"        id="psy-range-cold"     data-range="cold" aria-pressed="false">Cold</button>
                     </div>
                 </div>
                 <div class="ps-row">
@@ -1574,7 +1574,9 @@ keywords: humidity enthalpy wet bulb dew point dewpoint grains mixing coil AHU O
         // button highlighted on first paint.
         function syncRangeButtons() {
             document.querySelectorAll('[data-range]').forEach(b => {
-                b.classList.toggle('active', b.dataset.range === chartRange);
+                const on = b.dataset.range === chartRange;
+                b.classList.toggle('active', on);
+                b.setAttribute('aria-pressed', on ? 'true' : 'false');
             });
         }
         function setChartRange(next) {

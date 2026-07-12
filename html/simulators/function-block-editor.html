@@ -1013,6 +1013,10 @@ keywords: wiresheet logic block and or pid wire program sequence
                         field.type = 'number';
                         field.value = b.params[p.name];
                         field.addEventListener('input', () => {
+                            // Don't zero the model while the box is momentarily
+                            // empty mid-edit (HLB's number inputs do the same,
+                            // codebase-issues #138); a real value repaints it.
+                            if (field.value === '') return;
                             const n = parseFloat(field.value);
                             b.params[p.name] = isFinite(n) ? n : 0;
                             afterParamEdit();
