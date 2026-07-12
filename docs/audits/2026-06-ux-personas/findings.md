@@ -1,10 +1,12 @@
 # UX audit — 10 fresh personas (2026-06-20)
 
-> **Master findings document — awaiting triage.** Report-only: this audit is an
-> extra set of eyes; editorial and design decisions stay with the site owner.
-> Suggested directions are pointers, not finished rewrites. After triage, confirmed
-> items get cross-filed into `codebase-issues.md` / `content-audit.md` /
-> `site-ideas-and-friction.md` per their conventions.
+> **Archived 2026-07-12.** The cycle is closed — the sibling
+> `FIX-PROGRESS.md` DISPOSITION block is the durable record (86/86
+> dispositioned, campaign closed 2026-07-01, `main` at v3.23.0). Kept
+> as the master findings record of the ten-persona walkthrough; it is
+> no longer a live triage queue. Confirmed items were cross-filed into
+> `codebase-issues.md` / `content-audit.md` / `site-ideas-and-friction.md`
+> per their conventions.
 >
 > Built at **v3.21.0**. **Method:** ten persona auditors walked the site (HTML/CSS/JS
 > source as the exhaustive backbone, the live build at a local port for dynamic spot-

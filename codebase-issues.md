@@ -4512,7 +4512,7 @@ lessons group.
 cluster wiring was already that PR's topic): BACnet MS/TP added to
 controller-wiring's relatedLinks lessons group, closing the loop.
 
-### 145. Stale "awaiting triage" header on the closed ux-personas findings doc *(open — 2026-07-08)*
+### 145. Stale "awaiting triage" header on the closed ux-personas findings doc *(addressed 2026-07-12)*
 
 `docs/audits/2026-06-ux-personas/findings.md` still opens with
 "Master findings document — awaiting triage" and a pending-looking
@@ -4524,6 +4524,14 @@ for an "Archived — superseded by FIX-PROGRESS.md's DISPOSITION block"
 banner like the other archived cycles carry. Caught during the
 2026-07-08 open-items sweep; off-topic for the vendor-ID branch, so
 it logs here.
+
+**Addressed 2026-07-12** (PR A of the backlog burn-down): the header
+blockquote now reads "Archived 2026-07-12 … the sibling
+`FIX-PROGRESS.md` DISPOSITION block is the durable record (86/86
+dispositioned, campaign closed 2026-07-01, `main` at v3.23.0)",
+mirroring the `docs/audits/2026-05-ux/findings.md` archived banner. The
+Method / Personas context is kept as the durable record; only the
+triage-queue framing was swapped.
 
 ### 146. contact.html Turnstile clips ~14px at 320-class viewports *(accepted 2026-07-09)*
 
@@ -4541,7 +4549,7 @@ to fix cosmetic clipping that only exists on 320-class devices.
 Revisit trigger: Turnstile ships a flexible-width mode, or the form
 gains any other reason for a phone-specific variant.
 
-### 148. Home Browse-card pill counts are a fourth hand-maintained count surface with no guard *(open — 2026-07-10)*
+### 148. Home Browse-card pill counts are a fourth hand-maintained count surface with no guard *(addressed 2026-07-12)*
 
 The home page's Browse nav-cards carry hardcoded totals in their
 pills (`html/index.html` ~lines 528/544/552: `'N Tools'`,
@@ -4556,7 +4564,17 @@ CLAUDE.md checklists, or extend the existing card-count test cluster
 (smoke + home-hero duplicate assertions) with a home-pill assertion
 derived from the landing card counts so drift fails CI.
 
-### 149. CLAUDE.md still points the PAGES manifest at tests/smoke.spec.js *(open — 2026-07-11)*
+**Addressed 2026-07-12** (PR B, with #150): did **both** options. The
+`home count pills stay in sync with the landings (drift guard)` test in
+`home-hero.spec.js` derives the authoritative counts at runtime — the
+`/tools/` filter chips (each cross-checked against the cards it filters
+to) for per-category totals and each landing's `.nav-card` count for the
+Browse totals — and asserts every home pill matches, so drift now fails
+CI. CLAUDE.md "Adding a new tool" gained step 3b pointing at the home
+count surfaces + this guard. The Browse pills were already accurate; the
+guard locks them.
+
+### 149. CLAUDE.md still points the PAGES manifest at tests/smoke.spec.js *(addressed 2026-07-12)*
 
 CLAUDE.md's *Sitemap* section and both "Adding a new tool / quiz"
 checklists say to add new pages to "the `PAGES` array in
@@ -4571,7 +4589,15 @@ the badge lives in the `.hero-latest` paragraph (`html/index.html`
 ~L382). One-line doc fix at each mention; bundle into the next
 CLAUDE.md-touching PR.
 
-### 150. Home "Tools by Category" per-category pills are a fifth unguarded count surface — two already stale *(open — 2026-07-11)*
+**Addressed 2026-07-12** (PR A): the three PAGES pointers (CLAUDE.md
+*Sitemap* + both checklists) now say `tests/pages.js` and note it is
+shared by `smoke.spec.js` + `responsive.spec.js`. The step-6 hero
+pointer now reads "the `<p class="hero-latest">` paragraph (~L382)".
+Closes the badge half of this entry jointly with #153 (the standalone
+`.hero-badges` version). (The other `PAGES` mention — the search-index
+section — names no file, so it needed no change.)
+
+### 150. Home "Tools by Category" per-category pills are a fifth unguarded count surface — two already stale *(addressed 2026-07-12)*
 
 The home page's Tools-by-Category grid (`html/index.html` ~L481–514)
 carries per-category tool counts in its pills: Protocols says
@@ -4585,7 +4611,19 @@ Electrical card) — possibly a deliberate curation, possibly more
 drift; decide which when truing it up. Caught (pre-existing, not
 introduced) during the airside-load ship's count-surface sweep.
 
-### 151. worker.spec.js's `loadWorker()` races itself across parallel Playwright workers *(open — 2026-07-11)*
+**Addressed 2026-07-12** (PR B, with #148). Owner decision: **show all
+six categories**. Trued up the three stale pills (HVAC 7→8 — the "7
+correct" claim above had itself gone stale once coil-freeze-risk
+shipped; Protocols 4→5; Hydronics 2→4) and their name-listing `desc`s
+(added coil freeze risk / BACnet vendor ID / valve authority + waterside
+load), then added **Airflow (6)** and **Electrical (3)** category cards
+so the home grid mirrors the `/tools/` chip order (HVAC · Protocols ·
+Signals · Airflow · Electrical · Hydronics). The drift guard added for
+#148 covers these per-category pills too — it asserts each home category
+pill equals its `/tools/` chip count and that every `/tools/` category
+has a home card.
+
+### 151. worker.spec.js's `loadWorker()` races itself across parallel Playwright workers *(addressed 2026-07-12)*
 
 `loadWorker()` (tests/worker.spec.js ~L29) copies `src/worker.js` to
 a **fixed** temp path — `path.join(os.tmpdir(), 'cf-worker-under-test.mjs')`
@@ -4604,6 +4642,12 @@ per-process (`cf-worker-under-test-${process.pid}.mjs`); the
 dynamic-import cache still de-dupes within each process, so repeat
 `loadWorker()` calls stay cheap. Caught in passing (pre-existing,
 not introduced) while triaging the duct-traverse suite run.
+
+**Addressed 2026-07-12** (PR C): the temp filename is now
+`` `cf-worker-under-test-${process.pid}.mjs` `` so each parallel worker
+process writes and imports its own copy; the in-process dynamic-import
+cache still de-dupes repeat calls. A comment on the `tmp` line records
+why the per-process name is load-bearing.
 
 ### 152. `rewriteInput` + `REWRITE_DEC` is duplicated inline across eight tool pages *(addressed 2026-07-12)*
 
@@ -4626,6 +4670,7 @@ the next units-toggle tool should trigger the extraction rather than
 land copy #9. Caught while building coil-freeze-risk from the
 waterside-load template.
 
+<<<<<<< HEAD
 **Addressed 2026-07-12** (PR D): extracted to `window.rewriteInput` in
 `/scripts/ui.js` — a parameterized helper taking `(target, quantity,
 fromU, toU, decMap, fallback)`. `target` is an id *or* an element (so
@@ -4645,6 +4690,9 @@ Version bumped for the `ui.js` cache-bust (load-bearing: old `ui.js` +
 new page HTML would break the toggle).
 
 ### 153. CLAUDE.md's `Latest:` badge pointer says `.hero-badges`; the badge lives in `p.hero-latest` *(open — 2026-07-11)*
+=======
+### 153. CLAUDE.md's `Latest:` badge pointer says `.hero-badges`; the badge lives in `p.hero-latest` *(addressed 2026-07-12)*
+>>>>>>> origin/main
 
 *Adding a new tool* step 6 says the hero's `Latest: <name>` badge is
 "the last entry in `.hero-badges`" — but `html/index.html` renders it
@@ -4653,6 +4701,10 @@ someone greps `.hero-badges` to find the badge and edits the wrong
 element. One-line CLAUDE.md fix; batch with the next docs sweep.
 Caught by the disclaimer-sweep recon while mapping home-page count
 surfaces.
+
+**Addressed 2026-07-12** (PR A): fixed jointly with #149 — CLAUDE.md
+step 6 now points at the `<p class="hero-latest">` paragraph (~L382)
+instead of `.hero-badges`.
 
 ### Deferred / Won't fix (with revisit trigger)
 
