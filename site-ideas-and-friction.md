@@ -603,13 +603,10 @@ this order (field utility first, verification-gated items last):
    2026-07-11 — see its Shipped entry below; owner picked
    diagnostic-first framing and the user-set freezestat-setpoint top
    band edge)*.
-5. **Minimum Outdoor Air (62.1)** — `/tools/minimum-outdoor-air.html`,
-   prefix `vo-`, airflow. Vbz = Rp·Pz + Ra·Az → Voz = Vbz/Ez → %OA
-   pill; splits per-person (DCV-resettable) from per-area (floor).
-   ~8–10 common Rp/Ra presets (editable, free-entry first-class,
-   edition-stamped, placeholder-verify comments — **owner sign-off
-   gate before merge**); "About these values" disclaimer card on the
-   refrigerant-pt model. Single-zone only; `[future: multi-zone Ev]`.
+5. **Minimum Outdoor Air (62.1)** — `/tools/minimum-outdoor-air.html`
+   *(shipped 2026-07-11 — see its Shipped entry below; owner picked
+   the draft-10 preset list and the "ASHRAE 62.1-2022" edition stamp;
+   the Rp/Ra sign-off gate rides the PR review before merge)*.
 6. **Duct Sizer** — `/tools/duct-sizer.html`, prefix `dz-` (`ds-`
    taken), airflow. Field-first framing (diagnose high static, not
    design ductwork): Altshul-Tsal friction (ε = 0.0003 ft galvanized),
@@ -838,6 +835,79 @@ waterside-load, transformer-sizing. Adversarial review before ship
 caught five fixes (stale readout on hand-edit, descending-band guard,
 reference rounding, parser hardening, bridge-result `aria-labelledby`).
 
+### Minimum Outdoor Air calculator *(shipped 2026-07-11)*
+
+Tool #5 of the airflow buildout (`/tools/minimum-outdoor-air.html`,
+prefix `vo-`, airflow — chips went Airflow 4→5, All 26→27). v3.38.0.
+Design notes:
+
+- **Owner gates (2026-07-11):** the draft-10 preset list (office,
+  conference, classroom 9+, lecture, retail, dining, health club,
+  lobby, corridor [area-only], break room) and the explicit
+  **"ASHRAE 62.1-2022, Table 6-1" edition stamp** in visible prose
+  (over citing the IMC or a vague no-edition phrasing). The queue's
+  one data gate — **owner sign-off on the shipped Rp/Ra rows** —
+  rides the PR review before merge; the rows carry placeholder-verify
+  comments in both the visible table and the JS `PRESETS` map until
+  then. Defensibility posture unchanged from planning: the same
+  values are adopted verbatim into public mechanical codes
+  (IMC Table 403.3.1.1).
+- **The teaching spine is the split.** Per-person (Rp × Pz) and
+  per-area (Ra × Az) render as separate output rows because that IS
+  the DCV argument: CO₂ can prove the people left, not that the
+  carpet did — a DCV reset trims the per-person share only, and the
+  per-area share is the floor under it. The seed (1,500 ft² office,
+  12 people, 1,200 CFM) lands 60 + 90 = 150 cfm → 12.5 % OA and was
+  chosen so the floor outweighs the people AND the honest answer
+  undercuts the folkloric 20 % minimum position.
+- **Damper % ≠ flow %** stated in the worked example: 12.5 % is a
+  flow fraction, proven by airflow station or traverse, not a blade
+  angle. Keeps the tool from blessing "command the damper to 12.5".
+- **Preset-populates-editable-inputs is a new pattern** (no prior
+  on-site select writes into editable fields): selecting a category
+  seeds Rp/Ra via `tidy()`, hand-editing either flips the select to
+  Custom. No persistence — unlike `cf_rf_refrigerant` there's no
+  re-select-every-visit pain (the office default is the common
+  case), so no new `cf_*` key and no privacy.html change.
+- **Ez as a select** (1.0 cooling / 0.8 ceiling heating / 1.2
+  displacement / custom) with the Table 6-2 mini-table and the
+  short-circuiting story tied back to the air-handlers lesson's
+  stratification prose. Custom Ez validates > 0 with a teaching mute.
+- **%OA is optional and honest:** blank Vpz hides the row (neutral
+  pill asks for it); Vpz ≤ 0 gets its own message without muting the
+  breathing-zone math; > 100 % is an error whose fix is "more supply
+  air, not damper position."
+- **US-native** (the duct-traverse posture): 62.1's IP edition and
+  this market's schedules are cfm/ft². The `PRESETS` map carries
+  `rpSI`/`raSI` twins from day one; `[future: L/s mode]`. Notably
+  this means codebase-issues #152's "next units-toggle tool triggers
+  the rewriteInput extraction" did NOT fire here — copy #9 is still
+  unwritten.
+- **Single-zone only**, stated in the preamble and the About card —
+  multi-zone Ev/critical-zone math is real work, not a row.
+  `[future: multi-zone Ev]` `[future: education/ventilation-dcv.html]`
+  (the DCV split row is the seed of that lesson).
+- **Adversarial-review record (19 agents):** 7 confirmed findings,
+  all fixed pre-PR. The big one flipped a design call: I'd judged the
+  page outside the damage-stakes convention ("under-ventilation is a
+  health stake, not equipment damage") and two dimensions
+  independently overturned it — the %OA output feeds winter
+  minimum-position settings, which is economizer-ratio's Tier-2
+  freeze chain — so the About card now ends with the scope note
+  ("the ventilation floor and the freeze floor both bind"). Also
+  caught: the Ez table rows dropped Table 6-2's conditions (the
+  floor-jet 1.0 credit read as an escape from the ≥15 °F 0.8 row —
+  qualifiers folded in, wrong-direction risk since Ez=1.0 vs 0.8
+  under-delivers OA by 20 %); a mis-attributed stratification
+  cross-reference (the story lives in vav-systems' reheat cap, not
+  air-handlers — re-anchored); the formula line printed raw rate ×
+  count products that a .05-tie could round away from (now sums the
+  two displayed shares, which close by construction); air-handlers'
+  20 %-mixing example silently equated damper position with flow
+  fraction (given a building-pressure-style parenthetical, since the
+  file was already in the diff); and the one missing reciprocal
+  (practice/air-handlers).
+
 ### Damage-stakes scope notes — the cross-tool disclaimer convention *(shipped 2026-07-11)*
 
 Owner call right after coil-freeze-risk merged: any tool that risks
@@ -861,7 +931,11 @@ A full-tool-list sweep put the set at eight pages, tiered:
   affinity-laws (cube-law power on a speed *increase* → overloaded
   motor — its tail taught the slow-down energy case and never
   mentioned that 10 % over asks for 33 % more power),
-  transformer-sizing (the suggested-fuse row).
+  transformer-sizing (the suggested-fuse row), and — added by its own
+  ship-review the same day — minimum-outdoor-air (its %OA output is a
+  winter minimum-position source; a dense-occupancy floor of 30–50 %
+  OA is the coil-freeze chain, the same reason economizer-ratio
+  qualified).
 - **Already compliant:** electrical-quick-calc — its permanent
   "Estimate only — not a code value… never this number"
   failure-callout plus the worked example's "size off the table
