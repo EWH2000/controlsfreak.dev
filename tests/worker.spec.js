@@ -30,7 +30,12 @@ async function loadWorker() {
     // The repo is a CommonJS package, so Node refuses to import() the
     // ES-module worker by its .js path — copy it to a temp .mjs first.
     // The dynamic-import cache makes repeat calls within a run cheap.
-    const tmp = path.join(os.tmpdir(), 'cf-worker-under-test.mjs');
+    // Name the temp file per-process: fullyParallel runs this spec across
+    // several worker processes, and fs.writeFileSync isn't atomic, so a
+    // shared fixed path let one process import() a half-written module
+    // (undefined .default → "Cannot read properties of undefined") — one
+    // mechanism behind the "one random full-suite failure" flake (#151).
+    const tmp = path.join(os.tmpdir(), `cf-worker-under-test-${process.pid}.mjs`);
     fs.writeFileSync(tmp, fs.readFileSync(WORKER_PATH));
     return (await import(pathToFileURL(tmp).href)).default;
 }
