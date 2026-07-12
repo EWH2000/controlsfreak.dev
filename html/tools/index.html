@@ -21,7 +21,7 @@ nav: tools
 
     <div class="filter-chips" role="group" aria-label="Filter tools by category">
         <button type="button" class="filter-chip active" data-category="all" aria-pressed="true">
-            All <span class="filter-chip-count">26</span>
+            All <span class="filter-chip-count">27</span>
         </button>
         <button type="button" class="filter-chip" data-category="hvac" aria-pressed="false">
             HVAC <span class="filter-chip-count">8</span>
@@ -33,7 +33,7 @@ nav: tools
             Signals <span class="filter-chip-count">2</span>
         </button>
         <button type="button" class="filter-chip" data-category="airflow" aria-pressed="false">
-            Airflow <span class="filter-chip-count">4</span>
+            Airflow <span class="filter-chip-count">5</span>
         </button>
         <button type="button" class="filter-chip" data-category="electrical" aria-pressed="false">
             Electrical <span class="filter-chip-count">3</span>
@@ -213,6 +213,15 @@ nav: tools
             titleFull:  'Equipment Airflow Check',
             desc:       'Judge a measured airflow against equipment limits — CFM per active ton of DX cooling with staging-aware icing / carryover verdicts, and the gas-furnace rise window turned into an allowable CFM band.',
             pills:      ['Airflow', 'CFM / Active Ton', 'Rise Window', 'Verdicts'],
+            category:   'airflow'
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/tools/minimum-outdoor-air.html',
+            titleShort: 'Minimum OA',
+            titleFull:  'Minimum Outdoor Air Calculator',
+            desc:       'ASHRAE 62.1 breathing-zone math — Rp × Pz + Ra × Az through zone effectiveness to a % OA damper floor, split into the DCV-resettable share and the permanent per-area floor.',
+            pills:      ['Airflow', 'Rp·Pz + Ra·Az', 'Ez', 'DCV Split'],
             category:   'airflow'
         }) }}
         {{ navCard({

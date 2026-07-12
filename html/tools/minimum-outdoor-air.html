@@ -1,0 +1,503 @@
+---
+title: Minimum Outdoor Air Calculator — controlsfreak.dev
+description: ASHRAE 62.1 breathing-zone ventilation math — Rp, Ra, zone effectiveness, and a percent-OA check, split into the DCV-resettable part and the permanent floor.
+canonical: https://controlsfreak.dev/tools/minimum-outdoor-air.html
+nav: tools
+category: airflow
+keywords: ashrae 62.1 minimum outdoor air ventilation rate procedure breathing zone vbz voz rp ra cfm per person zone air distribution effectiveness ez dcv demand controlled ventilation minimum damper position imc 403
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Tools · Minimum Outdoor Air</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">
+                Minimum Outdoor Air Calculator
+                <span class="tool-tag">Airflow</span>
+            </h1>
+        </div>
+
+        <details class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
+            <summary>Where does the 20 % minimum actually come from?</summary>
+            <div class="preamble-rest">
+                Almost every air handler carries a minimum outdoor-air position
+                somebody set years ago. This page runs the arithmetic that number
+                is supposed to trace back to &mdash; ASHRAE 62.1&rsquo;s
+                breathing-zone equation: so much air per person, plus so much per
+                square foot, corrected for how well the supply actually reaches
+                the people. Single-zone units only; it checks the math, and the
+                stamped ventilation schedule establishes compliance &mdash; see
+                <em>About these values</em> below.
+            </div>
+        </details>
+        <p class="ps-seed-note">Inputs are seeded with an example — edit them to your numbers.</p>
+
+        <div class="tool-body-2col">
+
+            <section>
+                <h2 class="ps-section-label">Input</h2>
+                <div class="ps-row">
+                    <label class="ps-label" for="vo-occupancy">Occupancy category</label>
+                    <select class="ps-input" id="vo-occupancy">
+                        <option value="office" selected>Office space</option>
+                        <option value="conference">Conference / meeting room</option>
+                        <option value="classroom">Classroom (ages 9+)</option>
+                        <option value="lecture">Lecture classroom</option>
+                        <option value="retail">Retail sales floor</option>
+                        <option value="dining">Restaurant dining room</option>
+                        <option value="gym">Health club / weight room</option>
+                        <option value="lobby">Lobby</option>
+                        <option value="corridor">Corridor (area-only)</option>
+                        <option value="breakroom">Break room</option>
+                        <option value="custom">Custom — rates from the schedule</option>
+                    </select>
+                </div>
+                <div class="ps-row">
+                    <label class="ps-label" for="vo-rp">People rate Rp (cfm/person)</label>
+                    <input class="ps-input" type="number" id="vo-rp" step="any" min="0" value="5">
+                </div>
+                <div class="ps-row">
+                    <label class="ps-label" for="vo-pz">Zone population Pz (people)</label>
+                    <input class="ps-input" type="number" id="vo-pz" step="1" min="0" value="12">
+                </div>
+                <div class="ps-row">
+                    <label class="ps-label" for="vo-ra">Area rate Ra (cfm/ft²)</label>
+                    <input class="ps-input" type="number" id="vo-ra" step="any" min="0" value="0.06">
+                </div>
+                <div class="ps-row">
+                    <label class="ps-label" for="vo-az">Zone floor area Az (ft²)</label>
+                    <input class="ps-input" type="number" id="vo-az" step="any" min="0" value="1500">
+                </div>
+                <div class="ps-row">
+                    <label class="ps-label" for="vo-ez">Air distribution effectiveness Ez</label>
+                    <select class="ps-input" id="vo-ez">
+                        <option value="1" selected>1.0 — ceiling supply, cooling</option>
+                        <option value="0.8">0.8 — ceiling supply, heating</option>
+                        <option value="1.2">1.2 — floor supply, displacement</option>
+                        <option value="custom">Custom Ez…</option>
+                    </select>
+                </div>
+                <div class="ps-row hidden" id="vo-row-ez-custom">
+                    <label class="ps-label" for="vo-ez-custom">Custom Ez</label>
+                    <input class="ps-input" type="number" id="vo-ez-custom" step="0.05" min="0" max="2" value="1">
+                </div>
+                <div class="ps-row">
+                    <label class="ps-label" for="vo-vpz">Zone supply airflow Vpz (CFM, optional)</label>
+                    <input class="ps-input" type="number" id="vo-vpz" step="any" min="0" value="1200">
+                </div>
+                <p class="ref-note">
+                    Picking a category fills Rp and Ra with the common
+                    62.1-2022 rates (see <em>About these values</em>) —
+                    both stay editable, and hand-editing either one flips
+                    the category to Custom. Pz is the design population
+                    the zone is ventilated for, not this afternoon&rsquo;s
+                    head-count.
+                </p>
+            </section>
+
+            <section role="status" aria-atomic="false">
+                <h2 class="ps-section-label">Output</h2>
+                <div class="status-pill" id="vo-pill">Enter values to run the math.</div>
+                <div class="ps-row">
+                    <span class="ps-label">Per-person share — Rp × Pz</span>
+                    <span class="ps-value muted" id="vo-person">—</span>
+                </div>
+                <div class="ps-row">
+                    <span class="ps-label">Per-area share — Ra × Az</span>
+                    <span class="ps-value muted" id="vo-area">—</span>
+                </div>
+                <div class="ps-row">
+                    <span class="ps-label">Breathing-zone OA (Vbz)</span>
+                    <span class="ps-value muted" id="vo-vbz">—</span>
+                </div>
+                <div class="ps-row primary">
+                    <span class="ps-label">OA at the diffuser (Voz)</span>
+                    <span class="ps-value muted" id="vo-voz">—</span>
+                </div>
+                <div class="ps-row" id="vo-row-pct">
+                    <span class="ps-label">Share of supply as OA</span>
+                    <span class="ps-value muted" id="vo-pct">—</span>
+                </div>
+                <div class="btn-row">
+                    <button class="copy-btn" id="vo-copy">Copy Vbz + Voz</button>
+                </div>
+                <div class="result-formula wrap" id="vo-formula"></div>
+                <div class="failure-callout" id="vo-callout" hidden></div>
+                <p class="ref-note">
+                    The two shares are the point of the split: the per-person
+                    part is what a demand-controlled sequence may reset as the
+                    count drops; the per-area part is the floor the zone owes
+                    whenever it&rsquo;s in occupied mode — even empty.
+                </p>
+            </section>
+
+        </div>
+
+        <section class="tool-body-row">
+            <h2 class="ps-section-label">Worked example</h2>
+            <p class="ref-note worked-intro">
+                A 1,500 ft² open office with 12 people at the default office
+                rates — Rp 5 cfm/person, Ra 0.06 cfm/ft² — on a 1,200 CFM
+                supply.
+            </p>
+            <ol class="ref-note worked-list">
+                <li><strong>People part:</strong> <code>5 × 12 = 60 cfm</code> —
+                    the share a demand-controlled ventilation sequence is allowed
+                    to win back when the head-count drops.</li>
+                <li><strong>Area part:</strong> <code>0.06 × 1500 = 90 cfm</code> —
+                    owed whenever the zone runs in occupied mode, badge swipes or
+                    not. Note which share is bigger: in a typical office the
+                    floor outweighs the people.</li>
+                <li><strong>Breathing zone to diffuser:</strong>
+                    <code>Vbz = 60 + 90 = 150 cfm</code>; a ceiling diffuser
+                    doing cooling mixes the room fully, so Ez = 1.0 and
+                    <code>Voz = 150 ÷ 1.0 = 150 cfm</code>.</li>
+                <li><strong>As a damper floor:</strong> against 1,200 CFM of
+                    supply, <code>150 ÷ 1200 × 100 = 12.5 %</code> outdoor air —
+                    which is where a &ldquo;minimum position&rdquo; ought to
+                    start, instead of the 20 % inherited from the last
+                    controls contractor. And 12.5 % is a <em>flow</em>
+                    fraction, not a blade angle — damper flow isn&rsquo;t
+                    linear with stroke, so the floor gets proven with an
+                    airflow station or a
+                    <a href="/tools/duct-traverse.html">traverse</a>, not by
+                    commanding 12.5 %.</li>
+            </ol>
+        </section>
+
+        <section class="tool-body-row">
+            <h2 class="ps-section-label">Why the output splits in two</h2>
+            <p class="ref-note">
+                62.1&rsquo;s breathing-zone equation is two claims added
+                together: people exhale and shed things (Rp × Pz), and the
+                building itself off-gasses — carpet, furniture, cleaning
+                chemistry — whether anyone is home or not (Ra × Az). That
+                second claim is why demand-controlled ventilation never
+                resets to zero: a CO₂ sensor can prove the people left, but
+                it can&rsquo;t prove the carpet did. A DCV sequence that
+                trims the OA damper on low CO₂ is resetting the
+                <em>per-person share only</em>; the per-area share is the
+                floor under the reset, and a sequence that dips below it is
+                out of bounds no matter how clean the CO₂ trend looks.
+            </p>
+        </section>
+
+        <section class="tool-body-row">
+            <h2 class="ps-section-label">What Ez is — and why heating pays a penalty</h2>
+            <!-- // user to verify Ez values against 62.1-2022 Table 6-2 — placeholder data, refine after review -->
+            <table class="ref-table-dense">
+                <thead>
+                    <tr><th>Air distribution configuration</th><th>Ez</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>Ceiling supply of cool air</td><td>1.0</td></tr>
+                    <tr><td>Ceiling supply of warm air 15 °F or more above room temperature, ceiling return</td><td>0.8</td></tr>
+                    <tr><td>Ceiling supply of warm air under 15 °F above room, ceiling return, jet reaching the floor</td><td>1.0</td></tr>
+                    <tr><td>Floor supply of cool air, low-velocity displacement</td><td>1.2</td></tr>
+                </tbody>
+            </table>
+            <p class="ref-note">
+                Ez answers one question: of the air leaving the diffuser, how
+                much actually reaches the breathing zone? Cool air from a
+                ceiling diffuser drops and mixes — full credit. Warm air from
+                the same diffuser floats, hugs the ceiling, and short-circuits
+                to the return — so in heating you owe 25 % more at the
+                diffuser to land the same fresh air on the occupants
+                (150 ÷ 0.8 = 187.5 cfm in the example above). Displacement
+                systems deliver low and slow underneath the occupants and get
+                credit above 1.0. Mind that the full Table 6-2 hangs
+                conditions on every row — supply ΔT, return location, whether
+                the jet actually throws to the floor — so match the whole row
+                in the standard, not just the diffuser type: a floor return,
+                for instance, rescues warm ceiling supply to full credit
+                regardless of ΔT. It&rsquo;s the same stratification physics
+                behind the <a href="/education/vav-systems.html">VAV Systems
+                lesson&rsquo;s</a> reheat cap — warm supply that floats at the
+                ceiling instead of mixing down — priced into the ventilation
+                math.
+            </p>
+            <!-- // user to verify Ez values against 62.1-2022 Table 6-2 — placeholder data, refine after review -->
+        </section>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h2 class="tool-card-title">About these values</h2>
+        </div>
+        <div class="tool-body">
+            <p>
+                The preset Rp and Ra rates are the commonly used values from
+                <strong>ASHRAE 62.1-2022, Table 6-1</strong> (Rp in cfm per
+                person, Ra in cfm per square foot). The same numbers appear,
+                category for category, in the public mechanical codes that
+                adopt them — IMC Table 403.3.1.1 — which is how most
+                jurisdictions actually enforce them. Editions rarely move the
+                common categories, but the schedule on the stamped drawings is
+                what binds a specific building.
+            </p>
+            <!-- // user to verify Rp/Ra preset values against ASHRAE 62.1-2022 Table 6-1 — placeholder data, refine after review -->
+            <table class="ref-table-dense">
+                <thead>
+                    <tr><th>Occupancy category</th><th>Rp (cfm/person)</th><th>Ra (cfm/ft²)</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>Office space</td><td>5</td><td>0.06</td></tr>
+                    <tr><td>Conference / meeting room</td><td>5</td><td>0.06</td></tr>
+                    <tr><td>Classroom (ages 9+)</td><td>10</td><td>0.12</td></tr>
+                    <tr><td>Lecture classroom</td><td>7.5</td><td>0.06</td></tr>
+                    <tr><td>Retail sales floor</td><td>7.5</td><td>0.12</td></tr>
+                    <tr><td>Restaurant dining room</td><td>7.5</td><td>0.18</td></tr>
+                    <tr><td>Health club / weight room</td><td>20</td><td>0.06</td></tr>
+                    <tr><td>Lobby</td><td>5</td><td>0.06</td></tr>
+                    <tr><td>Corridor</td><td>—</td><td>0.06</td></tr>
+                    <tr><td>Break room</td><td>5</td><td>0.12</td></tr>
+                </tbody>
+            </table>
+            <!-- // user to verify Rp/Ra preset values against ASHRAE 62.1-2022 Table 6-1 — placeholder data, refine after review -->
+            <p>
+                <strong>This page checks arithmetic; it doesn&rsquo;t establish
+                compliance.</strong> The ventilation schedule on the stamped
+                design documents and the authority having jurisdiction govern.
+                What the math is good for in the field: sanity-checking an
+                inherited minimum position, seeing how much OA a
+                demand-controlled sequence may legally reset, and knowing
+                whether a stuffy-zone complaint is even in the right
+                neighborhood.
+            </p>
+            <p>
+                <strong>Single-zone math only.</strong> Vbz → Voz is the whole
+                story for a unit serving one zone — a rooftop over one space, a
+                classroom unit ventilator. A VAV system feeding many zones
+                through one intake needs the multi-zone calculation (system
+                ventilation efficiency, critical-zone math), which is its own
+                page&rsquo;s worth of arithmetic and deliberately not squeezed
+                in here.
+            </p>
+            <p class="ref-note">
+                <strong>And mind the other direction.</strong> A ventilation
+                floor from this page can be a big number — a packed classroom
+                or dining room computes 30&ndash;50 % outdoor air — and in a
+                cold climate a winter minimum that large is exactly the setup
+                the <a href="/tools/coil-freeze-risk.html">Coil Freeze Risk
+                Checker</a> warns about. Treat the answer as a theory to check
+                against the mixed-air math, with the freezestat and the
+                low-limit override doing the protecting: the ventilation floor
+                and the freeze floor both bind, and the sequence has to
+                satisfy both.
+            </p>
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/tools/economizer-ratio.html', label: 'Economizer Ratio Helper'},
+            {href: '/tools/airside-load.html', label: 'Airside Load Calculator'},
+            {href: '/tools/duct-traverse.html', label: 'Duct Traverse Calculator'},
+            {href: '/tools/coil-freeze-risk.html', label: 'Coil Freeze Risk Checker'}
+        ],
+        lessons: [
+            {href: '/education/building-pressure.html', label: 'Building Pressure'},
+            {href: '/education/air-handlers.html', label: 'Air Handlers'},
+            {href: '/education/vav-systems.html', label: 'VAV Systems'}
+        ],
+        quizzes: [
+            {href: '/practice/building-pressure.html', label: 'Building Pressure Quiz'},
+            {href: '/practice/air-handlers.html', label: 'Air Handlers Quiz'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/tools/">← All tools</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="/scripts/ui.js"></script>
+<script>
+    // copyReadouts(btn, sep, ...ids) comes from /scripts/ui.js.
+    //
+    // US-native tool: 62.1's IP edition publishes Rp/Ra in cfm, and the
+    // stamped schedules this page gets checked against are cfm/ft² in
+    // this market — so no units-toggle participation (the duct-traverse
+    // posture). The preset table carries the SI twins (L/s, m²) from day
+    // one for a future L/s mode.
+    //
+    // Solve runs from inputs snapped to their formula-line display
+    // precision (rates 2 dp, people/area/supply whole numbers, cfm
+    // results 1 dp) — the house snap rule: computing from digits the
+    // reader can't see is how formula rows stop reproducing.
+    (function () {
+        'use strict';
+
+        // Trim trailing zeros so 5.0 reads 5 but 12.5 stays put.
+        const tidy = (n, dp) => parseFloat(n.toFixed(dp)).toString();
+        const snap = (n, dp) => parseFloat(tidy(n, dp));
+        // Displayed numbers get a typographic minus (matches the prose).
+        const disp = (n, dp) => tidy(n, dp).replace('-', '−');
+
+        // Common Rp/Ra rates, ASHRAE 62.1-2022 Table 6-1 (IP), with the
+        // SI-edition twins (L/s·person, L/s·m²) carried for later.
+        // // user to verify Rp/Ra preset values against ASHRAE 62.1-2022 Table 6-1 — placeholder data, refine after review
+        const PRESETS = {
+            office:     { rp: 5,   ra: 0.06, rpSI: 2.5, raSI: 0.3 },
+            conference: { rp: 5,   ra: 0.06, rpSI: 2.5, raSI: 0.3 },
+            classroom:  { rp: 10,  ra: 0.12, rpSI: 5,   raSI: 0.6 },
+            lecture:    { rp: 7.5, ra: 0.06, rpSI: 3.8, raSI: 0.3 },
+            retail:     { rp: 7.5, ra: 0.12, rpSI: 3.8, raSI: 0.6 },
+            dining:     { rp: 7.5, ra: 0.18, rpSI: 3.8, raSI: 0.9 },
+            gym:        { rp: 20,  ra: 0.06, rpSI: 10,  raSI: 0.3 },
+            lobby:      { rp: 5,   ra: 0.06, rpSI: 2.5, raSI: 0.3 },
+            corridor:   { rp: 0,   ra: 0.06, rpSI: 0,   raSI: 0.3 },
+            breakroom:  { rp: 5,   ra: 0.12, rpSI: 2.5, raSI: 0.6 }
+        };
+        // // user to verify Rp/Ra preset values against ASHRAE 62.1-2022 Table 6-1 — placeholder data, refine after review
+
+        const el = {};
+        for (const id of ['vo-occupancy', 'vo-rp', 'vo-pz', 'vo-ra', 'vo-az',
+                          'vo-ez', 'vo-ez-custom', 'vo-vpz',
+                          'vo-row-ez-custom', 'vo-row-pct',
+                          'vo-pill', 'vo-person', 'vo-area', 'vo-vbz', 'vo-voz',
+                          'vo-pct', 'vo-copy', 'vo-formula', 'vo-callout']) {
+            el[id.slice(3).replace(/-/g, '_')] = document.getElementById(id);
+        }
+
+        function setPill(text, kind) {
+            el.pill.textContent = text;
+            el.pill.className = 'status-pill' + (kind ? ' ' + kind : '');
+        }
+
+        function setValue(outEl, text, live) {
+            outEl.className = 'ps-value ' + (live ? 'live' : 'muted');
+            outEl.textContent = live ? text : '—';
+        }
+
+        function mute(msg) {
+            setValue(el.person); setValue(el.area); setValue(el.vbz);
+            setValue(el.voz); setValue(el.pct);
+            el.formula.textContent = '';
+            el.callout.textContent = msg;
+            el.callout.hidden = false;
+            setPill('Enter valid inputs to run the math.', '');
+        }
+
+        function calc() {
+            el.row_ez_custom.classList.toggle('hidden', el.ez.value !== 'custom');
+
+            // ── Snap inputs to display precision ──
+            const rp = snap(parseFloat(el.rp.value), 2);
+            const pz = snap(parseFloat(el.pz.value), 0);
+            const ra = snap(parseFloat(el.ra.value), 2);
+            const az = snap(parseFloat(el.az.value), 0);
+
+            if (!isFinite(rp) || !isFinite(pz) || !isFinite(ra) || !isFinite(az)) {
+                mute('The breathing-zone math needs all four numbers — Rp and Ra ' +
+                     'from the preset or the stamped schedule, Pz and Az from the zone.');
+                return;
+            }
+            if (rp < 0 || pz < 0 || ra < 0 || az < 0) {
+                mute('Rates, people, and area can’t be negative — the ventilation ' +
+                     'floor only ever adds.');
+                return;
+            }
+
+            let ez;
+            if (el.ez.value === 'custom') {
+                ez = snap(parseFloat(el.ez_custom.value), 2);
+                if (!isFinite(ez)) {
+                    mute('Custom Ez needs a number — 1.0 is the ceiling-supply ' +
+                         'cooling default.');
+                    return;
+                }
+            } else {
+                ez = parseFloat(el.ez.value);
+            }
+            if (ez <= 0) {
+                mute('An effectiveness of zero or less would mean no supply air ever ' +
+                     'reaches the breathing zone — real systems live between roughly ' +
+                     '0.5 and 1.2.');
+                return;
+            }
+
+            // ── Breathing zone, then diffuser ──
+            const person = snap(rp * pz, 1);
+            const area   = snap(ra * az, 1);
+            const vbz    = snap(person + area, 1);
+            const voz    = snap(vbz / ez, 1);
+
+            setValue(el.person, disp(person, 1) + ' cfm', true);
+            setValue(el.area,   disp(area, 1) + ' cfm', true);
+            setValue(el.vbz,    disp(vbz, 1) + ' cfm', true);
+            setValue(el.voz,    disp(voz, 1) + ' cfm', true);
+
+            // The formula sums the two DISPLAYED shares, not the raw
+            // rate × count products — a 2-dp rate can produce a .05-tie
+            // product that rounds away from its printed factors, and the
+            // sum of two printed 1-dp shares always closes by hand.
+            let formula = 'Vbz = ' + tidy(person, 1) + ' + ' + tidy(area, 1) + ' = ' +
+                          tidy(vbz, 1) + ' cfm' +
+                          ' · Voz = ' + tidy(vbz, 1) + ' ÷ ' + tidy(ez, 2) + ' = ' +
+                          tidy(voz, 1) + ' cfm';
+
+            // ── Optional % OA against the zone supply ──
+            const vpzRaw = el.vpz.value.trim();
+            if (vpzRaw === '') {
+                el.row_pct.classList.add('hidden');
+                setValue(el.pct);
+                setPill('Add the zone supply airflow (Vpz) to read the minimum as a % OA damper floor.', '');
+            } else {
+                el.row_pct.classList.remove('hidden');
+                const vpz = snap(parseFloat(vpzRaw), 0);
+                if (!isFinite(vpz) || vpz <= 0) {
+                    setValue(el.pct);
+                    setPill('The % OA check needs a positive supply airflow — enter the zone’s design or measured CFM.', '');
+                } else {
+                    const pct = snap(voz / vpz * 100, 1);
+                    setValue(el.pct, disp(pct, 1) + ' %', true);
+                    formula += ' · % OA = ' + tidy(voz, 1) + ' ÷ ' + tidy(vpz, 0) +
+                               ' × 100 = ' + tidy(pct, 1) + ' %';
+                    if (pct > 100) {
+                        setPill('The zone needs ' + disp(pct, 1) + ' % of its supply as outdoor air — more than 100 % OA can deliver. Ventilation is short even with the damper wide open; the fix is more supply air, not damper position.', 'error');
+                    } else {
+                        setPill('Voz fits the supply — ' + disp(pct, 1) + ' % OA is this zone’s ventilation floor.', 'ok');
+                    }
+                }
+            }
+
+            el.formula.textContent = formula;
+            el.callout.hidden = true;
+        }
+
+        // Preset select seeds the two rate inputs (still editable).
+        el.occupancy.addEventListener('change', () => {
+            const p = PRESETS[el.occupancy.value];
+            if (p) {
+                el.rp.value = tidy(p.rp, 2);
+                el.ra.value = tidy(p.ra, 2);
+            }
+            calc();
+        });
+        // Hand-editing a rate means it's no longer the preset's number.
+        for (const inp of [el.rp, el.ra]) {
+            inp.addEventListener('input', () => {
+                el.occupancy.value = 'custom';
+                calc();
+            });
+        }
+        for (const inp of [el.pz, el.az, el.ez_custom, el.vpz]) {
+            inp.addEventListener('input', calc);
+        }
+        el.ez.addEventListener('change', calc);
+        el.copy.addEventListener('click', (e) => copyReadouts(e.currentTarget, ' · ', 'vo-vbz', 'vo-voz'));
+
+        calc();
+    })();
+</script>
+{% endblock %}
