@@ -229,6 +229,17 @@ Calculators, converters, and lookups — open one, get an answer.
   demand-controlled-ventilation argument in one readout pair.
   Single-zone math only; checks arithmetic, doesn't establish
   compliance — the stamped schedule and the AHJ govern.
+- **Duct Sizer** — the ductulator as a diagnostic: friction rate and
+  velocity from the CFM and diameter you already have (the direction
+  the cardboard wheel is clumsy at), or solve for diameter or
+  capacity from a target friction or velocity — Altshul-Tsal, the
+  closed-form fit that reproduces the published friction chart, with
+  impossible asks refused instead of silently pinned. A second tab converts
+  rectangular ↔ round through Huebscher equivalent diameter and shows
+  the gotcha live: equal friction is deliberately not equal area or
+  equal velocity, so an area-match comes out undersized. Straight
+  galvanized runs only — fittings and crushed flex are the page's
+  stated blind spots.
 - **Transformer VA Budget** — "does this transformer have room for
   one more actuator?" List the loads on the 24 VAC secondary (blank
   rows are spares), pick the transformer, and read total VA, percent

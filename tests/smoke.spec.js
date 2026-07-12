@@ -3042,6 +3042,77 @@ test('minimum-outdoor-air — presets seed rates, Ez divides, %OA verdicts, hand
     expect(errors, 'minimum-outdoor-air behavioral should log no errors').toEqual([]);
 });
 
+test('duct-sizer — friction from the seeded 12-inch, solve-for flips, honest mutes', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('/tools/duct-sizer.html');
+
+    // Seeded diagnostic: 1200 CFM in a 12 in. round — A = 0.785 ft²,
+    // V = 1200 ÷ 0.785 = 1529 FPM, friction 0.26 in/100 ft (~3× the
+    // 0.08 sizing convention). The formula row must reproduce from
+    // displayed operands.
+    await expect(page.locator('#dz-out-vel')).toContainText('1529 FPM');
+    await expect(page.locator('#dz-out-fr')).toContainText('0.26');
+    await expect(page.locator('#dz-formula')).toContainText('1200 ÷ 0.785 = 1529');
+
+    // Diameter mode: at 0.08 the same 1200 CFM wants a 15.3 in. round.
+    await page.selectOption('#dz-solve', 'dia');
+    await expect(page.locator('#dz-out-dia')).toContainText('15.3 in.');
+    await expect(page.locator('#dz-out-vel')).toContainText('940 FPM');
+
+    // Airflow mode: a 12 in. at 0.08 was only ever good for ~626 CFM.
+    await page.selectOption('#dz-solve', 'cfm');
+    await expect(page.locator('#dz-out-cfm')).toContainText('626 CFM');
+
+    // Velocity mode: 1200 CFM at 900 FPM wants 15.6 in. at 0.07 in/100 ft.
+    await page.selectOption('#dz-solve', 'dia-vel');
+    await expect(page.locator('#dz-out-dia')).toContainText('15.6 in.');
+    await expect(page.locator('#dz-out-fr')).toContainText('0.07');
+
+    // Out-of-range honesty: a million CFM can't land on 0.08 inside
+    // 3–120 in. — the solver must refuse, not pin at the bound.
+    await page.selectOption('#dz-solve', 'dia');
+    await page.fill('#dz-cfm', '1000000');
+    await expect(page.locator('#dz-out-dia')).toHaveText('—');
+    await expect(page.locator('#dz-callout')).toBeVisible();
+    await expect(page.locator('#dz-callout')).toContainText('3–120');
+
+    // Laminar mute: 5 CFM in a 12 in. duct is not duct flow.
+    await page.selectOption('#dz-solve', 'friction');
+    await page.fill('#dz-cfm', '5');
+    await expect(page.locator('#dz-out-fr')).toHaveText('—');
+    await expect(page.locator('#dz-callout')).toContainText('laminar');
+
+    expect(errors, 'duct-sizer behavioral should log no errors').toEqual([]);
+});
+
+test('duct-sizer — Huebscher tab matches friction not area, optional CFM comparison', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('/tools/duct-sizer.html');
+    await page.click('[data-tab="rect"]');
+
+    // Seeded 20 × 10 → De 15.2, and at 1200 CFM the rectangle runs
+    // 863 FPM while the round runs 952 — equal friction ≠ equal velocity.
+    await expect(page.locator('#dz-r-de')).toContainText('15.2 in.');
+    await expect(page.locator('#dz-r-rect-v')).toContainText('863 FPM');
+    await expect(page.locator('#dz-r-round-v')).toContainText('952 FPM');
+
+    // Blank CFM hides the comparison rows; De stays live.
+    await page.fill('#dz-r-cfm', '');
+    await expect(page.locator('#dz-r-row-rect-v')).toBeHidden();
+    await expect(page.locator('#dz-r-de')).toContainText('15.2 in.');
+
+    // Reverse mode: De 15.3 with 10 in. of depth wants a 20.2 in. side.
+    await page.selectOption('#dz-r-solve', 'side');
+    await expect(page.locator('#dz-r-side')).toContainText('20.2 in.');
+
+    // No second side can rescue an impossible pairing — honest mute.
+    await page.fill('#dz-r-de-in', '3');
+    await expect(page.locator('#dz-r-side')).toHaveText('—');
+    await expect(page.locator('#dz-r-callout')).toBeVisible();
+
+    expect(errors, 'duct-sizer Huebscher behavioral should log no errors').toEqual([]);
+});
+
 test('transformer-sizing — seeded panel totals, fuse ladder, overload pill', async ({ page }) => {
     const errors = watchErrors(page);
     await page.goto('/tools/transformer-sizing.html');
