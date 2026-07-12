@@ -2976,6 +2976,72 @@ test('coil-freeze-risk — metric first paint rewrites inputs and the formula cl
     expect(errors, 'coil-freeze-risk metric behavioral should log no errors').toEqual([]);
 });
 
+test('minimum-outdoor-air — presets seed rates, Ez divides, %OA verdicts, hand-edits flip to Custom', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('/tools/minimum-outdoor-air.html');
+
+    // Seed: office — 5 × 12 + 0.06 × 1500 = 150 cfm; Ez 1.0; 1,200 CFM supply.
+    await expect(page.locator('#vo-person')).toHaveText('60 cfm');
+    await expect(page.locator('#vo-area')).toHaveText('90 cfm');
+    await expect(page.locator('#vo-vbz')).toHaveText('150 cfm');
+    await expect(page.locator('#vo-voz')).toHaveText('150 cfm');
+    await expect(page.locator('#vo-pct')).toHaveText('12.5 %');
+    await expect(page.locator('#vo-formula')).toContainText('Vbz = 60 + 90 = 150 cfm');
+    await expect(page.locator('#vo-formula')).toContainText('% OA = 150 ÷ 1200 × 100 = 12.5 %');
+    await expect(page.locator('#vo-pill')).toHaveClass(/\bok\b/);
+    await expect(page.locator('#vo-pill')).toContainText('12.5 % OA');
+
+    // Preset flip seeds the editable rates: classroom is 10 / 0.12 → 300 cfm;
+    // the heating Ez (0.8) divides it up to 375 at the diffuser.
+    await page.selectOption('#vo-occupancy', 'classroom');
+    await expect(page.locator('#vo-rp')).toHaveValue('10');
+    await expect(page.locator('#vo-ra')).toHaveValue('0.12');
+    await expect(page.locator('#vo-vbz')).toHaveText('300 cfm');
+    await page.selectOption('#vo-ez', '0.8');
+    await expect(page.locator('#vo-voz')).toHaveText('375 cfm');
+    await expect(page.locator('#vo-pct')).toHaveText('31.3 %');
+
+    // Starve the supply → over-100 % OA is an error with an honest fix.
+    await page.fill('#vo-vpz', '300');
+    await expect(page.locator('#vo-pct')).toHaveText('125 %');
+    await expect(page.locator('#vo-pill')).toHaveClass(/\berror\b/);
+    await expect(page.locator('#vo-pill')).toContainText('more than 100 % OA can deliver');
+
+    // Vpz is optional: blank hides the % row and asks for it neutrally,
+    // while the breathing-zone math keeps running.
+    await page.fill('#vo-vpz', '');
+    await expect(page.locator('#vo-row-pct')).toBeHidden();
+    await expect(page.locator('#vo-pill')).toContainText('Add the zone supply airflow');
+    await expect(page.locator('#vo-voz')).toHaveText('375 cfm');
+
+    // Hand-editing a rate means it's no longer the preset's number.
+    await page.fill('#vo-rp', '7.5');
+    await expect(page.locator('#vo-occupancy')).toHaveValue('custom');
+    await expect(page.locator('#vo-vbz')).toHaveText('270 cfm');
+
+    // Corridor is the area-only preset — Rp seeds to 0 and the per-person
+    // share goes with it; the per-area floor stands alone.
+    await page.selectOption('#vo-occupancy', 'corridor');
+    await expect(page.locator('#vo-rp')).toHaveValue('0');
+    await expect(page.locator('#vo-person')).toHaveText('0 cfm');
+    await expect(page.locator('#vo-vbz')).toHaveText('90 cfm');
+
+    // Custom Ez row appears on demand; Ez 0 mutes with teaching, not math.
+    await page.selectOption('#vo-ez', 'custom');
+    await expect(page.locator('#vo-row-ez-custom')).toBeVisible();
+    await page.fill('#vo-ez-custom', '0');
+    await expect(page.locator('#vo-callout')).toContainText('no supply air ever reaches');
+    await expect(page.locator('#vo-vbz')).toHaveText('—');
+
+    // Teaching mute on a missing input.
+    await page.fill('#vo-ez-custom', '1');
+    await page.fill('#vo-az', '');
+    await expect(page.locator('#vo-callout')).toContainText('needs all four numbers');
+    await expect(page.locator('#vo-pill')).toContainText('Enter valid inputs');
+
+    expect(errors, 'minimum-outdoor-air behavioral should log no errors').toEqual([]);
+});
+
 test('transformer-sizing — seeded panel totals, fuse ladder, overload pill', async ({ page }) => {
     const errors = watchErrors(page);
     await page.goto('/tools/transformer-sizing.html');

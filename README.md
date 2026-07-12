@@ -217,6 +217,18 @@ Calculators, converters, and lookups — open one, get an answer.
   airflow with a limit-trip / flue-condensation verdict. The blower
   table method (the static check no generic tool can do) is taught
   in prose instead of faked.
+- **Minimum Outdoor Air Calculator** — where the AHU's minimum-OA
+  number is supposed to come from, instead of the 20 % inherited from
+  the last contractor. ASHRAE 62.1's breathing-zone equation
+  (`Vbz = Rp × Pz + Ra × Az`) with ten common occupancy presets
+  (editable, edition-stamped 62.1-2022), zone air distribution
+  effectiveness (heating pays a 0.8 penalty; displacement earns 1.2),
+  and an optional % OA check against the zone supply. The output
+  deliberately splits the DCV-resettable per-person share from the
+  per-area floor a CO₂ sensor can never reset — the whole
+  demand-controlled-ventilation argument in one readout pair.
+  Single-zone math only; checks arithmetic, doesn't establish
+  compliance — the stamped schedule and the AHJ govern.
 - **Transformer VA Budget** — "does this transformer have room for
   one more actuator?" List the loads on the 24 VAC secondary (blank
   rows are spares), pick the transformer, and read total VA, percent
