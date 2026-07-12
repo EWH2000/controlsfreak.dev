@@ -1,0 +1,253 @@
+---
+title: BACnet Services — controlsfreak.dev
+description: BACnet services — the verbs of the protocol, confirmed vs unconfirmed, the service families, and BIBBs and device profiles that say what a device supports.
+canonical: https://controlsfreak.dev/education/bacnet-services.html
+nav: education
+category: protocols
+keywords: bacnet services bibb bibbs interoperability building blocks readproperty writeproperty subscribecov confirmed unconfirmed who-is i-am pics device profile b-bc b-asc conformance
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Education · BACnet Services</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">BACnet Services <span class="tool-tag">BACnet</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                <a href="/education/bacnet-basics.html">BACnet Basics</a> named the five services that carry almost every everyday read, write, and notification, then moved on. This page is the fuller reference: <strong>what a service actually is, the confirmed / unconfirmed split, the service families, and — the part that decides whether two devices will actually talk — BIBBs and device profiles.</strong> If objects are the nouns of BACnet and properties the adjectives, services are the verbs; and a device only speaks the verbs its <em>conformance</em> claims, which is what the second half of this page is about.
+            </p>
+
+            <h2 class="subhead" id="what-is-a-service">What a service is</h2>
+
+            <p>
+                A <em>service</em> is a defined request-and-response message against the object model — the thing a client puts on the wire to read a property, write one, acknowledge an alarm, or subscribe to a change. One device <em>initiates</em> the service (the client); another <em>executes</em> it (the server). The same physical box is usually both: a controller is a server when a workstation reads it, and a client when it reads a sensor down the trunk. ASHRAE 135 defines roughly three dozen services; a handful do almost all the work.
+            </p>
+
+            <p>
+                The first split to internalize is <strong>confirmed vs. unconfirmed</strong>. A <em>confirmed</em> service expects an answer: the initiator sends the request and waits, and the executor returns either an acknowledgement (carrying any result) or a <a href="/tools/bacnet-error-codes.html">BACnet-Error</a>. ReadProperty and WriteProperty are confirmed — you always learn whether they worked. An <em>unconfirmed</em> service is fire-and-forget: it is sent, usually as a broadcast, and no reply is owed. Discovery (<code>Who-Is</code> / <code>I-Am</code>) and time synchronization live here — even <code>I-Am</code>, the "reply" to <code>Who-Is</code>, is itself an unconfirmed broadcast, not an acknowledgement.
+            </p>
+
+            <svg class="bac-svg wide" viewBox="0 0 760 280" role="img"
+                 aria-labelledby="bsv-conf-title bsv-conf-desc">
+                <title id="bsv-conf-title">Confirmed versus unconfirmed services</title>
+                <desc id="bsv-conf-desc">Top lane, confirmed: a client box on the left sends a ReadProperty request arrow to a server box on the right, which returns an acknowledgement-or-error arrow back to the client. Bottom lane, unconfirmed: a device on the left sends a Who-Is broadcast arrow into a dashed broadcast-domain box on the right, and a note explains the I-Am reply is itself unconfirmed so no acknowledgement is owed.</desc>
+
+                <!-- CONFIRMED lane -->
+                <text x="30" y="28" font-family="var(--mono)" font-size="12" font-weight="600" fill="var(--accent)">CONFIRMED</text>
+
+                <rect x="30" y="42" width="150" height="50" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.6"/>
+                <text x="105" y="65" text-anchor="middle" font-family="var(--mono)" font-size="12" fill="var(--text-bright)">Client (A)</text>
+                <text x="105" y="81" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="var(--text-dim)">workstation / JACE</text>
+
+                <rect x="580" y="42" width="150" height="50" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.6"/>
+                <text x="655" y="65" text-anchor="middle" font-family="var(--mono)" font-size="12" fill="var(--text-bright)">Server (B)</text>
+                <text x="655" y="81" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="var(--text-dim)">controller</text>
+
+                <line x1="180" y1="59" x2="576" y2="59" stroke="var(--accent)" stroke-width="1.8" marker-end="url(#bsv-arrow)"/>
+                <text x="378" y="52" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--accent)">ReadProperty request</text>
+                <line x1="576" y1="79" x2="184" y2="79" stroke="var(--blue)" stroke-width="1.8" marker-end="url(#bsv-arrow-blue)"/>
+                <text x="378" y="95" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--blue)">Ack + the value — or an Error</text>
+
+                <text x="30" y="120" font-family="var(--mono)" font-size="10.5" fill="var(--text-dim)">The initiator waits. Every request is acknowledged or refused.</text>
+
+                <line x1="30" y1="140" x2="730" y2="140" stroke="var(--border)" stroke-width="1" stroke-dasharray="3 3"/>
+
+                <!-- UNCONFIRMED lane -->
+                <text x="30" y="170" font-family="var(--mono)" font-size="12" font-weight="600" fill="var(--heat)">UNCONFIRMED</text>
+
+                <rect x="30" y="184" width="150" height="50" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.6"/>
+                <text x="105" y="207" text-anchor="middle" font-family="var(--mono)" font-size="12" fill="var(--text-bright)">Any device</text>
+                <text x="105" y="223" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="var(--text-dim)">initiator</text>
+
+                <rect x="500" y="178" width="230" height="62" fill="none" stroke="var(--text-dim)" stroke-width="1.4" stroke-dasharray="5 4"/>
+                <text x="615" y="204" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--text-dim)">the broadcast domain</text>
+                <text x="615" y="221" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="var(--text-dim)">every device hears it</text>
+
+                <line x1="180" y1="209" x2="496" y2="209" stroke="var(--heat)" stroke-width="1.8" stroke-dasharray="6 4" marker-end="url(#bsv-arrow-heat)"/>
+                <text x="338" y="202" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--heat)">Who-Is  (broadcast)</text>
+
+                <text x="30" y="262" font-family="var(--mono)" font-size="10.5" fill="var(--text-dim)">No answer is owed. The I-Am that comes back is itself unconfirmed.</text>
+
+                <defs>
+                    <marker id="bsv-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="var(--accent)"/></marker>
+                    <marker id="bsv-arrow-blue" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="var(--blue)"/></marker>
+                    <marker id="bsv-arrow-heat" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="var(--heat)"/></marker>
+                </defs>
+            </svg>
+
+            <h2 class="subhead" id="service-families">The service families</h2>
+
+            <p>
+                The standard groups services into <em>interoperability areas</em> — Data Sharing, Alarm &amp; Event, Scheduling, Trending, and Device &amp; Network Management. You will meet the Data Sharing ones daily; the rest show up when a specific feature does. The table is the field-relevant set, not the full three dozen.
+            </p>
+
+            <div class="table-scroll">
+                <table class="ref-table-dense rt-stack">
+                    <thead><tr><th>Service</th><th>Type</th><th>Area</th><th>What it does</th></tr></thead>
+                    <tbody>
+                        <tr><td><code>ReadProperty</code></td><td>Confirmed</td><td>Data Sharing</td><td>Fetch one property of one object — the everyday read.</td></tr>
+                        <tr><td><code>ReadPropertyMultiple</code></td><td>Confirmed</td><td>Data Sharing</td><td>Fetch many properties across many objects in one request — how a graphic polls a controller.</td></tr>
+                        <tr><td><code>WriteProperty</code></td><td>Confirmed</td><td>Data Sharing</td><td>Set one property — often a <a href="/tools/bacnet-priority.html">priority-array</a> write on a commandable point.</td></tr>
+                        <tr><td><code>WritePropertyMultiple</code></td><td>Confirmed</td><td>Data Sharing</td><td>Set many properties in one request.</td></tr>
+                        <tr><td><code>SubscribeCOV</code></td><td>Confirmed</td><td>Data Sharing</td><td>Ask a device to <em>push</em> a notification whenever a value changes past its <code>COV_Increment</code> — instead of polling.</td></tr>
+                        <tr><td><code>ConfirmedCOVNotification</code></td><td>Confirmed</td><td>Data Sharing</td><td>The push itself, when the subscription asked for an acknowledged delivery.</td></tr>
+                        <tr><td><code>UnconfirmedCOVNotification</code></td><td>Unconfirmed</td><td>Data Sharing</td><td>The same push with no acknowledgement — lighter, but it can be missed.</td></tr>
+                        <tr><td><code>ConfirmedEventNotification</code></td><td>Confirmed</td><td>Alarm &amp; Event</td><td>Deliver an alarm or event to a recipient that must acknowledge receipt.</td></tr>
+                        <tr><td><code>UnconfirmedEventNotification</code></td><td>Unconfirmed</td><td>Alarm &amp; Event</td><td>Deliver an alarm or event with no delivery acknowledgement.</td></tr>
+                        <tr><td><code>AcknowledgeAlarm</code></td><td>Confirmed</td><td>Alarm &amp; Event</td><td>An operator acknowledges an alarm — the "ACK" the workstation sends back.</td></tr>
+                        <tr><td><code>GetEventInformation</code></td><td>Confirmed</td><td>Alarm &amp; Event</td><td>Pull the list of objects currently in an active or unacknowledged event state.</td></tr>
+                        <tr><td><code>Who-Is</code> / <code>I-Am</code></td><td>Unconfirmed</td><td>Device Mgmt</td><td>Discovery — "who is out there?" and "here I am, device 1001." Both are broadcasts.</td></tr>
+                        <tr><td><code>Who-Has</code> / <code>I-Have</code></td><td>Unconfirmed</td><td>Device Mgmt</td><td>Find which device holds a named or numbered object.</td></tr>
+                        <tr><td><code>ReinitializeDevice</code></td><td>Confirmed</td><td>Device Mgmt</td><td>Warm- or cold-start a device — password-protected.</td></tr>
+                        <tr><td><code>DeviceCommunicationControl</code></td><td>Confirmed</td><td>Device Mgmt</td><td>Silence or re-enable a device's communication — password-protected; a classic "why did half the trunk go quiet" cause.</td></tr>
+                        <tr><td><code>TimeSynchronization</code> / <code>UTC…</code></td><td>Unconfirmed</td><td>Device Mgmt</td><td>Broadcast the current time (local or UTC) to the network.</td></tr>
+                        <tr><td><code>AtomicReadFile</code> / <code>…WriteFile</code></td><td>Confirmed</td><td>Data Sharing</td><td>Read or write a File object in chunks — firmware, trend uploads, config.</td></tr>
+                        <tr><td><code>CreateObject</code> / <code>DeleteObject</code></td><td>Confirmed</td><td>Object Access</td><td>Make or remove an object at runtime — how a controller with dynamic objects is provisioned.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <p>
+                Two habits carry the everyday work. First, the <code>…Multiple</code> variants exist so a client can read or write a graphic's worth of points in one round trip instead of thirty — a device that only supports the singular forms will still work, just slower and noisier on the wire. Second, COV (change-of-value) is BACnet's answer to Modbus-style polling: subscribe once and be told when the value moves, rather than asking again and again. Whether a given device can actually <em>do</em> either of those is not a given — which is the whole point of the next section.
+            </p>
+
+            <h2 class="subhead" id="bibbs">BIBBs — what a device actually supports</h2>
+
+            <p>
+                "It's BACnet" does not mean "it does everything." A tiny unit controller might answer <code>ReadProperty</code> and nothing else; a supervisor might initiate every service in the book. The unit that captures <em>which</em> capabilities a device claims is the <strong>BIBB</strong> — a BACnet Interoperability Building Block. Each BIBB pairs one service with one <em>role</em>, and its name is three parts: the interoperability area, the service, and an <strong>A</strong> or <strong>B</strong>.
+            </p>
+
+            <p>
+                The role letter is the piece people get backwards. <strong>A is the client</strong> — the device that <em>initiates</em> the service (the requester). <strong>B is the server</strong> — the device that <em>executes</em> it (the responder). The mnemonic: A comes before B as a request comes before a response. So a controller that can be read advertises <code>DS-RP-B</code> (it answers ReadProperty); the workstation reading it needs <code>DS-RP-A</code> (it initiates ReadProperty). A device that has to both serve and initiate a service claims both halves.
+            </p>
+
+            <svg class="bac-svg" viewBox="0 0 620 236" role="img"
+                 aria-labelledby="bsv-bibb-title bsv-bibb-desc">
+                <title id="bsv-bibb-title">Anatomy of a BIBB: DS-RP-B</title>
+                <desc id="bsv-bibb-desc">The BIBB name D-S dash R-P dash B is broken into three labeled parts. DS is the Data Sharing interoperability area. RP is the ReadProperty service. B is the server role, meaning this device answers the request, where an A device would initiate it.</desc>
+
+                <text x="140" y="52" text-anchor="middle" font-family="var(--mono)" font-size="30" font-weight="700" fill="var(--accent)">DS</text>
+                <text x="200" y="52" text-anchor="middle" font-family="var(--mono)" font-size="30" fill="var(--text-dim)">-</text>
+                <text x="255" y="52" text-anchor="middle" font-family="var(--mono)" font-size="30" font-weight="700" fill="var(--blue)">RP</text>
+                <text x="315" y="52" text-anchor="middle" font-family="var(--mono)" font-size="30" fill="var(--text-dim)">-</text>
+                <text x="360" y="52" text-anchor="middle" font-family="var(--mono)" font-size="30" font-weight="700" fill="var(--heat)">B</text>
+
+                <line x1="140" y1="64" x2="110" y2="102" stroke="var(--accent)" stroke-width="1.4"/>
+                <line x1="255" y1="64" x2="300" y2="102" stroke="var(--blue)" stroke-width="1.4"/>
+                <line x1="360" y1="64" x2="500" y2="102" stroke="var(--heat)" stroke-width="1.4"/>
+
+                <rect x="20" y="102" width="180" height="88" fill="var(--surface)" stroke="var(--accent)" stroke-width="1.4"/>
+                <text x="110" y="126" text-anchor="middle" font-family="var(--mono)" font-size="12" font-weight="700" fill="var(--accent)">Data Sharing</text>
+                <text x="110" y="148" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="var(--text-dim)">interoperability area —</text>
+                <text x="110" y="162" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="var(--text-dim)">the family of capability</text>
+
+                <rect x="216" y="102" width="168" height="88" fill="var(--surface)" stroke="var(--blue)" stroke-width="1.4"/>
+                <text x="300" y="126" text-anchor="middle" font-family="var(--mono)" font-size="12" font-weight="700" fill="var(--blue)">ReadProperty</text>
+                <text x="300" y="148" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="var(--text-dim)">the specific service</text>
+
+                <rect x="400" y="102" width="200" height="88" fill="var(--surface)" stroke="var(--heat)" stroke-width="1.4"/>
+                <text x="500" y="126" text-anchor="middle" font-family="var(--mono)" font-size="12" font-weight="700" fill="var(--heat)">B = server role</text>
+                <text x="500" y="148" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="var(--text-dim)">this device answers it;</text>
+                <text x="500" y="162" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="var(--text-dim)">an A device initiates it</text>
+
+                <text x="310" y="220" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--text)">the controller being read is DS-RP-B; the workstation reading it is DS-RP-A</text>
+            </svg>
+
+            <p>
+                The interoperability-area codes are short: <strong>DS</strong> Data Sharing, <strong>AE</strong> Alarm &amp; Event, <strong>SCHED</strong> Scheduling, <strong>T</strong> Trending, <strong>DM</strong> Device Management, <strong>NM</strong> Network Management. The common BIBBs a controls spec sheet lists:
+            </p>
+
+            <div class="table-scroll">
+                <table class="ref-table-dense rt-stack">
+                    <thead><tr><th>BIBB</th><th>Service</th><th>A / B roles</th></tr></thead>
+                    <tbody>
+                        <tr><td><code>DS-RP-A</code> / <code>-B</code></td><td>ReadProperty</td><td>A reads · B is read</td></tr>
+                        <tr><td><code>DS-RPM-A</code> / <code>-B</code></td><td>ReadPropertyMultiple</td><td>A reads many · B answers</td></tr>
+                        <tr><td><code>DS-WP-A</code> / <code>-B</code></td><td>WriteProperty</td><td>A writes · B is written</td></tr>
+                        <tr><td><code>DS-WPM-A</code> / <code>-B</code></td><td>WritePropertyMultiple</td><td>A writes many · B accepts</td></tr>
+                        <tr><td><code>DS-COV-A</code> / <code>-B</code></td><td>Subscribed change-of-value</td><td>A subscribes · B notifies</td></tr>
+                        <tr><td><code>DS-COVU-A</code> / <code>-B</code></td><td>Unsubscribed COV</td><td>A receives · B broadcasts</td></tr>
+                        <tr><td><code>AE-N-A</code> / <code>-B</code></td><td>Event / alarm notification</td><td>A is notified · B notifies</td></tr>
+                        <tr><td><code>AE-ACK-A</code> / <code>-B</code></td><td>Alarm acknowledgement</td><td>A acknowledges · B tracks</td></tr>
+                        <tr><td><code>DM-DDB-A</code> / <code>-B</code></td><td>Dynamic Device Binding — <code>Who-Is</code> / <code>I-Am</code></td><td>A discovers · B answers</td></tr>
+                        <tr><td><code>DM-DOB-A</code> / <code>-B</code></td><td>Dynamic Object Binding — <code>Who-Has</code> / <code>I-Have</code></td><td>A discovers · B answers</td></tr>
+                        <tr><td><code>DM-RD-A</code> / <code>-B</code></td><td>ReinitializeDevice</td><td>A commands · B restarts</td></tr>
+                        <tr><td><code>DM-DCC-A</code> / <code>-B</code></td><td>DeviceCommunicationControl</td><td>A commands · B obeys</td></tr>
+                        <tr><td><code>DM-TS-A</code> / <code>-B</code>, <code>DM-UTC-…</code></td><td>Time synchronization</td><td>A sends time · B sets its clock</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <p>
+                This is why two "fully BACnet" devices can still fail to do what you need. A workstation that wants live updates needs <code>DS-COV-A</code>, and the field controller needs <code>DS-COV-B</code> — if the controller only has <code>DS-RP-B</code>, you are polling whether you like it or not. Reading the BIBB lists on both sides tells you, before you wire anything, whether the integration you are quoting is actually possible.
+            </p>
+
+            <h2 class="subhead" id="device-profiles">Device profiles and the PICS</h2>
+
+            <p>
+                Listing BIBBs one by one would be tedious, so the standard bundles them into <em>device profiles</em> — a named minimum set a device promises to meet. The profile is shorthand: say "B-BC" and another engineer knows roughly what the box can do. The common ones on a controls job:
+            </p>
+
+            <div class="table-scroll">
+                <table class="ref-table-dense rt-stack">
+                    <thead><tr><th>Profile</th><th>Device</th><th>Typically</th></tr></thead>
+                    <tbody>
+                        <tr><td><code>B-BC</code></td><td>Building Controller</td><td>A programmable supervisory controller — a JACE, a plant controller. Rich BIBB set, acts as client and server.</td></tr>
+                        <tr><td><code>B-AAC</code></td><td>Advanced Application Controller</td><td>Runs advanced but fixed programs; more capable than a B-ASC, not fully field-programmable over BACnet.</td></tr>
+                        <tr><td><code>B-ASC</code></td><td>Application Specific Controller</td><td>A fixed-function unit controller — a VAV box, a fan-coil. Mostly a server; the smaller BIBB set.</td></tr>
+                        <tr><td><code>B-SA</code></td><td>Smart Actuator</td><td>A commandable actuator that answers reads and writes.</td></tr>
+                        <tr><td><code>B-SS</code></td><td>Smart Sensor</td><td>Reports a value; a small server, often read-only.</td></tr>
+                        <tr><td><code>B-OWS</code></td><td>Operator Workstation</td><td>The front end / BMS — a heavy client that initiates reads, writes, subscriptions, and alarm acknowledgements.</td></tr>
+                        <tr><td><code>B-GW</code></td><td>Gateway</td><td>Bridges BACnet to another protocol; what it exposes depends on the far side.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <p>
+                Where a profile is the label, the <strong>PICS</strong> is the fine print. A PICS — Protocol Implementation Conformance Statement — is the document every vendor publishes for a device: its profile, its exact BIBB list, the object types it supports, whether it does segmentation, its character sets, and its data-link options. When a device "should" do something and doesn't, the PICS is where you confirm whether it ever could. It is the single most useful page in a BACnet device's manual, and most techs never open it.
+            </p>
+
+            <p>
+                The profile also sets expectations for the object model behind it: a B-BC will carry the full commandable object set and a <a href="/tools/bacnet-priority.html">priority array</a> on its outputs, while a B-SS may expose a single Analog Input and little else. Pair the profile with the <a href="/tools/bacnet-objects.html">object reference</a> and you can predict most of a device's point list before it is even on the network.
+            </p>
+
+            <h2 class="subhead">What this page didn't cover</h2>
+
+            <p>
+                Out of scope here, by design: the full BIBB catalog (well over a hundred, most of them Scheduling, Trending, Network Management, and BACnet/SC blocks a controls tech rarely specifies), the deep mechanics of alarms and event notification — <code>Notification_Class</code> objects, event states, and the recipient list — which are their own topic, and <strong>segmentation</strong>, the machinery that splits a service response too big for one APDU, worth its own treatment. How these messages cross a router and a broadcast domain is <a href="/education/bacnet-networking.html">BACnet Networking</a>; the object model the services act on is <a href="/education/bacnet-basics.html">BACnet Basics</a>; and the numbers a device sends back when a service fails are in the <a href="/tools/bacnet-error-codes.html">Error Code Decoder</a>.
+            </p>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/tools/bacnet-objects.html', label: 'BACnet Object Reference'},
+            {href: '/tools/bacnet-priority.html', label: 'BACnet Priority Array'},
+            {href: '/tools/bacnet-error-codes.html', label: 'BACnet Error Code Decoder'}
+        ],
+        lessons: [
+            {href: '/education/bacnet-basics.html', label: 'BACnet Basics'},
+            {href: '/education/bacnet-networking.html', label: 'BACnet Networking'},
+            {href: '/education/bacnet-mstp.html', label: 'BACnet MS/TP'}
+        ],
+        quizzes: [
+            {href: '/practice/bacnet-basics.html', label: 'BACnet Basics'},
+            {href: '/practice/bacnet-networking.html', label: 'BACnet Networking'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/education/">← Back to Education</a>
+
+</main>
+{% endblock %}
