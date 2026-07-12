@@ -581,6 +581,15 @@ techs new to the industry and anyone wanting a refresh.
   rather than overwriting. MS/TP vs BACnet/IP is same protocol,
   different wrapper; cross-router discovery and BBMDs defer to the
   BACnet Networking companion. Pairs with a practice quiz.
+- **BACnet Services** — the fuller reference behind Basics' five
+  everyday verbs: what a service is, the confirmed / unconfirmed
+  split (why `Who-Is` owes no reply but `ReadProperty` always
+  answers), the service families as a field-relevant table, and the
+  part that decides whether two "fully BACnet" devices actually talk
+  — **BIBBs** (the A = client / B = server role letters, with the
+  anatomy of `DS-RP-B` broken open), device profiles (B-BC / B-AAC /
+  B-ASC and friends), and the PICS that lists a device's real
+  capabilities.
 - **BACnet Networking** — the other half of BACnet Basics: how
   devices on different networks find each other, and why discovery
   fails with no error when they don't. Three addresses for one

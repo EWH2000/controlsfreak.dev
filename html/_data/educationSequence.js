@@ -47,6 +47,7 @@ const order = [
     "/education/modbus-basics.html",
     "/education/modbus-decoding.html",
     "/education/bacnet-basics.html",
+    "/education/bacnet-services.html",
     "/education/bacnet-networking.html",
     "/education/bacnet-mstp.html",
 ];

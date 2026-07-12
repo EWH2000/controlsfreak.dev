@@ -23,7 +23,7 @@ nav: education
 
     <div class="filter-chips" role="group" aria-label="Filter lessons by category">
         <button type="button" class="filter-chip active" data-category="all" aria-pressed="true">
-            All <span class="filter-chip-count">24</span>
+            All <span class="filter-chip-count">25</span>
         </button>
         <button type="button" class="filter-chip" data-category="fundamentals" aria-pressed="false">
             Fundamentals <span class="filter-chip-count">6</span>
@@ -38,7 +38,7 @@ nav: education
             Forced Air Systems <span class="filter-chip-count">6</span>
         </button>
         <button type="button" class="filter-chip" data-category="protocols" aria-pressed="false">
-            Protocols <span class="filter-chip-count">5</span>
+            Protocols <span class="filter-chip-count">6</span>
         </button>
     </div>
 
@@ -240,6 +240,15 @@ nav: education
             titleFull:  'BACnet Basics',
             desc:       'BACnet on the wire — the self-describing object model, the services that read and write properties, the priority array, and Who-Is / I-Am discovery.',
             pills:      ['BACnet', 'Object Model', 'Priority Array', 'Who-Is / I-Am'],
+            category:   'protocols'
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/education/bacnet-services.html',
+            titleShort: 'BACnet Services',
+            titleFull:  'BACnet Services',
+            desc:       'The verbs of BACnet — confirmed vs unconfirmed, the service families, and BIBBs and device profiles that say which services a device actually supports.',
+            pills:      ['BACnet', 'Services', 'BIBBs', 'Device Profiles'],
             category:   'protocols'
         }) }}
         {{ navCard({

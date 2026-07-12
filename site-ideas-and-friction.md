@@ -135,14 +135,26 @@ Shipped so far:
   corrected to 5/6). *(shipped 2026-07-12, PR 6 — interactive tool, no
   imported data; the widget the Modbus/BACnet lessons had drafted out
   for the lesson pages lives here as a standalone tool)*.
+- **Services / BIBBs reference** — `education/bacnet-services.html`, a
+  lesson (category `protocols`, not a tool — the parked slot was
+  always `education/`) that deepens bacnet-basics' services section:
+  what a service is, the confirmed / unconfirmed split (with a
+  two-lane message-sequence diagram), a field-relevant service-family
+  reference table, then **BIBBs** — the A = client / B = server role
+  convention, a `DS-RP-B` anatomy diagram, and a common-BIBBs table —
+  and device profiles + the PICS. Facts (interop-area codes, BIBB
+  names, A/B role direction, device profiles, PICS) cross-checked
+  against Chipkin / Beckhoff / 7NOX and the search consensus. Inserted
+  into `educationSequence.js` **between bacnet-basics and
+  bacnet-networking** (basics introduces services → this deepens them
+  → networking moves them across routers); reciprocal relatedLinks +
+  a live forward-link added to both neighbours. *(shipped 2026-07-12,
+  PR 7 — lesson page, `.bac-svg` already consolidated so no page CSS)*.
 
 Remaining (each a soft-SERP reference tool or informational parent,
 one PR each; new tools follow the CLAUDE.md checklist, category
 `protocols`):
 
-- **Services / BIBBs reference** — ReadProperty / WriteProperty / COV /
-  Who-Is · I-Am as a reference table (prose-only in bacnet-basics
-  today). `[future: education/bacnet-services.html]`
 - *(stretch)* **BACnet vs Modbus** explainer — classic "difference"
   query funneling into both protocol clusters. `[future:
   education/bacnet-vs-modbus.html]`
