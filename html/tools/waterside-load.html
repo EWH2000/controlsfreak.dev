@@ -252,29 +252,14 @@ keywords: gpm delta t mbh tons btuh water flow 500 chilled hot water coil
         }
 
         // ── Unit-flip resync ──────────────────────────────────────────
-        // coil-sizing's rewriteInput, verbatim shape: reformat from a
-        // retained canonical value so flipping away and back hands back
-        // exactly what was typed (audit-2026-06 #60a/#60b).
+        // The shared ui.js helper reformats from a retained canonical
+        // value so flipping away and back hands back exactly what was
+        // typed (audit-2026-06 #60a/#60b).
         const REWRITE_DEC = { waterFlow: 2, deltaTemp: 1, heatCapacity: 1 };
+        // Delegates to the shared helper in ui.js (audit-2026-06
+        // #60a/#60b); this page keeps only its REWRITE_DEC decimals above.
         function rewriteInput(id, quantity, fromU, toU) {
-            const el = document.getElementById(id);
-            const v  = parseFloat(el.value);
-            if (!isFinite(v)) return;
-            let canon = parseFloat(el.dataset.canonUs);
-            if (!(isFinite(canon) && el.dataset.canonQ === quantity && el.dataset.canonDisp === el.value)) {
-                canon = U.convert(v, fromU, 'us', quantity);
-                el.dataset.canonUs = String(canon);
-                el.dataset.canonQ = quantity;
-                el.dataset.typedText = el.value;
-                el.dataset.typedUnits = fromU;
-            }
-            if (toU === el.dataset.typedUnits) {
-                el.value = el.dataset.typedText;
-            } else {
-                const dec = REWRITE_DEC[quantity] !== undefined ? REWRITE_DEC[quantity] : 2;
-                el.value = (+U.convert(canon, 'us', toU, quantity).toFixed(dec)).toString();
-            }
-            el.dataset.canonDisp = el.value;
+            return window.rewriteInput(id, quantity, fromU, toU, REWRITE_DEC);
         }
 
         U.onChange(function (newUnits) {

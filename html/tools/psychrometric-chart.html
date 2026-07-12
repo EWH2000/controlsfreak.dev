@@ -1497,46 +1497,18 @@ keywords: humidity enthalpy wet bulb dew point dewpoint grains mixing coil AHU O
         // Convert every input from `from` units to `to` units, leaving blanks alone.
         function convertInputsBetween(from, to) {
             if (from === to) return;
+            // Per-quantity display decimals (was an inline digits chain);
+            // the shared ui.js helper owns the canonical-retain mechanism
+            // (audit-2026-06 #60a/#60b). Fallback 1 matches the old
+            // `else digits = 1`. #152 — this loop was a ninth inline copy
+            // the rewriteInput grep missed (it had no named function).
+            const PSY_DEC = { altitude: 0, airflow: 0, humidityRatio: 1, enthalpy: 1 };
             for (const id of UNIT_INPUT_IDS) {
                 const el = document.getElementById(id);
                 if (!el) continue;
-                const raw = el.value.trim();
-                if (raw === '') continue;
-                const v = parseFloat(raw);
-                if (!isFinite(v)) continue;
                 const q = inputQuantity(id);
                 if (!q) continue;
-                // Reformat from a retained canonical value, not the
-                // rounded display string — flipping units away and back
-                // must hand back exactly what was typed (92 used to come
-                // back as 91.9 — audit-2026-06 #60a). The stored
-                // canonical is trusted only while the field still shows
-                // the exact text this function last wrote for the same
-                // quantity; a user edit or mode switch rebuilds it.
-                let canon = parseFloat(el.dataset.canonUs);
-                if (!(isFinite(canon) && el.dataset.canonQ === q && el.dataset.canonDisp === el.value)) {
-                    canon = U.convert(v, from, 'us', q);
-                    el.dataset.canonUs = String(canon);
-                    el.dataset.canonQ = q;
-                    el.dataset.typedText = el.value;
-                    el.dataset.typedUnits = from;
-                }
-                if (to === el.dataset.typedUnits) {
-                    el.value = el.dataset.typedText;
-                    el.dataset.canonDisp = el.value;
-                    continue;
-                }
-                const conv = U.convert(canon, 'us', to, q);
-                // Step depth follows the SECOND_PROP table for the *-second inputs
-                // and is tighter for metric on others; we pick a precision per quantity.
-                let digits;
-                if (q === 'altitude') digits = 0;
-                else if (q === 'airflow') digits = 0;
-                else if (q === 'humidityRatio') digits = 1;
-                else if (q === 'enthalpy') digits = to === 'us' ? 1 : 1;
-                else digits = 1;
-                el.value = (+conv.toFixed(digits)).toString();
-                el.dataset.canonDisp = el.value;
+                window.rewriteInput(el, q, from, to, PSY_DEC, 1);
             }
         }
 

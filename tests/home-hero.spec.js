@@ -84,3 +84,71 @@ test('hero converts every surface for a metric visitor', async ({ page }) => {
     await expect(page.locator('#hero-tree-sat')).toContainText('°F');
     await expect(page.locator('#hero-sp')).toHaveAttribute('aria-valuetext', /°F/);
 });
+
+// Drift guard — codebase-issues #148 / #150. The home page carries two
+// hand-maintained count surfaces: the "Tools by Category" pills and the
+// Browse pills. Both drifted silently before (category pills were −1/−1/−2
+// and two whole categories had no card at all). Rather than pin fresh
+// hardcoded numbers that rot the same way, derive the authoritative counts
+// at runtime — the /tools/ filter chips for per-category totals (each
+// cross-checked against the cards it actually filters to) and the nav-card
+// count on each section landing for the Browse totals — and assert every
+// home pill matches.
+test('home count pills stay in sync with the landings (drift guard)', async ({ page }) => {
+    const errors = watchErrors(page);
+
+    // Last "N …" pill on a card → integer.
+    const pillNum = async (card) => {
+        const txt = (await card.locator('.nav-card-pill').last().textContent()) || '';
+        const m = txt.match(/\d+/);
+        expect(m, `pill "${txt}" should carry a number`).not.toBeNull();
+        return parseInt(m[0], 10);
+    };
+
+    // Authoritative per-category tool counts: the /tools/ filter chips,
+    // each cross-checked against the cards it actually filters to (so a
+    // wrong chip can't quietly validate a wrong home pill).
+    await page.goto('/tools/');
+    const cats = [];
+    for (const chip of await page.locator('.filter-chip[data-category]').all()) {
+        const cat = await chip.getAttribute('data-category');
+        if (cat === 'all') continue;
+        cats.push([cat, parseInt((await chip.locator('.filter-chip-count').textContent()).trim(), 10)]);
+    }
+    for (const [cat, n] of cats) {
+        await page.click(`.filter-chip[data-category="${cat}"]`);
+        await expect(page.locator('.nav-card:not([hidden])'),
+            `chip "${cat}" count should equal the cards it filters to`).toHaveCount(n);
+    }
+    const toolsTotal = await page.locator('.nav-card').count();
+    expect(cats.reduce((s, [, n]) => s + n, 0),
+        'category counts should partition all tool cards').toBe(toolsTotal);
+
+    // Authoritative section totals: nav-card count on each landing.
+    await page.goto('/simulators/');
+    const simTotal = await page.locator('.nav-card').count();
+    await page.goto('/education/');
+    const eduTotal = await page.locator('.nav-card').count();
+    await page.goto('/practice/');
+    const practiceTotal = await page.locator('.nav-card').count();
+
+    // Home page — every pill must match its authoritative source.
+    await page.goto('/');
+
+    // Tools-by-Category cards, keyed by their #cat href. Each /tools/
+    // category must appear here (catches a category with no home card).
+    for (const [cat, n] of cats) {
+        const card = page.locator(`.nav-card[href="/tools/#${cat}"]`);
+        await expect(card, `home should carry a "${cat}" category card`).toHaveCount(1);
+        expect(await pillNum(card), `home "${cat}" pill should read ${n}`).toBe(n);
+    }
+
+    // Browse cards, keyed by section-landing href.
+    const browse = (href) => page.locator(`.card-grid.two .nav-card[href="${href}"]`);
+    expect(await pillNum(browse('/tools/')), 'Browse Tools pill').toBe(toolsTotal);
+    expect(await pillNum(browse('/simulators/')), 'Browse Simulators pill').toBe(simTotal);
+    expect(await pillNum(browse('/education/')), 'Browse Education pill').toBe(eduTotal);
+    expect(await pillNum(browse('/practice/')), 'Browse Practice pill').toBe(practiceTotal);
+
+    expect(errors, 'count-guard should log no page errors').toEqual([]);
+});
