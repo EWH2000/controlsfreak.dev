@@ -4670,7 +4670,6 @@ the next units-toggle tool should trigger the extraction rather than
 land copy #9. Caught while building coil-freeze-risk from the
 waterside-load template.
 
-<<<<<<< HEAD
 **Addressed 2026-07-12** (PR D): extracted to `window.rewriteInput` in
 `/scripts/ui.js` — a parameterized helper taking `(target, quantity,
 fromU, toU, decMap, fallback)`. `target` is an id *or* an element (so
@@ -4689,10 +4688,7 @@ migrated-loop surfaces (exact typed-text restore + rounded metric).
 Version bumped for the `ui.js` cache-bust (load-bearing: old `ui.js` +
 new page HTML would break the toggle).
 
-### 153. CLAUDE.md's `Latest:` badge pointer says `.hero-badges`; the badge lives in `p.hero-latest` *(open — 2026-07-11)*
-=======
 ### 153. CLAUDE.md's `Latest:` badge pointer says `.hero-badges`; the badge lives in `p.hero-latest` *(addressed 2026-07-12)*
->>>>>>> origin/main
 
 *Adding a new tool* step 6 says the hero's `Latest: <name>` badge is
 "the last entry in `.hero-badges`" — but `html/index.html` renders it
