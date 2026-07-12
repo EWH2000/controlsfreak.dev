@@ -109,15 +109,23 @@ Shipped so far:
   spellings + a page provenance note to verify against ASHRAE 135.
   *(shipped 2026-07-12, PR 4 — mirrors the vendor-ID tool + importer
   pattern)*.
+- **BACnet error / reject / abort code decoder** —
+  `tools/bacnet-error-codes.html`, a PDU-mode decode box (Error =
+  class + code, Reject, Abort) + four filterable reference tables.
+  Enum truth is **generated** (`html/_data/bacnetErrors.js`, `npm run
+  import-bacnet-errors`) from bacnet-stack's four error enums (8
+  classes, 225 codes, 11 reject, 12 abort); the field-common
+  descriptions live hand-authored in `html/_data/bacnetErrorNotes.js`
+  (overlaid by name), **drafted + adversarially verified via a
+  workflow** (3 independent BACnet lenses per item) before shipping.
+  Long tail (BACnet/SC, HTTP/TLS/DNS, OAuth-scope codes) is name-only.
+  *(shipped 2026-07-12, PR 5 — generated/curated split; the
+  descriptions carry the placeholder-verify convention)*.
 
 Remaining (each a soft-SERP reference tool or informational parent,
 one PR each; new tools follow the CLAUDE.md checklist, category
 `protocols`):
 
-- **BACnet error / reject / abort code decoder** — error-class +
-  error-code pairs and reject/abort reasons; mirrors the
-  ip-converter / objects pattern. `[future:
-  tools/bacnet-error-codes.html]`
 - **Priority Array explainer** — the 16 slots, lowest-non-null wins,
   write-null-releases, `Relinquish_Default`. Already parked as
   `[future: bacnet-priority.html]` on the BACnet Basics entry — this

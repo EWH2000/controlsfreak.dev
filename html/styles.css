@@ -1753,12 +1753,14 @@ input[type="range"]::-moz-range-thumb {
 #fbe-canvas:focus-visible,
 .bo-id.bo-copyable:focus-visible,
 .bvid-copyable:focus-visible,
+.bec-id.bec-copyable:focus-visible,
 .widget-try button:focus-visible,
 .ah-w-mode-btn:focus-visible,
 .aid-w-mode-btn:focus-visible,
 .bp-w-mode-btn:focus-visible,
 .ds-w-mode-btn:focus-visible,
 .vav-w-mode-btn:focus-visible,
+.bec-mode:focus-visible,
 details.tool-preamble > summary:focus-visible,
 .pid-spoiler > summary:focus-visible {
     outline: 2px solid var(--accent);
@@ -1796,6 +1798,7 @@ input[type="range"]:focus-visible::-moz-range-thumb {
     .tab-btn,
     .copy-btn,
     .filter-chip,
+    .bec-mode,
     .tool-card-fullscreen-btn,
     .quiz-action,
     .quiz-reset-best {

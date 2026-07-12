@@ -1,0 +1,578 @@
+---
+title: BACnet Error Code Decoder — controlsfreak.dev
+description: Decode a BACnet Error, Reject, or Abort a device sent back — the error class plus code, and reject and abort reasons, searchable by number or name.
+canonical: https://controlsfreak.dev/tools/bacnet-error-codes.html
+nav: tools
+category: protocols
+keywords: bacnet error class code reject abort pdu decode unknown-object unknown-property write-access-denied timeout segmentation tsm-timeout apdu-too-long ashrae 135 wireshark
+faqs:
+    - q: What is the difference between a BACnet Error, Reject, and Abort?
+      a: All three say a request failed, but at different stages. An <strong>Error</strong> means the service ran and the device refused it — it returns an error class plus an error code (unknown-property, write-access-denied). A <strong>Reject</strong> means the request could not be serviced at the protocol layer — malformed, mis-encoded, or asking for a service the device does not implement — thrown out before the service ran, and it returns a reject reason. An <strong>Abort</strong> tears down a transaction already in progress, usually over segmentation, a timeout, or resources — it returns an abort reason.
+    - q: What does BACnet error class 2 code 32 mean?
+      a: Error class 2 is property and code 32 is unknown-property — you asked for a property the object does not have. Check the property identifier; a common cause is reading an optional property a given device or object does not implement.
+    - q: What is a BACnet abort with reason APDU-too-long?
+      a: The response would not fit in one APDU and the device cannot segment it (or segmentation was not negotiated). It shows up on a big ReadPropertyMultiple or an Object_List read — split the request into smaller reads, or enable segmentation on both ends.
+    - q: Why do I get write-access-denied writing a BACnet point?
+      a: Error code 40, write-access-denied, means the property is read-only or write-protected to you — for example an input's Present_Value, or a property the device simply will not let you write. On a commandable object, writing Present_Value directly can be refused because its value is owned by the program or the priority array — write at a priority instead, or write the object that actually drives it.
+    - q: Where do I see the raw BACnet error class and code?
+      a: A workstation usually shows the decoded text, but a discovery log, an integration error dialog, or a Wireshark decode of the BACnet-Error / Reject / Abort APDU shows the bare numbers. That is when you paste them here.
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+{% from "faq.njk" import faqBlock %}
+
+{% block head %}
+    <style>
+        /* Page-only — error-code decoder. Shared property-sheet,
+           .ref-table-dense, .tabs, and .status-pill rules carry the layout;
+           only the PDU-mode chip row, the value column, and the empty-state
+           row sit here. */
+        .bec-modes {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-bottom: 1rem;
+        }
+        .bec-mode {
+            font-family: var(--mono);
+            font-size: 0.82rem;
+            padding: 0.4rem 0.8rem;
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            cursor: pointer;
+        }
+        .bec-mode:hover { color: var(--text); border-color: var(--accent-dim); }
+        .bec-mode.active {
+            background: var(--accent-dim);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+        .bec-inputs[hidden] { display: none; }
+        /* .ps-row sets an explicit display, which beats the UA [hidden]
+           rule — hide the context row (Error class) explicitly in the
+           single-value Reject / Abort modes. */
+        #bec-context-row[hidden] { display: none; }
+
+        .bec-search-label {
+            display: block;
+            font-family: var(--mono);
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-dim);
+            margin-bottom: 0.35rem;
+        }
+        #bec-search { width: 100%; }
+        .bec-count {
+            font-family: var(--mono);
+            font-size: 0.78em;
+            color: var(--text-dim);
+            font-weight: 500;
+            text-transform: none;
+            letter-spacing: normal;
+        }
+
+        /* The numeric value column — the one people search + copy. */
+        .ref-table-dense td.bec-id {
+            font-family: var(--mono);
+            color: var(--blue);
+            white-space: nowrap;
+            text-align: right;
+        }
+        .ref-table-dense td.bec-id.bec-copyable { cursor: pointer; }
+        .ref-table-dense td.bec-id.bec-copyable:hover { color: var(--accent); }
+        .bec-noteless td:last-child { color: var(--text-dim); }
+
+        .bec-empty td {
+            color: var(--text-dim);
+            font-style: italic;
+            text-align: center;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Tools · BACnet Error Code Decoder</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">
+                BACnet Error Code Decoder
+                <span class="tool-tag">BACnet</span>
+            </h1>
+        </div>
+
+        <details class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
+            <summary>Turn the numbers a device sends back when it refuses a request into what actually went wrong — error class and code, reject reason, or abort reason.</summary>
+            <div class="preamble-rest">
+                When a BACnet request fails, the device answers with one of three things: a <strong>BACnet-Error</strong> (an error <em>class</em> plus an error <em>code</em>), a <strong>BACnet-Reject</strong> (a reject reason — the message was malformed), or a <strong>BACnet-Abort</strong> (an abort reason — the transaction was torn down).
+                Pick the kind you got, type the number(s), and read the meaning; or filter the full reference tables below.
+            </div>
+        </details>
+        <p class="ps-seed-note">The inputs are seeded with an example — edit them to your numbers.</p>
+
+        <div class="bec-modes" role="group" aria-labelledby="bec-mode-label">
+            <span id="bec-mode-label" class="sr-only">Which kind of failure did the device return?</span>
+            <button type="button" class="bec-mode active" data-mode="error" aria-pressed="true">Error (class + code)</button>
+            <button type="button" class="bec-mode" data-mode="reject" aria-pressed="false">Reject</button>
+            <button type="button" class="bec-mode" data-mode="abort" aria-pressed="false">Abort</button>
+        </div>
+
+        <div class="tool-body-2col">
+
+            <section>
+                <h2 class="ps-section-label">Input</h2>
+
+                <div class="bec-inputs" id="bec-in-error">
+                    <div class="ps-row">
+                        <label class="ps-label" for="bec-class">Error class <span style="white-space:nowrap;">(0–7)</span></label>
+                        <input class="ps-input" type="number" id="bec-class" min="0" max="65535" step="1" placeholder="2" value="2">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="bec-code">Error code <span style="white-space:nowrap;">(0–255)</span></label>
+                        <input class="ps-input" type="number" id="bec-code" min="0" max="65535" step="1" placeholder="32" value="32">
+                    </div>
+                </div>
+
+                <div class="bec-inputs" id="bec-in-reject" hidden>
+                    <div class="ps-row">
+                        <label class="ps-label" for="bec-reject">Reject reason <span style="white-space:nowrap;">(0–255)</span></label>
+                        <input class="ps-input" type="number" id="bec-reject" min="0" max="255" step="1" placeholder="9" value="9">
+                    </div>
+                </div>
+
+                <div class="bec-inputs" id="bec-in-abort" hidden>
+                    <div class="ps-row">
+                        <label class="ps-label" for="bec-abort">Abort reason <span style="white-space:nowrap;">(0–255)</span></label>
+                        <input class="ps-input" type="number" id="bec-abort" min="0" max="255" step="1" placeholder="11" value="11">
+                    </div>
+                </div>
+
+                <p class="bit-hint" id="bec-hint" style="margin-top:0.85rem;">An <strong>Error</strong> is a class + code pair — the service ran and the device refused it.</p>
+            </section>
+
+            <section role="status" aria-atomic="false">
+                <h2 class="ps-section-label">Output</h2>
+                <div class="ps-row">
+                    <span class="ps-label" id="bec-primary-label">Error code</span>
+                    <span class="ps-value muted" id="bec-out-primary">—</span>
+                </div>
+                <div class="ps-row" id="bec-context-row">
+                    <span class="ps-label">Error class</span>
+                    <span class="ps-value muted" id="bec-out-context">—</span>
+                </div>
+                <p class="ps-value" id="bec-out-desc" style="margin:0.6rem 0 0; min-height:1.2em;"></p>
+                <div class="status-pill" id="bec-status">Enter a value to decode it.</div>
+                <div class="btn-row">
+                    <button class="copy-btn" id="bec-copy">Copy decode</button>
+                </div>
+            </section>
+
+        </div>
+        <div class="result-formula flush" id="bec-formula"></div>
+        <div class="failure-callout" id="bec-callout" hidden></div>
+
+        <section class="tool-body-row">
+            <h2 class="ps-section-label" id="reference">The full reference</h2>
+            <p class="ref-note" style="margin-top:0;">
+                Every error class, error code, reject reason, and abort reason, filterable across all four at once. Click a value to copy it.
+            </p>
+            <!-- // user to verify long-tail error-code names + descriptions — enums imported from bacnet-stack's bacenum.h; the field-common rows carry human-reviewed descriptions, the long tail (BACnet/SC, HTTP/TLS/DNS, OAuth-scope) is name-only, refine against ASHRAE 135 after review -->
+            <div style="margin-bottom:0.9rem;">
+                <label class="bec-search-label" for="bec-search">Filter by number, name, or meaning <span class="bec-count" id="bec-count-total" aria-hidden="true"></span></label>
+                <input class="ps-input" type="search" id="bec-search" placeholder="e.g. 32, unknown-property, segmentation, timeout">
+            </div>
+
+            <div class="tabs tabs-flush" role="tablist">
+                <button class="tab-btn active" data-tab="codes">Error Codes <span class="bec-count" data-count="codes" aria-hidden="true"></span></button>
+                <button class="tab-btn" data-tab="classes">Classes <span class="bec-count" data-count="classes" aria-hidden="true"></span></button>
+                <button class="tab-btn" data-tab="reject">Reject <span class="bec-count" data-count="reject" aria-hidden="true"></span></button>
+                <button class="tab-btn" data-tab="abort">Abort <span class="bec-count" data-count="abort" aria-hidden="true"></span></button>
+            </div>
+
+            <div id="tab-codes" class="tab-pane active">
+                <div class="table-scroll">
+                    <table class="ref-table-dense rt-stack" id="bec-table-codes">
+                        <thead><tr><th>Code</th><th>Name</th><th>What it means</th></tr></thead>
+                        <tbody>
+                            {% for c in bacnetErrors.errorCode %}
+                            {% set d = bacnetErrorNotes.codes[c.name] %}
+                            <tr{% if not d %} class="bec-noteless"{% endif %}><td class="bec-id">{{ c.id }}</td><td data-name="{{ c.name }}">{{ c.name | safe }}</td><td>{% if d %}{{ d | safe }}{% else %}—{% endif %}</td></tr>
+                            {% endfor %}
+                            <tr class="bec-empty" hidden><td colspan="3">No codes match that filter.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="tab-classes" class="tab-pane">
+                <div class="table-scroll">
+                    <table class="ref-table-dense rt-stack" id="bec-table-classes">
+                        <thead><tr><th>Class</th><th>Name</th><th>What it means</th></tr></thead>
+                        <tbody>
+                            {% for c in bacnetErrors.errorClass %}
+                            {% set d = bacnetErrorNotes.classes[c.name] %}
+                            <tr{% if not d %} class="bec-noteless"{% endif %}><td class="bec-id">{{ c.id }}</td><td data-name="{{ c.name }}">{{ c.name | safe }}</td><td>{% if d %}{{ d | safe }}{% else %}—{% endif %}</td></tr>
+                            {% endfor %}
+                            <tr class="bec-empty" hidden><td colspan="3">No classes match that filter.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="tab-reject" class="tab-pane">
+                <div class="table-scroll">
+                    <table class="ref-table-dense rt-stack" id="bec-table-reject">
+                        <thead><tr><th>Reason</th><th>Name</th><th>What it means</th></tr></thead>
+                        <tbody>
+                            {% for c in bacnetErrors.rejectReason %}
+                            {% set d = bacnetErrorNotes.reject[c.name] %}
+                            <tr{% if not d %} class="bec-noteless"{% endif %}><td class="bec-id">{{ c.id }}</td><td data-name="{{ c.name }}">{{ c.name | safe }}</td><td>{% if d %}{{ d | safe }}{% else %}—{% endif %}</td></tr>
+                            {% endfor %}
+                            <tr class="bec-empty" hidden><td colspan="3">No reject reasons match that filter.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="tab-abort" class="tab-pane">
+                <div class="table-scroll">
+                    <table class="ref-table-dense rt-stack" id="bec-table-abort">
+                        <thead><tr><th>Reason</th><th>Name</th><th>What it means</th></tr></thead>
+                        <tbody>
+                            {% for c in bacnetErrors.abortReason %}
+                            {% set d = bacnetErrorNotes.abort[c.name] %}
+                            <tr{% if not d %} class="bec-noteless"{% endif %}><td class="bec-id">{{ c.id }}</td><td data-name="{{ c.name }}">{{ c.name | safe }}</td><td>{% if d %}{{ d | safe }}{% else %}—{% endif %}</td></tr>
+                            {% endfor %}
+                            <tr class="bec-empty" hidden><td colspan="3">No abort reasons match that filter.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <p class="ref-note">
+                Enumerations imported from <a href="https://github.com/bacnet-stack/bacnet-stack">bacnet-stack</a>'s error enums (the de-facto machine-readable form of the ASHRAE 135 error tables, which are paywalled) — retrieved {{ bacnetErrors.retrieved }}: {{ bacnetErrors.counts.classes }} classes, {{ bacnetErrors.counts.codes }} error codes, {{ bacnetErrors.counts.reject }} reject reasons, {{ bacnetErrors.counts.abort }} abort reasons. Descriptions cover the field-common values; the long tail (BACnet/SC transport, HTTP / TLS / DNS, OAuth-scope codes added in later editions) is listed name-only. Verify exact normative wording against the standard.
+            </p>
+        </section>
+
+        <section class="tool-body-row">
+            <h2 class="ps-section-label" id="error-reject-abort">Error vs. Reject vs. Abort</h2>
+            <p class="ref-note" style="margin-top:0;">
+                All three are a "no," but they fail at different points, and the difference tells you where to look. A <strong>BACnet-Error</strong> means your request was well-formed and the service ran — the device understood exactly what you asked and refused it, so it hands back an error <em>class</em> (the category) and an error <em>code</em> (the specific reason). This is the common one: unknown-property, write-access-denied, value-out-of-range.
+            </p>
+            <p class="ref-note">
+                A <strong>BACnet-Reject</strong> means the request never got that far — the APDU was malformed, mis-encoded, or used a service the device does not implement, so it was thrown out at the protocol layer before the service ran. A <strong>BACnet-Abort</strong> means a transaction that had already started was torn down mid-flight — almost always segmentation, a TSM timeout, or the device running out of buffer or resources. Reject points at the message; Abort points at the transport or the device's capacity.
+            </p>
+        </section>
+
+        <section class="tool-body-row">
+            <h2 class="ps-section-label" id="reading-class-and-code">Reading an error class and code</h2>
+            <p class="ref-note" style="margin-top:0;">
+                A BACnet-Error always carries the pair. The <em>class</em> buckets the problem — device, object, property, resources, security, services, vt, or communication — and the <em>code</em> is the specific message inside that bucket. In practice the code is what you act on; the class just tells you which subsystem raised it. The same code number can legitimately appear under more than one class, so decode both.
+            </p>
+            <p class="ref-note">
+                Classes 0–63 and the standard code range are ASHRAE's; a class 64 or above is a vendor-proprietary error, and its meaning lives in that manufacturer's documentation — the <a href="/tools/bacnet-vendor-ids.html">Vendor ID lookup</a> tells you whose. The <a href="/tools/bacnet-objects.html">Object Reference</a> covers the object types and properties these errors refer to.
+            </p>
+        </section>
+
+    </div>
+
+    {{ faqBlock(faqs, "BACnet error decoding FAQ") }}
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/tools/bacnet-objects.html', label: 'BACnet Object Reference'},
+            {href: '/tools/bacnet-units.html', label: 'BACnet Units Decoder'},
+            {href: '/tools/bacnet-ip-converter.html', label: 'BACnet/IP Hex Converter'}
+        ],
+        lessons: [
+            {href: '/education/bacnet-basics.html', label: 'BACnet Basics'},
+            {href: '/education/bacnet-networking.html', label: 'BACnet Networking'},
+            {href: '/education/bacnet-mstp.html', label: 'BACnet MS/TP'}
+        ],
+        quizzes: [
+            {href: '/practice/bacnet-basics.html', label: 'BACnet Basics'},
+            {href: '/practice/bacnet-networking.html', label: 'BACnet Networking'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/tools/">← All tools</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="/scripts/ui.js"></script>
+<script>
+    // switchTab(name, btn) / copyText(el, text) come from /scripts/ui.js.
+    //
+    // The build-time-rendered tables ARE the dataset: the decode box reads
+    // its value → { name, desc } maps straight from the rendered rows at
+    // init, so the page ships each enumeration exactly once. The shared
+    // filter hides non-matching rows across all four tables at once and
+    // badges each tab with its live match count. Every value cell is
+    // click-to-copy via one delegated listener per table.
+    (function () {
+        'use strict';
+
+        const KINDS = ['codes', 'classes', 'reject', 'abort'];
+        const tables = {};
+        const maps = {};
+        KINDS.forEach(k => {
+            const t = document.getElementById('bec-table-' + k);
+            tables[k] = t;
+            const m = new Map();
+            Array.from(t.tBodies[0].rows).forEach(row => {
+                if (row.classList.contains('bec-empty')) return;
+                const desc = row.cells[2].textContent.trim();
+                m.set(Number(row.cells[0].textContent), {
+                    name: row.cells[1].dataset.name,
+                    desc: desc === '—' ? '' : desc,
+                });
+            });
+            maps[k] = m;
+        });
+
+        // ── decode box ──
+        const modeBtns   = document.querySelectorAll('.bec-mode');
+        const inputs     = {
+            error:  document.getElementById('bec-in-error'),
+            reject: document.getElementById('bec-in-reject'),
+            abort:  document.getElementById('bec-in-abort'),
+        };
+        const classEl    = document.getElementById('bec-class');
+        const codeEl      = document.getElementById('bec-code');
+        const rejectEl    = document.getElementById('bec-reject');
+        const abortEl      = document.getElementById('bec-abort');
+        const primaryLabel = document.getElementById('bec-primary-label');
+        const primaryEl    = document.getElementById('bec-out-primary');
+        const contextRow   = document.getElementById('bec-context-row');
+        const contextEl     = document.getElementById('bec-out-context');
+        const descEl        = document.getElementById('bec-out-desc');
+        const statusEl      = document.getElementById('bec-status');
+        const formulaEl     = document.getElementById('bec-formula');
+        const calloutEl     = document.getElementById('bec-callout');
+        const hintEl        = document.getElementById('bec-hint');
+
+        let mode = 'error';
+        let lastCopy = '';
+
+        const HINTS = {
+            error:  'An <strong>Error</strong> is a class + code pair — the service ran and the device refused it.',
+            reject: 'A <strong>Reject</strong> means the request PDU was malformed or unsupported — thrown out before the service ran.',
+            abort:  'An <strong>Abort</strong> tears down a transaction in progress — usually segmentation, a timeout, or resources.',
+        };
+
+        function setStatus(kind, text) {
+            statusEl.className = 'status-pill' + (kind ? ' ' + kind : '');
+            statusEl.textContent = text;
+        }
+
+        function resetOut() {
+            primaryEl.className = 'ps-value muted';
+            primaryEl.textContent = '—';
+            contextEl.className = 'ps-value muted';
+            contextEl.textContent = '—';
+            descEl.textContent = '';
+            formulaEl.textContent = '';
+            lastCopy = '';
+        }
+
+        // Whole-number Unsigned parse; returns null on anything invalid.
+        // max defaults to the Unsigned16 ceiling (error class/code); reject
+        // and abort reasons are single-octet, so their callers pass 255.
+        function readInt(el, max) {
+            const cap = max === undefined ? 65535 : max;
+            const raw = el.value.trim();
+            if (raw === '') return NaN;
+            const n = parseFloat(raw);
+            if (!isFinite(n) || n !== Math.floor(n) || n < 0 || n > cap) return null;
+            return n;
+        }
+
+        function lookup(kind, val, stdMax) {
+            const hit = maps[kind].get(val);
+            if (hit) return { state: 'ok', name: hit.name, desc: hit.desc };
+            if (val > 63 && kind !== 'codes') return { state: 'prop' };
+            if (kind === 'codes' && val > 255) return { state: 'prop' };
+            if (val > 63 && kind === 'codes' && val <= 255) return { state: 'unnamed' };
+            if (val <= stdMax) return { state: 'unnamed' };
+            return { state: 'prop' };
+        }
+
+        function decodeError() {
+            contextRow.hidden = false;
+            primaryLabel.textContent = 'Error code';
+            const cls = readInt(classEl);
+            const code = readInt(codeEl);
+            if (cls === null || code === null) {
+                resetOut();
+                calloutEl.textContent = 'Error class and code are whole numbers 0–65535 (the Unsigned range these enumerations live in).';
+                calloutEl.hidden = false;
+                setStatus('', 'Enter an error class and code.');
+                return;
+            }
+            calloutEl.hidden = true;
+            if (isNaN(cls) || isNaN(code)) { resetOut(); setStatus('', 'Enter an error class and code.'); return; }
+
+            const clsHit = lookup('classes', cls, 63);
+            const codeHit = lookup('codes', code, 255);
+
+            // primary = code
+            if (codeHit.state === 'ok') {
+                primaryEl.className = 'ps-value live';
+                primaryEl.textContent = codeHit.name;
+                descEl.textContent = codeHit.desc || '';
+            } else if (codeHit.state === 'prop') {
+                primaryEl.className = 'ps-value muted';
+                primaryEl.textContent = '— (proprietary)';
+                descEl.textContent = 'Code ' + code + ' is in the vendor-proprietary range — see the manufacturer’s docs.';
+            } else {
+                primaryEl.className = 'ps-value muted';
+                primaryEl.textContent = '— (unnamed)';
+                descEl.textContent = 'Code ' + code + ' is in the standard range but unnamed in this snapshot — a newer-edition code.';
+            }
+            // context = class
+            const clsName = clsHit.state === 'ok' ? clsHit.name : (clsHit.state === 'prop' ? 'proprietary' : 'unnamed');
+            contextEl.className = clsHit.state === 'ok' ? 'ps-value live' : 'ps-value muted';
+            contextEl.textContent = cls + ' · ' + clsName;
+
+            if (codeHit.state === 'ok' && clsHit.state === 'ok') setStatus('ok', 'Decoded');
+            else setStatus('warn', 'Partly decoded — see notes');
+            // Word the code the same way the class half does (line above) —
+            // a proprietary/unnamed code has no `name`, so fall back to the
+            // state word rather than a bare 'unnamed' that mislabels proprietary.
+            const codeWord = codeHit.state === 'ok' ? codeHit.name : (codeHit.state === 'prop' ? 'proprietary' : 'unnamed');
+            formulaEl.textContent = 'class ' + cls + ' / code ' + code + '  →  ' + clsName + ' / ' + codeWord;
+            lastCopy = 'class ' + cls + ' (' + clsName + ') / code ' + code + ' (' + codeWord + ')';
+        }
+
+        function decodeSingle(kind, el, stdMax, label, fieldMax) {
+            contextRow.hidden = true;
+            primaryLabel.textContent = label;
+            const val = readInt(el, fieldMax);
+            if (val === null) {
+                resetOut();
+                calloutEl.textContent = label + ' is a whole number 0–' + fieldMax + '.';
+                calloutEl.hidden = false;
+                setStatus('', 'Enter a ' + label.toLowerCase() + '.');
+                return;
+            }
+            calloutEl.hidden = true;
+            if (isNaN(val)) { resetOut(); setStatus('', 'Enter a ' + label.toLowerCase() + '.'); return; }
+            const hit = lookup(kind, val, stdMax);
+            if (hit.state === 'ok') {
+                primaryEl.className = 'ps-value live';
+                primaryEl.textContent = hit.name;
+                descEl.textContent = hit.desc || '';
+                setStatus('ok', 'Decoded');
+                formulaEl.textContent = val + '  →  ' + hit.name;
+                lastCopy = val + ' (' + hit.name + ')';
+            } else if (hit.state === 'prop') {
+                primaryEl.className = 'ps-value muted';
+                primaryEl.textContent = '— (proprietary)';
+                descEl.textContent = val + ' is in the vendor-proprietary range — see the manufacturer’s docs.';
+                setStatus('warn', 'Proprietary range');
+                formulaEl.textContent = val + '  →  vendor-proprietary';
+                lastCopy = val + ' (proprietary)';
+            } else {
+                primaryEl.className = 'ps-value muted';
+                primaryEl.textContent = '— (unnamed)';
+                descEl.textContent = val + ' is in the standard range but unnamed in this snapshot.';
+                setStatus('warn', 'Unnamed in this snapshot');
+                formulaEl.textContent = val + '  →  unnamed';
+                lastCopy = val + ' (unnamed)';
+            }
+        }
+
+        function decode() {
+            if (mode === 'error') decodeError();
+            else if (mode === 'reject') decodeSingle('reject', rejectEl, 63, 'Reject reason', 255);
+            else decodeSingle('abort', abortEl, 63, 'Abort reason', 255);
+        }
+
+        modeBtns.forEach(btn => {
+            btn.addEventListener('click', e => {
+                mode = e.currentTarget.dataset.mode;
+                modeBtns.forEach(b => {
+                    const on = b === e.currentTarget;
+                    b.classList.toggle('active', on);
+                    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+                });
+                inputs.error.hidden = mode !== 'error';
+                inputs.reject.hidden = mode !== 'reject';
+                inputs.abort.hidden = mode !== 'abort';
+                hintEl.innerHTML = HINTS[mode];
+                decode();
+            });
+        });
+        [classEl, codeEl, rejectEl, abortEl].forEach(el => el.addEventListener('input', decode));
+        document.getElementById('bec-copy').addEventListener('click', e => copyText(e.currentTarget, lastCopy));
+
+        // ── reference: tabs + shared filter + click-to-copy ──
+        document.querySelectorAll('[data-tab]').forEach(btn => {
+            btn.addEventListener('click', e => switchTab(e.currentTarget.dataset.tab, e.currentTarget));
+        });
+
+        function copyCell(cell) { copyText(cell, cell.dataset.code); }
+        KINDS.forEach(k => {
+            const table = tables[k];
+            table.querySelectorAll('td.bec-id').forEach(cell => {
+                cell.dataset.code = cell.textContent.trim();
+                cell.classList.add('bec-copyable');
+                cell.setAttribute('role', 'button');
+                cell.setAttribute('tabindex', '0');
+                cell.setAttribute('title', 'Copy ' + cell.dataset.code);
+            });
+            table.addEventListener('click', e => {
+                const cell = e.target.closest('td.bec-id');
+                if (cell) copyCell(cell);
+            });
+            table.addEventListener('keydown', e => {
+                if (e.key !== 'Enter' && e.key !== ' ') return;
+                const cell = e.target.closest('td.bec-id');
+                if (!cell) return;
+                e.preventDefault();
+                copyCell(cell);
+            });
+        });
+
+        const search = document.getElementById('bec-search');
+        const badges = {};
+        document.querySelectorAll('.bec-count[data-count]').forEach(b => { badges[b.dataset.count] = b; });
+        const totalBadge = document.getElementById('bec-count-total');
+
+        function applyFilter() {
+            const q = search.value.trim().toLowerCase();
+            let total = 0;
+            KINDS.forEach(k => {
+                const body = tables[k].tBodies[0];
+                let matches = 0;
+                Array.from(body.rows).forEach(row => {
+                    if (row.classList.contains('bec-empty')) return;
+                    // Match value (data-code, not the flashing cell text) + name + meaning.
+                    const hay = (row.cells[0].dataset.code + ' ' + row.cells[1].textContent + ' ' + row.cells[2].textContent).toLowerCase();
+                    const hit = !q || hay.includes(q);
+                    row.hidden = !hit;
+                    if (hit) matches++;
+                });
+                const emptyRow = body.querySelector('.bec-empty');
+                if (emptyRow) emptyRow.hidden = !(q && matches === 0);
+                if (badges[k]) badges[k].textContent = q ? '· ' + matches : '';
+                total += matches;
+            });
+            totalBadge.textContent = q ? '· ' + total + ' total' : '';
+        }
+        search.addEventListener('input', applyFilter);
+
+        // First-paint decode of the seeded example.
+        decode();   // class 2 / code 32 → property / unknown-property
+    })();
+</script>
+{% endblock %}
