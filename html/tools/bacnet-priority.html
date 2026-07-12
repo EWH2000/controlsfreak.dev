@@ -1,0 +1,417 @@
+---
+title: BACnet Priority Array — controlsfreak.dev
+description: BACnet priority-array resolver — set values or NULL in the 16 command slots; Present_Value resolves to the lowest non-null slot, or Relinquish_Default.
+canonical: https://controlsfreak.dev/tools/bacnet-priority.html
+nav: tools
+category: protocols
+keywords: bacnet priority array present value relinquish default commandable override write null release 16 slots manual operator life safety minimum on off writeproperty
+faqs:
+    - q: What is the BACnet priority array?
+      a: A 16-slot property (<code>Priority_Array</code>) on every <em>commandable</em> object — Analog Output, Binary Output, and Analog / Binary / Multi-state Value when configured commandable. A <code>WriteProperty</code> to <code>Present_Value</code> does not overwrite the value; it writes into one slot, at a chosen priority. Slot 1 is the highest priority and slot 16 the lowest.
+    - q: How does BACnet decide Present_Value from the priority array?
+      a: <code>Present_Value</code> is the value in the <strong>lowest-numbered slot that is not NULL</strong> — the highest-priority active command. Every lower-priority slot below it is held back. If every one of the 16 slots is NULL, the object falls back to its <code>Relinquish_Default</code> property.
+    - q: What does writing NULL to a BACnet priority do?
+      a: It <strong>releases</strong> (relinquishes) that slot — the slot becomes empty and stops commanding. It does not write a zero; it removes your command so the next-highest non-NULL slot takes over. Forgetting to write NULL when you are done is the most common way an override gets stuck.
+    - q: What is Relinquish_Default in BACnet?
+      a: The value a commandable object takes when its entire priority array is NULL — the resting state with nothing commanding. It is a separate, writable property, not slot 17. On many points it is the safe/off value the object should hold when no logic and no operator is asking for anything.
+    - q: What priority does a BACnet operator override use?
+      a: By convention, priority 8 — "Manual Operator" — is the operator's hand from a workstation or BMS, and priority 16 is where a controller's own automatic program most often writes. So a hand override at 8 beats the sequence at 16; write NULL back to 8 and the sequence at 16 resumes. The exact map is a local matter — check your controller.
+    - q: Why is my BACnet point stuck and not following the program?
+      a: Almost always a forgotten override sitting at a higher priority than the sequence. The program writes at, say, slot 16, but slot 8 still holds a hand value someone set months ago — so <code>Present_Value</code> resolves to the old override and the point looks "broken" even though the sequence is writing correctly. Read the whole priority array; release the stale slot with a NULL write.
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+{% from "faq.njk" import faqBlock %}
+
+{% set prioritySlots = [
+    { n: 1,  use: "Manual Life-Safety",         short: "life-safety",      tag: "std",   note: "The highest priority — reserved for manual life-safety commands. Nothing outranks it." },
+    { n: 2,  use: "Automatic Life-Safety",      short: "auto life-safety", tag: "std",   note: "Automatic life-safety functions — smoke control, fire response." },
+    { n: 3,  use: "Available",                  short: "",                 tag: "avail", note: "Available for application-specific use." },
+    { n: 4,  use: "Available",                  short: "",                 tag: "avail", note: "Available for application-specific use." },
+    { n: 5,  use: "Critical Equipment Control", short: "critical equip.",  tag: "std",   note: "Protects equipment — e.g. a compressor, or a defrost cycle that must run to completion." },
+    { n: 6,  use: "Minimum On/Off",             short: "min on/off",       tag: "std",   note: "Reserved for minimum on/off-time enforcement — the anti-short-cycle timer." },
+    { n: 7,  use: "Available",                  short: "",                 tag: "avail", note: "Available for application-specific use." },
+    { n: 8,  use: "Manual Operator",            short: "manual operator",  tag: "std",   note: "The operator's hand — a manual override from the workstation or BMS.", seed: "0" },
+    { n: 9,  use: "Available",                  short: "",                 tag: "avail", note: "Available for application-specific use." },
+    { n: 10, use: "Available",                  short: "",                 tag: "avail", note: "Available for application-specific use." },
+    { n: 11, use: "Available",                  short: "",                 tag: "avail", note: "Available for application-specific use." },
+    { n: 12, use: "Available",                  short: "",                 tag: "avail", note: "Available for application-specific use." },
+    { n: 13, use: "Available",                  short: "",                 tag: "avail", note: "Available for application-specific use." },
+    { n: 14, use: "Available",                  short: "",                 tag: "avail", note: "Available for application-specific use." },
+    { n: 15, use: "Available",                  short: "",                 tag: "avail", note: "Available for application-specific use." },
+    { n: 16, use: "Available",                  short: "sequence",         tag: "avail", note: "The lowest priority — commonly the slot a controller's own automatic program writes from.", seed: "65" }
+] %}
+
+{% block head %}
+    <style>
+        /* Page-only — priority-array resolver. Shared property-sheet,
+           .ref-table-dense, .status-pill, and .widget-try rules carry
+           the layout; the 16-slot editor grid, the release button, the
+           winning-slot highlight, and the big Present_Value readout sit
+           here. Prefix: bpri-. */
+        .bpri-array {
+            border: 1px solid var(--border);
+            background: var(--surface-2);
+        }
+        .bpri-slot {
+            display: grid;
+            grid-template-columns: 2.2rem 1fr 6.2rem 1.8rem;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.12rem 0.5rem;
+            border-bottom: 1px solid var(--border);
+            font-family: var(--mono);
+            font-size: 0.82rem;
+        }
+        .bpri-slot:last-child { border-bottom: none; }
+        /* A left rule marks the five standard-reserved slots (1, 2, 5, 6, 8). */
+        .bpri-std { border-left: 2px solid var(--accent-dim); }
+        .bpri-avail { border-left: 2px solid transparent; }
+        .bpri-num { color: var(--text-dim); text-align: right; }
+        /* Wraps (rather than clips) so the reserved-slot labels never
+           overflow their track on a phone — on desktop's wide column
+           they stay on one line. */
+        .bpri-tag {
+            color: var(--text-dim);
+            font-size: 0.72rem;
+            line-height: 1.2;
+            min-width: 0;
+        }
+        .bpri-val {
+            font-family: var(--mono);
+            font-size: 0.82rem;
+            text-align: right;
+            padding: 0.3rem 0.45rem;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--text);
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .bpri-val::placeholder { color: var(--text-dim); font-style: italic; }
+        .bpri-val:hover { border-color: var(--accent-dim); }
+        .bpri-release {
+            font-family: var(--mono);
+            font-size: 1.05rem;
+            line-height: 1;
+            background: none;
+            border: 1px solid transparent;
+            color: var(--text-dim);
+            cursor: pointer;
+            padding: 0.25rem 0;
+            min-height: 1.7rem;
+        }
+        .bpri-release:hover { color: var(--heat); border-color: var(--border); }
+        /* The winning (commanding) slot. */
+        .bpri-win { background: var(--accent-dim); }
+        .bpri-win .bpri-num,
+        .bpri-win .bpri-tag { color: var(--accent); font-weight: 700; }
+        .bpri-win .bpri-val {
+            border-color: var(--accent);
+            color: var(--accent);
+            font-weight: 700;
+        }
+
+        .bpri-rd {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            flex-wrap: wrap;
+            margin-top: 0.75rem;
+            padding: 0 0.5rem;
+        }
+        .bpri-rd-label { font-family: var(--mono); font-size: 0.82rem; color: var(--text); }
+        .bpri-rd .bpri-val { width: 6.2rem; flex: none; }
+        .bpri-rd-note { font-family: var(--mono); font-size: 0.72rem; color: var(--text-dim); }
+
+        .bpri-pv {
+            display: inline-block;
+            font-family: var(--mono);
+            font-size: 2.1rem;
+            font-weight: 700;
+            line-height: 1.1;
+            color: var(--accent);
+            word-break: break-word;
+            padding: 0.3rem 0;
+        }
+        .bpri-pv.muted { color: var(--text-dim); }
+
+        .ref-table-dense td.bpri-id {
+            font-family: var(--mono);
+            color: var(--blue);
+            text-align: right;
+            white-space: nowrap;
+        }
+        .bpri-ref-std td:nth-child(2) { color: var(--text-bright); }
+    </style>
+{% endblock %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Tools · BACnet Priority Array</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">
+                BACnet Priority Array
+                <span class="tool-tag">BACnet</span>
+            </h1>
+        </div>
+
+        <details class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
+            <summary>Type a value into any of the 16 command slots and watch <code>Present_Value</code> resolve — the lowest-numbered non-NULL slot wins, or <code>Relinquish_Default</code> if they are all empty.</summary>
+            <div class="preamble-rest">
+                Every <em>commandable</em> BACnet object holds a 16-slot <code>Priority_Array</code>. A write does not overwrite the value; it lands in one slot, at a priority. The object's actual <code>Present_Value</code> is then the value in the lowest-numbered slot that is not NULL. Type a value to command a slot; clear it — or press <strong>×</strong> — to write NULL and release it. The winning slot is highlighted, and the panel shows what would take over if you released it.
+            </div>
+        </details>
+        <p class="ps-seed-note">The array is seeded with an example — a hand override at slot 8 sitting on top of a sequence at slot 16. Edit it to your own values.</p>
+
+        <div class="tool-body-2col">
+
+            <section>
+                <h2 class="ps-section-label">Priority_Array</h2>
+
+                <div class="widget-try" id="bpri-presets">
+                    <span class="lbl">Try this:</span>
+                    <button type="button" data-preset="override">operator override</button>
+                    <button type="button" data-preset="sequence">sequence only</button>
+                    <button type="button" data-preset="lifesafety">life-safety trip</button>
+                    <button type="button" data-preset="released">all released</button>
+                </div>
+
+                <div class="bpri-array" id="bpri-array" role="group" aria-label="Priority array slots 1 to 16">
+                    {% for s in prioritySlots %}
+                    <div class="bpri-slot {% if s.tag == 'std' %}bpri-std{% else %}bpri-avail{% endif %}" data-slot="{{ s.n }}" data-tag="{{ s.tag }}" data-use="{{ s.use }}">
+                        <span class="bpri-num">{{ s.n }}</span>
+                        <span class="bpri-tag">{{ s.short }}</span>
+                        <input class="bpri-val" type="text" id="bpri-slot-{{ s.n }}" autocomplete="off" spellcheck="false" placeholder="NULL" value="{{ s.seed }}" aria-label="Priority {{ s.n }}{% if s.tag == 'std' %} — {{ s.use }}{% endif %} value">
+                        <button type="button" class="bpri-release" data-release="{{ s.n }}" title="Release slot {{ s.n }} — write NULL" aria-label="Release slot {{ s.n }}">×</button>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <div class="bpri-rd">
+                    <label class="bpri-rd-label" for="bpri-rd">Relinquish_Default</label>
+                    <input class="bpri-val" type="text" id="bpri-rd" autocomplete="off" spellcheck="false" placeholder="(none)" value="0">
+                    <span class="bpri-rd-note">used when every slot is NULL</span>
+                </div>
+
+                <p class="bit-hint" style="margin-top:0.85rem;">Blank = NULL = relinquished. A value can be anything the point commands — a percent, a temperature, or <code>active</code> / <code>inactive</code> on a binary object.</p>
+            </section>
+
+            <section role="status">
+                <h2 class="ps-section-label">Present_Value</h2>
+                <span class="bpri-pv muted" id="bpri-pv">—</span>
+                <div class="status-pill" id="bpri-status">Type a value to resolve it.</div>
+                <p class="ps-value" id="bpri-explain" style="margin:0.7rem 0 0; min-height:1.2em;"></p>
+                <p class="bit-hint" id="bpri-next" style="margin:0.55rem 0 0; min-height:1.1em;"></p>
+                <div class="btn-row">
+                    <button class="copy-btn" id="bpri-copy">Copy value</button>
+                </div>
+            </section>
+
+        </div>
+
+        <section class="tool-body-row">
+            <h2 class="ps-section-label" id="standard-slots">The 16 standard priority slots</h2>
+            <p class="ref-note" style="margin-top:0;">
+                Slot 1 is the highest priority, slot 16 the lowest. Five slots carry a standard-defined meaning (marked with the accent rule); the rest are available for application-specific use.
+            </p>
+            <div class="table-scroll">
+                <table class="ref-table-dense rt-stack">
+                    <thead><tr><th>Priority</th><th>Standard use</th><th>Notes</th></tr></thead>
+                    <tbody>
+                        {% for s in prioritySlots %}
+                        <tr{% if s.tag == 'std' %} class="bpri-ref-std"{% endif %}>
+                            <td class="bpri-id">{{ s.n }}</td>
+                            <td>{{ s.use }}</td>
+                            <td>{{ s.note }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <p class="ref-note">
+                The standard fixes only a few of these — life-safety at the top slots (1–2), critical-equipment control at 5, minimum on/off-time at 6, and the manual operator's hand at 8 — and leaves the rest to local policy. Slot 16 is simply the lowest priority, but it is where a controller's own automatic program most often writes. <strong>Your controller exposes its own priority map — that map, not this table, is what governs the point in front of you.</strong> Assignments cross-checked against ASHRAE 135 command-prioritization references.
+            </p>
+        </section>
+
+        <section class="tool-body-row">
+            <h2 class="ps-section-label" id="how-it-resolves">How Present_Value resolves</h2>
+            <p class="ref-note" style="margin-top:0;">
+                Reading the array is a scan from the top: start at slot 1 and take the value in the <em>first</em> slot that is not NULL. That value is <code>Present_Value</code>; every lower-priority slot underneath it is held back, still holding its value but not commanding. Nothing is added, averaged, or compared — the single highest-priority active slot wins outright.
+            </p>
+            <p class="ref-note">
+                If all sixteen slots are NULL, the object has no command at all, and <code>Present_Value</code> takes the value of <code>Relinquish_Default</code> — the resting state. Note that <code>Relinquish_Default</code> is a real, separate property you can write; it is not "slot 17," and it only matters when the whole array is empty.
+            </p>
+        </section>
+
+        <section class="tool-body-row">
+            <h2 class="ps-section-label" id="writing-null-releases">Writing NULL releases — the #1 field failure</h2>
+            <p class="ref-note" style="margin-top:0;">
+                The move that trips people up: to give a point <em>back</em>, you write NULL to your slot, not a zero. Writing zero commands the value zero at your priority — the point holds at 0. Writing NULL relinquishes the slot; it goes empty, and the next-highest non-NULL slot takes over. In this tool the <strong>×</strong> on each row does exactly that.
+            </p>
+            <p class="ref-note">
+                So the classic "this point is broken" call is almost never a broken sequence. The program is writing 65 % at slot 16 exactly as designed, but a hand override someone set months ago still sits at slot 8 — and slot 8 outranks slot 16, so <code>Present_Value</code> resolves to the stale override. The value on the graphic is the <em>resolved</em> value, not what the sequence is writing. Read the entire array, find the higher-priority slot that is still populated, and release it. A <a href="/tools/bacnet-error-codes.html">write-access-denied</a> when you try to write <code>Present_Value</code> directly is often the same story — the value is owned by the array, so command a priority instead.
+            </p>
+        </section>
+
+    </div>
+
+    {{ faqBlock(faqs, "BACnet priority array FAQ") }}
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/tools/bacnet-objects.html', label: 'BACnet Object Reference'},
+            {href: '/tools/bacnet-error-codes.html', label: 'BACnet Error Code Decoder'},
+            {href: '/tools/bacnet-units.html', label: 'BACnet Units Decoder'}
+        ],
+        lessons: [
+            {href: '/education/bacnet-basics.html', label: 'BACnet Basics'},
+            {href: '/education/bacnet-networking.html', label: 'BACnet Networking'},
+            {href: '/education/bacnet-mstp.html', label: 'BACnet MS/TP'}
+        ],
+        quizzes: [
+            {href: '/practice/bacnet-basics.html', label: 'BACnet Basics'},
+            {href: '/practice/bacnet-networking.html', label: 'BACnet Networking'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/tools/">← All tools</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="/scripts/ui.js"></script>
+<script>
+    // copyText(el, text) comes from /scripts/ui.js.
+    //
+    // The resolver is pure DOM: 16 text inputs (blank = NULL) plus a
+    // Relinquish_Default box. Present_Value is the value in the
+    // lowest-numbered non-empty slot, else Relinquish_Default, else NULL.
+    // The winning row is highlighted; the panel also computes what would
+    // take over if that slot were released — the teaching payload.
+    (function () {
+        'use strict';
+
+        const slotEls  = [];
+        const slotRows = [];
+        for (let i = 1; i <= 16; i++) {
+            const el = document.getElementById('bpri-slot-' + i);
+            slotEls.push(el);
+            slotRows.push(el.closest('.bpri-slot'));
+        }
+        const rdEl      = document.getElementById('bpri-rd');
+        const pvEl      = document.getElementById('bpri-pv');
+        const statusEl  = document.getElementById('bpri-status');
+        const explainEl = document.getElementById('bpri-explain');
+        const nextEl    = document.getElementById('bpri-next');
+        const copyBtn   = document.getElementById('bpri-copy');
+        let lastCopy = '';
+
+        const val = el => el.value.trim();
+
+        // "slot 8 (Manual Operator)" for reserved slots, "slot 4" otherwise.
+        function slotLabel(idx) {
+            const row = slotRows[idx];
+            return row.dataset.tag === 'std'
+                ? 'slot ' + (idx + 1) + ' (' + row.dataset.use + ')'
+                : 'slot ' + (idx + 1);
+        }
+
+        function setStatus(kind, text) {
+            statusEl.className = 'status-pill' + (kind ? ' ' + kind : '');
+            statusEl.textContent = text;
+        }
+
+        // Index of the lowest-numbered non-empty slot at or after `from`; -1 if none.
+        function firstActive(from) {
+            for (let i = from; i < 16; i++) {
+                if (val(slotEls[i]) !== '') return i;
+            }
+            return -1;
+        }
+
+        function resolve() {
+            slotRows.forEach(r => r.classList.remove('bpri-win'));
+            const win = firstActive(0);
+
+            if (win >= 0) {
+                const pv = val(slotEls[win]);
+                slotRows[win].classList.add('bpri-win');
+                pvEl.textContent = pv;
+                pvEl.classList.remove('muted');
+                setStatus('ok', 'Commanded by ' + slotLabel(win));
+                explainEl.innerHTML = 'Present_Value is the value in <strong>' + slotLabel(win)
+                    + '</strong> — the lowest-numbered slot that is not NULL.'
+                    + (win < 15 ? ' Lower-priority slots below it are held back.' : '');
+                lastCopy = pv;
+
+                const nxt = firstActive(win + 1);
+                if (nxt >= 0) {
+                    nextEl.textContent = 'Release ' + slotLabel(win) + ' and ' + slotLabel(nxt)
+                        + ' takes over at ' + val(slotEls[nxt]) + '.';
+                } else if (val(rdEl) !== '') {
+                    nextEl.textContent = 'Release ' + slotLabel(win)
+                        + ' and Present_Value falls to Relinquish_Default (' + val(rdEl) + ').';
+                } else {
+                    nextEl.textContent = 'Release ' + slotLabel(win)
+                        + ' and every slot is NULL — Present_Value becomes NULL.';
+                }
+            } else if (val(rdEl) !== '') {
+                const pv = val(rdEl);
+                pvEl.textContent = pv;
+                pvEl.classList.remove('muted');
+                setStatus('ok', 'From Relinquish_Default');
+                explainEl.innerHTML = 'Every slot is NULL, so Present_Value falls back to <strong>Relinquish_Default</strong> — the resting state.';
+                nextEl.textContent = 'Write any slot to command a value that overrides the default.';
+                lastCopy = pv;
+            } else {
+                pvEl.textContent = '—';
+                pvEl.classList.add('muted');
+                setStatus('warn', 'NULL — no commandable value');
+                explainEl.innerHTML = 'Every slot is NULL and Relinquish_Default is empty — Present_Value is NULL.';
+                nextEl.textContent = '';
+                lastCopy = '';
+            }
+        }
+
+        slotEls.concat(rdEl).forEach(el => el.addEventListener('input', resolve));
+
+        document.querySelectorAll('.bpri-release').forEach(btn => {
+            btn.addEventListener('click', e => {
+                const n = Number(e.currentTarget.dataset.release);
+                slotEls[n - 1].value = '';
+                resolve();
+                slotEls[n - 1].focus();
+            });
+        });
+
+        const PRESETS = {
+            override:   { slots: { 8: '0', 16: '65' }, rd: '0' },
+            sequence:   { slots: { 16: '65' },         rd: '0' },
+            lifesafety: { slots: { 1: '0', 8: '50', 16: '65' }, rd: '0' },
+            released:   { slots: {},                   rd: '0' },
+        };
+        document.querySelectorAll('#bpri-presets button').forEach(btn => {
+            btn.addEventListener('click', e => {
+                const p = PRESETS[e.currentTarget.dataset.preset];
+                slotEls.forEach(el => { el.value = ''; });
+                Object.keys(p.slots).forEach(n => { slotEls[Number(n) - 1].value = p.slots[n]; });
+                rdEl.value = p.rd;
+                resolve();
+            });
+        });
+
+        copyBtn.addEventListener('click', e => copyText(e.currentTarget, lastCopy));
+
+        // First-paint resolve of the seeded example (slot 8 = 0, slot 16 = 65).
+        resolve();
+    })();
+</script>
+{% endblock %}

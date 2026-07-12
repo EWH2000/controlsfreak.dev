@@ -1754,6 +1754,8 @@ input[type="range"]::-moz-range-thumb {
 .bo-id.bo-copyable:focus-visible,
 .bvid-copyable:focus-visible,
 .bec-id.bec-copyable:focus-visible,
+.bpri-val:focus-visible,
+.bpri-release:focus-visible,
 .widget-try button:focus-visible,
 .ah-w-mode-btn:focus-visible,
 .aid-w-mode-btn:focus-visible,

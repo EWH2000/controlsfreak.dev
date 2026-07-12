@@ -20,6 +20,7 @@ const PAGES = [
     { name: 'bacnet vendor ids',      url: '/tools/bacnet-vendor-ids.html' },
     { name: 'bacnet units decoder',   url: '/tools/bacnet-units.html' },
     { name: 'bacnet error decoder',   url: '/tools/bacnet-error-codes.html' },
+    { name: 'bacnet priority array',  url: '/tools/bacnet-priority.html' },
     { name: 'psychrometric chart',    url: '/tools/psychrometric-chart.html' },
     { name: 'economizer ratio',       url: '/tools/economizer-ratio.html' },
     { name: 'air mixing',             url: '/tools/air-mixing.html' },

@@ -121,15 +121,25 @@ Shipped so far:
   Long tail (BACnet/SC, HTTP/TLS/DNS, OAuth-scope codes) is name-only.
   *(shipped 2026-07-12, PR 5 — generated/curated split; the
   descriptions carry the placeholder-verify convention)*.
+- **Priority Array resolver** — `tools/bacnet-priority.html`, an
+  interactive 16-slot editor (type a value or clear to NULL in any
+  slot) that resolves `Present_Value` to the lowest-numbered non-NULL
+  slot, or `Relinquish_Default` when the whole array is empty; the
+  winning slot highlights and the panel computes what takes over if you
+  release it. Ships the standard reservation table (1 manual / 2 auto
+  life-safety, 5 critical-equipment, 6 min-on/off, 8 manual-operator;
+  the rest available) — slot table cross-checked against ASHRAE 135
+  command-prioritization references (Chipkin, Beckhoff/TwinCAT). Caught
+  and fixed a factual slip in `education/bacnet-basics.html` (it had
+  critical/min-on-off at slots 6/7 in both the prose and the SVG —
+  corrected to 5/6). *(shipped 2026-07-12, PR 6 — interactive tool, no
+  imported data; the widget the Modbus/BACnet lessons had drafted out
+  for the lesson pages lives here as a standalone tool)*.
 
 Remaining (each a soft-SERP reference tool or informational parent,
 one PR each; new tools follow the CLAUDE.md checklist, category
 `protocols`):
 
-- **Priority Array explainer** — the 16 slots, lowest-non-null wins,
-  write-null-releases, `Relinquish_Default`. Already parked as
-  `[future: bacnet-priority.html]` on the BACnet Basics entry — this
-  buildout is its demand signal.
 - **Services / BIBBs reference** — ReadProperty / WriteProperty / COV /
   Who-Is · I-Am as a reference table (prose-only in bacnet-basics
   today). `[future: education/bacnet-services.html]`
@@ -4833,8 +4843,9 @@ Out of scope (forward links):
 - Priority-array deeper mechanics (writeable `Relinquish_Default`,
   command prioritization under heavy override, the standard's
   full slot reservation table) — `[future: bacnet-priority.html]`
-  if demand surfaces. The current section names slots 1 / 8 / 16
-  and waves at the rest.
+  *(shipped 2026-07-12 — `tools/bacnet-priority.html`, the interactive
+  resolver + full 16-slot reservation table)*. The current section
+  names slots 1 / 8 / 16 and waves at the rest.
 - Alarms / event notifications, schedules, calendars, trend logs,
   file / group / loop / notification-class objects — named in the
   closing as out-of-scope. Each likely its own future page.
@@ -4860,8 +4871,11 @@ trigger.
 - `bacnet-mstp.html` — **paid 2026-06-10.** Both the §6 (MS/TP vs IP)
   deferral and the closing's out-of-scope mention are live anchors to
   the shipped page.
-- `bacnet-priority.html` — named in the closing as the eventual
-  destination for deeper priority-array mechanics.
+- `bacnet-priority.html` — **paid 2026-07-12.** The priority-array
+  section now carries a live "interactive companion" anchor to the
+  shipped `tools/bacnet-priority.html`, and the tool joins the page's
+  relatedLinks tools group. Shipping the tool also caught + fixed the
+  slot 6/7 → 5/6 factual slip in this page's prose and SVG.
 
 **Forward-link payoffs landed:**
 - BACnet/IP Hex Converter tool — the `BACnet/IP Port Reference`
