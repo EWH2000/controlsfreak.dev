@@ -582,7 +582,7 @@ vfds' water-only hand-off (air-side twin sentence), pid-tuner's
 lessons back-edge, and pump-control's mirror back-edge (precedent:
 load-piping → vav-systems).
 
-### Airflow tools buildout — the airside-tools queue *(opened 2026-07-11, in progress)*
+### Airflow tools buildout — the airside-tools queue *(opened 2026-07-11, completed 2026-07-11 — all six shipped)*
 
 The tools-side sequel to the Forced-air buildout: that chapter shipped
 six lessons and deliberately zero new tools, leaving the Airflow chip
@@ -607,13 +607,9 @@ this order (field utility first, verification-gated items last):
    *(shipped 2026-07-11 — see its Shipped entry below; owner picked
    the draft-10 preset list and the "ASHRAE 62.1-2022" edition stamp;
    the Rp/Ra sign-off gate rides the PR review before merge)*.
-6. **Duct Sizer** — `/tools/duct-sizer.html`, prefix `dz-` (`ds-`
-   taken), airflow. Field-first framing (diagnose high static, not
-   design ductwork): Altshul-Tsal friction (ε = 0.0003 ft galvanized),
-   four solve modes via bisection, Huebscher rect↔round with the
-   "equal friction ≠ equal velocity" gotcha. Biggest SEO term
-   ("ductulator"), weakest audience fit — last. `[future: SI
-   ductulator mode]`.
+6. **Duct Sizer** — `/tools/duct-sizer.html` *(shipped 2026-07-11 —
+   see its Shipped entry below; the queue's last item, closing the
+   buildout)*.
 
 Deferred with the queue: airflow.html's tracked metric-VP-tab and
 density-correction-row markers stay parked (owner call 2026-07-11).
@@ -851,6 +847,79 @@ waterside-load, transformer-sizing. Adversarial review before ship
 caught five fixes (stale readout on hand-edit, descending-band guard,
 reference rounding, parser hardening, bridge-result `aria-labelledby`).
 
+### Duct Sizer *(shipped 2026-07-11)*
+
+Tool #6 of the airflow buildout — the last item, closing the queue
+(`/tools/duct-sizer.html`, prefix `dz-`, airflow — chips went
+Airflow 5→6, All 27→28). v3.39.0. Design notes:
+
+- **Field-first framing, as planned:** the default solve mode is the
+  diagnostic direction a cardboard ductulator is clumsy at — duct
+  exists, traverse says what it's moving, how hard is it working? —
+  with the three classic wheel spins (diameter from friction,
+  capacity from a size, diameter from velocity) behind the solve-for
+  select. The whole page runs one continuous story: 1,200 CFM found
+  in a 12-in. main → 1,529 FPM / 0.26 in/100 ft (≈3× the 0.08
+  convention) → wants a 15.3-in. round → a 12-in. was only ever good
+  for ~626 CFM → tab 2 continues it: 10 in. of ceiling depth → other
+  side 20.2 → sheet-metal 20 × 10 (De 15.2) → the equal-friction ≠
+  equal-velocity gotcha lands on the same numbers (863 vs 952 FPM).
+- **First airflow-family engine file:** the pure math lives in
+  `/scripts/duct-engine.js` (Altshul-Tsal + the two bisection solvers
+  + Huebscher both ways), not in the page IIFE — because a pure-Node
+  vm spec (`tests/duct-engine.spec.js`, the psychro-engine pattern)
+  can then sweep published-chart anchors (12 in @ 1000 FPM → 0.12;
+  Huebscher table rows 20×10/12×12/30×12/8×8/24×18), monotonicity,
+  round-trips, and refusal edges — verification DOM tests can't do
+  cheaply. Snapping, mute messages, and formula lines stay on the
+  page per the engine convention.
+- **Solvers refuse instead of pinning:** unreachable targets (a
+  million CFM at 0.08; De 3 with a 10-in. side) return NaN from the
+  engine and a teaching mute on the page — never a silently clamped
+  bound. Re < 4000 mutes as "not real duct flow" (the fit is
+  turbulent-only); friction below 0.005 displays "< 0.01" rather
+  than a broken-looking "0.00".
+- **Damage-stakes 2b (in scope — Tier 2):** initial lean was
+  out-of-scope ("sizing guidance, no direct damage chain") but the
+  forward-curved-blower ride-out chain is real and field-classic —
+  oversizing drops resistance, the wheel rides out its curve, the
+  motor overloads (the "why did it trip after we cleaned the
+  filters" story) — and undersizing drives static toward the duct
+  high-limit. The scope note ships in the shared `.tool-body-row`
+  (both tabs see it) with an affinity-laws inline anchor.
+- **Near-miss caught at reciprocal-wiring time:** the lesson at
+  `education/balancing.html` is *hydronic* balancing — an air
+  "rebalancing" anchor and a relatedLinks row pointed at it were
+  removed before commit. Reciprocity landed on 8 hosts: airflow,
+  duct-traverse, airside-load, equipment-airflow, the
+  duct-static-control and vav-systems lessons, and both their
+  quizzes.
+- **US-native with the m/s ride-along** (the duct-traverse posture,
+  no units-toggle participation — codebase-issues #152's extraction
+  trigger still hasn't fired). Velocity/friction guidance
+  (0.08–0.10 in/100 ft; mains ~1,000–1,500 FPM, branches ~600–900)
+  ships as prose "conventions, loosely held" — soft trade guidance,
+  deliberately not a verdict pill, and not placeholder-marked (band
+  prose, not a data table). `[future: SI ductulator mode]` (carried
+  from the queue item). `[future: fitting equivalent-length helper]`
+  — the shared row names fittings as the static that this page
+  deliberately doesn't price.
+- **Adversarial ship-review (11 agents: 3 dimensions → 2 skeptics per
+  finding):** 3 confirmed, all fixed pre-PR. The keeper: a mutation
+  test proved the engine spec never pinned the low-f′ correction —
+  deleting `f = 0.85f′ + 0.0028` passed every chart anchor (the
+  ±0.01 chart tolerance is loosest exactly where the correction is
+  active), silently reading large-duct friction 6–12 % low; two
+  tight corrected-region anchors (60 in @ 1500 dp100, 36 in @ 2000
+  f) now kill that mutant. Also fixed: the optional rect-tab
+  velocity comparison printed "Infinity FPM" when a sub-inch duct
+  snapped its area to 0.00 (isFinite guard); and the methodology
+  attribution was inverted in three places — the ASHRAE chart is
+  computed from Colebrook (Wright 1945), Altshul-Tsal (1989) is the
+  closed-form fit offered *in place of* it, not the fit the chart
+  "is drawn from". Conventions and integration dimensions came back
+  clean.
+
 ### Minimum Outdoor Air calculator *(shipped 2026-07-11)*
 
 Tool #5 of the airflow buildout (`/tools/minimum-outdoor-air.html`,
@@ -951,7 +1020,12 @@ A full-tool-list sweep put the set at eight pages, tiered:
   ship-review the same day — minimum-outdoor-air (its %OA output is a
   winter minimum-position source; a dense-occupancy floor of 30–50 %
   OA is the coil-freeze chain, the same reason economizer-ratio
-  qualified).
+  qualified). duct-sizer joined at its own build the same day, note
+  shipped from day one: an undersized run drives static toward the
+  duct high-limit's territory, and an *oversized* one on a
+  forward-curved wheel rides out the fan curve into motor-overload
+  amps — the affinity-laws chain approached from the resistance side
+  instead of the speed side.
 - **Already compliant:** electrical-quick-calc — its permanent
   "Estimate only — not a code value… never this number"
   failure-callout plus the worked example's "size off the table

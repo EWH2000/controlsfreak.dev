@@ -21,7 +21,7 @@ nav: tools
 
     <div class="filter-chips" role="group" aria-label="Filter tools by category">
         <button type="button" class="filter-chip active" data-category="all" aria-pressed="true">
-            All <span class="filter-chip-count">27</span>
+            All <span class="filter-chip-count">28</span>
         </button>
         <button type="button" class="filter-chip" data-category="hvac" aria-pressed="false">
             HVAC <span class="filter-chip-count">8</span>
@@ -33,7 +33,7 @@ nav: tools
             Signals <span class="filter-chip-count">2</span>
         </button>
         <button type="button" class="filter-chip" data-category="airflow" aria-pressed="false">
-            Airflow <span class="filter-chip-count">5</span>
+            Airflow <span class="filter-chip-count">6</span>
         </button>
         <button type="button" class="filter-chip" data-category="electrical" aria-pressed="false">
             Electrical <span class="filter-chip-count">3</span>
@@ -222,6 +222,15 @@ nav: tools
             titleFull:  'Minimum Outdoor Air Calculator',
             desc:       'ASHRAE 62.1 breathing-zone math — Rp × Pz + Ra × Az through zone effectiveness to a % OA damper floor, split into the DCV-resettable share and the permanent per-area floor.',
             pills:      ['Airflow', 'Rp·Pz + Ra·Az', 'Ez', 'DCV Split'],
+            category:   'airflow'
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/tools/duct-sizer.html',
+            titleShort: 'Duct Sizer',
+            titleFull:  'Duct Sizer',
+            desc:       'The ductulator solved four ways — friction rate and velocity from CFM and diameter, or size to a target friction or velocity — plus Huebscher rect ↔ round, where equal friction is deliberately not equal velocity.',
+            pills:      ['Airflow', 'in. w.c. / 100 ft', 'Altshul-Tsal', 'Rect ↔ Round'],
             category:   'airflow'
         }) }}
         {{ navCard({
