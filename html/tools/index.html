@@ -21,10 +21,10 @@ nav: tools
 
     <div class="filter-chips" role="group" aria-label="Filter tools by category">
         <button type="button" class="filter-chip active" data-category="all" aria-pressed="true">
-            All <span class="filter-chip-count">25</span>
+            All <span class="filter-chip-count">26</span>
         </button>
         <button type="button" class="filter-chip" data-category="hvac" aria-pressed="false">
-            HVAC <span class="filter-chip-count">7</span>
+            HVAC <span class="filter-chip-count">8</span>
         </button>
         <button type="button" class="filter-chip" data-category="protocols" aria-pressed="false">
             Protocols <span class="filter-chip-count">5</span>
@@ -141,6 +141,15 @@ nav: tools
             titleFull:  'Coil-Sizing Calculator',
             desc:       'Total, sensible, and latent capacity for a cooling or heating coil from its entering and leaving air — or run it backwards to solve the leaving-air state from a known load.',
             pills:      ['HVAC', 'Cool / Heat', 'Sensible / Latent', 'Forward & Reverse'],
+            category:   'hvac'
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/tools/coil-freeze-risk.html',
+            titleShort: 'Coil Freeze Risk',
+            titleFull:  'Coil Freeze Risk Checker',
+            desc:       'Freezestat-season triage: place the mixed air, set it against what is in the tubes — water, glycol, or steam condensate — and get a margin plus a protection verdict.',
+            pills:      ['HVAC', 'MAT Margin', 'Glycol / Steam', 'Verdicts'],
             category:   'hvac'
         }) }}
         {{ navCard({

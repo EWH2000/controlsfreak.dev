@@ -1121,7 +1121,7 @@ test('tools landing — filter chip narrows to one category and All restores', a
     await expect(page.locator('.filter-chip[data-category="hvac"]')).toHaveClass(/active/);
     await expect(page.locator('.filter-chip[data-category="all"]')).not.toHaveClass(/active/);
     const visibleHvac = await page.locator('.nav-card:not([hidden])').count();
-    expect(visibleHvac, 'only HVAC cards should remain visible').toBe(7);
+    expect(visibleHvac, 'only HVAC cards should remain visible').toBe(8);
     // hash updates (replaceState — no scroll, no back-history pollution)
     expect(new URL(page.url()).hash).toBe('#hvac');
 
@@ -2829,6 +2829,151 @@ test('equipment-airflow — gas rise window becomes a CFM band, measured rise ea
     await expect(page.locator('#ea-gx-callout')).toContainText('inverted');
 
     expect(errors, 'equipment-airflow gas behavioral should log no errors').toEqual([]);
+});
+
+test('coil-freeze-risk — bands walk the ladder, glycol splits trips from tubes, mutes teach', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('/tools/coil-freeze-risk.html');
+
+    // Seed: OAT 5 / RAT 70 / 50 % OA (stuck linkage) → MAT 37.5, water
+    // freezes 32, margin 5.5 — under the 38 °F stat: the stat was right.
+    await expect(page.locator('#cfr-mat')).toHaveText('37.5 °F');
+    await expect(page.locator('#cfr-freeze')).toHaveText('32 °F');
+    await expect(page.locator('#cfr-margin')).toHaveText('5.5 °F');
+    await expect(page.locator('#cfr-formula')).toContainText('50 % × 5 + 50 % × 70 = 37.5');
+    await expect(page.locator('#cfr-formula')).toContainText('margin = 37.5 − 32 = 5.5');
+    await expect(page.locator('#cfr-pill')).toHaveClass(/\bwarn\b/);
+    await expect(page.locator('#cfr-pill')).toContainText('protection working');
+    await expect(page.locator('#cfr-flow-pill')).toHaveClass(/\bwarn\b/);
+    await expect(page.locator('#cfr-flow-pill')).toContainText('classic freeze setup');
+    await expect(page.locator('#cfr-stat-pill')).toHaveClass(/\bok\b/);
+    await expect(page.locator('#cfr-stat-pill')).toContainText('backstopping');
+
+    // The user-set stat setpoint IS the top band edge: drop it to 36 and
+    // the same 37.5 °F mix reads protected, with the margin-to-stat shown.
+    await page.fill('#cfr-sp', '36');
+    await expect(page.locator('#cfr-pill')).toHaveClass(/\bok\b/);
+    await expect(page.locator('#cfr-pill')).toContainText('by 1.5 °F');
+    await expect(page.locator('#cfr-pill')).toContainText('calculated average');
+    await page.fill('#cfr-sp', '38');
+
+    // 60 % OA drives the mix sub-freezing (31 °F): modulating low on
+    // plain water is the classic split (error, margin goes negative)…
+    await page.fill('#cfr-oa', '60');
+    await expect(page.locator('#cfr-mat')).toHaveText('31 °F');
+    await expect(page.locator('#cfr-margin')).toHaveText('−1 °F');
+    await expect(page.locator('#cfr-pill')).toHaveClass(/\berror\b/);
+    await expect(page.locator('#cfr-pill')).toContainText('classic split');
+
+    // …full proven flow is the designed preheat-coil condition (warn)…
+    await page.selectOption('#cfr-flow', 'full');
+    await expect(page.locator('#cfr-pill')).toHaveClass(/\bwarn\b/);
+    await expect(page.locator('#cfr-pill')).toContainText('preheat-coil condition');
+
+    // …and 30 % EG (freezes at 7) turns the same air into an air-side
+    // alarm story: the stat should already have tripped.
+    await page.selectOption('#cfr-fluid', 'eg30');
+    await expect(page.locator('#cfr-margin')).toHaveText('24 °F');
+    await expect(page.locator('#cfr-pill')).toHaveClass(/\bwarn\b/);
+    await expect(page.locator('#cfr-pill')).toContainText('should already have tripped');
+
+    // Glycol margin holds even with the pump off — no escalation.
+    await page.selectOption('#cfr-flow', 'off');
+    await expect(page.locator('#cfr-pill')).toHaveClass(/\bwarn\b/);
+    await expect(page.locator('#cfr-pill')).toContainText('tubes are covered');
+
+    // Plain water + stagnant + near-freezing average escalates: the
+    // stratified cold layer does the freezing while the average looks fine.
+    await page.selectOption('#cfr-fluid', 'water');
+    await page.fill('#cfr-oa', '55');
+    await expect(page.locator('#cfr-mat')).toHaveText('34.3 °F');
+    await expect(page.locator('#cfr-pill')).toHaveClass(/\berror\b/);
+    await expect(page.locator('#cfr-pill')).toContainText('Freeze territory in practice');
+
+    // No freezestat hides the setpoint row and flags the first fix.
+    await page.selectOption('#cfr-stat', 'none');
+    await expect(page.locator('#cfr-row-sp')).toBeHidden();
+    await expect(page.locator('#cfr-stat-pill')).toHaveClass(/\berror\b/);
+    await expect(page.locator('#cfr-stat-pill')).toContainText('No freezestat');
+
+    // Teaching mutes: an impossible OA share, then a missing input.
+    // The inactive service's factor pill stays hidden through a mute
+    // (setPill wipes className — review finding, 2026-07-11).
+    await page.fill('#cfr-oa', '120');
+    await expect(page.locator('#cfr-callout')).toContainText('0 to 100');
+    await expect(page.locator('#cfr-mat')).toHaveText('—');
+    await expect(page.locator('#cfr-pill')).toContainText('Enter valid inputs');
+    await expect(page.locator('#cfr-steam-pill')).toBeHidden();
+    await page.fill('#cfr-oa', '');
+    await expect(page.locator('#cfr-callout')).toContainText('Enter OAT, RAT');
+
+    // Direct-MAT mode swaps the input rows and reads the trend number
+    // as-is; 37.5 with no stat sits in the conventional 35–38 band.
+    await page.selectOption('#cfr-mat-mode', 'direct');
+    await expect(page.locator('#cfr-row-oat')).toBeHidden();
+    await expect(page.locator('#cfr-row-mat-direct')).toBeVisible();
+    await expect(page.locator('#cfr-mat')).toHaveText('37.5 °F');
+    await expect(page.locator('#cfr-pill')).toHaveClass(/\bwarn\b/);
+    await expect(page.locator('#cfr-pill')).toContainText('this unit has none');
+
+    expect(errors, 'coil-freeze-risk behavioral should log no errors').toEqual([]);
+});
+
+test('coil-freeze-risk — steam mechanism verdicts; metric closes on displayed operands', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('/tools/coil-freeze-risk.html');
+
+    // Steam service swaps the fluid/flow rows for the arrangement select
+    // and its factor pill.
+    await page.selectOption('#cfr-service', 'steam');
+    await expect(page.locator('#cfr-row-fluid')).toBeHidden();
+    await expect(page.locator('#cfr-row-flow')).toBeHidden();
+    await expect(page.locator('#cfr-row-steam-mode')).toBeVisible();
+    await expect(page.locator('#cfr-flow-pill')).toBeHidden();
+    await expect(page.locator('#cfr-steam-pill')).toBeVisible();
+
+    // Sub-freezing air over a modulating steam valve is the taught
+    // mechanism (error); two-position + face-and-bypass is the designed
+    // arrangement (warn), and its factor pill reads ok.
+    await page.fill('#cfr-oa', '60');
+    await expect(page.locator('#cfr-mat')).toHaveText('31 °F');
+    await expect(page.locator('#cfr-pill')).toHaveClass(/\berror\b/);
+    await expect(page.locator('#cfr-pill')).toContainText('vacuum');
+    await page.selectOption('#cfr-steam-mode', 'fbp');
+    await expect(page.locator('#cfr-pill')).toHaveClass(/\bwarn\b/);
+    await expect(page.locator('#cfr-pill')).toContainText('face-and-bypass');
+    await expect(page.locator('#cfr-steam-pill')).toHaveClass(/\bok\b/);
+
+    expect(errors, 'coil-freeze-risk steam behavioral should log no errors').toEqual([]);
+});
+
+test('coil-freeze-risk — metric first paint rewrites inputs and the formula closes', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.addInitScript(() => localStorage.setItem('cf_units', 'metric'));
+    await page.goto('/tools/coil-freeze-risk.html');
+
+    // Inputs rewritten at 1 dp (5 → −15, 70 → 21.1, 38 → 3.3); the MAT
+    // blend closes on the displayed metric operands via the integer-tenths
+    // path (0.5 × −15 + 0.5 × 21.1 = 3.05 → 3.1, half-up like a reader).
+    await expect(page.locator('#cfr-oat')).toHaveValue('-15');
+    await expect(page.locator('#cfr-rat')).toHaveValue('21.1');
+    await expect(page.locator('#cfr-sp')).toHaveValue('3.3');
+    await expect(page.locator('#cfr-mat')).toHaveText('3.1 °C');
+    await expect(page.locator('#cfr-margin')).toHaveText('3.1 °C');
+    await expect(page.locator('#cfr-formula')).toContainText('50 % × −15 + 50 % × 21.1 = 3.1');
+    await expect(page.locator('#cfr-formula')).toContainText('margin = 3.1 − 0 = 3.1');
+    await expect(page.locator('#cfr-pill')).toHaveClass(/\bwarn\b/);
+    await expect(page.locator('#cfr-pill')).toContainText('under the 3.3 °C setpoint');
+
+    // The glycol table's metric twins band identically: 30 % PG freezes
+    // at −13.3 °C, margin opens to 16.4 — and the trip verdict stands,
+    // because the stat reads air, not fluid.
+    await page.selectOption('#cfr-fluid', 'pg30');
+    await expect(page.locator('#cfr-freeze')).toHaveText('−13.3 °C');
+    await expect(page.locator('#cfr-margin')).toHaveText('16.4 °C');
+    await expect(page.locator('#cfr-pill')).toContainText('reads air, not fluid');
+
+    expect(errors, 'coil-freeze-risk metric behavioral should log no errors').toEqual([]);
 });
 
 test('transformer-sizing — seeded panel totals, fuse ladder, overload pill', async ({ page }) => {

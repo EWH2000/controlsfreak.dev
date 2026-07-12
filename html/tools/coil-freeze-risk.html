@@ -1,0 +1,663 @@
+---
+title: Coil Freeze Risk Checker — controlsfreak.dev
+description: Was the freezestat right to trip? Mixed-air margin against glycol freeze and burst points, flow state, and steam-coil mechanics — a protection verdict.
+canonical: https://controlsfreak.dev/tools/coil-freeze-risk.html
+nav: tools
+category: hvac
+keywords: freezestat freeze stat trip low limit mixed air mat glycol ethylene propylene burst point steam coil vacuum breaker face and bypass preheat split tubes winter
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Tools · Coil Freeze Risk</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">
+                Coil Freeze Risk Checker
+                <span class="tool-tag">HVAC</span>
+            </h1>
+        </div>
+
+        <details class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
+            <summary>The freezestat tripped at 6 AM &mdash; was it right?</summary>
+            <div class="preamble-rest">
+                A margin check, not a physics model: place the mixed air, set it
+                against what&rsquo;s actually in the tubes &mdash; water, glycol, or steam
+                condensate &mdash; and read the verdict plus the risk factors that decide
+                it. Predicting tube-wall freeze for real takes coil geometry the field
+                never has, so this page judges margins instead. The MAT here is the
+                straight weighted average; the
+                <a href="/tools/air-mixing.html">Air-Mixing Calculator</a> runs the
+                full psychrometric blend when you need humidity and enthalpy too.
+            </div>
+        </details>
+        <p class="ps-seed-note">Inputs are seeded with an example — edit them to your numbers.</p>
+
+        <div class="tool-body-2col">
+
+            <section>
+                <h2 class="ps-section-label">Input</h2>
+                <div class="ps-row">
+                    <label class="ps-label" for="cfr-service">Coil service</label>
+                    <select class="ps-input" id="cfr-service">
+                        <option value="hw" selected>Hot-water coil</option>
+                        <option value="chw">Chilled-water coil</option>
+                        <option value="steam">Steam coil</option>
+                    </select>
+                </div>
+                <div class="ps-row">
+                    <label class="ps-label" for="cfr-mat-mode">Mixed air comes from</label>
+                    <select class="ps-input" id="cfr-mat-mode">
+                        <option value="calc" selected>Calculate from OAT / RAT / % OA</option>
+                        <option value="direct">Enter MAT directly (off the trend)</option>
+                    </select>
+                </div>
+                <div class="ps-row" id="cfr-row-oat">
+                    <label class="ps-label" data-us="Outdoor air temperature (°F)" data-metric="Outdoor air temperature (°C)" for="cfr-oat">Outdoor air temperature (°F)</label>
+                    <input class="ps-input" type="number" id="cfr-oat" step="0.5" min="-50" max="200" value="5">
+                </div>
+                <div class="ps-row" id="cfr-row-rat">
+                    <label class="ps-label" data-us="Return air temperature (°F)" data-metric="Return air temperature (°C)" for="cfr-rat">Return air temperature (°F)</label>
+                    <input class="ps-input" type="number" id="cfr-rat" step="0.5" min="-50" max="200" value="70">
+                </div>
+                <div class="ps-row" id="cfr-row-oa">
+                    <label class="ps-label" for="cfr-oa">Outdoor air share (%)</label>
+                    <input class="ps-input" type="number" id="cfr-oa" step="1" min="0" max="100" value="50">
+                </div>
+                <div class="ps-row hidden" id="cfr-row-mat-direct">
+                    <label class="ps-label" data-us="Mixed-air temperature (°F)" data-metric="Mixed-air temperature (°C)" for="cfr-mat-direct">Mixed-air temperature (°F)</label>
+                    <input class="ps-input" type="number" id="cfr-mat-direct" step="0.5" min="-50" max="200" value="37.5">
+                </div>
+                <div class="ps-row" id="cfr-row-fluid">
+                    <label class="ps-label" for="cfr-fluid">Fluid in the coil</label>
+                    <select class="ps-input" id="cfr-fluid">
+                        <option value="water" selected>Plain water</option>
+                        <option value="eg10">10 % ethylene glycol</option>
+                        <option value="eg20">20 % ethylene glycol</option>
+                        <option value="eg30">30 % ethylene glycol</option>
+                        <option value="eg40">40 % ethylene glycol</option>
+                        <option value="eg50">50 % ethylene glycol</option>
+                        <option value="pg10">10 % propylene glycol</option>
+                        <option value="pg20">20 % propylene glycol</option>
+                        <option value="pg30">30 % propylene glycol</option>
+                        <option value="pg40">40 % propylene glycol</option>
+                        <option value="pg50">50 % propylene glycol</option>
+                    </select>
+                </div>
+                <div class="ps-row" id="cfr-row-flow">
+                    <label class="ps-label" for="cfr-flow">Flow state right now</label>
+                    <select class="ps-input" id="cfr-flow">
+                        <option value="full">Full flow — pump proven, valve open</option>
+                        <option value="low" selected>Valve modulating low / cracked open</option>
+                        <option value="closed">Valve closed — pump running</option>
+                        <option value="off">Pump off / no flow</option>
+                    </select>
+                </div>
+                <div class="ps-row hidden" id="cfr-row-steam-mode">
+                    <label class="ps-label" for="cfr-steam-mode">Steam arrangement</label>
+                    <select class="ps-input" id="cfr-steam-mode">
+                        <option value="mod" selected>Modulating steam valve</option>
+                        <option value="fbp">Two-position valve + face-and-bypass</option>
+                    </select>
+                </div>
+                <div class="ps-row">
+                    <label class="ps-label" for="cfr-stat">Freezestat installed</label>
+                    <select class="ps-input" id="cfr-stat">
+                        <option value="yes" selected>Yes</option>
+                        <option value="none">No</option>
+                    </select>
+                </div>
+                <div class="ps-row" id="cfr-row-sp">
+                    <label class="ps-label" data-us="Freezestat setpoint (°F)" data-metric="Freezestat setpoint (°C)" for="cfr-sp">Freezestat setpoint (°F)</label>
+                    <input class="ps-input" type="number" id="cfr-sp" step="0.5" min="-50" max="200" value="38">
+                </div>
+                <p class="ref-note">
+                    Flow state is deliberately categorical — tube velocity
+                    isn&rsquo;t computable from GPM without the coil&rsquo;s
+                    circuiting, so the page won&rsquo;t invent a ft/s number.
+                    What matters is which regime the water is in.
+                </p>
+            </section>
+
+            <section role="status" aria-atomic="false">
+                <h2 class="ps-section-label">Output</h2>
+                <div class="status-pill" id="cfr-pill">Enter values to run the check.</div>
+                <div class="ps-row">
+                    <span class="ps-label">Mixed-air temperature</span>
+                    <span class="ps-value muted" id="cfr-mat">—</span>
+                </div>
+                <div class="ps-row">
+                    <span class="ps-label">Fluid freezes at</span>
+                    <span class="ps-value muted" id="cfr-freeze">—</span>
+                </div>
+                <div class="ps-row">
+                    <span class="ps-label">Tubes burst near</span>
+                    <span class="ps-value muted" id="cfr-burst">—</span>
+                </div>
+                <div class="ps-row primary">
+                    <span class="ps-label">Margin to freezing</span>
+                    <span class="ps-value muted" id="cfr-margin">—</span>
+                </div>
+                <h3 class="subhead">Risk factors</h3>
+                <div class="status-pill" id="cfr-flow-pill">—</div>
+                <div class="status-pill hidden" id="cfr-steam-pill">—</div>
+                <div class="status-pill" id="cfr-stat-pill">—</div>
+                <div class="btn-row">
+                    <button class="copy-btn" id="cfr-copy">Copy MAT + margin</button>
+                </div>
+                <div class="result-formula wrap" id="cfr-formula"></div>
+                <div class="failure-callout" id="cfr-callout" hidden></div>
+            </section>
+
+        </div>
+
+        <section class="tool-body-row">
+            <h2 class="ps-section-label">Worked example</h2>
+            <p class="ref-note worked-intro">
+                A 6 AM freezestat trip in January: OAT
+                <span data-us="5 °F" data-metric="−15 °C">5 °F</span>, return air at
+                <span data-us="70 °F" data-metric="21.1 °C">70 °F</span> — and the
+                trend shows the return-damper linkage stuck at half, so the box is
+                running 50 % outdoor air.
+            </p>
+            <ol class="ref-note worked-list">
+                <li>Place the mix:
+                    <code><span data-us="MAT = 50 % × 5 + 50 % × 70 = 37.5 °F" data-metric="MAT = 50 % × −15 + 50 % × 21.1 = 3.1 °C">MAT = 50 % × 5 + 50 % × 70 = 37.5 °F</span></code>.</li>
+                <li>Set it against the fluid — plain water freezes at
+                    <span data-us="32 °F" data-metric="0 °C">32 °F</span>:
+                    <code><span data-us="margin = 37.5 − 32 = 5.5 °F" data-metric="margin = 3.1 − 0 = 3.1 °C">margin = 37.5 − 32 = 5.5 °F</span></code>.</li>
+                <li>The stat is set at <span data-us="38 °F" data-metric="3.3 °C">38 °F</span>
+                    and the mix is under it: <strong>the stat was right.</strong> A trip
+                    here is the protection working — the finding is the damper linkage,
+                    not the safety.</li>
+                <li>Now switch the fluid to 30 % propylene glycol: the freeze point drops
+                    to <span data-us="8 °F" data-metric="−13.3 °C">8 °F</span> and the margin
+                    opens to <code><span data-us="37.5 − 8 = 29.5 °F" data-metric="3.1 − (−13.3) = 16.4 °C">37.5 − 8 = 29.5 °F</span></code>.
+                    The tubes are covered — and the stat still trips, because it reads
+                    air, not fluid. Glycol protects tubes, not trips; chronic trips are a
+                    mixing or setpoint conversation.</li>
+            </ol>
+            <p class="ref-note">
+                The calculated MAT is the straight weighted average from the
+                <a href="/education/air-handlers.html#mixing-box">Air Handlers
+                lesson&rsquo;s mixing-box arithmetic</a>. When you need the full
+                psychrometric blend — humidity, enthalpy, mass-weighted streams — the
+                <a href="/tools/air-mixing.html">Air-Mixing Calculator</a> owns that math.
+            </p>
+        </section>
+
+        <section class="tool-body-row">
+            <h2 class="ps-section-label">Freeze point vs burst point</h2>
+            <p class="ref-note">
+                <strong>Freeze point</strong> is where ice crystals first form — the mix
+                turns to slush. <strong>Burst point</strong> sits far below it: slush
+                still flows and absorbs expansion, so tubes survive well past the freeze
+                point and split only near the burst rating. That gap is the whole idea of
+                burst protection — an idle coil with a 30&nbsp;% mix can sit in
+                <span data-us="0 °F" data-metric="−17.8 °C">0 °F</span> air all winter
+                without splitting. It is <em>not</em> an operating condition: moving
+                slush plugs passes and kills capacity.
+            </p>
+            <!-- // user to verify glycol freeze/burst table — placeholder data (typical inhibited-glycol charts, % by volume), refine after review -->
+            <table class="ref-table-dense">
+                <thead>
+                    <tr>
+                        <th>Mix (by volume)</th>
+                        <th><span data-us="Freeze point (°F)" data-metric="Freeze point (°C)">Freeze point (°F)</span></th>
+                        <th><span data-us="Burst point (°F)" data-metric="Burst point (°C)">Burst point (°F)</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>Plain water</td><td><span data-us="32" data-metric="0">32</span></td><td><span data-us="32" data-metric="0">32</span></td></tr>
+                    <tr><td>10 % ethylene glycol</td><td><span data-us="26" data-metric="−3.3">26</span></td><td><span data-us="16" data-metric="−8.9">16</span></td></tr>
+                    <tr><td>20 % ethylene glycol</td><td><span data-us="18" data-metric="−7.8">18</span></td><td><span data-us="4" data-metric="−15.6">4</span></td></tr>
+                    <tr><td>30 % ethylene glycol</td><td><span data-us="7" data-metric="−13.9">7</span></td><td><span data-us="−20" data-metric="−28.9">−20</span></td></tr>
+                    <tr><td>40 % ethylene glycol</td><td><span data-us="−10" data-metric="−23.3">−10</span></td><td><span data-us="−60" data-metric="−51.1">−60</span></td></tr>
+                    <tr><td>50 % ethylene glycol</td><td><span data-us="−34" data-metric="−36.7">−34</span></td><td><span data-us="below −60" data-metric="below −51.1">below −60</span></td></tr>
+                    <tr><td>10 % propylene glycol</td><td><span data-us="26" data-metric="−3.3">26</span></td><td><span data-us="19" data-metric="−7.2">19</span></td></tr>
+                    <tr><td>20 % propylene glycol</td><td><span data-us="19" data-metric="−7.2">19</span></td><td><span data-us="9" data-metric="−12.8">9</span></td></tr>
+                    <tr><td>30 % propylene glycol</td><td><span data-us="8" data-metric="−13.3">8</span></td><td><span data-us="−15" data-metric="−26.1">−15</span></td></tr>
+                    <tr><td>40 % propylene glycol</td><td><span data-us="−6" data-metric="−21.1">−6</span></td><td><span data-us="−50" data-metric="−45.6">−50</span></td></tr>
+                    <tr><td>50 % propylene glycol</td><td><span data-us="−28" data-metric="−33.3">−28</span></td><td><span data-us="below −60" data-metric="below −51.1">below −60</span></td></tr>
+                </tbody>
+            </table>
+            <!-- // user to verify glycol freeze/burst table above — placeholder data, refine after review -->
+            <p class="ref-note">
+                Typical values for inhibited glycols, mixed by volume. Formulations
+                differ by a degree or two, and real loops drift lean as they get topped
+                off with water — the fluid maker&rsquo;s chart governs, and a
+                refractometer reading of the actual loop is the ground truth. Glycol
+                also carries less heat per gallon: the
+                <a href="/tools/waterside-load.html">Waterside Load Calculator</a> stays
+                water-only for exactly that reason.
+            </p>
+        </section>
+
+        <section class="tool-body-row">
+            <h2 class="ps-section-label">Why steam coils split</h2>
+            <p class="ref-note">
+                A modulating steam valve throttled back to a light load drops the coil
+                below atmospheric pressure. The vacuum holds condensate up in the tubes —
+                the trap can&rsquo;t drain what the pressure difference is holding — and
+                sub-freezing air across the face does the rest. The fixes are piping and
+                arrangement, not tuning: a working <strong>vacuum breaker</strong> so the
+                coil can drain at low pressure, a real <strong>drip leg</strong> into a
+                generously sized <strong>trap</strong>, and — for coils that see freezing
+                air — a <strong>two-position valve with face-and-bypass dampers</strong>,
+                which moves the modulation to the air side and keeps the coil at full
+                pressure and temperature wall to wall.
+            </p>
+        </section>
+
+        <section class="tool-body-row">
+            <h2 class="ps-section-label">Why coils split while the trend looks fine</h2>
+            <p class="ref-note">
+                The MAT this page computes is an <em>average</em>. A mixing box that
+                layers instead of mixing runs cold blankets
+                <span data-us="10–20 °F" data-metric="6–11 °C">10–20 °F</span> below that
+                average along the bottom of the plenum — which is why coils split while
+                the trend looks healthy, why freezestat elements are serpentined across
+                the whole coil face (the stat trips on its coldest foot of capillary, not
+                the average), and why a single-point MA-T sensor
+                <a href="/education/air-handlers.html#sensor-strip">can lie about all of
+                it</a>. Averaging elements and honest damper arithmetic are the
+                countermeasures.
+            </p>
+            <p class="ref-note"><strong>The protection stack, roughly in order:</strong></p>
+            <ol class="ref-note worked-list">
+                <li><strong>Freezestat hard trip</strong> — manual reset, so a human has
+                    to look before the fan comes back. An auto-reset stat cycles the fan
+                    all night while the coil keeps icing.</li>
+                <li><strong>Low-limit MA-T override</strong> — drive the dampers toward
+                    minimum when the mixed air sags, whatever the cooling logic wants.
+                    The <a href="/education/economizers.html">Economizers lesson</a>
+                    calls this the floor under free cooling.</li>
+                <li><strong>Pump-on-freeze / valve-open-on-trip</strong> — dump heat into
+                    the coil and get the water moving the moment the stat fires.</li>
+                <li><strong>Glycol at burst-protection strength</strong> — for chilled-water
+                    coils idle through winter, where no heat source exists to rescue them.</li>
+                <li><strong>Drain what&rsquo;s truly idle</strong> — an empty coil
+                    can&rsquo;t split.</li>
+                <li><strong>Winter-safe minimum positions</strong> — a minimum-OA share
+                    that keeps the calculated MAT warm
+                    <a href="/education/air-handlers.html#mixing-box">by arithmetic</a>,
+                    so the routine case never gets near the bands above.</li>
+            </ol>
+        </section>
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/tools/air-mixing.html', label: 'Air-Mixing Calculator'},
+            {href: '/tools/economizer-ratio.html', label: 'Economizer Ratio Helper'},
+            {href: '/tools/equipment-airflow.html', label: 'Equipment Airflow Check'},
+            {href: '/tools/waterside-load.html', label: 'Waterside Load Calculator'}
+        ],
+        lessons: [
+            {href: '/education/air-handlers.html', label: 'Air Handlers'},
+            {href: '/education/economizers.html', label: 'Economizers'}
+        ],
+        quizzes: [
+            {href: '/practice/sequencing-scenarios.html', label: 'Sequencing Scenarios'},
+            {href: '/practice/air-handlers.html', label: 'Air Handlers Quiz'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/tools/">← All tools</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="/scripts/ui.js"></script>
+<script>
+    // copyReadouts(btn, sep, ...ids) comes from /scripts/ui.js.
+    // Units (window.Units) is loaded site-wide by the layout.
+    //
+    // Solve runs in the ACTIVE unit system from inputs snapped to their
+    // formula-line display precision (temps and percents 1 dp) — the
+    // equipment-airflow rule: computing from digits the reader can't see
+    // is how formula rows stop reproducing. The MAT blend is done in
+    // integer tenths so a hand calculation of the printed operands lands
+    // on exactly the printed result (a floating-point blend can round an
+    // exact .x5 like 3.05 °C either way depending on evaluation order).
+    // Band edges are unit-native constants (35 °F ↔ 1.7 °C floor; the
+    // 38 °F ↔ 3.3 °C conventional stat edge when none is installed), so
+    // the verdict a US and a metric reader see agree everywhere except
+    // within one display-rounding step of an edge.
+    (function () {
+        'use strict';
+
+        const U = window.Units;
+
+        // Trim trailing zeros so 5.0 reads 5 but 37.5 stays put.
+        const tidy = (n, dp) => parseFloat(n.toFixed(dp)).toString();
+        const snap = (n, dp) => parseFloat(tidy(n, dp));
+        // Displayed numbers get a typographic minus (matches the prose).
+        const disp = (n, dp) => tidy(n, dp).replace('-', '−');
+
+        // Freeze/burst points, whole °F, typical inhibited glycols by
+        // VOLUME; burst null = off the chart edge (below −60 °F). The °C
+        // twins are derived once at 1 dp so both unit systems band on the
+        // same displayed values.
+        // // user to verify glycol freeze/burst values — placeholder data, refine after review
+        const FLUIDS = {
+            water: { label: 'plain water',            fUs: 32,  bUs: 32 },
+            eg10:  { label: '10 % ethylene glycol',   fUs: 26,  bUs: 16 },
+            eg20:  { label: '20 % ethylene glycol',   fUs: 18,  bUs: 4 },
+            eg30:  { label: '30 % ethylene glycol',   fUs: 7,   bUs: -20 },
+            eg40:  { label: '40 % ethylene glycol',   fUs: -10, bUs: -60 },
+            eg50:  { label: '50 % ethylene glycol',   fUs: -34, bUs: null },
+            pg10:  { label: '10 % propylene glycol',  fUs: 26,  bUs: 19 },
+            pg20:  { label: '20 % propylene glycol',  fUs: 19,  bUs: 9 },
+            pg30:  { label: '30 % propylene glycol',  fUs: 8,   bUs: -15 },
+            pg40:  { label: '40 % propylene glycol',  fUs: -6,  bUs: -50 },
+            pg50:  { label: '50 % propylene glycol',  fUs: -28, bUs: null }
+        };
+        const f2c = f => snap((f - 32) / 1.8, 1);
+
+        const el = {};
+        for (const id of ['cfr-service', 'cfr-mat-mode', 'cfr-oat', 'cfr-rat', 'cfr-oa',
+                          'cfr-mat-direct', 'cfr-fluid', 'cfr-flow', 'cfr-steam-mode',
+                          'cfr-stat', 'cfr-sp',
+                          'cfr-row-oat', 'cfr-row-rat', 'cfr-row-oa', 'cfr-row-mat-direct',
+                          'cfr-row-fluid', 'cfr-row-flow', 'cfr-row-steam-mode', 'cfr-row-sp',
+                          'cfr-pill', 'cfr-mat', 'cfr-freeze', 'cfr-burst', 'cfr-margin',
+                          'cfr-flow-pill', 'cfr-steam-pill', 'cfr-stat-pill',
+                          'cfr-copy', 'cfr-formula', 'cfr-callout']) {
+            el[id.slice(4).replace(/-/g, '_')] = document.getElementById(id);
+        }
+
+        function setPill(pillEl, text, kind) {
+            pillEl.textContent = text;
+            pillEl.className = 'status-pill' + (kind ? ' ' + kind : '');
+        }
+
+        function setValue(outEl, text, live) {
+            outEl.className = 'ps-value ' + (live ? 'live' : 'muted');
+            outEl.textContent = live ? text : '—';
+        }
+
+        function mute(msg) {
+            setValue(el.mat); setValue(el.freeze); setValue(el.burst); setValue(el.margin);
+            el.formula.textContent = '';
+            el.callout.textContent = msg;
+            el.callout.hidden = false;
+            setPill(el.pill, 'Enter valid inputs for a verdict.', '');
+            setPill(el.flow_pill, '—', '');
+            setPill(el.steam_pill, '—', '');
+            setPill(el.stat_pill, '—', '');
+            // setPill wipes className, so re-hide the inactive service's
+            // factor pill (calc() toggled it before validation ran).
+            const isSteam = el.service.value === 'steam';
+            el.flow_pill.classList.toggle('hidden', isSteam);
+            el.steam_pill.classList.toggle('hidden', !isSteam);
+        }
+
+        function calc() {
+            const service  = el.service.value;
+            const matMode  = el.mat_mode.value;
+            const isSteam  = service === 'steam';
+            const statOn   = el.stat.value === 'yes';
+
+            el.row_oat.classList.toggle('hidden', matMode !== 'calc');
+            el.row_rat.classList.toggle('hidden', matMode !== 'calc');
+            el.row_oa.classList.toggle('hidden', matMode !== 'calc');
+            el.row_mat_direct.classList.toggle('hidden', matMode !== 'direct');
+            el.row_fluid.classList.toggle('hidden', isSteam);
+            el.row_flow.classList.toggle('hidden', isSteam);
+            el.row_steam_mode.classList.toggle('hidden', !isSteam);
+            el.flow_pill.classList.toggle('hidden', isSteam);
+            el.steam_pill.classList.toggle('hidden', !isSteam);
+            el.row_sp.classList.toggle('hidden', !statOn);
+
+            const us  = U.current() === 'us';
+            const suf = ' ' + U.suffix.temp();
+
+            // ── Snap inputs to display precision, then place the mix ──
+            let mat, matFormula = '';
+            if (matMode === 'calc') {
+                const oat = snap(parseFloat(el.oat.value), 1);
+                const rat = snap(parseFloat(el.rat.value), 1);
+                const pct = snap(parseFloat(el.oa.value), 1);
+                if (!isFinite(oat) || !isFinite(rat) || !isFinite(pct)) {
+                    mute('Enter OAT, RAT, and the outdoor-air share to place the mixed air.');
+                    return;
+                }
+                if (pct < 0 || pct > 100) {
+                    mute('Outdoor air is a share of the mix — it runs 0 to 100 %.');
+                    return;
+                }
+                const raShare = snap(100 - pct, 1);
+                // Integer tenths: exact blend of 1-dp operands, one round
+                // back to 1 dp with ties away from zero (toFixed's tie
+                // rule, so a −3.05 blend rounds −3.1 like a reader would).
+                const sum10 = (Math.round(pct * 10) * Math.round(oat * 10)
+                            + Math.round(raShare * 10) * Math.round(rat * 10)) / 1000;
+                const mat10 = Math.sign(sum10) * Math.round(Math.abs(sum10));
+                mat = mat10 / 10;
+                matFormula = 'MAT = ' + disp(pct, 1) + ' % × ' + disp(oat, 1)
+                           + ' + ' + disp(raShare, 1) + ' % × ' + disp(rat, 1)
+                           + ' = ' + disp(mat, 1) + suf + ' · ';
+            } else {
+                mat = snap(parseFloat(el.mat_direct.value), 1);
+                if (!isFinite(mat)) {
+                    mute('Enter the mixed-air temperature — the MA-T point on the BAS trend already has it.');
+                    return;
+                }
+            }
+
+            let sp;
+            if (statOn) {
+                sp = snap(parseFloat(el.sp.value), 1);
+                if (!isFinite(sp)) {
+                    mute('Enter the freezestat setpoint — 38 °F (3.3 °C) is the common default.');
+                    return;
+                }
+            } else {
+                sp = us ? 38 : 3.3;   // the conventional edge, for band language only
+            }
+
+            const fl     = isSteam ? FLUIDS.water : FLUIDS[el.fluid.value];
+            const freeze = us ? fl.fUs : f2c(fl.fUs);
+            const burst  = fl.bUs === null ? null : (us ? fl.bUs : f2c(fl.bUs));
+            const floor  = us ? 35 : 1.7;
+            const margin = snap(mat - freeze, 1);
+
+            const m = disp(mat, 1) + suf;
+            const f = disp(freeze, 1) + suf;
+            const s = disp(sp, 1) + suf;
+            const burstTxt = burst === null
+                ? 'below ' + disp(us ? -60 : f2c(-60), 1) + suf
+                : disp(burst, 1) + suf;
+            const floorTxt = us ? '35 °F' : '1.7 °C';
+            const bandTxt  = us ? '35–38 °F' : '1.7–3.3 °C';
+            const layerTxt = us ? '10–20 °F' : '6–11 °C';
+
+            setValue(el.mat, m, true);
+            setValue(el.freeze, f, true);
+            setValue(el.burst, burstTxt, true);
+            setValue(el.margin, disp(margin, 1) + suf, true);
+            el.formula.textContent = matFormula + 'margin = ' + disp(mat, 1) + ' − '
+                                   + disp(freeze, 1) + ' = ' + disp(margin, 1) + suf;
+            el.callout.hidden = true;
+
+            // ── Risk-factor pills ──
+            const flow = el.flow.value;
+            const steamMode = el.steam_mode.value;
+            if (isSteam) {
+                if (steamMode === 'mod') {
+                    setPill(el.steam_pill, 'Modulating steam valve — fine in mild air; below freezing it is the freeze mechanism (see the note below the tool).', 'warn');
+                } else {
+                    setPill(el.steam_pill, 'Two-position valve + face-and-bypass — modulation moved to the air side; the coil stays at full pressure and temperature.', 'ok');
+                }
+            } else if (flow === 'full') {
+                setPill(el.flow_pill, 'Full flow, pump proven — moving water is the strongest protection on this list.', 'ok');
+            } else if (flow === 'low') {
+                setPill(el.flow_pill, 'Valve modulating low — the classic freeze setup: the coldest air meets the slowest water, in the same tubes.', 'warn');
+            } else if (flow === 'closed') {
+                setPill(el.flow_pill, 'Valve closed — trapped water takes whatever temperature the air gives it. (A three-way valve keeps the loop moving, but not the coil.)', 'warn');
+            } else {
+                setPill(el.flow_pill, 'Pump off — no heat available and nothing moving; the coil is at the air’s mercy.', 'error');
+            }
+
+            if (!statOn) {
+                setPill(el.stat_pill, 'No freezestat — nothing stops the fan when the arithmetic goes wrong. First fix on the list.', 'error');
+            } else if (sp <= freeze) {
+                setPill(el.stat_pill, 'Freezestat set at ' + s + ' — at or below the fluid’s freeze point, it can only trip after ice is already possible. Typical settings run ' + bandTxt + '.', 'warn');
+            } else if (sp < floor) {
+                setPill(el.stat_pill, 'Freezestat set at ' + s + ' — below the ' + floorTxt + ' floor where trips normally live, so it fires late. Typical settings run ' + bandTxt + '.', 'warn');
+            } else {
+                setPill(el.stat_pill, 'Freezestat in and set at ' + s + ' — the hard trip backstopping everything above.', 'ok');
+            }
+
+            // ── Overall verdict — banded on the displayed values ──
+            const statClause = statOn
+                ? (mat < sp
+                    ? ' The stat at ' + s + ' should already have tripped — a fan still running means the stat is failed, bypassed, or mounted somewhere warmer than this air.'
+                    : (sp <= freeze
+                        ? ' The stat at ' + s + ' has not tripped yet — at or below the fluid’s freeze point, it only fires once ice is already possible; typical settings run ' + bandTxt + '.'
+                        : ' The stat at ' + s + ' has not tripped yet — set under the ' + floorTxt + ' floor, it fires late; typical settings run ' + bandTxt + '.'))
+                : ' There is no freezestat to catch it.';
+
+            function protectedText() {
+                const diff = snap(mat - sp, 1);
+                const edge = statOn ? 'freezestat setpoint' : 'line a stat would watch';
+                return 'Protected — mixed air at ' + m + (diff > 0
+                        ? ' clears the ' + s + ' ' + edge + ' by ' + disp(diff, 1) + suf + '.'
+                        : ' sits exactly at the ' + s + ' ' + edge + ' — no room for a colder hour.')
+                    + (matMode === 'calc' ? ' That is a calculated average — trust it as far as the mixing box actually mixes.' : '')
+                    + (statOn ? '' : ' With no freezestat, protection here is arithmetic only — a stuck damper on a colder morning has no backstop.');
+            }
+
+            if (isSteam) {
+                if (mat <= freeze) {
+                    if (steamMode === 'mod') {
+                        setPill(el.pill, 'Freeze territory — mixed air (' + m + ') at or below freezing over a modulating steam valve. The throttled valve pulls the coil below atmospheric, the vacuum holds condensate in the tubes, and the airstream freezes it there. Two-position steam with face-and-bypass, a working vacuum breaker, and a generous trap under a real drip leg are the fixes.', 'error');
+                    } else {
+                        setPill(el.pill, 'Mixed air (' + m + ') at or below freezing on two-position steam with face-and-bypass — the designed arrangement: valve full open, coil hot wall to wall, bypass dampers doing the modulating. Verify the vacuum breaker and trap; a plugged breaker quietly recreates the modulating-valve failure.', 'warn');
+                    }
+                } else if (mat < floor) {
+                    const modeClause = steamMode === 'mod'
+                        ? ' A modulating steam valve throttles hardest exactly when the air is coldest — below freezing, the condensate-trapping mechanism arms.'
+                        : ' Two-position with face-and-bypass keeps the coil at full pressure — the right arrangement for air this cold.';
+                    setPill(el.pill, 'At risk — mixed air at ' + m + ' is below ' + floorTxt + ', under any credible freezestat setting.' + modeClause + statClause, 'warn');
+                } else if (mat < sp) {
+                    if (statOn) {
+                        setPill(el.pill, 'Freezestat territory — mixed air at ' + m + ' is under the ' + s + ' setpoint. Expect the stat to trip before anything is damaged; a 6 AM trip here is the protection working, not a malfunction.', 'warn');
+                    } else {
+                        setPill(el.pill, 'Thin margin — mixed air at ' + m + ' sits where freezestats normally live (' + bandTxt + '), and this unit has none. Nothing trips the fan if tonight runs colder.', 'warn');
+                    }
+                } else {
+                    setPill(el.pill, protectedText(), 'ok');
+                }
+                return;
+            }
+
+            const isWater = el.fluid.value === 'water';
+            if (burst !== null && burst < freeze && mat <= burst) {
+                setPill(el.pill, 'Burst territory — mixed air at ' + m + ' is at or below the mix’s burst rating (' + burstTxt + '). Below that line, expansion splits tubes whether the slush was flowing or not.', 'error');
+            } else if (mat <= freeze) {
+                if (isWater) {
+                    if (flow === 'full' && service === 'hw') {
+                        setPill(el.pill, 'Freeze territory on flow alone — mixed air (' + m + ') at or below freezing, over a coil surviving on its pump: the designed preheat-coil condition. It holds only while full hot flow is proven — interlock the fan to flow, because the first interruption splits tubes.', 'warn');
+                    } else if (flow === 'full') {
+                        setPill(el.pill, 'Freeze territory — mixed air (' + m + ') at or below freezing over full chilled-water flow: motion buys time, but this water brings no heat, and a loop circulating through freezing air just keeps getting colder. Glycol, draining, or closing the air path are the real protections.', 'error');
+                    } else if (flow === 'low') {
+                        setPill(el.pill, 'Freeze territory — mixed air (' + m + ') at or below freezing over a modulating valve is the classic split: at light load the water crawls through the tubes and freezes before it makes it back out.', 'error');
+                    } else if (flow === 'closed') {
+                        setPill(el.pill, 'Freeze territory — a closed valve traps still water in air at or below freezing (' + m + '). The coil takes the air’s temperature; freezing is a matter of time, not chance.', 'error');
+                    } else {
+                        setPill(el.pill, 'Freeze territory — pump off in air at or below freezing (' + m + '): no heat coming and nothing moving. Freezing is a matter of time, not chance.', 'error');
+                    }
+                } else if (flow === 'off') {
+                    setPill(el.pill, 'At or below the mix’s freeze point (' + f + ') with the pump off — the burst-protection case: slush forms, but ' + fl.label + ' holds tubes to about ' + burstTxt + '. Let the coil warm before restarting — don’t push a pump into slush.', 'warn');
+                } else {
+                    setPill(el.pill, 'Operating at or below the ' + fl.label + ' freeze point (' + f + ') — ice crystals form in the flow, capacity dives, and slush can plug tubes that then sit stagnant. This strength protects against bursting (to about ' + burstTxt + '), not against running this cold.', 'error');
+                }
+            } else if (mat < floor) {
+                if (isWater && (flow === 'closed' || flow === 'off')) {
+                    setPill(el.pill, 'Freeze territory in practice — near-freezing average air (' + m + ') over stagnant plain water. The average is not the coldest spot: a poorly-mixed cold layer runs ' + layerTxt + ' below it, and still water takes the layer’s temperature, not the average’s.' + statClause, 'error');
+                } else {
+                    const fluidClause = isWater
+                        ? ' Water in the tubes has ' + disp(margin, 1) + suf + ' of margin left.'
+                        : ' The ' + fl.label + ' keeps the fluid margin at ' + disp(margin, 1) + suf + ' — the tubes are covered even while the air-side alarm math is not.';
+                    setPill(el.pill, 'At risk — mixed air at ' + m + ' is below ' + floorTxt + ', under any credible freezestat setting.' + fluidClause + statClause, 'warn');
+                }
+            } else if (mat < sp) {
+                const glycolClause = isWater ? ''
+                    : ' The ' + fl.label + ' holds the fluid to ' + f + ' — the stat reads air, not fluid, so glycol doesn’t buy fewer trips; chronic trips are a mixing or setpoint conversation.';
+                if (statOn) {
+                    setPill(el.pill, 'Freezestat territory — mixed air at ' + m + ' is under the ' + s + ' setpoint. Expect the stat to trip before anything is damaged; a 6 AM trip here is the protection working, not a malfunction.' + glycolClause, 'warn');
+                } else {
+                    setPill(el.pill, 'Thin margin — mixed air at ' + m + ' sits where freezestats normally live (' + bandTxt + '), and this unit has none. Nothing trips the fan if tonight runs colder.' + glycolClause, 'warn');
+                }
+            } else {
+                setPill(el.pill, protectedText(), 'ok');
+            }
+        }
+
+        // ── Unit-flip resync ──────────────────────────────────────────
+        // waterside-load's rewriteInput, verbatim shape: reformat from a
+        // retained canonical value so flipping away and back hands back
+        // exactly what was typed (audit-2026-06 #60a/#60b).
+        const REWRITE_DEC = { temp: 1 };
+        function rewriteInput(id, quantity, fromU, toU) {
+            const input = document.getElementById(id);
+            const v  = parseFloat(input.value);
+            if (!isFinite(v)) return;
+            let canon = parseFloat(input.dataset.canonUs);
+            if (!(isFinite(canon) && input.dataset.canonQ === quantity && input.dataset.canonDisp === input.value)) {
+                canon = U.convert(v, fromU, 'us', quantity);
+                input.dataset.canonUs = String(canon);
+                input.dataset.canonQ = quantity;
+                input.dataset.typedText = input.value;
+                input.dataset.typedUnits = fromU;
+            }
+            if (toU === input.dataset.typedUnits) {
+                input.value = input.dataset.typedText;
+            } else {
+                const dec = REWRITE_DEC[quantity] !== undefined ? REWRITE_DEC[quantity] : 2;
+                input.value = (+U.convert(canon, 'us', toU, quantity).toFixed(dec)).toString();
+            }
+            input.dataset.canonDisp = input.value;
+        }
+
+        U.onChange(function (newUnits) {
+            const oldUnits = newUnits === 'us' ? 'metric' : 'us';
+            rewriteInput('cfr-oat', 'temp', oldUnits, newUnits);
+            rewriteInput('cfr-rat', 'temp', oldUnits, newUnits);
+            rewriteInput('cfr-mat-direct', 'temp', oldUnits, newUnits);
+            rewriteInput('cfr-sp', 'temp', oldUnits, newUnits);
+            calc();
+        });
+
+        for (const input of [el.oat, el.rat, el.oa, el.mat_direct, el.sp]) {
+            input.addEventListener('input', calc);
+        }
+        for (const sel of [el.service, el.mat_mode, el.fluid, el.flow, el.steam_mode, el.stat]) {
+            sel.addEventListener('change', calc);
+        }
+        el.copy.addEventListener('click', e => copyReadouts(e.currentTarget, ' · ', 'cfr-mat', 'cfr-margin'));
+
+        // ── Initial paint ─────────────────────────────────────────────
+        // Input values are authored in US units; convert once up front
+        // for a returning metric visitor so the numbers match the labels
+        // units.js has already swapped.
+        if (U.current() === 'metric') {
+            rewriteInput('cfr-oat', 'temp', 'us', 'metric');
+            rewriteInput('cfr-rat', 'temp', 'us', 'metric');
+            rewriteInput('cfr-mat-direct', 'temp', 'us', 'metric');
+            rewriteInput('cfr-sp', 'temp', 'us', 'metric');
+        }
+        calc();
+    })();
+</script>
+{% endblock %}

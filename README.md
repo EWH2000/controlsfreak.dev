@@ -100,6 +100,17 @@ Calculators, converters, and lookups — open one, get an answer.
   leaving-air state, flagging the apparatus dew point when a latent
   load drives the leaving point onto the saturation curve. Cooling
   or heating coil; sea-level pressure.
+- **Coil Freeze Risk Checker** — freezestat-season triage. Place the
+  mixed air (straight OAT/RAT/%OA average, or the MA-T straight off
+  the trend), set it against what's actually in the tubes — plain
+  water, ethylene or propylene glycol at strength (freeze *and* burst
+  points — slush flows without splitting), or trapped steam
+  condensate — and read a margin plus a protection verdict. The
+  freezestat setpoint drives the top band, so "the stat was right to
+  trip" is a possible answer; flow state is categorical (full /
+  modulating low / valve closed / pump off) because tube velocity
+  isn't computable without circuiting. Steam path teaches the
+  vacuum-holds-condensate mechanism and its piping fixes.
 - **Dew Point Calculator** — dry-bulb plus one humidity reading (RH
   off the space sensor, or wet-bulb off a sling psychrometer) → dew
   point, with wet-bulb, grains, and enthalpy alongside. The Coil

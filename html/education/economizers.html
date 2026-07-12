@@ -385,7 +385,7 @@ keywords: economizer free cooling changeover dry bulb enthalpy high limit lockou
                 Economizers have a rough reputation in the field, and it's earned — study after study finds a huge share of them not economizing at all. The failure modes are worth knowing cold. <strong>Stuck dampers</strong> lead the list: a seized actuator, a broken linkage, a set screw that let go years ago. The tell is in the trends, and it's the same arithmetic as the mixing box: command the dampers and watch <em>MA-T</em>. Commanded to 100&nbsp;% on a cool day with MA-T sitting on top of RA-T? The blades never moved. Commanded to minimum on a cold morning with MA-T tracking OA-T? Stuck open — and the heating coil is quietly paying for it all winter. The command is a wish; MA-T is the witness.
             </p>
             <p style="margin-top:1.25rem;">
-                <strong>Hunting</strong> is the second act: dampers that swing instead of settling, usually a too-hot loop or a mixed-air sensor reading somewhere unrepresentative — the <a href="/education/air-handlers.html#sensor-strip">Air Handlers lesson's widget</a> hides a war story about exactly that. And <strong>freeze protection</strong> is the floor under everything: free cooling has a limit, and on a frigid morning an economizer chasing a cool supply setpoint can drive the mixed air toward coil-bursting territory. The low-limit override — drive dampers toward minimum when MA-T drops too far, whatever the cooling logic wants — plus the freeze-stat hard trip are the "when safe" half of "use cool air when safe." A unit missing them isn't aggressive, it's uninsured.
+                <strong>Hunting</strong> is the second act: dampers that swing instead of settling, usually a too-hot loop or a mixed-air sensor reading somewhere unrepresentative — the <a href="/education/air-handlers.html#sensor-strip">Air Handlers lesson's widget</a> hides a war story about exactly that. And <strong>freeze protection</strong> is the floor under everything: free cooling has a limit, and on a frigid morning an economizer chasing a cool supply setpoint can drive the mixed air toward <a href="/tools/coil-freeze-risk.html">coil-bursting territory</a>. The low-limit override — drive dampers toward minimum when MA-T drops too far, whatever the cooling logic wants — plus the freeze-stat hard trip are the "when safe" half of "use cool air when safe." A unit missing them isn't aggressive, it's uninsured.
             </p>
 
             <div class="callout" style="margin-top:1.5rem;">
@@ -405,7 +405,8 @@ keywords: economizer free cooling changeover dry bulb enthalpy high limit lockou
             {href: '/tools/economizer-ratio.html', label: 'Economizer Ratio Helper'},
             {href: '/tools/psychrometric-chart.html', label: 'Psychrometric Chart'},
             {href: '/tools/air-mixing.html', label: 'Air-Mixing Calculator'},
-            {href: '/tools/dew-point-calculator.html', label: 'Dew Point Calculator'}
+            {href: '/tools/dew-point-calculator.html', label: 'Dew Point Calculator'},
+            {href: '/tools/coil-freeze-risk.html', label: 'Coil Freeze Risk Checker'}
         ],
         lessons: [
             {href: '/education/air-handlers.html', label: 'Air Handlers'},
