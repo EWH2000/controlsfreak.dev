@@ -4706,21 +4706,6 @@ remain in `## Recently addressed` at their numerical position:
   re-clicking the source pin); recorded so a future "fix" PR doesn't
   add a `cancelWire()` here. Trigger: an explicit UX decision to
   change the cancel-on-mismatch behavior.
-- **#68. electrical-quick-calc Ohm's-Law `iv`-case message
-  mis-describes the 0/0 state.** In `calcOhms`, entering `V=0` *and*
-  `I=0` falls into the `iv` branch and mutes with "Current of 0 A with
-  a voltage present…" — but no voltage is present either, so the
-  message is wrong for that specific input. Cosmetic (math/behavior are
-  correct; the calc still mutes). Surfaced by the 2026-07-11 electrical
-  functionality audit. Trigger: a copy pass on the calc's guard
-  messages, or a broader "one message per distinct invalid state" tidy.
-- **#69. electrical-quick-calc AC voltage keeps the `(L-L)` label
-  under 1φ.** The "Line voltage Vₗ (L-L)" label is fixed, but a
-  single-phase branch is line-to-neutral; the computation
-  (`S = V·I`, no √3 for 1φ) is correct regardless and the ref-note
-  clarifies L-L vs L-N. Cosmetic labeling only. Surfaced by the same
-  audit. Trigger: a decision to make the label phase-aware
-  (swap to "Vₗ (L-N)" when 1φ is selected).
 
 ---
 

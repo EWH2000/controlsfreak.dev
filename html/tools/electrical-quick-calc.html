@@ -137,7 +137,7 @@ keywords: ohms law watts volts amps three phase kva kvar power factor motor fla 
                         </select>
                     </div>
                     <div class="ps-row">
-                        <label class="ps-label" for="eq-ac-vl">Line voltage Vₗ (L-L)</label>
+                        <label class="ps-label" id="eq-ac-vl-label" for="eq-ac-vl">Line voltage Vₗ (L-L)</label>
                         <input class="ps-input" type="number" id="eq-ac-vl" step="any" min="0" placeholder="480" value="460">
                     </div>
                     <div class="ps-row">
@@ -494,7 +494,12 @@ keywords: ohms law watts volts amps three phase kva kvar power factor motor fla 
 
             switch (key) {
                 case 'iv':   // V, I
-                    if (raw.i === 0) { muteOhm('Current of 0 A with a voltage present is an open circuit — resistance is infinite.'); return; }
+                    if (raw.i === 0) {
+                        muteOhm(raw.v === 0
+                            ? '0 V and 0 A together don\'t define a resistance or power — enter a non-zero value for at least one.'
+                            : 'Current of 0 A with a voltage present is an open circuit — resistance is infinite.');
+                        return;
+                    }
                     r.r = raw.v / raw.i; r.p = raw.v * raw.i;
                     formula = 'R = V ÷ I = ' + tidy(raw.v, 4) + ' ÷ ' + tidy(raw.i, 4) + ' = ' + tidy(r.r, 4) + ' Ω   ·   P = V × I = ' + tidy(raw.v, 4) + ' × ' + tidy(raw.i, 4) + ' = ' + tidy(r.p, 4) + ' W';
                     break;
@@ -557,6 +562,9 @@ keywords: ohms law watts volts amps three phase kva kvar power factor motor fla 
             const iIn   = num('eq-ac-i-in');
             const kwIn  = num('eq-ac-kw-in');
             const kvaIn = num('eq-ac-kva-in');
+
+            // 3φ voltage is line-to-line; a 1φ branch is line-to-neutral.
+            el('eq-ac-vl-label').textContent = phase === '3' ? 'Line voltage Vₗ (L-L)' : 'Line voltage Vₗ (L-N)';
 
             if (!isFinite(vl) || !isFinite(pf)) { muteAc('Enter line voltage and power factor.'); return; }
             if (vl <= 0) { muteAc('Line voltage must be greater than 0.'); return; }

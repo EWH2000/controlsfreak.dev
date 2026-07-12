@@ -797,7 +797,12 @@ owner pick), every formula numerically verified before build:
   fill-in-what-you-know pattern — leave current blank, enter kW/kVA, and
   it solves back to amps. The documented design ("one of the three → the
   rest") was always the intent; only the selector implementation forced
-  the misread.
+  the misread. Same PR folded in two cosmetic audit findings: the AC
+  voltage label is now phase-aware (`Vₗ (L-L)` for 3φ, `Vₗ (L-N)` for
+  1φ, via `eq-ac-vl-label`), and the Ohm's-Law `iv` guard distinguishes
+  a true 0/0 entry ("0 V and 0 A … don't define a resistance") from an
+  open circuit (V present, I = 0) rather than always claiming a voltage
+  is present.
 - **Motor HP / kW / FLA** — HP↔kW + an FLA *estimate*; the
   always-visible "estimate only — size off NEC 430.250/430.248, not this
   number" disclaimer is the load-bearing content. Optional measured-amps

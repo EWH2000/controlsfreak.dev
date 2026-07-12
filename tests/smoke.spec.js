@@ -3101,6 +3101,14 @@ test('electrical-quick-calc — four tabs solve and mute correctly', async ({ pa
     await page.fill('#eq-ohm-r', '4');
     await expect(page.locator('#eq-ohm-callout')).toBeVisible();
     await expect(page.locator('#eq-ohm-out-p')).toHaveText('—');
+    // 0/0 is distinct from an open circuit: V present + I=0 → "resistance infinite";
+    // V=0 AND I=0 → the indeterminate message, not a false "voltage present" (audit #68).
+    await page.fill('#eq-ohm-r', '');              // back to exactly two given
+    await page.fill('#eq-ohm-v', '12');
+    await page.fill('#eq-ohm-i', '0');
+    await expect(page.locator('#eq-ohm-callout')).toContainText('resistance is infinite');
+    await page.fill('#eq-ohm-v', '0');
+    await expect(page.locator('#eq-ohm-callout')).toContainText('0 V and 0 A');
 
     // Tab 2 (AC power), seeded 460 V 3φ, 30 A, PF 0.85.
     await page.click('[data-tab="ac"]');
@@ -3121,6 +3129,11 @@ test('electrical-quick-calc — four tabs solve and mute correctly', async ({ pa
     await page.fill('#eq-ac-i-in', '30');
     await expect(page.locator('#eq-ac-callout')).toContainText('clear the others');
     await expect(page.locator('#eq-ac-kva')).toHaveText('—');
+    // Voltage label tracks the phase: 1φ is line-to-neutral, 3φ line-to-line (audit #69).
+    await page.selectOption('#eq-ac-phase', '1');
+    await expect(page.locator('#eq-ac-vl-label')).toContainText('(L-N)');
+    await page.selectOption('#eq-ac-phase', '3');
+    await expect(page.locator('#eq-ac-vl-label')).toContainText('(L-L)');
 
     // Tab 3 (motor), seeded 10 HP, 460 V, 3φ, PF 0.88, η 0.90 → ~11.8 A.
     await page.click('[data-tab="motor"]');
