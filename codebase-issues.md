@@ -4605,6 +4605,27 @@ dynamic-import cache still de-dupes within each process, so repeat
 `loadWorker()` calls stay cheap. Caught in passing (pre-existing,
 not introduced) while triaging the duct-traverse suite run.
 
+### 152. `rewriteInput` + `REWRITE_DEC` is duplicated inline across eight tool pages *(open — 2026-07-11)*
+
+The unit-flip input-resync helper (`rewriteInput()` + its
+`REWRITE_DEC` decimals map — the audit-2026-06 #60a/#60b mechanism:
+retained canonical value in `dataset`, verbatim typed-text restore,
+per-quantity rewrite decimals) is now pasted inline in **eight**
+pages: refrigerant-pt, dew-point-calculator, coil-sizing, air-mixing,
+economizer-ratio, waterside-load, airside-load, and (new with tool #4
+of the airflow buildout) coil-freeze-risk. The bodies are
+byte-identical apart from the leading comment and each page's
+`REWRITE_DEC` contents; each page also repeats the same
+`U.onChange(...)` + initial-metric-paint wiring shape around it.
+Extraction candidate: a shared helper in `/scripts/ui.js` (or a
+`units.js` method — it already owns the canonical-conversion API the
+helper leans on) taking `(id, quantity)` pairs plus a decimals map,
+with each page keeping only its list. Not done inline during the
+coil-freeze ship (scope rule); the copy count is now high enough that
+the next units-toggle tool should trigger the extraction rather than
+land copy #9. Caught while building coil-freeze-risk from the
+waterside-load template.
+
 ### Deferred / Won't fix (with revisit trigger)
 
 Items considered during an audit and deliberately not pursued, each
