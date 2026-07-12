@@ -21,13 +21,13 @@ nav: tools
 
     <div class="filter-chips" role="group" aria-label="Filter tools by category">
         <button type="button" class="filter-chip active" data-category="all" aria-pressed="true">
-            All <span class="filter-chip-count">28</span>
+            All <span class="filter-chip-count">29</span>
         </button>
         <button type="button" class="filter-chip" data-category="hvac" aria-pressed="false">
             HVAC <span class="filter-chip-count">8</span>
         </button>
         <button type="button" class="filter-chip" data-category="protocols" aria-pressed="false">
-            Protocols <span class="filter-chip-count">5</span>
+            Protocols <span class="filter-chip-count">6</span>
         </button>
         <button type="button" class="filter-chip" data-category="signals" aria-pressed="false">
             Signals <span class="filter-chip-count">2</span>
@@ -105,6 +105,15 @@ nav: tools
             titleFull:  'BACnet Vendor ID Lookup',
             desc:       'The full ASHRAE-assigned vendor ID registry as one searchable table — decode the Vendor_Identifier a device reports in its I-Am, or filter 1,600+ manufacturers by name.',
             pills:      ['BACnet', 'Vendor_Identifier', 'Property 120', 'Registry'],
+            category:   'protocols'
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/tools/bacnet-units.html',
+            titleShort: 'BACnet Units',
+            titleFull:  'BACnet Engineering Units Decoder',
+            desc:       'The full BACnet Units enumeration (property 117) as one filterable table — paste the number a point reports for its units and get the name, or filter all 255 standard values by number, name, or symbol.',
+            pills:      ['BACnet', 'Property 117', 'Units Enum', 'Decode'],
             category:   'protocols'
         }) }}
         {{ navCard({
