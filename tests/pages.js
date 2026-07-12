@@ -22,6 +22,7 @@ const PAGES = [
     { name: 'economizer ratio',       url: '/tools/economizer-ratio.html' },
     { name: 'air mixing',             url: '/tools/air-mixing.html' },
     { name: 'coil sizing',            url: '/tools/coil-sizing.html' },
+    { name: 'coil freeze risk',       url: '/tools/coil-freeze-risk.html' },
     { name: 'power & energy converter', url: '/tools/power-energy-converter.html' },
     { name: 'dew point calculator',   url: '/tools/dew-point-calculator.html' },
     { name: 'thermistor calculator',  url: '/tools/thermistor-calculator.html' },

@@ -599,15 +599,10 @@ this order (field utility first, verification-gated items last):
 3. **Equipment Airflow Check** — `/tools/equipment-airflow.html`
    *(shipped 2026-07-11 — see its Shipped entry below; owner
    blessed bands 350/400/500 and the stages-or-% mode select)*.
-4. **Coil Freeze Risk** — `/tools/coil-freeze-risk.html`, prefix
-   `cfr-`, hvac. Margin + risk-factor verdict, NOT a physics predictor
-   (tube-wall freeze needs geometry the field never has): worst-case
-   MAT, glycol freeze + burst points (verify once, use twice — same
-   table waterside-load's glycol row needs), categorical flow state,
-   steam path as rules-verdict + taught mechanism (throttled valve →
-   sub-atmospheric coil → condensate held in tubes). Ship by early
-   fall for freeze-stat season. `[future:
-   education/coil-freeze-protection.html]`.
+4. **Coil Freeze Risk** — `/tools/coil-freeze-risk.html` *(shipped
+   2026-07-11 — see its Shipped entry below; owner picked
+   diagnostic-first framing and the user-set freezestat-setpoint top
+   band edge)*.
 5. **Minimum Outdoor Air (62.1)** — `/tools/minimum-outdoor-air.html`,
    prefix `vo-`, airflow. Vbz = Rp·Pz + Ra·Az → Voz = Vbz/Ez → %OA
    pill; splits per-person (DCV-resettable) from per-area (floor).
@@ -842,6 +837,106 @@ with electrical-quick-calc (the hp↔kW tie), coil-sizing,
 waterside-load, transformer-sizing. Adversarial review before ship
 caught five fixes (stale readout on hand-edit, descending-band guard,
 reference rounding, parser hardening, bridge-result `aria-labelledby`).
+
+### Coil Freeze Risk Checker *(shipped 2026-07-11)*
+
+Tool #4 of the airflow buildout (`/tools/coil-freeze-risk.html`,
+prefix `cfr-`, **hvac** — the buildout's one non-airflow category;
+chips went HVAC 7→8, All 25→26). v3.37.0. Design notes:
+
+- **Owner gates (decided at build start, 2026-07-11):**
+  *diagnostic-first framing* — the page opens from the field
+  complaint ("the freezestat tripped at 6 AM — was it right?") and
+  inputs read like a BAS trend review; and the *user-set freezestat
+  setpoint drives the top band edge* (default 38 °F; the 35 °F floor
+  and the fluid freeze/burst points sit fixed beneath it). The
+  setpoint-as-edge choice bought the tool its best diagnostic line
+  free: when MAT lands below the setpoint band, the verdict can say
+  "the stat should already have tripped — a fan still running means
+  the stat is failed, bypassed, or reading somewhere warmer."
+- **Margin + risk-factor verdict, not a physics predictor** (per the
+  queue scoping): tube-wall freeze needs coil geometry the field
+  never has. MAT (straight weighted average, or entered directly off
+  the trend), fluid freeze + burst points, categorical flow state
+  (full / modulating low / valve closed / pump off — tube velocity
+  isn't computable from GPM without circuiting, so no fake ft/s),
+  freezestat presence + setpoint. Overall pill plus flow/steam and
+  freezestat factor pills.
+- **Freeze vs burst is the teaching spine**: slush flows without
+  splitting tubes, so glycol below its freeze point splits into the
+  burst-protection case (pump off — warn, "don't push a pump into
+  slush") vs operating-below-freeze (error). And glycol protects
+  *tubes, not trips* — the trip band is an air-temperature fact, so
+  the worked example's glycol paragraph shows the margin opening to
+  29.5 °F while the 38 °F stat trips anyway.
+- **Band logic escalations kept principled**: plain water + stagnant
+  flow (closed/off) in the 32–35 °F band escalates to error via the
+  stratification argument (a poorly-mixed cold layer runs 10–20 °F
+  below the calculated average); glycol in the same band does NOT
+  escalate (fluid margin is real). Sub-freezing water at full proven
+  flow reads warn, not error — the designed preheat-coil condition.
+  The flat −5 °F stratification penalty was offered and rejected
+  (invents precision); stratification is taught in prose and in the
+  escalation texts instead.
+- **Steam path is rules-verdict + taught mechanism** (nothing numeric
+  is honest): throttled modulating valve → sub-atmospheric coil →
+  vacuum holds condensate in tubes → sub-freezing air splits them;
+  fixes are piping (vacuum breaker, drip leg + generous trap) and
+  arrangement (two-position + face-and-bypass), not tuning.
+- **Glycol freeze/burst table ships as placeholder-verify data**
+  (typical inhibited-glycol chart values, % by volume, EG + PG at
+  10–50 %; marked above and below the table). **Verify once, use
+  twice**: this is the freeze/burst half of the data waterside-load's
+  parked glycol row wants — that row still needs the density/cp
+  correction factors, which did NOT ship here (different columns,
+  same datasheet session). Prose sends users to the fluid maker's
+  chart and a refractometer; the `below −60 °F` chart-edge cells are
+  `null` in the JS table and simply can't reach the burst band.
+- **Integer-tenths MAT blend** — a new wrinkle on the snap-inputs
+  rule: the metric seed lands on an exact .x5 (0.5 × −15 + 0.5 ×
+  21.1 = 3.05 °C) and floating-point evaluation order rounds it
+  either way, so the blend of 1-dp operands is computed in integer
+  tenths with one half-up round. A hand calculation of the printed
+  operands now lands on exactly the printed result in both unit
+  systems, by construction.
+- **Full units-toggle participant** (its hvac siblings air-mixing /
+  economizer-ratio set the posture): waterside-load's
+  active-system-native solve + `rewriteInput` resync; band edges are
+  unit-native constants (35 °F ↔ 1.7 °C, 38 °F ↔ 3.3 °C), so the two
+  systems' verdicts agree except within one display-rounding step of
+  an edge (accepted, same class as the US/metric constant divergence
+  on waterside/airside).
+- First glycol content anywhere on the site (recon found zero prior
+  mentions in lessons or quiz banks). Reciprocal links landed on
+  air-mixing, economizer-ratio, equipment-airflow, waterside-load
+  (its water-only ref-note now hands the freeze/burst half of the
+  glycol story here, plus a relatedLinks entry), air-handlers +
+  economizers lessons (including an inline anchor on the economizers
+  freeze-protection passage's "coil-bursting territory"), and the
+  air-handlers quiz. sequencing-scenarios' low-limit question keeps
+  its lesson `learnMore` (a tool link would displace a better
+  teaching target).
+- **Adversarial review (2026-07-11, 27 agents) confirmed six
+  findings, all fixed pre-PR**: the at-risk band's "only fires once
+  ice is already possible" clause was domain-false for stats set
+  between the freeze point and 35 °F (now tier-split like the stat
+  pill); freeze-band prose said "sub-freezing"/"below" on an
+  inclusive `<=` band (now "at or below", matching the burst band's
+  edge wording); the steam trip band claimed a stat that a no-stat
+  unit doesn't have (now splits like the water ladder); `mute()`'s
+  `setPill` class-wipe un-hid the inactive service's factor pill
+  (mute now re-applies visibility); and this entry itself claimed a
+  waterside-load reciprocal before it existed (link then made real).
+  Also folded in from the contested set: exact-setpoint wording
+  ("sits exactly at" instead of "clears by 0 °F"), MAT-blend ties
+  now round away from zero (toFixed's rule, so negative .x5 metric
+  blends match hand math), the protection stack is an `<ol>` (it
+  says "roughly in order"), and the freeze-band full-flow text now
+  splits HW (preheat-coil condition, warn) from CHW (no heat to
+  bring — error).
+- `[future: education/coil-freeze-protection.html]` — the lesson this
+  tool will eventually pair with; the protection-stack reference row
+  is its outline.
 
 ### Equipment Airflow Check *(shipped 2026-07-11)*
 
