@@ -6,7 +6,7 @@
         <a class="nav-start-here" href="/education/" aria-label="New to controls? Start here — the Education lessons">Start here →</a>
         {{ navDropdown('tools', 'Tools', '/tools/', nav == 'tools', collections.navTools | navGroups('tools'), null, 'Calculators and converters for the day-to-day.') }}
         {{ navDropdown('simulators', 'Simulators', '/simulators/', nav == 'simulators', null, collections.navSimulators, 'Interactive models to poke at before the real thing.') }}
-        {{ navDropdown('education', 'Education', '/education/', nav == 'education', collections.navEducation | navGroups('education'), null, 'Plain-English lessons, from the ground up.') }}
+        {{ navDropdown('education', 'Education', '/education/', nav == 'education', collections.navEducation | navGroups('education'), null, 'Practical lessons, from the ground up.') }}
         {{ navDropdown('practice', 'Practice', '/practice/', nav == 'practice', collections.navPractice | navGroups('practice'), null, 'Quick quizzes and field drills to test yourself.') }}
         <a href="/contact.html"{% if nav == "contact" %} class="active"{% endif %}>Contact</a>
         <button type="button" class="nav-search-btn" id="nav-search-btn" aria-haspopup="dialog" aria-label="Search (press slash)">

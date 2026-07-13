@@ -8,7 +8,7 @@
 // Regenerate: npm run import-bacnet-errors
 //   (.github/scripts/import-bacnet-errors.mjs — validates before writing)
 //
-// Enum TRUTH only (id → name). Field-accurate plain-English descriptions
+// Enum TRUTH only (id → name). Field-accurate human-readable descriptions
 // live in the hand-authored html/_data/bacnetErrorNotes.js and are overlaid
 // by /tools/bacnet-error-codes.html at build time. Names are the
 // bacnet-stack spellings; the field-common rows should read cleanly, the

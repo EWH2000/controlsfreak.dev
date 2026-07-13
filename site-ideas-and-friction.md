@@ -2802,7 +2802,7 @@ across five questions — the load-bearing decisions:
   be possible and obvious"). No inject button — you wire it wrong, it fails:
   reversed power **sparks**, a dead short **blows the fuse** and drops every
   point dead, an unpowered actuator sits **DEAD**, and a FAULTS panel names
-  each one in plain English. Reduced-motion path snaps straight to the
+  each one in plain terms. Reduced-motion path snaps straight to the
   blown/dead state (no spark/flash), same discipline as `schematic-bg`.
 - **Scope = Power (24 VAC) + Inputs (UI/BI) + Outputs (AO/BO).** Network was
   deliberately cut: the NET terminals render greyed "future" — see

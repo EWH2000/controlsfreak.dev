@@ -67,7 +67,7 @@
         url: '/education/',
         title: 'Browse all lessons',
         section: 'education',
-        description: 'New to controls? Start with the plain-English explainers.'
+        description: 'New to controls? Start with the explainers.'
     };
 
     let entries = null;          // cached index (null until first fetch)
