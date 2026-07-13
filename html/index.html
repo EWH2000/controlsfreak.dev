@@ -345,6 +345,21 @@ nav: home
                 padding: 1.25rem 1.25rem 1.75rem;
             }
         }
+
+        /* Home card grids — deterministic balance at desktop. The fluid
+           auto-fill/auto-fit default packed Tools-by-Category 4+2 and
+           Browse 3+1 at a 1056px grid area (1920 viewport). Fix the
+           column count and use minmax(0,1fr) so cells shrink instead of
+           overflowing; collapse on the site's 900 / 600 breakpoints. */
+        .card-grid.home-cat-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        .card-grid.two.browse-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        @media (max-width: 900px) {
+            .card-grid.home-cat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+        @media (max-width: 600px) {
+            .card-grid.home-cat-grid,
+            .card-grid.two.browse-grid { grid-template-columns: 1fr; }
+        }
     </style>
 {% endblock %}
 
@@ -379,7 +394,7 @@ nav: home
             <a class="hero-btn" href="/education/">Start with the explainers →</a>
         </div>
         <p class="hero-onramp">Three weeks in or thirty years in — the <a href="/education/">explainers</a> start from the ground up.</p>
-        <p class="hero-latest">Latest <span class="titlebar-dots">·</span> <a href="/tools/bacnet-priority.html">BACnet Priority Array →</a></p>
+        <p class="hero-latest">Latest <span class="titlebar-dots">·</span> <a href="/bacnet/">BACnet Reference Hub →</a></p>
     </div>
 
     <!-- The seam: the site's whole premise as one live instrument — a
@@ -478,7 +493,7 @@ nav: home
         <div class="section-line"></div>
     </div>
 
-    <div class="card-grid">
+    <div class="card-grid home-cat-grid">
         {{ navCard({
             section:    'tools',
             href:       '/tools/#hvac',
@@ -534,7 +549,16 @@ nav: home
         <div class="section-line"></div>
     </div>
 
-    <div class="card-grid two">
+    <div class="card-grid two browse-grid">
+        {{ navCard({
+            section:    'reference',
+            href:       '/bacnet/',
+            titleShort: 'BACnet',
+            titleFull:  'The BACnet reference hub →',
+            desc:       'Everything BACnet in one place — five lessons in a start-here reading order (object model, services, networking, MS/TP, and BACnet vs Modbus) and six field tools that decode the units, errors, objects, and priorities a controller reports.',
+            pills:      ['Start Here', '5 Lessons', '6 Tools'],
+            wide:       true
+        }) }}
         {{ navCard({
             section:    'home',
             href:       '/tools/',

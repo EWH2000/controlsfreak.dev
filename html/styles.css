@@ -551,6 +551,22 @@ main { flex: 1; }
     white-space: normal;
     max-width: 240px;
 }
+/* Topic-cluster hub link pinned near the top of the Tools + Education
+   dropdowns (rendered by nav-dropdown.njk). Accent-tinted so it reads as
+   the marquee entry, above the category rows. */
+.nav-menu-featured {
+    display: block;
+    padding: 0.6rem 1rem;
+    border-bottom: 1px solid var(--border);
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    letter-spacing: 0.03em;
+    color: var(--accent);
+    text-decoration: none;
+    background: var(--accent-dim);
+    transition: color 0.18s, background 0.18s;
+}
+.nav-menu-featured:hover { color: var(--text-bright); background: var(--accent-glow); }
 
 /* ── NAV CATEGORY GROUPS (level-2 disclosure) ────────────────────────
    Inside a categorized section's .nav-menu (Tools / Education /
@@ -1732,6 +1748,7 @@ input[type="range"]::-moz-range-thumb {
 .nav-menu-toggle:focus-visible,
 .nav-group-toggle:focus-visible,
 .nav-menu-item:focus-visible,
+.nav-menu-featured:focus-visible,
 .cta-button:focus-visible,
 .hero-btn:focus-visible,
 .hero-qt:focus-visible,
@@ -2205,11 +2222,15 @@ p.chip-row-preamble {
     color: inherit;
     transition: border-color 0.18s, transform 0.18s;
 }
+/* Featured / marquee card — spans the full grid row. Applied via the
+   navCard() `wide` param (e.g. the BACnet hub atop the home Browse grid). */
+.nav-card--wide { grid-column: 1 / -1; }
 .nav-card--tools      { --section-accent: var(--accent); --section-accent-dim: var(--accent-dim); --section-accent-glow: var(--accent-glow); }
 .nav-card--education  { --section-accent: var(--plum);   --section-accent-dim: var(--plum-dim);   --section-accent-glow: var(--plum-glow); }
 .nav-card--simulators { --section-accent: var(--teal);   --section-accent-dim: var(--teal-dim);   --section-accent-glow: var(--teal-glow); }
 .nav-card--practice   { --section-accent: var(--amber);  --section-accent-dim: var(--amber-dim);  --section-accent-glow: var(--amber-glow); }
 .nav-card--home       { --section-accent: var(--accent); --section-accent-dim: var(--accent-dim); --section-accent-glow: var(--accent-glow); }
+.nav-card--reference  { --section-accent: var(--accent); --section-accent-dim: var(--accent-dim); --section-accent-glow: var(--accent-glow); }
 
 .nav-card:hover { border-color: var(--section-accent); transform: translateY(-2px); }
 
