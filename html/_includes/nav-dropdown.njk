@@ -16,6 +16,13 @@
             </button>
             <div class="nav-menu" id="nav-{{ section }}-menu" hidden>
                 {% if blurb %}<p class="nav-menu-blurb">{{ blurb }}</p>{% endif %}
+                {# Topic-cluster hub link, pinned above the category rows in the
+                   two dropdowns where BACnet content lives (Tools + Education) —
+                   the one place a deep-page visitor reaches /bacnet/ from the
+                   chrome. Gated here (not a macro arg) so it stays off nav.njk. #}
+                {% if section == 'tools' or section == 'education' %}
+                <a class="nav-menu-featured" href="/bacnet/">BACnet reference hub →</a>
+                {% endif %}
                 {% if groups %}
                 {% for g in groups %}
                 <div class="nav-menu-group">

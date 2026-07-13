@@ -35,6 +35,10 @@
                   gates its canvas on touch (the .desktop-canvas rule
                   in styles.css) so mobile visitors are warned before
                   they tap in.
+      wide        optional bool — adds .nav-card--wide, which spans the
+                  full grid row (grid-column: 1 / -1). For a featured /
+                  marquee card at the head of a .card-grid (e.g. the
+                  BACnet hub atop the home Browse grid).
 
     The macro derives the section prefix word (TOOL/LESSON/SIM/QUIZ/SECTION)
     and the status pill word (LIVE/READ/RUN/GO/OK) from `section` so the
@@ -56,7 +60,7 @@
         practice:   'GO',
         home:       'OK'
     }[opts.section] or 'OK' -%}
-<a class="nav-card nav-card--{{ opts.section }}"{% if opts.category %} data-category="{{ opts.category }}"{% endif %} href="{{ opts.href }}">
+<a class="nav-card nav-card--{{ opts.section }}{% if opts.wide %} nav-card--wide{% endif %}"{% if opts.category %} data-category="{{ opts.category }}"{% endif %} href="{{ opts.href }}">
     <div class="nav-card-titlebar">
         <span>{{ sectionWord }} <span class="titlebar-dots">::</span> {{ opts.titleShort | upper }}</span>
         <span class="ok-pill">{{ statusWord }}</span>
