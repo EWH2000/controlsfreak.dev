@@ -183,7 +183,7 @@ faqs:
             <p class="ref-note" style="margin-top:0;">
                 Every error class, error code, reject reason, and abort reason, filterable across all four at once. Click a value to copy it.
             </p>
-            <!-- // user to verify long-tail error-code names + descriptions — enums imported from bacnet-stack's bacenum.h; the field-common rows carry human-reviewed descriptions, the long tail (BACnet/SC, HTTP/TLS/DNS, OAuth-scope) is name-only, refine against ASHRAE 135 after review -->
+            <!-- Error enums are generated from bacnet-stack (html/_data/bacnetErrors.js) and were cross-checked 2026-07-13 against BACpypes3 + BACnet4J and ASHRAE addenda 135-2020cc / 135-2020cp for the SC / TLS / OAuth-scope tail; field-common rows carry human-reviewed descriptions (bacnetErrorNotes.js), the long tail stays name-only. Two known caveats: the deprecated 135-1995 security codes (1, 6, 12, 15, 28) are bacnet-stack-sourced — the independent transcriptions no longer carry them to reconfirm; and code 204 keeps bacnet-stack's disambiguated "unknown-security-key" (135-2020cc frees the bare "unknown-key" name, but id 107 historically held it). -->
             <div style="margin-bottom:0.9rem;">
                 <label class="bec-search-label" for="bec-search">Filter by number, name, or meaning <span class="bec-count" id="bec-count-total" aria-hidden="true"></span></label>
                 <input class="ps-input" type="search" id="bec-search" placeholder="e.g. 32, unknown-property, segmentation, timeout">

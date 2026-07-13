@@ -138,7 +138,6 @@ faqs:
             <p class="ref-note" style="margin-top:0;">
                 Every standard value of the <code>Units</code> property, ascending by number. Click a value to copy it. Symbols in parentheses are searchable too.
             </p>
-            <!-- // user to verify long-tail unit names — the 0–254 enum is imported from bacnet-stack's bacenum.h; the ~80 field-common rows are the canonical curated names, the rest are bacnet-stack spellings, refine against ASHRAE 135 after review -->
             <div class="bunit-controls">
                 <label class="bunit-search-label" for="bunit-search">Filter by number, name, or symbol <span class="bunit-count" id="bunit-count" aria-hidden="true"></span></label>
                 <input class="ps-input" type="search" id="bunit-search" placeholder="e.g. 62, celsius, kPa, flow, %">
@@ -156,7 +155,6 @@ faqs:
                     </tbody>
                 </table>
             </div>
-            <!-- // user to verify long-tail unit names — end of table -->
             <p class="ref-note">
                 Imported from <a href="https://github.com/bacnet-stack/bacnet-stack">bacnet-stack</a>'s <code>BACnetEngineeringUnits</code> enum (the de-facto machine-readable form of the ASHRAE 135 <code>Units</code> enumeration, which is paywalled) — retrieved {{ bacnetUnits.retrieved }}: {{ bacnetUnits.count }} standard values, 0–{{ bacnetUnits.maxStd }}. The field-common rows carry the curated names and symbols shared with the <a href="/tools/bacnet-objects.html">Object Reference</a>; the long-tail rows use bacnet-stack's spelling and should be confirmed against the standard for exact wording. Values {{ bacnetUnits.proprietaryMin }} and up are the proprietary/vendor range — no assigned name here.
             </p>
