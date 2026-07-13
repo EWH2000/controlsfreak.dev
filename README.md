@@ -1,6 +1,6 @@
 # controlsfreak.dev
 
-Open calculators, converters, and plain-English explainers for
+Open calculators, converters, and practical explainers for
 building-controls engineers — BACnet, Modbus, HVAC, and building
 automation work. No login, no ads, no tracking, just tools that
 are actually useful on a job site.
@@ -354,7 +354,7 @@ paired with an Education explainer for the underlying concepts.
   and outputs (0-10 V actuator, relay-driven fan), and click
   terminal-to-terminal. Points read live when landed right; a bad wire
   fails the way real hardware does — an open sensor, a dead actuator,
-  a spark, a popped fuse — with every fault named in plain English.
+  a spark, a popped fuse — with every fault named in plain terms.
   Pairs with the Controller Wiring explainer.
 - **Hydronic Loop Builder** — a 3D piping sandbox with a real solver:
   drop a plant, pump, coils, and valves onto two synced elevation views
@@ -371,7 +371,7 @@ paired with an Education explainer for the underlying concepts.
 
 ### Education
 
-Plain-English explainers with hand-drawn SVG schematics. Aimed at
+Practical explainers with hand-drawn SVG schematics. Aimed at
 techs new to the industry and anyone wanting a refresh.
 
 - **PID Basics** — what proportional, integral, and derivative

@@ -1,4 +1,4 @@
-// BACnet error/reject/abort plain-English descriptions — HAND-AUTHORED,
+// BACnet error/reject/abort field descriptions — HAND-AUTHORED,
 // human-reviewed. The companion to the GENERATED html/_data/bacnetErrors.js
 // (enum id → name); this file is the curated field-meaning of each value,
 // overlaid onto the enum by /tools/bacnet-error-codes.html at build time by

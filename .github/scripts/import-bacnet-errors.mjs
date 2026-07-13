@@ -15,7 +15,7 @@
 //   npm run import-bacnet-errors -- --dry-run fetch + validate + print stats, don't write
 //
 // This file carries ONLY the enum truth (id → name). The field-accurate
-// plain-English descriptions live in the hand-authored, human-reviewed
+// human-readable descriptions live in the hand-authored, human-reviewed
 // html/_data/bacnetErrorNotes.js and are overlaid by the page at build
 // time — the generated/curated split keeps this file regenerable and the
 // prose reviewable.
@@ -138,7 +138,7 @@ const out = `// BACnet error / reject / abort enumerations — GENERATED FILE, d
 // Regenerate: npm run import-bacnet-errors
 //   (.github/scripts/import-bacnet-errors.mjs — validates before writing)
 //
-// Enum TRUTH only (id → name). Field-accurate plain-English descriptions
+// Enum TRUTH only (id → name). Field-accurate human-readable descriptions
 // live in the hand-authored html/_data/bacnetErrorNotes.js and are overlaid
 // by /tools/bacnet-error-codes.html at build time. Names are the
 // bacnet-stack spellings; the field-common rows should read cleanly, the

@@ -2,7 +2,7 @@
 
 A field-reference tool site for building-controls engineers — open
 calculators and lookup utilities for BACnet, Modbus, HVAC, and building
-automation work, plus plain-English explainers. Source pages under
+automation work, plus practical explainers. Source pages under
 `html/` plus a small Cloudflare Worker (only for `/contact`). 11ty
 templates the shared chrome (`<head>`, nav, footer) out of every page;
 everything else is vanilla — no client-side framework, no bundler, no
@@ -327,6 +327,16 @@ section). **Category keys mirror the landing pages' `navCard()`
   ideally above and below the block. The `//` prefix is the
   site-wide marker; pair with `TODO` / `FIXME` / `XXX` when grepping
   in sweeps.
+- **Avoid "plain English" / "plain-English" in copy** (owner
+  preference, restored 2026-07-12 after it drifted out): the phrase
+  reads as *the English language* and invites confusion, so it's
+  banned as generic filler. Describe explainers/lessons as
+  **practical** ("practical explainers", "practical lessons"), and
+  render "in plain English" as **"in plain terms"**. The phrase is
+  allowed *only* as a deliberate callout or pun on the language, and
+  only where it genuinely fits. Applies to page copy, meta
+  descriptions, nav/search blurbs, and code comments alike; grep
+  `plain.english` before shipping a content sweep.
 - **Damage-stakes scope note** (owner decision, 2026-07-11): any tool
   whose output, acted on directly, can damage equipment (burst coil,
   cracked heat exchanger, slugged compressor, burned motor, cooked
