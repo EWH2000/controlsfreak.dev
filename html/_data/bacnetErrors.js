@@ -4,7 +4,7 @@
 //   (bacnet-stack's error enums — the de-facto machine-readable form of the
 //    ASHRAE 135 error-class / error-code / reject / abort enumerations,
 //    which are paywalled)
-// Retrieved: 2026-07-12 · 8 classes · 225 codes · 11 reject · 12 abort
+// Retrieved: 2026-07-13 · 8 classes · 226 codes · 11 reject · 12 abort
 // Regenerate: npm run import-bacnet-errors
 //   (.github/scripts/import-bacnet-errors.mjs — validates before writing)
 //
@@ -241,6 +241,7 @@ const errorCode = [
     { id: 213, name: "incorrect-client" },
     { id: 214, name: "install-scope-required" },
     { id: 215, name: "insufficient-scope" },
+    { id: 216, name: "no-default-scope" },
     { id: 217, name: "no-policy" },
     { id: 218, name: "revoked-token" },
     { id: 219, name: "override-scope-required" },
@@ -292,10 +293,10 @@ module.exports = {
     abortReason,
     counts: {
         classes: 8,
-        codes: 225,
+        codes: 226,
         reject: 11,
         abort: 12,
     },
-    retrieved: '2026-07-12',
+    retrieved: '2026-07-13',
     source: 'https://raw.githubusercontent.com/bacnet-stack/bacnet-stack/master/src/bacnet/bacenum.h',
 };

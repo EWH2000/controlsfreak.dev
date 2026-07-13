@@ -331,15 +331,19 @@ section). **Category keys mirror the landing pages' `navCard()`
   site-wide marker; pair with `TODO` / `FIXME` / `XXX` when grepping
   in sweeps.
 - **Avoid "plain English" / "plain-English" in copy** (owner
-  preference, restored 2026-07-12 after it drifted out): the phrase
-  reads as *the English language* and invites confusion, so it's
-  banned as generic filler. Describe explainers/lessons as
-  **practical** ("practical explainers", "practical lessons"), and
-  render "in plain English" as **"in plain terms"**. The phrase is
-  allowed *only* as a deliberate callout or pun on the language, and
-  only where it genuinely fits. Applies to page copy, meta
-  descriptions, nav/search blurbs, and code comments alike; grep
-  `plain.english` before shipping a content sweep.
+  preference, restored 2026-07-12 after it drifted out): **"Plain
+  English" is the name of Schneider Electric's EBO / Continuum
+  programming language**, so in building-controls copy the phrase
+  reads as that vendor product rather than the everyday "clear
+  wording" sense — a vendor-collision concern (ties into the
+  *avoid exact vendor names* guardrail). It's therefore banned as
+  generic filler. Describe explainers/lessons as **practical**
+  ("practical explainers", "practical lessons"), and render "in
+  plain English" as **"in plain terms"**. The phrase is allowed
+  *only* as a deliberate, correct reference to the EBO language (or
+  a pun on it), and only where it genuinely fits. Applies to page
+  copy, meta descriptions, nav/search blurbs, and code comments
+  alike; grep `plain.english` before shipping a content sweep.
 - **Damage-stakes scope note** (owner decision, 2026-07-11): any tool
   whose output, acted on directly, can damage equipment (burst coil,
   cracked heat exchanger, slugged compressor, burned motor, cooked
