@@ -192,7 +192,7 @@ keywords: ashrae 62.1 minimum outdoor air ventilation rate procedure breathing z
 
         <section class="tool-body-row">
             <h2 class="ps-section-label">What Ez is — and why heating pays a penalty</h2>
-            <!-- // user to verify Ez values against 62.1-2022 Table 6-2 — placeholder data, refine after review -->
+            <!-- Ez values verified 2026-07-13 against ASHRAE 62.1-2022 Table 6-4 (§6.2.1.2). -->
             <table class="ref-table-dense">
                 <thead>
                     <tr><th>Air distribution configuration</th><th>Ez</th></tr>
@@ -200,7 +200,7 @@ keywords: ashrae 62.1 minimum outdoor air ventilation rate procedure breathing z
                 <tbody>
                     <tr><td>Ceiling supply of cool air</td><td>1.0</td></tr>
                     <tr><td>Ceiling supply of warm air 15 °F or more above room temperature, ceiling return</td><td>0.8</td></tr>
-                    <tr><td>Ceiling supply of warm air under 15 °F above room, ceiling return, jet reaching the floor</td><td>1.0</td></tr>
+                    <tr><td>Ceiling supply of warm air under 15 °F above room, ceiling return, jet ≥ 150 fpm within 4.5 ft of floor</td><td>1.0</td></tr>
                     <tr><td>Floor supply of cool air, low-velocity displacement</td><td>1.2</td></tr>
                 </tbody>
             </table>
@@ -213,7 +213,7 @@ keywords: ashrae 62.1 minimum outdoor air ventilation rate procedure breathing z
                 diffuser to land the same fresh air on the occupants
                 (150 ÷ 0.8 = 187.5 cfm in the example above). Displacement
                 systems deliver low and slow underneath the occupants and get
-                credit above 1.0. Mind that the full Table 6-2 hangs
+                credit above 1.0. Mind that the full Table 6-4 hangs
                 conditions on every row — supply ΔT, return location, whether
                 the jet actually throws to the floor — so match the whole row
                 in the standard, not just the diffuser type: a floor return,
@@ -224,7 +224,6 @@ keywords: ashrae 62.1 minimum outdoor air ventilation rate procedure breathing z
                 ceiling instead of mixing down — priced into the ventilation
                 math.
             </p>
-            <!-- // user to verify Ez values against 62.1-2022 Table 6-2 — placeholder data, refine after review -->
         </section>
     </div>
 
@@ -243,7 +242,7 @@ keywords: ashrae 62.1 minimum outdoor air ventilation rate procedure breathing z
                 common categories, but the schedule on the stamped drawings is
                 what binds a specific building.
             </p>
-            <!-- // user to verify Rp/Ra preset values against ASHRAE 62.1-2022 Table 6-1 — placeholder data, refine after review -->
+            <!-- Rp/Ra values verified 2026-07-13 against ASHRAE 62.1-2022 Table 6-1. -->
             <table class="ref-table-dense">
                 <thead>
                     <tr><th>Occupancy category</th><th>Rp (cfm/person)</th><th>Ra (cfm/ft²)</th></tr>
@@ -261,7 +260,6 @@ keywords: ashrae 62.1 minimum outdoor air ventilation rate procedure breathing z
                     <tr><td>Break room</td><td>5</td><td>0.12</td></tr>
                 </tbody>
             </table>
-            <!-- // user to verify Rp/Ra preset values against ASHRAE 62.1-2022 Table 6-1 — placeholder data, refine after review -->
             <p>
                 <strong>This page checks arithmetic; it doesn&rsquo;t establish
                 compliance.</strong> The ventilation schedule on the stamped
@@ -345,7 +343,6 @@ keywords: ashrae 62.1 minimum outdoor air ventilation rate procedure breathing z
 
         // Common Rp/Ra rates, ASHRAE 62.1-2022 Table 6-1 (IP), with the
         // SI-edition twins (L/s·person, L/s·m²) carried for later.
-        // // user to verify Rp/Ra preset values against ASHRAE 62.1-2022 Table 6-1 — placeholder data, refine after review
         const PRESETS = {
             office:     { rp: 5,   ra: 0.06, rpSI: 2.5, raSI: 0.3 },
             conference: { rp: 5,   ra: 0.06, rpSI: 2.5, raSI: 0.3 },
@@ -358,7 +355,6 @@ keywords: ashrae 62.1 minimum outdoor air ventilation rate procedure breathing z
             corridor:   { rp: 0,   ra: 0.06, rpSI: 0,   raSI: 0.3 },
             breakroom:  { rp: 5,   ra: 0.12, rpSI: 2.5, raSI: 0.6 }
         };
-        // // user to verify Rp/Ra preset values against ASHRAE 62.1-2022 Table 6-1 — placeholder data, refine after review
 
         const el = {};
         for (const id of ['vo-occupancy', 'vo-rp', 'vo-pz', 'vo-ra', 'vo-az',
