@@ -29,6 +29,9 @@
 //     first or they parse as alias-duplicates.
 //   * `MAX_BACNET_ERROR_CLASS` and `ERROR_CODE_DEFAULT = 65535` are
 //     sentinels, not real values — filtered with the proprietary markers.
+//     The _DEFAULT filter is \b-anchored so it strips ERROR_CODE_DEFAULT
+//     but NOT ERROR_CODE_NO_DEFAULT_SCOPE (216) — a real 135-2020cp code
+//     the un-anchored pattern silently dropped as a false positive.
 // Robustness posture: throw loudly on anything unexpected.
 
 'use strict';
@@ -78,7 +81,7 @@ function parseEnum(closeTag, prefix, stdMax) {
     for (const mm of m[1].matchAll(/\b([A-Z][A-Z0-9_]+)\s*=\s*(\d+)/g)) {
         const macro = mm[1];
         const id = Number(mm[2]);
-        if (/PROPRIETARY|MAX_BACNET|_MAX\b|_RESERVED|_FIRST|_LAST|_DEFAULT/.test(macro)) continue;
+        if (/PROPRIETARY|MAX_BACNET|_MAX\b|_RESERVED|_FIRST|_LAST|_DEFAULT\b/.test(macro)) continue;
         if (id > stdMax) continue;
         if (seen.has(id)) throw new Error(`Duplicate id ${id} in ${closeTag} (${macro}) — comment stripping failed?`);
         seen.add(id);
