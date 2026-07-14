@@ -108,14 +108,24 @@ Clone `/bacnet/`'s anatomy (all reusable; only the four page-local
 
 ### PR-2 — `feat/guides-nav-lane` — the Guides lane + home reword
 
-1. **`html/_data/hubs.js`** — `[{href:'/bacnet/',label:'BACnet'},
-   {href:'/forced-air/',label:'Forced Air'}]`. A future hub is **one
-   data line** — no macro or `NAV_CATEGORIES` touch.
+*(As-built 2026-07-13, branch `feat/guides-nav-lane`. One refinement to
+the plan below: the Guides dropdown is driven by a `navGuides` collection
++ a `navLabel` frontmatter, **not** a `hubs.js` data file — see step 1.
+The home topic section shipped titled **"Guides"** as STAGE:1, with the
+two hub cards moved out of the format Browse.)*
+
+1. **Guides dropdown source — `navGuides` collection + `navLabel`**
+   *(as-built, cleaner than the planned `html/_data/hubs.js`)*: the
+   dropdown is driven by the `navGuides` collection (step 3) — the same
+   flat pattern as Simulators — and each hub carries a short `navLabel`
+   frontmatter ("BACnet" / "Forced Air") that `navDropdown`'s flat branch
+   prefers over the long page title. Single source (frontmatter), no data
+   file; a future hub is `nav: guides` + `navLabel` on its own landing.
 2. **`nav.njk`** — insert a **Guides** `navDropdown()` right after Home;
    **remove** the standalone `nav-start-here` "Start here →" CTA (L6) so
    the effective text-item count stays **7 → 7**. Guides renders **flat**
    (the Simulators pattern, `groups=null`): a `.nav-menu-blurb` + one
-   link per hub from `hubs.js`.
+   link per hub from `collections.navGuides`.
 3. **`.eleventy.js`** — add a `navGuides` collection (no
    `NAV_CATEGORIES.guides` — flat; `navCategoryGuard` **not** extended,
    Guides pages need no `category`).
