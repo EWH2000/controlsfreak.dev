@@ -897,21 +897,6 @@ const HYDRO = (function () {
                 case 'valve2': {
                     out.Q = b0 ? Math.abs(b0.Q) : 0;
                     out.posPct = clamp(asNum(c.params.pos), 0, 100);
-                    out.dP = b0 ? b0.k * out.Q * out.Q / FT_PER_PSI : 0;       // ft → psi
-                    // The valve's INSTALLED head-drop fraction at its CURRENT
-                    // position — ΔH_valve / pump head, its live share of the loop.
-                    // Note this climbs toward 1 as the valve strokes shut; it is
-                    // NOT the wide-open valve authority β the valve-cv tool defines
-                    // (which is evaluated full-open). Not surfaced on a readout yet.
-                    let pumpHead = 0;
-                    system.components.forEach((pc) => {
-                        if (pc.type === 'pump') {
-                            const pb = branchById[pc.id + '#0'];
-                            if (pb) pumpHead = Math.max(pumpHead, pb.hsrc);
-                        }
-                    });
-                    const vHead = b0 ? b0.k * out.Q * out.Q : 0;
-                    out.authority = pumpHead > 1e-6 ? clamp(vHead / pumpHead, 0, 1) : 0;
                     break;
                 }
                 case 'valve3': {
@@ -924,7 +909,6 @@ const HYDRO = (function () {
                 }
                 case 'balanceValve': {
                     out.Q = b0 ? Math.abs(b0.Q) : 0;
-                    out.dP = b0 ? b0.k * out.Q * out.Q / FT_PER_PSI : 0;
                     out.setting = clamp(asNum(c.params.setting), 0, 100);
                     break;
                 }
