@@ -342,7 +342,13 @@ keywords: pt chart r22 r410a r134a r407c psig kpag saturation glide superheat su
         let scCopy = '';
 
         function refrigerant() {
-            return REFRIGERANT_TYPES[document.getElementById('rf-refrigerant').value];
+            // typeof guard (codebase-issues #139): refrigerant-data.js declares
+            // a top-level const, reachable by name in the scope chain but NOT a
+            // window property. Returns null if it failed to load so the callers
+            // can degrade instead of throwing on the undefined global.
+            return typeof REFRIGERANT_TYPES !== 'undefined'
+                ? REFRIGERANT_TYPES[document.getElementById('rf-refrigerant').value]
+                : null;
         }
 
         // Linear interpolation over a [[psig, °F], ...] curve. xi/yi are the
@@ -397,6 +403,7 @@ keywords: pt chart r22 r410a r134a r407c psig kpag saturation glide superheat su
 
         function calcPt() {
             const R = refrigerant();
+            if (!R) { clearPt('Refrigerant data unavailable — reload the page.', 'error'); return; }
             document.getElementById('rf-pt-glide-row').classList.toggle('hidden', ptBy !== 'pressure');
 
             if (ptBy === 'pressure') {
@@ -474,6 +481,7 @@ keywords: pt chart r22 r410a r134a r407c psig kpag saturation glide superheat su
 
         function calcSc() {
             const R = refrigerant();
+            if (!R) { clearSc('Refrigerant data unavailable — reload the page.', 'error'); return; }
             const suction = scLine === 'suction';
             document.getElementById('rf-sc-result-lbl').textContent = suction ? 'Superheat' : 'Subcooling';
             document.getElementById('rf-sc-satref-lbl').textContent =

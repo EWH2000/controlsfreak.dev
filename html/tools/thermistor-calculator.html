@@ -477,6 +477,21 @@ keywords: NTC RTD resistance ohms 10k 20k 3k balco pt100 pt1000 sensor temperatu
 
         // ── Main recompute — driven by every input change ──
         function thRecompute() {
+            // Engine guard (codebase-issues #139): thermistor-data.js declares a
+            // top-level const — reachable by name, not a window property. If it
+            // failed to load, degrade to the muted state with a clear message
+            // rather than throwing on `T.table` below (the local mute closure is
+            // defined further down, after that deref).
+            if (typeof THERMISTOR_TYPES === 'undefined') {
+                const resultEl = document.getElementById('th-result');
+                const statusEl = document.getElementById('th-status');
+                resultEl.className = 'ps-value muted'; resultEl.textContent = '—';
+                document.getElementById('th-kind').className = 'ps-value muted';
+                document.getElementById('th-kind').textContent = '—';
+                statusEl.className = 'ps-value error'; statusEl.textContent = 'sensor curve data unavailable — reload the page';
+                document.getElementById('th-worked').textContent = '';
+                return;
+            }
             const T   = thType();
             const tbl = T.table;
             const kind = T.curve ? T.curve.kind : null;
@@ -716,6 +731,11 @@ keywords: NTC RTD resistance ohms 10k 20k 3k balco pt100 pt1000 sensor temperatu
             };
 
             if (pts.length < 2) { idMute('enter at least 2 (temp, resistance) points'); return; }
+
+            // Engine guard (codebase-issues #139): degrade to the muted state
+            // with a clear message if thermistor-data.js failed to load, rather
+            // than throwing on the undefined THERMISTOR_TYPES global below.
+            if (typeof THERMISTOR_TYPES === 'undefined') { idMute('sensor curve data unavailable — reload the page'); return; }
 
             // score every type, then rank: scorable types by rmsT ascending,
             // out-of-range types sorted to the bottom (still listed, flagged).

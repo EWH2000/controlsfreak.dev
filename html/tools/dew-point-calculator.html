@@ -331,6 +331,13 @@ keywords: dewpoint wet bulb wbt RH humidity grains enthalpy condensation coil sw
                 return;
             }
 
+            // Engine guard (codebase-issues #139): if psychro-engine.js failed
+            // to load, degrade to the muted state with a clear message rather
+            // than throwing on the undefined Psychro global.
+            if (typeof Psychro === 'undefined') {
+                muteOutputs('Psychrometric engine unavailable — reload the page.');
+                return;
+            }
             const state = Psychro.solveState(mode, dbF, secCanon, P);
             if (!state.ok) { muteOutputs(state.error); return; }
             if (!isFinite(state.tdp)) {

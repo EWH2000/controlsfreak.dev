@@ -718,6 +718,49 @@ test.describe('hydronic-engine: review regressions', () => {
         expect(new Set(c.pipes.map((p) => p.id)).size).toBe(c.pipes.length);
     });
 
+    // #137: component ids get the same dedup as pipe ids. Two components sharing
+    // an id (or a null id) would alias their branch keys (<id>#<bi>) in the
+    // warm-start / writeback caches and mirror one component's flow onto another.
+    // Unreachable through the shipped UI (monotonic ids) but an imported literal
+    // is the reach. Rewriting an id orphans any pipe that named it, so that pipe
+    // drops — the safe outcome vs an aliased-flow pipe.
+    test('makeSystem makes duplicate / null component ids unique', () => {
+        const HYDRO = loadEngine();
+        const sys = HYDRO.makeSystem({
+            components: [
+                { id: 'dup',  type: 'pump',   params: { h0: 40, a: 0.012, speed: 100, on: true } },
+                { id: 'dup',  type: 'coil',   params: { k: 0.02 } },          // collides with the pump
+                { id: null,   type: 'valve2', params: { cv: 8, pos: 100 } },  // null id
+            ],
+            pipes: [],
+        });
+        expect(sys.components.length).toBe(3);
+        const ids = sys.components.map((c) => c.id);
+        expect(ids.every((id) => id !== null && id !== undefined && id !== '')).toBe(true);
+        expect(new Set(ids).size).toBe(sys.components.length);
+    });
+
+    // A pipe that named a since-rewritten (collided) component id must drop,
+    // never dangle onto a fresh 'comp*' id — the pipe filter runs against the
+    // rebuilt id set. Here the first-declared 'dup' keeps its id (pump), the
+    // second 'dup' (coil) is rewritten, so a pipe to the coil's ORIGINAL id has
+    // no unambiguous target and is dropped; the pump's own loop survives.
+    test('makeSystem drops a pipe whose component id was deduped away', () => {
+        const HYDRO = loadEngine();
+        const sys = HYDRO.makeSystem({
+            components: [
+                { id: 'dup', type: 'pump', params: { h0: 40, a: 0.012, speed: 100, on: true } },
+                { id: 'dup', type: 'coil', params: { k: 0.02 } },
+            ],
+            pipes: [
+                { id: 'a', from: ['dup', 'out'], to: ['dup', 'in'] },   // ambiguous → self-loop on the pump
+            ],
+        });
+        expect(new Set(sys.components.map((c) => c.id)).size).toBe(sys.components.length);
+        const model = HYDRO.solve(sys);
+        expect(allFinite(model)).toBe(true);
+    });
+
     // solve()/tick() are public — a raw literal that never went through
     // makeSystem (no warm-start caches) must still solve, not throw.
     test('solve() tolerates a raw system literal with no warm-start caches', () => {
@@ -790,6 +833,47 @@ test.describe('hydronic-engine: review regressions', () => {
                 expect(Math.abs(lhs - rhs), 'branch ' + b.id + ' law residual').toBeLessThan(1e-2);
             });
         }
+    });
+
+    // #134: a steep typed pump curve (a ≥ 0.5) is the case the old secant chord
+    // could not solve — freezing hsrc as a constant injection overshot, and at
+    // a = 2.0 the loop reported converged:false with a flow ~25 % high (~5.55 vs
+    // the closed-form 4.45). The Newton step feeds the curve slope −2a·Q·spd² into
+    // the branch Jacobian, so a steep curve lands on the closed form and reports
+    // converged:true. Guards against a regression to the secant behaviour.
+    test('a steep pump curve (a=2.0) converges to its closed-form operating point', () => {
+        const HYDRO = loadEngine();
+        const S = HYDRO.SETTINGS;
+        const m = HYDRO.solve(seriesLoop(HYDRO, { pump: { a: 2.0 } }));
+        expect(m.converged).toBe(true);
+        expect(m.iters).toBeLessThanOrEqual(S.MAX_ITERS);
+        // closed loop, elevation cancels:  h0 − a·Q² = (pump casing + 2 pipes + coil)·Q²
+        const kTotal = S.K_PUMP_CASE + 2 * S.K_PIPE + 0.02;
+        const qExpected = Math.sqrt(40 / (2.0 + kTotal));
+        expect(qOf(m, 'p1')).toBeGreaterThan(0);
+        expect(Math.abs(qOf(m, 'p1') - qExpected)).toBeLessThan(0.02);
+        // and the branch law holds at the converged point (no false positive)
+        m.branches.forEach((b) => {
+            const lhs = m.nodes[b.nodeFrom].P - m.nodes[b.nodeTo].P;
+            const rhs = b.k * b.Q * Math.abs(b.Q) - b.hsrc + (b.Zto - b.Zfrom);
+            expect(Math.abs(lhs - rhs), 'branch ' + b.id + ' law residual').toBeLessThan(1e-2);
+        });
+    });
+
+    // Flow through a steep-curve loop must stay positive and monotonic in shutoff
+    // head — more head, more flow — with every point converged. A non-monotonic or
+    // non-converged point would signal the linearization moving the fixed point.
+    test('steep-curve loop flow is positive and monotonic in pump head', () => {
+        const HYDRO = loadEngine();
+        let prev = -Infinity;
+        [20, 40, 60, 80, 120].forEach((h0) => {
+            const m = HYDRO.solve(seriesLoop(HYDRO, { pump: { a: 0.8, h0: h0 } }));
+            expect(m.converged, 'h0=' + h0).toBe(true);
+            const q = qOf(m, 'p1');
+            expect(q, 'h0=' + h0).toBeGreaterThan(0);
+            expect(q, 'h0=' + h0).toBeGreaterThan(prev);   // strictly increasing with head
+            prev = q;
+        });
     });
 
     // pos coercion — makeSystem and the public solve()/tick() honor the documented
