@@ -105,20 +105,40 @@ test.describe('wiring-engine: power solver', () => {
         expect(r.cues.blownFuse).toBe(true);
     });
 
-    test('reversed polarity is flagged and sparks the 24V~ terminal', () => {
+    test('a lone reversed controller runs (no spark) with a warn advisory (#40)', () => {
         const Wiring = loadEngine();
         const panel = {
             devices: [Wiring.createDevice('xfmr', 'x1')],
             wires: [
-                W(['x1', 'com'], ['ctlr', '24v']),    // hot/com swapped
+                W(['x1', 'com'], ['ctlr', '24v']),    // R/C swapped
                 W(['x1', 'hot'], ['ctlr', '24com']),
             ],
         };
         const r = Wiring.evaluate(panel, {});
         expect(r.power.reversed).toBe(true);
-        expect(r.power.powered).toBe(false);
+        expect(r.power.powered).toBe(true);            // 24 VAC has no polarity — it just runs
+        expect(r.power.shorted).toBe(false);
         expect(faultIds(r)).toContain('reversed');
-        expect(r.cues.spark).toContain('24v');
+        expect(r.faults.find((f) => f.id === 'reversed').severity).toBe('warn');
+        expect(r.cues.spark).not.toContain('24v');     // no spark on a lone reversal
+    });
+
+    test('a reversed controller sharing a common back to the true COM leg dead-shorts (#40)', () => {
+        const Wiring = loadEngine();
+        // Reversed at the controller (24V~/24COM swapped), then a "common" wire
+        // run back to the transformer's real COM leg ties HOT to COM: a dead short.
+        const panel = {
+            devices: [Wiring.createDevice('xfmr', 'x1')],
+            wires: [
+                W(['x1', 'com'], ['ctlr', '24v']),
+                W(['x1', 'hot'], ['ctlr', '24com']),
+                W(['ctlr', 'com-a'], ['x1', 'com']),   // shared common bridges the legs
+            ],
+        };
+        const r = Wiring.evaluate(panel, {});
+        expect(r.power.shorted).toBe(true);
+        expect(faultIds(r)).toContain('short-xfmr');
+        expect(r.cues.blownFuse).toBe(true);
     });
 
     test('hot landed but common floating is an open common', () => {

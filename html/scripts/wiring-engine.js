@@ -280,11 +280,19 @@ const Wiring = (function () {
         let powered = false;
 
         if (reversed) {
-            addFault('reversed', '24v', 'fault',
-                'Power reversed — 24V~ and 24COM are swapped. The controller common rides the hot leg. ' +
-                'Alone on its own transformer this can even run — the danger is sharing: any common wire ' +
-                'to a correctly-phased device now bridges the two secondary legs, a dead short.');
-            cues.spark.push('24v');
+            // A lone reversed controller on its own transformer just runs: 24 VAC
+            // has no fixed polarity, so swapping 24V~/24COM crosses the panel
+            // *convention*, not the circuit. It powers up and reads live. The real
+            // hazard is sharing — a common tied back to a correctly-phased device
+            // bridges the two secondary legs — and THAT is already caught as a dead
+            // short (short-xfmr) by the power pass above. So: powered, a warn
+            // advisory, and no spark on the isolated case.
+            powered = true;
+            addFault('reversed', '24v', 'warn',
+                'Power leads reversed — 24V~ and 24COM are swapped. On its own transformer it still ' +
+                'runs (24 VAC has no fixed polarity), but it breaks the R/C convention every other tech ' +
+                'expects, and the moment 24COM is shared with a correctly-phased device it dead-shorts ' +
+                'the secondary. Swap the leads: 24V~ on the hot leg, 24COM on common.');
         } else if (ctlrHotOn24v && ctlrComOn24com && !shorted) {
             powered = true;
         } else if (ctlrHotOn24v && !ctlrComOn24com && hasXfmr) {
