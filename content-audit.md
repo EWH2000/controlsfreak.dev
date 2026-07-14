@@ -2623,8 +2623,9 @@ BACnet4J, the NEC + the Modbus spec), and Node-verifying physics claims
 against the site's own engines. Already-resolved findings #1–#48 were
 skipped; the metric-rounding, IP-native-formula, vendor-name, and "plain
 English" conventions were honored as non-errors. **Headline: the site
-verified overwhelmingly clean — 0 high, 2 medium, 6 low.** All eight items
-below are **surfaced, not fixed** — they await the owner's disposition.
+verified overwhelmingly clean — 0 high, 2 medium, 6 low.** Five of the eight
+below were fixed 2026-07-14 (PR #345); the remaining three are **surfaced, not
+fixed** — they await the owner's disposition.
 Full evidence, sources, and suggested fixes live in the triage doc:
 `docs/audits/2026-07-fresh-accuracy/triage.md`.
 
