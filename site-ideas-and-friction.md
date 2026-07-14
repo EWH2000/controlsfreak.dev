@@ -623,7 +623,9 @@ education/duct-static-control.html]` *(shipped 2026-07-11)*;
 fan-powered boxes `[future:
 education/fan-powered-boxes.html]`; VVT `[future: education/vvt.html]`;
 TAB procedure (the airflow tool's traverse note carries the math;
-no lesson promised).
+no lesson promised) *(the air-side TAB lesson shipped anyway as
+education/air-balancing.html 2026-07-14 — flow-ring verification,
+box setpoints, proportional balancing, building pressure)*.
 Debts: pays vfds.html's naked "VAV systems" prose in the cube-law
 section (gains its link), the airflow tool's lessons-link
 orphanhood, and the VAV-commissioning audit scenario. Incurs the
