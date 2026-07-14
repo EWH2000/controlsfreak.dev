@@ -835,6 +835,47 @@ test.describe('hydronic-engine: review regressions', () => {
         }
     });
 
+    // #134: a steep typed pump curve (a ≥ 0.5) is the case the old secant chord
+    // could not solve — freezing hsrc as a constant injection overshot, and at
+    // a = 2.0 the loop reported converged:false with a flow ~25 % high (~5.55 vs
+    // the closed-form 4.45). The Newton step feeds the curve slope −2a·Q·spd² into
+    // the branch Jacobian, so a steep curve lands on the closed form and reports
+    // converged:true. Guards against a regression to the secant behaviour.
+    test('a steep pump curve (a=2.0) converges to its closed-form operating point', () => {
+        const HYDRO = loadEngine();
+        const S = HYDRO.SETTINGS;
+        const m = HYDRO.solve(seriesLoop(HYDRO, { pump: { a: 2.0 } }));
+        expect(m.converged).toBe(true);
+        expect(m.iters).toBeLessThanOrEqual(S.MAX_ITERS);
+        // closed loop, elevation cancels:  h0 − a·Q² = (pump casing + 2 pipes + coil)·Q²
+        const kTotal = S.K_PUMP_CASE + 2 * S.K_PIPE + 0.02;
+        const qExpected = Math.sqrt(40 / (2.0 + kTotal));
+        expect(qOf(m, 'p1')).toBeGreaterThan(0);
+        expect(Math.abs(qOf(m, 'p1') - qExpected)).toBeLessThan(0.02);
+        // and the branch law holds at the converged point (no false positive)
+        m.branches.forEach((b) => {
+            const lhs = m.nodes[b.nodeFrom].P - m.nodes[b.nodeTo].P;
+            const rhs = b.k * b.Q * Math.abs(b.Q) - b.hsrc + (b.Zto - b.Zfrom);
+            expect(Math.abs(lhs - rhs), 'branch ' + b.id + ' law residual').toBeLessThan(1e-2);
+        });
+    });
+
+    // Flow through a steep-curve loop must stay positive and monotonic in shutoff
+    // head — more head, more flow — with every point converged. A non-monotonic or
+    // non-converged point would signal the linearization moving the fixed point.
+    test('steep-curve loop flow is positive and monotonic in pump head', () => {
+        const HYDRO = loadEngine();
+        let prev = -Infinity;
+        [20, 40, 60, 80, 120].forEach((h0) => {
+            const m = HYDRO.solve(seriesLoop(HYDRO, { pump: { a: 0.8, h0: h0 } }));
+            expect(m.converged, 'h0=' + h0).toBe(true);
+            const q = qOf(m, 'p1');
+            expect(q, 'h0=' + h0).toBeGreaterThan(0);
+            expect(q, 'h0=' + h0).toBeGreaterThan(prev);   // strictly increasing with head
+            prev = q;
+        });
+    });
+
     // pos coercion — makeSystem and the public solve()/tick() honor the documented
     // "never thrown on a corrupted/raw literal" contract for pos too (a truthy
     // non-object pos would otherwise throw on `c.pos.y = …` under 'use strict').

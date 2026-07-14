@@ -89,9 +89,9 @@ const HYDRO = (function () {
     const K_BTU       = 500;        // Q[Btu/h] = 500·GPM·ΔT°F  (waterside-load)
     const FT_PER_PSI  = 2.31;       // 1 psi ≈ 2.31 ft of water (62.3 lb/ft³)
     const Q_MIN       = 1e-3;       // GPM — divide-by-zero floor (thermal ΔT, mixing)
-    const Q_COND_FLOOR = 0.05;      // GPM — floor on |Q| in the secant conductance
-                                    // 1/(k|Q|). A hair above zero so g can't blow
-                                    // up at near-zero flow and overshoot. Negligible
+    const Q_COND_FLOOR = 0.05;      // GPM — floor on |Q| in the Newton tangent
+                                    // conductance g = 1/f'(Q). A hair above zero so g
+                                    // can't blow up at near-zero flow and overshoot. Negligible
                                     // vs any real loop flow (tens of GPM) and the
                                     // floor stops binding once |Q| > 0.05. It DOES
                                     // bias the operating point of a loop whose true
@@ -629,6 +629,23 @@ const HYDRO = (function () {
         return Math.max(0, isFin(h) ? h : 0);
     }
 
+    // The pump curve's slope dHsrc/dQ at the current flow — fed into the branch
+    // Jacobian for the Newton step (solveHydraulics). Non-pump branches, an off
+    // pump, and the clamped-flat region past max flow are all slope-0. In the
+    // active region hsrc = h0·spd² − a·Q², so dHsrc/dQ = −2a·Q·spd² (≤ 0 for
+    // forward flow, which ADDS to the friction tangent once negated in f').
+    function branchHsrcSlope(b) {
+        if (b.kind !== 'pump') return 0;
+        const p = b.comp.params;
+        if (!p.on) return 0;
+        const h0 = asNum(p.h0, 40);
+        const a  = asNum(p.a, 0.012);
+        const spd = clamp(asNum(p.speed, 100), 0, 100) / 100;
+        if (h0 * spd * spd - a * b.Q * b.Q <= 0) return 0;   // clamped flat → no slope
+        const s = -2 * a * b.Q * spd * spd;
+        return isFin(s) ? s : 0;
+    }
+
     // ── dense Gaussian solve with partial pivoting + pivot guard ────
     // n ≤ ~40 (one node per port). |pivot| < PIVOT_EPS → that unknown is set
     // to 0 rather than dividing by ~0 (a starved / near-singular row).
@@ -667,11 +684,21 @@ const HYDRO = (function () {
         return out;
     }
 
-    // ── hydraulic solve: linearized nodal / successive substitution ─
-    // Per iteration: secant conductance g = 1/(k·|Q|); assemble the nodal
-    // Laplacian G with pump head + elevation entering as Norton current
-    // injections; solve G·P = I (reference nodes pinned to 0); recompute each
-    // branch flow Q = g·((P_from − P_to) + hsrc − ΔZ); under-relax; repeat.
+    // ── hydraulic solve: Newton-linearized nodal iteration ──────────
+    // Each branch obeys the signed law f(Q) = k·Q·|Q| − hsrc(Q) = d, where the
+    // driving head d = (P_from − P_to) − ΔZ is net of elevation. Per iteration
+    // each branch is linearized by a TRUE Newton step: the tangent (differential)
+    // conductance g = 1/f'(Q) with f'(Q) = 2k|Q| − hsrc'(Q) feeds the pump-curve
+    // slope hsrc'(Q) = −2a·Q·spd² back into the linearization, instead of freezing
+    // hsrc as a constant injection — which is what overshot on steep a·Q² curves
+    // (codebase-issues #134). The Norton current inj = Q − g·(f(Q) + ΔZ) makes the
+    // flow map Q = g·(P_from − P_to) + inj CONSISTENT with that tangent (the trap
+    // the "fold the slope into the secant g" patch fell into — it changed the
+    // conductance but kept the chord flow map, moving the fixed point). Assemble
+    // the nodal Laplacian G, solve G·P = I (reference nodes pinned to 0), recover
+    // flows from the SAME map, under-relax, repeat. At the fixed point qSolved = Q
+    // gives g·(d − f(Q)) = 0, i.e. the branch law holds EXACTLY — map and
+    // linearization share the true operating point.
     function solveHydraulics(model) {
         const nodes = model.nodes, branches = model.branches, refMask = model.refMask;
         const n = nodes.length;
@@ -679,31 +706,40 @@ const HYDRO = (function () {
         let relax = RELAX, prevMaxDQ = Infinity;
 
         for (iters = 0; iters < MAX_ITERS; iters++) {
-            // 1. resistance, pump head, and secant conductance at the current flow.
-            //    |Q| is floored at Q_COND_FLOOR (not the tighter Q_MIN) so the
-            //    secant slope can't blow up at near-zero flow. A self-loop branch
-            //    (both ends on one node — e.g. a hand-authored pipe across a tee)
-            //    carries no flow: zero it so a stray elevation term can't inject a
-            //    phantom Q the matrix is blind to.
+            // 1. resistance, pump head, Newton tangent conductance, and Norton
+            //    injection at the current flow. |Q| is floored at Q_COND_FLOOR
+            //    (not the tighter Q_MIN) so the tangent slope can't blow up at
+            //    near-zero flow. A self-loop branch (both ends on one node — e.g. a
+            //    hand-authored pipe across a tee) carries no flow: zero it so a
+            //    stray elevation term can't inject a phantom Q the matrix is blind to.
             for (let i = 0; i < branches.length; i++) {
                 const b = branches[i];
-                if (b.nodeFrom === b.nodeTo) { b.k = K_FLOOR; b.hsrc = 0; b.g = 0; b.Q = 0; continue; }
+                if (b.nodeFrom === b.nodeTo) { b.k = K_FLOOR; b.hsrc = 0; b.g = 0; b.inj = 0; b.Q = 0; continue; }
                 b.k = branchK(b);
                 b.hsrc = branchHsrc(b);
                 const aq = Math.max(Math.abs(b.Q), Q_COND_FLOOR);
-                // Secant (chord) conductance g = 1/(k|Q|) — the chord through the
-                // origin, NOT the friction tangent 1/(2k|Q|). g is simultaneously
-                // the linearization AND the literal Q = g·residual flow map (step 5),
-                // so it must be the chord for the fixed point to land on the true
-                // operating point. The pump-head slope (−2a·Q·spd²) is deliberately
-                // NOT folded into g for the same reason — doing so moves the fixed
-                // point and yields branch-law-violating flows (see codebase-issues:
-                // steep pump curves don't converge; a true Newton step is the fix).
-                b.g = 1 / (b.k * aq);
+                // Newton (tangent) conductance g = 1/f'(Q) for f(Q) = k·Q·|Q| − hsrc(Q):
+                //   f'(Q) = 2k|Q| − hsrc'(Q)  — the friction tangent PLUS the pump-curve
+                // slope fed back (−hsrc' = 2a|Q|spd² for forward flow). This is the fix
+                // the old secant chord lacked: freezing hsrc as a constant injection
+                // overshot on a steep a·Q² curve (codebase-issues #134). Guard: if
+                // backflow through a pump would drive f'(Q) ≤ 0 (a·spd² > k), fall back
+                // to the always-positive friction tangent 2k|Q| so g stays finite and
+                // the nodal matrix stays an M-matrix (positive-definite, invertible).
+                let fp = 2 * b.k * aq - branchHsrcSlope(b);
+                if (!(fp > 0)) fp = 2 * b.k * aq;
+                b.g = 1 / fp;
                 if (!isFin(b.g)) b.g = 0;
+                // Norton injection making Q = g·(P_from − P_to) + inj reproduce the
+                // Newton step: inj = Q − g·(f(Q) + ΔZ), f(Q) = k·Q·|Q| − hsrc,
+                // ΔZ = Zto − Zfrom. Keeps the flow map (step 5) consistent with g.
+                const fQ = b.k * b.Q * Math.abs(b.Q) - b.hsrc;
+                b.inj = b.Q - b.g * (fQ + (b.Zto - b.Zfrom));
+                if (!isFin(b.inj)) b.inj = 0;
             }
-            // 2. assemble G·P = I. A branch from a→b: Q = g·((P_a−P_b)+hsrc−ΔZ).
-            //    The constant part g·(hsrc−ΔZ) is a current injected at b, drawn at a.
+            // 2. assemble G·P = I from the Newton Norton form: a branch a→c is a
+            //    conductance g plus a current source inj (Q = g·(P_a − P_c) + inj).
+            //    inj flows a→c, so it is drawn at a and injected at c.
             const G = [];
             for (let r = 0; r < n; r++) G.push(new Array(n).fill(0));
             const I = new Array(n).fill(0);
@@ -711,9 +747,8 @@ const HYDRO = (function () {
                 const b = branches[i];
                 if (b.nodeFrom === b.nodeTo) continue;
                 const a = b.nodeFrom, c = b.nodeTo, g = b.g;
-                const inj = g * (b.hsrc - (b.Zto - b.Zfrom));
                 G[a][a] += g; G[c][c] += g; G[a][c] -= g; G[c][a] -= g;
-                I[a] -= inj; I[c] += inj;
+                I[a] -= b.inj; I[c] += b.inj;
             }
             // 3. pin one reference node per island: row → identity, I → 0.
             for (let i = 0; i < n; i++) {
@@ -725,20 +760,20 @@ const HYDRO = (function () {
             // 4. solve for node pressures
             const P = gaussianSolve(G, I);
             for (let i = 0; i < n; i++) nodes[i].P = P[i];
-            // 5. recompute flows, under-relax, clamp, track convergence.
-            //    Convergence is measured on the TRUE secant residual |qSolved − Q|
-            //    (pre-relaxation), NOT on the under-relaxed step |qNew − Q|. The
-            //    latter is the residual scaled by `relax`, so once adaptive damping
-            //    cuts relax toward its floor the loop would report converged while
-            //    the branch law is still off by up to residual/relax. The relaxed
-            //    qNew is still what we APPLY — only the stop metric changes.
+            // 5. recompute flows from the SAME Newton map, under-relax, clamp,
+            //    track convergence. maxDQ is the pre-relaxation Newton increment
+            //    |qSolved − Q|, NOT the under-relaxed step |qNew − Q| = relax·increment.
+            //    Measuring the increment keeps the stop metric honest once adaptive
+            //    damping cuts relax — a converged solve then satisfies the branch law
+            //    to ~TOL (the fixed-point identity in the header). The relaxed qNew is
+            //    still what we APPLY — only the stop metric differs.
             maxDQ = 0;
             for (let i = 0; i < branches.length; i++) {
                 const b = branches[i];
                 if (b.nodeFrom === b.nodeTo) continue;
-                let qSolved = b.g * ((P[b.nodeFrom] - P[b.nodeTo]) + b.hsrc - (b.Zto - b.Zfrom));
+                let qSolved = b.g * (P[b.nodeFrom] - P[b.nodeTo]) + b.inj;
                 if (!isFin(qSolved)) qSolved = 0;
-                const dqTrue = Math.abs(qSolved - b.Q);     // pre-relaxation residual
+                const dqTrue = Math.abs(qSolved - b.Q);     // pre-relaxation Newton increment
                 let qNew = b.Q + relax * (qSolved - b.Q);
                 qNew = clamp(qNew, -Q_CAP, Q_CAP);          // catch cold-start overshoot
                 if (!isFin(qNew)) qNew = 0;
@@ -746,8 +781,8 @@ const HYDRO = (function () {
                 b.Q = qNew;
             }
             if (maxDQ < TOL) { iters++; converged = true; break; }
-            // Adaptive damping: a residual that GREW means the secant update is
-            // oscillating (stiff loops — a steep pump curve, pumps in series); cut
+            // Adaptive damping: a residual that GREW means the Newton update is
+            // overshooting (stiff loops — a steep pump curve, pumps in series); cut
             // the relaxation so it settles instead of limit-cycling. The 0.005 floor
             // (down from 0.05) is what lets a genuinely stiff loop — several high-
             // head pumps in series on a near-frictionless circuit — ratchet down far
