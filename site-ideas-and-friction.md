@@ -360,9 +360,10 @@ Shipped so far:
 Remaining: **none — the six-page chapter is complete** (reading
 order air-handlers → economizers → building-pressure →
 air-unit-identification → vav-systems → duct-static-control, all
-shipped with paired quizzes). Still open from the rollout notes:
-the deferred mini-hub / "start here" decision below, and the parked
-terminal-unit pages (markers only, demand-driven). New idea noted
+shipped with paired quizzes). Still open from the rollout notes: the
+parked terminal-unit pages (markers only, demand-driven); the deferred
+mini-hub / "start here" decision below is now **resolved** — the
+`/forced-air/` hub is shipping. New idea noted
 while shipping page 6 (owner request 2026-07-11): an **analog
 sensing / transmitters lesson** — ranges and scaling, live-zero,
 railed signals as ceilings not measurements — seeded by the
@@ -436,7 +437,20 @@ complete at six pages, so this decision is now due — an owner call.
 The relatedLinks half is done: affinity-laws links both pump-control
 and duct-static-control, so its fan side has a lesson home; whether
 its landing-card category should say more than "hydronics" is part
-of the same call.)*
+of the same call.)* *(Resolved 2026-07-13 — owner call made. Forced
+Air gets a **hub page** (`/forced-air/`, a `/bacnet/` clone), surfaced
+by a new single **"Guides"** nav lane — NOT a topic-primary nav
+rewrite (that's the documented north star, gated on ~4 hubs + GSC
+data). affinity-laws stays filed `hydronics` (its category home) but becomes a
+**full forced-air hub spoke** — grid card + a `hub:` "Part of" backlink
+(owner call: fans **and** pumps, so the backlink is a cross-link, not a
+re-parenting). It's the first genuinely multi-cluster tool, which
+spawns a new **"core tool" / multi-membership retrigger** (fires when
+the hydronics hub ships — affinity-laws would then need to backlink
+both — or when ≥3 tools need 2+ category buckets). Full scope, the
+two-PR sequencing, the deferred topic-primary north star, the P3
+(fold-Simulators) rejection, the home-hero reword direction, and the
+core-tool retrigger are recorded in `docs/nav-home-redesign-scope.md`.)*
 
 **Declared questions — all six, locked before drafting (one-question
 rule).** Each page's shipped entry will open with the same question

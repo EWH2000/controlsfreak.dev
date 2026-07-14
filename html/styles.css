@@ -1160,6 +1160,46 @@ abbr[title] {
 }
 .landing-intro a { color: var(--accent); }
 
+/* ── TOPIC-HUB LANDINGS ── */
+/* Group / sub-group headings and the numbered "start here" reading-path
+   line for the pillar-hub landings (/bacnet/, /forced-air/, and future
+   topic clusters). Promoted here from the BACnet hub's page-local block
+   once a second hub landing needed the same chrome. Heading scale
+   mirrors practice/index.html's .practice-section-heading. */
+.hub-group {
+    font-family: var(--mono);
+    font-size: 0.95rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-bright);
+    margin: 2.4rem 0 0.35rem;
+}
+.hub-group-intro {
+    font-size: 0.94rem;
+    line-height: 1.7;
+    color: var(--text-dim);
+    margin: 0 0 1.1rem;
+    max-width: 56rem;
+}
+.hub-sub {
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--accent);
+    margin: 1.5rem 0 0.65rem;
+}
+.hub-path {
+    font-family: var(--mono);
+    font-size: 0.9rem;
+    line-height: 1.95;
+    margin: 0 0 1.4rem;
+}
+.hub-path a { color: var(--accent); text-decoration: none; }
+.hub-path a:hover { color: var(--text-bright); }
+.hub-path .hub-step { color: var(--text-dim); }
+.hub-path .hub-arrow { color: var(--text-dim); margin: 0 0.35rem; }
+
 /* ── TABS ── */
 /* flex-wrap + nowrap buttons: at phone widths whole buttons wrap onto a
    second row instead of the row clipping inside the overflow-hidden

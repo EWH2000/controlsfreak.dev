@@ -53,6 +53,7 @@ const PAGES = [
     { name: 'controller wiring',      url: '/simulators/controller-wiring.html' },
     { name: 'hydronic loop builder',  url: '/simulators/hydronic-loop-builder.html' },
     { name: 'bacnet hub',             url: '/bacnet/' },
+    { name: 'forced-air hub',         url: '/forced-air/' },
     { name: 'education hub',          url: '/education/' },
     { name: 'education — pid basics',  url: '/education/pid-basics.html' },
     { name: 'education — controller wiring', url: '/education/controller-wiring.html' },

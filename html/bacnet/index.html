@@ -7,48 +7,6 @@ keywords: bacnet reference hub tools lessons object model services bibbs mstp ne
 {% extends "layouts/page.njk" %}
 {% from "nav-card.njk" import navCard %}
 
-{% block head %}
-    <style>
-        /* /bacnet/ topic-hub landing. Reuses .landing-intro + .card-grid +
-           navCard chrome; only the group / sub-group headings and the
-           reading-path line are page-local. Heading scale mirrors
-           practice/index.html's .practice-section-heading. */
-        .bhub-group {
-            font-family: var(--mono);
-            font-size: 0.95rem;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            color: var(--text-bright);
-            margin: 2.4rem 0 0.35rem;
-        }
-        .bhub-group-intro {
-            font-size: 0.94rem;
-            line-height: 1.7;
-            color: var(--text-dim);
-            margin: 0 0 1.1rem;
-            max-width: 56rem;
-        }
-        .bhub-sub {
-            font-family: var(--mono);
-            font-size: 0.8rem;
-            text-transform: uppercase;
-            letter-spacing: 0.07em;
-            color: var(--accent);
-            margin: 1.5rem 0 0.65rem;
-        }
-        .bhub-path {
-            font-family: var(--mono);
-            font-size: 0.9rem;
-            line-height: 1.95;
-            margin: 0 0 1.4rem;
-        }
-        .bhub-path a { color: var(--accent); text-decoration: none; }
-        .bhub-path a:hover { color: var(--text-bright); }
-        .bhub-path .bhub-step { color: var(--text-dim); }
-        .bhub-path .bhub-arrow { color: var(--text-dim); margin: 0 0.35rem; }
-    </style>
-{% endblock %}
-
 {% block content %}
 <main id="main">
 
@@ -65,17 +23,17 @@ keywords: bacnet reference hub tools lessons object model services bibbs mstp ne
         New to it? Work through the five lessons in order — they build from the object model up to the wire and out across the network. Already have a device on the bench? Jump to the tools: paste the number a controller reported and get its meaning. Everything here is open, needs no login, and tracks nothing.
     </p>
 
-    <h2 class="bhub-group">Start here — the lessons, in order</h2>
-    <p class="bhub-path">
-        <span class="bhub-step">1</span> <a href="/education/bacnet-basics.html">Basics</a>
-        <span class="bhub-arrow">→</span>
-        <span class="bhub-step">2</span> <a href="/education/bacnet-services.html">Services</a>
-        <span class="bhub-arrow">→</span>
-        <span class="bhub-step">3</span> <a href="/education/bacnet-networking.html">Networking</a>
-        <span class="bhub-arrow">→</span>
-        <span class="bhub-step">4</span> <a href="/education/bacnet-mstp.html">MS/TP</a>
-        <span class="bhub-arrow">→</span>
-        <span class="bhub-step">5</span> <a href="/education/bacnet-vs-modbus.html">vs Modbus</a>
+    <h2 class="hub-group">Start here — the lessons, in order</h2>
+    <p class="hub-path">
+        <span class="hub-step">1</span> <a href="/education/bacnet-basics.html">Basics</a>
+        <span class="hub-arrow">→</span>
+        <span class="hub-step">2</span> <a href="/education/bacnet-services.html">Services</a>
+        <span class="hub-arrow">→</span>
+        <span class="hub-step">3</span> <a href="/education/bacnet-networking.html">Networking</a>
+        <span class="hub-arrow">→</span>
+        <span class="hub-step">4</span> <a href="/education/bacnet-mstp.html">MS/TP</a>
+        <span class="hub-arrow">→</span>
+        <span class="hub-step">5</span> <a href="/education/bacnet-vs-modbus.html">vs Modbus</a>
     </p>
 
     <div class="card-grid">
@@ -121,12 +79,12 @@ keywords: bacnet reference hub tools lessons object model services bibbs mstp ne
         }) }}
     </div>
 
-    <h2 class="bhub-group">The tools</h2>
-    <p class="bhub-group-intro">
+    <h2 class="hub-group">The tools</h2>
+    <p class="hub-group-intro">
         Six field utilities — each one a table or resolver that turns a number a device reported into something you can read. No login, nothing to install.
     </p>
 
-    <h3 class="bhub-sub">Decoders — a device reported a number; what is it?</h3>
+    <h3 class="hub-sub">Decoders — a device reported a number; what is it?</h3>
     <div class="card-grid">
         {{ navCard({
             section:    'tools',
@@ -154,7 +112,7 @@ keywords: bacnet reference hub tools lessons object model services bibbs mstp ne
         }) }}
     </div>
 
-    <h3 class="bhub-sub">Addresses &amp; commands</h3>
+    <h3 class="hub-sub">Addresses &amp; commands</h3>
     <div class="card-grid">
         {{ navCard({
             section:    'tools',
@@ -174,7 +132,7 @@ keywords: bacnet reference hub tools lessons object model services bibbs mstp ne
         }) }}
     </div>
 
-    <h3 class="bhub-sub">Reference — the object model</h3>
+    <h3 class="hub-sub">Reference — the object model</h3>
     <div class="card-grid">
         {{ navCard({
             section:    'tools',

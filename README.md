@@ -26,6 +26,13 @@ reading order, plus the six decoders and reference tools) so the deepest
 BACnet content is reachable from a single entry point. Every BACnet page
 links back to it via the "Part of" slot in the related-links block.
 
+The **forced-air reference hub** at `/forced-air/` is the second topic
+pillar — one page that gathers the whole air side (six lessons from the
+air handler out to the VAV box, plus the airflow, coil, and fan tools
+that measure, size, and check the air a system moves) so the deepest
+forced-air content is reachable from a single entry point. The air-side
+pages link back to it the same way.
+
 ### Tools
 
 Calculators, converters, and lookups — open one, get an answer.
