@@ -296,6 +296,7 @@ keywords: 24vac com transformer 4-20ma loop dc loop power ui ai ao bo terminals 
             padding: 0.7rem 0.9rem;
         }
         .cw-faults.cw-faults--bad { border-left-color: var(--red); }
+        .cw-faults.cw-faults--warn { border-left-color: var(--amber); }
         .cw-faults-head {
             font-family: var(--mono);
             font-size: 0.66rem;
@@ -933,7 +934,11 @@ keywords: 24vac com transformer 4-20ma loop dc loop power ui ai ao bo terminals 
         function paintFaults(faults) {
             faultsList.innerHTML = '';
             const anyWired = panel.wires.length > 0 || panel.devices.length > 0;
-            faultsBox.classList.toggle('cw-faults--bad', faults.length > 0);
+            // Red only for a genuine failure (short/fault); a warn-level advisory
+            // (e.g. reversed leads that still run) gets an amber rail instead.
+            const hasFailure = faults.some((f) => f.severity === 'short' || f.severity === 'fault');
+            faultsBox.classList.toggle('cw-faults--bad', hasFailure);
+            faultsBox.classList.toggle('cw-faults--warn', !hasFailure && faults.length > 0);
             if (faults.length === 0) {
                 const li = document.createElement('li');
                 li.className = 'cw-ok';

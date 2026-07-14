@@ -2403,6 +2403,22 @@ consequence; the engine's reversed-power fault text gains the why
 ("alone … this can even run — the danger is sharing"). Sim behavior
 (spark cue) unchanged, as documented. The lesson was already correct.
 
+**Real fix (2026-07-14):** the copy scoping was correct, but the sim
+still contradicted it — a *lone* reversed controller was marked an
+unpowered fault with a spark, while the drill, lesson, and the fault's
+own text all say it "can even run." Owner reversed the 2026-06-10
+"keep the teaching spark" call. `wiring-engine.js` now powers a lone
+reversed controller (it reads live), downgrades the `reversed` fault to
+a **warn advisory**, and drops the spark. The genuine dead-short cases
+are unchanged and still spark/blow the fuse: `short-xfmr` (hot tied to
+com) and `xfmr-fight` (two transformers crossed) — and a reversed
+controller that *shares* a common back to the true COM leg is caught by
+that same short pass. The simulator's fault box now shows amber (not
+red) for a warn-only advisory, so a running-but-crossed panel reads as a
+heads-up rather than a failure. Reversed-polarity engine test rewritten
+to the new contract + a shared-common-short test added.
+PR: fix/reversed-power-lone-runs.
+
 ### 41. "Not 'around 40 °F' — at 40 °F" overshoots the site's own table
 
 **Location:** refrigeration cluster prose; 118 psig interpolates to
