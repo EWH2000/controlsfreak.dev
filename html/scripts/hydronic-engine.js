@@ -352,6 +352,26 @@ const HYDRO = (function () {
             c.out = {};
             c.state = {};
         });
+        // Ensure every component id is present AND unique — mirrors the pipe-id
+        // pass below. Two components sharing an id (or a null id) would alias their
+        // branch keys (<id>#<bi>) in the warm-start / writeback caches and mirror
+        // one component's flow onto another. Not reachable through the shipped UI
+        // (addComponent mints monotonic ids), but an imported/persisted literal or
+        // the Android wrapper could feed a collision. A rewritten id orphans any
+        // pipe that named the old id, so it drops in the pipe filter below — the
+        // safe outcome (an aliased-flow pipe is worse than a dropped one). Rebuild
+        // `ids` from the deduped set before that filter.
+        const seenCompIds = new Set();
+        components.forEach((c, i) => {
+            let id = (c.id === undefined || c.id === null) ? null : String(c.id);
+            if (id === null || seenCompIds.has(id)) {
+                let m = i;
+                id = 'comp' + m;
+                while (seenCompIds.has(id)) { m++; id = 'comp' + m; }
+            }
+            c.id = id;
+            seenCompIds.add(id);
+        });
         const ids = new Set(components.map((c) => c.id));
         const portsOf = (cid) => {
             const c = components.find((x) => x.id === cid);

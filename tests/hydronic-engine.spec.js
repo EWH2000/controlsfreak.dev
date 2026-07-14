@@ -718,6 +718,49 @@ test.describe('hydronic-engine: review regressions', () => {
         expect(new Set(c.pipes.map((p) => p.id)).size).toBe(c.pipes.length);
     });
 
+    // #137: component ids get the same dedup as pipe ids. Two components sharing
+    // an id (or a null id) would alias their branch keys (<id>#<bi>) in the
+    // warm-start / writeback caches and mirror one component's flow onto another.
+    // Unreachable through the shipped UI (monotonic ids) but an imported literal
+    // is the reach. Rewriting an id orphans any pipe that named it, so that pipe
+    // drops — the safe outcome vs an aliased-flow pipe.
+    test('makeSystem makes duplicate / null component ids unique', () => {
+        const HYDRO = loadEngine();
+        const sys = HYDRO.makeSystem({
+            components: [
+                { id: 'dup',  type: 'pump',   params: { h0: 40, a: 0.012, speed: 100, on: true } },
+                { id: 'dup',  type: 'coil',   params: { k: 0.02 } },          // collides with the pump
+                { id: null,   type: 'valve2', params: { cv: 8, pos: 100 } },  // null id
+            ],
+            pipes: [],
+        });
+        expect(sys.components.length).toBe(3);
+        const ids = sys.components.map((c) => c.id);
+        expect(ids.every((id) => id !== null && id !== undefined && id !== '')).toBe(true);
+        expect(new Set(ids).size).toBe(sys.components.length);
+    });
+
+    // A pipe that named a since-rewritten (collided) component id must drop,
+    // never dangle onto a fresh 'comp*' id — the pipe filter runs against the
+    // rebuilt id set. Here the first-declared 'dup' keeps its id (pump), the
+    // second 'dup' (coil) is rewritten, so a pipe to the coil's ORIGINAL id has
+    // no unambiguous target and is dropped; the pump's own loop survives.
+    test('makeSystem drops a pipe whose component id was deduped away', () => {
+        const HYDRO = loadEngine();
+        const sys = HYDRO.makeSystem({
+            components: [
+                { id: 'dup', type: 'pump', params: { h0: 40, a: 0.012, speed: 100, on: true } },
+                { id: 'dup', type: 'coil', params: { k: 0.02 } },
+            ],
+            pipes: [
+                { id: 'a', from: ['dup', 'out'], to: ['dup', 'in'] },   // ambiguous → self-loop on the pump
+            ],
+        });
+        expect(new Set(sys.components.map((c) => c.id)).size).toBe(sys.components.length);
+        const model = HYDRO.solve(sys);
+        expect(allFinite(model)).toBe(true);
+    });
+
     // solve()/tick() are public — a raw literal that never went through
     // makeSystem (no warm-start caches) must still solve, not throw.
     test('solve() tolerates a raw system literal with no warm-start caches', () => {
