@@ -1,16 +1,17 @@
 # Fresh accuracy audit — post-forced-air (2026-07-14)
 
-> **TRIAGE — 5 of 8 fixed 2026-07-14 (this PR); 3 awaiting owner
-> disposition.** The audit pass itself was strictly read-only — no page,
-> engine, or CSS source was touched during triage. Disposition since: the
-> five clean-cut findings (**M1, M2, L1, L3, L6**) were fixed 2026-07-14
-> in PR `content/fresh-audit-cleancut-fixes` and are annotated
-> **Fixed 2026-07-14** below; the three judgment-call findings
-> (**L2, L4, L5**) still await the owner to decide (accept / fix / reword
-> / defer). Cross-filed into `content-audit.md` as findings #49–#56 — the
-> five fixed now carry *(resolved 2026-07-14)*, the three open still carry
-> *(open — awaiting owner disposition, 2026-07-14)*. This doc is the
-> durable evidence record.
+> **TRIAGE — 8 of 8 dispositioned 2026-07-14: 7 fixed, 1 accepted-as-is.**
+> The audit pass itself was strictly read-only — no page, engine, or CSS
+> source was touched during triage. Disposition since: the five clean-cut
+> findings (**M1, M2, L1, L3, L6**) were fixed 2026-07-14 in PR
+> `content/fresh-audit-cleancut-fixes`; the two judgment-call fixes
+> (**L4, L5**) were fixed in the follow-up PR `content/fresh-audit-l4-l5-l2`;
+> and the last (**L2**) was accepted as-is as a known, disclosed
+> limitation. Each is annotated with its disposition below. Cross-filed
+> into `content-audit.md` as findings #49–#56 — the seven fixed carry
+> *(resolved 2026-07-14)*, L2 carries
+> *(accepted — known limitation, 2026-07-14)*. This doc is the durable
+> evidence record.
 
 Master findings document for the **fresh post-forced-air accuracy
 audit** — a full-site adversarial re-verification of the engineering
@@ -188,6 +189,11 @@ Tally: **0 high · 2 medium · 6 low.**
 - **Suggested fix:** optionally rename the six strings to ASHRAE word
   order. Low priority given the header's standing disclaimer.
 - **Severity:** low. **Confidence:** high.
+- **Accepted as-is 2026-07-14 (known limitation).** The integer ids are all
+  correct; the display strings follow bacnet-stack's spelling, which the
+  `bacnetUnits.js` header already discloses and flags for ASHRAE
+  verification. A genuine 50/50 — not worth churning the display strings;
+  revisit only if a canonical-ASHRAE naming pass is done.
 
 ### L3 — modbus-functions.html omits exception code 07 (NAK)
 
@@ -229,6 +235,11 @@ Tally: **0 high · 2 medium · 6 low.**
   simplified — a real frame also has a 1-byte header CRC" caveat in the
   caption and `<desc>`.
 - **Severity:** low. **Confidence:** medium-high.
+- **Fixed 2026-07-14.** Drew both CRC fields — the single "CRC" box became
+  two, a 1-byte `Hdr CRC` right after Length and a 2-byte `Data CRC` at the
+  end of the wrapper row (the shared payload rides between them). The
+  wrapper bracket was extended to cover both boxes and the `<desc>`
+  rewritten to enumerate the header and data CRCs and their positions.
 
 ### L5 — bacnet-services.html file-access services mis-bucketed
 
@@ -247,6 +258,9 @@ Tally: **0 high · 2 medium · 6 low.**
 - **Suggested fix:** relabel that row's area "File Access" (or "Device
   Mgmt").
 - **Severity:** low. **Confidence:** medium.
+- **Fixed 2026-07-14.** Relabeled the `AtomicReadFile / AtomicWriteFile`
+  row's Area column from "Data Sharing" to "File Access", matching the
+  ASHRAE 135 service category.
 
 ### L6 — CDAB byte-order term inconsistent site-wide
 

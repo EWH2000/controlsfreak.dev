@@ -570,7 +570,7 @@ keywords: object instance device av bv ai ao discovery who-is cov priority
             <svg class="bac-svg wide" viewBox="0 0 740 230" role="img"
                  aria-labelledby="bb-frame-title bb-frame-desc">
                 <title id="bb-frame-title">MS/TP framing vs BACnet/IP framing</title>
-                <desc id="bb-frame-desc">Two horizontal framing stacks side by side. The left stack is labeled MS/TP and shows six segments: Preamble (2 bytes), Frame Type (1 byte), Destination (1 byte), Source (1 byte), Length (2 bytes), and BACnet NPDU plus APDU (the common payload), followed by a 2-byte CRC. The right stack is labeled BACnet/IP and shows five segments: IP header, UDP header (port 47808 = 0xBAC0), BVLL (4 bytes), BACnet NPDU, and APDU. A bracket above each stack highlights that everything except NPDU and APDU is the data-link wrapper; the NPDU and APDU below the bracket are common to both transports.</desc>
+                <desc id="bb-frame-desc">Two horizontal framing stacks side by side. The left stack is labeled MS/TP and shows, left to right: Preamble (2 bytes), Frame Type (1 byte), Destination (1 byte), Source (1 byte), Length (2 bytes), a 1-byte header CRC, and a 2-byte data CRC. An MS/TP frame therefore carries two checksums: the header CRC follows the Length field and protects the header, and the data CRC comes last and protects the payload. The common payload — BACnet NPDU plus APDU — rides between the header CRC and the data CRC and is drawn below as shared. The right stack is labeled BACnet/IP and shows five segments: IP header, UDP header (port 47808 = 0xBAC0), BVLL (4 bytes), BACnet NPDU, and APDU. A bracket above each stack highlights that everything except NPDU and APDU is the data-link wrapper; the NPDU and APDU below the bracket are common to both transports.</desc>
 
                 <!-- Headers -->
                 <text x="180" y="22" text-anchor="middle" font-family="var(--mono)" font-size="12" font-weight="600" fill="var(--text-bright)">BACnet MS/TP</text>
@@ -595,8 +595,13 @@ keywords: object instance device av bv ai ao discovery who-is cov priority
                     <rect x="215" y="40" width="40" height="38" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.4"/>
                     <text x="235" y="60" fill="var(--text-bright)">Length</text>
 
-                    <rect x="255" y="40" width="35" height="38" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.4"/>
-                    <text x="272.5" y="60" fill="var(--text-bright)">CRC</text>
+                    <rect x="255" y="40" width="48" height="38" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.4"/>
+                    <text x="279" y="60" fill="var(--text-bright)">Hdr CRC</text>
+                    <text x="279" y="73" font-size="9" fill="var(--text-dim)">1 B</text>
+
+                    <rect x="303" y="40" width="56" height="38" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.4"/>
+                    <text x="331" y="60" fill="var(--text-bright)">Data CRC</text>
+                    <text x="331" y="73" font-size="9" fill="var(--text-dim)">2 B</text>
                 </g>
 
                 <!-- BACnet/IP stack -->
@@ -616,10 +621,10 @@ keywords: object instance device av bv ai ao discovery who-is cov priority
 
                 <!-- "data-link wrapper" brackets -->
                 <g stroke="var(--text-dim)" stroke-width="1.2" fill="none">
-                    <path d="M 50 92 V 100 H 290 V 92"/>
+                    <path d="M 50 92 V 100 H 359 V 92"/>
                     <path d="M 380 92 V 100 H 580 V 92"/>
                 </g>
-                <text x="170" y="116" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="var(--text-dim)">data-link wrapper (changes per transport)</text>
+                <text x="205" y="116" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="var(--text-dim)">data-link wrapper (changes per transport)</text>
                 <text x="480" y="116" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="var(--text-dim)">data-link wrapper (changes per transport)</text>
 
                 <!-- Shared NPDU + APDU -->
