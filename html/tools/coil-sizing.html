@@ -437,6 +437,10 @@ keywords: cfm gpm delta t mbh btu tons sensible latent shr capacity
         }
 
         function calcCapacity() {
+            // Engine guard (codebase-issues #139): degrade to the muted state
+            // with a clear message if psychro-engine.js failed to load, rather
+            // than throwing on the undefined Psychro global inside readState.
+            if (typeof Psychro === 'undefined') { clearCap('Psychrometric engine unavailable — reload the page.', 'error'); return; }
             refreshSecondLabel('cs-cap-ent');
             refreshSecondLabel('cs-cap-lvg');
             const cool = isCool();
@@ -534,6 +538,10 @@ keywords: cfm gpm delta t mbh btu tons sensible latent shr capacity
         }
 
         function calcLeaving() {
+            // Engine guard (codebase-issues #139): degrade to the muted state
+            // with a clear message if psychro-engine.js failed to load, rather
+            // than throwing on the undefined Psychro global inside readState.
+            if (typeof Psychro === 'undefined') { clearLvg('Psychrometric engine unavailable — reload the page.', 'error'); return; }
             refreshSecondLabel('cs-lvg-ent');
             const cool = isCool();
             const type = cool ? 'cool' : 'heat';

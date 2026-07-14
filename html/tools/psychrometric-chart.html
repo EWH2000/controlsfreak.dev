@@ -971,6 +971,18 @@ keywords: humidity enthalpy wet bulb dew point dewpoint grains mixing coil AHU O
 
         // ── Main recompute — wires solver output to all UI surfaces ──
         function psyRecompute() {
+            // Engine guard (codebase-issues #139): degrade to muted readouts + a
+            // clear message if psychro-engine.js failed to load, rather than
+            // throwing inside solveChain on the undefined Psychro global.
+            if (typeof Psychro === 'undefined') {
+                const msgEl = document.getElementById('psy-msg');
+                msgEl.textContent = 'Psychrometric engine unavailable — reload the page.';
+                msgEl.style.color = 'var(--red)';
+                renderMaReadouts(null);
+                renderDetail(null, detailLabelFor(selectedStep, {}));
+                renderProcessBlock(null, null);
+                return;
+            }
             const chain = solveChain();
             lastChain = chain;
 

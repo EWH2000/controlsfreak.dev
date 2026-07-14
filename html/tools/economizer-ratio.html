@@ -421,6 +421,15 @@ keywords: oa oat percent outdoor air free cooling changeover mixed air damper
         }
 
         function calcEnthalpy() {
+            // Engine guard (codebase-issues #139): the dry-bulb tab is pure
+            // temperature math and keeps working; the enthalpy tab needs the
+            // shared engine. If psychro-engine.js failed to load, degrade to the
+            // muted state with a clear message rather than throwing on the
+            // undefined Psychro global inside readState.
+            if (typeof Psychro === 'undefined') {
+                clearEnthalpyOutputs('Psychrometric engine unavailable — reload the page.');
+                return;
+            }
             refreshSecondLabel('er-h-oa');
             refreshSecondLabel('er-h-ra');
 
