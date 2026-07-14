@@ -451,6 +451,13 @@ techs new to the industry and anyone wanting a refresh.
   comparing all three branches under varying system Δp, with a
   burst-coil anecdote at the low-pressure extreme. Pays off forward
   links from Hydronic Loops, Load Piping, and Pump Control.
+- **Coil Selection** — where the design flow a balancer chases
+  actually comes from. The load-to-flow chain (q = ṁ·cp·ΔT resolved
+  to `GPM = Btu/h ÷ (500 × ΔT)` and `CFM = Btu/h ÷ (1.08 × ΔT)`), why
+  the chosen design ΔT is the lever that sets the flow, the coil's own
+  levers (rows, fin density, circuiting, face-velocity carryover), and
+  a brief approach / LMTD note. A counterflow-coil capstone diagram
+  ties the chain together. Feeds the Hydronic Balancing lesson.
 - **Refrigerant Cycle Basics** — the vapor-compression cycle for
   controls people, who meet it through sensor readings (a low-suction
   alarm, a head-pressure trip) and have to decide whether the system
@@ -567,6 +574,18 @@ techs new to the industry and anyone wanting a refresh.
   lying sensing tube), a drivable static-loop widget, and a closing
   walk of all six pages. Page 6 of the forced-air chapter; pairs
   with the Duct Static Control quiz.
+- **Air Balancing** — the air side of commissioning: proving every
+  zone gets the design flow it was drawn for. The flow ring and
+  CFM = K√VP, and why the box's own number is only as good as its
+  K until an independent duct traverse checks it; the three box
+  setpoints (min, max, reheat) and why the minimum is a ventilation
+  floor, not a comfort number; pressure-independent vs
+  pressure-dependent boxes and bypass dampers; holding the building
+  slightly positive; then the proportional-balancing field method —
+  proportion every terminal to the index zone, raise the common
+  supply, iterate — the air-side mirror of hydronic balancing.
+  Closes on the air-balance report as the record. Page 7 of the
+  forced-air chapter.
 - **Function-Block Basics** — what a block and a wiresheet are, why
   the industry builds sequences this way (the diagram is the program,
   you can watch it run live, the block vocabulary travels across

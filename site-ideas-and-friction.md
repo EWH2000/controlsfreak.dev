@@ -623,7 +623,9 @@ education/duct-static-control.html]` *(shipped 2026-07-11)*;
 fan-powered boxes `[future:
 education/fan-powered-boxes.html]`; VVT `[future: education/vvt.html]`;
 TAB procedure (the airflow tool's traverse note carries the math;
-no lesson promised).
+no lesson promised) *(the air-side TAB lesson shipped anyway as
+education/air-balancing.html 2026-07-14 — flow-ring verification,
+box setpoints, proportional balancing, building pressure)*.
 Debts: pays vfds.html's naked "VAV systems" prose in the cube-law
 section (gains its link), the airflow tool's lessons-link
 orphanhood, and the VAV-commissioning audit scenario. Incurs the
@@ -4516,8 +4518,8 @@ Out of scope (forward links, not content):
 - Reverse return as a passive balancing approach — covered on
   `hydronic-loops.html` d2 (cross-link from closing section)
 - Coil sizing / mass-flow design ("where does the design flow
-  number come from") — [future: coil-selection.html], mentioned
-  in the diagnostics section
+  number come from") — [future: coil-selection.html] *(shipped
+  2026-07-14)*, mentioned in the diagnostics section
 - Specific manufacturer cartridge curves / Cv math / authority
   algebra — keeps the cross-manufacturer pattern, same scope
   discipline as the vfds page
@@ -4578,9 +4580,12 @@ caught on a manometer walk.
   in depth. Still future: the hands-on proportional-balancing job-site walk
   ("balancing as job-site activity") — the shipped page covers the controls
   side, not that.
-- `[future: coil-selection.html]` — mentioned in the diagnostics
-  intro as the upstream source of the design-flow number. When
-  it ships, the balancing page can be cross-linked back.
+- `[future: coil-selection.html]` *(shipped 2026-07-14)* — mentioned
+  in the diagnostics intro as the upstream source of the design-flow
+  number. Shipped as the hydronics-cluster explainer for the
+  load-to-flow chain; the balancing diagnostics intro now anchors it
+  (the forward-link was added at ship time — the pre-ship page had the
+  topic in prose but not yet as a link).
 
 **CSS / pattern notes for the next Education page:**
 - Widget chrome is yet another instance of the

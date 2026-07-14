@@ -1150,12 +1150,12 @@ test('tools landing — URL hash deep-links to a category on initial load', asyn
     expect(errors, 'tools-hash behavioral should log no errors').toEqual([]);
 });
 
-test('education landing — Hydronics chip narrows to the 4 hydronic lessons', async ({ page }) => {
+test('education landing — Hydronics chip narrows to the 5 hydronic lessons', async ({ page }) => {
     const errors = watchErrors(page);
     await page.goto('/education/#hydronics');
 
     await expect(page.locator('.filter-chip[data-category="hydronics"]')).toHaveClass(/active/);
-    expect(await page.locator('.nav-card:not([hidden])').count()).toBe(4);
+    expect(await page.locator('.nav-card:not([hidden])').count()).toBe(5);
 
     expect(errors, 'education-filter behavioral should log no errors').toEqual([]);
 });
@@ -3335,7 +3335,7 @@ test.describe('lesson sequence pager (E-016)', () => {
     test('a mid lesson shows both Prev and Next in order', async ({ page }) => {
         await page.goto('/education/hydronic-loops.html');
         await expect(page.locator('.lesson-seq-prev'))
-            .toHaveAttribute('href', '/education/controller-wiring.html');
+            .toHaveAttribute('href', '/education/controls-commissioning.html');
         await expect(page.locator('.lesson-seq-next'))
             .toHaveAttribute('href', '/education/load-piping.html');
     });

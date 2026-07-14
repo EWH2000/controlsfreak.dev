@@ -23,19 +23,19 @@ nav: education
 
     <div class="filter-chips" role="group" aria-label="Filter lessons by category">
         <button type="button" class="filter-chip active" data-category="all" aria-pressed="true">
-            All <span class="filter-chip-count">27</span>
+            All <span class="filter-chip-count">29</span>
         </button>
         <button type="button" class="filter-chip" data-category="fundamentals" aria-pressed="false">
             Fundamentals <span class="filter-chip-count">7</span>
         </button>
         <button type="button" class="filter-chip" data-category="hydronics" aria-pressed="false">
-            Hydronics <span class="filter-chip-count">4</span>
+            Hydronics <span class="filter-chip-count">5</span>
         </button>
         <button type="button" class="filter-chip" data-category="refrigerant" aria-pressed="false">
             Refrigerant <span class="filter-chip-count">3</span>
         </button>
         <button type="button" class="filter-chip" data-category="forced-air" aria-pressed="false">
-            Forced Air Systems <span class="filter-chip-count">6</span>
+            Forced Air Systems <span class="filter-chip-count">7</span>
         </button>
         <button type="button" class="filter-chip" data-category="protocols" aria-pressed="false">
             Protocols <span class="filter-chip-count">7</span>
@@ -122,6 +122,15 @@ nav: education
             titleFull:  'Hydronic Balancing',
             desc:       'Getting design flow to every load — calibrated balancing valves, automatic balancing valves, and PICVs. With a widget that shows what each one does when system pressure swings.',
             pills:      ['Hydronics', 'Manual / Auto / PICV', 'Design Flow', 'Widget'],
+            category:   'hydronics'
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/education/coil-selection.html',
+            titleShort: 'Coil Selection',
+            titleFull:  'Coil Selection',
+            desc:       'Where the design flow a balancer chases actually comes from — the load-to-flow chain (q = ṁ·cp·ΔT), why the chosen ΔT sets the GPM, and the coil levers (rows, fins, face velocity, approach) that meet the capacity.',
+            pills:      ['Hydronics', 'Load → Flow', 'Design ΔT', 'Rows · Face Velocity'],
             category:   'hydronics'
         }) }}
         {{ navCard({
@@ -213,6 +222,15 @@ nav: education
             titleFull:  'Duct Static Control',
             desc:       'How the supply fan finds its speed — one sensor two-thirds down the trunk, setpoint reset, the safeties, and why a healthy static can hide a collapsed airflow.',
             pills:      ['Air Systems', 'Fan · VFD', 'Setpoint Reset', 'Loop Driver'],
+            category:   'forced-air'
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/education/air-balancing.html',
+            titleShort: 'Air Balancing',
+            titleFull:  'Air Balancing',
+            desc:       'Commissioning the air side to design flow — verifying box CFM against a traverse, setting box min, max and reheat, proportional balancing against the index zone, and building pressure.',
+            pills:      ['Air Systems', 'Flow Rings · K√VP', 'Min · Max · Reheat', 'Proportional'],
             category:   'forced-air'
         }) }}
         {{ navCard({
