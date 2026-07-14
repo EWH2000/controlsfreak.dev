@@ -152,6 +152,7 @@ keywords: function code exception CRC CRC-16 RTU checksum register coil holding 
                             <tr><td class="mf-id">4 <span class="mf-hex">0x04</span></td><td>Server Device Failure</td><td>An unrecoverable error occurred while carrying out the request.</td></tr>
                             <tr><td class="mf-id">5 <span class="mf-hex">0x05</span></td><td>Acknowledge</td><td>Request accepted but long-running — poll for completion, don't resend.</td></tr>
                             <tr><td class="mf-id">6 <span class="mf-hex">0x06</span></td><td>Server Device Busy</td><td>Busy with a long program command; resend the request later.</td></tr>
+                            <tr><td class="mf-id">7 <span class="mf-hex">0x07</span></td><td>Negative Acknowledge (NAK)</td><td>Server cannot perform the program function received in the query (FC 08/13/14 program commands).</td></tr>
                             <tr><td class="mf-id">8 <span class="mf-hex">0x08</span></td><td>Memory Parity Error</td><td>Parity error in the extended file-record memory (FC 20/21).</td></tr>
                             <tr><td class="mf-id">10 <span class="mf-hex">0x0A</span></td><td>Gateway Path Unavailable</td><td>A gateway is misconfigured or overloaded — no path to the target.</td></tr>
                             <tr><td class="mf-id">11 <span class="mf-hex">0x0B</span></td><td>Gateway Target Failed to Respond</td><td>No reply from the target device — often the wrong unit ID.</td></tr>

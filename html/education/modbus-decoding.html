@@ -224,7 +224,7 @@ keywords: 40001 30001 offset endian byte order word swap float scaling exception
             <svg class="mb-svg wide" viewBox="0 0 740 320" role="img"
                  aria-labelledby="mb-byteorder-title mb-byteorder-desc">
                 <title id="mb-byteorder-title">The four Modbus byte orderings for a 32-bit value</title>
-                <desc id="mb-byteorder-desc">A 32-bit value with bytes labeled A, B, C, D in transmission order is shown four ways across two consecutive registers. ABCD is byte order A-B in the first register, C-D in the second — the strict Modbus standard. CDAB swaps word order: C-D in the first register, A-B in the second — the Modicon byte-swap. BADC swaps bytes within each word: B-A in the first register, D-C in the second. DCBA does both — D-C in the first register, B-A in the second.</desc>
+                <desc id="mb-byteorder-desc">A 32-bit value with bytes labeled A, B, C, D in transmission order is shown four ways across two consecutive registers. ABCD is byte order A-B in the first register, C-D in the second — the strict Modbus standard. CDAB swaps word order: C-D in the first register, A-B in the second — the Modicon word-swap. BADC swaps bytes within each word: B-A in the first register, D-C in the second. DCBA does both — D-C in the first register, B-A in the second.</desc>
 
                 <!-- Column headers: register N+0 / register N+1 -->
                 <text x="265" y="34" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--text-dim)">register N</text>
@@ -289,7 +289,7 @@ keywords: 40001 30001 offset endian byte order word swap float scaling exception
                     <p>Big-endian word, big-endian byte. Bytes lie in the two registers in their natural transmission order. The closest thing to a Modbus "standard"; common on modern IP-side gear and platform controllers.</p>
                 </div>
                 <div class="callout">
-                    <h3>CDAB <span>· Modicon byte-swap</span></h3>
+                    <h3>CDAB <span>· Modicon word-swap</span></h3>
                     <p>Little-endian word, big-endian byte. Each register's bytes are in network order, but the two registers are swapped. Legacy Modicon PLCs exposed an internal little-endian word layout to the wire this way.</p>
                 </div>
                 <div class="callout">
