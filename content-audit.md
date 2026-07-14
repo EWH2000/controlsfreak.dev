@@ -2474,3 +2474,29 @@ always-true properties — AC-only (can't interrupt DC) and not a
 floating/isolated contact — keeping the copy vendor-neutral (no product
 names, per the vendor-name guardrail). Shipped in
 fix/4-20ma-dc-loop-power (same file).
+
+### 44. Hydronic loop builder violates the affinity laws at reduced pump speed
+
+**Location:** simulators/hydronic-loop-builder.html (the "How it works"
+formula) + the pump-curve model in scripts/hydronic-engine.js
+(`branchHsrc`). **Lens:** content (taught physics). **Verification
+status: verified** (2026-07 accuracy-audit workflow, HIGH confidence —
+adversarially adjudicated and independently re-derived).
+
+The reduced-speed pump head scaled the *entire* quadratic by speed² —
+`H = (H₀ − a·Q²)·(speed/100)²` — which incorrectly scales the a·Q²
+curve-steepness term too. The affinity laws scale only the shutoff head:
+`H = H₀·(speed/100)² − a·Q²`. On a k·Q² system curve the wrong form
+settles at ~57 % of full flow at 50 % speed (and 33 % head) instead of
+the affinity-correct 50 % flow / 25 % head — contradicting the site's
+own affinity-laws.html (Q₂ = Q₁·N₂/N₁, H₂ = H₁·(N₂/N₁)²), which the page
+cross-links. Sources: standard quadratic-pump-curve reduced-speed
+coefficient scaling (the Q² coefficient is unchanged, only the constant
+term scales with n²); Euler turbomachine H ∝ N².
+
+**Resolved (2026-07-14):** corrected the formula in `branchHsrc`, the
+engine header, and the page's "How it works" line to
+`H = H₀·(speed/100)² − a·Q²`; added a hydronic-engine spec asserting
+Q ∝ speed at reduced speed. PR: fix/hydronic-affinity-head. (This is a
+content-accuracy fix from the 2026-07 workflow audit, distinct from the
+open hydronic *code-quality* items codebase-issues #134/#135/#137.)
