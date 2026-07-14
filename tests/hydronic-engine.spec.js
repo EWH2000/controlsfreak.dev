@@ -207,6 +207,19 @@ test.describe('hydronic-engine: hydraulic solver', () => {
         expect(qOf(model, 'p1')).toBeLessThan(40);
     });
 
+    test('reduced pump speed obeys the affinity laws — flow ∝ speed', () => {
+        const HYDRO = loadEngine();
+        // Same series loop at full vs half speed. With the affinity-correct
+        // curve H = H₀·s² − a·Q² (only the shutoff term scales), the operating
+        // point on a k·Q² system curve moves as Q ∝ speed — exactly 0.5× at
+        // half speed. The old whole-curve scaling (H₀−a·Q²)·s² over-scaled the
+        // loss term and gave ~57% flow at 50% speed. Matches affinity-laws.html.
+        const full = HYDRO.solve(seriesLoop(HYDRO, { pump: { speed: 100 } }));
+        const half = HYDRO.solve(seriesLoop(HYDRO, { pump: { speed: 50 } }));
+        expect(full.converged && half.converged).toBe(true);
+        expect(qOf(half, 'p1') / qOf(full, 'p1')).toBeCloseTo(0.5, 2);
+    });
+
     test('mass is conserved (KCL) at every node', () => {
         const HYDRO = loadEngine();
         const model = HYDRO.solve(parallelLoop(HYDRO));

@@ -55,7 +55,7 @@
 // valve-cv / waterside-load / affinity-laws tools:
 //   • waterside heat:  Q[Btu/h] = 500 · GPM · ΔT°F        (waterside-load.html)
 //   • valve Cv:        ΔP[psi]  = (Q / Cv)²  (water, SG=1) (valve-cv.html)
-//   • pump/affinity:   H = (H₀ − a·Q²) · (speed/100)²      (affinity-laws.html)
+//   • pump/affinity:   H = H₀·(speed/100)² − a·Q²          (affinity-laws.html)
 // Head and valve ΔP are bridged with 1 psi ≈ 2.31 ft of water (no existing
 // tool sets this precedent — introduced here, standard 62.3 lb/ft³ water), so
 // a valve's head loss is ΔH[ft] = 2.31 · (Q/Cv)² = k·Q² with k = 2.31/Cv².
@@ -599,9 +599,13 @@ const HYDRO = (function () {
         const h0 = asNum(p.h0, 40);
         const a  = asNum(p.a, 0.012);
         const spd = clamp(asNum(p.speed, 100), 0, 100) / 100;
-        // Affinity: head ∝ speed². Clamp ≥ 0 — past max flow the curve would
-        // dip negative, but a pump can't add negative head.
-        const h = (h0 - a * b.Q * b.Q) * spd * spd;
+        // Affinity laws: only the shutoff head H₀ scales with speed² — the
+        // a·Q² curve-steepness term is UNCHANGED. That makes the operating
+        // point on a k·Q² system curve move as Q ∝ speed, H ∝ speed², matching
+        // affinity-laws.html. (Scaling the whole quadratic over-scales the loss
+        // term and gives ~57% flow at 50% speed instead of 50%.) Clamp ≥ 0 —
+        // past max flow the curve dips negative, but a pump can't add neg head.
+        const h = h0 * spd * spd - a * b.Q * b.Q;
         return Math.max(0, isFin(h) ? h : 0);
     }
 
