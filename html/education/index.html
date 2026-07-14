@@ -23,10 +23,10 @@ nav: education
 
     <div class="filter-chips" role="group" aria-label="Filter lessons by category">
         <button type="button" class="filter-chip active" data-category="all" aria-pressed="true">
-            All <span class="filter-chip-count">26</span>
+            All <span class="filter-chip-count">27</span>
         </button>
         <button type="button" class="filter-chip" data-category="fundamentals" aria-pressed="false">
-            Fundamentals <span class="filter-chip-count">6</span>
+            Fundamentals <span class="filter-chip-count">7</span>
         </button>
         <button type="button" class="filter-chip" data-category="hydronics" aria-pressed="false">
             Hydronics <span class="filter-chip-count">4</span>
@@ -60,6 +60,15 @@ nav: education
             desc:       'How a field point lands on a DDC controller — 24 VAC power and the shared common, the input and output types, and the wiring gotchas that bite. Pairs with the Controller Wiring Simulator.',
             pills:      ['Wiring', '24 VAC + Common', 'UI / BI / AO / BO', 'Field Gotchas'],
             category:   'wiring'
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/education/controls-commissioning.html',
+            titleShort: 'Commissioning',
+            titleFull:  'Controls Commissioning',
+            desc:       'Proving a controller does what its sequence of operations says — point-to-point checkout of every AI, AO, BI, and BO, override discipline, interlock and reset testing, and trend logs as proof over time.',
+            pills:      ['Commissioning', 'Point-to-Point', 'AI · AO · BI · BO', 'Overrides'],
+            category:   'commissioning'
         }) }}
         {{ navCard({
             section:    'education',
@@ -298,7 +307,7 @@ nav: education
         // categories that only have one card each. The card-level data-category
         // values stay granular (drives / control / hvac / sequencing / logic)
         // so a future split can put chips back without touching every navCard.
-        const FUNDAMENTALS = new Set(['drives', 'control', 'hvac', 'sequencing', 'logic', 'wiring']);
+        const FUNDAMENTALS = new Set(['drives', 'control', 'hvac', 'sequencing', 'logic', 'wiring', 'commissioning']);
 
         function apply(slug) {
             chips.forEach(c => {

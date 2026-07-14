@@ -4569,11 +4569,15 @@ post-descale refill silently invalidated the original balance,
 caught on a manometer walk.
 
 **Forward-link debts this page incurred:**
-- `[future: commissioning.html]` — the explicit scope cut. Closing
-  callout names it as "Coming later: a lesson on commissioning."
-  When that page ships, it should tie back here for the
-  conceptual half ("balancing as equipment-and-procedure" lives
-  here; "balancing as job-site activity" lives there).
+- `[future: commissioning.html]` *(controls half shipped 2026-07-14 as
+  `controls-commissioning.html`)* — the explicit scope cut. The closing
+  callout named it "Coming later: a lesson on commissioning"; that callout
+  is now a "See also" cross-link to the shipped **Controls Commissioning**
+  lesson, which frames commissioning as three efforts (controls functional
+  testing / hydronic balancing / air balancing) and walks the controls half
+  in depth. Still future: the hands-on proportional-balancing job-site walk
+  ("balancing as job-site activity") — the shipped page covers the controls
+  side, not that.
 - `[future: coil-selection.html]` — mentioned in the diagnostics
   intro as the upstream source of the design-flow number. When
   it ships, the balancing page can be cross-linked back.
