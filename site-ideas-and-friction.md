@@ -188,6 +188,10 @@ Shipped so far:
   inbound-link structure. Home entry via the (unguarded) `hero-latest`
   badge, repointed from bacnet-priority to `/bacnet/`. *(shipped
   2026-07-12, PR 9 — closes the BACnet buildout)*.
+  *(Archetype evolved 2026-07-13 by the Guides nav lane: hubs now DO
+  carry `nav: guides` + a short `navLabel`, so they sit in the flat
+  "Guides" dropdown and light `.active` — the "hub lights no section"
+  gap is closed. See `docs/nav-home-redesign-scope.md`.)*
 
 **BACnet buildout — COMPLETE (2026-07-12).** All five content pages +
 the pillar shipped across PRs 5–9 (units decoder, error decoder,

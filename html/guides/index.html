@@ -1,0 +1,46 @@
+---
+title: Guides — Field Reference by Topic — controlsfreak.dev
+description: Field guides by topic — each one gathers every tool, lesson, and drill on a single subject in one place. BACnet and forced air so far, with more to come.
+canonical: https://controlsfreak.dev/guides/
+nav: guides
+---
+{% extends "layouts/page.njk" %}
+{% from "nav-card.njk" import navCard %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <h1 class="section-label">Guides</h1>
+        <div class="section-line"></div>
+    </div>
+
+    <p class="landing-intro">
+        A field guide gathers everything on one subject — every tool, lesson, and drill — onto a single page, in a sensible order. Instead of hunting the calculators under Tools and the explainers under Education, you open one guide and the whole cluster is in front of you: what to read first, and what to reach for once you have a device or a duct in front of you.
+    </p>
+
+    <p class="landing-intro">
+        Two guides so far, each a start-here reading path plus the tools that go with it. More as the clusters fill out.
+    </p>
+
+    <div class="card-grid">
+        {{ navCard({
+            section:    'reference',
+            href:       '/bacnet/',
+            titleShort: 'BACnet',
+            titleFull:  'The BACnet reference hub →',
+            desc:       'Everything BACnet in one place — five lessons in a start-here reading order (object model, services, networking, MS/TP, and BACnet vs Modbus) and six field tools that decode the units, errors, objects, and priorities a controller reports.',
+            pills:      ['Start Here', '5 Lessons', '6 Tools']
+        }) }}
+        {{ navCard({
+            section:    'reference',
+            href:       '/forced-air/',
+            titleShort: 'Forced Air',
+            titleFull:  'The forced-air reference hub →',
+            desc:       'The whole air side in one place — six lessons from the air handler out to the VAV box, and the airflow, coil, and fan tools that measure, size, and check the air a system actually moves.',
+            pills:      ['Start Here', '6 Lessons', '13 Tools']
+        }) }}
+    </div>
+
+</main>
+{% endblock %}

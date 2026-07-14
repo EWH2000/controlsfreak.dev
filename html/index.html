@@ -1,6 +1,6 @@
 ---
 title: controlsfreak.dev — BMS Field Reference
-description: Free, open calculators and practical explainers for building-controls engineers — BACnet, Modbus, and HVAC reference tools that work on a job site.
+description: Free, open calculators and practical explainers for controls and the mechanical trades — airflow, coils, hydronics, BACnet, and Modbus tools for the job site.
 canonical: https://controlsfreak.dev/
 nav: home
 ---
@@ -17,7 +17,7 @@ nav: home
                 "@id": "https://controlsfreak.dev/#website",
                 "url": "https://controlsfreak.dev/",
                 "name": "controlsfreak.dev",
-                "description": "Field-reference calculators and practical explainers for building-controls engineers — BACnet, Modbus, HVAC."
+                "description": "Field-reference calculators and practical explainers for controls and the HVAC and mechanical trades — airflow, hydronics, BACnet, Modbus, HVAC."
             },
             {
                 "@type": "Person",
@@ -387,14 +387,14 @@ nav: home
     </div>
 
     <div class="hero-copy">
-        <h1>Tools for those in controls, built by someone in controls.</h1>
-        <p>The math you don't want to redo at the panel — signal scaling, BACnet/IP, Modbus, psychrometrics, thermistors — plus explainers that walk a whole system end-to-end. No login, no ads, no tracking; view-source still works, and these pages will still run ten years from now.</p>
+        <h1>Field tools for the whole mechanical stack — air, water, power, and the controls that tie it together. Built by someone in controls.</h1>
+        <p>The math you don't want to redo in the mechanical room, on the roof, or at the panel — airflow and duct sizing, coils and psychrometrics, valve and pump sizing, signal scaling, BACnet/IP, and Modbus — plus explainers that walk a whole system end-to-end. No login, no ads, no tracking; view-source still works, and these pages will still run ten years from now.</p>
         <div class="hero-cta">
             <a class="hero-btn primary" href="/tools/">Browse tools →</a>
             <a class="hero-btn" href="/education/">Start with the explainers →</a>
         </div>
         <p class="hero-onramp">Three weeks in or thirty years in — the <a href="/education/">explainers</a> start from the ground up.</p>
-        <p class="hero-latest">Latest <span class="titlebar-dots">·</span> <a href="/bacnet/">BACnet Reference Hub →</a></p>
+        <p class="hero-latest">Latest <span class="titlebar-dots">·</span> <a href="/forced-air/">Forced-Air Reference Hub →</a></p>
     </div>
 
     <!-- The seam: the site's whole premise as one live instrument — a
@@ -489,7 +489,31 @@ nav: home
 <main id="main">
 
     <div class="section-header">
-        <h2 class="section-label" data-stage="1">Tools by Category</h2>
+        <h2 class="section-label" data-stage="1">Guides</h2>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="card-grid two browse-grid">
+        {{ navCard({
+            section:    'reference',
+            href:       '/bacnet/',
+            titleShort: 'BACnet',
+            titleFull:  'The BACnet reference hub →',
+            desc:       'Everything BACnet in one place — five lessons in a start-here reading order (object model, services, networking, MS/TP, and BACnet vs Modbus) and six field tools that decode the units, errors, objects, and priorities a controller reports.',
+            pills:      ['Start Here', '5 Lessons', '6 Tools']
+        }) }}
+        {{ navCard({
+            section:    'reference',
+            href:       '/forced-air/',
+            titleShort: 'Forced Air',
+            titleFull:  'The forced-air reference hub →',
+            desc:       'The whole air side in one place — six lessons from the air handler out to the VAV box, and the airflow, coil, and fan tools that measure, size, and check the air a system actually moves.',
+            pills:      ['Start Here', '6 Lessons', '13 Tools']
+        }) }}
+    </div>
+
+    <div class="section-header">
+        <h2 class="section-label" data-stage="2">Tools by Category</h2>
         <div class="section-line"></div>
     </div>
 
@@ -545,29 +569,11 @@ nav: home
     </div>
 
     <div class="section-header" style="margin-top:3rem;">
-        <h2 class="section-label" data-stage="2">Browse</h2>
+        <h2 class="section-label" data-stage="3">Browse</h2>
         <div class="section-line"></div>
     </div>
 
     <div class="card-grid two browse-grid">
-        {{ navCard({
-            section:    'reference',
-            href:       '/bacnet/',
-            titleShort: 'BACnet',
-            titleFull:  'The BACnet reference hub →',
-            desc:       'Everything BACnet in one place — five lessons in a start-here reading order (object model, services, networking, MS/TP, and BACnet vs Modbus) and six field tools that decode the units, errors, objects, and priorities a controller reports.',
-            pills:      ['Start Here', '5 Lessons', '6 Tools'],
-            wide:       true
-        }) }}
-        {{ navCard({
-            section:    'reference',
-            href:       '/forced-air/',
-            titleShort: 'Forced Air',
-            titleFull:  'The forced-air reference hub →',
-            desc:       'The whole air side in one place — six lessons from the air handler out to the VAV box (mixing, economizers, building pressure, unit ID, VAV, duct static) and the airflow, coil, and fan tools that measure, size, and check the air a system moves.',
-            pills:      ['Start Here', '6 Lessons', '13 Tools'],
-            wide:       true
-        }) }}
         {{ navCard({
             section:    'home',
             href:       '/tools/',
@@ -603,7 +609,7 @@ nav: home
     </div>
 
     <div class="section-header" style="margin-top:3rem;">
-        <h2 class="section-label" data-stage="3">About</h2>
+        <h2 class="section-label" data-stage="4">About</h2>
         <div class="section-line"></div>
     </div>
 

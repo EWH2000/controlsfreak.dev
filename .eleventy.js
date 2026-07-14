@@ -250,6 +250,11 @@ module.exports = function(eleventyConfig) {
         navSection(api, "education", "https://controlsfreak.dev/education/"));
     eleventyConfig.addCollection("navPractice", (api) =>
         navSection(api, "practice", "https://controlsfreak.dev/practice/"));
+    // Topic-cluster hubs (nav: guides) for the flat "Guides" dropdown —
+    // same shape as Simulators. Short dropdown labels come from each hub's
+    // navLabel frontmatter (navDropdown's flat branch falls back to title).
+    eleventyConfig.addCollection("navGuides", (api) =>
+        navSection(api, "guides", "https://controlsfreak.dev/guides/"));
 
     // Group a nav collection (navTools/navEducation/navPractice) by its
     // pages' `category` for the cascading dropdowns. Returns

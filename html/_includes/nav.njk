@@ -3,7 +3,7 @@
     <a class="site-nav-brand" href="/">controlsfreak<span>.dev</span></a>
     <div class="site-nav-links" id="site-nav-links">
         <a href="/"{% if nav == "home" %} class="active"{% endif %}>Home</a>
-        <a class="nav-start-here" href="/education/" aria-label="New to controls? Start here — the Education lessons">Start here →</a>
+        {{ navDropdown('guides', 'Guides', '/guides/', nav == 'guides', null, collections.navGuides, 'Field guides by topic — every tool, lesson, and drill on one subject in one place.') }}
         {{ navDropdown('tools', 'Tools', '/tools/', nav == 'tools', collections.navTools | navGroups('tools'), null, 'Calculators and converters for the day-to-day.') }}
         {{ navDropdown('simulators', 'Simulators', '/simulators/', nav == 'simulators', null, collections.navSimulators, 'Interactive models to poke at before the real thing.') }}
         {{ navDropdown('education', 'Education', '/education/', nav == 'education', collections.navEducation | navGroups('education'), null, 'Practical lessons, from the ground up.') }}

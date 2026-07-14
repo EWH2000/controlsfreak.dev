@@ -33,6 +33,10 @@ that measure, size, and check the air a system moves) so the deepest
 forced-air content is reachable from a single entry point. The air-side
 pages link back to it the same way.
 
+Both hubs sit under a **Guides** nav lane and a `/guides/` landing that
+gather the topic pillars in one place — the topic axis alongside the
+format sections (Tools / Simulators / Education / Practice).
+
 ### Tools
 
 Calculators, converters, and lookups — open one, get an answer.
@@ -759,7 +763,7 @@ from now will still run it.
   JACE supervisor trunks — that draws itself in as it scrolls
   into view. Decorative, not navigational; hidden on smaller
   screens where load weight outranks decoration. Nav cards across
-  Home / Tools / Simulators / Education / Practice share an
+  Home / Guides / Tools / Simulators / Education / Practice share an
   instrument-frame shape (titlebar with a section prefix + status
   pill, body, and a bullet-separated semantic statusline) so the
   landings read as instrument racks. One design system, applied across every page;
@@ -813,9 +817,10 @@ from now will still run it.
   - `search.js` — the site-wide command palette (`window.Palette`).
     Fetches the build-time `/search-index.json` once and ranks it;
     opens on `/`, `Ctrl`/`⌘-K`, or the nav search button.
-  - `nav-menu.js` — the Tools / Simulators / Education / Practice
-    nav dropdowns (two-level category rows on Tools, Education, and
-    Practice) and the mobile hamburger (`window.NavMenu`); the
+  - `nav-menu.js` — the Guides / Tools / Simulators / Education /
+    Practice nav dropdowns (two-level category rows on Tools, Education,
+    and Practice; Guides and Simulators are flat) and the mobile
+    hamburger (`window.NavMenu`); the
     dropdown link lists are generated at build time from per-section
     collections.
   - `units.js` + `ui.js` — the site-wide US/metric display toggle
