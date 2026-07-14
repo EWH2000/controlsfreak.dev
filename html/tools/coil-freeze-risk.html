@@ -205,7 +205,7 @@ keywords: freezestat freeze stat trip low limit mixed air mat glycol ethylene pr
                 without splitting. It is <em>not</em> an operating condition: moving
                 slush plugs passes and kills capacity.
             </p>
-            <!-- // user to verify glycol freeze/burst table — placeholder data (typical inhibited-glycol charts, % by volume), refine after review -->
+            <!-- Freeze/burst values verified 2026-07-13 against Dow DOWTHERM (ethylene) and DOWFROST (propylene) product charts, cross-checked with ASHRAE Fundamentals Ch.31 and EngineeringToolbox. Product-specific typical values — the ref-note below states the caveat. -->
             <table class="ref-table-dense">
                 <thead>
                     <tr>
@@ -216,19 +216,18 @@ keywords: freezestat freeze stat trip low limit mixed air mat glycol ethylene pr
                 </thead>
                 <tbody>
                     <tr><td>Plain water</td><td><span data-us="32" data-metric="0">32</span></td><td><span data-us="32" data-metric="0">32</span></td></tr>
-                    <tr><td>10 % ethylene glycol</td><td><span data-us="26" data-metric="−3.3">26</span></td><td><span data-us="16" data-metric="−8.9">16</span></td></tr>
-                    <tr><td>20 % ethylene glycol</td><td><span data-us="18" data-metric="−7.8">18</span></td><td><span data-us="4" data-metric="−15.6">4</span></td></tr>
-                    <tr><td>30 % ethylene glycol</td><td><span data-us="7" data-metric="−13.9">7</span></td><td><span data-us="−20" data-metric="−28.9">−20</span></td></tr>
+                    <tr><td>10 % ethylene glycol</td><td><span data-us="26" data-metric="−3.3">26</span></td><td><span data-us="23" data-metric="−5.0">23</span></td></tr>
+                    <tr><td>20 % ethylene glycol</td><td><span data-us="18" data-metric="−7.8">18</span></td><td><span data-us="8" data-metric="−13.3">8</span></td></tr>
+                    <tr><td>30 % ethylene glycol</td><td><span data-us="7" data-metric="−13.9">7</span></td><td><span data-us="−14" data-metric="−25.6">−14</span></td></tr>
                     <tr><td>40 % ethylene glycol</td><td><span data-us="−10" data-metric="−23.3">−10</span></td><td><span data-us="−60" data-metric="−51.1">−60</span></td></tr>
                     <tr><td>50 % ethylene glycol</td><td><span data-us="−34" data-metric="−36.7">−34</span></td><td><span data-us="below −60" data-metric="below −51.1">below −60</span></td></tr>
-                    <tr><td>10 % propylene glycol</td><td><span data-us="26" data-metric="−3.3">26</span></td><td><span data-us="19" data-metric="−7.2">19</span></td></tr>
-                    <tr><td>20 % propylene glycol</td><td><span data-us="19" data-metric="−7.2">19</span></td><td><span data-us="9" data-metric="−12.8">9</span></td></tr>
-                    <tr><td>30 % propylene glycol</td><td><span data-us="8" data-metric="−13.3">8</span></td><td><span data-us="−15" data-metric="−26.1">−15</span></td></tr>
-                    <tr><td>40 % propylene glycol</td><td><span data-us="−6" data-metric="−21.1">−6</span></td><td><span data-us="−50" data-metric="−45.6">−50</span></td></tr>
+                    <tr><td>10 % propylene glycol</td><td><span data-us="26" data-metric="−3.3">26</span></td><td><span data-us="22" data-metric="−5.6">22</span></td></tr>
+                    <tr><td>20 % propylene glycol</td><td><span data-us="19" data-metric="−7.2">19</span></td><td><span data-us="11" data-metric="−11.7">11</span></td></tr>
+                    <tr><td>30 % propylene glycol</td><td><span data-us="8" data-metric="−13.3">8</span></td><td><span data-us="−18" data-metric="−27.8">−18</span></td></tr>
+                    <tr><td>40 % propylene glycol</td><td><span data-us="−6" data-metric="−21.1">−6</span></td><td><span data-us="below −60" data-metric="below −51.1">below −60</span></td></tr>
                     <tr><td>50 % propylene glycol</td><td><span data-us="−28" data-metric="−33.3">−28</span></td><td><span data-us="below −60" data-metric="below −51.1">below −60</span></td></tr>
                 </tbody>
             </table>
-            <!-- // user to verify glycol freeze/burst table above — placeholder data, refine after review -->
             <p class="ref-note">
                 Typical values for inhibited glycols, mixed by volume. Formulations
                 differ by a degree or two, and real loops drift lean as they get topped
@@ -358,18 +357,21 @@ keywords: freezestat freeze stat trip low limit mixed air mat glycol ethylene pr
         // VOLUME; burst null = off the chart edge (below −60 °F). The °C
         // twins are derived once at 1 dp so both unit systems band on the
         // same displayed values.
-        // // user to verify glycol freeze/burst values — placeholder data, refine after review
+        // Burst points verified 2026-07-13 against Dow DOWTHERM SR-1 / 4000
+        // (ethylene) and DOWFROST / DOWFROST HD (propylene) product charts,
+        // cross-checked with ASHRAE Fundamentals Ch.31 and EngineeringToolbox;
+        // freeze points confirmed unchanged.
         const FLUIDS = {
             water: { label: 'plain water',            fUs: 32,  bUs: 32 },
-            eg10:  { label: '10 % ethylene glycol',   fUs: 26,  bUs: 16 },
-            eg20:  { label: '20 % ethylene glycol',   fUs: 18,  bUs: 4 },
-            eg30:  { label: '30 % ethylene glycol',   fUs: 7,   bUs: -20 },
+            eg10:  { label: '10 % ethylene glycol',   fUs: 26,  bUs: 23 },
+            eg20:  { label: '20 % ethylene glycol',   fUs: 18,  bUs: 8 },
+            eg30:  { label: '30 % ethylene glycol',   fUs: 7,   bUs: -14 },
             eg40:  { label: '40 % ethylene glycol',   fUs: -10, bUs: -60 },
             eg50:  { label: '50 % ethylene glycol',   fUs: -34, bUs: null },
-            pg10:  { label: '10 % propylene glycol',  fUs: 26,  bUs: 19 },
-            pg20:  { label: '20 % propylene glycol',  fUs: 19,  bUs: 9 },
-            pg30:  { label: '30 % propylene glycol',  fUs: 8,   bUs: -15 },
-            pg40:  { label: '40 % propylene glycol',  fUs: -6,  bUs: -50 },
+            pg10:  { label: '10 % propylene glycol',  fUs: 26,  bUs: 22 },
+            pg20:  { label: '20 % propylene glycol',  fUs: 19,  bUs: 11 },
+            pg30:  { label: '30 % propylene glycol',  fUs: 8,   bUs: -18 },
+            pg40:  { label: '40 % propylene glycol',  fUs: -6,  bUs: null },
             pg50:  { label: '50 % propylene glycol',  fUs: -28, bUs: null }
         };
         const f2c = f => snap((f - 32) / 1.8, 1);
