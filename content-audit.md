@@ -2623,9 +2623,9 @@ BACnet4J, the NEC + the Modbus spec), and Node-verifying physics claims
 against the site's own engines. Already-resolved findings #1–#48 were
 skipped; the metric-rounding, IP-native-formula, vendor-name, and "plain
 English" conventions were honored as non-errors. **Headline: the site
-verified overwhelmingly clean — 0 high, 2 medium, 6 low.** Five of the eight
-below were fixed 2026-07-14 (PR #345); the remaining three are **surfaced, not
-fixed** — they await the owner's disposition.
+verified overwhelmingly clean — 0 high, 2 medium, 6 low.** All eight below are
+now dispositioned: **seven fixed** (five 2026-07-14 in PR #345; L4 and L5 in
+the follow-up PR) and **one accepted as-is** (L2, a known/disclosed limitation).
 Full evidence, sources, and suggested fixes live in the triage doc:
 `docs/audits/2026-07-fresh-accuracy/triage.md`.
 
@@ -2706,7 +2706,12 @@ long-tail names follow bacnet-stack and "should be verified against ASHRAE
 135," so this is a known, disclosed limitation logged for completeness.
 **Suggested direction:** optionally rename the six strings to ASHRAE word
 order. Severity low; confidence high. Triage: L2.
-*(open — awaiting owner disposition, 2026-07-14)*
+**Disposition:** owner-accepted as-is (2026-07-14) — the integer ids are all
+correct; the display strings follow bacnet-stack's spelling, which the
+`bacnetUnits.js` header already discloses and flags for ASHRAE verification. A
+genuine 50/50, not worth churning the display strings; revisit only if a
+canonical-ASHRAE naming pass is done.
+*(accepted — known limitation, 2026-07-14)*
 
 ### 53. modbus-functions.html exception-code table omits code 07 (NAK)
 
@@ -2741,7 +2746,12 @@ header looking unprotected — a pedagogical simplification. **Suggested
 direction:** show both CRC fields, or add a one-line "CRC shown simplified —
 a real frame also has a 1-byte header CRC" caveat in the caption and `<desc>`.
 Severity low; confidence medium-high. Triage: L4.
-*(open — awaiting owner disposition, 2026-07-14)*
+**Resolved:** drew both CRC fields — the single "CRC" box became two, a 1-byte
+`Hdr CRC` right after Length and a 2-byte `Data CRC` at the end of the wrapper
+row (the shared payload rides between them), with the wrapper bracket extended
+to cover both and the `<desc>` rewritten to enumerate the header and data CRCs
+and their positions. PR: content/fresh-audit-l4-l5-l2.
+*(resolved 2026-07-14)*
 
 ### 55. bacnet-services.html buckets AtomicRead/WriteFile under "Data Sharing"
 
@@ -2756,7 +2766,10 @@ Editorial: the page states its table is "the field-relevant set, not the full
 three dozen," so it's a curated-subset labeling call — but the bucket as shown
 is wrong. **Suggested direction:** relabel that row's area "File Access" (or
 "Device Mgmt"). Severity low; confidence medium. Triage: L5.
-*(open — awaiting owner disposition, 2026-07-14)*
+**Resolved:** relabeled the `AtomicReadFile / …WriteFile` row's Area column from
+"Data Sharing" to "File Access", matching the ASHRAE 135 service category.
+PR: content/fresh-audit-l4-l5-l2.
+*(resolved 2026-07-14)*
 
 ### 56. CDAB byte-order nickname inconsistent across tool, lesson, and quiz
 
