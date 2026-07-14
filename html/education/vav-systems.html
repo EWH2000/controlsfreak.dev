@@ -789,8 +789,12 @@ keywords: vav box terminal box variable air volume damper flow ring flow cross v
             if (stagesOn === 0) {
                 coilEl.textContent = held ? 'protected' : 'idle';
             } else {
+                // Verdict edges track the equipment-airflow tool's owner-blessed
+                // 350/400/500 bands (and this page's own ~400 CFM/ton prose): OK
+                // is the 400-500 window, 350-400 is thin, below 350 is icing
+                // territory. Keep in step with tools/equipment-airflow.html.
                 coilEl.textContent = Math.round(cfmPerTon) + ' CFM/ton' +
-                    (cfmPerTon >= 350 ? ' · OK' : (cfmPerTon >= 300 ? ' · thin' : ' · starving'));
+                    (cfmPerTon >= 400 ? ' · OK' : (cfmPerTon >= 350 ? ' · thin' : ' · starving'));
             }
 
             // Status line + anecdote latch.
