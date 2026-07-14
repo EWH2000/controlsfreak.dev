@@ -58,6 +58,7 @@ const PAGES = [
     { name: 'education hub',          url: '/education/' },
     { name: 'education — pid basics',  url: '/education/pid-basics.html' },
     { name: 'education — controller wiring', url: '/education/controller-wiring.html' },
+    { name: 'education — controls commissioning', url: '/education/controls-commissioning.html' },
     { name: 'education — hydronic loops', url: '/education/hydronic-loops.html' },
     { name: 'education — load piping', url: '/education/load-piping.html' },
     { name: 'education — vfds',       url: '/education/vfds.html' },

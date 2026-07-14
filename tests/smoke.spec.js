@@ -3335,7 +3335,7 @@ test.describe('lesson sequence pager (E-016)', () => {
     test('a mid lesson shows both Prev and Next in order', async ({ page }) => {
         await page.goto('/education/hydronic-loops.html');
         await expect(page.locator('.lesson-seq-prev'))
-            .toHaveAttribute('href', '/education/controller-wiring.html');
+            .toHaveAttribute('href', '/education/controls-commissioning.html');
         await expect(page.locator('.lesson-seq-next'))
             .toHaveAttribute('href', '/education/load-piping.html');
     });

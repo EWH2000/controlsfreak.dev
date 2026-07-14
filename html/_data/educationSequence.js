@@ -27,6 +27,7 @@
 const order = [
     "/education/pid-basics.html",
     "/education/controller-wiring.html",
+    "/education/controls-commissioning.html",
     "/education/hydronic-loops.html",
     "/education/load-piping.html",
     "/education/vfds.html",

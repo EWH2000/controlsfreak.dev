@@ -404,6 +404,14 @@ techs new to the industry and anyone wanting a refresh.
   The capstone diagram lands one of each on the same generic
   controller the simulator uses. Pairs with the Controller Wiring
   Simulator.
+- **Controls Commissioning** — how you verify a controller actually
+  does what its sequence of operations says. Point-to-point checkout
+  of every AI, AO, BI, and BO (exercise the point, confirm the value
+  or state, catch reversed actuators and swapped outputs), override
+  discipline (log every force, clear it before turnover), interlock
+  and reset testing against design intent, and trend logs as proof
+  over time. The verification-loop capstone diagram ties it together.
+  Pairs with Controller Wiring and the Function-Block lessons.
 - **Hydronic Loops** — 2-pipe direct return, reverse return, and
   the primary-secondary "twin-T" boiler-injection configuration.
   Animated schematics, plus an interactive injection-pump widget
