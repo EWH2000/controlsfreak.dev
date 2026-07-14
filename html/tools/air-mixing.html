@@ -479,6 +479,14 @@ faqs:
 
         // ── Tab calculation ───────────────────────────────────────────
         function calcTab(tab) {
+            // Engine guard (codebase-issues #139): degrade to the muted state
+            // with a clear message if psychro-engine.js failed to load, rather
+            // than throwing on the undefined Psychro global inside readStream.
+            if (typeof Psychro === 'undefined') {
+                clearOutputs(tab);
+                setStatus(tab, 'Psychrometric engine unavailable — reload the page.', 'error');
+                return;
+            }
             const P = pressure();
             const states = STREAMS.map(sn => readStream(tab, sn, P));
 
