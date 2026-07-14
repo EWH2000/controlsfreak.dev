@@ -32,6 +32,25 @@ test('P-only leaves the analytic steady-state offset (med, Kc=2)', () => {
     expect(r.overshoot).toBe(0);
 });
 
+// Pins the pid-basics "P only" (Sim 1) caption to the engine (#154,
+// content-audit #45). The Education mini-sim exposes only the fast / med
+// / slow chips — all low dead-time (dead÷τ ≈ 0.13) — so pure P cannot
+// ring on them at any reachable gain; the caption must promise a
+// tightening offset, not overshoot. Ringing under P alone needs the
+// dead-time-dominant loop (vhigh, dead÷τ = 0.5), which lives only on the
+// full tuner. Same root cause as content-audit #34, one surface further.
+test('pure P cannot ring on the Sim 1 loops but rings on the dead-time loop (#154)', () => {
+    for (const key of ['fast', 'med', 'slow']) {
+        for (const Kc of [10, 20]) {                 // 20 = Sim 1 slider max
+            const r = simulatePid(PID_PROC[key], Kc, 0, 0);
+            expect(r.overshoot, `${key} Kc=${Kc} must not overshoot under pure P`).toBe(0);
+        }
+    }
+    // The dead-time-dominant loop the caption points at (the full tuner's)
+    // does overshoot/ring once gain climbs — that's why it's the one to use.
+    expect(simulatePid(PID_PROC.vhigh, 20, 0, 0).overshoot).toBeGreaterThan(5);
+});
+
 test('adding integral removes the offset (med, Kc=2, 1 repeat/min)', () => {
     const r = simulatePid(PID_PROC.med, 2, 1, 0);
     expect(Math.abs(r.ssErr)).toBeLessThan(0.1);

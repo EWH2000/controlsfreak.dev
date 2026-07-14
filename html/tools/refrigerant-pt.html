@@ -420,9 +420,20 @@ keywords: pt chart r22 r410a r134a r407c psig kpag saturation glide superheat su
                 ptCopy = 'Bubble ' + dispT(bub.value) + ' ' + tU() + ' / Dew ' + dispT(dew.value) + ' ' + tU();
                 document.getElementById('rf-pt-formula').textContent =
                     `${R.name} at ${dispP(p)} ${pU()} — bubble ${dispT(bub.value)} ${tU()}, dew ${dispT(dew.value)} ${tU()}`;
+                // Three tiers by computed glide: a large-glide zeotrope (R-407C,
+                // ~7-12 °F) where the dew/bubble split is unmissable; a small-glide
+                // blend (R-454B, ~2 °F) where it's modest but still real — telling
+                // that user "effectively one temperature" would contradict both the
+                // superheat/subcooling lesson and the tool's own dew-vs-bubble
+                // referencing; and the near-azeotropes (≤ ~1 °F: R-410A, R-404A)
+                // that genuinely behave pure. The 1.5 °F edge sits cleanly between
+                // R-404A (≤ 1.1 °F computed) and R-454B (≥ 1.8 °F computed).
                 if (glide >= 5) {
                     setStatus('rf-pt-status',
                         `${R.name} is a glide blend — ${dispDT(glide)} ${dtU()} between bubble and dew. Superheat references the dew point, subcooling the bubble point.`, 'ok');
+                } else if (glide >= 1.5) {
+                    setStatus('rf-pt-status',
+                        `${R.name} — small glide, ${dispDT(glide)} ${dtU()} between bubble and dew. Superheat still references the dew point, subcooling the bubble point.`, 'ok');
                 } else {
                     setStatus('rf-pt-status',
                         `${R.name} — negligible glide; bubble and dew are effectively one saturation temperature.`, 'ok');

@@ -75,8 +75,11 @@ keywords: gain reset rate proportional integral derivative offset loop error
         <div class="tool-body">
             <p style="font-size:0.92rem;line-height:1.75;color:var(--text);margin-bottom:1.1rem;">
                 Proportional control alone always settles a little short of setpoint — the steady-state offset (droop)
-                that integral exists to fix. Raise the gain and the offset shrinks but the loop starts to ring; back it
-                off and the loop is calm but the gap grows. It never reaches zero — that's the point.
+                that integral exists to fix. Raise the gain and the offset shrinks; back it off and the gap grows. It
+                never reaches zero — that's the point: P needs some error to produce any output, so the loop settles a
+                hair short no matter how hard you push. These three loops stay well-damped as you push, so what you see
+                is the gap tightening, not the loop ringing — the overshoot-and-hunt that too much P brings on needs a
+                loop with real dead time (the full <a href="/simulators/pid-tuner.html">PID Tuning Helper</a> has one).
             </p>
 
             <div class="btn-row" style="margin-bottom:1.1rem;">

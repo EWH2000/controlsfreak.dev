@@ -1687,6 +1687,22 @@ region (the metrics-announcer precedent). `[future: a "load these into
 the sliders" affordance was considered and skipped — user gains on the
 toy process would misread as a simulation of their loop]`
 
+### PID basics — surface direct vs reverse acting? *(idea, noted 2026-07-14)*
+*Surfaced by the codebase-issues #154 sim/tool physics diff — an
+observation, not a defect: the physics on the page is correct.* The P
+callout's only worked example is a **chilled-water valve** (PV above SP,
+valve opens as error grows — a cooling / direct-acting loop), while every
+mini-sim and the engine (`e = SP − pv`, presets start below SP) is a
+**heating / reverse-acting** loop. Both are right in isolation, but the
+page never names the direct/reverse distinction, so a careful reader can
+be briefly thrown that the example's valve opens as PV *rises* while Sim 1
+drives *up* from below. The full tuner's Symptom→Move cheat sheet even
+lists "flip acting (direct ↔ reverse)" — a control the engine has no
+parameter for (it's fixed reverse-acting). Candidate: a one-line aside in
+the P callout naming acting direction, or switch the worked example to a
+heating valve so it matches the sims. Low priority; the arithmetic is
+sound either way.
+
 ### PID tuner — live process visualization + tune-it-blind spoiler *(shipped 2026-06-08)*
 *The interactive home hero sells a live loop, then links to the tuner —
 which by contrast drew a **static** step-response chart and showed none

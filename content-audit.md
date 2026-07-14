@@ -2500,3 +2500,114 @@ engine header, and the page's "How it works" line to
 Q ∝ speed at reduced speed. PR: fix/hydronic-affinity-head. (This is a
 content-accuracy fix from the 2026-07 workflow audit, distinct from the
 open hydronic *code-quality* items codebase-issues #134/#135/#137.)
+
+## Audit scope — sim/explainer ↔ tool physics diff (codebase-issues #154, 2026-07-14)
+
+A focused pass diffing every interactive model against the dedicated tool
+that computes the same physics — scoped after the 2026-07 workflow found
+both its real defects (hydronic affinity #44, 4-20 mA loop power #38)
+living in interactive math that had drifted from a companion calculator.
+Eight physics clusters were diffed and each shared relation re-derived and
+run in node at real operating points. Most surfaces were consistent —
+affinity/VFD, hydronic valve/load, signal scaling, staging, psychrometrics,
+duct/airflow, refrigerant P-T definitions, electrical — with node-verified
+agreement (details in codebase-issues #154). Four content-accuracy items
+surfaced and were fixed (#45-#48); two cross-widget cosmetics were logged
+to codebase-issues rather than fixed inline.
+
+### 45. pid-basics "P only" sim caption promises ringing the widget can't produce
+
+**Location:** education/pid-basics.html (Sim 1 caption) vs. the reachable
+behavior of scripts/pid-engine.js on the fast/med/slow presets. **Lens:**
+content (taught behavior). **Verification status: verified** (engine run in
+node at Kc 2-20).
+
+The Sim 1 caption read "Raise the gain and the offset shrinks but the loop
+starts to ring." The three loops the mini-sim exposes are all low dead-time
+(dead÷τ ≈ 0.13), so pure proportional control produces 0 % overshoot and
+zero setpoint crossings at every gain up to the slider max (Kc = 20) — the
+offset just shrinks monotonically. Ringing under P alone needs the
+dead-time-dominant loop (vhigh, dead÷τ = 0.5), which lives only on the full
+tuner. A reader dragging the gain slider as instructed never sees the ring
+the caption promises. Same root cause as #34 (the tuner cheat-sheet
+described unreachable failure modes) — the #34 fix added the vhigh preset to
+the tuner but never propagated to this Education mini-sim.
+
+**Resolved (2026-07-14):** reworded the caption to describe what these loops
+actually do — the offset tightens but never closes (P needs error to make
+output) and the loops stay well-damped — with a forward-reference to the
+full PID tuner for the dead-time loop that does ring. Added a pid-engine
+spec (`pure P cannot ring on the Sim 1 loops but rings on the dead-time
+loop`) pinning 0 overshoot on fast/med/slow at Kc ≤ 20 and > 5 % on vhigh.
+PR: issue-154/sim-tool-physics-audit.
+
+### 46. superheat-subcooling worked example claims the P-T tool "reads the same 10 °F back" — it interpolates to 10.2 / 9.6
+
+**Location:** education/superheat-subcooling.html (worked example) vs.
+tools/refrigerant-pt.html + scripts/refrigerant-data.js. **Lens:** content
+(claim about tool output). **Verification status: verified** (the page's
+tempAtP interpolation replicated in node).
+
+The lesson uses whole-degree chart values (R-410A dew ≈ 40 °F @118 psig,
+bubble ≈ 105 °F @340 psig → 10 °F superheat and subcooling), then tells the
+reader they'll "read the same 10 °F back" from the P-T tool. But the tool
+interpolates linearly between chart rows: dew@118 = 39.8 °F → superheat 10.2,
+bubble@340 = 104.6 °F → subcooling 9.6. The subcooling side is off by 0.4 °F
+from the claimed 10. The site's own metric-rounding policy insists on stating
+"the result a … user actually sees," so a checkable claim about tool output
+has to match.
+
+**Resolved (2026-07-14):** softened to "you'll read about 10 °F back either
+way — the tool interpolates between chart rows, so it lands a couple tenths
+off these whole-degree chart values." Added a data-integrity spec pinning the
+interpolated 10.2 / 9.6 so the "about" phrasing stays honest if the table is
+refined. (metering-devices-txv-eev.html uses the same 10 °F as a narrative
+anchor for the TXV-holds-superheat physics but makes no claim about tool
+output, so it was left unchanged.) PR: issue-154/sim-tool-physics-audit.
+
+### 47. R-454B's ~2 °F glide is labeled "negligible" by the P-T tool, contradicting the lesson that teaches it as a glide blend
+
+**Location:** tools/refrigerant-pt.html (P-T status pill) vs.
+education/superheat-subcooling.html (blend glide). **Lens:** content
+(tool/lesson consistency). **Verification status: verified** (glide computed
+across the table in node).
+
+The P-T pill had two tiers: glide ≥ 5 °F → "glide blend — superheat
+references the dew point, subcooling the bubble point"; else → "negligible
+glide; bubble and dew are effectively one saturation temperature." R-454B's
+computed glide is ~1.8-2.3 °F, so it fell in the "negligible / effectively
+one temperature" bucket — the opposite of superheat-subcooling.html, which
+groups R-454B as a zeotropic blend where the dew/bubble distinction matters,
+and of the tool's own computation (it references dew for superheat and bubble
+for subcooling on R-454B regardless of the pill wording). The data file's own
+comment ("≤ 1 °F glide behaves effectively pure") also puts a 2 °F blend
+outside the negligible bucket.
+
+**Resolved (2026-07-14):** added a middle "small glide" tier (1.5 ≤ glide < 5)
+that names the glide and keeps the dew/bubble guidance, so R-454B (and any
+~2 °F blend) is described consistently with the lesson. The 1.5 °F edge sits
+cleanly between R-404A (≤ 1.1 °F computed) and R-454B (≥ 1.8 °F). Added a
+data-integrity spec pinning each refrigerant into its tier. PR:
+issue-154/sim-tool-physics-audit.
+
+### 48. VAV coil-airflow widget's CFM/ton verdict disagrees with the equipment-airflow tool it links to
+
+**Location:** education/vav-systems.html (coil-airflow widget) vs.
+tools/equipment-airflow.html (owner-blessed 350/400/500 bands). **Lens:**
+content (cross-surface + internal consistency). **Verification status:
+verified** (widget math traced; presets recomputed).
+
+The widget banded coil airflow as ≥ 350 → OK, 300-350 → thin, else →
+starving. The equipment-airflow tool (the source of truth, owner-blessed
+edges dated 2026-07-11) reserves OK for the 400-500 window and calls 350-400
+"thin." So a coil at ~389 CFM/ton read "OK" in the widget and "thin — warn"
+in the tool — and the same VAV page's own prose calls the floor "near 400
+CFM of air per ton" and links to the tool. The physics (CFM/ton = total ÷
+(stages × tons)) is identical on both; only the verdict edges drifted.
+
+**Resolved (2026-07-14):** shifted the widget's edges to match the tool
+(≥ 400 → OK, 350-400 → thin, < 350 → icing), with a comment tying it to
+equipment-airflow.html as the source of truth. The design preset lands at
+exactly 400 CFM/ton (still OK); sliding the driving zone down reads "thin,"
+matching the tool. Added a behavioral spec pinning the verdict at 400 and 389
+CFM/ton. PR: issue-154/sim-tool-physics-audit.

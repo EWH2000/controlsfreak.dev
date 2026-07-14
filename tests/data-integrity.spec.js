@@ -66,6 +66,63 @@ for (const id of Object.keys(REFRIGERANTS)) {
     });
 }
 
+// Linear interpolation of °F over psig — the tempAtP the P-T tool
+// (refrigerant-pt.html) uses to read a saturation curve between rows.
+function tempAtP(curve, p) {
+    for (let i = 1; i < curve.length; i++) {
+        if (curve[i][0] >= p) {
+            const [p0, t0] = curve[i - 1], [p1, t1] = curve[i];
+            return t0 + (t1 - t0) * (p - p0) / (p1 - p0);
+        }
+    }
+    return null;
+}
+
+// The R-410A worked example on superheat-subcooling.html quotes whole-degree
+// chart values (dew ≈ 40 °F, bubble ≈ 105 °F → 10 °F superheat and
+// subcooling). The P-T tool interpolates between chart rows, so it actually
+// reads a couple tenths off — which is why the lesson now says "about 10 °F,"
+// not "the same 10 °F back" (#154, content-audit #46). Pin the interpolated
+// values so that phrasing stays honest if the table is ever refined.
+test('P-T tool interpolates the R-410A worked example to ~10 °F, not exactly 10 (#154)', () => {
+    const R = REFRIGERANTS.r410a;
+    const superheat  = 50 - tempAtP(R.dew, 118);      // suction: line − dew
+    const subcooling = tempAtP(R.bubble, 340) - 95;   // liquid: bubble − line
+    expect(superheat).toBeCloseTo(10.2, 1);
+    expect(subcooling).toBeCloseTo(9.6, 1);
+    // Both land off the whole-degree 10 — the reason the caption says "about."
+    expect(Math.abs(superheat - 10)).toBeGreaterThan(0.05);
+    expect(Math.abs(subcooling - 10)).toBeGreaterThan(0.05);
+});
+
+// The refrigerant-pt.html status pill sorts refrigerants into three tiers by
+// computed glide (≥ 5 → glide blend; ≥ 1.5 → small glide; else negligible).
+// Pin each into its intended tier so the pill can't silently mis-describe a
+// blend if the tables are edited — e.g. tell an R-454B user its ~2 °F glide is
+// "effectively one saturation temperature," contradicting the superheat/
+// subcooling lesson (#154, content-audit #47). Edges: R-404A ≤ 1.1, R-454B ≥ 1.8.
+test('computed glide keeps each refrigerant in its pill tier (#154)', () => {
+    const glideRange = (R) => {
+        let lo = Infinity, hi = -Infinity;
+        for (const [p, bubT] of R.bubble) {
+            if (p < R.dew[0][0] || p > R.dew[R.dew.length - 1][0]) continue;
+            const g = tempAtP(R.dew, p) - bubT;
+            if (g < lo) lo = g;
+            if (g > hi) hi = g;
+        }
+        return { lo, hi };
+    };
+    // Large-glide zeotrope → always the "glide blend" tier.
+    expect(glideRange(REFRIGERANTS.r407c).lo).toBeGreaterThanOrEqual(5);
+    // Small-glide blend → always the middle tier: at/above 1.5, never up to 5.
+    const g454 = glideRange(REFRIGERANTS.r454b);
+    expect(g454.lo).toBeGreaterThanOrEqual(1.5);
+    expect(g454.hi).toBeLessThan(5);
+    // Near-azeotropes → below the 1.5 middle-tier edge (the "negligible" tier).
+    expect(glideRange(REFRIGERANTS.r404a).hi).toBeLessThan(1.5);
+    expect(glideRange(REFRIGERANTS.r410a).hi).toBeLessThan(1.5);
+});
+
 // ── Thermistor / RTD generated tables vs published checkpoints ─────
 
 const THERMISTORS = loadGlobal('thermistor-data.js', 'THERMISTOR_TYPES');
