@@ -1,0 +1,405 @@
+---
+title: Air Balancing — controlsfreak.dev
+description: Commissioning the air side to design flows — the flow ring and CFM = K√VP, setting VAV box min, max and reheat, proportional balancing, and building pressure.
+canonical: https://controlsfreak.dev/education/air-balancing.html
+nav: education
+category: forced-air
+keywords: air balancing TAB testing adjusting balancing K-factor flow ring flow cross velocity pressure vav box min max reheat flow pressure independent pressure dependent bypass damper proportional balancing index zone building pressurization zone airflow duct traverse minimum outdoor air commissioning
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Education · Air Balancing</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">Air Balancing <span class="tool-tag">Air Systems</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                The rest of this chapter walked the air from the handler out to the boxes and taught what every station
+                is supposed to do. This page is about proving it does. One question, start to finish: <em>how do you
+                balance and commission the air side so every zone actually receives the design flow it was drawn for —
+                and how do you know when it doesn't?</em>
+            </p>
+
+            <div class="callout">
+                <p style="font-size:0.86rem;line-height:1.7;">
+                    Air balancing is one of three efforts that turn a built system into a commissioned one. The other
+                    two are its siblings: <em>controls functional testing</em> — proving each sequence does what the
+                    sequence of operations says, its own topic and a separate page still to come — and
+                    <a href="/education/balancing.html">hydronic balancing</a>, the water-side twin of everything below.
+                    This page stays on the air. Where the water side sets flow with a
+                    <a href="/education/balancing.html#cbv">valve at every load</a>, the air side sets it with a
+                    <a href="/education/vav-systems.html">box at every zone</a> — and the field method for evening the
+                    two out is the same shape, which the last section makes explicit.
+                </p>
+            </div>
+
+            <!-- ───────────────── 1 · The flow ring ───────────────── -->
+
+            <h2 class="subhead" id="the-flow-ring">What the Box Thinks It's Moving</h2>
+
+            <p>
+                Start where every air balance starts: the number the box reports. A pressure-independent
+                <a href="/education/vav-systems.html#box-anatomy">VAV box</a> measures its own airflow with a
+                <em>flow ring</em> — a ring or cross of averaging ports across the inlet, one set of holes facing into
+                the airstream and one facing away. The difference between them is the <em>velocity pressure</em>, and
+                velocity pressure rises with the square of air speed, so airflow follows a square root of it:
+            </p>
+
+            <p style="text-align:center;font-family:var(--mono);font-size:1.05rem;color:var(--text-bright);margin:1.4rem 0;">
+                CFM = K × √VP<span style="color:var(--text-dim);font-size:0.85rem;">&nbsp;&nbsp;(also written Q = K√ΔP)</span>
+            </p>
+
+            <p>
+                <strong>K is the whole personality of the reading.</strong> It's the box manufacturer's coefficient for
+                that particular inlet — literally the CFM the ring reads at exactly 1.0&nbsp;in.&nbsp;w.c. of velocity
+                pressure, since √1.0&nbsp;=&nbsp;1. A box with K&nbsp;=&nbsp;1000 seeing 0.36&nbsp;in.&nbsp;w.c. believes
+                it's passing <span data-us="600&nbsp;CFM" data-metric="1,020&nbsp;m³/h">600&nbsp;CFM</span> (1000&nbsp;×&nbsp;√0.36
+                = 1000&nbsp;×&nbsp;0.6). That K comes off a catalog for the box size, and — like the K-factor itself — the
+                whole velocity-pressure frame is US-native; the number printed on a metric box is a different figure on a
+                different label, so this section keeps VP and K in their IP field frame the way the
+                <a href="/tools/airflow.html">airflow tool</a> does. What matters for balancing is that K is not a
+                law of nature. It's a nameplate estimate, and the installed reality — duct approach, transitions, the
+                specific ring — shifts it. <strong>An uncommissioned box obeys its flow loop perfectly, around a number
+                nobody ever checked.</strong>
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                So the first act of air balancing is to distrust that number and go get an independent one. A
+                <a href="/tools/duct-traverse.html">duct traverse</a> — a grid of Pitot readings averaged across the
+                duct by the log-Tchebycheff points, not a single centerline poke — is the honest measurement the box's
+                ring is only estimating. Put the two side by side. If the traverse (or a calibrated flow hood on the
+                diffusers) says the box is really moving
+                <span data-us="660&nbsp;CFM" data-metric="1,120&nbsp;m³/h">660&nbsp;CFM</span> while the controller
+                computes <span data-us="600&nbsp;CFM" data-metric="1,020&nbsp;m³/h">600&nbsp;CFM</span> at the same
+                velocity pressure, the box is reading about ten percent low — and every setpoint you program into it will
+                be off by that ten percent until you fix K. The fix is arithmetic: the true K is
+                660&nbsp;÷&nbsp;√0.36&nbsp;=&nbsp;1100, so you trim the coefficient from 1000 up to 1100 (the
+                <a href="/tools/airflow.html">airflow tool's</a> second mode back-solves exactly this), and only then does
+                a programmed setpoint mean the CFM it says. The independent measurement is not optional; it's what
+                separates a balanced box from a confident one.
+            </p>
+
+            <svg class="edu-svg" viewBox="0 0 540 244" role="img" aria-labelledby="ab-d1-title ab-d1-desc" font-family="var(--mono)">
+                <title id="ab-d1-title">Field-verifying box airflow against an independent traverse</title>
+                <desc id="ab-d1-desc">Two parallel signal chains. The top chain: the flow ring's velocity-pressure
+                    signal feeds the box controller, which computes airflow as K times the square root of velocity
+                    pressure and reports six hundred CFM. The bottom chain: an independent duct traverse, averaged by
+                    the log-Tchebycheff points, measures six hundred sixty CFM. The two readouts disagree by ten
+                    percent, and the conclusion below is to trim the box factor K until the controller's number matches
+                    the traverse.</desc>
+
+                <!-- top lane: what the box computes -->
+                <rect x="20" y="40" width="150" height="50" fill="var(--surface)" stroke="var(--border)"/>
+                <text x="95" y="62" font-size="12" fill="var(--text-bright)" text-anchor="middle">flow ring</text>
+                <text x="95" y="79" font-size="11" fill="var(--text-dim)" text-anchor="middle">VP at the inlet</text>
+
+                <line x1="170" y1="65" x2="205" y2="65" stroke="var(--text)" stroke-width="1.5"/>
+                <polygon points="205,60 205,70 213,65" fill="var(--text)"/>
+
+                <rect x="214" y="40" width="160" height="50" fill="var(--surface)" stroke="var(--border)"/>
+                <text x="294" y="62" font-size="12" fill="var(--text-bright)" text-anchor="middle">box controller</text>
+                <text x="294" y="79" font-size="12" fill="var(--text-dim)" text-anchor="middle">CFM = K √VP</text>
+
+                <line x1="374" y1="65" x2="409" y2="65" stroke="var(--text)" stroke-width="1.5"/>
+                <polygon points="409,60 409,70 417,65" fill="var(--text)"/>
+
+                <rect x="418" y="40" width="104" height="50" fill="var(--bg)" stroke="var(--teal)"/>
+                <text x="470" y="60" font-size="11" fill="var(--text-dim)" text-anchor="middle">box says</text>
+                <text x="470" y="79" font-size="13" fill="var(--text-bright)" text-anchor="middle">600 CFM</text>
+
+                <!-- bottom lane: what a traverse measures -->
+                <rect x="20" y="154" width="150" height="50" fill="var(--surface)" stroke="var(--border)"/>
+                <text x="95" y="176" font-size="12" fill="var(--text-bright)" text-anchor="middle">duct traverse</text>
+                <text x="95" y="193" font-size="11" fill="var(--text-dim)" text-anchor="middle">log-Tcheb average</text>
+
+                <line x1="170" y1="179" x2="409" y2="179" stroke="var(--text)" stroke-width="1.5"/>
+                <polygon points="409,174 409,184 417,179" fill="var(--text)"/>
+
+                <rect x="418" y="154" width="104" height="50" fill="var(--bg)" stroke="var(--teal)"/>
+                <text x="470" y="174" font-size="11" fill="var(--text-dim)" text-anchor="middle">actually</text>
+                <text x="470" y="193" font-size="13" fill="var(--text-bright)" text-anchor="middle">660 CFM</text>
+
+                <!-- the comparison seam -->
+                <line x1="470" y1="90" x2="470" y2="154" stroke="var(--heat)" stroke-width="1.5" stroke-dasharray="4 4"/>
+                <text x="462" y="126" font-size="12" fill="var(--heat)" text-anchor="end">off by 10 %</text>
+
+                <text x="270" y="230" font-size="12" fill="var(--text)" text-anchor="middle">trim K (×1.10) until the box's number becomes the traverse's</text>
+            </svg>
+
+            <!-- // OWNER ANECDOTE: a real air-balance catch on the measurement itself — a box whose
+                 controller read dead-on its design CFM while an independent traverse (or flow hood)
+                 said it was well over/under, because K was never trimmed from the catalog value;
+                 or the mirror case where a plugged/kinked ring sensing tube made a perfectly-flowing
+                 box read low and the balancer chased a phantom. Teaching point: the box's number is
+                 only as trustworthy as its K and its tubing — the independent measurement is what
+                 proves it. House voice, first person, real story only — do not fabricate. -->
+
+            <!-- ───────────────── 2 · Setting the airflows ───────────────── -->
+
+            <h2 class="subhead" id="setting-airflows">Three Setpoints in the Box</h2>
+
+            <p>
+                With K honest, the box's flow number finally means something, and now you can program the setpoints the
+                balance is built around. Three of them do the work. The <strong>maximum</strong> — the cooling design
+                flow — is the ceiling the box drives toward when the zone is hottest; it comes off the mechanical
+                schedule as the zone's design cooling load expressed in air. The <strong>minimum</strong> is where the
+                flow loop stops when the zone satisfies, and it is the setpoint people get wrong, because they read it as
+                a comfort number when it's really a <em>ventilation floor</em>. And on a box that can heat, a separate
+                <strong>reheat (heating) minimum</strong> — sometimes higher than the cooling minimum — sets the flow the
+                box holds while its reheat coil warms the air.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                The minimum deserves the emphasis. Occupied zones need their code-required share of fresh air, and that
+                share rides in on the supply air; close a box too far and the temperature can be fine while the
+                ventilation quietly isn't. The floor is not a round number somebody liked — it's the outcome of the
+                <a href="/tools/minimum-outdoor-air.html">ASHRAE 62.1 ventilation math</a> (the per-person and per-area
+                rates, divided by the zone air-distribution effectiveness) turned into a minimum CFM at the box. Set it
+                below that and you've balanced a zone that meets its cooling load and starves its occupants of air; set
+                it needlessly high and you pay to over-cool the zone and then <a href="/education/vav-systems.html#minimums">reheat
+                it back</a>, which is the plant heating air it just paid to cool. Getting the minimum <em>right</em>,
+                rather than generous, is most of the craft — and it's why the balance report records the minimum as a
+                ventilation figure, not just a comfort one.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                One trap belongs here because it hides inside the box's own honesty. The box holds <em>flow</em>, but the
+                fresh-air fraction that flow carries is set at the <em>unit</em>, and on a VAV system the supply fan
+                slows as the boxes throttle — so a fixed outside-air damper passes less actual outside air at low fan
+                speed. A box minimum that delivers its ventilation share on the design day can quietly under-ventilate on
+                a mild one if the unit isn't measuring or controlling its outside air. The box's minimum is a necessary
+                floor, not a sufficient one; the <a href="/education/building-pressure.html#dampers-pressure">unit has to
+                hold up its end</a> too.
+            </p>
+
+            <!-- ───────────────── 3 · Box types + bypass ───────────────── -->
+
+            <h2 class="subhead" id="box-types">Pressure-Independent, Pressure-Dependent, Bypass</h2>
+
+            <p>
+                Not every terminal defends its own flow, and which kind you're balancing changes what the balance even
+                means. A <strong>pressure-independent</strong> box is the one the last two sections assumed: it reads its
+                flow ring and drives the damper to hold a CFM setpoint, so when trunk static wiggles — a neighbor
+                throttling, the fan speeding up — the flow loop absorbs it and the zone never feels it. Balance that box
+                once and the setpoints hold, because the box itself keeps holding them. It's the air-side cousin of the
+                <a href="/education/balancing.html#picv">PICV</a> on the water side, and for the same reason: it meters
+                flow, not position.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                A <strong>pressure-dependent</strong> box has no flow ring and no flow loop. Its damper is commanded to a
+                <em>position</em>, and the air that flows through that position depends entirely on the inlet static
+                behind it — so the moment another zone opens or closes and shifts trunk pressure, this zone's flow moves
+                with it, to a load that never changed. There is nothing to program a CFM setpoint into. Balancing a
+                pressure-dependent system means setting damper positions (and often manual balancing dampers in the
+                branch) at one operating condition and accepting that the balance is only true near that condition — the
+                same fragility a <a href="/education/balancing.html#cbv">calibrated balancing valve</a> has on the water
+                side. It's why pressure-independent boxes became the default: the balance survives the building changing
+                its mind.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                <strong>Bypass systems</strong> solve the mismatch differently, at the unit instead of the zone. A
+                bypass box (or a bypass damper from supply to return) dumps excess supply air straight back to the return
+                when the zones close down, so the fan sees a nearly constant volume while the zones see variable. The
+                bypass damper is controlled off <a href="/education/duct-static-control.html">duct static pressure</a>:
+                as the zone dampers close and static rises, the bypass opens and spills the surplus, holding the trunk at
+                a setpoint. It keeps a constant-volume unit alive on a variable-flow building — cheap, common on small
+                packaged systems — but it saves no fan energy (the fan moves design air all day, some of it in a circle)
+                and it can short-circuit cold supply air back over the return sensor. Balancing a bypass system means
+                setting that static setpoint so the bypass carries exactly the surplus and no more, then proving the
+                zones still make their design flows with the bypass doing its job. It is the opposite philosophy from a
+                pressure-independent box, which holds flow <em>regardless</em> of static rather than spilling to defend
+                static.
+            </p>
+
+            <!-- ───────────────── 4 · Building pressure ───────────────── -->
+
+            <h2 class="subhead" id="building-pressure">Setting the Building Slightly Positive</h2>
+
+            <p>
+                Zone-by-zone flow is only half of a balance; the building as a whole has to keep its own books. Every
+                cubic foot the unit brings in as outside air has to leave somewhere, and the residual — after the relief
+                path, the dedicated exhausts, and the leakage have taken their share — <em>is</em> the building pressure.
+                The target isn't neutral: designers hold a building <strong>slightly positive</strong>, a setpoint around
+                <span data-us="+0.02 to +0.05&nbsp;in. w.c." data-metric="+5 to +12&nbsp;Pa">+0.02 to +0.05&nbsp;in. w.c.</span>
+                relative to outdoors, so conditioned air seeps outward through the cracks instead of unfiltered, humid
+                air seeping in. Get it wrong and the doors tell on you — too positive and exterior doors drift open
+                against their closers; too negative and they go heavy and whistle at the weatherstripping.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                For the balancer this lands as a tracking relationship: <strong>supply, return, exhaust, and relief have
+                to add up to the small positive surplus you want.</strong> On a built-up unit that usually means setting
+                the return or relief fan to track the supply fan at a measured-flow offset — supply minus return equals
+                the standing withdrawal the building's dedicated exhausts steal from the unit's territory, plus the
+                surplus that holds it positive. The offset is not a fudge factor; it's an air-ledger figure, and it has
+                to be commissioned against the exhausts that were actually installed, not the ones on the drawing.
+                Getting that offset right is where zone balancing and building balancing meet — the whole envelope story
+                is <a href="/education/building-pressure.html">its own page of this chapter</a>, and the balance isn't
+                finished until the pressure sits where it belongs across the operating range, not just at one damper
+                position.
+            </p>
+
+            <!-- ───────────────── 5 · Proportional balancing ───────────────── -->
+
+            <h2 class="subhead" id="proportional">Proportional Balancing: Evening Out the Zones</h2>
+
+            <p>
+                Now the field method itself, and it's the same one the <a href="/education/balancing.html#cbv">water side
+                uses</a> because it solves the same problem: the terminals interact. Throttle the near ones and the
+                pressure they were hogging shifts to the far ones, which then read differently — so you can't just walk
+                the trunk once, set each terminal to its design flow, and call it done. The first terminal you touch is
+                already wrong by the time you reach the last.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                The answer is <em>proportional balancing</em>. Pick a reference: the <strong>index terminal</strong> —
+                the worst-case run, usually the farthest or most-restricted zone, the one that will lose flow first when
+                pressure drops. Measure every terminal as a <em>fraction of its own design flow</em>, and instead of
+                chasing absolute CFM, bring each one to the <em>same fraction</em> as the index. When every terminal is
+                delivering, say, ninety percent of its design, the system is <em>in proportion</em> even if it's not yet
+                at full flow — and now one move fixes all of it: set the fan (or open the index wide) to lift the whole
+                proportioned set up to one hundred percent together. Because the terminals are already in the right
+                <em>ratio</em>, raising the common supply raises them all in step. Then go back and check, because the
+                first pass moved the reference; two or three iterations is normal, more on a big system. It is real
+                work — half a day for a small system, a week for a large one — and the payoff is a building that's even,
+                not one that's merely full.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                Two air-side wrinkles the water side doesn't have. First, on pressure-independent boxes much of this is
+                done <em>in software</em> — you're proportioning by trimming K and the min/max setpoints so each box's
+                held flow matches its design share, then letting the boxes hold it — but the index-zone logic is
+                identical: prove the worst-case zone can make its number, and the rest follow. Second, the total has to
+                reconcile: the sum of the balanced box flows should agree with an independent traverse of the supply
+                trunk, and with the design outside-air fraction the unit is set to bring in. A building whose zones each
+                read right but whose trunk traverse doesn't add up is telling you a box is lying, a duct is leaking, or
+                the schedule and the installation disagree.
+            </p>
+
+            <svg class="edu-svg" viewBox="0 0 540 268" role="img" aria-labelledby="ab-d2-title ab-d2-desc" font-family="var(--mono)">
+                <title id="ab-d2-title">Proportional air balancing against the index zone</title>
+                <desc id="ab-d2-desc">A supply fan on the left feeds one trunk that runs across the drawing to four
+                    terminals dropping into four zones. Each terminal is labelled with its percentage of design flow;
+                    all four read one hundred percent, meaning they are in proportion. The farthest terminal is flagged
+                    as the index zone, the worst-case run. Annotations describe the method: proportion every terminal to
+                    the same fraction of design as the index, then raise the common supply to bring the whole set to one
+                    hundred percent, and iterate.</desc>
+
+                <!-- fan -->
+                <rect x="16" y="70" width="86" height="54" fill="var(--surface)" stroke="var(--border)"/>
+                <text x="59" y="94" font-size="12" fill="var(--text-bright)" text-anchor="middle">supply</text>
+                <text x="59" y="110" font-size="12" fill="var(--text-dim)" text-anchor="middle">fan</text>
+
+                <!-- supply trunk -->
+                <path id="ab-d2-trunk" data-flow="air" d="M102 97 H505" fill="none" stroke="var(--blue)" stroke-width="4"/>
+                <polygon points="497,92 497,102 507,97" fill="var(--blue)"/>
+
+                <!-- four terminal drops + zones -->
+                <path id="ab-d2-dr1" data-flow="air" data-flow-density="0.4" d="M170 97 V138" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <rect x="150" y="138" width="40" height="18" fill="var(--surface)" stroke="var(--text)"/>
+                <rect x="146" y="176" width="48" height="26" fill="none" stroke="var(--border)"/>
+                <text x="170" y="193" font-size="10" fill="var(--text-dim)" text-anchor="middle">zone</text>
+                <text x="170" y="222" font-size="12" fill="var(--text-bright)" text-anchor="middle">100 %</text>
+
+                <path id="ab-d2-dr2" data-flow="air" data-flow-density="0.4" d="M270 97 V138" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <rect x="250" y="138" width="40" height="18" fill="var(--surface)" stroke="var(--text)"/>
+                <rect x="246" y="176" width="48" height="26" fill="none" stroke="var(--border)"/>
+                <text x="270" y="193" font-size="10" fill="var(--text-dim)" text-anchor="middle">zone</text>
+                <text x="270" y="222" font-size="12" fill="var(--text-bright)" text-anchor="middle">100 %</text>
+
+                <path id="ab-d2-dr3" data-flow="air" data-flow-density="0.4" d="M370 97 V138" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <rect x="350" y="138" width="40" height="18" fill="var(--surface)" stroke="var(--text)"/>
+                <rect x="346" y="176" width="48" height="26" fill="none" stroke="var(--border)"/>
+                <text x="370" y="193" font-size="10" fill="var(--text-dim)" text-anchor="middle">zone</text>
+                <text x="370" y="222" font-size="12" fill="var(--text-bright)" text-anchor="middle">100 %</text>
+
+                <!-- index terminal (far end) -->
+                <path id="ab-d2-dr4" data-flow="air" data-flow-density="0.4" d="M460 97 V138" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <rect x="440" y="138" width="40" height="18" fill="var(--surface)" stroke="var(--teal)" stroke-width="2"/>
+                <rect x="436" y="176" width="48" height="26" fill="none" stroke="var(--teal)" stroke-width="1.5"/>
+                <text x="460" y="193" font-size="10" fill="var(--text-dim)" text-anchor="middle">zone</text>
+                <text x="460" y="222" font-size="12" fill="var(--text-bright)" text-anchor="middle">100 %</text>
+                <text x="460" y="242" font-size="11" fill="var(--teal)" text-anchor="middle">index</text>
+                <text x="460" y="256" font-size="10" fill="var(--text-dim)" text-anchor="middle">worst case</text>
+
+                <!-- method callouts -->
+                <text x="20" y="40" font-size="11" fill="var(--text)">1 · proportion every terminal to the index's share of design</text>
+                <text x="20" y="58" font-size="11" fill="var(--text-dim)">2 · raise the common supply to 100 % · 3 · iterate</text>
+            </svg>
+            <div class="edu-legend">
+                <span><span class="sw sa"></span>supply air</span>
+            </div>
+
+            <!-- ───────────────── 6 · Verification ───────────────── -->
+
+            <h2 class="subhead" id="verification">Verifying Against Design</h2>
+
+            <p>
+                A balance isn't a set of dial positions; it's a <em>record</em>. The deliverable is the air-balance
+                report, and it's the thing the next tech — and the commissioning authority, and the owner — actually
+                relies on. For each terminal it states the design flow, the measured flow, and the percentage of design;
+                for each unit it states the total supply, return, outside, and exhaust air, so the ledger visibly closes.
+                The report is where the cross-checks live: the sum of the box flows against a supply-trunk
+                <a href="/tools/duct-traverse.html">traverse</a>, the delivered air against the unit's nameplate with a
+                <a href="/tools/equipment-airflow.html">CFM-per-ton and CFM-per-person sanity check</a>, and the outside
+                air against the <a href="/tools/minimum-outdoor-air.html">62.1 minimum</a>. Any two of those disagreeing
+                is a finding, not a rounding error.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                And the record is what makes the balance survivable. The reason a building drifts out of balance months
+                after the balancer leaves — a K nudged during a filter change, a box re-tuned and never re-checked, a
+                unit whose fan curve moved when a coil was swapped — is that nobody could tell what "right" used to look
+                like. A balance report with real numbers, and boxes whose setpoints mean the CFM they say, is the
+                baseline that turns "the far zones feel starved" from a mystery into a measurement. That's the whole
+                point of doing it honestly the first time: not that the air side is balanced today, but that anyone can
+                prove whether it still is tomorrow.
+            </p>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        hub: {href: '/forced-air/', label: 'The forced-air reference hub'},
+        tools: [
+            {href: '/tools/duct-traverse.html', label: 'Duct Traverse Calculator'},
+            {href: '/tools/equipment-airflow.html', label: 'Equipment Airflow Check'},
+            {href: '/tools/airflow.html', label: 'Airflow Calculator'},
+            {href: '/tools/minimum-outdoor-air.html', label: 'Minimum Outdoor Air Calculator'}
+        ],
+        lessons: [
+            {href: '/education/vav-systems.html', label: 'VAV Systems'},
+            {href: '/education/duct-static-control.html', label: 'Duct Static Control'},
+            {href: '/education/building-pressure.html', label: 'Building Pressure'},
+            {href: '/education/balancing.html', label: 'Hydronic Balancing'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/education/">← Back to Education</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<!-- flow-engine.js is loaded site-wide from layouts/page.njk; the init()
+     below is an idempotent refresh so the page reads standalone. D1 is a
+     static block diagram (no data-flow); D2's supply trunk and terminal
+     drops carry data-flow="air" (particle color follows each duct's
+     stroke). This page has no interactive widget — the diagrams are the
+     only scripted elements. -->
+<script>
+    FlowEngine.init();
+</script>
+{% endblock %}
