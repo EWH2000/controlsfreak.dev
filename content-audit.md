@@ -2611,3 +2611,153 @@ equipment-airflow.html as the source of truth. The design preset lands at
 exactly 400 CFM/ton (still OK); sliding the driving zone down reads "thin,"
 matching the tool. Added a behavioral spec pinning the verdict at 400 and 389
 CFM/ton. PR: issue-154/sim-tool-physics-audit.
+
+## Fresh accuracy audit — post-forced-air (2026-07-14)
+
+A full-site adversarial accuracy re-verification run after the forced-air
+pillar shipped — three specialist auditors (HVAC/psychrometrics/refrigeration
+physics; BACnet/Modbus protocol data; electrical/controls/hydronics), each
+trying to *falsify* the site's claims against an authoritative source
+(ASHRAE Fundamentals + manufacturer datasheets, ASHRAE 135 / BACpypes3 /
+BACnet4J, the NEC + the Modbus spec), and Node-verifying physics claims
+against the site's own engines. Already-resolved findings #1–#48 were
+skipped; the metric-rounding, IP-native-formula, vendor-name, and "plain
+English" conventions were honored as non-errors. **Headline: the site
+verified overwhelmingly clean — 0 high, 2 medium, 6 low.** All eight items
+below are **surfaced, not fixed** — they await the owner's disposition.
+Full evidence, sources, and suggested fixes live in the triage doc:
+`docs/audits/2026-07-fresh-accuracy/triage.md`.
+
+### 49. R-32 mislabeled as a zeotropic glide blend in the superheat lesson
+
+**Location:** education/superheat-subcooling.html (~line 154, the glide
+footnote). **Lens:** content (refrigeration physics). **Verification status:
+verified** (datasheet + ASHRAE 34; the site's own data file treats R-32 as
+pure).
+
+The footnote names "R-407C, R-454B, R-32 to some extent" as zeotropic blends
+whose saturation curve splits into a bubble curve and a dew curve separated by
+glide. R-32 (difluoromethane) is a **pure single-component** refrigerant with
+**zero glide** — bubble and dew coincide at every pressure (Arkema Forane 32:
+"zero glide"; ASHRAE 34 classifies it single-component A2L). It is a
+*constituent* of R-410A (the likely confusion), but stands alone as a pure
+refrigerant. The "to some extent" hedge doesn't rescue it. This is the lone
+outlier: `html/_data/refrigerant-data.js` and the refrigerant-cycle-basics
+quiz already treat R-32 as pure. **Suggested direction:** drop R-32 from the
+zeotropic list (R-407C and R-454B belong — R-454B's ~2 °F glide is real per
+#47). Severity medium; confidence high. Triage: M1.
+*(open — awaiting owner disposition, 2026-07-14)*
+
+### 50. voltage-drop.html cites a false resistance-table source and temperature
+
+**Location:** tools/voltage-drop.html (line 158 rendered note, line 199 JS
+comment, line 200 `OHMS_PER_KFT`). **Lens:** content (electrical citation).
+**Verification status: verified** (NEC 2023 Ch. 9 Table 8).
+
+The reference note and JS comment both read "Solid copper at 25 °C, per NEC
+Chapter 9 Table 8." The Ω/kft values (14→2.525, 16→4.016, 18→6.385,
+20→10.15, 22→16.14) are the standard ~20 °C AWG copper resistances and are
+fine — but the **citation is wrong twice**: NEC Ch. 9 Table 8 tabulates DC
+resistance at **75 °C** (14 AWG ≈ 3.14 Ω/kft there, not 2.525), so both the
+"Table 8" attribution and the "25 °C" label are incorrect. **Suggested
+direction:** relabel "solid copper at 20 °C (standard AWG values)" and drop
+the NEC Table 8 attribution, fixing both the rendered note and the JS comment;
+the constant itself stays. Severity medium; confidence high. Triage: M2.
+*(open — awaiting owner disposition, 2026-07-14)*
+
+### 51. airside-load.html Denver altitude figure understates the load over-read
+
+**Location:** tools/airside-load.html (line 240, the "where 1.08 / 0.68 / 4.5
+come from" note). **Lens:** content (physics figure). **Verification status:
+verified** (Node against the engine's own `pressFromAltitude`).
+
+The note says the constants over-read the load "roughly 3 % per thousand feet
+of elevation — call it 14 % in Denver." Node-verified at 5,280 ft against the
+site's `pressFromAltitude`: density deficit ≈ 17.7 %, load over-read ≈ 21.5 %;
+even the page's own 3 %/1,000 ft rule gives ~16 %, not 14 %. The city figure
+undershoots by every measure, including the page's own heuristic. **Suggested
+direction:** state ~20 % (over-read) or ~18 % (density deficit), or drop the
+specific city figure and keep only the per-1,000-ft rule (which is fine).
+Severity low; confidence high. Triage: L1.
+*(open — awaiting owner disposition, 2026-07-14)*
+
+### 52. bacnetUnits.js reactive-energy names use bacnet-stack word order
+
+**Location:** html/_data/bacnetUnits.js (lines 225–227 ids 203/204/205;
+264–266 ids 242/243/244); surfaced on tools/bacnet-units.html. **Lens:**
+content (BACnet naming). **Verification status: verified** (BACpypes3 /
+ASHRAE 135 spelling).
+
+The reactive-energy units read e.g. `watt-reactive-hours` (203),
+`volt-ampere-reactive-hours` (242). All integer ids are correct; only the
+string order differs from ASHRAE 135 / BACpypes3, which spell hours-then-
+reactive: `watt-hours-reactive` (203), `volt-ampere-hours-reactive` (242),
+plus kilo/mega siblings. Cosmetic — and the file header already discloses that
+long-tail names follow bacnet-stack and "should be verified against ASHRAE
+135," so this is a known, disclosed limitation logged for completeness.
+**Suggested direction:** optionally rename the six strings to ASHRAE word
+order. Severity low; confidence high. Triage: L2.
+*(open — awaiting owner disposition, 2026-07-14)*
+
+### 53. modbus-functions.html exception-code table omits code 07 (NAK)
+
+**Location:** tools/modbus-functions.html (Exception-codes tab, lines
+148–159). **Lens:** content (Modbus completeness). **Verification status:
+verified** (Modbus Application Protocol spec).
+
+The exception-code table lists codes 1, 2, 3, 4, 5, 6, 8, 10, 11 and skips
+**07 = Negative Acknowledge (NAK)** — returned by the program commands (FC
+08/13/14) when the server can't perform the request. Everything shown is
+correct; it's a completeness gap. (FC 07 = Read Exception Status in the
+*function*-code tab is unrelated — the gap is the *exception* code 07.)
+**Suggested direction:** add the `07 · 0x07 Negative Acknowledge` row; leave
+modbus-register-viewer.html's deliberately FC-only subset alone. Severity low;
+confidence high. Triage: L3.
+*(open — awaiting owner disposition, 2026-07-14)*
+
+### 54. bacnet-basics.html MS/TP framing diagram collapses two CRCs into one
+
+**Location:** education/bacnet-basics.html (MS/TP-vs-BACnet/IP framing SVG,
+~lines 570–640, and its `<desc>` alt-text ~line 573). **Lens:** content
+(BACnet framing). **Verification status: verified** (ASHRAE 135 Clause 9).
+
+The MS/TP frame is drawn and described as Preamble → Frame Type → Destination
+→ Source → Length → payload → a single **2-byte CRC**. A real ASHRAE 135 MS/TP
+frame carries **two** CRCs: a 1-byte header CRC (after Length, before payload)
+and a 2-byte data CRC (after payload). Showing only the data CRC leaves the
+header looking unprotected — a pedagogical simplification. **Suggested
+direction:** show both CRC fields, or add a one-line "CRC shown simplified —
+a real frame also has a 1-byte header CRC" caveat in the caption and `<desc>`.
+Severity low; confidence medium-high. Triage: L4.
+*(open — awaiting owner disposition, 2026-07-14)*
+
+### 55. bacnet-services.html buckets AtomicRead/WriteFile under "Data Sharing"
+
+**Location:** education/bacnet-services.html (service-families table, ~line
+114). **Lens:** content (BACnet service taxonomy). **Verification status:
+verified** (ASHRAE 135 service categories).
+
+`AtomicReadFile / AtomicWriteFile` sit in the "Data Sharing" interoperability-
+area column. In ASHRAE 135 these are **File Access Services** (they underpin
+the Device-Management backup/restore BIBB family, DM-BR), not Data Sharing.
+Editorial: the page states its table is "the field-relevant set, not the full
+three dozen," so it's a curated-subset labeling call — but the bucket as shown
+is wrong. **Suggested direction:** relabel that row's area "File Access" (or
+"Device Mgmt"). Severity low; confidence medium. Triage: L5.
+*(open — awaiting owner disposition, 2026-07-14)*
+
+### 56. CDAB byte-order nickname inconsistent across tool, lesson, and quiz
+
+**Location:** tools/modbus-register-viewer.html (~line 181) +
+education/modbus-decoding.html (~line 292) call CDAB the "Modicon byte-swap";
+quiz html/_data/quizzes/modbus-decoding.js (~line 75) calls it "word-swap."
+**Lens:** content (site-wide consistency). **Verification status: verified**
+(the encoding's own definition).
+
+CDAB swaps the two 16-bit **words** (byte order preserved within each word),
+so "word-swap" is the precise term and "byte-swap" is the looser traditional
+Modicon label — the two surfaces disagree. The ABCD/CDAB letter notation
+itself is unambiguous and correct everywhere; only the parenthetical nickname
+drifts. **Suggested direction:** standardize on "word-swap" across all three
+surfaces. Severity very low; confidence high. Triage: L6.
+*(open — awaiting owner disposition, 2026-07-14)*
