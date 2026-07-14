@@ -4333,7 +4333,7 @@ Worker: legacy redirect discards query string and fragment (src/worker.js:238-24
 **Resolution (2026-06-16):** applied the one-liner — `const target = new URL(legacyTarget, url.origin); target.search = url.search;` — so an inbound `?utm_*`/query on a moved simulator URL now rides through the 301 (fragments are never sent to the server, so there's nothing to carry there). Regression test in `tests/worker.spec.js` (`/tools/pid-tuner.html?utm_source=nl&x=1` → `/simulators/pid-tuner.html?utm_source=nl&x=1`). Harmless-today gap closed pre-emptively (the cost is one line + a test, and it's strictly more correct). No version bump.
 
 
-### 134. Hydronic engine: steep pump curves / series pumps need a true Newton step *(open — 2026-06-17)*
+### 134. Hydronic engine: steep pump curves / series pumps need a true Newton step *(addressed 2026-07-14)*
 
 From the Hydronic Loop Builder review (PR #277 follow-up). `solveHydraulics`
 linearizes only the friction term into the secant conductance `g = 1/(k|Q|)`
@@ -4367,7 +4367,15 @@ step — a user-selectable pipe **diameter** (a large bore drives `k` small) plu
 the pipe-sizing lesson — which is the part that would actually raise stiffness
 and wants the Newton step first.
 
-### 135. Hydronic engine: valve2 `out.authority` is dead + mislabeled *(open — 2026-06-17)*
+**Addressed (2026-07-14, PR #341).** Shipped the true Newton step — tangent
+conductance `g = 1/f'(Q)` (`f'(Q) = 2k|Q| − hsrc'(Q)`, new `branchHsrcSlope`
+helper) with a Norton injection that keeps the flow-from-pressure map
+consistent, sidestepping the fold-into-`g` fixed-point trap proven wrong above.
+Steep typed curves that reported `converged:false` now converge to the closed
+form (a=1.0 → 6.256, a=2.0 → 4.448, residual ~1e-4); `hydronic-engine.spec.js`
+44/44.
+
+### 135. Hydronic engine: valve2 `out.authority` is dead + mislabeled *(addressed 2026-07-14)*
 
 `writeback`'s valve2 case computes `out.authority = vHead / pumpHead` and
 `out.dP`, and balanceValve computes `out.dP` — none are rendered on the page
@@ -4380,6 +4388,11 @@ delete the three dead `out` fields, or — if a teaching readout is wanted later
 — rename (e.g. `out.headShare`), fix the denominator to the valve's own
 controlled-branch node-to-node drop, and compute the wide-open β once so it
 matches valve-cv. Not urgent: it cannot mis-display anything today.
+
+**Addressed (2026-07-14, PR #341).** Deleted the dead `out.authority`/`out.dP`
+from `writeback`'s valve2 case and `out.dP` from balanceValve (grep confirmed no
+consumer) — removed rather than renamed, since the quantity has no readout and
+"authority" collides with valve-cv's reserved meaning.
 
 ### 136. Hydronic page: component drag wipes the particle layer every pointermove *(RESOLVED 2026-06-20 — phase 2)*
 
@@ -4400,7 +4413,7 @@ FlowEngine pools survive the whole drag. `pointerup` then calls
 geometry. (`renderAll()` still does a full rebuild on add/delete/example/select
 — but that's not the per-pointermove path, so no churn there.)
 
-### 137. Hydronic engine: `makeSystem` dedupes pipe ids but not component ids *(open — 2026-06-17)*
+### 137. Hydronic engine: `makeSystem` dedupes pipe ids but not component ids *(addressed 2026-07-14)*
 
 `makeSystem` rewrites null/duplicate **pipe** ids to fresh unique ones (so the
 warm-start `_warm` / writeback caches can't alias), and the test suite enshrines
@@ -4411,6 +4424,11 @@ UI (`addComponent` uses a monotonic `h`+seq id), so not urgent; matters once a
 persistence/import path or the Android wrapper feeds external JSON. Fix: mirror
 the pipe-id pass (a `seenCompIds` Set rewriting collisions), rebuild the `ids`
 set before the pipe filter, and add a spec case.
+
+**Addressed (2026-07-14, PR #341).** Added the `seenCompIds` dedup pass to
+`makeSystem` mirroring the pipe-id pass (rewrites null/duplicate component ids
+before the `ids` set + pipe filter), with regression cases — imported JSON can
+no longer alias component branch keys.
 
 ### 138. Number-input idiom: function-block-editor could take the same min/max/step *(guard addressed 2026-07-12; catalog parity deferred)*
 
@@ -4429,7 +4447,7 @@ deferred (pure UX polish, and fbe's `fbe-engine.js` param defs carry no
 `min/max/step` today — a two-file change). Revisit trigger: a general
 min/max/step sweep, or adding validation-worthy ranges to fbe blocks.
 
-### 139. Engine-missing degradation is non-uniform across tool pages *(open — 2026-06-27)*
+### 139. Engine-missing degradation is non-uniform across tool pages *(addressed 2026-07-14)*
 
 Tools load their shared engine via a plain `<script src>` (dew-point →
 psychro-engine.js, voltage-drop → thermistor-data.js, etc.). If that request
@@ -4450,7 +4468,14 @@ to the engine-dependent pages in a future defensive-degradation sweep. The
 palette half of the same finding (search-index fetch failure) is already
 handled (#119). Low priority.
 
-### 140. `.nav-menu-blurb` bottom rule is narrower than an expanded dropdown panel *(open — 2026-07-01)*
+**Addressed (2026-07-14, PR #340).** Propagated the `typeof <global>` guard to
+all seven engine-dependent tools (dew-point, coil-sizing, refrigerant-pt,
+thermistor, air-mixing, psychrometric-chart, economizer-ratio) — each degrades
+to its validate-and-mute state plus an "engine unavailable" line instead of
+throwing; economizer-ratio degrades only its enthalpy tab (the dry-bulb math
+keeps working).
+
+### 140. `.nav-menu-blurb` bottom rule is narrower than an expanded dropdown panel *(addressed 2026-07-14)*
 
 The section-dropdown blurbs (G-011, PR #290) cap at `max-width: 240px`,
 and the `border-bottom` that separates the blurb from the category rows
@@ -4462,7 +4487,12 @@ this is cosmetic only. Fix shape: move the border to a full-width
 wrapper (or the menu's `::before`) and keep the `max-width` on an inner
 text span. Log-don't-sweep; pick up if anyone notices it in the field.
 
-### 141. Education SVG captions are inline-styled — `.edu-caption` promotion candidate *(open — 2026-07-01)*
+**Addressed (2026-07-14, PR #343).** Dropped `border-bottom` from
+`.nav-menu-blurb` and moved the separating rule to `.nav-menu-blurb + *` (the
+first category group/link), which spans the full expanded-panel width — the
+~108px short-rule gap closes to ~0 (verified live in a headless browser).
+
+### 141. Education SVG captions are inline-styled — `.edu-caption` promotion candidate *(addressed 2026-07-14)*
 
 From the 2026-05 content-audit refinement pass ("Code items split to
 codebase-issues.md," batch 4 — flagged "worth an entry once the
@@ -4475,6 +4505,11 @@ canonized, promote a shared `.edu-caption` class to `styles.css` and
 sweep the three pages. (The sibling candidate from the batch-2 sweep,
 `.narrow-width-note`, was since promoted — `styles.css` ~line 2022,
 four consumer pages — so this is the remaining education half.)
+
+**Addressed (2026-07-14, PR #343).** Promoted `.edu-caption` to `styles.css` and
+swept the 11 directional flow captions across hydronic-loops, load-piping, and
+pump-control to use it; a before/after pixel-diff of every education diagram
+shows zero differing pixels.
 
 ### 142. Preset/example chip rows: two per-page stragglers off the shared `.widget-try` *(declined 2026-07-12 — miscategorization)*
 
@@ -4787,7 +4822,7 @@ Huebscher equivalent-diameter, and the economizer %OA formula. The staging
 rotation modes, fault promotion) verified faithful between sim and lesson.
 PR: issue-154/sim-tool-physics-audit.
 
-### 155. staging-sequencer ↔ equipment-staging: two cross-widget cosmetic mismatches *(open — 2026-07-14)*
+### 155. staging-sequencer ↔ equipment-staging: two cross-widget cosmetic mismatches *(addressed 2026-07-14)*
 
 Surfaced by the #154 sim/tool physics diff. Both are cosmetic, neither a
 physics or logic error — logged rather than fixed inline to keep the #154
@@ -4807,6 +4842,27 @@ PR scoped to accuracy:
   reader sees "90" and "85" side by side — the 90 lives only in a lesson
   code comment. Align only if the two teaching models should quote the same
   number.
+
+**Addressed (2026-07-14, PR #339).** Aligned the lesson's held-status border to
+`var(--amber)` (matching the sim, which reserves red for fault/shortfall). For
+the stage-up default: the two widgets model the same per-unit-load quantity, and
+the sim's generalized `d > U·k/N` with the lesson's N=3 regenerates the lesson's
+hard-coded 30/60 thresholds only at U=90 — so the sim's `85` was the drift.
+Nudged the sim default to `90` (input `value` + `cfg.up`) rather than break the
+lesson's own math.
+
+### 156. `package-lock.json` `version` field is stale (drifted from `package.json`) *(open — 2026-07-14)*
+
+Surfaced during the 2026-07-14 parallel backlog sweep: `npm install` in a fresh
+worktree re-syncs `package-lock.json`'s top-level `"version"`, which had drifted
+to `3.39.4` while `package.json` was `3.50.1` (now `3.50.3`). The version-bump
+flow updates `package.json` (the footer / cache-bust source) but not the
+lockfile field, and nothing user-facing reads it — which is why it drifted
+unnoticed. Harmless to installs and the build; a hygiene/consistency gap only.
+Each fix agent that hit it reverted the incidental churn to keep its PR scoped,
+so it was never committed. Fix: use `npm version` for bumps (updates both), or a
+one-time resync commit; optionally note in CLAUDE.md that the lockfile `version`
+isn't load-bearing. Low priority.
 
 ### Deferred / Won't fix (with revisit trigger)
 
