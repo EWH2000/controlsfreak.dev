@@ -1,13 +1,16 @@
 # Fresh accuracy audit — post-forced-air (2026-07-14)
 
-> **TRIAGE — awaiting owner disposition (2026-07-14).** Every finding
-> below is **surfaced, not fixed**. This pass was strictly read-only:
-> no page, engine, or CSS source was touched. The items wait for the
-> owner to decide disposition (accept / fix / reword / defer). Cross-filed
-> concurrently into `content-audit.md` as findings #49–#56, each carrying
-> the same *(open — awaiting owner disposition, 2026-07-14)* marker. When
-> the owner triages, the resolutions land there per that file's
-> convention; this doc is the durable evidence record.
+> **TRIAGE — 5 of 8 fixed 2026-07-14 (this PR); 3 awaiting owner
+> disposition.** The audit pass itself was strictly read-only — no page,
+> engine, or CSS source was touched during triage. Disposition since: the
+> five clean-cut findings (**M1, M2, L1, L3, L6**) were fixed 2026-07-14
+> in PR `content/fresh-audit-cleancut-fixes` and are annotated
+> **Fixed 2026-07-14** below; the three judgment-call findings
+> (**L2, L4, L5**) still await the owner to decide (accept / fix / reword
+> / defer). Cross-filed into `content-audit.md` as findings #49–#56 — the
+> five fixed now carry *(resolved 2026-07-14)*, the three open still carry
+> *(open — awaiting owner disposition, 2026-07-14)*. This doc is the
+> durable evidence record.
 
 Master findings document for the **fresh post-forced-air accuracy
 audit** — a full-site adversarial re-verification of the engineering
@@ -108,6 +111,8 @@ Tally: **0 high · 2 medium · 6 low.**
   "small glide" tier already recognizes it, per content-audit #47), so
   the sentence survives with R-32 removed.
 - **Severity:** medium. **Confidence:** high.
+- **Fixed 2026-07-14.** Dropped R-32 from the zeotropic-blend footnote;
+  the list now reads "(R-407C, R-454B)".
 
 ### M2 — voltage-drop.html false resistance-table citation ("NEC Ch. 9 Table 8, 25 °C")
 
@@ -132,6 +137,9 @@ Tally: **0 high · 2 medium · 6 low.**
   rendered note (line 158) and the JS comment (line 199) — the constant
   itself (line 200) is correct and stays.
 - **Severity:** medium. **Confidence:** high.
+- **Fixed 2026-07-14.** Rendered note + JS comment both relabeled "solid
+  copper at 20 °C (standard AWG values)"; the false NEC Ch. 9 Table 8
+  attribution is dropped and the Ω/kft constant is unchanged.
 
 ---
 
@@ -157,6 +165,8 @@ Tally: **0 high · 2 medium · 6 low.**
   deficit), or drop the specific city number and keep only the per-
   1,000-ft rule (which is a fine approximation).
 - **Severity:** low. **Confidence:** high.
+- **Fixed 2026-07-14.** Denver figure changed from "14 %" to "about 20 %"
+  (the load over-read); the 3 %/1,000 ft rule is kept as-is.
 
 ### L2 — bacnetUnits.js reactive-energy names use bacnet-stack word order
 
@@ -197,6 +207,8 @@ Tally: **0 high · 2 medium · 6 low.**
   exception-codes table. Leave `modbus-register-viewer.html` alone — its
   code subset is deliberately FC-only.
 - **Severity:** low. **Confidence:** high.
+- **Fixed 2026-07-14.** Added the `7 · 0x07 · Negative Acknowledge (NAK)`
+  row in numeric order (between 06 and 08); register-viewer untouched.
 
 ### L4 — bacnet-basics.html MS/TP framing diagram collapses two CRCs into one
 
@@ -255,6 +267,9 @@ Tally: **0 high · 2 medium · 6 low.**
 - **Suggested fix:** standardize on "word-swap" across all three
   surfaces.
 - **Severity:** very low. **Confidence:** high.
+- **Fixed 2026-07-14.** "Modicon byte-swap" → "Modicon word-swap" on the
+  tool and the lesson (heading + diagram `<desc>`); the quiz already read
+  "word-swap."
 
 ---
 

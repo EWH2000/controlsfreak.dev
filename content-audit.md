@@ -2646,7 +2646,9 @@ outlier: `html/_data/refrigerant-data.js` and the refrigerant-cycle-basics
 quiz already treat R-32 as pure. **Suggested direction:** drop R-32 from the
 zeotropic list (R-407C and R-454B belong — R-454B's ~2 °F glide is real per
 #47). Severity medium; confidence high. Triage: M1.
-*(open — awaiting owner disposition, 2026-07-14)*
+**Resolved:** dropped R-32 from the zeotropic-blend footnote, keeping R-407C
+and R-454B (R-454B's ~2 °F glide is real). PR: content/fresh-audit-cleancut-fixes.
+*(resolved 2026-07-14)*
 
 ### 50. voltage-drop.html cites a false resistance-table source and temperature
 
@@ -2663,7 +2665,10 @@ resistance at **75 °C** (14 AWG ≈ 3.14 Ω/kft there, not 2.525), so both the
 direction:** relabel "solid copper at 20 °C (standard AWG values)" and drop
 the NEC Table 8 attribution, fixing both the rendered note and the JS comment;
 the constant itself stays. Severity medium; confidence high. Triage: M2.
-*(open — awaiting owner disposition, 2026-07-14)*
+**Resolved:** relabeled both the rendered note and the JS comment "solid copper
+at 20 °C (standard AWG values)" and dropped the false NEC Ch. 9 Table 8
+attribution; the Ω/kft constant is unchanged. PR: content/fresh-audit-cleancut-fixes.
+*(resolved 2026-07-14)*
 
 ### 51. airside-load.html Denver altitude figure understates the load over-read
 
@@ -2679,7 +2684,10 @@ undershoots by every measure, including the page's own heuristic. **Suggested
 direction:** state ~20 % (over-read) or ~18 % (density deficit), or drop the
 specific city figure and keep only the per-1,000-ft rule (which is fine).
 Severity low; confidence high. Triage: L1.
-*(open — awaiting owner disposition, 2026-07-14)*
+**Resolved:** changed the Denver figure from "14 %" to "about 20 %" (the load
+over-read verified against `pressFromAltitude` at 5,280 ft); kept the 3 %/1,000 ft
+rule. PR: content/fresh-audit-cleancut-fixes.
+*(resolved 2026-07-14)*
 
 ### 52. bacnetUnits.js reactive-energy names use bacnet-stack word order
 
@@ -2713,7 +2721,10 @@ correct; it's a completeness gap. (FC 07 = Read Exception Status in the
 **Suggested direction:** add the `07 · 0x07 Negative Acknowledge` row; leave
 modbus-register-viewer.html's deliberately FC-only subset alone. Severity low;
 confidence high. Triage: L3.
-*(open — awaiting owner disposition, 2026-07-14)*
+**Resolved:** added the `7 · 0x07 · Negative Acknowledge (NAK)` row in numeric
+order (between 06 and 08); left the register-viewer's FC-only subset alone.
+PR: content/fresh-audit-cleancut-fixes.
+*(resolved 2026-07-14)*
 
 ### 54. bacnet-basics.html MS/TP framing diagram collapses two CRCs into one
 
@@ -2760,4 +2771,7 @@ Modicon label — the two surfaces disagree. The ABCD/CDAB letter notation
 itself is unambiguous and correct everywhere; only the parenthetical nickname
 drifts. **Suggested direction:** standardize on "word-swap" across all three
 surfaces. Severity very low; confidence high. Triage: L6.
-*(open — awaiting owner disposition, 2026-07-14)*
+**Resolved:** changed "Modicon byte-swap" → "Modicon word-swap" on the tool and
+on the lesson (both the heading and the diagram `<desc>` alt-text); the quiz
+already read "word-swap." PR: content/fresh-audit-cleancut-fixes.
+*(resolved 2026-07-14)*

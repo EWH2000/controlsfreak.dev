@@ -155,7 +155,7 @@ keywords: awg wire gauge ohms voltage drop 4-20ma loop 0-10v thermistor lead res
                 </tbody>
             </table>
             <p class="ref-note">
-                Solid copper at 25&nbsp;°C, per NEC Chapter&nbsp;9 Table&nbsp;8. This tool is US-native (AWG, Ω/1000&nbsp;ft) — a metric mm²&nbsp;/&nbsp;Ω-per-km option is a tracked follow-up. Copper runs ~0.4&nbsp;%/°C hotter-is-more, so a ceiling-plenum run in summer reads a touch higher than the table.
+                Solid copper at 20&nbsp;°C (standard AWG values). This tool is US-native (AWG, Ω/1000&nbsp;ft) — a metric mm²&nbsp;/&nbsp;Ω-per-km option is a tracked follow-up. Copper runs ~0.4&nbsp;%/°C hotter-is-more, so a ceiling-plenum run in summer reads a touch higher than the table.
             </p>
         </section>
     </div>
@@ -196,7 +196,7 @@ keywords: awg wire gauge ohms voltage drop 4-20ma loop 0-10v thermistor lead res
     (function () {
         'use strict';
 
-        // Solid copper, 25 °C, Ω per 1000 ft — NEC Ch. 9 Table 8.
+        // Solid copper at 20 °C, Ω per 1000 ft — standard AWG values.
         const OHMS_PER_KFT = { 14: 2.525, 16: 4.016, 18: 6.385, 20: 10.15, 22: 16.14 };
         const SENSOR_EVAL_F = 72;   // evaluate sensor-curve slopes near room temp
 
