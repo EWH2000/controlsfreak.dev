@@ -25,7 +25,9 @@
 // transformer, then walk each field device to decide what its controller
 // point reads (or how it fails). 24 VAC is abstracted as a DC-style
 // +24 / 0 reference so "short", "reversed", and "open common" fall out of
-// simple net math; this is a teaching model, not SPICE.
+// simple net math; this is a teaching model, not SPICE. The controller also
+// exposes a DC LOOP+ terminal (its own loop-power supply) that sources 2-wire
+// 4-20 mA current loops — DC by nature, kept distinct from the AC hot leg.
 //
 // API (window.Wiring):
 //
@@ -52,16 +54,20 @@ const Wiring = (function () {
     'use strict';
 
     // ── controller terminal model (GENERIC DDC-8) ───────────────────
-    // group: power | ui | bi | ao | bo | boc | com | net
+    // group: power | pwrdc | ui | bi | ao | bo | boc | com | net
     // All com* terminals (and 24com) are one internal node — a DDC's
-    // signal reference is its power common. NET terminals are greyed
-    // 'future' (the bus simulator owns networking) and never wire.
+    // signal reference is its power common. The LOOP+ terminal (group
+    // 'pwrdc') is the controller's internal DC loop-power supply, referenced
+    // to that common; it sources 2-wire 4-20 mA loops (DC), never the AC hot
+    // leg. NET terminals are greyed 'future' (the bus simulator owns
+    // networking) and never wire.
     const CONTROLLER = {
         id: 'ctlr',
         label: 'GENERIC DDC-8',
         terminals: [
             { id: '24v',   label: '24V~',  group: 'power' },
             { id: '24com', label: '24COM', group: 'power' },
+            { id: 'loop',  label: 'LOOP+', group: 'pwrdc' },
             { id: 'com-a', label: 'COM',   group: 'com' },
             { id: 'com-b', label: 'COM',   group: 'com' },
             { id: 'ui1',   label: 'UI1',   group: 'ui' },
@@ -314,6 +320,10 @@ const Wiring = (function () {
 
         // ── helpers for point readings ──────────────────────────────
         const live = powered && !shorted;
+        // DC LOOP+ sources the 4-20 mA loop only when the controller is
+        // powered (it's the controller's internal DC supply, referenced to
+        // COM) — never the AC hot leg.
+        const isLoopPower = (node, term) => live && root(node, term) === root('ctlr', 'loop');
         // A point is "dead" when the controller has no power to read/drive it.
         function deadPoint(term) {
             cues.dead.push(term);
@@ -398,16 +408,20 @@ const Wiring = (function () {
             }
 
             if (dev.type === 'xmtr420') {
-                // 2-wire loop: + must be hot, - must reach this UI (current mode).
-                const loopPowered = isHot(dev.id, 'plus');
+                // 2-wire loop: + must come from the DC LOOP+ terminal, - must
+                // reach this UI (current mode). A real loop is DC loop-powered;
+                // landing + on the AC 24V~ hot leg is the classic mistake.
+                const loopPowered = isLoopPower(dev.id, 'plus');
+                const onAcHot = isHot(dev.id, 'plus');
                 const minusOnUi = root(dev.id, 'minus') === root('ctlr', ui);
                 if (!minusOnUi) {
                     points[ui] = { state: 'idle', display: 'no sensor', led: 'off' };
                     return;
                 }
                 if (!loopPowered) {
-                    addFault('ui-loop-' + ui, ui, 'fault',
-                        ui.toUpperCase() + ': 4-20mA loop has no power — the + leg must come from 24V~ to drive the loop. Reads 0 mA.');
+                    addFault('ui-loop-' + ui, ui, 'fault', onAcHot
+                        ? ui.toUpperCase() + ': a 4-20mA loop needs DC loop power — land + on LOOP+, not the 24 VAC hot leg. Reads 0 mA.'
+                        : ui.toUpperCase() + ': 4-20mA loop has no power — the + leg must come from the LOOP+ (DC loop-power) terminal. Reads 0 mA.');
                     points[ui] = { state: 'fault', display: '0.0 mA', led: 'alarm' };
                     return;
                 }

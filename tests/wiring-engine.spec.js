@@ -223,6 +223,60 @@ test.describe('wiring-engine: fault classification', () => {
     });
 });
 
+test.describe('wiring-engine: 4-20 mA DC loop power (#38)', () => {
+
+    // A 2-wire loop: + on the controller's DC LOOP+ terminal, - into the UI
+    // (current mode). `plusTerm` lets a test mis-land the + leg.
+    function loopPanel(Wiring, plusTerm) {
+        return {
+            devices: [
+                Wiring.createDevice('xfmr', 'x1'),
+                Wiring.createDevice('xmtr420', 'm1'),
+            ],
+            wires: [
+                W(['x1', 'hot'], ['ctlr', '24v']),
+                W(['x1', 'com'], ['ctlr', '24com']),
+                W(['m1', 'plus'],  ['ctlr', plusTerm]),
+                W(['m1', 'minus'], ['ctlr', 'ui2']),
+            ],
+        };
+    }
+
+    test('loop powered from LOOP+ reads live in current mode', () => {
+        const Wiring = loadEngine();
+        const r = Wiring.evaluate(loopPanel(Wiring, 'loop'), { uiMode: { ui2: 'ma' } });
+        expect(r.points.ui2.state).toBe('ok');
+        expect(r.points.ui2.display).toMatch(/mA$/);
+        expect(faultIds(r)).not.toContain('ui-loop-ui2');
+    });
+
+    test('loop + landed on the 24V~ AC hot leg faults — needs DC loop power', () => {
+        const Wiring = loadEngine();
+        const r = Wiring.evaluate(loopPanel(Wiring, '24v'), { uiMode: { ui2: 'ma' } });
+        expect(r.points.ui2.state).toBe('fault');
+        expect(r.points.ui2.display).toBe('0.0 mA');
+        expect(faultIds(r)).toContain('ui-loop-ui2');
+        // The AC-hot mis-landing gets its own teaching message.
+        expect(r.faults.find((f) => f.id === 'ui-loop-ui2').text).toMatch(/hot leg/);
+    });
+
+    test('loop + on an unpowered terminal faults — points at LOOP+', () => {
+        const Wiring = loadEngine();
+        // plus on BI1 (neither loop-power nor hot).
+        const r = Wiring.evaluate(loopPanel(Wiring, 'bi1'), { uiMode: { ui2: 'ma' } });
+        expect(r.points.ui2.state).toBe('fault');
+        expect(faultIds(r)).toContain('ui-loop-ui2');
+        expect(r.faults.find((f) => f.id === 'ui-loop-ui2').text).toMatch(/LOOP\+/);
+    });
+
+    test('a powered loop on a UI in the wrong mode is a mode fault', () => {
+        const Wiring = loadEngine();
+        const r = Wiring.evaluate(loopPanel(Wiring, 'loop'), { uiMode: { ui2: 'v' } });
+        expect(r.points.ui2.state).toBe('fault');
+        expect(faultIds(r)).toContain('ui-mode-ui2');
+    });
+});
+
 test.describe('wiring-engine: VA budget', () => {
 
     // Build a fully-loaded, CORRECTLY-wired panel: 4 0-10V transmitters on
