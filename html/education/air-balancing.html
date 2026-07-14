@@ -136,14 +136,6 @@ keywords: air balancing TAB testing adjusting balancing K-factor flow ring flow 
                 <text x="270" y="230" font-size="12" fill="var(--text)" text-anchor="middle">trim K (×1.10) until the box's number becomes the traverse's</text>
             </svg>
 
-            <!-- // OWNER ANECDOTE: a real air-balance catch on the measurement itself — a box whose
-                 controller read dead-on its design CFM while an independent traverse (or flow hood)
-                 said it was well over/under, because K was never trimmed from the catalog value;
-                 or the mirror case where a plugged/kinked ring sensing tube made a perfectly-flowing
-                 box read low and the balancer chased a phantom. Teaching point: the box's number is
-                 only as trustworthy as its K and its tubing — the independent measurement is what
-                 proves it. House voice, first person, real story only — do not fabricate. -->
-
             <!-- ───────────────── 2 · Setting the airflows ───────────────── -->
 
             <h2 class="subhead" id="setting-airflows">Three Setpoints in the Box</h2>
@@ -250,6 +242,22 @@ keywords: air balancing TAB testing adjusting balancing K-factor flow ring flow 
                 finished until the pressure sits where it belongs across the operating range, not just at one damper
                 position.
             </p>
+
+            <div class="callout" style="margin-top:1.5rem;">
+                <h3>Field note <span>· exhaust that tracks is not constant volume</span></h3>
+                <p>
+                    Early in my career, fairly new and turned loose to program a job on my own, I got this exact thing
+                    wrong. The exhaust boxes were supposed to <em>track</em> the supply — volumetric tracking, so the
+                    building pressure held as the supply flow moved. I read the sequence as constant-volume exhaust and
+                    programmed them to hold a fixed CFM setpoint instead. The building fought me for it: intermittent
+                    pressure problems that were genuinely hard to pin down and almost harder to describe. I only found
+                    it going back later, with more experience — rereading the sequence and the logic until the tracking
+                    requirement I'd skipped jumped out. The lesson stuck: exhaust that's meant to track supply is
+                    <em>not</em> constant volume, and getting that one wrong quietly breaks building-pressure control in
+                    the most maddening, on-and-off way. Before you program or balance a box, know which it is — does it
+                    track, or does it hold?
+                </p>
+            </div>
 
             <!-- ───────────────── 5 · Proportional balancing ───────────────── -->
 
