@@ -13,8 +13,9 @@ keywords: 24vac com transformer dead short 4-20ma loop wiring fuse polarity
     <style>
         /* Page-specific — controller-wiring schematics. Follows the .edu-svg
            precedent (full-width, screenshot-audited). The wire palette mirrors
-           the Controller Wiring Simulator: red = 24 VAC hot, blue = common /
-           return, dim = signal, amber = energized "current" flow (the
+           the Controller Wiring Simulator: red = 24 VAC hot, teal = DC loop
+           power (2-wire 4-20 mA), blue = common / return, dim = signal, amber
+           = energized "current" flow (the
            data-flow="current" family the flow-engine colours by default).
            Class prefix cwl-. Terminal dots / device boxes / orthogonal wires
            match the simulator's look so the lesson and the sim read as one
@@ -24,6 +25,7 @@ keywords: 24vac com transformer dead short 4-20ma loop wiring fuse polarity
         .cwl-svg .w-hot { stroke: var(--red); }
         .cwl-svg .w-com { stroke: var(--blue); }
         .cwl-svg .w-sig { stroke: var(--text-dim); }
+        .cwl-svg .w-loop { stroke: var(--teal); }
         .cwl-svg .w-cur { stroke: var(--amber); }
         .cwl-svg .term { fill: var(--surface); stroke: var(--text-dim); stroke-width: 1.5; }
         /* Meaning-carrying geometry strokes use --text-dim, not --border —
@@ -36,10 +38,12 @@ keywords: 24vac com transformer dead short 4-20ma loop wiring fuse polarity
         .cwl-svg .lbl-term { fill: var(--text-bright); font-size: 11px; font-weight: 600; }
         .cwl-svg .arrow-cur { fill: var(--amber); }
         .cwl-svg .arrow-com { fill: var(--blue); }
+        .cwl-svg .arrow-loop { fill: var(--teal); }
         /* Legend swatches for the wire families. */
         .cwl-leg.edu-legend .sw.hot { border-top: 3px solid var(--red); }
         .cwl-leg.edu-legend .sw.com { border-top: 3px solid var(--blue); }
         .cwl-leg.edu-legend .sw.sig { border-top: 3px solid var(--text-dim); }
+        .cwl-leg.edu-legend .sw.loop { border-top: 3px solid var(--teal); }
         .cwl-leg.edu-legend .sw.cur { border-top: 3px solid var(--amber); }
     </style>
 {% endblock %}
@@ -144,7 +148,7 @@ keywords: 24vac com transformer dead short 4-20ma loop wiring fuse polarity
             </p>
 
             <p>
-                <strong>A 4&ndash;20 mA transmitter</strong> is where the loop-power idea trips people up. A two-wire transmitter doesn't have a separate signal wire — it <em>regulates the current flowing through the loop it sits in</em>, between 4 and 20 mA, in proportion to what it measures. That means the loop has to be powered: the 24 V hot leg drives current out to the transmitter's <strong>+</strong>, through the transmitter, back into the controller's input (configured for current) on the <strong>&minus;</strong> side, where a small internal resistor turns the current into a voltage the controller can read, with the bottom of that resistor on COM. Forget to power the loop and there's no current to regulate — the point reads 0 mA, dead. The payoff is that 4 mA at the bottom of the range is a live, non-zero signal, so a broken wire (0 mA) is distinguishable from a real low reading; that's the whole reason the standard starts at 4, not 0. One field-reality note: a real two-wire transmitter is <strong>DC</strong> loop-powered &mdash; typically 12&ndash;30 VDC from a dedicated supply or the controller's own loop-power terminal, not the AC transformer leg. This page and the <a href="/simulators/controller-wiring.html">simulator</a> run the loop off the 24 V hot leg so every device shares one power story; the regulate-the-current idea is exactly the same either way.
+                <strong>A 4&ndash;20 mA transmitter</strong> is where the loop-power idea trips people up. A two-wire transmitter doesn't have a separate signal wire — it <em>regulates the current flowing through the loop it sits in</em>, between 4 and 20 mA, in proportion to what it measures. That means the loop has to be powered, and — because the transmitter's own electronics ride on the loop — it has to be powered with <strong>DC</strong>: typically 12&ndash;30 VDC from the controller's own <strong>loop-power terminal</strong> (shown here as <strong>LOOP+</strong>) or a dedicated 24 VDC supply, <em>not</em> the 24 VAC hot leg. That DC drives current out to the transmitter's <strong>+</strong>, through the transmitter, and back into the controller's input (configured for current) on the <strong>&minus;</strong> side, where a small internal resistor turns the current into a voltage the controller can read, with the bottom of that resistor on COM. Land the <strong>+</strong> on the AC hot leg instead and there's no DC to regulate — the point reads 0 mA, dead; forget to power it at all, same result. The payoff of the scheme is that 4 mA at the bottom of the range is a live, non-zero signal, so a broken wire (0 mA) is distinguishable from a real low reading; that's the whole reason the standard starts at 4, not 0.
             </p>
 
             <p>
@@ -162,20 +166,24 @@ keywords: 24vac com transformer dead short 4-20ma loop wiring fuse polarity
             <svg class="edu-svg cwl-svg" id="cwl-inputs" viewBox="0 0 700 400"
                  role="img" aria-labelledby="cwl-inputs-title cwl-inputs-desc">
                 <title id="cwl-inputs-title">Four input landings on a controller</title>
-                <desc id="cwl-inputs-desc">A controller terminal column on the left lists 24V~, UI1, UI2, UI3, a COM terminal, and BI1. A red hot bus runs down from 24V~ and a blue common bus runs from COM. To the right, four devices land on them: a 10K thermistor on UI1 with its return to the common bus (signal wire dim); a three-wire 0 to 10 volt transmitter on UI2 taking 24 volt power off the hot bus, output to UI2, and common to the common bus; a two-wire 4 to 20 milliamp transmitter whose loop is powered off the hot bus and returns into UI3; and a dry contact on BI1 returning to the common bus. Every return lands on the shared common.</desc>
+                <desc id="cwl-inputs-desc">A controller terminal column on the left lists 24V~, UI1, UI2, UI3, a COM terminal, and BI1. A red hot bus runs down from 24V~, a teal DC loop-power lead runs from a LOOP+ terminal, and a blue common bus runs from COM. To the right, four devices land on them: a 10K thermistor on UI1 with its return to the common bus (signal wire dim); a three-wire 0 to 10 volt transmitter on UI2 taking 24 volt power off the hot bus, output to UI2, and common to the common bus; a two-wire 4 to 20 milliamp transmitter whose loop is powered from the LOOP+ DC loop-power terminal and returns into UI3; and a dry contact on BI1 returning to the common bus. Every return lands on the shared common.</desc>
 
                 <!-- controller terminal column -->
                 <rect class="dev" x="24" y="34" width="126" height="350" rx="3"/>
                 <text class="lbl-dim" x="87" y="26" text-anchor="middle">CONTROLLER</text>
                 <circle class="term" cx="150" cy="64" r="5"/>  <text class="lbl-term" x="124" y="68" text-anchor="end">24V~</text>
+                <circle class="term" cx="150" cy="88" r="5"/>  <text class="lbl-term" x="124" y="92" text-anchor="end">LOOP+</text>
                 <circle class="term" cx="150" cy="112" r="5"/> <text class="lbl-term" x="124" y="116" text-anchor="end">UI1</text>
                 <circle class="term" cx="150" cy="180" r="5"/> <text class="lbl-term" x="124" y="184" text-anchor="end">UI2</text>
                 <circle class="term" cx="150" cy="258" r="5"/> <text class="lbl-term" x="124" y="262" text-anchor="end">UI3</text>
                 <circle class="term" cx="150" cy="318" r="5"/> <text class="lbl-term" x="124" y="322" text-anchor="end">COM</text>
                 <circle class="term" cx="150" cy="360" r="5"/> <text class="lbl-term" x="124" y="364" text-anchor="end">BI1</text>
 
-                <!-- distribution buses: hot (red) from 24V~, common (blue) from COM -->
-                <path class="wire w-hot" d="M 150 64 H 192 V 250 H 150"/>
+                <!-- distribution buses: hot (red) from 24V~ feeds the 0-10V xmtr;
+                     DC loop power (teal) from LOOP+ feeds the 4-20mA loop;
+                     common (blue) from COM collects every return. -->
+                <path class="wire w-hot" d="M 150 64 H 192 V 164"/>
+                <path class="wire w-loop" d="M 150 88 H 208 V 246 H 490"/>
                 <path class="wire w-com" d="M 150 318 H 224 V 112"/>
                 <path class="wire w-com" d="M 224 374 V 318"/>
 
@@ -198,7 +206,6 @@ keywords: 24vac com transformer dead short 4-20ma loop wiring fuse polarity
                 <rect class="dev" x="490" y="236" width="160" height="48" rx="3"/>
                 <text class="lbl" x="570" y="258" text-anchor="middle">4&ndash;20 mA XMTR</text>
                 <text class="lbl-dim" x="570" y="273" text-anchor="middle">2-wire · loop-powered</text>
-                <path class="wire w-hot" d="M 192 246 H 490"/>
                 <path class="wire w-sig" d="M 490 272 H 320 V 258 H 150"/>
 
                 <!-- dry contact on BI1 -->
@@ -208,10 +215,11 @@ keywords: 24vac com transformer dead short 4-20ma loop wiring fuse polarity
                 <path class="wire w-sig" d="M 150 360 H 490"/>
                 <path class="wire w-com" d="M 490 374 H 224"/>
 
-                <text class="lbl-dim" x="370" y="396" text-anchor="middle">hot bus feeds the transmitters · every return lands on COM</text>
+                <text class="lbl-dim" x="370" y="396" text-anchor="middle">hot feeds the 0–10 V xmtr · LOOP+ (DC) feeds the 4–20 mA loop · returns on COM</text>
             </svg>
             <p class="edu-legend cwl-leg">
-                <span><span class="sw hot"></span>24 VAC hot / loop power</span>
+                <span><span class="sw hot"></span>24 VAC hot</span>
+                <span><span class="sw loop"></span>DC loop power</span>
                 <span><span class="sw com"></span>common / return</span>
                 <span><span class="sw sig"></span>signal</span>
             </p>
@@ -231,7 +239,7 @@ keywords: 24vac com transformer dead short 4-20ma loop wiring fuse polarity
             </p>
 
             <p>
-                Some binary outputs are <strong>triacs</strong> instead of relays — solid-state switches that handle 24 VAC only (no dry-contact flexibility, and a small leakage current even when "off" that can hold a sensitive load partly energized), but with no moving contacts to wear out. They're common for driving floating/tristate actuators, where two triac outputs (open and close) inch an actuator in each direction. The wiring intent is the same — switch a 24 VAC leg to a load — but a triac isn't a dry contact: it won't switch a separate voltage, and that leakage means it's the wrong choice for, say, proving a circuit truly de-energized.
+                Some binary outputs are <strong>triacs</strong> instead of relays — solid-state switches that handle 24 VAC only (no dry-contact flexibility, and a small leakage current even when "off" that can hold a sensitive load partly energized), but with no moving contacts to wear out. They're common for driving floating/tristate actuators, where two triac outputs (open and close) inch an actuator in each direction. The wiring intent is the same — switch a 24 VAC leg to a load — but a triac isn't a dry contact: it's AC-only (it latches on and can't interrupt a DC load) and it isn't a floating, isolated contact, so between that and the off-state leakage it's the wrong choice for switching a DC circuit or for proving one truly de-energized.
             </p>
 
             <!-- Outputs diagram: AO 0-10V actuator (power + signal + common) and a
@@ -279,25 +287,26 @@ keywords: 24vac com transformer dead short 4-20ma loop wiring fuse polarity
             <h2 class="subhead" id="putting-together">The whole controller, landed</h2>
 
             <p>
-                Put it together and a single generic controller carries all of it at once: power in from the transformer, a thermistor and a couple of transmitters on the inputs, a dry contact on a BI, an actuator on an AO, and a fan contactor on a BO. The diagram below traces one of each on a <strong>DDC-8</strong> &mdash; the same controller as the simulator. The amber paths are the ones with current actually flowing: the 24 VAC hot bus feeding everything, and the 4&ndash;20 mA loop circulating from the hot leg, through the transmitter, and back into the input. Blue is the common every return shares; dim is the signal wiring; red is hot at rest.
+                Put it together and a single generic controller carries all of it at once: power in from the transformer, a thermistor and a couple of transmitters on the inputs, a dry contact on a BI, an actuator on an AO, and a fan contactor on a BO. The diagram below traces one of each on a <strong>DDC-8</strong> &mdash; the same controller as the simulator. The amber path is the AC hot bus with current actually flowing — feeding the actuator and the BO source. The teal <strong>4&ndash;20 mA loop</strong> is DC loop-powered from the controller's <strong>LOOP+</strong> terminal, circulating through the transmitter and back into the input. Blue is the common every return shares; dim is the signal wiring; red is hot at rest.
             </p>
 
             <!-- Capstone: full DDC-8 with one landing of each type, energized.
-                 data-flow="current" (amber) on the 24V hot bus + the 4-20mA loop
-                 — the two paths where current literally flows. Direction arrows
+                 data-flow="current": amber on the 24V hot bus (AC), teal on the
+                 4-20mA loop (DC) — the two paths where current literally flows. Arrows
                  carry the meaning under prefers-reduced-motion (the engine bails
                  and injects no particles). Selectors elsewhere stay attribute-
                  only per the CLAUDE.md SVG gotcha; these paths are uniquely id'd. -->
             <svg class="edu-svg cwl-svg" id="cwl-cap" viewBox="0 0 760 540"
                  role="img" aria-labelledby="cwl-cap-title cwl-cap-desc">
                 <title id="cwl-cap-title">A fully landed DDC-8 controller</title>
-                <desc id="cwl-cap-desc">A generic DDC-8 controller terminal strip down the left side, powered from a 24 VAC transformer at top right. The hot leg (amber, energized) feeds the 24V~ terminal and runs down a vertical hot bus that powers the loop transmitter, the actuator, and the BO-C source. The common leg (blue) feeds 24COM and runs down a vertical common bus that every device return lands on. On the right, one device of each kind: a 10K thermistor on UI1; a 4 to 20 milliamp transmitter on UI2 whose loop circulates from the hot bus through the transmitter and back into the input (amber); a dry contact on BI1; a 0 to 10 volt actuator on AO1 taking power, signal, and common; and a fan contactor switched by BO1. Direction arrows mark current flow on the energized amber paths.</desc>
+                <desc id="cwl-cap-desc">A generic DDC-8 controller terminal strip down the left side, powered from a 24 VAC transformer at top right. The hot leg (amber, energized) feeds the 24V~ terminal and runs down a vertical hot bus that powers the actuator and the BO-C source. A separate LOOP+ terminal supplies DC loop power to the 4 to 20 milliamp transmitter. The common leg (blue) feeds 24COM and runs down a vertical common bus that every device return lands on. On the right, one device of each kind: a 10K thermistor on UI1; a 4 to 20 milliamp transmitter on UI2 whose loop circulates from the LOOP+ DC loop-power terminal through the transmitter and back into the input (teal); a dry contact on BI1; a 0 to 10 volt actuator on AO1 taking power, signal, and common; and a fan contactor switched by BO1. Direction arrows mark current flow on the energized hot bus (amber) and the DC loop (teal).</desc>
 
                 <!-- controller strip -->
                 <rect class="dev" x="24" y="40" width="126" height="470" rx="3"/>
                 <text class="lbl-dim" x="87" y="32" text-anchor="middle">GENERIC DDC-8</text>
                 <circle class="term" cx="150" cy="70" r="5"/>  <text class="lbl-term" x="124" y="74" text-anchor="end">24V~</text>
                 <circle class="term" cx="150" cy="110" r="5"/> <text class="lbl-term" x="124" y="114" text-anchor="end">24COM</text>
+                <circle class="term" cx="150" cy="135" r="5"/> <text class="lbl-term" x="124" y="139" text-anchor="end">LOOP+</text>
                 <circle class="term" cx="150" cy="160" r="5"/> <text class="lbl-term" x="124" y="164" text-anchor="end">COM</text>
                 <circle class="term" cx="150" cy="210" r="5"/> <text class="lbl-term" x="124" y="214" text-anchor="end">UI1</text>
                 <circle class="term" cx="150" cy="270" r="5"/> <text class="lbl-term" x="124" y="274" text-anchor="end">UI2</text>
@@ -332,13 +341,13 @@ keywords: 24vac com transformer dead short 4-20ma loop wiring fuse polarity
                 <path class="wire w-sig" d="M 150 210 H 480"/>
                 <path class="wire w-com" d="M 480 224 H 232"/>
 
-                <!-- 4-20mA loop on UI2: hot bus -> xmtr+ ; xmtr- -> UI2 (animated) -->
+                <!-- 4-20mA loop on UI2: LOOP+ (DC) -> xmtr+ ; xmtr- -> UI2 (animated) -->
                 <rect class="dev" x="480" y="250" width="160" height="44" rx="3"/>
                 <text class="lbl" x="560" y="270" text-anchor="middle">4&ndash;20 mA XMTR</text>
-                <text class="lbl-dim" x="560" y="285" text-anchor="middle">loop-powered</text>
-                <path class="wire w-cur" d="M 200 264 H 480"/>
-                <path id="cwl-cap-loop" data-flow="current" class="wire w-cur" d="M 480 286 H 360 V 270 H 150" fill="none"/>
-                <polygon class="arrow-cur" points="250,265 240,270 250,275"/>
+                <text class="lbl-dim" x="560" y="285" text-anchor="middle">DC loop-powered</text>
+                <path class="wire w-loop" d="M 150 135 H 214 V 264 H 480"/>
+                <path id="cwl-cap-loop" data-flow="current" class="wire w-loop" d="M 480 286 H 360 V 270 H 150" fill="none"/>
+                <polygon class="arrow-loop" points="250,265 240,270 250,275"/>
 
                 <!-- dry contact on BI1 -->
                 <rect class="dev" x="480" y="310" width="160" height="40" rx="3"/>
@@ -364,7 +373,8 @@ keywords: 24vac com transformer dead short 4-20ma loop wiring fuse polarity
                 <path class="wire w-com" d="M 480 494 H 232"/>
             </svg>
             <p class="edu-legend cwl-leg">
-                <span><span class="sw cur"></span>energized (current flows)</span>
+                <span><span class="sw cur"></span>energized AC (current flows)</span>
+                <span><span class="sw loop"></span>DC loop power</span>
                 <span><span class="sw hot"></span>24 VAC hot</span>
                 <span><span class="sw com"></span>common / return</span>
                 <span><span class="sw sig"></span>signal</span>
