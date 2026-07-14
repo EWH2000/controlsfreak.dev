@@ -360,9 +360,10 @@ Shipped so far:
 Remaining: **none — the six-page chapter is complete** (reading
 order air-handlers → economizers → building-pressure →
 air-unit-identification → vav-systems → duct-static-control, all
-shipped with paired quizzes). Still open from the rollout notes:
-the deferred mini-hub / "start here" decision below, and the parked
-terminal-unit pages (markers only, demand-driven). New idea noted
+shipped with paired quizzes). Still open from the rollout notes: the
+parked terminal-unit pages (markers only, demand-driven); the deferred
+mini-hub / "start here" decision below is now **resolved** — the
+`/forced-air/` hub is shipping. New idea noted
 while shipping page 6 (owner request 2026-07-11): an **analog
 sensing / transmitters lesson** — ranges and scaling, live-zero,
 railed signals as ceilings not measurements — seeded by the

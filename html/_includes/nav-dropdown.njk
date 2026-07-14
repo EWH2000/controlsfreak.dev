@@ -16,12 +16,15 @@
             </button>
             <div class="nav-menu" id="nav-{{ section }}-menu" hidden>
                 {% if blurb %}<p class="nav-menu-blurb">{{ blurb }}</p>{% endif %}
-                {# Topic-cluster hub link, pinned above the category rows in the
-                   two dropdowns where BACnet content lives (Tools + Education) —
-                   the one place a deep-page visitor reaches /bacnet/ from the
-                   chrome. Gated here (not a macro arg) so it stays off nav.njk. #}
+                {# Topic-cluster hub links, pinned above the category rows in the
+                   dropdowns where each cluster's content lives (Tools + Education).
+                   Interim chrome path to the hubs until the "Guides" nav lane
+                   lands and retires these pins — PR-2 of the nav redesign; see
+                   docs/nav-home-redesign-scope.md. Gated here (not a macro arg)
+                   so they stay off nav.njk. #}
                 {% if section == 'tools' or section == 'education' %}
                 <a class="nav-menu-featured" href="/bacnet/">BACnet reference hub →</a>
+                <a class="nav-menu-featured" href="/forced-air/">Forced-air reference hub →</a>
                 {% endif %}
                 {% if groups %}
                 {% for g in groups %}

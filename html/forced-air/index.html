@@ -1,0 +1,247 @@
+---
+title: Forced Air — Field Reference, Tools & Lessons — controlsfreak.dev
+description: Forced-air field reference — lessons from the air handler out to the VAV box, plus the airflow, coil, and fan tools that size and check the air a system moves.
+canonical: https://controlsfreak.dev/forced-air/
+keywords: forced air air handler ahu rtu economizer vav duct static building pressure airflow velocity pressure duct sizing traverse minimum outdoor air ashrae 62.1 coil sizing mixed air psychrometrics fan affinity laws
+---
+{% extends "layouts/page.njk" %}
+{% from "nav-card.njk" import navCard %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <h1 class="section-label">Forced Air</h1>
+        <div class="section-line"></div>
+    </div>
+
+    <p class="landing-intro">
+        Forced air is the side of the building that <strong>moves conditioned air</strong>. An air handler pulls in return air, mixes in outdoor air, drives it through filters and coils, and a fan pushes it out through ductwork to the zones. Every station on that path is something a control system measures, sizes, or holds at setpoint — mixed-air temperature, duct static pressure, the outdoor-air fraction, coil capacity, fan speed. These pages walk the air side end to end, from the air handler out to the VAV box, and give you the tools that put a number on each station.
+    </p>
+
+    <p class="landing-intro">
+        New to it? Work the six lessons in order — they follow the air from the air handler out to the terminal boxes. Already have a unit in front of you? Jump to the tools: size a duct, average a traverse, work the minimum outdoor air, or check a coil. Everything here is open, needs no login, and tracks nothing.
+    </p>
+
+    <h2 class="hub-group">Start here — the lessons, in order</h2>
+    <p class="hub-path">
+        <span class="hub-step">1</span> <a href="/education/air-handlers.html">Air Handlers</a>
+        <span class="hub-arrow">→</span>
+        <span class="hub-step">2</span> <a href="/education/economizers.html">Economizers</a>
+        <span class="hub-arrow">→</span>
+        <span class="hub-step">3</span> <a href="/education/building-pressure.html">Building Pressure</a>
+        <span class="hub-arrow">→</span>
+        <span class="hub-step">4</span> <a href="/education/air-unit-identification.html">Unit ID</a>
+        <span class="hub-arrow">→</span>
+        <span class="hub-step">5</span> <a href="/education/vav-systems.html">VAV Systems</a>
+        <span class="hub-arrow">→</span>
+        <span class="hub-step">6</span> <a href="/education/duct-static-control.html">Duct Static</a>
+    </p>
+
+    <div class="card-grid">
+        {{ navCard({
+            section:    'education',
+            href:       '/education/air-handlers.html',
+            titleShort: 'Air Handlers',
+            titleFull:  'Air Handlers',
+            desc:       'The air path through an air handler, station by station — return, mixing box, filters, heating and cooling coils, supply fan — and the job each one does. The chapter\'s starting point.',
+            pills:      ['Step 1', 'Air Path', 'Mixing → Coils → Fan']
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/education/economizers.html',
+            titleShort: 'Economizers',
+            titleFull:  'Economizers',
+            desc:       'When an air handler should cool with outdoor air instead of the compressor — the changeover logic, the damper sequence, and the mixed-air target that free cooling chases.',
+            pills:      ['Step 2', 'Free Cooling', 'Damper Sequence']
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/education/building-pressure.html',
+            titleShort: 'Building Pressure',
+            titleFull:  'Building Pressure',
+            desc:       'Why a building goes positive or negative — supply vs return vs exhaust, the relief path, and how the controls hold a building near neutral without the doors fighting you.',
+            pills:      ['Step 3', 'Supply / Return / Relief', 'Neutral']
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/education/air-unit-identification.html',
+            titleShort: 'Unit ID',
+            titleFull:  'Unit Identification',
+            desc:       'Naming the box you\'re standing in front of — RTU vs AHU vs fan coil vs makeup air, single-zone vs VAV — and what the nameplate and the duct layout tell you about it.',
+            pills:      ['Step 4', 'RTU / AHU / MAU', 'Nameplate']
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/education/vav-systems.html',
+            titleShort: 'VAV Systems',
+            titleFull:  'VAV Systems',
+            desc:       'One air handler, many zones that never agree — VAV boxes, the pressure-independent loop, reheat, and how the air handler holds duct static while thirty dampers move.',
+            pills:      ['Step 5', 'VAV Boxes', 'Pressure-Independent']
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/education/duct-static-control.html',
+            titleShort: 'Duct Static',
+            titleFull:  'Duct Static Control',
+            desc:       'Holding supply-duct static pressure as the boxes open and close — where the sensor goes, the fan-speed (VFD) loop that chases setpoint, and the static reset that saves fan energy.',
+            pills:      ['Step 6', 'Static Setpoint', 'Fan Reset']
+        }) }}
+    </div>
+
+    <h2 class="hub-group">The tools</h2>
+    <p class="hub-group-intro">
+        Thirteen field utilities for the air side — measure what a duct is moving, size ducts and coils, work the ventilation math, and predict what a speed change does to a fan. No login, nothing to install.
+    </p>
+
+    <h3 class="hub-sub">Measure the air — what's actually moving?</h3>
+    <div class="card-grid">
+        {{ navCard({
+            section:    'tools',
+            href:       '/tools/airflow.html',
+            titleShort: 'Airflow',
+            titleFull:  'Airflow & Velocity Pressure',
+            desc:       'Velocity pressure ↔ air velocity ↔ CFM for a duct — turn a Pitot or velocity-pressure reading into a real air velocity, and a velocity into flow, both directions.',
+            pills:      ['VP ↔ Velocity', 'CFM', 'Pitot']
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/tools/duct-traverse.html',
+            titleShort: 'Duct Traverse',
+            titleFull:  'Duct Traverse Calculator',
+            desc:       'Average a grid of Pitot readings into an honest duct CFM — the log-Tchebycheff traverse points, the per-point velocities, and the flow they add up to.',
+            pills:      ['Traverse', 'Log-Tcheb', 'Avg CFM']
+        }) }}
+    </div>
+
+    <h3 class="hub-sub">Size ducts &amp; loads</h3>
+    <div class="card-grid">
+        {{ navCard({
+            section:    'tools',
+            href:       '/tools/duct-sizer.html',
+            titleShort: 'Duct Sizer',
+            titleFull:  'Duct Sizer',
+            desc:       'Size a duct by friction rate or velocity — round or rectangular, the equivalent-diameter round-trip, and the friction loss the fan has to overcome.',
+            pills:      ['Friction Rate', 'Round ↔ Rect', 'Equiv Dia']
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/tools/airside-load.html',
+            titleShort: 'Airside Load',
+            titleFull:  'Airside Load Calculator',
+            desc:       'The sensible and latent load an airstream carries — CFM, the temperature split, and the humidity change into BTU/h: the air side of what a coil has to do.',
+            pills:      ['Sensible + Latent', 'CFM · ΔT', 'BTU/h']
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/tools/equipment-airflow.html',
+            titleShort: 'Equipment Airflow',
+            titleFull:  'Equipment Airflow Check',
+            desc:       'Is the unit moving the air it should? CFM-per-ton and CFM-per-person sanity checks against the nameplate capacity and the space it serves.',
+            pills:      ['CFM / Ton', 'CFM / Person', 'Sanity Check']
+        }) }}
+    </div>
+
+    <h3 class="hub-sub">Ventilation &amp; mixing</h3>
+    <div class="card-grid">
+        {{ navCard({
+            section:    'tools',
+            href:       '/tools/minimum-outdoor-air.html',
+            titleShort: 'Minimum OA',
+            titleFull:  'Minimum Outdoor Air Calculator',
+            desc:       'The outdoor-air a space needs by ASHRAE 62.1 — the people and area rates, the zone air-distribution effectiveness, and the intake fraction that delivers it.',
+            pills:      ['62.1 Rp / Ra', 'Ez', 'OA Fraction']
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/tools/economizer-ratio.html',
+            titleShort: 'Economizer Ratio',
+            titleFull:  'Economizer Ratio Helper',
+            desc:       'The outdoor-air damper position that hits a mixed-air target — the ratio of outdoor to return air for free-cooling changeover and the resulting mixed-air temperature.',
+            pills:      ['OA / RA Ratio', 'Mixed-Air Target', 'Economizer']
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/tools/air-mixing.html',
+            titleShort: 'Air Mixing',
+            titleFull:  'Mixed Air Temperature Calculator',
+            desc:       'Return air + outdoor air = mixed air — the weighted blend a mixing box produces at any damper split, and the coil-entering temperature it sets up.',
+            pills:      ['RA + OA', 'Mixed-Air Temp', 'Damper Split']
+        }) }}
+    </div>
+
+    <h3 class="hub-sub">Coils &amp; psychrometrics</h3>
+    <div class="card-grid">
+        {{ navCard({
+            section:    'tools',
+            href:       '/tools/coil-sizing.html',
+            titleShort: 'Coil Sizing',
+            titleFull:  'Coil-Sizing Calculator',
+            desc:       'The capacity a coil needs — airflow and the entering / leaving air state into total, sensible, and latent BTU/h, plus the water-side flow that carries it away.',
+            pills:      ['Coil Capacity', 'Total / Sens / Lat', 'GPM']
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/tools/coil-freeze-risk.html',
+            titleShort: 'Coil Freeze',
+            titleFull:  'Coil Freeze Risk Checker',
+            desc:       'Whether a coil is at risk of freezing — the outdoor-air fraction, the mixed-air temperature it produces, and the glycol concentration that protects the water side.',
+            pills:      ['Freeze Risk', 'Mixed-Air Temp', 'Glycol %']
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/tools/dew-point-calculator.html',
+            titleShort: 'Dew Point',
+            titleFull:  'Dew Point Calculator & Coil Check',
+            desc:       'Dew point from temperature and humidity — whether a cold surface or a cooling coil will condense, and where the air crosses saturation.',
+            pills:      ['Dew Point', 'Condensation', 'Coil Check']
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/tools/psychrometric-chart.html',
+            titleShort: 'Psych Chart',
+            titleFull:  'Psychrometric Chart',
+            desc:       'Plot an air state and read every property off the chart — dry bulb, wet bulb, RH, dew point, enthalpy — and walk a coil or mixing process across it.',
+            pills:      ['Air State', 'Wet Bulb / RH', 'Process Line']
+        }) }}
+    </div>
+
+    <h3 class="hub-sub">Fans</h3>
+    <div class="card-grid">
+        {{ navCard({
+            section:    'tools',
+            href:       '/tools/affinity-laws.html',
+            titleShort: 'Affinity Laws',
+            titleFull:  'Affinity Laws',
+            desc:       'How fan speed drives airflow, static pressure, and power — the cube-law on horsepower that makes a VFD the biggest lever on a forced-air system\'s energy. (Same laws run pumps.)',
+            pills:      ['Fan Laws', 'Speed → Flow / SP', 'Cube-Law HP']
+        }) }}
+    </div>
+
+    <h2 class="hub-group">Related lessons</h2>
+    <p class="hub-group-intro">
+        Two fundamentals the air side leans on — the air-state vocabulary behind every coil calc, and the drive that turns a fan down.
+    </p>
+    <div class="card-grid">
+        {{ navCard({
+            section:    'education',
+            href:       '/education/psychrometrics-basics.html',
+            titleShort: 'Psychrometrics',
+            titleFull:  'Psychrometrics Basics',
+            desc:       'Air as a mixture of dry air and water vapor — dry bulb, wet bulb, dew point, RH, and enthalpy, the vocabulary the psych chart and every coil calc are built on.',
+            pills:      ['Fundamentals', 'Air State', 'Enthalpy']
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/education/vfds.html',
+            titleShort: 'VFDs',
+            titleFull:  'VFDs',
+            desc:       'How a variable-frequency drive turns a fan or pump motor down — the volts-per-hertz basics behind duct-static control and pump-speed control.',
+            pills:      ['Fundamentals', 'Volts / Hz', 'Fan / Pump Speed']
+        }) }}
+    </div>
+
+    <a class="back-link" href="/education/">← Back to Education</a>
+
+</main>
+{% endblock %}
