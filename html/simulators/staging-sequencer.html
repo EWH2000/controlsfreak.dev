@@ -268,7 +268,7 @@ keywords: lead lag rotation runtime stage up down chiller boiler pump
             <div class="form-row">
                 <div class="field">
                     <label for="stg-up">Stage up above (% unit load)</label>
-                    <input type="number" id="stg-up" min="50" max="100" step="1" value="85">
+                    <input type="number" id="stg-up" min="50" max="100" step="1" value="90">
                 </div>
                 <div class="field">
                     <!-- "post-drop": the sequence drops a unit when the load
@@ -471,7 +471,7 @@ keywords: lead lag rotation runtime stage up down chiller boiler pump
             type: 'pump',
             strategy: 'fixed',
             schedDays: 7,
-            up: 85,          // per-unit load % to stage up
+            up: 90,          // per-unit load % to stage up
             down: 45,        // per-unit load % to stage down (down < up)
             delaySec: 120,   // sim-seconds demand must hold across the line
             minSec: 300,     // sim-seconds locked after a change
