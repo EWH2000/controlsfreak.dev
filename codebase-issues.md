@@ -4740,6 +4740,29 @@ surfaces.
 step 6 now points at the `<p class="hero-latest">` paragraph (~L382)
 instead of `.hero-badges`.
 
+### 154. Audit: diff every simulator/explainer against the tool that computes the same physics *(open — 2026-07-14)*
+
+The 2026-07 accuracy-audit workflow found that the site's *static*
+reference data (enum tables, conversion constants, lookup tables) is
+solid, but the two real defects it surfaced both lived in **interactive
+models that restate physics a dedicated tool also computes** — and had
+drifted from it: the hydronic loop builder's pump curve violated the
+affinity laws that `affinity-laws.html` teaches (fixed, content-audit
+#44), and the controller-wiring lesson/sim taught 4-20 mA loop power off
+the AC hot leg (fixed, content-audit #38). Hand-derived interactive math
+that *should* mirror a companion calculator is the live accuracy
+surface; the tables are not.
+
+**Action:** a focused pass that, for each simulator/explainer, diffs its
+embedded physics against the tool of record and pins them together at a
+couple of operating points. Candidate pairs the coverage critic flagged:
+vfd-mock ↔ affinity-laws, staging-sequencer ↔ equipment-staging,
+pid-tuner ↔ pid-basics, hydronic-loop-builder ↔ valve-cv /
+waterside-load, controller-wiring ↔ signal-scaling. Where an engine is
+the source of truth, prefer an engine-direct spec assertion (as added
+for the affinity fix) over a screenshot. Log any drift found as its own
+content-audit entry.
+
 ### Deferred / Won't fix (with revisit trigger)
 
 Items considered during an audit and deliberately not pursued, each
