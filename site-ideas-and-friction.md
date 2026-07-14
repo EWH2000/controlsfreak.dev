@@ -4518,8 +4518,8 @@ Out of scope (forward links, not content):
 - Reverse return as a passive balancing approach — covered on
   `hydronic-loops.html` d2 (cross-link from closing section)
 - Coil sizing / mass-flow design ("where does the design flow
-  number come from") — [future: coil-selection.html], mentioned
-  in the diagnostics section
+  number come from") — [future: coil-selection.html] *(shipped
+  2026-07-14)*, mentioned in the diagnostics section
 - Specific manufacturer cartridge curves / Cv math / authority
   algebra — keeps the cross-manufacturer pattern, same scope
   discipline as the vfds page
@@ -4576,9 +4576,12 @@ caught on a manometer walk.
   When that page ships, it should tie back here for the
   conceptual half ("balancing as equipment-and-procedure" lives
   here; "balancing as job-site activity" lives there).
-- `[future: coil-selection.html]` — mentioned in the diagnostics
-  intro as the upstream source of the design-flow number. When
-  it ships, the balancing page can be cross-linked back.
+- `[future: coil-selection.html]` *(shipped 2026-07-14)* — mentioned
+  in the diagnostics intro as the upstream source of the design-flow
+  number. Shipped as the hydronics-cluster explainer for the
+  load-to-flow chain; the balancing diagnostics intro now anchors it
+  (the forward-link was added at ship time — the pre-ship page had the
+  topic in prose but not yet as a link).
 
 **CSS / pattern notes for the next Education page:**
 - Widget chrome is yet another instance of the
