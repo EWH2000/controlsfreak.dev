@@ -2338,6 +2338,21 @@ dedicated supply or loop-power terminal) and names the hot-leg framing
 a deliberate one-power-story simplification; the sim preamble carries
 the matching two-sentence caveat. Engine and diagrams unchanged.
 
+**Real fix (2026-07-14):** the caveat-only resolution was reopened — a
+note over a still-wrong diagram and sim isn't a fix. The loop is now DC
+loop-powered everywhere. The controller model gains a `LOOP+` DC
+loop-power terminal (wiring-engine.js); the 4–20 mA `+` sources from it,
+not `24V~`; and mis-landing the `+` on the AC hot leg now faults with a
+teaching message ("a 4-20mA loop needs DC loop power — land + on LOOP+,
+not the 24 VAC hot leg"). The lesson prose and both diagrams (inputs,
+capstone) redraw the loop from LOOP+ in a distinct teal "DC loop power"
+wire family; the simulator surfaces the LOOP+ terminal (new "Loop Power"
+group) and repaths the loop preset. New engine-direct tests cover the
+loop path (OK from LOOP+, fault on the AC hot leg, fault unpowered, mode
+mismatch). This brings the page in line with the site's own
+`field-wiring-sensors` drill, which already teaches DC loop power.
+PR: fix/4-20ma-dc-loop-power.
+
 ### 39. PID fast scene tells a physically wrong story — a "VAV damper" controlling duct static while the fan also tracks the same output
 
 **Location:** simulators/pid-tuner.html — selector option "VAV damper
@@ -2388,6 +2403,22 @@ consequence; the engine's reversed-power fault text gains the why
 ("alone … this can even run — the danger is sharing"). Sim behavior
 (spark cue) unchanged, as documented. The lesson was already correct.
 
+**Real fix (2026-07-14):** the copy scoping was correct, but the sim
+still contradicted it — a *lone* reversed controller was marked an
+unpowered fault with a spark, while the drill, lesson, and the fault's
+own text all say it "can even run." Owner reversed the 2026-06-10
+"keep the teaching spark" call. `wiring-engine.js` now powers a lone
+reversed controller (it reads live), downgrades the `reversed` fault to
+a **warn advisory**, and drops the spark. The genuine dead-short cases
+are unchanged and still spark/blow the fuse: `short-xfmr` (hot tied to
+com) and `xfmr-fight` (two transformers crossed) — and a reversed
+controller that *shares* a common back to the true COM leg is caught by
+that same short pass. The simulator's fault box now shows amber (not
+red) for a warn-only advisory, so a running-but-crossed panel reads as a
+heads-up rather than a failure. Reversed-polarity engine test rewritten
+to the new contract + a shared-common-short test added.
+PR: fix/reversed-power-lone-runs.
+
 ### 41. "Not 'around 40 °F' — at 40 °F" overshoots the site's own table
 
 **Location:** refrigeration cluster prose; 118 psig interpolates to
@@ -2421,6 +2452,28 @@ held for decision.
 walkthrough now reads "a sliver of lift out of the needle's total
 travel" with a parenthetical reserving "turns" for the adjustment
 screw; the screw paragraph's turn language stands (correct usage).
+
+### 43. Triac output description is imprecise — "won't switch a separate voltage"
+
+**Location:** education/controller-wiring.html (outputs section, triac
+paragraph). **Lens:** content. **Verification status: verified**
+(2026-07 accuracy-audit workflow, adversarially adjudicated).
+
+The line "a triac isn't a dry contact: it won't switch a separate
+voltage" is defensible for the common internally-sourced controller
+triac output but not universally true — opto-isolated triac outputs can
+switch a separately-supplied AC source. The always-true distinctions
+from a dry contact are that a triac is **AC-only** (it latches on and
+can't interrupt a DC load) and is **not a galvanically isolated
+contact**. Sources: Schneider EBO / KMC controller triac-output docs
+(opto-isolated, common terminal to a separate 24 VAC); triac
+DC-latching physics (no AC zero-cross to commutate off).
+
+**Resolved (2026-07-14):** rewrote the sentence to anchor on the
+always-true properties — AC-only (can't interrupt DC) and not a
+floating/isolated contact — keeping the copy vendor-neutral (no product
+names, per the vendor-name guardrail). Shipped in
+fix/4-20ma-dc-loop-power (same file).
 
 ### 44. Hydronic loop builder violates the affinity laws at reduced pump speed
 

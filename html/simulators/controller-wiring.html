@@ -3,7 +3,7 @@ title: Controller Wiring Simulator — controlsfreak.dev
 description: Wire a generic DDC controller — 24 VAC power, universal/binary inputs, analog/binary outputs — then watch it read live or fail with sparks and a popped fuse.
 canonical: https://controlsfreak.dev/simulators/controller-wiring.html
 nav: simulators
-keywords: 24vac com transformer 4-20ma loop ui ai ao bo terminals fuse
+keywords: 24vac com transformer 4-20ma loop dc loop power ui ai ao bo terminals fuse
 ---
 {% extends "layouts/page.njk" %}
 {% from "related-links.njk" import relatedLinks %}
@@ -68,6 +68,7 @@ keywords: 24vac com transformer 4-20ma loop ui ai ao bo terminals fuse
         .cw-wire-sig { stroke: var(--text-dim); }
         .cw-wire-hot { stroke: var(--red); }
         .cw-wire-com { stroke: var(--blue); }
+        .cw-wire-loop { stroke: var(--teal); }   /* DC loop power (2-wire 4-20 mA) */
         .cw-wire-hit { fill: none; stroke: transparent; stroke-width: 15; pointer-events: stroke; cursor: pointer; }
         .cw-wire-sel { stroke: var(--text-bright) !important; stroke-dasharray: 6 3; }
 
@@ -295,6 +296,7 @@ keywords: 24vac com transformer 4-20ma loop ui ai ao bo terminals fuse
             padding: 0.7rem 0.9rem;
         }
         .cw-faults.cw-faults--bad { border-left-color: var(--red); }
+        .cw-faults.cw-faults--warn { border-left-color: var(--amber); }
         .cw-faults-head {
             font-family: var(--mono);
             font-size: 0.66rem;
@@ -365,7 +367,7 @@ keywords: 24vac com transformer 4-20ma loop ui ai ao bo terminals fuse
         <div class="tool-body">
 
             <p class="tool-preamble" style="margin-bottom:1rem;">
-                Land a generic DDC controller the way you would in the field — power it from a transformer, drop sensors and outputs, and click terminal-to-terminal to run the wire. Get it right and the points read live; get it wrong and it fails the way real hardware fails — a sensor goes open, an actuator sits dead, the fuse pops. One simplification: the 4–20 mA loop here runs off the 24 V hot leg, while a real two-wire transmitter is DC loop-powered (typically 12–30 VDC from a dedicated supply or the controller's loop-power terminal). The wiring shape and the failure modes are the same either way. <strong>Desktop tool</strong> — wiring wants a mouse and room. <strong>New to landing a controller?</strong> <a href="/education/controller-wiring.html">Start with the explainer →</a>
+                Land a generic DDC controller the way you would in the field — power it from a transformer, drop sensors and outputs, and click terminal-to-terminal to run the wire. Get it right and the points read live; get it wrong and it fails the way real hardware fails — a sensor goes open, an actuator sits dead, the fuse pops. The 4–20 mA transmitter is DC loop-powered: land its <strong>+</strong> on the controller's <strong>LOOP+</strong> terminal (its internal 24 VDC loop supply), not the 24 VAC hot leg — put it on the hot leg and the point faults, the same way real hardware won't drive a loop off AC. <strong>Desktop tool</strong> — wiring wants a mouse and room. <strong>New to landing a controller?</strong> <a href="/education/controller-wiring.html">Start with the explainer →</a>
             </p>
 
             <div class="desktop-only-sim">
@@ -376,7 +378,7 @@ keywords: 24vac com transformer 4-20ma loop ui ai ao bo terminals fuse
                 <ul>
                     <li><strong>Power first.</strong> Land the transformer's hot leg on <strong>24V~</strong> and its common on <strong>24COM</strong> before anything else — every powered device and output references that common.</li>
                     <li><strong>Sensors are two wires to a UI.</strong> A 10K thermistor lands on a universal input plus the signal common; set the input type (<strong>R / V / mA</strong>) to match the device, or the reading is garbage.</li>
-                    <li><strong>Know your transmitter.</strong> A 2-wire 4–20 mA transmitter is loop-powered and sits in series with the loop; a 3-wire 0–10 V transmitter needs its own power, common, and signal.</li>
+                    <li><strong>Know your transmitter.</strong> A 2-wire 4–20 mA transmitter is DC loop-powered — its + comes off the controller's LOOP+ terminal and it sits in series with the loop; a 3-wire 0–10 V transmitter needs its own power, common, and signal.</li>
                     <li><strong>Outputs split two ways.</strong> An analog output drives a separately-powered actuator — signal and signal-common carry the command. A binary output is just a dry contact that switches an external load, like a fan contactor fed from the hot leg.</li>
                     <li><strong>Wrong landings fail like real hardware.</strong> A dead short across hot and common pops the fuse; a sensor returned to the wrong terminal reads open; an unpowered actuator sits dead.</li>
                 </ul>
@@ -501,6 +503,7 @@ keywords: 24vac com transformer 4-20ma loop ui ai ao bo terminals fuse
         // Controller faceplate layout — display order + group headers.
         const GROUPS = [
             { label: 'Power', terms: ['24v', '24com'] },
+            { label: 'Loop Power', terms: ['loop'] },
             { label: 'Signal Common', terms: ['com-a', 'com-b'] },
             { label: 'Universal Inputs', terms: ['ui1', 'ui2', 'ui3', 'ui4'] },
             { label: 'Binary Inputs', terms: ['bi1', 'bi2'] },
@@ -824,19 +827,22 @@ keywords: 24vac com transformer 4-20ma loop ui ai ao bo terminals fuse
         // Colour a wire by the role of whichever end is most telling.
         function wireRole(w) {
             const ends = [w.a, w.b];
-            let hot = false, com = false;
+            let hot = false, com = false, loop = false;
             ends.forEach((e) => {
                 const r = endRole(e[0], e[1]);
                 if (r === 'hot') hot = true;
                 if (r === 'com') com = true;
+                if (r === 'loop') loop = true;
             });
-            if (hot) return 'hot';
+            if (hot) return 'hot';       // AC hot wins — a loop + mislanded on 24V~ reads hot (and faults)
+            if (loop) return 'loop';     // DC loop-power leg (LOOP+ → transmitter +)
             if (com) return 'com';
             return 'sig';
         }
         function endRole(node, term) {
             if (node === 'ctlr') {
                 if (term === '24v' || term === 'boc') return 'hot';
+                if (term === 'loop') return 'loop';
                 if (term === '24com' || term === 'com-a' || term === 'com-b') return 'com';
                 return 'sig';
             }
@@ -844,7 +850,8 @@ keywords: 24vac com transformer 4-20ma loop ui ai ao bo terminals fuse
             if (!d) return 'sig';
             const t = W.DEVICES[d.type].terminals.find((x) => x.id === term);
             if (!t) return 'sig';
-            if (t.kind === 'hot' || t.kind === 'pwr' || t.kind === 'loop+') return 'hot';
+            if (t.kind === 'hot' || t.kind === 'pwr') return 'hot';
+            if (t.kind === 'loop+') return 'loop';
             if (t.kind === 'xcom' || t.kind === 'ret' || t.kind === 'pcom') return 'com';
             return 'sig';
         }
@@ -927,7 +934,11 @@ keywords: 24vac com transformer 4-20ma loop ui ai ao bo terminals fuse
         function paintFaults(faults) {
             faultsList.innerHTML = '';
             const anyWired = panel.wires.length > 0 || panel.devices.length > 0;
-            faultsBox.classList.toggle('cw-faults--bad', faults.length > 0);
+            // Red only for a genuine failure (short/fault); a warn-level advisory
+            // (e.g. reversed leads that still run) gets an amber rail instead.
+            const hasFailure = faults.some((f) => f.severity === 'short' || f.severity === 'fault');
+            faultsBox.classList.toggle('cw-faults--bad', hasFailure);
+            faultsBox.classList.toggle('cw-faults--warn', !hasFailure && faults.length > 0);
             if (faults.length === 0) {
                 const li = document.createElement('li');
                 li.className = 'cw-ok';
@@ -1062,7 +1073,7 @@ keywords: 24vac com transformer 4-20ma loop ui ai ao bo terminals fuse
                 wires: [
                     { a: ['D0', 'hot'], b: ['ctlr', '24v'] },
                     { a: ['D0', 'com'], b: ['ctlr', '24com'] },
-                    { a: ['D1', 'plus'], b: ['ctlr', '24v'] },
+                    { a: ['D1', 'plus'], b: ['ctlr', 'loop'] },
                     { a: ['D1', 'minus'], b: ['ctlr', 'ui2'] },
                     { a: ['D2', 'a'], b: ['ctlr', 'bi1'] },
                     { a: ['D2', 'b'], b: ['ctlr', 'com-a'] },
