@@ -4740,7 +4740,7 @@ surfaces.
 step 6 now points at the `<p class="hero-latest">` paragraph (~L382)
 instead of `.hero-badges`.
 
-### 154. Audit: diff every simulator/explainer against the tool that computes the same physics *(open — 2026-07-14)*
+### 154. Audit: diff every simulator/explainer against the tool that computes the same physics *(addressed 2026-07-14)*
 
 The 2026-07 accuracy-audit workflow found that the site's *static*
 reference data (enum tables, conversion constants, lookup tables) is
@@ -4762,6 +4762,51 @@ waterside-load, controller-wiring ↔ signal-scaling. Where an engine is
 the source of truth, prefer an engine-direct spec assertion (as added
 for the affinity fix) over a screenshot. Log any drift found as its own
 content-audit entry.
+
+**Audit complete (2026-07-14).** Ran the pass as eight parallel
+physics-cluster diffs (affinity/VFD, hydronic valve/load, PID,
+signal/wiring, staging, psychrometrics, refrigerant P-T,
+duct/airflow/economizer), each re-deriving the shared relation and running
+the engine in node at real operating points. Static reference held up
+everywhere; the drift again lived in interactive math and prose. Four
+content-accuracy fixes shipped (content-audit #45-#48): the pid-basics "P
+only" caption (promised ringing three low-dead-time loops can't produce),
+the superheat-subcooling "reads the same 10 °F back" claim (the tool
+interpolates to 10.2 / 9.6), the R-454B "negligible glide" pill
+(contradicted the glide-blend lesson), and the VAV coil CFM/ton verdict
+bands (disagreed with the equipment-airflow tool). Each is pinned by an
+engine-direct, data-direct, or behavioral spec. Two cross-widget cosmetics
+were logged separately (#155). Node-verified consistent, no change:
+affinity exponents across vfd-mock / vfds / pump-control / hydronic; valve
+`Q = Cv·√ΔP` and `500·gpm·ΔT` in the hydronic engine; every mA↔EU /
+live-zero map vs signal-scaling; the 1.08 / 0.68 / 4.5 psychro constants
+and flow-weighted mixing; superheat/subcooling sign + reference and the P-T
+table values; `CFM = V×A`, the 4005 velocity-pressure constant, the
+Huebscher equivalent-diameter, and the economizer %OA formula. The staging
+*logic* (deadband, stage delay, anti-short-cycle lock, all three lead/lag
+rotation modes, fault promotion) verified faithful between sim and lesson.
+PR: issue-154/sim-tool-physics-audit.
+
+### 155. staging-sequencer ↔ equipment-staging: two cross-widget cosmetic mismatches *(open — 2026-07-14)*
+
+Surfaced by the #154 sim/tool physics diff. Both are cosmetic, neither a
+physics or logic error — logged rather than fixed inline to keep the #154
+PR scoped to accuracy:
+
+- **"held" status color differs.** `education/equipment-staging.html`
+  (`.es-w1-status[data-kind="held"]`) borders the held state `var(--red)`;
+  `simulators/staging-sequencer.html` (`.stg-status[data-kind="held"]`)
+  borders it `var(--amber)`. Same benign state — a stage change blocked by
+  the minimum stage-time lock — with two accents. The sim's amber is the
+  better choice (it reserves red for fault/shortfall), so aligning the
+  lesson to amber is the likely fix. One-line CSS.
+- **Stage-up default differs (not user-facing).** The lesson widget's own
+  code comment says pumps are added near 90 % per-unit load; the sim's
+  default `up` is 85 %. The two widgets display thresholds in different
+  units (lesson = % of full-plant demand; sim = % per-unit load), so no
+  reader sees "90" and "85" side by side — the 90 lives only in a lesson
+  code comment. Align only if the two teaching models should quote the same
+  number.
 
 ### Deferred / Won't fix (with revisit trigger)
 
