@@ -23,13 +23,13 @@ nav: education
 
     <div class="filter-chips" role="group" aria-label="Filter lessons by category">
         <button type="button" class="filter-chip active" data-category="all" aria-pressed="true">
-            All <span class="filter-chip-count">26</span>
+            All <span class="filter-chip-count">27</span>
         </button>
         <button type="button" class="filter-chip" data-category="fundamentals" aria-pressed="false">
             Fundamentals <span class="filter-chip-count">6</span>
         </button>
         <button type="button" class="filter-chip" data-category="hydronics" aria-pressed="false">
-            Hydronics <span class="filter-chip-count">4</span>
+            Hydronics <span class="filter-chip-count">5</span>
         </button>
         <button type="button" class="filter-chip" data-category="refrigerant" aria-pressed="false">
             Refrigerant <span class="filter-chip-count">3</span>
@@ -113,6 +113,15 @@ nav: education
             titleFull:  'Hydronic Balancing',
             desc:       'Getting design flow to every load — calibrated balancing valves, automatic balancing valves, and PICVs. With a widget that shows what each one does when system pressure swings.',
             pills:      ['Hydronics', 'Manual / Auto / PICV', 'Design Flow', 'Widget'],
+            category:   'hydronics'
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/education/coil-selection.html',
+            titleShort: 'Coil Selection',
+            titleFull:  'Coil Selection',
+            desc:       'Where the design flow a balancer chases actually comes from — the load-to-flow chain (q = ṁ·cp·ΔT), why the chosen ΔT sets the GPM, and the coil levers (rows, fins, face velocity, approach) that meet the capacity.',
+            pills:      ['Hydronics', 'Load → Flow', 'Design ΔT', 'Rows · Face Velocity'],
             category:   'hydronics'
         }) }}
         {{ navCard({

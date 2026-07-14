@@ -64,6 +64,7 @@ const PAGES = [
     { name: 'education — pump control', url: '/education/pump-control.html' },
     { name: 'education — equipment staging', url: '/education/equipment-staging.html' },
     { name: 'education — balancing',   url: '/education/balancing.html' },
+    { name: 'education — coil selection', url: '/education/coil-selection.html' },
     { name: 'education — refrigerant cycle basics', url: '/education/refrigerant-cycle-basics.html' },
     { name: 'education — superheat & subcooling', url: '/education/superheat-subcooling.html' },
     { name: 'education — txv vs eev', url: '/education/metering-devices-txv-eev.html' },
