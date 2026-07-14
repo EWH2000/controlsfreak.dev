@@ -33,6 +33,7 @@ const order = [
     "/education/pump-control.html",
     "/education/equipment-staging.html",
     "/education/balancing.html",
+    "/education/coil-selection.html",
     "/education/refrigerant-cycle-basics.html",
     "/education/superheat-subcooling.html",
     "/education/metering-devices-txv-eev.html",

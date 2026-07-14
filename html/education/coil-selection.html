@@ -1,0 +1,341 @@
+---
+title: Coil Selection — controlsfreak.dev
+description: Where the design GPM a balancer chases comes from — the load-to-flow chain, why the chosen ΔT sets the flow, and how a coil is picked to meet the capacity.
+canonical: https://controlsfreak.dev/education/coil-selection.html
+nav: education
+category: hydronics
+keywords: coil selection coil sizing design flow gpm delta-t mass flow rows face velocity lmtd approach
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block head %}
+    <style>
+        /* Page-local — coil-selection lesson. Prominent equation blocks
+           for the load-to-flow chain, a wider-vs-narrower ΔT comparison
+           card, and the static counterflow-coil capstone. The capstone
+           uses the shared .edu-svg frame from styles.css but carries NO
+           [data-flow] paths, so the site-wide flow engine no-ops it — it
+           is a labelled reference schematic, not an animated pipe run.
+           id-prefix csel- throughout (no collision with coil-sizing's
+           cs- tool prefix). */
+
+        /* Emphasised equation line — mono, blue left rule, scrolls on its
+           own if a formula runs wide (never the page body). */
+        .csel-eq {
+            display: block;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--blue);
+            border-radius: 3px;
+            padding: 0.7rem 1rem;
+            margin: 1.1rem 0;
+            font-family: var(--mono);
+            font-size: 0.92rem;
+            line-height: 1.6;
+            color: var(--text-bright);
+            overflow-x: auto;
+        }
+        .csel-eq .csel-eq-note {
+            display: block;
+            margin-top: 0.35rem;
+            font-size: 0.76rem;
+            color: var(--text-dim);
+            letter-spacing: 0.02em;
+        }
+
+        /* Constant-breakdown chip — the "where 500 / 1.08 comes from" line
+           kept IP-native (no converted twin), quiet and small. */
+        .csel-const {
+            font-family: var(--mono);
+            font-size: 0.82rem;
+            color: var(--text);
+        }
+
+        /* Wider-vs-narrower ΔT comparison — two cells sharing the same
+           load, one at design ΔT, one wider. */
+        .csel-lever {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.85rem;
+            margin: 1.25rem 0;
+        }
+        @media (max-width: 560px) {
+            .csel-lever { grid-template-columns: 1fr; }
+        }
+        .csel-lever-cell {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            padding: 0.85rem 1rem;
+        }
+        .csel-lever-cell.wide { border-color: var(--accent-dim); }
+        .csel-lever-dt {
+            font-family: var(--mono);
+            font-size: 0.72rem;
+            letter-spacing: 0.06em;
+            color: var(--text-dim);
+            text-transform: uppercase;
+        }
+        .csel-lever-flow {
+            font-family: var(--mono);
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: var(--blue);
+            margin: 0.3rem 0 0.15rem;
+            line-height: 1;
+        }
+        .csel-lever-cell.wide .csel-lever-flow { color: var(--accent); }
+        .csel-lever-sub {
+            font-size: 0.8rem;
+            color: var(--text-dim);
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Education · Coil Selection</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">Coil Selection <span class="tool-tag">Hydronics</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                The <a href="/education/balancing.html">balancing</a> lesson is all about getting <em>design flow</em> to every load — the <span data-us="GPM" data-metric="L/s">GPM</span> a tech chases with a manometer at each branch. But it takes that number as a given. Where does it actually come from? Nobody picks it out of the air. It falls out of the coil the engineer selected, and behind the coil sits one short chain of physics: the load the coil has to move, the temperature drop you decide to move it across, and the flow that combination demands. This page walks that chain — so the next time a balancer asks "what's design on this branch?", you know what produced the answer.
+            </p>
+
+            <!-- ───────────────── 1 · The load-to-flow chain ───────────────── -->
+            <h2 class="subhead">The load-to-flow chain</h2>
+
+            <p>
+                Every coil is a heat exchanger, and every heat exchanger obeys the same sentence: the heat a moving fluid carries equals its mass flow times its specific heat times the temperature change it goes through. In symbols that's <code>q = ṁ · c<sub>p</sub> · ΔT</code> — mass flow <code>ṁ</code>, specific heat <code>c<sub>p</sub></code>, temperature difference <code>ΔT</code>. That one relationship is the whole game. Rearranged for flow, it says: given a load and a temperature difference, the flow is <em>fixed</em>. You don't get to choose it independently.
+            </p>
+
+            <p style="margin-top:1.1rem;">
+                Nobody in the field carries around mass flow in pounds per hour, though. The trade collapses that equation into two shortcut forms — one for water, one for air — where the fluid's properties are baked into a single constant so you can work in the units on the gauge.
+            </p>
+
+            <p style="margin-top:1.1rem;"><strong>Water.</strong> For a hydronic coil, flow comes out in GPM:</p>
+
+            <code class="csel-eq">
+                GPM = Btu/h ÷ (500 × ΔT<sub>water</sub>)
+                <span class="csel-eq-note">computes in IP; the flow converts to L/s at the display boundary</span>
+            </code>
+
+            <p>
+                The <span class="csel-const">500</span> is water's density and specific heat folded into one number:
+                <span class="csel-const">8.33 lb/gal × 60 min/h × 1.0 Btu/lb·°F</span> — pounds of water per gallon, minutes per hour, and the Btu it takes to lift one pound of water one degree. Multiply those and you get 499.8, rounded to 500 everywhere in the trade. It is an IP constant through and through; there is no clean "metric 500," so the math runs in IP and the flow you read simply converts to <span data-us="GPM" data-metric="L/s">GPM</span> on the way to the screen. One caveat that bites: the 500 assumes <em>water</em>. A glycol mix is denser and has a lower specific heat, so it carries less heat per gallon — the shortcut over-reports flow-for-load until you correct it, which is a big part of why a <a href="/education/hydronic-loops.html">glycol loop</a> needs its own numbers.
+            </p>
+
+            <p style="margin-top:1.1rem;"><strong>Air.</strong> For an air coil the same chain gives CFM, using the sensible-heat form:</p>
+
+            <code class="csel-eq">
+                CFM = Btu/h<sub>sensible</sub> ÷ (1.08 × ΔT<sub>air</sub>)
+                <span class="csel-eq-note">standard air, sea level; computes in IP, converts to m³/h at the display boundary</span>
+            </code>
+
+            <p>
+                The <span class="csel-const">1.08</span> is the air twin of the 500:
+                <span class="csel-const">0.075 lb/ft³ × 0.24 Btu/lb·°F × 60 min/h</span> — the density of standard air, the specific heat of air, and minutes per hour, which multiply to 1.08. That is <em>sensible</em> heat only — the part that changes dry-bulb temperature. When a cooling coil is also wringing moisture out of the air, the total (sensible + latent) heat rides the enthalpy form instead: <code>Btu/h<sub>total</sub> = 4.5 × CFM × Δh</code>, where the <span class="csel-const">4.5 = 60 × 0.075</span> and <code>Δh</code> is the enthalpy drop across the coil in Btu/lb. The <a href="/tools/coil-sizing.html">Coil-Sizing Calculator</a> runs that full sensible/latent split for you; here the point is just that air flow comes from the same load-over-ΔT chain water does.
+            </p>
+
+            <p style="margin-top:1.1rem;">
+                So both field forms are the same idea wearing different clothes: <strong>load on top, ΔT on the bottom.</strong> Fix any two and the third is decided. That is the lever the next section is about.
+            </p>
+
+            <!-- ───────────────── 2 · Why ΔT is the lever ───────────────── -->
+            <h2 class="subhead">Why ΔT is the lever</h2>
+
+            <p>
+                The load is not yours to choose — the space needs what it needs on the design day. The constant is physics. So the one knob the designer actually turns is the <em>design ΔT</em>: how big a temperature drop you decide the coil will develop between supply and return. Pick a wide ΔT and the same load needs less flow; pick a narrow one and it needs more. Everything downstream — pipe size, pump size, pumping energy, the number the balancer chases — hangs off that single choice.
+            </p>
+
+            <p style="margin-top:1.1rem;">
+                Work an example. A hot-water heating coil has to carry <span data-us="120,000 Btu/h" data-metric="35.2 kW">120,000 Btu/h</span> — 120 MBH — on the design day. Take the traditional hot-water design ΔT of <span data-us="20 °F" data-metric="11.1 °C">20 °F</span> (a 180/160 supply/return schedule). The waterside form hands back the flow directly:
+            </p>
+
+            <code class="csel-eq">
+                GPM = 120,000 ÷ (500 × 20) = 12 GPM
+                <span class="csel-eq-note">IP-native; a metric reader sees the same coil at <span data-us="12 GPM" data-metric="0.76 L/s">12 GPM</span> (0.76 L/s)</span>
+            </code>
+
+            <p>
+                Twelve gallons a minute. That is design flow for this branch — the exact number a balancer will set with a manometer, and the number a commissioning agent will later verify. Now change nothing but the schedule. Design for a <span data-us="30 °F" data-metric="16.7 °C">30 °F</span> ΔT instead — a 180/150 spread a condensing boiler is perfectly happy to run — and the same 120,000 Btu/h needs only <span data-us="8 GPM" data-metric="0.50 L/s">8 GPM</span>:
+            </p>
+
+            <div class="csel-lever">
+                <div class="csel-lever-cell">
+                    <div class="csel-lever-dt">ΔT = <span data-us="20 °F" data-metric="11.1 °C">20 °F</span></div>
+                    <div class="csel-lever-flow"><span data-us="12 GPM" data-metric="0.76 L/s">12 GPM</span></div>
+                    <div class="csel-lever-sub">traditional 180/160 schedule</div>
+                </div>
+                <div class="csel-lever-cell wide">
+                    <div class="csel-lever-dt">ΔT = <span data-us="30 °F" data-metric="16.7 °C">30 °F</span></div>
+                    <div class="csel-lever-flow"><span data-us="8 GPM" data-metric="0.50 L/s">8 GPM</span></div>
+                    <div class="csel-lever-sub">wider 180/150 schedule — two-thirds the water</div>
+                </div>
+            </div>
+
+            <p>
+                Same heat, two-thirds the water, for the price of designing the coil around a bigger temperature drop. Less flow means smaller pipe, a smaller pump, and less energy spent pushing water around for the life of the building. That is why chilled-water design has been creeping wider for years — from the old <span data-us="10–12 °F" data-metric="5.6–6.7 °C">10–12 °F</span> ΔT toward <span data-us="16–20 °F" data-metric="8.9–11.1 °C">16–20 °F</span> — and why "low-ΔT syndrome," a coil that never develops the ΔT it was designed for and so demands far more flow than planned, is one of the classic ways a plant ends up flow-starved and over-pumped at the same time.
+
+                <!-- // OWNER ANECDOTE: a design-flow number chased on a branch that traced back to a wrong (or never-developed) ΔT — e.g. a coil selected for a wide ΔT that the real load never produced, so it hogged flow and starved the rest of the loop, and the "wrong balance" was really a wrong ΔT assumption. Teaching point: the balancer chases design GPM, but design GPM is only as right as the ΔT it was computed from. -->
+            </p>
+
+            <p style="margin-top:1.1rem;">
+                The air side has exactly the same lever. A cooling coil carrying <span data-us="54,000 Btu/h" data-metric="15.8 kW">54,000 Btu/h</span> of sensible load across a <span data-us="25 °F" data-metric="13.9 °C">25 °F</span> supply-air ΔT wants <code>54,000 ÷ (1.08 × 25) = </code> <span data-us="2,000 CFM" data-metric="3,400 m³/h">2,000 CFM</span>. Widen the air-side ΔT and the fan moves less air for the same cooling; narrow it and it moves more. The <a href="/tools/waterside-load.html">Waterside Load</a> and <a href="/tools/airside-load.html">Airside Load</a> calculators run these both directions if you want to try your own numbers.
+            </p>
+
+            <!-- ───────────────── 3 · What the coil itself brings ───────────────── -->
+            <h2 class="subhead">What the coil itself brings</h2>
+
+            <p>
+                So the load and the ΔT set the flow. But there is a second question hiding underneath: can a real coil actually <em>develop</em> that ΔT at that flow, given the air and water temperatures it will see? That is where the physical coil — not the equation — earns its keep. A selection program juggles a handful of levers to make a finite bundle of finned tube hit the required capacity at the chosen flow and entering conditions.
+            </p>
+
+            <p style="margin-top:1.1rem;">
+                <strong>Rows.</strong> The number of tube rows deep, in the air direction. More rows means more heat-transfer surface and a longer path for the air, so the coil can pull the air closer to the water temperature — more capacity, a closer approach (next section). A heating coil is often one or two rows; a deep dehumidifying cooling coil might be six or eight. Rows cost air-side pressure drop, so the fan pays for every one.
+            </p>
+
+            <p style="margin-top:1.1rem;">
+                <strong>Fin density.</strong> Fins per inch on the tubes — commonly somewhere around 8 to 14. More fins means more surface per row, so you can sometimes trade fin density against rows. But tight fins clog with dirt, are harder to clean, and drive air-side pressure drop up fast, so there is a practical ceiling.
+            </p>
+
+            <p style="margin-top:1.1rem;">
+                <strong>Circuiting.</strong> How the tubes are plumbed internally — how many parallel water paths the flow splits into. Circuiting sets the water velocity inside the tubes, which sets the water-side heat transfer and the water-side pressure drop. Too few circuits and the water rockets through at a high head loss; too many and it crawls, the flow goes laminar, and heat transfer falls off. It is the water-side twin of the fin/row trade.
+            </p>
+
+            <p style="margin-top:1.1rem;">
+                <strong>Face velocity.</strong> The air speed through the coil's face area — airflow divided by the coil's frontal area, in feet per minute. It is the sneaky limit. On a wet cooling coil there is a hard ceiling around <span data-us="500 fpm" data-metric="2.5 m/s">500 fpm</span>: push the face velocity much past that and the airstream strips condensate droplets off the fins and carries them downstream — <em>moisture carryover</em> — wetting the duct, the downstream filter, and anything else in the airstream, and it can defeat the dehumidification the coil was there to do. Above roughly <span data-us="550 fpm" data-metric="2.8 m/s">550 fpm</span> the risk climbs sharply. Dry heating coils have no condensate to carry, so they tolerate higher face velocities, but they still pay in air-side pressure drop. Face velocity is why a coil has a minimum sensible <em>size</em> — you can't shrink the face indefinitely without blowing water off it.
+            </p>
+
+            <p style="margin-top:1.1rem;">
+                None of this is a coil-selection program, and it isn't meant to be — the manufacturer's software juggles all of these against catalog tube-and-fin data to land on a real part number. The point is orientation: the design GPM you now understand as "load over ΔT" only holds if the coil the engineer selected can actually meet the capacity at that flow, and these are the levers that make it possible.
+            </p>
+
+            <!-- ───────────────── 4 · Approach / LMTD ───────────────── -->
+            <h2 class="subhead">Approach — why a finite coil can't give infinite ΔT</h2>
+
+            <p>
+                There is a reason you can't just keep widening the ΔT for free. A coil transfers heat because the water and the air are at different temperatures; the bigger that difference along the coil, the more heat crosses per square foot of surface. But as one stream gets pulled toward the other, the temperature difference driving the transfer shrinks — and the closer they get, the more surface each additional degree costs. The gap between the leaving fluid and the entering other stream is the <em>approach</em> temperature. A finite coil can get the approach small, but never to zero: driving it to zero would take infinite surface. On the heating coil above, the leaving air simply cannot reach the entering water temperature no matter how many rows you add — it can only approach it.
+            </p>
+
+            <p style="margin-top:1.1rem;">
+                The formal version of "the average driving temperature difference" is the log-mean temperature difference, <code>LMTD = (ΔT₁ − ΔT₂) ÷ ln(ΔT₁ ÷ ΔT₂)</code>, where <code>ΔT₁</code> and <code>ΔT₂</code> are the stream-to-stream differences at the two ends of the coil. You will rarely compute it by hand — the selection software does — but the shape of it is the lesson: as the two ends' temperature differences get close (a tight approach), the LMTD collapses and the required surface balloons. That is the wall that stops "design for a wider ΔT" from being a free lunch. Beyond a point, the coil to develop it gets big, deep, and expensive, and its air-side pressure drop starts costing the fan more than the pump saves.
+            </p>
+
+            <!-- ───────────────── 5 · The capstone diagram ───────────────── -->
+            <h2 class="subhead">The whole chain in one picture</h2>
+
+            <p>
+                Here is the hot-water coil from the worked example, drawn as a counterflow heat exchanger — air crossing the finned tube one way, water travelling the other. The two water temperatures set the ΔT; the ΔT and the load set the flow; and the flow is the number the balancer chases at the branch. That is the entire chain, left to right and top to bottom.
+            </p>
+
+            <svg class="edu-svg" viewBox="0 0 720 380" role="img" aria-labelledby="csel-coil-title csel-coil-desc"
+                 font-family="var(--mono)">
+                <title id="csel-coil-title">Counterflow hot-water coil, with the load-to-flow chain annotated</title>
+                <desc id="csel-coil-desc">A hot-water heating coil drawn as a counterflow heat exchanger. Air enters from the left at 55 degrees Fahrenheit and leaves warmer on the right at 95 degrees Fahrenheit. Hot supply water at 180 degrees Fahrenheit enters the coil at the right end, travels left through the tubes counter to the airflow, and leaves as return water at 160 degrees Fahrenheit from the left end — a 20 degree Fahrenheit water temperature drop. A callout below the coil shows the design flow calculation: coil load divided by the constant 500 times the water temperature difference. With a 120,000 Btu per hour load and a 20 degree Fahrenheit water delta-T, the design flow is 12 GPM — the number a balancer chases at this branch.</desc>
+
+                <!-- Fin bundle inside the coil face -->
+                <rect x="270" y="110" width="180" height="140" rx="2" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                <g stroke="var(--border-faint)" stroke-width="1.5">
+                    <line x1="290" y1="116" x2="290" y2="244"/>
+                    <line x1="308" y1="116" x2="308" y2="244"/>
+                    <line x1="326" y1="116" x2="326" y2="244"/>
+                    <line x1="344" y1="116" x2="344" y2="244"/>
+                    <line x1="362" y1="116" x2="362" y2="244"/>
+                    <line x1="380" y1="116" x2="380" y2="244"/>
+                    <line x1="398" y1="116" x2="398" y2="244"/>
+                    <line x1="416" y1="116" x2="416" y2="244"/>
+                    <line x1="434" y1="116" x2="434" y2="244"/>
+                </g>
+                <text x="360" y="102" text-anchor="middle" font-size="12" font-weight="600" fill="var(--text-bright)">HEATING COIL</text>
+
+                <!-- Air stream: enters left (cold), leaves right (warm). Static arrows. -->
+                <line x1="60" y1="180" x2="258" y2="180" stroke="var(--text-dim)" stroke-width="3"/>
+                <polygon points="258,174 270,180 258,186" fill="var(--text-dim)"/>
+                <line x1="450" y1="180" x2="648" y2="180" stroke="var(--text-dim)" stroke-width="3"/>
+                <polygon points="648,174 660,180 648,186" fill="var(--text-dim)"/>
+                <text x="150" y="162" text-anchor="middle" font-size="11" fill="var(--text)">AIR IN</text>
+                <text x="150" y="202" text-anchor="middle" font-size="11" fill="var(--text-dim)" data-us="55 °F" data-metric="12.8 °C">55 °F</text>
+                <text x="555" y="162" text-anchor="middle" font-size="11" fill="var(--text)">AIR OUT</text>
+                <text x="555" y="202" text-anchor="middle" font-size="11" fill="var(--text-dim)" data-us="95 °F" data-metric="35.0 °C">95 °F</text>
+
+                <!-- Supply water: enters top-right of coil, solid --blue, drawn downward (into coil). -->
+                <line x1="415" y1="48" x2="415" y2="110" stroke="var(--blue)" stroke-width="3"/>
+                <polygon points="409,100 415,112 421,100" fill="var(--blue)"/>
+                <text x="415" y="40" text-anchor="middle" font-size="11" font-weight="600" fill="var(--blue)">SUPPLY</text>
+                <text x="431" y="82" font-size="11" fill="var(--text)" data-us="180 °F" data-metric="82.2 °C">180 °F</text>
+
+                <!-- Return water: leaves top-left of coil, dashed --blue-cool, drawn upward (out of coil). -->
+                <line x1="305" y1="110" x2="305" y2="48" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                <polygon points="299,58 305,46 311,58" fill="var(--blue-cool)"/>
+                <text x="305" y="40" text-anchor="middle" font-size="11" font-weight="600" fill="var(--blue-cool)">RETURN</text>
+                <text x="289" y="82" text-anchor="end" font-size="11" fill="var(--text)" data-us="160 °F" data-metric="71.1 °C">160 °F</text>
+
+                <!-- Counterflow cue -->
+                <text x="360" y="270" text-anchor="middle" font-size="9" font-style="italic" fill="var(--text-dim)">counterflow: water travels right → left, against the airflow</text>
+
+                <!-- Derivation callout. Each dual-stated line carries data-us /
+                     data-metric on the whole <text> element (the pump-control
+                     precedent) so the units walker swaps a complete string —
+                     no nested dual-stated tspans. The formula line stays IP
+                     (methodology constant); only the plugged-in values and the
+                     result convert. -->
+                <rect x="140" y="292" width="440" height="72" rx="3" fill="var(--surface)" stroke="var(--border)" stroke-width="1"/>
+                <rect x="140" y="292" width="4" height="72" fill="var(--blue)"/>
+                <text x="164" y="316" font-size="12" fill="var(--text-bright)">design flow = coil load ÷ (500 × water ΔT)</text>
+                <text x="164" y="336" font-size="11" fill="var(--text-dim)" data-us="ΔT = 180 − 160 = 20 °F  ·  load = 120,000 Btu/h" data-metric="ΔT = 82.2 − 71.1 = 11.1 °C  ·  load = 35.2 kW">ΔT = 180 − 160 = 20 °F  ·  load = 120,000 Btu/h</text>
+                <text x="164" y="356" font-size="12" font-weight="700" fill="var(--blue)" data-us="→ 12 GPM — the number the balancer chases" data-metric="→ 0.76 L/s — the number the balancer chases">→ 12 GPM — the number the balancer chases</text>
+            </svg>
+
+            <p class="ref-note" style="margin-top:0.25rem;">
+                A reference schematic, not to scale — a real coil has many rows of tube and hundreds of fins. The temperatures follow the US / metric toggle; the flow is computed in IP and shown in your units.
+            </p>
+
+            <!-- ───────────────── 6 · Where the number goes next ───────────────── -->
+            <h2 class="subhead">Where the number goes next</h2>
+
+            <p>
+                That design flow is not the end of a story — it is the beginning of two of them. It is the number the <a href="/education/balancing.html">balancing</a> effort proportions to: every calibrated valve, automatic balancing valve, or PICV on the loop exists to make its branch actually receive the flow this chain produced. When a balancer reads a branch "against design," <em>this</em> is the design they mean. And it is the design intent a commissioning agent verifies — the loop is only commissioned when the flows the coils were selected for are the flows the branches actually get.
+                <!-- Forward-link: the commissioning procedure gets its own lesson (see balancing.html's "Coming later" callout); kept as plain prose per the forward-link convention until that page exists. -->
+            </p>
+
+            <p style="margin-top:1.1rem;">
+                So the chain runs both ways. Downstream, a wrong flow at a branch sends you to the balance valve. But upstream, a flow number that never made sense — a branch that hogs, a coil that can't keep up even at design flow — can trace all the way back here, to a load that was mis-estimated or a design ΔT the real coil never develops. The balancer chases the design GPM; the design GPM is only ever as right as the load and the ΔT it was computed from.
+            </p>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/tools/waterside-load.html', label: 'Waterside Load Calculator'},
+            {href: '/tools/airside-load.html', label: 'Airside Load Calculator'},
+            {href: '/tools/coil-sizing.html', label: 'Coil-Sizing Calculator'},
+            {href: '/tools/coil-freeze-risk.html', label: 'Coil Freeze Risk Checker'}
+        ],
+        simulators: [
+            {href: '/simulators/hydronic-loop-builder.html', label: 'Hydronic Loop Builder'}
+        ],
+        lessons: [
+            {href: '/education/balancing.html', label: 'Hydronic Balancing'},
+            {href: '/education/load-piping.html', label: 'Load Piping'},
+            {href: '/education/hydronic-loops.html', label: 'Hydronic Loops'}
+        ],
+        quizzes: [
+            {href: '/practice/balancing.html', label: 'Hydronic Balancing'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/education/">← Back to Education</a>
+
+</main>
+{% endblock %}

@@ -443,6 +443,13 @@ techs new to the industry and anyone wanting a refresh.
   comparing all three branches under varying system Δp, with a
   burst-coil anecdote at the low-pressure extreme. Pays off forward
   links from Hydronic Loops, Load Piping, and Pump Control.
+- **Coil Selection** — where the design flow a balancer chases
+  actually comes from. The load-to-flow chain (q = ṁ·cp·ΔT resolved
+  to `GPM = Btu/h ÷ (500 × ΔT)` and `CFM = Btu/h ÷ (1.08 × ΔT)`), why
+  the chosen design ΔT is the lever that sets the flow, the coil's own
+  levers (rows, fin density, circuiting, face-velocity carryover), and
+  a brief approach / LMTD note. A counterflow-coil capstone diagram
+  ties the chain together. Feeds the Hydronic Balancing lesson.
 - **Refrigerant Cycle Basics** — the vapor-compression cycle for
   controls people, who meet it through sensor readings (a low-suction
   alarm, a head-pressure trip) and have to decide whether the system
