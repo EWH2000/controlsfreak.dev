@@ -185,8 +185,6 @@ keywords: coil selection coil sizing design flow gpm delta-t mass flow rows face
 
             <p>
                 Same heat, two-thirds the water, for the price of designing the coil around a bigger temperature drop. Less flow means smaller pipe, a smaller pump, and less energy spent pushing water around for the life of the building. That is why chilled-water design has been creeping wider for years — from the old <span data-us="10–12 °F" data-metric="5.6–6.7 °C">10–12 °F</span> ΔT toward <span data-us="16–20 °F" data-metric="8.9–11.1 °C">16–20 °F</span> — and why "low-ΔT syndrome," a coil that never develops the ΔT it was designed for and so demands far more flow than planned, is one of the classic ways a plant ends up flow-starved and over-pumped at the same time.
-
-                <!-- // OWNER ANECDOTE: a design-flow number chased on a branch that traced back to a wrong (or never-developed) ΔT — e.g. a coil selected for a wide ΔT that the real load never produced, so it hogged flow and starved the rest of the loop, and the "wrong balance" was really a wrong ΔT assumption. Teaching point: the balancer chases design GPM, but design GPM is only as right as the ΔT it was computed from. -->
             </p>
 
             <p style="margin-top:1.1rem;">
@@ -311,6 +309,26 @@ keywords: coil selection coil sizing design flow gpm delta-t mass flow rows face
             <p style="margin-top:1.1rem;">
                 So the chain runs both ways. Downstream, a wrong flow at a branch sends you to the balance valve. But upstream, a flow number that never made sense — a branch that hogs, a coil that can't keep up even at design flow — can trace all the way back here, to a load that was mis-estimated or a design ΔT the real coil never develops. The balancer chases the design GPM; the design GPM is only ever as right as the load and the ΔT it was computed from.
             </p>
+
+            <p style="margin-top:1.1rem;">
+                And the assumptions run wider than load and ΔT. Every coil is also selected for the <em>entering conditions</em> it will meet — the air and water temperatures, and how much moisture the air is carrying. Those are an assumption with a shelf life. The design day can drift, and the equipment upstream that is supposed to hold those conditions can quietly stop holding them — and a correctly-sized coil goes functionally undersized without anyone touching it.
+            </p>
+
+            <!-- Owner anecdote (real, supplied by owner): a lab-space DOAS + fan-coil
+                 job where the FCU coils were selected assuming the upstream DOAS held
+                 its design dew point; a hotter/wetter climate now pushes past the
+                 design outdoor condition, the DOAS can't reach design dew point, and
+                 the FCUs — correctly sized for the drier assumed entering condition —
+                 can't hold the labs. A selection limit, not a controls problem. House
+                 voice matches balancing.html's "True story." lead. Kept deliberately
+                 non-psychrometric: the point is "assumptions have a shelf life," not a
+                 dehumidification tutorial. -->
+            <div class="callout" style="margin-top:1.5rem;">
+                <h3>From a real building <span>· the assumption moved</span></h3>
+                <p style="font-size:0.9rem;line-height:1.75;">
+                    <strong>True story.</strong> A facility with lab spaces that hold tight humidity, built as a dedicated-outdoor-air system (DOAS) feeding fan-coil units. Each zone's FCU carries a chilled-water and a hot-water coil off the building's chiller and boilers — the hydronic side, the side this page is about — while a separate DOAS, on its own DX cooling, conditions the ventilation air and does the dehumidification. That split is deliberate: the DOAS owns the latent load and hands the zones outside air dry enough that the FCU coils were selected to handle mostly sensible, at an entering-air condition that <em>assumed</em> the DOAS was holding its design dew point. Then the climate moved out from under the drawing. Summers here have gotten hotter and a lot more humid, past the outdoor condition the system was designed for, and the DOAS's design leaving dew point now sits below the dew points it is actually being handed — it can't pull the ventilation air all the way down. The zones get wetter air than the FCUs were selected for, and the labs stop holding humidity. The call comes in as "the FCUs can't keep up," and they can't — not because anything is out of tune, but because they were picked for entering conditions an upstream unit no longer delivers. No amount of loop tuning conjures capacity that was never selected. That is the whole lesson standing in one building: a coil selection is only as valid as the conditions it assumed, and some of those conditions are set by equipment sitting upstream of you.
+                </p>
+            </div>
 
         </div>
     </div>
