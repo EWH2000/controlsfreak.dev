@@ -3690,6 +3690,30 @@ test in `tests/smoke.spec.js` and `tests/screenshot-diagrams.mjs` were
 updated to reconcile the clean sitemap against the local `.html` file
 server. CLAUDE.md's convention bullet rewritten to match.
 
+**Bing follow-on + fixed (2026-07-15):** the 2026-07-07 fix cleaned the
+*rendered* signals (canonical/`og:url`/sitemap `<loc>`) but left two things
+untouched: (1) the `.html` → clean redirect was still a **307** (temporary),
+and (2) `.github/scripts/indexnow.mjs` still read the raw `canonical:`
+frontmatter (`.html`) and submitted *that* to the IndexNow consortium. Bing
+Webmaster then flagged "too many pages with identical titles / meta
+descriptions" — the `.html` and clean form of each page — while Google stayed
+quiet. Why the split: a 307 tells engines to *keep* the source URL, and Google
+consolidated anyway via the now-clean canonical, but Bing is stricter **and**
+IndexNow (Bing/Yandex/Seznam/Naver/Yep — not Google) was actively pinging Bing
+to crawl the `.html` form, so Bing indexed both. Failing-URL list was pairs
+(`/tools/thermistor-calculator.html` + `/tools/thermistor-calculator`, etc.).
+Fix: `src/worker.js` intercepts the `html_handling` 307 and returns a **301**
+(forwarding the binding's relative `Location` verbatim via a plain `Response` —
+`Response.redirect()` throws on a relative URL), so engines consolidate on the
+clean 200 URL and drop the `.html`; `indexnow.mjs` now strips `.html` to match
+`cleanCanonical`/the sitemap. `tests/worker.spec.js` gains a 307→301 case.
+Post-deploy: a one-off IndexNow submission of every page's `.html` form (bypassing
+the now-clean script) to make Bing recrawl-and-consolidate the whole site rather
+than wait for a scheduled crawl. The load-bearing half is the 301 — Part 2 alone
+wouldn't fix it, since Bing keeps discovering `.html` via the site's own internal
+anchors (kept `.html` by convention). CLAUDE.md's convention bullet + IndexNow
+bullet updated to match.
+
 ### 87. smoke.spec.js serializes ~154 s of the suite's ~196 test-seconds into one worker *(addressed 2026-06-10)*
 
 Cross-filed from `docs/audits/2026-06-extensive/findings.md` (tests polish, 2026-06-10).

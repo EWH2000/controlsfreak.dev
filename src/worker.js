@@ -28,7 +28,9 @@ const FETCH_TIMEOUT_MS = 8000;    // Turnstile + Resend upstream hard cap.
 // Pages that moved from /tools/ to /simulators/ when the Simulators section
 // landed. 301 so search engines transfer signal to the new URL and so any
 // older bookmarks / inbound links keep working. html_handling on the assets
-// binding handles the .html → clean-URL hop on the new path on its own.
+// binding does the .html → clean-URL hop on the new path (the 307→301 upgrade
+// below then makes that hop permanent), so a legacy hit chains 301→301→200.
+// Targets stay .html: tests/worker.spec.js asserts each maps to a built file.
 const LEGACY_TOOL_REDIRECTS = {
     "/tools/pid-tuner.html":             "/simulators/pid-tuner.html",
     "/tools/vfd-mock.html":              "/simulators/vfd-mock.html",
@@ -264,6 +266,27 @@ export default {
             );
         }
         const assetRes = await env.ASSETS.fetch(request);
+        // html_handling ("auto-trailing-slash") answers the non-canonical form
+        // of a REAL asset (/foo.html, /foo/index.html, /dir no-slash) with a
+        // 307 to the clean form. A 307 is TEMPORARY, so crawlers keep indexing
+        // the source URL — Bing indexed both /tools/foo.html and /tools/foo as
+        // separate pages with identical titles + meta descriptions (Bing
+        // Webmaster, 2026-07). Google consolidated via the clean canonical and
+        // never flagged it; Bing did (and IndexNow actively fed it the .html
+        // form — see .github/scripts/indexnow.mjs). Upgrade the normalization
+        // hop to a 301 so engines consolidate on the clean URL and drop the
+        // .html form. This is the ONLY redirect the assets binding emits (no
+        // _redirects file; not_found_handling is a 404, not a hop; contact +
+        // legacy 301s are handled above ASSETS), so a blanket 307→301 is safe.
+        // The Location (path-relative, query preserved) is forwarded verbatim,
+        // so the target is never recomputed and can't be pointed wrong;
+        // Response.redirect() would throw on that relative Location.
+        if (assetRes.status === 307 && assetRes.headers.has("location")) {
+            return new Response(null, {
+                status: 301,
+                headers: { location: assetRes.headers.get("location") },
+            });
+        }
         const cc = assetCacheControl(url);
         // Re-apply the long-lived header on a 304 too (codebase-issues #133's
         // sibling #132): with run_worker_first:true, env.ASSETS.fetch answers
