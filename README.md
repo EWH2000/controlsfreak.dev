@@ -595,6 +595,18 @@ techs new to the industry and anyone wanting a refresh.
   supply, iterate — the air-side mirror of hydronic balancing.
   Closes on the air-balance report as the record. Page 7 of the
   forced-air chapter.
+- **Dedicated Outdoor Air (DOAS)** — the other way to bring fresh air
+  in: a unit dedicated to 100% outdoor air that decouples ventilation
+  and latent load from the space's sensible. What a DOAS is versus a
+  mixed-air handler; why decoupling lets you control humidity
+  independently and guarantees each zone its 62.1 ventilation share
+  regardless of the thermostat; the latent/sensible split — the deep
+  coil driven to a low apparatus dew point, then reheat to a neutral
+  supply (and the cold-air variant that skips it); and how it's
+  controlled — a leaving-air dew-point setpoint, reheat, enthalpy
+  recovery, and occupancy / DCV scheduling. Closes on a true story: a
+  lab building whose DOAS was sized to a design dew point the climate
+  has since outrun. Page 8 of the forced-air chapter.
 - **Function-Block Basics** — what a block and a wiresheet are, why
   the industry builds sequences this way (the diagram is the program,
   you can watch it run live, the block vocabulary travels across

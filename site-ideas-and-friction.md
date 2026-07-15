@@ -427,8 +427,8 @@ Parked, NOT committed pages (terminal-unit follow-ons — markers only,
 they earn pages when demand shows): `[future:
 education/fan-powered-boxes.html]` (series vs parallel), `[future:
 education/vvt.html]` (looks like VAV, isn't), `[future:
-education/fan-coil-units.html]`, `[future: DOAS / ERV page]` (already
-parked on the psychrometrics entry — stays parked), `[future:
+education/fan-coil-units.html]`, `[future: DOAS / ERV page]`
+*(shipped 2026-07-15 — education/dedicated-outdoor-air.html)*, `[future:
 single-zone VAV]` (drive tracks the zone's own load, no boxes, no
 static setpoint — the ID page's CV-vs-VAV callout names it as the
 bare-trunk exception; surfaced by the PR-4 review).
@@ -601,8 +601,9 @@ callout + closing hand-off upgraded to live links)*; FCUs beyond
 recognition `[future:
 education/fan-coil-units.html]`; VVT `[future: education/vvt.html]`
 (named in prose in the CV-vs-VAV callout); DOAS/ERV psychrometrics
-`[future: DOAS / ERV page]` (parked since the psychrometrics entry;
-DOAS named in prose at identification level); what the unit should
+`[future: DOAS / ERV page]` *(shipped 2026-07-15 —
+education/dedicated-outdoor-air.html; the "what a DOAS is" explainer,
+not a psychrometrics deep-dive)*; what the unit should
 *do* once named — the rest of the chapter.
 Debts: paid THE sidestep — the opener's prose callout upgraded to a
 live link, closing walks back to the opener's air path — plus an

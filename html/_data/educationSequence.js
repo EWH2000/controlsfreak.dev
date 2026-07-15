@@ -46,6 +46,7 @@ const order = [
     "/education/vav-systems.html",
     "/education/duct-static-control.html",
     "/education/air-balancing.html",
+    "/education/dedicated-outdoor-air.html",
     "/education/function-blocks.html",
     "/education/modbus-basics.html",
     "/education/modbus-decoding.html",
