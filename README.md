@@ -27,14 +27,23 @@ BACnet content is reachable from a single entry point. Every BACnet page
 links back to it via the "Part of" slot in the related-links block.
 
 The **forced-air reference hub** at `/forced-air/` is the second topic
-pillar — one page that gathers the whole air side (six lessons from the
-air handler out to the VAV box, plus the airflow, coil, and fan tools
-that measure, size, and check the air a system moves) so the deepest
-forced-air content is reachable from a single entry point. The air-side
-pages link back to it the same way.
+pillar — one page that gathers the whole air side (seven lessons from the
+air handler out to the VAV box and its commissioning, plus the airflow,
+coil, and fan tools that measure, size, and check the air a system moves)
+so the deepest forced-air content is reachable from a single entry point.
+The air-side pages link back to it the same way.
 
-Both hubs sit under a **Guides** nav lane and a `/guides/` landing that
-gather the topic pillars in one place — the topic axis alongside the
+The **hydronics reference hub** at `/hydronics/` is the third topic
+pillar — one page that gathers the whole water side (five lessons from
+the loop and load piping through pump control, balancing, and coil
+selection, plus the valve, flow, and pump tools and a loop-builder
+sandbox) so the deepest hydronic content is reachable from a single
+entry point. The water-side pages link back to it the same way, and
+`affinity-laws` — fan **and** pump laws — is a full member of both the
+forced-air and hydronics hubs.
+
+The three hubs sit under a **Guides** nav lane and a `/guides/` landing
+that gather the topic pillars in one place — the topic axis alongside the
 format sections (Tools / Simulators / Education / Practice).
 
 ### Tools

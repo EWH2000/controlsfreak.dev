@@ -225,7 +225,10 @@ faqs:
     {{ faqBlock(faqs, "Affinity law FAQ") }}
 
     {{ relatedLinks({
-        hub: {href: '/forced-air/', label: 'The forced-air reference hub'},
+        hub: [
+            {href: '/hydronics/', label: 'The hydronics reference hub'},
+            {href: '/forced-air/', label: 'The forced-air reference hub'}
+        ],
         lessons: [
             {href: '/education/pump-control.html', label: 'Pump Control'},
             {href: '/education/duct-static-control.html', label: 'Duct Static Control'},
