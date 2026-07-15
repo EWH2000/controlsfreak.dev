@@ -79,6 +79,28 @@ test('a 304 from ASSETS keeps the immutable header on a fingerprinted path (#132
     expect(res2.headers.get('cache-control')).toBeNull();
 });
 
+test('a 307 normalization redirect from ASSETS is upgraded to 301 (Bing dup-title fix)', async () => {
+    const worker = await loadWorker();
+    // html_handling ("auto-trailing-slash") 307s the non-canonical form of a
+    // real asset (/foo.html, /dir no-slash) to the clean URL. A 307 is
+    // temporary, so crawlers keep the source URL indexed — Bing indexed both
+    // /tools/foo.html and /tools/foo as identical pages. The worker upgrades it
+    // to a permanent 301 to consolidate; the Location is forwarded verbatim
+    // (the worker never recomputes the target — a relative Location would also
+    // make Response.redirect() throw, which is why it builds a plain Response).
+    const env = {
+        ...stubEnv(),
+        ASSETS: { fetch: () => new Response(null, {
+            status: 307,
+            headers: { location: '/tools/signal-scaling' },
+        }) },
+    };
+    const res = await worker.fetch(
+        new Request(ORIGIN + '/tools/signal-scaling.html'), env);
+    expect(res.status).toBe(301);
+    expect(res.headers.get('location')).toBe('/tools/signal-scaling');
+});
+
 test('non-POST /api/contact is 405 with Allow', async () => {
     const worker = await loadWorker();
     const res = await worker.fetch(

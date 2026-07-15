@@ -83,7 +83,11 @@ findings from the recurring content-accuracy audits.
   site root (like `robots.txt`) so the IndexNow consortium can verify
   the domain. `.github/scripts/indexnow.mjs` + the `indexnow.yml`
   workflow ping Bing/Yandex/etc. (not Google) with changed canonical
-  URLs on push to `main`. See *Workflow*.
+  URLs on push to `main` — the **clean** (extensionless) form, stripped
+  from the `.html` frontmatter the same way `sitemap.njk` does, so the
+  submitter and the sitemap agree (submitting `.html` fed Bing the
+  redirecting form and it indexed both — see the URL-conventions note).
+  See *Workflow*.
 - **Hosting:** Cloudflare Workers; auto-deploys ~60s on push to
   `main` (the dashboard runs `npm ci`, unshallows the clone, sets
   `STRICT_GIT_DATES=1`, then `npm run build` and serves `_site/`).
@@ -226,7 +230,7 @@ section). **Category keys mirror the landing pages' `navCard()`
   `/tools/signal-scaling.html`, `/contact.html`); directory URLs (`/`,
   `/tools/`) stay clean. Works against the eleventy dev server,
   against `python -m http.server` serving `_site/`, and against the
-  Worker (which redirects to the clean form). Asset references
+  Worker (which **301**-redirects to the clean form). Asset references
   (`/styles.css`, `/scripts/…`) are absolute. The `html.11tydata.js`
   permalink override is what keeps this working — 11ty's pretty-URL
   default would break it. **Crawl-facing URLs render the clean,
@@ -239,9 +243,18 @@ section). **Category keys mirror the landing pages' `navCard()`
   2026-07 Search Console data showed Google indexing both the `.html` and
   clean form of every page — the documented revisit trigger — because a
   canonical pointing at a redirecting URL, while the clean 200 disclaimed
-  itself, is self-contradictory. Internal anchors keep the `.html` form
-  (they 307 fine within the site); the on-site search index keeps `.html`
-  too (client-side navigation, not a crawl signal).
+  itself, is self-contradictory. **The `.html` → clean redirect is a
+  `301` (permanent), not a `307`** (`src/worker.js` upgrades the
+  `html_handling` 307): a 307 is *temporary*, so search engines keep the
+  source URL indexed — Bing surfaced this in Webmaster as "too many pages
+  with identical titles / meta descriptions" (the `.html` and clean form
+  of each page), and IndexNow (which pings Bing/Yandex, **not** Google)
+  had been submitting the `.html` form, so we were actively feeding Bing
+  the duplicate. The 301 consolidates it; the indexnow submitter now
+  sends clean URLs too (2026-07-15 — codebase-issues #86 Bing follow-on).
+  Internal anchors keep the `.html` form (they **301** fine within the
+  site — one cached permanent hop); the on-site search index keeps
+  `.html` too (client-side navigation, not a crawl signal).
 - **Indentation: 4 spaces** everywhere — HTML, CSS, JS, Nunjucks
   template syntax.
 - **ID naming: kebab-case site-wide.** Every `id="…"` is lowercase
@@ -900,7 +913,8 @@ under *Git conventions*). Stage specific file lists, not
 CI on every PR runs `npm test` (`.github/workflows/test.yml`);
 Cloudflare Workers Build deploys `_site/` ~60s after merge. A separate
 `.github/workflows/indexnow.yml` fires on push to `main` and submits the
-merge's changed canonical URLs to IndexNow (no secrets — the key is the
+merge's changed canonical URLs — in the **clean** (extensionless) form,
+matching the sitemap — to IndexNow (no secrets — the key is the
 public `html/<key>.txt`). Run it by hand with `npm run indexnow`
 (changed since last commit) or `npm run indexnow -- --all` (full
 re-submit); add `--dry-run` to print the URL list without POSTing.

@@ -100,7 +100,15 @@ function canonicalOf(file, beforeRef) {
         return null;
     }
     const m = src.match(/^canonical:\s*(\S+)/m);
-    return m ? m[1] : null;
+    // Strip the trailing .html to match sitemap.njk's <loc> and head.njk's
+    // rendered canonical, both of which run the value through the
+    // `cleanCanonical` filter (.eleventy.js). Frontmatter keeps .html as the
+    // single source of truth, but the crawl-facing URL is the clean 200 form.
+    // Submitting the .html form told Bing/Yandex to crawl a URL that 30x's to
+    // clean, so they indexed BOTH as identical pages (Bing Webmaster
+    // "identical titles", 2026-07). Keep this regex in lockstep with
+    // cleanCanonical.
+    return m ? m[1].replace(/\.html$/, "") : null;
 }
 
 // Resolve the file set for changed-mode, falling back to a full submit
