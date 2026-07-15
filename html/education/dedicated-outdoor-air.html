@@ -130,8 +130,10 @@ keywords: DOAS dedicated outdoor air ventilation latent sensible decouple deep c
 
             <p>
                 Decoupling is not tidiness for its own sake — it solves two real problems that a mixed-air unit is bad at.
-                The first is <strong>moisture</strong>. In most climates, the ventilation air is where the great majority of
-                the building's <em>latent</em> load — the moisture the system has to remove — actually walks in the door.
+                The first is <strong>moisture</strong>. A large share of the building's <em>latent</em> load — the moisture
+                the system has to remove — walks in the door with the ventilation air, especially in humid climates. (Some
+                spaces make plenty of their own — a lab, a kitchen, a natatorium — but the outdoor-air stream is the part a
+                mixed-air unit is worst at drying.)
                 Hot, humid outdoor air carries far more water per pound than the conditioned air already in the space, so
                 the fresh-air requirement and the humidity problem are, physically, the same stream. Put that stream on its
                 own unit and you can control humidity <em>independently</em> of temperature: the DOAS is sized and
@@ -181,9 +183,8 @@ keywords: DOAS dedicated outdoor air ventilation latent sensible decouple deep c
                 the DOAS drives its coil <strong>deep</strong> — down to a low <em>apparatus dew point</em>, the effective
                 cold-surface temperature the leaving air is pulled toward. A common target is a leaving-air dew point around
                 <span data-us="55&nbsp;°F" data-metric="12.8&nbsp;°C">55&nbsp;°F</span>, and where a space needs tighter
-                humidity the coil is pushed further —
-                <!-- // user to verify deep-coil leaving dew point / apparatus dew point figure — published DOAS engineering guidance gives ~48–50 °F coil-leaving for full latent removal (see PR source table); refine after review -->
-                toward a leaving dew point <span data-us="in the upper 40s&nbsp;°F" data-metric="near 8–9&nbsp;°C">in the upper 40s&nbsp;°F</span>.
+                humidity the coil is pushed further — toward a leaving dew point
+                <span data-us="in the mid-to-upper 40s&nbsp;°F" data-metric="near 7 to 9&nbsp;°C">in the mid-to-upper 40s&nbsp;°F</span>.
                 That is far colder than any space wants its supply air.
             </p>
 
@@ -283,12 +284,14 @@ keywords: DOAS dedicated outdoor air ventilation latent sensible decouple deep c
             <p style="margin-top:1.25rem;">
                 Running a coil deep and then reheating is energy-hungry by nature — you are paying to cool air well past
                 what temperature alone needs, then paying again to warm it back. That is why most modern DOAS units carry
-                <strong>energy recovery</strong> ahead of the coil: an enthalpy (total-energy) wheel or a fixed-plate core
-                that lets the outgoing exhaust air precondition the incoming outdoor air, transferring both heat
-                <em>and</em> moisture between the two streams. In summer the cool, dry exhaust pre-cools and pre-dries the
-                hot, humid intake before it ever reaches the coil; in winter it pre-warms it. A total-energy wheel commonly
-                recovers on the order of
-                <!-- // user to verify enthalpy/total-energy wheel effectiveness range — ASHRAE Handbook—HVAC Systems & Equipment Ch. 26 (Air-to-Air Energy Recovery); manufacturer app guides give ~70–80% total effectiveness; ASHRAE 90.1 sets a minimum energy-recovery ratio on high-OA units; refine after review -->
+                <strong>energy recovery</strong> ahead of the coil, letting the outgoing exhaust air precondition the
+                incoming outdoor air. What actually crosses between the two streams depends on the device: an
+                <strong>enthalpy (total-energy) device</strong> — a total-energy wheel or a membrane/enthalpy plate core —
+                transfers both heat <em>and</em> moisture, while a plain <strong>sensible</strong> exchanger — a bare
+                fixed-plate core or a sensible-only wheel — moves heat alone. For a DOAS fighting a latent load, the
+                enthalpy kind is the one that earns its keep: in summer the cool, dry exhaust pre-cools <em>and</em>
+                pre-dries the hot, humid intake before it ever reaches the coil; in winter it pre-warms and re-humidifies
+                it. A total-energy wheel commonly recovers on the order of
                 70&nbsp;to&nbsp;80% of the energy in the air it would otherwise throw away, which is a large part of what makes
                 a deep-coil-plus-reheat unit affordable to run — and energy codes now require recovery on many high-outdoor-air
                 units for exactly that reason.
@@ -419,16 +422,17 @@ keywords: DOAS dedicated outdoor air ventilation latent sensible decouple deep c
                 <p style="font-size:0.9rem;line-height:1.75;">
                     <strong>True story.</strong> I service a building with lab spaces that have to hold humidity in a tight
                     band. It is built exactly the way this page describes: a DOAS conditions the ventilation air and hands it
-                    to the labs, while fan-coil units — chilled water and hot water, off the building's chiller and boilers —
-                    handle each room's sensible load. The DOAS runs on its own DX cooling, and it was sized and set to a
-                    <em>design leaving dew point</em> chosen for the climate the drawings assumed. The whole split depends on
-                    that one number holding: the DOAS delivers air dry enough, and the FCUs — picked for mostly
-                    <em>sensible</em> duty — never have to become dehumidifiers. Then the climate moved. Summers here have
-                    gotten markedly hotter and more humid than the design ever contemplated, and the outdoor air now arrives
-                    at dew points past what the deep coil was built to pull down. The DOAS runs flat out and still can't reach
-                    its leaving-dew-point setpoint — the coil simply doesn't have the depth for the moisture it is now being
-                    handed. So wetter-than-designed air reaches the labs, and the FCUs, sized for sensible and fed cold water
-                    that was never meant to do serious drying, can't absorb the extra latent. The lab humidity climbs. The
+                    to the labs, while fan-coil units — chilled water and hot water, served from the plant's chiller and
+                    boilers — handle each room's sensible load. The DOAS makes its own cold with onboard DX, and it was
+                    sized and set to a <em>design leaving dew point</em> chosen for the climate the drawings assumed. The
+                    whole split depends on that one number holding: the DOAS delivers air dry enough, and the FCUs — picked
+                    for mostly <em>sensible</em> duty — never have to become dehumidifiers. Then the outdoor climate drifted
+                    off the design. The peak summer days now land muggier and more punishing than the drawings ever budgeted
+                    for, and the outdoor air shows up at dew points past what the deep coil was built to pull down. The DOAS
+                    runs flat out and still can't reach its leaving-dew-point setpoint — the coil simply lacks the depth for
+                    the moisture load it now has to strip. So air wetter than the design ever intended reaches the labs, and
+                    the FCUs, sized for sensible and fed chilled water that was never meant to do heavy drying, can't absorb
+                    the extra latent. The lab humidity climbs. The
                     controls tell the whole story at a glance: the DOAS leaving dew point sitting stubbornly above setpoint,
                     space RH above its band, and the terminals pinned wide open with comfort still off. Nothing is broken and
                     nothing is out of tune — the unit is meeting a design condition the weather stopped honoring. That is the
