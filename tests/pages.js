@@ -54,6 +54,7 @@ const PAGES = [
     { name: 'hydronic loop builder',  url: '/simulators/hydronic-loop-builder.html' },
     { name: 'bacnet hub',             url: '/bacnet/' },
     { name: 'forced-air hub',         url: '/forced-air/' },
+    { name: 'hydronics hub',          url: '/hydronics/' },
     { name: 'guides landing',         url: '/guides/' },
     { name: 'education hub',          url: '/education/' },
     { name: 'education — pid basics',  url: '/education/pid-basics.html' },

@@ -455,6 +455,15 @@ both — or when ≥3 tools need 2+ category buckets). Full scope, the
 two-PR sequencing, the deferred topic-primary north star, the P3
 (fold-Simulators) rejection, the home-hero reword direction, and the
 core-tool retrigger are recorded in `docs/nav-home-redesign-scope.md`.)*
+*(Retrigger fired 2026-07-14 — the **hydronics hub** shipped
+(`/hydronics/`, a third `/bacnet/`-clone pillar wired into the Guides
+lane via `nav: guides` + `navLabel`). The single-`hub:` limit came due
+exactly as predicted: `affinity-laws` now backlinks **both** forced air
+and hydronics, handled by the `hub:` → **array** step — the cleanest
+candidate from the scope doc. The `relatedLinks` macro normalizes a
+single `{href,label}` object or an array of them, so the 24 existing
+single-hub spokes are untouched. affinity-laws keeps `category:
+hydronics`; the dual-taxonomy nav/chip listing stays deferred.)*
 
 **Declared questions — all six, locked before drafting (one-question
 rule).** Each page's shipped entry will open with the same question

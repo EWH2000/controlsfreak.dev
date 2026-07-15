@@ -1,0 +1,170 @@
+---
+title: Hydronics — Field Reference, Tools & Lessons — controlsfreak.dev
+description: Hydronics field reference — lessons from loop types and load piping to pump control and balancing, plus the valve, flow, and pump tools for the water side.
+canonical: https://controlsfreak.dev/hydronics/
+nav: guides
+navLabel: Hydronics
+keywords: hydronics hydronic loops chilled water hot water primary secondary reverse return variable speed pumping load piping two-way three-way control valve authority cv sizing kv waterside load gpm delta-t balancing circuit setter picv differential pressure pump affinity laws coil selection
+---
+{% extends "layouts/page.njk" %}
+{% from "nav-card.njk" import navCard %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <h1 class="section-label">Hydronics</h1>
+        <div class="section-line"></div>
+    </div>
+
+    <p class="landing-intro">
+        Hydronics is the side of the building that <strong>moves heat with water</strong>. A pump pushes hot or chilled water out through piping to a coil or terminal unit at every zone, a control valve at each load meters how much heat that load takes, and the water gives up its heat and returns for another pass. Every station on that loop is something a control system sizes, meters, or balances — the pump head and speed, the valve Cv and authority, the flow each load needs, the temperature split the plant sees. These pages walk the water side from the loop architecture out to the coil, and give you the tools that put a number on each station.
+    </p>
+
+    <p class="landing-intro">
+        New to it? Work the five lessons in order — they build from the loop types out through load piping, pump control, and balancing, then close on where the design flow comes from. Already have a system in front of you? Jump to the tools: size a control valve, check that it will actually control, work the waterside flow, or predict what a speed change does to a pump. Everything here is open, needs no login, and tracks nothing.
+    </p>
+
+    <h2 class="hub-group">Start here — the lessons, in order</h2>
+    <p class="hub-path">
+        <span class="hub-step">1</span> <a href="/education/hydronic-loops.html">Hydronic Loops</a>
+        <span class="hub-arrow">→</span>
+        <span class="hub-step">2</span> <a href="/education/load-piping.html">Load Piping</a>
+        <span class="hub-arrow">→</span>
+        <span class="hub-step">3</span> <a href="/education/pump-control.html">Pump Control</a>
+        <span class="hub-arrow">→</span>
+        <span class="hub-step">4</span> <a href="/education/balancing.html">Balancing</a>
+        <span class="hub-arrow">→</span>
+        <span class="hub-step">5</span> <a href="/education/coil-selection.html">Coil Selection</a>
+    </p>
+
+    <div class="card-grid">
+        {{ navCard({
+            section:    'education',
+            href:       '/education/hydronic-loops.html',
+            titleShort: 'Hydronic Loops',
+            titleFull:  'Hydronic Loops',
+            desc:       'How a building distributes its water — direct versus reverse return, and primary-secondary with the injection tee — and what each loop choice does to flow and control. The chapter\'s starting point.',
+            pills:      ['Step 1', 'Loop Types', 'Primary–Secondary']
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/education/load-piping.html',
+            titleShort: 'Load Piping',
+            titleFull:  'Load Piping',
+            desc:       'How each load ties into the loop — a two-way valve for variable system flow versus a three-way for constant — and how that one choice at the coil ripples back through the whole system.',
+            pills:      ['Step 2', '2-Way vs 3-Way', 'Variable Flow']
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/education/pump-control.html',
+            titleShort: 'Pump Control',
+            titleFull:  'Pump Control',
+            desc:       'Moving the water — the pump curve and the operating point, variable-speed (VFD) control against a differential-pressure sensor, and the DP-setpoint reset that saves pump energy.',
+            pills:      ['Step 3', 'Pump Curve', 'DP Reset']
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/education/balancing.html',
+            titleShort: 'Balancing',
+            titleFull:  'Hydronic Balancing',
+            desc:       'Getting design flow to every load — calibrated balancing valves and PICVs, the proportional field method, and how to tell when a loop is starved at the far end or overflowing near the pump.',
+            pills:      ['Step 4', 'CBV · PICV', 'Design Flow']
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/education/coil-selection.html',
+            titleShort: 'Coil Selection',
+            titleFull:  'Coil Selection',
+            desc:       'Where the design flow a balancer chases actually comes from — the load-to-flow chain, why the chosen temperature split sets the GPM, and how a coil is picked to meet the capacity at its entering conditions.',
+            pills:      ['Step 5', 'Load → ΔT → GPM', 'Entering Conditions']
+        }) }}
+    </div>
+
+    <h2 class="hub-group">Build one — the simulator</h2>
+    <p class="hub-group-intro">
+        One interactive model for the water side — assemble a loop and watch it solve, so the loop types and pump behavior from the lessons move in front of you instead of sitting on the page.
+    </p>
+    <div class="card-grid">
+        {{ navCard({
+            section:    'simulators',
+            href:       '/simulators/hydronic-loop-builder.html',
+            titleShort: 'Loop Builder',
+            titleFull:  'Hydronic Loop Builder',
+            desc:       'Drop a plant, pump, coils, and valves on two elevations, pipe them together in 3D, and watch flow and water temperature solve live — a sandbox for the loop architectures the lessons cover.',
+            pills:      ['Sandbox', 'Loop Builder', 'Live Solve']
+        }) }}
+    </div>
+
+    <h2 class="hub-group">The tools</h2>
+    <p class="hub-group-intro">
+        Four field utilities for the water side — size a control valve and check that it will actually control, work the flow a load needs, and predict what a speed change does to a pump. No login, nothing to install.
+    </p>
+
+    <h3 class="hub-sub">Size the water side</h3>
+    <div class="card-grid">
+        {{ navCard({
+            section:    'tools',
+            href:       '/tools/waterside-load.html',
+            titleShort: 'Waterside Load',
+            titleFull:  'Waterside Load Calculator',
+            desc:       'The flow a hydronic coil needs — q = 500 × GPM × ΔT solved for load, flow, or temperature split, with tons alongside: the GPM the balancer ends up chasing.',
+            pills:      ['500 · GPM · ΔT', 'Load ↔ Flow', 'Tons']
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/tools/valve-cv.html',
+            titleShort: 'Valve Cv',
+            titleFull:  'Control Valve Cv Calculator',
+            desc:       'Size a control valve from its flow coefficient — Cv = Q√(SG/ΔP), solved for Cv, flow, or drop, with a Kv/Kvs equivalent and a built-in authority check.',
+            pills:      ['Cv = Q√(SG/ΔP)', 'Kv / Kvs', 'Valve Sizing']
+        }) }}
+    </div>
+
+    <h3 class="hub-sub">Control valves &amp; pumps</h3>
+    <div class="card-grid">
+        {{ navCard({
+            section:    'tools',
+            href:       '/tools/valve-authority.html',
+            titleShort: 'Valve Authority',
+            titleFull:  'Valve Authority Calculator',
+            desc:       'Whether a control valve will actually control — authority β from the open-valve drop against the rest of the branch, a good / marginal / poor verdict, and the installed characteristic it produces.',
+            pills:      ['Authority β', 'Good / Poor', 'Installed Char']
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/tools/affinity-laws.html',
+            titleShort: 'Affinity Laws',
+            titleFull:  'Affinity Laws',
+            desc:       'How pump speed drives flow, head, and power — the cube-law on power that makes a VFD the biggest lever on a hydronic system\'s energy. (Same laws run fans.)',
+            pills:      ['Pump Laws', 'Speed → Flow / Head', 'Cube-Law HP']
+        }) }}
+    </div>
+
+    <h2 class="hub-group">Related lessons</h2>
+    <p class="hub-group-intro">
+        Two fundamentals the water side leans on — staging the plant that feeds the loop, and the drive that turns a pump down.
+    </p>
+    <div class="card-grid">
+        {{ navCard({
+            section:    'education',
+            href:       '/education/equipment-staging.html',
+            titleShort: 'Equipment Staging',
+            titleFull:  'Equipment Staging',
+            desc:       'Several identical pumps, boilers, or chillers in parallel and one staging sequence — how a BMS decides how many to run, when to add or drop one, and which unit takes the lead.',
+            pills:      ['Fundamentals', 'Lead / Lag', 'Add / Drop']
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/education/vfds.html',
+            titleShort: 'VFDs',
+            titleFull:  'VFDs',
+            desc:       'How a variable-frequency drive turns a pump or fan motor down — the volts-per-hertz basics behind pump-speed control and every differential-pressure reset loop.',
+            pills:      ['Fundamentals', 'Volts / Hz', 'Pump / Fan Speed']
+        }) }}
+    </div>
+
+    <a class="back-link" href="/education/">← Back to Education</a>
+
+</main>
+{% endblock %}

@@ -4,7 +4,9 @@
    pooling at the section landings. Pure SEO + UX, no behavior.
 
    Accepts an `opts` object with up to four optional arrays of
-   {href, label} pairs, plus an optional single `hub` {href, label}:
+   {href, label} pairs, plus an optional `hub` — either a single
+   {href, label} or an array of them (a page that belongs to two
+   clusters, e.g. affinity-laws under hydronics AND forced air):
 
        {{ relatedLinks({
            hub:        {href: '/bacnet/', label: 'The BACnet reference hub'},
@@ -16,9 +18,10 @@
 
    Rendering rules:
    - Each non-empty group becomes a labelled column.
-   - `hub` (a single link, not an array) renders first as a "Part of"
-     column — the spoke-to-pillar link for a topic cluster (e.g. every
-     BACnet page points back at /bacnet/). Reusable for future clusters.
+   - `hub` renders first as a "Part of" column — the spoke-to-pillar
+     link(s) for a topic cluster (e.g. every BACnet page points back at
+     /bacnet/). A single object lists one pillar; an array lists several
+     (multi-cluster membership). Normalized to a list below.
    - The whole block renders nothing if every group is empty.
    - Only anchor pages that actually exist today (per the CLAUDE.md
      "Forward-link convention") — don't add href entries to pages that
@@ -28,7 +31,10 @@
    in html/styles.css under "RELATED LINKS". #}
 
 {% macro relatedLinks(opts) %}
-    {% set hasHub = opts.hub and opts.hub.href %}
+    {# Normalize `hub` to a list: a single {href,label} has a .href, an
+       array does not — so wrap the object, pass the array through. #}
+    {% set hubList = [opts.hub] if (opts.hub and opts.hub.href) else (opts.hub or []) %}
+    {% set hasHub = hubList.length %}
     {% set hasTools = opts.tools and opts.tools.length %}
     {% set hasSims = opts.simulators and opts.simulators.length %}
     {% set hasLessons = opts.lessons and opts.lessons.length %}
@@ -39,7 +45,7 @@
         <div class="related-group related-group-hub">
             <h2 class="related-label">Part of</h2>
             <ul>
-                <li><a href="{{ opts.hub.href }}" rel="related">{{ opts.hub.label }}</a></li>
+                {% for h in hubList %}<li><a href="{{ h.href }}" rel="related">{{ h.label }}</a></li>{% endfor %}
             </ul>
         </div>
         {% endif %}
