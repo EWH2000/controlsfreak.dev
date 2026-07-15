@@ -120,7 +120,7 @@ keywords: DOAS dedicated outdoor air ventilation latent sensible decouple deep c
                 <rect x="478" y="192" width="140" height="82" fill="var(--surface)" stroke="var(--text-dim)"/>
                 <text x="548" y="222" font-size="13" font-weight="600" fill="var(--text-bright)" text-anchor="middle">ZONE</text>
                 <rect x="492" y="234" width="112" height="28" fill="var(--bg)" stroke="var(--border)"/>
-                <text x="548" y="252" font-size="10" fill="var(--text-dim)" text-anchor="middle">terminal unit · sensible</text>
+                <text x="548" y="252" font-size="10" fill="var(--text-dim)" text-anchor="middle">terminal unit</text>
 
                 <text x="20" y="290" font-size="11" fill="var(--text-dim)">the DOAS owns ventilation + latent; the terminal unit handles the space's sensible load</text>
             </svg>
@@ -357,16 +357,13 @@ keywords: DOAS dedicated outdoor air ventilation latent sensible decouple deep c
                 <!-- Deep cooling coil -->
                 <g id="doas-d3-clg">
                     <rect x="150" y="265" width="40" height="70" fill="var(--surface)" stroke="var(--blue)" stroke-width="2"/>
-                    <line x1="154" y1="331" x2="186" y2="269" stroke="var(--blue)" stroke-width="1"/>
-                    <line x1="154" y1="301" x2="180" y2="269" stroke="var(--blue)" stroke-width="1"/>
-                    <line x1="154" y1="331" x2="168" y2="269" stroke="var(--blue)" stroke-width="1"/>
+                    <path d="M156 274 H184 V287 H156 V300 H184 V313 H156 V326 H184" fill="none" stroke="var(--blue)" stroke-width="1.5"/>
                 </g>
 
                 <!-- Reheat coil -->
                 <g id="doas-d3-rht">
                     <rect x="230" y="265" width="40" height="70" fill="var(--surface)" stroke="var(--heat)" stroke-width="2"/>
-                    <line x1="234" y1="331" x2="266" y2="269" stroke="var(--heat)" stroke-width="1"/>
-                    <line x1="234" y1="301" x2="260" y2="269" stroke="var(--heat)" stroke-width="1"/>
+                    <path d="M236 274 H264 V287 H236 V300 H264 V313 H236 V326 H264" fill="none" stroke="var(--heat)" stroke-width="1.5"/>
                 </g>
 
                 <!-- Supply fan -->
@@ -379,7 +376,7 @@ keywords: DOAS dedicated outdoor air ventilation latent sensible decouple deep c
                 <g id="doas-d3-dpt">
                     <circle cx="390" cy="300" r="14" fill="var(--bg)" stroke="var(--accent)" stroke-width="2"/>
                     <text x="390" y="304" font-size="10" fill="var(--text-bright)" text-anchor="middle">RH</text>
-                    <line x1="390" y1="286" x2="390" y2="368" stroke="var(--accent)" stroke-width="1" stroke-dasharray="3 3"/>
+                    <line x1="390" y1="314" x2="390" y2="368" stroke="var(--accent)" stroke-width="1" stroke-dasharray="3 3"/>
                     <text x="390" y="382" font-size="10" fill="var(--accent)" text-anchor="middle">leaving dew point</text>
                     <text x="390" y="395" font-size="10" fill="var(--accent)" text-anchor="middle">setpoint</text>
                 </g>
@@ -395,7 +392,7 @@ keywords: DOAS dedicated outdoor air ventilation latent sensible decouple deep c
                 <!-- Zones + terminal units -->
                 <rect x="470" y="230" width="110" height="150" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
                 <text x="525" y="262" font-size="13" font-weight="600" fill="var(--text-bright)" text-anchor="middle">ZONES</text>
-                <rect x="486" y="284" width="78" height="30" fill="var(--bg)" stroke="var(--border)"/>
+                <rect x="480" y="284" width="90" height="30" fill="var(--bg)" stroke="var(--border)"/>
                 <text x="525" y="303" font-size="10" fill="var(--text-dim)" text-anchor="middle">terminal unit</text>
                 <text x="525" y="336" font-size="10" fill="var(--text-dim)" text-anchor="middle">handles the</text>
                 <text x="525" y="349" font-size="10" fill="var(--text-dim)" text-anchor="middle">space sensible</text>
