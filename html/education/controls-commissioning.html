@@ -29,7 +29,7 @@ keywords: point-to-point checkout functional testing startup sequence of operati
 
             <div class="callout">
                 <p style="font-size:0.86rem;line-height:1.7;">
-                    "Commissioning" gets used for three different jobs that share a week on site and get conflated on the schedule. This page is one of them — <strong>controls functional testing</strong>, the point-by-point proof that the DDC does what the sequence says. The other two move fluids, not signals: <a href="/education/balancing.html">hydronic balancing</a> sets design flow to every water load, and <em>air balancing</em> does the same for the ductwork (a companion lesson, coming). All three have to land before turnover, but they're different work with different tools — a manometer and a balancing report are not a laptop and a points list. Keep them separate in your head and the rest of this page stays about controls.
+                    "Commissioning" gets used for three different jobs that share a week on site and get conflated on the schedule. This page is one of them — <strong>controls functional testing</strong>, the point-by-point proof that the DDC does what the sequence says. The other two move fluids, not signals: <a href="/education/balancing.html">hydronic balancing</a> sets design flow to every water load, and <a href="/education/air-balancing.html">air balancing</a> does the same for the ductwork (a companion lesson). All three have to land before turnover, but they're different work with different tools — a manometer and a balancing report are not a laptop and a points list. Keep them separate in your head and the rest of this page stays about controls.
                 </p>
             </div>
 
@@ -117,7 +117,7 @@ keywords: point-to-point checkout functional testing startup sequence of operati
                  surfaced on the graphics. -->
             <div class="callout" style="margin-top:1.25rem;">
                 <p style="margin:0;font-size:0.86rem;line-height:1.7;">
-                    <strong style="color:var(--text-bright);">True story.</strong> I swapped a controller one winter with the outside air down around <span data-us="&minus;20&nbsp;°F" data-metric="&minus;28.9&nbsp;°C">&minus;20&nbsp;°F</span>. Before the swap I forced all the DX cooling off — you don't bump compressors at that kind of cold, and those units had only small crankcase heat bands, so starting them was a good way to hurt a compressor. That was the right call for the day. The trouble was the graphics: the forced-off cooling outputs never showed as overridden on the front end, so once the swap was done they slipped under the radar and nobody saw them. They rode along, quietly forced off, all the way to summer — when the first hot day came in as a no-cool call on that exact controller. Short drive to the site, quick fix once I was there: clear the overrides. The lesson isn't "don't override" — the override was correct. It's that an override placed for a good reason still has to be written down and cleared before turnover, and the ones that never surface on the graphics are exactly the ones that get you. A point-to-point pass over the swapped points would have caught a forced-off cooling output on the spot.
+                    <strong>True story.</strong> I swapped a controller one winter with the outside air down around <span data-us="&minus;20&nbsp;°F" data-metric="&minus;28.9&nbsp;°C">&minus;20&nbsp;°F</span>. Before the swap I forced all the DX cooling off — you don't bump compressors at that kind of cold, and those units had only small crankcase heat bands, so starting them was a good way to hurt a compressor. That was the right call for the day. The trouble was the graphics: the forced-off cooling outputs never showed as overridden on the front end, so once the swap was done they slipped under the radar and nobody saw them. They rode along, quietly forced off, all the way to summer — when the first hot day came in as a no-cool call on that exact controller. Short drive to the site, quick fix once I was there: clear the overrides. The lesson isn't "don't override" — the override was correct. It's that an override placed for a good reason still has to be written down and cleared before turnover, and the ones that never surface on the graphics are exactly the ones that get you. A point-to-point pass over the swapped points would have caught a forced-off cooling output on the spot.
                 </p>
             </div>
 
@@ -169,24 +169,24 @@ keywords: point-to-point checkout functional testing startup sequence of operati
                 <!-- Sequence banner: the yardstick every point is checked against -->
                 <rect x="20" y="28" width="770" height="46" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
                 <text x="405" y="50" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text-bright)">SEQUENCE OF OPERATIONS</text>
-                <text x="405" y="66" text-anchor="middle" font-size="10.5" fill="var(--text-dim)">the design intent every point is checked against</text>
+                <text x="405" y="66" text-anchor="middle" class="edu-caption">the design intent every point is checked against</text>
 
                 <!-- Four loop stages -->
                 <rect x="30" y="150" width="150" height="72" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
                 <text x="105" y="184" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text-bright)">1 · EXERCISE</text>
-                <text x="105" y="203" text-anchor="middle" font-size="10.5" fill="var(--text-dim)">apply or command it</text>
+                <text x="105" y="203" text-anchor="middle" class="edu-caption">apply or command it</text>
 
                 <rect x="230" y="150" width="150" height="72" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
                 <text x="305" y="184" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text-bright)">2 · FIELD DEVICE</text>
-                <text x="305" y="203" text-anchor="middle" font-size="10.5" fill="var(--text-dim)">the physical response</text>
+                <text x="305" y="203" text-anchor="middle" class="edu-caption">the physical response</text>
 
                 <rect x="430" y="150" width="150" height="72" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
                 <text x="505" y="184" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text-bright)">3 · CONFIRM</text>
-                <text x="505" y="203" text-anchor="middle" font-size="10.5" fill="var(--text-dim)">value · state · action</text>
+                <text x="505" y="203" text-anchor="middle" class="edu-caption">value · state · action</text>
 
                 <rect x="630" y="150" width="150" height="72" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
                 <text x="705" y="184" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text-bright)">4 · DOCUMENT</text>
-                <text x="705" y="203" text-anchor="middle" font-size="10.5" fill="var(--text-dim)">log it · clear force</text>
+                <text x="705" y="203" text-anchor="middle" class="edu-caption">log it · clear force</text>
 
                 <!-- Forward arrows between the stages (accent = action) -->
                 <line x1="180" y1="186" x2="223" y2="186" stroke="var(--accent)" stroke-width="2.5"/>
@@ -204,7 +204,7 @@ keywords: point-to-point checkout functional testing startup sequence of operati
                 <!-- Return arrow: Document back to Exercise, once per point -->
                 <path d="M705 222 V262 H105 V229" fill="none" stroke="var(--text-dim)" stroke-width="2" stroke-dasharray="6 4"/>
                 <polygon points="100,231 110,231 105,222" fill="var(--text-dim)"/>
-                <text x="405" y="282" text-anchor="middle" font-size="11" fill="var(--text-dim)">walk every point on the list — end to end</text>
+                <text x="405" y="282" text-anchor="middle" class="edu-caption">walk every point on the list — end to end</text>
             </svg>
 
             <p style="margin-top:1.25rem;">
@@ -228,7 +228,9 @@ keywords: point-to-point checkout functional testing startup sequence of operati
             {href: '/education/controller-wiring.html', label: 'Controller Wiring'},
             {href: '/education/function-blocks.html', label: 'Function-Block Basics'},
             {href: '/education/pid-basics.html', label: 'PID Basics'},
-            {href: '/education/balancing.html', label: 'Hydronic Balancing'}
+            {href: '/education/balancing.html', label: 'Hydronic Balancing'},
+            {href: '/education/air-balancing.html', label: 'Air Balancing'},
+            {href: '/education/coil-selection.html', label: 'Coil Selection'}
         ],
         quizzes: [
             {href: '/practice/controller-swap.html', label: 'Controller Swap'},

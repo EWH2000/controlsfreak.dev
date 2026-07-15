@@ -324,7 +324,6 @@ keywords: coil selection coil sizing design flow gpm delta-t mass flow rows face
                  non-psychrometric: the point is "assumptions have a shelf life," not a
                  dehumidification tutorial. -->
             <div class="callout" style="margin-top:1.5rem;">
-                <h3>From a real building <span>· the assumption moved</span></h3>
                 <p style="font-size:0.9rem;line-height:1.75;">
                     <strong>True story.</strong> A facility with lab spaces that hold tight humidity, built as a dedicated-outdoor-air system (DOAS) feeding fan-coil units. Each zone's FCU carries a chilled-water and a hot-water coil off the building's chiller and boilers — the hydronic side, the side this page is about — while a separate DOAS, on its own DX cooling, conditions the ventilation air and does the dehumidification. That split is deliberate: the DOAS owns the latent load and hands the zones outside air dry enough that the FCU coils were selected to handle mostly sensible, at an entering-air condition that <em>assumed</em> the DOAS was holding its design dew point. Then the climate moved out from under the drawing. Summers here have gotten hotter and a lot more humid, past the outdoor condition the system was designed for, and the DOAS's design leaving dew point now sits below the dew points it is actually being handed — it can't pull the ventilation air all the way down. The zones get wetter air than the FCUs were selected for, and the labs stop holding humidity. The call comes in as "the FCUs can't keep up," and they can't — not because anything is out of tune, but because they were picked for entering conditions an upstream unit no longer delivers. No amount of loop tuning conjures capacity that was never selected. That is the whole lesson standing in one building: a coil selection is only as valid as the conditions it assumed, and some of those conditions are set by equipment sitting upstream of you.
                 </p>
@@ -334,6 +333,7 @@ keywords: coil selection coil sizing design flow gpm delta-t mass flow rows face
     </div>
 
     {{ relatedLinks({
+        hub: {href: '/hydronics/', label: 'The hydronics reference hub'},
         tools: [
             {href: '/tools/waterside-load.html', label: 'Waterside Load Calculator'},
             {href: '/tools/airside-load.html', label: 'Airside Load Calculator'},
@@ -346,7 +346,8 @@ keywords: coil selection coil sizing design flow gpm delta-t mass flow rows face
         lessons: [
             {href: '/education/balancing.html', label: 'Hydronic Balancing'},
             {href: '/education/load-piping.html', label: 'Load Piping'},
-            {href: '/education/hydronic-loops.html', label: 'Hydronic Loops'}
+            {href: '/education/hydronic-loops.html', label: 'Hydronic Loops'},
+            {href: '/education/controls-commissioning.html', label: 'Controls Commissioning'}
         ],
         quizzes: [
             {href: '/practice/balancing.html', label: 'Hydronic Balancing'}

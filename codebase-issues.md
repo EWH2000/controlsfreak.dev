@@ -4864,6 +4864,26 @@ so it was never committed. Fix: use `npm version` for bumps (updates both), or a
 one-time resync commit; optionally note in CLAUDE.md that the lockfile `version`
 isn't load-bearing. Low priority.
 
+### 157. CLAUDE.md page-creation checklist omits `html/_data/educationSequence.js` *(addressed 2026-07-14)*
+
+Surfaced while shipping the Track-A education round (controls-commissioning /
+air-balancing / coil-selection) alongside the hydronics hub. Every
+`nav: education` page must be listed in the `order` array of
+`html/_data/educationSequence.js`, and `educationSequenceGuard` in
+`.eleventy.js` **fails the build** if one isn't (or if `order` lists a URL no
+education page claims — see #93, the drift this guard was added to catch). The
+CLAUDE.md *Adding a new tool → Adding a new simulator / quiz* checklist walks
+the tools/quiz path in detail but has **no education-specific step list**, so
+`educationSequence.js` is nowhere in the documented flow — a new-lesson author
+learns about it only by hitting the build failure. Loud, not silent (unlike the
+original #93 drift), but still a checklist gap.
+
+**Addressed (2026-07-14).** Added a one-line note to CLAUDE.md's page-creation
+steps pointing at `educationSequence.js` (and its `index.html` grid-order
+twin) for `nav: education` pages. A fuller "Adding a new education lesson"
+checklist, mirroring the tools/quiz ones, is the larger follow-up if the
+education path keeps growing.
+
 ### Deferred / Won't fix (with revisit trigger)
 
 Items considered during an audit and deliberately not pursued, each

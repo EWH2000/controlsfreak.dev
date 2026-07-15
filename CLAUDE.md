@@ -714,6 +714,14 @@ section headers).
 frontmatter and the new `.nav-card` added to
 `simulators/index.html`. No filter chips to recount there.
 
+**Adding a new education lesson** follows the same steps under
+`html/education/` (`nav: education` + a `category` in
+`NAV_CATEGORIES.education`); **additionally, add the page's URL to the
+`order` array in `html/_data/educationSequence.js`** (kept in the same
+order as the `education/index.html` grid) — `educationSequenceGuard`
+fails the build if a `nav: education` page is missing from it
+(codebase-issues #93, #157).
+
 **Adding a new quiz / drill** follows a similar shape under
 `html/practice/`:
 
