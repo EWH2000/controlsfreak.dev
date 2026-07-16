@@ -23,7 +23,7 @@ nav: education
 
     <div class="filter-chips" role="group" aria-label="Filter lessons by category">
         <button type="button" class="filter-chip active" data-category="all" aria-pressed="true">
-            All <span class="filter-chip-count">29</span>
+            All <span class="filter-chip-count">30</span>
         </button>
         <button type="button" class="filter-chip" data-category="fundamentals" aria-pressed="false">
             Fundamentals <span class="filter-chip-count">7</span>
@@ -35,7 +35,7 @@ nav: education
             Refrigerant <span class="filter-chip-count">3</span>
         </button>
         <button type="button" class="filter-chip" data-category="forced-air" aria-pressed="false">
-            Forced Air Systems <span class="filter-chip-count">7</span>
+            Forced Air Systems <span class="filter-chip-count">8</span>
         </button>
         <button type="button" class="filter-chip" data-category="protocols" aria-pressed="false">
             Protocols <span class="filter-chip-count">7</span>
@@ -231,6 +231,15 @@ nav: education
             titleFull:  'Air Balancing',
             desc:       'Commissioning the air side to design flow — verifying box CFM against a traverse, setting box min, max and reheat, proportional balancing against the index zone, and building pressure.',
             pills:      ['Air Systems', 'Flow Rings · K√VP', 'Min · Max · Reheat', 'Proportional'],
+            category:   'forced-air'
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/education/dedicated-outdoor-air.html',
+            titleShort: 'DOAS',
+            titleFull:  'Dedicated Outdoor Air (DOAS)',
+            desc:       'The unit that conditions 100% outdoor air and decouples ventilation and latent load from sensible — the deep coil and reheat, energy recovery, dew-point control, and terminals that handle the space.',
+            pills:      ['Air Systems', 'Latent / Sensible', 'Deep Coil · Reheat', 'Dew-Point Control'],
             category:   'forced-air'
         }) }}
         {{ navCard({

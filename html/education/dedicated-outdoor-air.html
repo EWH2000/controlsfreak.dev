@@ -1,0 +1,483 @@
+---
+title: Dedicated Outdoor Air (DOAS) — controlsfreak.dev
+description: A dedicated outdoor air system explained — why buildings split ventilation and latent load from sensible, the deep coil and reheat, and how it is controlled.
+canonical: https://controlsfreak.dev/education/dedicated-outdoor-air.html
+nav: education
+category: forced-air
+keywords: DOAS dedicated outdoor air ventilation latent sensible decouple deep cooling coil reheat neutral supply dew point humidity control energy recovery enthalpy wheel ERV terminal unit fan coil chilled beam radiant ashrae 62.1 apparatus dew point
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Education · Dedicated Outdoor Air</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">Dedicated Outdoor Air (DOAS) <span class="tool-tag">Air Systems</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                A conventional air handler does two jobs in one breath: it brings in the code-required slice of outdoor
+                air for ventilation, and it heats or cools the space — all in a single blended stream, driven by one
+                thermostat call. A <em>dedicated outdoor air system</em> pulls those two jobs apart. It takes 100%
+                outdoor air, conditions it to a controlled supply state, and ducts it to the zones purely as
+                ventilation — while separate <em>terminal units</em> at each zone handle the heating and cooling the space
+                actually needs. This page is about what that split buys you and how the unit is controlled. One question,
+                start to finish: <em>what is a DOAS, and why would a building decouple ventilation from the rest of the
+                load?</em>
+            </p>
+
+            <div class="callout">
+                <p style="font-size:0.86rem;line-height:1.7;">
+                    This page is the counterpoint to <a href="/education/air-handlers.html">Air Handlers</a>, which walks
+                    the conventional mixed-air unit station by station. If the mixing box — where a slug of outdoor air
+                    joins the recirculated return and the blend gets conditioned together — isn't familiar yet, read that
+                    first. Everything below is about the other way to bring in fresh air: not blended into the return, but
+                    on its own unit, with its own coil, its own controls, and its own reason for existing.
+                </p>
+            </div>
+
+            <!-- ───────────────── 1 · What a DOAS is ───────────────── -->
+            <h2 class="subhead" id="what-it-is">One Unit, One Job: Ventilation Air</h2>
+
+            <p>
+                Start with the definition and hold onto it: a DOAS is a unit dedicated to <strong>100% outdoor air</strong>.
+                It draws in nothing but fresh air, conditions that air to a controlled leaving state, and ducts it to the
+                zones as the building's ventilation supply. It never touches return air the way a mixing box does —
+                there is no blend. The heating and cooling the space needs to hold its thermostat setpoint is somebody
+                else's job entirely: the <em>terminal units</em>. Those can be <a href="/education/load-piping.html">fan-coil
+                units</a>, <a href="/education/vav-systems.html">VAV boxes</a>, chilled beams, or radiant panels — whatever
+                the design picked to move the space's <em>sensible</em> load. The DOAS delivers ventilation; the terminals
+                hold the room.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                Contrast that with the conventional <a href="/education/air-handlers.html#mixing-box">mixed-air air
+                handler</a>. There, the outdoor-air damper cracks open to a minimum position, a small fraction of fresh
+                air mixes into the big recirculated return stream, and the blended air crosses one set of coils on its way
+                back to the space. Ventilation is real, but it is <em>entangled</em> with the thermostat: the same fan and
+                the same coils serve both the cooling call and the fresh-air requirement, and the outdoor air rides in as a
+                passenger on whatever the space happens to be calling for. A DOAS un-entangles them. The two streams below
+                are the whole idea — one blended path versus two dedicated ones.
+            </p>
+
+            <svg class="edu-svg" viewBox="0 0 640 300" role="img" aria-labelledby="doas-d1-title doas-d1-desc" font-family="var(--mono)">
+                <title id="doas-d1-title">Conventional mixed-air path versus a decoupled DOAS path</title>
+                <desc id="doas-d1-desc">Two lanes compared. The top lane is a conventional air handler: return air with a
+                    little minimum outdoor air enters one unit, crosses a coil, and leaves as a single conditioned supply
+                    stream to the zone — so ventilation is entangled with the thermostat's cooling call. The bottom lane is
+                    a dedicated outdoor air system: 100% outdoor air enters a DOAS unit that conditions it, and a neutral,
+                    dry supply is ducted to the zone as ventilation only, while a separate terminal unit at the zone handles
+                    the space's sensible heating and cooling.</desc>
+
+                <!-- Top lane — conventional mixed-air -->
+                <text x="20" y="30" font-size="12" fill="var(--text-bright)">CONVENTIONAL — ONE MIXED STREAM</text>
+
+                <rect x="20" y="48" width="150" height="50" fill="var(--surface)" stroke="var(--border)"/>
+                <text x="95" y="70" font-size="11" fill="var(--text-bright)" text-anchor="middle">return + min OA</text>
+                <text x="95" y="87" font-size="10" fill="var(--text-dim)" text-anchor="middle">blended in the box</text>
+
+                <path id="doas-d1-ma" data-flow="air" d="M170 73 H210" fill="none" stroke="var(--blue-cool)" stroke-width="3"/>
+                <polygon points="208,68 208,78 216,73" fill="var(--blue-cool)"/>
+
+                <rect x="217" y="48" width="80" height="50" fill="var(--surface)" stroke="var(--blue)"/>
+                <text x="257" y="77" font-size="12" fill="var(--text-bright)" text-anchor="middle">coil</text>
+
+                <path id="doas-d1-sa1" data-flow="air" d="M297 73 H470" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <polygon points="468,68 468,78 476,73" fill="var(--blue)"/>
+
+                <rect x="478" y="40" width="140" height="66" fill="var(--surface)" stroke="var(--text-dim)"/>
+                <text x="548" y="70" font-size="13" font-weight="600" fill="var(--text-bright)" text-anchor="middle">ZONE</text>
+                <text x="548" y="88" font-size="10" fill="var(--text-dim)" text-anchor="middle">one stream does it all</text>
+
+                <text x="20" y="128" font-size="11" fill="var(--text-dim)">ventilation is entangled with the thermostat's cooling call</text>
+
+                <!-- Bottom lane — DOAS decoupled -->
+                <text x="20" y="182" font-size="12" fill="var(--text-bright)">DOAS — VENTILATION DECOUPLED</text>
+
+                <rect x="20" y="200" width="120" height="50" fill="var(--surface)" stroke="var(--teal)"/>
+                <text x="80" y="222" font-size="11" fill="var(--text-bright)" text-anchor="middle">100% outdoor</text>
+                <text x="80" y="239" font-size="11" fill="var(--text-bright)" text-anchor="middle">air</text>
+
+                <path id="doas-d1-oa" data-flow="air" d="M140 225 H178" fill="none" stroke="var(--teal)" stroke-width="3"/>
+                <polygon points="176,220 176,230 184,225" fill="var(--teal)"/>
+
+                <rect x="185" y="200" width="150" height="50" fill="var(--surface)" stroke="var(--blue)"/>
+                <text x="260" y="222" font-size="12" fill="var(--text-bright)" text-anchor="middle">DOAS unit</text>
+                <text x="260" y="239" font-size="10" fill="var(--text-dim)" text-anchor="middle">deep coil + reheat</text>
+
+                <path id="doas-d1-sa2" data-flow="air" d="M335 225 H472" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <polygon points="470,220 470,230 478,225" fill="var(--blue)"/>
+                <text x="403" y="216" font-size="10" fill="var(--text-dim)" text-anchor="middle">neutral, dry supply</text>
+
+                <rect x="478" y="192" width="140" height="82" fill="var(--surface)" stroke="var(--text-dim)"/>
+                <text x="548" y="222" font-size="13" font-weight="600" fill="var(--text-bright)" text-anchor="middle">ZONE</text>
+                <rect x="492" y="234" width="112" height="28" fill="var(--bg)" stroke="var(--border)"/>
+                <text x="548" y="252" font-size="10" fill="var(--text-dim)" text-anchor="middle">terminal unit</text>
+
+                <text x="20" y="290" font-size="11" fill="var(--text-dim)">the DOAS owns ventilation + latent; the terminal unit handles the space's sensible load</text>
+            </svg>
+
+            <!-- ───────────────── 2 · Why decouple ───────────────── -->
+            <h2 class="subhead" id="why-decouple">Why Pull Them Apart</h2>
+
+            <p>
+                Decoupling is not tidiness for its own sake — it solves two real problems that a mixed-air unit is bad at.
+                The first is <strong>moisture</strong>. A large share of the building's <em>latent</em> load — the moisture
+                the system has to remove — walks in the door with the ventilation air, especially in humid climates. (Some
+                spaces make plenty of their own — a lab, a kitchen, a natatorium — but the outdoor-air stream is the part a
+                mixed-air unit is worst at drying.)
+                Hot, humid outdoor air carries far more water per pound than the conditioned air already in the space, so
+                the fresh-air requirement and the humidity problem are, physically, the same stream. Put that stream on its
+                own unit and you can control humidity <em>independently</em> of temperature: the DOAS is sized and
+                controlled to wring the moisture out of the ventilation air before it ever reaches a zone, instead of
+                hoping the space cooling coil happens to run cold enough, long enough, to dry the air out as a side effect.
+                That side-effect approach is exactly how a mixed-air system ends up with cold, clammy spaces on a mild,
+                humid day — the thermostat is satisfied, so the coil stops, so the drying stops, while the outdoor dew
+                point keeps climbing.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                The second problem is <strong>guaranteed ventilation</strong>. On a mixed-air VAV system the outdoor air
+                rides in as a fraction of the supply, and the supply throttles down as zones satisfy — so a
+                <a href="/education/vav-systems.html#minimums">box sitting at its minimum flow</a> can quietly starve its
+                occupants of fresh air even while the temperature is perfect, and the whole system's outdoor-air fraction
+                wanders as the <a href="/education/duct-static-control.html">fan speed</a> and damper positions move. A
+                DOAS sidesteps that entirely: it delivers each zone its <a href="/tools/minimum-outdoor-air.html">ASHRAE
+                62.1 ventilation share</a> as a measured, dedicated flow, regardless of whether the zone is calling for
+                heating, cooling, or nothing at all. Ventilation stops being a fraction you hope is right and becomes a
+                delivered quantity you can meter.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                There is a payoff on the equipment, too. Because the terminal units no longer have to bring in and
+                dehumidify outdoor air — the DOAS already did — they only have to move the space's <em>sensible</em> load.
+                That makes them smaller: a fan coil that would have been sized for the ventilation-plus-latent burden on top
+                of the room load can shrink to just the room's sensible swing. The load didn't vanish; it moved to the unit
+                built to handle it.
+            </p>
+
+            <!-- ───────────────── 3 · The latent / sensible split ───────────────── -->
+            <h2 class="subhead" id="latent-sensible-split">The Latent / Sensible Split</h2>
+
+            <p>
+                Here is the load-bearing idea of the whole architecture, stated plainly: <strong>the DOAS owns the latent
+                load; the terminals own the sensible load.</strong> Latent is the moisture — the energy tied up in water
+                vapor. Sensible is the dry-bulb temperature — the part a thermometer reads. A conventional coil does both
+                at once and can't really separate them; a DOAS design deliberately assigns each to the equipment suited for
+                it. And doing the latent half well drives an unusual-looking move at the DOAS coil.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                To pull moisture out of air, a cooling coil has to run its surface colder than the air's dew point, so water
+                condenses onto the fins and drains away (the same physics behind the drain pan on any
+                <a href="/education/air-handlers.html#filter-coils">cooling coil</a>, and the reason a
+                <a href="/tools/dew-point-calculator.html">dew point</a> matters). To dry the ventilation air <em>enough</em>,
+                the DOAS drives its coil <strong>deep</strong> — down to a low <em>apparatus dew point</em>, the effective
+                cold-surface temperature the leaving air is pulled toward. A common target is a leaving-air dew point around
+                <span data-us="55&nbsp;°F" data-metric="12.8&nbsp;°C">55&nbsp;°F</span>, and where a space needs tighter
+                humidity the coil is pushed further — toward a leaving dew point
+                <span data-us="in the mid-to-upper 40s&nbsp;°F" data-metric="near 7 to 9&nbsp;°C">in the mid-to-upper 40s&nbsp;°F</span>.
+                That is far colder than any space wants its supply air.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                So the deep coil creates a problem it then has to fix: air that dry is also that <em>cold</em>, and blowing
+                <span data-us="50&nbsp;°F" data-metric="10.0&nbsp;°C">50&nbsp;°F</span> air into an occupied zone would
+                overcool it and hand the space's <em>heating</em> a fight it never asked for. The usual answer is
+                <strong>reheat</strong>: after the deep coil has wrung the moisture out, a reheat coil warms the air back up
+                to a <em>neutral</em> supply — around <span data-us="70&nbsp;°F" data-metric="21.1&nbsp;°C">70&nbsp;°F</span>
+                dry-bulb, close to room temperature — so the DOAS delivers dry air that is thermally almost invisible to the
+                space. It added no net sensible load; it just handed the room dehumidified ventilation and left the heating
+                and cooling to the terminals, exactly as designed. (Not every DOAS reheats: a <em>cold-air</em> DOAS
+                deliberately skips it and delivers the cool, dry air straight to the zone, using that coldness to knock down
+                part of the space sensible load on purpose. Neutral is the common default; cold-air is a design choice you
+                will meet.)
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                The diagram below is that process on a stripped-down psychrometric path: the outdoor-air state, the deep
+                coil pulling it down and to the left to the apparatus dew point, and the reheat carrying it straight across —
+                dry-bulb up, moisture unchanged — to a neutral supply. (The full air-state vocabulary — dry bulb, dew point,
+                humidity ratio, enthalpy — lives in <a href="/education/psychrometrics-basics.html">Psychrometrics Basics</a>,
+                and you can plot a real state on the <a href="/tools/psychrometric-chart.html">psychrometric chart</a>.)
+            </p>
+
+            <svg class="edu-svg" viewBox="0 0 580 380" role="img" aria-labelledby="doas-d2-title doas-d2-desc" font-family="var(--mono)">
+                <title id="doas-d2-title">The DOAS coil-and-reheat process on a psychrometric path</title>
+                <desc id="doas-d2-desc">A stylized psychrometric chart with dry-bulb temperature on the horizontal axis and
+                    moisture, the humidity ratio, on the vertical axis. A saturation curve rises from lower-left to
+                    upper-right. Three state points are marked. The outdoor-air state sits high and to the right — hot and
+                    humid. An arrow labelled "deep cooling coil" runs down and to the left from the outdoor-air state to the
+                    apparatus dew point, a cold, nearly saturated point low on the chart: both temperature and moisture drop,
+                    so the coil removes sensible and latent heat together. A second arrow labelled "reheat" runs
+                    horizontally to the right from the apparatus dew point to the neutral supply state at the same moisture
+                    level: the dry-bulb rises while the moisture stays put, adding sensible heat only. The neutral supply is
+                    the dry, room-temperature air the DOAS ducts to the zones.</desc>
+
+                <!-- axes -->
+                <line x1="80" y1="320" x2="540" y2="320" stroke="var(--text-dim)" stroke-width="1.5"/>
+                <polygon points="540,315 552,320 540,325" fill="var(--text-dim)"/>
+                <line x1="80" y1="320" x2="80" y2="50" stroke="var(--text-dim)" stroke-width="1.5"/>
+                <polygon points="75,50 80,38 85,50" fill="var(--text-dim)"/>
+                <text x="310" y="352" font-size="11" fill="var(--text)" text-anchor="middle">dry-bulb temperature →</text>
+                <text x="42" y="185" font-size="11" fill="var(--text)" text-anchor="middle" transform="rotate(-90 42 185)">moisture (humidity ratio) →</text>
+
+                <!-- saturation curve (stylized, not to scale) -->
+                <path d="M100 314 C 200 280, 320 190, 465 92" fill="none" stroke="var(--blue-cool)" stroke-width="1.5" stroke-dasharray="5 4"/>
+                <text x="452" y="76" font-size="10" fill="var(--blue-cool)" text-anchor="end">saturation (100% RH)</text>
+
+                <!-- process legs: OA down-left to the apparatus dew point (deep coil),
+                     then straight across to the neutral supply (reheat) -->
+                <line x1="452" y1="138" x2="221" y2="246" stroke="var(--blue)" stroke-width="2.5"/>
+                <polygon points="233,236 219,247 237,250" fill="var(--blue)"/>
+                <line x1="215" y1="250" x2="352" y2="250" stroke="var(--heat)" stroke-width="2.5"/>
+                <polygon points="344,245 356,250 344,255" fill="var(--heat)"/>
+
+                <!-- state points -->
+                <circle cx="458" cy="132" r="6" fill="var(--teal)" stroke="var(--bg)" stroke-width="1.5"/>
+                <text x="470" y="126" font-size="11" fill="var(--text-bright)">OA</text>
+                <text x="470" y="142" font-size="10" fill="var(--text-dim)">hot &amp; humid</text>
+
+                <circle cx="207" cy="250" r="6" fill="var(--blue)" stroke="var(--bg)" stroke-width="1.5"/>
+                <text x="196" y="244" font-size="11" fill="var(--text-bright)" text-anchor="end">apparatus</text>
+                <text x="196" y="259" font-size="11" fill="var(--text-bright)" text-anchor="end">dew point</text>
+                <text x="196" y="274" font-size="10" fill="var(--text-dim)" text-anchor="end">cold &amp; saturated</text>
+
+                <circle cx="360" cy="250" r="6" fill="var(--accent)" stroke="var(--bg)" stroke-width="1.5"/>
+                <text x="372" y="246" font-size="11" fill="var(--text-bright)">neutral supply</text>
+                <text x="372" y="262" font-size="10" fill="var(--text-dim)">dry, room-temp</text>
+
+                <!-- process labels, held clear of both lines -->
+                <text x="345" y="210" font-size="11" fill="var(--blue)" text-anchor="middle">deep coil</text>
+                <text x="345" y="225" font-size="10" fill="var(--text-dim)" text-anchor="middle">cool + dry</text>
+                <text x="283" y="278" font-size="11" fill="var(--heat)" text-anchor="middle">reheat</text>
+                <text x="283" y="293" font-size="10" fill="var(--text-dim)" text-anchor="middle">warm, don't re-wet</text>
+            </svg>
+            <p class="ref-note" style="margin-top:0.25rem;">
+                A schematic path, not a metered chart — the point is the <em>shape</em>: down-and-left to dry the air,
+                then straight across to warm it without re-wetting it. Real state points come off the
+                <a href="/tools/psychrometric-chart.html">psychrometric chart</a>.
+            </p>
+
+            <!-- ───────────────── 4 · How a DOAS is controlled ───────────────── -->
+            <h2 class="subhead" id="how-controlled">How a DOAS Is Controlled</h2>
+
+            <p>
+                Because the DOAS exists to control moisture, its primary control loop is not a dry-bulb loop — it is a
+                <strong>leaving-air dew point (or humidity) setpoint</strong> on the deep coil. The unit modulates its
+                cooling — a chilled-water valve, or compressor staging on a
+                <a href="/education/refrigerant-cycle-basics.html">DX</a> unit — to hold the supply air at a target dew
+                point, measured by a humidity or dew-point sensor in the leaving airstream. That is the number to look for
+                first on the BMS graphic: not "is the supply 55 degrees," but "is the supply dry enough." A separate
+                <strong>reheat</strong> loop then trims the dry-bulb up to the neutral supply setpoint, so the two loops
+                divide the work the same way the whole system does — one owns moisture, the other owns temperature.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                Running a coil deep and then reheating is energy-hungry by nature — you are paying to cool air well past
+                what temperature alone needs, then paying again to warm it back. That is why most modern DOAS units carry
+                <strong>energy recovery</strong> ahead of the coil, letting the outgoing exhaust air precondition the
+                incoming outdoor air. What actually crosses between the two streams depends on the device: an
+                <strong>enthalpy (total-energy) device</strong> — a total-energy wheel or a membrane/enthalpy plate core —
+                transfers both heat <em>and</em> moisture, while a plain <strong>sensible</strong> exchanger — a bare
+                fixed-plate core or a sensible-only wheel — moves heat alone. For a DOAS fighting a latent load, the
+                enthalpy kind is the one that earns its keep: in summer the cool, dry exhaust pre-cools <em>and</em>
+                pre-dries the hot, humid intake before it ever reaches the coil; in winter it pre-warms and re-humidifies
+                it. A total-energy wheel commonly recovers on the order of
+                70&nbsp;to&nbsp;80% of the energy in the air it would otherwise throw away, which is a large part of what makes
+                a deep-coil-plus-reheat unit affordable to run — and energy codes now require recovery on many high-outdoor-air
+                units for exactly that reason.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                The rest of the control story is scheduling. Ventilation is only owed when the building is occupied, so the
+                DOAS runs on an <strong>occupancy schedule</strong>, and on systems with variable occupancy it can lean on
+                <a href="/tools/minimum-outdoor-air.html">demand-controlled ventilation</a> — trimming outdoor-air flow (or
+                staging the unit) as measured or inferred occupancy falls, then restoring full ventilation as it climbs.
+                Put together, the BMS points that tell the whole story are a short list: <em>leaving-air temperature</em>
+                and <em>leaving-air RH / dew point</em> (the humidity control point), the <em>cooling coil valve or
+                compressor stage</em>, the <em>reheat valve or stage</em>, and the <em>energy-recovery wheel</em> command
+                and status. Read those five in order and you are watching the unit do its one job. The capstone below marks
+                each of them on the airflow path.
+            </p>
+
+            <svg class="edu-svg" viewBox="-30 0 630 430" role="img" aria-labelledby="doas-d3-title doas-d3-desc" font-family="var(--mono)">
+                <title id="doas-d3-title">A dedicated outdoor air unit, end to end, with its control points</title>
+                <desc id="doas-d3-desc">A dedicated outdoor air unit drawn as a casing with four stations in air-path order.
+                    Outdoor air enters at the lower left and passes through an energy-recovery wheel, then a deep cooling
+                    coil that dehumidifies it, then a reheat coil, then the supply fan, and leaves as a neutral, dry supply
+                    ducted to the zones on the right. Return air from the zones runs back along the top to the other face of
+                    the energy-recovery wheel, which transfers heat and moisture to the incoming outdoor air, and is then
+                    thrown out as exhaust at the upper left. A leaving-air dew-point and relative-humidity sensor sits in the
+                    supply airstream after the reheat coil — the unit's primary control point. Each zone has a terminal unit
+                    that handles the space's sensible heating and cooling.</desc>
+
+                <!-- Return duct (zones back to the wheel, along the top) -->
+                <path id="doas-d3-ra" data-flow="air" d="M470 120 H92 V150" fill="none" stroke="var(--blue-cool)" stroke-width="3"/>
+                <polygon points="300,115 291,120 300,125" fill="var(--blue-cool)"/>
+                <text x="300" y="108" font-size="12" fill="var(--text)" text-anchor="middle">← return air from the zones</text>
+
+                <!-- Exhaust out (dashed) -->
+                <path id="doas-d3-ea" data-flow="air" data-flow-density="0.6" d="M66 150 V70 H24" fill="none" stroke="var(--text-dim)" stroke-width="3" stroke-dasharray="9 5"/>
+                <polygon points="34,65 25,70 34,75" fill="var(--text-dim)"/>
+                <text x="70" y="60" font-size="12" fill="var(--text)" text-anchor="start">exhaust ↑</text>
+
+                <!-- Outdoor-air intake (label sits in the -30 left margin) -->
+                <path id="doas-d3-oa" data-flow="air" d="M-28 300 H40" fill="none" stroke="var(--teal)" stroke-width="3"/>
+                <polygon points="30,295 40,300 30,305" fill="var(--teal)"/>
+                <text x="-28" y="290" font-size="11" fill="var(--text)" text-anchor="start">outdoor air</text>
+
+                <!-- Supply out to zones — straight into the zone block -->
+                <path id="doas-d3-sa" data-flow="air" d="M420 300 H468" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <polygon points="460,295 470,300 460,305" fill="var(--blue)"/>
+
+                <!-- Casing -->
+                <rect x="40" y="250" width="380" height="100" fill="none" stroke="var(--text-dim)" stroke-width="2"/>
+                <line x1="130" y1="250" x2="130" y2="350" stroke="var(--border)" stroke-width="1"/>
+                <line x1="210" y1="250" x2="210" y2="350" stroke="var(--border)" stroke-width="1"/>
+                <line x1="290" y1="250" x2="290" y2="350" stroke="var(--border)" stroke-width="1"/>
+                <line x1="360" y1="250" x2="360" y2="350" stroke="var(--border)" stroke-width="1"/>
+
+                <!-- Energy-recovery wheel (spans the intake + exhaust faces) -->
+                <g id="doas-d3-wheel">
+                    <circle cx="85" cy="300" r="34" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <line x1="85" y1="266" x2="85" y2="334" stroke="var(--border)" stroke-width="1"/>
+                    <path d="M61 282 A34 34 0 0 1 109 282" fill="none" stroke="var(--border)" stroke-width="1"/>
+                    <path d="M61 318 A34 34 0 0 0 109 318" fill="none" stroke="var(--border)" stroke-width="1"/>
+                </g>
+
+                <!-- Deep cooling coil -->
+                <g id="doas-d3-clg">
+                    <rect x="150" y="265" width="40" height="70" fill="var(--surface)" stroke="var(--blue)" stroke-width="2"/>
+                    <path d="M156 274 H184 V287 H156 V300 H184 V313 H156 V326 H184" fill="none" stroke="var(--blue)" stroke-width="1.5"/>
+                </g>
+
+                <!-- Reheat coil -->
+                <g id="doas-d3-rht">
+                    <rect x="230" y="265" width="40" height="70" fill="var(--surface)" stroke="var(--heat)" stroke-width="2"/>
+                    <path d="M236 274 H264 V287 H236 V300 H264 V313 H236 V326 H264" fill="none" stroke="var(--heat)" stroke-width="1.5"/>
+                </g>
+
+                <!-- Supply fan -->
+                <g id="doas-d3-fan">
+                    <circle cx="325" cy="300" r="18" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <polygon points="319,293 334,300 319,307" fill="var(--text-dim)"/>
+                </g>
+
+                <!-- Leaving-air dew point / RH sensor — the control point -->
+                <g id="doas-d3-dpt">
+                    <circle cx="390" cy="300" r="14" fill="var(--bg)" stroke="var(--accent)" stroke-width="2"/>
+                    <text x="390" y="304" font-size="10" fill="var(--text-bright)" text-anchor="middle">RH</text>
+                    <line x1="390" y1="314" x2="390" y2="368" stroke="var(--accent)" stroke-width="1" stroke-dasharray="3 3"/>
+                    <text x="390" y="382" font-size="10" fill="var(--accent)" text-anchor="middle">leaving dew point</text>
+                    <text x="390" y="395" font-size="10" fill="var(--accent)" text-anchor="middle">setpoint</text>
+                </g>
+
+                <!-- Station labels -->
+                <text x="85" y="368" font-size="11" fill="var(--text)" text-anchor="middle">RECOVERY</text>
+                <text x="85" y="381" font-size="11" fill="var(--text)" text-anchor="middle">WHEEL</text>
+                <text x="170" y="368" font-size="11" fill="var(--text)" text-anchor="middle">DEEP COIL</text>
+                <text x="170" y="381" font-size="10" fill="var(--text-dim)" text-anchor="middle">dehumidify</text>
+                <text x="250" y="368" font-size="11" fill="var(--text)" text-anchor="middle">REHEAT</text>
+                <text x="325" y="335" font-size="10" fill="var(--text-dim)" text-anchor="middle">fan</text>
+
+                <!-- Zones + terminal units -->
+                <rect x="470" y="230" width="110" height="150" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                <text x="525" y="262" font-size="13" font-weight="600" fill="var(--text-bright)" text-anchor="middle">ZONES</text>
+                <rect x="480" y="284" width="90" height="30" fill="var(--bg)" stroke="var(--border)"/>
+                <text x="525" y="303" font-size="10" fill="var(--text-dim)" text-anchor="middle">terminal unit</text>
+                <text x="525" y="336" font-size="10" fill="var(--text-dim)" text-anchor="middle">handles the</text>
+                <text x="525" y="349" font-size="10" fill="var(--text-dim)" text-anchor="middle">space sensible</text>
+                <text x="525" y="218" font-size="11" fill="var(--blue)" text-anchor="middle">← neutral, dry supply</text>
+            </svg>
+            <div class="edu-legend">
+                <span><span class="sw oa"></span>outdoor air</span>
+                <span><span class="sw ra"></span>return air</span>
+                <span><span class="sw sa"></span>neutral supply</span>
+                <span><span class="sw ea"></span>exhaust</span>
+            </div>
+
+            <!-- ───────────────── 5 · Closing case study — owner's true story ───────────────── -->
+            <h2 class="subhead" id="case-study">When the Climate Outruns the Design</h2>
+
+            <p>
+                All of that is the theory working as intended. Here is what it looks like when the ground shifts under a
+                DOAS after it is installed — a real building, told from the DOAS side. (The same building's fan-coils are
+                the closing story on <a href="/education/coil-selection.html">Coil Selection</a>, seen from the terminal
+                side; this is the unit that feeds them.)
+            </p>
+
+            <div class="callout" style="margin-top:1.25rem;">
+                <p style="font-size:0.9rem;line-height:1.75;">
+                    <strong>True story.</strong> I service a building with lab spaces that have to hold humidity in a tight
+                    band. It is built exactly the way this page describes: a DOAS conditions the ventilation air and hands it
+                    to the labs, while fan-coil units — chilled water and hot water, served from the plant's chiller and
+                    boilers — handle each room's sensible load. The DOAS makes its own cold with onboard DX, and it was
+                    sized and set to a <em>design leaving dew point</em> chosen for the climate the drawings assumed. The
+                    whole split depends on that one number holding: the DOAS delivers air dry enough, and the FCUs — picked
+                    for mostly <em>sensible</em> duty — never have to become dehumidifiers. Then the outdoor climate drifted
+                    off the design. The peak summer days now land muggier and more punishing than the drawings ever budgeted
+                    for, and the outdoor air shows up at dew points past what the deep coil was built to pull down. The DOAS
+                    runs flat out and still can't reach its leaving-dew-point setpoint — the coil simply lacks the depth for
+                    the moisture load it now has to strip. So air wetter than the design ever intended reaches the labs, and
+                    the FCUs, sized for sensible and fed chilled water that was never meant to do heavy drying, can't absorb
+                    the extra latent. The lab humidity climbs. The
+                    controls tell the whole story at a glance: the DOAS leaving dew point sitting stubbornly above setpoint,
+                    space RH above its band, and the terminals pinned wide open with comfort still off. Nothing is broken and
+                    nothing is out of tune — the unit is meeting a design condition the weather stopped honoring. That is the
+                    hard lesson a DOAS teaches when its assumptions expire: the entire architecture rides on the deep coil
+                    winning its fight with the outdoor dew point, and a design dew point chosen for yesterday's climate is not
+                    a promise the coil can keep once the climate outgrows it.
+                </p>
+            </div>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        hub: [
+            {href: '/forced-air/', label: 'The forced-air reference hub'}
+        ],
+        tools: [
+            {href: '/tools/dew-point-calculator.html', label: 'Dew Point Calculator & Coil Check'},
+            {href: '/tools/minimum-outdoor-air.html', label: 'Minimum Outdoor Air Calculator'},
+            {href: '/tools/psychrometric-chart.html', label: 'Psychrometric Chart'}
+        ],
+        lessons: [
+            {href: '/education/air-handlers.html', label: 'Air Handlers'},
+            {href: '/education/economizers.html', label: 'Economizers'},
+            {href: '/education/vav-systems.html', label: 'VAV Systems'},
+            {href: '/education/coil-selection.html', label: 'Coil Selection'},
+            {href: '/education/psychrometrics-basics.html', label: 'Psychrometrics Basics'},
+            {href: '/education/refrigerant-cycle-basics.html', label: 'Refrigerant Cycle Basics'}
+        ]
+    }) }}
+    {# hub is an array so the refrigeration hub can be added as a second
+       spoke-back link when /refrigeration/ ships (DOAS is dual-hub-ready:
+       forced-air + refrigeration). Only forced-air exists today, so only it
+       is linked — forward-link convention. #}
+
+    <a class="back-link" href="/education/">← Back to Education</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<!-- flow-engine.js is loaded site-wide from layouts/page.njk; the init()
+     below is an idempotent refresh so the page reads standalone. D1 (the
+     mixed-air vs DOAS contrast) and D3 (the capstone airflow schematic)
+     carry data-flow="air" ducts — particle color follows each duct's
+     stroke. D2 is a static psychrometric-path schematic (no data-flow), so
+     the flow engine no-ops it. This page has no interactive widget. -->
+<script>
+    FlowEngine.init();
+</script>
+{% endblock %}

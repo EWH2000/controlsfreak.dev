@@ -78,6 +78,7 @@ const PAGES = [
     { name: 'education — vav systems', url: '/education/vav-systems.html' },
     { name: 'education — duct static control', url: '/education/duct-static-control.html' },
     { name: 'education — air balancing',  url: '/education/air-balancing.html' },
+    { name: 'education — dedicated outdoor air', url: '/education/dedicated-outdoor-air.html' },
     { name: 'education — function blocks', url: '/education/function-blocks.html' },
     { name: 'education — modbus basics', url: '/education/modbus-basics.html' },
     { name: 'education — modbus decoding', url: '/education/modbus-decoding.html' },
