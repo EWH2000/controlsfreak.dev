@@ -52,6 +52,7 @@ const PAGES = [
     { name: 'staging sequencer',      url: '/simulators/staging-sequencer.html' },
     { name: 'controller wiring',      url: '/simulators/controller-wiring.html' },
     { name: 'hydronic loop builder',  url: '/simulators/hydronic-loop-builder.html' },
+    { name: 'refrigerant loop simulator', url: '/simulators/refrigerant-loop.html' },
     { name: 'bacnet hub',             url: '/bacnet/' },
     { name: 'forced-air hub',         url: '/forced-air/' },
     { name: 'hydronics hub',          url: '/hydronics/' },

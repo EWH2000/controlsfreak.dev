@@ -6,6 +6,7 @@ nav: simulators
 keywords: vapor compression suction discharge head pressure superheat subcooling txv metering freeze psig manifold gauge r410a
 ---
 {% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
 
 {% block head %}
     <style>
@@ -133,6 +134,33 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
             .rl-knob-grid { grid-template-columns: 1fr; }
         }
         .rl-slider-sub .cfm { color: var(--text); }
+
+        /* ── "Try this" scenario presets ── a mutually-exclusive group of
+           .copy-btn buttons (the staging-sequencer idiom); .active marks the
+           loaded scenario and is cleared the moment a knob is touched by
+           hand, so a lit button always means "this is exactly what's loaded."
+           The headline starve reads a touch louder than its siblings. */
+        .rl-presets { margin: 1.25rem 0 0; }
+        .rl-presets .btn-row { margin-top: 0.5rem; }
+        .rl-presets .copy-btn.rl-preset-starve.active { border-color: var(--red); color: var(--red); }
+
+        /* ── P-T state plot ── the superheat / subcooling P-T diagram made
+           live. Canvas geometry stays canonical (deg F / psig); only the axis
+           and gap labels convert on a unit flip. Legend swatches follow the
+           superheat-subcooling lesson's colour language: the saturation curve
+           neutral, superheat orange (heat), subcooling muted blue (blue-cool),
+           the freeze line red. */
+        .rl-plot-wrap { margin-top: 0.5rem; }
+        .rl-plot-legend .swatch.sat    { border-top: 2px solid var(--text-dim); }
+        .rl-plot-legend .swatch.sh     { border-top: 2px solid var(--heat); }
+        .rl-plot-legend .swatch.sc     { border-top: 2px solid var(--blue-cool); }
+        .rl-plot-legend .swatch.freeze { border-top: 2px dashed var(--red); }
+
+        /* The P-T strip compresses below ~700px; surface the shared
+           orientation note there, same as the PID tuner / staging sequencer. */
+        @media (max-width: 700px) {
+            .narrow-width-note { display: block; }
+        }
     </style>
 {% endblock %}
 
@@ -165,6 +193,23 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                 <strong>New to the cycle?</strong>
                 <a href="/education/refrigerant-cycle-basics.html">Start with the basics →</a>
             </p>
+
+            <!-- ── "Try this" scenario presets — one per RefrigLoop.PRESETS
+                 key. A click writes the whole knob set, marks the scenario
+                 active, and eases the loop / gauges / plot to the new
+                 equilibrium. Typical first, then the headline starve; moving
+                 any knob by hand clears the active mark. -->
+            <div class="rl-presets field" role="group" aria-labelledby="rl-try-lbl">
+                <span class="field-label" id="rl-try-lbl">Try this:</span>
+                <div class="btn-row">
+                    <button type="button" class="copy-btn" data-preset="typical" aria-pressed="false">Typical day</button>
+                    <button type="button" class="copy-btn rl-preset-starve" data-preset="starve" aria-pressed="false">Starve the coil</button>
+                    <button type="button" class="copy-btn" data-preset="undercharge" aria-pressed="false">Undercharge</button>
+                    <button type="button" class="copy-btn" data-preset="overcharge" aria-pressed="false">Overcharge</button>
+                    <button type="button" class="copy-btn" data-preset="dirtyCondenser" aria-pressed="false">Dirty condenser</button>
+                    <button type="button" class="copy-btn" data-preset="lowAmbient" aria-pressed="false">Low ambient</button>
+                </div>
+            </div>
 
             <!-- ── Hero: the animated loop ─────────────────────────────────
                  Geometry re-id'd (rl-*) from the refrigerant-cycle-basics
@@ -418,6 +463,41 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                 </div>
             </div>
 
+            <!-- ── Live P-T state plot ─────────────────────────────────────
+                 The superheat / subcooling P-T diagram, live and data-driven.
+                 Y = pressure (psig), X = temperature (°F). The refrigerant's
+                 saturation curve comes straight from REFRIGERANT_TYPES (dew
+                 always; bubble too when the glide is visible). Four live
+                 points: low-side sat (tEvap, pSuc) + suction-line (tSucLine,
+                 pSuc) to its right — the gap is superheat; high-side sat
+                 (tCond, pDis) + liquid-line (tLiqLine, pDis) to its left — the
+                 gap is subcooling. A vertical 32 °F freeze line turns red when
+                 the low-side sat point slides left past it. Redrawn on every
+                 solve — no easing, so the reduced-motion frame is simply the
+                 settled state. -->
+            <h2 class="subhead" style="margin-top:2rem;">On the P-T chart</h2>
+            <p class="ref-note" style="margin-top:0.4rem;">
+                Where the cycle sits on the refrigerant's own saturation curve.
+                The low-side point rides the dew curve — the gap to its right is
+                superheat; the high-side point rides the bubble curve — the gap
+                to its left is subcooling. Starve the coil and the low-side
+                point slides left past the 32&nbsp;°F freeze line.
+            </p>
+            <div class="narrow-width-note">
+                The P-T strip reads best on a wider screen — at phone width the
+                temperature axis compresses. Every reading updates regardless;
+                a laptop just gives the curve room.
+            </div>
+            <div class="sim-canvas-wrap rl-plot-wrap">
+                <canvas id="rl-plot" role="img" aria-label="Live pressure-temperature plot: the selected refrigerant's saturation curve with the low-side and high-side state points, the superheat and subcooling gaps, and a 32 degree Fahrenheit freeze line"></canvas>
+            </div>
+            <div class="sim-legend rl-plot-legend">
+                <span><span class="swatch sat"></span>Saturation curve</span>
+                <span><span class="swatch sh"></span>Superheat</span>
+                <span><span class="swatch sc"></span>Subcooling</span>
+                <span><span class="swatch freeze"></span>32&nbsp;°F freeze</span>
+            </div>
+
             <!-- ── Controls (knobs) ─────────────────────────────────────────
                  Slider min/max/step mirror RefrigLoop.CLAMPS exactly (single
                  source of truth). Temp / ΔT sliders stay in canonical °F so the
@@ -504,8 +584,73 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                 </div>
             </div>
 
+            <!-- ── About this model + damage-stakes scope note ──────────── -->
+            <h2 class="subhead" style="margin-top:2.25rem;">About this model</h2>
+            <p class="tool-preamble">
+                This is a <strong>directional</strong> model, not a
+                thermodynamic one. The pressures are real lookups on the
+                selected refrigerant's published P-T table — the same tables
+                the <a href="/tools/refrigerant-pt.html">P-T calculator</a>
+                reads — and superheat and subcooling are honest subtractions
+                against the dew and bubble curves. But the <em>magnitudes</em>
+                each knob moves are illustrative, tuned so the state travels the
+                way it does in the field, not to reproduce a specific machine.
+                There is no enthalpy or P-h data behind it, so read it for
+                direction and relationships in plain terms — a real property
+                model is a later upgrade.
+            </p>
+            <p class="tool-preamble">
+                The headline is the airside-versus-refrigerant-side split.
+                <strong>Starve the coil</strong> and the suction pressure dives,
+                the evaporator saturation temperature drops below freezing, and
+                the coil ices — all while superheat sits at a perfectly
+                <em>normal</em> 10&nbsp;°F. Nothing on the refrigerant side is
+                wrong; the coil simply cannot breathe. That is why the freeze
+                alarm fires on its own, independently of superheat, and it is
+                the exact trap behind the coil-flow minimum in
+                <a href="/education/vav-systems.html#the-coil-floor">VAV
+                systems</a> — confirm the airflow itself with the
+                <a href="/tools/equipment-airflow.html">Equipment Airflow
+                Check</a>. A superheat that looks fine never means the system
+                is.
+            </p>
+            <p class="tool-preamble">
+                One glide caveat: freeze detection uses the dew (superheat-side)
+                saturation temperature as a single stand-in for the coil
+                temperature. On a large-glide blend like R-407C the coil inlet
+                runs colder than that by roughly the glide, so a real coil would
+                start frosting a touch earlier than the single number here
+                suggests. On R-410A and the other low-glide refrigerants that
+                distinction all but vanishes.
+            </p>
+
+            <p class="ref-note">
+                <strong>A theory check, a learning aid, and a second opinion —
+                not a charging tool.</strong> The magnitudes here are
+                illustrative, and no toy loop should stand in for the machine's
+                own protections. The <strong>low-pressure cutout, the
+                freeze-stat, the high-pressure switch, and the manufacturer's
+                charging chart</strong> are what actually keep the equipment
+                alive: a coil starved of air ices solid and hands the
+                compressor a slug of liquid, and a mischarge cooks or floods it.
+                Diagnose a charge or a freeze off the gauges, the superheat and
+                subcooling on the real machine, and the data plate — never off a
+                simulator.
+            </p>
+
         </div>
     </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/tools/refrigerant-pt.html', label: 'Refrigerant P-T & Superheat Calculator'}
+        ],
+        lessons: [
+            {href: '/education/refrigerant-cycle-basics.html', label: 'Refrigerant Cycle Basics'},
+            {href: '/education/superheat-subcooling.html', label: 'Superheat & Subcooling'},
+            {href: '/education/metering-devices-txv-eev.html', label: 'TXVs vs. EEVs'}
+        ]
+    }) }}
 
     <a class="back-link" href="/simulators/">← All simulators</a>
 
@@ -563,6 +708,7 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
 
         // ── Knob state (compressor stage is the one non-slider input) ──
         let capacity = CL.capacity.default;     // 0.5 (stage 1) | 1.0 (stage 2)
+        let lastState = null;                   // most recent solve — for plot redraws on resize
 
         function currentInputs() {
             return {
@@ -755,6 +901,204 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
         }
 
         // ─────────────────────────────────────────────────────────────
+        // P-T STATE PLOT — the superheat / subcooling P-T diagram, live.
+        // Y = pressure (psig), X = temperature (°F). Geometry is canonical
+        // (°F / psig); only the axis + gap labels convert to display units.
+        // Redrawn on every solve (no easing → the reduced-motion frame is
+        // just the settled state) and on resize; theme tokens are read at
+        // draw time so a light/dark flip repaints correctly (staging / PID
+        // pattern).
+        // ─────────────────────────────────────────────────────────────
+        const FREEZE_LINE_F = RefrigLoop.DESIGN.FREEZE_T;   // 32 °F
+
+        // Sample a saturation curve across [tLo, tHi] into canonical [°F, psig]
+        // points, skipping temps below the table's first row (so the polyline
+        // never kinks down to a clamped end).
+        function sampleCurve(id, curve, tLo, tHi) {
+            const pts = [];
+            const steps = 64;
+            for (let i = 0; i <= steps; i++) {
+                const t = tLo + (tHi - tLo) * i / steps;
+                const r = RefrigLoop.pressAtSatTemp(id, curve, t);
+                if (r && r.ok) pts.push([t, r.value]);
+            }
+            return pts;
+        }
+        // Round a pressure up to a tidy axis maximum.
+        function niceCeilP(p) {
+            const step = p > 400 ? 100 : p > 150 ? 50 : 25;
+            return Math.ceil(p / step) * step;
+        }
+        // A "nice" tick step for a temperature span (display units).
+        function niceStepT(span) {
+            return span > 140 ? 40 : span > 90 ? 20 : span > 45 ? 15 : span > 20 ? 10 : 5;
+        }
+
+        function drawPlot(s) {
+            const canvas = $('rl-plot');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const dpr = window.devicePixelRatio || 1;
+            const cssW = canvas.clientWidth || 600;
+            const cssH = canvas.clientHeight || 260;
+            if (canvas.width !== Math.round(cssW * dpr) || canvas.height !== Math.round(cssH * dpr)) {
+                canvas.width  = Math.round(cssW * dpr);
+                canvas.height = Math.round(cssH * dpr);
+            }
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            ctx.clearRect(0, 0, cssW, cssH);
+
+            // Theme tokens at draw time (a light/dark flip repaints correctly).
+            const css = getComputedStyle(document.documentElement);
+            const cGrid = css.getPropertyValue('--border-faint').trim() || '#2b333d';
+            const cDim  = css.getPropertyValue('--text-dim').trim()     || '#919cab';
+            const cText = css.getPropertyValue('--text').trim()         || '#c8cfd8';
+            const cHeat = css.getPropertyValue('--heat').trim()         || '#e8884a';
+            const cCool = css.getPropertyValue('--blue-cool').trim()    || '#6f97aa';
+            const cRed  = css.getPropertyValue('--red').trim()          || '#e85d4f';
+            const cSurf = css.getPropertyValue('--surface').trim()      || '#1e232b';
+            const mono  = css.getPropertyValue('--mono').trim()         || 'monospace';
+
+            // ── Canonical data bounds. Keep the 32 °F freeze line and every
+            //    drawn point inside the frame with a margin. ──
+            const padF = 14;
+            const tMin = Math.min(s.tEvap, s.tLiqLine, s.tSucLine, FREEZE_LINE_F) - padF;
+            const tMax = Math.max(s.tCond, s.tSucLine, s.tLiqLine) + padF;
+            const tSpan = Math.max(tMax - tMin, 1);
+            const pMax = Math.max(niceCeilP(s.pDis * 1.1), 50);
+
+            const padL = 40, padR = 12, padT = 12, padB = 26;
+            const plotW = cssW - padL - padR;
+            const plotH = cssH - padT - padB;
+            const xOf = t => padL + plotW * (t - tMin) / tSpan;
+            const yOf = p => padT + plotH * (1 - p / pMax);
+
+            // ── Pressure gridlines + labels (left, display units) ──
+            ctx.font = '10px ' + mono;
+            ctx.lineWidth = 1;
+            ctx.strokeStyle = cGrid;
+            ctx.fillStyle = cDim;
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'middle';
+            for (let i = 0; i <= 4; i++) {
+                const p = pMax * i / 4;
+                const y = Math.round(yOf(p)) + 0.5;
+                ctx.beginPath();
+                ctx.moveTo(padL, y);
+                ctx.lineTo(cssW - padR, y);
+                ctx.stroke();
+                ctx.fillText(String(dispP(p)), padL - 5, yOf(p));
+            }
+
+            // ── Temperature ticks (bottom) — nice DISPLAY values placed back
+            //    in canonical space so a metric axis reads round too. ──
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+            const dA = U.display.temp(tMin), dB = U.display.temp(tMax);
+            const dLo = Math.min(dA, dB), dHi = Math.max(dA, dB);
+            const dStep = niceStepT(dHi - dLo);
+            for (let d = Math.ceil(dLo / dStep) * dStep; d <= dHi; d += dStep) {
+                const x = xOf(U.toCanonical.temp(d));
+                if (x < padL - 1 || x > cssW - padR + 1) continue;
+                ctx.fillText(d + '°', x, cssH - padB + 6);
+            }
+
+            // ── Axis unit captions ──
+            ctx.fillStyle = cDim;
+            ctx.font = '9px ' + mono;
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'top';
+            ctx.fillText(pU(), 2, 2);
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'bottom';
+            ctx.fillText(tU(), cssW - 2, cssH - 2);
+
+            // ── Saturation curve(s) from the table ──
+            const stroke = (pts, color, width, dash) => {
+                if (pts.length < 2) return;
+                ctx.save();
+                ctx.beginPath();
+                for (let i = 0; i < pts.length; i++) {
+                    const x = xOf(pts[i][0]), y = yOf(pts[i][1]);
+                    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+                }
+                ctx.strokeStyle = color;
+                ctx.lineWidth = width;
+                ctx.setLineDash(dash || []);
+                ctx.stroke();
+                ctx.restore();
+            };
+            const id = $('rl-refrigerant').value;
+            const R = (typeof REFRIGERANT_TYPES !== 'undefined') ? REFRIGERANT_TYPES[id] : null;
+            const glideVisible = !!(R && R.glide >= 3);   // draw bubble only when it visibly diverges
+            stroke(sampleCurve(id, 'dew', tMin, tMax), cDim, 1.75);
+            if (glideVisible) stroke(sampleCurve(id, 'bubble', tMin, tMax), cDim, 1, [4, 3]);
+
+            // ── 32 °F freeze line (red once the coil is icing) ──
+            const freezing = s.tEvap < FREEZE_LINE_F;
+            const xF = xOf(FREEZE_LINE_F);
+            if (xF >= padL && xF <= cssW - padR) {
+                ctx.save();
+                ctx.beginPath();
+                ctx.moveTo(xF, padT);
+                ctx.lineTo(xF, padT + plotH);
+                ctx.strokeStyle = freezing ? cRed : cDim;
+                ctx.lineWidth = freezing ? 2 : 1;
+                ctx.setLineDash([5, 4]);
+                ctx.stroke();
+                ctx.restore();
+                ctx.save();
+                ctx.fillStyle = freezing ? cRed : cDim;
+                ctx.font = '9px ' + mono;
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'top';
+                ctx.fillText(Math.round(U.display.temp(FREEZE_LINE_F)) + '° freeze', xF + 3, padT + 2);
+                ctx.restore();
+            }
+
+            // ── Constant-pressure SH / SC dashes + labels ──
+            const gap = (t1, t2, p, color, label) => {
+                const y = yOf(p);
+                ctx.save();
+                ctx.beginPath();
+                ctx.moveTo(xOf(t1), y);
+                ctx.lineTo(xOf(t2), y);
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 1.5;
+                ctx.setLineDash([3, 3]);
+                ctx.stroke();
+                ctx.setLineDash([]);
+                ctx.fillStyle = color;
+                ctx.font = '10px ' + mono;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'bottom';
+                ctx.fillText(label, (xOf(t1) + xOf(t2)) / 2, y - 4);
+                ctx.restore();
+            };
+            gap(s.tEvap, s.tSucLine, s.pSuc, cHeat, 'SH ' + Math.round(U.display.deltaTemp(s.superheat)) + dtU());
+            gap(s.tCond, s.tLiqLine, s.pDis, cCool, 'SC ' + Math.round(U.display.deltaTemp(s.subcool)) + dtU());
+
+            // ── State points. Saturation points ride the curve (neutral, red
+            //    on the low side when freezing); the line-state points carry
+            //    the SH / SC colour. ──
+            const dot = (t, p, fill) => {
+                ctx.save();
+                ctx.beginPath();
+                ctx.arc(xOf(t), yOf(p), 4.5, 0, Math.PI * 2);
+                ctx.fillStyle = fill;
+                ctx.strokeStyle = cSurf;
+                ctx.lineWidth = 2;
+                ctx.fill();
+                ctx.stroke();
+                ctx.restore();
+            };
+            dot(s.tEvap, s.pSuc, freezing ? cRed : cText);   // low-side saturation
+            dot(s.tCond, s.pDis, cText);                     // high-side saturation
+            dot(s.tSucLine, s.pSuc, cHeat);                  // suction line (superheated vapour)
+            dot(s.tLiqLine, s.pDis, cCool);                  // liquid line (subcooled liquid)
+        }
+
+        // ─────────────────────────────────────────────────────────────
         // Controls readouts (slider value labels + sub-lines). Kept in one
         // place so a unit flip just re-runs this + renderMain().
         // ─────────────────────────────────────────────────────────────
@@ -789,10 +1133,12 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                 return;
             }
             const s = RefrigLoop.solve(inp);
+            lastState = s;
             setGaugeTarget(gauges.low,  s.pSuc);
             setGaugeTarget(gauges.high, s.pDis);
             renderRegister(s);
             updateLoop(s);
+            drawPlot(s);
         }
 
         // ── Refrigerant change: rebuild gauge rings, badge, persist ───
@@ -842,26 +1188,91 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
         // ─────────────────────────────────────────────────────────────
         // Wiring
         // ─────────────────────────────────────────────────────────────
-        ['rl-airflow', 'rl-charge', 'rl-returnt', 'rl-shtarget', 'rl-ambient', 'rl-condair'].forEach(id => {
-            $(id).addEventListener('input', () => { renderControls(); renderMain(); });
+
+        // Persist the refrigerant under the shared cf_rf_refrigerant key.
+        function persistRefrig(id) {
+            try { localStorage.setItem(RF_KEY, id); } catch (e) { /* private mode */ }
+        }
+
+        // "Try this" scenario presets — each writes the full RefrigLoop knob
+        // set (§3.5), marks itself active, and eases everything to the new
+        // equilibrium. Any hand move on a knob / stage / refrigerant clears
+        // the active mark, so a lit button always means "this is loaded."
+        const presetBtns = Array.prototype.slice.call(
+            document.querySelectorAll('#main [data-preset]'));
+
+        function clearActivePreset() {
+            presetBtns.forEach(b => {
+                b.classList.remove('active');
+                b.setAttribute('aria-pressed', 'false');
+            });
+        }
+
+        function applyPreset(key, btn) {
+            const p = RefrigLoop.PRESETS[key];
+            if (!p) return;
+            $('rl-airflow').value  = p.airflow;
+            $('rl-charge').value   = p.charge;
+            $('rl-returnt').value  = p.returnT;
+            $('rl-shtarget').value = p.shTarget;
+            $('rl-ambient').value  = p.ambient;
+            $('rl-condair').value  = p.condAir;
+            updateStageButtons(p.capacity);
+            // The presets are R-410A-anchored, so they carry the refrigerant.
+            if (p.refrig && $('rl-refrigerant').value !== p.refrig) {
+                $('rl-refrigerant').value = p.refrig;
+                persistRefrig(p.refrig);
+            }
+            clearActivePreset();
+            btn.classList.add('active');
+            btn.setAttribute('aria-pressed', 'true');
+            renderControls();
+            applyRefrigerant();   // rebuilds the gauge rings + repaints (→ drawPlot)
+        }
+
+        presetBtns.forEach(b => {
+            b.addEventListener('click', e =>
+                applyPreset(e.currentTarget.getAttribute('data-preset'), e.currentTarget));
         });
 
-        // Compressor stage toggle → capacity 0.5 / 1.0.
-        function setStage(cap, btn) {
+        // Knob sliders — a hand move leaves any active preset behind.
+        ['rl-airflow', 'rl-charge', 'rl-returnt', 'rl-shtarget', 'rl-ambient', 'rl-condair'].forEach(id => {
+            $(id).addEventListener('input', () => { clearActivePreset(); renderControls(); renderMain(); });
+        });
+
+        // Compressor stage — button visuals + the capacity axis, split from the
+        // click handler so a preset can set the stage without clearing its mark.
+        function updateStageButtons(cap) {
             capacity = cap;
-            [$('rl-stage-1'), $('rl-stage-2')].forEach(b => {
-                const on = b === btn;
-                b.classList.toggle('active', on);
-                b.setAttribute('aria-pressed', on ? 'true' : 'false');
+            const on2 = cap >= 1.0;   // stage 2 = 1.0, stage 1 = 0.5
+            [[$('rl-stage-1'), !on2], [$('rl-stage-2'), on2]].forEach(pair => {
+                pair[0].classList.toggle('active', pair[1]);
+                pair[0].setAttribute('aria-pressed', pair[1] ? 'true' : 'false');
             });
+        }
+        function setStage(cap) {
+            updateStageButtons(cap);
+            clearActivePreset();
             renderMain();
         }
-        $('rl-stage-1').addEventListener('click', e => setStage(0.5, e.currentTarget));
-        $('rl-stage-2').addEventListener('click', e => setStage(1.0, e.currentTarget));
+        $('rl-stage-1').addEventListener('click', () => setStage(0.5));
+        $('rl-stage-2').addEventListener('click', () => setStage(1.0));
 
         $('rl-refrigerant').addEventListener('change', () => {
-            try { localStorage.setItem(RF_KEY, $('rl-refrigerant').value); } catch (e) { /* private mode */ }
+            persistRefrig($('rl-refrigerant').value);
+            clearActivePreset();
             applyRefrigerant();
+        });
+
+        // Repaint the P-T strip on resize (the canvas is responsive-width; the
+        // gauges are SVG and rescale for free).
+        let plotResizeRaf = null;
+        window.addEventListener('resize', () => {
+            if (plotResizeRaf) return;
+            plotResizeRaf = requestAnimationFrame(() => {
+                plotResizeRaf = null;
+                if (lastState) drawPlot(lastState);
+            });
         });
         try {
             const saved = localStorage.getItem(RF_KEY);

@@ -4908,6 +4908,33 @@ twin) for `nav: education` pages. A fuller "Adding a new education lesson"
 checklist, mirroring the tools/quiz ones, is the larger follow-up if the
 education path keeps growing.
 
+### 158. `air-handlers.html` still uses the older diagonal fin-line coil motif *(open — 2026-07-15)*
+
+Surfaced while shipping the refrigerant-loop sim (the refrigeration cluster's
+first interactive). The DOAS lesson's D3 diagram (PR #352) settled on a
+**serpentine** coil motif, and the newer air-side diagrams have followed it, but
+`html/education/air-handlers.html` still draws its coils with the older
+**diagonal fin-line** treatment. Purely cosmetic — no data or label is wrong —
+but the two coil idioms now sit one click apart in the same air-side cluster and
+read as inconsistent. Fix: redraw the air-handlers coil(s) to the serpentine
+motif in a future diagram-harmonization pass (grep the other education diagrams
+for the shared shape first so the whole cluster lands on one coil vocabulary).
+Low priority; no functional impact.
+
+### 159. `refrigerant-pt.html` could consume `RefrigLoop.satTempAtP` / `pressAtSatTemp` *(open — 2026-07-15)*
+
+The refrigerant-loop engine (`html/scripts/refrigerant-loop-engine.js`) ported
+`refrigerant-pt.html`'s inline `lerp` plus the `satTempAtP` / `pressAtSatTemp`
+saturation lookups verbatim, so the exact same interpolation now lives in two
+places: the tool's page-inline IIFE and the shared engine. Both read the same
+`REFRIGERANT_TYPES` tables and agree by construction today, but a future table
+or interpolation change has to be made twice. Fix: have `refrigerant-pt.html`
+load `refrigerant-loop-engine.js` (or a smaller extracted lookup module) and
+call `RefrigLoop.satTempAtP` / `pressAtSatTemp` instead of its own copy,
+collapsing the two to one source. Deferred out of the sim's PR to keep it scoped
+(the sim only *added* code; touching the shipped tool is a separate, testable
+change). Flagged in the engine header as a tracked follow-up.
+
 ### Deferred / Won't fix (with revisit trigger)
 
 Items considered during an audit and deliberately not pursued, each

@@ -1150,6 +1150,16 @@ the hardware and the manufacturer's data govern) — never copy-pasted
 boilerplate. Convention recorded in CLAUDE.md (*Conventions* bullet +
 *Adding a new tool* step 2b).
 
+*Extended to a simulator (2026-07-15):* the refrigerant-loop sim
+(`/simulators/refrigerant-loop.html`) is the first non-tool to carry
+the note. It depicts equipment whose *starvation* damages it — a coil
+starved of airflow ices solid and slugs the compressor — so its last
+`.tool-card` ends with a page-tailored `p.ref-note` naming the real
+protections (low-pressure cutout, freeze-stat, high-pressure switch,
+and the manufacturer's charging chart). Same spine, sim-flavoured:
+don't diagnose a charge or a freeze off a directional toy. Added to
+the CLAUDE.md "Current set" list.
+
 ### Coil Freeze Risk Checker *(shipped 2026-07-11)*
 
 Tool #4 of the airflow buildout (`/tools/coil-freeze-risk.html`,
@@ -5324,6 +5334,18 @@ Next sim on the radar is a refrigerant-loop sim, paired with the
 refrigerant-cycle Education page (entry above under "Refrigerant cycle
 — Education section, possibly with calculator"). When it ships, the
 filter-chip question on the landing will resurface — re-evaluate then.
+
+*Shipped 2026-07-15.* The Refrigerant Loop Simulator
+(`/simulators/refrigerant-loop.html`) landed as the refrigeration
+cluster's first interactive — a directional vapor-compression model
+(manifold gauges, an animated loop, and a live P-T strip) grounded in
+the existing `REFRIGERANT_TYPES` P-T tables, headlined by the
+"Starve the coil" scenario. It brings the simulators landing to seven
+cards; the filter-chip question resurfaced and the owner chose to
+**defer** the chip row for now (still comfortably scannable at seven).
+No refrigeration hub exists yet, so the sim forward-links the three
+refrigerant lessons and the P-T tool without a `hub:` back-link
+([future: /refrigeration/]).
 
 ### Schematic-bg chrome — gutter as-builts, hero-frame nav cards, discrete-pulse mode *(shipped 2026-05-23)*
 
