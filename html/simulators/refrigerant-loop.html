@@ -441,9 +441,9 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
 
                 <!-- Verdict + CFM/ton + short reading -->
                 <div>
-                    <div class="status-pill" id="rl-status">Turn a knob to run the loop.</div>
+                    <div class="status-pill" id="rl-status" role="status">Turn a knob to run the loop.</div>
 
-                    <div class="rl-cfm readout">
+                    <div class="rl-cfm readout" role="status">
                         <div class="readout-label">Evaporator airflow</div>
                         <div class="readout-value"><span class="rl-cfm-val" id="rl-cfm-val">&#8212;</span>
                             <span style="color:var(--text-dim);font-weight:400;"> CFM/ton · floor 400</span></div>
@@ -755,12 +755,19 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
             return el;
         }
 
-        // Smallest "nice" step giving ≤5 intervals, and the max rounded up
-        // to a whole number of those steps (so every tick is a round value).
+        // Smallest "nice" step giving ≤4 intervals, and the max rounded up to
+        // a whole number of those steps (so every tick is a round value). The
+        // ≤4 cap (not ≤5) is deliberate: a 5-interval dial puts ticks at
+        // frac 0.4 and 0.6, so two sat-temp ring labels flank the narrow top
+        // of the dial and overlap ("87.7° 111.5°"). Capping at 4 intervals
+        // lands a single label on the top centre (frac 0.5) or, at 3
+        // intervals, a widely-spaced 0.33 / 0.67 pair — the clean R-410A /
+        // R-454B behaviour, now guaranteed for all six refrigerants on both
+        // gauges.
         function niceScale(rawMax) {
             const steps = [10, 20, 25, 50, 100, 150, 200, 250];
             for (let i = 0; i < steps.length; i++) {
-                if (rawMax / steps[i] <= 5) {
+                if (rawMax / steps[i] <= 4) {
                     return { step: steps[i], max: Math.ceil(rawMax / steps[i]) * steps[i] };
                 }
             }
@@ -905,9 +912,9 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
         // Y = pressure (psig), X = temperature (°F). Geometry is canonical
         // (°F / psig); only the axis + gap labels convert to display units.
         // Redrawn on every solve (no easing → the reduced-motion frame is
-        // just the settled state) and on resize; theme tokens are read at
-        // draw time so a light/dark flip repaints correctly (staging / PID
-        // pattern).
+        // just the settled state), on resize, and on a 'themechange'
+        // broadcast; theme tokens are read at draw time so a light/dark flip
+        // repaints correctly (staging / PID pattern).
         // ─────────────────────────────────────────────────────────────
         const FREEZE_LINE_F = RefrigLoop.DESIGN.FREEZE_T;   // 32 °F
 
@@ -1075,8 +1082,8 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                 ctx.fillText(label, (xOf(t1) + xOf(t2)) / 2, y - 4);
                 ctx.restore();
             };
-            gap(s.tEvap, s.tSucLine, s.pSuc, cHeat, 'SH ' + Math.round(U.display.deltaTemp(s.superheat)) + dtU());
-            gap(s.tCond, s.tLiqLine, s.pDis, cCool, 'SC ' + Math.round(U.display.deltaTemp(s.subcool)) + dtU());
+            gap(s.tEvap, s.tSucLine, s.pSuc, cHeat, 'SH ' + dispDT(s.superheat) + dtU());
+            gap(s.tCond, s.tLiqLine, s.pDis, cCool, 'SC ' + dispDT(s.subcool) + dtU());
 
             // ── State points. Saturation points ride the curve (neutral, red
             //    on the low side when freezing); the line-state points carry
@@ -1105,18 +1112,44 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
         function pct(v) { return Math.round(v * 100) + '%'; }
 
         function renderControls() {
-            const airflow = parseFloat($('rl-airflow').value);
-            $('rl-airflow-val').textContent = pct(airflow);
+            const airflow  = parseFloat($('rl-airflow').value);
+            const charge   = parseFloat($('rl-charge').value);
+            const condair  = parseFloat($('rl-condair').value);
+            const returnt  = parseFloat($('rl-returnt').value);
+            const ambient  = parseFloat($('rl-ambient').value);
+            const shtarget = parseFloat($('rl-shtarget').value);
+
+            // Human-facing value strings (fractions -> %, temps / ΔT in display
+            // units) — reused for both the visible slider-val and aria-valuetext.
+            const airflowTxt  = pct(airflow);
+            const chargeTxt   = pct(charge);
+            const condairTxt  = pct(condair);
+            const returntTxt  = dispT(returnt)   + ' ' + tU();
+            const ambientTxt  = dispT(ambient)   + ' ' + tU();
+            const shtargetTxt = dispDT(shtarget) + ' ' + dtU();
+
+            $('rl-airflow-val').textContent = airflowTxt;
             $('rl-airflow-sub').innerHTML =
                 '<span class="cfm">' + Math.round(RefrigLoop.DESIGN.CFM_PER_TON_DESIGN * airflow) +
                 ' CFM/ton</span>';
+            $('rl-charge-val').textContent   = chargeTxt;
+            $('rl-condair-val').textContent  = condairTxt;
+            $('rl-returnt-val').textContent  = returntTxt;
+            $('rl-ambient-val').textContent  = ambientTxt;
+            $('rl-shtarget-val').textContent = shtargetTxt;
 
-            $('rl-charge-val').textContent  = pct(parseFloat($('rl-charge').value));
-            $('rl-condair-val').textContent = pct(parseFloat($('rl-condair').value));
-
-            $('rl-returnt-val').textContent  = dispT(parseFloat($('rl-returnt').value))  + ' ' + tU();
-            $('rl-ambient-val').textContent  = dispT(parseFloat($('rl-ambient').value))  + ' ' + tU();
-            $('rl-shtarget-val').textContent = dispDT(parseFloat($('rl-shtarget').value)) + ' ' + dtU();
+            // aria-valuetext: announce the human-facing value, not the raw
+            // range number. The fraction sliders would otherwise read "0.45";
+            // the temp / ΔT sliders would read the canonical °F even to a
+            // metric listener (the sliders stay canonical). Re-set here so AT
+            // stays in step with the visible slider-val on input, preset load,
+            // and unit flip.
+            $('rl-airflow').setAttribute('aria-valuetext', airflowTxt);
+            $('rl-charge').setAttribute('aria-valuetext', chargeTxt);
+            $('rl-condair').setAttribute('aria-valuetext', condairTxt);
+            $('rl-returnt').setAttribute('aria-valuetext', returntTxt);
+            $('rl-ambient').setAttribute('aria-valuetext', ambientTxt);
+            $('rl-shtarget').setAttribute('aria-valuetext', shtargetTxt);
         }
 
         // ── Main recompute — solve, then paint everything ─────────────
@@ -1274,6 +1307,17 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                 if (lastState) drawPlot(lastState);
             });
         });
+
+        // Theme flip → repaint the P-T strip with the new tokens. drawPlot
+        // reads the theme vars at draw time, but only a solve / resize (never a
+        // pure theme toggle) triggered a redraw, so subscribe to theme.js's
+        // 'themechange' broadcast — the same hook pid-tuner / staging-sequencer
+        // / hydronic-loop-builder / psychrometric-chart use. The SVG gauges
+        // recolor for free via the CSS cascade.
+        document.addEventListener('themechange', () => {
+            if (lastState) drawPlot(lastState);
+        });
+
         try {
             const saved = localStorage.getItem(RF_KEY);
             if (saved && typeof REFRIGERANT_TYPES !== 'undefined' && REFRIGERANT_TYPES[saved]) {
