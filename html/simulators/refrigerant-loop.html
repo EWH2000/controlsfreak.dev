@@ -1,0 +1,900 @@
+---
+title: Refrigerant Loop Simulator — controlsfreak.dev
+description: Turn airflow, charge, ambient and metering superheat on a live vapor-compression loop and watch suction, head, superheat, subcooling and a starving coil react.
+canonical: https://controlsfreak.dev/simulators/refrigerant-loop.html
+nav: simulators
+keywords: vapor compression suction discharge head pressure superheat subcooling txv metering freeze psig manifold gauge r410a
+---
+{% extends "layouts/page.njk" %}
+
+{% block head %}
+    <style>
+        /* ── Refrigerant Loop Simulator — page-local internals (rl-*) ──
+           The shared sim/widget shell (.form-row / .field / .slider-field /
+           .btn-row / .copy-btn / .bit-readouts / .readout / .status-pill /
+           .device / .lcd / .led / .dev-leds / .widget-fan) lives in
+           styles.css; only the pieces this page alone draws — the loop-
+           schematic cosmetics, the two manifold gauges' SVG internals, the
+           frost state, and the register layout grid — sit here. --rl-frost
+           is a page-local icy tint (theme-constant, like the equipment
+           register): it colors the suction particles + the frost overlay
+           when the coil ices, and lives on the wrapper so the flow-engine's
+           particle <circle>s (descendants of the loop <svg>) inherit it. */
+        .rl-stage { --rl-frost: #a9d4e8; }
+
+        /* Loop schematic — the hero. Centered, capped. Pipe strokes carry
+           meaning (--heat hot side, --blue-cool cool side) exactly like the
+           refrigerant-cycle-basics lesson it is re-id'd from. */
+        .rl-loop {
+            max-width: 640px;
+            margin: 0.5rem auto 0;
+        }
+        .rl-loop-svg { display: block; width: 100%; height: auto; }
+        .rl-comp-label,
+        .rl-region-label { font-family: var(--mono); }
+
+        /* Frost state — an icy wash over the evaporator + suction leg that
+           fades in when the freeze alarm latches. Off by default; the JS
+           toggles .frozen on the <svg>. The global reduced-motion block
+           collapses the transition to a snap. */
+        .rl-frost { opacity: 0; transition: opacity 0.45s ease; pointer-events: none; }
+        .rl-loop-svg.frozen .rl-frost { opacity: 1; }
+        .rl-frost-fill { fill: var(--rl-frost); opacity: 0.28; }
+        .rl-frost-mark { stroke: var(--rl-frost); stroke-width: 2; stroke-linecap: round; }
+
+        /* The compressor spin glyph sits inside the compressor circle; the
+           blades reuse the shared .widget-fan look, tinted "running". */
+        .rl-loop .widget-fan.spinning ellipse { fill: var(--blue); }
+
+        /* ── Register layout — gauges beside the LCD/LED/verdict stack ──
+           A two-column grid at wide widths (gauges | readouts), stacking
+           below 720px. Sits inside the plain .tool-body. */
+        .rl-register {
+            display: grid;
+            grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+            gap: 1.4rem 1.75rem;
+            align-items: start;
+            margin-top: 0.5rem;
+        }
+        @media (max-width: 720px) {
+            .rl-register { grid-template-columns: 1fr; }
+        }
+
+        /* Two manifold gauges side by side inside their equipment-register
+           device face. The gauge SVGs are page-local internals. */
+        .rl-gauges {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem 0.75rem;
+        }
+        .rl-gauge { display: block; width: 100%; height: auto; }
+        .rl-gauge-face {
+            fill: var(--dev-face);
+            stroke: var(--dev-bezel);
+            stroke-width: 2;
+        }
+        .rl-gauge-arc { fill: none; stroke: var(--dev-edge); stroke-width: 6; }
+        .rl-gauge-tick { stroke: #8a8369; stroke-width: 1.4; }
+        .rl-gauge-plabel {
+            font-family: var(--mono);
+            font-size: 11px;
+            fill: #cfc8ad;
+            text-anchor: middle;
+        }
+        .rl-gauge-tlabel {
+            font-family: var(--mono);
+            font-size: 9.5px;
+            text-anchor: middle;
+        }
+        .rl-gauge-low  .rl-gauge-tlabel { fill: var(--blue); }
+        .rl-gauge-high .rl-gauge-tlabel { fill: var(--heat); }
+        .rl-gauge-needle-low  { stroke: var(--blue); stroke-width: 3; stroke-linecap: round; }
+        .rl-gauge-needle-high { stroke: var(--heat); stroke-width: 3; stroke-linecap: round; }
+        .rl-gauge-hub { fill: #cfc8ad; stroke: var(--dev-bezel); stroke-width: 1; }
+        .rl-gauge-val {
+            font-family: var(--mono);
+            font-weight: 700;
+            font-size: 20px;
+            text-anchor: middle;
+        }
+        .rl-gauge-low  .rl-gauge-val { fill: var(--blue); }
+        .rl-gauge-high .rl-gauge-val { fill: var(--heat); }
+        .rl-gauge-cap {
+            font-family: var(--mono);
+            font-size: 9px;
+            letter-spacing: 0.1em;
+            fill: #8a8369;
+            text-anchor: middle;
+        }
+
+        /* LCD cluster — 2×2 grid of small equipment LCDs. */
+        .rl-lcds {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            margin-top: 0.9rem;
+        }
+        .rl-lcds .lcd .v { font-size: 1.15rem; }
+
+        /* CFM/ton readout — colored against the 400-CFM/ton floor. */
+        .rl-cfm { margin-top: 0.9rem; }
+        .rl-cfm-val.ok  { color: var(--accent); }
+        .rl-cfm-val.mid { color: var(--amber); }
+        .rl-cfm-val.bad { color: var(--red); }
+
+        /* Controls — a compact grid of slider-fields under the register. */
+        .rl-controls { margin-top: 1.75rem; }
+        .rl-knob-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem 1.5rem;
+        }
+        @media (max-width: 560px) {
+            .rl-knob-grid { grid-template-columns: 1fr; }
+        }
+        .rl-slider-sub .cfm { color: var(--text); }
+    </style>
+{% endblock %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Simulators · Refrigerant Loop</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">
+                Refrigerant Loop Simulator
+                <span class="tool-tag">HVAC</span>
+            </h1>
+        </div>
+        <!-- Custom stacked layout on purpose (like the PID tuner / staging
+             sequencer / VFD mock): a running vapor-compression model — the
+             live loop, two manifold gauges, LCD readouts, and the knob bank
+             — doesn't fit the Input / Output / Reference column pattern. -->
+        <div class="tool-body">
+
+            <p class="tool-preamble" style="margin-bottom:1.5rem;">
+                A directional model, not a thermodynamic one — the pressures are
+                real P-T-table lookups, but the magnitudes each knob moves are
+                illustrative, tuned to teach which way the state travels. Turn a
+                knob and watch the gauges, the loop, and the alarms react.
+                <strong>New to the cycle?</strong>
+                <a href="/education/refrigerant-cycle-basics.html">Start with the basics →</a>
+            </p>
+
+            <!-- ── Hero: the animated loop ─────────────────────────────────
+                 Geometry re-id'd (rl-*) from the refrigerant-cycle-basics
+                 lesson's rc-cycle: a closed clockwise loop, compressor (left)
+                 / condenser (top) / metering (right) / evaporator (bottom),
+                 heat-in / heat-out arrows. Four data-flow pipe segments —
+                 discharge + liquid recolored --heat (hot side), expansion +
+                 suction --blue-cool (cool side, suction recolored to a frost
+                 tint when the coil ices). The compressor circle carries a
+                 spinning fan glyph whose rate tracks the compressor stage.
+                 The particles + colors are applied by flow-engine.js (loaded
+                 site-wide); this page only tags the geometry and recolors. -->
+            <h2 class="subhead">The loop</h2>
+            <div class="rl-loop rl-stage">
+                <svg class="rl-loop-svg" id="rl-cycle" viewBox="0 0 720 460"
+                     role="img" aria-labelledby="rl-cycle-title rl-cycle-desc"
+                     font-family="var(--mono)">
+                    <title id="rl-cycle-title">The refrigerant loop, live</title>
+                    <desc id="rl-cycle-desc">A closed rectangular vapor-compression loop drawn clockwise. A compressor on the left drives hot high-pressure vapor up the discharge line into a condenser spanning the top, which rejects heat to outdoor air and drops the refrigerant to a warm high-pressure liquid; the liquid line runs down the right side to a metering device, which flashes it to a cold low-pressure mix; that mix crosses the evaporator along the bottom, absorbing heat from indoor air and boiling back to a cool low-pressure vapor that returns up the suction line to the compressor. The upper and right pipes — discharge and liquid line — are the hot high side, drawn in orange; the lower and left pipes — expansion and suction — are the cool low side, drawn in muted blue. When the evaporator coil is starved of airflow and ices over, a frost overlay appears on the evaporator and the suction leg. Live pressure, superheat, subcooling and alarm values are reported in the gauges and readouts below.</desc>
+
+                    <!-- ── HIGH-SIDE pipes (orange / --heat) ── -->
+                    <path id="rl-discharge" data-flow="supply" d="M 120 193 V 85 H 200" fill="none"
+                          stroke="var(--heat)" stroke-width="3"/>
+                    <path id="rl-liquid"    data-flow="supply" d="M 520 85 H 600 V 195" fill="none"
+                          stroke="var(--heat)" stroke-width="3"/>
+
+                    <!-- ── LOW-SIDE pipes (cool / --blue-cool). data-flow="return"
+                         gives the engine blue-cool particles; the dasharray is the
+                         reduced-motion / print fallback (the screen+animation rule
+                         in styles.css drops the dashes once .flow-active lands). ── -->
+                    <path id="rl-expansion" data-flow="return" d="M 600 235 V 345 H 520" fill="none"
+                          stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                    <path id="rl-suction"   data-flow="return" d="M 200 345 H 120 V 237" fill="none"
+                          stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+
+                    <!-- Direction arrows — one per leg so direction reads under
+                         reduced-motion and on paper. -->
+                    <g fill="var(--heat)">
+                        <polygon points="120,135 115,146 125,146"/>
+                        <polygon points="155,80 164,85 155,90"/>
+                        <polygon points="555,80 564,85 555,90"/>
+                        <polygon points="595,140 600,151 605,140"/>
+                    </g>
+                    <g fill="var(--blue-cool)">
+                        <polygon points="595,290 600,301 605,290"/>
+                        <polygon points="560,350 551,345 560,340"/>
+                        <polygon points="160,350 151,345 160,340"/>
+                        <polygon points="120,290 115,301 125,301"/>
+                    </g>
+
+                    <!-- HIGH / LOW SIDE region labels. -->
+                    <text class="rl-region-label" x="360" y="165" text-anchor="middle" font-size="10"
+                          letter-spacing="0.15em" fill="var(--text-dim)">HIGH SIDE · HOT</text>
+                    <text class="rl-region-label" x="360" y="275" text-anchor="middle" font-size="10"
+                          letter-spacing="0.15em" fill="var(--text-dim)">LOW SIDE · COOL</text>
+
+                    <!-- Faint equator divider. -->
+                    <line x1="160" y1="215" x2="580" y2="215" stroke="var(--text-dim)" stroke-width="1"
+                          stroke-dasharray="2 5" opacity="0.45"/>
+
+                    <!-- ── COMPRESSOR (circle + spinning fan glyph) ── -->
+                    <g id="rl-compressor">
+                        <circle cx="120" cy="215" r="24" fill="var(--surface)"
+                                stroke="var(--text-dim)" stroke-width="2"/>
+                        <svg class="widget-fan spinning" x="99" y="194" width="42" height="42" viewBox="0 0 100 100">
+                            <g class="widget-fan-blades" id="rl-compressor-fan">
+                                <ellipse cx="50" cy="22" rx="7" ry="22"/>
+                                <ellipse cx="50" cy="22" rx="7" ry="22" transform="rotate(72 50 50)"/>
+                                <ellipse cx="50" cy="22" rx="7" ry="22" transform="rotate(144 50 50)"/>
+                                <ellipse cx="50" cy="22" rx="7" ry="22" transform="rotate(216 50 50)"/>
+                                <ellipse cx="50" cy="22" rx="7" ry="22" transform="rotate(288 50 50)"/>
+                            </g>
+                            <circle cx="50" cy="50" r="4.5" fill="var(--text-dim)"/>
+                        </svg>
+                        <text class="rl-comp-label" x="80" y="257" text-anchor="middle" font-size="11"
+                              font-weight="600" fill="var(--text-bright)">COMPRESSOR</text>
+                    </g>
+
+                    <!-- ── CONDENSER ── -->
+                    <g id="rl-condenser">
+                        <rect x="200" y="55" width="320" height="60" rx="2" fill="var(--surface)"
+                              stroke="var(--text-dim)" stroke-width="2"/>
+                        <text x="360" y="91" text-anchor="middle" font-size="14" font-weight="600"
+                              fill="var(--text-bright)">CONDENSER</text>
+                        <g fill="var(--heat)" stroke="var(--heat)" stroke-width="1.4">
+                            <line x1="250" y1="55" x2="250" y2="36"/>
+                            <polygon points="250,30 245,40 255,40"/>
+                            <line x1="330" y1="55" x2="330" y2="36"/>
+                            <polygon points="330,30 325,40 335,40"/>
+                            <line x1="410" y1="55" x2="410" y2="36"/>
+                            <polygon points="410,30 405,40 415,40"/>
+                            <line x1="490" y1="55" x2="490" y2="36"/>
+                            <polygon points="490,30 485,40 495,40"/>
+                        </g>
+                        <text x="535" y="38" font-size="9" font-style="italic" fill="var(--text-dim)">
+                            heat &#8594; outdoor air
+                        </text>
+                    </g>
+
+                    <!-- ── METERING DEVICE (diamond) ── -->
+                    <g id="rl-metering">
+                        <polygon points="600,200 615,215 600,230 585,215" fill="var(--surface)"
+                                 stroke="var(--text-dim)" stroke-width="2"/>
+                        <text x="630" y="219" font-size="11" font-weight="600"
+                              fill="var(--text-bright)">METERING</text>
+                    </g>
+
+                    <!-- ── EVAPORATOR ── -->
+                    <g id="rl-evaporator">
+                        <rect x="200" y="315" width="320" height="60" rx="2" fill="var(--surface)"
+                              stroke="var(--text-dim)" stroke-width="2"/>
+                        <text x="360" y="351" text-anchor="middle" font-size="14" font-weight="600"
+                              fill="var(--text-bright)">EVAPORATOR</text>
+                        <g fill="var(--blue-cool)" stroke="var(--blue-cool)" stroke-width="1.4">
+                            <line x1="250" y1="395" x2="250" y2="376"/>
+                            <polygon points="250,370 245,380 255,380"/>
+                            <line x1="330" y1="395" x2="330" y2="376"/>
+                            <polygon points="330,370 325,380 335,380"/>
+                            <line x1="410" y1="395" x2="410" y2="376"/>
+                            <polygon points="410,370 405,380 415,380"/>
+                            <line x1="490" y1="395" x2="490" y2="376"/>
+                            <polygon points="490,370 485,380 495,380"/>
+                        </g>
+                        <text x="535" y="395" font-size="9" font-style="italic" fill="var(--text-dim)">
+                            heat &#8592; indoor air
+                        </text>
+                    </g>
+
+                    <!-- State annotations on each pipe leg. -->
+                    <text x="135" y="140" font-size="10" fill="var(--heat)">hot vapor</text>
+                    <text x="585" y="140" text-anchor="end" font-size="10" fill="var(--heat)">warm liquid</text>
+                    <text x="585" y="290" text-anchor="end" font-size="10" fill="var(--blue-cool)">cold mix</text>
+                    <text x="135" y="290" font-size="10" fill="var(--blue-cool)">cool vapor</text>
+
+                    <!-- ── FROST OVERLAY — fades in on the coil-freeze alarm ── -->
+                    <g class="rl-frost" id="rl-frost">
+                        <rect class="rl-frost-fill" x="200" y="315" width="320" height="60" rx="2"/>
+                        <g class="rl-frost-mark">
+                            <line x1="215" y1="322" x2="215" y2="368"/>
+                            <line x1="207" y1="345" x2="223" y2="345"/>
+                            <line x1="245" y1="322" x2="245" y2="368"/>
+                            <line x1="237" y1="345" x2="253" y2="345"/>
+                            <line x1="275" y1="322" x2="275" y2="368"/>
+                            <line x1="267" y1="345" x2="283" y2="345"/>
+                            <line x1="120" y1="300" x2="120" y2="340"/>
+                            <line x1="112" y1="320" x2="128" y2="320"/>
+                        </g>
+                        <rect class="rl-frost-fill" x="116" y="237" width="8" height="108"/>
+                    </g>
+                </svg>
+            </div>
+
+            <!-- ── Equipment register: manifold gauges + LCDs + LEDs + verdict ──
+                 The sim depicts real hardware, so everything here uses the
+                 equipment register (warm device face, dot-matrix LCDs, glowing
+                 LEDs). The two round gauges are manifold-style: LOW side needle
+                 -> suction psig, HIGH side -> head psig, each with a per-refrigerant
+                 saturation-temperature ring drawn from REFRIGERANT_TYPES (the
+                 P-T curve, on the gauge face). Needles ease on the page rAF. -->
+            <h2 class="subhead" style="margin-top:2rem;">Gauges &amp; readouts</h2>
+            <div class="rl-register">
+
+                <!-- Manifold gauges + LCD cluster -->
+                <div class="device">
+                    <div class="device-inner">
+                        <div class="device-tb">
+                            <span class="led led--run" id="rl-led-run" aria-hidden="true"></span>
+                            <span class="title">Manifold</span>
+                            <span class="badge" id="rl-refrig-badge">R-410A</span>
+                        </div>
+
+                        <div class="rl-gauges">
+                            <svg class="rl-gauge rl-gauge-low" id="rl-gauge-low" viewBox="0 0 200 178"
+                                 role="img" aria-labelledby="rl-gauge-low-t">
+                                <title id="rl-gauge-low-t">Low-side suction pressure gauge</title>
+                                <circle class="rl-gauge-face" cx="100" cy="94" r="86"/>
+                                <path class="rl-gauge-arc" id="rl-gauge-low-arc" d=""/>
+                                <g id="rl-gauge-low-scale"></g>
+                                <line class="rl-gauge-needle-low" id="rl-gauge-low-needle"
+                                      x1="100" y1="94" x2="100" y2="24"/>
+                                <circle class="rl-gauge-hub" cx="100" cy="94" r="5"/>
+                                <text class="rl-gauge-val" id="rl-gauge-low-val" x="100" y="150">&#8212;</text>
+                                <text class="rl-gauge-cap" x="100" y="167">LOW · SUCTION</text>
+                            </svg>
+
+                            <svg class="rl-gauge rl-gauge-high" id="rl-gauge-high" viewBox="0 0 200 178"
+                                 role="img" aria-labelledby="rl-gauge-high-t">
+                                <title id="rl-gauge-high-t">High-side discharge pressure gauge</title>
+                                <circle class="rl-gauge-face" cx="100" cy="94" r="86"/>
+                                <path class="rl-gauge-arc" id="rl-gauge-high-arc" d=""/>
+                                <g id="rl-gauge-high-scale"></g>
+                                <line class="rl-gauge-needle-high" id="rl-gauge-high-needle"
+                                      x1="100" y1="94" x2="100" y2="24"/>
+                                <circle class="rl-gauge-hub" cx="100" cy="94" r="5"/>
+                                <text class="rl-gauge-val" id="rl-gauge-high-val" x="100" y="150">&#8212;</text>
+                                <text class="rl-gauge-cap" x="100" y="167">HIGH · HEAD</text>
+                            </svg>
+                        </div>
+
+                        <!-- LCD cluster — role="status" so the live numbers reach AT. -->
+                        <div class="rl-lcds" role="status" aria-live="polite" aria-label="Live cycle readouts">
+                            <div class="lcd">
+                                <div class="k">Superheat</div>
+                                <div class="v" id="rl-lcd-sh">&#8212;</div>
+                            </div>
+                            <div class="lcd">
+                                <div class="k">Subcooling</div>
+                                <div class="v" id="rl-lcd-sc">&#8212;</div>
+                            </div>
+                            <div class="lcd">
+                                <div class="k">Evap sat temp</div>
+                                <div class="v" id="rl-lcd-evap">&#8212;</div>
+                            </div>
+                            <div class="lcd">
+                                <div class="k">Cond sat temp</div>
+                                <div class="v" id="rl-lcd-cond">&#8212;</div>
+                            </div>
+                        </div>
+
+                        <!-- Status LEDs -->
+                        <div class="dev-leds">
+                            <span><span class="led led--run"  id="rl-led-run2" aria-hidden="true"></span>Run</span>
+                            <span><span class="led led--off"  id="rl-led-freeze" aria-hidden="true"></span>Coil freeze</span>
+                            <span><span class="led led--off"  id="rl-led-flood" aria-hidden="true"></span>Floodback</span>
+                            <span><span class="led led--off"  id="rl-led-head" aria-hidden="true"></span>High head</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Verdict + CFM/ton + short reading -->
+                <div>
+                    <div class="status-pill" id="rl-status">Turn a knob to run the loop.</div>
+
+                    <div class="rl-cfm readout">
+                        <div class="readout-label">Evaporator airflow</div>
+                        <div class="readout-value"><span class="rl-cfm-val" id="rl-cfm-val">&#8212;</span>
+                            <span style="color:var(--text-dim);font-weight:400;"> CFM/ton · floor 400</span></div>
+                    </div>
+
+                    <p class="ref-note" style="margin-top:1rem;">
+                        The two gauges read like a manifold set: the low-side needle
+                        follows suction pressure, the high-side needle follows head.
+                        Each dial's inner scale is that refrigerant's own
+                        saturation-temperature ring — the P-T curve, on the gauge
+                        face. Superheat is referenced to the dew curve, subcooling to
+                        the bubble curve. An airside-starved coil can freeze with
+                        <em>normal</em> superheat — the refrigerant side looks fine
+                        while the coil ices, which is exactly why the freeze alarm
+                        fires on its own.
+                    </p>
+                </div>
+            </div>
+
+            <!-- ── Controls (knobs) ─────────────────────────────────────────
+                 Slider min/max/step mirror RefrigLoop.CLAMPS exactly (single
+                 source of truth). Temp / ΔT sliders stay in canonical °F so the
+                 engine reads them unchanged; only the readout converts on a unit
+                 flip (U.onChange re-renders). -->
+            <div class="rl-controls">
+                <h2 class="subhead">Controls</h2>
+
+                <div class="form-row">
+                    <div class="field">
+                        <label for="rl-refrigerant">Refrigerant</label>
+                        <select id="rl-refrigerant">
+                            <option value="r410a" selected>R-410A</option>
+                            <option value="r22">R-22</option>
+                            <option value="r134a">R-134a</option>
+                            <option value="r407c">R-407C</option>
+                            <option value="r404a">R-404A</option>
+                            <option value="r454b">R-454B</option>
+                        </select>
+                    </div>
+                    <div class="field" role="group" aria-labelledby="rl-stage-lbl">
+                        <span id="rl-stage-lbl" class="field-label">Compressor stage</span>
+                        <div class="btn-row">
+                            <button type="button" class="copy-btn"        id="rl-stage-1" aria-pressed="false">Stage 1</button>
+                            <button type="button" class="copy-btn active" id="rl-stage-2" aria-pressed="true">Stage 2</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="rl-knob-grid">
+                    <div class="slider-field">
+                        <div class="slider-head">
+                            <label id="rl-airflow-lbl" for="rl-airflow">Evaporator airflow</label>
+                            <span class="slider-val" id="rl-airflow-val">100%</span>
+                        </div>
+                        <input type="range" id="rl-airflow" min="0.40" max="1.20" step="0.05" value="1.00">
+                        <span class="slider-sub rl-slider-sub" id="rl-airflow-sub"></span>
+                    </div>
+
+                    <div class="slider-field">
+                        <div class="slider-head">
+                            <label id="rl-charge-lbl" for="rl-charge">Refrigerant charge</label>
+                            <span class="slider-val" id="rl-charge-val">100%</span>
+                        </div>
+                        <input type="range" id="rl-charge" min="0.60" max="1.20" step="0.05" value="1.00">
+                        <span class="slider-sub rl-slider-sub" id="rl-charge-sub"></span>
+                    </div>
+
+                    <div class="slider-field">
+                        <div class="slider-head">
+                            <label id="rl-returnt-lbl" for="rl-returnt">Indoor return-air temp</label>
+                            <span class="slider-val" id="rl-returnt-val">75 °F</span>
+                        </div>
+                        <input type="range" id="rl-returnt" min="65" max="85" step="1" value="75">
+                        <span class="slider-sub rl-slider-sub" id="rl-returnt-sub"></span>
+                    </div>
+
+                    <div class="slider-field">
+                        <div class="slider-head">
+                            <label id="rl-shtarget-lbl" for="rl-shtarget">Metering target superheat</label>
+                            <span class="slider-val" id="rl-shtarget-val">10 °F</span>
+                        </div>
+                        <input type="range" id="rl-shtarget" min="4" max="25" step="1" value="10">
+                        <span class="slider-sub rl-slider-sub" id="rl-shtarget-sub"></span>
+                    </div>
+
+                    <div class="slider-field">
+                        <div class="slider-head">
+                            <label id="rl-ambient-lbl" for="rl-ambient">Outdoor ambient temp</label>
+                            <span class="slider-val" id="rl-ambient-val">90 °F</span>
+                        </div>
+                        <input type="range" id="rl-ambient" min="55" max="115" step="1" value="90">
+                        <span class="slider-sub rl-slider-sub" id="rl-ambient-sub"></span>
+                    </div>
+
+                    <div class="slider-field">
+                        <div class="slider-head">
+                            <label id="rl-condair-lbl" for="rl-condair">Condenser airflow</label>
+                            <span class="slider-val" id="rl-condair-val">100%</span>
+                        </div>
+                        <input type="range" id="rl-condair" min="0.40" max="1.20" step="0.05" value="1.00">
+                        <span class="slider-sub rl-slider-sub" id="rl-condair-sub"></span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <a class="back-link" href="/simulators/">← All simulators</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<!-- refrigerant-data.js FIRST (the engine reads REFRIGERANT_TYPES by name),
+     then the directional solver, then the page glue. Both unversioned —
+     per-page block-scripts refs keep the revalidate default. -->
+<script src="/scripts/refrigerant-data.js"></script>
+<script src="/scripts/refrigerant-loop-engine.js"></script>
+<script>
+    // ─────────────────────────────────────────────────────────────────
+    // Refrigerant Loop Simulator — page glue around RefrigLoop.
+    //
+    // The engine (RefrigLoop.solve) owns the quasi-static equilibrium solve
+    // and every table lookup; this file owns the DOM: the two manifold
+    // gauges (needle rAF easing + a per-refrigerant saturation-temp ring),
+    // the LCD/LED/verdict register, the CFM/ton readout, the knob bank, and
+    // the loop animation hooks into flow-engine.js.
+    //
+    // Units: the temp / ΔT sliders stay in canonical °F (their min/max/step
+    // mirror RefrigLoop.CLAMPS exactly) so the engine reads them unchanged;
+    // a unit flip only re-renders the readouts (U.onChange), it never
+    // rewrites a slider's range. Pressures display through U.display.pressure
+    // (a pure scale — psig<->kPag), same convention as refrigerant-pt.html.
+    //
+    // flow-engine.js + units.js are site-wide (loaded from page.njk) — this
+    // page must NOT re-load them. The loop recolor / density hooks run in a
+    // DOMContentLoaded listener registered AFTER schematic-bg's, so the
+    // FlowEngine pools already exist when we recolor (the same timing the
+    // refrigerant-cycle-basics lesson uses).
+    // ─────────────────────────────────────────────────────────────────
+    (function () {
+        'use strict';
+
+        const U   = window.Units;
+        const CL  = RefrigLoop.CLAMPS;
+        const $   = id => document.getElementById(id);
+        const SVG_NS = 'http://www.w3.org/2000/svg';
+        const reduceMotion = window.matchMedia &&
+            window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        // ── Display helpers (mirror refrigerant-pt.html) ──────────────
+        const dispT  = f  => U.display.temp(f).toFixed(1);
+        const dispDT = df => U.display.deltaTemp(df).toFixed(1);
+        const dispP  = p  => Math.round(U.display.pressure(p));
+        const tU     = () => U.suffix.temp();
+        const dtU    = () => U.suffix.deltaTemp();
+        // Gauge pressures are gauge (psig / kPag); the site pressure factor
+        // is a pure scale, so U.display.pressure converts psig->kPag unchanged
+        // (only the suffix differs) — exactly refrigerant-pt.html's pU().
+        const pU     = () => U.current() === 'metric' ? 'kPag' : 'psig';
+
+        // ── Knob state (compressor stage is the one non-slider input) ──
+        let capacity = CL.capacity.default;     // 0.5 (stage 1) | 1.0 (stage 2)
+
+        function currentInputs() {
+            return {
+                airflow:  parseFloat($('rl-airflow').value),
+                returnT:  parseFloat($('rl-returnt').value),
+                charge:   parseFloat($('rl-charge').value),
+                shTarget: parseFloat($('rl-shtarget').value),
+                ambient:  parseFloat($('rl-ambient').value),
+                condAir:  parseFloat($('rl-condair').value),
+                capacity: capacity,
+                refrig:   $('rl-refrigerant').value,
+            };
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        // GAUGES — a 240° manifold dial. frac 0..1 maps to sweep angle
+        // 150°→390° (lower-left, up through top, to lower-right). The
+        // needle is drawn pointing up and rotated (frac*240 − 120)°. Each
+        // gauge carries a per-refrigerant saturation-temp ring built from
+        // REFRIGERANT_TYPES via RefrigLoop.satTempAtP — the P-T curve on
+        // the dial face.
+        // ─────────────────────────────────────────────────────────────
+        const GCX = 100, GCY = 94;
+        const R_TICK_OUT = 80, R_TICK_IN = 71, R_PLABEL = 62, R_TLABEL = 44, R_NEEDLE = 70;
+        void R_NEEDLE;
+
+        const gauges = {
+            low:  { curve: 'dew',    refTemp: 60,  max: 200, cur: -120, target: -120,
+                    scale: 'rl-gauge-low-scale',  needle: 'rl-gauge-low-needle',
+                    arc: 'rl-gauge-low-arc',      val: 'rl-gauge-low-val' },
+            high: { curve: 'bubble', refTemp: 140, max: 600, cur: -120, target: -120,
+                    scale: 'rl-gauge-high-scale', needle: 'rl-gauge-high-needle',
+                    arc: 'rl-gauge-high-arc',     val: 'rl-gauge-high-val' },
+        };
+
+        // frac → point on the dial at radius R (screen coords, y down).
+        function ptAt(R, frac) {
+            const th = (150 + frac * 240) * Math.PI / 180;
+            return { x: GCX + R * Math.cos(th), y: GCY + R * Math.sin(th) };
+        }
+        function svgEl(name, attrs) {
+            const el = document.createElementNS(SVG_NS, name);
+            for (const k in attrs) el.setAttribute(k, attrs[k]);
+            return el;
+        }
+
+        // Smallest "nice" step giving ≤5 intervals, and the max rounded up
+        // to a whole number of those steps (so every tick is a round value).
+        function niceScale(rawMax) {
+            const steps = [10, 20, 25, 50, 100, 150, 200, 250];
+            for (let i = 0; i < steps.length; i++) {
+                if (rawMax / steps[i] <= 5) {
+                    return { step: steps[i], max: Math.ceil(rawMax / steps[i]) * steps[i] };
+                }
+            }
+            return { step: 500, max: Math.ceil(rawMax / 500) * 500 };
+        }
+
+        // (Re)build one gauge's tick + P-T ring for the current refrigerant.
+        function buildGaugeScale(g, refrig) {
+            const gEl = $(g.scale);
+            while (gEl.firstChild) gEl.removeChild(gEl.firstChild);
+
+            // Range: pressure at a reference sat temp that leaves headroom
+            // above the design point, then rounded to nice ticks.
+            const raw = RefrigLoop.pressAtSatTemp(refrig, g.curve, g.refTemp);
+            const rawMax = (raw && raw.ok) ? raw.value : 400;
+            const ns = niceScale(rawMax);
+            g.max = ns.max;
+
+            // Faint arc under the ticks (the dial track).
+            const a0 = ptAt(R_TICK_IN + 4, 0), a1 = ptAt(R_TICK_IN + 4, 1);
+            $(g.arc).setAttribute('d',
+                'M ' + a0.x.toFixed(1) + ' ' + a0.y.toFixed(1) +
+                ' A ' + (R_TICK_IN + 4) + ' ' + (R_TICK_IN + 4) + ' 0 1 1 ' +
+                a1.x.toFixed(1) + ' ' + a1.y.toFixed(1));
+
+            for (let p = 0; p <= g.max + 0.5; p += ns.step) {
+                const frac = p / g.max;
+                const o = ptAt(R_TICK_OUT, frac), i = ptAt(R_TICK_IN, frac);
+                gEl.appendChild(svgEl('line', {
+                    class: 'rl-gauge-tick',
+                    x1: o.x.toFixed(1), y1: o.y.toFixed(1),
+                    x2: i.x.toFixed(1), y2: i.y.toFixed(1),
+                }));
+                // Pressure label (outer ring) — display units.
+                const pl = ptAt(R_PLABEL, frac);
+                const pTxt = svgEl('text', {
+                    class: 'rl-gauge-plabel', x: pl.x.toFixed(1), y: (pl.y + 3.5).toFixed(1),
+                });
+                pTxt.textContent = String(dispP(p));
+                gEl.appendChild(pTxt);
+                // Saturation-temp label (inner ring) — the P-T curve. Skip
+                // where the table can't resolve (very low pressures).
+                const sat = RefrigLoop.satTempAtP(refrig, g.curve, p);
+                if (sat && sat.ok) {
+                    const tl = ptAt(R_TLABEL, frac);
+                    const tTxt = svgEl('text', {
+                        class: 'rl-gauge-tlabel', x: tl.x.toFixed(1), y: (tl.y + 3).toFixed(1),
+                    });
+                    tTxt.textContent = dispT(sat.value) + '°';
+                    gEl.appendChild(tTxt);
+                }
+            }
+        }
+
+        function setGaugeTarget(g, psig) {
+            const frac = Math.max(0, Math.min(1, psig / g.max));
+            g.target = frac * 240 - 120;
+            if (reduceMotion) { g.cur = g.target; applyNeedle(g); }
+            // Digital readout in the dial face.
+            $(g.val).textContent = dispP(psig) + ' ' + pU();
+        }
+        function applyNeedle(g) {
+            $(g.needle).setAttribute('transform',
+                'rotate(' + g.cur.toFixed(2) + ' ' + GCX + ' ' + GCY + ')');
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        // LCD / LED / verdict / CFM readouts
+        // ─────────────────────────────────────────────────────────────
+        function setLed(id, on, activeCls) {
+            const el = $(id);
+            el.classList.toggle(activeCls, on);
+            el.classList.toggle('led--off', !on);
+        }
+
+        function renderRegister(s) {
+            // LCDs
+            $('rl-lcd-sh').innerHTML   = dispDT(s.superheat) + '<small>' + dtU() + '</small>';
+            $('rl-lcd-sc').innerHTML   = dispDT(s.subcool)   + '<small>' + dtU() + '</small>';
+            $('rl-lcd-evap').innerHTML = dispT(s.tEvap)      + '<small>' + tU()  + '</small>';
+            $('rl-lcd-cond').innerHTML = dispT(s.tCond)      + '<small>' + tU()  + '</small>';
+
+            // LEDs — RUN always lit (2-stage compressor runs at 0.5 or 1.0),
+            // freeze blinks red, floodback / high head go amber.
+            const running = capacity > 0;
+            setLed('rl-led-run2', running, 'led--run');
+            $('rl-led-run').classList.toggle('led--run', running);
+            $('rl-led-run').classList.toggle('led--off', !running);
+            setLed('rl-led-freeze', s.flags.freeze,    'led--alarm');
+            setLed('rl-led-flood',  s.flags.floodback, 'led--warn');
+            setLed('rl-led-head',   s.flags.highHead,  'led--warn');
+
+            // Verdict pill
+            const kind = s.verdict.kind === 'ok' ? 'ok' : s.verdict.kind === 'error' ? 'error' : 'warn';
+            const pill = $('rl-status');
+            pill.textContent = s.verdict.text;
+            pill.className = 'status-pill ' + kind;
+
+            // CFM/ton — colored against the 400 floor (matches the VAV bands).
+            const cfm = Math.round(s.cfmPerTon);
+            const cv = $('rl-cfm-val');
+            cv.textContent = cfm;
+            cv.classList.remove('ok', 'mid', 'bad');
+            cv.classList.add(cfm >= 400 ? 'ok' : cfm >= 350 ? 'mid' : 'bad');
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        // LOOP animation hooks (flow-engine.js). Color encodes state
+        // (hot / cool / frost); coarse density bands encode mass flow
+        // (compressor stage, thinned when the coil ices). refreshPath
+        // rebuilds a pool (and resets particle color to the data-flow
+        // default), so density changes are throttled to band crossings and
+        // the colors are re-applied every render. No-ops safely before the
+        // engine has initialized (setPathColor/refreshPath guard on that).
+        // ─────────────────────────────────────────────────────────────
+        const FLOW_SEGS = ['rl-discharge', 'rl-liquid', 'rl-expansion', 'rl-suction'];
+        let lastBand = null;
+
+        function updateLoop(s) {
+            $('rl-cycle').classList.toggle('frozen', s.flags.freeze);
+            if (!window.FlowEngine || !FlowEngine.setPathColor) return;
+
+            // Mass-flow band: stage 2 full, stage 1 leaner, iced coil sparse.
+            const band = s.flags.freeze ? 0.3 : (capacity >= 1 ? 1.0 : 0.55);
+            if (band !== lastBand) {
+                lastBand = band;
+                FLOW_SEGS.forEach(id => {
+                    const el = $(id);
+                    el.setAttribute('data-flow-density', band);
+                    if (FlowEngine.refreshPath) FlowEngine.refreshPath(el);
+                });
+            }
+            // State colors (cheap; also restores color after a refresh).
+            FlowEngine.setPathColor($('rl-discharge'),  'var(--heat)');
+            FlowEngine.setPathColor($('rl-liquid'),     'var(--heat)');
+            FlowEngine.setPathColor($('rl-expansion'),  'var(--blue-cool)');
+            FlowEngine.setPathColor($('rl-suction'),    s.flags.freeze ? 'var(--rl-frost)' : 'var(--blue-cool)');
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        // Controls readouts (slider value labels + sub-lines). Kept in one
+        // place so a unit flip just re-runs this + renderMain().
+        // ─────────────────────────────────────────────────────────────
+        function pct(v) { return Math.round(v * 100) + '%'; }
+
+        function renderControls() {
+            const airflow = parseFloat($('rl-airflow').value);
+            $('rl-airflow-val').textContent = pct(airflow);
+            $('rl-airflow-sub').innerHTML =
+                '<span class="cfm">' + Math.round(RefrigLoop.DESIGN.CFM_PER_TON_DESIGN * airflow) +
+                ' CFM/ton</span>';
+
+            $('rl-charge-val').textContent  = pct(parseFloat($('rl-charge').value));
+            $('rl-condair-val').textContent = pct(parseFloat($('rl-condair').value));
+
+            $('rl-returnt-val').textContent  = dispT(parseFloat($('rl-returnt').value))  + ' ' + tU();
+            $('rl-ambient-val').textContent  = dispT(parseFloat($('rl-ambient').value))  + ' ' + tU();
+            $('rl-shtarget-val').textContent = dispDT(parseFloat($('rl-shtarget').value)) + ' ' + dtU();
+        }
+
+        // ── Main recompute — solve, then paint everything ─────────────
+        function renderMain() {
+            const inp = currentInputs();
+            // Validate-and-mute: a non-finite knob (should be impossible from
+            // a range input, but guard defensively) blanks the register.
+            const bad = ['airflow', 'returnT', 'charge', 'shTarget', 'ambient', 'condAir']
+                .some(k => !isFinite(inp[k]));
+            if (bad) {
+                ['rl-lcd-sh', 'rl-lcd-sc', 'rl-lcd-evap', 'rl-lcd-cond'].forEach(id => { $(id).textContent = '—'; });
+                $('rl-status').textContent = 'Check the controls.';
+                $('rl-status').className = 'status-pill warn';
+                return;
+            }
+            const s = RefrigLoop.solve(inp);
+            setGaugeTarget(gauges.low,  s.pSuc);
+            setGaugeTarget(gauges.high, s.pDis);
+            renderRegister(s);
+            updateLoop(s);
+        }
+
+        // ── Refrigerant change: rebuild gauge rings, badge, persist ───
+        // Reuse the P-T tool's shared cf_rf_refrigerant key — strict-validate
+        // on read, never trust the stored string (codebase-issues #83 pattern).
+        const RF_KEY = 'cf_rf_refrigerant';
+
+        function applyRefrigerant() {
+            const id = $('rl-refrigerant').value;
+            const R = (typeof REFRIGERANT_TYPES !== 'undefined') ? REFRIGERANT_TYPES[id] : null;
+            $('rl-refrig-badge').textContent = R ? R.name : id;
+            buildGaugeScale(gauges.low, id);
+            buildGaugeScale(gauges.high, id);
+            renderMain();
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        // Needle-easing + compressor-spin rAF. One loop drives both
+        // gauges toward their target angle and rotates the fan glyph at a
+        // rate tied to the compressor stage. Under reduced-motion the
+        // needles snap (setGaugeTarget applies immediately) and the loop
+        // never schedules — mirrors flow-engine.js bailing out.
+        // ─────────────────────────────────────────────────────────────
+        let fanAngle = 0, lastT = null;
+        const fan = $('rl-compressor-fan');
+
+        function frame(t) {
+            if (lastT === null) lastT = t;
+            const dt = Math.min(0.05, (t - lastT) / 1000);
+            lastT = t;
+
+            [gauges.low, gauges.high].forEach(g => {
+                const d = g.target - g.cur;
+                if (Math.abs(d) > 0.05) g.cur += d * 0.18;
+                else g.cur = g.target;
+                applyNeedle(g);
+            });
+
+            fanAngle = (fanAngle + 140 * capacity * dt) % 360;
+            if (fan) fan.setAttribute('transform', 'rotate(' + fanAngle.toFixed(1) + ' 50 50)');
+
+            // Keep going: the compressor is always running, so the fan spins
+            // continuously (the needle easing rides the same loop).
+            requestAnimationFrame(frame);
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        // Wiring
+        // ─────────────────────────────────────────────────────────────
+        ['rl-airflow', 'rl-charge', 'rl-returnt', 'rl-shtarget', 'rl-ambient', 'rl-condair'].forEach(id => {
+            $(id).addEventListener('input', () => { renderControls(); renderMain(); });
+        });
+
+        // Compressor stage toggle → capacity 0.5 / 1.0.
+        function setStage(cap, btn) {
+            capacity = cap;
+            [$('rl-stage-1'), $('rl-stage-2')].forEach(b => {
+                const on = b === btn;
+                b.classList.toggle('active', on);
+                b.setAttribute('aria-pressed', on ? 'true' : 'false');
+            });
+            renderMain();
+        }
+        $('rl-stage-1').addEventListener('click', e => setStage(0.5, e.currentTarget));
+        $('rl-stage-2').addEventListener('click', e => setStage(1.0, e.currentTarget));
+
+        $('rl-refrigerant').addEventListener('change', () => {
+            try { localStorage.setItem(RF_KEY, $('rl-refrigerant').value); } catch (e) { /* private mode */ }
+            applyRefrigerant();
+        });
+        try {
+            const saved = localStorage.getItem(RF_KEY);
+            if (saved && typeof REFRIGERANT_TYPES !== 'undefined' && REFRIGERANT_TYPES[saved]) {
+                $('rl-refrigerant').value = saved;
+            }
+        } catch (e) { /* private mode */ }
+
+        // Unit flip → re-render readouts (sliders stay canonical) + rebuild
+        // gauge rings (their labels are in display units) + repaint.
+        U.onChange(function () {
+            renderControls();
+            applyRefrigerant();
+        });
+
+        // ── Initial paint ─────────────────────────────────────────────
+        renderControls();
+        applyRefrigerant();
+        if (!reduceMotion) requestAnimationFrame(frame);
+
+        // Loop recolor / density: register AFTER schematic-bg.js's
+        // DOMContentLoaded listener (which calls FlowEngine.init() to build
+        // the pools). Ours fires next, with the pools already built, so the
+        // recolor sticks. If the document is already parsed, run now.
+        function primeLoop() {
+            lastBand = null;          // force the density band to (re)apply
+            renderMain();
+        }
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', primeLoop);
+        } else {
+            primeLoop();
+        }
+    })();
+</script>
+{% endblock %}
