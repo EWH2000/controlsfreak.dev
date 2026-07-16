@@ -175,10 +175,30 @@ test.describe('refrigerant-loop-engine: preset fault signatures', () => {
         expect(s.flags.freeze).toBe(true);
         expect(s.verdict.kind).toBe('error');
         expect(s.verdict.text.toLowerCase()).toContain('freez');
+        // Airflow IS below the 400 floor here, so the verdict names the starve.
+        expect(s.verdict.text.toLowerCase()).toContain('airflow starved');
         // The honesty guard: airside starve leaves the refrigerant side normal.
         expect(s.superheat).toBeCloseTo(10, 1);
         expect(s.flags.starved).toBe(false);
         expect(s.cfmPerTon).toBeLessThan(400);
+    });
+
+    test('non-airflow freeze ⇒ alarm fires, verdict names the below-32 cause', () => {
+        const { RefrigLoop } = loadEngine();
+        // Deep undercharge (0.60) + cold return air (65 °F) drags the evaporator
+        // below 32 °F at FULL airflow — the reachable state where the P-T plot
+        // reddened but the old airflow-gated alarm stayed silent (the mixed
+        // signal). The alarm now follows the plot: any sub-32 °F coil freezes.
+        const s = RefrigLoop.solve({ charge: 0.60, returnT: 65, airflow: 1.0 });
+        expect(s.tEvap).toBeLessThan(32);
+        // Airflow is AT the design floor, not below it — the starve branch must
+        // not fire, so the verdict must not claim airflow starvation.
+        expect(s.cfmPerTon).toBeGreaterThanOrEqual(400);
+        expect(s.flags.freeze).toBe(true);
+        expect(s.verdict.kind).toBe('error');
+        expect(s.verdict.text.toLowerCase()).toContain('freez');
+        expect(s.verdict.text.toLowerCase()).not.toContain('airflow starved');
+        expect(s.verdict.text.toLowerCase()).toContain('below 32');
     });
 
     test('undercharge ⇒ starved, high superheat + low/neg subcooling', () => {
@@ -189,7 +209,7 @@ test.describe('refrigerant-loop-engine: preset fault signatures', () => {
         expect(s.superheat).toBeGreaterThanOrEqual(25);
         expect(s.subcool).toBeLessThan(3);
         expect(s.flags.lowSubcool).toBe(true);
-        expect(s.flags.freeze).toBe(false);     // airflow is fine — a charge fault
+        expect(s.flags.freeze).toBe(false);     // coil sits ~36 °F, above the 32 °F line
     });
 
     test('overcharge ⇒ high subcooling + high head, superheat low', () => {

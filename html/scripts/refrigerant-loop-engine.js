@@ -43,10 +43,15 @@
 // Airflow deliberately does NOT move superheat (see DESIGN / rule B). An
 // AIRSIDE-starved coil freezes at NORMAL superheat — the refrigerant side
 // looks fine while the coil ices over. So the `freeze` flag fires
-// INDEPENDENTLY of superheat, driven by low airflow (CFM/ton below the 400
-// floor) dragging the evaporator saturation temp below 32 °F. This is the
-// crux scenario ("Starve the coil"); the model must not let "superheat looks
-// fine" imply "system is fine."
+// INDEPENDENTLY of superheat: it trips whenever the evaporator saturation
+// temp drops below 32 °F, whatever dragged it there. The airside starve
+// (CFM/ton below the 400 floor) is the crux scenario ("Starve the coil") —
+// the model must not let "superheat looks fine" imply "system is fine" — but
+// a deeply undercharged coil pulled below 32 °F at NORMAL airflow ices too,
+// so the alarm follows the P-T plot (any sub-32 °F coil reads as freezing)
+// rather than gating on the airflow driver. The verdict text then names
+// whichever cause applies (owner decision — the plot already went red on
+// tEvap < 32 alone, so gating the alarm on airflow was a mixed signal).
 //
 // API (window.RefrigLoop):
 //   RefrigLoop.solve(inputs)            → state object (below). Recompute-on-
@@ -316,12 +321,13 @@ const RefrigLoop = (function () {
 
         // ── Flags ──
         const flags = {
-            // Coil-freeze runaway: evap sat temp below 32 °F AND airflow is the
-            // driver (CFM/ton below the design floor). Gated on airflow so the
-            // freeze ALARM stays the airside-starvation story — it fires
-            // independently of superheat (the honesty guard), which is exactly
-            // why a starved coil ices with a normal refrigerant-side reading.
-            freeze:      tEvap < D.FREEZE_T && cfmPerTon < D.CFM_PER_TON_DESIGN,
+            // Coil-freeze: evap sat temp below 32 °F, whatever drove it there
+            // — an airside starve OR a cold/undercharged coil. Fires on the
+            // temp alone (owner decision) so the alarm matches the P-T plot,
+            // which already reddens on tEvap < 32; it stays independent of
+            // superheat (the honesty guard), so a starved coil ices with a
+            // normal refrigerant-side reading. buildVerdict names the cause.
+            freeze:      tEvap < D.FREEZE_T,
             // Liquid reaching the compressor: superheat collapsed (may be < 0).
             floodback:   superheat <= D.FLOODBACK_SH,
             // Starved evaporator / high superheat — the undercharge tell.
@@ -335,7 +341,7 @@ const RefrigLoop = (function () {
         };
 
         // ── Verdict (single status-pill summary; most severe wins) ──
-        const verdict = buildVerdict(flags, tCond, D);
+        const verdict = buildVerdict(flags, tCond, cfmPerTon, D);
 
         return {
             pSuc: pSuc, pDis: pDis,
@@ -351,8 +357,16 @@ const RefrigLoop = (function () {
     // Collapse the flag set to one { kind, text } pill. Severity order: an iced
     // coil / slugged compressor first, then heat-rejection and charge tells,
     // then the low-ambient head-collapse note (verdict-only, no flag), then OK.
-    function buildVerdict(flags, tCond, D) {
-        if (flags.freeze)      return { kind: 'error', text: 'Coil freezing — evaporator airflow starved.' };
+    // Freeze stays the top-priority error, but its text is cause-accurate: it
+    // only claims airflow starvation when airflow is actually below the design
+    // floor; a coil pulled below 32 °F at normal airflow reads the below-32 °F
+    // wording (the flag no longer gates on airflow — see the honesty guard).
+    function buildVerdict(flags, tCond, cfmPerTon, D) {
+        if (flags.freeze) {
+            return (cfmPerTon < D.CFM_PER_TON_DESIGN)
+                ? { kind: 'error', text: 'Coil freezing — evaporator airflow starved.' }
+                : { kind: 'error', text: 'Coil freezing — evaporator running below 32 °F.' };
+        }
         if (flags.floodback)   return { kind: 'warn',  text: 'Floodback — superheat collapsed, liquid reaching the compressor.' };
         if (flags.starved)     return { kind: 'warn',  text: 'Evaporator starved — high superheat, suspect low charge.' };
         if (flags.highHead)    return { kind: 'warn',  text: 'High head — condenser cannot reject heat (dirty coil / overcharge / hot day).' };
