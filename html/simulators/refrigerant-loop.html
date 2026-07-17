@@ -121,7 +121,7 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
             text-anchor: middle;
         }
 
-        /* LCD cluster — 2×2 grid of small equipment LCDs. */
+        /* LCD cluster — 4×2 grid of small equipment LCDs. */
         .rl-lcds {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -130,6 +130,16 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
         }
         .rl-lcds .lcd .k { font-size: 0.6rem; }
         .rl-lcds .lcd .v { font-size: 1.45rem; }
+        /* The two air in→out pair cells carry twice the digits of a single
+           reading and overflow at the default 1.45rem; the .v keeps the
+           selector's specificity above the shared .lcd .v rule. At phone
+           width the two-column cell drops to ~100px and even 1.05rem
+           overflows (90.0→102.0°F measured 114px in a 103px cell), so the
+           pair steps down once more. */
+        .rl-lcds .lcd .v.rl-lcd-pair { font-size: 1.05rem; }
+        @media (max-width: 480px) {
+            .rl-lcds .lcd .v.rl-lcd-pair { font-size: 0.85rem; }
+        }
 
         /* CFM/ton readout — colored against the 400-CFM/ton floor. */
         .rl-cfm { margin-top: 0.9rem; }
@@ -606,12 +616,29 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                                 <div class="k">Cond sat temp</div>
                                 <div class="v" id="rl-lcd-cond">&#8212;</div>
                             </div>
-                            <!-- Visually-hidden gauge + alarm mirror: the needle
-                                 angles and dial digits are SVG presentation most
-                                 AT never surfaces, and the pill names only the
-                                 top-priority fault — this line carries the two
-                                 pressures and the full alarm set through the
-                                 same live region as the LCDs. -->
+                            <div class="lcd">
+                                <div class="k">Suction</div>
+                                <div class="v" id="rl-lcd-psuc">&#8212;</div>
+                            </div>
+                            <div class="lcd">
+                                <div class="k">Head</div>
+                                <div class="v" id="rl-lcd-pdis">&#8212;</div>
+                            </div>
+                            <div class="lcd">
+                                <div class="k">Indoor air in &#8594; out</div>
+                                <div class="v rl-lcd-pair" id="rl-lcd-air-evap">&#8212;</div>
+                            </div>
+                            <div class="lcd">
+                                <div class="k">Outdoor air in &#8594; out</div>
+                                <div class="v rl-lcd-pair" id="rl-lcd-air-cond">&#8212;</div>
+                            </div>
+                            <!-- Visually-hidden alarm mirror: the pill names only
+                                 the top-priority fault, so this line carries the
+                                 FULL alarm set (plus the P-T-chart clamp note)
+                                 through the same live region as the LCDs. The
+                                 pressures now sit in visible LCD cells above —
+                                 inside this same live region — so repeating them
+                                 here would double-speak. -->
                             <div class="sr-only" id="rl-sr-summary"></div>
                         </div>
 
@@ -834,6 +861,19 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                 start frosting a touch earlier than the single number here
                 suggests. On R-410A and the other low-glide refrigerants that
                 distinction all but vanishes.
+            </p>
+            <p class="tool-preamble">
+                The two air readouts are sensible-only. The indoor pair is a
+                dry-bulb split — at design, the classic
+                <span data-us="75 °F" data-metric="23.9 °C">75&nbsp;°F</span>
+                return dropping to a
+                <span data-us="55 °F" data-metric="12.8 °C">55&nbsp;°F</span>
+                supply — scaled by capacity over airflow, and the outdoor pair
+                shows the matching discharge-air rise across the condenser.
+                There is no humidity model behind either number: a real
+                supply-air reading rides latent load and coil dehumidification,
+                so read these as the dry-bulb direction, not a psychrometric
+                result.
             </p>
 
             <p class="ref-note">
@@ -1068,6 +1108,14 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
             $('rl-lcd-sc').innerHTML   = dispDT(s.subcool)   + '<small>' + dtU() + '</small>';
             $('rl-lcd-evap').innerHTML = dispT(s.tEvap)      + '<small>' + tU()  + '</small>';
             $('rl-lcd-cond').innerHTML = dispT(s.tCond)      + '<small>' + tU()  + '</small>';
+            // Pressure LCDs mirror the dial digitals exactly, INCLUDING the
+            // ≤/≥ clamp cue renderMain passes to setGaugeTarget — an LCD that
+            // dropped the mark would contradict the pegged dial beside it.
+            $('rl-lcd-psuc').innerHTML = (s.flags.outOfRangeLow  ? '≤ ' : '') + dispP(s.pSuc) + '<small>' + pU() + '</small>';
+            $('rl-lcd-pdis').innerHTML = (s.flags.outOfRangeHigh ? '≥ ' : '') + dispP(s.pDis) + '<small>' + pU() + '</small>';
+            // Airside in→out pairs (sensible-only; see the About caveat).
+            $('rl-lcd-air-evap').innerHTML = dispT(s.tAirInEvap) + '<small>→</small>' + dispT(s.tAirOutEvap) + '<small>' + tU() + '</small>';
+            $('rl-lcd-air-cond').innerHTML = dispT(s.tAirInCond) + '<small>→</small>' + dispT(s.tAirOutCond) + '<small>' + tU() + '</small>';
 
             // LEDs — RUN always lit (2-stage compressor runs at 0.5 or 1.0),
             // freeze blinks red, floodback / high head go amber.
@@ -1092,18 +1140,19 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
             cv.classList.remove('ok', 'mid', 'bad');
             cv.classList.add(cfm >= 400 ? 'ok' : cfm >= 350 ? 'mid' : 'bad');
 
-            // Visually-hidden gauge + alarm mirror (see the markup note): the
-            // two pressures, plus every lit alarm — the pill alone names only
-            // the top-priority fault, so concurrent alarms were AT-invisible.
+            // Visually-hidden alarm mirror (see the markup note): every lit
+            // alarm — the pill alone names only the top-priority fault, so
+            // concurrent alarms were AT-invisible. The pressures moved into
+            // visible LCD cells inside this same live region, so they are
+            // deliberately NOT repeated here (double-speak).
             const alarms = [];
             if (s.flags.freeze)    alarms.push('coil freeze');
             if (s.flags.floodback) alarms.push('floodback');
             if (s.flags.highHead)  alarms.push('high head');
-            $('rl-sr-summary').textContent =
-                'Suction ' + dispP(s.pSuc) + ' ' + pU() +
-                ', head ' + dispP(s.pDis) + ' ' + pU() +
-                (alarms.length ? '. Alarms: ' + alarms.join(', ') + '.' : '.') +
-                (s.flags.outOfRange ? ' Reading clamped at the edge of the P-T chart.' : '');
+            const srBits = [];
+            if (alarms.length) srBits.push('Alarms: ' + alarms.join(', ') + '.');
+            if (s.flags.outOfRange) srBits.push('Reading clamped at the edge of the P-T chart.');
+            $('rl-sr-summary').textContent = srBits.join(' ');
         }
 
         // ─────────────────────────────────────────────────────────────
@@ -1404,7 +1453,8 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
             const bad = ['airflow', 'returnT', 'charge', 'shTarget', 'ambient', 'condAir']
                 .some(k => !isFinite(inp[k]));
             if (bad) {
-                ['rl-lcd-sh', 'rl-lcd-sc', 'rl-lcd-evap', 'rl-lcd-cond'].forEach(id => { $(id).textContent = '—'; });
+                ['rl-lcd-sh', 'rl-lcd-sc', 'rl-lcd-evap', 'rl-lcd-cond',
+                 'rl-lcd-psuc', 'rl-lcd-pdis', 'rl-lcd-air-evap', 'rl-lcd-air-cond'].forEach(id => { $(id).textContent = '—'; });
                 $('rl-status').textContent = 'Check the controls.';
                 $('rl-status').className = 'status-pill warn';
                 return;
