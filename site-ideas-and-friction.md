@@ -5411,6 +5411,12 @@ spinning fan gave way to a top-down scroll set — the moving spiral
 orbits (it doesn't spin), paced by capacity like the fan was.
 Items 6 and 7 above remain the queue.
 
+*Airflow animation (2026-07-17):* the sim's first feedback-driven
+addition — the owner watched the loop live and wanted the air side
+(what the two airflow knobs control) visible, so both coil faces now
+carry animated air lanes whose density tracks the CFM knobs, the
+indoor stream frost-tinting with the freeze latch.
+
 ### Schematic-bg chrome — gutter as-builts, hero-frame nav cards, discrete-pulse mode *(shipped 2026-05-23)*
 
 A major chrome overhaul on top of the existing v2.0 workstation
