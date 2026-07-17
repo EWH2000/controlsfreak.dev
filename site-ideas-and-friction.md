@@ -5378,19 +5378,32 @@ merges. Pairs naturally with per-refrigerant anchor work (#3 below).
 *Queued visual-round ideas from the verification (owner to pick):*
 (1) two visible pressure LCD cells in the register (the AT summary
 line covers screen readers today; visible cells would help sighted
-low-vision users too); (2) a flash-gas cue when subcooling goes
-negative (hollow/warn-tinted liquid dot or a "(flash gas)" label
-suffix); (3) nice rounded pressure-gridline steps on the P-T plot
-(quarters of pMax currently yield 113/38-style labels); (4) clamp or
-shorten SH/SC gap labels below ~450px canvas width; (5) a small
+low-vision users too) *(shipped 2026-07-17)*; (2) a flash-gas cue
+when subcooling goes negative (hollow/warn-tinted liquid dot or a
+"(flash gas)" label suffix) *(shipped 2026-07-17 — both: hollow
+amber dot + amber label suffix)*; (3) nice rounded pressure-gridline
+steps on the P-T plot (quarters of pMax currently yield 113/38-style
+labels) *(shipped 2026-07-17)*; (4) clamp or shorten SH/SC gap
+labels below ~450px canvas width *(shipped 2026-07-17)*; (5) a small
 radial inset for the two dial ring labels flanking top-center (the
-needle can bisect one mid-dial); (6) a one-line copy note making the
-shared-cycle framing explicit ("every refrigerant runs the same
-40/105 °F cycle so the pressures compare apples-to-apples — R-404A
-in real life usually runs colder boxes"); (7) per-refrigerant
-sat-temp anchoring as the bigger upgrade (needs per-refrigerant
-design-point sourcing; trades away the clean cross-refrigerant
-comparability, so possibly a toggle).
+needle can bisect one mid-dial) *(superseded 2026-07-17 by the dial
+re-hierarchy — needle drawn under the labels, sat ring pulled in)*;
+(6) a one-line copy note making the shared-cycle framing explicit
+("every refrigerant runs the same 40/105 °F cycle so the pressures
+compare apples-to-apples — R-404A in real life usually runs colder
+boxes"); (7) per-refrigerant sat-temp anchoring as the bigger
+upgrade (needs per-refrigerant design-point sourcing; trades away
+the clean cross-refrigerant comparability, so possibly a toggle).
+
+*Visual refinement round (2026-07-17, owner-directed):* gauge dial
+rebalance (punch-out labels, needle re-hierarchy, units moved to the
+captions), the register grown to 4 rows — visible suction/head
+pressure LCD cells plus air in/out temps off the new engine block F
+(sensible-only airside model) — spacing normalization across the
+cockpit, the fullscreen tall regime now gated on aspect ratio (the
+2560×1440 landscape-QHD fix), and plot polish (rounded gridlines,
+short SH/SC tags on narrow canvases, the flash-gas dot + label).
+Items 6 and 7 above remain the queue.
 
 ### Schematic-bg chrome — gutter as-builts, hero-frame nav cards, discrete-pulse mode *(shipped 2026-05-23)*
 
