@@ -87,10 +87,15 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
             font-size: 11px;
             text-anchor: middle;
         }
-        .rl-gauge-low  .rl-gauge-tlabel { fill: var(--blue); }
-        .rl-gauge-high .rl-gauge-tlabel { fill: var(--heat); }
-        .rl-gauge-needle-low  { stroke: var(--blue); stroke-width: 3; stroke-linecap: round; }
-        .rl-gauge-needle-high { stroke: var(--heat); stroke-width: 3; stroke-linecap: round; }
+        /* Dial internals are equipment-register surfaces — theme-CONSTANT,
+           like the ticks/hub hexes above. Pinned to the dark-token blue /
+           heat values instead of var(--blue)/var(--heat): the light theme's
+           darker tokens fell to ~3:1 on the constant dark gauge face
+           (measured AA fail, 2026-07-16 verification). */
+        .rl-gauge-low  .rl-gauge-tlabel { fill: #4aa3dd; }
+        .rl-gauge-high .rl-gauge-tlabel { fill: #e8884a; }
+        .rl-gauge-needle-low  { stroke: #4aa3dd; stroke-width: 3; stroke-linecap: round; }
+        .rl-gauge-needle-high { stroke: #e8884a; stroke-width: 3; stroke-linecap: round; }
         .rl-gauge-hub { fill: #cfc8ad; stroke: var(--dev-bezel); stroke-width: 1; }
         .rl-gauge-val {
             font-family: var(--mono);
@@ -98,8 +103,8 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
             font-size: 22px;
             text-anchor: middle;
         }
-        .rl-gauge-low  .rl-gauge-val { fill: var(--blue); }
-        .rl-gauge-high .rl-gauge-val { fill: var(--heat); }
+        .rl-gauge-low  .rl-gauge-val { fill: #4aa3dd; }   /* theme-constant, see note above */
+        .rl-gauge-high .rl-gauge-val { fill: #e8884a; }
         .rl-gauge-cap {
             font-family: var(--mono);
             font-size: 10.5px;
