@@ -1154,7 +1154,9 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
             const tMin = Math.min(s.tEvap, s.tLiqLine, s.tSucLine, FREEZE_LINE_F) - padF;
             const tMax = Math.max(s.tCond, s.tSucLine, s.tLiqLine) + padF;
             const tSpan = Math.max(tMax - tMin, 1);
-            const pMax = Math.max(niceCeilP(s.pDis * 1.1), 50);
+            // Scale from BOTH pressures — the engine floors pDis above pSuc,
+            // but the axis must never let either point paint off the top.
+            const pMax = Math.max(niceCeilP(Math.max(s.pDis, s.pSuc) * 1.1), 50);
 
             const padL = 40, padR = 12, padT = 12, padB = 26;
             const plotW = cssW - padL - padR;
@@ -1192,14 +1194,16 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                 ctx.fillText(d + '°', x, cssH - padB + 6);
             }
 
-            // ── Axis unit captions ──
+            // ── Axis unit captions — both on the bottom line. The pressure
+            //    unit sits at bottom-left under its label column: drawn in the
+            //    top-left corner it glyph-collided with the topmost gridline
+            //    label ('psig' across '400', worse as 4-digit metric). ──
             ctx.fillStyle = cDim;
             ctx.font = '9px ' + mono;
             ctx.textAlign = 'left';
-            ctx.textBaseline = 'top';
-            ctx.fillText(pU(), 2, 2);
-            ctx.textAlign = 'right';
             ctx.textBaseline = 'bottom';
+            ctx.fillText(pU(), 2, cssH - 2);
+            ctx.textAlign = 'right';
             ctx.fillText(tU(), cssW - 2, cssH - 2);
 
             // ── Saturation curve(s) from the table ──
@@ -1245,8 +1249,12 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                 ctx.restore();
             }
 
-            // ── Constant-pressure SH / SC dashes + labels ──
-            const gap = (t1, t2, p, color, label) => {
+            // ── Constant-pressure SH / SC dashes + labels. The label sits
+            //    above the dash unless the saturation curve passes through
+            //    that band at the label's midpoint — then it flips below so
+            //    the curve doesn't strike the text (the typical view's SH
+            //    label sat exactly in the rising dew curve's path). ──
+            const gap = (t1, t2, p, color, label, curve) => {
                 const y = yOf(p);
                 ctx.save();
                 ctx.beginPath();
@@ -1260,12 +1268,16 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                 ctx.fillStyle = color;
                 ctx.font = '10px ' + mono;
                 ctx.textAlign = 'center';
-                ctx.textBaseline = 'bottom';
-                ctx.fillText(label, (xOf(t1) + xOf(t2)) / 2, y - 4);
+                const curveP = RefrigLoop.pressAtSatTemp(id, curve, (t1 + t2) / 2);
+                const yCurve = (curveP && curveP.ok) ? yOf(curveP.value) : -Infinity;
+                const collides = yCurve > y - 18 && yCurve < y - 1;
+                ctx.textBaseline = collides ? 'top' : 'bottom';
+                ctx.fillText(label, (xOf(t1) + xOf(t2)) / 2, collides ? y + 6 : y - 4);
                 ctx.restore();
             };
-            gap(s.tEvap, s.tSucLine, s.pSuc, cHeat, 'SH ' + dispDT(s.superheat) + dtU());
-            gap(s.tCond, s.tLiqLine, s.pDis, cCool, 'SC ' + dispDT(s.subcool) + dtU());
+            gap(s.tEvap, s.tSucLine, s.pSuc, cHeat, 'SH ' + dispDT(s.superheat) + dtU(), 'dew');
+            gap(s.tCond, s.tLiqLine, s.pDis, cCool, 'SC ' + dispDT(s.subcool) + dtU(),
+                glideVisible ? 'bubble' : 'dew');
 
             // ── State points. Saturation points ride the curve (neutral, red
             //    on the low side when freezing); the line-state points carry
