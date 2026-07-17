@@ -364,10 +364,11 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
             <div class="rl-cockpit">
 
             <!-- ── "Try this" scenario presets — one per RefrigLoop.PRESETS
-                 key. A click writes the whole knob set, marks the scenario
-                 active, and eases the loop / gauges / plot to the new
-                 equilibrium. Typical first, then the headline starve; moving
-                 any knob by hand clears the active mark. -->
+                 key. A click writes the whole knob set (keeping the selected
+                 refrigerant — the tells are refrigerant-independent), marks
+                 the scenario active, and eases the loop / gauges / plot to
+                 the new equilibrium. Typical first, then the headline starve;
+                 moving any knob by hand clears the active mark. -->
             <div class="rl-presets field" role="group" aria-labelledby="rl-try-lbl">
                 <span class="field-label" id="rl-try-lbl">Try this:</span>
                 <div class="btn-row">
@@ -1481,11 +1482,12 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
             $('rl-ambient').value  = p.ambient;
             $('rl-condair').value  = p.condAir;
             updateStageButtons(p.capacity);
-            // The presets are R-410A-anchored, so they carry the refrigerant.
-            if (p.refrig && $('rl-refrigerant').value !== p.refrig) {
-                $('rl-refrigerant').value = p.refrig;
-                persistRefrig(p.refrig);
-            }
+            // The preset's refrig key is deliberately IGNORED: the scenario
+            // signatures are refrigerant-independent (same sat temps / SH /
+            // SC / flags — only the pressures differ), so a preset keeps the
+            // user's selected refrigerant. Writing r410a here also silently
+            // overwrote the shared cf_rf_refrigerant memory the P-T tool
+            // reads — a cross-page side effect (2026-07-16 verification).
             clearActivePreset();
             btn.classList.add('active');
             btn.setAttribute('aria-pressed', 'true');
