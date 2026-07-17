@@ -70,6 +70,9 @@
 //     tEvap, tCond,          // evap dew sat temp / cond bubble sat temp, °F
 //     superheat, subcool,    // °F (SH held by metering; SC emergent from charge)
 //     tSucLine, tLiqLine,    // suction-line / liquid-line temps, °F
+//     tAirInEvap, tAirOutEvap,  // indoor-coil entering / leaving air, °F
+//     tAirInCond, tAirOutCond,  // condenser entering / leaving air, °F
+//                            //   (sensible-only — no latent / dehumidification)
 //     cfmPerTon,             // evaporator airflow vs the 400 floor
 //     flags: { freeze, floodback, starved, highHead, lowSubcool,
 //              highSubcool, outOfRange, outOfRangeLow, outOfRangeHigh },
@@ -143,6 +146,29 @@ const RefrigLoop = (function () {
         CFM_PER_TON_DESIGN: 400,   // design evaporator airflow, CFM/ton (the
                                    //   floor from equipment-airflow / the VAV
                                    //   coil-flow story). cfmPerTon = 400·airflow.
+
+        // (F) Airside coil temperatures, °F.  Sensible-only — no latent /
+        //     dehumidification model. Each coil's air split scales with load
+        //     over air: ΔT_air = base × (capacity / airflow fraction) — double
+        //     the pumping or halve the air and the air split doubles.
+        AIR_DT_EVAP:  20,     // design indoor-coil air drop, °F — the VAV-lesson
+                              //   anchor (75 °F return ⇒ 55 °F supply at design
+                              //   airflow). Less air or more pumping ⇒ bigger
+                              //   drop.
+        AIR_DT_COND:  12,     // design condenser air rise, °F — sits BELOW the
+                              //   15 °F design split on purpose so discharge air
+                              //   approaches the condensing temp but never
+                              //   passes it (90 °F ambient ⇒ 102 °F air under a
+                              //   105 °F tCond).
+        AIR_APPROACH: 2,      // °F — the airside MIN_LIFT: closest either
+                              //   leaving airstream may approach its coil's
+                              //   saturation temp. Supply air floors at tEvap +
+                              //   this; condenser discharge air caps at tCond −
+                              //   this and floors at ambient (when block (C)'s
+                              //   split collapses below the approach — overblown
+                              //   condenser airflow + deep undercharge — the
+                              //   displayed rise collapses to zero rather than
+                              //   contradict the head gauge).
 
         // ── Flag / verdict thresholds ──
         FREEZE_T:        32,  // °F — coil-freeze onset (evap sat temp below 32).
@@ -324,6 +350,21 @@ const RefrigLoop = (function () {
         // (E) Airflow readout against the 400 CFM/ton floor.
         const cfmPerTon = D.CFM_PER_TON_DESIGN * airflow;
 
+        // (F) Airside coil temperatures — sensible-only. Each leaving airstream
+        //     may APPROACH its coil's own refrigerant temp but never cross it:
+        //     supply air floors at tEvap + AIR_APPROACH, condenser discharge
+        //     air caps at tCond − AIR_APPROACH. The outer ambient floor keeps
+        //     condenser air from leaving COOLER than it entered when block
+        //     (C)'s split collapses below the approach — the displayed rise
+        //     degenerates to zero instead of contradicting the head gauge.
+        const tAirInEvap  = returnT;
+        const tAirOutEvap = Math.max(returnT - D.AIR_DT_EVAP * (capacity / airflow),
+                                     tEvap + D.AIR_APPROACH);
+        const tAirInCond  = ambient;
+        const tAirOutCond = Math.max(ambient,
+            Math.min(ambient + D.AIR_DT_COND * (capacity / condAir),
+                     tCond - D.AIR_APPROACH));
+
         // Pressures — the ONE hard-data step. dew for the low side (superheat
         // convention), bubble for the high side (subcooling convention). Clamped
         // to the table ends; a clamp raises flags.outOfRange (never NaN).
@@ -365,6 +406,8 @@ const RefrigLoop = (function () {
             tEvap: tEvap, tCond: tCond,
             superheat: superheat, subcool: subcool,
             tSucLine: tSucLine, tLiqLine: tLiqLine,
+            tAirInEvap: tAirInEvap, tAirOutEvap: tAirOutEvap,
+            tAirInCond: tAirInCond, tAirOutCond: tAirOutCond,
             cfmPerTon: cfmPerTon,
             flags: flags,
             verdict: verdict,

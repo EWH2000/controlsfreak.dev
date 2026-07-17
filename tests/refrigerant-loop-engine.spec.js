@@ -33,7 +33,8 @@ function allFinite(state, keys) {
     return keys.every((k) => Number.isFinite(state[k]));
 }
 const STATE_NUMS = ['pSuc', 'pDis', 'tEvap', 'tCond', 'superheat', 'subcool',
-    'tSucLine', 'tLiqLine', 'cfmPerTon'];
+    'tSucLine', 'tLiqLine', 'tAirInEvap', 'tAirOutEvap', 'tAirInCond',
+    'tAirOutCond', 'cfmPerTon'];
 
 // ── 1. Saturation lookups match the table ────────────────────────────────
 test.describe('refrigerant-loop-engine: saturation lookups (the grounding)', () => {
@@ -431,5 +432,139 @@ test.describe('refrigerant-loop-engine: remaining directions + robustness', () =
             expect(s.pSuc).toBeCloseTo(base.pSuc, 6);
             expect(s.pDis).toBeCloseTo(base.pDis, 6);
         }
+    });
+});
+
+// ── 11. Airside coil temperatures (block F) ──────────────────────────────
+// Block F is pure arithmetic on already-solved locals — it never reads the
+// saturation tables — so a single refrigerant (the default) covers the
+// sweeps. The approach clamps mirror MIN_LIFT on the airside: leaving air
+// may approach its coil's saturation temp but never cross it, and condenser
+// discharge air never leaves cooler than it entered.
+test.describe('refrigerant-loop-engine: airside coil temperatures', () => {
+
+    test('typical lands on the 75→55 supply and 90→102 discharge anchors', () => {
+        const { RefrigLoop } = loadEngine();
+        const D = RefrigLoop.DESIGN;
+        const s = RefrigLoop.solve(RefrigLoop.PRESETS.typical);
+        expect(s.tAirInEvap).toBe(75);
+        expect(s.tAirOutEvap).toBeCloseTo(55, 6);
+        expect(s.tAirInCond).toBe(90);
+        expect(s.tAirOutCond).toBeCloseTo(102, 6);
+        // The splits close on the design deltas…
+        expect(s.tAirInEvap - s.tAirOutEvap).toBeCloseTo(D.AIR_DT_EVAP, 6);
+        expect(s.tAirOutCond - s.tAirInCond).toBeCloseTo(D.AIR_DT_COND, 6);
+        // …and each airstream sits on the correct side of its own coil.
+        expect(s.tAirOutEvap).toBeGreaterThan(s.tEvap);
+        expect(s.tAirOutCond).toBeLessThan(s.tCond);
+    });
+
+    test('air orderings hold at every corner of the CLAMPS box', () => {
+        const { RefrigLoop } = loadEngine();
+        const C = RefrigLoop.CLAMPS;
+        const D = RefrigLoop.DESIGN;
+        const axes = ['airflow', 'returnT', 'charge', 'shTarget', 'ambient', 'condAir', 'capacity'];
+        for (let mask = 0; mask < (1 << axes.length); mask++) {
+            const inp = {};
+            axes.forEach((k, i) => { inp[k] = (mask & (1 << i)) ? C[k].max : C[k].min; });
+            const s = RefrigLoop.solve(inp);
+            // Entering air IS the knob; leaving air never crosses its coil's
+            // saturation temp, the supply always cools, the discharge never
+            // leaves cooler than it entered.
+            expect(s.tAirInEvap, `evap in mask ${mask}`).toBe(inp.returnT);
+            expect(s.tAirInCond, `cond in mask ${mask}`).toBe(inp.ambient);
+            expect(s.tAirOutEvap, `evap approach mask ${mask}`)
+                .toBeGreaterThanOrEqual(s.tEvap + D.AIR_APPROACH - 1e-9);
+            expect(s.tAirOutEvap, `evap cools mask ${mask}`).toBeLessThan(s.tAirInEvap);
+            expect(s.tAirOutCond, `cond rises mask ${mask}`)
+                .toBeGreaterThanOrEqual(s.tAirInCond);
+            expect(s.tAirOutCond, `cond approach mask ${mask}`)
+                .toBeLessThanOrEqual(Math.max(s.tAirInCond, s.tCond - D.AIR_APPROACH) + 1e-9);
+        }
+    });
+
+    test('airflow ↓ ⇒ supply air strictly colder; starve blows freezing air at normal SH', () => {
+        const { RefrigLoop } = loadEngine();
+        const sweep = [1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4].map(
+            (a) => RefrigLoop.solve({ airflow: a }));
+        expect(sweep[0].tAirInEvap).toBe(75);
+        for (let i = 1; i < sweep.length; i++) {
+            expect(sweep[i].tAirOutEvap, `tAirOutEvap step ${i}`)
+                .toBeLessThan(sweep[i - 1].tAirOutEvap);
+            expect(sweep[i].tAirInEvap, `tAirInEvap step ${i}`).toBe(75);
+        }
+        // The teaching tell, airside view of the honesty guard: the starve
+        // preset (airflow 0.45, all else design) blows sub-freezing supply
+        // air — 75 − 20/0.45 = 30.56 °F — while superheat still reads a
+        // normal 10 (nothing on the refrigerant side looks wrong).
+        const s = RefrigLoop.solve(RefrigLoop.PRESETS.starve);
+        expect(s.tAirOutEvap).toBeLessThan(32);
+        expect(s.tAirOutEvap).toBeCloseTo(30.56, 1);
+        expect(s.superheat).toBeGreaterThan(RefrigLoop.DESIGN.FLOODBACK_SH);
+        expect(s.superheat).toBeLessThanOrEqual(RefrigLoop.DESIGN.STARVED_SH);
+    });
+
+    test('condAir ↓ ⇒ discharge air strictly hotter, across the approach cap', () => {
+        const { RefrigLoop } = loadEngine();
+        // The first two points ride the tCond − 2 cap (97, 100) before the raw
+        // rise takes over at 1.0 — strictness must hold across the branch change.
+        const sweep = [1.2, 1.1, 1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4].map(
+            (c) => RefrigLoop.solve({ condAir: c }));
+        expect(sweep[0].tAirInCond).toBe(90);
+        for (let i = 1; i < sweep.length; i++) {
+            expect(sweep[i].tAirOutCond, `tAirOutCond step ${i}`)
+                .toBeGreaterThan(sweep[i - 1].tAirOutCond);
+            expect(sweep[i].tAirInCond, `tAirInCond step ${i}`).toBe(90);
+        }
+    });
+
+    test('capacity widens both splits; return / ambient temps track through', () => {
+        const { RefrigLoop } = loadEngine();
+        // Stage 2 doubles the load on the same air ⇒ both splits widen (strict).
+        const stage1 = RefrigLoop.solve({ capacity: 0.5 });
+        const stage2 = RefrigLoop.solve({ capacity: 1.0 });
+        expect(stage2.tAirInEvap - stage2.tAirOutEvap)
+            .toBeGreaterThan(stage1.tAirInEvap - stage1.tAirOutEvap);
+        expect(stage2.tAirOutCond - stage2.tAirInCond)
+            .toBeGreaterThan(stage1.tAirOutCond - stage1.tAirInCond);
+        // Return air shifts both indoor temps 1:1 (the drop term never reads
+        // returnT, and neither endpoint hits the approach floor).
+        const cold = RefrigLoop.solve({ returnT: 65 });
+        const warm = RefrigLoop.solve({ returnT: 85 });
+        expect(warm.tAirInEvap - cold.tAirInEvap).toBeCloseTo(20, 6);
+        expect(warm.tAirOutEvap - cold.tAirOutEvap).toBeCloseTo(20, 6);
+        // Ambient shifts both outdoor temps 1:1 — unclamped at defaults over
+        // the whole ambient range (55 ⇒ 67 °F out, 115 ⇒ 127 °F out).
+        const mild = RefrigLoop.solve({ ambient: 55 });
+        const hot  = RefrigLoop.solve({ ambient: 115 });
+        expect(hot.tAirInCond - mild.tAirInCond).toBeCloseTo(60, 6);
+        expect(hot.tAirOutCond - mild.tAirOutCond).toBeCloseTo(60, 6);
+    });
+
+    test('the approach clamps engage at the derived corners (pinned)', () => {
+        const { RefrigLoop } = loadEngine();
+        // Warm coil + light load: the raw 56.67 °F supply would leave COLDER
+        // than the 58.5 °F coil — floored at tEvap + 2 = 60.5, still below
+        // the 65 °F return.
+        const a = RefrigLoop.solve({ airflow: 1.2, returnT: 65, charge: 1.2, capacity: 0.5 });
+        expect(a.tEvap).toBeCloseTo(58.5, 6);
+        expect(a.tAirOutEvap).toBeCloseTo(60.5, 6);
+        expect(a.tAirOutEvap).toBeLessThan(65);
+        // Deep starve: the raw 15.0 °F supply sits INSIDE the 2 °F approach
+        // of the 14 °F coil — floored to 16.
+        const b = RefrigLoop.solve({ airflow: 0.4, returnT: 65, charge: 1.2 });
+        expect(b.tEvap).toBeCloseTo(14, 6);
+        expect(b.tAirOutEvap).toBeCloseTo(16, 6);
+        // Overblown condenser: the raw 100 °F discharge would PASS the 99 °F
+        // condensing temp — capped at tCond − 2 = 97.
+        const c = RefrigLoop.solve({ condAir: 1.2 });
+        expect(c.tCond).toBeCloseTo(99, 6);
+        expect(c.tAirOutCond).toBeCloseTo(97, 6);
+        // Degenerate: overblown condenser + deep undercharge collapses block
+        // (C)'s split below zero (tCond 89 < ambient 90) — the ambient floor
+        // shows a zero rise rather than contradict the head gauge.
+        const d = RefrigLoop.solve({ condAir: 1.2, charge: 0.6 });
+        expect(d.tCond).toBeCloseTo(89, 6);
+        expect(d.tAirOutCond).toBe(90);
     });
 });
