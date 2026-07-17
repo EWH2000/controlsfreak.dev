@@ -13,7 +13,7 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
         /* ── Refrigerant Loop Simulator — page-local internals (rl-*) ──
            The shared sim/widget shell (.form-row / .field / .slider-field /
            .btn-row / .copy-btn / .bit-readouts / .readout / .status-pill /
-           .device / .lcd / .led / .dev-leds / .widget-fan) lives in
+           .device / .lcd / .led / .dev-leds) lives in
            styles.css; only the pieces this page alone draws — the loop-
            schematic cosmetics, the two manifold gauges' SVG internals, the
            frost state, and the register layout grid — sit here. --rl-frost
@@ -47,10 +47,6 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
         .rl-loop-svg.frozen .rl-frost { opacity: 1; }
         .rl-frost-fill { fill: var(--rl-frost); opacity: 0.28; }
         .rl-frost-mark { stroke: var(--rl-frost); stroke-width: 2; stroke-linecap: round; }
-
-        /* The compressor spin glyph sits inside the compressor circle; the
-           blades reuse the shared .widget-fan look, tinted "running". */
-        .rl-loop .widget-fan.spinning ellipse { fill: var(--blue); }
 
         /* ── Register layout — gauges beside the LCD/LED/verdict stack ──
            A two-column grid at wide widths (gauges | readouts), stacking
@@ -441,7 +437,7 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                  discharge + liquid recolored --heat (hot side), expansion +
                  suction --blue-cool (cool side, suction recolored to a frost
                  tint when the coil ices). The compressor circle carries a
-                 spinning fan glyph whose rate tracks the compressor stage.
+                 top-down scroll set whose orbit rate tracks the stage.
                  The particles + colors are applied by flow-engine.js (loaded
                  site-wide); this page only tags the geometry and recolors. -->
             <h2 class="subhead">The loop</h2>
@@ -451,7 +447,7 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                      aria-describedby="rl-cycle-desc"
                      font-family="var(--mono)">
                     <title id="rl-cycle-title">The refrigerant loop, live</title>
-                    <desc id="rl-cycle-desc">A closed rectangular vapor-compression loop drawn clockwise. A compressor on the left drives hot high-pressure vapor up the discharge line into a condenser spanning the top, which rejects heat to outdoor air and drops the refrigerant to a warm high-pressure liquid; the liquid line runs down the right side to a metering device, which flashes it to a cold low-pressure mix; that mix crosses the evaporator along the bottom, absorbing heat from indoor air and boiling back to a cool low-pressure vapor that returns up the suction line to the compressor. The discharge and liquid-line pipes — up the left side and across the top — are the hot high side, drawn in orange; the expansion and suction pipes — down the right side and along the bottom — are the cool low side, drawn in muted blue. When the evaporator coil is starved of airflow and ices over, a frost overlay appears on the evaporator and the suction leg. Live pressure, superheat, subcooling and alarm values are reported in the gauges and readouts below.</desc>
+                    <desc id="rl-cycle-desc">A closed rectangular vapor-compression loop drawn clockwise. A compressor on the left drives hot high-pressure vapor up the discharge line into a condenser spanning the top, which rejects heat to outdoor air and drops the refrigerant to a warm high-pressure liquid; the liquid line runs down the right side to a metering device, which flashes it to a cold low-pressure mix; that mix crosses the evaporator along the bottom, absorbing heat from indoor air and boiling back to a cool low-pressure vapor that returns up the suction line to the compressor. The discharge and liquid-line pipes — up the left side and across the top — are the hot high side, drawn in orange; the expansion and suction pipes — down the right side and along the bottom — are the cool low side, drawn in muted blue. When the evaporator coil is starved of airflow and ices over, a frost overlay appears on the evaporator and the suction leg. The compressor symbol is a top-down scroll set — two interleaved spirals, the moving one orbiting the fixed one in a small circle (a circular translation, not a spin) at a rate that follows the compressor stage. Live pressure, superheat, subcooling and alarm values are reported in the gauges and readouts below.</desc>
 
                     <!-- ── HIGH-SIDE pipes (orange / --heat) ── -->
                     <path id="rl-discharge" data-flow="supply" d="M 120 193 V 85 H 200" fill="none"
@@ -493,20 +489,29 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                     <line x1="160" y1="215" x2="580" y2="215" stroke="var(--text-dim)" stroke-width="1"
                           stroke-dasharray="2 5" opacity="0.45"/>
 
-                    <!-- ── COMPRESSOR (circle + spinning fan glyph) ── -->
+                    <!-- ── COMPRESSOR (circle + top-down scroll set) ──
+                         The classic scroll-compressor cross-section: two
+                         identical spirals, one fixed, one orbiting (circular
+                         translation — it never spins). Generator: alternating
+                         semicircular arcs about two centers (0,0)/(3.5,0),
+                         radii 2.5 / 6 / 9.5 / 13 / 16.5 (half-pitch 3.5,
+                         2.5 turns, outer radius 16.5 — clears the r24 housing
+                         with the 3.25px orbit). The orbiting copy is the same
+                         path with a baked rotate(180) about the compressor
+                         center; frame() writes only the orbit translate. Ink
+                         reuses the retired fan glyph's palette: fixed scroll
+                         in its base tint (blue-cool), orbiting scroll in its
+                         running tint (blue), same 2px weight. -->
                     <g id="rl-compressor">
                         <circle cx="120" cy="215" r="24" fill="var(--surface)"
                                 stroke="var(--text-dim)" stroke-width="2"/>
-                        <svg class="widget-fan spinning" x="99" y="194" width="42" height="42" viewBox="0 0 100 100">
-                            <g class="widget-fan-blades" id="rl-compressor-fan">
-                                <ellipse cx="50" cy="22" rx="7" ry="22"/>
-                                <ellipse cx="50" cy="22" rx="7" ry="22" transform="rotate(72 50 50)"/>
-                                <ellipse cx="50" cy="22" rx="7" ry="22" transform="rotate(144 50 50)"/>
-                                <ellipse cx="50" cy="22" rx="7" ry="22" transform="rotate(216 50 50)"/>
-                                <ellipse cx="50" cy="22" rx="7" ry="22" transform="rotate(288 50 50)"/>
+                        <g transform="translate(120 215)" fill="none"
+                           stroke-width="2" stroke-linecap="round">
+                            <path id="rl-scroll-fixed" stroke="var(--blue-cool)" d="M 2.5 0 A 2.5 2.5 0 0 1 -2.5 0 A 6 6 0 0 1 9.5 0 A 9.5 9.5 0 0 1 -9.5 0 A 13 13 0 0 1 16.5 0 A 16.5 16.5 0 0 1 -16.5 0"/>
+                            <g id="rl-compressor-orbit" transform="translate(3.25 0)">
+                                <path stroke="var(--blue)" d="M 2.5 0 A 2.5 2.5 0 0 1 -2.5 0 A 6 6 0 0 1 9.5 0 A 9.5 9.5 0 0 1 -9.5 0 A 13 13 0 0 1 16.5 0 A 16.5 16.5 0 0 1 -16.5 0" transform="rotate(180)"/>
                             </g>
-                            <circle cx="50" cy="50" r="4.5" fill="var(--text-dim)"/>
-                        </svg>
+                        </g>
                         <text class="rl-comp-label" x="80" y="257" text-anchor="middle" font-size="12"
                               font-weight="600" fill="var(--text-bright)">COMPRESSOR</text>
                     </g>
@@ -1635,14 +1640,17 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
         }
 
         // ─────────────────────────────────────────────────────────────
-        // Needle-easing + compressor-spin rAF. One loop drives both
-        // gauges toward their target angle and rotates the fan glyph at a
-        // rate tied to the compressor stage. Under reduced-motion the
-        // needles snap (setGaugeTarget applies immediately) and the loop
-        // never schedules — mirrors flow-engine.js bailing out.
+        // Needle-easing + scroll-orbit rAF. One loop drives both gauges
+        // toward their target angle and orbits the compressor's moving
+        // scroll — a circular translation (it never spins) — at a rate
+        // tied to the compressor stage. Under reduced-motion the needles
+        // snap (setGaugeTarget applies immediately) and the loop never
+        // schedules, so the orbit rests at the markup's settled phase-0
+        // translate — mirrors flow-engine.js bailing out.
         // ─────────────────────────────────────────────────────────────
-        let fanAngle = 0, lastT = null;
-        const fan = $('rl-compressor-fan');
+        const ORBIT_R = 3.25;              // px; matches the markup's settled translate(3.25 0)
+        let orbitPhase = 0, lastT = null;  // degrees; phase 0 = the markup's rest position
+        const orbit = $('rl-compressor-orbit');
 
         function frame(t) {
             if (lastT === null) lastT = t;
@@ -1656,11 +1664,19 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                 applyNeedle(g);
             });
 
-            fanAngle = (fanAngle + 140 * capacity * dt) % 360;
-            if (fan) fan.setAttribute('transform', 'rotate(' + fanAngle.toFixed(1) + ' 50 50)');
+            // Same pacing rule the old fan glyph used: 140°/s × capacity.
+            // The 180° rotation is baked on the path inside the group, so
+            // only the orbit translate is written per frame.
+            orbitPhase = (orbitPhase + 140 * capacity * dt) % 360;
+            if (orbit) {
+                const rad = orbitPhase * Math.PI / 180;
+                orbit.setAttribute('transform', 'translate(' +
+                    (ORBIT_R * Math.cos(rad)).toFixed(2) + ' ' +
+                    (ORBIT_R * Math.sin(rad)).toFixed(2) + ')');
+            }
 
-            // Keep going: the compressor is always running, so the fan spins
-            // continuously (the needle easing rides the same loop).
+            // Keep going: the compressor is always running, so the scroll
+            // orbits continuously (the needle easing rides the same loop).
             requestAnimationFrame(frame);
         }
 
