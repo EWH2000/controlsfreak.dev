@@ -370,7 +370,7 @@ section). **Category keys mirror the landing pages' `navCard()`
   failure-callout). Current set: coil-freeze-risk, equipment-airflow,
   refrigerant-pt, air-mixing, economizer-ratio, affinity-laws,
   transformer-sizing, electrical-quick-calc, minimum-outdoor-air,
-  duct-sizer. Rationale + tiering in the friction file under
+  duct-sizer, refrigerant-loop (simulator). Rationale + tiering in the friction file under
   "Damage-stakes scope notes."
 
 ### Gotchas

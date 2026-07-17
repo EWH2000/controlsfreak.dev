@@ -118,6 +118,10 @@
     --blue-glow:    rgba(74,163,221,0.24);
     --red:          #e85d4f;   /* fault / alarm */
     --red-dim:      rgba(232,93,79,0.14);   /* faint red wash — quiz wrong-answer fill (parallels --accent-dim) */
+    --red-text:     #f07a6d;   /* alarm TEXT on surfaces — --red reads 3.89:1 on
+                                  --surface-2 (AA fail at small sizes); this
+                                  lighter step computes 4.91:1. Borders/strokes
+                                  keep --red (3:1 UI threshold passes). */
     --heat:         #e8884a;   /* warm orange — "heating" on the psychrometric chart's process lines; companion to --blue for cooling */
     --teal:         #46b3ac;   /* teal — data/comm traces on the background schematic (BACnet, IP); also outside-air ducts in the education air diagrams */
     --teal-dim:     rgba(70,179,172,0.14);
@@ -182,6 +186,7 @@
     --blue-glow:    rgba(17,103,159,0.22);
     --red:          #c4382f;
     --red-dim:      rgba(196,56,47,0.10);
+    --red-text:     #c4382f;   /* light --red already clears AA on light surfaces */
     --heat:         #9c5a14;
     --teal:         #377070;
     --teal-dim:     rgba(55,112,112,0.10);
@@ -233,6 +238,7 @@
         --blue-glow:    rgba(17,103,159,0.22);
         --red:          #c4382f;
         --red-dim:      rgba(196,56,47,0.10);
+        --red-text:     #c4382f;
         --heat:         #9c5a14;
         --teal:         #377070;
         --teal-dim:     rgba(55,112,112,0.10);
@@ -3577,7 +3583,7 @@ p.ref-note.compact {
 }
 .status-pill.ok    { border-color: var(--accent); background: var(--accent-dim); }
 .status-pill.warn  { border-color: var(--heat);   color: var(--heat); }
-.status-pill.error { border-color: var(--red);    color: var(--red); }
+.status-pill.error { border-color: var(--red);    color: var(--red-text); }
 
 /* 5-blade fan icon — visual handle for "the drive is energising
    something." Used by the run/speed widget on vfds and both
@@ -3817,7 +3823,9 @@ p.ref-note.compact {
     font-size: 0.54rem;
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    color: rgba(27,36,16,0.72);
+    /* 0.85 (was 0.72): the caption computed 3.69:1 against the darker
+       backlight-gradient stop — AA fail at this size. 0.85 → 4.75:1. */
+    color: rgba(27,36,16,0.85);
 }
 .lcd .v {
     font-family: var(--mono);
@@ -3827,7 +3835,7 @@ p.ref-note.compact {
     color: var(--lcd-ink);
     margin-top: 0.12rem;
 }
-.lcd .v small { font-size: 0.66rem; color: rgba(27,36,16,0.6); margin-left: 0.12rem; }
+.lcd .v small { font-size: 0.66rem; color: rgba(27,36,16,0.85); margin-left: 0.12rem; }   /* 0.85 (was 0.6, a 2.91:1 AA fail) — see .lcd .k */
 
 /* Physical keypad — embossed keycaps. Warm key colours are equipment
    constants (the key is plastic, not themed); .go is the run/enter key. */

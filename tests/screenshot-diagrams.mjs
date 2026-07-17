@@ -39,6 +39,9 @@ const DIAGRAM_SELECTOR = [
     'svg.pc-w1-chart',  // pump-control worked-example chart
     'svg.bp-w-gauge',   // building-pressure worked-example gauge
     'svg.va-chart',     // valve-authority curve chart
+    'svg.rl-loop-svg',  // refrigerant-loop sim: the animated cycle schematic
+    'svg.rl-gauge',     // refrigerant-loop sim: manifold dials (ring-label
+                        // collisions were a real prior-audit finding class)
 ].join(', ');
 
 async function fetchSitemapUrls() {
