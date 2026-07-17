@@ -439,8 +439,11 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                  heat-in / heat-out arrows. Four data-flow pipe segments —
                  discharge + liquid recolored --heat (hot side), expansion +
                  suction --blue-cool (cool side, suction recolored to a frost
-                 tint when the coil ices). The compressor circle carries a
-                 top-down scroll set whose orbit rate tracks the stage.
+                 tint when the coil ices). Eight airside lane segments cross
+                 the two coil faces, their density banded to the airflow
+                 knobs (see the AIRSIDE LANES note in the SVG). The
+                 compressor circle carries a top-down scroll set whose orbit
+                 rate tracks the stage.
                  The particles + colors are applied by flow-engine.js (loaded
                  site-wide); this page only tags the geometry and recolors. -->
             <h2 class="subhead">The loop</h2>
@@ -450,7 +453,7 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                      aria-describedby="rl-cycle-desc"
                      font-family="var(--mono)">
                     <title id="rl-cycle-title">The refrigerant loop, live</title>
-                    <desc id="rl-cycle-desc">A closed rectangular vapor-compression loop drawn clockwise. A compressor on the left drives hot high-pressure vapor up the discharge line into a condenser spanning the top, which rejects heat to outdoor air and drops the refrigerant to a warm high-pressure liquid; the liquid line runs down the right side to a metering device, which flashes it to a cold low-pressure mix; that mix crosses the evaporator along the bottom, absorbing heat from indoor air and boiling back to a cool low-pressure vapor that returns up the suction line to the compressor. The discharge and liquid-line pipes — up the left side and across the top — are the hot high side, drawn in orange; the expansion and suction pipes — down the right side and along the bottom — are the cool low side, drawn in muted blue. When the evaporator coil is starved of airflow and ices over, a frost overlay appears on the evaporator and the suction leg. The compressor symbol is a top-down scroll set — two interleaved spirals, the moving one orbiting the fixed one in a small circle (a circular translation, not a spin) at a rate that follows the compressor stage. Live pressure, superheat, subcooling and alarm values are reported in the gauges and readouts below.</desc>
+                    <desc id="rl-cycle-desc">A closed rectangular vapor-compression loop drawn clockwise. A compressor on the left drives hot high-pressure vapor up the discharge line into a condenser spanning the top, which rejects heat to outdoor air and drops the refrigerant to a warm high-pressure liquid; the liquid line runs down the right side to a metering device, which flashes it to a cold low-pressure mix; that mix crosses the evaporator along the bottom, absorbing heat from indoor air and boiling back to a cool low-pressure vapor that returns up the suction line to the compressor. The discharge and liquid-line pipes — up the left side and across the top — are the hot high side, drawn in orange; the expansion and suction pipes — down the right side and along the bottom — are the cool low side, drawn in muted blue. When the evaporator coil is starved of airflow and ices over, a frost overlay appears on the evaporator and the suction leg. The compressor symbol is a top-down scroll set — two interleaved spirals, the moving one orbiting the fixed one in a small circle (a circular translation, not a spin) at a rate that follows the compressor stage. Thin dashed air lanes cross both coil faces left to right — outdoor air over the condenser, indoor air over the evaporator — entering in dim ink and leaving tinted by the coil's work: warmed orange past the condenser's midline, cooled blue past the evaporator's, frost-tinted once the coil ices. Each face's lane density follows its own airflow knob, so a starved coil visibly thins its air stream. Live pressure, superheat, subcooling and alarm values are reported in the gauges and readouts below.</desc>
 
                     <!-- ── HIGH-SIDE pipes (orange / --heat) ── -->
                     <path id="rl-discharge" data-flow="supply" d="M 120 193 V 85 H 200" fill="none"
@@ -574,6 +577,53 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                     <text x="585" y="140" text-anchor="end" font-size="11" fill="var(--heat)">warm liquid</text>
                     <text x="585" y="290" text-anchor="end" font-size="11" fill="var(--blue-cool)">cold mix</text>
                     <text x="135" y="290" font-size="11" fill="var(--blue-cool)">cool vapor</text>
+
+                    <!-- ── AIRSIDE LANES — the streams the two airflow knobs
+                         drive. Two thin dashed lanes cross each coil face
+                         left→right (matching the register's "air in → out"
+                         reading), skirting the label band. Each lane splits at
+                         the rect midline into an IN half (neutral dim ink) and
+                         an OUT half tinted by the coil's work: warmed --heat
+                         off the condenser (opacity-quieted — the air is
+                         supporting cast next to the pipes), cooled --blue-cool
+                         off the evaporator (recolored to the frost tint when
+                         the coil ices, exactly like the suction line). Both
+                         halves run the same direction, so one path per segment
+                         is fine — the converging-flow two-path gotcha only
+                         applies when directions oppose. data-flow="air" makes
+                         the particle fill follow each lane's stroke; density
+                         bands track the two knobs from updateLoop. The dashes
+                         are the static / reduced-motion / print encoding —
+                         .flow-active drops them while particles run (the
+                         shared air-duct rule in styles.css). -->
+                    <g>
+                        <!-- Condenser face: outdoor air, in (dim) → out (warmed). -->
+                        <path id="rl-air-c-in-a"  data-flow="air" d="M 185 70 H 360" fill="none"
+                              stroke="var(--text-dim)" stroke-width="1.4" stroke-dasharray="4 4" opacity="0.6"/>
+                        <path id="rl-air-c-out-a" data-flow="air" d="M 360 70 H 535" fill="none"
+                              stroke="var(--heat)" stroke-width="1.4" stroke-dasharray="4 4" opacity="0.6"/>
+                        <path id="rl-air-c-in-b"  data-flow="air" d="M 185 103 H 360" fill="none"
+                              stroke="var(--text-dim)" stroke-width="1.4" stroke-dasharray="4 4" opacity="0.6"/>
+                        <path id="rl-air-c-out-b" data-flow="air" d="M 360 103 H 535" fill="none"
+                              stroke="var(--heat)" stroke-width="1.4" stroke-dasharray="4 4" opacity="0.6"/>
+                        <g fill="var(--heat)" opacity="0.6">
+                            <polygon points="537,66 545,70 537,74"/>
+                            <polygon points="537,99 545,103 537,107"/>
+                        </g>
+                        <!-- Evaporator face: indoor air, in (dim) → out (cooled). -->
+                        <path id="rl-air-e-in-a"  data-flow="air" d="M 185 330 H 360" fill="none"
+                              stroke="var(--text-dim)" stroke-width="1.4" stroke-dasharray="4 4" opacity="0.6"/>
+                        <path id="rl-air-e-out-a" data-flow="air" d="M 360 330 H 535" fill="none"
+                              stroke="var(--blue-cool)" stroke-width="1.4" stroke-dasharray="4 4" opacity="0.75"/>
+                        <path id="rl-air-e-in-b"  data-flow="air" d="M 185 363 H 360" fill="none"
+                              stroke="var(--text-dim)" stroke-width="1.4" stroke-dasharray="4 4" opacity="0.6"/>
+                        <path id="rl-air-e-out-b" data-flow="air" d="M 360 363 H 535" fill="none"
+                              stroke="var(--blue-cool)" stroke-width="1.4" stroke-dasharray="4 4" opacity="0.75"/>
+                        <g fill="var(--blue-cool)" opacity="0.75">
+                            <polygon points="537,326 545,330 537,334"/>
+                            <polygon points="537,359 545,363 537,367"/>
+                        </g>
+                    </g>
 
                     <!-- ── FROST OVERLAY — fades in on the coil-freeze alarm ── -->
                     <g class="rl-frost" id="rl-frost">
@@ -1309,7 +1359,8 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
         // ─────────────────────────────────────────────────────────────
         // LOOP animation hooks (flow-engine.js). Color encodes state
         // (hot / cool / frost); coarse density bands encode mass flow
-        // (compressor stage, thinned when the coil ices). refreshPath
+        // (compressor stage, thinned when the coil ices) and — on the
+        // airside lanes — each coil face's CFM knob. refreshPath
         // rebuilds a pool (and resets particle color to the data-flow
         // default), so density changes are throttled to band crossings and
         // the colors are re-applied every render. No-ops safely before the
@@ -1318,7 +1369,23 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
         const FLOW_SEGS = ['rl-discharge', 'rl-liquid', 'rl-expansion', 'rl-suction'];
         let lastBand = null;
 
-        function updateLoop(s) {
+        // Airside lane segments — attribute-only selectors (the SVG-id
+        // gotcha): one set per coil face for the density refresh, plus the
+        // evaporator OUT halves alone for the frost recolor.
+        const AIR_E     = document.querySelectorAll('[id^="rl-air-e-"]');
+        const AIR_C     = document.querySelectorAll('[id^="rl-air-c-"]');
+        const AIR_E_OUT = document.querySelectorAll('[id^="rl-air-e-out"]');
+        let lastAirBandE = null, lastAirBandC = null;
+
+        // Map an airflow knob (0.40–1.20) onto the pipes' coarse density
+        // scheme. Design 1.00 deliberately sits one band under full so the
+        // top of the knob (≥1.10) still reads denser than design; 0.40
+        // lands on the same sparse 0.3 the iced pipes use.
+        function airBand(v) {
+            return v >= 1.10 ? 1.0 : v >= 0.90 ? 0.75 : v >= 0.65 ? 0.5 : 0.3;
+        }
+
+        function updateLoop(s, inp) {
             $('rl-cycle').classList.toggle('frozen', s.flags.freeze);
             if (!window.FlowEngine || !FlowEngine.setPathColor) return;
 
@@ -1332,11 +1399,36 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                     if (FlowEngine.refreshPath) FlowEngine.refreshPath(el);
                 });
             }
+            // Airside bands: each coil face's lane rate follows its own CFM
+            // knob — indoor tracks airflow, outdoor tracks condAir. Same
+            // throttle-to-band-crossings rule as the pipes above.
+            const eBand = airBand(inp.airflow);
+            if (eBand !== lastAirBandE) {
+                lastAirBandE = eBand;
+                AIR_E.forEach(el => {
+                    el.setAttribute('data-flow-density', eBand);
+                    if (FlowEngine.refreshPath) FlowEngine.refreshPath(el);
+                });
+            }
+            const cBand = airBand(inp.condAir);
+            if (cBand !== lastAirBandC) {
+                lastAirBandC = cBand;
+                AIR_C.forEach(el => {
+                    el.setAttribute('data-flow-density', cBand);
+                    if (FlowEngine.refreshPath) FlowEngine.refreshPath(el);
+                });
+            }
             // State colors (cheap; also restores color after a refresh).
             FlowEngine.setPathColor($('rl-discharge'),  'var(--heat)');
             FlowEngine.setPathColor($('rl-liquid'),     'var(--heat)');
             FlowEngine.setPathColor($('rl-expansion'),  'var(--blue-cool)');
             FlowEngine.setPathColor($('rl-suction'),    s.flags.freeze ? 'var(--rl-frost)' : 'var(--blue-cool)');
+            // The indoor OUT air rides the same frost recolor as the suction
+            // line; every other lane's rebuild default (its stroke) is
+            // already the right color.
+            AIR_E_OUT.forEach(el => {
+                FlowEngine.setPathColor(el, s.flags.freeze ? 'var(--rl-frost)' : 'var(--blue-cool)');
+            });
         }
 
         // ─────────────────────────────────────────────────────────────
@@ -1673,7 +1765,7 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
             setGaugeTarget(gauges.low,  s.pSuc, s.flags.outOfRangeLow  ? '≤ ' : '');
             setGaugeTarget(gauges.high, s.pDis, s.flags.outOfRangeHigh ? '≥ ' : '');
             renderRegister(s);
-            updateLoop(s);
+            updateLoop(s, inp);
             drawPlot(s);
         }
 
@@ -1900,7 +1992,8 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
         // the pools). Ours fires next, with the pools already built, so the
         // recolor sticks. If the document is already parsed, run now.
         function primeLoop() {
-            lastBand = null;          // force the density band to (re)apply
+            lastBand = null;          // force the density bands to (re)apply
+            lastAirBandE = lastAirBandC = null;
             renderMain();
         }
         if (document.readyState === 'loading') {
