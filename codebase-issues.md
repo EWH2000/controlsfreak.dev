@@ -4935,6 +4935,68 @@ collapsing the two to one source. Deferred out of the sim's PR to keep it scoped
 (the sim only *added* code; touching the shipped tool is a separate, testable
 change). Flagged in the engine header as a tracked follow-up.
 
+### 160. Home Browse-card Simulators `desc` names five of seven sims *(open — 2026-07-16)*
+
+`html/index.html`'s Browse-card Simulators description still enumerates
+five simulators ("a PID step-response loop, a mock drive keypad, a
+function-block wiresheet, an equipment-staging plant, and a
+controller-wiring rig") while the pill correctly says `7 Simulators` —
+`hydronic-loop-builder` was already missing on main and
+`refrigerant-loop` extends the drift. Only the pill is guarded by
+`home-hero.spec.js`. Fix: add the two names or de-enumerate the desc.
+
+### 161. `--blue-cool` small-text light-theme contrast is 3.74:1 *(open — 2026-07-16)*
+
+Light theme's `--blue-cool` (#5e8aa0) computes 3.74:1 on the white
+surface — an AA fail wherever it colors small data text (the
+refrigerant-loop P-T plot's SC gap label, the loop SVG's "cold
+mix"/"cool vapor" labels, and the same return-side label color across
+the older cycle/hydronics diagrams). A site-token decision, not a
+page bug: retuning light `--blue-cool` moves every return-side
+diagram at once. Mitigation today: the failing values are duplicated
+at high contrast in adjacent LCD/legend text.
+
+### 162. `.copy-btn`'s `transition: all` animates the focus outline *(open — 2026-07-16)*
+
+`transition: all 0.15s` on `.copy-btn` makes the `:focus-visible`
+outline fade/shift in rather than appear instantly on keyboard focus
+(measured mid-transition during the sim's a11y verification).
+Enumerating the intended properties (border-color, color, background)
+fixes it site-wide; sweep other `transition: all` interactives while
+in there.
+
+### 163. CSS fullscreen leaves the background page keyboard-focusable *(open — 2026-07-16)*
+
+`fullscreen-toggle.js` pins the tool-card at z-index 300 but nav /
+footer / back-link behind the overlay stay tabbable — Shift+Tab from
+the fullscreen button lands focus on links that are visually covered,
+so the focus indicator disappears. Fix in the shared mechanism:
+`inert` on the siblings (or aria-hidden + tabindex management) while
+`body.has-fullscreen-tool` is set. Affects every fullscreen-capable
+tool, not just the refrigerant-loop sim.
+
+### 164. Touch-target floor block doesn't cover `<select>`s *(open — 2026-07-16)*
+
+The `TOUCH-TARGET FLOOR` block pads chrome-level buttons to ≥44px on
+touch devices, but selects were never in it — the refrigerant-loop
+sim's refrigerant `<select>` measures 39px on touch (better than the
+shipped 29px `.ps-input` baseline on refrigerant-pt, still under the
+floor). Site-wide conversation: adding `.field select` (or `.ps-input`
+generally) to the block changes density on every tool page.
+
+### 165. `refrigerant-data.js` provenance nits: glide-band wording + coarse low-pressure rows *(open — 2026-07-16)*
+
+Two content-accuracy nits from the 2026-07-16 source-PDF re-verification
+(all ~340 table rows matched their cited sources exactly): (a) the
+header and the r407c note say the glide is "~8–13 °F", but the
+transcribed table correctly narrows to ~6.5 °F at its top rows —
+"roughly 6–13 °F, narrowing at high pressure" would match; (b) the
+R-454B and R-407C sources jump 0→20→40 and 0→10→20 psig at the bottom,
+so the linear chord can read ~2–4 °F low around e.g. 10 psig R-454B —
+faithful to the charts and irrelevant at A/C pressures, but worth
+densifying from Genetron Properties data if low-temp refrigeration
+lookups ever matter.
+
 ### Deferred / Won't fix (with revisit trigger)
 
 Items considered during an audit and deliberately not pursued, each

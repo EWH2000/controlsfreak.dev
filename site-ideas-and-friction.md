@@ -5347,6 +5347,51 @@ No refrigeration hub exists yet, so the sim forward-links the three
 refrigerant lessons and the P-T tool without a `hub:` back-link
 ([future: /refrigeration/]).
 
+*Verification round (2026-07-16).* An independent multi-agent
+verification (engine re-derivation, source-PDF table audit, 6×6
+browser matrix, plot pixel checks, a11y, conventions) confirmed the
+physics and data exactly and shipped a fix series on the PR branch:
+a MIN_LIFT floor (tCond ≥ tEvap + 10 °F — an extreme stage-1 corner
+could invert the gauges), plot label/axis fixes, metric dual-stating,
+AT access to the gauge pressures + LED states, measured-contrast
+fixes, presets no longer overwrite the shared refrigerant memory, and
+a ≥/≤ off-chart cue on a pegged dial. The airflow knobs were renamed
+to **Indoor coil / Outdoor coil airflow** (hardware names; the LCDs
+and verdicts keep evaporator/condenser — the *function* words). That
+split is deliberate groundwork for the big one:
+
+**[future: reversing-valve heat-pump mode]** — owner decision
+2026-07-16: build the FULL heating-mode model, not a cosmetic flip.
+Scope sketch: an engine `mode` axis (cooling/heating) with per-mode
+anchor sets (heating: outdoor coil evaporates — sat temp tracks
+*outdoor* ambient, e.g. ~25–30 °F at a 47 °F rating point; indoor
+coil condenses ~100–110 °F); outdoor-coil frost as the new headline
+teaching story (frost accumulation below ~40 °F outdoor, defrost as
+the field reality — a *normal* fault-look, unlike the cooling coil
+freeze); per-mode verdict wording; a reversing-valve glyph in the
+loop SVG with re-routed `data-flow` segments (the valve swaps which
+coil receives discharge gas — remember the converging-flow
+split-segment gotcha); presets for heating faults (frosted outdoor
+coil, defrost, low-ambient heating). Its own PR after the sim
+merges. Pairs naturally with per-refrigerant anchor work (#3 below).
+
+*Queued visual-round ideas from the verification (owner to pick):*
+(1) two visible pressure LCD cells in the register (the AT summary
+line covers screen readers today; visible cells would help sighted
+low-vision users too); (2) a flash-gas cue when subcooling goes
+negative (hollow/warn-tinted liquid dot or a "(flash gas)" label
+suffix); (3) nice rounded pressure-gridline steps on the P-T plot
+(quarters of pMax currently yield 113/38-style labels); (4) clamp or
+shorten SH/SC gap labels below ~450px canvas width; (5) a small
+radial inset for the two dial ring labels flanking top-center (the
+needle can bisect one mid-dial); (6) a one-line copy note making the
+shared-cycle framing explicit ("every refrigerant runs the same
+40/105 °F cycle so the pressures compare apples-to-apples — R-404A
+in real life usually runs colder boxes"); (7) per-refrigerant
+sat-temp anchoring as the bigger upgrade (needs per-refrigerant
+design-point sourcing; trades away the clean cross-refrigerant
+comparability, so possibly a toggle).
+
 ### Schematic-bg chrome — gutter as-builts, hero-frame nav cards, discrete-pulse mode *(shipped 2026-05-23)*
 
 A major chrome overhaul on top of the existing v2.0 workstation
