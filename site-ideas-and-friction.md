@@ -5403,6 +5403,12 @@ pressure LCD cells plus air in/out temps off the new engine block F
 cockpit, the fullscreen tall regime now gated on aspect ratio (the
 2560×1440 landscape-QHD fix), and plot polish (rounded gridlines,
 short SH/SC tags on narrow canvases, the flash-gas dot + label).
+A same-evening follow-up finished the dials and the loop glyph: the
+sat-temp inner ring now prints round display-unit temps at one
+constant step per dial, placed where the P-T curve puts them, over a
+new inner track arc with half-step minor ticks; and the compressor's
+spinning fan gave way to a top-down scroll set — the moving spiral
+orbits (it doesn't spin), paced by capacity like the fan was.
 Items 6 and 7 above remain the queue.
 
 ### Schematic-bg chrome — gutter as-builts, hero-frame nav cards, discrete-pulse mode *(shipped 2026-05-23)*
