@@ -1416,8 +1416,10 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
             //    450px canvas width the value is dropped ("SH" / "SC" only):
             //    the full string collided with the state dots and the canvas
             //    edge at phone widths, and the LCD register already carries
-            //    the numbers there. ──
-            const gap = (t1, t2, p, color, tag, value, curve) => {
+            //    the numbers there. An optional suffix names the state in
+            //    the warn tint (the flash-gas cue); it rides the same 450px
+            //    gate as the value so narrow plots stay bare-tag. ──
+            const gap = (t1, t2, p, color, tag, value, curve, suffix) => {
                 const y = yOf(p);
                 ctx.save();
                 ctx.beginPath();
@@ -1430,18 +1432,42 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                 ctx.setLineDash([]);
                 ctx.fillStyle = color;
                 ctx.font = '10px ' + mono;
-                ctx.textAlign = 'center';
                 const label = cssW < 450 ? tag : tag + ' ' + value;
                 const curveP = RefrigLoop.pressAtSatTemp(id, curve, (t1 + t2) / 2);
                 const yCurve = (curveP && curveP.ok) ? yOf(curveP.value) : -Infinity;
                 const collides = yCurve > y - 18 && yCurve < y - 1;
                 ctx.textBaseline = collides ? 'top' : 'bottom';
-                ctx.fillText(label, (xOf(t1) + xOf(t2)) / 2, collides ? y + 6 : y - 4);
+                const yText = collides ? y + 6 : y - 4;
+                const midX = (xOf(t1) + xOf(t2)) / 2;
+                if (suffix && cssW >= 450) {
+                    // Label keeps its centered spot on the dash; the suffix
+                    // trails right in the warn amber (4.5:1 small-text floor
+                    // on --surface: 7.47:1 dark, 5.52:1 light) — shifting
+                    // the whole label left would walk it into the saturation
+                    // curve. The pair only slides left when the suffix would
+                    // run past the plot's right pad (mid-width canvases).
+                    const wLabel = ctx.measureText(label).width;
+                    const wSuffix = ctx.measureText(suffix).width;
+                    let x0 = midX - wLabel / 2;
+                    const over = (x0 + wLabel + 4 + wSuffix) - (cssW - padR);
+                    if (over > 0) x0 -= over;
+                    ctx.textAlign = 'left';
+                    ctx.fillText(label, x0, yText);
+                    ctx.fillStyle = cWarn;
+                    ctx.fillText(suffix, x0 + wLabel + 4, yText);
+                } else {
+                    ctx.textAlign = 'center';
+                    ctx.fillText(label, midX, yText);
+                }
                 ctx.restore();
             };
+            // Negative subcooling means the "liquid" line is carrying vapour
+            // (flash gas — deep undercharge): the SC label gains an amber
+            // "(flash gas)" name and the liquid-line dot hollows out below.
+            const flashGas = s.subcool < 0;
             gap(s.tEvap, s.tSucLine, s.pSuc, cHeat, 'SH', dispDT(s.superheat) + dtU(), 'dew');
             gap(s.tCond, s.tLiqLine, s.pDis, cCool, 'SC', dispDT(s.subcool) + dtU(),
-                glideVisible ? 'bubble' : 'dew');
+                glideVisible ? 'bubble' : 'dew', flashGas ? '(flash gas)' : null);
 
             // ── State points. Saturation points ride the curve (neutral, red
             //    on the low side when freezing); the line-state points carry
@@ -1458,10 +1484,6 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                 ctx.stroke();
                 ctx.restore();
             };
-            // Negative subcooling means the "liquid" line is carrying vapour
-            // (flash gas — deep undercharge): hollow warn ring instead of a
-            // solid subcooled-liquid dot.
-            const flashGas = s.subcool < 0;
             dot(s.tEvap, s.pSuc, freezing ? cRed : cText);   // low-side saturation
             dot(s.tCond, s.pDis, cText);                     // high-side saturation
             dot(s.tSucLine, s.pSuc, cHeat);                  // suction line (superheated vapour)
