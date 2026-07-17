@@ -1291,6 +1291,12 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
             const cHeat = css.getPropertyValue('--heat').trim()         || '#e8884a';
             const cCool = css.getPropertyValue('--blue-cool').trim()    || '#6f97aa';
             const cRed  = css.getPropertyValue('--red').trim()          || '#e85d4f';
+            // Warn tint for the flash-gas cue. --amber (not --heat, the
+            // status-pill warn hue): --heat IS this plot's superheat color,
+            // so a heat-tinted ring would misread as an SH marker. Amber
+            // clears the 3:1 UI-component floor on --surface in both themes
+            // (7.5:1 dark, 5.5:1 light).
+            const cWarn = css.getPropertyValue('--amber').trim()        || '#e0a94a';
             const cSurf = css.getPropertyValue('--surface').trim()      || '#1e232b';
             const mono  = css.getPropertyValue('--mono').trim()         || 'monospace';
 
@@ -1406,8 +1412,12 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
             //    above the dash unless the saturation curve passes through
             //    that band at the label's midpoint — then it flips below so
             //    the curve doesn't strike the text (the typical view's SH
-            //    label sat exactly in the rising dew curve's path). ──
-            const gap = (t1, t2, p, color, label, curve) => {
+            //    label sat exactly in the rising dew curve's path). Below
+            //    450px canvas width the value is dropped ("SH" / "SC" only):
+            //    the full string collided with the state dots and the canvas
+            //    edge at phone widths, and the LCD register already carries
+            //    the numbers there. ──
+            const gap = (t1, t2, p, color, tag, value, curve) => {
                 const y = yOf(p);
                 ctx.save();
                 ctx.beginPath();
@@ -1421,6 +1431,7 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                 ctx.fillStyle = color;
                 ctx.font = '10px ' + mono;
                 ctx.textAlign = 'center';
+                const label = cssW < 450 ? tag : tag + ' ' + value;
                 const curveP = RefrigLoop.pressAtSatTemp(id, curve, (t1 + t2) / 2);
                 const yCurve = (curveP && curveP.ok) ? yOf(curveP.value) : -Infinity;
                 const collides = yCurve > y - 18 && yCurve < y - 1;
@@ -1428,28 +1439,33 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                 ctx.fillText(label, (xOf(t1) + xOf(t2)) / 2, collides ? y + 6 : y - 4);
                 ctx.restore();
             };
-            gap(s.tEvap, s.tSucLine, s.pSuc, cHeat, 'SH ' + dispDT(s.superheat) + dtU(), 'dew');
-            gap(s.tCond, s.tLiqLine, s.pDis, cCool, 'SC ' + dispDT(s.subcool) + dtU(),
+            gap(s.tEvap, s.tSucLine, s.pSuc, cHeat, 'SH', dispDT(s.superheat) + dtU(), 'dew');
+            gap(s.tCond, s.tLiqLine, s.pDis, cCool, 'SC', dispDT(s.subcool) + dtU(),
                 glideVisible ? 'bubble' : 'dew');
 
             // ── State points. Saturation points ride the curve (neutral, red
             //    on the low side when freezing); the line-state points carry
-            //    the SH / SC colour. ──
-            const dot = (t, p, fill) => {
+            //    the SH / SC colour. A hollow dot inverts the ring: canvas-bg
+            //    fill with the colour on the stroke. ──
+            const dot = (t, p, color, hollow) => {
                 ctx.save();
                 ctx.beginPath();
                 ctx.arc(xOf(t), yOf(p), 4.5, 0, Math.PI * 2);
-                ctx.fillStyle = fill;
-                ctx.strokeStyle = cSurf;
+                ctx.fillStyle = hollow ? cSurf : color;
+                ctx.strokeStyle = hollow ? color : cSurf;
                 ctx.lineWidth = 2;
                 ctx.fill();
                 ctx.stroke();
                 ctx.restore();
             };
+            // Negative subcooling means the "liquid" line is carrying vapour
+            // (flash gas — deep undercharge): hollow warn ring instead of a
+            // solid subcooled-liquid dot.
+            const flashGas = s.subcool < 0;
             dot(s.tEvap, s.pSuc, freezing ? cRed : cText);   // low-side saturation
             dot(s.tCond, s.pDis, cText);                     // high-side saturation
             dot(s.tSucLine, s.pSuc, cHeat);                  // suction line (superheated vapour)
-            dot(s.tLiqLine, s.pDis, cCool);                  // liquid line (subcooled liquid)
+            dot(s.tLiqLine, s.pDis, flashGas ? cWarn : cCool, flashGas);   // liquid line
         }
 
         // ─────────────────────────────────────────────────────────────
