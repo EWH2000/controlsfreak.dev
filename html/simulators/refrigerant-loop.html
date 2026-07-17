@@ -389,10 +389,11 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
             <h2 class="subhead">The loop</h2>
             <div class="rl-loop rl-stage">
                 <svg class="rl-loop-svg" id="rl-cycle" viewBox="0 0 720 460"
-                     role="img" aria-labelledby="rl-cycle-title rl-cycle-desc"
+                     role="img" aria-labelledby="rl-cycle-title"
+                     aria-describedby="rl-cycle-desc"
                      font-family="var(--mono)">
                     <title id="rl-cycle-title">The refrigerant loop, live</title>
-                    <desc id="rl-cycle-desc">A closed rectangular vapor-compression loop drawn clockwise. A compressor on the left drives hot high-pressure vapor up the discharge line into a condenser spanning the top, which rejects heat to outdoor air and drops the refrigerant to a warm high-pressure liquid; the liquid line runs down the right side to a metering device, which flashes it to a cold low-pressure mix; that mix crosses the evaporator along the bottom, absorbing heat from indoor air and boiling back to a cool low-pressure vapor that returns up the suction line to the compressor. The upper and right pipes — discharge and liquid line — are the hot high side, drawn in orange; the lower and left pipes — expansion and suction — are the cool low side, drawn in muted blue. When the evaporator coil is starved of airflow and ices over, a frost overlay appears on the evaporator and the suction leg. Live pressure, superheat, subcooling and alarm values are reported in the gauges and readouts below.</desc>
+                    <desc id="rl-cycle-desc">A closed rectangular vapor-compression loop drawn clockwise. A compressor on the left drives hot high-pressure vapor up the discharge line into a condenser spanning the top, which rejects heat to outdoor air and drops the refrigerant to a warm high-pressure liquid; the liquid line runs down the right side to a metering device, which flashes it to a cold low-pressure mix; that mix crosses the evaporator along the bottom, absorbing heat from indoor air and boiling back to a cool low-pressure vapor that returns up the suction line to the compressor. The discharge and liquid-line pipes — up the left side and across the top — are the hot high side, drawn in orange; the expansion and suction pipes — down the right side and along the bottom — are the cool low side, drawn in muted blue. When the evaporator coil is starved of airflow and ices over, a frost overlay appears on the evaporator and the suction leg. Live pressure, superheat, subcooling and alarm values are reported in the gauges and readouts below.</desc>
 
                     <!-- ── HIGH-SIDE pipes (orange / --heat) ── -->
                     <path id="rl-discharge" data-flow="supply" d="M 120 193 V 85 H 200" fill="none"
@@ -591,14 +592,25 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                                 <div class="k">Cond sat temp</div>
                                 <div class="v" id="rl-lcd-cond">&#8212;</div>
                             </div>
+                            <!-- Visually-hidden gauge + alarm mirror: the needle
+                                 angles and dial digits are SVG presentation most
+                                 AT never surfaces, and the pill names only the
+                                 top-priority fault — this line carries the two
+                                 pressures and the full alarm set through the
+                                 same live region as the LCDs. -->
+                            <div class="sr-only" id="rl-sr-summary"></div>
                         </div>
 
                         <!-- Status LEDs -->
+                        <!-- The dots are color-only, so each label carries a
+                             visually-hidden on/off suffix (setLed keeps it in
+                             step) — the state is readable in browse mode
+                             without turning the bank into a live region. -->
                         <div class="dev-leds">
-                            <span><span class="led led--run"  id="rl-led-run2" aria-hidden="true"></span>Run</span>
-                            <span><span class="led led--off"  id="rl-led-freeze" aria-hidden="true"></span>Coil freeze</span>
-                            <span><span class="led led--off"  id="rl-led-flood" aria-hidden="true"></span>Floodback</span>
-                            <span><span class="led led--off"  id="rl-led-head" aria-hidden="true"></span>High head</span>
+                            <span><span class="led led--run"  id="rl-led-run2" aria-hidden="true"></span>Run<span class="sr-only" id="rl-led-run2-state">, on</span></span>
+                            <span><span class="led led--off"  id="rl-led-freeze" aria-hidden="true"></span>Coil freeze<span class="sr-only" id="rl-led-freeze-state">, off</span></span>
+                            <span><span class="led led--off"  id="rl-led-flood" aria-hidden="true"></span>Floodback<span class="sr-only" id="rl-led-flood-state">, off</span></span>
+                            <span><span class="led led--off"  id="rl-led-head" aria-hidden="true"></span>High head<span class="sr-only" id="rl-led-head-state">, off</span></span>
                         </div>
                     </div>
                 </div>
@@ -656,7 +668,7 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
             </div>
             <div class="rl-fs-plot">
                 <div class="sim-canvas-wrap rl-plot-wrap">
-                    <canvas id="rl-plot" role="img" aria-label="Live pressure-temperature plot: the selected refrigerant's saturation curve with the low-side and high-side state points, the superheat and subcooling gaps, and a 32 degree Fahrenheit freeze line"></canvas>
+                    <canvas id="rl-plot" role="img" aria-label="Live pressure-temperature plot: the selected refrigerant's saturation curve — dew, plus a dashed bubble curve when the blend has visible glide — with the low-side and high-side state points, the superheat and subcooling gaps, and a 32 degree Fahrenheit freeze line"></canvas>
                 </div>
                 <div class="sim-legend rl-plot-legend">
                     <span><span class="swatch sat"></span>Saturation curve</span>
@@ -918,8 +930,7 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
         // the dial face.
         // ─────────────────────────────────────────────────────────────
         const GCX = 100, GCY = 94;
-        const R_TICK_OUT = 80, R_TICK_IN = 71, R_PLABEL = 62, R_TLABEL = 44, R_NEEDLE = 70;
-        void R_NEEDLE;
+        const R_TICK_OUT = 80, R_TICK_IN = 71, R_PLABEL = 62, R_TLABEL = 44;
 
         const gauges = {
             low:  { curve: 'dew',    refTemp: 60,  max: 200, cur: -120, target: -120,
@@ -1027,6 +1038,10 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
             const el = $(id);
             el.classList.toggle(activeCls, on);
             el.classList.toggle('led--off', !on);
+            // Paired visually-hidden state suffix — the dot itself is
+            // aria-hidden color, so the label text carries on/off for AT.
+            const state = $(id + '-state');
+            if (state) state.textContent = on ? ', on' : ', off';
         }
 
         function renderRegister(s) {
@@ -1058,6 +1073,18 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
             cv.textContent = cfm;
             cv.classList.remove('ok', 'mid', 'bad');
             cv.classList.add(cfm >= 400 ? 'ok' : cfm >= 350 ? 'mid' : 'bad');
+
+            // Visually-hidden gauge + alarm mirror (see the markup note): the
+            // two pressures, plus every lit alarm — the pill alone names only
+            // the top-priority fault, so concurrent alarms were AT-invisible.
+            const alarms = [];
+            if (s.flags.freeze)    alarms.push('coil freeze');
+            if (s.flags.floodback) alarms.push('floodback');
+            if (s.flags.highHead)  alarms.push('high head');
+            $('rl-sr-summary').textContent =
+                'Suction ' + dispP(s.pSuc) + ' ' + pU() +
+                ', head ' + dispP(s.pDis) + ' ' + pU() +
+                (alarms.length ? '. Alarms: ' + alarms.join(', ') + '.' : '.');
         }
 
         // ─────────────────────────────────────────────────────────────
