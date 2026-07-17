@@ -78,13 +78,13 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
         .rl-gauge-tick { stroke: #8a8369; stroke-width: 1.4; }
         .rl-gauge-plabel {
             font-family: var(--mono);
-            font-size: 11px;
+            font-size: 12px;
             fill: #cfc8ad;
             text-anchor: middle;
         }
         .rl-gauge-tlabel {
             font-family: var(--mono);
-            font-size: 9.5px;
+            font-size: 11px;
             text-anchor: middle;
         }
         .rl-gauge-low  .rl-gauge-tlabel { fill: var(--blue); }
@@ -95,14 +95,14 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
         .rl-gauge-val {
             font-family: var(--mono);
             font-weight: 700;
-            font-size: 20px;
+            font-size: 22px;
             text-anchor: middle;
         }
         .rl-gauge-low  .rl-gauge-val { fill: var(--blue); }
         .rl-gauge-high .rl-gauge-val { fill: var(--heat); }
         .rl-gauge-cap {
             font-family: var(--mono);
-            font-size: 9px;
+            font-size: 10.5px;
             letter-spacing: 0.1em;
             fill: #8a8369;
             text-anchor: middle;
@@ -115,7 +115,8 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
             gap: 0.5rem;
             margin-top: 0.9rem;
         }
-        .rl-lcds .lcd .v { font-size: 1.15rem; }
+        .rl-lcds .lcd .k { font-size: 0.6rem; }
+        .rl-lcds .lcd .v { font-size: 1.45rem; }
 
         /* CFM/ton readout — colored against the 400-CFM/ton floor. */
         .rl-cfm { margin-top: 0.9rem; }
@@ -161,6 +162,136 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
         @media (max-width: 700px) {
             .narrow-width-note { display: block; }
         }
+
+        /* ── FULLSCREEN COCKPIT ────────────────────────────────────────────
+           Desktop-only "see everything at once" mode (the button is
+           fs-desktop-only). The shared mechanism (fullscreen-toggle.js) pins
+           .tool-card to the viewport via .is-fullscreen; here we reflow the
+           interactive cockpit into a grid that fills one screen with no scroll.
+           MOBILE + NORMAL DESKTOP FLOW ARE UNTOUCHED — .rl-cockpit / .rl-fs-plot
+           are `display: contents` (transparent) until .is-fullscreen. Two
+           regimes, chosen by viewport HEIGHT:
+             • tall / portrait (min-height 1150px, e.g. 1080×1920): the loop AND
+               the P-T plot both fit — show everything, hide the view toggle.
+             • short / landscape (max-height 1149px, e.g. 1920×1080, 1440×900):
+               too short for both, so a System/Curve toggle swaps loop↔plot in
+               one "main" cell; gauges, readouts and controls stay put. */
+        .rl-cockpit { display: contents; }
+        .rl-fs-plot { display: contents; }
+        .rl-fs-viewtoggle { display: none; }
+
+        .tool-card.is-fullscreen {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .tool-card.is-fullscreen .tool-card-header { flex: none; padding-bottom: 0.35rem; }
+        .tool-card.is-fullscreen .tool-body {
+            flex: 1;
+            min-height: 0;
+            padding: 0.5rem 1rem 0.85rem;
+            overflow: hidden;
+        }
+        /* Fullscreen is the instrument panel, not the article — drop the
+           reading-only prose, the section headings, and the long notes. */
+        .tool-card.is-fullscreen .tool-body > .tool-preamble,
+        .tool-card.is-fullscreen .subhead,
+        .tool-card.is-fullscreen .tool-body .ref-note,
+        .tool-card.is-fullscreen .narrow-width-note { display: none; }
+
+        .tool-card.is-fullscreen .rl-cockpit {
+            display: grid;
+            height: 100%;
+            min-height: 0;
+            gap: 0.55rem 1rem;
+            box-sizing: border-box;
+        }
+        .tool-card.is-fullscreen .rl-presets,
+        .tool-card.is-fullscreen .rl-loop,
+        .tool-card.is-fullscreen .rl-register,
+        .tool-card.is-fullscreen .rl-fs-plot,
+        .tool-card.is-fullscreen .rl-controls { margin: 0; min-width: 0; min-height: 0; }
+
+        /* Loop: the SVG contains itself to the cell (default preserveAspectRatio
+           = meet), so it never overflows and scales up with the cockpit. */
+        .tool-card.is-fullscreen .rl-loop { max-width: none; overflow: hidden; }
+        .tool-card.is-fullscreen .rl-loop-svg { width: 100%; height: 100%; }
+
+        /* Register: stack device over the verdict so the two gauges get the full
+           cell width (keeps the enlarged dial labels readable). */
+        .tool-card.is-fullscreen .rl-register {
+            grid-template-columns: 1fr;
+            gap: 0.65rem;
+            align-content: start;
+            overflow: auto;
+        }
+
+        /* P-T plot: fill the cell; the canvas takes the height left after the
+           legend (drawPlot reads clientHeight, so it repaints crisp). */
+        .tool-card.is-fullscreen .rl-fs-plot { flex-direction: column; min-height: 0; }
+        .tool-card.is-fullscreen .rl-fs-plot .rl-plot-wrap {
+            flex: 1;
+            min-height: 0;
+            margin: 0;
+        }
+        .tool-card.is-fullscreen .rl-fs-plot .rl-plot-wrap canvas { height: 100%; }
+        .tool-card.is-fullscreen .rl-fs-plot .rl-plot-legend { margin-top: 0.4rem; }
+
+        /* Controls: tighter so the six knobs stay in the bottom band. */
+        .tool-card.is-fullscreen .rl-controls .form-row { margin-bottom: 0.55rem; }
+        .tool-card.is-fullscreen .rl-knob-grid { gap: 0.4rem 1.4rem; }
+
+        /* ── TALL / PORTRAIT: show the whole cockpit, no toggle ──
+           Gauges + loop up top, the P-T plot full-width below (its temperature
+           axis wants the width), controls along the bottom. */
+        @media (min-height: 1150px) {
+            .tool-card.is-fullscreen .rl-cockpit {
+                grid-template-columns: 1fr 1fr;
+                grid-template-rows: auto auto minmax(0, 1fr) auto;
+                grid-template-areas:
+                    "presets  presets"
+                    "gauges   loop"
+                    "plot     plot"
+                    "controls controls";
+            }
+            .tool-card.is-fullscreen .rl-presets  { grid-area: presets; }
+            .tool-card.is-fullscreen .rl-register { grid-area: gauges; }
+            .tool-card.is-fullscreen .rl-loop     { grid-area: loop; display: block; }
+            .tool-card.is-fullscreen .rl-fs-plot  { grid-area: plot; display: flex; }
+            .tool-card.is-fullscreen .rl-controls { grid-area: controls; }
+            .tool-card.is-fullscreen .rl-fs-viewtoggle { display: none; }
+        }
+
+        /* ── SHORT / LANDSCAPE: loop↔plot via the System/Curve toggle ── */
+        @media (max-height: 1149px) {
+            .tool-card.is-fullscreen .rl-cockpit {
+                grid-template-columns: 1.32fr 0.68fr;
+                grid-template-rows: auto minmax(0, 1fr) auto;
+                grid-template-areas:
+                    "presets  toggle"
+                    "main     gauges"
+                    "controls gauges";
+            }
+            .tool-card.is-fullscreen .rl-presets  { grid-area: presets; align-self: center; }
+            .tool-card.is-fullscreen .rl-fs-viewtoggle { grid-area: toggle; display: block; justify-self: end; align-self: center; }
+            .tool-card.is-fullscreen .rl-register { grid-area: gauges; }
+            .tool-card.is-fullscreen .rl-controls { grid-area: controls; }
+            .tool-card.is-fullscreen .rl-loop     { grid-area: main; display: block; }
+            .tool-card.is-fullscreen .rl-fs-plot  { grid-area: main; display: none; }
+            .tool-card.is-fullscreen.rl-fs-curve .rl-loop    { display: none; }
+            .tool-card.is-fullscreen.rl-fs-curve .rl-fs-plot { display: flex; }
+        }
+
+        /* Safety net: if a fullscreen card is ever narrower than the grid
+           assumes (resized below the button's own 1000px gate), fall back to a
+           single scrolling column rather than overlap. */
+        @media (max-width: 999px) {
+            .tool-card.is-fullscreen { overflow: auto; }
+            .tool-card.is-fullscreen .rl-cockpit { display: block; height: auto; }
+            .tool-card.is-fullscreen .rl-loop,
+            .tool-card.is-fullscreen .rl-fs-plot,
+            .tool-card.is-fullscreen .rl-fs-viewtoggle { display: block; }
+        }
     </style>
 {% endblock %}
 
@@ -173,6 +304,28 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
     </div>
 
     <div class="tool-card">
+        <!-- .fs-desktop-only: fullscreen is a desktop "see-everything-at-once"
+             cockpit; on phones the stacked scroll layout is the intended
+             experience, so the button is hidden below 1000px / on touch. -->
+        <button type="button" class="tool-card-fullscreen-btn fs-desktop-only"
+                data-fullscreen-target=".tool-card"
+                aria-pressed="false" aria-label="Enter fullscreen"
+                title="Toggle fullscreen — Esc to exit">
+            <svg class="fs-icon-enter" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="15 3 21 3 21 9"/>
+                <polyline points="9 21 3 21 3 15"/>
+                <line x1="21" y1="3" x2="14" y2="10"/>
+                <line x1="3" y1="21" x2="10" y2="14"/>
+            </svg>
+            <svg class="fs-icon-exit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="4 14 10 14 10 20"/>
+                <polyline points="20 10 14 10 14 4"/>
+                <line x1="14" y1="10" x2="21" y2="3"/>
+                <line x1="3" y1="21" x2="10" y2="14"/>
+            </svg>
+            <span class="fs-label-enter">Fullscreen</span>
+            <span class="fs-label-exit">Exit</span>
+        </button>
         <div class="tool-card-header">
             <h1 class="tool-card-title">
                 Refrigerant Loop Simulator
@@ -193,6 +346,17 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                 <strong>New to the cycle?</strong>
                 <a href="/education/refrigerant-cycle-basics.html">Start with the basics →</a>
             </p>
+
+            <!-- ── Interactive cockpit ─────────────────────────────────────
+                 Everything below (presets, loop, gauges, P-T plot, controls) is
+                 the live model. In normal + mobile flow .rl-cockpit is
+                 `display: contents` — a transparent wrapper, so the stacked
+                 layout is exactly as before. In DESKTOP fullscreen it becomes a
+                 grid that fills one viewport with no scrolling (see the
+                 FULLSCREEN COCKPIT block). The reading-only prose (the preamble
+                 above and "About this model" below) stays OUTSIDE this wrapper
+                 and is hidden in fullscreen. -->
+            <div class="rl-cockpit">
 
             <!-- ── "Try this" scenario presets — one per RefrigLoop.PRESETS
                  key. A click writes the whole knob set, marks the scenario
@@ -261,9 +425,9 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                     </g>
 
                     <!-- HIGH / LOW SIDE region labels. -->
-                    <text class="rl-region-label" x="360" y="165" text-anchor="middle" font-size="10"
+                    <text class="rl-region-label" x="360" y="165" text-anchor="middle" font-size="11"
                           letter-spacing="0.15em" fill="var(--text-dim)">HIGH SIDE · HOT</text>
-                    <text class="rl-region-label" x="360" y="275" text-anchor="middle" font-size="10"
+                    <text class="rl-region-label" x="360" y="275" text-anchor="middle" font-size="11"
                           letter-spacing="0.15em" fill="var(--text-dim)">LOW SIDE · COOL</text>
 
                     <!-- Faint equator divider. -->
@@ -284,7 +448,7 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                             </g>
                             <circle cx="50" cy="50" r="4.5" fill="var(--text-dim)"/>
                         </svg>
-                        <text class="rl-comp-label" x="80" y="257" text-anchor="middle" font-size="11"
+                        <text class="rl-comp-label" x="80" y="257" text-anchor="middle" font-size="12"
                               font-weight="600" fill="var(--text-bright)">COMPRESSOR</text>
                     </g>
 
@@ -304,7 +468,7 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                             <line x1="490" y1="55" x2="490" y2="36"/>
                             <polygon points="490,30 485,40 495,40"/>
                         </g>
-                        <text x="535" y="38" font-size="9" font-style="italic" fill="var(--text-dim)">
+                        <text x="535" y="38" font-size="10.5" font-style="italic" fill="var(--text-dim)">
                             heat &#8594; outdoor air
                         </text>
                     </g>
@@ -313,7 +477,7 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                     <g id="rl-metering">
                         <polygon points="600,200 615,215 600,230 585,215" fill="var(--surface)"
                                  stroke="var(--text-dim)" stroke-width="2"/>
-                        <text x="630" y="219" font-size="11" font-weight="600"
+                        <text x="630" y="219" font-size="12" font-weight="600"
                               fill="var(--text-bright)">METERING</text>
                     </g>
 
@@ -333,16 +497,16 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                             <line x1="490" y1="395" x2="490" y2="376"/>
                             <polygon points="490,370 485,380 495,380"/>
                         </g>
-                        <text x="535" y="395" font-size="9" font-style="italic" fill="var(--text-dim)">
+                        <text x="535" y="395" font-size="10.5" font-style="italic" fill="var(--text-dim)">
                             heat &#8592; indoor air
                         </text>
                     </g>
 
                     <!-- State annotations on each pipe leg. -->
-                    <text x="135" y="140" font-size="10" fill="var(--heat)">hot vapor</text>
-                    <text x="585" y="140" text-anchor="end" font-size="10" fill="var(--heat)">warm liquid</text>
-                    <text x="585" y="290" text-anchor="end" font-size="10" fill="var(--blue-cool)">cold mix</text>
-                    <text x="135" y="290" font-size="10" fill="var(--blue-cool)">cool vapor</text>
+                    <text x="135" y="140" font-size="11" fill="var(--heat)">hot vapor</text>
+                    <text x="585" y="140" text-anchor="end" font-size="11" fill="var(--heat)">warm liquid</text>
+                    <text x="585" y="290" text-anchor="end" font-size="11" fill="var(--blue-cool)">cold mix</text>
+                    <text x="135" y="290" font-size="11" fill="var(--blue-cool)">cool vapor</text>
 
                     <!-- ── FROST OVERLAY — fades in on the coil-freeze alarm ── -->
                     <g class="rl-frost" id="rl-frost">
@@ -488,14 +652,16 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                 temperature axis compresses. Every reading updates regardless;
                 a laptop just gives the curve room.
             </div>
-            <div class="sim-canvas-wrap rl-plot-wrap">
-                <canvas id="rl-plot" role="img" aria-label="Live pressure-temperature plot: the selected refrigerant's saturation curve with the low-side and high-side state points, the superheat and subcooling gaps, and a 32 degree Fahrenheit freeze line"></canvas>
-            </div>
-            <div class="sim-legend rl-plot-legend">
-                <span><span class="swatch sat"></span>Saturation curve</span>
-                <span><span class="swatch sh"></span>Superheat</span>
-                <span><span class="swatch sc"></span>Subcooling</span>
-                <span><span class="swatch freeze"></span>32&nbsp;°F freeze</span>
+            <div class="rl-fs-plot">
+                <div class="sim-canvas-wrap rl-plot-wrap">
+                    <canvas id="rl-plot" role="img" aria-label="Live pressure-temperature plot: the selected refrigerant's saturation curve with the low-side and high-side state points, the superheat and subcooling gaps, and a 32 degree Fahrenheit freeze line"></canvas>
+                </div>
+                <div class="sim-legend rl-plot-legend">
+                    <span><span class="swatch sat"></span>Saturation curve</span>
+                    <span><span class="swatch sh"></span>Superheat</span>
+                    <span><span class="swatch sc"></span>Subcooling</span>
+                    <span><span class="swatch freeze"></span>32&nbsp;°F freeze</span>
+                </div>
             </div>
 
             <!-- ── Controls (knobs) ─────────────────────────────────────────
@@ -583,6 +749,22 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                     </div>
                 </div>
             </div>
+
+            <!-- ── Fullscreen view toggle — only shown inside fullscreen on a
+                 viewport too SHORT to fit the loop and the P-T plot at once
+                 (e.g. a 1920×1080 landscape). "System" keeps the loop on screen;
+                 "Curve" swaps in the P-T plot. Both keep the gauges, readouts
+                 and controls. Hidden in normal flow and on a tall/portrait
+                 fullscreen (where everything fits). Session-only, no cf_* key. -->
+            <div class="rl-fs-viewtoggle field" role="group" aria-labelledby="rl-fs-view-lbl">
+                <span class="field-label" id="rl-fs-view-lbl">Fullscreen view</span>
+                <div class="btn-row">
+                    <button type="button" class="copy-btn active" id="rl-fs-view-system" aria-pressed="true">System</button>
+                    <button type="button" class="copy-btn" id="rl-fs-view-curve" aria-pressed="false">Curve</button>
+                </div>
+            </div>
+
+            </div><!-- /.rl-cockpit -->
 
             <!-- ── About this model + damage-stakes scope note ──────────── -->
             <h2 class="subhead" style="margin-top:2.25rem;">About this model</h2>
@@ -1316,6 +1498,43 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
         // recolor for free via the CSS cascade.
         document.addEventListener('themechange', () => {
             if (lastState) drawPlot(lastState);
+        });
+
+        // ─────────────────────────────────────────────────────────────
+        // FULLSCREEN COCKPIT — desktop "see everything at once". The shared
+        // fullscreen-toggle.js pins the card (.is-fullscreen) and CSS reflows
+        // the cockpit into a one-screen grid. Two jobs here: (1) repaint the
+        // P-T canvas at its new size on enter/exit and on the System/Curve
+        // swap (the gauge + loop SVGs rescale for free), and (2) drive that
+        // toggle, which only matters on a viewport too short to show the loop
+        // and the plot at once. The view is session-only (no cf_* key) and
+        // resets to System on every fullscreen entry.
+        // ─────────────────────────────────────────────────────────────
+        const toolCard = document.querySelector('.tool-card');
+        const fsSystemBtn = $('rl-fs-view-system');
+        const fsCurveBtn  = $('rl-fs-view-curve');
+
+        function repaintPlotSoon() {
+            // Two frames: let the CSS grid resize the canvas cell before redraw.
+            requestAnimationFrame(() => requestAnimationFrame(() => {
+                if (lastState) drawPlot(lastState);
+            }));
+        }
+
+        function setFsView(curve) {
+            toolCard.classList.toggle('rl-fs-curve', curve);
+            fsSystemBtn.classList.toggle('active', !curve);
+            fsCurveBtn.classList.toggle('active', curve);
+            fsSystemBtn.setAttribute('aria-pressed', curve ? 'false' : 'true');
+            fsCurveBtn.setAttribute('aria-pressed', curve ? 'true' : 'false');
+            repaintPlotSoon();   // the plot may have just become visible
+        }
+        fsSystemBtn.addEventListener('click', () => setFsView(false));
+        fsCurveBtn.addEventListener('click', () => setFsView(true));
+
+        toolCard.addEventListener('fullscreenchange', () => {
+            setFsView(false);    // deterministic: always land on System
+            repaintPlotSoon();   // resize the canvas to (or back from) fullscreen
         });
 
         try {
