@@ -382,7 +382,7 @@ const RefrigLoop = (function () {
         if (flags.freeze) {
             return (cfmPerTon < D.CFM_PER_TON_DESIGN)
                 ? { kind: 'error', text: 'Coil freezing — evaporator airflow starved.' }
-                : { kind: 'error', text: 'Coil freezing — evaporator running below 32 °F.' };
+                : { kind: 'error', text: 'Coil freezing — evaporator running below 32 °F (0 °C).' };
         }
         if (flags.floodback)   return { kind: 'warn',  text: 'Floodback — superheat collapsed, liquid reaching the compressor.' };
         if (flags.starved)     return { kind: 'warn',  text: 'Evaporator starved — high superheat, suspect low charge.' };
