@@ -87,6 +87,14 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
             font-size: 11px;
             text-anchor: middle;
         }
+        /* Labels punch a face-colored halo out of whatever passes beneath
+           them (the needle paints before the scale group). */
+        .rl-gauge-plabel, .rl-gauge-tlabel {
+            paint-order: stroke;
+            stroke: var(--dev-face);
+            stroke-width: 3px;
+            stroke-linejoin: round;
+        }
         /* Dial internals are equipment-register surfaces — theme-CONSTANT,
            like the ticks/hub hexes above. Pinned to the dark-token blue /
            heat values instead of var(--blue)/var(--heat): the light theme's
@@ -553,27 +561,27 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                         </div>
 
                         <div class="rl-gauges">
-                            <svg class="rl-gauge rl-gauge-low" id="rl-gauge-low" viewBox="0 0 200 178"
+                            <svg class="rl-gauge rl-gauge-low" id="rl-gauge-low" viewBox="0 0 200 182"
                                  role="img" aria-labelledby="rl-gauge-low-t">
                                 <title id="rl-gauge-low-t">Low-side suction pressure gauge</title>
                                 <circle class="rl-gauge-face" cx="100" cy="94" r="86"/>
                                 <path class="rl-gauge-arc" id="rl-gauge-low-arc" d=""/>
-                                <g id="rl-gauge-low-scale"></g>
                                 <line class="rl-gauge-needle-low" id="rl-gauge-low-needle"
                                       x1="100" y1="94" x2="100" y2="24"/>
+                                <g id="rl-gauge-low-scale"></g>
                                 <circle class="rl-gauge-hub" cx="100" cy="94" r="5"/>
                                 <text class="rl-gauge-val" id="rl-gauge-low-val" x="100" y="150">&#8212;</text>
                                 <text class="rl-gauge-cap" x="100" y="167">LOW · SUCTION</text>
                             </svg>
 
-                            <svg class="rl-gauge rl-gauge-high" id="rl-gauge-high" viewBox="0 0 200 178"
+                            <svg class="rl-gauge rl-gauge-high" id="rl-gauge-high" viewBox="0 0 200 182"
                                  role="img" aria-labelledby="rl-gauge-high-t">
                                 <title id="rl-gauge-high-t">High-side discharge pressure gauge</title>
                                 <circle class="rl-gauge-face" cx="100" cy="94" r="86"/>
                                 <path class="rl-gauge-arc" id="rl-gauge-high-arc" d=""/>
-                                <g id="rl-gauge-high-scale"></g>
                                 <line class="rl-gauge-needle-high" id="rl-gauge-high-needle"
                                       x1="100" y1="94" x2="100" y2="24"/>
+                                <g id="rl-gauge-high-scale"></g>
                                 <circle class="rl-gauge-hub" cx="100" cy="94" r="5"/>
                                 <text class="rl-gauge-val" id="rl-gauge-high-val" x="100" y="150">&#8212;</text>
                                 <text class="rl-gauge-cap" x="100" y="167">HIGH · HEAD</text>
