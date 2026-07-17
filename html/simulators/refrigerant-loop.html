@@ -60,6 +60,10 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
         @media (max-width: 720px) {
             .rl-register { grid-template-columns: 1fr; }
         }
+        /* Verdict pill tops the right column — kill the shared base's 1rem
+           top margin so it aligns with the device's top edge. (Stacked
+           ≤720px layout is safe: the register grid's row-gap spaces it.) */
+        .rl-register .status-pill { margin-top: 0; }
 
         /* Two manifold gauges side by side inside their equipment-register
            device face. The gauge SVGs are page-local internals. */
@@ -147,8 +151,11 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
         .rl-cfm-val.mid { color: var(--amber); }
         .rl-cfm-val.bad { color: var(--red); }
 
-        /* Controls — a compact grid of slider-fields under the register. */
-        .rl-controls { margin-top: 1.75rem; }
+        /* Controls — a compact grid of slider-fields under the register.
+           The wrapper carries the section's top margin because its subhead
+           is a :first-child (margin-top zeroed by the shared rule); 2rem
+           matches the subhead rhythm everywhere else on the page. */
+        .rl-controls { margin-top: 2rem; }
         .rl-knob-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -672,7 +679,7 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                     </div>
                 </div>
 
-                <!-- Verdict + CFM/ton + short reading -->
+                <!-- Verdict + CFM/ton -->
                 <div>
                     <div class="status-pill" id="rl-status" role="status">Turn a knob to run the loop.</div>
 
@@ -681,20 +688,24 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                         <div class="readout-value"><span class="rl-cfm-val" id="rl-cfm-val">&#8212;</span>
                             <span style="color:var(--text-dim);font-weight:400;"> CFM/ton · floor 400</span></div>
                     </div>
-
-                    <p class="ref-note" style="margin-top:1rem;">
-                        The two gauges read like a manifold set: the low-side needle
-                        follows suction pressure, the high-side needle follows head.
-                        Each dial's inner scale is that refrigerant's own
-                        saturation-temperature ring — the P-T curve, on the gauge
-                        face. Superheat is referenced to the dew curve, subcooling to
-                        the bubble curve. An airside-starved coil can freeze with
-                        <em>normal</em> superheat — the refrigerant side looks fine
-                        while the coil ices, which is exactly why the freeze alarm
-                        fires on its own.
-                    </p>
                 </div>
             </div>
+
+            <!-- Full-width register footnote — how to read the gauges. A
+                 sibling of .rl-register (still inside .rl-cockpit), so the
+                 fullscreen prose hide (.is-fullscreen .tool-body .ref-note)
+                 drops it in the cockpit like every other note. -->
+            <p class="ref-note">
+                The two gauges read like a manifold set: the low-side needle
+                follows suction pressure, the high-side needle follows head.
+                Each dial's inner scale is that refrigerant's own
+                saturation-temperature ring — the P-T curve, on the gauge
+                face. Superheat is referenced to the dew curve, subcooling to
+                the bubble curve. An airside-starved coil can freeze with
+                <em>normal</em> superheat — the refrigerant side looks fine
+                while the coil ices, which is exactly why the freeze alarm
+                fires on its own.
+            </p>
 
             <!-- ── Live P-T state plot ─────────────────────────────────────
                  The superheat / subcooling P-T diagram, live and data-driven.
@@ -709,7 +720,7 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                  solve — no easing, so the reduced-motion frame is simply the
                  settled state. -->
             <h2 class="subhead" style="margin-top:2rem;">On the P-T chart</h2>
-            <p class="ref-note" style="margin-top:0.4rem;">
+            <p class="ref-note compact">
                 Where the cycle sits on the refrigerant's own saturation curve.
                 The low-side point rides the dew curve — the gap to its right is
                 superheat; the high-side point rides the bubble curve — the gap
@@ -838,7 +849,7 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
             </div><!-- /.rl-cockpit -->
 
             <!-- ── About this model + damage-stakes scope note ──────────── -->
-            <h2 class="subhead" style="margin-top:2.25rem;">About this model</h2>
+            <h2 class="subhead">About this model</h2>
             <p class="tool-preamble">
                 This is a <strong>directional</strong> model, not a
                 thermodynamic one. The pressures are real lookups on the
