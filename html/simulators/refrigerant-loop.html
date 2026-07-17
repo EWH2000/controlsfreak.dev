@@ -85,6 +85,10 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
         }
         .rl-gauge-arc { fill: none; stroke: var(--dev-edge); stroke-width: 6; }
         .rl-gauge-tick { stroke: #8a8369; stroke-width: 1.4; }
+        /* Inner sat-temp track + its short ticks — dimmer than the pressure
+           ring so the round temp labels stay the ring's loudest element. */
+        .rl-gauge-tarc { fill: none; stroke: var(--dev-edge); stroke-width: 1.5; }
+        .rl-gauge-ttick { stroke: #8a8369; stroke-width: 1; }
         .rl-gauge-plabel {
             font-family: var(--mono);
             font-size: 12px;
@@ -1014,11 +1018,13 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
         // 150°→390° (lower-left, up through top, to lower-right). The
         // needle is drawn pointing up and rotated (frac*240 − 120)°. Each
         // gauge carries a per-refrigerant saturation-temp ring built from
-        // REFRIGERANT_TYPES via RefrigLoop.satTempAtP — the P-T curve on
-        // the dial face.
+        // REFRIGERANT_TYPES via RefrigLoop.pressAtSatTemp: round display
+        // temps placed wherever the P-T curve puts them on the pressure
+        // sweep — like a real manifold gauge face — under a faint inner
+        // track arc (R_TARC) with a short tick per label.
         // ─────────────────────────────────────────────────────────────
         const GCX = 100, GCY = 94;
-        const R_TICK_OUT = 80, R_TICK_IN = 71, R_PLABEL = 62, R_TLABEL = 40;
+        const R_TICK_OUT = 80, R_TICK_IN = 71, R_PLABEL = 62, R_TLABEL = 40, R_TARC = 48;
 
         const gauges = {
             low:  { curve: 'dew',    refTemp: 60,  max: 200, cur: -120, target: -120,
@@ -1042,13 +1048,10 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
 
         // Smallest "nice" step giving ≤4 intervals, and the max rounded up to
         // a whole number of those steps (so every tick is a round value). The
-        // ≤4 cap (not ≤5) is deliberate: a 5-interval dial puts ticks at
-        // frac 0.4 and 0.6, so two sat-temp ring labels flank the narrow top
-        // of the dial and overlap ("87.7° 111.5°"). Capping at 4 intervals
-        // lands a single label on the top centre (frac 0.5) or, at 3
-        // intervals, a widely-spaced 0.33 / 0.67 pair — the clean R-410A /
-        // R-454B behaviour, now guaranteed for all six refrigerants on both
-        // gauges.
+        // ≤4 cap (not ≤5) predates the independent temp ring — it originally
+        // kept two per-tick sat-temp labels from flanking the narrow top of
+        // the dial — and stays because it also reads well for the pressure
+        // ring itself: at most 5 well-spaced round figures per dial.
         function niceScale(rawMax) {
             const steps = [10, 20, 25, 50, 100, 150, 200, 250];
             for (let i = 0; i < steps.length; i++) {
@@ -1057,6 +1060,47 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                 }
             }
             return { step: 500, max: Math.ceil(rawMax / 500) * 500 };
+        }
+
+        // 240° track arc at radius R — shared by the pressure track and the
+        // inner sat-temp track (large-arc, clockwise from frac 0 to frac 1).
+        function arcPath(R) {
+            const a0 = ptAt(R, 0), a1 = ptAt(R, 1);
+            return 'M ' + a0.x.toFixed(1) + ' ' + a0.y.toFixed(1) +
+                ' A ' + R + ' ' + R + ' 0 1 1 ' +
+                a1.x.toFixed(1) + ' ' + a1.y.toFixed(1);
+        }
+
+        // Round sat-temp stops for the inner ring. Mirrors drawPlot's
+        // niceStepP move: pick ROUND values in the current display unit
+        // (°F or °C), then convert each back to canonical °F and let
+        // RefrigLoop.pressAtSatTemp place it on the pressure sweep — round
+        // figures at whatever angle the P-T curve dictates, like a printed
+        // manifold-gauge P-T ring (the per-tick sat temps this replaces
+        // printed artifacts: 101.3°, 95.8°, -41.5°). Ladder walk: take the
+        // densest step whose labels, after greedily dropping any label
+        // closer than MIN_SEP of the sweep to its kept neighbour, still
+        // fit (≤6). Out-of-table temps (r134a / r454b high dials near
+        // full-scale) drop out via the !ok guard, same as before.
+        function tempRingStops(g, refrig) {
+            const steps = U.current() === 'metric' ? [5, 10, 20, 25] : [10, 20, 25, 50];
+            const MIN_SEP = 0.06;
+            let best = [];
+            for (let si = 0; si < steps.length; si++) {
+                const step = steps[si];
+                const stops = [];
+                for (let d = Math.ceil(-100 / step) * step; d <= 320; d += step) {
+                    const r = RefrigLoop.pressAtSatTemp(refrig, g.curve, U.toCanonical.temp(d));
+                    if (!r || !r.ok) continue;
+                    const frac = r.value / g.max;
+                    if (frac < 0 || frac > 1) continue;
+                    if (stops.length && frac - stops[stops.length - 1].frac < MIN_SEP) continue;
+                    stops.push({ frac: frac, label: String(d) + '°' });
+                }
+                best = stops;
+                if (stops.length <= 6) break;
+            }
+            return best;
         }
 
         // (Re)build one gauge's tick + P-T ring for the current refrigerant.
@@ -1072,11 +1116,21 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
             g.max = ns.max;
 
             // Faint arc under the ticks (the dial track).
-            const a0 = ptAt(R_TICK_IN + 4, 0), a1 = ptAt(R_TICK_IN + 4, 1);
-            $(g.arc).setAttribute('d',
-                'M ' + a0.x.toFixed(1) + ' ' + a0.y.toFixed(1) +
-                ' A ' + (R_TICK_IN + 4) + ' ' + (R_TICK_IN + 4) + ' 0 1 1 ' +
-                a1.x.toFixed(1) + ' ' + a1.y.toFixed(1));
+            $(g.arc).setAttribute('d', arcPath(R_TICK_IN + 4));
+
+            // Inner sat-temp track + its short ticks go in FIRST; the temp
+            // labels append LAST so their paint-order halos punch out of
+            // the arc wherever the curve lands a label near it.
+            const stops = tempRingStops(g, refrig);
+            gEl.appendChild(svgEl('path', { class: 'rl-gauge-tarc', d: arcPath(R_TARC) }));
+            stops.forEach(function (st) {
+                const o = ptAt(R_TARC + 2, st.frac), i = ptAt(R_TARC - 2, st.frac);
+                gEl.appendChild(svgEl('line', {
+                    class: 'rl-gauge-ttick',
+                    x1: o.x.toFixed(1), y1: o.y.toFixed(1),
+                    x2: i.x.toFixed(1), y2: i.y.toFixed(1),
+                }));
+            });
 
             for (let p = 0; p <= g.max + 0.5; p += ns.step) {
                 const frac = p / g.max;
@@ -1093,18 +1147,18 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                 });
                 pTxt.textContent = String(dispP(p));
                 gEl.appendChild(pTxt);
-                // Saturation-temp label (inner ring) — the P-T curve. Skip
-                // where the table can't resolve (very low pressures).
-                const sat = RefrigLoop.satTempAtP(refrig, g.curve, p);
-                if (sat && sat.ok) {
-                    const tl = ptAt(R_TLABEL, frac);
-                    const tTxt = svgEl('text', {
-                        class: 'rl-gauge-tlabel', x: tl.x.toFixed(1), y: (tl.y + 3).toFixed(1),
-                    });
-                    tTxt.textContent = dispT(sat.value) + '°';
-                    gEl.appendChild(tTxt);
-                }
             }
+
+            // Saturation-temp labels (inner ring) — round display values on
+            // the P-T curve, independent of the pressure ticks above.
+            stops.forEach(function (st) {
+                const tl = ptAt(R_TLABEL, st.frac);
+                const tTxt = svgEl('text', {
+                    class: 'rl-gauge-tlabel', x: tl.x.toFixed(1), y: (tl.y + 3).toFixed(1),
+                });
+                tTxt.textContent = st.label;
+                gEl.appendChild(tTxt);
+            });
         }
 
         function setGaugeTarget(g, psig, oorMark) {
