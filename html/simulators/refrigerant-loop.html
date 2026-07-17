@@ -108,7 +108,7 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
         .rl-gauge-val {
             font-family: var(--mono);
             font-weight: 700;
-            font-size: 22px;
+            font-size: 24px;
             text-anchor: middle;
         }
         .rl-gauge-low  .rl-gauge-val { fill: #4aa3dd; }   /* theme-constant, see note above */
@@ -571,7 +571,7 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                                 <g id="rl-gauge-low-scale"></g>
                                 <circle class="rl-gauge-hub" cx="100" cy="94" r="6.5"/>
                                 <text class="rl-gauge-val" id="rl-gauge-low-val" x="100" y="150">&#8212;</text>
-                                <text class="rl-gauge-cap" x="100" y="167">LOW · SUCTION</text>
+                                <text class="rl-gauge-cap" id="rl-gauge-low-cap" x="100" y="167">LOW · SUCTION · PSIG</text>
                             </svg>
 
                             <svg class="rl-gauge rl-gauge-high" id="rl-gauge-high" viewBox="0 0 200 182"
@@ -584,7 +584,7 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                                 <g id="rl-gauge-high-scale"></g>
                                 <circle class="rl-gauge-hub" cx="100" cy="94" r="6.5"/>
                                 <text class="rl-gauge-val" id="rl-gauge-high-val" x="100" y="150">&#8212;</text>
-                                <text class="rl-gauge-cap" x="100" y="167">HIGH · HEAD</text>
+                                <text class="rl-gauge-cap" id="rl-gauge-high-cap" x="100" y="167">HIGH · HEAD · PSIG</text>
                             </svg>
                         </div>
 
@@ -1040,8 +1040,9 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
             // Digital readout in the dial face. A table-clamped reading gets
             // a ≥/≤ mark — without it the pegged gauge silently contradicted
             // the sat-temp LCD (e.g. 153.0 °F beside a 530-psig top-row clamp)
-            // while a higher-priority verdict masked the off-chart note.
-            $(g.val).textContent = (oorMark || '') + dispP(psig) + ' ' + pU();
+            // while a higher-priority verdict masked the off-chart note. The
+            // unit lives in the caption below (see applyRefrigerant), not here.
+            $(g.val).textContent = (oorMark || '') + dispP(psig);
         }
         function applyNeedle(g) {
             $(g.needle).setAttribute('transform',
@@ -1428,6 +1429,12 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
             $('rl-refrig-badge').textContent = R ? R.name : id;
             buildGaugeScale(gauges.low, id);
             buildGaugeScale(gauges.high, id);
+            // Dial captions carry the pressure unit (the digital is bare);
+            // re-set here because this runs on init, refrigerant change, and
+            // the U.onChange unit flip alike.
+            const capU = pU().toUpperCase();
+            $('rl-gauge-low-cap').textContent  = 'LOW · SUCTION · '  + capU;
+            $('rl-gauge-high-cap').textContent = 'HIGH · HEAD · ' + capU;
             renderMain();
         }
 
