@@ -23,6 +23,11 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
            particle <circle>s (descendants of the loop <svg>) inherit it. */
         .rl-stage { --rl-frost: #a9d4e8; }
 
+        /* Intro preamble — the shared p.tool-preamble carries no margins
+           (per-site by design); this one sits inside .tool-body above the
+           cockpit and needs breathing room before the presets row. */
+        p.tool-preamble.rl-intro { margin-bottom: 1.5rem; }
+
         /* Loop schematic — the hero. Centered, capped. Pipe strokes carry
            meaning (--heat hot side, --blue-cool cool side) exactly like the
            refrigerant-cycle-basics lesson it is re-id'd from. */
@@ -145,8 +150,10 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
             .rl-lcds .lcd .v.rl-lcd-pair { font-size: 0.85rem; }
         }
 
-        /* CFM/ton readout — colored against the 400-CFM/ton floor. */
+        /* CFM/ton readout — colored against the 400-CFM/ton floor. The
+           unit caption reads quiet next to the colored value. */
         .rl-cfm { margin-top: 0.9rem; }
+        .rl-cfm-unit { color: var(--text-dim); font-weight: 400; }
         .rl-cfm-val.ok  { color: var(--accent); }
         .rl-cfm-val.mid { color: var(--amber); }
         .rl-cfm-val.bad { color: var(--red); }
@@ -384,7 +391,7 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
              — doesn't fit the Input / Output / Reference column pattern. -->
         <div class="tool-body">
 
-            <p class="tool-preamble" style="margin-bottom:1.5rem;">
+            <p class="tool-preamble rl-intro">
                 A directional model, not a thermodynamic one — the pressures are
                 real P-T-table lookups, but the magnitudes each knob moves are
                 illustrative, tuned to teach which way the state travels. Turn a
@@ -581,7 +588,7 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                  -> suction psig, HIGH side -> head psig, each with a per-refrigerant
                  saturation-temperature ring drawn from REFRIGERANT_TYPES (the
                  P-T curve, on the gauge face). Needles ease on the page rAF. -->
-            <h2 class="subhead" style="margin-top:2rem;">Gauges &amp; readouts</h2>
+            <h2 class="subhead">Gauges &amp; readouts</h2>
             <div class="rl-register">
 
                 <!-- Manifold gauges + LCD cluster -->
@@ -686,7 +693,7 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                     <div class="rl-cfm readout" role="status">
                         <div class="readout-label">Indoor coil airflow</div>
                         <div class="readout-value"><span class="rl-cfm-val" id="rl-cfm-val">&#8212;</span>
-                            <span style="color:var(--text-dim);font-weight:400;"> CFM/ton · floor 400</span></div>
+                            <span class="rl-cfm-unit"> CFM/ton · floor 400</span></div>
                     </div>
                 </div>
             </div>
@@ -719,7 +726,7 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                  the low-side sat point slides left past it. Redrawn on every
                  solve — no easing, so the reduced-motion frame is simply the
                  settled state. -->
-            <h2 class="subhead" style="margin-top:2rem;">On the P-T chart</h2>
+            <h2 class="subhead">On the P-T chart</h2>
             <p class="ref-note compact">
                 Where the cycle sits on the refrigerant's own saturation curve.
                 The low-side point rides the dew curve — the gap to its right is
