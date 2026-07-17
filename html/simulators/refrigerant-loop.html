@@ -1255,6 +1255,19 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
         function niceStepT(span) {
             return span > 140 ? 40 : span > 90 ? 20 : span > 45 ? 15 : span > 20 ? 10 : 5;
         }
+        // A "nice" pressure gridline step (display units): the smallest
+        // 1-2-2.5-5 ladder value that keeps the non-zero line count at 5
+        // or fewer (lands on 3-5 for any axis max). Non-integer rungs
+        // (2.5 itself) are skipped so labels stay whole numbers.
+        function niceStepP(maxDisp) {
+            for (let k = 1; ; k *= 10) {
+                const mults = [1, 2, 2.5, 5];
+                for (let i = 0; i < mults.length; i++) {
+                    const step = mults[i] * k;
+                    if (step % 1 === 0 && Math.floor(maxDisp / step) <= 5) return step;
+                }
+            }
+        }
 
         function drawPlot(s) {
             const canvas = $('rl-plot');
@@ -1297,21 +1310,28 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
             const xOf = t => padL + plotW * (t - tMin) / tSpan;
             const yOf = p => padT + plotH * (1 - p / pMax);
 
-            // ── Pressure gridlines + labels (left, display units) ──
+            // ── Pressure gridlines + labels (left) — nice DISPLAY steps
+            //    placed back in canonical space, mirroring the temperature
+            //    ticks below: quarters of pMax gave 88/175/263-style labels
+            //    (and never-round kPag), so pick a round step in the current
+            //    display unit and convert each value to psig for placement
+            //    (gauge pressure is a pure scale, so this is exact). ──
             ctx.font = '10px ' + mono;
             ctx.lineWidth = 1;
             ctx.strokeStyle = cGrid;
             ctx.fillStyle = cDim;
             ctx.textAlign = 'right';
             ctx.textBaseline = 'middle';
-            for (let i = 0; i <= 4; i++) {
-                const p = pMax * i / 4;
+            const pMaxDisp = U.display.pressure(pMax);
+            const pStep = niceStepP(pMaxDisp);
+            for (let d = 0; d <= pMaxDisp; d += pStep) {
+                const p = U.toCanonical.pressure(d);
                 const y = Math.round(yOf(p)) + 0.5;
                 ctx.beginPath();
                 ctx.moveTo(padL, y);
                 ctx.lineTo(cssW - padR, y);
                 ctx.stroke();
-                ctx.fillText(String(dispP(p)), padL - 5, yOf(p));
+                ctx.fillText(String(d), padL - 5, yOf(p));
             }
 
             // ── Temperature ticks (bottom) — nice DISPLAY values placed back
