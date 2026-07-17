@@ -567,9 +567,9 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                                 <circle class="rl-gauge-face" cx="100" cy="94" r="86"/>
                                 <path class="rl-gauge-arc" id="rl-gauge-low-arc" d=""/>
                                 <line class="rl-gauge-needle-low" id="rl-gauge-low-needle"
-                                      x1="100" y1="94" x2="100" y2="24"/>
+                                      x1="100" y1="110" x2="100" y2="18"/>
                                 <g id="rl-gauge-low-scale"></g>
-                                <circle class="rl-gauge-hub" cx="100" cy="94" r="5"/>
+                                <circle class="rl-gauge-hub" cx="100" cy="94" r="6.5"/>
                                 <text class="rl-gauge-val" id="rl-gauge-low-val" x="100" y="150">&#8212;</text>
                                 <text class="rl-gauge-cap" x="100" y="167">LOW · SUCTION</text>
                             </svg>
@@ -580,9 +580,9 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                                 <circle class="rl-gauge-face" cx="100" cy="94" r="86"/>
                                 <path class="rl-gauge-arc" id="rl-gauge-high-arc" d=""/>
                                 <line class="rl-gauge-needle-high" id="rl-gauge-high-needle"
-                                      x1="100" y1="94" x2="100" y2="24"/>
+                                      x1="100" y1="110" x2="100" y2="18"/>
                                 <g id="rl-gauge-high-scale"></g>
-                                <circle class="rl-gauge-hub" cx="100" cy="94" r="5"/>
+                                <circle class="rl-gauge-hub" cx="100" cy="94" r="6.5"/>
                                 <text class="rl-gauge-val" id="rl-gauge-high-val" x="100" y="150">&#8212;</text>
                                 <text class="rl-gauge-cap" x="100" y="167">HIGH · HEAD</text>
                             </svg>
@@ -944,7 +944,7 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
         // the dial face.
         // ─────────────────────────────────────────────────────────────
         const GCX = 100, GCY = 94;
-        const R_TICK_OUT = 80, R_TICK_IN = 71, R_PLABEL = 62, R_TLABEL = 44;
+        const R_TICK_OUT = 80, R_TICK_IN = 71, R_PLABEL = 62, R_TLABEL = 40;
 
         const gauges = {
             low:  { curve: 'dew',    refTemp: 60,  max: 200, cur: -120, target: -120,
