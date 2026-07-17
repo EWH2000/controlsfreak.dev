@@ -283,3 +283,153 @@ test.describe('refrigerant-loop-engine: out-of-range guard', () => {
         expect(RefrigLoop.solve(RefrigLoop.PRESETS.typical).flags.outOfRange).toBe(false);
     });
 });
+
+// ── 7. Physical sanity across the whole knob box ─────────────────────────
+// The 2026-07-16 verification audit found a reachable stage-1 + cold-ambient
+// corner where tEvap rose ABOVE tCond, putting the suction gauge above the
+// head gauge with the compressor running — physically impossible. The engine
+// now floors tCond at tEvap + DESIGN.MIN_LIFT; these tests pin that.
+test.describe('refrigerant-loop-engine: pressure ordering (min lift)', () => {
+
+    test('pDis > pSuc at every corner of the CLAMPS box, all refrigerants', () => {
+        const { RefrigLoop, REFRIGERANT_TYPES } = loadEngine();
+        const C = RefrigLoop.CLAMPS;
+        const axes = ['airflow', 'returnT', 'charge', 'shTarget', 'ambient', 'condAir', 'capacity'];
+        const ids = Object.keys(REFRIGERANT_TYPES);
+        for (const id of ids) {
+            for (let mask = 0; mask < (1 << axes.length); mask++) {
+                const inp = { refrig: id };
+                axes.forEach((k, i) => { inp[k] = (mask & (1 << i)) ? C[k].max : C[k].min; });
+                const s = RefrigLoop.solve(inp);
+                expect(allFinite(s, STATE_NUMS), `finite ${id} mask ${mask}`).toBe(true);
+                expect(s.pDis, `pDis>pSuc ${id} mask ${mask}`).toBeGreaterThan(s.pSuc);
+                expect(s.tCond, `lift ${id} mask ${mask}`)
+                    .toBeGreaterThanOrEqual(s.tEvap + RefrigLoop.DESIGN.MIN_LIFT - 1e-9);
+            }
+        }
+    });
+
+    test('the audit corner that used to invert now keeps positive lift', () => {
+        const { RefrigLoop } = loadEngine();
+        // Mildest pre-fix inversion: nominal SH/SC, every flag false, suction
+        // 186.8 psig over head 175.2 (r410a). The floor must hold it ordered.
+        const s = RefrigLoop.solve({ airflow: 1.20, returnT: 85, charge: 1.00,
+            shTarget: 10, ambient: 55, condAir: 1.20, capacity: 0.5, refrig: 'r410a' });
+        expect(s.tCond).toBeCloseTo(s.tEvap + RefrigLoop.DESIGN.MIN_LIFT, 6);
+        expect(s.pDis).toBeGreaterThan(s.pSuc);
+    });
+});
+
+// ── 8. Verdict priority (most severe wins) ────────────────────────────────
+// buildVerdict is a first-match if-chain; nothing pinned its order before, so
+// a reorder would have passed the suite. Each case trips MULTIPLE flags and
+// asserts which one owns the pill.
+test.describe('refrigerant-loop-engine: verdict priority', () => {
+
+    test('freeze outranks starved (deep undercharge + starved airflow)', () => {
+        const { RefrigLoop } = loadEngine();
+        const s = RefrigLoop.solve({ airflow: 0.40, returnT: 65, charge: 0.60 });
+        expect(s.flags.freeze && s.flags.starved).toBe(true);
+        expect(s.verdict.kind).toBe('error');
+        expect(s.verdict.text.toLowerCase()).toContain('freez');
+    });
+
+    test('floodback outranks high head + high subcooling (overcharge + dirty)', () => {
+        const { RefrigLoop } = loadEngine();
+        const s = RefrigLoop.solve({ charge: 1.20, condAir: 0.50 });
+        expect(s.flags.floodback && s.flags.highHead && s.flags.highSubcool).toBe(true);
+        expect(s.verdict.text.toLowerCase()).toContain('floodback');
+    });
+
+    test('high head outranks high subcooling (mild overcharge + weak condenser)', () => {
+        const { RefrigLoop } = loadEngine();
+        const s = RefrigLoop.solve({ charge: 1.15, condAir: 0.60 });
+        expect(s.flags.floodback).toBe(false);
+        expect(s.flags.highHead && s.flags.highSubcool).toBe(true);
+        expect(s.verdict.text.toLowerCase()).toContain('high head');
+    });
+});
+
+// ── 9. Flag threshold boundaries (strict vs inclusive) ───────────────────
+// A silent < → <= regression passed the old suite. solve() does not quantize
+// to the slider step, so exact-boundary inputs are legal probes.
+test.describe('refrigerant-loop-engine: threshold boundaries', () => {
+
+    test('freeze is strictly below 32 °F', () => {
+        const { RefrigLoop } = loadEngine();
+        expect(RefrigLoop.solve({ airflow: 0.80 }).tEvap).toBeCloseTo(32, 6);
+        expect(RefrigLoop.solve({ airflow: 0.80 }).flags.freeze).toBe(false);
+        expect(RefrigLoop.solve({ airflow: 0.79 }).flags.freeze).toBe(true);
+    });
+
+    test('floodback is inclusive at SH = 3 °F', () => {
+        const { RefrigLoop } = loadEngine();
+        // Binary-exact knobs so SH computes to exactly 3.0:
+        // 4.25 − 40·(1/32) = 4.25 − 1.25 = 3.0 (all dyadic fractions).
+        const at3 = RefrigLoop.solve({ shTarget: 4.25, charge: 1 + 1 / 32 });
+        expect(at3.superheat).toBe(3);
+        expect(at3.flags.floodback).toBe(true);
+        // 4.25 − 40·(1/64) = 3.625 — just above the line stays clear.
+        expect(RefrigLoop.solve({ shTarget: 4.25, charge: 1 + 1 / 64 }).flags.floodback).toBe(false);
+    });
+
+    test('starved is strictly above SH 20 °F', () => {
+        const { RefrigLoop } = loadEngine();
+        expect(RefrigLoop.solve({ shTarget: 20 }).flags.starved).toBe(false);
+        expect(RefrigLoop.solve({ shTarget: 21 }).flags.starved).toBe(true);
+    });
+
+    test('subcool bands are strict at 3 and 20 °F', () => {
+        const { RefrigLoop } = loadEngine();
+        // Binary-exact knobs: 10 + 60·(−1/8) − 8·(−1/16) = 10 − 7.5 + 0.5 = 3.0.
+        const atLow = RefrigLoop.solve({ charge: 0.875, condAir: 0.9375 });
+        expect(atLow.subcool).toBe(3);
+        expect(atLow.flags.lowSubcool).toBe(false);          // strict <
+        expect(RefrigLoop.solve({ charge: 0.875 }).flags.lowSubcool).toBe(true);   // SC 2.5
+        // 10 + 60·(1/8) − 8·(−5/16) = 10 + 7.5 + 2.5 = 20.0.
+        const atHigh = RefrigLoop.solve({ charge: 1.125, condAir: 0.6875 });
+        expect(atHigh.subcool).toBe(20);
+        expect(atHigh.flags.highSubcool).toBe(false);        // strict >
+        expect(RefrigLoop.solve({ charge: 1.125, condAir: 0.5 }).flags.highSubcool).toBe(true); // SC 21.5
+    });
+
+    test('highHead split branch is strictly above 18 °F approach', () => {
+        const { RefrigLoop } = loadEngine();
+        expect(RefrigLoop.solve({ condAir: 0.90 }).flags.highHead).toBe(false);  // split 18.0
+        expect(RefrigLoop.solve({ condAir: 0.89 }).flags.highHead).toBe(true);   // split 18.3
+    });
+
+    test('the low-head note starts strictly below tCond 85 °F', () => {
+        const { RefrigLoop } = loadEngine();
+        expect(RefrigLoop.solve({ ambient: 70 }).verdict.kind).toBe('ok');       // tCond 85.0
+        expect(RefrigLoop.solve({ ambient: 69 }).verdict.text.toLowerCase()).toContain('head low');
+    });
+});
+
+// ── 10. The two knobs with no directional coverage + input robustness ────
+test.describe('refrigerant-loop-engine: remaining directions + robustness', () => {
+
+    test('returnT ↑ ⇒ tEvap and pSuc ↑; shTarget ↑ ⇒ superheat ↑', () => {
+        const { RefrigLoop } = loadEngine();
+        const cold = RefrigLoop.solve({ returnT: 65 });
+        const warm = RefrigLoop.solve({ returnT: 85 });
+        expect(warm.tEvap).toBeGreaterThan(cold.tEvap);
+        expect(warm.pSuc).toBeGreaterThan(cold.pSuc);
+        expect(RefrigLoop.solve({ shTarget: 25 }).superheat)
+            .toBeGreaterThan(RefrigLoop.solve({ shTarget: 4 }).superheat);
+    });
+
+    test('garbage inputs fall back to the defaults solve, finite, no throw', () => {
+        const { RefrigLoop } = loadEngine();
+        const base = RefrigLoop.solve({});
+        for (const inp of [null, undefined,
+            { refrig: 'bogus', airflow: 'wide', charge: NaN, ambient: Infinity },
+            { airflow: {}, returnT: true, shTarget: [], condAir: null }]) {
+            let s;
+            expect(() => { s = RefrigLoop.solve(inp); }).not.toThrow();
+            expect(allFinite(s, STATE_NUMS)).toBe(true);
+            expect(s.pSuc).toBeCloseTo(base.pSuc, 6);
+            expect(s.pDis).toBeCloseTo(base.pDis, 6);
+        }
+    });
+});

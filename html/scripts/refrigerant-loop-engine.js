@@ -71,8 +71,8 @@
 //     superheat, subcool,    // °F (SH held by metering; SC emergent from charge)
 //     tSucLine, tLiqLine,    // suction-line / liquid-line temps, °F
 //     cfmPerTon,             // evaporator airflow vs the 400 floor
-//     flags: { freeze, floodback, starved, highHead,
-//              lowSubcool, highSubcool, outOfRange },
+//     flags: { freeze, floodback, starved, highHead, lowSubcool,
+//              highSubcool, outOfRange, outOfRangeLow, outOfRangeHigh },
 //     verdict: { kind:'ok'|'warn'|'error', text } }
 // (No tDisGas — the discharge-gas-temp readout is omitted from v1; it is the
 // least-grounded number, so it waits for a real enthalpy model.)
@@ -121,6 +121,15 @@ const RefrigLoop = (function () {
         SPLIT_CHG:   25,      // °F per unit charge above 1 — overcharge backs
                               //   liquid up the condenser ⇒ higher head.
         SPLIT_CAP:   5,       // °F per unit capacity above 1 — more flow to reject.
+        MIN_LIFT:    10,      // °F — minimum condenser-over-evaporator approach
+                              //   while the compressor runs: tCond is floored at
+                              //   tEvap + MIN_LIFT. A pumping compressor cannot
+                              //   hold head below suction (that is why low-ambient
+                              //   head-pressure control exists). Without the floor,
+                              //   a stage-1 + cold-ambient + high-airflow corner
+                              //   drove tEvap above tCond and the suction gauge
+                              //   read above the head gauge — physically
+                              //   impossible on a running system.
 
         // (D) Subcooling, °F.  Emergent from charge + condenser.
         SC_BASE:     10,      // design subcooling, °F.
@@ -295,12 +304,16 @@ const RefrigLoop = (function () {
             - D.SH_OVER  * Math.max(0, charge - 1);
         const tSucLine = tEvap + superheat;
 
-        // (C) Condenser saturation temp (high side / head).
+        // (C) Condenser saturation temp (high side / head). Floored at the
+        //     evaporator temp + minimum lift: head cannot sit below suction
+        //     while the compressor pumps (the low-ambient collapse bottoms out
+        //     here — the machine-side answer is head-pressure control, which
+        //     the lowAmbient verdict already narrates).
         const split = D.SPLIT_BASE
             + D.SPLIT_CONDAIR * (condAir  - 1)
             + D.SPLIT_CHG     * (charge   - 1)
             + D.SPLIT_CAP     * (capacity - 1);
-        const tCond = ambient + split;
+        const tCond = Math.max(ambient + split, tEvap + D.MIN_LIFT);
 
         // (D) Subcooling — emergent from charge + condenser.
         const subcool = D.SC_BASE
@@ -337,6 +350,10 @@ const RefrigLoop = (function () {
             highHead:    (tCond > D.HIGH_HEAD_T) || (split > D.HIGH_HEAD_SPLIT),
             lowSubcool:  subcool < D.LOW_SC,
             highSubcool: subcool > D.HIGH_SC,
+            // Per-side table-clamp detail (the page marks the pegged gauge)
+            // plus the combined flag the verdict reads.
+            outOfRangeLow:  pSucR.oor,
+            outOfRangeHigh: pDisR.oor,
             outOfRange:  pSucR.oor || pDisR.oor,
         };
 
