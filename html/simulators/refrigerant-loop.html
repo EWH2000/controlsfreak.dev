@@ -193,12 +193,18 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
            interactive cockpit into a grid that fills one screen with no scroll.
            MOBILE + NORMAL DESKTOP FLOW ARE UNTOUCHED — .rl-cockpit / .rl-fs-plot
            are `display: contents` (transparent) until .is-fullscreen. Two
-           regimes, chosen by viewport HEIGHT:
-             • tall / portrait (min-height 1150px, e.g. 1080×1920): the loop AND
-               the P-T plot both fit — show everything, hide the view toggle.
-             • short / landscape (max-height 1149px, e.g. 1920×1080, 1440×900):
-               too short for both, so a System/Curve toggle swaps loop↔plot in
-               one "main" cell; gauges, readouts and controls stay put. */
+           regimes:
+             • short / landscape (the BASE — any fullscreen viewport, e.g.
+               1920×1080, 1440×900, 2560×1440): too short for the loop AND the
+               P-T plot at once, so a System/Curve toggle swaps loop↔plot in
+               one "main" cell; gauges, readouts and controls stay put.
+             • tall / portrait (the override — min-height 1150px AND
+               max-aspect-ratio 4/3, e.g. 1080×1920): the loop and the plot
+               both fit stacked — show everything, hide the view toggle. The
+               aspect gate matters: a landscape QHD monitor (2560×1440)
+               clears the height but not the vertical proportion — height
+               alone handed it the portrait layout (ballooned dials, the
+               plot squeezed to a ribbon). */
         .rl-cockpit { display: contents; }
         .rl-fs-plot { display: contents; }
         .rl-fs-viewtoggle { display: none; }
@@ -264,10 +270,34 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
         .tool-card.is-fullscreen .rl-controls .form-row { margin-bottom: 0.55rem; }
         .tool-card.is-fullscreen .rl-knob-grid { gap: 0.4rem 1.4rem; }
 
-        /* ── TALL / PORTRAIT: show the whole cockpit, no toggle ──
+        /* ── SHORT / LANDSCAPE (base): loop↔plot via the System/Curve toggle.
+           No height gate — this is what every fullscreen viewport gets unless
+           the tall override below claims it. A wide monitor with height to
+           spare (2560×1440) still belongs here: extra width scales the dials,
+           it never adds the vertical room the stacked layout needs. ── */
+        .tool-card.is-fullscreen .rl-cockpit {
+            grid-template-columns: 1.32fr 0.68fr;
+            grid-template-rows: auto minmax(0, 1fr) auto;
+            grid-template-areas:
+                "presets  toggle"
+                "main     gauges"
+                "controls gauges";
+        }
+        .tool-card.is-fullscreen .rl-presets  { grid-area: presets; align-self: center; }
+        .tool-card.is-fullscreen .rl-fs-viewtoggle { grid-area: toggle; display: block; justify-self: end; align-self: center; }
+        .tool-card.is-fullscreen .rl-register { grid-area: gauges; }
+        .tool-card.is-fullscreen .rl-controls { grid-area: controls; }
+        .tool-card.is-fullscreen .rl-loop     { grid-area: main; display: block; }
+        .tool-card.is-fullscreen .rl-fs-plot  { grid-area: main; display: none; }
+        .tool-card.is-fullscreen.rl-fs-curve .rl-loop    { display: none; }
+        .tool-card.is-fullscreen.rl-fs-curve .rl-fs-plot { display: flex; }
+
+        /* ── TALL / PORTRAIT (override): show the whole cockpit, no toggle.
            Gauges + loop up top, the P-T plot full-width below (its temperature
-           axis wants the width), controls along the bottom. */
-        @media (min-height: 1150px) {
+           axis wants the width), controls along the bottom. Gated on height
+           AND aspect so only portrait / near-square viewports (1080×1920 and
+           friends) qualify — see the regime note above. ── */
+        @media (min-height: 1150px) and (max-aspect-ratio: 4/3) {
             .tool-card.is-fullscreen .rl-cockpit {
                 grid-template-columns: 1fr 1fr;
                 grid-template-rows: auto auto minmax(0, 1fr) auto;
@@ -277,31 +307,17 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                     "plot     plot"
                     "controls controls";
             }
-            .tool-card.is-fullscreen .rl-presets  { grid-area: presets; }
+            .tool-card.is-fullscreen .rl-presets  { grid-area: presets; align-self: auto; }
             .tool-card.is-fullscreen .rl-register { grid-area: gauges; }
             .tool-card.is-fullscreen .rl-loop     { grid-area: loop; display: block; }
             .tool-card.is-fullscreen .rl-fs-plot  { grid-area: plot; display: flex; }
             .tool-card.is-fullscreen .rl-controls { grid-area: controls; }
             .tool-card.is-fullscreen .rl-fs-viewtoggle { display: none; }
-        }
-
-        /* ── SHORT / LANDSCAPE: loop↔plot via the System/Curve toggle ── */
-        @media (max-height: 1149px) {
-            .tool-card.is-fullscreen .rl-cockpit {
-                grid-template-columns: 1.32fr 0.68fr;
-                grid-template-rows: auto minmax(0, 1fr) auto;
-                grid-template-areas:
-                    "presets  toggle"
-                    "main     gauges"
-                    "controls gauges";
-            }
-            .tool-card.is-fullscreen .rl-presets  { grid-area: presets; align-self: center; }
-            .tool-card.is-fullscreen .rl-fs-viewtoggle { grid-area: toggle; display: block; justify-self: end; align-self: center; }
-            .tool-card.is-fullscreen .rl-register { grid-area: gauges; }
-            .tool-card.is-fullscreen .rl-controls { grid-area: controls; }
-            .tool-card.is-fullscreen .rl-loop     { grid-area: main; display: block; }
-            .tool-card.is-fullscreen .rl-fs-plot  { grid-area: main; display: none; }
-            .tool-card.is-fullscreen.rl-fs-curve .rl-loop    { display: none; }
+            /* Both views are visible here, so the System/Curve state is
+               meaningless — out-specify the base .rl-fs-curve swap so a
+               Curve view set on a shorter viewport can't hide the loop
+               after a resize into this regime. */
+            .tool-card.is-fullscreen.rl-fs-curve .rl-loop    { display: block; }
             .tool-card.is-fullscreen.rl-fs-curve .rl-fs-plot { display: flex; }
         }
 
