@@ -1025,12 +1025,15 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
             }
         }
 
-        function setGaugeTarget(g, psig) {
+        function setGaugeTarget(g, psig, oorMark) {
             const frac = Math.max(0, Math.min(1, psig / g.max));
             g.target = frac * 240 - 120;
             if (reduceMotion) { g.cur = g.target; applyNeedle(g); }
-            // Digital readout in the dial face.
-            $(g.val).textContent = dispP(psig) + ' ' + pU();
+            // Digital readout in the dial face. A table-clamped reading gets
+            // a ≥/≤ mark — without it the pegged gauge silently contradicted
+            // the sat-temp LCD (e.g. 153.0 °F beside a 530-psig top-row clamp)
+            // while a higher-priority verdict masked the off-chart note.
+            $(g.val).textContent = (oorMark || '') + dispP(psig) + ' ' + pU();
         }
         function applyNeedle(g) {
             $(g.needle).setAttribute('transform',
@@ -1090,7 +1093,8 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
             $('rl-sr-summary').textContent =
                 'Suction ' + dispP(s.pSuc) + ' ' + pU() +
                 ', head ' + dispP(s.pDis) + ' ' + pU() +
-                (alarms.length ? '. Alarms: ' + alarms.join(', ') + '.' : '.');
+                (alarms.length ? '. Alarms: ' + alarms.join(', ') + '.' : '.') +
+                (s.flags.outOfRange ? ' Reading clamped at the edge of the P-T chart.' : '');
         }
 
         // ─────────────────────────────────────────────────────────────
@@ -1398,8 +1402,8 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
             }
             const s = RefrigLoop.solve(inp);
             lastState = s;
-            setGaugeTarget(gauges.low,  s.pSuc);
-            setGaugeTarget(gauges.high, s.pDis);
+            setGaugeTarget(gauges.low,  s.pSuc, s.flags.outOfRangeLow  ? '≤ ' : '');
+            setGaugeTarget(gauges.high, s.pDis, s.flags.outOfRangeHigh ? '≥ ' : '');
             renderRegister(s);
             updateLoop(s);
             drawPlot(s);
