@@ -569,7 +569,326 @@ test.describe('refrigerant-loop-engine: airside coil temperatures', () => {
     });
 });
 
-// ── 12. Loop-SVG geometry guards (source-level) ──────────────────────────
+// ── 12. Heating mode (the reversing-valve axis) ──────────────────────────
+// mode: 'heating' swaps the driving-temperature ROLES: the outdoor coil
+// evaporates (ambient + condAir drive block A) and the indoor coil condenses
+// (returnT + airflow drive block C). Anchored to the 47 °F heat-pump rating
+// point. Backward compat is a hard requirement — the first test below gates
+// it explicitly,
+// and every pre-mode describe above runs UNCHANGED with mode absent.
+test.describe('refrigerant-loop-engine: heating mode', () => {
+
+    test('backward-compat gate: mode absent === mode cooling, bit-identical', () => {
+        const { RefrigLoop } = loadEngine();
+        expect(RefrigLoop.DEFAULTS.mode).toBe('cooling');
+        const probes = [
+            {},
+            Object.assign({}, RefrigLoop.PRESETS.starve),
+            { airflow: 0.45, returnT: 65 },
+            { charge: 0.7, condAir: 0.6, capacity: 0.5 },
+            { ambient: 115, charge: 1.2, refrig: 'r407c' },
+        ];
+        for (const inp of probes) {
+            const a = RefrigLoop.solve(inp);
+            const b = RefrigLoop.solve(Object.assign({}, inp, { mode: 'cooling' }));
+            for (const k of STATE_NUMS) expect(b[k], k).toBe(a[k]);
+            expect(b.flags).toEqual(a.flags);
+            expect(b.verdict).toEqual(a.verdict);
+            expect(a.mode).toBe('cooling');
+        }
+    });
+
+    test('heating clamps: ambient/returnT re-range, everything else shared', () => {
+        const { RefrigLoop } = loadEngine();
+        const H = RefrigLoop.CLAMPS_HEATING;
+        expect(H.ambient).toEqual({ min: -5, max: 65, step: 1, default: 47 });
+        expect(H.returnT).toEqual({ min: 60, max: 80, step: 1, default: 70 });
+        // The other five knobs are the SAME frozen objects as CLAMPS.
+        for (const k of ['airflow', 'charge', 'shTarget', 'condAir', 'capacity']) {
+            expect(H[k], k).toBe(RefrigLoop.CLAMPS[k]);
+        }
+        expect(RefrigLoop.clampsFor('heating')).toBe(H);
+        expect(RefrigLoop.clampsFor('cooling')).toBe(RefrigLoop.CLAMPS);
+    });
+
+    test('heating design day lands on the 47 °F rating point, all green', () => {
+        const { RefrigLoop } = loadEngine();
+        // Missing ambient/returnT fall back to the HEATING defaults (47/70).
+        const s = RefrigLoop.solve({ mode: 'heating' });
+        expect(s.mode).toBe('heating');
+        expect(s.tEvap).toBe(27);                       // 47 − 20 approach
+        expect(s.tEvap).toBeGreaterThanOrEqual(25);     // published rating band
+        expect(s.tEvap).toBeLessThanOrEqual(30);
+        expect(s.tCond).toBe(105);                      // 70 + 35 split
+        expect(s.tCond).toBeGreaterThanOrEqual(100);
+        expect(s.tCond).toBeLessThanOrEqual(110);
+        expect(s.superheat).toBe(10);
+        expect(s.subcool).toBe(10);
+        // Pressures are the same table lookups the P-T tool would make.
+        expect(s.pSuc).toBeCloseTo(RefrigLoop.pressAtSatTemp('r410a', 'dew', 27).value, 6);
+        expect(s.pDis).toBeCloseTo(RefrigLoop.pressAtSatTemp('r410a', 'bubble', 105).value, 6);
+        // A sub-32 coil is NORMAL here: no freeze, and no frost at 47 °F
+        // ambient (above the 40 °F accumulation band).
+        for (const k of Object.keys(s.flags)) {
+            expect(s.flags[k], `flag ${k}`).toBe(false);
+        }
+        expect(s.verdict.kind).toBe('ok');
+    });
+
+    test('swapped roles: condAir drives the evaporator, airflow the condenser', () => {
+        const { RefrigLoop } = loadEngine();
+        // Outdoor airflow ↓ ⇒ suction dives (the frost-spiral term).
+        const sweep = [1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4].map(
+            (c) => RefrigLoop.solve({ mode: 'heating', condAir: c }));
+        for (let i = 1; i < sweep.length; i++) {
+            expect(sweep[i].tEvap, `tEvap step ${i}`).toBeLessThan(sweep[i - 1].tEvap);
+            expect(sweep[i].pSuc,  `pSuc step ${i}`).toBeLessThan(sweep[i - 1].pSuc);
+        }
+        // Indoor airflow ↓ ⇒ head climbs (winter choked-filter story).
+        const good = RefrigLoop.solve({ mode: 'heating', airflow: 1.0 });
+        const choked = RefrigLoop.solve({ mode: 'heating', airflow: 0.5 });
+        expect(choked.tCond).toBeGreaterThan(good.tCond);
+        expect(choked.pDis).toBeGreaterThan(good.pDis);
+        expect(choked.flags.highHead).toBe(true);       // split 50 > 38
+        expect(good.flags.highHead).toBe(false);        // design split 35
+        // Ambient tracks the EVAPORATOR 1:1; the condenser follows at the
+        // droop slope (the real capacity fade — owner decision 2026-07-18;
+        // this line originally pinned cold.tCond === mild.tCond).
+        const mild = RefrigLoop.solve({ mode: 'heating', ambient: 47 });
+        const cold = RefrigLoop.solve({ mode: 'heating', ambient: 17 });
+        expect(mild.tEvap - cold.tEvap).toBeCloseTo(30, 6);
+        expect(cold.tCond).toBeLessThan(mild.tCond);
+        expect(mild.tCond - cold.tCond)
+            .toBeCloseTo(RefrigLoop.DESIGN.SPLIT_AMB_HEAT * 30, 6);
+        // Return air tracks the CONDENSER 1:1 and leaves the evaporator alone.
+        const warm = RefrigLoop.solve({ mode: 'heating', returnT: 80 });
+        const cool = RefrigLoop.solve({ mode: 'heating', returnT: 60 });
+        expect(warm.tCond - cool.tCond).toBeCloseTo(20, 6);
+        expect(warm.tEvap).toBeCloseTo(cool.tEvap, 6);
+        // Compressor stage keeps its cooling directions.
+        const stage1 = RefrigLoop.solve({ mode: 'heating', capacity: 0.5 });
+        const stage2 = RefrigLoop.solve({ mode: 'heating', capacity: 1.0 });
+        expect(stage2.pSuc).toBeLessThan(stage1.pSuc);
+        expect(stage2.pDis).toBeGreaterThan(stage1.pDis);
+    });
+
+    test('frost flag: sub-32 coil AND sub-40 ambient, both strict', () => {
+        const { RefrigLoop } = loadEngine();
+        // 47 °F day: coil at 27 — sub-32, but ambient above the band. Normal.
+        expect(RefrigLoop.solve({ mode: 'heating', ambient: 47 }).flags.frost).toBe(false);
+        // Ambient gate is strict: 40 °F exactly stays clear, 39 °F frosts.
+        expect(RefrigLoop.solve({ mode: 'heating', ambient: 40 }).flags.frost).toBe(false);
+        const at39 = RefrigLoop.solve({ mode: 'heating', ambient: 39 });
+        expect(at39.tEvap).toBeLessThan(32);
+        expect(at39.flags.frost).toBe(true);
+        expect(at39.flags.freeze).toBe(false);          // freeze is cooling-cycle-only
+        expect(at39.verdict.kind).toBe('warn');
+        expect(at39.verdict.text.toLowerCase()).toContain('frost');
+        // Coil gate: light load + high outdoor airflow can hold the coil
+        // above 32 even in the frost band — no frost then (39.5 °F sat).
+        const warmCoil = RefrigLoop.solve({ mode: 'heating', ambient: 39,
+            condAir: 1.2, capacity: 0.5 });
+        expect(warmCoil.tEvap).toBeGreaterThanOrEqual(32);
+        expect(warmCoil.flags.frost).toBe(false);
+    });
+
+    test('frostChoked: strict below the 0.75 outdoor-airflow fraction', () => {
+        const { RefrigLoop } = loadEngine();
+        const at75 = RefrigLoop.solve({ mode: 'heating', ambient: 35, condAir: 0.75 });
+        expect(at75.flags.frost).toBe(true);
+        expect(at75.flags.frostChoked).toBe(false);     // strict <
+        const choked = RefrigLoop.solve({ mode: 'heating', ambient: 35, condAir: 0.70 });
+        expect(choked.flags.frostChoked).toBe(true);
+        expect(choked.verdict.kind).toBe('error');
+        // The choked error outranks the (also-true) generic starve rung.
+        expect(choked.flags.starvedOutdoor).toBe(true);
+        expect(choked.verdict.text.toLowerCase()).toContain('frosted over');
+    });
+
+    test('tEvap is ceiling-clamped at ambient − MIN_APPROACH_HEAT', () => {
+        const { RefrigLoop } = loadEngine();
+        const D = RefrigLoop.DESIGN;
+        // The verification-round repro: light load (stage 1) + overblown
+        // outdoor fan at a mild ambient summed +20.5 °F of positive
+        // authority — the raw block-A sat temp (65.5) crossed ABOVE the
+        // 65 °F air the coil absorbs heat from. The ceiling holds it at
+        // ambient − 2.
+        const s = RefrigLoop.solve({ mode: 'heating', ambient: 65,
+            condAir: 1.2, capacity: 0.5 });
+        expect(s.tEvap).toBeCloseTo(65 - D.MIN_APPROACH_HEAT, 6);
+        // MIN_LIFT still orders the pair after the ceiling pulls tEvap down.
+        expect(s.tCond).toBeGreaterThanOrEqual(s.tEvap + D.MIN_LIFT - 1e-9);
+        expect(s.pDis).toBeGreaterThan(s.pSuc);
+        // Below the ceiling the raw block-A value is untouched (design day).
+        expect(RefrigLoop.solve({ mode: 'heating' }).tEvap).toBe(27);
+    });
+
+    test('outdoor starve fires on deep approach at ANY ambient', () => {
+        const { RefrigLoop } = loadEngine();
+        // The verification-round repro: ambient 45 / condAir 0.40 pulled
+        // the coil to 1 °F (suction ~50 psig) yet read green — above the
+        // 40 °F frost band no rung saw the collapsed suction. The
+        // approach rung does, ambient-independent.
+        const s = RefrigLoop.solve({ mode: 'heating', ambient: 45, condAir: 0.40 });
+        expect(s.tEvap).toBeCloseTo(1, 6);
+        expect(s.flags.frost).toBe(false);              // 45 ≥ 40: no frost claim
+        expect(s.flags.starvedOutdoor).toBe(true);
+        expect(s.verdict.kind).toBe('warn');
+        expect(s.verdict.text.toLowerCase()).toContain('outdoor coil starved');
+        // Boundary is strict at approach 30 — at design knobs that lands
+        // exactly on condAir 0.75 (40·0.25 = 10 over the 20 design
+        // approach), the same physical line FROST_CHOKE_AIR specializes.
+        const at30 = RefrigLoop.solve({ mode: 'heating', ambient: 45, condAir: 0.75 });
+        expect(45 - at30.tEvap).toBeCloseTo(30, 6);
+        expect(at30.flags.starvedOutdoor).toBe(false);  // strict >
+        expect(at30.verdict.kind).toBe('ok');
+        const past = RefrigLoop.solve({ mode: 'heating', ambient: 45, condAir: 0.70 });
+        expect(past.flags.starvedOutdoor).toBe(true);
+        // Cycle-gated: never fires in cooling or defrost.
+        expect(RefrigLoop.solve({ condAir: 0.40 }).flags.starvedOutdoor).toBe(false);
+        expect(RefrigLoop.solve(RefrigLoop.PRESETS.defrost).flags.starvedOutdoor).toBe(false);
+    });
+
+    test('hardware-keyed airside mirrors: the LCD remap is explicit', () => {
+        const { RefrigLoop } = loadEngine();
+        // Cooling: indoor IS the evaporator pair, outdoor the condenser pair.
+        const c = RefrigLoop.solve(RefrigLoop.PRESETS.typical);
+        expect(c.tAirInIndoor).toBe(c.tAirInEvap);
+        expect(c.tAirOutIndoor).toBe(c.tAirOutEvap);
+        expect(c.tAirInOutdoor).toBe(c.tAirInCond);
+        expect(c.tAirOutOutdoor).toBe(c.tAirOutCond);
+        // Heating: indoor air crosses the CONDENSER — the design-day supply
+        // rise is 70 → 95, and outdoor air leaves the evaporator COOLED,
+        // 47 → 35.
+        const h = RefrigLoop.solve({ mode: 'heating' });
+        expect(h.tAirInIndoor).toBe(70);
+        expect(h.tAirOutIndoor).toBeCloseTo(95, 6);
+        expect(h.tAirInOutdoor).toBe(47);
+        expect(h.tAirOutOutdoor).toBeCloseTo(35, 6);
+        expect(h.tAirInIndoor).toBe(h.tAirInCond);
+        expect(h.tAirOutOutdoor).toBe(h.tAirOutEvap);
+    });
+
+    test('heating preset signatures: frosted / defrost / low-ambient', () => {
+        const { RefrigLoop } = loadEngine();
+        // Frosted outdoor coil — the heating headline: suction dives with
+        // superheat NORMAL (the honesty guard's outdoor mirror), and the
+        // choked-frost error owns the pill.
+        const f = RefrigLoop.solve(RefrigLoop.PRESETS.frostedOutdoorCoil);
+        expect(f.tEvap).toBe(-5);
+        expect(f.superheat).toBeCloseTo(10, 6);
+        expect(f.flags.starved).toBe(false);
+        expect(f.flags.frost && f.flags.frostChoked).toBe(true);
+        expect(f.flags.freeze).toBe(false);
+        expect(f.verdict.kind).toBe('error');
+        expect(f.verdict.text.toLowerCase()).toContain('frost');
+        // Defrost — the honest cooling-cycle run: mode still echoes heating,
+        // suction jumps off the warm indoor coil, the supply duct blows
+        // ~50 °F (the "cold blow"), the fan-off head spike is narrated (not
+        // alarmed — highHead suppressed), and the frost flags clear.
+        const d = RefrigLoop.solve(RefrigLoop.PRESETS.defrost);
+        expect(d.mode).toBe('heating');
+        expect(d.flags.defrost).toBe(true);
+        expect(d.tEvap).toBeCloseTo(37.5, 6);           // cooling block A at 70 °F return
+        expect(d.tAirOutIndoor).toBeCloseTo(50, 6);     // the cold blow
+        expect(d.flags.frost).toBe(false);
+        expect(d.flags.freeze).toBe(false);
+        expect(d.flags.highHead).toBe(false);
+        expect(d.verdict.kind).toBe('warn');
+        expect(d.verdict.text.toLowerCase()).toContain('defrost');
+        // The gauge tell vs the heating design day: suction UP, head DOWN.
+        const design = RefrigLoop.solve({ mode: 'heating' });
+        expect(d.pSuc).toBeGreaterThan(design.pSuc);
+        expect(d.pDis).toBeLessThan(design.pDis);
+        // Low-ambient heating — the 17 °F rating point: deep-cold suction,
+        // DROOPED head (the real capacity fade), plain frost warn (NOT
+        // choked — airflow is clean).
+        const l = RefrigLoop.solve(RefrigLoop.PRESETS.lowAmbientHeating);
+        expect(l.tEvap).toBe(-3);
+        expect(l.tCond).toBeCloseTo(90, 6);     // 105 − 0.5·30 droop
+        expect(l.flags.frost).toBe(true);
+        expect(l.flags.frostChoked).toBe(false);
+        expect(l.verdict.kind).toBe('warn');
+        expect(l.verdict.text.toLowerCase()).toContain('frost');
+        // All three are COMPLETE knob sets carrying their mode (§3.5).
+        for (const key of ['frostedOutdoorCoil', 'defrost', 'lowAmbientHeating']) {
+            const p = RefrigLoop.PRESETS[key];
+            expect(p.mode, key).toBe('heating');
+            for (const k of ['airflow', 'returnT', 'charge', 'shTarget',
+                'ambient', 'condAir', 'capacity', 'refrig']) {
+                expect(p[k], `${key}.${k}`).toBeDefined();
+            }
+        }
+    });
+
+    test('cold-weather capacity fade: the condensing side droops', () => {
+        // Owner decision 2026-07-18: a REAL ambient droop on heating block
+        // C — as suction falls with the cold, less heat reaches the indoor
+        // coil, so condensing temp (and, once the tCond − 2 cap undercuts
+        // the design rise, the supply air) fades instead of holding at
+        // design. One-sided: zero at the 47 °F anchor and above.
+        const { RefrigLoop } = loadEngine();
+        const at = (a) => RefrigLoop.solve({ mode: 'heating', ambient: a });
+        // The rating point is the anchor — droop is exactly zero there,
+        // and a mild day holds the design split (no highHead false flag).
+        expect(at(47).tCond).toBe(105);
+        expect(at(65).tCond).toBe(105);
+        expect(at(65).flags.highHead).toBe(false);
+        // Strictly decreasing below the anchor — head follows.
+        const sweep = [47, 37, 27, 17, 7, -5].map(at);
+        for (let i = 1; i < sweep.length; i++) {
+            expect(sweep[i].tCond, `tCond step ${i}`).toBeLessThan(sweep[i - 1].tCond);
+            expect(sweep[i].pDis,  `pDis step ${i}`).toBeLessThan(sweep[i - 1].pDis);
+        }
+        // The 17 °F rating point lands the supply in the published band.
+        const s17 = at(17);
+        expect(s17.tCond).toBeCloseTo(90, 6);
+        expect(s17.tAirOutIndoor).toBeGreaterThanOrEqual(85);
+        expect(s17.tAirOutIndoor).toBeLessThanOrEqual(90);      // lands 88
+        // Deeper cold droops the supply further still…
+        expect(at(-5).tAirOutIndoor).toBeLessThan(s17.tAirOutIndoor);
+        // …while just inside the frost band the design rise (95) still
+        // governs — the droop reads on the head gauge before the duct.
+        expect(at(39).tAirOutIndoor).toBeCloseTo(95, 6);
+    });
+
+    test('pressure ordering + air orderings hold over the heating box', () => {
+        const { RefrigLoop, REFRIGERANT_TYPES } = loadEngine();
+        const C = RefrigLoop.CLAMPS_HEATING;
+        const D = RefrigLoop.DESIGN;
+        const axes = ['airflow', 'returnT', 'charge', 'shTarget', 'ambient', 'condAir', 'capacity'];
+        const HW_NUMS = STATE_NUMS.concat(['tAirInIndoor', 'tAirOutIndoor',
+            'tAirInOutdoor', 'tAirOutOutdoor']);
+        for (const id of Object.keys(REFRIGERANT_TYPES)) {
+            for (let mask = 0; mask < (1 << axes.length); mask++) {
+                const inp = { mode: 'heating', refrig: id };
+                axes.forEach((k, i) => { inp[k] = (mask & (1 << i)) ? C[k].max : C[k].min; });
+                const s = RefrigLoop.solve(inp);
+                expect(allFinite(s, HW_NUMS), `finite ${id} mask ${mask}`).toBe(true);
+                expect(s.pDis, `pDis>pSuc ${id} mask ${mask}`).toBeGreaterThan(s.pSuc);
+                expect(s.tCond, `lift ${id} mask ${mask}`)
+                    .toBeGreaterThanOrEqual(s.tEvap + D.MIN_LIFT - 1e-9);
+                // The evaporating coil never crosses the air it absorbs
+                // heat from (the ceiling clamp — 16 pre-fix corners did).
+                expect(s.tEvap, `approach ceiling ${id} mask ${mask}`)
+                    .toBeLessThanOrEqual(inp.ambient - D.MIN_APPROACH_HEAT + 1e-9);
+                // Outdoor air never leaves WARMER than it entered the
+                // evaporating coil (the light-load degenerate collapses the
+                // drop to zero instead); indoor air never leaves COOLER.
+                expect(s.tAirOutEvap, `outdoor cools ${id} mask ${mask}`)
+                    .toBeLessThanOrEqual(s.tAirInEvap + 1e-9);
+                expect(s.tAirOutEvap, `outdoor floor ${id} mask ${mask}`)
+                    .toBeGreaterThanOrEqual(Math.min(s.tAirInEvap, s.tEvap + D.AIR_APPROACH) - 1e-9);
+                expect(s.tAirOutCond, `indoor warms ${id} mask ${mask}`)
+                    .toBeGreaterThanOrEqual(s.tAirInCond - 1e-9);
+                expect(s.tAirOutCond, `indoor cap ${id} mask ${mask}`)
+                    .toBeLessThanOrEqual(Math.max(s.tAirInCond, s.tCond - D.AIR_APPROACH) + 1e-9);
+            }
+        }
+    });
+});
+
+// ── 13. Loop-SVG geometry guards (source-level) ──────────────────────────
 // The simulator page's loop schematic is static markup the animation JS
 // hooks by id — same read-the-file grounding as loadEngine() above, aimed
 // at the page source instead of the engine. Two guarded families:
@@ -708,5 +1027,115 @@ test.describe('refrigerant-loop page: serpentine coils + state gradients', () =>
             .toMatch(/<linearGradient id="rl-grad-cond"[^>]*x1="200"[^>]*x2="520"/);
         expect(src, 'evaporator span matches GRAD_GEOM (x1=520, dx=-320)')
             .toMatch(/<linearGradient id="rl-grad-evap"[^>]*x1="520"[^>]*x2="200"/);
+    });
+});
+
+// ── 14. Heat-pump re-route (MODE_GEOM) guards (source-level) ─────────────
+// The mode flip swaps the six flow elements' d attributes from the page's
+// MODE_GEOM table — draw order IS particle direction, so the table is a
+// physics claim, not decoration. Three contracts:
+//   • the COOLING entries equal the markup d attributes byte-for-byte (the
+//     markup is the cooling state; a nudge to one side without the other
+//     would silently desync the mode flip);
+//   • the HEATING entries are H/V-only paths whose endpoints chain around
+//     the loop COUNTERCLOCKWISE — compressor → bottom (indoor) bar →
+//     metering → top (outdoor) bar → compressor — with no particle
+//     teleports at the joints;
+//   • the GRAD_Y table matches: each state gradient follows its coil to
+//     the other bar's tube row (85 ↔ 345).
+// A failure here is a design signal, not a test to loosen.
+
+// Extract a { cooling: {id: d}, heating: {id: d} } table from the page's
+// inline-JS MODE_GEOM literal (entries are one-per-line quoted pairs).
+function modeGeomTable(src) {
+    const block = src.match(/const MODE_GEOM = \{([\s\S]*?)\n {8}\};/);
+    expect(block, 'MODE_GEOM literal found').toBeTruthy();
+    const out = {};
+    for (const mode of ['cooling', 'heating']) {
+        const sub = block[1].match(new RegExp(mode + ': \\{([\\s\\S]*?)\\}'));
+        expect(sub, `MODE_GEOM.${mode} found`).toBeTruthy();
+        out[mode] = {};
+        const entryRe = /'([a-z-]+)': '([^']+)'/g;
+        let m;
+        while ((m = entryRe.exec(sub[1])) !== null) out[mode][m[1]] = m[2];
+    }
+    return out;
+}
+
+// Walk an M + H/V-only d and return its [start, end] points.
+function hvEndpoints(d, label) {
+    const m = d.match(/^M (-?\d+(?:\.\d+)?) (-?\d+(?:\.\d+)?)((?: [HV] -?\d+(?:\.\d+)?)+)$/);
+    expect(m, `${label} is M + H/V-only commands: "${d}"`).toBeTruthy();
+    const start = [parseFloat(m[1]), parseFloat(m[2])];
+    let x = start[0], y = start[1];
+    const cmds = m[3].trim().split(' ');
+    for (let i = 0; i < cmds.length; i += 2) {
+        if (cmds[i] === 'H') x = parseFloat(cmds[i + 1]);
+        else y = parseFloat(cmds[i + 1]);
+    }
+    return [start, [x, y]];
+}
+
+test.describe('refrigerant-loop page: heat-pump MODE_GEOM re-route', () => {
+
+    const FLOW_IDS = ['rl-discharge', 'rl-liquid', 'rl-expansion',
+        'rl-suction', 'rl-coil-cond', 'rl-coil-evap'];
+
+    test('cooling MODE_GEOM entries equal the markup d attributes', () => {
+        const src = loadPageSource();
+        const geom = modeGeomTable(src);
+        for (const id of FLOW_IDS) {
+            expect(geom.cooling[id], `${id} cooling entry present`).toBeTruthy();
+            expect(geom.cooling[id], `${id} table matches markup`)
+                .toBe(pathD(src, id));
+        }
+    });
+
+    test('heating entries chain counterclockwise with no teleports', () => {
+        const geom = modeGeomTable(loadPageSource()).heating;
+        const pts = {};
+        for (const id of FLOW_IDS) {
+            expect(geom[id], `${id} heating entry present`).toBeTruthy();
+            pts[id] = hvEndpoints(geom[id], `${id} heating`);
+        }
+        // Compressor bottom port → indoor (bottom) bar left joint …
+        expect(pts['rl-discharge'][0]).toEqual([120, 237]);
+        expect(pts['rl-discharge'][1]).toEqual([200, 345]);
+        // … condensing serpentine crosses the BOTTOM bar left→right …
+        expect(pts['rl-coil-cond'][0]).toEqual(pts['rl-discharge'][1]);
+        expect(pts['rl-coil-cond'][1]).toEqual([520, 345]);
+        // … liquid climbs to the metering device's bottom port …
+        expect(pts['rl-liquid'][0]).toEqual(pts['rl-coil-cond'][1]);
+        expect(pts['rl-liquid'][1]).toEqual([600, 235]);
+        // … expansion drops out of its top port to the outdoor (top) bar …
+        expect(pts['rl-expansion'][0]).toEqual([600, 195]);
+        expect(pts['rl-expansion'][1]).toEqual([520, 85]);
+        // … evaporating serpentine crosses the TOP bar right→left …
+        expect(pts['rl-coil-evap'][0]).toEqual(pts['rl-expansion'][1]);
+        expect(pts['rl-coil-evap'][1]).toEqual([200, 85]);
+        // … and suction returns to the compressor's top port.
+        expect(pts['rl-suction'][0]).toEqual(pts['rl-coil-evap'][1]);
+        expect(pts['rl-suction'][1]).toEqual([120, 193]);
+    });
+
+    test('GRAD_Y swaps each gradient to the other bar\'s tube row', () => {
+        const src = loadPageSource();
+        const block = src.match(/const GRAD_Y = \{([\s\S]*?)\n {8}\};/);
+        expect(block, 'GRAD_Y literal found').toBeTruthy();
+        const rows = {};
+        for (const mode of ['cooling', 'heating']) {
+            const m = block[1].match(new RegExp(
+                mode + ": \\{ 'rl-grad-cond': (\\d+), 'rl-grad-evap': (\\d+) \\}"));
+            expect(m, `GRAD_Y.${mode} found`).toBeTruthy();
+            rows[mode] = { cond: parseInt(m[1], 10), evap: parseInt(m[2], 10) };
+        }
+        // Cooling rows equal the markup gradients' y1 …
+        expect(String(rows.cooling.cond))
+            .toBe(src.match(/<linearGradient id="rl-grad-cond"[^>]*y1="(\d+)"/)[1]);
+        expect(String(rows.cooling.evap))
+            .toBe(src.match(/<linearGradient id="rl-grad-evap"[^>]*y1="(\d+)"/)[1]);
+        // … and heating is the bar swap (cond → bottom row, evap → top).
+        expect(rows.heating.cond).toBe(rows.cooling.evap);
+        expect(rows.heating.evap).toBe(rows.cooling.cond);
     });
 });

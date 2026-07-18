@@ -1,9 +1,9 @@
 ---
 title: Refrigerant Loop Simulator — controlsfreak.dev
-description: Turn airflow, charge, ambient and metering superheat on a live vapor-compression loop and watch suction, head, superheat, subcooling and a starving coil react.
+description: Run a live vapor-compression loop in cooling or heat-pump heating — flip the reversing valve, frost the outdoor coil, run a defrost, and watch it react.
 canonical: https://controlsfreak.dev/simulators/refrigerant-loop.html
 nav: simulators
-keywords: vapor compression suction discharge head pressure superheat subcooling txv metering freeze psig manifold gauge r410a
+keywords: vapor compression suction discharge head pressure superheat subcooling txv metering freeze psig manifold gauge r410a heat pump reversing valve defrost frost low ambient heating
 ---
 {% extends "layouts/page.njk" %}
 {% from "related-links.njk" import relatedLinks %}
@@ -61,14 +61,35 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
         .rl-comp-label,
         .rl-region-label { font-family: var(--mono); }
 
-        /* Frost state — an icy wash over the evaporator + suction leg that
-           fades in when the freeze alarm latches. Off by default; the JS
-           toggles .frozen on the <svg>. The global reduced-motion block
-           collapses the transition to a snap. */
+        /* Frost state — an icy wash over the frosting coil + its suction leg
+           that fades in on the alarm. TWO kits share the .rl-frost base:
+           #rl-frost (bottom bar — the cooling freeze latch, .frozen) and
+           #rl-frost-top (top bar — the heating outdoor-coil frost flag,
+           .frosted). Id-targeted so each mode lights only its own coil.
+           During the defrost preset (.defrost) the top kit shows half-faded
+           — the melt in progress — while the outdoor air lanes (fan off)
+           drop to a ghost. The global reduced-motion block collapses the
+           transitions to a snap. */
         .rl-frost { opacity: 0; transition: opacity 0.45s ease; pointer-events: none; }
-        .rl-loop-svg.frozen .rl-frost { opacity: 1; }
+        .rl-loop-svg.frozen #rl-frost { opacity: 1; }
+        .rl-loop-svg.frosted #rl-frost-top { opacity: 1; }
+        .rl-loop-svg.defrost #rl-frost-top { opacity: 0.35; }
+        /* The outdoor-face caption ghosts WITH its lanes — the id-prefix
+           selector can't reach it (no trailing hyphen), and a full-ink
+           "warm air → outdoors" over a stopped fan would contradict the
+           muted LCD + the sr "outdoor fan off" narration. */
+        .rl-loop-svg.defrost [id^="rl-air-c-"],
+        .rl-loop-svg.defrost #rl-air-cap-top { opacity: 0.12; }
         .rl-frost-fill { fill: var(--rl-frost); opacity: 0.28; }
         .rl-frost-mark { stroke: var(--rl-frost); stroke-width: 2; stroke-linecap: round; }
+
+        /* Mode-swapped direction arrows — the heating set is drawn in the
+           markup and hidden until the reversing valve flips (.rl-heating on
+           the <svg>, cycle-keyed: the defrost preset flips the visuals BACK
+           to the cooling set while the mode toggle stays on Heat). */
+        .rl-loop-svg .rl-dir-heat { display: none; }
+        .rl-loop-svg.rl-heating .rl-dir-cool { display: none; }
+        .rl-loop-svg.rl-heating .rl-dir-heat { display: inline; }
 
         /* ── Register layout — gauges beside the LCD/LED/verdict stack ──
            A two-column grid at wide widths (gauges | readouts), stacking
@@ -217,14 +238,26 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
         }
         .rl-slider-sub .cfm { color: var(--text); }
 
+        /* ── Cool / Heat mode toggle ── the reversing valve's own control,
+           styled like the compressor-stage button pair. Sits first in the
+           cockpit, above the presets row. Mode is session-only — no cf_*
+           key (the fullscreen view-toggle precedent). */
+        .rl-mode { margin: 0; }
+        .rl-mode .btn-row { margin-top: 0.5rem; }
+
         /* ── "Try this" scenario presets ── a mutually-exclusive group of
            .copy-btn buttons (the staging-sequencer idiom); .active marks the
            loaded scenario and is cleared the moment a knob is touched by
            hand, so a lit button always means "this is exactly what's loaded."
-           The headline starve reads a touch louder than its siblings. */
+           The row FILTERS by mode (six cooling / three heating buttons —
+           only the active mode's scenarios show, so a preset can never flip
+           the reversing valve). The headline starve — and its heating
+           mirror, the frosted outdoor coil — reads a touch louder than its
+           siblings. */
         .rl-presets { margin: 1.25rem 0 0; }
         .rl-presets .btn-row { margin-top: 0.5rem; }
-        .rl-presets .copy-btn.rl-preset-starve.active { border-color: var(--red); color: var(--red); }
+        .rl-presets .copy-btn.rl-preset-starve.active,
+        .rl-presets .copy-btn.rl-preset-frost.active { border-color: var(--red); color: var(--red); }
 
         /* Scan hierarchy: the knob / field captions are what you scan FOR in
            a control block this dense, but the shared `label, .field-label`
@@ -235,6 +268,7 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
         .rl-controls label,
         .rl-controls .field-label,
         .rl-presets .field-label,
+        .rl-mode .field-label,
         .rl-fs-viewtoggle .field-label { color: var(--text); }
 
         /* ── P-T state plot ── the superheat / subcooling P-T diagram made
@@ -304,6 +338,7 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
             gap: 0.55rem 1rem;
             box-sizing: border-box;
         }
+        .tool-card.is-fullscreen .rl-mode,
         .tool-card.is-fullscreen .rl-presets,
         .tool-card.is-fullscreen .rl-loop,
         .tool-card.is-fullscreen .rl-register,
@@ -346,12 +381,14 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
            it never adds the vertical room the stacked layout needs. ── */
         .tool-card.is-fullscreen .rl-cockpit {
             grid-template-columns: 1.32fr 0.68fr;
-            grid-template-rows: auto minmax(0, 1fr) auto;
+            grid-template-rows: auto auto minmax(0, 1fr) auto;
             grid-template-areas:
+                "mode     toggle"
                 "presets  toggle"
                 "main     gauges"
                 "controls gauges";
         }
+        .tool-card.is-fullscreen .rl-mode     { grid-area: mode; align-self: center; }
         .tool-card.is-fullscreen .rl-presets  { grid-area: presets; align-self: center; }
         .tool-card.is-fullscreen .rl-fs-viewtoggle { grid-area: toggle; display: block; justify-self: end; align-self: center; }
         .tool-card.is-fullscreen .rl-register { grid-area: gauges; }
@@ -369,13 +406,15 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
         @media (min-height: 1150px) and (max-aspect-ratio: 4/3) {
             .tool-card.is-fullscreen .rl-cockpit {
                 grid-template-columns: 1fr 1fr;
-                grid-template-rows: auto auto minmax(0, 1fr) auto;
+                grid-template-rows: auto auto auto minmax(0, 1fr) auto;
                 grid-template-areas:
+                    "mode     mode"
                     "presets  presets"
                     "gauges   loop"
                     "plot     plot"
                     "controls controls";
             }
+            .tool-card.is-fullscreen .rl-mode     { grid-area: mode; align-self: auto; }
             .tool-card.is-fullscreen .rl-presets  { grid-area: presets; align-self: auto; }
             .tool-card.is-fullscreen .rl-register { grid-area: gauges; }
             .tool-card.is-fullscreen .rl-loop     { grid-area: loop; display: block; }
@@ -450,8 +489,11 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                 A directional model, not a thermodynamic one — the pressures are
                 real P-T-table lookups, but the magnitudes each knob moves are
                 illustrative, tuned to teach which way the state travels. Turn a
-                knob and watch the gauges, the loop, and the alarms react.
-                <strong>New to the cycle?</strong>
+                knob and watch the gauges, the loop, and the alarms react — then
+                flip the mode to <strong>Heat</strong> and the reversing valve
+                swaps the coils: the outdoor coil evaporates, frost becomes the
+                story, and Defrost shows why a heat pump blows cold air twice a
+                day. <strong>New to the cycle?</strong>
                 <a href="/education/refrigerant-cycle-basics.html">Start with the basics →</a>
             </p>
 
@@ -466,28 +508,56 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                  and is hidden in fullscreen. -->
             <div class="rl-cockpit">
 
+            <!-- ── Cool / Heat mode — the reversing valve. Flipping it swaps
+                 which coil receives discharge gas: the engine re-anchors
+                 (RefrigLoop mode axis), the loop re-routes its legs and
+                 serpentines, the ambient + return-air sliders re-range to the
+                 mode's CLAMPS, and the preset row swaps its scenario set.
+                 Session-only, no cf_* key (the view-toggle precedent). -->
+            <div class="rl-mode field" role="group" aria-labelledby="rl-mode-lbl">
+                <span class="field-label" id="rl-mode-lbl">Mode</span>
+                <div class="btn-row">
+                    <button type="button" class="copy-btn active" id="rl-mode-cool" aria-pressed="true">Cool</button>
+                    <button type="button" class="copy-btn" id="rl-mode-heat" aria-pressed="false">Heat</button>
+                </div>
+            </div>
+
             <!-- ── "Try this" scenario presets — one per RefrigLoop.PRESETS
                  key. A click writes the whole knob set (keeping the selected
                  refrigerant — the tells are refrigerant-independent), marks
                  the scenario active, and eases the loop / gauges / plot to
-                 the new equilibrium. Typical first, then the headline starve;
-                 moving any knob by hand clears the active mark. -->
+                 the new equilibrium. The row FILTERS by mode (data-mode +
+                 hidden): only the active mode's scenarios show, so a click
+                 never flips the reversing valve; the engine presets carry a
+                 mode key for the tests, and the page ignores it the same way
+                 it ignores refrig. Typical first, then the headline starve;
+                 in heating the frosted coil leads, with Defrost as the
+                 honest cooling-cycle flip. Moving any knob by hand clears
+                 the active mark (and steps out of defrost). -->
             <div class="rl-presets field" role="group" aria-labelledby="rl-try-lbl">
                 <span class="field-label" id="rl-try-lbl">Try this:</span>
                 <div class="btn-row">
-                    <button type="button" class="copy-btn" data-preset="typical" aria-pressed="false">Typical day</button>
-                    <button type="button" class="copy-btn rl-preset-starve" data-preset="starve" aria-pressed="false">Starve the coil</button>
-                    <button type="button" class="copy-btn" data-preset="undercharge" aria-pressed="false">Undercharge</button>
-                    <button type="button" class="copy-btn" data-preset="overcharge" aria-pressed="false">Overcharge</button>
-                    <button type="button" class="copy-btn" data-preset="dirtyCondenser" aria-pressed="false">Dirty condenser</button>
-                    <button type="button" class="copy-btn" data-preset="lowAmbient" aria-pressed="false">Low ambient</button>
+                    <button type="button" class="copy-btn" data-preset="typical" data-mode="cooling" aria-pressed="false">Typical day</button>
+                    <button type="button" class="copy-btn rl-preset-starve" data-preset="starve" data-mode="cooling" aria-pressed="false">Starve the coil</button>
+                    <button type="button" class="copy-btn" data-preset="undercharge" data-mode="cooling" aria-pressed="false">Undercharge</button>
+                    <button type="button" class="copy-btn" data-preset="overcharge" data-mode="cooling" aria-pressed="false">Overcharge</button>
+                    <button type="button" class="copy-btn" data-preset="dirtyCondenser" data-mode="cooling" aria-pressed="false">Dirty condenser</button>
+                    <button type="button" class="copy-btn" data-preset="lowAmbient" data-mode="cooling" aria-pressed="false">Low ambient</button>
+                    <button type="button" class="copy-btn rl-preset-frost" data-preset="frostedOutdoorCoil" data-mode="heating" aria-pressed="false" hidden>Frosted outdoor coil</button>
+                    <button type="button" class="copy-btn" data-preset="defrost" data-mode="heating" aria-pressed="false" hidden>Defrost</button>
+                    <button type="button" class="copy-btn" data-preset="lowAmbientHeating" data-mode="heating" aria-pressed="false" hidden>Low-ambient heat</button>
                 </div>
             </div>
 
             <!-- ── Hero: the animated loop ─────────────────────────────────
                  Geometry re-id'd (rl-*) from the refrigerant-cycle-basics
-                 lesson's rc-cycle: a closed clockwise loop, compressor (left)
-                 / condenser (top) / metering (right) / evaporator (bottom).
+                 lesson's rc-cycle: a closed loop, compressor (left) /
+                 outdoor coil (top) / metering (right) / indoor coil
+                 (bottom), clockwise in cooling. The markup below is the
+                 COOLING state; heating re-routes the six flow elements +
+                 flips the arrows/labels via MODE_GEOM / applyCycleVisuals
+                 in the page script (elements are FUNCTION-keyed — the ids
+                 follow the hot gas, not the cabinet).
                  Six data-flow segments in four state inks — discharge
                  --rl-hot, liquid --rl-liq (page tokens: the global
                  --heat / --amber in dark, a punchier pair in light),
@@ -511,7 +581,7 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                      aria-describedby="rl-cycle-desc"
                      font-family="var(--mono)">
                     <title id="rl-cycle-title">The refrigerant loop, live</title>
-                    <desc id="rl-cycle-desc">A closed rectangular vapor-compression loop drawn clockwise. A compressor on the left drives hot high-pressure vapor up the discharge line into a condenser spanning the top, which rejects heat to outdoor air and drops the refrigerant to a warm high-pressure liquid; the liquid line runs down the right side to a metering device, which flashes it to a cold low-pressure mix; that mix crosses the evaporator along the bottom, absorbing heat from indoor air and boiling back to a cool low-pressure vapor that returns up the suction line to the compressor. Four pipe inks track four states: the discharge line is hot-gas orange, the liquid line warm-liquid amber, the expansion leg cold-mix muted blue, and the suction line cool-vapor blue — the warm-to-cool jump landing at the metering device, where it physically belongs. Inside each coil bar the refrigerant rides a serpentine tube circuit painted with a live color gradient: the condenser's run blends hot-gas orange into liquid amber at a point that tracks subcooling — flash gas stretches the blend past the exit, so the coil visibly leaves off short of full liquid — and the evaporator's blends cold-mix blue into vapor blue at a point that tracks superheat, so an undercharged, refrigerant-starved coil walks the vapor color across half its run and beyond. When the evaporator coil is starved of airflow and ices over, a frost overlay appears on the evaporator and the suction leg. The compressor symbol is a top-down scroll set — two interleaved spirals, the moving one orbiting the fixed one in a small circle (a circular translation, not a spin) at a rate that follows the compressor stage. Thin dashed air lanes cross both coil faces vertically, on the crossflow axis — outdoor air rises through the condenser and leaves out the top, indoor air drops through the evaporator and leaves out the bottom — entering in dim ink and leaving tinted by the coil's work: warmed orange above the condenser, cooled blue below the evaporator, frost-tinted once the coil ices. Each face's lane density follows its own airflow knob, so a starved coil visibly thins its air stream. Live pressure, superheat, subcooling and alarm values are reported in the gauges and readouts below.</desc>
+                    <desc id="rl-cycle-desc">A closed rectangular vapor-compression loop with a heat-pump reversing valve. The top bar is always the outdoor coil and the bottom bar the indoor coil; which one condenses follows the selected mode. In cooling mode the loop runs clockwise: a compressor on the left drives hot high-pressure vapor up through the reversing valve into the outdoor coil spanning the top, which rejects heat to outdoor air and drops the refrigerant to a warm high-pressure liquid; the liquid line runs down the right side to a metering device, which flashes it to a cold low-pressure mix; that mix crosses the indoor coil along the bottom, absorbing heat from indoor air and boiling back to a cool low-pressure vapor that returns to the compressor. In heating mode the valve flips and the loop runs counterclockwise: discharge gas goes DOWN to the indoor coil, which condenses and heats the indoor air, while the outdoor coil evaporates — running below the outdoor temperature and, on a cold damp day, below freezing, where a frost overlay builds on the top bar. The Defrost scenario flips the valve back to the cooling direction with the outdoor air lanes stopped: a temporary cooling-cycle run that melts the frost while the indoor duct blows cool air. Four pipe inks track four states wherever they flow: hot-gas orange on the discharge leg, warm-liquid amber on the liquid leg, cold-mix muted blue on the expansion leg, cool-vapor blue on the suction leg — the warm-to-cool jump landing at the metering device, where it physically belongs. Inside each coil bar the refrigerant rides a serpentine tube circuit painted with a live color gradient: the condensing run blends hot-gas orange into liquid amber at a point that tracks subcooling — flash gas stretches the blend past the exit — and the evaporating run blends cold-mix blue into vapor blue at a point that tracks superheat. A small four-way reversing-valve symbol on the left column shows its slide position flipping with the mode. When a coil frosts or freezes, a frost overlay appears on that coil and its suction leg. The compressor symbol is a top-down scroll set — two interleaved spirals, the moving one orbiting the fixed one in a small circle at a rate that follows the compressor stage. Thin dashed air lanes cross both coil faces vertically, on the crossflow axis — outdoor air rises through the top coil, indoor air drops through the bottom coil — entering in dim ink and leaving tinted by the coil's work: warmed orange off the condensing coil, cooled blue off the evaporating coil, frost-tinted once a coil ices, and stopped on the outdoor face during defrost. Each face's lane density follows its own airflow knob. Live pressure, superheat, subcooling and alarm values are reported in the gauges and readouts below.</desc>
 
                     <!-- ── STATE GRADIENTS — userSpaceOnUse so the serpentine
                          STROKE and the engine's particle <circle> fills
@@ -568,28 +638,55 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
 
                     <!-- Direction arrows — one per leg so direction reads under
                          reduced-motion and on paper; each pair carries its own
-                         leg's state ink (four inks, four states). -->
-                    <g fill="var(--rl-hot)">
-                        <polygon points="120,135 115,146 125,146"/>
-                        <polygon points="155,80 164,85 155,90"/>
+                         leg's state ink (four inks, four states). Two complete
+                         sets, CSS-toggled by the cycle (.rl-heating): in
+                         heating every leg reverses AND swaps sides of the
+                         loop, so the hot pair moves to the bottom-left, the
+                         liquid pair to the bottom-right, and so on — mirrored
+                         positions, same inks. -->
+                    <g class="rl-dir-cool">
+                        <g fill="var(--rl-hot)">
+                            <polygon points="120,135 115,146 125,146"/>
+                            <polygon points="155,80 164,85 155,90"/>
+                        </g>
+                        <g fill="var(--rl-liq)">
+                            <polygon points="555,80 564,85 555,90"/>
+                            <polygon points="595,140 600,151 605,140"/>
+                        </g>
+                        <g fill="var(--blue-cool)">
+                            <polygon points="595,290 600,301 605,290"/>
+                            <polygon points="560,350 551,345 560,340"/>
+                        </g>
+                        <g fill="var(--blue)">
+                            <polygon points="160,350 151,345 160,340"/>
+                            <polygon points="120,290 115,301 125,301"/>
+                        </g>
                     </g>
-                    <g fill="var(--rl-liq)">
-                        <polygon points="555,80 564,85 555,90"/>
-                        <polygon points="595,140 600,151 605,140"/>
-                    </g>
-                    <g fill="var(--blue-cool)">
-                        <polygon points="595,290 600,301 605,290"/>
-                        <polygon points="560,350 551,345 560,340"/>
-                    </g>
-                    <g fill="var(--blue)">
-                        <polygon points="160,350 151,345 160,340"/>
-                        <polygon points="120,290 115,301 125,301"/>
+                    <g class="rl-dir-heat">
+                        <g fill="var(--rl-hot)">
+                            <polygon points="115,290 125,290 120,301"/>
+                            <polygon points="155,340 164,345 155,350"/>
+                        </g>
+                        <g fill="var(--rl-liq)">
+                            <polygon points="555,340 564,345 555,350"/>
+                            <polygon points="600,290 595,301 605,301"/>
+                        </g>
+                        <g fill="var(--blue-cool)">
+                            <polygon points="600,140 595,151 605,151"/>
+                            <polygon points="551,85 560,80 560,90"/>
+                        </g>
+                        <g fill="var(--blue)">
+                            <polygon points="151,85 160,80 160,90"/>
+                            <polygon points="115,135 125,135 120,146"/>
+                        </g>
                     </g>
 
-                    <!-- HIGH / LOW SIDE region labels. -->
-                    <text class="rl-region-label" x="360" y="165" text-anchor="middle" font-size="11"
+                    <!-- HIGH / LOW SIDE region labels — the halves swap with
+                         the cycle (JS rewrites the text per mode: heating
+                         puts the high side on the BOTTOM). -->
+                    <text class="rl-region-label" id="rl-region-top" x="360" y="165" text-anchor="middle" font-size="11"
                           letter-spacing="0.15em" fill="var(--text-dim)">HIGH SIDE · HOT</text>
-                    <text class="rl-region-label" x="360" y="275" text-anchor="middle" font-size="11"
+                    <text class="rl-region-label" id="rl-region-bottom" x="360" y="275" text-anchor="middle" font-size="11"
                           letter-spacing="0.15em" fill="var(--text-dim)">LOW SIDE · COOL</text>
 
                     <!-- Faint equator divider. -->
@@ -648,7 +745,7 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                               stroke="var(--text-dim)" stroke-width="1.4" stroke-dasharray="4 4" opacity="0.6"/>
                         <path id="rl-air-c-out-b" data-flow="air" d="M 460 85 V 25" fill="none"
                               stroke="var(--heat)" stroke-width="1.4" stroke-dasharray="4 4" opacity="0.6"/>
-                        <g fill="var(--heat)" opacity="0.6">
+                        <g id="rl-air-c-heads" fill="var(--heat)" opacity="0.6">
                             <polygon points="260,18 255,28 265,28"/>
                             <polygon points="460,18 455,28 465,28"/>
                         </g>
@@ -661,7 +758,7 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                               stroke="var(--text-dim)" stroke-width="1.4" stroke-dasharray="4 4" opacity="0.6"/>
                         <path id="rl-air-e-out-b" data-flow="air" d="M 460 345 V 430" fill="none"
                               stroke="var(--blue-cool)" stroke-width="1.4" stroke-dasharray="4 4" opacity="0.75"/>
-                        <g fill="var(--blue-cool)" opacity="0.75">
+                        <g id="rl-air-e-heads" fill="var(--blue-cool)" opacity="0.75">
                             <polygon points="260,438 255,428 265,428"/>
                             <polygon points="460,438 455,428 465,428"/>
                         </g>
@@ -697,33 +794,57 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                                 <path stroke="var(--blue)" d="M 2.5 0 A 2.5 2.5 0 0 1 -2.5 0 A 6 6 0 0 1 9.5 0 A 9.5 9.5 0 0 1 -9.5 0 A 13 13 0 0 1 16.5 0 A 16.5 16.5 0 0 1 -16.5 0" transform="rotate(180)"/>
                             </g>
                         </g>
-                        <text class="rl-comp-label" x="80" y="257" text-anchor="middle" font-size="12"
+                        <!-- Label nudged 6px left (x 80 → 74, codebase-issues
+                             #169): measured with the site fonts the text's
+                             right edge lands ≈113.4, so it clears the x=116
+                             frost wash by ~2.6px and the x≈118 suction-leg
+                             particle edge by ~4.6px in the frozen state.
+                             Outside the four frost-overlay placement
+                             constraints (those bound the marks, not this
+                             label). -->
+                        <text class="rl-comp-label" x="74" y="257" text-anchor="middle" font-size="12"
                               font-weight="600" fill="var(--text-bright)">COMPRESSOR</text>
                     </g>
 
-                    <!-- ── CONDENSER ── -->
+                    <!-- ── REVERSING VALVE (4-way) ── the heat-pump glyph, on
+                         the left column between the compressor and the top
+                         coil's leg. A capsule body with the classic two-arc
+                         slide; the slide mirrors with the CYCLE (JS swaps the
+                         d): cooling sends discharge up to the outdoor coil,
+                         heating sends it down to the indoor coil. A glyph,
+                         not a re-plumb — the simplified rectangle keeps one
+                         drawn pipe through the valve, and the re-routed legs
+                         + arrows carry the actual direction story. The body
+                         paints over the pipe run (doc order) so the leg
+                         reads as passing THROUGH the valve; particles (the
+                         SVG's last-child layer) ride over its face, which is
+                         exactly what flow through a valve should do. -->
+                    <g id="rl-revvalve">
+                        <rect x="96" y="150" width="48" height="20" rx="10" fill="var(--surface)"
+                              stroke="var(--text-dim)" stroke-width="2"/>
+                        <path id="rl-revvalve-slide" fill="none" stroke="var(--text-bright)"
+                              stroke-width="2" stroke-linecap="round"
+                              d="M 104 160 A 6 6 0 0 1 116 160 M 124 160 A 6 6 0 0 0 136 160"/>
+                        <text class="rl-comp-label" x="88" y="157" text-anchor="end" font-size="9"
+                              fill="var(--text-dim)">REVERSING</text>
+                        <text class="rl-comp-label" x="88" y="168" text-anchor="end" font-size="9"
+                              fill="var(--text-dim)">VALVE</text>
+                    </g>
+
+                    <!-- ── OUTDOOR COIL (top bar) ── -->
                     <g id="rl-condenser">
                         <rect x="200" y="55" width="320" height="60" rx="2" fill="var(--surface)"
                               stroke="var(--text-dim)" stroke-width="2"/>
-                        <!-- Serpentine tube circuit — square-wave H/V legs (the
-                             DOAS coil motif, flipped: vertical legs progressing
-                             horizontally), entering at the discharge joint
-                             (200,85) and leaving at the liquid joint (520,85)
-                             so the pipe particle streams hand off with no
-                             teleport; draw order = flow direction. Stroke AND
-                             particles ride rl-grad-cond (the stroke reads
-                             statically / under reduced motion; updateLoop
-                             re-applies the particle fill every solve). -->
-                        <path id="rl-coil-cond" data-flow="supply" fill="none"
-                              stroke="url(#rl-grad-cond)" stroke-width="1.5"
-                              d="M 200 85 H 220 V 67 H 248 V 103 H 276 V 67 H 304 V 103 H 332 V 67 H 360 V 103 H 388 V 67 H 416 V 103 H 444 V 67 H 472 V 103 H 500 V 85 H 520"/>
                         <!-- Name sits on open canvas below the bar (the DOAS
                              label-below-rect precedent), in the loop's
                              interior band — off the serpentine AND out of
-                             the particle streams, so no halo needed. -->
-                        <text x="360" y="133" text-anchor="middle" font-size="14"
+                             the particle streams, so no halo needed. The
+                             bars keep HARDWARE identity (top = outdoor coil,
+                             always); this FUNCTION label and the air caption
+                             swap with the mode (JS rewrites the text). -->
+                        <text id="rl-bar-top-name" x="360" y="133" text-anchor="middle" font-size="14"
                               font-weight="600" fill="var(--text-bright)">CONDENSER</text>
-                        <text x="535" y="38" font-size="10.5" font-style="italic" fill="var(--text-dim)">
+                        <text id="rl-air-cap-top" x="535" y="38" font-size="10.5" font-style="italic" fill="var(--text-dim)">
                             warm air &#8594; outdoors
                         </text>
                     </g>
@@ -736,43 +857,68 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                               fill="var(--text-bright)">METERING</text>
                     </g>
 
-                    <!-- ── EVAPORATOR ── -->
+                    <!-- ── INDOOR COIL (bottom bar) ── -->
                     <g id="rl-evaporator">
                         <rect x="200" y="315" width="320" height="60" rx="2" fill="var(--surface)"
                               stroke="var(--text-dim)" stroke-width="2"/>
-                        <!-- Serpentine tube circuit — the condenser's mirror,
-                             right→left: enters at the expansion joint (520,345),
-                             leaves at the suction joint (200,345). Stroke AND
-                             particles ride rl-grad-evap; freeze overrides the
-                             PARTICLES to --rl-frost (the stroke keeps its
-                             gradient — the frost wash carries the static look). -->
-                        <path id="rl-coil-evap" data-flow="return" fill="none"
-                              stroke="url(#rl-grad-evap)" stroke-width="1.5"
-                              d="M 520 345 H 500 V 327 H 472 V 363 H 444 V 327 H 416 V 363 H 388 V 327 H 360 V 363 H 332 V 327 H 304 V 363 H 276 V 327 H 248 V 363 H 220 V 345 H 200"/>
                         <!-- Name above the bar, mirroring the condenser's
-                             below-bar placement into the same interior band. -->
-                        <text x="360" y="307" text-anchor="middle" font-size="14"
+                             below-bar placement into the same interior band.
+                             Function label + caption swap with the mode,
+                             like the top bar's. -->
+                        <text id="rl-bar-bottom-name" x="360" y="307" text-anchor="middle" font-size="14"
                               font-weight="600" fill="var(--text-bright)">EVAPORATOR</text>
-                        <text x="535" y="430" font-size="10.5" font-style="italic" fill="var(--text-dim)">
+                        <text id="rl-air-cap-bottom" x="535" y="430" font-size="10.5" font-style="italic" fill="var(--text-dim)">
                             cool air &#8594; indoors
                         </text>
                     </g>
 
-                    <!-- State annotations on each pipe leg — each in its own
-                         leg's state ink. -->
-                    <text x="135" y="140" font-size="11" fill="var(--rl-hot)">hot vapor</text>
-                    <text x="585" y="140" text-anchor="end" font-size="11" fill="var(--rl-liq)">warm liquid</text>
-                    <text x="585" y="290" text-anchor="end" font-size="11" fill="var(--blue-cool)">cold mix</text>
-                    <text x="135" y="290" font-size="11" fill="var(--blue)">cool vapor</text>
+                    <!-- ── SERPENTINE TUBE CIRCUITS — square-wave H/V legs
+                         (the DOAS coil motif, flipped: vertical legs
+                         progressing horizontally), each entering and leaving
+                         at its bar's pipe joints so the particle streams
+                         hand off with no teleport; draw order = flow
+                         direction. Stroke AND particles ride the rl-grad-*
+                         state gradients (the stroke reads statically / under
+                         reduced motion; updateLoop re-applies the particle
+                         fill every solve; an icing coil overrides PARTICLES
+                         to --rl-frost while the stroke keeps its gradient —
+                         the frost wash carries the static look). The two
+                         paths live OUTSIDE the bar groups, after both, on
+                         purpose: they are function-keyed (cond = the
+                         condensing run) and the mode flip re-routes each to
+                         the other BAR (MODE_GEOM) — drawn inside its
+                         cooling bar's group, a re-routed run would paint
+                         underneath the other bar's face rect. The markup ds
+                         are the COOLING state (pinned by the engine spec). -->
+                    <path id="rl-coil-cond" data-flow="supply" fill="none"
+                          stroke="url(#rl-grad-cond)" stroke-width="1.5"
+                          d="M 200 85 H 220 V 67 H 248 V 103 H 276 V 67 H 304 V 103 H 332 V 67 H 360 V 103 H 388 V 67 H 416 V 103 H 444 V 67 H 472 V 103 H 500 V 85 H 520"/>
+                    <path id="rl-coil-evap" data-flow="return" fill="none"
+                          stroke="url(#rl-grad-evap)" stroke-width="1.5"
+                          d="M 520 345 H 500 V 327 H 472 V 363 H 444 V 327 H 416 V 363 H 388 V 327 H 360 V 363 H 332 V 327 H 304 V 363 H 276 V 327 H 248 V 363 H 220 V 345 H 200"/>
 
-                    <!-- ── FROST OVERLAY — fades in on the coil-freeze alarm ──
-                         Snowflake clusters sit BETWEEN serpentine legs (legs
-                         at x=220+28k): each vertical bar and each 16px tick
-                         end clears every leg by ≥2px, the ticks clear the
-                         y=345 entry/exit stubs (x 200–220 / 500–520), and
-                         everything stays out of the x≈253–267 air-lane
-                         corridor (particles paint on top). Keep all four
-                         constraints when nudging. -->
+                    <!-- State annotations on each pipe leg — each in its own
+                         leg's state ink. Positions are corner-fixed (tl / tr
+                         / br / bl); text + ink swap with the cycle since the
+                         states travel around the loop with the valve (JS
+                         rewrites both). -->
+                    <text id="rl-ann-tl" x="135" y="140" font-size="11" fill="var(--rl-hot)">hot vapor</text>
+                    <text id="rl-ann-tr" x="585" y="140" text-anchor="end" font-size="11" fill="var(--rl-liq)">warm liquid</text>
+                    <text id="rl-ann-br" x="585" y="290" text-anchor="end" font-size="11" fill="var(--blue-cool)">cold mix</text>
+                    <text id="rl-ann-bl" x="135" y="290" font-size="11" fill="var(--blue)">cool vapor</text>
+
+                    <!-- ── FROST OVERLAYS ── two kits, one per coil bar.
+                         #rl-frost (bottom / indoor) fades in on the cooling
+                         coil-freeze alarm; #rl-frost-top (top / outdoor) on
+                         the heating frost flag, and shows half-faded during
+                         the Defrost scenario (the melt). Snowflake clusters
+                         sit BETWEEN serpentine legs (legs at x=220+28k):
+                         each vertical bar and each 16px tick end clears
+                         every leg by ≥2px, the ticks clear each bar's
+                         entry/exit stubs (x 200–220 / 500–520 at the tube
+                         row), and everything stays out of the x≈253–267
+                         air-lane corridor (particles paint on top). Keep
+                         all four constraints when nudging. -->
                     <g class="rl-frost" id="rl-frost">
                         <rect class="rl-frost-fill" x="200" y="315" width="320" height="60" rx="2"/>
                         <g class="rl-frost-mark">
@@ -786,6 +932,25 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                             <line x1="112" y1="320" x2="128" y2="320"/>
                         </g>
                         <rect class="rl-frost-fill" x="116" y="237" width="8" height="108"/>
+                    </g>
+                    <!-- Top kit — the bottom kit mirrored to the outdoor bar
+                         (y 55–115, tube row y=85; same x columns, so the
+                         four placement constraints hold by construction).
+                         Its suction-leg wash rides the top-left leg (the
+                         heating suction run) and STOPS above the reversing
+                         valve body at y=150 so the wash never paints over
+                         the valve face. -->
+                    <g class="rl-frost" id="rl-frost-top">
+                        <rect class="rl-frost-fill" x="200" y="55" width="320" height="60" rx="2"/>
+                        <g class="rl-frost-mark">
+                            <line x1="232" y1="62" x2="232" y2="108"/>
+                            <line x1="224" y1="85" x2="240" y2="85"/>
+                            <line x1="290" y1="62" x2="290" y2="108"/>
+                            <line x1="282" y1="85" x2="298" y2="85"/>
+                            <line x1="318" y1="62" x2="318" y2="108"/>
+                            <line x1="310" y1="85" x2="326" y2="85"/>
+                        </g>
+                        <rect class="rl-frost-fill" x="116" y="85" width="8" height="63"/>
                     </g>
                 </svg>
             </div>
@@ -894,7 +1059,7 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                              without turning the bank into a live region. -->
                         <div class="dev-leds">
                             <span><span class="led led--run"  id="rl-led-run2" aria-hidden="true"></span>Run<span class="sr-only" id="rl-led-run2-state">, on</span></span>
-                            <span><span class="led led--off"  id="rl-led-freeze" aria-hidden="true"></span>Coil freeze<span class="sr-only" id="rl-led-freeze-state">, off</span></span>
+                            <span><span class="led led--off"  id="rl-led-freeze" aria-hidden="true"></span><span id="rl-led-freeze-label">Coil freeze</span><span class="sr-only" id="rl-led-freeze-state">, off</span></span>
                             <span><span class="led led--off"  id="rl-led-flood" aria-hidden="true"></span>Floodback<span class="sr-only" id="rl-led-flood-state">, off</span></span>
                             <span><span class="led led--off"  id="rl-led-head" aria-hidden="true"></span>High head<span class="sr-only" id="rl-led-head-state">, off</span></span>
                         </div>
@@ -908,7 +1073,7 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                     <div class="rl-cfm readout" role="status">
                         <div class="readout-label">Indoor coil airflow</div>
                         <div class="readout-value"><span class="rl-cfm-val" id="rl-cfm-val">&#8212;</span>
-                            <span class="rl-cfm-unit"> CFM/ton · floor 400</span></div>
+                            <span class="rl-cfm-unit" id="rl-cfm-unit"> CFM/ton · floor 400</span></div>
                     </div>
                 </div>
             </div>
@@ -926,7 +1091,10 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                 the bubble curve. An airside-starved coil can freeze with
                 <em>normal</em> superheat — the refrigerant side looks fine
                 while the coil ices, which is exactly why the freeze alarm
-                fires on its own.
+                fires on its own. In heating mode the same trap moves
+                outdoors: a frost-choked outdoor coil starves at normal
+                superheat too, and only the diving suction pressure gives it
+                away.
             </p>
 
             <!-- ── Live P-T state plot ─────────────────────────────────────
@@ -949,7 +1117,11 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                 to its left is subcooling. Starve the coil and the low-side
                 point slides left past the
                 <span data-us="32 °F" data-metric="0 °C">32&nbsp;°F</span>
-                freeze line.
+                freeze line. In heating mode the same line reads as the
+                <em>frost</em> line instead: the outdoor coil normally runs
+                left of it on a cold day, so the line only turns red when the
+                ambient is in the frost-accumulation band and ice is actually
+                building.
             </p>
             <div class="narrow-width-note">
                 The P-T strip reads best on a wider screen — at phone width the
@@ -958,13 +1130,13 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
             </div>
             <div class="rl-fs-plot">
                 <div class="sim-canvas-wrap rl-plot-wrap">
-                    <canvas id="rl-plot" role="img" aria-label="Live pressure-temperature plot: the selected refrigerant's saturation curve — dew, plus a dashed bubble curve when the blend has visible glide — with the low-side and high-side state points, the superheat and subcooling gaps, and a 32 degree Fahrenheit freeze line"></canvas>
+                    <canvas id="rl-plot" role="img" aria-label="Live pressure-temperature plot: the selected refrigerant's saturation curve — dew, plus a dashed bubble curve when the blend has visible glide — with the low-side and high-side state points, the superheat and subcooling gaps, and a 32 degree Fahrenheit line. In cooling mode the line is the coil-freeze alarm; in heating mode it is the frost line — the outdoor coil normally sits left of it on a cold day, and the line only reddens when the ambient is in the frost-accumulation band"></canvas>
                 </div>
                 <div class="sim-legend rl-plot-legend">
                     <span><span class="swatch sat"></span>Saturation curve</span>
                     <span><span class="swatch sh"></span>Superheat</span>
                     <span><span class="swatch sc"></span>Subcooling</span>
-                    <span><span class="swatch freeze"></span><span data-us="32 °F" data-metric="0 °C">32&nbsp;°F</span> freeze</span>
+                    <span><span class="swatch freeze"></span><span data-us="32 °F" data-metric="0 °C">32&nbsp;°F</span> <span id="rl-plot-freeze-word">freeze</span></span>
                 </div>
             </div>
 
@@ -1083,7 +1255,55 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                 way it does in the field, not to reproduce a specific machine.
                 There is no enthalpy or P-h data behind it, so read it for
                 direction and relationships in plain terms — a real property
-                model is a later upgrade.
+                model is a later upgrade. One framing note: every refrigerant
+                runs the same design cycle per mode — in cooling a
+                <span data-us="40 °F" data-metric="4.4 °C">40&nbsp;°F</span>
+                evaporator against a
+                <span data-us="105 °F" data-metric="40.6 °C">105&nbsp;°F</span>
+                condenser, in heating its own shared anchor set (roughly
+                <span data-us="27 °F" data-metric="-2.8 °C">27&nbsp;°F</span> /
+                <span data-us="105 °F" data-metric="40.6 °C">105&nbsp;°F</span>
+                at the
+                <span data-us="47 °F" data-metric="8.3 °C">47&nbsp;°F</span>
+                rating point) — so the pressures compare apples-to-apples
+                across refrigerants. R-404A in real life usually runs colder
+                boxes.
+            </p>
+            <p class="tool-preamble">
+                <strong>Heat mode is the same machine with the reversing valve
+                flipped.</strong> The bars keep their hardware identity — top
+                is always the outdoor coil, bottom always the indoor coil —
+                and the CONDENSER / EVAPORATOR labels swap instead, because
+                that is what the valve actually changes. In heating the
+                outdoor coil runs about
+                <span data-us="20 °F" data-metric="11.1 °C">20&nbsp;°F</span>
+                below the outdoor air, so on a cold day it sits below freezing
+                <em>by design</em> — a below-32 coil is normal heat-pump
+                operation, not an alarm. What turns it into a fault is
+                accumulation: below roughly
+                <span data-us="40 °F" data-metric="4.4 °C">40&nbsp;°F</span>
+                outdoors the coil frosts faster than it sheds, the frost
+                chokes the coil's own airflow, the coil pulls colder, and the
+                spiral runs until a defrost breaks it. The
+                <strong>Defrost</strong> scenario shows that honestly: defrost
+                <em>is</em> a temporary cooling-mode run — the valve flips
+                back, the outdoor fan stops so the hot coil melts its ice, and
+                the indoor duct blows cool air until the cycle ends. That is
+                the "my heat pump is blowing cold air and steaming" service
+                call, working as designed. The cold-weather capacity fade is
+                modeled too: as the suction falls, less heat reaches the
+                indoor coil, so below the
+                <span data-us="47 °F" data-metric="8.3 °C">47&nbsp;°F</span>
+                rating point the condensing temperature droops with the
+                ambient — watch the head gauge first, then the supply air
+                slide from
+                <span data-us="95 °F" data-metric="35.0 °C">95&nbsp;°F</span>
+                toward roughly
+                <span data-us="88 °F" data-metric="31.1 °C">88&nbsp;°F</span>
+                at the
+                <span data-us="17 °F" data-metric="-8.3 °C">17&nbsp;°F</span>
+                rating point, and cooler still in deep cold. That fade is
+                exactly why auxiliary heat exists.
             </p>
             <p class="tool-preamble">
                 The headline is the airside-versus-refrigerant-side split.
@@ -1130,19 +1350,22 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                 not a charging tool.</strong> The magnitudes here are
                 illustrative, and no toy loop should stand in for the machine's
                 own protections. The <strong>low-pressure cutout, the
-                freeze-stat, the high-pressure switch, and the manufacturer's
-                charging chart</strong> are what actually keep the equipment
-                alive: a coil starved of air ices solid and hands the
-                compressor a slug of liquid, and a mischarge cooks or floods it.
-                Diagnose a charge or a freeze off the gauges, the superheat and
-                subcooling on the real machine, and the data plate — never off a
-                simulator.
+                freeze-stat, the high-pressure switch, the defrost control,
+                and the manufacturer's charging chart</strong> are what
+                actually keep the equipment alive: a coil starved of air ices
+                solid and hands the compressor a slug of liquid — indoors in
+                cooling, outdoors in heating when frost runs past the
+                defrost's reach — and a mischarge cooks or floods it in either
+                mode. Diagnose a charge, a freeze, or a defrost complaint off
+                the gauges, the superheat and subcooling on the real machine,
+                and the data plate — never off a simulator.
             </p>
 
         </div>
     </div>
 
     {{ relatedLinks({
+        hub: {href: '/refrigeration/', label: 'The refrigeration reference hub'},
         tools: [
             {href: '/tools/refrigerant-pt.html', label: 'Refrigerant P-T & Superheat Calculator'}
         ],
@@ -1171,8 +1394,11 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
     // The engine (RefrigLoop.solve) owns the quasi-static equilibrium solve
     // and every table lookup; this file owns the DOM: the two manifold
     // gauges (needle rAF easing + a per-refrigerant saturation-temp ring),
-    // the LCD/LED/verdict register, the CFM/ton readout, the knob bank, and
-    // the loop animation hooks into flow-engine.js.
+    // the LCD/LED/verdict register, the CFM/ton readout, the knob bank, the
+    // Cool/Heat mode toggle (the reversing valve — per-cycle loop re-route
+    // via MODE_GEOM, per-mode slider ranges via RefrigLoop.clampsFor, the
+    // mode-filtered preset row, and the defrost flow flip), and the loop
+    // animation hooks into flow-engine.js.
     //
     // Units: the temp / ΔT sliders stay in canonical °F (their min/max/step
     // mirror RefrigLoop.CLAMPS exactly) so the engine reads them unchanged;
@@ -1210,9 +1436,18 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
         // ── Knob state (compressor stage is the one non-slider input) ──
         let capacity = CL.capacity.default;     // 0.5 (stage 1) | 1.0 (stage 2)
         let lastState = null;                   // most recent solve — for plot redraws on resize
+        // Mode + defrost — the reversing-valve state. Session-only, no cf_*
+        // key (the fullscreen view-toggle precedent): a returning visitor
+        // always opens on cooling. defrostActive only ever comes from the
+        // Defrost preset and clears on ANY hand move (defrost is a
+        // transient the machine commands, not a knob you hold).
+        let mode = 'cooling';                   // 'cooling' | 'heating'
+        let defrostActive = false;
 
         function currentInputs() {
             return {
+                mode:     mode,
+                defrost:  defrostActive,
                 airflow:  parseFloat($('rl-airflow').value),
                 returnT:  parseFloat($('rl-returnt').value),
                 charge:   parseFloat($('rl-charge').value),
@@ -1467,17 +1702,35 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
             // dropped the mark would contradict the pegged dial beside it.
             $('rl-lcd-psuc').innerHTML = (s.flags.outOfRangeLow  ? '≤ ' : '') + dispP(s.pSuc) + '<small>' + pU() + '</small>';
             $('rl-lcd-pdis').innerHTML = (s.flags.outOfRangeHigh ? '≥ ' : '') + dispP(s.pDis) + '<small>' + pU() + '</small>';
-            // Airside in→out pairs (sensible-only; see the About caveat).
-            $('rl-lcd-air-evap').innerHTML = dispT(s.tAirInEvap) + '<small>→</small>' + dispT(s.tAirOutEvap) + '<small>' + tU() + '</small>';
-            $('rl-lcd-air-cond').innerHTML = dispT(s.tAirInCond) + '<small>→</small>' + dispT(s.tAirOutCond) + '<small>' + tU() + '</small>';
+            // Airside in→out pairs — the cells are labeled Indoor / Outdoor
+            // (hardware), so they read the engine's HARDWARE-KEYED fields,
+            // never the function-keyed ones: in heating the indoor air
+            // crosses the CONDENSER, and the explicit tAir*Indoor/Outdoor
+            // mirrors make that remap the engine's job, not a guess here
+            // (the likeliest silent-bug site — see the engine header). The
+            // outdoor pair mutes during defrost: the fan is off, so there
+            // is no outdoor airstream to read.
+            $('rl-lcd-air-evap').innerHTML = dispT(s.tAirInIndoor) + '<small>→</small>' + dispT(s.tAirOutIndoor) + '<small>' + tU() + '</small>';
+            $('rl-lcd-air-cond').innerHTML = defrostActive ? '—'
+                : dispT(s.tAirInOutdoor) + '<small>→</small>' + dispT(s.tAirOutOutdoor) + '<small>' + tU() + '</small>';
 
             // LEDs — RUN always lit (2-stage compressor runs at 0.5 or 1.0),
-            // freeze blinks red, floodback / high head go amber.
+            // freeze blinks red, floodback / high head go amber. The first
+            // LED is per-mode: the cooling coil-freeze alarm (red), or the
+            // heating outdoor-frost tell — amber while frost is a normal
+            // accumulation, red once it chokes the coil (both classes
+            // cleared first so a tier change never leaves the old one).
             const running = capacity > 0;
             setLed('rl-led-run2', running, 'led--run');
             $('rl-led-run').classList.toggle('led--run', running);
             $('rl-led-run').classList.toggle('led--off', !running);
-            setLed('rl-led-freeze', s.flags.freeze,    'led--alarm');
+            $('rl-led-freeze-label').textContent = mode === 'heating' ? 'Outdoor frost' : 'Coil freeze';
+            $('rl-led-freeze').classList.remove('led--alarm', 'led--warn');
+            if (mode === 'heating') {
+                setLed('rl-led-freeze', s.flags.frost, s.flags.frostChoked ? 'led--alarm' : 'led--warn');
+            } else {
+                setLed('rl-led-freeze', s.flags.freeze, 'led--alarm');
+            }
             setLed('rl-led-flood',  s.flags.floodback, 'led--warn');
             setLed('rl-led-head',   s.flags.highHead,  'led--warn');
 
@@ -1487,23 +1740,33 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
             pill.textContent = s.verdict.text;
             pill.className = 'status-pill ' + kind;
 
-            // CFM/ton — colored against the 400 floor (matches the VAV bands).
+            // CFM/ton — colored against the 400 design (matches the VAV
+            // bands). Same blower, per-mode story: in cooling 400 is the
+            // coil-freeze floor; in heating low indoor airflow shows up as
+            // high head instead, so the caption says "design", not "floor".
             const cfm = Math.round(s.cfmPerTon);
             const cv = $('rl-cfm-val');
             cv.textContent = cfm;
             cv.classList.remove('ok', 'mid', 'bad');
             cv.classList.add(cfm >= 400 ? 'ok' : cfm >= 350 ? 'mid' : 'bad');
+            $('rl-cfm-unit').textContent = mode === 'heating'
+                ? ' CFM/ton · design 400' : ' CFM/ton · floor 400';
 
             // Visually-hidden alarm mirror (see the markup note): every lit
             // alarm — the pill alone names only the top-priority fault, so
             // concurrent alarms were AT-invisible. The pressures moved into
             // visible LCD cells inside this same live region, so they are
-            // deliberately NOT repeated here (double-speak).
+            // deliberately NOT repeated here (double-speak). Defrost is
+            // narrated as a state, not listed as an alarm — it is normal
+            // operation that merely looks wrong.
             const alarms = [];
-            if (s.flags.freeze)    alarms.push('coil freeze');
-            if (s.flags.floodback) alarms.push('floodback');
-            if (s.flags.highHead)  alarms.push('high head');
+            if (s.flags.freeze)      alarms.push('coil freeze');
+            if (s.flags.frostChoked) alarms.push('outdoor coil frosted over');
+            else if (s.flags.frost)  alarms.push('outdoor coil frosting');
+            if (s.flags.floodback)   alarms.push('floodback');
+            if (s.flags.highHead)    alarms.push('high head');
             const srBits = [];
+            if (defrostActive) srBits.push('Defrost running — reversing valve in the cooling position, outdoor fan off.');
             if (alarms.length) srBits.push('Alarms: ' + alarms.join(', ') + '.');
             if (s.flags.outOfRange) srBits.push('Reading clamped at the edge of the P-T chart.');
             $('rl-sr-summary').textContent = srBits.join(' ');
@@ -1528,11 +1791,16 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
         let lastBand = null;
 
         // Airside lane segments — attribute-only selectors (the SVG-id
-        // gotcha): one set per coil face for the density refresh, plus the
-        // evaporator OUT halves alone for the frost recolor.
+        // gotcha): one set per coil face for the density refresh, the OUT
+        // halves per face for the tint / frost recolors, and the outdoor IN
+        // halves for the defrost fan-off blank. The prefix sets also catch
+        // the rl-air-*-heads arrowhead <g>s — deliberate for the CSS, and
+        // harmless here (no data-flow / no pool, so the engine calls no-op).
         const AIR_E     = document.querySelectorAll('[id^="rl-air-e-"]');
         const AIR_C     = document.querySelectorAll('[id^="rl-air-c-"]');
         const AIR_E_OUT = document.querySelectorAll('[id^="rl-air-e-out"]');
+        const AIR_C_OUT = document.querySelectorAll('[id^="rl-air-c-out"]');
+        const AIR_C_IN  = document.querySelectorAll('[id^="rl-air-c-in"]');
         let lastAirBandE = null, lastAirBandC = null;
 
         // Map an airflow knob (0.40–1.20) onto the pipes' coarse density
@@ -1578,7 +1846,7 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
         const GRAD_HOLD_MIN = 0.1;
         // Each gradient's bar geometry: x1 = the entry joint, dx = the
         // signed bar length (evaporator runs right→left). Must match the
-        // <linearGradient> markup (pinned by the engine spec's §12).
+        // <linearGradient> markup (pinned by the engine spec's §13).
         const GRAD_GEOM = {
             'rl-grad-cond': { x1: 200, dx: 320 },
             'rl-grad-evap': { x1: 520, dx: -320 },
@@ -1601,8 +1869,131 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
             $(id + '-done').setAttribute('offset', done.toFixed(3));
         }
 
+        // ── Per-cycle loop geometry — the reversing valve's re-route. ────
+        // The six flow elements keep their FUNCTION identity (rl-discharge
+        // is always the hot-gas leg, rl-coil-evap always the evaporating
+        // serpentine) and swap their GEOMETRY per cycle instead — so every
+        // state hook above and below (gradients, freeze/frost recolors,
+        // density bands) works unchanged in both modes. Draw order IS
+        // particle direction (flow-engine has no reverse), so each heating
+        // d is its cooling twin re-routed AND re-directed: in heating the
+        // loop runs counterclockwise — discharge drops to the bottom
+        // (indoor) bar, the bottom serpentine condenses left→right, liquid
+        // climbs to the metering device, expansion feeds the top (outdoor)
+        // bar, the top serpentine evaporates right→left, and suction
+        // returns down the top-left leg. The cooling entries are pinned
+        // equal to the markup d attributes by the engine spec (§13) —
+        // markup and table must move in lockstep.
+        const MODE_GEOM = {
+            cooling: {
+                'rl-discharge': 'M 120 193 V 85 H 200',
+                'rl-liquid': 'M 520 85 H 600 V 195',
+                'rl-expansion': 'M 600 235 V 345 H 520',
+                'rl-suction': 'M 200 345 H 120 V 237',
+                'rl-coil-cond': 'M 200 85 H 220 V 67 H 248 V 103 H 276 V 67 H 304 V 103 H 332 V 67 H 360 V 103 H 388 V 67 H 416 V 103 H 444 V 67 H 472 V 103 H 500 V 85 H 520',
+                'rl-coil-evap': 'M 520 345 H 500 V 327 H 472 V 363 H 444 V 327 H 416 V 363 H 388 V 327 H 360 V 363 H 332 V 327 H 304 V 363 H 276 V 327 H 248 V 363 H 220 V 345 H 200',
+            },
+            heating: {
+                'rl-discharge': 'M 120 237 V 345 H 200',
+                'rl-liquid': 'M 520 345 H 600 V 235',
+                'rl-expansion': 'M 600 195 V 85 H 520',
+                'rl-suction': 'M 200 85 H 120 V 193',
+                'rl-coil-cond': 'M 200 345 H 220 V 363 H 248 V 327 H 276 V 363 H 304 V 327 H 332 V 363 H 360 V 327 H 388 V 363 H 416 V 327 H 444 V 363 H 472 V 327 H 500 V 345 H 520',
+                'rl-coil-evap': 'M 520 85 H 500 V 103 H 472 V 67 H 444 V 103 H 416 V 67 H 388 V 103 H 360 V 67 H 332 V 103 H 304 V 67 H 276 V 103 H 248 V 67 H 220 V 85 H 200',
+            },
+        };
+        // The state gradients follow their coil to the other bar: x1/dx are
+        // cycle-constant (both bars span the same columns, and the cond run
+        // is always left→right, the evap run right→left), only the tube-row
+        // y moves. setGradient keeps owning x2 (the flash-gas stretch).
+        const GRAD_Y = {
+            cooling: { 'rl-grad-cond': 85, 'rl-grad-evap': 345 },
+            heating: { 'rl-grad-cond': 345, 'rl-grad-evap': 85 },
+        };
+        // Reversing-valve slide — the two internal arcs mirror vertically
+        // with the cycle (the classic 4-way schematic flip).
+        const VALVE_SLIDE = {
+            cooling: 'M 104 160 A 6 6 0 0 1 116 160 M 124 160 A 6 6 0 0 0 136 160',
+            heating: 'M 104 160 A 6 6 0 0 0 116 160 M 124 160 A 6 6 0 0 1 136 160',
+        };
+        // Corner state annotations: [text, ink] per corner, per cycle — the
+        // states travel around the loop with the valve.
+        const ANNOTATIONS = {
+            cooling: { tl: ['hot vapor', 'var(--rl-hot)'], tr: ['warm liquid', 'var(--rl-liq)'],
+                       br: ['cold mix', 'var(--blue-cool)'], bl: ['cool vapor', 'var(--blue)'] },
+            heating: { tl: ['cool vapor', 'var(--blue)'], tr: ['cold mix', 'var(--blue-cool)'],
+                       br: ['warm liquid', 'var(--rl-liq)'], bl: ['hot vapor', 'var(--rl-hot)'] },
+        };
+
+        // Re-route the loop for a cycle ('cooling' | 'heating'). Note the
+        // argument is the CYCLE, not the mode: the Defrost preset calls this
+        // with 'cooling' while the mode toggle stays on Heat — the honest
+        // defrost depiction (the valve really does flip back). refreshPath
+        // re-reads each element's geometry so the particle pools follow the
+        // new routes (no-op under reduced motion — the swapped strokes,
+        // arrows and labels carry the story there).
+        function applyCycleVisuals(cycle) {
+            const heat = cycle === 'heating';
+            const svg = $('rl-cycle');
+            svg.classList.toggle('rl-heating', heat);
+            const geom = MODE_GEOM[cycle];
+            Object.keys(geom).forEach(id => {
+                const el = $(id);
+                el.setAttribute('d', geom[id]);
+                if (window.FlowEngine && FlowEngine.refreshPath) FlowEngine.refreshPath(el);
+            });
+            Object.keys(GRAD_Y[cycle]).forEach(id => {
+                $(id).setAttribute('y1', GRAD_Y[cycle][id]);
+                $(id).setAttribute('y2', GRAD_Y[cycle][id]);
+            });
+            $('rl-revvalve-slide').setAttribute('d', VALVE_SLIDE[cycle]);
+            // Region labels swap halves (heating's high side is the bottom).
+            $('rl-region-top').textContent    = heat ? 'LOW SIDE · COOL' : 'HIGH SIDE · HOT';
+            $('rl-region-bottom').textContent = heat ? 'HIGH SIDE · HOT' : 'LOW SIDE · COOL';
+            // Bars keep hardware identity; the FUNCTION labels + air-story
+            // captions swap (owner decision — top is always the outdoor coil).
+            $('rl-bar-top-name').textContent    = heat ? 'EVAPORATOR' : 'CONDENSER';
+            $('rl-bar-bottom-name').textContent = heat ? 'CONDENSER' : 'EVAPORATOR';
+            $('rl-air-cap-top').textContent     = heat ? 'cool air → outdoors' : 'warm air → outdoors';
+            $('rl-air-cap-bottom').textContent  = heat ? 'warm air → indoors'  : 'cool air → indoors';
+            const ann = ANNOTATIONS[cycle];
+            Object.keys(ann).forEach(k => {
+                const el = $('rl-ann-' + k);
+                el.textContent = ann[k][0];
+                el.setAttribute('fill', ann[k][1]);
+            });
+            // Air-lane OUT tints swap faces: in heating the outdoor (top)
+            // air leaves COOLED and the indoor (bottom) air leaves WARMED.
+            // The stroke attribute is also the engine's rebuild default for
+            // air-particle fill, so one write keeps both in step; the
+            // opacities swap too (the warm side is the quieter one). The
+            // arrowhead <g>s share the lane id prefix ON PURPOSE — the
+            // defrost CSS ghost targets [id^="rl-air-c-"] once for lanes
+            // and heads alike (they hold no data-flow, so the engine loops
+            // over them are no-ops).
+            document.querySelectorAll('[id^="rl-air-c-out"]').forEach(el => {
+                el.setAttribute('stroke', heat ? 'var(--blue-cool)' : 'var(--heat)');
+                el.setAttribute('opacity', heat ? '0.75' : '0.6');
+            });
+            AIR_E_OUT.forEach(el => {
+                el.setAttribute('stroke', heat ? 'var(--heat)' : 'var(--blue-cool)');
+                el.setAttribute('opacity', heat ? '0.6' : '0.75');
+            });
+            $('rl-air-c-heads').setAttribute('fill', heat ? 'var(--blue-cool)' : 'var(--heat)');
+            $('rl-air-c-heads').setAttribute('opacity', heat ? '0.75' : '0.6');
+            $('rl-air-e-heads').setAttribute('fill', heat ? 'var(--heat)' : 'var(--blue-cool)');
+            $('rl-air-e-heads').setAttribute('opacity', heat ? '0.6' : '0.75');
+        }
+
         function updateLoop(s, inp) {
-            $('rl-cycle').classList.toggle('frozen', s.flags.freeze);
+            // The frost surface follows the cycle: .frozen lights the bottom
+            // (indoor) kit on the cooling freeze alarm, .frosted the top
+            // (outdoor) kit on the heating frost flag, .defrost half-fades
+            // the top kit (the melt) and ghosts the fan-off outdoor lanes.
+            const svg = $('rl-cycle');
+            svg.classList.toggle('frozen',  s.flags.freeze);
+            svg.classList.toggle('frosted', s.flags.frost);
+            svg.classList.toggle('defrost', defrostActive);
             // Gradient stops move BEFORE the engine guard: the serpentine
             // STROKES are static markup, so the state ramps stay live even
             // under reduced motion (no particles there to carry them).
@@ -1610,8 +2001,9 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
             setGradient('rl-grad-evap', 1 - s.superheat / 50);
             if (!window.FlowEngine || !FlowEngine.setPathColor) return;
 
-            // Mass-flow band: stage 2 full, stage 1 leaner, iced coil sparse.
-            const band = s.flags.freeze ? 0.3 : (capacity >= 1 ? 1.0 : 0.55);
+            // Mass-flow band: stage 2 full, stage 1 leaner, iced coil sparse
+            // (frost thins the heating loop the same way freeze thins cooling).
+            const band = (s.flags.freeze || s.flags.frost) ? 0.3 : (capacity >= 1 ? 1.0 : 0.55);
             if (band !== lastBand) {
                 lastBand = band;
                 FLOW_SEGS.forEach(id => {
@@ -1641,22 +2033,43 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
             }
             // State colors (cheap; also restores color after a refresh).
             // Four pipe inks + the two serpentine gradient fills (url()
-            // strings pass through setPathColor verbatim). The freeze
+            // strings pass through setPathColor verbatim). The ice
             // override claims the low-side EXIT elements — suction +
-            // evaporator-serpentine PARTICLES — while the serpentine
+            // evaporating-serpentine PARTICLES — while the serpentine
             // stroke keeps its gradient (the frost wash carries the
-            // static look).
+            // static look). Because the flow elements are FUNCTION-keyed
+            // (rl-suction is the suction leg in both modes), the freeze
+            // and frost flags recolor the same elements — in heating those
+            // sit on the TOP bar, exactly where the frost is.
+            const icy = s.flags.freeze || s.flags.frost;
             FlowEngine.setPathColor($('rl-discharge'),  'var(--rl-hot)');
             FlowEngine.setPathColor($('rl-coil-cond'),  'url(#rl-grad-cond)');
             FlowEngine.setPathColor($('rl-liquid'),     'var(--rl-liq)');
             FlowEngine.setPathColor($('rl-expansion'),  'var(--blue-cool)');
-            FlowEngine.setPathColor($('rl-coil-evap'),  s.flags.freeze ? 'var(--rl-frost)' : 'url(#rl-grad-evap)');
-            FlowEngine.setPathColor($('rl-suction'),    s.flags.freeze ? 'var(--rl-frost)' : 'var(--blue)');
-            // The indoor OUT air rides the same frost recolor as the suction
-            // line; every other lane's rebuild default (its stroke) is
-            // already the right color.
+            FlowEngine.setPathColor($('rl-coil-evap'),  icy ? 'var(--rl-frost)' : 'url(#rl-grad-evap)');
+            FlowEngine.setPathColor($('rl-suction'),    icy ? 'var(--rl-frost)' : 'var(--blue)');
+            // Airside particle tints per CYCLE (not mode — during defrost
+            // the indoor face evaporates and its air leaves cooled, the
+            // "cold blow"): the OUT halves carry each face's leaving-air
+            // story, with the frost tint riding whichever face is icing.
+            // The outdoor set blanks to transparent during defrost — the
+            // fan is off, so no air moves at all (the CSS ghost handles
+            // the static dashes) — and the outdoor IN halves are re-set
+            // explicitly so their particles recover their dim ink the
+            // moment defrost ends.
+            const heatCycle = mode === 'heating' && !defrostActive;
             AIR_E_OUT.forEach(el => {
-                FlowEngine.setPathColor(el, s.flags.freeze ? 'var(--rl-frost)' : 'var(--blue-cool)');
+                FlowEngine.setPathColor(el, heatCycle ? 'var(--heat)'
+                    : (s.flags.freeze ? 'var(--rl-frost)' : 'var(--blue-cool)'));
+            });
+            AIR_C_OUT.forEach(el => {
+                FlowEngine.setPathColor(el, defrostActive ? 'transparent'
+                    : heatCycle
+                        ? (s.flags.frost ? 'var(--rl-frost)' : 'var(--blue-cool)')
+                        : 'var(--heat)');
+            });
+            AIR_C_IN.forEach(el => {
+                FlowEngine.setPathColor(el, defrostActive ? 'transparent' : 'var(--text-dim)');
             });
         }
 
@@ -1834,8 +2247,15 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
             stroke(sampleCurve(id, 'dew', tMin, tMax), cDim, 1.75);
             if (glideVisible) stroke(sampleCurve(id, 'bubble', tMin, tMax), cDim, 1, [4, 3]);
 
-            // ── 32 °F freeze line (red once the coil is icing) ──
-            const freezing = s.tEvap < FREEZE_LINE_F;
+            // ── 32 °F line — per-mode SEMANTICS (the mode axis's one plot
+            //    change): in cooling it is the freeze line and reddens on
+            //    the freeze alarm (tEvap left of it). In heating a sub-32
+            //    evaporator is NORMAL — the low-side point lives left of
+            //    the line on any cold day — so the line reads as the FROST
+            //    line instead and only reddens when the frost flag says ice
+            //    is actually accumulating (ambient in the frost band). ──
+            const freezing = s.flags.freeze || s.flags.frost;
+            const freezeWord = s.mode === 'heating' ? '° frost' : '° freeze';
             const xF = xOf(FREEZE_LINE_F);
             if (xF >= padL && xF <= cssW - padR) {
                 ctx.save();
@@ -1852,7 +2272,7 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                 ctx.font = fCap + 'px ' + mono;
                 ctx.textAlign = 'left';
                 ctx.textBaseline = 'top';
-                ctx.fillText(Math.round(U.display.temp(FREEZE_LINE_F)) + '° freeze', xF + 3, padT + 2);
+                ctx.fillText(Math.round(U.display.temp(FREEZE_LINE_F)) + freezeWord, xF + 3, padT + 2);
                 ctx.restore();
             }
 
@@ -2085,8 +2505,18 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
         // set (§3.5), marks itself active, and eases everything to the new
         // equilibrium. Any hand move on a knob / stage / refrigerant clears
         // the active mark, so a lit button always means "this is loaded."
+        // The row FILTERS by mode (owner decision): only the active mode's
+        // buttons are visible, so a preset can never flip the reversing
+        // valve — the page ignores each preset's `mode` key the same way it
+        // ignores `refrig`.
         const presetBtns = Array.prototype.slice.call(
             document.querySelectorAll('#main [data-preset]'));
+
+        function updatePresetRow() {
+            presetBtns.forEach(b => {
+                b.hidden = b.getAttribute('data-mode') !== mode;
+            });
+        }
 
         function clearActivePreset() {
             presetBtns.forEach(b => {
@@ -2095,9 +2525,23 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
             });
         }
 
+        // Defrost is preset-owned state: leaving it (any hand move, mode
+        // flip, stage / refrigerant change) flips the loop visuals back to
+        // the mode's own cycle. No-op unless defrost was actually running.
+        function leaveDefrost() {
+            if (!defrostActive) return;
+            defrostActive = false;
+            applyCycleVisuals(mode === 'heating' ? 'heating' : 'cooling');
+        }
+
         function applyPreset(key, btn) {
             const p = RefrigLoop.PRESETS[key];
             if (!p) return;
+            // Defense-in-depth (the [hidden]-defeat CSS trap): the row
+            // filter hides cross-mode buttons, but a display rule that
+            // beats the UA [hidden] default must not let a stray tap load
+            // a cross-mode scenario — a cross-mode key is ignored outright.
+            if ((p.mode || 'cooling') !== mode) return;
             $('rl-airflow').value  = p.airflow;
             $('rl-charge').value   = p.charge;
             $('rl-returnt').value  = p.returnT;
@@ -2111,9 +2555,22 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
             // user's selected refrigerant. Writing r410a here also silently
             // overwrote the shared cf_rf_refrigerant memory the P-T tool
             // reads — a cross-page side effect (2026-07-16 verification).
+            // The preset's mode key is ignored too (the row filters by mode,
+            // so it always matches anyway).
             clearActivePreset();
             btn.classList.add('active');
             btn.setAttribute('aria-pressed', 'true');
+            // Defrost preset: the honest flow flip — the reversing valve
+            // returns to the cooling position (loop re-routes) and the
+            // outdoor fan stops, while the MODE toggle stays on Heat
+            // (defrost is part of heating operation). The mode guard is
+            // redundant with the cross-mode bail above — belt and
+            // suspenders: defrost can never arm outside heating.
+            const wasDefrost = defrostActive;
+            defrostActive = (mode === 'heating' && key === 'defrost');
+            if (defrostActive !== wasDefrost) {
+                applyCycleVisuals((mode === 'heating' && !defrostActive) ? 'heating' : 'cooling');
+            }
             renderControls();
             applyRefrigerant();   // rebuilds the gauge rings + repaints (→ drawPlot)
         }
@@ -2123,9 +2580,11 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                 applyPreset(e.currentTarget.getAttribute('data-preset'), e.currentTarget));
         });
 
-        // Knob sliders — a hand move leaves any active preset behind.
+        // Knob sliders — a hand move leaves any active preset behind (and
+        // steps out of defrost: it is a machine-commanded transient, not a
+        // state you tune).
         ['rl-airflow', 'rl-charge', 'rl-returnt', 'rl-shtarget', 'rl-ambient', 'rl-condair'].forEach(id => {
-            $(id).addEventListener('input', () => { clearActivePreset(); renderControls(); renderMain(); });
+            $(id).addEventListener('input', () => { clearActivePreset(); leaveDefrost(); renderControls(); renderMain(); });
         });
 
         // Compressor stage — button visuals + the capacity axis, split from the
@@ -2141,6 +2600,7 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
         function setStage(cap) {
             updateStageButtons(cap);
             clearActivePreset();
+            leaveDefrost();
             renderMain();
         }
         $('rl-stage-1').addEventListener('click', () => setStage(0.5));
@@ -2149,8 +2609,42 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
         $('rl-refrigerant').addEventListener('change', () => {
             persistRefrig($('rl-refrigerant').value);
             clearActivePreset();
+            leaveDefrost();
             applyRefrigerant();
         });
+
+        // ── Cool / Heat mode — the reversing valve. Flips the engine's
+        // anchor set, re-routes the loop, re-ranges + RE-DEFAULTS the two
+        // temperature sliders from the engine's per-mode CLAMPS (single
+        // source — the other knobs keep their values), swaps the preset
+        // row, and repaints everything. Re-defaulting (rather than
+        // preserving-and-clamping) is deliberate: a 90 °F cooling ambient
+        // has no heating meaning, and round-trip flips should land on each
+        // mode's design day, not mutate state. Session-only, no cf_* key.
+        function setMode(m) {
+            if (m === mode) return;
+            mode = m;
+            defrostActive = false;
+            const heat = m === 'heating';
+            [[$('rl-mode-cool'), !heat], [$('rl-mode-heat'), heat]].forEach(pair => {
+                pair[0].classList.toggle('active', pair[1]);
+                pair[0].setAttribute('aria-pressed', pair[1] ? 'true' : 'false');
+            });
+            const CLm = RefrigLoop.clampsFor(m);
+            [['rl-ambient', 'ambient'], ['rl-returnt', 'returnT']].forEach(pair => {
+                const el = $(pair[0]), c = CLm[pair[1]];
+                el.min = c.min; el.max = c.max; el.step = c.step;
+                el.value = c.default;
+            });
+            clearActivePreset();
+            updatePresetRow();
+            applyCycleVisuals(heat ? 'heating' : 'cooling');
+            $('rl-plot-freeze-word').textContent = heat ? 'frost' : 'freeze';
+            renderControls();
+            applyRefrigerant();   // gauge rings are pressure-keyed — rebuild + repaint
+        }
+        $('rl-mode-cool').addEventListener('click', () => setMode('cooling'));
+        $('rl-mode-heat').addEventListener('click', () => setMode('heating'));
 
         // Repaint the P-T strip on resize (the canvas is responsive-width; the
         // gauges are SVG and rescale for free).

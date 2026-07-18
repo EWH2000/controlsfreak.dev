@@ -1894,6 +1894,12 @@ input[type="range"]:focus-visible::-moz-range-thumb {
         justify-content: center;
         min-height: 44px;
     }
+    /* The display:inline-flex above beats the UA-default
+       `[hidden] { display: none }` — the same trap .nav-card[hidden]
+       and the .rt-stack tr[hidden] re-assert against elsewhere.
+       Re-assert it here, or the refrigerant-loop sim's mode-filtered
+       preset row leaks BOTH modes' scenario buttons on touch. */
+    .copy-btn[hidden] { display: none; }
     /* The burger gets min-height ONLY — sharing the display
        declaration above overrode its base display:none at ALL widths
        under hover:none, rendering a stray non-functional hamburger
