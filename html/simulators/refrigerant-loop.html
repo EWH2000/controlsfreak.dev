@@ -2479,7 +2479,12 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
             // only the orbit translate is written per frame — a circle of
             // ORBIT_R about the mesh offset ORBIT_CX, keeping the walls in
             // touch-and-slide contact at every phase (see the markup note).
-            orbitPhase = (orbitPhase + 140 * capacity * dt) % 360;
+            // The phase DECREMENTS (CCW on screen): the sealed pockets
+            // co-rotate with the orbit, so compression (perimeter→center)
+            // needs the orbit to run AGAINST the spirals' CW-outward
+            // winding. Mode/defrost-invariant on purpose — a real
+            // compressor never reverses.
+            orbitPhase = (orbitPhase + 360 - 140 * capacity * dt) % 360;
             if (orbit) {
                 const rad = orbitPhase * Math.PI / 180;
                 orbit.setAttribute('transform', 'translate(' +
