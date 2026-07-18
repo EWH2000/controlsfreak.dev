@@ -5018,7 +5018,7 @@ snaps on instantly on all three. Matches the enumerated-transition
 shape the rest of `styles.css` already uses (e.g.
 `.tool-card-fullscreen-btn`).
 
-### 163. CSS fullscreen leaves the background page keyboard-focusable *(open — 2026-07-16)*
+### 163. CSS fullscreen leaves the background page keyboard-focusable *(addressed 2026-07-18)*
 
 `fullscreen-toggle.js` pins the tool-card at z-index 300 but nav /
 footer / back-link behind the overlay stay tabbable — Shift+Tab from
@@ -5027,6 +5027,28 @@ so the focus indicator disappears. Fix in the shared mechanism:
 `inert` on the siblings (or aria-hidden + tabindex management) while
 `body.has-fullscreen-tool` is set. Affects every fullscreen-capable
 tool, not just the refrigerant-loop sim.
+
+**Resolution (2026-07-18):** `setState()` now applies background
+containment on enter and clears it on every exit path (button, ESC,
+`Fullscreen.exit`): `applyInert()` walks from the fullscreen target up
+to `<body>`, setting the `inert` attribute on each level's siblings —
+the same mechanism search.js uses for the palette (#121); on browsers
+without inert support the attribute is a harmless no-op and behavior
+degrades to the old tab order. Everything it sets is tagged
+`data-fs-inert` so `clearInert()` removes exactly what enter added
+(idempotent across repeated cycles). Three exclusions: `<script>`
+elements, anything already inert (a page's own containment isn't ours
+to undo), and `#palette` — the command palette layers ABOVE fullscreen
+(z-index 1000 vs 300) and stays usable via Ctrl/⌘-K, which surfaced a
+real interaction: search.js's `setBackgroundInert(false)` stripped
+`inert` from every body child on palette close, un-inerting the
+fullscreen background. Its off-path now skips `data-fs-inert` carriers.
+Regression tests in `tests/fullscreen-toggle.spec.js`: chrome inert +
+a 25-step Shift+Tab walk that never escapes the card + exact restore
+(psychrometric-chart), two enter/exit cycles with a pre-existing inert
+surviving (refrigerant-loop), and palette open/close over fullscreen
+keeping the containment. Shipped on `issue-163/fullscreen-inert`
+(version bump 3.56.0 → 3.56.1 — both scripts are `?v=`-cached).
 
 ### 164. Touch-target floor block doesn't cover `<select>`s *(open — 2026-07-16)*
 
