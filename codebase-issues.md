@@ -4945,7 +4945,7 @@ media, not coil fins — left as-is. Verified against rendered screenshots at
 desktop/phone in both themes plus the `npm run screenshots` audit pass; suite
 green (635 passed).
 
-### 159. `refrigerant-pt.html` could consume `RefrigLoop.satTempAtP` / `pressAtSatTemp` *(open — 2026-07-15)*
+### 159. `refrigerant-pt.html` could consume `RefrigLoop.satTempAtP` / `pressAtSatTemp` *(addressed 2026-07-18)*
 
 The refrigerant-loop engine (`html/scripts/refrigerant-loop-engine.js`) ported
 `refrigerant-pt.html`'s inline `lerp` plus the `satTempAtP` / `pressAtSatTemp`
@@ -4958,6 +4958,22 @@ call `RefrigLoop.satTempAtP` / `pressAtSatTemp` instead of its own copy,
 collapsing the two to one source. Deferred out of the sim's PR to keep it scoped
 (the sim only *added* code; touching the shipped tool is a separate, testable
 change). Flagged in the engine header as a tracked follow-up.
+
+**Addressed (2026-07-18).** `refrigerant-pt.html` now loads
+`refrigerant-loop-engine.js` (after `refrigerant-data.js`, per the engine
+header's load order) and calls `RefrigLoop.satTempAtP` / `pressAtSatTemp`;
+the page's inline `lerp` / `tempAtP` / `pAtTemp` copies are deleted, so the
+interpolation lives in one source. The page gained the #139-pattern
+`typeof RefrigLoop` guard (mirrors coil-sizing's `typeof Psychro`), degrading
+to the muted state with an "engine unavailable" line if the script fails to
+load. Numeric equivalence proven before shipping: a throwaway vm sweep
+(old inline helpers extracted from git HEAD vs the engine lookups) across
+all 6 refrigerants × both curves × both directions at 0.05 steps over the
+full table ranges plus ±10 out-of-range margins and every breakpoint's
+±1e-6/±1e-7 tolerance edges — 172,562 comparisons, 0 mismatches
+(`Object.is`-strict, so bit-identical). The engine's dedup follow-up note
+now records the collapse; no version bump (page-inline + unversioned
+per-page script refs only).
 
 ### 160. Home Browse-card Simulators `desc` names five of seven sims *(addressed 2026-07-18)*
 

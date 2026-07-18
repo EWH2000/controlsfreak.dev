@@ -317,10 +317,15 @@ keywords: pt chart r22 r410a r134a r407c psig kpag saturation glide superheat su
 {% block scripts %}
 <script src="/scripts/ui.js"></script>
 <script src="/scripts/refrigerant-data.js"></script>
+<script src="/scripts/refrigerant-loop-engine.js"></script>
 <script>
     // switchTab(name, btn) / copyText(btn, text) come from /scripts/ui.js.
     // REFRIGERANT_TYPES (per-refrigerant bubble/dew P-T curves) comes from
-    // /scripts/refrigerant-data.js. Canonical units here: pressure in psig
+    // /scripts/refrigerant-data.js; the saturation lookups
+    // (RefrigLoop.satTempAtP / pressAtSatTemp) come from
+    // /scripts/refrigerant-loop-engine.js — one interpolation source shared
+    // with the Refrigerant Loop simulator (codebase-issues #159).
+    // Canonical units here: pressure in psig
     // (gauge — both the source charts and the tool input are psig, so no
     // absolute-pressure conversion is needed), temperature in °F. The site
     // Units pressure factor is a pure scale (1 psi = 6.89476 kPa), so it
@@ -355,28 +360,14 @@ keywords: pt chart r22 r410a r134a r407c psig kpag saturation glide superheat su
                 : null;
         }
 
-        // Linear interpolation over a [[psig, °F], ...] curve. xi/yi are the
-        // column indices (0 = psig, 1 = °F). The curve is sorted ascending by
-        // psig and °F rises monotonically with it, so scanning either column
-        // works. Returns { ok, value } or { ok:false, lo, hi } when x is out
-        // of the curve's range.
-        function lerp(points, xi, yi, x) {
-            const n = points.length;
-            const lo = points[0][xi], hi = points[n - 1][xi];
-            if (x < lo - 1e-6 || x > hi + 1e-6) return { ok: false, lo: lo, hi: hi };
-            if (x <= lo) return { ok: true, value: points[0][yi] };
-            if (x >= hi) return { ok: true, value: points[n - 1][yi] };
-            for (let i = 0; i < n - 1; i++) {
-                const a = points[i], b = points[i + 1];
-                if (x >= a[xi] && x <= b[xi]) {
-                    const f = (x - a[xi]) / (b[xi] - a[xi]);
-                    return { ok: true, value: a[yi] + f * (b[yi] - a[yi]) };
-                }
-            }
-            return { ok: false, lo: lo, hi: hi };
-        }
-        const tempAtP = (curve, p) => lerp(curve, 0, 1, p);
-        const pAtTemp = (curve, t) => lerp(curve, 1, 0, t);
+        // Saturation lookups live in RefrigLoop (refrigerant-loop-engine.js)
+        // — satTempAtP / pressAtSatTemp are the exact linear interpolation
+        // this page used to inline, collapsed to one shared source
+        // (codebase-issues #159). Same result shape: { ok:true, value } or
+        // { ok:false, lo, hi } when the input is off the chart's range. The
+        // engine keys lookups by refrigerant id + curve name ('dew' |
+        // 'bubble'); the select's value is the id.
+        const refrigId = () => document.getElementById('rf-refrigerant').value;
 
         // ── Shared element helpers ────────────────────────────────────
         function setLive(id, text) {
@@ -406,6 +397,11 @@ keywords: pt chart r22 r410a r134a r407c psig kpag saturation glide superheat su
         }
 
         function calcPt() {
+            // Engine guard (codebase-issues #139): degrade to the muted state
+            // with a clear message if refrigerant-loop-engine.js failed to
+            // load, rather than throwing on the undefined RefrigLoop global
+            // at the lookup sites below.
+            if (typeof RefrigLoop === 'undefined') { clearPt('Refrigerant engine unavailable — reload the page.', 'error'); return; }
             const R = refrigerant();
             if (!R) { clearPt('Refrigerant data unavailable — reload the page.', 'error'); return; }
             document.getElementById('rf-pt-glide-row').classList.toggle('hidden', ptBy !== 'pressure');
@@ -416,8 +412,8 @@ keywords: pt chart r22 r410a r134a r407c psig kpag saturation glide superheat su
                 const pD = getNum('rf-pt-pressure');
                 if (!isFinite(pD)) { clearPt('Enter a pressure to read the saturation temperature.'); return; }
                 const p = U.toCanonical.pressure(pD);
-                const bub = tempAtP(R.bubble, p);
-                const dew = tempAtP(R.dew, p);
+                const bub = RefrigLoop.satTempAtP(refrigId(), 'bubble', p);
+                const dew = RefrigLoop.satTempAtP(refrigId(), 'dew', p);
                 if (!bub.ok || !dew.ok) {
                     const lo = Math.round(U.display.pressure(bub.lo));
                     const hi = Math.round(U.display.pressure(bub.hi));
@@ -455,8 +451,8 @@ keywords: pt chart r22 r410a r134a r407c psig kpag saturation glide superheat su
                 const tD = getNum('rf-pt-temp');
                 if (!isFinite(tD)) { clearPt('Enter a temperature to read the saturation pressure.'); return; }
                 const t = U.toCanonical.temp(tD);
-                const bub = pAtTemp(R.bubble, t);
-                const dew = pAtTemp(R.dew, t);
+                const bub = RefrigLoop.pressAtSatTemp(refrigId(), 'bubble', t);
+                const dew = RefrigLoop.pressAtSatTemp(refrigId(), 'dew', t);
                 if (!bub.ok || !dew.ok) {
                     // Mirror the by-pressure branch: bounds in the user's
                     // display units, not raw canonical °F — a metric user
@@ -484,6 +480,8 @@ keywords: pt chart r22 r410a r134a r407c psig kpag saturation glide superheat su
         }
 
         function calcSc() {
+            // Engine guard (codebase-issues #139): same degradation as calcPt.
+            if (typeof RefrigLoop === 'undefined') { clearSc('Refrigerant engine unavailable — reload the page.', 'error'); return; }
             const R = refrigerant();
             if (!R) { clearSc('Refrigerant data unavailable — reload the page.', 'error'); return; }
             const suction = scLine === 'suction';
@@ -500,8 +498,8 @@ keywords: pt chart r22 r410a r134a r407c psig kpag saturation glide superheat su
 
             const p = U.toCanonical.pressure(pD);
             const lineT = U.toCanonical.temp(tD);
-            const curve = suction ? R.dew : R.bubble;
-            const sat = tempAtP(curve, p);
+            const curve = suction ? 'dew' : 'bubble';
+            const sat = RefrigLoop.satTempAtP(refrigId(), curve, p);
             if (!sat.ok) {
                 const lo = Math.round(U.display.pressure(sat.lo));
                 const hi = Math.round(U.display.pressure(sat.hi));
