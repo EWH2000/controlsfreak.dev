@@ -5578,6 +5578,33 @@ longer drift over the names); the light theme got page-local
 light `--heat`/`--amber` sat too close); frost snowflakes reseated
 between serpentine legs.)*
 
+*Compressor-direction fixes (2026-07-18):* the owner, watching the
+live sim, caught two depiction defects at the compressor — both
+confirmed wrong by a two-agent investigation (kinematic derivation +
+pixel-tracking on the production render). First, the **scroll orbited
+in the expander sense**: the moving spiral ran clockwise on screen
+(~135–139 °/s measured), the same sense the spirals wind outward, so
+the sealed pockets read as sweeping outward — gas drawn at the center
+and pumped out the low side. One-line fix: the orbit phase now
+decrements (CCW on screen, the compression sense), still deliberately
+mode/defrost-invariant — a real compressor never reverses. Second,
+**the compressor's own ports swapped function with the mode**
+(MODE_GEOM made the top port the discharge in cooling but the suction
+in heating, and the heating discharge never touched the reversing
+valve — the swap visibly happened at the compressor, the inverse of
+real hardware). Fixed with a true four-port re-plumb: the ports are
+now FIXED (suction always up into the bottom port, discharge always
+out the top port), both compressor lines terminate at the widened
+valve capsule in both modes, and only the valve's coil-side legs
+re-route — cooling keeps the straight-through up the x=120 column
+while the suction U-turns under the slide cup and wraps beneath the
+shell into the bottom port; heating crosses over inside the capsule
+to the indoor-coil leg (x=162). The slide glyph went port-anchored
+(tick + U-cup vs. crossover cup + diagonal), mode-invariant stub
+arrows mark the never-swapping ports, and the port invariant is
+spec-pinned (§14: identical compressor-side endpoints across modes,
+both lines threading the capsule).
+
 ### Guides nav lane + topic-hub IA — the nav/home redesign *(scoped 2026-07-13, shipped PRs #332/#333; scope doc retired 2026-07-18)*
 
 The second pillar hub (`/forced-air/`) is where the **format-based
