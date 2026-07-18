@@ -5179,7 +5179,7 @@ view-toggle captions lifted to `--text`) — precedent to reach for if
 the same read recurs elsewhere before any site-wide retune. Affects
 every `<label>`-bearing page (~46).
 
-### 169. Refrigerant-loop frozen state: suction frost wash kisses the COMPRESSOR label *(open — 2026-07-17)*
+### 169. Refrigerant-loop frozen state: suction frost wash kisses the COMPRESSOR label *(addressed 2026-07-18)*
 
 Pre-existing on main (verified there — not introduced by the
 serpentine/crossflow branch), cosmetic: in the frozen state the
@@ -5188,6 +5188,14 @@ riding that leg kiss the right edge of the COMPRESSOR label (text
 right edge ≈ x=118). A ~4px left nudge of the wash column (or the
 label) would clear it. Noticed during the PR #355 review follow-ups;
 out of that PR's scope.
+
+**Fix (2026-07-18, heat-pump-mode PR):** the LABEL moved, not the
+wash — the wash must stay centered on its pipe (x=120), so the
+COMPRESSOR label's anchor nudged x=80 → 76; its right edge (~112)
+now clears the wash (x=116) and the x=120 particles by ~4px. Outside
+the four frost-overlay placement constraints (those bound the marks).
+Rode along because that PR rebuilt the frost machinery (second kit on
+the top bar for heating frost).
 
 ### 170. Home Browse-card desc enumeration drift, round two — Education arc + Tools examples *(open — 2026-07-18)*
 

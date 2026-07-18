@@ -5391,7 +5391,8 @@ to **Indoor coil / Outdoor coil airflow** (hardware names; the LCDs
 and verdicts keep evaporator/condenser — the *function* words). That
 split is deliberate groundwork for the big one:
 
-**[future: reversing-valve heat-pump mode]** — owner decision
+**[future: reversing-valve heat-pump mode]** *(shipped 2026-07-18)* —
+owner decision
 2026-07-16: build the FULL heating-mode model, not a cosmetic flip.
 Scope sketch: an engine `mode` axis (cooling/heating) with per-mode
 anchor sets (heating: outdoor coil evaporates — sat temp tracks
@@ -5405,6 +5406,44 @@ coil receives discharge gas — remember the converging-flow
 split-segment gotcha); presets for heating faults (frosted outdoor
 coil, defrost, low-ambient heating). Its own PR after the sim
 merges. Pairs naturally with per-refrigerant anchor work (#3 below).
+
+*Shipped 2026-07-18.* The full heating model, as scoped. Engine: a
+`mode` axis (`DEFAULTS.mode='cooling'` — every pre-mode caller,
+preset and test bit-identical, gated by an explicit spec test) with
+the driving-temperature ROLES swapped in heating (block A rides
+`ambient`+`condAir`, anchored 27 °F at the 47 °F rating point; block
+C rides `returnT`+`airflow`, 70 → 105 °F), per-mode CLAMPS
+(`CLAMPS_HEATING`/`clampsFor()` — the page sliders re-range AND
+re-default from it on a flip, single-source), hardware-keyed airside
+mirrors (`tAir*Indoor/Outdoor` — the LCD remap is the engine's job,
+killing the likeliest silent-bug site), and new `frost` /
+`frostChoked` / `defrost` flags with per-mode verdict wording. Frost
+is the deliberate anti-freeze story: sub-32 °F coil sat is NORMAL
+heating (no alarm) until the ambient is in the sub-40 °F
+accumulation band (warn), and reads as an error only once the
+blocked face (`condAir < 0.75`) makes it the choke spiral. Page: the
+six flow elements stay FUNCTION-keyed and swap GEOMETRY per cycle
+(`MODE_GEOM`, spec-pinned to the markup in lockstep; draw order =
+particle direction, so heating runs the loop counterclockwise), the
+serpentines hoisted out of the bar groups so a re-routed run can't
+hide under the other bar's face; state gradients follow their coil
+between tube rows (`GRAD_Y`); a four-way reversing-valve glyph on
+the left column mirrors its slide with the cycle; the frost kit is
+mirrored to the top bar (`#rl-frost-top`, `.frosted`); the preset
+row filters by mode (6 cooling / 3 heating, a click can never flip
+the valve — owner decision), and **Defrost is the honest flow flip**
+(owner decision): the valve visuals flip back to cooling, the
+outdoor air lanes stop (fan off — transparent particles + a CSS
+ghost), the top frost kit shows half-faded (the melt), the outdoor
+air LCD mutes, and the verdict narrates "normal, and temporary"
+while the mode toggle stays on Heat; any hand move steps out. The
+P-T plot's 32 °F line is per-mode: freeze line in cooling, FROST
+line in heating (reddening only on the frost flag — sub-32 sat is
+normal there). Mode is session-only, no `cf_*` key (view-toggle
+precedent, so no privacy.html edit); bars keep hardware identity
+(top = outdoor) with the CONDENSER/EVAPORATOR labels swapping.
+Riders: #169 (COMPRESSOR label nudged clear of the frost wash) and
+visual-queue item 6 (below). Item 7 stays queued.
 
 *Queued visual-round ideas from the verification (owner to pick):*
 (1) two visible pressure LCD cells in the register (the AT summary
@@ -5422,7 +5461,10 @@ re-hierarchy — needle drawn under the labels, sat ring pulled in)*;
 (6) a one-line copy note making the shared-cycle framing explicit
 ("every refrigerant runs the same 40/105 °F cycle so the pressures
 compare apples-to-apples — R-404A in real life usually runs colder
-boxes"); (7) per-refrigerant sat-temp anchoring as the bigger
+boxes") *(shipped 2026-07-18 — reworded for the heat-pump mode's
+per-mode anchors: 40/105 is the COOLING cycle, heating states its
+own shared 27/105 set at the 47 °F rating point)*;
+(7) per-refrigerant sat-temp anchoring as the bigger
 upgrade (needs per-refrigerant design-point sourcing; trades away
 the clean cross-refrigerant comparability, so possibly a toggle).
 

@@ -423,8 +423,17 @@ paired with an Education explainer for the underlying concepts.
   magnitudes are illustrative. The headline scenario — "Starve the
   coil" — freezes the evaporator at a perfectly normal superheat, the
   airside-vs-refrigerant-side trap behind the VAV coil-flow minimum.
-  Pairs with the refrigerant-cycle, superheat / subcooling, and
-  metering-device lessons.
+  A Cool / Heat toggle flips the reversing valve into a full
+  heat-pump heating model: the loop re-routes (discharge gas drops to
+  the indoor coil, the outdoor coil evaporates below ambient), the
+  engine re-anchors to the 47 °F rating point, and outdoor-coil frost
+  becomes the new headline — a below-freezing coil that *looks*
+  normal until the accumulation chokes it, with a Defrost scenario
+  that honestly runs the temporary cooling cycle (valve flipped back,
+  outdoor fan off, indoor duct blowing cold) and a low-ambient
+  scenario for the capacity-fade / auxiliary-heat story. Pairs with
+  the refrigerant-cycle, superheat / subcooling, and metering-device
+  lessons.
 
 ### Education
 
