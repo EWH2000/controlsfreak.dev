@@ -32,6 +32,36 @@ test.describe('phone (hover:none, 412×883)', () => {
         const action = await page.locator('.quiz-action-primary').boundingBox();
         expect(action.height).toBeGreaterThanOrEqual(44);
     });
+
+    test('the #164 form-control family clears the 44px floor on touch', async ({ page }) => {
+        // .field select — 38.6px natively (refrigerant-loop sim).
+        await page.goto('/simulators/refrigerant-loop.html');
+        const fieldSelect = await page.locator('#rl-refrigerant').boundingBox();
+        expect(fieldSelect.height).toBeGreaterThanOrEqual(44);
+
+        // The property-sheet family — 29px natively, selects AND inputs
+        // floored together so a sheet doesn't mix 44px and 29px rows.
+        await page.goto('/tools/refrigerant-pt.html');
+        const psSelect = await page.locator('select.ps-input').first().boundingBox();
+        expect(psSelect.height).toBeGreaterThanOrEqual(44);
+        const psInput = await page.locator('input.ps-input').first().boundingBox();
+        expect(psInput.height).toBeGreaterThanOrEqual(44);
+    });
+});
+
+test.describe('desktop pointer density stays compact (#164)', () => {
+    // Default desktop context — (hover: none) must NOT match, so the
+    // form-control floor never applies and the workstation density holds.
+    test('property-sheet controls keep their compact desktop height', async ({ page }) => {
+        await page.goto('/tools/refrigerant-pt.html');
+        const psSelect = await page.locator('select.ps-input').first().boundingBox();
+        expect(psSelect.height).toBeLessThan(35);
+        const psInput = await page.locator('input.ps-input').first().boundingBox();
+        expect(psInput.height).toBeLessThan(35);
+        await page.goto('/simulators/refrigerant-loop.html');
+        const fieldSelect = await page.locator('#rl-refrigerant').boundingBox();
+        expect(fieldSelect.height).toBeLessThan(44);
+    });
 });
 
 test.describe('touch tablet (hover:none, 768×1024)', () => {

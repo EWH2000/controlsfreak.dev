@@ -5050,7 +5050,7 @@ surviving (refrigerant-loop), and palette open/close over fullscreen
 keeping the containment. Shipped on `issue-163/fullscreen-inert`
 (version bump 3.56.0 → 3.56.1 — both scripts are `?v=`-cached).
 
-### 164. Touch-target floor block doesn't cover `<select>`s *(open — 2026-07-16)*
+### 164. Touch-target floor block doesn't cover `<select>`s *(addressed 2026-07-18)*
 
 The `TOUCH-TARGET FLOOR` block pads chrome-level buttons to ≥44px on
 touch devices, but selects were never in it — the refrigerant-loop
@@ -5058,6 +5058,19 @@ sim's refrigerant `<select>` measures 39px on touch (better than the
 shipped 29px `.ps-input` baseline on refrigerant-pt, still under the
 floor). Site-wide conversation: adding `.field select` (or `.ps-input`
 generally) to the block changes density on every tool page.
+
+**Addressed 2026-07-18** (owner pick from the visual brief's candidates:
+floor the **whole form-control family**, not just selects — flooring
+only selects would leave 44px selects towering over 29px inputs in the
+same property sheet). Added `.field select`, `input.ps-input`, and
+`select.ps-input` to the TOUCH-TARGET FLOOR block (min-height ONLY —
+replaced elements, the group's inline-flex would fight native
+rendering); `textarea.ps-input` stays out (the one instance is
+multi-row and clears natively). Also fixed the block's header comment,
+whose ".ps-input fields … clear 44px natively" claim the 2026-07-18
+measurements disproved (29px). Desktop density untouched — everything
+sits inside the existing `(hover: none)` gate; `touch-floor.spec.js`
+now pins both halves (≥44px on touch, compact on desktop pointer).
 
 ### 165. `refrigerant-data.js` coarse low-pressure rows at the table bottoms *(open — 2026-07-16; glide-band wording addressed 2026-07-18)*
 

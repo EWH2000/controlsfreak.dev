@@ -1861,16 +1861,19 @@ input[type="range"]:focus-visible::-moz-range-thumb {
    On touch devices (coarse pointer, no hover), the interactive
    controls are padded to a >=44px hit area (WCAG 2.5.5 / Apple HIG).
    Scoped to (hover: none) so pointer users keep the compact desktop
-   workstation density. The .ps-input fields and .quiz-choice answers
-   clear 44px natively; everything else measured under the floor lives
-   here — including .copy-btn (22px natively — the audit-2026-06 #24
-   measurement disproved this block's old "copy/submit buttons already
-   clear 44px" claim), .filter-chip (28px), .quiz-action (39px), and
-   the fullscreen button (26px). Like FOCUS INDICATORS above, this is
+   workstation density. The .quiz-choice answers clear 44px natively;
+   everything else measured under the floor lives here — including
+   .copy-btn (22px natively — the audit-2026-06 #24 measurement
+   disproved this block's old "copy/submit buttons already clear 44px"
+   claim), .filter-chip (28px), .quiz-action (39px), the fullscreen
+   button (26px), and the form-control family (#164 measured
+   input.ps-input AND select.ps-input at 29px and .field selects at
+   38.6px — this block's old ".ps-input fields clear 44px natively"
+   claim was equally false). Like FOCUS INDICATORS above, this is
    the single consolidated home for the floor — add new interactives
    here rather than scattering per-component min-heights.
-   See codebase-issues #74 / ux-audit #3 / #8 / #9 + audit-2026-06
-   #24 / #25 for the why. */
+   See codebase-issues #74 / #164 / ux-audit #3 / #8 / #9 +
+   audit-2026-06 #24 / #25 for the why. */
 @media (hover: none) {
     .site-nav-links a,
     .units-btn,
@@ -1907,6 +1910,17 @@ input[type="range"]:focus-visible::-moz-range-thumb {
        match the dropdown rows. */
     .site-nav-links a { padding-inline: 0.2rem; justify-content: flex-start; }
     .quiz-settings-select { min-height: 44px; }
+    /* Form-control family (#164): min-height ONLY — replaced elements
+       grow their box directly and vertically center their text; the
+       group's inline-flex display above would fight native select /
+       input rendering. Floored together per the 2026-07-18 owner call:
+       flooring only the selects would leave 44px selects towering over
+       29px inputs in the same property sheet. textarea.ps-input stays
+       out — the one instance (duct-traverse readings) is multi-row and
+       clears the floor natively. */
+    .field select,
+    input.ps-input,
+    select.ps-input { min-height: 44px; }
     /* Disclosure summaries get min-height ONLY — they're left-aligned text
        lines, so the group's center declaration would mis-align them. */
     .pid-spoiler > summary,
