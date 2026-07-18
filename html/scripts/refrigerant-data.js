@@ -38,7 +38,8 @@
 //   r134a  HIGH  Honeywell G525-710 — Genetron 134a. Single component,
 //                zero glide.
 //   r407c  HIGH  Honeywell G525-710 (A/C page) — Genetron 407C.
-//                Zeotropic blend, large glide (~8–13 °F).
+//                Zeotropic blend, large glide (roughly 6–13 °F,
+//                narrowing at high pressure).
 //   r404a  HIGH  Honeywell G525-710 — Genetron 404A. Near-azeotropic
 //                blend, small glide (~1 °F).
 //   r454b  HIGH  Honeywell "PT Chart Solstice 454B", TCS-24-09-EN,
@@ -149,7 +150,7 @@ const REFRIGERANT_TYPES = (function () {
         // ── R-407C — Honeywell G525-710 A/C page, Genetron 407C (zeotropic) ──
         'r407c': {
             name: 'R-407C', safety: 'A1', blend: true, glide: 10,
-            note: 'Zeotropic R-22-replacement blend with large glide — bubble and dew sit ~8–13 °F apart, so superheat and subcooling must reference different temperatures. Charge as a liquid.',
+            note: 'Zeotropic R-22-replacement blend with large glide — bubble and dew sit roughly 6–13 °F apart (narrowing at high pressure), so superheat and subcooling must reference different temperatures. Charge as a liquid.',
             ref: 'Honeywell PT Charts G525-710 (Genetron 407C)',
             index: 'pressure',
             table: [
