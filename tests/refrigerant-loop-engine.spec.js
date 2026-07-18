@@ -694,4 +694,19 @@ test.describe('refrigerant-loop page: serpentine coils + state gradients', () =>
                 .toContain('gradientUnits="userSpaceOnUse"');
         }
     });
+
+    test('the moving stops + span geometry setGradient rewrites exist', () => {
+        // The page JS dereferences these unguarded every solve: the four
+        // -hold/-done stops it moves, and each gradient's x1/x2 baseline
+        // (GRAD_GEOM) it stretches past the bar for flash gas / floodback.
+        const src = loadPageSource();
+        for (const id of ['rl-grad-cond-hold', 'rl-grad-cond-done',
+            'rl-grad-evap-hold', 'rl-grad-evap-done']) {
+            expect(src, `${id} stop present`).toContain('<stop id="' + id + '"');
+        }
+        expect(src, 'condenser span matches GRAD_GEOM (x1=200, dx=+320)')
+            .toMatch(/<linearGradient id="rl-grad-cond"[^>]*x1="200"[^>]*x2="520"/);
+        expect(src, 'evaporator span matches GRAD_GEOM (x1=520, dx=-320)')
+            .toMatch(/<linearGradient id="rl-grad-evap"[^>]*x1="520"[^>]*x2="200"/);
+    });
 });

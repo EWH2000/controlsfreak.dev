@@ -21,8 +21,27 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
            register): it colors the suction + evaporator-serpentine particles
            and the frost overlay when the coil ices, and lives on the wrapper
            so the flow-engine's particle <circle>s (descendants of the loop
-           <svg>) inherit it. */
-        .rl-stage { --rl-frost: #a9d4e8; }
+           <svg>) inherit it. --rl-hot / --rl-liq are the refrigerant-side
+           warm pair (hot gas / warm liquid) — the global tokens by default,
+           punched apart under the light theme (below). */
+        .rl-stage {
+            --rl-frost: #a9d4e8;
+            --rl-hot: var(--heat);
+            --rl-liq: var(--amber);
+        }
+        /* Light theme separates the refrigerant-side warm pair — the global
+           light --heat / --amber (#9c5a14 / #83641f) sit too close and too
+           muddy for the condenser's hot-gas → liquid story (owner call,
+           review round): a saturated rust vs a saturated deep gold, distinct
+           in hue AND luminance. Page-local on purpose: the air lanes stay
+           on var(--heat) (a different system), and the dark defaults above
+           resolve to the globals untouched. Both hexes hold ≥ 4.5:1 on the
+           white light surface for the 11px leg annotations (the #161
+           small-text guard). */
+        [data-theme="light"] .rl-stage {
+            --rl-hot: #a53a08;
+            --rl-liq: #8f6e05;
+        }
 
         /* Intro preamble — the shared p.tool-preamble carries no margins
            (per-site by design); this one sits inside .tool-body above the
@@ -30,7 +49,7 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
         p.tool-preamble.rl-intro { margin-bottom: 1.5rem; }
 
         /* Loop schematic — the hero. Centered, capped. Pipe strokes carry
-           meaning — four state inks (--heat hot gas, --amber warm liquid,
+           meaning — four state inks (--rl-hot hot gas, --rl-liq warm liquid,
            --blue-cool cold mix, --blue cool vapor), the coil serpentines
            bridging each pair with a live gradient — an upgrade on the
            two-ink refrigerant-cycle-basics lesson it is re-id'd from. */
@@ -41,15 +60,6 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
         .rl-loop-svg { display: block; width: 100%; height: auto; }
         .rl-comp-label,
         .rl-region-label { font-family: var(--mono); }
-        /* Coil names punch a surface-colored halo out of the serpentine
-           passing beneath them — the gauge-label paint-order idiom
-           (further down), sized up for the 14px bar titles. */
-        .rl-coil-name {
-            paint-order: stroke;
-            stroke: var(--surface);
-            stroke-width: 4px;
-            stroke-linejoin: round;
-        }
 
         /* Frost state — an icy wash over the evaporator + suction leg that
            fades in when the freeze alarm latches. Off by default; the JS
@@ -479,7 +489,9 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                  lesson's rc-cycle: a closed clockwise loop, compressor (left)
                  / condenser (top) / metering (right) / evaporator (bottom).
                  Six data-flow segments in four state inks — discharge
-                 --heat, liquid --amber, expansion --blue-cool, suction
+                 --rl-hot, liquid --rl-liq (page tokens: the global
+                 --heat / --amber in dark, a punchier pair in light),
+                 expansion --blue-cool, suction
                  --blue (frost tint when the coil ices) — plus a serpentine
                  coil run through each bar whose stroke AND particles ride a
                  live userSpaceOnUse state gradient (see the STATE GRADIENTS
@@ -499,7 +511,7 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                      aria-describedby="rl-cycle-desc"
                      font-family="var(--mono)">
                     <title id="rl-cycle-title">The refrigerant loop, live</title>
-                    <desc id="rl-cycle-desc">A closed rectangular vapor-compression loop drawn clockwise. A compressor on the left drives hot high-pressure vapor up the discharge line into a condenser spanning the top, which rejects heat to outdoor air and drops the refrigerant to a warm high-pressure liquid; the liquid line runs down the right side to a metering device, which flashes it to a cold low-pressure mix; that mix crosses the evaporator along the bottom, absorbing heat from indoor air and boiling back to a cool low-pressure vapor that returns up the suction line to the compressor. Four pipe inks track four states: the discharge line is hot-gas orange, the liquid line warm-liquid amber, the expansion leg cold-mix muted blue, and the suction line cool-vapor blue — the warm-to-cool jump landing at the metering device, where it physically belongs. Inside each coil bar the refrigerant rides a serpentine tube circuit painted with a live color gradient: the condenser's run blends hot-gas orange into liquid amber at a point that tracks subcooling — flash gas visibly keeps the exit gassy — and the evaporator's blends cold-mix blue into vapor blue at a point that tracks superheat, so a starved coil walks the vapor color across most of its run. When the evaporator coil is starved of airflow and ices over, a frost overlay appears on the evaporator and the suction leg. The compressor symbol is a top-down scroll set — two interleaved spirals, the moving one orbiting the fixed one in a small circle (a circular translation, not a spin) at a rate that follows the compressor stage. Thin dashed air lanes cross both coil faces vertically, on the crossflow axis — outdoor air rises through the condenser and leaves out the top, indoor air drops through the evaporator and leaves out the bottom — entering in dim ink and leaving tinted by the coil's work: warmed orange above the condenser, cooled blue below the evaporator, frost-tinted once the coil ices. Each face's lane density follows its own airflow knob, so a starved coil visibly thins its air stream. Live pressure, superheat, subcooling and alarm values are reported in the gauges and readouts below.</desc>
+                    <desc id="rl-cycle-desc">A closed rectangular vapor-compression loop drawn clockwise. A compressor on the left drives hot high-pressure vapor up the discharge line into a condenser spanning the top, which rejects heat to outdoor air and drops the refrigerant to a warm high-pressure liquid; the liquid line runs down the right side to a metering device, which flashes it to a cold low-pressure mix; that mix crosses the evaporator along the bottom, absorbing heat from indoor air and boiling back to a cool low-pressure vapor that returns up the suction line to the compressor. Four pipe inks track four states: the discharge line is hot-gas orange, the liquid line warm-liquid amber, the expansion leg cold-mix muted blue, and the suction line cool-vapor blue — the warm-to-cool jump landing at the metering device, where it physically belongs. Inside each coil bar the refrigerant rides a serpentine tube circuit painted with a live color gradient: the condenser's run blends hot-gas orange into liquid amber at a point that tracks subcooling — flash gas stretches the blend past the exit, so the coil visibly leaves off short of full liquid — and the evaporator's blends cold-mix blue into vapor blue at a point that tracks superheat, so an undercharged, refrigerant-starved coil walks the vapor color across half its run and beyond. When the evaporator coil is starved of airflow and ices over, a frost overlay appears on the evaporator and the suction leg. The compressor symbol is a top-down scroll set — two interleaved spirals, the moving one orbiting the fixed one in a small circle (a circular translation, not a spin) at a rate that follows the compressor stage. Thin dashed air lanes cross both coil faces vertically, on the crossflow axis — outdoor air rises through the condenser and leaves out the top, indoor air drops through the evaporator and leaves out the bottom — entering in dim ink and leaving tinted by the coil's work: warmed orange above the condenser, cooled blue below the evaporator, frost-tinted once the coil ices. Each face's lane density follows its own airflow knob, so a starved coil visibly thins its air stream. Live pressure, superheat, subcooling and alarm values are reported in the gauges and readouts below.</desc>
 
                     <!-- ── STATE GRADIENTS — userSpaceOnUse so the serpentine
                          STROKE and the engine's particle <circle> fills
@@ -510,16 +522,21 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                          stops (-hold / -done) move on every solve — see the
                          setGradient block in the page script for the
                          s.subcool / s.superheat mapping; the fixed outer
-                         stops pad the ends. Stop colors are var() tokens
-                         (the sparkline trend-grad pattern), so both themes
-                         come for free. ── -->
+                         stops pad the ends. When a blend runs past the coil
+                         exit (flash gas / floodback), setGradient stretches
+                         x2 past the bar instead of clamping the stops, so
+                         the exit paints a genuinely unfinished blend; the
+                         markup x2 values are the settled design state. Stop
+                         colors are var() tokens (the sparkline trend-grad
+                         pattern), so both themes come for free — the warm
+                         pair through the page-local --rl-hot / --rl-liq. ── -->
                     <defs>
                         <linearGradient id="rl-grad-cond" gradientUnits="userSpaceOnUse"
                                         x1="200" y1="85" x2="520" y2="85">
-                            <stop offset="0" stop-color="var(--heat)"/>
-                            <stop id="rl-grad-cond-hold" offset="0.45" stop-color="var(--heat)"/>
-                            <stop id="rl-grad-cond-done" offset="0.75" stop-color="var(--amber)"/>
-                            <stop offset="1" stop-color="var(--amber)"/>
+                            <stop offset="0" stop-color="var(--rl-hot)"/>
+                            <stop id="rl-grad-cond-hold" offset="0.45" stop-color="var(--rl-hot)"/>
+                            <stop id="rl-grad-cond-done" offset="0.75" stop-color="var(--rl-liq)"/>
+                            <stop offset="1" stop-color="var(--rl-liq)"/>
                         </linearGradient>
                         <linearGradient id="rl-grad-evap" gradientUnits="userSpaceOnUse"
                                         x1="520" y1="345" x2="200" y2="345">
@@ -530,13 +547,13 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                         </linearGradient>
                     </defs>
 
-                    <!-- ── HIGH-SIDE pipes — hot-gas --heat discharge into the
-                         condenser, warm-liquid --amber out of it (the coil's
+                    <!-- ── HIGH-SIDE pipes — hot-gas --rl-hot discharge into the
+                         condenser, warm-liquid --rl-liq out of it (the coil's
                          serpentine gradient bridges the two states). ── -->
                     <path id="rl-discharge" data-flow="supply" d="M 120 193 V 85 H 200" fill="none"
-                          stroke="var(--heat)" stroke-width="3"/>
+                          stroke="var(--rl-hot)" stroke-width="3"/>
                     <path id="rl-liquid"    data-flow="supply" d="M 520 85 H 600 V 195" fill="none"
-                          stroke="var(--amber)" stroke-width="3"/>
+                          stroke="var(--rl-liq)" stroke-width="3"/>
 
                     <!-- ── LOW-SIDE pipes — cold-mix --blue-cool expansion into
                          the evaporator, cool-vapor --blue suction out of it
@@ -552,11 +569,11 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                     <!-- Direction arrows — one per leg so direction reads under
                          reduced-motion and on paper; each pair carries its own
                          leg's state ink (four inks, four states). -->
-                    <g fill="var(--heat)">
+                    <g fill="var(--rl-hot)">
                         <polygon points="120,135 115,146 125,146"/>
                         <polygon points="155,80 164,85 155,90"/>
                     </g>
-                    <g fill="var(--amber)">
+                    <g fill="var(--rl-liq)">
                         <polygon points="555,80 564,85 555,90"/>
                         <polygon points="595,140 600,151 605,140"/>
                     </g>
@@ -608,9 +625,13 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                          SAFE COLUMNS: those particles paint above everything,
                          so a lane must never share an x with text — x=260 /
                          x=460 clear the CONDENSER / EVAPORATOR names
-                         (~x 318–402), the HIGH/LOW SIDE region labels
-                         (~x 295–425), the pipe-leg state annotations, and the
-                         evaporator frost ticks (x 207–283). Keep that
+                         (~x 318–402, on the open interior band at y≈123–133 /
+                         297–307 — between the lane columns, and the lanes'
+                         in-band runs cross those rows at x=260/460 only),
+                         the HIGH/LOW SIDE region labels (~x 295–425), the
+                         pipe-leg state annotations, and the evaporator frost
+                         marks (x 224–326, seated between serpentine legs and
+                         outside this corridor). Keep that
                          constraint when nudging. data-flow="air" makes the
                          particle fill follow each lane's stroke; density
                          bands track the two knobs from updateLoop. The dashes
@@ -696,7 +717,11 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                         <path id="rl-coil-cond" data-flow="supply" fill="none"
                               stroke="url(#rl-grad-cond)" stroke-width="1.5"
                               d="M 200 85 H 220 V 67 H 248 V 103 H 276 V 67 H 304 V 103 H 332 V 67 H 360 V 103 H 388 V 67 H 416 V 103 H 444 V 67 H 472 V 103 H 500 V 85 H 520"/>
-                        <text class="rl-coil-name" x="360" y="91" text-anchor="middle" font-size="14"
+                        <!-- Name sits on open canvas below the bar (the DOAS
+                             label-below-rect precedent), in the loop's
+                             interior band — off the serpentine AND out of
+                             the particle streams, so no halo needed. -->
+                        <text x="360" y="133" text-anchor="middle" font-size="14"
                               font-weight="600" fill="var(--text-bright)">CONDENSER</text>
                         <text x="535" y="38" font-size="10.5" font-style="italic" fill="var(--text-dim)">
                             warm air &#8594; outdoors
@@ -724,7 +749,9 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                         <path id="rl-coil-evap" data-flow="return" fill="none"
                               stroke="url(#rl-grad-evap)" stroke-width="1.5"
                               d="M 520 345 H 500 V 327 H 472 V 363 H 444 V 327 H 416 V 363 H 388 V 327 H 360 V 363 H 332 V 327 H 304 V 363 H 276 V 327 H 248 V 363 H 220 V 345 H 200"/>
-                        <text class="rl-coil-name" x="360" y="351" text-anchor="middle" font-size="14"
+                        <!-- Name above the bar, mirroring the condenser's
+                             below-bar placement into the same interior band. -->
+                        <text x="360" y="307" text-anchor="middle" font-size="14"
                               font-weight="600" fill="var(--text-bright)">EVAPORATOR</text>
                         <text x="535" y="430" font-size="10.5" font-style="italic" fill="var(--text-dim)">
                             cool air &#8594; indoors
@@ -733,21 +760,28 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
 
                     <!-- State annotations on each pipe leg — each in its own
                          leg's state ink. -->
-                    <text x="135" y="140" font-size="11" fill="var(--heat)">hot vapor</text>
-                    <text x="585" y="140" text-anchor="end" font-size="11" fill="var(--amber)">warm liquid</text>
+                    <text x="135" y="140" font-size="11" fill="var(--rl-hot)">hot vapor</text>
+                    <text x="585" y="140" text-anchor="end" font-size="11" fill="var(--rl-liq)">warm liquid</text>
                     <text x="585" y="290" text-anchor="end" font-size="11" fill="var(--blue-cool)">cold mix</text>
                     <text x="135" y="290" font-size="11" fill="var(--blue)">cool vapor</text>
 
-                    <!-- ── FROST OVERLAY — fades in on the coil-freeze alarm ── -->
+                    <!-- ── FROST OVERLAY — fades in on the coil-freeze alarm ──
+                         Snowflake clusters sit BETWEEN serpentine legs (legs
+                         at x=220+28k): each vertical bar and each 16px tick
+                         end clears every leg by ≥2px, the ticks clear the
+                         y=345 entry/exit stubs (x 200–220 / 500–520), and
+                         everything stays out of the x≈253–267 air-lane
+                         corridor (particles paint on top). Keep all four
+                         constraints when nudging. -->
                     <g class="rl-frost" id="rl-frost">
                         <rect class="rl-frost-fill" x="200" y="315" width="320" height="60" rx="2"/>
                         <g class="rl-frost-mark">
-                            <line x1="215" y1="322" x2="215" y2="368"/>
-                            <line x1="207" y1="345" x2="223" y2="345"/>
-                            <line x1="245" y1="322" x2="245" y2="368"/>
-                            <line x1="237" y1="345" x2="253" y2="345"/>
-                            <line x1="275" y1="322" x2="275" y2="368"/>
-                            <line x1="267" y1="345" x2="283" y2="345"/>
+                            <line x1="232" y1="322" x2="232" y2="368"/>
+                            <line x1="224" y1="345" x2="240" y2="345"/>
+                            <line x1="290" y1="322" x2="290" y2="368"/>
+                            <line x1="282" y1="345" x2="298" y2="345"/>
+                            <line x1="318" y1="322" x2="318" y2="368"/>
+                            <line x1="310" y1="345" x2="326" y2="345"/>
                             <line x1="120" y1="300" x2="120" y2="340"/>
                             <line x1="112" y1="320" x2="128" y2="320"/>
                         </g>
@@ -1477,7 +1511,7 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
 
         // ─────────────────────────────────────────────────────────────
         // LOOP animation hooks (flow-engine.js). Color encodes state —
-        // four pipe inks (--heat / --amber / --blue-cool / --blue, frost
+        // four pipe inks (--rl-hot / --rl-liq / --blue-cool / --blue, frost
         // overriding the low-side exit when iced) plus the two serpentine
         // coil runs, whose stroke AND particle fill ride the live
         // rl-grad-* gradients (userSpaceOnUse, so each particle samples
@@ -1518,29 +1552,51 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
         // color's solid run, `-done` completes the blend to the exit
         // color. `pos` is the UNCLAMPED blend-end position along the bar
         // (0 = entry, 1 = exit), linear in the driving °F:
-        //   condenser   pos = 1 − subcool/40 — design 10 °F lands amber
-        //     across the last quarter; subcool ≤ 0 pushes the ramp to /
-        //     past the exit, so flash gas visibly never finishes making
-        //     liquid (at −12 °F both stops clamp to 1: all hot gas).
+        //   condenser   pos = 1 − subcool/40 — design 10 °F lands liquid
+        //     ink across the last quarter; subcool ≤ 0 carries the blend
+        //     end past the exit (the span stretch below), so flash gas
+        //     leaves the exit visibly short of full liquid — by −12 °F
+        //     the hold reaches the exit and the whole run reads hot gas.
         //   evaporator  pos = 1 − superheat/50 — design 10 °F leaves a
-        //     modest vapor tail; a starved coil's 30–40 °F walks the
-        //     vapor ink across most of the run.
+        //     modest vapor tail; an undercharged / refrigerant-starved
+        //     coil's ~25 °F (the undercharge preset, also the metering
+        //     slider's top) walks the vapor ink across half the run, and
+        //     floored charge + maxed metering claims nearly all of it.
+        //     Negative superheat (floodback) mirrors flash gas: the exit
+        //     stops short of dry vapor.
         // The hold stop trails by GRAD_BLEND_W, floored at GRAD_HOLD_MIN
-        // so the entry ink always shows. Both clamp to [0,1] (SVG stop
-        // offsets), and writes are throttled to 0.001 changes. A linear
-        // indicator, not a psychrometric claim (same license as the
-        // engine's directional magnitudes).
+        // so the entry ink always shows. pos > 1 does NOT clamp the done
+        // stop to the exit: the gradients are userSpaceOnUse, so the
+        // span is STRETCHED past the bar instead (x2 = x1 + dx·pos) with
+        // the stops held at their bar-relative fractions — the painted
+        // bar then shows the true partial blend at the exit, continuous
+        // and monotonic through subcool = 0, and the particles inherit
+        // it automatically. Writes are throttled to 0.001 changes. A
+        // linear indicator, not a psychrometric claim (same license as
+        // the engine's directional magnitudes).
         const GRAD_BLEND_W  = 0.3;
         const GRAD_HOLD_MIN = 0.1;
+        // Each gradient's bar geometry: x1 = the entry joint, dx = the
+        // signed bar length (evaporator runs right→left). Must match the
+        // <linearGradient> markup (pinned by the engine spec's §12).
+        const GRAD_GEOM = {
+            'rl-grad-cond': { x1: 200, dx: 320 },
+            'rl-grad-evap': { x1: 520, dx: -320 },
+        };
         const lastGradPos = {};
 
         function setGradient(id, pos) {
-            const done = Math.max(0, Math.min(1, pos));
-            const hold = Math.min(done,
-                Math.max(GRAD_HOLD_MIN, Math.min(1, pos - GRAD_BLEND_W)));
-            const key = hold.toFixed(3) + ',' + done.toFixed(3);
+            const span = Math.max(1, pos);
+            const doneBar = Math.max(0, pos);
+            const holdBar = Math.min(doneBar,
+                Math.max(GRAD_HOLD_MIN, pos - GRAD_BLEND_W));
+            const done = doneBar / span;
+            const hold = holdBar / span;
+            const key = hold.toFixed(3) + ',' + done.toFixed(3) + ',' + span.toFixed(3);
             if (lastGradPos[id] === key) return;
             lastGradPos[id] = key;
+            const geom = GRAD_GEOM[id];
+            $(id).setAttribute('x2', (geom.x1 + geom.dx * span).toFixed(1));
             $(id + '-hold').setAttribute('offset', hold.toFixed(3));
             $(id + '-done').setAttribute('offset', done.toFixed(3));
         }
@@ -1590,9 +1646,9 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
             // evaporator-serpentine PARTICLES — while the serpentine
             // stroke keeps its gradient (the frost wash carries the
             // static look).
-            FlowEngine.setPathColor($('rl-discharge'),  'var(--heat)');
+            FlowEngine.setPathColor($('rl-discharge'),  'var(--rl-hot)');
             FlowEngine.setPathColor($('rl-coil-cond'),  'url(#rl-grad-cond)');
-            FlowEngine.setPathColor($('rl-liquid'),     'var(--amber)');
+            FlowEngine.setPathColor($('rl-liquid'),     'var(--rl-liq)');
             FlowEngine.setPathColor($('rl-expansion'),  'var(--blue-cool)');
             FlowEngine.setPathColor($('rl-coil-evap'),  s.flags.freeze ? 'var(--rl-frost)' : 'url(#rl-grad-evap)');
             FlowEngine.setPathColor($('rl-suction'),    s.flags.freeze ? 'var(--rl-frost)' : 'var(--blue)');
