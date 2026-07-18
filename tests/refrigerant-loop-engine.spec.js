@@ -902,7 +902,10 @@ test.describe('refrigerant-loop-engine: heating mode', () => {
 //   • serpentine coil runs — H/V-only square waves whose endpoints join
 //     the pipe joints exactly (no particle teleport), and the state
 //     gradients they ride declare userSpaceOnUse (the contract that lets
-//     particle <circle> fills sample the ramp at their true position).
+//     particle <circle> fills sample the ramp at their true position);
+//   • frost crystal seating — the kits' bar flakes sit at the
+//     serpentine's inter-leg bay mids (skipping air-lane corridors),
+//     derived from the drawn legs so a redraw can't strand them.
 
 function loadPageSource() {
     return fs.readFileSync(
@@ -1030,19 +1033,86 @@ test.describe('refrigerant-loop page: serpentine coils + state gradients', () =>
     });
 });
 
+test.describe('refrigerant-loop page: frost crystal seating', () => {
+
+    // The frost kits' bar crystals are seated at the serpentine's
+    // inter-leg BAY MIDS, derived from the drawn leg geometry — not
+    // hand-seated (owner catch 2026-07-18: three ad-hoc crosses had been
+    // stranded on the bar's left third across two geometry redraws).
+    // Contract: every bay mid carries a flake except mids inside an
+    // air-lane corridor (lane x ± 14, particles paint on top); both kits
+    // share the same columns. A serpentine redraw that moves the legs
+    // fails here until the crystals move with them.
+    test('crystals sit at the serpentine bay mids, full width, lanes skipped', () => {
+        const src = loadPageSource();
+        // Legs: the x position at each V command of the cooling
+        // condensing serpentine (the markup / cooling state).
+        const d = pathD(src, 'rl-coil-cond');
+        const m = d.match(/^M (\d+) (\d+)((?: [HV] \d+)+)$/);
+        expect(m, 'serpentine d parses as M + H/V').toBeTruthy();
+        let x = parseFloat(m[1]);
+        const legs = [];
+        const tok = m[3].trim().split(' ');
+        for (let i = 0; i < tok.length; i += 2) {
+            if (tok[i] === 'H') x = parseFloat(tok[i + 1]);
+            else legs.push(x);
+        }
+        const uniq = [...new Set(legs)];
+        expect(uniq.length, 'serpentine has multiple legs').toBeGreaterThan(2);
+        const mids = [];
+        for (let i = 0; i + 1 < uniq.length; i++) mids.push((uniq[i] + uniq[i + 1]) / 2);
+        // Air-lane columns from the lane markup (single-vertical contract).
+        const lanes = ['rl-air-c-in-a', 'rl-air-c-in-b'].map(id =>
+            parseFloat(pathD(src, id).match(/^M (\d+(?:\.\d+)?) /)[1]));
+        const expected = mids.filter(mid => lanes.every(lx => Math.abs(mid - lx) > 14));
+        // Crystal xs per kit: the <use> flakes seated at the bar's tube row
+        // (the per-kit leg flake sits at another y and is excluded).
+        const kit = (id, row) => {
+            const block = src.match(new RegExp(
+                '<g class="rl-frost" id="' + id + '">([\\s\\S]*?)\\n {20}</g>'));
+            expect(block, `${id} kit found`).toBeTruthy();
+            const xs = [];
+            const re = new RegExp(
+                '<use href="#rl-flake-(?:lg|sm)" x="(\\d+)" y="' + row + '"/>', 'g');
+            let u;
+            while ((u = re.exec(block[1])) !== null) xs.push(parseFloat(u[1]));
+            return xs;
+        };
+        const bottom = kit('rl-frost', 345);
+        const top = kit('rl-frost-top', 85);
+        expect(bottom, 'both kits share the same columns').toEqual(top);
+        expect(bottom, 'crystals sit exactly at the non-lane bay mids').toEqual(expected);
+    });
+});
+
 // ── 14. Heat-pump re-route (MODE_GEOM) guards (source-level) ─────────────
 // The mode flip swaps the six flow elements' d attributes from the page's
 // MODE_GEOM table — draw order IS particle direction, so the table is a
-// physics claim, not decoration. Three contracts:
+// physics claim, not decoration. Four contracts:
 //   • the COOLING entries equal the markup d attributes byte-for-byte (the
 //     markup is the cooling state; a nudge to one side without the other
 //     would silently desync the mode flip);
 //   • the HEATING entries are H/V-only paths whose endpoints chain around
-//     the loop COUNTERCLOCKWISE — compressor → bottom (indoor) bar →
-//     metering → top (outdoor) bar → compressor — with no particle
-//     teleports at the joints;
+//     the loop COUNTERCLOCKWISE — compressor top port → through the valve
+//     → bottom (indoor) bar → metering → top (outdoor) bar → back through
+//     the valve → compressor bottom port — with no particle teleports at
+//     the joints;
+//   • the COMPRESSOR PORTS ARE FIXED (the 2026-07-18 re-plumb): discharge
+//     starts at the top port and suction ends at the bottom port in BOTH
+//     modes — both lines terminate at the reversing valve (their runs
+//     thread its capsule), and only the valve's coil-side legs re-route.
+//     A real compressor's ports never trade function; the valve does all
+//     the swapping;
+//   • the ONE-ELEMENT RULE (owner review, 2026-07-18): the valve
+//     capsule's visible interior lines ARE the flow paths — the valve
+//     body paints BEFORE rl-discharge/rl-suction in doc order and there
+//     is no separate slide overlay, so the drawn passage and the
+//     particle track are the same element and cannot diverge (the
+//     heating diagonal the particles ride IS the line the viewer sees);
 //   • the GRAD_Y table matches: each state gradient follows its coil to
 //     the other bar's tube row (85 ↔ 345).
+// The heating suction's crossover diagonal is the one sanctioned
+// non-H/V segment (an L command) — the walkers below accept it.
 // A failure here is a design signal, not a test to loosen.
 
 // Extract a { cooling: {id: d}, heating: {id: d} } table from the page's
@@ -1062,18 +1132,28 @@ function modeGeomTable(src) {
     return out;
 }
 
-// Walk an M + H/V-only d and return its [start, end] points.
-function hvEndpoints(d, label) {
-    const m = d.match(/^M (-?\d+(?:\.\d+)?) (-?\d+(?:\.\d+)?)((?: [HV] -?\d+(?:\.\d+)?)+)$/);
-    expect(m, `${label} is M + H/V-only commands: "${d}"`).toBeTruthy();
-    const start = [parseFloat(m[1]), parseFloat(m[2])];
-    let x = start[0], y = start[1];
-    const cmds = m[3].trim().split(' ');
-    for (let i = 0; i < cmds.length; i += 2) {
-        if (cmds[i] === 'H') x = parseFloat(cmds[i + 1]);
-        else y = parseFloat(cmds[i + 1]);
+// Walk an M + H/V/L d into its [x1, y1, x2, y2] segment list. H/V are
+// the pipe grammar; L is sanctioned only for the valve's crossover
+// diagonal (see the section note).
+function hvSegments(d, label) {
+    const m = d.match(/^M (-?\d+(?:\.\d+)?) (-?\d+(?:\.\d+)?)((?: (?:[HV] -?\d+(?:\.\d+)?|L -?\d+(?:\.\d+)? -?\d+(?:\.\d+)?))+)$/);
+    expect(m, `${label} is M + H/V/L commands: "${d}"`).toBeTruthy();
+    let x = parseFloat(m[1]), y = parseFloat(m[2]);
+    const segs = [];
+    const tok = m[3].trim().split(' ');
+    for (let i = 0; i < tok.length;) {
+        if (tok[i] === 'H') { segs.push([x, y, parseFloat(tok[i + 1]), y]); x = parseFloat(tok[i + 1]); i += 2; }
+        else if (tok[i] === 'V') { segs.push([x, y, x, parseFloat(tok[i + 1])]); y = parseFloat(tok[i + 1]); i += 2; }
+        else { segs.push([x, y, parseFloat(tok[i + 1]), parseFloat(tok[i + 2])]); x = parseFloat(tok[i + 1]); y = parseFloat(tok[i + 2]); i += 3; }
     }
-    return [start, [x, y]];
+    return segs;
+}
+
+// Same walk, returning just the [start, end] points.
+function hvEndpoints(d, label) {
+    const segs = hvSegments(d, label);
+    return [[segs[0][0], segs[0][1]],
+        [segs[segs.length - 1][2], segs[segs.length - 1][3]]];
 }
 
 test.describe('refrigerant-loop page: heat-pump MODE_GEOM re-route', () => {
@@ -1098,8 +1178,8 @@ test.describe('refrigerant-loop page: heat-pump MODE_GEOM re-route', () => {
             expect(geom[id], `${id} heating entry present`).toBeTruthy();
             pts[id] = hvEndpoints(geom[id], `${id} heating`);
         }
-        // Compressor bottom port → indoor (bottom) bar left joint …
-        expect(pts['rl-discharge'][0]).toEqual([120, 237]);
+        // Compressor top port → (valve) → indoor (bottom) bar left joint …
+        expect(pts['rl-discharge'][0]).toEqual([120, 193]);
         expect(pts['rl-discharge'][1]).toEqual([200, 345]);
         // … condensing serpentine crosses the BOTTOM bar left→right …
         expect(pts['rl-coil-cond'][0]).toEqual(pts['rl-discharge'][1]);
@@ -1113,9 +1193,76 @@ test.describe('refrigerant-loop page: heat-pump MODE_GEOM re-route', () => {
         // … evaporating serpentine crosses the TOP bar right→left …
         expect(pts['rl-coil-evap'][0]).toEqual(pts['rl-expansion'][1]);
         expect(pts['rl-coil-evap'][1]).toEqual([200, 85]);
-        // … and suction returns to the compressor's top port.
+        // … and suction returns through the valve to the bottom port.
         expect(pts['rl-suction'][0]).toEqual(pts['rl-coil-evap'][1]);
-        expect(pts['rl-suction'][1]).toEqual([120, 193]);
+        expect(pts['rl-suction'][1]).toEqual([120, 237]);
+    });
+
+    test('compressor ports are fixed: the valve, not the compressor, swaps', () => {
+        // The re-plumb invariant: discharge starts at the top port and
+        // suction ends at the bottom port in BOTH modes — the coil-side
+        // ends are the only thing MODE_GEOM may move.
+        const geom = modeGeomTable(loadPageSource());
+        for (const mode of ['cooling', 'heating']) {
+            const dis = hvEndpoints(geom[mode]['rl-discharge'], `rl-discharge ${mode}`);
+            const suc = hvEndpoints(geom[mode]['rl-suction'], `rl-suction ${mode}`);
+            expect(dis[0], `discharge leaves the top port (${mode})`).toEqual([120, 193]);
+            expect(suc[1], `suction enters the bottom port (${mode})`).toEqual([120, 237]);
+        }
+    });
+
+    test('both compressor lines thread the reversing-valve capsule in both modes', () => {
+        // Real hardware: both lines terminate at the 4-way. Depicted here
+        // as both runs passing through the capsule's rect in every mode.
+        const src = loadPageSource();
+        const cap = src.match(
+            /<g id="rl-revvalve">\s*<rect x="(\d+)" y="(\d+)" width="(\d+)" height="(\d+)"/);
+        expect(cap, 'valve capsule rect found').toBeTruthy();
+        const rx0 = +cap[1], ry0 = +cap[2], rx1 = rx0 + +cap[3], ry1 = ry0 + +cap[4];
+        const hits = segs => segs.some(([x1, y1, x2, y2]) =>
+            Math.min(x1, x2) <= rx1 && Math.max(x1, x2) >= rx0 &&
+            Math.min(y1, y2) <= ry1 && Math.max(y1, y2) >= ry0);
+        const geom = modeGeomTable(src);
+        for (const mode of ['cooling', 'heating']) {
+            for (const id of ['rl-discharge', 'rl-suction']) {
+                expect(hits(hvSegments(geom[mode][id], `${id} ${mode}`)),
+                    `${id} passes through the valve capsule (${mode})`).toBe(true);
+            }
+        }
+    });
+
+    test('one-element rule: the capsule interior is drawn by the flow paths themselves', () => {
+        // Owner review 2026-07-18: the visible interior line and the
+        // particle-carrying path must be the SAME element so they cannot
+        // diverge. Structural encoding: (a) no separate slide overlay
+        // exists, (b) the valve body paints BEFORE the flow paths in doc
+        // order (so their strokes ARE the visible passages), and (c) any
+        // diagonal (L) segment lies fully inside the capsule — outside
+        // it the pipe grammar stays H/V.
+        const src = loadPageSource();
+        expect(src.includes('rl-revvalve-slide'), 'no slide overlay element').toBe(false);
+        expect(src.includes('const VALVE_SLIDE'), 'no VALVE_SLIDE table').toBe(false);
+        const valveAt = src.indexOf('<g id="rl-revvalve">');
+        const dischargeAt = src.indexOf('id="rl-discharge"');
+        const suctionAt = src.indexOf('id="rl-suction"');
+        expect(valveAt, 'valve group present').toBeGreaterThan(-1);
+        expect(valveAt, 'valve body paints before the discharge path').toBeLessThan(dischargeAt);
+        expect(valveAt, 'valve body paints before the suction path').toBeLessThan(suctionAt);
+        const cap = src.match(
+            /<g id="rl-revvalve">\s*<rect x="(\d+)" y="(\d+)" width="(\d+)" height="(\d+)"/);
+        const rx0 = +cap[1], ry0 = +cap[2], rx1 = rx0 + +cap[3], ry1 = ry0 + +cap[4];
+        const geom = modeGeomTable(src);
+        for (const mode of ['cooling', 'heating']) {
+            for (const id of FLOW_IDS) {
+                for (const [x1, y1, x2, y2] of hvSegments(geom[mode][id], `${id} ${mode}`)) {
+                    if (x1 !== x2 && y1 !== y2) {
+                        expect(x1 >= rx0 && x2 >= rx0 && x1 <= rx1 && x2 <= rx1 &&
+                               y1 >= ry0 && y2 >= ry0 && y1 <= ry1 && y2 <= ry1,
+                            `diagonal segment of ${id} (${mode}) stays inside the capsule`).toBe(true);
+                    }
+                }
+            }
+        }
     });
 
     test('GRAD_Y swaps each gradient to the other bar\'s tube row', () => {

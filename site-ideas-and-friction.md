@@ -5578,6 +5578,63 @@ longer drift over the names); the light theme got page-local
 light `--heat`/`--amber` sat too close); frost snowflakes reseated
 between serpentine legs.)*
 
+*Compressor-direction fixes (2026-07-18):* the owner, watching the
+live sim, caught two depiction defects at the compressor — both
+confirmed wrong by a two-agent investigation (kinematic derivation +
+pixel-tracking on the production render). First, the **scroll orbited
+in the expander sense**: the moving spiral ran clockwise on screen
+(~135–139 °/s measured), the same sense the spirals wind outward, so
+the sealed pockets read as sweeping outward — gas drawn at the center
+and pumped out the low side. One-line fix: the orbit phase now
+decrements (CCW on screen, the compression sense), still deliberately
+mode/defrost-invariant — a real compressor never reverses. Second,
+**the compressor's own ports swapped function with the mode**
+(MODE_GEOM made the top port the discharge in cooling but the suction
+in heating, and the heating discharge never touched the reversing
+valve — the swap visibly happened at the compressor, the inverse of
+real hardware). Fixed with a true four-port re-plumb: the ports are
+now FIXED (suction always up into the bottom port, discharge always
+out the top port), both compressor lines terminate at the widened
+valve capsule in both modes, and only the valve's coil-side legs
+re-route — cooling keeps the straight-through up the x=120 column
+while the suction hairpins inside the valve and wraps beneath the
+shell into the bottom port; heating crosses over inside the capsule
+to the indoor-coil leg (x=162). Mode-invariant stub arrows mark the
+never-swapping ports, and the port invariant is spec-pinned (§14:
+identical compressor-side endpoints across modes, both lines
+threading the capsule). *(Owner review, same day:* the first cut
+drew the valve's interior passages as a separate slide-glyph overlay,
+and in heating the particles took an H/V jog while the overlay drew a
+diagonal — the mismatch made the interior "overwhelming." Root-cause
+fix: the overlay is retired and the capsule's visible interior lines
+ARE the flow paths — the valve body now paints *before* the pipes, so
+the drawn passage and the particle track are one element and cannot
+diverge; the heating suction's crossover diagonal became a real `L`
+segment in its d (the one sanctioned non-H/V pipe segment, capsule-
+interior only). The capsule grew 20 → 30 tall (y 142–172) to give the
+crossover room, and the cool-vapor/hot-vapor tl annotation tucked up
+above its horizontal run into the loop's top-left corner — the
+collision pass caught the wider heating text grazing the top bar at
+the first position, mono-font width being the culprit. All spec-
+pinned as the §14 one-element rule.)*
+
+*Frost-crystal reseat (2026-07-18, owner catch while testing):* the
+freeze overlay's snowflake marks read as a bug — three plus-crosses
+clustered on the bar's left third, nothing across the rest. Root
+cause: they were hand-seated once for the pre-serpentine bar (x
+215/245/275) and each later geometry redraw only re-dodged the new
+legs (232/290/318) without ever extending them across the finished
+320px bar. Replaced with DERIVED seating: 6-arm snowflake asterisks
+(the + arms full length, the × arms at 60%; two alternating sizes as
+`defs` symbols placed by `<use>`) at every serpentine inter-leg bay
+mid — legs x=220+28k so mids 234+28k — except the two mids inside
+the air-lane corridors, full-width on BOTH bars, plus one small
+flake on each iced suction leg. The bay-mid derivation is
+spec-pinned (§13 frost-crystal seating: crystal x-positions computed
+from the drawn legs, lane mids skipped, kits share columns), so a
+serpentine redraw can't strand them again; defrost's half-fade now
+reads as a full bar of melting crystals.
+
 ### Guides nav lane + topic-hub IA — the nav/home redesign *(scoped 2026-07-13, shipped PRs #332/#333; scope doc retired 2026-07-18)*
 
 The second pillar hub (`/forced-air/`) is where the **format-based
