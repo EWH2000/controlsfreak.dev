@@ -5024,18 +5024,30 @@ shipped 29px `.ps-input` baseline on refrigerant-pt, still under the
 floor). Site-wide conversation: adding `.field select` (or `.ps-input`
 generally) to the block changes density on every tool page.
 
-### 165. `refrigerant-data.js` provenance nits: glide-band wording + coarse low-pressure rows *(open — 2026-07-16)*
+### 165. `refrigerant-data.js` coarse low-pressure rows at the table bottoms *(open — 2026-07-16; glide-band wording addressed 2026-07-18)*
 
 Two content-accuracy nits from the 2026-07-16 source-PDF re-verification
 (all ~340 table rows matched their cited sources exactly): (a) the
-header and the r407c note say the glide is "~8–13 °F", but the
-transcribed table correctly narrows to ~6.5 °F at its top rows —
-"roughly 6–13 °F, narrowing at high pressure" would match; (b) the
+header and the r407c note said the glide is "~8–13 °F", but the
+transcribed table correctly narrows to ~6.5 °F at its top rows; (b) the
 R-454B and R-407C sources jump 0→20→40 and 0→10→20 psig at the bottom,
 so the linear chord can read ~2–4 °F low around e.g. 10 psig R-454B —
 faithful to the charts and irrelevant at A/C pressures, but worth
 densifying from Genetron Properties data if low-temp refrigeration
 lookups ever matter.
+
+**(a) addressed (2026-07-18).** Trued both prose sites (the header's
+r407c source line and the R-407C `note`) to what the transcribed table
+supports: the dew−bubble spread is ~12.6 °F at 0 psig, narrowing
+monotonically to ~6.5 °F at 425 psig — now stated as "roughly 6–13 °F,
+narrowing at high pressure." Comment/prose only; no data rows or code
+touched.
+
+**(b) remains open**, same trigger: densify the coarse low-pressure
+rows from Genetron Properties data only if low-temp refrigeration
+lookups start mattering. The refrigerant-loop sim's heat-pump mode will
+exercise these rows at low ambient, which slightly strengthens the
+future case, but the call stands.
 
 ### 166. `.tool-tag` / `.ok-pill` accent-on-accent-dim text fails AA in both themes *(open — 2026-07-17)*
 
