@@ -4921,6 +4921,12 @@ motif in a future diagram-harmonization pass (grep the other education diagrams
 for the shared shape first so the whole cluster lands on one coil vocabulary).
 Low priority; no functional impact.
 
+*(2026-07-17)* The refrigerant-loop simulator now draws both its coil bars with
+the serpentine motif — live `data-flow` circuits joined to the pipe joints,
+painted by the state gradients — so the refrigeration cluster's flagship
+interactive sits on the settled coil vocabulary too. `air-handlers.html`
+remains the holdout for the harmonization pass.
+
 ### 159. `refrigerant-pt.html` could consume `RefrigLoop.satTempAtP` / `pressAtSatTemp` *(open — 2026-07-15)*
 
 The refrigerant-loop engine (`html/scripts/refrigerant-loop-engine.js`) ported
@@ -5042,6 +5048,16 @@ now overrides page-locally (this PR: controls / presets / fullscreen
 view-toggle captions lifted to `--text`) — precedent to reach for if
 the same read recurs elsewhere before any site-wide retune. Affects
 every `<label>`-bearing page (~46).
+
+### 169. Refrigerant-loop frozen state: suction frost wash kisses the COMPRESSOR label *(open — 2026-07-17)*
+
+Pre-existing on main (verified there — not introduced by the
+serpentine/crossflow branch), cosmetic: in the frozen state the
+suction-leg frost wash rect (x=116, 8 wide) and the suction particles
+riding that leg kiss the right edge of the COMPRESSOR label (text
+right edge ≈ x=118). A ~4px left nudge of the wash column (or the
+label) would clear it. Noticed during the PR #355 review follow-ups;
+out of that PR's scope.
 
 ### Deferred / Won't fix (with revisit trigger)
 

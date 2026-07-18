@@ -568,3 +568,145 @@ test.describe('refrigerant-loop-engine: airside coil temperatures', () => {
         expect(d.tAirOutCond).toBe(90);
     });
 });
+
+// ── 12. Loop-SVG geometry guards (source-level) ──────────────────────────
+// The simulator page's loop schematic is static markup the animation JS
+// hooks by id — same read-the-file grounding as loadEngine() above, aimed
+// at the page source instead of the engine. Two guarded families:
+//   • crossflow air lanes — every lane is a single vertical segment (the
+//     crossflow axis), each IN/OUT pair shares its column and meets at
+//     the coil's tube row (y=85 condenser / y=345 evaporator), and path
+//     drawing order is the flow direction (condenser air rises → y
+//     decreasing; evaporator air drops → y increasing). Exact x columns
+//     are deliberately NOT pinned — they may be nudged for label
+//     clearance — only the pairing and axis contracts are.
+//   • serpentine coil runs — H/V-only square waves whose endpoints join
+//     the pipe joints exactly (no particle teleport), and the state
+//     gradients they ride declare userSpaceOnUse (the contract that lets
+//     particle <circle> fills sample the ramp at their true position).
+
+function loadPageSource() {
+    return fs.readFileSync(
+        path.join(__dirname, '..', 'html', 'simulators', 'refrigerant-loop.html'),
+        'utf8');
+}
+
+// First d="…" after the given id inside the same tag (lazy [^>]*? keeps
+// the match inside one element; \s keeps `d=` from matching mid-word).
+function pathD(src, id) {
+    const m = src.match(new RegExp('id="' + id + '"[^>]*?\\sd="([^"]+)"'));
+    return m ? m[1] : null;
+}
+
+test.describe('refrigerant-loop page: crossflow air-lane geometry', () => {
+
+    const LANE_IDS = ['rl-air-c-in-a', 'rl-air-c-out-a', 'rl-air-c-in-b',
+        'rl-air-c-out-b', 'rl-air-e-in-a', 'rl-air-e-out-a', 'rl-air-e-in-b',
+        'rl-air-e-out-b'];
+
+    // Parse every lane's d as `M x y0 V y1` — the single-vertical-segment
+    // contract — and hand back {x, y0, y1} per id.
+    function laneSegs() {
+        const src = loadPageSource();
+        const segs = {};
+        for (const id of LANE_IDS) {
+            const d = pathD(src, id);
+            expect(d, `${id} has a d attribute`).toBeTruthy();
+            const m = d.match(/^M (\d+(?:\.\d+)?) (\d+(?:\.\d+)?) V (\d+(?:\.\d+)?)$/);
+            expect(m, `${id} is a single vertical segment: "${d}"`).toBeTruthy();
+            segs[id] = { x: parseFloat(m[1]), y0: parseFloat(m[2]), y1: parseFloat(m[3]) };
+        }
+        return segs;
+    }
+
+    test('all 8 lanes are single vertical segments in two distinct columns', () => {
+        const segs = laneSegs();
+        // a and b columns are distinct, and each coil's a/b pair straddles
+        // the same two columns as the other coil's.
+        expect(segs['rl-air-c-in-a'].x).not.toBe(segs['rl-air-c-in-b'].x);
+        expect(segs['rl-air-e-in-a'].x).toBe(segs['rl-air-c-in-a'].x);
+        expect(segs['rl-air-e-in-b'].x).toBe(segs['rl-air-c-in-b'].x);
+    });
+
+    test('IN/OUT pairs share a column and meet at the tube row (85 / 345)', () => {
+        const segs = laneSegs();
+        for (const p of ['a', 'b']) {
+            expect(segs[`rl-air-c-in-${p}`].x, `cond pair ${p} column`)
+                .toBe(segs[`rl-air-c-out-${p}`].x);
+            expect(segs[`rl-air-c-in-${p}`].y1, `cond in-${p} ends at the tube row`).toBe(85);
+            expect(segs[`rl-air-c-out-${p}`].y0, `cond out-${p} starts at the tube row`).toBe(85);
+            expect(segs[`rl-air-e-in-${p}`].x, `evap pair ${p} column`)
+                .toBe(segs[`rl-air-e-out-${p}`].x);
+            expect(segs[`rl-air-e-in-${p}`].y1, `evap in-${p} ends at the tube row`).toBe(345);
+            expect(segs[`rl-air-e-out-${p}`].y0, `evap out-${p} starts at the tube row`).toBe(345);
+        }
+    });
+
+    test('path order is the flow direction: condenser rises, evaporator drops', () => {
+        const segs = laneSegs();
+        for (const id of LANE_IDS) {
+            const s = segs[id];
+            if (id.indexOf('rl-air-c-') === 0) {
+                expect(s.y1, `${id} rises (y decreasing)`).toBeLessThan(s.y0);
+            } else {
+                expect(s.y1, `${id} drops (y increasing)`).toBeGreaterThan(s.y0);
+            }
+        }
+    });
+});
+
+test.describe('refrigerant-loop page: serpentine coils + state gradients', () => {
+
+    // Entry/exit ARE the pipe joints: rl-discharge ends at (200,85) and
+    // rl-liquid starts at (520,85); rl-expansion ends at (520,345) and
+    // rl-suction starts at (200,345). Draw order = flow direction, so
+    // the evaporator run is right→left.
+    const SERPENTINES = {
+        'rl-coil-cond': { start: [200, 85], end: [520, 85] },
+        'rl-coil-evap': { start: [520, 345], end: [200, 345] },
+    };
+
+    test('serpentine ds are H/V-only and join the pipe endpoints', () => {
+        const src = loadPageSource();
+        for (const id of Object.keys(SERPENTINES)) {
+            const d = pathD(src, id);
+            expect(d, `${id} has a d attribute`).toBeTruthy();
+            const m = d.match(/^M (\d+(?:\.\d+)?) (\d+(?:\.\d+)?)((?: [HV] \d+(?:\.\d+)?)+)$/);
+            expect(m, `${id} is M + H/V-only commands: "${d}"`).toBeTruthy();
+            let x = parseFloat(m[1]);
+            let y = parseFloat(m[2]);
+            expect([x, y], `${id} starts at its pipe joint`).toEqual(SERPENTINES[id].start);
+            const cmds = m[3].trim().split(' ');
+            for (let i = 0; i < cmds.length; i += 2) {
+                if (cmds[i] === 'H') x = parseFloat(cmds[i + 1]);
+                else y = parseFloat(cmds[i + 1]);
+            }
+            expect([x, y], `${id} ends at its pipe joint`).toEqual(SERPENTINES[id].end);
+        }
+    });
+
+    test('both state gradients declare userSpaceOnUse', () => {
+        const src = loadPageSource();
+        for (const id of ['rl-grad-cond', 'rl-grad-evap']) {
+            const m = src.match(new RegExp('<linearGradient id="' + id + '"[^>]*>'));
+            expect(m, `${id} exists`).toBeTruthy();
+            expect(m[0], `${id} samples root user space (particle-fill contract)`)
+                .toContain('gradientUnits="userSpaceOnUse"');
+        }
+    });
+
+    test('the moving stops + span geometry setGradient rewrites exist', () => {
+        // The page JS dereferences these unguarded every solve: the four
+        // -hold/-done stops it moves, and each gradient's x1/x2 baseline
+        // (GRAD_GEOM) it stretches past the bar for flash gas / floodback.
+        const src = loadPageSource();
+        for (const id of ['rl-grad-cond-hold', 'rl-grad-cond-done',
+            'rl-grad-evap-hold', 'rl-grad-evap-done']) {
+            expect(src, `${id} stop present`).toContain('<stop id="' + id + '"');
+        }
+        expect(src, 'condenser span matches GRAD_GEOM (x1=200, dx=+320)')
+            .toMatch(/<linearGradient id="rl-grad-cond"[^>]*x1="200"[^>]*x2="520"/);
+        expect(src, 'evaporator span matches GRAD_GEOM (x1=520, dx=-320)')
+            .toMatch(/<linearGradient id="rl-grad-evap"[^>]*x1="520"[^>]*x2="200"/);
+    });
+});

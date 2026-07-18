@@ -4143,13 +4143,26 @@ page invents its own variant.
   them by construction (structurally immune to the #96 recolor-wipe
   class — no `setPathColor` needed for static stream colors; a page
   that recolors air ducts dynamically layers `setPathColor` on top
-  and owns the rebuild caveat — none does yet: the economizers page
-  (buildout PR 2) kept its modulating diagram static and let
-  `data-flow-density` carry the recipe instead). Falls back to
-  `SUPPLY_FILL` with no stroke.
+  and owns the rebuild caveat — the refrigerant-loop sim does this
+  since PR #354: its indoor-exit lanes frost-recolor on the freeze
+  latch, the recolor re-applied every solve so a density rebuild
+  can't wipe it; the economizers page (buildout PR 2) kept its
+  modulating diagram static and let `data-flow-density` carry the
+  recipe instead). Falls back to `SUPPLY_FILL` with no stroke.
   Dashed exhaust/relief ducts drop their dashes while animated
   exactly like the water return — the shared rule in styles.css
   targets `[data-flow="air"][stroke-dasharray]`.
+  One more accepted color-string form *(added 2026-07-17, the
+  refrigerant-loop serpentines)*: `setPathColor` passes strings
+  through verbatim, so `url(#…)` gradient references work as
+  particle fills. Two-part contract: the gradient must declare
+  `gradientUnits="userSpaceOnUse"` — the engine's particles are
+  `<circle>`s placed by cx/cy in root user space, so only a
+  user-space ramp samples at each particle's true position — and
+  the page must re-apply the fill after every `refreshPath`, since
+  a pool rebuild resets particle color to the `data-flow` default
+  (for a gradient consumer that rebuild IS the wipe class the
+  static air-stream rule above is immune to).
 - `data-flow-reverse="true"` — optional, default false. Walks the
   path end-to-start instead of start-to-end. Use when a path is
   drawn against flow direction and rewriting the `d` /
@@ -5415,7 +5428,63 @@ Items 6 and 7 above remain the queue.
 addition — the owner watched the loop live and wanted the air side
 (what the two airflow knobs control) visible, so both coil faces now
 carry animated air lanes whose density tracks the CFM knobs, the
-indoor stream frost-tinting with the freeze latch.
+indoor stream frost-tinting with the freeze latch. *(Amended
+2026-07-17, same day:* the lanes first ran left→right along each bar
+to match the register's "air in → out" reading — but that put them
+parallel to the tubes and perpendicular to the crossflow axis air
+actually takes through a fin-tube face. The crossflow fix turned
+them vertical — outdoor air rises through the condenser and out the
+top, indoor air drops through the evaporator and out the bottom —
+and retired the static heat arrows: the dim→tinted lane flip now
+carries the heat story, with the italic labels reworded as airflow
+statements. Lanes live in safe columns (x=260 / x=460) because the
+engine's particles paint above every label; the airBand floor rose
+0.3 → 0.4 so the 115px IN stubs always carry a particle.)*
+
+*Serpentine coils + the live four-state gradient (2026-07-17):* the
+owner's flagship-piece expansion of the crossflow fix — the
+refrigerant no longer teleports across each coil bar. Both bars now
+carry a serpentine tube circuit (the DOAS D3 coil motif flipped:
+vertical zigzag legs progressing horizontally — 11 legs at 28px
+pitch, ~680px of path ≈ 20 particles at baseline density), joined
+to the pipe joints exactly — (200,85)→(520,85) and
+(520,345)→(200,345), draw order = flow direction — so the particle
+streams hand off with no gap. Each serpentine's stroke AND its
+particles ride a `userSpaceOnUse` linearGradient (`rl-grad-cond` /
+`rl-grad-evap`, stop colors as var() tokens, the sparkline
+trend-grad pattern): particles are cx/cy circles in root user
+space, so a gradient fill samples at each particle's true position,
+and the stroke keeps the state change readable statically and under
+reduced motion. The palette went four-state (owner decision): hot
+gas `--heat` → warm liquid `--amber` across the condenser, cold mix
+`--blue-cool` → cool vapor `--blue` across the evaporator, with the
+liquid + suction pipes, their leg arrows, and the state annotations
+adopting the new inks — the amber→blue jump lands at the metering
+device, where it physically belongs. The gradients are LIVE:
+updateLoop maps the solve onto the two moving stops (blend-end =
+1 − subcool/40 on the condenser, 1 − superheat/50 on the
+evaporator; 0.3 blend width, clamped to [0,1], writes throttled),
+so a starved coil walks the vapor ink across the evaporator and
+flash gas visibly keeps the condenser exit gassy. CONDENSER /
+EVAPORATOR names punch a `--surface` paint-order halo (the
+gauge-label idiom) through the serpentine; the air-lane group moved
+before the coil groups so its in-bar strokes hide behind the bar
+faces (stubs + arrowheads carry the static story — air particles
+still cross the face on the engine's top layer). Freeze still
+overrides the evaporator serpentine's particles to `--rl-frost`,
+exactly like the suction line. *(Review follow-ups, same day:* the
+blend cap became a span stretch — `pos > 1` extends the
+userSpaceOnUse gradient's x2 past the bar instead of clamping the
+done stop, so mild flash gas / floodback paints a genuinely
+unfinished blend at the coil exit (the downstream liquid line
+staying solid amber is the accepted residual — the P-T plot's
+flash-gas cue covers that side); the coil names lifted out of the
+bars onto the open interior band (DOAS label-off-the-rect
+precedent — the paint-order halo retired here, and particles no
+longer drift over the names); the light theme got page-local
+`--rl-hot` / `--rl-liq` punch tokens for the warm pair (the global
+light `--heat`/`--amber` sat too close); frost snowflakes reseated
+between serpentine legs.)*
 
 ### Schematic-bg chrome — gutter as-builts, hero-frame nav cards, discrete-pulse mode *(shipped 2026-05-23)*
 
