@@ -27,10 +27,11 @@ BACnet content is reachable from a single entry point. Every BACnet page
 links back to it via the "Part of" slot in the related-links block.
 
 The **forced-air reference hub** at `/forced-air/` is the second topic
-pillar — one page that gathers the whole air side (seven lessons from the
-air handler out to the VAV box and its commissioning, plus the airflow,
-coil, and fan tools that measure, size, and check the air a system moves)
-so the deepest forced-air content is reachable from a single entry point.
+pillar — one page that gathers the whole air side (eight lessons from the
+air handler out to the VAV box, its commissioning, and dedicated outdoor
+air, plus the airflow, coil, and fan tools that measure, size, and check
+the air a system moves) so the deepest forced-air content is reachable
+from a single entry point.
 The air-side pages link back to it the same way.
 
 The **hydronics reference hub** at `/hydronics/` is the third topic

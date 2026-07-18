@@ -5113,6 +5113,89 @@ right edge ≈ x=118). A ~4px left nudge of the wash column (or the
 label) would clear it. Noticed during the PR #355 review follow-ups;
 out of that PR's scope.
 
+### 170. Home Browse-card desc enumeration drift, round two — Education arc + Tools examples *(open — 2026-07-18)*
+
+Same hand-kept drift class as #160 (just closed by de-enumerating the
+Simulators desc), noticed during the 2026-07-18 wave. `html/index.html`'s
+Education Browse-card desc still enumerates a five-lesson "current arc"
+(PID control → hydronic loops → load piping → VFDs → pump control) out
+of the 30 lessons its own pill counts — a framing that predates the
+air-side and BACnet buildouts — and the Tools card names four example
+topics (psychrometric staging, signal scaling, register/address
+conversions, thermistor curves) out of 31 tools. The pills are guarded
+by `home-hero.spec.js`; the descs are NOT test-guarded. Candidate fix:
+de-enumerate both the way #160's fix did the Simulators card, or
+refresh the enumerations deliberately as an editorial pick.
+
+### 171. `.nav-card-titlebar .ok-pill` section-accent tints sit outside the #166 fix *(open — 2026-07-18)*
+
+The #166 `--accent-ink` fix covers the default accent-on-accent-dim
+pills, but `.nav-card-titlebar .ok-pill` (`html/styles.css`, nav-card
+block) recolors via the `--section-accent` cascade — plum (education),
+teal (simulators), amber (practice) — text on the matching
+`--section-accent-dim` wash. Those section-tinted pills' small-text
+contrast on the titlebar wash was never measured in either theme and
+the accent-ink twin doesn't reach them. Needs a measurement pass
+(four accents × two themes) and possibly per-section ink twins if any
+fail. Noticed during the 2026-07-18 wave; see #166.
+
+### 172. Touch-target parity tail: vfds source selects + contact text inputs under 44px *(open — 2026-07-18, low priority)*
+
+The parity tail left after #164's select coverage, noticed during the
+2026-07-18 wave: `html/education/vfds.html` has two `<select>`s inside
+`.vfd-w-sources` (`#vfd-run-src`, `#vfd-spd-src`) that are neither
+`.field select` nor `.ps-input`, measuring ~38.6px on touch, and
+`html/contact.html`'s `.field` text/email inputs also sit ~38.6px. No
+within-page mismatch on contact (its controls match each other), but
+these are the remaining under-44 form controls if full touch-target
+parity is wanted. See #164.
+
+### 173. `tests/worker.spec.js` prints a loud stack trace from a passing expected-error test *(open — 2026-07-18)*
+
+The Resend 502 paths ("Resend non-2xx → 502" / "Resend network failure
+→ 502") exercise `src/worker.js`'s `console.error("Resend request
+failed", err)` / `("Resend returned non-2xx", …)` handlers, so a fully
+PASSING run prints a stack trace and error lines into the reporter
+output — clean runs look dirty, and a real failure is harder to spot
+in the noise. Wrap or silence the expected error output around those
+assertions (stub `console.error`, or assert on it), leaving the
+worker's production logging intact. Noticed during the 2026-07-18
+wave.
+
+### 174. Refrigerant-loop: `rl-air-*-heads` arrowhead groups share the air-lane id prefix *(open — 2026-07-18, low)*
+
+The `rl-air-*-heads` arrowhead groups match the `[id^="rl-air-e-"]` /
+`[id^="rl-air-c-"]` selectors the `AIR_E` / `AIR_C` NodeList loops
+build from (`html/simulators/refrigerant-loop.html`). The loops no-op
+over the groups harmlessly — documented in the page — but the
+coupling is implicit: a future loop that styles everything it matches
+would repaint the arrowheads too. A stricter selector family (e.g. a
+`data-` attribute marking the lane paths, in the spirit of the
+attribute-only SVG-selector convention) would be cleaner. Low.
+
+### 175. Refrigerant-loop: fixed low-side gauge range parks the needle in deep low-ambient heating *(open — 2026-07-18, low / design idea)*
+
+The low-side gauge's dial range is anchored by a fixed `refTemp: 60`
+(`html/simulators/refrigerant-loop.html`, gauge config — a 200 psig
+dial sized for cooling-mode suction). In deep low-ambient heating the
+suction pressure drops to ~45 psig on that 200 psig dial, leaving the
+needle very low with most of the dial dead — readable, but a per-mode
+gauge range (heating anchoring on a lower refTemp) would serve heating
+better. Low / design idea, noticed during the 2026-07-18 wave.
+
+### 176. Refrigerant-loop engine: ambient droop masks the blocked-filter high-head warn in deep cold *(open — 2026-07-18, decision-needed)*
+
+Verification-round finding on PR #368: with the ambient droop live, a
+blocked indoor filter in DEEP cold (below ~17 °F ambient) no longer
+crosses the absolute `HIGH_HEAD_SPLIT_HEAT` threshold
+(`html/scripts/refrigerant-loop-engine.js`) — the drooped baseline
+sits far enough below the onset that the filter's head rise never
+reaches it, so the frost warn owns that regime. The blocked filter
+still flags normally at 40–65 °F ambient. Re-tuning the threshold
+relative-to-droop (split against the drooped baseline rather than an
+absolute onset) changes when the warn fires across the whole heating
+envelope — a design call. Decision-needed.
+
 ### Deferred / Won't fix (with revisit trigger)
 
 Items considered during an audit and deliberately not pursued, each
