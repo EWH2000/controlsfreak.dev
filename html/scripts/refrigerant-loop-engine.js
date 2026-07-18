@@ -404,9 +404,9 @@ const RefrigLoop = (function () {
     // xi/yi are the column indices (0 = psig, 1 = °F); °F rises monotonically
     // with psig so scanning either column works. Returns { ok:true, value } or
     // { ok:false, lo, hi } when x is outside the curve's x-column range. This
-    // is the EXACT semantics refrigerant-pt.html uses — one source, so the tool,
-    // the engine, and the spec agree (collapsing the two copies to one is a
-    // tracked follow-up, out of this file's scope).
+    // is the EXACT semantics refrigerant-pt.html uses — and since #159 closed
+    // (2026-07-18) the tool CONSUMES these lookups instead of keeping its own
+    // copy, so the tool, the engine, and the spec share this one source.
     function lerp(points, xi, yi, x) {
         const n = points.length;
         const lo = points[0][xi], hi = points[n - 1][xi];
