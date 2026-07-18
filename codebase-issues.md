@@ -5084,7 +5084,7 @@ lookups start mattering. The refrigerant-loop sim's heat-pump mode will
 exercise these rows at low ambient, which slightly strengthens the
 future case, but the call stands.
 
-### 166. `.tool-tag` / `.ok-pill` accent-on-accent-dim text fails AA in both themes *(open — 2026-07-17)*
+### 166. `.tool-tag` / `.ok-pill` accent-on-accent-dim text fails AA in both themes *(addressed 2026-07-18)*
 
 Both classes set `color: var(--accent)` on the `--accent-dim` wash at
 0.62rem (9.92px); the refrigerant-loop legibility audit measured
@@ -5098,6 +5098,22 @@ header of ~100 pages (every tool / simulator / education / practice
 page), and `.ok-pill` renders on every page via
 `_includes/footer.njk`, plus the `_includes/nav-card.njk` statuslines
 and `index.html`.
+
+**Resolution (2026-07-18):** owner picked the purpose-token option
+(over a global `--accent` retune or a size bump past the large-text
+threshold) from the design-calls brief: new `--accent-ink` token —
+"accent-colored text that must read at small sizes on the
+`--accent-dim` wash" — dark `#86cf4d` (rides `--accent-bright`'s
+value), light `#356e12` (deeper than `--accent`; brighter *worsens*
+light). Computed on the real composited washes: 5.60:1 dark /
+5.00:1 light, vs the failing 4.09/4.27. Only the two class rules'
+`color:` switched (`.tool-tag`, `.ok-pill`); pill dots, borders, and
+every other accent consumer stay `--accent` (≥3:1 UI floor passes).
+Token added to all three synced blocks (`:root`, light, `@media
+print`). The per-theme asymmetry now lives in one token instead of a
+brand-green retune. Known gap, deliberately out of scope: the
+`.nav-card-titlebar .ok-pill` variant recolors via `--section-accent`
+(plum/teal/amber) and isn't covered — tracked as its own issue.
 
 ### 167. Fixed-px canvas type on canvases that grow — psychrometric-chart has the sim's latent bug *(addressed 2026-07-18)*
 
