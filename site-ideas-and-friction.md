@@ -191,7 +191,8 @@ Shipped so far:
   *(Archetype evolved 2026-07-13 by the Guides nav lane: hubs now DO
   carry `nav: guides` + a short `navLabel`, so they sit in the flat
   "Guides" dropdown and light `.active` — the "hub lights no section"
-  gap is closed. See `docs/nav-home-redesign-scope.md`.)*
+  gap is closed. See *Guides nav lane + topic-hub IA — the nav/home
+  redesign* under **Site structure / organization**.)*
 
 **BACnet buildout — COMPLETE (2026-07-12).** All five content pages +
 the pillar shipped across PRs 5–9 (units decoder, error decoder,
@@ -454,7 +455,9 @@ the hydronics hub ships — affinity-laws would then need to backlink
 both — or when ≥3 tools need 2+ category buckets). Full scope, the
 two-PR sequencing, the deferred topic-primary north star, the P3
 (fold-Simulators) rejection, the home-hero reword direction, and the
-core-tool retrigger are recorded in `docs/nav-home-redesign-scope.md`.)*
+core-tool retrigger are folded into *Guides nav lane + topic-hub IA —
+the nav/home redesign* under **Site structure / organization** (the
+scope doc is retired; git history keeps the full text).)*
 *(Retrigger fired 2026-07-14 — the **hydronics hub** shipped
 (`/hydronics/`, a third `/bacnet/`-clone pillar wired into the Guides
 lane via `nav: guides` + `navLabel`). The single-`hub:` limit came due
@@ -5574,6 +5577,113 @@ longer drift over the names); the light theme got page-local
 `--rl-hot` / `--rl-liq` punch tokens for the warm pair (the global
 light `--heat`/`--amber` sat too close); frost snowflakes reseated
 between serpentine legs.)*
+
+### Guides nav lane + topic-hub IA — the nav/home redesign *(scoped 2026-07-13, shipped PRs #332/#333; scope doc retired 2026-07-18)*
+
+The second pillar hub (`/forced-air/`) is where the **format-based
+top nav** (Tools / Simulators / Education / Practice — "what *kind*
+of thing is this") started colliding with the **topic-based hubs**
+("what am I *working on*" — a field tech's mental model is usually
+topic-first), so the owner opened the larger IA question. A fan-out
+mapping + three independent proposals + an adversarial critique were
+synthesized in `docs/nav-home-redesign-scope.md` (2026-07-13); with
+everything it sequenced now shipped, that doc is retired per its own
+lifecycle note — git history keeps the full scoping text, and this
+entry is the durable record. Owner call: **incremental** — one
+narrow **"Guides" lane** for the hubs (Proposal 2), NOT the
+topic-primary rewrite (Proposal 1, the deferred north star below),
+NOT folding Simulators into Tools (Proposal 3, rejected below).
+
+**As-built (two PRs, merged 2026-07-13):**
+- **PR #332 `feat/forced-air-hub`** — `/forced-air/`, a `/bacnet/`
+  clone; the page-local `.bhub-*` styles promoted to a shared
+  `.hub-*` set in `styles.css`; 13 core spokes got the hub card +
+  `hub:` backlink (6 airflow tools + 6 forced-air lessons +
+  **affinity-laws**, the cross-cluster full member — fans *and*
+  pumps, `category: hydronics` unchanged); an interim featured pin
+  in the dropdowns kept the hub reachable before the lane.
+- **PR #333 `feat/guides-nav-lane`** — the Guides dropdown right
+  after Home, with the standalone "Start here →" CTA retired so the
+  text-item count held 7 → 7 (its intent re-homed to the hero
+  on-ramp line + the Education dropdown blurb). As-built deviation
+  from the plan: the dropdown is driven by a **`navGuides`
+  collection + a short `navLabel` frontmatter** on each hub
+  (`nav: guides`), NOT the planned `html/_data/hubs.js` data file —
+  single source in frontmatter; a future hub is just `nav: guides`
+  + `navLabel` on its own landing. Both interim pins (BACnet's
+  hardcode + PR #332's) were deleted, removing the one hub-specific
+  hardcode from shared chrome. `/guides/` shipped as the
+  pillar-of-pillars landing; the home page gained a "Guides" topic
+  section with the hub cards moved out of the format Browse.
+- **Home hero as landed:** the scoped "whole mechanical stack"
+  broadening shipped in PR #333, then the owner re-tightened it
+  2026-07-14 — the identity stays controls-first ("Field tools for
+  those in building automation/controls, advanced HVAC, and many
+  other adjacent fields. Built by a building automation
+  programmer."), with the broadened work-site-neutral subcopy
+  ("mechanical room, on the roof, or at the panel") naming the
+  mechanical tool families. A second live hero demo stays
+  **deferred**: no air-side simulator exists to hand off to, and
+  the seam was composed with one loop as the single payoff — if an
+  air-side sim (mixed-air/economizer or VAV/duct-static) ever
+  ships, make it a toggle/tab on the existing `.hero-seam-stage`,
+  not a second stacked widget.
+  `[future: an air-side simulator → then a second hero demo]`
+- **Since then:** the hydronics hub + the `hub:` → **array** step
+  (PR #350, 2026-07-14 — `relatedLinks` normalizes object-or-array;
+  affinity-laws carries the dual backlink), then the refrigeration
+  hub (PR #359, 2026-07-18) — **hub count four**.
+
+**Rejected — Proposal 3, fold Simulators into Tools.** Slimming the
+format nav to Tools+Learn would shorten the mobile top level (7→5),
+but it breaks the **`<Section> · <Page>` eyebrow ↔ active-nav
+convention** on ~13 pages (a page filed under the Tools lane would
+still read "Simulators · …" / "Practice · …") — a documented
+convention violation needing an explicit owner waiver, not worth a
+mobile-row win that retiring "Start here →" nearly matched for free.
+
+**Deferred — topic-primary nav rewrite (the north star).**
+Proposal 1: replace the four format lanes with ~6 equipment/topic
+hub lanes (BACnet, Forced Air, Hydronics, Refrigeration, Electrical,
+Controls & I/O) + a single "Browse ▾" for the demoted format axis,
+with a new `cluster:` frontmatter driving `.active` + the `hub:`
+backlink. It's the right destination — the strongest hub-and-spoke
+internal-link concentration for the young-domain pillar-cluster SEO
+play — but disproportionate when scoped: it committed to hub pages
+that didn't exist and are uneven (Electrical is tools-only;
+Signals/Modbus have no honest standalone home → a catch-all
+"Controls & I/O" lane); it adds a **third** hand-kept taxonomy tag
+on top of the existing `category` ↔ `navCard` two-source drift
+(codebase-issues #92) — do **NOT** adopt without building a
+`clusterGuard` first, or metadata drift gets worse, not better; and
+it's a full nav rewrite + `nav-menu.js` surgery + ~40 frontmatter
+edits on the flagship front door that loses the dropdowns'
+deep-link affordance. **Revisit trigger: hub count reaches ~4 AND
+the mid-Aug 2026 GSC pull shows the pillars earning rank** (ties
+into `seo-growth-plan-2026-07`). *(Half-armed 2026-07-18 — the
+hub-count half fired when `/refrigeration/` made it four; the GSC
+half is now the sole remaining condition.)*
+`[future: topic-primary nav rewrite]`
+
+**Deferred — multi-membership "core tool" taxonomy (retrigger,
+owner-requested 2026-07-13, seeded by affinity-laws).** The
+taxonomy is single-value: one `category:` key buckets the nav
+dropdown + the landing filter chip. Of the scope doc's three
+candidate shapes, the cleanest — `hub:` accepting an **array** —
+already shipped (PR #350, when the hydronics hub fired the first
+trigger arm exactly as predicted). The remainder stays deferred:
+multi-value `category:` (or an `alsoIn: []` companion) so a tool
+can list under multiple dropdown buckets + landing chips — a
+bigger change touching `navGroups`, `navCategoryGuard`, the chip
+counts, and the codebase-issues #92 two-source drift — plus the
+lightweight `coreTool: true` tag idea for tools foundational
+enough to surface across clusters (affinity-laws, arguably
+signal-scaling, psychrometric-chart). **Remaining revisit trigger:
+≥3 tools need to appear under 2+ category buckets on the tools
+landing / nav dropdown** (e.g. air-mixing, psychrometric-chart join
+affinity-laws — the scope doc flagged air-mixing as the likeliest
+next).
+`[future: multi-membership "core tool" taxonomy]`
 
 ### Schematic-bg chrome — gutter as-builts, hero-frame nav cards, discrete-pulse mode *(shipped 2026-05-23)*
 
