@@ -395,16 +395,24 @@ paired with an Education explainer for the underlying concepts.
   desktop-only by design. A teaching model, not a design tool — the
   capstone for the four hydronic lessons.
 - **Refrigerant Loop Simulator** — a directional vapor-compression
-  model: turn evaporator airflow, refrigerant charge, outdoor ambient,
-  condenser airflow, return-air temperature, metering superheat, and
-  the compressor stage, and watch suction and head pressure, superheat,
-  subcooling, and a starving coil react on two manifold gauges, an
-  animated loop, and a live P-T strip. Pressures are real P-T-table
-  lookups; the magnitudes are illustrative. The headline scenario —
-  "Starve the coil" — freezes the evaporator at a perfectly normal
-  superheat, the airside-vs-refrigerant-side trap behind the VAV
-  coil-flow minimum. Pairs with the refrigerant-cycle, superheat /
-  subcooling, and metering-device lessons.
+  model: turn indoor-coil airflow, refrigerant charge, outdoor
+  ambient, outdoor-coil airflow, return-air temperature, metering
+  superheat, and the compressor stage, and watch suction and head
+  pressure, superheat, subcooling, and a starving coil react on two
+  manifold gauges, an animated loop, and a live P-T strip. The loop
+  draws both coils as serpentine tube circuits with the refrigerant
+  riding them through a live four-state color gradient — hot gas to
+  warm liquid across the condenser, cold mix to cool vapor across the
+  evaporator, the transitions tracking subcooling and superheat, and
+  flash gas leaving the condenser blend visibly unfinished — while
+  crossflow air lanes through both coil faces ("warm air → outdoors",
+  "cool air → indoors") pace with the airflow knobs and frost-tint
+  when the coil freezes. Pressures are real P-T-table lookups; the
+  magnitudes are illustrative. The headline scenario — "Starve the
+  coil" — freezes the evaporator at a perfectly normal superheat, the
+  airside-vs-refrigerant-side trap behind the VAV coil-flow minimum.
+  Pairs with the refrigerant-cycle, superheat / subcooling, and
+  metering-device lessons.
 
 ### Education
 
