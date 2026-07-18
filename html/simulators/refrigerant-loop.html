@@ -581,7 +581,7 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                      aria-describedby="rl-cycle-desc"
                      font-family="var(--mono)">
                     <title id="rl-cycle-title">The refrigerant loop, live</title>
-                    <desc id="rl-cycle-desc">A closed rectangular vapor-compression loop with a heat-pump reversing valve. The top bar is always the outdoor coil and the bottom bar the indoor coil; which one condenses follows the selected mode. In cooling mode the loop runs clockwise: a compressor on the left drives hot high-pressure vapor up through the reversing valve into the outdoor coil spanning the top, which rejects heat to outdoor air and drops the refrigerant to a warm high-pressure liquid; the liquid line runs down the right side to a metering device, which flashes it to a cold low-pressure mix; that mix crosses the indoor coil along the bottom, absorbing heat from indoor air and boiling back to a cool low-pressure vapor that returns through the reversing valve to the compressor. In heating mode the valve flips and the loop runs counterclockwise: discharge gas goes DOWN to the indoor coil, which condenses and heats the indoor air, while the outdoor coil evaporates — running below the outdoor temperature and, on a cold damp day, below freezing, where a frost overlay builds on the top bar. The Defrost scenario flips the valve back to the cooling direction with the outdoor air lanes stopped: a temporary cooling-cycle run that melts the frost while the indoor duct blows cool air. Four pipe inks track four states wherever they flow: hot-gas orange on the discharge leg, warm-liquid amber on the liquid leg, cold-mix muted blue on the expansion leg, cool-vapor blue on the suction leg — the warm-to-cool jump landing at the metering device, where it physically belongs. Inside each coil bar the refrigerant rides a serpentine tube circuit painted with a live color gradient: the condensing run blends hot-gas orange into liquid amber at a point that tracks subcooling — flash gas stretches the blend past the exit — and the evaporating run blends cold-mix blue into vapor blue at a point that tracks superheat. A four-way reversing-valve symbol sits between the compressor and the coil legs, and both compressor lines terminate at it in every mode: discharge always leaves the compressor's fixed top port into the valve, and suction always returns from the valve into the compressor's fixed bottom port. The valve's slide, drawn flipping with the mode, is what swaps which coil each line serves — the compressor's own ports never trade places. When a coil frosts or freezes, a frost overlay appears on that coil and its suction leg. The compressor symbol is a top-down scroll set — two interleaved spirals, the moving one orbiting the fixed one in a small circle, running against the spirals' outward winding — the compression direction — at a rate that follows the compressor stage. Thin dashed air lanes cross both coil faces vertically, on the crossflow axis — outdoor air rises through the top coil, indoor air drops through the bottom coil — entering in dim ink and leaving tinted by the coil's work: warmed orange off the condensing coil, cooled blue off the evaporating coil, frost-tinted once a coil ices, and stopped on the outdoor face during defrost. Each face's lane density follows its own airflow knob. Live pressure, superheat, subcooling and alarm values are reported in the gauges and readouts below.</desc>
+                    <desc id="rl-cycle-desc">A closed rectangular vapor-compression loop with a heat-pump reversing valve. The top bar is always the outdoor coil and the bottom bar the indoor coil; which one condenses follows the selected mode. In cooling mode the loop runs clockwise: a compressor on the left drives hot high-pressure vapor up through the reversing valve into the outdoor coil spanning the top, which rejects heat to outdoor air and drops the refrigerant to a warm high-pressure liquid; the liquid line runs down the right side to a metering device, which flashes it to a cold low-pressure mix; that mix crosses the indoor coil along the bottom, absorbing heat from indoor air and boiling back to a cool low-pressure vapor that returns through the reversing valve to the compressor. In heating mode the valve flips and the loop runs counterclockwise: discharge gas goes DOWN to the indoor coil, which condenses and heats the indoor air, while the outdoor coil evaporates — running below the outdoor temperature and, on a cold damp day, below freezing, where a frost overlay builds on the top bar. The Defrost scenario flips the valve back to the cooling direction with the outdoor air lanes stopped: a temporary cooling-cycle run that melts the frost while the indoor duct blows cool air. Four pipe inks track four states wherever they flow: hot-gas orange on the discharge leg, warm-liquid amber on the liquid leg, cold-mix muted blue on the expansion leg, cool-vapor blue on the suction leg — the warm-to-cool jump landing at the metering device, where it physically belongs. Inside each coil bar the refrigerant rides a serpentine tube circuit painted with a live color gradient: the condensing run blends hot-gas orange into liquid amber at a point that tracks subcooling — flash gas stretches the blend past the exit — and the evaporating run blends cold-mix blue into vapor blue at a point that tracks superheat. A four-way reversing-valve symbol sits between the compressor and the coil legs, and both compressor lines terminate at it in every mode: discharge always leaves the compressor's fixed top port into the valve, and suction always returns from the valve into the compressor's fixed bottom port. The valve's internal passages — drawn by the pipes themselves and flipping with the mode — are what swap which coil each line serves; the compressor's own ports never trade places. When a coil frosts or freezes, a frost overlay appears on that coil and its suction leg. The compressor symbol is a top-down scroll set — two interleaved spirals, the moving one orbiting the fixed one in a small circle, running against the spirals' outward winding — the compression direction — at a rate that follows the compressor stage. Thin dashed air lanes cross both coil faces vertically, on the crossflow axis — outdoor air rises through the top coil, indoor air drops through the bottom coil — entering in dim ink and leaving tinted by the coil's work: warmed orange off the condensing coil, cooled blue off the evaporating coil, frost-tinted once a coil ices, and stopped on the outdoor face during defrost. Each face's lane density follows its own airflow knob. Live pressure, superheat, subcooling and alarm values are reported in the gauges and readouts below.</desc>
 
                     <!-- ── STATE GRADIENTS — userSpaceOnUse so the serpentine
                          STROKE and the engine's particle <circle> fills
@@ -617,6 +617,51 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                         </linearGradient>
                     </defs>
 
+                    <!-- ── REVERSING VALVE (4-way) ── the heat-pump glyph, on
+                         the left column between the compressor and the top
+                         coil's leg. A true four-port re-plumb (2026-07-18 —
+                         it used to be a one-pipe glyph whose modes swapped
+                         the COMPRESSOR's ports, backwards vs real hardware):
+                         all four ports are FIXED and function-constant in
+                         both cycles —
+                           top    (120,142)  outdoor-coil leg (up to the bar);
+                           bottom (120,172)  compressor discharge stub, down
+                                             to the fixed top port (120,193);
+                           bottom (152,172)  compressor suction take-off,
+                                             down the shell's right flank and
+                                             under it into the fixed bottom
+                                             port (120,237);
+                           bottom (162,172)  indoor-coil leg (down to the
+                                             bar).
+                         INVARIANT (pinned by the engine spec §14): the
+                         compressor-side endpoints of rl-discharge and
+                         rl-suction are identical between the cooling and
+                         heating MODE_GEOM entries — only the coil-side ends
+                         re-route, i.e. the VALVE does all the swapping.
+                         ONE-ELEMENT RULE (also §14, the 2026-07-18 owner
+                         review): the capsule's visible interior lines ARE
+                         the flow paths — this group paints BEFORE
+                         rl-discharge / rl-suction in doc order, so their
+                         strokes (and the particles riding them) draw the
+                         selected internal passages directly. There is no
+                         separate slide overlay to drift from the flow:
+                         cooling shows the straight-through at x=120 plus the
+                         suction hairpin (up the indoor-coil port, over, down
+                         the take-off); heating shows the crossover — the
+                         suction diagonal from the outdoor-coil port to the
+                         take-off crossing the discharge run at mid-capsule.
+                         Particles (the SVG's last-child layer) ride over the
+                         face, which is exactly what flow through a valve
+                         should do. -->
+                    <g id="rl-revvalve">
+                        <rect x="96" y="142" width="78" height="30" rx="10" fill="var(--surface)"
+                              stroke="var(--text-dim)" stroke-width="2"/>
+                        <text class="rl-comp-label" x="88" y="153" text-anchor="end" font-size="9"
+                              fill="var(--text-dim)">REVERSING</text>
+                        <text class="rl-comp-label" x="88" y="164" text-anchor="end" font-size="9"
+                              fill="var(--text-dim)">VALVE</text>
+                    </g>
+
                     <!-- ── HIGH-SIDE pipes — hot-gas --rl-hot discharge into the
                          condenser, warm-liquid --rl-liq out of it (the coil's
                          serpentine gradient bridges the two states). ── -->
@@ -631,14 +676,16 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                          the dasharray is the reduced-motion / print fallback —
                          the screen+animation rule in styles.css drops the
                          dashes once .flow-active lands). The suction run goes
-                         coil → reversing valve (U-turn under the slide cup)
+                         coil → reversing valve (hairpin inside the capsule)
                          → down the compressor's right flank → under the
                          shell → up into the fixed bottom port at (120,237):
                          both compressor lines terminate at the valve, in
-                         both modes (see the REVERSING VALVE note). ── -->
+                         both modes, and their strokes draw the valve's
+                         interior passages themselves (see the REVERSING
+                         VALVE note above — the body paints first). ── -->
                     <path id="rl-expansion" data-flow="return" d="M 600 235 V 345 H 520" fill="none"
                           stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
-                    <path id="rl-suction"   data-flow="return" d="M 200 345 H 162 V 160 H 152 V 256 H 120 V 237" fill="none"
+                    <path id="rl-suction"   data-flow="return" d="M 200 345 H 162 V 152 H 152 V 256 H 120 V 237" fill="none"
                           stroke="var(--blue)" stroke-width="3" stroke-dasharray="9 5"/>
 
                     <!-- Direction arrows — one per leg so direction reads under
@@ -654,7 +701,7 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                          because the ports never swap. -->
                     <g class="rl-dir-cool">
                         <g fill="var(--rl-hot)">
-                            <polygon points="120,135 115,146 125,146"/>
+                            <polygon points="120,122 115,133 125,133"/>
                             <polygon points="155,80 164,85 155,90"/>
                         </g>
                         <g fill="var(--rl-liq)">
@@ -685,15 +732,15 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                         </g>
                         <g fill="var(--blue)">
                             <polygon points="151,85 160,80 160,90"/>
-                            <polygon points="115,135 125,135 120,146"/>
+                            <polygon points="115,122 125,122 120,133"/>
                         </g>
                     </g>
                     <!-- Mode-invariant arrows on the two compressor stubs —
                          visible in BOTH cycles because the ports are fixed:
                          discharge always rises out of the top port into the
                          valve (up-arrow on the x=120 stub), suction always
-                         drops out of the valve's cup and wraps under the
-                         shell into the bottom port (down-arrow on the x=152
+                         drops out of the valve and wraps under the shell
+                         into the bottom port (down-arrow on the x=152
                          drop). The constancy IS the story — the valve does
                          the swapping, the compressor never does. -->
                     <g class="rl-dir-fixed">
@@ -830,51 +877,6 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                               font-weight="600" fill="var(--text-bright)">COMPRESSOR</text>
                     </g>
 
-                    <!-- ── REVERSING VALVE (4-way) ── the heat-pump glyph, on
-                         the left column between the compressor and the top
-                         coil's leg. A true four-port re-plumb (2026-07-18 —
-                         it used to be a one-pipe glyph whose modes swapped
-                         the COMPRESSOR's ports, backwards vs real hardware):
-                         all four ports are FIXED and function-constant in
-                         both cycles —
-                           top    (120,150)  outdoor-coil leg (up to the bar);
-                           bottom (120,170)  compressor discharge stub, down
-                                             to the fixed top port (120,193);
-                           bottom (152,170)  compressor suction take-off,
-                                             down the shell's right flank and
-                                             under it into the fixed bottom
-                                             port (120,237);
-                           bottom (162,170)  indoor-coil leg (down to the
-                                             bar).
-                         INVARIANT (pinned by the engine spec §14): the
-                         compressor-side endpoints of rl-discharge and
-                         rl-suction are identical between the cooling and
-                         heating MODE_GEOM entries — only the coil-side ends
-                         re-route, i.e. the VALVE does all the swapping. The
-                         slide (JS swaps the d) draws the selected internal
-                         passages port-anchored: cooling = straight-through
-                         tick at x=120 plus the suction U-cup joining the
-                         indoor-coil port to the suction take-off; heating =
-                         the wide crossover cup carrying discharge to the
-                         indoor-coil port plus the diagonal link dropping the
-                         outdoor-coil return onto the suction take-off. The
-                         body paints over the pipe runs (doc order) so the
-                         legs read as passing THROUGH the valve; particles
-                         (the SVG's last-child layer) ride over its face and
-                         trace the selected passages, which is exactly what
-                         flow through a valve should do. -->
-                    <g id="rl-revvalve">
-                        <rect x="96" y="150" width="78" height="20" rx="10" fill="var(--surface)"
-                              stroke="var(--text-dim)" stroke-width="2"/>
-                        <path id="rl-revvalve-slide" fill="none" stroke="var(--text-bright)"
-                              stroke-width="2" stroke-linecap="round"
-                              d="M 120 153 V 167 M 152 165 A 5 5 0 0 1 162 165"/>
-                        <text class="rl-comp-label" x="88" y="157" text-anchor="end" font-size="9"
-                              fill="var(--text-dim)">REVERSING</text>
-                        <text class="rl-comp-label" x="88" y="168" text-anchor="end" font-size="9"
-                              fill="var(--text-dim)">VALVE</text>
-                    </g>
-
                     <!-- ── OUTDOOR COIL (top bar) ── -->
                     <g id="rl-condenser">
                         <rect x="200" y="55" width="320" height="60" rx="2" fill="var(--surface)"
@@ -946,7 +948,14 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                          / br / bl); text + ink swap with the cycle since the
                          states travel around the loop with the valve (JS
                          rewrites both). -->
-                    <text id="rl-ann-tl" x="135" y="140" font-size="11" fill="var(--rl-hot)">hot vapor</text>
+                    <!-- tl sits ABOVE its horizontal run, tucked into the
+                         loop's top-left corner (owner review 2026-07-18 —
+                         it used to float beside the vertical, crowding the
+                         valve). Baseline 74 keeps descenders ~3px off the
+                         leg arrows at y 80–90; x=124 keeps the wider
+                         heating text ("cool vapor", 10 mono chars ≈ 66px)
+                         ~9px clear of the top bar's left edge. -->
+                    <text id="rl-ann-tl" x="124" y="74" font-size="11" fill="var(--rl-hot)">hot vapor</text>
                     <text id="rl-ann-tr" x="585" y="140" text-anchor="end" font-size="11" fill="var(--rl-liq)">warm liquid</text>
                     <text id="rl-ann-br" x="585" y="290" text-anchor="end" font-size="11" fill="var(--blue-cool)">cold mix</text>
                     <text id="rl-ann-bl" x="170" y="290" font-size="11" fill="var(--blue)">cool vapor</text>
@@ -978,16 +987,16 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                         <!-- Suction-leg wash rides the indoor-coil leg at
                              x=162 (the cooling suction run since the valve
                              re-plumb) and STOPS below the valve body at
-                             y=172, mirroring the top kit's stop-at-the-valve
+                             y=174, mirroring the top kit's stop-at-the-valve
                              rule. -->
-                        <rect class="rl-frost-fill" x="158" y="172" width="8" height="173"/>
+                        <rect class="rl-frost-fill" x="158" y="174" width="8" height="171"/>
                     </g>
                     <!-- Top kit — the bottom kit mirrored to the outdoor bar
                          (y 55–115, tube row y=85; same x columns, so the
                          four placement constraints hold by construction).
                          Its suction-leg wash rides the top-left leg (the
                          heating suction run) and STOPS above the reversing
-                         valve body at y=150 so the wash never paints over
+                         valve body at y=142 so the wash never paints over
                          the valve face. -->
                     <g class="rl-frost" id="rl-frost-top">
                         <rect class="rl-frost-fill" x="200" y="55" width="320" height="60" rx="2"/>
@@ -999,7 +1008,7 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                             <line x1="318" y1="62" x2="318" y2="108"/>
                             <line x1="310" y1="85" x2="326" y2="85"/>
                         </g>
-                        <rect class="rl-frost-fill" x="116" y="85" width="8" height="63"/>
+                        <rect class="rl-frost-fill" x="116" y="85" width="8" height="55"/>
                     </g>
                 </svg>
             </div>
@@ -1937,27 +1946,31 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
         // device, expansion feeds the top (outdoor) bar, the top
         // serpentine evaporates right→left, and suction returns down the
         // top-left leg into the valve and out its take-off (x=152, under
-        // the shell, up into the bottom port). The internal jogs at
-        // y=154/160 sit inside the valve capsule (y 150–170): the one
-        // crossing — heating suction dropping across the discharge run at
-        // (152,160) — happens on the valve face, where a real 4-way's
-        // crossover lives. The cooling entries are pinned equal to the
-        // markup d attributes and the port invariant is pinned by the
-        // engine spec (§14) — markup and table must move in lockstep.
+        // the shell, up into the bottom port). The capsule-interior runs
+        // sit inside y 142–172 and are the valve's VISIBLE passages — the
+        // body paints before these paths (the one-element rule, §14), so
+        // the drawn line and the particle track cannot diverge: cooling
+        // = the x=120 straight-through + the suction hairpin (up 162,
+        // over at y=152, down 152); heating = the crossover — the suction
+        // DIAGONAL (120,148)→(152,166) crossing the discharge run (y=157)
+        // at mid-capsule (≈136,157), where a real 4-way's crossover
+        // lives. The cooling entries are pinned equal to the markup d
+        // attributes and the port invariant is pinned by the engine spec
+        // (§14) — markup and table must move in lockstep.
         const MODE_GEOM = {
             cooling: {
                 'rl-discharge': 'M 120 193 V 85 H 200',
                 'rl-liquid': 'M 520 85 H 600 V 195',
                 'rl-expansion': 'M 600 235 V 345 H 520',
-                'rl-suction': 'M 200 345 H 162 V 160 H 152 V 256 H 120 V 237',
+                'rl-suction': 'M 200 345 H 162 V 152 H 152 V 256 H 120 V 237',
                 'rl-coil-cond': 'M 200 85 H 220 V 67 H 248 V 103 H 276 V 67 H 304 V 103 H 332 V 67 H 360 V 103 H 388 V 67 H 416 V 103 H 444 V 67 H 472 V 103 H 500 V 85 H 520',
                 'rl-coil-evap': 'M 520 345 H 500 V 327 H 472 V 363 H 444 V 327 H 416 V 363 H 388 V 327 H 360 V 363 H 332 V 327 H 304 V 363 H 276 V 327 H 248 V 363 H 220 V 345 H 200',
             },
             heating: {
-                'rl-discharge': 'M 120 193 V 160 H 162 V 345 H 200',
+                'rl-discharge': 'M 120 193 V 157 H 162 V 345 H 200',
                 'rl-liquid': 'M 520 345 H 600 V 235',
                 'rl-expansion': 'M 600 195 V 85 H 520',
-                'rl-suction': 'M 200 85 H 120 V 154 H 152 V 256 H 120 V 237',
+                'rl-suction': 'M 200 85 H 120 V 148 L 152 166 V 256 H 120 V 237',
                 'rl-coil-cond': 'M 200 345 H 220 V 363 H 248 V 327 H 276 V 363 H 304 V 327 H 332 V 363 H 360 V 327 H 388 V 363 H 416 V 327 H 444 V 363 H 472 V 327 H 500 V 345 H 520',
                 'rl-coil-evap': 'M 520 85 H 500 V 103 H 472 V 67 H 444 V 103 H 416 V 67 H 388 V 103 H 360 V 67 H 332 V 103 H 304 V 67 H 276 V 103 H 248 V 67 H 220 V 85 H 200',
             },
@@ -1970,18 +1983,10 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
             cooling: { 'rl-grad-cond': 85, 'rl-grad-evap': 345 },
             heating: { 'rl-grad-cond': 345, 'rl-grad-evap': 85 },
         };
-        // Reversing-valve slide — port-anchored internal passages, swapped
-        // with the cycle (see the REVERSING VALVE markup note for the port
-        // map). Cooling: straight-through tick on the x=120 discharge
-        // column + the suction U-cup joining the indoor-coil port (162) to
-        // the suction take-off (152). Heating: the wide crossover cup
-        // carrying discharge from (120) to the indoor-coil port (162) +
-        // the diagonal link dropping the outdoor-coil return onto the
-        // suction take-off.
-        const VALVE_SLIDE = {
-            cooling: 'M 120 153 V 167 M 152 165 A 5 5 0 0 1 162 165',
-            heating: 'M 120 166 A 21 6 0 0 1 162 166 M 120 153 L 152 165',
-        };
+        // (No VALVE_SLIDE table since the 2026-07-18 owner review: the
+        // valve's interior passages are drawn by the flow paths above —
+        // one element per stream, so the visible line and the particle
+        // track cannot diverge. §14 guards the rule.)
         // Corner state annotations: [text, ink] per corner, per cycle — the
         // states travel around the loop with the valve.
         const ANNOTATIONS = {
@@ -2012,7 +2017,6 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                 $(id).setAttribute('y1', GRAD_Y[cycle][id]);
                 $(id).setAttribute('y2', GRAD_Y[cycle][id]);
             });
-            $('rl-revvalve-slide').setAttribute('d', VALVE_SLIDE[cycle]);
             // Region labels swap halves (heating's high side is the bottom).
             $('rl-region-top').textContent    = heat ? 'LOW SIDE · COOL' : 'HIGH SIDE · HOT';
             $('rl-region-bottom').textContent = heat ? 'HIGH SIDE · HOT' : 'LOW SIDE · COOL';

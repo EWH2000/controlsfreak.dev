@@ -5597,13 +5597,26 @@ now FIXED (suction always up into the bottom port, discharge always
 out the top port), both compressor lines terminate at the widened
 valve capsule in both modes, and only the valve's coil-side legs
 re-route — cooling keeps the straight-through up the x=120 column
-while the suction U-turns under the slide cup and wraps beneath the
+while the suction hairpins inside the valve and wraps beneath the
 shell into the bottom port; heating crosses over inside the capsule
-to the indoor-coil leg (x=162). The slide glyph went port-anchored
-(tick + U-cup vs. crossover cup + diagonal), mode-invariant stub
-arrows mark the never-swapping ports, and the port invariant is
-spec-pinned (§14: identical compressor-side endpoints across modes,
-both lines threading the capsule).
+to the indoor-coil leg (x=162). Mode-invariant stub arrows mark the
+never-swapping ports, and the port invariant is spec-pinned (§14:
+identical compressor-side endpoints across modes, both lines
+threading the capsule). *(Owner review, same day:* the first cut
+drew the valve's interior passages as a separate slide-glyph overlay,
+and in heating the particles took an H/V jog while the overlay drew a
+diagonal — the mismatch made the interior "overwhelming." Root-cause
+fix: the overlay is retired and the capsule's visible interior lines
+ARE the flow paths — the valve body now paints *before* the pipes, so
+the drawn passage and the particle track are one element and cannot
+diverge; the heating suction's crossover diagonal became a real `L`
+segment in its d (the one sanctioned non-H/V pipe segment, capsule-
+interior only). The capsule grew 20 → 30 tall (y 142–172) to give the
+crossover room, and the cool-vapor/hot-vapor tl annotation tucked up
+above its horizontal run into the loop's top-left corner — the
+collision pass caught the wider heating text grazing the top bar at
+the first position, mono-font width being the culprit. All spec-
+pinned as the §14 one-element rule.)*
 
 ### Guides nav lane + topic-hub IA — the nav/home redesign *(scoped 2026-07-13, shipped PRs #332/#333; scope doc retired 2026-07-18)*
 
