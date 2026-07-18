@@ -5618,6 +5618,23 @@ collision pass caught the wider heating text grazing the top bar at
 the first position, mono-font width being the culprit. All spec-
 pinned as the §14 one-element rule.)*
 
+*Frost-crystal reseat (2026-07-18, owner catch while testing):* the
+freeze overlay's snowflake marks read as a bug — three plus-crosses
+clustered on the bar's left third, nothing across the rest. Root
+cause: they were hand-seated once for the pre-serpentine bar (x
+215/245/275) and each later geometry redraw only re-dodged the new
+legs (232/290/318) without ever extending them across the finished
+320px bar. Replaced with DERIVED seating: 6-arm snowflake asterisks
+(the + arms full length, the × arms at 60%; two alternating sizes as
+`defs` symbols placed by `<use>`) at every serpentine inter-leg bay
+mid — legs x=220+28k so mids 234+28k — except the two mids inside
+the air-lane corridors, full-width on BOTH bars, plus one small
+flake on each iced suction leg. The bay-mid derivation is
+spec-pinned (§13 frost-crystal seating: crystal x-positions computed
+from the drawn legs, lane mids skipped, kits share columns), so a
+serpentine redraw can't strand them again; defrost's half-fade now
+reads as a full bar of melting crystals.
+
 ### Guides nav lane + topic-hub IA — the nav/home redesign *(scoped 2026-07-13, shipped PRs #332/#333; scope doc retired 2026-07-18)*
 
 The second pillar hub (`/forced-air/`) is where the **format-based

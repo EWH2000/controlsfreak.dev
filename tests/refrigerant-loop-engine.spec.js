@@ -902,7 +902,10 @@ test.describe('refrigerant-loop-engine: heating mode', () => {
 //   • serpentine coil runs — H/V-only square waves whose endpoints join
 //     the pipe joints exactly (no particle teleport), and the state
 //     gradients they ride declare userSpaceOnUse (the contract that lets
-//     particle <circle> fills sample the ramp at their true position).
+//     particle <circle> fills sample the ramp at their true position);
+//   • frost crystal seating — the kits' bar flakes sit at the
+//     serpentine's inter-leg bay mids (skipping air-lane corridors),
+//     derived from the drawn legs so a redraw can't strand them.
 
 function loadPageSource() {
     return fs.readFileSync(
@@ -1027,6 +1030,58 @@ test.describe('refrigerant-loop page: serpentine coils + state gradients', () =>
             .toMatch(/<linearGradient id="rl-grad-cond"[^>]*x1="200"[^>]*x2="520"/);
         expect(src, 'evaporator span matches GRAD_GEOM (x1=520, dx=-320)')
             .toMatch(/<linearGradient id="rl-grad-evap"[^>]*x1="520"[^>]*x2="200"/);
+    });
+});
+
+test.describe('refrigerant-loop page: frost crystal seating', () => {
+
+    // The frost kits' bar crystals are seated at the serpentine's
+    // inter-leg BAY MIDS, derived from the drawn leg geometry — not
+    // hand-seated (owner catch 2026-07-18: three ad-hoc crosses had been
+    // stranded on the bar's left third across two geometry redraws).
+    // Contract: every bay mid carries a flake except mids inside an
+    // air-lane corridor (lane x ± 14, particles paint on top); both kits
+    // share the same columns. A serpentine redraw that moves the legs
+    // fails here until the crystals move with them.
+    test('crystals sit at the serpentine bay mids, full width, lanes skipped', () => {
+        const src = loadPageSource();
+        // Legs: the x position at each V command of the cooling
+        // condensing serpentine (the markup / cooling state).
+        const d = pathD(src, 'rl-coil-cond');
+        const m = d.match(/^M (\d+) (\d+)((?: [HV] \d+)+)$/);
+        expect(m, 'serpentine d parses as M + H/V').toBeTruthy();
+        let x = parseFloat(m[1]);
+        const legs = [];
+        const tok = m[3].trim().split(' ');
+        for (let i = 0; i < tok.length; i += 2) {
+            if (tok[i] === 'H') x = parseFloat(tok[i + 1]);
+            else legs.push(x);
+        }
+        const uniq = [...new Set(legs)];
+        expect(uniq.length, 'serpentine has multiple legs').toBeGreaterThan(2);
+        const mids = [];
+        for (let i = 0; i + 1 < uniq.length; i++) mids.push((uniq[i] + uniq[i + 1]) / 2);
+        // Air-lane columns from the lane markup (single-vertical contract).
+        const lanes = ['rl-air-c-in-a', 'rl-air-c-in-b'].map(id =>
+            parseFloat(pathD(src, id).match(/^M (\d+(?:\.\d+)?) /)[1]));
+        const expected = mids.filter(mid => lanes.every(lx => Math.abs(mid - lx) > 14));
+        // Crystal xs per kit: the <use> flakes seated at the bar's tube row
+        // (the per-kit leg flake sits at another y and is excluded).
+        const kit = (id, row) => {
+            const block = src.match(new RegExp(
+                '<g class="rl-frost" id="' + id + '">([\\s\\S]*?)\\n {20}</g>'));
+            expect(block, `${id} kit found`).toBeTruthy();
+            const xs = [];
+            const re = new RegExp(
+                '<use href="#rl-flake-(?:lg|sm)" x="(\\d+)" y="' + row + '"/>', 'g');
+            let u;
+            while ((u = re.exec(block[1])) !== null) xs.push(parseFloat(u[1]));
+            return xs;
+        };
+        const bottom = kit('rl-frost', 345);
+        const top = kit('rl-frost-top', 85);
+        expect(bottom, 'both kits share the same columns').toEqual(top);
+        expect(bottom, 'crystals sit exactly at the non-lane bay mids').toEqual(expected);
     });
 });
 

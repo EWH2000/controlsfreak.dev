@@ -615,6 +615,15 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                             <stop id="rl-grad-evap-done" offset="0.8" stop-color="var(--blue)"/>
                             <stop offset="1" stop-color="var(--blue)"/>
                         </linearGradient>
+                        <!-- Frost crystals — two sizes of 6-arm snowflake
+                             asterisk (the + arms full length, the × arms at
+                             60%), origin-centered so the frost kits place
+                             them with <use x= y=>. Stroke/ink inherit from
+                             .rl-frost-mark. -->
+                        <path id="rl-flake-lg" fill="none"
+                              d="M 0 -10 V 10 M -10 0 H 10 M -4.2 -4.2 L 4.2 4.2 M -4.2 4.2 L 4.2 -4.2"/>
+                        <path id="rl-flake-sm" fill="none"
+                              d="M 0 -7 V 7 M -7 0 H 7 M -3 -3 L 3 3 M -3 3 L 3 -3"/>
                     </defs>
 
                     <!-- ── REVERSING VALVE (4-way) ── the heat-pump glyph, on
@@ -964,25 +973,38 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                          #rl-frost (bottom / indoor) fades in on the cooling
                          coil-freeze alarm; #rl-frost-top (top / outdoor) on
                          the heating frost flag, and shows half-faded during
-                         the Defrost scenario (the melt). Snowflake clusters
-                         sit BETWEEN serpentine legs (legs at x=220+28k):
-                         each vertical bar and each 16px tick end clears
-                         every leg by ≥2px, the ticks clear each bar's
-                         entry/exit stubs (x 200–220 / 500–520 at the tube
-                         row), and everything stays out of the x≈253–267
-                         air-lane corridor (particles paint on top). Keep
-                         all four constraints when nudging. -->
+                         the Defrost scenario (the melt). CRYSTAL SEATING IS
+                         DERIVED, not ad-hoc (owner catch 2026-07-18: three
+                         hand-seated crosses had been left clustered on the
+                         bar's left third across two geometry redraws and
+                         read as a bug): serpentine legs sit at x=220+28k
+                         (k 0–10), so the inter-leg bay mids are 234+28k
+                         (k 0–9); EVERY bay carries a 6-arm flake
+                         (defs #rl-flake-lg / -sm, alternating along the
+                         bar) EXCEPT k=1 (mid 262) and k=8 (mid 458), whose
+                         mids land in the x≈253–267 / 453–467 air-lane
+                         corridors where particles paint on top. Flake reach
+                         (±10 large, ±7 small) clears the legs by ≥4px
+                         (half-pitch 14), the entry/exit stubs by ≥4px, and
+                         stays between the serpentine rows (tube row ±18) —
+                         all by construction. The bay-mid derivation is
+                         pinned by the engine spec (§13, frost-crystal
+                         seating), so a serpentine redraw can't strand the
+                         crystals again. Each kit adds one small flake on
+                         its iced suction leg. Ink/weight from
+                         .rl-frost-mark; opacity rides the kit fade. -->
                     <g class="rl-frost" id="rl-frost">
                         <rect class="rl-frost-fill" x="200" y="315" width="320" height="60" rx="2"/>
                         <g class="rl-frost-mark">
-                            <line x1="232" y1="322" x2="232" y2="368"/>
-                            <line x1="224" y1="345" x2="240" y2="345"/>
-                            <line x1="290" y1="322" x2="290" y2="368"/>
-                            <line x1="282" y1="345" x2="298" y2="345"/>
-                            <line x1="318" y1="322" x2="318" y2="368"/>
-                            <line x1="310" y1="345" x2="326" y2="345"/>
-                            <line x1="162" y1="300" x2="162" y2="340"/>
-                            <line x1="154" y1="320" x2="170" y2="320"/>
+                            <use href="#rl-flake-lg" x="234" y="345"/>
+                            <use href="#rl-flake-sm" x="290" y="345"/>
+                            <use href="#rl-flake-lg" x="318" y="345"/>
+                            <use href="#rl-flake-sm" x="346" y="345"/>
+                            <use href="#rl-flake-lg" x="374" y="345"/>
+                            <use href="#rl-flake-sm" x="402" y="345"/>
+                            <use href="#rl-flake-lg" x="430" y="345"/>
+                            <use href="#rl-flake-sm" x="486" y="345"/>
+                            <use href="#rl-flake-sm" x="162" y="320"/>
                         </g>
                         <!-- Suction-leg wash rides the indoor-coil leg at
                              x=162 (the cooling suction run since the valve
@@ -993,20 +1015,24 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                     </g>
                     <!-- Top kit — the bottom kit mirrored to the outdoor bar
                          (y 55–115, tube row y=85; same x columns, so the
-                         four placement constraints hold by construction).
-                         Its suction-leg wash rides the top-left leg (the
-                         heating suction run) and STOPS above the reversing
-                         valve body at y=142 so the wash never paints over
-                         the valve face. -->
+                         seating constraints hold by construction). Its leg
+                         flake sits on the top-left suction run at (120,112),
+                         3px above the upper-leg mode arrows (y 122–133).
+                         The suction-leg wash rides that leg and STOPS above
+                         the reversing valve body at y=142 so the wash never
+                         paints over the valve face. -->
                     <g class="rl-frost" id="rl-frost-top">
                         <rect class="rl-frost-fill" x="200" y="55" width="320" height="60" rx="2"/>
                         <g class="rl-frost-mark">
-                            <line x1="232" y1="62" x2="232" y2="108"/>
-                            <line x1="224" y1="85" x2="240" y2="85"/>
-                            <line x1="290" y1="62" x2="290" y2="108"/>
-                            <line x1="282" y1="85" x2="298" y2="85"/>
-                            <line x1="318" y1="62" x2="318" y2="108"/>
-                            <line x1="310" y1="85" x2="326" y2="85"/>
+                            <use href="#rl-flake-lg" x="234" y="85"/>
+                            <use href="#rl-flake-sm" x="290" y="85"/>
+                            <use href="#rl-flake-lg" x="318" y="85"/>
+                            <use href="#rl-flake-sm" x="346" y="85"/>
+                            <use href="#rl-flake-lg" x="374" y="85"/>
+                            <use href="#rl-flake-sm" x="402" y="85"/>
+                            <use href="#rl-flake-lg" x="430" y="85"/>
+                            <use href="#rl-flake-sm" x="486" y="85"/>
+                            <use href="#rl-flake-sm" x="120" y="112"/>
                         </g>
                         <rect class="rl-frost-fill" x="116" y="85" width="8" height="55"/>
                     </g>
