@@ -651,11 +651,15 @@ test.describe('refrigerant-loop-engine: heating mode', () => {
         expect(choked.pDis).toBeGreaterThan(good.pDis);
         expect(choked.flags.highHead).toBe(true);       // split 50 > 38
         expect(good.flags.highHead).toBe(false);        // design split 35
-        // Ambient tracks the EVAPORATOR 1:1 and leaves the condenser alone.
+        // Ambient tracks the EVAPORATOR 1:1; the condenser follows at the
+        // droop slope (the real capacity fade — owner decision 2026-07-18;
+        // this line originally pinned cold.tCond === mild.tCond).
         const mild = RefrigLoop.solve({ mode: 'heating', ambient: 47 });
         const cold = RefrigLoop.solve({ mode: 'heating', ambient: 17 });
         expect(mild.tEvap - cold.tEvap).toBeCloseTo(30, 6);
-        expect(cold.tCond).toBeCloseTo(mild.tCond, 6);
+        expect(cold.tCond).toBeLessThan(mild.tCond);
+        expect(mild.tCond - cold.tCond)
+            .toBeCloseTo(RefrigLoop.DESIGN.SPLIT_AMB_HEAT * 30, 6);
         // Return air tracks the CONDENSER 1:1 and leaves the evaporator alone.
         const warm = RefrigLoop.solve({ mode: 'heating', returnT: 80 });
         const cool = RefrigLoop.solve({ mode: 'heating', returnT: 60 });
@@ -797,10 +801,11 @@ test.describe('refrigerant-loop-engine: heating mode', () => {
         expect(d.pSuc).toBeGreaterThan(design.pSuc);
         expect(d.pDis).toBeLessThan(design.pDis);
         // Low-ambient heating — the 17 °F rating point: deep-cold suction,
-        // normal head, plain frost warn (NOT choked — airflow is clean).
+        // DROOPED head (the real capacity fade), plain frost warn (NOT
+        // choked — airflow is clean).
         const l = RefrigLoop.solve(RefrigLoop.PRESETS.lowAmbientHeating);
         expect(l.tEvap).toBe(-3);
-        expect(l.tCond).toBe(105);
+        expect(l.tCond).toBeCloseTo(90, 6);     // 105 − 0.5·30 droop
         expect(l.flags.frost).toBe(true);
         expect(l.flags.frostChoked).toBe(false);
         expect(l.verdict.kind).toBe('warn');
@@ -814,6 +819,37 @@ test.describe('refrigerant-loop-engine: heating mode', () => {
                 expect(p[k], `${key}.${k}`).toBeDefined();
             }
         }
+    });
+
+    test('cold-weather capacity fade: the condensing side droops', () => {
+        // Owner decision 2026-07-18: a REAL ambient droop on heating block
+        // C — as suction falls with the cold, less heat reaches the indoor
+        // coil, so condensing temp (and, once the tCond − 2 cap undercuts
+        // the design rise, the supply air) fades instead of holding at
+        // design. One-sided: zero at the 47 °F anchor and above.
+        const { RefrigLoop } = loadEngine();
+        const at = (a) => RefrigLoop.solve({ mode: 'heating', ambient: a });
+        // The rating point is the anchor — droop is exactly zero there,
+        // and a mild day holds the design split (no highHead false flag).
+        expect(at(47).tCond).toBe(105);
+        expect(at(65).tCond).toBe(105);
+        expect(at(65).flags.highHead).toBe(false);
+        // Strictly decreasing below the anchor — head follows.
+        const sweep = [47, 37, 27, 17, 7, -5].map(at);
+        for (let i = 1; i < sweep.length; i++) {
+            expect(sweep[i].tCond, `tCond step ${i}`).toBeLessThan(sweep[i - 1].tCond);
+            expect(sweep[i].pDis,  `pDis step ${i}`).toBeLessThan(sweep[i - 1].pDis);
+        }
+        // The 17 °F rating point lands the supply in the published band.
+        const s17 = at(17);
+        expect(s17.tCond).toBeCloseTo(90, 6);
+        expect(s17.tAirOutIndoor).toBeGreaterThanOrEqual(85);
+        expect(s17.tAirOutIndoor).toBeLessThanOrEqual(90);      // lands 88
+        // Deeper cold droops the supply further still…
+        expect(at(-5).tAirOutIndoor).toBeLessThan(s17.tAirOutIndoor);
+        // …while just inside the frost band the design rise (95) still
+        // governs — the droop reads on the head gauge before the duct.
+        expect(at(39).tAirOutIndoor).toBeCloseTo(95, 6);
     });
 
     test('pressure ordering + air orderings hold over the heating box', () => {

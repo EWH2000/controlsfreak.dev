@@ -5460,8 +5460,16 @@ an ambient-independent outdoor-starve verdict rung
 (`STARVED_APPROACH_HEAT` — a choked coil at 45 °F ambient had read
 green with suction collapsed; below 40 °F frostChoked specializes
 it), the defrost caption ghosting with its stopped lanes, and honest
-low-ambient verdict wording (the model holds the indoor split at
-design — the fade reads in the suction gauge, stated in About).
+low-ambient wording. The wording fix then escalated by owner decision
+("we should have a real ambient droop term") into a REAL cold-weather
+capacity fade: heating block C gains `SPLIT_AMB_HEAT` (0.5 °F split
+droop per °F below the 47 °F anchor, one-sided so mild days hold
+design and never false-flag highHead) — zero at 47 °F, tCond 90 °F /
+~88 °F supply at the 17 °F rating point (published 85–90 band),
+cooler still in deep cold, with the supply cap at tCond − 2 carrying
+the droop to the air once tCond falls under ~97 °F. The About copy
+states the fade (it is why auxiliary heat exists) instead of
+disclaiming it.
 
 *Queued visual-round ideas from the verification (owner to pick):*
 (1) two visible pressure LCD cells in the register (the AT summary

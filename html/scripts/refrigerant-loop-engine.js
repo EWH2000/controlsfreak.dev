@@ -230,6 +230,28 @@ const RefrigLoop = (function () {
                                  //   AIR_APPROACH's 2 °F role.
         SPLIT_BASE_HEAT:    35,  // °F indoor condenser split over return air
                                  //   (70 °F return ⇒ 105 °F condensing).
+        SPLIT_AMB_HEAT:    0.5,  // °F of condensing-split DROOP per °F of
+                                 //   ambient below the 47 °F rating point
+                                 //   (owner decision 2026-07-18: a real
+                                 //   cold-weather capacity fade, not a
+                                 //   held-at-design disclaimer). As ambient
+                                 //   falls, suction density and mass flow
+                                 //   fall, so less heat reaches the indoor
+                                 //   coil: zero at the 47 °F anchor (the
+                                 //   rating-point tests stand), tCond 90 °F
+                                 //   at the 17 °F point ⇒ ~88 °F supply
+                                 //   (published 85–90 band; the supply cap
+                                 //   at tCond − AIR_APPROACH is what
+                                 //   carries the droop to the air once
+                                 //   tCond falls under ~97). Deep cold
+                                 //   droops further (−5 °F ⇒ ~77 °F supply
+                                 //   — a few °F cooler than typical
+                                 //   published, erring on the honest-fade
+                                 //   side for a directional model). ONE-
+                                 //   SIDED on purpose: above 47 °F the
+                                 //   design split holds — a mild-day head
+                                 //   boost is second-order and would
+                                 //   false-flag highHead at design knobs.
         AIR_DT_EVAP_HEAT:   12,  // °F design outdoor-coil air drop — the air
                                  //   gives up its heat to the refrigerant
                                  //   (47 ⇒ 35 °F off the coil).
@@ -516,11 +538,16 @@ const RefrigLoop = (function () {
                 ambient - D.MIN_APPROACH_HEAT);
             // (C) heating — INDOOR coil condenses over return air; the
             //     indoor blower (airflow) is the split authority (a choked
-            //     filter in winter reads as high head).
+            //     filter in winter reads as high head). The ambient term is
+            //     the cold-weather capacity fade: below the 47 °F rating
+            //     point the split droops (falling suction ⇒ less mass flow
+            //     ⇒ less heat into the indoor coil), one-sided so a mild
+            //     day holds the design split — see SPLIT_AMB_HEAT.
             split = D.SPLIT_BASE_HEAT
-                + D.SPLIT_CONDAIR * (airflow  - 1)
-                + D.SPLIT_CHG     * (charge   - 1)
-                + D.SPLIT_CAP     * (capacity - 1);
+                + D.SPLIT_CONDAIR  * (airflow  - 1)
+                + D.SPLIT_CHG      * (charge   - 1)
+                + D.SPLIT_CAP      * (capacity - 1)
+                + D.SPLIT_AMB_HEAT * Math.min(0, ambient - 47);
             tCondRaw = returnT + split;
             // (D) heating — the condensing coil's airflow is the indoor knob.
             subcool = D.SC_BASE
@@ -686,7 +713,12 @@ const RefrigLoop = (function () {
     // starve rung outranks it because a deep approach is the more specific
     // finding when both hold). highHead / lowHead re-word per mode: in
     // heating the condenser is the indoor coil and "low ambient" is the
-    // suction side's problem, not the head's.
+    // suction side's problem, not the head's. With the real ambient droop
+    // (SPLIT_AMB_HEAT), deep-cold heating also drifts under the lowHead
+    // threshold (tCond crosses 85 near 7 °F ambient at design knobs) — the
+    // frost/fade warn above it owns that regime, so the heating lowHead
+    // text only surfaces on warm-ambient collapses (undercharge / overblown
+    // indoor fan).
     function buildVerdict(mode, flags, tCond, cfmPerTon, D) {
         if (flags.freeze) {
             return (cfmPerTon < D.CFM_PER_TON_DESIGN)
@@ -698,7 +730,7 @@ const RefrigLoop = (function () {
         if (flags.floodback)   return { kind: 'warn',  text: 'Floodback — superheat collapsed, liquid reaching the compressor.' };
         if (flags.starved)     return { kind: 'warn',  text: 'Evaporator starved — high superheat, suspect low charge.' };
         if (flags.starvedOutdoor) return { kind: 'warn', text: 'Outdoor coil starved — running far below the outdoor air, suction collapsing (blocked coil face / weak fan).' };
-        if (flags.frost)       return { kind: 'warn',  text: 'Outdoor coil below freezing — frost will build at this ambient, and suction falls with the outdoor temp. A real unit leans on defrost cycles and auxiliary heat here.' };
+        if (flags.frost)       return { kind: 'warn',  text: 'Outdoor coil below freezing — frost will build at this ambient, and capacity fades with the falling suction. Real units lean on defrost cycles and auxiliary heat here.' };
         if (flags.highHead) {
             return mode === 'heating'
                 ? { kind: 'warn', text: 'High head — the indoor coil cannot reject heat (weak indoor airflow / overcharge).' }

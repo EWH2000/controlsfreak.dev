@@ -1290,12 +1290,20 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                 back, the outdoor fan stops so the hot coil melts its ice, and
                 the indoor duct blows cool air until the cycle ends. That is
                 the "my heat pump is blowing cold air and steaming" service
-                call, working as designed. One deliberate simplification: the
-                indoor condensing side holds its design split at any outdoor
-                temperature, so the supply-air number does not fade with the
-                cold — on a real unit it does, which is exactly why auxiliary
-                heat exists. Read the cold-weather capacity fade in the
-                collapsing suction gauge, where this model honestly shows it.
+                call, working as designed. The cold-weather capacity fade is
+                modeled too: as the suction falls, less heat reaches the
+                indoor coil, so below the
+                <span data-us="47 °F" data-metric="8.3 °C">47&nbsp;°F</span>
+                rating point the condensing temperature droops with the
+                ambient — watch the head gauge first, then the supply air
+                slide from
+                <span data-us="95 °F" data-metric="35.0 °C">95&nbsp;°F</span>
+                toward roughly
+                <span data-us="88 °F" data-metric="31.1 °C">88&nbsp;°F</span>
+                at the
+                <span data-us="17 °F" data-metric="-8.3 °C">17&nbsp;°F</span>
+                rating point, and cooler still in deep cold. That fade is
+                exactly why auxiliary heat exists.
             </p>
             <p class="tool-preamble">
                 The headline is the airside-versus-refrigerant-side split.
