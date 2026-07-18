@@ -1053,7 +1053,19 @@ keywords: humidity enthalpy wet bulb dew point dewpoint grains mixing coil AHU O
             ctx.fillStyle = cSurface;
             ctx.fillRect(0, 0, cssW, cssH);
 
-            const padL = 14, padR = 50, padB = 30, padT = 16;
+            // ── Type scale — ride the canvas CSS box so fullscreen text grows
+            //    with the chart instead of staying at phone size (clamped
+            //    10–16px, the refrigerant-loop fScale pattern; the normal
+            //    ~524px-wide box keeps today's 10/11px). The canvas aspect is
+            //    fixed at 8/5 in CSS, so width alone sets the scale. fBase:
+            //    ticks, curve labels, axis captions. fNode: state-point
+            //    labels. padR / padB hold the tick + caption gutters, so
+            //    they scale in step; padL / padT carry no text and stay put. ──
+            const fScale = Math.max(10, Math.min(16, cssW / 52));
+            const fBase = Math.round(fScale);
+            const fNode = Math.round(fScale * 1.1);
+
+            const padL = 14, padR = 5 * fBase, padB = 3 * fBase, padT = 16;
             const w = cssW - padL - padR, h = cssH - padT - padB;
             if (w <= 20 || h <= 20) return;
             const P = chain.P;
@@ -1061,7 +1073,7 @@ keywords: humidity enthalpy wet bulb dew point dewpoint grains mixing coil AHU O
             const Y = ww => padT + h - ww / W_MAX * h;
             psyGeom = { padL, padT, w, h, X, Y };
 
-            ctx.font = "10px 'IBM Plex Mono', monospace";
+            ctx.font = fBase + "px 'IBM Plex Mono', monospace";
             ctx.lineWidth = 1;
 
             // Tick scales — IP uses every 10 °F across the active range; SI uses
@@ -1271,7 +1283,7 @@ keywords: humidity enthalpy wet bulb dew point dewpoint grains mixing coil AHU O
                 }
                 if (label) {
                     ctx.fillStyle = cAccent;
-                    ctx.font = "11px 'IBM Plex Mono', monospace";
+                    ctx.font = fNode + "px 'IBM Plex Mono', monospace";
                     ctx.textAlign = 'left';
                     ctx.textBaseline = 'bottom';
                     ctx.fillText(label, px + (isDraggable ? 11 : 8), py - 7);

@@ -5025,7 +5025,7 @@ page), and `.ok-pill` renders on every page via
 `_includes/footer.njk`, plus the `_includes/nav-card.njk` statuslines
 and `index.html`.
 
-### 167. Fixed-px canvas type on canvases that grow — psychrometric-chart has the sim's latent bug *(open — 2026-07-17)*
+### 167. Fixed-px canvas type on canvases that grow — psychrometric-chart has the sim's latent bug *(addressed 2026-07-18)*
 
 The refrigerant-loop P-T plot drew all canvas text at fixed 9–10px
 while fullscreen grew the canvas 988×260 → 1218×645 — fixed in this
@@ -5036,6 +5036,21 @@ PR by deriving a clamped type scale from the canvas CSS box (the
 `scripts/pid-chart.js` (pid-tuner, pid-basics) and the
 staging-sequencer canvas share the 9–10px fixed-type pattern but have
 no fullscreen mode yet — they only inherit the bug if one lands.
+
+**Fixed (2026-07-18)** for the one page where the bug was live:
+`drawPsychChart` now derives the sim's clamped type scale from the
+canvas CSS box — `fScale = clamp(cssW / 52, 10, 16)` (width alone
+sets it; the canvas aspect is fixed 8/5 in CSS, so the template's
+height term would be dead code) — and both `ctx.font` sites ride it
+(`fBase` for ticks / curve labels / axis captions, `fNode =
+fScale × 1.1` for state-point labels). The `padR` / `padB` label
+gutters scale in step so bigger type keeps its row. The /52 divisor
+keeps the normal 524px-wide box at today's exact 10/11px
+(before/after pixel-identical); fullscreen reaches 12px at 1400×900
+and the 16px cap from ~1920×1080 up. The pid-chart.js and
+staging-sequencer halves stay **latent-only** — still fixed-px, still
+no fullscreen mode, so no live bug; apply the same pattern if either
+ever gains one. PR: issue-167/psychro-canvas-type.
 
 ### 168. Form-label scan hierarchy: shared `label, .field-label` rule dims the scan targets *(open — 2026-07-17, low priority)*
 
