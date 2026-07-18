@@ -8,11 +8,13 @@ templates the shared chrome (`<head>`, nav, footer) out of every page;
 everything else is vanilla — no client-side framework, no bundler, no
 transpiler.
 
-Companion docs: `README.md` for the user-facing tour;
-`site-ideas-and-friction.md` for per-page design history and
-ideas-not-yet-shipped; `codebase-issues.md` for open code-quality
-items needing a decision; `content-audit.md` for editorial
-findings from the recurring content-accuracy audits.
+Companion docs: `README.md` for the user-facing tour; under
+`docs/` — `docs/site-ideas-and-friction.md` for per-page design
+history and ideas-not-yet-shipped; `docs/codebase-issues.md` for
+open code-quality items needing a decision; `docs/content-audit.md`
+for editorial findings from the recurring content-accuracy audits;
+`docs/quiz-section-plan.md` for the Practice-section
+quiz planning.
 
 ## Stack
 
@@ -478,13 +480,14 @@ section). **Category keys mirror the landing pages' `navCard()`
   truth — enumerating them here drifted twice (audit-2026-06 docs
   sweep), so don't.
 - `_site/` — build output (gitignored).
-- `docs/` — archived audit artifacts. `docs/audits/<topic>/`
+- `docs/` — the tracking markdowns (`site-ideas-and-friction.md`,
+  `codebase-issues.md`, `content-audit.md`, `quiz-section-plan.md`)
+  plus archived audit artifacts. `docs/audits/<topic>/`
   collects the triage / decisions / implementation / findings docs
   from each completed audit cycle in one place (the durable record;
   each carries a disposition header). Spent one-shot prompt briefs
   are deleted once their deliverable ships — git history retains them.
-- Root: `CLAUDE.md`, `README.md`, `site-ideas-and-friction.md`,
-  `codebase-issues.md`, `content-audit.md`, `.eleventy.js`,
+- Root: `CLAUDE.md`, `README.md`, `.eleventy.js`,
   `wrangler.jsonc`, `package.json`.
 
 ## Design landmarks
