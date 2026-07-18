@@ -105,6 +105,13 @@
     --bevel-lo:     rgba(0,0,0,0.45);        /* 1px shade under it */
     --accent:       #6cb23a;   /* the green — brand / action (refined for dark, not neon) */
     --accent-bright:#86cf4d;
+    --accent-ink:   #86cf4d;   /* accent-colored TEXT that must read at small sizes on the
+                                  --accent-dim wash (.tool-tag / .ok-pill) — --accent itself
+                                  sits at ~4.1:1 there, an AA small-text fail. The fix is
+                                  asymmetric per theme (codebase-issues #166), so it lives in
+                                  a purpose token: dark rides --accent-bright's value; light
+                                  needs its own deeper green. Dots/borders stay --accent
+                                  (3:1 UI floor passes). */
     --accent-dim:   rgba(108,178,58,0.14);
     --accent-glow:  rgba(108,178,58,0.24);
     --accent-soft:  rgba(108,178,58,0.07);  /* one notch under --accent-dim — status-pill / inset backdrops */
@@ -173,6 +180,8 @@
     --bevel-lo:     rgba(0,0,0,0.05);
     --accent:       #3a7a14;
     --accent-bright:#428a16;
+    --accent-ink:   #356e12;   /* NOT --accent-bright here — brighter WORSENS light-theme
+                                  contrast (3.48:1); small accent text needs a deeper green */
     --accent-dim:   rgba(58,122,20,0.10);
     --accent-glow:  rgba(58,122,20,0.22);
     --accent-soft:  rgba(58,122,20,0.06);
@@ -225,6 +234,7 @@
         --bevel-lo:     rgba(0,0,0,0.05);
         --accent:       #3a7a14;
         --accent-bright:#428a16;
+        --accent-ink:   #356e12;
         --accent-dim:   rgba(58,122,20,0.10);
         --accent-glow:  rgba(58,122,20,0.22);
         --accent-soft:  rgba(58,122,20,0.06);
@@ -936,7 +946,7 @@ body.palette-open { overflow: hidden; }
     align-items: center;
     gap: 0.3rem;
     background: var(--accent-dim);
-    color: var(--accent);
+    color: var(--accent-ink);
     border: 1px solid var(--accent-glow);
     padding: 0.1rem 0.5rem;
     border-radius: 0;
@@ -1059,7 +1069,7 @@ h2.section-label[data-stage]::before {
     font-size: 0.62rem;
     padding: 0.15rem 0.5rem;
     background: var(--accent-dim);
-    color: var(--accent);
+    color: var(--accent-ink);
     border: 1px solid var(--accent-glow);
     border-radius: 0;
     text-transform: uppercase;
