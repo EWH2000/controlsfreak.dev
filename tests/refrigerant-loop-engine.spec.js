@@ -568,3 +568,85 @@ test.describe('refrigerant-loop-engine: airside coil temperatures', () => {
         expect(d.tAirOutCond).toBe(90);
     });
 });
+
+// ── 12. Loop-SVG geometry guards (source-level) ──────────────────────────
+// The simulator page's loop schematic is static markup the animation JS
+// hooks by id — same read-the-file grounding as loadEngine() above, aimed
+// at the page source instead of the engine. These pin the geometry
+// contracts the airside crossflow lanes rely on: every lane is a single
+// vertical segment (the crossflow axis), each IN/OUT pair shares its
+// column and meets at the coil's tube row (y=85 condenser / y=345
+// evaporator), and path drawing order is the flow direction (condenser
+// air rises → y decreasing; evaporator air drops → y increasing). Exact
+// x columns are deliberately NOT pinned — they may be nudged for label
+// clearance — only the pairing and axis contracts are.
+
+function loadPageSource() {
+    return fs.readFileSync(
+        path.join(__dirname, '..', 'html', 'simulators', 'refrigerant-loop.html'),
+        'utf8');
+}
+
+// First d="…" after the given id inside the same tag (lazy [^>]*? keeps
+// the match inside one element; \s keeps `d=` from matching mid-word).
+function pathD(src, id) {
+    const m = src.match(new RegExp('id="' + id + '"[^>]*?\\sd="([^"]+)"'));
+    return m ? m[1] : null;
+}
+
+test.describe('refrigerant-loop page: crossflow air-lane geometry', () => {
+
+    const LANE_IDS = ['rl-air-c-in-a', 'rl-air-c-out-a', 'rl-air-c-in-b',
+        'rl-air-c-out-b', 'rl-air-e-in-a', 'rl-air-e-out-a', 'rl-air-e-in-b',
+        'rl-air-e-out-b'];
+
+    // Parse every lane's d as `M x y0 V y1` — the single-vertical-segment
+    // contract — and hand back {x, y0, y1} per id.
+    function laneSegs() {
+        const src = loadPageSource();
+        const segs = {};
+        for (const id of LANE_IDS) {
+            const d = pathD(src, id);
+            expect(d, `${id} has a d attribute`).toBeTruthy();
+            const m = d.match(/^M (\d+(?:\.\d+)?) (\d+(?:\.\d+)?) V (\d+(?:\.\d+)?)$/);
+            expect(m, `${id} is a single vertical segment: "${d}"`).toBeTruthy();
+            segs[id] = { x: parseFloat(m[1]), y0: parseFloat(m[2]), y1: parseFloat(m[3]) };
+        }
+        return segs;
+    }
+
+    test('all 8 lanes are single vertical segments in two distinct columns', () => {
+        const segs = laneSegs();
+        // a and b columns are distinct, and each coil's a/b pair straddles
+        // the same two columns as the other coil's.
+        expect(segs['rl-air-c-in-a'].x).not.toBe(segs['rl-air-c-in-b'].x);
+        expect(segs['rl-air-e-in-a'].x).toBe(segs['rl-air-c-in-a'].x);
+        expect(segs['rl-air-e-in-b'].x).toBe(segs['rl-air-c-in-b'].x);
+    });
+
+    test('IN/OUT pairs share a column and meet at the tube row (85 / 345)', () => {
+        const segs = laneSegs();
+        for (const p of ['a', 'b']) {
+            expect(segs[`rl-air-c-in-${p}`].x, `cond pair ${p} column`)
+                .toBe(segs[`rl-air-c-out-${p}`].x);
+            expect(segs[`rl-air-c-in-${p}`].y1, `cond in-${p} ends at the tube row`).toBe(85);
+            expect(segs[`rl-air-c-out-${p}`].y0, `cond out-${p} starts at the tube row`).toBe(85);
+            expect(segs[`rl-air-e-in-${p}`].x, `evap pair ${p} column`)
+                .toBe(segs[`rl-air-e-out-${p}`].x);
+            expect(segs[`rl-air-e-in-${p}`].y1, `evap in-${p} ends at the tube row`).toBe(345);
+            expect(segs[`rl-air-e-out-${p}`].y0, `evap out-${p} starts at the tube row`).toBe(345);
+        }
+    });
+
+    test('path order is the flow direction: condenser rises, evaporator drops', () => {
+        const segs = laneSegs();
+        for (const id of LANE_IDS) {
+            const s = segs[id];
+            if (id.indexOf('rl-air-c-') === 0) {
+                expect(s.y1, `${id} rises (y decreasing)`).toBeLessThan(s.y0);
+            } else {
+                expect(s.y1, `${id} drops (y increasing)`).toBeGreaterThan(s.y0);
+            }
+        }
+    });
+});

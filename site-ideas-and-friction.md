@@ -5415,7 +5415,18 @@ Items 6 and 7 above remain the queue.
 addition — the owner watched the loop live and wanted the air side
 (what the two airflow knobs control) visible, so both coil faces now
 carry animated air lanes whose density tracks the CFM knobs, the
-indoor stream frost-tinting with the freeze latch.
+indoor stream frost-tinting with the freeze latch. *(Amended
+2026-07-17, same day:* the lanes first ran left→right along each bar
+to match the register's "air in → out" reading — but that put them
+parallel to the tubes and perpendicular to the crossflow axis air
+actually takes through a fin-tube face. The crossflow fix turned
+them vertical — outdoor air rises through the condenser and out the
+top, indoor air drops through the evaporator and out the bottom —
+and retired the static heat arrows: the dim→tinted lane flip now
+carries the heat story, with the italic labels reworded as airflow
+statements. Lanes live in safe columns (x=260 / x=460) because the
+engine's particles paint above every label; the airBand floor rose
+0.3 → 0.4 so the 115px IN stubs always carry a particle.)*
 
 ### Schematic-bg chrome — gutter as-builts, hero-frame nav cards, discrete-pulse mode *(shipped 2026-05-23)*
 
