@@ -4978,7 +4978,7 @@ instead of naming pages, so adding a simulator only touches the
 pill — which stays the sole count surface and stays guarded by
 `home-hero.spec.js`.
 
-### 161. `--blue-cool` small-text light-theme contrast is 3.74:1 *(open — 2026-07-16)*
+### 161. `--blue-cool` small-text light-theme contrast is 3.74:1 *(addressed 2026-07-18)*
 
 Light theme's `--blue-cool` (#5e8aa0) computes 3.74:1 on the white
 surface — an AA fail wherever it colors small data text (the
@@ -4995,6 +4995,18 @@ P-T plot's canvas SC gap tag (drawn in `--blue-cool` at 10px via
 `drawPlot`). If the token retune stalls, `drawPlot` could pin a darker
 light-mode blue at draw time the way the gauge dials pinned
 theme-constant ink — a page-local mitigation, not the token fix.
+
+**Addressed 2026-07-18** (owner pick from the design-calls visual
+brief): the **site-token retune**, not the page-local `drawPlot` pin —
+light `--blue-cool` goes `#5e8aa0` → `#4d7286` in both synced
+locations in `html/styles.css` (the `[data-theme="light"]` block and
+its `@media print` duplicate). New ratios: 5.16:1 on `--surface`
+(white, the failing sighting's backdrop), 4.73:1 on `--surface-2`,
+4.53:1 on `--bg`, 4.32:1 on `--well` (the one sub-4.5 light backdrop;
+no small `--blue-cool` text sits on a well today). Dark `#6f97aa`
+untouched (5.02:1). The retune moves every return-side diagram at
+once, keeping `--blue-cool` visibly the muted companion to `--blue`
+(#11679f, 6.06:1).
 
 ### 162. `.copy-btn`'s `transition: all` animates the focus outline *(addressed 2026-07-18)*
 
