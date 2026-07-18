@@ -53,6 +53,28 @@
 // whichever cause applies (owner decision — the plot already went red on
 // tEvap < 32 alone, so gating the alarm on airflow was a mixed signal).
 //
+// ── The mode axis (heat-pump heating) ───────────────────────────────────
+// `mode: 'cooling' | 'heating'` selects which coil evaporates — the
+// reversing-valve swap. DEFAULTS.mode = 'cooling', so every pre-mode caller,
+// preset, and test is unchanged (backward compat is a hard requirement).
+// In HEATING the driving-temperature ROLES swap, not just the numbers:
+//   • block (A) — the OUTDOOR coil evaporates: sat temp tracks the outdoor
+//     `ambient` (design approach EVAP_APPROACH_HEAT below it — the 47 °F
+//     rating point lands tEvap 27 °F) and `condAir` (the outdoor-coil
+//     airflow knob) takes over the C_AIR authority. Frost blocking the
+//     face IS an outdoor airflow starve — same honesty guard, other coil.
+//   • block (C) — the INDOOR coil condenses: tCond = returnT +
+//     SPLIT_BASE_HEAT (70 °F return ⇒ 105 °F condensing) and `airflow`
+//     (the indoor knob) takes over the SPLIT_CONDAIR authority.
+//   • blocks (B)/(D) — superheat / subcooling stay charge-authority;
+//     block (D)'s condenser-airflow term follows the condensing coil's
+//     knob (airflow in heating).
+// `defrost: true` (heating only — the defrost preset) models the field
+// reality honestly: defrost IS a temporary cooling-cycle run — the
+// reversing valve flips back and the outdoor fan stops (DEFROST_COND_AIR
+// stands in for the knob) — so the solve resolves to the COOLING anchor
+// set while `mode` still echoes 'heating'.
+//
 // API (window.RefrigLoop):
 //   RefrigLoop.solve(inputs)            → state object (below). Recompute-on-
 //                                         change; deterministic; no time step.
@@ -61,21 +83,35 @@
 //                                         (low-side / superheat) or 'bubble'
 //                                         (high-side / subcooling).
 //   RefrigLoop.DESIGN                   coefficients (read-only, frozen)
-//   RefrigLoop.CLAMPS                   per-knob {min,max,step,default} (read-only)
+//   RefrigLoop.CLAMPS                   per-knob {min,max,step,default} —
+//                                         the COOLING set (read-only)
+//   RefrigLoop.CLAMPS_HEATING           the heating overlay: ambient / returnT
+//                                         re-ranged, every other knob shared
+//   RefrigLoop.clampsFor(mode)          → CLAMPS or CLAMPS_HEATING; the page
+//                                         slider mirror reads THIS (single source)
 //   RefrigLoop.DEFAULTS                 the design knob set (read-only)
-//   RefrigLoop.PRESETS                  the six scenario knob sets (read-only)
+//   RefrigLoop.PRESETS                  the nine scenario knob sets (read-only;
+//                                         six cooling + three heating)
 //
 // solve() returns:
-//   { pSuc, pDis,            // gauge pressures, psig (real table lookups)
+//   { mode,                  // echoed: 'cooling' | 'heating'
+//     pSuc, pDis,            // gauge pressures, psig (real table lookups)
 //     tEvap, tCond,          // evap dew sat temp / cond bubble sat temp, °F
 //     superheat, subcool,    // °F (SH held by metering; SC emergent from charge)
 //     tSucLine, tLiqLine,    // suction-line / liquid-line temps, °F
-//     tAirInEvap, tAirOutEvap,  // indoor-coil entering / leaving air, °F
-//     tAirInCond, tAirOutCond,  // condenser entering / leaving air, °F
-//                            //   (sensible-only — no latent / dehumidification)
-//     cfmPerTon,             // evaporator airflow vs the 400 floor
-//     flags: { freeze, floodback, starved, highHead, lowSubcool,
-//              highSubcool, outOfRange, outOfRangeLow, outOfRangeHigh },
+//     tAirInEvap, tAirOutEvap,  // EVAPORATING coil entering / leaving air, °F
+//     tAirInCond, tAirOutCond,  // CONDENSING coil entering / leaving air, °F
+//                            //   (function-keyed; sensible-only)
+//     tAirInIndoor, tAirOutIndoor,    // hardware-keyed airside mirrors —
+//     tAirInOutdoor, tAirOutOutdoor,  //   the page's Indoor / Outdoor LCD
+//                            //   pairs read THESE, so the mode remap is
+//                            //   explicit (in heating, indoor air crosses
+//                            //   the CONDENSER — the likeliest silent-bug
+//                            //   site if a caller guessed from names)
+//     cfmPerTon,             // indoor-blower airflow vs the 400 design
+//     flags: { freeze, frost, frostChoked, defrost, floodback, starved,
+//              highHead, lowSubcool, highSubcool, outOfRange,
+//              outOfRangeLow, outOfRangeHigh },
 //     verdict: { kind:'ok'|'warn'|'error', text } }
 // (No tDisGas — the discharge-gas-temp readout is omitted from v1; it is the
 // least-grounded number, so it waits for a real enthalpy model.)
@@ -170,6 +206,44 @@ const RefrigLoop = (function () {
                               //   displayed rise collapses to zero rather than
                               //   contradict the head gauge).
 
+        // (G) HEATING-MODE anchors — the reversing-valve swap. The knob
+        //     authorities above carry over with their roles exchanged
+        //     (C_AIR rides condAir, SPLIT_CONDAIR / SC_CONDAIR ride
+        //     airflow); only the anchor geometry is new. Anchored to the
+        //     47 °F heat-pump rating point: tEvap 27 °F / tCond 105 °F.
+        EVAP_APPROACH_HEAT: 20,  // °F the outdoor coil runs BELOW ambient at
+                                 //   design (47 °F day ⇒ 27 °F sat — inside
+                                 //   the published 25–30 °F rating band).
+                                 //   Ambient tracks 1:1: a 17 °F day lands
+                                 //   the coil at −3 °F sat.
+        SPLIT_BASE_HEAT:    35,  // °F indoor condenser split over return air
+                                 //   (70 °F return ⇒ 105 °F condensing).
+        AIR_DT_EVAP_HEAT:   12,  // °F design outdoor-coil air drop — the air
+                                 //   gives up its heat to the refrigerant
+                                 //   (47 ⇒ 35 °F off the coil).
+        AIR_DT_COND_HEAT:   25,  // °F design indoor supply rise (70 ⇒ 95 °F
+                                 //   supply — heat-pump-warm, not furnace-hot).
+        HIGH_HEAD_SPLIT_HEAT: 38,  // °F abnormal indoor-condenser approach
+                                 //   onset (design split is 35 — same +3
+                                 //   margin as the cooling threshold).
+        FROST_AMBIENT_T:    40,  // °F — the frost-accumulation ambient
+                                 //   ceiling: below-32 °F coil sat is NORMAL
+                                 //   heat-pump operation on a cold day, so
+                                 //   the frost flag needs the ambient to be
+                                 //   in the moisture-laden accumulation band
+                                 //   too (strictly below 40 °F).
+        FROST_CHOKE_AIR:    0.75,  // outdoor-airflow fraction below which a
+                                 //   frosting coil reads CHOKED — the
+                                 //   accumulated state (frost blocks the
+                                 //   face, the coil pulls colder, more
+                                 //   frost — the spiral the defrost cycle
+                                 //   exists to break).
+        DEFROST_COND_AIR:   0.05,  // the outdoor-coil airflow the DEFROST
+                                 //   solve uses — the fan is OFF, so the
+                                 //   knob's commanded value is ignored and
+                                 //   the near-zero airflow spikes the coil
+                                 //   split (hot coil melts the frost).
+
         // ── Flag / verdict thresholds ──
         FREEZE_T:        32,  // °F — coil-freeze onset (evap sat temp below 32).
         HIGH_HEAD_T:     120, // °F — absolute high-head onset (catches a very hot
@@ -204,10 +278,28 @@ const RefrigLoop = (function () {
                                   stages: Object.freeze([0.50, 1.00]) }),
     });
 
+    // Heating overlay: only the two temperature knobs re-range (a heating
+    // day is cold outside and the indoor design return is 70 °F); every
+    // other knob is the SAME frozen object as CLAMPS. clampsFor(mode) is
+    // what the page's slider mirror reads on a mode flip (single source).
+    const CLAMPS_HEATING = Object.freeze(Object.assign({}, CLAMPS, {
+        returnT:  Object.freeze({ min: 60,  max: 80,  step: 1, default: 70 }),
+        ambient:  Object.freeze({ min: -5,  max: 65,  step: 1, default: 47 }),
+    }));
+
+    function clampsFor(mode) {
+        return mode === 'heating' ? CLAMPS_HEATING : CLAMPS;
+    }
+
     // The design ("typical day") knob set — what the sim opens on and what the
     // `typical` preset restores. refrig is the R-410A default (persisted by the
     // page under the shared cf_rf_refrigerant key; the engine just needs an id).
+    // mode defaults to cooling — the backward-compat anchor: solve() without a
+    // mode key is bit-identical to the pre-mode engine. (In heating, missing
+    // ambient / returnT keys fall back to CLAMPS_HEATING's defaults instead —
+    // solve({ mode: 'heating' }) IS the 47 °F rating point.)
     const DEFAULTS = Object.freeze({
+        mode:     'cooling',
         airflow:  1.00,
         returnT:  75,
         charge:   1.00,
@@ -222,20 +314,41 @@ const RefrigLoop = (function () {
     // Each is a COMPLETE input set so a click writes every knob unambiguously
     // (spec §3.5) and solve(PRESETS.x) is self-contained for the tests. Each
     // produces a distinct fault signature on the gauges/LEDs — see the tells.
+    // Every preset carries its `mode` so the engine tests are self-contained;
+    // the PAGE ignores that key (the preset row filters by the active mode,
+    // so a click can never flip the reversing valve — owner decision), the
+    // same way it ignores the `refrig` key (cross-page cf_rf_refrigerant).
     const PRESETS = Object.freeze({
         // Baseline: all design ⇒ 118/341, 40/105, SH 10, SC 10, all green.
-        typical:        Object.freeze({ airflow: 1.00, returnT: 75, charge: 1.00, shTarget: 10, ambient: 90, condAir: 1.00, capacity: 1.0, refrig: 'r410a' }),
+        typical:        Object.freeze({ mode: 'cooling', airflow: 1.00, returnT: 75, charge: 1.00, shTarget: 10, ambient: 90, condAir: 1.00, capacity: 1.0, refrig: 'r410a' }),
         // HEADLINE: airside starve ⇒ suction dives, evap → ~18 °F → freeze,
         // but SH stays ~10 (nothing on the refrigerant side is wrong).
-        starve:         Object.freeze({ airflow: 0.45, returnT: 75, charge: 1.00, shTarget: 10, ambient: 90, condAir: 1.00, capacity: 1.0, refrig: 'r410a' }),
+        starve:         Object.freeze({ mode: 'cooling', airflow: 0.45, returnT: 75, charge: 1.00, shTarget: 10, ambient: 90, condAir: 1.00, capacity: 1.0, refrig: 'r410a' }),
         // Undercharge ⇒ SH high (~25, starved evap) + SC low/negative (flash gas).
-        undercharge:    Object.freeze({ airflow: 1.00, returnT: 75, charge: 0.75, shTarget: 10, ambient: 90, condAir: 1.00, capacity: 1.0, refrig: 'r410a' }),
+        undercharge:    Object.freeze({ mode: 'cooling', airflow: 1.00, returnT: 75, charge: 0.75, shTarget: 10, ambient: 90, condAir: 1.00, capacity: 1.0, refrig: 'r410a' }),
         // Overcharge ⇒ SC high (~22) + head up + SH low (~2, floodback edge).
-        overcharge:     Object.freeze({ airflow: 1.00, returnT: 75, charge: 1.20, shTarget: 10, ambient: 90, condAir: 1.00, capacity: 1.0, refrig: 'r410a' }),
+        overcharge:     Object.freeze({ mode: 'cooling', airflow: 1.00, returnT: 75, charge: 1.20, shTarget: 10, ambient: 90, condAir: 1.00, capacity: 1.0, refrig: 'r410a' }),
         // Dirty / airflow-starved condenser ⇒ high head (~120) with SH/SC normal.
-        dirtyCondenser: Object.freeze({ airflow: 1.00, returnT: 75, charge: 1.00, shTarget: 10, ambient: 90, condAir: 0.50, capacity: 1.0, refrig: 'r410a' }),
+        dirtyCondenser: Object.freeze({ mode: 'cooling', airflow: 1.00, returnT: 75, charge: 1.00, shTarget: 10, ambient: 90, condAir: 0.50, capacity: 1.0, refrig: 'r410a' }),
         // Low ambient ⇒ head collapses (~70 °F cond, ~200 psig) ⇒ weak metering ΔP.
-        lowAmbient:     Object.freeze({ airflow: 1.00, returnT: 75, charge: 1.00, shTarget: 10, ambient: 55, condAir: 1.00, capacity: 1.0, refrig: 'r410a' }),
+        lowAmbient:     Object.freeze({ mode: 'cooling', airflow: 1.00, returnT: 75, charge: 1.00, shTarget: 10, ambient: 55, condAir: 1.00, capacity: 1.0, refrig: 'r410a' }),
+
+        // ── Heating presets — the reversing-valve stories. ──
+        // HEATING HEADLINE: the accumulated frost state. condAir 0.50 stands
+        // in for frost blocking the outdoor face (frost IS an airside
+        // starve): suction dives (tEvap −5 °F), SH stays ~10 — the honesty
+        // guard's outdoor-coil mirror — and the choked-frost error fires.
+        frostedOutdoorCoil: Object.freeze({ mode: 'heating', airflow: 1.00, returnT: 70, charge: 1.00, shTarget: 10, ambient: 35, condAir: 0.50, capacity: 1.0, refrig: 'r410a' }),
+        // Honest defrost: a temporary COOLING-cycle run — valve flipped
+        // back, outdoor fan off (condAir's knob value is ignored; see
+        // DEFROST_COND_AIR) — so suction jumps (~113 psig off the 70 °F
+        // indoor coil), the indoor duct blows ~50 °F "cold blow", and the
+        // fan-off coil split climbs toward the melt.
+        defrost:            Object.freeze({ mode: 'heating', defrost: true, airflow: 1.00, returnT: 70, charge: 1.00, shTarget: 10, ambient: 35, condAir: 1.00, capacity: 1.0, refrig: 'r410a' }),
+        // Deep low-ambient heating (the 17 °F rating point): capacity fades
+        // (tEvap −3 °F, ~45 psig suction) while the frost flag rides —
+        // normal-LOOKING operation that needs defrost + auxiliary heat.
+        lowAmbientHeating:  Object.freeze({ mode: 'heating', airflow: 1.00, returnT: 70, charge: 1.00, shTarget: 10, ambient: 17, condAir: 1.00, capacity: 1.0, refrig: 'r410a' }),
     });
 
     // ── Saturation lookups (ported verbatim from refrigerant-pt.html) ─────
@@ -305,65 +418,145 @@ const RefrigLoop = (function () {
         const inp = inputs || {};
         const D = DESIGN;
 
-        // Resolve + clamp every knob.
-        const airflow  = clamp(asNum(inp.airflow,  DEFAULTS.airflow),  CLAMPS.airflow.min,  CLAMPS.airflow.max);
-        const returnT  = clamp(asNum(inp.returnT,  DEFAULTS.returnT),  CLAMPS.returnT.min,  CLAMPS.returnT.max);
-        const charge   = clamp(asNum(inp.charge,   DEFAULTS.charge),   CLAMPS.charge.min,   CLAMPS.charge.max);
-        const shTarget = clamp(asNum(inp.shTarget, DEFAULTS.shTarget), CLAMPS.shTarget.min, CLAMPS.shTarget.max);
-        const ambient  = clamp(asNum(inp.ambient,  DEFAULTS.ambient),  CLAMPS.ambient.min,  CLAMPS.ambient.max);
-        const condAir  = clamp(asNum(inp.condAir,  DEFAULTS.condAir),  CLAMPS.condAir.min,  CLAMPS.condAir.max);
-        const capacity = clamp(asNum(inp.capacity, DEFAULTS.capacity), CLAMPS.capacity.min, CLAMPS.capacity.max);
+        // Mode axis. Anything but the literal 'heating' resolves to cooling,
+        // so a missing / garbage mode key is the pre-mode engine exactly.
+        const mode = inp.mode === 'heating' ? 'heating' : 'cooling';
+        const defrost = mode === 'heating' && inp.defrost === true;
+        // The CYCLE is which coil evaporates. Defrost IS a cooling-cycle run
+        // (the reversing valve flips back, the outdoor fan stops) commanded
+        // from heating mode, so it resolves to the cooling anchor set while
+        // `mode` still echoes 'heating' for the page.
+        const cycle = (mode === 'heating' && !defrost) ? 'heating' : 'cooling';
+        const CLm = clampsFor(mode);
+
+        // Resolve + clamp every knob against the MODE's ranges. The
+        // missing-key fallback is the mode's design default (for cooling
+        // these equal DEFAULTS — bit-identical to the pre-mode engine; in
+        // heating, ambient/returnT default to the 47 °F rating point).
+        const airflow  = clamp(asNum(inp.airflow,  CLm.airflow.default),  CLm.airflow.min,  CLm.airflow.max);
+        const returnT  = clamp(asNum(inp.returnT,  CLm.returnT.default),  CLm.returnT.min,  CLm.returnT.max);
+        const charge   = clamp(asNum(inp.charge,   CLm.charge.default),   CLm.charge.min,   CLm.charge.max);
+        const shTarget = clamp(asNum(inp.shTarget, CLm.shTarget.default), CLm.shTarget.min, CLm.shTarget.max);
+        const ambient  = clamp(asNum(inp.ambient,  CLm.ambient.default),  CLm.ambient.min,  CLm.ambient.max);
+        const condAir  = clamp(asNum(inp.condAir,  CLm.condAir.default),  CLm.condAir.min,  CLm.condAir.max);
+        const capacity = clamp(asNum(inp.capacity, CLm.capacity.default), CLm.capacity.min, CLm.capacity.max);
         // Refrigerant id: fall back to the R-410A default if unknown / data absent.
         const refrig = (curveOf(inp.refrig, 'dew')) ? inp.refrig : DEFAULTS.refrig;
 
-        // (A) Evaporator saturation temp — airflow is the dominant term.
-        const tEvap = D.T_EVAP_BASE
-            + D.C_AIR   * (airflow  - 1)
-            + D.C_RET   * (returnT  - 75)
-            + D.C_CAP_E * (capacity - 1)
-            + D.C_CHG_E * (charge   - 1);
+        // Defrost: the outdoor fan is OFF — the cycle sees the near-zero
+        // DEFROST_COND_AIR, not the knob (which keeps the commanded value
+        // for when defrost terminates).
+        const condAirEff = defrost ? D.DEFROST_COND_AIR : condAir;
+
+        // (A) Evaporating-coil saturation temp + (C) condensing split — the
+        //     per-mode anchor sets. The knob AUTHORITIES swap with the
+        //     reversing valve: in cooling the indoor knobs drive block (A)
+        //     and the outdoor knobs block (C); in heating the outdoor coil
+        //     evaporates (ambient + condAir drive A) and the indoor coil
+        //     condenses (returnT + airflow drive C). Coefficients are
+        //     shared; only each mode's anchor geometry differs.
+        let tEvap, split, tCondRaw, subcool;
+        if (cycle === 'cooling') {
+            // (A) cooling — indoor coil evaporates; airflow is the dominant term.
+            tEvap = D.T_EVAP_BASE
+                + D.C_AIR   * (airflow  - 1)
+                + D.C_RET   * (returnT  - 75)
+                + D.C_CAP_E * (capacity - 1)
+                + D.C_CHG_E * (charge   - 1);
+            // (C) cooling — outdoor coil condenses over ambient.
+            split = D.SPLIT_BASE
+                + D.SPLIT_CONDAIR * (condAirEff - 1)
+                + D.SPLIT_CHG     * (charge     - 1)
+                + D.SPLIT_CAP     * (capacity   - 1);
+            tCondRaw = ambient + split;
+            // (D) cooling — subcooling's condenser-airflow term rides condAir.
+            subcool = D.SC_BASE
+                + D.SC_CHG     * (charge     - 1)
+                + D.SC_CONDAIR * (condAirEff - 1);
+        } else {
+            // (A) heating — OUTDOOR coil evaporates: sat temp tracks ambient
+            //     1:1 below the design approach; condAir is the airside
+            //     authority (frost blocking the face is an airflow starve).
+            tEvap = ambient - D.EVAP_APPROACH_HEAT
+                + D.C_AIR   * (condAir  - 1)
+                + D.C_CAP_E * (capacity - 1)
+                + D.C_CHG_E * (charge   - 1);
+            // (C) heating — INDOOR coil condenses over return air; the
+            //     indoor blower (airflow) is the split authority (a choked
+            //     filter in winter reads as high head).
+            split = D.SPLIT_BASE_HEAT
+                + D.SPLIT_CONDAIR * (airflow  - 1)
+                + D.SPLIT_CHG     * (charge   - 1)
+                + D.SPLIT_CAP     * (capacity - 1);
+            tCondRaw = returnT + split;
+            // (D) heating — the condensing coil's airflow is the indoor knob.
+            subcool = D.SC_BASE
+                + D.SC_CHG     * (charge  - 1)
+                + D.SC_CONDAIR * (airflow - 1);
+        }
 
         // (B) Superheat — held by the metering device, charge is the authority.
-        //     Airflow is intentionally absent (an airside starve leaves SH normal).
+        //     Coil airflow is intentionally absent in BOTH modes (an airside
+        //     starve — a blocked filter or a frosted outdoor face — leaves SH
+        //     normal: the honesty guard).
         const superheat = shTarget
             + D.SH_UNDER * Math.max(0, 1 - charge)
             - D.SH_OVER  * Math.max(0, charge - 1);
         const tSucLine = tEvap + superheat;
 
-        // (C) Condenser saturation temp (high side / head). Floored at the
-        //     evaporator temp + minimum lift: head cannot sit below suction
-        //     while the compressor pumps (the low-ambient collapse bottoms out
-        //     here — the machine-side answer is head-pressure control, which
-        //     the lowAmbient verdict already narrates).
-        const split = D.SPLIT_BASE
-            + D.SPLIT_CONDAIR * (condAir  - 1)
-            + D.SPLIT_CHG     * (charge   - 1)
-            + D.SPLIT_CAP     * (capacity - 1);
-        const tCond = Math.max(ambient + split, tEvap + D.MIN_LIFT);
-
-        // (D) Subcooling — emergent from charge + condenser.
-        const subcool = D.SC_BASE
-            + D.SC_CHG     * (charge  - 1)
-            + D.SC_CONDAIR * (condAir - 1);
+        // (C, floor) Head cannot sit below suction while the compressor pumps
+        //     (the low-ambient collapse bottoms out here — the machine-side
+        //     answer is head-pressure control, which the lowAmbient verdict
+        //     already narrates). Same floor in both modes.
+        const tCond = Math.max(tCondRaw, tEvap + D.MIN_LIFT);
         const tLiqLine = tCond - subcool;
 
-        // (E) Airflow readout against the 400 CFM/ton floor.
+        // (E) Indoor-blower airflow readout against the 400 CFM/ton design.
+        //     Keyed to the indoor knob in BOTH modes (it is the same blower);
+        //     only the STORY changes — in cooling 400 is the coil-freeze
+        //     floor, in heating low indoor airflow reads as high head.
         const cfmPerTon = D.CFM_PER_TON_DESIGN * airflow;
 
-        // (F) Airside coil temperatures — sensible-only. Each leaving airstream
-        //     may APPROACH its coil's own refrigerant temp but never cross it:
-        //     supply air floors at tEvap + AIR_APPROACH, condenser discharge
-        //     air caps at tCond − AIR_APPROACH. The outer ambient floor keeps
-        //     condenser air from leaving COOLER than it entered when block
-        //     (C)'s split collapses below the approach — the displayed rise
-        //     degenerates to zero instead of contradicting the head gauge.
-        const tAirInEvap  = returnT;
-        const tAirOutEvap = Math.max(returnT - D.AIR_DT_EVAP * (capacity / airflow),
-                                     tEvap + D.AIR_APPROACH);
-        const tAirInCond  = ambient;
-        const tAirOutCond = Math.max(ambient,
-            Math.min(ambient + D.AIR_DT_COND * (capacity / condAir),
-                     tCond - D.AIR_APPROACH));
+        // (F) Airside coil temperatures — sensible-only, function-keyed
+        //     (Evap = the evaporating coil, whichever cabinet that is).
+        //     Each leaving airstream may APPROACH its coil's refrigerant
+        //     temp but never cross it, and never crosses its own entering
+        //     temp the wrong way when a degenerate corner collapses the
+        //     split below the approach (the same zero-split degeneration
+        //     rule on both coils, both modes).
+        let tAirInEvap, tAirOutEvap, tAirInCond, tAirOutCond;
+        if (cycle === 'cooling') {
+            tAirInEvap  = returnT;
+            tAirOutEvap = Math.max(returnT - D.AIR_DT_EVAP * (capacity / airflow),
+                                   tEvap + D.AIR_APPROACH);
+            tAirInCond  = ambient;
+            tAirOutCond = Math.max(ambient,
+                Math.min(ambient + D.AIR_DT_COND * (capacity / condAirEff),
+                         tCond - D.AIR_APPROACH));
+        } else {
+            // Heating: outdoor air crosses the evaporating coil and leaves
+            // COOLED (its heat went into the refrigerant); indoor air
+            // crosses the condensing coil and leaves as heat-pump-warm
+            // supply. The outer min/max keep each stream on the right side
+            // of its own inlet when the light-load corner pushes tEvap
+            // within the approach of ambient.
+            tAirInEvap  = ambient;
+            tAirOutEvap = Math.min(ambient,
+                Math.max(ambient - D.AIR_DT_EVAP_HEAT * (capacity / condAir),
+                         tEvap + D.AIR_APPROACH));
+            tAirInCond  = returnT;
+            tAirOutCond = Math.max(returnT,
+                Math.min(returnT + D.AIR_DT_COND_HEAT * (capacity / airflow),
+                         tCond - D.AIR_APPROACH));
+        }
+        // Hardware-keyed mirrors — what the page's Indoor / Outdoor LCD
+        // pairs read. The remap is EXPLICIT here so no caller has to infer
+        // it from mode (in heating, indoor air crosses the CONDENSER).
+        const indoorIsEvap = cycle === 'cooling';
+        const tAirInIndoor   = indoorIsEvap ? tAirInEvap  : tAirInCond;
+        const tAirOutIndoor  = indoorIsEvap ? tAirOutEvap : tAirOutCond;
+        const tAirInOutdoor  = indoorIsEvap ? tAirInCond  : tAirInEvap;
+        const tAirOutOutdoor = indoorIsEvap ? tAirOutCond : tAirOutEvap;
 
         // Pressures — the ONE hard-data step. dew for the low side (superheat
         // convention), bubble for the high side (subcooling convention). Clamped
@@ -374,6 +567,14 @@ const RefrigLoop = (function () {
         const pDis = pDisR.value;
 
         // ── Flags ──
+        // Frost first: in heating a below-32 °F outdoor coil is NORMAL — the
+        // flag needs the moisture-laden accumulation band too (ambient
+        // strictly below FROST_AMBIENT_T). frostChoked is the accumulated
+        // state: frost blocking the face reads as outdoor airflow below the
+        // choke fraction — the spiral defrost exists to break. Both are
+        // heating-CYCLE-only (defrost melts, so it clears them).
+        const frost = cycle === 'heating'
+            && tEvap < D.FREEZE_T && ambient < D.FROST_AMBIENT_T;
         const flags = {
             // Coil-freeze: evap sat temp below 32 °F, whatever drove it there
             // — an airside starve OR a cold/undercharged coil. Fires on the
@@ -381,14 +582,23 @@ const RefrigLoop = (function () {
             // which already reddens on tEvap < 32; it stays independent of
             // superheat (the honesty guard), so a starved coil ices with a
             // normal refrigerant-side reading. buildVerdict names the cause.
-            freeze:      tEvap < D.FREEZE_T,
+            // COOLING-CYCLE-only: in heating the same sub-32 sat temp is
+            // normal operation and reads through `frost` instead.
+            freeze:      cycle === 'cooling' && tEvap < D.FREEZE_T,
+            frost:       frost,
+            frostChoked: frost && condAir < D.FROST_CHOKE_AIR,
+            defrost:     defrost,
             // Liquid reaching the compressor: superheat collapsed (may be < 0).
             floodback:   superheat <= D.FLOODBACK_SH,
             // Starved evaporator / high superheat — the undercharge tell.
             starved:     superheat > D.STARVED_SH,
-            // High head: an abnormal condenser approach (dirty coil / overcharge)
-            // OR an absolutely high condensing temp (a very hot ambient).
-            highHead:    (tCond > D.HIGH_HEAD_T) || (split > D.HIGH_HEAD_SPLIT),
+            // High head: an abnormal condenser approach (dirty coil /
+            // overcharge — per-mode threshold, the heating design split is
+            // 35 not 15) OR an absolutely high condensing temp. Suppressed
+            // during defrost: the fan-off split spike IS the melt working,
+            // not a fault (the defrost verdict narrates it).
+            highHead:    !defrost && ((tCond > D.HIGH_HEAD_T) || (split >
+                (cycle === 'heating' ? D.HIGH_HEAD_SPLIT_HEAT : D.HIGH_HEAD_SPLIT))),
             lowSubcool:  subcool < D.LOW_SC,
             highSubcool: subcool > D.HIGH_SC,
             // Per-side table-clamp detail (the page marks the pegged gauge)
@@ -399,15 +609,18 @@ const RefrigLoop = (function () {
         };
 
         // ── Verdict (single status-pill summary; most severe wins) ──
-        const verdict = buildVerdict(flags, tCond, cfmPerTon, D);
+        const verdict = buildVerdict(mode, flags, tCond, cfmPerTon, D);
 
         return {
+            mode: mode,
             pSuc: pSuc, pDis: pDis,
             tEvap: tEvap, tCond: tCond,
             superheat: superheat, subcool: subcool,
             tSucLine: tSucLine, tLiqLine: tLiqLine,
             tAirInEvap: tAirInEvap, tAirOutEvap: tAirOutEvap,
             tAirInCond: tAirInCond, tAirOutCond: tAirOutCond,
+            tAirInIndoor: tAirInIndoor, tAirOutIndoor: tAirOutIndoor,
+            tAirInOutdoor: tAirInOutdoor, tAirOutOutdoor: tAirOutOutdoor,
             cfmPerTon: cfmPerTon,
             flags: flags,
             verdict: verdict,
@@ -421,19 +634,38 @@ const RefrigLoop = (function () {
     // only claims airflow starvation when airflow is actually below the design
     // floor; a coil pulled below 32 °F at normal airflow reads the below-32 °F
     // wording (the flag no longer gates on airflow — see the honesty guard).
-    function buildVerdict(flags, tCond, cfmPerTon, D) {
+    // Heating adds three rungs, all no-ops in cooling (their flags are
+    // cycle-gated false): defrost (narrates the honest cooling-cycle run —
+    // right under freeze, which can still fire on the defrosting indoor
+    // coil), the choked-frost error, and the plain frost warn (deliberately
+    // BELOW floodback/starved — frost is a normal-looking accumulation, a
+    // slugged compressor is not). highHead / lowHead re-word per mode: in
+    // heating the condenser is the indoor coil and "low ambient" is the
+    // suction side's problem, not the head's.
+    function buildVerdict(mode, flags, tCond, cfmPerTon, D) {
         if (flags.freeze) {
             return (cfmPerTon < D.CFM_PER_TON_DESIGN)
                 ? { kind: 'error', text: 'Coil freezing — evaporator airflow starved.' }
                 : { kind: 'error', text: 'Coil freezing — evaporator running below 32 °F (0 °C).' };
         }
+        if (flags.defrost)     return { kind: 'warn',  text: 'Defrost — reversing valve flipped to cooling, outdoor fan off; hot gas melts the frost while the supply duct blows cool. Normal, and temporary.' };
+        if (flags.frostChoked) return { kind: 'error', text: 'Outdoor coil frosted over — frost is choking its airflow and dragging suction down. Defrost overdue.' };
         if (flags.floodback)   return { kind: 'warn',  text: 'Floodback — superheat collapsed, liquid reaching the compressor.' };
         if (flags.starved)     return { kind: 'warn',  text: 'Evaporator starved — high superheat, suspect low charge.' };
-        if (flags.highHead)    return { kind: 'warn',  text: 'High head — condenser cannot reject heat (dirty coil / overcharge / hot day).' };
+        if (flags.frost)       return { kind: 'warn',  text: 'Outdoor coil below freezing — frost will build at this ambient. Expect defrost cycles, and auxiliary heat as capacity fades.' };
+        if (flags.highHead) {
+            return mode === 'heating'
+                ? { kind: 'warn', text: 'High head — the indoor coil cannot reject heat (weak indoor airflow / overcharge).' }
+                : { kind: 'warn', text: 'High head — condenser cannot reject heat (dirty coil / overcharge / hot day).' };
+        }
         if (flags.highSubcool) return { kind: 'warn',  text: 'High subcooling — suspect overcharge.' };
         if (flags.lowSubcool)  return { kind: 'warn',  text: 'Low subcooling — suspect undercharge / flash gas.' };
         if (flags.outOfRange)  return { kind: 'warn',  text: 'Off the P-T chart — reading clamped to the table end.' };
-        if (tCond < D.LOW_HEAD_T) return { kind: 'warn', text: 'Head low — low ambient weakens the metering ΔP.' };
+        if (tCond < D.LOW_HEAD_T) {
+            return mode === 'heating'
+                ? { kind: 'warn', text: 'Head low — condensing temp collapsed, supply air running lukewarm.' }
+                : { kind: 'warn', text: 'Head low — low ambient weakens the metering ΔP.' };
+        }
         return { kind: 'ok', text: 'Balanced — superheat and subcooling nominal.' };
     }
 
@@ -443,6 +675,8 @@ const RefrigLoop = (function () {
         pressAtSatTemp: pressAtSatTemp,
         DESIGN: DESIGN,
         CLAMPS: CLAMPS,
+        CLAMPS_HEATING: CLAMPS_HEATING,
+        clampsFor: clampsFor,
         DEFAULTS: DEFAULTS,
         PRESETS: PRESETS,
     };
