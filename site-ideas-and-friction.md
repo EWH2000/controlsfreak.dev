@@ -5374,6 +5374,9 @@ refrigerant-pt. **The simulator's own `hub:` backlink is deliberately
 deferred** — the heat-pump-mode lane owns `refrigerant-loop.html`, so
 the one-line backlink lands in whichever of the two lanes merges
 second (also recorded in the hub PR body so it can't be dropped).
+*(Landed 2026-07-18 with the heat-pump-mode PR #368 — the
+second-merging lane, as planned; the sim now carries the "Part of"
+back-link and all five core spokes point at the pillar.)*
 Hub count is now **four**, which half-arms the topic-primary-nav
 revisit trigger ("~4 hubs AND the mid-Aug 2026 GSC pull") — the GSC
 pull is now the sole remaining condition.
