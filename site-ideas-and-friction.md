@@ -5445,6 +5445,24 @@ precedent, so no privacy.html edit); bars keep hardware identity
 Riders: #169 (COMPRESSOR label nudged clear of the frost wash) and
 visual-queue item 6 (below). Item 7 stays queued.
 
+*Verification round (2026-07-18, pre-merge).* The independent
+adversarial pass (engine re-derivation against the 47/17 °F rating
+convention, ~230 browser checks, particle-diff flow-direction
+analysis) confirmed the anchors, dew/bubble orientation, every
+role-swap sign, the LCD remap and backward compat — and surfaced
+five fixes shipped on the branch: the touch preset-row leak (the
+touch-floor `display:inline-flex` beats the UA `[hidden]` rule —
+`.copy-btn[hidden]` re-assert + a cross-mode guard in applyPreset +
+a touch-floor regression test), a heating evaporator approach
+CEILING (`MIN_APPROACH_HEAT` — the MIN_LIFT analog: light-load
+corners could put the outdoor coil ABOVE the air it absorbs from),
+an ambient-independent outdoor-starve verdict rung
+(`STARVED_APPROACH_HEAT` — a choked coil at 45 °F ambient had read
+green with suction collapsed; below 40 °F frostChoked specializes
+it), the defrost caption ghosting with its stopped lanes, and honest
+low-ambient verdict wording (the model holds the indoor split at
+design — the fade reads in the suction gauge, stated in About).
+
 *Queued visual-round ideas from the verification (owner to pick):*
 (1) two visible pressure LCD cells in the register (the AT summary
 line covers screen readers today; visible cells would help sighted

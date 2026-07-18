@@ -5191,8 +5191,10 @@ out of that PR's scope.
 
 **Fix (2026-07-18, heat-pump-mode PR):** the LABEL moved, not the
 wash — the wash must stay centered on its pipe (x=120), so the
-COMPRESSOR label's anchor nudged x=80 → 76; its right edge (~112)
-now clears the wash (x=116) and the x=120 particles by ~4px. Outside
+COMPRESSOR label's anchor nudged x=80 → 74. Measured with the site
+fonts (verification round: a 76 first cut left only ~0.6px to the
+wash), the right edge lands ≈113.4 — ~2.6px clear of the x=116 wash
+and ~4.6px clear of the x≈118 particle edge, both themes. Outside
 the four frost-overlay placement constraints (those bound the marks).
 Rode along because that PR rebuilt the frost machinery (second kit on
 the top bar for heating frost).

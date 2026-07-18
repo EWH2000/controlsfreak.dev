@@ -696,6 +696,53 @@ test.describe('refrigerant-loop-engine: heating mode', () => {
         const choked = RefrigLoop.solve({ mode: 'heating', ambient: 35, condAir: 0.70 });
         expect(choked.flags.frostChoked).toBe(true);
         expect(choked.verdict.kind).toBe('error');
+        // The choked error outranks the (also-true) generic starve rung.
+        expect(choked.flags.starvedOutdoor).toBe(true);
+        expect(choked.verdict.text.toLowerCase()).toContain('frosted over');
+    });
+
+    test('tEvap is ceiling-clamped at ambient − MIN_APPROACH_HEAT', () => {
+        const { RefrigLoop } = loadEngine();
+        const D = RefrigLoop.DESIGN;
+        // The verification-round repro: light load (stage 1) + overblown
+        // outdoor fan at a mild ambient summed +20.5 °F of positive
+        // authority — the raw block-A sat temp (65.5) crossed ABOVE the
+        // 65 °F air the coil absorbs heat from. The ceiling holds it at
+        // ambient − 2.
+        const s = RefrigLoop.solve({ mode: 'heating', ambient: 65,
+            condAir: 1.2, capacity: 0.5 });
+        expect(s.tEvap).toBeCloseTo(65 - D.MIN_APPROACH_HEAT, 6);
+        // MIN_LIFT still orders the pair after the ceiling pulls tEvap down.
+        expect(s.tCond).toBeGreaterThanOrEqual(s.tEvap + D.MIN_LIFT - 1e-9);
+        expect(s.pDis).toBeGreaterThan(s.pSuc);
+        // Below the ceiling the raw block-A value is untouched (design day).
+        expect(RefrigLoop.solve({ mode: 'heating' }).tEvap).toBe(27);
+    });
+
+    test('outdoor starve fires on deep approach at ANY ambient', () => {
+        const { RefrigLoop } = loadEngine();
+        // The verification-round repro: ambient 45 / condAir 0.40 pulled
+        // the coil to 1 °F (suction ~50 psig) yet read green — above the
+        // 40 °F frost band no rung saw the collapsed suction. The
+        // approach rung does, ambient-independent.
+        const s = RefrigLoop.solve({ mode: 'heating', ambient: 45, condAir: 0.40 });
+        expect(s.tEvap).toBeCloseTo(1, 6);
+        expect(s.flags.frost).toBe(false);              // 45 ≥ 40: no frost claim
+        expect(s.flags.starvedOutdoor).toBe(true);
+        expect(s.verdict.kind).toBe('warn');
+        expect(s.verdict.text.toLowerCase()).toContain('outdoor coil starved');
+        // Boundary is strict at approach 30 — at design knobs that lands
+        // exactly on condAir 0.75 (40·0.25 = 10 over the 20 design
+        // approach), the same physical line FROST_CHOKE_AIR specializes.
+        const at30 = RefrigLoop.solve({ mode: 'heating', ambient: 45, condAir: 0.75 });
+        expect(45 - at30.tEvap).toBeCloseTo(30, 6);
+        expect(at30.flags.starvedOutdoor).toBe(false);  // strict >
+        expect(at30.verdict.kind).toBe('ok');
+        const past = RefrigLoop.solve({ mode: 'heating', ambient: 45, condAir: 0.70 });
+        expect(past.flags.starvedOutdoor).toBe(true);
+        // Cycle-gated: never fires in cooling or defrost.
+        expect(RefrigLoop.solve({ condAir: 0.40 }).flags.starvedOutdoor).toBe(false);
+        expect(RefrigLoop.solve(RefrigLoop.PRESETS.defrost).flags.starvedOutdoor).toBe(false);
     });
 
     test('hardware-keyed airside mirrors: the LCD remap is explicit', () => {
@@ -785,6 +832,10 @@ test.describe('refrigerant-loop-engine: heating mode', () => {
                 expect(s.pDis, `pDis>pSuc ${id} mask ${mask}`).toBeGreaterThan(s.pSuc);
                 expect(s.tCond, `lift ${id} mask ${mask}`)
                     .toBeGreaterThanOrEqual(s.tEvap + D.MIN_LIFT - 1e-9);
+                // The evaporating coil never crosses the air it absorbs
+                // heat from (the ceiling clamp — 16 pre-fix corners did).
+                expect(s.tEvap, `approach ceiling ${id} mask ${mask}`)
+                    .toBeLessThanOrEqual(inp.ambient - D.MIN_APPROACH_HEAT + 1e-9);
                 // Outdoor air never leaves WARMER than it entered the
                 // evaporating coil (the light-load degenerate collapses the
                 // drop to zero instead); indoor air never leaves COOLER.

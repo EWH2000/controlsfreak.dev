@@ -47,6 +47,26 @@ test.describe('phone (hover:none, 412×883)', () => {
         const psInput = await page.locator('input.ps-input').first().boundingBox();
         expect(psInput.height).toBeGreaterThanOrEqual(44);
     });
+
+    test('mode-filtered preset row stays filtered on touch', async ({ page }) => {
+        // The floor block's display:inline-flex on .copy-btn beats the
+        // UA-default [hidden] rule (the #25 trap family) — without the
+        // .copy-btn[hidden] re-assert, the refrigerant-loop sim leaked
+        // all nine scenario buttons in both modes on touch devices.
+        await page.goto('/simulators/refrigerant-loop.html');
+        await expect(page.locator('#main [data-preset]:visible')).toHaveCount(6);
+        await expect(page.locator('[data-preset="defrost"]')).toBeHidden();
+        await page.click('#rl-mode-heat');
+        await expect(page.locator('#main [data-preset]:visible')).toHaveCount(3);
+        await expect(page.locator('[data-preset="starve"]')).toBeHidden();
+        // Defense-in-depth: even a programmatic click on a cross-mode
+        // preset (the CSS-regression scenario) must not load it — the
+        // page ignores a preset whose mode isn't active.
+        await page.click('#rl-mode-cool');
+        await page.locator('[data-preset="defrost"]').dispatchEvent('click');
+        await expect(page.locator('#rl-cycle')).not.toHaveClass(/defrost/);
+        await expect(page.locator('#rl-ambient')).toHaveValue('90');
+    });
 });
 
 test.describe('desktop pointer density stays compact (#164)', () => {

@@ -74,7 +74,12 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
         .rl-loop-svg.frozen #rl-frost { opacity: 1; }
         .rl-loop-svg.frosted #rl-frost-top { opacity: 1; }
         .rl-loop-svg.defrost #rl-frost-top { opacity: 0.35; }
-        .rl-loop-svg.defrost [id^="rl-air-c-"] { opacity: 0.12; }
+        /* The outdoor-face caption ghosts WITH its lanes — the id-prefix
+           selector can't reach it (no trailing hyphen), and a full-ink
+           "warm air → outdoors" over a stopped fan would contradict the
+           muted LCD + the sr "outdoor fan off" narration. */
+        .rl-loop-svg.defrost [id^="rl-air-c-"],
+        .rl-loop-svg.defrost #rl-air-cap-top { opacity: 0.12; }
         .rl-frost-fill { fill: var(--rl-frost); opacity: 0.28; }
         .rl-frost-mark { stroke: var(--rl-frost); stroke-width: 2; stroke-linecap: round; }
 
@@ -789,13 +794,15 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                                 <path stroke="var(--blue)" d="M 2.5 0 A 2.5 2.5 0 0 1 -2.5 0 A 6 6 0 0 1 9.5 0 A 9.5 9.5 0 0 1 -9.5 0 A 13 13 0 0 1 16.5 0 A 16.5 16.5 0 0 1 -16.5 0" transform="rotate(180)"/>
                             </g>
                         </g>
-                        <!-- Label nudged 4px left (x 80 → 76, codebase-issues
-                             #169): its right edge now clears the x=116 frost
-                             wash and the suction-leg particles at x=120 by
-                             ~4px in the frozen state. Outside the four
-                             frost-overlay placement constraints (those bound
-                             the marks, not this label). -->
-                        <text class="rl-comp-label" x="76" y="257" text-anchor="middle" font-size="12"
+                        <!-- Label nudged 6px left (x 80 → 74, codebase-issues
+                             #169): measured with the site fonts the text's
+                             right edge lands ≈113.4, so it clears the x=116
+                             frost wash by ~2.6px and the x≈118 suction-leg
+                             particle edge by ~4.6px in the frozen state.
+                             Outside the four frost-overlay placement
+                             constraints (those bound the marks, not this
+                             label). -->
+                        <text class="rl-comp-label" x="74" y="257" text-anchor="middle" font-size="12"
                               font-weight="600" fill="var(--text-bright)">COMPRESSOR</text>
                     </g>
 
@@ -1283,7 +1290,12 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                 back, the outdoor fan stops so the hot coil melts its ice, and
                 the indoor duct blows cool air until the cycle ends. That is
                 the "my heat pump is blowing cold air and steaming" service
-                call, working as designed.
+                call, working as designed. One deliberate simplification: the
+                indoor condensing side holds its design split at any outdoor
+                temperature, so the supply-air number does not fade with the
+                cold — on a real unit it does, which is exactly why auxiliary
+                heat exists. Read the cold-weather capacity fade in the
+                collapsing suction gauge, where this model honestly shows it.
             </p>
             <p class="tool-preamble">
                 The headline is the airside-versus-refrigerant-side split.
@@ -2516,6 +2528,11 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
         function applyPreset(key, btn) {
             const p = RefrigLoop.PRESETS[key];
             if (!p) return;
+            // Defense-in-depth (the [hidden]-defeat CSS trap): the row
+            // filter hides cross-mode buttons, but a display rule that
+            // beats the UA [hidden] default must not let a stray tap load
+            // a cross-mode scenario — a cross-mode key is ignored outright.
+            if ((p.mode || 'cooling') !== mode) return;
             $('rl-airflow').value  = p.airflow;
             $('rl-charge').value   = p.charge;
             $('rl-returnt').value  = p.returnT;
@@ -2537,9 +2554,11 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
             // Defrost preset: the honest flow flip — the reversing valve
             // returns to the cooling position (loop re-routes) and the
             // outdoor fan stops, while the MODE toggle stays on Heat
-            // (defrost is part of heating operation).
+            // (defrost is part of heating operation). The mode guard is
+            // redundant with the cross-mode bail above — belt and
+            // suspenders: defrost can never arm outside heating.
             const wasDefrost = defrostActive;
-            defrostActive = (key === 'defrost');
+            defrostActive = (mode === 'heating' && key === 'defrost');
             if (defrostActive !== wasDefrost) {
                 applyCycleVisuals((mode === 'heating' && !defrostActive) ? 'heating' : 'cooling');
             }

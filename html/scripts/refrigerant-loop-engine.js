@@ -109,9 +109,9 @@
 //                            //   the CONDENSER — the likeliest silent-bug
 //                            //   site if a caller guessed from names)
 //     cfmPerTon,             // indoor-blower airflow vs the 400 design
-//     flags: { freeze, frost, frostChoked, defrost, floodback, starved,
-//              highHead, lowSubcool, highSubcool, outOfRange,
-//              outOfRangeLow, outOfRangeHigh },
+//     flags: { freeze, frost, frostChoked, starvedOutdoor, defrost,
+//              floodback, starved, highHead, lowSubcool, highSubcool,
+//              outOfRange, outOfRangeLow, outOfRangeHigh },
 //     verdict: { kind:'ok'|'warn'|'error', text } }
 // (No tDisGas — the discharge-gas-temp readout is omitted from v1; it is the
 // least-grounded number, so it waits for a real enthalpy model.)
@@ -216,6 +216,18 @@ const RefrigLoop = (function () {
                                  //   the published 25–30 °F rating band).
                                  //   Ambient tracks 1:1: a 17 °F day lands
                                  //   the coil at −3 °F sat.
+        MIN_APPROACH_HEAT:   2,  // °F — the heating evaporator's MIN_LIFT
+                                 //   analog: the coil's sat temp may
+                                 //   APPROACH the entering outdoor air but
+                                 //   never cross it (a coil warmer than the
+                                 //   air it absorbs heat from would be
+                                 //   rejecting, not absorbing). The block-A
+                                 //   positive authorities can sum past the
+                                 //   20 °F design approach (+8 fan, +12.5
+                                 //   stage 1, +3 overcharge = +23.5), so a
+                                 //   reachable light-load corner otherwise
+                                 //   put tEvap ABOVE ambient. Mirrors
+                                 //   AIR_APPROACH's 2 °F role.
         SPLIT_BASE_HEAT:    35,  // °F indoor condenser split over return air
                                  //   (70 °F return ⇒ 105 °F condensing).
         AIR_DT_EVAP_HEAT:   12,  // °F design outdoor-coil air drop — the air
@@ -238,6 +250,20 @@ const RefrigLoop = (function () {
                                  //   face, the coil pulls colder, more
                                  //   frost — the spiral the defrost cycle
                                  //   exists to break).
+        STARVED_APPROACH_HEAT: 30,  // °F — evaporator approach (ambient −
+                                 //   sat) beyond which the outdoor coil
+                                 //   reads STARVED at ANY ambient (blocked
+                                 //   face, matted fins, weak fan — design
+                                 //   approach is 20). At design charge and
+                                 //   stage this fires exactly when condAir
+                                 //   drops below FROST_CHOKE_AIR — the same
+                                 //   physical boundary; below the 40 °F
+                                 //   frost band frostChoked SPECIALIZES it
+                                 //   into the icing error, above the band
+                                 //   the generic starve warn carries it
+                                 //   (without this rung, a choked coil at
+                                 //   45 °F ambient read green with suction
+                                 //   collapsed to ~50 psig).
         DEFROST_COND_AIR:   0.05,  // the outdoor-coil airflow the DEFROST
                                  //   solve uses — the fan is OFF, so the
                                  //   knob's commanded value is ignored and
@@ -477,10 +503,17 @@ const RefrigLoop = (function () {
             // (A) heating — OUTDOOR coil evaporates: sat temp tracks ambient
             //     1:1 below the design approach; condAir is the airside
             //     authority (frost blocking the face is an airflow starve).
-            tEvap = ambient - D.EVAP_APPROACH_HEAT
-                + D.C_AIR   * (condAir  - 1)
-                + D.C_CAP_E * (capacity - 1)
-                + D.C_CHG_E * (charge   - 1);
+            //     Ceiling-clamped at ambient − MIN_APPROACH_HEAT: an
+            //     evaporator can approach the air it absorbs heat from but
+            //     never cross it (the MIN_LIFT analog — the light-load
+            //     corner's +23.5 °F of positive authority beat the 20 °F
+            //     design approach and put the coil above the outdoor air).
+            tEvap = Math.min(
+                ambient - D.EVAP_APPROACH_HEAT
+                    + D.C_AIR   * (condAir  - 1)
+                    + D.C_CAP_E * (capacity - 1)
+                    + D.C_CHG_E * (charge   - 1),
+                ambient - D.MIN_APPROACH_HEAT);
             // (C) heating — INDOOR coil condenses over return air; the
             //     indoor blower (airflow) is the split authority (a choked
             //     filter in winter reads as high head).
@@ -587,6 +620,14 @@ const RefrigLoop = (function () {
             freeze:      cycle === 'cooling' && tEvap < D.FREEZE_T,
             frost:       frost,
             frostChoked: frost && condAir < D.FROST_CHOKE_AIR,
+            // Outdoor-coil starve — the ambient-independent airside tell:
+            // an evaporator approach past STARVED_APPROACH_HEAT means the
+            // coil cannot pull heat out of the air stream it has (blocked
+            // face / weak fan), whatever the thermometer says outside.
+            // Below the frost band, frostChoked is this rung's icing
+            // specialization and outranks it in the verdict.
+            starvedOutdoor: cycle === 'heating'
+                && (ambient - tEvap) > D.STARVED_APPROACH_HEAT,
             defrost:     defrost,
             // Liquid reaching the compressor: superheat collapsed (may be < 0).
             floodback:   superheat <= D.FLOODBACK_SH,
@@ -634,12 +675,16 @@ const RefrigLoop = (function () {
     // only claims airflow starvation when airflow is actually below the design
     // floor; a coil pulled below 32 °F at normal airflow reads the below-32 °F
     // wording (the flag no longer gates on airflow — see the honesty guard).
-    // Heating adds three rungs, all no-ops in cooling (their flags are
-    // cycle-gated false): defrost (narrates the honest cooling-cycle run —
-    // right under freeze, which can still fire on the defrosting indoor
-    // coil), the choked-frost error, and the plain frost warn (deliberately
-    // BELOW floodback/starved — frost is a normal-looking accumulation, a
-    // slugged compressor is not). highHead / lowHead re-word per mode: in
+    // Heating adds four rungs, all no-ops in cooling (their flags are
+    // cycle-gated false), tiered: defrost (narrates the honest
+    // cooling-cycle run — right under freeze, which can still fire on the
+    // defrosting indoor coil), the choked-frost ERROR (the icing
+    // specialization of the starve), then — under floodback/starved, which
+    // threaten the compressor — the outdoor-coil starve warn (the
+    // ambient-independent airside tell; fires alone above the 40 °F frost
+    // band) and the plain frost warn (a normal-looking accumulation; the
+    // starve rung outranks it because a deep approach is the more specific
+    // finding when both hold). highHead / lowHead re-word per mode: in
     // heating the condenser is the indoor coil and "low ambient" is the
     // suction side's problem, not the head's.
     function buildVerdict(mode, flags, tCond, cfmPerTon, D) {
@@ -652,7 +697,8 @@ const RefrigLoop = (function () {
         if (flags.frostChoked) return { kind: 'error', text: 'Outdoor coil frosted over — frost is choking its airflow and dragging suction down. Defrost overdue.' };
         if (flags.floodback)   return { kind: 'warn',  text: 'Floodback — superheat collapsed, liquid reaching the compressor.' };
         if (flags.starved)     return { kind: 'warn',  text: 'Evaporator starved — high superheat, suspect low charge.' };
-        if (flags.frost)       return { kind: 'warn',  text: 'Outdoor coil below freezing — frost will build at this ambient. Expect defrost cycles, and auxiliary heat as capacity fades.' };
+        if (flags.starvedOutdoor) return { kind: 'warn', text: 'Outdoor coil starved — running far below the outdoor air, suction collapsing (blocked coil face / weak fan).' };
+        if (flags.frost)       return { kind: 'warn',  text: 'Outdoor coil below freezing — frost will build at this ambient, and suction falls with the outdoor temp. A real unit leans on defrost cycles and auxiliary heat here.' };
         if (flags.highHead) {
             return mode === 'heating'
                 ? { kind: 'warn', text: 'High head — the indoor coil cannot reject heat (weak indoor airflow / overcharge).' }
