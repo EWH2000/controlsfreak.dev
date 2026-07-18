@@ -125,6 +125,12 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
         }
         .rl-gauge-low  .rl-gauge-val { fill: #4aa3dd; }   /* theme-constant, see note above */
         .rl-gauge-high .rl-gauge-val { fill: #e8884a; }
+        /* Unit tspan tucked beside the digital number — the register
+           LCDs' small-unit look (smaller, lighter, same baseline). */
+        .rl-gauge-val-unit {
+            font-weight: 400;
+            font-size: 13px;
+        }
         .rl-gauge-cap {
             font-family: var(--mono);
             font-size: 10.5px;
@@ -132,6 +138,19 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
             fill: #8a8369;
             text-anchor: middle;
         }
+        /* Side header above each dial — names the manifold side for
+           readers new to gauges. Lives INSIDE the SVG so it scales
+           with the dial in fullscreen (an HTML label would stay
+           fixed-size); ink pinned to the side's needle/label hexes
+           (theme-constant, see note above). */
+        .rl-gauge-side {
+            font-family: var(--mono);
+            font-size: 11px;
+            letter-spacing: 0.1em;
+            text-anchor: middle;
+        }
+        .rl-gauge-low  .rl-gauge-side { fill: #4aa3dd; }
+        .rl-gauge-high .rl-gauge-side { fill: #e8884a; }
 
         /* LCD cluster — 4×2 grid of small equipment LCDs. */
         .rl-lcds {
@@ -681,30 +700,36 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                         </div>
 
                         <div class="rl-gauges">
-                            <svg class="rl-gauge rl-gauge-low" id="rl-gauge-low" viewBox="0 0 200 182"
+                            <svg class="rl-gauge rl-gauge-low" id="rl-gauge-low" viewBox="0 -20 200 202"
                                  role="img" aria-labelledby="rl-gauge-low-t">
                                 <title id="rl-gauge-low-t">Low-side suction pressure gauge</title>
+                                <text class="rl-gauge-side" x="100" y="-6">LOW PRESSURE SIDE</text>
                                 <circle class="rl-gauge-face" cx="100" cy="94" r="86"/>
                                 <path class="rl-gauge-arc" id="rl-gauge-low-arc" d=""/>
                                 <line class="rl-gauge-needle-low" id="rl-gauge-low-needle"
                                       x1="100" y1="110" x2="100" y2="18"/>
                                 <g id="rl-gauge-low-scale"></g>
                                 <circle class="rl-gauge-hub" cx="100" cy="94" r="6.5"/>
-                                <text class="rl-gauge-val" id="rl-gauge-low-val" x="100" y="150">&#8212;</text>
-                                <text class="rl-gauge-cap" id="rl-gauge-low-cap" x="100" y="167">LOW · SUCTION · PSIG</text>
+                                <text class="rl-gauge-val" x="100" y="150"><tspan
+                                    id="rl-gauge-low-num">&#8212;</tspan><tspan
+                                    class="rl-gauge-val-unit" id="rl-gauge-low-unit" dx="4">psig</tspan></text>
+                                <text class="rl-gauge-cap" x="100" y="167">SUCTION</text>
                             </svg>
 
-                            <svg class="rl-gauge rl-gauge-high" id="rl-gauge-high" viewBox="0 0 200 182"
+                            <svg class="rl-gauge rl-gauge-high" id="rl-gauge-high" viewBox="0 -20 200 202"
                                  role="img" aria-labelledby="rl-gauge-high-t">
                                 <title id="rl-gauge-high-t">High-side discharge pressure gauge</title>
+                                <text class="rl-gauge-side" x="100" y="-6">HIGH PRESSURE SIDE</text>
                                 <circle class="rl-gauge-face" cx="100" cy="94" r="86"/>
                                 <path class="rl-gauge-arc" id="rl-gauge-high-arc" d=""/>
                                 <line class="rl-gauge-needle-high" id="rl-gauge-high-needle"
                                       x1="100" y1="110" x2="100" y2="18"/>
                                 <g id="rl-gauge-high-scale"></g>
                                 <circle class="rl-gauge-hub" cx="100" cy="94" r="6.5"/>
-                                <text class="rl-gauge-val" id="rl-gauge-high-val" x="100" y="150">&#8212;</text>
-                                <text class="rl-gauge-cap" id="rl-gauge-high-cap" x="100" y="167">HIGH · HEAD · PSIG</text>
+                                <text class="rl-gauge-val" x="100" y="150"><tspan
+                                    id="rl-gauge-high-num">&#8212;</tspan><tspan
+                                    class="rl-gauge-val-unit" id="rl-gauge-high-unit" dx="4">psig</tspan></text>
+                                <text class="rl-gauge-cap" x="100" y="167">HEAD</text>
                             </svg>
                         </div>
 
@@ -1106,10 +1131,10 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
         const gauges = {
             low:  { curve: 'dew',    refTemp: 60,  max: 200, cur: -120, target: -120,
                     scale: 'rl-gauge-low-scale',  needle: 'rl-gauge-low-needle',
-                    arc: 'rl-gauge-low-arc',      val: 'rl-gauge-low-val' },
+                    arc: 'rl-gauge-low-arc',      num: 'rl-gauge-low-num' },
             high: { curve: 'bubble', refTemp: 140, max: 600, cur: -120, target: -120,
                     scale: 'rl-gauge-high-scale', needle: 'rl-gauge-high-needle',
-                    arc: 'rl-gauge-high-arc',     val: 'rl-gauge-high-val' },
+                    arc: 'rl-gauge-high-arc',     num: 'rl-gauge-high-num' },
         };
 
         // frac → point on the dial at radius R (screen coords, y down).
@@ -1300,8 +1325,8 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
             // a ≥/≤ mark — without it the pegged gauge silently contradicted
             // the sat-temp LCD (e.g. 153.0 °F beside a 530-psig top-row clamp)
             // while a higher-priority verdict masked the off-chart note. The
-            // unit lives in the caption below (see applyRefrigerant), not here.
-            $(g.val).textContent = (oorMark || '') + dispP(psig);
+            // unit lives in the sibling tspan (see applyRefrigerant), not here.
+            $(g.num).textContent = (oorMark || '') + dispP(psig);
         }
         function applyNeedle(g) {
             $(g.needle).setAttribute('transform',
@@ -1808,12 +1833,12 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
             $('rl-refrig-badge').textContent = R ? R.name : id;
             buildGaugeScale(gauges.low, id);
             buildGaugeScale(gauges.high, id);
-            // Dial captions carry the pressure unit (the digital is bare);
-            // re-set here because this runs on init, refrigerant change, and
-            // the U.onChange unit flip alike.
-            const capU = pU().toUpperCase();
-            $('rl-gauge-low-cap').textContent  = 'LOW · SUCTION · '  + capU;
-            $('rl-gauge-high-cap').textContent = 'HIGH · HEAD · ' + capU;
+            // The digital readout's unit tspan tracks the display unit
+            // (the captions below the dials are static); re-set here because
+            // this runs on init, refrigerant change, and the U.onChange unit
+            // flip alike.
+            $('rl-gauge-low-unit').textContent  = pU();
+            $('rl-gauge-high-unit').textContent = pU();
             renderMain();
         }
 
