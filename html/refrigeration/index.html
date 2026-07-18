@@ -1,0 +1,120 @@
+---
+title: Refrigeration — Field Reference, Tools & Lessons — controlsfreak.dev
+description: Refrigeration field reference — the vapor-compression cycle, superheat and subcooling, and metering devices, plus the P-T tool and a live loop simulator.
+canonical: https://controlsfreak.dev/refrigeration/
+nav: guides
+navLabel: Refrigeration
+keywords: refrigeration vapor compression cycle compressor condenser evaporator suction discharge head pressure saturation superheat subcooling txv eev metering device charge psig pt chart manifold gauges refrigerant
+---
+{% extends "layouts/page.njk" %}
+{% from "nav-card.njk" import navCard %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <h1 class="section-label">Refrigeration</h1>
+        <div class="section-line"></div>
+    </div>
+
+    <p class="landing-intro">
+        Refrigeration is the part of the machine that <strong>moves heat with a phase change</strong>. A compressor drives refrigerant around a sealed loop — boiling in the evaporator to soak up heat, condensing outdoors to reject it — and a metering device holds the balance point between the two. Every number a gauge set or a BMS shows comes off that loop: the suction and head pressures, the saturation temperatures they lock to, and the superheat and subcooling that prove the cycle is actually running right. These pages walk the circuit from the four components out to the measurements, and give you the tools that put a number on each one.
+    </p>
+
+    <p class="landing-intro">
+        New to it? Work the three lessons in order — they build from the cycle and its saturation lock, through the two measurements that prove the charge and the feed, to the metering device that holds superheat in place. Already have gauges on a unit? Jump to the P-T calculator with a pressure and a line temperature, or open the loop simulator and turn the same knobs a fault would. Everything here is open, needs no login, and tracks nothing.
+    </p>
+
+    <h2 class="hub-group">Start here — the lessons, in order</h2>
+    <p class="hub-path">
+        <span class="hub-step">1</span> <a href="/education/refrigerant-cycle-basics.html">Refrigerant Cycle Basics</a>
+        <span class="hub-arrow">→</span>
+        <span class="hub-step">2</span> <a href="/education/superheat-subcooling.html">Superheat &amp; Subcooling</a>
+        <span class="hub-arrow">→</span>
+        <span class="hub-step">3</span> <a href="/education/metering-devices-txv-eev.html">TXVs vs. EEVs</a>
+    </p>
+
+    <div class="card-grid">
+        {{ navCard({
+            section:    'education',
+            href:       '/education/refrigerant-cycle-basics.html',
+            titleShort: 'Refrigerant Cycle',
+            titleFull:  'Refrigerant Cycle Basics',
+            desc:       'How a vapor-compression system moves heat — the four components, high side vs low side, and the saturation P-T relationship behind every refrigerant sensor reading. The chapter\'s starting point.',
+            pills:      ['Step 1', '4 Components', 'High vs Low Side']
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/education/superheat-subcooling.html',
+            titleShort: 'Superheat & SC',
+            titleFull:  'Superheat & Subcooling',
+            desc:       'The two measurements that prove a refrigerant cycle is running right — what each one measures, the sensors that compute them, and the fault direction an abnormal reading points at.',
+            pills:      ['Step 2', 'Superheat', 'Subcooling']
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/education/metering-devices-txv-eev.html',
+            titleShort: 'TXV vs EEV',
+            titleFull:  'TXVs vs. EEVs',
+            desc:       'The two metering-device designs that hold superheat at a target — the TXV\'s mechanical force balance and the EEV\'s controller-driven stepper loop — and how each behaves as load drifts.',
+            pills:      ['Step 3', 'TXV', 'EEV']
+        }) }}
+    </div>
+
+    <h2 class="hub-group">Build one — the simulator</h2>
+    <p class="hub-group-intro">
+        One interactive model for the refrigerant circuit — a live vapor-compression loop with manifold gauges, so the saturation lock and the fault signatures from the lessons move in front of you instead of sitting on the page.
+    </p>
+    <div class="card-grid">
+        {{ navCard({
+            section:    'simulators',
+            href:       '/simulators/refrigerant-loop.html',
+            titleShort: 'Refrigerant Loop',
+            titleFull:  'Refrigerant Loop Simulator',
+            desc:       'Turn airflow, charge, ambient, and metering superheat on a live vapor-compression loop and watch suction, head, superheat, subcooling, and a starving coil react on manifold gauges and a live P-T strip.',
+            pills:      ['Vapor-Compression', 'Manifold Gauges', 'Starve the Coil']
+        }) }}
+    </div>
+
+    <h2 class="hub-group">The tools</h2>
+    <p class="hub-group-intro">
+        The field utility for the refrigerant side — the saturation lookup and superheat / subcooling math the lessons build toward, ready for the pressures and line temperatures you actually bring back. No login, nothing to install.
+    </p>
+    <div class="card-grid">
+        {{ navCard({
+            section:    'tools',
+            href:       '/tools/refrigerant-pt.html',
+            titleShort: 'Refrig P-T',
+            titleFull:  'Refrigerant P-T & Superheat Calculator',
+            desc:       'Saturation pressure ↔ temperature for R-410A, R-22, R-134a, R-407C, R-404A and R-454B — bubble and dew both, so blend glide is in plain sight — plus a superheat / subcooling check off a measured line temperature.',
+            pills:      ['6 Refrigerants', 'Bubble / Dew', 'Superheat / Subcool']
+        }) }}
+    </div>
+
+    <h2 class="hub-group">Related pages</h2>
+    <p class="hub-group-intro">
+        Two neighbors the refrigerant circuit works for — the moist-air side the evaporator conditions, and the coil capacity math at the air boundary.
+    </p>
+    <div class="card-grid">
+        {{ navCard({
+            section:    'education',
+            href:       '/education/psychrometrics-basics.html',
+            titleShort: 'Psychrometrics',
+            titleFull:  'Psychrometrics Basics',
+            desc:       'The seven properties on a psychrometric chart, what each one tells a controls engineer, and the gotchas that bite — with a pool-room widget that shows why dew point is the number to watch.',
+            pills:      ['Fundamentals', '7 Properties', 'Dew Point']
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/tools/coil-sizing.html',
+            titleShort: 'Coil Sizing',
+            titleFull:  'Coil-Sizing Calculator',
+            desc:       'Total, sensible, and latent capacity for a cooling or heating coil from its entering and leaving air — or run it backwards to solve the leaving-air state from a known load.',
+            pills:      ['Cool / Heat', 'Sensible / Latent', 'Forward & Reverse']
+        }) }}
+    </div>
+
+    <a class="back-link" href="/education/">← Back to Education</a>
+
+</main>
+{% endblock %}

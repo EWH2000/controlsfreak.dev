@@ -5358,7 +5358,25 @@ cards; the filter-chip question resurfaced and the owner chose to
 **defer** the chip row for now (still comfortably scannable at seven).
 No refrigeration hub exists yet, so the sim forward-links the three
 refrigerant lessons and the P-T tool without a `hub:` back-link
-([future: /refrigeration/]).
+([future: /refrigeration/] *(shipped 2026-07-18)*).
+
+*Shipped 2026-07-18.* The **refrigeration hub** (`/refrigeration/`, the
+fourth `/bacnet/`-clone pillar, wired into the Guides lane via
+`nav: guides` + `navLabel`) landed: a start-here path over the
+three-lesson chapter (cycle basics → superheat & subcooling →
+TXVs vs. EEVs), plus cards for the loop simulator, the P-T tool, and
+two Related pages (psychrometrics-basics, coil-sizing — cards on the
+hub only, no `hub:` backlinks, the hydronics Related-lessons
+precedent; coil-freeze-risk stays out entirely — it's water-coil
+freeze protection, a keyword match, not a subject match). `hub:`
+backlinks went on exactly four spokes: the three lessons and
+refrigerant-pt. **The simulator's own `hub:` backlink is deliberately
+deferred** — the heat-pump-mode lane owns `refrigerant-loop.html`, so
+the one-line backlink lands in whichever of the two lanes merges
+second (also recorded in the hub PR body so it can't be dropped).
+Hub count is now **four**, which half-arms the topic-primary-nav
+revisit trigger ("~4 hubs AND the mid-Aug 2026 GSC pull") — the GSC
+pull is now the sole remaining condition.
 
 *Verification round (2026-07-16).* An independent multi-agent
 verification (engine re-derivation, source-PDF table audit, 6×6

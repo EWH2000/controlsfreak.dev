@@ -43,7 +43,18 @@ entry point. The water-side pages link back to it the same way, and
 `affinity-laws` — fan **and** pump laws — is a full member of both the
 forced-air and hydronics hubs.
 
-The three hubs sit under a **Guides** nav lane and a `/guides/` landing
+The **refrigeration reference hub** at `/refrigeration/` is the fourth
+topic pillar — one page that gathers the refrigerant circuit (the
+three-lesson chapter from the vapor-compression cycle through superheat
+and subcooling to the metering devices, plus the P-T & superheat
+calculator and the live loop simulator) so the deepest refrigeration
+content is reachable from a single entry point. The refrigerant pages
+link back to it via the same "Part of" slot; the simulator's own
+backlink follows separately (its page is owned by the parallel
+heat-pump-mode PR, so the one-line backlink lands with whichever of the
+two merges second).
+
+The four hubs sit under a **Guides** nav lane and a `/guides/` landing
 that gather the topic pillars in one place — the topic axis alongside the
 format sections (Tools / Simulators / Education / Practice).
 
