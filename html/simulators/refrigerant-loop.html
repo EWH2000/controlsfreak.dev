@@ -185,6 +185,17 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
         .rl-presets .btn-row { margin-top: 0.5rem; }
         .rl-presets .copy-btn.rl-preset-starve.active { border-color: var(--red); color: var(--red); }
 
+        /* Scan hierarchy: the knob / field captions are what you scan FOR in
+           a control block this dense, but the shared `label, .field-label`
+           rule paints them the dimmest ink on the page while the values sit
+           in accent. Lift the captions to full text ink (size / casing keep
+           them reading as labels); values, slider sub-lines and buttons are
+           untouched. */
+        .rl-controls label,
+        .rl-controls .field-label,
+        .rl-presets .field-label,
+        .rl-fs-viewtoggle .field-label { color: var(--text); }
+
         /* ── P-T state plot ── the superheat / subcooling P-T diagram made
            live. Canvas geometry stays canonical (deg F / psig); only the axis
            and gap labels convert on a unit flip. Legend swatches follow the
