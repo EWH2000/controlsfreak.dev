@@ -720,7 +720,10 @@ section headers).
    on small revisions.
 7. Bump `package.json.version` when shipping something notable; the
    footer reads it via `html/_data/site.js`. A new tool is a minor
-   bump (`1.X.0`); a bug fix is a patch bump (`1.X.Y`).
+   bump (`1.X.0`); a bug fix is a patch bump (`1.X.Y`). Bump with
+   `npm version <minor|patch> --no-git-tag-version` — it updates
+   `package-lock.json`'s `version` fields in the same step, so the
+   two files can't drift (codebase-issues #156).
 
 **Adding a new simulator** follows the same steps under
 `html/simulators/` instead, with `nav: simulators` in the
