@@ -322,7 +322,11 @@
             const el = kids[i];
             if (el === palette || el.tagName === 'SCRIPT') continue;
             if (on) el.setAttribute('inert', '');
-            else el.removeAttribute('inert');
+            // fullscreen-toggle.js inerts the chrome behind a fullscreen
+            // tool and tags it data-fs-inert (codebase-issues #163). The
+            // palette opens ABOVE a fullscreen card (z-index 1000 vs 300),
+            // so closing it must not strip fullscreen's containment.
+            else if (!el.hasAttribute('data-fs-inert')) el.removeAttribute('inert');
         }
     }
 
