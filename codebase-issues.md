@@ -4948,7 +4948,7 @@ collapsing the two to one source. Deferred out of the sim's PR to keep it scoped
 (the sim only *added* code; touching the shipped tool is a separate, testable
 change). Flagged in the engine header as a tracked follow-up.
 
-### 160. Home Browse-card Simulators `desc` names five of seven sims *(open — 2026-07-16)*
+### 160. Home Browse-card Simulators `desc` names five of seven sims *(addressed 2026-07-18)*
 
 `html/index.html`'s Browse-card Simulators description still enumerates
 five simulators ("a PID step-response loop, a mock drive keypad, a
@@ -4957,6 +4957,15 @@ controller-wiring rig") while the pill correctly says `7 Simulators` —
 `hydronic-loop-builder` was already missing on main and
 `refrigerant-loop` extends the drift. Only the pill is guarded by
 `home-hero.spec.js`. Fix: add the two names or de-enumerate the desc.
+
+**Addressed (2026-07-18).** Took the de-enumerate option (owner's
+preference — it ends this drift class permanently rather than patching
+it). The desc keeps its opening anchor and closing sentence but the
+middle now characterizes the collection ("bump the setpoints, force
+the faults, and watch loops, logic, and equipment respond live")
+instead of naming pages, so adding a simulator only touches the
+pill — which stays the sole count surface and stays guarded by
+`home-hero.spec.js`.
 
 ### 161. `--blue-cool` small-text light-theme contrast is 3.74:1 *(open — 2026-07-16)*
 
