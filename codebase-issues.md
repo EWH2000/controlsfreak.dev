@@ -4875,7 +4875,7 @@ hard-coded 30/60 thresholds only at U=90 — so the sim's `85` was the drift.
 Nudged the sim default to `90` (input `value` + `cfg.up`) rather than break the
 lesson's own math.
 
-### 156. `package-lock.json` `version` field is stale (drifted from `package.json`) *(open — 2026-07-14)*
+### 156. `package-lock.json` `version` field is stale (drifted from `package.json`) *(addressed 2026-07-18)*
 
 Surfaced during the 2026-07-14 parallel backlog sweep: `npm install` in a fresh
 worktree re-syncs `package-lock.json`'s top-level `"version"`, which had drifted
@@ -4887,6 +4887,13 @@ Each fix agent that hit it reverted the incidental churn to keep its PR scoped,
 so it was never committed. Fix: use `npm version` for bumps (updates both), or a
 one-time resync commit; optionally note in CLAUDE.md that the lockfile `version`
 isn't load-bearing. Low priority.
+
+**Addressed (2026-07-18).** One-time resync: hand-edited both lockfile `version`
+fields (root + `packages[""]`) to `3.56.0`, matching `package.json` — nothing
+else in the lockfile touched. Also added the going-forward note to CLAUDE.md's
+version-bump step (*Adding a new tool*, step 7): bump with
+`npm version <minor|patch> --no-git-tag-version`, which rewrites both files
+atomically so the drift can't recur.
 
 ### 157. CLAUDE.md page-creation checklist omits `html/_data/educationSequence.js` *(addressed 2026-07-14)*
 
