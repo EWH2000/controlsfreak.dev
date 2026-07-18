@@ -4921,6 +4921,12 @@ motif in a future diagram-harmonization pass (grep the other education diagrams
 for the shared shape first so the whole cluster lands on one coil vocabulary).
 Low priority; no functional impact.
 
+*(2026-07-17)* The refrigerant-loop simulator now draws both its coil bars with
+the serpentine motif — live `data-flow` circuits joined to the pipe joints,
+painted by the state gradients — so the refrigeration cluster's flagship
+interactive sits on the settled coil vocabulary too. `air-handlers.html`
+remains the holdout for the harmonization pass.
+
 ### 159. `refrigerant-pt.html` could consume `RefrigLoop.satTempAtP` / `pressAtSatTemp` *(open — 2026-07-15)*
 
 The refrigerant-loop engine (`html/scripts/refrigerant-loop-engine.js`) ported

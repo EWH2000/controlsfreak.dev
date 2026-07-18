@@ -572,14 +572,18 @@ test.describe('refrigerant-loop-engine: airside coil temperatures', () => {
 // ── 12. Loop-SVG geometry guards (source-level) ──────────────────────────
 // The simulator page's loop schematic is static markup the animation JS
 // hooks by id — same read-the-file grounding as loadEngine() above, aimed
-// at the page source instead of the engine. These pin the geometry
-// contracts the airside crossflow lanes rely on: every lane is a single
-// vertical segment (the crossflow axis), each IN/OUT pair shares its
-// column and meets at the coil's tube row (y=85 condenser / y=345
-// evaporator), and path drawing order is the flow direction (condenser
-// air rises → y decreasing; evaporator air drops → y increasing). Exact
-// x columns are deliberately NOT pinned — they may be nudged for label
-// clearance — only the pairing and axis contracts are.
+// at the page source instead of the engine. Two guarded families:
+//   • crossflow air lanes — every lane is a single vertical segment (the
+//     crossflow axis), each IN/OUT pair shares its column and meets at
+//     the coil's tube row (y=85 condenser / y=345 evaporator), and path
+//     drawing order is the flow direction (condenser air rises → y
+//     decreasing; evaporator air drops → y increasing). Exact x columns
+//     are deliberately NOT pinned — they may be nudged for label
+//     clearance — only the pairing and axis contracts are.
+//   • serpentine coil runs — H/V-only square waves whose endpoints join
+//     the pipe joints exactly (no particle teleport), and the state
+//     gradients they ride declare userSpaceOnUse (the contract that lets
+//     particle <circle> fills sample the ramp at their true position).
 
 function loadPageSource() {
     return fs.readFileSync(
@@ -647,6 +651,47 @@ test.describe('refrigerant-loop page: crossflow air-lane geometry', () => {
             } else {
                 expect(s.y1, `${id} drops (y increasing)`).toBeGreaterThan(s.y0);
             }
+        }
+    });
+});
+
+test.describe('refrigerant-loop page: serpentine coils + state gradients', () => {
+
+    // Entry/exit ARE the pipe joints: rl-discharge ends at (200,85) and
+    // rl-liquid starts at (520,85); rl-expansion ends at (520,345) and
+    // rl-suction starts at (200,345). Draw order = flow direction, so
+    // the evaporator run is right→left.
+    const SERPENTINES = {
+        'rl-coil-cond': { start: [200, 85], end: [520, 85] },
+        'rl-coil-evap': { start: [520, 345], end: [200, 345] },
+    };
+
+    test('serpentine ds are H/V-only and join the pipe endpoints', () => {
+        const src = loadPageSource();
+        for (const id of Object.keys(SERPENTINES)) {
+            const d = pathD(src, id);
+            expect(d, `${id} has a d attribute`).toBeTruthy();
+            const m = d.match(/^M (\d+(?:\.\d+)?) (\d+(?:\.\d+)?)((?: [HV] \d+(?:\.\d+)?)+)$/);
+            expect(m, `${id} is M + H/V-only commands: "${d}"`).toBeTruthy();
+            let x = parseFloat(m[1]);
+            let y = parseFloat(m[2]);
+            expect([x, y], `${id} starts at its pipe joint`).toEqual(SERPENTINES[id].start);
+            const cmds = m[3].trim().split(' ');
+            for (let i = 0; i < cmds.length; i += 2) {
+                if (cmds[i] === 'H') x = parseFloat(cmds[i + 1]);
+                else y = parseFloat(cmds[i + 1]);
+            }
+            expect([x, y], `${id} ends at its pipe joint`).toEqual(SERPENTINES[id].end);
+        }
+    });
+
+    test('both state gradients declare userSpaceOnUse', () => {
+        const src = loadPageSource();
+        for (const id of ['rl-grad-cond', 'rl-grad-evap']) {
+            const m = src.match(new RegExp('<linearGradient id="' + id + '"[^>]*>'));
+            expect(m, `${id} exists`).toBeTruthy();
+            expect(m[0], `${id} samples root user space (particle-fill contract)`)
+                .toContain('gradientUnits="userSpaceOnUse"');
         }
     });
 });

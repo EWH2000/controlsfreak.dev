@@ -5428,6 +5428,39 @@ statements. Lanes live in safe columns (x=260 / x=460) because the
 engine's particles paint above every label; the airBand floor rose
 0.3 → 0.4 so the 115px IN stubs always carry a particle.)*
 
+*Serpentine coils + the live four-state gradient (2026-07-17):* the
+owner's flagship-piece expansion of the crossflow fix — the
+refrigerant no longer teleports across each coil bar. Both bars now
+carry a serpentine tube circuit (the DOAS D3 coil motif flipped:
+vertical zigzag legs progressing horizontally — 11 legs at 28px
+pitch, ~680px of path ≈ 20 particles at baseline density), joined
+to the pipe joints exactly — (200,85)→(520,85) and
+(520,345)→(200,345), draw order = flow direction — so the particle
+streams hand off with no gap. Each serpentine's stroke AND its
+particles ride a `userSpaceOnUse` linearGradient (`rl-grad-cond` /
+`rl-grad-evap`, stop colors as var() tokens, the sparkline
+trend-grad pattern): particles are cx/cy circles in root user
+space, so a gradient fill samples at each particle's true position,
+and the stroke keeps the state change readable statically and under
+reduced motion. The palette went four-state (owner decision): hot
+gas `--heat` → warm liquid `--amber` across the condenser, cold mix
+`--blue-cool` → cool vapor `--blue` across the evaporator, with the
+liquid + suction pipes, their leg arrows, and the state annotations
+adopting the new inks — the amber→blue jump lands at the metering
+device, where it physically belongs. The gradients are LIVE:
+updateLoop maps the solve onto the two moving stops (blend-end =
+1 − subcool/40 on the condenser, 1 − superheat/50 on the
+evaporator; 0.3 blend width, clamped to [0,1], writes throttled),
+so a starved coil walks the vapor ink across the evaporator and
+flash gas visibly keeps the condenser exit gassy. CONDENSER /
+EVAPORATOR names punch a `--surface` paint-order halo (the
+gauge-label idiom) through the serpentine; the air-lane group moved
+before the coil groups so its in-bar strokes hide behind the bar
+faces (stubs + arrowheads carry the static story — air particles
+still cross the face on the engine's top layer). Freeze still
+overrides the evaporator serpentine's particles to `--rl-frost`,
+exactly like the suction line.
+
 ### Schematic-bg chrome — gutter as-builts, hero-frame nav cards, discrete-pulse mode *(shipped 2026-05-23)*
 
 A major chrome overhaul on top of the existing v2.0 workstation
