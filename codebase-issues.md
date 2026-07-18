@@ -4908,7 +4908,7 @@ twin) for `nav: education` pages. A fuller "Adding a new education lesson"
 checklist, mirroring the tools/quiz ones, is the larger follow-up if the
 education path keeps growing.
 
-### 158. `air-handlers.html` still uses the older diagonal fin-line coil motif *(open — 2026-07-15)*
+### 158. `air-handlers.html` still uses the older diagonal fin-line coil motif *(addressed 2026-07-18)*
 
 Surfaced while shipping the refrigerant-loop sim (the refrigeration cluster's
 first interactive). The DOAS lesson's D3 diagram (PR #352) settled on a
@@ -4926,6 +4926,17 @@ the serpentine motif — live `data-flow` circuits joined to the pipe joints,
 painted by the state gradients — so the refrigeration cluster's flagship
 interactive sits on the settled coil vocabulary too. `air-handlers.html`
 remains the holdout for the harmonization pass.
+
+**Addressed (2026-07-18, PR #363).** Redrew all four air-handlers coil glyphs
+(D1 `ah-d1-htg`/`ah-d1-clg`, D3 `ah-d3-htg`/`ah-d3-clg`) as square-wave H/V
+serpentines on the DOAS reference geometry — D1's 40×70 coils take it verbatim
+(5 passes, 13-unit spacing), D3's 44×140 zoomed-slice coils keep the rhythm
+scaled (10 passes, 14-unit spacing); stroke-width 1.5, accent tokens and ids
+unchanged. The grep-the-cluster check confirmed DOAS was the only other
+education page drawing the motif and the filter glyphs' diagonals are filter
+media, not coil fins — left as-is. Verified against rendered screenshots at
+desktop/phone in both themes plus the `npm run screenshots` audit pass; suite
+green (635 passed).
 
 ### 159. `refrigerant-pt.html` could consume `RefrigLoop.satTempAtP` / `pressAtSatTemp` *(open — 2026-07-15)*
 
