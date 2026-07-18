@@ -281,7 +281,7 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
             margin: 0;
         }
         .tool-card.is-fullscreen .rl-fs-plot .rl-plot-wrap canvas { height: 100%; }
-        .tool-card.is-fullscreen .rl-fs-plot .rl-plot-legend { margin-top: 0.4rem; }
+        .tool-card.is-fullscreen .rl-fs-plot .rl-plot-legend { margin-top: 0.4rem; font-size: 0.85rem; }
 
         /* Controls: tighter so the six knobs stay in the bottom band. */
         .tool-card.is-fullscreen .rl-controls .form-row { margin-bottom: 0.55rem; }
@@ -1526,7 +1526,17 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
             // but the axis must never let either point paint off the top.
             const pMax = Math.max(niceCeilP(Math.max(s.pDis, s.pSuc) * 1.1), 50);
 
-            const padL = 40, padR = 12, padT = 12, padB = 26;
+            // ── Type scale — ride the canvas CSS box so fullscreen text grows
+            //    with the plot instead of staying at phone size (clamped
+            //    10–16px; small canvases keep today's 10/9px). fAxis: gridline
+            //    labels, temp ticks, SH/SC gap labels. fCap: axis unit
+            //    captions + the freeze tag. The label-clearance pads scale in
+            //    step so bigger type keeps its column / row. ──
+            const fScale = Math.max(10, Math.min(16, Math.min(cssW / 60, cssH / 20)));
+            const fAxis = Math.round(fScale);
+            const fCap  = Math.max(9, Math.round(fScale * 0.85));
+
+            const padL = 4 * fAxis, padR = 12, padT = 12, padB = 2 * fAxis;
             const plotW = cssW - padL - padR;
             const plotH = cssH - padT - padB;
             const xOf = t => padL + plotW * (t - tMin) / tSpan;
@@ -1538,7 +1548,7 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
             //    (and never-round kPag), so pick a round step in the current
             //    display unit and convert each value to psig for placement
             //    (gauge pressure is a pure scale, so this is exact). ──
-            ctx.font = '10px ' + mono;
+            ctx.font = fAxis + 'px ' + mono;
             ctx.lineWidth = 1;
             ctx.strokeStyle = cGrid;
             ctx.fillStyle = cDim;
@@ -1574,7 +1584,7 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
             //    top-left corner it glyph-collided with the topmost gridline
             //    label ('psig' across '400', worse as 4-digit metric). ──
             ctx.fillStyle = cDim;
-            ctx.font = '9px ' + mono;
+            ctx.font = fCap + 'px ' + mono;
             ctx.textAlign = 'left';
             ctx.textBaseline = 'bottom';
             ctx.fillText(pU(), 2, cssH - 2);
@@ -1617,7 +1627,7 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                 ctx.restore();
                 ctx.save();
                 ctx.fillStyle = freezing ? cRed : cDim;
-                ctx.font = '9px ' + mono;
+                ctx.font = fCap + 'px ' + mono;
                 ctx.textAlign = 'left';
                 ctx.textBaseline = 'top';
                 ctx.fillText(Math.round(U.display.temp(FREEZE_LINE_F)) + '° freeze', xF + 3, padT + 2);
@@ -1647,11 +1657,11 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                 ctx.stroke();
                 ctx.setLineDash([]);
                 ctx.fillStyle = color;
-                ctx.font = '10px ' + mono;
+                ctx.font = fAxis + 'px ' + mono;
                 const label = cssW < 450 ? tag : tag + ' ' + value;
                 const curveP = RefrigLoop.pressAtSatTemp(id, curve, (t1 + t2) / 2);
                 const yCurve = (curveP && curveP.ok) ? yOf(curveP.value) : -Infinity;
-                const collides = yCurve > y - 18 && yCurve < y - 1;
+                const collides = yCurve > y - (fAxis + 8) && yCurve < y - 1;
                 ctx.textBaseline = collides ? 'top' : 'bottom';
                 const yText = collides ? y + 6 : y - 4;
                 const midX = (xOf(t1) + xOf(t2)) / 2;
