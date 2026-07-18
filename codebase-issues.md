@@ -4956,6 +4956,13 @@ page bug: retuning light `--blue-cool` moves every return-side
 diagram at once. Mitigation today: the failing values are duplicated
 at high contrast in adjacent LCD/legend text.
 
+*2026-07-17 (refrigerant-loop legibility audit):* two more sightings —
+the sim loop-SVG's "cold mix" / "cool vapor" annotations and the sim
+P-T plot's canvas SC gap tag (drawn in `--blue-cool` at 10px via
+`drawPlot`). If the token retune stalls, `drawPlot` could pin a darker
+light-mode blue at draw time the way the gauge dials pinned
+theme-constant ink — a page-local mitigation, not the token fix.
+
 ### 162. `.copy-btn`'s `transition: all` animates the focus outline *(open — 2026-07-16)*
 
 `transition: all 0.15s` on `.copy-btn` makes the `:focus-visible`
@@ -4996,6 +5003,45 @@ so the linear chord can read ~2–4 °F low around e.g. 10 psig R-454B —
 faithful to the charts and irrelevant at A/C pressures, but worth
 densifying from Genetron Properties data if low-temp refrigeration
 lookups ever matter.
+
+### 166. `.tool-tag` / `.ok-pill` accent-on-accent-dim text fails AA in both themes *(open — 2026-07-17)*
+
+Both classes set `color: var(--accent)` on the `--accent-dim` wash at
+0.62rem (9.92px); the refrigerant-loop legibility audit measured
+4.08:1 dark / 4.25:1 light — an AA small-text fail in both themes.
+The fix is asymmetric, which is why it needs a token-level design
+decision rather than a drive-by swap: moving the text to
+`--accent-bright` fixes dark (5.60:1) but *worsens* light to 3.48:1 —
+so it likely wants a light-theme-specific green (or a size bump past
+the large-text threshold). Blast radius: `.tool-tag` sits in the
+header of ~100 pages (every tool / simulator / education / practice
+page), and `.ok-pill` renders on every page via
+`_includes/footer.njk`, plus the `_includes/nav-card.njk` statuslines
+and `index.html`.
+
+### 167. Fixed-px canvas type on canvases that grow — psychrometric-chart has the sim's latent bug *(open — 2026-07-17)*
+
+The refrigerant-loop P-T plot drew all canvas text at fixed 9–10px
+while fullscreen grew the canvas 988×260 → 1218×645 — fixed in this
+PR by deriving a clamped type scale from the canvas CSS box (the
+`fScale` clamp in `drawPlot`; use it as the template).
+`tools/psychrometric-chart.html` has the same *latent* bug today:
+10/11px canvas fonts plus a fullscreen mode that enlarges the canvas.
+`scripts/pid-chart.js` (pid-tuner, pid-basics) and the
+staging-sequencer canvas share the 9–10px fixed-type pattern but have
+no fullscreen mode yet — they only inherit the bug if one lands.
+
+### 168. Form-label scan hierarchy: shared `label, .field-label` rule dims the scan targets *(open — 2026-07-17, low priority)*
+
+The shared rule in `styles.css` sets every form label to 0.7rem
+`--text-dim`, so on control-dense pages the captions you scan FOR are
+the dimmest ink in the block while the values render accent/bright —
+hierarchy inverted for scanning. Not a WCAG fail (5.67:1 dark /
+5.27:1 light), purely a hierarchy question. The refrigerant-loop sim
+now overrides page-locally (this PR: controls / presets / fullscreen
+view-toggle captions lifted to `--text`) — precedent to reach for if
+the same read recurs elsewhere before any site-wide retune. Affects
+every `<label>`-bearing page (~46).
 
 ### Deferred / Won't fix (with revisit trigger)
 

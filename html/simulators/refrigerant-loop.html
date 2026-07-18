@@ -125,6 +125,12 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
         }
         .rl-gauge-low  .rl-gauge-val { fill: #4aa3dd; }   /* theme-constant, see note above */
         .rl-gauge-high .rl-gauge-val { fill: #e8884a; }
+        /* Unit tspan tucked beside the digital number — the register
+           LCDs' small-unit look (smaller, lighter, same baseline). */
+        .rl-gauge-val-unit {
+            font-weight: 400;
+            font-size: 13px;
+        }
         .rl-gauge-cap {
             font-family: var(--mono);
             font-size: 10.5px;
@@ -132,6 +138,19 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
             fill: #8a8369;
             text-anchor: middle;
         }
+        /* Side header above each dial — names the manifold side for
+           readers new to gauges. Lives INSIDE the SVG so it scales
+           with the dial in fullscreen (an HTML label would stay
+           fixed-size); ink pinned to the side's needle/label hexes
+           (theme-constant, see note above). */
+        .rl-gauge-side {
+            font-family: var(--mono);
+            font-size: 11px;
+            letter-spacing: 0.1em;
+            text-anchor: middle;
+        }
+        .rl-gauge-low  .rl-gauge-side { fill: #4aa3dd; }
+        .rl-gauge-high .rl-gauge-side { fill: #e8884a; }
 
         /* LCD cluster — 4×2 grid of small equipment LCDs. */
         .rl-lcds {
@@ -184,6 +203,17 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
         .rl-presets { margin: 1.25rem 0 0; }
         .rl-presets .btn-row { margin-top: 0.5rem; }
         .rl-presets .copy-btn.rl-preset-starve.active { border-color: var(--red); color: var(--red); }
+
+        /* Scan hierarchy: the knob / field captions are what you scan FOR in
+           a control block this dense, but the shared `label, .field-label`
+           rule paints them the dimmest ink on the page while the values sit
+           in accent. Lift the captions to full text ink (size / casing keep
+           them reading as labels); values, slider sub-lines and buttons are
+           untouched. */
+        .rl-controls label,
+        .rl-controls .field-label,
+        .rl-presets .field-label,
+        .rl-fs-viewtoggle .field-label { color: var(--text); }
 
         /* ── P-T state plot ── the superheat / subcooling P-T diagram made
            live. Canvas geometry stays canonical (deg F / psig); only the axis
@@ -281,7 +311,7 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
             margin: 0;
         }
         .tool-card.is-fullscreen .rl-fs-plot .rl-plot-wrap canvas { height: 100%; }
-        .tool-card.is-fullscreen .rl-fs-plot .rl-plot-legend { margin-top: 0.4rem; }
+        .tool-card.is-fullscreen .rl-fs-plot .rl-plot-legend { margin-top: 0.4rem; font-size: 0.85rem; }
 
         /* Controls: tighter so the six knobs stay in the bottom band. */
         .tool-card.is-fullscreen .rl-controls .form-row { margin-bottom: 0.55rem; }
@@ -439,8 +469,11 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                  heat-in / heat-out arrows. Four data-flow pipe segments —
                  discharge + liquid recolored --heat (hot side), expansion +
                  suction --blue-cool (cool side, suction recolored to a frost
-                 tint when the coil ices). The compressor circle carries a
-                 top-down scroll set whose orbit rate tracks the stage.
+                 tint when the coil ices). Eight airside lane segments cross
+                 the two coil faces, their density banded to the airflow
+                 knobs (see the AIRSIDE LANES note in the SVG). The
+                 compressor circle carries a top-down scroll set whose orbit
+                 rate tracks the stage.
                  The particles + colors are applied by flow-engine.js (loaded
                  site-wide); this page only tags the geometry and recolors. -->
             <h2 class="subhead">The loop</h2>
@@ -450,7 +483,7 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                      aria-describedby="rl-cycle-desc"
                      font-family="var(--mono)">
                     <title id="rl-cycle-title">The refrigerant loop, live</title>
-                    <desc id="rl-cycle-desc">A closed rectangular vapor-compression loop drawn clockwise. A compressor on the left drives hot high-pressure vapor up the discharge line into a condenser spanning the top, which rejects heat to outdoor air and drops the refrigerant to a warm high-pressure liquid; the liquid line runs down the right side to a metering device, which flashes it to a cold low-pressure mix; that mix crosses the evaporator along the bottom, absorbing heat from indoor air and boiling back to a cool low-pressure vapor that returns up the suction line to the compressor. The discharge and liquid-line pipes — up the left side and across the top — are the hot high side, drawn in orange; the expansion and suction pipes — down the right side and along the bottom — are the cool low side, drawn in muted blue. When the evaporator coil is starved of airflow and ices over, a frost overlay appears on the evaporator and the suction leg. The compressor symbol is a top-down scroll set — two interleaved spirals, the moving one orbiting the fixed one in a small circle (a circular translation, not a spin) at a rate that follows the compressor stage. Live pressure, superheat, subcooling and alarm values are reported in the gauges and readouts below.</desc>
+                    <desc id="rl-cycle-desc">A closed rectangular vapor-compression loop drawn clockwise. A compressor on the left drives hot high-pressure vapor up the discharge line into a condenser spanning the top, which rejects heat to outdoor air and drops the refrigerant to a warm high-pressure liquid; the liquid line runs down the right side to a metering device, which flashes it to a cold low-pressure mix; that mix crosses the evaporator along the bottom, absorbing heat from indoor air and boiling back to a cool low-pressure vapor that returns up the suction line to the compressor. The discharge and liquid-line pipes — up the left side and across the top — are the hot high side, drawn in orange; the expansion and suction pipes — down the right side and along the bottom — are the cool low side, drawn in muted blue. When the evaporator coil is starved of airflow and ices over, a frost overlay appears on the evaporator and the suction leg. The compressor symbol is a top-down scroll set — two interleaved spirals, the moving one orbiting the fixed one in a small circle (a circular translation, not a spin) at a rate that follows the compressor stage. Thin dashed air lanes cross both coil faces left to right — outdoor air over the condenser, indoor air over the evaporator — entering in dim ink and leaving tinted by the coil's work: warmed orange past the condenser's midline, cooled blue past the evaporator's, frost-tinted once the coil ices. Each face's lane density follows its own airflow knob, so a starved coil visibly thins its air stream. Live pressure, superheat, subcooling and alarm values are reported in the gauges and readouts below.</desc>
 
                     <!-- ── HIGH-SIDE pipes (orange / --heat) ── -->
                     <path id="rl-discharge" data-flow="supply" d="M 120 193 V 85 H 200" fill="none"
@@ -499,9 +532,16 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                          semicircular arcs about two centers (0,0)/(3.5,0),
                          radii 2.5 / 6 / 9.5 / 13 / 16.5 (half-pitch 3.5,
                          2.5 turns, outer radius 16.5 — clears the r24 housing
-                         with the 3.25px orbit). The orbiting copy is the same
-                         path with a baked rotate(180) about the compressor
-                         center; frame() writes only the orbit translate. Ink
+                         at the orbit's widest reach, translate 5.25). The
+                         orbiting copy is the same path with a baked
+                         rotate(180) about the compressor center; that
+                         rotation lands it meshed — walls concentric with the
+                         fixed set, 3.5 apart — at translate(3.5 0), so
+                         frame() orbits THAT offset in a 1.75px circle: wall
+                         gap stays 3.5 − 1.75 = 1.75 against the 2px stroke,
+                         a constant touch-and-slide kiss, never a crossing
+                         (an origin-centered orbit swings 3.5 ± r from mesh
+                         and passes clean through at the far phase). Ink
                          reuses the retired fan glyph's palette: fixed scroll
                          in its base tint (blue-cool), orbiting scroll in its
                          running tint (blue), same 2px weight. -->
@@ -511,7 +551,7 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                         <g transform="translate(120 215)" fill="none"
                            stroke-width="2" stroke-linecap="round">
                             <path id="rl-scroll-fixed" stroke="var(--blue-cool)" d="M 2.5 0 A 2.5 2.5 0 0 1 -2.5 0 A 6 6 0 0 1 9.5 0 A 9.5 9.5 0 0 1 -9.5 0 A 13 13 0 0 1 16.5 0 A 16.5 16.5 0 0 1 -16.5 0"/>
-                            <g id="rl-compressor-orbit" transform="translate(3.25 0)">
+                            <g id="rl-compressor-orbit" transform="translate(5.25 0)">
                                 <path stroke="var(--blue)" d="M 2.5 0 A 2.5 2.5 0 0 1 -2.5 0 A 6 6 0 0 1 9.5 0 A 9.5 9.5 0 0 1 -9.5 0 A 13 13 0 0 1 16.5 0 A 16.5 16.5 0 0 1 -16.5 0" transform="rotate(180)"/>
                             </g>
                         </g>
@@ -575,6 +615,53 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                     <text x="585" y="290" text-anchor="end" font-size="11" fill="var(--blue-cool)">cold mix</text>
                     <text x="135" y="290" font-size="11" fill="var(--blue-cool)">cool vapor</text>
 
+                    <!-- ── AIRSIDE LANES — the streams the two airflow knobs
+                         drive. Two thin dashed lanes cross each coil face
+                         left→right (matching the register's "air in → out"
+                         reading), skirting the label band. Each lane splits at
+                         the rect midline into an IN half (neutral dim ink) and
+                         an OUT half tinted by the coil's work: warmed --heat
+                         off the condenser (opacity-quieted — the air is
+                         supporting cast next to the pipes), cooled --blue-cool
+                         off the evaporator (recolored to the frost tint when
+                         the coil ices, exactly like the suction line). Both
+                         halves run the same direction, so one path per segment
+                         is fine — the converging-flow two-path gotcha only
+                         applies when directions oppose. data-flow="air" makes
+                         the particle fill follow each lane's stroke; density
+                         bands track the two knobs from updateLoop. The dashes
+                         are the static / reduced-motion / print encoding —
+                         .flow-active drops them while particles run (the
+                         shared air-duct rule in styles.css). -->
+                    <g>
+                        <!-- Condenser face: outdoor air, in (dim) → out (warmed). -->
+                        <path id="rl-air-c-in-a"  data-flow="air" d="M 185 70 H 360" fill="none"
+                              stroke="var(--text-dim)" stroke-width="1.4" stroke-dasharray="4 4" opacity="0.6"/>
+                        <path id="rl-air-c-out-a" data-flow="air" d="M 360 70 H 535" fill="none"
+                              stroke="var(--heat)" stroke-width="1.4" stroke-dasharray="4 4" opacity="0.6"/>
+                        <path id="rl-air-c-in-b"  data-flow="air" d="M 185 103 H 360" fill="none"
+                              stroke="var(--text-dim)" stroke-width="1.4" stroke-dasharray="4 4" opacity="0.6"/>
+                        <path id="rl-air-c-out-b" data-flow="air" d="M 360 103 H 535" fill="none"
+                              stroke="var(--heat)" stroke-width="1.4" stroke-dasharray="4 4" opacity="0.6"/>
+                        <g fill="var(--heat)" opacity="0.6">
+                            <polygon points="537,66 545,70 537,74"/>
+                            <polygon points="537,99 545,103 537,107"/>
+                        </g>
+                        <!-- Evaporator face: indoor air, in (dim) → out (cooled). -->
+                        <path id="rl-air-e-in-a"  data-flow="air" d="M 185 330 H 360" fill="none"
+                              stroke="var(--text-dim)" stroke-width="1.4" stroke-dasharray="4 4" opacity="0.6"/>
+                        <path id="rl-air-e-out-a" data-flow="air" d="M 360 330 H 535" fill="none"
+                              stroke="var(--blue-cool)" stroke-width="1.4" stroke-dasharray="4 4" opacity="0.75"/>
+                        <path id="rl-air-e-in-b"  data-flow="air" d="M 185 363 H 360" fill="none"
+                              stroke="var(--text-dim)" stroke-width="1.4" stroke-dasharray="4 4" opacity="0.6"/>
+                        <path id="rl-air-e-out-b" data-flow="air" d="M 360 363 H 535" fill="none"
+                              stroke="var(--blue-cool)" stroke-width="1.4" stroke-dasharray="4 4" opacity="0.75"/>
+                        <g fill="var(--blue-cool)" opacity="0.75">
+                            <polygon points="537,326 545,330 537,334"/>
+                            <polygon points="537,359 545,363 537,367"/>
+                        </g>
+                    </g>
+
                     <!-- ── FROST OVERLAY — fades in on the coil-freeze alarm ── -->
                     <g class="rl-frost" id="rl-frost">
                         <rect class="rl-frost-fill" x="200" y="315" width="320" height="60" rx="2"/>
@@ -613,30 +700,36 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                         </div>
 
                         <div class="rl-gauges">
-                            <svg class="rl-gauge rl-gauge-low" id="rl-gauge-low" viewBox="0 0 200 182"
+                            <svg class="rl-gauge rl-gauge-low" id="rl-gauge-low" viewBox="0 -20 200 202"
                                  role="img" aria-labelledby="rl-gauge-low-t">
                                 <title id="rl-gauge-low-t">Low-side suction pressure gauge</title>
+                                <text class="rl-gauge-side" x="100" y="-6">LOW PRESSURE SIDE</text>
                                 <circle class="rl-gauge-face" cx="100" cy="94" r="86"/>
                                 <path class="rl-gauge-arc" id="rl-gauge-low-arc" d=""/>
                                 <line class="rl-gauge-needle-low" id="rl-gauge-low-needle"
                                       x1="100" y1="110" x2="100" y2="18"/>
                                 <g id="rl-gauge-low-scale"></g>
                                 <circle class="rl-gauge-hub" cx="100" cy="94" r="6.5"/>
-                                <text class="rl-gauge-val" id="rl-gauge-low-val" x="100" y="150">&#8212;</text>
-                                <text class="rl-gauge-cap" id="rl-gauge-low-cap" x="100" y="167">LOW · SUCTION · PSIG</text>
+                                <text class="rl-gauge-val" x="100" y="150"><tspan
+                                    id="rl-gauge-low-num">&#8212;</tspan><tspan
+                                    class="rl-gauge-val-unit" id="rl-gauge-low-unit" dx="4">psig</tspan></text>
+                                <text class="rl-gauge-cap" x="100" y="167">SUCTION</text>
                             </svg>
 
-                            <svg class="rl-gauge rl-gauge-high" id="rl-gauge-high" viewBox="0 0 200 182"
+                            <svg class="rl-gauge rl-gauge-high" id="rl-gauge-high" viewBox="0 -20 200 202"
                                  role="img" aria-labelledby="rl-gauge-high-t">
                                 <title id="rl-gauge-high-t">High-side discharge pressure gauge</title>
+                                <text class="rl-gauge-side" x="100" y="-6">HIGH PRESSURE SIDE</text>
                                 <circle class="rl-gauge-face" cx="100" cy="94" r="86"/>
                                 <path class="rl-gauge-arc" id="rl-gauge-high-arc" d=""/>
                                 <line class="rl-gauge-needle-high" id="rl-gauge-high-needle"
                                       x1="100" y1="110" x2="100" y2="18"/>
                                 <g id="rl-gauge-high-scale"></g>
                                 <circle class="rl-gauge-hub" cx="100" cy="94" r="6.5"/>
-                                <text class="rl-gauge-val" id="rl-gauge-high-val" x="100" y="150">&#8212;</text>
-                                <text class="rl-gauge-cap" id="rl-gauge-high-cap" x="100" y="167">HIGH · HEAD · PSIG</text>
+                                <text class="rl-gauge-val" x="100" y="150"><tspan
+                                    id="rl-gauge-high-num">&#8212;</tspan><tspan
+                                    class="rl-gauge-val-unit" id="rl-gauge-high-unit" dx="4">psig</tspan></text>
+                                <text class="rl-gauge-cap" x="100" y="167">HEAD</text>
                             </svg>
                         </div>
 
@@ -1038,10 +1131,10 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
         const gauges = {
             low:  { curve: 'dew',    refTemp: 60,  max: 200, cur: -120, target: -120,
                     scale: 'rl-gauge-low-scale',  needle: 'rl-gauge-low-needle',
-                    arc: 'rl-gauge-low-arc',      val: 'rl-gauge-low-val' },
+                    arc: 'rl-gauge-low-arc',      num: 'rl-gauge-low-num' },
             high: { curve: 'bubble', refTemp: 140, max: 600, cur: -120, target: -120,
                     scale: 'rl-gauge-high-scale', needle: 'rl-gauge-high-needle',
-                    arc: 'rl-gauge-high-arc',     val: 'rl-gauge-high-val' },
+                    arc: 'rl-gauge-high-arc',     num: 'rl-gauge-high-num' },
         };
 
         // frac → point on the dial at radius R (screen coords, y down).
@@ -1232,8 +1325,8 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
             // a ≥/≤ mark — without it the pegged gauge silently contradicted
             // the sat-temp LCD (e.g. 153.0 °F beside a 530-psig top-row clamp)
             // while a higher-priority verdict masked the off-chart note. The
-            // unit lives in the caption below (see applyRefrigerant), not here.
-            $(g.val).textContent = (oorMark || '') + dispP(psig);
+            // unit lives in the sibling tspan (see applyRefrigerant), not here.
+            $(g.num).textContent = (oorMark || '') + dispP(psig);
         }
         function applyNeedle(g) {
             $(g.needle).setAttribute('transform',
@@ -1309,7 +1402,8 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
         // ─────────────────────────────────────────────────────────────
         // LOOP animation hooks (flow-engine.js). Color encodes state
         // (hot / cool / frost); coarse density bands encode mass flow
-        // (compressor stage, thinned when the coil ices). refreshPath
+        // (compressor stage, thinned when the coil ices) and — on the
+        // airside lanes — each coil face's CFM knob. refreshPath
         // rebuilds a pool (and resets particle color to the data-flow
         // default), so density changes are throttled to band crossings and
         // the colors are re-applied every render. No-ops safely before the
@@ -1318,7 +1412,23 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
         const FLOW_SEGS = ['rl-discharge', 'rl-liquid', 'rl-expansion', 'rl-suction'];
         let lastBand = null;
 
-        function updateLoop(s) {
+        // Airside lane segments — attribute-only selectors (the SVG-id
+        // gotcha): one set per coil face for the density refresh, plus the
+        // evaporator OUT halves alone for the frost recolor.
+        const AIR_E     = document.querySelectorAll('[id^="rl-air-e-"]');
+        const AIR_C     = document.querySelectorAll('[id^="rl-air-c-"]');
+        const AIR_E_OUT = document.querySelectorAll('[id^="rl-air-e-out"]');
+        let lastAirBandE = null, lastAirBandC = null;
+
+        // Map an airflow knob (0.40–1.20) onto the pipes' coarse density
+        // scheme. Design 1.00 deliberately sits one band under full so the
+        // top of the knob (≥1.10) still reads denser than design; 0.40
+        // lands on the same sparse 0.3 the iced pipes use.
+        function airBand(v) {
+            return v >= 1.10 ? 1.0 : v >= 0.90 ? 0.75 : v >= 0.65 ? 0.5 : 0.3;
+        }
+
+        function updateLoop(s, inp) {
             $('rl-cycle').classList.toggle('frozen', s.flags.freeze);
             if (!window.FlowEngine || !FlowEngine.setPathColor) return;
 
@@ -1332,11 +1442,36 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                     if (FlowEngine.refreshPath) FlowEngine.refreshPath(el);
                 });
             }
+            // Airside bands: each coil face's lane rate follows its own CFM
+            // knob — indoor tracks airflow, outdoor tracks condAir. Same
+            // throttle-to-band-crossings rule as the pipes above.
+            const eBand = airBand(inp.airflow);
+            if (eBand !== lastAirBandE) {
+                lastAirBandE = eBand;
+                AIR_E.forEach(el => {
+                    el.setAttribute('data-flow-density', eBand);
+                    if (FlowEngine.refreshPath) FlowEngine.refreshPath(el);
+                });
+            }
+            const cBand = airBand(inp.condAir);
+            if (cBand !== lastAirBandC) {
+                lastAirBandC = cBand;
+                AIR_C.forEach(el => {
+                    el.setAttribute('data-flow-density', cBand);
+                    if (FlowEngine.refreshPath) FlowEngine.refreshPath(el);
+                });
+            }
             // State colors (cheap; also restores color after a refresh).
             FlowEngine.setPathColor($('rl-discharge'),  'var(--heat)');
             FlowEngine.setPathColor($('rl-liquid'),     'var(--heat)');
             FlowEngine.setPathColor($('rl-expansion'),  'var(--blue-cool)');
             FlowEngine.setPathColor($('rl-suction'),    s.flags.freeze ? 'var(--rl-frost)' : 'var(--blue-cool)');
+            // The indoor OUT air rides the same frost recolor as the suction
+            // line; every other lane's rebuild default (its stroke) is
+            // already the right color.
+            AIR_E_OUT.forEach(el => {
+                FlowEngine.setPathColor(el, s.flags.freeze ? 'var(--rl-frost)' : 'var(--blue-cool)');
+            });
         }
 
         // ─────────────────────────────────────────────────────────────
@@ -1427,7 +1562,17 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
             // but the axis must never let either point paint off the top.
             const pMax = Math.max(niceCeilP(Math.max(s.pDis, s.pSuc) * 1.1), 50);
 
-            const padL = 40, padR = 12, padT = 12, padB = 26;
+            // ── Type scale — ride the canvas CSS box so fullscreen text grows
+            //    with the plot instead of staying at phone size (clamped
+            //    10–16px; small canvases keep today's 10/9px). fAxis: gridline
+            //    labels, temp ticks, SH/SC gap labels. fCap: axis unit
+            //    captions + the freeze tag. The label-clearance pads scale in
+            //    step so bigger type keeps its column / row. ──
+            const fScale = Math.max(10, Math.min(16, Math.min(cssW / 60, cssH / 20)));
+            const fAxis = Math.round(fScale);
+            const fCap  = Math.max(9, Math.round(fScale * 0.85));
+
+            const padL = 4 * fAxis, padR = 12, padT = 12, padB = 2 * fAxis;
             const plotW = cssW - padL - padR;
             const plotH = cssH - padT - padB;
             const xOf = t => padL + plotW * (t - tMin) / tSpan;
@@ -1439,7 +1584,7 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
             //    (and never-round kPag), so pick a round step in the current
             //    display unit and convert each value to psig for placement
             //    (gauge pressure is a pure scale, so this is exact). ──
-            ctx.font = '10px ' + mono;
+            ctx.font = fAxis + 'px ' + mono;
             ctx.lineWidth = 1;
             ctx.strokeStyle = cGrid;
             ctx.fillStyle = cDim;
@@ -1475,7 +1620,7 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
             //    top-left corner it glyph-collided with the topmost gridline
             //    label ('psig' across '400', worse as 4-digit metric). ──
             ctx.fillStyle = cDim;
-            ctx.font = '9px ' + mono;
+            ctx.font = fCap + 'px ' + mono;
             ctx.textAlign = 'left';
             ctx.textBaseline = 'bottom';
             ctx.fillText(pU(), 2, cssH - 2);
@@ -1518,7 +1663,7 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                 ctx.restore();
                 ctx.save();
                 ctx.fillStyle = freezing ? cRed : cDim;
-                ctx.font = '9px ' + mono;
+                ctx.font = fCap + 'px ' + mono;
                 ctx.textAlign = 'left';
                 ctx.textBaseline = 'top';
                 ctx.fillText(Math.round(U.display.temp(FREEZE_LINE_F)) + '° freeze', xF + 3, padT + 2);
@@ -1548,11 +1693,11 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                 ctx.stroke();
                 ctx.setLineDash([]);
                 ctx.fillStyle = color;
-                ctx.font = '10px ' + mono;
+                ctx.font = fAxis + 'px ' + mono;
                 const label = cssW < 450 ? tag : tag + ' ' + value;
                 const curveP = RefrigLoop.pressAtSatTemp(id, curve, (t1 + t2) / 2);
                 const yCurve = (curveP && curveP.ok) ? yOf(curveP.value) : -Infinity;
-                const collides = yCurve > y - 18 && yCurve < y - 1;
+                const collides = yCurve > y - (fAxis + 8) && yCurve < y - 1;
                 ctx.textBaseline = collides ? 'top' : 'bottom';
                 const yText = collides ? y + 6 : y - 4;
                 const midX = (xOf(t1) + xOf(t2)) / 2;
@@ -1673,7 +1818,7 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
             setGaugeTarget(gauges.low,  s.pSuc, s.flags.outOfRangeLow  ? '≤ ' : '');
             setGaugeTarget(gauges.high, s.pDis, s.flags.outOfRangeHigh ? '≥ ' : '');
             renderRegister(s);
-            updateLoop(s);
+            updateLoop(s, inp);
             drawPlot(s);
         }
 
@@ -1688,12 +1833,12 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
             $('rl-refrig-badge').textContent = R ? R.name : id;
             buildGaugeScale(gauges.low, id);
             buildGaugeScale(gauges.high, id);
-            // Dial captions carry the pressure unit (the digital is bare);
-            // re-set here because this runs on init, refrigerant change, and
-            // the U.onChange unit flip alike.
-            const capU = pU().toUpperCase();
-            $('rl-gauge-low-cap').textContent  = 'LOW · SUCTION · '  + capU;
-            $('rl-gauge-high-cap').textContent = 'HIGH · HEAD · ' + capU;
+            // The digital readout's unit tspan tracks the display unit
+            // (the captions below the dials are static); re-set here because
+            // this runs on init, refrigerant change, and the U.onChange unit
+            // flip alike.
+            $('rl-gauge-low-unit').textContent  = pU();
+            $('rl-gauge-high-unit').textContent = pU();
             renderMain();
         }
 
@@ -1706,7 +1851,8 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
         // schedules, so the orbit rests at the markup's settled phase-0
         // translate — mirrors flow-engine.js bailing out.
         // ─────────────────────────────────────────────────────────────
-        const ORBIT_R = 3.25;              // px; matches the markup's settled translate(3.25 0)
+        const ORBIT_CX = 3.5;              // px; mesh offset — the rotated twin's walls sit concentric here
+        const ORBIT_R  = 1.75;             // px; orbit circle about the mesh; phase 0 = the markup's translate(5.25 0)
         let orbitPhase = 0, lastT = null;  // degrees; phase 0 = the markup's rest position
         const orbit = $('rl-compressor-orbit');
 
@@ -1724,12 +1870,14 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
 
             // Same pacing rule the old fan glyph used: 140°/s × capacity.
             // The 180° rotation is baked on the path inside the group, so
-            // only the orbit translate is written per frame.
+            // only the orbit translate is written per frame — a circle of
+            // ORBIT_R about the mesh offset ORBIT_CX, keeping the walls in
+            // touch-and-slide contact at every phase (see the markup note).
             orbitPhase = (orbitPhase + 140 * capacity * dt) % 360;
             if (orbit) {
                 const rad = orbitPhase * Math.PI / 180;
                 orbit.setAttribute('transform', 'translate(' +
-                    (ORBIT_R * Math.cos(rad)).toFixed(2) + ' ' +
+                    (ORBIT_CX + ORBIT_R * Math.cos(rad)).toFixed(2) + ' ' +
                     (ORBIT_R * Math.sin(rad)).toFixed(2) + ')');
             }
 
@@ -1900,7 +2048,8 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
         // the pools). Ours fires next, with the pools already built, so the
         // recolor sticks. If the document is already parsed, run now.
         function primeLoop() {
-            lastBand = null;          // force the density band to (re)apply
+            lastBand = null;          // force the density bands to (re)apply
+            lastAirBandE = lastAirBandC = null;
             renderMain();
         }
         if (document.readyState === 'loading') {
