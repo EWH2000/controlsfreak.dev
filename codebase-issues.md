@@ -4996,7 +4996,7 @@ P-T plot's canvas SC gap tag (drawn in `--blue-cool` at 10px via
 light-mode blue at draw time the way the gauge dials pinned
 theme-constant ink — a page-local mitigation, not the token fix.
 
-### 162. `.copy-btn`'s `transition: all` animates the focus outline *(open — 2026-07-16)*
+### 162. `.copy-btn`'s `transition: all` animates the focus outline *(addressed 2026-07-18)*
 
 `transition: all 0.15s` on `.copy-btn` makes the `:focus-visible`
 outline fade/shift in rather than appear instantly on keyboard focus
@@ -5004,6 +5004,19 @@ outline fade/shift in rather than appear instantly on keyboard focus
 Enumerating the intended properties (border-color, color, background)
 fixes it site-wide; sweep other `transition: all` interactives while
 in there.
+
+**Addressed 2026-07-18:** the sweep found exactly three
+`transition: all` rules in `html/styles.css` — and none in page-level
+`{% block head %}` styles or shared scripts. Each now enumerates the
+properties its states actually animate, durations unchanged:
+`.copy-btn` → `color, border-color, background` (background included
+because refrigerant-pt stacks `background: var(--accent-dim)` on its
+`.copy-btn.active` mode toggles); `.tab-btn` (0.18s) → `color,
+border-color` (covers `.active`'s `border-bottom-color`); `.bit`
+(0.12s) → `background, border-color`. The `:focus-visible` outline now
+snaps on instantly on all three. Matches the enumerated-transition
+shape the rest of `styles.css` already uses (e.g.
+`.tool-card-fullscreen-btn`).
 
 ### 163. CSS fullscreen leaves the background page keyboard-focusable *(open — 2026-07-16)*
 
