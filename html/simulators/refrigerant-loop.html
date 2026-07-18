@@ -502,9 +502,16 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                          semicircular arcs about two centers (0,0)/(3.5,0),
                          radii 2.5 / 6 / 9.5 / 13 / 16.5 (half-pitch 3.5,
                          2.5 turns, outer radius 16.5 — clears the r24 housing
-                         with the 3.25px orbit). The orbiting copy is the same
-                         path with a baked rotate(180) about the compressor
-                         center; frame() writes only the orbit translate. Ink
+                         at the orbit's widest reach, translate 5.25). The
+                         orbiting copy is the same path with a baked
+                         rotate(180) about the compressor center; that
+                         rotation lands it meshed — walls concentric with the
+                         fixed set, 3.5 apart — at translate(3.5 0), so
+                         frame() orbits THAT offset in a 1.75px circle: wall
+                         gap stays 3.5 − 1.75 = 1.75 against the 2px stroke,
+                         a constant touch-and-slide kiss, never a crossing
+                         (an origin-centered orbit swings 3.5 ± r from mesh
+                         and passes clean through at the far phase). Ink
                          reuses the retired fan glyph's palette: fixed scroll
                          in its base tint (blue-cool), orbiting scroll in its
                          running tint (blue), same 2px weight. -->
@@ -514,7 +521,7 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                         <g transform="translate(120 215)" fill="none"
                            stroke-width="2" stroke-linecap="round">
                             <path id="rl-scroll-fixed" stroke="var(--blue-cool)" d="M 2.5 0 A 2.5 2.5 0 0 1 -2.5 0 A 6 6 0 0 1 9.5 0 A 9.5 9.5 0 0 1 -9.5 0 A 13 13 0 0 1 16.5 0 A 16.5 16.5 0 0 1 -16.5 0"/>
-                            <g id="rl-compressor-orbit" transform="translate(3.25 0)">
+                            <g id="rl-compressor-orbit" transform="translate(5.25 0)">
                                 <path stroke="var(--blue)" d="M 2.5 0 A 2.5 2.5 0 0 1 -2.5 0 A 6 6 0 0 1 9.5 0 A 9.5 9.5 0 0 1 -9.5 0 A 13 13 0 0 1 16.5 0 A 16.5 16.5 0 0 1 -16.5 0" transform="rotate(180)"/>
                             </g>
                         </g>
@@ -1798,7 +1805,8 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
         // schedules, so the orbit rests at the markup's settled phase-0
         // translate — mirrors flow-engine.js bailing out.
         // ─────────────────────────────────────────────────────────────
-        const ORBIT_R = 3.25;              // px; matches the markup's settled translate(3.25 0)
+        const ORBIT_CX = 3.5;              // px; mesh offset — the rotated twin's walls sit concentric here
+        const ORBIT_R  = 1.75;             // px; orbit circle about the mesh; phase 0 = the markup's translate(5.25 0)
         let orbitPhase = 0, lastT = null;  // degrees; phase 0 = the markup's rest position
         const orbit = $('rl-compressor-orbit');
 
@@ -1816,12 +1824,14 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
 
             // Same pacing rule the old fan glyph used: 140°/s × capacity.
             // The 180° rotation is baked on the path inside the group, so
-            // only the orbit translate is written per frame.
+            // only the orbit translate is written per frame — a circle of
+            // ORBIT_R about the mesh offset ORBIT_CX, keeping the walls in
+            // touch-and-slide contact at every phase (see the markup note).
             orbitPhase = (orbitPhase + 140 * capacity * dt) % 360;
             if (orbit) {
                 const rad = orbitPhase * Math.PI / 180;
                 orbit.setAttribute('transform', 'translate(' +
-                    (ORBIT_R * Math.cos(rad)).toFixed(2) + ' ' +
+                    (ORBIT_CX + ORBIT_R * Math.cos(rad)).toFixed(2) + ' ' +
                     (ORBIT_R * Math.sin(rad)).toFixed(2) + ')');
             }
 
