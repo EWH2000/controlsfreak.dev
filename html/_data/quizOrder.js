@@ -13,9 +13,9 @@ module.exports = [
     // sequence) ──
     { slug: 'controller-wiring',        label: 'Controller Wiring' },
     { slug: 'analog-sensing',           label: 'Analog Sensing' },
-    // start-stop-commands closes the Signals & Sensing chapter — keep it
-    // after the in-flight chapter quizzes as they merge (mirror the
-    // education sequence) ──
+    { slug: 'temperature-sensors',      label: 'Temperature Sensors' },
+    { slug: 'status-and-proof',         label: 'Status & Proof' },
+    { slug: 'commanding-actuators',     label: 'Commanding Actuators' },
     { slug: 'start-stop-commands',      label: 'Start/Stop Commands' },
     { slug: 'hydronic-loops',           label: 'Hydronic Loops' },
     { slug: 'load-piping',              label: 'Load Piping' },
