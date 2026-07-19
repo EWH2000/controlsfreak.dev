@@ -660,6 +660,15 @@ techs new to the industry and anyone wanting a refresh.
   sandbox and a Function Blocks quiz.
 <!-- ── Programming chapter ─ Function-Block Basics leads it; insert
      new lesson bullets here, in curriculum order ── -->
+- **Boolean Logic & Latches** — how the true/false blocks turn
+  equipment rules into logic: the permissive chain (AND as a chain
+  of proofs), reading a truth table as a sentence, fail-safe
+  normally-closed wiring and the NOT that fixes a trip-sense
+  signal, why safeties latch instead of self-clearing (the
+  set-dominant SR latch and the manual-reset idiom, timed out on a
+  four-trace diagram), and XOR as the command/status disagreement
+  detector. Capstones into the editor's freeze-stat example. Pairs
+  with a Boolean Logic & Latches quiz.
 - **Modbus Basics** — what Modbus is on the wire: the four data
   tables (coils, discrete inputs, input and holding registers),
   the function codes that read and write them, and what an
@@ -743,7 +752,7 @@ flavors share the same engine:
   When a topic recurs in feedback, it becomes a candidate for a
   new education page.
 
-Shipped so far — twenty-four content quizzes (each 10 questions, paired
+Shipped so far — twenty-five content quizzes (each 10 questions, paired
 1:1 with its lesson and deep-linking the gotchas) plus five field
 drills:
 
@@ -769,8 +778,10 @@ drills:
   AC hot leg for a 2-wire loop, wetting current and wet vs. dry
   contacts, the AO signal that isn't the load's power, the unfed
   BO-C, and triac vs. relay outputs.
-- **Content quizzes — programming:** Function Blocks. Blocks, pins,
-  wire types, the block families, and how a scan resolves feedback.
+- **Content quizzes — programming:** Function Blocks, Boolean Logic
+  & Latches. Blocks, pins, wire types, the block families, and how
+  a scan resolves feedback; then permissive chains, fail-safe NOT
+  inversion, set-dominant SR behavior, and the missing-NOT gotcha.
 - **Content quizzes — refrigeration:** Refrigerant Cycle Basics,
   Superheat & Subcooling, TXVs vs. EEVs. The four components and
   the pressure-temperature saturation lock, which line each

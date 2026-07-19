@@ -3950,7 +3950,7 @@ related future page (`pid-basics.html`) already exists, so the
 lesson cross-links to it for PID internals without a `[future:]`
 marker.
 
-### Boolean Logic & Latches — Education page *(drafting 2026-07-18, controls-spine arc)*
+### Boolean Logic & Latches — Education page *(shipped 2026-07-18, controls-spine arc)*
 
 **One question:** *how do TRUE/FALSE blocks turn equipment rules —
 interlocks, permissives, safeties — into logic, and how does a
