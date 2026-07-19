@@ -386,7 +386,7 @@ keywords: 24vac com transformer dead short 4-20ma loop wiring fuse polarity
             </p>
 
             <p>
-                One piece sits just outside this page: the <strong>network</strong>. A field controller almost always has an RS-485 / BACnet MS/TP trunk or a BACnet/IP port so the BMS can talk to it — its own small world of daisy-chain topology, &plus;/&minus; polarity, end-of-line termination, and station addressing. The <a href="/education/bacnet-mstp.html">BACnet MS/TP</a> explainer walks that story; a dedicated bus simulator is still the right place to wire it hands-on someday, and the controller's network terminals are the seam where it will plug in. For the protocol side of what rides that trunk, the <a href="/education/bacnet-networking.html">BACnet Networking</a> explainer picks it up.
+                One piece sits just outside this page: the <strong>network</strong>. A field controller almost always has an RS-485 / BACnet MS/TP trunk or a BACnet/IP port so the BMS can talk to it — its own small world of daisy-chain topology, &plus;/&minus; polarity, end-of-line termination, and station addressing. That's a bus-level story rather than a terminal-level one — it's about how a whole trunk of controllers behaves, not how one device's terminals get landed — so it lives on its own page: the <a href="/education/bacnet-mstp.html">BACnet MS/TP</a> explainer walks it, and the controller's network terminals are the seam between the two. For the protocol side of what rides that trunk, the <a href="/education/bacnet-networking.html">BACnet Networking</a> explainer picks it up.
             </p>
 
             {{ relatedLinks({

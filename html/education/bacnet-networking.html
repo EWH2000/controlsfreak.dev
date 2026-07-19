@@ -27,10 +27,11 @@ keywords: ms/tp mstp baud bbmd foreign device router subnet broadcast who-is
 
             <p class="page-intro">
                 <a href="/education/bacnet-basics.html">BACnet Basics</a> covered the
-                object model and the services — how to read a property, write a
-                priority-array slot, and discover devices on the same network. This
-                page is the other half of the story: <em>how devices on different
-                networks find each other</em>, why a normal Ethernet broadcast
+                object model and <a href="/education/bacnet-services.html">BACnet
+                Services</a> the requests that act on it — how to read a property,
+                write a priority-array slot, and discover devices on the same
+                network. This page picks up where those leave off: <em>how devices on
+                different networks find each other</em>, why a normal Ethernet broadcast
                 doesn't reach across a router, and what the BBMD and Foreign Device
                 Registration machinery is actually doing. It also unpacks the EBO
                 hex blob the <a href="/tools/bacnet-ip-converter.html">BACnet/IP Hex
@@ -596,12 +597,11 @@ keywords: ms/tp mstp baud bbmd foreign device router subnet broadcast who-is
             <h2 class="subhead">What this page didn't cover</h2>
 
             <p>
-                Two pages on BACnet — one on the object model and services,
-                one on addressing and networking — cover what most BMS techs
+                The BACnet lessons on this site cover what most BMS techs
                 need to read a point list, form a request, route a message
                 across a router, and reason about why a device isn't
                 showing up in a discovery scan. What's left, deliberately
-                out of scope on this pair:
+                out of scope across them:
             </p>
 
             <ul>
