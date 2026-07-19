@@ -55,6 +55,11 @@ const order = [
     // ── Programming ─ function-blocks leads the chapter; insert new
     // lesson URLs here, in curriculum order (mirror the
     // education/index.html grid) ──
+    // Final chapter order once the in-flight sibling lanes merge:
+    // … → boolean-logic → comparators-and-deadband → timers-and-delays
+    // → setpoint-math-reset → reading-a-wiresheet. On this branch only
+    // setpoint-math-reset exists, so it sits directly after the anchor.
+    "/education/setpoint-math-reset.html",
     "/education/modbus-basics.html",
     "/education/modbus-decoding.html",
     "/education/bacnet-vs-modbus.html",
