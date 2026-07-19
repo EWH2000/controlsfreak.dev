@@ -1,0 +1,78 @@
+---
+title: Timers & Delays Quiz — controlsfreak.dev
+description: Ten questions on timers and delays — picking TON or TOF, elapsed-time resets, proof windows sized right, debounce, and minimum run and off times.
+canonical: https://controlsfreak.dev/practice/timers-and-delays.html
+nav: practice
+category: programming
+pairedLesson: https://controlsfreak.dev/education/timers-and-delays.html
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Practice · Timers &amp; Delays</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">Timers &amp; Delays Quiz <span class="tool-tag">Logic</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                Read the
+                <a href="/education/timers-and-delays.html">Timers &amp; Delays</a> lesson first, then
+                test yourself — ten questions on gating decisions through time: which timer matches which
+                sentence, what actually clears the elapsed time, sizing a proof window between nuisance
+                trips and blind spots, debouncing a fluttering status, and the minimum run and off times
+                that keep a compressor alive. Each reveal links back to the section it came from.
+            </p>
+
+            <div id="quiz"></div>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        lessons: [
+            {href: '/education/timers-and-delays.html', label: 'Timers & Delays'},
+            {href: '/education/function-blocks.html', label: 'Function-Block Basics'}
+        ],
+        simulators: [
+            {href: '/simulators/function-block-editor.html', label: 'Function-Block Editor'}
+        ],
+        quizzes: [
+            {href: '/practice/function-blocks.html', label: 'Function Blocks Quiz'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/practice/">← All practice</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="/scripts/quiz-engine.js"></script>
+<script>
+    (function () {
+        'use strict';
+
+        // Question bank lives in html/_data/quizzes/timers-and-delays.js
+        // so the FAQPage JSON-LD emitted from head.njk can read the same
+        // source.
+        const questions = {{ quizzes['timers-and-delays'] | safeScriptJson | safe }};
+
+        Quiz.mount('#quiz', questions, {
+            next: {{ page.fileSlug | nextQuiz | safeScriptJson | safe }},
+            slug: 'timers-and-delays',
+            title: 'Timers & Delays',
+            defaultCount: 10,
+            defaultOrder: 'sequential'
+        });
+    })();
+</script>
+{% endblock %}

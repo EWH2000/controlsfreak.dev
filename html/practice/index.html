@@ -77,7 +77,7 @@ nav: practice
 
     <div class="filter-chips" role="group" aria-label="Filter practice by topic">
         <button type="button" class="filter-chip active" data-category="all" aria-pressed="true">
-            All <span class="filter-chip-count">36</span>
+            All <span class="filter-chip-count">37</span>
         </button>
         <button type="button" class="filter-chip" data-category="modbus" aria-pressed="false">
             Modbus <span class="filter-chip-count">2</span>
@@ -98,7 +98,7 @@ nav: practice
             Controls <span class="filter-chip-count">2</span>
         </button>
         <button type="button" class="filter-chip" data-category="programming" aria-pressed="false">
-            Programming <span class="filter-chip-count">3</span>
+            Programming <span class="filter-chip-count">4</span>
         </button>
         <button type="button" class="filter-chip" data-category="psychrometrics" aria-pressed="false">
             Psychrometrics <span class="filter-chip-count">1</span>
@@ -361,6 +361,15 @@ nav: practice
                 titleFull:  'Comparators & Deadband',
                 desc:       'Match the sentence to the comparator, dodge the EQ-on-analog trap, price out chatter, place the set and reset lines, and read direct vs reverse action.',
                 pills:      ['10 Questions', 'MCQ · TF · Numeric · Gotcha', '~ 5 min'],
+                category:   'programming'
+            }) }}
+            {{ navCard({
+                section:    'practice',
+                href:       '/practice/timers-and-delays.html',
+                titleShort: 'Timers & Delays',
+                titleFull:  'Timers & Delays',
+                desc:       'Prove the timing from memory — TON vs TOF sentences, what clears ET, proof windows sized between nuisance trips and blind spots, and starts-per-hour spacing.',
+                pills:      ['10 Questions', 'MCQ · TF · Gotcha · Numeric', '~ 5 min'],
                 category:   'programming'
             }) }}
             {# ── end Programming ── #}

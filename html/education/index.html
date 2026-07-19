@@ -23,7 +23,7 @@ nav: education
 
     <div class="filter-chips" role="group" aria-label="Filter lessons by category">
         <button type="button" class="filter-chip active" data-category="all" aria-pressed="true">
-            All <span class="filter-chip-count">37</span>
+            All <span class="filter-chip-count">38</span>
         </button>
         <button type="button" class="filter-chip" data-category="fundamentals" aria-pressed="false">
             Fundamentals <span class="filter-chip-count">5</span>
@@ -41,7 +41,7 @@ nav: education
             Forced Air Systems <span class="filter-chip-count">8</span>
         </button>
         <button type="button" class="filter-chip" data-category="programming" aria-pressed="false">
-            Programming <span class="filter-chip-count">3</span>
+            Programming <span class="filter-chip-count">4</span>
         </button>
         <button type="button" class="filter-chip" data-category="protocols" aria-pressed="false">
             Protocols <span class="filter-chip-count">7</span>
@@ -325,6 +325,15 @@ nav: education
             titleFull:  'Comparators & Deadband',
             desc:       'How a comparator turns a number into a decision, the chatter a single threshold guarantees, and the two-comparator set/reset build inside every deadband block.',
             pills:      ['Logic', 'Chatter', 'Set/Reset Band'],
+            category:   'programming'
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/education/timers-and-delays.html',
+            titleShort: 'Timers & Delays',
+            titleFull:  'Timers & Delays',
+            desc:       'What TON and TOF actually do — preset and elapsed time, the proof window behind every fail-to-start alarm, debounce, and the minimum run and off times that stop short-cycling.',
+            pills:      ['Logic', 'TON / TOF', 'Proof Window', 'Min Run / Off'],
             category:   'programming'
         }) }}
         {# ── end Programming ── #}

@@ -38,6 +38,7 @@ module.exports = [
     // slugs here, in curriculum order (mirror the education sequence) ──
     { slug: 'boolean-logic-latches',    label: 'Boolean Logic & Latches' },
     { slug: 'comparators-and-deadband', label: 'Comparators & Deadband' },
+    { slug: 'timers-and-delays',        label: 'Timers & Delays' },
     { slug: 'modbus-basics',            label: 'Modbus Basics' },
     { slug: 'modbus-decoding',          label: 'Modbus Decoding' },
     { slug: 'bacnet-basics',            label: 'BACnet Basics' },

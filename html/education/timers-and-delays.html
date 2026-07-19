@@ -1,0 +1,532 @@
+---
+title: Timers & Delays — controlsfreak.dev
+description: What TON and TOF timers actually do — preset and elapsed time, proof windows and fail-to-start alarms, debounce, and minimum run and off times.
+canonical: https://controlsfreak.dev/education/timers-and-delays.html
+nav: education
+category: programming
+pairedQuiz: https://controlsfreak.dev/practice/timers-and-delays.html
+keywords: TON TOF on-delay off-delay preset elapsed proof fail-to-start debounce minimum run anti short cycle
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block head %}
+    <style>
+        /* Page-specific — both diagrams are wiresheet-flavored structural
+           drawings (the function-blocks.html family), so they take the
+           shared .edu-svg base plus a page-local width cap: a wiresheet
+           stretched to full column width reads as a poster, not a sheet.
+           (Same pattern as the chapter's other lessons.) */
+        .edu-svg.tdl-svg {
+            max-width: 740px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        /* Timer quick-reference stays compact — short columns, no
+           reason to span the full column width. */
+        .tdl-table {
+            max-width: 680px;
+            margin: 1.25rem auto 0.5rem;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Education · Timers &amp; Delays</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">Timers &amp; Delays <span class="tool-tag">Logic</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                Read a few real control sequences and a pattern emerges: almost nothing
+                important happens the instant its condition goes true. <em>Command the fan,
+                then wait for proof before you believe it started. Keep the fan running for a
+                while after the heat shuts off. Don't restart the compressor you stopped
+                ninety seconds ago.</em> Every one of those sentences is a timer — and the
+                whole family on a wiresheet comes down to two blocks. This page is one
+                question, start to finish: <em>what do TON and TOF actually do — and why does
+                almost every real sheet gate its decisions through time?</em>
+            </p>
+
+            <div class="callout">
+                <p style="font-size:0.86rem;line-height:1.7;">
+                    This page assumes you can read a sheet at the block level — pins, wires,
+                    and the scan. That's <a href="/education/function-blocks.html">Function-Block
+                    Basics</a>, the opening lesson of this chapter. Two neighbors get leaned on
+                    but not re-taught: this chapter's boolean-logic lesson owns what an
+                    <code>SR latch</code> is and why safeties latch, and its comparator lesson
+                    owns how a threshold decision gets made in the first place. Here, those
+                    blocks just do their day jobs — the timers are the story.
+                </p>
+            </div>
+
+            <!-- ───────────────── 1 · TON / TOF semantics ───────────────── -->
+            <h2 class="subhead" id="ton-tof">TON and TOF: two mirror sentences</h2>
+
+            <p>
+                A timer block does nothing clever with its input — no math, no comparison. It
+                reshapes the input <em>in time</em>. The on-delay timer, <strong>TON</strong>,
+                is the sentence <em>"the input must stay true this long before I believe
+                it."</em> Its output stays FALSE until the input has been TRUE, continuously,
+                for the full preset — then the output goes TRUE and follows the input for as
+                long as it holds. The off-delay timer, <strong>TOF</strong>, is the mirror:
+                <em>"I keep saying true this long after it drops."</em> Its output goes TRUE
+                the instant the input does — no delay on the way up — and when the input
+                drops, the output hangs on for the preset before letting go.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                Both blocks carry the same two numbers. The <strong>preset</strong> (PT) is
+                the parameter you type in — the length of the delay, in seconds. The
+                <strong>elapsed time</strong> (ET) is the block's live progress toward it,
+                counting <em>up</em> from zero. On a running sheet, ET is the readout that
+                tells you what the timer is doing right now: a TON with ET climbing is an
+                input being tested; a TOF with ET climbing is an output living on borrowed
+                time.
+            </p>
+
+            <div class="tdl-table table-scroll">
+                <table class="ref-table-dense">
+                    <thead>
+                        <tr><th>Block</th><th>Q goes TRUE</th><th>Q goes FALSE</th><th>ET measures</th><th>ET clears when</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>TON</td><td>after IN holds TRUE for PT</td><td>the instant IN drops</td><td>how long IN has been TRUE</td><td>IN drops</td></tr>
+                        <tr><td>TOF</td><td>the instant IN rises</td><td>after IN stays FALSE for PT</td><td>how long since IN dropped</td><td>IN returns</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <p style="margin-top:1.25rem;">
+                The resets in that last column are where field intuition most often goes
+                wrong, so make them explicit. A TON keeps <em>no credit across attempts</em>:
+                if the input drops one second short of the preset, ET zeroes on the spot, and
+                the next attempt starts the count from scratch. There's no partial credit,
+                no memory of how close it came. (Timers that <em>do</em> accumulate across
+                interruptions exist — some palettes call them retentive or accumulating
+                timers — but that's a different block; don't assume you have one.) A TOF's
+                reset runs the other way: if the input comes <em>back</em> before the preset
+                runs out, the countdown is cancelled — not paused — and ET zeroes. The output
+                never blinked, and the next drop starts a fresh, full-length delay.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                Here are both blocks as timing traces — the one diagram every controls
+                reference draws, because it answers at a glance what a paragraph struggles
+                to. Top to bottom in each panel: the input, the elapsed time, the output.
+            </p>
+
+            <svg class="edu-svg tdl-svg" viewBox="0 0 740 496" role="img"
+                 aria-labelledby="tdl-d1-title tdl-d1-desc" font-family="var(--mono)">
+                <title id="tdl-d1-title">TON and TOF timing diagrams</title>
+                <desc id="tdl-d1-desc">Two stacked timing panels, each with three aligned traces: input IN, elapsed time ET, and output Q. In the TON panel, a first input pulse is shorter than the preset: ET ramps partway up and clears to zero the instant the input drops, and Q never fires. A second, longer input pulse holds: ET ramps up, reaches the preset line, and parks there; Q rises exactly when ET reaches the preset and drops the instant the input drops, with ET clearing at the same moment. In the TOF panel, Q rises the instant the input rises. When the input drops, Q holds while ET ramps toward the preset; at the preset Q finally drops and ET parks at the preset value. A second input pulse then drops out only briefly: ET ramps partway, the input returns before reaching the preset, ET clears, and Q rides straight through without ever dropping.</desc>
+
+                <!-- ── TON panel ─────────────────────────────────── -->
+                <text x="130" y="22" font-size="12" font-weight="600" fill="var(--text-bright)">TON — on-delay</text>
+                <text x="710" y="22" text-anchor="end" font-size="10" fill="var(--text-dim)">preset PT, elapsed ET</text>
+
+                <!-- row labels -->
+                <text x="112" y="68"  text-anchor="end" font-size="11" fill="var(--text)">IN</text>
+                <text x="112" y="120" text-anchor="end" font-size="11" fill="var(--text)">ET</text>
+                <text x="112" y="188" text-anchor="end" font-size="11" fill="var(--text)">Q</text>
+
+                <!-- IN trace: short attempt 170–250, long hold 330–650 -->
+                <path d="M130 76 H170 V52 H250 V76 H330 V52 H650 V76 H710"
+                      fill="none" stroke="var(--text)" stroke-width="2" stroke-linejoin="round"/>
+
+                <!-- PT level line (ET row) -->
+                <line x1="130" y1="96" x2="710" y2="96" stroke="var(--amber)" stroke-width="1.2" stroke-dasharray="5 4"/>
+                <text x="134" y="90" font-size="9.5" fill="var(--amber)">PT</text>
+
+                <!-- ET trace: ramp + clear, then ramp to PT, park, clear -->
+                <path d="M130 134 H170 L250 109 V134 H330 L450 96 H650 V134 H710"
+                      fill="none" stroke="var(--blue)" stroke-width="2.2" stroke-linejoin="round"/>
+
+                <!-- preset span bracket under the successful ramp -->
+                <line x1="330" y1="146" x2="450" y2="146" stroke="var(--text-dim)" stroke-width="1"/>
+                <line x1="330" y1="142" x2="330" y2="150" stroke="var(--text-dim)" stroke-width="1"/>
+                <line x1="450" y1="142" x2="450" y2="150" stroke="var(--text-dim)" stroke-width="1"/>
+                <text x="390" y="158" text-anchor="middle" font-size="9" fill="var(--text-dim)">PT</text>
+
+                <!-- Q trace: rises at 450 (ET reaches PT), drops with IN at 650 -->
+                <path d="M130 196 H450 V172 H650 V196 H710"
+                      fill="none" stroke="var(--accent)" stroke-width="2.4" stroke-linejoin="round"/>
+
+                <!-- annotations -->
+                <text x="250" y="40" text-anchor="middle" font-size="9.5" fill="var(--text-dim)">dropped early — ET clears, Q never fires</text>
+                <text x="545" y="216" text-anchor="middle" font-size="9.5" fill="var(--text-dim)">Q waits out the full preset — then follows IN down at once</text>
+
+                <!-- ── TOF panel ─────────────────────────────────── -->
+                <text x="130" y="268" font-size="12" font-weight="600" fill="var(--text-bright)">TOF — off-delay</text>
+
+                <!-- row labels -->
+                <text x="112" y="314" text-anchor="end" font-size="11" fill="var(--text)">IN</text>
+                <text x="112" y="366" text-anchor="end" font-size="11" fill="var(--text)">ET</text>
+                <text x="112" y="434" text-anchor="end" font-size="11" fill="var(--text)">Q</text>
+
+                <!-- IN trace: pulse 170–290, then 470–520 dropout 520–590, high to 710 -->
+                <path d="M130 322 H170 V298 H290 V322 H470 V298 H520 V322 H590 V298 H710"
+                      fill="none" stroke="var(--text)" stroke-width="2" stroke-linejoin="round"/>
+
+                <!-- PT level line (ET row) -->
+                <line x1="130" y1="342" x2="710" y2="342" stroke="var(--amber)" stroke-width="1.2" stroke-dasharray="5 4"/>
+                <text x="134" y="336" font-size="9.5" fill="var(--amber)">PT</text>
+
+                <!-- ET trace: ramp 290→410 to PT, park, clear at 470; partial ramp 520→590, clear -->
+                <path d="M130 380 H290 L410 342 H470 V380 H520 L590 358 V380 H710"
+                      fill="none" stroke="var(--blue)" stroke-width="2.2" stroke-linejoin="round"/>
+
+                <!-- preset span bracket under the completed off-delay -->
+                <line x1="290" y1="392" x2="410" y2="392" stroke="var(--text-dim)" stroke-width="1"/>
+                <line x1="290" y1="388" x2="290" y2="396" stroke="var(--text-dim)" stroke-width="1"/>
+                <line x1="410" y1="388" x2="410" y2="396" stroke="var(--text-dim)" stroke-width="1"/>
+                <text x="350" y="404" text-anchor="middle" font-size="9" fill="var(--text-dim)">PT</text>
+
+                <!-- Q trace: rises with IN at 170, holds past drop until 410; rises 470, rides through -->
+                <path d="M130 442 H170 V418 H410 V442 H470 V418 H710"
+                      fill="none" stroke="var(--accent)" stroke-width="2.4" stroke-linejoin="round"/>
+
+                <!-- annotations -->
+                <text x="170" y="286" font-size="9.5" fill="var(--text-dim)">Q rises with IN — no delay up</text>
+                <text x="415" y="414" font-size="9.5" fill="var(--text-dim)">Q lets go at PT</text>
+                <text x="555" y="286" text-anchor="middle" font-size="9.5" fill="var(--text-dim)">short dropout — Q rides through</text>
+
+                <text x="710" y="462" text-anchor="end" font-size="10" fill="var(--text-dim)">time →</text>
+
+                <text x="370" y="482" text-anchor="middle" font-size="10.5" fill="var(--text)">TON trims away any TRUE shorter than the preset; TOF fills in any FALSE shorter than it</text>
+            </svg>
+
+            <p class="ref-note compact" style="text-align:center;">
+                ET climbs toward the preset and parks there — a TON holds it at PT while the
+                input stays true, a TOF after the delay expires — until the opposite edge
+                clears it. That's exactly how the simulator's blocks report it live.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                Squint at the two output traces and a single idea covers both blocks: a timer
+                is a <strong>minimum-duration filter</strong>. TON deletes every TRUE shorter
+                than the preset — as far as anything downstream knows, a six-second blip into
+                a ten-second TON <em>never happened</em>. TOF deletes every FALSE shorter than
+                the preset — a brief dropout is invisible on the far side. Hold onto that
+                framing, because every use in the rest of this page — proof windows, debounce,
+                minimum times — is that one filter pointed at a different decision.
+            </p>
+
+            <!-- ───────────────── 2 · The proof window ───────────────── -->
+            <h2 class="subhead" id="proof">The proof window: fail-to-start, done right</h2>
+
+            <p>
+                Why does a sheet need time at all? Because the controller and the machinery
+                live at different speeds. The sheet re-evaluates several times a second —
+                every scan, fresh answers. A fan takes ten or fifteen seconds to spool up and
+                make enough airflow to close its proof switch. So for the first several
+                seconds of every <em>perfectly healthy</em> start, "commanded but not
+                proved" is the honest state of the world. Logic that alarms on that condition
+                directly will cry wolf on every start it ever supervises. The fix isn't a
+                better comparison — it's a window of patience, and that window is a TON.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                Here's the pattern in full, and it's worth learning wire by wire because it
+                guards nearly every fan, pump, and compressor in a building: the
+                <strong>fail-to-start alarm</strong>. The sentence first: <em>"if the command
+                is on and proof hasn't shown up within 15 seconds, something is wrong — and
+                stay alarmed until someone looks."</em> The
+                <a href="/simulators/function-block-editor.html">Function-Block Editor</a>
+                ships this exact sheet as its <em>proof-of-flow alarm</em> example. Two
+                binary inputs on the left: the fan <strong>command</strong>, and the
+                <strong>proof</strong> — a status contact that closes when air actually
+                moves. A <code>NOT</code> flips the proof into "proof is <em>missing</em>,"
+                and an <code>AND</code> combines: commanded, AND no proof — the failure
+                condition. That condition feeds a <code>TON</code> with a 15-second preset —
+                the <strong>proof window</strong>. The timer's output sets an
+                <code>SR latch</code>, the latch drives the alarm output, and a reset input
+                waits on the latch's R for a human. Here's the sheet eight seconds after the
+                proof dropped:
+            </p>
+
+            <svg class="edu-svg tdl-svg" viewBox="0 0 880 486" role="img"
+                 aria-labelledby="tdl-d2-title tdl-d2-desc" font-family="var(--mono)">
+                <title id="tdl-d2-title">The proof-of-flow alarm as a wiresheet</title>
+                <desc id="tdl-d2-desc">A function-block sheet with eight blocks. Two binary inputs on the left: a fan command reading ON and a proof-of-flow status reading OFF. The status feeds a NOT block, so its output — proof missing — is TRUE. The command and the NOT output feed an AND block, whose output, commanded with no proof, is TRUE and feeds a TON on-delay timer with a 15 second preset; the timer's elapsed time reads 8 seconds and climbing, so its output is still FALSE. The timer output feeds the set input of an SR latch; a reset binary input, currently OFF, feeds the latch's reset input. The latch output, still FALSE, drives a binary output labeled ALARM, currently off. Three numbered phase markers annotate the sheet: phase one, healthy — with proof made the AND has a FALSE leg and the timer sits at zero; phase two, the drawn moment — proof lost eight seconds ago, elapsed time climbing toward the preset; phase three — if the elapsed time reaches 15 seconds the timer fires the latch and the alarm holds until reset, even if proof returns. Every wire on this sheet is digital: TRUE wires are green, FALSE wires grey.</desc>
+
+                <!-- wires (drawn first, behind the blocks) -->
+                <line x1="145" y1="52" x2="205" y2="52" stroke="var(--text-dim)" stroke-width="2.4" stroke-linecap="round"/>
+                <path d="M315 52 H322 V208 H330" fill="none" stroke="var(--accent)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+                <line x1="145" y1="218" x2="330" y2="228" stroke="var(--accent)" stroke-width="2.4" stroke-linecap="round"/>
+                <path d="M450 218 H465 V52 H490" fill="none" stroke="var(--accent)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M620 52 H628 V208 H640" fill="none" stroke="var(--text-dim)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M590 368 H615 V228 H640" fill="none" stroke="var(--text-dim)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M750 218 H762 V52 H770" fill="none" stroke="var(--text-dim)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+
+                <!-- STATUS -->
+                <g id="tdl-d2-sts">
+                    <rect x="15" y="24" width="130" height="56" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="27" y="43" font-size="8.5" letter-spacing="0.5" fill="var(--text-dim)">BINARY IN · PROOF</text>
+                    <text x="27" y="64" font-size="13" font-weight="600" fill="var(--text-dim)">STATUS OFF</text>
+                    <circle cx="145" cy="52" r="3.8" fill="var(--text-dim)"/>
+                </g>
+                <!-- NOT -->
+                <g id="tdl-d2-not">
+                    <rect x="205" y="24" width="110" height="56" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="260" y="48" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text-bright)">NOT</text>
+                    <text x="260" y="66" text-anchor="middle" font-size="9" fill="var(--accent)">no proof → TRUE</text>
+                    <circle cx="205" cy="52" r="3.8" fill="var(--text-dim)"/>
+                    <circle cx="315" cy="52" r="3.8" fill="var(--accent)"/>
+                </g>
+                <!-- CMD -->
+                <g id="tdl-d2-cmd">
+                    <rect x="15" y="190" width="130" height="56" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="27" y="209" font-size="8.5" letter-spacing="0.5" fill="var(--text-dim)">BINARY IN · FAN</text>
+                    <text x="27" y="230" font-size="13" font-weight="600" fill="var(--accent)">CMD ON</text>
+                    <circle cx="145" cy="218" r="3.8" fill="var(--accent)"/>
+                </g>
+                <!-- AND -->
+                <g id="tdl-d2-fail">
+                    <rect x="330" y="190" width="120" height="56" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="390" y="214" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text-bright)">AND</text>
+                    <text x="390" y="232" text-anchor="middle" font-size="9" fill="var(--accent)">cmd + no proof</text>
+                    <circle cx="330" cy="208" r="3.8" fill="var(--accent)"/>
+                    <circle cx="330" cy="228" r="3.8" fill="var(--accent)"/>
+                    <circle cx="450" cy="218" r="3.8" fill="var(--accent)"/>
+                </g>
+                <!-- TON -->
+                <g id="tdl-d2-tmr">
+                    <rect x="490" y="24" width="130" height="56" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="555" y="46" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text-bright)">TON</text>
+                    <text x="555" y="66" text-anchor="middle" font-size="9" fill="var(--amber)">PT 15 s · ET 8 s ↑</text>
+                    <circle cx="490" cy="52" r="3.8" fill="var(--accent)"/>
+                    <circle cx="620" cy="52" r="3.8" fill="var(--text-dim)"/>
+                </g>
+                <!-- SR LATCH -->
+                <g id="tdl-d2-latch">
+                    <rect x="640" y="190" width="110" height="56" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="648" y="212" font-size="9" fill="var(--text-dim)">S</text>
+                    <text x="648" y="232" font-size="9" fill="var(--text-dim)">R</text>
+                    <text x="702" y="214" text-anchor="middle" font-size="12" font-weight="600" fill="var(--text-bright)">SR LATCH</text>
+                    <text x="702" y="232" text-anchor="middle" font-size="9" fill="var(--text-dim)">Q FALSE</text>
+                    <circle cx="640" cy="208" r="3.8" fill="var(--text-dim)"/>
+                    <circle cx="640" cy="228" r="3.8" fill="var(--text-dim)"/>
+                    <circle cx="750" cy="218" r="3.8" fill="var(--text-dim)"/>
+                </g>
+                <!-- ALARM -->
+                <g id="tdl-d2-alarm">
+                    <rect x="770" y="24" width="95" height="56" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="782" y="43" font-size="8.5" letter-spacing="0.5" fill="var(--text-dim)">BINARY OUT</text>
+                    <text x="782" y="64" font-size="12" font-weight="600" fill="var(--text-dim)">ALARM OFF</text>
+                    <circle cx="770" cy="52" r="3.8" fill="var(--text-dim)"/>
+                </g>
+                <!-- RESET -->
+                <g id="tdl-d2-rst">
+                    <rect x="460" y="340" width="130" height="56" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="472" y="359" font-size="8.5" letter-spacing="0.5" fill="var(--text-dim)">BINARY IN</text>
+                    <text x="472" y="380" font-size="13" font-weight="600" fill="var(--text-dim)">RESET OFF</text>
+                    <circle cx="590" cy="368" r="3.8" fill="var(--text-dim)"/>
+                </g>
+
+                <!-- phase markers -->
+                <g id="tdl-d2-ph1">
+                    <circle cx="390" cy="164" r="10" fill="none" stroke="var(--text-dim)" stroke-width="1.3"/>
+                    <text x="390" y="168" text-anchor="middle" font-size="10.5" fill="var(--text-dim)">1</text>
+                </g>
+                <g id="tdl-d2-ph2">
+                    <circle cx="555" cy="106" r="10" fill="none" stroke="var(--amber)" stroke-width="1.3"/>
+                    <text x="555" y="110" text-anchor="middle" font-size="10.5" fill="var(--amber)">2</text>
+                </g>
+                <g id="tdl-d2-ph3">
+                    <circle cx="702" cy="164" r="10" fill="none" stroke="var(--text-dim)" stroke-width="1.3"/>
+                    <text x="702" y="168" text-anchor="middle" font-size="10.5" fill="var(--text-dim)">3</text>
+                </g>
+
+                <text x="440" y="436" text-anchor="middle" font-size="10.5" fill="var(--text)">1 — healthy — proof made: the AND has a FALSE leg and the timer sits at zero</text>
+                <text x="440" y="454" text-anchor="middle" font-size="10.5" fill="var(--text)">2 — drawn here — proof lost 8 s ago: ET climbing toward the 15 s preset, alarm still off</text>
+                <text x="440" y="472" text-anchor="middle" font-size="10.5" fill="var(--text)">3 — if ET reaches 15 s — Q fires S: ALARM latches ON and holds until RESET, even if proof returns</text>
+            </svg>
+
+            <p class="ref-note compact" style="text-align:center;">
+                Every wire on this sheet is digital: green carries TRUE, grey carries FALSE —
+                the same coloring the editor uses live.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                Now watch what the timer buys you on a <em>healthy</em> start. Command goes
+                on; the fan hasn't moved yet, so proof is missing and the <code>AND</code>
+                goes TRUE — the failure condition is honestly true, for a moment. ET starts
+                climbing. Eight, nine, ten seconds in, the fan makes airflow, proof closes,
+                the <code>NOT</code> drops the AND's leg, and ET clears back to zero. Q never
+                fired; nobody got paged. The TON deleted a TRUE that was shorter than the
+                preset — the minimum-duration filter, doing exactly what section one said.
+                The timer's whole job is to <em>forgive every honest start</em> and catch
+                only the failure that outlasts the window.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                And why the latch? Because the timer's output only lasts as long as the
+                failure condition stands. Suppose the belt snapped: proof never comes, ET
+                walks all the way to 15, the alarm should stand. But if an operator later
+                switches the fan command off — a perfectly natural response — the
+                <code>AND</code> drops, the TON releases, and without a latch the alarm would
+                erase itself, evidence and all. The <code>SR latch</code> gives the trip a
+                memory: the timer <em>detects</em>, the latch <em>remembers</em>, and only a
+                deliberate reset — a person, acknowledging — lets go. (What a latch is, why
+                set-dominance matters, and the latch + manual-reset idiom are this chapter's
+                boolean-logic lesson; here it just does its day job.)
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                Don't take the diagram's word for it — the sheet is running in the
+                <a href="/simulators/function-block-editor.html">Function-Block Editor</a>.
+                Load the <em>proof-of-flow alarm</em> example; it loads healthy, command and
+                proof both made. Click the STATUS block and toggle it off — the belt just
+                snapped. Watch the TON's ET readout climb, and try to beat it: toggle STATUS
+                back on before 15 seconds and the count just vanishes — that's a recovery
+                inside the window, no alarm. Break it again and let it run. At 15, the alarm
+                latches — and now toggle STATUS back on and watch <em>nothing change</em>.
+                The latch is holding. Flip RESET on and off again — that's the acknowledge —
+                and the sheet is healthy again.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                How long should the window be? It's a real decision with a failure mode on
+                each side. Too short, and the alarm nuisance-trips on every honest start —
+                the fan was coming; the logic didn't wait. Cry wolf often enough and the
+                alarm gets ignored or, worse, disabled. Too long, and the window becomes a
+                blind spot: a start that genuinely failed runs unreported for the whole
+                preset, and anything the sequence interlocks against "proven" — electric
+                heat that must never run without airflow — inherits that blind spot with it.
+                The rule of thumb: as long as the slowest <em>honest</em> start you'll ever
+                see, plus a little margin, and no longer. What the proof contact actually
+                measures — and which failures each kind of proof source can even see — is a
+                story of its own, and it belongs to this chapter's status-and-proof lesson.
+            </p>
+
+            <!-- // anecdote slot: a proof-window war story — a nuisance fail-to-start
+                 that trained a site to ignore alarms, or a too-long window that let
+                 something run unprotected — owner to supply; do not draft. -->
+
+            <p style="margin-top:1.25rem;">
+                The same filter works at a smaller scale, where it goes by the name
+                <strong>debounce</strong>. Picture a DP switch set close to the fan's actual
+                operating pressure: at marginal airflow it flutters, and the raw status point
+                flips on and off several times a minute — spamming alarms and waking the
+                whole change-of-value pipeline. A two- or three-second TON between the raw
+                point and the logic means the status must <em>hold</em> made before anything
+                believes it; the flutter never survives the filter. The mirror trick works
+                too: a short TOF rides <em>through</em> brief dropouts instead. Just know
+                what the timer is doing for you — it's treating the symptom. If the switch
+                is fluttering because its setpoint has no margin against the operating
+                point, the honest fix is the setpoint, not a longer filter.
+            </p>
+
+            <!-- ───────────────── 3 · Minimum run / minimum off ───────────────── -->
+            <h2 class="subhead" id="min-times">Minimum run, minimum off: protecting equipment from its own decisions</h2>
+
+            <p>
+                The third job timers do isn't about believing inputs at all — it's about
+                pacing outputs. A cooling call starts the compressor; ninety seconds later
+                the space is satisfied and the call drops; two minutes after that, it's back.
+                Every individual decision was correct. The <em>pattern</em> is destructive,
+                because for a compressor the expensive part isn't running — it's
+                <strong>starting</strong>. Locked-rotor inrush heats the windings faster than
+                they can shed it; a short run pumps oil out into the circuit and never runs
+                long enough to carry it home; and a stop leaves the system with a pressure
+                difference across it that the next start has to fight if it isn't given time
+                to equalize. Manufacturers publish a starts-per-hour budget for exactly this
+                reason — and a sequence that ignores it is spending someone else's money.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                The guard is a pair of timing rules, and both are the section-one filter
+                pointed at the equipment's own state. <strong>Minimum run</strong>: once
+                started, stay started for at least the minimum — a stop request younger than
+                that isn't honored yet. <strong>Minimum off</strong>: once stopped, stay
+                stopped — a start request has to wait out the off-time. Each rule is
+                "this state must stand at least this long," which is an on-delay measuring
+                the current state's age and gating the exit. Production palettes usually bake
+                both into the equipment-enable block as min-on / min-off parameters; when you
+                meet the logic built out in the open, it reads as a TON per state. Either
+                way, the numbers come from the equipment's documentation, not from taste.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                Here's where the timers meet the decision they're pacing. The on/off decision
+                itself comes from a deadband — two thresholds with memory between them, this
+                chapter's comparator lesson — and the two mechanisms divide the work
+                cleanly: <em>the band decides what the sequence wants; the timers decide when
+                it's allowed.</em> When the two are sized together, the timers almost never
+                intervene — the band alone asks for cycles slower than the minimums. When the
+                band is too narrow, you can watch the fight on a live sheet: the band says
+                stop, the min-run timer says <em>not yet</em>, and the space sails past the
+                threshold while the equipment holds on — occupants feel a thermostat being
+                ignored. The timing did its job; the decision was wrong. Fix the band. An
+                anti-short-cycle timer is the last line of defense, not a license to draw
+                thresholds carelessly.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                Zoom out from one compressor to a whole plant and the same two rules are
+                running at system scale. The
+                <a href="/education/equipment-staging.html#staging">equipment-staging</a>
+                lesson's sequencer carries a <em>stage delay</em> — demand must hold across
+                the threshold for a sustained period before a stage changes, an on-delay by
+                another name — and a <em>minimum stage time</em> that blocks the next change
+                after one lands: min-run and min-off at the stage level. Its interactive
+                widget lets you feel both — drag the demand slider up and down quickly and
+                the sequence refuses to chase you. How long those delays should be, and
+                where the staging thresholds themselves belong, is that lesson's ground.
+                One boundary worth naming so it doesn't blur: everything on this page is
+                <em>interval</em> time — "how long since." Time-of-<em>day</em> control —
+                occupancy schedules, optimal start — is calendar time, a different mechanism
+                entirely, and there's no clock block on this simulator's palette.
+            </p>
+
+            <!-- ───────────────── 4 · Capstone ───────────────── -->
+            <h2 class="subhead" id="try-it">Race the window yourself</h2>
+
+            <p>
+                The proof-of-flow sheet is the whole lesson in seven blocks, and it's already
+                built. Load the <em>proof-of-flow alarm</em> example in the
+                <a href="/simulators/function-block-editor.html">Function-Block Editor</a>
+                and break it: toggle STATUS off and watch ET climb on the TON. Beat the
+                window once — proof back on at 12 seconds, count erased, no alarm. Then let
+                it expire, watch the latch grab, and see for yourself that restoring the
+                proof changes nothing until RESET. Finally, click the TON and shrink its
+                preset to 3 seconds in the inspector, then break the proof again — feel how
+                fast a too-short window turns an honest transient into a page at 2 a.m.
+                That's the entire art of this block family: same timer, same sheet — the
+                preset is the judgment call.
+            </p>
+
+            <a class="cta-button" href="/simulators/function-block-editor.html">Open the Function-Block Editor →</a>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        simulators: [
+            {href: '/simulators/function-block-editor.html', label: 'Function-Block Editor'}
+        ],
+        lessons: [
+            {href: '/education/function-blocks.html', label: 'Function-Block Basics'},
+            {href: '/education/equipment-staging.html', label: 'Equipment Staging'}
+        ],
+        quizzes: [
+            {href: '/practice/timers-and-delays.html', label: 'Timers & Delays Quiz'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/education/">← Back to Education</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+{% endblock %}

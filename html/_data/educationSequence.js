@@ -63,6 +63,7 @@ const order = [
     // education/index.html grid) ──
     "/education/boolean-logic-latches.html",
     "/education/comparators-and-deadband.html",
+    "/education/timers-and-delays.html",
     "/education/modbus-basics.html",
     "/education/modbus-decoding.html",
     "/education/bacnet-vs-modbus.html",
