@@ -427,6 +427,8 @@ keywords: wiresheet logic block and or pid wire program sequence
                     <a data-example="tstat-cool">cooling thermostat</a>
                     <a data-example="tstat-heat">heating thermostat</a>
                     <a data-example="pid">heating PID</a>
+                    <a data-example="proof">proof-of-flow alarm</a>
+                    <a data-example="reset">hot-water reset</a>
                 </div>
 
                 <div class="fbe-simbar">
@@ -513,7 +515,7 @@ keywords: wiresheet logic block and or pid wire program sequence
     // /scripts/fbe-engine.js (window.FBE): the block catalog and a pure
     // per-tick evaluator. This file owns the palette, the draggable
     // blocks, pin-to-pin wiring, the 100 ms tick loop, the inspector, and
-    // the five canned example programs.
+    // the seven canned example programs.
     //
     // State survives interaction but not a reload (session-only, by
     // design — same as every other tool on the site).
@@ -652,6 +654,63 @@ keywords: wiresheet logic block and or pid wire program sequence
                     { from: ['pv', 'O'],   to: ['ctl', 'PV'] },
                     { from: ['ctl', 'OUT'], to: ['out', 'IN'] },
                     { from: ['ctl', 'OUT'], to: ['rd', 'IN'] },
+                ],
+            },
+            proof: {
+                // Fan fail-to-start: command TRUE while proof-of-flow
+                // stays FALSE for longer than the TON preset trips the
+                // alarm, and the SR latch holds it until a manual reset.
+                // Default state is a healthy running fan (command and
+                // proof both made) — toggle STATUS off to break it.
+                // Layout: the chain alternates between the top (y 40)
+                // and bottom (y 190) rows — x still strictly increases,
+                // but every link gets a long visible vertical run
+                // instead of a near-zero horizontal stub.
+                blocks: [
+                    { id: 'cmd',   type: 'bi',  x: 20,  y: 190, params: { state: true } },
+                    { id: 'sts',   type: 'bi',  x: 20,  y: 40,  params: { state: true } },
+                    { id: 'rst',   type: 'bi',  x: 475, y: 360, params: { state: false } },
+                    { id: 'inv',   type: 'not', x: 195, y: 40 },
+                    { id: 'fail',  type: 'and', x: 340, y: 190 },
+                    { id: 'tmr',   type: 'ton', x: 482, y: 40,  params: { pt: 15 } },
+                    { id: 'latch', type: 'sr',  x: 624, y: 190 },
+                    { id: 'alarm', type: 'bo',  x: 764, y: 40 },
+                ],
+                wires: [
+                    { from: ['cmd', 'O'],    to: ['fail', 'A'] },
+                    { from: ['sts', 'O'],    to: ['inv', 'IN'] },
+                    { from: ['inv', 'Q'],    to: ['fail', 'B'] },
+                    { from: ['fail', 'Q'],   to: ['tmr', 'IN'] },
+                    { from: ['tmr', 'Q'],    to: ['latch', 'S'] },
+                    { from: ['rst', 'O'],    to: ['latch', 'R'] },
+                    { from: ['latch', 'Q'],  to: ['alarm', 'IN'] },
+                ],
+            },
+            reset: {
+                // OAT reset schedule: hot-water setpoint slides from
+                // 180 °F at 0 °F outdoors to 140 °F at 60 °F — the
+                // linear chain y = slope·OAT + intercept with slope
+                // −40/60 ≈ −0.667 and intercept 180, LIMIT clamping the
+                // line to the 140–180 band. Default 30 °F OAT → 160 °F.
+                // Layout: the math chain alternates row heights so each
+                // hop draws a tall visible elbow rather than a short
+                // block-to-block stub.
+                blocks: [
+                    { id: 'oat',   type: 'ai',    x: 20,  y: 40,  params: { value: 30 } },
+                    { id: 'slope', type: 'const', x: 20,  y: 170, params: { value: -0.667 } },
+                    { id: 'icpt',  type: 'const', x: 20,  y: 300, params: { value: 180 } },
+                    { id: 'scale', type: 'mul',   x: 190, y: 90 },
+                    { id: 'sum',   type: 'add',   x: 365, y: 190 },
+                    { id: 'clamp', type: 'limit', x: 540, y: 90,  params: { lo: 140, hi: 180 } },
+                    { id: 'hwsp',  type: 'ao',    x: 715, y: 190 },
+                ],
+                wires: [
+                    { from: ['oat', 'O'],   to: ['scale', 'A'] },
+                    { from: ['slope', 'O'], to: ['scale', 'B'] },
+                    { from: ['scale', 'O'], to: ['sum', 'A'] },
+                    { from: ['icpt', 'O'],  to: ['sum', 'B'] },
+                    { from: ['sum', 'O'],   to: ['clamp', 'IN'] },
+                    { from: ['clamp', 'O'], to: ['hwsp', 'IN'] },
                 ],
             },
         };

@@ -81,6 +81,32 @@ chapter now builds out from the
 buildout left behind. Per-page contracts below, one at a time as
 lanes open.
 
+**Analog Sensing — the chapter's anchor lesson.** Declared question:
+*How does a raw electrical signal become the engineering value on
+the graphic — and when should you not believe that value?*
+In scope: ranges and scaling (the published range as a promise; the
+straight line between signal and engineering units; the
+range-mismatch failure mode — software span ≠ transmitter span reads
+plausible-but-wrong forever; worked example replicable in the
+signal-scaling tool); live zero as diagnosis (what under-range and
+over-range look like per signal family at the graphic — 0–10 V
+can't distinguish broken from zero, 4–20 mA can; the WHY of the
+4 mA floor stays on controller-wiring, taken as given via
+cross-link); railed signals as ceilings, not measurements (a value
+pegged at range top says only "the truth is at least this much";
+picking ranges so the operating point lives mid-span — generalizes
+duct-static-control's railed-transducer war story, anchor-linked
+both directions).
+Out of scope: loop wiring/power — controller-wiring owns it (any
+sentence explaining loop power belongs there); thermistor/RTD
+curves — plain prose, the temperature-sensors lesson is in-flight
+this arc and a later lane adds the anchor; sensor placement —
+duct-static-control / pump-control own theirs; calibration offsets —
+plain prose here, `[future: education/sensor-calibration.html]`.
+Debts: pays the signal-scaling tool's missing lessons-link (the
+tool's documented lesson home) and the duct-static war story's
+generalization.
+
 **Status & Proof — the binary-sensing lesson.** Declared question:
 *When the graphic says a fan is ON, what is the controller actually
 sensing — and why do command and status sometimes disagree?*
@@ -415,7 +441,9 @@ while shipping page 6 (owner request 2026-07-11): an **analog
 sensing / transmitters lesson** — ranges and scaling, live-zero,
 railed signals as ceilings not measurements — seeded by the
 railed-transducer beat; natural home for the signal-scaling tool's
-lessons-link. `[future: education/analog-sensing.html]`
+lessons-link. `[future: education/analog-sensing.html]` *(shipped
+2026-07-18 — Signals & Sensing chapter anchor; contract under the
+Signals & Sensing buildout entry)*
 
 **The identification sidestep.** Linear order stands, but the opener
 plants an early callout toward naming the unit ("not sure what to
@@ -3816,7 +3844,8 @@ anti-windup, output clamped 0–100 %; distinct from `pid-engine.js`'s
 shape). The pid-tuner / pid-basics pages remain the place for PID
 internals; this tool just lets you wire the loop into a sequence.
 
-**Five canned example programs** load via a `widget-try` chip row:
+**Canned example programs** load via a `widget-try` chip row —
+five at launch:
 1. *Freeze-stat shutdown chain* — freeze BI sets an SR latch, the
    latch drops the fan via NOT and lights an alarm BO.
 2. *Economizer enable* — AI(OAT) `<` const(setpoint) AND BI(cool
@@ -3833,6 +3862,18 @@ internals; this tool just lets you wire the loop into a sequence.
    vocabulary.
 5. *PID loop* — AI(PV), const(SP), PID block, AO + readout. The
    loop visibly climbs toward setpoint once running.
+
+Two more shipped 2026-07-18 (PR #381) as lesson capstones for the
+programming chapter — seven total:
+
+6. *Proof-of-flow alarm* — command AND NOT(proof) feeds a 15 s TON;
+   its Q sets an SR latch driving the alarm BO, cleared by a reset
+   BI. Loads healthy (commanded + proved) so the user breaks it by
+   toggling proof off. Capstone for the timers-and-delays lesson.
+7. *OAT hot-water reset* — AI(OAT) → MUL const(−0.667) → ADD
+   const(180) → LIMIT 140–180 → AO: 180 °F at 0 °F sliding to
+   140 °F at 60 °F, default 30 °F OAT → 160 °F. Capstone for the
+   setpoint-math-reset lesson.
 
 **Tick semantics — one-tick delay for cycles.** Kahn topological
 sort on the wire DAG; combinational chains settle in dependency

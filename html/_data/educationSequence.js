@@ -32,8 +32,9 @@ const order = [
     // education/index.html grid). Final chapter order: controller-wiring
     // → analog-sensing → temperature-sensors → status-and-proof →
     // commanding-actuators → start-stop-commands; status-and-proof sits
-    // directly after controller-wiring until the in-flight
-    // analog-sensing / temperature-sensors lanes merge ahead of it ──
+    // directly after analog-sensing until the in-flight
+    // temperature-sensors lane merges between them ──
+    "/education/analog-sensing.html",
     "/education/status-and-proof.html",
     "/education/controls-commissioning.html",
     "/education/hydronic-loops.html",
