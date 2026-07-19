@@ -54,6 +54,11 @@ const order = [
     // ── Programming ─ function-blocks leads the chapter; insert new
     // lesson URLs here, in curriculum order (mirror the
     // education/index.html grid) ──
+    // comparators-and-deadband slots directly after boolean-logic-latches
+    // once that in-flight sibling lane merges (final chapter order:
+    // function-blocks → boolean-logic-latches → comparators-and-deadband
+    // → the rest of the arc).
+    "/education/comparators-and-deadband.html",
     "/education/modbus-basics.html",
     "/education/modbus-decoding.html",
     "/education/bacnet-vs-modbus.html",
