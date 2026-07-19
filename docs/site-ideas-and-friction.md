@@ -104,12 +104,77 @@ both directions).
 Out of scope: loop wiring/power — controller-wiring owns it (any
 sentence explaining loop power belongs there); thermistor/RTD
 curves — plain prose, the temperature-sensors lesson is in-flight
-this arc and a later lane adds the anchor; sensor placement —
-duct-static-control / pump-control own theirs; calibration offsets —
-plain prose here, `[future: education/sensor-calibration.html]`.
+this arc and a later lane adds the anchor *(paid 2026-07-18 — the
+temperature-sensors lane merged second and added its lesson to this
+page's relatedLinks per the second-merger reciprocity rule)*; sensor
+placement — duct-static-control / pump-control own theirs;
+calibration offsets — plain prose here,
+`[future: education/sensor-calibration.html]`.
 Debts: pays the signal-scaling tool's missing lessons-link (the
 tool's documented lesson home) and the duct-static war story's
 generalization.
+
+**Temperature Sensors — curve families + the meter workflow.**
+Declared question: *Why does the controller need to know exactly
+which temperature sensor is on the wire — and how do you verify one
+with a meter?*
+In scope: thermistor curve families (10K Type II vs Type III share
+one defining point — 10 kΩ at 77 °F — and diverge everywhere else;
+the vendor-shunted conventions the thermistor-calculator already
+names, the JCI 10K + 8.7K and TAC Type 5, as proof the name is not
+the curve; the quiet failure — a wrong-but-close curve reads a few
+degrees off, plausibly, forever, and nobody hunts a 3° lie); RTDs vs
+thermistors (Pt100 / Pt1000 / Balco; ohms-per-degree so small on an
+RTD that lead resistance reads as temperature; the 3-wire
+compensation answer; where each family lives in the field —
+thermistors own BAS space/duct temp, RTDs where accuracy and
+stability pay); the verification workflow (disconnect → meter the
+ohms → table lookup — the thermistor-calculator's R/T tables ARE the
+lookup, sent there directly → compare against a reference
+thermometer; deciding sensor vs input vs configuration from what
+disagrees).
+Out of scope: landing/wiring faults and the open-reads-cold /
+short-reads-hot display signature — controller-wiring owns them (one
+sentence + anchor); averaging elements + sensor placement — plain
+prose, `[future: education/sensor-placement.html]`; calibration
+offsets — plain prose, `[future: education/sensor-calibration.html]`
+(also declared on the Analog Sensing contract above); the
+analog-signal chapter opener was referenced in plain prose while
+that lane was in-flight *(converted to a live anchor + relatedLinks
+reciprocity at integration, 2026-07-18)*.
+Debts: pays the thermistor-calculator's missing lessons-link (the
+tool had no lesson home until now).
+
+**Status & Proof — the binary-sensing lesson.** Declared question:
+*When the graphic says a fan is ON, what is the controller actually
+sensing — and why do command and status sometimes disagree?*
+In scope: the status-source menu (starter auxiliary contact vs
+current switch vs DP/paddle switch, and what each actually PROVES —
+contactor closed ≠ motor drawing amps ≠ air moving; the broken-belt
+case is the canonical separator and the page's through-line: aux
+says ON, current switch shows a motor spinning unloaded whose draw
+may sit under the trip, DP says no air); proof logic (command-vs-
+status comparison, the proof window — command it, wait, expect
+proof — and fail-to-start as a concept; the BLOCK-level
+implementation belongs to the in-flight timers-and-delays lesson
+`[future: education/timers-and-delays.html]` — one plain-prose
+forward sentence with no anchor, the timers lane retro-adds it on
+merge); binary fault signatures (inverted polarity
+from a NO/NC config mismatch — perpetual ON or perpetual OFF;
+chattering status from a loose contact or marginal airflow at a DP
+switch; a current-switch trip point set below the motor's unloaded
+draw — proves ON with a broken belt, tying back to section 1).
+Out of scope: dry/wet contacts, wetting current, and how the BI
+lands — controller-wiring owns them (one sentence + anchor);
+point-to-point checkout discipline — controls-commissioning owns it
+(anchor); the wiring simulator models dry contacts on BIs and is
+cross-linked as the place to wire one.
+Paired quiz: `practice/status-and-proof.html` — 10 questions, house
+mix, exactly 1 gotcha (an inverted-polarity point-config snippet);
+scope split vs the neighboring banks: field-wiring-sensors owns
+sensor curves/shielding/sourcing-sinking, controller-wiring owns
+the landings and wet-vs-dry — this bank stays on WHAT STATUS PROVES
+and the command-vs-status logic.
 
 **Commanding Actuators** (`education/commanding-actuators.html` +
 paired quiz) *(lane opened 2026-07-18 — drafted, owner-checkpointed,

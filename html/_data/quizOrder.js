@@ -13,10 +13,8 @@ module.exports = [
     // sequence) ──
     { slug: 'controller-wiring',        label: 'Controller Wiring' },
     { slug: 'analog-sensing',           label: 'Analog Sensing' },
-    // Final chapter order: … → analog-sensing → temperature-sensors →
-    // status-and-proof → commanding-actuators → start-stop-commands
-    // (mirror the education sequence) — reorder as the in-flight
-    // sibling quizzes land.
+    { slug: 'temperature-sensors',      label: 'Temperature Sensors' },
+    { slug: 'status-and-proof',         label: 'Status & Proof' },
     { slug: 'commanding-actuators',     label: 'Commanding Actuators' },
     { slug: 'hydronic-loops',           label: 'Hydronic Loops' },
     { slug: 'load-piping',              label: 'Load Piping' },

@@ -29,12 +29,12 @@ const order = [
     "/education/controller-wiring.html",
     // ── Signals & Sensing ─ controller-wiring leads the chapter; insert
     // new lesson URLs here, in curriculum order (mirror the
-    // education/index.html grid) ──
+    // education/index.html grid). Final chapter order: controller-wiring
+    // → analog-sensing → temperature-sensors → status-and-proof →
+    // commanding-actuators → start-stop-commands ──
     "/education/analog-sensing.html",
-    // Final chapter order: … → analog-sensing → temperature-sensors →
-    // status-and-proof → commanding-actuators → start-stop-commands.
-    // commanding-actuators sits directly after analog-sensing until
-    // those in-flight siblings land — reorder as each merges.
+    "/education/temperature-sensors.html",
+    "/education/status-and-proof.html",
     "/education/commanding-actuators.html",
     "/education/controls-commissioning.html",
     "/education/hydronic-loops.html",

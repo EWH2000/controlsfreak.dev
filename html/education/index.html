@@ -23,13 +23,13 @@ nav: education
 
     <div class="filter-chips" role="group" aria-label="Filter lessons by category">
         <button type="button" class="filter-chip active" data-category="all" aria-pressed="true">
-            All <span class="filter-chip-count">32</span>
+            All <span class="filter-chip-count">34</span>
         </button>
         <button type="button" class="filter-chip" data-category="fundamentals" aria-pressed="false">
             Fundamentals <span class="filter-chip-count">5</span>
         </button>
         <button type="button" class="filter-chip" data-category="signals" aria-pressed="false">
-            Signals &amp; Sensing <span class="filter-chip-count">3</span>
+            Signals &amp; Sensing <span class="filter-chip-count">5</span>
         </button>
         <button type="button" class="filter-chip" data-category="hydronics" aria-pressed="false">
             Hydronics <span class="filter-chip-count">5</span>
@@ -77,6 +77,24 @@ nav: education
             titleFull:  'Analog Sensing',
             desc:       'How a raw 4–20 mA or 0–10 V signal becomes the value on the graphic — the published range as a promise, live zero as a fault you can see from the chair, and railed readings as ceilings. Interactive mapping widget.',
             pills:      ['Signals', 'Ranges + Scaling', 'Live Zero', 'Railed = Ceiling'],
+            category:   'signals'
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/education/temperature-sensors.html',
+            titleShort: 'Temperature Sensors',
+            titleFull:  'Temperature Sensors',
+            desc:       'Why the controller must know exactly which sensor is on the wire — 10K Type II vs Type III and the shunted vendor curves, RTDs and the lead resistance that reads as temperature, and the meter-and-table verification workflow.',
+            pills:      ['Signals', 'Curve Families', 'RTD vs Thermistor', 'Meter Verify'],
+            category:   'signals'
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/education/status-and-proof.html',
+            titleShort: 'Status & Proof',
+            titleFull:  'Status & Proof',
+            desc:       'What a fan status point actually proves — aux contact vs current switch vs DP switch, proof windows and fail-to-start, and the broken belt that fools two of the three.',
+            pills:      ['Signals', 'Aux vs CS vs DP', 'Proof Window', 'Fail-to-Start'],
             category:   'signals'
         }) }}
         {{ navCard({
