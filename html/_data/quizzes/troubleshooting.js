@@ -6,8 +6,8 @@
 // reasoning across the trade — BACnet/Modbus comms, hydronics, refrigerant,
 // and VFDs. The skill being drilled is reading a symptom for what it rules
 // IN and OUT, not memorizing one fix. Explanations are inline; learnMore
-// points only at pages that exist (BACnet Networking, Balancing, Superheat
-// & Subcooling, VFDs lessons).
+// points only at pages that exist and genuinely cover the concept behind
+// the symptom.
 
 module.exports = [
     // ── Comms: BACnet won't discover ──────────────────────
