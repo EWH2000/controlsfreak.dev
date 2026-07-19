@@ -954,6 +954,22 @@ under *Git conventions*). Stage specific file lists, not
     checklist against it before merging.
 
   Large sweeps log under `codebase-issues.md` rather than skip.
+- **Name the payer for every reverse cross-link.** When parallel
+  lanes will cross-link each other's pages, the lane spec must say
+  **which lane pays each reverse link**, decided before the second
+  lane opens. Otherwise the debt gets recorded in a PR body and
+  evaporates the moment that PR merges — nothing carries it forward.
+  The 2026-07-18 arc shipped two chapters under identical conventions
+  with opposite outcomes: Signals' `relatedLinks()` reciprocity was
+  fully paid, Programming's was **entirely unpaid** (four lessons
+  naming each other in prose with zero sibling links). The difference
+  was structural, not carelessness — Signals happened to have a lane
+  that merged second and retro-paid the anchors; Programming had none.
+- **PR bodies are not a reliable debt ledger, in either direction.**
+  Roughly a third of the debt itemized in that arc's PR bodies was
+  phantom — already paid during conflict resolution, bodies never
+  amended — while real debt went unrecorded. Reconcile against the
+  built site, never against the prose in a merged PR.
 
 CI on every PR runs `npm test` (`.github/workflows/test.yml`);
 Cloudflare Workers Build deploys `_site/` ~60s after merge. A separate
