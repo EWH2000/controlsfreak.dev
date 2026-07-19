@@ -616,9 +616,16 @@ section headers).
   (WCAG 2.5.5 / Apple HIG) while desktop pointer density stays
   compact. When adding a new *chrome-level* interactive (nav,
   toggle, tab, settings control), add its selector here rather than
-  setting a per-component `min-height`. Answer-level controls
-  (`.quiz-choice`, `.quiz-action`, `.ps-input`, copy/submit buttons)
-  already clear 44px and aren't in the block.
+  setting a per-component `min-height`. The form-control family
+  (`.field` inputs + selects, `.ps-input`) and the measured-short
+  buttons (`.copy-btn`, `.quiz-action`) are in the block too —
+  successive measurement passes (audit-2026-06 #24, codebase-issues
+  #164 / #172) disproved the old "already clear 44px" claims; only
+  `.quiz-choice` and the multi-row textareas genuinely clear the
+  floor natively. The block holds *shared-class* selectors only:
+  widget internals with no shared class (the vfds source selects)
+  get a page-local `(hover: none)` floor in their own
+  `{% block head %}`.
 - **Column-grid family** — `.tool-body-2col` / `.tool-body-3col` /
   `.tool-body-row` all live in `styles.css`. Each grid sits directly
   inside a `.tab-pane` or `.tool-card`, not inside a padded

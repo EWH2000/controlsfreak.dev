@@ -452,7 +452,7 @@ techs new to the industry and anyone wanting a refresh.
   on the same leg or the first shared wire dead-shorts the secondary.
   The capstone diagram lands one of each on the same generic
   controller the simulator uses. Pairs with the Controller Wiring
-  Simulator.
+  Simulator and the Controller Wiring quiz.
 <!-- ── Signals & Sensing chapter ─ Controller Wiring leads it; insert
      new lesson bullets here, in curriculum order ── -->
 - **Controls Commissioning** — how you verify a controller actually
@@ -743,7 +743,7 @@ flavors share the same engine:
   When a topic recurs in feedback, it becomes a candidate for a
   new education page.
 
-Shipped so far — twenty-three content quizzes (each 10 questions, paired
+Shipped so far — twenty-four content quizzes (each 10 questions, paired
 1:1 with its lesson and deep-linking the gotchas) plus five field
 drills:
 
@@ -763,6 +763,12 @@ drills:
   leaves and how integral erases it, and the rectifier / DC-bus /
   inverter power stages with the run-command vs. speed-reference
   trap.
+- **Content quizzes — signals:** Controller Wiring. The shared COM
+  as the panel's 0 V reference, the same-leg phasing rule on a
+  shared transformer (and the 24-vs-48 V distinction), LOOP+ vs the
+  AC hot leg for a 2-wire loop, wetting current and wet vs. dry
+  contacts, the AO signal that isn't the load's power, the unfed
+  BO-C, and triac vs. relay outputs.
 - **Content quizzes — programming:** Function Blocks. Blocks, pins,
   wire types, the block families, and how a scan resolves feedback.
 - **Content quizzes — refrigeration:** Refrigerant Cycle Basics,

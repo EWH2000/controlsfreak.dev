@@ -48,6 +48,35 @@ test.describe('phone (hover:none, 412×883)', () => {
         expect(psInput.height).toBeGreaterThanOrEqual(44);
     });
 
+    test('the #172 tail clears the 44px floor on touch', async ({ page }) => {
+        // .field input — 38.6px natively (#164 floored .field select
+        // but never the inputs). Contact needs the contact.spec.js
+        // Turnstile treatment: route-block challenges.cloudflare.com
+        // before navigating (it errors on sandboxed localhost) and use
+        // domcontentloaded (the widget never goes network-idle).
+        await page.route('https://challenges.cloudflare.com/**', route => route.abort());
+        await page.goto('/contact.html', { waitUntil: 'domcontentloaded' });
+        const fieldInput = await page.locator('#contact-name').boundingBox();
+        expect(fieldInput.height).toBeGreaterThanOrEqual(44);
+
+        // The same .field input family on the simulator sidebars.
+        await page.goto('/simulators/pid-tuner.html');
+        const sgInput = await page.locator('#pid-sg-dco').boundingBox();
+        expect(sgInput.height).toBeGreaterThanOrEqual(44);
+        await page.goto('/simulators/staging-sequencer.html');
+        const stgInput = await page.locator('#stg-up').boundingBox();
+        expect(stgInput.height).toBeGreaterThanOrEqual(44);
+
+        // The vfds run/speed source selects — 31.8px natively; widget
+        // internals with no shared class, floored by the page-local
+        // (hover: none) rule in the vfds head, not the shared block.
+        await page.goto('/education/vfds.html');
+        const runSrc = await page.locator('#vfd-run-src').boundingBox();
+        expect(runSrc.height).toBeGreaterThanOrEqual(44);
+        const spdSrc = await page.locator('#vfd-spd-src').boundingBox();
+        expect(spdSrc.height).toBeGreaterThanOrEqual(44);
+    });
+
     test('mode-filtered preset row stays filtered on touch', async ({ page }) => {
         // The floor block's display:inline-flex on .copy-btn beats the
         // UA-default [hidden] rule (the #25 trap family) — without the
@@ -81,6 +110,14 @@ test.describe('desktop pointer density stays compact (#164)', () => {
         await page.goto('/simulators/refrigerant-loop.html');
         const fieldSelect = await page.locator('#rl-refrigerant').boundingBox();
         expect(fieldSelect.height).toBeLessThan(44);
+        // The #172 additions hold desktop density too — .field inputs
+        // and the vfds page-local select floor are both (hover: none).
+        await page.goto('/simulators/staging-sequencer.html');
+        const stgInput = await page.locator('#stg-up').boundingBox();
+        expect(stgInput.height).toBeLessThan(44);
+        await page.goto('/education/vfds.html');
+        const runSrc = await page.locator('#vfd-run-src').boundingBox();
+        expect(runSrc.height).toBeLessThan(44);
     });
 });
 
