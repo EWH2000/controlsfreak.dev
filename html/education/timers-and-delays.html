@@ -61,10 +61,11 @@ keywords: TON TOF on-delay off-delay preset elapsed proof fail-to-start debounce
                     This page assumes you can read a sheet at the block level — pins, wires,
                     and the scan. That's <a href="/education/function-blocks.html">Function-Block
                     Basics</a>, the opening lesson of this chapter. Two neighbors get leaned on
-                    but not re-taught: this chapter's boolean-logic lesson owns what an
-                    <code>SR latch</code> is and why safeties latch, and its comparator lesson
-                    owns how a threshold decision gets made in the first place. Here, those
-                    blocks just do their day jobs — the timers are the story.
+                    but not re-taught: <a href="/education/boolean-logic-latches.html#sr-latch">Boolean
+                    Logic &amp; Latches</a> owns what an <code>SR latch</code> is and why safeties
+                    latch, and <a href="/education/comparators-and-deadband.html#comparators">Comparators
+                    &amp; Deadband</a> owns how a threshold decision gets made in the first place.
+                    Here, those blocks just do their day jobs — the timers are the story.
                 </p>
             </div>
 
@@ -377,8 +378,9 @@ keywords: TON TOF on-delay off-delay preset elapsed proof fail-to-start debounce
                 erase itself, evidence and all. The <code>SR latch</code> gives the trip a
                 memory: the timer <em>detects</em>, the latch <em>remembers</em>, and only a
                 deliberate reset — a person, acknowledging — lets go. (What a latch is, why
-                set-dominance matters, and the latch + manual-reset idiom are this chapter's
-                boolean-logic lesson; here it just does its day job.)
+                set-dominance matters, and the latch + manual-reset idiom are
+                <a href="/education/boolean-logic-latches.html#sr-latch">the SR-latch section of
+                Boolean Logic &amp; Latches</a>; here it just does its day job.)
             </p>
 
             <p style="margin-top:1.25rem;">
@@ -405,7 +407,9 @@ keywords: TON TOF on-delay off-delay preset elapsed proof fail-to-start debounce
                 The rule of thumb: as long as the slowest <em>honest</em> start you'll ever
                 see, plus a little margin, and no longer. What the proof contact actually
                 measures — and which failures each kind of proof source can even see — is a
-                story of its own, and it belongs to this chapter's status-and-proof lesson.
+                story of its own, told from the input side in
+                <a href="/education/status-and-proof.html#sap-sources">the status-source menu in
+                Status &amp; Proof</a>.
             </p>
 
             <!-- // anecdote slot: a proof-window war story — a nuisance fail-to-start
@@ -458,8 +462,9 @@ keywords: TON TOF on-delay off-delay preset elapsed proof fail-to-start debounce
 
             <p style="margin-top:1.25rem;">
                 Here's where the timers meet the decision they're pacing. The on/off decision
-                itself comes from a deadband — two thresholds with memory between them, this
-                chapter's comparator lesson — and the two mechanisms divide the work
+                itself comes from a deadband — two thresholds with memory between them,
+                <a href="/education/comparators-and-deadband.html#deadband">built out in
+                Comparators &amp; Deadband</a> — and the two mechanisms divide the work
                 cleanly: <em>the band decides what the sequence wants; the timers decide when
                 it's allowed.</em> When the two are sized together, the timers almost never
                 intervene — the band alone asks for cycles slower than the minimums. When the
@@ -516,7 +521,9 @@ keywords: TON TOF on-delay off-delay preset elapsed proof fail-to-start debounce
         ],
         lessons: [
             {href: '/education/function-blocks.html', label: 'Function-Block Basics'},
-            {href: '/education/equipment-staging.html', label: 'Equipment Staging'}
+            {href: '/education/boolean-logic-latches.html', label: 'Boolean Logic & Latches'},
+            {href: '/education/comparators-and-deadband.html', label: 'Comparators & Deadband'},
+            {href: '/education/status-and-proof.html', label: 'Status & Proof'}
         ],
         quizzes: [
             {href: '/practice/timers-and-delays.html', label: 'Timers & Delays Quiz'}

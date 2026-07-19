@@ -61,8 +61,9 @@ keywords: comparator deadband hysteresis threshold chatter short cycle GT LT set
                     and the scan. That's <a href="/education/function-blocks.html">Function-Block
                     Basics</a>, the opening lesson of this chapter. The TRUE/FALSE side of the
                     story — what AND, OR, and a latch <em>do</em> with a comparator's answer —
-                    has a lesson of its own in this chapter, on boolean logic and latches; you
-                    don't need it first, but the two pages are neighbors.
+                    has a lesson of its own in this chapter,
+                    <a href="/education/boolean-logic-latches.html">Boolean Logic &amp; Latches</a>;
+                    you don't need it first, but the two pages are neighbors.
                 </p>
             </div>
 
@@ -157,8 +158,9 @@ keywords: comparator deadband hysteresis threshold chatter short cycle GT LT set
                 rest, oil that never returns, pressures that never equalize. A compressor is
                 rated for a handful of starts an hour; a chattering threshold can demand ten
                 a <em>minute</em>. Real equipment carries anti-short-cycle timers as a last
-                line of defense against exactly this, and minimum on/off timing gets a lesson
-                of its own later in this chapter — but a sequence that leans on the safety
+                line of defense against exactly this, and
+                <a href="/education/timers-and-delays.html#min-times">minimum on/off timing</a>
+                gets a lesson of its own later in this chapter — but a sequence that leans on the safety
                 timer to clean up its own chatter is a sequence with a bug in it.
             </p>
 
@@ -271,7 +273,8 @@ keywords: comparator deadband hysteresis threshold chatter short cycle GT LT set
                 true, so something has to <em>remember</em> which side of the story it's in.
                 That something is an <code>SR latch</code> — the one boolean block with
                 memory. (What a latch is, why safeties lean on it, and what happens when set
-                and reset collide is this chapter's boolean-logic lesson; here the latch just
+                and reset collide is <a href="/education/boolean-logic-latches.html#sr-latch">the
+                SR-latch section of Boolean Logic &amp; Latches</a>; here the latch just
                 does its day job.)
             </p>
 
@@ -487,8 +490,9 @@ keywords: comparator deadband hysteresis threshold chatter short cycle GT LT set
         ],
         lessons: [
             {href: '/education/function-blocks.html', label: 'Function-Block Basics'},
-            {href: '/education/equipment-staging.html', label: 'Equipment Staging'},
-            {href: '/education/pid-basics.html', label: 'PID Basics'}
+            {href: '/education/boolean-logic-latches.html', label: 'Boolean Logic & Latches'},
+            {href: '/education/timers-and-delays.html', label: 'Timers & Delays'},
+            {href: '/education/setpoint-math-reset.html', label: 'Setpoint Math & Reset'}
         ],
         quizzes: [
             {href: '/practice/comparators-and-deadband.html', label: 'Comparators & Deadband Quiz'}
