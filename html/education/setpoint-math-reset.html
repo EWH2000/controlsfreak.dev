@@ -417,10 +417,13 @@ keywords: setpoint reset schedule OAT slope intercept clamp limit min max select
                 Need more than two modes? Chain the selects: the first picks between
                 unoccupied and morning-warm-up values, the second picks between that result
                 and the occupied setpoint, and two boolean wires walk the output through
-                three modes. How a building <em>decides</em> which mode it's in — schedules,
-                overrides, warm-up logic, the state machine behind those boolean wires — is a
-                design story of its own, and it gets its own lesson rather than a paragraph
-                here.
+                three modes. Notice what this page does and doesn't answer: the math blocks
+                hold the setpoints and the <code>SELECT</code> picks between them, but what
+                <em>drives</em> those boolean wires — schedules, occupancy overrides,
+                warm-up logic, the state machine deciding which mode the building is in — is
+                a different subject entirely, closer to calendar time and sequence design
+                than to the arithmetic here. Treat the mode wire as a given: whatever
+                computes it, the selection math on this page works the same way.
             </p>
 
             <h2 class="subhead" id="capstone">Load It and Watch the Clamp Catch</h2>
