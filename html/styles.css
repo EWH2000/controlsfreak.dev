@@ -1869,10 +1869,14 @@ input[type="range"]:focus-visible::-moz-range-thumb {
    button (26px), and the form-control family (#164 measured
    input.ps-input AND select.ps-input at 29px and .field selects at
    38.6px — this block's old ".ps-input fields clear 44px natively"
-   claim was equally false). Like FOCUS INDICATORS above, this is
+   claim was equally false; #172 caught the .field INPUTS the #164
+   pass missed, at 38.6px). Like FOCUS INDICATORS above, this is
    the single consolidated home for the floor — add new interactives
-   here rather than scattering per-component min-heights.
-   See codebase-issues #74 / #164 / ux-audit #3 / #8 / #9 +
+   here rather than scattering per-component min-heights. Shared-class
+   selectors only: widget INTERNALS with no shared class (e.g. the
+   vfds source selects) get a page-local (hover: none) floor in their
+   own head block instead.
+   See codebase-issues #74 / #164 / #172 / ux-audit #3 / #8 / #9 +
    audit-2026-06 #24 / #25 for the why. */
 @media (hover: none) {
     .site-nav-links a,
@@ -1916,14 +1920,20 @@ input[type="range"]:focus-visible::-moz-range-thumb {
        match the dropdown rows. */
     .site-nav-links a { padding-inline: 0.2rem; justify-content: flex-start; }
     .quiz-settings-select { min-height: 44px; }
-    /* Form-control family (#164): min-height ONLY — replaced elements
-       grow their box directly and vertically center their text; the
-       group's inline-flex display above would fight native select /
-       input rendering. Floored together per the 2026-07-18 owner call:
-       flooring only the selects would leave 44px selects towering over
-       29px inputs in the same property sheet. textarea.ps-input stays
-       out — the one instance (duct-traverse readings) is multi-row and
-       clears the floor natively. */
+    /* Form-control family (#164 / #172): min-height ONLY — replaced
+       elements grow their box directly and vertically center their
+       text; the group's inline-flex display above would fight native
+       select / input rendering. Floored together per the 2026-07-18
+       owner call: flooring only the selects would leave 44px selects
+       towering over 29px inputs in the same property sheet. #172
+       added .field input — #164 floored the .field selects but never
+       the inputs, which sat at 38.6px on contact / pid-tuner /
+       staging-sequencer. The contact honeypot is .hp-field, not
+       .field, so the floor can't catch it, and `input` never matches
+       the textareas — contact's message box and textarea.ps-input
+       (duct-traverse readings) are multi-row and clear the floor
+       natively. */
+    .field input,
     .field select,
     input.ps-input,
     select.ps-input { min-height: 44px; }
