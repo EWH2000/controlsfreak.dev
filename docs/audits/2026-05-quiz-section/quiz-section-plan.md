@@ -1,26 +1,81 @@
 # controlsfreak.dev — Quiz Section Planning
 
-> **Status: v1 shipped 2026-05-25 (PR #141); v2 batch shipped
-> 2026-05-29/30 (PRs #157 / #158 / #159).** Lane is live at
-> `/practice/` (named "Practice" — picked over "Drills" / "Quizzes"
-> during scoping). v1 shipped the engine + Modbus Decoding content
-> quiz + Surviving Your First Months field drill. v2 added seven more
-> content quizzes (Modbus Basics, BACnet Basics, BACnet Networking,
-> Pump Control, Hydronic Loops, Load Piping, Hydronic Balancing) and
-> the Controller Swap field drill — eight content quizzes and two
-> drills now live. Graduating note with the v1 design decisions lives
-> in [`site-ideas-and-friction.md`](site-ideas-and-friction.md) under
-> *Practice section — quizzes + field drills* (which also tracks the
-> v2 ship and the re-scoped v3 list). The **v3 content-quiz arm shipped
-> 2026-06-05** across three more PRs (Refrigeration, Controls & Logic,
-> Air & Pumps) — all 16 Education lessons now have a 1:1 paired quiz.
-> The specialized field drills have since shipped (Field Wiring &
-> Sensors, Sequencing Scenarios). What remains of v3 is the cross-page
-> **Mix quizzes** (plus an optional Junior Interview Prep drill and a
-> Commissioning lesson to parent the Controller Swap drill). File stays
-> at root until the Mix quizzes land, at
-> which point it moves to `docs/audits/quiz/` per the original
-> self-direction below.
+> **Archived 2026-07-19 — RETIRED, and the body below is historical
+> and substantially wrong. Read it as a record of what was planned in
+> May 2026, never as a description of the site.** The Practice section
+> shipped and then grew far past this plan: v1 on 2026-05-25 (PR #141,
+> engine + Modbus Decoding quiz + Surviving Your First Months drill),
+> v2 on 2026-05-29/30 (PRs #157–#159), the v3 content-quiz arm on
+> 2026-06-05, and a year's worth of paired quizzes since. **Live today:
+> 34 content quizzes + 5 field drills at `/practice/`.** Moved out of
+> the repo root into `docs/audits/` on the controls-spine arc's
+> close-out; the durable record is the *Practice section — quizzes +
+> field drills* entry in
+> [`site-ideas-and-friction.md`](../../site-ideas-and-friction.md),
+> which is where Practice-section planning lives from here on.
+>
+> **Disposition of the open scope**
+>
+> - **Cross-page Mix quizzes (All-Protocols / All-Hydronics) —
+>   formally DROPPED (owner decision, 2026-07-19).** They were
+>   deferred 2026-06-10 on three grounds, and two of the three have
+>   since dissolved: the build-time aggregation machinery now exists
+>   (`html/_data/quizzes/`, one bank file per quiz), and the bank
+>   counts grew well past the "not enough material" objection. But the
+>   deferral's explicit revisit trigger was *"revisit when a real user
+>   asks"* — and no user has asked. Per the owner's quality-first
+>   directive, **"closing out a planning doc" is not itself a reason to
+>   build a feature**; a feature ships because someone wants it. If the
+>   demand signal ever arrives, the catalog sketch below is a fine
+>   starting point — note it names a third mix ("Fundamentals Sampler")
+>   that no later doc carries.
+> - **Optional Junior Interview Prep drill** — handed to
+>   `site-ideas-and-friction.md` as residual scope (same treatment the
+>   refrigerant-education audit gave its optional page 4). Still
+>   unbuilt.
+> - **Commissioning lesson** — the plan wanted one so the Controller
+>   Swap drill would have a parent to pair against. The **lesson
+>   shipped** 2026-07-14 as `education/controls-commissioning.html`,
+>   but it has no paired quiz and `practice/controller-swap.html` still
+>   carries no `pairedLesson`, so the parenting purpose is unrealized.
+>   The residual — a commissioning practice bank paired to that lesson
+>   — is handed to the friction file.
+>
+> **Known-wrong claims in the body** (non-exhaustive; enough to
+> calibrate the rest):
+>
+> - It says twice that the file "lives at root." It does not — the
+>   tracking markdowns moved under `docs/` on 2026-07-18, and this one
+>   is now under `docs/audits/`. Its self-direction to graduate into
+>   `docs/audits/quiz/` was **not** followed: the established archive
+>   convention is date-prefixed (`2026-05-ux`, `2026-07-fresh-accuracy`),
+>   so this lives at `docs/audits/2026-05-quiz-section/`, dated from
+>   the section's 2026-05-25 v1 ship.
+> - It presents the **section name as an open question leaning
+>   "Drills."** It shipped as **Practice**. Every `/drills/` URL and
+>   every `nav: drills` in the body is wrong — the real values are
+>   `/practice/` and `nav: practice`.
+> - It prescribes **inline per-page question banks** in
+>   `{% block scripts %}` and argues *against* a build-time data step.
+>   The exact opposite shipped: banks live in
+>   `html/_data/quizzes/<slug>.js` precisely so the page and
+>   `head.njk`'s FAQPage JSON-LD read one source.
+> - Its localStorage namespace `cfd-drills-v1:<slug>:…` was **never
+>   used**. Shipped as `cf_quiz_<slug>_*`, per the site-wide
+>   `cf_<feature>_<key>` convention.
+> - It points at `tests/smoke.spec.js` for the PAGES manifest. That
+>   manifest is now `tests/pages.js`, shared by `smoke.spec.js` and
+>   `responsive.spec.js`.
+> - Its **catalog is aspiration, not history**: 16 content quizzes
+>   (13 per-page + 3 mixes) and 8 field drills, against the 34 + 5
+>   that actually shipped. The drill list also names vendor-specific
+>   titles ("Tridium / Niagara Quirks", "EBO Quirks") that the site's
+>   later *avoid exact vendor names* guardrail rules out.
+>
+> The **hard nos still hold** (accounts, leaderboards, server-side
+> scoring, adaptive difficulty, spaced repetition, drill-of-the-day,
+> share images, on-site authoring UI) — those are carried forward in
+> the friction file's Practice entry, which is the live source.
 
 Planning doc for a new top-level section: quizzes / drills for
 building-controls techs. Companion to `site-ideas-and-friction.md`

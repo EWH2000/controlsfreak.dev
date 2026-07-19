@@ -329,7 +329,7 @@ nav: practice
                 href:       '/practice/duct-static-control.html',
                 titleShort: 'Duct Static',
                 titleFull:  'Duct Static Control',
-                desc:       'Close the chapter from memory — why static is the signal, the sensor two-thirds out, trim and respond, the railed transducer, and who decides flow.',
+                desc:       'Run the static loop from memory — why static is the signal, the sensor two-thirds out, trim and respond, the railed transducer, and who decides flow.',
                 pills:      ['10 Questions', 'MCQ · TF · Gotcha · Numeric', '~ 5 min'],
                 category:   'forced-air'
             }) }}
@@ -551,8 +551,8 @@ nav: practice
         // all along; the landing never read them — a student grinding
         // 21 quizzes couldn't see where they stood without opening each
         // page. Paint a small badge on every card with a recorded best.
-        // All client-side, no accounts — inside quiz-section-plan's
-        // hard-no lines.
+        // All client-side, no accounts — inside the hard-no lines in
+        // docs/audits/2026-05-quiz-section/quiz-section-plan.md.
         document.querySelectorAll('.nav-card[href^="/practice/"]').forEach(card => {
             const slug = (card.getAttribute('href').match(/\/practice\/([a-z-]+)\.html/) || [])[1];
             if (!slug) return;
