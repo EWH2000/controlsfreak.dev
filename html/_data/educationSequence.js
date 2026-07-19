@@ -31,6 +31,7 @@ const order = [
     // new lesson URLs here, in curriculum order (mirror the
     // education/index.html grid) ──
     "/education/analog-sensing.html",
+    "/education/temperature-sensors.html",
     "/education/controls-commissioning.html",
     "/education/hydronic-loops.html",
     "/education/load-piping.html",
