@@ -40,6 +40,7 @@ module.exports = [
     { slug: 'comparators-and-deadband', label: 'Comparators & Deadband' },
     { slug: 'timers-and-delays',        label: 'Timers & Delays' },
     { slug: 'setpoint-math-reset',      label: 'Setpoint Math & Reset' },
+    { slug: 'reading-a-wiresheet',      label: 'Reading a Wiresheet' },
     { slug: 'modbus-basics',            label: 'Modbus Basics' },
     { slug: 'modbus-decoding',          label: 'Modbus Decoding' },
     { slug: 'bacnet-basics',            label: 'BACnet Basics' },

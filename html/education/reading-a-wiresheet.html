@@ -1,0 +1,562 @@
+---
+title: Reading a Wiresheet — controlsfreak.dev
+description: How to troubleshoot a live wiresheet you did not write — trace backward from the wrong output, read values against the scan, and corner the block that is lying.
+canonical: https://controlsfreak.dev/education/reading-a-wiresheet.html
+nav: education
+category: programming
+pairedQuiz: https://controlsfreak.dev/practice/reading-a-wiresheet.html
+keywords: wiresheet trace troubleshoot backward live values scan idiom force override block
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block head %}
+    <style>
+        /* Page-specific — the worked sheet is a wiresheet-flavored
+           structural drawing (the function-blocks.html family), so it
+           takes the shared .edu-svg base plus a page-local width cap.
+           This sheet is the chapter's biggest (fifteen blocks), so the
+           cap sits wider than the siblings' 740px. */
+        .edu-svg.raw-svg {
+            max-width: 880px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        /* Idiom signatures — the one-line block-shape "spelling" inside
+           each idiom callout. Element-qualified like the site's other
+           small-text utilities. */
+        code.raw-sig {
+            display: block;
+            font-family: var(--mono);
+            font-size: 0.72rem;
+            letter-spacing: 0.02em;
+            color: var(--blue);
+            margin: 0.4rem 0 0.55rem;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Education · Reading a Wiresheet</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">Reading a Wiresheet <span class="tool-tag">Logic</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                Every lesson in this chapter taught you a block family. This one teaches the
+                job they add up to. The unit is misbehaving, the program is somebody else's,
+                and the sheet in front of you is <em>live</em> — every wire wearing its
+                current value. Nobody reads a sheet like that for pleasure; you read it
+                because something is wrong. The whole skill is one question, start to finish:
+                <em>you didn't write this program and something's wrong — how do you read a
+                live wiresheet to find the block that's lying?</em>
+            </p>
+
+            <div class="callout">
+                <p style="font-size:0.86rem;line-height:1.7;">
+                    This page assumes the chapter behind it —
+                    <a href="/education/function-blocks.html">Function-Block Basics</a> for
+                    pins, wires, and the scan, with the block families (latches, comparators,
+                    timers, setpoint math) doing their day jobs. And one boundary, drawn
+                    crisply: <strong>commissioning proves a <em>correct</em> program was
+                    installed</strong> — point-to-point checkout and the override discipline
+                    live in <a href="/education/controls-commissioning.html">Controls
+                    Commissioning</a>. This page is the other job: finding the fault in a
+                    live one.
+                </p>
+            </div>
+
+            <!-- ───────────────── 1 · Work backward ───────────────── -->
+            <h2 class="subhead" id="raw-backward">Work backward from the wrong output</h2>
+
+            <p>
+                The beginner move is to read the sheet the way it was written: start at the
+                inputs on the left, follow the signals forward, verify each block as you go.
+                It feels rigorous. It's also the slowest possible route to the fault —
+                because a broken sheet is still <em>mostly healthy</em>. One block is lying;
+                the other thirty are doing their jobs perfectly. Read forward and you'll
+                inspect the whole healthy ninety percent before you touch the one block that
+                matters. Forward is how you <em>learn</em> a sheet; it isn't how you fix one.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                So start at the other end. The complaint already names the wrong output —
+                the heat that won't run, the damper that won't close, the alarm that won't
+                clear. Put your finger on that output and step <strong>upstream</strong>,
+                one wire at a time, asking the same question at every hop:
+                <em>given these inputs, is this output right?</em> "Right" means what the
+                <strong>sequence needs it to say</strong> — not merely what the block's
+                label computes. As long as the answer is yes, the block is honest and the
+                problem is further upstream. <strong>The first NO is your block.</strong>
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                That last distinction — what the sequence needs versus what the label
+                computes — is the heart of it, because a block can lie two ways. Broken math
+                is the rare way; blocks compute what they're told with total reliability.
+                The common way is <strong>the wrong sentence configured into it</strong>: a
+                comparator pointed the wrong direction, a missing inversion, a constant
+                somebody typed wrong, a swapped pair of wires. A block like that answers its
+                own question faithfully, forever — and its question is the wrong one. The
+                trace corners it just the same: at that hop, the output stops matching what
+                the sequence plainly needs, and everything upstream still makes sense. The
+                block that's lying — or its config — is under your finger.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                Two dividends fall out of the discipline for free. Every branch that never
+                reaches the wrong output <em>doesn't exist</em> for this trace — you don't
+                owe it a glance, no matter how suspicious it looks. And every hop where the
+                answer is "yes, honest" retires the <em>entire subtree</em> above the healthy
+                input: a TRUE permit leg clears the whole permissive chain that built it in
+                one look. Backward tracing isn't just starting at the other end — it's a
+                pruning strategy. The sheet gets smaller at every hop.
+            </p>
+
+            <!-- ───────────────── 2 · The scan, observed ───────────────── -->
+            <h2 class="subhead" id="raw-scan">What the scan means for what you see</h2>
+
+            <p>
+                <a href="/education/function-blocks.html">Function-Block Basics</a> covered
+                how a sheet runs: the controller evaluates every block several times a
+                second — the <em>scan</em> — in dependency order, sources first, and a
+                feedback wire carries the <em>previous</em> scan's value so a loop resolves
+                instead of chasing itself. That was the mechanism. Standing in front of a
+                live sheet, the mechanism becomes three things you'll actually observe.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                <strong>Values move together, not in sequence.</strong> Within one scan a
+                whole combinational chain settles — comparator, gate, output, done — and the
+                display repaints far more slowly than the controller scans. You will never
+                watch a value crawl block-to-block across the sheet, and you shouldn't wait
+                for one to. The corollary is diagnostic gold: if a chain disagrees with
+                <em>itself</em> — a TRUE feeding an AND whose other leg is TRUE while its
+                output sits FALSE — that isn't propagation delay you're seeing, because
+                there is none to see. Something is genuinely wrong at that block, and you've
+                found your NO.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                <strong>Feedback shows its age honestly.</strong> A latch displaying
+                <code>Q&nbsp;TRUE</code> while its <code>S</code> input reads FALSE looks
+                broken to a beginner — the output is on with nothing turning it on. It's the
+                healthiest thing on the sheet: <code>Q</code> is <em>state</em>, and
+                <code>S</code> only needed to be TRUE once, possibly thousands of scans ago.
+                The same reading applies to any wire that loops back on itself — it carries
+                last scan's value, one scan stale, by design. When the trace reaches a
+                stateful block, the hop question shifts tense: not "given these inputs, is
+                this output right?" but "given these inputs <em>and a legitimate past</em>,
+                is it right?" — for a latch, check what could have fired
+                <code>S</code>, not just what <code>S</code> says now.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                <strong>Forcing an input is the fastest experiment you can run.</strong>
+                Because the whole sheet settles every scan, a forced value ripples through
+                everything downstream of it before the next repaint — force the temperature
+                five degrees up and the comparator, the latch, the gate, and the output all
+                confess at once. Whatever your platform calls it — force, override, out of
+                service — it turns a passive read into an active test: <em>if this input
+                were X, would the sheet do the right thing?</em> A yes moves the fault
+                upstream of your force; a no keeps it downstream. That's a binary search,
+                and it converges fast. The discipline that keeps it safe — log every force,
+                clear every force — is the same override discipline commissioning runs;
+                <a href="/education/controls-commissioning.html#ccx-overrides">that
+                lesson's override section</a> is the rulebook, and it applies double on an
+                occupied building.
+            </p>
+
+            <!-- ───────────────── 3 · Idiom recognition ───────────────── -->
+            <h2 class="subhead" id="raw-idioms">Idiom recognition: five blocks, one name</h2>
+
+            <p>
+                You don't read prose letter by letter — you read words. Sheets work the same
+                way. The chapter's lessons each taught a recurring cluster of blocks that
+                shows up on real sheets as a unit, and once you can name the cluster, five
+                blocks collapse into one word. A forty-block sheet becomes six or seven
+                idioms with wires between them — and the trace hops <em>between patterns,
+                not between blocks</em>. Inside a recognized idiom you already know what
+                every pin should be doing; the interesting hops are the seams.
+            </p>
+
+            <div class="callout-grid">
+                <div class="callout">
+                    <h3>Permissive chain <span>· the run permit</span></h3>
+                    <code class="raw-sig">proof → AND → AND → … → run permit</code>
+                    <p>Every safety and proof ANDed in a row; one FALSE leg kills the permit, so the trace through it is just "find the FALSE leg."</p>
+                </div>
+                <div class="callout">
+                    <h3>Latch + manual reset <span>· the memory</span></h3>
+                    <code class="raw-sig">fault → S · button → R · Q holds the trip</code>
+                    <p>The fault fires once, the latch stands until a person acknowledges — so Q TRUE over a FALSE S is the idiom working, not a broken block.</p>
+                </div>
+                <div class="callout">
+                    <h3>Band-edge cluster <span>· the deadband</span></h3>
+                    <code class="raw-sig">SP ± DB → GT / LT → SR latch</code>
+                    <p>Add and subtract build the edges, two comparators watch them, the latch holds between — a thermostat that switches once per crossing instead of chattering.</p>
+                </div>
+                <div class="callout">
+                    <h3>Proof window <span>· fail-to-start</span></h3>
+                    <code class="raw-sig">CMD AND NOT(status) → TON → latch</code>
+                    <p>Commanded with no proof starts a timer; an honest start beats the preset, and only the failure that outlasts the window latches the alarm.</p>
+                </div>
+                <div class="callout">
+                    <h3>Reset chain <span>· the schedule</span></h3>
+                    <code class="raw-sig">input → MUL → ADD → LIMIT</code>
+                    <p>A setpoint computed from a condition — y&nbsp;=&nbsp;mx&nbsp;+&nbsp;b with a clamp. If a setpoint looks typed-in but keeps moving, you're looking at one of these.</p>
+                </div>
+                <div class="callout">
+                    <h3>Mode switch <span>· two setpoints, one wire</span></h3>
+                    <code class="raw-sig">mode bit → SELECT: occ / unocc</code>
+                    <p>A boolean picks which of two values flows on; chained selects make three or more modes. Trace the selector bit before either value.</p>
+                </div>
+            </div>
+
+            <p style="margin-top:1.25rem;">
+                Each of those has a lesson of its own in this chapter —
+                <a href="/education/boolean-logic-latches.html">Boolean Logic &amp; Latches</a>
+                owns the permissive chain and the latch,
+                <a href="/education/comparators-and-deadband.html">Comparators &amp; Deadband</a>
+                owns the band edges,
+                <a href="/education/timers-and-delays.html">Timers &amp; Delays</a>
+                owns the proof window, and
+                <a href="/education/setpoint-math-reset.html">Setpoint Math &amp; Reset Schedules</a>
+                owns the reset chain and the select. Here they only need their names,
+                because the names are what make the next section possible.
+            </p>
+
+            <!-- ───────────────── 4 · The worked trace ───────────────── -->
+            <h2 class="subhead" id="raw-worked">A worked trace — cold morning, no heat</h2>
+
+            <p>
+                Here is the whole method on one sheet. An air handler's heating call: the
+                program went in this fall, this is the first real cold morning, and the
+                complaint is simple — the space is at
+                <span data-us="65&nbsp;°F" data-metric="18.3&nbsp;°C">65&nbsp;°F</span> and
+                falling, and the heat won't come on. You didn't write it. Read the idioms
+                before the blocks: a <strong>band-edge cluster</strong> across the top
+                building a heating thermostat around the
+                <span data-us="68&nbsp;°F" data-metric="20.0&nbsp;°C">68&nbsp;°F</span>
+                setpoint, a two-proof <strong>permissive chain</strong> at the bottom left,
+                a gate AND joining them into the heat command — and a little branch off the
+                freeze stat driving a trip lamp. Fifteen blocks; four patterns and a stub.
+            </p>
+
+            <svg class="edu-svg raw-svg" viewBox="0 0 980 710" role="img"
+                 aria-labelledby="raw-d1-title raw-d1-desc" font-family="var(--mono)">
+                <title id="raw-d1-title">A faulted heating-call wiresheet with the backward trace numbered on it</title>
+                <desc id="raw-d1-desc">A live function-block sheet with fifteen blocks and every wire labeled with its current value. Across the top, a band-edge cluster: a space-temperature analog input reading 65 and a setpoint constant of 68 with a deadband constant of 1 feed a SUBTRACT block making the 67 lower edge and an ADD block making the 69 upper edge. Two comparators test the temperature against the edges and both are labeled A greater than B: the set-leg comparator asks is 65 greater than 67 and answers FALSE; the reset-leg comparator asks is 65 greater than 69 and answers FALSE. Both feed an SR latch whose output Q is FALSE. At the bottom left, a permissive chain: a fan status binary input reading ON and a normally-closed freeze stat reading OK, both TRUE, feed an AND whose run-permit output is TRUE. The freeze stat also branches through a NOT to a freeze-trip lamp binary output, currently off, with every wire grey — a healthy branch that only looks dead. The latch output and the run permit meet at a gate AND whose output, FALSE, drives the HEAT binary output, reading OFF. Four numbered trace badges walk backward from the symptom: one at the HEAT output, two at the gate AND, three at the latch, and four, highlighted, at the set-leg comparator — the block that is lying. It computes 65 greater than 67 faithfully, but the set leg of a heating thermostat needs 65 less than 67; a greater-than was dropped where a less-than belongs, so the call never fires.</desc>
+
+                <!-- wires (drawn first, behind the blocks) -->
+                <!-- analog: temp fans to both comparators -->
+                <path d="M145 48 H355 V38 H390" fill="none" stroke="var(--blue)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M355 48 V166 H390" fill="none" stroke="var(--blue)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+                <circle cx="355" cy="48" r="2.6" fill="var(--blue)"/>
+                <!-- analog: SP fans to both edge builders -->
+                <path d="M145 176 H165 V102 H205" fill="none" stroke="var(--blue)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M165 176 V230 H205" fill="none" stroke="var(--blue)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+                <circle cx="165" cy="176" r="2.6" fill="var(--blue)"/>
+                <!-- analog: DB fans to both edge builders -->
+                <path d="M145 304 H185 V122 H205" fill="none" stroke="var(--blue)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M185 304 V250 H205" fill="none" stroke="var(--blue)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+                <circle cx="185" cy="304" r="2.6" fill="var(--blue)"/>
+                <!-- analog: edges into comparators -->
+                <path d="M325 112 H357 V58 H390" fill="none" stroke="var(--blue)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M325 240 H357 V186 H390" fill="none" stroke="var(--blue)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+                <!-- digital FALSE (grey): comparators into latch, call into gate, gate into heat, herring lamp -->
+                <path d="M510 48 H540 V102 H575" fill="none" stroke="var(--text-dim)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M510 176 H548 V122 H575" fill="none" stroke="var(--text-dim)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M685 112 H702 V302 H720" fill="none" stroke="var(--text-dim)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+                <line x1="840" y1="312" x2="850" y2="312" stroke="var(--text-dim)" stroke-width="2.4" stroke-linecap="round"/>
+                <line x1="500" y1="576" x2="575" y2="576" stroke="var(--text-dim)" stroke-width="2.4" stroke-linecap="round"/>
+                <!-- digital TRUE (green): the permissive chain -->
+                <path d="M145 448 H170 V502 H205" fill="none" stroke="var(--accent)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M145 576 H180 V522 H205" fill="none" stroke="var(--accent)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M180 576 H390" fill="none" stroke="var(--accent)" stroke-width="2.4" stroke-linecap="round"/>
+                <circle cx="180" cy="576" r="2.6" fill="var(--accent)"/>
+                <path d="M325 512 H660 V322 H720" fill="none" stroke="var(--accent)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+
+                <!-- wire value labels (one per net, at the source pin) -->
+                <text x="152" y="40" font-size="10" fill="var(--blue)">65</text>
+                <text x="152" y="168" font-size="10" fill="var(--blue)">68</text>
+                <text x="152" y="296" font-size="10" fill="var(--blue)">1</text>
+                <text x="332" y="104" font-size="10" fill="var(--blue)">67</text>
+                <text x="332" y="232" font-size="10" fill="var(--blue)">69</text>
+                <text x="518" y="40" font-size="10" fill="var(--text-dim)">FALSE</text>
+                <text x="518" y="168" font-size="10" fill="var(--text-dim)">FALSE</text>
+                <text x="693" y="104" font-size="10" fill="var(--text-dim)">FALSE</text>
+                <text x="845" y="276" text-anchor="middle" font-size="10" fill="var(--text-dim)">FALSE</text>
+                <text x="508" y="568" font-size="10" fill="var(--text-dim)">FALSE</text>
+                <text x="152" y="440" font-size="10" fill="var(--accent)">TRUE</text>
+                <text x="152" y="568" font-size="10" fill="var(--accent)">TRUE</text>
+                <text x="332" y="504" font-size="10" fill="var(--accent)">TRUE</text>
+
+                <!-- TEMP -->
+                <g id="raw-d1-temp">
+                    <rect x="15" y="20" width="130" height="56" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="27" y="39" font-size="8.5" letter-spacing="0.5" fill="var(--text-dim)">ANALOG IN · SPACE</text>
+                    <text x="27" y="60" font-size="13" font-weight="600" fill="var(--text-bright)">TEMP  65</text>
+                    <circle cx="145" cy="48" r="3.8" fill="var(--blue)"/>
+                </g>
+                <!-- SP -->
+                <g id="raw-d1-sp">
+                    <rect x="15" y="148" width="130" height="56" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="27" y="167" font-size="8.5" letter-spacing="0.5" fill="var(--text-dim)">CONSTANT</text>
+                    <text x="27" y="188" font-size="13" font-weight="600" fill="var(--text-bright)">SP  68</text>
+                    <circle cx="145" cy="176" r="3.8" fill="var(--blue)"/>
+                </g>
+                <!-- DB -->
+                <g id="raw-d1-db">
+                    <rect x="15" y="276" width="130" height="56" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="27" y="295" font-size="8.5" letter-spacing="0.5" fill="var(--text-dim)">CONSTANT</text>
+                    <text x="27" y="316" font-size="13" font-weight="600" fill="var(--text-bright)">DB  1</text>
+                    <circle cx="145" cy="304" r="3.8" fill="var(--blue)"/>
+                </g>
+                <!-- LO edge (SUB) -->
+                <g id="raw-d1-lo">
+                    <rect x="205" y="84" width="120" height="56" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="213" y="106" font-size="9" fill="var(--text-dim)">A</text>
+                    <text x="213" y="126" font-size="9" fill="var(--text-dim)">B</text>
+                    <text x="272" y="108" text-anchor="middle" font-size="12" font-weight="600" fill="var(--text-bright)">SUBTRACT</text>
+                    <text x="272" y="126" text-anchor="middle" font-size="9" fill="var(--text-dim)">68 − 1 = 67</text>
+                    <circle cx="205" cy="102" r="3.8" fill="var(--blue)"/>
+                    <circle cx="205" cy="122" r="3.8" fill="var(--blue)"/>
+                    <circle cx="325" cy="112" r="3.8" fill="var(--blue)"/>
+                </g>
+                <!-- HI edge (ADD) -->
+                <g id="raw-d1-hi">
+                    <rect x="205" y="212" width="120" height="56" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="213" y="234" font-size="9" fill="var(--text-dim)">A</text>
+                    <text x="213" y="254" font-size="9" fill="var(--text-dim)">B</text>
+                    <text x="272" y="236" text-anchor="middle" font-size="12" font-weight="600" fill="var(--text-bright)">ADD</text>
+                    <text x="272" y="254" text-anchor="middle" font-size="9" fill="var(--text-dim)">68 + 1 = 69</text>
+                    <circle cx="205" cy="230" r="3.8" fill="var(--blue)"/>
+                    <circle cx="205" cy="250" r="3.8" fill="var(--blue)"/>
+                    <circle cx="325" cy="240" r="3.8" fill="var(--blue)"/>
+                </g>
+                <!-- UNDER (set leg — the lie) -->
+                <g id="raw-d1-under">
+                    <rect x="390" y="20" width="120" height="56" rx="3" fill="var(--surface)" stroke="var(--amber)" stroke-width="1.5"/>
+                    <text x="398" y="42" font-size="9" fill="var(--text-dim)">A</text>
+                    <text x="398" y="62" font-size="9" fill="var(--text-dim)">B</text>
+                    <text x="457" y="44" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text-bright)">A &gt; B</text>
+                    <text x="457" y="62" text-anchor="middle" font-size="9" fill="var(--text-dim)">65 &gt; 67 → FALSE</text>
+                    <circle cx="390" cy="38" r="3.8" fill="var(--blue)"/>
+                    <circle cx="390" cy="58" r="3.8" fill="var(--blue)"/>
+                    <circle cx="510" cy="48" r="3.8" fill="var(--text-dim)"/>
+                </g>
+                <!-- OVER (reset leg — honest) -->
+                <g id="raw-d1-over">
+                    <rect x="390" y="148" width="120" height="56" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="398" y="170" font-size="9" fill="var(--text-dim)">A</text>
+                    <text x="398" y="190" font-size="9" fill="var(--text-dim)">B</text>
+                    <text x="457" y="172" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text-bright)">A &gt; B</text>
+                    <text x="457" y="190" text-anchor="middle" font-size="9" fill="var(--text-dim)">65 &gt; 69 → FALSE</text>
+                    <circle cx="390" cy="166" r="3.8" fill="var(--blue)"/>
+                    <circle cx="390" cy="186" r="3.8" fill="var(--blue)"/>
+                    <circle cx="510" cy="176" r="3.8" fill="var(--text-dim)"/>
+                </g>
+                <!-- CALL latch -->
+                <g id="raw-d1-call">
+                    <rect x="575" y="84" width="110" height="56" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="583" y="106" font-size="9" fill="var(--text-dim)">S</text>
+                    <text x="583" y="126" font-size="9" fill="var(--text-dim)">R</text>
+                    <text x="637" y="108" text-anchor="middle" font-size="12" font-weight="600" fill="var(--text-bright)">SR LATCH</text>
+                    <text x="637" y="126" text-anchor="middle" font-size="9" fill="var(--text-dim)">Q FALSE</text>
+                    <circle cx="575" cy="102" r="3.8" fill="var(--text-dim)"/>
+                    <circle cx="575" cy="122" r="3.8" fill="var(--text-dim)"/>
+                    <circle cx="685" cy="112" r="3.8" fill="var(--text-dim)"/>
+                </g>
+                <!-- STS -->
+                <g id="raw-d1-sts">
+                    <rect x="15" y="420" width="130" height="56" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="27" y="439" font-size="8.5" letter-spacing="0.5" fill="var(--text-dim)">BINARY IN · FAN</text>
+                    <text x="27" y="460" font-size="13" font-weight="600" fill="var(--accent)">STATUS  ON</text>
+                    <circle cx="145" cy="448" r="3.8" fill="var(--accent)"/>
+                </g>
+                <!-- FRZ -->
+                <g id="raw-d1-frz">
+                    <rect x="15" y="548" width="130" height="56" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="27" y="567" font-size="8.5" letter-spacing="0.5" fill="var(--text-dim)">BINARY IN · NC STAT</text>
+                    <text x="27" y="588" font-size="13" font-weight="600" fill="var(--accent)">FRZ OK  ON</text>
+                    <circle cx="145" cy="576" r="3.8" fill="var(--accent)"/>
+                </g>
+                <!-- PERMIT AND -->
+                <g id="raw-d1-permit">
+                    <rect x="205" y="484" width="120" height="56" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="265" y="508" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text-bright)">AND</text>
+                    <text x="265" y="526" text-anchor="middle" font-size="9" fill="var(--accent)">run permit</text>
+                    <circle cx="205" cy="502" r="3.8" fill="var(--accent)"/>
+                    <circle cx="205" cy="522" r="3.8" fill="var(--accent)"/>
+                    <circle cx="325" cy="512" r="3.8" fill="var(--accent)"/>
+                </g>
+                <!-- NOT (herring) -->
+                <g id="raw-d1-not">
+                    <rect x="390" y="548" width="110" height="56" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="445" y="572" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text-bright)">NOT</text>
+                    <text x="445" y="590" text-anchor="middle" font-size="9" fill="var(--text-dim)">OK → not tripped</text>
+                    <circle cx="390" cy="576" r="3.8" fill="var(--accent)"/>
+                    <circle cx="500" cy="576" r="3.8" fill="var(--text-dim)"/>
+                </g>
+                <!-- TRIP lamp (herring) -->
+                <g id="raw-d1-trip">
+                    <rect x="575" y="548" width="130" height="56" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="587" y="567" font-size="8.5" letter-spacing="0.5" fill="var(--text-dim)">BINARY OUT · LAMP</text>
+                    <text x="587" y="588" font-size="12" font-weight="600" fill="var(--text-dim)">FRZ TRIP  OFF</text>
+                    <circle cx="575" cy="576" r="3.8" fill="var(--text-dim)"/>
+                </g>
+                <!-- GATE AND -->
+                <g id="raw-d1-gate">
+                    <rect x="720" y="284" width="120" height="56" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="780" y="308" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text-bright)">AND</text>
+                    <text x="780" y="326" text-anchor="middle" font-size="9" fill="var(--text-dim)">call · permit</text>
+                    <circle cx="720" cy="302" r="3.8" fill="var(--text-dim)"/>
+                    <circle cx="720" cy="322" r="3.8" fill="var(--accent)"/>
+                    <circle cx="840" cy="312" r="3.8" fill="var(--text-dim)"/>
+                </g>
+                <!-- HEAT -->
+                <g id="raw-d1-heat">
+                    <rect x="850" y="284" width="115" height="56" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="862" y="303" font-size="8.5" letter-spacing="0.5" fill="var(--text-dim)">BINARY OUT</text>
+                    <text x="862" y="324" font-size="12" font-weight="600" fill="var(--text-dim)">HEAT  OFF</text>
+                    <circle cx="850" cy="312" r="3.8" fill="var(--text-dim)"/>
+                </g>
+
+                <!-- trace badges -->
+                <g id="raw-d1-b1">
+                    <circle cx="907" cy="254" r="10" fill="none" stroke="var(--text-dim)" stroke-width="1.3"/>
+                    <text x="907" y="258" text-anchor="middle" font-size="10.5" fill="var(--text-dim)">1</text>
+                </g>
+                <g id="raw-d1-b2">
+                    <circle cx="780" cy="254" r="10" fill="none" stroke="var(--text-dim)" stroke-width="1.3"/>
+                    <text x="780" y="258" text-anchor="middle" font-size="10.5" fill="var(--text-dim)">2</text>
+                </g>
+                <g id="raw-d1-b3">
+                    <circle cx="637" cy="54" r="10" fill="none" stroke="var(--text-dim)" stroke-width="1.3"/>
+                    <text x="637" y="58" text-anchor="middle" font-size="10.5" fill="var(--text-dim)">3</text>
+                </g>
+                <g id="raw-d1-b4">
+                    <circle cx="452" cy="112" r="10" fill="none" stroke="var(--amber)" stroke-width="1.3"/>
+                    <text x="452" y="116" text-anchor="middle" font-size="10.5" fill="var(--amber)">4</text>
+                </g>
+
+                <text x="490" y="644" text-anchor="middle" font-size="10.5" fill="var(--text)">1 — the symptom: HEAT reads OFF with the space at 65 and falling — start here, not at the inputs</text>
+                <text x="490" y="662" text-anchor="middle" font-size="10.5" fill="var(--text)">2 — the gate is honest: permit leg TRUE (chain cleared in one glance), call leg FALSE — follow the FALSE</text>
+                <text x="490" y="680" text-anchor="middle" font-size="10.5" fill="var(--text)">3 — the latch is honest: S FALSE, R FALSE, Q repeats last scan — the question becomes why S never fires</text>
+                <text x="490" y="698" text-anchor="middle" font-size="10.5" fill="var(--amber)">4 — the lie: 65 against the 67 edge should read TRUE — the block answers A &gt; B; the set leg needs A &lt; B</text>
+            </svg>
+
+            <p class="ref-note compact" style="text-align:center;">
+                Blue wires carry analog values; green wires carry a TRUE digital signal,
+                grey a FALSE one — the same coloring the editor uses live.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                <strong>Step 1 — start at the symptom.</strong> <code>HEAT</code> reads OFF.
+                Its only input is the gate's output, FALSE — an output block repeating a
+                FALSE input is telling the truth, so hop upstream.
+                <strong>Step 2 — the gate.</strong> Two legs: the permit reads TRUE, the
+                call reads FALSE. Given TRUE and FALSE, an AND outputting FALSE is honest —
+                and here the pruning pays: the TRUE permit leg retires the entire permissive
+                chain below it. One glance — status ON, freeze stat OK, permit made — and
+                you never read it again. Follow the FALSE leg.
+                <strong>Step 3 — the latch.</strong> <code>Q</code> is FALSE with S FALSE
+                and R FALSE. A latch with nothing setting and nothing resetting repeats last
+                scan — legitimate <em>if S has never fired</em>. The latch is honest; the
+                question moves upstream to why S never fires.
+                <strong>Step 4 — the set leg.</strong> Inputs: 65, the space, against 67,
+                the lower band edge. What the sequence needs this block to say is "the space
+                has fallen below the band — call for heat," and 65 is plainly below 67: the
+                answer should be TRUE. The block says FALSE. <em>First NO.</em> Now read the
+                block instead of the wire: its label is <code>A&nbsp;&gt;&nbsp;B</code>. It
+                is answering "is 65 greater than 67?" — faithfully, forever — and that is
+                the wrong question. The set leg of a heating thermostat needs
+                <code>A&nbsp;&lt;&nbsp;B</code>. Look at the reset leg above it: the same
+                block, correctly used. Whoever built the cluster made the reset comparator
+                first and copied it for the set leg — and never flipped the copy. One
+                dropped character, cornered in four hops.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                Count what the trace never touched. The permissive chain: cleared in one
+                glance at step 2, never walked. The freeze-trip lamp branch at the bottom:
+                never on the path at all — and it's the sheet's best trap, because every
+                wire on it is grey. A beginner hunting for "dead" wires lands there first;
+                grey only means FALSE, and FALSE is exactly what a healthy trip lamp shows.
+                Nothing on that branch reaches the heat output, so the trace owes it
+                nothing. A forward read starts at five sources and works the whole healthy
+                sheet on its way to the one bad block; the backward trace touched four
+                blocks, total.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                One last observation worth keeping: an inverted comparison flips the whole
+                sequence's sense with the weather. The same lie that blocks heat on a cold
+                morning would have run it away hot on last week's mild afternoon — S fires
+                anywhere <em>above</em> the 67 edge, and past 69, where R finally objects,
+                the set-dominant latch lets S win. Symptoms that reverse with conditions
+                smell like a backwards comparison. And the fix is its own small proof: flip the block to
+                <code>A&nbsp;&lt;&nbsp;B</code>, watch S go TRUE and the latch set and the
+                heat start — then verify the release too, because a repair you didn't watch
+                work is just a theory with a wrench in it.
+            </p>
+
+            <!-- ───────────────── 5 · Break one yourself ───────────────── -->
+            <h2 class="subhead" id="raw-try-it">Break one yourself</h2>
+
+            <p>
+                The trace above is fixed on the page; the skill is built live. Open the
+                <a href="/simulators/function-block-editor.html">Function-Block Editor</a>
+                and load the <em>heating thermostat</em> example — the same band-edge
+                cluster as the worked sheet, healthy this time. Then run the drill in three
+                passes. <strong>Predict:</strong> select the TEMP block and type a new
+                value into its inspector — that's your force — but before you look at the
+                sheet, call every wire: both edges, both comparators, S, R, Q. <em>Then</em>
+                look. Drive the temperature below the lower edge, back up through the band,
+                and out the top, predicting each crossing before it paints.
+                <strong>Break:</strong> now sabotage it on purpose — set the deadband
+                constant to 5 and watch the heat go quiet on a cool space.
+                <strong>Trace:</strong> backward from the output that stopped behaving:
+                the gate is honest, the latch is honest, the comparator is honest — the lie
+                has retreated all the way to a number somebody typed. Faults don't always
+                live in the logic; sometimes the block that's lying is a constant.
+            </p>
+
+            <a class="cta-button" href="/simulators/function-block-editor.html">Open the Function-Block Editor →</a>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        simulators: [
+            {href: '/simulators/function-block-editor.html', label: 'Function-Block Editor'}
+        ],
+        lessons: [
+            {href: '/education/function-blocks.html', label: 'Function-Block Basics'},
+            {href: '/education/boolean-logic-latches.html', label: 'Boolean Logic & Latches'},
+            {href: '/education/comparators-and-deadband.html', label: 'Comparators & Deadband'},
+            {href: '/education/timers-and-delays.html', label: 'Timers & Delays'},
+            {href: '/education/setpoint-math-reset.html', label: 'Setpoint Math & Reset Schedules'},
+            {href: '/education/controls-commissioning.html', label: 'Controls Commissioning'}
+        ],
+        quizzes: [
+            {href: '/practice/reading-a-wiresheet.html', label: 'Reading a Wiresheet Quiz'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/education/">← Back to Education</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+{% endblock %}
