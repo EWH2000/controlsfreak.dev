@@ -15,6 +15,7 @@ module.exports = [
     { slug: 'analog-sensing',           label: 'Analog Sensing' },
     { slug: 'temperature-sensors',      label: 'Temperature Sensors' },
     { slug: 'status-and-proof',         label: 'Status & Proof' },
+    { slug: 'commanding-actuators',     label: 'Commanding Actuators' },
     { slug: 'hydronic-loops',           label: 'Hydronic Loops' },
     { slug: 'load-piping',              label: 'Load Piping' },
     { slug: 'vfds',                     label: 'VFDs' },

@@ -35,6 +35,7 @@ const order = [
     "/education/analog-sensing.html",
     "/education/temperature-sensors.html",
     "/education/status-and-proof.html",
+    "/education/commanding-actuators.html",
     "/education/controls-commissioning.html",
     "/education/hydronic-loops.html",
     "/education/load-piping.html",

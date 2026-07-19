@@ -484,6 +484,17 @@ techs new to the industry and anyone wanting a refresh.
   current-switch trip set below the unloaded draw. Two diagrams share
   one machine: three sources tapped where they live, then the same
   drawing with the belt snapped and three verdicts.
+- **Commanding Actuators** — what happens between an AO commanding
+  50% and the damper actually sitting at 50%. The three command
+  spans (0–10 V, 2–10 V, 4–20 mA) with the worked 5-V-into-2–10-V =
+  37.5% mismatch (replicable in the Signal Scaling tool), direct vs.
+  reverse acting at the actuator (distinct from loop action), spring
+  return and fail posture as a design decision — the normally-open
+  hot-water valve for freeze protection — then position feedback's
+  diagnostic fork (transit time → span config → mechanics) and
+  floating (tri-state) actuators, whose run-time position estimate
+  drifts and re-syncs at the ends of travel. Pairs with the
+  Commanding Actuators quiz.
 - **Controls Commissioning** — how you verify a controller actually
   does what its sequence of operations says. Point-to-point checkout
   of every AI, AO, BI, and BO (exercise the point, confirm the value
@@ -772,7 +783,7 @@ flavors share the same engine:
   When a topic recurs in feedback, it becomes a candidate for a
   new education page.
 
-Shipped so far — twenty-seven content quizzes (each 10 questions, paired
+Shipped so far — twenty-eight content quizzes (each 10 questions, paired
 1:1 with its lesson and deep-linking the gotchas) plus five field
 drills:
 
@@ -793,7 +804,7 @@ drills:
   inverter power stages with the run-command vs. speed-reference
   trap.
 - **Content quizzes — signals:** Controller Wiring, Analog Sensing,
-  Temperature Sensors, Status & Proof.
+  Temperature Sensors, Status & Proof, Commanding Actuators.
   The shared COM as the panel's 0 V reference, the same-leg phasing
   rule on a shared transformer (and the 24-vs-48 V distinction),
   LOOP+ vs the AC hot leg for a 2-wire loop, wetting current and wet
@@ -808,7 +819,10 @@ drills:
   sensor from run from configuration; then the binary side — what
   aux, current, and DP switches each prove, the broken-belt verdict
   bracket, trip-point reasoning, the proof-window trade-off, and the
-  inverted-polarity config gotcha.
+  inverted-polarity config gotcha; then the command side — the
+  2–10 V span math in both directions, fail posture on power loss,
+  the feedback diagnostic fork, and the floating actuator's morning
+  full-travel re-sync.
 - **Content quizzes — programming:** Function Blocks. Blocks, pins,
   wire types, the block families, and how a scan resolves feedback.
 - **Content quizzes — refrigeration:** Refrigerant Cycle Basics,

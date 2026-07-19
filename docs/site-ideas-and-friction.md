@@ -79,7 +79,11 @@ category with controller-wiring as the boundary lesson, and the
 chapter now builds out from the
 `[future: education/analog-sensing.html]` marker the forced-air
 buildout left behind. Per-page contracts below, one at a time as
-lanes open.
+lanes open. Chapter reading order (final, once all lanes land):
+controller-wiring → analog-sensing → temperature-sensors →
+status-and-proof → commanding-actuators → start-stop-commands;
+educationSequence.js, quizOrder.js, and both landing grids re-sort
+as each in-flight lane merges.
 
 **Analog Sensing — the chapter's anchor lesson.** Declared question:
 *How does a raw electrical signal become the engineering value on
@@ -171,6 +175,42 @@ scope split vs the neighboring banks: field-wiring-sensors owns
 sensor curves/shielding/sourcing-sinking, controller-wiring owns
 the landings and wet-vs-dry — this bank stays on WHAT STATUS PROVES
 and the command-vs-status logic.
+
+**Commanding Actuators** (`education/commanding-actuators.html` +
+paired quiz) *(lane opened 2026-07-18 — drafted, owner-checkpointed,
+and integrated the same day)*. Declared question:
+*What happens between an AO commanding 50% and the damper actually
+sitting at 50% — and why do the two disagree?*
+In scope: (1) command spans — 0–10 V vs 2–10 V vs 4–20 mA actuator
+inputs; THE worked example: 5 V into a 2–10 V actuator is 37.5%
+stroke, not 50% (numeric, replicable in the signal-scaling tool, and
+the page says so); the mismatch symptoms (everything tracks but
+always sits low/high, hunting near the ends of travel) with span
+DIP-switch / configuration mismatch as the usual cause. (2) direction
+and fail posture — direct vs reverse acting at the ACTUATOR, one
+disambiguation sentence against loop action (pid-basics owns the
+loop); spring return vs fail-in-place; what normally open / normally
+closed means for a valve and a damper on power loss, fail posture as
+a design decision — the normally-OPEN hot-water valve as the classic
+freeze-protection example. (3) position feedback and floating
+behavior — verifying with a feedback AI and the
+command-50-feedback-34 diagnostic fork (stroke time → span config →
+mechanical); floating (tri-state) actuators as
+command-without-position — the run-time estimate drifts and re-syncs
+by overdriving to an end of travel; the field symptoms (drift, the
+periodic full-travel drive). Two static cak- diagrams (span-mismatch
+number line; three-line stroke-vs-command chart), an anecdote slot
+left at fail posture.
+Out of scope: the 3-wire landing / power-vs-signal mistake and the
+floating triac-pair wiring — controller-wiring.html (anchored once);
+VFD run/speed — vfds.html (anchored once: drives take the same
+0–10 / 4–20 command languages, that page owns them); loop behavior —
+pid-basics.html; valve sizing and authority stay plain prose
+`[future: valve-authority]`.
+Debts: pays analog-sensing's "you will meet it on actuator feedback
+especially" plant (upgraded to a live link into
+#feedback-and-floating, plus relatedLinks reciprocity both ways).
+Incurs the valve-authority marker above.
 
 ### BACnet buildout — the flagship subsection *(opened 2026-07-07, completed 2026-07-12 — all five pages + the pillar shipped)*
 
