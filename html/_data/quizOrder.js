@@ -13,6 +13,10 @@ module.exports = [
     // sequence) ──
     { slug: 'controller-wiring',        label: 'Controller Wiring' },
     { slug: 'analog-sensing',           label: 'Analog Sensing' },
+    { slug: 'temperature-sensors',      label: 'Temperature Sensors' },
+    { slug: 'status-and-proof',         label: 'Status & Proof' },
+    { slug: 'commanding-actuators',     label: 'Commanding Actuators' },
+    { slug: 'start-stop-commands',      label: 'Start/Stop Commands' },
     { slug: 'hydronic-loops',           label: 'Hydronic Loops' },
     { slug: 'load-piping',              label: 'Load Piping' },
     { slug: 'vfds',                     label: 'VFDs' },
@@ -32,9 +36,8 @@ module.exports = [
     { slug: 'function-blocks',          label: 'Function Blocks' },
     // ── Programming ─ function-blocks leads the chapter; insert new quiz
     // slugs here, in curriculum order (mirror the education sequence) ──
-    // timers-and-delays slots after boolean-logic-latches and
-    // comparators-and-deadband once those in-flight sibling lanes merge
-    // (mirror educationSequence.js's final chapter order).
+    { slug: 'boolean-logic-latches',    label: 'Boolean Logic & Latches' },
+    { slug: 'comparators-and-deadband', label: 'Comparators & Deadband' },
     { slug: 'timers-and-delays',        label: 'Timers & Delays' },
     { slug: 'modbus-basics',            label: 'Modbus Basics' },
     { slug: 'modbus-decoding',          label: 'Modbus Decoding' },

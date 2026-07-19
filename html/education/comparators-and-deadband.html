@@ -1,0 +1,504 @@
+---
+title: Comparators & Deadband — controlsfreak.dev
+description: How a comparator turns a number into a decision, why one threshold chatters equipment on and off, and how two comparators and a latch build a clean deadband.
+canonical: https://controlsfreak.dev/education/comparators-and-deadband.html
+nav: education
+category: programming
+pairedQuiz: https://controlsfreak.dev/practice/comparators-and-deadband.html
+keywords: comparator deadband hysteresis threshold chatter short cycle GT LT setpoint band
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block head %}
+    <style>
+        /* Page-specific — both diagrams are wiresheet-flavored structural
+           drawings (the function-blocks.html family), so they take the
+           shared .edu-svg base plus a page-local width cap: a wiresheet
+           stretched to full column width reads as a poster, not a sheet.
+           (Same pattern as the chapter's other lessons.) */
+        .edu-svg.cdb-svg {
+            max-width: 740px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        /* Comparator quick-reference stays compact — three short
+           columns, no reason to span the full column width. */
+        .cdb-table {
+            max-width: 640px;
+            margin: 1.25rem auto 0.5rem;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Education · Comparators &amp; Deadband</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">Comparators &amp; Deadband <span class="tool-tag">Logic</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                A controller lives in two worlds at once. Sensors hand it <em>numbers</em> —
+                a space temperature, a duct pressure, a valve position — and equipment mostly
+                wants <em>decisions</em>: run or don't, open or close, alarm or stay quiet.
+                The block that carries a value across that gap is the <strong>comparator</strong>,
+                and it looks so simple — is A bigger than B? — that it's easy to miss the trap
+                inside it. This page is one question, start to finish: <em>how does a number
+                become a decision — and why does a single threshold chatter?</em>
+            </p>
+
+            <div class="callout">
+                <p style="font-size:0.86rem;line-height:1.7;">
+                    This page assumes you can read a sheet at the block level — pins, wires,
+                    and the scan. That's <a href="/education/function-blocks.html">Function-Block
+                    Basics</a>, the opening lesson of this chapter. The TRUE/FALSE side of the
+                    story — what AND, OR, and a latch <em>do</em> with a comparator's answer —
+                    has a lesson of its own in this chapter, on boolean logic and latches; you
+                    don't need it first, but the two pages are neighbors.
+                </p>
+            </div>
+
+            <!-- ───────────────── 1 · The comparator family ───────────────── -->
+            <h2 class="subhead" id="comparators">The comparator family: number in, decision out</h2>
+
+            <p>
+                A comparator takes two analog values in on blue wires and puts one digital
+                answer out on a green-or-grey one. That's the whole block — and it's the
+                bridge every threshold decision in a building crosses. <em>Start cooling when
+                the space is too warm. Trip the alarm when the static is too high. Enable the
+                economizer when outdoor air is cooler than return air.</em> Each of those
+                sentences has a number on one side, a decision on the other, and a comparator
+                in the middle.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                The family has four workhorses — greater-than, less-than, and their
+                boundary-included twins — plus an equals pair you'll reach for far less often
+                than you'd think:
+            </p>
+
+            <div class="cdb-table">
+                <table class="ref-table-dense">
+                    <thead>
+                        <tr><th>Block</th><th>Reads as</th><th>Typical job</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>A &gt; B</td><td>TRUE above the line</td><td>high alarms, stage-up checks, a cooling call</td></tr>
+                        <tr><td>A &lt; B</td><td>TRUE below the line</td><td>low alarms, freeze protection, changeover</td></tr>
+                        <tr><td>A ≥ B&nbsp;·&nbsp;A ≤ B</td><td>same, boundary included</td><td>interchangeable with &gt; / &lt; on measured values</td></tr>
+                        <tr><td>A = B&nbsp;·&nbsp;A ≠ B</td><td>equal (within a tolerance)</td><td>discrete values only — modes, counts, whole-number points</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <p style="margin-top:1.25rem;">
+                About that third row: on paper, <code>A &gt; B</code> and <code>A ≥ B</code>
+                differ in exactly one case — when the two values are <em>precisely</em> equal.
+                On a real measured value, that case is a knife-edge. A space temperature is a
+                float wandering through a continuum; the moment it sits at exactly the
+                setpoint is one value out of infinitely many, and even if a scan happens to
+                catch it there, the next scan won't. In the field, swapping <code>&gt;</code>
+                for <code>≥</code> changes nothing you could ever observe. What actually
+                matters about a comparator is its <em>direction</em> — which side of the line
+                reads TRUE — and where you draw the line. Spend your attention there.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                The equals row deserves its own warning, because <strong>EQ on an analog value
+                is a trap</strong>. A measured temperature is never <em>exactly</em> 72.0 —
+                partly because the value never holds still, and partly because of how
+                computers store decimals: two routes to "the same" number (say, a setpoint
+                typed as 72.0 and a value computed as 71.999999…) can differ out in the far
+                decimal places, so a bit-exact equality test fails even when every display in
+                the building shows 72.0. This site's
+                <a href="/simulators/function-block-editor.html">Function-Block Editor</a>
+                builds the guard in: its <code>A = B</code> block actually asks "are these
+                within a tiny tolerance of each other?", not "are the bits identical?" —
+                and production palettes do the same, or hand you a tolerance parameter.
+                Even with the tolerance, an equality on a moving measurement is a decision
+                that's true for a scan or two while the value passes through — not something
+                to hang a sequence on. Save EQ for values that are genuinely discrete: a mode
+                number, a stage count, a whole-number software point.
+            </p>
+
+            <!-- ───────────────── 2 · Chatter ───────────────── -->
+            <h2 class="subhead" id="chatter">Chatter: one threshold is a trap</h2>
+
+            <p>
+                So wire the obvious thermostat: space temperature into <code>A</code>, a
+                <span data-us="74 °F" data-metric="23.3 °C">74 °F</span> setpoint into
+                <code>B</code>, and <code>A &gt; B</code> drives the cooling call. It even
+                works — until the space temperature <em>arrives</em>. Cooling runs, the
+                temperature falls to the setpoint, the comparator goes FALSE, cooling stops,
+                the temperature drifts up a fraction, TRUE again. Now add what a real analog
+                input looks like up close: a little noise, a sensor resolution step, a value
+                that jitters a few tenths of a degree scan to scan. With the temperature
+                <em>riding the line</em>, that jitter re-answers the question differently
+                every few scans — and the sheet evaluates several times a second. The output
+                doesn't cycle; it <strong>chatters</strong>.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                Here's the part that makes this a trap rather than a corner case: a controlled
+                variable spends its life <em>near its setpoint</em> — that's what control
+                means. Put a single threshold at the setpoint and you've guaranteed the value
+                will hover exactly where the comparator is most unstable. And the output isn't
+                a number on a screen. If it's a compressor call, every flip is a contactor
+                pulling in and dropping out — arcing the contacts toward an eventual weld — and
+                a compressor start with locked-rotor inrush through windings that never get a
+                rest, oil that never returns, pressures that never equalize. A compressor is
+                rated for a handful of starts an hour; a chattering threshold can demand ten
+                a <em>minute</em>. Real equipment carries anti-short-cycle timers as a last
+                line of defense against exactly this, and minimum on/off timing gets a lesson
+                of its own later in this chapter — but a sequence that leans on the safety
+                timer to clean up its own chatter is a sequence with a bug in it.
+            </p>
+
+            <!-- // anecdote slot: a chattered/short-cycled casualty the owner has met in
+                 the field (welded contactor, compressor that cycled itself to death,
+                 hunting stage) — owner to supply; do not draft. -->
+
+            <p style="margin-top:1.25rem;">
+                The picture below is the whole problem in one glance. The blue trace is a
+                space temperature drifting up through the band and back down, with honest
+                sensor noise on it. Below it, the same signal put through two different
+                decisions: a single <code>A &gt; B</code> at the setpoint, and the two-line
+                set/reset pair the next section builds. Same input, same noise — one output
+                chatters at every crossing, the other switches exactly twice.
+            </p>
+
+            <svg class="edu-svg cdb-svg" viewBox="0 0 740 444" role="img"
+                 aria-labelledby="cdb-d1-title cdb-d1-desc" font-family="var(--mono)">
+                <title id="cdb-d1-title">One threshold chatters; a deadband switches clean</title>
+                <desc id="cdb-d1-desc">Three aligned traces. The top trace is a noisy space temperature drifting up through a setpoint and back down. Horizontal reference lines mark the setpoint plus two band edges half a band above and below it. The middle trace is the output of a single greater-than comparator at the setpoint: it flips rapidly back and forth each time the noisy temperature crosses the setpoint — a burst of chatter on the way up and another on the way down. The bottom trace is the deadband output — set above the upper edge, reset below the lower edge, latched in between: it switches on exactly once as the temperature crosses the upper edge and off exactly once as it falls below the lower edge. Same input, two switches instead of many.</desc>
+
+                <!-- threshold reference lines -->
+                <line x1="130" y1="92"  x2="710" y2="92"  stroke="var(--accent)" stroke-width="1.2" stroke-dasharray="5 4"/>
+                <line x1="130" y1="120" x2="710" y2="120" stroke="var(--amber)"  stroke-width="1.2" stroke-dasharray="5 4"/>
+                <line x1="130" y1="148" x2="710" y2="148" stroke="var(--accent)" stroke-width="1.2" stroke-dasharray="5 4"/>
+                <text x="134" y="86"  font-size="10" fill="var(--text-dim)">set line — SP + ½ band</text>
+                <text x="134" y="114" font-size="10" fill="var(--amber)">single threshold (SP)</text>
+                <text x="460" y="162" text-anchor="middle" font-size="10" fill="var(--text-dim)">reset line — SP − ½ band</text>
+
+                <!-- set / reset event guides tying the panes together -->
+                <line x1="370" y1="92"  x2="370" y2="355" stroke="var(--border)" stroke-width="1" stroke-dasharray="3 4"/>
+                <line x1="670" y1="148" x2="670" y2="355" stroke="var(--border)" stroke-width="1" stroke-dasharray="3 4"/>
+
+                <!-- trace labels -->
+                <text x="112" y="124" text-anchor="end" font-size="11" fill="var(--text)">TEMP</text>
+                <text x="112" y="244" text-anchor="end" font-size="11" fill="var(--text)">SINGLE GT</text>
+                <text x="112" y="258" text-anchor="end" font-size="11" fill="var(--text)">AT SP</text>
+                <text x="112" y="334" text-anchor="end" font-size="11" fill="var(--text)">SET / RESET</text>
+                <text x="112" y="348" text-anchor="end" font-size="11" fill="var(--text)">BAND + LATCH</text>
+
+                <!-- temperature trace (generated: slow sine + deterministic ripple) -->
+                <polyline fill="none" stroke="var(--blue)" stroke-width="2.2" stroke-linejoin="round" points="
+                    130,147.0 132,145.2 134,146.0 136,149.3 138,154.6 140,160.7 142,166.5 144,170.6 146,172.4 148,171.5 150,168.2 152,163.3
+                    154,158.0 156,153.6 158,151.1 160,151.2 162,153.8 164,158.6 166,164.4 168,170.0 170,174.3 172,176.3 174,175.6 176,172.4
+                    178,167.4 180,161.9 182,156.9 184,153.8 186,153.1 188,155.0 190,159.1 192,164.6 194,170.1 196,174.4 198,176.6 200,176.1
+                    202,173.0 204,168.0 206,162.2 208,156.8 210,153.0 212,151.5 214,152.7 216,156.2 218,161.2 220,166.5 222,170.9 224,173.2
+                    226,173.0 228,170.1 230,165.1 232,159.1 234,153.2 236,148.8 238,146.6 240,147.1 242,150.0 244,154.6 246,159.6 248,164.0
+                    250,166.5 252,166.5 254,163.9 256,159.0 258,152.8 260,146.6 262,141.6 264,138.8 266,138.5 268,140.8 270,145.0 272,149.9
+                    274,154.2 276,157.0 278,157.3 280,154.9 282,150.2 284,144.0 286,137.5 288,132.0 290,128.6 292,127.7 294,129.4 296,133.2
+                    298,137.9 300,142.3 302,145.3 304,145.9 306,143.9 308,139.4 310,133.3 312,126.7 314,120.9 316,116.9 318,115.5 320,116.7
+                    322,120.0 324,124.6 326,129.1 328,132.3 330,133.4 332,131.8 334,127.7 336,121.8 338,115.1 340,109.1 342,104.7 344,102.7
+                    346,103.4 348,106.5 350,110.9 352,115.5 354,119.1 356,120.7 358,119.6 360,115.9 362,110.3 364,103.8 366,97.5 368,92.8
+                    370,90.5 372,90.8 374,93.5 376,97.9 378,102.7 380,106.6 382,108.7 384,108.2 386,105.1 388,99.9 390,93.6 392,87.3
+                    394,82.4 396,79.7 398,79.7 400,82.2 402,86.5 404,91.4 406,95.8 408,98.5 410,98.6 412,96.2 414,91.5 416,85.4
+                    418,79.3 420,74.2 422,71.3 424,71.0 426,73.3 428,77.5 430,82.7 432,87.4 434,90.7 436,91.6 438,89.8 440,85.7
+                    442,80.1 444,74.1 446,69.0 448,65.8 450,65.3 452,67.4 454,71.6 456,76.9 458,82.1 460,86.0 462,87.6 464,86.6
+                    466,83.1 468,78.0 470,72.2 472,67.1 474,63.8 476,63.1 478,65.0 480,69.2 482,74.7 484,80.3 486,84.7 488,87.1
+                    490,86.8 492,84.0 494,79.4 496,73.9 498,68.9 500,65.5 502,64.5 504,66.2 506,70.3 508,75.9 510,81.9 512,86.9
+                    514,90.0 516,90.5 518,88.4 520,84.2 522,79.1 524,74.1 526,70.6 528,69.4 530,70.9 532,74.9 534,80.6 536,86.8
+                    538,92.3 540,96.0 542,97.3 544,95.8 546,92.3 548,87.4 550,82.6 552,79.0 554,77.5 556,78.7 558,82.5 560,88.1
+                    562,94.6 564,100.5 566,104.8 568,106.7 570,105.9 572,102.9 574,98.3 576,93.6 578,89.8 580,88.1 582,89.0 584,92.5
+                    586,98.0 588,104.5 590,110.7 592,115.6 594,118.0 596,117.9 598,115.3 600,111.1 602,106.3 604,102.4 606,100.3 608,100.8
+                    610,103.9 612,109.2 614,115.7 616,122.2 618,127.4 620,130.4 622,130.8 624,128.6 626,124.6 628,119.9 630,115.8 632,113.3
+                    634,113.3 636,116.0 638,121.0 640,127.3 642,133.8 644,139.3 646,142.8 648,143.6 650,141.8 652,138.1 654,133.4 656,129.0
+                    658,126.1 660,125.5 662,127.6 664,132.2 666,138.2 668,144.8 670,150.4 672,154.2 674,155.4 676,154.0 678,150.4 680,145.6
+                    682,141.0 684,137.6 686,136.4 688,137.9 690,141.9 692,147.6 694,154.0 696,159.7 698,163.7 700,165.3 702,164.1 704,160.7
+                    706,155.8 708,150.9 710,147.0"/>
+
+                <!-- single-threshold output: derived from the same samples, GT at SP -->
+                <text x="260" y="213" text-anchor="middle" font-size="10" fill="var(--text-dim)">flips with every noise wiggle</text>
+                <path d="M130 265 H316 V225 H322 V265 H338 V225 H356 V265 H358 V225 H616 V265 H628 V225 H638 V265 H710"
+                      fill="none" stroke="var(--amber)" stroke-width="2.4" stroke-linejoin="round"/>
+
+                <!-- deadband output: set > SP+½band, reset < SP−½band, latched between -->
+                <text x="520" y="303" text-anchor="middle" font-size="10" fill="var(--text-dim)">one start, one stop — noise absorbed</text>
+                <path d="M130 355 H370 V315 H670 V355 H710"
+                      fill="none" stroke="var(--accent)" stroke-width="2.4" stroke-linejoin="round"/>
+
+                <!-- ON / OFF level cues -->
+                <text x="716" y="228" font-size="8.5" fill="var(--text-dim)">ON</text>
+                <text x="716" y="268" font-size="8.5" fill="var(--text-dim)">OFF</text>
+                <text x="716" y="318" font-size="8.5" fill="var(--text-dim)">ON</text>
+                <text x="716" y="358" font-size="8.5" fill="var(--text-dim)">OFF</text>
+
+                <text x="710" y="374" text-anchor="end" font-size="10" fill="var(--text-dim)">time →</text>
+
+                <text x="370" y="415" text-anchor="middle" font-size="10.5" fill="var(--text)">same noisy input: the single threshold flips eight times,</text>
+                <text x="370" y="431" text-anchor="middle" font-size="10.5" fill="var(--text)">the set/reset pair twice — once on at the set line, once off at the reset line</text>
+            </svg>
+
+            <p style="margin-top:1.25rem;">
+                Read the middle trace against the top one. Every burst of chatter sits exactly
+                under a place where the noisy temperature is crossing the setpoint — the
+                comparator isn't broken, it's answering the question it was asked, several
+                times a second, about a value that keeps changing its mind by a tenth of a
+                degree. The bottom trace ignores all of it: nothing happens until the
+                temperature commits to the <em>upper</em> line, and nothing un-happens until
+                it commits to the <em>lower</em> one. The gap between those two lines is the
+                <strong>deadband</strong>, and building it takes exactly three blocks.
+            </p>
+
+            <!-- ───────────────── 3 · Building the deadband ───────────────── -->
+            <h2 class="subhead" id="deadband">Building the deadband: two comparators and a latch</h2>
+
+            <p>
+                The fix splits the one line into two, with memory in between. <em>Turn on
+                above the setpoint plus half a band. Turn off below the setpoint minus half a
+                band. In between — stay put.</em> The "stay put" is the giveaway that plain
+                comparators can't do this alone: between the lines, neither condition is
+                true, so something has to <em>remember</em> which side of the story it's in.
+                That something is an <code>SR latch</code> — the one boolean block with
+                memory. (What a latch is, why safeties lean on it, and what happens when set
+                and reset collide is this chapter's boolean-logic lesson; here the latch just
+                does its day job.)
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                The <a href="/simulators/function-block-editor.html">Function-Block Editor</a>
+                ships this exact sequence as its <em>cooling thermostat</em> example, and it's
+                worth walking wire by wire. Three sources on the left: the space temperature
+                (an analog input), a setpoint constant of
+                <span data-us="74 °F" data-metric="23.3 °C">74 °F</span>, and a deadband
+                constant of <span data-us="1 °F" data-metric="0.6 °C">1 °F</span> — read the
+                sheet's plain numbers as °F. An <code>ADD</code> and a <code>SUBTRACT</code>
+                build the two lines from them: SP + DB =
+                <span data-us="75 °F" data-metric="23.9 °C">75 °F</span> and SP − DB =
+                <span data-us="73 °F" data-metric="22.7 °C">73 °F</span>. A greater-than
+                watches for the temperature above the upper line and fires the latch's
+                <strong>S</strong>; a less-than watches for it below the lower line and fires
+                <strong>R</strong>; the latch output drives the cooling call. Here's the sheet
+                at the moment the space has warmed to
+                <span data-us="76 °F" data-metric="24.4 °C">76 °F</span>:
+            </p>
+
+            <svg class="edu-svg cdb-svg" viewBox="0 0 800 420" role="img"
+                 aria-labelledby="cdb-d2-title cdb-d2-desc" font-family="var(--mono)">
+                <title id="cdb-d2-title">The deadband thermostat as a wiresheet</title>
+                <desc id="cdb-d2-desc">A function-block sheet with nine blocks. Three sources on the left: a space-temperature analog input reading 76, a setpoint constant of 74, and a deadband constant of 1. An ADD block computes setpoint plus deadband, 75; a SUBTRACT block computes setpoint minus deadband, 73. A greater-than comparator tests the temperature against 75 and currently reads TRUE; a less-than comparator tests it against 73 and reads FALSE. The greater-than output wires into the SR latch's set input, the less-than output into its reset input, and the latch output — TRUE — drives a binary output labeled COOL, on. Analog wires are blue; the true digital wires are green; the false one is grey.</desc>
+
+                <!-- wires (drawn first, behind the blocks) -->
+                <line x1="145" y1="48"  x2="215" y2="108" stroke="var(--blue)" stroke-width="2.4" stroke-linecap="round"/>
+                <path d="M145 48 L178 48 L178 268 L215 268" fill="none" stroke="var(--blue)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M145 338 L192 338 L192 128 L215 128" fill="none" stroke="var(--blue)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+                <line x1="145" y1="338" x2="215" y2="288" stroke="var(--blue)" stroke-width="2.4" stroke-linecap="round"/>
+                <path d="M145 193 H368 V48 H400"  fill="none" stroke="var(--blue)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M145 193 H368 V318 H400" fill="none" stroke="var(--blue)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+                <line x1="335" y1="118" x2="400" y2="68"  stroke="var(--blue)" stroke-width="2.4" stroke-linecap="round"/>
+                <line x1="335" y1="278" x2="400" y2="338" stroke="var(--blue)" stroke-width="2.4" stroke-linecap="round"/>
+                <line x1="520" y1="58"  x2="570" y2="183" stroke="var(--accent)"   stroke-width="2.4" stroke-linecap="round"/>
+                <line x1="520" y1="328" x2="570" y2="203" stroke="var(--text-dim)" stroke-width="2.4" stroke-linecap="round"/>
+                <line x1="680" y1="193" x2="695" y2="193" stroke="var(--accent)"   stroke-width="2.4" stroke-linecap="round"/>
+
+                <!-- SP -->
+                <g id="cdb-d2-sp">
+                    <rect x="15" y="20" width="130" height="56" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="27" y="39" font-size="8.5" letter-spacing="0.5" fill="var(--text-dim)">CONSTANT</text>
+                    <text x="27" y="60" font-size="13" font-weight="600" fill="var(--text-bright)">SP  74</text>
+                    <circle cx="145" cy="48" r="3.8" fill="var(--blue)"/>
+                </g>
+                <!-- TEMP -->
+                <g id="cdb-d2-temp">
+                    <rect x="15" y="165" width="130" height="56" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="27" y="184" font-size="8.5" letter-spacing="0.5" fill="var(--text-dim)">ANALOG IN</text>
+                    <text x="27" y="205" font-size="13" font-weight="600" fill="var(--text-bright)">TEMP  76</text>
+                    <circle cx="145" cy="193" r="3.8" fill="var(--blue)"/>
+                </g>
+                <!-- DB -->
+                <g id="cdb-d2-db">
+                    <rect x="15" y="310" width="130" height="56" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="27" y="329" font-size="8.5" letter-spacing="0.5" fill="var(--text-dim)">CONSTANT</text>
+                    <text x="27" y="350" font-size="13" font-weight="600" fill="var(--text-bright)">DB  1</text>
+                    <circle cx="145" cy="338" r="3.8" fill="var(--blue)"/>
+                </g>
+                <!-- ADD (upper band edge) -->
+                <g id="cdb-d2-hi">
+                    <rect x="215" y="90" width="120" height="56" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="275" y="114" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text-bright)">ADD</text>
+                    <text x="275" y="132" text-anchor="middle" font-size="9" fill="var(--text-dim)">SP + DB = 75</text>
+                    <circle cx="215" cy="108" r="3.8" fill="var(--blue)"/>
+                    <circle cx="215" cy="128" r="3.8" fill="var(--blue)"/>
+                    <circle cx="335" cy="118" r="3.8" fill="var(--blue)"/>
+                </g>
+                <!-- SUBTRACT (lower band edge) -->
+                <g id="cdb-d2-lo">
+                    <rect x="215" y="250" width="120" height="56" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="275" y="274" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text-bright)">SUBTRACT</text>
+                    <text x="275" y="292" text-anchor="middle" font-size="9" fill="var(--text-dim)">SP − DB = 73</text>
+                    <circle cx="215" cy="268" r="3.8" fill="var(--blue)"/>
+                    <circle cx="215" cy="288" r="3.8" fill="var(--blue)"/>
+                    <circle cx="335" cy="278" r="3.8" fill="var(--blue)"/>
+                </g>
+                <!-- GT (set side) -->
+                <g id="cdb-d2-over">
+                    <rect x="400" y="30" width="120" height="56" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="460" y="54" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text-bright)">A &gt; B</text>
+                    <text x="460" y="72" text-anchor="middle" font-size="9" fill="var(--accent)">76 &gt; 75 → TRUE</text>
+                    <circle cx="400" cy="48" r="3.8" fill="var(--blue)"/>
+                    <circle cx="400" cy="68" r="3.8" fill="var(--blue)"/>
+                    <circle cx="520" cy="58" r="3.8" fill="var(--accent)"/>
+                </g>
+                <!-- LT (reset side) -->
+                <g id="cdb-d2-under">
+                    <rect x="400" y="300" width="120" height="56" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="460" y="324" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text-bright)">A &lt; B</text>
+                    <text x="460" y="342" text-anchor="middle" font-size="9" fill="var(--text-dim)">76 &lt; 73 → FALSE</text>
+                    <circle cx="400" cy="318" r="3.8" fill="var(--blue)"/>
+                    <circle cx="400" cy="338" r="3.8" fill="var(--blue)"/>
+                    <circle cx="520" cy="328" r="3.8" fill="var(--text-dim)"/>
+                </g>
+                <!-- SR latch -->
+                <g id="cdb-d2-stat">
+                    <rect x="570" y="165" width="110" height="56" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="578" y="187" font-size="9" fill="var(--text-dim)">S</text>
+                    <text x="578" y="207" font-size="9" fill="var(--text-dim)">R</text>
+                    <text x="629" y="189" text-anchor="middle" font-size="12" font-weight="600" fill="var(--text-bright)">SR LATCH</text>
+                    <text x="629" y="207" text-anchor="middle" font-size="9" fill="var(--accent)">Q = TRUE</text>
+                    <circle cx="570" cy="183" r="3.8" fill="var(--accent)"/>
+                    <circle cx="570" cy="203" r="3.8" fill="var(--text-dim)"/>
+                    <circle cx="680" cy="193" r="3.8" fill="var(--accent)"/>
+                </g>
+                <!-- COOL -->
+                <g id="cdb-d2-cool">
+                    <rect x="695" y="165" width="95" height="56" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="707" y="184" font-size="8.5" letter-spacing="0.5" fill="var(--text-dim)">BINARY OUT</text>
+                    <text x="707" y="205" font-size="12" font-weight="600" fill="var(--accent)">COOL ON</text>
+                    <circle cx="695" cy="193" r="3.8" fill="var(--accent)"/>
+                </g>
+
+                <text x="400" y="396" text-anchor="middle" font-size="10.5" fill="var(--text)">warm past 75: the greater-than fires SET and cooling latches ON —</text>
+                <text x="400" y="412" text-anchor="middle" font-size="10.5" fill="var(--text)">it will hold, straight through the band, until TEMP falls below 73</text>
+            </svg>
+
+            <p class="ref-note compact" style="text-align:center;">
+                Blue wires carry an analog value; green wires carry a TRUE digital signal,
+                grey wires FALSE — the same coloring the editor uses live.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                Now run the story forward. Cooling pulls the space back down through
+                <span data-us="75 °F" data-metric="23.9 °C">75 °F</span> — the greater-than
+                drops to FALSE, and <em>nothing happens</em>, because a latch that isn't
+                being set or reset simply holds. Down through the setpoint, still on. Only
+                below <span data-us="73 °F" data-metric="22.7 °C">73 °F</span> does the
+                less-than fire R and drop the call. Inside the band, both comparators are
+                FALSE and the latch's memory <em>is</em> the deadband — the sheet's answer to
+                "stay put." The noise that flipped the single threshold eight times in the
+                diagram above never comes close to a line
+                <span data-us="1 °F" data-metric="0.6 °C">1 °F</span> away, so the equipment
+                cycles at the speed of the building, not the speed of the noise.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                One number to be careful with: the DB constant here is <em>half</em> the band
+                — it's applied once up and once down, so the space actually swings
+                <span data-us="2 °F" data-metric="1.1 °C">2 °F</span> from set to reset.
+                Vendors split on this. Some deadband parameters mean the full width, some the
+                half; copy a value between platforms without checking and you've silently
+                doubled or halved the band. Read the block's documentation — or better, do
+                what this sheet does and build the edges in the open where you can see them.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                And here's a bonus the construction hands you for free. Swap the two wires
+                into the latch — under-temperature fires <strong>S</strong>,
+                over-temperature fires <strong>R</strong> — and the same nine blocks are a
+                <em>heating</em> thermostat: the call rises when the space is cold, drops
+                when it's warm. That's the whole difference between
+                <strong>direct-acting</strong> control (output follows the measurement up —
+                cooling) and <strong>reverse-acting</strong> control (output rises as the
+                measurement falls — heating). The comparators don't change; only which one
+                sets and which one resets. The editor ships both thermostats as a pair for
+                exactly this reason.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                How wide should the band be? It's a trade, and it's the same trade at every
+                scale. Narrow means tight comfort and busy equipment; wide means the
+                equipment rests and the occupants ride the swing. A room thermostat usually
+                lands around <span data-us="1–2 °F" data-metric="0.6–1.1 °C">1–2 °F</span> of
+                total band; but zoom out and the pattern repeats — the
+                <a href="/education/equipment-staging.html#staging">equipment-staging</a>
+                lesson's stage-up and stage-down thresholds are this exact construction at
+                plant scale, where the gap between them is a deliberate deadband that keeps a
+                whole pump plant from hunting. And when the equipment can <em>modulate</em>
+                instead of switch, the cleanest answer is to stop drawing lines altogether
+                and close a <a href="/education/pid-basics.html">PID loop</a> around the
+                setpoint instead.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                One last note for the day you meet this in a real palette: most production
+                environments bundle the whole thing into a single <em>deadband</em> or
+                <em>hysteresis</em> comparator — one block, a setpoint, a band, chatter-free
+                output. Use it; that's what it's for. But now you know what's inside the box:
+                two lines and a memory. When a bundled block misbehaves — or when a palette
+                doesn't have one — you can build it, and more importantly you can
+                <em>read</em> one when you find it built out in the open on someone else's
+                sheet.
+            </p>
+
+            <!-- ───────────────── 4 · Capstone ───────────────── -->
+            <h2 class="subhead" id="try-it">Walk the band yourself</h2>
+
+            <p>
+                The whole lesson is sitting in the
+                <a href="/simulators/function-block-editor.html">Function-Block Editor</a>,
+                running. Load the <em>cooling thermostat</em> example, click the TEMP block,
+                and walk its value up in the inspector: 74 — nothing. 74.9 — nothing. Above
+                75 — the greater-than wire goes green and the call latches on. Now walk it
+                back down and watch where it lets go: not at 75, not at 74, only below 73.
+                Set and reset firing at <em>different values</em> is the deadband, live on
+                the wire. Then load the <em>heating thermostat</em> and hunt for what
+                changed — the blocks are identical; only the two wires into S and R have
+                traded places.
+            </p>
+
+            <a class="cta-button" href="/simulators/function-block-editor.html">Open the Function-Block Editor →</a>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        simulators: [
+            {href: '/simulators/function-block-editor.html', label: 'Function-Block Editor'},
+            {href: '/simulators/pid-tuner.html', label: 'PID Tuning Helper'}
+        ],
+        lessons: [
+            {href: '/education/function-blocks.html', label: 'Function-Block Basics'},
+            {href: '/education/equipment-staging.html', label: 'Equipment Staging'},
+            {href: '/education/pid-basics.html', label: 'PID Basics'}
+        ],
+        quizzes: [
+            {href: '/practice/comparators-and-deadband.html', label: 'Comparators & Deadband Quiz'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/education/">← Back to Education</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+{% endblock %}

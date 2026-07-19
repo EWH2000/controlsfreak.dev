@@ -1,0 +1,315 @@
+---
+title: Status & Proof — controlsfreak.dev
+description: What a fan status point actually proves — starter aux contact vs current switch vs DP switch, proof windows and fail-to-start, and the belt that fools them.
+canonical: https://controlsfreak.dev/education/status-and-proof.html
+nav: education
+category: signals
+pairedQuiz: https://controlsfreak.dev/practice/status-and-proof.html
+keywords: status proof current switch DP switch aux contact fail-to-start broken belt command paddle proof-of-flow airflow proving NO NC polarity chatter
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block head %}
+    <style>
+        /* Page-specific — status-and-proof diagrams. Static SVGs on the
+           .edu-svg house style (mono text via the svg font-family attr;
+           meaning-carrying geometry in --text-dim per the
+           balancing-diagram convention). Class prefix sap-. Red = the
+           power path (line power / motor lead), dashed dim = status
+           taps down to their source cards, blue = moving air. The two
+           diagrams share one base drawing — the capstone repeats it
+           with the belt snapped and verdicts in the cards. */
+        .sap-svg text { font-family: var(--mono); }
+        .sap-svg .dev { fill: var(--surface); stroke: var(--text-dim); stroke-width: 1.5; }
+        .sap-svg .term { fill: var(--surface); stroke: var(--text-dim); stroke-width: 1.5; }
+        .sap-svg .pwr { fill: none; stroke: var(--red); stroke-width: 2.6; stroke-linecap: round; }
+        .sap-svg .belt { fill: none; stroke: var(--text-dim); stroke-width: 2; }
+        .sap-svg .duct { fill: none; stroke: var(--text-dim); stroke-width: 2; }
+        .sap-svg .tap { fill: none; stroke: var(--text-dim); stroke-width: 1.5; stroke-dasharray: 4 3; }
+        .sap-svg .air { fill: none; stroke: var(--blue); stroke-width: 2.5; }
+        .sap-svg .air-head { fill: var(--blue); }
+        .sap-svg .lbl { fill: var(--text-bright); font-size: 12px; }
+        .sap-svg .lbl-dim { fill: var(--text-dim); font-size: 11px; }
+        .sap-svg .lbl-proves { fill: var(--blue); font-size: 11px; font-weight: 600; }
+        .sap-svg .verdict-on { fill: var(--amber-ink); font-size: 17px; font-weight: 700; }
+        .sap-svg .verdict-off { fill: var(--red-text); font-size: 17px; font-weight: 700; }
+        .sap-leg.edu-legend .sw.pwr { border-top: 3px solid var(--red); }
+        .sap-leg.edu-legend .sw.tap { border-top: 3px dashed var(--text-dim); }
+        .sap-leg.edu-legend .sw.air { border-top: 3px solid var(--blue); }
+    </style>
+{% endblock %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Education · Status &amp; Proof</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">Status &amp; Proof <span class="tool-tag">Signals</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                Every equipment graphic has a fan icon that turns green when the fan is "on." That green is not the fan — it is a binary input reporting whatever the status device on the other end of the wire happens to prove, and the gap between those two things is where a whole family of service calls lives. This page is about that gap. One question, start to finish: <em>when the graphic says a fan is ON, what is the controller actually sensing — and why do command and status sometimes disagree?</em> How a status contact physically lands on a binary input — the wetting current the controller supplies, dry versus externally powered contacts — is <a href="/education/controller-wiring.html#inputs">Controller Wiring</a>'s ground; here the landing is taken as given, and the question is what the closed contact actually <em>means</em>. (This is the binary half of the chapter's believe-the-graphic question — <a href="/education/analog-sensing.html">Analog Sensing</a> asks the same thing of the analog values beside that fan icon.)
+            </p>
+
+            <!-- ───────────────── 1 · The status-source menu ───────────────── -->
+            <h2 class="subhead" id="sap-sources">The status-source menu</h2>
+
+            <p>
+                Command is the easy half: the controller closes a binary output and the starter pulls in. Status is the return trip — some device out at the equipment closes a contact to say <em>it worked</em>, and the controller reads it on a BI. What that contact is attached to decides what "it worked" means, and there are three common choices, in rising order of how much they prove.
+            </p>
+
+            <p style="margin-top:1.1rem;">
+                A <strong>starter auxiliary contact</strong> is a spare contact ganged to the contactor's armature: when the coil pulls the power poles in, the aux goes with them. It is the cheapest status there is, and what it proves is exactly this: <em>the contactor closed</em>. Nothing downstream is in the picture — not whether the motor drew a single amp, not whether the belt survived, not whether any air moved. An aux contact is one honest step above wiring nothing at all and letting the graphic show the command back to you: it proves the starter answered, and no more.
+            </p>
+
+            <p style="margin-top:1.1rem;">
+                A <strong>current switch</strong> is a small current transformer clamped around one motor lead, with an adjustable trip point: when the current through its sensing window rises above the trip, the contact closes. Now the proof reaches past the contactor to the motor itself — closed means <em>the motor is drawing amps</em>, real electrical work, not just a closed set of poles. What it still cannot see is the machine on the far end of the shaft. And its honesty hangs on a setting — the trip point — which section 3 comes back to.
+            </p>
+
+            <p style="margin-top:1.1rem;">
+                A <strong>differential-pressure switch</strong> reads the pressure rise across the fan, its two sensing tubes tapped into the duct on either side; a <strong>paddle switch</strong> — a sail in the airstream — swings closed when moving air pushes it. Either way, the proof is the delivered effect itself: <em>air is moving</em>. On the water side the same rung is a flow switch or a DP switch across the pump. This is the strongest proof on the menu, and — because it watches a live physical quantity instead of a contact block — the touchiest to set up, which is also section 3's business.
+            </p>
+
+            <p style="margin-top:1.1rem;">
+                The classic separator for all three is a <strong>broken belt</strong>. Snap the belt on a belt-driven fan and walk the menu: the aux contact says ON — the contactor genuinely is closed; it is not lying about the thing it watches. The current switch sees a motor spinning freely with no load — the draw falls to its unloaded level, and whether the switch still "proves" depends entirely on where the trip sits. The DP switch says OFF — no air, no pressure rise, no proof. One fault, three different verdicts, each source reporting honestly on the thing it was built to watch. Keep that picture; the rest of the page keeps coming back to it.
+            </p>
+
+            <p style="margin-top:1.1rem;">
+                Whichever source you pick, it reaches the controller the same way: a dry contact landed on a binary input, wetted by the controller's own sensing voltage. The landing rules live in <a href="/education/controller-wiring.html#inputs">Controller Wiring</a>, and the <a href="/simulators/controller-wiring.html">wiring simulator</a> models exactly this case — a dry status contact on a BI you can land yourself and fault on purpose.
+            </p>
+
+            <svg class="edu-svg sap-svg" id="sap-d1" viewBox="-44 0 764 424" role="img" aria-labelledby="sap-d1-title sap-d1-desc">
+                <title id="sap-d1-title">One fan circuit, three status sources, and what each one proves</title>
+                <desc id="sap-d1-desc">A belt-driven fan circuit drawn once, left to right: line power enters a contactor, a motor lead runs from the contactor through the sensing window of a current switch to the motor, a belt connects the motor pulley to the fan pulley, and the fan sits in a duct with air flowing out to the right. Three status sources are tapped at their physical points, each with a dashed leader down to a card describing it. The auxiliary contact rides the contactor and proves only that the contactor closed — blind to amps, belt, and air. The current switch clamps the motor lead and proves the motor is drawing amps — blind to the belt and the air. The differential-pressure switch taps the duct on either side of the fan and proves air is actually moving — the delivered effect itself. A caption reads: three different claims — contactor closed, motor drawing amps, air moving.</desc>
+
+                <!-- power feed + contactor -->
+                <path class="pwr" d="M -40 100 H 48"/>
+                <text class="lbl-dim" x="-40" y="84">line power</text>
+                <rect class="dev" x="48" y="64" width="120" height="72"/>
+                <text class="lbl" x="108" y="96" text-anchor="middle">CONTACTOR</text>
+                <text class="lbl-dim" x="108" y="113" text-anchor="middle">coil + poles</text>
+                <circle class="term" cx="108" cy="136" r="4.5"/>
+
+                <!-- motor lead through the current-switch window -->
+                <circle class="dev" cx="210" cy="100" r="16"/>
+                <path class="pwr" d="M 168 100 H 256"/>
+                <circle cx="210" cy="100" r="6" fill="none" stroke="var(--text-dim)" stroke-width="1.5"/>
+                <circle class="term" cx="210" cy="116" r="4.5"/>
+
+                <!-- motor + pulleys + belt -->
+                <circle class="dev" cx="292" cy="100" r="36"/>
+                <text x="292" y="106" font-size="16" font-weight="600" fill="var(--text-bright)" text-anchor="middle">M</text>
+                <text class="lbl-dim" x="292" y="152" text-anchor="middle">motor</text>
+                <path class="belt" d="M 328 100 H 338"/>
+                <circle class="dev" cx="348" cy="100" r="10"/>
+                <circle class="dev" cx="448" cy="100" r="10"/>
+                <path class="belt" d="M 348 90 H 448"/>
+                <path class="belt" d="M 348 110 H 448"/>
+                <text class="lbl-dim" x="398" y="78" text-anchor="middle">belt</text>
+
+                <!-- fan in duct + moving air -->
+                <path class="duct" d="M 470 56 H 700"/>
+                <path class="duct" d="M 470 144 H 700"/>
+                <path class="belt" d="M 458 100 H 490"/>
+                <circle class="dev" cx="520" cy="100" r="30"/>
+                <polygon points="510,88 534,100 510,112" fill="var(--text-dim)"/>
+                <path class="air" d="M 590 100 H 656"/>
+                <polygon class="air-head" points="654,94 668,100 654,106"/>
+                <text x="622" y="88" font-size="11" fill="var(--blue)" text-anchor="middle">air</text>
+
+                <!-- DP switch across the fan -->
+                <path class="tap" d="M 482 144 V 176"/>
+                <path class="tap" d="M 566 144 V 176"/>
+                <rect class="dev" x="478" y="176" width="140" height="30"/>
+                <text class="lbl" x="548" y="196" text-anchor="middle">DP SWITCH</text>
+
+                <!-- status-tap leaders down to the source cards -->
+                <path class="tap" d="M 108 140 V 268"/>
+                <path class="tap" d="M 210 120 V 240 H 361 V 268"/>
+                <path class="tap" d="M 548 206 V 268"/>
+
+                <!-- the three source cards -->
+                <rect class="dev" x="30" y="268" width="210" height="100"/>
+                <text class="lbl" x="135" y="292" font-weight="600" text-anchor="middle">AUX CONTACT</text>
+                <text class="lbl-dim" x="135" y="309" text-anchor="middle">spare contact on the starter</text>
+                <text class="lbl-proves" x="135" y="331" text-anchor="middle">PROVES: CONTACTOR CLOSED</text>
+                <text class="lbl-dim" x="135" y="349" text-anchor="middle">blind to: amps · belt · air</text>
+
+                <rect class="dev" x="256" y="268" width="210" height="100"/>
+                <text class="lbl" x="361" y="292" font-weight="600" text-anchor="middle">CURRENT SWITCH</text>
+                <text class="lbl-dim" x="361" y="309" text-anchor="middle">CT clamped on a motor lead</text>
+                <text class="lbl-proves" x="361" y="331" text-anchor="middle">PROVES: MOTOR DRAWING AMPS</text>
+                <text class="lbl-dim" x="361" y="349" text-anchor="middle">blind to: belt · air</text>
+
+                <rect class="dev" x="482" y="268" width="210" height="100"/>
+                <text class="lbl" x="587" y="292" font-weight="600" text-anchor="middle">DP / PADDLE SWITCH</text>
+                <text class="lbl-dim" x="587" y="309" text-anchor="middle">taps across the fan</text>
+                <text class="lbl-proves" x="587" y="331" text-anchor="middle">PROVES: AIR MOVING</text>
+                <text class="lbl-dim" x="587" y="349" text-anchor="middle">the delivered effect itself</text>
+
+                <text class="lbl-dim" x="360" y="404" text-anchor="middle">three different claims: contactor closed ≠ motor drawing amps ≠ air moving</text>
+            </svg>
+            <p class="edu-legend sap-leg">
+                <span><span class="sw pwr"></span>power path</span>
+                <span><span class="sw tap"></span>status tap</span>
+                <span><span class="sw air"></span>moving air</span>
+            </p>
+
+            <!-- ───────────────── 2 · Proof logic ───────────────── -->
+            <h2 class="subhead" id="sap-proof">Proof logic — command, wait, expect</h2>
+
+            <p>
+                With a command point and a status point on the same fan, the controller can do something neither point does alone: <strong>compare them</strong>. Command-versus-status comparison is <em>proof logic</em> — the sequence commands the fan, then expects the status to confirm it, and treats disagreement as a fault instead of trusting either side blindly.
+            </p>
+
+            <p style="margin-top:1.1rem;">
+                The wrinkle is time. A real fan takes a few seconds to pull in, come up to speed, and build enough pressure to close a DP switch — so the comparison runs on a <strong>proof window</strong>: command it, wait a defined time, <em>then</em> expect proof. Set the window too short and every legitimate start trips a nuisance alarm — the fan was coming; the logic didn't wait. Set it too long and the window becomes a blind spot: a start that genuinely failed runs unreported for the whole delay, and anything the sequence interlocks against "proven" — an electric heater that must never run without airflow, a downstream stage waiting its turn — inherits that blind spot with it. The window should be as long as the slowest honest start, and no longer.
+            </p>
+
+            <p style="margin-top:1.1rem;">
+                When the window expires with the command ON and the status still OFF, that is a <strong>fail-to-start</strong>: the controller alarms, and most sequences also latch the command back off — there is no point holding a start signal into a fault, and some failures get worse if you keep trying. The block-level way the window is actually built — an on-delay timer holding the fail alarm off while the fan comes up — belongs to a lesson on timers and delays.
+            </p>
+
+            <p style="margin-top:1.1rem;">
+                Disagreement runs in two directions, and they point at different suspects. <strong>Commanded ON, status OFF</strong> is the fail-to-start family: no control power at the starter, a coil that never pulled in, a tripped overload — or, per section 1, a fault the chosen status source can see that a cheaper one could not. <strong>Commanded OFF, status ON</strong> is stranger and often more urgent: the equipment is running, and the controller is not the one running it. A hand-off-auto switch left in HAND, a welded contactor, a jumper someone left behind from troubleshooting — the machine has an authority problem, not a proof problem. The same comparison catches both; the direction tells you which story you are walking into.
+            </p>
+
+            <p style="margin-top:1.1rem;">
+                And all of it rests on the status point itself telling the truth — a point that reads backwards will alarm on every healthy start and bless every real failure. Proving the point before trusting the logic — actuate the real contact, watch the value land where the sequence expects — is point-to-point checkout, <a href="/education/controls-commissioning.html">Controls Commissioning</a>'s ground.
+            </p>
+
+            <!-- ───────────────── 3 · Binary fault signatures ───────────────── -->
+            <h2 class="subhead" id="sap-signatures">Binary fault signatures</h2>
+
+            <p>
+                Binary status points fail in a small number of recognizable ways, and each leaves a distinct signature on the graphic and in the alarm log. Learn the signatures and you can often name the fault before you leave the desk.
+            </p>
+
+            <p style="margin-top:1.1rem;">
+                <strong>Inverted polarity.</strong> A NO/NC mismatch between the contact and the point's configuration — the device offers both contact types and the wrong one got landed, or the point's polarity flag is set backwards. The point is not dead; it <em>tracks perfectly, inverted</em>. Because most equipment holds one state for hours, it presents as a status stuck at the wrong value: perpetual ON on a unit that sits off, perpetual OFF on one that runs around the clock. The giveaway is the alarm pattern at the transitions — a fail-to-start on every start of a fan you can hear running, and a running-unexpectedly alarm the moment it legitimately stops. Backwards <em>twice</em> is the signature; a genuinely dead point never changes at all.
+            </p>
+
+            <p style="margin-top:1.1rem;">
+                <strong>Chattering status.</strong> The point flips ON/OFF rapidly, spamming alarms and change-of-value traffic. Two usual causes. Mechanical: a loose termination, or a contact bouncing with equipment vibration. Marginal: a DP switch set so close to the fan's actual operating pressure that normal swings — VAV dampers throttling back, a filter loading up — walk the pressure back and forth across the trip. If the chatter tracks the system (worse at low load, gone at full speed), suspect the setpoint margin; if it tracks the machine's vibration, suspect the termination. The fix is margin: set the trip so the normal operating point sits well past it, and let the switch's built-in differential do its job.
+            </p>
+
+            <p style="margin-top:1.1rem;">
+                <strong>A current-switch trip set below the unloaded draw.</strong> The broken-belt caveat from section 1, now as a number. A motor that loses its load does not stop drawing current — it drops to its <em>unloaded draw</em>, mostly magnetizing current, commonly somewhere around a quarter to a third of nameplate on a fan motor. Set the current switch's trip below that and the switch will "prove" a motor spinning a broken belt forever: the draw never falls under the trip, so the contact never opens. The trip belongs <em>above</em> the unloaded draw and <em>below</em> the normal running draw — that window exists on any healthy belt-driven load, and putting the trip inside it is the whole reason to buy a current switch instead of settling for an aux contact.
+            </p>
+
+            <p style="margin-top:1.1rem;">
+                Here is the section-1 machine one more time — belt snapped, all three sources reporting at once. Two of them say ON. Both are honest about the thing they watch, and both are wrong about the fan.
+            </p>
+
+            <svg class="edu-svg sap-svg" id="sap-d2" viewBox="-44 0 764 424" role="img" aria-labelledby="sap-d2-title sap-d2-desc">
+                <title id="sap-d2-title">The same fan with the belt snapped — three status verdicts</title>
+                <desc id="sap-d2-desc">The same belt-driven fan circuit as the previous diagram, but the belt between the motor pulley and the fan pulley is drawn snapped, and no air moves in the duct. The three status-source cards now carry verdicts. The auxiliary contact reads ON — true, the contactor is closed, but it says nothing about the fan. The current switch reads ON with an asterisk — the motor is still drawing its unloaded current, and the trip point sits below that draw, so the switch keeps proving. The differential-pressure switch reads OFF — no air, the only source that caught the failure. A caption reads: two honest ONs, one true answer — only the source watching the air catches the broken belt.</desc>
+
+                <!-- power feed + contactor -->
+                <path class="pwr" d="M -40 100 H 48"/>
+                <text class="lbl-dim" x="-40" y="84">line power</text>
+                <rect class="dev" x="48" y="64" width="120" height="72"/>
+                <text class="lbl" x="108" y="96" text-anchor="middle">CONTACTOR</text>
+                <text class="lbl-dim" x="108" y="113" text-anchor="middle">closed</text>
+                <circle class="term" cx="108" cy="136" r="4.5"/>
+
+                <!-- motor lead through the current-switch window -->
+                <circle class="dev" cx="210" cy="100" r="16"/>
+                <path class="pwr" d="M 168 100 H 256"/>
+                <circle cx="210" cy="100" r="6" fill="none" stroke="var(--text-dim)" stroke-width="1.5"/>
+                <circle class="term" cx="210" cy="116" r="4.5"/>
+
+                <!-- motor + pulleys + snapped belt -->
+                <circle class="dev" cx="292" cy="100" r="36"/>
+                <text x="292" y="106" font-size="16" font-weight="600" fill="var(--text-bright)" text-anchor="middle">M</text>
+                <text class="lbl-dim" x="292" y="152" text-anchor="middle">spinning, unloaded</text>
+                <path class="belt" d="M 328 100 H 338"/>
+                <circle class="dev" cx="348" cy="100" r="10"/>
+                <circle class="dev" cx="448" cy="100" r="10"/>
+                <path class="belt" d="M 348 90 H 380 l 6 -5"/>
+                <path class="belt" d="M 448 90 H 416 l -6 8"/>
+                <path class="belt" d="M 348 110 C 366 120, 378 122, 386 115"/>
+                <path class="belt" d="M 448 110 C 432 120, 420 121, 412 116"/>
+                <text x="398" y="76" font-size="11" fill="var(--red-text)" text-anchor="middle">belt snapped</text>
+
+                <!-- fan in duct, no air -->
+                <path class="duct" d="M 470 56 H 700"/>
+                <path class="duct" d="M 470 144 H 700"/>
+                <path class="belt" d="M 458 100 H 490"/>
+                <circle class="dev" cx="520" cy="100" r="30"/>
+                <polygon points="510,88 534,100 510,112" fill="var(--text-dim)"/>
+                <text class="lbl-dim" x="625" y="104" text-anchor="middle">no air</text>
+
+                <!-- DP switch across the fan -->
+                <path class="tap" d="M 482 144 V 176"/>
+                <path class="tap" d="M 566 144 V 176"/>
+                <rect class="dev" x="478" y="176" width="140" height="30"/>
+                <text class="lbl" x="548" y="196" text-anchor="middle">DP SWITCH</text>
+
+                <!-- status-tap leaders down to the verdict cards -->
+                <path class="tap" d="M 108 140 V 268"/>
+                <path class="tap" d="M 210 120 V 240 H 361 V 268"/>
+                <path class="tap" d="M 548 206 V 268"/>
+
+                <!-- the three verdict cards -->
+                <rect class="dev" x="30" y="268" width="210" height="100"/>
+                <text class="lbl" x="135" y="292" font-weight="600" text-anchor="middle">AUX CONTACT</text>
+                <text class="verdict-on" x="135" y="322" text-anchor="middle">ON</text>
+                <text class="lbl-dim" x="135" y="344" text-anchor="middle">true — the contactor is closed</text>
+                <text class="lbl-dim" x="135" y="360" text-anchor="middle">and useless about the fan</text>
+
+                <rect class="dev" x="256" y="268" width="210" height="100"/>
+                <text class="lbl" x="361" y="292" font-weight="600" text-anchor="middle">CURRENT SWITCH</text>
+                <text class="verdict-on" x="361" y="322" text-anchor="middle">ON *</text>
+                <text class="lbl-dim" x="361" y="344" text-anchor="middle">* trip sits below the</text>
+                <text class="lbl-dim" x="361" y="360" text-anchor="middle">motor's unloaded draw</text>
+
+                <rect class="dev" x="482" y="268" width="210" height="100"/>
+                <text class="lbl" x="587" y="292" font-weight="600" text-anchor="middle">DP / PADDLE SWITCH</text>
+                <text class="verdict-off" x="587" y="322" text-anchor="middle">OFF</text>
+                <text class="lbl-dim" x="587" y="344" text-anchor="middle">no air — the only source</text>
+                <text class="lbl-dim" x="587" y="360" text-anchor="middle">that caught the failure</text>
+
+                <text class="lbl-dim" x="360" y="404" text-anchor="middle">two honest ONs, one true answer — only the source watching the air catches it</text>
+            </svg>
+            <p class="edu-legend sap-leg">
+                <span><span class="sw pwr"></span>power path</span>
+                <span><span class="sw tap"></span>status tap</span>
+            </p>
+
+            <!-- // anecdote slot: a status point that lied in the field — a broken belt
+                 behind a proving current switch, or an inverted NO/NC status found at
+                 checkout — owner to supply -->
+
+            <p style="margin-top:1.25rem;">
+                That is the whole lesson in one drawing: status is not a fact about the fan — it is a fact about whatever the status device watches. Pick the source that proves what the sequence actually needs proven (a duct heater's interlock wants <em>air</em>, not amps), wrap the comparison in a proof window long enough for an honest start, and when command and status disagree, read the direction before you drive out. The graphic's green icon is only ever as truthful as the contact behind it.
+            </p>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        simulators: [
+            {href: '/simulators/controller-wiring.html', label: 'Controller Wiring Simulator'}
+        ],
+        lessons: [
+            {href: '/education/controller-wiring.html', label: 'Controller Wiring'},
+            {href: '/education/analog-sensing.html', label: 'Analog Sensing'},
+            {href: '/education/controls-commissioning.html', label: 'Controls Commissioning'}
+        ],
+        quizzes: [
+            {href: '/practice/status-and-proof.html', label: 'Status & Proof'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/education/">← Back to Education</a>
+
+</main>
+{% endblock %}
