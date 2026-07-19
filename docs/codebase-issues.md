@@ -5480,6 +5480,175 @@ defrost, low-ambient) unchanged. One further intended behavior
 change: overcharge (charge 1.20) now flags at every ambient — honest,
 and the pill is unchanged because floodback outranks it.
 
+### 177. Home Practice Browse-card desc names a specific drill *(open — 2026-07-18, low; may be intentional)*
+
+`html/index.html` — the Practice Browse-card `desc` ends "New to the
+field? Surviving Your First Months is the gentlest place to start."
+Structurally that's the same surface #160 and #170 were fixed on: a
+page name living in a hand-kept desc string with no test guard, so it
+goes stale silently if the drill is renamed, retired, or displaced as
+the natural entry point (the pills are guarded by
+`home-hero.spec.js`; the descs are not).
+
+Unlike #160 / #170, though, this one reads as a **deliberate
+editorial entry-point** rather than an incidental enumeration —
+naming one starting place for a newcomer does work that a kind-level
+characterization can't. So the de-enumeration reflex is likely wrong
+here and this wants an owner call, not an automatic sweep: either
+keep the name and accept it as a surface someone must remember to
+true up (worth a comment at the call site saying so), or drop to a
+generic "start with the field drills" phrasing and lose the
+hand-hold. Low. Logged-only from the 2026-07-18 arc.
+
+### 178. `pid-basics.html` eyebrow carries the `<h1>` — sole outlier among the lessons *(open — 2026-07-18, low; document-outline, not cosmetic)*
+
+`html/education/pid-basics.html:17` uses
+`<h1 class="section-label">Education · PID Basics</h1>` for its
+eyebrow, and has no `<h1 class="tool-card-title">` anywhere. All 38
+other lesson pages use the span-eyebrow +
+`<h1 class="tool-card-title">` shape; the only other page with the
+`<h1 class="section-label">` form is `education/index.html`, which is
+legitimate — CLAUDE.md's heading rule explicitly lets the eyebrow
+carry the `<h1>` "on landings without a tool-card." pid-basics is not
+a landing and does have tool-cards, so it sits outside that carve-out.
+
+Worth being precise about the severity, because it's easy to over- or
+under-call. It is **not** a duplicate-`<h1>` violation — the page has
+exactly one, so the "exactly one `<h1>` per page" rule is satisfied
+and no validator flags it. What is actually wrong is the *content* of
+that `<h1>`: it's the breadcrumb string "Education · PID Basics"
+rather than the page's topic. A screen-reader user navigating by
+heading, and any consumer reading the document outline, gets
+navigation chrome where every sibling lesson gives a descriptive
+title. The page's real section headings then sit at `<h2>` under an
+`<h1>` of the same `.section-label` class, so the chrome element
+outranks the content headings. That makes it a document-outline
+defect rather than a cosmetic one — low priority, but it should be
+fixed as a semantics change, not filed as styling. Logged-only from
+the 2026-07-18 arc.
+
+### 179. `function-blocks.html` (and `setpoint-math-reset.html`) lack the follow-on-paragraph margin rhythm *(open — 2026-07-18, low / cosmetic)*
+
+`html/education/function-blocks.html` has five follow-on paragraph
+pairs (a `<p>` immediately after another `<p>`) and zero
+`style="margin-top:…"` treatments, so its prose renders tighter than
+the Programming-chapter lessons that do carry the rhythm —
+`boolean-logic-latches` (10 treated), `timers-and-delays` (13),
+`comparators-and-deadband` (12). Purely visual; no semantic or
+behavioral effect.
+
+One correction to the shape this was first noticed in: function-blocks
+is **not** a lone outlier. `setpoint-math-reset.html` — the newest
+page in the chapter — has six follow-on pairs and zero treatments too,
+so it shipped the same way. Anyone picking this up should fix both, or
+the "bring the odd page up to the chapter rhythm" framing will true up
+function-blocks and leave the most recently shipped page still out.
+That two-page split also raises the prior question: an inline
+`style="margin-top:1.25rem;"` repeated a dozen times per page is the
+thing actually causing the drift, and a shared `p + p` rule (or a
+`p.follow-on` utility, per the element-qualified prose-utility
+convention) would end the class rather than re-fix it page by page.
+Logged-only from the 2026-07-18 arc.
+
+### 180. Forced-air chapter: stale terminal-position claims + a hand-kept page count *(open — 2026-07-18)*
+
+`air-balancing` and `dedicated-outdoor-air` joined the `forced-air`
+chapter after `duct-static-control`, and prose written when
+duct-static was the closer never got trued up. The chapter now holds
+**eight** pages (`category: forced-air`), and `educationSequence.js`
+puts duct-static at position 6 of 8 — third-from-last, not last.
+Three sites, one root cause:
+
+- `html/education/vav-systems.html:181` — "the answering half of the
+  mirror is [the last page of this chapter]", anchored at
+  duct-static-control.
+- `html/education/vav-systems.html:248` — "How the fan *knows* how
+  much to slow down is the [chapter's last page]", same anchor.
+- `html/education/duct-static-control.html:616–617` — a two-for-one:
+  "here's the field move this chapter has been building toward"
+  (a terminal-position claim from a page that is now third-from-last)
+  **and** "read it the way these six pages did" (a hand-kept count,
+  stale by two).
+
+The first two are the stale-terminal-position class; the count in the
+third is the same enumeration-drift class as #160 / #170, and the
+de-enumeration fix shape applies directly to it — "read it the way
+this chapter did" carries the same instruction and can't go stale.
+The terminal-position claims need a rewrite rather than a
+de-enumeration, since the sentences do real work pointing forward and
+would need re-aiming at whatever the chapter's actual closer is (or
+rephrasing to name duct-static by role instead of by position).
+Logged-only from the 2026-07-18 arc; see #182.3, which proposes a
+guard for exactly this prose class.
+
+### 181. Process: reverse cross-links are unowned when lanes ship in parallel *(open — 2026-07-18, process / lane-spec)*
+
+Not a code defect — a defect in how parallel lanes are specified,
+recorded here because it produced a real, shipped content gap.
+
+The 2026-07-18 arc shipped two chapters under identical conventions
+with opposite outcomes. The Signals chapter's `relatedLinks()`
+reciprocity was fully paid; the Programming chapter's was **entirely
+unpaid** — four lessons that name each other in prose shipped with
+zero sibling links between them. The difference was structural, not
+carelessness: Signals happened to have a lane that merged second and
+retro-paid the anchors, and Programming had no such lane. The
+two-phase lane pattern has no step that assigns ownership of a reverse
+link, so when the target page is still unmerged at draft time the debt
+gets recorded in a PR body and then evaporates the moment that PR
+merges — nothing carries it forward.
+
+Concrete fix for next time: the lane spec should name **which lane
+pays each reverse link**, decided before the second lane opens, so the
+obligation lives in the spec rather than in a PR body.
+
+Also worth knowing before anyone treats PR bodies as a ledger: roughly
+a third of the debt itemized in those bodies turned out to be
+*phantom* — already paid during conflict resolution, with the bodies
+never amended. So PR bodies proved unreliable in both directions,
+under-recording paid work and over-recording outstanding work. Any
+future reconciliation should verify against the built site, not
+against the prose in a merged PR. Logged-only from the 2026-07-18 arc.
+
+### 182. Three defect classes this arc that a green build cannot see *(open — 2026-07-18, guard proposals)*
+
+Three classes surfaced during the 2026-07-18 arc that build clean,
+pass the full suite, and ship broken anyway. Logged together because
+converting a recurring class into a spec guard is this arc's
+established habit and it has already caught real regressions
+(`educationSequenceGuard`, `navCategoryGuard`, the home count-pill
+drift guard). Each is a guard proposal, not a fix:
+
+1. **Missing `quizOrder.js` entry.** A quiz page whose slug is absent
+   from the order array builds green, passes every test, and silently
+   ships no "Next quiz →" link — while its predecessor points straight
+   past it. Caught by hand on `reading-a-wiresheet`. Guardable the
+   same way `educationSequenceGuard` works: assert every
+   `nav: practice` **content-quiz** page's slug appears in
+   `quizOrder.js`. Field drills are legitimately excluded, so the
+   guard keys off the content-quiz/drill distinction rather than
+   `nav:` alone.
+2. **Dead anchor fragments.** Nothing resolves `href="/…#fragment"`
+   against the target page's ids. PR #393 verified 19 fragments with
+   an ad-hoc script; once that script is gone, nothing keeps them
+   honest, and a renamed `id` breaks an inbound deep link silently.
+   Guardable by walking the built `_site` HTML and asserting every
+   internal fragment href has a matching `id` on the target page —
+   a whole-site check that needs no per-page maintenance.
+3. **Cross-chapter mis-attribution.** "This chapter's X" prose where
+   X belongs to a different chapter. Found live in `timers-and-delays`
+   (fixed in PR #393); #180 above is the same shape within one
+   chapter. Genuinely harder to guard, since it's prose and the
+   failure is semantic — but a grep-based lint over the
+   chapter-claiming constructions ("this chapter", "the last page of
+   this chapter", "these N pages"), cross-checked against the page's
+   `category` frontmatter and the chapter's actual membership, is
+   feasible and would have caught all four known instances. Worth
+   scoping as a lint that reports candidates for human review rather
+   than a hard build failure, given the false-positive risk.
+
+Logged-only from the 2026-07-18 arc.
+
 ### Deferred / Won't fix (with revisit trigger)
 
 Items considered during an audit and deliberately not pursued, each
