@@ -464,6 +464,15 @@ techs new to the industry and anyone wanting a refresh.
   the general lesson under Duct Static Control's railed-transducer
   war story. Interactive signal-to-engineering-units mapping widget.
   Pairs with the Signal Scaling tool.
+- **Temperature Sensors** — why the controller must know exactly
+  which sensor is on the wire, and how to verify one with a meter.
+  The 10K Type II / Type III curve families that share one defining
+  point and nothing else (plus the shunted vendor conventions), the
+  quiet wrong-curve failure that reads plausibly off forever, RTDs
+  (Pt100 / Pt1000 / Balco) and the lead resistance that reads as
+  temperature with the 3-wire fix, and the disconnect → ohm → table →
+  reference verification workflow. Pairs with the Thermistor / RTD
+  Calculator.
 - **Status & Proof** — when the graphic says a fan is ON, what is the
   controller actually sensing? The status-source menu (starter aux
   contact vs current switch vs DP/paddle switch) and what each
@@ -763,7 +772,7 @@ flavors share the same engine:
   When a topic recurs in feedback, it becomes a candidate for a
   new education page.
 
-Shipped so far — twenty-six content quizzes (each 10 questions, paired
+Shipped so far — twenty-seven content quizzes (each 10 questions, paired
 1:1 with its lesson and deep-linking the gotchas) plus five field
 drills:
 
@@ -784,18 +793,22 @@ drills:
   inverter power stages with the run-command vs. speed-reference
   trap.
 - **Content quizzes — signals:** Controller Wiring, Analog Sensing,
-  Status & Proof. The shared COM as the panel's 0 V reference, the
-  same-leg phasing rule on a shared transformer (and the 24-vs-48 V
-  distinction), LOOP+ vs the AC hot leg for a 2-wire loop, wetting
-  current and wet vs. dry contacts, the AO signal that isn't the
-  load's power, the unfed BO-C, and triac vs. relay outputs; the
-  reading side — the published-range promise and its span-mismatch
-  gotcha, scaling a raw signal to engineering units, the live zero's
-  impossible numbers, and the railed flatline that's a ceiling, not
-  a measurement; then the binary side — what aux, current, and DP
-  switches each prove, the broken-belt verdict bracket, trip-point
-  reasoning, the proof-window trade-off, and the inverted-polarity
-  config gotcha.
+  Temperature Sensors, Status & Proof.
+  The shared COM as the panel's 0 V reference, the same-leg phasing
+  rule on a shared transformer (and the 24-vs-48 V distinction),
+  LOOP+ vs the AC hot leg for a 2-wire loop, wetting current and wet
+  vs. dry contacts, the AO signal that isn't the load's power, the
+  unfed BO-C, and triac vs. relay outputs; then the reading side —
+  the published-range promise and its span-mismatch gotcha, scaling
+  a raw signal to engineering units, the live zero's impossible
+  numbers, and the railed flatline that's a ceiling, not a
+  measurement; then the sensor itself — ohms-to-temperature lookups,
+  the Type II / Type III mismatch and its plausibly-wrong signature,
+  RTD lead resistance in degrees, and the meter workflow that splits
+  sensor from run from configuration; then the binary side — what
+  aux, current, and DP switches each prove, the broken-belt verdict
+  bracket, trip-point reasoning, the proof-window trade-off, and the
+  inverted-polarity config gotcha.
 - **Content quizzes — programming:** Function Blocks. Blocks, pins,
   wire types, the block families, and how a scan resolves feedback.
 - **Content quizzes — refrigeration:** Refrigerant Cycle Basics,

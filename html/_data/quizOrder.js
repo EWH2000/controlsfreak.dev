@@ -13,6 +13,7 @@ module.exports = [
     // sequence) ──
     { slug: 'controller-wiring',        label: 'Controller Wiring' },
     { slug: 'analog-sensing',           label: 'Analog Sensing' },
+    { slug: 'temperature-sensors',      label: 'Temperature Sensors' },
     { slug: 'status-and-proof',         label: 'Status & Proof' },
     { slug: 'hydronic-loops',           label: 'Hydronic Loops' },
     { slug: 'load-piping',              label: 'Load Piping' },
