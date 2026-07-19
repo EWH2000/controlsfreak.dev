@@ -1,0 +1,76 @@
+---
+title: Status & Proof Quiz — controlsfreak.dev
+description: Drill the Status and Proof lesson — what each status source proves, the broken-belt verdicts, trip points, proof windows, and inverted polarity.
+canonical: https://controlsfreak.dev/practice/status-and-proof.html
+nav: practice
+category: signals
+pairedLesson: https://controlsfreak.dev/education/status-and-proof.html
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Practice · Status &amp; Proof</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">Status &amp; Proof Quiz <span class="tool-tag">Signals</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                Read the <a href="/education/status-and-proof.html">Status &amp; Proof</a> lesson first, then
+                test yourself — ten questions on what a status point actually proves: aux contact vs current
+                switch vs DP switch, the broken-belt verdicts, where a current-switch trip point belongs, the
+                proof-window trade-off, what each direction of command-vs-status disagreement means, and the
+                fault signatures — inverted polarity and the chattering switch. Each reveal links back to the
+                section of the lesson it came from. For how these contacts physically land on a BI, the
+                <a href="/practice/controller-wiring.html">Controller Wiring quiz</a> is the companion set.
+            </p>
+
+            <div id="quiz"></div>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        simulators: [
+            {href: '/simulators/controller-wiring.html', label: 'Controller Wiring Simulator'}
+        ],
+        lessons: [
+            {href: '/education/status-and-proof.html', label: 'Status & Proof'},
+            {href: '/education/controller-wiring.html', label: 'Controller Wiring'},
+            {href: '/education/controls-commissioning.html', label: 'Controls Commissioning'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/practice/">← All practice</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="/scripts/quiz-engine.js"></script>
+<script>
+    (function () {
+        'use strict';
+
+        // Question bank lives in html/_data/quizzes/status-and-proof.js so
+        // the FAQPage JSON-LD emitted from head.njk can read the same source.
+        const questions = {{ quizzes['status-and-proof'] | safeScriptJson | safe }};
+
+        Quiz.mount('#quiz', questions, {
+            next: {{ page.fileSlug | nextQuiz | safeScriptJson | safe }},
+            slug: 'status-and-proof',
+            title: 'Status & Proof',
+            defaultCount: 10,
+            defaultOrder: 'sequential'
+        });
+    })();
+</script>
+{% endblock %}
