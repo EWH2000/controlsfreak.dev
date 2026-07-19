@@ -1,0 +1,75 @@
+---
+title: Temperature Sensors Quiz — controlsfreak.dev
+description: Ten questions on temperature sensors — curve families and the wrong-pick symptom, RTD lead resistance and the 3-wire fix, and the meter verdict.
+canonical: https://controlsfreak.dev/practice/temperature-sensors.html
+nav: practice
+category: signals
+pairedLesson: https://controlsfreak.dev/education/temperature-sensors.html
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Practice · Temperature Sensors</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">Temperature Sensors Quiz <span class="tool-tag">Signals</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                Read the <a href="/education/temperature-sensors.html">Temperature Sensors</a> lesson first, then
+                test yourself — ten questions on the curve behind every ohm: Type II vs Type III and the
+                wrong-pick symptom, the shunted vendor conventions, RTDs and the lead resistance that reads as
+                temperature, and the meter-and-table workflow that decides sensor vs input vs configuration.
+                Each reveal links back to the section it came from. For the wire-side fundamentals — landings,
+                shields, loop power — the <a href="/practice/field-wiring-sensors.html">Field Wiring &amp;
+                Sensors drill</a> is the companion set.
+            </p>
+
+            <div id="quiz"></div>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/tools/thermistor-calculator.html', label: 'Thermistor / RTD Calculator'}
+        ],
+        lessons: [
+            {href: '/education/temperature-sensors.html', label: 'Temperature Sensors'},
+            {href: '/education/controller-wiring.html', label: 'Controller Wiring'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/practice/">← All practice</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="/scripts/quiz-engine.js"></script>
+<script>
+    (function () {
+        'use strict';
+
+        // Question bank lives in html/_data/quizzes/temperature-sensors.js so
+        // the FAQPage JSON-LD emitted from head.njk can read the same source.
+        const questions = {{ quizzes['temperature-sensors'] | safeScriptJson | safe }};
+
+        Quiz.mount('#quiz', questions, {
+            next: {{ page.fileSlug | nextQuiz | safeScriptJson | safe }},
+            slug: 'temperature-sensors',
+            title: 'Temperature Sensors',
+            defaultCount: 10,
+            defaultOrder: 'sequential'
+        });
+    })();
+</script>
+{% endblock %}

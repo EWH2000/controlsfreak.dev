@@ -122,7 +122,7 @@ keywords: 4-20mA 0-10V span scaling live zero railed transducer range transmitte
             </p>
 
             <p>
-                Watch what that does to the arithmetic. You have already met the number a dead loop reads: it is the <strong>b</strong> in y&nbsp;=&nbsp;mx&nbsp;+&nbsp;b. A broken wire, a dead loop, or an open terminal reads 0&nbsp;mA, and scaled linearly against our <span data-us="0&ndash;250&nbsp;psi" data-metric="0&ndash;1724&nbsp;kPa">0&ndash;250&nbsp;psi</span> example that lands at (0&nbsp;&minus;&nbsp;4)/16 = &minus;25% of span: <span data-us="&minus;62.5&nbsp;psi" data-metric="&minus;431&nbsp;kPa">&minus;62.5&nbsp;psi</span> on the graphic. An <em>impossible</em> number — and impossible is exactly what you want, because it cannot be mistaken for a reading. Compare the 0&ndash;10&nbsp;V version of the same break: the input falls to 0&nbsp;V, and 0&nbsp;V is a perfectly legal value — the bottom of the range. The graphic shows range-min and sits there looking like a calm, valid low reading, indefinitely. <strong>A 0&ndash;10&nbsp;V input cannot distinguish "broken" from "zero"; a 4&ndash;20&nbsp;mA input can.</strong> (Voltage has its own live-zero variant — 2&ndash;10&nbsp;V — which buys the same diagnostic space below 2&nbsp;V; you will meet it on actuator feedback especially.)
+                Watch what that does to the arithmetic. You have already met the number a dead loop reads: it is the <strong>b</strong> in y&nbsp;=&nbsp;mx&nbsp;+&nbsp;b. A broken wire, a dead loop, or an open terminal reads 0&nbsp;mA, and scaled linearly against our <span data-us="0&ndash;250&nbsp;psi" data-metric="0&ndash;1724&nbsp;kPa">0&ndash;250&nbsp;psi</span> example that lands at (0&nbsp;&minus;&nbsp;4)/16 = &minus;25% of span: <span data-us="&minus;62.5&nbsp;psi" data-metric="&minus;431&nbsp;kPa">&minus;62.5&nbsp;psi</span> on the graphic. An <em>impossible</em> number — and impossible is exactly what you want, because it cannot be mistaken for a reading. Compare the 0&ndash;10&nbsp;V version of the same break: the input falls to 0&nbsp;V, and 0&nbsp;V is a perfectly legal value — the bottom of the range. The graphic shows range-min and sits there looking like a calm, valid low reading, indefinitely. <strong>A 0&ndash;10&nbsp;V input cannot distinguish "broken" from "zero"; a 4&ndash;20&nbsp;mA input can.</strong> (Voltage has its own live-zero variant — 2&ndash;10&nbsp;V — which buys the same diagnostic space below 2&nbsp;V; you will meet it on <a href="/education/commanding-actuators.html#feedback-and-floating">actuator feedback</a> especially.)
             </p>
 
             <p>
@@ -250,6 +250,9 @@ keywords: 4-20mA 0-10V span scaling live zero railed transducer range transmitte
                 ],
                 lessons: [
                     {href: '/education/controller-wiring.html', label: 'Controller Wiring'},
+                    {href: '/education/temperature-sensors.html', label: 'Temperature Sensors'},
+                    {href: '/education/status-and-proof.html', label: 'Status & Proof'},
+                    {href: '/education/commanding-actuators.html', label: 'Commanding Actuators'},
                     {href: '/education/duct-static-control.html', label: 'Duct Static Control'}
                 ],
                 quizzes: [

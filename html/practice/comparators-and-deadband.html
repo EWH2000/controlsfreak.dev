@@ -1,0 +1,78 @@
+---
+title: Comparators & Deadband Quiz — controlsfreak.dev
+description: Ten questions on comparators and deadband — picking GT or LT, band-edge math, chatter and short-cycling, and the set/reset latch that holds between the edges.
+canonical: https://controlsfreak.dev/practice/comparators-and-deadband.html
+nav: practice
+category: programming
+pairedLesson: https://controlsfreak.dev/education/comparators-and-deadband.html
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Practice · Comparators &amp; Deadband</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">Comparators &amp; Deadband Quiz <span class="tool-tag">Logic</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                Read the
+                <a href="/education/comparators-and-deadband.html">Comparators &amp; Deadband</a> lesson first, then
+                test yourself — ten questions on turning numbers into decisions: which comparator matches which
+                sentence, why EQ on an analog value is a trap, what a single threshold does to a compressor, the
+                set/reset band-edge math, direct vs reverse action, and the latch memory that holds between the
+                edges. Each reveal links back to the section it came from.
+            </p>
+
+            <div id="quiz"></div>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        lessons: [
+            {href: '/education/comparators-and-deadband.html', label: 'Comparators & Deadband'},
+            {href: '/education/function-blocks.html', label: 'Function-Block Basics'}
+        ],
+        simulators: [
+            {href: '/simulators/function-block-editor.html', label: 'Function-Block Editor'}
+        ],
+        quizzes: [
+            {href: '/practice/function-blocks.html', label: 'Function Blocks Quiz'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/practice/">← All practice</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="/scripts/quiz-engine.js"></script>
+<script>
+    (function () {
+        'use strict';
+
+        // Question bank lives in html/_data/quizzes/comparators-and-deadband.js
+        // so the FAQPage JSON-LD emitted from head.njk can read the same
+        // source.
+        const questions = {{ quizzes['comparators-and-deadband'] | safeScriptJson | safe }};
+
+        Quiz.mount('#quiz', questions, {
+            next: {{ page.fileSlug | nextQuiz | safeScriptJson | safe }},
+            slug: 'comparators-and-deadband',
+            title: 'Comparators & Deadband',
+            defaultCount: 10,
+            defaultOrder: 'sequential'
+        });
+    })();
+</script>
+{% endblock %}

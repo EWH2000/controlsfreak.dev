@@ -1,0 +1,343 @@
+---
+title: Start/Stop Commands — controlsfreak.dev
+description: What sits between a BO commanding ON and the motor starting — interposing relay, HOA switch, hardwired safety string — and why Hand works when Auto is dead.
+canonical: https://controlsfreak.dev/education/start-stop-commands.html
+nav: education
+category: signals
+pairedQuiz: https://controlsfreak.dev/practice/start-stop-commands.html
+keywords: BO binary output start stop HOA hand off auto interposing relay contactor safety string command path freeze stat firestat overload
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block head %}
+    <style>
+        /* Page-specific — start/stop command-path schematics. Follows the
+           .edu-svg precedent (full-width, screenshot-audited) and extends
+           the controller-wiring lesson's cwl- wire grammar: red = the
+           starter's control-circuit hot (120 VAC typical), teal = the
+           controller-side 24 VAC the BO switches (the "other domain"
+           color, as cwl uses it for the DC loop), blue = common /
+           neutral returns, dim = geometry. Class prefix ssc-. */
+        .ssc-svg text { font-family: var(--mono); }
+        .ssc-svg .wire { fill: none; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+        .ssc-svg .w-ctl { stroke: var(--red); }
+        .ssc-svg .w-bo { stroke: var(--teal); }
+        .ssc-svg .w-com { stroke: var(--blue); }
+        .ssc-svg .term { fill: var(--surface); stroke: var(--text-dim); stroke-width: 1.5; }
+        .ssc-svg .j { fill: var(--red); }
+        /* Meaning-carrying geometry strokes use --text-dim, not --border —
+           the balancing-diagram convention (audit-2026-06 #14). */
+        .ssc-svg .dev { fill: var(--surface); stroke: var(--text-dim); stroke-width: 1.5; }
+        .ssc-svg .blade { fill: none; stroke: var(--text-bright); stroke-width: 2.2; stroke-linecap: round; }
+        .ssc-svg .lbl { fill: var(--text-bright); font-size: 12px; }
+        .ssc-svg .lbl-dim { fill: var(--text-dim); font-size: 11px; }
+        .ssc-svg .lbl-term { fill: var(--text-bright); font-size: 11px; font-weight: 600; }
+        .ssc-svg .lbl-callout { fill: var(--text-dim); font-size: 10px; }
+        .ssc-svg .chip { fill: var(--bg); stroke: var(--text-dim); stroke-width: 1.2; }
+        .ssc-svg .verdict-split { fill: var(--amber); font-size: 10px; }
+        .ssc-svg .verdict-agree { fill: var(--accent); font-size: 10px; }
+        /* Legend swatches for the wire families. */
+        .ssc-leg.edu-legend .sw.ctl { border-top: 3px solid var(--red); }
+        .ssc-leg.edu-legend .sw.bo { border-top: 3px solid var(--teal); }
+        .ssc-leg.edu-legend .sw.com { border-top: 3px solid var(--blue); }
+    </style>
+{% endblock %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Education · Start/Stop Commands</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">Start/Stop Commands <span class="tool-tag">Signals</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                Every fan and pump the BMS "starts" is really started by a chain of hardware the BMS only touches at one end. The controller's whole contribution is a binary output closing a small relay contact — everything after that click is copper, and most of the service calls this page is about live in that copper. One question, start to finish: <em>when a BO commands equipment ON, what sits between the controller's relay and the motor starting — and why does Hand work when Auto doesn't?</em> The BO itself — relay vs. triac, feeding BO-C from the hot leg — is the <a href="/education/controller-wiring.html#outputs">Controller Wiring lesson's</a> territory, taken as given here. This page walks <em>downstream</em>: everything between the BO's click and the contactor's clunk.
+            </p>
+
+            <h2 class="subhead" id="command-path">The Command Path</h2>
+
+            <p>
+                Lay the chain out left to right, the way the current sees it. The <strong>BO</strong> is the decision: a dry contact inside the controller that closes when the program (or an operator override) says run. The BO doesn't switch the motor, and it doesn't even switch the motor's starter — its little pilot-duty contact drives the coil of an <strong>interposing relay</strong>, and <em>that</em> relay's heavier contact is what enters the starter's control circuit. Two reasons the middleman exists, and both are on the nameplate: <strong>contact rating</strong> — the BO is rated for a small 24 VAC load, while a contactor coil is a heavier, inductive load with real inrush — and <strong>voltage class</strong> — the starter's control circuit commonly runs at 120 VAC, and line-class wiring has no business landing on a DDC terminal strip. The BO switches a small relay it can handle; the relay switches a circuit the BO never could.
+            </p>
+
+            <p>
+                From the interposing relay's contact, the starter's control circuit runs through the <strong>HOA switch</strong> — Hand-Off-Auto, the human override, and the whole next section — with the BO's path entering on the <em>Auto</em> leg. Then comes the <strong>safety string</strong>: a series of hardwired vetoes, each a contact held closed in normal operation and opened by a trip — a <strong>freeze stat</strong> that opens when the air across a coil approaches freezing, a <strong>firestat</strong> or duct-detector shutdown contact, and the <strong>motor overload's auxiliary contact</strong>, which opens when the overload trips. Any one of them opens and the circuit is dead, no matter who is commanding — and the string sits downstream of the HOA on purpose, so that Hand does not bypass the safeties. Last in line is the <strong>contactor coil</strong>: the muscle. Energize it and the contactor's line-side contacts pull in, putting three-phase power to the motor. What lives inside the starter beyond that coil — contactor sizing, overload elements and trip class, the line-side power — is the electrician's territory; the controls side of the circuit ends at the coil.
+            </p>
+
+            <p>
+                Hold that picture and every element gets a one-breath failure signature, seen from the BMS seat. A BO that never commands, a dead interposing-relay coil, a broken wire on the controller side: <em>Auto is dead, Hand still runs</em>. An HOA someone left in Off: <em>dead in both, and the fix is a glance, not a meter</em>. An open safety: <em>dead in Hand and Auto alike</em> — the string outranks everyone. A dead contactor coil or lost control power: <em>dead everywhere, and the meter goes to the coil terminals first</em>. The diagram below is the whole chain with those signatures written under each link.
+            </p>
+
+            <!-- Command-path diagram: the starter control circuit left to right
+                 (hot → interposing-relay contact → HOA Auto leg → safety string
+                 → contactor coil → neutral), the Hand leg bypassing the relay
+                 up top, and the controller-side 24 VAC BO circuit driving the
+                 relay coil at lower left. Break-point callouts beneath each
+                 element. Static — the topology is the whole point. -->
+            <svg class="edu-svg ssc-svg" id="ssc-path" viewBox="0 0 760 400"
+                 role="img" aria-labelledby="ssc-path-title ssc-path-desc">
+                <title id="ssc-path-title">The start/stop command path from BO contact to contactor coil</title>
+                <desc id="ssc-path-desc">A starter control circuit drawn left to right. Control hot — 120 VAC, typically
+                    from the starter's own control transformer — enters at the left and passes through the interposing
+                    relay's contact, then the HOA switch's Auto leg, then a safety string of three series contacts
+                    labeled freeze, fire, and overload aux, then the contactor coil, and returns on the control neutral.
+                    A Hand leg branches off the hot ahead of the interposing relay and re-enters at the HOA's Hand
+                    terminal, hardwiring around everything the controller owns. At lower left, a DDC controller's binary
+                    output switches a separate 24 VAC circuit that energizes the interposing relay's coil — the
+                    controller's only touch on the whole chain. Beneath each element, a callout describes what a break
+                    at that point looks like from the BMS seat: a dead BO or relay leaves Auto dead while Hand runs; an
+                    HOA left in Off and an open safety are dead in Hand and Auto alike; a dead coil or lost control
+                    power is dead everywhere.</desc>
+
+                <!-- ── starter control circuit (the main rail, y=150) ── -->
+                <!-- control hot terminal + label -->
+                <circle class="term" cx="36" cy="150" r="5"/>
+                <text class="lbl-term" x="24" y="172">CONTROL HOT</text>
+                <text class="lbl-dim" x="24" y="188" font-size="10">120 VAC typ. — from the</text>
+                <text class="lbl-dim" x="24" y="202" font-size="10">starter control xfmr</text>
+
+                <!-- hot rail into the IR contact; junction feeds the Hand leg -->
+                <path class="wire w-ctl" d="M 36 150 H 204"/>
+                <circle class="j" cx="84" cy="150" r="3.5"/>
+                <text class="lbl-dim" x="150" y="140" font-size="10" text-anchor="middle">AUTO leg</text>
+
+                <!-- Hand bypass over the top, into the HOA's H terminal -->
+                <path class="wire w-ctl" d="M 84 150 V 84 H 386 V 110"/>
+                <text class="lbl-dim" x="235" y="74" font-size="10" text-anchor="middle">HAND leg — around the BO and relay</text>
+
+                <!-- ── interposing relay (coil + contact, one device) ── -->
+                <rect class="dev" x="204" y="110" width="96" height="140"/>
+                <circle class="term" cx="204" cy="150" r="5"/>
+                <circle class="term" cx="300" cy="150" r="5"/>
+                <!-- NO contact: fixed point + open blade -->
+                <line class="blade" x1="222" y1="150" x2="276" y2="134"/>
+                <circle class="j" cx="222" cy="150" r="2.5"/>
+                <path class="wire w-ctl" d="M 280 150 H 300" stroke-width="2"/>
+                <text class="lbl" x="252" y="178" text-anchor="middle" font-size="11">INTERPOSING</text>
+                <text class="lbl" x="252" y="192" text-anchor="middle" font-size="11">RELAY</text>
+                <!-- coil, fed by the BO circuit -->
+                <circle class="dev" cx="252" cy="222" r="13"/>
+                <text class="lbl" x="252" y="226" text-anchor="middle" font-size="10">IR</text>
+                <circle class="term" cx="204" cy="222" r="5"/>
+                <circle class="term" cx="300" cy="222" r="5"/>
+                <path class="wire w-bo" d="M 204 222 H 239" stroke-width="2"/>
+                <path class="wire w-com" d="M 265 222 H 300" stroke-width="2"/>
+                <text class="lbl-dim" x="252" y="268" font-size="10" text-anchor="middle">shown de-energized</text>
+
+                <!-- ── controller (bottom left) driving the IR coil ── -->
+                <rect class="dev" x="24" y="252" width="120" height="86"/>
+                <text class="lbl-dim" x="84" y="244" text-anchor="middle">CONTROLLER</text>
+                <circle class="term" cx="144" cy="274" r="5"/>
+                <text class="lbl-term" x="136" y="266" text-anchor="end">BO1</text>
+                <text class="lbl-dim" x="84" y="304" text-anchor="middle" font-size="10">BO dry contact</text>
+                <circle class="term" cx="144" cy="322" r="5"/>
+                <text class="lbl-term" x="136" y="314" text-anchor="end">24COM</text>
+                <path class="wire w-bo" d="M 144 274 H 176 V 222 H 204"/>
+                <path class="wire w-com" d="M 300 222 H 322 V 322 H 144"/>
+                <text class="lbl-dim" x="152" y="296" font-size="10">BO-switched 24 VAC</text>
+
+                <!-- ── HOA switch ── -->
+                <rect class="dev" x="336" y="110" width="100" height="88"/>
+                <circle class="term" cx="336" cy="150" r="5"/>
+                <circle class="term" cx="386" cy="110" r="5"/>
+                <circle class="term" cx="436" cy="150" r="5"/>
+                <path class="wire w-ctl" d="M 300 150 H 336"/>
+                <!-- A path closed (selector in AUTO); H path open -->
+                <path class="wire w-ctl" d="M 336 150 H 402 L 436 150" stroke-width="2"/>
+                <line class="blade" x1="386" y1="118" x2="398" y2="132" stroke-dasharray="3 3" stroke-width="1.6"/>
+                <text class="lbl" x="348" y="144" font-size="11">A</text>
+                <text class="lbl" x="372" y="126" font-size="11">H</text>
+                <text class="lbl-dim" x="386" y="184" font-size="10" text-anchor="middle">OFF opens both</text>
+                <text class="lbl-dim" x="386" y="214" font-size="10" text-anchor="middle">HOA — shown in AUTO</text>
+
+                <!-- ── safety string: three series vetoes ── -->
+                <text class="lbl-dim" x="548" y="104" font-size="10" text-anchor="middle">SAFETY STRING</text>
+                <line x1="470" y1="112" x2="626" y2="112" stroke="var(--text-dim)" stroke-width="1"/>
+                <path class="wire w-ctl" d="M 436 150 H 470"/>
+                <circle class="term" cx="470" cy="150" r="4.5"/>
+                <line class="blade" x1="470" y1="150" x2="508" y2="140"/>
+                <circle class="term" cx="510" cy="150" r="4.5"/>
+                <text class="lbl-dim" x="490" y="132" font-size="10" text-anchor="middle">FREEZE</text>
+                <path class="wire w-ctl" d="M 510 150 H 528"/>
+                <circle class="term" cx="528" cy="150" r="4.5"/>
+                <line class="blade" x1="528" y1="150" x2="566" y2="140"/>
+                <circle class="term" cx="568" cy="150" r="4.5"/>
+                <text class="lbl-dim" x="548" y="132" font-size="10" text-anchor="middle">FIRE</text>
+                <path class="wire w-ctl" d="M 568 150 H 586"/>
+                <circle class="term" cx="586" cy="150" r="4.5"/>
+                <line class="blade" x1="586" y1="150" x2="624" y2="140"/>
+                <circle class="term" cx="626" cy="150" r="4.5"/>
+                <text class="lbl-dim" x="606" y="132" font-size="10" text-anchor="middle">OL AUX</text>
+
+                <!-- ── contactor coil + neutral ── -->
+                <path class="wire w-ctl" d="M 626 150 H 652"/>
+                <circle class="dev" cx="668" cy="150" r="16"/>
+                <text class="lbl" x="668" y="155" text-anchor="middle">C</text>
+                <text class="lbl-dim" x="668" y="106" font-size="10" text-anchor="middle">CONTACTOR</text>
+                <text class="lbl-dim" x="668" y="119" font-size="10" text-anchor="middle">COIL</text>
+                <path class="wire w-com" d="M 684 150 H 724"/>
+                <circle class="term" cx="724" cy="150" r="5"/>
+                <text class="lbl-term" x="738" y="154">N</text>
+                <text class="lbl-dim" x="700" y="180" font-size="10" text-anchor="end">control neutral</text>
+                <text class="lbl-dim" x="668" y="208" font-size="10" text-anchor="middle">coil in → contacts close</text>
+                <text class="lbl-dim" x="668" y="221" font-size="10" text-anchor="middle">→ motor runs (line side)</text>
+
+                <!-- ── break-point callouts ── -->
+                <text class="lbl" x="380" y="348" text-anchor="middle" font-size="11">A BREAK HERE, SEEN FROM THE BMS SEAT</text>
+                <text class="lbl-callout" x="84" y="366" text-anchor="middle">point never commands:</text>
+                <text class="lbl-callout" x="84" y="380" text-anchor="middle">Auto dead, Hand runs</text>
+                <text class="lbl-callout" x="84" y="394" text-anchor="middle">— check the BO first</text>
+                <text class="lbl-callout" x="240" y="366" text-anchor="middle">coil or contact dead:</text>
+                <text class="lbl-callout" x="240" y="380" text-anchor="middle">Auto dead, Hand runs</text>
+                <text class="lbl-callout" x="240" y="394" text-anchor="middle">— listen for the click</text>
+                <text class="lbl-callout" x="392" y="366" text-anchor="middle">left in OFF:</text>
+                <text class="lbl-callout" x="392" y="380" text-anchor="middle">dead in Hand and Auto</text>
+                <text class="lbl-callout" x="392" y="394" text-anchor="middle">— look, then meter</text>
+                <text class="lbl-callout" x="545" y="366" text-anchor="middle">any safety open:</text>
+                <text class="lbl-callout" x="545" y="380" text-anchor="middle">dead in Hand and Auto</text>
+                <text class="lbl-callout" x="545" y="394" text-anchor="middle">— walk the string</text>
+                <text class="lbl-callout" x="680" y="366" text-anchor="middle">coil / control power:</text>
+                <text class="lbl-callout" x="680" y="380" text-anchor="middle">dead everywhere</text>
+                <text class="lbl-callout" x="680" y="394" text-anchor="middle">— meter at the coil</text>
+            </svg>
+            <p class="edu-legend ssc-leg">
+                <span><span class="sw ctl"></span>starter control hot (120 VAC typ.)</span>
+                <span><span class="sw bo"></span>BO-switched 24 VAC (controller side)</span>
+                <span><span class="sw com"></span>common / neutral</span>
+            </p>
+
+            <h2 class="subhead" id="hoa">HOA Semantics — Who Gets to Decide</h2>
+
+            <p>
+                The three positions of that selector switch are a complete statement about authority, and each one is worth saying precisely. <strong>Hand</strong> connects the coil circuit around the BO and the interposing relay entirely — the unit runs, and the BMS isn't overridden so much as <em>bypassed</em>: no software point, no priority, no command from any seat changes what the motor does. The safeties still stand — Hand enters the chain upstream of the string, not around it. <strong>Off</strong> breaks the circuit ahead of both legs: it beats the BO, and it beats Hand. Off has to win, because the person standing at the unit has to be able to make it stop — though an HOA in Off is <em>not</em> lockout/tagout; the starter's line side is still hot, and nothing about a selector switch protects anyone working inside. <strong>Auto</strong> is the position the drawings assume: the circuit routes through the interposing relay's contact, and the decision belongs to the BO — which is to say, to the program.
+            </p>
+
+            <p>
+                Now watch what each position does to the pair of points the BMS graphic shows. A <em>command</em> point records a request; a <em>status</em> point reports a fact. In Auto, on a healthy unit, the two agree — command ON, status ON; command OFF, status OFF. In Hand, they split by design: the unit runs while the BMS may well be commanding OFF — <strong>command OFF, status ON</strong>, and the status is the one telling the truth. That disagreement is the exact mirror of the broken-belt service call, where the BMS commands ON and the proof point reports that nothing is actually moving. How the status point earns the right to be believed — current switches, differential-pressure switches, the whole art of proving a thing ran — is its own lesson, told from the input side; here it's enough that the graphic <em>can</em> show you the disagreement, and that a command/status split is a message, not a glitch. The panel below is the three positions as the graphic sees them.
+            </p>
+
+            <!-- HOA truth panel: three positions × what runs × what the
+                 command and status points show. Static table-style SVG. -->
+            <svg class="edu-svg ssc-svg" id="ssc-hoa" viewBox="0 0 700 350"
+                 role="img" aria-labelledby="ssc-hoa-title ssc-hoa-desc">
+                <title id="ssc-hoa-title">The HOA truth panel: what each position does to command and status</title>
+                <desc id="ssc-hoa-desc">A three-row panel, one row per HOA position. Hand: the unit runs, wired around
+                    the BO — the BMS is bypassed, not consulted; the graphic shows command OFF against status ON, a
+                    disagreement that mirrors the broken-belt case. Off: the unit is stopped, period — Off beats the BO
+                    and Hand alike; the graphic shows command ON against status OFF, and no BMS write can change it.
+                    Auto: the BO decides — the program is in charge; command and status agree, and when they split it
+                    is time to start hunting. A caption reads: status reports a fact, command records a request — Hand
+                    and Off make them split by design.</desc>
+
+                <!-- header -->
+                <text class="lbl-dim" x="40" y="36">POSITION</text>
+                <text class="lbl-dim" x="190" y="36">WHAT THE UNIT DOES</text>
+                <text class="lbl-dim" x="446" y="36">COMMAND vs STATUS</text>
+                <line x1="30" y1="48" x2="670" y2="48" stroke="var(--text-dim)" stroke-width="1"/>
+
+                <!-- row: HAND -->
+                <circle class="dev" cx="64" cy="88" r="17"/>
+                <line x1="64" y1="88" x2="53" y2="76" stroke="var(--text-bright)" stroke-width="3" stroke-linecap="round"/>
+                <text class="lbl-dim" x="44" y="66" font-size="9">H</text>
+                <text class="lbl-dim" x="64" y="60" font-size="9" text-anchor="middle">O</text>
+                <text class="lbl-dim" x="84" y="66" font-size="9">A</text>
+                <text class="lbl" x="100" y="92" font-size="13" font-weight="600">HAND</text>
+                <text class="lbl" x="190" y="84" font-size="11">runs — wired around the BO</text>
+                <text class="lbl-dim" x="190" y="102" font-size="10">the BMS is bypassed, not consulted</text>
+                <rect class="chip" x="446" y="66" width="88" height="20"/>
+                <text class="lbl-dim" x="490" y="80" font-size="10" text-anchor="middle">CMD: OFF</text>
+                <rect class="chip" x="446" y="92" width="88" height="20"/>
+                <text class="lbl" x="490" y="106" font-size="10" text-anchor="middle">STATUS: ON</text>
+                <text class="verdict-split" x="550" y="80">disagree — the mirror</text>
+                <text class="verdict-split" x="550" y="94">of the broken belt</text>
+                <line x1="30" y1="134" x2="670" y2="134" stroke="var(--border)" stroke-width="1"/>
+
+                <!-- row: OFF -->
+                <circle class="dev" cx="64" cy="180" r="17"/>
+                <line x1="64" y1="180" x2="64" y2="164" stroke="var(--text-bright)" stroke-width="3" stroke-linecap="round"/>
+                <text class="lbl-dim" x="44" y="158" font-size="9">H</text>
+                <text class="lbl-dim" x="64" y="152" font-size="9" text-anchor="middle">O</text>
+                <text class="lbl-dim" x="84" y="158" font-size="9">A</text>
+                <text class="lbl" x="100" y="184" font-size="13" font-weight="600">OFF</text>
+                <text class="lbl" x="190" y="176" font-size="11">stopped, period</text>
+                <text class="lbl-dim" x="190" y="194" font-size="10">beats the BO and Hand alike</text>
+                <rect class="chip" x="446" y="158" width="88" height="20"/>
+                <text class="lbl-dim" x="490" y="172" font-size="10" text-anchor="middle">CMD: ON</text>
+                <rect class="chip" x="446" y="184" width="88" height="20"/>
+                <text class="lbl" x="490" y="198" font-size="10" text-anchor="middle">STATUS: OFF</text>
+                <text class="verdict-split" x="550" y="172">disagree — and no BMS</text>
+                <text class="verdict-split" x="550" y="186">write can change it</text>
+                <line x1="30" y1="226" x2="670" y2="226" stroke="var(--border)" stroke-width="1"/>
+
+                <!-- row: AUTO -->
+                <circle class="dev" cx="64" cy="272" r="17"/>
+                <line x1="64" y1="272" x2="75" y2="260" stroke="var(--text-bright)" stroke-width="3" stroke-linecap="round"/>
+                <text class="lbl-dim" x="44" y="250" font-size="9">H</text>
+                <text class="lbl-dim" x="64" y="244" font-size="9" text-anchor="middle">O</text>
+                <text class="lbl-dim" x="84" y="250" font-size="9">A</text>
+                <text class="lbl" x="100" y="276" font-size="13" font-weight="600">AUTO</text>
+                <text class="lbl" x="190" y="268" font-size="11">the BO decides</text>
+                <text class="lbl-dim" x="190" y="286" font-size="10">the program is in charge</text>
+                <rect class="chip" x="446" y="250" width="88" height="20"/>
+                <text class="lbl-dim" x="490" y="264" font-size="10" text-anchor="middle">CMD: ON</text>
+                <rect class="chip" x="446" y="276" width="88" height="20"/>
+                <text class="lbl" x="490" y="290" font-size="10" text-anchor="middle">STATUS: ON</text>
+                <text class="verdict-agree" x="550" y="264">agree — when they</text>
+                <text class="verdict-agree" x="550" y="278">split, start hunting</text>
+
+                <text class="lbl-dim" x="350" y="336" font-size="11" text-anchor="middle">status reports a fact; command records a request — Hand and Off make them split by design</text>
+            </svg>
+
+            <p>
+                One more thing Hand is <em>for</em>, before the troubleshooting section cashes it in: Hand answers a question no software point can. Flip it and the machine either runs or it doesn't — with the program, the network, the controller, and the BO all removed from the experiment. That's not an override so much as a diagnostic instrument, and it's the first move in the classic service call below.
+            </p>
+
+            <h2 class="subhead" id="finding-the-break">Finding the Break</h2>
+
+            <p>
+                The call comes in as "the fan won't run," and the first move isn't a meter — it's the HOA, because one flip of that switch cuts the whole chain into two halves and tells you which half to hunt in. <strong>Runs in Hand, dead in Auto:</strong> Hand just proved everything downstream of the HOA — the safety string, the contactor coil, control power, the starter, the motor itself — in one move. The fault is upstream, in the Auto leg: the BO (is the point actually commanding? check it before touching a wire), the interposing relay (is the coil getting its 24 V? is it clicking? is the contact actually closing?), or the wiring between them. <strong>Dead in Hand and Auto both:</strong> now the upstream half is exonerated instead — nothing the controller does or doesn't do explains a unit that won't run in Hand. Hunt downstream: walk the safety string contact by contact until you find the open one (freeze stats are commonly manual-reset — a trip at <span data-us="38&nbsp;°F" data-metric="3.3&nbsp;°C">38&nbsp;°F</span> overnight stays tripped until someone presses the button), then the contactor coil, then control power itself.
+            </p>
+
+            <!-- // anecdote slot: a works-in-Hand-dead-in-Auto service call (or the
+                 morning-after manual-reset freeze stat) — owner to supply -->
+
+            <p>
+                The safety string deserves one more beat, because a fair question hides in it: the controller already knows the discharge temperature — why not let the program catch a freeze condition and stop the fan in software? Some sequences do exactly that, as a first line. But the hardwired string exists for every moment software can't be trusted with: the controller powered down, the program mid-download, the network dark, the point overridden by someone troubleshooting three floors away. A trip that protects people or destroys equipment when missed — the firestat, the freeze stat guarding a coil full of water — has to outrank <em>all</em> of that, and copper in series with the coil is the only authority that does. That's the dividing line: <strong>life-safety and equipment-destroying trips live in copper; software interlocks handle the polite coordination</strong> — sequencing, optimization, the interlocks that make the plant graceful rather than safe. The BMS gets <em>told</em> about a hardwired trip (ideally through a status or alarm point); it doesn't get a vote in it.
+            </p>
+
+            <p>
+                And when the equipment grows up and gets a drive, the shape survives. On a <a href="/education/vfds.html#run-vs-speed">VFD</a>, the contactor disappears — the drive itself switches the motor — but the run command is the same story landed on a drive terminal: a BO, an interposing relay where ratings call for one, an enable or safety circuit the drive honors before it will run. Drives replace the contactor; they keep the command path's shape.
+            </p>
+
+            <p>
+                That answers the question this page opened. Between the BO's click and the motor: an interposing relay to amplify the decision, a selector switch that says who's deciding, a string of hardwired vetoes, and a coil that does the actual work. And Hand works when Auto doesn't because Hand enters the chain downstream of everything the controller owns — which is exactly why it's the first thing a good tech reaches for: one flip, and half the suspects go home.
+            </p>
+
+            {{ relatedLinks({
+                simulators: [
+                    {href: '/simulators/controller-wiring.html', label: 'Controller Wiring Simulator'}
+                ],
+                lessons: [
+                    {href: '/education/controller-wiring.html', label: 'Controller Wiring'},
+                    {href: '/education/vfds.html', label: 'VFDs'}
+                ],
+                quizzes: [
+                    {href: '/practice/start-stop-commands.html', label: 'Start/Stop Commands Quiz'}
+                ]
+            }) }}
+
+            <a class="back-link" href="/education/">← Back to Education</a>
+
+        </div>
+    </div>
+
+</main>
+{% endblock %}

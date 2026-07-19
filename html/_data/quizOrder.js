@@ -13,6 +13,10 @@ module.exports = [
     // sequence) ──
     { slug: 'controller-wiring',        label: 'Controller Wiring' },
     { slug: 'analog-sensing',           label: 'Analog Sensing' },
+    { slug: 'temperature-sensors',      label: 'Temperature Sensors' },
+    { slug: 'status-and-proof',         label: 'Status & Proof' },
+    { slug: 'commanding-actuators',     label: 'Commanding Actuators' },
+    { slug: 'start-stop-commands',      label: 'Start/Stop Commands' },
     { slug: 'hydronic-loops',           label: 'Hydronic Loops' },
     { slug: 'load-piping',              label: 'Load Piping' },
     { slug: 'vfds',                     label: 'VFDs' },
@@ -32,8 +36,9 @@ module.exports = [
     { slug: 'function-blocks',          label: 'Function Blocks' },
     // ── Programming ─ function-blocks leads the chapter; insert new quiz
     // slugs here, in curriculum order (mirror the education sequence) ──
-    // Final position for setpoint-math-reset: after the in-flight
-    // timers-and-delays quiz, before reading-a-wiresheet (sibling lanes).
+    { slug: 'boolean-logic-latches',    label: 'Boolean Logic & Latches' },
+    { slug: 'comparators-and-deadband', label: 'Comparators & Deadband' },
+    { slug: 'timers-and-delays',        label: 'Timers & Delays' },
     { slug: 'setpoint-math-reset',      label: 'Setpoint Math & Reset' },
     { slug: 'modbus-basics',            label: 'Modbus Basics' },
     { slug: 'modbus-decoding',          label: 'Modbus Decoding' },

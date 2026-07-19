@@ -29,8 +29,14 @@ const order = [
     "/education/controller-wiring.html",
     // ── Signals & Sensing ─ controller-wiring leads the chapter; insert
     // new lesson URLs here, in curriculum order (mirror the
-    // education/index.html grid) ──
+    // education/index.html grid). Final chapter order: controller-wiring
+    // → analog-sensing → temperature-sensors → status-and-proof →
+    // commanding-actuators → start-stop-commands ──
     "/education/analog-sensing.html",
+    "/education/temperature-sensors.html",
+    "/education/status-and-proof.html",
+    "/education/commanding-actuators.html",
+    "/education/start-stop-commands.html",
     "/education/controls-commissioning.html",
     "/education/hydronic-loops.html",
     "/education/load-piping.html",
@@ -55,10 +61,9 @@ const order = [
     // ── Programming ─ function-blocks leads the chapter; insert new
     // lesson URLs here, in curriculum order (mirror the
     // education/index.html grid) ──
-    // Final chapter order once the in-flight sibling lanes merge:
-    // … → boolean-logic → comparators-and-deadband → timers-and-delays
-    // → setpoint-math-reset → reading-a-wiresheet. On this branch only
-    // setpoint-math-reset exists, so it sits directly after the anchor.
+    "/education/boolean-logic-latches.html",
+    "/education/comparators-and-deadband.html",
+    "/education/timers-and-delays.html",
     "/education/setpoint-math-reset.html",
     "/education/modbus-basics.html",
     "/education/modbus-decoding.html",
