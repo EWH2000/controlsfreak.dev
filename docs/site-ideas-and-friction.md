@@ -1174,7 +1174,11 @@ Out of scope: terminal-unit identification `[future:
 education/vav-systems.html]` *(shipped 2026-07-10 — CV-or-VAV
 callout + closing hand-off upgraded to live links)*; FCUs beyond
 recognition `[future:
-education/fan-coil-units.html]`; VVT `[future: education/vvt.html]`
+education/fan-coil-units.html]` *(this marker is now the only tracker
+for the topic — the page's "the family gets its own page someday"
+clause was cut 2026-07-19 under the no-coming-soon-copy rule; the
+chapter still owes FCUs recognition only)*; VVT
+`[future: education/vvt.html]`
 (named in prose in the CV-vs-VAV callout); DOAS/ERV psychrometrics
 `[future: DOAS / ERV page]` *(shipped 2026-07-15 —
 education/dedicated-outdoor-air.html; the "what a DOAS is" explainer,
@@ -3522,6 +3526,38 @@ user floated while scoping this one: a daisy-chain trunk with +/- polarity,
 end-of-line termination at both ends only, biasing, and MAC/device-instance
 addressing. The Controller Wiring sim's greyed NET terminals are the seam it
 plugs into.
+
+*Scope re-confirmed 2026-07-19, when the no-coming-soon-copy rule pulled the
+last promise of it out of page copy* (`education/controller-wiring.html`
+closed on "a dedicated bus simulator is still the right place to wire it
+hands-on someday"; the sibling lane cut that clause, so this marker is now
+the only place the idea is tracked — hence the detail below). Two threads
+converge here and this entry is the canonical one; the other two mentions
+are pointers, not separate ideas:
+
+- **The wiring side** — controller-wiring.html declares the network out of
+  scope in its closing paragraph (the page owns power / inputs / outputs at
+  the controller; the trunk is "its own small world of daisy-chain topology,
+  polarity, end-of-line termination, and station addressing"). That is the
+  static layer already listed above.
+- **The traffic side** — `bacnet-mstp.html` (the lesson half, shipped
+  2026-06-10) teaches what the static picture can't show: **token passing**,
+  the token ring re-forming when a device drops, `Max_Master` / `Max_Info_
+  Frames` behavior, and how a marginal trunk degrades rather than fails
+  outright. A simulator's real value over the lesson is watching that
+  dynamic — pull a device, watch the ring re-form and the poll rate sag.
+  The lesson entry's own out-of-scope list already points here.
+
+**Why parked, not planned** (honest read, not a promise): the *explanatory*
+half shipped — bacnet-mstp.html carries the teaching load, so nothing is
+un-taught, only un-touchable. What's missing is the hands-on half, and that
+is a full flagship-scale sim (new engine, new equipment depiction) competing
+against a named next flagship (the air-side simulator) that is already
+sequenced ahead of it. Three pages forward-link the topic in prose
+(controller-wiring, bacnet-mstp, bacnet-networking), which reads as demand
+but isn't — it's the same idea cited three times, with no user having asked.
+Per the standing rule, it ships when someone wants it, not to tidy up the
+inbound links.
 
 **Desktop-only on mobile/touch *(2026-06-13)*.** Click-to-wire +
 drag-to-place has the same touch flaw as the Function-Block Editor — a
