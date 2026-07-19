@@ -12,10 +12,11 @@ module.exports = [
     // new quiz slugs below it, in curriculum order (mirror the education
     // sequence) ──
     { slug: 'controller-wiring',        label: 'Controller Wiring' },
-    // Final chapter position for commanding-actuators: after
-    // status-and-proof, before start-stop-commands (mirror the
-    // education sequence) — reorder at integration once the sibling
-    // quizzes land.
+    { slug: 'analog-sensing',           label: 'Analog Sensing' },
+    // Final chapter order: … → analog-sensing → temperature-sensors →
+    // status-and-proof → commanding-actuators → start-stop-commands
+    // (mirror the education sequence) — reorder as the in-flight
+    // sibling quizzes land.
     { slug: 'commanding-actuators',     label: 'Commanding Actuators' },
     { slug: 'hydronic-loops',           label: 'Hydronic Loops' },
     { slug: 'load-piping',              label: 'Load Piping' },

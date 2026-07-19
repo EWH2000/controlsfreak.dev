@@ -30,11 +30,11 @@ const order = [
     // ── Signals & Sensing ─ controller-wiring leads the chapter; insert
     // new lesson URLs here, in curriculum order (mirror the
     // education/index.html grid) ──
-    // Final chapter position for commanding-actuators: after
-    // status-and-proof, before start-stop-commands (… →
-    // status-and-proof → commanding-actuators → start-stop-commands).
-    // It sits directly after controller-wiring until those sibling
-    // lessons land — reorder at integration.
+    "/education/analog-sensing.html",
+    // Final chapter order: … → analog-sensing → temperature-sensors →
+    // status-and-proof → commanding-actuators → start-stop-commands.
+    // commanding-actuators sits directly after analog-sensing until
+    // those in-flight siblings land — reorder as each merges.
     "/education/commanding-actuators.html",
     "/education/controls-commissioning.html",
     "/education/hydronic-loops.html",
