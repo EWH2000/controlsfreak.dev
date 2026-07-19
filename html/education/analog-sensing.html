@@ -1,0 +1,321 @@
+---
+title: Analog Sensing — controlsfreak.dev
+description: How a raw 4–20 mA or 0–10 V signal becomes the value on the graphic — ranges and scaling, live zero as a fault flag, and why a railed reading is a ceiling.
+canonical: https://controlsfreak.dev/education/analog-sensing.html
+nav: education
+category: signals
+pairedQuiz: https://controlsfreak.dev/practice/analog-sensing.html
+keywords: 4-20mA 0-10V span scaling live zero railed transducer range transmitter under-range over-range slope offset
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block head %}
+    <style>
+        /* Page-specific — analog-sensing diagrams. Static SVGs follow the
+           .edu-svg house style (mono text via the svg font-family attr,
+           meaning-carrying geometry in --text-dim per the balancing-diagram
+           convention). Class prefix asn-. Legend swatches mirror the
+           cwl-leg pattern; the strip-chart truth swatch is dashed to match
+           its path. */
+        .asn-leg.edu-legend .sw.rep { border-top: 3px solid var(--blue); }
+        .asn-leg.edu-legend .sw.truth { border-top: 3px dashed var(--amber); }
+    </style>
+{% endblock %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Education · Analog Sensing</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">Analog Sensing <span class="tool-tag">Signals</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                Every analog value on a BMS graphic — the duct static, the discharge pressure, the mixed-air temperature — started life as a small electrical quantity on a pair of wires, and somewhere between the wire and the screen a piece of software turned one into the other. This page is about that translation. One question, start to finish: <em>how does a raw electrical signal become the engineering value on the graphic — and when should you not believe that value?</em> The physical side of the story — how those signals get landed on a controller in the first place — is <a href="/education/controller-wiring.html">Controller Wiring</a>; here we stay on the reading side, where the number meets your eyes.
+            </p>
+
+            <h2 class="subhead" id="ranges-scaling">Ranges and Scaling — the Published Promise</h2>
+
+            <p>
+                Start with the transmitter's nameplate. When a pressure transmitter says <strong>0&ndash;250 psi, 4&ndash;20 mA</strong>, that line is a <em>promise</em>: at <span data-us="0&nbsp;psi" data-metric="0&nbsp;kPa">0&nbsp;psi</span> the device drives exactly 4&nbsp;mA, at <span data-us="250&nbsp;psi" data-metric="1724&nbsp;kPa">250&nbsp;psi</span> it drives exactly 20&nbsp;mA, and in between it holds a <strong>straight line</strong>. That is the entire contract — two endpoints and linearity. Everything the graphic will ever show for this point is read off that line.
+            </p>
+
+            <p>
+                Because the map is a straight line, the arithmetic is one fraction: <em>how far into the signal span are you?</em> Say the input reads <strong>8&nbsp;mA</strong>. The span runs from 4 to 20, so 8&nbsp;mA sits at (8&nbsp;&minus;&nbsp;4)&nbsp;/&nbsp;(20&nbsp;&minus;&nbsp;4) = 4/16 = <strong>25% of span</strong> — and 25% of a <span data-us="0&ndash;250&nbsp;psi" data-metric="0&ndash;1724&nbsp;kPa">0&ndash;250&nbsp;psi</span> range is <span data-us="62.5&nbsp;psi" data-metric="431&nbsp;kPa">62.5&nbsp;psi</span>. That same line can be written as a slope and an offset — the y&nbsp;=&nbsp;mx&nbsp;+&nbsp;b the software actually stores: here m&nbsp;=&nbsp;250/16&nbsp;=&nbsp;15.625&nbsp;psi per mA and b&nbsp;=&nbsp;&minus;62.5&nbsp;psi, so psi&nbsp;=&nbsp;15.625&nbsp;&times;&nbsp;mA&nbsp;&minus;&nbsp;62.5. Run the numbers yourself in the <a href="/tools/signal-scaling.html">signal-scaling tool</a> — it takes the same three ingredients (signal type, range min, range max) and shows the fraction, the value, and the formula. Being fast at this arithmetic is a field skill, not a math exercise; the rest of this page is about the days it saves you. (A sensor that reads a touch off at one known point is a different, smaller story — a <em>calibration</em> trim against a reference — not a range problem. Keep the two separate in your head: scaling is the line, calibration is a nudge to it.)
+            </p>
+
+            <p>
+                Here is the failure mode that makes the promise worth memorizing: <strong>the software has to copy both endpoints of the nameplate, exactly.</strong> Configure the point with the wrong span and nothing crashes, nothing alarms, and nothing ever looks broken — the value just comes out wrong by a fixed factor, forever. The classic version: a duct-static transducer with a published range of <span data-us="0&ndash;2.5&nbsp;in.&nbsp;w.c." data-metric="0&ndash;625&nbsp;Pa">0&ndash;2.5&nbsp;in.&nbsp;w.c.</span> gets its software point scaled <span data-us="0&ndash;5&nbsp;in.&nbsp;w.c." data-metric="0&ndash;1250&nbsp;Pa">0&ndash;5&nbsp;in.&nbsp;w.c.</span> Every reading is now exactly double the truth: a duct really sitting at <span data-us="0.9&nbsp;in.&nbsp;w.c." data-metric="225&nbsp;Pa">0.9&nbsp;in.&nbsp;w.c.</span> shows up as a perfectly plausible <span data-us="1.8&nbsp;in.&nbsp;w.c." data-metric="450&nbsp;Pa">1.8&nbsp;in.&nbsp;w.c.</span> The number moves when the fan moves, trends look alive, and the loop will happily control to it — a plausible value is far more dangerous than an obviously broken one. The tell is never on the graphic; it is a hand gauge at the tap reading half the screen, or a fresh pair of eyes checking the point's scale against the nameplate. When a value is wrong by a suspiciously <em>round</em> factor, suspect the span before you suspect the sensor.
+            </p>
+
+            <!-- // anecdote slot: a range-mismatch that read plausibly wrong for a long
+                 time (software span ≠ transmitter published range) — owner to supply -->
+
+            <p>
+                The diagram below is the whole section in one picture: the signal rail and the engineering rail drawn parallel, one state on each, joined by the mapping. Drag the slider and watch the pair move together — and notice what the line does <em>outside</em> the published span, because the next two sections live out there.
+            </p>
+
+            <svg class="edu-svg asn-svg" id="asn-map" viewBox="0 0 640 260" font-family="var(--mono)"
+                 role="img" aria-labelledby="asn-map-title asn-map-desc">
+                <title id="asn-map-title">A 4 to 20 milliamp signal rail mapped onto a 0 to 250 psi engineering rail</title>
+                <desc id="asn-map-desc">Two horizontal number lines drawn in parallel. The top rail is the raw signal in
+                    milliamps: a solid segment spans 4 to 20 milliamps, with dim dashed extensions below 4 and above 20.
+                    The bottom rail is the engineering value: a solid segment spans 0 to 250 psi, with dashed extensions
+                    into negative pressures on the left and past range max on the right. A dot on each rail marks the
+                    current state — 8 milliamps above, 62.5 psi below — joined by a vertical dashed connector: both dots
+                    always sit at the same fraction of their span. The dashed extensions line up too: a signal below the
+                    4 milliamp live zero maps to an impossible negative pressure, and a signal above 20 milliamps maps
+                    past range max. A slider under the diagram moves the signal dot.</desc>
+
+                <!-- signal rail -->
+                <text x="60" y="32" font-size="12" fill="var(--text-bright)">SIGNAL — 4&ndash;20 mA (what the wire carries)</text>
+                <path d="M 60 78 H 600" fill="none" stroke="var(--text-dim)" stroke-width="1.5" stroke-dasharray="5 4"/>
+                <path d="M 114 78 H 546" fill="none" stroke="var(--teal)" stroke-width="3"/>
+                <line x1="114" y1="70" x2="114" y2="86" stroke="var(--teal)" stroke-width="1.5"/>
+                <line x1="330" y1="72" x2="330" y2="84" stroke="var(--teal)" stroke-width="1.5"/>
+                <line x1="546" y1="70" x2="546" y2="86" stroke="var(--teal)" stroke-width="1.5"/>
+                <text x="114" y="60" font-size="11" fill="var(--text)" text-anchor="middle">4 mA</text>
+                <text x="330" y="60" font-size="11" fill="var(--text-dim)" text-anchor="middle">12 mA</text>
+                <text x="546" y="60" font-size="11" fill="var(--text)" text-anchor="middle">20 mA</text>
+
+                <!-- state pair + connector (JS moves cx / x1 / x2) -->
+                <line id="asn-map-link" x1="222" y1="86" x2="222" y2="170" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="4 3"/>
+                <circle id="asn-map-sig-dot" cx="222" cy="78" r="7" fill="var(--accent)" stroke="var(--bg)" stroke-width="1.5"/>
+                <circle id="asn-map-eu-dot" cx="222" cy="178" r="7" fill="var(--accent)" stroke="var(--bg)" stroke-width="1.5"/>
+
+                <!-- engineering rail -->
+                <path d="M 60 178 H 600" fill="none" stroke="var(--text-dim)" stroke-width="1.5" stroke-dasharray="5 4"/>
+                <path d="M 114 178 H 546" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <line x1="114" y1="170" x2="114" y2="186" stroke="var(--blue)" stroke-width="1.5"/>
+                <line x1="330" y1="172" x2="330" y2="184" stroke="var(--blue)" stroke-width="1.5"/>
+                <line x1="546" y1="170" x2="546" y2="186" stroke="var(--blue)" stroke-width="1.5"/>
+                <text x="114" y="202" font-size="11" fill="var(--text)" text-anchor="middle">0 psi</text>
+                <text x="330" y="202" font-size="11" fill="var(--text-dim)" text-anchor="middle">125 psi</text>
+                <text x="546" y="202" font-size="11" fill="var(--text)" text-anchor="middle">250 psi</text>
+                <text x="84" y="202" font-size="10" fill="var(--text-dim)" text-anchor="end">negative =</text>
+                <text x="84" y="215" font-size="10" fill="var(--text-dim)" text-anchor="end">impossible</text>
+                <text x="576" y="202" font-size="10" fill="var(--text-dim)" text-anchor="start">past</text>
+                <text x="576" y="215" font-size="10" fill="var(--text-dim)" text-anchor="start">range max</text>
+                <text x="60" y="240" font-size="12" fill="var(--text-bright)">ENGINEERING VALUE — 0&ndash;250 psi (what the graphic shows)</text>
+            </svg>
+
+            <div class="slider-field" style="margin:0 0 1.1rem;">
+                <div class="slider-head">
+                    <label for="asn-map-slider">Signal (mA)</label>
+                    <span class="slider-val" id="asn-map-val">8.0 mA → 62.5 psi</span>
+                </div>
+                <input type="range" id="asn-map-slider" min="2" max="22" step="0.1" value="8">
+                <span class="slider-sub" id="asn-map-sub">25.0% of span — in range: a measurement you can believe.</span>
+            </div>
+
+            <h2 class="subhead" id="live-zero">Live Zero — the Fault You Can See From the Chair</h2>
+
+            <p>
+                You may have noticed the 4&ndash;20&nbsp;mA rail does something odd: its range starts at 4, not 0. <em>Why</em> the standard starts at 4 — the loop-power story — is the wiring lesson's territory; the <a href="/education/controller-wiring.html#inputs">4&ndash;20&nbsp;mA landing there</a> walks it end to end. This page takes the 4 as given and cashes in what it buys you at the graphic: a <strong>live zero</strong>. Because the bottom of the range is a real, non-zero current, the space <em>below</em> 4&nbsp;mA is signal territory no genuine measurement can ever occupy — which turns it into a vocabulary for faults. A healthy point never goes there; a dead one always does.
+            </p>
+
+            <p>
+                Watch what that does to the arithmetic. You have already met the number a dead loop reads: it is the <strong>b</strong> in y&nbsp;=&nbsp;mx&nbsp;+&nbsp;b. A broken wire, a dead loop, or an open terminal reads 0&nbsp;mA, and scaled linearly against our <span data-us="0&ndash;250&nbsp;psi" data-metric="0&ndash;1724&nbsp;kPa">0&ndash;250&nbsp;psi</span> example that lands at (0&nbsp;&minus;&nbsp;4)/16 = &minus;25% of span: <span data-us="&minus;62.5&nbsp;psi" data-metric="&minus;431&nbsp;kPa">&minus;62.5&nbsp;psi</span> on the graphic. An <em>impossible</em> number — and impossible is exactly what you want, because it cannot be mistaken for a reading. Compare the 0&ndash;10&nbsp;V version of the same break: the input falls to 0&nbsp;V, and 0&nbsp;V is a perfectly legal value — the bottom of the range. The graphic shows range-min and sits there looking like a calm, valid low reading, indefinitely. <strong>A 0&ndash;10&nbsp;V input cannot distinguish "broken" from "zero"; a 4&ndash;20&nbsp;mA input can.</strong> (Voltage has its own live-zero variant — 2&ndash;10&nbsp;V — which buys the same diagnostic space below 2&nbsp;V; you will meet it on actuator feedback especially.)
+            </p>
+
+            <p>
+                Two practical wrinkles before you lean on this. First, many controllers and front ends <strong>clamp</strong> an under-range point at range-min instead of displaying the negative — some flag a fault status, some do not. On those systems the impossible number is hidden, but the habit that survives is: <em>open the point and read the raw signal.</em> Scaled values can clamp; a raw reading of 0&nbsp;mA — or anything below about 3.8&nbsp;mA, where transmitters declare under-range — is unambiguous. Second, not every sensor plays this game: a resistance sensor like a 10K thermistor fails differently again — an open circuit reads as pinned-cold rather than as a signal fault — and that story belongs with the temperature-sensor curves rather than here. The takeaway for the chair is a short checklist: know which signal family the point is, know where "broken" lands for that family, and treat the space below a live zero as a message, not a measurement.
+            </p>
+
+            <svg class="edu-svg asn-svg" id="asn-lz" viewBox="0 0 640 320" font-family="var(--mono)"
+                 role="img" aria-labelledby="asn-lz-title asn-lz-desc">
+                <title id="asn-lz-title">Where a broken wire lands on a 0 to 10 volt scale versus a 4 to 20 milliamp scale</title>
+                <desc id="asn-lz-desc">Two vertical signal scales side by side. On the left, a 0 to 10 volt scale: the whole
+                    rail is live range, and a single marker at the bottom carries two labels — a broken wire reads 0 volts
+                    and a true range-min also reads 0 volts — the same point, so the graphic cannot tell them apart. On the
+                    right, a 4 to 20 milliamp scale: the live range spans 4 to 20 milliamps, and the stretch from 0 to 4
+                    milliamps is dashed fault space. A true range-min sits at 4 milliamps, alive; a broken wire sits at
+                    0 milliamps, below the live zero, unambiguously a fault. A caption reads: a live zero moves broken
+                    somewhere no real measurement can be.</desc>
+
+                <!-- 0-10 V rail -->
+                <text x="200" y="32" font-size="12" fill="var(--text-bright)" text-anchor="middle">0&ndash;10 V</text>
+                <text x="200" y="47" font-size="10" fill="var(--text-dim)" text-anchor="middle">zero is a legal value</text>
+                <path d="M 200 60 V 270" fill="none" stroke="var(--teal)" stroke-width="3"/>
+                <line x1="192" y1="60" x2="208" y2="60" stroke="var(--teal)" stroke-width="1.5"/>
+                <line x1="192" y1="270" x2="208" y2="270" stroke="var(--teal)" stroke-width="1.5"/>
+                <text x="216" y="64" font-size="11" fill="var(--text)">10 V — range max</text>
+
+                <circle cx="200" cy="270" r="6" fill="var(--amber)" stroke="var(--bg)" stroke-width="1.5"/>
+                <line x1="155" y1="250" x2="192" y2="266" stroke="var(--text-dim)" stroke-width="1"/>
+                <line x1="155" y1="288" x2="192" y2="273" stroke="var(--text-dim)" stroke-width="1"/>
+                <text x="150" y="245" font-size="11" fill="var(--text)" text-anchor="end">a broken wire</text>
+                <text x="150" y="259" font-size="11" fill="var(--text)" text-anchor="end">reads 0 V</text>
+                <text x="150" y="284" font-size="11" fill="var(--text)" text-anchor="end">a true range-min</text>
+                <text x="150" y="298" font-size="11" fill="var(--text)" text-anchor="end">reads 0 V</text>
+                <text x="216" y="268" font-size="11" fill="var(--text-bright)">same point — the graphic</text>
+                <text x="216" y="282" font-size="11" fill="var(--text-bright)">cannot tell which is which</text>
+
+                <!-- 4-20 mA rail -->
+                <text x="410" y="32" font-size="12" fill="var(--text-bright)" text-anchor="middle">4&ndash;20 mA</text>
+                <text x="410" y="47" font-size="10" fill="var(--text-dim)" text-anchor="middle">zero is below anything real</text>
+                <path d="M 410 60 V 228" fill="none" stroke="var(--teal)" stroke-width="3"/>
+                <path d="M 410 228 V 270" fill="none" stroke="var(--text-dim)" stroke-width="2" stroke-dasharray="5 4"/>
+                <line x1="402" y1="60" x2="418" y2="60" stroke="var(--teal)" stroke-width="1.5"/>
+                <line x1="402" y1="228" x2="418" y2="228" stroke="var(--teal)" stroke-width="1.5"/>
+                <line x1="402" y1="270" x2="418" y2="270" stroke="var(--text-dim)" stroke-width="1.5"/>
+                <text x="426" y="64" font-size="11" fill="var(--text)">20 mA — range max</text>
+                <text x="394" y="253" font-size="10" fill="var(--text-dim)" text-anchor="end">fault space</text>
+
+                <circle cx="410" cy="228" r="6" fill="var(--accent)" stroke="var(--bg)" stroke-width="1.5"/>
+                <text x="426" y="232" font-size="11" fill="var(--text)">4 mA — true range-min, alive</text>
+                <circle cx="410" cy="270" r="6" fill="var(--red)" stroke="var(--bg)" stroke-width="1.5"/>
+                <text x="426" y="267" font-size="11" fill="var(--text)">0 mA — a broken wire:</text>
+                <text x="426" y="281" font-size="11" fill="var(--text)">below live zero, unambiguous</text>
+
+                <text x="320" y="312" font-size="11" fill="var(--text-dim)" text-anchor="middle">a live zero moves "broken" somewhere no real measurement can be</text>
+            </svg>
+
+            <h2 class="subhead" id="railed">Railed Signals Are Ceilings, Not Measurements</h2>
+
+            <p>
+                The third habit is about the <em>top</em> of the range. When the truth climbs past range max, the transmitter does not follow it — it <strong>rails</strong>: the signal parks at full scale and stays there, and the graphic shows range max no matter how far past it the real value goes. A railed reading carries exactly one bit of information: <em>the truth is at least this much.</em> It is a ceiling, not a measurement — and it wears a disguise, because range max is usually a clean, plausible-looking number. The trend signature to burn in: a value that climbs, then <strong>flatlines at a round number near the top of the sensor's range</strong>, hour after hour, suspiciously smooth. Real processes wander; ceilings do not.
+            </p>
+
+            <p>
+                This site already carries the definitive war story: in the <a href="/education/duct-static-control.html#static-is-not-flow">duct-static lesson's "Static Is Not Flow" section</a>, a cranked supply fan pushes a duct past what its <span data-us="0&ndash;2.5&nbsp;in.&nbsp;w.c." data-metric="0&ndash;625&nbsp;Pa">0&ndash;2.5&nbsp;in.&nbsp;w.c.</span> / 0&ndash;10&nbsp;V transducer can say, and the trend flatlines at exactly <span data-us="2.5&nbsp;in.&nbsp;w.c." data-metric="625&nbsp;Pa">2.5&nbsp;in.&nbsp;w.c.</span> while the real static climbs on, unmeasured, past where a safety should have tripped. Read it there in full — it is told from the fan's side. This page is the general lesson underneath it: that flatline was not a duct behaving strangely; it was a sensor answering the only way a railed sensor can.
+            </p>
+
+            <p>
+                The prevention is a design habit: <strong>pick ranges so the operating point lives mid-span.</strong> A duct that controls to <span data-us="1.5&nbsp;in.&nbsp;w.c." data-metric="375&nbsp;Pa">1.5&nbsp;in.&nbsp;w.c.</span> sits at 60% of a 0&ndash;2.5 sensor — resolution to read it, and headroom above to <em>see</em> an abnormal excursion instead of losing it over the ceiling. Both directions of range-picking fail: too tight a range rails during exactly the events you most need to see, while a too-generous range (say 0&ndash;10 on that same duct) buries normal operation in the bottom sixth of the scale, where an accuracy spec written as a percent <em>of full scale</em> becomes a large fraction of the reading. The range is not a formality on a submittal — it decides both what the point can say and how precisely it can say it.
+            </p>
+
+            <svg class="edu-svg asn-svg" id="asn-rail" viewBox="0 0 640 300" font-family="var(--mono)"
+                 role="img" aria-labelledby="asn-rail-title asn-rail-desc">
+                <title id="asn-rail-title">A trend of a railed sensor: the reported value flatlines at range max while the truth keeps climbing</title>
+                <desc id="asn-rail-desc">A strip chart with time on the horizontal axis and duct static pressure on the
+                    vertical axis. A dashed horizontal line marks range max at 2.5 inches of water column, the top of a
+                    0 to 2.5 sensor. A solid reported-value line climbs and then clamps flat exactly on the range-max
+                    line, running smooth and level for the rest of the chart. From the same point, a dashed line marked
+                    actual keeps climbing above the range line, unmeasured. The point where they part is marked railed
+                    here. The reported flatline is a ceiling, not a measurement.</desc>
+
+                <!-- axes -->
+                <line x1="60" y1="260" x2="600" y2="260" stroke="var(--text-dim)" stroke-width="1.5"/>
+                <polygon points="600,255 612,260 600,265" fill="var(--text-dim)"/>
+                <line x1="60" y1="260" x2="60" y2="40" stroke="var(--text-dim)" stroke-width="1.5"/>
+                <polygon points="55,40 60,28 65,40" fill="var(--text-dim)"/>
+                <text x="596" y="280" font-size="11" fill="var(--text)" text-anchor="end">time →</text>
+                <text x="28" y="150" font-size="11" fill="var(--text)" text-anchor="middle" transform="rotate(-90 28 150)">duct static (in. w.c.)</text>
+
+                <!-- range max line (label sits below the line, clear of both
+                     the climb on the left and the "railed here" marker) -->
+                <line x1="60" y1="110" x2="600" y2="110" stroke="var(--text-dim)" stroke-width="1.5" stroke-dasharray="5 4"/>
+                <text x="66" y="126" font-size="10" fill="var(--text-dim)">range max — 2.5 in. w.c.</text>
+                <text x="66" y="140" font-size="10" fill="var(--text-dim)">(top of a 0&ndash;2.5 sensor)</text>
+
+                <!-- shared climb, then the two stories diverge (two paths — the
+                     converging-flow convention: one line can't carry both meanings) -->
+                <path d="M 70 218 C 150 210, 230 170, 300 110" fill="none" stroke="var(--blue)" stroke-width="2.5"/>
+                <path d="M 300 110 H 590" fill="none" stroke="var(--blue)" stroke-width="2.5"/>
+                <path d="M 300 110 C 380 66, 470 50, 560 44" fill="none" stroke="var(--amber)" stroke-width="2.5" stroke-dasharray="7 5"/>
+
+                <!-- divergence marker -->
+                <text x="288" y="96" font-size="10" fill="var(--text-bright)" text-anchor="end">railed here</text>
+                <line x1="291" y1="99" x2="298" y2="107" stroke="var(--text-bright)" stroke-width="1"/>
+
+                <!-- series labels -->
+                <text x="445" y="132" font-size="11" fill="var(--blue)" text-anchor="middle">reported — flatlines at exactly range max</text>
+                <text x="445" y="146" font-size="10" fill="var(--text-dim)" text-anchor="middle">suspiciously smooth</text>
+                <text x="430" y="38" font-size="11" fill="var(--amber)" text-anchor="middle">actual — keeps climbing, unmeasured</text>
+            </svg>
+            <p class="edu-legend asn-leg">
+                <span><span class="sw rep"></span>reported value (railed)</span>
+                <span><span class="sw truth"></span>actual value (above the range)</span>
+            </p>
+
+            <p>
+                That closes the question this page opened. A raw signal becomes the value on the graphic through one straight line — two endpoints, copied from the nameplate into the software. And you stop believing that value in three specific places: when the two spans do not match (plausible-but-wrong, forever), when the signal falls below a live zero (a message, not a measurement), and when it flatlines at the top of its range (a ceiling, not a reading). Know the range, know where broken lands, know where the ceiling is — and the graphic goes back to being the most honest tool in the building.
+            </p>
+
+            {{ relatedLinks({
+                tools: [
+                    {href: '/tools/signal-scaling.html', label: 'Signal Scaling'},
+                    {href: '/tools/thermistor-calculator.html', label: 'Thermistor / RTD Calculator'}
+                ],
+                simulators: [
+                    {href: '/simulators/controller-wiring.html', label: 'Controller Wiring Simulator'}
+                ],
+                lessons: [
+                    {href: '/education/controller-wiring.html', label: 'Controller Wiring'},
+                    {href: '/education/duct-static-control.html', label: 'Duct Static Control'}
+                ],
+                quizzes: [
+                    {href: '/practice/analog-sensing.html', label: 'Analog Sensing Quiz'}
+                ]
+            }) }}
+
+            <a class="back-link" href="/education/">← Back to Education</a>
+
+        </div>
+    </div>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    (function () {
+        'use strict';
+
+        // The mapping widget: one slider drives the state dot on both rails
+        // of the number-line diagram (#asn-map). Pure linear math — the same
+        // slope/offset the prose teaches. The rails share x-coordinates
+        // (mA 2..22 → x 60..600; the EU rail's 0–250 psi span occupies the
+        // same 114..546 as the 4–20 mA span), so one x serves both dots and
+        // the connector — the visual point being that both dots always sit
+        // at the same fraction of their span.
+        const SIG_MIN = 4;                      // live zero (mA)
+        const SIG_MAX = 20;                     // range max (mA)
+        const EU_MAX = 250;                     // published range top (psi)
+        const X0 = 60;                          // x at 2 mA
+        const X_PER_MA = 27;                    // (600 − 60) / (22 − 2)
+
+        const slider = document.getElementById('asn-map-slider');
+        const valEl = document.getElementById('asn-map-val');
+        const subEl = document.getElementById('asn-map-sub');
+        const sigDot = document.getElementById('asn-map-sig-dot');
+        const euDot = document.getElementById('asn-map-eu-dot');
+        const link = document.getElementById('asn-map-link');
+
+        function paint() {
+            const ma = parseFloat(slider.value);
+            const pct = (ma - SIG_MIN) / (SIG_MAX - SIG_MIN);
+            const eu = pct * EU_MAX;
+            const x = X0 + (ma - 2) * X_PER_MA;
+
+            sigDot.setAttribute('cx', x);
+            euDot.setAttribute('cx', x);
+            link.setAttribute('x1', x);
+            link.setAttribute('x2', x);
+
+            valEl.textContent = ma.toFixed(1) + ' mA → ' + eu.toFixed(1) + ' psi';
+            if (ma < SIG_MIN) {
+                subEl.textContent = (pct * 100).toFixed(1) +
+                    '% of span — below the live zero: no real measurement lives here. A dead loop, a broken wire, or an open terminal.';
+            } else if (ma > SIG_MAX) {
+                subEl.textContent = (pct * 100).toFixed(1) +
+                    '% of span — past range max: a real transmitter saturates just above 20 mA. Treat it as railed or faulted, not as data.';
+            } else {
+                subEl.textContent = (pct * 100).toFixed(1) +
+                    '% of span — in range: a measurement you can believe.';
+            }
+        }
+
+        slider.addEventListener('input', paint);
+        paint();
+    })();
+</script>
+{% endblock %}
