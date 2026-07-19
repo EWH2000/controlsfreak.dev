@@ -12,7 +12,7 @@ Live at [controlsfreak.dev](https://controlsfreak.dev).
 ### Getting around
 
 Press `/` (or `Ctrl`/`⌘-K`) anywhere for a command-palette **search**
-over every page — or use the search button in the nav. The Tools,
+over every page — or use the search button in the nav. The Guides, Tools,
 Simulators, Education, and Practice nav items **drop down** to direct
 links, so any page is one click from anywhere; on a phone the nav collapses
 behind a hamburger with the search button kept in reach. The home page
@@ -49,10 +49,7 @@ three-lesson chapter from the vapor-compression cycle through superheat
 and subcooling to the metering devices, plus the P-T & superheat
 calculator and the live loop simulator) so the deepest refrigeration
 content is reachable from a single entry point. The refrigerant pages
-link back to it via the same "Part of" slot; the simulator's own
-backlink follows separately (its page is owned by the parallel
-heat-pump-mode PR, so the one-line backlink lands with whichever of the
-two merges second).
+link back to it via the same "Part of" slot.
 
 The four hubs sit under a **Guides** nav lane and a `/guides/` landing
 that gather the topic pillars in one place — the topic axis alongside the
@@ -124,7 +121,7 @@ Calculators, converters, and lookups — open one, get an answer.
   with the code — unknown-property, write-access-denied), a **Reject**
   (a malformed-request reason), or an **Abort** (a torn-down
   transaction — segmentation, TSM timeout, APDU-too-long). Four
-  reference tables (8 classes, 225 codes, 11 reject and 12 abort
+  reference tables (8 classes, 226 codes, 11 reject and 12 abort
   reasons) share one filter; every value is click-to-copy. Enums are
   imported by script; the field-common descriptions are hand-authored
   and were adversarially cross-checked for accuracy.
@@ -405,7 +402,7 @@ paired with an Education explainer for the underlying concepts.
   shut valves stay finite, and a solve that doesn't settle warns you
   rather than masquerading as solved. Three worked loops to start from;
   desktop-only by design. A teaching model, not a design tool — the
-  capstone for the four hydronic lessons.
+  capstone for the hydronics chapter.
 - **Refrigerant Loop Simulator** — a directional vapor-compression
   model: turn indoor-coil airflow, refrigerant charge, outdoor
   ambient, outdoor-coil airflow, return-air temperature, metering
@@ -661,7 +658,7 @@ techs new to the industry and anyone wanting a refresh.
   did. Closes on the chapter cliff-hanger: every box shuts at once —
   where does the pressure go? Page 5 of the forced-air chapter;
   pairs with the VAV Systems quiz.
-- **Duct Static Control** — the chapter closer, answering page 5's
+- **Duct Static Control** — answering page 5's
   cliff-hanger: why the supply fan holds one static pressure instead
   of chasing flow (the pump-control mirror, drawn on air); the loop —
   a sensor two-thirds down the trunk, a setpoint in whole inches, a
@@ -673,7 +670,7 @@ techs new to the industry and anyone wanting a refresh.
   because pressure-independent boxes give a cranked fan nothing but
   pressure back. Safeties (the independent high-static cutout, the
   lying sensing tube), a drivable static-loop widget, and a closing
-  walk of all six pages. Page 6 of the forced-air chapter; pairs
+  walk back through the chapter. Page 6 of the forced-air chapter; pairs
   with the Duct Static Control quiz.
 - **Air Balancing** — the air side of commissioning: proving every
   zone gets the design flow it was drawn for. The flow ring and
@@ -1036,6 +1033,25 @@ from now will still run it.
     behind the Hydronic Loop Builder: pump curves, pipe / valve /
     coil resistances, and the operating-point solve on the
     assembled loop.
+  - `duct-engine.js` — round-duct friction (the Altshul-Tsal
+    friction-factor fit at galvanized roughness, the closed-form
+    approximation ASHRAE offers in place of Colebrook) plus
+    Huebscher rect↔round equivalent-diameter conversion, behind the
+    Duct Sizer. Both solve-backwards helpers bisect a bracket and
+    return NaN when the target isn't reachable, so a caller can
+    refuse an impossible ask instead of pinning at a bound. Exposes
+    flat top-level globals (`ductFriction`, `ductDiaForFriction`,
+    `huebscherDe`, …) rather than a namespace object.
+  - `refrigerant-loop-engine.js` — the directional vapor-compression
+    solver (`RefrigLoop`) behind the Refrigerant Loop Simulator, in
+    cooling and heat-pump modes. Works in saturation-temperature
+    space rather than on P-h data: additive rules move evaporator and
+    condenser saturation temperatures as each knob turns, with the
+    pressure ↔ sat-temp mapping coming from real table lookups. The
+    Refrigerant P-T tool reuses its `satTempAtP` / `pressAtSatTemp`
+    lookups. `refrigerant-data.js` must load first — the engine reads
+    its tables through the shared script scope and guards every read,
+    since a top-level `const` isn't a window property.
   - `fbe-engine.js` — function-block catalog + per-tick evaluator
     behind the Function-Block Editor simulator.
   - `wiring-engine.js` — pure circuit solver behind the Controller
@@ -1114,13 +1130,14 @@ python3 -m http.server 8000 --directory _site
 npm test
 ```
 
-Tests live under `tests/`: `smoke.spec.js` (every page returns
-200, has the expected title and nav, no console errors, plus
-behaviour spot-checks), `contact.spec.js` (the contact form),
-`psychro-engine.spec.js` (pure-Node engine math), `nav-search.spec.js`
-(the command palette + search-index drift), `nav-menu.spec.js` (the
-nav dropdowns + mobile hamburger), and `home-hero.spec.js` (the
-interactive hero loop + category deep-links). Chromium only. The Playwright config has a `webServer` block that builds
+Tests live under `tests/` — Playwright specs run against the built
+site, Chromium only. `smoke.spec.js` covers every page (200, expected
+title and nav, no console errors, plus behaviour spot-checks); the
+rest are per-surface behavioural specs (the contact form, command
+palette, nav dropdowns, interactive hero, responsive and a11y sweeps,
+landing-count drift guards) and pure-Node engine-math specs for each
+shared engine. The directory is the source of truth for the full
+list. The Playwright config has a `webServer` block that builds
 and serves `_site/`, so `npm test` is self-sufficient on a fresh
 checkout — a running `npm run dev` on port 8000 is reused.
 
