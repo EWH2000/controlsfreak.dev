@@ -10,11 +10,11 @@ transpiler.
 
 Companion docs: `README.md` for the user-facing tour; under
 `docs/` — `docs/site-ideas-and-friction.md` for per-page design
-history and ideas-not-yet-shipped; `docs/codebase-issues.md` for
-open code-quality items needing a decision; `docs/content-audit.md`
-for editorial findings from the recurring content-accuracy audits;
-`docs/quiz-section-plan.md` for the Practice-section
-quiz planning.
+history and ideas-not-yet-shipped (also the live source for
+Practice-section planning since the quiz plan was retired
+2026-07-19); `docs/codebase-issues.md` for open code-quality items
+needing a decision; `docs/content-audit.md` for editorial findings
+from the recurring content-accuracy audits.
 
 ## Stack
 
@@ -481,7 +481,7 @@ section). **Category keys mirror the landing pages' `navCard()`
   sweep), so don't.
 - `_site/` — build output (gitignored).
 - `docs/` — the tracking markdowns (`site-ideas-and-friction.md`,
-  `codebase-issues.md`, `content-audit.md`, `quiz-section-plan.md`)
+  `codebase-issues.md`, `content-audit.md`)
   plus archived audit artifacts. `docs/audits/<topic>/`
   collects the triage / decisions / implementation / findings docs
   from each completed audit cycle in one place (the durable record;
