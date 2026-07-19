@@ -753,6 +753,21 @@ techs new to the industry and anyone wanting a refresh.
   signal scaling (the tool's 2-Point tab solves a schedule
   directly). Pairs with the editor's hot-water reset example and a
   Setpoint Math & Reset quiz.
+- **Reading a Wiresheet** — the Programming chapter's capstone: you
+  didn't write this program and something's wrong, so how do you
+  read a live sheet to find the block that's lying? Work backward
+  from the misbehaving output rather than forward from the inputs
+  (which reads the healthy 90 % of the sheet before reaching the
+  fault), asking at each hop whether this output is right given
+  these inputs — the first no is your block. Covers what the scan
+  means for what you actually see on screen (values settling
+  together between paints, feedback wires carrying last scan's
+  value, why a latch showing Q true over a false S is healthy), and
+  idiom recognition — reading five blocks as one named pattern so
+  you trace between patterns instead of between blocks. Closes on a
+  deliberately-faulted AHU heating-call sheet walked in four
+  numbered steps. Pairs with the Function-Block Editor sandbox and
+  a Reading a Wiresheet quiz.
 - **Modbus Basics** — what Modbus is on the wire: the four data
   tables (coils, discrete inputs, input and holding registers),
   the function codes that read and write them, and what an
@@ -836,7 +851,7 @@ flavors share the same engine:
   When a topic recurs in feedback, it becomes a candidate for a
   new education page.
 
-Shipped so far — thirty-three content quizzes (each 10 questions, paired
+Shipped so far — thirty-four content quizzes (each 10 questions, paired
 1:1 with its lesson and deep-linking the gotchas) plus five field
 drills:
 
@@ -882,7 +897,8 @@ drills:
   not code.
 - **Content quizzes — programming:** Function Blocks, Boolean Logic
   & Latches, Comparators & Deadband, Timers & Delays, Setpoint Math
-  & Reset. Blocks, pins, wire types, the block families, and how a
+  & Reset, Reading a Wiresheet. Blocks, pins, wire types, the block
+  families, and how a
   scan resolves feedback; then permissive chains, fail-safe NOT
   inversion, set-dominant SR behavior, and the missing-NOT gotcha;
   then comparator picks, the EQ-on-analog trap, chatter and
@@ -893,7 +909,10 @@ drills:
   spacing behind minimum run and off times; then the math chains —
   interpolating a reset schedule from fresh endpoints, deriving
   slope and intercept, high- vs low-selects, and a flipped-sign
-  reset chain gotcha.
+  reset chain gotcha; and finally the method layer — the first move
+  when an output is wrong, which leg the backward trace follows,
+  the feedback-wire value that only looks broken, and naming a
+  five-block idiom from its description.
 - **Content quizzes — refrigeration:** Refrigerant Cycle Basics,
   Superheat & Subcooling, TXVs vs. EEVs. The four components and
   the pressure-temperature saturation lock, which line each
