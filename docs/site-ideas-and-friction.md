@@ -4002,6 +4002,96 @@ related future page (`pid-basics.html`) already exists, so the
 lesson cross-links to it for PID internals without a `[future:]`
 marker.
 
+### Timers & Delays — Education page *(drafting 2026-07-18, controls-spine arc)*
+
+**One question:** *what do TON and TOF actually do — and why does
+almost every real sheet gate its decisions through time?*
+Programming-chapter lesson (curriculum position: function-blocks →
+boolean-logic-latches → comparators-and-deadband → this page →
+setpoint-math-reset → reading-a-wiresheet; the boolean and
+comparator lessons are in-flight sibling lanes on this arc that
+merge first). Ships at `html/education/timers-and-delays.html`
+with a paired quiz at `html/practice/timers-and-delays.html`.
+
+In scope (three sections):
+- *TON / TOF semantics* — the two mirror sentences (TON: "the
+  input must stay true this long before I believe it"; TOF: "I
+  keep saying true this long after it drops"); preset (PT) and
+  elapsed time (ET), ET counting up toward the preset in both
+  blocks; what clears ET, matched to `fbe-engine.js` (the ground
+  truth, not PLC-textbook variants): TON's ET zeroes the instant
+  the input drops — no credit kept across attempts (an
+  accumulating/retentive timer is a different block some palettes
+  offer) — and parks at the preset while the input holds; TOF's
+  ET zeroes the instant the input returns (the countdown is
+  cancelled, not paused) and parks at the preset after expiry
+  until the next rise clears it. Framing that pays off later in
+  the page: TON is a minimum-duration filter on TRUE, TOF the
+  same filter on FALSE. Capstone diagram: the classic stacked
+  timing traces (IN / ET / Q for both blocks), including the
+  reset case — input drops mid-TON, ET clears, Q never fires.
+- *The proof window and debounce* — why time gates decisions (the
+  sheet scans ten times a second; machinery moves in seconds, so
+  logic without time treats every honest transient as a fault);
+  the fail-to-start pattern: command TRUE AND proof FALSE feeds a
+  TON, window expiry latches the alarm. Walks the FB editor's
+  `proof` canned example wire by wire (cmd BI + proof BI → NOT →
+  AND → TON 15 s → SR latch → alarm BO, reset BI into R), redrawn
+  lesson-style with the three phases annotated (healthy / window
+  running / alarmed+latched), then sends the reader to load it,
+  toggle proof off, and watch ET climb to the preset. Window
+  sizing both ways: too short = nuisance alarm on every honest
+  start; too long = a blind spot that masks a real failure and
+  everything interlocked on "proven" inherits it. Debounce: a
+  chattering status (a DP switch fluttering at marginal airflow)
+  believed only after a short TON; a short TOF as the mirror
+  (ride through brief dropouts).
+- *Minimum run / minimum off* — anti-short-cycle timing (starts
+  are the expensive part: inrush heat in the windings, oil that
+  never returns on short runs, pressures that need the off-time
+  to equalize; manufacturers budget starts per hour); how the
+  min-times interact with the deadband decision (the band decides
+  WHAT the sequence wants, the timers decide WHEN it is allowed —
+  a band narrower than the timing can honor reads as equipment
+  ignoring its own thermostat; fix the band, don't lean on the
+  timer); equipment-staging's stage-delay / minimum-stage-time
+  widgets are this at plant scale (anchored — exists today).
+
+Out of scope (adjacent topics, with owners):
+- Staging timer DESIGN (thresholds, delay lengths, rotation) —
+  `equipment-staging.html` owns it (anchored, exists today).
+- What latches are, set-dominance, the latch + manual-reset
+  idiom — boolean-logic-latches (in-flight sibling lane, merges
+  first; plain prose in Phase A, anchored at Phase B integration).
+- The threshold/deadband decisions the timers gate —
+  comparators-and-deadband (in-flight sibling lane, merges first;
+  plain prose in Phase A, anchored at Phase B).
+- What proof sources actually prove (current switch vs DP vs aux
+  contact) and binary fault signatures — status-and-proof
+  (in-flight lane, this arc). Its proof-logic section (`#sap-proof`)
+  ends on "the block-level way the window is built belongs to a
+  lesson on timers and delays" — whichever of the two lanes merges
+  second wires the reciprocal anchors; this lane merges second, so
+  at Phase B it anchors status-and-proof here AND retro-adds the
+  anchor in `#sap-proof` pointing back at this page.
+- Schedules / occupancy timing — calendar time, not interval
+  time; no clock block exists in the sim, so one plain-prose
+  sentence only. `[future: education/schedules-and-occupancy.html]`
+- Modulating control as the alternative to timed switching —
+  `pid-basics.html` anchor where it comes up.
+
+**Capstone hook:** the FB editor's `proof` canned example (shipped
+2026-07-18, PR #381, as this lesson's capstone). Load it, toggle
+STATUS off, watch ET climb to 15 s on the TON block, watch the
+alarm latch; toggle STATUS back on — the alarm holds (the latch,
+not the timer, owns the memory); pulse RESET to clear.
+
+**Quiz notes:** ten questions (6 mcq / 2 tf / 1 numeric / 1
+gotcha), ids `tdl-*`. The gotcha is a sheet snippet wiring a
+filter-DP alarm through a TOF where the sentence ("stays made for
+30 s before I believe it") needs a TON — so the alarm fires the
+instant the switch closes and lingers after it opens.
+
 ### Controller commissioner *(larger build — reviewed 2026-06-10: stays parked)*
 
 **Reviewed 2026-06-10 (mock-call audit, owner concurred): stays
