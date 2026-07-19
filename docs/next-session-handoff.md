@@ -16,13 +16,13 @@ you act, and tell every lane you spawn to do the same.
 
 ## Where things stand
 
-`main` @ `30bec2c`, **v3.69.4** (v3.69.5 pending on PR #398), clean tree.
+`main` @ `2eb5d5a`, **v3.69.5**, clean tree. (Measurements below cite `30bec2c`,
+the commit they were taken at — that is deliberate, not stale.)
 Counts: **40 education lessons · 34 content quizzes + 5 field drills · 31
 tools · 7 simulators.**
 
-**PR #398 — `test/structural-drift-guards`** ships three ratchets and closes
-two of `codebase-issues` #182's three sub-items. Check its state before
-assuming; it was a draft awaiting owner review when this was written:
+**PR #398 — `test/structural-drift-guards`** shipped three ratchets and closed
+two of `codebase-issues` #182's three sub-items:
 
 - `tests/link-integrity.spec.js` — fragment + internal-link integrity over
   `_site/`, **plus** the ~358 `learnMore.href` deep links in
