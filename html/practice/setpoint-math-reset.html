@@ -1,0 +1,79 @@
+---
+title: Setpoint Math & Reset Quiz — controlsfreak.dev
+description: Drill computed setpoints — interpolate reset schedules from their design endpoints, derive slope and intercept, and catch a flipped-sign reset chain.
+canonical: https://controlsfreak.dev/practice/setpoint-math-reset.html
+nav: practice
+category: programming
+pairedLesson: https://controlsfreak.dev/education/setpoint-math-reset.html
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Practice · Setpoint Math</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">Setpoint Math &amp; Reset Quiz <span class="tool-tag">Logic</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                Read the <a href="/education/setpoint-math-reset.html">Setpoint Math &amp;
+                Reset Schedules</a> lesson first, then test yourself — ten questions on
+                computed setpoints: interpolate a reset schedule from two design endpoints
+                (different endpoints than the lesson's, so the method has to carry you),
+                derive the slope, name what each block in the chain contributes, pick the
+                right select for a demand pool versus a ceiling, and diagnose a reset chain
+                whose slope sign got flipped. Each reveal links back to the section of the
+                lesson it came from.
+            </p>
+
+            <div id="quiz"></div>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/tools/signal-scaling.html', label: 'Signal Scaling'}
+        ],
+        simulators: [
+            {href: '/simulators/function-block-editor.html', label: 'Function-Block Editor'}
+        ],
+        lessons: [
+            {href: '/education/setpoint-math-reset.html', label: 'Setpoint Math & Reset Schedules'},
+            {href: '/education/function-blocks.html', label: 'Function-Block Basics'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/practice/">← All practice</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="/scripts/quiz-engine.js"></script>
+<script>
+    (function () {
+        'use strict';
+
+        // Question bank lives in html/_data/quizzes/setpoint-math-reset.js so
+        // the FAQPage JSON-LD emitted from head.njk can read the same source.
+        const questions = {{ quizzes['setpoint-math-reset'] | safeScriptJson | safe }};
+
+        Quiz.mount('#quiz', questions, {
+            next: {{ page.fileSlug | nextQuiz | safeScriptJson | safe }},
+            slug: 'setpoint-math-reset',
+            title: 'Setpoint Math & Reset',
+            defaultCount: 10,
+            defaultOrder: 'sequential'
+        });
+    })();
+</script>
+{% endblock %}

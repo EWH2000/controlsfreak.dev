@@ -32,6 +32,9 @@ module.exports = [
     { slug: 'function-blocks',          label: 'Function Blocks' },
     // ── Programming ─ function-blocks leads the chapter; insert new quiz
     // slugs here, in curriculum order (mirror the education sequence) ──
+    // Final position for setpoint-math-reset: after the in-flight
+    // timers-and-delays quiz, before reading-a-wiresheet (sibling lanes).
+    { slug: 'setpoint-math-reset',      label: 'Setpoint Math & Reset' },
     { slug: 'modbus-basics',            label: 'Modbus Basics' },
     { slug: 'modbus-decoding',          label: 'Modbus Decoding' },
     { slug: 'bacnet-basics',            label: 'BACnet Basics' },
