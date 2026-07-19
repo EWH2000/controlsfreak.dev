@@ -55,6 +55,12 @@ const order = [
     // ── Programming ─ function-blocks leads the chapter; insert new
     // lesson URLs here, in curriculum order (mirror the
     // education/index.html grid) ──
+    // reading-a-wiresheet is the chapter TAIL — final chapter order:
+    // function-blocks → boolean-logic-latches → comparators-and-deadband
+    // → timers-and-delays → setpoint-math-reset → reading-a-wiresheet,
+    // then modbus-basics resumes. Sibling lessons still in flight slot
+    // in ABOVE this line as their lanes merge.
+    "/education/reading-a-wiresheet.html",
     "/education/modbus-basics.html",
     "/education/modbus-decoding.html",
     "/education/bacnet-vs-modbus.html",
