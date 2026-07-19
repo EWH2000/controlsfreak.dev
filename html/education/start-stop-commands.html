@@ -221,7 +221,7 @@ keywords: BO binary output start stop HOA hand off auto interposing relay contac
             </p>
 
             <p>
-                Now watch what each position does to the pair of points the BMS graphic shows. A <em>command</em> point records a request; a <em>status</em> point reports a fact. In Auto, on a healthy unit, the two agree — command ON, status ON; command OFF, status OFF. In Hand, they split by design: the unit runs while the BMS may well be commanding OFF — <strong>command OFF, status ON</strong>, and the status is the one telling the truth. That disagreement is the exact mirror of the broken-belt service call, where the BMS commands ON and the proof point reports that nothing is actually moving. How the status point earns the right to be believed — current switches, differential-pressure switches, the whole art of proving a thing ran — is its own lesson, told from the input side; here it's enough that the graphic <em>can</em> show you the disagreement, and that a command/status split is a message, not a glitch. The panel below is the three positions as the graphic sees them.
+                Now watch what each position does to the pair of points the BMS graphic shows. A <em>command</em> point records a request; a <em>status</em> point reports a fact. In Auto, on a healthy unit, the two agree — command ON, status ON; command OFF, status OFF. In Hand, they split by design: the unit runs while the BMS may well be commanding OFF — <strong>command OFF, status ON</strong>, and the status is the one telling the truth. That disagreement is the exact mirror of the broken-belt service call, where the BMS commands ON and the proof point reports that nothing is actually moving. How the status point earns the right to be believed — current switches, differential-pressure switches, the whole art of proving a thing ran — is <a href="/education/status-and-proof.html">Status &amp; Proof</a>'s story, told from the input side; here it's enough that the graphic <em>can</em> show you the disagreement, and that a command/status split is a message, not a glitch. The panel below is the three positions as the graphic sees them.
             </p>
 
             <!-- HOA truth panel: three positions × what runs × what the
@@ -327,6 +327,7 @@ keywords: BO binary output start stop HOA hand off auto interposing relay contac
                 ],
                 lessons: [
                     {href: '/education/controller-wiring.html', label: 'Controller Wiring'},
+                    {href: '/education/status-and-proof.html', label: 'Status & Proof'},
                     {href: '/education/vfds.html', label: 'VFDs'}
                 ],
                 quizzes: [
