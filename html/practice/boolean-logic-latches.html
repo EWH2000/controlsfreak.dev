@@ -1,0 +1,78 @@
+---
+title: Boolean Logic & Latches Quiz — controlsfreak.dev
+description: Ten questions on Boolean logic in equipment terms — permissive chains, fail-safe NOT inversion, XOR checks, and why a latched safety must be reset by hand.
+canonical: https://controlsfreak.dev/practice/boolean-logic-latches.html
+nav: practice
+category: programming
+pairedLesson: https://controlsfreak.dev/education/boolean-logic-latches.html
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Practice · Boolean Logic</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">Boolean Logic &amp; Latches Quiz <span class="tool-tag">Logic</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                Read the
+                <a href="/education/boolean-logic-latches.html">Boolean Logic &amp; Latches</a> lesson first, then
+                test yourself — ten questions on the logic that makes equipment decisions: reading a permissive
+                chain, fail-safe normally-closed wiring and the NOT that fixes a trip-sense signal, why a safety
+                latches instead of self-clearing, set-dominant SR behavior when set and reset collide, and the
+                XOR command/status mismatch check. Each reveal links back to the section it came from.
+            </p>
+
+            <div id="quiz"></div>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        lessons: [
+            {href: '/education/boolean-logic-latches.html', label: 'Boolean Logic & Latches'},
+            {href: '/education/function-blocks.html', label: 'Function-Block Basics'}
+        ],
+        simulators: [
+            {href: '/simulators/function-block-editor.html', label: 'Function-Block Editor'}
+        ],
+        quizzes: [
+            {href: '/practice/function-blocks.html', label: 'Function Blocks Quiz'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/practice/">← All practice</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="/scripts/quiz-engine.js"></script>
+<script>
+    (function () {
+        'use strict';
+
+        // Question bank lives in html/_data/quizzes/boolean-logic-latches.js
+        // so the FAQPage JSON-LD emitted from head.njk can read the same
+        // source.
+        const questions = {{ quizzes['boolean-logic-latches'] | safeScriptJson | safe }};
+
+        Quiz.mount('#quiz', questions, {
+            next: {{ page.fileSlug | nextQuiz | safeScriptJson | safe }},
+            slug: 'boolean-logic-latches',
+            title: 'Boolean Logic & Latches',
+            defaultCount: 10,
+            defaultOrder: 'sequential'
+        });
+    })();
+</script>
+{% endblock %}
