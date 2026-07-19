@@ -5550,7 +5550,7 @@ thing actually causing the drift, and a shared `p + p` rule (or a
 convention) would end the class rather than re-fix it page by page.
 Logged-only from the 2026-07-18 arc.
 
-### 180. Forced-air chapter: stale terminal-position claims + a hand-kept page count *(open — 2026-07-18)*
+### 180. Forced-air chapter: stale terminal-position claims + a hand-kept page count *(addressed 2026-07-19)*
 
 `air-balancing` and `dedicated-outdoor-air` joined the `forced-air`
 chapter after `duct-static-control`, and prose written when
@@ -5581,7 +5581,65 @@ rephrasing to name duct-static by role instead of by position).
 Logged-only from the 2026-07-18 arc; see #182.3, which proposes a
 guard for exactly this prose class.
 
-### 181. Process: reverse cross-links are unowned when lanes ship in parallel *(open — 2026-07-18, process / lane-spec)*
+**Resolution (2026-07-19):** fixed by PR #395
+(`fix/forced-air-chapter-position-claims`). The entry named three
+sites carrying four claims; the sweep that answered it retired
+**twelve claims across eight files**, because the root cause was
+never per-sentence. The chapter grew 6 → 8 by append
+(`air-balancing` 2026-07-14, `dedicated-outdoor-air` 2026-07-15) and
+every claim naming `duct-static-control` as the closer went stale in
+the same instant — including several the entry hadn't found
+(`duct-static-control.html:597` "That closes the six-page chapter",
+`air-handlers.html:441` "it closes this chapter as its own page",
+`building-pressure.html:507` "why that loop closes this chapter",
+`air-balancing.html:27` "The rest of this chapter walked", plus the
+`practice/duct-static-control.html` intro and the practice landing's
+matching card `desc`, both of which said "close the chapter from
+memory").
+
+Two fix shapes, applied per claim class rather than uniformly:
+
+- **Terminal-position claims were re-aimed to name the page by role,
+  not position.** `vav-systems.html:181` and `:248` both dropped the
+  anchor text "the last page of this chapter" / "chapter's last page"
+  for plain "duct static control"; `air-handlers.html:441` became "it
+  has its own page in this chapter". The deliberate choice was
+  drift-proofing over merely-correct wording — `vav-systems:248` could
+  have read "the chapter's *next* page" (true today, 5 → 6) and was
+  de-ordinalized instead, since inserting any page between the two
+  would falsify it again. `vav-systems.html:626` was left alone: its
+  relational "the next page of this chapter" was already correct
+  (vav-systems is 5, duct-static-control is 6), leaving the page one
+  chapter-qualified relational pointer instead of three.
+- **Counts were de-enumerated**, the #160 / #170 fix shape: "read it
+  the way these six pages did" → "these pages did"; "With the chapter
+  in hand" → "With that arc in hand". `duct-static-control`'s closer
+  was **re-scoped rather than renumbered** — "That closes the
+  six-page chapter" → "That closes the arc from the unit to the
+  loop", so its five-beat recap now recaps the arc it actually walks
+  and a ninth page cannot break it.
+
+The sweep also added the forward handoff the append had left missing:
+a new paragraph on `duct-static-control` pointing at **air balancing**
+and **dedicated outdoor air**, framed on the gap between a system that
+*should* work and one that *does* — balancing catches the starved wing
+the static loop structurally cannot see, and DOAS changes what these
+coils are asked to do. `air-unit-identification.html:223`'s "its own
+future topic" became a live link now that the page exists, with
+`dedicated-outdoor-air` added to that page's `relatedLinks`.
+
+Note on scope: PR #396 (`fix/stale-claims-site-sweep`) merged the same
+day and is the **same defect class at different instances** — fourteen
+unrelated stale claims elsewhere on the site — but it touched none of
+this entry's sites. #395 closes this entry alone.
+
+One instance of the class survives both PRs and is recorded under
+#182's 2026-07-19 update: `metering-devices-txv-eev.html:303` says
+"the three-page chapter", true today and stale the moment the
+refrigerant chapter grows. As of this writing it is the only surviving
+`N-page` claim in `html/`.
+
+### 181. Process: reverse cross-links are unowned when lanes ship in parallel *(addressed 2026-07-19)*
 
 Not a code defect — a defect in how parallel lanes are specified,
 recorded here because it produced a real, shipped content gap.
@@ -5610,7 +5668,19 @@ under-recording paid work and over-recording outstanding work. Any
 future reconciliation should verify against the built site, not
 against the prose in a merged PR. Logged-only from the 2026-07-18 arc.
 
-### 182. Three defect classes this arc that a green build cannot see *(open — 2026-07-18, guard proposals)*
+**Resolution (2026-07-19):** promoted to `CLAUDE.md`'s `## Workflow`
+section as two bullets — lane-spec reverse-link ownership, and the
+"PR bodies are not a reliable debt ledger" warning — and closed here.
+
+Closed by relocation, not by fixing anything in the tree. This is a
+**process** defect, and `codebase-issues.md` is the wrong home for it:
+entries in this file are read during audits, which is strictly too
+late for a rule whose whole job is to fire *when a lane spec is
+written*. A convention that must be consulted before work starts
+belongs where conventions live. Nothing about the finding changed —
+only where it can be found in time to matter.
+
+### 182. Three defect classes this arc that a green build cannot see *(open — 2026-07-18, guard proposals; guard 3 disproven as specified 2026-07-19 — see the Update)*
 
 Three classes surfaced during the 2026-07-18 arc that build clean,
 pass the full suite, and ship broken anyway. Logged together because
@@ -5648,6 +5718,217 @@ drift guard). Each is a guard proposal, not a fix:
    than a hard build failure, given the false-positive risk.
 
 Logged-only from the 2026-07-18 arc.
+
+**Update (2026-07-19):** stays **open** — this is live work, not a
+closure. A prototyping pass ran all three proposals against the real
+tree before anyone built them. One is disproven as specified, one was
+scoped too narrowly and is the highest-value of the set, one is
+confirmed sound, and a fourth proposal is added below. Recorded here
+so the dead end is not rediscovered.
+
+**Guard 3's proposed shape catches zero and must be rewritten.** The
+proposal above is to cross-check chapter-claiming prose against the
+target page's `category` frontmatter, and estimates it "would have
+caught all four known instances." It would have caught none of them,
+for two independent reasons.
+
+*First, the intra-chapter instances are invisible to it.* Prototyped
+over `html/education/*.html` + `html/practice/*.html`: **29
+chapter-claiming anchors exist site-wide, 27 intra-category and 2
+cross-category — and both cross-category hits are false positives.**
+Both are the same shape: an incidental `/education/vfds.html` link
+sharing a line with a "this chapter" claim that attaches to a
+different target (`air-handlers.html:441`,
+`air-unit-identification.html:327`). So the check finds zero real
+violations *and* generates noise. That is structural, not a tuning
+problem — the real defect class is **terminal and ordinal claims going
+stale on append**, a claim about a page's *position* within its
+chapter, and category equality cannot see position at all. All of
+#180's instances were intra-chapter, so category equality was always
+going to read them as clean.
+
+*Second, it would have missed the one genuine cross-chapter case too.*
+`timers-and-delays` (`category: programming`) really did claim
+`status-and-proof` (`category: signals`) as "this chapter's
+status-and-proof lesson" before PR #393 fixed it — a true category
+violation. But that claim carried **no anchor**: it named the page in
+bare prose. A category cross-check has to resolve the claim to a
+target page to compare frontmatter, and with no href there is nothing
+to resolve. The single instance the guard was designed for is the
+single instance its mechanism cannot reach. Do not rebuild this.
+
+The productive form is a **ban-list regex** over the same two globs,
+matching last / first / final / opener / closes / ends **plus an
+explicit chapter qualifier** ("of this chapter" / "this chapter" /
+"chapter's"), joined with the `N-page` and "these N pages" count
+constructions that #160 / #170 / #180 all turned out to be. The
+critical tuning result, measured at the pre-fix HEAD (`8ea5254`, the
+merge of PR #394):
+
+- **The chapter qualifier is load-bearing.** A bare
+  `the (last|first) page` pattern returns 7 hits there, of which
+  **6 mean the *previous* lesson** — a true, correct, house-style
+  backward reference — and only one is the defect. On this site "the
+  last page" almost always means "the page before this one", so a
+  qualifier-free ban list is mostly false positives and would be
+  switched off within a week.
+- **With the qualifier**, the same corpus returns 5 hits, 4 of them
+  genuine (`vav-systems:181`, `vav-systems:248`,
+  `air-handlers:441`, `building-pressure:507`) against one false
+  positive (`vav-systems:446`, "the first reason is the one this
+  chapter keeps returning to" — an ordinal that isn't positional).
+  Adding the count constructions raises recall to the rest of #180's
+  cluster (`duct-static-control:597` and `:617`,
+  `practice/index.html:332`) at the cost of more noise, since
+  backward-looking counts like "The last three pages taught…" and
+  "Three pages, one picture" are legitimate.
+
+Net: a candidates-for-review lint, as the original proposal already
+concluded, and **not** a build failure. An earlier framing of this
+pass claimed a clean 7/7-true-positive formulation with the qualifier;
+that does not reproduce — the measured qualifier-only result is 4 true
+/ 1 false, and reaching the full cluster costs precision. Recall and
+precision trade against each other here and no formulation tested was
+free of both errors.
+
+**One instance survives the merged fixes.** After PRs #395 and #396,
+`html/education/metering-devices-txv-eev.html:303` still reads "That
+closes the three-page chapter" — verified present on `main` at
+`2ddd7d0`, and the only surviving `N-page` claim anywhere in `html/`.
+It is true today and goes stale the moment the refrigerant chapter
+grows, which is exactly how the forced-air cluster failed. Whoever
+builds this lint **must fix that line in the same PR**, or the lint
+fails `main` on arrival.
+
+**Guard 1 was scoped too narrowly and is the highest-value item of the
+set.** The proposal frames dead-anchor checking as a walk over built
+`_site` HTML. That walk sees roughly a third of the surface.
+Prototyped counts on the current build: **589 fragment links total** —
+231 in rendered HTML (149 same-page `href="#…"`, 82 cross-page), and
+**358 `learnMore` hrefs inside `html/_data/quizzes/*.js`**. The quiz
+banks are injected as JSON and rendered client-side by the engine,
+which makes every one of those 358 **structurally invisible to any
+scan of built HTML**. `duct-static-control.js` alone points at 6
+distinct ids from ~20 questions; `modbus-decoding.js`, `pump-control.js`
+and `vav-systems.js` each do the same. Blast radius: renaming one
+`<h2 id>` silently breaks dozens of quiz deep links while every page
+still renders and every test still passes. All 589 resolve today —
+this is a guard against a regression that has not happened yet, on a
+surface where nothing would announce it.
+
+One allowlist is required. Six hrefs look like misses and are not:
+`/tools/#hvac`, `#protocols`, `#signals`, `#airflow`, `#electrical`,
+`#hydronics` are **deliberate JS-consumed hash routes** — the tools
+landing reads `location.hash` at `html/tools/index.html:357` and
+listens for `hashchange` at `:369` to drive its filter chips. No `id`
+exists or should. That allowlist requirement is also the argument for
+putting this in `tests/` rather than in `.eleventy.js`: a
+false positive in a build guard blocks a deploy, and this guard has a
+standing category of legitimate non-resolving fragments.
+
+**Guard 2 is confirmed sound and should ship as a build guard.**
+~25 lines, a near-verbatim copy of `educationSequenceGuard`
+(`.eleventy.js:134–163`). `category: 'field'` is the correct
+discriminator, and the numbers are exact: **34 entries in
+`quizOrder.js`, 39 banks in `html/_data/quizzes/`, and the 5 absent
+from the order array are precisely the 5 `category: field` drills**
+(`controller-swap`, `field-wiring-sensors`, `sequencing-scenarios`,
+`surviving-first-months`, `troubleshooting`). Zero false positives
+today. This one belongs in `.eleventy.js` so it fails the build —
+unlike guard 1, it has no legitimate-exception category.
+
+Worth recording why it beats the check that already exists:
+`tests/smoke.spec.js:2097` asserts the practice landing's Content
+Quizzes grid matches `quizOrder.js`. That compares **two
+hand-maintained lists** against each other, so a quiz missing from
+*both* stays green — which is exactly how `reading-a-wiresheet` got
+caught by hand instead of by CI. Guard 2 compares the order array
+against the **pages that actually exist**, which is the invariant that
+matters.
+
+**Fourth proposal: section-landing card completeness.** Every non-index
+page under `html/<section>/` should be linked from a `.nav-card` on
+that section's landing. A page that ships without its card is
+reachable only from the nav dropdown and the palette; the landing is
+the section's front door and the shape is easy to skip, especially in
+a parallel lane. Currently clean — **31/31 tools, 40/40 education,
+7/7 simulators, 39/39 practice**.
+
+The trap that makes this worth writing down: **scope the selector to
+the landing's card grid.** The built landing contains every section
+page *twice over* — once in its `.nav-card` and once in the nav
+dropdown that `nav.njk` renders into the same document (measured: 62
+`/tools/` hrefs on the built tools landing for 31 pages, 80 for 40 on
+education, 14 for 7 on simulators). A naive "is this page linked from
+its landing?" check therefore passes for every page whether or not the
+card exists, and passes silently — it would have shipped green and
+guarded nothing.
+
+### 183. Forced-air chapter: `air-handlers` never picked up the two appended lessons *(open — 2026-07-19)*
+
+`html/education/air-handlers.html`'s `relatedLinks()` lessons group
+omits both `air-balancing.html` and `dedicated-outdoor-air.html` —
+the two pages appended to the forced-air chapter on 2026-07-14 / 15.
+Verified against `main` at `2ddd7d0`: the group carries nine entries
+and neither appears.
+
+This is the same reverse-cross-link debt PR #393 paid for the
+Programming chapter, and the forced-air pass looks genuinely still
+owed. `air-handlers` is the chapter's map page — it opens by calling
+itself one — so it is the single worst place in the chapter for a
+missing sibling link: a reader who starts at the map and works down
+the Related column never learns those two pages exist. PR #395
+retired the chapter's stale *positional* claims and added the forward
+handoff on `duct-static-control`, but `relatedLinks` blocks were
+outside that lane's scope; its own PR body flags this as left for
+others. `air-unit-identification` picked up `dedicated-outdoor-air`
+in that PR because its prose now links there, so the chapter is
+partially paid, which makes the gap easy to miss.
+
+**Column-cap note, since it will come up:** there is no cap. An
+informal "the lessons column maxes at five" claim circulated in two
+recent PR bodies (#393, #396) and is not true — `related-links.njk`
+imposes no limit, and `air-handlers` already renders nine,
+`air-unit-identification` eight, `vav-systems` seven. Both additions
+fit; the open question is editorial (does a nine-entry column want
+pruning while it's being touched?), not structural.
+
+### 184. Forward-link convention violated on `commanding-actuators` — both targets already existed *(open — 2026-07-19)*
+
+`html/education/commanding-actuators.html:356` closes its out-of-scope
+paragraph with "that's valve sizing and authority, its own topic" —
+plain prose, no anchor — while both targets have been live for weeks.
+Verified on `main` at `2ddd7d0`:
+
+- `html/tools/valve-cv.html` shipped **2026-06-06** (`897cce3`).
+- `html/tools/valve-authority.html` shipped **2026-07-07**
+  (`d0f722f`, "rescue the site's #1 search query").
+- `html/education/commanding-actuators.html` shipped **2026-07-18**
+  (`8d2113a`) — eleven days after valve-authority.
+
+CLAUDE.md's forward-link convention is "anchor only if the target page
+exists today; if it's still a future page, write the topic as plain
+prose." The prose form is correct *for a future page*; neither of
+these was future. `valve-authority` is also absent from the page's
+`relatedLinks` tools group, which lists only `signal-scaling`.
+
+Root cause is upstream of the page: the lane spec in
+`docs/site-ideas-and-friction.md:213` declared "valve sizing and
+authority stay plain prose `[future: valve-authority]`" and the page
+shipped that instruction faithfully. The marker was already wrong when
+it was written. Worth noting for #181's sake — this is a lane spec
+carrying a stale fact into shipped copy, which no page-level review
+catches, since the page is internally consistent with its own brief.
+
+**Ambiguity to resolve before fixing:** the `[future: valve-authority]`
+marker may have meant a *lesson* on valve authority rather than the
+tool that now bears the name. If so the fix is a **rewording** — the
+sentence should hand off to the two tools while keeping whatever
+lesson-shaped gap the marker was reserving — and the friction-file
+marker needs renaming so it stops colliding with a shipped page.
+If it always meant the tool, the fix is two anchors and retiring the
+marker per the *Adding a new tool* step-5 rule. Owner's call; logged
+rather than fixed for that reason.
 
 ### Deferred / Won't fix (with revisit trigger)
 
