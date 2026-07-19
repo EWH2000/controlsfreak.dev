@@ -23,7 +23,7 @@ nav: education
 
     <div class="filter-chips" role="group" aria-label="Filter lessons by category">
         <button type="button" class="filter-chip active" data-category="all" aria-pressed="true">
-            All <span class="filter-chip-count">39</span>
+            All <span class="filter-chip-count">40</span>
         </button>
         <button type="button" class="filter-chip" data-category="fundamentals" aria-pressed="false">
             Fundamentals <span class="filter-chip-count">5</span>
@@ -41,7 +41,7 @@ nav: education
             Forced Air Systems <span class="filter-chip-count">8</span>
         </button>
         <button type="button" class="filter-chip" data-category="programming" aria-pressed="false">
-            Programming <span class="filter-chip-count">5</span>
+            Programming <span class="filter-chip-count">6</span>
         </button>
         <button type="button" class="filter-chip" data-category="protocols" aria-pressed="false">
             Protocols <span class="filter-chip-count">7</span>
@@ -343,6 +343,15 @@ nav: education
             titleFull:  'Setpoint Math & Reset Schedules',
             desc:       'How a sheet computes a setpoint — add/sub offsets, min/max and select picks, and an outdoor-air reset schedule built from four math blocks: y = mx + b plus a clamp.',
             pills:      ['Logic', 'Reset Schedule', 'y = mx + b', 'LIMIT'],
+            category:   'programming'
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/education/reading-a-wiresheet.html',
+            titleShort: 'Reading a Wiresheet',
+            titleFull:  'Reading a Wiresheet',
+            desc:       'Troubleshooting a live sheet you did not write — tracing backward from the wrong output, reading values against the scan, and recognizing the block idioms so you trace between patterns.',
+            pills:      ['Logic', 'Backward Trace', 'Live Values', 'Idioms'],
             category:   'programming'
         }) }}
         {# ── end Programming ── #}

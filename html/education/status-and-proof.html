@@ -174,11 +174,11 @@ keywords: status proof current switch DP switch aux contact fail-to-start broken
             </p>
 
             <p style="margin-top:1.1rem;">
-                When the window expires with the command ON and the status still OFF, that is a <strong>fail-to-start</strong>: the controller alarms, and most sequences also latch the command back off — there is no point holding a start signal into a fault, and some failures get worse if you keep trying. The block-level way the window is actually built — an on-delay timer holding the fail alarm off while the fan comes up — belongs to a lesson on timers and delays.
+                When the window expires with the command ON and the status still OFF, that is a <strong>fail-to-start</strong>: the controller alarms, and most sequences also latch the command back off — there is no point holding a start signal into a fault, and some failures get worse if you keep trying. The block-level way the window is actually built — an on-delay timer holding the fail alarm off while the fan comes up — is <a href="/education/timers-and-delays.html#proof">the proof window in Timers &amp; Delays</a>, wired out block by block.
             </p>
 
             <p style="margin-top:1.1rem;">
-                Disagreement runs in two directions, and they point at different suspects. <strong>Commanded ON, status OFF</strong> is the fail-to-start family: no control power at the starter, a coil that never pulled in, a tripped overload — or, per section 1, a fault the chosen status source can see that a cheaper one could not. <strong>Commanded OFF, status ON</strong> is stranger and often more urgent: the equipment is running, and the controller is not the one running it. A hand-off-auto switch left in HAND, a welded contactor, a jumper someone left behind from troubleshooting — the machine has an authority problem, not a proof problem. The same comparison catches both; the direction tells you which story you are walking into.
+                Disagreement runs in two directions, and they point at different suspects. <strong>Commanded ON, status OFF</strong> is the fail-to-start family: no control power at the starter, a coil that never pulled in, a tripped overload — or, per section 1, a fault the chosen status source can see that a cheaper one could not. <strong>Commanded OFF, status ON</strong> is stranger and often more urgent: the equipment is running, and the controller is not the one running it. <a href="/education/start-stop-commands.html#hoa">A hand-off-auto switch left in HAND</a>, a welded contactor, a jumper someone left behind from troubleshooting — the machine has an authority problem, not a proof problem. The same comparison catches both; the direction tells you which story you are walking into.
             </p>
 
             <p style="margin-top:1.1rem;">
@@ -302,7 +302,9 @@ keywords: status proof current switch DP switch aux contact fail-to-start broken
         lessons: [
             {href: '/education/controller-wiring.html', label: 'Controller Wiring'},
             {href: '/education/analog-sensing.html', label: 'Analog Sensing'},
-            {href: '/education/controls-commissioning.html', label: 'Controls Commissioning'}
+            {href: '/education/start-stop-commands.html', label: 'Start/Stop Commands'},
+            {href: '/education/controls-commissioning.html', label: 'Controls Commissioning'},
+            {href: '/education/timers-and-delays.html', label: 'Timers & Delays'}
         ],
         quizzes: [
             {href: '/practice/status-and-proof.html', label: 'Status & Proof'}

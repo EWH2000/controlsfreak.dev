@@ -1,0 +1,85 @@
+---
+title: Reading a Wiresheet Quiz — controlsfreak.dev
+description: Ten questions on troubleshooting a live wiresheet — the backward trace, feedback-wire values, what the scan shows you, and naming idioms at sight.
+canonical: https://controlsfreak.dev/practice/reading-a-wiresheet.html
+nav: practice
+category: programming
+pairedLesson: https://controlsfreak.dev/education/reading-a-wiresheet.html
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Practice · Reading a Wiresheet</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">Reading a Wiresheet Quiz <span class="tool-tag">Logic</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                Read the
+                <a href="/education/reading-a-wiresheet.html">Reading a Wiresheet</a> lesson
+                first, then test yourself — ten questions on the method: the first move when
+                an output is wrong, which leg the trace follows, why a latch showing Q TRUE
+                over a FALSE S is healthy, what the scan means for the values you watch, and
+                naming a five-block idiom from its description. Each reveal links back to
+                the section it came from.
+            </p>
+
+            <div id="quiz"></div>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        lessons: [
+            {href: '/education/reading-a-wiresheet.html', label: 'Reading a Wiresheet'},
+            {href: '/education/function-blocks.html', label: 'Function-Block Basics'}
+        ],
+        simulators: [
+            {href: '/simulators/function-block-editor.html', label: 'Function-Block Editor'}
+        ],
+        quizzes: [
+            {href: '/practice/function-blocks.html', label: 'Function Blocks Quiz'},
+            {href: '/practice/boolean-logic-latches.html', label: 'Boolean Logic & Latches Quiz'},
+            {href: '/practice/comparators-and-deadband.html', label: 'Comparators & Deadband Quiz'},
+            {href: '/practice/timers-and-delays.html', label: 'Timers & Delays Quiz'},
+            {href: '/practice/setpoint-math-reset.html', label: 'Setpoint Math & Reset Quiz'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/practice/">← All practice</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="/scripts/quiz-engine.js"></script>
+<script>
+    (function () {
+        'use strict';
+
+        // Question bank lives in html/_data/quizzes/reading-a-wiresheet.js
+        // so the FAQPage JSON-LD emitted from head.njk can read the same
+        // source. The bank is concept + method level by design — the hard
+        // multi-block trace programs belong to the upcoming Wiresheet
+        // Traces drill (see the bank header).
+        const questions = {{ quizzes['reading-a-wiresheet'] | safeScriptJson | safe }};
+
+        Quiz.mount('#quiz', questions, {
+            next: {{ page.fileSlug | nextQuiz | safeScriptJson | safe }},
+            slug: 'reading-a-wiresheet',
+            title: 'Reading a Wiresheet',
+            defaultCount: 10,
+            defaultOrder: 'sequential'
+        });
+    })();
+</script>
+{% endblock %}
