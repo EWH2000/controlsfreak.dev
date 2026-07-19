@@ -162,6 +162,55 @@ module.exports = function(eleventyConfig) {
         return [];
     });
 
+    // Build-time guard: every CONTENT quiz must appear in the quizOrder
+    // curriculum list, and every slug in that list must be claimed by a
+    // real practice page. Without this a new quiz silently gets no
+    // "Next quiz →" target and drops out of the curriculum chain, while
+    // the page itself renders fine and every existing test passes —
+    // tests/smoke.spec.js only compares the landing GRID to quizOrder, so
+    // a quiz missing from BOTH is invisible there. Mirrors
+    // educationSequenceGuard: same accumulate-then-throw shape, same
+    // both-directions check, data file required inside the callback.
+    //
+    // `category !== "field"` is the discriminator because field drills
+    // are deliberately NOT part of the curriculum — html/_data/quizOrder.js
+    // lines 1-8 record the invariant ("Field drills are not a curriculum
+    // and carry no next-link"), and `category: field` is the same flag the
+    // practice landing uses to hide drill cards under a topic chip. Today:
+    // 39 practice pages − 5 drills = 34 = quizOrder.length, zero orphans.
+    eleventyConfig.addCollection("quizOrderGuard", (collectionApi) => {
+        const order = require("./html/_data/quizOrder.js");
+        const ordered = new Set(order.map((entry) => `/practice/${entry.slug}.html`));
+        const landing = "https://controlsfreak.dev/practice/";
+        const pagePaths = new Set();
+        const offenders = [];
+        collectionApi.getAll()
+            .filter((item) => item.data.nav === "practice"
+                && typeof item.data.canonical === "string"
+                && item.data.canonical !== landing
+                && item.data.category !== "field")
+            .forEach((item) => {
+                const path = item.data.canonical.replace("https://controlsfreak.dev", "");
+                pagePaths.add(path);
+                if (!ordered.has(path)) {
+                    offenders.push(`  ${item.inputPath} — content quiz absent from quizOrder`);
+                }
+            });
+        ordered.forEach((url) => {
+            if (!pagePaths.has(url)) {
+                offenders.push(`  quizOrder lists ${url} but no non-field nav:practice page claims that canonical`);
+            }
+        });
+        if (offenders.length) {
+            throw new Error(
+                `quizOrder must list every content quiz — field drills are ` +
+                `exempt by design (html/_data/quizOrder.js header ` +
+                `invariant):\n${offenders.join("\n")}`
+            );
+        }
+        return [];
+    });
+
     // Pages for sitemap.njk: every template that carries a `canonical`
     // frontmatter — i.e. every real page; the sitemap template itself
     // has none, so it self-excludes. (Counts drift: a hardcoded "all 20
