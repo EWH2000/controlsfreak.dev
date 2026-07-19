@@ -1,0 +1,70 @@
+---
+title: Start/Stop Commands Quiz — controlsfreak.dev
+description: Ten questions on the start/stop command path — localize a runs-in-Hand-dead-in-Auto fault, read HOA positions, and pick which trips belong in copper, not code.
+canonical: https://controlsfreak.dev/practice/start-stop-commands.html
+nav: practice
+category: signals
+pairedLesson: https://controlsfreak.dev/education/start-stop-commands.html
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Practice · Start/Stop Commands</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">Start/Stop Commands Quiz <span class="tool-tag">Signals</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                Read the <a href="/education/start-stop-commands.html">Start/Stop Commands</a> lesson first, then test yourself — ten questions on the binary-output command path: the chain between a BO and the motor, why the interposing relay exists, what each HOA position does to command-vs-status agreement, the Hand-vs-Auto localization split, and which trips belong hardwired in copper rather than coded in software. Each reveal links back to the section it came from.
+            </p>
+
+            <div id="quiz"></div>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        simulators: [
+            {href: '/simulators/controller-wiring.html', label: 'Controller Wiring Simulator'}
+        ],
+        lessons: [
+            {href: '/education/start-stop-commands.html', label: 'Start/Stop Commands'},
+            {href: '/education/controller-wiring.html', label: 'Controller Wiring'},
+            {href: '/education/vfds.html', label: 'VFDs'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/practice/">← All practice</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="/scripts/quiz-engine.js"></script>
+<script>
+    (function () {
+        'use strict';
+
+        // Question bank lives in html/_data/quizzes/start-stop-commands.js so
+        // the FAQPage JSON-LD emitted from head.njk can read the same source.
+        const questions = {{ quizzes['start-stop-commands'] | safeScriptJson | safe }};
+
+        Quiz.mount('#quiz', questions, {
+            next: {{ page.fileSlug | nextQuiz | safeScriptJson | safe }},
+            slug: 'start-stop-commands',
+            title: 'Start/Stop Commands',
+            defaultCount: 10,
+            defaultOrder: 'sequential'
+        });
+    })();
+</script>
+{% endblock %}

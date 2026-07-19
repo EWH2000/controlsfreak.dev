@@ -77,7 +77,7 @@ nav: practice
 
     <div class="filter-chips" role="group" aria-label="Filter practice by topic">
         <button type="button" class="filter-chip active" data-category="all" aria-pressed="true">
-            All <span class="filter-chip-count">30</span>
+            All <span class="filter-chip-count">35</span>
         </button>
         <button type="button" class="filter-chip" data-category="modbus" aria-pressed="false">
             Modbus <span class="filter-chip-count">2</span>
@@ -92,7 +92,7 @@ nav: practice
             Refrigeration <span class="filter-chip-count">3</span>
         </button>
         <button type="button" class="filter-chip" data-category="signals" aria-pressed="false">
-            Signals &amp; Sensing <span class="filter-chip-count">1</span>
+            Signals &amp; Sensing <span class="filter-chip-count">6</span>
         </button>
         <button type="button" class="filter-chip" data-category="controls" aria-pressed="false">
             Controls <span class="filter-chip-count">2</span>
@@ -140,6 +140,51 @@ nav: practice
                 titleFull:  'Controller Wiring',
                 desc:       'Landings and power from memory — why every return comes back to COM, one transformer with two commons, LOOP+ vs the hot leg, wet vs dry contacts, and the BO-C nobody fed.',
                 pills:      ['10 Questions', 'MCQ · TF · Gotcha · Numeric', '~ 5 min'],
+                category:   'signals'
+            }) }}
+            {{ navCard({
+                section:    'practice',
+                href:       '/practice/analog-sensing.html',
+                titleShort: 'Analog Sensing',
+                titleFull:  'Analog Sensing',
+                desc:       'Trust the graphic from memory — scale a raw signal to engineering units, catch the doubled span, read a flatline as a ceiling, and spot the dead loop below live zero.',
+                pills:      ['10 Questions', 'MCQ · TF · Gotcha · Numeric', '~ 5 min'],
+                category:   'signals'
+            }) }}
+            {{ navCard({
+                section:    'practice',
+                href:       '/practice/temperature-sensors.html',
+                titleShort: 'Temperature Sensors',
+                titleFull:  'Temperature Sensors',
+                desc:       'Prove the sensor from memory — look up ohms against the curve, catch the Type II / Type III mismatch, size the lead-resistance error, and pick the meter move that settles it.',
+                pills:      ['10 Questions', 'MCQ · TF · Gotcha · Numeric', '~ 5 min'],
+                category:   'signals'
+            }) }}
+            {{ navCard({
+                section:    'practice',
+                href:       '/practice/status-and-proof.html',
+                titleShort: 'Status & Proof',
+                titleFull:  'Status & Proof',
+                desc:       'Read status like a skeptic — what aux, current, and DP switches each prove, the broken-belt verdicts, trip-point reasoning, proof windows, and inverted polarity.',
+                pills:      ['10 Questions', 'MCQ · TF · Gotcha · Numeric', '~ 5 min'],
+                category:   'signals'
+            }) }}
+            {{ navCard({
+                section:    'practice',
+                href:       '/practice/commanding-actuators.html',
+                titleShort: 'Commanding Actuators',
+                titleFull:  'Commanding Actuators',
+                desc:       'From AO to damper stroke — run the 2–10 V span math both directions, pick the right fail posture, work the feedback fork, and clear the floating actuator\'s morning drive.',
+                pills:      ['10 Questions', 'MCQ · TF · Gotcha · Numeric', '~ 5 min'],
+                category:   'signals'
+            }) }}
+            {{ navCard({
+                section:    'practice',
+                href:       '/practice/start-stop-commands.html',
+                titleShort: 'Start/Stop Commands',
+                titleFull:  'Start/Stop Commands',
+                desc:       'The BO command path from memory — order the chain, localize runs-in-Hand-dead-in-Auto, read command vs status in every HOA position, and catch the always-hot relay coil.',
+                pills:      ['10 Questions', 'MCQ · TF · Gotcha', '~ 5 min'],
                 category:   'signals'
             }) }}
             {# ── end Signals & Sensing ── #}

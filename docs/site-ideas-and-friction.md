@@ -70,6 +70,179 @@ renderer), plus a data-file schema for scenarios. Build **after** the
 engine, one scenario, the existing practice-landing card shape; no
 scoring leaderboards (the quiz plan's hard-nos carry over).
 
+### Signals & Sensing buildout — the controls-spine chapter *(opened 2026-07-18)*
+
+The controls-spine arc's education chapter (see the arc handoff
+brief): the site's identity is controls-first but the signals/IO
+shelf was the thinnest — the foundation PR seeded the `signals`
+category with controller-wiring as the boundary lesson, and the
+chapter now builds out from the
+`[future: education/analog-sensing.html]` marker the forced-air
+buildout left behind. Per-page contracts below, one at a time as
+lanes open. Chapter reading order (final, once all lanes land):
+controller-wiring → analog-sensing → temperature-sensors →
+status-and-proof → commanding-actuators → start-stop-commands;
+educationSequence.js, quizOrder.js, and both landing grids re-sort
+as each in-flight lane merges.
+
+**Analog Sensing — the chapter's anchor lesson.** Declared question:
+*How does a raw electrical signal become the engineering value on
+the graphic — and when should you not believe that value?*
+In scope: ranges and scaling (the published range as a promise; the
+straight line between signal and engineering units; the
+range-mismatch failure mode — software span ≠ transmitter span reads
+plausible-but-wrong forever; worked example replicable in the
+signal-scaling tool); live zero as diagnosis (what under-range and
+over-range look like per signal family at the graphic — 0–10 V
+can't distinguish broken from zero, 4–20 mA can; the WHY of the
+4 mA floor stays on controller-wiring, taken as given via
+cross-link); railed signals as ceilings, not measurements (a value
+pegged at range top says only "the truth is at least this much";
+picking ranges so the operating point lives mid-span — generalizes
+duct-static-control's railed-transducer war story, anchor-linked
+both directions).
+Out of scope: loop wiring/power — controller-wiring owns it (any
+sentence explaining loop power belongs there); thermistor/RTD
+curves — plain prose, the temperature-sensors lesson is in-flight
+this arc and a later lane adds the anchor *(paid 2026-07-18 — the
+temperature-sensors lane merged second and added its lesson to this
+page's relatedLinks per the second-merger reciprocity rule)*; sensor
+placement — duct-static-control / pump-control own theirs;
+calibration offsets — plain prose here,
+`[future: education/sensor-calibration.html]`.
+Debts: pays the signal-scaling tool's missing lessons-link (the
+tool's documented lesson home) and the duct-static war story's
+generalization.
+
+**Temperature Sensors — curve families + the meter workflow.**
+Declared question: *Why does the controller need to know exactly
+which temperature sensor is on the wire — and how do you verify one
+with a meter?*
+In scope: thermistor curve families (10K Type II vs Type III share
+one defining point — 10 kΩ at 77 °F — and diverge everywhere else;
+the vendor-shunted conventions the thermistor-calculator already
+names, the JCI 10K + 8.7K and TAC Type 5, as proof the name is not
+the curve; the quiet failure — a wrong-but-close curve reads a few
+degrees off, plausibly, forever, and nobody hunts a 3° lie); RTDs vs
+thermistors (Pt100 / Pt1000 / Balco; ohms-per-degree so small on an
+RTD that lead resistance reads as temperature; the 3-wire
+compensation answer; where each family lives in the field —
+thermistors own BAS space/duct temp, RTDs where accuracy and
+stability pay); the verification workflow (disconnect → meter the
+ohms → table lookup — the thermistor-calculator's R/T tables ARE the
+lookup, sent there directly → compare against a reference
+thermometer; deciding sensor vs input vs configuration from what
+disagrees).
+Out of scope: landing/wiring faults and the open-reads-cold /
+short-reads-hot display signature — controller-wiring owns them (one
+sentence + anchor); averaging elements + sensor placement — plain
+prose, `[future: education/sensor-placement.html]`; calibration
+offsets — plain prose, `[future: education/sensor-calibration.html]`
+(also declared on the Analog Sensing contract above); the
+analog-signal chapter opener was referenced in plain prose while
+that lane was in-flight *(converted to a live anchor + relatedLinks
+reciprocity at integration, 2026-07-18)*.
+Debts: pays the thermistor-calculator's missing lessons-link (the
+tool had no lesson home until now).
+
+**Status & Proof — the binary-sensing lesson.** Declared question:
+*When the graphic says a fan is ON, what is the controller actually
+sensing — and why do command and status sometimes disagree?*
+In scope: the status-source menu (starter auxiliary contact vs
+current switch vs DP/paddle switch, and what each actually PROVES —
+contactor closed ≠ motor drawing amps ≠ air moving; the broken-belt
+case is the canonical separator and the page's through-line: aux
+says ON, current switch shows a motor spinning unloaded whose draw
+may sit under the trip, DP says no air); proof logic (command-vs-
+status comparison, the proof window — command it, wait, expect
+proof — and fail-to-start as a concept; the BLOCK-level
+implementation belongs to the in-flight timers-and-delays lesson
+`[future: education/timers-and-delays.html]` — one plain-prose
+forward sentence with no anchor, the timers lane retro-adds it on
+merge); binary fault signatures (inverted polarity
+from a NO/NC config mismatch — perpetual ON or perpetual OFF;
+chattering status from a loose contact or marginal airflow at a DP
+switch; a current-switch trip point set below the motor's unloaded
+draw — proves ON with a broken belt, tying back to section 1).
+Out of scope: dry/wet contacts, wetting current, and how the BI
+lands — controller-wiring owns them (one sentence + anchor);
+point-to-point checkout discipline — controls-commissioning owns it
+(anchor); the wiring simulator models dry contacts on BIs and is
+cross-linked as the place to wire one.
+Paired quiz: `practice/status-and-proof.html` — 10 questions, house
+mix, exactly 1 gotcha (an inverted-polarity point-config snippet);
+scope split vs the neighboring banks: field-wiring-sensors owns
+sensor curves/shielding/sourcing-sinking, controller-wiring owns
+the landings and wet-vs-dry — this bank stays on WHAT STATUS PROVES
+and the command-vs-status logic.
+
+**Commanding Actuators** (`education/commanding-actuators.html` +
+paired quiz) *(lane opened 2026-07-18 — drafted, owner-checkpointed,
+and integrated the same day)*. Declared question:
+*What happens between an AO commanding 50% and the damper actually
+sitting at 50% — and why do the two disagree?*
+In scope: (1) command spans — 0–10 V vs 2–10 V vs 4–20 mA actuator
+inputs; THE worked example: 5 V into a 2–10 V actuator is 37.5%
+stroke, not 50% (numeric, replicable in the signal-scaling tool, and
+the page says so); the mismatch symptoms (everything tracks but
+always sits low/high, hunting near the ends of travel) with span
+DIP-switch / configuration mismatch as the usual cause. (2) direction
+and fail posture — direct vs reverse acting at the ACTUATOR, one
+disambiguation sentence against loop action (pid-basics owns the
+loop); spring return vs fail-in-place; what normally open / normally
+closed means for a valve and a damper on power loss, fail posture as
+a design decision — the normally-OPEN hot-water valve as the classic
+freeze-protection example. (3) position feedback and floating
+behavior — verifying with a feedback AI and the
+command-50-feedback-34 diagnostic fork (stroke time → span config →
+mechanical); floating (tri-state) actuators as
+command-without-position — the run-time estimate drifts and re-syncs
+by overdriving to an end of travel; the field symptoms (drift, the
+periodic full-travel drive). Two static cak- diagrams (span-mismatch
+number line; three-line stroke-vs-command chart), an anecdote slot
+left at fail posture.
+Out of scope: the 3-wire landing / power-vs-signal mistake and the
+floating triac-pair wiring — controller-wiring.html (anchored once);
+VFD run/speed — vfds.html (anchored once: drives take the same
+0–10 / 4–20 command languages, that page owns them); loop behavior —
+pid-basics.html; valve sizing and authority stay plain prose
+`[future: valve-authority]`.
+Debts: pays analog-sensing's "you will meet it on actuator feedback
+especially" plant (upgraded to a live link into
+#feedback-and-floating, plus relatedLinks reciprocity both ways).
+Incurs the valve-authority marker above.
+
+**Start/Stop Commands — the chapter closes on the output side.**
+Owner-added for input/output symmetry: the rest of the chapter lives
+on the reading side; this is the binary-OUTPUT story, and it lands
+LAST in the chapter (final order: controller-wiring → analog-sensing
+→ temperature-sensors → status-and-proof → commanding-actuators →
+start-stop-commands, then controls-commissioning resumes). Declared
+question: *When a BO commands equipment ON, what sits between the
+controller's relay and the motor starting — and why does Hand work
+when Auto doesn't?*
+In scope: the command path (BO dry contact → interposing relay → HOA
+switch → hardwired safety string → contactor coil → motor — each
+element's job in one breath, what a break at each point looks like
+from the BMS seat, and why the interposing relay exists: the BO's
+contact rating and voltage class vs the contactor coil's); HOA
+semantics (Hand bypasses the BMS entirely, Off beats everyone, Auto
+hands the decision to the BO; what each position does to
+command-vs-status agreement — in Hand the unit runs while the BMS
+commands OFF, the mirror of the broken-belt case); finding the break
+(works in Hand, dead in Auto → the fault is upstream of the HOA's
+Auto leg; works in neither → downstream; hardwired safety string vs
+software interlocks — why life-safety trips live in copper, not
+code).
+Out of scope: BO wiring / relay-vs-triac / the BO-C feed —
+controller-wiring owns them (anchored once, never re-taught); motor
+starter internals and overload sizing — out of site scope, one
+plain-prose sentence (electrician's territory); status sensing and
+proof — status-and-proof is the mirror lesson (in-flight this arc:
+prose now, anchor at integration); the VFD run command — vfds owns
+it (anchored: drives replace the contactor but keep the same
+command-path shape).
+
 ### BACnet buildout — the flagship subsection *(opened 2026-07-07, completed 2026-07-12 — all five pages + the pillar shipped)*
 
 The topic-cluster play from the `seo-growth-plan-2026-07` analysis,
@@ -373,7 +546,9 @@ while shipping page 6 (owner request 2026-07-11): an **analog
 sensing / transmitters lesson** — ranges and scaling, live-zero,
 railed signals as ceilings not measurements — seeded by the
 railed-transducer beat; natural home for the signal-scaling tool's
-lessons-link. `[future: education/analog-sensing.html]`
+lessons-link. `[future: education/analog-sensing.html]` *(shipped
+2026-07-18 — Signals & Sensing chapter anchor; contract under the
+Signals & Sensing buildout entry)*
 
 **The identification sidestep.** Linear order stands, but the opener
 plants an early callout toward naming the unit ("not sure what to
@@ -3774,7 +3949,8 @@ anti-windup, output clamped 0–100 %; distinct from `pid-engine.js`'s
 shape). The pid-tuner / pid-basics pages remain the place for PID
 internals; this tool just lets you wire the loop into a sequence.
 
-**Five canned example programs** load via a `widget-try` chip row:
+**Canned example programs** load via a `widget-try` chip row —
+five at launch:
 1. *Freeze-stat shutdown chain* — freeze BI sets an SR latch, the
    latch drops the fan via NOT and lights an alarm BO.
 2. *Economizer enable* — AI(OAT) `<` const(setpoint) AND BI(cool
@@ -3791,6 +3967,18 @@ internals; this tool just lets you wire the loop into a sequence.
    vocabulary.
 5. *PID loop* — AI(PV), const(SP), PID block, AO + readout. The
    loop visibly climbs toward setpoint once running.
+
+Two more shipped 2026-07-18 (PR #381) as lesson capstones for the
+programming chapter — seven total:
+
+6. *Proof-of-flow alarm* — command AND NOT(proof) feeds a 15 s TON;
+   its Q sets an SR latch driving the alarm BO, cleared by a reset
+   BI. Loads healthy (commanded + proved) so the user breaks it by
+   toggling proof off. Capstone for the timers-and-delays lesson.
+7. *OAT hot-water reset* — AI(OAT) → MUL const(−0.667) → ADD
+   const(180) → LIMIT 140–180 → AO: 180 °F at 0 °F sliding to
+   140 °F at 60 °F, default 30 °F OAT → 160 °F. Capstone for the
+   setpoint-math-reset lesson.
 
 **Tick semantics — one-tick delay for cycles.** Kahn topological
 sort on the wire DAG; combinational chains settle in dependency

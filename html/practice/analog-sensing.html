@@ -1,0 +1,69 @@
+---
+title: Analog Sensing Quiz — controlsfreak.dev
+description: Ten questions on trusting analog values — scale a raw signal to engineering units, catch a range mismatch, read a railed trend, and spot a dead loop.
+canonical: https://controlsfreak.dev/practice/analog-sensing.html
+nav: practice
+category: signals
+pairedLesson: https://controlsfreak.dev/education/analog-sensing.html
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Practice · Analog Sensing</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">Analog Sensing Quiz <span class="tool-tag">Signals</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                Read the <a href="/education/analog-sensing.html">Analog Sensing</a> lesson first, then test yourself — ten questions on the reading side of analog signals: what the published range promises, scaling a raw mA value to engineering units, the span-mismatch that reads plausibly wrong forever, what a live zero buys you at the graphic, and why a value flatlined at the top of its range is a ceiling, not a measurement. Each reveal links back to the section it came from.
+            </p>
+
+            <div id="quiz"></div>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/tools/signal-scaling.html', label: 'Signal Scaling'}
+        ],
+        lessons: [
+            {href: '/education/analog-sensing.html', label: 'Analog Sensing'},
+            {href: '/education/controller-wiring.html', label: 'Controller Wiring'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/practice/">← All practice</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="/scripts/quiz-engine.js"></script>
+<script>
+    (function () {
+        'use strict';
+
+        // Question bank lives in html/_data/quizzes/analog-sensing.js so the
+        // FAQPage JSON-LD emitted from head.njk can read the same source.
+        const questions = {{ quizzes['analog-sensing'] | safeScriptJson | safe }};
+
+        Quiz.mount('#quiz', questions, {
+            next: {{ page.fileSlug | nextQuiz | safeScriptJson | safe }},
+            slug: 'analog-sensing',
+            title: 'Analog Sensing',
+            defaultCount: 10,
+            defaultOrder: 'sequential'
+        });
+    })();
+</script>
+{% endblock %}
