@@ -464,6 +464,47 @@ techs new to the industry and anyone wanting a refresh.
   the general lesson under Duct Static Control's railed-transducer
   war story. Interactive signal-to-engineering-units mapping widget.
   Pairs with the Signal Scaling tool.
+- **Temperature Sensors** — why the controller must know exactly
+  which sensor is on the wire, and how to verify one with a meter.
+  The 10K Type II / Type III curve families that share one defining
+  point and nothing else (plus the shunted vendor conventions), the
+  quiet wrong-curve failure that reads plausibly off forever, RTDs
+  (Pt100 / Pt1000 / Balco) and the lead resistance that reads as
+  temperature with the 3-wire fix, and the disconnect → ohm → table →
+  reference verification workflow. Pairs with the Thermistor / RTD
+  Calculator.
+- **Status & Proof** — when the graphic says a fan is ON, what is the
+  controller actually sensing? The status-source menu (starter aux
+  contact vs current switch vs DP/paddle switch) and what each
+  actually proves — contactor closed ≠ motor drawing amps ≠ air
+  moving, with the broken belt as the canonical separator; proof
+  logic (command it, wait the proof window, expect status —
+  fail-to-start one way, an authority problem the other); and the
+  binary fault signatures — inverted polarity, chatter, and the
+  current-switch trip set below the unloaded draw. Two diagrams share
+  one machine: three sources tapped where they live, then the same
+  drawing with the belt snapped and three verdicts.
+- **Commanding Actuators** — what happens between an AO commanding
+  50% and the damper actually sitting at 50%. The three command
+  spans (0–10 V, 2–10 V, 4–20 mA) with the worked 5-V-into-2–10-V =
+  37.5% mismatch (replicable in the Signal Scaling tool), direct vs.
+  reverse acting at the actuator (distinct from loop action), spring
+  return and fail posture as a design decision — the normally-open
+  hot-water valve for freeze protection — then position feedback's
+  diagnostic fork (transit time → span config → mechanics) and
+  floating (tri-state) actuators, whose run-time position estimate
+  drifts and re-syncs at the ends of travel. Pairs with the
+  Commanding Actuators quiz.
+- **Start/Stop Commands** — the chapter's binary-output story: what
+  sits between a BO commanding ON and the motor starting. The
+  command path (BO dry contact → interposing relay → HOA switch →
+  hardwired safety string → contactor coil), why the interposing
+  relay exists (contact rating and voltage class), what each HOA
+  position does to command-vs-status agreement, and the localization
+  split that makes Hand the first move on a no-run call — runs in
+  Hand means hunt the Auto leg, dead in both means walk the safety
+  string. Life-safety trips live in copper, not code. Pairs with
+  Controller Wiring and the Start/Stop Commands quiz.
 - **Controls Commissioning** — how you verify a controller actually
   does what its sequence of operations says. Point-to-point checkout
   of every AI, AO, BI, and BO (exercise the point, confirm the value
@@ -668,9 +709,16 @@ techs new to the industry and anyone wanting a refresh.
   economizer-enable sheet. Pairs with the Function-Block Editor
   sandbox and a Function Blocks quiz.
 <!-- ── Programming chapter ─ Function-Block Basics leads it; insert
-     new lesson bullets here, in curriculum order (Boolean Logic &
-     Latches slots before Comparators & Deadband when its in-flight
-     lane merges) ── -->
+     new lesson bullets here, in curriculum order ── -->
+- **Boolean Logic & Latches** — how the true/false blocks turn
+  equipment rules into logic: the permissive chain (AND as a chain
+  of proofs), reading a truth table as a sentence, fail-safe
+  normally-closed wiring and the NOT that fixes a trip-sense
+  signal, why safeties latch instead of self-clearing (the
+  set-dominant SR latch and the manual-reset idiom, timed out on a
+  four-trace diagram), and XOR as the command/status disagreement
+  detector. Capstones into the editor's freeze-stat example. Pairs
+  with a Boolean Logic & Latches quiz.
 - **Comparators & Deadband** — how a number becomes a decision: the
   comparator family as the analog-to-digital bridge (why > vs ≥ never
   matters on a measured value, and why EQ on an analog is a trap the
@@ -765,7 +813,7 @@ flavors share the same engine:
   When a topic recurs in feedback, it becomes a candidate for a
   new education page.
 
-Shipped so far — twenty-six content quizzes (each 10 questions, paired
+Shipped so far — thirty-one content quizzes (each 10 questions, paired
 1:1 with its lesson and deep-linking the gotchas) plus five field
 drills:
 
@@ -785,7 +833,9 @@ drills:
   leaves and how integral erases it, and the rectifier / DC-bus /
   inverter power stages with the run-command vs. speed-reference
   trap.
-- **Content quizzes — signals:** Controller Wiring, Analog Sensing.
+- **Content quizzes — signals:** Controller Wiring, Analog Sensing,
+  Temperature Sensors, Status & Proof, Commanding Actuators,
+  Start/Stop Commands.
   The shared COM as the panel's 0 V reference, the same-leg phasing
   rule on a shared transformer (and the 24-vs-48 V distinction),
   LOOP+ vs the AC hot leg for a 2-wire loop, wetting current and wet
@@ -794,12 +844,26 @@ drills:
   the published-range promise and its span-mismatch gotcha, scaling
   a raw signal to engineering units, the live zero's impossible
   numbers, and the railed flatline that's a ceiling, not a
-  measurement.
-- **Content quizzes — programming:** Function Blocks, Comparators &
-  Deadband. Blocks, pins, wire types, the block families, and how a
-  scan resolves feedback; then comparator picks, the EQ-on-analog
-  trap, chatter and short-cycling, band-edge math, and the
-  swapped-looking S/R pair that's really reverse action.
+  measurement; then the sensor itself — ohms-to-temperature lookups,
+  the Type II / Type III mismatch and its plausibly-wrong signature,
+  RTD lead resistance in degrees, and the meter workflow that splits
+  sensor from run from configuration; then the binary side — what
+  aux, current, and DP switches each prove, the broken-belt verdict
+  bracket, trip-point reasoning, the proof-window trade-off, and the
+  inverted-polarity config gotcha; then the command side — the
+  2–10 V span math in both directions, fail posture on power loss,
+  the feedback diagnostic fork, and the floating actuator's morning
+  full-travel re-sync; then the output side — the BO-to-contactor
+  command path, HOA authority and the command/status split,
+  Hand-vs-Auto fault localization, and which trips belong in copper,
+  not code.
+- **Content quizzes — programming:** Function Blocks, Boolean Logic
+  & Latches, Comparators & Deadband. Blocks, pins, wire types, the
+  block families, and how a scan resolves feedback; then permissive
+  chains, fail-safe NOT inversion, set-dominant SR behavior, and the
+  missing-NOT gotcha; then comparator picks, the EQ-on-analog trap,
+  chatter and short-cycling, band-edge math, and the swapped-looking
+  S/R pair that's really reverse action.
 - **Content quizzes — refrigeration:** Refrigerant Cycle Basics,
   Superheat & Subcooling, TXVs vs. EEVs. The four components and
   the pressure-temperature saturation lock, which line each

@@ -1,0 +1,79 @@
+---
+title: Commanding Actuators Quiz — controlsfreak.dev
+description: Drill the Commanding Actuators lesson — 2-10 V span math, direction and fail posture, feedback that disagrees, and the floating morning full-travel.
+canonical: https://controlsfreak.dev/practice/commanding-actuators.html
+nav: practice
+category: signals
+pairedLesson: https://controlsfreak.dev/education/commanding-actuators.html
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Practice · Commanding Actuators</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">Commanding Actuators Quiz <span class="tool-tag">Signals</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                Read the <a href="/education/commanding-actuators.html">Commanding Actuators</a> lesson first,
+                then test yourself — ten questions on what an actuator does with a landed, powered command: the
+                2&ndash;10 V span math (both directions), why live-zero spans exist, direct vs reverse acting at
+                the actuator, the normally-open hot-water valve on a January power loss, the
+                command-50-feedback-34 diagnostic fork, and the floating actuator that drives full-travel every
+                morning. Each reveal links back to the section of the lesson it came from. For the landing side of
+                the same devices — power, signal, and common — the
+                <a href="/practice/controller-wiring.html">Controller Wiring quiz</a> is the companion set.
+            </p>
+
+            <div id="quiz"></div>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/tools/signal-scaling.html', label: 'Signal Scaling'}
+        ],
+        simulators: [
+            {href: '/simulators/controller-wiring.html', label: 'Controller Wiring Simulator'}
+        ],
+        lessons: [
+            {href: '/education/commanding-actuators.html', label: 'Commanding Actuators'},
+            {href: '/education/controller-wiring.html', label: 'Controller Wiring'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/practice/">← All practice</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="/scripts/quiz-engine.js"></script>
+<script>
+    (function () {
+        'use strict';
+
+        // Question bank lives in html/_data/quizzes/commanding-actuators.js
+        // so the FAQPage JSON-LD emitted from head.njk reads the same source.
+        const questions = {{ quizzes['commanding-actuators'] | safeScriptJson | safe }};
+
+        Quiz.mount('#quiz', questions, {
+            next: {{ page.fileSlug | nextQuiz | safeScriptJson | safe }},
+            slug: 'commanding-actuators',
+            title: 'Commanding Actuators',
+            defaultCount: 10,
+            defaultOrder: 'sequential'
+        });
+    })();
+</script>
+{% endblock %}

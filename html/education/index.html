@@ -23,13 +23,13 @@ nav: education
 
     <div class="filter-chips" role="group" aria-label="Filter lessons by category">
         <button type="button" class="filter-chip active" data-category="all" aria-pressed="true">
-            All <span class="filter-chip-count">32</span>
+            All <span class="filter-chip-count">37</span>
         </button>
         <button type="button" class="filter-chip" data-category="fundamentals" aria-pressed="false">
             Fundamentals <span class="filter-chip-count">5</span>
         </button>
         <button type="button" class="filter-chip" data-category="signals" aria-pressed="false">
-            Signals &amp; Sensing <span class="filter-chip-count">2</span>
+            Signals &amp; Sensing <span class="filter-chip-count">6</span>
         </button>
         <button type="button" class="filter-chip" data-category="hydronics" aria-pressed="false">
             Hydronics <span class="filter-chip-count">5</span>
@@ -41,7 +41,7 @@ nav: education
             Forced Air Systems <span class="filter-chip-count">8</span>
         </button>
         <button type="button" class="filter-chip" data-category="programming" aria-pressed="false">
-            Programming <span class="filter-chip-count">2</span>
+            Programming <span class="filter-chip-count">3</span>
         </button>
         <button type="button" class="filter-chip" data-category="protocols" aria-pressed="false">
             Protocols <span class="filter-chip-count">7</span>
@@ -77,6 +77,42 @@ nav: education
             titleFull:  'Analog Sensing',
             desc:       'How a raw 4–20 mA or 0–10 V signal becomes the value on the graphic — the published range as a promise, live zero as a fault you can see from the chair, and railed readings as ceilings. Interactive mapping widget.',
             pills:      ['Signals', 'Ranges + Scaling', 'Live Zero', 'Railed = Ceiling'],
+            category:   'signals'
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/education/temperature-sensors.html',
+            titleShort: 'Temperature Sensors',
+            titleFull:  'Temperature Sensors',
+            desc:       'Why the controller must know exactly which sensor is on the wire — 10K Type II vs Type III and the shunted vendor curves, RTDs and the lead resistance that reads as temperature, and the meter-and-table verification workflow.',
+            pills:      ['Signals', 'Curve Families', 'RTD vs Thermistor', 'Meter Verify'],
+            category:   'signals'
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/education/status-and-proof.html',
+            titleShort: 'Status & Proof',
+            titleFull:  'Status & Proof',
+            desc:       'What a fan status point actually proves — aux contact vs current switch vs DP switch, proof windows and fail-to-start, and the broken belt that fools two of the three.',
+            pills:      ['Signals', 'Aux vs CS vs DP', 'Proof Window', 'Fail-to-Start'],
+            category:   'signals'
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/education/commanding-actuators.html',
+            titleShort: 'Commanding Actuators',
+            titleFull:  'Commanding Actuators',
+            desc:       'What happens between an AO commanding 50% and the damper sitting at 37.5% — command spans (0–10 / 2–10 V / 4–20 mA), direct vs reverse acting, spring-return fail positions, position feedback, and floating actuators.',
+            pills:      ['Signals', 'Command Spans', 'Fail Posture', 'Floating'],
+            category:   'signals'
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/education/start-stop-commands.html',
+            titleShort: 'Start/Stop Commands',
+            titleFull:  'Start/Stop Commands',
+            desc:       'What sits between a BO commanding ON and the motor starting — the interposing relay, the HOA switch, the hardwired safety string, and why a unit that runs in Hand but not Auto has already told you where the break is.',
+            pills:      ['Signals', 'BO → Contactor', 'HOA', 'Safety String'],
             category:   'signals'
         }) }}
         {# ── end Signals & Sensing ── #}
@@ -273,9 +309,15 @@ nav: education
             pills:      ['Logic', 'Wiresheet', 'Evaluation Order'],
             category:   'programming'
         }) }}
-        {# boolean-logic-latches' card slots between Function Blocks and
-           Comparators & Deadband when its in-flight lane merges (keep
-           educationSequence.js in the same order) #}
+        {{ navCard({
+            section:    'education',
+            href:       '/education/boolean-logic-latches.html',
+            titleShort: 'Boolean Logic',
+            titleFull:  'Boolean Logic & Latches',
+            desc:       'How AND, OR, and NOT turn interlocks, permissives, and safeties into wiresheet logic — and how the set-dominant SR latch holds a trip until someone resets it.',
+            pills:      ['Logic', 'Permissive Chain', 'SR Latch'],
+            category:   'programming'
+        }) }}
         {{ navCard({
             section:    'education',
             href:       '/education/comparators-and-deadband.html',
