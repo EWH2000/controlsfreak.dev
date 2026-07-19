@@ -2238,8 +2238,11 @@ drawing.
 - `[future: sequencing.html]` (the closing) — **partly paid.** The
   closing's staging mention now links to equipment-staging.html;
   the rest of the broader sequence layer — setpoint reset against
-  outside-air temperature, mode transitions, morning warm-up —
-  stays plain-prose forward-link for future pages.
+  outside-air temperature *(shipped 2026-07-18 —
+  education/setpoint-math-reset.html, the sheet-side math; the
+  system-side WHY stays here on the DP-reset section)*, mode
+  transitions, morning warm-up — stays plain-prose forward-link
+  for future pages.
 - `[future: balancing.html]` *(shipped 2026-05-16)* — not directly forward-linked from
   pump-control (the load-piping page already carries the link),
   but worth noting that pump-control's "DP setpoint reset assumes
@@ -2292,7 +2295,9 @@ In scope (sections shipped):
   plain prose) to the still-future reset / modes / warm-up pages.
 
 Out of scope (forward links, not content):
-- Setpoint / OAT reset, mode transitions, optimal / morning warm-up
+- Setpoint / OAT reset *(shipped 2026-07-18 —
+  education/setpoint-math-reset.html carries the reset-schedule
+  math)*, mode transitions, optimal / morning warm-up
   start, bumpless transitions — [future: sequencing page(s)]
 - End-of-curve protection / deadhead — covered on pump-control;
   linked back, not re-taught

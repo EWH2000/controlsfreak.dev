@@ -669,6 +669,18 @@ techs new to the industry and anyone wanting a refresh.
   sandbox and a Function Blocks quiz.
 <!-- ── Programming chapter ─ Function-Block Basics leads it; insert
      new lesson bullets here, in curriculum order ── -->
+- **Setpoint Math & Reset Schedules** — how a sheet computes a
+  setpoint instead of typing it: add/sub building band edges and
+  occupied/unoccupied setbacks off one constant, min/max as
+  high-selects across zone demands and low-select ceilings, and the
+  SELECT block switching setpoints on an occupancy bit. The
+  centerpiece is the outdoor-air reset schedule as y = mx + b plus a
+  clamp — slope and intercept derived from the two design endpoints,
+  the LIMIT block as the safety rail that keeps a cold snap from
+  commanding water past design, and the same two-point arithmetic as
+  signal scaling (the tool's 2-Point tab solves a schedule
+  directly). Pairs with the editor's hot-water reset example and a
+  Setpoint Math & Reset quiz.
 - **Modbus Basics** — what Modbus is on the wire: the four data
   tables (coils, discrete inputs, input and holding registers),
   the function codes that read and write them, and what an
@@ -752,7 +764,7 @@ flavors share the same engine:
   When a topic recurs in feedback, it becomes a candidate for a
   new education page.
 
-Shipped so far — twenty-five content quizzes (each 10 questions, paired
+Shipped so far — twenty-six content quizzes (each 10 questions, paired
 1:1 with its lesson and deep-linking the gotchas) plus five field
 drills:
 
@@ -782,8 +794,11 @@ drills:
   a raw signal to engineering units, the live zero's impossible
   numbers, and the railed flatline that's a ceiling, not a
   measurement.
-- **Content quizzes — programming:** Function Blocks. Blocks, pins,
-  wire types, the block families, and how a scan resolves feedback.
+- **Content quizzes — programming:** Function Blocks, Setpoint Math
+  & Reset. Blocks, pins, wire types, the block families, and how a
+  scan resolves feedback; then the math chains — interpolating a
+  reset schedule from fresh endpoints, deriving slope and intercept,
+  high- vs low-selects, and a flipped-sign reset chain gotcha.
 - **Content quizzes — refrigeration:** Refrigerant Cycle Basics,
   Superheat & Subcooling, TXVs vs. EEVs. The four components and
   the pressure-temperature saturation lock, which line each
