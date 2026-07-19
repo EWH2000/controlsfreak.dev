@@ -35,8 +35,8 @@ from the recurring content-accuracy audits.
   - `head.njk` — `<head>`: meta, OG, favicons, fonts, `/styles.css`,
     units + theme before-paint bootstrap scripts.
   - `nav.njk` — top nav; `.active` driven by `nav` frontmatter.
-    Tools / Simulators / Education / Practice carry **dropdown menus**
-    of direct links (disclosure buttons populated from collections — see *Search
+    Guides / Tools / Simulators / Education / Practice carry **dropdown
+    menus** of direct links (disclosure buttons populated from collections — see *Search
     index & nav menus*); the bar also holds the **command-palette
     search button** and, below 620px, a **hamburger** that collapses
     the link bar (`nav-menu.js`).
@@ -157,7 +157,7 @@ Frontmatter:
   build on out-of-range). Renders HTML-autoescaped, so rephrase to
   avoid `'` and `<` if clean view-source matters.
 - `canonical` — full URL with `.html` extension; used for `og:url`.
-- `nav` — one of `home`, `tools`, `simulators`, `education`,
+- `nav` — one of `home`, `guides`, `tools`, `simulators`, `education`,
   `practice`, `contact`; drives the `.active` marker. Omit on pages
   that don't fit.
 - `keywords` — optional space- or comma-separated synonyms fed only to
@@ -200,9 +200,9 @@ The JSON has no `canonical` and is `eleventyExcludeFromCollections`,
 so it stays out of `sitemapPages` and the `PAGES` drift test — same
 status as `sitemap.xml`.
 
-The nav dropdowns are built from `navTools` / `navSimulators` /
-`navEducation` / `navPractice` collections (each `nav: <section>` minus
-the landing).
+The nav dropdowns are built from `navGuides` / `navTools` /
+`navSimulators` / `navEducation` / `navPractice` collections (each
+`nav: <section>` minus the landing).
 Two shared `.eleventy.js` filters serve both the index and the menus:
 `cleanTitle` (strips the ` — controlsfreak.dev` suffix) and
 `canonicalPath` (full canonical URL → root-relative `.html` href).
@@ -219,7 +219,8 @@ labels live in the `NAV_CATEGORIES` const in `.eleventy.js`; the
 declares its bucket via a **`category` frontmatter** key. A
 `navCategoryGuard` collection fails the build if any tools/education/
 practice page lacks a `category` or carries one not in its section's
-config. Simulators has no `NAV_CATEGORIES` entry, so it renders flat.
+config. Guides and Simulators have no `NAV_CATEGORIES` entry, so they
+render flat.
 `nav-menu.js` layers a second disclosure level (`.nav-group-toggle` /
 `.nav-submenu`, one category open at a time, Escape steps category →
 section). **Category keys mirror the landing pages' `navCard()`
@@ -345,6 +346,36 @@ section). **Category keys mirror the landing pages' `navCard()`
   ideally above and below the block. The `//` prefix is the
   site-wide marker; pair with `TODO` / `FIXME` / `XXX` when grepping
   in sweeps.
+- **Write claims that can't go stale** (the 2026-07-19 prose sweep's
+  most valuable finding — same defect family as the de-enumeration
+  items #160 / #170 / #180). The curriculum grows by *append*, so any
+  sentence that fixes a chapter's size or its last page is a
+  time bomb. Countable-but-uncounted phrasings ("its own page in this
+  chapter", "the pages before it") survived every chapter expansion;
+  **numbered and terminal ones went stale the moment a page landed** —
+  "the last page of this chapter", "these six pages", "closes this
+  chapter", "the chapter closer". One such claim propagated to six
+  files before anyone caught it. **Prefer phrasing that cannot drift
+  over phrasing that is merely correct today.** Concretely: don't
+  assert a page is last or a chapter is closed; don't count pages,
+  lessons, or files in prose when naming the set does the same work
+  ("the capstone for the hydronics chapter", not "for the five
+  hydronic lessons"). Counts that a build guard or a live render keeps
+  honest are fine — the home-page pills have a drift test, README
+  prose does not. Section landings and hub pages are the *one* place
+  ordinals belong, since they enumerate the sequence anyway.
+- **No coming-soon copy.** Never promise an unbuilt page in
+  reader-facing prose — no "gets its own lesson", "coming later", "a
+  future page covers this". Owner decision 2026-07-19: *"I don't like
+  a 'coming soon' look to things. There's plenty of content, and if
+  someone is looking for something specific when already on the site,
+  the homepage makes it evident the site is ever expanding."* State
+  the scope boundary and why the topic sits outside it, then move on —
+  a page that may never ship must not leave a reader waiting. The
+  roadmap lives in `site-ideas-and-friction.md` as a `[future:]`
+  marker; that marker is the tracking mechanism, page copy is not.
+  Complements the forward-link convention above: that one governs
+  *anchors* (never link an unbuilt page), this one governs *promises*.
 - **Avoid "plain English" / "plain-English" in copy** (owner
   preference, restored 2026-07-12 after it drifted out): **"Plain
   English" is the name of Schneider Electric's EBO / Continuum
@@ -497,11 +528,12 @@ Cross-cutting decisions. For per-page history and *why*, see
 `README.md`. This section only carries what's load-bearing when
 adding or moving pages.
 
-- **Shared top nav:** Home / Tools / Simulators / Education /
-  Practice / Contact. `nav` frontmatter drives `.active`. Tools /
-  Simulators / Education / Practice link to hub landings; Tools /
-  Simulators / Education / Practice also **drop down** to direct
-  links. A
+- **Shared top nav:** Home / Guides / Tools / Simulators / Education /
+  Practice / Contact. `nav` frontmatter drives `.active`. Guides /
+  Tools / Simulators / Education / Practice each link to a hub landing
+  and **drop down** to direct links — Tools / Education / Practice
+  cascade through category rows, Guides / Simulators render flat
+  (see *Search index & nav menus*). A
   command-palette **search** button (`/` or Ctrl/⌘-K) sits in the
   bar; below 620px the whole link bar collapses behind a
   **hamburger**, with the search icon kept in the top bar
