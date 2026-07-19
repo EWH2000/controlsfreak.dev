@@ -495,6 +495,16 @@ techs new to the industry and anyone wanting a refresh.
   floating (tri-state) actuators, whose run-time position estimate
   drifts and re-syncs at the ends of travel. Pairs with the
   Commanding Actuators quiz.
+- **Start/Stop Commands** — the chapter's binary-output story: what
+  sits between a BO commanding ON and the motor starting. The
+  command path (BO dry contact → interposing relay → HOA switch →
+  hardwired safety string → contactor coil), why the interposing
+  relay exists (contact rating and voltage class), what each HOA
+  position does to command-vs-status agreement, and the localization
+  split that makes Hand the first move on a no-run call — runs in
+  Hand means hunt the Auto leg, dead in both means walk the safety
+  string. Life-safety trips live in copper, not code. Pairs with
+  Controller Wiring and the Start/Stop Commands quiz.
 - **Controls Commissioning** — how you verify a controller actually
   does what its sequence of operations says. Point-to-point checkout
   of every AI, AO, BI, and BO (exercise the point, confirm the value
@@ -783,7 +793,7 @@ flavors share the same engine:
   When a topic recurs in feedback, it becomes a candidate for a
   new education page.
 
-Shipped so far — twenty-eight content quizzes (each 10 questions, paired
+Shipped so far — twenty-nine content quizzes (each 10 questions, paired
 1:1 with its lesson and deep-linking the gotchas) plus five field
 drills:
 
@@ -804,7 +814,8 @@ drills:
   inverter power stages with the run-command vs. speed-reference
   trap.
 - **Content quizzes — signals:** Controller Wiring, Analog Sensing,
-  Temperature Sensors, Status & Proof, Commanding Actuators.
+  Temperature Sensors, Status & Proof, Commanding Actuators,
+  Start/Stop Commands.
   The shared COM as the panel's 0 V reference, the same-leg phasing
   rule on a shared transformer (and the 24-vs-48 V distinction),
   LOOP+ vs the AC hot leg for a 2-wire loop, wetting current and wet
@@ -822,7 +833,10 @@ drills:
   inverted-polarity config gotcha; then the command side — the
   2–10 V span math in both directions, fail posture on power loss,
   the feedback diagnostic fork, and the floating actuator's morning
-  full-travel re-sync.
+  full-travel re-sync; then the output side — the BO-to-contactor
+  command path, HOA authority and the command/status split,
+  Hand-vs-Auto fault localization, and which trips belong in copper,
+  not code.
 - **Content quizzes — programming:** Function Blocks. Blocks, pins,
   wire types, the block families, and how a scan resolves feedback.
 - **Content quizzes — refrigeration:** Refrigerant Cycle Basics,

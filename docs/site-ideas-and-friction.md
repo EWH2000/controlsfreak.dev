@@ -212,6 +212,37 @@ especially" plant (upgraded to a live link into
 #feedback-and-floating, plus relatedLinks reciprocity both ways).
 Incurs the valve-authority marker above.
 
+**Start/Stop Commands — the chapter closes on the output side.**
+Owner-added for input/output symmetry: the rest of the chapter lives
+on the reading side; this is the binary-OUTPUT story, and it lands
+LAST in the chapter (final order: controller-wiring → analog-sensing
+→ temperature-sensors → status-and-proof → commanding-actuators →
+start-stop-commands, then controls-commissioning resumes). Declared
+question: *When a BO commands equipment ON, what sits between the
+controller's relay and the motor starting — and why does Hand work
+when Auto doesn't?*
+In scope: the command path (BO dry contact → interposing relay → HOA
+switch → hardwired safety string → contactor coil → motor — each
+element's job in one breath, what a break at each point looks like
+from the BMS seat, and why the interposing relay exists: the BO's
+contact rating and voltage class vs the contactor coil's); HOA
+semantics (Hand bypasses the BMS entirely, Off beats everyone, Auto
+hands the decision to the BO; what each position does to
+command-vs-status agreement — in Hand the unit runs while the BMS
+commands OFF, the mirror of the broken-belt case); finding the break
+(works in Hand, dead in Auto → the fault is upstream of the HOA's
+Auto leg; works in neither → downstream; hardwired safety string vs
+software interlocks — why life-safety trips live in copper, not
+code).
+Out of scope: BO wiring / relay-vs-triac / the BO-C feed —
+controller-wiring owns them (anchored once, never re-taught); motor
+starter internals and overload sizing — out of site scope, one
+plain-prose sentence (electrician's territory); status sensing and
+proof — status-and-proof is the mirror lesson (in-flight this arc:
+prose now, anchor at integration); the VFD run command — vfds owns
+it (anchored: drives replace the contactor but keep the same
+command-path shape).
+
 ### BACnet buildout — the flagship subsection *(opened 2026-07-07, completed 2026-07-12 — all five pages + the pillar shipped)*
 
 The topic-cluster play from the `seo-growth-plan-2026-07` analysis,

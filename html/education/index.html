@@ -23,13 +23,13 @@ nav: education
 
     <div class="filter-chips" role="group" aria-label="Filter lessons by category">
         <button type="button" class="filter-chip active" data-category="all" aria-pressed="true">
-            All <span class="filter-chip-count">34</span>
+            All <span class="filter-chip-count">35</span>
         </button>
         <button type="button" class="filter-chip" data-category="fundamentals" aria-pressed="false">
             Fundamentals <span class="filter-chip-count">5</span>
         </button>
         <button type="button" class="filter-chip" data-category="signals" aria-pressed="false">
-            Signals &amp; Sensing <span class="filter-chip-count">5</span>
+            Signals &amp; Sensing <span class="filter-chip-count">6</span>
         </button>
         <button type="button" class="filter-chip" data-category="hydronics" aria-pressed="false">
             Hydronics <span class="filter-chip-count">5</span>
@@ -104,6 +104,15 @@ nav: education
             titleFull:  'Commanding Actuators',
             desc:       'What happens between an AO commanding 50% and the damper sitting at 37.5% — command spans (0–10 / 2–10 V / 4–20 mA), direct vs reverse acting, spring-return fail positions, position feedback, and floating actuators.',
             pills:      ['Signals', 'Command Spans', 'Fail Posture', 'Floating'],
+            category:   'signals'
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/education/start-stop-commands.html',
+            titleShort: 'Start/Stop Commands',
+            titleFull:  'Start/Stop Commands',
+            desc:       'What sits between a BO commanding ON and the motor starting — the interposing relay, the HOA switch, the hardwired safety string, and why a unit that runs in Hand but not Auto has already told you where the break is.',
+            pills:      ['Signals', 'BO → Contactor', 'HOA', 'Safety String'],
             category:   'signals'
         }) }}
         {# ── end Signals & Sensing ── #}
