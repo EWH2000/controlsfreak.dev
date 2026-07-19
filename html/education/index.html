@@ -26,7 +26,10 @@ nav: education
             All <span class="filter-chip-count">30</span>
         </button>
         <button type="button" class="filter-chip" data-category="fundamentals" aria-pressed="false">
-            Fundamentals <span class="filter-chip-count">7</span>
+            Fundamentals <span class="filter-chip-count">5</span>
+        </button>
+        <button type="button" class="filter-chip" data-category="signals" aria-pressed="false">
+            Signals &amp; Sensing <span class="filter-chip-count">1</span>
         </button>
         <button type="button" class="filter-chip" data-category="hydronics" aria-pressed="false">
             Hydronics <span class="filter-chip-count">5</span>
@@ -36,6 +39,9 @@ nav: education
         </button>
         <button type="button" class="filter-chip" data-category="forced-air" aria-pressed="false">
             Forced Air Systems <span class="filter-chip-count">8</span>
+        </button>
+        <button type="button" class="filter-chip" data-category="programming" aria-pressed="false">
+            Programming <span class="filter-chip-count">1</span>
         </button>
         <button type="button" class="filter-chip" data-category="protocols" aria-pressed="false">
             Protocols <span class="filter-chip-count">7</span>
@@ -52,6 +58,9 @@ nav: education
             pills:      ['PID', 'P · I · D', '3 Mini Sims'],
             category:   'control'
         }) }}
+        {# ── Signals & Sensing ─ controller-wiring leads the chapter; insert
+           new lesson cards below it, in curriculum order (keep
+           educationSequence.js in lockstep) ── #}
         {{ navCard({
             section:    'education',
             href:       '/education/controller-wiring.html',
@@ -59,8 +68,9 @@ nav: education
             titleFull:  'Controller Wiring',
             desc:       'How a field point lands on a DDC controller — 24 VAC power and the shared common, the input and output types, and the wiring gotchas that bite. Pairs with the Controller Wiring Simulator.',
             pills:      ['Wiring', '24 VAC + Common', 'UI / BI / AO / BO', 'Field Gotchas'],
-            category:   'wiring'
+            category:   'signals'
         }) }}
+        {# ── end Signals & Sensing ── #}
         {{ navCard({
             section:    'education',
             href:       '/education/controls-commissioning.html',
@@ -242,6 +252,9 @@ nav: education
             pills:      ['Air Systems', 'Latent / Sensible', 'Deep Coil · Reheat', 'Dew-Point Control'],
             category:   'forced-air'
         }) }}
+        {# ── Programming ─ function-blocks leads the chapter; insert new
+           lesson cards below it, in curriculum order (keep
+           educationSequence.js in lockstep) ── #}
         {{ navCard({
             section:    'education',
             href:       '/education/function-blocks.html',
@@ -249,8 +262,9 @@ nav: education
             titleFull:  'Function-Block Basics',
             desc:       'What a function block and a wiresheet are, why building-controls sequences are built from boxes-and-wires, and how a sheet evaluates — paired with the Function-Block Editor.',
             pills:      ['Logic', 'Wiresheet', 'Evaluation Order'],
-            category:   'logic'
+            category:   'programming'
         }) }}
+        {# ── end Programming ── #}
         {{ navCard({
             section:    'education',
             href:       '/education/modbus-basics.html',
@@ -332,9 +346,11 @@ nav: education
 
         // "Fundamentals" is a UX-level catch-all that maps to the per-card
         // categories that only have one card each. The card-level data-category
-        // values stay granular (drives / control / hvac / sequencing / logic)
-        // so a future split can put chips back without touching every navCard.
-        const FUNDAMENTALS = new Set(['drives', 'control', 'hvac', 'sequencing', 'logic', 'wiring', 'commissioning']);
+        // values stay granular (drives / control / hvac / sequencing /
+        // commissioning) so a future split can put chips back without touching
+        // every navCard. (wiring and logic graduated into the Signals & Sensing
+        // and Programming chapters — controls-spine arc, 2026-07.)
+        const FUNDAMENTALS = new Set(['drives', 'control', 'hvac', 'sequencing', 'commissioning']);
 
         function apply(slug) {
             chips.forEach(c => {

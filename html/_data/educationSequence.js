@@ -27,6 +27,9 @@
 const order = [
     "/education/pid-basics.html",
     "/education/controller-wiring.html",
+    // ── Signals & Sensing ─ controller-wiring leads the chapter; insert
+    // new lesson URLs here, in curriculum order (mirror the
+    // education/index.html grid) ──
     "/education/controls-commissioning.html",
     "/education/hydronic-loops.html",
     "/education/load-piping.html",
@@ -48,6 +51,9 @@ const order = [
     "/education/air-balancing.html",
     "/education/dedicated-outdoor-air.html",
     "/education/function-blocks.html",
+    // ── Programming ─ function-blocks leads the chapter; insert new
+    // lesson URLs here, in curriculum order (mirror the
+    // education/index.html grid) ──
     "/education/modbus-basics.html",
     "/education/modbus-decoding.html",
     "/education/bacnet-vs-modbus.html",

@@ -453,6 +453,8 @@ techs new to the industry and anyone wanting a refresh.
   The capstone diagram lands one of each on the same generic
   controller the simulator uses. Pairs with the Controller Wiring
   Simulator.
+<!-- ── Signals & Sensing chapter ─ Controller Wiring leads it; insert
+     new lesson bullets here, in curriculum order ── -->
 - **Controls Commissioning** — how you verify a controller actually
   does what its sequence of operations says. Point-to-point checkout
   of every AI, AO, BI, and BO (exercise the point, confirm the value
@@ -656,6 +658,8 @@ techs new to the industry and anyone wanting a refresh.
   latch) hold state instead of chasing itself — then walks a real
   economizer-enable sheet. Pairs with the Function-Block Editor
   sandbox and a Function Blocks quiz.
+<!-- ── Programming chapter ─ Function-Block Basics leads it; insert
+     new lesson bullets here, in curriculum order ── -->
 - **Modbus Basics** — what Modbus is on the wire: the four data
   tables (coils, discrete inputs, input and holding registers),
   the function codes that read and write them, and what an
@@ -755,11 +759,12 @@ drills:
   primary-secondary twin-T, two-way vs three-way flow, the
   CBV / ABV / PICV families, and the stage-up/stage-down deadband
   with lead rotation for even wear.
-- **Content quizzes — controls:** PID Basics, VFDs, Function Blocks.
-  The droop P leaves and how integral erases it, the rectifier /
-  DC-bus / inverter power stages and the run-command vs.
-  speed-reference trap, and blocks, pins, wire types, and how a
-  scan resolves feedback.
+- **Content quizzes — controls:** PID Basics, VFDs. The droop P
+  leaves and how integral erases it, and the rectifier / DC-bus /
+  inverter power stages with the run-command vs. speed-reference
+  trap.
+- **Content quizzes — programming:** Function Blocks. Blocks, pins,
+  wire types, the block families, and how a scan resolves feedback.
 - **Content quizzes — refrigeration:** Refrigerant Cycle Basics,
   Superheat & Subcooling, TXVs vs. EEVs. The four components and
   the pressure-temperature saturation lock, which line each
