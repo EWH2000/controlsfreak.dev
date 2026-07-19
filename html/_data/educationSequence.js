@@ -31,6 +31,12 @@ const order = [
     // new lesson URLs here, in curriculum order (mirror the
     // education/index.html grid) ──
     "/education/analog-sensing.html",
+    // start-stop-commands is the chapter's LAST lesson (final order:
+    // controller-wiring → analog-sensing → temperature-sensors →
+    // status-and-proof → commanding-actuators → start-stop-commands);
+    // placed here after the predecessors that exist on this base — keep
+    // it at the chapter's tail as the in-flight lessons merge ──
+    "/education/start-stop-commands.html",
     "/education/controls-commissioning.html",
     "/education/hydronic-loops.html",
     "/education/load-piping.html",
