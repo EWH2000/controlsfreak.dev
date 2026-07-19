@@ -55,8 +55,8 @@ module.exports = function(eleventyConfig) {
     // be kept in sync by hand (codebase-issues — two-source category).
     const NAV_CATEGORIES = {
         tools: [["hvac", "HVAC"], ["protocols", "Protocols"], ["signals", "Signals"], ["airflow", "Airflow"], ["electrical", "Electrical"], ["hydronics", "Hydronics"]],
-        education: [["fundamentals", "Fundamentals"], ["hydronics", "Hydronics"], ["refrigerant", "Refrigerant"], ["forced-air", "Forced Air Systems"], ["protocols", "Protocols"]],
-        practice: [["modbus", "Modbus"], ["bacnet", "BACnet"], ["hydronics", "Hydronics"], ["refrigeration", "Refrigeration"], ["controls", "Controls"], ["psychrometrics", "Psychrometrics"], ["forced-air", "Forced Air Systems"], ["field", "Field Drills"]],
+        education: [["fundamentals", "Fundamentals"], ["signals", "Signals & Sensing"], ["hydronics", "Hydronics"], ["refrigerant", "Refrigerant"], ["forced-air", "Forced Air Systems"], ["programming", "Programming"], ["protocols", "Protocols"]],
+        practice: [["modbus", "Modbus"], ["bacnet", "BACnet"], ["hydronics", "Hydronics"], ["refrigeration", "Refrigeration"], ["signals", "Signals & Sensing"], ["controls", "Controls"], ["programming", "Programming"], ["psychrometrics", "Psychrometrics"], ["forced-air", "Forced Air Systems"], ["field", "Field Drills"]],
     };
 
     // Build-time guard for the 140–160 char `description` frontmatter
