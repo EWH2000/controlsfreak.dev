@@ -5,10 +5,9 @@
 // Field drill (no single paired lesson): how real sequences of operation
 // behave — chiller / boiler plant staging and deadbands, AHU economizer
 // changeover, dehumidification + reheat cascades, and lead/lag rotation.
-// Explanations are inline; learnMore points only at the lessons/tools that
-// genuinely cover the concept (Equipment Staging + Psychrometrics +
-// Economizers lessons, Economizer Ratio + Psychrometric Chart tools all
-// exist; the three economizer questions deep-link the Economizers lesson).
+// Explanations are inline; learnMore points only at pages that exist and
+// genuinely cover the concept, deep-linked to the relevant section where
+// the lesson has one.
 
 module.exports = [
     // ── Plant staging: why stage at all ───────────────────
@@ -142,7 +141,7 @@ module.exports = [
             { id: 'd', text: 'It has no effect — efficiency depends only on supply temp.' }
         ],
         explain: 'A condensing boiler earns its name (and its efficiency premium) by cooling the flue gas enough to condense the water vapor in it and capture that latent heat — but that only happens when the <strong>return</strong> water is below the flue-gas dew point, roughly the mid-120s to low-130s °F. Run the return hot and the boiler never condenses; you\'ve bought a condensing boiler and operate it like a conventional one. So the sequence pairs outdoor-air-reset (lowest supply temp that still meets load) with system design that keeps return water low — wide ΔT, no needless bypass — to stay in the condensing band as much of the season as possible.',
-        learnMore: { href: '/education/equipment-staging.html', label: 'Equipment Staging' },
+        learnMore: { href: '/education/setpoint-math-reset.html#reset', label: 'Setpoint Math — The Linear Reset' },
         tags: ['sequencing-scenarios', 'boiler-plant', 'reset']
     },
 

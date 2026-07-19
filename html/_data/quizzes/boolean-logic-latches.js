@@ -149,7 +149,7 @@ module.exports = [
             { id: 'c', text: 'XOR — TRUE when the inputs disagree.', correct: true },
             { id: 'd', text: 'An SR latch — set on command, reset on proof.' }
         ],
-        explain: 'XOR is the disagreement detector: TRUE only when its inputs differ. Command TRUE with status FALSE catches a broken belt or tripped overload; status TRUE with no command catches a welded contactor or a hand switch left in HAND. The same shape checks any pair of states that must never read alike. In practice the mismatch alarm waits a few seconds before sounding so the equipment has time to actually move — delays are their own lesson.',
+        explain: 'XOR is the disagreement detector: TRUE only when its inputs differ. Command TRUE with status FALSE catches a broken belt or tripped overload; status TRUE with no command catches a welded contactor or a hand switch left in HAND. The same shape checks any pair of states that must never read alike. In practice the mismatch alarm waits a few seconds before sounding so the equipment has time to actually move — <a href="/education/timers-and-delays.html#proof">that proof window</a> is its own lesson in this chapter.',
         learnMore: { href: '/education/boolean-logic-latches.html#idioms', label: 'Boolean Logic & Latches — Small idioms' },
         tags: ['boolean-logic-latches', 'logic', 'xor']
     }
