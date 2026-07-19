@@ -77,7 +77,7 @@ nav: practice
 
     <div class="filter-chips" role="group" aria-label="Filter practice by topic">
         <button type="button" class="filter-chip active" data-category="all" aria-pressed="true">
-            All <span class="filter-chip-count">38</span>
+            All <span class="filter-chip-count">39</span>
         </button>
         <button type="button" class="filter-chip" data-category="modbus" aria-pressed="false">
             Modbus <span class="filter-chip-count">2</span>
@@ -98,7 +98,7 @@ nav: practice
             Controls <span class="filter-chip-count">2</span>
         </button>
         <button type="button" class="filter-chip" data-category="programming" aria-pressed="false">
-            Programming <span class="filter-chip-count">5</span>
+            Programming <span class="filter-chip-count">6</span>
         </button>
         <button type="button" class="filter-chip" data-category="psychrometrics" aria-pressed="false">
             Psychrometrics <span class="filter-chip-count">1</span>
@@ -379,6 +379,15 @@ nav: practice
                 titleFull:  'Setpoint Math & Reset',
                 desc:       'Interpolate reset schedules from fresh endpoints, derive slope and intercept, pick high- vs low-selects, and catch a flipped-sign reset chain.',
                 pills:      ['10 Questions', 'MCQ · TF · Gotcha · Numeric', '~ 5 min'],
+                category:   'programming'
+            }) }}
+            {{ navCard({
+                section:    'practice',
+                href:       '/practice/reading-a-wiresheet.html',
+                titleShort: 'Reading a Wiresheet',
+                titleFull:  'Reading a Wiresheet',
+                desc:       'Work the method — the first move when an output is wrong, which leg the trace follows, why a latch holding Q over a FALSE S is healthy, and naming an idiom from its shape.',
+                pills:      ['10 Questions', 'MCQ · TF · Numeric · Gotcha', '~ 5 min'],
                 category:   'programming'
             }) }}
             {# ── end Programming ── #}

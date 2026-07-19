@@ -65,6 +65,13 @@ const order = [
     "/education/comparators-and-deadband.html",
     "/education/timers-and-delays.html",
     "/education/setpoint-math-reset.html",
+    // reading-a-wiresheet is the chapter TAIL — it reads whole sheets
+    // built from every block the chapter taught, so it comes last.
+    // Chapter order: function-blocks → boolean-logic-latches →
+    // comparators-and-deadband → timers-and-delays →
+    // setpoint-math-reset → reading-a-wiresheet, then modbus-basics
+    // resumes.
+    "/education/reading-a-wiresheet.html",
     "/education/modbus-basics.html",
     "/education/modbus-decoding.html",
     "/education/bacnet-vs-modbus.html",
