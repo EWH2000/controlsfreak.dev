@@ -30,6 +30,7 @@ const order = [
     // ── Signals & Sensing ─ controller-wiring leads the chapter; insert
     // new lesson URLs here, in curriculum order (mirror the
     // education/index.html grid) ──
+    "/education/analog-sensing.html",
     "/education/controls-commissioning.html",
     "/education/hydronic-loops.html",
     "/education/load-piping.html",
