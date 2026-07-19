@@ -17,6 +17,17 @@
 // `<h2 class="subhead" id="…">` and dozens of quiz links break with
 // every page still rendering and every existing spec still passing.
 //
+// TWO deep-link surfaces live in those banks and both are covered here.
+// `learnMore.href` is the sanctioned mechanism and carries the volume,
+// but a handful of questions also write a plain `<a href="…">` inline in
+// their prose — 5 today, all in `explain`, one of them a fragment link
+// (boolean-logic-latches → /education/timers-and-delays.html#proof).
+// Those are invisible for exactly the same reason, so the walk scans
+// EVERY string value on a question rather than a list of field names:
+// hardcoding `explain` would re-create the hand-maintained list this
+// file exists to kill, and a future href in a new field is covered for
+// free.
+//
 // Pure Node, no browser — the `page` fixture is deliberately unused, as
 // in worker.spec.js. There is no DOM parser in devDependencies
 // (@11ty/eleventy, @playwright/test, wrangler), so regex is the tool.
@@ -201,34 +212,70 @@ test('every internal link resolves to a file in _site', () => {
     expect(broken, 'every root-relative href must resolve under _site/').toEqual([]);
 });
 
+// Every string value anywhere on a question, with a dotted trail for the
+// error message. Recursive rather than a field list on purpose — see the
+// header note on the two deep-link surfaces.
+function stringValues(value, trail, out) {
+    if (typeof value === 'string') out.push([trail, value]);
+    else if (Array.isArray(value)) value.forEach((v, i) => stringValues(v, `${trail}[${i}]`, out));
+    else if (value && typeof value === 'object') {
+        for (const key of Object.keys(value)) {
+            stringValues(value[key], trail ? `${trail}.${key}` : key, out);
+        }
+    }
+    return out;
+}
+
 // The flagship check. These links never appear in built HTML — the engine
 // paints them from injected JSON after load — so nothing else on this
 // site can see them break. Bare require() of the CommonJS banks, exactly
 // as quiz-banks.spec.js:26-30 does it.
-test('every quiz-bank learnMore link resolves', () => {
+test('every quiz-bank deep link resolves', () => {
     const banks = fs.readdirSync(BANK_DIR).filter((f) => f.endsWith('.js')).sort();
     expect(banks.length, 'sanity: quiz banks were found').toBeGreaterThanOrEqual(30);
 
     const broken = [];
-    let fragments = 0;
+    let learnMoreFragments = 0;
+    let proseAnchors = 0;
+
+    // Resolves one href the same way for both surfaces; returns whether it
+    // carried a fragment so the caller can count. Off-site and relative
+    // hrefs are not this spec's business.
+    const check = (href, where) => {
+        const hash = href.indexOf('#');
+        const page = hash === -1 ? href : href.slice(0, hash);
+        if (OFF_SITE.test(page) || !page.startsWith('/')) return false;
+        const target = resolve(page);
+        if (!target) {
+            broken.push(`${where} → ${href} (no such page)`);
+            return false;
+        }
+        if (hash === -1) return false;
+        if (!fragmentResolves(target, href.slice(hash + 1))) {
+            broken.push(`${where} → ${href} (no such id)`);
+        }
+        return true;
+    };
+
     for (const file of banks) {
         for (const question of require(path.join(BANK_DIR, file))) {
             const href = question.learnMore && question.learnMore.href;
-            if (typeof href !== 'string') continue;
-            const hash = href.indexOf('#');
-            const page = hash === -1 ? href : href.slice(0, hash);
-            const target = resolve(page);
-            if (!target) {
-                broken.push(`${file}/${question.id} → ${href} (no such page)`);
-                continue;
+            if (typeof href === 'string' && check(href, `${file}/${question.id} learnMore`)) {
+                learnMoreFragments++;
             }
-            if (hash === -1) continue;
-            fragments++;
-            if (!fragmentResolves(target, href.slice(hash + 1))) {
-                broken.push(`${file}/${question.id} → ${href} (no such id)`);
+            for (const [trail, text] of stringValues(question, '', [])) {
+                for (const [, embedded] of text.matchAll(HREF_RE)) {
+                    proseAnchors++;
+                    check(embedded, `${file}/${question.id} [${trail}]`);
+                }
             }
         }
     }
-    expect(fragments, 'sanity: learnMore deep links were found').toBeGreaterThanOrEqual(300);
-    expect(broken, 'every learnMore.href must resolve to a real page and id').toEqual([]);
+
+    expect(learnMoreFragments, 'sanity: learnMore deep links were found').toBeGreaterThanOrEqual(300);
+    // Deliberately low: prose anchors are RARE by convention — learnMore is
+    // the sanctioned deep-link mechanism, so this floor only has to prove
+    // the scan still reaches inside the bank strings at all.
+    expect(proseAnchors, 'sanity: prose anchors inside bank strings were found').toBeGreaterThanOrEqual(4);
+    expect(broken, 'every quiz-bank link must resolve to a real page and id').toEqual([]);
 });
