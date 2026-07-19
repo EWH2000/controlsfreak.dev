@@ -32,6 +32,10 @@ module.exports = [
     { slug: 'function-blocks',          label: 'Function Blocks' },
     // ── Programming ─ function-blocks leads the chapter; insert new quiz
     // slugs here, in curriculum order (mirror the education sequence) ──
+    // timers-and-delays slots after boolean-logic-latches and
+    // comparators-and-deadband once those in-flight sibling lanes merge
+    // (mirror educationSequence.js's final chapter order).
+    { slug: 'timers-and-delays',        label: 'Timers & Delays' },
     { slug: 'modbus-basics',            label: 'Modbus Basics' },
     { slug: 'modbus-decoding',          label: 'Modbus Decoding' },
     { slug: 'bacnet-basics',            label: 'BACnet Basics' },

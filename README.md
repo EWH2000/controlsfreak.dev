@@ -669,6 +669,17 @@ techs new to the industry and anyone wanting a refresh.
   sandbox and a Function Blocks quiz.
 <!-- ── Programming chapter ─ Function-Block Basics leads it; insert
      new lesson bullets here, in curriculum order ── -->
+- **Timers & Delays** — what TON and TOF actually do: the two mirror
+  sentences (must stay true this long before I believe it / keep
+  saying true this long after it drops), preset vs. elapsed time and
+  what clears ET — no credit across attempts, a countdown cancelled
+  rather than paused — and why almost every real sheet gates its
+  decisions through time. Walks the fail-to-start alarm wire by wire
+  against the editor's proof-of-flow example (the window that
+  forgives honest starts, the latch that remembers), covers
+  debounce, and closes on minimum run / off times — anti-short-cycle
+  pacing from one compressor up to plant staging. Pairs with the
+  Function-Block Editor sandbox and a Timers & Delays quiz.
 - **Modbus Basics** — what Modbus is on the wire: the four data
   tables (coils, discrete inputs, input and holding registers),
   the function codes that read and write them, and what an
@@ -752,7 +763,7 @@ flavors share the same engine:
   When a topic recurs in feedback, it becomes a candidate for a
   new education page.
 
-Shipped so far — twenty-five content quizzes (each 10 questions, paired
+Shipped so far — twenty-six content quizzes (each 10 questions, paired
 1:1 with its lesson and deep-linking the gotchas) plus five field
 drills:
 
@@ -782,8 +793,12 @@ drills:
   a raw signal to engineering units, the live zero's impossible
   numbers, and the railed flatline that's a ceiling, not a
   measurement.
-- **Content quizzes — programming:** Function Blocks. Blocks, pins,
-  wire types, the block families, and how a scan resolves feedback.
+- **Content quizzes — programming:** Function Blocks, Timers &
+  Delays. Blocks, pins, wire types, the block families, and how a
+  scan resolves feedback; then the timing layer — TON vs. TOF
+  selection, what clears the elapsed time, proof windows sized
+  between nuisance trips and blind spots, and the starts-per-hour
+  spacing behind minimum run and off times.
 - **Content quizzes — refrigeration:** Refrigerant Cycle Basics,
   Superheat & Subcooling, TXVs vs. EEVs. The four components and
   the pressure-temperature saturation lock, which line each
