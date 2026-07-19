@@ -5680,7 +5680,7 @@ written*. A convention that must be consulted before work starts
 belongs where conventions live. Nothing about the finding changed —
 only where it can be found in time to matter.
 
-### 182. Three defect classes this arc that a green build cannot see *(open — 2026-07-18, guard proposals; guard 3 disproven as specified 2026-07-19 — see the Update)*
+### 182. Three defect classes this arc that a green build cannot see *(open — 2026-07-18, guard proposals; sub-items 1, 2 + the fourth proposal shipped as PR #398 2026-07-19; stays open for the prose lint — see both Updates)*
 
 Three classes surfaced during the 2026-07-18 arc that build clean,
 pass the full suite, and ship broken anyway. Logged together because
@@ -5863,6 +5863,72 @@ education, 14 for 7 on simulators). A naive "is this page linked from
 its landing?" check therefore passes for every page whether or not the
 card exists, and passes silently — it would have shipped green and
 guarded nothing.
+
+**Update (2026-07-19, second pass — sub-items 1, 2 and the fourth
+proposal SHIPPED as PR #398.** Stays open for sub-item 3, the prose
+lint.) Three corrections to what is written above, all measured against
+`30bec2c` and all of a kind: **the guard shapes recorded here were
+sound in intent and wrong in mechanism.** Recorded so the dead ends are
+not rediscovered a third time.
+
+*The hash-route allowlist is three landings, not one.* This entry names
+`html/tools/index.html` and six values. `html/education/index.html`
+(`:434-435`, `:460-463`) and `html/practice/index.html` (`:514-515`,
+`:535-538`) run the identical `location.hash` router — **25 chip values
+across three pages**. A six-string allowlist would have reported ~19
+false positives on first run. PR #398 derives the allowlist by scraping
+each page's own `.filter-chip` `data-category` values, the same way the
+page JS builds `validSlugs` — a hardcoded list would itself have been
+the hand-maintained-list failure mode this whole issue exists to kill.
+Note education's *card* categories (`control`, `drives`, `hvac`,
+`sequencing`, `commissioning`) are **not** chip values and
+`slugFromHash` rejects them; deriving from card `data-category` would
+silently widen the allowlist.
+
+*"Scope the selector to the landing's card grid" does not work.* The
+trap named above is real — 62 `/tools/` hrefs for 31 pages — but the
+prescribed fix fails: only practice's grid is followed by `</section>`,
+so a `.card-grid` block-slice matches 1 of 4 landings and returns empty
+on the other three. That is the same silent-green failure the trap
+warns about, one layer down. The working form is the card **anchor** —
+`/<a class="nav-card nav-card--[a-z-]+"[^>]*?href="([^"]+)"/g` — which
+returns 31/40/39/7 exactly, and excludes the nav-dropdown duplicates for
+free because they carry no `nav-card` class. It is also grid-agnostic,
+which matters: practice has **two** `.card-grid` blocks (content and
+field).
+
+*The prose lint's qualified regex is disproven too, and the counts here
+are wrong.* This entry records "4 true / 1 false" for the
+qualifier-bearing form at `8ea5254`. Re-measured at `30bec2c`: **6 true
+/ 9+ false.** Worse, the qualified form **misses its own flagship
+instance** — `metering-devices-txv-eev.html:303` reads "That closes the
+three-page chapter", which contains none of "of this chapter" /
+"chapter's" / "this chapter". And it cannot see **9 unqualified "the
+last page" hits** across `duct-static-control.html` and
+`vav-systems.html` that are equally stale-prone. This is the *second*
+formulation proposed for this lint and the second to fail on
+measurement; treat a third confidently-stated precision figure with
+matching suspicion. Direction that survived: drop the qualifier
+requirement, match terminal/ordinal claims near "chapter" *or* "page",
+then subtract the two provably-safe classes — **opener** claims (stable
+when a chapter grows at the end) and **existence** claims ("has its own
+page in this chapter", which never go stale). Owner decision
+2026-07-19: **redesign and ship report-only**, so the noise floor is
+visible before anything can block `main`. The 6 true positives at
+`30bec2c`: `metering-devices-txv-eev.html:303`,
+`reading-a-wiresheet.html:54`, `duct-static-control.html:184`,
+`economizers.html:397` and `:115`, `air-unit-identification.html:494`.
+
+One surface this entry did not anticipate, folded into PR #398: **5 raw
+`href="…"` anchors are embedded in `explain` strings** across
+`bacnet-basics`, `bacnet-networking`, `boolean-logic-latches`,
+`modbus-basics` and `modbus-decoding`, one of them a fragment deep link
+(`boolean-logic-latches/bll-xor-disagreement` →
+`/education/timers-and-delays.html#proof`). `learnMore` is the
+sanctioned deep-link mechanism, but prose anchors exist and were
+invisible for exactly the same reason `learnMore` was. The shipped guard
+walks **every string value** on every question rather than a maintained
+field list, and names the field trail in the failure message.
 
 ### 183. Forced-air chapter: `air-handlers` never picked up the two appended lessons *(open — 2026-07-19)*
 
