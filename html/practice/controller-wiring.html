@@ -1,0 +1,79 @@
+---
+title: Controller Wiring Quiz — controlsfreak.dev
+description: Drill the Controller Wiring lesson — the shared COM reference, transformer-leg phasing, LOOP+ vs the AC hot leg, wet vs dry contacts, and the unfed BO-C.
+canonical: https://controlsfreak.dev/practice/controller-wiring.html
+nav: practice
+category: signals
+pairedLesson: https://controlsfreak.dev/education/controller-wiring.html
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Practice · Controller Wiring</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">Controller Wiring Quiz <span class="tool-tag">Wiring</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                Read the <a href="/education/controller-wiring.html">Controller Wiring</a> lesson first, then
+                test yourself — ten questions on landings and power: why every return comes back to the shared
+                COM, the phasing rule on a shared transformer, which terminal feeds a 2-wire loop and why it
+                must be DC, wet vs dry contacts, and the output-side traps — the AO that signals but doesn&rsquo;t
+                power, and the BO-C nobody fed. Each reveal links back to the section of the lesson it came
+                from. For sensor curves, scaling math, and shield practice, the
+                <a href="/practice/field-wiring-sensors.html">Field Wiring &amp; Sensors drill</a> is the
+                companion set.
+            </p>
+
+            <div id="quiz"></div>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/tools/transformer-sizing.html', label: 'Transformer VA Budget'},
+            {href: '/tools/signal-scaling.html', label: 'Signal Scaling'}
+        ],
+        simulators: [
+            {href: '/simulators/controller-wiring.html', label: 'Controller Wiring Simulator'}
+        ],
+        lessons: [
+            {href: '/education/controller-wiring.html', label: 'Controller Wiring'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/practice/">← All practice</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="/scripts/quiz-engine.js"></script>
+<script>
+    (function () {
+        'use strict';
+
+        // Question bank lives in html/_data/quizzes/controller-wiring.js so
+        // the FAQPage JSON-LD emitted from head.njk can read the same source.
+        const questions = {{ quizzes['controller-wiring'] | safeScriptJson | safe }};
+
+        Quiz.mount('#quiz', questions, {
+            next: {{ page.fileSlug | nextQuiz | safeScriptJson | safe }},
+            slug: 'controller-wiring',
+            title: 'Controller Wiring',
+            defaultCount: 10,
+            defaultOrder: 'sequential'
+        });
+    })();
+</script>
+{% endblock %}

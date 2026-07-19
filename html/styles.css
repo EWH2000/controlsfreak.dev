@@ -133,12 +133,21 @@
     --teal:         #46b3ac;   /* teal — data/comm traces on the background schematic (BACnet, IP); also outside-air ducts in the education air diagrams */
     --teal-dim:     rgba(70,179,172,0.14);
     --teal-glow:    rgba(70,179,172,0.24);
+    --teal-ink:     #5bbfb9;   /* per-section --accent-ink twin (--amber/--plum below too):
+                                  the nav-card titlebar pill recolors .ok-pill TEXT via
+                                  --section-accent, and the raw hues compute 3.6-4.5:1 on
+                                  their -dim washes — an AA small-text fail (codebase-issues
+                                  #171, same mechanism as #166). Dots/borders stay on the
+                                  raw hue (3:1 UI floor passes). */
     --amber:        #e0a94a;   /* amber — energized control wiring on the background schematic; section accent for /practice/ */
     --amber-dim:    rgba(224,169,74,0.14);
     --amber-glow:   rgba(224,169,74,0.26);
+    --amber-ink:    #e0a94a;   /* = --amber — dark amber already clears AA (4.86:1);
+                                  light needs its own deeper step below */
     --plum:         #b783c0;   /* plum — logic-signal lines on the background schematic */
     --plum-dim:     rgba(183,131,192,0.14);
     --plum-glow:    rgba(183,131,192,0.26);
+    --plum-ink:     #c8a0cf;
 
     /* blueprint graticule (body background) — dark gets a faint grid +
        a subtle cool radial wash; light overrides below to the stronger
@@ -200,12 +209,15 @@
     --teal:         #377070;
     --teal-dim:     rgba(55,112,112,0.10);
     --teal-glow:    rgba(55,112,112,0.22);
+    --teal-ink:     #346b6b;
     --amber:        #83641f;
     --amber-dim:    rgba(131,100,31,0.10);
     --amber-glow:   rgba(131,100,31,0.22);
+    --amber-ink:    #7b5e1d;
     --plum:         #8a5e7e;
     --plum-dim:     rgba(138,94,126,0.10);
     --plum-glow:    rgba(138,94,126,0.22);
+    --plum-ink:     #7f5774;
     --grid-line-c:  var(--border);
     --grid-line-w:  1.5px;
     --grid-wash:    transparent;
@@ -253,12 +265,15 @@
         --teal:         #377070;
         --teal-dim:     rgba(55,112,112,0.10);
         --teal-glow:    rgba(55,112,112,0.22);
+        --teal-ink:     #346b6b;
         --amber:        #83641f;
         --amber-dim:    rgba(131,100,31,0.10);
         --amber-glow:   rgba(131,100,31,0.22);
+        --amber-ink:    #7b5e1d;
         --plum:         #8a5e7e;
         --plum-dim:     rgba(138,94,126,0.10);
         --plum-glow:    rgba(138,94,126,0.22);
+        --plum-ink:     #7f5774;
         --grid-line-c:  var(--border);
         --grid-line-w:  1.5px;
         --grid-wash:    transparent;
@@ -1869,10 +1884,14 @@ input[type="range"]:focus-visible::-moz-range-thumb {
    button (26px), and the form-control family (#164 measured
    input.ps-input AND select.ps-input at 29px and .field selects at
    38.6px — this block's old ".ps-input fields clear 44px natively"
-   claim was equally false). Like FOCUS INDICATORS above, this is
+   claim was equally false; #172 caught the .field INPUTS the #164
+   pass missed, at 38.6px). Like FOCUS INDICATORS above, this is
    the single consolidated home for the floor — add new interactives
-   here rather than scattering per-component min-heights.
-   See codebase-issues #74 / #164 / ux-audit #3 / #8 / #9 +
+   here rather than scattering per-component min-heights. Shared-class
+   selectors only: widget INTERNALS with no shared class (e.g. the
+   vfds source selects) get a page-local (hover: none) floor in their
+   own head block instead.
+   See codebase-issues #74 / #164 / #172 / ux-audit #3 / #8 / #9 +
    audit-2026-06 #24 / #25 for the why. */
 @media (hover: none) {
     .site-nav-links a,
@@ -1916,14 +1935,20 @@ input[type="range"]:focus-visible::-moz-range-thumb {
        match the dropdown rows. */
     .site-nav-links a { padding-inline: 0.2rem; justify-content: flex-start; }
     .quiz-settings-select { min-height: 44px; }
-    /* Form-control family (#164): min-height ONLY — replaced elements
-       grow their box directly and vertically center their text; the
-       group's inline-flex display above would fight native select /
-       input rendering. Floored together per the 2026-07-18 owner call:
-       flooring only the selects would leave 44px selects towering over
-       29px inputs in the same property sheet. textarea.ps-input stays
-       out — the one instance (duct-traverse readings) is multi-row and
-       clears the floor natively. */
+    /* Form-control family (#164 / #172): min-height ONLY — replaced
+       elements grow their box directly and vertically center their
+       text; the group's inline-flex display above would fight native
+       select / input rendering. Floored together per the 2026-07-18
+       owner call: flooring only the selects would leave 44px selects
+       towering over 29px inputs in the same property sheet. #172
+       added .field input — #164 floored the .field selects but never
+       the inputs, which sat at 38.6px on contact / pid-tuner /
+       staging-sequencer. The contact honeypot is .hp-field, not
+       .field, so the floor can't catch it, and `input` never matches
+       the textareas — contact's message box and textarea.ps-input
+       (duct-traverse readings) are multi-row and clear the floor
+       natively. */
+    .field input,
     .field select,
     input.ps-input,
     select.ps-input { min-height: 44px; }
@@ -2289,13 +2314,16 @@ p.chip-row-preamble {
    (--section-accent) defaults to --accent and is overridden by the
    --tools / --education / --simulators / --home modifier so the
    hover border, name color, and status pill all track the section's
-   identity color (matches the gutter motif palette). See
+   identity color (matches the gutter motif palette). The -ink twin
+   carries the pill's TEXT (see the .ok-pill note below); it defaults
+   to --accent-ink, so the green sections need no override. See
    _includes/nav-card.njk for the macro that emits the chrome — pages
    call it instead of hand-rolling the markup. */
 .nav-card {
     --section-accent:      var(--accent);
     --section-accent-dim:  var(--accent-dim);
     --section-accent-glow: var(--accent-glow);
+    --section-accent-ink:  var(--accent-ink);
     display: flex;
     flex-direction: column;
     background: var(--surface);
@@ -2311,9 +2339,9 @@ p.chip-row-preamble {
    navCard() `wide` param (e.g. the BACnet hub atop the home Browse grid). */
 .nav-card--wide { grid-column: 1 / -1; }
 .nav-card--tools      { --section-accent: var(--accent); --section-accent-dim: var(--accent-dim); --section-accent-glow: var(--accent-glow); }
-.nav-card--education  { --section-accent: var(--plum);   --section-accent-dim: var(--plum-dim);   --section-accent-glow: var(--plum-glow); }
-.nav-card--simulators { --section-accent: var(--teal);   --section-accent-dim: var(--teal-dim);   --section-accent-glow: var(--teal-glow); }
-.nav-card--practice   { --section-accent: var(--amber);  --section-accent-dim: var(--amber-dim);  --section-accent-glow: var(--amber-glow); }
+.nav-card--education  { --section-accent: var(--plum);   --section-accent-dim: var(--plum-dim);   --section-accent-glow: var(--plum-glow);  --section-accent-ink: var(--plum-ink); }
+.nav-card--simulators { --section-accent: var(--teal);   --section-accent-dim: var(--teal-dim);   --section-accent-glow: var(--teal-glow);  --section-accent-ink: var(--teal-ink); }
+.nav-card--practice   { --section-accent: var(--amber);  --section-accent-dim: var(--amber-dim);  --section-accent-glow: var(--amber-glow); --section-accent-ink: var(--amber-ink); }
 .nav-card--home       { --section-accent: var(--accent); --section-accent-dim: var(--accent-dim); --section-accent-glow: var(--accent-glow); }
 .nav-card--reference  { --section-accent: var(--accent); --section-accent-dim: var(--accent-dim); --section-accent-glow: var(--accent-glow); }
 
@@ -2356,9 +2384,14 @@ p.chip-row-preamble {
 }
 .nav-card-titlebar .ok-pill {
     /* Per-section status-pill tint. Same .ok-pill shape as the hero;
-       the colors come from the .nav-card--<section> tokens above. */
+       the colors come from the .nav-card--<section> tokens above.
+       TEXT rides the -ink twin — the raw section hues compute
+       3.6-4.5:1 on their -dim washes at this 0.62rem size, an AA
+       small-text fail in 6 of 8 accent x theme combos (codebase-issues
+       #171; same mechanism as --accent-ink, #166). The dot + border
+       stay on the raw hue (the 3:1 UI floor passes everywhere). */
     background: var(--section-accent-dim);
-    color: var(--section-accent);
+    color: var(--section-accent-ink);
     border-color: var(--section-accent-glow);
 }
 .nav-card-titlebar .ok-pill::before {

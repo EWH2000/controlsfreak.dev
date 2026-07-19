@@ -75,6 +75,14 @@ keywords: fla amps hz drive inverter speed torque carrier motor run
                 width: 100%;
             }
         }
+        /* Touch-target floor for the two source selects (#172 measured
+           31.8px under hover:none). They're widget internals with no
+           shared class, so the consolidated TOUCH-TARGET FLOOR block
+           in styles.css can't carry them — page-local floor here,
+           min-height ONLY per that block's form-control convention. */
+        @media (hover: none) {
+            #vfd-widget select { min-height: 44px; }
+        }
 
         .vfd-w-section {
             margin-top: 1rem;

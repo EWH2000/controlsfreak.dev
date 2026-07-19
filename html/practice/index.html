@@ -77,7 +77,7 @@ nav: practice
 
     <div class="filter-chips" role="group" aria-label="Filter practice by topic">
         <button type="button" class="filter-chip active" data-category="all" aria-pressed="true">
-            All <span class="filter-chip-count">28</span>
+            All <span class="filter-chip-count">29</span>
         </button>
         <button type="button" class="filter-chip" data-category="modbus" aria-pressed="false">
             Modbus <span class="filter-chip-count">2</span>
@@ -90,6 +90,9 @@ nav: practice
         </button>
         <button type="button" class="filter-chip" data-category="refrigeration" aria-pressed="false">
             Refrigeration <span class="filter-chip-count">3</span>
+        </button>
+        <button type="button" class="filter-chip" data-category="signals" aria-pressed="false">
+            Signals &amp; Sensing <span class="filter-chip-count">1</span>
         </button>
         <button type="button" class="filter-chip" data-category="controls" aria-pressed="false">
             Controls <span class="filter-chip-count">2</span>
@@ -127,9 +130,19 @@ nav: practice
                 pills:      ['10 Questions', 'MCQ · TF · Gotcha · Numeric', '~ 5 min'],
                 category:   'controls'
             }) }}
-            {# ── Signals & Sensing ─ new signals-chapter quiz cards insert
-               here, in curriculum order (controller-wiring's slot — it has
-               no quiz; keep quizOrder.js in lockstep) ── #}
+            {# ── Signals & Sensing ─ controller-wiring leads the chapter;
+               insert new quiz cards below it, in curriculum order (keep
+               quizOrder.js in lockstep) ── #}
+            {{ navCard({
+                section:    'practice',
+                href:       '/practice/controller-wiring.html',
+                titleShort: 'Controller Wiring',
+                titleFull:  'Controller Wiring',
+                desc:       'Landings and power from memory — why every return comes back to COM, one transformer with two commons, LOOP+ vs the hot leg, wet vs dry contacts, and the BO-C nobody fed.',
+                pills:      ['10 Questions', 'MCQ · TF · Gotcha · Numeric', '~ 5 min'],
+                category:   'signals'
+            }) }}
+            {# ── end Signals & Sensing ── #}
             {{ navCard({
                 section:    'practice',
                 href:       '/practice/hydronic-loops.html',
