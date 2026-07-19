@@ -5215,7 +5215,7 @@ the four frost-overlay placement constraints (those bound the marks).
 Rode along because that PR rebuilt the frost machinery (second kit on
 the top bar for heating frost).
 
-### 170. Home Browse-card desc enumeration drift, round two — Education arc + Tools examples *(open — 2026-07-18)*
+### 170. Home Browse-card desc enumeration drift, round two — Education arc + Tools examples *(addressed 2026-07-18)*
 
 Same hand-kept drift class as #160 (just closed by de-enumerating the
 Simulators desc), noticed during the 2026-07-18 wave. `html/index.html`'s
@@ -5229,7 +5229,28 @@ by `home-hero.spec.js`; the descs are NOT test-guarded. Candidate fix:
 de-enumerate both the way #160's fix did the Simulators card, or
 refresh the enumerations deliberately as an editorial pick.
 
-### 171. `.nav-card-titlebar .ok-pill` section-accent tints sit outside the #166 fix *(open — 2026-07-18)*
+**Resolution (2026-07-18):** owner picked de-enumeration (over
+refreshing the enumerations as a recurring editorial chore, which
+would have kept the drift class alive). Two desc strings in
+`html/index.html`'s Browse `navCard()` calls changed, nothing else —
+each keeps its opening anchor and closing beat and swaps the page
+list for a kind-level characterization that stays true as pages
+land. Tools: the four-topic list (psychrometric staging, signal
+scaling, register/address conversions, thermistor curves) becomes
+"conversions, sizing checks, protocol decoding, and the reference
+tables that are never around when you need them," with "Open one,
+get an answer, get back to work." kept. Education: the five-lesson
+"current arc" chain becomes "lessons on the loops, systems, and
+protocols behind the day-to-day work," keeping the "not a glossary"
+anchor and the "each asking one question…" characterization. Count
+pills, hero, `Latest:` badge, and the *Tools by Category* cards were
+left untouched — other in-flight lanes owned those surfaces. With
+both descs now count-free and page-free, the fact that descs aren't
+test-guarded (unlike the pills, which `home-hero.spec.js` guards)
+stops mattering on these two cards; the class is closed the same way
+#160 closed it for Simulators.
+
+### 171. `.nav-card-titlebar .ok-pill` section-accent tints sit outside the #166 fix *(addressed 2026-07-18)*
 
 The #166 `--accent-ink` fix covers the default accent-on-accent-dim
 pills, but `.nav-card-titlebar .ok-pill` (`html/styles.css`, nav-card
@@ -5241,7 +5262,52 @@ the accent-ink twin doesn't reach them. Needs a measurement pass
 (four accents × two themes) and possibly per-section ink twins if any
 fail. Noticed during the 2026-07-18 wave; see #166.
 
-### 172. Touch-target parity tail: vfds source selects + contact text inputs under 44px *(open — 2026-07-18, low priority)*
+**Resolution (2026-07-18):** owner picked option A1 — mirror #166's
+purpose-token mechanism per section (over retuning the raw
+`--teal` / `--amber` / `--plum` hues, which would have moved the
+gutter-motif palette too, and over bumping the 0.62rem pill past the
+large-text threshold). New `--teal-ink` / `--amber-ink` /
+`--plum-ink` land in all three synced token blocks (`:root` dark,
+`:root[data-theme="light"]`, the `@media print` light twin) — the
+same placement pattern `--accent-ink` shipped with. `.nav-card`
+gains `--section-accent-ink: var(--accent-ink)` as the cascade
+default and the education / simulators / practice modifiers override
+it; only the `color:` on `.nav-card-titlebar .ok-pill` switched, so
+the dot (`::before`) and `border-color` stay on the raw section hue
+(the 3:1 non-text floor passes everywhere). Dark amber's ink is
+`--amber`'s own value — dark amber already cleared AA.
+
+Two corrections to the framing above. First, the failure count: the
+options brief's prose said 5 of 8 accent × theme combos failed, but
+its own enumerated ratios listed six, and independent
+re-measurement confirmed **6 of 8** — only teal-light (4.54) and
+amber-dark (4.86) passed. Second, and more important, this entry
+assumed #166's `--accent-ink` still reached the *default* green
+pills. It did not: `color: var(--section-accent)` on the titlebar
+rule also overrode the base `.ok-pill`'s `var(--accent-ink)`, so the
+green sections (tools / home / reference) were regressed by this
+same rule — green dark 4.08, green light 4.25, both failing. The
+`--section-accent-ink: var(--accent-ink)` default alone repairs
+that, with no per-section override needed for green.
+
+Measured on the composited backdrop (`-dim` wash over
+`--surface-2`), by token math and by 3× pixel sampling of the
+rendered pills, the two agreeing within ±0.03 — before → after:
+green dark 4.08 → 5.59; green light 4.25 → 4.99; plum dark 3.63 →
+4.86; plum light 4.26 → 4.82; teal dark 4.17 → 4.82; teal light
+4.54 → 4.88; amber dark 4.86 → 4.86; amber light 4.44 → 4.88.
+Every combo now clears 4.5:1 with headroom (≥4.82). Also measured
+during the arc's verification round and passing as-is, so no
+follow-up: the `.nav-card-pill--desktop` amber statusline text at
+6.33 dark / 5.05 light.
+
+Known gap, deliberately out of scope: nothing pins these ratios in
+CI. No contrast harness exists to extend (`a11y-bundle.spec.js` is
+keyboard/ARIA behavioral only) and #166 shipped without a spec pin
+either — inventing one was judged a separate piece of work rather
+than a rider on this fix.
+
+### 172. Touch-target parity tail: vfds source selects + contact text inputs under 44px *(addressed 2026-07-18)*
 
 The parity tail left after #164's select coverage, noticed during the
 2026-07-18 wave: `html/education/vfds.html` has two `<select>`s inside
@@ -5252,7 +5318,45 @@ within-page mismatch on contact (its controls match each other), but
 these are the remaining under-44 form controls if full touch-target
 parity is wanted. See #164.
 
-### 173. `tests/worker.spec.js` prints a loud stack trace from a passing expected-error test *(open — 2026-07-18)*
+**Resolution (2026-07-18):** owner took full parity, and the fix
+shipped as a shared-class family extension rather than the two
+page-local patches this entry implied — because the measurement
+pass contradicted the problem statement twice. The vfds source
+selects measured **31.8px**, not the ~38.6px recorded above; and the
+under-floor set was not "vfds + contact" but **9 controls on 4
+pages** (touch emulation, isMobile + hasTouch, 390×844):
+`#vfd-run-src` / `#vfd-spd-src` (education/vfds) at 31.8px, and at
+38.6px `#contact-name` / `#contact-email` (contact), `#pid-sg-dco` /
+`#pid-sg-dead` (pid-tuner), `#stg-up` / `#stg-delay` / `#stg-min`
+(staging-sequencer). The real root cause was broader than the
+entry: #164 floored `.field select` and the `.ps-input` family but
+never `.field input` at all.
+
+So `.field input` joins the #164 form-control family in the
+consolidated `TOUCH-TARGET FLOOR` block (`min-height` only,
+`(hover: none)`-scoped), and the two vfds selects — widget internals
+with no shared class — get a page-local `@media (hover: none)` floor
+in the page's own `{% block head %}`. That split is now written down
+as a rule in the block's comments and in CLAUDE.md: the shared block
+holds shared-class selectors only. All nine measure 44.0px on touch;
+a desktop pointer context keeps the compact 31.8 / 38.6px
+workstation density. Verified unmatched by the new selector: the
+contact honeypot (`.hp-field`, not `.field`) and the message
+textarea (which clears the floor natively at ~204px).
+`tests/touch-floor.spec.js` pins both directions — ≥44px on touch,
+<44px on desktop.
+
+Coverage note from the arc's verification round: the nine figure was
+the *visible-at-load* subset. Four more `.field` number inputs
+hidden at load — `#stg-sched-days`, `#stg-down`, `#pid-sg-dpv`,
+`#pid-sg-tau` — were equally under-floor, and the shipped
+`.field input` selector covers them too. Read the disposition as
+**9 measured at load, 13 total in the family**; no follow-up fix is
+needed. The same PR also trued up CLAUDE.md's stale claim that the
+answer-level controls "already clear 44px and aren't in the block,"
+which had been wrong since #24 / #164.
+
+### 173. `tests/worker.spec.js` prints a loud stack trace from a passing expected-error test *(addressed 2026-07-18)*
 
 The Resend 502 paths ("Resend non-2xx → 502" / "Resend network failure
 → 502") exercise `src/worker.js`'s `console.error("Resend request
@@ -5264,7 +5368,23 @@ assertions (stub `console.error`, or assert on it), leaving the
 worker's production logging intact. Noticed during the 2026-07-18
 wave.
 
-### 174. Refrigerant-loop: `rl-air-*-heads` arrowhead groups share the air-lane id prefix *(open — 2026-07-18, low)*
+**Resolution (2026-07-18):** shipped as stub-**and**-assert — both
+halves of the candidate rather than a pick between them, since
+silencing alone would have thrown away a free assertion. A new
+`captureConsoleError(fn)` helper in `tests/worker.spec.js` stubs
+`console.error` for the duration of `fn`, records the calls, and
+restores in a `finally` so the stub can't leak past an assertion
+failure (Playwright runs tests sequentially within a worker process,
+so no other test's output gets swallowed). The two Resend 502 tests
+wrap their `postContact` call in it and then assert the worker
+logged what it should — `'Resend returned non-2xx'` with status
+`500`, and `'Resend request failed'` with an `Error` instance — so
+the tests got stronger, not just quieter. Noise removed from a
+passing run, measured: one error line plus a 14-line stack trace.
+`src/worker.js`'s production logging is untouched; test-only change,
+no version bump.
+
+### 174. Refrigerant-loop: `rl-air-*-heads` arrowhead groups share the air-lane id prefix *(deferred 2026-07-18)*
 
 The `rl-air-*-heads` arrowhead groups match the `[id^="rl-air-e-"]` /
 `[id^="rl-air-c-"]` selectors the `AIR_E` / `AIR_C` NodeList loops
@@ -5275,7 +5395,19 @@ would repaint the arrowheads too. A stricter selector family (e.g. a
 `data-` attribute marking the lane paths, in the spirit of the
 attribute-only SVG-selector convention) would be cleaner. Low.
 
-### 175. Refrigerant-loop: fixed low-side gauge range parks the needle in deep low-ambient heating *(open — 2026-07-18, low / design idea)*
+**Decision (2026-07-18):** deferred. The coupling is inert today —
+the `AIR_E` / `AIR_C` loops no-op over the arrowhead groups — and
+it's already documented in-page, so fixing it standalone is churn:
+a selector-family refactor with no user-visible change and a
+non-zero chance of disturbing a lane that currently animates
+correctly. It should be tightened by whoever is next in that code,
+not by a PR that exists only to tighten it. Trigger for revisit: the
+next time the refrigerant-loop simulator's SVG lane structure gets
+substantive work — tighten the selector family then (e.g. a `data-`
+attribute marking the lane paths, per the attribute-only
+SVG-selector convention) while already in there.
+
+### 175. Refrigerant-loop: fixed low-side gauge range parks the needle in deep low-ambient heating *(deferred 2026-07-18)*
 
 The low-side gauge's dial range is anchored by a fixed `refTemp: 60`
 (`html/simulators/refrigerant-loop.html`, gauge config — a 200 psig
@@ -5285,7 +5417,18 @@ needle very low with most of the dial dead — readable, but a per-mode
 gauge range (heating anchoring on a lower refTemp) would serve heating
 better. Low / design idea, noticed during the 2026-07-18 wave.
 
-### 176. Refrigerant-loop engine: ambient droop masks the blocked-filter high-head warn in deep cold *(open — 2026-07-18, decision-needed)*
+**Decision (2026-07-18):** deferred. The needle stays legible at the
+bottom of the dial, so what's wrong here is a dead dial region —
+cosmetic, not a misread. Per-mode ranging is also the kind of change
+that belongs bundled with heating work rather than shipped alone: on
+its own it's a one-sim tweak to a gauge config, and it invites a
+second pass the moment anything else about heating-mode presentation
+moves. Trigger for revisit: either the air-side simulator adopting
+the same gauge component — at which point per-mode ranging becomes
+shared infrastructure rather than a one-sim tweak — or the next arc
+that resumes work on heat-pump / heating-mode behavior.
+
+### 176. Refrigerant-loop engine: ambient droop masks the blocked-filter high-head warn in deep cold *(addressed 2026-07-18)*
 
 Verification-round finding on PR #368: with the ambient droop live, a
 blocked indoor filter in DEEP cold (below ~17 °F ambient) no longer
@@ -5297,6 +5440,45 @@ still flags normally at 40–65 °F ambient. Re-tuning the threshold
 relative-to-droop (split against the drooped baseline rather than an
 absolute onset) changes when the warn fires across the whole heating
 envelope — a design call. Decision-needed.
+
+**Resolution (2026-07-18):** owner picked candidate (b) — measure
+the split *relative* to the drooped design baseline — over nudging
+the absolute onset down (which only moves where the blind spot
+starts) and over leaving the frost verdict to own deep cold (which
+loses a real, separately-diagnosable fault). `HIGH_HEAD_SPLIT_HEAT:
+38` becomes `HIGH_HEAD_EXCESS_HEAT: 3` — the same +3 margin cooling
+already uses at 18-over-15. The heating block hoists the droop term
+and exposes `droopedDesignSplit = SPLIT_BASE_HEAT + ambDroop`
+(design split = 35 + 0.5·min(0, ambient − 47)), and `highHead`'s
+heating rung compares `split − droopedDesignSplit` against it. The
+absolute `tCond > 120 °F` rung and the cooling rung are untouched,
+and verdict priority is unchanged — below 40 °F the frost verdict
+still owns the pill, so this moves the HEAD LED and the
+screen-reader alarm list only.
+
+Correction to the problem statement above: "the blocked filter still
+flags normally at 40–65 °F ambient" was only half right. The
+absolute onset also **desensitized the whole 18–47 °F band** — onset
+airflow ~0.62 at 30 °F against 0.85–0.90 on a mild day — so the
+40–47 °F corner was already degraded, not normal. The fix therefore
+makes that band warn slightly earlier (onset airflow 0.90 vs the old
+0.78–0.90); that is the desensitization being removed, not a
+regression.
+
+Measured, each pinned as an assertion in
+`tests/refrigerant-loop-engine.spec.js`: deep cold restored — a
+fully blocked indoor filter at 10 °F ambient had run head 261 → 340
+psig with no tell, and onset airflow is now uniform at 0.90 clear /
+0.85 fires across −5…65 °F; bit-identical at 47–65 °F ambient, where
+the droop is zero, so excess ≡ split − 35 and the old `split > 38`
+boundary holds exactly (the split sum keeps its addition order via
+the hoisted `ambDroop`, so every solved number is bit-identical at
+every ambient); zero frost-alone false positives — condenser-air
+starvation, condAir 0.40–1.20 across ambient −5…45 °F, with a clean
+indoor filter never fires highHead; heating presets (frosted-coil,
+defrost, low-ambient) unchanged. One further intended behavior
+change: overcharge (charge 1.20) now flags at every ambient — honest,
+and the pill is unchanged because floodback outranks it.
 
 ### Deferred / Won't fix (with revisit trigger)
 
@@ -5311,7 +5493,12 @@ at the bottom of this subsection. Two more deferrals from the
 2026-05-23 schematic-bg doc-audit sit at their numerical positions
 above: #69 (short-path dasharray stutter — case-split attempt
 reverted 2026-05-24 after the Chromium pathLength/dasharray finding),
-and #70 (~360 SVGs inlined per page).
+and #70 (~360 SVGs inlined per page). Two from the 2026-07-18 wave
+do the same — #174 (`rl-air-*-heads` share the air-lane id prefix)
+and #175 (fixed low-side gauge range in deep low-ambient heating) —
+each carrying a `*(deferred 2026-07-18)*` marker and a **Decision**
+block at its numerical position; pointers at the bottom of this
+subsection.
 
 ### 7. Worker has no app-level rate limit on `/api/contact` *(deferred 2026-05-16)*
 
@@ -5368,6 +5555,21 @@ remain in `## Recently addressed` at their numerical position:
   re-clicking the source pin); recorded so a future "fix" PR doesn't
   add a `cancelWire()` here. Trigger: an explicit UX decision to
   change the cancel-on-mismatch behavior.
+
+**Also deferred from the 2026-07-18 wave** — full entries remain at
+their numerical position above in `## Issues (status inline)`:
+
+- **#174. Refrigerant-loop: `rl-air-*-heads` arrowhead groups share
+  the air-lane id prefix.** Inert today and documented in-page, so
+  a standalone selector refactor is churn. Trigger: the next
+  substantive work on the refrigerant-loop simulator's SVG lane
+  structure — tighten the selector family while in there.
+- **#175. Refrigerant-loop: fixed low-side gauge range parks the
+  needle in deep low-ambient heating.** The needle stays legible;
+  the dead dial region is cosmetic. Trigger: the air-side simulator
+  adopting the same gauge component (making per-mode ranging shared
+  infrastructure), or the next arc resuming heat-pump / heating-mode
+  work.
 
 ---
 
