@@ -70,6 +70,48 @@ renderer), plus a data-file schema for scenarios. Build **after** the
 engine, one scenario, the existing practice-landing card shape; no
 scoring leaderboards (the quiz plan's hard-nos carry over).
 
+### Signals & Sensing buildout — the controls-spine chapter *(opened 2026-07-18)*
+
+The controls-spine arc's education chapter (see the arc handoff
+brief): the site's identity is controls-first but the signals/IO
+shelf was the thinnest — the foundation PR seeded the `signals`
+category with controller-wiring as the boundary lesson, and the
+chapter now builds out from the
+`[future: education/analog-sensing.html]` marker the forced-air
+buildout left behind. Per-page contracts below, one at a time as
+lanes open.
+
+**Temperature Sensors — curve families + the meter workflow.**
+Declared question: *Why does the controller need to know exactly
+which temperature sensor is on the wire — and how do you verify one
+with a meter?*
+In scope: thermistor curve families (10K Type II vs Type III share
+one defining point — 10 kΩ at 77 °F — and diverge everywhere else;
+the vendor-shunted conventions the thermistor-calculator already
+names, the JCI 10K + 8.7K and TAC Type 5, as proof the name is not
+the curve; the quiet failure — a wrong-but-close curve reads a few
+degrees off, plausibly, forever, and nobody hunts a 3° lie); RTDs vs
+thermistors (Pt100 / Pt1000 / Balco; ohms-per-degree so small on an
+RTD that lead resistance reads as temperature; the 3-wire
+compensation answer; where each family lives in the field —
+thermistors own BAS space/duct temp, RTDs where accuracy and
+stability pay); the verification workflow (disconnect → meter the
+ohms → table lookup — the thermistor-calculator's R/T tables ARE the
+lookup, sent there directly → compare against a reference
+thermometer; deciding sensor vs input vs configuration from what
+disagrees).
+Out of scope: landing/wiring faults and the open-reads-cold /
+short-reads-hot display signature — controller-wiring owns them (one
+sentence + anchor); averaging elements + sensor placement — plain
+prose, `[future: education/sensor-placement.html]`; calibration
+offsets — plain prose, `[future: education/sensor-calibration.html]`
+(also declared on the Analog Sensing contract, in-flight on its own
+lane); the analog-signal chapter opener is referenced in plain prose
+while that lane is in-flight (anchor conversion + relatedLinks
+reciprocity at integration if merged).
+Debts: pays the thermistor-calculator's missing lessons-link (the
+tool had no lesson home until now).
+
 ### BACnet buildout — the flagship subsection *(opened 2026-07-07, completed 2026-07-12 — all five pages + the pillar shipped)*
 
 The topic-cluster play from the `seo-growth-plan-2026-07` analysis,
