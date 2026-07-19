@@ -296,20 +296,48 @@ test('hostname pin rejects a token minted on another host → 400 (#34)', async 
     expect(res.status).toBe(400);
 });
 
-test('Resend non-2xx → 502', async () => {
+// The two Resend-failure tests exercise the worker's console.error
+// handlers, so a fully PASSING run used to print an error line and a
+// full stack trace into the reporter output — clean runs looked dirty
+// and a real failure was harder to spot (#173). Capture console.error
+// for the duration of `fn` and hand the calls back for assertion:
+// quieter AND stronger (the tests now prove the worker logged). The
+// finally-restore holds even when an expect inside `fn` throws, and
+// Playwright runs tests sequentially within a worker process, so no
+// other test's output is swallowed. src/worker.js logging untouched.
+async function captureConsoleError(fn) {
+    const calls = [];
+    const realError = console.error;
+    console.error = (...args) => { calls.push(args); };
+    try {
+        return { result: await fn(), calls };
+    } finally {
+        console.error = realError;
+    }
+}
+
+test('Resend non-2xx → 502 (and logs it)', async () => {
     const worker = await loadWorker();
-    const res = await postContact(worker, {
-        stub: fetchStub({ verify: GOOD_VERIFY, resendStatus: 500 }),
-    });
+    const { result: res, calls } = await captureConsoleError(() =>
+        postContact(worker, {
+            stub: fetchStub({ verify: GOOD_VERIFY, resendStatus: 500 }),
+        }));
     expect(res.status).toBe(502);
+    expect(calls).toHaveLength(1);
+    expect(calls[0][0]).toBe('Resend returned non-2xx');
+    expect(calls[0][1]).toBe(500);
 });
 
-test('Resend network failure → 502', async () => {
+test('Resend network failure → 502 (and logs it)', async () => {
     const worker = await loadWorker();
-    const res = await postContact(worker, {
-        stub: fetchStub({ verify: GOOD_VERIFY, resendThrows: true }),
-    });
+    const { result: res, calls } = await captureConsoleError(() =>
+        postContact(worker, {
+            stub: fetchStub({ verify: GOOD_VERIFY, resendThrows: true }),
+        }));
     expect(res.status).toBe(502);
+    expect(calls).toHaveLength(1);
+    expect(calls[0][0]).toBe('Resend request failed');
+    expect(calls[0][1]).toBeInstanceOf(Error);
 });
 
 test('malformed email is rejected before any upstream → 400', async () => {

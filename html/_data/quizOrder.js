@@ -1,16 +1,18 @@
 // Canonical practice-curriculum order for the CONTENT quizzes — the
 // single source the results-card "Next quiz →" links are built from
 // (owner decision 2026-06-10, audit-2026-06 #21/#22). Mirrors the
-// Education landing's card order minus controller-wiring (no quiz
-// yet). The practice landing's Content Quizzes grid is hand-ordered
+// Education landing's card order (lessons with no quiz yet don't
+// appear). The practice landing's Content Quizzes grid is hand-ordered
 // to MATCH this list — re-order both together. Field drills are not
 // a curriculum and carry no next-link. Labels are the topic names as
 // the landing cards show them.
 module.exports = [
     { slug: 'pid-basics',               label: 'PID Basics' },
-    // ── Signals & Sensing ─ new signals-chapter quizzes insert here, in
-    // curriculum order (controller-wiring's slot — it has no quiz; mirror
-    // the education sequence) ──
+    // ── Signals & Sensing ─ controller-wiring leads the chapter; insert
+    // new quiz slugs below it, in curriculum order (mirror the education
+    // sequence) ──
+    { slug: 'controller-wiring',        label: 'Controller Wiring' },
+    { slug: 'analog-sensing',           label: 'Analog Sensing' },
     { slug: 'hydronic-loops',           label: 'Hydronic Loops' },
     { slug: 'load-piping',              label: 'Load Piping' },
     { slug: 'vfds',                     label: 'VFDs' },

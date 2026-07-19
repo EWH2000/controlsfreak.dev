@@ -257,9 +257,18 @@ const RefrigLoop = (function () {
                                  //   (47 ⇒ 35 °F off the coil).
         AIR_DT_COND_HEAT:   25,  // °F design indoor supply rise (70 ⇒ 95 °F
                                  //   supply — heat-pump-warm, not furnace-hot).
-        HIGH_HEAD_SPLIT_HEAT: 38,  // °F abnormal indoor-condenser approach
-                                 //   onset (design split is 35 — same +3
-                                 //   margin as the cooling threshold).
+        HIGH_HEAD_EXCESS_HEAT: 3,  // °F of indoor-condenser split EXCESS
+                                 //   over the ambient-drooped design
+                                 //   baseline (see SPLIT_AMB_HEAT) at
+                                 //   which highHead fires — the same +3
+                                 //   margin as cooling's 18-over-15, but
+                                 //   measured RELATIVE so a blocked
+                                 //   indoor filter warns identically at
+                                 //   any ambient (#176: the old absolute
+                                 //   38 °F onset sat unreachably above
+                                 //   the drooped baseline below 17 °F
+                                 //   ambient, and desensitized the whole
+                                 //   18–47 °F band).
         FROST_AMBIENT_T:    40,  // °F — the frost-accumulation ambient
                                  //   ceiling: below-32 °F coil sat is NORMAL
                                  //   heat-pump operation on a cold day, so
@@ -503,7 +512,11 @@ const RefrigLoop = (function () {
         //     evaporates (ambient + condAir drive A) and the indoor coil
         //     condenses (returnT + airflow drive C). Coefficients are
         //     shared; only each mode's anchor geometry differs.
-        let tEvap, split, tCondRaw, subcool;
+        // droopedDesignSplit is heating-only (undefined in cooling): the
+        // indoor-condenser split a HEALTHY machine runs at this ambient —
+        // the block-C design baseline including the cold-weather droop —
+        // which the highHead excess is measured against (#176).
+        let tEvap, split, droopedDesignSplit, tCondRaw, subcool;
         if (cycle === 'cooling') {
             // (A) cooling — indoor coil evaporates; airflow is the dominant term.
             tEvap = D.T_EVAP_BASE
@@ -543,11 +556,16 @@ const RefrigLoop = (function () {
             //     point the split droops (falling suction ⇒ less mass flow
             //     ⇒ less heat into the indoor coil), one-sided so a mild
             //     day holds the design split — see SPLIT_AMB_HEAT.
+            const ambDroop = D.SPLIT_AMB_HEAT * Math.min(0, ambient - 47);
             split = D.SPLIT_BASE_HEAT
                 + D.SPLIT_CONDAIR  * (airflow  - 1)
                 + D.SPLIT_CHG      * (charge   - 1)
                 + D.SPLIT_CAP      * (capacity - 1)
-                + D.SPLIT_AMB_HEAT * Math.min(0, ambient - 47);
+                + ambDroop;
+            // What a healthy machine's split IS at this ambient — the
+            // droop is design fade, not fault headroom, so the highHead
+            // rung measures the knob terms' excess over THIS (#176).
+            droopedDesignSplit = D.SPLIT_BASE_HEAT + ambDroop;
             tCondRaw = returnT + split;
             // (D) heating — the condensing coil's airflow is the indoor knob.
             subcool = D.SC_BASE
@@ -661,12 +679,17 @@ const RefrigLoop = (function () {
             // Starved evaporator / high superheat — the undercharge tell.
             starved:     superheat > D.STARVED_SH,
             // High head: an abnormal condenser approach (dirty coil /
-            // overcharge — per-mode threshold, the heating design split is
-            // 35 not 15) OR an absolutely high condensing temp. Suppressed
-            // during defrost: the fan-off split spike IS the melt working,
-            // not a fault (the defrost verdict narrates it).
-            highHead:    !defrost && ((tCond > D.HIGH_HEAD_T) || (split >
-                (cycle === 'heating' ? D.HIGH_HEAD_SPLIT_HEAT : D.HIGH_HEAD_SPLIT))),
+            // overcharge — per-mode form) OR an absolutely high condensing
+            // temp. Heating measures the split's EXCESS over the drooped
+            // design baseline (#176) — relative, so a blocked indoor
+            // filter warns at any ambient (at 47 °F and above the droop is
+            // zero and this is bit-identical to the old split > 38);
+            // cooling keeps its absolute 18 °F onset. Suppressed during
+            // defrost: the fan-off split spike IS the melt working, not a
+            // fault (the defrost verdict narrates it).
+            highHead:    !defrost && ((tCond > D.HIGH_HEAD_T) || (cycle === 'heating'
+                ? (split - droopedDesignSplit) > D.HIGH_HEAD_EXCESS_HEAT
+                : split > D.HIGH_HEAD_SPLIT)),
             lowSubcool:  subcool < D.LOW_SC,
             highSubcool: subcool > D.HIGH_SC,
             // Per-side table-clamp detail (the page marks the pegged gauge)

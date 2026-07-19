@@ -452,9 +452,18 @@ techs new to the industry and anyone wanting a refresh.
   on the same leg or the first shared wire dead-shorts the secondary.
   The capstone diagram lands one of each on the same generic
   controller the simulator uses. Pairs with the Controller Wiring
-  Simulator.
+  Simulator and the Controller Wiring quiz.
 <!-- ── Signals & Sensing chapter ─ Controller Wiring leads it; insert
      new lesson bullets here, in curriculum order ── -->
+- **Analog Sensing** — how a raw electrical signal becomes the
+  engineering value on the graphic, and when not to believe it. The
+  published range as a two-endpoint promise (with the span-mismatch
+  that reads plausibly wrong forever), live zero as a fault you can
+  see from the chair (0–10 V can't distinguish broken from zero,
+  4–20 mA can), and railed signals as ceilings, not measurements —
+  the general lesson under Duct Static Control's railed-transducer
+  war story. Interactive signal-to-engineering-units mapping widget.
+  Pairs with the Signal Scaling tool.
 - **Controls Commissioning** — how you verify a controller actually
   does what its sequence of operations says. Point-to-point checkout
   of every AI, AO, BI, and BO (exercise the point, confirm the value
@@ -743,7 +752,7 @@ flavors share the same engine:
   When a topic recurs in feedback, it becomes a candidate for a
   new education page.
 
-Shipped so far — twenty-three content quizzes (each 10 questions, paired
+Shipped so far — twenty-five content quizzes (each 10 questions, paired
 1:1 with its lesson and deep-linking the gotchas) plus five field
 drills:
 
@@ -763,6 +772,16 @@ drills:
   leaves and how integral erases it, and the rectifier / DC-bus /
   inverter power stages with the run-command vs. speed-reference
   trap.
+- **Content quizzes — signals:** Controller Wiring, Analog Sensing.
+  The shared COM as the panel's 0 V reference, the same-leg phasing
+  rule on a shared transformer (and the 24-vs-48 V distinction),
+  LOOP+ vs the AC hot leg for a 2-wire loop, wetting current and wet
+  vs. dry contacts, the AO signal that isn't the load's power, the
+  unfed BO-C, and triac vs. relay outputs; then the reading side —
+  the published-range promise and its span-mismatch gotcha, scaling
+  a raw signal to engineering units, the live zero's impossible
+  numbers, and the railed flatline that's a ceiling, not a
+  measurement.
 - **Content quizzes — programming:** Function Blocks. Blocks, pins,
   wire types, the block families, and how a scan resolves feedback.
 - **Content quizzes — refrigeration:** Refrigerant Cycle Basics,
