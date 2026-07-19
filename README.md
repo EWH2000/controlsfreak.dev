@@ -49,10 +49,8 @@ three-lesson chapter from the vapor-compression cycle through superheat
 and subcooling to the metering devices, plus the P-T & superheat
 calculator and the live loop simulator) so the deepest refrigeration
 content is reachable from a single entry point. The refrigerant pages
-link back to it via the same "Part of" slot; the simulator's own
-backlink follows separately (its page is owned by the parallel
-heat-pump-mode PR, so the one-line backlink lands with whichever of the
-two merges second).
+link back to it via the same "Part of" slot, and so does the
+simulator.
 
 The four hubs sit under a **Guides** nav lane and a `/guides/` landing
 that gather the topic pillars in one place — the topic axis alongside the
@@ -124,7 +122,7 @@ Calculators, converters, and lookups — open one, get an answer.
   with the code — unknown-property, write-access-denied), a **Reject**
   (a malformed-request reason), or an **Abort** (a torn-down
   transaction — segmentation, TSM timeout, APDU-too-long). Four
-  reference tables (8 classes, 225 codes, 11 reject and 12 abort
+  reference tables (8 classes, 226 codes, 11 reject and 12 abort
   reasons) share one filter; every value is click-to-copy. Enums are
   imported by script; the field-common descriptions are hand-authored
   and were adversarially cross-checked for accuracy.
@@ -405,7 +403,7 @@ paired with an Education explainer for the underlying concepts.
   shut valves stay finite, and a solve that doesn't settle warns you
   rather than masquerading as solved. Three worked loops to start from;
   desktop-only by design. A teaching model, not a design tool — the
-  capstone for the four hydronic lessons.
+  capstone for the five hydronic lessons.
 - **Refrigerant Loop Simulator** — a directional vapor-compression
   model: turn indoor-coil airflow, refrigerant charge, outdoor
   ambient, outdoor-coil airflow, return-air temperature, metering
@@ -1114,13 +1112,15 @@ python3 -m http.server 8000 --directory _site
 npm test
 ```
 
-Tests live under `tests/`: `smoke.spec.js` (every page returns
+Tests live under `tests/` — around thirty spec files, and the
+directory is the source of truth for the list (enumerating them here
+only drifts). `smoke.spec.js` is the broad one: every page returns
 200, has the expected title and nav, no console errors, plus
-behaviour spot-checks), `contact.spec.js` (the contact form),
-`psychro-engine.spec.js` (pure-Node engine math), `nav-search.spec.js`
-(the command palette + search-index drift), `nav-menu.spec.js` (the
-nav dropdowns + mobile hamburger), and `home-hero.spec.js` (the
-interactive hero loop + category deep-links). Chromium only. The Playwright config has a `webServer` block that builds
+behaviour spot-checks. The rest are per-surface — the shared chrome
+(command palette, nav dropdowns, mobile hamburger, the interactive
+home hero), the contact form, accessibility and responsive sweeps,
+and a set of engine-direct specs that run the simulator and tool math
+pure-Node inside the Playwright workers. Chromium only. The Playwright config has a `webServer` block that builds
 and serves `_site/`, so `npm test` is self-sufficient on a fresh
 checkout — a running `npm run dev` on port 8000 is reused.
 
