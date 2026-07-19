@@ -64,6 +64,7 @@ const order = [
     "/education/boolean-logic-latches.html",
     "/education/comparators-and-deadband.html",
     "/education/timers-and-delays.html",
+    "/education/setpoint-math-reset.html",
     "/education/modbus-basics.html",
     "/education/modbus-decoding.html",
     "/education/bacnet-vs-modbus.html",

@@ -39,6 +39,7 @@ module.exports = [
     { slug: 'boolean-logic-latches',    label: 'Boolean Logic & Latches' },
     { slug: 'comparators-and-deadband', label: 'Comparators & Deadband' },
     { slug: 'timers-and-delays',        label: 'Timers & Delays' },
+    { slug: 'setpoint-math-reset',      label: 'Setpoint Math & Reset' },
     { slug: 'modbus-basics',            label: 'Modbus Basics' },
     { slug: 'modbus-decoding',          label: 'Modbus Decoding' },
     { slug: 'bacnet-basics',            label: 'BACnet Basics' },

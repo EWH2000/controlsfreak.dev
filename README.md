@@ -741,6 +741,18 @@ techs new to the industry and anyone wanting a refresh.
   debounce, and closes on minimum run / off times — anti-short-cycle
   pacing from one compressor up to plant staging. Pairs with the
   Function-Block Editor sandbox and a Timers & Delays quiz.
+- **Setpoint Math & Reset Schedules** — how a sheet computes a
+  setpoint instead of typing it: add/sub building band edges and
+  occupied/unoccupied setbacks off one constant, min/max as
+  high-selects across zone demands and low-select ceilings, and the
+  SELECT block switching setpoints on an occupancy bit. The
+  centerpiece is the outdoor-air reset schedule as y = mx + b plus a
+  clamp — slope and intercept derived from the two design endpoints,
+  the LIMIT block as the safety rail that keeps a cold snap from
+  commanding water past design, and the same two-point arithmetic as
+  signal scaling (the tool's 2-Point tab solves a schedule
+  directly). Pairs with the editor's hot-water reset example and a
+  Setpoint Math & Reset quiz.
 - **Modbus Basics** — what Modbus is on the wire: the four data
   tables (coils, discrete inputs, input and holding registers),
   the function codes that read and write them, and what an
@@ -824,7 +836,7 @@ flavors share the same engine:
   When a topic recurs in feedback, it becomes a candidate for a
   new education page.
 
-Shipped so far — thirty-two content quizzes (each 10 questions, paired
+Shipped so far — thirty-three content quizzes (each 10 questions, paired
 1:1 with its lesson and deep-linking the gotchas) plus five field
 drills:
 
@@ -869,15 +881,19 @@ drills:
   Hand-vs-Auto fault localization, and which trips belong in copper,
   not code.
 - **Content quizzes — programming:** Function Blocks, Boolean Logic
-  & Latches, Comparators & Deadband, Timers & Delays. Blocks, pins,
-  wire types, the block families, and how a scan resolves feedback;
-  then permissive chains, fail-safe NOT inversion, set-dominant SR
-  behavior, and the missing-NOT gotcha; then comparator picks, the
-  EQ-on-analog trap, chatter and short-cycling, band-edge math, and
-  the swapped-looking S/R pair that's really reverse action; then
-  the timing layer — TON vs. TOF selection, what clears the elapsed
-  time, proof windows sized between nuisance trips and blind spots,
-  and the starts-per-hour spacing behind minimum run and off times.
+  & Latches, Comparators & Deadband, Timers & Delays, Setpoint Math
+  & Reset. Blocks, pins, wire types, the block families, and how a
+  scan resolves feedback; then permissive chains, fail-safe NOT
+  inversion, set-dominant SR behavior, and the missing-NOT gotcha;
+  then comparator picks, the EQ-on-analog trap, chatter and
+  short-cycling, band-edge math, and the swapped-looking S/R pair
+  that's really reverse action; then the timing layer — TON vs. TOF
+  selection, what clears the elapsed time, proof windows sized
+  between nuisance trips and blind spots, and the starts-per-hour
+  spacing behind minimum run and off times; then the math chains —
+  interpolating a reset schedule from fresh endpoints, deriving
+  slope and intercept, high- vs low-selects, and a flipped-sign
+  reset chain gotcha.
 - **Content quizzes — refrigeration:** Refrigerant Cycle Basics,
   Superheat & Subcooling, TXVs vs. EEVs. The four components and
   the pressure-temperature saturation lock, which line each

@@ -77,7 +77,7 @@ nav: practice
 
     <div class="filter-chips" role="group" aria-label="Filter practice by topic">
         <button type="button" class="filter-chip active" data-category="all" aria-pressed="true">
-            All <span class="filter-chip-count">37</span>
+            All <span class="filter-chip-count">38</span>
         </button>
         <button type="button" class="filter-chip" data-category="modbus" aria-pressed="false">
             Modbus <span class="filter-chip-count">2</span>
@@ -98,7 +98,7 @@ nav: practice
             Controls <span class="filter-chip-count">2</span>
         </button>
         <button type="button" class="filter-chip" data-category="programming" aria-pressed="false">
-            Programming <span class="filter-chip-count">4</span>
+            Programming <span class="filter-chip-count">5</span>
         </button>
         <button type="button" class="filter-chip" data-category="psychrometrics" aria-pressed="false">
             Psychrometrics <span class="filter-chip-count">1</span>
@@ -369,6 +369,15 @@ nav: practice
                 titleShort: 'Timers & Delays',
                 titleFull:  'Timers & Delays',
                 desc:       'Prove the timing from memory — TON vs TOF sentences, what clears ET, proof windows sized between nuisance trips and blind spots, and starts-per-hour spacing.',
+                pills:      ['10 Questions', 'MCQ · TF · Gotcha · Numeric', '~ 5 min'],
+                category:   'programming'
+            }) }}
+            {{ navCard({
+                section:    'practice',
+                href:       '/practice/setpoint-math-reset.html',
+                titleShort: 'Setpoint Math & Reset',
+                titleFull:  'Setpoint Math & Reset',
+                desc:       'Interpolate reset schedules from fresh endpoints, derive slope and intercept, pick high- vs low-selects, and catch a flipped-sign reset chain.',
                 pills:      ['10 Questions', 'MCQ · TF · Gotcha · Numeric', '~ 5 min'],
                 category:   'programming'
             }) }}

@@ -243,6 +243,51 @@ prose now, anchor at integration); the VFD run command — vfds owns
 it (anchored: drives replace the contactor but keep the same
 command-path shape).
 
+### Programming buildout — the wiresheet chapter *(opened 2026-07-18)*
+
+The controls-spine arc's second education chapter (see the arc
+handoff brief): the Function-Block Editor sim and its
+function-blocks lesson shipped as a capstone with no chapter behind
+them — the telling detail that picked this arc. The chapter builds
+out from function-blocks (the anchor) in curriculum order:
+boolean-logic → comparators-and-deadband → timers-and-delays →
+setpoint-math-reset → reading-a-wiresheet, per-page contracts below
+as lanes open. Each lesson gets a paired Practice quiz; the sim's
+canned examples (PR #381 added proof-of-flow and hot-water reset)
+serve as the lesson capstones.
+
+**Setpoint Math & Reset Schedules.** Declared question: *How does a
+sheet compute a setpoint — and how does an outdoor-air reset
+schedule come out of four math blocks?*
+In scope: offset math (add/sub building band edges and
+occupied/unoccupied setbacks; min/max as high-select across zone
+demands and low-select ceilings; the framing that real sheets
+compute setpoints rather than type them); the linear reset — the
+sim's hot-water `reset` canned example walked block by block (derive
+m = −40/60 ≈ −0.667 and b = 180 from the two design endpoints so the
+method generalizes; the LIMIT block as the safety rail — at −10 °F
+the unclamped line asks 186.7 °F; worked middle point 30 °F →
+160 °F; metric dual-stating per the rounding policy, displayed-
+operand arithmetic closing in both systems); the cross-chapter beat
+that a reset schedule is the same slope/offset arithmetic as signal
+scaling — the signal-scaling tool's 2-Point tab literally solves one
+if you feed it the endpoints; SELECT switching setpoints by
+occupancy (occupied 72 / unoccupied 65 through one SELECT, a
+sentence on chaining for multi-mode).
+Out of scope: WHY resets save energy + how endpoints get chosen —
+the system pages own it (pump-control `#dp-reset`, duct-static
+`#reset` trim-and-respond), anchored as "the system side of this
+math"; trim-and-respond as an algorithm — duct-static-control;
+PID — pid-basics; comparator band-edge behavior (deadband, chatter)
+— the comparators-and-deadband lesson (in-flight this arc; prose
+now, anchor + reciprocal when merged); mode DESIGN — how a building
+decides which mode it's in — plain prose,
+`[future: education/mode-and-state-logic.html]`.
+Debts: pays the sequencing residual ("setpoint reset against
+outside-air temperature") parked on the pump-control and
+equipment-staging entries' `[future:]` breadcrumbs — annotate those
+crumbs as shipped-here when this page lands.
+
 ### BACnet buildout — the flagship subsection *(opened 2026-07-07, completed 2026-07-12 — all five pages + the pillar shipped)*
 
 The topic-cluster play from the `seo-growth-plan-2026-07` analysis,
@@ -2329,8 +2374,11 @@ drawing.
 - `[future: sequencing.html]` (the closing) — **partly paid.** The
   closing's staging mention now links to equipment-staging.html;
   the rest of the broader sequence layer — setpoint reset against
-  outside-air temperature, mode transitions, morning warm-up —
-  stays plain-prose forward-link for future pages.
+  outside-air temperature *(shipped 2026-07-18 —
+  education/setpoint-math-reset.html, the sheet-side math; the
+  system-side WHY stays here on the DP-reset section)*, mode
+  transitions, morning warm-up — stays plain-prose forward-link
+  for future pages.
 - `[future: balancing.html]` *(shipped 2026-05-16)* — not directly forward-linked from
   pump-control (the load-piping page already carries the link),
   but worth noting that pump-control's "DP setpoint reset assumes
@@ -2383,7 +2431,9 @@ In scope (sections shipped):
   plain prose) to the still-future reset / modes / warm-up pages.
 
 Out of scope (forward links, not content):
-- Setpoint / OAT reset, mode transitions, optimal / morning warm-up
+- Setpoint / OAT reset *(shipped 2026-07-18 —
+  education/setpoint-math-reset.html carries the reset-schedule
+  math)*, mode transitions, optimal / morning warm-up
   start, bumpless transitions — [future: sequencing page(s)]
 - End-of-curve protection / deadhead — covered on pump-control;
   linked back, not re-taught
