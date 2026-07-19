@@ -55,7 +55,7 @@ keywords: status proof current switch DP switch aux contact fail-to-start broken
         <div class="tool-body">
 
             <p class="page-intro">
-                Every equipment graphic has a fan icon that turns green when the fan is "on." That green is not the fan — it is a binary input reporting whatever the status device on the other end of the wire happens to prove, and the gap between those two things is where a whole family of service calls lives. This page is about that gap. One question, start to finish: <em>when the graphic says a fan is ON, what is the controller actually sensing — and why do command and status sometimes disagree?</em> How a status contact physically lands on a binary input — the wetting current the controller supplies, dry versus externally powered contacts — is <a href="/education/controller-wiring.html#inputs">Controller Wiring</a>'s ground; here the landing is taken as given, and the question is what the closed contact actually <em>means</em>.
+                Every equipment graphic has a fan icon that turns green when the fan is "on." That green is not the fan — it is a binary input reporting whatever the status device on the other end of the wire happens to prove, and the gap between those two things is where a whole family of service calls lives. This page is about that gap. One question, start to finish: <em>when the graphic says a fan is ON, what is the controller actually sensing — and why do command and status sometimes disagree?</em> How a status contact physically lands on a binary input — the wetting current the controller supplies, dry versus externally powered contacts — is <a href="/education/controller-wiring.html#inputs">Controller Wiring</a>'s ground; here the landing is taken as given, and the question is what the closed contact actually <em>means</em>. (This is the binary half of the chapter's believe-the-graphic question — <a href="/education/analog-sensing.html">Analog Sensing</a> asks the same thing of the analog values beside that fan icon.)
             </p>
 
             <!-- ───────────────── 1 · The status-source menu ───────────────── -->
@@ -301,6 +301,7 @@ keywords: status proof current switch DP switch aux contact fail-to-start broken
         ],
         lessons: [
             {href: '/education/controller-wiring.html', label: 'Controller Wiring'},
+            {href: '/education/analog-sensing.html', label: 'Analog Sensing'},
             {href: '/education/controls-commissioning.html', label: 'Controls Commissioning'}
         ],
         quizzes: [
