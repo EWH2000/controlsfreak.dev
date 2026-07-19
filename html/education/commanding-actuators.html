@@ -1,0 +1,381 @@
+---
+title: Commanding Actuators — controlsfreak.dev
+description: An AO commands 50% and the damper sits at 37.5% — actuator command spans, direct vs reverse action, fail positions, feedback, and floating actuators.
+canonical: https://controlsfreak.dev/education/commanding-actuators.html
+nav: education
+category: signals
+pairedQuiz: https://controlsfreak.dev/practice/commanding-actuators.html
+keywords: actuator 2-10V 0-10V 4-20mA span stroke spring return fail position normally open normally closed floating tri-state tristate feedback damper valve DIP switch
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block head %}
+    <style>
+        /* Page-specific — commanding-actuators diagrams. Follows the .edu-svg
+           precedent (full-width, screenshot-audited); class prefix cak-.
+           Palette: green (accent) = the controller's command, blue = the
+           actuator's answer / the 2-10 V span line, warm (heat) = the
+           reverse-acting line, dim dashed = the 1:1 reference. Static
+           diagrams — the span story needs no motion. */
+        .cak-svg text { font-family: var(--mono); }
+        .cak-svg .lbl { fill: var(--text-bright); font-size: 12px; }
+        .cak-svg .lbl-dim { fill: var(--text-dim); font-size: 11px; }
+        .cak-svg .lbl-cmd { fill: var(--accent); font-size: 12px; }
+        .cak-svg .lbl-ans { fill: var(--blue); font-size: 12px; }
+        /* Meaning-carrying geometry strokes use --text-dim, not --border —
+           the balancing-diagram convention (--border nearly vanishes as a
+           line color; audit-2026-06 #14). */
+        .cak-svg .rail { stroke: var(--text-dim); stroke-width: 1.5; }
+        .cak-svg .tick { stroke: var(--text-dim); stroke-width: 1; }
+        .cak-svg .ln-ideal { stroke: var(--text-dim); stroke-width: 2; stroke-dasharray: 5 4; fill: none; }
+        .cak-svg .ln-span { stroke: var(--blue); stroke-width: 2.5; fill: none; }
+        .cak-svg .ln-rev { stroke: var(--heat); stroke-width: 2; fill: none; }
+        .cak-svg .cmd-mark { stroke: var(--accent); stroke-width: 1.5; stroke-dasharray: 4 4; }
+        /* Legend swatches for the three chart lines. */
+        .cak-leg.edu-legend .sw.ideal { border-top: 3px dashed var(--text-dim); }
+        .cak-leg.edu-legend .sw.span { border-top: 3px solid var(--blue); }
+        .cak-leg.edu-legend .sw.rev { border-top: 3px solid var(--heat); }
+    </style>
+{% endblock %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Education · Commanding Actuators</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">Commanding Actuators <span class="tool-tag">Signals</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                A controller's analog output is a promise, not a position. The AO drives a voltage or a current
+                down the wire; the actuator on the other end turns that signal into stroke — degrees of damper
+                rotation, millimeters of valve stem. Between the two sit a handful of translation rules: which
+                <em>span</em> the signal speaks, which <em>direction</em> the actuator runs, and where it goes when
+                the signal or the power dies — and every one of them can be set wrong while all of the wiring is
+                right. This page is about that translation. One question, start to finish: <em>what happens between
+                an AO commanding 50% and the damper actually sitting at 50% — and why do the two disagree?</em>
+                (How the conductors themselves land — the three-wire power + signal + common landing, and the
+                triac pair that drives a floating actuator — is
+                <a href="/education/controller-wiring.html">Controller Wiring</a>'s story. Here the wire is assumed
+                right, and the trouble is still there.)
+            </p>
+
+            <!-- ───────────────── 1 · Command spans ───────────────── -->
+            <h2 class="subhead" id="command-spans">The Command Spans — 0–10 V, 2–10 V, 4–20 mA</h2>
+
+            <p>
+                A modulating actuator listens in one of three common command languages: <strong>0–10 V</strong>,
+                <strong>2–10 V</strong>, or <strong>4–20 mA</strong>. All three are linear spans meaning 0–100% of
+                stroke; the difference is the endpoints. The two offset spans carry a <em>live zero</em> — the
+                bottom of the range is a real, non-zero signal, so a dead wire (0&nbsp;V, 0&nbsp;mA) is
+                distinguishable from an honest "fully closed" command. And they're close cousins: drive a 4–20 mA
+                loop through a 500&nbsp;Ω resistor and the voltage across it is exactly 2–10 V, which is why an
+                actuator spec sheet so often says its 2–10 V input "accepts 4–20 mA with a 500&nbsp;Ω resistor."
+                (Drives take the same 0–10 / 4–20 command languages — a VFD's speed reference is usually one of
+                them — but the run-command and speed-reference story belongs to
+                <a href="/education/vfds.html">the VFD lesson</a>.)
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                Here is the whole page's problem in one number. The controller's AO is scaled
+                0–100% → 0–10 V, so a 50% command puts <strong>5.0 V</strong> on the wire. The actuator, though,
+                is configured for a <strong>2–10 V</strong> input — its 0% lives at 2 V and its 100% at 10 V. It
+                does the only math it knows: stroke = (5.0 − 2) ÷ (10 − 2) = <strong>37.5%</strong>. The graphics
+                say 50; the damper sits at 37.5; both devices are working perfectly. You can replicate this in the
+                <a href="/tools/signal-scaling.html">Signal Scaling tool</a>: signal type 2–10 V, signal value 5,
+                engineering range 0 to 100 — it answers 37.50, and the %-of-span readout says the same 37.5%.
+            </p>
+
+            <svg class="edu-svg cak-svg" id="cak-d1" viewBox="0 0 680 292"
+                 role="img" aria-labelledby="cak-d1-title cak-d1-desc">
+                <title id="cak-d1-title">One 5-volt command read against the 0–10 V and 2–10 V spans</title>
+                <desc id="cak-d1-desc">Two horizontal number lines. The top rail is the controller's AO command
+                    span, 0 to 10 volts; a dot marks 5.0 volts, which the controller calls 50 percent. The bottom
+                    rail is the actuator's 2-to-10-volt input span, labeled 0 to 100 percent of stroke, with the
+                    region from 0 to 2 volts hatched as a dead zone where the actuator cannot move. A dashed
+                    vertical line drops from the 5-volt dot straight down to the actuator rail, where the same
+                    voltage lands at 37.5 percent stroke — the 2-volt offset the actuator never counts.</desc>
+
+                <defs>
+                    <pattern id="cak-hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+                        <line x1="0" y1="0" x2="0" y2="6" stroke="var(--text-dim)" stroke-width="1" opacity="0.55"/>
+                    </pattern>
+                </defs>
+
+                <!-- top rail: AO command, 0–10 V (x = 80 + 52·V) -->
+                <text class="lbl" x="80" y="28">AO COMMAND — 0–10 V</text>
+                <text class="lbl-cmd" x="340" y="50" text-anchor="middle">5.0 V — the controller calls it 50%</text>
+                <line class="rail" x1="80" y1="76" x2="600" y2="76"/>
+                <line class="tick" x1="80" y1="70" x2="80" y2="82"/>
+                <line class="tick" x1="184" y1="70" x2="184" y2="82"/>
+                <line class="tick" x1="288" y1="70" x2="288" y2="82"/>
+                <line class="tick" x1="392" y1="70" x2="392" y2="82"/>
+                <line class="tick" x1="496" y1="70" x2="496" y2="82"/>
+                <line class="tick" x1="600" y1="70" x2="600" y2="82"/>
+                <text class="lbl-dim" x="80" y="100" text-anchor="middle">0 V</text>
+                <text class="lbl-dim" x="184" y="100" text-anchor="middle">2</text>
+                <text class="lbl-dim" x="288" y="100" text-anchor="middle">4</text>
+                <text class="lbl-dim" x="392" y="100" text-anchor="middle">6</text>
+                <text class="lbl-dim" x="496" y="100" text-anchor="middle">8</text>
+                <text class="lbl-dim" x="600" y="100" text-anchor="middle">10</text>
+                <circle cx="340" cy="76" r="6" fill="var(--accent)" stroke="var(--bg)" stroke-width="1.5"/>
+
+                <!-- the same voltage, dropped onto the actuator's span -->
+                <line class="cmd-mark" x1="340" y1="84" x2="340" y2="184"/>
+                <polygon points="335,184 345,184 340,192" fill="var(--accent)"/>
+
+                <!-- bottom rail: actuator stroke, 2–10 V input (0% at x=184, 100% at x=600) -->
+                <text class="lbl" x="600" y="140" text-anchor="end">ACTUATOR STROKE — 2–10 V INPUT</text>
+                <text class="lbl-dim" x="132" y="160" text-anchor="middle">dead zone</text>
+                <text class="lbl-dim" x="132" y="174" text-anchor="middle">no motion below 2 V</text>
+                <rect x="80" y="188" width="104" height="16" fill="url(#cak-hatch)" stroke="var(--text-dim)" stroke-width="1"/>
+                <line class="rail" x1="184" y1="196" x2="600" y2="196"/>
+                <line class="tick" x1="184" y1="190" x2="184" y2="202"/>
+                <line class="tick" x1="288" y1="190" x2="288" y2="202"/>
+                <line class="tick" x1="392" y1="190" x2="392" y2="202"/>
+                <line class="tick" x1="496" y1="190" x2="496" y2="202"/>
+                <line class="tick" x1="600" y1="190" x2="600" y2="202"/>
+                <text class="lbl-dim" x="184" y="220" text-anchor="middle">0%</text>
+                <text class="lbl-dim" x="288" y="220" text-anchor="middle">25%</text>
+                <text class="lbl-dim" x="392" y="220" text-anchor="middle">50%</text>
+                <text class="lbl-dim" x="496" y="220" text-anchor="middle">75%</text>
+                <text class="lbl-dim" x="600" y="220" text-anchor="middle">100%</text>
+                <circle cx="340" cy="196" r="6" fill="var(--blue)" stroke="var(--bg)" stroke-width="1.5"/>
+                <text class="lbl-ans" x="340" y="248" text-anchor="middle">37.5% stroke — the actuator's answer</text>
+                <text class="lbl-dim" x="340" y="278" text-anchor="middle">same 5 volts, two answers — the 2 V offset never cancels</text>
+            </svg>
+
+            <p style="margin-top:1.25rem;">
+                The field signature of a span mismatch is its <em>consistency</em>. Everything tracks — command up,
+                damper opens further — but every position sits offset, all day, on every unit that shares the
+                configuration. One damper stuck low is a broken actuator; a whole floor of them sitting low is a
+                setting. And near the bottom of the range the offset becomes a <strong>dead zone</strong>: every
+                command below 20% (0–2 V from this AO) means the same thing to a 2–10 V actuator — nothing — so a
+                loop trying to hold a small opening gets no response, winds up its integral through the silence,
+                then overshoots when the signal finally climbs past 2 V. That's the hunting near the end of travel
+                that mismatched spans are famous for. Run the mismatch the other way — an AO scaled 2–10 V into an
+                actuator configured 0–10 V — and everything sits <em>high</em> instead: the AO's "fully closed" is
+                2 V, the actuator reads 2 V as 20%, and the damper never fully closes no matter what the graphics
+                claim.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                The usual cause is not a failed actuator — it's a switch. Most modulating actuators carry a
+                <strong>DIP switch or jumper</strong> on the body selecting the input span (0–10 / 2–10 / 4–20 mA
+                with the resistor) and often the direction, and the factory default doesn't care what your
+                controller is scaled for. The fix is agreement, not replacement: check the actuator's span switch
+                against the AO's scaling before touching the wire, and check the wire before condemning the motor.
+            </p>
+
+            <!-- ───────────────── 2 · Direction and fail posture ───────────────── -->
+            <h2 class="subhead" id="direction-and-fail">Direction and Fail Posture</h2>
+
+            <p>
+                The span says how much; the <strong>direction</strong> setting says which way. A
+                <em>direct-acting</em> actuator increases stroke as the signal rises — 2 V is 0%, 10 V is 100%. A
+                <em>reverse-acting</em> one runs the same span backwards — full signal, zero stroke — usually the
+                same DIP block or, on damper actuators, a rotation switch (CW/CCW). One disambiguation, because the
+                words collide: this is direction <em>at the actuator</em>, the mapping from signal to stroke. A
+                control loop's direct/reverse <em>action</em> — which way the controller's output moves as the
+                measurement rises — is a different setting solving a different problem, and it belongs to
+                <a href="/education/pid-basics.html">PID Basics</a>. Flip either one and motion inverts; flip both
+                and the two inversions cancel, so the system even seems to work — until someone reads a position.
+                Fix the mapping at the layer that's actually wrong. The chart below puts the whole section on one
+                plot: the ideal 1:1 line, the 2–10 V line from the worked example, and a reverse-acting line —
+                three configurations, one glance at what the same 5 V command gets you.
+            </p>
+
+            <svg class="edu-svg cak-svg" id="cak-d2" viewBox="0 0 620 402"
+                 role="img" aria-labelledby="cak-d2-title cak-d2-desc">
+                <title id="cak-d2-title">Stroke versus command for three actuator configurations</title>
+                <desc id="cak-d2-desc">A chart with AO command voltage from 0 to 10 volts on the horizontal axis
+                    and actuator stroke from 0 to 100 percent on the vertical axis. Three lines: a dashed 1-to-1
+                    reference line for a 0-to-10-volt direct-acting actuator, rising from the origin to full stroke
+                    at 10 volts; a solid line for a 2-to-10-volt direct-acting actuator, flat at zero until 2 volts
+                    and then rising more steeply to full stroke at 10 volts — sitting below the reference
+                    everywhere; and a falling line for a 0-to-10-volt reverse-acting actuator, from full stroke at
+                    0 volts down to zero at 10 volts. A dashed vertical marker at 5 volts crosses the two
+                    0-to-10-volt lines at 50 percent and the 2-to-10-volt line at 37.5 percent.</desc>
+
+                <text class="lbl-dim" x="330" y="26" text-anchor="middle">at 5 V: a 0–10 V actuator answers 50% — a 2–10 V actuator answers 37.5%</text>
+
+                <!-- axes -->
+                <line x1="90" y1="320" x2="580" y2="320" stroke="var(--text-dim)" stroke-width="1.5"/>
+                <polygon points="580,315 592,320 580,325" fill="var(--text-dim)"/>
+                <line x1="90" y1="320" x2="90" y2="60" stroke="var(--text-dim)" stroke-width="1.5"/>
+                <polygon points="85,60 90,48 95,60" fill="var(--text-dim)"/>
+                <text class="lbl-dim" x="335" y="382" text-anchor="middle">AO command (V) →</text>
+                <text class="lbl-dim" x="34" y="190" text-anchor="middle" transform="rotate(-90 34 190)">actuator stroke →</text>
+
+                <!-- x ticks (x = 90 + 48·V) -->
+                <line class="tick" x1="90" y1="320" x2="90" y2="326"/>
+                <line class="tick" x1="186" y1="320" x2="186" y2="326"/>
+                <line class="tick" x1="282" y1="320" x2="282" y2="326"/>
+                <line class="tick" x1="378" y1="320" x2="378" y2="326"/>
+                <line class="tick" x1="474" y1="320" x2="474" y2="326"/>
+                <line class="tick" x1="570" y1="320" x2="570" y2="326"/>
+                <text class="lbl-dim" x="90" y="344" text-anchor="middle">0</text>
+                <text class="lbl-dim" x="186" y="344" text-anchor="middle">2</text>
+                <text class="lbl-dim" x="282" y="344" text-anchor="middle">4</text>
+                <text class="lbl-dim" x="378" y="344" text-anchor="middle">6</text>
+                <text class="lbl-dim" x="474" y="344" text-anchor="middle">8</text>
+                <text class="lbl-dim" x="570" y="344" text-anchor="middle">10</text>
+
+                <!-- y ticks (y = 320 − 2.6·pct) -->
+                <line class="tick" x1="84" y1="320" x2="90" y2="320"/>
+                <line class="tick" x1="84" y1="255" x2="90" y2="255"/>
+                <line class="tick" x1="84" y1="190" x2="90" y2="190"/>
+                <line class="tick" x1="84" y1="125" x2="90" y2="125"/>
+                <line class="tick" x1="84" y1="60" x2="90" y2="60"/>
+                <text class="lbl-dim" x="76" y="324" text-anchor="end">0%</text>
+                <text class="lbl-dim" x="76" y="259" text-anchor="end">25%</text>
+                <text class="lbl-dim" x="76" y="194" text-anchor="end">50%</text>
+                <text class="lbl-dim" x="76" y="129" text-anchor="end">75%</text>
+                <text class="lbl-dim" x="76" y="64" text-anchor="end">100%</text>
+
+                <!-- the three configurations -->
+                <line class="ln-ideal" x1="90" y1="320" x2="570" y2="60"/>
+                <path class="ln-span" d="M 90 320 H 186 L 570 60"/>
+                <line class="ln-rev" x1="90" y1="60" x2="570" y2="320"/>
+
+                <!-- the 5 V command marker and where each line answers it -->
+                <line class="cmd-mark" x1="330" y1="320" x2="330" y2="54"/>
+                <text class="lbl-cmd" x="330" y="344" text-anchor="middle">5 V</text>
+                <circle cx="330" cy="190" r="5.5" fill="var(--text-bright)" stroke="var(--bg)" stroke-width="1.5"/>
+                <line x1="333" y1="158" x2="331" y2="182" stroke="var(--text-dim)" stroke-width="1"/>
+                <text class="lbl" x="338" y="152">50%</text>
+                <circle cx="330" cy="222" r="5.5" fill="var(--blue)" stroke="var(--bg)" stroke-width="1.5"/>
+                <text class="lbl-ans" x="344" y="240">37.5%</text>
+            </svg>
+            <p class="edu-legend cak-leg">
+                <span><span class="sw ideal"></span>0–10 V direct — the 1:1 reference</span>
+                <span><span class="sw span"></span>2–10 V direct — sits low on a 0–10 V command</span>
+                <span><span class="sw rev"></span>0–10 V reverse acting</span>
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                Direction answers "which way does it run." The next question is <strong>where does it go when
+                everything dies?</strong> A <em>spring-return</em> actuator winds a spring as it strokes; kill its
+                power and the spring drives it — at its own pace, with no controller involved — to one defined end
+                of travel. A <em>non-spring</em> (fail-in-place) actuator just stops wherever it was. (A third
+                family stores energy in a capacitor and drives itself to a configured position on power loss —
+                electronic fail-safe — but the design question is the same.) Which end the spring owns is not an
+                afterthought: it's decided when the hardware is picked, and it's the one behavior no software can
+                override, because it happens precisely when the software is gone.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                Valve people name that resting end <strong>normally open / normally closed</strong>, and the word
+                <em>normally</em> is the trap: it means the position with <strong>no power and no signal</strong> —
+                the spring position — not the position the valve usually operates at. A normally-open hot-water
+                valve may spend nearly all of its life pinched almost shut; it's still NO, because open is where
+                the spring takes it the moment control disappears. Dampers tell the same story in different words —
+                <em>fail open / fail closed</em>, spring open / spring closed.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                The classic example is <strong>freeze protection</strong>, and it's worth spelling out because the
+                convention surprises people: <strong>the hot-water coil's valve is specified normally open.</strong>
+                Picture an air handler in a Northeast January — power fails, a freeze-stat trips, a controller dies.
+                The outdoor-air damper's spring drives it <em>closed</em>, so the cabinet stops swallowing air below
+                <span data-us="32&nbsp;°F" data-metric="0&nbsp;°C">32&nbsp;°F</span>; the heating valve's spring
+                drives it <em>open</em>, flooding the coil with hot water that the cold can't freeze. The building
+                might overheat a floor; the alternative is a burst coil and a flooded mechanical room. Fail posture
+                is a design decision made for the worst five minutes of the building's year, not for the normal
+                ones — and when you find a valve specified "backwards," that's usually the reason.
+            </p>
+
+            <!-- // anecdote slot: a fail-posture save or bite — a frozen/burst coil,
+                 or an NO valve overheating a space on a power loss — owner to supply -->
+
+            <!-- ───────────────── 3 · Feedback and floating ───────────────── -->
+            <h2 class="subhead" id="feedback-and-floating">Position Feedback — and Commanding Without It</h2>
+
+            <p>
+                Everything so far assumes the actuator heard the command. The only way to <em>know</em> is
+                <strong>position feedback</strong>: many modulating actuators offer a feedback output — commonly
+                2–10 V across the same stroke — that lands on an AI. Now the graphics can show two numbers: what
+                was asked, and what the actuator says it did. The command is a hope; the feedback is a
+                measurement.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                So the AO commands 50% and the feedback AI reads 34% — now what? Work the fork in order of
+                cheapness. <strong>Time first:</strong> actuators are slow on purpose — 90 to 150 seconds for full
+                stroke is ordinary — so a freshly written command and its feedback disagree for a while by design.
+                If the feedback is still climbing, that isn't disagreement, it's transit. <strong>Configuration
+                second:</strong> the feedback signal has a span and the AI reading it has a scaling, and every trap
+                from the command side applies again on the way back — a 2–10 V feedback landed on an AI scaled
+                0–10 V misreports a perfectly healthy actuator. <strong>Mechanical last:</strong> feedback that
+                stops short and <em>holds</em> while the command keeps climbing is the actuator telling you it
+                physically can't get there — a jammed damper blade, a seized valve stem, a motor stalled at its
+                torque limit. And watch for the inverse tell: command and feedback agreeing beautifully while the
+                temperature never moves. The actuator is turning; a slipped linkage or a loose hub means the shaft
+                isn't.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                <strong>Floating (tri-state) actuators</strong> skip the analog conversation entirely. The
+                controller drives two binary outputs — one inches the actuator open, the other inches it closed,
+                neither on means hold — and the actuator carries no position input and, typically, no feedback.
+                (The two-triac landing itself is on the wiring page.) The controller <em>estimates</em> position
+                instead: it knows the actuator's stroke time and integrates its own pulses — "I drove open for 12
+                seconds of a 120-second stroke, so I'm 10% further open than I was." That is command without
+                position: the number on the graphics is arithmetic, not measurement.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                And that estimate drifts. Pulses round off, a power blip restarts the count mid-stroke, and
+                somebody's crank on the manual override never reports itself. Left alone, assumed and actual
+                position walk apart, and the loop starts producing quiet mysteries — setpoint held on the graphics,
+                room complaining. The designed cure is <strong>re-synchronization at the ends of travel</strong>:
+                periodically — commonly at schedule start or after a power-up — the controller overdrives the
+                actuator toward one end for longer than the full stroke time, so wherever it actually was, it lands
+                on a hard stop the controller can trust as 0% (or 100%), and the count starts clean. Which answers
+                a very common service call: <em>the damper drives fully closed every morning and then reopens — is
+                it failing?</em> No — that's the controller re-zeroing the only position reference a floating
+                actuator has. Drift is the disease, the morning full-travel drive is the medicine, and neither one
+                is a broken actuator.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                That's the whole distance between commanded and actual: the AO speaks a span, the actuator answers
+                in stroke, direction decides which way, and the spring decides where it rests when everything
+                fails — with feedback, or a hard stop, as the only truth. When the two numbers disagree, the fault
+                list is short and ordered: transit time, span configuration, direction, mechanics — and the wiring
+                you already proved. One thing this page deliberately leaves alone: how much <em>flow</em> a given
+                valve stroke actually buys. Fifty percent stroke is rarely fifty percent flow — that's valve sizing
+                and authority, its own topic.
+            </p>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/tools/signal-scaling.html', label: 'Signal Scaling'}
+        ],
+        simulators: [
+            {href: '/simulators/controller-wiring.html', label: 'Controller Wiring Simulator'}
+        ],
+        lessons: [
+            {href: '/education/controller-wiring.html', label: 'Controller Wiring'},
+            {href: '/education/vfds.html', label: 'VFDs'},
+            {href: '/education/pid-basics.html', label: 'PID Basics'}
+        ],
+        quizzes: [
+            {href: '/practice/commanding-actuators.html', label: 'Commanding Actuators'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/education/">← Back to Education</a>
+
+</main>
+{% endblock %}
