@@ -32,6 +32,9 @@ module.exports = [
     { slug: 'function-blocks',          label: 'Function Blocks' },
     // ── Programming ─ function-blocks leads the chapter; insert new quiz
     // slugs here, in curriculum order (mirror the education sequence) ──
+    // boolean-logic-latches slots between function-blocks and
+    // comparators-and-deadband when its in-flight lane merges.
+    { slug: 'comparators-and-deadband', label: 'Comparators & Deadband' },
     { slug: 'modbus-basics',            label: 'Modbus Basics' },
     { slug: 'modbus-decoding',          label: 'Modbus Decoding' },
     { slug: 'bacnet-basics',            label: 'BACnet Basics' },

@@ -668,7 +668,20 @@ techs new to the industry and anyone wanting a refresh.
   economizer-enable sheet. Pairs with the Function-Block Editor
   sandbox and a Function Blocks quiz.
 <!-- ── Programming chapter ─ Function-Block Basics leads it; insert
-     new lesson bullets here, in curriculum order ── -->
+     new lesson bullets here, in curriculum order (Boolean Logic &
+     Latches slots before Comparators & Deadband when its in-flight
+     lane merges) ── -->
+- **Comparators & Deadband** — how a number becomes a decision: the
+  comparator family as the analog-to-digital bridge (why > vs ≥ never
+  matters on a measured value, and why EQ on an analog is a trap the
+  editor's epsilon guards against); the chatter a single threshold
+  guarantees once a controlled variable settles at its setpoint, with
+  honest compressor/contactor stakes; then the fix built in the open —
+  two comparators and an SR latch making a set/reset band, walked
+  wire-by-wire against the editor's cooling thermostat, with direct
+  vs reverse action falling out of the S/R pair for free. Pairs with
+  the Function-Block Editor's thermostat examples and a Comparators
+  & Deadband quiz.
 - **Modbus Basics** — what Modbus is on the wire: the four data
   tables (coils, discrete inputs, input and holding registers),
   the function codes that read and write them, and what an
@@ -752,7 +765,7 @@ flavors share the same engine:
   When a topic recurs in feedback, it becomes a candidate for a
   new education page.
 
-Shipped so far — twenty-five content quizzes (each 10 questions, paired
+Shipped so far — twenty-six content quizzes (each 10 questions, paired
 1:1 with its lesson and deep-linking the gotchas) plus five field
 drills:
 
@@ -782,8 +795,11 @@ drills:
   a raw signal to engineering units, the live zero's impossible
   numbers, and the railed flatline that's a ceiling, not a
   measurement.
-- **Content quizzes — programming:** Function Blocks. Blocks, pins,
-  wire types, the block families, and how a scan resolves feedback.
+- **Content quizzes — programming:** Function Blocks, Comparators &
+  Deadband. Blocks, pins, wire types, the block families, and how a
+  scan resolves feedback; then comparator picks, the EQ-on-analog
+  trap, chatter and short-cycling, band-edge math, and the
+  swapped-looking S/R pair that's really reverse action.
 - **Content quizzes — refrigeration:** Refrigerant Cycle Basics,
   Superheat & Subcooling, TXVs vs. EEVs. The four components and
   the pressure-temperature saturation lock, which line each
