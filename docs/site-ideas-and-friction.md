@@ -4138,6 +4138,51 @@ related future page (`pid-basics.html`) already exists, so the
 lesson cross-links to it for PID internals without a `[future:]`
 marker.
 
+### Boolean Logic & Latches — Education page *(shipped 2026-07-18, controls-spine arc)*
+
+**One question:** *how do TRUE/FALSE blocks turn equipment rules —
+interlocks, permissives, safeties — into logic, and how does a
+latch remember?* First new lesson of the Programming chapter
+(function-blocks opens it; the FB editor is the chapter capstone).
+Ships at `html/education/boolean-logic-latches.html` with a paired
+quiz at `html/practice/boolean-logic-latches.html`.
+
+In scope (three sections):
+- *AND / OR / NOT in equipment terms* — the permissive chain
+  (every safety proved AND occupied AND OAT permits → run),
+  reading a truth table as a sentence rather than a grid, NOT for
+  fail-safe inversion (a normally-closed safety reads TRUE when
+  healthy, so a wire break reads as a trip).
+- *The SR latch — how logic remembers* — why safeties LATCH
+  instead of self-clearing (the fault may clear but the trip must
+  be acknowledged); the sim's latch is **set-dominant** (S wins
+  when S and R are both true — `fbe-engine.js` is the ground
+  truth); the latch + manual-reset idiom.
+- *Small idioms* — XOR as the disagreement detector for
+  mutually-exclusive states; the one-sentence version of
+  "feedback wires carry last scan's value."
+
+Out of scope (adjacent topics, with owners):
+- What a block/wiresheet IS and how a sheet evaluates —
+  `function-blocks.html` owns it; this page opens with a callout
+  cross-link to it as the prerequisite.
+- Threshold/comparator decisions and deadband — plain prose only.
+  `[future: education/comparators-and-deadband.html]` (in-flight
+  lane, this arc).
+- Timing — proof delays, debounce, minimum run times — plain
+  prose only. `[future: education/timers-and-delays.html]`
+  (in-flight lane, this arc).
+- Reading whole sheets end to end — plain prose only.
+  `[future: education/reading-a-wiresheet.html]` (a later lane
+  adds the anchor).
+- Staging/rotation logic — `equipment-staging.html` owns it
+  (cross-link, exists today).
+
+**Capstone hook:** the FB editor ships a canned freeze-stat
+example (freeze BI sets an SR latch → NOT drops the fan BO →
+alarm BO). The lesson ends by sending the reader there: load it,
+trip the freeze stat, watch the latch hold after the input clears.
+
 ### Controller commissioner *(larger build — reviewed 2026-06-10: stays parked)*
 
 **Reviewed 2026-06-10 (mock-call audit, owner concurred): stays

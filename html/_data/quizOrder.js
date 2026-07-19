@@ -36,6 +36,7 @@ module.exports = [
     { slug: 'function-blocks',          label: 'Function Blocks' },
     // ── Programming ─ function-blocks leads the chapter; insert new quiz
     // slugs here, in curriculum order (mirror the education sequence) ──
+    { slug: 'boolean-logic-latches',    label: 'Boolean Logic & Latches' },
     { slug: 'modbus-basics',            label: 'Modbus Basics' },
     { slug: 'modbus-decoding',          label: 'Modbus Decoding' },
     { slug: 'bacnet-basics',            label: 'BACnet Basics' },
