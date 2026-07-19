@@ -5215,7 +5215,7 @@ the four frost-overlay placement constraints (those bound the marks).
 Rode along because that PR rebuilt the frost machinery (second kit on
 the top bar for heating frost).
 
-### 170. Home Browse-card desc enumeration drift, round two — Education arc + Tools examples *(open — 2026-07-18)*
+### 170. Home Browse-card desc enumeration drift, round two — Education arc + Tools examples *(addressed 2026-07-18)*
 
 Same hand-kept drift class as #160 (just closed by de-enumerating the
 Simulators desc), noticed during the 2026-07-18 wave. `html/index.html`'s
@@ -5229,7 +5229,28 @@ by `home-hero.spec.js`; the descs are NOT test-guarded. Candidate fix:
 de-enumerate both the way #160's fix did the Simulators card, or
 refresh the enumerations deliberately as an editorial pick.
 
-### 171. `.nav-card-titlebar .ok-pill` section-accent tints sit outside the #166 fix *(open — 2026-07-18)*
+**Resolution (2026-07-18):** owner picked de-enumeration (over
+refreshing the enumerations as a recurring editorial chore, which
+would have kept the drift class alive). Two desc strings in
+`html/index.html`'s Browse `navCard()` calls changed, nothing else —
+each keeps its opening anchor and closing beat and swaps the page
+list for a kind-level characterization that stays true as pages
+land. Tools: the four-topic list (psychrometric staging, signal
+scaling, register/address conversions, thermistor curves) becomes
+"conversions, sizing checks, protocol decoding, and the reference
+tables that are never around when you need them," with "Open one,
+get an answer, get back to work." kept. Education: the five-lesson
+"current arc" chain becomes "lessons on the loops, systems, and
+protocols behind the day-to-day work," keeping the "not a glossary"
+anchor and the "each asking one question…" characterization. Count
+pills, hero, `Latest:` badge, and the *Tools by Category* cards were
+left untouched — other in-flight lanes owned those surfaces. With
+both descs now count-free and page-free, the fact that descs aren't
+test-guarded (unlike the pills, which `home-hero.spec.js` guards)
+stops mattering on these two cards; the class is closed the same way
+#160 closed it for Simulators.
+
+### 171. `.nav-card-titlebar .ok-pill` section-accent tints sit outside the #166 fix *(addressed 2026-07-18)*
 
 The #166 `--accent-ink` fix covers the default accent-on-accent-dim
 pills, but `.nav-card-titlebar .ok-pill` (`html/styles.css`, nav-card
@@ -5241,7 +5262,52 @@ the accent-ink twin doesn't reach them. Needs a measurement pass
 (four accents × two themes) and possibly per-section ink twins if any
 fail. Noticed during the 2026-07-18 wave; see #166.
 
-### 172. Touch-target parity tail: vfds source selects + contact text inputs under 44px *(open — 2026-07-18, low priority)*
+**Resolution (2026-07-18):** owner picked option A1 — mirror #166's
+purpose-token mechanism per section (over retuning the raw
+`--teal` / `--amber` / `--plum` hues, which would have moved the
+gutter-motif palette too, and over bumping the 0.62rem pill past the
+large-text threshold). New `--teal-ink` / `--amber-ink` /
+`--plum-ink` land in all three synced token blocks (`:root` dark,
+`:root[data-theme="light"]`, the `@media print` light twin) — the
+same placement pattern `--accent-ink` shipped with. `.nav-card`
+gains `--section-accent-ink: var(--accent-ink)` as the cascade
+default and the education / simulators / practice modifiers override
+it; only the `color:` on `.nav-card-titlebar .ok-pill` switched, so
+the dot (`::before`) and `border-color` stay on the raw section hue
+(the 3:1 non-text floor passes everywhere). Dark amber's ink is
+`--amber`'s own value — dark amber already cleared AA.
+
+Two corrections to the framing above. First, the failure count: the
+options brief's prose said 5 of 8 accent × theme combos failed, but
+its own enumerated ratios listed six, and independent
+re-measurement confirmed **6 of 8** — only teal-light (4.54) and
+amber-dark (4.86) passed. Second, and more important, this entry
+assumed #166's `--accent-ink` still reached the *default* green
+pills. It did not: `color: var(--section-accent)` on the titlebar
+rule also overrode the base `.ok-pill`'s `var(--accent-ink)`, so the
+green sections (tools / home / reference) were regressed by this
+same rule — green dark 4.08, green light 4.25, both failing. The
+`--section-accent-ink: var(--accent-ink)` default alone repairs
+that, with no per-section override needed for green.
+
+Measured on the composited backdrop (`-dim` wash over
+`--surface-2`), by token math and by 3× pixel sampling of the
+rendered pills, the two agreeing within ±0.03 — before → after:
+green dark 4.08 → 5.59; green light 4.25 → 4.99; plum dark 3.63 →
+4.86; plum light 4.26 → 4.82; teal dark 4.17 → 4.82; teal light
+4.54 → 4.88; amber dark 4.86 → 4.86; amber light 4.44 → 4.88.
+Every combo now clears 4.5:1 with headroom (≥4.82). Also measured
+during the arc's verification round and passing as-is, so no
+follow-up: the `.nav-card-pill--desktop` amber statusline text at
+6.33 dark / 5.05 light.
+
+Known gap, deliberately out of scope: nothing pins these ratios in
+CI. No contrast harness exists to extend (`a11y-bundle.spec.js` is
+keyboard/ARIA behavioral only) and #166 shipped without a spec pin
+either — inventing one was judged a separate piece of work rather
+than a rider on this fix.
+
+### 172. Touch-target parity tail: vfds source selects + contact text inputs under 44px *(addressed 2026-07-18)*
 
 The parity tail left after #164's select coverage, noticed during the
 2026-07-18 wave: `html/education/vfds.html` has two `<select>`s inside
@@ -5252,7 +5318,45 @@ within-page mismatch on contact (its controls match each other), but
 these are the remaining under-44 form controls if full touch-target
 parity is wanted. See #164.
 
-### 173. `tests/worker.spec.js` prints a loud stack trace from a passing expected-error test *(open — 2026-07-18)*
+**Resolution (2026-07-18):** owner took full parity, and the fix
+shipped as a shared-class family extension rather than the two
+page-local patches this entry implied — because the measurement
+pass contradicted the problem statement twice. The vfds source
+selects measured **31.8px**, not the ~38.6px recorded above; and the
+under-floor set was not "vfds + contact" but **9 controls on 4
+pages** (touch emulation, isMobile + hasTouch, 390×844):
+`#vfd-run-src` / `#vfd-spd-src` (education/vfds) at 31.8px, and at
+38.6px `#contact-name` / `#contact-email` (contact), `#pid-sg-dco` /
+`#pid-sg-dead` (pid-tuner), `#stg-up` / `#stg-delay` / `#stg-min`
+(staging-sequencer). The real root cause was broader than the
+entry: #164 floored `.field select` and the `.ps-input` family but
+never `.field input` at all.
+
+So `.field input` joins the #164 form-control family in the
+consolidated `TOUCH-TARGET FLOOR` block (`min-height` only,
+`(hover: none)`-scoped), and the two vfds selects — widget internals
+with no shared class — get a page-local `@media (hover: none)` floor
+in the page's own `{% block head %}`. That split is now written down
+as a rule in the block's comments and in CLAUDE.md: the shared block
+holds shared-class selectors only. All nine measure 44.0px on touch;
+a desktop pointer context keeps the compact 31.8 / 38.6px
+workstation density. Verified unmatched by the new selector: the
+contact honeypot (`.hp-field`, not `.field`) and the message
+textarea (which clears the floor natively at ~204px).
+`tests/touch-floor.spec.js` pins both directions — ≥44px on touch,
+<44px on desktop.
+
+Coverage note from the arc's verification round: the nine figure was
+the *visible-at-load* subset. Four more `.field` number inputs
+hidden at load — `#stg-sched-days`, `#stg-down`, `#pid-sg-dpv`,
+`#pid-sg-tau` — were equally under-floor, and the shipped
+`.field input` selector covers them too. Read the disposition as
+**9 measured at load, 13 total in the family**; no follow-up fix is
+needed. The same PR also trued up CLAUDE.md's stale claim that the
+answer-level controls "already clear 44px and aren't in the block,"
+which had been wrong since #24 / #164.
+
+### 173. `tests/worker.spec.js` prints a loud stack trace from a passing expected-error test *(addressed 2026-07-18)*
 
 The Resend 502 paths ("Resend non-2xx → 502" / "Resend network failure
 → 502") exercise `src/worker.js`'s `console.error("Resend request
@@ -5264,7 +5368,23 @@ assertions (stub `console.error`, or assert on it), leaving the
 worker's production logging intact. Noticed during the 2026-07-18
 wave.
 
-### 174. Refrigerant-loop: `rl-air-*-heads` arrowhead groups share the air-lane id prefix *(open — 2026-07-18, low)*
+**Resolution (2026-07-18):** shipped as stub-**and**-assert — both
+halves of the candidate rather than a pick between them, since
+silencing alone would have thrown away a free assertion. A new
+`captureConsoleError(fn)` helper in `tests/worker.spec.js` stubs
+`console.error` for the duration of `fn`, records the calls, and
+restores in a `finally` so the stub can't leak past an assertion
+failure (Playwright runs tests sequentially within a worker process,
+so no other test's output gets swallowed). The two Resend 502 tests
+wrap their `postContact` call in it and then assert the worker
+logged what it should — `'Resend returned non-2xx'` with status
+`500`, and `'Resend request failed'` with an `Error` instance — so
+the tests got stronger, not just quieter. Noise removed from a
+passing run, measured: one error line plus a 14-line stack trace.
+`src/worker.js`'s production logging is untouched; test-only change,
+no version bump.
+
+### 174. Refrigerant-loop: `rl-air-*-heads` arrowhead groups share the air-lane id prefix *(deferred 2026-07-18)*
 
 The `rl-air-*-heads` arrowhead groups match the `[id^="rl-air-e-"]` /
 `[id^="rl-air-c-"]` selectors the `AIR_E` / `AIR_C` NodeList loops
@@ -5275,7 +5395,19 @@ would repaint the arrowheads too. A stricter selector family (e.g. a
 `data-` attribute marking the lane paths, in the spirit of the
 attribute-only SVG-selector convention) would be cleaner. Low.
 
-### 175. Refrigerant-loop: fixed low-side gauge range parks the needle in deep low-ambient heating *(open — 2026-07-18, low / design idea)*
+**Decision (2026-07-18):** deferred. The coupling is inert today —
+the `AIR_E` / `AIR_C` loops no-op over the arrowhead groups — and
+it's already documented in-page, so fixing it standalone is churn:
+a selector-family refactor with no user-visible change and a
+non-zero chance of disturbing a lane that currently animates
+correctly. It should be tightened by whoever is next in that code,
+not by a PR that exists only to tighten it. Trigger for revisit: the
+next time the refrigerant-loop simulator's SVG lane structure gets
+substantive work — tighten the selector family then (e.g. a `data-`
+attribute marking the lane paths, per the attribute-only
+SVG-selector convention) while already in there.
+
+### 175. Refrigerant-loop: fixed low-side gauge range parks the needle in deep low-ambient heating *(deferred 2026-07-18)*
 
 The low-side gauge's dial range is anchored by a fixed `refTemp: 60`
 (`html/simulators/refrigerant-loop.html`, gauge config — a 200 psig
@@ -5285,7 +5417,18 @@ needle very low with most of the dial dead — readable, but a per-mode
 gauge range (heating anchoring on a lower refTemp) would serve heating
 better. Low / design idea, noticed during the 2026-07-18 wave.
 
-### 176. Refrigerant-loop engine: ambient droop masks the blocked-filter high-head warn in deep cold *(open — 2026-07-18, decision-needed)*
+**Decision (2026-07-18):** deferred. The needle stays legible at the
+bottom of the dial, so what's wrong here is a dead dial region —
+cosmetic, not a misread. Per-mode ranging is also the kind of change
+that belongs bundled with heating work rather than shipped alone: on
+its own it's a one-sim tweak to a gauge config, and it invites a
+second pass the moment anything else about heating-mode presentation
+moves. Trigger for revisit: either the air-side simulator adopting
+the same gauge component — at which point per-mode ranging becomes
+shared infrastructure rather than a one-sim tweak — or the next arc
+that resumes work on heat-pump / heating-mode behavior.
+
+### 176. Refrigerant-loop engine: ambient droop masks the blocked-filter high-head warn in deep cold *(addressed 2026-07-18)*
 
 Verification-round finding on PR #368: with the ambient droop live, a
 blocked indoor filter in DEEP cold (below ~17 °F ambient) no longer
@@ -5297,6 +5440,214 @@ still flags normally at 40–65 °F ambient. Re-tuning the threshold
 relative-to-droop (split against the drooped baseline rather than an
 absolute onset) changes when the warn fires across the whole heating
 envelope — a design call. Decision-needed.
+
+**Resolution (2026-07-18):** owner picked candidate (b) — measure
+the split *relative* to the drooped design baseline — over nudging
+the absolute onset down (which only moves where the blind spot
+starts) and over leaving the frost verdict to own deep cold (which
+loses a real, separately-diagnosable fault). `HIGH_HEAD_SPLIT_HEAT:
+38` becomes `HIGH_HEAD_EXCESS_HEAT: 3` — the same +3 margin cooling
+already uses at 18-over-15. The heating block hoists the droop term
+and exposes `droopedDesignSplit = SPLIT_BASE_HEAT + ambDroop`
+(design split = 35 + 0.5·min(0, ambient − 47)), and `highHead`'s
+heating rung compares `split − droopedDesignSplit` against it. The
+absolute `tCond > 120 °F` rung and the cooling rung are untouched,
+and verdict priority is unchanged — below 40 °F the frost verdict
+still owns the pill, so this moves the HEAD LED and the
+screen-reader alarm list only.
+
+Correction to the problem statement above: "the blocked filter still
+flags normally at 40–65 °F ambient" was only half right. The
+absolute onset also **desensitized the whole 18–47 °F band** — onset
+airflow ~0.62 at 30 °F against 0.85–0.90 on a mild day — so the
+40–47 °F corner was already degraded, not normal. The fix therefore
+makes that band warn slightly earlier (onset airflow 0.90 vs the old
+0.78–0.90); that is the desensitization being removed, not a
+regression.
+
+Measured, each pinned as an assertion in
+`tests/refrigerant-loop-engine.spec.js`: deep cold restored — a
+fully blocked indoor filter at 10 °F ambient had run head 261 → 340
+psig with no tell, and onset airflow is now uniform at 0.90 clear /
+0.85 fires across −5…65 °F; bit-identical at 47–65 °F ambient, where
+the droop is zero, so excess ≡ split − 35 and the old `split > 38`
+boundary holds exactly (the split sum keeps its addition order via
+the hoisted `ambDroop`, so every solved number is bit-identical at
+every ambient); zero frost-alone false positives — condenser-air
+starvation, condAir 0.40–1.20 across ambient −5…45 °F, with a clean
+indoor filter never fires highHead; heating presets (frosted-coil,
+defrost, low-ambient) unchanged. One further intended behavior
+change: overcharge (charge 1.20) now flags at every ambient — honest,
+and the pill is unchanged because floodback outranks it.
+
+### 177. Home Practice Browse-card desc names a specific drill *(open — 2026-07-18, low; may be intentional)*
+
+`html/index.html` — the Practice Browse-card `desc` ends "New to the
+field? Surviving Your First Months is the gentlest place to start."
+Structurally that's the same surface #160 and #170 were fixed on: a
+page name living in a hand-kept desc string with no test guard, so it
+goes stale silently if the drill is renamed, retired, or displaced as
+the natural entry point (the pills are guarded by
+`home-hero.spec.js`; the descs are not).
+
+Unlike #160 / #170, though, this one reads as a **deliberate
+editorial entry-point** rather than an incidental enumeration —
+naming one starting place for a newcomer does work that a kind-level
+characterization can't. So the de-enumeration reflex is likely wrong
+here and this wants an owner call, not an automatic sweep: either
+keep the name and accept it as a surface someone must remember to
+true up (worth a comment at the call site saying so), or drop to a
+generic "start with the field drills" phrasing and lose the
+hand-hold. Low. Logged-only from the 2026-07-18 arc.
+
+### 178. `pid-basics.html` eyebrow carries the `<h1>` — sole outlier among the lessons *(open — 2026-07-18, low; document-outline, not cosmetic)*
+
+`html/education/pid-basics.html:17` uses
+`<h1 class="section-label">Education · PID Basics</h1>` for its
+eyebrow, and has no `<h1 class="tool-card-title">` anywhere. All 38
+other lesson pages use the span-eyebrow +
+`<h1 class="tool-card-title">` shape; the only other page with the
+`<h1 class="section-label">` form is `education/index.html`, which is
+legitimate — CLAUDE.md's heading rule explicitly lets the eyebrow
+carry the `<h1>` "on landings without a tool-card." pid-basics is not
+a landing and does have tool-cards, so it sits outside that carve-out.
+
+Worth being precise about the severity, because it's easy to over- or
+under-call. It is **not** a duplicate-`<h1>` violation — the page has
+exactly one, so the "exactly one `<h1>` per page" rule is satisfied
+and no validator flags it. What is actually wrong is the *content* of
+that `<h1>`: it's the breadcrumb string "Education · PID Basics"
+rather than the page's topic. A screen-reader user navigating by
+heading, and any consumer reading the document outline, gets
+navigation chrome where every sibling lesson gives a descriptive
+title. The page's real section headings then sit at `<h2>` under an
+`<h1>` of the same `.section-label` class, so the chrome element
+outranks the content headings. That makes it a document-outline
+defect rather than a cosmetic one — low priority, but it should be
+fixed as a semantics change, not filed as styling. Logged-only from
+the 2026-07-18 arc.
+
+### 179. `function-blocks.html` (and `setpoint-math-reset.html`) lack the follow-on-paragraph margin rhythm *(open — 2026-07-18, low / cosmetic)*
+
+`html/education/function-blocks.html` has five follow-on paragraph
+pairs (a `<p>` immediately after another `<p>`) and zero
+`style="margin-top:…"` treatments, so its prose renders tighter than
+the Programming-chapter lessons that do carry the rhythm —
+`boolean-logic-latches` (10 treated), `timers-and-delays` (13),
+`comparators-and-deadband` (12). Purely visual; no semantic or
+behavioral effect.
+
+One correction to the shape this was first noticed in: function-blocks
+is **not** a lone outlier. `setpoint-math-reset.html` — the newest
+page in the chapter — has six follow-on pairs and zero treatments too,
+so it shipped the same way. Anyone picking this up should fix both, or
+the "bring the odd page up to the chapter rhythm" framing will true up
+function-blocks and leave the most recently shipped page still out.
+That two-page split also raises the prior question: an inline
+`style="margin-top:1.25rem;"` repeated a dozen times per page is the
+thing actually causing the drift, and a shared `p + p` rule (or a
+`p.follow-on` utility, per the element-qualified prose-utility
+convention) would end the class rather than re-fix it page by page.
+Logged-only from the 2026-07-18 arc.
+
+### 180. Forced-air chapter: stale terminal-position claims + a hand-kept page count *(open — 2026-07-18)*
+
+`air-balancing` and `dedicated-outdoor-air` joined the `forced-air`
+chapter after `duct-static-control`, and prose written when
+duct-static was the closer never got trued up. The chapter now holds
+**eight** pages (`category: forced-air`), and `educationSequence.js`
+puts duct-static at position 6 of 8 — third-from-last, not last.
+Three sites, one root cause:
+
+- `html/education/vav-systems.html:181` — "the answering half of the
+  mirror is [the last page of this chapter]", anchored at
+  duct-static-control.
+- `html/education/vav-systems.html:248` — "How the fan *knows* how
+  much to slow down is the [chapter's last page]", same anchor.
+- `html/education/duct-static-control.html:616–617` — a two-for-one:
+  "here's the field move this chapter has been building toward"
+  (a terminal-position claim from a page that is now third-from-last)
+  **and** "read it the way these six pages did" (a hand-kept count,
+  stale by two).
+
+The first two are the stale-terminal-position class; the count in the
+third is the same enumeration-drift class as #160 / #170, and the
+de-enumeration fix shape applies directly to it — "read it the way
+this chapter did" carries the same instruction and can't go stale.
+The terminal-position claims need a rewrite rather than a
+de-enumeration, since the sentences do real work pointing forward and
+would need re-aiming at whatever the chapter's actual closer is (or
+rephrasing to name duct-static by role instead of by position).
+Logged-only from the 2026-07-18 arc; see #182.3, which proposes a
+guard for exactly this prose class.
+
+### 181. Process: reverse cross-links are unowned when lanes ship in parallel *(open — 2026-07-18, process / lane-spec)*
+
+Not a code defect — a defect in how parallel lanes are specified,
+recorded here because it produced a real, shipped content gap.
+
+The 2026-07-18 arc shipped two chapters under identical conventions
+with opposite outcomes. The Signals chapter's `relatedLinks()`
+reciprocity was fully paid; the Programming chapter's was **entirely
+unpaid** — four lessons that name each other in prose shipped with
+zero sibling links between them. The difference was structural, not
+carelessness: Signals happened to have a lane that merged second and
+retro-paid the anchors, and Programming had no such lane. The
+two-phase lane pattern has no step that assigns ownership of a reverse
+link, so when the target page is still unmerged at draft time the debt
+gets recorded in a PR body and then evaporates the moment that PR
+merges — nothing carries it forward.
+
+Concrete fix for next time: the lane spec should name **which lane
+pays each reverse link**, decided before the second lane opens, so the
+obligation lives in the spec rather than in a PR body.
+
+Also worth knowing before anyone treats PR bodies as a ledger: roughly
+a third of the debt itemized in those bodies turned out to be
+*phantom* — already paid during conflict resolution, with the bodies
+never amended. So PR bodies proved unreliable in both directions,
+under-recording paid work and over-recording outstanding work. Any
+future reconciliation should verify against the built site, not
+against the prose in a merged PR. Logged-only from the 2026-07-18 arc.
+
+### 182. Three defect classes this arc that a green build cannot see *(open — 2026-07-18, guard proposals)*
+
+Three classes surfaced during the 2026-07-18 arc that build clean,
+pass the full suite, and ship broken anyway. Logged together because
+converting a recurring class into a spec guard is this arc's
+established habit and it has already caught real regressions
+(`educationSequenceGuard`, `navCategoryGuard`, the home count-pill
+drift guard). Each is a guard proposal, not a fix:
+
+1. **Missing `quizOrder.js` entry.** A quiz page whose slug is absent
+   from the order array builds green, passes every test, and silently
+   ships no "Next quiz →" link — while its predecessor points straight
+   past it. Caught by hand on `reading-a-wiresheet`. Guardable the
+   same way `educationSequenceGuard` works: assert every
+   `nav: practice` **content-quiz** page's slug appears in
+   `quizOrder.js`. Field drills are legitimately excluded, so the
+   guard keys off the content-quiz/drill distinction rather than
+   `nav:` alone.
+2. **Dead anchor fragments.** Nothing resolves `href="/…#fragment"`
+   against the target page's ids. PR #393 verified 19 fragments with
+   an ad-hoc script; once that script is gone, nothing keeps them
+   honest, and a renamed `id` breaks an inbound deep link silently.
+   Guardable by walking the built `_site` HTML and asserting every
+   internal fragment href has a matching `id` on the target page —
+   a whole-site check that needs no per-page maintenance.
+3. **Cross-chapter mis-attribution.** "This chapter's X" prose where
+   X belongs to a different chapter. Found live in `timers-and-delays`
+   (fixed in PR #393); #180 above is the same shape within one
+   chapter. Genuinely harder to guard, since it's prose and the
+   failure is semantic — but a grep-based lint over the
+   chapter-claiming constructions ("this chapter", "the last page of
+   this chapter", "these N pages"), cross-checked against the page's
+   `category` frontmatter and the chapter's actual membership, is
+   feasible and would have caught all four known instances. Worth
+   scoping as a lint that reports candidates for human review rather
+   than a hard build failure, given the false-positive risk.
+
+Logged-only from the 2026-07-18 arc.
 
 ### Deferred / Won't fix (with revisit trigger)
 
@@ -5311,7 +5662,12 @@ at the bottom of this subsection. Two more deferrals from the
 2026-05-23 schematic-bg doc-audit sit at their numerical positions
 above: #69 (short-path dasharray stutter — case-split attempt
 reverted 2026-05-24 after the Chromium pathLength/dasharray finding),
-and #70 (~360 SVGs inlined per page).
+and #70 (~360 SVGs inlined per page). Two from the 2026-07-18 wave
+do the same — #174 (`rl-air-*-heads` share the air-lane id prefix)
+and #175 (fixed low-side gauge range in deep low-ambient heating) —
+each carrying a `*(deferred 2026-07-18)*` marker and a **Decision**
+block at its numerical position; pointers at the bottom of this
+subsection.
 
 ### 7. Worker has no app-level rate limit on `/api/contact` *(deferred 2026-05-16)*
 
@@ -5368,6 +5724,21 @@ remain in `## Recently addressed` at their numerical position:
   re-clicking the source pin); recorded so a future "fix" PR doesn't
   add a `cancelWire()` here. Trigger: an explicit UX decision to
   change the cancel-on-mismatch behavior.
+
+**Also deferred from the 2026-07-18 wave** — full entries remain at
+their numerical position above in `## Issues (status inline)`:
+
+- **#174. Refrigerant-loop: `rl-air-*-heads` arrowhead groups share
+  the air-lane id prefix.** Inert today and documented in-page, so
+  a standalone selector refactor is churn. Trigger: the next
+  substantive work on the refrigerant-loop simulator's SVG lane
+  structure — tighten the selector family while in there.
+- **#175. Refrigerant-loop: fixed low-side gauge range parks the
+  needle in deep low-ambient heating.** The needle stays legible;
+  the dead dial region is cosmetic. Trigger: the air-side simulator
+  adopting the same gauge component (making per-mode ranging shared
+  infrastructure), or the next arc resuming heat-pump / heating-mode
+  work.
 
 ---
 
