@@ -102,6 +102,7 @@ const PAGES = [
     { name: 'practice — superheat & subcooling', url: '/practice/superheat-subcooling.html' },
     { name: 'practice — metering devices txv/eev', url: '/practice/metering-devices-txv-eev.html' },
     { name: 'practice — pid basics', url: '/practice/pid-basics.html' },
+    { name: 'practice — controller wiring', url: '/practice/controller-wiring.html' },
     { name: 'practice — vfds', url: '/practice/vfds.html' },
     { name: 'practice — function blocks', url: '/practice/function-blocks.html' },
     { name: 'practice — psychrometrics basics', url: '/practice/psychrometrics-basics.html' },
