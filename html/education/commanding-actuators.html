@@ -75,7 +75,9 @@ keywords: actuator 2-10V 0-10V 4-20mA span stroke spring return fail position no
                 <strong>2–10 V</strong>, or <strong>4–20 mA</strong>. All three are linear spans meaning 0–100% of
                 stroke; the difference is the endpoints. The two offset spans carry a <em>live zero</em> — the
                 bottom of the range is a real, non-zero signal, so a dead wire (0&nbsp;V, 0&nbsp;mA) is
-                distinguishable from an honest "fully closed" command. And they're close cousins: drive a 4–20 mA
+                distinguishable from an honest "fully closed" command — the same fault-flag logic
+                <a href="/education/analog-sensing.html#live-zero">Analog Sensing</a> walks on the input side,
+                running the other direction here. And they're close cousins: drive a 4–20 mA
                 loop through a 500&nbsp;Ω resistor and the voltage across it is exactly 2–10 V, which is why an
                 actuator spec sheet so often says its 2–10 V input "accepts 4–20 mA with a 500&nbsp;Ω resistor."
                 (Drives take the same 0–10 / 4–20 command languages — a VFD's speed reference is usually one of
@@ -367,6 +369,7 @@ keywords: actuator 2-10V 0-10V 4-20mA span stroke spring return fail position no
         ],
         lessons: [
             {href: '/education/controller-wiring.html', label: 'Controller Wiring'},
+            {href: '/education/analog-sensing.html', label: 'Analog Sensing'},
             {href: '/education/vfds.html', label: 'VFDs'},
             {href: '/education/pid-basics.html', label: 'PID Basics'}
         ],

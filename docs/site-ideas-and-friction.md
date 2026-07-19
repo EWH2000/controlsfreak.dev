@@ -79,7 +79,11 @@ category with controller-wiring as the boundary lesson, and the
 chapter now builds out from the
 `[future: education/analog-sensing.html]` marker the forced-air
 buildout left behind. Per-page contracts below, one at a time as
-lanes open.
+lanes open. Chapter reading order (final, once all lanes land):
+controller-wiring → analog-sensing → temperature-sensors →
+status-and-proof → commanding-actuators → start-stop-commands;
+educationSequence.js, quizOrder.js, and both landing grids re-sort
+as each in-flight lane merges.
 
 **Analog Sensing — the chapter's anchor lesson.** Declared question:
 *How does a raw electrical signal become the engineering value on
@@ -106,6 +110,42 @@ plain prose here, `[future: education/sensor-calibration.html]`.
 Debts: pays the signal-scaling tool's missing lessons-link (the
 tool's documented lesson home) and the duct-static war story's
 generalization.
+
+**Commanding Actuators** (`education/commanding-actuators.html` +
+paired quiz) *(lane opened 2026-07-18 — drafted, owner-checkpointed,
+and integrated the same day)*. Declared question:
+*What happens between an AO commanding 50% and the damper actually
+sitting at 50% — and why do the two disagree?*
+In scope: (1) command spans — 0–10 V vs 2–10 V vs 4–20 mA actuator
+inputs; THE worked example: 5 V into a 2–10 V actuator is 37.5%
+stroke, not 50% (numeric, replicable in the signal-scaling tool, and
+the page says so); the mismatch symptoms (everything tracks but
+always sits low/high, hunting near the ends of travel) with span
+DIP-switch / configuration mismatch as the usual cause. (2) direction
+and fail posture — direct vs reverse acting at the ACTUATOR, one
+disambiguation sentence against loop action (pid-basics owns the
+loop); spring return vs fail-in-place; what normally open / normally
+closed means for a valve and a damper on power loss, fail posture as
+a design decision — the normally-OPEN hot-water valve as the classic
+freeze-protection example. (3) position feedback and floating
+behavior — verifying with a feedback AI and the
+command-50-feedback-34 diagnostic fork (stroke time → span config →
+mechanical); floating (tri-state) actuators as
+command-without-position — the run-time estimate drifts and re-syncs
+by overdriving to an end of travel; the field symptoms (drift, the
+periodic full-travel drive). Two static cak- diagrams (span-mismatch
+number line; three-line stroke-vs-command chart), an anecdote slot
+left at fail posture.
+Out of scope: the 3-wire landing / power-vs-signal mistake and the
+floating triac-pair wiring — controller-wiring.html (anchored once);
+VFD run/speed — vfds.html (anchored once: drives take the same
+0–10 / 4–20 command languages, that page owns them); loop behavior —
+pid-basics.html; valve sizing and authority stay plain prose
+`[future: valve-authority]`.
+Debts: pays analog-sensing's "you will meet it on actuator feedback
+especially" plant (upgraded to a live link into
+#feedback-and-floating, plus relatedLinks reciprocity both ways).
+Incurs the valve-authority marker above.
 
 ### BACnet buildout — the flagship subsection *(opened 2026-07-07, completed 2026-07-12 — all five pages + the pillar shipped)*
 
@@ -727,50 +767,6 @@ Extra debts paid beyond the contract line: page 4's closing plant,
 vfds' water-only hand-off (air-side twin sentence), pid-tuner's
 lessons back-edge, and pump-control's mirror back-edge (precedent:
 load-piping → vav-systems).
-
-### Signals & Sensing buildout — the controls-spine chapter *(opened 2026-07-17, in flight — parallel lanes, one contract per page)*
-
-The Signals & Sensing education chapter (category `signals`), opened
-by the controller-wiring re-categorization and its paired quiz (PR
-#380 — the chapter's first). The chapter answers the layer the
-forced-air and hydronic arcs kept deferring to markers: what actually
-travels on the wire between the controller and the field. Sibling
-lessons ship in parallel lanes, one PR per page; each lane declares
-its page's one question + scope contract here BEFORE drafting (the
-forced-air-buildout discipline). Chapter reading order (final, once
-all lanes land): controller-wiring leads; … → status-and-proof →
-commanding-actuators → start-stop-commands. educationSequence.js,
-quizOrder.js, and both landing grids take the full order at
-integration.
-
-**Commanding Actuators** (`education/commanding-actuators.html` +
-paired quiz) *(lane opened 2026-07-18)*
-*One question: what happens between an AO commanding 50% and the
-damper actually sitting at 50% — and why do the two disagree?*
-In scope: (1) command spans — 0–10 V vs 2–10 V vs 4–20 mA actuator
-inputs; THE worked example: 5 V into a 2–10 V actuator is 37.5%
-stroke, not 50% (numeric, replicable in the signal-scaling tool, and
-the page says so); the mismatch symptoms (everything tracks but
-always sits low/high, hunting near the ends of travel) with span
-DIP-switch / configuration mismatch as the usual cause. (2) direction
-and fail posture — direct vs reverse acting at the ACTUATOR, one
-disambiguation sentence against loop action (pid-basics owns the
-loop); spring return vs fail-in-place; what normally open / normally
-closed means for a valve and a damper on power loss, fail posture as
-a design decision — the normally-OPEN hot-water valve as the classic
-freeze-protection example. (3) position feedback and floating
-behavior — verifying with a feedback AI and the
-command-50-feedback-34 diagnostic fork (stroke time → span config →
-mechanical); floating (tri-state) actuators as
-command-without-position — the run-time estimate drifts and re-syncs
-by overdriving to an end of travel; the field symptoms (drift, the
-periodic full-travel drive).
-Out of scope: the 3-wire landing / power-vs-signal mistake and the
-floating triac-pair wiring — controller-wiring.html (anchored once);
-VFD run/speed — vfds.html (anchored once: drives take the same
-0–10 / 4–20 command languages, that page owns them); loop behavior —
-pid-basics.html; valve sizing and authority stay plain prose
-`[future: valve-authority]`.
 
 ### Airflow tools buildout — the airside-tools queue *(opened 2026-07-11, completed 2026-07-11 — all six shipped)*
 

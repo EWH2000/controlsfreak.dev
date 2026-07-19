@@ -23,13 +23,13 @@ nav: education
 
     <div class="filter-chips" role="group" aria-label="Filter lessons by category">
         <button type="button" class="filter-chip active" data-category="all" aria-pressed="true">
-            All <span class="filter-chip-count">31</span>
+            All <span class="filter-chip-count">32</span>
         </button>
         <button type="button" class="filter-chip" data-category="fundamentals" aria-pressed="false">
             Fundamentals <span class="filter-chip-count">5</span>
         </button>
         <button type="button" class="filter-chip" data-category="signals" aria-pressed="false">
-            Signals &amp; Sensing <span class="filter-chip-count">2</span>
+            Signals &amp; Sensing <span class="filter-chip-count">3</span>
         </button>
         <button type="button" class="filter-chip" data-category="hydronics" aria-pressed="false">
             Hydronics <span class="filter-chip-count">5</span>
@@ -77,6 +77,15 @@ nav: education
             titleFull:  'Analog Sensing',
             desc:       'How a raw 4–20 mA or 0–10 V signal becomes the value on the graphic — the published range as a promise, live zero as a fault you can see from the chair, and railed readings as ceilings. Interactive mapping widget.',
             pills:      ['Signals', 'Ranges + Scaling', 'Live Zero', 'Railed = Ceiling'],
+            category:   'signals'
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/education/commanding-actuators.html',
+            titleShort: 'Commanding Actuators',
+            titleFull:  'Commanding Actuators',
+            desc:       'What happens between an AO commanding 50% and the damper sitting at 37.5% — command spans (0–10 / 2–10 V / 4–20 mA), direct vs reverse acting, spring-return fail positions, position feedback, and floating actuators.',
+            pills:      ['Signals', 'Command Spans', 'Fail Posture', 'Floating'],
             category:   'signals'
         }) }}
         {# ── end Signals & Sensing ── #}
