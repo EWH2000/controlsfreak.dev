@@ -29,8 +29,14 @@ const order = [
     "/education/controller-wiring.html",
     // ── Signals & Sensing ─ controller-wiring leads the chapter; insert
     // new lesson URLs here, in curriculum order (mirror the
-    // education/index.html grid) ──
+    // education/index.html grid). Final chapter order: controller-wiring
+    // → analog-sensing → temperature-sensors → status-and-proof →
+    // commanding-actuators → start-stop-commands ──
     "/education/analog-sensing.html",
+    "/education/temperature-sensors.html",
+    "/education/status-and-proof.html",
+    "/education/commanding-actuators.html",
+    "/education/start-stop-commands.html",
     "/education/controls-commissioning.html",
     "/education/hydronic-loops.html",
     "/education/load-piping.html",
@@ -55,11 +61,16 @@ const order = [
     // ── Programming ─ function-blocks leads the chapter; insert new
     // lesson URLs here, in curriculum order (mirror the
     // education/index.html grid) ──
-    // reading-a-wiresheet is the chapter TAIL — final chapter order:
-    // function-blocks → boolean-logic-latches → comparators-and-deadband
-    // → timers-and-delays → setpoint-math-reset → reading-a-wiresheet,
-    // then modbus-basics resumes. Sibling lessons still in flight slot
-    // in ABOVE this line as their lanes merge.
+    "/education/boolean-logic-latches.html",
+    "/education/comparators-and-deadband.html",
+    "/education/timers-and-delays.html",
+    "/education/setpoint-math-reset.html",
+    // reading-a-wiresheet is the chapter TAIL — it reads whole sheets
+    // built from every block the chapter taught, so it comes last.
+    // Chapter order: function-blocks → boolean-logic-latches →
+    // comparators-and-deadband → timers-and-delays →
+    // setpoint-math-reset → reading-a-wiresheet, then modbus-basics
+    // resumes.
     "/education/reading-a-wiresheet.html",
     "/education/modbus-basics.html",
     "/education/modbus-decoding.html",

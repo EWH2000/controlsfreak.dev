@@ -1,0 +1,390 @@
+---
+title: Boolean Logic & Latches — controlsfreak.dev
+description: AND, OR, and NOT turn equipment rules into logic — permissives, interlocks, fail-safe inversion — and the SR latch is how a safety remembers its trip.
+canonical: https://controlsfreak.dev/education/boolean-logic-latches.html
+nav: education
+category: programming
+pairedQuiz: https://controlsfreak.dev/practice/boolean-logic-latches.html
+keywords: AND OR NOT XOR latch SR interlock permissive safety truth table
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block head %}
+    <style>
+        /* Page-specific — both diagrams are wiresheet-flavored structural
+           drawings (the function-blocks.html family), so they take the
+           shared .edu-svg base plus a page-local width cap: a wiresheet
+           stretched to full column width reads as a poster, not a sheet. */
+        .edu-svg.bll-svg {
+            max-width: 740px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        /* Truth table stays compact — six short columns, no reason to
+           span the full column width. */
+        .bll-truth {
+            max-width: 560px;
+            margin: 1.25rem auto 0.5rem;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Education · Boolean Logic</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">Boolean Logic &amp; Latches <span class="tool-tag">Logic</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                Every control sequence is full of sentences: <em>run the fan only if every
+                safety is proved and the schedule says occupied. Light the alarm if any
+                trouble contact closes. Once the freeze stat trips, keep the unit off until
+                someone resets it.</em> The boolean blocks — <code>AND</code>, <code>OR</code>,
+                <code>NOT</code>, <code>XOR</code>, and the <code>SR latch</code> — are how
+                those sentences become logic on a wiresheet. This page is one question, start
+                to finish: <em>how do TRUE/FALSE blocks turn equipment rules — interlocks,
+                permissives, safeties — into logic, and how does a latch remember?</em>
+            </p>
+
+            <div class="callout">
+                <p style="font-size:0.86rem;line-height:1.7;">
+                    This page assumes you can already read a sheet at the block level — what a
+                    block and its pins are, what the wires carry, and how a scan evaluates.
+                    That's <a href="/education/function-blocks.html">Function-Block Basics</a>,
+                    the opening lesson of this chapter; start there if a wiresheet is new to
+                    you. Everything below lives inside one block family: the true/false logic
+                    that makes equipment decisions.
+                </p>
+            </div>
+
+            <!-- ───────────────── 1 · AND / OR / NOT in equipment terms ───────────────── -->
+            <h2 class="subhead" id="permissives">The permissive chain: AND, OR, NOT</h2>
+
+            <p>
+                Start with the sentence you'll meet on almost every unit: <em>the fan may run
+                only when every safety is proved, the building is occupied, and the outdoor
+                air won't freeze the coil.</em> Every "only when … and" in that sentence is an
+                <code>AND</code>. Chain the conditions into one <code>AND</code> and its
+                output is the <strong>run permit</strong> — TRUE only while <em>every single
+                input</em> is TRUE. That structure has a name in the field: a
+                <strong>permissive chain</strong>. It's deliberately unforgiving. One FALSE
+                anywhere — one safety not proved, one contact open — and the permit drops. A
+                permissive chain is a chain of proofs, and a proof you don't have counts
+                against you.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                <code>OR</code> is the opposite sentence: <em>any one of these is enough.</em>
+                Three trouble contacts — filter, condensate overflow, smoke — into one
+                <code>OR</code> gives a common alarm that lights when <em>any</em> of them
+                trips. And <code>NOT</code> is the word "isn't": it flips TRUE to FALSE and
+                back. Those three cover most of the logic you'll ever read on a sheet.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                Textbooks present these blocks as <strong>truth tables</strong> — every input
+                combination and its output, laid out as a grid. The grid below is worth one
+                look, but don't memorize it as a grid. Read each column as a
+                <strong>sentence</strong> instead, because the sentence is how you'll actually
+                use it standing in front of a live sheet: <code>AND</code> is <em>TRUE only
+                when every input is TRUE</em>. <code>OR</code> is <em>TRUE when at least one
+                input is TRUE</em>. <code>XOR</code> is <em>TRUE when the inputs
+                disagree</em>. <code>NOT</code> is <em>the opposite</em>.
+            </p>
+
+            <div class="bll-truth">
+                <table class="ref-table-dense">
+                    <thead>
+                        <tr><th>A</th><th>B</th><th>A AND B</th><th>A OR B</th><th>A XOR B</th><th>NOT A</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>F</td><td>F</td><td>F</td><td>F</td><td>F</td><td>T</td></tr>
+                        <tr><td>F</td><td>T</td><td>F</td><td>T</td><td>T</td><td>T</td></tr>
+                        <tr><td>T</td><td>F</td><td>F</td><td>T</td><td>T</td><td>F</td></tr>
+                        <tr><td>T</td><td>T</td><td>T</td><td>T</td><td>F</td><td>F</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <p class="ref-note compact" style="text-align:center;">
+                T = TRUE, F = FALSE. Read the columns as sentences, not rows of a grid.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                <code>NOT</code> earns a longer look, because it's tied to how safeties are
+                wired in the first place. A hardwired safety — a freeze stat, a high-static
+                switch — is almost always <strong>normally closed</strong>: the contact is
+                closed while the device is healthy, so the binary input reads TRUE when
+                everything is fine. That's a deliberate <em>fail-safe</em> choice. If a wire
+                breaks or the device dies, the circuit opens and the point reads FALSE — the
+                same as a trip — so a failed safety circuit stops the equipment instead of
+                silently promising it protection. A healthy safety <em>proves</em> itself
+                every scan; silence is treated as a trip.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                Wired that way, the "OK" signals feed the permissive <code>AND</code>
+                directly. But not every point arrives in the OK sense. An alarm-style contact
+                or a software point often reads TRUE when <em>tripped</em> — the opposite
+                polarity — and that's what <code>NOT</code> is for: flip the trip-sense signal
+                to OK-sense before it enters the chain. Getting a signal's sense wrong (or
+                dropping the <code>NOT</code> that fixes it) is a classic day-one
+                commissioning bug: every device healthy, and the fan still won't start,
+                because the chain is reading a healthy FALSE as a standing trip.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                Here's the chain drawn as a sheet. Three safety proofs feed the
+                <code>AND</code>; two are proved, one isn't — and the wire colors tell the
+                story at a glance, the same way a live editor would. (This <code>AND</code> is
+                drawn with three inputs. Production palettes usually offer multi-input
+                <code>AND</code>/<code>OR</code> blocks; a palette that only has two-input
+                blocks — like this site's <a href="/simulators/function-block-editor.html">
+                Function-Block Editor</a> — chains them instead, and an <code>AND</code> of
+                <code>AND</code>s is still an <code>AND</code>.)
+            </p>
+
+            <svg class="edu-svg bll-svg" viewBox="0 0 740 300" role="img"
+                 aria-labelledby="bll-d1-title bll-d1-desc" font-family="var(--mono)">
+                <title id="bll-d1-title">A permissive chain on a wiresheet</title>
+                <desc id="bll-d1-desc">A function-block sheet. Three binary inputs on the left — FREEZE OK reading TRUE, PROOF OK reading TRUE, and HI-STATIC OK reading FALSE — wire into a three-input AND block. The AND block's output wires into a binary output labeled RUN PERMIT, reading OFF. The two TRUE wires are drawn green and the FALSE wires grey, matching the editor's live coloring. Because one input is FALSE, the permit is off: one FALSE input is all it takes.</desc>
+
+                <!-- wires (drawn first, behind the blocks) -->
+                <line x1="185" y1="56"  x2="340" y2="118" stroke="var(--accent)"   stroke-width="2.4" stroke-linecap="round"/>
+                <line x1="185" y1="146" x2="340" y2="146" stroke="var(--accent)"   stroke-width="2.4" stroke-linecap="round"/>
+                <line x1="185" y1="236" x2="340" y2="174" stroke="var(--text-dim)" stroke-width="2.4" stroke-linecap="round"/>
+                <line x1="460" y1="146" x2="560" y2="146" stroke="var(--text-dim)" stroke-width="2.4" stroke-linecap="round"/>
+
+                <!-- FREEZE OK -->
+                <g id="bll-d1-frz">
+                    <rect x="15" y="28" width="170" height="56" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="27" y="47" font-size="8.5" letter-spacing="0.5" fill="var(--text-dim)">BINARY IN</text>
+                    <text x="27" y="68" font-size="12" font-weight="600" fill="var(--accent)">FREEZE OK  TRUE</text>
+                    <circle cx="185" cy="56" r="3.8" fill="var(--accent)"/>
+                </g>
+                <!-- PROOF OK -->
+                <g id="bll-d1-prf">
+                    <rect x="15" y="118" width="170" height="56" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="27" y="137" font-size="8.5" letter-spacing="0.5" fill="var(--text-dim)">BINARY IN</text>
+                    <text x="27" y="158" font-size="12" font-weight="600" fill="var(--accent)">PROOF OK  TRUE</text>
+                    <circle cx="185" cy="146" r="3.8" fill="var(--accent)"/>
+                </g>
+                <!-- HI-STATIC OK -->
+                <g id="bll-d1-hst">
+                    <rect x="15" y="208" width="170" height="56" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="27" y="227" font-size="8.5" letter-spacing="0.5" fill="var(--text-dim)">BINARY IN</text>
+                    <text x="27" y="248" font-size="12" font-weight="600" fill="var(--text-dim)">HI-STATIC OK  FALSE</text>
+                    <circle cx="185" cy="236" r="3.8" fill="var(--text-dim)"/>
+                </g>
+                <!-- AND -->
+                <g id="bll-d1-and">
+                    <rect x="340" y="102" width="120" height="88" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="400" y="150" text-anchor="middle" font-size="16" font-weight="600" fill="var(--text-bright)">AND</text>
+                    <text x="400" y="168" text-anchor="middle" font-size="9" fill="var(--text-dim)">permissive</text>
+                    <circle cx="340" cy="118" r="3.8" fill="var(--accent)"/>
+                    <circle cx="340" cy="146" r="3.8" fill="var(--accent)"/>
+                    <circle cx="340" cy="174" r="3.8" fill="var(--text-dim)"/>
+                    <circle cx="460" cy="146" r="3.8" fill="var(--text-dim)"/>
+                </g>
+                <!-- RUN PERMIT -->
+                <g id="bll-d1-out">
+                    <rect x="560" y="118" width="165" height="56" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="572" y="137" font-size="8.5" letter-spacing="0.5" fill="var(--text-dim)">BINARY OUT</text>
+                    <text x="572" y="158" font-size="12" font-weight="600" fill="var(--text-dim)">RUN PERMIT  OFF</text>
+                    <circle cx="560" cy="146" r="3.8" fill="var(--text-dim)"/>
+                </g>
+
+                <text x="370" y="288" text-anchor="middle" font-size="10.5" fill="var(--text)">one FALSE input is all it takes — the permit stays OFF until every proof reads TRUE</text>
+            </svg>
+
+            <p class="ref-note compact" style="text-align:center;">
+                Green wires carry a TRUE digital signal, grey wires carry FALSE — the same
+                coloring the editor uses live. (Analog values ride blue wires; this sheet has
+                none.)
+            </p>
+
+            <!-- ───────────────── 2 · The SR latch ───────────────── -->
+            <h2 class="subhead" id="sr-latch">The SR latch: how logic remembers</h2>
+
+            <p>
+                Everything above is <em>combinational</em> logic: the output is a pure
+                function of what the inputs are <em>right now</em>. The high-static switch
+                closes again and the permit comes right back, automatically, with no memory
+                that anything happened. For comfort logic that's usually what you want — the
+                zone got warm, the zone cooled off, move on. For a safety it is exactly
+                wrong.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                Walk the freeze-stat case through and you'll see why. The stat trips on a
+                near-freezing coil, the permit drops, the fan stops. But with no airflow
+                across it, the coil drifts back toward room temperature — so the freeze stat
+                clears itself. If the trip were plain combinational logic, the permit would
+                come right back, the fan would restart, cold air would slam the coil, and the
+                stat would trip again. The unit short-cycles through its own safety,
+                over and over, and nobody ever finds out <em>why the coil was freezing in the
+                first place</em>. The fault clearing is not the same thing as the problem
+                being fixed. A safety trip must <strong>stand</strong> — visible, holding the
+                equipment off — until a person acknowledges it and goes looking for the
+                cause.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                That's the job of the <strong><code>SR latch</code></strong> — the one block
+                in the boolean family with memory. It has two inputs and a story: a TRUE on
+                <strong>S</strong> (<em>set</em>) drives the output <strong>Q</strong> TRUE,
+                and Q then <em>stays</em> TRUE on its own — the input can drop, the latch
+                holds. A TRUE on <strong>R</strong> (<em>reset</em>) drops Q back to FALSE.
+                Wire the freeze trip to S and you get the behavior the story above demands:
+                the trip is remembered after the stat clears, and only a deliberate reset
+                releases it.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                One question the block has to answer that a truth table can't dodge:
+                <em>what if S and R are both TRUE on the same scan?</em> The latch in this
+                site's editor is <strong>set-dominant</strong> — S wins, Q stays TRUE. Read
+                that in equipment terms and it's the right answer for a safety: while the
+                fault is <em>still standing</em>, you cannot reset your way past it. Hold the
+                reset button all day; nothing happens until the freeze stat itself clears.
+                The reset only works once the fault is gone. (Palettes vary — some vendors
+                ship a reset-dominant flavor too, where R wins. It matters: behind a
+                maintained reset switch, a reset-dominant latch never holds the trip at all.
+                Check which one your palette gives you before you trust it with a safety.)
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                Together, that's the <strong>latch + manual-reset idiom</strong>: the fault
+                sets, an operator resets. S comes from the safety; R comes from a person — a
+                reset button on a graphic, a software point the BMS writes, a physical
+                switch. The timeline below is the whole life of one trip, on all four
+                signals at once — and it's the same drawing you'd assemble in your head
+                watching the live sheet.
+            </p>
+
+            <svg class="edu-svg bll-svg" viewBox="0 0 740 372" role="img"
+                 aria-labelledby="bll-d2-title bll-d2-desc" font-family="var(--mono)">
+                <title id="bll-d2-title">A latched freeze trip on a timing diagram</title>
+                <desc id="bll-d2-desc">Four aligned timing traces: the freeze stat on the latch's set input, the reset button on its reset input, the latch output Q, and the fan command, which is Q inverted. The freeze stat trips and Q rises at the same moment, dropping the fan. While the freeze stat is still tripped, a reset pulse is ignored — the latch is set-dominant, so set wins. The freeze stat then clears, but Q holds and the fan stays off: the latch remembers. Only a second reset pulse, after the fault has cleared, drops Q and restores the fan.</desc>
+
+                <!-- event annotations (staggered rows) -->
+                <text x="240" y="30" text-anchor="middle" font-size="10" fill="var(--text)">freeze trips</text>
+                <text x="470" y="30" text-anchor="middle" font-size="10" fill="var(--text)">fault clears — Q holds</text>
+                <text x="340" y="46" text-anchor="middle" font-size="10" fill="var(--text-dim)">reset ignored — S wins</text>
+                <text x="600" y="46" text-anchor="middle" font-size="10" fill="var(--text-dim)">reset lands — Q drops</text>
+
+                <!-- event guide lines -->
+                <line x1="240" y1="52" x2="240" y2="312" stroke="var(--border)" stroke-width="1" stroke-dasharray="3 4"/>
+                <line x1="340" y1="52" x2="340" y2="312" stroke="var(--border)" stroke-width="1" stroke-dasharray="3 4"/>
+                <line x1="470" y1="52" x2="470" y2="312" stroke="var(--border)" stroke-width="1" stroke-dasharray="3 4"/>
+                <line x1="600" y1="52" x2="600" y2="312" stroke="var(--border)" stroke-width="1" stroke-dasharray="3 4"/>
+
+                <!-- trace labels -->
+                <text x="112" y="84"  text-anchor="end" font-size="11" fill="var(--text)">FREEZE (S)</text>
+                <text x="112" y="154" text-anchor="end" font-size="11" fill="var(--text)">RESET (R)</text>
+                <text x="112" y="224" text-anchor="end" font-size="11" fill="var(--text)">LATCH Q</text>
+                <text x="112" y="294" text-anchor="end" font-size="11" fill="var(--text)">FAN (NOT Q)</text>
+
+                <!-- traces -->
+                <path d="M130 92 H240 V64 H470 V92 H710" fill="none" stroke="var(--heat)" stroke-width="2.4" stroke-linejoin="round"/>
+                <path d="M130 162 H340 V134 H375 V162 H600 V134 H635 V162 H710" fill="none" stroke="var(--blue)" stroke-width="2.4" stroke-linejoin="round"/>
+                <path d="M130 232 H240 V204 H600 V232 H710" fill="none" stroke="var(--accent)" stroke-width="2.4" stroke-linejoin="round"/>
+                <path d="M130 274 H240 V302 H600 V274 H710" fill="none" stroke="var(--teal)" stroke-width="2.4" stroke-linejoin="round"/>
+
+                <text x="710" y="326" text-anchor="end" font-size="10" fill="var(--text-dim)">time →</text>
+
+                <text x="370" y="346" text-anchor="middle" font-size="10.5" fill="var(--text)">the latch rises with the trip, ignores a reset while the fault stands,</text>
+                <text x="370" y="362" text-anchor="middle" font-size="10.5" fill="var(--text)">holds after it clears, and drops only when the reset lands</text>
+            </svg>
+
+            <p>
+                Read the four traces against each other. The trip and the latch rise
+                together; the fan — Q through a <code>NOT</code> — drops the same scan. The
+                first reset pulse changes nothing, because the fault is still standing and
+                set wins. Then the stat clears and <em>nothing on the sheet moves</em>:
+                that flat stretch of Q, TRUE with both inputs FALSE, is the memory — the
+                whole reason the block exists. Only the second reset, arriving after the
+                fault is gone, drops Q and restores the fan.
+            </p>
+
+            <!-- ───────────────── 3 · Small idioms ───────────────── -->
+            <h2 class="subhead" id="idioms">Small idioms: XOR and the feedback wire</h2>
+
+            <p>
+                Two smaller moves round out the family. First, <strong><code>XOR</code></strong>
+                — TRUE when its inputs <em>disagree</em> — which makes it the sheet's
+                <strong>disagreement detector</strong>. The classic use is command versus
+                status: wire the fan's command and its proof contact into an <code>XOR</code>
+                and the output goes TRUE exactly when the two don't match — commanded on with
+                no proof (a broken belt, a tripped overload), or proved running with no
+                command (a welded contactor, a hand switch left in HAND). The same shape
+                checks any pair of states that must never read alike: the open and closed end
+                switches on a two-position damper should always disagree, so
+                <code>XOR</code> TRUE is health and FALSE means a switch — or the actuator —
+                is lying. In practice a real mismatch alarm waits a few seconds before
+                sounding, so the equipment has time to actually move; delays and debounce are
+                their own upcoming lesson in this chapter.
+            </p>
+
+            <p style="margin-top:1.25rem;">
+                Second, a one-sentence version of something you'll notice the first time you
+                stare at a latch: it's secretly a <em>loop</em> — the block's output feeds
+                back into its own decision — and a sheet resolves any feedback wire by
+                letting it carry <strong>last scan's value</strong>, which is exactly the
+                one-scan memory that lets a latch hold
+                (<a href="/education/function-blocks.html#scan">how a wiresheet runs</a> covers
+                the scan itself). That single sentence will carry you a long way; reading
+                whole sheets end to end — loops, feedback, and all — is its own lesson coming
+                later in this chapter.
+            </p>
+
+            <!-- ───────────────── 4 · Capstone ───────────────── -->
+            <h2 class="subhead" id="try-it">See it hold</h2>
+
+            <p>
+                Everything on this page is running, right now, in the
+                <a href="/simulators/function-block-editor.html">Function-Block Editor</a> —
+                load its <em>freeze-stat shutdown</em> example and you're looking at this
+                lesson as a live sheet: a freeze binary input sets an <code>SR latch</code>,
+                a <code>NOT</code> drops the fan output, and an alarm output lights. Trip the
+                freeze stat and watch the latch catch it. Then clear the stat — and watch the
+                latch <em>not care</em>. The fan stays off, the alarm stays lit, and the only
+                way back is the reset input. While you're there, hold the reset TRUE with the
+                freeze stat still tripped: the latch ignores it until the fault clears,
+                set-dominance live on the wire.
+            </p>
+
+            <a class="cta-button" href="/simulators/function-block-editor.html">Open the Function-Block Editor →</a>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        simulators: [
+            {href: '/simulators/function-block-editor.html', label: 'Function-Block Editor'}
+        ],
+        lessons: [
+            {href: '/education/function-blocks.html', label: 'Function-Block Basics'},
+            {href: '/education/equipment-staging.html', label: 'Equipment Staging'},
+            {href: '/education/controls-commissioning.html', label: 'Controls Commissioning'}
+        ],
+        quizzes: [
+            {href: '/practice/boolean-logic-latches.html', label: 'Boolean Logic & Latches Quiz'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/education/">← Back to Education</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+{% endblock %}

@@ -79,7 +79,11 @@ category with controller-wiring as the boundary lesson, and the
 chapter now builds out from the
 `[future: education/analog-sensing.html]` marker the forced-air
 buildout left behind. Per-page contracts below, one at a time as
-lanes open.
+lanes open. Chapter reading order (final, once all lanes land):
+controller-wiring → analog-sensing → temperature-sensors →
+status-and-proof → commanding-actuators → start-stop-commands;
+educationSequence.js, quizOrder.js, and both landing grids re-sort
+as each in-flight lane merges.
 
 **Analog Sensing — the chapter's anchor lesson.** Declared question:
 *How does a raw electrical signal become the engineering value on
@@ -100,12 +104,189 @@ both directions).
 Out of scope: loop wiring/power — controller-wiring owns it (any
 sentence explaining loop power belongs there); thermistor/RTD
 curves — plain prose, the temperature-sensors lesson is in-flight
-this arc and a later lane adds the anchor; sensor placement —
-duct-static-control / pump-control own theirs; calibration offsets —
-plain prose here, `[future: education/sensor-calibration.html]`.
+this arc and a later lane adds the anchor *(paid 2026-07-18 — the
+temperature-sensors lane merged second and added its lesson to this
+page's relatedLinks per the second-merger reciprocity rule)*; sensor
+placement — duct-static-control / pump-control own theirs;
+calibration offsets — plain prose here,
+`[future: education/sensor-calibration.html]`.
 Debts: pays the signal-scaling tool's missing lessons-link (the
 tool's documented lesson home) and the duct-static war story's
 generalization.
+
+**Temperature Sensors — curve families + the meter workflow.**
+Declared question: *Why does the controller need to know exactly
+which temperature sensor is on the wire — and how do you verify one
+with a meter?*
+In scope: thermistor curve families (10K Type II vs Type III share
+one defining point — 10 kΩ at 77 °F — and diverge everywhere else;
+the vendor-shunted conventions the thermistor-calculator already
+names, the JCI 10K + 8.7K and TAC Type 5, as proof the name is not
+the curve; the quiet failure — a wrong-but-close curve reads a few
+degrees off, plausibly, forever, and nobody hunts a 3° lie); RTDs vs
+thermistors (Pt100 / Pt1000 / Balco; ohms-per-degree so small on an
+RTD that lead resistance reads as temperature; the 3-wire
+compensation answer; where each family lives in the field —
+thermistors own BAS space/duct temp, RTDs where accuracy and
+stability pay); the verification workflow (disconnect → meter the
+ohms → table lookup — the thermistor-calculator's R/T tables ARE the
+lookup, sent there directly → compare against a reference
+thermometer; deciding sensor vs input vs configuration from what
+disagrees).
+Out of scope: landing/wiring faults and the open-reads-cold /
+short-reads-hot display signature — controller-wiring owns them (one
+sentence + anchor); averaging elements + sensor placement — plain
+prose, `[future: education/sensor-placement.html]`; calibration
+offsets — plain prose, `[future: education/sensor-calibration.html]`
+(also declared on the Analog Sensing contract above); the
+analog-signal chapter opener was referenced in plain prose while
+that lane was in-flight *(converted to a live anchor + relatedLinks
+reciprocity at integration, 2026-07-18)*.
+Debts: pays the thermistor-calculator's missing lessons-link (the
+tool had no lesson home until now).
+
+**Status & Proof — the binary-sensing lesson.** Declared question:
+*When the graphic says a fan is ON, what is the controller actually
+sensing — and why do command and status sometimes disagree?*
+In scope: the status-source menu (starter auxiliary contact vs
+current switch vs DP/paddle switch, and what each actually PROVES —
+contactor closed ≠ motor drawing amps ≠ air moving; the broken-belt
+case is the canonical separator and the page's through-line: aux
+says ON, current switch shows a motor spinning unloaded whose draw
+may sit under the trip, DP says no air); proof logic (command-vs-
+status comparison, the proof window — command it, wait, expect
+proof — and fail-to-start as a concept; the BLOCK-level
+implementation belongs to the in-flight timers-and-delays lesson
+`[future: education/timers-and-delays.html]` — one plain-prose
+forward sentence with no anchor, the timers lane retro-adds it on
+merge); binary fault signatures (inverted polarity
+from a NO/NC config mismatch — perpetual ON or perpetual OFF;
+chattering status from a loose contact or marginal airflow at a DP
+switch; a current-switch trip point set below the motor's unloaded
+draw — proves ON with a broken belt, tying back to section 1).
+Out of scope: dry/wet contacts, wetting current, and how the BI
+lands — controller-wiring owns them (one sentence + anchor);
+point-to-point checkout discipline — controls-commissioning owns it
+(anchor); the wiring simulator models dry contacts on BIs and is
+cross-linked as the place to wire one.
+Paired quiz: `practice/status-and-proof.html` — 10 questions, house
+mix, exactly 1 gotcha (an inverted-polarity point-config snippet);
+scope split vs the neighboring banks: field-wiring-sensors owns
+sensor curves/shielding/sourcing-sinking, controller-wiring owns
+the landings and wet-vs-dry — this bank stays on WHAT STATUS PROVES
+and the command-vs-status logic.
+
+**Commanding Actuators** (`education/commanding-actuators.html` +
+paired quiz) *(lane opened 2026-07-18 — drafted, owner-checkpointed,
+and integrated the same day)*. Declared question:
+*What happens between an AO commanding 50% and the damper actually
+sitting at 50% — and why do the two disagree?*
+In scope: (1) command spans — 0–10 V vs 2–10 V vs 4–20 mA actuator
+inputs; THE worked example: 5 V into a 2–10 V actuator is 37.5%
+stroke, not 50% (numeric, replicable in the signal-scaling tool, and
+the page says so); the mismatch symptoms (everything tracks but
+always sits low/high, hunting near the ends of travel) with span
+DIP-switch / configuration mismatch as the usual cause. (2) direction
+and fail posture — direct vs reverse acting at the ACTUATOR, one
+disambiguation sentence against loop action (pid-basics owns the
+loop); spring return vs fail-in-place; what normally open / normally
+closed means for a valve and a damper on power loss, fail posture as
+a design decision — the normally-OPEN hot-water valve as the classic
+freeze-protection example. (3) position feedback and floating
+behavior — verifying with a feedback AI and the
+command-50-feedback-34 diagnostic fork (stroke time → span config →
+mechanical); floating (tri-state) actuators as
+command-without-position — the run-time estimate drifts and re-syncs
+by overdriving to an end of travel; the field symptoms (drift, the
+periodic full-travel drive). Two static cak- diagrams (span-mismatch
+number line; three-line stroke-vs-command chart), an anecdote slot
+left at fail posture.
+Out of scope: the 3-wire landing / power-vs-signal mistake and the
+floating triac-pair wiring — controller-wiring.html (anchored once);
+VFD run/speed — vfds.html (anchored once: drives take the same
+0–10 / 4–20 command languages, that page owns them); loop behavior —
+pid-basics.html; valve sizing and authority stay plain prose
+`[future: valve-authority]`.
+Debts: pays analog-sensing's "you will meet it on actuator feedback
+especially" plant (upgraded to a live link into
+#feedback-and-floating, plus relatedLinks reciprocity both ways).
+Incurs the valve-authority marker above.
+
+**Start/Stop Commands — the chapter closes on the output side.**
+Owner-added for input/output symmetry: the rest of the chapter lives
+on the reading side; this is the binary-OUTPUT story, and it lands
+LAST in the chapter (final order: controller-wiring → analog-sensing
+→ temperature-sensors → status-and-proof → commanding-actuators →
+start-stop-commands, then controls-commissioning resumes). Declared
+question: *When a BO commands equipment ON, what sits between the
+controller's relay and the motor starting — and why does Hand work
+when Auto doesn't?*
+In scope: the command path (BO dry contact → interposing relay → HOA
+switch → hardwired safety string → contactor coil → motor — each
+element's job in one breath, what a break at each point looks like
+from the BMS seat, and why the interposing relay exists: the BO's
+contact rating and voltage class vs the contactor coil's); HOA
+semantics (Hand bypasses the BMS entirely, Off beats everyone, Auto
+hands the decision to the BO; what each position does to
+command-vs-status agreement — in Hand the unit runs while the BMS
+commands OFF, the mirror of the broken-belt case); finding the break
+(works in Hand, dead in Auto → the fault is upstream of the HOA's
+Auto leg; works in neither → downstream; hardwired safety string vs
+software interlocks — why life-safety trips live in copper, not
+code).
+Out of scope: BO wiring / relay-vs-triac / the BO-C feed —
+controller-wiring owns them (anchored once, never re-taught); motor
+starter internals and overload sizing — out of site scope, one
+plain-prose sentence (electrician's territory); status sensing and
+proof — status-and-proof is the mirror lesson (in-flight this arc:
+prose now, anchor at integration); the VFD run command — vfds owns
+it (anchored: drives replace the contactor but keep the same
+command-path shape).
+
+### Programming buildout — the wiresheet chapter *(opened 2026-07-18)*
+
+The controls-spine arc's second education chapter (see the arc
+handoff brief): the Function-Block Editor sim and its
+function-blocks lesson shipped as a capstone with no chapter behind
+them — the telling detail that picked this arc. The chapter builds
+out from function-blocks (the anchor) in curriculum order:
+boolean-logic → comparators-and-deadband → timers-and-delays →
+setpoint-math-reset → reading-a-wiresheet, per-page contracts below
+as lanes open. Each lesson gets a paired Practice quiz; the sim's
+canned examples (PR #381 added proof-of-flow and hot-water reset)
+serve as the lesson capstones.
+
+**Setpoint Math & Reset Schedules.** Declared question: *How does a
+sheet compute a setpoint — and how does an outdoor-air reset
+schedule come out of four math blocks?*
+In scope: offset math (add/sub building band edges and
+occupied/unoccupied setbacks; min/max as high-select across zone
+demands and low-select ceilings; the framing that real sheets
+compute setpoints rather than type them); the linear reset — the
+sim's hot-water `reset` canned example walked block by block (derive
+m = −40/60 ≈ −0.667 and b = 180 from the two design endpoints so the
+method generalizes; the LIMIT block as the safety rail — at −10 °F
+the unclamped line asks 186.7 °F; worked middle point 30 °F →
+160 °F; metric dual-stating per the rounding policy, displayed-
+operand arithmetic closing in both systems); the cross-chapter beat
+that a reset schedule is the same slope/offset arithmetic as signal
+scaling — the signal-scaling tool's 2-Point tab literally solves one
+if you feed it the endpoints; SELECT switching setpoints by
+occupancy (occupied 72 / unoccupied 65 through one SELECT, a
+sentence on chaining for multi-mode).
+Out of scope: WHY resets save energy + how endpoints get chosen —
+the system pages own it (pump-control `#dp-reset`, duct-static
+`#reset` trim-and-respond), anchored as "the system side of this
+math"; trim-and-respond as an algorithm — duct-static-control;
+PID — pid-basics; comparator band-edge behavior (deadband, chatter)
+— the comparators-and-deadband lesson (in-flight this arc; prose
+now, anchor + reciprocal when merged); mode DESIGN — how a building
+decides which mode it's in — plain prose,
+`[future: education/mode-and-state-logic.html]`.
+Debts: pays the sequencing residual ("setpoint reset against
+outside-air temperature") parked on the pump-control and
+equipment-staging entries' `[future:]` breadcrumbs — annotate those
+crumbs as shipped-here when this page lands.
 
 ### BACnet buildout — the flagship subsection *(opened 2026-07-07, completed 2026-07-12 — all five pages + the pillar shipped)*
 
@@ -2193,8 +2374,11 @@ drawing.
 - `[future: sequencing.html]` (the closing) — **partly paid.** The
   closing's staging mention now links to equipment-staging.html;
   the rest of the broader sequence layer — setpoint reset against
-  outside-air temperature, mode transitions, morning warm-up —
-  stays plain-prose forward-link for future pages.
+  outside-air temperature *(shipped 2026-07-18 —
+  education/setpoint-math-reset.html, the sheet-side math; the
+  system-side WHY stays here on the DP-reset section)*, mode
+  transitions, morning warm-up — stays plain-prose forward-link
+  for future pages.
 - `[future: balancing.html]` *(shipped 2026-05-16)* — not directly forward-linked from
   pump-control (the load-piping page already carries the link),
   but worth noting that pump-control's "DP setpoint reset assumes
@@ -2247,7 +2431,9 @@ In scope (sections shipped):
   plain prose) to the still-future reset / modes / warm-up pages.
 
 Out of scope (forward links, not content):
-- Setpoint / OAT reset, mode transitions, optimal / morning warm-up
+- Setpoint / OAT reset *(shipped 2026-07-18 —
+  education/setpoint-math-reset.html carries the reset-schedule
+  math)*, mode transitions, optimal / morning warm-up
   start, bumpless transitions — [future: sequencing page(s)]
 - End-of-curve protection / deadhead — covered on pump-control;
   linked back, not re-taught
@@ -4002,7 +4188,210 @@ related future page (`pid-basics.html`) already exists, so the
 lesson cross-links to it for PID internals without a `[future:]`
 marker.
 
-### Reading a Wiresheet — Education page *(drafting 2026-07-18, controls-spine arc)*
+### Boolean Logic & Latches — Education page *(shipped 2026-07-18, controls-spine arc)*
+
+**One question:** *how do TRUE/FALSE blocks turn equipment rules —
+interlocks, permissives, safeties — into logic, and how does a
+latch remember?* First new lesson of the Programming chapter
+(function-blocks opens it; the FB editor is the chapter capstone).
+Ships at `html/education/boolean-logic-latches.html` with a paired
+quiz at `html/practice/boolean-logic-latches.html`.
+
+In scope (three sections):
+- *AND / OR / NOT in equipment terms* — the permissive chain
+  (every safety proved AND occupied AND OAT permits → run),
+  reading a truth table as a sentence rather than a grid, NOT for
+  fail-safe inversion (a normally-closed safety reads TRUE when
+  healthy, so a wire break reads as a trip).
+- *The SR latch — how logic remembers* — why safeties LATCH
+  instead of self-clearing (the fault may clear but the trip must
+  be acknowledged); the sim's latch is **set-dominant** (S wins
+  when S and R are both true — `fbe-engine.js` is the ground
+  truth); the latch + manual-reset idiom.
+- *Small idioms* — XOR as the disagreement detector for
+  mutually-exclusive states; the one-sentence version of
+  "feedback wires carry last scan's value."
+
+Out of scope (adjacent topics, with owners):
+- What a block/wiresheet IS and how a sheet evaluates —
+  `function-blocks.html` owns it; this page opens with a callout
+  cross-link to it as the prerequisite.
+- Threshold/comparator decisions and deadband — plain prose only.
+  `[future: education/comparators-and-deadband.html]` (in-flight
+  lane, this arc).
+- Timing — proof delays, debounce, minimum run times — plain
+  prose only. `[future: education/timers-and-delays.html]`
+  (in-flight lane, this arc).
+- Reading whole sheets end to end — plain prose only.
+  `[future: education/reading-a-wiresheet.html]`
+  *(shipped 2026-07-19)* — the anchor itself is left to the
+  cross-link true-up lane that follows this one.
+- Staging/rotation logic — `equipment-staging.html` owns it
+  (cross-link, exists today).
+
+**Capstone hook:** the FB editor ships a canned freeze-stat
+example (freeze BI sets an SR latch → NOT drops the fan BO →
+alarm BO). The lesson ends by sending the reader there: load it,
+trip the freeze stat, watch the latch hold after the input clears.
+
+### Comparators & Deadband — Education page *(drafting 2026-07-18, controls-spine arc)*
+
+**One question:** *how does a number become a decision — and why
+does a single threshold chatter?* Programming-chapter lesson
+(curriculum position: function-blocks → boolean-logic-latches →
+this page; the boolean lesson is an in-flight sibling lane on this
+arc that merges first). Ships at
+`html/education/comparators-and-deadband.html` with a paired quiz
+at `html/practice/comparators-and-deadband.html`.
+
+In scope (three sections):
+- *The comparator family* — GT/LT/GE/LE as the analog→digital
+  bridge; why ≥ vs > is a distinction without a difference on a
+  measured value (the boundary case is a knife-edge — direction
+  and placement are what matter); the EQ-on-analog trap (a float
+  is never exactly 72.0 — the sim's EQ compares within an epsilon
+  for exactly this reason; EQ is for genuinely discrete values).
+- *Chatter* — a value hovering at a single threshold flips the
+  output every few scans; the structural trap (a controlled
+  variable lives near its setpoint, so a threshold AT the setpoint
+  guarantees hovering where the comparison is least stable);
+  honest stakes (contactor arcing, compressor inrush/oil-return —
+  rated a handful of starts an hour, chatter demands ten a
+  minute); anti-short-cycle timers framed as last defense, not a
+  license. Capstone diagram: one noisy input, two output traces —
+  single-GT chatter vs the clean set/reset pulse (traces generated
+  from the same sample data so the flips align honestly).
+- *Building the deadband* — two comparators + an SR latch (set
+  above SP+½band, reset below SP−½band), walked wire-by-wire
+  against the FB editor's `tstat-cool` canned example (SP 74,
+  DB 1 → edges 75/73), redrawn in lesson style with the sim's
+  wire-color legend; the latch's hold between the edges IS the
+  deadband; the half-vs-total band-parameter gotcha (this DB
+  constant is per-side); direct vs reverse acting fall out of the
+  S/R pair for free (the sim's `tstat-heat` is the same nine
+  blocks with S and R traded); band width = comfort vs cycling
+  (equipment-staging's stage-up/stage-down gap is this pattern at
+  plant scale — anchored); production palettes bundle a one-block
+  deadband/hysteresis comparator — this lesson shows what's inside
+  that block (consistent with function-blocks' comparator-family
+  card, which already hints it).
+
+Out of scope (adjacent topics, with owners):
+- What latches ARE, set-dominance, the manual-reset idiom —
+  boolean-logic-latches (in-flight sibling lane, merges first;
+  referenced in plain prose in Phase A, anchored + retro-linked
+  into its relatedLinks at Phase B integration).
+- Staging threshold design — `equipment-staging.html` owns it
+  (anchored, exists today).
+- Modulating control as the alternative to switching — one
+  sentence + `pid-basics.html` anchor.
+- Timing-based anti-short-cycle (minimum on/off, proof delays) —
+  plain prose only. `[future: education/timers-and-delays.html]`
+  (in-flight lane, this arc).
+
+**Capstone hook:** the FB editor's thermostat pair. Load
+`tstat-cool`, walk the TEMP value up and down through the band in
+the inspector, watch set and reset fire at different values; load
+`tstat-heat` and hunt for what swapped (only the two wires into S
+and R).
+
+**Quiz notes:** ten questions (6 mcq / 2 tf / 1 numeric / 1
+gotcha), ids `cdb-*`. The gotcha shows the heating stat's
+"swapped-looking" S/R wiring flagged as a bug — the verdict is
+that it's the sim's reverse-acting heating example, teaching
+"read the output's meaning before judging the latch wiring."
+
+### Timers & Delays — Education page *(drafting 2026-07-18, controls-spine arc)*
+
+**One question:** *what do TON and TOF actually do — and why does
+almost every real sheet gate its decisions through time?*
+Programming-chapter lesson (curriculum position: function-blocks →
+boolean-logic-latches → comparators-and-deadband → this page →
+setpoint-math-reset → reading-a-wiresheet; the boolean and
+comparator lessons are in-flight sibling lanes on this arc that
+merge first). Ships at `html/education/timers-and-delays.html`
+with a paired quiz at `html/practice/timers-and-delays.html`.
+
+In scope (three sections):
+- *TON / TOF semantics* — the two mirror sentences (TON: "the
+  input must stay true this long before I believe it"; TOF: "I
+  keep saying true this long after it drops"); preset (PT) and
+  elapsed time (ET), ET counting up toward the preset in both
+  blocks; what clears ET, matched to `fbe-engine.js` (the ground
+  truth, not PLC-textbook variants): TON's ET zeroes the instant
+  the input drops — no credit kept across attempts (an
+  accumulating/retentive timer is a different block some palettes
+  offer) — and parks at the preset while the input holds; TOF's
+  ET zeroes the instant the input returns (the countdown is
+  cancelled, not paused) and parks at the preset after expiry
+  until the next rise clears it. Framing that pays off later in
+  the page: TON is a minimum-duration filter on TRUE, TOF the
+  same filter on FALSE. Capstone diagram: the classic stacked
+  timing traces (IN / ET / Q for both blocks), including the
+  reset case — input drops mid-TON, ET clears, Q never fires.
+- *The proof window and debounce* — why time gates decisions (the
+  sheet scans ten times a second; machinery moves in seconds, so
+  logic without time treats every honest transient as a fault);
+  the fail-to-start pattern: command TRUE AND proof FALSE feeds a
+  TON, window expiry latches the alarm. Walks the FB editor's
+  `proof` canned example wire by wire (cmd BI + proof BI → NOT →
+  AND → TON 15 s → SR latch → alarm BO, reset BI into R), redrawn
+  lesson-style with the three phases annotated (healthy / window
+  running / alarmed+latched), then sends the reader to load it,
+  toggle proof off, and watch ET climb to the preset. Window
+  sizing both ways: too short = nuisance alarm on every honest
+  start; too long = a blind spot that masks a real failure and
+  everything interlocked on "proven" inherits it. Debounce: a
+  chattering status (a DP switch fluttering at marginal airflow)
+  believed only after a short TON; a short TOF as the mirror
+  (ride through brief dropouts).
+- *Minimum run / minimum off* — anti-short-cycle timing (starts
+  are the expensive part: inrush heat in the windings, oil that
+  never returns on short runs, pressures that need the off-time
+  to equalize; manufacturers budget starts per hour); how the
+  min-times interact with the deadband decision (the band decides
+  WHAT the sequence wants, the timers decide WHEN it is allowed —
+  a band narrower than the timing can honor reads as equipment
+  ignoring its own thermostat; fix the band, don't lean on the
+  timer); equipment-staging's stage-delay / minimum-stage-time
+  widgets are this at plant scale (anchored — exists today).
+
+Out of scope (adjacent topics, with owners):
+- Staging timer DESIGN (thresholds, delay lengths, rotation) —
+  `equipment-staging.html` owns it (anchored, exists today).
+- What latches are, set-dominance, the latch + manual-reset
+  idiom — boolean-logic-latches (in-flight sibling lane, merges
+  first; plain prose in Phase A, anchored at Phase B integration).
+- The threshold/deadband decisions the timers gate —
+  comparators-and-deadband (in-flight sibling lane, merges first;
+  plain prose in Phase A, anchored at Phase B).
+- What proof sources actually prove (current switch vs DP vs aux
+  contact) and binary fault signatures — status-and-proof
+  (in-flight lane, this arc). Its proof-logic section (`#sap-proof`)
+  ends on "the block-level way the window is built belongs to a
+  lesson on timers and delays" — whichever of the two lanes merges
+  second wires the reciprocal anchors; this lane merges second, so
+  at Phase B it anchors status-and-proof here AND retro-adds the
+  anchor in `#sap-proof` pointing back at this page.
+- Schedules / occupancy timing — calendar time, not interval
+  time; no clock block exists in the sim, so one plain-prose
+  sentence only. `[future: education/schedules-and-occupancy.html]`
+- Modulating control as the alternative to timed switching —
+  `pid-basics.html` anchor where it comes up.
+
+**Capstone hook:** the FB editor's `proof` canned example (shipped
+2026-07-18, PR #381, as this lesson's capstone). Load it, toggle
+STATUS off, watch ET climb to 15 s on the TON block, watch the
+alarm latch; toggle STATUS back on — the alarm holds (the latch,
+not the timer, owns the memory); pulse RESET to clear.
+
+**Quiz notes:** ten questions (6 mcq / 2 tf / 1 numeric / 1
+gotcha), ids `tdl-*`. The gotcha is a sheet snippet wiring a
+filter-DP alarm through a TOF where the sentence ("stays made for
+30 s before I believe it") needs a TON — so the alarm fires the
+instant the switch closes and lingers after it opens.
+
+### Reading a Wiresheet — Education page *(shipped 2026-07-19, controls-spine arc)*
 
 **One question:** *you didn't write this program and something's
 wrong — how do you read a live wiresheet to find the block that's
@@ -4042,8 +4431,8 @@ In scope (three sections + a worked trace):
   (NOT + AND + TON + latch = fail-to-start), the reset chain
   (mul/add/limit = a schedule), the select-based mode switch. One
   compact sentence + a code-style signature each; the chapter's
-  lessons own the deep teaching (plain prose in Phase A — every
-  sibling is still in flight; Phase B anchors whichever merged).
+  lessons own the deep teaching (every sibling merged ahead of this
+  lane's Phase B, so each idiom anchors its owning lesson).
 - *The worked trace* — ONE deliberately-faulted AHU heating-call
   sheet (band-edge cluster + permissive chain gating the call, a
   freeze-stat trip-lamp red-herring branch, live values on every
