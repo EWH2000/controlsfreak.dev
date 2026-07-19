@@ -4183,6 +4183,73 @@ example (freeze BI sets an SR latch → NOT drops the fan BO →
 alarm BO). The lesson ends by sending the reader there: load it,
 trip the freeze stat, watch the latch hold after the input clears.
 
+### Comparators & Deadband — Education page *(drafting 2026-07-18, controls-spine arc)*
+
+**One question:** *how does a number become a decision — and why
+does a single threshold chatter?* Programming-chapter lesson
+(curriculum position: function-blocks → boolean-logic-latches →
+this page; the boolean lesson is an in-flight sibling lane on this
+arc that merges first). Ships at
+`html/education/comparators-and-deadband.html` with a paired quiz
+at `html/practice/comparators-and-deadband.html`.
+
+In scope (three sections):
+- *The comparator family* — GT/LT/GE/LE as the analog→digital
+  bridge; why ≥ vs > is a distinction without a difference on a
+  measured value (the boundary case is a knife-edge — direction
+  and placement are what matter); the EQ-on-analog trap (a float
+  is never exactly 72.0 — the sim's EQ compares within an epsilon
+  for exactly this reason; EQ is for genuinely discrete values).
+- *Chatter* — a value hovering at a single threshold flips the
+  output every few scans; the structural trap (a controlled
+  variable lives near its setpoint, so a threshold AT the setpoint
+  guarantees hovering where the comparison is least stable);
+  honest stakes (contactor arcing, compressor inrush/oil-return —
+  rated a handful of starts an hour, chatter demands ten a
+  minute); anti-short-cycle timers framed as last defense, not a
+  license. Capstone diagram: one noisy input, two output traces —
+  single-GT chatter vs the clean set/reset pulse (traces generated
+  from the same sample data so the flips align honestly).
+- *Building the deadband* — two comparators + an SR latch (set
+  above SP+½band, reset below SP−½band), walked wire-by-wire
+  against the FB editor's `tstat-cool` canned example (SP 74,
+  DB 1 → edges 75/73), redrawn in lesson style with the sim's
+  wire-color legend; the latch's hold between the edges IS the
+  deadband; the half-vs-total band-parameter gotcha (this DB
+  constant is per-side); direct vs reverse acting fall out of the
+  S/R pair for free (the sim's `tstat-heat` is the same nine
+  blocks with S and R traded); band width = comfort vs cycling
+  (equipment-staging's stage-up/stage-down gap is this pattern at
+  plant scale — anchored); production palettes bundle a one-block
+  deadband/hysteresis comparator — this lesson shows what's inside
+  that block (consistent with function-blocks' comparator-family
+  card, which already hints it).
+
+Out of scope (adjacent topics, with owners):
+- What latches ARE, set-dominance, the manual-reset idiom —
+  boolean-logic-latches (in-flight sibling lane, merges first;
+  referenced in plain prose in Phase A, anchored + retro-linked
+  into its relatedLinks at Phase B integration).
+- Staging threshold design — `equipment-staging.html` owns it
+  (anchored, exists today).
+- Modulating control as the alternative to switching — one
+  sentence + `pid-basics.html` anchor.
+- Timing-based anti-short-cycle (minimum on/off, proof delays) —
+  plain prose only. `[future: education/timers-and-delays.html]`
+  (in-flight lane, this arc).
+
+**Capstone hook:** the FB editor's thermostat pair. Load
+`tstat-cool`, walk the TEMP value up and down through the band in
+the inspector, watch set and reset fire at different values; load
+`tstat-heat` and hunt for what swapped (only the two wires into S
+and R).
+
+**Quiz notes:** ten questions (6 mcq / 2 tf / 1 numeric / 1
+gotcha), ids `cdb-*`. The gotcha shows the heating stat's
+"swapped-looking" S/R wiring flagged as a bug — the verdict is
+that it's the sim's reverse-acting heating example, teaching
+"read the output's meaning before judging the latch wiring."
+
 ### Controller commissioner *(larger build — reviewed 2026-06-10: stays parked)*
 
 **Reviewed 2026-06-10 (mock-call audit, owner concurred): stays

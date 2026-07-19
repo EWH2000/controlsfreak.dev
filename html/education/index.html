@@ -23,7 +23,7 @@ nav: education
 
     <div class="filter-chips" role="group" aria-label="Filter lessons by category">
         <button type="button" class="filter-chip active" data-category="all" aria-pressed="true">
-            All <span class="filter-chip-count">36</span>
+            All <span class="filter-chip-count">37</span>
         </button>
         <button type="button" class="filter-chip" data-category="fundamentals" aria-pressed="false">
             Fundamentals <span class="filter-chip-count">5</span>
@@ -41,7 +41,7 @@ nav: education
             Forced Air Systems <span class="filter-chip-count">8</span>
         </button>
         <button type="button" class="filter-chip" data-category="programming" aria-pressed="false">
-            Programming <span class="filter-chip-count">2</span>
+            Programming <span class="filter-chip-count">3</span>
         </button>
         <button type="button" class="filter-chip" data-category="protocols" aria-pressed="false">
             Protocols <span class="filter-chip-count">7</span>
@@ -316,6 +316,15 @@ nav: education
             titleFull:  'Boolean Logic & Latches',
             desc:       'How AND, OR, and NOT turn interlocks, permissives, and safeties into wiresheet logic — and how the set-dominant SR latch holds a trip until someone resets it.',
             pills:      ['Logic', 'Permissive Chain', 'SR Latch'],
+            category:   'programming'
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/education/comparators-and-deadband.html',
+            titleShort: 'Comparators',
+            titleFull:  'Comparators & Deadband',
+            desc:       'How a comparator turns a number into a decision, the chatter a single threshold guarantees, and the two-comparator set/reset build inside every deadband block.',
+            pills:      ['Logic', 'Chatter', 'Set/Reset Band'],
             category:   'programming'
         }) }}
         {# ── end Programming ── #}
