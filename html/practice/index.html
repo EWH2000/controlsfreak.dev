@@ -92,7 +92,10 @@ nav: practice
             Refrigeration <span class="filter-chip-count">3</span>
         </button>
         <button type="button" class="filter-chip" data-category="controls" aria-pressed="false">
-            Controls <span class="filter-chip-count">3</span>
+            Controls <span class="filter-chip-count">2</span>
+        </button>
+        <button type="button" class="filter-chip" data-category="programming" aria-pressed="false">
+            Programming <span class="filter-chip-count">1</span>
         </button>
         <button type="button" class="filter-chip" data-category="psychrometrics" aria-pressed="false">
             Psychrometrics <span class="filter-chip-count">1</span>
@@ -124,6 +127,9 @@ nav: practice
                 pills:      ['10 Questions', 'MCQ · TF · Gotcha · Numeric', '~ 5 min'],
                 category:   'controls'
             }) }}
+            {# ── Signals & Sensing ─ new signals-chapter quiz cards insert
+               here, in curriculum order (controller-wiring's slot — it has
+               no quiz; keep quizOrder.js in lockstep) ── #}
             {{ navCard({
                 section:    'practice',
                 href:       '/practice/hydronic-loops.html',
@@ -269,6 +275,9 @@ nav: practice
                 pills:      ['10 Questions', 'MCQ · TF · Gotcha · Numeric', '~ 5 min'],
                 category:   'forced-air'
             }) }}
+            {# ── Programming ─ function-blocks leads the chapter; insert new
+               quiz cards below it, in curriculum order (keep quizOrder.js in
+               lockstep) ── #}
             {{ navCard({
                 section:    'practice',
                 href:       '/practice/function-blocks.html',
@@ -276,8 +285,9 @@ nav: practice
                 titleFull:  'Function Blocks',
                 desc:       'Blocks and pins, digital vs. analog wires, the block families, how a scan resolves feedback, and a worked economizer sheet.',
                 pills:      ['10 Questions', 'MCQ · TF · Gotcha', '~ 5 min'],
-                category:   'controls'
+                category:   'programming'
             }) }}
+            {# ── end Programming ── #}
             {{ navCard({
                 section:    'practice',
                 href:       '/practice/modbus-basics.html',

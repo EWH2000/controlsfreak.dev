@@ -8,6 +8,9 @@
 // the landing cards show them.
 module.exports = [
     { slug: 'pid-basics',               label: 'PID Basics' },
+    // ── Signals & Sensing ─ new signals-chapter quizzes insert here, in
+    // curriculum order (controller-wiring's slot — it has no quiz; mirror
+    // the education sequence) ──
     { slug: 'hydronic-loops',           label: 'Hydronic Loops' },
     { slug: 'load-piping',              label: 'Load Piping' },
     { slug: 'vfds',                     label: 'VFDs' },
@@ -25,6 +28,8 @@ module.exports = [
     { slug: 'vav-systems',              label: 'VAV Systems' },
     { slug: 'duct-static-control',      label: 'Duct Static Control' },
     { slug: 'function-blocks',          label: 'Function Blocks' },
+    // ── Programming ─ function-blocks leads the chapter; insert new quiz
+    // slugs here, in curriculum order (mirror the education sequence) ──
     { slug: 'modbus-basics',            label: 'Modbus Basics' },
     { slug: 'modbus-decoding',          label: 'Modbus Decoding' },
     { slug: 'bacnet-basics',            label: 'BACnet Basics' },

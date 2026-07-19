@@ -649,8 +649,8 @@ test.describe('refrigerant-loop-engine: heating mode', () => {
         const choked = RefrigLoop.solve({ mode: 'heating', airflow: 0.5 });
         expect(choked.tCond).toBeGreaterThan(good.tCond);
         expect(choked.pDis).toBeGreaterThan(good.pDis);
-        expect(choked.flags.highHead).toBe(true);       // split 50 > 38
-        expect(good.flags.highHead).toBe(false);        // design split 35
+        expect(choked.flags.highHead).toBe(true);       // excess 15 > 3 (split 50)
+        expect(good.flags.highHead).toBe(false);        // excess 0 (design split 35)
         // Ambient tracks the EVAPORATOR 1:1; the condenser follows at the
         // droop slope (the real capacity fade — owner decision 2026-07-18;
         // this line originally pinned cold.tCond === mild.tCond).
@@ -850,6 +850,57 @@ test.describe('refrigerant-loop-engine: heating mode', () => {
         // …while just inside the frost band the design rise (95) still
         // governs — the droop reads on the head gauge before the duct.
         expect(at(39).tAirOutIndoor).toBeCloseTo(95, 6);
+    });
+
+    test('heat-mode high head measures excess over the drooped baseline (#176)', () => {
+        // The retune: the old ABSOLUTE 38 °F split onset sat unreachably
+        // above the drooped design baseline below 17 °F ambient (a fully
+        // blocked filter at 10 °F ran head 261→340 psig with no tell) and
+        // desensitized the 18–47 °F band. The flag now fires on
+        // split − droopedDesignSplit(ambient) > HIGH_HEAD_EXCESS_HEAT,
+        // where droopedDesignSplit = 35 + 0.5·min(0, ambient − 47).
+        const { RefrigLoop } = loadEngine();
+        const at = (ambient, knobs) => RefrigLoop.solve(
+            Object.assign({ mode: 'heating', ambient: ambient }, knobs));
+        // 1. Deep cold restored — and the blocked-filter onset is UNIFORM
+        //    across the envelope: indoor airflow 0.90 stays clear (excess
+        //    3.0, strict >) and the next grid step fires, at EVERY ambient
+        //    (mirrors the cooling boundary pin's 18.0 / 18.3 shape).
+        for (const a of [-5, 5, 10, 17, 30, 39, 47, 55, 65]) {
+            expect(at(a, { airflow: 0.90 }).flags.highHead, `clear @ ${a}`).toBe(false);
+            expect(at(a, { airflow: 0.85 }).flags.highHead, `fires @ ${a}`).toBe(true);
+        }
+        // The motivating repro: a fully blocked filter at 10 °F ambient
+        // now raises the high-head tell (excess 18 > 3; the old rule saw
+        // split 34.5 < 38 — never).
+        expect(at(10, { airflow: 0.40 }).flags.highHead).toBe(true);
+        // 2. Bit-identical at/above the 47 °F anchor: the droop is zero
+        //    there, so the excess form IS the old split > 38 boundary.
+        expect(at(47, { airflow: 0.90 }).flags.highHead).toBe(false);  // split 38.0
+        expect(at(47, { airflow: 0.89 }).flags.highHead).toBe(true);   // split 38.3
+        expect(at(65, { airflow: 0.90 }).flags.highHead).toBe(false);
+        expect(at(65, { airflow: 0.89 }).flags.highHead).toBe(true);
+        // 3. Frost alone never false-positives the head LED: outdoor-coil
+        //    air starvation (condAir — the suction side's knob) with a
+        //    clean indoor filter stays clear across the whole
+        //    accumulation envelope.
+        for (let a = -5; a <= 45; a += 5) {
+            for (let c = 40; c <= 120; c += 5) {
+                const s = at(a, { condAir: c / 100 });
+                expect(s.flags.highHead, `frost-alone @ ${a} °F / condAir ${c / 100}`)
+                    .toBe(false);
+            }
+        }
+        // 4. Overcharge (1.20) now flags at every ambient — intended and
+        //    honest: its +5 °F split rise is a fault at any temperature
+        //    (the old rule lost it below 43 °F ambient). The PILL is
+        //    unchanged: floodback outranks highHead in the verdict.
+        for (const a of [-5, 10, 17, 30, 47, 65]) {
+            const s = at(a, { charge: 1.20 });
+            expect(s.flags.highHead, `overcharge @ ${a}`).toBe(true);
+            expect(s.flags.floodback).toBe(true);
+            expect(s.verdict.text.toLowerCase()).toContain('floodback');
+        }
     });
 
     test('pressure ordering + air orderings hold over the heating box', () => {
