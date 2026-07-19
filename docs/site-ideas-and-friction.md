@@ -4002,6 +4002,80 @@ related future page (`pid-basics.html`) already exists, so the
 lesson cross-links to it for PID internals without a `[future:]`
 marker.
 
+### Reading a Wiresheet — Education page *(drafting 2026-07-18, controls-spine arc)*
+
+**One question:** *you didn't write this program and something's
+wrong — how do you read a live wiresheet to find the block that's
+lying?* The Programming chapter's CAPSTONE — the synthesis lesson
+the chapter builds toward, and the arc's highest-utility page.
+Curriculum position: chapter tail (function-blocks →
+boolean-logic-latches → comparators-and-deadband →
+timers-and-delays → setpoint-math-reset → **this page**, then
+modbus-basics resumes). Ships at
+`html/education/reading-a-wiresheet.html` with a paired quiz at
+`html/practice/reading-a-wiresheet.html`.
+
+In scope (three sections + a worked trace):
+- *Work backward from the wrong output* — the discipline of
+  starting at the misbehaving output and following wires upstream
+  until a value stops making sense, versus the beginner move of
+  reading inputs forward (which reads the whole healthy 90 % of
+  the sheet before touching the fault). The "block that's lying"
+  framing: at each hop ask *"given these inputs, is this output
+  right?"* — right meaning what the sequence needs, not merely
+  what the block's label computes — and the first NO is your block
+  (or its config).
+- *What the scan means for what you SEE* — dependency-order
+  evaluation; live values settling together between paints (you
+  never watch a signal crawl block to block); feedback wires
+  carrying LAST scan's value (why a latch showing Q TRUE over a
+  FALSE S is healthy, not broken); why forcing an input and
+  watching the ripple is the fastest experiment on a live sheet
+  (with the override-discipline pointer to
+  controls-commissioning's `#ccx-overrides`). Expands
+  function-blocks' scan section from "how it runs" to "what you'll
+  observe while staring at it."
+- *Idiom recognition* — seeing five blocks as one named pattern so
+  you trace BETWEEN patterns, not between blocks: the permissive
+  chain (run permit), the latch + manual-reset pair, the band-edge
+  cluster (add/sub + GT/LT + latch = a deadband), the proof window
+  (NOT + AND + TON + latch = fail-to-start), the reset chain
+  (mul/add/limit = a schedule), the select-based mode switch. One
+  compact sentence + a code-style signature each; the chapter's
+  lessons own the deep teaching (plain prose in Phase A — every
+  sibling is still in flight; Phase B anchors whichever merged).
+- *The worked trace* — ONE deliberately-faulted AHU heating-call
+  sheet (band-edge cluster + permissive chain gating the call, a
+  freeze-stat trip-lamp red-herring branch, live values on every
+  wire), the backward trace walked in four numbered steps with
+  matching badges on the sheet. The fault: a plausible-but-wrong
+  config — a GT dropped where the set leg needs an LT — that the
+  trace corners in four hops while never visiting the healthy
+  permissive chain or the herring branch.
+
+**Boundary (crisp):** commissioning proves a CORRECT program was
+installed — controls-commissioning owns point-to-point checkout
+and override discipline (anchored); this page finds the fault in a
+LIVE one. No vendor-specific navigation — platform names
+generically only.
+
+**Capstone exercise:** load the heating thermostat example in the
+FB editor, force the temperature input, and predict every wire's
+value before looking — then break it on purpose (swap a param) and
+backward-trace your own fault.
+
+**Quiz notes:** ten questions (6 mcq / 2 tf / 1 numeric / 1
+gotcha), ids `raw-*`, concept + method level ONLY:
+first-move-when-output-wrong, the hop question, which-leg-next
+trace reasoning, feedback-wire value reasoning (Q TRUE over S
+FALSE), scan/observation tf, the commissioning boundary tf, idiom
+identification, and one LIGHT gotcha (three-block snippet, one
+obvious lie). **Deliberately does NOT carry hard multi-block trace
+exercises** — a dedicated "Wiresheet Traces" practice DRILL ships
+right after this lesson carrying the intentionally hard programs
+(owner-decided split; the bank header notes it).
+`[future: practice/wiresheet-traces.html]`
+
 ### Controller commissioner *(larger build — reviewed 2026-06-10: stays parked)*
 
 **Reviewed 2026-06-10 (mock-call audit, owner concurred): stays
