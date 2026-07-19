@@ -1,0 +1,272 @@
+---
+title: Temperature Sensors — controlsfreak.dev
+description: Thermistor curve families, RTDs and lead resistance, and the meter-and-table workflow that proves which temperature sensor is really on the wire.
+canonical: https://controlsfreak.dev/education/temperature-sensors.html
+nav: education
+category: signals
+pairedQuiz: https://controlsfreak.dev/practice/temperature-sensors.html
+keywords: thermistor RTD 10K Type II Type III PT100 PT1000 Balco 3-wire ohms curve lead resistance NTC
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block head %}
+    <style>
+        /* Page-specific — temperature-sensor diagrams. Static SVGs on the
+           .edu-svg house base (mono text, meaning-carrying geometry in
+           --text-dim per the balancing-diagram convention; device boxes /
+           terminal dots / orthogonal wires match the cwl- family so the
+           chapter reads as one set). Class prefix tsn-. The R/T chart pair
+           uses --blue (Type II) vs --amber (Type III) — the same
+           two-series pairing as analog-sensing's strip chart — with the
+           divergence band as a low-opacity amber fill. */
+        .tsn-svg text { font-family: var(--mono); }
+        .tsn-svg .wire { fill: none; stroke: var(--text-dim); stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+        .tsn-svg .term { fill: var(--surface); stroke: var(--text-dim); stroke-width: 1.5; }
+        .tsn-svg .dev { fill: var(--surface); stroke: var(--text-dim); stroke-width: 1.5; }
+        .tsn-svg .lbl { fill: var(--text-bright); font-size: 12px; }
+        .tsn-svg .lbl-dim { fill: var(--text-dim); font-size: 11px; }
+        .tsn-svg .lbl-term { fill: var(--text-bright); font-size: 11px; font-weight: 600; }
+        .tsn-svg .rt { fill: none; stroke-width: 2.5; }
+        .tsn-svg .rt-ii { stroke: var(--blue); }
+        .tsn-svg .rt-iii { stroke: var(--amber); }
+        .tsn-svg .band { fill: var(--amber); opacity: 0.16; }
+        .tsn-leg.edu-legend .sw.t2 { border-top: 3px solid var(--blue); }
+        .tsn-leg.edu-legend .sw.t3 { border-top: 3px solid var(--amber); }
+        .tsn-leg.edu-legend .sw.band { border-top: 8px solid var(--amber); opacity: 0.45; }
+    </style>
+{% endblock %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Education · Temperature Sensors</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">Temperature Sensors <span class="tool-tag">Signals</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                Most of the temperature readings in a building ride on the simplest hardware in the trade: a resistor on the end of two small wires. No power, no polarity, no electronics — the element just changes resistance with temperature, and the controller turns ohms into degrees through a stored <strong>curve</strong>. That translation is the whole subject of this page. One question, start to finish: <em>why does the controller need to know exactly which temperature sensor is on the wire — and how do you verify one with a meter?</em> How the sensor physically lands on an input is <a href="/education/controller-wiring.html">Controller Wiring</a>&rsquo;s story, and how raw signals in general become values on a graphic is the chapter&rsquo;s analog-signal opener. This page is about the sensor itself: the curve families, the RTD alternative, and the ten-minute meter check that settles an argument with a graphic.
+            </p>
+
+            <h2 class="subhead" id="curve-families">One Name, Several Curves</h2>
+
+            <p>
+                The workhorse BAS temperature sensor is an <strong>NTC thermistor</strong> — <em>negative temperature coefficient</em>: resistance <em>falls</em> as temperature rises, steeply and non-linearly. Near room temperature a common 10K element moves about <span data-us="240&nbsp;&Omega; for every &deg;F" data-metric="440&nbsp;&Omega; for every &deg;C">240&nbsp;&Omega; for every &deg;F</span> — an enormous, easy-to-read signal. The <strong>&ldquo;10K&rdquo;</strong> in the name is a single defining point: <strong>10,000&nbsp;&Omega; at <span data-us="77.0&nbsp;&deg;F" data-metric="25.0&nbsp;&deg;C">77.0&nbsp;&deg;F</span></strong>. And here is the trap hiding in that name: a point is not a curve. Two sensors can both read 10&nbsp;k&Omega; at <span data-us="77&nbsp;&deg;F" data-metric="25.0&nbsp;&deg;C">77&nbsp;&deg;F</span> and disagree at every other temperature on Earth.
+            </p>
+
+            <p>
+                That is exactly the situation in the field. The two big industry curve families — <strong>10K Type&nbsp;II</strong> and <strong>10K Type&nbsp;III</strong> — share the defining point and nothing else. Type&nbsp;II is the steeper curve; Type&nbsp;III is shallower, so it reads lower at the cold end and higher at the hot end. At <span data-us="40.0&nbsp;&deg;F" data-metric="4.4&nbsp;&deg;C">40.0&nbsp;&deg;F</span> a Type&nbsp;II sits near <strong>26.3&nbsp;k&Omega;</strong> while a Type&nbsp;III sits near <strong>24.5&nbsp;k&Omega;</strong> — close enough to look alike on a meter, far enough apart to matter on a graphic. They are not interchangeable, and neither one is &ldquo;the&rdquo; 10K curve; a controller asks you to pick because it genuinely cannot tell from the wire.
+            </p>
+
+            <p>
+                It gets one step messier: several vendors ship <strong>shunted</strong> 10K conventions — a 10K element with a fixed resistor in parallel to flatten the curve over the occupied range. The JCI convention pairs a 10K element with an 8.7&nbsp;k&Omega; shunt and reads only about <strong>4.7&nbsp;k&Omega;</strong> at the <span data-us="77&nbsp;&deg;F" data-metric="25.0&nbsp;&deg;C">77&nbsp;&deg;F</span> defining point; the TAC Type&nbsp;5 convention pairs a Type&nbsp;III element with an 11&nbsp;k&Omega; shunt and reads about <strong>5.2&nbsp;k&Omega;</strong> there. Both are still called &ldquo;10K sensors&rdquo; in conversation — and both would look badly broken to a tech expecting 10&nbsp;k&Omega; at room temperature. The lesson generalizes: <strong>the label on the box is a name; the curve selected in the software is a decision.</strong> The controller needs the two to agree, and nothing in the wiring will force them to.
+            </p>
+
+            <p>
+                Which brings us to the quiet failure this section exists to teach. Wire a Type&nbsp;III sensor to an input configured for Type&nbsp;II and <em>everything appears to work</em>. The point reads a live, plausible temperature; it trends smoothly; it never alarms. It is also wrong — by nothing at the <span data-us="77&nbsp;&deg;F" data-metric="25.0&nbsp;&deg;C">77&nbsp;&deg;F</span> crossover, by about <span data-us="3&nbsp;&deg;F" data-metric="1.7&nbsp;&deg;C">3&nbsp;&deg;F</span> when the truth is <span data-us="40.0&nbsp;&deg;F" data-metric="4.4&nbsp;&deg;C">40.0&nbsp;&deg;F</span>, and by more the further the temperature drifts from the crossover. Compare that with the loud faults: an open or shorted sensor pins the reading to a rail, where anyone can see it — the <a href="/education/controller-wiring.html#inputs">thermistor landing in Controller Wiring</a> tells that story (an open reads full-scale cold, a short full-scale hot). A curve mismatch does the opposite. It reads <em>plausibly</em> wrong, forever — an outdoor-air sensor a few degrees off quietly skews economizer changeovers and lockouts for years, and nobody hunts a 3&deg; lie.
+            </p>
+
+            <!-- R/T curve overlay: Type II vs Type III on a log resistance
+                 axis, the divergence band shaded, the 77 °F crossover and a
+                 40 °F worked point annotated. Static — the geometry IS the
+                 lesson. Path coordinates generated from the same β-model
+                 curves as /scripts/thermistor-data.js (Type II β=3900,
+                 Type III β=3600, R25=10 kΩ); y is log10(R) mapped 3.7→5.0
+                 over 300→48. -->
+            <svg class="edu-svg tsn-svg" id="tsn-curves" viewBox="0 0 640 352"
+                 role="img" aria-labelledby="tsn-curves-title tsn-curves-desc">
+                <title id="tsn-curves-title">10K Type II and Type III resistance curves overlaid, crossing at 77 degrees Fahrenheit</title>
+                <desc id="tsn-curves-desc">A chart of resistance versus sensor temperature. The vertical axis is
+                    resistance on a logarithmic scale from 5 kilohms to 100 kilohms; the horizontal axis is temperature
+                    from 0 to 100 degrees Fahrenheit. Two falling curves run from upper left to lower right: 10K Type II,
+                    the steeper curve, and 10K Type III, the shallower one. A thin shaded band between them marks their
+                    disagreement. The curves cross at exactly one point, marked with a dot at 77 degrees Fahrenheit and
+                    10 kilohms — the shared point that gives both curves the 10K name. A worked point at 40 degrees
+                    Fahrenheit shows the two curves reading 26.3 kilohms and 24.5 kilohms — pick the wrong curve in the
+                    software and the graphic reads about 3 degrees Fahrenheit off, plausibly, with no alarm.</desc>
+
+                <text class="lbl" x="80" y="24">TWO CURVES, ONE NAME — 10K TYPE II vs TYPE III</text>
+
+                <!-- axes -->
+                <line x1="80" y1="40" x2="80" y2="310" stroke="var(--text-dim)" stroke-width="1.5"/>
+                <line x1="80" y1="310" x2="612" y2="310" stroke="var(--text-dim)" stroke-width="1.5"/>
+                <!-- y ticks (log scale) -->
+                <line x1="76" y1="48" x2="84" y2="48" stroke="var(--text-dim)" stroke-width="1.5"/>
+                <line x1="76" y1="149.4" x2="84" y2="149.4" stroke="var(--text-dim)" stroke-width="1.5"/>
+                <line x1="76" y1="241.8" x2="84" y2="241.8" stroke="var(--text-dim)" stroke-width="1.5"/>
+                <line x1="76" y1="300.2" x2="84" y2="300.2" stroke="var(--text-dim)" stroke-width="1.5"/>
+                <text class="lbl-dim" x="72" y="52" text-anchor="end">100 kΩ</text>
+                <text class="lbl-dim" x="72" y="153" text-anchor="end">30 kΩ</text>
+                <text class="lbl-dim" x="72" y="246" text-anchor="end">10 kΩ</text>
+                <text class="lbl-dim" x="72" y="304" text-anchor="end">5 kΩ</text>
+                <text class="lbl-dim" x="26" y="175" text-anchor="middle" transform="rotate(-90 26 175)">resistance (log scale)</text>
+                <!-- x ticks -->
+                <line x1="80" y1="310" x2="80" y2="316" stroke="var(--text-dim)" stroke-width="1.5"/>
+                <line x1="184" y1="310" x2="184" y2="316" stroke="var(--text-dim)" stroke-width="1.5"/>
+                <line x1="288" y1="310" x2="288" y2="316" stroke="var(--text-dim)" stroke-width="1.5"/>
+                <line x1="392" y1="310" x2="392" y2="316" stroke="var(--text-dim)" stroke-width="1.5"/>
+                <line x1="496" y1="310" x2="496" y2="316" stroke="var(--text-dim)" stroke-width="1.5"/>
+                <line x1="600" y1="310" x2="600" y2="316" stroke="var(--text-dim)" stroke-width="1.5"/>
+                <text class="lbl-dim" x="80" y="330" text-anchor="middle">0</text>
+                <text class="lbl-dim" x="184" y="330" text-anchor="middle">20</text>
+                <text class="lbl-dim" x="288" y="330" text-anchor="middle">40</text>
+                <text class="lbl-dim" x="392" y="330" text-anchor="middle">60</text>
+                <text class="lbl-dim" x="496" y="330" text-anchor="middle">80</text>
+                <text class="lbl-dim" x="600" y="330" text-anchor="middle">100</text>
+                <text class="lbl-dim" x="346" y="348" text-anchor="middle">sensor temperature (°F)</text>
+
+                <!-- divergence band (drawn under the curves) -->
+                <path class="band" d="M 80 57.4 L 106 71.2 L 132 84.8 L 158 98 L 184 111 L 210 123.7 L 236 136.1 L 262 148.3 L 288 160.3 L 314 172 L 340 183.5 L 366 194.8 L 392 205.8 L 418 216.7 L 444 227.3 L 470 237.7 L 496 248 L 522 258 L 548 267.9 L 574 277.6 L 600 287.1 L 600 283.6 L 574 274.8 L 548 265.9 L 522 256.8 L 496 247.5 L 470 238 L 444 228.4 L 418 218.6 L 392 208.6 L 366 198.4 L 340 188 L 314 177.4 L 288 166.6 L 262 155.5 L 236 144.3 L 210 132.8 L 184 121 L 158 109.1 L 132 96.8 L 106 84.3 L 80 71.6 Z"/>
+
+                <!-- the two curves -->
+                <path class="rt rt-ii" d="M 80 57.4 L 106 71.2 L 132 84.8 L 158 98 L 184 111 L 210 123.7 L 236 136.1 L 262 148.3 L 288 160.3 L 314 172 L 340 183.5 L 366 194.8 L 392 205.8 L 418 216.7 L 444 227.3 L 470 237.7 L 496 248 L 522 258 L 548 267.9 L 574 277.6 L 600 287.1"/>
+                <path class="rt rt-iii" d="M 80 71.6 L 106 84.3 L 132 96.8 L 158 109.1 L 184 121 L 210 132.8 L 236 144.3 L 262 155.5 L 288 166.6 L 314 177.4 L 340 188 L 366 198.4 L 392 208.6 L 418 218.6 L 444 228.4 L 470 238 L 496 247.5 L 522 256.8 L 548 265.9 L 574 274.8 L 600 283.6"/>
+                <text x="100" y="55" font-size="11" fill="var(--blue)">TYPE II</text>
+                <text x="100" y="124" font-size="11" fill="var(--amber)">TYPE III</text>
+
+                <!-- 40 °F worked point: short marker through both readings,
+                     callout text in the empty upper-right area -->
+                <line x1="288" y1="148" x2="288" y2="180" stroke="var(--text-bright)" stroke-width="1" stroke-dasharray="3 3"/>
+                <circle cx="288" cy="160.3" r="4.5" fill="var(--blue)" stroke="var(--bg)" stroke-width="1.5"/>
+                <circle cx="288" cy="166.6" r="4.5" fill="var(--amber)" stroke="var(--bg)" stroke-width="1.5"/>
+                <line x1="332" y1="118" x2="294" y2="146" stroke="var(--text-dim)" stroke-width="1"/>
+                <text class="lbl-dim" x="340" y="80" fill="var(--text-bright)">at 40.0 °F: 26.3 kΩ vs 24.5 kΩ</text>
+                <text class="lbl-dim" x="340" y="96">pick the wrong curve and the</text>
+                <text class="lbl-dim" x="340" y="112">graphic reads ≈ 3 °F off — plausibly</text>
+
+                <!-- 77 °F crossover -->
+                <line x1="480.4" y1="248" x2="480.4" y2="310" stroke="var(--text-dim)" stroke-width="1" stroke-dasharray="3 3"/>
+                <circle cx="480.4" cy="241.8" r="6" fill="var(--accent)" stroke="var(--bg)" stroke-width="1.5"/>
+                <text class="lbl-dim" x="468" y="264" fill="var(--text-bright)" text-anchor="end">77 °F — both curves read 10.0 kΩ</text>
+                <text class="lbl-dim" x="468" y="280" text-anchor="end">(the one point the shared name promises)</text>
+            </svg>
+            <p class="edu-legend tsn-leg">
+                <span><span class="sw t2"></span>10K Type II — steeper</span>
+                <span><span class="sw t3"></span>10K Type III — shallower</span>
+                <span><span class="sw band"></span>the divergence — a few quiet degrees</span>
+            </p>
+
+            <h2 class="subhead" id="rtds-vs-thermistors">RTDs — the Other Family</h2>
+
+            <p>
+                The other family you will meet is the <strong>RTD</strong> — <em>resistance temperature detector</em> — a fine metal element, usually platinum, whose resistance <em>rises</em> with temperature and does it almost linearly. Where thermistor curves are vendor conventions, the common RTDs are standardized: a <strong>Pt100</strong> reads 100.0&nbsp;&Omega; at <span data-us="32.0&nbsp;&deg;F" data-metric="0.0&nbsp;&deg;C">32.0&nbsp;&deg;F</span> on the international IEC&nbsp;60751 curve, and a <strong>Pt1000</strong> is the same curve scaled ten times. The odd cousin is <strong>Balco</strong> — a nickel-iron element near 1,000&nbsp;&Omega; at <span data-us="70&nbsp;&deg;F" data-metric="21.1&nbsp;&deg;C">70&nbsp;&deg;F</span>, roughly linear — common on older gear. Direction is a free identification clue at the meter: warm the element in your hand, and a thermistor&rsquo;s resistance falls while an RTD&rsquo;s rises.
+            </p>
+
+            <p>
+                The RTD&rsquo;s catch is the size of its signal. A Pt100 moves about <span data-us="0.22&nbsp;&Omega; per &deg;F" data-metric="0.39&nbsp;&Omega; per &deg;C">0.22&nbsp;&Omega; per &deg;F</span> — a thousand times less than the 10K thermistor&rsquo;s <span data-us="&asymp;240&nbsp;&Omega; per &deg;F" data-metric="&asymp;440&nbsp;&Omega; per &deg;C">&asymp;240&nbsp;&Omega; per &deg;F</span> near room temperature. At that scale the copper field wiring stops being invisible: <strong>the leads have resistance too, and the input cannot tell lead ohms from element ohms.</strong> A <span data-us="100&nbsp;ft" data-metric="30&nbsp;m">100&nbsp;ft</span> run of 18&nbsp;AWG pair puts about 1.3&nbsp;&Omega; of copper in series — on a 2-wire Pt100 that reads about <span data-us="6&nbsp;&deg;F" data-metric="3.3&nbsp;&deg;C">6&nbsp;&deg;F</span> <em>high</em>, constantly, with nothing broken. Put the same 1.3&nbsp;&Omega; in series with a 10K thermistor and the error is a few thousandths of a degree — which is exactly why thermistors get away with plain 2-wire landings and RTDs need help.
+            </p>
+
+            <p>
+                The classic help is the <strong>3-wire landing</strong>: run a third conductor to the same end of the element, matched to the other two — same gauge, same length, same cable. That gives the input two things it can measure: the sensor loop (element plus two leads) and a <em>lead-only</em> loop (two leads through the jumper at the sensor head). Subtract the second from the first and the lead resistance cancels, leaving the element alone. The whole scheme rests on the leads being matched, which in one cable they are. Where lab-grade accuracy matters, a <strong>4-wire</strong> landing measures the element directly and cancels the leads completely — and the blunter modern fix is the <strong>Pt1000</strong>: ten times the base resistance makes the same lead ohms ten times less significant (that 1.3&nbsp;&Omega; run becomes about <span data-us="0.6&nbsp;&deg;F" data-metric="0.3&nbsp;&deg;C">0.6&nbsp;&deg;F</span>), which is a big part of why newer HVAC controllers favor it.
+            </p>
+
+            <!-- 3-wire RTD lead compensation, cwl-style: controller input
+                 column, three matched field conductors each carrying a lead-
+                 resistance box, and the sensor head with the element tied to
+                 one lead on top and two leads on the bottom. Static. -->
+            <svg class="edu-svg tsn-svg" id="tsn-rtd" viewBox="0 0 680 296"
+                 role="img" aria-labelledby="tsn-rtd-title tsn-rtd-desc">
+                <title id="tsn-rtd-title">A 3-wire RTD landing and how the input cancels lead resistance</title>
+                <desc id="tsn-rtd-desc">A controller input block on the left with three terminals, T1, T2, and T3,
+                    connected by three field conductors, L1, L2, and L3, to a sensor head on the right containing a Pt100
+                    element. Each conductor carries a small resistor symbol — every lead adds a few ohms of copper. Inside
+                    the sensor head, L1 lands on the top of the element while L2 and L3 are jumpered together to the
+                    bottom of the element. A caption explains the compensation: measuring T1 to T2 reads the element plus
+                    leads L1 and L2; measuring T2 to T3 reads leads L2 and L3 alone; subtracting the two cancels the
+                    matched leads and leaves the element resistance by itself.</desc>
+
+                <!-- controller input block -->
+                <text class="lbl-dim" x="87" y="72" text-anchor="middle">CONTROLLER</text>
+                <rect class="dev" x="24" y="80" width="126" height="170" rx="3"/>
+                <circle class="term" cx="150" cy="110" r="5"/> <text class="lbl-term" x="124" y="114" text-anchor="end">T1</text>
+                <circle class="term" cx="150" cy="160" r="5"/> <text class="lbl-term" x="124" y="164" text-anchor="end">T2</text>
+                <circle class="term" cx="150" cy="210" r="5"/> <text class="lbl-term" x="124" y="214" text-anchor="end">T3</text>
+                <text class="lbl-dim" x="87" y="238" text-anchor="middle">3-wire RTD input</text>
+
+                <!-- sensor head -->
+                <text class="lbl-dim" x="578" y="72" text-anchor="middle">SENSOR HEAD</text>
+                <rect class="dev" x="500" y="80" width="156" height="170" rx="3"/>
+                <circle class="term" cx="500" cy="110" r="5"/>
+                <circle class="term" cx="500" cy="160" r="5"/>
+                <circle class="term" cx="500" cy="210" r="5"/>
+
+                <!-- element (vertical) with its two-lead bottom end -->
+                <rect class="dev" x="600" y="115" width="32" height="80" rx="2"/>
+                <text x="592" y="138" font-size="11" fill="var(--text-bright)" text-anchor="end">Pt100</text>
+                <text class="lbl-dim" x="592" y="152" text-anchor="end">element</text>
+                <path class="wire" d="M 500 110 H 616 V 115"/>
+                <path class="wire" d="M 616 195 V 210"/>
+                <path class="wire" d="M 500 210 H 616"/>
+                <path class="wire" d="M 500 160 H 548 V 210"/>
+                <circle cx="548" cy="210" r="3" fill="var(--text-dim)"/>
+                <circle cx="616" cy="210" r="3" fill="var(--text-dim)"/>
+
+                <!-- three matched field conductors, each with lead resistance -->
+                <path class="wire" d="M 150 110 H 500"/>
+                <path class="wire" d="M 150 160 H 500"/>
+                <path class="wire" d="M 150 210 H 500"/>
+                <text class="lbl-dim" x="166" y="102">L1</text>
+                <text class="lbl-dim" x="166" y="152">L2</text>
+                <text class="lbl-dim" x="166" y="202">L3</text>
+                <rect class="dev" x="308" y="104" width="36" height="12"/>
+                <rect class="dev" x="308" y="154" width="36" height="12"/>
+                <rect class="dev" x="308" y="204" width="36" height="12"/>
+                <text class="lbl-dim" x="326" y="92" text-anchor="middle">every lead adds a few ohms of copper</text>
+
+                <!-- the compensation, in one caption -->
+                <text class="lbl-dim" x="340" y="268" text-anchor="middle">T1→T2 reads element + L1 + L2 · T2→T3 reads L2 + L3 — the leads alone</text>
+                <text class="lbl-dim" x="340" y="284" text-anchor="middle">subtract the two: matched leads cancel and the element remains</text>
+            </svg>
+
+            <p>
+                Knowing both families, the field split makes sense. <strong>Thermistors own BAS space, duct, and return sensors</strong>: they are cheap, their signal is enormous, lead resistance is a non-issue, and any sensor on the same curve is a drop-in replacement. <strong>RTDs show up where accuracy and stability pay their way</strong>: plant and process sensors, high-temperature applications past a thermistor&rsquo;s comfort, and especially <em>matched pairs</em> — an energy (BTU) measurement lives and dies on the supply-return &Delta;T, and a pair of matched platinum elements holds that difference honestly for years. RTDs also drift less over the long haul, which is why the sensor whose number feeds a bill is rarely a thermistor.
+            </p>
+
+            <h2 class="subhead" id="verification">Prove It With a Meter</h2>
+
+            <p>
+                Now the payoff — the workflow that turns all of this into a verdict. A space reads <span data-us="80&nbsp;&deg;F" data-metric="26.7&nbsp;&deg;C">80&nbsp;&deg;F</span> and the occupants say it is freezing; an OAT point disagrees with the weather; two duct sensors a foot apart disagree with each other. There are exactly three suspects: <strong>the sensor</strong>, <strong>the input</strong>, and <strong>the configuration</strong> — and the graphic cannot testify against itself. The meter separates them, before anyone swaps hardware on a hunch.
+            </p>
+
+            <p>
+                The workflow is four steps. <strong>One: disconnect the sensor</strong> from its input terminals, so the meter reads the sensor alone and not the sensor in parallel with the input&rsquo;s own circuit. <strong>Two: meter the ohms</strong> across the sensor&rsquo;s leads. <strong>Three: turn ohms into a temperature</strong> using the R/T table for the type the sensor is supposed to be — the <a href="/tools/thermistor-calculator.html">Thermistor / RTD Calculator</a>&rsquo;s R/T tables are exactly this lookup, both directions, for every common curve on this page (and if the type itself is in doubt, its Identify tab ranks every curve against measured points). <strong>Four: compare</strong> that temperature against a reference thermometer sitting where the sensor sits. A working 10K sensor in a <span data-us="70&nbsp;&deg;F" data-metric="21.1&nbsp;&deg;C">70&nbsp;&deg;F</span> room meters near 11.9&nbsp;k&Omega; on a Type&nbsp;II curve — numbers in that neighborhood are the everyday sanity check that the sensor, at least, is telling the truth.
+            </p>
+
+            <p>
+                The verdict comes from <em>what disagrees</em>. If the metered ohms match the reference temperature through the right table but the graphic still reads wrong, the sensor is honest — move the suspicion inside: the input, or more often the <strong>configuration</strong>, starting with which curve the point has selected. If the meter reads open or near-zero, the sensor or its run has failed — localize it by metering again at the sensor head: healthy ohms at the head with an open back at the panel convicts the run and its terminations; an open at the head convicts the sensor itself. And if the ohms translate to a temperature that sits a consistent few degrees off the reference, you are back in the first section of this page — <strong>suspect a curve mismatch before you condemn hardware</strong>, because checking the software&rsquo;s curve selection is free and replacing a good sensor with an identical good sensor fixes nothing.
+            </p>
+
+            <p>
+                Two boundaries on what the meter can prove, both deliberate. A sensor can pass every check above and still steer the system wrong because it is measuring <em>the wrong air</em> — placement, stratification, and the averaging elements that big ducts need are their own subject for another page. And when a healthy sensor disagrees with the reference by a small, honest margin, trimming it with a calibration offset is its own discipline with its own traps — also a page of its own. What this page hands you is the core of the argument: the wire carries ohms and nothing else. Only the curve turns ohms into a temperature, the controller can only be told which curve — and the meter, a table, and a reference thermometer are how you audit that the label, the wire, and the configuration are all telling the same story.
+            </p>
+
+            {{ relatedLinks({
+                tools: [
+                    {href: '/tools/thermistor-calculator.html', label: 'Thermistor / RTD Calculator'},
+                    {href: '/tools/signal-scaling.html', label: 'Signal Scaling'}
+                ],
+                simulators: [
+                    {href: '/simulators/controller-wiring.html', label: 'Controller Wiring Simulator'}
+                ],
+                lessons: [
+                    {href: '/education/controller-wiring.html', label: 'Controller Wiring'}
+                ],
+                quizzes: [
+                    {href: '/practice/temperature-sensors.html', label: 'Temperature Sensors Quiz'}
+                ]
+            }) }}
+
+            <a class="back-link" href="/education/">← Back to Education</a>
+
+        </div>
+    </div>
+
+</main>
+{% endblock %}
