@@ -3813,7 +3813,8 @@ anti-windup, output clamped 0–100 %; distinct from `pid-engine.js`'s
 shape). The pid-tuner / pid-basics pages remain the place for PID
 internals; this tool just lets you wire the loop into a sequence.
 
-**Five canned example programs** load via a `widget-try` chip row:
+**Canned example programs** load via a `widget-try` chip row —
+five at launch:
 1. *Freeze-stat shutdown chain* — freeze BI sets an SR latch, the
    latch drops the fan via NOT and lights an alarm BO.
 2. *Economizer enable* — AI(OAT) `<` const(setpoint) AND BI(cool
@@ -3830,6 +3831,18 @@ internals; this tool just lets you wire the loop into a sequence.
    vocabulary.
 5. *PID loop* — AI(PV), const(SP), PID block, AO + readout. The
    loop visibly climbs toward setpoint once running.
+
+Two more shipped 2026-07-18 (PR #381) as lesson capstones for the
+programming chapter — seven total:
+
+6. *Proof-of-flow alarm* — command AND NOT(proof) feeds a 15 s TON;
+   its Q sets an SR latch driving the alarm BO, cleared by a reset
+   BI. Loads healthy (commanded + proved) so the user breaks it by
+   toggling proof off. Capstone for the timers-and-delays lesson.
+7. *OAT hot-water reset* — AI(OAT) → MUL const(−0.667) → ADD
+   const(180) → LIMIT 140–180 → AO: 180 °F at 0 °F sliding to
+   140 °F at 60 °F, default 30 °F OAT → 160 °F. Capstone for the
+   setpoint-math-reset lesson.
 
 **Tick semantics — one-tick delay for cycles.** Kahn topological
 sort on the wire DAG; combinational chains settle in dependency
