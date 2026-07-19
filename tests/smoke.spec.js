@@ -2093,7 +2093,9 @@ test('practice landing — Modbus chip collapses sections + filters cards', asyn
 // sequence lives in html/_data/quizOrder.js (which also drives every
 // results-card next-link at build time). If someone adds a quiz card
 // without re-ordering — or reorders one source but not the other —
-// this catches it.
+// this catches it. Complementary to `quizOrderGuard` in .eleventy.js,
+// which checks MEMBERSHIP (a quiz missing from both grid and quizOrder)
+// but deliberately not order — keep both.
 test('practice landing — Content Quizzes grid matches quizOrder.js', async ({ page }) => {
     const quizOrder = require('../html/_data/quizOrder.js');
     await page.goto('/practice/');
