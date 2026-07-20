@@ -682,6 +682,30 @@ section headers).
   The `p` is load-bearing — it ties `.tool-body p` on specificity
   and wins on cascade. Keep that shape when adding new small-text
   utility paragraphs.
+- **Lesson prose rhythm is automatic — don't hand-set it.** The
+  global reset zeroes every margin, so a `<p>` following another `<p>`
+  renders flush. Education lessons used to compensate with inline
+  `style="margin-top:1.25rem;"` on each follow-on paragraph, which
+  drifted (13 of 40 lessons had run-together prose — codebase-issues
+  #179). The shared `LESSON PROSE RHYTHM` rule in `styles.css` now
+  owns it: `body.education-page .tool-body p + p:not([class])`. **New
+  lessons write plain `<p>` and inherit the rhythm.** The scope is
+  deliberately narrow — `.tool-body` alone doesn't scope (tools /
+  simulators / practice share the class and tune their own spacing),
+  and `:not([class])` keeps the rule off the prose utilities above,
+  which own their spacing. Inline `margin-top` still out-specifies
+  the rule, so the ~279 existing inline declarations across 27
+  lessons render unchanged; four hydronics lessons sit at 1.1rem and
+  stay off the house 1.25rem until someone strips them.
+- **`body.education-page` is the one *build-time* body class.**
+  `layouts/page.njk` emits it from the `nav: education` frontmatter —
+  the same key that drives the active nav link, so the styling scope
+  can't drift from what the site calls an education page. Reach for
+  this pattern when a rule must scope to one section: `.tool-body`
+  and friends are shared across archetypes and won't do it. The other
+  body classes (`palette-open`, `nav-sheet-open`,
+  `has-fullscreen-tool`) are JS-toggled *runtime state*, not scoping
+  hooks — don't read them as precedent for either job.
 
 ### JS patterns
 
@@ -742,6 +766,14 @@ section headers).
    The `home count pills stay in sync with the landings (drift guard)`
    test in `home-hero.spec.js` fails CI if any home pill falls out of
    sync with the `/tools/` chips or the section-landing card counts.
+   A second guard in the same file — `home nav-card descs only name
+   pages that still exist (drift guard)` — covers the **desc wording**:
+   any run of 2+ Title-Case words inside a home nav-card desc must match
+   some page's `title` frontmatter, so a renamed or retired page can't
+   leave the home copy stale. It is a shape heuristic, so a Title-Case
+   phrase that names no page (a section heading, a capitalized term of
+   art) trips it too — that's expected; add the phrase to the spec's
+   `NON_PAGE_NAMES` set rather than reword around it.
 4. Add the page's URL to the `PAGES` array in `tests/pages.js` (the
    shared manifest `smoke.spec.js` + `responsive.spec.js` require; the
    sitemap is automatic — see *Sitemap* — but the drift test fails
@@ -778,7 +810,10 @@ frontmatter and the new `.nav-card` added to
 `order` array in `html/_data/educationSequence.js`** (kept in the same
 order as the `education/index.html` grid) — `educationSequenceGuard`
 fails the build if a `nav: education` page is missing from it
-(codebase-issues #93, #157).
+(codebase-issues #93, #157). **Follow-on paragraph spacing is
+automatic** — the shared lesson-prose-rhythm rule handles it off the
+`nav: education` frontmatter, so body prose is plain `<p>` with no
+inline `margin-top` (see *Design system*).
 
 **Adding a new quiz / drill** follows a similar shape under
 `html/practice/`:
@@ -803,8 +838,51 @@ fails the build if a `nav: education` page is missing from it
    is the namespace for `cf_quiz_<slug>_*` localStorage keys.
 3. Question schema lives in `quiz-engine.js`'s header — `type` is
    one of `mcq` / `tf` / `gotcha` / `numeric`; shared
-   `id` / `prompt` / `explain` / `learnMore` / `tags` across all
-   types. `id` is kebab-case and stable across edits.
+   `id` / `prompt` / `explain` / `learnMore` / `tags` / `figure`
+   across all types. `id` is kebab-case and stable across edits.
+   **A question that needs a diagram uses `figure`, never an SVG
+   inside `prompt`** — `prompt` is stripped to text by the
+   Review/miss table *and* by `head.njk`'s FAQPage JSON-LD, so an
+   inline SVG publishes every `<title>` / `<desc>` / `<text>` node
+   as structured data. `figure` is the kebab-case **element id** of
+   an `<svg class="… hidden" id="…">` in a static figure bank on the
+   page; the engine clones it into the `.quiz-figure` slot and mount
+   fails loudly if the id doesn't resolve. Ids in the clone are
+   **renamed** with a per-render prefix and every internal reference
+   (`url(#…)`, `<use href="#…">`) is rewritten to match, so the clone
+   stays self-contained without colliding with the live source —
+   stripping the ids instead silently blanks markers, gradients and
+   patterns. The figure must name itself natively (`role="img"` +
+   `<title>` / `<desc>`); `aria-labelledby` / `aria-describedby` on a
+   figure **fails mount** — note this is the opposite of the
+   education-page SVG idiom, so a lesson SVG needs its labelling
+   converted when it moves into a figure bank.
+
+   **Owner decision (2026-07-20) — settled: describe the topology
+   fully.** A drill figure's `<desc>` states the topology and the live
+   values completely, in the drawing's own neutral register, and
+   **never names the fault or states the verdict** — that lives in
+   `explain`, which every reader gets after answering.
+
+   This was raised 2026-07-19 as an open question, on the argument that
+   describing a red-herring branch completely describes it away, and
+   that **WCAG 1.1.1's Test exception** — non-text content that is a
+   test may carry only *descriptive identification* — licensed a short
+   `<desc>` instead. The owner ruled for the full description on trade
+   grounds: *someone visually impaired who is function-block
+   programming is best served by hearing the longer description and
+   mapping it out in their head.* Note the Test exception is
+   **permissive, not prescriptive** — it says a test *may* carry only
+   descriptive identification, so the fuller `<desc>` is a choice
+   inside the standard, not a departure from it.
+
+   The apparent self-contradiction dissolves in practice: the `<desc>`
+   describes **what is drawn**, not **what is wrong with it**. "A NOT
+   block sits between the freeze stat and the AND" is the same
+   information a sighted reader gets from the picture — both still have
+   to know that placement is wrong. Write each `<desc>` as if it were
+   the only way you could see the diagram, then re-read it hunting for
+   a leaked verdict.
 4. Add a `navCard` (section `'practice'`) to the appropriate H2
    section on `html/practice/index.html` — *Content Quizzes* if
    every question maps to an existing page, *Field Drills* if the
