@@ -71,20 +71,44 @@
 // shape word for word; what makes the first append-fragile is the four
 // sentences marching beside it. Proximity is the only signal in the text that
 // tracks that, and it is measured in SOURCE LINES as a stand-in for "one
-// paragraph" — this corpus writes prose one sentence per source line, so a
-// recap is a tight run and a cross-reference is not. Measured on the current
-// corpus: the duct recap's largest internal gap is 2 lines (598, 599, 601,
-// 603, 604) and the smallest gap between two unrelated lone ordinals is 28
-// (refrigerant-cycle-basics.html:65 → :93). The window sits at 4, most of an
-// order of magnitude clear of both edges.
+// paragraph".
 //
-// WHERE IT MISFIRES: two unrelated lone cross-references landing in adjacent
-// paragraphs would be read as a run and over-report at HIGH/append. Nothing
-// in the corpus does that today (the 28-line floor above), and the direction
-// of the error is the conservative one. The reverse — a genuine recap written
-// as a single ordinal — is not reachable: one ordinal enumerates nothing, and
-// a recap that names its own end trips terminal-verb or terminal-ordinal
-// instead.
+// THE CALIBRATION BELOW IS MEASURED ON THE EDUCATION-HTML HALF ONLY, AND THAT
+// LIMIT IS LOAD-BEARING — read it before trusting the margin. Education pages
+// write prose one sentence per source line, so a recap is a tight run and a
+// cross-reference is not. Measured there: the duct recap's largest internal
+// gap is 2 lines (598, 599, 601, 603, 604) and the smallest gap between two
+// unrelated lone ordinals is 28 (refrigerant-cycle-basics.html:65 → :93). The
+// window sits at 4, most of an order of magnitude clear of both edges.
+//
+// THAT MARGIN DOES NOT EXIST IN html/_data/quizzes/, WHICH IS ALSO SCANNED
+// (choice 6). Quiz `explain` strings are single-line JS string literals
+// running up to 877 chars (surviving-first-months.js:5115; also 834 in
+// start-stop-commands.js:4738, 798 in commanding-actuators.js:1515). Several
+// sentences share one source line there, so line-proximity has ZERO
+// resolution: two unrelated lone ordinals in one `explain` sit 0 lines apart
+// and NO window value can separate them. The effective floor on that
+// subcorpus is 0-1 lines, not 28.
+//
+// WHERE IT MISFIRES: two unrelated lone cross-references inside the proximity
+// window are read as a run and over-report at HIGH/append. On education pages
+// that needs them in adjacent paragraphs (the 28-line floor makes it remote);
+// in a quiz `explain` it needs only one sentence between them, and is
+// reachable today. Verified reachable: an `explain` reading "…covered on page
+// 2 of the refrigeration chapter, and … handles it on page 4" reports BOTH as
+// ordinal-run / append / HIGH. No instance exists in the corpus right now —
+// the whole quiz subcorpus carries exactly ONE ordinal match
+// (superheat-subcooling.js:149, "Page 3"), and a run needs two — but this is
+// a live gap, not a remote one, and the append total is the number the owner
+// ruling exists to make independently readable. Left as-is deliberately: the
+// direction of the error is the conservative one, and the alternatives
+// (a character-distance discriminator, or excluding quiz data from the run
+// half) each re-litigate a pinned owner ruling. Anyone who sees a quiz
+// `explain` in the append section should read the sentence first.
+//
+// The reverse — a genuine recap written as a single ordinal — is not
+// reachable: one ordinal enumerates nothing, and a recap that names its own
+// end trips terminal-verb or terminal-ordinal instead.
 //
 // This does NOT change what the lint detects. Both rules share ONE pattern
 // (ORDINAL_RE) and one `cls: 'ordinal'`; the split is a post-pass that
@@ -108,7 +132,11 @@
 //     conservative direction.
 //   - ordinal-run over-reports if two unrelated lone ordinals ever land
 //     within ORDINAL_RUN_WINDOW lines of each other — see the proximity note
-//     above. No instance today.
+//     above. No instance today, but do NOT read that as "remote": the
+//     28-line floor it used to rest on was measured on education HTML only,
+//     and in html/_data/quizzes/ (also scanned) a multi-sentence `explain`
+//     puts two ordinals 0 lines apart, where no window value separates them.
+//     Reachable, unmitigated, and conservative in direction.
 //
 // The ordinal-label residue that used to sit here is GONE: those five lone
 // ordinals now report as ordinal-reference under insertion-fragile, which is
@@ -350,7 +378,7 @@ function maskFile(src) {
         .replace(/\{#[\s\S]*?#\}/g, blankKeepNewlines)    // Nunjucks comment
         .replace(/\{\{[\s\S]*?\}\}/g, blankKeepNewlines)  // Nunjucks expression
         .replace(/\{%[\s\S]*?%\}/g, blankKeepNewlines)    // Nunjucks tag
-        .replace(/<[^>]*>/g, blankKeepNewlines);          // HTML tag
+        .replace(/<\/?[a-zA-Z!][^>]*>/g, blankKeepNewlines);  // HTML tag
 }
 
 // The HTML-tag strip belongs in maskFile, NOT here: `[^>]` spans newlines, and
@@ -399,8 +427,11 @@ const ORDINAL_REFERENCE = {
 };
 
 // Two ordinal matches this many source lines apart or less read as one run.
-// Calibrated against the corpus: largest gap inside the duct-static-control
-// recap is 2, smallest gap between unrelated lone ordinals is 28.
+// Calibrated against the EDUCATION-HTML half only: largest gap inside the
+// duct-static-control recap is 2, smallest gap between unrelated lone
+// ordinals is 28. That margin does not carry to html/_data/quizzes/, whose
+// single-line `explain` strings put unrelated ordinals 0 lines apart — no
+// window value helps there. See the proximity note in the file header.
 const ORDINAL_RUN_WINDOW = 4;
 
 const RULES = [
