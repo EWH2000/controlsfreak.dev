@@ -439,14 +439,23 @@ Raise these when convenient; none blocks the work above.
 
 The **air-side simulator** remains the named next flagship and gets its own
 session. Readiness is substantially higher than "flagship greenfield" implies —
-`psychro-engine.js` already provides the mixed-air/coil core, and **six** of
+`psychro-engine.js` already provides the mixed-air/coil core, and **five** of
 the eight forced-air lessons contain working models with owner-blessed
-constants. Closer to a consolidation job. Full brief in
-`docs/air-side-sim-scoping.md`.
+constants — while **six** carry an interactive widget. Closer to a
+consolidation job. Full brief in `docs/air-side-sim-scoping.md`.
 
-*(Corrected 2026-07-19: the count is six, not five. The scoping brief
-contradicted itself — `:14` said "five of the eight" while `:141-143` said
-`air-balancing` and `dedicated-outdoor-air` are "the only forced-air lessons
-with no interactive widget… vs 150–290 lines of script in **the other six**."
-Measurement confirms six; `docs/air-side-sim-scoping.md:14` is fixed in the
-same commit so the next reader cannot re-propagate it.)*
+⚠️ ***Those two numbers are not a contradiction, and this file previously got
+that wrong.** The 2026-07-19 pass read `docs/air-side-sim-scoping.md`'s "five"
+at `:14` against its "the other six" at `:141-143`, called it a self-
+contradiction, and "corrected" the five to six — **turning a true statement
+false.** They count different properties. Six lessons have an interactive
+widget (all but `air-balancing` and `dedicated-outdoor-air`). Five of those six
+have a physics model with owner-blessed constants: `air-handlers`,
+`building-pressure`, `duct-static-control`, `economizers`, `vav-systems`. The
+odd one out is `air-unit-identification` — 15 controls and 228 script lines,
+but **zero physical constants**; it is a constraint-satisfaction identification
+game (`FAMILIES` / `MYSTERIES` / `QUESTIONS` / `survivors` / `firstMismatch`),
+so a physics sim has nothing to consolidate from it. Reverted 2026-07-20 after
+a scoping session actually opened the file and checked. **An apparent internal
+contradiction may be two true statements measuring different properties —
+establish what each number counts before reconciling them.*** 

@@ -11,14 +11,30 @@
 **Readiness is higher than "next flagship" implies — this is substantially a
 consolidation job, not greenfield physics.** The psychrometric core exists and
 is spec-covered, the animated air-lane rendering exists and is in production,
-and six of the eight forced-air lessons already contain working models with
+and five of the eight forced-air lessons already contain working models with
 owner-blessed constants. The genuinely new work is one solver and the
 consolidation itself.
 
-<!-- // corrected 2026-07-19: this line read "five of the eight" and
-     contradicted the measured count below at "Two lessons have nothing to
-     consolidate," which puts 150–290 lines of script in "the other six."
-     Six is right: 8 total − air-balancing − dedicated-outdoor-air. -->
+<!-- // DO NOT "reconcile" this five against the six below — they count
+     different things, and both are correct. Measured at ab73ebb:
+
+       6 lessons have an INTERACTIVE WIDGET  (all but air-balancing and
+         dedicated-outdoor-air) — that is the "other six" at L141-143.
+       5 of those 6 have a PHYSICS MODEL with owner-blessed constants —
+         air-handlers, building-pressure, duct-static-control,
+         economizers, vav-systems. That is this line's five.
+
+     The odd one out is air-unit-identification: 15 controls and 228
+     script lines, but zero physical constants. It is a
+     constraint-satisfaction identification game (FAMILIES / MYSTERIES /
+     QUESTIONS / survivors / firstMismatch), not a model — so it has
+     nothing for a physics sim to consolidate.
+
+     This was "corrected" from five to six on 2026-07-19 by a session
+     that read the two numbers as a contradiction. That change made a
+     true statement false; reverted 2026-07-20 after a scoping session
+     checked air-unit-identification for physics constants and found
+     none. Check what each number counts before reconciling them. -->
 
 
 ## What already exists to build on
