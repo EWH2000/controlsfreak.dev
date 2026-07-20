@@ -6705,3 +6705,118 @@ So the ambiguity resolves in both directions at once:
 Fix in flight on `issue-186/stale-count-and-ordinal-claims`, which
 closes this and #186 together (one topic, one owner ruling) and records
 the narrowing in `CLAUDE.md`.
+
+---
+
+### 188. Light-theme `--text-dim` fails AA on the recessed panel *(open — 2026-07-20, fix in flight)*
+
+Found while recomputing #168's contrast ratios — genuinely separate from
+#168, which is a *hierarchy preference* that is explicitly not a WCAG
+failure. This one **is** a failure.
+
+**Light theme only:** `--text-dim` on `--surface-3` measures **4.40:1**
+(`#666e66` on `#e8ece4`), under the **4.5:1** AA floor for small text.
+The dark theme passes the same pairing at 6.15:1.
+
+`--surface-3` is the recessed panel — `.widget` shells
+(`styles.css:3509`) and `.tool-body-3col > section:last-child` reference
+columns, both of which carry small dim text by design.
+
+**Owner decision (2026-07-20): fix it as its own lane**, not folded into
+#168's PR — that PR is deliberately zero-pixel, and its whole point is
+recording that the dimming is *intentional*. Mixing a token change into
+it would muddy both records.
+
+Constraint carried into the fix: the nudge must be **the minimum that
+clears AA on every surface `--text-dim` lands on**, not a general
+brightening. Overshooting flattens the quiet-label / loud-value scan
+hierarchy that #168 exists to protect.
+
+Fix in flight on `issue-188/light-theme-dim-contrast`.
+
+---
+
+### 189. `defaultCount: 10` silently truncated any bank that grew past 10 *(open — 2026-07-20, fix in flight)*
+
+Surfaced by the first bank ever to exceed 10 questions (the Controls
+Commissioning drill, PR #403).
+
+All 37 existing banks hold **exactly 10** questions, and every practice
+page mounts with `defaultCount: 10` + `defaultOrder: 'sequential'`. That
+composition has never truncated anything **because** the two numbers
+always matched. At 11, `buildQueue()`'s `indices.slice(0, 10)` drops the
+last question from every default run — **no build guard, no test, no
+visible symptom.** The quiz works; one question simply never appears
+unless a visitor changes the settings select.
+
+This is the #182 defect family in its purest form: a green build cannot
+see it, and it only becomes reachable the moment someone does the
+obvious good thing (write an 11th question).
+
+**Owner decision (2026-07-20) — solved by design, not by guard:**
+
+> *"When we have more than 10 questions, we should add a random element
+> to which ones are presented. That way we can grow question banks
+> without issue. Plus that increases replayability of the quizzes. Still
+> add guards as needed with that. All quizzes of that type should still
+> remain 10 questions, just a matter of what questions are shown."*
+
+Presented length stays 10; **which** 10 becomes a random sample. Bank
+growth turns from a hazard into a feature — a 15-question bank makes
+every run different. A guard still lands alongside it, designed to have
+failed on the pre-fix code.
+
+Fix in flight on `feat/quiz-random-selection`; PR #403 must merge
+**after** it.
+
+---
+
+### 190. Two competing follow-on-paragraph rhythms, plus ~205 redundant inline margins *(open — 2026-07-20)*
+
+Surfaced by the #179 lane. Two facts in #179 were understated and are
+corrected here:
+
+- **13 of the 40 education lessons** lack follow-on paragraph rhythm,
+  not the two named in #179 (`function-blocks`, `setpoint-math-reset`).
+- The defect is not "tighter spacing." Untreated follow-on paragraphs
+  compute **`margin-top: 0px`** — the global `* { margin: 0 }` reset at
+  `styles.css:283` zeroes it and nothing restores it — so stacked
+  paragraphs render **flush**, with only line-height between them.
+
+The open item is what #179's fix does *not* resolve: **two rhythms are
+in use.** 148 follow-on paragraphs sit at `1.25rem` and 51 at `1.1rem`
+(concentrated in the hydronics chapter), plus one-offs at 0.6rem (×3),
+0.9rem, 1rem and 1.4rem. All are inline `style="margin-top:…"`.
+
+**Owner decision (2026-07-20): standardize on `1.25rem`** (the majority
+value), shipped as the shared scoped rule in #179. The hydronics pages
+keep `1.1rem` via inline styles, which now makes them the deviation.
+
+Remaining work, deliberately not bundled into #179: **removing the ~205
+now-redundant inline margins.** That is a large mechanical sweep whose
+only risk is the 1.1rem pages — removing their inline styles silently
+re-rhythms the hydronics chapter to 1.25rem. Decide whether hydronics
+converges or keeps a documented per-chapter value **before** the sweep,
+or it will look like an accident.
+
+---
+
+### 191. Link text that names a page is unguarded, even where the href is *(open — 2026-07-20, low priority)*
+
+Noticed by the #177 lane while building the home-desc drift guard.
+
+`html/practice/index.html:72` carries
+`<a href="/practice/surviving-first-months.html">Surviving Your First
+Months</a>`. The **href** is guarded — `link-integrity.spec.js` catches
+it if the page is retired. The **link text** is not: rename the page's
+title and the anchor keeps the old label indefinitely, with a green
+build and a working link.
+
+Same family as #177 (a page name embedded in prose with nothing keeping
+it honest), but a distinct mechanism: #177's surface had no guard at
+all, whereas this one has a guard that verifies the wrong half.
+
+Low priority — a stale link label is a cosmetic mismatch, not a broken
+path. Worth doing only if the #177 guard generalizes cheaply; that guard
+already extracts Title-Case runs from the built home page, so pointing
+the same detector at anchor text across landings may be a small delta.
