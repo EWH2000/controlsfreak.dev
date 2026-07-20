@@ -700,13 +700,18 @@ section headers).
   1.1rem (balancing, coil-selection, controls-commissioning,
   status-and-proof — three different chapters, not one) went with
   them, owner decision 2026-07-20. **An inline `margin-top` that
-  survives on a lesson paragraph is therefore deliberate**, and the
-  ones the shared rule can reach carry a comment saying why (see
-  `pid-basics.html`'s callout examples at 0.6rem). The rest are
-  outside the selector — a first `<p>` in its container, a
-  classed prose utility, or prose outside `.tool-body` — where the
-  inline value is the only thing setting the gap. Check which case
-  you are in before deleting one.
+  survives on a lesson paragraph is one of three cases** — check
+  which before deleting one:
+  1. *Deliberate and rule-reachable* — carries a comment saying why
+     (see `pid-basics.html`'s callout examples at 0.6rem).
+  2. *Known-unresolved* — two rule-reachable one-offs the sweep left
+     for the owner rather than silently re-rhythming
+     (`hydronic-loops.html` at 0.9rem, `psychrometrics-basics.html`
+     at 1rem). Both carry an in-file `// user to verify` marker and
+     are inventoried in codebase-issues #190. **Not** precedent.
+  3. *Outside the selector* — a first `<p>` in its container, a
+     classed prose utility, or prose outside `.tool-body` — where
+     the inline value is the only thing setting the gap.
 - **`body.education-page` is the one *build-time* body class.**
   `layouts/page.njk` emits it from the `nav: education` frontmatter —
   the same key that drives the active nav link, so the styling scope

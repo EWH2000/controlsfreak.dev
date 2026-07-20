@@ -1120,9 +1120,12 @@ h2.section-label[data-stage]::before {
    declarations this rule reached were stripped once it landed
    (codebase-issues #190), including the 51 that sat at 1.1rem —
    1.25rem is the single house rhythm now. An inline margin-top that
-   survives on a lesson paragraph is either deliberate (and commented
-   at the call site) or outside this selector, where it is the only
-   thing setting the gap. New lessons write plain <p>. */
+   survives on a lesson paragraph is deliberate (and commented at the
+   call site), outside this selector (where it is the only thing
+   setting the gap), or one of the two known-unresolved one-offs the
+   sweep left for the owner — hydronic-loops 0.9rem and
+   psychrometrics-basics 1rem, both marked in-file and inventoried in
+   codebase-issues #190. New lessons write plain <p>. */
 body.education-page .tool-body p + p:not([class]) { margin-top: 1.25rem; }
 /* Body-prose lists — same font triplet as .tool-body p. Per-list margin
    stays inline (it varies). A page that wants a tighter small-text list
