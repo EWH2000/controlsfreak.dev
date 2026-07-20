@@ -118,11 +118,11 @@ keywords: coil selection coil sizing design flow gpm delta-t mass flow rows face
                 Every coil is a heat exchanger, and every heat exchanger obeys the same sentence: the heat a moving fluid carries equals its mass flow times its specific heat times the temperature change it goes through. In symbols that's <code>q = ṁ · c<sub>p</sub> · ΔT</code> — mass flow <code>ṁ</code>, specific heat <code>c<sub>p</sub></code>, temperature difference <code>ΔT</code>. That one relationship is the whole game. Rearranged for flow, it says: given a load and a temperature difference, the flow is <em>fixed</em>. You don't get to choose it independently.
             </p>
 
-            <p style="margin-top:1.1rem;">
+            <p>
                 Nobody in the field carries around mass flow in pounds per hour, though. The trade collapses that equation into two shortcut forms — one for water, one for air — where the fluid's properties are baked into a single constant so you can work in the units on the gauge.
             </p>
 
-            <p style="margin-top:1.1rem;"><strong>Water.</strong> For a hydronic coil, flow comes out in GPM:</p>
+            <p><strong>Water.</strong> For a hydronic coil, flow comes out in GPM:</p>
 
             <code class="csel-eq">
                 GPM = Btu/h ÷ (500 × ΔT<sub>water</sub>)
@@ -134,7 +134,7 @@ keywords: coil selection coil sizing design flow gpm delta-t mass flow rows face
                 <span class="csel-const">8.33 lb/gal × 60 min/h × 1.0 Btu/lb·°F</span> — pounds of water per gallon, minutes per hour, and the Btu it takes to lift one pound of water one degree. Multiply those and you get 499.8, rounded to 500 everywhere in the trade. It is an IP constant through and through; there is no clean "metric 500," so the math runs in IP and the flow you read simply converts to <span data-us="GPM" data-metric="L/s">GPM</span> on the way to the screen. One caveat that bites: the 500 assumes <em>water</em>. A glycol mix is denser and has a lower specific heat, so it carries less heat per gallon — the shortcut over-reports flow-for-load until you correct it, which is a big part of why a <a href="/education/hydronic-loops.html">glycol loop</a> needs its own numbers.
             </p>
 
-            <p style="margin-top:1.1rem;"><strong>Air.</strong> For an air coil the same chain gives CFM, using the sensible-heat form:</p>
+            <p><strong>Air.</strong> For an air coil the same chain gives CFM, using the sensible-heat form:</p>
 
             <code class="csel-eq">
                 CFM = Btu/h<sub>sensible</sub> ÷ (1.08 × ΔT<sub>air</sub>)
@@ -146,7 +146,7 @@ keywords: coil selection coil sizing design flow gpm delta-t mass flow rows face
                 <span class="csel-const">0.075 lb/ft³ × 0.24 Btu/lb·°F × 60 min/h</span> — the density of standard air, the specific heat of air, and minutes per hour, which multiply to 1.08. That is <em>sensible</em> heat only — the part that changes dry-bulb temperature. When a cooling coil is also wringing moisture out of the air, the total (sensible + latent) heat rides the enthalpy form instead: <code>Btu/h<sub>total</sub> = 4.5 × CFM × Δh</code>, where the <span class="csel-const">4.5 = 60 × 0.075</span> and <code>Δh</code> is the enthalpy drop across the coil in Btu/lb. The <a href="/tools/coil-sizing.html">Coil-Sizing Calculator</a> runs that full sensible/latent split for you; here the point is just that air flow comes from the same load-over-ΔT chain water does.
             </p>
 
-            <p style="margin-top:1.1rem;">
+            <p>
                 So both field forms are the same idea wearing different clothes: <strong>load on top, ΔT on the bottom.</strong> Fix any two and the third is decided. That is the lever the next section is about.
             </p>
 
@@ -157,7 +157,7 @@ keywords: coil selection coil sizing design flow gpm delta-t mass flow rows face
                 The load is not yours to choose — the space needs what it needs on the design day. The constant is physics. So the one knob the designer actually turns is the <em>design ΔT</em>: how big a temperature drop you decide the coil will develop between supply and return. Pick a wide ΔT and the same load needs less flow; pick a narrow one and it needs more. Everything downstream — pipe size, pump size, pumping energy, the number the balancer chases — hangs off that single choice.
             </p>
 
-            <p style="margin-top:1.1rem;">
+            <p>
                 Work an example. A hot-water heating coil has to carry <span data-us="120,000 Btu/h" data-metric="35.2 kW">120,000 Btu/h</span> — 120 MBH — on the design day. Take the traditional hot-water design ΔT of <span data-us="20 °F" data-metric="11.1 °C">20 °F</span> (a 180/160 supply/return schedule). The waterside form hands back the flow directly:
             </p>
 
@@ -187,7 +187,7 @@ keywords: coil selection coil sizing design flow gpm delta-t mass flow rows face
                 Same heat, two-thirds the water, for the price of designing the coil around a bigger temperature drop. Less flow means smaller pipe, a smaller pump, and less energy spent pushing water around for the life of the building. That is why chilled-water design has been creeping wider for years — from the old <span data-us="10–12 °F" data-metric="5.6–6.7 °C">10–12 °F</span> ΔT toward <span data-us="16–20 °F" data-metric="8.9–11.1 °C">16–20 °F</span> — and why "low-ΔT syndrome," a coil that never develops the ΔT it was designed for and so demands far more flow than planned, is one of the classic ways a plant ends up flow-starved and over-pumped at the same time.
             </p>
 
-            <p style="margin-top:1.1rem;">
+            <p>
                 The air side has exactly the same lever. A cooling coil carrying <span data-us="54,000 Btu/h" data-metric="15.8 kW">54,000 Btu/h</span> of sensible load across a <span data-us="25 °F" data-metric="13.9 °C">25 °F</span> supply-air ΔT wants <code>54,000 ÷ (1.08 × 25) = </code> <span data-us="2,000 CFM" data-metric="3,400 m³/h">2,000 CFM</span>. Widen the air-side ΔT and the fan moves less air for the same cooling; narrow it and it moves more. The <a href="/tools/waterside-load.html">Waterside Load</a> and <a href="/tools/airside-load.html">Airside Load</a> calculators run these both directions if you want to try your own numbers.
             </p>
 
@@ -198,23 +198,23 @@ keywords: coil selection coil sizing design flow gpm delta-t mass flow rows face
                 So the load and the ΔT set the flow. But there is a second question hiding underneath: can a real coil actually <em>develop</em> that ΔT at that flow, given the air and water temperatures it will see? That is where the physical coil — not the equation — earns its keep. A selection program juggles a handful of levers to make a finite bundle of finned tube hit the required capacity at the chosen flow and entering conditions.
             </p>
 
-            <p style="margin-top:1.1rem;">
+            <p>
                 <strong>Rows.</strong> The number of tube rows deep, in the air direction. More rows means more heat-transfer surface and a longer path for the air, so the coil can pull the air closer to the water temperature — more capacity, a closer approach (next section). A heating coil is often one or two rows; a deep dehumidifying cooling coil might be six or eight. Rows cost air-side pressure drop, so the fan pays for every one.
             </p>
 
-            <p style="margin-top:1.1rem;">
+            <p>
                 <strong>Fin density.</strong> Fins per inch on the tubes — commonly somewhere around 8 to 14. More fins means more surface per row, so you can sometimes trade fin density against rows. But tight fins clog with dirt, are harder to clean, and drive air-side pressure drop up fast, so there is a practical ceiling.
             </p>
 
-            <p style="margin-top:1.1rem;">
+            <p>
                 <strong>Circuiting.</strong> How the tubes are plumbed internally — how many parallel water paths the flow splits into. Circuiting sets the water velocity inside the tubes, which sets the water-side heat transfer and the water-side pressure drop. Too few circuits and the water rockets through at a high head loss; too many and it crawls, the flow goes laminar, and heat transfer falls off. It is the water-side twin of the fin/row trade.
             </p>
 
-            <p style="margin-top:1.1rem;">
+            <p>
                 <strong>Face velocity.</strong> The air speed through the coil's face area — airflow divided by the coil's frontal area, in feet per minute. It is the sneaky limit. On a wet cooling coil there is a hard ceiling around <span data-us="500 fpm" data-metric="2.5 m/s">500 fpm</span>: push the face velocity much past that and the airstream strips condensate droplets off the fins and carries them downstream — <em>moisture carryover</em> — wetting the duct, the downstream filter, and anything else in the airstream, and it can defeat the dehumidification the coil was there to do. Above roughly <span data-us="550 fpm" data-metric="2.8 m/s">550 fpm</span> the risk climbs sharply. Dry heating coils have no condensate to carry, so they tolerate higher face velocities, but they still pay in air-side pressure drop. Face velocity is why a coil has a minimum sensible <em>size</em> — you can't shrink the face indefinitely without blowing water off it.
             </p>
 
-            <p style="margin-top:1.1rem;">
+            <p>
                 None of this is a coil-selection program, and it isn't meant to be — the manufacturer's software juggles all of these against catalog tube-and-fin data to land on a real part number. The point is orientation: the design GPM you now understand as "load over ΔT" only holds if the coil the engineer selected can actually meet the capacity at that flow, and these are the levers that make it possible.
             </p>
 
@@ -225,7 +225,7 @@ keywords: coil selection coil sizing design flow gpm delta-t mass flow rows face
                 There is a reason you can't just keep widening the ΔT for free. A coil transfers heat because the water and the air are at different temperatures; the bigger that difference along the coil, the more heat crosses per square foot of surface. But as one stream gets pulled toward the other, the temperature difference driving the transfer shrinks — and the closer they get, the more surface each additional degree costs. The gap between the leaving fluid and the entering other stream is the <em>approach</em> temperature. A finite coil can get the approach small, but never to zero: driving it to zero would take infinite surface. On the heating coil above, the leaving air simply cannot reach the entering water temperature no matter how many rows you add — it can only approach it.
             </p>
 
-            <p style="margin-top:1.1rem;">
+            <p>
                 The formal version of "the average driving temperature difference" is the log-mean temperature difference, <code>LMTD = (ΔT₁ − ΔT₂) ÷ ln(ΔT₁ ÷ ΔT₂)</code>, where <code>ΔT₁</code> and <code>ΔT₂</code> are the stream-to-stream differences at the two ends of the coil. You will rarely compute it by hand — the selection software does — but the shape of it is the lesson: as the two ends' temperature differences get close (a tight approach), the LMTD collapses and the required surface balloons. That is the wall that stops "design for a wider ΔT" from being a free lunch. Beyond a point, the coil to develop it gets big, deep, and expensive, and its air-side pressure drop starts costing the fan more than the pump saves.
             </p>
 
@@ -306,11 +306,11 @@ keywords: coil selection coil sizing design flow gpm delta-t mass flow rows face
                 <!-- Forward-link: the commissioning procedure gets its own lesson (see balancing.html's "Coming later" callout); kept as plain prose per the forward-link convention until that page exists. -->
             </p>
 
-            <p style="margin-top:1.1rem;">
+            <p>
                 So the chain runs both ways. Downstream, a wrong flow at a branch sends you to the balance valve. But upstream, a flow number that never made sense — a branch that hogs, a coil that can't keep up even at design flow — can trace all the way back here, to a load that was mis-estimated or a design ΔT the real coil never develops. The balancer chases the design GPM; the design GPM is only ever as right as the load and the ΔT it was computed from.
             </p>
 
-            <p style="margin-top:1.1rem;">
+            <p>
                 And the assumptions run wider than load and ΔT. Every coil is also selected for the <em>entering conditions</em> it will meet — the air and water temperatures, and how much moisture the air is carrying. Those are an assumption with a shelf life. The design day can drift, and the equipment upstream that is supposed to hold those conditions can quietly stop holding them — and a correctly-sized coil goes functionally undersized without anyone touching it.
             </p>
 

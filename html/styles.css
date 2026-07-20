@@ -1116,10 +1116,13 @@ h2.section-label[data-stage]::before {
    own their own spacing and must keep it — this rule would otherwise
    out-specify them.
 
-   Inline `style="margin-top:…"` still wins, so the lessons already
-   carrying hand-set rhythm (1.25rem and, on the hydronics chapter,
-   1.1rem) render exactly as before. New lessons inherit the rhythm
-   without the inline style. */
+   Inline `style="margin-top:…"` still wins. The 199 redundant
+   declarations this rule reached were stripped once it landed
+   (codebase-issues #190), including the 51 that sat at 1.1rem —
+   1.25rem is the single house rhythm now. An inline margin-top that
+   survives on a lesson paragraph is either deliberate (and commented
+   at the call site) or outside this selector, where it is the only
+   thing setting the gap. New lessons write plain <p>. */
 body.education-page .tool-body p + p:not([class]) { margin-top: 1.25rem; }
 /* Body-prose lists — same font triplet as .tool-body p. Per-list margin
    stays inline (it varies). A page that wants a tighter small-text list

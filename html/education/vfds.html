@@ -299,7 +299,7 @@ keywords: fla amps hz drive inverter speed torque carrier motor run
                 Walk through any modern mechanical room and you'll see drives on the pumps, on the fans, sometimes on the compressors. Forty years ago the same equipment ran at one speed and dumped whatever it didn't need through bypass dampers, three-way valves, or vanes. The reason that changed isn't comfort or controllability (those are nice side effects). It's <em>energy</em>, and the math is short.
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 For centrifugal equipment — fans, pumps, most compressors — the power required scales roughly as the <em>cube</em> of the speed. Drop the speed to 80%, the power isn't 80% of design; it's 0.8³ ≈ <strong>51%</strong>. Drop it to 50% and the power's down to 0.5³ ≈ <strong>13%</strong>. You don't need that many minutes a day at part load before the drive pays for itself on the electric bill.
             </p>
 
@@ -335,7 +335,7 @@ keywords: fla amps hz drive inverter speed torque carrier motor run
                 The mistake — and it's a common one — is treating these as one thing. You set up the speed reference to come from BACnet, the BMS is happily writing 30 Hz to the speed-reference AV (<a href="/education/bacnet-basics.html">a BACnet Analog Value object</a>), and the drive doesn't run. Why? Because the <em>run-source</em> parameter is still set to "terminals" from the factory, and there's no digital-input run signal wired up. Two parameters; you only changed one.
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 Try it. The widget below is a tiny mock drive that respects whatever you set the run and speed sources to. Pick a configuration, then try to start it from each of the three command surfaces. The status panel tells you what it accepted and what it ignored.
             </p>
 
@@ -666,11 +666,11 @@ keywords: fla amps hz drive inverter speed torque carrier motor run
                 On the <a href="/education/load-piping.html">load-piping</a> lesson we set up the variable-flow picture from the load side: every coil is throttled by a two-way valve; the system pump should slow down as the loads close in. The VFD is the answer to the pump side of that picture. The system pump's BMS-facing surface is a run command and a speed reference — exactly the two parameters we just walked through — and the BMS modulates the speed reference to hold whatever variable the sequence cares about (usually a differential pressure across the loop, sometimes a return-temperature setpoint, occasionally a valve-position reset on the most-open valve).
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 That last part — <em>how</em> the BMS decides what speed reference to send — is its own topic, and it now has a lesson on each fluid. The <a href="/education/pump-control.html">pump-control lesson</a> picks up from here on the water side, walking through pump curves and the operating point, DP-based control with a remote sensor, and DP setpoint reset for the bottom of the cube-law savings; <a href="/education/duct-static-control.html">duct static control</a> is the same story on air — a supply fan slowing against a static setpoint while the VAV boxes throttle.
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 And if you want to actually feel how the parameter tree on a real drive lays out — pressing up/down/enter/escape, finding the run-source parameter buried three menus deep, watching commanded Hz vs. actual Hz when you hit RUN — the <a href="/simulators/vfd-mock.html">mock VFD interface</a> is the next step. Same source-parameter pedagogy as the widget above, but with a keypad and a parameter tree to navigate.
             </p>
 
