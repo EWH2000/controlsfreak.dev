@@ -169,13 +169,25 @@ test('home count pills stay in sync with the landings (drift guard)', async ({ p
 // move the stale string from the page into the test. So BOTH sides are
 // read at runtime: candidate page names are extracted from the built
 // home page's descs by SHAPE (a run of two or more Title-Case words),
-// and each must appear in some built page's <title>. Rename the drill
+// and each must match some page's `title` frontmatter. Rename the drill
 // and the desc's phrase stops matching any title → red. Retire it and
-// the title disappears → red. Reword the desc away from naming a page
-// and no candidate is produced → the guard correctly falls silent (the
-// surface it exists to protect is gone).
+// the title disappears → red. Reword the desc away from any Title-Case
+// phrase and no candidate is produced → the guard falls silent.
 //
-// ── Why the name-word rule is this strict ────────────────────────────
+// ── Which side is read from where ────────────────────────────────────
+// Descs come from the BUILT home page (_site/index.html) because
+// navCard() is a Nunjucks macro — the source is a macro call, not
+// markup. Titles come from the SOURCE tree (html/**/*.html frontmatter
+// `title:`), NOT from _site, for exactly the reason spelled out in
+// landing-completeness.spec.js: Eleventy does not clean its output dir,
+// so a retired page survives in _site as an orphan across an
+// incremental build. Reading both sides from _site made the retire case
+// — the one this guard's whole reason for existing — pass green locally
+// while the home desc still named the dead page. (CI is a fresh
+// checkout, so it was a local-only false green; that is worse, not
+// better, since local is where the retire actually happens.)
+//
+// ── Why the name-word rule is this strict, and what it still gets wrong
 // A word counts toward a run only if it is Capitalized-then-lowercase
 // and at least three characters. That drops the acronym-shaped words
 // that otherwise manufacture false candidates out of ordinary prose in
@@ -184,6 +196,16 @@ test('home count pills stay in sync with the landings (drift guard)', async ({ p
 // also cut at sentence punctuation so a name ending one sentence can't
 // fuse with a name starting the next. On the current home page the rule
 // yields exactly one candidate across all 14 descs.
+//
+// It is still only a SHAPE heuristic, and it errs in both directions:
+//   - False negatives: an acronym-shaped page name ("VFD Mock") is
+//     invisible to it. Accepted — this guard is a net, not a proof.
+//   - False positives: any 2+ Title-Case run reads as a page claim even
+//     when the author meant a section heading, a proper noun, or a
+//     capitalized term of art ("Field Drills", "Ohm's Law"). If you hit
+//     a red on a phrase you did NOT intend as a page reference, that is
+//     expected behavior, not a bug in your copy — add the phrase to
+//     NON_PAGE_NAMES below with a one-line note and move on.
 //
 // ── Sanity floors ────────────────────────────────────────────────────
 // Like landing-completeness.spec.js, this reads truth from markup shape
@@ -196,6 +218,13 @@ test('home count pills stay in sync with the landings (drift guard)', async ({ p
 // in landing-completeness.spec.js and worker.spec.js.
 test('home nav-card descs only name pages that still exist (drift guard)', () => {
     const SITE = path.join(__dirname, '..', '_site');
+    const SRC = path.join(__dirname, '..', 'html');
+
+    // Title-Case phrases that legitimately appear in a desc without
+    // naming a page — section headings, proper nouns, terms of art.
+    // Empty today; add here (with a note) rather than contorting copy
+    // to dodge the heuristic.
+    const NON_PAGE_NAMES = new Set([]);
 
     const decode = (s) => s
         .replace(/&#39;/g, "'").replace(/&quot;/g, '"')
@@ -225,21 +254,25 @@ test('home nav-card descs only name pages that still exist (drift guard)', () =>
         }
     }
 
-    // Every built page's title, minus the site suffix — the authority on
-    // what a page is called today.
+    // Every SOURCE page's title frontmatter, minus the site suffix — the
+    // authority on what a page is called today. Source, not _site: see
+    // the orphaned-build-output note above. Directories starting with
+    // `_` are 11ty's (_includes / _data), never pages.
     const walk = (dir) => fs.readdirSync(dir, { withFileTypes: true })
         .flatMap((entry) => (entry.isDirectory()
-            ? walk(path.join(dir, entry.name))
+            ? (entry.name.startsWith('_') ? [] : walk(path.join(dir, entry.name)))
             : (entry.name.endsWith('.html') ? [path.join(dir, entry.name)] : [])));
-    const titles = walk(SITE)
-        .map((file) => fs.readFileSync(file, 'utf8').match(/<title>([\s\S]*?)<\/title>/))
+    const titles = walk(SRC)
+        .map((file) => fs.readFileSync(file, 'utf8').match(/^title:[ \t]*(.+?)[ \t]*$/m))
         .filter(Boolean)
-        .map((m) => decode(m[1]).replace(/\s*—\s*controlsfreak\.dev$/, '').trim());
-    expect(titles.length, 'sanity: built site yielded page titles').toBeGreaterThanOrEqual(50);
+        .map((m) => m[1].replace(/\s*—\s*controlsfreak\.dev$/, '').trim());
+    expect(titles.length, 'sanity: source tree yielded page titles').toBeGreaterThanOrEqual(50);
 
     const offenders = [...candidates]
+        .filter((name) => !NON_PAGE_NAMES.has(name))
         .filter((name) => !titles.some((title) => title.includes(name)))
-        .map((name) => `  home desc names "${name}" but no built page carries that title`);
+        .map((name) => `  home desc names "${name}" but no page carries that title `
+            + '(if it was never meant as a page name, add it to NON_PAGE_NAMES)');
     expect(offenders, 'a page named in a home nav-card desc must still exist under that name')
         .toEqual([]);
 });
