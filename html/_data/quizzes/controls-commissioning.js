@@ -10,6 +10,15 @@
 // Controller Swap drill already spends the priority-array override
 // angle and Field Wiring & Sensors already spends the live zero and the
 // mA-to-engineering-units scaling math.
+//
+// Analog span arithmetic is spent across the corpus and is off-limits
+// here: Commanding Actuators owns the 2-10 V actuator both ways
+// (span-math-five-volts, span-math-fifty-percent), and Analog Sensing,
+// Field Wiring & Sensors, and Duct Static Control each own a
+// mA-or-V-to-engineering-units conversion. Check ALL banks, not just
+// the drills, before adding a numeric — this bank's first numeric
+// duplicated span-math-fifty-percent outright (same 2-10 V actuator,
+// same 50 % command, same 6 V answer) and had to be replaced.
 
 module.exports = [
     // ── The idea: checkout runs from the field toward the front end ──
@@ -42,18 +51,6 @@ module.exports = [
         explain: 'Direction catches the reversed action — an actuator wired or configured for the wrong sense strokes backwards, driving wide open on a 0 % command, and the loop fights itself all season. Span catches the actuator that only sweeps part of its travel because its range setting and the software range disagree. Both are invisible from the front end, and both look like a tuning problem later if you skip this. A drive gets the same three commands, plus a confirmation of rotation direction — once, during checkout, before it matters.',
         learnMore: { href: '/education/controls-commissioning.html#ccx-method', label: 'Controls Commissioning — The method, per point type' },
         tags: ['commissioning', 'ao', 'method']
-    },
-    {
-        type: 'numeric',
-        id: 'ao-span-midpoint-voltage',
-        prompt: 'An AO drives a damper actuator whose input range is 2–10 V, and the software point is scaled 0–100 %. You command the point to 50 % and meter the signal at the actuator. What should you read?',
-        answer: 6,
-        tolerance: 0,
-        unit: 'V',
-        inputmode: 'decimal',
-        explain: 'The span is 2–10 V, so 8 V of signal covers 0–100 %: 2 + 0.50 × 8 = <strong>6 V</strong>. The reason to meter it rather than trust the command is that this is the one place the software range and the actuator range can silently disagree. An actuator jumpered for 0–10 V while the software drives 2–10 V is already 20 % off at midspan and never reaches the bottom of its travel — it looks like a lazy loop, not a range mismatch.',
-        learnMore: { href: '/education/controls-commissioning.html#ccx-method', label: 'Controls Commissioning — The method, per point type' },
-        tags: ['commissioning', 'ao', 'scaling', 'method']
     },
     {
         type: 'tf',
@@ -125,6 +122,18 @@ module.exports = [
         learnMore: { href: '/education/controls-commissioning.html#ccx-trends', label: 'Controls Commissioning — Trend logs, proof over time' },
         tags: ['commissioning', 'trends', 'reset']
     },
+    {
+        type: 'numeric',
+        id: 'trend-buffer-wrap-hours',
+        prompt: 'You set up a trend on a hunting discharge-air loop before leaving Friday, sampling every 1 minute. The controller allocates the log a 600-sample buffer, and it overwrites the oldest sample once full. How many hours of history does it hold before it starts wrapping?',
+        answer: 10,
+        tolerance: 0,
+        unit: 'h',
+        inputmode: 'decimal',
+        explain: '600 samples × 1 minute = 600 minutes = <strong>10 hours</strong>. That is the whole trap: you left it Friday afternoon to catch a weekend behavior and came back Monday to a log whose oldest sample is Sunday night. The buffer did not fail — it did exactly what it was configured to do, and quietly discarded the swings you set it up to capture. Interval and buffer depth trade against each other: a fast interval resolves a hunting loop but buys you very little history, while a slow one spans the weekend and can miss the oscillation entirely. Size the log against the span you need to observe, or use change-of-value so samples are only spent when the point actually moves.',
+        learnMore: { href: '/education/controls-commissioning.html#ccx-trends', label: 'Controls Commissioning — Trend logs, proof over time' },
+        tags: ['commissioning', 'trends', 'method']
+    },
 
     // ── The loop, once per point ─────────────────────────
     {
@@ -133,7 +142,7 @@ module.exports = [
         prompt: 'A point\'s checkout is finished once you have confirmed it against the sequence — writing it up and releasing the force can be swept up together at the end of the day.',
         answer: false,
         explain: 'The loop is exercise → watch the field device → confirm against the sequence → document it and clear the force, and it closes once per point. Batching the last step turns it into memory work at the end of a long day, which is precisely when a point gets skipped. The stakes are asymmetric, too: an undocumented pass costs you a re-test, but an uncleared force is a live hazard the logic cannot see — the sequence is executing correctly and being ignored. A forced AO holds a heating valve open into a summer coil; a defeated freeze interlock leaves nothing between a cold night and a burst coil.',
-        learnMore: { href: '/education/controls-commissioning.html#ccx-loop', label: 'Controls Commissioning — One small loop, run once per point' },
+        learnMore: { href: '/education/controls-commissioning.html#ccx-overrides', label: 'Controls Commissioning — Override discipline, the safety spine' },
         tags: ['commissioning', 'overrides', 'workflow']
     },
 
