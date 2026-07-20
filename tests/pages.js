@@ -139,6 +139,7 @@ const PAGES = [
     { name: 'practice — sequencing scenarios', url: '/practice/sequencing-scenarios.html' },
     { name: 'practice — controls commissioning', url: '/practice/controls-commissioning.html' },
     { name: 'practice — troubleshooting', url: '/practice/troubleshooting.html' },
+    { name: 'practice — wiresheet traces', url: '/practice/wiresheet-traces.html' },
     { name: 'contact',                url: '/contact.html' },
     { name: 'privacy',                url: '/privacy.html' },
 ];

@@ -31,6 +31,7 @@ const PHONE_SE_PAGES = [
     '/education/balancing.html',
     '/education/equipment-staging.html',
     '/simulators/vfd-mock.html',
+    '/practice/wiresheet-traces.html',
     '/styleguide.html',
 ];
 
