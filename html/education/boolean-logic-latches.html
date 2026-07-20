@@ -82,7 +82,7 @@ keywords: AND OR NOT XOR latch SR interlock permissive safety truth table
                 against you.
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 <code>OR</code> is the opposite sentence: <em>any one of these is enough.</em>
                 Three trouble contacts — filter, condensate overflow, smoke — into one
                 <code>OR</code> gives a common alarm that lights when <em>any</em> of them
@@ -90,7 +90,7 @@ keywords: AND OR NOT XOR latch SR interlock permissive safety truth table
                 back. Those three cover most of the logic you'll ever read on a sheet.
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 Textbooks present these blocks as <strong>truth tables</strong> — every input
                 combination and its output, laid out as a grid. The grid below is worth one
                 look, but don't memorize it as a grid. Read each column as a
@@ -118,7 +118,7 @@ keywords: AND OR NOT XOR latch SR interlock permissive safety truth table
                 T = TRUE, F = FALSE. Read the columns as sentences, not rows of a grid.
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 <code>NOT</code> earns a longer look, because it's tied to how safeties are
                 wired in the first place. A hardwired safety — a freeze stat, a high-static
                 switch — is almost always <strong>normally closed</strong>: the contact is
@@ -130,7 +130,7 @@ keywords: AND OR NOT XOR latch SR interlock permissive safety truth table
                 every scan; silence is treated as a trip.
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 Wired that way, the "OK" signals feed the permissive <code>AND</code>
                 directly. But not every point arrives in the OK sense. An alarm-style contact
                 or a software point often reads TRUE when <em>tripped</em> — the opposite
@@ -141,7 +141,7 @@ keywords: AND OR NOT XOR latch SR interlock permissive safety truth table
                 because the chain is reading a healthy FALSE as a standing trip.
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 Here's the chain drawn as a sheet. Three safety proofs feed the
                 <code>AND</code>; two are proved, one isn't — and the wire colors tell the
                 story at a glance, the same way a live editor would. (This <code>AND</code> is
@@ -223,7 +223,7 @@ keywords: AND OR NOT XOR latch SR interlock permissive safety truth table
                 wrong.
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 Walk the freeze-stat case through and you'll see why. The stat trips on a
                 near-freezing coil, the permit drops, the fan stops. But with no airflow
                 across it, the coil drifts back toward room temperature — so the freeze stat
@@ -237,7 +237,7 @@ keywords: AND OR NOT XOR latch SR interlock permissive safety truth table
                 cause.
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 That's the job of the <strong><code>SR latch</code></strong> — the one block
                 in the boolean family with memory. It has two inputs and a story: a TRUE on
                 <strong>S</strong> (<em>set</em>) drives the output <strong>Q</strong> TRUE,
@@ -248,7 +248,7 @@ keywords: AND OR NOT XOR latch SR interlock permissive safety truth table
                 releases it.
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 One question the block has to answer that a truth table can't dodge:
                 <em>what if S and R are both TRUE on the same scan?</em> The latch in this
                 site's editor is <strong>set-dominant</strong> — S wins, Q stays TRUE. Read
@@ -261,7 +261,7 @@ keywords: AND OR NOT XOR latch SR interlock permissive safety truth table
                 Check which one your palette gives you before you trust it with a safety.)
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 Together, that's the <strong>latch + manual-reset idiom</strong>: the fault
                 sets, an operator resets. S comes from the safety; R comes from a person — a
                 reset button on a graphic, a software point the BMS writes, a physical
@@ -335,7 +335,7 @@ keywords: AND OR NOT XOR latch SR interlock permissive safety truth table
                 lesson in this chapter.
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 Second, a one-sentence version of something you'll notice the first time you
                 stare at a latch: it's secretly a <em>loop</em> — the block's output feeds
                 back into its own decision — and a sheet resolves any feedback wire by

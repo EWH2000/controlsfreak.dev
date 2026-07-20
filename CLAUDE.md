@@ -735,9 +735,21 @@ section headers).
   simulators / practice share the class and tune their own spacing),
   and `:not([class])` keeps the rule off the prose utilities above,
   which own their spacing. Inline `margin-top` still out-specifies
-  the rule, so the ~279 existing inline declarations across 27
-  lessons render unchanged; four hydronics lessons sit at 1.1rem and
-  stay off the house 1.25rem until someone strips them.
+  the rule, so the 201 redundant declarations the rule reached were
+  stripped in the same arc (codebase-issues #190) and **1.25rem is
+  now the single house rhythm** — the 51 declarations that sat at
+  1.1rem (balancing, coil-selection, controls-commissioning,
+  status-and-proof — three different chapters, not one) went with
+  them, and so did the two lone one-offs at 0.9rem
+  (`hydronic-loops.html`) and 1rem (`psychrometrics-basics.html`),
+  owner decision 2026-07-20. **An inline `margin-top` that survives
+  on a lesson paragraph is one of two cases** — check which before
+  deleting one:
+  1. *Deliberate and rule-reachable* — carries a comment saying why
+     (see `pid-basics.html`'s callout examples at 0.6rem).
+  2. *Outside the selector* — a first `<p>` in its container, a
+     classed prose utility, or prose outside `.tool-body` — where
+     the inline value is the only thing setting the gap.
 - **`body.education-page` is the one *build-time* body class.**
   `layouts/page.njk` emits it from the `nav: education` frontmatter —
   the same key that drives the active nav link, so the styling scope

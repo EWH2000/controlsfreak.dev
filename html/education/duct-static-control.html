@@ -167,7 +167,7 @@ keywords: duct static pressure supply fan vfd speed control static sensor placem
                 box can take what it wants</strong>. The fan makes pressure available; the boxes decide flow.
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 And pressure turns out to be a wonderfully honest messenger, because the duct does the arithmetic for
                 free. Thirty boxes all pull from one trunk. When they throttle back, the fan is suddenly pushing the
                 same effort into less opening, and trunk pressure rises. When they open up, the trunk bleeds down.
@@ -176,7 +176,7 @@ keywords: duct static pressure supply fan vfd speed control static sensor placem
                 stale. The fan answers to the building, not to a clock.
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 If that four-beat sentence rings familiar, it's because <a
                 href="/education/pump-control.html">pump control</a> taught it first with water in it: valves close, DP
                 rises, the pump slows. Same sign, same logic, same cube-law payday. The hydronic arc drew this mirror
@@ -244,7 +244,7 @@ keywords: duct static pressure supply fan vfd speed control static sensor placem
                 the supply fan's VFD. That's the entire machine: one AI, one AO, one fast loop between them.
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 <em>Fast</em> is worth pausing on. The zone loops you met last page think in minutes — a room warms
                 slowly, a damper strokes, the world catches up. Duct pressure answers the fan in <em>seconds</em>: touch
                 the speed reference and the sensor feels it almost immediately. Loops that quick are tuned gently or
@@ -253,7 +253,7 @@ keywords: duct static pressure supply fan vfd speed control static sensor placem
                 that's the hands-on pair for this page.
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 Where the sensor lives is the design decision. Mount it at the fan discharge and the loop holds
                 pressure where nobody uses it — on a design afternoon the far end of the trunk has spent most of that
                 pressure on duct friction before the last boxes ever see it, so you're forced to hold a high number all
@@ -323,7 +323,7 @@ keywords: duct static pressure supply fan vfd speed control static sensor placem
                 Pressure the fan paid cube-law money to make, throttled away at thirty dampers, on purpose, all day.
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 The fix is the same one <a href="/education/pump-control.html#dp-reset">pump control</a> reached for:
                 reset the setpoint down when nobody needs it. The air-side recipe is usually called <em>trim &amp;
                 respond</em> — the BMS polls the box dampers, and as long as no box is near wide open, it trims the
@@ -335,7 +335,7 @@ keywords: duct static pressure supply fan vfd speed control static sensor placem
                 ventilation minimums), but between floor and design the setpoint follows the building.
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 Why bother? Because the fan is the biggest motor on the unit, and power follows the <em>cube</em> of
                 speed — half speed costs an eighth (≈13%) of the power. Every tenth of an inch the setpoint walks down
                 lets the fan run that much slower for the same delivered air, and the savings compound exactly the way
@@ -358,7 +358,7 @@ keywords: duct static pressure supply fan vfd speed control static sensor placem
                 Three ways that bites, in escalating order:
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 <em>First — by design.</em>
                 <span data-us="1.5&nbsp;in.&nbsp;w.c." data-metric="375&nbsp;Pa">1.5&nbsp;in.&nbsp;w.c.</span> at
                 <span data-us="30,000&nbsp;CFM" data-metric="51,000&nbsp;m³/h">30,000&nbsp;CFM</span> and
@@ -372,7 +372,7 @@ keywords: duct static pressure supply fan vfd speed control static sensor placem
                 static trend sitting flat on setpoint, green as grass.
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 <em>Second — under restriction.</em> Now ice the coil, the way that building iced it. The coil sits
                 upstream of the fan, and ice is a restriction: dragging the same air through a choking coil costs more
                 fan than it used to. But the loop doesn't know about coils — it knows the sensor is reading low-of-
@@ -386,7 +386,7 @@ keywords: duct static pressure supply fan vfd speed control static sensor placem
                 load is a restriction growing somewhere the sensor can't see.
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 <em>Third — the old fix.</em> Same building, earlier chapter of its story. The coil is starving for
                 air, so someone reaches for the obvious lever: make more air — crank the fan. Except the boxes are
                 pressure-independent, and you know what that means now: every box is holding a flow setpoint, and when
@@ -450,7 +450,7 @@ keywords: duct static pressure supply fan vfd speed control static sensor placem
                 don't depend on it.
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 <em>The high-static cutout.</em> The six-o'clock scene with no working loop — a fan at speed, a duct
                 closing like a fist — ends with pressure the ductwork wasn't built for: seams boom, flex pops off its
                 collars, access doors bow. The answer is a <strong>separate mechanical pressure switch</strong>, set
@@ -466,7 +466,7 @@ keywords: duct static pressure supply fan vfd speed control static sensor placem
                 answers when software's number is gone.
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 <em>The sensing tube.</em> The transducer is only as good as the plastic tube feeding it. Tubes get
                 pinched by a panel, plugged by dust, kinked at a fitting, and — on tubes run through cold spots —
                 blocked by frozen condensation. A tube stuck reading <em>low</em> is the dangerous direction: the loop
@@ -477,7 +477,7 @@ keywords: duct static pressure supply fan vfd speed control static sensor placem
                 same paragraph with pipe in it — one small sensor, absolute trust, calibrate it and protect it.
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 <em>The duct itself.</em> A blown flex connection or an access door left open upstream of the sensor
                 is a hole the loop cannot tell from demand: static can't build, so the fan pegs at 100% and stays
                 there, conditioning a ceiling plenum. The tell is the same honest number as before — fan speed that no
@@ -609,7 +609,7 @@ keywords: duct static pressure supply fan vfd speed control static sensor placem
                 responds — drawn on water once, and now drawn on air.
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 What that arc gives you is a system that should work. What comes next is the gap between
                 <em>should</em> and <em>does</em>. <a href="/education/air-balancing.html">Air
                 balancing</a> goes zone by zone and proves every box actually receives the flow it was drawn for —
@@ -619,7 +619,7 @@ keywords: duct static pressure supply fan vfd speed control static sensor placem
                 changes what the coils here are being asked to do.
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 With that arc in hand, a handful of tools stop being black boxes. The <a
                 href="/tools/airflow.html">airflow calculator</a> is a flow ring with the sheet metal off. The <a
                 href="/tools/affinity-laws.html">affinity-laws tool</a> is this page's savings argument with real

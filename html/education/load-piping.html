@@ -268,7 +268,7 @@ keywords: 2-way 3-way valve coil bypass diverting mixing tee
                 A <em>three-way</em> valve has, as expected, three ports. What it adds to the picture is a <em>bypass</em>: a short loop of pipe that lets water get from the supply side to the return side <em>without going through the coil</em>. When the load needs less, the valve doesn't choke flow off — it sends it around the coil instead. The water still moves; it just doesn't pick up (or drop off) heat on the way through. From the system loop's point of view, the branch's total flow stays the same. The pump sees the same demand all day.
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 There are two common arrangements, and they look different but do the same job. A <em>mixing</em> valve sits at the coil's outlet and combines coil return with the bypass before sending the result back. A <em>diverting</em> valve sits at the coil's inlet and splits incoming supply between the coil and the bypass. Either way, system-side flow stays constant; coil-side flow varies between zero and full.
             </p>
 
@@ -407,7 +407,7 @@ keywords: 2-way 3-way valve coil bypass diverting mixing tee
                 Why pick three-way over two-way? Mostly history and pairing. Three-way valves pair naturally with constant-speed pumps and with boilers or chillers that want a steady diet of flow, so older buildings — and any new system whose plant insists on it — lean three-way. The downside is the one you can already see: the bypass is moving water around the building for no thermal reason at all. At part load, the system pump is still doing full work to push water past coils that don't want it. That's energy you'd rather not spend, which is exactly the argument that pushed the industry toward two-way + variable-speed.
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 One related note worth flagging: even on a constant-flow setup, each load only sees its <em>design</em> flow if the loop is <em>balanced</em> — circuit setters, automatic balancing valves, or pressure-independent control valves (PICVs) at each branch. See <a href="/education/balancing.html">Hydronic Balancing</a> for what each of those three is, when you'd reach for it, and how to tell when the loop has drifted out of balance.
             </p>
 
@@ -418,7 +418,7 @@ keywords: 2-way 3-way valve coil bypass diverting mixing tee
                 If you've been through the <a href="/education/hydronic-loops.html#d3">primary-secondary twin-T</a>, this is where the loose end gets tied off. That diagram showed two loads on the system loop as plain boxes — supply in, return out, no detail about how they connect. The detail is what we just covered, and the choice has a consequence that propagates all the way back to the loop.
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 Here's the same twin-T, with each load box opened up. <em>Load A</em> is wired two-way; <em>Load B</em> is wired three-way diverting. (Real systems pick one type for every load on the loop — both are drawn together here so the comparison is in one frame.)
             </p>
 
@@ -579,15 +579,15 @@ keywords: 2-way 3-way valve coil bypass diverting mixing tee
                 If the twin-T's loads are <em>two-way</em> (Load A above), the system loop is variable-flow. As loads modulate down, the system pump should slow down with them, and the injection pump may even need to adjust to keep the supply temperature stable as system demand swings.
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 The variable-flow plumbing has one easy-to-miss piece, marked <strong>MIN-FLOW</strong> at the far end of the system loop above. A <em>minimum-flow bypass</em> sits opposite the pump and short-circuits a controlled trickle of supply water straight back to the return main, never touching a load. With most 2-way valves throttled closed, system flow can otherwise fall low enough to dead-head the pump against its own discharge — and a VFD system pump, which can only slow down so far, still needs that floor. The guaranteed minimum flow is the pump protection a variable-flow system needs. (It's a cousin of the <em>differential pressure bypass valve</em> covered in the <a href="/education/pump-control.html">pump-control lesson</a> — same crossover location, but a DPBV opens on a Δp setpoint and is the classic constant-speed-pump fix; under VFD pressure control the drive already caps loop Δp, so the variable-flow device is sized to hold a minimum flow instead.) Three-way systems need neither — the per-load bypasses already keep flow through the pump constant.
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 If the twin-T's loads are <em>three-way</em> (Load B above), the system loop is constant-flow. A fixed-speed system pump runs all day, and the injection pump becomes the only thing modulating in response to load. Either way, the boiler doesn't care — it's still on its own primary loop, the closely-spaced tees still decouple it — but the <em>system</em> loop has a personality, and the load piping is what gives it one.
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 That's the difference the twin-T diagram didn't mention. Pick the wrong load type for the rest of your system and you end up with a constant-speed system pump fighting a building full of throttling two-way valves, or a variable-speed pump trying to ramp down on a building full of three-ways that won't let it. The connection point at each load doesn't look like much on a riser diagram, but it determines what the rest of the loop is allowed to do.
             </p>
 

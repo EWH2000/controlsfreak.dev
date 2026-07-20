@@ -40,7 +40,7 @@ keywords: point-to-point checkout functional testing startup sequence of operati
                 Point-to-point checkout is exactly what it sounds like: you take the points list — the I/O schedule from the submittal, the one that says UI3 is the mixed-air sensor and BO2 is the exhaust fan — and you verify every line of it against the physical world, one point at a time. The word that carries the weight is <em>physical</em>. You are not checking that the graphic shows <span data-us="55&nbsp;°F" data-metric="12.8&nbsp;°C">55&nbsp;°F</span>; you are checking that when the mixed-air sensor is really at <span data-us="55&nbsp;°F" data-metric="12.8&nbsp;°C">55&nbsp;°F</span> the controller reads it, that the wire on UI3 goes to the sensor the schedule names, and that the object the sequence references is the object that actually moves.
             </p>
 
-            <p style="margin-top:1.1rem;">
+            <p>
                 A graphic can be right for all the wrong reasons. A point mapped to the wrong object reads plausibly. A transmitter scaled on the wrong range tracks in the right direction and lies about the magnitude. Two swapped wires each report a believable number. None of that shows up from the front end — it shows up when you stand at the device, make something known happen, and watch whether the value the controller reports is the value the world is really doing. That's why checkout runs <strong>from the field toward the front end</strong>, not the other way around: the field is the ground truth, and the graphic is the thing on trial.
             </p>
 
@@ -51,19 +51,19 @@ keywords: point-to-point checkout functional testing startup sequence of operati
                 Every point gets exercised in the same spirit — make a known thing happen at the field end, then confirm the controller agrees — but the mechanics differ by point type. The four you'll meet on almost any controller are the analog and binary inputs and outputs (<strong>AI / AO / BI / BO</strong>), and each has its own way of being lied to.
             </p>
 
-            <p style="margin-top:1.1rem;">
+            <p>
                 <strong>Analog input (AI).</strong> Apply a <em>known</em> input and confirm the engineering value. On a resistance sensor — an RTD or a 10K thermistor — that means a decade box or resistance substitution at the input, using the sensor's type curve to know which temperature a given resistance should represent. On a transmitter it means a signal source: a loop calibrator injecting a known current, or a voltage source for a 0&ndash;10&nbsp;V device, stepped through the bottom, middle, and top of range while you confirm the controller shows the same. This is where scaling errors surface, and the <a href="/tools/signal-scaling.html">signal-scaling tool</a> is the arithmetic behind them — a transmitter read on an object scaled for the wrong range tracks correctly and reads wrong everywhere. Keep the live zero in mind: on a 4&ndash;20&nbsp;mA loop, 4&nbsp;mA is a real signal and 0&nbsp;mA is a broken loop, so an AI parked at the very bottom of its range is a wiring question, not a reading.
             </p>
 
-            <p style="margin-top:1.1rem;">
+            <p>
                 <strong>Analog output (AO).</strong> Command the point to 0, 50, and 100&nbsp;% and go watch the actuator, valve, or drive move. Two things get proven: <em>direction</em> and <em>span</em>. Direction catches the reversed action — an actuator wired or configured for the wrong sense strokes backwards, driving wide open on a 0&nbsp;% command, and the loop fights itself all season. Span catches the actuator that only sweeps part of its travel because its range setting and the software range disagree. A drive gets the same three commands, and its direction of rotation is confirmed here too — once, during checkout, before it matters.
             </p>
 
-            <p style="margin-top:1.1rem;">
+            <p>
                 <strong>Binary input (BI).</strong> Actuate the actual field contact and confirm the point changes state — and that its <em>sense</em> is right. A proof-of-flow switch, a current switch on a motor lead, a differential-pressure status: make the real condition happen (or jump the contact at the device, knowing exactly what you've done) and confirm OPEN / CLOSED lands where the sequence expects. Polarity is the trap. A normally-closed contact read as normally-open inverts the whole meaning, so "fan running" annunciates as "fan failed," and the sequence dutifully reacts to a status that is precisely backwards.
             </p>
 
-            <p style="margin-top:1.1rem;">
+            <p>
                 <strong>Binary output (BO).</strong> Command on, command off, and confirm the intended load actually switches. The classic catch is the mislabeled or swapped pair: you command the exhaust fan and the supply fan starts, because the two outputs are landed backwards or the panel and the schedule disagree. You only find it by commanding the point and watching the equipment — the graphic will cheerfully show the exhaust fan running while the supply fan is the thing that spun up.
             </p>
 
@@ -108,7 +108,7 @@ keywords: point-to-point checkout functional testing startup sequence of operati
                 Every one of those tests is an override. You force the AO to 100&nbsp;%, you put the BI out of service and toggle it, you command the BO on with the interlocks defeated so you can prove the wiring before you prove the logic. Overrides and forces are <em>how checkout happens</em> — there's no way to test an output without commanding it away from what the sequence wants. The discipline isn't avoiding them; it's <strong>accounting</strong> for them.
             </p>
 
-            <p style="margin-top:1.1rem;">
+            <p>
                 Two rules do the work. <strong>Log every override as you set it</strong>, so there is a written list of what is not currently under automatic control. <strong>Clear every one before turnover</strong> — walk that list back to zero and confirm each point is released to normal automatic operation. A forced point is a live hazard wearing a disguise: an AO left at 100&nbsp;% holds a heating valve wide open into a summer coil; a defeated freeze interlock leaves nothing between a cold night and a burst coil; a BO forced on runs a motor the sequence believes is off. The reason it's worse than an ordinary bug is that it's <em>invisible to the logic</em> — the sequence is executing correctly and being ignored. A forgotten force is one of the classic turnover defects, and it's usually found weeks later by the equipment, not by the trend.
             </p>
 
@@ -128,7 +128,7 @@ keywords: point-to-point checkout functional testing startup sequence of operati
                 Proving each point moves is necessary and not sufficient. The sequence is a set of <em>relationships</em> — this condition trips, so that output responds — and those get verified by making the triggering condition real and confirming the programmed reaction, not by confirming the trigger point merely reads. Trip the freezestat (a low-limit thermostat set just above freezing) and confirm the sequence does everything it promises: fan off, outside-air damper closed, heating valve driven open, alarm annunciated — the whole response, not just "the freeze point went to ALARM." Trip the high-static cutout and confirm the supply fan actually stops. Put the unit in unoccupied mode and confirm setbacks, damper positions, and fan state all follow. Drive a reset input across its range and confirm the reset output walks the way the sequence draws it.
             </p>
 
-            <p style="margin-top:1.1rem;">
+            <p>
                 Hardwired safeties get special attention, because they exist for exactly the moments the software can't be trusted. A freezestat or high-static switch wired to drop the fan through hardware has to be proven to drop the fan <em>through hardware</em> — controller watching, but not in the path. The whole point of a hardwired safety is that it works when the software's number is a lie: a railed sensor, a crashed controller, a value stuck where nothing downstream can see it's wrong. Test it the way it will be asked to work.
             </p>
 
@@ -139,7 +139,7 @@ keywords: point-to-point checkout functional testing startup sequence of operati
                 A point-to-point walk proves a point moved once. It does not prove the loop holds setpoint at three in the morning, that the lead/lag rotation actually rotated on schedule, or that the static reset walked down on a mild evening and back up on a design afternoon. That proof lives in <strong>trends</strong>. Stand up trend logs — change-of-value or a short interval — on the points the sequence cares about, let them run across real operating swings, and read them back.
             </p>
 
-            <p style="margin-top:1.1rem;">
+            <p>
                 Trends catch the failures a snapshot cannot: a loop that tracks fine when you nudge it but hunts for twenty minutes after a load step, staging that short-cycles on a marginal deadband, a reset that never leaves its design value because the polling side was never enabled. A commissioning record that ends at the point-to-point walk has proven the plumbing; the trends are what prove the <em>sequence</em>. If you've tuned a loop in the <a href="/simulators/pid-tuner.html">PID tuner</a>, you already know the shape of what a trend is showing you — the same overshoot and hunting, now on a real point over real hours.
             </p>
 
@@ -150,7 +150,7 @@ keywords: point-to-point checkout functional testing startup sequence of operati
                 The deliverable of checkout is not a working building — it's the <em>record</em> that the building was proven to work, point by point, with a name and a date on it. The completed point-to-point checklist is that record: every I/O point, what it was exercised with, the observed value or state, pass or fail, and a note wherever something had to be corrected. Whatever is still open at turnover goes on the <strong>issues log</strong> — the punch list of deferred items — so nothing quietly falls through the seam between "commissioned" and "occupied."
             </p>
 
-            <p style="margin-top:1.1rem;">
+            <p>
                 The other half of a good record is that it lets the <em>next</em> tech re-verify. A year from now, when a sensor drifts or a controller gets swapped, the person standing at the panel should be able to read what "right" looked like on the day it was proven. Leave the checklist, leave the trends, and leave the overrides cleared — and listed as cleared. That last part is what turning a system over actually means: not "it runs," but "here is the proof it runs, and here is how you'll know when it stops."
             </p>
 
