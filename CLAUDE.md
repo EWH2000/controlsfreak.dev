@@ -811,13 +811,29 @@ fails the build if a `nav: education` page is missing from it
    inline SVG publishes every `<title>` / `<desc>` / `<text>` node
    as structured data. `figure` is the kebab-case **element id** of
    an `<svg class="… hidden" id="…">` in a static figure bank on the
-   page; the engine clones it into the `.quiz-figure` slot (ids
-   stripped from the clone) and mount fails loudly if the id doesn't
-   resolve. The figure names itself natively (`role="img"` +
-   `<title>` / `<desc>`, no `aria-labelledby`); on a drill figure the
-   `<desc>` describes topology and live values completely but never
-   names the fault — the verdict belongs in `explain`, which every
-   reader gets (owner decision, 2026-07-19).
+   page; the engine clones it into the `.quiz-figure` slot and mount
+   fails loudly if the id doesn't resolve. Ids in the clone are
+   **renamed** with a per-render prefix and every internal reference
+   (`url(#…)`, `<use href="#…">`) is rewritten to match, so the clone
+   stays self-contained without colliding with the live source —
+   stripping the ids instead silently blanks markers, gradients and
+   patterns. The figure must name itself natively (`role="img"` +
+   `<title>` / `<desc>`); `aria-labelledby` / `aria-describedby` on a
+   figure **fails mount** — note this is the opposite of the
+   education-page SVG idiom, so a lesson SVG needs its labelling
+   converted when it moves into a figure bank.
+
+   **Open — not yet settled with the owner (raised 2026-07-19):** how
+   much a drill figure's `<desc>` may give away. The working shape has
+   been "describes topology and live values completely but never names
+   the fault, verdict lives in `explain`", but that is
+   self-contradictory when the puzzle *is* the topology (a red-herring
+   branch described completely is described away). The relevant
+   standard is **WCAG 1.1.1's Test exception** — non-text content that
+   is a test may carry only *descriptive identification*, which
+   licenses a short `<desc>` and makes the rule stateable without
+   contradiction. Settle this before authoring drill figures; don't
+   treat either shape as ratified.
 4. Add a `navCard` (section `'practice'`) to the appropriate H2
    section on `html/practice/index.html` — *Content Quizzes* if
    every question maps to an existing page, *Field Drills* if the
