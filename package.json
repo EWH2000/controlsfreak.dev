@@ -9,6 +9,7 @@
     "test": "playwright test",
     "screenshots": "node tests/screenshot-diagrams.mjs",
     "indexnow": "node .github/scripts/indexnow.mjs",
+    "prose-lint": "node .github/scripts/prose-lint.mjs",
     "import-vendor-ids": "node .github/scripts/import-bacnet-vendor-ids.mjs",
     "import-bacnet-units": "node .github/scripts/import-bacnet-units.mjs",
     "import-bacnet-errors": "node .github/scripts/import-bacnet-errors.mjs"

@@ -363,7 +363,11 @@ section). **Category keys mirror the landing pages' `navCard()`
   hydronic lessons"). Counts that a build guard or a live render keeps
   honest are fine — the home-page pills have a drift test, README
   prose does not. Section landings and hub pages are the *one* place
-  ordinals belong, since they enumerate the sequence anyway.
+  ordinals belong, since they enumerate the sequence anyway — that
+  exemption is about **ordinals**, not counts or terminal claims,
+  which stay in scope on a landing like anywhere else.
+  **`npm run prose-lint` finds candidates for this rule** (report-only;
+  see *Local preview & tests*) — run it instead of hand-greping.
 - **No coming-soon copy.** Never promise an unbuilt page in
   reader-facing prose — no "gets its own lesson", "coming later", "a
   future page covers this". Owner decision 2026-07-19: *"I don't like
@@ -1079,6 +1083,41 @@ re-submit); add `--dry-run` to print the URL list without POSTing.
   + `page.screenshot({ path, fullPage: true })`. For `contact.html`
   use `waitUntil: 'domcontentloaded'`. Rebuild (`npm run build`)
   before screenshotting `_site/` unless `npm run dev` is running.
+- **Stale-claim prose lint:** `npm run prose-lint` reports prose that
+  fixes a chapter's size or names its last page — the *Write claims
+  that can't go stale* convention above, made greppable. Eight rules
+  over four classes (`terminal` / `count` / `ordinal` / `positional`),
+  with anchor-wrapped matches downgraded a step.
+  **The report is split into two sections that are never summed**
+  (owner ruling 2026-07-20): **append-fragile** — stale when a lesson
+  is added to the END of a chapter (terminal claims, counted sets,
+  ordinal *runs*), ranked HIGH, the class the convention is actually
+  about — versus **insertion-fragile** — stale only when a lesson is
+  inserted MID-SEQUENCE (the `next` / positional family — `next`
+  *only*; "last in this chapter" is a terminal claim and files under
+  append — plus lone ordinal *references*), ranked MEDIUM. The
+  `ordinal` class is the one that spans both sections: several
+  ordinals enumerating a chapter go incomplete on append, while a lone
+  "from page 2" survives one and shifts only on insertion, so they are
+  two rules split by proximity (owner ruling 2026-07-20 — one label
+  must never cover two failure modes). Both are real; they measure
+  different risks,
+  so there is deliberately **no combined headline number** in any
+  output mode. One label covering two failure modes is what made the
+  two earlier formulations of this check unarguable. The append total
+  is a **ceiling** — the script header records the known misfiles in
+  it, since a PR body is not a durable ledger.
+  **Report-only and deliberately NOT in `test.yml`** — it is a
+  candidates-for-review list, not a gate, and "the last page" is a
+  homograph the lint cannot disambiguate (backward reference vs
+  terminal claim), so expect to dismiss some findings by reading the
+  sentence. `--json` for machine-readable output, `--files` for the
+  scanned file list. Script: `.github/scripts/prose-lint.mjs`; its
+  header pins every formulation choice (vocabulary, masking, path
+  exclusions) with the reasoning, so disagree with a specific line
+  rather than re-deriving the pattern — two earlier hand-rolled
+  formulations of this exact check produced confident numbers that
+  were never reproducible.
 - **Diagram audit pass:** `npm run screenshots` (with a server on
   :8000) dumps every diagram-class SVG across the sitemap to
   `/tmp/audit-<page>-<id>.png`. Use it as the starting point for any
