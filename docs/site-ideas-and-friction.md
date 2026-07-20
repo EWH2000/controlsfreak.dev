@@ -2593,6 +2593,12 @@ read it as a description of the site; read this entry.
   the lesson **shipped 2026-07-14**, but nothing pairs to it —
   controller-swap still carries no `pairedLesson` and there is no
   commissioning quiz. `[future: practice/controls-commissioning.html]`
+  *(shipped 2026-07-19)* — built as a `category: field` drill (owner
+  decision 2026-07-19: its scope is broader than one topic, which is
+  what `field` is for), so it deliberately carries no `pairedLesson` /
+  `pairedQuiz` pair and no `quizOrder.js` entry. controller-swap's
+  missing `pairedLesson` is therefore still open by design, not by
+  omission.
 - **Senior/mid Interview Prep and vendor-quirks drills** — the old
   list also named "Tridium / EBO quirks" drills. Those are **out** on
   the *avoid exact vendor names* guardrail, not merely deferred.

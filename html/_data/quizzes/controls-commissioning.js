@@ -1,0 +1,155 @@
+// Question bank for the Controls Commissioning field drill, exposed to
+// Nunjucks as `quizzes['controls-commissioning']`. See the sibling
+// modbus-decoding.js header for the data-vs-template rationale.
+//
+// Field drill (no single paired lesson): controls functional testing —
+// point-to-point checkout method per point type, interlock verification
+// against design intent, trends as proof over time, and the turnover
+// record. Deliberately weighted toward the method / trends / turnover /
+// loop sections of education/controls-commissioning.html, because the
+// Controller Swap drill already spends the priority-array override
+// angle and Field Wiring & Sensors already spends the live zero and the
+// mA-to-engineering-units scaling math.
+
+module.exports = [
+    // ── The idea: checkout runs from the field toward the front end ──
+    {
+        type: 'mcq',
+        id: 'checkout-runs-from-the-field',
+        prompt: 'Two techs check the same mixed-air sensor. One sees 55&nbsp;°F (12.8&nbsp;°C) on the graphic and moves on. The other puts a decade box on the input, dials in the resistance that should read 55&nbsp;°F (12.8&nbsp;°C), and confirms the controller agrees. Why is only the second one a checkout?',
+        choices: [
+            { id: 'a', text: 'The graphic refreshes too slowly to trust for commissioning.' },
+            { id: 'b', text: 'A graphic can be right for the wrong reasons — wrong object mapping, wrong range scaling, or swapped wires all report believable numbers. Only a known input at the field end proves the whole chain.', correct: true },
+            { id: 'c', text: 'Decade boxes are more accurate than the sensor, so the reading is better data.' },
+            { id: 'd', text: 'The graphic reads a cached value, so it can never be used for verification.' }
+        ],
+        explain: 'Checkout runs <em>from the field toward the front end</em>, because the field is the ground truth and the graphic is the thing on trial. A point mapped to the wrong object reads plausibly. A transmitter scaled on the wrong range tracks in the right direction and lies about the magnitude. Two swapped wires each report a believable number. None of that shows up from the front end — it shows up when you make something known happen at the device and check whether the controller agrees.',
+        learnMore: { href: '/education/controls-commissioning.html#ccx-p2p', label: 'Controls Commissioning — Point-to-point checkout' },
+        tags: ['commissioning', 'point-to-point', 'method']
+    },
+
+    // ── Method, per point type ───────────────────────────
+    {
+        type: 'mcq',
+        id: 'ao-command-proves-direction-and-span',
+        prompt: 'Commissioning an AO to a modulating valve actuator, you command 0, 50, and 100&nbsp;% and go watch the valve. What two things is that three-point command proving?',
+        choices: [
+            { id: 'a', text: 'Loop gain and integral time.' },
+            { id: 'b', text: 'Valve Cv and close-off rating.' },
+            { id: 'c', text: 'Direction and span — that the valve strokes the right way, and that it sweeps its full travel.', correct: true },
+            { id: 'd', text: 'Actuator hysteresis and stroke time.' }
+        ],
+        explain: 'Direction catches the reversed action — an actuator wired or configured for the wrong sense strokes backwards, driving wide open on a 0&nbsp;% command, and the loop fights itself all season. Span catches the actuator that only sweeps part of its travel because its range setting and the software range disagree. Both are invisible from the front end, and both look like a tuning problem later if you skip this. A drive gets the same three commands, plus a confirmation of rotation direction — once, during checkout, before it matters.',
+        learnMore: { href: '/education/controls-commissioning.html#ccx-method', label: 'Controls Commissioning — The method, per point type' },
+        tags: ['commissioning', 'ao', 'method']
+    },
+    {
+        type: 'numeric',
+        id: 'ao-span-midpoint-voltage',
+        prompt: 'An AO drives a damper actuator whose input range is 2&ndash;10&nbsp;V, and the software point is scaled 0&ndash;100&nbsp;%. You command the point to 50&nbsp;% and meter the signal at the actuator. What should you read?',
+        answer: 6,
+        tolerance: 0,
+        unit: 'V',
+        inputmode: 'decimal',
+        explain: 'The span is 2&ndash;10&nbsp;V, so 8&nbsp;V of signal covers 0&ndash;100&nbsp;%: 2 + 0.50 &times; 8 = <strong>6&nbsp;V</strong>. The reason to meter it rather than trust the command is that this is the one place the software range and the actuator range can silently disagree. An actuator jumpered for 0&ndash;10&nbsp;V while the software drives 2&ndash;10&nbsp;V is already 20&nbsp;% off at midspan and never reaches the bottom of its travel — it looks like a lazy loop, not a range mismatch.',
+        learnMore: { href: '/education/controls-commissioning.html#ccx-method', label: 'Controls Commissioning — The method, per point type' },
+        tags: ['commissioning', 'ao', 'scaling', 'method']
+    },
+    {
+        type: 'tf',
+        id: 'bi-state-change-is-not-polarity',
+        prompt: 'A binary input\'s checkout is complete once you have actuated the real field contact and watched the point change state.',
+        answer: false,
+        explain: 'A state change proves the wiring is continuous and the input is alive. It does not prove the <em>sense</em> is right. A normally-closed contact read as normally-open inverts the whole meaning, so "fan running" annunciates as "fan failed" — and the point still changes state obediently every time you exercise it. You have to know which physical condition you created and confirm that OPEN / CLOSED lands where the sequence expects it, not merely that it moved.',
+        learnMore: { href: '/education/controls-commissioning.html#ccx-method', label: 'Controls Commissioning — The method, per point type' },
+        tags: ['commissioning', 'bi', 'polarity', 'method']
+    },
+    {
+        type: 'gotcha',
+        id: 'bo-command-and-watch-the-equipment',
+        prompt: 'You are checking out the exhaust-fan BO from the laptop at the panel. You command it on, and the graphic\'s exhaust-fan symbol turns green with proof satisfied. What is still unproven?',
+        snippet: '<pre class="quiz-snippet">command:   EF-1 BO2 → ON\ngraphic:   EF-1 running ✓  (proof BI satisfied)\nobserved at the equipment:  ?</pre>',
+        choices: [
+            { id: 'a', text: 'Nothing — a satisfied proof input is the equipment confirming itself.' },
+            { id: 'b', text: 'That the load which actually started is the one the schedule names. Outputs landed backwards drive the wrong equipment, and the graphic reports the command, not the machine.', correct: true },
+            { id: 'c', text: 'The fan motor\'s full-load amps against the nameplate.' },
+            { id: 'd', text: 'Whether the exhaust fan is correctly sized for the space.' }
+        ],
+        explain: 'The classic BO catch is the mislabeled or swapped pair: you command the exhaust fan and the supply fan starts, because the two outputs are landed backwards or the panel and the schedule disagree. Note that the proof input does not save you — if the proof BI is landed on the same wrong machine, the pair is self-consistently wrong and the graphic looks perfect. The only thing that settles it is going to the equipment and watching which one spun up.',
+        learnMore: { href: '/education/controls-commissioning.html#ccx-method', label: 'Controls Commissioning — The method, per point type' },
+        tags: ['commissioning', 'bo', 'method']
+    },
+
+    // ── Interlocks against design intent ─────────────────
+    {
+        type: 'mcq',
+        id: 'interlock-is-the-whole-response',
+        prompt: 'The sequence says a freeze trip shall stop the supply fan, close the outside-air damper, drive the heating valve open, and annunciate an alarm. You trip the freezestat and the freeze point goes to ALARM on the graphic. Is the interlock verified?',
+        choices: [
+            { id: 'a', text: 'Yes — the alarm proves the trip point is wired and the logic saw it.' },
+            { id: 'b', text: 'No. The alarm is one of four promised reactions; the interlock is the relationship, so every programmed response has to be observed.', correct: true },
+            { id: 'c', text: 'Yes, provided the alarm clears when the freezestat resets.' },
+            { id: 'd', text: 'No — a freezestat can only be verified by lowering the actual mixed-air temperature.' }
+        ],
+        explain: 'Proving each point moves is necessary and not sufficient. A sequence is a set of <em>relationships</em>: this condition trips, so those outputs respond. Verifying one means making the triggering condition real and confirming the whole programmed reaction — fan off, damper closed, valve open, alarm annunciated — not confirming that the trigger point merely reads. It is entirely possible for the alarm to annunciate while one of the three output responses was never programmed, and the alarm looks like success.',
+        learnMore: { href: '/education/controls-commissioning.html#ccx-interlocks', label: 'Controls Commissioning — Interlocks and sequence logic' },
+        tags: ['commissioning', 'interlocks', 'sequence']
+    },
+
+    // ── Trends: proof over time ──────────────────────────
+    {
+        type: 'mcq',
+        id: 'trends-catch-what-a-walk-cannot',
+        prompt: 'A point-to-point walk passed every line of the I/O schedule. Which of these failures is it still most likely to have missed?',
+        choices: [
+            { id: 'a', text: 'An input scaled to the wrong range.' },
+            { id: 'b', text: 'An actuator that only strokes part of its travel.' },
+            { id: 'c', text: 'A swapped pair of binary outputs.' },
+            { id: 'd', text: 'A loop that settles fine when you nudge it but hunts for twenty minutes after a real load step.', correct: true }
+        ],
+        explain: 'The first three are exactly what a walk catches — they are all visible the moment you exercise the point. The fourth is not, because it only appears across real operating swings, and a checkout nudge is not a load step. A walk proves a point moved once; it does not prove the loop holds setpoint at three in the morning, that lead/lag actually rotated on schedule, or that staging does not short-cycle on a marginal deadband. That proof lives in trends. A commissioning record that ends at the walk has proven the plumbing — the trends are what prove the sequence.',
+        learnMore: { href: '/education/controls-commissioning.html#ccx-trends', label: 'Controls Commissioning — Trend logs, proof over time' },
+        tags: ['commissioning', 'trends', 'loops']
+    },
+    {
+        type: 'mcq',
+        id: 'reset-that-never-moves',
+        prompt: 'A hot-water plant runs outdoor-air reset. A week of trends shows the supply-water setpoint parked at its design value every day, mild ones included. What does the trend tell you that a spot check at the panel would not?',
+        choices: [
+            { id: 'a', text: 'That the reset schedule\'s slope is set too steep.' },
+            { id: 'b', text: 'That the reset is not executing at all — a single reading on any one day looks identical to a reset that never moves.', correct: true },
+            { id: 'c', text: 'That the boiler is oversized for the building.' },
+            { id: 'd', text: 'That the outdoor-air sensor is reading high.' }
+        ],
+        explain: 'A snapshot cannot distinguish "correct for today\'s conditions" from "stuck." Design value on a design day is the right answer; design value on a mild day is a failure — and the two look the same in a single reading. Only the record across changing conditions separates them. The usual causes are mundane: the reset block was never enabled, its input was never bound, or the schedule\'s endpoints collapsed onto one value. All three read as a perfectly plausible setpoint at the panel.',
+        learnMore: { href: '/education/controls-commissioning.html#ccx-trends', label: 'Controls Commissioning — Trend logs, proof over time' },
+        tags: ['commissioning', 'trends', 'reset']
+    },
+
+    // ── The loop, once per point ─────────────────────────
+    {
+        type: 'tf',
+        id: 'document-and-clear-per-point',
+        prompt: 'A point\'s checkout is finished once you have confirmed it against the sequence — writing it up and releasing the force can be swept up together at the end of the day.',
+        answer: false,
+        explain: 'The loop is exercise &rarr; watch the field device &rarr; confirm against the sequence &rarr; document it and clear the force, and it closes once per point. Batching the last step turns it into memory work at the end of a long day, which is precisely when a point gets skipped. The stakes are asymmetric, too: an undocumented pass costs you a re-test, but an uncleared force is a live hazard the logic cannot see — the sequence is executing correctly and being ignored. A forced AO holds a heating valve open into a summer coil; a defeated freeze interlock leaves nothing between a cold night and a burst coil.',
+        learnMore: { href: '/education/controls-commissioning.html#ccx-loop', label: 'Controls Commissioning — One small loop, run once per point' },
+        tags: ['commissioning', 'overrides', 'workflow']
+    },
+
+    // ── Turnover ─────────────────────────────────────────
+    {
+        type: 'mcq',
+        id: 'checkout-record-is-the-deliverable',
+        prompt: 'At turnover, what is the actual deliverable of controls functional testing?',
+        choices: [
+            { id: 'a', text: 'A building that runs correctly on the day of the walkthrough.' },
+            { id: 'b', text: 'The backup of the as-built application program.' },
+            { id: 'c', text: 'The completed record — every point, what exercised it, the observed result, pass or fail, corrections noted — plus an issues log for whatever is still open.', correct: true },
+            { id: 'd', text: 'A signed acceptance letter from the owner\'s representative.' }
+        ],
+        explain: 'The deliverable is not a working building — it is the <em>proof</em> that the building was verified, point by point, with a name and a date on it. Anything still open goes on the issues log so nothing falls through the seam between "commissioned" and "occupied." The second reason the record matters is the next tech: a year from now, when a sensor drifts or a controller gets swapped, whoever is standing at that panel should be able to read what "right" looked like on the day it was proven. That is what turning a system over means — not "it runs," but "here is the proof it runs, and here is how you will know when it stops."',
+        learnMore: { href: '/education/controls-commissioning.html#ccx-turnover', label: 'Controls Commissioning — Documentation and turnover' },
+        tags: ['commissioning', 'turnover', 'documentation']
+    }
+];

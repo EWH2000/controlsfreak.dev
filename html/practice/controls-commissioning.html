@@ -1,0 +1,87 @@
+---
+title: Controls Commissioning Drill — controlsfreak.dev
+description: A field drill on controls functional testing — point-to-point checkout by point type, interlock verification, trends as proof over time, and turnover records.
+canonical: https://controlsfreak.dev/practice/controls-commissioning.html
+nav: practice
+category: field
+keywords: point-to-point checkout functional testing startup commissioning override trend verification interlock freezestat turnover punch list
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Practice · Controls Commissioning</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">Controls Commissioning Drill <span class="tool-tag">Field Drill</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                Ten questions on proving a controller actually does what its sequence of operations says. The
+                <strong>method</strong>: exercising an AI, AO, BI, and BO from the field end, and what each
+                point type lies about when you skip it. The <strong>relationships</strong>: verifying an
+                interlock as the whole programmed response, not just the trigger reading. And the parts that
+                outlast the walk — <strong>trends</strong> as proof over real operating swings, and the
+                <strong>record</strong> you hand over. Reveals explain inline and deep-link the
+                <a href="/education/controls-commissioning.html">Controls Commissioning</a> lesson section
+                each question came from.
+            </p>
+
+            <div id="quiz"></div>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/tools/signal-scaling.html', label: 'Signal Scaling'},
+            {href: '/tools/thermistor-calculator.html', label: 'Thermistor / RTD Calculator'}
+        ],
+        simulators: [
+            {href: '/simulators/controller-wiring.html', label: 'Controller Wiring Simulator'},
+            {href: '/simulators/pid-tuner.html', label: 'PID Tuning Helper'}
+        ],
+        lessons: [
+            {href: '/education/controls-commissioning.html', label: 'Controls Commissioning'},
+            {href: '/education/controller-wiring.html', label: 'Controller Wiring'},
+            {href: '/education/function-blocks.html', label: 'Function-Block Basics'}
+        ],
+        quizzes: [
+            {href: '/practice/controller-swap.html', label: 'Controller Swap'},
+            {href: '/practice/field-wiring-sensors.html', label: 'Field Wiring & Sensors'},
+            {href: '/practice/sequencing-scenarios.html', label: 'Sequencing Scenarios'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/practice/">← All practice</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="/scripts/quiz-engine.js"></script>
+<script>
+    (function () {
+        'use strict';
+
+        // Question bank lives in html/_data/quizzes/controls-commissioning.js
+        // so the FAQPage JSON-LD emitted from head.njk can read the same source.
+        const questions = {{ quizzes['controls-commissioning'] | safeScriptJson | safe }};
+
+        Quiz.mount('#quiz', questions, {
+            next: {{ page.fileSlug | nextQuiz | safeScriptJson | safe }},
+            slug: 'controls-commissioning',
+            title: 'Controls Commissioning',
+            defaultCount: 10,
+            defaultOrder: 'sequential'
+        });
+    })();
+</script>
+{% endblock %}
