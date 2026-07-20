@@ -27,13 +27,14 @@
 //                       overwhelmingly grows, so these are the time bombs
 //                       CLAUDE.md's "Write claims that can't go stale" is
 //                       actually about. Rules: terminal-verb, terminal-ordinal,
-//                       terminal-in-chapter, counted-set, ordinal-label.
+//                       terminal-in-chapter, counted-set, ordinal-run.
 //
 //   INSERTION-FRAGILE — MEDIUM class (LOW when anchor-wrapped). Goes stale
 //                       only when a lesson is inserted MID-SEQUENCE. Rarer,
 //                       but real: chapters do get lessons inserted. Rules:
-//                       positional-ordinal, positional-in-chapter. Both are
-//                       `next`-shaped; nothing terminal lives in this class.
+//                       positional-ordinal, positional-in-chapter,
+//                       ordinal-reference. Nothing terminal lives in this
+//                       class.
 //
 // THEY ARE REPORTED SEPARATELY, WITH SEPARATE TOTALS, AND ARE NEVER ADDED
 // TOGETHER. No combined headline number appears in any output mode. That
@@ -43,16 +44,53 @@
 // wants to know "how much append-fragile prose is on this site" must be able
 // to read that number without subtracting a different risk out of it.
 //
-// A finding is placed by its WORST failure mode, not its only one. The
-// ordinal-label class is the case where that matters: "Page 3 of this chapter"
-// read in isolation is insertion-fragile only, but the shape this corpus
-// actually carries is the chapter recap (duct-static-control.html:598-604 walks
-// "Page one" through "Page five" in one paragraph), and an enumeration of a
-// chapter goes INCOMPLETE the moment a page is appended. The class sits in
-// append-fragile on that worst case; individual lines within it may be
-// insertion-only, and that is a judgement for the reader of the sentence, the
-// same judgement the "last page" homograph already demands (see KNOWN
-// AMBIGUITY below).
+// THE ORDINAL FAMILY IS SPLIT BY PROXIMITY, NOT PLACED BY WORST CASE
+// (owner ruling, 2026-07-20)
+//
+// `ordinal-label` used to be one rule filed in append-fragile on its WORST
+// case. That was a compromise and it was flagged as one: of its ten findings,
+// only the five-line chapter recap in duct-static-control.html was genuinely
+// append-fragile; the other five are lone cross-references ("from page 2")
+// that survive an append and break only on insertion. A rule that is
+// append-fragile for one instance and insertion-fragile for five is the same
+// one-label-two-failure-modes defect the append/insertion split exists to
+// remove, reproduced one level down. So it is now two rules:
+//
+//   ordinal-run       — TWO OR MORE ordinal labels within ORDINAL_RUN_WINDOW
+//                       lines of each other. An enumeration of a chapter goes
+//                       INCOMPLETE the moment a page lands at the end, and one
+//                       append falsifies every sentence in the run at once.
+//                       APPEND, HIGH, no link downgrade.
+//   ordinal-reference — a LONE ordinal pointing at one sibling. The number is
+//                       still right after an append; only an insertion shifts
+//                       it. INSERTION, MEDIUM, LOW when anchor-wrapped, the
+//                       same ranking the other positional rules carry.
+//
+// THE DISCRIMINATOR IS PROXIMITY BECAUSE NOTHING LEXICAL SEPARATES THEM.
+// "Page one built the path" and "page 2 turns into superheat" are the same
+// shape word for word; what makes the first append-fragile is the four
+// sentences marching beside it. Proximity is the only signal in the text that
+// tracks that, and it is measured in SOURCE LINES as a stand-in for "one
+// paragraph" — this corpus writes prose one sentence per source line, so a
+// recap is a tight run and a cross-reference is not. Measured on the current
+// corpus: the duct recap's largest internal gap is 2 lines (598, 599, 601,
+// 603, 604) and the smallest gap between two unrelated lone ordinals is 28
+// (refrigerant-cycle-basics.html:65 → :93). The window sits at 4, most of an
+// order of magnitude clear of both edges.
+//
+// WHERE IT MISFIRES: two unrelated lone cross-references landing in adjacent
+// paragraphs would be read as a run and over-report at HIGH/append. Nothing
+// in the corpus does that today (the 28-line floor above), and the direction
+// of the error is the conservative one. The reverse — a genuine recap written
+// as a single ordinal — is not reachable: one ordinal enumerates nothing, and
+// a recap that names its own end trips terminal-verb or terminal-ordinal
+// instead.
+//
+// This does NOT change what the lint detects. Both rules share ONE pattern
+// (ORDINAL_RE) and one `cls: 'ordinal'`; the split is a post-pass that
+// relabels findings already matched, so the union of the two rules is the old
+// `ordinal-label` set by construction. Verified as a set: same 10 findings,
+// same file/line/match, before and after.
 //
 // KNOWN MISFILES IN THE APPEND TOTAL — recorded here, in the repo, rather
 // than in a PR body, because CLAUDE.md's Workflow section is explicit that
@@ -68,12 +106,16 @@
 //     the regex vocabulary cannot draw (a count of neighbours vs a count of a
 //     set), and misfiling toward the higher-severity class is the
 //     conservative direction.
-//   - The ordinal-label class carries the same kind of residue by design —
-//     see the worst-case paragraph above. Lines whose ordinal is genuinely
-//     lone (refrigerant-cycle-basics.html, superheat-subcooling.html and its
-//     quiz bank) are insertion-only within an append-filed class.
+//   - ordinal-run over-reports if two unrelated lone ordinals ever land
+//     within ORDINAL_RUN_WINDOW lines of each other — see the proximity note
+//     above. No instance today.
 //
-// So the append total is a CEILING, not a clean figure. Read the sentence.
+// The ordinal-label residue that used to sit here is GONE: those five lone
+// ordinals now report as ordinal-reference under insertion-fragile, which is
+// their actual failure mode.
+//
+// So the append total is still a CEILING, not a clean figure. Read the
+// sentence.
 //
 // WHAT IT LOOKS FOR
 //
@@ -339,6 +381,28 @@ const NOUN = '(?:pages?|lessons?|chapters?)';
 // one word — "closes the three-page chapter" must reach its noun.
 const GAP = '(?:\\s+[\\w-]+){0,2}\\s+';
 
+// The ONE pattern behind both ordinal rules. "one" is admitted here (unlike
+// NUM) because "Page one" is a label, not a set size.
+const ORDINAL_RE = new RegExp(`\\b(?:pages?|lessons?)\\s+(?:${NUM}|one)\\b`, 'gi');
+
+// The lone half of the ordinal family. Not a matcher — classifyOrdinals()
+// stamps these fields onto findings that ORDINAL_RE produced and that turned
+// out to have no ordinal neighbour. `cls` stays 'ordinal' deliberately: it is
+// what keeps landings excluded from BOTH halves (ORDINAL_CLASSES / choice 6a),
+// so the split cannot change which files are scanned for what.
+const ORDINAL_REFERENCE = {
+    id: 'ordinal-reference',
+    cls: 'ordinal',
+    fragility: 'insertion',
+    severity: 'medium',
+    why: 'a lone ordinal cross-reference — survives an append, shifts on insertion',
+};
+
+// Two ordinal matches this many source lines apart or less read as one run.
+// Calibrated against the corpus: largest gap inside the duct-static-control
+// recap is 2, smallest gap between unrelated lone ordinals is 28.
+const ORDINAL_RUN_WINDOW = 4;
+
 const RULES = [
     {
         id: 'terminal-verb',
@@ -382,22 +446,26 @@ const RULES = [
         // chapter", "Page one built the path". Easy to miss when writing the
         // pattern (both earlier formulations did) and the densest real class
         // in this corpus — it hard-codes a sequence position in prose, which
-        // is exactly the "numbered" half of CLAUDE.md's warning. Held at high
-        // with no link downgrade for the same reason as counted-set: the
-        // anchor still resolves after an insertion, but the number is wrong.
+        // is exactly the "numbered" half of CLAUDE.md's warning.
         //
-        // APPEND-FRAGILE by worst case, per the two-class note at the top of
-        // this file. A lone "Page 3 of this chapter" survives an append; the
-        // chapter-recap shape this corpus actually carries does not, because
-        // an enumeration of a chapter goes incomplete the moment a page lands
-        // at the end. Read the sentence before acting on one of these.
-        id: 'ordinal-label',
+        // This entry is the MATCHER for the whole ordinal family and carries
+        // the ordinal-run labelling provisionally; classifyOrdinals() below
+        // demotes every match that turns out to be lone to ordinal-reference.
+        // See "THE ORDINAL FAMILY IS SPLIT BY PROXIMITY" in the header. Do
+        // not add a second matcher for the lone case — one pattern is what
+        // makes the split provably detection-preserving.
+        //
+        // No link downgrade on the run half, for the same reason as
+        // counted-set: the anchors still resolve after a page lands, but the
+        // enumeration is incomplete. The lone half DOES downgrade — see
+        // ORDINAL_REFERENCE.
+        id: 'ordinal-run',
         cls: 'ordinal',
         fragility: 'append',
         severity: 'high',
         keepWhenLinked: true,
-        why: 'hard-codes a sequence position by number — an enumeration goes incomplete on append, and every label shifts on insertion',
-        re: new RegExp(`\\b(?:pages?|lessons?)\\s+(?:${NUM}|one)\\b`, 'gi'),
+        why: 'several ordinals enumerating a chapter — one append leaves the whole run incomplete',
+        re: ORDINAL_RE,
     },
     {
         // The in-chapter twin of terminal-ordinal, for the shape that has no
@@ -498,6 +566,38 @@ function isLinked(raw, start, end) {
 
 const RANK = { high: 0, medium: 1, low: 2 };
 
+// Split the ordinal family in two, by proximity. Runs AFTER the overlap
+// filter, so an ordinal that lost to a wider match cannot pad a run.
+//
+// Mutates in place and returns the same array: every finding is already
+// labelled ordinal-run by the matcher, so this only has to demote the lone
+// ones. Chaining is transitive — a, a+3, a+6 is one run of three even though
+// the ends are 6 apart — which is the paragraph behaviour we want.
+function classifyOrdinals(findings) {
+    // `class`, not `cls` — the rule descriptor's `cls` is copied onto the
+    // finding under the key `class`. Reading `f.cls` here silently matches
+    // nothing and leaves every ordinal filed as a run.
+    const ordinals = findings
+        .filter((f) => f.class === 'ordinal')
+        .sort((a, b) => a.line - b.line);
+
+    for (let i = 0; i < ordinals.length; i += 1) {
+        const prev = ordinals[i - 1];
+        const next = ordinals[i + 1];
+        const near = (o) => o && Math.abs(o.line - ordinals[i].line) <= ORDINAL_RUN_WINDOW;
+        if (near(prev) || near(next)) continue;   // part of a run — keep as matched
+
+        const f = ordinals[i];
+        f.rule = ORDINAL_REFERENCE.id;
+        f.fragility = ORDINAL_REFERENCE.fragility;
+        f.why = ORDINAL_REFERENCE.why;
+        // Anchor-wrapped lone ordinals rank a step lower, same as the other
+        // positional rules: the link keeps resolving, only the number moves.
+        f.severity = f.linked ? 'low' : ORDINAL_REFERENCE.severity;
+    }
+    return findings;
+}
+
 function lintFile(file) {
     const rel = path.relative(ROOT, file);
     const src = readFileSync(file, 'utf8');
@@ -557,10 +657,10 @@ function lintFile(file) {
     // Rules overlap by design ("last three pages" is both terminal and a
     // count). Report the widest match on a given span once, rather than
     // making the reader reconcile two lines about the same words.
-    return findings.filter((f, _, all) => !all.some((o) => o !== f
+    return classifyOrdinals(findings.filter((f, _, all) => !all.some((o) => o !== f
         && o.line === f.line
         && o.start <= f.start && o.end >= f.end
-        && (o.end - o.start > f.end - f.start)));
+        && (o.end - o.start > f.end - f.start))));
 }
 
 const files = scanFiles(HTML_DIR);
@@ -608,7 +708,12 @@ if (filesOnly) {
                     current = f.severity;
                     console.log(`── ${current.toUpperCase()} ──`);
                 }
-                console.log(`${f.file}:${f.line}  [${f.class}${f.linked ? '/linked' : ''}]  "${f.match}"`);
+                // The RULE id, not the class. `ordinal` is now the one class
+                // that spans both sections (ordinal-run is append-fragile,
+                // ordinal-reference is insertion-fragile), so printing the
+                // class would leave a reader unable to tell which of the two
+                // a line came from — the exact ambiguity the split removes.
+                console.log(`${f.file}:${f.line}  [${f.rule}${f.linked ? '/linked' : ''}]  "${f.match}"`);
                 console.log(`    ${f.why}`);
                 console.log(`    … ${f.context} …\n`);
             }
@@ -633,19 +738,24 @@ if (filesOnly) {
             insertionFragile,
         );
 
-        console.log('Legend:');
-        console.log('  APPEND-FRAGILE classes');
-        console.log('    terminal   — asserts a page is last or a chapter is closed.');
-        console.log('    count      — fixes the size of an append-growing set. A count of');
-        console.log('                 NEIGHBOURS ("two lessons on either side") is insertion-');
-        console.log('                 only and files here anyway — read the sentence.');
-        console.log('    ordinal    — hard-codes a page number; an enumeration of a chapter');
-        console.log('                 goes incomplete on append. Placed by worst case — a lone');
-        console.log('                 ordinal reference is insertion-only, so read the sentence.');
-        console.log('  INSERTION-FRAGILE classes');
-        console.log('    positional — fixes a page\'s place in sequence ("the next page").');
+        console.log('Legend (rules, grouped by the section they report under):');
+        console.log('  APPEND-FRAGILE');
+        console.log('    terminal-verb / terminal-ordinal / terminal-in-chapter');
+        console.log('               — asserts a page is last or a chapter is closed.');
+        console.log('    counted-set — fixes the size of an append-growing set. A count of');
+        console.log('               NEIGHBOURS ("two lessons on either side") is insertion-');
+        console.log('               only and files here anyway — read the sentence.');
+        console.log('    ordinal-run — several ordinals enumerating a chapter; one append');
+        console.log('               leaves the whole run incomplete.');
+        console.log('  INSERTION-FRAGILE');
+        console.log('    positional-ordinal / positional-in-chapter');
+        console.log('               — fixes a page\'s place in sequence ("the next page").');
+        console.log('    ordinal-reference — a lone ordinal pointing at one sibling; the');
+        console.log('               number survives an append and shifts on insertion.');
         console.log('  /linked    — the claim wraps an <a href> to the page it names; the link');
         console.log('               keeps resolving, so these are the likeliest dismissals.');
+        console.log('  The `ordinal` CLASS spans both sections by design — its two rules have');
+        console.log('  different failure modes. Split by proximity; see the file header.');
         console.log('\nSee the header of this file for every formulation choice and why.');
         console.log('Report-only by design — exiting 0.');
     }
