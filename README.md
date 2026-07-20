@@ -849,7 +849,7 @@ flavors share the same engine:
   new education page.
 
 Shipped so far — thirty-four content quizzes (each 10 questions, paired
-1:1 with its lesson and deep-linking the gotchas) plus six field
+1:1 with its lesson and deep-linking the gotchas) plus seven field
 drills:
 
 - **Content quizzes — protocols:** Modbus Basics, Modbus Decoding,
