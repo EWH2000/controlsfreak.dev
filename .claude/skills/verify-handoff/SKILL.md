@@ -12,6 +12,20 @@ Run this **before** acting on a handoff, and **before** dispatching any
 brief to a subagent. A wrong premise in a brief multiplies across every
 lane it touches and lands in merged history.
 
+## What to verify
+
+Default target: **`docs/next-session-handoff.md`** — the rolling brief,
+and the file `/handoff` writes. Read it without being given a path.
+
+Verify something else when the user names a path, pastes a brief inline,
+or the work is arc-scoped: an arc with its own multi-session identity uses
+`docs/<arc>-handoff.md`, and completed cycles archive to
+`docs/audits/<topic>/handoff.md`. Same paths `/handoff` writes to — the
+two skills are two ends of one loop, so keep them in step if either moves.
+
+If the default is absent, say so and stop rather than hunting for a
+substitute; a missing handoff is itself worth reporting.
+
 ## Why this exists
 
 - One draft of `docs/next-session-handoff.md` carried **four claims that
