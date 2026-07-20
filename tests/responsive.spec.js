@@ -30,6 +30,7 @@ const PHONE_SE_PAGES = [
     '/education/vfds.html',
     '/education/balancing.html',
     '/education/equipment-staging.html',
+    '/education/reading-a-wiresheet.html',
     '/simulators/vfd-mock.html',
     '/styleguide.html',
 ];
