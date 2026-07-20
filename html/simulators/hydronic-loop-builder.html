@@ -182,7 +182,10 @@ keywords: hydronic loop pump coil valve cv balancing delta-t static head primary
         }
         .hlb-insp-title { font-family: var(--mono); font-size: 0.7rem; font-weight: 600; color: var(--text-bright); align-self: center; }
         .hlb-insp-empty { font-size: 0.78rem; color: var(--text-dim); align-self: center; }
-        .hlb-insp-keys { font-family: var(--mono); font-size: 0.62rem; color: var(--text-dim); align-self: center; opacity: 0.85; }
+        /* No opacity here: 0.85 composited --text-dim down to 3.48:1 on the
+           light --surface-3 face, an AA fail on static hint text. --text-dim
+           at full strength is already the "quiet" step (4.60:1 there). */
+        .hlb-insp-keys { font-family: var(--mono); font-size: 0.62rem; color: var(--text-dim); align-self: center; }
         .hlb-insp-row { display: flex; flex-direction: column; }
         .hlb-insp-row label {
             font-family: var(--mono); font-size: 0.6rem; text-transform: uppercase;

@@ -65,9 +65,9 @@ keywords: wb wbt db rh dew point grains enthalpy wet bulb humidity
         /* Margin readout — surface − dew-point — colour-matches the status
            panel so the pair reads as one signal. Override is keyed off the
            parent readouts' data-state attribute. */
-        #pool-margin-val { color: var(--accent); }
+        #pool-margin-val { color: var(--accent-ink); }
         .pool-w-readouts[data-state="watch"] #pool-margin-val { color: var(--heat); }
-        .pool-w-readouts[data-state="bad"]   #pool-margin-val { color: var(--red);  }
+        .pool-w-readouts[data-state="bad"]   #pool-margin-val { color: var(--red-text);  }
     </style>
 {% endblock %}
 

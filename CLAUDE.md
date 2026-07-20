@@ -662,6 +662,31 @@ section headers).
   (since the audit-2026-06 #2 fix; its DOM walker no-ops on pages
   without `data-us` spans) — pages must not load it themselves. The
   two pills share one CSS block (`UNITS + THEME TOGGLES`).
+- **Contrast is guarded, and the guard blocks.**
+  `tests/contrast-sweep.spec.js` walks every page in **both themes**,
+  composites `opacity` up to `<html>`, resolves the effective
+  background by walking ancestors, and asserts the WCAG AA floor for
+  each ink source's computed size and weight. Four things count as
+  text, because three of them are invisible to a `childNodes` scan: an
+  element's own text nodes, `::before` / `::after` string content,
+  an `<input>` / `<textarea>` VALUE, and `::placeholder`. It
+  runs in `npm test` like any other spec, so a token retune or a new
+  `color:` that lands under 4.5:1 fails CI instead of shipping. Two
+  things to know when it goes red: **name the ink token, don't fudge
+  the colour** — the `-ink` family (`--accent-ink`, `--blue-ink`,
+  `--red-text`) exists because small text needs a deeper/brighter step
+  than the base hue, per theme, and reaching for one of those is
+  almost always the fix; and **a separate `opacity` on the text
+  element counts** — that is what the sweep composites, and it is the
+  blind spot that hid `.bit-idx` at 1.83:1 behind a declared 4.83:1.
+  Genuine exceptions go in the spec's `ALLOWLIST` **with a measured
+  ratio and a written reason**, never as a threshold change, and an
+  entry that stops matching fails its own test so it cannot decay into
+  a silent permanent exemption. Scope exclusions (SVG diagram text,
+  the equipment register, decorative pseudo-element separators, and
+  state-dependent markup no stylesheet can open — the spec force-opens
+  the nav dropdowns, tab panes and command palette so those DO get
+  measured) are documented in the spec header.
 - **Focus indicators (`:focus-visible`)** live in one consolidated
   `FOCUS INDICATORS` block in `styles.css` (the browser default
   outline is suppressed elsewhere). When adding a new custom-styled

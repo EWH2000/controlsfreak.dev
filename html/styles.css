@@ -120,6 +120,12 @@
     --text-dim:     #919cab;   /* labels, secondary text — bumped one step 2026-06-10: #828d9b sat at 3.97:1 on --surface-2 where TH cells and nav-card pills carry real content (codebase-issues #81) */
     --blue:         #4aa3dd;   /* data readouts / selection (Niagara steel-azure); also "supply water" in diagrams */
     --blue-bright:  #74c2f0;
+    --blue-ink:     #4aa3dd;   /* blue TEXT at small sizes, incl. over the --accent-dim /
+                                  selection washes. Dark --blue already clears AA on every
+                                  surface it lands on (measured), so this rides its value
+                                  unchanged; LIGHT needs a deeper step. Same purpose-token
+                                  shape as --accent-ink (codebase-issues #166) and
+                                  --red-text. Strokes / fills stay --blue (3:1 UI floor). */
     --blue-cool:    #6f97aa;   /* muted companion to --blue — "return water" in diagrams (paired with a dashed line so it reads without colour too) */
     --blue-dim:     rgba(74,163,221,0.16);
     --blue-glow:    rgba(74,163,221,0.24);
@@ -213,13 +219,26 @@
                                   is blind to a separate `opacity` on the text element — see the
                                   .bit-idx note. Retuning this token does NOT clear those. */
     --blue:         #11679f;
-    --blue-bright:  #1573b2;
+    --blue-bright:  #146ea9;   /* darkened one step 2026-07-20: #1573b2 computed 4.47:1 on --bg,
+                                  an AA small-text fail on the home hero's setpoint readout. This
+                                  step reads 4.81:1 there / 5.48:1 on --surface. Kept as its own
+                                  token rather than folded into --blue-ink because "bright" is the
+                                  EMPHASIS step, and in dark (#74c2f0, 9.25:1) it is what separates
+                                  the operable readout from the quiet --blue-ink demo chrome. */
+    --blue-ink:     #0f5c8f;   /* deeper than --blue: --blue reads 4.42-4.48:1 as small text
+                                  on the selection washes (#d3dfdd hero tree row, #d7e1cf
+                                  psy selected row). This step clears 5.28:1 at the worst
+                                  of those. It is the QUIET blue-text step; --blue-bright is
+                                  the emphasis one and carries its own AA note above. */
     --blue-cool:    #4d7286;
     --blue-dim:     rgba(17,103,159,0.10);
     --blue-glow:    rgba(17,103,159,0.22);
     --red:          #c4382f;
     --red-dim:      rgba(196,56,47,0.10);
-    --red-text:     #c4382f;   /* light --red already clears AA on light surfaces */
+    --red-text:     #bb352c;   /* darkened 2026-07-20: #c4382f (= light --red) computed
+                                  4.44:1 on --surface-3, so the old "light --red already
+                                  clears AA on light surfaces" claim was true only of the
+                                  brighter surfaces. This step reads 4.80:1 there. */
     --heat:         #9c5a14;
     --teal:         #377070;
     --teal-dim:     rgba(55,112,112,0.10);
@@ -269,13 +288,14 @@
         --text-bright:  #1d251f;
         --text-dim:     #636b63;   /* kept in sync with the light block above */
         --blue:         #11679f;
-        --blue-bright:  #1573b2;
+        --blue-bright:  #146ea9;   /* kept in sync with the light block above */
+        --blue-ink:     #0f5c8f;
         --blue-cool:    #4d7286;
         --blue-dim:     rgba(17,103,159,0.10);
         --blue-glow:    rgba(17,103,159,0.22);
         --red:          #c4382f;
         --red-dim:      rgba(196,56,47,0.10);
-        --red-text:     #c4382f;
+        --red-text:     #bb352c;
         --heat:         #9c5a14;
         --teal:         #377070;
         --teal-dim:     rgba(55,112,112,0.10);
@@ -1314,7 +1334,7 @@ abbr[title] {
     margin-bottom: -1px;
     transition: color 0.18s, border-color 0.18s;
 }
-.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+.tab-btn.active { color: var(--accent-ink); border-bottom-color: var(--accent); }
 .tab-btn:hover:not(.active) { color: var(--text); }
 .tab-pane { display: none; }
 .tab-pane.active { display: block; }
@@ -1372,6 +1392,16 @@ input:focus, textarea:focus, select:focus {
     box-shadow: 0 0 0 3px var(--accent-dim);
 }
 select option { background: var(--surface); }
+/* Placeholder text is content, not chrome — WCAG 1.4.3 applies to it,
+   and left to the UA default Chromium painted every .ps-input hint at
+   4.04:1 on --bg across ~40 tool pages (a seeded example value like
+   "e.g. 260" or "1200" is often the only clue to the expected format).
+   --text-dim reads 6.52:1 dark / 4.83:1 light on the --bg field face
+   both these blocks use, and keeps the hint visibly quieter than the
+   --text-bright value the visitor types over it. Element-level so a
+   component that wants a different hint colour still out-specifies it
+   (.palette-input below already does). */
+input::placeholder, textarea::placeholder { color: var(--text-dim); }
 
 /* ── RESULT PANEL ── */
 .result-panel {
@@ -1805,7 +1835,7 @@ body.has-fullscreen-tool main { z-index: 400; }
     font-size: 0.7rem;
     text-transform: uppercase;
     letter-spacing: 0.12em;
-    color: var(--accent);
+    color: var(--accent-ink);
     margin: 2rem 0 0.9rem;
 }
 .subhead:first-child { margin-top: 0; }
@@ -2363,9 +2393,9 @@ p.chip-row-preamble {
     cursor: pointer;
     transition: border-color 0.18s, background 0.18s, color 0.18s;
 }
-.filter-chip:hover { border-color: var(--accent); color: var(--accent); }
+.filter-chip:hover { border-color: var(--accent); color: var(--accent-ink); }
 .filter-chip.active {
-    color: var(--accent);
+    color: var(--accent-ink);
     background: var(--accent-dim);
     border-color: var(--accent-glow);
 }
@@ -2373,7 +2403,18 @@ p.chip-row-preamble {
     font-size: 0.65rem;
     color: var(--text-dim);
 }
-.filter-chip.active .filter-chip-count { color: var(--accent); opacity: 0.75; }
+/* The old pairing here was --accent at opacity 0.75, which composited to
+   2.67:1 light / 3.39:1 dark on the chip's --accent-dim wash — a real AA
+   fail at 10.4px, so the opacity had to go. It leaves the count and the
+   chip label both on --accent-ink, i.e. no tonal step between them; the
+   size step (11.52px vs 10.4px) is all that marks the count as
+   subordinate. That flattening is NOT the preferred look, it is the only
+   one available: on the light active chip --accent-ink measures 4.79:1,
+   4.26:1 for --text-dim, so there is no green or grey quieter than this
+   that still clears 4.5:1. Restoring the step needs a lighter chip wash
+   or a smaller/lighter count — an owner visual call, tracked, not made
+   here. */
+.filter-chip.active .filter-chip-count { color: var(--accent-ink); }
 /* The .nav-card rule below sets display:block, which would override the UA
    `hidden { display: none }` and leave hidden cards consuming grid slots.
    Re-assert display: none for the [hidden] case. */
@@ -3627,7 +3668,7 @@ p.ref-note.compact {
 }
 .widget-try .lbl { letter-spacing: 0.05em; text-transform: uppercase; margin-right: 0.6rem; }
 .widget-try a {
-    color: var(--accent);
+    color: var(--accent-ink);
     text-decoration: none;
     margin-right: 0.85rem;
     cursor: pointer;
@@ -3639,7 +3680,7 @@ p.ref-note.compact {
    audit finding; new try-rows should use buttons). */
 .widget-try button {
     font: inherit;
-    color: var(--accent);
+    color: var(--accent-ink);
     background: none;
     border: none;
     border-bottom: 1px dashed var(--accent-dim);
