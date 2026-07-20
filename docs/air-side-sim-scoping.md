@@ -11,9 +11,15 @@
 **Readiness is higher than "next flagship" implies — this is substantially a
 consolidation job, not greenfield physics.** The psychrometric core exists and
 is spec-covered, the animated air-lane rendering exists and is in production,
-and five of the eight forced-air lessons already contain working models with
+and six of the eight forced-air lessons already contain working models with
 owner-blessed constants. The genuinely new work is one solver and the
 consolidation itself.
+
+<!-- // corrected 2026-07-19: this line read "five of the eight" and
+     contradicted the measured count below at "Two lessons have nothing to
+     consolidate," which puts 150–290 lines of script in "the other six."
+     Six is right: 8 total − air-balancing − dedicated-outdoor-air. -->
+
 
 ## What already exists to build on
 
