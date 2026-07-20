@@ -49,6 +49,30 @@
 //    claim AND a separate "next in this chapter" in the same sentence, and
 //    only the positional half is a finding.
 //
+// 3a. HONEST ACCOUNTING OF WHAT SAFE ACTUALLY DOES TODAY: nothing.
+//    Deleting the SAFE array outright produces a byte-identical finding
+//    set — same count, same file/line/rule/match, set-diff empty in both
+//    directions. It is a FORWARD guard, not a live filter, and the header
+//    previously read as though the reported total were net of two
+//    subtractions when it is gross.
+//
+//    The reason is that the safe phrasings are not candidate findings under
+//    ANY current rule, so there is nothing for the subtraction to remove.
+//    Re-read the economizers.html:115 example above in that light: the SAFE
+//    regex does match "a page of its own", but no rule starts inside that
+//    span (none of the five begins on "a" / "its" / "opening" / "first"),
+//    so the per-match skip never fires. The finding on that line comes from
+//    "next in this chapter", which SAFE was never going to touch. The
+//    example demonstrates the INTENT correctly and demonstrates the
+//    MECHANISM not at all. Same for the three opener claims in choice 2.
+//
+//    SAFE is kept rather than deleted because the rule vocabulary is the
+//    thing most likely to grow — the moment a rule reaches "first page" or
+//    "its own page", these subtractions start carrying weight. But that
+//    also means SAFE has ZERO coverage proving it works. Anyone extending
+//    the rule vocabulary into opener or existence territory should verify
+//    the subtraction actually fires rather than trusting this block.
+//
 // 4. PROXIMITY WINDOW: ADJACENCY, NOT A CHARACTER COUNT. The ordinal word
 //    must sit within two words of the sequence noun (page / lesson /
 //    chapter). A character window (the earlier formulations used 45-60
