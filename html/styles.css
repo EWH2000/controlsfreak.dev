@@ -3195,6 +3195,10 @@ p.chip-row-preamble {
     min-height: 38px;
 }
 .ps-row:last-of-type { border-bottom: none; }
+/* --text-dim here is the same deliberate quiet-caption choice as the shared
+   `label, .field-label` rule — see the standing-answer comment above that
+   rule for the rationale, the measured ratios, and the page-local escape
+   hatch (codebase-issues #168). */
 .ps-label {
     font-family: var(--sans);
     font-size: 0.82rem;
