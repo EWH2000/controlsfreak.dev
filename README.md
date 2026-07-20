@@ -21,13 +21,13 @@ leads with a quick-tools strip and a live AHU supply-air loop you can
 PID Tuner to tune one yourself.
 
 The **BACnet reference hub** at `/bacnet/` is a topic pillar — one page
-that gathers the whole BACnet cluster (the five lessons in a start-here
-reading order, plus the six decoders and reference tools) so the deepest
+that gathers the whole BACnet cluster (the lessons in a start-here
+reading order, plus the decoders and reference tools) so the deepest
 BACnet content is reachable from a single entry point. Every BACnet page
 links back to it via the "Part of" slot in the related-links block.
 
 The **forced-air reference hub** at `/forced-air/` is the second topic
-pillar — one page that gathers the whole air side (eight lessons from the
+pillar — one page that gathers the whole air side (the lessons run from the
 air handler out to the VAV box, its commissioning, and dedicated outdoor
 air, plus the airflow, coil, and fan tools that measure, size, and check
 the air a system moves) so the deepest forced-air content is reachable
@@ -35,7 +35,7 @@ from a single entry point.
 The air-side pages link back to it the same way.
 
 The **hydronics reference hub** at `/hydronics/` is the third topic
-pillar — one page that gathers the whole water side (five lessons from
+pillar — one page that gathers the whole water side (the lessons run from
 the loop and load piping through pump control, balancing, and coil
 selection, plus the valve, flow, and pump tools and a loop-builder
 sandbox) so the deepest hydronic content is reachable from a single
@@ -45,7 +45,7 @@ forced-air and hydronics hubs.
 
 The **refrigeration reference hub** at `/refrigeration/` is the fourth
 topic pillar — one page that gathers the refrigerant circuit (the
-three-lesson chapter from the vapor-compression cycle through superheat
+chapter runs from the vapor-compression cycle through superheat
 and subcooling to the metering devices, plus the P-T & superheat
 calculator and the live loop simulator) so the deepest refrigeration
 content is reachable from a single entry point. The refrigerant pages
