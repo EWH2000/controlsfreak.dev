@@ -59,13 +59,23 @@
 //    positional. Adjacency drops every one of them without a bespoke
 //    exclusion. A 2-LINE sliding window handles claims wrapped across
 //    source lines; each match is anchored to the line where it starts, so
-//    nothing is double-reported.
+//    nothing is double-reported. The ANCHOR-WRAP check runs on a 3-line
+//    window (one wider on each side): the rules only match forward, but an
+//    <a> can OPEN on the line before the match starts, and scoring those as
+//    unlinked mis-ranked real findings (duct-static-control.html:370 read
+//    HIGH when its claim is fully anchor-wrapped and belongs at MEDIUM).
 //
 // 5. RAW SOURCE OR EXTRACTED PROSE?  Raw source, with four things stripped
 //    before matching:
 //      - HTML tags        — `id="chapter-next"` and `href=".../last-page"`
 //                           are markup, not claims (this was a documented
-//                           false-positive source).
+//                           false-positive source). Masked over the WHOLE
+//                           file, like the comments below and for the same
+//                           reason: opening tags wrap across source lines all
+//                           over this corpus, and a per-line strip left the
+//                           continuation line's raw attributes exposed to the
+//                           rules — the precise false positive this defends
+//                           against.
 //      - Nunjucks {{ }} / {% %} — `next: {{ page.fileSlug | nextQuiz }}` in
 //                           37 practice pages is a data binding, not prose.
 //      - HTML / CSS / JS block comments — dev notes to ourselves. Masked
@@ -170,12 +180,22 @@ function maskFile(src) {
         .replace(/\/\*[\s\S]*?\*\//g, blankKeepNewlines)  // CSS / JS block comment
         .replace(/\{#[\s\S]*?#\}/g, blankKeepNewlines)    // Nunjucks comment
         .replace(/\{\{[\s\S]*?\}\}/g, blankKeepNewlines)  // Nunjucks expression
-        .replace(/\{%[\s\S]*?%\}/g, blankKeepNewlines);   // Nunjucks tag
+        .replace(/\{%[\s\S]*?%\}/g, blankKeepNewlines)    // Nunjucks tag
+        .replace(/<[^>]*>/g, blankKeepNewlines);          // HTML tag
 }
 
+// The HTML-tag strip belongs in maskFile, NOT here: `[^>]` spans newlines, and
+// this corpus wraps opening tags across source lines constantly (200 lines
+// under html/**.html end mid-tag). Stripping per line needs a `<` on the same
+// line, so a wrapped tag left its continuation line's raw attributes exposed
+// to the rules — defeating the false-positive defense choice 5 claims, since
+// `href=".../last-page"` is markup, not a claim. Nothing leaks today, but
+// `counted-set` is NUM[-\s]NOUN and that class accepts a hyphen, so a future
+// `href=".../three-page-recap.html"` landing on a continuation line would be
+// reported as a HIGH prose finding with markup as its match. Moving the strip
+// is behavior-preserving on today's corpus (verified: same 44 findings).
 function maskLine(line) {
     return line
-        .replace(/<[^>]*>/g, blank)            // HTML tag
         .replace(/(^|[^:])\/\/.*$/, (m, p1) => p1 + blank(m.slice(p1.length)));  // JS line comment
 }
 
@@ -198,7 +218,17 @@ const RULES = [
         cls: 'terminal',
         severity: 'high',
         why: 'asserts a chapter is closed — stale the moment a page is appended',
-        re: new RegExp(`\\b(?:closes|closing|concludes|concluding|wraps up|ends)${GAP}${NOUN}\\b`, 'gi'),
+        // Every inflection, not just the third-person singular. The first cut
+        // of this alternation covered `closes` but not `close` / `closed`, and
+        // the wording it therefore missed — "close the chapter from memory" —
+        // is a VERBATIM shipped regression: it sat on the practice landing's
+        // card desc and the paired drill intro, went stale when the forced-air
+        // chapter grew 6 → 8 by append, and was retired in PR #395. A lint
+        // commissioned for this defect class that cannot see the defect it was
+        // commissioned for is worse than no lint. Same reasoning for `ended` /
+        // `wrapped up`: a backward-looking past tense ("this lesson closed the
+        // chapter") makes the identical terminal assertion.
+        re: new RegExp(`\\b(?:close[sd]?|closing|conclude[sd]?|concluding|wrap(?:s|ped)?\\s+up|end(?:s|ed|ing)?)${GAP}${NOUN}\\b`, 'gi'),
     },
     {
         id: 'terminal-ordinal',
@@ -269,9 +299,18 @@ function safeSpans(text) {
     return spans;
 }
 
-// True when the matched text sits inside an <a ...>…</a> on the raw line.
+// True when the matched text sits inside an <a ...>…</a> in the raw window.
 // Anchor-wrapped claims break on insertion only (the link still resolves),
 // so they rank a step lower.
+//
+// The window passed in must be the SAME 2-line window the rules matched
+// against, not the single line the match starts on. This corpus wraps opening
+// tags across source lines constantly, so a claim whose <a is on the previous
+// line scored linked:false and reported at the undowngraded severity —
+// duct-static-control.html:370 is fully anchor-wrapped and was reported HIGH
+// instead of MEDIUM. Masking preserves character counts line for line and both
+// windows are joined with a single space, so offsets align between the masked
+// text the rules see and the raw text this reads.
 function isLinked(raw, start, end) {
     const re = /<a\b[^>]*>[\s\S]*?<\/a>/gi;
     let m;
@@ -300,6 +339,15 @@ function lintFile(file) {
         // reported by the previous window.
         const own = masked[i];
         const text = own + ' ' + (masked[i + 1] ?? '');
+        // One line WIDER than the match window, on both sides. The rules only
+        // ever match forward, but an anchor can OPEN on the line before the
+        // one a match starts on — duct-static-control.html:370 is exactly that
+        // shape, `<a` on 369 and the claim on 370 — so the link check needs a
+        // look-behind the rule scan does not. `rawOffset` re-bases the match
+        // offsets into this wider window.
+        const rawBefore = i > 0 ? raw[i - 1] + ' ' : '';
+        const rawOffset = rawBefore.length;
+        const rawText = rawBefore + raw[i] + ' ' + (raw[i + 1] ?? '');
         const skip = safeSpans(text);
 
         for (const rule of RULES) {
@@ -310,7 +358,7 @@ function lintFile(file) {
                 if (start >= own.length) continue;                       // starts on the next line
                 if (skip.some(([a, b]) => start >= a && start < b)) continue;   // safe class
 
-                const linked = isLinked(raw[i], start, Math.min(m.index + m[0].length, own.length));
+                const linked = isLinked(rawText, rawOffset + start, rawOffset + m.index + m[0].length);
                 const severity = (!linked || rule.keepWhenLinked) ? rule.severity
                     : rule.severity === 'high' ? 'medium' : 'low';
 
