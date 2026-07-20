@@ -27,12 +27,13 @@
 //                       overwhelmingly grows, so these are the time bombs
 //                       CLAUDE.md's "Write claims that can't go stale" is
 //                       actually about. Rules: terminal-verb, terminal-ordinal,
-//                       counted-set, ordinal-label.
+//                       terminal-in-chapter, counted-set, ordinal-label.
 //
 //   INSERTION-FRAGILE — MEDIUM class (LOW when anchor-wrapped). Goes stale
 //                       only when a lesson is inserted MID-SEQUENCE. Rarer,
 //                       but real: chapters do get lessons inserted. Rules:
-//                       positional-ordinal, positional-in-chapter.
+//                       positional-ordinal, positional-in-chapter. Both are
+//                       `next`-shaped; nothing terminal lives in this class.
 //
 // THEY ARE REPORTED SEPARATELY, WITH SEPARATE TOTALS, AND ARE NEVER ADDED
 // TOGETHER. No combined headline number appears in any output mode. That
@@ -53,6 +54,27 @@
 // same judgement the "last page" homograph already demands (see KNOWN
 // AMBIGUITY below).
 //
+// KNOWN MISFILES IN THE APPEND TOTAL — recorded here, in the repo, rather
+// than in a PR body, because CLAUDE.md's Workflow section is explicit that
+// "PR bodies are not a reliable debt ledger, in either direction" and that a
+// reader should "reconcile against the built site". A number the owner ruling
+// exists to make independently readable has to carry its own errata:
+//
+//   - html/education/controls-commissioning.html — "Two lessons sit on either
+//     side of this one" reports as counted-set / append / HIGH. It names a
+//     fixed BEFORE-and-AFTER pair, so appending to the chapter cannot falsify
+//     it; only an insertion can. It is insertion-fragile filed under append.
+//     Left in place deliberately: separating it needs a semantic distinction
+//     the regex vocabulary cannot draw (a count of neighbours vs a count of a
+//     set), and misfiling toward the higher-severity class is the
+//     conservative direction.
+//   - The ordinal-label class carries the same kind of residue by design —
+//     see the worst-case paragraph above. Lines whose ordinal is genuinely
+//     lone (refrigerant-cycle-basics.html, superheat-subcooling.html and its
+//     quiz bank) are insertion-only within an append-filed class.
+//
+// So the append total is a CEILING, not a clean figure. Read the sentence.
+//
 // WHAT IT LOOKS FOR
 //
 // CLAUDE.md, "Write claims that can't go stale": the curriculum grows by
@@ -71,7 +93,10 @@
 // the next reader can disagree with a specific line instead of re-guessing.
 //
 // 1. IS "next" IN THE VOCABULARY?  YES — as class `positional`, and it is
-//    the whole content of the INSERTION-FRAGILE report. Rationale: "the next
+//    the whole content of the INSERTION-FRAGILE report, now literally: both
+//    positional rules match on `next` alone. `last` / `final in this chapter`
+//    used to ride along in positional-in-chapter and are terminal claims, so
+//    they moved to terminal-in-chapter in the append class. Rationale: "the next
 //    page in this chapter" does not go stale when the chapter grows at the
 //    END (the append case CLAUDE.md is actually about), but it DOES go stale
 //    on INSERTION. Same failure mode as a backward "the last page" reference.
@@ -375,6 +400,36 @@ const RULES = [
         re: new RegExp(`\\b(?:pages?|lessons?)\\s+(?:${NUM}|one)\\b`, 'gi'),
     },
     {
+        // The in-chapter twin of terminal-ordinal, for the shape that has no
+        // noun to match on: "this lesson is the last in this chapter" states
+        // the same terminal claim as "the last page of this chapter", but
+        // terminal-ordinal needs `last`/`final` ADJACENT to a sequence noun
+        // and this shape puts "in this chapter" there instead.
+        //
+        // Split out of positional-in-chapter, which used to carry all three of
+        // next / last / final under ONE hardcoded `fragility: 'insertion'`. A
+        // terminal claim is not insertion-fragile — inserting mid-sequence
+        // cannot change which page is last, while APPENDING falsifies it
+        // immediately. Routing it to the insertion section put the exact
+        // defect class this lint was commissioned for (PR #395's "close the
+        // chapter from memory") under a blurb reading "stale only when a
+        // lesson is inserted MID-SEQUENCE", which is false for it — the
+        // one-label-two-meanings failure the append/insertion split exists to
+        // remove, reproduced inside the split itself.
+        //
+        // `cls: 'terminal'` is load-bearing beyond the report heading: it
+        // takes the rule OUT of ORDINAL_CLASSES, so landings no longer skip
+        // it. That is choice 6a working as written — CLAUDE.md's landing
+        // carve-out licenses ordinals, not terminal claims, and the claim that
+        // motivated PR #395 shipped on a landing.
+        id: 'terminal-in-chapter',
+        cls: 'terminal',
+        fragility: 'append',
+        severity: 'high',
+        why: 'names a final page — stale the moment a page is appended',
+        re: /\b(?:last|final)\s+in\s+(?:this|the)\s+chapter\b/gi,
+    },
+    {
         id: 'positional-ordinal',
         cls: 'positional',
         fragility: 'insertion',
@@ -383,12 +438,15 @@ const RULES = [
         re: new RegExp(`\\bnext\\s+${NOUN}\\b`, 'gi'),
     },
     {
+        // `next` only — see terminal-in-chapter above for why last / final
+        // moved out. Every current hit of this rule is next-shaped, so the
+        // split is a no-op on today's corpus and a correction on tomorrow's.
         id: 'positional-in-chapter',
         cls: 'positional',
         fragility: 'insertion',
         severity: 'medium',
         why: 'fixes sequence position — stale on insertion (choice 1)',
-        re: /\b(?:next|last|final)\s+in\s+(?:this|the)\s+chapter\b/gi,
+        re: /\bnext\s+in\s+(?:this|the)\s+chapter\b/gi,
     },
 ];
 
@@ -578,7 +636,9 @@ if (filesOnly) {
         console.log('Legend:');
         console.log('  APPEND-FRAGILE classes');
         console.log('    terminal   — asserts a page is last or a chapter is closed.');
-        console.log('    count      — fixes the size of an append-growing set.');
+        console.log('    count      — fixes the size of an append-growing set. A count of');
+        console.log('                 NEIGHBOURS ("two lessons on either side") is insertion-');
+        console.log('                 only and files here anyway — read the sentence.');
         console.log('    ordinal    — hard-codes a page number; an enumeration of a chapter');
         console.log('                 goes incomplete on append. Placed by worst case — a lone');
         console.log('                 ordinal reference is insertion-only, so read the sentence.');

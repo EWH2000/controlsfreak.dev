@@ -1007,7 +1007,7 @@ re-submit); add `--dry-run` to print the URL list without POSTing.
   before screenshotting `_site/` unless `npm run dev` is running.
 - **Stale-claim prose lint:** `npm run prose-lint` reports prose that
   fixes a chapter's size or names its last page — the *Write claims
-  that can't go stale* convention above, made greppable. Six rules
+  that can't go stale* convention above, made greppable. Seven rules
   over four classes (`terminal` / `count` / `ordinal` / `positional`),
   with anchor-wrapped matches downgraded a step.
   **The report is split into two sections that are never summed**
@@ -1015,11 +1015,14 @@ re-submit); add `--dry-run` to print the URL list without POSTing.
   is added to the END of a chapter (terminal claims, counted sets,
   ordinal labels), ranked HIGH, the class the convention is actually
   about — versus **insertion-fragile** — stale only when a lesson is
-  inserted MID-SEQUENCE (the `next` / positional family), ranked
-  MEDIUM. Both are real; they measure different risks, so there is
-  deliberately **no combined headline number** in any output mode. One
-  label covering two failure modes is what made the two earlier
-  formulations of this check unarguable.
+  inserted MID-SEQUENCE (the `next` / positional family — `next`
+  *only*; "last in this chapter" is a terminal claim and files under
+  append), ranked MEDIUM. Both are real; they measure different risks,
+  so there is deliberately **no combined headline number** in any
+  output mode. One label covering two failure modes is what made the
+  two earlier formulations of this check unarguable. The append total
+  is a **ceiling** — the script header records the known misfiles in
+  it, since a PR body is not a durable ledger.
   **Report-only and deliberately NOT in `test.yml`** — it is a
   candidates-for-review list, not a gate, and "the last page" is a
   homograph the lint cannot disambiguate (backward reference vs
