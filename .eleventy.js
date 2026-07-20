@@ -176,8 +176,11 @@ module.exports = function(eleventyConfig) {
     // are deliberately NOT part of the curriculum — html/_data/quizOrder.js
     // lines 1-8 record the invariant ("Field drills are not a curriculum
     // and carry no next-link"), and `category: field` is the same flag the
-    // practice landing uses to hide drill cards under a topic chip. Today:
-    // 39 practice pages − 5 drills = 34 = quizOrder.length, zero orphans.
+    // practice landing uses to hide drill cards under a topic chip. The
+    // invariant is a set equality, not a count: every non-field
+    // `nav: practice` page appears in quizOrder, and every quizOrder slug
+    // is claimed by one such page — so appending a quiz or a drill cannot
+    // falsify this comment.
     eleventyConfig.addCollection("quizOrderGuard", (collectionApi) => {
         const order = require("./html/_data/quizOrder.js");
         const ordered = new Set(order.map((entry) => `/practice/${entry.slug}.html`));
