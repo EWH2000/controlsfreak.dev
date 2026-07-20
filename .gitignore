@@ -13,9 +13,15 @@ Thumbs.db
 .idea/
 
 # Claude Code — per-developer local settings + runtime artifacts
-# (settings.local.json, scheduled_tasks.lock). A shared, committed
-# .claude/settings.json would need an explicit un-ignore.
-.claude/
+# (settings.local.json, scheduled_tasks.lock, worktrees/) stay out of
+# history. Shared skills under .claude/skills/ ARE committed: they encode
+# repo conventions the same way CLAUDE.md does, so they belong in the tree.
+# Note the `.claude/*` + negation shape — a bare `.claude/` excludes the
+# directory itself and git never descends into it, so `!.claude/skills/`
+# alone would not re-include anything. A shared .claude/settings.json would
+# need its own un-ignore line here.
+.claude/*
+!.claude/skills/
 
 # Node / npm
 node_modules/
