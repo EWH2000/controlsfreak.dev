@@ -9,6 +9,50 @@
 //   node .github/scripts/prose-lint.mjs --json    machine-readable findings
 //   node .github/scripts/prose-lint.mjs --files   just the file list it scanned
 //
+// TWO CLASSES, NEVER SUMMED  (owner ruling, 2026-07-20)
+//
+// Two rulings landed the same day and looked like they conflicted:
+//
+//   (a) "A count in prose is a violation only if appending can falsify it."
+//   (b) "Keep the `next` / positional class, ranked lower."
+//
+// The apparent conflict: "the next page in this chapter" is APPEND-SAFE —
+// appending to the end of a chapter cannot change what comes next — so a
+// strict reading of (a) retires the positional class outright, contradicting
+// (b). The owner's resolution is that BOTH stand, because they measure
+// DIFFERENT RISKS:
+//
+//   APPEND-FRAGILE    — HIGH class. Goes stale when a lesson is added to the
+//                       END of a chapter. That is how this curriculum
+//                       overwhelmingly grows, so these are the time bombs
+//                       CLAUDE.md's "Write claims that can't go stale" is
+//                       actually about. Rules: terminal-verb, terminal-ordinal,
+//                       counted-set, ordinal-label.
+//
+//   INSERTION-FRAGILE — MEDIUM class (LOW when anchor-wrapped). Goes stale
+//                       only when a lesson is inserted MID-SEQUENCE. Rarer,
+//                       but real: chapters do get lessons inserted. Rules:
+//                       positional-ordinal, positional-in-chapter.
+//
+// THEY ARE REPORTED SEPARATELY, WITH SEPARATE TOTALS, AND ARE NEVER ADDED
+// TOGETHER. No combined headline number appears in any output mode. That
+// conflation is precisely what broke the two earlier formulations of this
+// check: one label was used for two different failure modes, so the single
+// number it produced meant nothing and could not be argued with. A reader who
+// wants to know "how much append-fragile prose is on this site" must be able
+// to read that number without subtracting a different risk out of it.
+//
+// A finding is placed by its WORST failure mode, not its only one. The
+// ordinal-label class is the case where that matters: "Page 3 of this chapter"
+// read in isolation is insertion-fragile only, but the shape this corpus
+// actually carries is the chapter recap (duct-static-control.html:598-604 walks
+// "Page one" through "Page five" in one paragraph), and an enumeration of a
+// chapter goes INCOMPLETE the moment a page is appended. The class sits in
+// append-fragile on that worst case; individual lines within it may be
+// insertion-only, and that is a judgement for the reader of the sentence, the
+// same judgement the "last page" homograph already demands (see KNOWN
+// AMBIGUITY below).
+//
 // WHAT IT LOOKS FOR
 //
 // CLAUDE.md, "Write claims that can't go stale": the curriculum grows by
@@ -26,14 +70,16 @@
 // committed. Every choice that moved those numbers is written down here so
 // the next reader can disagree with a specific line instead of re-guessing.
 //
-// 1. IS "next" IN THE VOCABULARY?  YES — as class `positional`, ranked
-//    below the terminal claims. Rationale: "the next page in this chapter"
-//    does not go stale when the chapter grows at the END (the append case
-//    CLAUDE.md is actually about), but it DOES go stale on INSERTION.
-//    Same failure mode as a backward "the last page" reference. Real, but
-//    a different and rarer trigger than a terminal claim, so it is reported
-//    at a lower severity rather than excluded. Excluding it entirely is
-//    what drove one earlier reconstruction to zero findings.
+// 1. IS "next" IN THE VOCABULARY?  YES — as class `positional`, and it is
+//    the whole content of the INSERTION-FRAGILE report. Rationale: "the next
+//    page in this chapter" does not go stale when the chapter grows at the
+//    END (the append case CLAUDE.md is actually about), but it DOES go stale
+//    on INSERTION. Same failure mode as a backward "the last page" reference.
+//    Real, but a different and rarer trigger than a terminal claim — so it is
+//    reported in its own section at its own severity rather than excluded,
+//    and never added to the append-fragile total. Excluding it entirely is
+//    what drove one earlier reconstruction to zero findings; folding it into
+//    one number is what made the other reconstruction's number meaningless.
 //
 // 2. ARE "opening" / "opener" / "first page" IN IT?  NO — subtracted.
 //    An opener claim is provably stable under append: appending to a
@@ -272,6 +318,7 @@ const RULES = [
     {
         id: 'terminal-verb',
         cls: 'terminal',
+        fragility: 'append',
         severity: 'high',
         why: 'asserts a chapter is closed — stale the moment a page is appended',
         // Every inflection, not just the third-person singular. The first cut
@@ -289,6 +336,7 @@ const RULES = [
     {
         id: 'terminal-ordinal',
         cls: 'terminal',
+        fragility: 'append',
         severity: 'high',
         why: 'names a final page — stale the moment a page is appended',
         re: new RegExp(`\\b(?:final|last)\\s+(?:${NUM}[-\\s])?${NOUN}\\b`, 'gi'),
@@ -296,6 +344,7 @@ const RULES = [
     {
         id: 'counted-set',
         cls: 'count',
+        fragility: 'append',
         severity: 'high',
         // A count is wrong on its own terms once the set grows; linking to a
         // member does not make the number right. No link downgrade.
@@ -311,16 +360,24 @@ const RULES = [
         // is exactly the "numbered" half of CLAUDE.md's warning. Held at high
         // with no link downgrade for the same reason as counted-set: the
         // anchor still resolves after an insertion, but the number is wrong.
+        //
+        // APPEND-FRAGILE by worst case, per the two-class note at the top of
+        // this file. A lone "Page 3 of this chapter" survives an append; the
+        // chapter-recap shape this corpus actually carries does not, because
+        // an enumeration of a chapter goes incomplete the moment a page lands
+        // at the end. Read the sentence before acting on one of these.
         id: 'ordinal-label',
         cls: 'ordinal',
+        fragility: 'append',
         severity: 'high',
         keepWhenLinked: true,
-        why: 'hard-codes a sequence position by number — stale on insertion',
+        why: 'hard-codes a sequence position by number — an enumeration goes incomplete on append, and every label shifts on insertion',
         re: new RegExp(`\\b(?:pages?|lessons?)\\s+(?:${NUM}|one)\\b`, 'gi'),
     },
     {
         id: 'positional-ordinal',
         cls: 'positional',
+        fragility: 'insertion',
         severity: 'medium',
         why: 'fixes sequence position — stale on insertion (choice 1)',
         re: new RegExp(`\\bnext\\s+${NOUN}\\b`, 'gi'),
@@ -328,6 +385,7 @@ const RULES = [
     {
         id: 'positional-in-chapter',
         cls: 'positional',
+        fragility: 'insertion',
         severity: 'medium',
         why: 'fixes sequence position — stale on insertion (choice 1)',
         re: /\b(?:next|last|final)\s+in\s+(?:this|the)\s+chapter\b/gi,
@@ -424,6 +482,7 @@ function lintFile(file) {
                     line: i + 1,
                     rule: rule.id,
                     class: rule.cls,
+                    fragility: rule.fragility,
                     severity,
                     linked,
                     match: m[0].replace(/\s+/g, ' ').trim(),
@@ -460,33 +519,71 @@ const files = scanFiles(HTML_DIR);
 if (filesOnly) {
     for (const f of files) console.log(path.relative(ROOT, f));
 } else {
-    const findings = files.flatMap(lintFile)
+    const all = files.flatMap(lintFile)
         .sort((a, b) => RANK[a.severity] - RANK[b.severity]
             || a.file.localeCompare(b.file)
             || a.line - b.line);
 
+    // The two classes are split HERE and never re-joined. Nothing downstream
+    // may add `appendFragile.length` to `insertionFragile.length` — see the
+    // two-class note at the top of this file for why that number would be
+    // meaningless. Both output modes below print two totals, never a third.
+    const appendFragile = all.filter((f) => f.fragility === 'append');
+    const insertionFragile = all.filter((f) => f.fragility === 'insertion');
+
     if (asJson) {
-        console.log(JSON.stringify({ scanned: files.length, findings }, null, 2));
+        // Deliberately NOT `{ findings: [...] }`. A single array's `.length`
+        // IS a combined headline number, and a consumer reaching for it would
+        // reintroduce exactly the conflation this split exists to prevent.
+        console.log(JSON.stringify({
+            scanned: files.length,
+            appendFragile: { total: appendFragile.length, findings: appendFragile },
+            insertionFragile: { total: insertionFragile.length, findings: insertionFragile },
+        }, null, 2));
     } else {
+        const section = (heading, blurb, findings) => {
+            console.log(`══ ${heading} — ${findings.length} finding(s) ══`);
+            console.log(`${blurb}\n`);
+            let current = null;
+            for (const f of findings) {
+                if (f.severity !== current) {
+                    current = f.severity;
+                    console.log(`── ${current.toUpperCase()} ──`);
+                }
+                console.log(`${f.file}:${f.line}  [${f.class}${f.linked ? '/linked' : ''}]  "${f.match}"`);
+                console.log(`    ${f.why}`);
+                console.log(`    … ${f.context} …\n`);
+            }
+            if (!findings.length) console.log('(none)\n');
+        };
+
         console.log('prose-lint — stale terminal/ordinal claims (REPORT-ONLY, never fails)');
         console.log(`Scanned ${files.length} file(s) under html/.`);
-        console.log(`${findings.length} finding(s).\n`);
+        console.log('Two classes, reported separately. They measure different risks and are');
+        console.log('NEVER summed — there is deliberately no combined total below.\n');
 
-        let current = null;
-        for (const f of findings) {
-            if (f.severity !== current) {
-                current = f.severity;
-                console.log(`── ${current.toUpperCase()} ──`);
-            }
-            console.log(`${f.file}:${f.line}  [${f.class}${f.linked ? '/linked' : ''}]  "${f.match}"`);
-            console.log(`    ${f.why}`);
-            console.log(`    … ${f.context} …\n`);
-        }
+        section(
+            'APPEND-FRAGILE',
+            'Stale when a lesson is appended to the END of a chapter — how this\n'
+            + 'curriculum overwhelmingly grows. The high-priority class.',
+            appendFragile,
+        );
+        section(
+            'INSERTION-FRAGILE',
+            'Stale only when a lesson is inserted MID-SEQUENCE. Rarer, but real —\n'
+            + 'chapters do get lessons inserted. Tracked, ranked below append.',
+            insertionFragile,
+        );
 
         console.log('Legend:');
-        console.log('  terminal   — asserts a page is last or a chapter is closed. Stale on APPEND.');
-        console.log('  count      — fixes the size of an append-growing set. Stale on APPEND.');
-        console.log('  positional — fixes a page\'s place in sequence. Stale on INSERTION only.');
+        console.log('  APPEND-FRAGILE classes');
+        console.log('    terminal   — asserts a page is last or a chapter is closed.');
+        console.log('    count      — fixes the size of an append-growing set.');
+        console.log('    ordinal    — hard-codes a page number; an enumeration of a chapter');
+        console.log('                 goes incomplete on append. Placed by worst case — a lone');
+        console.log('                 ordinal reference is insertion-only, so read the sentence.');
+        console.log('  INSERTION-FRAGILE classes');
+        console.log('    positional — fixes a page\'s place in sequence ("the next page").');
         console.log('  /linked    — the claim wraps an <a href> to the page it names; the link');
         console.log('               keeps resolving, so these are the likeliest dismissals.');
         console.log('\nSee the header of this file for every formulation choice and why.');
