@@ -77,7 +77,7 @@ nav: practice
 
     <div class="filter-chips" role="group" aria-label="Filter practice by topic">
         <button type="button" class="filter-chip active" data-category="all" aria-pressed="true">
-            All <span class="filter-chip-count">39</span>
+            All <span class="filter-chip-count">40</span>
         </button>
         <button type="button" class="filter-chip" data-category="modbus" aria-pressed="false">
             Modbus <span class="filter-chip-count">2</span>
@@ -493,6 +493,15 @@ nav: practice
                 titleFull:  'Troubleshooting',
                 desc:       'Symptom → most-likely-cause reasoning across the trade — a pingable-but-undiscoverable BACnet device, Modbus exceptions and byte order, low-ΔT hydronics, an air-bound coil, superheat vs subcooling, and VFD start trips.',
                 pills:      ['10 Questions', 'MCQ · TF · Gotcha', 'Symptom → Cause', '~ 5 min'],
+                category:   'field'
+            }) }}
+            {{ navCard({
+                section:    'practice',
+                href:       '/practice/wiresheet-traces.html',
+                titleShort: 'Wiresheet Traces',
+                titleFull:  'Wiresheet Traces',
+                desc:       'Hard live function-block sheets, traced to a verdict — an orphaned setpoint constant, a high-select that quietly replaces a reset schedule, a NOT on the wrong safety leg, a permit built on an OR, and a clamp entered upside down.',
+                pills:      ['13 Questions', 'MCQ · TF · Gotcha · Numeric', 'Trace to a Verdict', '~ 6 min'],
                 category:   'field'
             }) }}
         </div>

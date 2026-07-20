@@ -570,7 +570,29 @@ obvious lie). **Deliberately does NOT carry hard multi-block trace
 exercises** — a dedicated "Wiresheet Traces" practice DRILL was the
 owner-decided split, carrying the intentionally hard programs (the
 bank header notes it). Not built in this arc:
-`[future: practice/wiresheet-traces.html]`.
+`[future: practice/wiresheet-traces.html]` *(shipped 2026-07-20)*.
+
+**Wiresheet Traces drill, as built** *(2026-07-20)*: thirteen
+questions rather than ten, because the engine's random sampling
+means a run presents 10 from a deeper bank and draws a different
+subset each time — replayability is the whole point of a drill
+whose questions are puzzles. Difficulty comes from exactly three
+sources, named in the bank header: red-herring branches,
+inverted-safety traps, and plausible-but-wrong configuration.
+**Deliberately excludes feedback loops and execution-order /
+last-scan traps** — a different and cheaper kind of hard, and the
+`function-blocks` / `reading-a-wiresheet` banks already own them.
+Text-first: three questions carry a `figure` (the field added in
+PR #404) and the other ten use `<pre class="quiz-snippet">`, since
+prose reads better on a phone and a figure is only worth its weight
+when **topology itself** is the puzzle — which pin a wire lands on,
+which leg a block sits on. Figures live in a hidden static bank in
+the page's `<main>`, cloned by id: crawlable, reachable by
+`npm run screenshots`, payload paid once. They carry a page-local
+`min-width` so they scroll inside `.quiz-figure` on a phone rather
+than shrinking their labels to ~6px, which is what a shared-width
+SVG does at 375px and what `responsive.spec.js` structurally cannot
+catch.
 
 ### Controls-spine arc — the durable decisions *(arc closed 2026-07-19)*
 

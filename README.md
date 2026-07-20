@@ -849,7 +849,7 @@ flavors share the same engine:
   new education page.
 
 Shipped so far — thirty-four content quizzes (each 10 questions, paired
-1:1 with its lesson and deep-linking the gotchas) plus five field
+1:1 with its lesson and deep-linking the gotchas) plus six field
 drills:
 
 - **Content quizzes — protocols:** Modbus Basics, Modbus Decoding,
@@ -964,6 +964,16 @@ drills:
   device, Modbus exceptions vs. a byte-order-garbled float, low-ΔT
   syndrome, an air-bound top-floor coil, low superheat vs. high
   subcooling, and a VFD that trips on start.
+- **Wiresheet Traces** *(field drill)* — the hard half of reading a
+  live function-block sheet: intentionally difficult programs traced
+  to a verdict, where every block computes its own label faithfully
+  and the fault is a red-herring branch, a permissive chain that
+  protects nothing, or configuration that is plausible in both
+  fields. An orphaned setpoint constant the graphic still writes, a
+  high-select quietly replacing a reset schedule, a NOT on the wrong
+  safety leg, a clamp entered upside down, and a reset point left in
+  override. Three questions carry a live wiresheet figure. The bank
+  runs deeper than a session presents, so runs vary.
 
 ## How it's built
 
