@@ -1435,11 +1435,24 @@ p.bit-hint {
     line-height: 1;
 }
 .bit.on .bit-val { color: var(--accent); }
+/* The per-cell bit number. INFORMATIONAL, not chrome: it is the only
+   visible thing that tells a sighted reader which bit a cell is (the
+   button's aria-label carries it for AT, but nothing else paints it),
+   and making someone count cells to find bit 11 reinstates exactly the
+   arithmetic this tool exists to remove.
+   Full opacity, and NOT --text-dim, both deliberate (codebase-issues
+   #192). It used to be --text-dim at opacity 0.45, which reads 4.6:1
+   DECLARED but composites to 1.8:1 — every prior contrast audit missed
+   it because they all read declared colour. --text-dim at full opacity
+   does not rescue it either: on an .on cell the --accent-dim wash lifts
+   the backdrop and it lands at 4.496:1, just under AA. --text clears
+   4.5:1 in all four combinations (dark/light x off/on, worst case
+   7.8:1), and the size + weight gap against .bit-val keeps the index
+   visually subordinate without leaning on colour. */
 .bit-idx {
     font-family: var(--mono);
     font-size: 0.48rem;
-    color: var(--text-dim);
-    opacity: 0.45;
+    color: var(--text);
     margin-top: 2px;
 }
 
