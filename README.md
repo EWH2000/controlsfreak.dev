@@ -973,7 +973,8 @@ drills:
   high-select quietly replacing a reset schedule, a NOT on the wrong
   safety leg, a clamp entered upside down, and a reset point left in
   override. Three questions carry a live wiresheet figure. The bank
-  runs deeper than a session presents, so runs vary.
+  runs deeper than a default session presents — set Questions to All
+  to take the whole thing.
 
 ## How it's built
 

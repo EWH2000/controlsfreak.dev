@@ -573,10 +573,21 @@ bank header notes it). Not built in this arc:
 `[future: practice/wiresheet-traces.html]` *(shipped 2026-07-20)*.
 
 **Wiresheet Traces drill, as built** *(2026-07-20)*: thirteen
-questions rather than ten, because the engine's random sampling
-means a run presents 10 from a deeper bank and draws a different
-subset each time — replayability is the whole point of a drill
-whose questions are puzzles. Difficulty comes from exactly three
+questions rather than ten, written for replayability — a drill
+whose questions are puzzles is worth re-taking, so the bank was
+sized to present a rotating 10. **That rotation does not exist as
+shipped.** The page mounts `defaultOrder: 'sequential'` and the
+engine shuffles only when order is `random`, so a default run is
+questions 1–10 in order, every time; the tail three
+(`wst-grey-not-dead`, `wst-permit-proven`,
+`wst-prune-with-sibling` — two of them the bank's only TF items,
+which the landing card's `MCQ · TF · Gotcha · Numeric` pill
+advertises) render only when the reader sets Questions to All.
+`[open: pick one — add sample-then-present-in-order to
+quiz-engine, flip this page to 'random' (costs the curated
+difficulty ramp, and makes `responsive.spec.js`'s 375/320 passes
+non-deterministic as to whether a figure is on screen), or present
+all 13]`. Difficulty comes from exactly three
 sources, named in the bank header: red-herring branches,
 inverted-safety traps, and plausible-but-wrong configuration.
 **Deliberately excludes feedback loops and execution-order /
