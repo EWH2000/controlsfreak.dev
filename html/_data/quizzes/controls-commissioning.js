@@ -22,12 +22,12 @@
 //
 // This bank holds 11, not the 10 every other bank happens to hold —
 // the hardwired-safety question was cut during the build and the owner
-// asked for it back. The count is coupled to the page: the mount in
-// practice/controls-commissioning.html sets defaultCount: 'all' rather
-// than the site-wide 10, because sequential order plus a count of 10
-// would slice the last question off every default run. Changing the
-// bank size means revisiting that option and the "Eleven questions"
-// page intro alongside it.
+// asked for it back. That is fine and needs no page-level special
+// casing: the engine draws a random 10 of them per run and presents
+// that subset in bank order, so the 11th is reachable and a repeat run
+// is a different drill. Grow this bank freely; the page keeps the
+// site-wide defaultCount: 10 and the "Ten questions" intro stays
+// accurate at any bank size. See buildQueue() in quiz-engine.js.
 
 module.exports = [
     // ── The idea: checkout runs from the field toward the front end ──
