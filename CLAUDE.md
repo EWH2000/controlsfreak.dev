@@ -364,6 +364,16 @@ section). **Category keys mirror the landing pages' `navCard()`
   honest are fine — the home-page pills have a drift test, README
   prose does not. Section landings and hub pages are the *one* place
   ordinals belong, since they enumerate the sequence anyway.
+  **The test is falsifiability, not numerals** (owner decision,
+  2026-07-20): a count is a violation only if *appending* can falsify
+  it. So counting **specifically named** pages is fine — "the two
+  pages are neighbors" survives any expansion once both are named and
+  linked — while "work the five lessons in order" does not. The
+  landing/hub carve-out covers the **enumerated list itself** (the
+  `hub-path` steps, the `Step N` nav-card pills, which you edit anyway
+  when a lesson lands), **not the intro prose above it**: hub
+  `.landing-intro` copy is in scope and must name the sequence rather
+  than count it.
 - **No coming-soon copy.** Never promise an unbuilt page in
   reader-facing prose — no "gets its own lesson", "coming later", "a
   future page covers this". Owner decision 2026-07-19: *"I don't like
