@@ -77,7 +77,7 @@ nav: practice
 
     <div class="filter-chips" role="group" aria-label="Filter practice by topic">
         <button type="button" class="filter-chip active" data-category="all" aria-pressed="true">
-            All <span class="filter-chip-count">39</span>
+            All <span class="filter-chip-count">40</span>
         </button>
         <button type="button" class="filter-chip" data-category="modbus" aria-pressed="false">
             Modbus <span class="filter-chip-count">2</span>
@@ -484,6 +484,15 @@ nav: practice
                 titleFull:  'Sequencing Scenarios',
                 desc:       'How real sequences of operation behave — chiller and boiler plant staging and deadbands, lead/lag rotation, AHU economizer changeover (dry-bulb vs enthalpy), and the overcool-and-reheat dehumidification cascade.',
                 pills:      ['10 Questions', 'MCQ · TF · Gotcha', 'Sequence Scenarios', '~ 5 min'],
+                category:   'field'
+            }) }}
+            {{ navCard({
+                section:    'practice',
+                href:       '/practice/controls-commissioning.html',
+                titleShort: 'Commissioning',
+                titleFull:  'Controls Commissioning',
+                desc:       'Proving a controller does what its sequence says — point-to-point checkout of AI, AO, BI, and BO points, interlocks verified as a whole response, trends as proof over time, and the turnover record.',
+                pills:      ['10 Questions', 'MCQ · TF · Gotcha · Numeric', 'Functional Testing', '~ 5 min'],
                 category:   'field'
             }) }}
             {{ navCard({

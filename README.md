@@ -849,7 +849,7 @@ flavors share the same engine:
   new education page.
 
 Shipped so far — thirty-four content quizzes (each 10 questions, paired
-1:1 with its lesson and deep-linking the gotchas) plus five field
+1:1 with its lesson and deep-linking the gotchas) plus six field
 drills:
 
 - **Content quizzes — protocols:** Modbus Basics, Modbus Decoding,
@@ -958,6 +958,15 @@ drills:
   missing on a freezing morning), the overcool-and-reheat
   dehumidification cascade, and condensing-boiler return-water
   logic.
+- **Controls Commissioning** *(field drill)* — proving a controller
+  does what its sequence of operations says: exercising AI, AO, BI,
+  and BO points from the field end, a binary input whose state changes
+  but whose sense is inverted, a commanded output that starts the wrong
+  machine, an interlock verified as the whole programmed response, a
+  hardwired safety proven through the copper rather than through the
+  software beside it, trend-buffer depth against the span you need to
+  observe, trends catching what a single walk cannot, and the turnover
+  record.
 - **Troubleshooting** *(field drill)* — symptom → most-likely-cause
   reasoning across the trade; the skill drilled is reading what a
   symptom rules in and out: a pingable-but-undiscoverable BACnet
