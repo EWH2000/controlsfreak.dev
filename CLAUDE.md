@@ -361,11 +361,34 @@ section). **Category keys mirror the landing pages' `navCard()`
   lessons, or files in prose when naming the set does the same work
   ("the capstone for the hydronics chapter", not "for the five
   hydronic lessons"). Counts that a build guard or a live render keeps
-  honest are fine — the home-page pills have a drift test, README
-  prose does not. Section landings and hub pages are the *one* place
-  ordinals belong, since they enumerate the sequence anyway — that
-  exemption is about **ordinals**, not counts or terminal claims,
-  which stay in scope on a landing like anywhere else.
+  honest are fine — but check that the guard actually covers the
+  surface: `home-hero.spec.js`'s drift test asserts the Tools-by-
+  Category pills and the four Browse cards keyed to `/tools/`,
+  `/simulators/`, `/education/`, `/practice/`, and **nothing else**.
+  The four topic-hub cards (`/bacnet/`, `/forced-air/`, `/hydronics/`,
+  `/refrigeration/`) on the home page and the Guides landing are
+  unguarded, and README prose is unguarded. Section landings and hub
+  pages are the *one* place ordinals belong, since they enumerate the
+  sequence anyway — that exemption is about **ordinals**, not counts
+  or terminal claims, which stay in scope on a landing like anywhere
+  else.
+  **The test is falsifiability, not numerals** (owner decision,
+  2026-07-20): a count is a violation only if *appending* can falsify
+  it. So counting **specifically named** pages is fine — "the two
+  pages are neighbors" survives any expansion once both are named and
+  linked — while "work the five lessons in order" does not, and
+  neither does a count of an *open-ended* set even when its current
+  members are named ("two pages follow it" is falsified by a ninth
+  lesson regardless of which two you then link). The landing/hub
+  carve-out covers the **enumerated list itself** — the `hub-path`
+  steps and the `Step N` nav-card pills, which are bare ordinals with
+  no "of N", so an append leaves them incomplete rather than wrong.
+  (Nothing enforces that a new lesson reaches its topic hub:
+  `educationSequenceGuard` covers `_data/educationSequence.js` only,
+  and `landing-completeness.spec.js` deliberately excludes the
+  single-page topic hubs. Update the hub by hand.) The carve-out does
+  **not** cover the intro prose above the list: hub `.landing-intro`
+  copy is in scope and must name the sequence rather than count it.
   **`npm run prose-lint` finds candidates for this rule** (report-only;
   see *Local preview & tests*) — run it instead of hand-greping.
 - **No coming-soon copy.** Never promise an unbuilt page in
