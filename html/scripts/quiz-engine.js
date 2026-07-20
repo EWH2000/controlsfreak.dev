@@ -19,6 +19,14 @@
 //       })();
 //     </script>
 //
+// defaultCount must be one of the settings select's own options —
+// '5', 10, or 'all' — since the select is painted from it. A bank may
+// hold MORE questions than the run presents: the queue is a random
+// SAMPLE of `count` questions, ordered per defaultOrder (see
+// buildQueue). So a 15-question bank under defaultCount: 10 presents a
+// different 10 each run and never strands its tail. Every practice page
+// uses defaultCount: 10; grow a bank rather than raising the count.
+//
 // The engine owns DOM construction for everything inside the mount
 // target — settings row, progress, prompt panel, choices/numeric input,
 // actions row, reveal panel, results card. The page supplies only the
@@ -332,6 +340,20 @@
             }
         }
 
+        // Sample, then order. When a bank holds more questions than the run
+        // presents, WHICH questions appear is a random draw — so a bank can
+        // grow past the presented count without stranding its tail (the old
+        // code took indices 0..count-1 under 'sequential', making every
+        // question past the count unreachable by default). The draw also
+        // makes a repeat run a different quiz.
+        //
+        // Order is applied AFTER the draw and stays independent of it:
+        // 'sequential' restores the bank's own order within the sampled
+        // subset (the build-up inside a bank is deliberate — a random
+        // subset is wanted, a scrambled sequence is not unless asked for);
+        // 'random' scrambles it. When the bank is no larger than the count
+        // there is nothing to sample, so both paths behave exactly as they
+        // did before: sequential yields 0..total-1, random yields a shuffle.
         function buildQueue() {
             const total = questions.length;
             let count;
@@ -340,8 +362,16 @@
 
             const indices = [];
             for (let i = 0; i < total; i++) indices.push(i);
+
+            if (count < total) {
+                shuffleInPlace(indices);
+                indices.length = count;
+            }
+
             if (state.order === 'random') shuffleInPlace(indices);
-            return indices.slice(0, count);
+            else indices.sort(function (a, b) { return a - b; });
+
+            return indices;
         }
 
         function startQuiz() {
