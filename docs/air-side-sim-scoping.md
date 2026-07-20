@@ -175,7 +175,10 @@ return shape; `asNum` NaN-proofing; a visible "About this model" honesty card;
 a pure-Node engine spec; an adversarial verification round; and the
 equipment-depiction lens — *would a tech read this machine as operating
 correctly* (rotation sense vs geometry, port/connection fixity, physically
-impossible state changes). **Four of 16 spec files pin SVG geometry**, so that
+impossible state changes). **The refrigerant-loop engine spec pins its SVG
+geometry at source level** — flow direction, IN/OUT lane pairing, coil tube
+rows, serpentine endpoint joins, gradient `userSpaceOnUse`, frost-crystal
+seating — **and it is the only simulator with that coverage**, so that
 lens is machine-checked rather than only reviewed. The owner builds equipment
 graphics professionally and his eye is the final QA — bring screenshot sets at
 review time.
