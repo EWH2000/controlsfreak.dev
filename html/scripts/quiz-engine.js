@@ -21,11 +21,13 @@
 //
 // defaultCount must be one of the settings select's own options —
 // '5', 10, or 'all' — since the select is painted from it. A bank may
-// hold MORE questions than the run presents: the queue is a random
-// SAMPLE of `count` questions, ordered per defaultOrder (see
-// buildQueue). So a 15-question bank under defaultCount: 10 presents a
-// different 10 each run and never strands its tail. Every practice page
-// uses defaultCount: 10; grow a bank rather than raising the count.
+// hold MORE questions than defaultCount presents: such a bank is
+// SAMPLED, so a 15-question bank under defaultCount: 10 presents a
+// different 10 each run and never strands its tail. A bank that fits
+// its defaultCount is never sampled — it presents its head in bank
+// order, exactly as it always has, including when the reader picks a
+// shorter run from the Questions select. Every practice page uses
+// defaultCount: 10; grow a bank rather than raising the count.
 //
 // The engine owns DOM construction for everything inside the mount
 // target — settings row, progress, prompt panel, choices/numeric input,
@@ -207,6 +209,15 @@
         const title = opts.title || '';
         const storeKeys = storeKeysForSlug(slug);
 
+        // Does this bank hold more questions than the page's configured run
+        // presents? That — not the runtime Questions select — is what
+        // enables sampling (see buildQueue). Fixed at mount: both operands
+        // are.
+        const presentedCount = (opts.defaultCount === 'all' || !opts.defaultCount)
+            ? questions.length
+            : Math.min(parseInt(opts.defaultCount, 10) || questions.length, questions.length);
+        const bankOverflows = questions.length > presentedCount;
+
         const state = {
             count:           opts.defaultCount || 'all',
             order:           opts.defaultOrder || 'sequential',
@@ -340,20 +351,28 @@
             }
         }
 
-        // Sample, then order. When a bank holds more questions than the run
-        // presents, WHICH questions appear is a random draw — so a bank can
-        // grow past the presented count without stranding its tail (the old
-        // code took indices 0..count-1 under 'sequential', making every
-        // question past the count unreachable by default). The draw also
-        // makes a repeat run a different quiz.
+        // Sample, then order — but ONLY for a bank that overflows the
+        // page's configured run (`bankOverflows`). That is the whole
+        // problem this solves: under the old `indices.slice(0, count)`,
+        // a bank grown past its defaultCount stranded its tail — every
+        // question past the count was unreachable in a default run.
         //
-        // Order is applied AFTER the draw and stays independent of it:
-        // 'sequential' restores the bank's own order within the sampled
-        // subset (the build-up inside a bank is deliberate — a random
-        // subset is wanted, a scrambled sequence is not unless asked for);
-        // 'random' scrambles it. When the bank is no larger than the count
-        // there is nothing to sample, so both paths behave exactly as they
-        // did before: sequential yields 0..total-1, random yields a shuffle.
+        // The gate is deliberately `bankOverflows`, NOT `count < total`.
+        // The runtime Questions select offers '5', so `count < total`
+        // fires on every bank that sits exactly at its count — which is
+        // all 39 shipped banks — and would silently turn "5" from "the
+        // first five" into "a random five" site-wide. That is a real
+        // product question (arguably a nicer behavior), but it is not
+        // this change's to make, and it broke three smoke tests that
+        // rely on the shipped meaning. A bank that fits its count keeps
+        // the pre-sampling code path verbatim.
+        //
+        // Within an overflowing bank, order stays independent of the
+        // draw: the draw picks WHICH questions, 'sequential' then
+        // restores the bank's own order inside the sampled subset (the
+        // build-up within a bank is deliberate — a random subset is
+        // wanted, a scrambled sequence is not unless asked for), and
+        // 'random' scrambles it.
         function buildQueue() {
             const total = questions.length;
             let count;
@@ -363,15 +382,18 @@
             const indices = [];
             for (let i = 0; i < total; i++) indices.push(i);
 
-            if (count < total) {
+            if (bankOverflows && count < total) {
                 shuffleInPlace(indices);
                 indices.length = count;
+                if (state.order === 'random') shuffleInPlace(indices);
+                else indices.sort(function (a, b) { return a - b; });
+                return indices;
             }
 
+            // Bank fits its configured run — byte-identical to the
+            // pre-sampling engine.
             if (state.order === 'random') shuffleInPlace(indices);
-            else indices.sort(function (a, b) { return a - b; });
-
-            return indices;
+            return indices.slice(0, count);
         }
 
         function startQuiz() {

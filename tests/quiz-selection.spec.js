@@ -30,8 +30,16 @@ const COUNT_OPTIONS = ['5', '10', 'all'];
 // Mount a synthetic bank of `bankSize` true/false questions, run it
 // `runs` times, and return every run's presented prompts (prompt text is
 // the question's 1-based bank position, so a run reads as its indices).
-async function probe(page, { bankSize, count, order, runs }) {
-    return page.evaluate(({ bankSize, count, order, runs }) => {
+//
+// `count` is the page's defaultCount — what the page author configures.
+// `runtimeCount` (optional) is what the READER then picks from the
+// Questions select, applied post-mount the way smoke.spec.js does it
+// (set the select, fire 'change', click "Restart now"). The two are
+// distinct inputs and sampling keys off the first, not the second, so a
+// probe that conflates them cannot see the difference — which is how the
+// count-5-on-a-10-bank regression got shipped past a green spec file.
+async function probe(page, { bankSize, count, runtimeCount, order, runs }) {
+    return page.evaluate(({ bankSize, count, runtimeCount, order, runs }) => {
         // Step one mounted run to the end and collect what it presented.
         // The engine's click handlers are synchronous, so this needs no
         // awaiting: Skip moves 'asking' -> 'revealed', the primary button
@@ -71,6 +79,15 @@ async function probe(page, { bankSize, count, order, runs }) {
             defaultCount: count,
             defaultOrder: order
         });
+        // Reader-side count change, if asked for: exactly the gesture
+        // smoke.spec.js performs on a live page.
+        if (runtimeCount !== undefined && runtimeCount !== null) {
+            const sel = host.querySelector('.quiz-settings-select');
+            sel.value = String(runtimeCount);
+            sel.dispatchEvent(new Event('change', { bubbles: true }));
+            host.querySelector('.quiz-restart-now').click();
+        }
+
         const runsOut = [];
         for (let r = 0; r < runs; r++) {
             if (r > 0) controller.reset();
@@ -81,7 +98,7 @@ async function probe(page, { bankSize, count, order, runs }) {
             .filter(function (k) { return k.indexOf('cf_quiz_probe-bank_') === 0; })
             .forEach(function (k) { localStorage.removeItem(k); });
         return runsOut;
-    }, { bankSize, count, order, runs });
+    }, { bankSize, count, runtimeCount: runtimeCount ?? null, order, runs });
 }
 
 // A bank BIGGER than the presented count must still be able to show
@@ -132,6 +149,52 @@ test('a bank equal to the presented count is unchanged — all questions, bank o
     for (const run of runs) {
         expect(run, 'identical to the pre-sampling sequential run').toEqual(expected);
     }
+});
+
+// The case that actually regressed. Every shipped bank is exactly 10 and
+// the Questions select offers '5', so a reader picking 5 makes the
+// runtime count LESS than the bank — which an earlier draft of this
+// change read as "there is something to sample" and turned into a random
+// five. That silently redefined "5" on all 39 shipped pages and broke
+// three smoke tests (the modbus bank's numeric questions sit at
+// positions 7-8, outside the first five by construction). Sampling is
+// gated on the bank overflowing its page's defaultCount, not on the
+// runtime count, precisely so this stays put.
+test('a shorter run inside a bank that fits its count is still the bank head', async ({ page }) => {
+    await page.goto('/practice/modbus-decoding.html');
+    // Exactly the shipped shape: defaultCount 10, bank of 10, reader picks 5.
+    const runs = await probe(page, {
+        bankSize: 10, count: 10, runtimeCount: 5, order: 'sequential', runs: 15
+    });
+
+    const expected = ['1', '2', '3', '4', '5'];
+    for (const run of runs) {
+        expect(run, 'picking a shorter run yields the bank head, every time').toEqual(expected);
+    }
+});
+
+// The same shorter run against a bank that DOES overflow its configured
+// count samples instead — the gate is the bank/defaultCount relationship,
+// so an over-count bank samples at every run length, not just its
+// default one.
+test('a shorter run inside an overflowing bank samples', async ({ page }) => {
+    await page.goto('/practice/modbus-decoding.html');
+    const runs = await probe(page, {
+        bankSize: 15, count: 10, runtimeCount: 5, order: 'sequential', runs: 20
+    });
+
+    for (const run of runs) {
+        expect(run.length, 'each run presents exactly the count the reader picked').toBe(5);
+        const nums = run.map(Number);
+        expect(nums, 'sampled subset stays in bank order')
+            .toEqual([...nums].sort((a, b) => a - b));
+    }
+    expect(new Set(runs.map((r) => r.join(','))).size,
+        'repeat runs draw different subsets').toBeGreaterThan(1);
+    // And the draw reaches past the head — the stranding this whole
+    // change exists to prevent.
+    expect([...new Set(runs.flat())].map(Number).some((n) => n > 5),
+        'the draw reaches beyond the first five').toBe(true);
 });
 
 // 'random' still scrambles the whole bank when the bank fits the count.
