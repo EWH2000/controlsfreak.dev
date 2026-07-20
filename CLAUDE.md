@@ -823,17 +823,31 @@ fails the build if a `nav: education` page is missing from it
    education-page SVG idiom, so a lesson SVG needs its labelling
    converted when it moves into a figure bank.
 
-   **Open — not yet settled with the owner (raised 2026-07-19):** how
-   much a drill figure's `<desc>` may give away. The working shape has
-   been "describes topology and live values completely but never names
-   the fault, verdict lives in `explain`", but that is
-   self-contradictory when the puzzle *is* the topology (a red-herring
-   branch described completely is described away). The relevant
-   standard is **WCAG 1.1.1's Test exception** — non-text content that
-   is a test may carry only *descriptive identification*, which
-   licenses a short `<desc>` and makes the rule stateable without
-   contradiction. Settle this before authoring drill figures; don't
-   treat either shape as ratified.
+   **Owner decision (2026-07-20) — settled: describe the topology
+   fully.** A drill figure's `<desc>` states the topology and the live
+   values completely, in the drawing's own neutral register, and
+   **never names the fault or states the verdict** — that lives in
+   `explain`, which every reader gets after answering.
+
+   This was raised 2026-07-19 as an open question, on the argument that
+   describing a red-herring branch completely describes it away, and
+   that **WCAG 1.1.1's Test exception** — non-text content that is a
+   test may carry only *descriptive identification* — licensed a short
+   `<desc>` instead. The owner ruled for the full description on trade
+   grounds: *someone visually impaired who is function-block
+   programming is best served by hearing the longer description and
+   mapping it out in their head.* Note the Test exception is
+   **permissive, not prescriptive** — it says a test *may* carry only
+   descriptive identification, so the fuller `<desc>` is a choice
+   inside the standard, not a departure from it.
+
+   The apparent self-contradiction dissolves in practice: the `<desc>`
+   describes **what is drawn**, not **what is wrong with it**. "A NOT
+   block sits between the freeze stat and the AND" is the same
+   information a sighted reader gets from the picture — both still have
+   to know that placement is wrong. Write each `<desc>` as if it were
+   the only way you could see the diagram, then re-read it hunting for
+   a leaked verdict.
 4. Add a `navCard` (section `'practice'`) to the appropriate H2
    section on `html/practice/index.html` — *Content Quizzes* if
    every question maps to an existing page, *Field Drills* if the
