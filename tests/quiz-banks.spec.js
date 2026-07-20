@@ -39,6 +39,17 @@ for (const file of bankFiles) {
             expect(typeof q.prompt, `${file}/${q.id}: prompt`).toBe('string');
             expect(typeof q.explain, `${file}/${q.id}: explain`).toBe('string');
 
+            // `figure` is an element id, never markup — the whole point
+            // of the field is that the SVG stays in page source and out
+            // of the two consumers that strip questions to text. The
+            // engine also proves the id resolves at mount; that half
+            // needs a DOM, so it lives in quiz-figure.spec.js.
+            if (q.figure !== undefined) {
+                expect(typeof q.figure, `${file}/${q.id}: figure is an id string`).toBe('string');
+                expect(q.figure, `${file}/${q.id}: figure ids are kebab-case`).toMatch(KEBAB);
+                expect(q.figure.includes('<'), `${file}/${q.id}: figure carries no markup`).toBe(false);
+            }
+
             if (q.type === 'mcq' || q.type === 'gotcha') {
                 expect(Array.isArray(q.choices), `${file}/${q.id}: choices`).toBe(true);
                 expect(q.choices.length, `${file}/${q.id}: ≥2 choices`).toBeGreaterThanOrEqual(2);
