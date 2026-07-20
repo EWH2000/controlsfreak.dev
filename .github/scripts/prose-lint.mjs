@@ -211,8 +211,26 @@ const RULES = [
         id: 'counted-set',
         cls: 'count',
         severity: 'high',
+        // A count is wrong on its own terms once the set grows; linking to a
+        // member does not make the number right. No link downgrade.
+        keepWhenLinked: true,
         why: 'fixes the size of a set that grows by append',
         re: new RegExp(`\\b${NUM}[-\\s]${NOUN}\\b`, 'gi'),
+    },
+    {
+        // Noun-then-number, the mirror image of counted-set: "Page 3 of this
+        // chapter", "Page one built the path". Easy to miss when writing the
+        // pattern (both earlier formulations did) and the densest real class
+        // in this corpus — it hard-codes a sequence position in prose, which
+        // is exactly the "numbered" half of CLAUDE.md's warning. Held at high
+        // with no link downgrade for the same reason as counted-set: the
+        // anchor still resolves after an insertion, but the number is wrong.
+        id: 'ordinal-label',
+        cls: 'ordinal',
+        severity: 'high',
+        keepWhenLinked: true,
+        why: 'hard-codes a sequence position by number — stale on insertion',
+        re: new RegExp(`\\b(?:pages?|lessons?)\\s+(?:${NUM}|one)\\b`, 'gi'),
     },
     {
         id: 'positional-ordinal',
@@ -293,9 +311,8 @@ function lintFile(file) {
                 if (skip.some(([a, b]) => start >= a && start < b)) continue;   // safe class
 
                 const linked = isLinked(raw[i], start, Math.min(m.index + m[0].length, own.length));
-                const severity = linked && rule.severity === 'medium' ? 'low'
-                    : linked && rule.cls !== 'count' ? 'medium'
-                        : rule.severity;
+                const severity = (!linked || rule.keepWhenLinked) ? rule.severity
+                    : rule.severity === 'high' ? 'medium' : 'low';
 
                 findings.push({
                     file: rel,
