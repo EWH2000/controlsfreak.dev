@@ -682,6 +682,30 @@ section headers).
   The `p` is load-bearing — it ties `.tool-body p` on specificity
   and wins on cascade. Keep that shape when adding new small-text
   utility paragraphs.
+- **Lesson prose rhythm is automatic — don't hand-set it.** The
+  global reset zeroes every margin, so a `<p>` following another `<p>`
+  renders flush. Education lessons used to compensate with inline
+  `style="margin-top:1.25rem;"` on each follow-on paragraph, which
+  drifted (13 of 40 lessons had run-together prose — codebase-issues
+  #179). The shared `LESSON PROSE RHYTHM` rule in `styles.css` now
+  owns it: `body.education-page .tool-body p + p:not([class])`. **New
+  lessons write plain `<p>` and inherit the rhythm.** The scope is
+  deliberately narrow — `.tool-body` alone doesn't scope (tools /
+  simulators / practice share the class and tune their own spacing),
+  and `:not([class])` keeps the rule off the prose utilities above,
+  which own their spacing. Inline `margin-top` still out-specifies
+  the rule, so the ~279 existing inline declarations across 27
+  lessons render unchanged; four hydronics lessons sit at 1.1rem and
+  stay off the house 1.25rem until someone strips them.
+- **`body.education-page` is the one *build-time* body class.**
+  `layouts/page.njk` emits it from the `nav: education` frontmatter —
+  the same key that drives the active nav link, so the styling scope
+  can't drift from what the site calls an education page. Reach for
+  this pattern when a rule must scope to one section: `.tool-body`
+  and friends are shared across archetypes and won't do it. The other
+  body classes (`palette-open`, `nav-sheet-open`,
+  `has-fullscreen-tool`) are JS-toggled *runtime state*, not scoping
+  hooks — don't read them as precedent for either job.
 
 ### JS patterns
 
@@ -786,7 +810,10 @@ frontmatter and the new `.nav-card` added to
 `order` array in `html/_data/educationSequence.js`** (kept in the same
 order as the `education/index.html` grid) — `educationSequenceGuard`
 fails the build if a `nav: education` page is missing from it
-(codebase-issues #93, #157).
+(codebase-issues #93, #157). **Follow-on paragraph spacing is
+automatic** — the shared lesson-prose-rhythm rule handles it off the
+`nav: education` frontmatter, so body prose is plain `<p>` with no
+inline `margin-top` (see *Design system*).
 
 **Adding a new quiz / drill** follows a similar shape under
 `html/practice/`:

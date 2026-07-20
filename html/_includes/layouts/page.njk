@@ -4,7 +4,13 @@
 {% include "head.njk" %}
     {% block head %}{% endblock %}
 </head>
-<body>
+{# `education-page` is the styling scope hook for lesson prose — the only
+   thing that distinguishes an education page from any other page in CSS
+   (`.tool-body` is shared with tools / simulators / practice, so it does
+   not scope). Driven off the same `nav` frontmatter that marks the active
+   nav link, so it can't drift from what the site calls an education page.
+   Consumed by the LESSON PROSE RHYTHM rule in styles.css. #}
+<body{% if nav == "education" %} class="education-page"{% endif %}>
 <a href="#main" class="skip-link">Skip to content</a>
 
 {% include "schematic-bg.njk" %}

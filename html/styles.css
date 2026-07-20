@@ -1108,6 +1108,34 @@ h2.section-label[data-stage]::before {
 .tool-body { padding: 1.5rem; }
 .tool-body p { font-size: 0.95rem; line-height: 1.8; color: var(--text); }
 .tool-body a { color: var(--accent); }
+
+/* ── LESSON PROSE RHYTHM ────────────────────────────────────────────
+   The global reset zeroes every margin, so a <p> immediately after
+   another <p> renders flush against it. Lessons compensated by hand
+   with inline `style="margin-top:1.25rem;"` on each follow-on
+   paragraph — which is exactly why the rhythm drifts: any page that
+   forgets the inline style ships with its prose run together, and
+   13 of the 40 education lessons had (codebase-issues #179).
+
+   SCOPE — `body.education-page` (emitted by layouts/page.njk for
+   `nav: education` frontmatter) narrowed to `.tool-body`, i.e. lesson
+   body prose. `.tool-body` alone does NOT scope: tools, simulators,
+   and practice pages use the same class, and their follow-on
+   paragraphs are reference/preamble copy tuned per page. Those are
+   deliberately OUTSIDE this rule, as are `/privacy.html` and the
+   section landings. The education landing carries the body class too
+   but has no `.tool-body`, so it is unaffected.
+
+   `:not([class])` keeps the rule to unclassed prose. The prose
+   utilities (p.ref-note, p.bit-hint, p.pid-note, p.tool-preamble)
+   own their own spacing and must keep it — this rule would otherwise
+   out-specify them.
+
+   Inline `style="margin-top:…"` still wins, so the lessons already
+   carrying hand-set rhythm (1.25rem and, on the hydronics chapter,
+   1.1rem) render exactly as before. New lessons inherit the rhythm
+   without the inline style. */
+body.education-page .tool-body p + p:not([class]) { margin-top: 1.25rem; }
 /* Body-prose lists — same font triplet as .tool-body p. Per-list margin
    stays inline (it varies). A page that wants a tighter small-text list
    overrides font-size/line-height inline; the inline style wins. */
