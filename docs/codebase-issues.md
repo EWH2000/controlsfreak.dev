@@ -6986,3 +6986,50 @@ explicit and auditable rather than blanket.
 Remaining alternatives if the styleguide route is rejected: drive the
 state changes in the spec, or measure the token pairs directly without a
 DOM.
+
+---
+
+### 195. Standing answer: opacity-dimmed "off but operable" states stay per-widget *(closed by decision — 2026-07-20)*
+
+Three widgets use `opacity` to say *this control is off but still
+clickable*, all landing well under AA: `.bit-idx` (#192),
+`.psy-pill.off` (1.91:1 light / 2.24:1 dark) and
+`.vfdm-ext-row.inactive` (1.63–2.43:1). The fix shape is identical each
+time — drop the opacity, dim the colour to compensate — so it was raised
+as a candidate for one house rule, likely a `--text-off` token at a
+measured floor.
+
+**Owner decision (2026-07-20): keep it per-widget. Do not introduce a
+house token for this.**
+
+The reasoning is worth recording, because "three identical fixes should
+share a rule" is a strong-sounding argument and someone will make it
+again:
+
+> *Different widgets on this site can have different personality and
+> that's okay. A secondary goal of this site is to train the brains of
+> new techs to visually process the software they'll see in the field. I
+> think some elegant variance is beneficial to that.*
+
+Field BAS software is not visually uniform, and a tech who has only ever
+read one house style is less prepared for the workstation in front of
+them. So variance across widget faces is a **feature with a pedagogical
+job**, not drift to be normalized away.
+
+⚠️ **Two boundaries on this, both explicit:**
+
+- **This is not licence to add variance for its own sake.** The owner:
+  *"Don't go out and change things just for that secondary goal though.
+  I think me being at the helm does enough for that."* Variance arrives
+  through his editorial judgment, not through a lane deciding a widget
+  should look different.
+- **It is not licence to ignore contrast.** Each of the three is
+  allowlisted in `tests/contrast-sweep.spec.js` with a *measured ratio*,
+  not a threshold fudge. Per-widget means each gets its own considered
+  answer — not that the question stops being asked. `.bit-idx` was in
+  fact fixed (#192, PR #413) because it is the only thing painting the
+  bit number for a sighted user.
+
+Related: #192 (the instance that started it), #194 (what the guard
+cannot see), #168 (the same shape one level up — dim labels are a
+deliberate hierarchy, recorded rather than "fixed").
