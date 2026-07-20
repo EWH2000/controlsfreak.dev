@@ -811,8 +811,51 @@ fails the build if a `nav: education` page is missing from it
    is the namespace for `cf_quiz_<slug>_*` localStorage keys.
 3. Question schema lives in `quiz-engine.js`'s header — `type` is
    one of `mcq` / `tf` / `gotcha` / `numeric`; shared
-   `id` / `prompt` / `explain` / `learnMore` / `tags` across all
-   types. `id` is kebab-case and stable across edits.
+   `id` / `prompt` / `explain` / `learnMore` / `tags` / `figure`
+   across all types. `id` is kebab-case and stable across edits.
+   **A question that needs a diagram uses `figure`, never an SVG
+   inside `prompt`** — `prompt` is stripped to text by the
+   Review/miss table *and* by `head.njk`'s FAQPage JSON-LD, so an
+   inline SVG publishes every `<title>` / `<desc>` / `<text>` node
+   as structured data. `figure` is the kebab-case **element id** of
+   an `<svg class="… hidden" id="…">` in a static figure bank on the
+   page; the engine clones it into the `.quiz-figure` slot and mount
+   fails loudly if the id doesn't resolve. Ids in the clone are
+   **renamed** with a per-render prefix and every internal reference
+   (`url(#…)`, `<use href="#…">`) is rewritten to match, so the clone
+   stays self-contained without colliding with the live source —
+   stripping the ids instead silently blanks markers, gradients and
+   patterns. The figure must name itself natively (`role="img"` +
+   `<title>` / `<desc>`); `aria-labelledby` / `aria-describedby` on a
+   figure **fails mount** — note this is the opposite of the
+   education-page SVG idiom, so a lesson SVG needs its labelling
+   converted when it moves into a figure bank.
+
+   **Owner decision (2026-07-20) — settled: describe the topology
+   fully.** A drill figure's `<desc>` states the topology and the live
+   values completely, in the drawing's own neutral register, and
+   **never names the fault or states the verdict** — that lives in
+   `explain`, which every reader gets after answering.
+
+   This was raised 2026-07-19 as an open question, on the argument that
+   describing a red-herring branch completely describes it away, and
+   that **WCAG 1.1.1's Test exception** — non-text content that is a
+   test may carry only *descriptive identification* — licensed a short
+   `<desc>` instead. The owner ruled for the full description on trade
+   grounds: *someone visually impaired who is function-block
+   programming is best served by hearing the longer description and
+   mapping it out in their head.* Note the Test exception is
+   **permissive, not prescriptive** — it says a test *may* carry only
+   descriptive identification, so the fuller `<desc>` is a choice
+   inside the standard, not a departure from it.
+
+   The apparent self-contradiction dissolves in practice: the `<desc>`
+   describes **what is drawn**, not **what is wrong with it**. "A NOT
+   block sits between the freeze stat and the AND" is the same
+   information a sighted reader gets from the picture — both still have
+   to know that placement is wrong. Write each `<desc>` as if it were
+   the only way you could see the diagram, then re-read it hunting for
+   a leaked verdict.
 4. Add a `navCard` (section `'practice'`) to the appropriate H2
    section on `html/practice/index.html` — *Content Quizzes* if
    every question maps to an existing page, *Field Drills* if the

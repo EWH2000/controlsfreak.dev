@@ -31,6 +31,37 @@
 //   explain:   inline HTML (same)
 //   learnMore: { href, label }                     -- optional
 //   tags:      string[]                            -- optional, reserved for mixes
+//   figure:    kebab-case element id               -- optional, any type
+//     References an element ALREADY IN THE PAGE'S STATIC DOM (a "figure
+//     bank" near the quiz mount: <svg class="edu-svg hidden" id="…">).
+//     The engine clones it into the .quiz-figure slot on render; it does
+//     NOT carry markup on the question object. Three reasons for the
+//     indirection: the payload is paid once no matter how often the
+//     question is drawn, the markup stays in crawlable page source, and
+//     `npm run screenshots` (the diagram audit) can reach it — the same
+//     class="hidden" un-hide the pid-eq-scene family already relies on.
+//     Keeping the SVG off the question object also keeps it out of the
+//     two consumers that strip questions to text: the Review/miss table
+//     below and head.njk's FAQPage JSON-LD (whose buildQuestionName in
+//     .eleventy.js reads only `prompt` + `snippet`), either of which
+//     would otherwise publish every <title>/<desc>/<text> node.
+//     Accessibility contract: the figure names itself natively —
+//     role="img" + <title> (+ <desc>). How much a DRILL figure's <desc>
+//     may reveal is an open question with the owner, not a settled rule
+//     — see the quiz section of CLAUDE.md before authoring one.
+//     The clone must NOT rely on aria-labelledby/aria-describedby;
+//     validateQuestion rejects a figure that carries either, because the
+//     accessible name would be recomputed from the renamed ids (see
+//     below) and a title+desc pair fed through aria-labelledby collapses
+//     the whole description into the graphic's NAME.
+//     Id handling: the root id is dropped and every descendant id is
+//     RENAMED with a per-render prefix, with all internal references
+//     (url(#…) on fill/stroke/marker-*/clip-path/mask/filter, and
+//     #fragment on <use href>) rewritten to match — so the clone stays
+//     self-contained without duplicating ids that are live in the
+//     document. Do not "simplify" this to stripping the ids: that
+//     leaves url(#…) dangling and the arrowheads / gradients / hatches
+//     silently paint nothing.
 //   ── mcq / gotcha ──
 //     choices: [{ id, text, correct? }]            -- exactly one `correct`
 //   ── gotcha ── (mcq + snippet)
@@ -100,6 +131,37 @@
         if (!q.id) return 'question ' + idx + ' missing id';
         if (!q.prompt) return 'question ' + idx + ' (' + q.id + ') missing prompt';
         if (!q.explain) return 'question ' + idx + ' (' + q.id + ') missing explain';
+        // `figure` is optional on EVERY type — deliberately not mirroring
+        // the gotcha/snippet invariant below, which is one-way (a gotcha
+        // without a snippet fails mount, but a non-gotcha carrying one
+        // renders nothing while the JSON-LD still publishes it). What is
+        // enforced instead is that a declared figure always resolves: a
+        // typo'd or missing id fails mount loudly rather than leaving an
+        // empty slot, so a `figure` can never silently no-op.
+        if (q.figure !== undefined) {
+            if (typeof q.figure !== 'string' || !KEBAB.test(q.figure)) {
+                return 'question ' + q.id + ' figure must be a kebab-case element id';
+            }
+            const figureEl = document.getElementById(q.figure);
+            if (!figureEl) {
+                return 'question ' + q.id + ' figure references missing element #' + q.figure;
+            }
+            // The accessibility contract in the header is enforced here
+            // rather than left to prose. Nearly every diagram SVG on the
+            // site names itself with role="img" aria-labelledby="<x>-title
+            // <x>-desc", so copying a lesson SVG into a figure bank is the
+            // path of least resistance — and it degrades silently: a
+            // title+desc pair routed through aria-labelledby becomes the
+            // graphic's NAME, so a screen reader announces the entire
+            // topology description every time the figure is encountered
+            // and the <desc> stops being a separate description. Fail
+            // loudly at mount instead; the figure should name itself with
+            // native <title> / <desc>.
+            if (figureEl.hasAttribute('aria-labelledby') || figureEl.hasAttribute('aria-describedby')) {
+                return 'question ' + q.id + ' figure #' + q.figure +
+                    ' must name itself with native <title>/<desc>, not aria-labelledby/aria-describedby';
+            }
+        }
         switch (q.type) {
             case 'mcq':
             case 'gotcha': {
@@ -166,6 +228,60 @@
             const tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
         }
         return arr;
+    }
+
+    // ── Figure helpers ──────────────────────────────────────────────
+    // Attributes that can carry a same-document reference. `fill` and
+    // `stroke` take a url(#…) paint server; the marker family, clip-path,
+    // mask and filter take url(#…) too; <use> takes a bare #fragment in
+    // href / xlink:href. This is the set the site's own diagram SVGs use
+    // (markers in bacnet-*.html, <pattern> in commanding-actuators.html,
+    // <linearGradient> + <use> in refrigerant-loop.html).
+    const FIGURE_URL_ATTRS = [
+        'fill', 'stroke', 'clip-path', 'mask', 'filter',
+        'marker', 'marker-start', 'marker-mid', 'marker-end'
+    ];
+    const FIGURE_HREF_ATTRS = ['href', 'xlink:href'];
+    let figureCloneSeq = 0;
+
+    // Rename every id in a cloned figure and rewrite the references that
+    // point at them. Stripping the ids instead (the obvious move, since
+    // the source stays live in the document) breaks the clone silently:
+    // the clone keeps marker-end="url(#x)" while its own <marker> has
+    // lost id="x", and Chromium does NOT fall through to the still-live
+    // hidden source — the arrowhead / gradient / hatch simply paints
+    // nothing, with no error and no console warning. Renaming keeps the
+    // clone self-contained AND collision-free (the source's ids and any
+    // other mounted copy's are untouched).
+    function uniquifyFigureIds(root) {
+        const prefix = 'qfig' + (++figureCloneSeq) + '-';
+        const renamed = Object.create(null);
+        root.querySelectorAll('[id]').forEach(function (node) {
+            const oldId = node.getAttribute('id');
+            const newId = prefix + oldId;
+            renamed[oldId] = newId;
+            node.setAttribute('id', newId);
+        });
+        if (!Object.keys(renamed).length) return root;
+
+        const all = [root].concat(Array.prototype.slice.call(root.querySelectorAll('*')));
+        all.forEach(function (node) {
+            FIGURE_URL_ATTRS.forEach(function (attr) {
+                const val = node.getAttribute && node.getAttribute(attr);
+                if (!val || val.indexOf('url(') === -1) return;
+                const next = val.replace(/url\(\s*(['"]?)#([^)'"\s]+)\1\s*\)/g, function (whole, quote, id) {
+                    return renamed[id] ? 'url(' + quote + '#' + renamed[id] + quote + ')' : whole;
+                });
+                if (next !== val) node.setAttribute(attr, next);
+            });
+            FIGURE_HREF_ATTRS.forEach(function (attr) {
+                const val = node.getAttribute && node.getAttribute(attr);
+                if (!val || val.charAt(0) !== '#') return;
+                const target = renamed[val.slice(1)];
+                if (target) node.setAttribute(attr, '#' + target);
+            });
+        });
+        return root;
     }
 
     // ── DOM helpers ─────────────────────────────────────────────────
@@ -260,6 +376,7 @@
 
         const questionPane = el('div', { class: 'quiz-question-pane' });
         const promptEl = el('div', { class: 'quiz-prompt' });
+        const figureSlot = el('div', { class: 'quiz-figure', hidden: true });
         const snippetSlot = el('div', { class: 'quiz-snippet-slot' });
         const choicesEl = el('div', { class: 'quiz-choices', role: 'radiogroup' });
         const numericEl = el('div', { class: 'quiz-numeric', hidden: true });
@@ -274,6 +391,7 @@
         numericEl.appendChild(numericInput);
         numericEl.appendChild(numericUnit);
         questionPane.appendChild(promptEl);
+        questionPane.appendChild(figureSlot);
         questionPane.appendChild(snippetSlot);
         questionPane.appendChild(choicesEl);
         questionPane.appendChild(numericEl);
@@ -370,6 +488,25 @@
 
             // Prompt
             promptEl.innerHTML = q.prompt;
+
+            // Figure (any type). Cloned from the page's static figure
+            // bank; mount() already proved the id resolves. Ids are
+            // RENAMED (not stripped) with a per-render prefix and every
+            // internal reference is rewritten to match — see
+            // uniquifyFigureIds. Stripping alone silently broke every
+            // marker / gradient / pattern / <use> in the clone.
+            figureSlot.innerHTML = '';
+            if (q.figure) {
+                const figureSrc = document.getElementById(q.figure);
+                const figureClone = figureSrc.cloneNode(true);
+                figureClone.classList.remove('hidden');
+                figureClone.removeAttribute('id');
+                uniquifyFigureIds(figureClone);
+                figureSlot.appendChild(figureClone);
+                figureSlot.hidden = false;
+            } else {
+                figureSlot.hidden = true;
+            }
 
             // Snippet (gotcha only)
             snippetSlot.innerHTML = '';

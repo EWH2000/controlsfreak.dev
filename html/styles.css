@@ -2806,6 +2806,37 @@ p.chip-row-preamble {
     border-radius: 0;
 }
 
+/* Figure slot — the engine clones a question's `figure` SVG out of the
+   page's static figure bank into here (see quiz-engine.js's schema
+   header). Framed like .quiz-snippet below because it plays the same
+   role: a block of evidence the prompt refers to. No margin: the parent
+   .quiz-question-pane is a flex column with gap, which owns the spacing
+   for every slot (.quiz-snippet-slot zeroes its margin for the same
+   reason) — a margin here double-counts and frames the figure
+   asymmetrically.
+   ⚠️ width:100% does NOT make a dense figure phone-safe, it only stops
+   it overflowing. A viewBox-scaled SVG shrinks its labels with the
+   frame: an 8.5px label in a 980-unit viewBox renders ~3.3px on a 375px
+   phone and ~2.8px at 320px — unreadable. responsive.spec.js cannot
+   catch this (it flags an element only when scrollWidth > clientWidth
+   AND overflow-x is hidden/clip, which a width:100% SVG never trips),
+   so a figure that is too dense to read on a phone ships green. Keep
+   figure viewBoxes small and their type large, or give the figure a
+   min-width and let overflow-x scroll it. Verify by eye at 320px. */
+.quiz-figure {
+    padding: 0.75rem;
+    background: var(--surface-3);
+    border: 1px solid var(--border);
+    border-radius: 0;
+    overflow-x: auto;
+}
+.quiz-figure svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    margin: 0;
+}
+
 .quiz-snippet-slot { margin: 0; }
 .quiz-snippet {
     font-family: var(--mono);
