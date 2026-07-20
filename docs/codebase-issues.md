@@ -6937,9 +6937,52 @@ a whole population never enters the sample. **Verdict colours are exactly
 where contrast matters most** — a warn pill nobody can read is worse than
 a dim label.
 
-Options, roughly ascending in cost: render a hidden static specimen of
-every state variant on `/styleguide.html` (which already exists as a
-living reference exercising both registers) and let the existing sweep
-reach it; or drive state in the spec; or measure the token pairs directly
-without the DOM. The styleguide route looks cheapest and has the side
-benefit of making the states visible to human review too.
+**4. And the guard never sweeps `/styleguide.html` at all.** Found while
+checking the proposed fix below. `contrast-sweep.spec.js:123` does
+`require('./pages')` and shards `PAGES` directly; `styleguide.html` is
+`noindex`, so it carries no canonical, so it is absent from the sitemap
+and therefore absent from `tests/pages.js`. `responsive.spec.js:18` has
+to graft it on explicitly — `const SWEEP_PAGES = [...PAGES, { name:
+'styleguide', url: '/styleguide.html' }]` — with a comment saying exactly
+why. The contrast sweep has no such graft.
+
+So **the one page whose entire purpose is exercising both registers in
+both themes is the one page the guard never looks at.** That is worth
+fixing on its own merits, independent of the status-pill states.
+
+#### The fix — corrected 2026-07-20 (the first proposal did not work)
+
+⚠️ **The original proposal here was "render a *hidden* static specimen of
+every state variant on `/styleguide.html` and let the existing sweep
+reach it." That fails twice over and would have produced a green test
+measuring nothing** — the no-op-guard shape this spec's own header argues
+against at length, and the same shape as `codebase-issues` #182.
+
+- **The sweep never reaches styleguide** (boundary 4 above).
+- **`hidden` specimens are skipped three separate ways**:
+  `el.closest('[hidden]')` (`:263`), `visibility === 'hidden' || display
+  === 'none'` (`:272`), and a hidden-ancestor walk (`:317-326`). That is
+  the *exact* mechanism that hid `.status-pill.warn` in the first place.
+  The spec header records 21,242 text elements skipped as hidden — more
+  than it measured.
+
+**What actually works, both parts required:**
+
+1. **Specimens must be VISIBLE on the page**, not `hidden`. Styleguide is
+   still the right home — CLAUDE.md calls it the living reference that
+   exercises both registers in both themes, so visible state specimens
+   belong there rather than reading as noise.
+2. **`contrast-sweep.spec.js` must graft styleguide onto its page list**
+   the way `responsive.spec.js:18` already does.
+
+There is a ready precedent for the alternative shape, if visible
+specimens are unwanted: `settle()` (`:405-417`) already strips the
+`hidden` attribute from a named `COLLAPSED_CHROME` selector list, with
+the comment *"every other `[hidden]` subtree on the site is genuinely
+state-dependent and stays skipped."* Adding specimen containers to that
+list is the sanctioned way to force-reveal, and it keeps the reveal
+explicit and auditable rather than blanket.
+
+Remaining alternatives if the styleguide route is rejected: drive the
+state changes in the spec, or measure the token pairs directly without a
+DOM.
