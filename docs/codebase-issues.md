@@ -6820,3 +6820,69 @@ Low priority — a stale link label is a cosmetic mismatch, not a broken
 path. Worth doing only if the #177 guard generalizes cheaply; that guard
 already extracts Title-Case runs from the built home page, so pointing
 the same detector at anchor text across landings may be a small delta.
+
+---
+
+### 192. `.bit-idx` composites to 1.83:1 — far below any floor *(open — 2026-07-20)*
+
+Found by the #188 lane's DOM sweep, which measured *composited* colour
+rather than declared colour. Distinct from #188 and much worse.
+
+`html/tools/modbus-register-viewer.html`'s `.bit-idx` renders
+`--text-dim` at **`opacity: 0.45`**. The declared pairing reads a
+healthy **4.83:1**, but the composited result is
+**`#afb5ae` on `#eef1ec` = 1.83:1** — under half the 4.5:1 AA floor, and
+below even the 3:1 large-text floor.
+
+**#188 moved it from 1.81 to 1.83** — an improvement, but nowhere near a
+fix, and the #188 lane deliberately did not chase it (its brief was the
+token, and changing `.bit-idx` is a consumer change).
+
+The general lesson is the important part: **a contrast audit that reads
+declared token values cannot see an opacity multiplier.** Every ratio
+recorded in this repo — #81, #166, #171, #168, #188 — was computed from
+declared colours. Any consumer applying `opacity` to dim text is
+invisible to all of them. Sweeping for `opacity` on text-bearing
+selectors would say how many more there are; only `.bit-idx` is
+confirmed so far.
+
+Fix is a consumer change, not a token change: raise the opacity, drop it
+in favour of a dimmer token at full opacity, or accept it as decorative
+if the bit index is genuinely redundant with an adjacent labelled
+control (it may be — worth checking before treating it as text).
+
+---
+
+### 193. Nothing guards token contrast — four fixes, all found by hand *(open — 2026-07-20)*
+
+`#81`, `#166`, `#171` and now `#188` were each found by a person or an
+agent recomputing WCAG ratios by hand, and each shipped a fix with
+**nothing preventing the next regression**. #188 in particular sat live
+because the ratios recorded in #168 were measured on `--surface`
+(`#ffffff`) — the *best-case* background — so the conclusion "not a WCAG
+fail" was true for the surface measured and false for the recessed one.
+
+That is the recurring shape: not a wrong computation, but a **correct
+computation against an unstated background**.
+
+The #188 lane's DOM-sweep technique is cheap and mechanical, and it
+found the real scope (600 failing elements across 47 selector shapes,
+versus the two selectors the issue named): walk the built pages, read
+each element's computed `color`, resolve its *effective* background by
+walking ancestors, and assert the ratio clears the floor for its
+computed font size. It runs against `_site/` like the existing
+integrity specs.
+
+Two design notes if this gets built:
+
+- **It must composite `opacity`** (see #192), or it reproduces the exact
+  blind spot that hid `.bit-idx` at 1.83:1.
+- **It needs an allowlist with reasons**, not a threshold fudge —
+  genuinely decorative text should be named and justified, so the next
+  reader can tell "deliberate" from "not yet fixed." #168 is the model:
+  a recorded standing answer beats a silent exemption.
+
+Worth weighing against the site's no-CI-guard precedents (#84's version
+bump is knowingly unguarded). The argument for guarding this one is that
+contrast regressions are invisible in review — nobody eyeballs a diff
+and sees 4.40:1.
