@@ -742,6 +742,14 @@ section headers).
    The `home count pills stay in sync with the landings (drift guard)`
    test in `home-hero.spec.js` fails CI if any home pill falls out of
    sync with the `/tools/` chips or the section-landing card counts.
+   A second guard in the same file — `home nav-card descs only name
+   pages that still exist (drift guard)` — covers the **desc wording**:
+   any run of 2+ Title-Case words inside a home nav-card desc must match
+   some page's `title` frontmatter, so a renamed or retired page can't
+   leave the home copy stale. It is a shape heuristic, so a Title-Case
+   phrase that names no page (a section heading, a capitalized term of
+   art) trips it too — that's expected; add the phrase to the spec's
+   `NON_PAGE_NAMES` set rather than reword around it.
 4. Add the page's URL to the `PAGES` array in `tests/pages.js` (the
    shared manifest `smoke.spec.js` + `responsive.spec.js` require; the
    sitemap is automatic — see *Sitemap* — but the drift test fails
