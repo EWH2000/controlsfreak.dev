@@ -6571,3 +6571,465 @@ same session:
   `'twin-T'` single-quotes, which render as `&#39;twin-T&#39;` in
   view-source per the CLAUDE.md autoescape gotcha. Dropped the
   quotes; meaning unchanged.
+
+---
+
+### 185. Quiz `snippet` path: one-way invariant publishes content the page never renders *(open — 2026-07-19)*
+
+Found by the Lane C review during PR #404 (`figure` field), deliberately
+left unfixed there to keep that PR's scope on the new field.
+
+`html/scripts/quiz-engine.js:127-128` enforces the `gotcha` → `snippet`
+invariant in **one direction only**: a `gotcha` with no `snippet` fails
+the mount loudly. Nothing stops the reverse — a **non-`gotcha` question
+carrying a `snippet`**. When one does:
+
+- the render guard at `quiz-engine.js:376`
+  (`q.type === 'gotcha' && q.snippet`) **silently drops it from the
+  page**, and
+- `buildQuestionName` (`.eleventy.js:476-477`) still concatenates it
+  into the FAQPage JSON-LD `Question.name`.
+
+Net effect: **content that never appears on the page is published as
+structured data**, with no warning at build time or mount time. That is
+the same defect family as #182's "a green build cannot see it" — the
+page looks right, the suite passes, and the wrong thing ships to search
+engines.
+
+No shipped bank currently trips it (verified across all 40 banks), so
+this is latent, not live. Two candidate fixes: make the validation
+symmetric (reject a `snippet` on a non-`gotcha`), or make the render
+guard type-agnostic (`if (q.snippet)`) so a stray snippet renders
+instead of vanishing. **The symmetric-validation option is the one
+consistent with how PR #404 handled `figure`** — that lane chose a
+*resolution* check over a required-field check precisely so a declared
+figure can never silently no-op.
+
+Note the `figure` field shipped in #404 deliberately does **not**
+reproduce this asymmetry.
+
+---
+
+### 186. Hard-coded page ordinals inside lesson prose — the append-fragile class the new lint surfaced *(open — 2026-07-19)*
+
+Surfaced by `npm run prose-lint` (shipped report-only in PR #405). These
+are the instances the lint flags HIGH that were **left unfixed** because
+the rewrite is editorial, not mechanical — the lane fixed only
+`metering-devices-txv-eev.html:303`, where meaning and voice survived a
+direct substitution.
+
+**Highest value — `html/education/duct-static-control.html:598-604`.** A
+chapter recap that walks *"Page one built the path… Page two gave the
+mixing box… Page three followed the air… Page four taught you to name
+the box… Page five went to the far end."* **An insertion anywhere in the
+forced-air chapter falsifies up to five sentences at once** — the same
+propagation shape as the six-file claim CLAUDE.md cites as the
+motivating incident for the convention. The mechanical fix (name the
+lessons by title) is known, but the paragraph's rhythm is built around
+the ordinals, so it needs editorial re-voicing rather than substitution.
+
+**Same file, same defect —
+`html/education/metering-devices-txv-eev.html:46`.** The intro paragraph
+still carries `Page 1` / `Page 2` sibling labels. PR #405 fixed `:303`
+in this file and deliberately left `:46`; flagged here so that reads as
+a decision rather than an oversight. The intro is one long sentence
+whose rewrite is editorial.
+
+The `ordinal-label` rule that finds these (noun-then-number, e.g.
+`Page 3 of this chapter`) **was not in either prior lint formulation**
+and is not in the brief that scoped PR #405 — the lane added it after
+hand-grepping for shapes its own pattern could not see. It is the
+mirror image of the counted-set rule and therefore invisible to any
+pattern written number-first. **13 instances, zero false positives in
+the class.**
+
+---
+
+### 187. Hub landing pages hard-code their chapter's lesson count *(open — 2026-07-19; ruled 2026-07-20, fix in flight)*
+
+`html/bacnet/index.html:25`, `html/forced-air/index.html:25`,
+`html/hydronics/index.html:25` and `html/refrigeration/index.html:25`
+each open their `.landing-intro` with *"Work the {five, eight, five,
+three} lessons in order"*, above a hand-written hub-path block whose
+step numbers are equally hard-coded. `/refrigeration/`'s *"the three
+lessons"* is the direct twin of the `metering-devices-txv-eev.html:303`
+claim fixed in PR #405.
+
+**This one is genuinely ambiguous and should not be fixed until the
+owner rules**, because CLAUDE.md pulls both ways:
+
+- *"Write claims that can't go stale… don't count pages, lessons, or
+  files in prose when naming the set does the same work"* — these are
+  violations.
+- *"Section landings and hub pages are the **one place** ordinals
+  belong, since they enumerate the sequence anyway"* — these are
+  explicitly exempt.
+
+A hub page's intro sentence is arguably neither: it is prose *above* an
+enumeration, not the enumeration itself. The lint currently reports them
+(the `**/index.html` exclusion was narrowed in PR #405 so landing
+*grids* stay exempt while intro prose is visible). **If the owner reads
+the exemption as covering the whole page, the exclusion should widen
+back and these four stop being findings.** If he reads it as covering
+only the enumerated list, four one-line rewrites close it.
+
+Related: the same ruling decides whether counting **two specifically
+named** pages (`comparators-and-deadband.html:66`,
+`modbus-decoding.html:413`, `duct-static-control.html:183`) is a
+violation. Appending to a chapter cannot falsify those, so PR #405
+treats them as the lint's false-positive class — but that rests on
+reading the convention as "don't state counts that can drift" rather
+than "don't state counts."
+
+**Update — owner ruling 2026-07-20.** The narrow reading wins:
+
+> **A count is a violation only if appending can falsify it.**
+
+So the ambiguity resolves in both directions at once:
+
+- **The four hub intros ARE violations** and get rewritten. Chapters
+  grow, so "Work the five lessons in order" goes stale on append. The
+  carve-out ("section landings and hub pages are the one place ordinals
+  belong") is narrowed to **the enumerated list itself**, not the prose
+  above it — the list is exempt because it *is* the enumeration; an
+  intro sentence merely counts it.
+- **Counting two specifically named pages is fine** and stays.
+  `comparators-and-deadband.html:66`, `modbus-decoding.html:413` and
+  `duct-static-control.html:183` each name and link both pages, so no
+  append can falsify them. The lint **keeps** its subtraction rule.
+- The lint's shipped behavior is therefore already correct under this
+  ruling — PR #405 narrowed the `**/index.html` exclusion so landing
+  grids stay exempt while intro prose is visible, which is exactly what
+  the ruling asks for. **No lint change needed.**
+
+Fix in flight on `issue-186/stale-count-and-ordinal-claims`, which
+closes this and #186 together (one topic, one owner ruling) and records
+the narrowing in `CLAUDE.md`.
+
+---
+
+### 188. Light-theme `--text-dim` fails AA on the recessed panel *(open — 2026-07-20, fix in flight)*
+
+Found while recomputing #168's contrast ratios — genuinely separate from
+#168, which is a *hierarchy preference* that is explicitly not a WCAG
+failure. This one **is** a failure.
+
+**Light theme only:** `--text-dim` on `--surface-3` measures **4.40:1**
+(`#666e66` on `#e8ece4`), under the **4.5:1** AA floor for small text.
+The dark theme passes the same pairing at 6.15:1.
+
+`--surface-3` is the recessed panel — `.widget` shells
+(`styles.css:3509`) and `.tool-body-3col > section:last-child` reference
+columns, both of which carry small dim text by design.
+
+**Owner decision (2026-07-20): fix it as its own lane**, not folded into
+#168's PR — that PR is deliberately zero-pixel, and its whole point is
+recording that the dimming is *intentional*. Mixing a token change into
+it would muddy both records.
+
+Constraint carried into the fix: the nudge must be **the minimum that
+clears AA on every surface `--text-dim` lands on**, not a general
+brightening. Overshooting flattens the quiet-label / loud-value scan
+hierarchy that #168 exists to protect.
+
+Fix in flight on `issue-188/light-theme-dim-contrast`.
+
+---
+
+### 189. `defaultCount: 10` silently truncated any bank that grew past 10 *(open — 2026-07-20, fix in flight)*
+
+Surfaced by the first bank ever to exceed 10 questions (the Controls
+Commissioning drill, PR #403).
+
+All 37 existing banks hold **exactly 10** questions, and every practice
+page mounts with `defaultCount: 10` + `defaultOrder: 'sequential'`. That
+composition has never truncated anything **because** the two numbers
+always matched. At 11, `buildQueue()`'s `indices.slice(0, 10)` drops the
+last question from every default run — **no build guard, no test, no
+visible symptom.** The quiz works; one question simply never appears
+unless a visitor changes the settings select.
+
+This is the #182 defect family in its purest form: a green build cannot
+see it, and it only becomes reachable the moment someone does the
+obvious good thing (write an 11th question).
+
+**Owner decision (2026-07-20) — solved by design, not by guard:**
+
+> *"When we have more than 10 questions, we should add a random element
+> to which ones are presented. That way we can grow question banks
+> without issue. Plus that increases replayability of the quizzes. Still
+> add guards as needed with that. All quizzes of that type should still
+> remain 10 questions, just a matter of what questions are shown."*
+
+Presented length stays 10; **which** 10 becomes a random sample. Bank
+growth turns from a hazard into a feature — a 15-question bank makes
+every run different. A guard still lands alongside it, designed to have
+failed on the pre-fix code.
+
+Fix in flight on `feat/quiz-random-selection`; PR #403 must merge
+**after** it.
+
+---
+
+### 190. Two competing follow-on-paragraph rhythms, plus ~205 redundant inline margins *(open — 2026-07-20)*
+
+Surfaced by the #179 lane. Two facts in #179 were understated and are
+corrected here:
+
+- **13 of the 40 education lessons** lack follow-on paragraph rhythm,
+  not the two named in #179 (`function-blocks`, `setpoint-math-reset`).
+- The defect is not "tighter spacing." Untreated follow-on paragraphs
+  compute **`margin-top: 0px`** — the global `* { margin: 0 }` reset at
+  `styles.css:283` zeroes it and nothing restores it — so stacked
+  paragraphs render **flush**, with only line-height between them.
+
+The open item is what #179's fix does *not* resolve: **two rhythms are
+in use.** 148 follow-on paragraphs sit at `1.25rem` and 51 at `1.1rem`
+(concentrated in the hydronics chapter), plus one-offs at 0.6rem (×3),
+0.9rem, 1rem and 1.4rem. All are inline `style="margin-top:…"`.
+
+**Owner decision (2026-07-20): standardize on `1.25rem`** (the majority
+value), shipped as the shared scoped rule in #179. The hydronics pages
+keep `1.1rem` via inline styles, which now makes them the deviation.
+
+Remaining work, deliberately not bundled into #179: **removing the ~205
+now-redundant inline margins.** That is a large mechanical sweep whose
+only risk is the 1.1rem pages — removing their inline styles silently
+re-rhythms the hydronics chapter to 1.25rem. Decide whether hydronics
+converges or keeps a documented per-chapter value **before** the sweep,
+or it will look like an accident.
+
+---
+
+### 191. Link text that names a page is unguarded, even where the href is *(open — 2026-07-20, low priority)*
+
+Noticed by the #177 lane while building the home-desc drift guard.
+
+`html/practice/index.html:72` carries
+`<a href="/practice/surviving-first-months.html">Surviving Your First
+Months</a>`. The **href** is guarded — `link-integrity.spec.js` catches
+it if the page is retired. The **link text** is not: rename the page's
+title and the anchor keeps the old label indefinitely, with a green
+build and a working link.
+
+Same family as #177 (a page name embedded in prose with nothing keeping
+it honest), but a distinct mechanism: #177's surface had no guard at
+all, whereas this one has a guard that verifies the wrong half.
+
+Low priority — a stale link label is a cosmetic mismatch, not a broken
+path. Worth doing only if the #177 guard generalizes cheaply; that guard
+already extracts Title-Case runs from the built home page, so pointing
+the same detector at anchor text across landings may be a small delta.
+
+---
+
+### 192. `.bit-idx` composites to 1.83:1 — far below any floor *(open — 2026-07-20)*
+
+Found by the #188 lane's DOM sweep, which measured *composited* colour
+rather than declared colour. Distinct from #188 and much worse.
+
+`html/tools/modbus-register-viewer.html`'s `.bit-idx` renders
+`--text-dim` at **`opacity: 0.45`**. The declared pairing reads a
+healthy **4.83:1**, but the composited result is
+**`#afb5ae` on `#eef1ec` = 1.83:1** — under half the 4.5:1 AA floor, and
+below even the 3:1 large-text floor.
+
+**#188 moved it from 1.81 to 1.83** — an improvement, but nowhere near a
+fix, and the #188 lane deliberately did not chase it (its brief was the
+token, and changing `.bit-idx` is a consumer change).
+
+The general lesson is the important part: **a contrast audit that reads
+declared token values cannot see an opacity multiplier.** Every ratio
+recorded in this repo — #81, #166, #171, #168, #188 — was computed from
+declared colours. Any consumer applying `opacity` to dim text is
+invisible to all of them. Sweeping for `opacity` on text-bearing
+selectors would say how many more there are; only `.bit-idx` is
+confirmed so far.
+
+Fix is a consumer change, not a token change: raise the opacity, drop it
+in favour of a dimmer token at full opacity, or accept it as decorative
+if the bit index is genuinely redundant with an adjacent labelled
+control (it may be — worth checking before treating it as text).
+
+---
+
+### 193. Nothing guards token contrast — four fixes, all found by hand *(open — 2026-07-20)*
+
+`#81`, `#166`, `#171` and now `#188` were each found by a person or an
+agent recomputing WCAG ratios by hand, and each shipped a fix with
+**nothing preventing the next regression**. #188 in particular sat live
+because the ratios recorded in #168 were measured on `--surface`
+(`#ffffff`) — the *best-case* background — so the conclusion "not a WCAG
+fail" was true for the surface measured and false for the recessed one.
+
+That is the recurring shape: not a wrong computation, but a **correct
+computation against an unstated background**.
+
+The #188 lane's DOM-sweep technique is cheap and mechanical, and it
+found the real scope (600 failing elements across 47 selector shapes,
+versus the two selectors the issue named): walk the built pages, read
+each element's computed `color`, resolve its *effective* background by
+walking ancestors, and assert the ratio clears the floor for its
+computed font size. It runs against `_site/` like the existing
+integrity specs.
+
+Two design notes if this gets built:
+
+- **It must composite `opacity`** (see #192), or it reproduces the exact
+  blind spot that hid `.bit-idx` at 1.83:1.
+- **It needs an allowlist with reasons**, not a threshold fudge —
+  genuinely decorative text should be named and justified, so the next
+  reader can tell "deliberate" from "not yet fixed." #168 is the model:
+  a recorded standing answer beats a silent exemption.
+
+Worth weighing against the site's no-CI-guard precedents (#84's version
+bump is knowingly unguarded). The argument for guarding this one is that
+contrast regressions are invisible in review — nobody eyeballs a diff
+and sees 4.40:1.
+
+---
+
+### 194. What the contrast guard cannot see — three boundaries, one of them unbounded *(open — 2026-07-20)*
+
+Found by an air-side-sim scoping session auditing PR #414's
+`tests/contrast-sweep.spec.js` rather than trusting its summary. None of
+these is a defect in the guard; they are the shape of its coverage, and
+two of the three are documented in its own header. The third is not, and
+is the one that matters.
+
+**1. SVG text — excluded, documented.** `if (el.closest('svg')) continue;`
+(`:262`). Diagram labels sit over drawn geometry, not CSS backgrounds, so
+an ancestor walk cannot resolve their background. Measuring them needs
+pixel sampling — a different instrument. Bounded and honest.
+
+**2. The equipment register — excluded by name, sanity-checked but not
+measured.** `.device, .lcd, .keypad, .gauge.eq, .cw-term` are skipped.
+There *is* a dedicated test (`:572`) asserting the selector still matches
+≥20 text nodes, so the exclusion cannot silently stop matching — but it
+proves the text was *found and skipped*, never that its contrast passes.
+The reassuring 7.59:1 / 6.16:1 figures at `:79-80` are a **hand
+measurement in a comment**, not an assertion.
+
+⚠️ **Consequence for any new page:** styling text onto
+`.device` / `.lcd` buys **exemption, not verification.** A future
+simulator that adopts equipment-register chrome inherits an unmeasured
+surface. (Note the widely-repeated claim that a *new* gradient face would
+be caught by the `unresolved` bucket is **false** — `unresolved` is only
+populated from rows that already failed the ratio (`:375` `continue`s on
+a pass, `:391` routes), so a gradient face is flagged only if its text
+also fails against the flattened backdrop.)
+
+**3. State-dependent classes — unbounded, undocumented.** The sweep walks
+*static built pages*. Any class reachable only through JS state change is
+never measured.
+
+The confirmed instance: **`.status-pill.warn` and `.status-pill.error`
+have never been contrast-measured.** `.status-pill` is shared tool-output
+chrome across ~8 tools (economizers, air-mixing, coil-sizing,
+refrigerant-pt, the bacnet tools, refrigerant-loop), and its `.warn` /
+`.error` variants are applied at runtime. The single static instance in
+markup — `html/simulators/hydronic-loop-builder.html:353` — carries
+`hidden`, so the walker skips it.
+
+This is the same defect family as #192 (`opacity` invisible to a
+declared-colour audit): the guard measures a real property correctly, and
+a whole population never enters the sample. **Verdict colours are exactly
+where contrast matters most** — a warn pill nobody can read is worse than
+a dim label.
+
+**4. And the guard never sweeps `/styleguide.html` at all.** Found while
+checking the proposed fix below. `contrast-sweep.spec.js:123` does
+`require('./pages')` and shards `PAGES` directly; `styleguide.html` is
+`noindex`, so it carries no canonical, so it is absent from the sitemap
+and therefore absent from `tests/pages.js`. `responsive.spec.js:18` has
+to graft it on explicitly — `const SWEEP_PAGES = [...PAGES, { name:
+'styleguide', url: '/styleguide.html' }]` — with a comment saying exactly
+why. The contrast sweep has no such graft.
+
+So **the one page whose entire purpose is exercising both registers in
+both themes is the one page the guard never looks at.** That is worth
+fixing on its own merits, independent of the status-pill states.
+
+#### The fix — corrected 2026-07-20 (the first proposal did not work)
+
+⚠️ **The original proposal here was "render a *hidden* static specimen of
+every state variant on `/styleguide.html` and let the existing sweep
+reach it." That fails twice over and would have produced a green test
+measuring nothing** — the no-op-guard shape this spec's own header argues
+against at length, and the same shape as `codebase-issues` #182.
+
+- **The sweep never reaches styleguide** (boundary 4 above).
+- **`hidden` specimens are skipped three separate ways**:
+  `el.closest('[hidden]')` (`:263`), `visibility === 'hidden' || display
+  === 'none'` (`:272`), and a hidden-ancestor walk (`:317-326`). That is
+  the *exact* mechanism that hid `.status-pill.warn` in the first place.
+  The spec header records 21,242 text elements skipped as hidden — more
+  than it measured.
+
+**What actually works, both parts required:**
+
+1. **Specimens must be VISIBLE on the page**, not `hidden`. Styleguide is
+   still the right home — CLAUDE.md calls it the living reference that
+   exercises both registers in both themes, so visible state specimens
+   belong there rather than reading as noise.
+2. **`contrast-sweep.spec.js` must graft styleguide onto its page list**
+   the way `responsive.spec.js:18` already does.
+
+There is a ready precedent for the alternative shape, if visible
+specimens are unwanted: `settle()` (`:405-417`) already strips the
+`hidden` attribute from a named `COLLAPSED_CHROME` selector list, with
+the comment *"every other `[hidden]` subtree on the site is genuinely
+state-dependent and stays skipped."* Adding specimen containers to that
+list is the sanctioned way to force-reveal, and it keeps the reveal
+explicit and auditable rather than blanket.
+
+Remaining alternatives if the styleguide route is rejected: drive the
+state changes in the spec, or measure the token pairs directly without a
+DOM.
+
+---
+
+### 195. Standing answer: opacity-dimmed "off but operable" states stay per-widget *(closed by decision — 2026-07-20)*
+
+Three widgets use `opacity` to say *this control is off but still
+clickable*, all landing well under AA: `.bit-idx` (#192),
+`.psy-pill.off` (1.91:1 light / 2.24:1 dark) and
+`.vfdm-ext-row.inactive` (1.63–2.43:1). The fix shape is identical each
+time — drop the opacity, dim the colour to compensate — so it was raised
+as a candidate for one house rule, likely a `--text-off` token at a
+measured floor.
+
+**Owner decision (2026-07-20): keep it per-widget. Do not introduce a
+house token for this.**
+
+The reasoning is worth recording, because "three identical fixes should
+share a rule" is a strong-sounding argument and someone will make it
+again:
+
+> *Different widgets on this site can have different personality and
+> that's okay. A secondary goal of this site is to train the brains of
+> new techs to visually process the software they'll see in the field. I
+> think some elegant variance is beneficial to that.*
+
+Field BAS software is not visually uniform, and a tech who has only ever
+read one house style is less prepared for the workstation in front of
+them. So variance across widget faces is a **feature with a pedagogical
+job**, not drift to be normalized away.
+
+⚠️ **Two boundaries on this, both explicit:**
+
+- **This is not licence to add variance for its own sake.** The owner:
+  *"Don't go out and change things just for that secondary goal though.
+  I think me being at the helm does enough for that."* Variance arrives
+  through his editorial judgment, not through a lane deciding a widget
+  should look different.
+- **It is not licence to ignore contrast.** Each of the three is
+  allowlisted in `tests/contrast-sweep.spec.js` with a *measured ratio*,
+  not a threshold fudge. Per-widget means each gets its own considered
+  answer — not that the question stops being asked. `.bit-idx` was in
+  fact fixed (#192, PR #413) because it is the only thing painting the
+  bit number for a sighted user.
+
+Related: #192 (the instance that started it), #194 (what the guard
+cannot see), #168 (the same shape one level up — dim labels are a
+deliberate hierarchy, recorded rather than "fixed").
