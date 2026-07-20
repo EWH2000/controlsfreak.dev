@@ -1324,6 +1324,18 @@ abbr[title] {
 }
 .field { display: flex; flex-direction: column; gap: 0.4rem; }
 
+/* Form labels are DELIBERATELY the quiet ink: quiet caption + loud value is
+   the scan hierarchy this system wants, not an oversight, and it is not a
+   WCAG failure — --text-dim on --surface measures 5.67:1 dark / 5.27:1
+   light against a 4.5:1 small-text AA floor. Standing answer to
+   codebase-issues #168 (owner, 2026-07-20: working as designed). Do NOT
+   "fix" this site-wide; it would flatten the hierarchy on all ~47
+   label-bearing pages to solve a non-problem. The escape hatch is
+   page-local instead: a page
+   whose control block is dense enough that the captions ARE the scan
+   target lifts them itself, leaving size / casing / values alone — see
+   the .rl-controls / .rl-presets / .rl-mode block in
+   simulators/refrigerant-loop.html. */
 label,
 .field-label {
     font-family: var(--mono);
@@ -3265,6 +3277,10 @@ p.chip-row-preamble {
     min-height: 38px;
 }
 .ps-row:last-of-type { border-bottom: none; }
+/* --text-dim here is the same deliberate quiet-caption choice as the shared
+   `label, .field-label` rule — see the standing-answer comment above that
+   rule for the rationale, the measured ratios, and the page-local escape
+   hatch (codebase-issues #168). */
 .ps-label {
     font-family: var(--sans);
     font-size: 0.82rem;
