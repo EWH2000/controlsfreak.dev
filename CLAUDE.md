@@ -682,6 +682,20 @@ section headers).
   The `p` is load-bearing — it ties `.tool-body p` on specificity
   and wins on cascade. Keep that shape when adding new small-text
   utility paragraphs.
+- **Form labels are deliberately dimmer than their values** — the
+  shared `label, .field-label` rule paints captions `--text-dim` while
+  values render bright/accent. That inversion looks like a bug and
+  isn't: quiet caption + loud value is the intended scan hierarchy, and
+  it clears WCAG (measured `--text-dim` on `--surface`: **5.67:1** dark
+  / **5.27:1** light, against a 4.5:1 small-text AA floor). Owner
+  decision 2026-07-20, standing answer to codebase-issues #168:
+  **working as designed — do not retune it site-wide** (it would flatten
+  the hierarchy on all ~47 label-bearing pages). When a page's
+  control block is dense enough that the captions genuinely *are* the
+  scan target, override **page-locally** (lift color only; size, casing
+  and values stay put) — `simulators/refrigerant-loop.html`'s
+  `.rl-controls` / `.rl-presets` / `.rl-mode` block is the reference
+  implementation.
 
 ### JS patterns
 
