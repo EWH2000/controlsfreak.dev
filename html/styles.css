@@ -219,12 +219,17 @@
                                   is blind to a separate `opacity` on the text element — see the
                                   .bit-idx note. Retuning this token does NOT clear those. */
     --blue:         #11679f;
-    --blue-bright:  #1573b2;
+    --blue-bright:  #146ea9;   /* darkened one step 2026-07-20: #1573b2 computed 4.47:1 on --bg,
+                                  an AA small-text fail on the home hero's setpoint readout. This
+                                  step reads 4.81:1 there / 5.48:1 on --surface. Kept as its own
+                                  token rather than folded into --blue-ink because "bright" is the
+                                  EMPHASIS step, and in dark (#74c2f0, 9.25:1) it is what separates
+                                  the operable readout from the quiet --blue-ink demo chrome. */
     --blue-ink:     #0f5c8f;   /* deeper than --blue: --blue reads 4.42-4.48:1 as small text
                                   on the selection washes (#d3dfdd hero tree row, #d7e1cf
-                                  psy selected row) and --blue-bright is worse still
-                                  (4.47:1 on --bg). This step clears 5.28:1 at the worst
-                                  of those. */
+                                  psy selected row). This step clears 5.28:1 at the worst
+                                  of those. It is the QUIET blue-text step; --blue-bright is
+                                  the emphasis one and carries its own AA note above. */
     --blue-cool:    #4d7286;
     --blue-dim:     rgba(17,103,159,0.10);
     --blue-glow:    rgba(17,103,159,0.22);
@@ -283,7 +288,7 @@
         --text-bright:  #1d251f;
         --text-dim:     #636b63;   /* kept in sync with the light block above */
         --blue:         #11679f;
-        --blue-bright:  #1573b2;
+        --blue-bright:  #146ea9;   /* kept in sync with the light block above */
         --blue-ink:     #0f5c8f;
         --blue-cool:    #4d7286;
         --blue-dim:     rgba(17,103,159,0.10);
@@ -1343,6 +1348,16 @@ input:focus, textarea:focus, select:focus {
     box-shadow: 0 0 0 3px var(--accent-dim);
 }
 select option { background: var(--surface); }
+/* Placeholder text is content, not chrome — WCAG 1.4.3 applies to it,
+   and left to the UA default Chromium painted every .ps-input hint at
+   4.04:1 on --bg across ~40 tool pages (a seeded example value like
+   "e.g. 260" or "1200" is often the only clue to the expected format).
+   --text-dim reads 6.52:1 dark / 4.83:1 light on the --bg field face
+   both these blocks use, and keeps the hint visibly quieter than the
+   --text-bright value the visitor types over it. Element-level so a
+   component that wants a different hint colour still out-specifies it
+   (.palette-input below already does). */
+input::placeholder, textarea::placeholder { color: var(--text-dim); }
 
 /* ── RESULT PANEL ── */
 .result-panel {
@@ -2339,6 +2354,17 @@ p.chip-row-preamble {
     font-size: 0.65rem;
     color: var(--text-dim);
 }
+/* The old pairing here was --accent at opacity 0.75, which composited to
+   2.67:1 light / 3.39:1 dark on the chip's --accent-dim wash — a real AA
+   fail at 10.4px, so the opacity had to go. It leaves the count and the
+   chip label both on --accent-ink, i.e. no tonal step between them; the
+   size step (11.52px vs 10.4px) is all that marks the count as
+   subordinate. That flattening is NOT the preferred look, it is the only
+   one available: on the light active chip --accent-ink measures 4.79:1,
+   4.26:1 for --text-dim, so there is no green or grey quieter than this
+   that still clears 4.5:1. Restoring the step needs a lighter chip wash
+   or a smaller/lighter count — an owner visual call, tracked, not made
+   here. */
 .filter-chip.active .filter-chip-count { color: var(--accent-ink); }
 /* The .nav-card rule below sets display:block, which would override the UA
    `hidden { display: none }` and leave hidden cards consuming grid slots.
