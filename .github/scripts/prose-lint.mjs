@@ -343,42 +343,48 @@ function lintFile(file) {
 
 const files = scanFiles(HTML_DIR);
 
+// NOTE: there is no process.exit() below, deliberately. `console.log` to a
+// PIPE is asynchronous — Node queues the write and `process.exit()` discards
+// whatever has not drained yet. The --json mode emits one ~19 KB write, so
+// piping it (`… --json | jq .`) truncated the document at the 8 KB pipe
+// buffer and produced unparseable JSON, while redirecting to a file hid the
+// bug entirely (writes to a file descriptor are synchronous). Falling off the
+// end of the script lets the event loop flush every write first; the exit
+// code is 0 regardless, because nothing here ever sets a failing one.
+
 if (filesOnly) {
     for (const f of files) console.log(path.relative(ROOT, f));
-    process.exit(0);
-}
+} else {
+    const findings = files.flatMap(lintFile)
+        .sort((a, b) => RANK[a.severity] - RANK[b.severity]
+            || a.file.localeCompare(b.file)
+            || a.line - b.line);
 
-const findings = files.flatMap(lintFile)
-    .sort((a, b) => RANK[a.severity] - RANK[b.severity]
-        || a.file.localeCompare(b.file)
-        || a.line - b.line);
+    if (asJson) {
+        console.log(JSON.stringify({ scanned: files.length, findings }, null, 2));
+    } else {
+        console.log('prose-lint — stale terminal/ordinal claims (REPORT-ONLY, never fails)');
+        console.log(`Scanned ${files.length} file(s) under html/.`);
+        console.log(`${findings.length} finding(s).\n`);
 
-if (asJson) {
-    console.log(JSON.stringify({ scanned: files.length, findings }, null, 2));
-    process.exit(0);
-}
+        let current = null;
+        for (const f of findings) {
+            if (f.severity !== current) {
+                current = f.severity;
+                console.log(`── ${current.toUpperCase()} ──`);
+            }
+            console.log(`${f.file}:${f.line}  [${f.class}${f.linked ? '/linked' : ''}]  "${f.match}"`);
+            console.log(`    ${f.why}`);
+            console.log(`    … ${f.context} …\n`);
+        }
 
-console.log('prose-lint — stale terminal/ordinal claims (REPORT-ONLY, never fails)');
-console.log(`Scanned ${files.length} file(s) under html/.`);
-console.log(`${findings.length} finding(s).\n`);
-
-let current = null;
-for (const f of findings) {
-    if (f.severity !== current) {
-        current = f.severity;
-        console.log(`── ${current.toUpperCase()} ──`);
+        console.log('Legend:');
+        console.log('  terminal   — asserts a page is last or a chapter is closed. Stale on APPEND.');
+        console.log('  count      — fixes the size of an append-growing set. Stale on APPEND.');
+        console.log('  positional — fixes a page\'s place in sequence. Stale on INSERTION only.');
+        console.log('  /linked    — the claim wraps an <a href> to the page it names; the link');
+        console.log('               keeps resolving, so these are the likeliest dismissals.');
+        console.log('\nSee the header of this file for every formulation choice and why.');
+        console.log('Report-only by design — exiting 0.');
     }
-    console.log(`${f.file}:${f.line}  [${f.class}${f.linked ? '/linked' : ''}]  "${f.match}"`);
-    console.log(`    ${f.why}`);
-    console.log(`    … ${f.context} …\n`);
 }
-
-console.log('Legend:');
-console.log('  terminal   — asserts a page is last or a chapter is closed. Stale on APPEND.');
-console.log('  count      — fixes the size of an append-growing set. Stale on APPEND.');
-console.log('  positional — fixes a page\'s place in sequence. Stale on INSERTION only.');
-console.log('  /linked    — the claim wraps an <a href> to the page it names; the link');
-console.log('               keeps resolving, so these are the likeliest dismissals.');
-console.log('\nSee the header of this file for every formulation choice and why.');
-console.log('Report-only by design — exiting 0.');
-process.exit(0);
