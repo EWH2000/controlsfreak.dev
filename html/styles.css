@@ -196,7 +196,22 @@
     --accent-soft:  rgba(58,122,20,0.06);
     --text:         #38423a;
     --text-bright:  #1d251f;
-    --text-dim:     #666e66;
+    --text-dim:     #636b63;   /* darkened one step 2026-07-20: #666e66 computed 4.40:1 on the
+                                  #e8ece4 surfaces (--surface-3 / --bg-2 / --well share that hex),
+                                  an AA small-text fail carrying ~600 elements across 47 selector
+                                  shapes — .ref-note worked-example prose and .ps-section-label
+                                  headings on 30 pages each, plus widget labels and dense-table
+                                  cells. This step computes 4.60:1 there and lifts the other
+                                  light surfaces to 4.83-5.51:1. Deliberately the MINIMUM nudge
+                                  that clears the floor: dim captions are an intentional scan
+                                  hierarchy (codebase-issues #168), so the gap to --text (8.74:1
+                                  on the same surface) is preserved. Dark --text-dim already
+                                  passes everywhere (4.81-6.63:1) and is untouched.
+                                  SCOPE: the sweep behind those numbers compares computed color
+                                  against the resolved background, so it only clears elements
+                                  whose contrast is determined by color-vs-background alone. It
+                                  is blind to a separate `opacity` on the text element — see the
+                                  .bit-idx note. Retuning this token does NOT clear those. */
     --blue:         #11679f;
     --blue-bright:  #1573b2;
     --blue-cool:    #4d7286;
@@ -252,7 +267,7 @@
         --accent-soft:  rgba(58,122,20,0.06);
         --text:         #38423a;
         --text-bright:  #1d251f;
-        --text-dim:     #666e66;
+        --text-dim:     #636b63;   /* kept in sync with the light block above */
         --blue:         #11679f;
         --blue-bright:  #1573b2;
         --blue-cool:    #4d7286;
@@ -1093,6 +1108,34 @@ h2.section-label[data-stage]::before {
 .tool-body { padding: 1.5rem; }
 .tool-body p { font-size: 0.95rem; line-height: 1.8; color: var(--text); }
 .tool-body a { color: var(--accent); }
+
+/* ── LESSON PROSE RHYTHM ────────────────────────────────────────────
+   The global reset zeroes every margin, so a <p> immediately after
+   another <p> renders flush against it. Lessons compensated by hand
+   with inline `style="margin-top:1.25rem;"` on each follow-on
+   paragraph — which is exactly why the rhythm drifts: any page that
+   forgets the inline style ships with its prose run together, and
+   13 of the 40 education lessons had (codebase-issues #179).
+
+   SCOPE — `body.education-page` (emitted by layouts/page.njk for
+   `nav: education` frontmatter) narrowed to `.tool-body`, i.e. lesson
+   body prose. `.tool-body` alone does NOT scope: tools, simulators,
+   and practice pages use the same class, and their follow-on
+   paragraphs are reference/preamble copy tuned per page. Those are
+   deliberately OUTSIDE this rule, as are `/privacy.html` and the
+   section landings. The education landing carries the body class too
+   but has no `.tool-body`, so it is unaffected.
+
+   `:not([class])` keeps the rule to unclassed prose. The prose
+   utilities (p.ref-note, p.bit-hint, p.pid-note, p.tool-preamble)
+   own their own spacing and must keep it — this rule would otherwise
+   out-specify them.
+
+   Inline `style="margin-top:…"` still wins, so the lessons already
+   carrying hand-set rhythm (1.25rem and, on the hydronics chapter,
+   1.1rem) render exactly as before. New lessons inherit the rhythm
+   without the inline style. */
+body.education-page .tool-body p + p:not([class]) { margin-top: 1.25rem; }
 /* Body-prose lists — same font triplet as .tool-body p. Per-list margin
    stays inline (it varies). A page that wants a tighter small-text list
    overrides font-size/line-height inline; the inline style wins. */
@@ -1281,6 +1324,18 @@ abbr[title] {
 }
 .field { display: flex; flex-direction: column; gap: 0.4rem; }
 
+/* Form labels are DELIBERATELY the quiet ink: quiet caption + loud value is
+   the scan hierarchy this system wants, not an oversight, and it is not a
+   WCAG failure — --text-dim on --surface measures 5.67:1 dark / 5.27:1
+   light against a 4.5:1 small-text AA floor. Standing answer to
+   codebase-issues #168 (owner, 2026-07-20: working as designed). Do NOT
+   "fix" this site-wide; it would flatten the hierarchy on all ~47
+   label-bearing pages to solve a non-problem. The escape hatch is
+   page-local instead: a page
+   whose control block is dense enough that the captions ARE the scan
+   target lifts them itself, leaving size / casing / values alone — see
+   the .rl-controls / .rl-presets / .rl-mode block in
+   simulators/refrigerant-loop.html. */
 label,
 .field-label {
     font-family: var(--mono);
@@ -1435,11 +1490,24 @@ p.bit-hint {
     line-height: 1;
 }
 .bit.on .bit-val { color: var(--accent); }
+/* The per-cell bit number. INFORMATIONAL, not chrome: it is the only
+   visible thing that tells a sighted reader which bit a cell is (the
+   button's aria-label carries it for AT, but nothing else paints it),
+   and making someone count cells to find bit 11 reinstates exactly the
+   arithmetic this tool exists to remove.
+   Full opacity, and NOT --text-dim, both deliberate (codebase-issues
+   #192). It used to be --text-dim at opacity 0.45, which reads 4.6:1
+   DECLARED but composites to 1.8:1 — every prior contrast audit missed
+   it because they all read declared colour. --text-dim at full opacity
+   does not rescue it either: on an .on cell the --accent-dim wash lifts
+   the backdrop and it lands at 4.496:1, just under AA. --text clears
+   4.5:1 in all four combinations (dark/light x off/on, worst case
+   7.8:1), and the size + weight gap against .bit-val keeps the index
+   visually subordinate without leaning on colour. */
 .bit-idx {
     font-family: var(--mono);
     font-size: 0.48rem;
-    color: var(--text-dim);
-    opacity: 0.45;
+    color: var(--text);
     margin-top: 2px;
 }
 
@@ -2806,6 +2874,37 @@ p.chip-row-preamble {
     border-radius: 0;
 }
 
+/* Figure slot — the engine clones a question's `figure` SVG out of the
+   page's static figure bank into here (see quiz-engine.js's schema
+   header). Framed like .quiz-snippet below because it plays the same
+   role: a block of evidence the prompt refers to. No margin: the parent
+   .quiz-question-pane is a flex column with gap, which owns the spacing
+   for every slot (.quiz-snippet-slot zeroes its margin for the same
+   reason) — a margin here double-counts and frames the figure
+   asymmetrically.
+   ⚠️ width:100% does NOT make a dense figure phone-safe, it only stops
+   it overflowing. A viewBox-scaled SVG shrinks its labels with the
+   frame: an 8.5px label in a 980-unit viewBox renders ~3.3px on a 375px
+   phone and ~2.8px at 320px — unreadable. responsive.spec.js cannot
+   catch this (it flags an element only when scrollWidth > clientWidth
+   AND overflow-x is hidden/clip, which a width:100% SVG never trips),
+   so a figure that is too dense to read on a phone ships green. Keep
+   figure viewBoxes small and their type large, or give the figure a
+   min-width and let overflow-x scroll it. Verify by eye at 320px. */
+.quiz-figure {
+    padding: 0.75rem;
+    background: var(--surface-3);
+    border: 1px solid var(--border);
+    border-radius: 0;
+    overflow-x: auto;
+}
+.quiz-figure svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    margin: 0;
+}
+
 .quiz-snippet-slot { margin: 0; }
 .quiz-snippet {
     font-family: var(--mono);
@@ -3183,6 +3282,10 @@ p.chip-row-preamble {
     min-height: 38px;
 }
 .ps-row:last-of-type { border-bottom: none; }
+/* --text-dim here is the same deliberate quiet-caption choice as the shared
+   `label, .field-label` rule — see the standing-answer comment above that
+   rule for the rationale, the measured ratios, and the page-local escape
+   hatch (codebase-issues #168). */
 .ps-label {
     font-family: var(--sans);
     font-size: 0.82rem;
