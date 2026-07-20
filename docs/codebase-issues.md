@@ -6645,7 +6645,7 @@ the class.**
 
 ---
 
-### 187. Hub landing pages hard-code their chapter's lesson count *(open — 2026-07-19, awaiting an editorial ruling)*
+### 187. Hub landing pages hard-code their chapter's lesson count *(open — 2026-07-19; ruled 2026-07-20, fix in flight)*
 
 `html/bacnet/index.html:25`, `html/forced-air/index.html:25`,
 `html/hydronics/index.html:25` and `html/refrigeration/index.html:25`
@@ -6680,3 +6680,28 @@ violation. Appending to a chapter cannot falsify those, so PR #405
 treats them as the lint's false-positive class — but that rests on
 reading the convention as "don't state counts that can drift" rather
 than "don't state counts."
+
+**Update — owner ruling 2026-07-20.** The narrow reading wins:
+
+> **A count is a violation only if appending can falsify it.**
+
+So the ambiguity resolves in both directions at once:
+
+- **The four hub intros ARE violations** and get rewritten. Chapters
+  grow, so "Work the five lessons in order" goes stale on append. The
+  carve-out ("section landings and hub pages are the one place ordinals
+  belong") is narrowed to **the enumerated list itself**, not the prose
+  above it — the list is exempt because it *is* the enumeration; an
+  intro sentence merely counts it.
+- **Counting two specifically named pages is fine** and stays.
+  `comparators-and-deadband.html:66`, `modbus-decoding.html:413` and
+  `duct-static-control.html:183` each name and link both pages, so no
+  append can falsify them. The lint **keeps** its subtraction rule.
+- The lint's shipped behavior is therefore already correct under this
+  ruling — PR #405 narrowed the `**/index.html` exclusion so landing
+  grids stay exempt while intro prose is visible, which is exactly what
+  the ruling asks for. **No lint change needed.**
+
+Fix in flight on `issue-186/stale-count-and-ordinal-claims`, which
+closes this and #186 together (one topic, one owner ruling) and records
+the narrowing in `CLAUDE.md`.
