@@ -1,3 +1,5 @@
+const fs = require('node:fs');
+const path = require('node:path');
 const { test, expect } = require('@playwright/test');
 
 // Shared with the other specs: capture pageerror + console.error.
@@ -151,4 +153,93 @@ test('home count pills stay in sync with the landings (drift guard)', async ({ p
     expect(await pillNum(browse('/practice/')), 'Browse Practice pill').toBe(practiceTotal);
 
     expect(errors, 'count-guard should log no page errors').toEqual([]);
+});
+
+// Drift guard — codebase-issues #177. The home nav-card descs are the
+// other hand-maintained surface on this page: alongside the counts
+// guarded above, the Practice Browse card's desc NAMES a page ("New to
+// the field? Surviving Your First Months is the gentlest place to
+// start."). The owner wants that concrete hand-hold kept (2026-07-20
+// decision) — it does work a kind-level characterization can't — so the
+// name needs a guard instead of a rewrite: rename or retire the drill
+// and the home copy otherwise goes stale silently, with a green build.
+//
+// ── Why this derives instead of asserting the string ─────────────────
+// Writing "Surviving Your First Months" as a literal here would just
+// move the stale string from the page into the test. So BOTH sides are
+// read at runtime: candidate page names are extracted from the built
+// home page's descs by SHAPE (a run of two or more Title-Case words),
+// and each must appear in some built page's <title>. Rename the drill
+// and the desc's phrase stops matching any title → red. Retire it and
+// the title disappears → red. Reword the desc away from naming a page
+// and no candidate is produced → the guard correctly falls silent (the
+// surface it exists to protect is gone).
+//
+// ── Why the name-word rule is this strict ────────────────────────────
+// A word counts toward a run only if it is Capitalized-then-lowercase
+// and at least three characters. That drops the acronym-shaped words
+// that otherwise manufacture false candidates out of ordinary prose in
+// the Tools-by-Category descs: "Valve Cv" ("Cv", 2 chars), "Everything
+// BACnet" (internal caps), "Control-transformer VA" (all caps). Runs are
+// also cut at sentence punctuation so a name ending one sentence can't
+// fuse with a name starting the next. On the current home page the rule
+// yields exactly one candidate across all 14 descs.
+//
+// ── Sanity floors ────────────────────────────────────────────────────
+// Like landing-completeness.spec.js, this reads truth from markup shape
+// (`class="nav-card-desc"`). If nav-card.njk is restyled and that class
+// changes, zero descs parse, zero candidates are found, and the guard
+// passes vacuously — so the desc count and the title-index size are
+// floored, and a red floor beats a green hollow guard.
+//
+// Pure Node, no browser — the `page` fixture is deliberately unused, as
+// in landing-completeness.spec.js and worker.spec.js.
+test('home nav-card descs only name pages that still exist (drift guard)', () => {
+    const SITE = path.join(__dirname, '..', '_site');
+
+    const decode = (s) => s
+        .replace(/&#39;/g, "'").replace(/&quot;/g, '"')
+        .replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+        .replace(/&amp;/g, '&');
+
+    const home = fs.readFileSync(path.join(SITE, 'index.html'), 'utf8');
+    const descs = [...home.matchAll(/<div class="nav-card-desc">([\s\S]*?)<\/div>/g)]
+        .map((m) => decode(m[1]).trim());
+    expect(descs.length, 'sanity: home page yielded nav-card descs').toBeGreaterThanOrEqual(10);
+
+    // A page name is a run of 2+ adjacent name-words within one sentence.
+    const isNameWord = (w) => w.length >= 3 && /^[A-Z][a-z][A-Za-z'’-]*$/.test(w);
+    const candidates = new Set();
+    for (const desc of descs) {
+        for (const sentence of desc.split(/[.!?;:—]/)) {
+            let run = [];
+            for (const word of sentence.match(/[A-Za-z][A-Za-z'’-]*/g) || []) {
+                if (isNameWord(word)) {
+                    run.push(word);
+                    continue;
+                }
+                if (run.length >= 2) candidates.add(run.join(' '));
+                run = [];
+            }
+            if (run.length >= 2) candidates.add(run.join(' '));
+        }
+    }
+
+    // Every built page's title, minus the site suffix — the authority on
+    // what a page is called today.
+    const walk = (dir) => fs.readdirSync(dir, { withFileTypes: true })
+        .flatMap((entry) => (entry.isDirectory()
+            ? walk(path.join(dir, entry.name))
+            : (entry.name.endsWith('.html') ? [path.join(dir, entry.name)] : [])));
+    const titles = walk(SITE)
+        .map((file) => fs.readFileSync(file, 'utf8').match(/<title>([\s\S]*?)<\/title>/))
+        .filter(Boolean)
+        .map((m) => decode(m[1]).replace(/\s*—\s*controlsfreak\.dev$/, '').trim());
+    expect(titles.length, 'sanity: built site yielded page titles').toBeGreaterThanOrEqual(50);
+
+    const offenders = [...candidates]
+        .filter((name) => !titles.some((title) => title.includes(name)))
+        .map((name) => `  home desc names "${name}" but no built page carries that title`);
+    expect(offenders, 'a page named in a home nav-card desc must still exist under that name')
+        .toEqual([]);
 });
