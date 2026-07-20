@@ -196,7 +196,17 @@
     --accent-soft:  rgba(58,122,20,0.06);
     --text:         #38423a;
     --text-bright:  #1d251f;
-    --text-dim:     #666e66;
+    --text-dim:     #636b63;   /* darkened one step 2026-07-20: #666e66 computed 4.40:1 on the
+                                  #e8ece4 surfaces (--surface-3 / --bg-2 / --well share that hex),
+                                  an AA small-text fail carrying ~600 elements across 47 selector
+                                  shapes — .ref-note worked-example prose and .ps-section-label
+                                  headings on 30 pages each, plus widget labels and dense-table
+                                  cells. This step computes 4.60:1 there and lifts the other
+                                  light surfaces to 4.83-5.51:1. Deliberately the MINIMUM nudge
+                                  that clears the floor: dim captions are an intentional scan
+                                  hierarchy (codebase-issues #168), so the gap to --text (8.74:1
+                                  on the same surface) is preserved. Dark --text-dim already
+                                  passes everywhere (4.81-6.63:1) and is untouched. */
     --blue:         #11679f;
     --blue-bright:  #1573b2;
     --blue-cool:    #4d7286;
@@ -252,7 +262,7 @@
         --accent-soft:  rgba(58,122,20,0.06);
         --text:         #38423a;
         --text-bright:  #1d251f;
-        --text-dim:     #666e66;
+        --text-dim:     #636b63;   /* kept in sync with the light block above */
         --blue:         #11679f;
         --blue-bright:  #1573b2;
         --blue-cool:    #4d7286;
