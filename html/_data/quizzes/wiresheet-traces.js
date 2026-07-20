@@ -23,10 +23,15 @@
 // traps: those are a different and cheaper kind of hard, and the sibling
 // banks (function-blocks, reading-a-wiresheet) already own them.
 //
-// BANK SIZE: intentionally larger than the 10 a run presents, so the
-// engine's random sampling draws a different subset each time. See the
-// PR body — this bank needs the sampling change to land or the tail
-// questions never render.
+// BANK SIZE: intentionally larger than the 10 a default run presents.
+// NOTE — the page mounts with defaultOrder: 'sequential', and the engine
+// only shuffles when order === 'random', so a default run is always
+// questions 1-10 in order and the tail (wst-grey-not-dead,
+// wst-permit-proven, wst-prune-with-sibling) renders only when the reader
+// sets Questions to All. The replayability this size was chosen for needs
+// a sampling change that has NOT landed; until it does, treat the tail as
+// opt-in, not as rotation. Open for the owner: sample-then-present-in-order
+// in the engine, flip this page to 'random', or present all 13.
 //
 // FIGURES: three questions carry a `figure` — the kebab-case id of a
 // hidden <svg> in the static figure bank on practice/wiresheet-traces.html.
@@ -63,7 +68,7 @@ module.exports = [
             { id: 'c', text: 'The MAX — its second input is a 170 minimum-temperature constant, so the reset result only reaches the AO on the days it exceeds 170.', correct: true },
             { id: 'd', text: 'Nothing — 170 is the correct reset output at 55 °F outdoors.' }
         ],
-        explain: 'The reset chain is textbook and it is not the problem: &minus;1.0 &times; 55 = &minus;55, plus 190 = 135, and the 130&ndash;180 clamp passes 135 untouched. Then a high-select puts that 135 up against a 170 constant and the constant wins, every hour of every mild day. A minimum-supply-temperature floor is a legitimate thing to want — some plants hold one for domestic-hot-water preheat or to keep a condensing boiler out of a range its controls dislike — but at 170 it is set above most of the schedule it is protecting, so it does not floor the reset, it replaces it. The trap is that the four blocks a tech reaches for first are all innocent; the fault is the block <em>after</em> the part of the sheet that has a name. Read the chain to the AO pin, not to the end of the idiom you recognized.',
+        explain: 'The reset chain is textbook and it is not the problem: &minus;1.0 &times; 55 = &minus;55, plus 190 = 135, and the 130&ndash;180 clamp passes 135 untouched. Then a high-select puts that 135 up against a 170 constant and the constant wins, every hour of every mild day. A minimum-supply-temperature floor is a legitimate thing to want — some plants hold one for domestic-hot-water preheat, and a non-condensing cast-iron or steel boiler wants a floor to keep return water above its flue-gas dew point and off the thermal-shock end of its curve — but at 170 it is set above most of the schedule it is protecting, so it does not floor the reset, it replaces it. The trap is that the four blocks a tech reaches for first are all innocent; the fault is the block <em>after</em> the part of the sheet that has a name. Read the chain to the AO pin, not to the end of the idiom you recognized.',
         learnMore: { href: '/education/setpoint-math-reset.html', label: 'Setpoint Math & Reset — the reset chain' },
         tags: ['wiresheet-traces', 'logic', 'red-herring', 'reset']
     },
@@ -102,7 +107,7 @@ module.exports = [
     {
         type: 'gotcha',
         id: 'wst-forced-reset-leg',
-        prompt: 'A freeze stat on a makeup-air unit is latched so a trip must be reset by hand. It has tripped three times this month and each time the unit was running again before anyone got there. The trip latch reads as below on a healthy afternoon. What explains the self-clearing trips?',
+        prompt: 'A freeze stat on a makeup-air unit is latched so a trip must be reset by hand. The alarm history shows it has tripped three times this month, and each time the unit was still running when someone got there. The trip latch reads as below on a healthy afternoon. What explains the self-clearing trips?',
         snippet: '<pre class="quiz-snippet">FRZ TRIP (from stat):   FALSE\nRESET CMD (sw point):   TRUE   [in override]\nSR LATCH   S:           FALSE\nSR LATCH   R:           TRUE\nSR LATCH   Q:           FALSE\nUNIT ENABLE:            TRUE</pre>',
         choices: [
             { id: 'a', text: 'The latch is set-dominant and should be reset-dominant.' },
