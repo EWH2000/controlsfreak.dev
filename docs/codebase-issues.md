@@ -6886,3 +6886,60 @@ Worth weighing against the site's no-CI-guard precedents (#84's version
 bump is knowingly unguarded). The argument for guarding this one is that
 contrast regressions are invisible in review — nobody eyeballs a diff
 and sees 4.40:1.
+
+---
+
+### 194. What the contrast guard cannot see — three boundaries, one of them unbounded *(open — 2026-07-20)*
+
+Found by an air-side-sim scoping session auditing PR #414's
+`tests/contrast-sweep.spec.js` rather than trusting its summary. None of
+these is a defect in the guard; they are the shape of its coverage, and
+two of the three are documented in its own header. The third is not, and
+is the one that matters.
+
+**1. SVG text — excluded, documented.** `if (el.closest('svg')) continue;`
+(`:262`). Diagram labels sit over drawn geometry, not CSS backgrounds, so
+an ancestor walk cannot resolve their background. Measuring them needs
+pixel sampling — a different instrument. Bounded and honest.
+
+**2. The equipment register — excluded by name, sanity-checked but not
+measured.** `.device, .lcd, .keypad, .gauge.eq, .cw-term` are skipped.
+There *is* a dedicated test (`:572`) asserting the selector still matches
+≥20 text nodes, so the exclusion cannot silently stop matching — but it
+proves the text was *found and skipped*, never that its contrast passes.
+The reassuring 7.59:1 / 6.16:1 figures at `:79-80` are a **hand
+measurement in a comment**, not an assertion.
+
+⚠️ **Consequence for any new page:** styling text onto
+`.device` / `.lcd` buys **exemption, not verification.** A future
+simulator that adopts equipment-register chrome inherits an unmeasured
+surface. (Note the widely-repeated claim that a *new* gradient face would
+be caught by the `unresolved` bucket is **false** — `unresolved` is only
+populated from rows that already failed the ratio (`:375` `continue`s on
+a pass, `:391` routes), so a gradient face is flagged only if its text
+also fails against the flattened backdrop.)
+
+**3. State-dependent classes — unbounded, undocumented.** The sweep walks
+*static built pages*. Any class reachable only through JS state change is
+never measured.
+
+The confirmed instance: **`.status-pill.warn` and `.status-pill.error`
+have never been contrast-measured.** `.status-pill` is shared tool-output
+chrome across ~8 tools (economizers, air-mixing, coil-sizing,
+refrigerant-pt, the bacnet tools, refrigerant-loop), and its `.warn` /
+`.error` variants are applied at runtime. The single static instance in
+markup — `html/simulators/hydronic-loop-builder.html:353` — carries
+`hidden`, so the walker skips it.
+
+This is the same defect family as #192 (`opacity` invisible to a
+declared-colour audit): the guard measures a real property correctly, and
+a whole population never enters the sample. **Verdict colours are exactly
+where contrast matters most** — a warn pill nobody can read is worse than
+a dim label.
+
+Options, roughly ascending in cost: render a hidden static specimen of
+every state variant on `/styleguide.html` (which already exists as a
+living reference exercising both registers) and let the existing sweep
+reach it; or drive state in the spec; or measure the token pairs directly
+without the DOM. The styleguide route looks cheapest and has the side
+benefit of making the states visible to human review too.
