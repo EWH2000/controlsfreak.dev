@@ -94,13 +94,30 @@
 //                           keeps exactly the reader-facing pair.
 //
 // 6. PATH EXCLUSIONS. Templates, shared scripts, and build data are
-//    infrastructure, not reader prose. Section landings and hub pages
-//    (**/index.html) are excluded on CLAUDE.md's own authority: "Section
-//    landings and hub pages are the ONE place ordinals belong, since they
-//    enumerate the sequence anyway" — and the home-page count pills have a
-//    drift test (home-hero.spec.js) keeping them honest, which is the other
-//    documented exemption. html/_data/quizzes/ is deliberately KEPT:
-//    quiz prompts and explanations are reader-facing prose.
+//    infrastructure, not reader prose, and are excluded from every rule.
+//    html/_data/quizzes/ is deliberately KEPT: quiz prompts and
+//    explanations are reader-facing prose.
+//
+// 6a. LANDINGS ARE EXCLUDED FROM THE ORDINAL CLASSES ONLY — not, as the
+//    first cut had it, from every rule. The authority is CLAUDE.md:
+//    "Section landings and hub pages are the ONE place ordinals belong,
+//    since they enumerate the sequence anyway." That licenses ORDINALS,
+//    and it licenses them BECAUSE the page enumerates the sequence in
+//    view. It says nothing about counts or terminal claims, and the same
+//    bullet elsewhere says the opposite of a blanket pass: "don't count
+//    pages, lessons, or files in prose when naming the set does the same
+//    work." A blanket exclusion also contradicted the corpus — the
+//    terminal claim that motivated PR #395 ("close the chapter from
+//    memory") shipped ON a landing, and would have been invisible here.
+//    Narrowing it surfaces exactly four findings, all genuine: the four
+//    topic hubs open with "Work the {three,five,five,eight} lessons in
+//    order" in a `.landing-intro`, sitting above a HAND-WRITTEN hub-path
+//    block whose step numbers are equally hardcoded, so nothing
+//    regenerates either half when a lesson lands. /refrigeration/'s is
+//    the twin of the claim this branch removed from
+//    metering-devices-txv-eev.html:303. The home-page count pills stay
+//    exempt on their own merits — home-hero.spec.js has a drift guard
+//    keeping them honest — but that guard does not reach these hubs.
 //
 // KNOWN AMBIGUITY THE LINT CANNOT RESOLVE
 //
@@ -132,16 +149,31 @@ const filesOnly = args.includes('--files');
 
 const SCANNED_EXT = new Set(['.html', '.js']);
 
-// Infrastructure + the documented ordinal-friendly surfaces (choice 6).
+// Infrastructure — never reader prose, excluded from every rule (choice 6).
 const EXCLUDED = [
     /^_includes\//,
     /^scripts\//,
     /^_data\/(?!quizzes\/)/,
+];
+
+// Landings and hub pages are excluded from the ORDINAL classes only, not from
+// every rule (choice 6a). CLAUDE.md's carve-out is specifically about
+// ordinals — "Section landings and hub pages are the ONE place ordinals
+// belong, since they enumerate the sequence anyway" — and the licence is
+// granted BECAUSE the page enumerates the sequence right there. A count or a
+// terminal claim is neither enumerated nor self-checking.
+const ORDINAL_ONLY_EXCLUDED = [
     /(^|\/)index\.html$/,
 ];
 
+const ORDINAL_CLASSES = new Set(['ordinal', 'positional']);
+
 function isExcluded(rel) {
     return EXCLUDED.some((re) => re.test(rel));
+}
+
+function skipsClass(rel, cls) {
+    return ORDINAL_CLASSES.has(cls) && ORDINAL_ONLY_EXCLUDED.some((re) => re.test(rel));
 }
 
 function scanFiles(dir) {
@@ -351,6 +383,7 @@ function lintFile(file) {
         const skip = safeSpans(text);
 
         for (const rule of RULES) {
+            if (skipsClass(rel, rule.cls)) continue;
             rule.re.lastIndex = 0;
             let m;
             while ((m = rule.re.exec(text)) !== null) {
