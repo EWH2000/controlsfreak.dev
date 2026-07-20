@@ -6571,3 +6571,112 @@ same session:
   `'twin-T'` single-quotes, which render as `&#39;twin-T&#39;` in
   view-source per the CLAUDE.md autoescape gotcha. Dropped the
   quotes; meaning unchanged.
+
+---
+
+### 185. Quiz `snippet` path: one-way invariant publishes content the page never renders *(open — 2026-07-19)*
+
+Found by the Lane C review during PR #404 (`figure` field), deliberately
+left unfixed there to keep that PR's scope on the new field.
+
+`html/scripts/quiz-engine.js:127-128` enforces the `gotcha` → `snippet`
+invariant in **one direction only**: a `gotcha` with no `snippet` fails
+the mount loudly. Nothing stops the reverse — a **non-`gotcha` question
+carrying a `snippet`**. When one does:
+
+- the render guard at `quiz-engine.js:376`
+  (`q.type === 'gotcha' && q.snippet`) **silently drops it from the
+  page**, and
+- `buildQuestionName` (`.eleventy.js:476-477`) still concatenates it
+  into the FAQPage JSON-LD `Question.name`.
+
+Net effect: **content that never appears on the page is published as
+structured data**, with no warning at build time or mount time. That is
+the same defect family as #182's "a green build cannot see it" — the
+page looks right, the suite passes, and the wrong thing ships to search
+engines.
+
+No shipped bank currently trips it (verified across all 40 banks), so
+this is latent, not live. Two candidate fixes: make the validation
+symmetric (reject a `snippet` on a non-`gotcha`), or make the render
+guard type-agnostic (`if (q.snippet)`) so a stray snippet renders
+instead of vanishing. **The symmetric-validation option is the one
+consistent with how PR #404 handled `figure`** — that lane chose a
+*resolution* check over a required-field check precisely so a declared
+figure can never silently no-op.
+
+Note the `figure` field shipped in #404 deliberately does **not**
+reproduce this asymmetry.
+
+---
+
+### 186. Hard-coded page ordinals inside lesson prose — the append-fragile class the new lint surfaced *(open — 2026-07-19)*
+
+Surfaced by `npm run prose-lint` (shipped report-only in PR #405). These
+are the instances the lint flags HIGH that were **left unfixed** because
+the rewrite is editorial, not mechanical — the lane fixed only
+`metering-devices-txv-eev.html:303`, where meaning and voice survived a
+direct substitution.
+
+**Highest value — `html/education/duct-static-control.html:598-604`.** A
+chapter recap that walks *"Page one built the path… Page two gave the
+mixing box… Page three followed the air… Page four taught you to name
+the box… Page five went to the far end."* **An insertion anywhere in the
+forced-air chapter falsifies up to five sentences at once** — the same
+propagation shape as the six-file claim CLAUDE.md cites as the
+motivating incident for the convention. The mechanical fix (name the
+lessons by title) is known, but the paragraph's rhythm is built around
+the ordinals, so it needs editorial re-voicing rather than substitution.
+
+**Same file, same defect —
+`html/education/metering-devices-txv-eev.html:46`.** The intro paragraph
+still carries `Page 1` / `Page 2` sibling labels. PR #405 fixed `:303`
+in this file and deliberately left `:46`; flagged here so that reads as
+a decision rather than an oversight. The intro is one long sentence
+whose rewrite is editorial.
+
+The `ordinal-label` rule that finds these (noun-then-number, e.g.
+`Page 3 of this chapter`) **was not in either prior lint formulation**
+and is not in the brief that scoped PR #405 — the lane added it after
+hand-grepping for shapes its own pattern could not see. It is the
+mirror image of the counted-set rule and therefore invisible to any
+pattern written number-first. **13 instances, zero false positives in
+the class.**
+
+---
+
+### 187. Hub landing pages hard-code their chapter's lesson count *(open — 2026-07-19, awaiting an editorial ruling)*
+
+`html/bacnet/index.html:25`, `html/forced-air/index.html:25`,
+`html/hydronics/index.html:25` and `html/refrigeration/index.html:25`
+each open their `.landing-intro` with *"Work the {five, eight, five,
+three} lessons in order"*, above a hand-written hub-path block whose
+step numbers are equally hard-coded. `/refrigeration/`'s *"the three
+lessons"* is the direct twin of the `metering-devices-txv-eev.html:303`
+claim fixed in PR #405.
+
+**This one is genuinely ambiguous and should not be fixed until the
+owner rules**, because CLAUDE.md pulls both ways:
+
+- *"Write claims that can't go stale… don't count pages, lessons, or
+  files in prose when naming the set does the same work"* — these are
+  violations.
+- *"Section landings and hub pages are the **one place** ordinals
+  belong, since they enumerate the sequence anyway"* — these are
+  explicitly exempt.
+
+A hub page's intro sentence is arguably neither: it is prose *above* an
+enumeration, not the enumeration itself. The lint currently reports them
+(the `**/index.html` exclusion was narrowed in PR #405 so landing
+*grids* stay exempt while intro prose is visible). **If the owner reads
+the exemption as covering the whole page, the exclusion should widen
+back and these four stop being findings.** If he reads it as covering
+only the enumerated list, four one-line rewrites close it.
+
+Related: the same ruling decides whether counting **two specifically
+named** pages (`comparators-and-deadband.html:66`,
+`modbus-decoding.html:413`, `duct-static-control.html:183`) is a
+violation. Appending to a chapter cannot falsify those, so PR #405
+treats them as the lint's false-positive class — but that rests on
+reading the convention as "don't state counts that can drift" rather
+than "don't state counts."
