@@ -196,7 +196,22 @@
     --accent-soft:  rgba(58,122,20,0.06);
     --text:         #38423a;
     --text-bright:  #1d251f;
-    --text-dim:     #666e66;
+    --text-dim:     #636b63;   /* darkened one step 2026-07-20: #666e66 computed 4.40:1 on the
+                                  #e8ece4 surfaces (--surface-3 / --bg-2 / --well share that hex),
+                                  an AA small-text fail carrying ~600 elements across 47 selector
+                                  shapes — .ref-note worked-example prose and .ps-section-label
+                                  headings on 30 pages each, plus widget labels and dense-table
+                                  cells. This step computes 4.60:1 there and lifts the other
+                                  light surfaces to 4.83-5.51:1. Deliberately the MINIMUM nudge
+                                  that clears the floor: dim captions are an intentional scan
+                                  hierarchy (codebase-issues #168), so the gap to --text (8.74:1
+                                  on the same surface) is preserved. Dark --text-dim already
+                                  passes everywhere (4.81-6.63:1) and is untouched.
+                                  SCOPE: the sweep behind those numbers compares computed color
+                                  against the resolved background, so it only clears elements
+                                  whose contrast is determined by color-vs-background alone. It
+                                  is blind to a separate `opacity` on the text element — see the
+                                  .bit-idx note. Retuning this token does NOT clear those. */
     --blue:         #11679f;
     --blue-bright:  #1573b2;
     --blue-cool:    #4d7286;
@@ -252,7 +267,7 @@
         --accent-soft:  rgba(58,122,20,0.06);
         --text:         #38423a;
         --text-bright:  #1d251f;
-        --text-dim:     #666e66;
+        --text-dim:     #636b63;   /* kept in sync with the light block above */
         --blue:         #11679f;
         --blue-bright:  #1573b2;
         --blue-cool:    #4d7286;
@@ -1435,6 +1450,14 @@ p.bit-hint {
     line-height: 1;
 }
 .bit.on .bit-val { color: var(--accent); }
+/* NOT AA. The 0.45 opacity composites --text-dim down to ~#afb5ae on the
+   light --bg cell face — 1.83:1 measured, against a 4.5:1 small-text floor
+   (1.76:1 on a lit .bit.on cell). Pre-existing and unrelated to the 2026-07-20
+   --text-dim retune, which moved it 1.81 -> 1.83; the token cannot fix this,
+   only dropping the opacity and dimming the color can. Left alone deliberately:
+   that is a visual-weight change on the bit grid, not a token change, and it
+   wants the owner's eye. The bit index IS meaningful content (bit position),
+   so it does not qualify for the disabled-control WCAG exemption. */
 .bit-idx {
     font-family: var(--mono);
     font-size: 0.48rem;
