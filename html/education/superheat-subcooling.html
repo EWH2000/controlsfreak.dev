@@ -150,7 +150,7 @@ keywords: psig saturation suction liquid line charge txv evaporator condenser
                 A few details worth pointing out on the diagram. The two example pressures aren't the same — superheat is shown at a lower pressure (suction-line conditions), subcooling at a higher pressure (liquid-line conditions). That matches the real system: the suction line lives on the low side, the liquid line on the high side. The saturation temperature is different at each pressure (every point on the curve has its own T), so each measurement has its own reference. The arrow's length is the magnitude of the deviation — bigger gap means more superheat or more subcooling.
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 One thing the conceptual diagram smooths over: on a <em>zeotropic</em> blend (R-407C, R-454B), the saturation "curve" is actually two curves close together — the <em>bubble</em> curve on the liquid side and the <em>dew</em> curve on the vapor side, separated by the refrigerant's <em>glide</em>. Superheat references the dew curve, subcooling the bubble curve, which is why both names appear on the formulas above. For a pure refrigerant or a near-azeotropic blend like R-410A or R-404A, the two curves collapse onto each other and the distinction stops mattering. The <a href="/tools/refrigerant-pt.html">P-T tool</a> always shows both, so the gap is visible whenever it's relevant.
             </p>
 
@@ -198,15 +198,15 @@ keywords: psig saturation suction liquid line charge txv evaporator condenser
                 <code><span data-us="subcooling = 105&nbsp;°F − 95&nbsp;°F = 10&nbsp;°F" data-metric="subcooling = 40.6&nbsp;°C − 35.0&nbsp;°C = 5.6&nbsp;°C">subcooling = 105&nbsp;°F − 95&nbsp;°F = 10&nbsp;°F</span></code>
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 Both numbers in the normal range for a residential or light-commercial split system on a typical operating day. Punch either pair into the <a href="/tools/refrigerant-pt.html">P-T tool</a>'s Superheat / Subcooling tab with R-410A selected, switch the Line toggle between Suction and Liquid, and you'll read about <span data-us="10 °F" data-metric="5.6 °C">10 °F</span> back either way — the tool interpolates between chart rows, so it lands a couple tenths off these whole-degree chart values — with the tool's verdict pill describing the result as in-range.
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 One caution before you carry that away: the matched numbers here are healthy <em>for this system on this day</em>, not a universal target. Every system has its own design superheat and subcooling — on the charging chart, the data plate, or the install manual — and a fixed-orifice unit on a hot afternoon can sit well off these and still be right. The example is teaching the <em>method</em>, line temperature against saturation, not a pair of numbers to memorize.
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 Now an abnormal scenario, same refrigerant. Suction-side gauge reads <strong><span data-us="118 psig" data-metric="814 kPag">118 psig</span></strong> still — saturation temperature still <span data-us="40 °F" data-metric="4.4 °C">40 °F</span>. But the clamp-on suction-line thermometer reads <strong><span data-us="90 °F" data-metric="32.2 °C">90 °F</span></strong>. So:
             </p>
 
@@ -214,7 +214,7 @@ keywords: psig saturation suction liquid line charge txv evaporator condenser
                 <code><span data-us="superheat = 90&nbsp;°F − 40&nbsp;°F = 50&nbsp;°F" data-metric="superheat = 32.2&nbsp;°C − 4.4&nbsp;°C = 27.8&nbsp;°C">superheat = 90&nbsp;°F − 40&nbsp;°F = 50&nbsp;°F</span></code>
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 <span data-us="50 °F" data-metric="27.8 °C">50 °F</span> is well outside any normal target — even a fixed-orifice system on a hot afternoon at light load isn't supposed to run that high. The direction it points: <em>starved evaporator</em>. Likely candidates are undercharge, a metering device under-feeding, or a liquid-line restriction. None of those are confirmed by the superheat reading alone — you'd check subcooling and the discharge pressure next, and if subcooling were also low, you'd lean toward undercharge; if subcooling were high with high discharge pressure, the liquid-line restriction story would fit. The P-T tool's verdict pill on the Superheat / Subcooling tab uses this same direction-of-fault language; the goal of this page is that you arrive at the tool already knowing what its words mean.
             </p>
 

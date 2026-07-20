@@ -15,6 +15,28 @@ and five of the eight forced-air lessons already contain working models with
 owner-blessed constants. The genuinely new work is one solver and the
 consolidation itself.
 
+<!-- // DO NOT "reconcile" this five against the six below — they count
+     different things, and both are correct. Measured at ab73ebb:
+
+       6 lessons have an INTERACTIVE WIDGET  (all but air-balancing and
+         dedicated-outdoor-air) — that is the "other six" at L141-143.
+       5 of those 6 have a PHYSICS MODEL with owner-blessed constants —
+         air-handlers, building-pressure, duct-static-control,
+         economizers, vav-systems. That is this line's five.
+
+     The odd one out is air-unit-identification: 15 controls and 228
+     script lines, but zero physical constants. It is a
+     constraint-satisfaction identification game (FAMILIES / MYSTERIES /
+     QUESTIONS / survivors / firstMismatch), not a model — so it has
+     nothing for a physics sim to consolidate.
+
+     This was "corrected" from five to six on 2026-07-19 by a session
+     that read the two numbers as a contradiction. That change made a
+     true statement false; reverted 2026-07-20 after a scoping session
+     checked air-unit-identification for physics constants and found
+     none. Check what each number counts before reconciling them. -->
+
+
 ## What already exists to build on
 
 **`psychro-engine.js` (258 lines) is the decisive asset.** Full ASHRAE 2017
@@ -153,7 +175,10 @@ return shape; `asNum` NaN-proofing; a visible "About this model" honesty card;
 a pure-Node engine spec; an adversarial verification round; and the
 equipment-depiction lens — *would a tech read this machine as operating
 correctly* (rotation sense vs geometry, port/connection fixity, physically
-impossible state changes). **Four of 16 spec files pin SVG geometry**, so that
+impossible state changes). **The refrigerant-loop engine spec pins its SVG
+geometry at source level** — flow direction, IN/OUT lane pairing, coil tube
+rows, serpentine endpoint joins, gradient `userSpaceOnUse`, frost-crystal
+seating — **and it is the only simulator with that coverage**, so that
 lens is machine-checked rather than only reviewed. The owner builds equipment
 graphics professionally and his eye is the final QA — bring screenshot sets at
 review time.

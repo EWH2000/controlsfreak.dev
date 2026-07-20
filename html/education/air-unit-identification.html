@@ -159,7 +159,7 @@ keywords: rtu ahu mau doas makeup air unit heat pump split system fan coil namep
                 Resist the urge to start with the nameplate. It's the most authoritative label on the unit and also the hardest to reach — behind an access panel, painted over, sun-bleached, ten feet up — and, as the rest of this page will show, paperwork of every kind has a way of lying. Start instead with three questions you can answer from ten feet away with your hands in your pockets. <em>Where does it sit?</em> <em>What's in the cabinet?</em> <em>Where does its air come from — and where does it go?</em> Between them they corner almost everything on a commercial roof or in a mechanical room.
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 Each question reads a different layer. Siting is the cheap first cut: a curb on the roof, a footprint in a mechanical room, a small box in or above the occupied space, or two separate pieces with something running between them. The cabinet is the deep tell: compressors and a gas burner mean the unit brought its own plant along; bare coils with pipe pairs disappearing toward a boiler room or a chiller mean it borrows someone else's; a lone fan with a small coil means it's a terminal device, not an air handler at all. And the connections are the fingerprint: a return duct plus an outside-air hood means it recirculates and mixes; an intake hood with no return duct means it's a 100% outside-air machine; a pair of grilles to the room means the room <em>is</em> the ductwork.
             </p>
 
@@ -211,23 +211,23 @@ keywords: rtu ahu mau doas makeup air unit heat pump split system fan coil namep
                 Read the lineup with those questions in hand. The <em>packaged rooftop unit</em> answers all three loudly: it sits on a curb; its cabinet contains everything — a filter rack behind the intake hood, a DX cooling coil with its own compressors and condenser fans, usually a gas heat exchanger with a flue; and both duct connections drop through the curb, return coming up from the building and supply going back down. It's everything the <a href="/education/air-handlers.html">chapter opener</a> drew, factory-folded into one weatherproof box, and the condenser-fan section spinning at one end is the giveaway that the refrigerant plant lives onboard.
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 One variant hides in plain sight: the <em>heat-pump RTU</em>. Same curb, same hood, same cabinet — but its refrigerant circuit can run in reverse and heat the building with the same coil that cooled it (a reversing valve does the switching; it's the <a href="/education/refrigerant-cycle-basics.html#components">refrigerant cycle</a> run both directions). From the curb in July you cannot tell it from a straight-cooling unit, and that's worth saying plainly: <strong>the heat-pump tell is paper, not sheet metal</strong> — a model code one letter different from its cooling-only sibling, a nameplate whose heating section names the compressor instead of a burner. It's the first hint of where this page goes next: some questions only the nameplate can answer.
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 The <em>built-up air handler</em> answers the cabinet question the opposite way: nothing in the box but air-side equipment. It sits in a mechanical room (a penthouse counts), often assembled on site in sections big enough to walk past — or through — and its coils are piped from a plant: insulated pipe pairs heading off toward a chiller or a boiler, valves and actuators at the coil connections, and no compressor anywhere. Find pipe pairs and the unit is a borrower; the plant lives elsewhere. That distinction survives even when the address doesn't cooperate — a built-up unit on a roof is still an air handler, because <strong>the pipes outrank the address</strong>.
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 The <em>makeup-air unit</em> is named by what's missing. Walk around it twice: intake hood, supply duct dropping into the building, often a burner section — and no return duct at all. It conditions 100% outside air, because its job isn't to recirculate the building's air but to replace what something else is throwing away: kitchen hoods, big process exhaust, a floor of lab fans. It's the "<a href="/education/building-pressure.html#dampers-pressure">more air in</a>" machine from the last page, made into its own box. Its polished cousin the <em>DOAS</em> (dedicated outdoor-air system) does the same 100%-OA job for ventilation, usually with energy recovery — recognizing one is enough here; what it does to the air psychrometrically has <a href="/education/dedicated-outdoor-air.html">its own page in this chapter</a>.
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 The <em>split system</em> answers the siting question with "two pieces": a condensing unit outdoors — compressor, condenser coil, fan, on a pad or a flat roof — and an air mover indoors, connected not by ducts but by a <em>refrigerant lineset</em>: two copper lines, the fatter one insulated, running between the halves. Follow the lineset and you've identified both ends at once. The indoor half ranges from a closet air handler to a wall cassette; the outdoor half is the one with the nameplate that matters.
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 And the little one, included so you can rule it out: the <em>fan coil</em>. A box a couple of feet across, in or above the space it serves, holding exactly what the name says — a fan and a piped coil — with barely any ductwork and usually no outside-air connection of its own. It's a terminal device, a hydronic load with a fan on it, not an air handler; this chapter owes it recognition only. What matters today is not mistaking one for the air handler its graphic might claim it is. Hold that thought.
             </p>
 
@@ -334,7 +334,7 @@ keywords: rtu ahu mau doas makeup air unit heat pump split system fan coil namep
                 Now the paper. Every unit on the mechanical drawings carries a <em>schedule tag</em> — AHU-1, RTU-3, MAU-1, EF-2 — a short family code, a hyphen, a number. The tag is the thread that ties everything together: it's stenciled or stickered on the cabinet (check the disconnect too), it names the unit's row in the <em>mechanical schedule</em>, and it labels the unit's symbol on the plan views. The schedule itself is a table on the M-series drawings, one row per unit: design airflow, external static, coil capacities, electrical data, and — the two columns worth reading first — <em>location</em> and <em>serves</em>. One disambiguation before anyone gets hurt: the mechanical schedule is a table on a drawing. It is not a <a href="/education/bacnet-basics.html">BACnet Schedule object</a>, and it is not the time-of-day occupancy schedule. Three unrelated things share the word, and "check the schedule" means a different afternoon depending on which one your caller meant.
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 The <em>nameplate</em> is the unit's own testimony — the factory's word, not the designer's. Manufacturer, model, serial; electrical ratings (voltage and phase, minimum circuit ampacity, maximum overcurrent protection — the numbers the wire and breaker were sized from); refrigerant type and factory charge on packaged DX equipment. Model strings reward a closer look — see the worked example below. And when nameplate and schedule disagree — a model number the schedule never heard of — you've just learned the most valuable thing paper can teach: someone replaced this unit, and the drawings don't know yet.
             </p>
 
@@ -397,11 +397,11 @@ keywords: rtu ahu mau doas makeup air unit heat pump split system fan coil namep
                 Everything in the last section assumed the paper is telling the truth. Sometimes none of it is. Buildings outlive their documentation: units get replaced and the schedule never hears about it; graphics get built by someone who never walked the roof, so equipment lands in the software under the wrong family entirely; tags fall off, get painted over, or were never applied. And the people on site — who are supposed to be the living documentation — inherit the same confusion, because they learned the names from the same wrong graphics. When the BAS name, the prints, and the person walking you around all disagree, you're not identifying a unit anymore; you're auditing three unreliable witnesses.
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 There's a clean way out, and it comes from the controls side: make the system announce itself, and <strong>command the season that's asleep</strong>. Pick the unidentified equipment in software and command a specific output that can't matter right now — a heating valve in July, a chilled-water valve in January. When the plant behind that output is truly de-energized — the boiler cold, the chiller down — the command moves a signal, not the building. Then stand at the cabinet you suspect and watch for the announcement: most controllers carry an output LED per point, and where there's no light to watch, put a meter on the output terminals and look for the volts (or the milliamps) to move. Point commanded, cabinet answered — one line of the map recovered. Write it down before you touch the next one.
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 Guardrails, because an override is still an override. First, confirm the season really is asleep: plenty of buildings run hot water all summer for reheat and dehumidification, so check that the plant is off and the loop cold before trusting a heating command to be harmless. Command a specific output, not a demand — on a packaged unit a first-stage "cooling call" isn't one output, it's a sequence, and an integrated economizer answers it by opening the outside-air damper. Keep it brief and keep it boring — a valve stroke held for seconds, not an experiment left running over lunch. Stay away from anything that can't tolerate even a harmless-looking nudge: life-safety systems, lab and pressure-critical spaces, and any freeze-risk path — an outside-air damper in January is not a diagnostic tool, and it will happily volunteer for the job if you command "cooling" instead of a valve. Tell the operator what you're doing before you do it. And release everything you touched, then watch it actually return to auto — <strong>an override left behind is a lie you added to the pile</strong>, and the next tech will be auditing you.
             </p>
 

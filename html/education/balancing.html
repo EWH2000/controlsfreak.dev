@@ -394,19 +394,19 @@ keywords: gpm delta p flow circuit setter proportional balance valve tab
                 A CBV is, at the level of physics, a fancy orifice. The handle on top rotates a stem that moves a plug into and out of the flow path, restricting how much water can pass for a given pressure drop. Two pressure-temperature ports — small Schrader-like fittings, one upstream and one downstream — let a tech jam a manometer probe in and read the differential pressure (Δp) across the trim. The valve manufacturer publishes a flow-vs-Δp-vs-handle-position chart for the body; that chart is how a calibrated reading becomes a flow number. The handle's locking ring or memory-stop holds the position once it's set.
             </p>
 
-            <p style="margin-top:1.1rem;">
+            <p>
                 The trim is the entire personality of the valve. Once set, the CBV passes flow proportional to the square root of the available Δp through it — twice the Δp gets you roughly 41 % more flow, half the Δp gets you about 71 % of the original flow. There's no compensation, no spring, no actuator. If the system pressure climbs or drops for any reason — another zone closing, the pump curve shifting, a slug of air in the loop — the CBV's flow goes with it. The valve doesn't know what it's supposed to be doing; it just lets through whatever its orifice equation allows.
             </p>
 
-            <p style="margin-top:1.1rem;">
+            <p>
                 Setting them is the famous part. Because the loads interact — throttling the near load shifts pressure to the far loads, which then read differently — you can't just walk the riser once and dial each valve to its design flow. The procedure is <em>proportional balancing</em>: pick a reference branch (usually the one with the most authority over the system, often the index circuit — the longest, most-restricted branch — at the far end), measure its flow as a fraction of design, then walk the rest of the loop adjusting each valve to the same fraction. Then go back and repeat, because the first pass moved the reference. Two or three iterations is typical; a complicated system takes more. It's a real job — half a day for a small system, a week for a big one — and it's exactly the work the other two valve types are trying to replace.
             </p>
 
-            <p style="margin-top:1.1rem;">
+            <p>
                 Where CBVs fit: constant-flow systems pair with them best. <a href="/education/load-piping.html">Three-way loads</a> hold the system loop at constant Δp by design, so the CBV trim that gets set during commissioning stays accurate as long as the loads keep modulating their bypass flows the way the engineer expected. CBVs on variable-flow (two-way) systems are technically valid but awkward — the operating point moves all day as loads modulate, the CBV that was perfect at the design condition is wrong at every off-design condition, and the loop drifts in and out of balance with whatever the pump and the worst-positioned valves are doing. CBVs were the only option for decades, so plenty of variable-flow systems do run on them; they just leave money on the table compared to the automatic alternatives.
             </p>
 
-            <p style="margin-top:1.1rem;">
+            <p>
                 What goes wrong: the trim drifts. Maintenance staff disturb the handle reaching for the nearby strainer; a vibration loosens the locking ring; somebody re-balances <em>one branch</em> and never goes back to redo the others. The P/T ports clog with rust or scale, and the next tech who tries to measure flow can't get a reading. Worst of all, the system itself changes — boiler swap, new load tied in, pump impeller trimmed — and the original calibration is silently invalid even though nothing about the valves themselves moved. The whole loop is back to "self-unbalanced" without anyone touching it, and the symptoms show up in occupied spaces months later.
             </p>
 
@@ -440,15 +440,15 @@ keywords: gpm delta p flow circuit setter proportional balance valve tab
                 An ABV looks the same from the outside as a CBV, but the inside is different. There's a spring-loaded cartridge in the flow path, and the cartridge moves as Δp across the valve changes. Higher Δp pushes the cartridge to close the orifice down; lower Δp lets it open up. Within the valve's <em>compensation range</em> — typically something like 1 to 22 psi of Δp, depending on cartridge selection — the flow through the valve stays approximately constant. You pick the valve body and cartridge for the design flow you want, install it, and walk away. No trim, no procedure, no manometer.
             </p>
 
-            <p style="margin-top:1.1rem;">
+            <p>
                 The compensation range is the load-bearing detail. Below the cartridge's minimum design Δp, the spring can't push the cartridge open any further — it's already fully open, and the valve behaves like a plain orifice; flow follows the same square-root-of-Δp curve a CBV would. Above the maximum design Δp, the spring is fully compressed and the cartridge is as closed as it gets; flow rises again with the square root of Δp. In between, you get the flat-flow behavior that's the whole point of buying an ABV. Sizing matters: pick a cartridge with a compensation range that comfortably brackets the Δp swings your system will actually see in operation, and the valve does its job; pick one too narrow and you've spent more money for a cartridge that spends most of its time outside the band where it works.
             </p>
 
-            <p style="margin-top:1.1rem;">
+            <p>
                 Where ABVs fit: anywhere CBVs would have gone, when "set and forget" is worth the small price premium. Especially well-suited to systems where loads were sized at different times — additions, retrofits, phased construction — because each load's ABV just holds its own flow regardless of what its neighbours do. They also pair gracefully with variable-flow systems within reason; the compensation range usually covers a wide enough Δp window to handle realistic load swings. They don't handle pump-curve excursions outside their compensation range, though; if the system pressure drops far enough that every ABV in the building falls below its compensation Δp, the flat-flow behavior disappears and you're back to orifices everywhere.
             </p>
 
-            <p style="margin-top:1.1rem;">
+            <p>
                 What goes wrong: the cartridge sticks. Scale, debris, rust, or just age can leave it half-closed and unresponsive. There's no way to see it from outside the valve body, and there are no test ports to measure Δp across the trim like you'd do on a CBV. Diagnosis usually means installing an external flow meter or P/T ports on the branch pipe — i.e., the equipment you bought an ABV to avoid needing. The other failure mode is undersized or oversized cartridges: the valve was specified at design without checking what the real Δp envelope looks like at part-load, and field operation sits half the time outside the compensation range.
             </p>
 
@@ -489,19 +489,19 @@ keywords: gpm delta p flow circuit setter proportional balance valve tab
                 A PICV puts the automatic-balancing cartridge of an ABV inside the body of a modulating control valve. The actuator on top is the same kind a BMS would drive on any other control valve — analog or floating-point input, 0–100 % open. What's different is what "100 % open" means: instead of "fully unobstructed orifice," it means "pass the design flow this cartridge was sized for." The internal cartridge keeps flow at that maximum regardless of system Δp; the actuator scales it from there. Tell the PICV to be 50 % open and you get 50 % of design flow, whether system Δp is at design or somewhere else within the cartridge's operating window.
             </p>
 
-            <p style="margin-top:1.1rem;">
+            <p>
                 That single behaviour change is why PICVs have become the default on new variable-flow systems. Traditional control valves have an <em>authority</em> problem: as system Δp swings (other loads modulating, pump speed changing), the same valve position passes a different amount of flow, and the BMS loop has to chase its own valve to hold setpoint. PICVs eliminate the loop's need to compensate, because the valve already did it. The control loop tunes once, the valve does what it's told, and the BMS spends its energy on actual load tracking instead of fighting hydraulics.
             </p>
 
-            <p style="margin-top:1.1rem;">
+            <p>
                 The pairing with <a href="/education/pump-control.html">DP setpoint reset</a> is the other half of why they've spread. PICVs let the pump drop pressure further than fixed-DP control would, because each valve can hold its own flow as long as it has the cartridge's minimum operating Δp at the branch. A PICV-equipped building can run the system pump at very low Δp during low-demand hours without starving anybody, which is where the meaningful energy savings live. It's also the configuration that finally makes "most-open-valve reset" feel like the obvious thing to do, instead of a delicate tightrope.
             </p>
 
-            <p style="margin-top:1.1rem;">
+            <p>
                 On constant-flow (three-way) systems, PICVs are usually overkill — the system Δp doesn't swing much, so an ABV (or even a well-set CBV) does the same job for less money. PICVs also have a minimum operating Δp; below that, the cartridge can't do its work and flow falls off. The minimum is typically lower than an ABV's because the cartridge is designed for control-valve modulation rather than just balancing, but it's not zero. And like any control valve, the PICV's actuator can fail or drift out of position relative to its internal feedback, which adds a failure mode that the dumber balancing valves don't have.
             </p>
 
-            <p style="margin-top:1.1rem;">
+            <p>
                 What goes wrong: cartridge fouling, same as an ABV — and harder to diagnose, because the body looks like a control valve and the natural assumption is to chase the actuator or the BMS signal. The actuator can also go out of mechanical agreement with its position feedback; a 50 % command should yield 50 % of design flow, but doesn't, and the loop reads as a flow problem rather than a valve problem. A flow meter on the branch is the diagnostic of last resort, and is rarely installed for ongoing use. The good news is that a PICV that's failing usually fails toward "less flow" rather than "wrong flow direction," so the symptoms are noticeable rather than insidious.
             </p>
 
@@ -595,7 +595,7 @@ keywords: gpm delta p flow circuit setter proportional balance valve tab
                 Balancing problems show up in two places: in occupied spaces and at the plant. Occupied-space symptoms are the obvious ones — too hot, too cold, complaints concentrated in a pattern — and they're often the first signal anyone notices. Plant-side symptoms are subtler and tend to live in BMS trends and manometer readings, and they're where the diagnostic actually lives, because they tell you <em>why</em> the occupied spaces are complaining.
             </p>
 
-            <p style="margin-top:1.1rem;">
+            <p>
                 Below is the short version. None of these are conclusive on their own; treat them as a starting point for what to look at next. The actual confirmation almost always involves a manometer at a balance valve's P/T ports, an external flow meter on a branch, or a temperature differential measurement across a coil that should be doing more work than it's doing. Every row measures a branch against its <em>design</em> flow — and that number isn't arbitrary. It's the upstream product of the coil selection: the load the coil carries, divided by the design ΔT. <a href="/education/coil-selection.html">Coil Selection</a> walks where the GPM you're chasing actually comes from.
             </p>
 
@@ -650,15 +650,15 @@ keywords: gpm delta p flow circuit setter proportional balance valve tab
                 Three earlier lessons left forward-pointing breadcrumbs to this page. <a href="/education/hydronic-loops.html#d1">Direct return</a> needed balance valves because the geometry guaranteed flow asymmetry between near and far loads; <a href="/education/hydronic-loops.html#d2">reverse return</a> was self-balancing enough that the valves became trim work rather than load-bearing, though even reverse-return loops usually carry CBVs at each branch for fine adjustment.
             </p>
 
-            <p style="margin-top:1.1rem;">
+            <p>
                 <a href="/education/load-piping.html">Load piping</a> made the bigger claim that three-way (constant-flow) systems hold a steady demand on the system pump. That claim is true at the loop level — system flow stays constant — but it's only true at the individual load level if every branch is balanced; otherwise some loads see too much flow and others too little, and the pump satisfies the average while the extremes complain. CBVs and ABVs are the usual fit there. PICVs make less sense on three-way systems because the Δp doesn't swing enough to need them.
             </p>
 
-            <p style="margin-top:1.1rem;">
+            <p>
                 <a href="/education/pump-control.html">Pump control</a> made the variable-flow claim that DP setpoint reset can drop pump pressure as far as the worst-positioned valve allows. The worst-positioned valve is whatever's at the index circuit — the longest, most-restricted branch — and "as far as it allows" depends critically on whether that valve can hold its design flow at low Δp. A CBV can't; the reset has to be timid. A PICV can; the reset can be aggressive and the energy story actually shows up. That's why PICVs and DP-reset are the modern variable-flow pairing, and why the older CBV + fixed-DP combination, while still common, leaves the energy savings on the table.
             </p>
 
-            <p style="margin-top:1.1rem;">
+            <p>
                 What this page doesn't cover: the actual job-site procedure of balancing a system at commissioning — what tools, what reference data, what sign-off looks like, what the proportional-balancing iteration actually feels like to perform. That's a different kind of content — process rather than equipment — and it'll get its own lesson when it's written. The forward-link is recorded; treat this page as the conceptual half and that future one as the practical half.
             </p>
 

@@ -87,7 +87,7 @@ keywords: wiresheet trace troubleshoot backward live values scan idiom force ove
                 matters. Forward is how you <em>learn</em> a sheet; it isn't how you fix one.
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 So start at the other end. The complaint already names the wrong output —
                 the heat that won't run, the damper that won't close, the alarm that won't
                 clear. Put your finger on that output and step <strong>upstream</strong>,
@@ -98,7 +98,7 @@ keywords: wiresheet trace troubleshoot backward live values scan idiom force ove
                 problem is further upstream. <strong>The first NO is your block.</strong>
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 That last distinction — what the sequence needs versus what the label
                 computes — is the heart of it, because a block can lie two ways. Broken math
                 is the rare way; blocks compute what they're told with total reliability.
@@ -111,7 +111,7 @@ keywords: wiresheet trace troubleshoot backward live values scan idiom force ove
                 block that's lying — or its config — is under your finger.
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 Two dividends fall out of the discipline for free. Every branch that never
                 reaches the wrong output <em>doesn't exist</em> for this trace — you don't
                 owe it a glance, no matter how suspicious it looks. And every hop where the
@@ -133,7 +133,7 @@ keywords: wiresheet trace troubleshoot backward live values scan idiom force ove
                 live sheet, the mechanism becomes three things you'll actually observe.
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 <strong>Values move together, not in sequence.</strong> Within one scan a
                 whole combinational chain settles — comparator, gate, output, done — and the
                 display repaints far more slowly than the controller scans. You will never
@@ -145,7 +145,7 @@ keywords: wiresheet trace troubleshoot backward live values scan idiom force ove
                 found your NO.
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 <strong>Feedback shows its age honestly.</strong> A latch displaying
                 <code>Q&nbsp;TRUE</code> while its <code>S</code> input reads FALSE looks
                 broken to a beginner — the output is on with nothing turning it on. It's the
@@ -159,7 +159,7 @@ keywords: wiresheet trace troubleshoot backward live values scan idiom force ove
                 <code>S</code>, not just what <code>S</code> says now.
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 <strong>Forcing an input is the fastest experiment you can run.</strong>
                 Because the whole sheet settles every scan, a forced value ripples through
                 everything downstream of it before the next repaint — force the temperature
@@ -460,7 +460,7 @@ keywords: wiresheet trace troubleshoot backward live values scan idiom force ove
                 grey a FALSE one — the same coloring the editor uses live.
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 <strong>Step 1 — start at the symptom.</strong> <code>HEAT</code> reads OFF.
                 Its only input is the gate's output, FALSE — an output block repeating a
                 FALSE input is telling the truth, so hop upstream.
@@ -486,7 +486,7 @@ keywords: wiresheet trace troubleshoot backward live values scan idiom force ove
                 dropped character, cornered in four hops.
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 Count what the trace never touched. The permissive chain: cleared in one
                 glance at step 2, never walked. The freeze-trip lamp branch at the bottom:
                 never on the path at all — and it's the sheet's best trap, because every
@@ -498,7 +498,7 @@ keywords: wiresheet trace troubleshoot backward live values scan idiom force ove
                 blocks, total.
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 One last observation worth keeping: an inverted comparison flips the whole
                 sequence's sense with the weather. The same lie that blocks heat on a cold
                 morning would have run it away hot on last week's mild afternoon — S fires
