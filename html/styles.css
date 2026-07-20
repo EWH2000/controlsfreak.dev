@@ -120,6 +120,12 @@
     --text-dim:     #919cab;   /* labels, secondary text — bumped one step 2026-06-10: #828d9b sat at 3.97:1 on --surface-2 where TH cells and nav-card pills carry real content (codebase-issues #81) */
     --blue:         #4aa3dd;   /* data readouts / selection (Niagara steel-azure); also "supply water" in diagrams */
     --blue-bright:  #74c2f0;
+    --blue-ink:     #4aa3dd;   /* blue TEXT at small sizes, incl. over the --accent-dim /
+                                  selection washes. Dark --blue already clears AA on every
+                                  surface it lands on (measured), so this rides its value
+                                  unchanged; LIGHT needs a deeper step. Same purpose-token
+                                  shape as --accent-ink (codebase-issues #166) and
+                                  --red-text. Strokes / fills stay --blue (3:1 UI floor). */
     --blue-cool:    #6f97aa;   /* muted companion to --blue — "return water" in diagrams (paired with a dashed line so it reads without colour too) */
     --blue-dim:     rgba(74,163,221,0.16);
     --blue-glow:    rgba(74,163,221,0.24);
@@ -214,12 +220,20 @@
                                   .bit-idx note. Retuning this token does NOT clear those. */
     --blue:         #11679f;
     --blue-bright:  #1573b2;
+    --blue-ink:     #0f5c8f;   /* deeper than --blue: --blue reads 4.42-4.48:1 as small text
+                                  on the selection washes (#d3dfdd hero tree row, #d7e1cf
+                                  psy selected row) and --blue-bright is worse still
+                                  (4.47:1 on --bg). This step clears 5.28:1 at the worst
+                                  of those. */
     --blue-cool:    #4d7286;
     --blue-dim:     rgba(17,103,159,0.10);
     --blue-glow:    rgba(17,103,159,0.22);
     --red:          #c4382f;
     --red-dim:      rgba(196,56,47,0.10);
-    --red-text:     #c4382f;   /* light --red already clears AA on light surfaces */
+    --red-text:     #bb352c;   /* darkened 2026-07-20: #c4382f (= light --red) computed
+                                  4.44:1 on --surface-3, so the old "light --red already
+                                  clears AA on light surfaces" claim was true only of the
+                                  brighter surfaces. This step reads 4.80:1 there. */
     --heat:         #9c5a14;
     --teal:         #377070;
     --teal-dim:     rgba(55,112,112,0.10);
@@ -270,12 +284,13 @@
         --text-dim:     #636b63;   /* kept in sync with the light block above */
         --blue:         #11679f;
         --blue-bright:  #1573b2;
+        --blue-ink:     #0f5c8f;
         --blue-cool:    #4d7286;
         --blue-dim:     rgba(17,103,159,0.10);
         --blue-glow:    rgba(17,103,159,0.22);
         --red:          #c4382f;
         --red-dim:      rgba(196,56,47,0.10);
-        --red-text:     #c4382f;
+        --red-text:     #bb352c;
         --heat:         #9c5a14;
         --teal:         #377070;
         --teal-dim:     rgba(55,112,112,0.10);
@@ -1282,7 +1297,7 @@ abbr[title] {
     margin-bottom: -1px;
     transition: color 0.18s, border-color 0.18s;
 }
-.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+.tab-btn.active { color: var(--accent-ink); border-bottom-color: var(--accent); }
 .tab-btn:hover:not(.active) { color: var(--text); }
 .tab-pane { display: none; }
 .tab-pane.active { display: block; }
@@ -1756,7 +1771,7 @@ body.has-fullscreen-tool main { z-index: 400; }
     font-size: 0.7rem;
     text-transform: uppercase;
     letter-spacing: 0.12em;
-    color: var(--accent);
+    color: var(--accent-ink);
     margin: 2rem 0 0.9rem;
 }
 .subhead:first-child { margin-top: 0; }
@@ -2314,9 +2329,9 @@ p.chip-row-preamble {
     cursor: pointer;
     transition: border-color 0.18s, background 0.18s, color 0.18s;
 }
-.filter-chip:hover { border-color: var(--accent); color: var(--accent); }
+.filter-chip:hover { border-color: var(--accent); color: var(--accent-ink); }
 .filter-chip.active {
-    color: var(--accent);
+    color: var(--accent-ink);
     background: var(--accent-dim);
     border-color: var(--accent-glow);
 }
@@ -2324,7 +2339,7 @@ p.chip-row-preamble {
     font-size: 0.65rem;
     color: var(--text-dim);
 }
-.filter-chip.active .filter-chip-count { color: var(--accent); opacity: 0.75; }
+.filter-chip.active .filter-chip-count { color: var(--accent-ink); }
 /* The .nav-card rule below sets display:block, which would override the UA
    `hidden { display: none }` and leave hidden cards consuming grid slots.
    Re-assert display: none for the [hidden] case. */
@@ -3543,7 +3558,7 @@ p.ref-note.compact {
 }
 .widget-try .lbl { letter-spacing: 0.05em; text-transform: uppercase; margin-right: 0.6rem; }
 .widget-try a {
-    color: var(--accent);
+    color: var(--accent-ink);
     text-decoration: none;
     margin-right: 0.85rem;
     cursor: pointer;
@@ -3555,7 +3570,7 @@ p.ref-note.compact {
    audit finding; new try-rows should use buttons). */
 .widget-try button {
     font: inherit;
-    color: var(--accent);
+    color: var(--accent-ink);
     background: none;
     border: none;
     border-bottom: 1px dashed var(--accent-dim);

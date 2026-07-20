@@ -105,7 +105,10 @@ faqs:
         /* The winning (commanding) slot. */
         .bpri-win { background: var(--accent-dim); }
         .bpri-win .bpri-num,
-        .bpri-win .bpri-tag { color: var(--accent); font-weight: 700; }
+        .bpri-win .bpri-tag { color: var(--accent-ink); font-weight: 700; }
+        /* --text-dim lands at 3.82:1 (dark) / 4.43:1 (light) on the
+           --accent-dim win slot — AA fail at this size. */
+        .bpri-win .bpri-release { color: var(--text); }
         .bpri-win .bpri-val {
             border-color: var(--accent);
             color: var(--accent);
