@@ -31,6 +31,28 @@
 //   explain:   inline HTML (same)
 //   learnMore: { href, label }                     -- optional
 //   tags:      string[]                            -- optional, reserved for mixes
+//   figure:    kebab-case element id               -- optional, any type
+//     References an element ALREADY IN THE PAGE'S STATIC DOM (a "figure
+//     bank" near the quiz mount: <svg class="edu-svg hidden" id="…">).
+//     The engine clones it into the .quiz-figure slot on render; it does
+//     NOT carry markup on the question object. Three reasons for the
+//     indirection: the payload is paid once no matter how often the
+//     question is drawn, the markup stays in crawlable page source, and
+//     `npm run screenshots` (the diagram audit) can reach it — the same
+//     class="hidden" un-hide the pid-eq-scene family already relies on.
+//     Keeping the SVG off the question object also keeps it out of the
+//     two consumers that strip questions to text: the Review/miss table
+//     below and head.njk's FAQPage JSON-LD (whose buildQuestionName in
+//     .eleventy.js reads only `prompt` + `snippet`), either of which
+//     would otherwise publish every <title>/<desc>/<text> node.
+//     Accessibility contract: the figure names itself natively —
+//     role="img" + <title> (+ <desc> for the topology and live values).
+//     On a drill figure the <desc> describes completely but never names
+//     the fault, so a screen-reader user gets the same puzzle a sighted
+//     user gets; the verdict lives in `explain`. The clone therefore
+//     must NOT use aria-labelledby — every `id` is stripped from the
+//     clone (root and descendants) so the mounted copy can't duplicate
+//     ids already live in the document.
 //   ── mcq / gotcha ──
 //     choices: [{ id, text, correct? }]            -- exactly one `correct`
 //   ── gotcha ── (mcq + snippet)
@@ -100,6 +122,21 @@
         if (!q.id) return 'question ' + idx + ' missing id';
         if (!q.prompt) return 'question ' + idx + ' (' + q.id + ') missing prompt';
         if (!q.explain) return 'question ' + idx + ' (' + q.id + ') missing explain';
+        // `figure` is optional on EVERY type — deliberately not mirroring
+        // the gotcha/snippet invariant below, which is one-way (a gotcha
+        // without a snippet fails mount, but a non-gotcha carrying one
+        // renders nothing while the JSON-LD still publishes it). What is
+        // enforced instead is that a declared figure always resolves: a
+        // typo'd or missing id fails mount loudly rather than leaving an
+        // empty slot, so a `figure` can never silently no-op.
+        if (q.figure !== undefined) {
+            if (typeof q.figure !== 'string' || !KEBAB.test(q.figure)) {
+                return 'question ' + q.id + ' figure must be a kebab-case element id';
+            }
+            if (!document.getElementById(q.figure)) {
+                return 'question ' + q.id + ' figure references missing element #' + q.figure;
+            }
+        }
         switch (q.type) {
             case 'mcq':
             case 'gotcha': {
@@ -260,6 +297,7 @@
 
         const questionPane = el('div', { class: 'quiz-question-pane' });
         const promptEl = el('div', { class: 'quiz-prompt' });
+        const figureSlot = el('div', { class: 'quiz-figure', hidden: true });
         const snippetSlot = el('div', { class: 'quiz-snippet-slot' });
         const choicesEl = el('div', { class: 'quiz-choices', role: 'radiogroup' });
         const numericEl = el('div', { class: 'quiz-numeric', hidden: true });
@@ -274,6 +312,7 @@
         numericEl.appendChild(numericInput);
         numericEl.appendChild(numericUnit);
         questionPane.appendChild(promptEl);
+        questionPane.appendChild(figureSlot);
         questionPane.appendChild(snippetSlot);
         questionPane.appendChild(choicesEl);
         questionPane.appendChild(numericEl);
@@ -370,6 +409,26 @@
 
             // Prompt
             promptEl.innerHTML = q.prompt;
+
+            // Figure (any type). Cloned from the page's static figure
+            // bank; mount() already proved the id resolves. Every id is
+            // stripped from the clone so the mounted copy can't collide
+            // with the still-live source (or with a second question that
+            // draws the same figure).
+            figureSlot.innerHTML = '';
+            if (q.figure) {
+                const figureSrc = document.getElementById(q.figure);
+                const figureClone = figureSrc.cloneNode(true);
+                figureClone.classList.remove('hidden');
+                figureClone.removeAttribute('id');
+                figureClone.querySelectorAll('[id]').forEach(function (node) {
+                    node.removeAttribute('id');
+                });
+                figureSlot.appendChild(figureClone);
+                figureSlot.hidden = false;
+            } else {
+                figureSlot.hidden = true;
+            }
 
             // Snippet (gotcha only)
             snippetSlot.innerHTML = '';

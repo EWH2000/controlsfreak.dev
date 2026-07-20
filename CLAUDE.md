@@ -803,8 +803,21 @@ fails the build if a `nav: education` page is missing from it
    is the namespace for `cf_quiz_<slug>_*` localStorage keys.
 3. Question schema lives in `quiz-engine.js`'s header — `type` is
    one of `mcq` / `tf` / `gotcha` / `numeric`; shared
-   `id` / `prompt` / `explain` / `learnMore` / `tags` across all
-   types. `id` is kebab-case and stable across edits.
+   `id` / `prompt` / `explain` / `learnMore` / `tags` / `figure`
+   across all types. `id` is kebab-case and stable across edits.
+   **A question that needs a diagram uses `figure`, never an SVG
+   inside `prompt`** — `prompt` is stripped to text by the
+   Review/miss table *and* by `head.njk`'s FAQPage JSON-LD, so an
+   inline SVG publishes every `<title>` / `<desc>` / `<text>` node
+   as structured data. `figure` is the kebab-case **element id** of
+   an `<svg class="… hidden" id="…">` in a static figure bank on the
+   page; the engine clones it into the `.quiz-figure` slot (ids
+   stripped from the clone) and mount fails loudly if the id doesn't
+   resolve. The figure names itself natively (`role="img"` +
+   `<title>` / `<desc>`, no `aria-labelledby`); on a drill figure the
+   `<desc>` describes topology and live values completely but never
+   names the fault — the verdict belongs in `explain`, which every
+   reader gets (owner decision, 2026-07-19).
 4. Add a `navCard` (section `'practice'`) to the appropriate H2
    section on `html/practice/index.html` — *Content Quizzes* if
    every question maps to an existing page, *Field Drills* if the

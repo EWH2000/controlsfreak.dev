@@ -2806,6 +2806,27 @@ p.chip-row-preamble {
     border-radius: 0;
 }
 
+/* Figure slot — the engine clones a question's `figure` SVG out of the
+   page's static figure bank into here (see quiz-engine.js's schema
+   header). Framed like .quiz-snippet below because it plays the same
+   role: a block of evidence the prompt refers to. The SVG carries a
+   viewBox, so width:100% scales it down cleanly on a phone; overflow-x
+   is the escape hatch for a figure that sets a hard min-width instead. */
+.quiz-figure {
+    margin: 0.9rem 0 0;
+    padding: 0.75rem;
+    background: var(--surface-3);
+    border: 1px solid var(--border);
+    border-radius: 0;
+    overflow-x: auto;
+}
+.quiz-figure svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    margin: 0;
+}
+
 .quiz-snippet-slot { margin: 0; }
 .quiz-snippet {
     font-family: var(--mono);
