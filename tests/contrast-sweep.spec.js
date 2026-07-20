@@ -144,15 +144,6 @@ const PAGES = require('./pages');
 // forces the deletion.
 const ALLOWLIST = [
     {
-        page: '/tools/modbus-register-viewer.html',
-        match: (r) => r.cls.split(/\s+/).includes('bit-idx'),
-        why: 'codebase-issues #192, IN FLIGHT in a separate lane as of 2026-07-20. '
-            + '.bit-idx on tools/modbus-register-viewer carries opacity 0.45; measured '
-            + '1.83:1 (light) / 2.05:1 (dark). Pre-existing, not a regression, and no '
-            + 'value of --text-dim can clear it — the fix is a visual-weight change to '
-            + 'the bit grid. Deliberately NOT fixed here so the two lanes do not collide.',
-    },
-    {
         page: '/tools/psychrometric-chart.html',
         match: (r) => r.cls.split(/\s+/).includes('psy-pill') && r.cls.split(/\s+/).includes('off'),
         why: '.psy-pill.off on tools/psychrometric-chart marks a stage that is switched '
@@ -452,76 +443,76 @@ test('contrast math reproduces independently recorded ratios', async ({ page }) 
     expect(got.composite, '25% white composited over black, vs black').toBe(2.02);
 });
 
-// Sharded rather than one test per theme: 133 pages x 2 themes in a
+// Sharded rather than one test per theme: every page x 2 themes in a
 // single test blows the default 30s timeout, and one test per page
-// would add 266 context launches. Chunks of 20 keep each shard inside a
+// would add a browser context per page per theme. Chunks of CHUNK keep each shard inside a
 // generous timeout while `fullyParallel` spreads them over the workers.
 const CHUNK = 20;
 const chunks = [];
 for (let i = 0; i < PAGES.length; i += CHUNK) chunks.push(PAGES.slice(i, i + CHUNK));
 
 for (const theme of ['dark', 'light']) {
-  chunks.forEach((group, n) => {
-    const label = `${theme} theme, pages ${n * CHUNK + 1}-${n * CHUNK + group.length}`;
-    test(`every text element clears its WCAG AA floor — ${label}`, async ({ browser }) => {
-        test.setTimeout(180000);
-        // reducedMotion so the site's own reveal animations land in their
-        // settled state rather than mid-flight.
-        const ctx = await browser.newContext({
-            viewport: { width: 1280, height: 900 },
-            reducedMotion: 'reduce',
-        });
-        // Dark is the default and headless Chromium reports
-        // prefers-color-scheme: light, so neither theme can be assumed —
-        // seed cf_theme, then assert what actually rendered.
-        await ctx.addInitScript((t) => {
-            try { localStorage.setItem('cf_theme', t); } catch (e) { /* private mode */ }
-        }, theme);
-        const page = await ctx.newPage();
+    chunks.forEach((group, n) => {
+        const label = `${theme} theme, pages ${n * CHUNK + 1}-${n * CHUNK + group.length}`;
+        test(`every text element clears its WCAG AA floor — ${label}`, async ({ browser }) => {
+            test.setTimeout(180000);
+            // reducedMotion so the site's own reveal animations land in their
+            // settled state rather than mid-flight.
+            const ctx = await browser.newContext({
+                viewport: { width: 1280, height: 900 },
+                reducedMotion: 'reduce',
+            });
+            // Dark is the default and headless Chromium reports
+            // prefers-color-scheme: light, so neither theme can be assumed —
+            // seed cf_theme, then assert what actually rendered.
+            await ctx.addInitScript((t) => {
+                try { localStorage.setItem('cf_theme', t); } catch (e) { /* private mode */ }
+            }, theme);
+            const page = await ctx.newPage();
 
-        const failures = [];
-        const unresolved = [];
-        let checked = 0;
-        let equipment = 0;
+            const failures = [];
+            const unresolved = [];
+            let checked = 0;
+            let equipment = 0;
 
-        try {
-            for (const p of group) {
-                // contact.html's Turnstile never goes idle (CLAUDE.md).
-                await page.goto(p.url, { waitUntil: 'domcontentloaded' });
-                await settle(page);
+            try {
+                for (const p of group) {
+                    // contact.html's Turnstile never goes idle (CLAUDE.md).
+                    await page.goto(p.url, { waitUntil: 'domcontentloaded' });
+                    await settle(page);
 
-                const actual = await page.evaluate(() => document.documentElement.getAttribute('data-theme'));
-                expect(actual, `${p.url} must actually render the ${theme} theme`).toBe(theme);
+                    const actual = await page.evaluate(() => document.documentElement.getAttribute('data-theme'));
+                    expect(actual, `${p.url} must actually render the ${theme} theme`).toBe(theme);
 
-                const res = await page.evaluate(`(${walk.toString()})(${JSON.stringify(EQUIPMENT)})`);
-                checked += res.checked;
-                equipment += res.equipment;
-                for (const r of res.fail) {
-                    if (ALLOWLIST.some((a) => a.match(r))) continue;
-                    failures.push(describeRow(p.url, r));
+                    const res = await page.evaluate(`(${walk.toString()})(${JSON.stringify(EQUIPMENT)})`);
+                    checked += res.checked;
+                    equipment += res.equipment;
+                    for (const r of res.fail) {
+                        if (ALLOWLIST.some((a) => a.match(r))) continue;
+                        failures.push(describeRow(p.url, r));
+                    }
+                    for (const r of res.unresolved) {
+                        unresolved.push(`${describeRow(p.url, r)} — behind ${r.painted}`);
+                    }
                 }
-                for (const r of res.unresolved) {
-                    unresolved.push(`${describeRow(p.url, r)} — behind ${r.painted}`);
-                }
+            } finally {
+                await ctx.close();
             }
-        } finally {
-            await ctx.close();
-        }
 
-        // Sanity floor first — see the header. Every page carries the
-        // shared nav (dropdowns force-opened by `settle`) + footer, so
-        // even the thinnest page measures hundreds of ink sources —
-        // /contact.html, the floor of the site, was 187 on 2026-07-20.
-        expect(checked, 'sanity: text elements were measured at all')
-            .toBeGreaterThanOrEqual(group.length * 100);
-        void equipment;
+            // Sanity floor first — see the header. Every page carries the
+            // shared nav (dropdowns force-opened by `settle`) + footer, so
+            // even the thinnest page measures hundreds of ink sources —
+            // /contact.html, the floor of the site, was 187 on 2026-07-20.
+            expect(checked, 'sanity: text elements were measured at all')
+                .toBeGreaterThanOrEqual(group.length * 100);
+            void equipment;
 
-        // A gradient under real text outside the equipment register is a
-        // hole in this guard, not an exemption from it.
-        expect(unresolved, 'text over an unflattenable background must not go unmeasured').toEqual([]);
-        expect(failures, `WCAG AA contrast failures (${label})`).toEqual([]);
+            // A gradient under real text outside the equipment register is a
+            // hole in this guard, not an exemption from it.
+            expect(unresolved, 'text over an unflattenable background must not go unmeasured').toEqual([]);
+            expect(failures, `WCAG AA contrast failures (${label})`).toEqual([]);
+        });
     });
-  });
 }
 
 // The equipment-register skip is the guard's one named blind spot, so it

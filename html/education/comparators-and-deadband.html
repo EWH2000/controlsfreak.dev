@@ -80,7 +80,7 @@ keywords: comparator deadband hysteresis threshold chatter short cycle GT LT set
                 in the middle.
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 The family has four workhorses — greater-than, less-than, and their
                 boundary-included twins — plus an equals pair you'll reach for far less often
                 than you'd think:
@@ -112,7 +112,7 @@ keywords: comparator deadband hysteresis threshold chatter short cycle GT LT set
                 reads TRUE — and where you draw the line. Spend your attention there.
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 The equals row deserves its own warning, because <strong>EQ on an analog value
                 is a trap</strong>. A measured temperature is never <em>exactly</em> 72.0 —
                 partly because the value never holds still, and partly because of how
@@ -147,7 +147,7 @@ keywords: comparator deadband hysteresis threshold chatter short cycle GT LT set
                 doesn't cycle; it <strong>chatters</strong>.
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 Here's the part that makes this a trap rather than a corner case: a controlled
                 variable spends its life <em>near its setpoint</em> — that's what control
                 means. Put a single threshold at the setpoint and you've guaranteed the value
@@ -168,7 +168,7 @@ keywords: comparator deadband hysteresis threshold chatter short cycle GT LT set
                  the field (welded contactor, compressor that cycled itself to death,
                  hunting stage) — owner to supply; do not draft. -->
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 The picture below is the whole problem in one glance. The blue trace is a
                 space temperature drifting up through the band and back down, with honest
                 sensor noise on it. Below it, the same signal put through two different
@@ -278,7 +278,7 @@ keywords: comparator deadband hysteresis threshold chatter short cycle GT LT set
                 does its day job.)
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 The <a href="/simulators/function-block-editor.html">Function-Block Editor</a>
                 ships this exact sequence as its <em>cooling thermostat</em> example, and it's
                 worth walking wire by wire. Three sources on the left: the space temperature
@@ -399,7 +399,7 @@ keywords: comparator deadband hysteresis threshold chatter short cycle GT LT set
                 grey wires FALSE — the same coloring the editor uses live.
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 Now run the story forward. Cooling pulls the space back down through
                 <span data-us="75 °F" data-metric="23.9 °C">75 °F</span> — the greater-than
                 drops to FALSE, and <em>nothing happens</em>, because a latch that isn't
@@ -413,7 +413,7 @@ keywords: comparator deadband hysteresis threshold chatter short cycle GT LT set
                 cycles at the speed of the building, not the speed of the noise.
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 One number to be careful with: the DB constant here is <em>half</em> the band
                 — it's applied once up and once down, so the space actually swings
                 <span data-us="2 °F" data-metric="1.1 °C">2 °F</span> from set to reset.
@@ -423,7 +423,7 @@ keywords: comparator deadband hysteresis threshold chatter short cycle GT LT set
                 what this sheet does and build the edges in the open where you can see them.
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 And here's a bonus the construction hands you for free. Swap the two wires
                 into the latch — under-temperature fires <strong>S</strong>,
                 over-temperature fires <strong>R</strong> — and the same nine blocks are a
@@ -436,7 +436,7 @@ keywords: comparator deadband hysteresis threshold chatter short cycle GT LT set
                 exactly this reason.
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 How wide should the band be? It's a trade, and it's the same trade at every
                 scale. Narrow means tight comfort and busy equipment; wide means the
                 equipment rests and the occupants ride the swing. A room thermostat usually
@@ -451,7 +451,7 @@ keywords: comparator deadband hysteresis threshold chatter short cycle GT LT set
                 setpoint instead.
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 One last note for the day you meet this in a real palette: most production
                 environments bundle the whole thing into a single <em>deadband</em> or
                 <em>hysteresis</em> comparator — one block, a setpoint, a band, chatter-free

@@ -65,23 +65,23 @@ keywords: status proof current switch DP switch aux contact fail-to-start broken
                 Command is the easy half: the controller closes a binary output and the starter pulls in. Status is the return trip — some device out at the equipment closes a contact to say <em>it worked</em>, and the controller reads it on a BI. What that contact is attached to decides what "it worked" means, and there are three common choices, in rising order of how much they prove.
             </p>
 
-            <p style="margin-top:1.1rem;">
+            <p>
                 A <strong>starter auxiliary contact</strong> is a spare contact ganged to the contactor's armature: when the coil pulls the power poles in, the aux goes with them. It is the cheapest status there is, and what it proves is exactly this: <em>the contactor closed</em>. Nothing downstream is in the picture — not whether the motor drew a single amp, not whether the belt survived, not whether any air moved. An aux contact is one honest step above wiring nothing at all and letting the graphic show the command back to you: it proves the starter answered, and no more.
             </p>
 
-            <p style="margin-top:1.1rem;">
+            <p>
                 A <strong>current switch</strong> is a small current transformer clamped around one motor lead, with an adjustable trip point: when the current through its sensing window rises above the trip, the contact closes. Now the proof reaches past the contactor to the motor itself — closed means <em>the motor is drawing amps</em>, real electrical work, not just a closed set of poles. What it still cannot see is the machine on the far end of the shaft. And its honesty hangs on a setting — the trip point — which section 3 comes back to.
             </p>
 
-            <p style="margin-top:1.1rem;">
+            <p>
                 A <strong>differential-pressure switch</strong> reads the pressure rise across the fan, its two sensing tubes tapped into the duct on either side; a <strong>paddle switch</strong> — a sail in the airstream — swings closed when moving air pushes it. Either way, the proof is the delivered effect itself: <em>air is moving</em>. On the water side the same rung is a flow switch or a DP switch across the pump. This is the strongest proof on the menu, and — because it watches a live physical quantity instead of a contact block — the touchiest to set up, which is also section 3's business.
             </p>
 
-            <p style="margin-top:1.1rem;">
+            <p>
                 The classic separator for all three is a <strong>broken belt</strong>. Snap the belt on a belt-driven fan and walk the menu: the aux contact says ON — the contactor genuinely is closed; it is not lying about the thing it watches. The current switch sees a motor spinning freely with no load — the draw falls to its unloaded level, and whether the switch still "proves" depends entirely on where the trip sits. The DP switch says OFF — no air, no pressure rise, no proof. One fault, three different verdicts, each source reporting honestly on the thing it was built to watch. Keep that picture; the rest of the page keeps coming back to it.
             </p>
 
-            <p style="margin-top:1.1rem;">
+            <p>
                 Whichever source you pick, it reaches the controller the same way: a dry contact landed on a binary input, wetted by the controller's own sensing voltage. The landing rules live in <a href="/education/controller-wiring.html#inputs">Controller Wiring</a>, and the <a href="/simulators/controller-wiring.html">wiring simulator</a> models exactly this case — a dry status contact on a BI you can land yourself and fault on purpose.
             </p>
 
@@ -169,19 +169,19 @@ keywords: status proof current switch DP switch aux contact fail-to-start broken
                 With a command point and a status point on the same fan, the controller can do something neither point does alone: <strong>compare them</strong>. Command-versus-status comparison is <em>proof logic</em> — the sequence commands the fan, then expects the status to confirm it, and treats disagreement as a fault instead of trusting either side blindly.
             </p>
 
-            <p style="margin-top:1.1rem;">
+            <p>
                 The wrinkle is time. A real fan takes a few seconds to pull in, come up to speed, and build enough pressure to close a DP switch — so the comparison runs on a <strong>proof window</strong>: command it, wait a defined time, <em>then</em> expect proof. Set the window too short and every legitimate start trips a nuisance alarm — the fan was coming; the logic didn't wait. Set it too long and the window becomes a blind spot: a start that genuinely failed runs unreported for the whole delay, and anything the sequence interlocks against "proven" — an electric heater that must never run without airflow, a downstream stage waiting its turn — inherits that blind spot with it. The window should be as long as the slowest honest start, and no longer.
             </p>
 
-            <p style="margin-top:1.1rem;">
+            <p>
                 When the window expires with the command ON and the status still OFF, that is a <strong>fail-to-start</strong>: the controller alarms, and most sequences also latch the command back off — there is no point holding a start signal into a fault, and some failures get worse if you keep trying. The block-level way the window is actually built — an on-delay timer holding the fail alarm off while the fan comes up — is <a href="/education/timers-and-delays.html#proof">the proof window in Timers &amp; Delays</a>, wired out block by block.
             </p>
 
-            <p style="margin-top:1.1rem;">
+            <p>
                 Disagreement runs in two directions, and they point at different suspects. <strong>Commanded ON, status OFF</strong> is the fail-to-start family: no control power at the starter, a coil that never pulled in, a tripped overload — or, per section 1, a fault the chosen status source can see that a cheaper one could not. <strong>Commanded OFF, status ON</strong> is stranger and often more urgent: the equipment is running, and the controller is not the one running it. <a href="/education/start-stop-commands.html#hoa">A hand-off-auto switch left in HAND</a>, a welded contactor, a jumper someone left behind from troubleshooting — the machine has an authority problem, not a proof problem. The same comparison catches both; the direction tells you which story you are walking into.
             </p>
 
-            <p style="margin-top:1.1rem;">
+            <p>
                 And all of it rests on the status point itself telling the truth — a point that reads backwards will alarm on every healthy start and bless every real failure. Proving the point before trusting the logic — actuate the real contact, watch the value land where the sequence expects — is point-to-point checkout, <a href="/education/controls-commissioning.html">Controls Commissioning</a>'s ground.
             </p>
 
@@ -192,19 +192,19 @@ keywords: status proof current switch DP switch aux contact fail-to-start broken
                 Binary status points fail in a small number of recognizable ways, and each leaves a distinct signature on the graphic and in the alarm log. Learn the signatures and you can often name the fault before you leave the desk.
             </p>
 
-            <p style="margin-top:1.1rem;">
+            <p>
                 <strong>Inverted polarity.</strong> A NO/NC mismatch between the contact and the point's configuration — the device offers both contact types and the wrong one got landed, or the point's polarity flag is set backwards. The point is not dead; it <em>tracks perfectly, inverted</em>. Because most equipment holds one state for hours, it presents as a status stuck at the wrong value: perpetual ON on a unit that sits off, perpetual OFF on one that runs around the clock. The giveaway is the alarm pattern at the transitions — a fail-to-start on every start of a fan you can hear running, and a running-unexpectedly alarm the moment it legitimately stops. Backwards <em>twice</em> is the signature; a genuinely dead point never changes at all.
             </p>
 
-            <p style="margin-top:1.1rem;">
+            <p>
                 <strong>Chattering status.</strong> The point flips ON/OFF rapidly, spamming alarms and change-of-value traffic. Two usual causes. Mechanical: a loose termination, or a contact bouncing with equipment vibration. Marginal: a DP switch set so close to the fan's actual operating pressure that normal swings — VAV dampers throttling back, a filter loading up — walk the pressure back and forth across the trip. If the chatter tracks the system (worse at low load, gone at full speed), suspect the setpoint margin; if it tracks the machine's vibration, suspect the termination. The fix is margin: set the trip so the normal operating point sits well past it, and let the switch's built-in differential do its job.
             </p>
 
-            <p style="margin-top:1.1rem;">
+            <p>
                 <strong>A current-switch trip set below the unloaded draw.</strong> The broken-belt caveat from section 1, now as a number. A motor that loses its load does not stop drawing current — it drops to its <em>unloaded draw</em>, mostly magnetizing current, commonly somewhere around a quarter to a third of nameplate on a fan motor. Set the current switch's trip below that and the switch will "prove" a motor spinning a broken belt forever: the draw never falls under the trip, so the contact never opens. The trip belongs <em>above</em> the unloaded draw and <em>below</em> the normal running draw — that window exists on any healthy belt-driven load, and putting the trip inside it is the whole reason to buy a current switch instead of settling for an aux contact.
             </p>
 
-            <p style="margin-top:1.1rem;">
+            <p>
                 Here is the section-1 machine one more time — belt snapped, all three sources reporting at once. Two of them say ON. Both are honest about the thing they watch, and both are wrong about the fan.
             </p>
 
@@ -288,7 +288,7 @@ keywords: status proof current switch DP switch aux contact fail-to-start broken
                  behind a proving current switch, or an inverted NO/NC status found at
                  checkout — owner to supply -->
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 That is the whole lesson in one drawing: status is not a fact about the fan — it is a fact about whatever the status device watches. Pick the source that proves what the sequence actually needs proven (a duct heater's interlock wants <em>air</em>, not amps), wrap the comparison in a proof window long enough for an honest start, and when command and status disagree, read the direction before you drive out. The graphic's green icon is only ever as truthful as the contact behind it.
             </p>
 

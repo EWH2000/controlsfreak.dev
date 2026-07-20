@@ -85,7 +85,7 @@ keywords: actuator 2-10V 0-10V 4-20mA span stroke spring return fail position no
                 <a href="/education/vfds.html">the VFD lesson</a>.)
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 Here is the whole page's problem in one number. The controller's AO is scaled
                 0–100% → 0–10 V, so a 50% command puts <strong>5.0 V</strong> on the wire. The actuator, though,
                 is configured for a <strong>2–10 V</strong> input — its 0% lives at 2 V and its 100% at 10 V. It
@@ -168,7 +168,7 @@ keywords: actuator 2-10V 0-10V 4-20mA span stroke spring return fail position no
                 claim.
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 The usual cause is not a failed actuator — it's a switch. Most modulating actuators carry a
                 <strong>DIP switch or jumper</strong> on the body selecting the input span (0–10 / 2–10 / 4–20 mA
                 with the resistor) and often the direction, and the factory default doesn't care what your
@@ -262,7 +262,7 @@ keywords: actuator 2-10V 0-10V 4-20mA span stroke spring return fail position no
                 <span><span class="sw rev"></span>0–10 V reverse acting</span>
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 Direction answers "which way does it run." The next question is <strong>where does it go when
                 everything dies?</strong> A <em>spring-return</em> actuator winds a spring as it strokes; kill its
                 power and the spring drives it — at its own pace, with no controller involved — to one defined end
@@ -273,7 +273,7 @@ keywords: actuator 2-10V 0-10V 4-20mA span stroke spring return fail position no
                 override, because it happens precisely when the software is gone.
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 Valve people name that resting end <strong>normally open / normally closed</strong>, and the word
                 <em>normally</em> is the trap: it means the position with <strong>no power and no signal</strong> —
                 the spring position — not the position the valve usually operates at. A normally-open hot-water
@@ -282,7 +282,7 @@ keywords: actuator 2-10V 0-10V 4-20mA span stroke spring return fail position no
                 <em>fail open / fail closed</em>, spring open / spring closed.
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 The classic example is <strong>freeze protection</strong>, and it's worth spelling out because the
                 convention surprises people: <strong>the hot-water coil's valve is specified normally open.</strong>
                 Picture an air handler in a Northeast January — power fails, a freeze-stat trips, a controller dies.
@@ -308,7 +308,7 @@ keywords: actuator 2-10V 0-10V 4-20mA span stroke spring return fail position no
                 measurement.
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 So the AO commands 50% and the feedback AI reads 34% — now what? Work the fork in order of
                 cheapness. <strong>Time first:</strong> actuators are slow on purpose — 90 to 150 seconds for full
                 stroke is ordinary — so a freshly written command and its feedback disagree for a while by design.
@@ -323,7 +323,7 @@ keywords: actuator 2-10V 0-10V 4-20mA span stroke spring return fail position no
                 isn't.
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 <strong>Floating (tri-state) actuators</strong> skip the analog conversation entirely. The
                 controller drives two binary outputs — one inches the actuator open, the other inches it closed,
                 neither on means hold — and the actuator carries no position input and, typically, no feedback.
@@ -333,7 +333,7 @@ keywords: actuator 2-10V 0-10V 4-20mA span stroke spring return fail position no
                 position: the number on the graphics is arithmetic, not measurement.
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 And that estimate drifts. Pulses round off, a power blip restarts the count mid-stroke, and
                 somebody's crank on the manual override never reports itself. Left alone, assumed and actual
                 position walk apart, and the loop starts producing quiet mysteries — setpoint held on the graphics,
@@ -347,7 +347,7 @@ keywords: actuator 2-10V 0-10V 4-20mA span stroke spring return fail position no
                 is a broken actuator.
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 That's the whole distance between commanded and actual: the AO speaks a span, the actuator answers
                 in stroke, direction decides which way, and the spring decides where it rests when everything
                 fails — with feedback, or a hard stop, as the only truth. When the two numbers disagree, the fault

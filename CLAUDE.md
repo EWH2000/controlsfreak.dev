@@ -361,9 +361,36 @@ section). **Category keys mirror the landing pages' `navCard()`
   lessons, or files in prose when naming the set does the same work
   ("the capstone for the hydronics chapter", not "for the five
   hydronic lessons"). Counts that a build guard or a live render keeps
-  honest are fine — the home-page pills have a drift test, README
-  prose does not. Section landings and hub pages are the *one* place
-  ordinals belong, since they enumerate the sequence anyway.
+  honest are fine — but check that the guard actually covers the
+  surface: `home-hero.spec.js`'s drift test asserts the Tools-by-
+  Category pills and the four Browse cards keyed to `/tools/`,
+  `/simulators/`, `/education/`, `/practice/`, and **nothing else**.
+  The four topic-hub cards (`/bacnet/`, `/forced-air/`, `/hydronics/`,
+  `/refrigeration/`) on the home page and the Guides landing are
+  unguarded, and README prose is unguarded. Section landings and hub
+  pages are the *one* place ordinals belong, since they enumerate the
+  sequence anyway — that exemption is about **ordinals**, not counts
+  or terminal claims, which stay in scope on a landing like anywhere
+  else.
+  **The test is falsifiability, not numerals** (owner decision,
+  2026-07-20): a count is a violation only if *appending* can falsify
+  it. So counting **specifically named** pages is fine — "the two
+  pages are neighbors" survives any expansion once both are named and
+  linked — while "work the five lessons in order" does not, and
+  neither does a count of an *open-ended* set even when its current
+  members are named ("two pages follow it" is falsified by a ninth
+  lesson regardless of which two you then link). The landing/hub
+  carve-out covers the **enumerated list itself** — the `hub-path`
+  steps and the `Step N` nav-card pills, which are bare ordinals with
+  no "of N", so an append leaves them incomplete rather than wrong.
+  (Nothing enforces that a new lesson reaches its topic hub:
+  `educationSequenceGuard` covers `_data/educationSequence.js` only,
+  and `landing-completeness.spec.js` deliberately excludes the
+  single-page topic hubs. Update the hub by hand.) The carve-out does
+  **not** cover the intro prose above the list: hub `.landing-intro`
+  copy is in scope and must name the sequence rather than count it.
+  **`npm run prose-lint` finds candidates for this rule** (report-only;
+  see *Local preview & tests*) — run it instead of hand-greping.
 - **No coming-soon copy.** Never promise an unbuilt page in
   reader-facing prose — no "gets its own lesson", "coming later", "a
   future page covers this". Owner decision 2026-07-19: *"I don't like
@@ -707,6 +734,56 @@ section headers).
   The `p` is load-bearing — it ties `.tool-body p` on specificity
   and wins on cascade. Keep that shape when adding new small-text
   utility paragraphs.
+- **Form labels are deliberately dimmer than their values** — the
+  shared `label, .field-label` rule paints captions `--text-dim` while
+  values render bright/accent. That inversion looks like a bug and
+  isn't: quiet caption + loud value is the intended scan hierarchy, and
+  it clears WCAG (measured `--text-dim` on `--surface`: **5.67:1** dark
+  / **5.27:1** light, against a 4.5:1 small-text AA floor). Owner
+  decision 2026-07-20, standing answer to codebase-issues #168:
+  **working as designed — do not retune it site-wide** (it would flatten
+  the hierarchy on all ~47 label-bearing pages). When a page's
+  control block is dense enough that the captions genuinely *are* the
+  scan target, override **page-locally** (lift color only; size, casing
+  and values stay put) — `simulators/refrigerant-loop.html`'s
+  `.rl-controls` / `.rl-presets` / `.rl-mode` block is the reference
+  implementation.
+- **Lesson prose rhythm is automatic — don't hand-set it.** The
+  global reset zeroes every margin, so a `<p>` following another `<p>`
+  renders flush. Education lessons used to compensate with inline
+  `style="margin-top:1.25rem;"` on each follow-on paragraph, which
+  drifted (13 of 40 lessons had run-together prose — codebase-issues
+  #179). The shared `LESSON PROSE RHYTHM` rule in `styles.css` now
+  owns it: `body.education-page .tool-body p + p:not([class])`. **New
+  lessons write plain `<p>` and inherit the rhythm.** The scope is
+  deliberately narrow — `.tool-body` alone doesn't scope (tools /
+  simulators / practice share the class and tune their own spacing),
+  and `:not([class])` keeps the rule off the prose utilities above,
+  which own their spacing. Inline `margin-top` still out-specifies
+  the rule, so the 201 redundant declarations the rule reached were
+  stripped in the same arc (codebase-issues #190) and **1.25rem is
+  now the single house rhythm** — the 51 declarations that sat at
+  1.1rem (balancing, coil-selection, controls-commissioning,
+  status-and-proof — three different chapters, not one) went with
+  them, and so did the two lone one-offs at 0.9rem
+  (`hydronic-loops.html`) and 1rem (`psychrometrics-basics.html`),
+  owner decision 2026-07-20. **An inline `margin-top` that survives
+  on a lesson paragraph is one of two cases** — check which before
+  deleting one:
+  1. *Deliberate and rule-reachable* — carries a comment saying why
+     (see `pid-basics.html`'s callout examples at 0.6rem).
+  2. *Outside the selector* — a first `<p>` in its container, a
+     classed prose utility, or prose outside `.tool-body` — where
+     the inline value is the only thing setting the gap.
+- **`body.education-page` is the one *build-time* body class.**
+  `layouts/page.njk` emits it from the `nav: education` frontmatter —
+  the same key that drives the active nav link, so the styling scope
+  can't drift from what the site calls an education page. Reach for
+  this pattern when a rule must scope to one section: `.tool-body`
+  and friends are shared across archetypes and won't do it. The other
+  body classes (`palette-open`, `nav-sheet-open`,
+  `has-fullscreen-tool`) are JS-toggled *runtime state*, not scoping
+  hooks — don't read them as precedent for either job.
 
 ### JS patterns
 
@@ -767,6 +844,14 @@ section headers).
    The `home count pills stay in sync with the landings (drift guard)`
    test in `home-hero.spec.js` fails CI if any home pill falls out of
    sync with the `/tools/` chips or the section-landing card counts.
+   A second guard in the same file — `home nav-card descs only name
+   pages that still exist (drift guard)` — covers the **desc wording**:
+   any run of 2+ Title-Case words inside a home nav-card desc must match
+   some page's `title` frontmatter, so a renamed or retired page can't
+   leave the home copy stale. It is a shape heuristic, so a Title-Case
+   phrase that names no page (a section heading, a capitalized term of
+   art) trips it too — that's expected; add the phrase to the spec's
+   `NON_PAGE_NAMES` set rather than reword around it.
 4. Add the page's URL to the `PAGES` array in `tests/pages.js` (the
    shared manifest `smoke.spec.js` + `responsive.spec.js` require; the
    sitemap is automatic — see *Sitemap* — but the drift test fails
@@ -803,7 +888,10 @@ frontmatter and the new `.nav-card` added to
 `order` array in `html/_data/educationSequence.js`** (kept in the same
 order as the `education/index.html` grid) — `educationSequenceGuard`
 fails the build if a `nav: education` page is missing from it
-(codebase-issues #93, #157).
+(codebase-issues #93, #157). **Follow-on paragraph spacing is
+automatic** — the shared lesson-prose-rhythm rule handles it off the
+`nav: education` frontmatter, so body prose is plain `<p>` with no
+inline `margin-top` (see *Design system*).
 
 **Adding a new quiz / drill** follows a similar shape under
 `html/practice/`:
@@ -828,8 +916,51 @@ fails the build if a `nav: education` page is missing from it
    is the namespace for `cf_quiz_<slug>_*` localStorage keys.
 3. Question schema lives in `quiz-engine.js`'s header — `type` is
    one of `mcq` / `tf` / `gotcha` / `numeric`; shared
-   `id` / `prompt` / `explain` / `learnMore` / `tags` across all
-   types. `id` is kebab-case and stable across edits.
+   `id` / `prompt` / `explain` / `learnMore` / `tags` / `figure`
+   across all types. `id` is kebab-case and stable across edits.
+   **A question that needs a diagram uses `figure`, never an SVG
+   inside `prompt`** — `prompt` is stripped to text by the
+   Review/miss table *and* by `head.njk`'s FAQPage JSON-LD, so an
+   inline SVG publishes every `<title>` / `<desc>` / `<text>` node
+   as structured data. `figure` is the kebab-case **element id** of
+   an `<svg class="… hidden" id="…">` in a static figure bank on the
+   page; the engine clones it into the `.quiz-figure` slot and mount
+   fails loudly if the id doesn't resolve. Ids in the clone are
+   **renamed** with a per-render prefix and every internal reference
+   (`url(#…)`, `<use href="#…">`) is rewritten to match, so the clone
+   stays self-contained without colliding with the live source —
+   stripping the ids instead silently blanks markers, gradients and
+   patterns. The figure must name itself natively (`role="img"` +
+   `<title>` / `<desc>`); `aria-labelledby` / `aria-describedby` on a
+   figure **fails mount** — note this is the opposite of the
+   education-page SVG idiom, so a lesson SVG needs its labelling
+   converted when it moves into a figure bank.
+
+   **Owner decision (2026-07-20) — settled: describe the topology
+   fully.** A drill figure's `<desc>` states the topology and the live
+   values completely, in the drawing's own neutral register, and
+   **never names the fault or states the verdict** — that lives in
+   `explain`, which every reader gets after answering.
+
+   This was raised 2026-07-19 as an open question, on the argument that
+   describing a red-herring branch completely describes it away, and
+   that **WCAG 1.1.1's Test exception** — non-text content that is a
+   test may carry only *descriptive identification* — licensed a short
+   `<desc>` instead. The owner ruled for the full description on trade
+   grounds: *someone visually impaired who is function-block
+   programming is best served by hearing the longer description and
+   mapping it out in their head.* Note the Test exception is
+   **permissive, not prescriptive** — it says a test *may* carry only
+   descriptive identification, so the fuller `<desc>` is a choice
+   inside the standard, not a departure from it.
+
+   The apparent self-contradiction dissolves in practice: the `<desc>`
+   describes **what is drawn**, not **what is wrong with it**. "A NOT
+   block sits between the freeze stat and the AND" is the same
+   information a sighted reader gets from the picture — both still have
+   to know that placement is wrong. Write each `<desc>` as if it were
+   the only way you could see the diagram, then re-read it hunting for
+   a leaked verdict.
 4. Add a `navCard` (section `'practice'`) to the appropriate H2
    section on `html/practice/index.html` — *Content Quizzes* if
    every question maps to an existing page, *Field Drills* if the
@@ -1026,6 +1157,41 @@ re-submit); add `--dry-run` to print the URL list without POSTing.
   + `page.screenshot({ path, fullPage: true })`. For `contact.html`
   use `waitUntil: 'domcontentloaded'`. Rebuild (`npm run build`)
   before screenshotting `_site/` unless `npm run dev` is running.
+- **Stale-claim prose lint:** `npm run prose-lint` reports prose that
+  fixes a chapter's size or names its last page — the *Write claims
+  that can't go stale* convention above, made greppable. Eight rules
+  over four classes (`terminal` / `count` / `ordinal` / `positional`),
+  with anchor-wrapped matches downgraded a step.
+  **The report is split into two sections that are never summed**
+  (owner ruling 2026-07-20): **append-fragile** — stale when a lesson
+  is added to the END of a chapter (terminal claims, counted sets,
+  ordinal *runs*), ranked HIGH, the class the convention is actually
+  about — versus **insertion-fragile** — stale only when a lesson is
+  inserted MID-SEQUENCE (the `next` / positional family — `next`
+  *only*; "last in this chapter" is a terminal claim and files under
+  append — plus lone ordinal *references*), ranked MEDIUM. The
+  `ordinal` class is the one that spans both sections: several
+  ordinals enumerating a chapter go incomplete on append, while a lone
+  "from page 2" survives one and shifts only on insertion, so they are
+  two rules split by proximity (owner ruling 2026-07-20 — one label
+  must never cover two failure modes). Both are real; they measure
+  different risks,
+  so there is deliberately **no combined headline number** in any
+  output mode. One label covering two failure modes is what made the
+  two earlier formulations of this check unarguable. The append total
+  is a **ceiling** — the script header records the known misfiles in
+  it, since a PR body is not a durable ledger.
+  **Report-only and deliberately NOT in `test.yml`** — it is a
+  candidates-for-review list, not a gate, and "the last page" is a
+  homograph the lint cannot disambiguate (backward reference vs
+  terminal claim), so expect to dismiss some findings by reading the
+  sentence. `--json` for machine-readable output, `--files` for the
+  scanned file list. Script: `.github/scripts/prose-lint.mjs`; its
+  header pins every formulation choice (vocabulary, masking, path
+  exclusions) with the reasoning, so disagree with a specific line
+  rather than re-deriving the pattern — two earlier hand-rolled
+  formulations of this exact check produced confident numbers that
+  were never reproducible.
 - **Diagram audit pass:** `npm run screenshots` (with a server on
   :8000) dumps every diagram-class SVG across the sitemap to
   `/tmp/audit-<page>-<id>.png`. Use it as the starting point for any

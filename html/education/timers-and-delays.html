@@ -84,7 +84,7 @@ keywords: TON TOF on-delay off-delay preset elapsed proof fail-to-start debounce
                 drops, the output hangs on for the preset before letting go.
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 Both blocks carry the same two numbers. The <strong>preset</strong> (PT) is
                 the parameter you type in — the length of the delay, in seconds. The
                 <strong>elapsed time</strong> (ET) is the block's live progress toward it,
@@ -119,7 +119,7 @@ keywords: TON TOF on-delay off-delay preset elapsed proof fail-to-start debounce
                 never blinked, and the next drop starts a fresh, full-length delay.
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 Here are both blocks as timing traces — the one diagram every controls
                 reference draws, because it answers at a glance what a paragraph struggles
                 to. Top to bottom in each panel: the input, the elapsed time, the output.
@@ -211,7 +211,7 @@ keywords: TON TOF on-delay off-delay preset elapsed proof fail-to-start debounce
                 clears it. That's exactly how the simulator's blocks report it live.
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 Squint at the two output traces and a single idea covers both blocks: a timer
                 is a <strong>minimum-duration filter</strong>. TON deletes every TRUE shorter
                 than the preset — as far as anything downstream knows, a six-second blip into
@@ -235,7 +235,7 @@ keywords: TON TOF on-delay off-delay preset elapsed proof fail-to-start debounce
                 better comparison — it's a window of patience, and that window is a TON.
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 Here's the pattern in full, and it's worth learning wire by wire because it
                 guards nearly every fan, pump, and compressor in a building: the
                 <strong>fail-to-start alarm</strong>. The sentence first: <em>"if the command
@@ -357,7 +357,7 @@ keywords: TON TOF on-delay off-delay preset elapsed proof fail-to-start debounce
                 the same coloring the editor uses live.
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 Now watch what the timer buys you on a <em>healthy</em> start. Command goes
                 on; the fan hasn't moved yet, so proof is missing and the <code>AND</code>
                 goes TRUE — the failure condition is honestly true, for a moment. ET starts
@@ -369,7 +369,7 @@ keywords: TON TOF on-delay off-delay preset elapsed proof fail-to-start debounce
                 only the failure that outlasts the window.
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 And why the latch? Because the timer's output only lasts as long as the
                 failure condition stands. Suppose the belt snapped: proof never comes, ET
                 walks all the way to 15, the alarm should stand. But if an operator later
@@ -383,7 +383,7 @@ keywords: TON TOF on-delay off-delay preset elapsed proof fail-to-start debounce
                 Boolean Logic &amp; Latches</a>; here it just does its day job.)
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 Don't take the diagram's word for it — the sheet is running in the
                 <a href="/simulators/function-block-editor.html">Function-Block Editor</a>.
                 Load the <em>proof-of-flow alarm</em> example; it loads healthy, command and
@@ -396,7 +396,7 @@ keywords: TON TOF on-delay off-delay preset elapsed proof fail-to-start debounce
                 and the sheet is healthy again.
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 How long should the window be? It's a real decision with a failure mode on
                 each side. Too short, and the alarm nuisance-trips on every honest start —
                 the fan was coming; the logic didn't wait. Cry wolf often enough and the
@@ -416,7 +416,7 @@ keywords: TON TOF on-delay off-delay preset elapsed proof fail-to-start debounce
                  that trained a site to ignore alarms, or a too-long window that let
                  something run unprotected — owner to supply; do not draft. -->
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 The same filter works at a smaller scale, where it goes by the name
                 <strong>debounce</strong>. Picture a DP switch set close to the fan's actual
                 operating pressure: at marginal airflow it flutters, and the raw status point
@@ -447,7 +447,7 @@ keywords: TON TOF on-delay off-delay preset elapsed proof fail-to-start debounce
                 reason — and a sequence that ignores it is spending someone else's money.
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 The guard is a pair of timing rules, and both are the section-one filter
                 pointed at the equipment's own state. <strong>Minimum run</strong>: once
                 started, stay started for at least the minimum — a stop request younger than
@@ -460,7 +460,7 @@ keywords: TON TOF on-delay off-delay preset elapsed proof fail-to-start debounce
                 way, the numbers come from the equipment's documentation, not from taste.
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 Here's where the timers meet the decision they're pacing. The on/off decision
                 itself comes from a deadband — two thresholds with memory between them,
                 <a href="/education/comparators-and-deadband.html#deadband">built out in
@@ -476,7 +476,7 @@ keywords: TON TOF on-delay off-delay preset elapsed proof fail-to-start debounce
                 thresholds carelessly.
             </p>
 
-            <p style="margin-top:1.25rem;">
+            <p>
                 Zoom out from one compressor to a whole plant and the same two rules are
                 running at system scale. The
                 <a href="/education/equipment-staging.html#staging">equipment-staging</a>
