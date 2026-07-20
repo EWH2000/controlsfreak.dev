@@ -960,11 +960,13 @@ drills:
   logic.
 - **Controls Commissioning** *(field drill)* — proving a controller
   does what its sequence of operations says: exercising AI, AO, BI,
-  and BO points from the field end, the 2-10 V span-mismatch math, a
-  binary input whose state changes but whose sense is inverted, a
-  commanded output that starts the wrong machine, an interlock
-  verified as the whole programmed response, trends catching what a
-  single walk cannot, and the turnover record.
+  and BO points from the field end, a binary input whose state changes
+  but whose sense is inverted, a commanded output that starts the wrong
+  machine, an interlock verified as the whole programmed response, a
+  hardwired safety proven through the copper rather than through the
+  software beside it, trend-buffer depth against the span you need to
+  observe, trends catching what a single walk cannot, and the turnover
+  record.
 - **Troubleshooting** *(field drill)* — symptom → most-likely-cause
   reasoning across the trade; the skill drilled is reading what a
   symptom rules in and out: a pingable-but-undiscoverable BACnet

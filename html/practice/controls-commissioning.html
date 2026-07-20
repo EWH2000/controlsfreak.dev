@@ -24,10 +24,11 @@ keywords: point-to-point checkout functional testing startup commissioning overr
         <div class="tool-body">
 
             <p class="page-intro">
-                Ten questions on proving a controller actually does what its sequence of operations says. The
+                Eleven questions on proving a controller actually does what its sequence of operations says. The
                 <strong>method</strong>: exercising an AI, AO, BI, and BO from the field end, and what each
                 point type lies about when you skip it. The <strong>relationships</strong>: verifying an
-                interlock as the whole programmed response, not just the trigger reading. And the parts that
+                interlock as the whole programmed response, and proving a hardwired safety through the copper
+                rather than through the software that sits beside it. And the parts that
                 outlast the walk — <strong>trends</strong> as proof over real operating swings, and the
                 <strong>record</strong> you hand over. Reveals explain inline and deep-link the
                 <a href="/education/controls-commissioning.html">Controls Commissioning</a> lesson section
@@ -75,11 +76,16 @@ keywords: point-to-point checkout functional testing startup commissioning overr
         // so the FAQPage JSON-LD emitted from head.njk can read the same source.
         const questions = {{ quizzes['controls-commissioning'] | safeScriptJson | safe }};
 
+        // defaultCount is 'all' rather than the site-wide 10 because this bank
+        // holds 11: sequential order plus a count of 10 slices the last
+        // question off every default run, so one question would never be seen
+        // unless a visitor changed the setting. The 5 / 10 / All select is
+        // unchanged.
         Quiz.mount('#quiz', questions, {
             next: {{ page.fileSlug | nextQuiz | safeScriptJson | safe }},
             slug: 'controls-commissioning',
             title: 'Controls Commissioning',
-            defaultCount: 10,
+            defaultCount: 'all',
             defaultOrder: 'sequential'
         });
     })();

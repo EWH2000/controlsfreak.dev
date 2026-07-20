@@ -19,6 +19,15 @@
 // the drills, before adding a numeric — this bank's first numeric
 // duplicated span-math-fifty-percent outright (same 2-10 V actuator,
 // same 50 % command, same 6 V answer) and had to be replaced.
+//
+// This bank holds 11, not the 10 every other bank happens to hold —
+// the hardwired-safety question was cut during the build and the owner
+// asked for it back. The count is coupled to the page: the mount in
+// practice/controls-commissioning.html sets defaultCount: 'all' rather
+// than the site-wide 10, because sequential order plus a count of 10
+// would slice the last question off every default run. Changing the
+// bank size means revisiting that option and the "Eleven questions"
+// page intro alongside it.
 
 module.exports = [
     // ── The idea: checkout runs from the field toward the front end ──
@@ -91,6 +100,21 @@ module.exports = [
         explain: 'Proving each point moves is necessary and not sufficient. A sequence is a set of <em>relationships</em>: this condition trips, so those outputs respond. Verifying one means making the triggering condition real and confirming the whole programmed reaction — fan off, damper closed, valve open, alarm annunciated — not confirming that the trigger point merely reads. It is entirely possible for the alarm to annunciate while one of the three output responses was never programmed, and the alarm looks like success.',
         learnMore: { href: '/education/controls-commissioning.html#ccx-interlocks', label: 'Controls Commissioning — Interlocks and sequence logic' },
         tags: ['commissioning', 'interlocks', 'sequence']
+    },
+    {
+        type: 'gotcha',
+        id: 'hardwired-trip-must-act-on-its-own',
+        prompt: 'A freezestat is hardwired into the supply-fan starter circuit, and it also lands on a BI so the controller can annunciate the alarm and shut the unit down in software. Here is the test that was run to verify it. Why does this not verify the hardwired trip?',
+        snippet: '<pre class="quiz-snippet">action:  freezestat tripped by hand at the device\nBI:      FREEZE ALARM   (controller saw it)\nBO:      SF-1 → OFF     (software dropped the fan)\nfan:     stopped ✓</pre>',
+        choices: [
+            { id: 'a', text: 'It does — the fan stopped, and stopping the fan is the required response.' },
+            { id: 'b', text: 'Both paths were armed at once and the software path answered first. Nothing in the record shows the copper could have stopped that fan on its own.', correct: true },
+            { id: 'c', text: 'A hand trip is not a valid test — the element has to be chilled below its actual setting for the result to count.' },
+            { id: 'd', text: 'One freezestat should never serve both a hardwired trip and a BI, so the arrangement itself is the defect.' }
+        ],
+        explain: 'A hardwired safety exists for exactly the moments the controller cannot be trusted — a railed sensor, a hung program, a value stuck at a number that looks perfectly reasonable and that nothing downstream knows is wrong. A test with both paths live cannot say anything about the one that matters, because the quicker path answers and the slower one is never asked. Prove the copper by taking the software out of the path and leaving it watching: hold the fan <em>commanded on</em> from the controller, trip the freezestat, and confirm the fan drops anyway while the BO still reads ON. That is the whole shape of the arrangement — the controller reports the trip, the wiring performs it. Restore the command and verify the software response as its own step, so the record ends with both paths proven instead of one of them assumed.',
+        learnMore: { href: '/education/controls-commissioning.html#ccx-interlocks', label: 'Controls Commissioning — Interlocks and sequence logic' },
+        tags: ['commissioning', 'interlocks', 'safety']
     },
 
     // ── Trends: proof over time ──────────────────────────
