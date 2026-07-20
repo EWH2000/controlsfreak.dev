@@ -16,7 +16,7 @@ module.exports = [
     {
         type: 'mcq',
         id: 'checkout-runs-from-the-field',
-        prompt: 'Two techs check the same mixed-air sensor. One sees 55&nbsp;°F (12.8&nbsp;°C) on the graphic and moves on. The other puts a decade box on the input, dials in the resistance that should read 55&nbsp;°F (12.8&nbsp;°C), and confirms the controller agrees. Why is only the second one a checkout?',
+        prompt: 'Two techs check the same mixed-air sensor. One sees 55 °F (12.8 °C) on the graphic and moves on. The other puts a decade box on the input, dials in the resistance that should read 55 °F (12.8 °C), and confirms the controller agrees. Why is only the second one a checkout?',
         choices: [
             { id: 'a', text: 'The graphic refreshes too slowly to trust for commissioning.' },
             { id: 'b', text: 'A graphic can be right for the wrong reasons — wrong object mapping, wrong range scaling, or swapped wires all report believable numbers. Only a known input at the field end proves the whole chain.', correct: true },
@@ -32,26 +32,26 @@ module.exports = [
     {
         type: 'mcq',
         id: 'ao-command-proves-direction-and-span',
-        prompt: 'Commissioning an AO to a modulating valve actuator, you command 0, 50, and 100&nbsp;% and go watch the valve. What two things is that three-point command proving?',
+        prompt: 'Commissioning an AO to a modulating valve actuator, you command 0, 50, and 100 % and go watch the valve. What two things is that three-point command proving?',
         choices: [
             { id: 'a', text: 'Loop gain and integral time.' },
             { id: 'b', text: 'Valve Cv and close-off rating.' },
             { id: 'c', text: 'Direction and span — that the valve strokes the right way, and that it sweeps its full travel.', correct: true },
             { id: 'd', text: 'Actuator hysteresis and stroke time.' }
         ],
-        explain: 'Direction catches the reversed action — an actuator wired or configured for the wrong sense strokes backwards, driving wide open on a 0&nbsp;% command, and the loop fights itself all season. Span catches the actuator that only sweeps part of its travel because its range setting and the software range disagree. Both are invisible from the front end, and both look like a tuning problem later if you skip this. A drive gets the same three commands, plus a confirmation of rotation direction — once, during checkout, before it matters.',
+        explain: 'Direction catches the reversed action — an actuator wired or configured for the wrong sense strokes backwards, driving wide open on a 0 % command, and the loop fights itself all season. Span catches the actuator that only sweeps part of its travel because its range setting and the software range disagree. Both are invisible from the front end, and both look like a tuning problem later if you skip this. A drive gets the same three commands, plus a confirmation of rotation direction — once, during checkout, before it matters.',
         learnMore: { href: '/education/controls-commissioning.html#ccx-method', label: 'Controls Commissioning — The method, per point type' },
         tags: ['commissioning', 'ao', 'method']
     },
     {
         type: 'numeric',
         id: 'ao-span-midpoint-voltage',
-        prompt: 'An AO drives a damper actuator whose input range is 2&ndash;10&nbsp;V, and the software point is scaled 0&ndash;100&nbsp;%. You command the point to 50&nbsp;% and meter the signal at the actuator. What should you read?',
+        prompt: 'An AO drives a damper actuator whose input range is 2–10 V, and the software point is scaled 0–100 %. You command the point to 50 % and meter the signal at the actuator. What should you read?',
         answer: 6,
         tolerance: 0,
         unit: 'V',
         inputmode: 'decimal',
-        explain: 'The span is 2&ndash;10&nbsp;V, so 8&nbsp;V of signal covers 0&ndash;100&nbsp;%: 2 + 0.50 &times; 8 = <strong>6&nbsp;V</strong>. The reason to meter it rather than trust the command is that this is the one place the software range and the actuator range can silently disagree. An actuator jumpered for 0&ndash;10&nbsp;V while the software drives 2&ndash;10&nbsp;V is already 20&nbsp;% off at midspan and never reaches the bottom of its travel — it looks like a lazy loop, not a range mismatch.',
+        explain: 'The span is 2–10 V, so 8 V of signal covers 0–100 %: 2 + 0.50 × 8 = <strong>6 V</strong>. The reason to meter it rather than trust the command is that this is the one place the software range and the actuator range can silently disagree. An actuator jumpered for 0–10 V while the software drives 2–10 V is already 20 % off at midspan and never reaches the bottom of its travel — it looks like a lazy loop, not a range mismatch.',
         learnMore: { href: '/education/controls-commissioning.html#ccx-method', label: 'Controls Commissioning — The method, per point type' },
         tags: ['commissioning', 'ao', 'scaling', 'method']
     },
@@ -132,7 +132,7 @@ module.exports = [
         id: 'document-and-clear-per-point',
         prompt: 'A point\'s checkout is finished once you have confirmed it against the sequence — writing it up and releasing the force can be swept up together at the end of the day.',
         answer: false,
-        explain: 'The loop is exercise &rarr; watch the field device &rarr; confirm against the sequence &rarr; document it and clear the force, and it closes once per point. Batching the last step turns it into memory work at the end of a long day, which is precisely when a point gets skipped. The stakes are asymmetric, too: an undocumented pass costs you a re-test, but an uncleared force is a live hazard the logic cannot see — the sequence is executing correctly and being ignored. A forced AO holds a heating valve open into a summer coil; a defeated freeze interlock leaves nothing between a cold night and a burst coil.',
+        explain: 'The loop is exercise → watch the field device → confirm against the sequence → document it and clear the force, and it closes once per point. Batching the last step turns it into memory work at the end of a long day, which is precisely when a point gets skipped. The stakes are asymmetric, too: an undocumented pass costs you a re-test, but an uncleared force is a live hazard the logic cannot see — the sequence is executing correctly and being ignored. A forced AO holds a heating valve open into a summer coil; a defeated freeze interlock leaves nothing between a cold night and a burst coil.',
         learnMore: { href: '/education/controls-commissioning.html#ccx-loop', label: 'Controls Commissioning — One small loop, run once per point' },
         tags: ['commissioning', 'overrides', 'workflow']
     },
