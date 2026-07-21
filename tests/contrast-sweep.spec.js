@@ -80,10 +80,15 @@
 //   (#1b2410) reads 7.59:1 on --lcd-bg and 6.16:1 on --lcd-bg-2, so the
 //   register clears AA at both ends of its own gradient. It is also
 //   theme-constant by design ("a device is a device").
-//   Any OTHER background-image in the backdrop window is NOT excused —
-//   it lands in `unresolved`, which is asserted empty, so a new gradient
-//   surface under real text fails this spec instead of silently opting
-//   out of it.
+//   Any OTHER background-image in the backdrop window is NOT silently
+//   excused as an exemption: a failing text row over one is routed to
+//   `unresolved` (asserted empty) rather than `fail`. But mind the limit
+//   — `unresolved` is reached ONLY after a row has already failed the
+//   ratio against the flattened, gradient-ignoring backdrop (the walk
+//   `continue`s on a pass first). So a new gradient surface is caught
+//   only where its text ALSO fails that flattened approximation; text
+//   that clears it passes silently and the gradient's own light/dark
+//   spread is never assessed. See codebase-issues #194.
 // * Disabled controls — WCAG 1.4.3 exempts text in an inactive user
 //   interface component.
 // * Text that is closed at load and has no shared container to reveal
@@ -121,6 +126,16 @@
 
 const { test, expect } = require('@playwright/test');
 const PAGES = require('./pages');
+
+// styleguide.html is noindex — no canonical, so it is absent from the
+// sitemap and therefore from tests/pages.js. It is also the one page whose
+// whole purpose is exercising both registers in both themes, and the only
+// place the .status-pill .warn / .error verdict states are rendered
+// statically — everywhere else they are applied at runtime, so the
+// static-page walk never reaches them and those verdict inks go unmeasured
+// (codebase-issues #194). Graft it on so the sweep covers it, exactly as
+// responsive.spec.js:18 does and for the same reason.
+const SWEEP_PAGES = [...PAGES, { name: 'styleguide', url: '/styleguide.html' }];
 
 // Allowlisted shapes. Each entry is a STANDING ANSWER with a measured
 // ratio and a reason — codebase-issues #168 is the model, and the point
@@ -449,7 +464,7 @@ test('contrast math reproduces independently recorded ratios', async ({ page }) 
 // generous timeout while `fullyParallel` spreads them over the workers.
 const CHUNK = 20;
 const chunks = [];
-for (let i = 0; i < PAGES.length; i += CHUNK) chunks.push(PAGES.slice(i, i + CHUNK));
+for (let i = 0; i < SWEEP_PAGES.length; i += CHUNK) chunks.push(SWEEP_PAGES.slice(i, i + CHUNK));
 
 for (const theme of ['dark', 'light']) {
     chunks.forEach((group, n) => {

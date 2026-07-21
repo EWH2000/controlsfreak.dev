@@ -6916,7 +6916,7 @@ tracked as **#194** — do not read this as complete coverage.
 
 ---
 
-### 194. What the contrast guard cannot see — three boundaries, one of them unbounded *(open — 2026-07-20)*
+### 194. What the contrast guard cannot see — three boundaries, one of them unbounded *(resolved — 2026-07-20)*
 
 Found by an air-side-sim scoping session auditing PR #414's
 `tests/contrast-sweep.spec.js` rather than trusting its summary. None of
@@ -7013,6 +7013,44 @@ explicit and auditable rather than blanket.
 Remaining alternatives if the styleguide route is rejected: drive the
 state changes in the spec, or measure the token pairs directly without a
 DOM.
+
+#### Resolved 2026-07-20 — styleguide graft + visible verdict specimens
+
+The corrected fix shipped, both parts:
+
+- **Graft.** `tests/contrast-sweep.spec.js` now defines
+  `SWEEP_PAGES = [...PAGES, { name: 'styleguide', url: '/styleguide.html' }]`
+  and shards *that* — the same shape `responsive.spec.js:18` uses, with a
+  comment pointing back here. The sweep now covers `/styleguide.html` in
+  both themes (the last shard grew 11 → 12 pages; the page contributes 277
+  measured ink sources, well over the per-page sanity floor). **Boundary 4
+  closed.**
+- **Visible specimens.** `html/styleguide.html` renders the three
+  `.status-pill` states (`ok` / `warn` / `error`) as **visible** rows in
+  the "Callouts, verdicts & tables" card — not the `hidden`-specimen first
+  proposal, which would have been skipped three ways. Measured, both clear
+  the 4.5:1 small-text floor: **warn 5.13 dark / 4.95 light, error 4.91 /
+  5.26, ok 6.63 / 8.42.** So the verdict inks were fine all along — the
+  defect was that nobody was *measuring* them. **The confirmed instance of
+  boundary 3 closed.**
+- **Falsifiability confirmed end-to-end**, per this file's own "no green
+  no-op guard" rule: mutating `.status-pill.warn` to a low-contrast colour
+  (`#8f9aa0`) and rebuilding turns the light styleguide shard **red** at
+  2.63:1, naming the exact pill. Reverted. The guard bites; it is not
+  measuring nothing.
+
+**What remains — by design, not open work:**
+
+- Boundaries 1 (SVG text) and 2 (equipment register) stay permanent,
+  documented, bounded exclusions. Not defects.
+- Boundary 3 in its *general* form — any text reachable only through a JS
+  state change the sweep cannot trigger (a quiz's dirty-state notice, the
+  psychrometric editor, conditional table rows) — stays a known
+  limitation. But the **sanctioned pattern for closing any future
+  confirmed instance is now set**: render a visible specimen on the
+  styleguide (the living register reference), or add its container to
+  `settle()`'s `COLLAPSED_CHROME` force-reveal list. Reach for it the next
+  time a specific runtime-only state is found under-contrast.
 
 ---
 
