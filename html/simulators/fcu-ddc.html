@@ -1,0 +1,644 @@
+---
+title: DX Fan Coil — DDC Graphic — controlsfreak.dev
+description: A DX heat-pump fan coil rendered as a live DDC supervisory graphic — read entering and leaving air, coil delta-T, fan and compressor status, and diagnose it.
+nav: simulators
+eleventyExcludeFromCollections: true
+---
+{% extends "layouts/page.njk" %}
+
+{% block head %}
+    <style>
+        /* ── DX Fan Coil — DDC supervisory graphic (fcu-*) ── phase-1
+           throwaway mockup. SOFTWARE register only: schematic pipe/duct
+           strokes, plain live-value text, and the shared .status-pill
+           verdict. No .device / .lcd — a supervisory front-end is chrome,
+           not a hardware face. Only the pieces this page alone draws sit
+           here; the shell (.field / .slider-field / .btn-row / .copy-btn /
+           .status-pill / .subhead) lives in styles.css. */
+
+        /* The hero graphic — centered, capped. */
+        .fcu-graphic { max-width: 660px; margin: 0.5rem auto 0; }
+        .fcu-svg { display: block; width: 100%; height: auto; }
+
+        /* On-graphic point labels — the DDC feel. Mono, small; the value
+           is the loud element, the caption the quiet one (the site scan
+           hierarchy). SVG text is out of the contrast-sweep's scope. */
+        .fcu-pt-cap {
+            font-family: var(--mono);
+            font-size: 10px;
+            letter-spacing: 0.08em;
+            fill: var(--text-dim);
+            text-anchor: middle;
+        }
+        .fcu-pt-val {
+            font-family: var(--mono);
+            font-size: 14px;
+            font-weight: 700;
+            fill: var(--text-bright);
+            text-anchor: middle;
+        }
+        .fcu-dt-val { fill: var(--blue); }
+        .fcu-badge { fill: var(--surface-2); stroke: var(--border); stroke-width: 1; }
+        .fcu-badge-dt { stroke: var(--blue); }
+        .fcu-zone-label,
+        .fcu-cabinet-label,
+        .fcu-glyph-label { font-family: var(--mono); text-anchor: middle; }
+
+        /* The two drill-down glyphs (DX coil, supply fan). The real,
+           keyboard-reachable targets are the HTML links below the graphic;
+           these glyphs carry a mouse cursor + hover affordance and a JS
+           click as a convenience, so no bare SVG element is the ONLY
+           target. */
+        .fcu-link { cursor: pointer; }
+        .fcu-link-box {
+            fill: var(--surface);
+            stroke: var(--text-dim);
+            stroke-width: 2;
+            transition: stroke 0.15s;
+        }
+        .fcu-link:hover .fcu-link-box,
+        .fcu-link:focus-visible .fcu-link-box { stroke: var(--accent); }
+
+        /* Fan blade spin — same pattern as the air-handlers D4 fan. */
+        .fcu-fan-blade { transform-box: fill-box; transform-origin: center; }
+        @media (prefers-reduced-motion: reduce) {
+            .fcu-fan-blade { transform: none !important; }
+        }
+
+        /* Point-readout grid below the graphic — the mobile-legible mirror
+           of the on-graphic labels (SVG text gets tiny on a phone). */
+        .fcu-points {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 0.6rem 1rem;
+            margin-top: 1rem;
+        }
+        .fcu-point { display: flex; flex-direction: column; gap: 0.15rem; }
+        .fcu-point-cap {
+            font-family: var(--mono);
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-dim);
+        }
+        .fcu-point-val {
+            font-family: var(--mono);
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-bright);
+        }
+        .fcu-point-val.accent { color: var(--blue); }
+        .fcu-point-val.dim { color: var(--text-dim); }
+
+        /* Verdict pill sits tight under the points. */
+        .fcu-verdict { margin-top: 1rem; }
+
+        /* Drill-down link pair — prove the hub. Card-ish anchors, clearly
+           labeled with the fan → VFD / coil → heat-pump mapping. */
+        .fcu-drills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.6rem;
+            margin-top: 0.75rem;
+        }
+        .fcu-drill {
+            display: block;
+            flex: 1 1 220px;
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border);
+            background: var(--surface-2);
+            color: var(--text);
+            text-decoration: none;
+            font-family: var(--mono);
+            font-size: 0.82rem;
+            transition: border-color 0.15s, color 0.15s;
+        }
+        .fcu-drill:hover { border-color: var(--accent); color: var(--text-bright); }
+        .fcu-drill-sub { display: block; color: var(--text-dim); font-size: 0.72rem; margin-top: 0.2rem; }
+
+        /* Controls — a compact grid of slider-fields. */
+        .fcu-controls { margin-top: 2rem; }
+        .fcu-knob-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem 1.5rem;
+        }
+        @media (max-width: 560px) {
+            .fcu-knob-grid { grid-template-columns: 1fr; }
+        }
+        .fcu-presets { margin: 0 0 1.25rem; }
+        .fcu-presets .btn-row { margin-top: 0.5rem; }
+        .fcu-presets .copy-btn.fcu-preset-fault.active { border-color: var(--red); color: var(--red-text); }
+
+        /* Lift the control captions to full ink — this block is dense
+           enough that the captions are the scan target (the page-local
+           escape hatch documented for .rl-controls). Size / casing /
+           values stay put. */
+        .fcu-controls label,
+        .fcu-controls .field-label,
+        .fcu-presets .field-label { color: var(--text); }
+    </style>
+{% endblock %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Simulators · Fan Coil</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">
+                DX Fan Coil — DDC Graphic
+                <span class="tool-tag">HVAC</span>
+            </h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="tool-preamble">
+                A rough, directional model — this is the BAS front-end a tech
+                reads, not a commissioning tool. The numbers show which way the
+                air moves across the coil, not a rated capacity. Turn a knob or
+                load a fault and read the graphic the way you would read the
+                supervisory screen.
+            </p>
+
+            <!-- ── The supervisory graphic ─────────────────────────────────
+                 Recirculating DX fan coil serving one zone. Return air leaves
+                 the zone (right), wraps the top return duct to the cabinet,
+                 drops through the DX coil then the supply fan, and is pushed
+                 back to the zone via the discharge duct. Air lanes animate
+                 with flow-engine.js (data-flow="air", particle color follows
+                 each duct's stroke). The DX coil + supply fan glyphs are the
+                 two drill-down sub-devices (real HTML links below).
+                 SOFTWARE register throughout; a11y = the education idiom
+                 (role="img" + aria-labelledby → title/desc). -->
+            <div class="fcu-graphic">
+                <svg class="fcu-svg" id="fcu-graphic" viewBox="0 0 720 380"
+                     role="img" aria-labelledby="fcu-title fcu-desc"
+                     font-family="var(--mono)">
+                    <title id="fcu-title">A DX fan coil serving one zone, as a DDC supervisory graphic</title>
+                    <desc id="fcu-desc">A recirculating direct-expansion fan coil serving one zone, drawn as a DDC supervisory graphic. Return air leaves the zone on the right, travels along the top return duct to the left of the cabinet, and drops into the fan coil unit. Inside the cabinet the air passes through a DX cooling coil and then a supply fan, which pushes it back out through the supply duct into the zone. Floating point labels report the entering-air temperature at the coil, the discharge-air temperature after the fan, and the temperature difference across the coil. The zone box shows the zone temperature and its cooling setpoint; separate labels show the supply-fan status and speed and the compressor stage. The DX coil and the supply fan are drawn as the two sub-devices the graphic can drill into.</desc>
+
+                    <!-- Air lanes. Draw order = flow direction. Return air:
+                         zone → top duct → down → into the coil. Supply air:
+                         fan → up → into the zone. Density tracks fan speed
+                         (set in the page script). -->
+                    <path id="fcu-ra" data-flow="air" d="M548 150 H60 V298 H150" fill="none"
+                          stroke="var(--blue-cool)" stroke-width="3"/>
+                    <path id="fcu-sa" data-flow="air" d="M440 298 H500 V230 H548" fill="none"
+                          stroke="var(--blue)" stroke-width="3"/>
+
+                    <!-- Static flow arrows — carry direction under reduced
+                         motion / print. -->
+                    <g id="fcu-flow-arrows">
+                        <polygon points="320,145 311,150 320,155" fill="var(--blue-cool)"/>
+                        <polygon points="55,240 65,240 60,251" fill="var(--blue-cool)"/>
+                        <polygon points="112,293 121,298 112,303" fill="var(--blue-cool)"/>
+                        <polygon points="475,293 484,298 475,303" fill="var(--blue)"/>
+                        <polygon points="495,250 505,250 500,239" fill="var(--blue)"/>
+                        <polygon points="524,225 533,230 524,235" fill="var(--blue)"/>
+                    </g>
+
+                    <!-- ── The zone ── return-air source + zone temp / setpoint. -->
+                    <g id="fcu-zone">
+                        <rect x="548" y="90" width="150" height="170" fill="var(--surface)"
+                              stroke="var(--text-dim)" stroke-width="2"/>
+                        <text class="fcu-zone-label" x="623" y="118" font-size="13"
+                              font-weight="600" fill="var(--text-bright)">ZONE</text>
+                        <text class="fcu-pt-cap" x="623" y="150">ZONE TEMP</text>
+                        <text class="fcu-pt-val" id="fcu-zone-t" x="623" y="170">76.0 °F</text>
+                        <text class="fcu-pt-cap" x="623" y="205">SETPOINT</text>
+                        <text class="fcu-pt-val" id="fcu-zone-sp" x="623" y="225"
+                              font-size="12" fill="var(--text-dim)">72.0 °F</text>
+                    </g>
+
+                    <!-- ── FCU cabinet ── -->
+                    <rect x="90" y="250" width="430" height="95" fill="none"
+                          stroke="var(--text-dim)" stroke-width="2"/>
+                    <text class="fcu-cabinet-label" x="305" y="338" font-size="11"
+                          fill="var(--text-dim)">FAN COIL UNIT · FCU-1</text>
+
+                    <!-- ── DX coil (drill-down → heat-pump sim) ── -->
+                    <g id="fcu-coil-link" class="fcu-link" data-href="/simulators/refrigerant-loop.html">
+                        <title>Open the heat-pump simulator</title>
+                        <rect class="fcu-link-box" x="150" y="262" width="52" height="72"/>
+                        <path d="M156 270 H196 V282 H156 V294 H196 V306 H156 V318 H196 V330 H156"
+                              fill="none" stroke="var(--blue)" stroke-width="1.5"/>
+                        <text class="fcu-glyph-label" x="176" y="356" font-size="11"
+                              font-weight="600" fill="var(--text-bright)">DX COIL</text>
+                    </g>
+
+                    <!-- Compressor status LED + label (the DX call). -->
+                    <g id="fcu-comp">
+                        <circle id="fcu-comp-dot" cx="240" cy="298" r="7"
+                                fill="var(--accent)" stroke="var(--border)" stroke-width="1"/>
+                        <text class="fcu-pt-cap" id="fcu-comp-v" x="240" y="325" font-size="10">STG 2 · ON</text>
+                        <text class="fcu-pt-cap" x="240" y="280" font-size="9">CMP</text>
+                    </g>
+
+                    <!-- ── Supply fan (drill-down → VFD sim) ── -->
+                    <g id="fcu-fan-link" class="fcu-link" data-href="/simulators/vfd-mock.html">
+                        <title>Open the VFD simulator</title>
+                        <circle class="fcu-link-box" cx="410" cy="298" r="30"/>
+                        <rect class="fcu-fan-blade" id="fcu-fan-blade" x="382" y="296" width="56" height="4"
+                              rx="2" fill="var(--text-dim)"/>
+                        <circle cx="410" cy="298" r="3" fill="var(--text-bright)"/>
+                        <text class="fcu-glyph-label" x="410" y="356" font-size="11"
+                              font-weight="600" fill="var(--text-bright)">SUPPLY FAN</text>
+                        <text class="fcu-pt-cap" id="fcu-fan-v" x="410" y="248" font-size="10">100% · ON</text>
+                    </g>
+
+                    <!-- ── Floating point badges — EAT / ΔT / DAT ──
+                         Above the cabinet, each over its sensor spot. The ΔT
+                         badge is the headline: it collapses toward zero on a
+                         fault. -->
+                    <g id="fcu-badges">
+                        <rect class="fcu-badge" x="120" y="196" width="86" height="40"/>
+                        <text class="fcu-pt-cap" x="163" y="212">EAT · ENTERING</text>
+                        <text class="fcu-pt-val" id="fcu-eat" x="163" y="230" font-size="13">76.0 °F</text>
+
+                        <rect class="fcu-badge fcu-badge-dt" x="258" y="196" width="96" height="40"/>
+                        <text class="fcu-pt-cap" x="306" y="212">ΔT ACROSS COIL</text>
+                        <text class="fcu-pt-val fcu-dt-val" id="fcu-dt" x="306" y="230" font-size="13">20.4 °F</text>
+
+                        <rect class="fcu-badge" x="406" y="196" width="90" height="40"/>
+                        <text class="fcu-pt-cap" x="451" y="212">DAT · DISCHARGE</text>
+                        <text class="fcu-pt-val" id="fcu-dat" x="451" y="230" font-size="13">56.6 °F</text>
+                    </g>
+                </svg>
+            </div>
+
+            <!-- Drill-downs — the real, keyboard-reachable click targets.
+                 The graphic's coil / fan glyphs mirror these on hover + click
+                 (mouse convenience), so no bare SVG element is the only
+                 target. -->
+            <div class="fcu-drills">
+                <a class="fcu-drill" href="/simulators/refrigerant-loop.html">
+                    DX coil → open the heat-pump simulator
+                    <span class="fcu-drill-sub">the vapor-compression loop behind this coil</span>
+                </a>
+                <a class="fcu-drill" href="/simulators/vfd-mock.html">
+                    Supply fan → open the VFD simulator
+                    <span class="fcu-drill-sub">the drive spinning this fan</span>
+                </a>
+            </div>
+
+            <!-- Point readouts (mobile-legible mirror) + the verdict. -->
+            <div class="fcu-points">
+                <div class="fcu-point">
+                    <span class="fcu-point-cap">EAT · entering</span>
+                    <span class="fcu-point-val" id="fcu-eat-r">76.0 °F</span>
+                </div>
+                <div class="fcu-point">
+                    <span class="fcu-point-cap">DAT · discharge</span>
+                    <span class="fcu-point-val" id="fcu-dat-r">56.6 °F</span>
+                </div>
+                <div class="fcu-point">
+                    <span class="fcu-point-cap">ΔT across coil</span>
+                    <span class="fcu-point-val accent" id="fcu-dt-r">20.4 °F</span>
+                </div>
+                <div class="fcu-point">
+                    <span class="fcu-point-cap">Zone / setpoint</span>
+                    <span class="fcu-point-val" id="fcu-zone-r">76.0 / 72.0 °F</span>
+                </div>
+                <div class="fcu-point">
+                    <span class="fcu-point-cap">Supply fan</span>
+                    <span class="fcu-point-val" id="fcu-fan-r">100% · ON</span>
+                </div>
+                <div class="fcu-point">
+                    <span class="fcu-point-cap">Compressor</span>
+                    <span class="fcu-point-val" id="fcu-comp-r">Stage 2 · ON</span>
+                </div>
+            </div>
+
+            <div class="status-pill ok fcu-verdict" id="fcu-verdict" aria-live="polite">
+                Cooling — clear ΔT across the coil
+            </div>
+
+            <!-- ── Controls ── -->
+            <div class="fcu-controls">
+                <h2 class="subhead">Controls</h2>
+
+                <div class="fcu-presets field" role="group" aria-labelledby="fcu-try-lbl">
+                    <span class="field-label" id="fcu-try-lbl">Try this:</span>
+                    <div class="btn-row">
+                        <button type="button" class="copy-btn active" data-preset="healthy" aria-pressed="true">Healthy cooling</button>
+                        <button type="button" class="copy-btn" data-preset="compoff" aria-pressed="false">Compressor off</button>
+                        <button type="button" class="copy-btn fcu-preset-fault" data-preset="lowcharge" aria-pressed="false">Low charge</button>
+                        <button type="button" class="copy-btn fcu-preset-fault" data-preset="airflow" aria-pressed="false">Airflow fault</button>
+                    </div>
+                </div>
+
+                <div class="field" role="group" aria-labelledby="fcu-stage-lbl">
+                    <span class="field-label" id="fcu-stage-lbl">Compressor stage</span>
+                    <div class="btn-row">
+                        <button type="button" class="copy-btn" id="fcu-stage-0" data-stage="0" aria-pressed="false">Off</button>
+                        <button type="button" class="copy-btn" id="fcu-stage-1" data-stage="1" aria-pressed="false">Stage 1</button>
+                        <button type="button" class="copy-btn active" id="fcu-stage-2" data-stage="2" aria-pressed="true">Stage 2</button>
+                    </div>
+                </div>
+
+                <div class="fcu-knob-grid">
+                    <div class="slider-field">
+                        <div class="slider-head">
+                            <label id="fcu-zone-lbl" for="fcu-zone-slider">Zone temp (return / demand)</label>
+                            <span class="slider-val" id="fcu-zone-val">76 °F</span>
+                        </div>
+                        <input type="range" id="fcu-zone-slider" min="70" max="84" step="1" value="76">
+                    </div>
+
+                    <div class="slider-field">
+                        <div class="slider-head">
+                            <label id="fcu-fan-lbl" for="fcu-fan-slider">Supply-fan speed</label>
+                            <span class="slider-val" id="fcu-fan-sval">100%</span>
+                        </div>
+                        <input type="range" id="fcu-fan-slider" min="0" max="100" step="5" value="100">
+                    </div>
+                </div>
+            </div>
+
+            <p class="ref-note">
+                Directional only — the coil effect is a rough sensible split
+                (a ~1.5-ton DX fan coil, nominal 600 CFM), and the fault
+                presets zero the coil's work outright to make the tell obvious.
+                A real no-cooling call has more than one cause; the graphic
+                shows you where to look, not what to fix.
+            </p>
+
+        </div>
+    </div>
+
+    <a class="back-link" href="/simulators/">← All simulators</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="/scripts/psychro-engine.js"></script>
+<script>
+    (function () {
+        'use strict';
+
+        // ── Rough constants (noted for the reviewer) ──────────────────────
+        // A ~1.5-ton DX fan coil. Internal model is IP (°F); converted at
+        // the display boundary via window.Units. Cooling capacity is a
+        // per-stage SENSIBLE + latent load fed to Psychro.invertProcess,
+        // which solves the leaving-air state — so lower fan speed (less air
+        // over the same load) genuinely raises the coil ΔT, and a fault that
+        // zeroes the load collapses it.
+        const NOMINAL_CFM = 600;                 // CFM at 100% fan
+        const STAGE_QSENS = { 1: 7000, 2: 13500 };   // Btu/h sensible
+        const STAGE_QLAT  = { 1: 1500, 2: 3000 };    // Btu/h latent
+        const RA_RH       = 50;                  // % — assumed return-air RH
+        const FAN_HEAT    = 0.6;                 // °F picked up across the fan
+        const COIL_FLOOR  = 34;                  // °F leaving-air clamp (freeze floor)
+        const SETPOINT    = 72;                  // °F cooling setpoint (fixed)
+        const P           = P_STD;               // psia (from psychro-engine)
+
+        const state = { stage: 2, fault: 'none' };   // fault: none | lowCharge | airflow
+
+        const zoneSlider = document.getElementById('fcu-zone-slider');
+        const fanSlider  = document.getElementById('fcu-fan-slider');
+        const zoneValLbl = document.getElementById('fcu-zone-val');
+        const fanValLbl  = document.getElementById('fcu-fan-sval');
+        const raPath     = document.getElementById('fcu-ra');
+        const saPath     = document.getElementById('fcu-sa');
+        const fanBlade   = document.getElementById('fcu-fan-blade');
+        const compDot    = document.getElementById('fcu-comp-dot');
+        const verdictEl  = document.getElementById('fcu-verdict');
+
+        // On-graphic + readout-grid nodes (kept in one map so update() writes
+        // both surfaces from one source).
+        const out = {
+            eat:  [document.getElementById('fcu-eat'),   document.getElementById('fcu-eat-r')],
+            dat:  [document.getElementById('fcu-dat'),   document.getElementById('fcu-dat-r')],
+            dt:   [document.getElementById('fcu-dt'),    document.getElementById('fcu-dt-r')],
+            zt:   document.getElementById('fcu-zone-t'),
+            zsp:  document.getElementById('fcu-zone-sp'),
+            zr:   document.getElementById('fcu-zone-r'),
+            fanG: document.getElementById('fcu-fan-v'),
+            fanR: document.getElementById('fcu-fan-r'),
+            compG:document.getElementById('fcu-comp-v'),
+            compR:document.getElementById('fcu-comp-r'),
+            datG: document.getElementById('fcu-dat'),
+        };
+
+        // ── Units helpers ── round metric to one decimal; the DISPLAYED ΔT
+        // is the arithmetic of the displayed EAT / DAT so the on-screen math
+        // closes (the metric worked-example rounding policy).
+        function dispTempNum(f) {
+            const U = window.Units;
+            const v = U.current() === 'us' ? f : U.display.temp(f);
+            return Math.round(v * 10) / 10;
+        }
+        function tSuffix() { return window.Units.suffix.temp(); }
+        function dSuffix() { return window.Units.suffix.deltaTemp(); }
+
+        function setBoth(pair, text) {
+            pair[0].textContent = text;
+            pair[1].textContent = text;
+        }
+
+        function update() {
+            const zoneT  = parseFloat(zoneSlider.value);   // °F
+            const fanPct = parseFloat(fanSlider.value);    // %
+
+            // Validate-and-mute: if a read isn't finite, blank the values.
+            if (!isFinite(zoneT) || !isFinite(fanPct)) {
+                setBoth(out.eat, '—'); setBoth(out.dat, '—'); setBoth(out.dt, '—');
+                verdictEl.className = 'status-pill fcu-verdict';
+                verdictEl.textContent = 'Enter a value.';
+                return;
+            }
+
+            const fanFrac = fanPct / 100;
+            const fanOn   = fanPct > 0;
+            const stage   = state.stage;
+            const fault   = state.fault;
+            const capActive = stage > 0 && fanOn && fault === 'none';
+
+            // Coil leaving-air temp via the shared psychro solver.
+            const inlet = Psychro.solveState('rh', zoneT, RA_RH, P);
+            let coilLeaveT;
+            if (fanOn && inlet.ok) {
+                const cfm   = Math.max(50, NOMINAL_CFM * fanFrac);
+                const qSens = capActive ? STAGE_QSENS[stage] : 0;
+                const qLat  = capActive ? STAGE_QLAT[stage]  : 0;
+                const leaving = Psychro.invertProcess(inlet, { type: 'cool', cfm: cfm, qSens: qSens, qLat: qLat });
+                coilLeaveT = leaving.ok ? leaving.tdb : zoneT;
+                if (coilLeaveT < COIL_FLOOR) coilLeaveT = COIL_FLOOR;
+            } else {
+                coilLeaveT = zoneT;   // no airflow — nothing crosses the coil
+            }
+            // Discharge sensor sits after the fan (draw-through pickup).
+            const datT = fanOn ? coilLeaveT + FAN_HEAT : zoneT;
+
+            // Displayed values — ΔT reconciles from the displayed operands.
+            const eatN = dispTempNum(zoneT);
+            const datN = dispTempNum(datT);
+            const spN  = dispTempNum(SETPOINT);
+            const dtN  = Math.round((eatN - datN) * 10) / 10;
+
+            setBoth(out.eat, eatN.toFixed(1) + ' ' + tSuffix());
+            setBoth(out.dat, datN.toFixed(1) + ' ' + tSuffix());
+            setBoth(out.dt,  dtN.toFixed(1)  + ' ' + dSuffix());
+            out.zt.textContent  = eatN.toFixed(1) + ' ' + tSuffix();
+            out.zsp.textContent = spN.toFixed(1) + ' ' + tSuffix();
+            out.zr.textContent  = eatN.toFixed(1) + ' / ' + spN.toFixed(1) + ' ' + tSuffix();
+
+            const fanTxt = fanOn ? (fanPct + '% · ON') : 'OFF';
+            out.fanG.textContent = fanTxt;
+            out.fanR.textContent = fanTxt;
+
+            const compTxt = stage === 0 ? 'OFF' : ('Stage ' + stage + ' · ON');
+            out.compG.textContent = stage === 0 ? 'OFF' : ('STG ' + stage + ' · ON');
+            out.compR.textContent = compTxt;
+
+            // Compressor LED: producing (green), off (dim), or energized but
+            // not producing (red — the fault tell).
+            compDot.setAttribute('fill',
+                capActive ? 'var(--accent)'
+                          : (stage > 0 && fanOn) ? 'var(--red)' : 'var(--text-dim)');
+
+            // Supply-air lane color follows whether the coil is actually
+            // cooling: cold blue when it is, neutral when it isn't.
+            const cooling = capActive && dtN >= 3;
+            const saColor = cooling ? 'var(--blue)' : 'var(--text-dim)';
+            saPath.setAttribute('stroke', saColor);
+            if (window.FlowEngine) FlowEngine.setPathColor(saPath, saColor);
+            out.datG.setAttribute('fill', cooling ? 'var(--text-bright)' : 'var(--text-dim)');
+
+            // Air-lane density tracks fan speed; near-zero when off (the
+            // engine then draws no particles on these short paths).
+            const dens = fanOn ? Math.max(0.3, fanFrac) : 0.05;
+            [raPath, saPath].forEach(function (p) {
+                p.setAttribute('data-flow-density', dens.toFixed(2));
+                if (window.FlowEngine) FlowEngine.refreshPath(p);
+            });
+
+            // Verdict — a fault or an off state outranks the mode readout.
+            let cls, txt;
+            if (!fanOn) {
+                cls = 'error'; txt = 'Supply fan off — no air across the coil';
+            } else if (stage === 0) {
+                cls = 'warn';  txt = 'Compressor off — fan only, no ΔT across the coil';
+            } else if (fault === 'lowCharge') {
+                cls = 'error'; txt = 'No ΔT across coil — low charge, not cooling';
+            } else if (fault === 'airflow') {
+                cls = 'error'; txt = 'No ΔT across coil — airflow fault, not cooling';
+            } else if (dtN < 3) {
+                cls = 'error'; txt = 'No ΔT across coil — compressor not cooling';
+            } else if (coilLeaveT <= 42) {
+                cls = 'warn';  txt = 'Cooling — but ΔT is high / airflow low (coil-freeze watch)';
+            } else {
+                cls = 'ok';    txt = 'Cooling — clear ΔT across the coil';
+            }
+            verdictEl.className = 'status-pill fcu-verdict ' + cls;
+            verdictEl.textContent = txt;
+
+            // Slider read-outs.
+            zoneValLbl.textContent = eatN.toFixed(0) + ' ' + tSuffix();
+            fanValLbl.textContent  = fanPct + '%';
+
+            state.fanFrac = fanOn ? fanFrac : 0;
+        }
+
+        // ── Preset / stage / knob wiring ──────────────────────────────────
+        const PRESETS = {
+            healthy:   { zone: 78, fan: 100, stage: 2, fault: 'none' },
+            compoff:   { zone: 78, fan: 100, stage: 0, fault: 'none' },
+            lowcharge: { zone: 78, fan: 100, stage: 2, fault: 'lowCharge' },
+            airflow:   { zone: 78, fan: 100, stage: 2, fault: 'airflow' },
+        };
+        const presetBtns = document.querySelectorAll('[data-preset]');
+        const stageBtns  = document.querySelectorAll('[data-stage]');
+
+        function markPreset(key) {
+            presetBtns.forEach(function (b) {
+                const on = b.getAttribute('data-preset') === key;
+                b.classList.toggle('active', on);
+                b.setAttribute('aria-pressed', on ? 'true' : 'false');
+            });
+        }
+        function clearPreset() {
+            presetBtns.forEach(function (b) {
+                b.classList.remove('active');
+                b.setAttribute('aria-pressed', 'false');
+            });
+        }
+        function markStage(stage) {
+            stageBtns.forEach(function (b) {
+                const on = parseInt(b.getAttribute('data-stage'), 10) === stage;
+                b.classList.toggle('active', on);
+                b.setAttribute('aria-pressed', on ? 'true' : 'false');
+            });
+        }
+
+        presetBtns.forEach(function (btn) {
+            btn.addEventListener('click', function (e) {
+                const p = PRESETS[e.currentTarget.getAttribute('data-preset')];
+                if (!p) return;
+                zoneSlider.value = String(p.zone);
+                fanSlider.value  = String(p.fan);
+                state.stage = p.stage;
+                state.fault = p.fault;
+                markStage(p.stage);
+                markPreset(e.currentTarget.getAttribute('data-preset'));
+                update();
+            });
+        });
+
+        stageBtns.forEach(function (btn) {
+            btn.addEventListener('click', function (e) {
+                state.stage = parseInt(e.currentTarget.getAttribute('data-stage'), 10);
+                markStage(state.stage);
+                clearPreset();
+                update();
+            });
+        });
+
+        // Sliders keep any standing fault (so you can probe it) but drop the
+        // active preset highlight — a lit preset always means "exactly this."
+        zoneSlider.addEventListener('input', function () { clearPreset(); update(); });
+        fanSlider.addEventListener('input', function () { clearPreset(); update(); });
+
+        // Re-render on the global unit toggle.
+        document.addEventListener('unitschange', update);
+
+        // ── Fan-blade spin — speed tracks fan fraction; still when off.
+        (function () {
+            if (!fanBlade) return;
+            const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            if (reduce) return;
+            const BASE = 360 / 0.8;   // deg/sec at 100%
+            let angle = 0;
+            let lastT = null;
+            const frame = function (t) {
+                if (lastT === null) lastT = t;
+                const dt = Math.min(0.1, (t - lastT) / 1000);
+                lastT = t;
+                angle = (angle + BASE * (state.fanFrac || 0) * dt) % 360;
+                fanBlade.style.transform = 'rotate(' + angle.toFixed(2) + 'deg)';
+                requestAnimationFrame(frame);
+            };
+            requestAnimationFrame(frame);
+        })();
+
+        // ── Glyph click convenience (mouse) — the HTML links above are the
+        // real, keyboard-reachable targets; these mirror them so the fan /
+        // coil read as clickable, without a bare SVG element being the ONLY
+        // target.
+        document.querySelectorAll('.fcu-link[data-href]').forEach(function (g) {
+            g.addEventListener('click', function (e) {
+                window.location.href = e.currentTarget.getAttribute('data-href');
+            });
+        });
+
+        // Initial paint.
+        update();
+    })();
+</script>
+{% endblock %}
