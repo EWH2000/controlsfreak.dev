@@ -80,10 +80,15 @@
 //   (#1b2410) reads 7.59:1 on --lcd-bg and 6.16:1 on --lcd-bg-2, so the
 //   register clears AA at both ends of its own gradient. It is also
 //   theme-constant by design ("a device is a device").
-//   Any OTHER background-image in the backdrop window is NOT excused —
-//   it lands in `unresolved`, which is asserted empty, so a new gradient
-//   surface under real text fails this spec instead of silently opting
-//   out of it.
+//   Any OTHER background-image in the backdrop window is NOT silently
+//   excused as an exemption: a failing text row over one is routed to
+//   `unresolved` (asserted empty) rather than `fail`. But mind the limit
+//   — `unresolved` is reached ONLY after a row has already failed the
+//   ratio against the flattened, gradient-ignoring backdrop (the walk
+//   `continue`s on a pass first). So a new gradient surface is caught
+//   only where its text ALSO fails that flattened approximation; text
+//   that clears it passes silently and the gradient's own light/dark
+//   spread is never assessed. See codebase-issues #194.
 // * Disabled controls — WCAG 1.4.3 exempts text in an inactive user
 //   interface component.
 // * Text that is closed at load and has no shared container to reveal
