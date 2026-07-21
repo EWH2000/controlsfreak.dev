@@ -3,7 +3,7 @@
 > **Lifecycle:** written 2026-07-20, updated 2026-07-21. The 16-PR
 > accessibility + practice batch and the #194 contrast-guard work all
 > shipped (PRs #402–#418); the #186 prose-lint residual is triaged, with
-> its one genuine fix in **PR #419** (open). What's left is the **air-side
+> its one genuine fix in **PR #419** (merged). What's left is the **air-side
 > simulator** (§1) — the next flagship, and the reason this file still
 > exists. Retire it when the sim ships.
 
@@ -42,8 +42,8 @@ this session's own failures:
 
 ## Where things stand
 
-`main` @ `22f6059`, **v3.72.1**, clean tree, **1 open PR** (#419, the
-prose-lint fix — awaiting review). The batch retrospective below cites
+`main` @ `e6d43d3`, **v3.72.1**, clean tree, **0 open PRs**. The batch
+retrospective below cites
 `cc5856b`, where those measurements were taken — deliberate, not stale.
 Counts: **40 education lessons · 34 content quizzes + 7 field drills ·
 31 tools · 7 simulators.**
@@ -105,7 +105,7 @@ Counts: **40 education lessons · 34 content quizzes + 7 field drills ·
   does) and added visible `.status-pill` verdict specimens, so the
   `.warn`/`.error` inks (runtime-only elsewhere) are now measured in both
   themes. Falsifiability proven by mutation. **v3.72.1.**
-- **#419** (open) — the one genuine append-fragile prose fix from the #186
+- **#419** (merged) — the one genuine append-fragile prose fix from the #186
   triage (the building-pressure intro's "Two pages… have now made the same
   promise"); the other four HIGH candidates pass the falsifiability rule
   and were left as-is (owner-confirmed on the live site).
@@ -216,7 +216,7 @@ post-batch note above.)
 
 None blocking. The air-side sim's open questions (§1) are now **live design
 work done *with* the owner**, not a queue to hand him — the mockup-first
-test is how they get answered. PR #419 awaits his review.
+test is how they get answered. The #186 prose-lint fix (PR #419) has merged.
 
 ## Process notes that earned their keep
 
