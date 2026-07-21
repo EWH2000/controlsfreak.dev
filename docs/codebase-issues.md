@@ -6610,7 +6610,7 @@ reproduce this asymmetry.
 
 ---
 
-### 186. Hard-coded page ordinals inside lesson prose — the append-fragile class the new lint surfaced *(open — 2026-07-19)*
+### 186. Hard-coded page ordinals inside lesson prose — the append-fragile class the new lint surfaced *(partly addressed 2026-07-20 · PR #408 · residuals open)*
 
 Surfaced by `npm run prose-lint` (shipped report-only in PR #405). These
 are the instances the lint flags HIGH that were **left unfixed** because
@@ -6645,7 +6645,7 @@ the class.**
 
 ---
 
-### 187. Hub landing pages hard-code their chapter's lesson count *(open — 2026-07-19; ruled 2026-07-20, fix in flight)*
+### 187. Hub landing pages hard-code their chapter's lesson count *(addressed 2026-07-20 · PR #408)*
 
 `html/bacnet/index.html:25`, `html/forced-air/index.html:25`,
 `html/hydronics/index.html:25` and `html/refrigeration/index.html:25`
@@ -6702,13 +6702,13 @@ So the ambiguity resolves in both directions at once:
   grids stay exempt while intro prose is visible, which is exactly what
   the ruling asks for. **No lint change needed.**
 
-Fix in flight on `issue-186/stale-count-and-ordinal-claims`, which
-closes this and #186 together (one topic, one owner ruling) and records
-the narrowing in `CLAUDE.md`.
+**Shipped as PR #408** (2026-07-20), which closed this and #186's two
+named instances together (one topic, one owner ruling) and recorded the
+count-rule narrowing in `CLAUDE.md`.
 
 ---
 
-### 188. Light-theme `--text-dim` fails AA on the recessed panel *(open — 2026-07-20, fix in flight)*
+### 188. Light-theme `--text-dim` fails AA on the recessed panel *(addressed 2026-07-20 · PR #412)*
 
 Found while recomputing #168's contrast ratios — genuinely separate from
 #168, which is a *hierarchy preference* that is explicitly not a WCAG
@@ -6732,11 +6732,12 @@ clears AA on every surface `--text-dim` lands on**, not a general
 brightening. Overshooting flattens the quiet-label / loud-value scan
 hierarchy that #168 exists to protect.
 
-Fix in flight on `issue-188/light-theme-dim-contrast`.
+**Shipped as PR #412** (2026-07-20): light `--text-dim` → `#636b63`,
+clearing 4.60:1 on the recessed `#e8ece4` surfaces, dark untouched.
 
 ---
 
-### 189. `defaultCount: 10` silently truncated any bank that grew past 10 *(open — 2026-07-20, fix in flight)*
+### 189. `defaultCount: 10` silently truncated any bank that grew past 10 *(addressed 2026-07-20 · PR #411)*
 
 Surfaced by the first bank ever to exceed 10 questions (the Controls
 Commissioning drill, PR #403).
@@ -6766,12 +6767,13 @@ growth turns from a hazard into a feature — a 15-question bank makes
 every run different. A guard still lands alongside it, designed to have
 failed on the pre-fix code.
 
-Fix in flight on `feat/quiz-random-selection`; PR #403 must merge
-**after** it.
+**Shipped as PR #411** (2026-07-20): `buildQueue()` samples an
+oversized bank instead of slicing its head, so growth past the presented
+count is safe by design. #403 and #416 both merged after it, as required.
 
 ---
 
-### 190. Two competing follow-on-paragraph rhythms, plus ~205 redundant inline margins *(open — 2026-07-20)*
+### 190. Two competing follow-on-paragraph rhythms, plus ~205 redundant inline margins *(addressed 2026-07-20 · PR #415)*
 
 Surfaced by the #179 lane. Two facts in #179 were understated and are
 corrected here:
@@ -6799,6 +6801,13 @@ re-rhythms the hydronics chapter to 1.25rem. Decide whether hydronics
 converges or keeps a documented per-chapter value **before** the sweep,
 or it will look like an accident.
 
+**Shipped as PR #415** (2026-07-20): 201 redundant inline `margin-top`
+declarations removed (browser-truth per occurrence, not regex), the
+1.1rem hydronics set converged to the single 1.25rem house rhythm, and
+the two lone one-offs flattened per the owner call. Removals were
+verified per-occurrence so classed prose (`p.ref-note`) and
+out-of-selector paragraphs kept their load-bearing inline margins.
+
 ---
 
 ### 191. Link text that names a page is unguarded, even where the href is *(open — 2026-07-20, low priority)*
@@ -6823,7 +6832,7 @@ the same detector at anchor text across landings may be a small delta.
 
 ---
 
-### 192. `.bit-idx` composites to 1.83:1 — far below any floor *(open — 2026-07-20)*
+### 192. `.bit-idx` composites to 1.83:1 — far below any floor *(addressed 2026-07-20 · PR #413)*
 
 Found by the #188 lane's DOM sweep, which measured *composited* colour
 rather than declared colour. Distinct from #188 and much worse.
@@ -6851,9 +6860,17 @@ in favour of a dimmer token at full opacity, or accept it as decorative
 if the bit index is genuinely redundant with an adjacent labelled
 control (it may be — worth checking before treating it as text).
 
+**Shipped as PR #413** (2026-07-20): the check found `.bit-idx` is
+informational (its bit number is painted nowhere else for a sighted
+reader), so it was fixed, not exempted — `color: var(--text)` at full
+opacity, clearing 4.5:1 in all four theme/state combinations, hierarchy
+now carried by size and weight rather than colour. Its 1.83:1 value
+survives as a frozen math-calibration fixture in
+`tests/contrast-sweep.spec.js` (the `i192` self-test).
+
 ---
 
-### 193. Nothing guards token contrast — four fixes, all found by hand *(open — 2026-07-20)*
+### 193. Nothing guards token contrast — four fixes, all found by hand *(addressed 2026-07-20 · PR #414)*
 
 `#81`, `#166`, `#171` and now `#188` were each found by a person or an
 agent recomputing WCAG ratios by hand, and each shipped a fix with
@@ -6886,6 +6903,16 @@ Worth weighing against the site's no-CI-guard precedents (#84's version
 bump is knowingly unguarded). The argument for guarding this one is that
 contrast regressions are invisible in review — nobody eyeballs a diff
 and sees 4.40:1.
+
+**Shipped as PR #414** (2026-07-20): `tests/contrast-sweep.spec.js` — a
+**blocking** WCAG-AA sweep over every manifest page in both themes,
+compositing `opacity` and resolving effective backgrounds by ancestor
+walk. It found 114 failures (a second, independent cluster beyond #188's
+`--text-dim` — light `--accent` as small text); 71 were fixed via the
+`-ink` token family, the rest allowlisted with measured ratios. The
+walker's own math is pinned against five known-answer fixtures after it
+nearly shipped scoring white-on-black at 5:1. What it still cannot see is
+tracked as **#194** — do not read this as complete coverage.
 
 ---
 
