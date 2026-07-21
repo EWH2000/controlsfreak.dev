@@ -1,19 +1,18 @@
-# Session handoff — the 16-PR accessibility + practice batch shipped (2026-07-20)
+# Session handoff — cleanup done, air-side simulator is next (2026-07-21)
 
-> **Lifecycle:** written 2026-07-20, superseding the 2026-07-19 draft in
-> full. That draft carried three work items — prose lint, commissioning
-> drill, wiresheet drill — **all three shipped this session** (PRs #405,
-> #403, #416), along with the three parked decisions it listed (#177, #168,
-> #179 → PRs #409, #407, #410). Nothing from it remains open, so its
-> sections are gone rather than stale. Retire this file when the air-side
-> simulator ships, or sooner if a session clears the four open
-> `codebase-issues` items below without starting the sim.
+> **Lifecycle:** written 2026-07-20, updated 2026-07-21. The 16-PR
+> accessibility + practice batch and the #194 contrast-guard work all
+> shipped (PRs #402–#418); the #186 prose-lint residual is triaged, with
+> its one genuine fix in **PR #419** (open). What's left is the **air-side
+> simulator** (§1) — the next flagship, and the reason this file still
+> exists. Retire it when the sim ships.
 
 ## Read this first
 
-**Every claim in this file is a hypothesis. The repo is the truth.** All
-measurements below were taken at `cc5856b` (grounded by command, not
-recalled).
+**Every claim in this file is a hypothesis. The repo is the truth.** The
+batch retrospective's measurements were taken at `cc5856b`; the
+current-state figures at `22f6059` — both grounded by command, not
+recalled.
 
 The lesson this session drove home the hard way, worth carrying into every
 lane: **a correction needs the same burden of proof as the claim it
@@ -35,16 +34,19 @@ this session's own failures:
   regex). Every one was caught by a lane checking rather than trusting.
   **Assume the real scope is larger than the brief states.**
 - **Two fixes shipped that were wrong while their findings were right** —
-  the `#194` styleguide fix (below) and a `keep-both` conflict resolution
+  the `#194` styleguide fix (the *hidden-specimen* first proposal, since
+  corrected and shipped in #418) and a `keep-both` conflict resolution
   that would have duplicated a comment. A fix inherits the credibility of
   its finding and lands when attention is spent. **Verify the remedy against
   the mechanism, not just the defect.**
 
 ## Where things stand
 
-`main` @ `cc5856b`, **v3.72.0**, clean tree, **0 open PRs**. (Measurements
-cite `cc5856b` — deliberate, not stale.) Counts: **40 education lessons ·
-34 content quizzes + 7 field drills · 31 tools · 7 simulators.**
+`main` @ `22f6059`, **v3.72.1**, clean tree, **1 open PR** (#419, the
+prose-lint fix — awaiting review). The batch retrospective below cites
+`cc5856b`, where those measurements were taken — deliberate, not stale.
+Counts: **40 education lessons · 34 content quizzes + 7 field drills ·
+31 tools · 7 simulators.**
 
 **The batch — 16 PRs, all merged, in dependency order:**
 
@@ -96,6 +98,18 @@ cite `cc5856b` — deliberate, not stale.) Counts: **40 education lessons ·
 - **#417** — reconciled six `codebase-issues` statuses that shipped but
   still read "open / fix in flight."
 
+**Post-batch, in the 2026-07-21 cleanup arc:**
+
+- **#418** — closed the #194 contrast-guard blind spots: grafted
+  `/styleguide.html` onto the sweep (`SWEEP_PAGES`, as `responsive.spec.js`
+  does) and added visible `.status-pill` verdict specimens, so the
+  `.warn`/`.error` inks (runtime-only elsewhere) are now measured in both
+  themes. Falsifiability proven by mutation. **v3.72.1.**
+- **#419** (open) — the one genuine append-fragile prose fix from the #186
+  triage (the building-pressure intro's "Two pages… have now made the same
+  promise"); the other four HIGH candidates pass the falsifiability rule
+  and were left as-is (owner-confirmed on the live site).
+
 ## Standing constraints now live on `main` — design new work around these
 
 - ⚠️ **The contrast guard blocks.** `tests/contrast-sweep.spec.js` runs in
@@ -127,79 +141,69 @@ cite `cc5856b` — deliberate, not stale.) Counts: **40 education lessons ·
 
 ## The work, in order
 
-### 1. Air-side simulator — the named next flagship
+### 1. Air-side simulator — the next flagship, owner-active from the start
 
-**Owner direction (2026-07-19, reaffirmed by a scoping session
-2026-07-20): scope it before writing engine code; decide A-vs-C on the
-axis the owner actually arbitrates — can a viewer tell at a glance which
-box is starving.**
+**This is the next flagship, and the owner is hands-on in it** (his call,
+2026-07-21) — not "supply a brief and hand off," but scope and design it
+*with* him. That's the right shape for two reasons pointing the same way:
+the go/no-go axis is *can a viewer tell at a glance which box is
+starving*, and the owner builds equipment graphics professionally. So the
+first session **leads with mockups and his eye, not engine code.**
 
-⚠️ **The scoping brief on disk is stale relative to the analysis that
-exists.** `docs/air-side-sim-scoping.md` is the **2026-07-19** version — it
-carries the Scope options (A: AHU sequence sim; B: full air-side system;
-and a dropped middle option), the two architectural calls, and "STATIC IS
-NOT FLOW" as the honesty-guard concept. **It does NOT contain the
-2026-07-20 scoping session's findings**, which live only in that session's
-report:
+**Scope will evolve — don't over-lock it up front.** The owner's own
+framing (2026-07-21): he'd love to lock scope before building, but knows
+ideas will come as he interacts with a working artifact — *the same way
+they do working in his field.* Treat the initial scope as a starting
+point, not a contract; budget for it to grow and shift once there's
+something on screen to react to. That is a reason to get a rough
+interactive mockup in front of him **early**, not late.
 
-- the **engine/page split** — refrigerant-loop is 787 engine lines against
-  2,843 page lines, so ~78% of the cost is the page and the depiction, and
-  every prior estimate sized only the engine;
-- the **mockup-first test** — build 2–3 static SVGs at RL fidelity and ask
-  "can you tell which box is starving" before committing scope;
-- **seven open questions**, the load-bearing one being whether zone
-  temperature is *state* or *input* (the second honesty guard can't be
-  simulated without it, only asserted);
-- the lean toward **Option A, held loosely** (the "must-be-new-physics" test
-  would have killed refrigerant-loop itself, whose physics shipped first as
-  `tools/refrigerant-pt.html`).
+**Concrete first move — the mockup-first test.** Build 2–3 static
+air-side SVGs at refrigerant-loop fidelity (an AHU with OA/RA/coils/fan;
+a starved zone vs a satisfied one) and put the question to him directly:
+can you tell, at a glance, which box is starving? His visual read decides
+Option A (AHU sequence sim) vs a fuller air-side system — and whether
+it's worth building at all — before a line of engine code.
 
-**First action for whoever takes this: capture that scoping-session output
-into `docs/air-side-sim-scoping.md`** (owner has it), or the next session
-re-derives it. Readiness is real — `psychro-engine.js` provides the
-mixed-air/coil core and **five of the eight forced-air lessons carry
-physics models with owner-blessed constants** (all but `air-balancing`,
-`dedicated-outdoor-air`, and `air-unit-identification` — the last has a
-widget but no physics). But the honest read from the scoping session is
-that the sim is **substantially a depiction job, not a physics job**, and
-that is where refrigerant-loop's cost actually went.
+⚠️ **The detailed 2026-07-20 scoping doc was lost in the merge shuffle;
+its load-bearing findings survive here and in `codebase-issues`, so this
+is not a restart:** ~78% of a refrigerant-loop-class sim is *depiction*,
+not engine (787 vs 2,843 lines); the mockup-first test above; the lean
+toward **Option A, held loosely** (a "must-be-new-physics" bar would have
+killed refrigerant-loop itself); and the one load-bearing open question —
+is zone temperature **state or input** (the "which box is starving"
+honesty guard can only be *simulated*, not asserted, if it's state).
+What's gone is the working doc — **six of the seven open questions were
+never written down.** Re-deriving them *with* the owner is a natural first
+step, not a recovery job.
 
-### 2. Prose-lint residual list — `codebase-issues` #186
+**Readiness is real.** `psychro-engine.js` provides the mixed-air/coil
+core, and **five of the eight forced-air lessons carry physics models
+with owner-blessed constants** (all but `air-balancing`,
+`dedicated-outdoor-air`, and `air-unit-identification`).
+`docs/air-side-sim-scoping.md` is still the **2026-07-19** version — the
+next session updates it *with* the owner as scoping is rebuilt, not as a
+spec to capture.
 
-The lint (#405) is report-only and on `main`. Its HIGH list beyond the two
-instances #408 fixed is unworked editorial cleanup — terminal/ordinal
-claims across the education chapters. **Run `npm run prose-lint`, read the
-append-fragile section, and rewrite by naming the set rather than counting
-it.** The owner is the editor of site prose; propose rewrites, don't
-unilaterally reword voice-carrying sentences.
+### 2. Prose-lint residual list — `codebase-issues` #186 (largely worked)
 
-### 3. Contrast-guard blind spots — `codebase-issues` #194
+The lint (#405) is report-only and on `main`. The five HIGH append-fragile
+candidates around the forced-air chapter were triaged 2026-07-21: **one
+genuine fix shipped in PR #419** (the building-pressure intro), the other
+four pass the falsifiability rule and were left as-is — named
+pairs/triples and backward-reference homographs, owner-confirmed on the
+live site. **Eight more HIGH `npm run prose-lint` items remain
+untriaged**; expect a similar hit rate (mostly homographs to dismiss, a
+genuine count here and there). Run the lint, read the append-fragile
+section, reword by *naming the set* rather than counting it — and dismiss
+the homographs by reading the sentence. The owner is the editor of site
+prose; propose, don't unilaterally reword voice-carrying lines.
 
-Three boundaries, one unbounded and worth closing:
+### 3. Explicitly declined / left open — do not carry as active work
 
-- ⚠️ **`.status-pill.warn` / `.status-pill.error` have never been
-  contrast-measured.** They're shared tool-output chrome across **17 tool
-  pages (20 pages in all)**, applied at runtime, so the static-page sweep
-  never reaches the warn/error state, and the one static warn instance
-  (`simulators/hydronic-loop-builder.html:356`) carries `hidden`.
-  (`education/economizers.html` also hardcodes two static `status-pill ok`
-  pills, but those aren't the verdict-colour risk.) Verdict colours are
-  where contrast matters most.
-- **The guard never sweeps `/styleguide.html`** — the one page whose purpose
-  is exercising both registers in both themes. It's `noindex`, so absent
-  from `tests/pages.js`; `responsive.spec.js:18` grafts it on explicitly,
-  the contrast sweep does not.
-- **The corrected fix is on the #194 entry.** ⚠️ Its *first* proposal
-  ("hidden specimens on styleguide") was wrong and would have shipped a
-  green test measuring nothing — the sweep never reaches styleguide (graft
-  it, as `responsive.spec.js` does), and `hidden` specimens are skipped
-  three ways (`:254` closest-`[hidden]`, `:263` self visibility/display,
-  `:312`/`:317` ancestor-chain). Specimens must be **visible**;
-  `settle()`'s `COLLAPSED_CHROME` force-reveal (`:403-409`, inside the
-  `:397-415` function) is the sanctioned mechanism if visible ones read as
-  noise.
+(#194 contrast-guard blind spots **shipped** in PR #418 — see the
+post-batch note above.)
 
-**Explicitly declined / left open, do not carry as active work:**
 - **#185** — the quiz `snippet` path enforces `gotcha→snippet` one-way, so a
   non-gotcha carrying a snippet is dropped from the page but still published
   to JSON-LD. **Latent — no shipped bank trips it.** Fix only if authoring a
@@ -210,9 +214,9 @@ Three boundaries, one unbounded and worth closing:
 
 ## Decisions waiting on the owner
 
-None blocking. The three parked last session (#177, #168, #179) all shipped.
-The air-side sim's seven open questions (§1) are pre-work for that flagship,
-not standing decisions — surface them when that session starts.
+None blocking. The air-side sim's open questions (§1) are now **live design
+work done *with* the owner**, not a queue to hand him — the mockup-first
+test is how they get answered. PR #419 awaits his review.
 
 ## Process notes that earned their keep
 
@@ -249,11 +253,12 @@ not standing decisions — surface them when that session starts.
 
 ## One passing note
 
-The air-side sim is the flagship and it earns its own session. The honest
-readiness read from the scoping pass: the physics core exists and five
-lessons already model it, but the real cost is the *depiction* (~78% of
-refrigerant-loop was page, not engine), and an air system has no natural
-closed frame the way a refrigeration loop does. The owner builds equipment
-graphics professionally — the mockup-first test (§1) routes the go/no-go
-decision to the axis he actually arbitrates. Capture the scoping session's
-output into the brief before anyone writes engine code.
+The air-side sim is the flagship and it earns its own session — an
+owner-active one. The honest readiness read: the physics core exists and
+five lessons already model it, but the real cost is the *depiction* (~78%
+of refrigerant-loop was page, not engine), and an air system has no
+natural closed frame the way a refrigeration loop does. The owner builds
+equipment graphics professionally and wants to be hands-on, so the
+go/no-go rides on his eye — **start with mockups, expect the scope to
+evolve as he interacts with them, and don't write engine code until the
+"which box is starving" test passes in front of him.**
