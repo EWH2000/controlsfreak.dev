@@ -238,12 +238,22 @@ noindex: true
         </div>
         <div class="tool-card">
             <div class="tool-card-header">
-                <h3 class="tool-card-title">Callouts &amp; tables</h3>
+                <h3 class="tool-card-title">Callouts, verdicts &amp; tables</h3>
             </div>
             <div class="tool-body sg-stack">
                 <div class="callout">
                     <h3>Worked example <span>· the accent left-rule</span></h3>
                     <p>Callouts carry a 2px accent left-border. The same shell is reused for PID-term cards, discovery prompts, and reveals.</p>
+                </div>
+                <!-- .status-pill verdict states — shown together and VISIBLE
+                     (not hidden) so the contrast sweep measures the .warn and
+                     .error ink, which is applied at runtime on real tool pages
+                     and so never reaches the static-page walk otherwise. See
+                     codebase-issues #194. -->
+                <div class="sg-verdicts" role="group" aria-label="Status-pill verdict states">
+                    <div class="status-pill ok">OK · coil clears the design load with margin</div>
+                    <div class="status-pill warn">WARN · approach temperature marginal — verify at low load</div>
+                    <div class="status-pill error">ERROR · leaving-air is below the coil dew point</div>
                 </div>
                 <!-- .rt-stack: below 620px each row stacks — leading cells
                      on a header line, the prose cell full-width beneath.

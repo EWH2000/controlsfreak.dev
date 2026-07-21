@@ -122,6 +122,16 @@
 const { test, expect } = require('@playwright/test');
 const PAGES = require('./pages');
 
+// styleguide.html is noindex — no canonical, so it is absent from the
+// sitemap and therefore from tests/pages.js. It is also the one page whose
+// whole purpose is exercising both registers in both themes, and the only
+// place the .status-pill .warn / .error verdict states are rendered
+// statically — everywhere else they are applied at runtime, so the
+// static-page walk never reaches them and those verdict inks go unmeasured
+// (codebase-issues #194). Graft it on so the sweep covers it, exactly as
+// responsive.spec.js:18 does and for the same reason.
+const SWEEP_PAGES = [...PAGES, { name: 'styleguide', url: '/styleguide.html' }];
+
 // Allowlisted shapes. Each entry is a STANDING ANSWER with a measured
 // ratio and a reason — codebase-issues #168 is the model, and the point
 // of writing them down is that the next reader can tell "deliberate"
@@ -449,7 +459,7 @@ test('contrast math reproduces independently recorded ratios', async ({ page }) 
 // generous timeout while `fullyParallel` spreads them over the workers.
 const CHUNK = 20;
 const chunks = [];
-for (let i = 0; i < PAGES.length; i += CHUNK) chunks.push(PAGES.slice(i, i + CHUNK));
+for (let i = 0; i < SWEEP_PAGES.length; i += CHUNK) chunks.push(SWEEP_PAGES.slice(i, i + CHUNK));
 
 for (const theme of ['dark', 'light']) {
     chunks.forEach((group, n) => {
