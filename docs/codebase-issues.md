@@ -6610,7 +6610,7 @@ reproduce this asymmetry.
 
 ---
 
-### 186. Hard-coded page ordinals inside lesson prose — the append-fragile class the new lint surfaced *(partly addressed 2026-07-20 · PR #408 · residuals open)*
+### 186. Hard-coded page ordinals inside lesson prose — the append-fragile class the new lint surfaced *(largely addressed — 2026-07-20 #408 / 2026-07-21 #419; named instances fixed, remaining HIGH flags are lint over-flag)*
 
 Surfaced by `npm run prose-lint` (shipped report-only in PR #405). These
 are the instances the lint flags HIGH that were **left unfixed** because
@@ -6642,6 +6642,25 @@ hand-grepping for shapes its own pattern could not see. It is the
 mirror image of the counted-set rule and therefore invisible to any
 pattern written number-first. **13 instances, zero false positives in
 the class.**
+
+**Update 2026-07-21 (verified at `a74f27d`).** The two instances named
+above are **fixed** — a grep finds neither the `duct-static-control` "Page
+one… Page five" recap nor the `metering-devices-txv-eev.html:46` "Page 1 /
+Page 2" labels (the lint's own header notes the ordinal-label residue is
+GONE). The *current* lint HIGH list was triaged this session: of five
+close-read append-fragile candidates, **one was genuine** —
+`building-pressure.html:157` ("Two pages… have now made the same promise",
+an unnamed growing-set count), reworded in **PR #419**. The other four
+pass the falsifiability rule — named pairs/triples
+(`pump-control.html:625` "three pages" all linked; `duct-static-control.html:183`
+named pair; `modbus-decoding.html:413`) and "last page" *backward-reference*
+homographs (`duct-static-control.html:184`, `air-unit-identification.html:146`)
+the lint can't disambiguate; owner re-checked them on the live site. ~8
+more HIGH flags are un-close-read but read like the same over-flag. **Net:
+the append-fragile *prose* is essentially clean; what remains is the lint
+reporting homographs it can't tell from terminal claims — a
+report-reading task, not a rewrite backlog.** Keep this entry open only as
+the pointer to that reading task.
 
 ---
 

@@ -11,13 +11,13 @@
 
 **Every claim in this file is a hypothesis. The repo is the truth.** The
 batch retrospective's measurements were taken at `cc5856b`; the
-current-state figures at `22f6059` — both grounded by command, not
+current-state figures at `a74f27d` — both grounded by command, not
 recalled.
 
-The lesson this session drove home the hard way, worth carrying into every
-lane: **a correction needs the same burden of proof as the claim it
-replaces, and the *remedy* needs it as much as the *finding*.** Concretely,
-this session's own failures:
+The lesson the 2026-07-20 → 07-21 cleanup arc drove home the hard way,
+worth carrying into every lane: **a correction needs the same burden of
+proof as the claim it replaces, and the *remedy* needs it as much as the
+*finding*.** Concretely, the arc's own failures:
 
 - A "correction" that **made a true statement false.** The predecessor said
   "five of the eight forced-air lessons contain working models"; a
@@ -39,10 +39,17 @@ this session's own failures:
   that would have duplicated a comment. A fix inherits the credibility of
   its finding and lands when attention is spent. **Verify the remedy against
   the mechanism, not just the defect.**
+- **A direct-to-main handoff commit got bundled into a PR** (2026-07-21):
+  committed to local `main` but not pushed, then a PR was cut off local
+  main — so it silently carried the handoff diff. A **single-agent
+  fresh-eyes review** caught it (plus a separate overstated guard claim)
+  that the author hadn't. **Push `main` before cutting a PR from it, and
+  take a review agent's findings seriously — they catch what you
+  rationalised.**
 
 ## Where things stand
 
-`main` @ `e6d43d3`, **v3.72.1**, clean tree, **0 open PRs**. The batch
+`main` @ `a74f27d`, **v3.72.1**, clean tree, **0 open PRs**. The batch
 retrospective below cites
 `cc5856b`, where those measurements were taken — deliberate, not stale.
 Counts: **40 education lessons · 34 content quizzes + 7 field drills ·
@@ -109,6 +116,23 @@ Counts: **40 education lessons · 34 content quizzes + 7 field drills ·
   triage (the building-pressure intro's "Two pages… have now made the same
   promise"); the other four HIGH candidates pass the falsifiability rule
   and were left as-is (owner-confirmed on the live site).
+
+## Corrections to the previous draft — do not rediscover these
+
+1. **The air-side-sim scoping output is *lost*, not owner-held.** The
+   2026-07-20 draft's first action was "capture that scoping-session output
+   into `docs/air-side-sim-scoping.md` — owner has it." He does **not** —
+   it was lost in the merge shuffle (owner, 2026-07-21). The load-bearing
+   findings survive (§1); **six of the seven open questions did not.** Don't
+   spend a lane hunting the artifact — re-derive scope *with* the owner,
+   mockup-first (§1).
+2. **`npm run prose-lint`'s HIGH list over-flags — close-read to dismiss.**
+   Of the five HIGH append-fragile candidates triaged 2026-07-21, **only
+   one was genuine** (fixed in #419); the other four pass the falsifiability
+   rule — named pairs/triples and "last page" *backward-reference*
+   homographs the lint can't disambiguate (owner re-checked on the live
+   site). Read the sentence before rewriting; don't churn prose that already
+   passes.
 
 ## Standing constraints now live on `main` — design new work around these
 
@@ -250,6 +274,13 @@ test is how they get answered. The #186 prose-lint fix (PR #419) has merged.
   about a discrepancy. This session's lanes reported dozens of brief-vs-repo
   discrepancies rather than silently accommodating them; that is why the
   merged history is correct.
+- **A single-agent fresh-eyes review earns its cost on a finished PR.**
+  (2026-07-21) One general-purpose agent, given only the PR plus the repo's
+  own conventions — no author reasoning — reproduced every load-bearing
+  number and caught two real issues the author had missed: a mis-scoped PR
+  (the bundled handoff) and an overstated guard comment. Give it the
+  conventions so it doesn't false-positive; withhold your conclusions so it
+  stays independent.
 
 ## One passing note
 
