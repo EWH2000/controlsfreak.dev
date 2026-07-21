@@ -104,9 +104,12 @@ cite `cc5856b` — deliberate, not stale.) Counts: **40 education lessons ·
   especially — must clear it. **A new gradient device face is a specific
   trap:** the guard excludes the equipment register (`.device`, `.lcd`,
   `.keypad`, `.gauge.eq`, `.cw-term`) *by name*, so reusing those classes
-  buys exemption; a *new* gradient surface under real text lands in the
-  `unresolved` bucket the spec asserts empty and fails. What the guard
-  cannot see is tracked as **#194** — do not read it as complete coverage.
+  buys exemption — and a *new* gradient surface is only **partly**
+  covered: the sweep flattens each backdrop to one colour, so it flags a
+  gradient face only where the text *also* fails that flattened
+  approximation; text that clears it passes silently and the gradient's
+  own light/dark spread is never assessed. What the guard cannot see is
+  tracked as **#194** — do not read it as complete coverage.
 - **Banks can exceed the presented count.** `#411`'s sampling means a
   15-question bank presents a random 10 per run. Author bigger banks for
   replayability; keep `defaultCount: 10`.
