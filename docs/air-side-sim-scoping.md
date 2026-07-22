@@ -5,6 +5,11 @@
 > a plan and not owner-approved. Verify every claim before acting — line numbers
 > and counts drift. Retire this file when the sim ships or the scope is decided
 > some other way.
+>
+> **SUPERSEDED (2026-07-21):** the scope *direction* is now decided with the
+> owner — see **`docs/air-side-sim.md`** (owner-active DX fan-coil DDC sim). The
+> engine/readiness **findings** below still hold; the Option-A-vs-B scope
+> **recommendation** does not.
 
 ## The headline
 
