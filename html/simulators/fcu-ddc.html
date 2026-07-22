@@ -43,6 +43,11 @@ eleventyExcludeFromCollections: true
         .fcu-zone-label,
         .fcu-cabinet-label,
         .fcu-glyph-label { font-family: var(--mono); text-anchor: middle; }
+        /* The compressor status text reads left-to-right from just right of its
+           LED dot; the id beats .fcu-pt-cap's text-anchor: middle (a CSS class
+           overrides the SVG text-anchor ATTRIBUTE, so the attribute alone let
+           the dot land inside the string — the "ST●2" overlap). */
+        #fcu-comp-v { text-anchor: start; }
 
         /* Ductwork — a filled channel with real width (the recessed --well
            body) framed by two crisp AX wall strokes, drawn ONLY on the
@@ -52,7 +57,7 @@ eleventyExcludeFromCollections: true
         .fcu-duct-body {
             fill: none;
             stroke: var(--well);
-            stroke-width: 24;
+            stroke-width: 46;
             stroke-linejoin: miter;
             stroke-linecap: butt;
         }
@@ -293,27 +298,27 @@ eleventyExcludeFromCollections: true
                          Return duct body: from the zone face, along the top,
                          down the left, butting the cabinet's LEFT wall at
                          (90,298). Supply duct body: from the cabinet's TOP
-                         wall at (500,250), up and over to the zone face. The
-                         gap between them is the open cabinet interior — no
-                         body / walls there, only chevrons bridge it. Walls are
-                         the ±12 offsets of each body. -->
+                         wall at (500,250), up to y218 and over to the zone
+                         face. The gap between them is the open cabinet interior
+                         — no body / walls there, only chevrons bridge it. Walls
+                         are the ±23 offsets of each fattened body (stroke 46). -->
                     <path class="fcu-duct-body" d="M548 150 L60 150 L60 298 L90 298"/>
-                    <path class="fcu-duct-wall" d="M548 138 L48 138 L48 310 L90 310"/>
-                    <path class="fcu-duct-wall" d="M548 162 L72 162 L72 286 L90 286"/>
+                    <path class="fcu-duct-wall" d="M548 127 L37 127 L37 321 L90 321"/>
+                    <path class="fcu-duct-wall" d="M548 173 L83 173 L83 275 L90 275"/>
 
-                    <path class="fcu-duct-body" d="M500 250 L500 230 L548 230"/>
-                    <path class="fcu-duct-wall" d="M488 250 L488 218 L548 218"/>
-                    <path class="fcu-duct-wall" d="M512 250 L512 242 L548 242"/>
+                    <path class="fcu-duct-body" d="M500 250 L500 218 L548 218"/>
+                    <path class="fcu-duct-wall" d="M477 250 L477 195 L548 195"/>
+                    <path class="fcu-duct-wall" d="M523 250 L523 241 L548 241"/>
 
-                    <!-- Duct labels. -->
-                    <text class="fcu-pt-cap" x="300" y="131">RETURN AIR</text>
-                    <text class="fcu-pt-cap" x="524" y="210">SUPPLY</text>
+                    <!-- Duct labels — above each run, clear of the fatter body. -->
+                    <text class="fcu-pt-cap" x="300" y="120">RETURN AIR</text>
+                    <text class="fcu-pt-cap" x="524" y="187">SUPPLY</text>
 
                     <!-- Invisible centerline — the marker source for the
                          chevrons only. Full recirculation loop, crossing the
                          cabinet at y298. -->
                     <path class="fcu-centerline" id="fcu-centerline"
-                          d="M548 150 L60 150 L60 298 L500 298 L500 230 L548 230"/>
+                          d="M548 150 L60 150 L60 298 L500 298 L500 218 L548 218"/>
 
                     <!-- Static flow arrows — carry direction under reduced
                          motion / print (drawn under the moving chevrons). -->
@@ -321,7 +326,7 @@ eleventyExcludeFromCollections: true
                         <polygon points="328,144 320,150 328,156" fill="var(--blue-cool)"/>
                         <polygon points="54,222 66,222 60,230" fill="var(--blue-cool)"/>
                         <polygon points="494,272 506,272 500,264" fill="var(--blue)"/>
-                        <polygon points="520,224 528,230 520,236" fill="var(--blue)"/>
+                        <polygon points="520,212 528,218 520,224" fill="var(--blue)"/>
                     </g>
 
                     <!-- ── The zone ── return-air source + zone temp / setpoint. -->
@@ -373,21 +378,23 @@ eleventyExcludeFromCollections: true
                     </a>
 
                     <!-- ── Floating point badges — EAT / ΔT / DAT ──
-                         Above the cabinet, each over its sensor spot. The ΔT
-                         badge is the headline: it collapses toward zero on a
-                         fault. -->
+                         In airflow order above the cabinet: EAT over the coil
+                         inlet, ΔT just past the coil, DAT over the supply fan.
+                         Kept clear of the fattened return duct (bottom y173),
+                         the cabinet (top y250) and the supply run. The ΔT badge
+                         is the headline: it collapses toward zero on a fault. -->
                     <g id="fcu-badges">
-                        <rect class="fcu-badge" x="120" y="196" width="86" height="40"/>
-                        <text class="fcu-pt-cap" x="163" y="212">EAT · ENTERING</text>
-                        <text class="fcu-pt-val" id="fcu-eat" x="163" y="230" font-size="13">76.0 °F</text>
+                        <rect class="fcu-badge" x="96" y="188" width="86" height="40"/>
+                        <text class="fcu-pt-cap" x="139" y="204">EAT · ENTERING</text>
+                        <text class="fcu-pt-val" id="fcu-eat" x="139" y="222" font-size="13">76.0 °F</text>
 
-                        <rect class="fcu-badge fcu-badge-dt" x="258" y="196" width="96" height="40"/>
-                        <text class="fcu-pt-cap" x="306" y="212">ΔT ACROSS COIL</text>
-                        <text class="fcu-pt-val fcu-dt-val" id="fcu-dt" x="306" y="230" font-size="13">20.4 °F</text>
+                        <rect class="fcu-badge fcu-badge-dt" x="196" y="188" width="96" height="40"/>
+                        <text class="fcu-pt-cap" x="244" y="204">ΔT ACROSS COIL</text>
+                        <text class="fcu-pt-val fcu-dt-val" id="fcu-dt" x="244" y="222" font-size="13">20.4 °F</text>
 
-                        <rect class="fcu-badge" x="406" y="196" width="90" height="40"/>
-                        <text class="fcu-pt-cap" x="451" y="212">DAT · DISCHARGE</text>
-                        <text class="fcu-pt-val" id="fcu-dat" x="451" y="230" font-size="13">56.6 °F</text>
+                        <rect class="fcu-badge" x="370" y="188" width="90" height="40"/>
+                        <text class="fcu-pt-cap" x="415" y="204">DAT · DISCHARGE</text>
+                        <text class="fcu-pt-val" id="fcu-dat" x="415" y="222" font-size="13">56.6 °F</text>
                     </g>
 
                     <!-- Air chevrons — populated by the page script; last of
@@ -400,10 +407,10 @@ eleventyExcludeFromCollections: true
                          compressor isn't in the air path), drawn last so its
                          LED and label stay legible over any chevron. -->
                     <g id="fcu-comp">
-                        <text class="fcu-pt-cap" x="250" y="313" font-size="9">COMPRESSOR</text>
-                        <circle id="fcu-comp-dot" cx="222" cy="325" r="6"
+                        <text class="fcu-pt-cap" x="256" y="313" font-size="9">COMPRESSOR</text>
+                        <circle id="fcu-comp-dot" cx="212" cy="326" r="5"
                                 fill="var(--accent)" stroke="var(--border)" stroke-width="1"/>
-                        <text class="fcu-pt-cap" id="fcu-comp-v" x="234" y="329"
+                        <text class="fcu-pt-cap" id="fcu-comp-v" x="226" y="330"
                               font-size="10" text-anchor="start">STG 2 · ON</text>
                     </g>
                 </svg>
@@ -813,10 +820,23 @@ eleventyExcludeFromCollections: true
 
             function place(m, travel) {
                 const f = (m.base + travel) % 1;
-                const s = table[Math.min(n, Math.round(f * n))];
+                // Interpolate between the two bracketing samples so the chevron
+                // moves smoothly sub-sample at ANY fan speed. A rounded index
+                // snaps to the same discrete sample for many frames at low
+                // speed (travel advances < one sample/frame), which read as a
+                // low framerate. Heading stays from i0 — adjacent samples share
+                // it except at corners, and a one-sample lag is invisible here.
+                const fp = f * n;
+                const i0 = Math.min(n, Math.floor(fp));
+                const i1 = Math.min(n, i0 + 1);
+                const frac = fp - i0;
+                const s0 = table[i0];
+                const s1 = table[i1];
+                const x = s0.x + (s1.x - s0.x) * frac;
+                const y = s0.y + (s1.y - s0.y) * frac;
                 m.el.setAttribute('transform',
-                    'translate(' + s.x.toFixed(2) + ' ' + s.y.toFixed(2) + ') rotate('
-                    + (s.ang * 180 / Math.PI).toFixed(1) + ')');
+                    'translate(' + x.toFixed(2) + ' ' + y.toFixed(2) + ') rotate('
+                    + (s0.ang * 180 / Math.PI).toFixed(1) + ')');
                 const color = f < boundaryFrac ? 'var(--blue-cool)' : downstreamColor;
                 if (color !== m.color) { m.el.style.stroke = color; m.color = color; }
             }
