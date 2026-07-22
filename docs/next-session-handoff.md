@@ -19,8 +19,9 @@ decisions, guardrails) before acting.
 
 ## Where things stand
 
-`main` @ `08fdb76`, **v3.72.1**, clean tree except one untracked file
-(`docs/air-side-sim.md`, the design doc — committed alongside this handoff).
+`main` @ `1933072` (the handoff's own commits `024de27` + `1933072` landed after
+the original `08fdb76` snapshot), **v3.72.1**, clean tree —
+`docs/air-side-sim.md`, the design doc, is now committed.
 Counts (main, unchanged — all sim work is branch-only + `eleventyExcludeFromCollections`):
 **40 education lessons · 34 content quizzes + 7 field drills · 31 tools · 7
 simulators.**
@@ -55,9 +56,9 @@ auto-merge:**
 2. **The 2026-07-19 scoping doc's Option-A-vs-B recommendation is moot.** It was
    never the owner's call; scope now evolves mockup-by-mockup.
    `docs/air-side-sim-scoping.md`'s engine/readiness *findings* still hold
-   (psychro coil-core idle + ready; refrigerant-loop ~78% depiction; flow-engine
-   air lanes), but its scope *recommendation* is superseded by
-   `docs/air-side-sim.md`.
+   (psychro coil-core spec-covered + already used in production, ready to reuse;
+   refrigerant-loop as the quasi-static-engine precedent; flow-engine air lanes),
+   but its scope *recommendation* is superseded by `docs/air-side-sim.md`.
 
 ## The work, in order
 
@@ -105,8 +106,9 @@ the gate, not hand-coded** — so a lead BMS programmer (the owner) verifies the
 control logic directly, instead of trusting hand-written JS. **Grounded good
 news:** `html/scripts/fbe-engine.js` is already a tick-based execution engine
 (`function tick(graph, dt)` at `fbe-engine.js:429`, Kahn topological sort at
-`:400`, PID / timers / latches / comparators as stateful blocks, `window.FBE`
-exposed at `:478`) — the controls runtime **exists**; FBE↔sim is an in-browser
+`:400`, PID / timers / latches as stateful blocks + stateless comparators,
+`window.FBE` exposed at `:478`) — the controls runtime **exists**; FBE↔sim is an
+in-browser
 wiring, no server.
 
 - **Sequencing (owner):** manual **point override** first → owner drives the unit
