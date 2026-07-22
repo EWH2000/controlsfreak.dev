@@ -91,6 +91,16 @@ for (const section of sections) {
         }
         const onDisk = new Set(fs.readdirSync(path.join(SRC, section))
             .filter((f) => f.endsWith('.html') && f !== 'index.html')
+            // Skip pages deliberately excluded from the site's collections.
+            // `eleventyExcludeFromCollections` keeps a page out of the nav,
+            // the search index and the sitemap, so it is intentionally NOT
+            // part of the navigable structure and a landing card is not
+            // expected (in-progress mockups stay hidden this way until they
+            // ship). This test targets ACCIDENTAL orphans — pages that build
+            // and land in the sitemap yet link from nowhere; an excluded page
+            // is an intentional one, and is absent from the sitemap besides.
+            .filter((f) => !/^eleventyExcludeFromCollections:\s*true\b/m
+                .test(fs.readFileSync(path.join(SRC, section, f), 'utf8')))
             .map((f) => `/${section}/${f}`));
 
         expect(carded.size, `sanity: ${section} landing yielded cards`).toBeGreaterThanOrEqual(5);
