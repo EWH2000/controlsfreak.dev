@@ -144,7 +144,11 @@ dynamics/FBE arc (§2) is the owner's to sequence, but it sits behind increment 
   (runtime-only; clears on reboot). Any session serving a preview must have the
   owner open its port, or he gets "address unreachable" (his dashboard works
   because it rides Caddy on 443). Give him the **IPv4** URL
-  (`http://192.168.8.123:PORT/…`) — the dev server is v4-only.
+  (`http://192.168.8.123:PORT/…`) — the dev server is v4-only. **The dev server
+  is ephemeral** — a background process owned by the session that starts it, so
+  it dies when that session ends; each session serves fresh from a detached
+  worktree at `origin/<branch>`. The *work* survives (branches on GitHub, docs on
+  `main`); only the live preview goes away.
 - **Verify before showing the owner.** Every deliverable this session was checked
   against the *running* page (dark-theme screenshots, state read-back) before
   handoff — it confirmed the fault tell + metric toggle actually work rather than
