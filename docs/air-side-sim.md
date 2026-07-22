@@ -25,15 +25,19 @@ that diagnostic end**, not the point.
   unit; the owner's own fault examples are AHU faults, so the structure grows
   toward OA/mixing → MAT and beyond.
 
-## Current state — Increment 0 (shipped as a rough mockup, 2026-07-21)
+## Current state — Increment 1 shipped, live-but-hidden (2026-07-22)
 
-`html/simulators/fcu-ddc.html` — draft **PR #420**, branch `feat/fcu-ddc-mockup`,
-`eleventyExcludeFromCollections` (unlinked throwaway). A DX fan coil as a DDC
-graphic: live points (EAT / DAT / **ΔT across coil** / zone temp+setpoint / fan /
-compressor), three knobs, four fault presets, the **"no ΔT over the coil"** tell
-(red compressor LED + collapsed ΔT + red verdict), metric toggle, drill-downs to
-the VFD + heat-pump sims. Quasi-static via `Psychro.invertProcess`. Verified
-working, LAN-previewed. **This is the react-baseline, not a shipped page.**
+`html/simulators/fcu-ddc.html` — **merged to `main` (PR #420, 2026-07-22)**,
+`eleventyExcludeFromCollections` + `noindex` (reachable at its URL, out of
+nav / search / sitemap / landing). A DX fan coil as a DDC graphic: live points
+(EAT / DAT / **ΔT across coil** / zone temp+setpoint / fan / compressor), knobs,
+four fault presets, the **"no ΔT over the coil"** tell (red compressor LED +
+collapsed ΔT + red verdict), metric toggle, in-graphic keyboard-reachable
+drill-downs to the VFD + heat-pump sims. Increment 1's depiction pass is in:
+**page-local chevron airflow that crosses the open cabinet** (no flow-engine
+dependency), filled exterior ducts, air recolor across the coil, fullscreen, a
+fan-heat note. Still quasi-static via `Psychro.invertProcess`. **The
+react-baseline / reference point, not a surfaced page.**
 
 ## Confirmed decisions (owner)
 
@@ -79,11 +83,12 @@ working, LAN-previewed. **This is the react-baseline, not a shipped page.**
 
 ## Backlog — tiered (owner brain-dump 2026-07-21, refined)
 
-### Near-term — depiction & space (one coherent increment)
+### Near-term — depiction & space *(SHIPPED 2026-07-22 as Increment 1)*
 Duct **width** + realistic-ish DDC ductwork (our style) · airflow animation that
 reads as **air** and extends **inside** the unit · **fullscreen** · **remove the
 tiles** · short **fan-heat/calibration callout** · **improved fan animation**
-(and coil, but mostly the fan).
+(and coil, but mostly the fan). *(One item held back: the upper-left composition
+— parked as "fix 1", see Increment 1 below.)*
 
 ### Mid-term — features
 - **Visible sensors** on the graphic (temp/pressure/flow points as real sensor
@@ -128,6 +133,12 @@ a genuinely novel teaching tool (write a program, watch it run the model).
   the *same* points. The override state is the commissioning bench and a useful
   deliverable on its own. **Add the FBE's IO point-blocks early** (owner-agreed)
   so the binding surface exists before the control work, not bolted on last.
+  - ⚠️ **Refined 2026-07-22 (see "DDC Workbench" below):** the owner set the
+    strict override-first order aside *for focus* — do **all** the FBE build in
+    one session with the loop **open** (zone temp stays an input you nudge by
+    hand), then a dedicated **physics** session for closed-loop dynamics +
+    psychro tuning. HAND/AUTO override still ships in the FBE session; the
+    commission-by-hand payoff arrives once the physics session lands dynamics.
 
 ## Engineering guardrails (carry into any increment)
 
@@ -144,37 +155,67 @@ a genuinely novel teaching tool (write a program, watch it run the model).
 
 ## Open questions
 
-1. **Duct width — how wide, what style?** Needs the owner's eye on 2–3 concrete
-   options (double-line duct, filled duct body, chevron-vs-particle airflow).
+1. ~~**Duct width — how wide, what style?**~~ *(answered — filled duct body +
+   marching chevrons, treatment B; shipped in Increment 1, 2026-07-22.)*
 2. **Limited mobile version** — desktop-gate + read-only view, or a genuinely
    reduced interactive layout? Later.
 
-## Next increment — "ductwork & space" (Increment 1) — DECIDED
+## Increment 1 — "ductwork & space" — SHIPPED (2026-07-22)
 
-Apply **duct treatment B** (owner pick, 2026-07-21): a **filled duct body with
-marching directional chevrons** (from the variants comparison
-`html/simulators/_fcu-duct-variants.html` on branch `feat/fcu-duct-variants` — a
-throwaway; the *real* target is `html/simulators/fcu-ddc.html` on
-`feat/fcu-ddc-mockup`). The full depiction pass, no hard backend:
+Duct treatment **B** (filled body + marching chevrons) ported onto `fcu-ddc.html`
+and **merged (PR #420)**. Delivered: page-local chevron airflow crossing the
+open cabinet through coil+fan (flow-engine dependency dropped), filled
+**exterior-only** ducts (the "duct within a duct" fixed — no body inside the
+cabinet), fan-speed-coupled chevron speed with smooth sub-sample interpolation,
+air recolor across the coil, fullscreen, in-graphic keyboard-reachable
+SVG-`<a>` drill-downs (tiles removed), fan-heat / calibration note, a fuller fan
+impeller, compressor LED moved to the cabinet base off the airstream. Owner's
+two porting fixes (slow chevrons, kill duct-in-duct) both applied; a fix-up
+round fattened the ducts and cleared label overlaps.
 
-- Port B's filled-body + chevron ducts onto the **real sim** (`fcu-ddc.html`),
-  keeping all page-local (never touch shared `flow-engine.js`).
-- **Two fixes to B when porting (owner notes, 2026-07-21):**
-  - **Slow the chevron speed** — too fast even at 100%.
-  - **Fix the "duct within a duct."** B's duct body continues *into* the
-    AHU/cabinet, so it reads as a duct nested inside the unit. The airflow should
-    extend inside the cabinet *through* the coil/fan **without** drawing a second
-    duct body around them.
-- Airflow reads as air and **extends inside the unit** (through coil + fan).
-- **Fullscreen** treatment (refrigerant-loop pattern).
-- **Remove the drill-down tiles**; **in-graphic component-click** drill-down
-  instead (keyboard-reachable, discoverable-but-not-missed).
-- Short **fan-heat / calibration callout**.
-- Improve the **fan animation**.
-- Open sub-decisions carried in: whether to re-add the **compressor** glyph
-  (dropped in the variants; would sit in the wider airstream) and whether the
-  **wrap-around-left return routing** should change (owner didn't object).
+- **Parked by owner (2026-07-22): the upper-left composition** (the return-duct
+  box crowds the EAT/ΔT/DAT badges + the cabinet corner). Owner: **"no fix" for
+  now** — he builds similar nested boxes in his own graphics, and canvas
+  headroom shrinks as units get bigger. Eventual fix named **"fix 1": re-route
+  the return so it drops into the cabinet *top*** rather than wrap the whole left
+  side. Revisit in a later depiction pass, not now.
+
+## Next increment — the FBE "DDC Workbench" (decided 2026-07-22)
+
+**ALL the FBE work in one focused session** (owner: "get the bouncing out of the
+way"), so the session *after* is pure sim physics. The FCU sim is reframed as the
+**"DDC Workbench Sim."**
+
+- **Model A — one page, one runtime, two tabbed views:** a **Unit** view (the DDC
+  graphic) and a **Wiresheet** view (the FBE editor), the editor view
+  **lazy-built** so the Unit tab stays light. The owner rejected truly-separate
+  documents synced over a channel as fragile.
+- **Two-tier program model:** a few **sample programs** for non-authors + a
+  **live editable wiresheet** to write your own and watch it run; picking a
+  sample loads its logic onto the wiresheet. The **Unit** tab's control
+  affordance shows the **live IO values + the running program's name**.
+- **Data-driven IO point surface** (owner: build it so bigger units are a config
+  change, not a rewrite): cooling-only DX to start — AI Space Temp + DAT; AO
+  Supply-Fan Speed; BO Fan-Enable / Y1 / Y2; params Cooling SP + Deadband. Maps
+  onto the FBE I/O blocks.
+- **HAND/AUTO override** on the points (HAND drives by hand, AUTO lets the FBE
+  graph drive).
+- **The loop stays OPEN this session** (owner-confirmed): the program runs and
+  drives the unit and you watch the air state react, but **zone temp stays an
+  input you nudge by hand** — closed-loop dynamics + psychro tuning are the
+  SESSION AFTER (see Horizon). A deliberate split, not an oversight.
+- **Reuse the existing FBE stack:** `fbe-engine.js` (tick runtime + block library
+  incl. I/O blocks + PID) and `function-block-editor.html` (a working drag-wire
+  editor with loadable example programs). ⚠️ The editor's logic is **inline** in
+  that page, not a shared module — embedding it likely means **extracting a
+  reusable editor module** into `html/scripts/` (or making the Workbench the
+  generalized editor). First real architectural task.
+- **Precondition met:** the FBE editor's wire-visibility bug (delete-one-blanks-
+  all; new-wire-blanks-previous) was a live production bug — fixed, verified, and
+  **PR #421 merged 2026-07-22**. Its deeper root (render cache on the wire data
+  objects) is logged as codebase-issues **#196** — a good decoupling target if
+  the editor is being extracted anyway.
 
 Everything else (visible sensors, zone thermographics, selectable unit type, and
-the dynamics + manual-override commissioning + FBE-driven control arc) stays in
-the backlog.
+the closed-loop dynamics + psychro tuning) stays in the backlog / the physics
+session.

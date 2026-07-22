@@ -7117,3 +7117,39 @@ job**, not drift to be normalized away.
 Related: #192 (the instance that started it), #194 (what the guard
 cannot see), #168 (the same shape one level up — dim labels are a
 deliberate hierarchy, recorded rather than "fixed").
+
+### 196. FBE editor render/cache state lives on the wire *data* objects *(open — 2026-07-22)*
+
+The Function-Block Editor (`html/simulators/function-block-editor.html`)
+attaches transient render + cache fields directly to the wire **data**
+objects in `graph.wires`: `_vis` (the visible `<path>`), `_hit` (the
+hit-area `<path>`), and `_lastCls` (the render cache — the last CSS class
+`refreshValues()` wrote, so it can skip a redundant `setAttribute`, the
+10 Hz micro-optimization from #111).
+
+Because those persist on the data object across `renderAll()` — which
+rebuilds the `<path>` elements via `createWireEls()` — the cache can
+**desync from the freshly-built element**. That desync WAS the
+wire-invisibility bug (deleting one wire blanked all the others; a new
+wire blanked the previous one): `createWireEls` rebuilt each `<path>` at
+the bare, colourless `.fbe-wire` class while `_lastCls` still claimed the
+coloured class, so `refreshValues` skipped the colour write and the wire
+rendered with no stroke. Fixed narrowly in **PR #421 (2026-07-22)** by
+resetting `w._lastCls = 'fbe-wire'` in `createWireEls` to keep the cache
+invariant honest, and guarded by `tests/fbe-wires.spec.js` (asserts the
+*visible-stroke* count, verified to fail without the fix).
+
+The narrow fix is correct, but the underlying fragility remains: coupling
+render/cache state to the data model is a standing footgun — any future
+change to the wire render lifecycle risks re-desyncing the cache. A
+cleaner design keeps the render cache in a side map keyed by wire id (or on
+the element itself), decoupled from `graph.wires`. Larger refactor than the
+bug fix; logged for a decision, not urgent.
+
+**Good moment to act:** the FCU "DDC Workbench" session (see
+`docs/next-session-handoff.md`) plans to embed/extract this editor into a
+shared module — if the editor code is being extracted anyway, that's the
+natural point to decouple the cache.
+
+Related: #111 (the `refreshValues` micro-optimization this cache serves),
+PR #421 (the narrow fix + regression guard).
