@@ -848,6 +848,14 @@ keywords: wiresheet logic block and or pid wire program sequence
             svg.appendChild(vis);
             w._hit = hit;
             w._vis = vis;
+            // refreshValues() caches the last-written wire class in _lastCls
+            // and skips setAttribute when it matches (#111). This _vis is a
+            // brand-new element carrying only the colourless base class, so
+            // reset the cache to match — otherwise a _lastCls left on the
+            // wire object from the previous render suppresses the colour
+            // write and the re-rendered wire stays invisible (bare .fbe-wire
+            // has no stroke).
+            w._lastCls = 'fbe-wire';
         }
 
         // Pin-dot centre, in canvas-inner coordinates.
