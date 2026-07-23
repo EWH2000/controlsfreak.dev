@@ -7118,7 +7118,7 @@ Related: #192 (the instance that started it), #194 (what the guard
 cannot see), #168 (the same shape one level up — dim labels are a
 deliberate hierarchy, recorded rather than "fixed").
 
-### 196. FBE editor render/cache state lives on the wire *data* objects *(open — 2026-07-22)*
+### 196. FBE editor render/cache state lives on the wire *data* objects *(addressed 2026-07-22)*
 
 The Function-Block Editor (`html/simulators/function-block-editor.html`)
 attaches transient render + cache fields directly to the wire **data**
@@ -7153,3 +7153,37 @@ natural point to decouple the cache.
 
 Related: #111 (the `refreshValues` micro-optimization this cache serves),
 PR #421 (the narrow fix + regression guard).
+
+**Resolved (2026-07-22, `refactor/fbe-editor-module`).** The editor was
+extracted from the page's inline IIFE into a shared classic-script module
+`html/scripts/fbe-editor.js` (`window.FBEEditor.createEditor`), the natural
+moment flagged above (the "DDC Workbench" arc, PR-1). The extraction
+decouples the render/cache state from the data model exactly as proposed:
+`_vis` / `_hit` / `_lastCls` no longer live on the `graph.wires` objects.
+A module-scoped side map `const wireEls = {}` keyed by `w.id` holds
+`{ hit, vis, lastCls }` (mirroring the block-side `els` map), and
+`renderAll()` clears it in lockstep with `els` — so a rebuilt `<path>`
+cannot inherit a stale cache by construction, not by a compensating reset.
+`createWireEls` writes the entry; `drawWires` / `refreshValues` read it.
+The engine (`fbe-engine.js`) is unchanged. `tests/fbe-wires.spec.js` still
+guards it (visible-stroke count). The `wireEls` clear in `renderAll` is
+memory hygiene, not the sole correctness guarantor: `createWireEls` writes a
+fresh `{ lastCls: 'fbe-wire' }` entry for every wire on every render, so
+removing the clear alone does **not** fail the spec (it only orphans map
+entries for deleted wire ids). The guard was verified to bite by injecting the
+actual failure mechanism — seeding a stale *coloured* `lastCls` at create time
+so `refreshValues` skips the colour write — which fails `fbe-wires` as
+expected.
+
+### 197. `.fbe-palette-btn:focus-visible` sits outside the consolidated FOCUS INDICATORS block *(open — 2026-07-22)*
+
+When the function-block editor's `.fbe-*` CSS moved into `styles.css` (PR-1 of
+the DDC Workbench arc, `refactor/fbe-editor-module`), the
+`.fbe-palette-btn:focus-visible` rule travelled verbatim and now sits as its
+own rule inside the FBE section, rather than folded into the consolidated
+`FOCUS INDICATORS` block where its sibling `#fbe-canvas:focus-visible` already
+lives (per the CLAUDE.md focus-indicator convention — "add its selector to
+that block; don't scatter a one-off rule"). Behaviour is correct; this is a
+placement/consolidation cleanup, not a bug. Deferred out of PR-1 to keep that
+behaviour-preserving refactor tight. Fold the rule into the `FOCUS INDICATORS`
+block in a later `styles.css` pass.
