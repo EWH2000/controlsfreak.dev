@@ -25,19 +25,33 @@ that diagnostic end**, not the point.
   unit; the owner's own fault examples are AHU faults, so the structure grows
   toward OA/mixing → MAT and beyond.
 
-## Current state — Increment 1 shipped, live-but-hidden (2026-07-22)
+## Current state — Increment 2 (DDC Workbench) shipped, live-but-hidden (2026-07-23)
 
-`html/simulators/fcu-ddc.html` — **merged to `main` (PR #420, 2026-07-22)**,
-`eleventyExcludeFromCollections` + `noindex` (reachable at its URL, out of
-nav / search / sitemap / landing). A DX fan coil as a DDC graphic: live points
-(EAT / DAT / **ΔT across coil** / zone temp+setpoint / fan / compressor), knobs,
-four fault presets, the **"no ΔT over the coil"** tell (red compressor LED +
-collapsed ΔT + red verdict), metric toggle, in-graphic keyboard-reachable
-drill-downs to the VFD + heat-pump sims. Increment 1's depiction pass is in:
-**page-local chevron airflow that crosses the open cabinet** (no flow-engine
-dependency), filled exterior ducts, air recolor across the coil, fullscreen, a
-fan-heat note. Still quasi-static via `Psychro.invertProcess`. **The
-react-baseline / reference point, not a surfaced page.**
+`html/simulators/ddc-workbench.html` (renamed from `fcu-ddc.html`) — **merged to
+`main`**, `eleventyExcludeFromCollections` + `noindex` (reachable at its URL, out
+of nav / search / sitemap / landing). Two tabbed views on one runtime: a **Unit**
+view (the DX fan-coil DDC graphic from Increment 1) and a **Wiresheet** view (the
+Function-Block Editor, lazy-mounted). An **FBE control program drives the unit
+every 10 Hz tick** through a generic binding driver, with **HAND/AUTO** override.
+The default `cool-2stage` program stages Y1/Y2 off space-temp vs a
+wiresheet-editable setpoint. **The loop is still OPEN** — space temp is a
+hand-nudged input; no zone thermal dynamics yet (the physics session, next).
+Shipped across:
+- **PR #420** — the DX fan-coil DDC-graphic mockup (Increment 1's depiction:
+  live points EAT / DAT / ΔT / zone / fan / compressor, chevron airflow, fault
+  presets, the "no ΔT over the coil" tell, fullscreen, in-graphic drill-downs).
+- **PR #421** — the FBE editor wire-visibility fix (delete-one-blanked-all).
+- **PR #422** — extracted the drag-wire editor into the shared module
+  `html/scripts/fbe-editor.js` (`window.FBEEditor.createEditor`) + fixed
+  codebase-issues #196 (render/cache decoupled from the wire data objects);
+  version 3.72.1 → 3.73.0.
+- **PR #423** — the Workbench itself (two tabs, the host tick loop, the generic
+  binding driver, the FCU unit plug-in, 3 sample programs).
+- **PR #424** — the verdict pill reads idle (neutral), not a red fault, when the
+  program satisfies the space (auto-fan cycles the fan off).
+
+Still quasi-static via `Psychro.invertProcess`. **The react-baseline / reference
+point, not a surfaced page.**
 
 ## Confirmed decisions (owner)
 
@@ -180,7 +194,17 @@ round fattened the ducts and cleared label overlaps.
   the return so it drops into the cabinet *top*** rather than wrap the whole left
   side. Revisit in a later depiction pass, not now.
 
-## Next increment — the FBE "DDC Workbench" (decided 2026-07-22)
+## Increment 2 — the FBE "DDC Workbench" — SHIPPED (2026-07-23)
+
+> Shipped across PRs #421–#424 (see *Current state*). The design below is as
+> decided; two deviations from it, as built: (1) the editor was **extracted to a
+> shared module** (`fbe-editor.js`, PR #422) rather than generalizing the editor
+> page in place; (2) the IO-point **param binding is block→plant** — setpoint /
+> deadband live in the FBE program's `const` blocks and are read INTO the plant,
+> so editing the setpoint on the wiresheet changes staging (the reverse of an
+> early plan sketch; it's what makes the wiresheet-editable-setpoint behaviour
+> work). **The immediate next increment is the physics session (closed-loop
+> dynamics + psychro tuning) — see *Horizon* and `docs/next-session-handoff.md`.**
 
 **ALL the FBE work in one focused session** (owner: "get the bouncing out of the
 way"), so the session *after* is pure sim physics. The FCU sim is reframed as the
