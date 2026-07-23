@@ -173,23 +173,120 @@ noindex: true
         .fcu-controls .field-label,
         .fcu-presets .field-label { color: var(--text); }
 
+        /* A control that is read-only in AUTO (the program owns it): dim
+           it and disable pointer/keyboard. Applies to the fan slider,
+           stage buttons, and fan-enable toggle when the shell is in AUTO. */
+        .fcu-controls .ddcw-tracked[disabled],
+        .fcu-controls input[disabled],
+        .fcu-controls .copy-btn[disabled] { opacity: 0.55; cursor: not-allowed; }
+        .fcu-fanen { margin-top: 0.25rem; }
+        .fcu-fanen label { display: inline-flex; align-items: center; gap: 0.45rem; cursor: pointer; }
+        .fcu-fanen input { width: auto; margin: 0; }
+
+        /* ── DDC WORKBENCH SHELL (ddcw-*) ── unit-agnostic chrome. The two
+           tab panes reuse the shared .tabs / .tab-btn / .tab-pane and the
+           .fbe-* wiresheet classes from styles.css; only the persistent
+           statusbar (live IO strip + program picker + HAND/AUTO) is drawn
+           here. It carries NO fcu-specific id — the shell speaks only of
+           points and plant. */
+        .ddcw-statusbar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.6rem 1.25rem;
+            padding: 0.7rem 0 0.85rem;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 1.1rem;
+        }
+        .ddcw-io-strip { display: flex; flex-wrap: wrap; gap: 0.4rem 0.5rem; }
+        .ddcw-chip {
+            display: inline-flex;
+            align-items: baseline;
+            gap: 0.35rem;
+            font-family: var(--mono);
+            font-size: 0.68rem;
+            padding: 0.22rem 0.5rem;
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: 3px;
+        }
+        .ddcw-chip-cap {
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+        .ddcw-chip-val { color: var(--text-bright); font-weight: 700; }
+        .ddcw-chip-val.on { color: var(--accent-ink); }
+        .ddcw-chip-val.off { color: var(--text-dim); }
+        .ddcw-status-right {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.5rem 1.1rem;
+        }
+        .ddcw-prog, .ddcw-mode { display: flex; align-items: center; gap: 0.45rem; }
+        .ddcw-prog-lbl, .ddcw-mode-lbl {
+            font-family: var(--mono);
+            font-size: 0.68rem;
+            color: var(--text);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+        .ddcw-prog select { min-width: 12rem; }
+        .ddcw-mode .btn-row { display: flex; gap: 0.35rem; }
+        .ddcw-mode .copy-btn.active { border-color: var(--accent); color: var(--accent-ink); }
+
+        /* A short intro line above the wiresheet, tying it to the unit. */
+        p.ddcw-sheet-note {
+            font-family: var(--mono);
+            font-size: 0.78rem;
+            line-height: 1.5;
+            color: var(--text-dim);
+            margin: 0 0 0.25rem;
+        }
+
         /* ── FULLSCREEN COCKPIT ────────────────────────────────────────────
            The shared mechanism (fullscreen-toggle.js) pins .tool-card to the
-           viewport via .is-fullscreen; here we reflow the graphic large with
-           the points / verdict / controls beside it (wide) or below it (tall
-           / portrait). NORMAL FLOW IS UNTOUCHED. Reading-only prose (preamble,
-           section heading, the long notes) drops out — fullscreen is the
-           instrument view, not the article. The SVG is viewBox + width:100%,
-           so it auto-scales into whatever cell it lands in. */
+           viewport via .is-fullscreen. Here the card becomes a flex column:
+           header + tabs + statusbar are fixed, and the ACTIVE tab pane fills
+           the rest. On the Unit tab the graphic sits beside the readouts +
+           controls; on the Wiresheet tab the shared .fbe-* fullscreen rules
+           (styles.css) fill the canvas. NORMAL FLOW IS UNTOUCHED. Reading-only
+           prose drops out — fullscreen is the instrument view, not the article. */
         .tool-card.is-fullscreen {
             display: flex;
             flex-direction: column;
             overflow: hidden;
         }
-        .tool-card.is-fullscreen .tool-card-header { flex: none; padding-bottom: 0.35rem; }
+        .tool-card.is-fullscreen .tool-card-header { flex: none; padding-bottom: 0.25rem; }
         .tool-card.is-fullscreen .tool-body {
             flex: 1;
             min-height: 0;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            padding: 0.4rem 1.25rem 0.9rem;
+        }
+        .tool-card.is-fullscreen .tabs.tabs-flush,
+        .tool-card.is-fullscreen .ddcw-statusbar { flex: none; }
+        .tool-card.is-fullscreen .tab-pane.active {
+            flex: 1;
+            min-height: 0;
+            overflow: auto;
+        }
+        /* Reading-only prose is out in the instrument view. */
+        .tool-card.is-fullscreen .tool-preamble,
+        .tool-card.is-fullscreen .subhead,
+        .tool-card.is-fullscreen .ref-note,
+        .tool-card.is-fullscreen p.fcu-note,
+        .tool-card.is-fullscreen p.ddcw-sheet-note,
+        .tool-card.is-fullscreen .fbe-legend { display: none; }
+
+        /* Unit pane in fullscreen: graphic left, readouts + controls right
+           (wide) or stacked (tall / portrait / narrow). Scoped to .active so
+           it doesn't override the .tab-pane hide when the Wiresheet is up. */
+        .tool-card.is-fullscreen #tab-unit.active {
             display: grid;
             grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
             grid-template-rows: auto auto minmax(0, 1fr);
@@ -199,13 +296,7 @@ noindex: true
                 "graphic controls";
             gap: 0.6rem 1.5rem;
             align-content: start;
-            overflow: auto;
-            padding: 0.6rem 1.25rem 1rem;
         }
-        .tool-card.is-fullscreen .tool-preamble,
-        .tool-card.is-fullscreen .subhead,
-        .tool-card.is-fullscreen .ref-note,
-        .tool-card.is-fullscreen p.fcu-note { display: none; }
         .tool-card.is-fullscreen .fcu-graphic {
             grid-area: graphic;
             max-width: none;
@@ -216,10 +307,8 @@ noindex: true
         .tool-card.is-fullscreen .fcu-verdict { grid-area: verdict; margin: 0; }
         .tool-card.is-fullscreen .fcu-controls { grid-area: controls; margin-top: 0.5rem; }
 
-        /* Tall / portrait OR narrow: stack the graphic over the readouts and
-           controls in one column. */
         @media (max-width: 900px), (max-aspect-ratio: 1/1) {
-            .tool-card.is-fullscreen .tool-body {
+            .tool-card.is-fullscreen #tab-unit.active {
                 grid-template-columns: 1fr;
                 grid-template-rows: auto auto auto auto;
                 grid-template-areas:
@@ -236,7 +325,7 @@ noindex: true
 <main id="main">
 
     <div class="section-header">
-        <span class="section-label">Simulators · Fan Coil</span>
+        <span class="section-label">Simulators · DDC Workbench</span>
         <div class="section-line"></div>
     </div>
 
@@ -262,19 +351,62 @@ noindex: true
         </button>
         <div class="tool-card-header">
             <h1 class="tool-card-title">
-                DX Fan Coil — DDC Graphic
-                <span class="tool-tag">HVAC</span>
+                DDC Workbench
+                <span class="tool-tag">Air-side</span>
             </h1>
         </div>
         <div class="tool-body">
 
             <p class="tool-preamble">
-                A rough, directional model — this is the BAS front-end a tech
-                reads, not a commissioning tool. The numbers show which way the
-                air moves across the coil, not a rated capacity. Turn a knob or
-                load a fault and read the graphic the way you would read the
-                supervisory screen.
+                A DX fan coil as a live DDC graphic, driven by a function-block
+                program. The <strong>Unit</strong> tab is the supervisory screen
+                a tech reads; the <strong>Wiresheet</strong> tab is the control
+                program running it. In <strong>AUTO</strong> the program owns the
+                outputs — nudge the space temperature and watch it stage the
+                compressor. Switch to <strong>HAND</strong> to drive the outputs
+                yourself. The zone is an input you nudge, not a simulated load —
+                the loop stays open.
             </p>
+
+            <!-- ── Tabs: Unit graphic | Wiresheet (FBE) ── the shell is
+                 unit-agnostic; the persistent statusbar below sits OUTSIDE the
+                 panes so both tabs show live IO + the running program + the
+                 HAND/AUTO toggle. -->
+            <div class="tabs tabs-flush">
+                <button class="tab-btn active" data-tab="unit">Unit</button>
+                <button class="tab-btn" data-tab="wiresheet">Wiresheet</button>
+            </div>
+
+            <!-- Persistent statusbar (shell, unit-agnostic). IO chips are
+                 rendered from unit.points; the program picker + HAND/AUTO drive
+                 the whole workbench. -->
+            <div class="ddcw-statusbar" id="ddcw-statusbar">
+                <div class="ddcw-io-strip" id="ddcw-io" aria-label="Live point values"></div>
+                <div class="ddcw-status-right">
+                    <div class="ddcw-prog">
+                        <label class="ddcw-prog-lbl" for="ddcw-program">Program</label>
+                        <select class="ps-input" id="ddcw-program">
+                            <option value="cool-2stage">2-stage cooling</option>
+                            <option value="cool-1stage">1-stage cooling</option>
+                            <option value="cool-2stage-fanon">2-stage, continuous fan</option>
+                            <option value="custom" disabled>Custom (edited)</option>
+                        </select>
+                    </div>
+                    <div class="ddcw-mode" role="group" aria-labelledby="ddcw-mode-lbl">
+                        <span class="ddcw-mode-lbl" id="ddcw-mode-lbl">Mode</span>
+                        <div class="btn-row">
+                            <button type="button" class="copy-btn active" id="ddcw-mode-auto"
+                                    data-mode="auto" aria-pressed="true">AUTO</button>
+                            <button type="button" class="copy-btn" id="ddcw-mode-hand"
+                                    data-mode="hand" aria-pressed="false">HAND</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ══ TAB: UNIT ══ the DDC supervisory graphic + readouts +
+                 hand controls. -->
+            <div id="tab-unit" class="tab-pane active">
 
             <!-- ── The supervisory graphic ─────────────────────────────────
                  Recirculating DX fan coil serving one zone. Return air leaves
@@ -454,9 +586,9 @@ noindex: true
                 <h2 class="subhead">Controls</h2>
 
                 <div class="fcu-presets field" role="group" aria-labelledby="fcu-try-lbl">
-                    <span class="field-label" id="fcu-try-lbl">Try this:</span>
+                    <span class="field-label" id="fcu-try-lbl">Scenarios (switch to HAND):</span>
                     <div class="btn-row">
-                        <button type="button" class="copy-btn active" data-preset="healthy" aria-pressed="true">Healthy cooling</button>
+                        <button type="button" class="copy-btn" data-preset="healthy" aria-pressed="false">Healthy cooling</button>
                         <button type="button" class="copy-btn" data-preset="compoff" aria-pressed="false">Compressor off</button>
                         <button type="button" class="copy-btn fcu-preset-fault" data-preset="lowcharge" aria-pressed="false">Low charge</button>
                         <button type="button" class="copy-btn fcu-preset-fault" data-preset="airflow" aria-pressed="false">Airflow fault</button>
@@ -464,18 +596,18 @@ noindex: true
                 </div>
 
                 <div class="field" role="group" aria-labelledby="fcu-stage-lbl">
-                    <span class="field-label" id="fcu-stage-lbl">Compressor stage</span>
+                    <span class="field-label" id="fcu-stage-lbl">Compressor stage — Y1 / Y2 (HAND)</span>
                     <div class="btn-row">
-                        <button type="button" class="copy-btn" id="fcu-stage-0" data-stage="0" aria-pressed="false">Off</button>
-                        <button type="button" class="copy-btn" id="fcu-stage-1" data-stage="1" aria-pressed="false">Stage 1</button>
-                        <button type="button" class="copy-btn active" id="fcu-stage-2" data-stage="2" aria-pressed="true">Stage 2</button>
+                        <button type="button" class="copy-btn ddcw-tracked" id="fcu-stage-0" data-stage="0" aria-pressed="false">Off</button>
+                        <button type="button" class="copy-btn ddcw-tracked" id="fcu-stage-1" data-stage="1" aria-pressed="false">Stage 1</button>
+                        <button type="button" class="copy-btn ddcw-tracked" id="fcu-stage-2" data-stage="2" aria-pressed="false">Stage 2</button>
                     </div>
                 </div>
 
                 <div class="fcu-knob-grid">
                     <div class="slider-field">
                         <div class="slider-head">
-                            <label id="fcu-zone-lbl" for="fcu-zone-slider">Zone temp (return / demand)</label>
+                            <label id="fcu-zone-lbl" for="fcu-zone-slider">Space temp (sensor — always live)</label>
                             <span class="slider-val" id="fcu-zone-val">76 °F</span>
                         </div>
                         <input type="range" id="fcu-zone-slider" min="70" max="84" step="1" value="76">
@@ -483,11 +615,18 @@ noindex: true
 
                     <div class="slider-field">
                         <div class="slider-head">
-                            <label id="fcu-fan-lbl" for="fcu-fan-slider">Supply-fan speed</label>
+                            <label id="fcu-fan-lbl" for="fcu-fan-slider">Supply-fan speed (HAND)</label>
                             <span class="slider-val" id="fcu-fan-sval">100%</span>
                         </div>
-                        <input type="range" id="fcu-fan-slider" min="0" max="100" step="5" value="100">
+                        <input type="range" id="fcu-fan-slider" class="ddcw-tracked" min="0" max="100" step="5" value="100">
                     </div>
+                </div>
+
+                <div class="field fcu-fanen">
+                    <label>
+                        <input type="checkbox" id="fcu-fanen-toggle" class="ddcw-tracked" checked>
+                        Fan enable — G command (HAND)
+                    </label>
                 </div>
             </div>
 
@@ -508,6 +647,60 @@ noindex: true
                 point reports leaving-coil temperature.
             </p>
 
+            </div><!-- #tab-unit -->
+
+            <!-- ══ TAB: WIRESHEET ══ the shared Function-Block Editor
+                 (window.FBEEditor), lazy-mounted on first open. The skeleton
+                 below carries ddcw-* ids; the .fbe-* classes + the fullscreen
+                 rules come from styles.css. Desktop-only by design (the shared
+                 @media gate hides .fbe-live below 1000px / on touch and shows
+                 the tips panel instead). -->
+            <div id="tab-wiresheet" class="tab-pane">
+
+                <p class="ddcw-sheet-note">
+                    The program driving the unit. Sources (space temp, setpoint)
+                    on the left, logic in the middle, outputs (Y1 / Y2 / fan) on
+                    the right. Pick a sample above, or wire your own — it runs on
+                    the unit every tick.
+                </p>
+
+                <div class="desktop-only-sim">
+                    <h2 class="dos-label">Desktop tool</h2>
+                    <p>
+                        Wiring blocks on a wiresheet is drag work that wants a
+                        pointer and a wide canvas — open this page on a laptop or
+                        desktop to edit the control program. The Unit tab reads
+                        fine on a phone, and the program keeps running the unit
+                        whether or not this sheet is on screen.
+                    </p>
+                </div>
+
+                <div class="fbe-live">
+                    <div class="fbe-simbar">
+                        <button type="button" class="copy-btn" id="ddcw-fbe-run" data-fbe-action="run">Pause</button>
+                        <button type="button" class="copy-btn" id="ddcw-fbe-reset" data-fbe-action="reset">Reset</button>
+                        <button type="button" class="copy-btn" id="ddcw-fbe-clear" data-fbe-action="clear">Clear</button>
+                        <span class="fbe-status" id="ddcw-fbe-status" role="status" aria-live="polite">Running</span>
+                    </div>
+
+                    <div class="fbe-workspace">
+                        <div class="fbe-palette" id="ddcw-fbe-palette" aria-label="Block palette"></div>
+                        <div class="fbe-canvas" id="ddcw-fbe-canvas" tabindex="0" role="region" aria-label="Wiresheet canvas">
+                            <div class="fbe-canvas-inner" id="ddcw-fbe-inner"></div>
+                        </div>
+                    </div>
+
+                    <div class="fbe-inspector" id="ddcw-fbe-inspector"></div>
+
+                    <div class="fbe-legend">
+                        <span><span class="fbe-swatch fbe-sw-num"></span> analog (number)</span>
+                        <span><span class="fbe-swatch fbe-sw-on"></span> digital TRUE</span>
+                        <span><span class="fbe-swatch fbe-sw-off"></span> digital FALSE</span>
+                    </div>
+                </div><!-- .fbe-live -->
+
+            </div><!-- #tab-wiresheet -->
+
         </div>
     </div>
 
@@ -518,9 +711,233 @@ noindex: true
 
 {% block scripts %}
 <script src="/scripts/psychro-engine.js"></script>
+<script src="/scripts/fbe-engine.js"></script>
+<script src="/scripts/fbe-editor.js"></script>
+<script src="/scripts/ui.js"></script>
 <script>
+    // ── DDC Workbench — page wiring ─────────────────────────────────────
+    // ONE IIFE, two banner-delimited sections:
+    //   • the unit-agnostic SHELL (tabs, the single host tick loop,
+    //     HAND/AUTO, the lazy editor mount, and one generic binding driver
+    //     that walks unit.points) — contains NO fcu-specific identifier;
+    //   • the FCU unit PLUG-IN (physics update(), POINTS, sample PROGRAMS,
+    //     the fcu-* graphic + controls) — the only unit today, page-local
+    //     behind the `UNIT: FCU` banners rather than a speculative plugin
+    //     framework. A future AHU is a second unit object + its own SVG +
+    //     programs; the shell and the binding contract don't change.
+    //
+    // Binding contract (load-bearing invariant): a point's id === the seed
+    // FBE-block id in every program === the IO block the programs author.
+    // The loop stays OPEN this increment — space temp is a hand-nudged
+    // sensor, there is NO zone thermal dynamics.
     (function () {
         'use strict';
+
+        const FBE       = window.FBE;
+        const FBEEditor = window.FBEEditor;
+        const DT        = 0.1;                  // host tick step, seconds (10 Hz)
+
+        // ── shell state (assigned in init, after the unit is defined) ──────
+        let unit, plant, graph;
+        let byId  = {};
+        let mode  = 'auto';                     // 'auto' | 'hand'
+        let editor = null, editorBuilt = false, wiresheetVisible = false;
+        let programKey = null;                  // current sample key, or null = custom
+        let suppressCustom = false;             // true while WE load a program
+        const chipVals = {};                    // pointId → statusbar value node
+
+        // ── generic binding driver (names NO unit point) ───────────────────
+        function reindex(g) {
+            byId = {};
+            g.blocks.forEach(function (b) { byId[b.id] = b; });
+        }
+
+        function bindingTick(dt) {
+            const pts = unit.points;
+            let i, p, blk, v;
+            // sensors + params → into the seeded IO blocks
+            for (i = 0; i < pts.length; i++) {
+                p = pts[i];
+                blk = byId[p.id];
+                if (!blk) continue;
+                if (p.dir === 'sensor') {
+                    if (p.kind === 'ai') blk.params.value = plant.sensors[p.plantKey];
+                    else if (p.kind === 'bi') blk.params.state = !!plant.sensors[p.plantKey];
+                } else if (p.kind === 'param') {
+                    // Params (setpoint / deadband) live in the wiresheet const
+                    // block — the program's own config. Read them INTO plant
+                    // (block → plant) so the IO chips display them AND a user
+                    // edit of the const takes effect on the unit; a plant → block
+                    // write would freeze them at the literal and clobber edits.
+                    // A future plant-side setpoint schedule would seed the block
+                    // at load instead, keeping this read for display.
+                    plant.params[p.plantKey] = blk.params.value;
+                }
+            }
+            FBE.tick(graph, dt);
+            // actuators ← the program's outputs (AUTO only; HAND owns them)
+            if (mode === 'auto') {
+                for (i = 0; i < pts.length; i++) {
+                    p = pts[i];
+                    if (p.dir !== 'actuator') continue;
+                    blk = byId[p.id];
+                    if (!blk) continue;
+                    v = blk.in ? blk.in.IN : undefined;   // guard .in === {} pre-tick
+                    if (v === undefined) continue;
+                    plant.actuators[p.plantKey] = (p.kind === 'bo') ? (v === true) : v;
+                }
+            }
+        }
+
+        // ── host tick loop (the SOLE ticker) ────────────────────────────────
+        function hostTick() {
+            bindingTick(DT);
+            unit.update(plant, DT);
+            unit.renderUnit(plant);
+            unit.syncControls(plant, mode);
+            renderStatusbar();
+            if (editorBuilt && wiresheetVisible) editor.refresh();
+        }
+        function requestRender() { hostTick(); }   // immediate repaint on interaction
+
+        // ── statusbar (generic — live IO chips + program + mode) ────────────
+        function initChips() {
+            const strip = document.getElementById('ddcw-io');
+            strip.innerHTML = '';
+            unit.points.forEach(function (p) {
+                const chip = document.createElement('span');
+                chip.className = 'ddcw-chip';
+                const cap = document.createElement('span');
+                cap.className = 'ddcw-chip-cap';
+                cap.textContent = p.name;
+                const val = document.createElement('span');
+                val.className = 'ddcw-chip-val';
+                chip.appendChild(cap);
+                chip.appendChild(val);
+                strip.appendChild(chip);
+                chipVals[p.id] = val;
+            });
+        }
+        function updateChips() {
+            unit.points.forEach(function (p) {
+                const el = chipVals[p.id];
+                if (!el) return;
+                let raw;
+                if (p.dir === 'sensor') raw = plant.sensors[p.plantKey];
+                else if (p.kind === 'param') raw = plant.params[p.plantKey];
+                else raw = plant.actuators[p.plantKey];
+                let cls = '';
+                let txt;
+                if (p.kind === 'bo' || p.kind === 'bi') {
+                    const on = raw === true;
+                    txt = on ? 'ON' : 'OFF';
+                    cls = on ? 'on' : 'off';
+                } else {
+                    const n = Number(raw);
+                    const num = isFinite(n)
+                        ? (p.kind === 'ao' ? String(Math.round(n)) : String(Math.round(n * 10) / 10))
+                        : '—';
+                    txt = num + (p.unit ? ' ' + p.unit : '');
+                }
+                el.textContent = txt;
+                el.className = 'ddcw-chip-val' + (cls ? ' ' + cls : '');
+            });
+        }
+        function syncProgramSelect() {
+            const sel = document.getElementById('ddcw-program');
+            const want = programKey || 'custom';
+            if (sel.value !== want) sel.value = want;
+        }
+        function renderStatusbar() { updateChips(); syncProgramSelect(); }
+
+        // ── HAND / AUTO ─────────────────────────────────────────────────────
+        function setMode(m) {
+            mode = m;
+            [['ddcw-mode-auto', 'auto'], ['ddcw-mode-hand', 'hand']].forEach(function (pair) {
+                const btn = document.getElementById(pair[0]);
+                const on = m === pair[1];
+                btn.classList.toggle('active', on);
+                btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+            });
+        }
+
+        // ── program picker + graph single-source contract ───────────────────
+        function onGraphChange(g) {
+            graph = g;
+            reindex(g);
+            // A structural edit (add/delete block or wire) that we didn't
+            // initiate marks the running program "custom".
+            if (!suppressCustom) programKey = null;
+        }
+        function loadProgram(key) {
+            if (!unit.programs[key]) return;
+            programKey = key;
+            if (editorBuilt) {
+                suppressCustom = true;
+                editor.loadExample(key);        // replaces graph → onGraphChange recaptures
+                suppressCustom = false;
+            } else {
+                graph = FBE.makeGraph(unit.programs[key]);
+                reindex(graph);
+            }
+            syncProgramSelect();
+        }
+
+        // ── lazy editor mount (built once, on first Wiresheet open) ──────────
+        function ensureEditor() {
+            if (editorBuilt) return;
+            // The construction's setGraph fires onGraphChange with the editor's
+            // NEW (deep-cloned) internal graph object — capture it, but don't
+            // let it mark the program "custom".
+            suppressCustom = true;
+            editor = FBEEditor.createEditor({
+                engine: FBE,
+                elements: {
+                    canvas:    document.getElementById('ddcw-fbe-canvas'),
+                    inner:     document.getElementById('ddcw-fbe-inner'),
+                    palette:   document.getElementById('ddcw-fbe-palette'),
+                    inspector: document.getElementById('ddcw-fbe-inspector'),
+                    status:    document.getElementById('ddcw-fbe-status'),
+                    runButton: document.getElementById('ddcw-fbe-run'),
+                },
+                examples: unit.programs,
+                initialGraph: graph,            // share the already-running graph
+                autoloop: false,                // the HOST drives ticks
+                keyScope: document.getElementById('tab-wiresheet'),
+                onChange: onGraphChange,
+            });
+            suppressCustom = false;
+            editorBuilt = true;
+            // Sim-bar buttons — Run/Pause toggles the wire-flow animation
+            // (the host keeps ticking); Reset re-arms latches/timers; Clear
+            // empties the sheet to author from scratch.
+            document.querySelectorAll('#tab-wiresheet [data-fbe-action]').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    switch (btn.dataset.fbeAction) {
+                        case 'run':   editor.setRunning(!editor.isRunning()); break;
+                        case 'reset': editor.reset(); break;
+                        case 'clear': editor.clearCanvas(); break;
+                    }
+                });
+            });
+            editor.refresh();
+        }
+
+        // ── tabs ─────────────────────────────────────────────────────────────
+        function showTab(name) {
+            wiresheetVisible = (name === 'wiresheet');
+            if (wiresheetVisible) {
+                ensureEditor();                 // pane is already visible (switchTab ran first)
+                const fs = document.body.classList.contains('has-fullscreen-tool');
+                editor.onFullscreenChange(fs);  // re-measure in fullscreen, pin otherwise
+                editor.refresh();
+            }
+        }
+
+        // ══════════════════════════════ UNIT: FCU ══════════════════════════
+        // The only unit today — physics, points, sample programs, and the
+        // fcu-* graphic + controls. Page-local behind these banners; extract
+        // to /scripts/units/fcu.js only when a second unit lands.
 
         // ── Rough constants (noted for the reviewer) ──────────────────────
         // A ~1.5-ton DX fan coil. Internal model is IP (°F); converted at
@@ -535,26 +952,26 @@ noindex: true
         const RA_RH       = 50;                  // % — assumed return-air RH
         const FAN_HEAT    = 0.6;                 // °F picked up across the fan
         const COIL_FLOOR  = 34;                  // °F leaving-air clamp (freeze floor)
-        const SETPOINT    = 72;                  // °F cooling setpoint (fixed)
         const P           = P_STD;               // psia (from psychro-engine)
 
-        const state = { stage: 2, fault: 'none' };   // fault: none | lowCharge | airflow
-
-        // Air colour downstream of the coil, published by update() and read
-        // by the chevron loop (upstream is always --blue-cool). Under reduced
-        // motion, refreshFrozenAir re-tints the frozen chevrons on each update.
+        // Air colour downstream of the coil, set by renderUnit and read by the
+        // chevron loop (upstream is always --blue-cool). Under reduced motion,
+        // refreshFrozenAir re-tints the frozen chevrons on each render.
         let downstreamColor = 'var(--blue)';
         let refreshFrozenAir = null;
 
-        const zoneSlider = document.getElementById('fcu-zone-slider');
-        const fanSlider  = document.getElementById('fcu-fan-slider');
-        const zoneValLbl = document.getElementById('fcu-zone-val');
-        const fanValLbl  = document.getElementById('fcu-fan-sval');
-        const fanBlade   = document.getElementById('fcu-fan-blade');
-        const compDot    = document.getElementById('fcu-comp-dot');
-        const verdictEl  = document.getElementById('fcu-verdict');
+        const zoneSlider  = document.getElementById('fcu-zone-slider');
+        const fanSlider   = document.getElementById('fcu-fan-slider');
+        const fanenToggle = document.getElementById('fcu-fanen-toggle');
+        const zoneValLbl  = document.getElementById('fcu-zone-val');
+        const fanValLbl   = document.getElementById('fcu-fan-sval');
+        const fanBlade    = document.getElementById('fcu-fan-blade');
+        const compDot     = document.getElementById('fcu-comp-dot');
+        const verdictEl   = document.getElementById('fcu-verdict');
+        const stageBtns   = document.querySelectorAll('#tab-unit [data-stage]');
+        const presetBtns  = document.querySelectorAll('#tab-unit [data-preset]');
 
-        // On-graphic + readout-grid nodes (kept in one map so update() writes
+        // On-graphic + readout-grid nodes (kept in one map so renderUnit writes
         // both surfaces from one source).
         const out = {
             eat:  [document.getElementById('fcu-eat'),   document.getElementById('fcu-eat-r')],
@@ -586,22 +1003,38 @@ noindex: true
             pair[1].textContent = text;
         }
 
-        function update() {
-            const zoneT  = parseFloat(zoneSlider.value);   // °F
-            const fanPct = parseFloat(fanSlider.value);    // %
+        // ── plant — the FCU's data-driven IO surface (unit-specific keys) ──
+        function fcuCreatePlant() {
+            // Arrival: space temp 76 °F with SP 72 / deadband 3 puts the
+            // cool-2stage program on Y1 (fan on, ΔT visible) the moment the
+            // loop starts — so the page shows the program running the unit
+            // immediately. The loop is OPEN: space-temp is exogenous.
+            return {
+                sensors:    { 'space-temp': 76, 'dat': 55 },
+                actuators:  { 'fan-speed': 100, 'fan-enable': true, 'y1': true, 'y2': false },
+                params:     { 'cooling-setpoint': 72, 'deadband': 3 },
+                conditions: { fault: 'none' },   // none | lowCharge | airflow (observe-only)
+                derived:    {},
+                anim:       { fanFrac: 1 },
+            };
+        }
 
-            // Validate-and-mute: if a read isn't finite, blank the values.
-            if (!isFinite(zoneT) || !isFinite(fanPct)) {
-                setBoth(out.eat, '—'); setBoth(out.dat, '—'); setBoth(out.dt, '—');
-                verdictEl.className = 'status-pill fcu-verdict';
-                verdictEl.textContent = 'Enter a value.';
-                return;
-            }
+        // ── physics — reads `plant`, not the DOM (renderUnit does the paint) ──
+        function fcuUpdate(plant, dt) {
+            const zoneT  = plant.sensors['space-temp'];   // °F
+            const fanPct = plant.actuators['fan-speed'];  // %
+            const d = plant.derived;
+
+            // Validate-and-mute: if a read isn't finite, blank on render.
+            if (!isFinite(zoneT) || !isFinite(fanPct)) { d.invalid = true; return; }
+            d.invalid = false;
 
             const fanFrac = fanPct / 100;
-            const fanOn   = fanPct > 0;
-            const stage   = state.stage;
-            const fault   = state.fault;
+            // Y2-implies-Y1 interlock, FCU-local: a Y2 call is always stage 2.
+            const stage = plant.actuators.y2 ? 2 : (plant.actuators.y1 ? 1 : 0);
+            // fan-enable is a real BO gate now (not speed>0 alone).
+            const fanOn = !!plant.actuators['fan-enable'] && fanPct > 0;
+            const fault = plant.conditions.fault;
             const capActive = stage > 0 && fanOn && fault === 'none';
 
             // Coil leaving-air temp via the shared psychro solver.
@@ -620,10 +1053,35 @@ noindex: true
             // Discharge sensor sits after the fan (draw-through pickup).
             const datT = fanOn ? coilLeaveT + FAN_HEAT : zoneT;
 
+            // The DAT sensor reports the computed discharge temp — fed back
+            // into the program's `dat` AI next tick (a discharge low-limit hook).
+            plant.sensors['dat'] = datT;
+
+            d.eatT = zoneT;
+            d.coilLeaveT = coilLeaveT;
+            d.datT = datT;
+            d.stage = stage;
+            d.fanOn = fanOn;
+            d.fanPct = fanPct;
+            d.capActive = capActive;
+            d.setp = plant.params['cooling-setpoint'];
+            d.fault = fault;
+            plant.anim.fanFrac = fanOn ? fanFrac : 0;
+        }
+
+        // ── paint — reads plant.derived; owns the DOM (graphic + verdict) ──
+        function fcuRenderUnit(plant) {
+            const d = plant.derived;
+            if (d.invalid) {
+                setBoth(out.eat, '—'); setBoth(out.dat, '—'); setBoth(out.dt, '—');
+                verdictEl.className = 'status-pill fcu-verdict';
+                verdictEl.textContent = 'Enter a value.';
+                return;
+            }
             // Displayed values — ΔT reconciles from the displayed operands.
-            const eatN = dispTempNum(zoneT);
-            const datN = dispTempNum(datT);
-            const spN  = dispTempNum(SETPOINT);
+            const eatN = dispTempNum(d.eatT);
+            const datN = dispTempNum(d.datT);
+            const spN  = dispTempNum(d.setp);
             const dtN  = Math.round((eatN - datN) * 10) / 10;
 
             setBoth(out.eat, eatN.toFixed(1) + ' ' + tSuffix());
@@ -633,41 +1091,40 @@ noindex: true
             out.zsp.textContent = spN.toFixed(1) + ' ' + tSuffix();
             out.zr.textContent  = eatN.toFixed(1) + ' / ' + spN.toFixed(1) + ' ' + tSuffix();
 
-            const fanTxt = fanOn ? (fanPct + '% · ON') : 'OFF';
+            const fanTxt = d.fanOn ? (d.fanPct + '% · ON') : 'OFF';
             out.fanG.textContent = fanTxt;
             out.fanR.textContent = fanTxt;
 
-            const compTxt = stage === 0 ? 'OFF' : ('Stage ' + stage + ' · ON');
-            out.compG.textContent = stage === 0 ? 'OFF' : ('STG ' + stage + ' · ON');
+            const compTxt = d.stage === 0 ? 'OFF' : ('Stage ' + d.stage + ' · ON');
+            out.compG.textContent = d.stage === 0 ? 'OFF' : ('STG ' + d.stage + ' · ON');
             out.compR.textContent = compTxt;
 
             // Compressor LED: producing (green), off (dim), or energized but
             // not producing (red — the fault tell).
             compDot.setAttribute('fill',
-                capActive ? 'var(--accent)'
-                          : (stage > 0 && fanOn) ? 'var(--red)' : 'var(--text-dim)');
+                d.capActive ? 'var(--accent)'
+                            : (d.stage > 0 && d.fanOn) ? 'var(--red)' : 'var(--text-dim)');
 
             // Downstream air colour follows whether the coil is actually
-            // cooling: cold blue when it is, neutral when it isn't. The
-            // chevron stream reads this to recolor air past the coil.
-            const cooling = capActive && dtN >= 3;
+            // cooling; the chevron stream reads it to recolor air past the coil.
+            const cooling = d.capActive && dtN >= 3;
             downstreamColor = cooling ? 'var(--blue)' : 'var(--text-dim)';
             out.datG.setAttribute('fill', cooling ? 'var(--text-bright)' : 'var(--text-dim)');
             if (refreshFrozenAir) refreshFrozenAir();
 
             // Verdict — a fault or an off state outranks the mode readout.
             let cls, txt;
-            if (!fanOn) {
+            if (!d.fanOn) {
                 cls = 'error'; txt = 'Supply fan off — no air across the coil';
-            } else if (stage === 0) {
+            } else if (d.stage === 0) {
                 cls = 'warn';  txt = 'Compressor off — fan only, no ΔT across the coil';
-            } else if (fault === 'lowCharge') {
+            } else if (d.fault === 'lowCharge') {
                 cls = 'error'; txt = 'No ΔT across coil — low charge, not cooling';
-            } else if (fault === 'airflow') {
+            } else if (d.fault === 'airflow') {
                 cls = 'error'; txt = 'No ΔT across coil — airflow fault, not cooling';
             } else if (dtN < 3) {
                 cls = 'error'; txt = 'No ΔT across coil — compressor not cooling';
-            } else if (coilLeaveT <= 42) {
+            } else if (d.coilLeaveT <= 42) {
                 cls = 'warn';  txt = 'Cooling — but ΔT is high / airflow low (coil-freeze watch)';
             } else {
                 cls = 'ok';    txt = 'Cooling — clear ΔT across the coil';
@@ -675,199 +1132,443 @@ noindex: true
             verdictEl.className = 'status-pill fcu-verdict ' + cls;
             verdictEl.textContent = txt;
 
-            // Slider read-outs.
+            // Space-temp readout mirrors the sensor (display units).
             zoneValLbl.textContent = eatN.toFixed(0) + ' ' + tSuffix();
-            fanValLbl.textContent  = fanPct + '%';
-
-            state.fanFrac = fanOn ? fanFrac : 0;
         }
 
-        // ── Preset / stage / knob wiring ──────────────────────────────────
-        const PRESETS = {
-            healthy:   { zone: 78, fan: 100, stage: 2, fault: 'none' },
-            compoff:   { zone: 78, fan: 100, stage: 0, fault: 'none' },
-            lowcharge: { zone: 78, fan: 100, stage: 2, fault: 'lowCharge' },
-            airflow:   { zone: 78, fan: 100, stage: 2, fault: 'airflow' },
-        };
-        const presetBtns = document.querySelectorAll('[data-preset]');
-        const stageBtns  = document.querySelectorAll('[data-stage]');
-
-        function markPreset(key) {
-            presetBtns.forEach(function (b) {
-                const on = b.getAttribute('data-preset') === key;
-                b.classList.toggle('active', on);
-                b.setAttribute('aria-pressed', on ? 'true' : 'false');
-            });
-        }
-        function clearPreset() {
-            presetBtns.forEach(function (b) {
-                b.classList.remove('active');
-                b.setAttribute('aria-pressed', 'false');
-            });
-        }
-        function markStage(stage) {
+        // ── hand controls — AUTO tracks the program (read-only); HAND drives ──
+        function fcuSyncControls(plant, mode) {
+            const auto = mode === 'auto';
+            fanSlider.disabled   = auto;
+            fanenToggle.disabled = auto;
+            stageBtns.forEach(function (b) { b.disabled = auto; });
+            // In AUTO the fan slider tracks the program's command; in HAND the
+            // user owns it (don't overwrite mid-drag).
+            if (auto) fanSlider.value = String(plant.actuators['fan-speed']);
+            fanenToggle.checked = !!plant.actuators['fan-enable'];
+            const stg = plant.actuators.y2 ? 2 : (plant.actuators.y1 ? 1 : 0);
             stageBtns.forEach(function (b) {
-                const on = parseInt(b.getAttribute('data-stage'), 10) === stage;
+                const on = parseInt(b.getAttribute('data-stage'), 10) === stg;
                 b.classList.toggle('active', on);
                 b.setAttribute('aria-pressed', on ? 'true' : 'false');
             });
+            fanValLbl.textContent = plant.actuators['fan-speed'] + '%';
         }
 
-        presetBtns.forEach(function (btn) {
-            btn.addEventListener('click', function (e) {
-                const p = PRESETS[e.currentTarget.getAttribute('data-preset')];
-                if (!p) return;
-                zoneSlider.value = String(p.zone);
-                fanSlider.value  = String(p.fan);
-                state.stage = p.stage;
-                state.fault = p.fault;
-                markStage(p.stage);
-                markPreset(e.currentTarget.getAttribute('data-preset'));
-                update();
-            });
-        });
+        // The graphic is a viewBox SVG at width:100% — it auto-scales into its
+        // cell, so a fullscreen transition needs no unit-side reflow.
+        function fcuOnResize() { /* no-op — SVG scales itself */ }
 
-        stageBtns.forEach(function (btn) {
-            btn.addEventListener('click', function (e) {
-                state.stage = parseInt(e.currentTarget.getAttribute('data-stage'), 10);
-                markStage(state.stage);
-                clearPreset();
-                update();
-            });
-        });
-
-        // Sliders keep any standing fault (so you can probe it) but drop the
-        // active preset highlight — a lit preset always means "exactly this."
-        zoneSlider.addEventListener('input', function () { clearPreset(); update(); });
-        fanSlider.addEventListener('input', function () { clearPreset(); update(); });
-
-        // Re-render on the global unit toggle.
-        document.addEventListener('unitschange', update);
-
-        // ── Fan-blade spin — speed tracks fan fraction; still when off.
-        (function () {
-            if (!fanBlade) return;
-            const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-            if (reduce) return;
-            const BASE = 360 / 0.8;   // deg/sec at 100%
-            let angle = 0;
-            let lastT = null;
-            const frame = function (t) {
-                if (lastT === null) lastT = t;
-                const dt = Math.min(0.1, (t - lastT) / 1000);
-                lastT = t;
-                angle = (angle + BASE * (state.fanFrac || 0) * dt) % 360;
-                fanBlade.style.transform = 'rotate(' + angle.toFixed(2) + 'deg)';
-                requestAnimationFrame(frame);
+        // ── control wiring — writes `plant`; flips HAND via the host hooks ──
+        function fcuWireControls(pl, host) {
+            // Scenarios apply a HAND setup (force outputs + any fault) so the
+            // graphic tells are reachable without wiring a program.
+            const SCENARIOS = {
+                healthy:   { zone: 78, fan: 100, stage: 2, fault: 'none' },
+                compoff:   { zone: 78, fan: 100, stage: 0, fault: 'none' },
+                lowcharge: { zone: 78, fan: 100, stage: 2, fault: 'lowCharge' },
+                airflow:   { zone: 78, fan: 100, stage: 2, fault: 'airflow' },
             };
-            requestAnimationFrame(frame);
-        })();
 
-        // ── Airflow chevrons — page-local rAF (no flow-engine) ────────────
-        // One invisible centerline is the getPointAtLength source; chevrons
-        // march it, speed scales with the fan fraction (0% fan = frozen), and
-        // each recolors at the coil's leaving edge so the ΔT shows in the air.
-        (function () {
-            const SVG_NS = 'http://www.w3.org/2000/svg';
-            const centerline = document.getElementById('fcu-centerline');
-            const layer = document.getElementById('fcu-flow');
-            if (!centerline || !layer) return;
+            presetBtns.forEach(function (btn) {
+                btn.addEventListener('click', function (e) {
+                    const s = SCENARIOS[e.currentTarget.getAttribute('data-preset')];
+                    if (!s) return;
+                    host.setMode('hand');
+                    pl.sensors['space-temp'] = s.zone;   zoneSlider.value = String(s.zone);
+                    pl.actuators['fan-speed'] = s.fan;   fanSlider.value  = String(s.fan);
+                    pl.actuators.y1 = s.stage >= 1;
+                    pl.actuators.y2 = s.stage >= 2;
+                    pl.actuators['fan-enable'] = s.fan > 0;   // scenarios run the fan
+                    pl.conditions.fault = s.fault;
+                    host.requestRender();
+                });
+            });
 
-            const reduce = window.matchMedia
-                && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            // Stage buttons (HAND) — write Y1 / Y2 (Y2 implies Y1).
+            stageBtns.forEach(function (btn) {
+                btn.addEventListener('click', function (e) {
+                    if (host.getMode() !== 'hand') return;
+                    const s = parseInt(e.currentTarget.getAttribute('data-stage'), 10);
+                    pl.actuators.y1 = s >= 1;
+                    pl.actuators.y2 = s >= 2;
+                    host.requestRender();
+                });
+            });
 
-            const SPACING = 46;         // px between chevrons along the centerline
-            const BASE_SPEED = 0.05;    // loops/sec at 100% fan (× fanFrac)
-            const COIL_LEAVE = { x: 202, y: 298 };   // downstream boundary
+            // Fan-enable toggle (HAND).
+            fanenToggle.addEventListener('change', function () {
+                if (host.getMode() !== 'hand') return;
+                pl.actuators['fan-enable'] = fanenToggle.checked;
+                host.requestRender();
+            });
 
-            // Sample the centerline into an arc-length table once, so the
-            // frame loop never calls getPointAtLength. `ang` is the local
-            // tangent (chevron heading).
-            const len = centerline.getTotalLength();
-            const n = Math.max(8, Math.round(len / 3));
-            const raw = [];
-            let i;
-            for (i = 0; i <= n; i++) raw.push(centerline.getPointAtLength(len * i / n));
-            const table = [];
-            for (i = 0; i <= n; i++) {
-                const a = raw[Math.max(0, i - 1)];
-                const b = raw[Math.min(n, i + 1)];
-                table.push({ x: raw[i].x, y: raw[i].y, ang: Math.atan2(b.y - a.y, b.x - a.x) });
-            }
+            // Fan-speed slider (HAND).
+            fanSlider.addEventListener('input', function () {
+                if (host.getMode() !== 'hand') return;
+                const v = parseFloat(fanSlider.value);
+                if (isFinite(v)) pl.actuators['fan-speed'] = v;
+                host.requestRender();
+            });
 
-            // Fraction of the coil's leaving edge — the recolor boundary. The
-            // centerline passes (202, 298) exactly once, so the nearest sample
-            // is unambiguous.
-            let boundaryFrac = 0.5;
-            let bestD = Infinity;
-            for (i = 0; i <= n; i++) {
-                const dx = table[i].x - COIL_LEAVE.x;
-                const dy = table[i].y - COIL_LEAVE.y;
-                const d = dx * dx + dy * dy;
-                if (d < bestD) { bestD = d; boundaryFrac = i / n; }
-            }
+            // Space-temp slider — the exogenous sensor, ALWAYS live (open loop).
+            zoneSlider.addEventListener('input', function () {
+                const v = parseFloat(zoneSlider.value);
+                if (isFinite(v)) pl.sensors['space-temp'] = v;
+                host.requestRender();
+            });
+        }
 
-            // Build the chevrons, evenly phased along the loop.
-            const count = Math.max(2, Math.floor(len / SPACING));
-            const chevrons = [];
-            let k;
-            for (k = 0; k < count; k++) {
-                const el = document.createElementNS(SVG_NS, 'path');
-                el.setAttribute('d', 'M-5 -5 L2 0 L-5 5');
-                el.setAttribute('class', 'fcu-chevron');
-                layer.appendChild(el);
-                chevrons.push({ el: el, base: k / count, color: '' });
-            }
-
-            function place(m, travel) {
-                const f = (m.base + travel) % 1;
-                // Interpolate between the two bracketing samples so the chevron
-                // moves smoothly sub-sample at ANY fan speed. A rounded index
-                // snaps to the same discrete sample for many frames at low
-                // speed (travel advances < one sample/frame), which read as a
-                // low framerate. Heading stays from i0 — adjacent samples share
-                // it except at corners, and a one-sample lag is invisible here.
-                const fp = f * n;
-                const i0 = Math.min(n, Math.floor(fp));
-                const i1 = Math.min(n, i0 + 1);
-                const frac = fp - i0;
-                const s0 = table[i0];
-                const s1 = table[i1];
-                const x = s0.x + (s1.x - s0.x) * frac;
-                const y = s0.y + (s1.y - s0.y) * frac;
-                m.el.setAttribute('transform',
-                    'translate(' + x.toFixed(2) + ' ' + y.toFixed(2) + ') rotate('
-                    + (s0.ang * 180 / Math.PI).toFixed(1) + ')');
-                const color = f < boundaryFrac ? 'var(--blue-cool)' : downstreamColor;
-                if (color !== m.color) { m.el.style.stroke = color; m.color = color; }
-            }
-
-            // Reduced motion: freeze each chevron at its base fraction (the
-            // filled duct + static arrows carry direction). Re-tint on demand
-            // when the mode changes so the ΔT still shows in the air colour.
-            if (reduce) {
-                refreshFrozenAir = function () {
-                    chevrons.forEach(function (m) { place(m, 0); });
+        // ── page-local animations (rAF; read plant.anim.fanFrac) ────────────
+        function fcuInitAnim(pl) {
+            // Fan-blade spin — speed tracks fan fraction; still when off.
+            (function () {
+                if (!fanBlade) return;
+                const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+                if (reduce) return;
+                const BASE = 360 / 0.8;   // deg/sec at 100%
+                let angle = 0;
+                let lastT = null;
+                const frame = function (t) {
+                    if (lastT === null) lastT = t;
+                    const dt = Math.min(0.1, (t - lastT) / 1000);
+                    lastT = t;
+                    angle = (angle + BASE * (pl.anim.fanFrac || 0) * dt) % 360;
+                    fanBlade.style.transform = 'rotate(' + angle.toFixed(2) + 'deg)';
+                    requestAnimationFrame(frame);
                 };
-                refreshFrozenAir();
-                return;
-            }
-
-            let travel = 0;
-            let lastT = null;
-            function frame(t) {
-                if (lastT === null) lastT = t;
-                const dt = Math.min(0.1, (t - lastT) / 1000);
-                lastT = t;
-                travel = (travel + BASE_SPEED * (state.fanFrac || 0) * dt) % 1;
-                chevrons.forEach(function (m) { place(m, travel); });
                 requestAnimationFrame(frame);
-            }
-            requestAnimationFrame(frame);
-        })();
+            })();
 
-        // Initial paint.
-        update();
+            // Airflow chevrons — page-local rAF (no flow-engine). One invisible
+            // centerline is the getPointAtLength source; chevrons march it,
+            // speed scales with fan fraction (0% = frozen), and each recolors at
+            // the coil's leaving edge so the ΔT shows in the air itself.
+            (function () {
+                const SVG_NS = 'http://www.w3.org/2000/svg';
+                const centerline = document.getElementById('fcu-centerline');
+                const layer = document.getElementById('fcu-flow');
+                if (!centerline || !layer) return;
+
+                const reduce = window.matchMedia
+                    && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+                const SPACING = 46;         // px between chevrons along the centerline
+                const BASE_SPEED = 0.05;    // loops/sec at 100% fan (× fanFrac)
+                const COIL_LEAVE = { x: 202, y: 298 };   // downstream boundary
+
+                const len = centerline.getTotalLength();
+                const n = Math.max(8, Math.round(len / 3));
+                const raw = [];
+                let i;
+                for (i = 0; i <= n; i++) raw.push(centerline.getPointAtLength(len * i / n));
+                const table = [];
+                for (i = 0; i <= n; i++) {
+                    const a = raw[Math.max(0, i - 1)];
+                    const b = raw[Math.min(n, i + 1)];
+                    table.push({ x: raw[i].x, y: raw[i].y, ang: Math.atan2(b.y - a.y, b.x - a.x) });
+                }
+
+                let boundaryFrac = 0.5;
+                let bestD = Infinity;
+                for (i = 0; i <= n; i++) {
+                    const dx = table[i].x - COIL_LEAVE.x;
+                    const dy = table[i].y - COIL_LEAVE.y;
+                    const d = dx * dx + dy * dy;
+                    if (d < bestD) { bestD = d; boundaryFrac = i / n; }
+                }
+
+                const count = Math.max(2, Math.floor(len / SPACING));
+                const chevrons = [];
+                let k;
+                for (k = 0; k < count; k++) {
+                    const el = document.createElementNS(SVG_NS, 'path');
+                    el.setAttribute('d', 'M-5 -5 L2 0 L-5 5');
+                    el.setAttribute('class', 'fcu-chevron');
+                    layer.appendChild(el);
+                    chevrons.push({ el: el, base: k / count, color: '' });
+                }
+
+                function place(m, travel) {
+                    const f = (m.base + travel) % 1;
+                    const fp = f * n;
+                    const i0 = Math.min(n, Math.floor(fp));
+                    const i1 = Math.min(n, i0 + 1);
+                    const frac = fp - i0;
+                    const s0 = table[i0];
+                    const s1 = table[i1];
+                    const x = s0.x + (s1.x - s0.x) * frac;
+                    const y = s0.y + (s1.y - s0.y) * frac;
+                    m.el.setAttribute('transform',
+                        'translate(' + x.toFixed(2) + ' ' + y.toFixed(2) + ') rotate('
+                        + (s0.ang * 180 / Math.PI).toFixed(1) + ')');
+                    const color = f < boundaryFrac ? 'var(--blue-cool)' : downstreamColor;
+                    if (color !== m.color) { m.el.style.stroke = color; m.color = color; }
+                }
+
+                if (reduce) {
+                    refreshFrozenAir = function () {
+                        chevrons.forEach(function (m) { place(m, 0); });
+                    };
+                    refreshFrozenAir();
+                    return;
+                }
+
+                let travel = 0;
+                let lastT = null;
+                function frame(t) {
+                    if (lastT === null) lastT = t;
+                    const dt = Math.min(0.1, (t - lastT) / 1000);
+                    lastT = t;
+                    travel = (travel + BASE_SPEED * (pl.anim.fanFrac || 0) * dt) % 1;
+                    chevrons.forEach(function (m) { place(m, travel); });
+                    requestAnimationFrame(frame);
+                }
+                requestAnimationFrame(frame);
+            })();
+        }
+
+        // ── FCU IO points ── point id === seed FBE-block id === the IO block
+        // the sample programs author (the load-bearing binding invariant).
+        // `dir` is 'sensor' | 'actuator' for the driver; params carry
+        // dir:'param'. min/max/step mirror the hand-control ranges (informational
+        // here — the programs place their own blocks, so no `seed` field).
+        const FCU_POINTS = [
+            { id: 'space-temp',       kind: 'ai',    dir: 'sensor',   plantKey: 'space-temp',       name: 'Space',    unit: '°F', min: 70, max: 84, step: 1 },
+            { id: 'dat',              kind: 'ai',    dir: 'sensor',   plantKey: 'dat',              name: 'DAT',      unit: '°F' },
+            { id: 'fan-speed',        kind: 'ao',    dir: 'actuator', plantKey: 'fan-speed',        name: 'Fan',      unit: '%', min: 0, max: 100, step: 5 },
+            { id: 'fan-enable',       kind: 'bo',    dir: 'actuator', plantKey: 'fan-enable',       name: 'Fan En' },
+            { id: 'y1',               kind: 'bo',    dir: 'actuator', plantKey: 'y1',               name: 'Y1' },
+            { id: 'y2',               kind: 'bo',    dir: 'actuator', plantKey: 'y2',               name: 'Y2' },
+            { id: 'cooling-setpoint', kind: 'param', dir: 'param',    plantKey: 'cooling-setpoint', name: 'Cool SP',  unit: '°F' },
+            { id: 'deadband',         kind: 'param', dir: 'param',    plantKey: 'deadband',         name: 'Deadband', unit: '°F' },
+        ];
+
+        // ── FCU sample programs (FBE graph literals; keys = editor examples) ──
+        // Staging (SP=72, deadband=3, stage-2 separation=2):
+        //   Y1 ON  temp > SP+deadband = 75    Y1 OFF  temp < SP = 72
+        //   Y2 ON  temp > 77 (Y1-on + sep)    Y2 OFF  temp < 75 (Y1-on)
+        // Two SR latches give per-stage hysteresis (no chatter); OR/AND make
+        // Y1 the any-cooling call and Y2 = Y1·stage-2. Fan enabled on the
+        // cooling call; fan-speed is a const 100 (fan-enable BO gates the fan
+        // physically). `dat` AI is seeded but unwired — a discharge low-limit
+        // is the teaching hook.
+        const FCU_PROGRAMS = {
+            'cool-2stage': {
+                blocks: [
+                    { id: 'space-temp',       type: 'ai',    x: 20,  y: 20,  params: { value: 76 } },
+                    { id: 'cooling-setpoint', type: 'const', x: 20,  y: 115, params: { value: 72 } },
+                    { id: 'deadband',         type: 'const', x: 20,  y: 210, params: { value: 3 } },
+                    { id: 'sep',              type: 'const', x: 20,  y: 305, params: { value: 2 } },
+                    { id: 'y1on',             type: 'add',   x: 170, y: 40 },
+                    { id: 'y2on',             type: 'add',   x: 170, y: 150 },
+                    { id: 'hundred',          type: 'const', x: 170, y: 280, params: { value: 100 } },
+                    { id: 'dat',              type: 'ai',    x: 170, y: 380, params: { value: 55 } },
+                    { id: 'gt1',              type: 'gt',    x: 320, y: 20 },
+                    { id: 'lt1',              type: 'lt',    x: 320, y: 115 },
+                    { id: 'gt2',              type: 'gt',    x: 320, y: 215 },
+                    { id: 'lt2',              type: 'lt',    x: 320, y: 315 },
+                    { id: 'sr1',              type: 'sr',    x: 470, y: 80 },
+                    { id: 'sr2',              type: 'sr',    x: 470, y: 240 },
+                    { id: 'or1',              type: 'or',    x: 615, y: 80 },
+                    { id: 'and1',             type: 'and',   x: 615, y: 240 },
+                    { id: 'y1',               type: 'bo',    x: 760, y: 20 },
+                    { id: 'fan-enable',       type: 'bo',    x: 760, y: 115 },
+                    { id: 'y2',               type: 'bo',    x: 760, y: 215 },
+                    { id: 'fan-speed',        type: 'ao',    x: 760, y: 315 },
+                ],
+                wires: [
+                    { from: ['cooling-setpoint', 'O'], to: ['y1on', 'A'] },
+                    { from: ['deadband', 'O'],         to: ['y1on', 'B'] },
+                    { from: ['y1on', 'O'],             to: ['y2on', 'A'] },
+                    { from: ['sep', 'O'],              to: ['y2on', 'B'] },
+                    { from: ['space-temp', 'O'],       to: ['gt1', 'A'] },
+                    { from: ['y1on', 'O'],             to: ['gt1', 'B'] },
+                    { from: ['space-temp', 'O'],       to: ['lt1', 'A'] },
+                    { from: ['cooling-setpoint', 'O'], to: ['lt1', 'B'] },
+                    { from: ['space-temp', 'O'],       to: ['gt2', 'A'] },
+                    { from: ['y2on', 'O'],             to: ['gt2', 'B'] },
+                    { from: ['space-temp', 'O'],       to: ['lt2', 'A'] },
+                    { from: ['y1on', 'O'],             to: ['lt2', 'B'] },
+                    { from: ['gt1', 'Q'],              to: ['sr1', 'S'] },
+                    { from: ['lt1', 'Q'],              to: ['sr1', 'R'] },
+                    { from: ['gt2', 'Q'],              to: ['sr2', 'S'] },
+                    { from: ['lt2', 'Q'],              to: ['sr2', 'R'] },
+                    { from: ['sr1', 'Q'],              to: ['or1', 'A'] },
+                    { from: ['sr2', 'Q'],              to: ['or1', 'B'] },
+                    { from: ['sr1', 'Q'],              to: ['and1', 'A'] },
+                    { from: ['sr2', 'Q'],              to: ['and1', 'B'] },
+                    { from: ['or1', 'Q'],              to: ['y1', 'IN'] },
+                    { from: ['or1', 'Q'],              to: ['fan-enable', 'IN'] },
+                    { from: ['and1', 'Q'],             to: ['y2', 'IN'] },
+                    { from: ['hundred', 'O'],          to: ['fan-speed', 'IN'] },
+                ],
+            },
+            'cool-1stage': {
+                blocks: [
+                    { id: 'space-temp',       type: 'ai',    x: 20,  y: 20,  params: { value: 76 } },
+                    { id: 'cooling-setpoint', type: 'const', x: 20,  y: 130, params: { value: 72 } },
+                    { id: 'deadband',         type: 'const', x: 20,  y: 240, params: { value: 3 } },
+                    { id: 'dat',              type: 'ai',    x: 20,  y: 350, params: { value: 55 } },
+                    { id: 'y1on',             type: 'add',   x: 195, y: 120 },
+                    { id: 'hundred',          type: 'const', x: 195, y: 300, params: { value: 100 } },
+                    { id: 'gt1',              type: 'gt',    x: 370, y: 40 },
+                    { id: 'lt1',              type: 'lt',    x: 370, y: 200 },
+                    { id: 'sr1',              type: 'sr',    x: 545, y: 120 },
+                    { id: 'y1',               type: 'bo',    x: 720, y: 20 },
+                    { id: 'fan-enable',       type: 'bo',    x: 720, y: 130 },
+                    { id: 'y2',               type: 'bo',    x: 720, y: 240 },
+                    { id: 'fan-speed',        type: 'ao',    x: 720, y: 350 },
+                ],
+                wires: [
+                    { from: ['cooling-setpoint', 'O'], to: ['y1on', 'A'] },
+                    { from: ['deadband', 'O'],         to: ['y1on', 'B'] },
+                    { from: ['space-temp', 'O'],       to: ['gt1', 'A'] },
+                    { from: ['y1on', 'O'],             to: ['gt1', 'B'] },
+                    { from: ['space-temp', 'O'],       to: ['lt1', 'A'] },
+                    { from: ['cooling-setpoint', 'O'], to: ['lt1', 'B'] },
+                    { from: ['gt1', 'Q'],              to: ['sr1', 'S'] },
+                    { from: ['lt1', 'Q'],              to: ['sr1', 'R'] },
+                    { from: ['sr1', 'Q'],              to: ['y1', 'IN'] },
+                    { from: ['sr1', 'Q'],              to: ['fan-enable', 'IN'] },
+                    { from: ['hundred', 'O'],          to: ['fan-speed', 'IN'] },
+                ],
+            },
+            'cool-2stage-fanon': {
+                blocks: [
+                    { id: 'space-temp',       type: 'ai',    x: 20,  y: 20,  params: { value: 76 } },
+                    { id: 'cooling-setpoint', type: 'const', x: 20,  y: 115, params: { value: 72 } },
+                    { id: 'deadband',         type: 'const', x: 20,  y: 210, params: { value: 3 } },
+                    { id: 'sep',              type: 'const', x: 20,  y: 305, params: { value: 2 } },
+                    { id: 'y1on',             type: 'add',   x: 170, y: 40 },
+                    { id: 'y2on',             type: 'add',   x: 170, y: 150 },
+                    { id: 'hundred',          type: 'const', x: 170, y: 280, params: { value: 100 } },
+                    { id: 'dat',              type: 'ai',    x: 170, y: 380, params: { value: 55 } },
+                    { id: 'gt1',              type: 'gt',    x: 320, y: 20 },
+                    { id: 'lt1',              type: 'lt',    x: 320, y: 115 },
+                    { id: 'gt2',              type: 'gt',    x: 320, y: 215 },
+                    { id: 'lt2',              type: 'lt',    x: 320, y: 315 },
+                    { id: 'sr1',              type: 'sr',    x: 470, y: 80 },
+                    { id: 'sr2',              type: 'sr',    x: 470, y: 240 },
+                    { id: 'or1',              type: 'or',    x: 615, y: 80 },
+                    { id: 'and1',             type: 'and',   x: 615, y: 240 },
+                    { id: 'fanon',            type: 'bi',    x: 615, y: 380, params: { state: true } },
+                    { id: 'y1',               type: 'bo',    x: 760, y: 20 },
+                    { id: 'fan-enable',       type: 'bo',    x: 760, y: 115 },
+                    { id: 'y2',               type: 'bo',    x: 760, y: 215 },
+                    { id: 'fan-speed',        type: 'ao',    x: 760, y: 315 },
+                ],
+                wires: [
+                    { from: ['cooling-setpoint', 'O'], to: ['y1on', 'A'] },
+                    { from: ['deadband', 'O'],         to: ['y1on', 'B'] },
+                    { from: ['y1on', 'O'],             to: ['y2on', 'A'] },
+                    { from: ['sep', 'O'],              to: ['y2on', 'B'] },
+                    { from: ['space-temp', 'O'],       to: ['gt1', 'A'] },
+                    { from: ['y1on', 'O'],             to: ['gt1', 'B'] },
+                    { from: ['space-temp', 'O'],       to: ['lt1', 'A'] },
+                    { from: ['cooling-setpoint', 'O'], to: ['lt1', 'B'] },
+                    { from: ['space-temp', 'O'],       to: ['gt2', 'A'] },
+                    { from: ['y2on', 'O'],             to: ['gt2', 'B'] },
+                    { from: ['space-temp', 'O'],       to: ['lt2', 'A'] },
+                    { from: ['y1on', 'O'],             to: ['lt2', 'B'] },
+                    { from: ['gt1', 'Q'],              to: ['sr1', 'S'] },
+                    { from: ['lt1', 'Q'],              to: ['sr1', 'R'] },
+                    { from: ['gt2', 'Q'],              to: ['sr2', 'S'] },
+                    { from: ['lt2', 'Q'],              to: ['sr2', 'R'] },
+                    { from: ['sr1', 'Q'],              to: ['or1', 'A'] },
+                    { from: ['sr2', 'Q'],              to: ['or1', 'B'] },
+                    { from: ['sr1', 'Q'],              to: ['and1', 'A'] },
+                    { from: ['sr2', 'Q'],              to: ['and1', 'B'] },
+                    { from: ['or1', 'Q'],              to: ['y1', 'IN'] },
+                    { from: ['and1', 'Q'],             to: ['y2', 'IN'] },
+                    { from: ['fanon', 'O'],            to: ['fan-enable', 'IN'] },
+                    { from: ['hundred', 'O'],          to: ['fan-speed', 'IN'] },
+                ],
+            },
+        };
+
+        // The unit interface the shell calls through — nothing else.
+        const fcuUnit = {
+            id: 'fcu', prefix: 'fcu',
+            points: FCU_POINTS,
+            programs: FCU_PROGRAMS,
+            defaultProgram: 'cool-2stage',
+            createPlant: fcuCreatePlant,
+            update: fcuUpdate,
+            renderUnit: fcuRenderUnit,
+            syncControls: fcuSyncControls,
+            onResize: fcuOnResize,
+            initAnim: fcuInitAnim,
+            wireControls: fcuWireControls,
+        };
+        // ══════════════════════════════ /UNIT: FCU ═════════════════════════
+
+        // ── shell init ─────────────────────────────────────────────────────
+        unit = fcuUnit;
+        plant = unit.createPlant();
+        programKey = unit.defaultProgram;
+        graph = FBE.makeGraph(unit.programs[programKey]);
+        reindex(graph);
+        initChips();
+        setMode('auto');
+        unit.wireControls(plant, {
+            getMode: function () { return mode; },
+            setMode: setMode,
+            requestRender: requestRender,
+        });
+        unit.initAnim(plant);
+
+        // Tabs — shared switchTab (ui.js), then lazy-mount / relayout the editor.
+        document.querySelectorAll('.tabs.tabs-flush [data-tab]').forEach(function (btn) {
+            btn.addEventListener('click', function (e) {
+                switchTab(btn.dataset.tab, e.currentTarget);
+                showTab(btn.dataset.tab);
+            });
+        });
+
+        // HAND / AUTO.
+        document.querySelectorAll('.ddcw-mode [data-mode]').forEach(function (btn) {
+            btn.addEventListener('click', function () { setMode(btn.dataset.mode); requestRender(); });
+        });
+
+        // Program picker.
+        document.getElementById('ddcw-program').addEventListener('change', function (e) {
+            const key = e.currentTarget.value;
+            if (!key || key === 'custom') return;
+            loadProgram(key);
+            requestRender();
+        });
+
+        // Fullscreen — reflow the unit + (if built & visible) the editor.
+        const card = document.querySelector('.tool-card');
+        if (card) {
+            card.addEventListener('fullscreenchange', function (e) {
+                const fs = !!(e.detail && e.detail.fullscreen);
+                unit.onResize(plant, fs);
+                if (editorBuilt && wiresheetVisible) { editor.onFullscreenChange(fs); editor.refresh(); }
+            });
+        }
+
+        // Desktop-width crossing — re-measure the editor if it is showing.
+        if (window.matchMedia) {
+            const mq = window.matchMedia('(min-width: 1000px)');
+            mq.addEventListener('change', function () {
+                if (editorBuilt && wiresheetVisible) {
+                    const fs = document.body.classList.contains('has-fullscreen-tool');
+                    editor.onFullscreenChange(fs); editor.refresh();
+                }
+            });
+        }
+
+        // Re-render display on the global unit toggle (metric / US).
+        document.addEventListener('unitschange', function () {
+            unit.renderUnit(plant);
+            unit.syncControls(plant, mode);
+        });
+
+        syncProgramSelect();
+        hostTick();                              // initial paint — AUTO, cooling on arrival
+        window.setInterval(function () { if (!document.hidden) hostTick(); }, 100);
     })();
 </script>
 {% endblock %}
