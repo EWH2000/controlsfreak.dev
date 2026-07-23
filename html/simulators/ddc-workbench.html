@@ -1113,9 +1113,16 @@ noindex: true
             if (refreshFrozenAir) refreshFrozenAir();
 
             // Verdict — a fault or an off state outranks the mode readout.
+            // Fan-off splits two ways: with a stage energized it's a genuine
+            // no-airflow fault (only reachable by a HAND override — in AUTO the
+            // auto-fan runs the fan for any cooling call); with no stage called
+            // the unit is simply at rest, which is normal operation, not an
+            // alarm (previously this whole branch flagged red).
             let cls, txt;
-            if (!d.fanOn) {
-                cls = 'error'; txt = 'Supply fan off — no air across the coil';
+            if (!d.fanOn && d.stage > 0) {
+                cls = 'error'; txt = 'Fan off with compressor on — no airflow across an active coil';
+            } else if (!d.fanOn) {
+                cls = '';      txt = 'No cooling call — fan off (idle)';
             } else if (d.stage === 0) {
                 cls = 'warn';  txt = 'Compressor off — fan only, no ΔT across the coil';
             } else if (d.fault === 'lowCharge') {
