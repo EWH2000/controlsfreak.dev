@@ -4127,6 +4127,360 @@ p.ref-note.compact {
    single-class display rule (e.g. .result-panel's display:flex). */
 .hidden { display: none; }
 
+/* ──────────────────────────────────────────────────────────────────────
+ * FUNCTION-BLOCK EDITOR (fbe-*) — the wiresheet tool's own chrome.
+ *
+ * A three-region workspace (palette rail · canvas · inspector) that
+ * doesn't fit the Input/Output/Reference column grids; same precedent as
+ * the PID tuner and VFD mock keeping their own simulator layouts. The
+ * .widget-* shell isn't used — this is a full custom tool, not a recessed
+ * teaching widget — but the example-program chip row reuses the shared
+ * .widget-try idiom. Lifted here from the page's head block when the
+ * editor JS moved to /scripts/fbe-editor.js, so a second consumer (the
+ * "DDC Workbench") reads one source. Desktop-only by design — the @media
+ * gate at the end hides the live workspace below 1000px / on touch. The
+ * page-local #fbe-canvas:focus-visible sits in the FOCUS INDICATORS block.
+ * ────────────────────────────────────────────────────────────────────── */
+.fbe-workspace {
+    display: grid;
+    grid-template-columns: 9.5rem 1fr;
+    gap: 0.9rem;
+    margin: 1rem 0 0.9rem;
+}
+
+/* ── Palette rail ── */
+.fbe-palette {
+    background: var(--surface-3);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 0.55rem 0.5rem;
+    overflow-y: auto;
+    max-height: 30rem;
+}
+.fbe-palette-label {
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    color: var(--text-dim);
+    margin: 0.7rem 0 0.3rem;
+}
+.fbe-palette-label:first-child { margin-top: 0.1rem; }
+.fbe-palette-btn {
+    display: block;
+    width: 100%;
+    text-align: left;
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    color: var(--text-bright);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 0.28rem 0.45rem;
+    margin-bottom: 0.25rem;
+    cursor: pointer;
+}
+.fbe-palette-btn:hover { border-color: var(--accent); color: var(--accent); }
+.fbe-palette-btn:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+}
+
+/* ── Canvas ── */
+.fbe-canvas {
+    position: relative;
+    background: var(--surface-3);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    height: 30rem;
+    overflow: auto;
+}
+.fbe-canvas-inner {
+    position: relative;
+    width: 900px;
+    height: 480px;
+}
+.fbe-wire-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 900px;
+    height: 480px;
+    pointer-events: none;
+}
+.fbe-wire { fill: none; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.fbe-wire-num { stroke: var(--blue); }
+.fbe-wire-bool-on { stroke: var(--accent); }
+/* Off wires must still be traceable — --border was 1.24:1 in light
+   (you could not see where the wire ran). --text-dim follows the
+   balancing-diagram stroke convention (audit-2026-06 #14). */
+.fbe-wire-bool-off { stroke: var(--text-dim); }
+.fbe-wire-hit { fill: none; stroke: transparent; stroke-width: 14; pointer-events: stroke; cursor: pointer; }
+.fbe-wire-sel { stroke: var(--text-bright); stroke-dasharray: 5 3; }
+
+/* Live-signal flow — while the sim runs (.fbe-running on the
+   canvas, toggled by setRunning), energized wires march from
+   source to sink: wire paths are drawn output → input, so a
+   negative dashoffset walks the dashes in true signal direction.
+   Digital TRUE pulses briskly; analog crawls with a long dash so
+   the line stays traceable as a line. FALSE wires stay still — a
+   dead wire doesn't pulse. Both dash periods are 12 so they share
+   one keyframe (offset −12 = exactly one cycle, seamless loop).
+   Gated on no-preference rather than relying on the global
+   reduce block: that block only freezes animation, and frozen
+   dashes would read as the selection dash pattern — reduced
+   motion should keep fully SOLID wires. Selected wires opt out
+   (selection owns the dash pattern). */
+@media (prefers-reduced-motion: no-preference) {
+    .fbe-canvas.fbe-running .fbe-wire-bool-on {
+        stroke-dasharray: 7 5;
+        animation: fbe-signal-flow 0.45s linear infinite;
+    }
+    .fbe-canvas.fbe-running .fbe-wire-num {
+        stroke-dasharray: 9 3;
+        animation: fbe-signal-flow 1.1s linear infinite;
+    }
+    .fbe-canvas.fbe-running .fbe-wire-sel {
+        animation: none;
+        stroke-dasharray: 5 3;
+    }
+}
+@keyframes fbe-signal-flow {
+    to { stroke-dashoffset: -12; }
+}
+
+/* ── Blocks ── */
+.fbe-block {
+    position: absolute;
+    width: 8.5rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    user-select: none;
+    box-shadow: 0 1px 0 var(--bevel-lo);
+}
+.fbe-block-sel { border-color: var(--accent); }
+.fbe-block-head {
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: var(--text-bright);
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--border);
+    padding: 0.22rem 0.45rem;
+    border-radius: 2px 2px 0 0;
+    cursor: move;
+}
+.fbe-block-sel .fbe-block-head { background: var(--accent-dim); color: var(--accent); }
+.fbe-block-body {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.3rem 0;
+}
+.fbe-pins { display: flex; flex-direction: column; gap: 0.12rem; }
+.fbe-pins-out { align-items: flex-end; }
+.fbe-pin {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-family: var(--mono);
+    font-size: 0.58rem;
+    color: var(--text-dim);
+    cursor: crosshair;
+}
+.fbe-pin-label { pointer-events: none; }
+.fbe-pin-dot {
+    width: 0.62rem;
+    height: 0.62rem;
+    border-radius: 50%;
+    border: 1.5px solid var(--text-dim);
+    background: var(--surface);
+    flex: none;
+}
+.fbe-pin-in .fbe-pin-dot { margin-left: -0.36rem; }
+.fbe-pin-out .fbe-pin-dot { margin-right: -0.36rem; }
+.fbe-pin[data-kind="number"] .fbe-pin-dot { border-color: var(--blue); }
+.fbe-pin[data-kind="number"].fbe-on .fbe-pin-dot { background: var(--blue); }
+.fbe-pin[data-kind="bool"].fbe-on .fbe-pin-dot {
+    background: var(--accent);
+    border-color: var(--accent);
+}
+.fbe-pin-target .fbe-pin-dot {
+    box-shadow: 0 0 0 3px var(--accent-glow);
+}
+.fbe-block-val {
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    text-align: center;
+    color: var(--blue);
+    border-top: 1px solid var(--border-faint);
+    padding: 0.18rem 0.3rem;
+    background: var(--surface-2);
+}
+.fbe-val-off { color: var(--text-dim); }
+.fbe-val-on { color: var(--accent); }
+.fbe-toggle { cursor: pointer; }
+.fbe-toggle:hover { color: var(--text-bright); }
+
+/* ── Inspector — a full-width strip below the canvas. The
+      selected block's parameters lay out as a horizontal row of
+      stacked label/field pairs (every block has ≤ 4 params). ── */
+.fbe-inspector {
+    background: var(--surface-3);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 0.5rem 0.7rem;
+    margin-bottom: 1.25rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 0.4rem 1.1rem;
+    min-height: 3.4rem;
+}
+.fbe-insp-title {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--text-bright);
+    align-self: center;
+}
+.fbe-insp-empty { font-size: 0.78rem; color: var(--text-dim); align-self: center; }
+.fbe-insp-keys {
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    color: var(--text-dim);
+    align-self: center;
+    opacity: 0.85;
+}
+.fbe-insp-row { display: flex; flex-direction: column; }
+.fbe-insp-row label {
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-dim);
+    margin-bottom: 0.15rem;
+}
+.fbe-insp-row input[type="number"],
+.fbe-insp-row select {
+    width: 7rem;
+    font-family: var(--mono);
+    font-size: 0.74rem;
+    padding: 0.25rem 0.35rem;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    background: var(--surface);
+    color: var(--text-bright);
+}
+.fbe-insp-check {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.4rem;
+    align-self: center;
+}
+.fbe-insp-check input { width: 0.95rem; height: 0.95rem; }
+.fbe-insp-check label {
+    margin: 0;
+    text-transform: none;
+    letter-spacing: normal;
+    font-size: 0.74rem;
+    font-family: var(--sans);
+    color: var(--text);
+}
+.fbe-insp-del { margin-left: auto; align-self: center; }
+
+/* ── Sim bar + status ── */
+.fbe-simbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+    margin-bottom: 0.2rem;
+}
+.fbe-status {
+    font-family: var(--mono);
+    font-size: 0.66rem;
+    color: var(--text-dim);
+    margin-left: 0.3rem;
+}
+.fbe-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    color: var(--text-dim);
+    margin-top: 0.4rem;
+}
+.fbe-legend span { display: inline-flex; align-items: center; gap: 0.35rem; }
+.fbe-swatch { width: 1.4rem; height: 0; border-top-width: 3px; border-top-style: solid; }
+.fbe-sw-num { border-color: var(--blue); }
+.fbe-sw-on { border-color: var(--accent); }
+.fbe-sw-off { border-color: var(--border); }
+
+/* Page-local modifier — the preamble sits right above the example
+   chips and wants a smaller gap than the global rule's default. */
+p.tool-preamble.tight { margin-bottom: 0.85rem; }
+
+/* Desktop-only interaction by design — drag-wiring wants room and a
+   pointer, and on touch a finger can't both drag a block and pan the
+   sheet. Below 1000px OR on a touch-primary device the whole live
+   workspace is hidden and the shared .desktop-only-sim tips panel
+   takes its place (the @media gate is at the end of this block). */
+/* Fullscreen overrides — let the workspace use the bigger viewport. The
+   grid flips from [palette | canvas] to a single column with the canvas
+   on top filling the freed-up horizontal space and the palette wrapped
+   horizontally below (uses the dead space and keeps every block in
+   sight without the side rail's scroll). The page's IIFE lifts
+   INNER_W / INNER_H and updates the wire-layer viewBox on the
+   'fullscreenchange' event from /scripts/fullscreen-toggle.js. */
+.tool-card.is-fullscreen .fbe-workspace {
+    grid-template-areas: "canvas" "palette";
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr auto;
+    height: calc(100vh - 23rem);
+    min-height: 30rem;
+    gap: 0.55rem;
+}
+.tool-card.is-fullscreen .fbe-canvas { grid-area: canvas; height: auto; min-height: 0; }
+.tool-card.is-fullscreen .fbe-canvas-inner { width: 100%; height: 100%; }
+.tool-card.is-fullscreen .fbe-wire-layer { width: 100%; height: 100%; }
+.tool-card.is-fullscreen .fbe-palette {
+    grid-area: palette;
+    max-height: none;
+    overflow: visible;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem 0.4rem;
+    padding: 0.5rem 0.6rem;
+}
+.tool-card.is-fullscreen .fbe-palette-label {
+    margin: 0;
+    padding: 0 0.5rem 0 0.55rem;
+    border-left: 1px solid var(--border);
+    align-self: stretch;
+    display: flex;
+    align-items: center;
+}
+.tool-card.is-fullscreen .fbe-palette-label:first-child {
+    border-left: 0;
+    padding-left: 0;
+}
+.tool-card.is-fullscreen .fbe-palette-btn {
+    display: inline-block;
+    width: auto;
+    margin: 0;
+    padding: 0.3rem 0.55rem;
+}
+
+@media (max-width: 999px), (hover: none) and (pointer: coarse) {
+    .fbe-live { display: none; }
+    .desktop-only-sim { display: block; }
+}
+
 @media (prefers-reduced-motion: reduce) {
     .widget-fan-blades { transform: none !important; }
     *, *::before, *::after {

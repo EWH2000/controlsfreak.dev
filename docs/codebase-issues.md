@@ -7118,7 +7118,7 @@ Related: #192 (the instance that started it), #194 (what the guard
 cannot see), #168 (the same shape one level up — dim labels are a
 deliberate hierarchy, recorded rather than "fixed").
 
-### 196. FBE editor render/cache state lives on the wire *data* objects *(open — 2026-07-22)*
+### 196. FBE editor render/cache state lives on the wire *data* objects *(addressed 2026-07-22)*
 
 The Function-Block Editor (`html/simulators/function-block-editor.html`)
 attaches transient render + cache fields directly to the wire **data**
@@ -7153,3 +7153,18 @@ natural point to decouple the cache.
 
 Related: #111 (the `refreshValues` micro-optimization this cache serves),
 PR #421 (the narrow fix + regression guard).
+
+**Resolved (2026-07-22, `refactor/fbe-editor-module`).** The editor was
+extracted from the page's inline IIFE into a shared classic-script module
+`html/scripts/fbe-editor.js` (`window.FBEEditor.createEditor`), the natural
+moment flagged above (the "DDC Workbench" arc, PR-1). The extraction
+decouples the render/cache state from the data model exactly as proposed:
+`_vis` / `_hit` / `_lastCls` no longer live on the `graph.wires` objects.
+A module-scoped side map `const wireEls = {}` keyed by `w.id` holds
+`{ hit, vis, lastCls }` (mirroring the block-side `els` map), and
+`renderAll()` clears it in lockstep with `els` — so a rebuilt `<path>`
+cannot inherit a stale cache by construction, not by a compensating reset.
+`createWireEls` writes the entry; `drawWires` / `refreshValues` read it.
+The engine (`fbe-engine.js`) is unchanged. `tests/fbe-wires.spec.js` still
+guards it (visible-stroke count), and was re-verified to fail when the
+`wireEls` clear is removed from `renderAll`.
