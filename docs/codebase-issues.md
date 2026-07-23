@@ -7166,5 +7166,24 @@ A module-scoped side map `const wireEls = {}` keyed by `w.id` holds
 cannot inherit a stale cache by construction, not by a compensating reset.
 `createWireEls` writes the entry; `drawWires` / `refreshValues` read it.
 The engine (`fbe-engine.js`) is unchanged. `tests/fbe-wires.spec.js` still
-guards it (visible-stroke count), and was re-verified to fail when the
-`wireEls` clear is removed from `renderAll`.
+guards it (visible-stroke count). The `wireEls` clear in `renderAll` is
+memory hygiene, not the sole correctness guarantor: `createWireEls` writes a
+fresh `{ lastCls: 'fbe-wire' }` entry for every wire on every render, so
+removing the clear alone does **not** fail the spec (it only orphans map
+entries for deleted wire ids). The guard was verified to bite by injecting the
+actual failure mechanism — seeding a stale *coloured* `lastCls` at create time
+so `refreshValues` skips the colour write — which fails `fbe-wires` as
+expected.
+
+### 197. `.fbe-palette-btn:focus-visible` sits outside the consolidated FOCUS INDICATORS block *(open — 2026-07-22)*
+
+When the function-block editor's `.fbe-*` CSS moved into `styles.css` (PR-1 of
+the DDC Workbench arc, `refactor/fbe-editor-module`), the
+`.fbe-palette-btn:focus-visible` rule travelled verbatim and now sits as its
+own rule inside the FBE section, rather than folded into the consolidated
+`FOCUS INDICATORS` block where its sibling `#fbe-canvas:focus-visible` already
+lives (per the CLAUDE.md focus-indicator convention — "add its selector to
+that block; don't scatter a one-off rule"). Behaviour is correct; this is a
+placement/consolidation cleanup, not a bug. Deferred out of PR-1 to keep that
+behaviour-preserving refactor tight. Fold the rule into the `FOCUS INDICATORS`
+block in a later `styles.css` pass.
